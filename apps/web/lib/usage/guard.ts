@@ -2,6 +2,8 @@ import { and, desc, eq, gt, sql } from 'drizzle-orm'
 import { db, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
 import { POLICY, type Plan } from '@miro/config'
 import { costOf, decide, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
+import { track } from '@/lib/analytics/track'
+import { observe } from '@/lib/observe'
 
 export class UsageExceededError extends Error {
   constructor(readonly plan: Plan, readonly resetsAt: Date) {
@@ -58,7 +60,11 @@ export async function reserve(opts: {
     }
 
     const decision = decide(win!, opts.kind, units, now)
-    if (!decision.allowed) throw new UsageExceededError(decision.plan, decision.resetsAt)
+    if (!decision.allowed) {
+      observe('usage.limit_reached', { userId: opts.userId, kind: opts.kind, plan: decision.plan })
+      void track(opts.userId, 'usage_limit_reached', { kind: opts.kind, plan: decision.plan })
+      throw new UsageExceededError(decision.plan, decision.resetsAt)
+    }
 
     const [ledger] = await tx.insert(usageLedger).values({
       windowId: win!.id, userId: opts.userId, kind: opts.kind, units,
@@ -112,7 +118,7 @@ export async function guarded<T>(
     await commit(r.reservationId)
     return out
   } catch (e) {
-    if (!r.reused) await rollback(r.reservationId)
+    if (!r.reused) { await rollback(r.reservationId); observe('usage.rolled_back', { userId: opts.userId, kind: opts.kind }) }
     throw e
   }
 }

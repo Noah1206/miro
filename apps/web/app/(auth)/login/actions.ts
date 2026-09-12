@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { login, signup } from '@/lib/auth'
+import { track } from '@/lib/analytics/track'
 
 const Credentials = z.object({
   email: z.string().email('올바른 이메일을 입력해 주세요.'),
@@ -28,8 +29,10 @@ export async function authenticate(_prev: AuthState, form: FormData): Promise<Au
 
   const mode = form.get('mode') === 'signup' ? 'signup' : 'login'
   try {
-    if (mode === 'signup') await signup(parsed.data.email, parsed.data.password)
-    else await login(parsed.data.email, parsed.data.password)
+    const u = mode === 'signup'
+      ? await signup(parsed.data.email, parsed.data.password)
+      : await login(parsed.data.email, parsed.data.password)
+    if (mode === 'signup') void track(u.id, 'signup', {})
   } catch (e) {
     const code = e instanceof Error ? e.message : 'UNKNOWN'
     return { error: MESSAGES[code] ?? '로그인에 실패했습니다. 다시 시도해 주세요.' }

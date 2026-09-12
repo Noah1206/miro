@@ -1,6 +1,6 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: Phase 0–11 완료 → Phase 12 (Analytics·Observability·CI·Hardening) 진행 중
+> **Status**: Phase 0–12 완료 → Phase 13 (결제 — Mock PG Adapter) 진행 중
 > **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
@@ -52,7 +52,7 @@
 
 ## 2. PRD 대비 구현 상태
 
-**Phase 0–11 완료. 테스트 216 unit/integration + 29 e2e 통과, 두 앱 빌드 clean.**
+**Phase 0–12 완료. 테스트 221 unit/integration + 31 e2e 통과, 두 앱 빌드 clean (DB 없이도 빌드됨), CI 워크플로 구성.**
 
 | # | 기능 영역 | 상태 | 비고 |
 |---|---|---|---|
@@ -69,7 +69,7 @@
 | 11 | 장기 기억 및 관계 맥락 | **Implemented** | 세션 격리, salience, dedupe, 중요도 기반 prune |
 | 12 | 계정 삭제 및 개인 데이터 처리 | **Implemented** | 영향 정보 → 확정 → 로그인 차단·세션 폐기·Push 제거·soft delete·구독 해지, 반복 요청 idempotent |
 
-**실제 적용 DB**: 29 테이블 / 10 migration (`0000_core` … `0009_admin`). 남은 것: `analytics_events`(P12).
+**실제 적용 DB**: 30 테이블 / 11 migration (`0000_core` … `0010_analytics`). 결제(P13)에서 `payment_events` 추가 예정.
 
 ## 3. 구조적 리스크
 
@@ -84,7 +84,8 @@
 | **R-5** | 동시 RP State 덮어쓰기 | 관계/세계 상태 유실 | `version` 컬럼 optimistic lock |
 | **R-6** | Video Call 웹 구현 난이도 | Phase 8 지연 | Architecture + CallSession 기록은 v1 완성, 실시간 렌더링은 Adapter 교체 |
 | **R-7** | Node 20 | Next 15 빌드 경고 | 개발 중 Node 22 LTS 권장 (블로커 아님) |
-| **R-8** | 고정 스토리 구조로 회귀 | 제품 정체성 붕괴 | Phase 12의 Non-linear Simulation Test(§36-A)를 **CI 필수 게이트**로 |
+| **R-8** | 고정 스토리 구조로 회귀 | 제품 정체성 붕괴 | Non-linear Simulation Test(T1–T8)가 `pnpm test` 에 포함 → CI 게이트 ✅ |
+| **R-9** | 인증/신고 엔드포인트 rate limit 없음 | 무차별 대입·신고 스팸 | 배포 인프라(Vercel Firewall) 규칙으로 적용. 앱 레벨 구현은 TBD |
 
 ---
 
@@ -382,8 +383,8 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | **P8** ✅ | 통화 = 같은 시뮬레이션의 mode(voice_call/video_call). 수신 UI 채널별 분리, 수락 시점 과금, 종료 시 실제 분 보정, 부재중 만료(Cron), CallMediaProvider Mock | P5, P9 |
 | **P10** ✅ | Archive · Settings · Quiet Hours · Permissions · Adult Verification · Mature gate · Reporting · Account Delete · retention purge | P5 |
 | **P11** ✅ | `apps/admin` 별도 앱 · 별도 쿠키/테이블 · RBAC(viewer/reviewer/superadmin) · 상태 전이 표 · version 낙관적 잠금 · 감사 로그 · 사용자 앱에 admin 경로/링크 없음(테스트로 고정) | P10 |
-| **P12** ▶ | Analytics · Observability · CI · Health · Hardening | P1–P11 |
-| **P13** | **결제 시스템 연동** (PG · 구매 · 복원 · 해지 · Webhook) | P9, P12 |
+| **P12** ✅ | analytics_events + sanitize(관계 수치·본문 차단) · 퍼널 19개 이벤트 wiring · `observe()` 구조화 로그(원시값만) · `/api/health`(Provider mock 명시) · 보안 헤더 · lazy DB client(빌드 무의존) · Playwright webServer · GitHub Actions(Postgres service, T1–T8 게이트) · README · .env.example | P1–P11 |
+| **P13** ▶ | 결제: PaymentProvider Adapter(Mock) · 구매/복원/해지 · webhook idempotency | P9, P12 |
 
 **계획 이탈 해소** — P9를 P7 직후로 당겨 실행했다. `guarded()` 한 함수가 호출부 6곳(chat, live, photo, create, media 생성, 선연락 사진은 정책상 무차감)을 감싼다. 이후 P8 통화 경로는 처음부터 이 함수를 쓴다.
 
@@ -414,6 +415,10 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-17 | Admin은 별도 Next 앱(`apps/admin`, 포트 3100) | 인증 쿠키·테이블·배포 단위 분리. 사용자 앱에 admin 문자열이 없음을 통합 테스트가 grep으로 검사 |
 | E-18 | 신고 조치는 상태 전이 표 + `reports.version` | 동시 처리 시 늦은 운영자는 stale. 제한 조치는 근거 메모 필수 |
 | E-19 | E2E: Next 라우트 어나운서(`__next-route-announcer__`)가 `role=alert` | `getByRole('alert')`는 항상 `.filter({hasText})`로 스코프 |
+| E-20 | DB client 는 첫 사용 시 연결 (Proxy) | `next build` 의 페이지 데이터 수집이 DATABASE_URL 없이도 통과. 빌드는 DB 를 몰라야 한다 |
+| E-21 | 분석 이벤트 props 는 `sanitizeProps` 를 거친다 | 관계 6차원·stage·본문·이메일 키 제거, 80자 초과 문자열 제거. 대화 내용이 분석 파이프라인에 실릴 수 없음 |
+| E-22 | `observe()` 필드 타입은 원시값만 | 구조화 로그에 객체(메시지 본문 등)를 넣을 수 없게 타입으로 강제 |
+| E-23 | Rate limiting 은 미구현 (R-9) | 서버리스에서 프로세스 메모리 제한은 무의미. Vercel Firewall/WAF 규칙 또는 KV 기반 카운터로 배포 시 적용 (TBD) |
 
 ---
 

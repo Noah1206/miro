@@ -4,6 +4,7 @@ import { db } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
 import { purgeDeleted } from '@/lib/ops/archive'
+import { observe } from '@/lib/observe'
 
 export type SchedulerRun = {
   claimed: number
@@ -55,7 +56,7 @@ export async function runRealityScheduler(now = new Date()): Promise<SchedulerRu
       results[key] = (results[key] ?? 0) + 1
     } catch (e) {
       errors++
-      console.error('[reality] evaluate failed', { sessionId: row.id, error: (e as Error).message })
+      observe('reality.job_failed', { sessionId: row.id, error: (e as Error).message })
     }
   }
 

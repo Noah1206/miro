@@ -9,6 +9,8 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
+import { track } from '@/lib/analytics/track'
+import { observe, timed } from '@/lib/observe'
 
 export type TurnState = {
   error: string | null
@@ -47,7 +49,8 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
     try {
       result = await guarded(
         { userId: user.id, kind: 'textRP', idempotencyKey: `turn:${sessionId}:${turnIndex}` },
-        () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input }),
+        () => timed('provider.llm.turn', { sessionId, mode: llm.info.mode },
+          () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input })),
       )
     } catch (e) {
       if (e instanceof UsageExceededError) {
@@ -59,7 +62,8 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
     const { transition } = result
     // 검증에서 걸러진 항목은 조용히 버리지 않는다 — Provider 품질 신호다.
     if (transition.issues.length > 0) {
-      console.warn('[rp] proposal issues', { sessionId, turn: turnIndex, issues: transition.issues })
+      observe('provider.llm.validation_issues', { sessionId, turn: turnIndex, count: transition.issues.length,
+        fields: transition.issues.map((i) => i.field).join(',') })
     }
     if (transition.blocks.length === 0) return fail('응답을 생성하지 못했습니다. 다시 시도해 주세요.')
 
@@ -79,10 +83,14 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
       })
     } catch (e) {
       // 다른 요청이 먼저 커밋했다. 최신 상태로 한 번 더 시도한다.
-      if (e instanceof StaleStateError && attempt === 0) continue
+      if (e instanceof StaleStateError && attempt === 0) { observe('state.stale_retry', { sessionId, turn: turnIndex }); continue }
+      observe('state.commit_failed', { sessionId, turn: turnIndex, error: (e as Error).message })
       return fail('상태를 저장하지 못했습니다. 다시 시도해 주세요.')
     }
 
+    void track(user.id, 'rp_message_sent', { sessionId, turn: turnIndex })
+    if (transition.newEvent) void track(user.id, 'event_triggered', { sessionId, type: transition.newEvent.candidate.type })
+    if (transition.sceneDelta) void track(user.id, 'scene_changed', { sessionId })
     revalidatePath(`/chat/${sessionId}`)
     return {
       error: null,

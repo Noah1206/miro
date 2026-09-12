@@ -14,6 +14,8 @@ import {
 } from '@miro/providers'
 import { getOrGenerate } from '@/lib/simulation/media'
 import { startIncomingCall } from '@/lib/call/service'
+import { track } from '@/lib/analytics/track'
+import { observe } from '@/lib/observe'
 import { shouldChargeRealityContact } from '@miro/domain'
 
 export type EvaluateOutcome =
@@ -118,7 +120,7 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
   if (decision.channel === 'voice_call' || decision.channel === 'video_call') {
     const channel = decision.channel === 'voice_call' ? 'voice' : 'video'
     const callId = await startIncomingCall(sessionId, channel, intent.reason)
-    if (!callId) return { outcome: 'skipped', reason: 'duplicate' }
+    if (!callId) { observe('reality.duplicate_prevented', { sessionId, channel: decision.channel }); return { outcome: 'skipped', reason: 'duplicate' } }
     let contactId: string
     try {
       const [c] = await db.insert(realityContacts).values({
@@ -138,6 +140,7 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
         url: `/chat/${sessionId}`, tag: `call:${sessionId}`,
       })
     }
+    void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
     return { outcome: 'sent', channel: decision.channel, contactId }
   }
 
@@ -212,9 +215,10 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
     })
   } catch (e) {
     // (session_id, dedupe_key) UNIQUE — 같은 사유가 이미 발송됐다. 조용히 넘기되 기록한다.
-    if ((e as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'duplicate' }
+    if ((e as { code?: string }).code === '23505') { observe('reality.duplicate_prevented', { sessionId, channel: decision.channel }); return { outcome: 'skipped', reason: 'duplicate' } }
     throw e
   }
+  void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
 
   // Push 는 트랜잭션 밖에서. 실패해도 인앱 메시지는 이미 남아 있다.
   if (settings.pushEnabled) {
@@ -240,7 +244,7 @@ async function pushToUser(userId: string, payload: {
   for (const s of subs) {
     const r = await push.send({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, payload)
     if (!r.ok) {
-      console.warn('[push] failed', { userId, gone: r.gone, error: r.error })
+      observe('push.send_failed', { userId, gone: r.gone, error: r.error })
       if (r.gone) {
         await db.update(pushSubscriptions).set({ failedAt: new Date() })
           .where(eq(pushSubscriptions.id, s.id))

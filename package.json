@@ -4,12 +4,16 @@
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "pnpm --filter @miro/web dev",
-    "build": "pnpm --filter @miro/web build",
+    "build": "pnpm --filter @miro/web build && pnpm --filter @miro/admin build",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",
     "db:generate": "pnpm --filter @miro/db generate",
-    "db:migrate": "pnpm --filter @miro/db migrate"
+    "db:migrate": "pnpm --filter @miro/db migrate",
+    "e2e": "playwright test",
+    "db:migrate:sql": "for f in packages/db/migrations/*.sql; do psql -q \"$DATABASE_URL\" -f \"$f\"; done",
+    "db:seed": "tsx packages/db/seed.ts",
+    "db:seed:admin": "tsx packages/db/seed-admin.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.49",

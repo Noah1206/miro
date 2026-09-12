@@ -601,3 +601,18 @@ export const adminActions = pgTable('admin_actions', {
   note: text('note').notNull().default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ reportIdx: index('admin_actions_report_idx').on(t.reportId, t.createdAt) }))
+
+
+/* ─────────────── Analytics (P12) ─────────────── */
+
+/**
+ * 제품 퍼널 이벤트. 관계 내부 수치는 절대 싣지 않는다 (sanitize 로 강제).
+ * 사용자 삭제 시 함께 지워진다.
+ */
+export const analyticsEvents = pgTable('analytics_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }),
+  event: text('event').notNull(),
+  props: jsonb('props').$type<Record<string, string | number | boolean | null>>().notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ eventIdx: index('analytics_event_time_idx').on(t.event, t.createdAt) }))

@@ -6,6 +6,7 @@ import {
   db, characters, worlds, roleplaySessions, worldStates, relationships,
 } from '@miro/db'
 import { requireUser } from '@/lib/auth'
+import { track } from '@/lib/analytics/track'
 
 /** 시작 관계 기본값. 캐릭터는 처음부터 사용자에게 호감을 보이지 않는다 (명세서 4.1). */
 const DEFAULT_START = {
@@ -82,6 +83,8 @@ export async function startRoleplay(slug: string): Promise<void> {
     return id
   })
 
+  void track(user.id, 'character_selected', { characterId: character.characterId, official: true })
+  void track(user.id, 'rp_started', { sessionId, characterId: character.characterId })
   // redirect 는 throw 로 동작하므로 반드시 트랜잭션 밖에서 호출한다.
   redirect(`/chat/${sessionId}`)
 }

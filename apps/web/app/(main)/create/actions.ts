@@ -8,6 +8,7 @@ import {
 import { CharacterDraft, generateCharacterDraft, resolveLLM } from '@miro/providers'
 import { requireUser } from '@/lib/auth'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
+import { track } from '@/lib/analytics/track'
 
 export type DraftState = {
   draft: CharacterDraft | null
@@ -112,5 +113,7 @@ export async function saveDraft(form: FormData): Promise<void> {
     return session!.id
   })
 
+  void track(user.id, 'character_created', { sessionId })
+  void track(user.id, 'rp_started', { sessionId, official: false })
   redirect(`/chat/${sessionId}`)
 }

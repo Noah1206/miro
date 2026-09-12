@@ -71,6 +71,13 @@
       "when": 1789221215391,
       "tag": "0009_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789221767948,
+      "tag": "0010_analytics",
+      "breakpoints": true
     }
   ]
 }

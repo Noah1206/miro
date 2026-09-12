@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3951'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function enterRoleplay(page: Page) {
   await page.goto(`${BASE}/login`)

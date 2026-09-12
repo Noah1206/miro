@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3945'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function createCharacter(page: import('@playwright/test').Page, name: string) {
   await page.goto(`${BASE}/login`)

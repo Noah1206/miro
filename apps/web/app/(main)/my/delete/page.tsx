@@ -2,11 +2,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { currentUser, requireUser, destroySession } from '@/lib/auth'
 import { deleteAccount, deletionImpact } from '@/lib/ops/account'
+import { track } from '@/lib/analytics/track'
 
 async function confirm() {
   'use server'
   const user = await requireUser()
   const r = await deleteAccount(user.id)
+  if (r === 'completed') await track(null, 'account_deleted', {})   // userId 는 남기지 않는다
   await destroySession()
   redirect(r === 'completed' ? '/deleted' : '/deleted?already=1')
 }

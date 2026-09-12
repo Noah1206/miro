@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3943'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 /**
  * Scenario 1 (부분) — Signup → 공식 캐릭터 → 역할극 시작.

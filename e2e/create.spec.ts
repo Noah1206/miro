@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3944'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function signup(page: import('@playwright/test').Page) {
   await page.goto(`${BASE}/login`)

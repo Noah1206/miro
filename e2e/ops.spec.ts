@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3956'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function signup(page: Page) {
   const email = `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`

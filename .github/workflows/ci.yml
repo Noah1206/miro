@@ -1,0 +1,41 @@
+name: ci
+on: { push: { branches: [main] }, pull_request: {} }
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_DB: miro_test, POSTGRES_USER: miro, POSTGRES_PASSWORD: miro }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U miro" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://miro:miro@localhost:5432/miro_test
+      CRON_SECRET: ci-cron-secret
+      MIRO_ENABLE_DEV_API: '1'
+      ADMIN_SEED_EMAIL: e2e-admin@miro.dev
+      ADMIN_SEED_PASSWORD: admin-pass-123
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Migrate + seed
+        run: |
+          sudo apt-get install -y -q postgresql-client
+          pnpm db:migrate:sql
+          pnpm db:seed
+          pnpm db:seed:admin
+      - run: pnpm typecheck
+      # 비선형 시뮬레이션 테스트(T1–T8)와 Usage/Reality/Admin 통합 테스트가 여기서 게이트된다.
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright-report, path: playwright-report, retention-days: 7 }

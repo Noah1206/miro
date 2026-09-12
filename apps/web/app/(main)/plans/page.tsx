@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { POLICY } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { effectivePlan } from '@/lib/usage/guard'
+import { track } from '@/lib/analytics/track'
 
 const FEATURES = [
   '자유 역할극 · 세계·관계·사건 엔진', '캐릭터 만들기 · Face Cast', 'AI 사진 · Live Scene',
@@ -15,6 +16,7 @@ export default async function PlansPage() {
   if (!user) redirect('/login')
   const plan = await effectivePlan(user.id)
   const { free, pro } = POLICY.usage.limits
+  void track(user.id, 'upgrade_viewed', { plan })
 
   return (
     <main style={{ minHeight: '100dvh', padding: '24px 24px 60px', maxWidth: 560, margin: '0 auto' }}>

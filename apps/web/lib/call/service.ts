@@ -4,6 +4,7 @@ import { db, callSessions, messages, realityContacts, roleplaySessions } from '@
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
 import { commit, reserve, rollback, UsageExceededError } from '@/lib/usage/guard'
+import { track } from '@/lib/analytics/track'
 
 export { UsageExceededError }
 
@@ -20,6 +21,7 @@ export async function startOutgoingCall(userId: string, sessionId: string, chann
     sessionId, channel, direction: 'outgoing', status: 'active',
     startedAt: new Date(), usageReservationId: r.reservationId,
   }).returning({ id: callSessions.id })
+  void track(userId, 'call_started', { sessionId, channel, direction: 'outgoing' })
   return call!.id
 }
 
@@ -49,6 +51,7 @@ export async function acceptCall(userId: string, callId: string) {
   await db.update(callSessions)
     .set({ status: 'active', startedAt: new Date(), usageReservationId: r.reservationId })
     .where(and(eq(callSessions.id, callId), eq(callSessions.status, 'ringing')))
+  void track(userId, 'call_started', { sessionId: call.sessionId, channel: call.channel, direction: 'incoming' })
   return call
 }
 
@@ -93,6 +96,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
   })
   if (call.usageReservationId) await commit(call.usageReservationId, minutes)
   await resolveCallMedia(call.channel).endSession(`mock:${call.channel}:${callId}`).catch(() => {})
+  void track(userId, 'call_completed', { sessionId: call.sessionId, channel: call.channel, minutes, result })
   return { durationSec, minutes }
 }
 

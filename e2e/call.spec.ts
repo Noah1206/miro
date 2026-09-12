@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3955'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 const CRON_SECRET = process.env.CRON_SECRET ?? 'e2e-cron-secret'
 function daytime() { const d = new Date(); d.setHours(14, 0, 0, 0); return d.toISOString() }
 

@@ -8,6 +8,7 @@ import { ChatComposer, StylePicker } from './composer'
 import { MediaBar } from './media-bar'
 import { IncomingCall } from '@/components/incoming-call'
 import { matureGateFor } from '@/lib/ops/safety'
+import { track } from '@/lib/analytics/track'
 
 export default async function ChatPage({
   params,
@@ -19,14 +20,16 @@ export default async function ChatPage({
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded) notFound()
 
-  const [history] = await Promise.all([
+  const [history, opened] = await Promise.all([
     db.select().from(messages)
       .where(eq(messages.sessionId, sessionId))
       .orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     // 재진입 — 확인하지 않은 선연락을 열람 처리한다 (재진입 이벤트).
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
-      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
+      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
+      .returning({ id: realityContacts.id }),
   ])
+  if (opened.length > 0) void track(user.id, 'reality_contact_opened', { sessionId, count: opened.length })
 
   const { snapshot: s } = loaded
   const activeEvent = s.activeEvents[0]

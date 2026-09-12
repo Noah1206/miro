@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const BASE = process.env.E2E_BASE ?? 'http://localhost:3953'
+const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 const CRON_SECRET = process.env.CRON_SECRET ?? 'e2e-cron-secret'
 
 /** 오늘 14:00 현지 — 세 캐릭터의 활동 시간 안, Quiet Hours 밖. 테스트가 실행 시각에 묶이지 않게 한다. */

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
-const WEB = process.env.E2E_BASE ?? 'http://localhost:3957'
-const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3157'
+const WEB = process.env.E2E_BASE ?? 'http://localhost:3000'
+const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
 
 async function userReports(page: Page) {
   await page.goto(`${WEB}/login`)
