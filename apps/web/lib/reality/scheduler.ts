@@ -3,12 +3,14 @@ import { POLICY } from '@miro/config'
 import { db } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
+import { purgeDeleted } from '@/lib/ops/archive'
 
 export type SchedulerRun = {
   claimed: number
   results: Record<string, number>
   errors: number
   calls: { missed: number; timedOut: number }
+  purged: number
 }
 
 /**
@@ -58,5 +60,6 @@ export async function runRealityScheduler(now = new Date()): Promise<SchedulerRu
   }
 
   const calls = await expireCalls(now)
-  return { claimed: claimed.length, results, errors, calls }
+  const purged = await purgeDeleted(now)   // 보존 기간이 지난 삭제 역할극 영구 삭제
+  return { claimed: claimed.length, results, errors, calls, purged }
 }

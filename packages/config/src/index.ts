@@ -114,6 +114,15 @@ export const POLICY = {
   adultVerification: {
     /** 명세서 7.1 예외: 인증 실패 시 재시도 대기 시간. */
     retryAfterHours: 24,
+    /** 성인 기준 연령 (만). 인증 Provider 확정 후 그쪽 판정을 따른다. */
+    minimumAge: DEV_DEFAULT(19),
+  },
+
+  retention: {
+    /** 삭제 확정된 역할극을 복구 가능하게 보관하는 기간(일). 법적 정책 확정 전 임시값. */
+    deletedSessionDays: DEV_DEFAULT(30),
+    /** 계정 삭제 후 운영 검토용 최소 보존(일). 명세서 12장: 세부 기간은 초기 범위 밖 → TBD. */
+    deletedAccountDays: DEV_DEFAULT(30),
   },
 
   context: {

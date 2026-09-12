@@ -57,6 +57,13 @@
       "when": 1789220226880,
       "tag": "0007_calls",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789220874701,
+      "tag": "0008_ops",
+      "breakpoints": true
     }
   ]
 }

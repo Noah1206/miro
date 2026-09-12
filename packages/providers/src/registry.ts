@@ -8,6 +8,8 @@ import { WebPushProvider } from './push/webpush'
 import type { PushProvider } from './push/types'
 import { MockCallMediaProvider } from './call/mock'
 import type { CallMediaProvider } from './call/types'
+import { MockAdultVerificationProvider } from './verify/mock'
+import type { AdultVerificationProvider } from './verify/types'
 
 /**
  * Provider 선택.
@@ -45,4 +47,9 @@ export function resolvePush(): PushProvider {
  */
 export function resolveCallMedia(kind: 'voice' | 'video'): CallMediaProvider {
   return new MockCallMediaProvider(kind)
+}
+
+/** 성인 인증 Provider. 확정되면 env 로 분기한다. */
+export function resolveAdultVerification(): AdultVerificationProvider {
+  return new MockAdultVerificationProvider()
 }

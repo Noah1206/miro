@@ -13,6 +13,8 @@ export const users = pgTable('users', {
 
   adultVerifiedAt: timestamp('adult_verified_at', { withTimezone: true }),
   adultVerifyFailedAt: timestamp('adult_verify_failed_at', { withTimezone: true }),
+  /** 성인 콘텐츠 사용 정책 동의. 인증과 별개로 요구된다 (명세서 정책 2). */
+  maturePolicyAgreedAt: timestamp('mature_policy_agreed_at', { withTimezone: true }),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   /** 계정 삭제 후 동일 계정 로그인 및 보관함 접근 차단 (명세서 12.1). */
@@ -56,6 +58,10 @@ export const userSettings = pgTable('user_settings', {
   quietHoursEnd: text('quiet_hours_end').notNull().default('08:00'),
   /** Quiet Hours / Active Hours 는 사용자 현지 시각 기준이다. */
   timeZone: text('time_zone').notNull().default('Asia/Seoul'),
+  /** 기기 권한은 명시적 동의 후에만 사용한다 (명세서 7.1). 동의 시각을 남긴다. */
+  cameraConsentAt: timestamp('camera_consent_at', { withTimezone: true }),
+  micConsentAt: timestamp('mic_consent_at', { withTimezone: true }),
+  imageUploadConsentAt: timestamp('image_upload_consent_at', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -516,3 +522,44 @@ export const callSessions = pgTable('call_sessions', {
     .on(t.sessionId).where(sql`${t.status} = 'ringing'`),
   sessionIdx: index('call_sessions_session_idx').on(t.sessionId, t.createdAt),
 }))
+
+
+/* ─────────────── Reporting & account (M3) ─────────────── */
+
+/**
+ * 콘텐츠 신고. 대상은 개별 메시지/사진/Live Scene 이다.
+ * (reporter, target) UNIQUE 로 중복 신고를 막고, 신고 당시 내용을 스냅샷으로 남겨
+ * 대상이 삭제돼도 검토 범위를 유지한다 (명세서 9.1 예외).
+ */
+export const reports = pgTable('reports', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  reporterId: uuid('reporter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  targetType: text('target_type', { enum: ['message', 'photo', 'live_scene'] }).notNull(),
+  targetId: uuid('target_id').notNull(),
+  reason: text('reason', { enum: ['safety', 'rights', 'harassment', 'inappropriate', 'other'] }).notNull(),
+  detail: text('detail').notNull().default(''),
+  characterId: uuid('character_id').references(() => characters.id, { onDelete: 'set null' }),
+  sessionId: uuid('session_id').references(() => roleplaySessions.id, { onDelete: 'set null' }),
+  targetSnapshot: jsonb('target_snapshot').$type<Record<string, unknown>>().notNull().default({}),
+
+  status: text('status', { enum: ['pending', 'reviewing', 'resolved', 'dismissed'] }).notNull().default('pending'),
+  /** 운영자 동시 처리 방지 (명세서 9.2 예외). */
+  version: integer('version').notNull().default(1),
+  reviewedBy: uuid('reviewed_by'),
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+  resolution: text('resolution'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  dupUniq: uniqueIndex('reports_reporter_target_uniq').on(t.reporterId, t.targetType, t.targetId),
+  statusIdx: index('reports_status_idx').on(t.status, t.createdAt),
+}))
+
+/** 계정 삭제 요청. 확정 전 영향 정보를 보여주고, 확정 후 접근을 차단한다 (명세서 12.1). */
+export const accountDeletions = pgTable('account_deletions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['requested', 'completed', 'failed'] }).notNull().default('requested'),
+  impact: jsonb('impact').$type<Record<string, unknown>>().notNull().default({}),
+  requestedAt: timestamp('requested_at', { withTimezone: true }).notNull().defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+})

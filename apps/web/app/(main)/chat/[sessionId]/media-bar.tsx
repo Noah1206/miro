@@ -7,7 +7,7 @@ import { placeCallAction, type PlaceCallState } from '@/app/(immersive)/call/[ca
 
 const initial: MediaState = { error: null, notice: null }
 
-export function MediaBar({ sessionId }: { sessionId: string }) {
+export function MediaBar({ sessionId, matureAllowed }: { sessionId: string; matureAllowed: boolean }) {
   const [state, action, pending] = useActionState(requestPhoto, initial)
   const [callState, callAction, calling] = useActionState(placeCallAction, { error: null } satisfies PlaceCallState)
 
@@ -30,11 +30,17 @@ export function MediaBar({ sessionId }: { sessionId: string }) {
       )}
 
       <div style={{ display: 'flex', gap: 6 }}>
-        <form action={action}>
+        <form action={action} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <input type="hidden" name="sessionId" value={sessionId} />
           <button type="submit" disabled={pending} style={pill}>
             {pending ? '사진 요청 중…' : '사진'}
           </button>
+          {/* 성인 표현 토글은 서버 판정을 통과한 사용자에게만 보인다. 서버가 다시 검사한다. */}
+          {matureAllowed && (
+            <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', gap: 4, alignItems: 'center' }}>
+              <input type="checkbox" name="mature" style={{ accentColor: 'var(--accent)' }} />성인
+            </label>
+          )}
         </form>
         <Link href={`/live/${sessionId}`} style={pill}>Live Scene</Link>
         {(['voice', 'video'] as const).map((ch) => (

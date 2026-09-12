@@ -7,6 +7,7 @@ import { requireUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
+import { matureGateFor } from '@/lib/ops/safety'
 
 export type MediaState = { error: string | null; notice: string | null }
 
@@ -26,6 +27,14 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
 
   const context = await contextFromWorld(sessionId)
   if (!context) return { error: '현재 상태를 불러오지 못했습니다.', notice: null }
+
+  // 성인 표현 요청은 서버에서 다시 판정한다. 차단 시 사유와 다음 행동을 명확히 안내한다 (명세서 7.1 표시).
+  if (form.get('mature') === 'on') {
+    const gate = await matureGateFor(user.id, loaded.characterId)
+    if (!gate.allowed) return { error: `성인 표현을 적용할 수 없습니다. ${gate.next}`, notice: null }
+    // 성숙한 비주얼은 별도 캐릭터가 아니라 현재 장면의 연장선이다 — 같은 외형·장소, 표현만 다르다.
+    context.outfit = 'mature'
+  }
 
   try {
     const media = await getOrGenerate({

@@ -51,6 +51,7 @@ export default async function LiveScene({
         </Link>
         <p style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: 0 }}>
           {s.world.currentLocation} · {s.world.currentTime}
+          {s.world.currentSceneId && <> · <Link href={`/report?type=live_scene&id=${s.world.currentSceneId}`} style={{ textDecoration: 'underline' }}>신고</Link></>}
         </p>
       </header>
 

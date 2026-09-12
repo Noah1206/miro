@@ -7,6 +7,7 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { ChatComposer, StylePicker } from './composer'
 import { MediaBar } from './media-bar'
 import { IncomingCall } from '@/components/incoming-call'
+import { matureGateFor } from '@/lib/ops/safety'
 
 export default async function ChatPage({
   params,
@@ -29,6 +30,7 @@ export default async function ChatPage({
 
   const { snapshot: s } = loaded
   const activeEvent = s.activeEvents[0]
+  const mature = await matureGateFor(user.id, loaded.characterId)
 
   return (
     <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
@@ -67,12 +69,12 @@ export default async function ChatPage({
         {activeEvent && <EventCard type={activeEvent.type} state={activeEvent.continuationState} />}
 
         {history.map((m) => (
-          <Bubble key={m.id} role={m.role} kind={m.kind} content={m.content}
+          <Bubble key={m.id} id={m.id} role={m.role} kind={m.kind} content={m.content}
                   blocks={m.blocks as Array<Record<string, unknown>>} />
         ))}
       </div>
 
-      <MediaBar sessionId={sessionId} />
+      <MediaBar sessionId={sessionId} matureAllowed={mature.allowed} />
       <ChatComposer sessionId={sessionId} />
     </main>
   )
@@ -116,8 +118,16 @@ function EventCard({ type, state }: { type: string; state: Record<string, unknow
   )
 }
 
-function Bubble({ role, kind, content, blocks }: {
-  role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>
+function ReportLink({ id, kind }: { id: string; kind: string }) {
+  // n30 — 개별 콘텐츠 단위 신고 진입점. 사용자 자신의 메시지는 신고 대상이 아니다.
+  return (
+    <Link href={`/report?type=${kind === 'photo' ? 'photo' : 'message'}&id=${id}`} aria-label="신고"
+      style={{ fontSize: 10.5, color: 'var(--text-secondary)', opacity: .7, alignSelf: 'flex-start', marginTop: 2 }}>신고</Link>
+  )
+}
+
+function Bubble({ id, role, kind, content, blocks }: {
+  id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>
 }) {
   const mine = role === 'user'
   const reality = blocks.find((b) => b.type === 'reality') as
@@ -135,6 +145,7 @@ function Bubble({ role, kind, content, blocks }: {
         {reality?.caption && (
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{reality.caption}</p>
         )}
+        <ReportLink id={id} kind="photo" />
       </div>
     )
   }
@@ -159,12 +170,13 @@ function Bubble({ role, kind, content, blocks }: {
         }}>
           {content}
         </div>
+        <ReportLink id={id} kind="message" />
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
       <div style={{
         maxWidth: '82%', padding: '11px 14px', borderRadius: 14,
         background: mine ? 'var(--accent)' : 'var(--surface)',
@@ -173,6 +185,7 @@ function Bubble({ role, kind, content, blocks }: {
       }}>
         {content}
       </div>
+      {!mine && <ReportLink id={id} kind="message" />}
     </div>
   )
 }
