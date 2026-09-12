@@ -423,7 +423,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-25 | 구매 시 **현재** 사용량 창의 한도를 Pro 로 올린다 | 명세서 10.2 "결제 성공 후 Pro 사용량 적용". 한도에 막혀 결제한 사용자가 다음 창까지 기다리지 않게 |
 | E-26 | webhook 중복 판정은 트랜잭션 안에서 select-먼저 | tx 안의 UNIQUE 위반은 tx 전체를 abort 하므로 catch 로 복구 불가. UNIQUE 인덱스는 동시 레이스의 안전망 |
 | E-27 | 디자인 SoT = `docs/DESIGN.md`, 문장 SoT = `docs/COPY.md` + `lib/copy.ts` | 토큰은 `globals.css` `:root` 한 곳. 페이지는 inline 색값을 쓰지 않는다 |
-| E-28 | Motion = `lib/motion/tokens.ts` 하나의 언어 | duration 120/220/360/520, ease standard/enter/exit, spring quick/default/gentle(전부 과감쇠). Bounce 없음. `MotionConfig reducedMotion="user"` + CSS media 로 이중 보장 |
+| E-28 | Motion = `lib/motion/tokens.ts` 하나의 언어 | duration 160/320/480/720 (등장 tween.enter = 480ms, stagger 60/90/140ms — 사용자 피드백 "너무 빠르다"로 한 단계 늦춤; 눌림 90ms 는 그대로), ease standard/enter/exit, spring quick/default/gentle(전부 과감쇠). Bounce 없음. `MotionConfig reducedMotion="user"` + CSS media 로 이중 보장 |
 | E-29 | 페이지 전환 = View Transition API + `html[data-nav]` 방향, 공유 요소 = `view-transition-name` | 라이브러리 없이 표준. 미지원/감소 모션이면 즉시 이동. `?now=`처럼 dev 전용 훅 없음 |
 | E-30 | 캐러셀은 CSS scroll-snap, Motion 은 인디케이터(layoutId)만 | 스냅·관성·러버밴드는 플랫폼이 더 잘한다. 키보드 Tab 으로 카드 간 이동 가능 |
 | E-31 | 접근성: `--color-text-tertiary` 를 #6E6E75 → #8A8A92 (3.9:1 → 5.8:1) | DESIGN.md 값에서 유일하게 벗어난 토큰. 원값은 `--color-text-quaternary` 로 장식 전용. 폼 경계는 `--color-border-input` #62626A (3.2:1) |
@@ -438,7 +438,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-40 | OAuth 는 SDK 없이 Authorization Code + state 쿠키 + PKCE(Google·Kakao) | 제공자 차이는 endpoint 와 프로필 파싱뿐이라 `OAuth2Provider` 하나로 충분하다. 관리자 콘솔은 별도 이메일·비밀번호 로그인을 유지한다 |
 | E-41 | 서체는 Toss Product Sans, 폴백 Pretendard. 세리프 display 역할 제거 | 사용자 결정. `--font-display` 는 `--font-body` 를 가리키고 `.t-name`/`.t-quote` 는 자간으로만 구분한다 |
 | E-42 | 로고는 원본 PNG(`public/logo-mark.png`) 를 `mix-blend-mode: screen` 으로 | 검정 판이 어두운 배경에 녹는다. Launch sequence 는 두 판 사이 사선을 `clip-path` 로 잘라 재현 |
-| E-43 | 등장은 `Page` 가 variant 트리의 뿌리 (`hidden`→`show`, staggerChildren 45ms). 공유 요소(PageHeader 줄·Card·Notice·Field·ToggleRow·Checkbox·Radio·Button·ButtonLink)는 `fadeUp` variants 만 들고 순서를 물려받는다 | 페이지마다 Reveal 을 끼우지 않아도 모든 화면·나중에 마운트되는 요소까지 같은 등장. `Pressable` 의 눌림은 MotionValue 로 옮겨 `animate` prop 을 비웠다 (variants 상속 조건). 컴포넌트를 거치지 않은 날것의 h1/h2/h3/p/label 은 CSS `text-in` 이 같은 부모 안에서 nth-child 순서로 받친다 (fill backwards — 끝나면 Motion 이 다시 인라인을 쥔다). Reduce Motion 이면 뿌리의 `initial=false` 가 전파되어 바로 있다 |
+| E-43 | 등장은 `Page` 가 variant 트리의 뿌리 (`hidden`→`show`, staggerChildren 90ms, 등장 480ms). 공유 요소(PageHeader 줄·Card·Notice·Field·ToggleRow·Checkbox·Radio·Button·ButtonLink)는 `fadeUp` variants 만 들고 순서를 물려받는다 | 페이지마다 Reveal 을 끼우지 않아도 모든 화면·나중에 마운트되는 요소까지 같은 등장. `Pressable` 의 눌림은 MotionValue 로 옮겨 `animate` prop 을 비웠다 (variants 상속 조건). 컴포넌트를 거치지 않은 날것의 h1/h2/h3/p/label 은 CSS `text-in` 이 같은 부모 안에서 nth-child 순서로 받친다 (fill backwards — 끝나면 Motion 이 다시 인라인을 쥔다). Reduce Motion 이면 뿌리의 `initial=false` 가 전파되어 바로 있다 |
 
 ---
 

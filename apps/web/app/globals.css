@@ -36,7 +36,7 @@
   --space-6: 32px; --space-7: 48px; --space-8: 64px; --space-9: 96px;
 
   /* motion — flow & tension, not bounce */
-  --motion-fast: 120ms; --motion-normal: 220ms; --motion-slow: 360ms; --motion-scene: 520ms;
+  --motion-fast: 160ms; --motion-normal: 320ms; --motion-slow: 480ms; --motion-scene: 720ms;
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
@@ -96,10 +96,10 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 /* Motion 이 opacity 를 인라인으로 쥐고 있으므로 비활성 흐림은 규칙으로 이긴다 */
 .btn:disabled { opacity: 0.45 !important; }
 
-/* text entrance — 컴포넌트를 거치지 않은 날것의 문장도 나타날 때 움직인다. 같은 부모 안에서 순서대로 (최대 10번째까지 45ms 간격). */
-@keyframes text-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* text entrance — 컴포넌트를 거치지 않은 날것의 문장도 나타날 때 움직인다. 같은 부모 안에서 순서대로 (최대 10번째까지 90ms 간격). */
+@keyframes text-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: no-preference) {
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption) { animation: text-in var(--motion-normal) var(--ease-enter) backwards; animation-delay: calc(var(--text-i, 0) * 45ms); }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption) { animation: text-in var(--motion-slow) var(--ease-enter) backwards; animation-delay: calc(var(--text-i, 0) * 90ms); }
   .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(1) { --text-i: 0; }
   .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(2) { --text-i: 1; }
   .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(3) { --text-i: 2; }

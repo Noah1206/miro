@@ -7,14 +7,14 @@ import { TransitionLink } from './transition-link'
 /**
  * 직접 진입(새로고침·딥링크)에도 같은 등장: fade + y 12. View Transition 이 담당하는 링크 이동과 결이 같다.
  * variant 트리의 뿌리 — 안쪽의 Card·Notice·Field·PageHeader 줄은 `fadeUp` variants 만 들고 있으면
- * 여기서 45ms 간격으로 차례로 나타난다. 나중에 마운트되는 것(오류 안내 등)도 같은 등장을 탄다.
+ * 여기서 90ms 간격으로 차례로 나타난다. 나중에 마운트되는 것(오류 안내 등)도 같은 등장을 탄다.
  * Reduce Motion 이면 initial=false 가 하위 전체에 전파되어 바로 있다.
  */
 export function Page({ children, immersive, className, style }: { children: ReactNode; immersive?: boolean; className?: string; style?: React.CSSProperties }) {
   const reduce = useReducedMotion()
   return (
     <motion.main id="main" tabIndex={-1} initial={reduce ? false : 'hidden'} animate="show"
-      variants={{ hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { ...tween.enter, staggerChildren: stagger.normal } } }}
+      variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { ...tween.enter, staggerChildren: stagger.normal } } }}
       className={`page ${immersive ? 'page--immersive' : ''} ${className ?? ''}`} style={{ outline: 'none', ...style }}>
       {children}
     </motion.main>
