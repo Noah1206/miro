@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod'
+import type { ZodType, ZodTypeDef } from 'zod'
 import type { LLMProvider, ProviderInfo } from '../types'
 
 /**
@@ -17,12 +17,12 @@ export class MockLLMProvider implements LLMProvider {
 
   constructor(private readonly build: (prompt: string) => unknown) {}
 
-  async generateStructured<T>(opts: {
-    schema: ZodType<T>
+  async generateStructured<Out, In = Out>(opts: {
+    schema: ZodType<Out, ZodTypeDef, In>
     system: string
     prompt: string
     maxRetries?: number
-  }): Promise<T> {
+  }): Promise<Out> {
     const draft = this.build(opts.prompt)
     const parsed = opts.schema.safeParse(draft)
     if (!parsed.success) {

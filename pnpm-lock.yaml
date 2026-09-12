@@ -35,6 +35,9 @@ importers:
       '@miro/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@miro/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@miro/providers':
         specifier: workspace:*
         version: link:../../packages/providers
@@ -84,6 +87,21 @@ importers:
       '@miro/config':
         specifier: workspace:*
         version: link:../config
+
+  packages/engine:
+    dependencies:
+      '@miro/config':
+        specifier: workspace:*
+        version: link:../config
+      '@miro/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@miro/providers':
+        specifier: workspace:*
+        version: link:../providers
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
 
   packages/providers:
     dependencies:

@@ -17,8 +17,8 @@ export type CharacterCore = {
 
   personality: {
     personality: string
-    values: string
-    speechStyle: string
+    values: string | null
+    speechStyle: string | null
     userNickname: string | null
     hobbies: string[]
     dislikes: string[]

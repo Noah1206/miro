@@ -264,3 +264,82 @@ export const messages = pgTable('messages', {
   // 한 턴에 캐릭터/NPC/서술 메시지가 여러 개 나올 수 있으므로 unique 제약을 두지 않는다.
   sessionIdx: index('messages_session_idx').on(t.sessionId, t.turnIndex),
 }))
+
+
+/* ─────────────── Simulation state (M2) ─────────────── */
+
+export const events = pgTable('events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull()
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+
+  type: text('type').notNull(),
+  status: text('status', {
+    enum: ['created', 'active', 'escalated', 'resolved', 'expired', 'cancelled'],
+  }).notNull().default('active'),
+
+  context: jsonb('context').$type<Record<string, unknown>>().notNull().default({}),
+  participantNpcIds: jsonb('participant_npc_ids').$type<string[]>().notNull().default([]),
+  /** 사건이 남긴 지속 상태. 다음 턴에 이유 없이 사라지지 않게 하는 근거. */
+  continuationState: jsonb('continuation_state').$type<Record<string, unknown>>().notNull().default({}),
+  consequences: jsonb('consequences').$type<string[]>().notNull().default([]),
+
+  /** 이 턴 이전에는 동일 유형이 재발생할 수 없다. */
+  cooldownUntilTurn: integer('cooldown_until_turn').notNull().default(0),
+  createdAtTurn: integer('created_at_turn').notNull(),
+  resolvedAtTurn: integer('resolved_at_turn'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  sessionIdx: index('events_session_status_idx').on(t.sessionId, t.status),
+}))
+
+export const npcs = pgTable('npcs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull()
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  role: text('role').notNull(),
+  /** NPC Knowledge Boundary — 알 수 없는 정보로 행동하지 못하게 한다. */
+  knows: jsonb('knows').$type<string[]>().notNull().default([]),
+  relationshipToCharacter: text('relationship_to_character').notNull().default(''),
+  relationshipToUser: text('relationship_to_user').notNull().default(''),
+  isActive: boolean('is_active').notNull().default(true),
+}, (t) => ({ sessionIdx: index('npcs_session_idx').on(t.sessionId, t.isActive) }))
+
+/**
+ * 장기 기억. sessionId 로 격리되며 다른 캐릭터/세션에 노출되지 않는다.
+ * 대화 원문이 아니라 요약된 중요 정보만 담는다.
+ */
+export const memories = pgTable('memories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull()
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  characterId: uuid('character_id').notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+
+  type: text('type').notNull(),
+  content: text('content').notNull(),
+  importance: integer('importance').notNull(),     // 0-100 (0-1 을 정수로 저장)
+  persistence: integer('persistence').notNull(),
+  confidence: integer('confidence').notNull(),
+  sourceMessageId: uuid('source_message_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  sessionIdx: index('memories_session_idx').on(t.sessionId, t.importance),
+}))
+
+export const scenes = pgTable('scenes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull()
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  location: text('location').notNull(),
+  time: text('time').notNull(),
+  mood: text('mood').notNull().default(''),
+  weather: text('weather').notNull().default(''),
+  /** 동일 조건이면 같은 키 → 기존 asset 재사용 → 새 생성 usage 미소비. */
+  sceneKey: text('scene_key').notNull(),
+  backgroundAssetId: uuid('background_asset_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  keyIdx: index('scenes_session_key_idx').on(t.sessionId, t.sceneKey),
+}))

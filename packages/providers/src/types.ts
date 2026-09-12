@@ -1,4 +1,4 @@
-import type { ZodType } from 'zod'
+import type { ZodType, ZodTypeDef } from 'zod'
 
 /** Provider 가 미구성일 때 실제 AI 처럼 가장하지 않기 위한 표식. */
 export type ProviderMode = 'live' | 'mock'
@@ -16,13 +16,14 @@ export interface LLMProvider {
    * 구조화 생성. 자유 문자열이 아니라 검증된 스키마를 반환한다.
    * 한 User Message 에 대해 여러 LLM 을 연속 호출하지 않는다 — 1회 호출로 끝낸다.
    */
-  generateStructured<T>(opts: {
-    schema: ZodType<T>
+  generateStructured<Out, In = Out>(opts: {
+    /** 파싱 결과(Out)를 반환한다. .default() 가 있으면 In 과 Out 이 다르다. */
+    schema: ZodType<Out, ZodTypeDef, In>
     system: string
     prompt: string
     /** 스키마 위반 시 재시도 횟수. 무한 재시도 금지. */
     maxRetries?: number
-  }): Promise<T>
+  }): Promise<Out>
 }
 
 export type ImageSpec = {

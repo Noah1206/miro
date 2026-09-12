@@ -1,0 +1,102 @@
+import { z } from 'zod'
+
+/**
+ * 한 번의 Structured Generation 으로 받는 전체 제안.
+ *
+ * 관계/사건/세계/기억/NPC 를 각각 별도 LLM 호출로 나누지 않는다 — 1회로 끝낸다.
+ * 이것은 제안일 뿐이며, Validator 를 통과하기 전에는 어떤 상태도 바뀌지 않는다.
+ */
+
+const RP_BLOCK_TYPES = ['dialogue', 'action', 'narrative', 'npc', 'world'] as const
+
+export const RpBlock = z.object({
+  type: z.enum(RP_BLOCK_TYPES),
+  /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. */
+  speaker: z.string().max(40).nullable(),
+  text: z.string().min(1).max(2000),
+})
+
+/** 관계는 절대값이 아니라 delta 로만 제안할 수 있다 — AI 가 상태를 덮어쓰지 못하게. */
+const delta = z.number().int().min(-100).max(100)
+
+export const RelationshipDeltaProposal = z.object({
+  trust: delta.optional(),
+  attraction: delta.optional(),
+  jealousy: delta.optional(),
+  protectiveness: delta.optional(),
+  emotionalDistance: delta.optional(),
+  attachment: delta.optional(),
+  stage: z.enum([
+    'stranger', 'acquaintance', 'professional', 'friend', 'rivalry',
+    'distrust', 'ambiguous', 'conflict', 'flirting', 'dating', 'lover',
+  ]).optional(),
+  /** 왜 이 변화가 일어났는지. 검증과 로깅에 사용한다. */
+  reason: z.string().max(200).optional(),
+})
+
+export const WorldDeltaProposal = z.object({
+  currentLocation: z.string().max(80).optional(),
+  currentTime: z.string().max(40).optional(),
+  worldStatus: z.string().max(200).optional(),
+})
+
+export const SceneDeltaProposal = z.object({
+  location: z.string().max(80).optional(),
+  time: z.string().max(40).optional(),
+  mood: z.string().max(40).optional(),
+  weather: z.string().max(40).optional(),
+})
+
+export const MemoryCandidateProposal = z.object({
+  type: z.enum(['user_fact', 'promise', 'shared_event', 'relationship_change', 'preference', 'conflict']),
+  content: z.string().min(2).max(300),
+  importance: z.number().min(0).max(1),
+  persistence: z.number().min(0).max(1),
+  confidence: z.number().min(0).max(1),
+})
+
+export const EventCandidateProposal = z.object({
+  type: z.enum([
+    'conflict', 'jealousy', 'business_trip', 'crisis', 'rival', 'scandal',
+    'injury', 'npc_arrival', 'location_change', 'work', 'promise',
+    'misunderstanding', 'reconciliation',
+  ]),
+  summary: z.string().min(2).max(300),
+  /** 현재 서사 맥락 적합도 */
+  relevance: z.number().min(0).max(1),
+  /** 감정적 압력 */
+  salience: z.number().min(0).max(1),
+  participantNpcIds: z.array(z.string()).max(3).default([]),
+})
+
+export const NpcActionProposal = z.object({
+  npcId: z.string(),
+  action: z.string().min(1).max(300),
+  /** NPC 가 실제로 아는 정보만 근거가 될 수 있다. Validator 가 대조한다. */
+  basedOn: z.array(z.string().max(80)).max(5).default([]),
+})
+
+export const RealityIntentProposal = z.object({
+  channel: z.enum([
+    'message', 'push', 'photo', 'voice_message',
+    'status', 'missed_call', 'voice_call', 'video_call',
+  ]),
+  reason: z.string().max(120),
+  urgency: z.number().min(0).max(1),
+})
+
+export const SimulationProposal = z.object({
+  rp: z.object({
+    blocks: z.array(RpBlock).min(1).max(12),
+  }),
+  worldDelta: WorldDeltaProposal.nullable().default(null),
+  relationshipDelta: RelationshipDeltaProposal.nullable().default(null),
+  sceneDelta: SceneDeltaProposal.nullable().default(null),
+  memoryCandidates: z.array(MemoryCandidateProposal).max(3).default([]),
+  eventCandidates: z.array(EventCandidateProposal).max(2).default([]),
+  npcActions: z.array(NpcActionProposal).max(3).default([]),
+  realityIntent: RealityIntentProposal.nullable().default(null),
+})
+
+export type SimulationProposal = z.infer<typeof SimulationProposal>
+export type RpBlock = z.infer<typeof RpBlock>
