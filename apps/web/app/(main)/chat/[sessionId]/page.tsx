@@ -45,7 +45,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   }))
 
   return (
-    <main className="chat-layout">
+    <main id="main" tabIndex={-1} className="chat-layout" style={{ outline: 'none' }}>
       <IncomingCall userId={user.id} characterName={loaded.characterName} />
       <section className="chat-main">
         <header className="chat-header" style={{ position: 'sticky', top: 0, zIndex: 15, padding: '10px var(--space-4)', background: 'rgba(10,10,11,0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--color-border)' }}>

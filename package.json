@@ -16,6 +16,7 @@
     "db:seed:admin": "tsx packages/db/seed-admin.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10",
     "@playwright/test": "1.49",
     "@types/node": "^22.10.1",
     "tsx": "^4.23.13",

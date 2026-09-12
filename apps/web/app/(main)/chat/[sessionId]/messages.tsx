@@ -61,7 +61,7 @@ function Reportable({ id, kind, children }: { id: string; kind: 'message' | 'pho
   return (
     <div {...handlers} className="stack" style={{ gap: 6, position: 'relative', touchAction: 'pan-y' }}>
       {children}
-      <TransitionLink href={href} aria-label="신고" className="t-micro" style={{ alignSelf: 'flex-start', textTransform: 'none', letterSpacing: 0, minHeight: 24, display: 'inline-flex', alignItems: 'center', padding: '0 6px', marginLeft: -6, opacity: 0.85 }}>신고</TransitionLink>
+      <TransitionLink href={href} aria-label="신고" className="t-micro" style={{ alignSelf: 'flex-start', textTransform: 'none', letterSpacing: 0, minHeight: 24, display: 'inline-flex', alignItems: 'center', padding: '0 6px', marginLeft: -6 }}>신고</TransitionLink>
       <Popover open={menu} onClose={() => setMenu(false)}>
         <MenuItem type="button" onClick={() => { setMenu(false); window.location.href = href }}>이 내용 신고</MenuItem>
       </Popover>

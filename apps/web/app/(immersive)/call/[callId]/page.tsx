@@ -45,7 +45,7 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
     .reverse()
 
   return (
-    <main data-call-channel={call.channel} className="page page--immersive" style={{
+    <main id="main" tabIndex={-1} data-call-channel={call.channel} className="page page--immersive" style={{ outline: 'none',
       minHeight: '100dvh', display: 'flex', flexDirection: 'column', position: 'relative', background: 'var(--color-bg-deep)',
     }}>
       {face && <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url(${face})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}

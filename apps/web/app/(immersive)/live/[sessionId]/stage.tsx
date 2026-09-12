@@ -15,7 +15,7 @@ export function LiveStage({ sessionId, characterName, background, header, lines 
   const suggestions = ['가만히 지켜본다.', `"${characterName}…"`, '한 걸음 다가간다.']
 
   return (
-    <main className="page page--immersive" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', position: 'relative', background: 'var(--color-bg-deep)' }}>
+    <main id="main" tabIndex={-1} className="page page--immersive" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', position: 'relative', background: 'var(--color-bg-deep)', outline: 'none' }}>
       {background && (
         <motion.div aria-hidden initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.52, ease: [0.16, 1, 0.3, 1] }}
           style={{ position: 'absolute', inset: 0, backgroundImage: `url(${background})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />

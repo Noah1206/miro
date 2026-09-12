@@ -29,7 +29,7 @@ export function HangUp({ callId }: { callId: string }) {
   return (
     <form action={hangUp.bind(null, callId)} style={{ padding: '8px 16px 28px', textAlign: 'center' }}>
       <p data-call-timer className="t-micro" aria-label="통화 시간" style={{ marginBottom: 14, fontVariantNumeric: 'tabular-nums' }}>{String(Math.floor(sec / 60)).padStart(2, '0')}:{String(sec % 60).padStart(2, '0')}</p>
-      <Pressable type="submit" aria-label="종료" style={{ width: 68, height: 68, borderRadius: 999, border: 0, background: '#E65A5A', color: '#fff', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>종료</Pressable>
+      <Pressable type="submit" aria-label="종료" style={{ width: 68, height: 68, borderRadius: 999, border: 0, background: 'var(--color-danger-strong)', color: '#fff', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>종료</Pressable>
     </form>
   )
 }

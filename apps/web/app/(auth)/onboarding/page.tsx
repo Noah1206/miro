@@ -14,7 +14,7 @@ const LINES = [
 export default function Onboarding() {
   const [opened, setOpened] = useState(false)
   return (
-    <main className="page page--immersive" style={{ minHeight: '100dvh', background: 'var(--color-bg-deep)', display: 'flex', flexDirection: 'column' }}>
+    <main id="main" tabIndex={-1} className="page page--immersive" style={{ minHeight: '100dvh', background: 'var(--color-bg-deep)', display: 'flex', flexDirection: 'column', outline: 'none' }}>
       <h1 className="sr-only">MIRO — 한 사람의 세계 안으로</h1>
       <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}>
         <LogoIntro onDone={() => setOpened(true)} />

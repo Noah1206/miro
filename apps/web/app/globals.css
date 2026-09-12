@@ -14,6 +14,8 @@
   --color-border-input: #62626A;
   --color-white: #FFFFFF; --color-black: #000000;
   --color-relationship: #D85C79; --color-danger: #E65A5A; --color-success: #5CBF88;
+  /* 파괴적 버튼의 채움색. 흰 글자와 5.8:1 (--color-danger 위 흰 글자는 3.5:1 라 텍스트로만 쓴다) */
+  --color-danger-strong: #B23A3A;
 
   /* type */
   --font-body: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;

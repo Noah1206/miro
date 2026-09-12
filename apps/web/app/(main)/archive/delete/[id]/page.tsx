@@ -26,7 +26,7 @@ export default async function DeleteConfirm({ params }: { params: Promise<{ id: 
       </ul>
       <form action={confirmDelete.bind(null, id)} style={{ display: 'flex', gap: 10 }}>
         <ButtonLink href="/archive" direction="back" variant="secondary" style={{ flex: 1 }}>취소</ButtonLink>
-        <Button type="submit" variant="danger" full style={{ flex: 1, background: 'var(--color-danger)', color: '#fff', borderColor: 'var(--color-danger)' }}>삭제 확정</Button>
+        <Button type="submit" variant="destructive" full style={{ flex: 1 }}>삭제 확정</Button>
       </form>
     </Page>
   )

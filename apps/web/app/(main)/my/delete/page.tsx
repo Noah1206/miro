@@ -26,7 +26,7 @@ export default async function DeleteAccountPage() {
       </ul>
       <form action={confirm} style={{ display: 'flex', gap: 10 }}>
         <ButtonLink href="/my" direction="back" variant="secondary" style={{ flex: 1 }}>취소</ButtonLink>
-        <Button type="submit" full style={{ flex: 1, background: 'var(--color-danger)', color: '#fff', borderColor: 'var(--color-danger)' }}>계정 삭제 확정</Button>
+        <Button type="submit" variant="destructive" full style={{ flex: 1 }}>계정 삭제 확정</Button>
       </form>
     </Page>
   )

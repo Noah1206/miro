@@ -27,7 +27,7 @@ export function IncomingCallScreen({ channel, name, reason, acceptAction, declin
       <motion.h2 variants={at(0.4)} className="t-display t-name">{name}</motion.h2>
       {reason && <motion.p variants={at(0.5)} className="t-caption t-quote">{reason}</motion.p>}
       <motion.div variants={at(0.65)} style={{ display: 'flex', gap: 28, marginTop: 28 }}>
-        <form action={declineAction}><Pressable type="submit" style={round('#E65A5A', '#fff')}>거절</Pressable></form>
+        <form action={declineAction}><Pressable type="submit" style={round('var(--color-danger-strong)', '#fff')}>거절</Pressable></form>
         <form action={acceptAction}><Pressable ref={accept} type="submit" style={round('#FFFFFF', '#000')}>{video ? '영상으로 받기' : '받기'}</Pressable></form>
       </motion.div>
     </motion.div>

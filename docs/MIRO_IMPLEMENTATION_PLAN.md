@@ -432,6 +432,8 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-34 | 스케줄러의 `?now=` 는 판단 시각만 바꾼다; 만료·정리는 벽시계 | 자정 이후 고정 시각(14:00)이 생성 시각보다 과거가 되어 방금 만든 통화가 부재중 처리됐다 |
 | E-35 | `chat/[sessionId]` 에는 `loading.tsx` 를 두지 않는다 | 스트리밍 셸이 200 을 먼저 보내 `notFound()` 의 404 가 사라진다. 삭제된 인연은 진짜 404 여야 한다 |
 | E-36 | E2E 는 모바일 뷰포트(390×844) + reducedMotion | 모바일 우선 제품. 데스크톱 컨텍스트 패널 때문에 같은 텍스트가 두 곳에 보이면 `.first()` |
+| E-37 | `e2e/a11y.spec.ts` — axe-core(WCAG 2.x A/AA + best-practice) 가 13개 화면을 훑고 serious/critical 0 을 게이트 | 등장 애니메이션은 Reduce Motion 에서 페이드조차 하지 않도록 바꿈(Motion 기본은 opacity 유지) — 사용자에게도, 측정에도 맞다 |
+| E-38 | `--color-danger-strong` #B23A3A 는 파괴적 버튼의 채움 전용 | `--color-danger` 위 흰 글자는 3.5:1 이라 텍스트/아웃라인에만 쓴다 |
 
 ---
 

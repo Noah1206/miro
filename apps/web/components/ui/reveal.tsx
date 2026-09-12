@@ -8,8 +8,10 @@ export function Reveal({ children, delay = 0, inView, as = 'div', style, classNa
   children: ReactNode; delay?: number; inView?: boolean; as?: 'div' | 'section' | 'li' | 'p' | 'h1' | 'h2'; style?: React.CSSProperties; className?: string
 }) {
   const Tag = motion[as]
-  const props = inView
-    ? { initial: 'hidden', whileInView: 'show', viewport: { once: true, margin: '-10% 0px' } }
+  const reduce = useReducedMotion()
+  // Reduce Motion 이면 페이드조차 하지 않는다 — 내용이 바로 있어야 한다.
+  const props = reduce ? { initial: false as const, animate: 'show' }
+    : inView ? { initial: 'hidden', whileInView: 'show', viewport: { once: true, margin: '-10% 0px' } }
     : { initial: 'hidden', animate: 'show' }
   return <Tag {...props} variants={{ ...fadeUp, show: { ...fadeUp.show, transition: { ...tween.enter, delay } } }} style={style} className={className}>{children}</Tag>
 }
@@ -19,8 +21,9 @@ export function Stagger({ children, gap = stag.normal, delay = 0, as = 'div', st
   children: ReactNode; gap?: number; delay?: number; as?: 'div' | 'ul' | 'ol' | 'section'; style?: React.CSSProperties; className?: string; inView?: boolean
 }) {
   const Tag = motion[as]
-  const props = inView
-    ? { initial: 'hidden', whileInView: 'show', viewport: { once: true, margin: '-10% 0px' } }
+  const reduce = useReducedMotion()
+  const props = reduce ? { initial: false as const, animate: 'show' }
+    : inView ? { initial: 'hidden', whileInView: 'show', viewport: { once: true, margin: '-10% 0px' } }
     : { initial: 'hidden', animate: 'show' }
   return <Tag {...props} variants={staggerParent(gap, delay)} style={style} className={className}>{children}</Tag>
 }

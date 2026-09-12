@@ -1,5 +1,5 @@
 'use client'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { fadeUp } from '@/lib/motion/tokens'
 
 /**
@@ -41,5 +41,6 @@ export function SceneMeta({ children }: { children: React.ReactNode }) {
 
 /** 목록에 새 줄이 붙을 때. 마운트 시 fade+y, layout 으로 위쪽이 밀린다. */
 export function Line({ children, ...rest }: { children: React.ReactNode } & Record<string, unknown>) {
-  return <motion.div layout="position" variants={fadeUp} initial="hidden" animate="show" {...rest}>{children}</motion.div>
+  const reduce = useReducedMotion()
+  return <motion.div layout="position" variants={fadeUp} initial={reduce ? false : 'hidden'} animate="show" {...rest}>{children}</motion.div>
 }
