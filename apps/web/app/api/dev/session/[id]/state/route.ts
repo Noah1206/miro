@@ -12,6 +12,7 @@ const Body = z.object({
     emotionalDistance: z.number().int().min(0).max(100).optional(),
   }).optional(),
   activeEvent: z.object({ type: z.string().max(40), summary: z.string().max(200) }).optional(),
+  pendingIntent: z.object({ channel: z.string(), reason: z.string(), urgency: z.number().min(0).max(1) }).optional(),
 })
 
 /** 개발/E2E 보조. 본인 세션의 시각과 관계 상태를 직접 조정한다. 운영에서는 닫혀 있다. */
@@ -38,6 +39,10 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (parsed.data.relationship) {
     await db.update(relationships).set(parsed.data.relationship)
       .where(eq(relationships.sessionId, id))
+  }
+  if (parsed.data.pendingIntent) {
+    await db.update(roleplaySessions).set({ pendingRealityIntent: parsed.data.pendingIntent })
+      .where(eq(roleplaySessions.id, id))
   }
   if (parsed.data.activeEvent) {
     await db.insert(events).values({

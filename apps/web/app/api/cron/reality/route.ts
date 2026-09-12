@@ -18,6 +18,6 @@ export async function GET(req: Request) {
   const now = override && !Number.isNaN(Date.parse(override)) ? new Date(override) : new Date()
 
   const run = await runRealityScheduler(now)
-  console.info('[reality] scheduler run', { at: now.toISOString(), ...run })
+  console.info('[reality] scheduler run', JSON.stringify({ at: now.toISOString(), ...run }))
   return NextResponse.json(run)
 }

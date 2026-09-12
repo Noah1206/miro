@@ -1,7 +1,7 @@
 import { POLICY } from '@miro/config'
-import { describeRelationship, selectRelevantMemories } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, selectRelevantMemories } from '@miro/domain'
 import type {
-  CharacterCore, Memory, RelationshipState, SimulationEvent, Npc, WorldState, Scene,
+  CharacterCore, Memory, RelationshipState, SimulationEvent, Npc, WorldState, Scene, SimulationMode,
 } from '@miro/domain'
 
 export type RecentMessage = {
@@ -23,6 +23,8 @@ export type SimulationSnapshot = {
   recentRealityContacts: Array<{ channel: string; sentAt: Date }>
   outputStyle: 'messenger' | 'balanced' | 'narrative'
   turnCount: number
+  /** chat(기본) | voice_call | video_call. 통화도 같은 시뮬레이션이다. */
+  mode?: SimulationMode
 }
 
 export type BuiltContext = {
@@ -90,7 +92,7 @@ function buildSystem(s: SimulationSnapshot): string {
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
     '- 정해진 줄거리를 따라가지 않습니다. 현재 상태에서 자연스럽게 이어지는 반응을 만듭니다.',
-    `- 출력 스타일: ${STYLE_GUIDE[s.outputStyle]}`,
+    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : `- 출력 스타일: ${STYLE_GUIDE[s.outputStyle]}`,
     '',
     '## 상태 변화 제안',
     '- 관계 변화는 delta 로만 제안합니다. 한 턴에 큰 폭으로 움직이지 않습니다.',

@@ -103,3 +103,13 @@ describe('context builder', () => {
     expect(calm.system).toContain('질투 성향 5')
   })
 })
+
+describe('call mode context', () => {
+  it('switches the style rules to call rules and keeps world/relationship state', () => {
+    const c = buildContext(snapshot({ mode: 'voice_call' }))
+    expect(c.system).toMatch(/전화 통화 중/)
+    expect(c.system).not.toMatch(/출력 스타일/)
+    expect(c.prompt).toContain('런던 구시가지')
+    expect(c.prompt).toMatch(/절대 노출하지 말 것/)
+  })
+})

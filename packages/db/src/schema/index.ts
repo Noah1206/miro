@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
@@ -486,3 +487,32 @@ export const subscriptions = pgTable('subscriptions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+
+/* ─────────────── Calls (M2) ─────────────── */
+
+/**
+ * 통화 세션. 수락 전에 사용자는 voice/video 를 알아야 하므로 channel 은 생성 시 확정된다.
+ * 세션당 ringing 은 하나뿐 (partial UNIQUE) — 중복 수신을 막는다.
+ */
+export const callSessions = pgTable('call_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull()
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  channel: text('channel', { enum: ['voice', 'video'] }).notNull(),
+  direction: text('direction', { enum: ['incoming', 'outgoing'] }).notNull(),
+  status: text('status', { enum: ['ringing', 'active', 'ended', 'missed', 'declined'] }).notNull(),
+  reason: text('reason'),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  durationSec: integer('duration_sec'),
+  result: text('result'),
+  /** 통화 시작 시 1분 예약, 종료 시 실제 분으로 보정. */
+  usageReservationId: uuid('usage_reservation_id'),
+  providerMetadata: jsonb('provider_metadata').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  ringingUniq: uniqueIndex('call_sessions_one_ringing_per_session')
+    .on(t.sessionId).where(sql`${t.status} = 'ringing'`),
+  sessionIdx: index('call_sessions_session_idx').on(t.sessionId, t.createdAt),
+}))

@@ -13,6 +13,7 @@ import {
   resolveLLM, resolvePush,
 } from '@miro/providers'
 import { getOrGenerate } from '@/lib/simulation/media'
+import { startIncomingCall } from '@/lib/call/service'
 import { shouldChargeRealityContact } from '@miro/domain'
 
 export type EvaluateOutcome =
@@ -111,8 +112,36 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
     return { outcome: 'suppressed', reason: decision.reason }
   }
 
-  // ---- 내용 생성 (Provider 미구성 시 Mock, 숨기지 않음) ----
   const presented = presentContact(decision.channel, row.character.name, row.profile.presentation)
+
+  // ---- 통화: 메시지가 아니라 ringing 통화 세션을 만든다. 수락 전까지 사용량은 없다. ----
+  if (decision.channel === 'voice_call' || decision.channel === 'video_call') {
+    const channel = decision.channel === 'voice_call' ? 'voice' : 'video'
+    const callId = await startIncomingCall(sessionId, channel, intent.reason)
+    if (!callId) return { outcome: 'skipped', reason: 'duplicate' }
+    let contactId: string
+    try {
+      const [c] = await db.insert(realityContacts).values({
+        sessionId, channel: decision.channel, reason: intent.reason, dedupeKey: decision.dedupeKey,
+        payload: { callId, ...presented }, status: 'sent', sentAt: now,
+      }).returning({ id: realityContacts.id })
+      contactId = c!.id
+      await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
+    } catch (e) {
+      if ((e as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'duplicate' }
+      throw e
+    }
+    if (settings.pushEnabled) {
+      await pushToUser(row.session.userId, {
+        title: presented.senderLabel,
+        body: channel === 'video' ? '영상통화 수신' : '전화 수신',
+        url: `/chat/${sessionId}`, tag: `call:${sessionId}`,
+      })
+    }
+    return { outcome: 'sent', channel: decision.channel, contactId }
+  }
+
+  // ---- 내용 생성 (Provider 미구성 시 Mock, 숨기지 않음) ----
   const configured = resolveLLM()
   const llm = configured.info.mode === 'live'
     ? configured

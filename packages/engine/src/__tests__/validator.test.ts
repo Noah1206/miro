@@ -235,3 +235,25 @@ describe('npc introductions', () => {
     expect(v.issues.some((i) => i.reason.includes('max active npcs'))).toBe(true)
   })
 })
+
+describe('call mode', () => {
+  it('drops narration during a voice call — there is nothing to narrate on a phone', () => {
+    const v = validateProposal(proposal({
+      rp: { blocks: [
+        { type: 'narrative', speaker: null, text: '비가 내렸다.' },
+        { type: 'action', speaker: null, text: '그가 한숨을 쉰다.' },
+        { type: 'dialogue', speaker: '토마스', text: '듣고 있어요.' },
+      ] },
+    }), snapshot({ mode: 'voice_call' }))
+    expect(v.blocks.map((b) => b.type)).toEqual(['dialogue'])
+  })
+  it('keeps a brief action on video', () => {
+    const v = validateProposal(proposal({
+      rp: { blocks: [
+        { type: 'action', speaker: null, text: '시선을 피한다.' },
+        { type: 'dialogue', speaker: '토마스', text: '…' },
+      ] },
+    }), snapshot({ mode: 'video_call' }))
+    expect(v.blocks).toHaveLength(2)
+  })
+})

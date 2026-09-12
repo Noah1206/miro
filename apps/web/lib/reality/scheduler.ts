@@ -2,11 +2,13 @@ import { sql } from 'drizzle-orm'
 import { POLICY } from '@miro/config'
 import { db } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
+import { expireCalls } from '@/lib/call/service'
 
 export type SchedulerRun = {
   claimed: number
   results: Record<string, number>
   errors: number
+  calls: { missed: number; timedOut: number }
 }
 
 /**
@@ -55,5 +57,6 @@ export async function runRealityScheduler(now = new Date()): Promise<SchedulerRu
     }
   }
 
-  return { claimed: claimed.length, results, errors }
+  const calls = await expireCalls(now)
+  return { claimed: claimed.length, results, errors, calls }
 }

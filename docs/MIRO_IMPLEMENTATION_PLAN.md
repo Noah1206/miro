@@ -1,6 +1,6 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: Phase 7·9 완료 → Phase 8 (Voice/Video Call) 진행 중
+> **Status**: Phase 0–9 완료 → Phase 10 (Archive·Settings·Safety·Reporting·Delete) 진행 중
 > **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
@@ -52,7 +52,7 @@
 
 ## 2. PRD 대비 구현 상태
 
-**Phase 0–7, 9 완료. 테스트 169 unit/integration + 18 e2e 통과, 빌드 clean.**
+**Phase 0–9 완료. 테스트 187 unit/integration + 21 e2e 통과, 빌드 clean.**
 
 | # | 기능 영역 | 상태 | 비고 |
 |---|---|---|---|
@@ -60,7 +60,7 @@
 | 2 | 캐릭터 탐색 및 생성 | **Implemented** (Face Cast UI 제외) | 공식 3인 시드, Quick Create, 섹션형 고급 편집. Visual Identity는 자동 생성·전 미디어 참조 중이나 사용자가 외형을 고르는 UI는 Image Provider 확정 후 |
 | 3 | 자유 역할극 대화 | **Implemented** | 1회 Structured Generation, 3가지 출력 스타일, 사건 카드 |
 | 4 | 세계·관계·사건 엔진 | **Implemented** | version lock, delta clamp, eligibility+cooldown, NPC 지식 경계, 사건 해결/NPC 등장 |
-| 5 | 현실 연동 및 몰입 미디어 | **Partial** | AI Photo·Background·Live Scene·**선연락(Web Push + Cron)** 완료. 통화(P8) 미구현 |
+| 5 | 현실 연동 및 몰입 미디어 | **Implemented** | Photo·Background·Live Scene·선연락·**음성/영상통화(수신/발신/거절/부재중/분당 과금, 실시간 미디어는 Mock Adapter)** |
 | 6 | 사용량·구독 및 설정 | **Partial** | Usage Guard 6곳 연결, 5h 창, Free/Pro 자격, /my·/plans 완료. 설정 화면(P10)·결제(P13) 남음 |
 | 7 | 안전·권리 및 데이터 보호 | Missing | P10 |
 | 8 | 캐릭터 및 역할극 보관함 | Missing | P10. `/archive` 링크만 존재 |
@@ -69,7 +69,7 @@
 | 11 | 장기 기억 및 관계 맥락 | **Implemented** | 세션 격리, salience, dedupe, 중요도 기반 prune |
 | 12 | 계정 삭제 및 개인 데이터 처리 | Missing | P10. 스키마(`deleted_at`)는 준비됨 |
 
-**실제 적용 DB**: 23 테이블 / 7 migration (`0000_core` … `0006_usage`). 남은 것: `call_sessions`(P8), `reports`·`admin_actions`·`account_deletions`(P10–P11).
+**실제 적용 DB**: 24 테이블 / 8 migration (`0000_core` … `0007_calls`). 남은 것: `reports`·`admin_actions`·`account_deletions`(P10–P11).
 
 ## 3. 구조적 리스크
 
@@ -256,7 +256,7 @@ JSONB 허용: `character_visual_identities.profile`, `world_states.snapshot`, `g
 | `0003_simulation` ✅ | P4 | events, npcs, memories, scenes |
 | `0004_media` ✅ | P6 | generated_media |
 | `0005_reality` ✅ | P7 | reality_contacts(dedupe UNIQUE), push_subscriptions, sessions.pending_reality_intent / reality_checked_at / character_status, contact_profiles.presentation, user_settings.time_zone |
-| `0007_calls` | P8 | call_sessions |
+| `0007_calls` ✅ | P8 | call_sessions (세션당 ringing 1개 partial UNIQUE) |
 | `0006_usage` ✅ | P9 | usage_windows, usage_ledger(idempotency UNIQUE), subscriptions(자격만) |
 | `0008_ops` | P10–P11 | reports, admin_actions, account_deletions |
 
@@ -361,7 +361,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 ### 9.3 E2E Scenario
 지시서 §37 Scenario 1–7 전부. **Scenario 3(Usage→Pro 전환)은 Phase 13까지 Pro 전환을 dev 토글로 대체.**
 
-**현재 상태** (Playwright 18개): Scenario 1 **완결**, Scenario 2 부분, **Scenario 3 완결**(Free 한도→Pro 안내→dev 토글 Pro→/my 반영; 결제는 P13), Scenario 5(통합), Scenario 6 부분. 통화(4)는 P8.
+**현재 상태** (Playwright 21개): Scenario 1·3·**4** 완결, Scenario 2·6 부분, Scenario 5 통합. Scenario 7(비선형 Event)은 통합 테스트(T1)로 커버.
 
 ---
 
@@ -378,8 +378,8 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | **P6** ✅ | Dynamic Scene · Background · AI Photo · Live Scene | P5 |
 | **P7** ✅ | Reality Activation · Web Push(VAPID) · Cron Scheduler(SKIP LOCKED claim) · World Translation(데이터) · timezone Quiet Hours | P5 |
 | **P9** ✅ | Usage Guard(reserve/commit/rollback, advisory lock, idempotency) · Free/Pro 자격(effectivePlan) · /my · /plans · dev Pro 토글 | P4 |
-| **P8** ▶ | Voice Call · Video Call · Provider Layer · CallSession | P5, P9 |
-| **P10** | Archive · Settings · Quiet Hours · Adult Verification · Reporting · Account Delete | P5 |
+| **P8** ✅ | 통화 = 같은 시뮬레이션의 mode(voice_call/video_call). 수신 UI 채널별 분리, 수락 시점 과금, 종료 시 실제 분 보정, 부재중 만료(Cron), CallMediaProvider Mock | P5, P9 |
+| **P10** ▶ | Archive · Settings · Quiet Hours · Adult Verification · Reporting · Account Delete | P5 |
 | **P11** | Web Admin (Report 검토 · RBAC · Audit Log) | P10 |
 | **P12** | Analytics · QA · Performance · E2E · Non-linear Test 게이트 | P1–P11 |
 | **P13** | **결제 시스템 연동** (PG · 구매 · 복원 · 해지 · Webhook) | P9, P12 |
@@ -406,7 +406,10 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-10 | World Translation은 코드 분기가 아니라 `contact_profiles.presentation` 데이터 | 캐릭터 추가 시 코드 수정 없음. 사용자 생성 캐릭터도 같은 경로 |
 | E-11 | 선연락 동기 = 의도(deriveIntent) → 평가(evaluator) 2단 | 의도가 있어도 발송이 확정되지 않는다. 사건이 있어도 관계 없는 stranger에겐 보내지 않음(테스트로 고정) |
 | E-12 | `POLICY.reality.motivationThreshold` (DEV_DEFAULT 0.5) | 침묵만으로 연락이 가려면 적극적 캐릭터 + 가까운 관계 필요. **Product feel 튜닝 대상** |
-| E-13 | Cron 엔드포인트 dev 전용 `?now=` 오버라이드 | 활동시간/Quiet Hours가 현지 시각에 묶이므로 E2E는 시각을 고정해야 함 |
+| E-13 | Cron 엔드포인트 dev 전용 `?now=` 오버라이드 | 활동시간/Quiet Hours가 현지 시각에 묶이므로 E2E는 시각을 고정해야 함. **E2E에서 세션을 backdate 할 때는 이 고정 시각보다 앞이어야 claim 된다** |
+| E-14 | 통화는 별도 엔진이 아니라 `SimulationSnapshot.mode` | 통화 중 발화가 관계·세계·기억에 그대로 반영. Validator가 모드에 맞지 않는 블록(전화 중 서술)을 버림 |
+| E-15 | 전화/영상 선택은 난수가 아니라 임계값 | `pickCallChannel(profile, urgency)` — 같은 상태면 같은 결과. profile.callProbability는 "성향"으로 해석 |
+| E-16 | 수신 통화 과금은 수락 시점 | 받지 않은 통화에 사용량을 물리지 않음. 1분 예약 → 종료 시 실제 분으로 commit 보정 |
 
 ---
 

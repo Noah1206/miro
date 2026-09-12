@@ -6,6 +6,8 @@ import type { ImageProvider, LLMProvider } from './types'
 import { MockPushProvider } from './push/mock'
 import { WebPushProvider } from './push/webpush'
 import type { PushProvider } from './push/types'
+import { MockCallMediaProvider } from './call/mock'
+import type { CallMediaProvider } from './call/types'
 
 /**
  * Provider 선택.
@@ -35,4 +37,12 @@ export function resolvePush(): PushProvider {
     ? new WebPushProvider({ subject, publicKey, privateKey })
     : new MockPushProvider()
   return pushSingleton
+}
+
+/**
+ * 음성/영상 Provider. 확정되면 여기서 env 로 분기해 live adapter 를 반환한다.
+ * Domain/서비스 코드는 바뀌지 않는다.
+ */
+export function resolveCallMedia(kind: 'voice' | 'video'): CallMediaProvider {
+  return new MockCallMediaProvider(kind)
 }

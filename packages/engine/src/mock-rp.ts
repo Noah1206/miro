@@ -17,13 +17,16 @@ export function buildMockProposal(
 
   // 거리가 멀면 짧고 건조하게, 가까우면 조금 더 길게 — 상태가 출력을 바꾼다.
   const cold = distance > 60
-  const blocks: SimulationProposal['rp']['blocks'] = [
-    { type: 'action', speaker: null, text: cold ? '그는 시선을 돌렸다.' : '그가 잠깐 말을 멈췄다.' },
-    {
-      type: 'dialogue', speaker: name,
-      text: cold ? '…그래서요?' : '조금 놀랐어요. 그런 말을 할 줄은 몰랐는데.',
-    },
-  ]
+  const onCall = /전화 통화 중|영상통화 중/.test(prompt)
+  const blocks: SimulationProposal['rp']['blocks'] = onCall
+    ? [{ type: 'dialogue', speaker: name, text: cold ? '…듣고 있어요. 말해요.' : '목소리 들으니까 좀 낫네요.' }]
+    : [
+        { type: 'action', speaker: null, text: cold ? '그는 시선을 돌렸다.' : '그가 잠깐 말을 멈췄다.' },
+        {
+          type: 'dialogue', speaker: name,
+          text: cold ? '…그래서요?' : '조금 놀랐어요. 그런 말을 할 줄은 몰랐는데.',
+        },
+      ]
 
   return {
     rp: { blocks },

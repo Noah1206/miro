@@ -6,6 +6,7 @@ import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ChatComposer, StylePicker } from './composer'
 import { MediaBar } from './media-bar'
+import { IncomingCall } from '@/components/incoming-call'
 
 export default async function ChatPage({
   params,
@@ -31,6 +32,7 @@ export default async function ChatPage({
 
   return (
     <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+      <IncomingCall userId={user.id} characterName={loaded.characterName} />
       {/* 상단: 캐릭터 이름 + 현재 장소/상태 (명세서 3.1 표시) */}
       <header style={{
         position: 'sticky', top: 0, zIndex: 10,
@@ -134,6 +136,14 @@ function Bubble({ role, kind, content, blocks }: {
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{reality.caption}</p>
         )}
       </div>
+    )
+  }
+
+  if (kind === 'call_record') {
+    return (
+      <p data-call-record style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0' }}>
+        ☏ {content}
+      </p>
     )
   }
 

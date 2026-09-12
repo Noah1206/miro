@@ -4,6 +4,7 @@ import { currentUser } from '@/lib/auth'
 import { listOfficials, type OfficialCard } from '@/lib/characters'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { TabBar } from '@/components/tab-bar'
+import { IncomingCall } from '@/components/incoming-call'
 
 export default async function Home() {
   const user = await currentUser()
@@ -13,6 +14,7 @@ export default async function Home() {
 
   return (
     <main style={{ minHeight: '100dvh', paddingBottom: 96 }}>
+      <IncomingCall userId={user.id} />
       <header style={{ padding: '28px 24px 20px' }}>
         <h1 style={{ fontSize: 22, letterSpacing: '0.2em', fontWeight: 300, margin: 0 }}>
           MIRO

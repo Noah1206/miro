@@ -2,6 +2,7 @@ import type { ContactChannel, ContactProfile } from '../character/types'
 import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
 import type { RealityIntent } from './types'
+import { pickCallChannel } from '../call/pick'
 
 export type IntentInput = {
   relationship: RelationshipState
@@ -13,8 +14,10 @@ export type IntentInput = {
   pending: RealityIntent | null
 }
 
-/** P7 에서 실제로 발송 가능한 채널. 통화 계열은 P8 에서 연결된다. */
-const SENDABLE: ContactChannel[] = ['message', 'push', 'photo', 'status', 'voice_message']
+/** 발송 가능한 채널. missed_call 은 결과 상태이지 의도가 아니다. */
+const SENDABLE: ContactChannel[] = [
+  'message', 'push', 'photo', 'status', 'voice_message', 'voice_call', 'video_call',
+]
 
 /**
  * 연락 의도 도출.
@@ -31,10 +34,11 @@ export function deriveIntent(input: IntentInput): RealityIntent | null {
   // 1. 미해결 사건 — 가장 강한 동기. 사건이 있으면 거리와 무관하게 이유가 생긴다.
   const event = activeEvents.find((e) => e.status === 'active' || e.status === 'escalated')
   if (event) {
+    const urgency = event.status === 'escalated' ? 0.9 : 0.7
     return {
-      channel: preferred(p),
+      channel: pickCallChannel(p, urgency, preferred(p)),
       reason: `event:${event.type}`,
-      urgency: event.status === 'escalated' ? 0.9 : 0.7,
+      urgency,
     }
   }
 

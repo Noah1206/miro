@@ -69,12 +69,20 @@ describe('intent derivation — reasons come from state, never from a schedule',
     expect(deriveIntent({ ...args, contactProfile: { ...profile, contactFrequency: 95 } })).not.toBeNull()
   })
 
-  it('a pending intent from the last turn wins, but call channels are downgraded until P8', () => {
+  it('a pending intent from the last turn wins, including call channels', () => {
     const i = deriveIntent({
       relationship: rel(), activeEvents: [], contactProfile: profile, idleMinutes: 0,
       pending: { channel: 'video_call', reason: 'wanted to see you', urgency: 0.5 },
     })
     expect(i?.reason).toBe('wanted to see you')
+    expect(i?.channel).toBe('video_call')
+  })
+
+  it('missed_call is a result, never an intent — it is downgraded to a message', () => {
+    const i = deriveIntent({
+      relationship: rel(), activeEvents: [], contactProfile: profile, idleMinutes: 0,
+      pending: { channel: 'missed_call', reason: 'x', urgency: 0.5 },
+    })
     expect(i?.channel).toBe('message')
   })
 })

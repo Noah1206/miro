@@ -101,6 +101,16 @@ export const POLICY = {
     defaultEnd: DEV_DEFAULT('08:00'),
   },
 
+  call: {
+    /** 수신 통화가 이 시간 안에 수락되지 않으면 부재중으로 기록한다. */
+    ringingTimeoutMinutes: DEV_DEFAULT(2),
+    /** 한 통화의 최대 길이(분). 초과 시 서버가 종료한다. */
+    maxMinutes: DEV_DEFAULT(30),
+    /** 캐릭터가 메시지 대신 전화를 택하는 urgency 하한. profile.callProbability 와 함께 본다. */
+    voiceUrgencyFloor: DEV_DEFAULT(0.8),
+    videoUrgencyFloor: DEV_DEFAULT(0.9),
+  },
+
   adultVerification: {
     /** 명세서 7.1 예외: 인증 실패 시 재시도 대기 시간. */
     retryAfterHours: 24,

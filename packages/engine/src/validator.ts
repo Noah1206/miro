@@ -1,5 +1,5 @@
 import { POLICY } from '@miro/config'
-import { validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
+import { allowedBlockTypes, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { EventCandidate, MemoryCandidate, Npc, SimulationEvent } from '@miro/domain'
 import type { SimulationProposal } from './proposal.schema'
 import type { SimulationSnapshot } from './context'
@@ -59,8 +59,14 @@ function validateBlocks(
   issues: ValidationIssue[],
 ): SimulationProposal['rp']['blocks'] {
   const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name)])
+  const allowed = allowedBlockTypes(s.mode ?? 'chat')
 
   return p.rp.blocks.filter((b) => {
+    // 전화 중에는 서술할 화면이 없다. 모드에 맞지 않는 블록은 버린다.
+    if (!allowed.has(b.type)) {
+      issues.push({ field: 'rp.blocks', reason: `${b.type} not allowed in ${s.mode ?? 'chat'}` })
+      return false
+    }
     if (b.type === 'dialogue' || b.type === 'npc') {
       if (!b.speaker) {
         issues.push({ field: 'rp.blocks', reason: `${b.type} block has no speaker` })
