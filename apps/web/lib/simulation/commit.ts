@@ -216,8 +216,14 @@ export async function commitTurn(input: CommitInput): Promise<void> {
     }
 
     /* ---- session ---- */
+    // AI 가 "나중에 연락하고 싶은 이유" 를 남겼다면 저장한다. 스케줄러가 우선 참고한다.
+    // 사용자가 돌아와 턴을 진행했으므로 이전 의도는 더 이상 유효하지 않다 — 새 값으로 덮는다.
     await tx.update(roleplaySessions)
-      .set({ turnCount: input.turnIndex, lastInteractionAt: new Date() })
+      .set({
+        turnCount: input.turnIndex,
+        lastInteractionAt: new Date(),
+        pendingRealityIntent: t.realityIntent ?? null,
+      })
       .where(eq(roleplaySessions.id, input.sessionId))
   })
 }

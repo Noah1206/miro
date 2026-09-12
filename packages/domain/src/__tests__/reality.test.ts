@@ -8,6 +8,7 @@ import type { RelationshipState } from '../relationship/types'
 const settings: NotificationSettings = {
   pushEnabled: true, voiceCallEnabled: true, videoCallEnabled: true,
   quietHoursEnabled: true, quietHoursStart: '23:00', quietHoursEnd: '08:00',
+  timeZone: 'Asia/Seoul',
 }
 
 const profile: ContactProfile = {
@@ -34,7 +35,7 @@ function input(over: Partial<RealityInput> = {}): RealityInput {
     settings,
     lastContactAt: null,
     pendingContacts: [],
-    now: new Date('2026-09-12T14:00:00'),
+    now: new Date('2026-09-12T14:00:00+09:00'),
     ...over,
   }
 }
@@ -46,14 +47,14 @@ describe('reality activation', () => {
   })
 
   it('T-QuietHours: suppresses intrusive channels at night but keeps state intact', () => {
-    const d = evaluateRealityContact(input({ now: new Date('2026-09-12T02:00:00') }))
+    const d = evaluateRealityContact(input({ now: new Date('2026-09-12T02:00:00+09:00') }))
     expect(d).toEqual({ send: false, reason: 'quiet_hours' })
   })
 
   it('quiet hours spanning midnight is handled correctly', () => {
-    expect(inQuietHours(new Date('2026-09-12T23:30:00'), settings)).toBe(true)
-    expect(inQuietHours(new Date('2026-09-12T03:00:00'), settings)).toBe(true)
-    expect(inQuietHours(new Date('2026-09-12T12:00:00'), settings)).toBe(false)
+    expect(inQuietHours(new Date('2026-09-12T23:30:00+09:00'), settings)).toBe(true)
+    expect(inQuietHours(new Date('2026-09-12T03:00:00+09:00'), settings)).toBe(true)
+    expect(inQuietHours(new Date('2026-09-12T12:00:00+09:00'), settings)).toBe(false)
   })
 
   it('respects a disabled channel', () => {
@@ -65,7 +66,7 @@ describe('reality activation', () => {
   })
 
   it('T-Dedupe: cooldown prevents repeat contact spam', () => {
-    const d = evaluateRealityContact(input({ lastContactAt: new Date('2026-09-12T13:30:00') }))
+    const d = evaluateRealityContact(input({ lastContactAt: new Date('2026-09-12T13:30:00+09:00') }))
     expect(d).toEqual({ send: false, reason: 'cooldown' })
   })
 
@@ -94,7 +95,7 @@ describe('reality activation', () => {
   })
 
   it('T1: identical elapsed time is never the trigger — only state is', () => {
-    const now = new Date('2026-09-12T14:00:00')
+    const now = new Date('2026-09-12T14:00:00+09:00')
     const warm: RealityDecision = evaluateRealityContact(input({ now }))
     const cold: RealityDecision = evaluateRealityContact(input({
       now,

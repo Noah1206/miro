@@ -1,6 +1,6 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
-  db, characters, events, memories, messages, npcs, relationships,
+  db, characters, events, memories, messages, npcs, realityContacts, relationships,
   roleplaySessions, scenes, worldStates, worlds,
 } from '@miro/db'
 import type { SimulationSnapshot } from '@miro/engine'
@@ -10,6 +10,7 @@ export type LoadedSession = {
   sessionId: string
   characterId: string
   characterName: string
+  characterStatus: string | null
 }
 
 /**
@@ -38,7 +39,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [allEvents, sessionNpcs, sessionMemories, currentScene, recent] = await Promise.all([
+  const [allEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts] = await Promise.all([
     db.select().from(events).where(eq(events.sessionId, sessionId)),
     db.select().from(npcs).where(and(eq(npcs.sessionId, sessionId), eq(npcs.isActive, true))),
     db.select().from(memories).where(eq(memories.sessionId, sessionId)),
@@ -49,6 +50,10 @@ export async function loadSession(
       .where(eq(messages.sessionId, sessionId))
       .orderBy(desc(messages.turnIndex), desc(messages.createdAt))
       .limit(24),
+    db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
+      .from(realityContacts)
+      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
+      .orderBy(desc(realityContacts.sentAt)).limit(3),
   ])
 
   const c = row.character
@@ -84,7 +89,8 @@ export async function loadSession(
     activeEvents: allEvents.filter((e) => e.status === 'active' || e.status === 'escalated') as never,
     recentlyResolvedEvents: allEvents.filter((e) => e.status === 'resolved') as never,
     activeNpcs: sessionNpcs as never,
-    recentRealityContacts: [],
+    recentRealityContacts: recentContacts
+      .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),
     outputStyle: row.session.outputStyle,
     turnCount: row.session.turnCount,
   }
@@ -94,6 +100,7 @@ export async function loadSession(
     sessionId,
     characterId: c.id,
     characterName: c.name,
+    characterStatus: row.session.characterStatus,
   }
 }
 

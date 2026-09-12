@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { asc, eq } from 'drizzle-orm'
-import { db, messages } from '@miro/db'
+import { and, asc, eq } from 'drizzle-orm'
+import { db, messages, realityContacts } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ChatComposer, StylePicker } from './composer'
@@ -17,9 +17,14 @@ export default async function ChatPage({
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded) notFound()
 
-  const history = await db.select().from(messages)
-    .where(eq(messages.sessionId, sessionId))
-    .orderBy(asc(messages.turnIndex), asc(messages.createdAt))
+  const [history] = await Promise.all([
+    db.select().from(messages)
+      .where(eq(messages.sessionId, sessionId))
+      .orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
+    // 재진입 — 확인하지 않은 선연락을 열람 처리한다 (재진입 이벤트).
+    db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
+      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
+  ])
 
   const { snapshot: s } = loaded
   const activeEvent = s.activeEvents[0]
@@ -42,6 +47,11 @@ export default async function ChatPage({
             {s.world.currentLocation} · {s.world.currentTime}
             {s.world.worldStatus ? ` · ${s.world.worldStatus}` : ''}
           </p>
+          {loaded.characterStatus && (
+            <p style={{ fontSize: 11, color: 'var(--accent-strong)', margin: '2px 0 0' }}>
+              {loaded.characterStatus}
+            </p>
+          )}
         </div>
         <StylePicker sessionId={sessionId} current={s.outputStyle} />
       </header>
@@ -55,13 +65,22 @@ export default async function ChatPage({
         {activeEvent && <EventCard type={activeEvent.type} state={activeEvent.continuationState} />}
 
         {history.map((m) => (
-          <Bubble key={m.id} role={m.role} kind={m.kind} content={m.content} />
+          <Bubble key={m.id} role={m.role} kind={m.kind} content={m.content}
+                  blocks={m.blocks as Array<Record<string, unknown>>} />
         ))}
       </div>
 
       <MediaBar sessionId={sessionId} />
       <ChatComposer sessionId={sessionId} />
     </main>
+  )
+}
+
+function RealityTag({ sender, channel }: { sender?: string; channel?: string }) {
+  return (
+    <p style={{ fontSize: 10.5, letterSpacing: '0.08em', color: 'var(--accent-strong)', margin: 0 }}>
+      {[sender, channel].filter(Boolean).join(' · ')}
+    </p>
   )
 }
 
@@ -95,17 +114,41 @@ function EventCard({ type, state }: { type: string; state: Record<string, unknow
   )
 }
 
-function Bubble({ role, kind, content }: { role: string; kind: string; content: string }) {
+function Bubble({ role, kind, content, blocks }: {
+  role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>
+}) {
   const mine = role === 'user'
+  const reality = blocks.find((b) => b.type === 'reality') as
+    { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
 
   if (kind === 'photo') {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        {reality && <RealityTag sender={reality.senderLabel} channel={reality.channelLabel} />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={content} alt="캐릭터가 보낸 사진" style={{
           maxWidth: '68%', borderRadius: 14, border: '1px solid var(--border)',
           display: 'block',
         }} />
+        {reality?.caption && (
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{reality.caption}</p>
+        )}
+      </div>
+    )
+  }
+
+  if (kind === 'reality_message') {
+    // 캐릭터가 먼저 보낸 연락. 세계관 표현(편지/문자/사내 메신저)을 함께 보여준다.
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
+        <RealityTag sender={reality?.senderLabel} channel={reality?.channelLabel} />
+        <div data-reality-message style={{
+          maxWidth: '82%', padding: '11px 14px', borderRadius: 14,
+          background: 'var(--elevated)', border: '1px solid var(--accent)',
+          fontSize: 14.5, lineHeight: 1.72, whiteSpace: 'pre-wrap',
+        }}>
+          {content}
+        </div>
       </div>
     )
   }

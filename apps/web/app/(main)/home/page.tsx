@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { listOfficials, type OfficialCard } from '@/lib/characters'
+import { PushSubscribe } from '@/components/push-subscribe'
 
 export default async function Home() {
   const user = await currentUser()
@@ -16,6 +17,8 @@ export default async function Home() {
           MIRO
         </h1>
       </header>
+
+      <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
 
       <section style={{ padding: '0 24px' }}>
         <h2 style={{ fontSize: 13, letterSpacing: '0.14em', color: 'var(--text-secondary)',

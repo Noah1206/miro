@@ -3,6 +3,9 @@ import { MockLLMProvider } from './mock/llm'
 import { MockImageProvider } from './mock/image'
 import { buildMockDraft } from './character/generate'
 import type { ImageProvider, LLMProvider } from './types'
+import { MockPushProvider } from './push/mock'
+import { WebPushProvider } from './push/webpush'
+import type { PushProvider } from './push/types'
 
 /**
  * Provider 선택.
@@ -18,4 +21,18 @@ export function resolveLLM(): LLMProvider {
 export function resolveImage(): ImageProvider {
   // Image Provider 확정 시 여기에 live adapter 를 추가한다.
   return new MockImageProvider()
+}
+
+let pushSingleton: PushProvider | null = null
+
+/** Push Provider. VAPID 키가 없으면 Mock — 발송되지 않는다는 사실을 숨기지 않는다. */
+export function resolvePush(): PushProvider {
+  if (pushSingleton) return pushSingleton
+  const publicKey = process.env.VAPID_PUBLIC_KEY
+  const privateKey = process.env.VAPID_PRIVATE_KEY
+  const subject = process.env.VAPID_SUBJECT
+  pushSingleton = publicKey && privateKey && subject
+    ? new WebPushProvider({ subject, publicKey, privateKey })
+    : new MockPushProvider()
+  return pushSingleton
 }

@@ -1,5 +1,5 @@
 import {
-  boolean, index, integer, jsonb, pgTable, text, timestamp, uuid,
+  boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 
 export const users = pgTable('users', {
@@ -53,8 +53,22 @@ export const userSettings = pgTable('user_settings', {
   quietHoursEnabled: boolean('quiet_hours_enabled').notNull().default(true),
   quietHoursStart: text('quiet_hours_start').notNull().default('23:00'),
   quietHoursEnd: text('quiet_hours_end').notNull().default('08:00'),
+  /** Quiet Hours / Active Hours 는 사용자 현지 시각 기준이다. */
+  timeZone: text('time_zone').notNull().default('Asia/Seoul'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+/** Web Push 구독. 기기마다 하나이며 endpoint 로 식별한다. */
+export const pushSubscriptions = pgTable('push_subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endpoint: text('endpoint').notNull().unique(),
+  p256dh: text('p256dh').notNull(),
+  auth: text('auth').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  /** 발송 실패(410 등) 시 기록. 반복 실패 구독은 정리 대상. */
+  failedAt: timestamp('failed_at', { withTimezone: true }),
+}, (t) => ({ userIdx: index('push_subscriptions_user_idx').on(t.userId) }))
 
 /**
  * Character Core — 안정적으로 유지되는 정체성.
@@ -158,6 +172,15 @@ export const contactProfiles = pgTable('contact_profiles', {
   activeHoursStart: text('active_hours_start').notNull().default('08:00'),
   activeHoursEnd: text('active_hours_end').notNull().default('23:00'),
   initiativeLevel: integer('initiative_level').notNull().default(50),
+
+  /**
+   * World Translation — 같은 기능도 세계관에 맞게 다르게 보인다 (명세서 5.1).
+   * 예: 히사시는 '알 수 없는 번호', 토마스는 '편지'. 코드 분기가 아니라 데이터다.
+   */
+  presentation: jsonb('presentation').$type<{
+    senderLabel?: string
+    channelLabels?: Record<string, string>
+  }>().notNull().default({}),
 })
 
 export const worlds = pgTable('worlds', {
@@ -188,6 +211,14 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),
+
+  /** RP 턴에서 AI 가 제안한 "나중에 연락하고 싶은 이유". 스케줄러가 우선 참고한다. */
+  pendingRealityIntent: jsonb('pending_reality_intent')
+    .$type<{ channel: string; reason: string; urgency: number }>(),
+  /** 스케줄러가 마지막으로 이 세션의 선연락을 판단한 시각. */
+  realityCheckedAt: timestamp('reality_checked_at', { withTimezone: true }),
+  /** 캐릭터 상태 한 줄 ('status' 채널). Chats 목록과 헤더에 표시. */
+  characterStatus: text('character_status'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   /** 삭제 확정 후 일정 기간 복구 가능하게 보관 (명세서 8.1 결과). */
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -250,7 +281,7 @@ export const messages = pgTable('messages', {
   sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['user', 'character', 'narrator', 'npc', 'system'] }).notNull(),
   kind: text('kind', {
-    enum: ['text', 'photo', 'voice_message', 'event_card', 'call_record', 'live_scene'],
+    enum: ['text', 'photo', 'voice_message', 'event_card', 'call_record', 'live_scene', 'reality_message'],
   }).notNull().default('text'),
 
   content: text('content').notNull(),
@@ -378,4 +409,31 @@ export const generatedMedia = pgTable('generated_media', {
 }, (t) => ({
   cacheIdx: index('media_cache_idx').on(t.characterId, t.kind, t.cacheKey),
   sessionIdx: index('media_session_idx').on(t.sessionId, t.createdAt),
+}))
+
+
+/* ─────────────── Reality Activation (M2) ─────────────── */
+
+/**
+ * 캐릭터 선연락 기록.
+ * (session_id, dedupe_key) UNIQUE 로 같은 사유의 반복 발송을 DB 레벨에서 막는다.
+ */
+export const realityContacts = pgTable('reality_contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull()
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  channel: text('channel').notNull(),
+  dedupeKey: text('dedupe_key').notNull(),
+  reason: text('reason').notNull().default(''),
+  /** 발송된 내용. 채널에 따라 text / mediaId 등. */
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+  status: text('status', { enum: ['pending', 'sent', 'opened', 'suppressed'] }).notNull(),
+  suppressedReason: text('suppressed_reason'),
+  messageId: uuid('message_id'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  openedAt: timestamp('opened_at', { withTimezone: true }),
+}, (t) => ({
+  dedupeUniq: uniqueIndex('reality_contacts_session_dedupe_uniq').on(t.sessionId, t.dedupeKey),
+  sessionIdx: index('reality_contacts_session_status_idx').on(t.sessionId, t.status, t.sentAt),
 }))

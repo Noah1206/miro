@@ -50,6 +50,8 @@ export type OfficialSeed = {
     activeHoursStart: string
     activeHoursEnd: string
     initiativeLevel: number
+    /** World Translation — 같은 기능을 세계관에 맞는 표현으로. */
+    presentation: { senderLabel?: string; channelLabels?: Record<string, string> }
   }
 }
 
@@ -102,6 +104,9 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
       callProbability: 10, videoCallProbability: 3, photoProbability: 12,
       voiceMessageProbability: 8,
       activeHoursStart: '06:00', activeHoursEnd: '22:00', initiativeLevel: 25,
+      presentation: {
+        channelLabels: { message: '편지', push: '편지', photo: '동봉된 사진', status: '공방 소식' },
+      },
     },
   },
 
@@ -153,6 +158,9 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
       callProbability: 35, videoCallProbability: 12, photoProbability: 20,
       voiceMessageProbability: 18,
       activeHoursStart: '07:00', activeHoursEnd: '24:00', initiativeLevel: 65,
+      presentation: {
+        channelLabels: { message: '사내 메신저', push: '사내 메신저', status: '근무 상태' },
+      },
     },
   },
 
@@ -204,6 +212,10 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
       callProbability: 25, videoCallProbability: 2, photoProbability: 8,
       voiceMessageProbability: 20,
       activeHoursStart: '18:00', activeHoursEnd: '04:00', initiativeLevel: 40,
+      presentation: {
+        senderLabel: '알 수 없는 번호',
+        channelLabels: { message: '문자', push: '문자', voice_message: '음성 메시지' },
+      },
     },
   },
 ]

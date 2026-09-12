@@ -42,7 +42,7 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
     // Simulation State 는 그대로 진행하고 발송만 억제한다.
     return { send: false, reason: 'quiet_hours' }
   }
-  if (!inActiveHours(now, input.contactProfile)) {
+  if (!inActiveHours(now, input.contactProfile, settings.timeZone)) {
     return { send: false, reason: 'outside_active_hours' }
   }
   if (input.pendingContacts.length >= POLICY.reality.maxPending) {
@@ -51,7 +51,7 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   if (inCooldown(input.lastContactAt, now)) {
     return { send: false, reason: 'cooldown' }
   }
-  if (motivation(input) < 0.5) {
+  if (motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
   return { send: true, channel: intent.channel, dedupeKey: buildDedupeKey(input) }
@@ -71,8 +71,9 @@ function motivation(input: RealityInput): number {
   // 미해결 사건은 거리와 무관하게 연락 동기를 만든다.
   const eventPressure = activeEvents.length > 0 ? 0.3 : 0
 
+  // 의도의 urgency 는 이미 "이 캐릭터가 지금 얼마나 연락하고 싶은가" 의 판단이므로 비중이 크다.
   return clamp01(
-    initiative * 0.3 + bond * 0.3 + intent.urgency * 0.25 + eventPressure - distance * 0.35,
+    initiative * 0.3 + bond * 0.3 + intent.urgency * 0.35 + eventPressure - distance * 0.35,
   )
 }
 
@@ -89,19 +90,29 @@ function isChannelAllowed(c: ContactChannel, s: NotificationSettings): boolean {
 
 export function inQuietHours(now: Date, s: NotificationSettings): boolean {
   if (!s.quietHoursEnabled) return false
-  return inWindow(now, s.quietHoursStart, s.quietHoursEnd)
+  return inWindow(now, s.quietHoursStart, s.quietHoursEnd, s.timeZone)
 }
 
-function inActiveHours(now: Date, p: ContactProfile): boolean {
-  return inWindow(now, p.activeHours.start, p.activeHours.end)
+function inActiveHours(now: Date, p: ContactProfile, timeZone: string): boolean {
+  return inWindow(now, p.activeHours.start, p.activeHours.end, timeZone)
 }
 
-/** 'HH:MM' 구간 판정. 자정을 넘는 구간(23:00-08:00)을 지원한다. */
-function inWindow(now: Date, start: string, end: string): boolean {
-  const mins = now.getHours() * 60 + now.getMinutes()
+/** 'HH:MM' 구간 판정. 자정을 넘는 구간(23:00-08:00)을 지원하며 사용자 timezone 기준이다. */
+function inWindow(now: Date, start: string, end: string, timeZone: string): boolean {
+  const mins = localMinutes(now, timeZone)
   const s = toMinutes(start)
   const e = toMinutes(end)
   return s <= e ? mins >= s && mins < e : mins >= s || mins < e
+}
+
+/** 서버 시각이 아니라 사용자 현지 시각의 분 단위 값. */
+export function localMinutes(now: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(now)
+  const h = Number(parts.find((p) => p.type === 'hour')?.value ?? 0)
+  const m = Number(parts.find((p) => p.type === 'minute')?.value ?? 0)
+  return h * 60 + m
 }
 
 function toMinutes(hhmm: string): number {
@@ -114,10 +125,14 @@ function inCooldown(last: Date | null, now: Date): boolean {
   return now.getTime() - last.getTime() < POLICY.reality.minGapMinutes * 60_000
 }
 
-/** 같은 사건·채널에 대한 반복 발송을 차단하는 키. */
+/**
+ * 같은 사건·채널·사유의 반복 발송을 차단하는 키.
+ * 사건이 없는 사유(예: silence)는 날짜 버킷을 붙인다 — 영구 차단이 아니라 하루 한 번이다.
+ */
 function buildDedupeKey(input: RealityInput): string {
-  const eventPart = input.activeEvents.map((e) => e.id).sort().join(',') || 'none'
-  return `${input.intent.channel}:${eventPart}:${input.intent.reason}`
+  const eventPart = input.activeEvents.map((e) => e.id).sort().join(',')
+  const bucket = eventPart || input.now.toISOString().slice(0, 10)
+  return `${input.intent.channel}:${bucket}:${input.intent.reason}`
 }
 
 function clamp01(v: number): number {

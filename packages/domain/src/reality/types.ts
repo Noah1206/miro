@@ -31,4 +31,6 @@ export type NotificationSettings = {
   quietHoursEnabled: boolean
   quietHoursStart: string // 'HH:MM'
   quietHoursEnd: string
+  /** IANA timezone. Quiet/Active Hours 는 사용자 현지 시각으로 판정한다. */
+  timeZone: string
 }

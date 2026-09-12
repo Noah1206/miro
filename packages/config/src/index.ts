@@ -72,6 +72,22 @@ export const POLICY = {
     minGapMinutes: DEV_DEFAULT(90),
     /** 사용자가 확인하지 않은 채 쌓일 수 있는 선연락 최대 수. */
     maxPending: DEV_DEFAULT(2),
+    /**
+     * 사용자의 마지막 상호작용 후 이 시간이 지나야 선연락 판단 대상이 된다.
+     * 대화 중인 사용자에게 먼저 연락하지 않기 위해서다.
+     */
+    idleMinutesBeforeContact: DEV_DEFAULT(60),
+    /** 한 세션을 다시 판단하기까지의 최소 간격(분). 스케줄러 부하 제어용. */
+    recheckMinutes: DEV_DEFAULT(30),
+    /** 스케줄러 1회 실행당 판단할 세션 수. */
+    batchSize: DEV_DEFAULT(200),
+    /** 사용자 timezone 미설정 시 기본값. Quiet Hours/Active Hours 판정에 쓴다. */
+    defaultTimeZone: DEV_DEFAULT('Asia/Seoul'),
+    /**
+     * 연락 동기 임계값 (0-1). 낮출수록 캐릭터가 더 자주 먼저 연락한다.
+     * 침묵만으로 연락이 가려면 적극적 캐릭터 + 가까운 관계가 필요하도록 맞춰져 있다 (Product feel, TBD).
+     */
+    motivationThreshold: DEV_DEFAULT(0.5),
   },
 
   quietHours: {
