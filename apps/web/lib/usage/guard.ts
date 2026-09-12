@@ -1,7 +1,7 @@
 import { and, desc, eq, gt, sql } from 'drizzle-orm'
 import { db, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
 import { POLICY, type Plan } from '@miro/config'
-import { costOf, decide, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
+import { costOf, decide, isEntitled, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
 
@@ -19,9 +19,8 @@ export type Reservation = { reservationId: string; cost: number; windowId: strin
  * 없으면 users.plan — P13 전까지는 dev 토글이 이 값을 쓴다.
  */
 export async function effectivePlan(userId: string, now = new Date()): Promise<Plan> {
-  const [sub] = await db.select({ status: subscriptions.status, end: subscriptions.currentPeriodEnd })
-    .from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
-  if (sub && sub.status !== 'expired' && sub.end > now) return 'pro'
+  const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
+  if (isEntitled(sub ? (sub as never) : null, now)) return 'pro'
   const [u] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
   return u?.plan ?? 'free'
 }

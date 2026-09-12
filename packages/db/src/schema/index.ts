@@ -616,3 +616,26 @@ export const analyticsEvents = pgTable('analytics_events', {
   props: jsonb('props').$type<Record<string, string | number | boolean | null>>().notNull().default({}),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ eventIdx: index('analytics_event_time_idx').on(t.event, t.createdAt) }))
+
+
+/* ─────────────── Payments (P13) ─────────────── */
+
+/**
+ * 결제 이벤트 원장. (provider, external_event_id) UNIQUE 로 같은 webhook 이 두 번 와도 한 번만 적용된다.
+ * 구독 자격(subscriptions)은 이 원장을 적용한 결과다.
+ */
+export const paymentEvents = pgTable('payment_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+  provider: text('provider').notNull(),
+  externalEventId: text('external_event_id').notNull(),
+  /** 구독/거래 식별자. 복원(restore) 시 계정과 다시 연결하는 열쇠. */
+  externalRef: text('external_ref').notNull(),
+  type: text('type', { enum: ['purchase', 'renewal', 'cancel', 'refund', 'failed'] }).notNull(),
+  periodEnd: timestamp('period_end', { withTimezone: true }),
+  payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  idemUniq: uniqueIndex('payment_events_provider_event_uniq').on(t.provider, t.externalEventId),
+  refIdx: index('payment_events_ref_idx').on(t.externalRef),
+}))

@@ -10,6 +10,8 @@ import { MockCallMediaProvider } from './call/mock'
 import type { CallMediaProvider } from './call/types'
 import { MockAdultVerificationProvider } from './verify/mock'
 import type { AdultVerificationProvider } from './verify/types'
+import { MockPaymentProvider } from './payment/mock'
+import type { PaymentProvider } from './payment/types'
 
 /**
  * Provider 선택.
@@ -52,4 +54,10 @@ export function resolveCallMedia(kind: 'voice' | 'video'): CallMediaProvider {
 /** 성인 인증 Provider. 확정되면 env 로 분기한다. */
 export function resolveAdultVerification(): AdultVerificationProvider {
   return new MockAdultVerificationProvider()
+}
+
+let paymentSingleton: PaymentProvider | null = null
+/** 결제 Provider. PG 확정 시 env 로 분기 (예: STRIPE_SECRET_KEY → StripePaymentProvider). */
+export function resolvePayment(): PaymentProvider {
+  return (paymentSingleton ??= new MockPaymentProvider())
 }

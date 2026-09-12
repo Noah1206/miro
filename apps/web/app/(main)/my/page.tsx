@@ -49,6 +49,7 @@ export default async function MyPage() {
         </Link>
       </section>
 
+      <Menu href="/my/subscription" label="구독 관리" />
       <Menu href="/my/settings" label="알림 · 통화 · 야간 연락 설정" />
       <Menu href="/my/verify" label="성인 인증" />
       <Menu href="/my/permissions" label="권한 안내" />

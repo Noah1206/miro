@@ -118,6 +118,13 @@ export const POLICY = {
     minimumAge: DEV_DEFAULT(19),
   },
 
+  subscription: {
+    /** 결제 기간(일). 실제 PG 의 주기를 따르게 되며, Mock 은 이 값을 쓴다. */
+    periodDays: DEV_DEFAULT(30),
+    /** 가격은 Product Decision — 확정 전까지 숫자를 두지 않는다. */
+    priceLabel: 'TBD',
+  },
+
   retention: {
     /** 삭제 확정된 역할극을 복구 가능하게 보관하는 기간(일). 법적 정책 확정 전 임시값. */
     deletedSessionDays: DEV_DEFAULT(30),
