@@ -66,6 +66,9 @@ export const characters = pgTable('characters', {
   ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
   isOfficial: boolean('is_official').notNull().default(false),
 
+  /** 공식 캐릭터 식별용 안정 키. 재시드 시 중복 생성을 막는다. */
+  slug: text('slug').unique(),
+
   name: text('name').notNull(),
   age: integer('age'),
   nationality: text('nationality'),
@@ -86,6 +89,22 @@ export const characters = pgTable('characters', {
 
   socialPosition: text('social_position'),
   startingContext: text('starting_context'),
+
+  /** 카드/상세 화면 표시용. 긴 설정집을 강제하지 않는다 (명세서 2.1). */
+  role: text('role'),
+  relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
+  accentA: text('accent_a'),
+  accentB: text('accent_b'),
+
+  /**
+   * 시작 관계. 캐릭터마다 다른 출발점을 갖는다 (태윤=professional, 히사시=보호성향 높음).
+   * 세션 생성 시 relationships 행의 초기값으로 복사된다.
+   */
+  initialRelationship: jsonb('initial_relationship')
+    .$type<Record<string, number | string>>().notNull().default({}),
+
+  /** 시작 시각 표현. 세션의 최초 world_state 에 복사된다. */
+  startingTime: text('starting_time').notNull().default('저녁'),
 
   /** Quick Create 초안 자동 임시저장 (명세서 2.2 예외). */
   isDraft: boolean('is_draft').notNull().default(false),
