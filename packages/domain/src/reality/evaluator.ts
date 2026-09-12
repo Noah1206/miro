@@ -1,8 +1,8 @@
 import { POLICY } from '@miro/config'
-import type { ContactChannel, ContactProfile } from '../character/types.js'
-import type { RelationshipState } from '../relationship/types.js'
-import type { SimulationEvent } from '../event/types.js'
-import type { NotificationSettings, RealityContact, RealityIntent, SuppressReason } from './types.js'
+import type { ContactChannel, ContactProfile } from '../character/types'
+import type { RelationshipState } from '../relationship/types'
+import type { SimulationEvent } from '../event/types'
+import type { NotificationSettings, RealityContact, RealityIntent, SuppressReason } from './types'
 
 export type RealityInput = {
   intent: RealityIntent

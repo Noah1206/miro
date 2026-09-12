@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { filterSalient, selectRelevantMemories } from '../memory/salience.js'
-import type { Memory, MemoryCandidate } from '../memory/types.js'
+import { filterSalient, selectRelevantMemories } from '../memory/salience'
+import type { Memory, MemoryCandidate } from '../memory/types'
 
 function mem(sessionId: string, id: string, importance = 0.9): Memory {
   return {

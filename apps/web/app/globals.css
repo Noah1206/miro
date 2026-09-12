@@ -1,0 +1,34 @@
+/* MIRO Design Tokens — Dark Cinematic (지시서 §34) */
+:root {
+  --bg: #0E0E10;
+  --surface: #17171A;
+  --elevated: #202024;
+  --text-primary: #F5F5F7;
+  --text-secondary: #9B9BA1;
+  --border: #2A2A2F;
+  --accent: #C94F6D;
+  --accent-strong: #E05A7A;
+
+  /* Character Accent — 캐릭터별 정체성 */
+  --thomas-a: #A8C5DC;   --thomas-b: #C7CDD4;
+  --taeyun-a: #E8D5B0;   --taeyun-b: #B5AFA6;
+  --hisashi-a: #7A2E3C;  --hisashi-b: #4A1620;
+
+  --radius: 14px;
+  --font: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo',
+          system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }

@@ -3,7 +3,7 @@ import {
   RELATIONSHIP_DIMENSIONS,
   type RelationshipDelta,
   type RelationshipState,
-} from './types.js'
+} from './types'
 
 const { deltaClampPerTurn, dimensionMin, dimensionMax } = POLICY.relationship
 

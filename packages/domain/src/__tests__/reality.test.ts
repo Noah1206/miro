@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateRealityContact, inQuietHours } from '../reality/evaluator.js'
-import type { NotificationSettings } from '../reality/types.js'
-import type { RealityDecision, RealityInput } from '../reality/evaluator.js'
-import type { ContactProfile } from '../character/types.js'
-import type { RelationshipState } from '../relationship/types.js'
+import { evaluateRealityContact, inQuietHours } from '../reality/evaluator'
+import type { NotificationSettings } from '../reality/types'
+import type { RealityDecision, RealityInput } from '../reality/evaluator'
+import type { ContactProfile } from '../character/types'
+import type { RelationshipState } from '../relationship/types'
 
 const settings: NotificationSettings = {
   pushEnabled: true, voiceCallEnabled: true, videoCallEnabled: true,

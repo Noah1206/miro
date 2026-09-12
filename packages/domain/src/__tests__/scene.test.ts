@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSceneKey } from '../scene/types.js'
+import { buildSceneKey } from '../scene/types'
 
 describe('scene cache key', () => {
   it('T7: the same world state produces the same key (no silent background drift)', () => {

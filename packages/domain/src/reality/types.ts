@@ -1,4 +1,4 @@
-import type { ContactChannel } from '../character/types.js'
+import type { ContactChannel } from '../character/types'
 
 export type RealityContact = {
   id: string

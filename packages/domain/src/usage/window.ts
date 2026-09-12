@@ -1,5 +1,5 @@
 import { POLICY, type Plan } from '@miro/config'
-import type { UsageKind, UsageWindow, UsageDecision } from './types.js'
+import type { UsageKind, UsageWindow, UsageDecision } from './types'
 
 export function windowEnd(startedAt: Date): Date {
   return new Date(startedAt.getTime() + POLICY.usage.windowHours * 3600_000)

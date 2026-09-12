@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateNpcKnowledge, type Npc } from '../npc/types.js'
+import { validateNpcKnowledge, type Npc } from '../npc/types'
 
 const npc: Npc = {
   id: 'n1', sessionId: 's1', name: '이수현', role: 'coworker',

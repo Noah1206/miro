@@ -1,0 +1,22 @@
+'use server'
+
+import { redirect } from 'next/navigation'
+import { db, termsConsents, userSettings } from '@miro/db'
+import { requireUser } from '@/lib/auth'
+import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal'
+
+/** n10 — 약관 동의 완료. 동의 시 기본 설정(야간 연락 차단 포함)도 함께 생성한다. */
+export async function agreeToTerms(): Promise<void> {
+  const user = await requireUser()
+
+  await db.insert(termsConsents).values({
+    userId: user.id,
+    termsVersion: TERMS_VERSION,
+    privacyVersion: PRIVACY_VERSION,
+  })
+
+  // 명세서 5.1: 야간 선연락은 기본 차단. 스키마 기본값이 이를 보장한다.
+  await db.insert(userSettings).values({ userId: user.id }).onConflictDoNothing()
+
+  redirect('/welcome')
+}

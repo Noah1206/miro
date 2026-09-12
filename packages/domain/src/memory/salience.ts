@@ -1,5 +1,5 @@
 import { POLICY } from '@miro/config'
-import type { MemoryCandidate } from './types.js'
+import type { MemoryCandidate } from './types'
 
 /** 중요도 미만 후보는 장기 기억으로 승격하지 않는다. Memory != Conversation Log. */
 export function filterSalient(candidates: MemoryCandidate[]): MemoryCandidate[] {

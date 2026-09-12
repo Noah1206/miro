@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { applyRelationshipDelta, modulateByPersonality } from '../relationship/apply.js'
-import type { RelationshipState } from '../relationship/types.js'
+import { applyRelationshipDelta, modulateByPersonality } from '../relationship/apply'
+import type { RelationshipState } from '../relationship/types'
 
 function state(over: Partial<RelationshipState> = {}): RelationshipState {
   return {

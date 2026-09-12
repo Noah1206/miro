@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateEligibility, nextCooldownTurn, selectEvent } from '../event/eligibility.js'
-import type { EventCandidate, SimulationEvent } from '../event/types.js'
+import { evaluateEligibility, nextCooldownTurn, selectEvent } from '../event/eligibility'
+import type { EventCandidate, SimulationEvent } from '../event/types'
 
 function candidate(over: Partial<EventCandidate> = {}): EventCandidate {
   return { type: 'jealousy', context: {}, participantNpcIds: [], relevance: 0.9, salience: 0.9, ...over }

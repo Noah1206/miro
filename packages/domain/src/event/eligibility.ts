@@ -1,5 +1,5 @@
 import { POLICY } from '@miro/config'
-import type { EventCandidate, EventType, SimulationEvent } from './types.js'
+import type { EventCandidate, EventType, SimulationEvent } from './types'
 
 export type EligibilityInput = {
   candidate: EventCandidate

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { decide, openWindow, windowEnd, isWindowActive, costOf } from '../usage/window.js'
-import type { UsageWindow } from '../usage/types.js'
+import { decide, openWindow, windowEnd, isWindowActive, costOf } from '../usage/window'
+import type { UsageWindow } from '../usage/types'
 
 const T0 = new Date('2026-09-12T13:20:00Z')
 
