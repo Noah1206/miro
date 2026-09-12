@@ -6,6 +6,7 @@ import { db, messages, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
+import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 
 export type MediaState = { error: string | null; notice: string | null }
 
@@ -33,6 +34,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
       characterName: loaded.characterName,
       kind: 'photo',
       context,
+      usage: { userId: user.id },
     })
 
     await db.insert(messages).values({
@@ -49,7 +51,8 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
 
     revalidatePath(`/chat/${sessionId}`)
     return { error: null, notice: media.providerNotice }
-  } catch {
+  } catch (e) {
+    if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
     // 이미지 생성 실패 시 텍스트 역할극은 그대로 유지한다 (명세서 5.3 예외).
     return { error: '사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.', notice: null }
   }

@@ -7,6 +7,7 @@ import {
 } from '@miro/db'
 import { CharacterDraft, generateCharacterDraft, resolveLLM } from '@miro/providers'
 import { requireUser } from '@/lib/auth'
+import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 
 export type DraftState = {
   draft: CharacterDraft | null
@@ -16,7 +17,7 @@ export type DraftState = {
 
 /** 빠른 만들기 — 한 문장 → 편집 가능한 Draft. 확정값이 아니다. */
 export async function createDraft(_prev: DraftState, form: FormData): Promise<DraftState> {
-  await requireUser()
+  const user = await requireUser()
 
   const oneLiner = String(form.get('oneLiner') ?? '').trim()
   if (oneLiner.length < 4) {
@@ -28,9 +29,15 @@ export async function createDraft(_prev: DraftState, form: FormData): Promise<Dr
 
   const llm = resolveLLM()
   try {
-    const draft = await generateCharacterDraft(llm, oneLiner)
+    const draft = await guarded(
+      { userId: user.id, kind: 'characterDraft', idempotencyKey: `draft:${user.id}:${crypto.randomUUID()}` },
+      () => generateCharacterDraft(llm, oneLiner),
+    )
     return { draft, error: null, providerNotice: llm.info.notice }
-  } catch {
+  } catch (e) {
+    if (e instanceof UsageExceededError) {
+      return { draft: null, error: exceededMessage(e), providerNotice: llm.info.notice }
+    }
     return {
       draft: null,
       error: '캐릭터 초안을 만들지 못했습니다. 다시 시도해 주세요.',

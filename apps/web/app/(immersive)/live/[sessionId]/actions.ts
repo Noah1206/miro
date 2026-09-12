@@ -7,6 +7,7 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
+import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 
 export type LiveState = { error: string | null; notice: string | null }
 
@@ -30,10 +31,15 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
     if (!loaded) return { error: '장면을 찾을 수 없습니다.', notice: null }
 
     const llm = resolveRpLLM(loaded.characterName)
+    const turnIndex = loaded.snapshot.turnCount + 1
     let result
     try {
-      result = await runTurn({ llm, snapshot: loaded.snapshot, userInput: input })
-    } catch {
+      result = await guarded(
+        { userId: user.id, kind: 'liveScene', idempotencyKey: `live:${sessionId}:${turnIndex}` },
+        () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input }),
+      )
+    } catch (e) {
+      if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
       return { error: '응답을 생성하지 못했습니다.', notice: null }
     }
 
@@ -48,7 +54,7 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
       await commitTurn({
         sessionId,
         characterId: loaded.characterId,
-        turnIndex: loaded.snapshot.turnCount + 1,
+        turnIndex,
         userInput: input,
         responseText: renderBlocks(result.transition.blocks),
         blocks: result.transition.blocks,
@@ -89,9 +95,10 @@ export async function ensureSceneBackground(sessionId: string): Promise<string |
       kind: 'background',
       context,
       aspect: '16:9',
+      usage: { userId: user.id },
     })
     return media.url
   } catch {
-    return null   // 배경 실패해도 텍스트 장면은 유지한다
+    return null   // 배경 실패·한도 초과여도 텍스트 장면은 유지한다
   }
 }

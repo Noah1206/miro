@@ -1,6 +1,6 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: Phase 7 완료 → Phase 8 (Voice/Video Call) 진행 예정
+> **Status**: Phase 7·9 완료 → Phase 8 (Voice/Video Call) 진행 중
 > **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
@@ -52,7 +52,7 @@
 
 ## 2. PRD 대비 구현 상태
 
-**Phase 0–7 완료. 테스트 160 unit/integration + 16 e2e 통과, 빌드 clean.**
+**Phase 0–7, 9 완료. 테스트 169 unit/integration + 18 e2e 통과, 빌드 clean.**
 
 | # | 기능 영역 | 상태 | 비고 |
 |---|---|---|---|
@@ -61,7 +61,7 @@
 | 3 | 자유 역할극 대화 | **Implemented** | 1회 Structured Generation, 3가지 출력 스타일, 사건 카드 |
 | 4 | 세계·관계·사건 엔진 | **Implemented** | version lock, delta clamp, eligibility+cooldown, NPC 지식 경계, 사건 해결/NPC 등장 |
 | 5 | 현실 연동 및 몰입 미디어 | **Partial** | AI Photo·Background·Live Scene·**선연락(Web Push + Cron)** 완료. 통화(P8) 미구현 |
-| 6 | 사용량·구독 및 설정 | **Missing** | Usage domain 로직·테스트는 있으나 Guard가 호출부에 연결되지 않음 (P9) |
+| 6 | 사용량·구독 및 설정 | **Partial** | Usage Guard 6곳 연결, 5h 창, Free/Pro 자격, /my·/plans 완료. 설정 화면(P10)·결제(P13) 남음 |
 | 7 | 안전·권리 및 데이터 보호 | Missing | P10 |
 | 8 | 캐릭터 및 역할극 보관함 | Missing | P10. `/archive` 링크만 존재 |
 | 9 | 콘텐츠 신고 및 운영 대응 | Missing | P10, P11 |
@@ -69,7 +69,7 @@
 | 11 | 장기 기억 및 관계 맥락 | **Implemented** | 세션 격리, salience, dedupe, 중요도 기반 prune |
 | 12 | 계정 삭제 및 개인 데이터 처리 | Missing | P10. 스키마(`deleted_at`)는 준비됨 |
 
-**실제 적용 DB**: 20 테이블 / 6 migration (`0000_core` … `0005_reality`). 남은 것: `call_sessions`(P8), `usage_windows`·`usage_ledger`·`subscriptions`(P9), `reports`·`admin_actions`·`account_deletions`(P10–P11).
+**실제 적용 DB**: 23 테이블 / 7 migration (`0000_core` … `0006_usage`). 남은 것: `call_sessions`(P8), `reports`·`admin_actions`·`account_deletions`(P10–P11).
 
 ## 3. 구조적 리스크
 
@@ -256,8 +256,8 @@ JSONB 허용: `character_visual_identities.profile`, `world_states.snapshot`, `g
 | `0003_simulation` ✅ | P4 | events, npcs, memories, scenes |
 | `0004_media` ✅ | P6 | generated_media |
 | `0005_reality` ✅ | P7 | reality_contacts(dedupe UNIQUE), push_subscriptions, sessions.pending_reality_intent / reality_checked_at / character_status, contact_profiles.presentation, user_settings.time_zone |
-| `0006_calls` | P8 | call_sessions |
-| `0007_usage` | P9 | usage_windows, usage_ledger, subscriptions(자격만) |
+| `0007_calls` | P8 | call_sessions |
+| `0006_usage` ✅ | P9 | usage_windows, usage_ledger(idempotency UNIQUE), subscriptions(자격만) |
 | `0008_ops` | P10–P11 | reports, admin_actions, account_deletions |
 
 ---
@@ -361,7 +361,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 ### 9.3 E2E Scenario
 지시서 §37 Scenario 1–7 전부. **Scenario 3(Usage→Pro 전환)은 Phase 13까지 Pro 전환을 dev 토글로 대체.**
 
-**현재 상태** (Playwright 16개): Scenario 1 **완결**(가입→RP→앱 이탈→Cron→캐릭터 편지→재진입 상태 유지), Scenario 2 부분, Scenario 5(Quiet Hours — 통합 테스트), Scenario 6 부분. 통화·Usage 시나리오는 P8–P9.
+**현재 상태** (Playwright 18개): Scenario 1 **완결**, Scenario 2 부분, **Scenario 3 완결**(Free 한도→Pro 안내→dev 토글 Pro→/my 반영; 결제는 P13), Scenario 5(통합), Scenario 6 부분. 통화(4)는 P8.
 
 ---
 
@@ -377,14 +377,14 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | **P5** ✅ | World · Relationship · Event · NPC · Memory · State Transition · Scenario 6 검증 | P4 |
 | **P6** ✅ | Dynamic Scene · Background · AI Photo · Live Scene | P5 |
 | **P7** ✅ | Reality Activation · Web Push(VAPID) · Cron Scheduler(SKIP LOCKED claim) · World Translation(데이터) · timezone Quiet Hours | P5 |
-| **P8** ▶ | Voice Call · Video Call · Provider Layer · CallSession | P5 |
-| **P9** | Global Usage Guard 실제 정책 · Free/Pro **자격 모델** · 요금제 비교 화면 | P4 |
+| **P9** ✅ | Usage Guard(reserve/commit/rollback, advisory lock, idempotency) · Free/Pro 자격(effectivePlan) · /my · /plans · dev Pro 토글 | P4 |
+| **P8** ▶ | Voice Call · Video Call · Provider Layer · CallSession | P5, P9 |
 | **P10** | Archive · Settings · Quiet Hours · Adult Verification · Reporting · Account Delete | P5 |
 | **P11** | Web Admin (Report 검토 · RBAC · Audit Log) | P10 |
 | **P12** | Analytics · QA · Performance · E2E · Non-linear Test 게이트 | P1–P11 |
 | **P13** | **결제 시스템 연동** (PG · 구매 · 복원 · 해지 · Webhook) | P9, P12 |
 
-**⚠ 계획 이탈 — P4에서 UsageGuard no-op을 심지 않았다.** 결과적으로 P9에서 Provider 호출부 5곳을 직접 감싸야 한다: `chat/actions.ts`, `live/actions.ts`, `chat/media-actions.ts`, `create/actions.ts`, `lib/simulation/media.ts`. 호출부가 아직 적어 비용은 작지만, P7·P8에서 호출부를 더 늘리기 전에 **P9를 P7 직후로 당기는 것을 권장**한다.
+**계획 이탈 해소** — P9를 P7 직후로 당겨 실행했다. `guarded()` 한 함수가 호출부 6곳(chat, live, photo, create, media 생성, 선연락 사진은 정책상 무차감)을 감싼다. 이후 P8 통화 경로는 처음부터 이 함수를 쓴다.
 
 **P13 분리 근거**: Usage Guard는 `plan: 'free'|'pro'`만 읽으면 되고 그 값의 출처를 몰라도 된다. 결제는 `subscriptions`에 쓰는 주체만 추가하면 되므로 Domain 수정이 0이다. 개발 중 Pro 전환은 Admin/dev 토글(`DEV_DEFAULT`)로 처리.
 

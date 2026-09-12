@@ -4,6 +4,7 @@ import {
 } from '@miro/db'
 import { buildMediaKey, buildVisualPrompt, type MediaKind, type PhotoContext } from '@miro/domain'
 import { resolveImage } from '@miro/providers'
+import { guarded } from '@/lib/usage/guard'
 
 export type MediaResult = {
   id: string
@@ -46,6 +47,11 @@ export async function getOrGenerate(opts: {
   kind: MediaKind
   context: PhotoContext
   aspect?: '1:1' | '3:4' | '16:9'
+  /**
+   * 사용량 차감 주체. null 이면 차감하지 않는다 — 선연락 사진처럼 정책상 무차감인 경로.
+   * 캐시 적중은 어느 경우든 차감하지 않는다.
+   */
+  usage: { userId: string } | null
 }): Promise<MediaResult> {
   const identity = await activeVisualIdentity(opts.characterId)
   const context = { ...opts.context, visualVersion: identity.version }
@@ -69,11 +75,20 @@ export async function getOrGenerate(opts: {
     kind: opts.kind,
   })
 
-  const image = await resolveImage().generate({
+  const generate = () => resolveImage().generate({
     prompt,
     sceneKey: cacheKey,
     aspect: opts.aspect ?? (opts.kind === 'background' ? '16:9' : '3:4'),
   })
+  const usageKind = opts.kind === 'background' ? 'background'
+    : opts.kind === 'face_cast' ? 'faceCast'
+    : opts.kind === 'live_scene' ? 'liveScene' : 'photo'
+  const image = opts.usage
+    ? await guarded(
+        { userId: opts.usage.userId, kind: usageKind, idempotencyKey: `media:${opts.usage.userId}:${cacheKey}:${Date.now()}` },
+        generate,
+      )
+    : await generate()
 
   const [saved] = await db.insert(generatedMedia).values({
     sessionId: opts.sessionId,

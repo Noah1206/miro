@@ -13,6 +13,7 @@ import {
   resolveLLM, resolvePush,
 } from '@miro/providers'
 import { getOrGenerate } from '@/lib/simulation/media'
+import { shouldChargeRealityContact } from '@miro/domain'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string }
@@ -144,6 +145,8 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
             location: row.world.currentLocation, time: row.world.currentTime,
             mood: row.world.worldStatus ?? 'neutral', outfit: '', visualVersion: 0,
           },
+          // 단순 선연락은 무차감 우선 (명세서 정책 1). 정책값으로 제어한다.
+          usage: shouldChargeRealityContact() ? { userId: row.session.userId } : null,
         })
         mediaUrl = media.url
       }

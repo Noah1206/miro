@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef } from 'react'
 import { sendTurn, setOutputStyle, type TurnState } from './actions'
 
-const initial: TurnState = { error: null, notice: null }
+const initial: TurnState = { error: null, notice: null, limit: null }
 
 /**
  * 자유 RP 입력.
@@ -31,6 +31,9 @@ export function ChatComposer({ sessionId }: { sessionId: string }) {
       {state.error && (
         <p role="alert" style={{ fontSize: 12.5, color: 'var(--accent-strong)', margin: '0 0 8px' }}>
           {state.error}
+          {state.limit?.plan === 'free' && (
+            <> <a href="/plans" style={{ textDecoration: 'underline', marginLeft: 6 }}>Pro 알아보기</a></>
+          )}
         </p>
       )}
 

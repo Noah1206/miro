@@ -437,3 +437,52 @@ export const realityContacts = pgTable('reality_contacts', {
   dedupeUniq: uniqueIndex('reality_contacts_session_dedupe_uniq').on(t.sessionId, t.dedupeKey),
   sessionIdx: index('reality_contacts_session_status_idx').on(t.sessionId, t.status, t.sentAt),
 }))
+
+
+/* ─────────────── Usage & entitlement (M3) ─────────────── */
+
+/**
+ * 5시간 사용량 창. 창 시작 = 첫 생성 AI Request 시각 (소진 시점이 아니다).
+ * Free/Pro 는 같은 기능에 접근하고 limit 만 다르다.
+ */
+export const usageWindows = pgTable('usage_windows', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  plan: text('plan', { enum: ['free', 'pro'] }).notNull(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+  endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
+  consumed: integer('consumed').notNull().default(0),
+  limit: integer('limit').notNull(),
+}, (t) => ({ userIdx: index('usage_windows_user_ends_idx').on(t.userId, t.endsAt) }))
+
+/** 차감 원장. idempotency_key UNIQUE 가 이중 차감을 DB 레벨에서 막는다. */
+export const usageLedger = pgTable('usage_ledger', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  windowId: uuid('window_id').notNull().references(() => usageWindows.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  kind: text('kind').notNull(),
+  units: integer('units').notNull().default(1),
+  amount: integer('amount').notNull(),
+  idempotencyKey: text('idempotency_key').notNull().unique(),
+  status: text('status', { enum: ['reserved', 'committed', 'rolled_back'] }).notNull().default('reserved'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ windowIdx: index('usage_ledger_window_idx').on(t.windowId) }))
+
+/**
+ * 구독 자격. 결제(P13)는 이 행을 쓰는 주체일 뿐이며 Usage Guard 는 여기와 users.plan 만 읽는다.
+ * 해지 후에도 current_period_end 까지 Pro 자격을 유지한다 (명세서 10.3).
+ */
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  plan: text('plan', { enum: ['pro'] }).notNull().default('pro'),
+  status: text('status', { enum: ['active', 'cancelled', 'expired'] }).notNull(),
+  renewalStatus: text('renewal_status', { enum: ['auto', 'cancelled'] }).notNull().default('auto'),
+  currentPeriodStart: timestamp('current_period_start', { withTimezone: true }).notNull(),
+  currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }).notNull(),
+  /** 외부 결제 거래/구독 식별자. 복원(restore) 시 계정과 연결한다. */
+  externalRef: text('external_ref').unique(),
+  provider: text('provider'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})

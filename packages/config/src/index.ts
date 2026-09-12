@@ -24,6 +24,7 @@ export const POLICY = {
     weights: {
       textRP: DEV_DEFAULT(1),
       complexEvent: DEV_DEFAULT(2),
+      characterDraft: DEV_DEFAULT(3),
       photo: DEV_DEFAULT(10),
       faceCast: DEV_DEFAULT(15),
       background: DEV_DEFAULT(8),
