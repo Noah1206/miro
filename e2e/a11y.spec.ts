@@ -31,7 +31,7 @@ test.afterAll(() => {
 })
 
 test('public screens', async ({ page }) => {
-  for (const [path, name] of [['/onboarding', 'onboarding'], ['/login', 'login']] as const) { await page.goto(`${BASE}${path}`); await audit(page, name) }
+  for (const [path, name] of [['/login', 'login'], ['/auth/mock/google?state=x&redirect_uri=/api/auth/google/callback', 'mock-consent']] as const) { await page.goto(`${BASE}${path}`); await audit(page, name) }
 })
 test('signed-in screens', async ({ page }) => {
   const chat = await signupAndPlay(page)

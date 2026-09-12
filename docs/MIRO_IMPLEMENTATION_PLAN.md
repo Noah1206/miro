@@ -438,6 +438,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-40 | OAuth 는 SDK 없이 Authorization Code + state 쿠키 + PKCE(Google·Kakao) | 제공자 차이는 endpoint 와 프로필 파싱뿐이라 `OAuth2Provider` 하나로 충분하다. 관리자 콘솔은 별도 이메일·비밀번호 로그인을 유지한다 |
 | E-41 | 서체는 Toss Product Sans, 폴백 Pretendard. 세리프 display 역할 제거 | 사용자 결정. `--font-display` 는 `--font-body` 를 가리키고 `.t-name`/`.t-quote` 는 자간으로만 구분한다 |
 | E-42 | 로고는 원본 PNG(`public/logo-mark.png`) 를 `mix-blend-mode: screen` 으로 | 검정 판이 어두운 배경에 녹는다. Launch sequence 는 두 판 사이 사선을 `clip-path` 로 잘라 재현 |
+| E-44 | 온보딩 소개 화면(유저플로우 n3/n4) 은 두지 않는다 — `/` 는 곧바로 로그인 무대 | 사용자 결정 ("굳이 이 페이지 없어도 될듯"). 로고 Launch sequence 는 로그인 화면이 품는다: 검은 무대 → 로고 → 로고가 위로 물러나며(layout spring) 소셜 버튼. `/onboarding` 은 `/login` 으로 redirect. 핵심 가치 소개 문장은 캐릭터 상세·홈이 대신한다 |
 | E-43 | 등장은 `Page` 가 variant 트리의 뿌리 (`hidden`→`show`, staggerChildren 90ms, 등장 480ms). 공유 요소(PageHeader 줄·Card·Notice·Field·ToggleRow·Checkbox·Radio·Button·ButtonLink)는 `fadeUp` variants 만 들고 순서를 물려받는다 | 페이지마다 Reveal 을 끼우지 않아도 모든 화면·나중에 마운트되는 요소까지 같은 등장. `Pressable` 의 눌림은 MotionValue 로 옮겨 `animate` prop 을 비웠다 (variants 상속 조건). 컴포넌트를 거치지 않은 날것의 h1/h2/h3/p/label 은 CSS `text-in` 이 같은 부모 안에서 nth-child 순서로 받친다 (fill backwards — 끝나면 Motion 이 다시 인라인을 쥔다). Reduce Motion 이면 뿌리의 `initial=false` 가 전파되어 바로 있다 |
 
 ---

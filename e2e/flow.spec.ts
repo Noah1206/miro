@@ -9,8 +9,6 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
  */
 test('signup through entering a roleplay', async ({ page }) => {
   await page.goto(`${BASE}/`)
-  await expect(page).toHaveURL(/\/onboarding/)
-  await page.getByRole('link', { name: '시작하기' }).click()
   await expect(page).toHaveURL(/\/login/)
   // 가입/로그인이 나뉘지 않는다 — 소셜 버튼 하나. "계정이 없으신가요?" 는 안내를 펼친다.
   await page.getByRole('button', { name: '계정이 없으신가요?' }).click()

@@ -12,6 +12,8 @@ const config: NextConfig = {
   transpilePackages: ['@miro/domain', '@miro/db', '@miro/config', '@miro/providers', '@miro/engine'],
   poweredByHeader: false,
   async headers() { return [{ source: '/(.*)', headers: securityHeaders }] },
+  /** 온보딩 소개 페이지는 없앴다 (E-44). 옛 링크는 로그인 무대로. */
+  async redirects() { return [{ source: '/onboarding', destination: '/login', permanent: false }] },
 }
 
 export default config
