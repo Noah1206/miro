@@ -31,9 +31,16 @@ function options(url: string): postgres.Options<Record<string, never>> {
   const pooled = port === '6543' || hostname.includes('pooler')
   return {
     ssl: 'require',
+    // Transaction pooler 는 문장마다 연결이 바뀔 수 있어 named prepared statement 를 못 쓴다.
     prepare: !pooled,
-    // 서버리스 인스턴스가 각자 풀을 들고 있으면 Supabase 의 연결 한도를 금방 먹는다.
-    max: pooled ? 1 : 10,
+    /**
+     * 동시에 들어오는 요청 수만큼은 커넥션이 있어야 한다. 1 로 묶으면 한 요청이
+     * 트랜잭션을 연 사이 다른 요청이 풀을 기다리다 타임아웃한다 — 트랜잭션 안에서
+     * 커넥션을 하나 더 잡으려는 코드가 있으면 아예 자기 자신과 교착한다.
+     * Supabase pooler 가 뒤에서 실제 Postgres 연결을 이미 모아 주므로 이 값은 넉넉해도 된다.
+     * DB_POOL_MAX 로 배포 환경(서버리스는 낮게)에 맞춰 조정한다.
+     */
+    max: Number(process.env.DB_POOL_MAX ?? 10),
     idle_timeout: 20,
   }
 }

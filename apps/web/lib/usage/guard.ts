@@ -14,14 +14,21 @@ export class UsageExceededError extends Error {
 
 export type Reservation = { reservationId: string; cost: number; windowId: string; reused: boolean }
 
+/** `db` 또는 열려 있는 트랜잭션(tx) 어느 쪽으로도 읽을 수 있게. */
+type Reader = Pick<typeof db, 'select'>
+
 /**
  * 유효 요금제. 구독(active, 또는 해지됐지만 기간이 남은)이 있으면 pro.
  * 없으면 users.plan — P13 전까지는 dev 토글이 이 값을 쓴다.
+ *
+ * 트랜잭션 안에서 부를 때는 반드시 그 tx 를 넘긴다. 전역 `db` 로 읽으면 커넥션을
+ * 하나 더 요구하는데, 바깥 트랜잭션이 이미 advisory lock 을 쥔 채 풀을 점유하고 있어
+ * 풀 크기가 작으면(서버리스·pooler 환경의 max:1) 서로를 기다리다 멈춘다.
  */
-export async function effectivePlan(userId: string, now = new Date()): Promise<Plan> {
-  const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
+export async function effectivePlan(userId: string, now = new Date(), reader: Reader = db): Promise<Plan> {
+  const [sub] = await reader.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
   if (isEntitled(sub ? (sub as never) : null, now)) return 'pro'
-  const [u] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
+  const [u] = await reader.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
   return u?.plan ?? 'free'
 }
 
@@ -54,7 +61,7 @@ export async function reserve(opts: {
       .orderBy(desc(usageWindows.startedAt)).limit(1)
 
     if (!win || !isWindowActive(win, now)) {
-      const plan = await effectivePlan(opts.userId, now)
+      const plan = await effectivePlan(opts.userId, now, tx)
       ;[win] = await tx.insert(usageWindows).values(openWindow(opts.userId, plan, now)).returning()
     }
 

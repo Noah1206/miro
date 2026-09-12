@@ -66,7 +66,7 @@ export async function declineCall(userId: string, callId: string) {
       sessionId: call.sessionId, role: 'system', kind: 'call_record',
       content: `${label(call.channel)} 거절`,
       blocks: [{ type: 'call', callId, channel: call.channel, result: 'declined' }],
-      turnIndex: await turnOf(call.sessionId),
+      turnIndex: await turnOf(call.sessionId, tx),
     })
   })
 }
@@ -89,7 +89,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
         type: 'call', callId, channel: call.channel, result,
         startedAt: call.startedAt?.toISOString() ?? null, endedAt: endedAt.toISOString(), durationSec,
       }],
-      turnIndex: await turnOf(call.sessionId),
+      turnIndex: await turnOf(call.sessionId, tx),
     })
     await tx.update(roleplaySessions).set({ lastInteractionAt: endedAt })
       .where(eq(roleplaySessions.id, call.sessionId))
@@ -113,7 +113,7 @@ export async function expireCalls(now = new Date()) {
         sessionId: c.sessionId, role: 'system', kind: 'call_record',
         content: `부재중 ${label(c.channel)}`,
         blocks: [{ type: 'call', callId: c.id, channel: c.channel, result: 'missed' }],
-        turnIndex: await turnOf(c.sessionId),
+        turnIndex: await turnOf(c.sessionId, tx),
       })
     })
   }
@@ -164,8 +164,12 @@ export async function abortCall(userId: string, callId: string) {
   if (call.usageReservationId) await rollback(call.usageReservationId)
 }
 
-async function turnOf(sessionId: string) {
-  const [s] = await db.select({ t: roleplaySessions.turnCount }).from(roleplaySessions)
+/**
+ * 트랜잭션 안에서 부를 때는 그 tx 를 넘긴다 — 전역 `db` 로 읽으면 커넥션을 하나 더
+ * 요구하는데, 바깥 트랜잭션이 풀을 점유한 상태라 풀이 작으면 서로를 기다리다 멈춘다.
+ */
+async function turnOf(sessionId: string, reader: Pick<typeof db, 'select'> = db) {
+  const [s] = await reader.select({ t: roleplaySessions.turnCount }).from(roleplaySessions)
     .where(eq(roleplaySessions.id, sessionId)).limit(1)
   return s?.t ?? 0
 }
