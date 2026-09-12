@@ -15,7 +15,8 @@
     "@miro/db": "workspace:*",
     "@miro/domain": "workspace:*",
     "@miro/config": "workspace:*",
-    "drizzle-orm": "^0.36.4"
+    "drizzle-orm": "^0.36.4",
+    "@miro/providers": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.0.1",

@@ -35,6 +35,9 @@ importers:
       '@miro/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@miro/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
       drizzle-orm:
         specifier: ^0.36.4
         version: 0.36.4(@types/react@19.3.0)(postgres@3.4.9)(react@19.3.0)
@@ -81,6 +84,15 @@ importers:
       '@miro/config':
         specifier: workspace:*
         version: link:../config
+
+  packages/providers:
+    dependencies:
+      '@miro/config':
+        specifier: workspace:*
+        version: link:../config
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
 
 packages:
 
