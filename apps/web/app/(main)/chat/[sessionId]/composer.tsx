@@ -1,94 +1,40 @@
 'use client'
-
 import { useActionState, useEffect, useRef } from 'react'
-import { sendTurn, setOutputStyle, type TurnState } from './actions'
+import { AnimatePresence, motion } from 'motion/react'
+import { Pressable, StatusIcon, TextArea, TransitionLink } from '@/components/ui'
+import { tween } from '@/lib/motion/tokens'
+import { COPY } from '@/lib/copy'
+import { sendTurn, type TurnState } from './actions'
 
-const initial: TurnState = { error: null, notice: null, limit: null }
-
-/**
- * 자유 RP 입력.
- * 선택지를 강제하지 않는다 — 대사·행동·묘사·상황 지시를 자유롭게 섞어 쓴다.
- */
-export function ChatComposer({ sessionId }: { sessionId: string }) {
-  const [state, action, pending] = useActionState(sendTurn, initial)
+/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). */
+export function ChatComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
+  const [state, action, pending] = useActionState(sendTurn, { error: null, notice: null, limit: null } satisfies TurnState)
   const ref = useRef<HTMLFormElement>(null)
-
-  useEffect(() => {
-    if (!pending && !state.error) ref.current?.reset()
-  }, [pending, state.error])
+  const ta = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => { if (!pending && !state.error) { ref.current?.reset(); if (ta.current) ta.current.style.height = 'auto' } }, [pending, state.error])
 
   return (
-    <div style={{
-      position: 'sticky', bottom: 0, background: 'var(--bg)',
-      borderTop: '1px solid var(--border)', padding: '12px 16px',
-      paddingBottom: 'calc(12px + env(safe-area-inset-bottom))',
-    }}>
-      {state.notice && (
-        <p role="status" style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 8px' }}>
-          ⚠ {state.notice}
-        </p>
-      )}
-      {state.error && (
-        <p role="alert" style={{ fontSize: 12.5, color: 'var(--accent-strong)', margin: '0 0 8px' }}>
-          {state.error}
-          {state.limit?.plan === 'free' && (
-            <> <a href="/plans" style={{ textDecoration: 'underline', marginLeft: 6 }}>Pro 알아보기</a></>
-          )}
-        </p>
-      )}
-
+    <div style={{ position: 'sticky', bottom: 0, zIndex: 15, background: 'rgba(10,10,11,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid var(--color-border)', padding: '10px var(--space-4)', paddingBottom: 'calc(10px + env(safe-area-inset-bottom))' }}>
+      <AnimatePresence initial={false}>
+        {pending && <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>{characterName}이(가) 답을 고르고 있다…</motion.p>}
+        {state.notice && !pending && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {state.notice}</motion.p>}
+        {state.error && (
+          <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
+            {state.error}
+            {state.limit?.plan === 'free' && <> <TransitionLink href="/plans" style={{ textDecoration: 'underline', marginLeft: 6, color: 'var(--color-text-primary)' }}>Pro 알아보기</TransitionLink></>}
+          </motion.p>
+        )}
+      </AnimatePresence>
       <form ref={ref} action={action} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
         <input type="hidden" name="sessionId" value={sessionId} />
-        <textarea
-          name="input" rows={1} required maxLength={2000}
-          placeholder="대사, 행동, 묘사를 자유롭게…"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault()
-              e.currentTarget.form?.requestSubmit()
-            }
-          }}
-          style={{
-            flex: 1, padding: '12px 14px', background: 'var(--surface)',
-            border: '1px solid var(--border)', borderRadius: 12,
-            color: 'var(--text-primary)', fontSize: 14.5, fontFamily: 'inherit',
-            resize: 'none', lineHeight: 1.5, maxHeight: 140,
-          }}
-        />
-        <button type="submit" disabled={pending} aria-label="전송" style={{
-          width: 44, height: 44, flexShrink: 0, border: 'none', borderRadius: 12,
-          background: 'var(--accent)', color: 'var(--text-primary)',
-          fontSize: 16, cursor: pending ? 'wait' : 'pointer', opacity: pending ? 0.5 : 1,
-        }}>
-          {pending ? '…' : '↑'}
-        </button>
+        <TextArea ref={ta} name="input" rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
+          onInput={(e) => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 140)}px` }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit() } }}
+          style={{ resize: 'none', maxHeight: 140, borderRadius: 'var(--radius-md)', padding: '12px 14px' }} />
+        <Pressable type="submit" disabled={pending} aria-label={COPY.cta.send} style={{ width: 46, height: 46, flexShrink: 0, borderRadius: 'var(--radius-md)', border: '1px solid var(--color-white)', background: 'var(--color-white)', color: 'var(--color-black)', display: 'grid', placeItems: 'center' }}>
+          {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>}
+        </Pressable>
       </form>
-    </div>
-  )
-}
-
-const STYLES = [
-  { key: 'messenger', label: '메신저형' },
-  { key: 'balanced', label: '균형형' },
-  { key: 'narrative', label: '서사형' },
-] as const
-
-/** n29 — 출력 스타일 변경. */
-export function StylePicker({ sessionId, current }: { sessionId: string; current: string }) {
-  return (
-    <div style={{ display: 'flex', gap: 3 }}>
-      {STYLES.map((s) => (
-        <form key={s.key} action={setOutputStyle.bind(null, sessionId, s.key)}>
-          <button type="submit" aria-pressed={current === s.key} style={{
-            padding: '5px 8px', fontSize: 10.5, borderRadius: 7, cursor: 'pointer',
-            border: `1px solid ${current === s.key ? 'var(--accent)' : 'var(--border)'}`,
-            background: current === s.key ? 'var(--elevated)' : 'transparent',
-            color: current === s.key ? 'var(--text-primary)' : 'var(--text-secondary)',
-          }}>
-            {s.label}
-          </button>
-        </form>
-      ))}
     </div>
   )
 }

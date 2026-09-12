@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db, userSettings } from '@miro/db'
 import { currentUser } from '@/lib/auth'
+import { Page, PageHeader } from '@/components/ui'
 import { SettingsForm } from './form'
 
 export default async function SettingsPage() {
@@ -10,15 +10,9 @@ export default async function SettingsPage() {
   if (!user) redirect('/login')
   const [s] = await db.select().from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   return (
-    <main style={{ minHeight: '100dvh', padding: '24px 24px 60px', maxWidth: 520, margin: '0 auto' }}>
-      <Link href="/my" style={{ fontSize: 20, color: 'var(--text-secondary)' }}>‹</Link>
-      <h1 style={{ fontSize: 20, margin: '18px 0 20px' }}>알림 · 통화 · 야간 연락</h1>
-      <SettingsForm initial={{
-        pushEnabled: s?.pushEnabled ?? true, voiceCallEnabled: s?.voiceCallEnabled ?? true,
-        videoCallEnabled: s?.videoCallEnabled ?? true, quietHoursEnabled: s?.quietHoursEnabled ?? true,
-        quietHoursStart: s?.quietHoursStart ?? '23:00', quietHoursEnd: s?.quietHoursEnd ?? '08:00',
-        timeZone: s?.timeZone ?? 'Asia/Seoul',
-      }} />
-    </main>
+    <Page style={{ maxWidth: 520 }}>
+      <PageHeader back="/my" title="연락" lead="캐릭터가 언제, 어떻게 먼저 다가올 수 있는지." />
+      <SettingsForm initial={{ pushEnabled: s?.pushEnabled ?? true, voiceCallEnabled: s?.voiceCallEnabled ?? true, videoCallEnabled: s?.videoCallEnabled ?? true, quietHoursEnabled: s?.quietHoursEnabled ?? true, quietHoursStart: s?.quietHoursStart ?? '23:00', quietHoursEnd: s?.quietHoursEnd ?? '08:00', timeZone: s?.timeZone ?? 'Asia/Seoul' }} />
+    </Page>
   )
 }

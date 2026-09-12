@@ -39,7 +39,7 @@ test('signup through entering a roleplay', async ({ page }) => {
 
   // 세션이 생성되고 저장된 세계 상태가 복구되어야 한다
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
-  await expect(page.getByText('런던 구시가지')).toBeVisible()
+  await expect(page.getByText('런던 구시가지').first()).toBeVisible()
 })
 
 test('re-entering the same character continues the existing session', async ({ page }) => {

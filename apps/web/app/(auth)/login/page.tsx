@@ -1,68 +1,32 @@
 'use client'
-
 import { useActionState, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { Button, Input, LogoMark, Page, Tabs } from '@/components/ui'
+import { tween } from '@/lib/motion/tokens'
 import { authenticate, type AuthState } from './actions'
-
-const initial: AuthState = { error: null }
 
 export default function LoginPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
-  const [state, action, pending] = useActionState(authenticate, initial)
-
+  const [state, action, pending] = useActionState(authenticate, { error: null } satisfies AuthState)
   return (
-    <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-                   justifyContent: 'center', padding: 24, maxWidth: 420, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 28, letterSpacing: '0.2em', fontWeight: 300, margin: '0 0 40px' }}>
-        MIRO
-      </h1>
-
-      <div role="tablist" style={{ display: 'flex', gap: 4, marginBottom: 24 }}>
-        {(['login', 'signup'] as const).map((m) => (
-          <button key={m} role="tab" type="button" aria-selected={mode === m}
-            onClick={() => setMode(m)}
-            style={{
-              flex: 1, padding: '10px', cursor: 'pointer',
-              background: mode === m ? 'var(--elevated)' : 'transparent',
-              color: mode === m ? 'var(--text-primary)' : 'var(--text-secondary)',
-              border: '1px solid var(--border)', borderRadius: 10, fontSize: 14,
-            }}>
-            {m === 'login' ? '로그인' : '회원가입'}
-          </button>
-        ))}
-      </div>
-
-      <form action={action} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <Page style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: 420, paddingBottom: 'var(--space-7)' }}>
+      <div style={{ marginBottom: 'var(--space-7)' }}><LogoMark size={28} /></div>
+      <h1 className="sr-only">{mode === 'login' ? '로그인' : '회원가입'}</h1>
+      <Tabs id="auth" active={mode} onChange={(k) => setMode(k as 'login' | 'signup')} tabs={[{ key: 'login', label: '로그인' }, { key: 'signup', label: '회원가입' }]} />
+      <form action={action} className="stack" style={{ gap: 12, marginTop: 'var(--space-5)' }}>
         <input type="hidden" name="mode" value={mode} />
-        <input name="email" type="email" placeholder="이메일" required autoComplete="email"
-          style={inputStyle} />
-        <input name="password" type="password" placeholder="비밀번호 (8자 이상)" required
-          autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-          style={inputStyle} />
-
-        {state.error && (
-          <p role="alert" style={{ color: 'var(--accent-strong)', fontSize: 13, margin: '4px 0 0' }}>
-            {state.error}
-          </p>
-        )}
-
-        <button type="submit" disabled={pending} style={{
-          marginTop: 12, padding: 16, border: 'none', borderRadius: 'var(--radius)',
-          background: 'var(--accent)', color: 'var(--text-primary)',
-          fontWeight: 600, fontSize: 16, cursor: pending ? 'wait' : 'pointer',
-          opacity: pending ? 0.6 : 1,
-        }}>
-          {pending ? '처리 중…' : mode === 'login' ? '로그인' : '회원가입'}
-        </button>
+        <Input name="email" type="email" placeholder="이메일" aria-label="이메일" required autoComplete="email" />
+        <Input name="password" type="password" placeholder="비밀번호 (8자 이상)" aria-label="비밀번호" aria-describedby="pw-hint" required minLength={8} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
+        <p id="pw-hint" className="sr-only">8자 이상</p>
+        <AnimatePresence>
+          {state.error && (
+            <motion.p role="alert" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} className="t-caption" style={{ color: 'var(--color-danger)' }}>{state.error}</motion.p>
+          )}
+        </AnimatePresence>
+        <Button type="submit" variant="primary" size="lg" full status={pending ? 'loading' : 'idle'} style={{ marginTop: 8 }}>
+          {mode === 'login' ? '로그인' : '회원가입'}
+        </Button>
       </form>
-    </main>
+    </Page>
   )
-}
-
-const inputStyle: React.CSSProperties = {
-  padding: 14,
-  background: 'var(--surface)',
-  border: '1px solid var(--border)',
-  borderRadius: 10,
-  color: 'var(--text-primary)',
-  fontSize: 15,
 }

@@ -60,7 +60,7 @@ test('the character reaches out while the user is away, in the world\'s own idio
   await expect(page.locator('[data-reality-message]')).toBeVisible()
   await expect(page.getByText('토마스 · 편지')).toBeVisible()
   await expect(page.getByText('의뢰 건으로 왔습니다.')).toBeVisible()
-  await expect(page.getByText(/런던 구시가지/)).toBeVisible()
+  await expect(page.getByText(/런던 구시가지/).first()).toBeVisible()
 })
 
 test('the cron endpoint refuses calls without the secret', async ({ request }) => {

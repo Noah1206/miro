@@ -33,7 +33,7 @@ test('live scene continues the same simulation and returns to chat', async ({ pa
   await expect(page).toHaveURL(new RegExp(`/live/${sessionId}`))
 
   // Chat 과 같은 세계 상태를 쓴다
-  await expect(page.getByText(/런던 구시가지 · 저녁/)).toBeVisible()
+  await expect(page.getByText(/런던 구시가지 · 저녁/).first()).toBeVisible()
 
   // 제안 행동은 힌트일 뿐 — 자유 입력이 항상 가능하다
   await page.getByPlaceholder('무엇을 하시겠어요?').fill('창가로 걸어가 커튼을 걷는다.')

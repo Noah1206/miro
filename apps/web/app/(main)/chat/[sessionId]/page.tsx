@@ -1,202 +1,89 @@
 import { notFound, redirect } from 'next/navigation'
-import Link from 'next/link'
 import { and, asc, eq } from 'drizzle-orm'
 import { db, messages, realityContacts } from '@miro/db'
+import { stageLabel } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
-import { ChatComposer, StylePicker } from './composer'
-import { MediaBar } from './media-bar'
-import { IncomingCall } from '@/components/incoming-call'
 import { matureGateFor } from '@/lib/ops/safety'
 import { track } from '@/lib/analytics/track'
+import { Back, Chip } from '@/components/ui'
+import { COPY } from '@/lib/copy'
+import { IncomingCall } from '@/components/incoming-call'
+import { ChatComposer } from './composer'
+import { MediaBar } from './media-bar'
+import { MessageList, type Msg } from './messages'
+import { StylePicker } from './style-picker'
+import { ContextContent, ContextTrigger, type ContextData } from './context'
 
-export default async function ChatPage({
-  params,
-}: { params: Promise<{ sessionId: string }> }) {
+export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
-
   const { sessionId } = await params
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded) notFound()
 
   const [history, opened] = await Promise.all([
-    db.select().from(messages)
-      .where(eq(messages.sessionId, sessionId))
-      .orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
-    // 재진입 — 확인하지 않은 선연락을 열람 처리한다 (재진입 이벤트).
+    db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
-      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
-      .returning({ id: realityContacts.id }),
+      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))).returning({ id: realityContacts.id }),
   ])
   if (opened.length > 0) void track(user.id, 'reality_contact_opened', { sessionId, count: opened.length })
 
-  const { snapshot: s } = loaded
-  const activeEvent = s.activeEvents[0]
+  const s = loaded.snapshot
   const mature = await matureGateFor(user.id, loaded.characterId)
+  const ctx: ContextData = {
+    name: loaded.characterName, location: s.world.currentLocation, time: s.world.currentTime, status: loaded.characterStatus,
+    relationship: stageLabel(s.relationship.stage, s.relationship),
+    scene: s.scene ? { mood: s.scene.mood, weather: s.scene.weather } : null,
+    events: s.activeEvents.map((e) => ({ type: e.type, summary: String((e.continuationState as { summary?: string }).summary ?? e.type) })),
+    npcs: s.activeNpcs.map((n) => n.name),
+  }
+  const items: Msg[] = history.map((m) => ({
+    id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
+    content: m.hiddenAt ? '운영 정책에 따라 숨김 처리된 메시지입니다.' : m.content,
+    blocks: m.blocks as Array<Record<string, unknown>>,
+  }))
 
   return (
-    <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+    <main className="chat-layout">
       <IncomingCall userId={user.id} characterName={loaded.characterName} />
-      {/* 상단: 캐릭터 이름 + 현재 장소/상태 (명세서 3.1 표시) */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        padding: '14px 20px', borderBottom: '1px solid var(--border)',
-        background: 'var(--bg)', display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <Link href="/archive" style={{ fontSize: 19, color: 'var(--text-secondary)' }}>‹</Link>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontSize: 15.5, margin: 0, fontWeight: 600 }}>{loaded.characterName}</h1>
-          <p style={{
-            fontSize: 11.5, color: 'var(--text-secondary)', margin: '2px 0 0',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            {s.world.currentLocation} · {s.world.currentTime}
-            {s.world.worldStatus ? ` · ${s.world.worldStatus}` : ''}
-          </p>
-          {loaded.characterStatus && (
-            <p style={{ fontSize: 11, color: 'var(--accent-strong)', margin: '2px 0 0' }}>
-              {loaded.characterStatus}
+      <section className="chat-main">
+        <header className="chat-header" style={{ position: 'sticky', top: 0, zIndex: 15, padding: '10px var(--space-4)', background: 'rgba(10,10,11,0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--color-border)' }}>
+          <Back href="/archive" />
+          <ContextTrigger d={ctx}>
+            <h1 className="t-title-3 t-name" style={{ lineHeight: 1.2 }}>{loaded.characterName}</h1>
+            <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {s.world.currentLocation} · {s.world.currentTime}{s.world.worldStatus ? ` · ${s.world.worldStatus}` : ''}
             </p>
+            {loaded.characterStatus && <p className="t-caption" style={{ color: 'var(--color-text-primary)' }}>{loaded.characterStatus}</p>}
+          </ContextTrigger>
+          <StylePicker sessionId={sessionId} current={s.outputStyle} label={COPY.a11y.styleGroup} />
+        </header>
+
+        <div style={{ flex: 1, padding: 'var(--space-5) var(--space-4) var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {loaded.restricted && <p data-restricted role="status" className="t-caption" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>운영 정책에 따라 이 역할극은 제한되었습니다.</p>}
+          {history.length === 0 && s.character.worldRole.startingContext && (
+            <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.85, padding: 'var(--space-5) var(--space-3)' }}>{s.character.worldRole.startingContext}</p>
           )}
+          {s.activeEvents[0] && (
+            <aside style={{ padding: '14px 16px', borderLeft: '2px solid var(--color-relationship)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
+              <h2 className="t-micro" style={{ marginBottom: 4 }}>지금 이 세계에서</h2>
+              <p className="t-body t-quote">{ctx.events[0]!.summary}</p>
+            </aside>
+          )}
+          <MessageList items={items} characterName={loaded.characterName} />
         </div>
-        <StylePicker sessionId={sessionId} current={s.outputStyle} />
-      </header>
 
-      <div style={{ flex: 1, padding: '20px 20px 8px', display: 'flex',
-                    flexDirection: 'column', gap: 14 }}>
-        {history.length === 0 && (
-          <Opening text={s.character.worldRole.startingContext} />
-        )}
+        <MediaBar sessionId={sessionId} matureAllowed={mature.allowed} />
+        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
+      </section>
 
-        {activeEvent && <EventCard type={activeEvent.type} state={activeEvent.continuationState} />}
-
-        {loaded.restricted && (
-          <p data-restricted role="status" style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--accent-strong)' }}>운영 정책에 따라 이 역할극은 제한되었습니다.</p>
-        )}
-        {history.map((m) => (
-          <Bubble key={m.id} id={m.id} role={m.role} kind={m.hiddenAt ? 'hidden' : m.kind}
-                  content={m.hiddenAt ? '운영 정책에 따라 숨김 처리된 메시지입니다.' : m.content}
-                  blocks={m.blocks as Array<Record<string, unknown>>} />
-        ))}
-      </div>
-
-      <MediaBar sessionId={sessionId} matureAllowed={mature.allowed} />
-      <ChatComposer sessionId={sessionId} />
+      <aside className="chat-context" aria-label="관계와 세계">
+        <div style={{ position: 'sticky', top: 'var(--space-5)' }}>
+          <h2 className="t-title-3 t-name" style={{ marginBottom: 'var(--space-5)' }}>{loaded.characterName} <Chip tone="relationship" style={{ marginLeft: 6 }}>{ctx.relationship}</Chip></h2>
+          <ContextContent d={ctx} />
+        </div>
+      </aside>
     </main>
-  )
-}
-
-function RealityTag({ sender, channel }: { sender?: string; channel?: string }) {
-  return (
-    <p style={{ fontSize: 10.5, letterSpacing: '0.08em', color: 'var(--accent-strong)', margin: 0 }}>
-      {[sender, channel].filter(Boolean).join(' · ')}
-    </p>
-  )
-}
-
-function Opening({ text }: { text: string | null }) {
-  if (!text) return null
-  return (
-    <p style={{
-      fontSize: 13.5, lineHeight: 1.8, color: 'var(--text-secondary)',
-      textAlign: 'center', padding: '20px 12px', margin: 0,
-      borderBottom: '1px solid var(--border)',
-    }}>
-      {text}
-    </p>
-  )
-}
-
-/** 사건은 Chat 안의 카드로 표시한다 (명세서 4.2 표시). */
-function EventCard({ type, state }: { type: string; state: Record<string, unknown> }) {
-  const summary = typeof state.summary === 'string' ? state.summary : null
-  return (
-    <aside style={{
-      border: `1px solid var(--accent)`, borderRadius: 12, padding: '12px 14px',
-      background: 'var(--elevated)',
-    }}>
-      <p style={{ fontSize: 10.5, letterSpacing: '0.1em', color: 'var(--accent-strong)',
-                  margin: '0 0 4px' }}>
-        진행 중
-      </p>
-      <p style={{ fontSize: 13, margin: 0, lineHeight: 1.6 }}>{summary ?? type}</p>
-    </aside>
-  )
-}
-
-function ReportLink({ id, kind }: { id: string; kind: string }) {
-  // n30 — 개별 콘텐츠 단위 신고 진입점. 사용자 자신의 메시지는 신고 대상이 아니다.
-  return (
-    <Link href={`/report?type=${kind === 'photo' ? 'photo' : 'message'}&id=${id}`} aria-label="신고"
-      style={{ fontSize: 10.5, color: 'var(--text-secondary)', opacity: .7, alignSelf: 'flex-start', marginTop: 2 }}>신고</Link>
-  )
-}
-
-function Bubble({ id, role, kind, content, blocks }: {
-  id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>
-}) {
-  const mine = role === 'user'
-  const reality = blocks.find((b) => b.type === 'reality') as
-    { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
-
-  if (kind === 'photo') {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-        {reality && <RealityTag sender={reality.senderLabel} channel={reality.channelLabel} />}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={content} alt="캐릭터가 보낸 사진" style={{
-          maxWidth: '68%', borderRadius: 14, border: '1px solid var(--border)',
-          display: 'block',
-        }} />
-        {reality?.caption && (
-          <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>{reality.caption}</p>
-        )}
-        <ReportLink id={id} kind="photo" />
-      </div>
-    )
-  }
-
-  if (kind === 'hidden') {
-    return <p data-hidden-message style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>{content}</p>
-  }
-
-  if (kind === 'call_record') {
-    return (
-      <p data-call-record style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0' }}>
-        ☏ {content}
-      </p>
-    )
-  }
-
-  if (kind === 'reality_message') {
-    // 캐릭터가 먼저 보낸 연락. 세계관 표현(편지/문자/사내 메신저)을 함께 보여준다.
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 6 }}>
-        <RealityTag sender={reality?.senderLabel} channel={reality?.channelLabel} />
-        <div data-reality-message style={{
-          maxWidth: '82%', padding: '11px 14px', borderRadius: 14,
-          background: 'var(--elevated)', border: '1px solid var(--accent)',
-          fontSize: 14.5, lineHeight: 1.72, whiteSpace: 'pre-wrap',
-        }}>
-          {content}
-        </div>
-        <ReportLink id={id} kind="message" />
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start' }}>
-      <div style={{
-        maxWidth: '82%', padding: '11px 14px', borderRadius: 14,
-        background: mine ? 'var(--accent)' : 'var(--surface)',
-        border: mine ? 'none' : '1px solid var(--border)',
-        fontSize: 14.5, lineHeight: 1.72, whiteSpace: 'pre-wrap',
-      }}>
-        {content}
-      </div>
-      {!mine && <ReportLink id={id} kind="message" />}
-    </div>
   )
 }

@@ -7,6 +7,7 @@ import { owned } from '@/lib/call/service'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { CallComposer, HangUp } from './ui'
+import { CharacterText } from '@/components/scene/text'
 
 /** 음성/영상 통화 화면. 채널은 수락 전에 정해져 있으므로 여기서 바뀌지 않는다. */
 export default async function CallPage({ params }: { params: Promise<{ callId: string }> }) {
@@ -44,30 +45,21 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
     .reverse()
 
   return (
-    <main data-call-channel={call.channel} style={{
-      minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-      background: face ? `linear-gradient(rgba(14,14,16,.35), rgba(14,14,16,.92)), url(${face}) center/cover` : 'var(--bg)',
+    <main data-call-channel={call.channel} className="page page--immersive" style={{
+      minHeight: '100dvh', display: 'flex', flexDirection: 'column', position: 'relative', background: 'var(--color-bg-deep)',
     }}>
-      <header style={{ padding: '28px 24px 8px', textAlign: 'center' }}>
-        <p style={{ fontSize: 11.5, letterSpacing: '0.14em', color: 'var(--text-secondary)', margin: 0 }}>
-          {call.channel === 'voice' ? '음성통화' : '영상통화'} · {loaded.snapshot.world.currentLocation}
-        </p>
-        <h1 style={{ fontSize: 26, margin: '8px 0 0', fontWeight: 600 }}>{loaded.characterName}</h1>
-        {media.mode === 'mock' && (
-          <p role="status" style={{ fontSize: 11.5, color: 'var(--text-secondary)', marginTop: 10 }}>⚠ {provider.info.notice}</p>
-        )}
+      {face && <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url(${face})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
+      <div aria-hidden style={{ position: 'absolute', inset: 0, background: face ? 'linear-gradient(to top, rgba(0,0,0,0.94) 30%, rgba(0,0,0,0.35))' : 'transparent' }} />
+      <header style={{ position: 'relative', padding: '32px 24px 8px', textAlign: 'center' }}>
+        <p className="t-micro">{call.channel === 'voice' ? '음성통화' : '영상통화'} · {loaded.snapshot.world.currentLocation}</p>
+        <h1 className="t-display t-name" style={{ marginTop: 10 }}>{loaded.characterName}</h1>
+        {media.mode === 'mock' && <p role="status" className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>⚠ {provider.info.notice}</p>}
       </header>
-
-      <div style={{ flex: 1, padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 10 }}>
-        {lines.map((m) => (
-          <p key={m.id} style={{
-            margin: 0, fontSize: m.role === 'user' ? 14 : 16, lineHeight: 1.7,
-            color: m.role === 'user' ? 'var(--text-secondary)' : 'var(--text-primary)',
-            textAlign: m.role === 'user' ? 'right' : 'left', textShadow: '0 1px 10px rgba(0,0,0,.6)',
-          }}>{m.content.replace(/^[^:]+: /, '')}</p>
-        ))}
+      <div style={{ position: 'relative', flex: 1, padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 12, maxWidth: 560, width: '100%', margin: '0 auto' }}>
+        {lines.map((m) => m.role === 'user'
+          ? <p key={m.id} className="t-caption" style={{ textAlign: 'right', color: 'var(--color-text-secondary)' }}>{m.content}</p>
+          : <div key={m.id} style={{ textShadow: '0 1px 10px rgba(0,0,0,.7)' }}><CharacterText content={m.content} name={loaded.characterName} size="lg" /></div>)}
       </div>
-
       <CallComposer callId={callId} />
       <HangUp callId={callId} />
     </main>

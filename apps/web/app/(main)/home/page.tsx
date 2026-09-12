@@ -1,85 +1,53 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
-import { listOfficials, type OfficialCard } from '@/lib/characters'
+import { featuredFor } from '@/lib/home'
+import { ButtonLink, Chip, LogoMark, Page, Reveal, TransitionLink } from '@/components/ui'
+import { COPY } from '@/lib/copy'
+import { CharacterVisual } from '@/components/character-visual'
 import { PushSubscribe } from '@/components/push-subscribe'
-import { TabBar } from '@/components/tab-bar'
 import { IncomingCall } from '@/components/incoming-call'
+import { WorldPager } from './pager'
 
+/** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다. 화면의 대부분을 한 사람이 차지한다 (DESIGN §9). */
 export default async function Home() {
   const user = await currentUser()
   if (!user) redirect('/login')
-
-  const officials = await listOfficials()
+  const { featured: f, others } = await featuredFor(user.id)
 
   return (
-    <main style={{ minHeight: '100dvh', paddingBottom: 96 }}>
+    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       <IncomingCall userId={user.id} />
-      <header style={{ padding: '28px 24px 20px' }}>
-        <h1 style={{ fontSize: 22, letterSpacing: '0.2em', fontWeight: 300, margin: 0 }}>
-          MIRO
-        </h1>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-5) var(--space-4)', maxWidth: 720, margin: '0 auto' }}>
+        <LogoMark size={22} />
+        <p className="t-micro">{f.sessionId ? '이어지는 인연' : <span lang="en">MIRO ORIGINALS</span>}</p>
       </header>
 
-      <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
-
-      <section style={{ padding: '0 24px' }}>
-        <h2 style={{ fontSize: 13, letterSpacing: '0.14em', color: 'var(--text-secondary)',
-                     margin: '0 0 16px', fontWeight: 500 }}>
-          MIRO ORIGINALS
-        </h2>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-          {officials.map((c) => <Poster key={c.id} character={c} />)}
-        </div>
-      </section>
-
-      <section style={{ padding: '32px 24px 0' }}>
-        <Link href="/create" style={{
-          display: 'block', padding: 20, textAlign: 'center',
-          background: 'var(--surface)', border: '1px dashed var(--border)',
-          borderRadius: 'var(--radius)', color: 'var(--text-secondary)', fontSize: 14,
-        }}>
-          내 캐릭터 만들기
-        </Link>
-      </section>
-
-      <TabBar />
-    </main>
-  )
-}
-
-/** 프리미엄 작품 포스터형 카드. 캐릭터별 accent 로 정체성을 구분한다. */
-function Poster({ character: c }: { character: OfficialCard }) {
-  const a = c.accentA ?? 'var(--accent)'
-  const b = c.accentB ?? 'var(--accent-strong)'
-
-  return (
-    <Link href={`/character/${c.slug}`} style={{ display: 'block' }}>
-      <article style={{
-        position: 'relative', height: 220, borderRadius: 'var(--radius)',
-        overflow: 'hidden', border: '1px solid var(--border)',
-        background: `linear-gradient(150deg, ${a}22 0%, ${b}14 45%, var(--surface) 100%)`,
-      }}>
-        <div style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(to top, rgba(14,14,16,0.94) 22%, transparent 72%)',
-        }} />
-        <div style={{ position: 'absolute', left: 20, right: 20, bottom: 18 }}>
-          <p style={{ fontSize: 11.5, letterSpacing: '0.1em', color: b, margin: '0 0 6px' }}>
-            {c.role}
-          </p>
-          <h3 style={{ fontSize: 26, margin: '0 0 10px', fontWeight: 600 }}>{c.name}</h3>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {c.relationshipKeywords.map((k) => (
-              <span key={k} style={{
-                fontSize: 11, padding: '4px 9px', borderRadius: 999,
-                border: `1px solid ${a}55`, color: 'var(--text-secondary)',
-              }}>{k}</span>
-            ))}
+      <section style={{ padding: '0 var(--space-5)', maxWidth: 720, margin: '0 auto' }}>
+        <TransitionLink href={`/character/${f.slug}`} aria-label={COPY.a11y.hero(f.name)} style={{ display: 'block' }}>
+          <CharacterVisual name={f.name} accent={f.accentA} slug={f.slug} ratio="4 / 5" />
+        </TransitionLink>
+        <Reveal delay={0.08}>
+          <div className="stack" style={{ gap: 8, padding: 'var(--space-5) 2px 0' }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span className="t-caption">{f.role}</span>
+              {f.relationship && <Chip tone="relationship">{f.relationship}</Chip>}
+            </div>
+            <TransitionLink href={`/character/${f.slug}`}><h1 className="t-hero t-name">{f.name}</h1></TransitionLink>
+            {f.situation && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)' }}>“{f.situation}”</p>}
+            <div style={{ marginTop: 'var(--space-3)' }}>
+              <ButtonLink href={f.sessionId ? `/chat/${f.sessionId}` : `/character/${f.slug}`} variant="primary" size="lg" full>{f.sessionId ? COPY.cta.continueWorld : COPY.cta.enterWorld}</ButtonLink>
+            </div>
           </div>
+        </Reveal>
+        <div style={{ margin: 'var(--space-6) 0' }}>
+          <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
         </div>
-      </article>
-    </Link>
+      </section>
+
+      <Reveal inView as="section" style={{ maxWidth: 720, margin: '0 auto' }}>
+        <h2 className="t-micro" style={{ padding: '0 var(--space-5) var(--space-4)' }}>다른 세계</h2>
+        <WorldPager items={others} />
+      </Reveal>
+    </Page>
   )
 }

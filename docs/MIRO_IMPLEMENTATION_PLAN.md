@@ -1,6 +1,6 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: **Phase 0–13 전부 완료 — Launch v1 구현 종료.** 남은 것은 Product Decision(Provider 선택·가격·한도)과 배포 설정뿐
+> **Status**: **Phase 0–13 완료 + UI 리디자인(DESIGN.md) + Motion System + WCAG 2.2 AA 패스 완료.** 남은 것은 Product Decision(Provider 선택·가격·한도)과 배포 설정뿐
 > **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
@@ -422,6 +422,16 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-24 | 결제 결과는 항상 `applyPaymentEvent` 한 경로 | 실 webhook 과 Mock 시뮬레이션이 같은 함수를 탄다. 자격 로직이 둘로 갈라지지 않음 |
 | E-25 | 구매 시 **현재** 사용량 창의 한도를 Pro 로 올린다 | 명세서 10.2 "결제 성공 후 Pro 사용량 적용". 한도에 막혀 결제한 사용자가 다음 창까지 기다리지 않게 |
 | E-26 | webhook 중복 판정은 트랜잭션 안에서 select-먼저 | tx 안의 UNIQUE 위반은 tx 전체를 abort 하므로 catch 로 복구 불가. UNIQUE 인덱스는 동시 레이스의 안전망 |
+| E-27 | 디자인 SoT = `docs/DESIGN.md`, 문장 SoT = `docs/COPY.md` + `lib/copy.ts` | 토큰은 `globals.css` `:root` 한 곳. 페이지는 inline 색값을 쓰지 않는다 |
+| E-28 | Motion = `lib/motion/tokens.ts` 하나의 언어 | duration 120/220/360/520, ease standard/enter/exit, spring quick/default/gentle(전부 과감쇠). Bounce 없음. `MotionConfig reducedMotion="user"` + CSS media 로 이중 보장 |
+| E-29 | 페이지 전환 = View Transition API + `html[data-nav]` 방향, 공유 요소 = `view-transition-name` | 라이브러리 없이 표준. 미지원/감소 모션이면 즉시 이동. `?now=`처럼 dev 전용 훅 없음 |
+| E-30 | 캐러셀은 CSS scroll-snap, Motion 은 인디케이터(layoutId)만 | 스냅·관성·러버밴드는 플랫폼이 더 잘한다. 키보드 Tab 으로 카드 간 이동 가능 |
+| E-31 | 접근성: `--color-text-tertiary` 를 #6E6E75 → #8A8A92 (3.9:1 → 5.8:1) | DESIGN.md 값에서 유일하게 벗어난 토큰. 원값은 `--color-text-quaternary` 로 장식 전용. 폼 경계는 `--color-border-input` #62626A (3.2:1) |
+| E-32 | `<a>` 안에 `<button>` 금지 → `ButtonLink` | 중첩 인터랙티브는 스크린리더/키보드를 깨뜨린다. 눌림 반응은 CSS `:active` 로 동일하게 |
+| E-33 | `usePress` 는 setPointerCapture 를 쓰지 않는다 | 부모 캡처가 자식 링크의 click 을 삼켰다(신고 링크·관리자 플로우 실패의 원인) |
+| E-34 | 스케줄러의 `?now=` 는 판단 시각만 바꾼다; 만료·정리는 벽시계 | 자정 이후 고정 시각(14:00)이 생성 시각보다 과거가 되어 방금 만든 통화가 부재중 처리됐다 |
+| E-35 | `chat/[sessionId]` 에는 `loading.tsx` 를 두지 않는다 | 스트리밍 셸이 200 을 먼저 보내 `notFound()` 의 404 가 사라진다. 삭제된 인연은 진짜 404 여야 한다 |
+| E-36 | E2E 는 모바일 뷰포트(390×844) + reducedMotion | 모바일 우선 제품. 데스크톱 컨텍스트 패널 때문에 같은 텍스트가 두 곳에 보이면 `.first()` |
 
 ---
 

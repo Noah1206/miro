@@ -1,10 +1,10 @@
 {
   "name": "MIRO",
   "short_name": "MIRO",
-  "description": "AI 캐릭터 세계 경험",
+  "description": "한 사람의 세계 안으로",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0E0E10",
-  "theme_color": "#0E0E10",
+  "background_color": "#0A0A0B",
+  "theme_color": "#0A0A0B",
   "icons": []
 }

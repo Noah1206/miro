@@ -25,7 +25,7 @@ export type SchedulerRun = {
  * ponytail: 단일 UPDATE … SKIP LOCKED 로 claim. 워커가 여럿이어도 같은 세션을 두 번 잡지 않는다.
  * 세션이 수십만 건이 되면 realityCheckedAt 에 부분 인덱스를 추가한다.
  */
-export async function runRealityScheduler(now = new Date()): Promise<SchedulerRun> {
+export async function runRealityScheduler(now = new Date(), wall = new Date()): Promise<SchedulerRun> {
   const { idleMinutesBeforeContact, recheckMinutes, batchSize } = POLICY.reality
 
   const iso = (d: Date) => d.toISOString()
@@ -62,8 +62,10 @@ export async function runRealityScheduler(now = new Date()): Promise<SchedulerRu
     }
   }
 
-  const calls = await expireCalls(now)
-  const purged = await purgeDeleted(now)   // 보존 기간이 지난 삭제 역할극 영구 삭제
-  const expiredSubscriptions = await expireSubscriptions(now)
+  // 정리 작업은 벽시계로 돈다. `now` 는 판단 시각(활동 시간·Quiet Hours)만 바꾸는 값이며,
+  // 생성 시각(실제 시각)과 비교하는 만료 판정에 섞이면 방금 만든 통화가 부재중이 된다.
+  const calls = await expireCalls(wall)
+  const purged = await purgeDeleted(wall)   // 보존 기간이 지난 삭제 역할극 영구 삭제
+  const expiredSubscriptions = await expireSubscriptions(wall)
   return { claimed: claimed.length, results, errors, calls, purged, expiredSubscriptions }
 }

@@ -1,34 +1,165 @@
-/* MIRO Design Tokens — Dark Cinematic (지시서 §34) */
+/* MIRO — Dark Cinematic × Human × Sharp Minimal  (docs/DESIGN.md) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
 :root {
-  --bg: #0E0E10;
-  --surface: #17171A;
-  --elevated: #202024;
-  --text-primary: #F5F5F7;
-  --text-secondary: #9B9BA1;
-  --border: #2A2A2F;
-  --accent: #C94F6D;
-  --accent-strong: #E05A7A;
+  color-scheme: dark;
 
-  /* Character Accent — 캐릭터별 정체성 */
-  --thomas-a: #A8C5DC;   --thomas-b: #C7CDD4;
-  --taeyun-a: #E8D5B0;   --taeyun-b: #B5AFA6;
-  --hisashi-a: #7A2E3C;  --hisashi-b: #4A1620;
+  /* color */
+  --color-bg: #0A0A0B;         --color-bg-deep: #000000;
+  --color-surface-1: #111113;  --color-surface-2: #17171A;  --color-surface-3: #1D1D21;
+  --color-border: #27272B;     --color-border-strong: #35353A; --color-border-hover: #3A3A40;
+  --color-text-primary: #F7F7F8; --color-text-secondary: #A1A1A8;
+  --color-text-tertiary: #8A8A92; --color-text-quaternary: #6E6E75; --color-text-disabled: #4D4D52;
+  /* 폼 경계는 3:1 이상이어야 한다 (1.4.11). 장식 테두리(--color-border)와 구분한다. */
+  --color-border-input: #62626A;
+  --color-white: #FFFFFF; --color-black: #000000;
+  --color-relationship: #D85C79; --color-danger: #E65A5A; --color-success: #5CBF88;
 
-  --radius: 14px;
-  --font: -apple-system, BlinkMacSystemFont, 'Pretendard', 'Apple SD Gothic Neo',
-          system-ui, sans-serif;
+  /* type */
+  --font-body: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
+  --font-display: var(--font-display-serif), 'Pretendard Variable', serif;
+  --font-hero: clamp(34px, 9.5vw, 48px); --font-display-size: clamp(28px, 8vw, 36px); --font-title-1: 28px; --font-title-2: 22px;
+  --font-title-3: 18px; --font-body-lg: 17px; --font-body-size: 15px; --font-caption: 13px; --font-micro: 11px;
+  --weight-regular: 400; --weight-medium: 500; --weight-semibold: 600; --weight-bold: 700;
+
+  /* radius — sharp minimal, never pill by default */
+  --radius-xs: 6px; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px;
+  --radius-button: 10px; --radius-sheet: 18px;
+
+  /* space — 8px grid, generous */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
+  --space-6: 32px; --space-7: 48px; --space-8: 64px; --space-9: 96px;
+
+  /* motion — flow & tension, not bounce */
+  --motion-fast: 120ms; --motion-normal: 220ms; --motion-slow: 360ms; --motion-scene: 520ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
+  --nav-h: 64px; --side-nav-w: 220px;
 }
 
-* { box-sizing: border-box; }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-  color: var(--text-primary);
-  font-family: var(--font);
-  -webkit-font-smoothing: antialiased;
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: calc(var(--nav-h) + 24px); scroll-padding-top: 72px; }
+html, body { margin: 0; padding: 0; min-height: 100%; background: var(--color-bg); color: var(--color-text-primary); }
+body {
+  font-family: var(--font-body); font-size: var(--font-body-size); line-height: 1.6;
+  font-weight: var(--weight-regular); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
 }
-
 a { color: inherit; text-decoration: none; }
-button { font-family: inherit; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+img { display: block; max-width: 100%; }
+h1, h2, h3, p { margin: 0; }
+:focus-visible { outline: 2px solid var(--color-white); outline-offset: 3px; border-radius: var(--radius-xs); }
+/* 어두운 면 위의 흰 링이 배경과 겹칠 때를 위해 바깥에 검은 테두리 한 겹 (2.4.13 방향) */
+button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 0 0 5px var(--color-bg); }
+
+/* 시각적으로 숨기되 스크린리더에는 남긴다 */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 10px 14px; background: var(--color-white); color: var(--color-black); border-radius: var(--radius-sm); font-weight: var(--weight-semibold); transform: translateY(-160%); transition: transform var(--motion-fast) var(--ease-standard); }
+.skip-link:focus { transform: none; }
+::selection { background: rgba(247, 247, 248, 0.18); }
+
+/* typography roles */
+.t-hero    { font: var(--weight-bold) var(--font-hero)/1.08 var(--font-display); letter-spacing: -0.02em; }
+.t-display { font: var(--weight-bold) var(--font-display-size)/1.12 var(--font-display); letter-spacing: -0.02em; }
+.t-title-1 { font-size: var(--font-title-1); font-weight: var(--weight-semibold); line-height: 1.2; letter-spacing: -0.015em; }
+.t-title-2 { font-size: var(--font-title-2); font-weight: var(--weight-semibold); line-height: 1.25; letter-spacing: -0.01em; }
+.t-title-3 { font-size: var(--font-title-3); font-weight: var(--weight-semibold); line-height: 1.3; }
+.t-body-lg { font-size: var(--font-body-lg); line-height: 1.65; }
+.t-body    { font-size: var(--font-body-size); line-height: 1.6; }
+.t-caption { font-size: var(--font-caption); line-height: 1.5; color: var(--color-text-secondary); }
+.t-micro   { font-size: var(--font-micro); line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-tertiary); font-weight: var(--weight-medium); }
+.t-name    { font-family: var(--font-display); font-weight: var(--weight-bold); letter-spacing: -0.01em; }
+.t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); }
+
+/* layout */
+.page { min-height: 100dvh; padding: var(--space-5) var(--space-5) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
+.page--immersive { max-width: none; padding: 0; }
+.stack { display: flex; flex-direction: column; }
+.hairline { height: 1px; background: var(--color-border); border: 0; margin: 0; }
+
+/* reduced motion — the whole system respects it (Motion honours it via MotionConfig too) */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+}
+
+/* page transitions — View Transition API. fade + translateY 12px; direction from html[data-nav] */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--motion-normal); animation-timing-function: var(--ease-standard); mix-blend-mode: normal; }
+::view-transition-old(root) { animation-name: vt-out; }
+::view-transition-new(root) { animation-name: vt-in-forward; }
+html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
+@keyframes vt-out { to { opacity: 0; } }
+@keyframes vt-in-forward { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes vt-in-back { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+/* shared element (character hero) — the browser morphs old→new box for us */
+::view-transition-group(*) { animation-duration: var(--motion-scene); animation-timing-function: var(--ease-enter); }
+
+/* skeleton */
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.skeleton { position: relative; overflow: hidden; background: var(--color-surface-2); border-radius: var(--radius-sm); }
+.skeleton::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); animation: shimmer 1.4s var(--ease-standard) infinite;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.045), transparent); }
+
+/* scene scrim — the one gradient we allow: readability over character imagery */
+.scrim { background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
+
+/* horizontal pager — native scroll-snap does momentum + snap; Motion only draws the indicator */
+.pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); touch-action: pan-x pan-y; }
+.pager::-webkit-scrollbar { display: none; }
+.pager > * { scroll-snap-align: start; flex: 0 0 82%; }
+
+/* pointer-aware hover: never on touch */
+@media (hover: hover) and (pointer: fine) {
+  .hoverable { transition: border-color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard); }
+  .hoverable:hover { border-color: var(--color-border-hover); }
+}
+
+/* desktop: left navigation + main; chat adds a context column */
+@media (min-width: 1024px) {
+  .app-shell { display: grid; grid-template-columns: var(--side-nav-w) 1fr; min-height: 100dvh; }
+  .page { padding-bottom: var(--space-8); max-width: 720px; }
+  .page--immersive { max-width: none; }
+}
+
+/* fields */
+.field { border-color: var(--color-border-input) !important; }
+.field:focus { border-color: var(--color-white) !important; }
+.field::placeholder { color: var(--color-text-tertiary); }
+.field:disabled { color: var(--color-text-disabled); }
+
+/* nav */
+.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around;
+  background: rgba(10,10,11,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--color-border); padding-bottom: env(safe-area-inset-bottom); }
+.nav__item { flex: 1; display: flex; justify-content: center; padding: 8px 0; min-height: 48px; }
+.nav__inner { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; padding: 4px 8px; }
+@media (min-width: 1024px) {
+  .nav { position: sticky; top: 0; height: 100dvh; width: var(--side-nav-w); flex-direction: column; justify-content: flex-start; gap: 6px; padding: 32px 16px; border-top: 0; border-right: 1px solid var(--color-border); }
+  .nav__item { flex: 0; width: 100%; justify-content: flex-start; padding: 0; }
+  .nav__inner { flex-direction: row; gap: 12px; padding: 10px 12px; width: 100%; border-radius: var(--radius-sm); }
+  .nav__inner > span:first-of-type { font-size: var(--font-body-size) !important; }
+  .nav__inner > span[style*="position: absolute"] { display: none; }
+}
+
+/* chat: mobile = one column; desktop = scene + context panel (DESIGN §31, main scene always widest) */
+.chat-layout { min-height: 100dvh; display: grid; grid-template-columns: 1fr; }
+.chat-main { display: flex; flex-direction: column; min-height: 100dvh; max-width: 720px; width: 100%; margin: 0 auto; }
+.chat-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.chat-header > :nth-child(2) { flex: 1 1 160px; min-width: 0; }
+.chat-context { display: none; }
+@media (min-width: 1024px) {
+  .chat-layout { grid-template-columns: minmax(0, 1fr) 300px; }
+  .chat-context { display: block; padding: var(--space-5); border-left: 1px solid var(--color-border); }
+  .chat-main { max-width: none; }
+}
+
+/* ButtonLink — 링크에도 같은 눌림 규칙 */
+.button-link { transition: transform var(--motion-fast) var(--ease-exit), filter var(--motion-fast) var(--ease-exit); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.button-link:active { transform: scale(0.97); filter: brightness(0.94); }
+@media (prefers-reduced-motion: reduce) { .button-link:active { transform: none; } }
+.detail-cta { bottom: var(--nav-h); padding-bottom: 16px; }
+@media (min-width: 1024px) { .detail-cta { bottom: 0; left: var(--side-nav-w); padding-bottom: calc(16px + env(safe-area-inset-bottom)); } }

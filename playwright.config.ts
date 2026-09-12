@@ -16,7 +16,9 @@ export default defineConfig({
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
-  use: { headless: true, baseURL: `http://localhost:${WEB}` },
+  // reducedMotion: Motion/CSS 가 즉시 최종 상태로 가므로 타이밍이 테스트를 흔들지 않는다.
+  // 모바일 우선 제품이므로 기본 뷰포트도 모바일. 데스크톱 레이아웃은 별도 프로젝트로 추가할 수 있다.
+  use: { headless: true, baseURL: `http://localhost:${WEB}`, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   webServer: [
     { command: `pnpm --filter @miro/web exec next start -p ${WEB}`, port: WEB, reuseExistingServer: true, env, timeout: 60_000 },

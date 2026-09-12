@@ -34,7 +34,7 @@ test('quick create produces an editable draft and starts a roleplay', async ({ p
   await page.getByRole('button', { name: '저장하고 시작하기' }).click()
 
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
-  await expect(page.getByText('윤지훈')).toBeVisible()
+  await expect(page.getByText('윤지훈').first()).toBeVisible()
 })
 
 test('rejects input that is too short to build from', async ({ page }) => {

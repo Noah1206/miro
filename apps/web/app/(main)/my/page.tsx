@@ -1,71 +1,47 @@
-import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { usageStatus } from '@/lib/usage/guard'
-import { TabBar } from '@/components/tab-bar'
+import { Page, Stagger, StaggerItem, TransitionLink } from '@/components/ui'
+import { COPY } from '@/lib/copy'
 
-/** My — 요금제, 공통 사용량, 초기화 시각. 세부 크레딧 차감값은 강조하지 않는다 (명세서 6.1). */
+/** 사용량은 조용한 선 하나. 차감값을 강조하지 않는다 (명세서 6.1). */
 export default async function MyPage() {
   const user = await currentUser()
   if (!user) redirect('/login')
   const u = await usageStatus(user.id)
   const pct = Math.round((u.remaining / u.limit) * 100)
-
+  const reset = u.resetsAt ? `${u.resetsAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 초기화` : `첫 사용부터 ${u.windowHours}시간 단위로 초기화`
   return (
-    <main style={{ minHeight: '100dvh', padding: '28px 24px 96px', maxWidth: 560, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 22, margin: '0 0 24px' }}>My</h1>
-
-      <section style={{ background: 'var(--surface)', border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius)', padding: 20, marginBottom: 14 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <p style={{ margin: 0, fontSize: 12, letterSpacing: '0.12em', color: 'var(--text-secondary)' }}>
-            현재 요금제
-          </p>
-          <p data-plan={u.plan} style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>
-            MIRO {u.plan === 'pro' ? 'Pro' : 'Free'}
-          </p>
+    <Page>
+      <h1 className="t-title-1" style={{ marginBottom: 'var(--space-5)' }}>내 정보</h1>
+      <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-4)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
+          <h2 className="t-micro">요금제</h2>
+          <p data-plan={u.plan} className="t-title-3">MIRO {u.plan === 'pro' ? 'Pro' : 'Free'}</p>
         </div>
-
-        <div style={{ marginTop: 18 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, marginBottom: 6 }}>
-            <span style={{ color: 'var(--text-secondary)' }}>남은 사용량</span>
-            <span data-usage-remaining={u.remaining}>{pct}%</span>
-          </div>
-          <div style={{ height: 6, borderRadius: 999, background: 'var(--elevated)', overflow: 'hidden' }}>
-            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--accent)' }} />
-          </div>
-          <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-            {u.resetsAt
-              ? `${u.resetsAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 초기화`
-              : `${u.windowHours}시간 단위로 사용량이 초기화됩니다. 첫 사용 시 창이 시작됩니다.`}
-          </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }} className="t-caption">
+          <span>남은 사용량</span><span data-usage-remaining={u.remaining} style={{ color: 'var(--color-text-primary)' }}>{pct}%</span>
         </div>
-
-        <Link href="/plans" style={{
-          display: 'block', marginTop: 16, padding: 12, textAlign: 'center', borderRadius: 10,
-          border: '1px solid var(--border)', fontSize: 13.5, color: 'var(--text-primary)',
-        }}>
-          요금제 비교
-        </Link>
+        <div role="meter" aria-label={COPY.a11y.usageMeter} aria-valuemin={0} aria-valuemax={u.limit} aria-valuenow={u.remaining} aria-valuetext={`${pct}% 남음`} style={{ height: 3, background: 'var(--color-surface-3)', overflow: 'hidden', borderRadius: 2 }}>
+          <div style={{ width: `${pct}%`, height: '100%', background: 'var(--color-white)', transition: 'width var(--motion-slow) var(--ease-standard)' }} />
+        </div>
+        <p className="t-caption" style={{ marginTop: 10 }}>{reset}</p>
+        <TransitionLink href="/plans" className="t-caption" style={{ display: 'inline-block', marginTop: 14, textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 비교</TransitionLink>
       </section>
-
-      <Menu href="/my/subscription" label="구독 관리" />
-      <Menu href="/my/settings" label="알림 · 통화 · 야간 연락 설정" />
-      <Menu href="/my/verify" label="성인 인증" />
-      <Menu href="/my/permissions" label="권한 안내" />
-      <Menu href="/my/delete" label="계정 삭제" danger />
-
-      <TabBar />
-    </main>
+      <Stagger as="div" className="stack" style={{ gap: 8 }}>
+        {[['/my/subscription', '구독 관리'], ['/my/settings', '알림 · 통화 · 야간 연락'], ['/my/verify', '성인 인증'], ['/my/permissions', '권한 안내']].map(([h, l]) => (
+          <StaggerItem key={h}><Row href={h!} label={l!} /></StaggerItem>
+        ))}
+        <StaggerItem><Row href="/my/delete" label="계정 삭제" danger /></StaggerItem>
+      </Stagger>
+    </Page>
   )
 }
-
-function Menu({ href, label, danger = false }: { href: string; label: string; danger?: boolean }) {
+function Row({ href, label, danger }: { href: string; label: string; danger?: boolean }) {
   return (
-    <Link href={href} style={{
-      display: 'block', padding: '15px 18px', marginBottom: 8, borderRadius: 12,
-      background: 'var(--surface)', border: '1px solid var(--border)', fontSize: 14,
-      color: danger ? 'var(--accent-strong)' : 'var(--text-primary)',
-    }}>{label}</Link>
+    <TransitionLink href={href} className="hoverable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', color: danger ? 'var(--color-danger)' : 'inherit' }}>
+      <span className="t-body">{label}</span>
+      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-tertiary)' }}><path d="M9 5l7 7-7 7" /></svg>
+    </TransitionLink>
   )
 }

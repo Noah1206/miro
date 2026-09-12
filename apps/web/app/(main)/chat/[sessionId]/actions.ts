@@ -10,6 +10,7 @@ import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 import { track } from '@/lib/analytics/track'
+import { COPY } from '@/lib/copy'
 import { observe, timed } from '@/lib/observe'
 
 export type TurnState = {
@@ -35,12 +36,12 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
   const input = String(form.get('input') ?? '').trim()
 
   if (input.length === 0) return { error: null, notice: null, limit: null }
-  if (input.length > MAX_INPUT) return fail(`${MAX_INPUT}자 이내로 입력해 주세요.`)
+  if (input.length > MAX_INPUT) return fail(COPY.error.tooLong(MAX_INPUT))
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(sessionId, user.id)
-    if (!loaded) return fail('대화를 찾을 수 없습니다.')
-    if (loaded.restricted) return fail('운영 정책에 따라 이 역할극은 제한되었습니다. 문의는 설정에서 할 수 있습니다.')
+    if (!loaded) return fail(COPY.error.sessionNotFound)
+    if (loaded.restricted) return fail(COPY.error.restricted)
 
     const llm = resolveRpLLM(loaded.characterName)
     const turnIndex = loaded.snapshot.turnCount + 1
@@ -56,7 +57,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
       if (e instanceof UsageExceededError) {
         return { error: exceededMessage(e), notice: null, limit: { plan: e.plan, resetsAt: e.resetsAt.toISOString() } }
       }
-      return fail('응답을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.')
+      return fail(COPY.error.connection)
     }
 
     const { transition } = result
@@ -65,7 +66,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
       observe('provider.llm.validation_issues', { sessionId, turn: turnIndex, count: transition.issues.length,
         fields: transition.issues.map((i) => i.field).join(',') })
     }
-    if (transition.blocks.length === 0) return fail('응답을 생성하지 못했습니다. 다시 시도해 주세요.')
+    if (transition.blocks.length === 0) return fail(COPY.error.generation)
 
     try {
       await commitTurn({
@@ -85,7 +86,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
       // 다른 요청이 먼저 커밋했다. 최신 상태로 한 번 더 시도한다.
       if (e instanceof StaleStateError && attempt === 0) { observe('state.stale_retry', { sessionId, turn: turnIndex }); continue }
       observe('state.commit_failed', { sessionId, turn: turnIndex, error: (e as Error).message })
-      return fail('상태를 저장하지 못했습니다. 다시 시도해 주세요.')
+      return fail(COPY.error.saveConflict)
     }
 
     void track(user.id, 'rp_message_sent', { sessionId, turn: turnIndex })
@@ -94,12 +95,12 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
     revalidatePath(`/chat/${sessionId}`)
     return {
       error: null,
-      notice: result.providerMode === 'mock' ? 'LLM Provider 미구성 — Mock 응답입니다.' : null,
+      notice: result.providerMode === 'mock' ? COPY.status.mockLLM : null,
       limit: null,
     }
   }
 
-  return fail('동시에 다른 요청이 처리되었습니다. 다시 시도해 주세요.')
+  return fail(COPY.error.concurrent)
 }
 
 /** 출력 스타일 변경 (n29). */

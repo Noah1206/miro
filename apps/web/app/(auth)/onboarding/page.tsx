@@ -1,44 +1,41 @@
-import Link from 'next/link'
+'use client'
+import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { ButtonLink, LogoIntro, Reveal, Stagger, StaggerItem } from '@/components/ui'
+import { tween } from '@/lib/motion/tokens'
 
-/** n3, n4 — 스플래시·온보딩 + MIRO 핵심 가치. 긴 취향 설문은 넣지 않는다. */
-const VALUES = [
-  { title: '캐릭터와 세계를 직접', body: '원하는 외형·성격·세계관을 한 문장으로 만들거나 세밀하게 편집합니다.' },
-  { title: '자유 역할극', body: '선택지가 아니라 대사·행동·묘사를 자유롭게 섞어 이어갑니다.' },
-  { title: '앱을 닫아도 이어지는 관계', body: '세계와 관계는 계속 존재하고, 캐릭터가 먼저 연락하기도 합니다.' },
+const LINES = [
+  ['한 사람을 고르거나, 만든다.', '외형·성격·세계를 한 문장으로도, 세밀하게도.'],
+  ['대사와 행동을 자유롭게 섞는다.', '선택지가 아니라 당신의 방식으로.'],
+  ['앱을 닫아도 관계는 이어진다.', '세계는 계속 움직이고, 먼저 연락이 오기도 한다.'],
 ]
 
+/** n3/n4 — 검은 무대 → 로고 두 조각 → 하나 → 벌어지며 세계가 열린다. 그 뒤에야 문장이 온다. */
 export default function Onboarding() {
+  const [opened, setOpened] = useState(false)
   return (
-    <main style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-                   padding: '56px 24px 32px', maxWidth: 480, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 40, letterSpacing: '0.24em', fontWeight: 300, margin: '0 0 8px' }}>
-        MIRO
-      </h1>
-      <p style={{ color: 'var(--text-secondary)', margin: '0 0 48px', fontSize: 15 }}>
-        AI 캐릭터 세계 경험
-      </p>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
-        {VALUES.map((v) => (
-          <section key={v.title} style={{
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)', padding: 20,
-          }}>
-            <h2 style={{ fontSize: 16, margin: '0 0 6px', fontWeight: 600 }}>{v.title}</h2>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
-              {v.body}
-            </p>
-          </section>
-        ))}
+    <main className="page page--immersive" style={{ minHeight: '100dvh', background: 'var(--color-bg-deep)', display: 'flex', flexDirection: 'column' }}>
+      <h1 className="sr-only">MIRO — 한 사람의 세계 안으로</h1>
+      <div style={{ flex: 1, display: 'grid', placeItems: 'center' }}>
+        <LogoIntro onDone={() => setOpened(true)} />
       </div>
-
-      <Link href="/login" style={{
-        display: 'block', textAlign: 'center', marginTop: 32, padding: '16px',
-        background: 'var(--accent)', borderRadius: 'var(--radius)',
-        fontWeight: 600, fontSize: 16,
-      }}>
-        시작하기
-      </Link>
+      <AnimatePresence>
+        {opened && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={tween.scene} style={{ padding: '0 var(--space-5) var(--space-7)', maxWidth: 480, width: '100%', margin: '0 auto' }}>
+            <Stagger as="ul" gap={0.07} style={{ listStyle: 'none', padding: 0, margin: '0 0 var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+              {LINES.map(([t, b]) => (
+                <StaggerItem as="li" key={t}>
+                  <p className="t-title-3 t-quote" style={{ marginBottom: 4 }}>{t}</p>
+                  <p className="t-caption">{b}</p>
+                </StaggerItem>
+              ))}
+            </Stagger>
+            <Reveal delay={0.3}>
+              <ButtonLink href="/login" variant="primary" size="lg" full>시작하기</ButtonLink>
+            </Reveal>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   )
 }

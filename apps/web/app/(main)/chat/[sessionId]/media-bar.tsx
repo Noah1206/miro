@@ -1,62 +1,36 @@
 'use client'
-
-import Link from 'next/link'
 import { useActionState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { Button, ButtonLink } from '@/components/ui'
+import { tween } from '@/lib/motion/tokens'
 import { requestPhoto, type MediaState } from './media-actions'
 import { placeCallAction, type PlaceCallState } from '@/app/(immersive)/call/[callId]/actions'
 
-const initial: MediaState = { error: null, notice: null }
-
+/** 장면을 넓히는 문들. 조용한 보조 버튼 — 텍스트가 주인공이다. */
 export function MediaBar({ sessionId, matureAllowed }: { sessionId: string; matureAllowed: boolean }) {
-  const [state, action, pending] = useActionState(requestPhoto, initial)
+  const [state, action, pending] = useActionState(requestPhoto, { error: null, notice: null } satisfies MediaState)
   const [callState, callAction, calling] = useActionState(placeCallAction, { error: null } satisfies PlaceCallState)
-
+  const err = callState.error ?? state.error
   return (
-    <div style={{ padding: '0 16px 4px' }}>
-      {state.error && (
-        <p role="alert" style={{ fontSize: 12, color: 'var(--accent-strong)', margin: '0 0 6px' }}>
-          {state.error}
-        </p>
-      )}
-      {callState.error && (
-        <p role="alert" style={{ fontSize: 12, color: 'var(--accent-strong)', margin: '0 0 6px' }}>
-          {callState.error}
-        </p>
-      )}
-      {state.notice && (
-        <p role="status" style={{ fontSize: 11.5, color: 'var(--text-secondary)', margin: '0 0 6px' }}>
-          ⚠ {state.notice}
-        </p>
-      )}
-
-      <div style={{ display: 'flex', gap: 6 }}>
-        <form action={action} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+    <div style={{ padding: '0 var(--space-4) 8px' }}>
+      <AnimatePresence initial={false}>
+        {err && <motion.p key="e" role="alert" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ color: 'var(--color-danger)', marginBottom: 6 }}>{err}</motion.p>}
+        {state.notice && <motion.p key="n" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ color: 'var(--color-text-tertiary)', marginBottom: 6 }}>⚠ {state.notice}</motion.p>}
+      </AnimatePresence>
+      <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+        <form action={action} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input type="hidden" name="sessionId" value={sessionId} />
-          <button type="submit" disabled={pending} style={pill}>
-            {pending ? '사진 요청 중…' : '사진'}
-          </button>
-          {/* 성인 표현 토글은 서버 판정을 통과한 사용자에게만 보인다. 서버가 다시 검사한다. */}
-          {matureAllowed && (
-            <label style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'flex', gap: 4, alignItems: 'center' }}>
-              <input type="checkbox" name="mature" style={{ accentColor: 'var(--accent)' }} />성인
-            </label>
-          )}
+          <Button type="submit" size="sm" variant="secondary" status={pending ? 'loading' : 'idle'}>{pending ? '사진 요청 중' : '사진'}</Button>
+          {matureAllowed && <label className="t-micro" style={{ display: 'flex', gap: 5, alignItems: 'center', textTransform: 'none', letterSpacing: 0 }}><input type="checkbox" name="mature" style={{ accentColor: 'var(--color-white)' }} />성인</label>}
         </form>
-        <Link href={`/live/${sessionId}`} style={pill}>Live Scene</Link>
+        <ButtonLink href={`/live/${sessionId}`} size="sm" variant="secondary"><span lang="en">Live Scene</span></ButtonLink>
         {(['voice', 'video'] as const).map((ch) => (
           <form key={ch} action={callAction}>
-            <input type="hidden" name="sessionId" value={sessionId} />
-            <input type="hidden" name="channel" value={ch} />
-            <button type="submit" disabled={calling} style={pill}>{ch === 'voice' ? '통화' : '영상통화'}</button>
+            <input type="hidden" name="sessionId" value={sessionId} /><input type="hidden" name="channel" value={ch} />
+            <Button type="submit" size="sm" variant="secondary" disabled={calling}>{ch === 'voice' ? '통화' : '영상통화'}</Button>
           </form>
         ))}
       </div>
     </div>
   )
-}
-
-const pill: React.CSSProperties = {
-  display: 'inline-block', padding: '7px 13px', borderRadius: 999,
-  border: '1px solid var(--border)', background: 'transparent',
-  color: 'var(--text-secondary)', fontSize: 12, cursor: 'pointer',
 }

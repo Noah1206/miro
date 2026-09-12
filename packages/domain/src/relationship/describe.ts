@@ -11,3 +11,23 @@ export function describeRelationship(r: RelationshipState): string {
   if (r.unresolvedEventIds.length > 0) hints.push('아직 풀리지 않은 일이 남아 있습니다.')
   return hints.length > 0 ? `행동 지침: ${hints.join(' ')}` : '행동 지침: 상황에 맞게 자연스럽게.'
 }
+
+import type { RelationshipStage } from './types'
+
+/** 사용자에게 보이는 관계 문장. 수치가 아니라 상태다. 후퇴·정체·모호함도 표현한다. */
+export function stageLabel(stage: RelationshipStage, r?: Pick<RelationshipState, 'emotionalDistance' | 'unresolvedEventIds'>): string {
+  if (r && r.unresolvedEventIds.length > 0) return '감정이 복잡함'
+  switch (stage) {
+    case 'stranger': return '낯선 사이'
+    case 'acquaintance': return '조금 익숙해짐'
+    case 'professional': return '일로 얽힌 사이'
+    case 'friend': return r && r.emotionalDistance < 30 ? '가까워지는 중' : '편한 사이'
+    case 'rivalry': return '서로를 재는 중'
+    case 'distrust': return '멀어지는 중'
+    case 'ambiguous': return '서로를 의식함'
+    case 'conflict': return '아직 풀리지 않음'
+    case 'flirting': return '서로를 의식함'
+    case 'dating': return '특별한 사이'
+    case 'lover': return '연인'
+  }
+}
