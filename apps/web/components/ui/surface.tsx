@@ -1,12 +1,17 @@
+'use client'
 import type { ReactNode } from 'react'
+import { motion, type HTMLMotionProps } from 'motion/react'
+import { fadeUp } from '@/lib/motion/tokens'
 
-/** Dark UI 에서는 그림자보다 테두리. 카드 radius 12–16. */
-export function Card({ children, style, level = 1, ...rest }: React.ComponentPropsWithoutRef<'section'> & { level?: 1 | 2 | 3 }) {
+type Motionish<T extends keyof HTMLElementTagNameMap> = Omit<HTMLMotionProps<T>, 'ref' | 'style' | 'children'> & { style?: React.CSSProperties; children?: ReactNode }
+
+/** Dark UI 에서는 그림자보다 테두리. 카드 radius 12–16. Page 의 등장 순서를 물려받는다 (fadeUp variants). */
+export function Card({ children, style, level = 1, ...rest }: Motionish<'section'> & { level?: 1 | 2 | 3 }) {
   return (
-    <section {...rest} className={`hoverable ${rest.className ?? ''}`} style={{
+    <motion.section variants={fadeUp} {...rest} className={`hoverable ${rest.className ?? ''}`} style={{
       background: `var(--color-surface-${level})`, border: '1px solid var(--color-border)',
       borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', ...style,
-    }}>{children}</section>
+    }}>{children}</motion.section>
   )
 }
 
@@ -25,12 +30,12 @@ export function Chip({ children, tone = 'default', ...rest }: React.ComponentPro
  * 시스템 안내. Provider 미구성 같은 사실은 숨기지 않되 조용하게.
  * role 은 호출자가 정한다 (status / alert).
  */
-export function Notice({ children, tone = 'muted', role = 'status', ...rest }: React.ComponentPropsWithoutRef<'p'> & { tone?: 'muted' | 'danger' | 'relationship' }) {
+export function Notice({ children, tone = 'muted', role = 'status', ...rest }: Motionish<'p'> & { tone?: 'muted' | 'danger' | 'relationship' }) {
   const color = tone === 'danger' ? 'var(--color-danger)' : tone === 'relationship' ? 'var(--color-relationship)' : 'var(--color-text-secondary)'
   return (
-    <p {...rest} role={role} style={{ fontSize: 'var(--font-caption)', lineHeight: 1.55, padding: '10px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-1)', color, ...rest.style }}>
+    <motion.p variants={fadeUp} {...rest} role={role} style={{ fontSize: 'var(--font-caption)', lineHeight: 1.55, padding: '10px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-1)', color, ...rest.style }}>
       {children}
-    </p>
+    </motion.p>
   )
 }
 
@@ -39,5 +44,5 @@ export function Skeleton({ w = '100%', h = 16, r, style }: { w?: number | string
 }
 
 export function Eyebrow({ children }: { children: ReactNode }) {
-  return <p className="t-micro">{children}</p>
+  return <motion.p className="t-micro" variants={fadeUp}>{children}</motion.p>
 }

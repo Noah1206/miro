@@ -93,6 +93,27 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
 
+/* Motion 이 opacity 를 인라인으로 쥐고 있으므로 비활성 흐림은 규칙으로 이긴다 */
+.btn:disabled { opacity: 0.45 !important; }
+
+/* text entrance — 컴포넌트를 거치지 않은 날것의 문장도 나타날 때 움직인다. 같은 부모 안에서 순서대로 (최대 10번째까지 45ms 간격). */
+@keyframes text-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption) { animation: text-in var(--motion-normal) var(--ease-enter) backwards; animation-delay: calc(var(--text-i, 0) * 45ms); }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(1) { --text-i: 0; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(2) { --text-i: 1; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(3) { --text-i: 2; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(4) { --text-i: 3; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(5) { --text-i: 4; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(6) { --text-i: 5; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(7) { --text-i: 6; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(8) { --text-i: 7; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(9) { --text-i: 8; }
+  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(n + 10) { --text-i: 9; }
+  /* 이름 있는 공유 요소(View Transition)와 라이브 영역은 자기 방식대로 움직인다 */
+  .page [style*="view-transition-name"] :is(h1, h2, h3, p), .page [aria-live] :is(p), .page [role="log"] p { animation: none; }
+}
+
 /* page transitions — View Transition API. fade + translateY 12px; direction from html[data-nav] */
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--motion-normal); animation-timing-function: var(--ease-standard); mix-blend-mode: normal; }
 ::view-transition-old(root) { animation-name: vt-out; }
@@ -163,8 +184,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 }
 
 /* ButtonLink — 링크에도 같은 눌림 규칙 */
-.button-link { transition: transform var(--motion-fast) var(--ease-exit), filter var(--motion-fast) var(--ease-exit); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
-.button-link:active { transform: scale(0.97); filter: brightness(0.94); }
-@media (prefers-reduced-motion: reduce) { .button-link:active { transform: none; } }
+/* transform 은 Motion 이 프레임마다 쥔다 (등장 y, whileTap scale) — CSS transition 을 걸면 서로 싸운다. 밝기만 CSS. */
+.button-link { transition: filter var(--motion-fast) var(--ease-exit); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.button-link:active { filter: brightness(0.94); }
 .detail-cta { bottom: var(--nav-h); padding-bottom: 16px; }
 @media (min-width: 1024px) { .detail-cta { bottom: 0; left: var(--side-nav-w); padding-bottom: calc(16px + env(safe-area-inset-bottom)); } }

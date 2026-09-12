@@ -15,7 +15,7 @@ export default async function MockConsent({ params, searchParams }: { params: Pr
   const { state = '', redirect_uri = '' } = await searchParams
   return (
     <Page style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <PageHeader eyebrow="개발용 시뮬레이션" title={`${OAUTH_LABEL[provider]} 로그인`} lead="실제 인증이 아닙니다. 아래 이메일로 계정을 만들거나 이어서 들어갑니다." />
+      <PageHeader align="center" eyebrow="개발용 시뮬레이션" title={`${OAUTH_LABEL[provider]} 로그인`} lead="실제 인증이 아닙니다. 아래 이메일로 계정을 만들거나 이어서 들어갑니다." />
       <Notice style={{ marginBottom: 16 }}>⚠ {resolveOAuth(provider).info.notice}</Notice>
       <form method="GET" action={redirect_uri} className="stack" style={{ gap: 12 }}>
         <input type="hidden" name="state" value={state} />

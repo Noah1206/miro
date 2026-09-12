@@ -1,5 +1,5 @@
 import { OAUTH_LABEL, resolveOAuth, type OAuthProviderId } from '@miro/providers'
-import { LogoMark, Notice, Page } from '@/components/ui'
+import { LogoMark, Notice, Page, StaggerItem } from '@/components/ui'
 import { NoAccount } from './no-account'
 
 const ERRORS: Record<string, string> = {
@@ -14,17 +14,17 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const providers = (['google', 'kakao', 'naver'] as OAuthProviderId[]).map((id) => ({ id, p: resolveOAuth(id) }))
   const mock = providers.find(({ p }) => p.info.mode === 'mock')
   return (
-    <Page style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', maxWidth: 420, paddingBottom: 'var(--space-7)' }}>
-      <div style={{ marginBottom: 'var(--space-6)' }}><LogoMark size={40} /></div>
-      <h1 className="t-title-1" style={{ marginBottom: 6 }}>다시, 그 세계로</h1>
-      <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)' }}>쓰던 계정으로 계속해요.</p>
-      {error && ERRORS[error] && <Notice role="alert" tone={error === 'failed' ? 'danger' : 'muted'} style={{ marginBottom: 16 }}>{ERRORS[error]}</Notice>}
-      {mock && <Notice style={{ marginBottom: 16 }}>⚠ {mock.p.info.notice}</Notice>}
+    <Page style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', maxWidth: 420, paddingBottom: 'var(--space-7)' }}>
+      <StaggerItem style={{ marginBottom: 'var(--space-6)' }}><LogoMark size={44} /></StaggerItem>
+      <StaggerItem as="div" style={{ marginBottom: 6 }}><h1 className="t-title-1">다시, 그 세계로</h1></StaggerItem>
+      <StaggerItem as="div" style={{ marginBottom: 'var(--space-6)' }}><p className="t-body" style={{ color: 'var(--color-text-secondary)' }}>쓰던 계정으로 계속해요.</p></StaggerItem>
+      {error && ERRORS[error] && <Notice role="alert" tone={error === 'failed' ? 'danger' : 'muted'} style={{ marginBottom: 16, width: '100%' }}>{ERRORS[error]}</Notice>}
+      {mock && <Notice style={{ marginBottom: 16, width: '100%' }}>⚠ {mock.p.info.notice}</Notice>}
 
-      <div className="stack" style={{ gap: 10 }}>
-        {providers.map(({ id }) => <SocialButton key={id} id={id} />)}
+      <div className="stack" style={{ gap: 10, width: '100%' }}>
+        {providers.map(({ id }) => <StaggerItem key={id}><SocialButton id={id} /></StaggerItem>)}
       </div>
-      <NoAccount />
+      <StaggerItem><NoAccount /></StaggerItem>
     </Page>
   )
 }

@@ -1,8 +1,12 @@
 'use client'
 import { forwardRef } from 'react'
+import { motion } from 'motion/react'
+import { fadeUp, press } from '@/lib/motion/tokens'
 import { Pressable, type PressableProps } from './pressable'
 import { StatusIcon, type Status } from './status-icon'
 import { TransitionLink } from './transition-link'
+
+const MotionLink = motion.create(TransitionLink)
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'destructive' | 'relationship'
 type Props = PressableProps & {
@@ -41,10 +45,11 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
       {...rest}
       disabled={disabled || busy}
       aria-busy={busy || undefined}
+      className={`btn ${rest.className ?? ''}`}
       style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         width: full ? '100%' : undefined, borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)',
-        whiteSpace: 'nowrap', opacity: disabled ? 0.45 : 1, cursor: disabled ? 'not-allowed' : 'pointer',
+        whiteSpace: 'nowrap', cursor: disabled ? 'not-allowed' : 'pointer',
         ...SIZE[size], ...VARIANT[variant], ...style,
       }}
     >
@@ -56,18 +61,18 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
 
 /**
  * 버튼처럼 보이는 링크. <a> 안에 <button> 을 넣지 않는다 — 중첩 인터랙티브는 스크린리더와 키보드를 깨뜨린다.
- * 눌림 반응은 Pressable 과 같은 규칙(scale 0.97 / brightness) 을 CSS 로 준다.
+ * 눌림 반응은 Pressable 과 같은 규칙(scale 0.97 / brightness). 등장은 Page 의 순서를 물려받는다.
  */
 export function ButtonLink({ href, variant = 'secondary', size = 'md', full, children, direction, style, ...rest }: {
   href: string; variant?: ButtonVariant; size?: 'sm' | 'md' | 'lg'; full?: boolean; children: React.ReactNode
   direction?: 'forward' | 'back'; style?: React.CSSProperties
-} & Omit<React.ComponentPropsWithoutRef<'a'>, 'href' | 'style'>) {
+} & Omit<React.ComponentPropsWithoutRef<'a'>, 'href' | 'style' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'>) {
   return (
-    <TransitionLink href={href} direction={direction} {...rest} className={`button-link ${rest.className ?? ''}`} style={{
+    <MotionLink href={href} direction={direction} variants={fadeUp} whileTap={{ scale: press.scale }} {...rest} className={`button-link ${rest.className ?? ''}`} style={{
       display: full ? 'flex' : 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: full ? '100%' : undefined,
       borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', whiteSpace: 'nowrap', ...SIZE[size], ...VARIANT[variant], ...style,
     }}>
       {children}
-    </TransitionLink>
+    </MotionLink>
   )
 }

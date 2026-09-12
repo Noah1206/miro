@@ -1,4 +1,7 @@
+'use client'
 import { forwardRef, type ReactNode } from 'react'
+import { motion } from 'motion/react'
+import { fadeUp } from '@/lib/motion/tokens'
 
 const base: React.CSSProperties = {
   width: '100%', padding: '13px 14px', background: 'var(--color-surface-1)',
@@ -18,42 +21,42 @@ export const TextArea = forwardRef<HTMLTextAreaElement, React.ComponentPropsWith
 /** label 이 input 을 감싸서 getByLabel 과 탭 영역이 함께 넓어진다. */
 export function Field({ label, hint, error, children }: { label: string; hint?: string; error?: string | null; children: ReactNode }) {
   return (
-    <label className="stack" style={{ gap: 6 }}>
+    <motion.label className="stack" variants={fadeUp} style={{ gap: 6 }}>
       <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
       {children}
       {hint && !error && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</span>}
       {error && <span role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{error}</span>}
-    </label>
+    </motion.label>
   )
 }
 
 /** 설정 행: 문장 + 체크박스. 색이 아니라 위치와 문장으로 상태가 읽힌다. */
 export function ToggleRow({ name, label, hint, defaultChecked }: { name: string; label: string; hint?: string; defaultChecked?: boolean }) {
   return (
-    <label className="stack hoverable" style={{ gap: 4, padding: '14px 16px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
+    <motion.label className="stack hoverable" variants={fadeUp} style={{ gap: 4, padding: '14px 16px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
       <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <span className="t-body">{label}</span>
         <input name={name} type="checkbox" defaultChecked={defaultChecked} style={{ width: 20, height: 20, accentColor: 'var(--color-white)', flexShrink: 0 }} />
       </span>
       {hint && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</span>}
-    </label>
+    </motion.label>
   )
 }
 
 export function Checkbox({ name, label, required }: { name: string; label: ReactNode; required?: boolean }) {
   return (
-    <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 'var(--font-caption)', lineHeight: 1.55, cursor: 'pointer' }}>
+    <motion.label variants={fadeUp} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 'var(--font-caption)', lineHeight: 1.55, cursor: 'pointer' }}>
       <input name={name} type="checkbox" required={required} style={{ marginTop: 2, width: 18, height: 18, accentColor: 'var(--color-white)', flexShrink: 0 }} />
       <span>{label}</span>
-    </label>
+    </motion.label>
   )
 }
 
 export function Radio({ name, value, label }: { name: string; value: string; label: string }) {
   return (
-    <label className="hoverable" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '13px 14px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-button)', cursor: 'pointer', fontSize: 'var(--font-body-size)' }}>
+    <motion.label className="hoverable" variants={fadeUp} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '13px 14px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-button)', cursor: 'pointer', fontSize: 'var(--font-body-size)' }}>
       <input type="radio" name={name} value={value} required style={{ accentColor: 'var(--color-white)', width: 18, height: 18 }} />
       <span>{label}</span>
-    </label>
+    </motion.label>
   )
 }
