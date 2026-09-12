@@ -1,4 +1,6 @@
 /* MIRO — Dark Cinematic × Human × Sharp Minimal  (docs/DESIGN.md) */
+@import url("https://static.toss.im/tps/main.css");
+@import url("https://static.toss.im/tps/others.css");
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
 :root {
@@ -18,8 +20,9 @@
   --color-danger-strong: #B23A3A;
 
   /* type */
-  --font-body: 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
-  --font-display: var(--font-display-serif), 'Pretendard Variable', serif;
+  /* Toss Product Sans 를 기본으로, 비슷한 결의 오픈 서체 Pretendard 가 그 뒤를 받친다. */
+  --font-body: "Toss Product Sans", 'Pretendard Variable', Pretendard, -apple-system, system-ui, sans-serif;
+  --font-display: var(--font-body);
   --font-hero: clamp(34px, 9.5vw, 48px); --font-display-size: clamp(28px, 8vw, 36px); --font-title-1: 28px; --font-title-2: 22px;
   --font-title-3: 18px; --font-body-lg: 17px; --font-body-size: 15px; --font-caption: 13px; --font-micro: 11px;
   --weight-regular: 400; --weight-medium: 500; --weight-semibold: 600; --weight-bold: 700;
@@ -75,8 +78,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .t-body    { font-size: var(--font-body-size); line-height: 1.6; }
 .t-caption { font-size: var(--font-caption); line-height: 1.5; color: var(--color-text-secondary); }
 .t-micro   { font-size: var(--font-micro); line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-text-tertiary); font-weight: var(--weight-medium); }
-.t-name    { font-family: var(--font-display); font-weight: var(--weight-bold); letter-spacing: -0.01em; }
-.t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); }
+.t-name    { font-family: var(--font-display); font-weight: var(--weight-bold); letter-spacing: -0.02em; }
+.t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); letter-spacing: -0.005em; }
 
 /* layout */
 .page { min-height: 100dvh; padding: var(--space-5) var(--space-5) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }

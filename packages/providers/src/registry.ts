@@ -12,6 +12,9 @@ import { MockAdultVerificationProvider } from './verify/mock'
 import type { AdultVerificationProvider } from './verify/types'
 import { MockPaymentProvider } from './payment/mock'
 import type { PaymentProvider } from './payment/types'
+import { OAuth2Provider } from './auth/oauth'
+import { MockOAuthProvider } from './auth/mock'
+import type { OAuthProvider, OAuthProviderId } from './auth/types'
 
 /**
  * Provider 선택.
@@ -60,4 +63,11 @@ let paymentSingleton: PaymentProvider | null = null
 /** 결제 Provider. PG 확정 시 env 로 분기 (예: STRIPE_SECRET_KEY → StripePaymentProvider). */
 export function resolvePayment(): PaymentProvider {
   return (paymentSingleton ??= new MockPaymentProvider())
+}
+
+/** 소셜 로그인. `${PROVIDER}_CLIENT_ID/SECRET` 가 있으면 실제 OAuth, 없으면 시뮬레이션. */
+export function resolveOAuth(id: OAuthProviderId): OAuthProvider {
+  const key = id.toUpperCase()
+  const clientId = process.env[`${key}_CLIENT_ID`], secret = process.env[`${key}_CLIENT_SECRET`]
+  return clientId && secret ? new OAuth2Provider(id, clientId, secret) : new MockOAuthProvider(id)
 }

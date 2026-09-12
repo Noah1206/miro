@@ -1,3 +1,4 @@
+import { signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -7,20 +8,14 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
  * Phase 4 에서 RP 턴까지 이어붙인다.
  */
 test('signup through entering a roleplay', async ({ page }) => {
-  const email = `e2e-${Date.now()}@miro.dev`
-
   await page.goto(`${BASE}/`)
   await expect(page).toHaveURL(/\/onboarding/)
   await page.getByRole('link', { name: '시작하기' }).click()
-
   await expect(page).toHaveURL(/\/login/)
-  await page.getByRole('tab', { name: '회원가입' }).click()
-  await page.getByPlaceholder('이메일').fill(email)
-  await page.getByPlaceholder('비밀번호 (8자 이상)').fill('password123')
-  await page.getByRole('button', { name: '회원가입' }).click()
-
-  await expect(page).toHaveURL(/\/terms/)
-  await page.getByRole('button', { name: '모두 동의하고 시작하기' }).click()
+  // 가입/로그인이 나뉘지 않는다 — 소셜 버튼 하나. "계정이 없으신가요?" 는 안내를 펼친다.
+  await page.getByRole('button', { name: '계정이 없으신가요?' }).click()
+  await expect(page.getByText(/따로 가입하지 않아도/)).toBeVisible()
+  await signUp(page, BASE)
 
   await expect(page).toHaveURL(/\/welcome/)
   await page.getByRole('link', { name: /MIRO ORIGINALS/ }).click()
@@ -45,12 +40,7 @@ test('signup through entering a roleplay', async ({ page }) => {
 test('re-entering the same character continues the existing session', async ({ page }) => {
   const email = `e2e2-${Date.now()}@miro.dev`
 
-  await page.goto(`${BASE}/login`)
-  await page.getByRole('tab', { name: '회원가입' }).click()
-  await page.getByPlaceholder('이메일').fill(email)
-  await page.getByPlaceholder('비밀번호 (8자 이상)').fill('password123')
-  await page.getByRole('button', { name: '회원가입' }).click()
-  await page.getByRole('button', { name: '모두 동의하고 시작하기' }).click()
+  await signUp(page, BASE)
 
   await page.goto(`${BASE}/character/hisashi`)
   await page.getByRole('button', { name: '역할극 시작하기' }).click()

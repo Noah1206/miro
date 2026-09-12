@@ -434,6 +434,10 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-36 | E2E 는 모바일 뷰포트(390×844) + reducedMotion | 모바일 우선 제품. 데스크톱 컨텍스트 패널 때문에 같은 텍스트가 두 곳에 보이면 `.first()` |
 | E-37 | `e2e/a11y.spec.ts` — axe-core(WCAG 2.x A/AA + best-practice) 가 13개 화면을 훑고 serious/critical 0 을 게이트 | 등장 애니메이션은 Reduce Motion 에서 페이드조차 하지 않도록 바꿈(Motion 기본은 opacity 유지) — 사용자에게도, 측정에도 맞다 |
 | E-38 | `--color-danger-strong` #B23A3A 는 파괴적 버튼의 채움 전용 | `--color-danger` 위 흰 글자는 3.5:1 이라 텍스트/아웃라인에만 쓴다 |
+| E-39 | 인증은 소셜 로그인(Google·Naver·Kakao)만. 가입/로그인 화면을 나누지 않는다 | 유저플로우 n5~n11 의 "로그인·회원가입"을 한 화면으로: 같은 소셜 버튼이 처음이면 가입, 아니면 로그인. `(provider, providerAccountId)` 가 열쇠, 이메일은 있으면 연결 키. 삭제된 계정은 `/login?error=deleted`. 제공자 키가 없으면 `MockOAuthProvider` 가 앱 안의 동의 화면(`/auth/mock/[provider]`)으로 시뮬레이션하며 화면에 그 사실을 적는다 |
+| E-40 | OAuth 는 SDK 없이 Authorization Code + state 쿠키 + PKCE(Google·Kakao) | 제공자 차이는 endpoint 와 프로필 파싱뿐이라 `OAuth2Provider` 하나로 충분하다. 관리자 콘솔은 별도 이메일·비밀번호 로그인을 유지한다 |
+| E-41 | 서체는 Toss Product Sans, 폴백 Pretendard. 세리프 display 역할 제거 | 사용자 결정. `--font-display` 는 `--font-body` 를 가리키고 `.t-name`/`.t-quote` 는 자간으로만 구분한다 |
+| E-42 | 로고는 원본 PNG(`public/logo-mark.png`) 를 `mix-blend-mode: screen` 으로 | 검정 판이 어두운 배경에 녹는다. Launch sequence 는 두 판 사이 사선을 `clip-path` 로 잘라 재현 |
 
 ---
 

@@ -1,15 +1,9 @@
+import { signInAgain, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function signup(page: Page) {
-  const email = `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`
-  await page.goto(`${BASE}/login`)
-  await page.getByRole('tab', { name: '회원가입' }).click()
-  await page.getByPlaceholder('이메일').fill(email)
-  await page.getByPlaceholder('비밀번호 (8자 이상)').fill('password123')
-  await page.getByRole('button', { name: '회원가입' }).click()
-  await page.getByRole('button', { name: '모두 동의하고 시작하기' }).click()
-  return email
+  return signUp(page, BASE, `op-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`)
 }
 async function roleplay(page: Page, slug = 'thomas') {
   await page.goto(`${BASE}/character/${slug}`)
@@ -113,9 +107,7 @@ test('account delete: impact shown, then login is refused', async ({ page }) => 
   await expect(page.locator('[data-impact]')).toContainText('역할극 1개')
   await page.getByRole('button', { name: '계정 삭제 확정' }).click()
   await expect(page.locator('[data-account-deleted]')).toBeVisible()
-  await page.goto(`${BASE}/login`)
-  await page.getByPlaceholder('이메일').fill(email)
-  await page.getByPlaceholder('비밀번호 (8자 이상)').fill('password123')
-  await page.getByRole('button', { name: '로그인' }).click()
-  await expect(page.getByRole('alert').filter({ hasText: '올바르지 않습니다' })).toBeVisible()
+  const back = await signInAgain(page, BASE, email)
+  expect(back).toMatch(/\/login\?error=deleted/)
+  await expect(page.getByRole('alert').filter({ hasText: '삭제된 계정' })).toBeVisible()
 })

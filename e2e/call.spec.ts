@@ -1,3 +1,4 @@
+import { signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -5,12 +6,7 @@ const CRON_SECRET = process.env.CRON_SECRET ?? 'e2e-cron-secret'
 function daytime() { const d = new Date(); d.setHours(14, 0, 0, 0); return d.toISOString() }
 
 async function enterRoleplay(page: Page) {
-  await page.goto(`${BASE}/login`)
-  await page.getByRole('tab', { name: '회원가입' }).click()
-  await page.getByPlaceholder('이메일').fill(`ca-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`)
-  await page.getByPlaceholder('비밀번호 (8자 이상)').fill('password123')
-  await page.getByRole('button', { name: '회원가입' }).click()
-  await page.getByRole('button', { name: '모두 동의하고 시작하기' }).click()
+  await signUp(page, BASE)
   await page.goto(`${BASE}/character/taeyun`)
   await page.getByRole('button', { name: '역할극 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)

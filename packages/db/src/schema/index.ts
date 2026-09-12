@@ -5,7 +5,8 @@ import {
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  email: text('email').notNull().unique(),
+  /** 소셜 제공자가 이메일을 주지 않을 수 있다 (카카오·네이버 선택 동의). 있으면 계정 연결 키로 쓴다. */
+  email: text('email').unique(),
   displayName: text('display_name'),
 
   /** Free/Pro 자격. 결제(Phase 13) 이전에는 dev 토글/Admin 이 이 값을 쓴다. */

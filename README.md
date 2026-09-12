@@ -24,7 +24,7 @@ LLM은 제안만 한다. 상태는 Validator를 통과한 것만 바뀐다.
 
 ```bash
 pnpm install
-cp .env.example .env            # DATABASE_URL 만 있어도 전부 Mock 으로 돈다
+cp .env.example .env            # DATABASE_URL 만 있어도 전부 Mock 으로 돈다 (소셜 로그인도 앱 안 시뮬레이션 화면으로)
 createdb miro_dev
 pnpm db:migrate:sql && pnpm db:seed
 ADMIN_SEED_EMAIL=you@x ADMIN_SEED_PASSWORD=... pnpm db:seed:admin

@@ -1,14 +1,14 @@
 import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { eq, and, isNull, gt } from 'drizzle-orm'
-import { db, users, accounts, authSessions, hashPassword, verifyPassword } from '@miro/db'
+import { db, users, accounts, authSessions } from '@miro/db'
 
 const COOKIE = 'miro_session'
 const SESSION_DAYS = 30
 
 export type SessionUser = {
   id: string
-  email: string
+  email: string | null
   displayName: string | null
   plan: 'free' | 'pro'
   adultVerifiedAt: Date | null
@@ -74,48 +74,36 @@ export async function requireUser(): Promise<SessionUser> {
   return user
 }
 
-/* ---------- signup / login ---------- */
+/* ---------- social sign-in ---------- */
 
-export async function signup(email: string, password: string): Promise<SessionUser> {
-  const existing = await db.select({ id: users.id }).from(users)
-    .where(eq(users.email, email)).limit(1)
-  if (existing.length > 0) throw new Error('EMAIL_TAKEN')
+export type SignInResult = { ok: true; userId: string; isNew: boolean } | { ok: false; reason: 'deleted' }
 
-  const [user] = await db.insert(users).values({ email }).returning()
-  if (!user) throw new Error('SIGNUP_FAILED')
-
-  await db.insert(accounts).values({
-    userId: user.id,
-    provider: 'credentials',
-    providerAccountId: hashPassword(password),
-  })
-
-  await createSession(user.id)
-  return {
-    id: user.id, email: user.email, displayName: user.displayName,
-    plan: user.plan, adultVerifiedAt: user.adultVerifiedAt,
-  }
-}
-
-export async function login(email: string, password: string): Promise<SessionUser> {
-  const rows = await db
-    .select({ user: users, credential: accounts.providerAccountId })
-    .from(users)
-    .innerJoin(accounts, and(
-      eq(accounts.userId, users.id),
-      eq(accounts.provider, 'credentials'),
-    ))
-    .where(and(eq(users.email, email), isNull(users.deletedAt)))
-    .limit(1)
-
-  const row = rows[0]
-  if (!row || !verifyPassword(password, row.credential)) {
-    throw new Error('INVALID_CREDENTIALS')
+/**
+ * 소셜 프로필로 로그인. 계정이 없으면 만든다 — 별도 가입 절차는 없다.
+ * (provider, providerAccountId) 가 열쇠. 같은 이메일의 기존 사용자가 있으면 그 사용자에 제공자를 연결한다.
+ * 삭제된 계정은 같은 소셜 계정으로 다시 들어올 수 없다 (명세서 12.1).
+ */
+export async function signInWithProfile(p: { provider: string; providerAccountId: string; email: string | null; name: string | null }): Promise<SignInResult> {
+  const [linked] = await db.select({ user: users }).from(accounts).innerJoin(users, eq(users.id, accounts.userId))
+    .where(and(eq(accounts.provider, p.provider), eq(accounts.providerAccountId, p.providerAccountId))).limit(1)
+  if (linked) {
+    if (linked.user.deletedAt) return { ok: false, reason: 'deleted' }
+    await createSession(linked.user.id)
+    return { ok: true, userId: linked.user.id, isNew: false }
   }
 
-  await createSession(row.user.id)
-  return {
-    id: row.user.id, email: row.user.email, displayName: row.user.displayName,
-    plan: row.user.plan, adultVerifiedAt: row.user.adultVerifiedAt,
+  let userId: string | null = null
+  if (p.email) {
+    const [byEmail] = await db.select({ id: users.id, deletedAt: users.deletedAt }).from(users).where(eq(users.email, p.email)).limit(1)
+    if (byEmail?.deletedAt) return { ok: false, reason: 'deleted' }
+    userId = byEmail?.id ?? null
   }
+  const isNew = userId === null
+  if (!userId) {
+    const [u] = await db.insert(users).values({ email: p.email, displayName: p.name }).returning({ id: users.id })
+    userId = u!.id
+  }
+  await db.insert(accounts).values({ userId, provider: p.provider, providerAccountId: p.providerAccountId })
+  await createSession(userId)
+  return { ok: true, userId, isNew }
 }

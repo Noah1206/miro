@@ -1,14 +1,10 @@
+import { signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 const WEB = process.env.E2E_BASE ?? 'http://localhost:3000'
 const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
 
 async function userReports(page: Page) {
-  await page.goto(`${WEB}/login`)
-  await page.getByRole('tab', { name: '회원가입' }).click()
-  await page.getByPlaceholder('이메일').fill(`ad-${Date.now()}@miro.dev`)
-  await page.getByPlaceholder('비밀번호 (8자 이상)').fill('password123')
-  await page.getByRole('button', { name: '회원가입' }).click()
-  await page.getByRole('button', { name: '모두 동의하고 시작하기' }).click()
+  await signUp(page, WEB)
   await page.goto(`${WEB}/character/thomas`)
   await page.getByRole('button', { name: '역할극 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)   // 리다이렉트 완료 후에 URL 을 잡는다
