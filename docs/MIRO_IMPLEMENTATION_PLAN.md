@@ -1,7 +1,7 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: Phase 0 (Audit & Architecture)
-> **Last updated**: 2026-09-12
+> **Status**: Phase 6 완료 → Phase 7 (Reality Activation) 진행 예정
+> **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
 ---
@@ -52,24 +52,24 @@
 
 ## 2. PRD 대비 구현 상태
 
-**전체 구현율: 0%**
+**Phase 0–6 완료. 테스트 135 unit/integration + 13 e2e 통과, 빌드 clean.**
 
-| # | 기능 영역 | 상태 | 목표 Phase |
+| # | 기능 영역 | 상태 | 비고 |
 |---|---|---|---|
-| 1 | 계정 및 온보딩 | Missing | P1 |
-| 2 | 캐릭터 탐색 및 생성 | Missing | P2, P3 |
-| 3 | 자유 역할극 대화 | Missing | P4 |
-| 4 | 세계·관계·사건 엔진 | Missing | P5 |
-| 5 | 현실 연동 및 몰입 미디어 | Missing | P6, P7, P8 |
-| 6 | 사용량·구독 및 설정 | Missing | P9 (결제 제외) |
+| 1 | 계정 및 온보딩 | **Implemented** | 온보딩→가입/로그인→약관→첫 선택. 삭제 계정 로그인 차단 |
+| 2 | 캐릭터 탐색 및 생성 | **Implemented** (Face Cast UI 제외) | 공식 3인 시드, Quick Create, 섹션형 고급 편집. Visual Identity는 자동 생성·전 미디어 참조 중이나 사용자가 외형을 고르는 UI는 Image Provider 확정 후 |
+| 3 | 자유 역할극 대화 | **Implemented** | 1회 Structured Generation, 3가지 출력 스타일, 사건 카드 |
+| 4 | 세계·관계·사건 엔진 | **Implemented** | version lock, delta clamp, eligibility+cooldown, NPC 지식 경계, 사건 해결/NPC 등장 |
+| 5 | 현실 연동 및 몰입 미디어 | **Partial** | AI Photo·Background·Live Scene 완료. 선연락(P7)·통화(P8) 미구현 |
+| 6 | 사용량·구독 및 설정 | **Missing** | Usage domain 로직·테스트는 있으나 Guard가 호출부에 연결되지 않음 (P9) |
 | 7 | 안전·권리 및 데이터 보호 | Missing | P10 |
-| 8 | 캐릭터 및 역할극 보관함 | Missing | P10 |
+| 8 | 캐릭터 및 역할극 보관함 | Missing | P10. `/archive` 링크만 존재 |
 | 9 | 콘텐츠 신고 및 운영 대응 | Missing | P10, P11 |
-| 10 | Pro 구독 결제 및 관리 | Missing | **P13 (최종)** |
-| 11 | 장기 기억 및 관계 맥락 | Missing | P5 |
-| 12 | 계정 삭제 및 개인 데이터 처리 | Missing | P10 |
+| 10 | Pro 구독 결제 및 관리 | Missing | **P13 (최종, 사용자 결정)** |
+| 11 | 장기 기억 및 관계 맥락 | **Implemented** | 세션 격리, salience, dedupe, 중요도 기반 prune |
+| 12 | 계정 삭제 및 개인 데이터 처리 | Missing | P10. 스키마(`deleted_at`)는 준비됨 |
 
----
+**실제 적용 DB**: 18 테이블 / 5 migration (`0000_core` … `0004_media`). 계획 §5의 22 테이블 중 `reality_contacts`, `call_sessions`, `usage_windows`, `usage_ledger`, `subscriptions`, `reports`, `admin_actions`, `account_deletions`는 P7–P11에서 추가.
 
 ## 3. 구조적 리스크
 
@@ -250,12 +250,15 @@ JSONB 허용: `character_visual_identities.profile`, `world_states.snapshot`, `g
 
 | Migration | Phase | 내용 |
 |---|---|---|
-| `0001_core` | P1 | M1 전체 |
-| `0002_simulation` | P5 | events, npcs, memories, scenes |
-| `0003_media_reality` | P6–P7 | generated_media, contact_profiles, reality_contacts |
-| `0004_calls` | P8 | call_sessions |
-| `0005_usage` | P9 | usage_windows, usage_ledger, subscriptions(자격만) |
-| `0006_ops` | P10–P11 | reports, admin_actions, account_deletions |
+| `0000_core` ✅ | P1 | users, accounts, auth_sessions, terms_consents, user_settings, characters, character_visual_identities, contact_profiles, worlds, world_states, relationships, roleplay_sessions, messages |
+| `0001_character_presentation` ✅ | P2 | slug, role, relationship_keywords, accent |
+| `0002_initial_relationship` ✅ | P2 | initial_relationship(jsonb), starting_time |
+| `0003_simulation` ✅ | P4 | events, npcs, memories, scenes |
+| `0004_media` ✅ | P6 | generated_media |
+| `0005_reality` | P7 | reality_contacts, push_subscriptions |
+| `0006_calls` | P8 | call_sessions |
+| `0007_usage` | P9 | usage_windows, usage_ledger, subscriptions(자격만) |
+| `0008_ops` | P10–P11 | reports, admin_actions, account_deletions |
 
 ---
 
@@ -353,8 +356,12 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | T7 | Tokyo Hotel Scene → AI Photo가 Seoul Office 배경 불가 |
 | T8 | 싸운 직후 Reality Message가 맥락 무시하고 친밀하게 오지 않음 |
 
+**현재 상태**: T1·T2·T3·T4·T5·T6·T7·T8 전부 단위 또는 통합 테스트로 존재. T2/T3/T6은 실제 Postgres에서 다중 턴으로 검증(`divergence.integration.test.ts`). T8은 domain evaluator 단위 테스트뿐 — P7에서 실제 발송 경로로 승격 필요.
+
 ### 9.3 E2E Scenario
 지시서 §37 Scenario 1–7 전부. **Scenario 3(Usage→Pro 전환)은 Phase 13까지 Pro 전환을 dev 토글로 대체.**
+
+**현재 상태** (Playwright 13개): Scenario 1 부분(가입→공식 캐릭터→RP→재진입 상태 복구), Scenario 2 부분(생성→RP→Photo→Live Scene→Chat 복귀), Scenario 6 부분(동일 캐릭터 독립 관계). 선연락·통화·Usage·Quiet Hours 시나리오는 P7–P10에서 추가.
 
 ---
 
@@ -362,14 +369,14 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 
 | Phase | 내용 | 선행 |
 |---|---|---|
-| **P0** | Repository Audit · Architecture · 본 문서 | — |
-| **P1** | Monorepo · Core Domain · DB(M1) · Auth · Terms · State Persistence | P0 |
-| **P2** | Home · Official Character(토마스/강태윤/히사시) · Character Detail | P1 |
-| **P3** | Quick Create · Advanced Editor · Face Cast Foundation · Draft Auto Save | P1 |
-| **P4** | Roleplay Session · Chat UI · Structured RP Engine · ContextBuilder · **UsageGuard 인터페이스(no-op)** | P2, P3 |
-| **P5** | World · Relationship · Event · NPC · Memory · State Transition | P4 |
-| **P6** | Dynamic Scene · Background · AI Photo · Live Scene | P5 |
-| **P7** | Reality Activation · Web Push · Contact Scheduler | P5 |
+| **P0** ✅ | Repository Audit · Architecture · 본 문서 | — |
+| **P1** ✅ | Monorepo · Core Domain · DB · Auth · Terms · State Persistence | P0 |
+| **P2** ✅ | Home · Official Character(토마스/강태윤/히사시) · Character Detail | P1 |
+| **P3** ✅ | Quick Create · Advanced Editor · Provider Adapter (Face Cast UI는 Image Provider 확정 후) | P1 |
+| **P4** ✅ | Roleplay Session · Chat UI · Structured RP Engine · ContextBuilder (UsageGuard no-op은 미이행 → P9) | P2, P3 |
+| **P5** ✅ | World · Relationship · Event · NPC · Memory · State Transition · Scenario 6 검증 | P4 |
+| **P6** ✅ | Dynamic Scene · Background · AI Photo · Live Scene | P5 |
+| **P7** ▶ | Reality Activation · Web Push · Contact Scheduler | P5 |
 | **P8** | Voice Call · Video Call · Provider Layer · CallSession | P5 |
 | **P9** | Global Usage Guard 실제 정책 · Free/Pro **자격 모델** · 요금제 비교 화면 | P4 |
 | **P10** | Archive · Settings · Quiet Hours · Adult Verification · Reporting · Account Delete | P5 |
@@ -377,7 +384,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | **P12** | Analytics · QA · Performance · E2E · Non-linear Test 게이트 | P1–P11 |
 | **P13** | **결제 시스템 연동** (PG · 구매 · 복원 · 해지 · Webhook) | P9, P12 |
 
-**P4에서 UsageGuard 인터페이스를 먼저 심는 이유**: 나중에 모든 Provider 호출부를 다시 뜯지 않기 위해. 초기엔 항상 통과하는 no-op, P9에서 실제 정책으로 교체.
+**⚠ 계획 이탈 — P4에서 UsageGuard no-op을 심지 않았다.** 결과적으로 P9에서 Provider 호출부 5곳을 직접 감싸야 한다: `chat/actions.ts`, `live/actions.ts`, `chat/media-actions.ts`, `create/actions.ts`, `lib/simulation/media.ts`. 호출부가 아직 적어 비용은 작지만, P7·P8에서 호출부를 더 늘리기 전에 **P9를 P7 직후로 당기는 것을 권장**한다.
 
 **P13 분리 근거**: Usage Guard는 `plan: 'free'|'pro'`만 읽으면 되고 그 값의 출처를 몰라도 된다. 결제는 `subscriptions`에 쓰는 주체만 추가하면 되므로 Domain 수정이 0이다. 개발 중 Pro 전환은 Admin/dev 토글(`DEV_DEFAULT`)로 처리.
 
@@ -390,7 +397,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-1 | Next.js App Router + TypeScript | 웹앱·API·Admin 단일 코드베이스. 네이티브 전환 시 API/Domain 100% 재사용 |
 | E-2 | PostgreSQL + Drizzle | Migration이 SQL 파일로 산출되어 리뷰 가능. JSONB 지원 |
 | E-3 | Zod | Structured AI Output 검증 + 런타임 타입 안전 |
-| E-4 | Auth.js | 직접 구현 금지 |
+| E-4 | ~~Auth.js~~ → **scrypt + 세션 쿠키 직접 구현** | 소셜 Provider 미확정 상태에서 Auth.js는 어댑터 설정만 늘림. `accounts.provider` 컬럼이 이미 있어 소셜 추가 시 그대로 확장. **계획과 다르게 결정한 항목** |
 | E-5 | Vercel AI Gateway | Provider 교체가 설정값 변경으로 끝남 (TBD 대응) |
 | E-6 | pnpm workspace monorepo | domain/engine을 앱과 분리하여 순수성 강제 |
 | E-7 | Web Push (VAPID) | 웹앱에서 Reality Activation 구현 수단 |
