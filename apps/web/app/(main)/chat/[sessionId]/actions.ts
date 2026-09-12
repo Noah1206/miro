@@ -66,6 +66,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
         worldVersion: loaded.snapshot.world.version,
         relationshipVersion: loaded.snapshot.relationship.version,
         currentRelationship: loaded.snapshot.relationship,
+        existingMemories: loaded.snapshot.memories,
       })
     } catch (e) {
       // 다른 요청이 먼저 커밋했다. 최신 상태로 한 번 더 시도한다.

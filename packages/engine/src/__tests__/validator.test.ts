@@ -158,3 +158,80 @@ describe('world delta', () => {
     expect(v.worldDelta?.currentLocation).toBe('도쿄 호텔')
   })
 })
+
+describe('event updates', () => {
+  it('lets an active event be resolved', () => {
+    const v = validateProposal(proposal({
+      eventUpdates: [{ eventId: 'e1', status: 'resolved', consequence: '화해했다' }],
+    }), snapshot({ activeEvents: [event({ id: 'e1' })] }))
+    expect(v.eventUpdates).toHaveLength(1)
+    expect(v.eventUpdates[0]!.status).toBe('resolved')
+  })
+
+  it('refuses to update an event that is not active', () => {
+    const v = validateProposal(proposal({
+      eventUpdates: [{ eventId: 'ghost', status: 'resolved' }],
+    }), snapshot({ activeEvents: [event({ id: 'e1' })] }))
+    expect(v.eventUpdates).toHaveLength(0)
+    expect(v.issues.some((i) => i.reason.includes('not an active event'))).toBe(true)
+  })
+
+  it('cannot revive an already resolved event', () => {
+    const v = validateProposal(proposal({
+      eventUpdates: [{ eventId: 'old', status: 'active' }],
+    }), snapshot({
+      activeEvents: [],
+      recentlyResolvedEvents: [event({ id: 'old', status: 'resolved' })],
+    }))
+    expect(v.eventUpdates).toHaveLength(0)
+  })
+
+  it('ignores a duplicate update for the same event', () => {
+    const v = validateProposal(proposal({
+      eventUpdates: [
+        { eventId: 'e1', status: 'escalated' },
+        { eventId: 'e1', status: 'resolved' },
+      ],
+    }), snapshot({ activeEvents: [event({ id: 'e1' })] }))
+    expect(v.eventUpdates).toHaveLength(1)
+    expect(v.eventUpdates[0]!.status).toBe('escalated')
+  })
+})
+
+describe('npc introductions', () => {
+  const intro = {
+    name: '박서준', role: '경쟁자', knows: ['user_visits_often'],
+    relationshipToCharacter: 'rival', relationshipToUser: 'stranger',
+  }
+
+  it('accepts a new npc', () => {
+    const v = validateProposal(proposal({ npcIntroductions: [intro] }), snapshot())
+    expect(v.npcIntroductions).toHaveLength(1)
+  })
+
+  it('refuses a name that already exists in the scene', () => {
+    const v = validateProposal(
+      proposal({ npcIntroductions: [{ ...intro, name: '이수현' }] }),
+      snapshot({ activeNpcs: [npc()] }),
+    )
+    expect(v.npcIntroductions).toHaveLength(0)
+  })
+
+  it('refuses an npc impersonating the main character', () => {
+    const v = validateProposal(
+      proposal({ npcIntroductions: [{ ...intro, name: '토마스' }] }),
+      snapshot(),
+    )
+    expect(v.npcIntroductions).toHaveLength(0)
+  })
+
+  it('caps the active cast so npcs cannot crowd out the character', () => {
+    const crowd = Array.from({ length: 4 }, (_, i) => npc({ id: `n${i}`, name: `NPC${i}` }))
+    const v = validateProposal(
+      proposal({ npcIntroductions: [intro] }),
+      snapshot({ activeNpcs: crowd }),
+    )
+    expect(v.npcIntroductions).toHaveLength(0)
+    expect(v.issues.some((i) => i.reason.includes('max active npcs'))).toBe(true)
+  })
+})

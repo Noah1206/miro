@@ -128,8 +128,10 @@ function buildPrompt(
   if (s.activeEvents.length > 0) {
     parts.push('', '## 진행 중인 사건 (해결 전까지 사라지지 않음)')
     for (const e of s.activeEvents) {
-      parts.push(`- [${e.type}] ${JSON.stringify(e.continuationState)}`)
+      // id 를 함께 실어야 AI 가 특정 사건의 해결/진행을 제안할 수 있다.
+      parts.push(`- [${e.type}] ${JSON.stringify({ __id: e.id, ...e.continuationState })}`)
     }
+    parts.push('사건이 마무리되었다면 eventUpdates 로 resolved 를 제안하세요.')
   }
   if (s.recentlyResolvedEvents.length > 0) {
     parts.push('', '## 최근 마무리된 사건 (당분간 반복 금지)')

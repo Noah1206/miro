@@ -69,6 +69,25 @@ export const EventCandidateProposal = z.object({
   participantNpcIds: z.array(z.string()).max(3).default([]),
 })
 
+/** 새 NPC 등장 제안. Validator 가 중복/한도를 검사한다. */
+export const NpcIntroductionProposal = z.object({
+  name: z.string().min(1).max(40),
+  role: z.string().min(1).max(60),
+  /** 등장 시점에 이 NPC 가 아는 것. 이후 행동의 경계가 된다. */
+  knows: z.array(z.string().max(80)).max(5).default([]),
+  relationshipToCharacter: z.string().max(60).default(''),
+  relationshipToUser: z.string().max(60).default(''),
+})
+
+/** 진행 중인 사건의 상태 변화 제안. */
+export const EventUpdateProposal = z.object({
+  eventId: z.string(),
+  status: z.enum(['active', 'escalated', 'resolved', 'cancelled']),
+  /** 사건이 남긴 지속 상태. resolved 가 아니면 다음 턴에도 유지된다. */
+  continuationState: z.record(z.unknown()).optional(),
+  consequence: z.string().max(200).optional(),
+})
+
 export const NpcActionProposal = z.object({
   npcId: z.string(),
   action: z.string().min(1).max(300),
@@ -94,6 +113,8 @@ export const SimulationProposal = z.object({
   sceneDelta: SceneDeltaProposal.nullable().default(null),
   memoryCandidates: z.array(MemoryCandidateProposal).max(3).default([]),
   eventCandidates: z.array(EventCandidateProposal).max(2).default([]),
+  eventUpdates: z.array(EventUpdateProposal).max(3).default([]),
+  npcIntroductions: z.array(NpcIntroductionProposal).max(2).default([]),
   npcActions: z.array(NpcActionProposal).max(3).default([]),
   realityIntent: RealityIntentProposal.nullable().default(null),
 })

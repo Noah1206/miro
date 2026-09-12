@@ -53,11 +53,18 @@ export const POLICY = {
     minSelectionScore: DEV_DEFAULT(0.55),
   },
 
+  npc: {
+    /** 동시에 활성일 수 있는 NPC 수. NPC 가 메인 캐릭터보다 맥락을 많이 차지하지 않게 한다. */
+    maxActive: DEV_DEFAULT(4),
+  },
+
   memory: {
     /** 장기 기억으로 승격되기 위한 최소 중요도. */
     minImportance: DEV_DEFAULT(0.4),
     /** 한 턴에 수집 가능한 기억 후보 최대 수. */
     maxCandidatesPerTurn: 3,
+    /** 세션당 보존하는 장기 기억 최대 수. 초과 시 중요도 낮은 것부터 정리한다. */
+    maxPerSession: DEV_DEFAULT(120),
   },
 
   reality: {

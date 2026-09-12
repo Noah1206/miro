@@ -17,6 +17,8 @@ export type ValidatedTransition = {
   sceneDelta: SimulationProposal['sceneDelta']
   memories: MemoryCandidate[]
   newEvent: { candidate: EventCandidate; score: number } | null
+  eventUpdates: SimulationProposal['eventUpdates']
+  npcIntroductions: SimulationProposal['npcIntroductions']
   npcActions: SimulationProposal['npcActions']
   realityIntent: SimulationProposal['realityIntent']
   issues: ValidationIssue[]
@@ -42,6 +44,8 @@ export function validateProposal(
     sceneDelta: proposal.sceneDelta,
     memories: validateMemories(proposal, issues),
     newEvent: validateEvent(proposal, snapshot, issues),
+    eventUpdates: validateEventUpdates(proposal, snapshot, issues),
+    npcIntroductions: validateNpcIntroductions(proposal, snapshot, issues),
     npcActions: validateNpcActions(proposal, snapshot.activeNpcs, issues),
     realityIntent: proposal.realityIntent,
     issues,
@@ -161,6 +165,64 @@ function validateEvent(
     issues.push({ field: 'eventCandidates', reason: 'no candidate passed eligibility' })
   }
   return picked
+}
+
+/**
+ * 사건 상태 변화 검증.
+ *
+ * 진행 중인 사건만 갱신할 수 있다 — AI 가 존재하지 않는 사건을 해결했다고
+ * 주장하거나, 이미 끝난 사건을 되살리지 못하게 한다.
+ */
+function validateEventUpdates(
+  p: SimulationProposal,
+  s: SimulationSnapshot,
+  issues: ValidationIssue[],
+): SimulationProposal['eventUpdates'] {
+  const activeIds = new Set(s.activeEvents.map((e) => e.id))
+  const seen = new Set<string>()
+
+  return p.eventUpdates.filter((u) => {
+    if (!activeIds.has(u.eventId)) {
+      issues.push({ field: 'eventUpdates', reason: `not an active event: ${u.eventId}` })
+      return false
+    }
+    if (seen.has(u.eventId)) {
+      issues.push({ field: 'eventUpdates', reason: `duplicate update for ${u.eventId}` })
+      return false
+    }
+    seen.add(u.eventId)
+    return true
+  })
+}
+
+/**
+ * NPC 등장 검증.
+ *
+ * NPC 는 메인 캐릭터보다 많은 맥락을 차지하면 안 된다. 동시 활성 수를 제한하고,
+ * 이름이 겹치는 NPC 는 추가하지 않는다.
+ */
+function validateNpcIntroductions(
+  p: SimulationProposal,
+  s: SimulationSnapshot,
+  issues: ValidationIssue[],
+): SimulationProposal['npcIntroductions'] {
+  const existing = new Set(s.activeNpcs.map((n) => n.name))
+  const room = Math.max(0, POLICY.npc.maxActive - s.activeNpcs.length)
+  const kept: SimulationProposal['npcIntroductions'] = []
+
+  for (const intro of p.npcIntroductions) {
+    if (kept.length >= room) {
+      issues.push({ field: 'npcIntroductions', reason: 'max active npcs reached' })
+      break
+    }
+    if (existing.has(intro.name) || intro.name === s.character.identity.name) {
+      issues.push({ field: 'npcIntroductions', reason: `name already present: ${intro.name}` })
+      continue
+    }
+    existing.add(intro.name)
+    kept.push(intro)
+  }
+  return kept
 }
 
 /** NPC 가 알 수 없는 정보로 행동하지 못하게 한다. */

@@ -1,9 +1,12 @@
 import { and, eq, sql } from 'drizzle-orm'
 import {
-  db, events, memories, messages, relationships, roleplaySessions,
+  db, events, memories, messages, npcs, relationships, roleplaySessions,
   scenes, worldStates,
 } from '@miro/db'
-import { applyRelationshipDelta, buildSceneKey, nextCooldownTurn } from '@miro/domain'
+import {
+  applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories,
+} from '@miro/domain'
+import { POLICY } from '@miro/config'
 import type { RelationshipState } from '@miro/domain'
 import type { ValidatedTransition } from '@miro/engine'
 
@@ -26,6 +29,8 @@ export type CommitInput = {
   worldVersion: number
   relationshipVersion: number
   currentRelationship: RelationshipState
+  /** 중복 기억 판정을 위한 기존 기억. */
+  existingMemories: Array<{ content: string; importance: number; persistence: number }>
 }
 
 /**
@@ -107,9 +112,63 @@ export async function commitTurn(input: CommitInput): Promise<void> {
       }
     }
 
+    /* ---- event updates ---- */
+    for (const u of t.eventUpdates) {
+      const patch: Record<string, unknown> = { status: u.status }
+      if (u.continuationState) patch.continuationState = u.continuationState
+      if (u.status === 'resolved' || u.status === 'cancelled') {
+        patch.resolvedAtTurn = input.turnIndex
+        // 해결된 사건은 쿨다운이 시작된다 — 다음 턴에 곧바로 재발하지 않는다.
+        patch.cooldownUntilTurn = nextCooldownTurn(input.turnIndex)
+      }
+      if (u.consequence) {
+        patch.consequences = sql`${events.consequences} || ${JSON.stringify([u.consequence])}::jsonb`
+      }
+
+      await tx.update(events).set(patch)
+        .where(and(eq(events.id, u.eventId), eq(events.sessionId, input.sessionId)))
+    }
+
+    // 해결/취소된 사건은 world 의 활성 목록에서 빠진다.
+    const closed = t.eventUpdates
+      .filter((u) => u.status === 'resolved' || u.status === 'cancelled')
+      .map((u) => u.eventId)
+
+    if (closed.length > 0) {
+      const [w] = await tx.select({ ids: worldStates.activeEventIds })
+        .from(worldStates).where(eq(worldStates.sessionId, input.sessionId)).limit(1)
+      if (w) {
+        await tx.update(worldStates)
+          .set({ activeEventIds: w.ids.filter((id) => !closed.includes(id)) })
+          .where(eq(worldStates.sessionId, input.sessionId))
+      }
+    }
+
+    /* ---- npc introductions ---- */
+    for (const intro of t.npcIntroductions) {
+      const [created] = await tx.insert(npcs).values({
+        sessionId: input.sessionId,
+        name: intro.name,
+        role: intro.role,
+        knows: intro.knows,
+        relationshipToCharacter: intro.relationshipToCharacter,
+        relationshipToUser: intro.relationshipToUser,
+      }).returning({ id: npcs.id })
+
+      if (created) {
+        await tx.update(worldStates)
+          .set({
+            activeNpcIds: sql`${worldStates.activeNpcIds} || ${JSON.stringify([created.id])}::jsonb`,
+          })
+          .where(eq(worldStates.sessionId, input.sessionId))
+      }
+    }
+
     /* ---- memories ---- */
-    if (t.memories.length > 0) {
-      await tx.insert(memories).values(t.memories.map((m) => ({
+    // 같은 사실을 반복 저장하지 않는다.
+    const fresh = dedupeCandidates(t.memories, input.existingMemories as never)
+    if (fresh.length > 0) {
+      await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,
         type: m.type,
@@ -118,6 +177,14 @@ export async function commitTurn(input: CommitInput): Promise<void> {
         persistence: Math.round(m.persistence * 100),
         confidence: Math.round(m.confidence * 100),
       })))
+
+      // 한도를 넘으면 중요도가 낮은 것부터 정리한다.
+      const all = await tx.select().from(memories)
+        .where(eq(memories.sessionId, input.sessionId))
+      const { drop } = pruneMemories(all as never, POLICY.memory.maxPerSession)
+      for (const m of drop) {
+        await tx.delete(memories).where(eq(memories.id, m.id))
+      }
     }
 
     /* ---- scene ---- */
