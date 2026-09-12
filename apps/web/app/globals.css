@@ -84,6 +84,9 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 /* layout */
 .page { min-height: 100dvh; padding: var(--space-5) var(--space-5) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
 .page--immersive { max-width: none; padding: 0; }
+/* 홈 히어로 — 세로 화면에선 4:5 인물 비율, 가로 화면(데스크톱)에선 한 화면을 넘지 않게 높이를 묶는다.
+   비율만 풀면 열 폭(720px)에 900px 높이가 나와 '다른 세계' 가 접힌 아래로 밀린다. */
+@media (min-width: 1024px) { .hero-visual { aspect-ratio: auto !important; height: min(58dvh, 520px); } }
 .stack { display: flex; flex-direction: column; }
 .hairline { height: 1px; background: var(--color-border); border: 0; margin: 0; }
 

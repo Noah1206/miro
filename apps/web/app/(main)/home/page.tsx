@@ -24,7 +24,7 @@ export default async function Home() {
 
       <section style={{ padding: '0 var(--space-5)', maxWidth: 720, margin: '0 auto' }}>
         <TransitionLink href={`/character/${f.slug}`} aria-label={COPY.a11y.hero(f.name)} style={{ display: 'block' }}>
-          <CharacterVisual name={f.name} accent={f.accentA} slug={f.slug} ratio="4 / 5" />
+          <CharacterVisual name={f.name} accent={f.accentA} slug={f.slug} ratio="4 / 5" className="hero-visual" />
         </TransitionLink>
         <Reveal delay={0.08}>
           <div className="stack" style={{ gap: 8, padding: 'var(--space-5) 2px 0' }}>
