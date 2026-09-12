@@ -68,8 +68,12 @@ export default async function ChatPage({
 
         {activeEvent && <EventCard type={activeEvent.type} state={activeEvent.continuationState} />}
 
+        {loaded.restricted && (
+          <p data-restricted role="status" style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--accent-strong)' }}>운영 정책에 따라 이 역할극은 제한되었습니다.</p>
+        )}
         {history.map((m) => (
-          <Bubble key={m.id} id={m.id} role={m.role} kind={m.kind} content={m.content}
+          <Bubble key={m.id} id={m.id} role={m.role} kind={m.hiddenAt ? 'hidden' : m.kind}
+                  content={m.hiddenAt ? '운영 정책에 따라 숨김 처리된 메시지입니다.' : m.content}
                   blocks={m.blocks as Array<Record<string, unknown>>} />
         ))}
       </div>
@@ -148,6 +152,10 @@ function Bubble({ id, role, kind, content, blocks }: {
         <ReportLink id={id} kind="photo" />
       </div>
     )
+  }
+
+  if (kind === 'hidden') {
+    return <p data-hidden-message style={{ fontSize: 12, color: 'var(--text-secondary)', fontStyle: 'italic', margin: 0 }}>{content}</p>
   }
 
   if (kind === 'call_record') {

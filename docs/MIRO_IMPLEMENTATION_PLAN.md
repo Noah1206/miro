@@ -1,6 +1,6 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: Phase 0–10 완료 → Phase 11 (Web Admin) 진행 중
+> **Status**: Phase 0–11 완료 → Phase 12 (Analytics·Observability·CI·Hardening) 진행 중
 > **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
@@ -52,7 +52,7 @@
 
 ## 2. PRD 대비 구현 상태
 
-**Phase 0–10 완료. 테스트 203 unit/integration + 27 e2e 통과, 빌드 clean.**
+**Phase 0–11 완료. 테스트 216 unit/integration + 29 e2e 통과, 두 앱 빌드 clean.**
 
 | # | 기능 영역 | 상태 | 비고 |
 |---|---|---|---|
@@ -64,12 +64,12 @@
 | 6 | 사용량·구독 및 설정 | **Partial** | Usage Guard, 5h 창, Free/Pro 자격, /my·/plans·알림/통화/Quiet Hours/timezone 설정 완료. 결제(P13)만 남음 |
 | 7 | 안전·권리 및 데이터 보호 | **Implemented** | 성인 인증(Mock Provider, 24h 재시도 잠금) + 정책 동의 + 실존 인물 참조 차단(gateMature) + 기기 권한 동의 기록 |
 | 8 | 캐릭터 및 역할극 보관함 | **Implemented** | 진행 중/보관됨, 미확인 선연락 배지, 현재 장면, 삭제 확인, soft delete + 보존기간 후 purge(Cron) |
-| 9 | 콘텐츠 신고 및 운영 대응 | **Partial** | 신고 제출(메시지/사진/Live Scene, 스냅샷, 중복 차단, 권한) 완료. 운영 검토(P11) 남음 |
+| 9 | 콘텐츠 신고 및 운영 대응 | **Implemented** | 신고 제출 + 별도 Admin 앱(자체 인증, RBAC, 목록/상세/맥락/조치/감사로그, 낙관적 잠금). 숨김·제한이 사용자 앱에 적용 |
 | 10 | Pro 구독 결제 및 관리 | Missing | **P13 (최종, 사용자 결정)** |
 | 11 | 장기 기억 및 관계 맥락 | **Implemented** | 세션 격리, salience, dedupe, 중요도 기반 prune |
 | 12 | 계정 삭제 및 개인 데이터 처리 | **Implemented** | 영향 정보 → 확정 → 로그인 차단·세션 폐기·Push 제거·soft delete·구독 해지, 반복 요청 idempotent |
 
-**실제 적용 DB**: 26 테이블 / 9 migration (`0000_core` … `0008_ops`). 남은 것: `admin_users`·`admin_sessions`·`admin_actions`(P11), `analytics_events`(P12).
+**실제 적용 DB**: 29 테이블 / 10 migration (`0000_core` … `0009_admin`). 남은 것: `analytics_events`(P12).
 
 ## 3. 구조적 리스크
 
@@ -259,7 +259,7 @@ JSONB 허용: `character_visual_identities.profile`, `world_states.snapshot`, `g
 | `0007_calls` ✅ | P8 | call_sessions (세션당 ringing 1개 partial UNIQUE) |
 | `0006_usage` ✅ | P9 | usage_windows, usage_ledger(idempotency UNIQUE), subscriptions(자격만) |
 | `0008_ops` ✅ | P10 | reports(reporter+target UNIQUE, 스냅샷, version), account_deletions, users.mature_policy_agreed_at, user_settings.*_consent_at |
-| `0009_admin` | P11 | admin_users, admin_sessions, admin_actions |
+| `0009_admin` ✅ | P11 | admin_users, admin_sessions, admin_actions(append-only), messages.hidden_at, sessions.restricted_at |
 
 ---
 
@@ -362,7 +362,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 ### 9.3 E2E Scenario
 지시서 §37 Scenario 1–7 전부. **Scenario 3(Usage→Pro 전환)은 Phase 13까지 Pro 전환을 dev 토글로 대체.**
 
-**현재 상태** (Playwright 27개): Scenario 1·3·4 완결, Scenario 2·6 부분, Scenario 5 통합, 보관함/설정/신고/성인인증/계정삭제 각 1개 이상.
+**현재 상태** (Playwright 29개): Scenario 1·3·4 완결, Scenario 2·6 부분, Scenario 5 통합, 보관함/설정/신고/성인인증/계정삭제, Admin 검토 플로우(제한 → 사용자 턴 거부).
 
 ---
 
@@ -381,8 +381,8 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | **P9** ✅ | Usage Guard(reserve/commit/rollback, advisory lock, idempotency) · Free/Pro 자격(effectivePlan) · /my · /plans · dev Pro 토글 | P4 |
 | **P8** ✅ | 통화 = 같은 시뮬레이션의 mode(voice_call/video_call). 수신 UI 채널별 분리, 수락 시점 과금, 종료 시 실제 분 보정, 부재중 만료(Cron), CallMediaProvider Mock | P5, P9 |
 | **P10** ✅ | Archive · Settings · Quiet Hours · Permissions · Adult Verification · Mature gate · Reporting · Account Delete · retention purge | P5 |
-| **P11** ▶ | Web Admin (Report 검토 · RBAC · Audit Log) | P10 |
-| **P12** | Analytics · QA · Performance · E2E · Non-linear Test 게이트 | P1–P11 |
+| **P11** ✅ | `apps/admin` 별도 앱 · 별도 쿠키/테이블 · RBAC(viewer/reviewer/superadmin) · 상태 전이 표 · version 낙관적 잠금 · 감사 로그 · 사용자 앱에 admin 경로/링크 없음(테스트로 고정) | P10 |
+| **P12** ▶ | Analytics · Observability · CI · Health · Hardening | P1–P11 |
 | **P13** | **결제 시스템 연동** (PG · 구매 · 복원 · 해지 · Webhook) | P9, P12 |
 
 **계획 이탈 해소** — P9를 P7 직후로 당겨 실행했다. `guarded()` 한 함수가 호출부 6곳(chat, live, photo, create, media 생성, 선연락 사진은 정책상 무차감)을 감싼다. 이후 P8 통화 경로는 처음부터 이 함수를 쓴다.
@@ -411,6 +411,9 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-14 | 통화는 별도 엔진이 아니라 `SimulationSnapshot.mode` | 통화 중 발화가 관계·세계·기억에 그대로 반영. Validator가 모드에 맞지 않는 블록(전화 중 서술)을 버림 |
 | E-15 | 전화/영상 선택은 난수가 아니라 임계값 | `pickCallChannel(profile, urgency)` — 같은 상태면 같은 결과. profile.callProbability는 "성향"으로 해석 |
 | E-16 | 수신 통화 과금은 수락 시점 | 받지 않은 통화에 사용량을 물리지 않음. 1분 예약 → 종료 시 실제 분으로 commit 보정 |
+| E-17 | Admin은 별도 Next 앱(`apps/admin`, 포트 3100) | 인증 쿠키·테이블·배포 단위 분리. 사용자 앱에 admin 문자열이 없음을 통합 테스트가 grep으로 검사 |
+| E-18 | 신고 조치는 상태 전이 표 + `reports.version` | 동시 처리 시 늦은 운영자는 stale. 제한 조치는 근거 메모 필수 |
+| E-19 | E2E: Next 라우트 어나운서(`__next-route-announcer__`)가 `role=alert` | `getByRole('alert')`는 항상 `.filter({hasText})`로 스코프 |
 
 ---
 

@@ -11,6 +11,8 @@ export type LoadedSession = {
   characterId: string
   characterName: string
   characterStatus: string | null
+  /** 운영 제한. 새 턴/미디어를 거부한다. */
+  restricted: boolean
 }
 
 /**
@@ -101,6 +103,7 @@ export async function loadSession(
     characterId: c.id,
     characterName: c.name,
     characterStatus: row.session.characterStatus,
+    restricted: row.session.restrictedAt !== null,
   }
 }
 

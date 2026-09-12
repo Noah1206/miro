@@ -6,7 +6,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./apps/web', import.meta.url)) },
   },
   test: {
-    include: ['packages/**/*.test.ts', 'apps/web/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'apps/web/**/*.test.ts', 'apps/admin/**/*.test.ts'],
     fileParallelism: false,
     environment: 'node',
   },

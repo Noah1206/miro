@@ -29,7 +29,10 @@ describeDb('archive / reports / account', () => {
     const u = await user(); await session(u)
     const [row] = await listSessions(u, 'active')
     expect(row!.location).toBe('런던')
-    expect(JSON.stringify(row)).not.toMatch(/trust|88/)
+    // 관계 차원 필드 자체가 목록 항목에 없어야 한다 (숫자 값이 아니라 키로 검사 — UUID 오탐 방지)
+    for (const k of ['trust', 'attraction', 'jealousy', 'protectiveness', 'emotionalDistance', 'attachment', 'stage']) {
+      expect(row).not.toHaveProperty(k)
+    }
   })
 
   it('archive → archived tab; restore → active', async () => {

@@ -38,6 +38,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(sessionId, user.id)
     if (!loaded) return fail('대화를 찾을 수 없습니다.')
+    if (loaded.restricted) return fail('운영 정책에 따라 이 역할극은 제한되었습니다. 문의는 설정에서 할 수 있습니다.')
 
     const llm = resolveRpLLM(loaded.characterName)
     const turnIndex = loaded.snapshot.turnCount + 1

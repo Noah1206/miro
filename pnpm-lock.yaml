@@ -24,6 +24,40 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.2)
 
+  apps/admin:
+    dependencies:
+      '@miro/config':
+        specifier: workspace:*
+        version: link:../../packages/config
+      '@miro/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@miro/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
+      drizzle-orm:
+        specifier: ^0.36.4
+        version: 0.36.4(@types/react@19.3.0)(postgres@3.4.9)(react@19.3.0)
+      next:
+        specifier: ^15.1.0
+        version: 15.5.25(@playwright/test@1.49.1)(@types/node@22.20.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.0.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.3.0(react@19.3.0)
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.1
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.2
+        version: 19.3.0(@types/react@19.3.0)
+
   apps/web:
     dependencies:
       '@miro/config':

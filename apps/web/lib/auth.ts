@@ -1,7 +1,7 @@
-import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { eq, and, isNull, gt } from 'drizzle-orm'
-import { db, users, accounts, authSessions } from '@miro/db'
+import { db, users, accounts, authSessions, hashPassword, verifyPassword } from '@miro/db'
 
 const COOKIE = 'miro_session'
 const SESSION_DAYS = 30
@@ -12,22 +12,6 @@ export type SessionUser = {
   displayName: string | null
   plan: 'free' | 'pro'
   adultVerifiedAt: Date | null
-}
-
-/* ---------- password hashing (scrypt, stdlib) ---------- */
-
-export function hashPassword(plain: string): string {
-  const salt = randomBytes(16).toString('hex')
-  const hash = scryptSync(plain, salt, 64).toString('hex')
-  return `${salt}:${hash}`
-}
-
-export function verifyPassword(plain: string, stored: string): boolean {
-  const [salt, hash] = stored.split(':')
-  if (!salt || !hash) return false
-  const expected = Buffer.from(hash, 'hex')
-  const actual = scryptSync(plain, salt, 64)
-  return expected.length === actual.length && timingSafeEqual(expected, actual)
 }
 
 /* ---------- session ---------- */

@@ -226,6 +226,9 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   realityCheckedAt: timestamp('reality_checked_at', { withTimezone: true }),
   /** 캐릭터 상태 한 줄 ('status' 채널). Chats 목록과 헤더에 표시. */
   characterStatus: text('character_status'),
+  /** 운영 제한 조치. 설정되면 새 턴/미디어 생성을 거부한다 (명세서 9.2). */
+  restrictedAt: timestamp('restricted_at', { withTimezone: true }),
+  restrictedReason: text('restricted_reason'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   /** 삭제 확정 후 일정 기간 복구 가능하게 보관 (명세서 8.1 결과). */
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -296,6 +299,8 @@ export const messages = pgTable('messages', {
   blocks: jsonb('blocks').$type<Array<Record<string, unknown>>>().notNull().default([]),
   mediaId: uuid('media_id'),
   turnIndex: integer('turn_index').notNull(),
+  /** 운영 조치로 숨김. 원문은 검토용으로 남고 사용자에게는 표시하지 않는다. */
+  hiddenAt: timestamp('hidden_at', { withTimezone: true }),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
@@ -563,3 +568,36 @@ export const accountDeletions = pgTable('account_deletions', {
   requestedAt: timestamp('requested_at', { withTimezone: true }).notNull().defaultNow(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
 })
+
+
+/* ─────────────── Admin (M3) — 사용자 앱과 완전히 분리된 인증 ─────────────── */
+
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  role: text('role', { enum: ['viewer', 'reviewer', 'superadmin'] }).notNull().default('viewer'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  disabledAt: timestamp('disabled_at', { withTimezone: true }),
+})
+
+export const adminSessions = pgTable('admin_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  adminId: uuid('admin_id').notNull().references(() => adminUsers.id, { onDelete: 'cascade' }),
+  token: text('token').notNull().unique(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+})
+
+/** 감사 로그. 누가 어떤 신고에 무엇을 했는지 — 되돌릴 수 없는 append-only. */
+export const adminActions = pgTable('admin_actions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  adminId: uuid('admin_id').notNull().references(() => adminUsers.id),
+  reportId: uuid('report_id').references(() => reports.id, { onDelete: 'set null' }),
+  action: text('action', {
+    enum: ['start_review', 'hide_content', 'restrict_session', 'resolve_no_action', 'dismiss', 'reopen'],
+  }).notNull(),
+  previousStatus: text('previous_status'),
+  newStatus: text('new_status'),
+  note: text('note').notNull().default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ reportIdx: index('admin_actions_report_idx').on(t.reportId, t.createdAt) }))
