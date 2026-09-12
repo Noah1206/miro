@@ -1,16 +1,19 @@
 import { GatewayLLMProvider } from './llm/gateway'
 import { MockLLMProvider } from './mock/llm'
 import { MockImageProvider } from './mock/image'
+import { ReplicateImageProvider } from './image/replicate'
 import { buildMockDraft } from './character/generate'
 import type { ImageProvider, LLMProvider } from './types'
 import { MockPushProvider } from './push/mock'
 import { WebPushProvider } from './push/webpush'
 import type { PushProvider } from './push/types'
 import { MockCallMediaProvider } from './call/mock'
+import { LiveKitCallMediaProvider } from './call/livekit'
 import type { CallMediaProvider } from './call/types'
 import { MockAdultVerificationProvider } from './verify/mock'
 import type { AdultVerificationProvider } from './verify/types'
 import { MockPaymentProvider } from './payment/mock'
+import { StripePaymentProvider } from './payment/stripe'
 import type { PaymentProvider } from './payment/types'
 import { OAuth2Provider } from './auth/oauth'
 import { MockOAuthProvider } from './auth/mock'
@@ -27,9 +30,10 @@ export function resolveLLM(): LLMProvider {
   return new MockLLMProvider((prompt) => buildMockDraft(prompt))
 }
 
+/** 이미지. REPLICATE_API_TOKEN 이 있으면 실제 생성, 없으면 자리표시. */
 export function resolveImage(): ImageProvider {
-  // Image Provider 확정 시 여기에 live adapter 를 추가한다.
-  return new MockImageProvider()
+  const token = process.env.REPLICATE_API_TOKEN
+  return token ? new ReplicateImageProvider(token) : new MockImageProvider()
 }
 
 let pushSingleton: PushProvider | null = null
@@ -47,11 +51,16 @@ export function resolvePush(): PushProvider {
 }
 
 /**
- * 음성/영상 Provider. 확정되면 여기서 env 로 분기해 live adapter 를 반환한다.
- * Domain/서비스 코드는 바뀌지 않는다.
+ * 음성/영상 Provider. LiveKit 자격증명이 모두 있으면 실시간 세션, 없으면 텍스트 대체.
+ * Domain/서비스 코드는 어느 쪽이든 바뀌지 않는다.
  */
 export function resolveCallMedia(kind: 'voice' | 'video'): CallMediaProvider {
-  return new MockCallMediaProvider(kind)
+  const key = process.env.LIVEKIT_API_KEY
+  const secret = process.env.LIVEKIT_API_SECRET
+  const url = process.env.LIVEKIT_URL
+  return key && secret && url
+    ? new LiveKitCallMediaProvider(kind, key, secret, url)
+    : new MockCallMediaProvider(kind)
 }
 
 /** 성인 인증 Provider. 확정되면 env 로 분기한다. */
@@ -60,9 +69,17 @@ export function resolveAdultVerification(): AdultVerificationProvider {
 }
 
 let paymentSingleton: PaymentProvider | null = null
-/** 결제 Provider. PG 확정 시 env 로 분기 (예: STRIPE_SECRET_KEY → StripePaymentProvider). */
+/** 결제 Provider. Stripe 키가 모두 있으면 실제 결제, 없으면 시뮬레이션. */
 export function resolvePayment(): PaymentProvider {
-  return (paymentSingleton ??= new MockPaymentProvider())
+  if (paymentSingleton) return paymentSingleton
+  const key = process.env.STRIPE_SECRET_KEY
+  const hook = process.env.STRIPE_WEBHOOK_SECRET
+  const price = process.env.STRIPE_PRICE_ID
+  const base = process.env.AUTH_BASE_URL ?? 'http://localhost:3000'
+  paymentSingleton = key && hook && price
+    ? new StripePaymentProvider(key, hook, price, `${base}/subscribe/result?status=success`, `${base}/subscribe?status=cancel`)
+    : new MockPaymentProvider()
+  return paymentSingleton
 }
 
 /** 소셜 로그인. `${PROVIDER}_CLIENT_ID/SECRET` 가 있으면 실제 OAuth, 없으면 시뮬레이션. */
