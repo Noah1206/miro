@@ -1,0 +1,19 @@
+{
+  "name": "miro",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter @miro/web dev",
+    "build": "pnpm --filter @miro/web build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --pretty false",
+    "db:generate": "pnpm --filter @miro/db generate",
+    "db:migrate": "pnpm --filter @miro/db migrate"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.1"
+  }
+}
