@@ -5,6 +5,7 @@ import { db, messages } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ChatComposer, StylePicker } from './composer'
+import { MediaBar } from './media-bar'
 
 export default async function ChatPage({
   params,
@@ -53,9 +54,12 @@ export default async function ChatPage({
 
         {activeEvent && <EventCard type={activeEvent.type} state={activeEvent.continuationState} />}
 
-        {history.map((m) => <Bubble key={m.id} role={m.role} content={m.content} />)}
+        {history.map((m) => (
+          <Bubble key={m.id} role={m.role} kind={m.kind} content={m.content} />
+        ))}
       </div>
 
+      <MediaBar sessionId={sessionId} />
       <ChatComposer sessionId={sessionId} />
     </main>
   )
@@ -91,8 +95,21 @@ function EventCard({ type, state }: { type: string; state: Record<string, unknow
   )
 }
 
-function Bubble({ role, content }: { role: string; content: string }) {
+function Bubble({ role, kind, content }: { role: string; kind: string; content: string }) {
   const mine = role === 'user'
+
+  if (kind === 'photo') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={content} alt="캐릭터가 보낸 사진" style={{
+          maxWidth: '68%', borderRadius: 14, border: '1px solid var(--border)',
+          display: 'block',
+        }} />
+      </div>
+    )
+  }
+
   return (
     <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
       <div style={{

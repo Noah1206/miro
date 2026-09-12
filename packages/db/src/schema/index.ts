@@ -343,3 +343,39 @@ export const scenes = pgTable('scenes', {
 }, (t) => ({
   keyIdx: index('scenes_session_key_idx').on(t.sessionId, t.sceneKey),
 }))
+
+
+/* ─────────────── Generated media (M2) ─────────────── */
+
+/**
+ * 생성된 미디어. sceneKey / promptKey 로 캐시되어 같은 조건이면 재사용한다.
+ * 재사용은 새 생성이 아니므로 Usage 를 소비하지 않는다.
+ */
+export const generatedMedia = pgTable('generated_media', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id')
+    .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  characterId: uuid('character_id').notNull()
+    .references(() => characters.id, { onDelete: 'cascade' }),
+
+  kind: text('kind', {
+    enum: ['photo', 'background', 'live_scene', 'face_cast'],
+  }).notNull(),
+
+  url: text('url').notNull(),
+  /** 동일 조건 재생성을 막는 캐시 키. */
+  cacheKey: text('cache_key').notNull(),
+  prompt: text('prompt').notNull().default(''),
+
+  /** 어떤 Visual Identity 판으로 만들었는지. 일관성 추적에 사용한다. */
+  visualIdentityId: uuid('visual_identity_id')
+    .references(() => characterVisualIdentities.id, { onDelete: 'set null' }),
+  visualIdentityVersion: integer('visual_identity_version'),
+
+  providerMetadata: jsonb('provider_metadata').$type<Record<string, unknown>>()
+    .notNull().default({}),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  cacheIdx: index('media_cache_idx').on(t.characterId, t.kind, t.cacheKey),
+  sessionIdx: index('media_session_idx').on(t.sessionId, t.createdAt),
+}))

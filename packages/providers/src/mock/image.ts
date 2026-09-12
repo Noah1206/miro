@@ -11,7 +11,7 @@ export class MockImageProvider implements ImageProvider {
   async generate(spec: ImageSpec): Promise<GeneratedImage> {
     const seed = hash(spec.sceneKey ?? spec.prompt)
     return {
-      url: `/mock-media/${seed}.svg`,
+      url: `/mock-media/${seed}`,
       providerMetadata: { mock: true, seed, aspect: spec.aspect },
     }
   }
