@@ -14,22 +14,25 @@ function Star() {
   return <span aria-hidden style={{ color: 'var(--color-text-tertiary)', marginRight: 2, fontSize: '0.85em', verticalAlign: 'super' }}>*</span>
 }
 
-/** 라벨 + 입력칸 한 덩이. 글자 수 표시는 값 길이를 받아 직접 그린다. */
+/**
+ * 한 칸.
+ *
+ * 회색 상자를 두르지 않는다 — 상자를 쌓으면 화면이 서류가 되고, 어느 칸이 중요한지 사라진다.
+ * 대신 밑줄 하나로 칸을 표시하고, 라벨은 값 위에 작게 얹는다. 초점이 들어오면 밑줄만 파래진다.
+ * 글자 수는 한도 근처(80%)에서만 나타난다 — 늘 떠 있으면 세라는 뜻이 되어 버린다.
+ */
 export function LabeledField({ label, required, hint, error, children }: {
   label: string; required?: boolean; hint?: string; error?: string | null; children: ReactNode
 }) {
   return (
-    <div className="stack" style={{ gap: 6 }}>
-      <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-        {required && <Star />}{label}
+    <div className="stack" style={{ gap: 4 }}>
+      <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: error ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
+        {label}{required && <Star />}
       </span>
       {children}
-      {hint && !error && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{hint}</span>}
+      {hint && !error && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-quaternary)' }}>{hint}</span>}
       {error && (
-        <span role="alert" className="t-caption" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--color-danger)' }}>
-          <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-            <circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 16.5v.5" strokeLinecap="round" />
-          </svg>
+        <span role="alert" className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-danger)' }}>
           {error}
         </span>
       )}
@@ -37,43 +40,60 @@ export function LabeledField({ label, required, hint, error, children }: {
   )
 }
 
-/** 글자 수가 붙은 한 줄 입력. 세는 일은 화면이 한다 — 서버는 maxLength 로 다시 자른다. */
+/** 밑줄이 초점을 따라 파래진다. 상자가 없으므로 이 선이 유일한 경계다. */
+function underline(focused: boolean, invalid?: boolean): React.CSSProperties {
+  return {
+    borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-accent)' : 'var(--color-border-strong)'}`,
+    transition: 'border-color var(--motion-fast) var(--ease-standard)',
+  }
+}
+
+/** 한도의 80% 를 넘겨야 보인다 — 그 전에는 셀 이유가 없다. */
+function Counter({ length, max }: { length: number; max: number }) {
+  if (length < max * 0.8) return null
+  return (
+    <span className="t-micro" style={{
+      textTransform: 'none', letterSpacing: 0, flexShrink: 0,
+      color: length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)',
+    }}>
+      {length}/{max}
+    </span>
+  )
+}
+
+/** 한 줄 입력. 밑줄만 있고 상자는 없다. */
 export function CountedInput({ name, placeholder, max, defaultValue = '', required, invalid }: {
   name: string; placeholder: string; max: number; defaultValue?: string; required?: boolean; invalid?: boolean
 }) {
   const [value, setValue] = useState(defaultValue)
+  const [focused, setFocused] = useState(false)
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px',
-      background: 'var(--color-surface-2)', borderRadius: 'var(--radius-button)',
-      border: `1px solid ${invalid ? 'var(--color-danger)' : 'transparent'}`,
-    }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px', ...underline(focused, invalid) }}>
       <input name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} required={required} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
-      <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, flexShrink: 0, color: 'var(--color-text-tertiary)' }}>
-        {value.length}/{max}
-      </span>
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
+      <Counter length={value.length} max={max} />
     </div>
   )
 }
 
-/** 글자 수가 붙은 여러 줄 입력. 안내문은 placeholder 에 예시까지 넣는다 (레퍼런스). */
+/** 여러 줄 입력. 같은 밑줄 규칙 — 칸이 길어져도 상자가 되지 않는다. */
 export function CountedTextArea({ name, placeholder, max, rows = 4, defaultValue = '' }: {
   name: string; placeholder: string; max: number; rows?: number; defaultValue?: string
 }) {
   const [value, setValue] = useState(defaultValue)
+  const [focused, setFocused] = useState(false)
   return (
-    <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-button)', padding: '12px 14px' }}>
+    <div style={{ padding: '6px 0 8px', ...underline(focused) }}>
       <textarea name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
-          width: '100%', background: 'none', border: 0, outline: 'none', resize: 'vertical',
-          color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.6, fontFamily: 'inherit',
+          width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none',
+          color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', lineHeight: 1.6, fontFamily: 'inherit',
         }} />
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-          {value.length}/{max}
-        </span>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
+        <Counter length={value.length} max={max} />
       </div>
     </div>
   )
@@ -93,24 +113,34 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
 
   return (
     <>
+      {/* 점선 사각형 대신 한 줄. 다른 칸들과 같은 밑줄 규칙을 쓰므로 폼에서 튀지 않는다. */}
       <motion.button type="button" onClick={() => setOpen(true)}
-        whileTap={reduce ? undefined : { scale: 0.98 }}
+        whileTap={reduce ? undefined : { scale: 0.99 }}
         style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4,
-          width: 128, height: 128, margin: '0 auto', cursor: 'pointer',
-          background: preview ? `center/cover no-repeat url(${preview})` : 'transparent',
-          border: `1px dashed ${preview ? 'transparent' : 'var(--color-border-strong)'}`,
-          borderRadius: 'var(--radius-md)', color: 'var(--color-text-secondary)',
+          display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 0 12px',
+          background: 'none', border: 0, borderBottom: '1.5px solid var(--color-border-strong)',
+          cursor: 'pointer', textAlign: 'left', color: 'var(--color-text-secondary)',
         }}>
-        {!preview && (
-          <>
-            <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14" />
+        <span aria-hidden style={{
+          display: 'grid', placeItems: 'center', width: 52, height: 52, flexShrink: 0,
+          borderRadius: 'var(--radius-sm)', color: 'var(--color-accent-text)',
+          background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-accent-soft)',
+        }}>
+          {!preview && (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
             </svg>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0 }}>{count}/{maxCount}</span>
-            <span className="t-caption" style={{ textAlign: 'center', lineHeight: 1.3 }}>{required && <Star />}{label}</span>
-          </>
-        )}
+          )}
+        </span>
+        <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
+          <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{label}{required && <Star />}</span>
+          <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
+            {preview ? '사진 1장 · 눌러서 바꾸기' : `최대 ${maxCount}장`}
+          </span>
+        </span>
+        <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <path d="M9 5l7 7-7 7" />
+        </svg>
       </motion.button>
 
       <Sheet open={open} onClose={() => setOpen(false)} title={`${label}${maxCount > 1 ? ` ${count}/${maxCount}` : ''}`}>

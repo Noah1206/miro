@@ -264,22 +264,29 @@ function StepPanel({ show, children }: { show: boolean; children: React.ReactNod
   )
 }
 
-/** 값을 바깥이 들고 있는 한 줄 입력 (단계 진행 판정에 쓰인다). */
+/**
+ * 값을 바깥이 들고 있는 한 줄 입력 (단계 진행 판정에 쓰인다).
+ * 상자 대신 밑줄 — form-parts 의 CountedInput 과 같은 규칙이다.
+ */
 function ControlledInput({ name, placeholder, max, value, onChange, invalid }: {
   name: string; placeholder: string; max: number; value: string; onChange: (v: string) => void; invalid?: boolean
 }) {
+  const [focused, setFocused] = useState(false)
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, padding: '14px 16px',
-      background: 'var(--color-surface-1)', borderRadius: 'var(--radius-button)',
-      border: `1px solid ${invalid ? 'var(--color-danger)' : 'transparent'}`,
+      display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px',
+      borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-accent)' : 'var(--color-border-strong)'}`,
+      transition: 'border-color var(--motion-fast) var(--ease-standard)',
     }}>
       <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
+        onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
-      <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, flexShrink: 0, color: 'var(--color-text-tertiary)' }}>
-        {value.length}/{max}
-      </span>
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-title-3)' }} />
+      {value.length >= max * 0.8 && (
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, flexShrink: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
+          {value.length}/{max}
+        </span>
+      )}
     </div>
   )
 }
