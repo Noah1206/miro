@@ -18,7 +18,7 @@ export function Section({ title, image, children }: { title: string; image?: str
       initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
       style={{ padding: 'var(--space-7) 0 0' }}>
-      <h2 className="t-title-1" style={{ marginBottom: 14 }}>{title}</h2>
+      <h2 className="t-title-2" style={{ marginBottom: 14 }}>{title}</h2>
       {image && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={image} alt="" width={1024} height={576} loading="lazy" decoding="async"
