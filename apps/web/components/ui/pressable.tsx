@@ -36,7 +36,11 @@ export const Pressable = forwardRef<HTMLButtonElement, Props>(function Pressable
   return (
     <motion.button
       ref={ref}
+      // Page 의 등장 순서를 물려받되, hidden 에 갇히지 않는다: AnimatePresence 안에서 다시 등장할 때
+      // 부모가 이름 있는 variant 를 내려보내면 자식이 opacity 0 인 채로 남는다 (실제로 그 버그가 있었다).
+      // `show` 를 기본 animate 로 두면 어느 경로로 마운트되든 보이는 상태로 정착한다.
       variants={fadeUp}
+      animate="show"
       {...rest}
       {...handlers}
       onClick={onClick}

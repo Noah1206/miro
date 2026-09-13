@@ -14,7 +14,8 @@ test('terms cannot be skipped without checking every item', async ({ page }) => 
   await page.getByRole('button', { name: '계속' }).click()
   await expect(page).toHaveURL(/\/terms/)
 
-  const submit = page.getByRole('button', { name: /동의하고 시작|다음으로 진행하기/ })
+  // '모두 동의하고 가입하기' 가 부분 일치로 함께 잡히므로 정확히 일치시킨다.
+  const submit = page.getByRole('button', { name: /^(동의하고 가입하기|다음으로 진행하기)$/ })
   await expect(submit).toBeDisabled()
 
   const boxes = page.getByRole('checkbox')
@@ -25,6 +26,16 @@ test('terms cannot be skipped without checking every item', async ({ page }) => 
   await expect(submit).toBeEnabled()             // 전부 체크해야 열린다
   await expect(submit).toHaveText('다음으로 진행하기')
 
+  // 다시 풀면 게이트가 닫히고 '모두 동의' 가 보이는 채로 돌아와야 한다
+  // (AnimatePresence 재등장 시 버튼이 opacity 0 으로 남던 버그).
+  await boxes.nth(2).click()
+  await expect(submit).toBeDisabled()
+  const agreeAll = page.getByRole('button', { name: '모두 동의하고 가입하기' })
+  await expect(agreeAll).toBeVisible()
+  await expect(agreeAll).toHaveCSS('opacity', '1')
+
+  await agreeAll.click()
+  await expect(submit).toBeEnabled()
   await submit.click()
   await expect(page).toHaveURL(/\/welcome/)
 })
