@@ -11,7 +11,7 @@ import { bookmark, deleteComment, postComment } from './social-actions'
  * 한 덩이. 스크롤하며 차례로 떠오른다.
  * 구분선은 두지 않는다 — 제목 크기와 간격이 이미 경계를 만든다.
  */
-export function Section({ title, image, children }: { title: string; image?: string | null; children: React.ReactNode }) {
+export function Section({ title, image, noBg, children }: { title: string; image?: string | null; noBg?: boolean; children: React.ReactNode }) {
   const reduce = useReducedMotion()
   return (
     <motion.section
@@ -19,7 +19,7 @@ export function Section({ title, image, children }: { title: string; image?: str
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
       style={{
         marginTop: 'var(--space-6)', padding: 'var(--space-5)',
-        background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
+        background: noBg ? 'transparent' : 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
       }}>
       <h2 className="t-title-2" style={{ marginBottom: 14 }}>{title}</h2>
       {image && (
