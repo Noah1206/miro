@@ -3,39 +3,67 @@ import { db, characters, relationships, roleplaySessions, worldStates } from '@m
 import { stageLabel } from '@miro/domain'
 import { listOfficials, type OfficialCard } from './characters'
 
-export type Featured = OfficialCard & {
+export type HomeCard = OfficialCard & {
+  /** 진행 중인 역할극이면 그 세션으로 바로 들어간다. */
   sessionId: string | null
-  /** 한 줄 상황: 캐릭터 상태 → 현재 장면 → 시작 상황 순으로. */
-  situation: string | null
-  relationship: string | null
+  /** 카드 아래 한 줄. 이어지는 인연이면 지금 어디에 있는지, 아니면 역할. */
+  caption: string | null
 }
 
-/** 홈의 주인공: 가장 최근에 이어진 인연. 없으면 첫 공식 캐릭터. */
-export async function featuredFor(userId: string): Promise<{ featured: Featured; others: OfficialCard[] }> {
+export type HomeRow = { key: string; title: string; items: HomeCard[] }
+
+const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
+  ({ ...c, sessionId: null, caption: c.role, ...over })
+
+/**
+ * 홈은 주제를 가진 가로 스크롤 행들이다 (명세서 2.1 표시).
+ * 빈 행은 내보내지 않는다 — 처음 온 사람에게는 ORIGINALS 한 줄만 보인다.
+ */
+export async function homeRows(userId: string): Promise<HomeRow[]> {
   const officials = await listOfficials()
-  const [last] = await db.select({ session: roleplaySessions, character: characters, world: worldStates, rel: relationships })
+
+  const active = await db.select({ session: roleplaySessions, character: characters, world: worldStates, rel: relationships })
     .from(roleplaySessions)
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .innerJoin(worldStates, eq(worldStates.sessionId, roleplaySessions.id))
     .innerJoin(relationships, eq(relationships.sessionId, roleplaySessions.id))
     .where(and(eq(roleplaySessions.userId, userId), eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt)))
-    .orderBy(desc(roleplaySessions.lastInteractionAt)).limit(1)
+    .orderBy(desc(roleplaySessions.lastInteractionAt))
+    .limit(12)
 
-  if (last && last.character.isOfficial && last.character.slug) {
-    const base = officials.find((o) => o.slug === last.character.slug)!
-    return {
-      featured: {
-        ...base, sessionId: last.session.id,
-        situation: last.session.characterStatus ?? `${last.world.currentLocation} · ${last.world.currentTime}`,
-        relationship: stageLabel(last.rel.stage as never, last.rel as never),
-      },
-      others: officials.filter((o) => o.slug !== last.character.slug),
-    }
-  }
-  const first = officials[0]!
-  const [row] = await db.select({ ctx: characters.startingContext }).from(characters).where(eq(characters.id, first.id)).limit(1)
-  return {
-    featured: { ...first, sessionId: null, situation: row?.ctx?.split(/(?<=[.!?。])\s/)[0] ?? null, relationship: null },
-    others: officials.slice(1),
-  }
+  const continuing: HomeCard[] = active.map((r) => ({
+    id: r.character.id,
+    slug: r.character.slug ?? r.character.id,
+    name: r.character.name,
+    role: r.character.role,
+    occupation: r.character.occupation,
+    relationshipKeywords: r.character.relationshipKeywords as string[],
+    accentA: r.character.accentA,
+    accentB: r.character.accentB,
+    sessionId: r.session.id,
+    caption: r.session.characterStatus
+      ?? `${r.world.currentLocation} · ${stageLabel(r.rel.stage as never, r.rel as never)}`,
+  }))
+
+  // 내가 만든 사람 — 아직 시작하지 않은 것까지 포함한다.
+  const mine = await db.select({
+    id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
+    occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
+    accentA: characters.accentA, accentB: characters.accentB,
+  })
+    .from(characters)
+    .where(and(eq(characters.ownerId, userId), isNull(characters.deletedAt)))
+    .orderBy(desc(characters.createdAt))
+    .limit(12)
+
+  const rows: HomeRow[] = [
+    { key: 'continuing', title: '이어지는 인연', items: continuing },
+    { key: 'originals', title: 'MIRO ORIGINALS', items: officials.map((o) => card(o)) },
+    {
+      key: 'mine',
+      title: '내가 만든 사람',
+      items: (mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id })),
+    },
+  ]
+  return rows.filter((r) => r.items.length > 0)
 }

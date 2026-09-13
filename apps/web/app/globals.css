@@ -84,9 +84,6 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 /* layout */
 .page { min-height: 100dvh; padding: var(--space-5) var(--space-5) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
 .page--immersive { max-width: none; padding: 0; }
-/* 홈 히어로 — 세로 화면에선 4:5 인물 비율, 가로 화면(데스크톱)에선 한 화면을 넘지 않게 높이를 묶는다.
-   비율만 풀면 열 폭(720px)에 900px 높이가 나와 '다른 세계' 가 접힌 아래로 밀린다. */
-@media (min-width: 1024px) { .hero-visual { aspect-ratio: auto !important; height: min(58dvh, 520px); } }
 .stack { display: flex; flex-direction: column; }
 .hairline { height: 1px; background: var(--color-border); border: 0; margin: 0; }
 
@@ -139,6 +136,13 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .scrim { background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0)); }
 
 /* horizontal pager — native scroll-snap does momentum + snap; Motion only draws the indicator */
+.row-scroll { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+  -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); }
+.row-scroll::-webkit-scrollbar { display: none; }
+/* 카드 폭: 다음 카드가 살짝 보여야 '옆으로 더 있다' 가 읽힌다. */
+.row-scroll > * { scroll-snap-align: start; flex: 0 0 40%; max-width: 190px; }
+@media (min-width: 1024px) { .row-scroll > * { flex-basis: 200px; max-width: 200px; } }
+
 .pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); touch-action: pan-x pan-y; }
 .pager::-webkit-scrollbar { display: none; }
 .pager > * { scroll-snap-align: start; flex: 0 0 82%; }
