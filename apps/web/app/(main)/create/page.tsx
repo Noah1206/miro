@@ -52,7 +52,7 @@ function Chooser({ onManual, action, pending, state }: {
     <Page style={{ maxWidth: 560 }}>
       <h1 className="t-title-1" style={{ marginBottom: 6 }}>한 사람을 만든다</h1>
       <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)' }}>
-        한 문장이면 AI 가 초안을 채워 줍니다. 직접 쓰고 싶다면 빈 폼에서 시작하세요.
+        한 문장이면 초안이 채워집니다. 직접 써도 됩니다.
       </p>
 
       {state.providerNotice && <Notice style={{ marginBottom: 16 }}>⚠ {state.providerNotice}</Notice>}
@@ -149,14 +149,14 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
           <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
           <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
             <LabeledField label="이름" required error={nameTouched && !name.trim() ? '이름을 입력해주세요' : null}>
-              <ControlledInput name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10}
+              <ControlledInput name="name" placeholder="예) 수현" max={10}
                 value={name} onChange={(v) => { setName(v); setNameTouched(true) }}
                 invalid={nameTouched && !name.trim()} />
             </LabeledField>
             <LabeledField label="어떤 사람인가요">
               <CountedTextArea name="personality" max={600} rows={4}
                 defaultValue={draft?.personality.personality ?? ''}
-                placeholder={'특징, 행동, 감정 표현을 적어주시면 개성이 살아납니다.\n예) 말이 짧고 군더더기가 없다. 감탄사를 거의 쓰지 않는다.'} />
+                placeholder={'특징·행동·감정 표현을 적어주세요.\n예) 말이 짧고 군더더기가 없다.'} />
             </LabeledField>
             <Accordion title="자세히">
               <div className="stack" style={{ gap: 18 }}>
@@ -172,13 +172,13 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
 
         <StepPanel show={step === 'world'}>
           <div className="stack" style={{ gap: 18 }}>
-            <LabeledField label="제목" required hint="목록과 카드에 걸리는 한 줄입니다.">
+            <LabeledField label="제목" required hint="카드에 걸리는 한 줄.">
               <ControlledInput name="title" placeholder="예) 비 내리는 공방" max={20} value={title} onChange={setTitle} />
             </LabeledField>
             <LabeledField label="어떤 세계인가요">
               <CountedTextArea name="worldSetting" max={600} rows={4}
                 defaultValue={draft?.world.worldSetting ?? ''}
-                placeholder="상황, 관계, 세계관 등을 설명해주세요." />
+                placeholder="상황·관계·세계관을 적어주세요." />
             </LabeledField>
             <Accordion title="자세히">
               <div className="stack" style={{ gap: 18 }}>
@@ -201,7 +201,7 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
             <LabeledField label="첫 장면">
               <CountedTextArea name="startingContext" max={600} rows={4}
                 defaultValue={draft?.startingContext ?? ''}
-                placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
+                placeholder="비 내리는 저녁, 그의 공방을 처음 찾았다." />
             </LabeledField>
             <LabeledField label="시작 시간">
               <CountedInput name="startingTime" placeholder="예) 저녁" max={20} defaultValue={draft?.startingTime ?? ''} />
@@ -210,7 +210,7 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label={`${name || '캐릭터'}의 말`}>
                   <CountedTextArea name="sampleCharacter" max={2000} rows={3}
-                    placeholder="작업대에서 눈을 들지 않는다* 의뢰라면 문 옆에 두고 가십시오." />
+                    placeholder="*눈을 들지 않는다* 문 옆에 두고 가십시오." />
                 </LabeledField>
                 <LabeledField label="내 말">
                   <CountedTextArea name="sampleUser" max={2000} rows={3} placeholder="직접 설명드리고 싶은데요." />
