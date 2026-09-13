@@ -5,6 +5,8 @@ const env = {
   DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://localhost/miro_dev',
   CRON_SECRET: process.env.CRON_SECRET ?? 'e2e-cron-secret',
   MIRO_ENABLE_DEV_API: '1',
+  /** E2E 는 실제 구글·카카오 계정으로 로그인할 수 없다 — 소셜 로그인만 시뮬레이션으로 돌린다. */
+  MIRO_MOCK_OAUTH: '1',
 }
 
 /**

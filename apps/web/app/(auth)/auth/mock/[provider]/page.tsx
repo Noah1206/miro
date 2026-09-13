@@ -11,7 +11,7 @@ export default async function MockConsent({ params, searchParams }: { params: Pr
   const { provider } = await params
   if (!isProvider(provider)) notFound()
   if (resolveOAuth(provider).info.mode !== 'mock') notFound()
-  if (process.env.NODE_ENV === 'production' && process.env.MIRO_ENABLE_DEV_API !== '1') notFound()
+  if (process.env.VERCEL_ENV === 'production') notFound()
   const { state = '', redirect_uri = '' } = await searchParams
   return (
     <Page style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>

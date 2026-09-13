@@ -82,8 +82,16 @@ export function resolvePayment(): PaymentProvider {
   return paymentSingleton
 }
 
-/** 소셜 로그인. `${PROVIDER}_CLIENT_ID/SECRET` 가 있으면 실제 OAuth, 없으면 시뮬레이션. */
+/**
+ * 소셜 로그인. `${PROVIDER}_CLIENT_ID/SECRET` 가 있으면 실제 OAuth, 없으면 시뮬레이션.
+ *
+ * `MIRO_MOCK_OAUTH=1` 이면 키가 있어도 시뮬레이션을 쓴다 — E2E 는 실제 구글·카카오 계정으로
+ * 로그인할 수 없기 때문이다. 로컬 E2E 도 `next start`(NODE_ENV=production) 로 돌므로
+ * NODE_ENV 로는 구분할 수 없다. 실제 배포 환경(VERCEL_ENV=production) 에서만 무시한다.
+ */
 export function resolveOAuth(id: OAuthProviderId): OAuthProvider {
+  const forceMock = process.env.MIRO_MOCK_OAUTH === '1' && process.env.VERCEL_ENV !== 'production'
+  if (forceMock) return new MockOAuthProvider(id)
   const key = id.toUpperCase()
   const clientId = process.env[`${key}_CLIENT_ID`], secret = process.env[`${key}_CLIENT_SECRET`]
   return clientId && secret ? new OAuth2Provider(id, clientId, secret) : new MockOAuthProvider(id)
