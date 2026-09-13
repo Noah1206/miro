@@ -1,7 +1,7 @@
 import type { ProviderInfo } from '../types'
 
-export type OAuthProviderId = 'google' | 'naver' | 'kakao'
-export const OAUTH_PROVIDERS: OAuthProviderId[] = ['google', 'naver', 'kakao']
+export type OAuthProviderId = 'google' | 'kakao'
+export const OAUTH_PROVIDERS: OAuthProviderId[] = ['google', 'kakao']
 
 export type OAuthProfile = {
   provider: OAuthProviderId
@@ -19,4 +19,4 @@ export interface OAuthProvider {
   exchange(p: { code: string; redirectUri: string; codeVerifier?: string }): Promise<OAuthProfile>
 }
 
-export const OAUTH_LABEL: Record<OAuthProviderId, string> = { google: 'Google', naver: '네이버', kakao: '카카오' }
+export const OAUTH_LABEL: Record<OAuthProviderId, string> = { google: 'Google', kakao: '카카오' }

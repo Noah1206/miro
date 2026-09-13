@@ -16,4 +16,4 @@ export async function takeOAuthState(): Promise<OAuthState | null> {
   jar.delete(COOKIE)
   try { return raw ? (JSON.parse(raw) as OAuthState) : null } catch { return null }
 }
-export function isProvider(p: string): p is 'google' | 'naver' | 'kakao' { return p === 'google' || p === 'naver' || p === 'kakao' }
+export function isProvider(p: string): p is 'google' | 'kakao' { return p === 'google' || p === 'kakao' }

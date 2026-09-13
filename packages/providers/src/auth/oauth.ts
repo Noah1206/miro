@@ -4,7 +4,6 @@ import type { OAuthProfile, OAuthProvider, OAuthProviderId } from './types'
 type Endpoints = { authorize: string; token: string; profile: string; scope: string }
 const ENDPOINTS: Record<OAuthProviderId, Endpoints> = {
   google: { authorize: 'https://accounts.google.com/o/oauth2/v2/auth', token: 'https://oauth2.googleapis.com/token', profile: 'https://openidconnect.googleapis.com/v1/userinfo', scope: 'openid email profile' },
-  naver: { authorize: 'https://nid.naver.com/oauth2.0/authorize', token: 'https://nid.naver.com/oauth2.0/token', profile: 'https://openapi.naver.com/v1/nid/me', scope: '' },
   kakao: { authorize: 'https://kauth.kakao.com/oauth/authorize', token: 'https://kauth.kakao.com/oauth/token', profile: 'https://kapi.kakao.com/v2/user/me', scope: 'account_email profile_nickname' },
 }
 
@@ -17,7 +16,7 @@ export class OAuth2Provider implements OAuthProvider {
   readonly pkce: boolean
   constructor(readonly id: OAuthProviderId, private readonly clientId: string, private readonly clientSecret: string) {
     this.info = { mode: 'live', name: `oauth-${id}`, notice: null }
-    this.pkce = id !== 'naver'
+    this.pkce = true
   }
   authorizeUrl({ redirectUri, state, codeChallenge }: { redirectUri: string; state: string; codeChallenge?: string }): string {
     const e = ENDPOINTS[this.id]
@@ -44,10 +43,6 @@ function parseProfile(id: OAuthProviderId, raw: unknown): OAuthProfile {
   const r = raw as Record<string, unknown>
   if (id === 'google') {
     return { provider: id, providerAccountId: String(r.sub), email: (r.email as string | undefined) ?? null, name: (r.name as string | undefined) ?? null }
-  }
-  if (id === 'naver') {
-    const res = (r.response ?? {}) as Record<string, unknown>
-    return { provider: id, providerAccountId: String(res.id), email: (res.email as string | undefined) ?? null, name: (res.nickname as string | undefined) ?? (res.name as string | undefined) ?? null }
   }
   const acc = (r.kakao_account ?? {}) as Record<string, unknown>
   const prof = (acc.profile ?? {}) as Record<string, unknown>
