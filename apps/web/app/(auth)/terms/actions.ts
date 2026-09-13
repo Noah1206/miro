@@ -18,5 +18,6 @@ export async function agreeToTerms(): Promise<void> {
   // 명세서 5.1: 야간 선연락은 기본 차단. 스키마 기본값이 이를 보장한다.
   await db.insert(userSettings).values({ userId: user.id }).onConflictDoNothing()
 
-  redirect('/welcome')
+  // 별도의 '어디서 시작할까요' 화면은 두지 않는다 (E-45) — 홈이 곧 그 선택지다.
+  redirect('/home')
 }

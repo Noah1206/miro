@@ -37,7 +37,7 @@ test('terms cannot be skipped without checking every item', async ({ page }) => 
   await agreeAll.click()
   await expect(submit).toBeEnabled()
   await submit.click()
-  await expect(page).toHaveURL(/\/welcome/)
+  await expect(page).toHaveURL(/\/home/)
 })
 
 test('signup through entering a roleplay', async ({ page }) => {
@@ -48,9 +48,7 @@ test('signup through entering a roleplay', async ({ page }) => {
   await expect(page.getByText(/따로 가입하지 않아도/)).toBeVisible()
   await signUp(page, BASE)
 
-  await expect(page).toHaveURL(/\/welcome/)
-  await page.getByRole('link', { name: /MIRO ORIGINALS/ }).click()
-
+  // 동의를 마치면 곧장 홈이다 — 별도의 시작 화면을 두지 않는다.
   await expect(page).toHaveURL(/\/home/)
   await expect(page.getByText('토마스')).toBeVisible()
   await expect(page.getByText('강태윤')).toBeVisible()

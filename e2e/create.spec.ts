@@ -5,7 +5,7 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function signup(page: import('@playwright/test').Page) {
   await signUp(page, BASE)
-  await expect(page).toHaveURL(/\/welcome/)
+  await expect(page).toHaveURL(/\/home/)
 }
 
 /** Scenario 2 (부분) — Character Create → RP 진입. */
