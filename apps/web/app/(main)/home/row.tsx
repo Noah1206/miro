@@ -45,13 +45,15 @@ function Card({ c }: { c: HomeCard }) {
       {/* 조회수는 실제로 대화한 사람이 있을 때만 — 0 을 보여주면 아무도 안 쓴다는 말이 된다. */}
       {c.plays > 0 && (
         <span style={{
-          position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 4,
-          padding: '4px 9px', borderRadius: 999, background: 'rgba(10,10,11,0.72)',
-          backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+          position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 5,
+          padding: '5px 10px', borderRadius: 999, background: 'rgba(60,60,66,0.82)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
           fontSize: 'var(--font-micro)', color: 'var(--color-text-primary)', letterSpacing: 0,
+          fontWeight: 'var(--weight-semibold)',
         }}>
-          <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" />
+          {/* 채운 말풍선 — 윤곽선만 있으면 속이 비어 보인다. */}
+          <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="var(--color-danger)">
+            <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
           </svg>
           {compact(c.plays)}
         </span>
