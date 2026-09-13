@@ -1,4 +1,4 @@
-import { BUILD_PRESETS, type CharacterVisualIdentity } from '../character/types'
+import { BUILD_PRESETS, GENDER_PRESETS, type CharacterVisualIdentity } from '../character/types'
 
 export type MediaKind = 'photo' | 'background' | 'live_scene' | 'face_cast'
 
@@ -61,10 +61,14 @@ export function buildVisualPrompt(opts: {
   return parts.filter(Boolean).join(', ')
 }
 
-/** 체형은 열거값 → 정해진 묘사로. 키/값을 그대로 늘어놓지 않는다. */
+/**
+ * 성별·체형은 열거값 → 정해진 묘사로. 키/값을 그대로 늘어놓지 않는다.
+ * 성별이 앞에 와야 한다 — 'muscular build' 만 주면 모델이 대개 남성을 그린다.
+ */
 function body(profile: CharacterVisualIdentity['bodyProfile']): string {
+  const gender = profile.gender ? GENDER_PRESETS[profile.gender]?.prompt : null
   const preset = profile.build ? BUILD_PRESETS[profile.build]?.prompt : null
-  return [preset, profile.height, profile.detail].filter(Boolean).join(', ')
+  return [gender, preset, profile.height, profile.detail].filter(Boolean).join(', ')
 }
 
 function describe(profile: Record<string, unknown>, label: string): string {

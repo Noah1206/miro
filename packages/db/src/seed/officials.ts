@@ -1,4 +1,4 @@
-import type { BuildType } from '@miro/domain'
+import type { BuildType, GenderType } from '@miro/domain'
 /**
  * MIRO ORIGINALS — 공식 캐릭터 3인.
  *
@@ -32,7 +32,7 @@ export type OfficialSeed = {
   appearance: {
     baseFace: { eyes: string; nose: string; jaw: string; skin: string; distinctive: string }
     hair: { color: string; length: string; style: string }
-    body: { build: BuildType; height: string; detail: string }
+    body: { build: BuildType; gender: GenderType; height: string; detail: string }
     styleTags: string[]
     expression: string
   }
@@ -109,7 +109,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
         distinctive: '왼쪽 눈썹 끝을 가로지르는 오래된 흉터',
       },
       hair: { color: '어두운 갈색', length: '짧고 단정한', style: '이마를 드러내게 넘긴' },
-      body: { build: 'slim', height: '186cm', detail: '어깨는 넓지만 전체적으로 가늘고 긴 체형' },
+      body: { build: 'slim', gender: 'male', height: '186cm', detail: '어깨는 넓지만 전체적으로 가늘고 긴 체형' },
       styleTags: ['소매를 걷어 올린 셔츠', '가는 금속테 안경', '작업용 가죽 앞치마', '어두운 색 위주'],
       expression: '표정 변화가 거의 없고, 웃을 때도 입꼬리만 옅게 움직인다',
     },
@@ -185,6 +185,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
       hair: { color: '검은색', length: '짧은', style: '이마를 드러낸 단정한 포마드' },
       body: {
         build: 'muscular',
+        gender: 'male',
         height: '184cm',
         detail: '정장 어깨선이 뜨지 않을 만큼 넓은 어깨와 단단한 가슴, 허리는 잘록하다',
       },
@@ -263,6 +264,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
       hair: { color: '검은색', length: '짧게 친', style: '뒤로 쓸어넘긴, 손질하지 않은' },
       body: {
         build: 'muscular',
+        gender: 'male',
         height: '181cm',
         detail: '두꺼운 목과 팔, 실전으로 다져진 상체. 셔츠 위로도 등과 어깨가 드러난다',
       },

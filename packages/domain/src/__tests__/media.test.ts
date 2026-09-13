@@ -103,6 +103,25 @@ describe('body build in the prompt', () => {
     expect(new Set(all).size).toBe(4)
   })
 
+  it('names the gender before the build, so the model does not default to a man', () => {
+    const p = buildVisualPrompt({
+      identity: { ...identity, bodyProfile: { build: 'muscular', gender: 'female', height: null, detail: null } },
+      characterName: 'x', context: ctx(), kind: 'photo',
+    })
+    expect(p).toContain('woman')
+    // 'muscular' 만 주면 모델이 대개 남성을 그린다 — 성별이 먼저 와야 한다.
+    expect(p.indexOf('woman')).toBeLessThan(p.indexOf('muscular'))
+  })
+
+  it('omits the gender when it was never chosen', () => {
+    const p = buildVisualPrompt({
+      identity: { ...identity, bodyProfile: { build: 'slim', height: null, detail: null } },
+      characterName: 'x', context: ctx(), kind: 'photo',
+    })
+    expect(p).not.toContain('woman')
+    expect(p).not.toContain(', man,')
+  })
+
   it('still builds a prompt when appearance is empty', () => {
     const empty: CharacterVisualIdentity = {
       ...identity, baseFace: {}, bodyProfile: {}, hair: {}, styleTags: [], expressionTendency: null,

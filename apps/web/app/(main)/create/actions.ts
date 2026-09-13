@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import {
   db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { CharacterDraft, generateCharacterDraft, resolveLLM } from '@miro/providers'
-import { BUILD_TYPES, type BuildType } from '@miro/domain'
+import { BUILD_TYPES, GENDER_TYPES, type BuildType, type GenderType } from '@miro/domain'
 import { requireUser } from '@/lib/auth'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 import { track } from '@/lib/analytics/track'
@@ -76,6 +76,11 @@ export async function saveCharacter(form: FormData): Promise<void> {
     ? (picked as BuildType)
     : (d?.appearance.body.build ?? 'average')
 
+  const pickedGender = s('gender')
+  const gender: GenderType = (GENDER_TYPES as readonly string[]).includes(pickedGender)
+    ? (pickedGender as GenderType)
+    : (d?.appearance.body.gender ?? 'male')
+
   // 상황 예시 — 한 쌍만 받는다. 비어 있으면 넣지 않는다.
   const sampleDialogue: Array<{ role: 'character' | 'user'; text: string }> = []
   const sampleCharacter = s('sampleCharacter')
@@ -140,16 +145,16 @@ export async function saveCharacter(form: FormData): Promise<void> {
         characterId,
         baseFace: d.appearance.baseFace,
         hair: d.appearance.hair,
-        bodyProfile: { ...d.appearance.body, build },
+        bodyProfile: { ...d.appearance.body, build, gender },
         styleTags: d.appearance.styleTags,
         expressionTendency: d.appearance.expression,
         referenceSource: 'ai_generated',
       })
     } else {
-      // 직접 만든 캐릭터도 체형만큼은 고른 값이 있다 — 사진 생성이 이 값을 읽는다.
+      // 직접 만든 캐릭터도 성별·체형은 고른 값이 있다 — 사진 생성이 이 값을 읽는다.
       await tx.insert(characterVisualIdentities).values({
         characterId,
-        bodyProfile: { build },
+        bodyProfile: { build, gender },
         referenceSource: 'text',
       })
     }

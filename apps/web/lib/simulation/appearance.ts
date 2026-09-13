@@ -13,6 +13,7 @@ const Appearance = z.object({
   hair: z.object({ color: z.string().max(40), length: z.string().max(40), style: z.string().max(60) }),
   body: z.object({
     build: z.enum(['slim', 'average', 'muscular', 'heavy']),
+    gender: z.enum(['male', 'female']),
     height: z.string().max(20), detail: z.string().max(120),
   }),
   styleTags: z.array(z.string().max(40)).min(1).max(5),
@@ -33,6 +34,7 @@ const SYSTEM = `당신은 캐릭터의 외형을 정하는 설계자입니다.
 - distinctive 에는 그 사람을 알아보게 하는 특징 하나를 넣습니다 (흉터, 점, 문신 등).
 - body.build 는 slim, average, muscular, heavy 중 하나이며 직업과 생활에 어울려야 합니다.
   모든 인물을 근육질로 만들지 않습니다.
+- body.gender 는 male 또는 female 이며, 인물 정보에 드러난 성별을 따릅니다.
 - 실존 인물이나 특정 배우를 재현하지 않습니다.
 - 한국어로 쓰고, 반드시 JSON 객체만 반환합니다.`
 

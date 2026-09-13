@@ -57,6 +57,19 @@ export const BUILD_PRESETS: Record<BuildType, { label: string; prompt: string }>
 }
 
 /**
+ * 성별. 체형과 함께 한 사람의 실루엣을 정하므로 같은 자리에 둔다.
+ * 두 값만 둔다 — 사진 생성 프롬프트가 실제로 가르는 축이 이것뿐이고,
+ * 그 밖의 표현은 외형 설명(detail)에 자유 문장으로 적는다.
+ */
+export const GENDER_TYPES = ['male', 'female'] as const
+export type GenderType = (typeof GENDER_TYPES)[number]
+
+export const GENDER_PRESETS: Record<GenderType, { label: string; prompt: string }> = {
+  male: { label: '남성', prompt: 'man' },
+  female: { label: '여성', prompt: 'woman' },
+}
+
+/**
  * 외형 항목. 키를 고정해야 캐릭터마다 같은 기준으로 적히고,
  * 편집 화면을 입력란으로 만들 수 있으며, 프롬프트 품질이 흔들리지 않는다.
  * 비워 두면(null) 프롬프트에서 그 항목이 빠질 뿐 깨지지 않는다.
@@ -70,7 +83,7 @@ export type BaseFace = {
   distinctive: string | null
 }
 export type HairProfile = { color: string | null; length: string | null; style: string | null }
-export type BodyProfile = { build: BuildType; height: string | null; detail: string | null }
+export type BodyProfile = { build: BuildType; gender: GenderType; height: string | null; detail: string | null }
 
 /** Character Visual Identity — Profile / AI Photo / Live Scene / Video Call 공통 기준. */
 export type CharacterVisualIdentity = {

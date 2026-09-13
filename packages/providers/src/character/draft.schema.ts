@@ -53,8 +53,10 @@ export const CharacterDraft = z.object({
       style: z.string().max(60),
     }),
     body: z.object({
-      // domain 의 BUILD_TYPES 와 같은 값. providers 는 domain 에 의존하지 않으므로 여기서 다시 적는다.
+      // domain 의 BUILD_TYPES / GENDER_TYPES 와 같은 값.
+      // providers 는 domain 에 의존하지 않으므로 여기서 다시 적는다.
       build: z.enum(['slim', 'average', 'muscular', 'heavy']),
+      gender: z.enum(['male', 'female']),
       height: z.string().max(20),
       detail: z.string().max(120),
     }),

@@ -16,6 +16,7 @@ const SYSTEM = `당신은 롤플레이 캐릭터 설계자입니다.
   distinctive 에는 그 사람을 알아보게 하는 특징 하나를 넣습니다(흉터, 점, 문신 등).
 - appearance.body.build 는 slim, average, muscular, heavy 중 하나이며 직업과 생활에
   어울려야 합니다. 모든 인물을 근육질로 만들지 않습니다.
+- appearance.body.gender 는 male 또는 female 이며, 요청에 성별이 드러나면 그것을 따릅니다.
 - 반드시 JSON 객체만 반환합니다.`
 
 /** Quick Create — 한 문장 → 편집 가능한 Draft. */
@@ -75,6 +76,7 @@ export function buildMockDraft(prompt: string): CharacterDraft {
       body: {
         // 전부 근육질로 몰리지 않게 네 종류에서 고른다.
         build: pick(['slim', 'average', 'muscular', 'heavy'] as const, 29),
+        gender: pick(['male', 'female'] as const, 17),
         height: `${170 + (n % 20)}cm`,
         detail: '자세가 곧다',
       },
