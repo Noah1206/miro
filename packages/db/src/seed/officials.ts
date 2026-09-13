@@ -1,3 +1,4 @@
+import type { BuildType } from '@miro/domain'
 /**
  * MIRO ORIGINALS — 공식 캐릭터 3인.
  *
@@ -26,6 +27,15 @@ export type OfficialSeed = {
   jealousy: number
   initiative: number
   emotionalExpression: number
+
+  /** 외형 — 사진·Live Scene·영상통화가 모두 이 값으로 같은 사람을 그린다. */
+  appearance: {
+    baseFace: { eyes: string; nose: string; jaw: string; skin: string; distinctive: string }
+    hair: { color: string; length: string; style: string }
+    body: { build: BuildType; height: string; detail: string }
+    styleTags: string[]
+    expression: string
+  }
 
   socialPosition: string
   startingContext: string
@@ -78,6 +88,20 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     jealousy: 35,
     initiative: 25,
     emotionalExpression: 20,
+
+    appearance: {
+      baseFace: {
+        eyes: '깊고 차가운 회청색 눈, 눈매가 길고 날카롭다',
+        nose: '곧고 높은 콧대',
+        jaw: '선이 분명한 턱, 얼굴선이 길다',
+        skin: '창백하고 건조한 피부, 눈 밑에 옅은 그늘',
+        distinctive: '왼쪽 눈썹 끝을 가로지르는 오래된 흉터',
+      },
+      hair: { color: '어두운 갈색', length: '짧고 단정한', style: '이마를 드러내게 넘긴' },
+      body: { build: 'slim', height: '186cm', detail: '어깨는 넓지만 전체적으로 가늘고 긴 체형' },
+      styleTags: ['소매를 걷어 올린 셔츠', '가는 금속테 안경', '작업용 가죽 앞치마', '어두운 색 위주'],
+      expression: '표정 변화가 거의 없고, 웃을 때도 입꼬리만 옅게 움직인다',
+    },
 
     socialPosition: '런던 구시가지 복원 공방의 주인',
     startingContext:
@@ -133,6 +157,24 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     initiative: 70,
     emotionalExpression: 45,
 
+    appearance: {
+      baseFace: {
+        eyes: '쌍꺼풀이 얕은 또렷한 검은 눈, 눈빛이 곧다',
+        nose: '반듯한 콧날',
+        jaw: '각지고 선명한 턱선',
+        skin: '깨끗하고 균일한 피부',
+        distinctive: '왼쪽 입가에 웃을 때만 보이는 옅은 보조개',
+      },
+      hair: { color: '검은색', length: '짧은', style: '이마를 드러낸 단정한 포마드' },
+      body: {
+        build: 'muscular',
+        height: '184cm',
+        detail: '정장 어깨선이 뜨지 않을 만큼 넓은 어깨와 단단한 가슴, 허리는 잘록하다',
+      },
+      styleTags: ['몸에 맞게 재단된 네이비 정장', '흰 셔츠와 줄무늬 타이', '깔끔한 라펠 핀'],
+      expression: '늘 정중한 미소를 띠지만 눈은 웃지 않는다',
+    },
+
     socialPosition: '서울 5성급 호텔의 최연소 총지배인',
     startingContext:
       '당신은 그 호텔에 새로 들어왔다. 첫 출근 날, 그는 당신의 이름을 이미 ' +
@@ -186,6 +228,24 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     jealousy: 45,
     initiative: 40,
     emotionalExpression: 15,
+
+    appearance: {
+      baseFace: {
+        eyes: '무겁게 내려앉은 눈꺼풀, 감정이 읽히지 않는 검은 눈',
+        nose: '한번 부러졌다 붙은 듯 콧등이 약간 휘었다',
+        jaw: '두껍고 각진 턱',
+        skin: '거칠고 그을린 피부',
+        distinctive: '오른쪽 목덜미에서 셔츠 깃 아래로 이어지는 문신 자락',
+      },
+      hair: { color: '검은색', length: '짧게 친', style: '뒤로 쓸어넘긴, 손질하지 않은' },
+      body: {
+        build: 'muscular',
+        height: '181cm',
+        detail: '두꺼운 목과 팔, 실전으로 다져진 상체. 셔츠 위로도 등과 어깨가 드러난다',
+      },
+      styleTags: ['검은 셔츠의 단추를 두어 개 푼', '손등과 손가락 마디의 굳은살', '반지 하나'],
+      expression: '거의 무표정하고, 상대를 오래 응시한다',
+    },
 
     socialPosition: '오사카 조직의 중간 간부',
     startingContext:

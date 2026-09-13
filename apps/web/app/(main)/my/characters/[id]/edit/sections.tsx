@@ -1,13 +1,15 @@
 'use client'
 import { useActionState } from 'react'
-import { Accordion, Button, Field, Input, TextArea } from '@/components/ui'
+import { Accordion, Button, Field, Input, Radio, TextArea } from '@/components/ui'
+import { BUILD_PRESETS, BUILD_TYPES } from '@miro/domain'
 import { saveSection, type EditState } from './actions'
 
 type CharacterFields = { name: string; age: number | null; nationality: string | null; occupation: string | null; mbti: string | null; personality: string; values: string | null; speechStyle: string | null; jealousy: number; initiative: number; emotionalExpression: number }
 type WorldFields = { era: string; location: string; genre: string; worldSetting: string }
+type AppearanceFields = { eyes: string; nose: string; jaw: string; skin: string; distinctive: string; hairColor: string; hairLength: string; hairStyle: string; build: string; height: string; detail: string; expression: string }
 type ContactFields = { contactFrequency: number; replyDelayMinutes: number; callProbability: number; videoCallProbability: number; photoProbability: number; voiceMessageProbability: number; activeHoursStart: string; activeHoursEnd: string; initiativeLevel: number }
 
-export function EditSections({ characterId, character, world, contact }: { characterId: string; character: CharacterFields; world: WorldFields | null; contact: ContactFields | null }) {
+export function EditSections({ characterId, character, appearance, world, contact }: { characterId: string; character: CharacterFields; appearance: AppearanceFields; world: WorldFields | null; contact: ContactFields | null }) {
   return (
     <div className="stack" style={{ gap: 12 }}>
       <Section characterId={characterId} name="identity" title="기본 정보">
@@ -26,6 +28,36 @@ export function EditSections({ characterId, character, world, contact }: { chara
         <Slider label="질투" name="jealousy" value={character.jealousy} lo="무던함" hi="예민함" />
         <Slider label="주도성" name="initiative" value={character.initiative} lo="기다림" hi="먼저 다가감" />
         <Slider label="감정 표현" name="emotionalExpression" value={character.emotionalExpression} lo="숨김" hi="드러냄" />
+      </Section>
+      <Section characterId={characterId} name="appearance" title="외형">
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 4 }}>
+          사진 · Live Scene · 영상통화가 모두 이 외형으로 그려집니다. 바꾸면 다음 이미지부터 반영됩니다.
+        </p>
+        <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+          <legend className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 6 }}>체형</legend>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {BUILD_TYPES.map((b) => (
+              <Radio key={b} name="build" value={b} label={BUILD_PRESETS[b].label} defaultChecked={appearance.build === b} />
+            ))}
+          </div>
+        </fieldset>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <Field label="키"><Input name="height" defaultValue={appearance.height} placeholder="184cm" /></Field>
+          <Field label="체형 설명"><Input name="detail" defaultValue={appearance.detail} placeholder="어깨가 넓다" /></Field>
+        </div>
+        <Field label="눈"><Input name="eyes" defaultValue={appearance.eyes} placeholder="또렷한 검은 눈" /></Field>
+        <Field label="코"><Input name="nose" defaultValue={appearance.nose} placeholder="반듯한 콧날" /></Field>
+        <Field label="턱"><Input name="jaw" defaultValue={appearance.jaw} placeholder="각진 턱선" /></Field>
+        <Field label="피부"><Input name="skin" defaultValue={appearance.skin} placeholder="깨끗한 피부" /></Field>
+        <Field label="알아보게 하는 특징" hint="흉터, 점, 문신처럼 한 가지">
+          <Input name="distinctive" defaultValue={appearance.distinctive} placeholder="왼쪽 눈가의 작은 점" />
+        </Field>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <Field label="머리 색"><Input name="hairColor" defaultValue={appearance.hairColor} placeholder="검은색" /></Field>
+          <Field label="머리 길이"><Input name="hairLength" defaultValue={appearance.hairLength} placeholder="짧은" /></Field>
+        </div>
+        <Field label="머리 스타일"><Input name="hairStyle" defaultValue={appearance.hairStyle} placeholder="자연스럽게 넘긴" /></Field>
+        <Field label="평소 표정"><Input name="expression" defaultValue={appearance.expression} placeholder="표정 변화가 크지 않다" /></Field>
       </Section>
       {world && (
         <Section characterId={characterId} name="world" title="세계">

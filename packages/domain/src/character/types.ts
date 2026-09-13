@@ -37,14 +37,49 @@ export type CharacterCore = {
   contactProfileId: string | null
 }
 
+/**
+ * 체형. 사용자가 캐릭터를 만들 때 고르는 값이라 열거형으로 고정한다 —
+ * 자유 문장이면 사람마다 다르게 적히고 선택 UI 를 만들 수 없다.
+ */
+export const BUILD_TYPES = ['slim', 'average', 'muscular', 'heavy'] as const
+export type BuildType = (typeof BUILD_TYPES)[number]
+
+/** 선택지 라벨과, 이미지 프롬프트로 나갈 묘사. 한 곳에서만 정의한다. */
+export const BUILD_PRESETS: Record<BuildType, { label: string; prompt: string }> = {
+  slim: { label: '마름', prompt: 'slim and lean build, slender frame' },
+  average: { label: '표준', prompt: 'average build, natural proportions' },
+  muscular: {
+    label: '근육질',
+    // 옷을 입은 상태에서도 체격이 드러나야 한다 (사용자 요구).
+    prompt: 'muscular athletic build, broad shoulders, defined chest and abs, physique visible through clothing',
+  },
+  heavy: { label: '과체중', prompt: 'heavyset build, soft and solid frame' },
+}
+
+/**
+ * 외형 항목. 키를 고정해야 캐릭터마다 같은 기준으로 적히고,
+ * 편집 화면을 입력란으로 만들 수 있으며, 프롬프트 품질이 흔들리지 않는다.
+ * 비워 두면(null) 프롬프트에서 그 항목이 빠질 뿐 깨지지 않는다.
+ */
+export type BaseFace = {
+  eyes: string | null
+  nose: string | null
+  jaw: string | null
+  skin: string | null
+  /** 흉터·점처럼 그 사람을 알아보게 하는 한 가지. */
+  distinctive: string | null
+}
+export type HairProfile = { color: string | null; length: string | null; style: string | null }
+export type BodyProfile = { build: BuildType; height: string | null; detail: string | null }
+
 /** Character Visual Identity — Profile / AI Photo / Live Scene / Video Call 공통 기준. */
 export type CharacterVisualIdentity = {
   id: string
   characterId: string
   version: number
-  baseFace: Record<string, unknown>
-  bodyProfile: Record<string, unknown>
-  hair: Record<string, unknown>
+  baseFace: Partial<BaseFace>
+  bodyProfile: Partial<BodyProfile>
+  hair: Partial<HairProfile>
   styleTags: string[]
   expressionTendency: string | null
   outfitProfile: Record<string, unknown>

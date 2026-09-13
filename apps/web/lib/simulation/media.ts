@@ -5,6 +5,7 @@ import {
 import { buildMediaKey, buildVisualPrompt, type MediaKind, type PhotoContext } from '@miro/domain'
 import { resolveImage } from '@miro/providers'
 import { guarded } from '@/lib/usage/guard'
+import { hasAppearance, inferAppearance } from './appearance'
 
 export type MediaResult = {
   id: string
@@ -15,7 +16,13 @@ export type MediaResult = {
   providerNotice: string | null
 }
 
-/** 캐릭터의 현재 Visual Identity. 없으면 기본값으로 하나 만든다. */
+/**
+ * 캐릭터의 현재 Visual Identity.
+ *
+ * 없으면 빈 판을 만든다. 외형이 비어 있으면 프롬프트에 얼굴 정보가 빠져
+ * 매번 다른 사람이 그려지므로, 그 전에 성격·직업·세계관을 근거로 한 번 채워 둔다
+ * (이미 있는 캐릭터를 위한 보정 — 새 캐릭터는 생성 시점에 채워진다).
+ */
 export async function activeVisualIdentity(characterId: string) {
   const rows = await db.select().from(characterVisualIdentities)
     .where(and(
@@ -25,11 +32,29 @@ export async function activeVisualIdentity(characterId: string) {
     .orderBy(desc(characterVisualIdentities.version))
     .limit(1)
 
-  if (rows[0]) return rows[0]
+  const existing = rows[0]
+  if (existing && hasAppearance(existing)) return existing
 
+  // 외형이 비어 있다 — 인물 정보로 한 번 채워 고정한다. 실패하면 있는 그대로 쓴다.
+  const inferred = await inferAppearance(characterId)
+  const values = inferred
+    ? {
+        baseFace: inferred.baseFace,
+        hair: inferred.hair,
+        bodyProfile: inferred.body,
+        styleTags: inferred.styleTags,
+        expressionTendency: inferred.expression,
+        referenceSource: 'ai_generated' as const,
+      }
+    : { referenceSource: 'text' as const }
+
+  if (existing) {
+    const [updated] = await db.update(characterVisualIdentities).set(values)
+      .where(eq(characterVisualIdentities.id, existing.id)).returning()
+    return updated!
+  }
   const [created] = await db.insert(characterVisualIdentities)
-    .values({ characterId, referenceSource: 'text' })
-    .returning()
+    .values({ characterId, ...values }).returning()
   return created!
 }
 

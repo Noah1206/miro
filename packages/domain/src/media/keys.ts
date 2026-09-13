@@ -1,4 +1,4 @@
-import type { CharacterVisualIdentity } from '../character/types'
+import { BUILD_PRESETS, type CharacterVisualIdentity } from '../character/types'
 
 export type MediaKind = 'photo' | 'background' | 'live_scene' | 'face_cast'
 
@@ -49,7 +49,7 @@ export function buildVisualPrompt(opts: {
   }
 
   parts.push(describe(v.baseFace, 'face'))
-  parts.push(describe(v.bodyProfile, 'build'))
+  parts.push(body(v.bodyProfile))
   parts.push(describe(v.hair, 'hair'))
   if (v.styleTags.length > 0) parts.push(v.styleTags.join(', '))
   if (v.expressionTendency) parts.push(`typical expression: ${v.expressionTendency}`)
@@ -59,6 +59,12 @@ export function buildVisualPrompt(opts: {
   if (c.outfit) parts.push(c.outfit)
 
   return parts.filter(Boolean).join(', ')
+}
+
+/** 체형은 열거값 → 정해진 묘사로. 키/값을 그대로 늘어놓지 않는다. */
+function body(profile: CharacterVisualIdentity['bodyProfile']): string {
+  const preset = profile.build ? BUILD_PRESETS[profile.build]?.prompt : null
+  return [preset, profile.height, profile.detail].filter(Boolean).join(', ')
 }
 
 function describe(profile: Record<string, unknown>, label: string): string {

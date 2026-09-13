@@ -1,5 +1,5 @@
 import { and, eq, isNull } from 'drizzle-orm'
-import { db, characters, worlds, contactProfiles } from '@miro/db'
+import { db, characters, worlds, contactProfiles, characterVisualIdentities } from '@miro/db'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -13,10 +13,15 @@ export async function getOwnedCharacter(characterId: string, userId: string) {
       character: characters,
       world: worlds,
       contact: contactProfiles,
+      visual: characterVisualIdentities,
     })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
+    .leftJoin(characterVisualIdentities, and(
+      eq(characterVisualIdentities.characterId, characters.id),
+      eq(characterVisualIdentities.isActive, true),
+    ))
     .where(and(
       eq(characters.id, characterId),
       eq(characters.ownerId, userId),

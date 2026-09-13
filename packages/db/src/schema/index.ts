@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
+import type { BaseFace, BodyProfile, HairProfile } from '@miro/domain'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -147,9 +148,9 @@ export const characterVisualIdentities = pgTable('character_visual_identities', 
   characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
   version: integer('version').notNull().default(1),
 
-  baseFace: jsonb('base_face').$type<Record<string, unknown>>().notNull().default({}),
-  bodyProfile: jsonb('body_profile').$type<Record<string, unknown>>().notNull().default({}),
-  hair: jsonb('hair').$type<Record<string, unknown>>().notNull().default({}),
+  baseFace: jsonb('base_face').$type<Partial<BaseFace>>().notNull().default({}),
+  bodyProfile: jsonb('body_profile').$type<Partial<BodyProfile>>().notNull().default({}),
+  hair: jsonb('hair').$type<Partial<HairProfile>>().notNull().default({}),
   styleTags: jsonb('style_tags').$type<string[]>().notNull().default([]),
   expressionTendency: text('expression_tendency'),
   outfitProfile: jsonb('outfit_profile').$type<Record<string, unknown>>().notNull().default({}),

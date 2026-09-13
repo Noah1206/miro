@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Button, Field, Input, MenuItem, Notice, Page, PageHeader, Popover, Stagger, StaggerItem, TextArea } from '@/components/ui'
 import { tween } from '@/lib/motion/tokens'
 import { createDraft, saveDraft, type DraftState } from './actions'
+import { BUILD_PRESETS, BUILD_TYPES } from '@miro/domain'
 
 const EXAMPLES = ['다른 사람한텐 싸가지 없는데 나한테만 잘해주는 30살 검사', '같은 병원에서 일하는 무뚝뚝한 외과의', '내 정체를 알고도 모른 척해주는 조직의 간부']
 
@@ -56,6 +57,17 @@ function DraftPreview({ draft: d }: { draft: NonNullable<DraftState['draft']> })
           <Row label="세계관" value={d.world.worldSetting} />
           <Row label="시작 장면" value={d.startingContext} quote />
           <Row label="관계" value={d.presentation.relationshipKeywords.join(' · ')} />
+          <StaggerItem>
+            <p className="t-micro" style={{ marginBottom: 3 }}>외형</p>
+            <p className="t-body" style={{ lineHeight: 1.7 }}>
+              {[d.appearance.hair.color && `${d.appearance.hair.color} ${d.appearance.hair.length} 머리`,
+                d.appearance.baseFace.eyes, d.appearance.baseFace.distinctive]
+                .filter(Boolean).join(' · ')}
+            </p>
+          </StaggerItem>
+          <StaggerItem>
+            <BuildPicker defaultBuild={d.appearance.body.build} height={d.appearance.body.height} />
+          </StaggerItem>
         </Stagger>
       </div>
       <p className="t-caption" style={{ margin: '12px 0 16px' }}>저장하면 이 사람의 세계가 시작됩니다. 관계는 처음부터 가깝지 않습니다.</p>
@@ -63,6 +75,34 @@ function DraftPreview({ draft: d }: { draft: NonNullable<DraftState['draft']> })
     </motion.form>
   )
 }
+/** 체형은 사용자가 고른다 — 초안 값이 기본 선택. */
+function BuildPicker({ defaultBuild, height }: { defaultBuild: string; height: string }) {
+  const [build, setBuild] = useState(defaultBuild)
+  return (
+    <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+      <legend className="t-micro" style={{ marginBottom: 6 }}>체형{height ? ` · ${height}` : ''}</legend>
+      <input type="hidden" name="build" value={build} />
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {BUILD_TYPES.map((b) => {
+          const on = b === build
+          return (
+            <button key={b} type="button" onClick={() => setBuild(b)} aria-pressed={on}
+              style={{
+                minHeight: 40, padding: '8px 16px', borderRadius: 'var(--radius-button)', cursor: 'pointer',
+                fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                background: on ? 'var(--color-white)' : 'var(--color-surface-2)',
+                color: on ? 'var(--color-black)' : 'var(--color-text-secondary)',
+                border: `1px solid ${on ? 'var(--color-white)' : 'var(--color-border)'}`,
+              }}>
+              {BUILD_PRESETS[b].label}
+            </button>
+          )
+        })}
+      </div>
+    </fieldset>
+  )
+}
+
 function Row({ label, value, quote }: { label: string; value: string | null; quote?: boolean }) {
   if (!value) return null
   return <StaggerItem><p className="t-micro" style={{ marginBottom: 3 }}>{label}</p><p className={quote ? 't-body t-quote' : 't-body'} style={{ lineHeight: 1.7 }}>{value}</p></StaggerItem>

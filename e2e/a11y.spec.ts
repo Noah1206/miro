@@ -33,6 +33,8 @@ test.afterAll(() => {
 test('public screens', async ({ page }) => {
   for (const [path, name] of [['/login', 'login'], ['/auth/mock/google?state=x&redirect_uri=/api/auth/google/callback', 'mock-consent']] as const) { await page.goto(`${BASE}${path}`); await audit(page, name) }
 })
+// 13개 화면을 한 번에 훑는다. 원격 DB(Supabase)에서는 기본 30초로 모자란다.
+test.describe.configure({ timeout: 120_000 })
 test('signed-in screens', async ({ page }) => {
   const chat = await signupAndPlay(page)
   for (const [path, name] of [['/home', 'home'], ['/character/thomas', 'detail'], ['/create', 'create'], ['/archive', 'archive'], ['/my', 'my'], ['/plans', 'plans'], ['/my/settings', 'settings'], ['/my/verify', 'verify'], ['/my/delete', 'delete'], ['/subscribe', 'subscribe']] as const) {

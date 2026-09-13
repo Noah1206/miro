@@ -35,6 +35,33 @@ export const CharacterDraft = z.object({
     worldSetting: z.string().min(10).max(600),
   }),
 
+  /**
+   * 외형. 사진·Live Scene·영상통화가 전부 이 값으로 같은 사람을 그린다.
+   * 체형은 사용자가 화면에서 고르므로 여기서 나온 값은 기본 선택일 뿐이다.
+   */
+  appearance: z.object({
+    baseFace: z.object({
+      eyes: z.string().max(80),
+      nose: z.string().max(80),
+      jaw: z.string().max(80),
+      skin: z.string().max(80),
+      distinctive: z.string().max(100),
+    }),
+    hair: z.object({
+      color: z.string().max(40),
+      length: z.string().max(40),
+      style: z.string().max(60),
+    }),
+    body: z.object({
+      // domain 의 BUILD_TYPES 와 같은 값. providers 는 domain 에 의존하지 않으므로 여기서 다시 적는다.
+      build: z.enum(['slim', 'average', 'muscular', 'heavy']),
+      height: z.string().max(20),
+      detail: z.string().max(120),
+    }),
+    styleTags: z.array(z.string().max(40)).min(1).max(5),
+    expression: z.string().max(120),
+  }),
+
   /** 카드/상세 표시용 */
   presentation: z.object({
     role: z.string().max(30),

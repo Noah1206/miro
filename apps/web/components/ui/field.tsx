@@ -52,10 +52,10 @@ export function Checkbox({ name, label, required }: { name: string; label: React
   )
 }
 
-export function Radio({ name, value, label }: { name: string; value: string; label: string }) {
+export function Radio({ name, value, label, defaultChecked }: { name: string; value: string; label: string; defaultChecked?: boolean }) {
   return (
     <motion.label className="hoverable" variants={fadeUp} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '13px 14px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-button)', cursor: 'pointer', fontSize: 'var(--font-body-size)' }}>
-      <input type="radio" name={name} value={value} required style={{ accentColor: 'var(--color-white)', width: 18, height: 18 }} />
+      <input type="radio" name={name} value={value} required defaultChecked={defaultChecked} style={{ accentColor: 'var(--color-white)', width: 18, height: 18 }} />
       <span>{label}</span>
     </motion.label>
   )

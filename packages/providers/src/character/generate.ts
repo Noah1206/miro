@@ -12,6 +12,10 @@ const SYSTEM = `당신은 롤플레이 캐릭터 설계자입니다.
 - 실존 인물, 배우, 특정 작품의 캐릭터를 그대로 재현하지 않습니다.
 - startingContext 는 사용자와 캐릭터가 처음 마주치는 장면이며, 아직 친밀하지 않은 상태여야 합니다.
 - contactStyle 은 성격과 일관되어야 합니다. 과묵한 인물이 연락 빈도가 높으면 안 됩니다.
+- appearance 는 이미지 생성에 그대로 쓰입니다. 눈·코·턱·피부·머리를 구체적으로 쓰고,
+  distinctive 에는 그 사람을 알아보게 하는 특징 하나를 넣습니다(흉터, 점, 문신 등).
+- appearance.body.build 는 slim, average, muscular, heavy 중 하나이며 직업과 생활에
+  어울려야 합니다. 모든 인물을 근육질로 만들지 않습니다.
 - 반드시 JSON 객체만 반환합니다.`
 
 /** Quick Create — 한 문장 → 편집 가능한 Draft. */
@@ -55,6 +59,29 @@ export function buildMockDraft(prompt: string): CharacterDraft {
       initiative: 25 + (n % 45),
       emotionalExpression: 20 + (n % 40),
     },
+    appearance: {
+      baseFace: {
+        eyes: pick(['서늘한 눈매', '둥글고 짙은 눈', '끝이 올라간 눈'] as const, 11),
+        nose: '곧은 콧날',
+        jaw: pick(['각진 턱선', '갸름한 턱'] as const, 13),
+        skin: '맑은 피부',
+        distinctive: pick(['왼쪽 눈가의 작은 점', '눈썹을 가로지르는 흉터', '목덜미의 오래된 자국'] as const, 17),
+      },
+      hair: {
+        color: pick(['검은색', '어두운 갈색'] as const, 19),
+        length: pick(['짧은', '귀를 덮는'] as const, 23),
+        style: '자연스럽게 넘긴',
+      },
+      body: {
+        // 전부 근육질로 몰리지 않게 네 종류에서 고른다.
+        build: pick(['slim', 'average', 'muscular', 'heavy'] as const, 29),
+        height: `${170 + (n % 20)}cm`,
+        detail: '자세가 곧다',
+      },
+      styleTags: ['어두운 색 위주', '장식이 적은 옷'],
+      expression: '표정 변화가 크지 않다',
+    },
+
     world: {
       era: '현대',
       location: pick(['서울', '도쿄', '런던'] as const, 7),

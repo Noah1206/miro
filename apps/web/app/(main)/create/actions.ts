@@ -3,9 +3,9 @@
 import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import {
-  db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships,
-} from '@miro/db'
+  db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { CharacterDraft, generateCharacterDraft, resolveLLM } from '@miro/providers'
+import { BUILD_TYPES, type BuildType } from '@miro/domain'
 import { requireUser } from '@/lib/auth'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 import { track } from '@/lib/analytics/track'
@@ -63,6 +63,12 @@ export async function saveDraft(form: FormData): Promise<void> {
   const editedName = String(form.get('name') ?? '').trim()
   const name = editedName.length > 0 ? editedName : d.identity.name
 
+  // 체형은 화면에서 고른 값이 초안보다 우선한다. 값이 이상하면 초안으로 되돌린다.
+  const picked = String(form.get('build') ?? '')
+  const build: BuildType = (BUILD_TYPES as readonly string[]).includes(picked)
+    ? (picked as BuildType)
+    : d.appearance.body.build
+
   const sessionId = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
       ownerId: user.id,
@@ -96,6 +102,17 @@ export async function saveDraft(form: FormData): Promise<void> {
       .returning({ id: worlds.id })
 
     await tx.insert(contactProfiles).values({ characterId, ...d.contactStyle })
+
+    /** 외형 — 사진·Live Scene·영상통화가 이 값으로 같은 사람을 그린다. */
+    await tx.insert(characterVisualIdentities).values({
+      characterId,
+      baseFace: d.appearance.baseFace,
+      hair: d.appearance.hair,
+      bodyProfile: { ...d.appearance.body, build },
+      styleTags: d.appearance.styleTags,
+      expressionTendency: d.appearance.expression,
+      referenceSource: 'ai_generated',
+    })
 
     const [session] = await tx.insert(roleplaySessions).values({
       userId: user.id, characterId, worldId: world!.id,

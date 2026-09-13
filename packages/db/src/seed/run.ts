@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db } from '../client'
-import { characters, contactProfiles, worlds } from '../schema/index'
+import { characterVisualIdentities, characters, contactProfiles, worlds } from '../schema/index'
 import { OFFICIAL_CHARACTERS } from './officials'
 
 /**
@@ -56,5 +56,28 @@ export async function seedOfficials(): Promise<void> {
     await db.insert(contactProfiles)
       .values({ characterId, ...c.contact })
       .onConflictDoUpdate({ target: contactProfiles.characterId, set: c.contact })
+
+    /**
+     * 외형. 없으면 만들고, 있으면 덮어쓴다 (version 은 그대로).
+     * 버전을 올리면 캐시 키가 갈라져 이미 만들어 둔 이미지를 전부 버리게 되므로,
+     * 시드 재실행이 그 비용을 내지 않도록 같은 판을 갱신한다.
+     */
+    const identity = {
+      baseFace: c.appearance.baseFace,
+      hair: c.appearance.hair,
+      bodyProfile: c.appearance.body,
+      styleTags: c.appearance.styleTags,
+      expressionTendency: c.appearance.expression,
+      referenceSource: 'text' as const,
+    }
+    const v = await db.select({ id: characterVisualIdentities.id })
+      .from(characterVisualIdentities)
+      .where(eq(characterVisualIdentities.characterId, characterId)).limit(1)
+    if (v[0]) {
+      await db.update(characterVisualIdentities).set(identity)
+        .where(eq(characterVisualIdentities.id, v[0].id))
+    } else {
+      await db.insert(characterVisualIdentities).values({ characterId, ...identity })
+    }
   }
 }

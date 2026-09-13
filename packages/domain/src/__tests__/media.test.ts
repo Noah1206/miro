@@ -4,8 +4,8 @@ import type { CharacterVisualIdentity } from '../character/types'
 
 const identity: CharacterVisualIdentity = {
   id: 'v1', characterId: 'c1', version: 1,
-  baseFace: { shape: 'angular', eyes: 'narrow' },
-  bodyProfile: { height: 'tall', build: 'lean' },
+  baseFace: { jaw: 'angular', eyes: 'narrow' },
+  bodyProfile: { height: 'tall', build: 'slim' },
   hair: { style: 'short', color: 'black' },
   styleTags: ['minimal', 'dark'],
   expressionTendency: 'reserved',
@@ -71,5 +71,42 @@ describe('visual prompt', () => {
     expect(p).toMatch(/hair/)
     expect(p).toMatch(/build/)
     expect(p).toMatch(/black coat/)
+  })
+})
+
+describe('body build in the prompt', () => {
+  it('turns the build enum into its written description, not the raw key', () => {
+    const p = buildVisualPrompt({
+      identity: { ...identity, bodyProfile: { build: 'muscular', height: '187cm', detail: null } },
+      characterName: '토마스', context: ctx(), kind: 'photo',
+    })
+    expect(p).toContain('muscular athletic build')
+    expect(p).not.toContain('build muscular')   // 키를 그대로 흘리지 않는다
+    expect(p).toContain('187cm')
+  })
+
+  it('keeps a muscular physique readable through clothing', () => {
+    const p = buildVisualPrompt({
+      identity: { ...identity, bodyProfile: { build: 'muscular', height: null, detail: null } },
+      characterName: '토마스', context: ctx({ outfit: 'wearing a wool coat' }), kind: 'photo',
+    })
+    expect(p).toContain('through clothing')
+    expect(p).toContain('wearing a wool coat')
+  })
+
+  it('gives each build its own description', () => {
+    const of = (build: 'slim' | 'average' | 'muscular' | 'heavy') => buildVisualPrompt({
+      identity: { ...identity, bodyProfile: { build, height: null, detail: null } },
+      characterName: 'x', context: ctx(), kind: 'photo',
+    })
+    const all = [of('slim'), of('average'), of('muscular'), of('heavy')]
+    expect(new Set(all).size).toBe(4)
+  })
+
+  it('still builds a prompt when appearance is empty', () => {
+    const empty: CharacterVisualIdentity = {
+      ...identity, baseFace: {}, bodyProfile: {}, hair: {}, styleTags: [], expressionTendency: null,
+    }
+    expect(() => buildVisualPrompt({ identity: empty, characterName: 'x', context: ctx(), kind: 'photo' })).not.toThrow()
   })
 })

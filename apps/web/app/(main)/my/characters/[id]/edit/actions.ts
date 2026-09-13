@@ -3,7 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { eq } from 'drizzle-orm'
-import { db, characters, worlds, contactProfiles } from '@miro/db'
+import { and, desc } from 'drizzle-orm'
+import { db, characters, worlds, contactProfiles, characterVisualIdentities } from '@miro/db'
+import { BUILD_TYPES } from '@miro/domain'
 import { requireUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
 
@@ -31,6 +33,23 @@ const Sections = {
     location: z.string().max(60),
     genre: z.string().max(60),
     worldSetting: z.string().max(600),
+  }),
+  /**
+   * 외형. 바꾸면 version 이 올라가 캐시 키가 갈라진다 — 이전 외형으로 만든 이미지를 재사용하지 않는다.
+   */
+  appearance: z.object({
+    eyes: z.string().max(80).nullable().catch(null),
+    nose: z.string().max(80).nullable().catch(null),
+    jaw: z.string().max(80).nullable().catch(null),
+    skin: z.string().max(80).nullable().catch(null),
+    distinctive: z.string().max(100).nullable().catch(null),
+    hairColor: z.string().max(40).nullable().catch(null),
+    hairLength: z.string().max(40).nullable().catch(null),
+    hairStyle: z.string().max(60).nullable().catch(null),
+    build: z.enum(BUILD_TYPES),
+    height: z.string().max(20).nullable().catch(null),
+    detail: z.string().max(120).nullable().catch(null),
+    expression: z.string().max(120).nullable().catch(null),
   }),
   contact: z.object({
     contactFrequency: score,
@@ -67,7 +86,34 @@ export async function saveSection(_prev: EditState, form: FormData): Promise<Edi
     return { saved: null, error: parsed.error.issues[0]?.message ?? '입력을 확인해 주세요.' }
   }
 
-  if (section === 'world') {
+  if (section === 'appearance') {
+    const a = parsed.data as z.infer<typeof Sections.appearance>
+    const [current] = await db.select().from(characterVisualIdentities)
+      .where(and(
+        eq(characterVisualIdentities.characterId, characterId),
+        eq(characterVisualIdentities.isActive, true),
+      ))
+      .orderBy(desc(characterVisualIdentities.version)).limit(1)
+
+    const values = {
+      baseFace: { eyes: a.eyes, nose: a.nose, jaw: a.jaw, skin: a.skin, distinctive: a.distinctive },
+      hair: { color: a.hairColor, length: a.hairLength, style: a.hairStyle },
+      bodyProfile: { build: a.build, height: a.height, detail: a.detail },
+      expressionTendency: a.expression,
+    }
+    if (current) {
+      // 외형이 바뀌었으면 판을 올린다. 같으면 그대로 둬서 캐시를 버리지 않는다.
+      const changed = JSON.stringify({
+        baseFace: current.baseFace, hair: current.hair,
+        bodyProfile: current.bodyProfile, expressionTendency: current.expressionTendency,
+      }) !== JSON.stringify(values)
+      await db.update(characterVisualIdentities)
+        .set({ ...values, version: changed ? current.version + 1 : current.version })
+        .where(eq(characterVisualIdentities.id, current.id))
+    } else {
+      await db.insert(characterVisualIdentities).values({ characterId, ...values, referenceSource: 'text' })
+    }
+  } else if (section === 'world') {
     await db.update(worlds).set(parsed.data as never).where(eq(worlds.characterId, characterId))
   } else if (section === 'contact') {
     await db.update(contactProfiles).set(parsed.data as never)
