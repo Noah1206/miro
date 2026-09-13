@@ -39,3 +39,12 @@ const PORTRAITS: Record<string, string> = {
 }
 export const portraitFor = (slug: string | null | undefined): string | null =>
   (slug && PORTRAITS[slug]) || null
+
+/** 소개 섹션에 얹는 장면 사진. 인물이 없는 그 세계의 공간이다. */
+const SCENES: Record<string, string> = {
+  thomas: '/characters/thomas-scene.webp',
+  taeyun: '/characters/taeyun-scene.webp',
+  hisashi: '/characters/hisashi-scene.webp',
+}
+export const sceneFor = (slug: string | null | undefined): string | null =>
+  (slug && SCENES[slug]) || null

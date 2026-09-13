@@ -2,20 +2,28 @@
 import { useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Button, TextArea, TransitionLink, useToast } from '@/components/ui'
-import { CharacterVisual, portraitFor } from '@/components/character-visual'
+import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
 import { bookmark, deleteComment, postComment } from './social-actions'
 
-/** 구분선으로 나뉜 한 덩이. 스크롤하며 차례로 떠오른다. */
-export function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * 한 덩이. 스크롤하며 차례로 떠오른다.
+ * 구분선은 두지 않는다 — 제목 크기와 간격이 이미 경계를 만든다.
+ */
+export function Section({ title, image, children }: { title: string; image?: string | null; children: React.ReactNode }) {
   const reduce = useReducedMotion()
   return (
     <motion.section
       initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
-      style={{ padding: 'var(--space-6) 0', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-      <h2 className="t-title-3" style={{ marginBottom: 12 }}>{title}</h2>
+      style={{ padding: 'var(--space-7) 0 0' }}>
+      <h2 className="t-title-1" style={{ marginBottom: 14 }}>{title}</h2>
+      {image && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={image} alt="" width={1024} height={576} loading="lazy" decoding="async"
+          style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', marginBottom: 16, display: 'block' }} />
+      )}
       {children}
     </motion.section>
   )
@@ -28,7 +36,7 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
     : <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', borderRadius: 8,
+      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7,
       background: 'var(--color-surface-2)', fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
     }}>
       <svg aria-hidden width="14" height="14" viewBox="0 0 24 24"
@@ -41,33 +49,11 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
   )
 }
 
-/** 같은 장르의 다른 캐릭터. 홈의 행과 같은 카드 언어를 쓴다. */
-export function SimilarRow({ items }: {
-  items: Array<{ id: string; slug: string | null; name: string; role: string | null; tagline: string | null; accentA: string | null }>
-}) {
-  const reduce = useReducedMotion()
+/** 같은 장르의 다른 캐릭터. 홈의 행과 똑같은 카드를 쓴다. */
+export function SimilarRow({ items }: { items: CardCharacter[] }) {
   return (
     <div className="row-scroll">
-      {items.map((c) => (
-        <motion.div key={c.id} whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
-          <TransitionLink href={`/character/${c.slug}`} aria-label={c.name}
-            style={{ display: 'block', position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-            <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug ?? c.id} photo={portraitFor(c.slug ?? '')} ratio="10 / 16" />
-            <div style={{
-              position: 'absolute', left: 0, right: 0, bottom: 0, padding: '28px 12px 12px',
-              background: 'linear-gradient(to top, rgba(8,8,9,0.94) 28%, rgba(8,8,9,0))',
-            }}>
-              <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)' }}>{c.name}</p>
-              {c.tagline && (
-                <p className="t-caption" style={{
-                  color: 'var(--color-text-secondary)', marginTop: 2,
-                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                }}>{c.tagline}</p>
-              )}
-            </div>
-          </TransitionLink>
-        </motion.div>
-      ))}
+      {items.map((c) => <CharacterCard key={c.id} c={c} />)}
     </div>
   )
 }
@@ -82,8 +68,8 @@ export function BookmarkButton({ slug, saved }: { slug: string; saved: boolean }
       <motion.button type="submit" aria-pressed={on} aria-label={on ? '보관함에서 빼기' : '보관함에 담기'}
         whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 11px', minHeight: 32,
-          borderRadius: 8, border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)',
+          display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', minHeight: 32,
+          borderRadius: 7, border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)',
           background: on ? 'var(--color-white)' : 'var(--color-surface-2)',
           color: on ? 'var(--color-black)' : 'var(--color-text-secondary)',
         }}>

@@ -7,7 +7,9 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Back, Button, ButtonLink, Page } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
+import { sceneFor } from '@/components/character-visual'
 import { Section, Stat, SimilarRow, Comments, BookmarkButton } from './sections'
+import { compact } from '@/lib/format'
 import { startRoleplay } from './actions'
 
 /**
@@ -52,8 +54,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <DetailHero name={c.name} accent={c.accentA} slug={c.slug!} />
 
       <div style={{ padding: '0 var(--space-5)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
-        <h1 className="t-hero t-name" style={{ marginBottom: 8 }}>{c.name}</h1>
-        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)', lineHeight: 1.6, marginBottom: 12 }}>{c.tagline}</p>}
+        <h1 className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em' }}>{c.name}</h1>
+        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-primary)', lineHeight: 1.6, marginBottom: 12 }}>{c.tagline}</p>}
 
         {tags.length > 0 && (
           <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 14 }}>
@@ -62,15 +64,15 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         )}
 
         {/* 통계 칩 — 레퍼런스의 '대화량 · 설정집 · 댓글' 자리. */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
           {plays > 0 && <Stat icon="chat" label={`${compact(plays)}`} />}
           <Stat icon="comment" label={`댓글 ${commentCount}`} />
           {/* 하단 CTA 는 '대화 시작하기' 하나만 둔다 — 북마크는 여기에 (사용자 결정). */}
           <BookmarkButton slug={slug} saved={saved} />
         </div>
 
-        <Section title="소개">
-          <p className="t-body" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{c.personality}</p>
+        <Section title="소개" image={sceneFor(slug)}>
+          <p className="t-body-lg" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{c.personality}</p>
         </Section>
 
         {profile.length > 0 && (
@@ -78,19 +80,19 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 14px' }}>
               {profile.map(([k, v]) => (
                 <div key={k} style={{ display: 'contents' }}>
-                  <dt className="t-caption" style={{ color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>{k}</dt>
-                  <dd className="t-caption" style={{ margin: 0, color: 'var(--color-text-primary)' }}>{v}</dd>
+                  <dt className="t-body" style={{ color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>{k}</dt>
+                  <dd className="t-body" style={{ margin: 0, color: 'var(--color-text-primary)' }}>{v}</dd>
                 </div>
               ))}
             </dl>
           </Section>
         )}
 
-        <Section title="세계">
-          <p className="t-caption" style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>
+        <Section title="세계관">
+          <p className="t-caption" style={{ marginBottom: 10, color: 'var(--color-text-tertiary)' }}>
             {[c.worldEra, c.worldLocation, c.worldGenre].filter(Boolean).join(' · ')}
           </p>
-          <p className="t-body" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{c.worldSetting}</p>
+          <p className="t-body-lg" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{c.worldSetting}</p>
         </Section>
 
         <Section title="인트로">
@@ -144,8 +146,3 @@ function withSubject(name: string): string {
   return `${name}${hasFinal ? '이' : '가'}`
 }
 
-function compact(n: number): string {
-  if (n >= 10_000) return `${(n / 10_000).toFixed(1).replace(/\.0$/, '')}만`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}천`
-  return String(n)
-}

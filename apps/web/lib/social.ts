@@ -82,9 +82,15 @@ export async function toggleBookmark(characterId: string, userId: string): Promi
 export async function similarCharacters(characterId: string, genre: string | null, limit = 6) {
   const keywords = genreKeywords(genre)
   if (keywords.length === 0) return []
-  return db.select({
+  const rows = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name,
     role: characters.role, tagline: characters.tagline, accentA: characters.accentA,
+    genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords,
+    // 카드의 조회수 배지 — 홈과 같은 기준(대화한 사람 수)으로 센다.
+    plays: sql<number>`(
+      select count(distinct s.user_id)::int from roleplay_sessions s
+      where s.character_id = ${characters.id} and s.deleted_at is null
+    )`,
   })
     .from(characters)
     .innerJoin(worlds, eq(worlds.characterId, characters.id))
@@ -95,4 +101,5 @@ export async function similarCharacters(characterId: string, genre: string | nul
       isNull(characters.deletedAt),
     ))
     .limit(limit)
+  return rows
 }
