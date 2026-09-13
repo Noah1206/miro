@@ -37,6 +37,9 @@ export type OfficialSeed = {
     expression: string
   }
 
+  /** 카드에 얹는 한 줄 — 캐릭터가 직접 하는 말. */
+  tagline: string
+
   socialPosition: string
   startingContext: string
 
@@ -74,6 +77,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     occupation: '고서 복원가',
     mbti: 'INTJ',
     role: '차가운 복원가',
+    tagline: '만지지 마십시오. …그건, 아직 당신 것이 아닙니다.',
     relationshipKeywords: ['거리를 두는', '서서히 열리는', '오래된 비밀'],
     accent: { a: '#A8C5DC', b: '#C7CDD4' },
 
@@ -142,6 +146,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     occupation: '호텔 총지배인',
     mbti: 'ENTJ',
     role: '완벽한 지배인',
+    tagline: '손님으로 오셨으면 좋았을 텐데요. 이제는 곤란합니다.',
     relationshipKeywords: ['빈틈없는', '사적인 얼굴', '선을 넘는 순간'],
     accent: { a: '#E8D5B0', b: '#B5AFA6' },
 
@@ -214,6 +219,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     occupation: '조직의 중간 간부',
     mbti: 'ISTP',
     role: '이름 없는 번호',
+    tagline: '이 번호는 저장하지 마. 내가 먼저 건다.',
     relationshipKeywords: ['위험한', '말을 아끼는', '지켜보는'],
     accent: { a: '#7A2E3C', b: '#4A1620' },
 

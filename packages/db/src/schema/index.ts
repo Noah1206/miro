@@ -115,6 +115,8 @@ export const characters = pgTable('characters', {
 
   /** 카드/상세 화면 표시용. 긴 설정집을 강제하지 않는다 (명세서 2.1). */
   role: text('role'),
+  /** 카드에 얹는 한 줄. 캐릭터가 직접 하는 말이다 — 서술문인 startingContext 와 다르다. */
+  tagline: text('tagline'),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
   accentA: text('accent_a'),
   accentB: text('accent_b'),

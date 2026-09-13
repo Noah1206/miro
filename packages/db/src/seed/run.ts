@@ -33,6 +33,7 @@ export async function seedOfficials(): Promise<void> {
       socialPosition: c.socialPosition,
       startingContext: c.startingContext,
       role: c.role,
+      tagline: c.tagline,
       relationshipKeywords: c.relationshipKeywords,
       accentA: c.accent.a,
       accentB: c.accent.b,
