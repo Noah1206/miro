@@ -1,10 +1,33 @@
 'use client'
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { Button, TextArea, Tabs, useToast } from '@/components/ui'
+import { Tabs, useToast } from '@/components/ui'
 import type { CommentItem } from '@/lib/social'
 import { duration, ease } from '@/lib/motion/tokens'
 import { postComment, deleteComment, likeComment } from '../social-actions'
+
+/** 알약형 한 줄 입력창 — 플레이스홀더 + 원형 전송 버튼 (레퍼런스). */
+function Composer({ name, placeholder, value, onChange, disabled, parentId }: {
+  name: string; placeholder: string; value: string; onChange: (v: string) => void; disabled?: boolean; parentId?: string
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 8px 10px 16px', background: 'var(--color-surface-1)', borderRadius: 999 }}>
+      {parentId && <input type="hidden" name="parentId" value={parentId} />}
+      <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={500} placeholder={placeholder}
+        aria-label={placeholder} autoComplete="off"
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
+      <button type="submit" disabled={disabled} aria-label="전송" style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 17,
+        border: 0, flexShrink: 0, background: 'var(--color-white)', color: 'var(--color-black)',
+        cursor: disabled ? 'default' : 'pointer', opacity: disabled ? 0.4 : 1,
+      }}>
+        <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </button>
+    </div>
+  )
+}
 
 /** 정렬 탭 + 입력창 + 스레드 목록. 탭은 쿼리로 서버 정렬을 바꾼다(하드 네비게이션 아님 — Tabs 가 Link 를 쓴다). */
 export function CommentThread({ slug, items, sort, signedIn }: {
@@ -15,13 +38,9 @@ export function CommentThread({ slug, items, sort, signedIn }: {
 
   return (
     <div className="stack" style={{ gap: 16 }}>
-      <form action={async (f) => { await postComment(slug, f); setBody(''); if (signedIn) toast('댓글을 남겼어요.') }}
-        className="stack" style={{ gap: 8 }}>
-        <TextArea name="body" rows={2} maxLength={500} value={body} onChange={(e) => setBody(e.target.value)}
-          placeholder={signedIn ? '이 캐릭터에 대해 남겨보세요' : '로그인하고 댓글을 남겨보세요'} aria-label="댓글 입력" />
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button type="submit" size="sm" variant="secondary" disabled={signedIn && !body.trim()}>등록</Button>
-        </div>
+      <form action={async (f) => { await postComment(slug, f); setBody(''); if (signedIn) toast('댓글을 남겼어요.') }}>
+        <Composer name="body" value={body} onChange={setBody} disabled={signedIn && !body.trim()}
+          placeholder={signedIn ? '이 캐릭터에 대해 남겨보세요' : '로그인하고 댓글을 남겨보세요'} />
       </form>
 
       <Tabs id="comment-sort"
@@ -112,13 +131,12 @@ function ReplyForm({ slug, parentId, signedIn, onDone }: { slug: string; parentI
     <motion.form initial={reduce ? false : { opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: duration.fast, ease: ease.enter }}
       action={async (f) => { await postComment(slug, f); setBody(''); onDone() }}
       className="stack" style={{ gap: 6, marginTop: 10, marginLeft: 36 }}>
-      <input type="hidden" name="parentId" value={parentId} />
-      <TextArea name="body" rows={2} maxLength={500} value={body} onChange={(e) => setBody(e.target.value)}
-        placeholder={signedIn ? '답글 남기기' : '로그인하고 답글을 남겨보세요'} aria-label="답글 입력" />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-        <Button type="button" size="sm" variant="ghost" onClick={onDone}>취소</Button>
-        <Button type="submit" size="sm" variant="secondary" disabled={signedIn && !body.trim()}>등록</Button>
-      </div>
+      <Composer name="body" parentId={parentId} value={body} onChange={setBody} disabled={signedIn && !body.trim()}
+        placeholder={signedIn ? '답글 남기기' : '로그인하고 답글을 남겨보세요'} />
+      <button type="button" onClick={onDone} className="t-caption"
+        style={{ alignSelf: 'flex-end', background: 'none', border: 0, padding: '0 8px', color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
+        취소
+      </button>
     </motion.form>
   )
 }
