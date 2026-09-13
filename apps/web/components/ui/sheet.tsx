@@ -67,7 +67,7 @@ export function Sheet({ open, onClose, title, children, snap = { half: 0.55, ful
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px var(--space-4) 12px var(--space-5)' }}>
               {title ? <h2 id={titleId} className="t-title-3">{title}</h2> : <span />}
               {/* 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7) */}
-              <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
+              <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 40, height: 40, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
                 <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
               </button>
             </div>

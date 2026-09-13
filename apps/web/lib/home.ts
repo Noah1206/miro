@@ -1,5 +1,5 @@
 import { and, desc, eq, isNull } from 'drizzle-orm'
-import { db, characters, relationships, roleplaySessions, worldStates } from '@miro/db'
+import { db, characters, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 import { stageLabel } from '@miro/domain'
 import { listOfficials, type OfficialCard } from './characters'
 
@@ -15,9 +15,30 @@ export type HomeRow = { key: string; title: string; items: HomeCard[] }
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
   ({ ...c, sessionId: null, caption: c.role, ...over })
 
-/** 행 분류는 캐릭터의 관계 키워드로 한다 — 코드에 이름을 박아두지 않는다. */
-const byKeyword = (c: HomeCard, keys: string[]): boolean =>
-  c.relationshipKeywords.some((k) => keys.includes(k))
+/**
+ * 장르 행. `worlds.genre` 는 '느와르 · 범죄 드라마' 처럼 여러 장르가 붙어 오므로
+ * 포함 여부로 가른다 — 한 캐릭터가 두 행에 나와도 된다 (웹툰·OTT 가 그렇게 한다).
+ * 코드에 캐릭터 이름을 박지 않는다: 새 캐릭터의 장르만 맞으면 자동으로 들어온다.
+ */
+const GENRES: Array<{ key: string; title: string; match: string[] }> = [
+  { key: 'romance', title: '로맨스', match: ['로맨스', '연애'] },
+  { key: 'thriller', title: '스릴러', match: ['스릴러', '느와르', '범죄', '미스터리'] },
+  { key: 'office', title: '오피스', match: ['오피스', '직장'] },
+  { key: 'fantasy', title: '판타지', match: ['판타지', '무협', 'SF'] },
+  { key: 'drama', title: '드라마', match: ['드라마'] },
+  { key: 'campus', title: '학원', match: ['학원', '캠퍼스', '하이틴'] },
+]
+
+const inGenre = (c: HomeCard, match: string[]): boolean =>
+  Boolean(c.genre && match.some((m) => c.genre!.includes(m)))
+
+/**
+ * 장르 행. 한 장짜리 행은 내보내지 않는다 — 카드 하나에 옆이 텅 비면 행처럼 보이지 않는다.
+ * 캐릭터가 늘면 그 장르가 저절로 나타난다.
+ */
+const genreRows = (all: HomeCard[]): HomeRow[] =>
+  GENRES.map((g) => ({ key: g.key, title: g.title, items: all.filter((c) => inGenre(c, g.match)) }))
+    .filter((r) => r.items.length >= 2)
 
 /**
  * 홈은 주제를 가진 가로 스크롤 행들이다 (명세서 2.1 표시).
@@ -28,11 +49,7 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
   // 로그인 전에는 보여줄 개인 기록이 없다 — ORIGINALS 한 줄로 시작한다.
   if (!userId) {
     const all = officials.map((o) => card(o))
-    return [
-      { key: 'originals', title: 'MIRO ORIGINALS', items: all },
-      { key: 'slow', title: '천천히 열리는 사람', items: all.filter((c) => byKeyword(c, ['거리를 두는', '서서히 열리는', '말을 아끼는'])) },
-      { key: 'dangerous', title: '위험한 거리', items: all.filter((c) => byKeyword(c, ['위험한', '지켜보는', '오래된 비밀', '선을 넘는 순간'])) },
-    ].filter((r) => r.items.length > 0)
+    return [{ key: 'originals', title: 'MIRO ORIGINALS', items: all }, ...genreRows(all)]
   }
 
   const active = await db.select({ session: roleplaySessions, character: characters, world: worldStates, rel: relationships })
@@ -53,6 +70,7 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
     relationshipKeywords: r.character.relationshipKeywords as string[],
     accentA: r.character.accentA,
     accentB: r.character.accentB,
+    genre: null,
     sessionId: r.session.id,
     caption: r.session.characterStatus
       ?? `${r.world.currentLocation} · ${stageLabel(r.rel.stage as never, r.rel as never)}`,
@@ -62,9 +80,10 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
   const mine = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
     occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
-    accentA: characters.accentA, accentB: characters.accentB,
+    accentA: characters.accentA, accentB: characters.accentB, genre: worlds.genre,
   })
     .from(characters)
+    .leftJoin(worlds, eq(worlds.characterId, characters.id))
     .where(and(eq(characters.ownerId, userId), isNull(characters.deletedAt)))
     .orderBy(desc(characters.createdAt))
     .limit(12)
@@ -74,9 +93,7 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
   const rows: HomeRow[] = [
     { key: 'continuing', title: '이어서 대화하기', items: continuing },
     { key: 'originals', title: 'MIRO ORIGINALS', items: all },
-    // 캐릭터가 많지 않으므로 주제로 갈라 보여준다 — 같은 사람이라도 다른 이유로 눈에 띈다.
-    { key: 'slow', title: '천천히 열리는 사람', items: all.filter((c) => byKeyword(c, ['거리를 두는', '서서히 열리는', '말을 아끼는'])) },
-    { key: 'dangerous', title: '위험한 거리', items: all.filter((c) => byKeyword(c, ['위험한', '지켜보는', '오래된 비밀', '선을 넘는 순간'])) },
+    ...genreRows(all),
     {
       key: 'mine',
       title: '내가 만든 사람',

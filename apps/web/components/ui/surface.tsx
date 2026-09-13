@@ -9,7 +9,7 @@ type Motionish<T extends keyof HTMLElementTagNameMap> = Omit<HTMLMotionProps<T>,
 export function Card({ children, style, level = 1, ...rest }: Motionish<'section'> & { level?: 1 | 2 | 3 }) {
   return (
     <motion.section variants={fadeUp} {...rest} className={`hoverable ${rest.className ?? ''}`} style={{
-      background: `var(--color-surface-${level})`, border: '1px solid var(--color-border)',
+      background: `var(--color-surface-${level})`,
       borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', ...style,
     }}>{children}</motion.section>
   )
@@ -33,7 +33,7 @@ export function Chip({ children, tone = 'default', ...rest }: React.ComponentPro
 export function Notice({ children, tone = 'muted', role = 'status', ...rest }: Motionish<'p'> & { tone?: 'muted' | 'danger' | 'relationship' }) {
   const color = tone === 'danger' ? 'var(--color-danger)' : tone === 'relationship' ? 'var(--color-relationship)' : 'var(--color-text-secondary)'
   return (
-    <motion.p variants={fadeUp} {...rest} role={role} style={{ fontSize: 'var(--font-caption)', lineHeight: 1.55, padding: '10px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface-1)', color, ...rest.style }}>
+    <motion.p variants={fadeUp} {...rest} role={role} style={{ fontSize: 'var(--font-caption)', lineHeight: 1.55, padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-1)', color, ...rest.style }}>
       {children}
     </motion.p>
   )

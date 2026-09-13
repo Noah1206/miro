@@ -20,7 +20,7 @@ export function Modal({ open, onClose, title, children }: { open: boolean; onClo
           style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.6)', display: 'grid', placeItems: 'center', padding: 24 }}>
           <motion.div ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={titleId} onClick={(e) => e.stopPropagation()}
             initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98, transition: tween.exit }} transition={tween.enter}
-            style={{ width: '100%', maxWidth: 400, background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', boxShadow: 'var(--shadow-soft)' }}>
+            style={{ width: '100%', maxWidth: 400, background: 'var(--color-surface-2)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', boxShadow: 'var(--shadow-soft)' }}>
             <h2 id={titleId} className="t-title-3" style={{ marginBottom: 12 }}>{title}</h2>
             {children}
           </motion.div>

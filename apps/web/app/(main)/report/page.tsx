@@ -15,7 +15,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   return (
     <Page style={{ maxWidth: 520 }}>
       <PageHeader title="이 내용을 신고합니다" lead="운영 검토에 필요한 범위만 함께 전달됩니다." />
-      <blockquote className="t-caption t-quote" style={{ margin: '0 0 18px', padding: 14, background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', whiteSpace: 'pre-wrap' }}>
+      <blockquote className="t-caption t-quote" style={{ margin: '0 0 18px', padding: 14, background: 'var(--color-surface-1)', borderRadius: 'var(--radius-md)', whiteSpace: 'pre-wrap' }}>
         {t === 'photo' ? '[사진]' : t === 'live_scene' ? '[Live Scene] ' : ''}{preview}
       </blockquote>
       <ReportForm type={t} id={id} />

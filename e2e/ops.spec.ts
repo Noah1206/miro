@@ -24,12 +24,12 @@ test('archive: list, archive, restore, delete with confirmation, and empty state
   await expect(row).toContainText('런던 구시가지')
   await expect(page.locator('body')).not.toContainText(/신뢰|호감도/)
 
+  // 목록을 나누지 않는다 — 보관해도 같은 자리에 '보관됨' 으로 남는다.
   await row.getByRole('button', { name: '보관' }).click()
-  await expect(page.locator('[data-session-row]')).toHaveCount(0)
-  await page.getByRole('tab', { name: '보관됨' }).click()
-  await expect(page.locator('[data-session-row]')).toHaveCount(1)
+  await expect(page.locator('[data-session-row][data-status="archived"]')).toHaveCount(1)
+  await expect(page.locator('[data-session-row]')).toContainText('보관됨')
   await page.getByRole('button', { name: '복원' }).click()
-  await expect(page.locator('[data-session-row]')).toHaveCount(0)
+  await expect(page.locator('[data-session-row][data-status="active"]')).toHaveCount(1)
 
   await page.goto(`${BASE}/archive`)
   await page.getByRole('link', { name: '삭제' }).click()

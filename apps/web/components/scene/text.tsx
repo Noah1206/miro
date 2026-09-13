@@ -30,7 +30,7 @@ export function CharacterText({ content, name, size = 'md' }: { content: string;
 export function UserText({ content }: { content: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-      <p style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', fontSize: 'var(--font-body-size)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{content}</p>
+      <p style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)', fontSize: 'var(--font-body-size)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{content}</p>
     </div>
   )
 }

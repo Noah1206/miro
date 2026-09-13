@@ -15,8 +15,11 @@ export type ArchiveItem = {
   unread: number
 }
 
-/** 보관함 목록. 공식/직접 생성 캐릭터를 하나의 목록으로 (명세서 8.1). 관계 수치는 싣지 않는다. */
-export async function listSessions(userId: string, status: 'active' | 'archived'): Promise<ArchiveItem[]> {
+/**
+ * 보관함 목록. 공식/직접 생성 캐릭터를 하나의 목록으로 (명세서 8.1). 관계 수치는 싣지 않는다.
+ * status 를 주지 않으면 진행 중과 보관됨을 한 목록으로 — 진행 중이 위에 온다.
+ */
+export async function listSessions(userId: string, status?: 'active' | 'archived'): Promise<ArchiveItem[]> {
   const rows = await db.select({
     id: roleplaySessions.id, characterName: characters.name, role: characters.role, accentA: characters.accentA,
     status: roleplaySessions.status, lastInteractionAt: roleplaySessions.lastInteractionAt,
@@ -27,8 +30,13 @@ export async function listSessions(userId: string, status: 'active' | 'archived'
     .from(roleplaySessions)
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .innerJoin(worldStates, eq(worldStates.sessionId, roleplaySessions.id))
-    .where(and(eq(roleplaySessions.userId, userId), eq(roleplaySessions.status, status), isNull(roleplaySessions.deletedAt)))
-    .orderBy(desc(roleplaySessions.lastInteractionAt))
+    .where(and(
+      eq(roleplaySessions.userId, userId),
+      ...(status ? [eq(roleplaySessions.status, status)] : []),
+      isNull(roleplaySessions.deletedAt),
+    ))
+    // 진행 중이 먼저, 그 안에서 최근 순.
+    .orderBy(sql`case when ${roleplaySessions.status} = 'active' then 0 else 1 end`, desc(roleplaySessions.lastInteractionAt))
   return rows as ArchiveItem[]
 }
 

@@ -16,7 +16,7 @@ export default async function SubscriptionPage() {
       {!s ? (
         <p data-sub-status="none" className="t-body" style={{ color: 'var(--color-text-secondary)' }}>구독이 없습니다. <TransitionLink href="/plans" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 보기</TransitionLink></p>
       ) : (
-        <section data-sub-status={s.status} style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)' }} className="stack">
+        <section data-sub-status={s.status} style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }} className="stack">
           <p className="t-title-3">MIRO Pro {s.entitled ? '' : <span className="t-caption">(만료)</span>}</p>
           <p className="t-caption" style={{ marginTop: 6 }}>{s.renewalStatus === 'auto' ? '자동 갱신' : '해지됨 — 갱신되지 않음'}</p>
           <p className="t-caption">현재 기간 {fmt(s.currentPeriodStart)} ~ {fmt(s.currentPeriodEnd)}</p>

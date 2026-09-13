@@ -14,7 +14,7 @@ export default async function MyPage() {
   return (
     <Page>
       <h1 className="t-title-1" style={{ marginBottom: 'var(--space-5)' }}>내 정보</h1>
-      <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-4)' }}>
+      <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
           <h2 className="t-micro">요금제</h2>
           <p data-plan={u.plan} className="t-title-3">MIRO {u.plan === 'pro' ? 'Pro' : 'Free'}</p>
@@ -39,7 +39,7 @@ export default async function MyPage() {
 }
 function Row({ href, label, danger }: { href: string; label: string; danger?: boolean }) {
   return (
-    <TransitionLink href={href} className="hoverable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', color: danger ? 'var(--color-danger)' : 'inherit' }}>
+    <TransitionLink href={href} className="hoverable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)', color: danger ? 'var(--color-danger)' : 'inherit' }}>
       <span className="t-body">{label}</span>
       <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-tertiary)' }}><path d="M9 5l7 7-7 7" /></svg>
     </TransitionLink>

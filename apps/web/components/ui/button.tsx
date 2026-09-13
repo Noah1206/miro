@@ -20,9 +20,9 @@ type Props = PressableProps & {
 
 const VARIANT: Record<ButtonVariant, React.CSSProperties> = {
   primary: { background: 'var(--color-white)', color: 'var(--color-black)', border: '1px solid var(--color-white)' },
-  secondary: { background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', border: '1px solid var(--color-border)' },
+  secondary: { background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' },
   ghost: { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid transparent' },
-  danger: { background: 'transparent', color: 'var(--color-danger)', border: '1px solid var(--color-border)' },
+  danger: { background: 'transparent', color: 'var(--color-danger)' },
   /** 되돌릴 수 없는 확정. 채움은 danger-strong — 흰 글자가 4.5:1 을 넘는다. */
   destructive: { background: 'var(--color-danger-strong)', color: 'var(--color-white)', border: '1px solid var(--color-danger-strong)' },
   /** 관계 변화의 순간에만. 장식용으로 쓰지 않는다. */

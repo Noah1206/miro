@@ -36,7 +36,7 @@ export function Segmented({ options, value, onChange, size = 'sm', label }: { op
   const [local, setLocal] = useState(value)
   useEffect(() => setLocal(value), [value])
   return (
-    <div role="group" aria-label={label} style={{ display: 'inline-flex', padding: 3, gap: 2, background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
+    <div role="group" aria-label={label} style={{ display: 'inline-flex', padding: 3, gap: 2, background: 'var(--color-surface-1)', borderRadius: 'var(--radius-sm)' }}>
       {options.map((o) => {
         const on = o.value === local
         return (

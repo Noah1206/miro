@@ -27,7 +27,7 @@ function Message({ m, characterName }: { m: Msg; characterName: string }) {
       <Reportable id={m.id} kind="photo">
         {reality && <RealityTag sender={reality.senderLabel} channel={reality.channelLabel} />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={m.content} alt={reality?.caption ? `캐릭터가 보낸 사진 — ${reality.caption}` : '캐릭터가 보낸 사진'} style={{ maxWidth: '72%', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }} />
+        <img src={m.content} alt={reality?.caption ? `캐릭터가 보낸 사진 — ${reality.caption}` : '캐릭터가 보낸 사진'} style={{ maxWidth: '72%', borderRadius: 'var(--radius-md)' }} />
         {reality?.caption && <p className="t-caption t-quote">{reality.caption}</p>}
       </Reportable>
     )

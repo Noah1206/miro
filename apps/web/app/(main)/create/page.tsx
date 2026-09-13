@@ -46,7 +46,7 @@ function DraftPreview({ draft: d }: { draft: NonNullable<DraftState['draft']> })
     <motion.form action={saveDraft} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginTop: 'var(--space-6)' }}>
       <input type="hidden" name="draft" value={JSON.stringify(d)} />
       <h2 className="t-micro" style={{ marginBottom: 12 }}>초안 미리보기</h2>
-      <div style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)' }}>
+      <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)' }}>
         <Field label="이름"><Input name="name" defaultValue={d.identity.name} maxLength={40} className="t-name" style={{ fontSize: 'var(--font-title-2)', fontWeight: 'var(--weight-bold)', fontFamily: 'var(--font-display)' }} /></Field>
         <Stagger gap={0.04} className="stack" style={{ gap: 14, marginTop: 18 }}>
           <Row label="기본" value={[d.identity.age && `${d.identity.age}세`, d.identity.nationality, d.identity.occupation, d.identity.mbti].filter(Boolean).join(' · ')} />

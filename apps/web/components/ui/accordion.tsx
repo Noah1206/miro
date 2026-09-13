@@ -11,7 +11,7 @@ export function Accordion({ title, defaultOpen = false, children, right }: { tit
   const [open, setOpen] = useState(defaultOpen)
   const id = useId()
   return (
-    <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', overflow: 'hidden' }}>
+    <div style={{ borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', overflow: 'hidden' }}>
       <button id={`${id}-btn`} type="button" aria-expanded={open} aria-controls={id} aria-label={typeof title === 'string' ? title : undefined} onClick={() => setOpen((o) => !o)}
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 20px', background: 'transparent', border: 0, textAlign: 'left' }}>
         <span className="t-title-3">{title}</span>

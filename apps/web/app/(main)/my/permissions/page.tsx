@@ -25,7 +25,7 @@ export default async function PermissionsPage() {
       <Stagger className="stack" style={{ gap: 10 }}>
         {items.map((i) => (
           <StaggerItem key={i.kind}>
-            <section style={{ padding: 18, background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)' }}>
+            <section style={{ padding: 18, background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
               <p className="t-title-3">{i.label}</p>
               <p className="t-caption" style={{ margin: '4px 0 12px' }}>{i.why}</p>
               {i.at ? <p data-consent={i.kind} className="t-caption" style={{ color: 'var(--color-success)' }}>동의함 · {i.at.toLocaleDateString('ko-KR')}</p>

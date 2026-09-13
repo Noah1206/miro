@@ -14,7 +14,7 @@ export function CharacterVisual({ name, accent, slug, photo, ratio = '4 / 5', sh
   return (
     <div aria-hidden="true" className={className} style={{
       position: 'relative', aspectRatio: ratio, width: '100%', overflow: 'hidden', borderRadius: 'var(--radius-lg)',
-      background: 'var(--color-surface-1)', border: '1px solid var(--color-border)',
+      background: 'var(--color-surface-1)',
       viewTransitionName: shared ? `hero-${slug}` : undefined, ...style,
     }}>
       {photo ? (
