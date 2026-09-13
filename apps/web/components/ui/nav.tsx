@@ -90,7 +90,8 @@ function PickerRow({ title, body, icon, onClick }: { title: string; body: string
     <button type="button" onClick={onClick}
       style={{
         display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%', padding: 16, textAlign: 'left',
-        background: 'var(--color-surface-2)', border: 0, borderRadius: 'var(--radius-md)', cursor: 'pointer',
+        // 시트 자체가 surface-2 라 같은 톤을 쓰면 줄이 보이지 않는다 — 한 단 올린다.
+        background: 'var(--color-surface-3)', border: 0, borderRadius: 'var(--radius-md)', cursor: 'pointer',
         color: 'var(--color-text-primary)',
       }}>
       <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}>
