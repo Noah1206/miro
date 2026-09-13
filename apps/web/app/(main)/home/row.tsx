@@ -46,13 +46,13 @@ function Card({ c }: { c: HomeCard }) {
       {c.plays > 0 && (
         <span style={{
           position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 5,
-          padding: '5px 10px', borderRadius: 999, background: 'rgba(60,60,66,0.82)',
+          padding: '5px 10px', borderRadius: 8, background: 'rgba(70,70,78,0.45)',
           backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
           fontSize: 'var(--font-micro)', color: 'var(--color-text-primary)', letterSpacing: 0,
           fontWeight: 'var(--weight-semibold)',
         }}>
           {/* 채운 말풍선 — 윤곽선만 있으면 속이 비어 보인다. */}
-          <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="var(--color-danger)">
+          <svg aria-hidden width="17" height="17" viewBox="0 0 24 24" fill="var(--color-danger)">
             <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
           </svg>
           {compact(c.plays)}
