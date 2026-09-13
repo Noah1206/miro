@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { db, characters, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 import { stageLabel } from '@miro/domain'
 import { listOfficials, type OfficialCard } from './characters'
+import { GENRES, matchesGenre } from './genres'
 
 export type HomeCard = OfficialCard & {
   /** 실제로 이 캐릭터와 대화한 사람 수. 초기에는 0 이며 그때는 표시하지 않는다. */
@@ -18,28 +19,11 @@ const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
   ({ ...c, sessionId: null, caption: c.role, plays: 0, ...over })
 
 /**
- * 장르 행. `worlds.genre` 는 '느와르 · 범죄 드라마' 처럼 여러 장르가 붙어 오므로
- * 포함 여부로 가른다 — 한 캐릭터가 두 행에 나와도 된다 (웹툰·OTT 가 그렇게 한다).
- * 코드에 캐릭터 이름을 박지 않는다: 새 캐릭터의 장르만 맞으면 자동으로 들어온다.
- */
-const GENRES: Array<{ key: string; title: string; match: string[] }> = [
-  { key: 'romance', title: '로맨스', match: ['로맨스', '연애'] },
-  { key: 'thriller', title: '스릴러', match: ['스릴러', '느와르', '범죄', '미스터리'] },
-  { key: 'office', title: '오피스', match: ['오피스', '직장'] },
-  { key: 'fantasy', title: '판타지', match: ['판타지', '무협', 'SF'] },
-  { key: 'drama', title: '드라마', match: ['드라마'] },
-  { key: 'campus', title: '학원', match: ['학원', '캠퍼스', '하이틴'] },
-]
-
-const inGenre = (c: HomeCard, match: string[]): boolean =>
-  Boolean(c.genre && match.some((m) => c.genre!.includes(m)))
-
-/**
  * 장르 행. 한 장짜리 행은 내보내지 않는다 — 카드 하나에 옆이 텅 비면 행처럼 보이지 않는다.
  * 캐릭터가 늘면 그 장르가 저절로 나타난다.
  */
 const genreRows = (all: HomeCard[]): HomeRow[] =>
-  GENRES.map((g) => ({ key: g.key, title: g.title, items: all.filter((c) => inGenre(c, g.match)) }))
+  GENRES.map((g) => ({ key: g.key, title: g.title, items: all.filter((c) => matchesGenre(c.genre, g.match)) }))
     .filter((r) => r.items.length >= 2)
 
 /**

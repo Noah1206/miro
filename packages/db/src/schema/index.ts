@@ -643,3 +643,30 @@ export const paymentEvents = pgTable('payment_events', {
   idemUniq: uniqueIndex('payment_events_provider_event_uniq').on(t.provider, t.externalEventId),
   refIdx: index('payment_events_ref_idx').on(t.externalRef),
 }))
+
+/**
+ * 캐릭터 댓글. 사용자가 남기는 공개 글이라 신고·숨김 대상이 된다 (명세서 9).
+ * 대댓글은 두지 않는다 — 초기 범위에서 관리 비용만 늘린다.
+ */
+export const characterComments = pgTable('character_comments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  body: text('body').notNull(),
+  /** 운영자가 숨기면 목록에서 빠진다. 원문은 남겨 검토 이력을 지킨다. */
+  hiddenAt: timestamp('hidden_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  charIdx: index('character_comments_char_idx').on(t.characterId, t.createdAt),
+}))
+
+/** 북마크. 한 사용자가 같은 캐릭터를 두 번 담을 수 없다. */
+export const characterBookmarks = pgTable('character_bookmarks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniq: uniqueIndex('character_bookmarks_uniq').on(t.userId, t.characterId),
+  userIdx: index('character_bookmarks_user_idx').on(t.userId, t.createdAt),
+}))

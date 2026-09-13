@@ -5,7 +5,7 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function signupAndPlay(page: Page) {
   await signUp(page, BASE)
-  await page.goto(`${BASE}/character/thomas`); await page.getByRole('button', { name: '역할극 시작하기' }).click(); await expect(page).toHaveURL(/\/chat\//)
+  await page.goto(`${BASE}/character/thomas`); await page.getByRole('button', { name: '대화 시작하기' }).click(); await expect(page).toHaveURL(/\/chat\//)
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('안녕하세요.'); await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByText('안녕하세요.')).toBeVisible()
   return page.url()

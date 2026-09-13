@@ -6,7 +6,7 @@ const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
 async function userReports(page: Page) {
   await signUp(page, WEB)
   await page.goto(`${WEB}/character/thomas`)
-  await page.getByRole('button', { name: '역할극 시작하기' }).click()
+  await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)   // 리다이렉트 완료 후에 URL 을 잡는다
   const chat = page.url()
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('신고할 내용입니다.')

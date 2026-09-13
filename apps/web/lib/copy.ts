@@ -22,7 +22,7 @@ export const COPY = {
     mockLLM: 'LLM Provider 미구성 — Mock 응답입니다.',
   },
   cta: {
-    enterWorld: '세계로 들어가기', continueWorld: '이어서 보기', startRoleplay: '역할극 시작하기',
+    enterWorld: '세계로 들어가기', continueWorld: '이어서 보기', startRoleplay: '대화 시작하기',
     send: '전송', act: '행동', speak: '말하기', hangUp: '종료', close: '닫기', back: '뒤로', skip: '본문으로 건너뛰기',
   },
   a11y: {

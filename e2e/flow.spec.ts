@@ -53,7 +53,7 @@ test('a visitor can browse before signing in, and lands back where they were', a
   await signUp(page, BASE)
   // 로그인·동의를 마치면 보던 캐릭터로 돌아온다.
   await expect(page).toHaveURL(/\/character\/thomas/)
-  await expect(page.getByRole('button', { name: '역할극 시작하기' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '대화 시작하기' })).toBeVisible()
 })
 
 test('signup through entering a roleplay', async ({ page }) => {
@@ -81,7 +81,7 @@ test('signup through entering a roleplay', async ({ page }) => {
   await expect(page.getByText('고서 복원가')).toBeVisible()
   await expect(page.getByText(/비 내리는 저녁/)).toBeVisible()
 
-  await page.getByRole('button', { name: '역할극 시작하기' }).click()
+  await page.getByRole('button', { name: '대화 시작하기' }).click()
 
   // 세션이 생성되고 저장된 세계 상태가 복구되어야 한다
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
@@ -94,12 +94,12 @@ test('re-entering the same character continues the existing session', async ({ p
   await signUp(page, BASE)
 
   await page.goto(`${BASE}/character/hisashi`)
-  await page.getByRole('button', { name: '역할극 시작하기' }).click()
+  await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
   const first = page.url()
 
   // 다시 들어가도 새 세션을 만들지 않는다
   await page.goto(`${BASE}/character/hisashi`)
-  await page.getByRole('button', { name: '역할극 시작하기' }).click()
+  await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(first)
 })

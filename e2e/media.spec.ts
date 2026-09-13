@@ -6,7 +6,7 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 async function enterRoleplay(page: Page) {
   await signUp(page, BASE)
   await page.goto(`${BASE}/character/thomas`)
-  await page.getByRole('button', { name: '역할극 시작하기' }).click()
+  await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
 }
 

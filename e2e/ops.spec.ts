@@ -7,7 +7,7 @@ async function signup(page: Page) {
 }
 async function roleplay(page: Page, slug = 'thomas') {
   await page.goto(`${BASE}/character/${slug}`)
-  await page.getByRole('button', { name: '역할극 시작하기' }).click()
+  await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
   return page.url().split('/chat/')[1]!
 }
