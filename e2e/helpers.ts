@@ -8,7 +8,9 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   await page.getByPlaceholder('이메일').fill(email)
   await page.getByRole('button', { name: '계속' }).click()
   await expect(page).toHaveURL(/\/terms/)
-  await page.getByRole('button', { name: '모두 동의하고 시작하기' }).click()
+  // 동의는 실제로 체크해야 열린다 — '모두 동의' 로 한 번에 켜고 진행한다.
+  await page.getByRole('button', { name: '모두 동의' }).click()
+  await page.getByRole('button', { name: '다음으로 진행하기' }).click()
   return email
 }
 

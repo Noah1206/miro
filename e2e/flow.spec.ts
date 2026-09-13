@@ -7,6 +7,28 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
  * Scenario 1 (부분) — Signup → 공식 캐릭터 → 역할극 시작.
  * Phase 4 에서 RP 턴까지 이어붙인다.
  */
+test('terms cannot be skipped without checking every item', async ({ page }) => {
+  await page.goto(`${BASE}/login`)
+  await page.getByRole('link', { name: 'Google로 계속하기' }).click()
+  await page.getByPlaceholder('이메일').fill(`gate-${Date.now()}@miro.dev`)
+  await page.getByRole('button', { name: '계속' }).click()
+  await expect(page).toHaveURL(/\/terms/)
+
+  const submit = page.getByRole('button', { name: /동의하고 시작|다음으로 진행하기/ })
+  await expect(submit).toBeDisabled()
+
+  const boxes = page.getByRole('checkbox')
+  await expect(boxes).toHaveCount(3)
+  await boxes.first().click()
+  await expect(submit).toBeDisabled()            // 하나만으로는 열리지 않는다
+  await boxes.nth(1).click(); await boxes.nth(2).click()
+  await expect(submit).toBeEnabled()             // 전부 체크해야 열린다
+  await expect(submit).toHaveText('다음으로 진행하기')
+
+  await submit.click()
+  await expect(page).toHaveURL(/\/welcome/)
+})
+
 test('signup through entering a roleplay', async ({ page }) => {
   await page.goto(`${BASE}/`)
   await expect(page).toHaveURL(/\/login/)
