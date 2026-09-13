@@ -1,11 +1,11 @@
 'use client'
 import { useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Button, TextArea, TransitionLink, useToast } from '@/components/ui'
+import { motion, useReducedMotion } from 'motion/react'
+import { TransitionLink, useToast } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
-import { bookmark, deleteComment, postComment } from './social-actions'
+import { bookmark, deleteComment, likeComment } from './social-actions'
 
 /**
  * 한 덩이. 스크롤하며 차례로 떠오른다.
@@ -209,46 +209,63 @@ export function BookmarkButton({ slug, saved }: { slug: string; saved: boolean }
 }
 
 /** 댓글. 비로그인도 읽을 수 있고, 쓰려 할 때 로그인으로 보낸다. */
-export function Comments({ slug, items, signedIn }: { slug: string; items: CommentItem[]; signedIn: boolean }) {
-  const [body, setBody] = useState('')
-  const toast = useToast()
+/**
+ * 상세 페이지의 댓글 미리보기. 카드 슬라이드 몇 개만 보여주고 '전체보기' 로 스레드 페이지를 연다
+ * (레퍼런스 UI). 입력·답글·삭제는 전체보기 페이지에서만 — 여기는 훑어보는 자리다.
+ */
+export function CommentsPreview({ slug, items }: { slug: string; items: CommentItem[] }) {
+  if (items.length === 0) {
+    return <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>아직 댓글이 없어요.</p>
+  }
   return (
-    <div className="stack" style={{ gap: 14 }}>
-      <form action={async (f) => { await postComment(slug, f); setBody(''); if (signedIn) toast('댓글을 남겼어요.') }}
-        className="stack" style={{ gap: 8 }}>
-        <TextArea name="body" rows={2} maxLength={500} value={body} onChange={(e) => setBody(e.target.value)}
-          placeholder={signedIn ? '이 캐릭터에 대해 남겨보세요' : '로그인하고 댓글을 남겨보세요'} aria-label="댓글 입력" />
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button type="submit" size="sm" variant="secondary" disabled={signedIn && !body.trim()}>등록</Button>
-        </div>
-      </form>
+    <div className="comment-scroll">
+      {items.map((c) => <CommentCard key={c.id} slug={slug} c={c} preview />)}
+    </div>
+  )
+}
 
-      {items.length === 0
-        ? <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>아직 댓글이 없어요.</p>
-        : (
-          <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 12 }}>
-            <AnimatePresence initial={false}>
-              {items.map((c) => (
-                <motion.li key={c.id} layout
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -10, transition: { duration: duration.fast, ease: ease.exit } }}
-                  transition={spring.default}
-                  style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-md)', padding: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 5 }}>
-                    <span className="t-caption" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>@{c.authorName}</span>
-                    <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, flexShrink: 0 }}>{day(c.createdAt)}</span>
-                  </div>
-                  <p className="t-caption" style={{ lineHeight: 1.5, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.body}</p>
-                  {c.mine && (
-                    <form action={async () => { await deleteComment(slug, c.id); toast('댓글을 지웠어요.') }} style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
-                      <Button type="submit" size="sm" variant="ghost">삭제</Button>
-                    </form>
-                  )}
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </ul>
+/**
+ * 댓글 카드 — 미리보기(고정 높이, clamp)와 전체 페이지(풀 텍스트) 둘 다에서 쓴다.
+ * '더보기' 는 clamp 를 풀 뿐 실제 텍스트는 그대로다.
+ */
+export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem; preview?: boolean }) {
+  const [liked, setLiked] = useState(c.liked)
+  const [likeCount, setLikeCount] = useState(c.likeCount)
+  const [expanded, setExpanded] = useState(false)
+  const toast = useToast()
+  const clamp = preview && !expanded
+  return (
+    <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+        <span aria-hidden style={{ width: 26, height: 26, borderRadius: 13, background: 'var(--color-surface-2)', flexShrink: 0 }} />
+        <span className="t-caption" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>@{c.authorName}</span>
+      </div>
+      <p className="t-body" style={{
+        lineHeight: 1.5, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', margin: 0,
+        ...(clamp ? { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}),
+      }}>{c.body}</p>
+      {clamp && c.body.length > 60 && (
+        <button type="button" onClick={() => setExpanded(true)} className="t-caption"
+          style={{ background: 'none', border: 0, padding: 0, marginTop: 6, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
+          더보기
+        </button>
+      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{day(c.createdAt)}</span>
+        <button type="button" aria-pressed={liked} aria-label={liked ? '좋아요 취소' : '좋아요'}
+          onClick={async () => { setLiked((v) => !v); setLikeCount((n) => n + (liked ? -1 : 1)); await likeComment(slug, c.id) }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: liked ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
+          <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round">
+            <path d="M12 21s-7.5-4.6-10-9.1C.5 8.4 2.3 5 5.8 5c2 0 3.4 1 4.2 2.3C10.8 6 12.2 5 14.2 5c3.5 0 5.3 3.4 3.8 6.9-2.5 4.5-10 9.1-10 9.1z" />
+          </svg>
+          <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0 }}>{likeCount}</span>
+        </button>
+        {c.mine && (
+          <form action={async () => { await deleteComment(slug, c.id); toast('댓글을 지웠어요.') }} style={{ marginLeft: 'auto' }}>
+            <button type="submit" className="t-micro" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>삭제</button>
+          </form>
         )}
+      </div>
     </div>
   )
 }

@@ -120,6 +120,13 @@
       "when": 1789292563385,
       "tag": "0016_sample_dialogue",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789301224365,
+      "tag": "0017_medical_cable",
+      "breakpoints": true
     }
   ]
 }

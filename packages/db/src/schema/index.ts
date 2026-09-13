@@ -651,18 +651,31 @@ export const paymentEvents = pgTable('payment_events', {
 
 /**
  * 캐릭터 댓글. 사용자가 남기는 공개 글이라 신고·숨김 대상이 된다 (명세서 9).
- * 대댓글은 두지 않는다 — 초기 범위에서 관리 비용만 늘린다.
+ * parentId 가 있으면 답글 — 1단계만 허용한다 (답글의 답글은 부모 댓글에 묶는다, 레퍼런스 UI와 동일).
  */
-export const characterComments = pgTable('character_comments', {
+export const characterComments: any = pgTable('character_comments', {
   id: uuid('id').primaryKey().defaultRandom(),
   characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  parentId: uuid('parent_id').references((): any => characterComments.id, { onDelete: 'cascade' }),
   body: text('body').notNull(),
   /** 운영자가 숨기면 목록에서 빠진다. 원문은 남겨 검토 이력을 지킨다. */
   hiddenAt: timestamp('hidden_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   charIdx: index('character_comments_char_idx').on(t.characterId, t.createdAt),
+  parentIdx: index('character_comments_parent_idx').on(t.parentId),
+}))
+
+/** 댓글 좋아요. 한 사용자가 같은 댓글을 두 번 좋아요할 수 없다. */
+export const characterCommentLikes = pgTable('character_comment_likes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  commentId: uuid('comment_id').notNull().references(() => characterComments.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  uniq: uniqueIndex('character_comment_likes_uniq').on(t.userId, t.commentId),
+  commentIdx: index('character_comment_likes_comment_idx').on(t.commentId),
 }))
 
 /** 북마크. 한 사용자가 같은 캐릭터를 두 번 담을 수 없다. */

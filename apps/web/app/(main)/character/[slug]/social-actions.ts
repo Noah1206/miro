@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { characters, db } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { addComment, removeComment, toggleBookmark } from '@/lib/social'
+import { addComment, removeComment, toggleBookmark, toggleCommentLike } from '@/lib/social'
 
 async function characterIdOf(slug: string): Promise<string | null> {
   const [c] = await db.select({ id: characters.id }).from(characters).where(eq(characters.slug, slug)).limit(1)
@@ -22,8 +22,18 @@ export async function postComment(slug: string, form: FormData): Promise<void> {
   if (!user) loginThenBack(slug)
   const id = await characterIdOf(slug)
   if (!id) return
-  await addComment(id, user.id, String(form.get('body') ?? ''))
+  const parentId = String(form.get('parentId') ?? '') || null
+  await addComment(id, user.id, String(form.get('body') ?? ''), parentId)
   revalidatePath(`/character/${slug}`)
+  revalidatePath(`/character/${slug}/comments`)
+}
+
+export async function likeComment(slug: string, commentId: string): Promise<void> {
+  const user = await currentUser()
+  if (!user) loginThenBack(slug)
+  await toggleCommentLike(commentId, user.id)
+  revalidatePath(`/character/${slug}`)
+  revalidatePath(`/character/${slug}/comments`)
 }
 
 export async function deleteComment(slug: string, commentId: string): Promise<void> {
@@ -31,6 +41,7 @@ export async function deleteComment(slug: string, commentId: string): Promise<vo
   if (!user) loginThenBack(slug)
   await removeComment(commentId, user.id)
   revalidatePath(`/character/${slug}`)
+  revalidatePath(`/character/${slug}/comments`)
 }
 
 export async function bookmark(slug: string): Promise<void> {

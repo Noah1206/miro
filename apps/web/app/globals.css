@@ -155,6 +155,12 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .gallery-scroll::-webkit-scrollbar { display: none; }
 .gallery-scroll > * { scroll-snap-align: start; flex: 0 0 42%; aspect-ratio: 3 / 4; }
 
+/* 댓글 미리보기 — 카드 하나가 거의 꽉 차고 다음 카드가 살짝 걸쳐 보인다. */
+.comment-scroll { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.comment-scroll::-webkit-scrollbar { display: none; }
+.comment-scroll > * { scroll-snap-align: start; flex: 0 0 88%; }
+
 /* 발견 — 2열 그리드. 카드는 행과 같은 것을 쓴다. */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 

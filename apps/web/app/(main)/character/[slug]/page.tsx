@@ -4,11 +4,11 @@ import { getOfficialBySlug } from '@/lib/characters'
 import { countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { Back, Button, ButtonLink, Page } from '@/components/ui'
+import { Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { galleryFor, portraitFor } from '@/components/character-visual'
-import { Section, Stat, SimilarRow, Comments, BookmarkButton, SampleDialogue, Gallery, RealityStrip } from './sections'
+import { Section, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, Gallery, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 
@@ -25,7 +25,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
   const [plays, comments, commentCount, saved, similar] = await Promise.all([
     playCount(c.id),
-    listComments(c.id, user?.id ?? null),
+    listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     isBookmarked(c.id, user?.id ?? null),
     similarCharacters(c.id, c.worldGenre),
@@ -117,9 +117,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           )}
         </Section>
 
-        <Section title={`댓글 ${commentCount}`} noBg divider>
-          <Comments slug={slug} items={comments} signedIn={Boolean(user)} />
-        </Section>
+        <section style={{ marginTop: 'var(--space-7)', paddingTop: 'var(--space-6)', borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <h2 className="t-title-2">댓글 {commentCount}</h2>
+            <TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>전체보기</TransitionLink>
+          </div>
+          <CommentsPreview slug={slug} items={comments} />
+        </section>
       </div>
 
       {similar.length > 0 && (
