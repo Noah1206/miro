@@ -14,7 +14,12 @@ async function signupAndPlay(page: Page) {
 /** WCAG 2.2 AA 자동 검사. 모든 화면을 먼저 모은 뒤 serious/critical 이 0 인지 본다. */
 const found: string[] = []
 async function audit(page: Page, name: string) {
-  await page.waitForLoadState('networkidle'); await page.waitForTimeout(250)   // 스트리밍·전환이 끝난 실제 화면을 본다
+  await page.waitForLoadState('networkidle')
+  // 등장이 끝난 뒤를 본다. reduce-motion 이어도 Motion 은 한 프레임 뒤에 최종값을 쓰므로,
+  // 진행 중인 애니메이션이 없어질 때까지 기다린 다음 검사한다 — 페이드 중간값을 명암비 위반으로 읽지 않게.
+  await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'), null, { timeout: 5000 })
+    .catch(() => undefined)
+  await page.waitForTimeout(250)
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice']).analyze()
   for (const v of r.violations) {
     for (const n of v.nodes.slice(0, 3)) {

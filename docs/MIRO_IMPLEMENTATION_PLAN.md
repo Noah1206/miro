@@ -423,7 +423,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-25 | 구매 시 **현재** 사용량 창의 한도를 Pro 로 올린다 | 명세서 10.2 "결제 성공 후 Pro 사용량 적용". 한도에 막혀 결제한 사용자가 다음 창까지 기다리지 않게 |
 | E-26 | webhook 중복 판정은 트랜잭션 안에서 select-먼저 | tx 안의 UNIQUE 위반은 tx 전체를 abort 하므로 catch 로 복구 불가. UNIQUE 인덱스는 동시 레이스의 안전망 |
 | E-27 | 디자인 SoT = `docs/DESIGN.md`, 문장 SoT = `docs/COPY.md` + `lib/copy.ts` | 토큰은 `globals.css` `:root` 한 곳. 페이지는 inline 색값을 쓰지 않는다 |
-| E-28 | Motion = `lib/motion/tokens.ts` 하나의 언어 | duration 160/320/480/720 (등장 tween.enter = 480ms, stagger 60/90/140ms — 사용자 피드백 "너무 빠르다"로 한 단계 늦춤; 눌림 90ms 는 그대로), ease standard/enter/exit, spring quick/default/gentle(전부 과감쇠). Bounce 없음. `MotionConfig reducedMotion="user"` + CSS media 로 이중 보장 |
+| E-28 | Motion = `lib/motion/tokens.ts` 하나의 언어 | duration 220/440/680/1000 (등장 tween.enter = 680ms, stagger 80/120/200ms — 사용자 피드백으로 두 차례 늦춤; 눌림 90ms 는 그대로). ease.enter 는 앞을 완만하게 해 '툭 나타남' 대신 '떠오름'으로 읽히게 한다, ease standard/enter/exit, spring quick/default/gentle(전부 과감쇠). Bounce 없음. `MotionConfig reducedMotion="user"` + CSS media 로 이중 보장 |
 | E-29 | 페이지 전환 = View Transition API + `html[data-nav]` 방향, 공유 요소 = `view-transition-name` | 라이브러리 없이 표준. 미지원/감소 모션이면 즉시 이동. `?now=`처럼 dev 전용 훅 없음 |
 | E-30 | 캐러셀은 CSS scroll-snap, Motion 은 인디케이터(layoutId)만 | 스냅·관성·러버밴드는 플랫폼이 더 잘한다. 키보드 Tab 으로 카드 간 이동 가능 |
 | E-31 | 접근성: `--color-text-tertiary` 를 #6E6E75 → #8A8A92 (3.9:1 → 5.8:1) | DESIGN.md 값에서 유일하게 벗어난 토큰. 원값은 `--color-text-quaternary` 로 장식 전용. 폼 경계는 `--color-border-input` #62626A (3.2:1) |
