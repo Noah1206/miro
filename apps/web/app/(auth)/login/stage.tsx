@@ -12,7 +12,7 @@ export type SocialProvider = { id: 'google' | 'kakao'; label: string }
  * 로고의 이동은 layout 애니메이션: 버튼 블록이 생기면 가운데 정렬이 다시 잡히고, 그 차이를 spring 으로 움직인다.
  * Reduce Motion 이면 무대 없이 바로 버튼.
  */
-export function LoginStage({ providers, notice, error }: { providers: SocialProvider[]; notice: string | null; error: string | null }) {
+export function LoginStage({ providers, notice, error, next }: { providers: SocialProvider[]; notice: string | null; error: string | null; next?: string | null }) {
   const reduce = useReducedMotion()
   const [ready, setReady] = useState(false)
   useEffect(() => { if (reduce) setReady(true) }, [reduce])
@@ -26,7 +26,7 @@ export function LoginStage({ providers, notice, error }: { providers: SocialProv
         <Stagger gap={stagger.normal} delay={0.25} style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {error && <Notice role="alert" tone="danger">{error}</Notice>}
           {notice && <Notice>⚠ {notice}</Notice>}
-          {providers.map((p) => <StaggerItem key={p.id}><SocialButton {...p} /></StaggerItem>)}
+          {providers.map((p) => <StaggerItem key={p.id}><SocialButton {...p} next={next} /></StaggerItem>)}
           <StaggerItem><NoAccount /></StaggerItem>
         </Stagger>
       )}
@@ -38,13 +38,13 @@ export function LoginStage({ providers, notice, error }: { providers: SocialProv
  * 브랜드 규정: Google 흰 바탕, Kakao #FEE500 에 검정 글자, Naver 는 초록 위 흰 글자가 2.3:1 이라
  * 초록을 아이콘에만 쓰고 글자는 어두운 면 위 흰색으로 둔다 (AA).
  */
-function SocialButton({ id, label }: SocialProvider) {
+function SocialButton({ id, label, next }: SocialProvider & { next?: string | null }) {
   const style: Record<SocialProvider['id'], React.CSSProperties> = {
     google: { background: '#FFFFFF', color: '#111111', border: '1px solid #FFFFFF' },
     kakao: { background: '#FEE500', color: '#000000', border: '1px solid #FEE500' },
   }
   return (
-    <a href={`/api/auth/${id}/start`} className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 52, padding: '12px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
+    <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 52, padding: '12px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
       <Icon id={id} />
       <span>{label}로 계속하기</span>
     </a>

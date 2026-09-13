@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { db, termsConsents } from '@miro/db'
 import { resolveOAuth } from '@miro/providers'
 import { signInWithProfile } from '@/lib/auth'
-import { isProvider, takeOAuthState } from '@/lib/oauth-state'
+import { isProvider, takeNext, takeOAuthState } from '@/lib/oauth-state'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
 
@@ -29,5 +29,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   if (r.isNew) void track(r.userId, 'signup', { provider })
 
   const consent = await db.select({ id: termsConsents.id }).from(termsConsents).where(eq(termsConsents.userId, r.userId)).limit(1)
-  return to(consent.length === 0 ? '/terms' : '/home')
+  // 동의가 남아 있으면 그 화면이 먼저다 — 돌아갈 곳은 쿠키에 그대로 두고 동의 후에 쓴다.
+  if (consent.length === 0) return to('/terms')
+  return to((await takeNext()) ?? '/home')
 }

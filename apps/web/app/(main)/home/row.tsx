@@ -15,9 +15,9 @@ export function Row({ row, index }: { row: HomeRow; index: number }) {
     <motion.section aria-labelledby={`row-${row.key}`}
       initial={reduce ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: duration.slow, ease: ease.enter, delay: 0.08 * index }}
-      style={{ marginBottom: 'var(--space-6)' }}>
-      <h2 id={`row-${row.key}`} className="t-title-3"
-        style={{ padding: '0 var(--space-5)', marginBottom: 12 }}>{row.title}</h2>
+      style={{ marginBottom: 'var(--space-7)' }}>
+      <h2 id={`row-${row.key}`} className="t-title-2"
+        style={{ padding: '0 var(--space-5)', marginBottom: 14 }}>{row.title}</h2>
       <div className="row-scroll">
         {row.items.map((c, i) => (
           <motion.div key={`${row.key}-${c.id}`}
@@ -27,7 +27,7 @@ export function Row({ row, index }: { row: HomeRow; index: number }) {
               <TransitionLink href={c.sessionId ? `/chat/${c.sessionId}` : `/character/${c.slug}`}
                 aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
                 style={{ display: 'block' }}>
-                <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug} photo={portraitFor(c.slug)} ratio="2 / 3" />
+                <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug} photo={portraitFor(c.slug)} ratio="27 / 40" />
                 <div style={{ padding: '10px 2px 0' }}>
                   <p className="t-body t-name" style={{ fontWeight: 'var(--weight-semibold)' }}>{c.name}</p>
                   {c.caption && <p className="t-caption" style={{ marginTop: 2 }}>{c.caption}</p>}

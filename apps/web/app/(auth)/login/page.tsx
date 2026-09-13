@@ -8,9 +8,9 @@ const ERRORS: Record<string, string> = {
 }
 
 /** n1→n5 — 앱의 첫 화면이자 로그인. 온보딩 소개 페이지는 두지 않는다 (E-44). 가입과 로그인도 나누지 않는다. */
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
+  const { error, next } = await searchParams
   const ids: OAuthProviderId[] = ['google', 'kakao']
   const mock = ids.map(resolveOAuth).find((p) => p.info.mode === 'mock')
-  return <LoginStage providers={ids.map((id) => ({ id, label: OAUTH_LABEL[id] }))} notice={mock?.info.notice ?? null} error={(error && ERRORS[error]) || null} />
+  return <LoginStage providers={ids.map((id) => ({ id, label: OAUTH_LABEL[id] }))} notice={mock?.info.notice ?? null} error={(error && ERRORS[error]) || null} next={next ?? null} />
 }

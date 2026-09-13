@@ -40,8 +40,29 @@ test('terms cannot be skipped without checking every item', async ({ page }) => 
   await expect(page).toHaveURL(/\/home/)
 })
 
+test('a visitor can browse before signing in, and lands back where they were', async ({ page }) => {
+  await page.goto(`${BASE}/home`)
+  await expect(page.getByRole('link', { name: '로그인' })).toBeVisible()
+
+  // 상세까지는 로그인 없이 볼 수 있고, 입장할 때 묻는다.
+  await page.locator('a[href="/character/thomas"]').first().click()
+  await expect(page).toHaveURL(/\/character\/thomas/)
+  await page.getByRole('link', { name: '로그인하고 시작하기' }).click()
+  await expect(page).toHaveURL(/\/login\?next=/)
+
+  await signUp(page, BASE)
+  // 로그인·동의를 마치면 보던 캐릭터로 돌아온다.
+  await expect(page).toHaveURL(/\/character\/thomas/)
+  await expect(page.getByRole('button', { name: '역할극 시작하기' })).toBeVisible()
+})
+
 test('signup through entering a roleplay', async ({ page }) => {
+  // 로그인 전에도 홈이 먼저다 — 무엇이 있는지 보여주고 나서 묻는다.
   await page.goto(`${BASE}/`)
+  await expect(page).toHaveURL(/\/home/)
+  await expect(page.getByText('토마스').first()).toBeVisible()
+  await page.getByRole('link', { name: '로그인' }).click()
+
   await expect(page).toHaveURL(/\/login/)
   // 가입/로그인이 나뉘지 않는다 — 소셜 버튼 하나. "계정이 없으신가요?" 는 안내를 펼친다.
   await page.getByRole('button', { name: '계정이 없으신가요?' }).click()
@@ -50,11 +71,12 @@ test('signup through entering a roleplay', async ({ page }) => {
 
   // 동의를 마치면 곧장 홈이다 — 별도의 시작 화면을 두지 않는다.
   await expect(page).toHaveURL(/\/home/)
-  await expect(page.getByText('토마스')).toBeVisible()
-  await expect(page.getByText('강태윤')).toBeVisible()
-  await expect(page.getByText('히사시')).toBeVisible()
+  // 같은 캐릭터가 여러 행에 등장하므로 첫 번째만 본다.
+  await expect(page.getByText('토마스').first()).toBeVisible()
+  await expect(page.getByText('강태윤').first()).toBeVisible()
+  await expect(page.getByText('히사시').first()).toBeVisible()
 
-  await page.getByText('토마스').click()
+  await page.getByText('토마스').first().click()
   await expect(page).toHaveURL(/\/character\/thomas/)
   await expect(page.getByText('고서 복원가')).toBeVisible()
   await expect(page.getByText(/비 내리는 저녁/)).toBeVisible()

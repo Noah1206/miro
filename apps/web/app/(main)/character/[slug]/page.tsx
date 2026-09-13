@@ -1,14 +1,14 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOfficialBySlug } from '@/lib/characters'
-import { Back, Button, Chip, Page, Reveal } from '@/components/ui'
+import { Back, Button, ButtonLink, Chip, Page, Reveal } from '@/components/ui'
 import { DetailHero } from './hero'
 import { startRoleplay } from './actions'
 
 /** 상세는 설정집이 아니다. 비주얼 → 한 줄 → 세계 → 시작 장면 → 문. */
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
+  // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
   const user = await currentUser()
-  if (!user) redirect('/login')
   const { slug } = await params
   const c = await getOfficialBySlug(slug)
   if (!c) notFound()
@@ -46,11 +46,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       {/* n18 — 문. 고정 하단, 흰 버튼 하나. */}
       {/* 하단 내비 위에 올라앉는다 — 내비가 CTA 를 가리면 누를 수도, 초점이 보일 수도 없다 (2.5.8 / 2.4.11) */}
-      <form action={enter} className="detail-cta" style={{ position: 'fixed', left: 0, right: 0, zIndex: 25, padding: '16px var(--space-5)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
+      <div className="detail-cta" style={{ position: 'fixed', left: 0, right: 0, zIndex: 25, padding: '16px var(--space-5)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
         <div style={{ maxWidth: 720, margin: '0 auto' }}>
-          <Button type="submit" variant="primary" size="lg" full>역할극 시작하기</Button>
+          {user
+            ? <form action={enter}><Button type="submit" variant="primary" size="lg" full>역할극 시작하기</Button></form>
+            : <ButtonLink href={`/login?next=${encodeURIComponent(`/character/${slug}`)}`} variant="primary" size="lg" full>로그인하고 시작하기</ButtonLink>}
         </div>
-      </form>
+      </div>
     </Page>
   )
 }

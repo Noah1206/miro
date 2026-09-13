@@ -139,8 +139,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .row-scroll { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
   -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); }
 .row-scroll::-webkit-scrollbar { display: none; }
-/* 카드 폭: 다음 카드가 살짝 보여야 '옆으로 더 있다' 가 읽힌다. */
-.row-scroll > * { scroll-snap-align: start; flex: 0 0 40%; max-width: 190px; }
+/* 카드 폭: 한 화면에 2장 + 다음 장이 걸쳐 보이게. 상한을 두지 않는다 — 앱 폭이 이미 고정이다. */
+.row-scroll > * { scroll-snap-align: start; flex: 0 0 43%; }
 
 .pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); touch-action: pan-x pan-y; }
 .pager::-webkit-scrollbar { display: none; }

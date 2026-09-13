@@ -13,7 +13,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   const items = await listSessions(user.id, status)
   return (
     <Page>
-      <h1 className="t-title-1" style={{ marginBottom: 'var(--space-4)' }}>인연</h1>
+      <h1 className="t-title-1" style={{ marginBottom: 'var(--space-4)' }}>대화</h1>
       <Tabs id="archive" active={status} tabs={[{ key: 'active', label: '진행 중', href: '/archive' }, { key: 'archived', label: '보관됨', href: '/archive?tab=archived' }]} />
       <div style={{ height: 'var(--space-5)' }} />
       {deleted && <p role="status" className="t-caption" style={{ marginBottom: 12 }}>역할극을 삭제했습니다.</p>}

@@ -438,6 +438,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-40 | OAuth 는 SDK 없이 Authorization Code + state 쿠키 + PKCE(Google·Kakao) | 제공자 차이는 endpoint 와 프로필 파싱뿐이라 `OAuth2Provider` 하나로 충분하다. 관리자 콘솔은 별도 이메일·비밀번호 로그인을 유지한다 |
 | E-41 | 서체는 Toss Product Sans, 폴백 Pretendard. 세리프 display 역할 제거 | 사용자 결정. `--font-display` 는 `--font-body` 를 가리키고 `.t-name`/`.t-quote` 는 자간으로만 구분한다 |
 | E-42 | 로고는 원본 PNG(`public/logo-mark.png`) 를 `mix-blend-mode: screen` 으로 | 검정 판이 어두운 배경에 녹는다. Launch sequence 는 두 판 사이 사선을 `clip-path` 로 잘라 재현 |
+| E-48 | 홈은 로그인 없이 볼 수 있다 — 입장할 때 묻는다 | 사용자 결정. `/` 는 언제나 홈, 헤더에 로그인 버튼, 캐릭터 상세까지 열람 가능하고 '역할극 시작하기' 자리에서 로그인으로 보낸다. 돌아갈 곳은 `miro_next` 쿠키에 담고 동의 화면까지 넘긴다 — 쿠키 쓰기는 Route Handler 에서만 되므로 `/api/auth/[provider]/start` 가 저장한다(서버 컴포넌트에서 쓰면 500). 값은 앱 내부 경로만 허용한다 (open redirect 방지). `/create` 는 layout 에서 막는다 — 다 적고 저장에서 튕기면 입력이 사라진다 |
 | E-47 | 모바일 전용 레이아웃 한 벌만 유지한다 — 넓은 화면에서는 앱 폭(430px)으로 가운데 고정 | 사용자 결정("완전히 모바일을 사용하는 사람들을 위한 웹앱"). 데스크톱 사이드바·채팅 컨텍스트 패널·1024px 분기를 전부 제거했다. `.nav` 와 `.detail-cta` 는 fixed 라 뷰포트 기준으로 퍼지므로 앱 폭에 맞춰 다시 가둔다. 화면이 하나뿐이면 디자인·접근성 검증도 한 번만 하면 된다 |
 | E-46 | 홈은 히어로 한 명이 아니라 주제를 가진 가로 스크롤 행(Netflix 형) | 사용자 결정. 기능명세서 2.1 '표시' 항목도 이에 맞춰 고쳤다 (문서가 SoT 이므로 구현만 어긋나게 두지 않는다). 행은 비어 있으면 내보내지 않는다 — 처음 온 사람에게는 ORIGINALS 한 줄, 역할극을 시작하면 '이어지는 인연' 이 위에 붙고, 캐릭터를 만들면 '내가 만든 사람' 이 생긴다 |
 | E-45 | 동의 후 '어디서 시작할까요' 화면(n12) 을 두지 않는다 — 곧장 홈 | 사용자 결정. 홈이 이미 공식 캐릭터와 '만들기' 를 함께 보여주므로 같은 선택을 한 번 더 묻는 화면이었다. 온보딩 제거(E-44) 와 같은 방향 |
