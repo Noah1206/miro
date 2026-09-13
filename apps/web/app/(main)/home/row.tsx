@@ -45,8 +45,8 @@ function Card({ c }: { c: HomeCard }) {
       {/* 조회수는 실제로 대화한 사람이 있을 때만 — 0 을 보여주면 아무도 안 쓴다는 말이 된다. */}
       {c.plays > 0 && (
         <span style={{
-          position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 5,
-          padding: '5px 10px', borderRadius: 8, background: 'rgba(70,70,78,0.45)',
+          position: 'absolute', top: 10, left: 10, display: 'inline-flex', alignItems: 'center', gap: 3,
+          padding: '3px 7px', borderRadius: 7, background: 'rgba(70,70,78,0.45)',
           backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
           fontSize: 'var(--font-micro)', color: 'var(--color-text-primary)', letterSpacing: 0,
           fontWeight: 'var(--weight-semibold)',
