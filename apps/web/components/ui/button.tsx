@@ -19,7 +19,8 @@ type Props = PressableProps & {
 }
 
 const VARIANT: Record<ButtonVariant, React.CSSProperties> = {
-  primary: { background: 'var(--color-white)', color: 'var(--color-black)', border: '1px solid var(--color-white)' },
+  /** 주요 행동은 브랜드 파랑이 채운다 — 흰 글자와 4.6:1. */
+  primary: { background: 'var(--color-accent)', color: 'var(--color-white)', border: '1px solid var(--color-accent)' },
   secondary: { background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' },
   ghost: { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid transparent' },
   danger: { background: 'transparent', color: 'var(--color-danger)' },

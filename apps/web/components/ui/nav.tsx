@@ -16,7 +16,7 @@ const ITEMS = [
 ]
 
 /**
- * 조용한 내비게이션. 활성 = 흰색, 비활성 = 회색, Accent 없음.
+ * 조용한 내비게이션. 활성 = 흰 글자 + 파란 점, 비활성 = 회색.
  * 모바일: 하단. 데스크톱(≥1024): 왼쪽 세로. 활성 표시는 하나의 점이 이동한다(layoutId).
  * Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
  *
@@ -42,7 +42,7 @@ export function Nav() {
             <span className="nav__inner">
               <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{it.icon}</svg>
               <span style={{ fontSize: 'var(--font-caption)', letterSpacing: 0 }}>{it.label}</span>
-              {active && <motion.span aria-hidden layoutId="nav-dot" transition={spring.default} style={{ position: 'absolute', top: -8, width: 4, height: 4, borderRadius: 2, background: 'var(--color-white)' }} />}
+              {active && <motion.span aria-hidden layoutId="nav-dot" transition={spring.default} style={{ position: 'absolute', top: -8, width: 4, height: 4, borderRadius: 2, background: 'var(--color-accent)' }} />}
             </span>
           )
           const color = active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'

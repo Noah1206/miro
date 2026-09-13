@@ -4,17 +4,19 @@ import { getOfficialBySlug } from '@/lib/characters'
 import { countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
+import { Accordion, Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { galleryFor, portraitFor } from '@/components/character-visual'
-import { Section, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, Gallery, RealityStrip } from './sections'
+import { Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, Gallery, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 
 /**
- * 상세는 작품 소개 화면이다 (레퍼런스 구조):
- * 히어로 → 제목·한 줄·해시태그·통계 → 소개 → 프로필 → 세계 → 시작 장면 → 댓글 → 비슷한 작품 → 문.
+ * 상세는 '이 사람과 말을 섞으면 어떤 느낌인가' 를 먼저 보여주는 화면이다.
+ * 히어로 → 이름·한 줄·해시태그·통계 → 현실 기능 → 첫 장면과 예시 대화 → 사진 →
+ * 접어 둔 설명 → 댓글 → 비슷한 작품 → 문.
+ * 설명을 위에 쌓지 않는다 — 읽고 싶은 사람만 펴게 두고, 장면을 먼저 보여준다.
  */
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -82,28 +84,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         <RealityStrip />
 
-        <Section title="소개" noBg>
-          <div className="detail-prose">
-            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>
-          </div>
-        </Section>
-
-        {(profile.length > 0 || gallery.length > 0) && (
-          <Section title="프로필">
-            {gallery.length > 0 && (
-              <Gallery name={c.name} images={gallery} />
-            )}
-            {profile.length > 0 && (
-              <div className="detail-prose" style={{ marginTop: gallery.length > 0 ? 16 : 0 }}>
-                {profile.map((line) => (
-                  <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
-                ))}
-              </div>
-            )}
-          </Section>
-        )}
-
-        <Section title="인트로" noBg>
+        {/* 먼저 보여주는 것은 설명이 아니라 장면이다 — 이 사람과 말을 섞으면 어떤 느낌인지. */}
+        <Rule label="첫 장면">
           <div className="detail-prose">
             <p className="t-body-lg t-quote">{c.startingContext}</p>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>
@@ -111,19 +93,34 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             </p>
           </div>
           {c.sampleDialogue.length > 0 && (
-            <div style={{ marginTop: 16 }}>
+            <div style={{ marginTop: 18 }}>
               <SampleDialogue name={c.name} portrait={portraitFor(slug)} turns={c.sampleDialogue} />
             </div>
           )}
-        </Section>
+        </Rule>
 
-        <section style={{ marginTop: 'var(--space-7)', paddingTop: 'var(--space-6)', borderTop: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <h2 className="t-title-2">댓글 {commentCount}</h2>
-            <TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>전체보기</TransitionLink>
+        {gallery.length > 0 && (
+          <div style={{ marginTop: 'var(--space-7)' }}>
+            <Gallery name={c.name} images={gallery} />
           </div>
+        )}
+
+        {/* 설명글은 읽고 싶은 사람만 편다 — 카드를 쌓는 대신 한 겹 접어 둔다. */}
+        <div style={{ marginTop: 'var(--space-7)' }}>
+          <Accordion title="이 사람에 대해">
+            <div className="detail-prose">
+              <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>
+              {profile.map((line) => (
+                <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
+              ))}
+            </div>
+          </Accordion>
+        </div>
+
+        <Rule label={`댓글 ${commentCount}`}
+          action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>전체보기</TransitionLink>}>
           <CommentsPreview slug={slug} items={comments} />
-        </section>
+        </Rule>
       </div>
 
       {similar.length > 0 && (

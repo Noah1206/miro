@@ -8,31 +8,23 @@ import type { CommentItem } from '@/lib/social'
 import { bookmark, deleteComment, likeComment } from './social-actions'
 
 /**
- * 한 덩이. 스크롤하며 차례로 떠오른다.
- * 구분선은 두지 않는다 — 제목 크기와 간격이 이미 경계를 만든다.
+ * 한 덩이.
+ *
+ * 카드로 감싸지 않는다 — 카드를 쌓으면 어느 것이 중요한지 사라진다. 대신 왼쪽에 짧은
+ * 브랜드 색 규칙선을 세우고 라벨을 작게 얹는다. 경계는 선 하나와 여백이 만든다.
  */
-export function Section({ title, image, noBg, divider, children }: { title: string; image?: string | null; noBg?: boolean; divider?: boolean; children: React.ReactNode }) {
+export function Rule({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
   const reduce = useReducedMotion()
   return (
     <motion.section
       initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
-      style={noBg
-        ? {
-          marginTop: divider ? 'var(--space-7)' : 'var(--space-6)',
-          paddingTop: divider ? 'var(--space-6)' : 0,
-          borderTop: divider ? '1px solid var(--color-border)' : undefined,
-        }
-        : {
-          marginTop: 'var(--space-6)', padding: 'var(--space-5)',
-          background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
-        }}>
-      <h2 className="t-title-2" style={{ marginBottom: 14 }}>{title}</h2>
-      {image && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" width={1024} height={576} loading="lazy" decoding="async"
-          style={{ width: '100%', height: 'auto', borderRadius: 'var(--radius-lg)', marginBottom: 16, display: 'block' }} />
-      )}
+      style={{ marginTop: 'var(--space-7)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: 'var(--color-accent)', flexShrink: 0 }} />
+        <h2 className="t-title-3" style={{ flex: 1 }}>{label}</h2>
+        {action}
+      </div>
       {children}
     </motion.section>
   )
@@ -164,7 +156,7 @@ export function RealityStrip() {
       {items.map((item) => (
         <span key={item.label} style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-          fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
+          fontSize: 'var(--font-caption)', color: 'var(--color-accent-text)',
         }}>
           <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
           {item.label}

@@ -18,7 +18,7 @@ export function Tabs({ tabs, active, onChange, id = 'tabs' }: { tabs: Tab[]; act
         const inner = (
           <>
             <span style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', transition: 'color var(--motion-fast) var(--ease-standard)' }}>{t.label}</span>
-            {isActive && <motion.span layoutId={`${id}-underline`} transition={spring.default} style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--color-white)' }} />}
+            {isActive && <motion.span layoutId={`${id}-underline`} transition={spring.default} style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--color-accent)' }} />}
           </>
         )
         const style: React.CSSProperties = { position: 'relative', padding: '10px 14px', minHeight: 44, background: 'transparent', border: 0, fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-medium)' }

@@ -1,78 +1,61 @@
 'use client'
 import { motion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
-import { spring } from '@/lib/motion/tokens'
+import { tween } from '@/lib/motion/tokens'
 
-export type CreateTab = 'prompt' | 'profile' | 'intro'
+export type CreateStep = 'who' | 'world' | 'scene'
 
-const TABS: Array<{ key: CreateTab; label: string; required?: boolean }> = [
-  { key: 'prompt', label: '프롬프트', required: true },
-  { key: 'profile', label: '프로필' },
-  { key: 'intro', label: '인트로', required: true },
+export const STEPS: Array<{ key: CreateStep; label: string }> = [
+  { key: 'who', label: '누구인가' },
+  { key: 'world', label: '어디에 사는가' },
+  { key: 'scene', label: '어떻게 만나는가' },
 ]
 
 /**
- * 만들기 화면의 고정 머리 (레퍼런스): 닫기 · 제목 · 임시저장 · 등록, 그 아래 탭.
- * 등록은 필수 항목이 채워질 때까지 눌리지 않는다 — 눌러 놓고 실패를 보는 것보다 낫다.
+ * 만들기 화면의 머리.
+ *
+ * 레퍼런스는 탭 위에 긴 폼을 올려 두지만, 여기서는 한 번에 하나씩 묻는 단계형으로 간다 —
+ * 캐릭터를 만드는 일은 서류를 채우는 일이 아니라 한 사람을 떠올리는 일이고,
+ * 그 순서(누구인가 → 어디에 사는가 → 어떻게 만나는가)가 화면에 그대로 보여야 한다.
+ * 진행 막대는 남은 일을 감추지 않는다.
  */
-export function CreateHeader({ tab, onTab, canSubmit, pending, total, max }: {
-  tab: CreateTab
-  onTab: (t: CreateTab) => void
-  canSubmit: boolean
-  pending: boolean
-  total: number
-  max: number
+export function CreateHeader({ step, index, onBack }: {
+  step: CreateStep
+  index: number
+  onBack: () => void
 }) {
+  const progress = (index + 1) / STEPS.length
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 20, margin: '0 calc(-1 * var(--space-5))',
-      padding: '0 var(--space-5)', background: 'var(--color-bg)',
+      padding: '0 var(--space-5) var(--space-3)', background: 'var(--color-bg)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 52 }}>
-        <TransitionLink href="/home" direction="back" aria-label="닫기"
-          style={{ display: 'inline-flex', color: 'var(--color-text-primary)', padding: 4 }}>
-          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </TransitionLink>
-        <h1 className="t-title-3" style={{ flex: 1 }}>캐릭터</h1>
-        <button type="submit" name="intent" value="draft" disabled={pending}
-          style={chip(false)}>임시저장</button>
-        <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending}
-          style={chip(canSubmit && !pending)}>{pending ? '만드는 중' : '등록'}</button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 56 }}>
+        {index === 0 ? (
+          <TransitionLink href="/home" direction="back" aria-label="닫기"
+            style={{ display: 'inline-flex', color: 'var(--color-text-primary)', padding: 4 }}>
+            <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </TransitionLink>
+        ) : (
+          <button type="button" onClick={onBack} aria-label="이전 단계"
+            style={{ display: 'inline-flex', background: 'none', border: 0, color: 'var(--color-text-primary)', padding: 4, cursor: 'pointer' }}>
+            <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 5l-7 7 7 7" />
+            </svg>
+          </button>
+        )}
+        <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
+          {index + 1} / {STEPS.length}
+        </span>
       </div>
 
-      <div role="tablist" style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--color-border)' }}>
-        {TABS.map((t) => {
-          const active = t.key === tab
-          return (
-            <button key={t.key} type="button" role="tab" aria-selected={active} onClick={() => onTab(t.key)}
-              style={{
-                position: 'relative', padding: '10px 12px', minHeight: 42, background: 'transparent', border: 0,
-                fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-medium)', cursor: 'pointer',
-                color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              }}>
-              {t.required && <span aria-hidden style={{ color: 'var(--color-text-tertiary)', fontSize: '0.8em', verticalAlign: 'super' }}>*</span>}
-              {t.label}
-              {active && <motion.span layoutId="create-tab-underline" transition={spring.default}
-                style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--color-white)' }} />}
-            </button>
-          )
-        })}
+      {/* 진행 막대 — 브랜드 색이 차오르는 유일한 자리. */}
+      <div aria-hidden style={{ height: 3, borderRadius: 2, background: 'var(--color-surface-2)', overflow: 'hidden' }}>
+        <motion.div animate={{ scaleX: progress }} initial={{ scaleX: 0 }} transition={tween.enter}
+          style={{ height: '100%', background: 'var(--color-accent)', transformOrigin: 'left center' }} />
       </div>
-
-      <p className="t-micro" style={{ textAlign: 'center', padding: '8px 0', textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-        {total.toLocaleString()}/{max.toLocaleString()}자
-      </p>
     </header>
   )
-}
-
-function chip(strong: boolean): React.CSSProperties {
-  return {
-    minHeight: 34, padding: '6px 14px', borderRadius: 'var(--radius-button)', border: 0, cursor: strong ? 'pointer' : 'default',
-    fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)',
-    background: strong ? 'var(--color-white)' : 'var(--color-surface-2)',
-    color: strong ? 'var(--color-black)' : 'var(--color-text-disabled)',
-  }
 }

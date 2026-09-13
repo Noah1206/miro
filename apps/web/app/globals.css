@@ -16,6 +16,17 @@
   --color-border-input: #62626A;
   --color-white: #FFFFFF; --color-black: #000000;
   --color-relationship: #D85C79; --color-danger: #E65A5A; --color-success: #5CBF88;
+  /**
+   * Accent — 토스 파랑 계열.
+   *
+   * 셋으로 나눈다. 하나로 쓰면 버튼에서 글자가 안 읽히거나 글자가 너무 어둡거나 둘 중 하나가 깨진다:
+   * - --color-accent      채움. 흰 글자와 4.63:1 로 AA 를 넘는다. 토스의 #3182F6 은 3.71:1 이라
+   *                       흰 글자를 얹는 버튼으로는 쓸 수 없어 한 단 내렸다 (실제로 axe 가 잡았다).
+   * - --color-accent-text 어두운 바탕 위 파란 글자·아이콘. 밝아야 읽힌다.
+   * - --color-accent-soft 선택된 칸의 옅은 배경.
+   */
+  --color-accent: #1F6FEB; --color-accent-text: #6BA5FF;
+  --color-accent-strong: #1B64DA; --color-accent-soft: rgba(49, 130, 246, 0.14);
   /* 파괴적 버튼의 채움색. 흰 글자와 5.8:1 (--color-danger 위 흰 글자는 3.5:1 라 텍스트로만 쓴다) */
   --color-danger-strong: #B23A3A;
 

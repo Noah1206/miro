@@ -17,8 +17,8 @@ test('quick create produces an editable draft and starts a roleplay', async ({ p
     .fill('다른 사람한텐 싸가지 없는데 나한테만 잘해주는 30살 검사')
   await page.getByRole('button', { name: 'AI 로 초안 만들기' }).click()
 
-  // 초안이 도착하면 폼으로 넘어간다 — 빈칸이 이미 채워진 상태로.
-  await expect(page.getByRole('tab', { name: /프롬프트/ })).toBeVisible()
+  // 초안이 도착하면 단계형 폼의 첫 단계로 넘어간다 — 빈칸이 이미 채워진 상태로.
+  await expect(page.getByRole('heading', { name: '어떤 사람인가요?' })).toBeVisible()
 
   // Provider 미구성 상태는 사용자에게 숨기지 않는다
   await expect(page.getByText(/Mock 출력입니다/)).toBeVisible()
@@ -27,10 +27,12 @@ test('quick create produces an editable draft and starts a roleplay', async ({ p
   const nameField = page.locator('input[name="name"]')
   await expect(nameField).toBeVisible()
   await nameField.fill('윤지훈')
-  // 제목은 필수 — 채워야 등록이 열린다.
-  await page.locator('input[name="title"]').fill('검사와의 계약')
 
-  await page.getByRole('button', { name: '등록' }).click()
+  // 단계형이다: 누구인가 → 어디에 사는가(제목) → 어떻게 만나는가.
+  await page.getByRole('button', { name: '다음' }).click()
+  await page.locator('input[name="title"]').fill('검사와의 계약')
+  await page.getByRole('button', { name: '다음' }).click()
+  await page.getByRole('button', { name: '저장하고 시작하기' }).click()
 
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
   await expect(page.getByText('윤지훈').first()).toBeVisible()
