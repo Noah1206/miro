@@ -86,19 +86,20 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </div>
         </Section>
 
-        {profile.length > 0 && (
+        {(profile.length > 0 || gallery.length > 0) && (
           <Section title="프로필">
-            <div className="detail-prose">
-              {profile.map((line) => (
-                <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
-              ))}
-            </div>
-          </Section>
-        )}
-
-        {gallery.length > 0 && (
-          <Section title="캐릭터">
-            <Gallery name={c.name} images={gallery} />
+            {profile.length > 0 && (
+              <div className="detail-prose">
+                {profile.map((line) => (
+                  <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
+                ))}
+              </div>
+            )}
+            {gallery.length > 0 && (
+              <div style={{ marginTop: profile.length > 0 ? 16 : 0 }}>
+                <Gallery name={c.name} images={gallery} />
+              </div>
+            )}
           </Section>
         )}
 
