@@ -275,7 +275,7 @@ function ControlledInput({ name, placeholder, max, value, onChange, invalid }: {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px',
-      borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-accent)' : 'var(--color-border-strong)'}`,
+      borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`,
       transition: 'border-color var(--motion-fast) var(--ease-standard)',
     }}>
       <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
@@ -296,7 +296,7 @@ function ControlledInput({ name, placeholder, max, value, onChange, invalid }: {
  *
  * '근육질' 이라는 낱말보다 어깨가 넓은 그림이 빠르다. 네 실루엣은 어깨너비·허리·목 굵기만
  * 다르게 그린 같은 사람이다 — 체형 차이만 읽히고 다른 인상이 섞이지 않아야 한다.
- * 고른 것은 파란 테두리와 채움으로 표시하고, 이름은 그림 밑에 남겨 둔다 (그림만으로는 모호하다).
+ * 고른 것은 라임 테두리와 옅은 채움으로 표시하고, 이름은 그림 밑에 남겨 둔다 (그림만으로는 모호하다).
  */
 function BuildPicker({ build, onChange, height }: { build: string; onChange: (b: string) => void; height: string }) {
   const reduce = useReducedMotion()

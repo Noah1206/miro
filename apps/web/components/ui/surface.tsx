@@ -17,7 +17,7 @@ export function Card({ children, style, level = 1, ...rest }: Motionish<'section
 
 /** Chip / Tag — pill 이 허용되는 유일한 자리. */
 export function Chip({ children, tone = 'default', ...rest }: React.ComponentPropsWithoutRef<'span'> & { tone?: 'default' | 'relationship' | 'strong' }) {
-  const color = tone === 'relationship' ? 'var(--color-relationship)' : tone === 'strong' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
+  const color = tone === 'relationship' ? 'var(--color-accent-text)' : tone === 'strong' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
   const border = tone === 'relationship' ? 'rgba(216,92,121,0.45)' : tone === 'strong' ? 'var(--color-border-strong)' : 'var(--color-border)'
   return (
     <span {...rest} style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 999, border: `1px solid ${border}`, color, fontSize: 'var(--font-micro)', letterSpacing: '0.04em', lineHeight: 1.4, whiteSpace: 'nowrap', ...rest.style }}>
@@ -31,7 +31,7 @@ export function Chip({ children, tone = 'default', ...rest }: React.ComponentPro
  * role 은 호출자가 정한다 (status / alert).
  */
 export function Notice({ children, tone = 'muted', role = 'status', ...rest }: Motionish<'p'> & { tone?: 'muted' | 'danger' | 'relationship' }) {
-  const color = tone === 'danger' ? 'var(--color-danger)' : tone === 'relationship' ? 'var(--color-relationship)' : 'var(--color-text-secondary)'
+  const color = tone === 'danger' ? 'var(--color-danger)' : tone === 'relationship' ? 'var(--color-accent-text)' : 'var(--color-text-secondary)'
   return (
     <motion.p variants={fadeUp} {...rest} role={role} style={{ fontSize: 'var(--font-caption)', lineHeight: 1.55, padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-1)', color, ...rest.style }}>
       {children}

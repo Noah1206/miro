@@ -19,7 +19,7 @@ export function IncomingCallScreen({ channel, name, reason, acceptAction, declin
     <motion.div data-incoming-call={channel} role="dialog" aria-label={video ? '수신 영상통화' : '수신 음성통화'}
       initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.3, ease: ease.enter } } }}
       style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 14, padding: 24, background: 'var(--color-bg-deep)' }}>
-      <motion.p variants={at(0.15)} className="t-micro" style={{ color: video ? 'var(--color-relationship)' : 'var(--color-text-secondary)' }}>{video ? '● 영상통화 수신' : '음성통화 수신'}</motion.p>
+      <motion.p variants={at(0.15)} className="t-micro" style={{ color: video ? 'var(--color-accent-text)' : 'var(--color-text-secondary)' }}>{video ? '● 영상통화 수신' : '음성통화 수신'}</motion.p>
       <motion.div variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: { ...spring.default, delay: 0.25 } } }}
         style={{ width: 120, height: 120, borderRadius: video ? 'var(--radius-lg)' : 999, background: 'var(--color-surface-2)', border: `1px solid ${video ? 'var(--color-white)' : 'var(--color-border-strong)'}`, display: 'grid', placeItems: 'center' }}>
         <span className="t-name" style={{ fontSize: 44, color: 'var(--color-text-tertiary)' }}>{name.slice(0, 1)}</span>

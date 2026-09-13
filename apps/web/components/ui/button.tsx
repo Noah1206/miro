@@ -19,15 +19,15 @@ type Props = PressableProps & {
 }
 
 const VARIANT: Record<ButtonVariant, React.CSSProperties> = {
-  /** 주요 행동은 브랜드 파랑이 채운다 — 흰 글자와 4.6:1. */
-  primary: { background: 'var(--color-accent)', color: 'var(--color-white)', border: '1px solid var(--color-accent)' },
+  /** 주요 행동만 라임이 채운다. 글자는 검정 — 라임 위 흰 글자는 1.3:1 로 읽히지 않는다. */
+  primary: { background: 'var(--color-accent)', color: 'var(--color-accent-on)', border: '1px solid var(--color-accent)' },
   secondary: { background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' },
   ghost: { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid transparent' },
   danger: { background: 'transparent', color: 'var(--color-danger)' },
   /** 되돌릴 수 없는 확정. 채움은 danger-strong — 흰 글자가 4.5:1 을 넘는다. */
   destructive: { background: 'var(--color-danger-strong)', color: 'var(--color-white)', border: '1px solid var(--color-danger-strong)' },
   /** 관계 변화의 순간에만. 장식용으로 쓰지 않는다. */
-  relationship: { background: 'var(--color-relationship)', color: 'var(--color-white)', border: '1px solid var(--color-relationship)' },
+  relationship: { background: 'var(--color-accent)', color: 'var(--color-accent-on)', border: '1px solid var(--color-accent)' },
 }
 const SIZE = {
   sm: { minHeight: 36, padding: '6px 14px', fontSize: 'var(--font-caption)' },
@@ -35,7 +35,7 @@ const SIZE = {
   lg: { minHeight: 56, padding: '12px 24px', fontSize: 'var(--font-body-lg)' },
 } as const
 
-/** Primary = 흰 배경 + 검은 글자. Gradient / Glow / Pill 없음. */
+/** Primary = 라임 배경 + 검은 글자. Gradient / Glow / Pill 없음. */
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   { variant = 'secondary', size = 'md', status = 'idle', full, children, style, disabled, ...rest }, ref,
 ) {

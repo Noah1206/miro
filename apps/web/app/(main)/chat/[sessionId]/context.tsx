@@ -15,7 +15,7 @@ export function ContextContent({ d }: { d: ContextData }) {
     <div className="stack" style={{ gap: 'var(--space-5)' }}>
       <section>
         <h3 className="t-micro" style={{ marginBottom: 8 }}>당신과의 관계</h3>
-        <p className="t-title-3 t-quote" style={{ color: 'var(--color-relationship)' }}>{d.relationship}</p>
+        <p className="t-title-3 t-quote" style={{ color: 'var(--color-accent-text)' }}>{d.relationship}</p>
       </section>
       <section>
         <h3 className="t-micro" style={{ marginBottom: 8 }}>지금 이 세계</h3>

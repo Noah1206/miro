@@ -63,6 +63,9 @@ MIRO 로고는 다음 원칙을 따른다.
 
 ## 3. Color System
 
+무채색 기반 + 라임 포인트. 색은 콘텐츠(캐릭터 사진)에서 나오고 UI 는 비켜선다 —
+인스타그램처럼 화면 자체는 거의 흑백이고, 라임은 '지금 이것' 을 가리킬 때만 켜진다.
+
 ### Core Colors
 
 ```css
@@ -70,26 +73,52 @@ MIRO 로고는 다음 원칙을 따른다.
   --color-bg: #0A0A0B;
   --color-bg-deep: #000000;
 
-  --color-surface-1: #111113;
-  --color-surface-2: #17171A;
-  --color-surface-3: #1D1D21;
+  --color-surface-1: #16161A;
+  --color-surface-2: #1E1E23;
+  --color-surface-3: #26262C;
 
-  --color-border: #27272B;
+  --color-border: #2A2A2F;
   --color-border-strong: #35353A;
 
-  --color-text-primary: #F7F7F8;
+  --color-text-primary: #F5F5F7;
   --color-text-secondary: #A1A1A8;
-  --color-text-tertiary: #6E6E75;
+  --color-text-tertiary: #8A8A92;
   --color-text-disabled: #4D4D52;
 
   --color-white: #FFFFFF;
   --color-black: #000000;
 
-  --color-relationship: #D85C79;
   --color-danger: #E65A5A;
   --color-success: #5CBF88;
 }
 ```
+
+### Accent (Lime)
+
+```css
+:root {
+  --color-accent: #BDF43F;        /* 채움 */
+  --color-accent-bright: #C6FF4A; /* 눌림·호버에서 한 단 밝게 */
+  --color-accent-on: #111111;     /* 라임 채움 위의 글자 */
+  --color-accent-text: #BDF43F;   /* 어두운 바탕 위 라임 글자 */
+  --color-accent-soft: rgba(189, 244, 63, 0.12);
+}
+```
+
+라임 위의 글자는 **반드시 검정**이다. 흰 글자는 1.3:1 이라 읽히지 않는다
+(검정은 14.6:1). `--color-accent-on` 이 그 값을 들고 있으니 버튼마다 다시 고르지 않는다.
+
+### Light Mode
+
+값만 정해 두고 아직 켜지 않는다 (`--light-bg` / `--light-text` / `--light-border`).
+히어로 스크림·카드 그라디언트·채팅 버블이 전부 어두운 바탕을 전제로 그려져 있어서,
+토큰만 뒤집으면 글이 사진 위에서 사라진다.
+
+| | Light | Dark |
+|---|---|---|
+| Background | `#FFFFFF` | `#0A0A0B` |
+| Text | `#111111` | `#F5F5F7` |
+| Border | `#EAEAEA` | `#2A2A2F` |
 
 ---
 
@@ -102,17 +131,18 @@ Accent Color는 장식용으로 사용하지 않는다.
 ### Accent는 의미가 있을 때만 사용
 
 가능:
+- 선택된 탭 / Navigation Active
+- 주요 CTA (화면당 하나)
+- 온라인 상태
 - 관계 변화
-- 감정 고조
-- 중요한 Event
-- 캐릭터가 사용자를 의식하는 순간
-- 특별한 Reality 메시지
+- 새 Event · 안 읽은 것
+- 특별한 Reality 메시지 (캐릭터가 앱 밖에서 먼저 연락한 순간)
 
 금지:
-- 모든 Primary Button을 핑크로 처리
 - 모든 카드 테두리를 Accent로 처리
-- Navigation Active 상태를 항상 Accent로 처리
+- 섹션 제목·구분선 같은 구조 요소에 사용 (구조는 무채색)
 - 단순 장식용 Gradient
+- Glow / Neon / 발광 효과
 
 즉, 색은 **UI 장식이 아니라 상태 변화의 신호**여야 한다.
 
@@ -663,9 +693,9 @@ Profile
 
 Active 상태는:
 
-- White Icon
+- White Icon + Label
 - Inactive는 Gray
-- Accent Color 사용 금지
+- 활성 표시(점·밑줄) 하나만 Lime — 아이콘과 글자까지 물들이지 않는다
 
 ---
 
@@ -858,8 +888,8 @@ MIRO의 UI는 Dark Cinematic × Human × Sharp Minimal을 따른다.
 - Neon / Glow 사용 금지
 - 과도한 Rounded UI 금지
 - Card radius는 12~16px 중심
-- Primary Button은 White background + Black text
-- Accent Color는 Relationship 변화에만 제한적으로 사용
+- Primary Button은 Lime background + Black text (화면당 하나)
+- Accent Color는 상태에만 사용 — 선택된 탭, 주요 CTA, 온라인, 관계 변화, 새 Event
 - Character Image와 Scene이 UI보다 항상 우선
 - SaaS Dashboard처럼 만들지 말 것
 - AI Tool처럼 보이게 만들지 말 것

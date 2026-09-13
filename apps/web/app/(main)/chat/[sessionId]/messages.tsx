@@ -37,7 +37,7 @@ function Message({ m, characterName }: { m: Msg; characterName: string }) {
     return (
       <Reportable id={m.id} kind="message">
         <RealityTag sender={reality?.senderLabel} channel={reality?.channelLabel} />
-        <div data-reality-message style={{ paddingLeft: 12, borderLeft: '2px solid var(--color-relationship)' }}>
+        <div data-reality-message style={{ paddingLeft: 12, borderLeft: '2px solid var(--color-accent)' }}>
           <CharacterText content={m.content} name={characterName} size="lg" />
         </div>
       </Reportable>
@@ -47,7 +47,7 @@ function Message({ m, characterName }: { m: Msg; characterName: string }) {
 }
 
 function RealityTag({ sender, channel }: { sender?: string; channel?: string }) {
-  return <p className="t-micro" style={{ color: 'var(--color-relationship)', textTransform: 'none', letterSpacing: '0.04em' }}>{[sender, channel].filter(Boolean).join(' · ')}</p>
+  return <p className="t-micro" style={{ color: 'var(--color-accent-text)', textTransform: 'none', letterSpacing: '0.04em' }}>{[sender, channel].filter(Boolean).join(' · ')}</p>
 }
 
 /**

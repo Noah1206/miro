@@ -11,7 +11,8 @@ import { bookmark, deleteComment, likeComment } from './social-actions'
  * 한 덩이.
  *
  * 카드로 감싸지 않는다 — 카드를 쌓으면 어느 것이 중요한지 사라진다. 대신 왼쪽에 짧은
- * 브랜드 색 규칙선을 세우고 라벨을 작게 얹는다. 경계는 선 하나와 여백이 만든다.
+ * 규칙선을 세우고 라벨을 작게 얹는다. 선은 무채색이다 — 구역을 나누는 일은 상태가 아니라
+ * 구조이고, 라임은 상태에만 쓴다.
  */
 export function Rule({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
   const reduce = useReducedMotion()
@@ -21,7 +22,7 @@ export function Rule({ label, action, children }: { label: string; action?: Reac
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
       style={{ marginTop: 'var(--space-7)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: 'var(--color-accent)', flexShrink: 0 }} />
+        <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: 'var(--color-border-strong)', flexShrink: 0 }} />
         <h2 className="t-title-3" style={{ flex: 1 }}>{label}</h2>
         {action}
       </div>
@@ -156,7 +157,7 @@ export function RealityStrip() {
       {items.map((item) => (
         <span key={item.label} style={{
           flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-          fontSize: 'var(--font-caption)', color: 'var(--color-accent-text)',
+          fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
         }}>
           <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
           {item.label}

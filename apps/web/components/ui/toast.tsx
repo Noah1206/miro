@@ -23,7 +23,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <AnimatePresence initial={false}>
           {items.map((t) => (
             <motion.div key={t.id} layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8, transition: tween.exit }} transition={spring.default}
-              style={{ padding: '10px 16px', borderRadius: 'var(--radius-button)', background: 'var(--color-surface-3)', border: `1px solid ${t.tone === 'relationship' ? 'rgba(216,92,121,0.5)' : 'var(--color-border-strong)'}`, fontSize: 'var(--font-caption)', boxShadow: 'var(--shadow-soft)', color: t.tone === 'relationship' ? 'var(--color-relationship)' : 'var(--color-text-primary)' }}>
+              style={{ padding: '10px 16px', borderRadius: 'var(--radius-button)', background: 'var(--color-surface-3)', border: `1px solid ${t.tone === 'relationship' ? 'var(--color-accent)' : 'var(--color-border-strong)'}`, fontSize: 'var(--font-caption)', boxShadow: 'var(--shadow-soft)', color: t.tone === 'relationship' ? 'var(--color-accent-text)' : 'var(--color-text-primary)' }}>
               {t.text}
             </motion.div>
           ))}

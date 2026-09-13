@@ -66,7 +66,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
             <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.85, padding: 'var(--space-5) var(--space-3)' }}>{s.character.worldRole.startingContext}</p>
           )}
           {s.activeEvents[0] && (
-            <aside style={{ padding: '14px 16px', borderLeft: '2px solid var(--color-relationship)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
+            <aside style={{ padding: '14px 16px', borderLeft: '2px solid var(--color-accent)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
               <h2 className="t-micro" style={{ marginBottom: 4 }}>지금 이 세계에서</h2>
               <p className="t-body t-quote">{ctx.events[0]!.summary}</p>
             </aside>

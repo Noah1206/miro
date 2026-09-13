@@ -36,7 +36,7 @@ export function ArchiveList({ items, archiveAction, restoreAction }: {
                 </div>
                 <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{s.characterStatus ?? `${s.location} · ${s.time}`}</p>
               </div>
-              {s.unread > 0 && <span data-unread className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 22, height: 22, padding: '0 7px', borderRadius: 11, background: 'var(--color-relationship)', color: '#fff', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
+              {s.unread > 0 && <span data-unread className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 22, height: 22, padding: '0 7px', borderRadius: 11, background: 'var(--color-accent)', color: 'var(--color-accent-on)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
             </TransitionLink>
             <div style={{ display: 'flex', gap: 6, marginTop: 10, justifyContent: 'flex-end' }}>
               <form action={async () => { await (archived ? restoreAction : archiveAction)(s.id); toast(archived ? '다시 이어집니다.' : '조용히 보관했어요.') }}>

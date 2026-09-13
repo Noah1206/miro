@@ -18,7 +18,8 @@ function Star() {
  * 한 칸.
  *
  * 회색 상자를 두르지 않는다 — 상자를 쌓으면 화면이 서류가 되고, 어느 칸이 중요한지 사라진다.
- * 대신 밑줄 하나로 칸을 표시하고, 라벨은 값 위에 작게 얹는다. 초점이 들어오면 밑줄만 파래진다.
+ * 대신 밑줄 하나로 칸을 표시하고, 라벨은 값 위에 작게 얹는다. 초점이 들어오면 밑줄만 희어진다
+ * (초점은 흰색이다 — 라임은 상태를 뜻하므로 '선택됨' 과 '초점' 이 같은 색이면 구분이 안 된다).
  * 글자 수는 한도 근처(80%)에서만 나타난다 — 늘 떠 있으면 세라는 뜻이 되어 버린다.
  */
 export function LabeledField({ label, required, hint, error, children }: {
@@ -40,10 +41,10 @@ export function LabeledField({ label, required, hint, error, children }: {
   )
 }
 
-/** 밑줄이 초점을 따라 파래진다. 상자가 없으므로 이 선이 유일한 경계다. */
+/** 밑줄이 초점을 따라 희어진다. 상자가 없으므로 이 선이 유일한 경계다. */
 function underline(focused: boolean, invalid?: boolean): React.CSSProperties {
   return {
-    borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-accent)' : 'var(--color-border-strong)'}`,
+    borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`,
     transition: 'border-color var(--motion-fast) var(--ease-standard)',
   }
 }
@@ -121,7 +122,7 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
           width: 132, height: 132, margin: '0 auto', cursor: 'pointer',
           background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-surface-1)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
-          borderRadius: 'var(--radius-lg)', color: 'var(--color-accent-text)',
+          borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
         }}>
         {!preview && (
           <>
