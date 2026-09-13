@@ -141,6 +141,7 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
   const [contactOn, setContactOn] = useState(true)
   const [channel, setChannel] = useState<string>(draft?.contactStyle.preferredChannel ?? 'message')
   const [outputStyle, setOutputStyle] = useState('balanced')
+  const [isPublic, setIsPublic] = useState(false)
 
   const missing = useMemo(() => {
     const m = new Set<CreateTab>()
@@ -424,11 +425,11 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
               </div>
             </Card>
           </Section>
-          <Section title="공개" subtitle="지금은 내가 만든 캐릭터는 나만 봅니다. 공개 공유는 아직 없습니다.">
+          <Section title="공개" subtitle="켜면 홈과 발견에 실리고, 다른 사람이 이 캐릭터와 대화를 시작할 수 있습니다.">
             <Card>
-              <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-                다른 사람에게 공개하는 기능이 생기면 여기서 켭니다.
-              </p>
+              <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
+                label="다른 사람에게 공개"
+                hint="임시저장은 공개되지 않습니다. 대화 내용은 각자 따로 — 다른 사람의 대화가 내게 보이지 않습니다." />
             </Card>
           </Section>
         </Panel>

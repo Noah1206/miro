@@ -134,6 +134,13 @@
       "when": 1789321481694,
       "tag": "0018_contact_enabled",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789342657382,
+      "tag": "0019_character_public",
+      "breakpoints": true
     }
   ]
 }

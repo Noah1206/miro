@@ -1,7 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, or } from 'drizzle-orm'
 import {
   db, characters, worlds, roleplaySessions, worldStates, relationships,
 } from '@miro/db'
@@ -24,12 +24,16 @@ const DEFAULT_START = {
  * 시작 상태는 DB 의 worlds 행에서 읽는다 — 시드 상수가 아니라.
  * 사용자가 만든 캐릭터도 같은 경로를 타야 하기 때문이다.
  */
-export async function startRoleplay(slug: string): Promise<void> {
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export async function startRoleplay(key: string): Promise<void> {
   const user = await requireUser()
 
+  // 상세와 같은 규칙: 공식이거나 공개했거나 내 것. 초안은 시작할 수 없다.
   const found = await db
     .select({
       characterId: characters.id,
+      isOfficial: characters.isOfficial,
       worldId: worlds.id,
       worldLocation: worlds.location,
       startingTime: characters.startingTime,
@@ -37,7 +41,12 @@ export async function startRoleplay(slug: string): Promise<void> {
     })
     .from(characters)
     .innerJoin(worlds, eq(worlds.characterId, characters.id))
-    .where(and(eq(characters.slug, slug), isNull(characters.deletedAt)))
+    .where(and(
+      UUID.test(key) ? eq(characters.id, key) : eq(characters.slug, key),
+      or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.ownerId, user.id)),
+      eq(characters.isDraft, false),
+      isNull(characters.deletedAt),
+    ))
     .limit(1)
 
   const character = found[0]
@@ -83,7 +92,7 @@ export async function startRoleplay(slug: string): Promise<void> {
     return id
   })
 
-  void track(user.id, 'character_selected', { characterId: character.characterId, official: true })
+  void track(user.id, 'character_selected', { characterId: character.characterId, official: character.isOfficial })
   void track(user.id, 'rp_started', { sessionId, characterId: character.characterId })
   // redirect 는 throw 로 동작하므로 반드시 트랜잭션 밖에서 호출한다.
   redirect(`/chat/${sessionId}`)

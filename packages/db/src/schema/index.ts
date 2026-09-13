@@ -138,12 +138,15 @@ export const characters = pgTable('characters', {
 
   /** Quick Create 초안 자동 임시저장 (명세서 2.2 예외). */
   isDraft: boolean('is_draft').notNull().default(false),
+  /** 다른 사람에게 보이는가. 공식이 아닌 캐릭터는 이 값이 켜져야 홈·발견·상세에 노출된다. 초안은 절대 공개되지 않는다. */
+  isPublic: boolean('is_public').notNull().default(false),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 }, (t) => ({
   ownerIdx: index('characters_owner_idx').on(t.ownerId),
   officialIdx: index('characters_official_idx').on(t.isOfficial),
+  publicIdx: index('characters_public_idx').on(t.isPublic),
 }))
 
 /**

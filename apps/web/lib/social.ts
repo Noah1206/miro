@@ -157,7 +157,8 @@ export async function similarCharacters(characterId: string, genre: string | nul
     .where(and(
       or(...keywords.map((k) => ilike(worlds.genre, `%${k}%`))),
       ne(characters.id, characterId),
-      eq(characters.isOfficial, true),
+      or(eq(characters.isOfficial, true), eq(characters.isPublic, true)),
+      eq(characters.isDraft, false),
       isNull(characters.deletedAt),
     ))
     .limit(limit)

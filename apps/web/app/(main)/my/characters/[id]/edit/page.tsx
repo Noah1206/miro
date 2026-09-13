@@ -15,7 +15,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     <Page style={{ maxWidth: 560 }}>
       <PageHeader back="/archive" eyebrow="편집" title={c.name} lead="항목마다 따로 저장됩니다." />
       <EditSections characterId={id}
-        character={{ name: c.name, age: c.age, nationality: c.nationality, occupation: c.occupation, mbti: c.mbti, personality: c.personality, values: c.values, speechStyle: c.speechStyle, jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression }}
+        character={{ name: c.name, age: c.age, nationality: c.nationality, occupation: c.occupation, mbti: c.mbti, personality: c.personality, values: c.values, speechStyle: c.speechStyle, jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression, isPublic: c.isPublic }}
         world={owned.world ? { era: owned.world.era ?? '', location: owned.world.location ?? '', genre: owned.world.genre ?? '', worldSetting: owned.world.worldSetting ?? '' } : null}
         appearance={{
           eyes: owned.visual?.baseFace?.eyes ?? '', nose: owned.visual?.baseFace?.nose ?? '',

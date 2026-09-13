@@ -1,10 +1,12 @@
 'use client'
 import { useActionState } from 'react'
-import { Accordion, Button, Field, Input, Radio, TextArea } from '@/components/ui'
+import { Accordion, Button, Field, Input, Radio, TextArea, ToggleRow } from '@/components/ui'
 import { BUILD_PRESETS, BUILD_TYPES } from '@miro/domain'
 import { saveSection, type EditState } from './actions'
 
-type CharacterFields = { name: string; age: number | null; nationality: string | null; occupation: string | null; mbti: string | null; personality: string; values: string | null; speechStyle: string | null; jealousy: number; initiative: number; emotionalExpression: number }
+type CharacterFields = { name: string; age: number | null; nationality: string | null; occupation: string | null; mbti: string | null; personality: string; values: string | null; speechStyle: string | null; jealousy: number; initiative: number; emotionalExpression: number
+  isPublic: boolean
+}
 type WorldFields = { era: string; location: string; genre: string; worldSetting: string }
 type AppearanceFields = { eyes: string; nose: string; jaw: string; skin: string; distinctive: string; hairColor: string; hairLength: string; hairStyle: string; build: string; height: string; detail: string; expression: string }
 type ContactFields = { contactFrequency: number; replyDelayMinutes: number; callProbability: number; videoCallProbability: number; photoProbability: number; voiceMessageProbability: number; activeHoursStart: string; activeHoursEnd: string; initiativeLevel: number }
@@ -20,6 +22,9 @@ export function EditSections({ characterId, character, appearance, world, contac
         </div>
         <Field label="국적"><Input name="nationality" defaultValue={character.nationality ?? ''} /></Field>
         <Field label="직업"><Input name="occupation" defaultValue={character.occupation ?? ''} /></Field>
+      </Section>
+      <Section characterId={characterId} name="settings" title="공개">
+        <ToggleRow name="isPublic" label="다른 사람에게 공개" hint="켜면 홈과 발견에 실리고 누구나 대화를 시작할 수 있습니다. 초안은 공개되지 않습니다." defaultChecked={character.isPublic} />
       </Section>
       <Section characterId={characterId} name="personality" title="성격">
         <Field label="성격"><TextArea name="personality" defaultValue={character.personality} rows={3} /></Field>

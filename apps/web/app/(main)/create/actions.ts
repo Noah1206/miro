@@ -174,6 +174,8 @@ export async function saveCharacter(form: FormData): Promise<void> {
       sampleDialogue,
       initialRelationship,
       isDraft: !publish,
+      // 초안은 절대 공개되지 않는다 — 등록할 때만 스위치가 의미를 갖는다.
+      isPublic: publish && form.get('isPublic') === 'on',
     }).returning({ id: characters.id })
     const characterId = character!.id
 

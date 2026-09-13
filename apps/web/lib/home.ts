@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql, ne } from 'drizzle-orm'
 import { db, characters, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 import { stageLabel } from '@miro/domain'
 import { listOfficials, type OfficialCard } from './characters'
@@ -80,11 +80,19 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
     .limit(12)
 
   const all = officials.map(withPlays)
+  const shared = await publicCharacters(userId, 12)
+  const sharedPlays = await playCounts(shared.map((c) => c.id))
 
   const rows: HomeRow[] = [
     { key: 'continuing', title: '이어서 대화하기', items: continuing },
     { key: 'originals', title: 'MIRO ORIGINALS', items: all },
     ...genreRows(all),
+    {
+      // 다른 사람이 공개한 캐릭터. 내 것은 아래 '내가 만든 사람' 에 있으니 뺀다.
+      key: 'shared',
+      title: '사람들이 만든 사람',
+      items: shared.map((c) => card({ ...c, slug: c.slug ?? c.id }, { plays: sharedPlays.get(c.id) ?? 0 })),
+    },
     {
       key: 'mine',
       title: '내가 만든 사람',
@@ -94,6 +102,26 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
   return rows.filter((r) => r.items.length > 0)
 }
 
+
+/** 다른 사람이 공개한 캐릭터 (초안·삭제 제외, 내 것 제외). 최근 것부터. */
+async function publicCharacters(viewerId: string | null, limit: number): Promise<OfficialCard[]> {
+  const rows = await db.select({
+    id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
+    occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
+    accentA: characters.accentA, accentB: characters.accentB, genre: worlds.genre,
+    tagline: characters.tagline,
+  })
+    .from(characters)
+    .leftJoin(worlds, eq(worlds.characterId, characters.id))
+    .where(and(
+      eq(characters.isPublic, true), eq(characters.isOfficial, false), eq(characters.isDraft, false),
+      isNull(characters.deletedAt),
+      ...(viewerId ? [ne(characters.ownerId, viewerId)] : []),
+    ))
+    .orderBy(desc(characters.createdAt))
+    .limit(limit)
+  return rows as OfficialCard[]
+}
 
 /** 캐릭터별 대화 인원. 한 번의 질의로 모아 카드에 붙인다. */
 async function playCounts(ids: string[]): Promise<Map<string, number>> {
@@ -111,7 +139,10 @@ export async function discoverGrid(userId: string | null): Promise<HomeCard[]> {
   const officials = await listOfficials()
   const plays = await playCounts(officials.map((o) => o.id))
   const all = officials.map((c) => card(c, { plays: plays.get(c.id) ?? 0 }))
-  if (!userId) return all
+  const shared = await publicCharacters(userId, 60)
+  const sharedPlays = await playCounts(shared.map((c) => c.id))
+  const sharedCards = shared.map((c) => card({ ...c, slug: c.slug ?? c.id }, { plays: sharedPlays.get(c.id) ?? 0 }))
+  if (!userId) return [...all, ...sharedCards]
 
   const mine = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
@@ -125,5 +156,5 @@ export async function discoverGrid(userId: string | null): Promise<HomeCard[]> {
     .orderBy(desc(characters.createdAt))
     .limit(30)
 
-  return [...all, ...(mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id }))]
+  return [...all, ...sharedCards, ...(mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id }))]
 }

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
-import { getOfficialBySlug } from '@/lib/characters'
+import { getCharacterByKey } from '@/lib/characters'
 import { countComments, listComments } from '@/lib/social'
 import { Back, Page } from '@/components/ui'
 import { CommentThread } from './thread'
@@ -16,7 +16,7 @@ export default async function CommentsPage({ params, searchParams }: {
   const user = await currentUser()
   const { slug } = await params
   const { sort } = await searchParams
-  const c = await getOfficialBySlug(slug)
+  const c = await getCharacterByKey(slug, user?.id ?? null)
   if (!c) notFound()
 
   const activeSort = sort === 'recent' ? 'recent' : 'popular'

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
-import { getOfficialBySlug } from '@/lib/characters'
+import { getCharacterByKey } from '@/lib/characters'
 import { countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
@@ -22,7 +22,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
   const user = await currentUser()
   const { slug } = await params
-  const c = await getOfficialBySlug(slug)
+  const c = await getCharacterByKey(slug, user?.id ?? null)
   if (!c) notFound()
 
   const [plays, comments, commentCount, saved, similar] = await Promise.all([
@@ -62,7 +62,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <Back href="/home" />
       </div>
 
-      <DetailHero name={c.name} accent={c.accentA} slug={c.slug!} />
+      <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} />
 
       <div style={{ padding: '0 var(--space-5)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em' }}>{c.name}</h1>

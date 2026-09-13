@@ -51,6 +51,9 @@ const Sections = {
     detail: z.string().max(120).nullable().catch(null),
     expression: z.string().max(120).nullable().catch(null),
   }),
+  settings: z.object({
+    isPublic: z.coerce.boolean(),
+  }),
   contact: z.object({
     contactFrequency: score,
     replyDelayMinutes: z.coerce.number().int().min(0).max(1440),
