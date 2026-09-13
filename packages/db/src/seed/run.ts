@@ -34,6 +34,7 @@ export async function seedOfficials(): Promise<void> {
       startingContext: c.startingContext,
       role: c.role,
       tagline: c.tagline,
+      sampleDialogue: c.sampleDialogue,
       relationshipKeywords: c.relationshipKeywords,
       accentA: c.accent.a,
       accentB: c.accent.b,

@@ -56,6 +56,7 @@ export async function getOfficialBySlug(slug: string) {
       socialPosition: characters.socialPosition,
       startingContext: characters.startingContext,
       tagline: characters.tagline,
+      sampleDialogue: characters.sampleDialogue,
       mbti: characters.mbti,
       personality: characters.personality,
       values: characters.values,

@@ -7,8 +7,8 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Back, Button, ButtonLink, Page } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { sceneFor } from '@/components/character-visual'
-import { Section, Stat, SimilarRow, Comments, BookmarkButton } from './sections'
+import { portraitFor, sceneFor } from '@/components/character-visual'
+import { Section, Stat, SimilarRow, Comments, BookmarkButton, SampleDialogue } from './sections'
 import { compact } from '@/lib/format'
 import { startRoleplay } from './actions'
 
@@ -88,12 +88,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </Section>
         )}
 
-        <Section title="세계관">
-          <p className="t-caption" style={{ marginBottom: 10, color: 'var(--color-text-tertiary)' }}>
-            {[c.worldEra, c.worldLocation, c.worldGenre].filter(Boolean).join(' · ')}
-          </p>
-          <p className="t-body-lg" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{c.worldSetting}</p>
-        </Section>
+        {c.sampleDialogue.length > 0 && (
+          <Section title="상황 예시">
+            <SampleDialogue name={c.name} portrait={portraitFor(slug)} turns={c.sampleDialogue} />
+          </Section>
+        )}
 
         <Section title="인트로">
           <p className="t-body-lg t-quote" style={{ lineHeight: 1.85 }}>{c.startingContext}</p>

@@ -39,6 +39,8 @@ export type OfficialSeed = {
 
   /** 카드에 얹는 한 줄 — 캐릭터가 직접 하는 말. */
   tagline: string
+  /** 상세의 '상황 예시' — 대화가 어떤 느낌인지 보여주는 짧은 주고받음. */
+  sampleDialogue: Array<{ role: 'character' | 'user'; text: string }>
 
   socialPosition: string
   startingContext: string
@@ -78,6 +80,11 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     mbti: 'INTJ',
     role: '차가운 복원가',
     tagline: '만지지 마십시오. …그건, 아직 당신 것이 아닙니다.',
+    sampleDialogue: [
+      { role: 'character', text: '*작업대에서 눈을 들지 않는다* 의뢰라면 문 옆에 두고 가십시오.' },
+      { role: 'user', text: '직접 설명드리고 싶은데요.' },
+      { role: 'character', text: '*손을 멈춘다* …앉으시죠. 오 분입니다.' },
+    ],
     relationshipKeywords: ['거리를 두는', '서서히 열리는', '오래된 비밀'],
     accent: { a: '#A8C5DC', b: '#C7CDD4' },
 
@@ -147,6 +154,11 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     mbti: 'ENTJ',
     role: '완벽한 지배인',
     tagline: '손님으로 오셨으면 좋았을 텐데요. 이제는 곤란합니다.',
+    sampleDialogue: [
+      { role: 'character', text: '*명단에서 눈을 떼지 않는다* 오늘 첫 출근이시죠. 이름은 이미 알고 있습니다.' },
+      { role: 'user', text: '…어떻게 아세요?' },
+      { role: 'character', text: '*정중하게 웃는다. 눈은 웃지 않는다* 제 호텔에서 일어나는 일은 전부 압니다.' },
+    ],
     relationshipKeywords: ['빈틈없는', '사적인 얼굴', '선을 넘는 순간'],
     accent: { a: '#E8D5B0', b: '#B5AFA6' },
 
@@ -220,6 +232,11 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
     mbti: 'ISTP',
     role: '이름 없는 번호',
     tagline: '이 번호는 저장하지 마. 내가 먼저 건다.',
+    sampleDialogue: [
+      { role: 'character', text: '*모르는 번호로 온 메시지* 오늘 본 거, 아무한테도 말하지 마.' },
+      { role: 'user', text: '누구세요?' },
+      { role: 'character', text: '*한참 뒤에 답이 온다* 그걸 알면 너한테 더 위험해져.' },
+    ],
     relationshipKeywords: ['위험한', '말을 아끼는', '지켜보는'],
     accent: { a: '#7A2E3C', b: '#4A1620' },
 

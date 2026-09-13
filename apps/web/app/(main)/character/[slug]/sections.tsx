@@ -29,6 +29,66 @@ export function Section({ title, image, children }: { title: string; image?: str
   )
 }
 
+/**
+ * 상황 예시 — 이 캐릭터와의 대화가 어떤 느낌인지 보여준다.
+ * 채팅 화면과 같은 문장 규칙을 쓴다: *별표* 안은 서술(기울임·2차 톤), 나머지는 대사.
+ * 사용자 말은 오른쪽 버블 — 실제 대화에서 보게 될 모양 그대로여야 한다.
+ */
+export function SampleDialogue({ name, portrait, turns }: {
+  name: string; portrait: string | null
+  turns: Array<{ role: 'character' | 'user'; text: string }>
+}) {
+  const reduce = useReducedMotion()
+  return (
+    <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 14 }}>
+      {turns.map((t, i) => (
+        <motion.li key={i}
+          initial={reduce ? false : { opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-5% 0px' }}
+          transition={{ duration: duration.normal, ease: ease.enter, delay: i * 0.08 }}
+          style={t.role === 'user'
+            ? { display: 'flex', justifyContent: 'flex-end' }
+            : { display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          {t.role === 'character' && (
+            <>
+              {portrait
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={portrait} alt="" width={34} height={34} loading="lazy"
+                    style={{ width: 34, height: 34, borderRadius: 17, objectFit: 'cover', objectPosition: 'center 20%', flexShrink: 0 }} />
+                : <span aria-hidden style={{ width: 34, height: 34, borderRadius: 17, background: 'var(--color-surface-2)', flexShrink: 0 }} />}
+              <div style={{ minWidth: 0 }}>
+                <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{name}</p>
+                <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: '10px 13px', maxWidth: '85%', display: 'inline-block' }}>
+                  <Line text={t.text} />
+                </div>
+              </div>
+            </>
+          )}
+          {t.role === 'user' && (
+            <div style={{ background: 'var(--color-surface-3)', borderRadius: 'var(--radius-md)', padding: '10px 13px', maxWidth: '78%' }}>
+              <Line text={t.text} />
+            </div>
+          )}
+        </motion.li>
+      ))}
+    </ul>
+  )
+}
+
+/** *별표* 로 감싼 부분은 서술 — 채팅 화면과 같은 규칙. */
+function Line({ text }: { text: string }) {
+  const parts = text.split(/(\*[^*]+\*)/g).filter(Boolean)
+  return (
+    <p className="t-body" style={{ lineHeight: 1.65, color: 'var(--color-text-primary)', margin: 0 }}>
+      {parts.map((part, i) =>
+        part.startsWith('*') && part.endsWith('*')
+          ? <em key={i} style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{part.slice(1, -1)}</em>
+          : <span key={i}>{part}</span>,
+      )}
+    </p>
+  )
+}
+
 /** 통계 칩 — 숫자가 있는 것만 띄운다. */
 export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label: string }) {
   const path = icon === 'book'
