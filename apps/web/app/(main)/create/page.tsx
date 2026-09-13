@@ -150,18 +150,22 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
 
         {/* 단계는 보이기만 바뀐다. DOM 에서 빼면 앞 단계에 쓴 값이 사라진다. */}
         <StepPanel show={step === 'who'}>
-          <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
-          <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-            <LabeledField label="이름" required error={nameTouched && !name.trim() ? '이름을 입력해주세요' : null}>
-              <ControlledInput name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10}
-                value={name} onChange={(v) => { setName(v); setNameTouched(true) }}
-                invalid={nameTouched && !name.trim()} />
-            </LabeledField>
-            <LabeledField label="어떤 사람인가요">
-              <CountedTextArea name="personality" max={600} rows={4}
-                defaultValue={draft?.personality.personality ?? ''}
-                placeholder={'특징, 행동, 감정 표현을 적어주시면 개성이 살아납니다.\n예) 말이 짧고 군더더기가 없다. 감탄사를 거의 쓰지 않는다.'} />
-            </LabeledField>
+          <Card>
+            <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
+            <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
+              <LabeledField label="이름" required error={nameTouched && !name.trim() ? '이름을 입력해주세요' : null}>
+                <ControlledInput name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10}
+                  value={name} onChange={(v) => { setName(v); setNameTouched(true) }}
+                  invalid={nameTouched && !name.trim()} />
+              </LabeledField>
+              <LabeledField label="어떤 사람인가요">
+                <CountedTextArea name="personality" max={600} rows={4}
+                  defaultValue={draft?.personality.personality ?? ''}
+                  placeholder={'특징, 행동, 감정 표현을 적어주시면 개성이 살아납니다.\n예) 말이 짧고 군더더기가 없다. 감탄사를 거의 쓰지 않는다.'} />
+              </LabeledField>
+            </div>
+          </Card>
+          <div style={{ marginTop: 'var(--space-4)' }}>
             <Accordion title="자세히">
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label="말투">
@@ -176,15 +180,19 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
         </StepPanel>
 
         <StepPanel show={step === 'world'}>
-          <div className="stack" style={{ gap: 18 }}>
-            <LabeledField label="제목" required hint="목록과 카드에 걸리는 한 줄입니다.">
-              <ControlledInput name="title" placeholder="예) 비 내리는 공방" max={20} value={title} onChange={setTitle} />
-            </LabeledField>
-            <LabeledField label="어떤 세계인가요">
-              <CountedTextArea name="worldSetting" max={600} rows={4}
-                defaultValue={draft?.world.worldSetting ?? ''}
-                placeholder="상황, 관계, 세계관 등을 설명해주세요." />
-            </LabeledField>
+          <Card>
+            <div className="stack" style={{ gap: 18 }}>
+              <LabeledField label="제목" required hint="목록과 카드에 걸리는 한 줄입니다.">
+                <ControlledInput name="title" placeholder="예) 비 내리는 공방" max={20} value={title} onChange={setTitle} />
+              </LabeledField>
+              <LabeledField label="어떤 세계인가요">
+                <CountedTextArea name="worldSetting" max={600} rows={4}
+                  defaultValue={draft?.world.worldSetting ?? ''}
+                  placeholder="상황, 관계, 세계관 등을 설명해주세요." />
+              </LabeledField>
+            </div>
+          </Card>
+          <div style={{ marginTop: 'var(--space-4)' }}>
             <Accordion title="자세히">
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label="시대">
@@ -202,15 +210,19 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
         </StepPanel>
 
         <StepPanel show={step === 'scene'}>
-          <div className="stack" style={{ gap: 18 }}>
-            <LabeledField label="첫 장면">
-              <CountedTextArea name="startingContext" max={600} rows={4}
-                defaultValue={draft?.startingContext ?? ''}
-                placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
-            </LabeledField>
-            <LabeledField label="시작 시간">
-              <CountedInput name="startingTime" placeholder="예) 저녁" max={20} defaultValue={draft?.startingTime ?? ''} />
-            </LabeledField>
+          <Card>
+            <div className="stack" style={{ gap: 18 }}>
+              <LabeledField label="첫 장면">
+                <CountedTextArea name="startingContext" max={600} rows={4}
+                  defaultValue={draft?.startingContext ?? ''}
+                  placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
+              </LabeledField>
+              <LabeledField label="시작 시간">
+                <CountedInput name="startingTime" placeholder="예) 저녁" max={20} defaultValue={draft?.startingTime ?? ''} />
+              </LabeledField>
+            </div>
+          </Card>
+          <div style={{ marginTop: 'var(--space-4)' }}>
             <Accordion title="상황 예시">
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label={`${name || '캐릭터'}의 말`}>
@@ -247,6 +259,21 @@ const QUESTION: Record<CreateStep, string> = {
   who: '어떤 사람인가요?',
   world: '어떤 세계에 살고 있나요?',
   scene: '어떻게 만나게 되나요?',
+}
+
+/**
+ * 칸을 묶는 판. 페이지 바닥보다 한 단 밝은 면 위에 얹는다 —
+ * 밑줄만 늘어놓으면 어디까지가 한 덩이인지 읽히지 않는다 (레퍼런스).
+ */
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
+      padding: 'var(--space-5) var(--space-4)',
+    }}>
+      {children}
+    </div>
+  )
 }
 
 /**
@@ -324,7 +351,7 @@ function BodyPicker({ build, onBuild, gender, onGender, height }: {
       {/* 고른 값이 선 사람. 칸 밑에 세워 두면 바꿀 때마다 바로 보인다. */}
       <div style={{
         display: 'grid', placeItems: 'center', padding: 'var(--space-5) 0 var(--space-4)',
-        marginTop: 'var(--space-4)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
+        marginTop: 'var(--space-4)', background: 'var(--color-surface-2)', borderRadius: 'var(--radius-lg)',
       }}>
         <Avatar build={build} gender={gender} />
         <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginTop: 10 }}>
@@ -350,7 +377,7 @@ function ChoiceRow({ options, value, onChange }: {
             style={{
               minHeight: 42, padding: '10px 8px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-              background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-1)',
+              background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
               border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
               color: on ? 'var(--color-accent-text)' : 'var(--color-text-secondary)',
             }}>

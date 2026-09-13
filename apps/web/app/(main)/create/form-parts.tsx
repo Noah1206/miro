@@ -120,7 +120,7 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
           width: 132, height: 132, margin: '0 auto', cursor: 'pointer',
-          background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-surface-1)',
+          background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-surface-2)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
           borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
         }}>
