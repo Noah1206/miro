@@ -1,7 +1,5 @@
 'use client'
-import { motion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
-import { tween } from '@/lib/motion/tokens'
 
 export type CreateStep = 'who' | 'world' | 'scene'
 
@@ -17,13 +15,15 @@ export const STEPS: Array<{ key: CreateStep; label: string }> = [
  * 레퍼런스는 탭 위에 긴 폼을 올려 두지만, 여기서는 한 번에 하나씩 묻는 단계형으로 간다 —
  * 캐릭터를 만드는 일은 서류를 채우는 일이 아니라 한 사람을 떠올리는 일이고,
  * 그 순서(누구인가 → 어디에 사는가 → 어떻게 만나는가)가 화면에 그대로 보여야 한다.
- * 진행 막대는 남은 일을 감추지 않는다.
+ *
+ * 머리에는 닫기/뒤로 하나만 둔다. 진행 막대도 단계 숫자도 없다 — 질문이 곧 어디쯤인지
+ * 말해 주고, 남은 단계를 세는 일은 사용자가 할 일이 아니다.
+ * 단계 위치는 질문 제목이 화면에 보이지 않는 말로 함께 읽어 준다 (page.tsx 의 sr-only).
  */
 export function CreateHeader({ index, onBack }: {
   index: number
   onBack: () => void
 }) {
-  const progress = (index + 1) / STEPS.length
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 20, margin: '0 calc(-1 * var(--space-5))',
@@ -45,20 +45,6 @@ export function CreateHeader({ index, onBack }: {
             </svg>
           </button>
         )}
-      </div>
-
-      {/*
-        진행 막대 — 브랜드 색이 차오르는 유일한 자리.
-        '1 / 3' 글자는 지웠다 (막대가 이미 같은 말을 한다). 대신 막대가 progressbar 로
-        그 값을 들고 있어야 한다 — aria-hidden 으로 두면 화면을 못 보는 사람에게는
-        몇 단계 중 어디인지가 통째로 사라진다.
-      */}
-      <div role="progressbar" aria-label="만들기 단계"
-        aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={index + 1}
-        aria-valuetext={`${STEPS.length}단계 중 ${index + 1}단계: ${STEPS[index]?.label ?? ''}`}
-        style={{ height: 3, borderRadius: 2, background: 'var(--color-surface-2)', overflow: 'hidden' }}>
-        <motion.div animate={{ scaleX: progress }} initial={{ scaleX: 0 }} transition={tween.enter}
-          style={{ height: '100%', background: 'var(--color-accent)', transformOrigin: 'left center' }} />
       </div>
     </header>
   )

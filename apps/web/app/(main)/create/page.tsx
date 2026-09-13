@@ -143,6 +143,8 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
           initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: duration.normal, ease: ease.enter }}
           style={{ margin: 'var(--space-6) 0 var(--space-5)' }}>
+          {/* 단계 위치는 화면에 띄우지 않되 제목과 함께 읽히게 한다 — 막대를 없앴으므로 여기가 유일한 자리다. */}
+          <span className="sr-only">{STEPS.length}단계 중 {index + 1}단계. </span>
           {QUESTION[step]}
         </motion.h1>
 
