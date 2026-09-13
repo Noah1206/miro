@@ -1,5 +1,6 @@
 'use client'
-import { useActionState, useMemo, useRef, useState } from 'react'
+import { Suspense, useActionState, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Accordion, Button, MenuItem, Notice, Page, Popover } from '@/components/ui'
 import { tween } from '@/lib/motion/tokens'
@@ -21,7 +22,14 @@ const TOTAL_MAX = 2400
 type Mode = 'choose' | 'form'
 
 export default function CreatePage() {
-  const [mode, setMode] = useState<Mode>('choose')
+  // useSearchParams 는 Suspense 경계를 요구한다.
+  return <Suspense fallback={null}><CreateEntry /></Suspense>
+}
+
+function CreateEntry() {
+  // 내비의 시트에서 '직접 만들기' 를 고르면 ?mode=manual 로 들어온다 — 고른 것을 또 고르게 하지 않는다.
+  const params = useSearchParams()
+  const [mode, setMode] = useState<Mode>(params.get('mode') === 'manual' ? 'form' : 'choose')
   const [tab, setTab] = useState<CreateTab>('prompt')
   const [state, action, pending] = useActionState(createDraft, { draft: null, error: null, providerNotice: null } satisfies DraftState)
 
