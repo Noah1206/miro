@@ -89,6 +89,30 @@ function Line({ text }: { text: string }) {
   )
 }
 
+/**
+ * 캐릭터 사진 갤러리. 가로 스크롤 — 스냅과 관성은 브라우저에 맡긴다.
+ * 장식이 아니라 '이 사람이 어떤 순간들을 갖는가' 를 보여주는 자리다.
+ */
+export function Gallery({ name, images }: { name: string; images: string[] }) {
+  const reduce = useReducedMotion()
+  return (
+    // 안에 초점 가능한 요소가 없는 스크롤 영역이라 스스로 초점을 받아야 한다 —
+    // 그러지 않으면 키보드만 쓰는 사람은 두 번째 사진부터 볼 수 없다 (WCAG 2.1.1).
+    <div className="gallery-scroll" tabIndex={0} role="group" aria-label={`${name} 사진 ${images.length}장`}>
+      {images.map((src, i) => (
+        <motion.div key={src}
+          initial={reduce ? false : { opacity: 0, x: 14 }} whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: '-5% 0px' }}
+          transition={{ duration: duration.normal, ease: ease.enter, delay: i * 0.06 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src} alt={`${name} ${i + 1}번째 사진`} width={640} height={853} loading="lazy" decoding="async"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-md)', display: 'block' }} />
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
 /** 통계 칩 — 숫자가 있는 것만 띄운다. */
 export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label: string }) {
   const path = icon === 'book'

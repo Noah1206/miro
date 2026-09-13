@@ -48,3 +48,12 @@ const SCENES: Record<string, string> = {
 }
 export const sceneFor = (slug: string | null | undefined): string | null =>
   (slug && SCENES[slug]) || null
+
+/** 프로필 아래 갤러리. 같은 인물의 다른 순간들이다. */
+const GALLERY: Record<string, string[]> = {
+  thomas: ['/characters/thomas-1.webp', '/characters/thomas-2.webp', '/characters/thomas-3.webp'],
+  taeyun: ['/characters/taeyun-1.webp', '/characters/taeyun-2.webp', '/characters/taeyun-3.webp'],
+  hisashi: ['/characters/hisashi-1.webp', '/characters/hisashi-2.webp'],
+}
+export const galleryFor = (slug: string | null | undefined): string[] =>
+  (slug && GALLERY[slug]) || []

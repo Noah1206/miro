@@ -142,6 +142,12 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* 카드 폭: 한 화면에 2장 + 다음 장이 걸쳐 보이게. 상한을 두지 않는다 — 앱 폭이 이미 고정이다. */
 .row-scroll > * { scroll-snap-align: start; flex: 0 0 58%; }
 
+/* 캐릭터 갤러리 — 2.4장이 걸쳐 보이게. 카드보다 작고 가볍다. */
+.gallery-scroll { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.gallery-scroll::-webkit-scrollbar { display: none; }
+.gallery-scroll > * { scroll-snap-align: start; flex: 0 0 42%; aspect-ratio: 3 / 4; }
+
 /* 발견 — 2열 그리드. 카드는 행과 같은 것을 쓴다. */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 

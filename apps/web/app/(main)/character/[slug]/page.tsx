@@ -7,9 +7,9 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Back, Button, ButtonLink, Page } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { portraitFor, sceneFor } from '@/components/character-visual'
-import { Section, Stat, SimilarRow, Comments, BookmarkButton, SampleDialogue } from './sections'
-import { compact } from '@/lib/format'
+import { galleryFor, portraitFor, sceneFor } from '@/components/character-visual'
+import { Section, Stat, SimilarRow, Comments, BookmarkButton, SampleDialogue, Gallery } from './sections'
+import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 
 /**
@@ -32,18 +32,27 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   ])
 
   const enter = startRoleplay.bind(null, slug)
+  const gallery = galleryFor(slug)
   const tags = [...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean)
-  const profile: Array<[string, string]> = [
-    ['나이', c.age ? `${c.age}세` : ''],
-    ['국적', c.nationality ?? ''],
-    ['직업', c.occupation ?? ''],
-    ['MBTI', c.mbti ?? ''],
-    ['위치', c.socialPosition ?? ''],
-    ['좋아하는 것', (c.hobbies as string[]).join(', ')],
-    ['싫어하는 것', (c.dislikes as string[]).join(', ')],
-    ['말투', c.speechStyle ?? ''],
-    ['가치관', c.values ?? ''],
-  ].filter(([, v]) => v) as Array<[string, string]>
+  // 라벨을 붙인 표 대신 읽히는 문장으로. 값이 없으면 그 문장이 통째로 빠진다.
+  const hobbies = c.hobbies as string[]
+  const dislikes = c.dislikes as string[]
+  // socialPosition 이 직업을 이미 품고 있으면 직업을 빼서 같은 말을 두 번 하지 않는다
+  // (히사시: '조직의 중간 간부' + '오사카 조직의 중간 간부').
+  const job = c.occupation && c.socialPosition?.includes(c.occupation) ? null : c.occupation
+  const profile: string[] = [
+    [
+      // 앞줄은 '32세 · 영국 · 고서 복원가.' 처럼 마침표로 닫는다 — 없으면 다음 문장과 붙어 읽힌다.
+      [[c.age && `${c.age}세`, c.nationality, job].filter(Boolean).join(' · '), '.'].join(''),
+      c.socialPosition ? `${withParticle(c.socialPosition, '이다', '다')}.` : '',
+      c.mbti ? `MBTI는 ${c.mbti}.` : '',
+    ].filter((x) => x && x !== '.').join(' '),
+    [
+      hobbies.length > 0 ? `${withParticle(hobbies.join(', '), '을', '를')} 좋아하고,` : '',
+      dislikes.length > 0 ? `${withParticle(dislikes.join(', '), '은', '는')} 싫어한다.` : '',
+    ].filter(Boolean).join(' '),
+    [c.speechStyle, c.values].filter(Boolean).join(' '),
+  ].filter((line) => line.trim())
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + 110px)' }}>
@@ -77,14 +86,17 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         {profile.length > 0 && (
           <Section title="프로필">
-            <dl style={{ margin: 0, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '10px 14px' }}>
-              {profile.map(([k, v]) => (
-                <div key={k} style={{ display: 'contents' }}>
-                  <dt className="t-body" style={{ color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>{k}</dt>
-                  <dd className="t-body" style={{ margin: 0, color: 'var(--color-text-primary)' }}>{v}</dd>
-                </div>
+            <div className="stack" style={{ gap: 10 }}>
+              {profile.map((line) => (
+                <p key={line} className="t-body-lg" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{line}</p>
               ))}
-            </dl>
+            </div>
+          </Section>
+        )}
+
+        {gallery.length > 0 && (
+          <Section title="캐릭터">
+            <Gallery name={c.name} images={gallery} />
           </Section>
         )}
 
@@ -109,7 +121,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {similar.length > 0 && (
         <section aria-labelledby="similar" style={{ marginTop: 'var(--space-7)' }}>
           <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--space-5)', marginBottom: 12 }}>
-            {withSubject(c.name)} 마음에 들었다면
+            {subject(c.name)} 마음에 들었다면
           </h2>
           <SimilarRow items={similar} />
         </section>
@@ -135,15 +147,4 @@ async function playCount(characterId: string): Promise<number> {
   return r?.n ?? 0
 }
 
-/**
- * 한글 조사. 받침이 있으면 '이', 없으면 '가' — '토마스이(가)' 처럼 쓰지 않는다.
- * 한글이 아니면 조사를 붙이지 않는다 (영문 이름에 '이/가' 는 어색하다).
- */
-function withSubject(name: string): string {
-  const last = name.trim().slice(-1)
-  const code = last.charCodeAt(0)
-  if (code < 0xac00 || code > 0xd7a3) return name
-  const hasFinal = (code - 0xac00) % 28 !== 0
-  return `${name}${hasFinal ? '이' : '가'}`
-}
 
