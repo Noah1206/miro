@@ -88,7 +88,7 @@ function Line({ text }: { text: string }) {
       {parts.map((part, i) =>
         part.startsWith('*') && part.endsWith('*')
           ? <em key={i} style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{part.slice(1, -1)}</em>
-          : <span key={i}>{part}</span>,
+          : <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>,
       )}
     </p>
   )
