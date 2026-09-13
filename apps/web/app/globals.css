@@ -142,6 +142,13 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* 카드 폭: 한 화면에 2장 + 다음 장이 걸쳐 보이게. 상한을 두지 않는다 — 앱 폭이 이미 고정이다. */
 .row-scroll > * { scroll-snap-align: start; flex: 0 0 58%; }
 
+/**
+ * 상세의 설명글 — 줄간격을 좁게 통일한다 (레퍼런스).
+ * 문단 사이도 벌리지 않는다: 줄바꿈만으로 이어지는 밀도라야 설정집처럼 읽힌다.
+ */
+.detail-prose p { line-height: 1.5; margin: 0; }
+.detail-prose > * + * { margin-top: 2px; }
+
 /* 캐릭터 갤러리 — 2.4장이 걸쳐 보이게. 카드보다 작고 가볍다. */
 .gallery-scroll { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x proximity;
   scrollbar-width: none; -webkit-overflow-scrolling: touch; }

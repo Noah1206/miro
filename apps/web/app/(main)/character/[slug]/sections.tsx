@@ -79,7 +79,7 @@ export function SampleDialogue({ name, portrait, turns }: {
 function Line({ text }: { text: string }) {
   const parts = text.split(/(\*[^*]+\*)/g).filter(Boolean)
   return (
-    <p className="t-body" style={{ lineHeight: 1.65, color: 'var(--color-text-primary)', margin: 0 }}>
+    <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-primary)', margin: 0 }}>
       {parts.map((part, i) =>
         part.startsWith('*') && part.endsWith('*')
           ? <em key={i} style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{part.slice(1, -1)}</em>
@@ -197,7 +197,7 @@ export function Comments({ slug, items, signedIn }: { slug: string; items: Comme
                     <span className="t-caption" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>@{c.authorName}</span>
                     <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, flexShrink: 0 }}>{day(c.createdAt)}</span>
                   </div>
-                  <p className="t-caption" style={{ lineHeight: 1.6, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.body}</p>
+                  <p className="t-caption" style={{ lineHeight: 1.5, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.body}</p>
                   {c.mine && (
                     <form action={async () => { await deleteComment(slug, c.id); toast('댓글을 지웠어요.') }} style={{ marginTop: 6, display: 'flex', justifyContent: 'flex-end' }}>
                       <Button type="submit" size="sm" variant="ghost">삭제</Button>

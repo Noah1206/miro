@@ -81,14 +81,16 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </div>
 
         <Section title="소개" image={sceneFor(slug)}>
-          <p className="t-body-lg" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{c.personality}</p>
+          <div className="detail-prose">
+            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>
+          </div>
         </Section>
 
         {profile.length > 0 && (
           <Section title="프로필">
-            <div className="stack" style={{ gap: 10 }}>
+            <div className="detail-prose">
               {profile.map((line) => (
-                <p key={line} className="t-body-lg" style={{ lineHeight: 1.8, color: 'var(--color-text-secondary)' }}>{line}</p>
+                <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
               ))}
             </div>
           </Section>
@@ -100,17 +102,18 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </Section>
         )}
 
-        {c.sampleDialogue.length > 0 && (
-          <Section title="상황 예시">
-            <SampleDialogue name={c.name} portrait={portraitFor(slug)} turns={c.sampleDialogue} />
-          </Section>
-        )}
-
         <Section title="인트로">
-          <p className="t-body-lg t-quote" style={{ lineHeight: 1.85 }}>{c.startingContext}</p>
-          <p className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>
-            {[c.worldLocation, c.startingTime].filter(Boolean).join(' · ')}부터 시작합니다.
-          </p>
+          <div className="detail-prose">
+            <p className="t-body-lg t-quote">{c.startingContext}</p>
+            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>
+              {[c.worldLocation, c.startingTime].filter(Boolean).join(' · ')}부터 시작합니다.
+            </p>
+          </div>
+          {c.sampleDialogue.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <SampleDialogue name={c.name} portrait={portraitFor(slug)} turns={c.sampleDialogue} />
+            </div>
+          )}
         </Section>
 
         <Section title={`댓글 ${commentCount}`}>
