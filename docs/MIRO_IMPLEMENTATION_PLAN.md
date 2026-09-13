@@ -438,6 +438,7 @@ Usage Window / Usage deduction / Provider failure rollback / Free·Pro / Relatio
 | E-40 | OAuth 는 SDK 없이 Authorization Code + state 쿠키 + PKCE(Google·Kakao) | 제공자 차이는 endpoint 와 프로필 파싱뿐이라 `OAuth2Provider` 하나로 충분하다. 관리자 콘솔은 별도 이메일·비밀번호 로그인을 유지한다 |
 | E-41 | 서체는 Toss Product Sans, 폴백 Pretendard. 세리프 display 역할 제거 | 사용자 결정. `--font-display` 는 `--font-body` 를 가리키고 `.t-name`/`.t-quote` 는 자간으로만 구분한다 |
 | E-42 | 로고는 원본 PNG(`public/logo-mark.png`) 를 `mix-blend-mode: screen` 으로 | 검정 판이 어두운 배경에 녹는다. Launch sequence 는 두 판 사이 사선을 `clip-path` 로 잘라 재현 |
+| E-51 | 탭은 다섯 칸이고 '만들기' 가 한가운데 — 탐색은 홈(주제별 행)과 발견(2열 그리드)으로 나눈다 | 사용자 결정(레퍼런스). 홈은 주제로 고르는 곳, 발견은 전부 훑는 곳. 그리드 카드는 홈의 행과 같은 `CharacterCard` 를 쓴다 |
 | E-50 | 캐릭터 상세는 작품 소개 화면 — 댓글·북마크 포함 | 사용자 결정(레퍼런스 스크린샷). 히어로 → 이름·한 줄·해시태그·통계 칩 → 소개 → 프로필 → 세계 → 인트로 → 댓글 → 비슷한 작품 → 하단 CTA 하나. 댓글(`character_comments`)은 운영자 숨김 대상이고 자기 글만 지울 수 있다. 북마크(`character_bookmarks`)는 CTA 가 아니라 통계 칩 줄에 둔다 — 하단은 '대화 시작하기' 하나. 장르 분류는 `lib/genres.ts` 한 곳에서 홈과 공유한다 |
 | E-49 | E2E 는 워커 3(로컬)/2(CI), 타임아웃 60초, retries 1 | 원격 DB 기준 같은 테스트가 단독 8~13초 → 병렬 30초 초과. 한계는 코어가 아니라 DB 왕복이라 워커를 코어 수(4)보다 낮춘다. retries 는 흔들림을 덮기 위한 것이 아니라 실제 네트워크 튐을 한 번 봐주는 것이며, 리포트의 flaky 표시로 드러난다 |
 | E-48 | 홈은 로그인 없이 볼 수 있다 — 입장할 때 묻는다 | 사용자 결정. `/` 는 언제나 홈, 헤더에 로그인 버튼, 캐릭터 상세까지 열람 가능하고 '역할극 시작하기' 자리에서 로그인으로 보낸다. 돌아갈 곳은 `miro_next` 쿠키에 담고 동의 화면까지 넘긴다 — 쿠키 쓰기는 Route Handler 에서만 되므로 `/api/auth/[provider]/start` 가 저장한다(서버 컴포넌트에서 쓰면 500). 값은 앱 내부 경로만 허용한다 (open redirect 방지). `/create` 는 layout 에서 막는다 — 다 적고 저장에서 튕기면 입력이 사라진다 |

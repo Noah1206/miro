@@ -4,10 +4,12 @@ import { usePathname } from 'next/navigation'
 import { spring } from '@/lib/motion/tokens'
 import { TransitionLink } from './transition-link'
 
+/** 만들기가 한가운데 — 다섯 칸의 중심이 '새로 만드는 일' 이다 (레퍼런스). */
 const ITEMS = [
   { href: '/home', label: '홈', icon: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /> },
+  { href: '/discover', label: '발견', icon: <><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5z" /></> },
+  { href: '/create', label: '만들기', icon: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></> },
   { href: '/archive', label: '대화', icon: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" /> },
-  { href: '/create', label: '만들기', icon: <path d="M12 5v14M5 12h14" /> },
   { href: '/my', label: '나', icon: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></> },
 ]
 

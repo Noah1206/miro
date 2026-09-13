@@ -104,3 +104,26 @@ async function playCounts(ids: string[]): Promise<Map<string, number>> {
     .groupBy(roleplaySessions.characterId)
   return new Map(rows.map((r) => [r.id, r.n]))
 }
+
+
+/** 발견 그리드. 주제로 나누지 않고 한 번에 보여준다. */
+export async function discoverGrid(userId: string | null): Promise<HomeCard[]> {
+  const officials = await listOfficials()
+  const plays = await playCounts(officials.map((o) => o.id))
+  const all = officials.map((c) => card(c, { plays: plays.get(c.id) ?? 0 }))
+  if (!userId) return all
+
+  const mine = await db.select({
+    id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
+    occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
+    accentA: characters.accentA, accentB: characters.accentB, genre: worlds.genre,
+    tagline: characters.tagline,
+  })
+    .from(characters)
+    .leftJoin(worlds, eq(worlds.characterId, characters.id))
+    .where(and(eq(characters.ownerId, userId), isNull(characters.deletedAt)))
+    .orderBy(desc(characters.createdAt))
+    .limit(30)
+
+  return [...all, ...(mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id }))]
+}
