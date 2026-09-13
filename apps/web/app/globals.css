@@ -194,5 +194,16 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* transform 은 Motion 이 프레임마다 쥔다 (등장 y, whileTap scale) — CSS transition 을 걸면 서로 싸운다. 밝기만 CSS. */
 .button-link { transition: filter var(--motion-fast) var(--ease-exit); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .button-link:active { filter: brightness(0.94); }
-.detail-cta { bottom: var(--nav-h); padding-bottom: 16px; }
-@media (min-width: 460px) { .detail-cta { left: 50%; right: auto; width: 100%; max-width: var(--app-w); transform: translateX(-50%); } }
+.detail-cta { position: fixed; left: 0; right: 0; bottom: var(--nav-h); padding-bottom: 16px; }
+.app-fixed { left: 0; right: 0; }
+/**
+ * 화면 하단에 붙는 fixed 요소는 전부 앱 폭 안에 머문다 (모바일 전용 레이아웃, E-47).
+ * transform 대신 margin 으로 가운데 정렬한다 — Motion 이 transform 을 쥐는 요소(시트)에
+ * translateX 를 얹으면 서로 덮어써서 어긋난다.
+ */
+@media (min-width: 460px) {
+  .detail-cta, .app-fixed {
+    left: 0; right: 0; width: var(--app-w);
+    margin-left: auto; margin-right: auto;
+  }
+}

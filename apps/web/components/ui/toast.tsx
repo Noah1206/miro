@@ -19,7 +19,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={push}>
       {children}
-      <div aria-live="polite" style={{ position: 'fixed', left: 0, right: 0, bottom: 'calc(var(--nav-h) + 16px)', zIndex: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
+      <div aria-live="polite" className="app-fixed" style={{ position: 'fixed', bottom: 'calc(var(--nav-h) + 16px)', zIndex: 80, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
         <AnimatePresence initial={false}>
           {items.map((t) => (
             <motion.div key={t.id} layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8, transition: tween.exit }} transition={spring.default}

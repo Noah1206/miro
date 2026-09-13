@@ -48,14 +48,14 @@ export function Sheet({ open, onClose, title, children, snap = { half: 0.55, ful
           <motion.div key="backdrop" onClick={onClose} aria-hidden
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.enter}
             style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)' }} />
-          <motion.div key="sheet" ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : '시트'}
+          <motion.div key="sheet" className="app-fixed" ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : '시트'}
             initial={reduce ? { y: 0, opacity: 0 } : { y: '100%' }}
             animate={reduce ? { y: 0, opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0, transition: tween.exit } : { y: '100%', transition: { ...tween.exit, duration: 0.2 } }}
             transition={spring.default}
             drag={reduce ? false : 'y'} dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.06, bottom: 0.5 }} onDragEnd={onDragEnd}
             style={{
-              position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 61, maxHeight: `${snap.full * 100}dvh`,
+              position: 'fixed', bottom: 0, zIndex: 61, maxHeight: `${snap.full * 100}dvh`,
               background: 'var(--color-surface-2)', borderTop: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0', touchAction: 'none',
               paddingBottom: 'env(safe-area-inset-bottom)', display: 'flex', flexDirection: 'column',
