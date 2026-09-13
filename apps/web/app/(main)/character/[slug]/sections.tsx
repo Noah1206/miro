@@ -124,9 +124,12 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
 
 /** 통계 칩 — 숫자가 있는 것만 띄운다. */
 export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label: string }) {
+  // chat = 대화 인원 수 → 사람 아이콘. comment = 댓글 수 → 말풍선 아이콘.
   const path = icon === 'book'
     ? <path d="M4 4h9a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4z" />
-    : <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
+    : icon === 'chat'
+      ? <path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
+      : <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7,
