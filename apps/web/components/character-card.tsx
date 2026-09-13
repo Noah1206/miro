@@ -54,12 +54,22 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
           </span>
         )}
 
-        {/* 캐릭터가 사진·통화·영상통화로 현실까지 이어진다는 신호 — 배지 하나로 와우 포인트를 미리 보여준다. */}
+        {/* 캐릭터가 사진·통화·영상통화로 현실까지 이어진다는 신호. 내비게이션과 같은 선 아이콘 규칙. */}
         <span aria-hidden style={{
-          position: 'absolute', top: 10, right: 10, display: 'inline-flex', alignItems: 'center', gap: 3,
-          padding: '3px 6px', borderRadius: 7, background: 'rgba(70,70,78,0.45)',
-          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', fontSize: 11,
-        }}>📷🎙️🎬</span>
+          position: 'absolute', top: 10, right: 10, display: 'inline-flex', alignItems: 'center', gap: 4,
+          padding: '4px 6px', borderRadius: 7, background: 'rgba(70,70,78,0.45)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', color: 'var(--color-text-primary)',
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
+          </svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4.5 5.5c0-1 .8-1.5 1.7-1.5H8c.8 0 1.4.5 1.6 1.2l.8 2.7c.2.6 0 1.3-.5 1.7L9 10.7c1 2.3 2.9 4.2 5.3 5.3l1.1-.9c.4-.5 1.1-.7 1.7-.5l2.7.8c.7.2 1.2.8 1.2 1.6v1.8c0 .9-.5 1.7-1.5 1.7C13.5 20.5 4.5 11.5 4.5 5.5z" />
+          </svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5 21 7v10l-6-3.5z" />
+          </svg>
+        </span>
 
         {/* 아래 절반을 덮는 그라디언트 위에 글을 올린다 — 이미지가 밝아도 글이 읽힌다. */}
         <div style={{

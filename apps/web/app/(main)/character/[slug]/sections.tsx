@@ -150,10 +150,11 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
  * 관계가 현실까지 이어진다는 걸 진입 전에 알려준다. 문구가 아니라 아이콘 3개로 즉시 읽히게.
  */
 export function RealityStrip() {
-  const items: Array<{ icon: string; label: string }> = [
-    { icon: '📷', label: '사진' },
-    { icon: '🎙️', label: '음성통화' },
-    { icon: '🎬', label: '영상통화' },
+  // 내비게이션과 같은 선 아이콘 규칙: viewBox 24, stroke currentColor, strokeWidth 1.75 — 이모지 대신.
+  const items: Array<{ label: string; icon: React.ReactNode }> = [
+    { label: '사진', icon: <><rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" /></> },
+    { label: '음성통화', icon: <><path d="M4.5 5.5c0-1 .8-1.5 1.7-1.5H8c.8 0 1.4.5 1.6 1.2l.8 2.7c.2.6 0 1.3-.5 1.7L9 10.7c1 2.3 2.9 4.2 5.3 5.3l1.1-.9c.4-.5 1.1-.7 1.7-.5l2.7.8c.7.2 1.2.8 1.2 1.6v1.8c0 .9-.5 1.7-1.5 1.7C13.5 20.5 4.5 11.5 4.5 5.5z" /></> },
+    { label: '영상통화', icon: <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5 21 7v10l-6-3.5z" /></> },
   ]
   return (
     <div style={{
@@ -162,10 +163,10 @@ export function RealityStrip() {
     }}>
       {items.map((item) => (
         <span key={item.label} style={{
-          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
           fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
         }}>
-          <span aria-hidden style={{ fontSize: 20 }}>{item.icon}</span>
+          <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
           {item.label}
         </span>
       ))}
