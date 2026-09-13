@@ -64,19 +64,19 @@ export function Nav() {
         })}
       </nav>
 
-      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="어떻게 만들까요?">
+      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="무엇부터 시작할까요?">
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
-          어느 쪽이든 같은 폼에서 끝냅니다.
+          어느 쪽으로 시작해도 같은 폼에서 마무리합니다.
         </p>
         <div className="stack" style={{ gap: 10 }}>
           <PickerRow
             title="AI 로 만들기"
-            body="한 문장이면 초안이 채워집니다."
+            body="한 문장만 적으면 이름·성격·세계까지 채워 드려요."
             onClick={() => go('ai')}
             icon={<><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" /></>} />
           <PickerRow
             title="직접 만들기"
-            body="빈 폼에서 직접 씁니다."
+            body="빈 폼에서 처음부터 직접 적습니다."
             onClick={() => go('manual')}
             icon={<><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" /><path d="M14 6l4 4" /></>} />
         </div>

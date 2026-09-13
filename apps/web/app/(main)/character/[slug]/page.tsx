@@ -89,7 +89,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <div className="detail-prose">
             <p className="t-body-lg t-quote">{c.startingContext}</p>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>
-              {[c.worldLocation, c.startingTime].filter(Boolean).join(' · ')}부터.
+              {[c.worldLocation, c.startingTime].filter(Boolean).join(' · ')}부터 시작합니다.
             </p>
           </div>
           {c.sampleDialogue.length > 0 && (

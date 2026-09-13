@@ -132,10 +132,12 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
               setOpen(false)
             }} />
           <p className="t-caption" style={{ color: 'var(--color-danger)', marginBottom: 8 }}>
-            내 것이 아니면 허락받고 쓰세요. 삭제·차단될 수 있어요.
+            내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요! 아니면 경고 없이 삭제나 차단될 수 있어요.
           </p>
           <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', lineHeight: 1.6 }}>
-            웹툰·게임 등 남의 그림, 아이돌·친구 등 남의 사진이 여기 해당합니다.
+            창작자의 허락 없는 그림 : 웹툰, 게임, 핀터레스트 등<br />
+            사진 속 사람의 허락 없는 사진 : 아이돌, 친구 등<br />
+            특히 스냅샷에 금지된 이미지를 넣으면 법적으로 더 위험할 수 있어요.
           </p>
         </div>
 
@@ -149,7 +151,7 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
           }>생성 기록에서 가져오기</SheetRow>
         </div>
         <p className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginTop: 10 }}>
-          생성·보관은 준비 중입니다. 고른 사진은 미리보기로만 쓰입니다.
+          이미지 생성과 보관은 아직 준비 중이에요. 지금 고른 사진은 이 화면에서 미리보기로만 쓰입니다.
         </p>
       </Sheet>
     </>
