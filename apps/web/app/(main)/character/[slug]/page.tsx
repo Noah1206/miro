@@ -88,16 +88,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         {(profile.length > 0 || gallery.length > 0) && (
           <Section title="프로필">
+            {gallery.length > 0 && (
+              <Gallery name={c.name} images={gallery} />
+            )}
             {profile.length > 0 && (
-              <div className="detail-prose">
+              <div className="detail-prose" style={{ marginTop: gallery.length > 0 ? 16 : 0 }}>
                 {profile.map((line) => (
                   <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
                 ))}
-              </div>
-            )}
-            {gallery.length > 0 && (
-              <div style={{ marginTop: profile.length > 0 ? 16 : 0 }}>
-                <Gallery name={c.name} images={gallery} />
               </div>
             )}
           </Section>
