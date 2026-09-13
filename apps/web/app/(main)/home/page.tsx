@@ -15,12 +15,12 @@ export default async function Home() {
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       <IncomingCall userId={user.id} />
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-5) var(--space-5)', maxWidth: 1080, margin: '0 auto' }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-5) var(--space-5)' }}>
         <LogoMark size={22} />
         <h1 className="t-micro" style={{ margin: 0 }}>한 사람의 세계 안으로</h1>
       </header>
 
-      <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+      <div>
         {rows.map((row, i) => <Row key={row.key} row={row} index={i} />)}
 
         <div style={{ padding: '0 var(--space-5)', marginTop: 'var(--space-5)' }}>

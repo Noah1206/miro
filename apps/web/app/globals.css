@@ -42,7 +42,7 @@
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
-  --nav-h: 64px; --side-nav-w: 220px;
+  --nav-h: 64px; --app-w: 430px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -141,7 +141,6 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .row-scroll::-webkit-scrollbar { display: none; }
 /* 카드 폭: 다음 카드가 살짝 보여야 '옆으로 더 있다' 가 읽힌다. */
 .row-scroll > * { scroll-snap-align: start; flex: 0 0 40%; max-width: 190px; }
-@media (min-width: 1024px) { .row-scroll > * { flex-basis: 200px; max-width: 200px; } }
 
 .pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); touch-action: pan-x pan-y; }
 .pager::-webkit-scrollbar { display: none; }
@@ -153,11 +152,18 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .hoverable:hover { border-color: var(--color-border-hover); }
 }
 
-/* desktop: left navigation + main; chat adds a context column */
-@media (min-width: 1024px) {
-  .app-shell { display: grid; grid-template-columns: var(--side-nav-w) 1fr; min-height: 100dvh; }
-  .page { padding-bottom: var(--space-8); max-width: 720px; }
-  .page--immersive { max-width: none; }
+/**
+ * 모바일 전용 제품이다 (E-47). 큰 화면에서도 레이아웃을 바꾸지 않고,
+ * 휴대폰 폭 그대로 가운데에 세운다 — 한 벌의 화면만 유지하면 된다.
+ * fixed 요소(.nav, .detail-cta)도 이 폭에 맞춰야 하므로 셸이 기준선을 만든다.
+ */
+.app-shell {
+  width: 100%; max-width: var(--app-w); margin: 0 auto; min-height: 100dvh;
+  position: relative; background: var(--color-bg);
+}
+@media (min-width: 460px) {
+  .app-shell { box-shadow: 0 0 0 1px var(--color-border); }
+  body { background: #000; }
 }
 
 /* fields */
@@ -171,12 +177,9 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   background: rgba(10,10,11,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--color-border); padding-bottom: env(safe-area-inset-bottom); }
 .nav__item { flex: 1; display: flex; justify-content: center; padding: 8px 0; min-height: 48px; }
 .nav__inner { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; padding: 4px 8px; }
-@media (min-width: 1024px) {
-  .nav { position: sticky; top: 0; height: 100dvh; width: var(--side-nav-w); flex-direction: column; justify-content: flex-start; gap: 6px; padding: 32px 16px; border-top: 0; border-right: 1px solid var(--color-border); }
-  .nav__item { flex: 0; width: 100%; justify-content: flex-start; padding: 0; }
-  .nav__inner { flex-direction: row; gap: 12px; padding: 10px 12px; width: 100%; border-radius: var(--radius-sm); }
-  .nav__inner > span:first-of-type { font-size: var(--font-body-size) !important; }
-  .nav__inner > span[style*="position: absolute"] { display: none; }
+/* 넓은 화면에서도 앱 폭 안에 머문다 (fixed 는 뷰포트 기준이므로 직접 가둔다). */
+@media (min-width: 460px) {
+  .nav { left: 50%; right: auto; width: 100%; max-width: var(--app-w); transform: translateX(-50%); }
 }
 
 /* chat: mobile = one column; desktop = scene + context panel (DESIGN §31, main scene always widest) */
@@ -185,15 +188,11 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .chat-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .chat-header > :nth-child(2) { flex: 1 1 160px; min-width: 0; }
 .chat-context { display: none; }
-@media (min-width: 1024px) {
-  .chat-layout { grid-template-columns: minmax(0, 1fr) 300px; }
-  .chat-context { display: block; padding: var(--space-5); border-left: 1px solid var(--color-border); }
-  .chat-main { max-width: none; }
-}
+/* 컨텍스트 패널은 두지 않는다 — 모바일에 없는 화면을 따로 유지하지 않는다 (E-47). */
 
 /* ButtonLink — 링크에도 같은 눌림 규칙 */
 /* transform 은 Motion 이 프레임마다 쥔다 (등장 y, whileTap scale) — CSS transition 을 걸면 서로 싸운다. 밝기만 CSS. */
 .button-link { transition: filter var(--motion-fast) var(--ease-exit); -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 .button-link:active { filter: brightness(0.94); }
 .detail-cta { bottom: var(--nav-h); padding-bottom: 16px; }
-@media (min-width: 1024px) { .detail-cta { bottom: 0; left: var(--side-nav-w); padding-bottom: calc(16px + env(safe-area-inset-bottom)); } }
+@media (min-width: 460px) { .detail-cta { left: 50%; right: auto; width: 100%; max-width: var(--app-w); transform: translateX(-50%); } }

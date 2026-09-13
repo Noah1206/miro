@@ -6,14 +6,14 @@ import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { matureGateFor } from '@/lib/ops/safety'
 import { track } from '@/lib/analytics/track'
-import { Back, Chip } from '@/components/ui'
+import { Back } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { IncomingCall } from '@/components/incoming-call'
 import { ChatComposer } from './composer'
 import { MediaBar } from './media-bar'
 import { MessageList, type Msg } from './messages'
 import { StylePicker } from './style-picker'
-import { ContextContent, ContextTrigger, type ContextData } from './context'
+import { ContextTrigger, type ContextData } from './context'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
@@ -78,12 +78,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
 
-      <aside className="chat-context" aria-label="관계와 세계">
-        <div style={{ position: 'sticky', top: 'var(--space-5)' }}>
-          <h2 className="t-title-3 t-name" style={{ marginBottom: 'var(--space-5)' }}>{loaded.characterName} <Chip tone="relationship" style={{ marginLeft: 6 }}>{ctx.relationship}</Chip></h2>
-          <ContextContent d={ctx} />
-        </div>
-      </aside>
     </main>
   )
 }
