@@ -19,8 +19,7 @@ export const STEPS: Array<{ key: CreateStep; label: string }> = [
  * 그 순서(누구인가 → 어디에 사는가 → 어떻게 만나는가)가 화면에 그대로 보여야 한다.
  * 진행 막대는 남은 일을 감추지 않는다.
  */
-export function CreateHeader({ step, index, onBack }: {
-  step: CreateStep
+export function CreateHeader({ index, onBack }: {
   index: number
   onBack: () => void
 }) {
@@ -46,13 +45,18 @@ export function CreateHeader({ step, index, onBack }: {
             </svg>
           </button>
         )}
-        <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-          {index + 1} / {STEPS.length}
-        </span>
       </div>
 
-      {/* 진행 막대 — 브랜드 색이 차오르는 유일한 자리. */}
-      <div aria-hidden style={{ height: 3, borderRadius: 2, background: 'var(--color-surface-2)', overflow: 'hidden' }}>
+      {/*
+        진행 막대 — 브랜드 색이 차오르는 유일한 자리.
+        '1 / 3' 글자는 지웠다 (막대가 이미 같은 말을 한다). 대신 막대가 progressbar 로
+        그 값을 들고 있어야 한다 — aria-hidden 으로 두면 화면을 못 보는 사람에게는
+        몇 단계 중 어디인지가 통째로 사라진다.
+      */}
+      <div role="progressbar" aria-label="만들기 단계"
+        aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={index + 1}
+        aria-valuetext={`${STEPS.length}단계 중 ${index + 1}단계: ${STEPS[index]?.label ?? ''}`}
+        style={{ height: 3, borderRadius: 2, background: 'var(--color-surface-2)', overflow: 'hidden' }}>
         <motion.div animate={{ scaleX: progress }} initial={{ scaleX: 0 }} transition={tween.enter}
           style={{ height: '100%', background: 'var(--color-accent)', transformOrigin: 'left center' }} />
       </div>

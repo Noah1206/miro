@@ -134,7 +134,7 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
         <input type="hidden" name="build" value={build} />
         <input type="hidden" name="gender" value={gender} />
 
-        <CreateHeader step={step} index={index} onBack={() => setIndex((i) => Math.max(0, i - 1))} />
+        <CreateHeader index={index} onBack={() => setIndex((i) => Math.max(0, i - 1))} />
 
         {providerNotice && <Notice style={{ marginTop: 16 }}>⚠ {providerNotice}</Notice>}
 
