@@ -145,6 +145,34 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
   )
 }
 
+/**
+ * 와우 포인트: 이 캐릭터가 앱 밖에서도 먼저 연락하고, 사진·통화·영상통화·Live Scene 으로
+ * 관계가 현실까지 이어진다는 걸 진입 전에 알려준다. 문구가 아니라 아이콘 3개로 즉시 읽히게.
+ */
+export function RealityStrip() {
+  const items: Array<{ icon: string; label: string }> = [
+    { icon: '📷', label: '사진' },
+    { icon: '🎙️', label: '음성통화' },
+    { icon: '🎬', label: '영상통화' },
+  ]
+  return (
+    <div style={{
+      display: 'flex', gap: 8, padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)',
+      background: 'var(--color-surface-1)',
+    }}>
+      {items.map((item) => (
+        <span key={item.label} style={{
+          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+          fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
+        }}>
+          <span aria-hidden style={{ fontSize: 20 }}>{item.icon}</span>
+          {item.label}
+        </span>
+      ))}
+    </div>
+  )
+}
+
 /** 같은 장르의 다른 캐릭터. 홈의 행과 똑같은 카드를 쓴다. */
 export function SimilarRow({ items }: { items: CardCharacter[] }) {
   return (

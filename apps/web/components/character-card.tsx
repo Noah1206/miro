@@ -54,6 +54,13 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
           </span>
         )}
 
+        {/* 캐릭터가 사진·통화·영상통화로 현실까지 이어진다는 신호 — 배지 하나로 와우 포인트를 미리 보여준다. */}
+        <span aria-hidden style={{
+          position: 'absolute', top: 10, right: 10, display: 'inline-flex', alignItems: 'center', gap: 3,
+          padding: '3px 6px', borderRadius: 7, background: 'rgba(70,70,78,0.45)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', fontSize: 11,
+        }}>📷🎙️🎬</span>
+
         {/* 아래 절반을 덮는 그라디언트 위에 글을 올린다 — 이미지가 밝아도 글이 읽힌다. */}
         <div style={{
           position: 'absolute', left: 0, right: 0, bottom: 0, padding: '30px 12px 12px',

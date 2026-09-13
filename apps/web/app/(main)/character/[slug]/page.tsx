@@ -8,7 +8,7 @@ import { Back, Button, ButtonLink, Page } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { galleryFor, portraitFor } from '@/components/character-visual'
-import { Section, Stat, SimilarRow, Comments, BookmarkButton, SampleDialogue, Gallery } from './sections'
+import { Section, Stat, SimilarRow, Comments, BookmarkButton, SampleDialogue, Gallery, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 
@@ -79,6 +79,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           {/* 하단 CTA 는 '대화 시작하기' 하나만 둔다 — 북마크는 여기에 (사용자 결정). */}
           <BookmarkButton slug={slug} saved={saved} />
         </div>
+
+        <RealityStrip />
 
         <Section title="소개" noBg>
           <div className="detail-prose">
