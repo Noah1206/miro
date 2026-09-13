@@ -115,7 +115,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           )}
         </Section>
 
-        <Section title={`댓글 ${commentCount}`}>
+        <Section title={`댓글 ${commentCount}`} noBg divider>
           <Comments slug={slug} items={comments} signedIn={Boolean(user)} />
         </Section>
       </div>
