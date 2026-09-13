@@ -113,34 +113,29 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
 
   return (
     <>
-      {/* 점선 사각형 대신 한 줄. 다른 칸들과 같은 밑줄 규칙을 쓰므로 폼에서 튀지 않는다. */}
+      {/* 사진은 가운데 정사각형 한 칸. 눌러서 시트를 연다. */}
       <motion.button type="button" onClick={() => setOpen(true)}
-        whileTap={reduce ? undefined : { scale: 0.99 }}
+        whileTap={reduce ? undefined : { scale: 0.98 }}
         style={{
-          display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '10px 0 12px',
-          background: 'none', border: 0, borderBottom: '1.5px solid var(--color-border-strong)',
-          cursor: 'pointer', textAlign: 'left', color: 'var(--color-text-secondary)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+          width: 132, height: 132, margin: '0 auto', cursor: 'pointer',
+          background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-surface-1)',
+          border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
+          borderRadius: 'var(--radius-lg)', color: 'var(--color-accent-text)',
         }}>
-        <span aria-hidden style={{
-          display: 'grid', placeItems: 'center', width: 52, height: 52, flexShrink: 0,
-          borderRadius: 'var(--radius-sm)', color: 'var(--color-accent-text)',
-          background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-accent-soft)',
-        }}>
-          {!preview && (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+        {!preview && (
+          <>
+            <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
             </svg>
-          )}
-        </span>
-        <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
-          <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{label}{required && <Star />}</span>
-          <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-            {preview ? '사진 1장 · 눌러서 바꾸기' : `최대 ${maxCount}장`}
-          </span>
-        </span>
-        <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-          <path d="M9 5l7 7-7 7" />
-        </svg>
+            <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
+              {label}{required && <Star />}
+            </span>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-quaternary)' }}>
+              최대 {maxCount}장
+            </span>
+          </>
+        )}
       </motion.button>
 
       <Sheet open={open} onClose={() => setOpen(false)} title={`${label}${maxCount > 1 ? ` ${count}/${maxCount}` : ''}`}>

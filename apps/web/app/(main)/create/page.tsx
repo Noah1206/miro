@@ -291,30 +291,72 @@ function ControlledInput({ name, placeholder, max, value, onChange, invalid }: {
   )
 }
 
-/** 체형은 사용자가 고른다 — 초안 값이 기본 선택. 고른 칸은 브랜드 색으로 찬다. */
+/**
+ * 체형은 사용자가 고른다 — 글자 대신 실루엣으로 본다.
+ *
+ * '근육질' 이라는 낱말보다 어깨가 넓은 그림이 빠르다. 네 실루엣은 어깨너비·허리·목 굵기만
+ * 다르게 그린 같은 사람이다 — 체형 차이만 읽히고 다른 인상이 섞이지 않아야 한다.
+ * 고른 것은 파란 테두리와 채움으로 표시하고, 이름은 그림 밑에 남겨 둔다 (그림만으로는 모호하다).
+ */
 function BuildPicker({ build, onChange, height }: { build: string; onChange: (b: string) => void; height: string }) {
+  const reduce = useReducedMotion()
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-      <legend className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+      <legend className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>
         체형{height ? ` · ${height}` : ''}
       </legend>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
         {BUILD_TYPES.map((b) => {
           const on = b === build
           return (
-            <button key={b} type="button" onClick={() => onChange(b)} aria-pressed={on}
+            <motion.button key={b} type="button" onClick={() => onChange(b)} aria-pressed={on}
+              whileTap={reduce ? undefined : { scale: 0.97 }}
               style={{
-                minHeight: 44, padding: '10px 18px', borderRadius: 'var(--radius-button)', cursor: 'pointer',
-                fontSize: 'var(--font-body-size)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                padding: '12px 4px 10px', cursor: 'pointer', borderRadius: 'var(--radius-md)',
                 background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-1)',
-                color: on ? 'var(--color-accent-text)' : 'var(--color-text-secondary)',
-                border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                color: on ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)',
               }}>
-              {BUILD_PRESETS[b].label}
-            </button>
+              <Silhouette build={b} />
+              <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0 }}>{BUILD_PRESETS[b].label}</span>
+            </motion.button>
           )
         })}
       </div>
     </fieldset>
+  )
+}
+
+/**
+ * 체형 실루엣. 머리 + 몸통 하나로 그린다 — 어깨너비와 허리선만 체형마다 바뀐다.
+ * currentColor 를 쓰므로 선택 상태의 색을 그대로 따라간다.
+ */
+function Silhouette({ build }: { build: string }) {
+  // [어깨 반너비, 허리 반너비, 목 굵기, 허리 볼록(+면 배가 나온다)]
+  const shape: Record<string, [number, number, number, number]> = {
+    slim: [6.5, 5, 2.1, 0],
+    average: [8.5, 7, 2.8, 0],
+    // 어깨가 넓고 허리로 좁아진다 — V 자가 근육질을 읽게 하는 유일한 단서다.
+    muscular: [12, 6.5, 3.8, 0],
+    // 어깨는 보통인데 허리가 어깨보다 넓고 옆으로 불룩하다.
+    heavy: [9, 11, 3.2, 2.5],
+  }
+  const [sh, wa, neck, belly] = shape[build] ?? shape.average!
+  const cx = 16
+  return (
+    <svg aria-hidden width="34" height="40" viewBox="0 0 32 40" fill="currentColor">
+      <circle cx={cx} cy="8" r="5.4" />
+      <path d={[
+        `M${cx - neck} 13`,
+        `L${cx - sh} 17.5`,
+        // 옆선: 볼록값이 있으면 바깥으로 부푼다.
+        `Q${cx - wa - belly} 26 ${cx - wa} 33`,
+        `Q${cx} 35.5 ${cx + wa} 33`,
+        `Q${cx + wa + belly} 26 ${cx + sh} 17.5`,
+        `L${cx + neck} 13`,
+        'Z',
+      ].join(' ')} />
+    </svg>
   )
 }
