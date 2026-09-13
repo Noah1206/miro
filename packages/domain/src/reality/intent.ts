@@ -29,6 +29,9 @@ const SENDABLE: ContactChannel[] = [
 export function deriveIntent(input: IntentInput): RealityIntent | null {
   const { relationship: r, activeEvents, contactProfile: p, idleMinutes, pending } = input
 
+  // 0. 사용자가 선연락을 껐다 — 사건이든 RP 가 남긴 의도든 밖으로 나가지 않는다.
+  if (p.enabled === false) return null
+
   if (pending) return { ...pending, channel: downgrade(pending.channel) }
 
   // 1. 미해결 사건 — 가장 강한 동기. 사건이 있으면 거리와 무관하게 이유가 생긴다.

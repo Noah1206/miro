@@ -48,45 +48,53 @@ export async function createDraft(_prev: DraftState, form: FormData): Promise<Dr
 }
 
 /**
- * 폼 저장 후 역할극 시작.
+ * 저장. 두 갈래가 여기서 만난다: AI 초안을 고친 경우(draft 있음)와 빈 폼에 직접 쓴 경우.
+ * 화면에서 쓴 값이 초안보다 우선하고, 비워 둔 칸은 초안 → 스키마 기본값 순으로 메운다.
  *
- * 두 길이 여기서 만난다: AI 초안을 고친 경우(draft 있음)와 빈 폼에 직접 쓴 경우(draft 없음).
- * 어느 쪽이든 공식 캐릭터와 동일하게 characters/worlds/contact_profiles 를 채우므로
- * 이후 모든 경로(진입·RP·선연락)가 같은 코드를 탄다. 직접 쓴 경우 비워 둔 칸은
- * 스키마 기본값이 메운다 — 빈칸 때문에 저장이 막히면 안 된다.
+ * intent=draft 면 isDraft 로 저장만 하고 편집 화면으로 보낸다 (명세서 2.2 예외: 임시저장).
+ * intent=publish 면 세션까지 만들고 역할극으로 들어간다.
  */
 export async function saveCharacter(form: FormData): Promise<void> {
   const user = await requireUser()
 
   const s = (k: string): string => String(form.get(k) ?? '').trim()
   const orNull = (v: string): string | null => (v.length > 0 ? v : null)
+  const clamp = (k: string, fallback: number): number => {
+    const n = Number(s(k)); return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : fallback
+  }
+  const tags = (k: string, max: number, len: number): string[] =>
+    s(k).split(',').map((t) => t.trim().slice(0, len)).filter(Boolean).slice(0, max)
+  const oneOf = <T extends string>(k: string, allowed: readonly T[], fallback: T): T =>
+    (allowed as readonly string[]).includes(s(k)) ? (s(k) as T) : fallback
 
-  // 초안은 있을 수도, 없을 수도 있다. 깨진 초안은 없는 것으로 친다 — 사용자가 쓴 값은 살린다.
   const rawDraft = String(form.get('draft') ?? '')
   const parsed = rawDraft ? CharacterDraft.safeParse(JSON.parse(rawDraft)) : null
   const d = parsed?.success ? parsed.data : null
+  const publish = s('intent') !== 'draft'
 
-  // 화면에서 쓴 값이 초안보다 우선한다.
   const name = s('name') || d?.identity.name || ''
   if (!name) throw new Error('NAME_REQUIRED')
-  const personality = s('personality') || d?.personality.personality || `${name}에 대한 설명은 아직 적히지 않았다.`
+  const personality = s('personality') || d?.personality.personality || (publish ? '' : `${name}에 대한 설명은 아직 적히지 않았다.`)
+  if (publish && !personality) throw new Error('PERSONALITY_REQUIRED')
 
-  const picked = s('build')
-  const build: BuildType = (BUILD_TYPES as readonly string[]).includes(picked)
-    ? (picked as BuildType)
-    : (d?.appearance.body.build ?? 'average')
+  const ageN = Number(s('age'))
+  const age = Number.isInteger(ageN) && ageN >= 18 && ageN <= 99 ? ageN : (d?.identity.age ?? null)
 
-  const pickedGender = s('gender')
-  const gender: GenderType = (GENDER_TYPES as readonly string[]).includes(pickedGender)
-    ? (pickedGender as GenderType)
-    : (d?.appearance.body.gender ?? 'male')
+  const build = oneOf('build', BUILD_TYPES, d?.appearance.body.build ?? 'average')
+  const gender = oneOf('gender', GENDER_TYPES, d?.appearance.body.gender ?? 'male')
 
-  // 상황 예시 — 한 쌍만 받는다. 비어 있으면 넣지 않는다.
-  const sampleDialogue: Array<{ role: 'character' | 'user'; text: string }> = []
-  const sampleCharacter = s('sampleCharacter')
-  const sampleUser = s('sampleUser')
-  if (sampleCharacter) sampleDialogue.push({ role: 'character', text: sampleCharacter })
-  if (sampleUser) sampleDialogue.push({ role: 'user', text: sampleUser })
+  // 상황 예시 — DialogueEditor 가 JSON 으로 싣는다. 모양이 이상하면 버린다.
+  let sampleDialogue: Array<{ role: 'character' | 'user'; text: string }> = []
+  try {
+    const raw = JSON.parse(s('sampleDialogue') || '[]') as unknown
+    if (Array.isArray(raw)) {
+      sampleDialogue = raw
+        .filter((t): t is { role: string; text: string } => typeof t === 'object' && t !== null && typeof (t as { text?: unknown }).text === 'string')
+        .filter((t) => t.role === 'character' || t.role === 'user')
+        .map((t) => ({ role: t.role as 'character' | 'user', text: t.text.trim().slice(0, 500) }))
+        .filter((t) => t.text).slice(0, 12)
+    }
+  } catch { /* 빈 배열 */ }
 
   const world = {
     era: orNull(s('era')) ?? d?.world.era ?? null,
@@ -95,87 +103,106 @@ export async function saveCharacter(form: FormData): Promise<void> {
     worldSetting: orNull(s('worldSetting')) ?? d?.world.worldSetting ?? null,
   }
   const startingContext = orNull(s('startingContext')) ?? d?.startingContext ?? null
-  // startingTime 은 notNull(기본 '저녁') — null 을 넣으면 기본값을 건너뛴다. 값이 있을 때만 넘긴다.
   const startingTime = orNull(s('startingTime')) ?? d?.startingTime ?? null
-  // world_states 의 장소·시간도 notNull 이다. 직접 만든 캐릭터가 비워 둘 수 있으므로 여기서 메운다.
-  const openingLocation = world.location ?? '어딘가'
-  const openingTime = startingTime ?? '저녁'
 
-  const sessionId = await db.transaction(async (tx) => {
+  const stage = oneOf('stage', STAGES, (d?.initialRelationship.stage as (typeof STAGES)[number] | undefined) ?? 'stranger')
+  const r = d?.initialRelationship
+  const initialRelationship = {
+    stage,
+    trust: clamp('trust', r?.trust ?? 30),
+    attraction: clamp('attraction', r?.attraction ?? 10),
+    jealousy: clamp('relJealousy', r?.jealousy ?? 0),
+    protectiveness: clamp('protectiveness', r?.protectiveness ?? 20),
+    emotionalDistance: clamp('emotionalDistance', r?.emotionalDistance ?? 60),
+    attachment: clamp('attachment', r?.attachment ?? 10),
+  }
+
+  // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.
+  const c = d?.contactStyle
+  const delayN = Number(s('replyDelayMinutes'))
+  const contact = {
+    enabled: form.get('contactEnabled') === 'on',
+    contactFrequency: clamp('contactFrequency', c?.contactFrequency ?? 50),
+    initiativeLevel: clamp('initiativeLevel', c?.initiativeLevel ?? 50),
+    replyDelayMinutes: Number.isInteger(delayN) && delayN >= 0 && delayN <= 1440 ? delayN : (c?.replyDelayMinutes ?? 5),
+    preferredChannel: oneOf('preferredChannel', CHANNELS, c?.preferredChannel ?? 'message'),
+    callProbability: clamp('callProbability', c?.callProbability ?? 30),
+    videoCallProbability: clamp('videoCallProbability', c?.videoCallProbability ?? 10),
+    photoProbability: clamp('photoProbability', c?.photoProbability ?? 20),
+    voiceMessageProbability: clamp('voiceMessageProbability', c?.voiceMessageProbability ?? 20),
+    activeHoursStart: /^\d{2}:\d{2}$/.test(s('activeHoursStart')) ? s('activeHoursStart') : (c?.activeHoursStart ?? '08:00'),
+    activeHoursEnd: /^\d{2}:\d{2}$/.test(s('activeHoursEnd')) ? s('activeHoursEnd') : (c?.activeHoursEnd ?? '23:00'),
+    presentation: orNull(s('senderLabel')) ? { senderLabel: s('senderLabel').slice(0, 30) } : {},
+  }
+
+  // 외형. 화면 값이 초안을 덮는다. 사진이 이 값으로 같은 사람을 그린다.
+  const a = d?.appearance
+  const face = (k: 'eyes' | 'nose' | 'jaw' | 'skin' | 'distinctive') => orNull(s(k)) ?? a?.baseFace[k] ?? null
+  const visual = {
+    baseFace: { eyes: face('eyes'), nose: face('nose'), jaw: face('jaw'), skin: face('skin'), distinctive: face('distinctive') },
+    hair: { color: orNull(s('hairColor')) ?? a?.hair.color ?? null, length: orNull(s('hairLength')) ?? a?.hair.length ?? null, style: orNull(s('hairStyle')) ?? a?.hair.style ?? null },
+    bodyProfile: { build, gender, height: orNull(s('height')) ?? a?.body.height ?? null, detail: orNull(s('detail')) ?? a?.body.detail ?? null },
+    styleTags: tags('styleTags', 5, 40).length > 0 ? tags('styleTags', 5, 40) : (a?.styleTags ?? []),
+    expressionTendency: orNull(s('expression')) ?? a?.expression ?? null,
+    referenceSource: d ? ('ai_generated' as const) : ('text' as const),
+  }
+
+  const outputStyle = oneOf('outputStyle', ['messenger', 'balanced', 'narrative'] as const, 'balanced')
+
+  const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
-      ownerId: user.id,
-      isOfficial: false,
-      name,
-      // 제목은 카드의 한 줄로 쓴다 — 레퍼런스의 '제목' 자리.
+      ownerId: user.id, isOfficial: false, name,
       tagline: orNull(s('title')),
-      age: d?.identity.age ?? null,
-      nationality: d?.identity.nationality ?? null,
-      occupation: d?.identity.occupation ?? null,
-      mbti: d?.identity.mbti ?? null,
+      age,
+      nationality: orNull(s('nationality')) ?? d?.identity.nationality ?? null,
+      occupation: orNull(s('occupation')) ?? d?.identity.occupation ?? null,
+      mbti: orNull(s('mbti').toUpperCase().slice(0, 4)) ?? d?.identity.mbti ?? null,
       personality,
-      values: d?.personality.values ?? null,
+      values: orNull(s('values')) ?? d?.personality.values ?? null,
       speechStyle: orNull(s('speechStyle')) ?? d?.personality.speechStyle ?? null,
-      hobbies: d?.personality.hobbies ?? [],
-      dislikes: d?.personality.dislikes ?? [],
-      ...(d ? {
-        jealousy: d.personality.jealousy,
-        initiative: d.personality.initiative,
-        emotionalExpression: d.personality.emotionalExpression,
-      } : {}),
-      socialPosition: d?.socialPosition ?? null,
+      userNickname: orNull(s('userNickname')),
+      hobbies: tags('hobbies', 6, 30).length > 0 ? tags('hobbies', 6, 30) : (d?.personality.hobbies ?? []),
+      dislikes: tags('dislikes', 6, 30).length > 0 ? tags('dislikes', 6, 30) : (d?.personality.dislikes ?? []),
+      jealousy: clamp('jealousy', d?.personality.jealousy ?? 50),
+      initiative: clamp('initiative', d?.personality.initiative ?? 50),
+      emotionalExpression: clamp('emotionalExpression', d?.personality.emotionalExpression ?? 50),
+      socialPosition: orNull(s('socialPosition')) ?? d?.socialPosition ?? null,
+      role: orNull(s('role')) ?? d?.presentation.role ?? null,
+      relationshipKeywords: tags('relationshipKeywords', 4, 20).length > 0 ? tags('relationshipKeywords', 4, 20) : (d?.presentation.relationshipKeywords ?? []),
       startingContext,
       ...(startingTime ? { startingTime } : {}),
-      role: d?.presentation.role ?? null,
-      relationshipKeywords: d?.presentation.relationshipKeywords ?? [],
       sampleDialogue,
-      ...(d ? { initialRelationship: d.initialRelationship } : {}),
-      isDraft: false,
+      initialRelationship,
+      isDraft: !publish,
     }).returning({ id: characters.id })
-
     const characterId = character!.id
 
     const [w] = await tx.insert(worlds).values({ characterId, ...world }).returning({ id: worlds.id })
+    await tx.insert(contactProfiles).values({ characterId, ...contact })
+    await tx.insert(characterVisualIdentities).values({ characterId, ...visual })
 
-    // 연락 성향은 초안이 있을 때만 지정한다 — 없으면 스키마 기본값이 맞다.
-    await tx.insert(contactProfiles).values({ characterId, ...(d ? d.contactStyle : {}) })
-
-    /** 외형 — 사진·Live Scene·영상통화가 이 값으로 같은 사람을 그린다. */
-    if (d) {
-      await tx.insert(characterVisualIdentities).values({
-        characterId,
-        baseFace: d.appearance.baseFace,
-        hair: d.appearance.hair,
-        bodyProfile: { ...d.appearance.body, build, gender },
-        styleTags: d.appearance.styleTags,
-        expressionTendency: d.appearance.expression,
-        referenceSource: 'ai_generated',
-      })
-    } else {
-      // 직접 만든 캐릭터도 성별·체형은 고른 값이 있다 — 사진 생성이 이 값을 읽는다.
-      await tx.insert(characterVisualIdentities).values({
-        characterId,
-        bodyProfile: { build, gender },
-        referenceSource: 'text',
-      })
-    }
+    if (!publish) return { characterId, sessionId: null }
 
     const [session] = await tx.insert(roleplaySessions).values({
-      userId: user.id, characterId, worldId: w!.id,
+      userId: user.id, characterId, worldId: w!.id, outputStyle,
     }).returning({ id: roleplaySessions.id })
-
     await tx.insert(worldStates).values({
       sessionId: session!.id,
-      currentLocation: openingLocation,
-      currentTime: openingTime,
+      currentLocation: world.location ?? '어딘가',
+      currentTime: startingTime ?? '저녁',
     })
-    await tx.insert(relationships).values({
-      sessionId: session!.id, ...(d ? d.initialRelationship : {}),
-    })
-
-    return session!.id
+    await tx.insert(relationships).values({ sessionId: session!.id, ...initialRelationship })
+    return { characterId, sessionId: session!.id }
   })
 
-  void track(user.id, 'character_created', { sessionId })
-  void track(user.id, 'rp_started', { sessionId, official: false })
-  redirect(`/chat/${sessionId}`)
+  if (!result.sessionId) {
+    // 임시저장 — 이어서 고칠 수 있는 편집 화면으로.
+    redirect(`/my/characters/${result.characterId}/edit`)
+  }
+  void track(user.id, 'character_created', { sessionId: result.sessionId })
+  void track(user.id, 'rp_started', { sessionId: result.sessionId, official: false })
+  redirect(`/chat/${result.sessionId}`)
 }
+
+const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'ambiguous', 'flirting', 'rivalry', 'distrust', 'conflict', 'dating', 'lover'] as const
+const CHANNELS = ['message', 'photo', 'voice_message', 'voice_call'] as const

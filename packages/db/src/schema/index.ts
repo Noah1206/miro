@@ -178,6 +178,12 @@ export const contactProfiles = pgTable('contact_profiles', {
   characterId: uuid('character_id').notNull().unique()
     .references(() => characters.id, { onDelete: 'cascade' }),
 
+  /**
+   * 앱 밖에서 먼저 연락하는 기능 자체의 on/off. 빈도 0 은 '3일에 한 번' 이지 '안 함' 이 아니라서
+   * 별도 스위치가 필요하다 — 사용자가 끄면 사건이 있어도 연락하지 않는다.
+   */
+  enabled: boolean('enabled').notNull().default(true),
+
   contactFrequency: integer('contact_frequency').notNull().default(50),
   replyDelayMinutes: integer('reply_delay_minutes').notNull().default(5),
   preferredChannel: text('preferred_channel').notNull().default('message'),

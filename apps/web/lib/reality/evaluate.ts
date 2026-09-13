@@ -58,6 +58,7 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
 
   const profile = {
     id: row.profile.id, characterId: row.character.id,
+    enabled: row.profile.enabled,
     contactFrequency: row.profile.contactFrequency,
     replyDelayMinutes: row.profile.replyDelayMinutes,
     preferredChannel: row.profile.preferredChannel as ContactChannel,

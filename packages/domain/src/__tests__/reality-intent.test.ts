@@ -124,3 +124,28 @@ describe('quiet hours are judged in the user\'s timezone', () => {
     expect(inQuietHours(instant, { ...base, timeZone: 'Europe/London' })).toBe(false)
   })
 })
+
+// ── 선연락 on/off 스위치 (contact_profiles.enabled) ─────────────────────────────
+// 빈도 0 은 '3일에 한 번' 이지 '안 함' 이 아니라 별도 스위치가 있다. 꺼지면 어떤 이유로도 나가지 않는다.
+const switchProfile = (over: Partial<ContactProfile> = {}): ContactProfile => ({
+  id: 'p', characterId: 'c', contactFrequency: 80, replyDelayMinutes: 5, preferredChannel: 'message',
+  callProbability: 0, videoCallProbability: 0, photoProbability: 0, voiceMessageProbability: 0,
+  activeHours: { start: '00:00', end: '23:59' }, initiativeLevel: 80, ...over,
+})
+const switchBonded = { attachment: 80, emotionalDistance: 20, trust: 60, jealousy: 0, protectiveness: 20, unresolvedEventIds: [] } as never
+
+describe('선연락 on/off 스위치', () => {
+  it('켜져 있으면(기본) 긴 침묵에 연락할 이유를 찾는다', () => {
+    const i = deriveIntent({ relationship: switchBonded, activeEvents: [], contactProfile: switchProfile(), idleMinutes: 60 * 72, pending: null })
+    expect(i?.reason).toBe('silence')
+  })
+  it('꺼져 있으면 침묵이 아무리 길어도 연락하지 않는다', () => {
+    const i = deriveIntent({ relationship: switchBonded, activeEvents: [], contactProfile: switchProfile({ enabled: false }), idleMinutes: 60 * 720, pending: null })
+    expect(i).toBeNull()
+  })
+  it('꺼져 있으면 RP 가 남긴 의도도 밖으로 나가지 않는다', () => {
+    const pending = { channel: 'message', reason: 'rp', urgency: 0.9 } as never
+    const i = deriveIntent({ relationship: switchBonded, activeEvents: [], contactProfile: switchProfile({ enabled: false }), idleMinutes: 0, pending })
+    expect(i).toBeNull()
+  })
+})

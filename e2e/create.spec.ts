@@ -17,8 +17,8 @@ test('quick create produces an editable draft and starts a roleplay', async ({ p
     .fill('다른 사람한텐 싸가지 없는데 나한테만 잘해주는 30살 검사')
   await page.getByRole('button', { name: 'AI 로 초안 만들기' }).click()
 
-  // 초안이 도착하면 폼으로 넘어간다 — 빈칸이 이미 채워진 상태로.
-  await expect(page.getByRole('heading', { name: '캐릭터', exact: true })).toBeVisible()
+  // 초안이 도착하면 고급 만들기 폼으로 넘어간다 — 빈칸이 이미 채워진 상태로.
+  await expect(page.getByRole('tab', { name: /프로필/ })).toBeVisible()
 
   // Provider 미구성 상태는 사용자에게 숨기지 않는다
   await expect(page.getByText(/Mock 출력입니다/)).toBeVisible()
@@ -27,9 +27,11 @@ test('quick create produces an editable draft and starts a roleplay', async ({ p
   const nameField = page.locator('input[name="name"]')
   await expect(nameField).toBeVisible()
   await nameField.fill('윤지훈')
-  // 한 장짜리 폼이다 — 이름과 제목만 채우면 바로 저장된다.
   await page.locator('input[name="title"]').fill('검사와의 계약')
-  await page.getByRole('button', { name: '저장하고 시작하기' }).click()
+
+  // 초안이 성격·첫 장면을 채워 두므로 필수 탭에 ! 배지가 없어야 하고 등록이 열린다.
+  await expect(page.getByLabel('필수 항목이 비어 있음')).toHaveCount(0)
+  await page.getByRole('button', { name: '등록' }).click()
 
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
   await expect(page.getByText('윤지훈').first()).toBeVisible()

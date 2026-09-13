@@ -11,7 +11,7 @@ async function createCharacter(page: import('@playwright/test').Page, name: stri
   await page.getByRole('button', { name: 'AI 로 초안 만들기' }).click()
   await page.locator('input[name="name"]').fill(name)
   await page.locator('input[name="title"]').fill(`${name}의 이야기`)
-  await page.getByRole('button', { name: '저장하고 시작하기' }).click()
+  await page.getByRole('button', { name: '등록' }).click()
   await expect(page).toHaveURL(/\/chat\//)
 }
 

@@ -242,3 +242,182 @@ export function AddRow({ label, count, max, onClick }: { label: string; count: n
     </button>
   )
 }
+
+/**
+ * 스위치 (제타식 토글). 켜짐만 라임 — 상태이므로 accent 규칙에 맞는다.
+ * 실제 요소는 checkbox 라 폼 제출에 그대로 실리고, role=switch 로 읽힌다.
+ */
+export function Switch({ name, label, hint, checked, onChange }: {
+  name: string; label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void
+}) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+      <span className="stack" style={{ gap: 3, flex: 1, minWidth: 0 }}>
+        <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{label}</span>
+        {hint && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</span>}
+      </span>
+      <span style={{ position: 'relative', width: 46, height: 26, flexShrink: 0 }}>
+        <input type="checkbox" role="switch" name={name} checked={checked} onChange={(e) => onChange(e.target.checked)}
+          aria-checked={checked}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, margin: 0, cursor: 'pointer' }} />
+        <span aria-hidden style={{
+          position: 'absolute', inset: 0, borderRadius: 13,
+          background: checked ? 'var(--color-accent)' : 'var(--color-surface-3)',
+          transition: 'background var(--motion-fast) var(--ease-standard)',
+        }} />
+        <span aria-hidden style={{
+          position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: 10,
+          background: checked ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
+          transform: checked ? 'translateX(20px)' : 'none',
+          transition: 'transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard)',
+        }} />
+      </span>
+    </label>
+  )
+}
+
+/** 0–100 슬라이더. 양끝 말이 수치보다 먼저 읽히게 한다. */
+export function Slider({ name, label, defaultValue, lo, hi }: {
+  name: string; label: string; defaultValue: number; lo: string; hi: string
+}) {
+  const [v, setV] = useState(defaultValue)
+  return (
+    <label className="stack" style={{ gap: 6 }}>
+      <span style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{v}</span>
+      </span>
+      <input name={name} type="range" min={0} max={100} value={v} onChange={(e) => setV(Number(e.target.value))}
+        style={{ width: '100%', accentColor: 'var(--color-white)' }} />
+      <span className="t-micro" style={{ display: 'flex', justifyContent: 'space-between', textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
+        <span>{lo}</span><span>{hi}</span>
+      </span>
+    </label>
+  )
+}
+
+/**
+ * 태그 입력 — 해시태그·취미·싫어하는 것. 칩으로 쌓이고, 값은 쉼표로 이어 hidden 에 싣는다.
+ * Enter 나 쉼표로 추가. 한도에 닿으면 입력이 닫힌다.
+ */
+export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue = [] }: {
+  name: string; placeholder: string; max: number; maxLength?: number; defaultValue?: string[]
+}) {
+  const [tags, setTags] = useState<string[]>(defaultValue)
+  const [draft, setDraft] = useState('')
+  const full = tags.length >= max
+  function commit() {
+    const t = draft.trim().replace(/^#/, '').slice(0, maxLength)
+    if (!t || tags.includes(t) || full) { setDraft(''); return }
+    setTags([...tags, t]); setDraft('')
+  }
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <input type="hidden" name={name} value={tags.join(',')} />
+      {tags.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {tags.map((t) => (
+            <button key={t} type="button" onClick={() => setTags(tags.filter((x) => x !== t))} aria-label={`${t} 지우기`}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 999, border: 0,
+                background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', cursor: 'pointer',
+              }}>
+              #{t}
+              <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          ))}
+        </div>
+      )}
+      {!full && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px', borderBottom: '1.5px solid var(--color-border-strong)' }}>
+          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} maxLength={maxLength} autoComplete="off"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
+            style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
+          <button type="button" onClick={commit} className="t-caption"
+            style={{ background: 'none', border: 0, padding: '2px 4px', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+            + 추가 {tags.length}/{max}
+          </button>
+        </div>
+      )}
+      {full && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{tags.length}/{max}</span>}
+    </div>
+  )
+}
+
+/** 여러 개 중 하나. 고른 칩만 라임. 줄바꿈해서 늘어놓는다 (관계 단계처럼 많을 때). */
+export function ChoiceChips({ name, options, value, onChange, columns }: {
+  name?: string; options: Array<{ value: string; label: string }>; value: string; onChange: (v: string) => void; columns?: number
+}) {
+  const reduce = useReducedMotion()
+  return (
+    <div style={columns
+      ? { display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: 6 }
+      : { display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      {name && <input type="hidden" name={name} value={value} />}
+      {options.map((o) => {
+        const on = o.value === value
+        return (
+          <motion.button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={on}
+            whileTap={reduce ? undefined : { scale: 0.97 }}
+            style={{
+              minHeight: 40, padding: '8px 14px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+              fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+              background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
+              border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+              color: on ? 'var(--color-accent-text)' : 'var(--color-text-secondary)',
+            }}>
+            {o.label}
+          </motion.button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * 상황 예시 편집기 — 캐릭터 말 / 내 말을 번갈아 쌓는다 (제타의 '상황 예시').
+ * 값은 JSON 으로 hidden 에 싣는다. 채팅과 같은 규칙: *별표* 안은 서술.
+ */
+export function DialogueEditor({ name, characterName, defaultValue = [] }: {
+  name: string; characterName: string; defaultValue?: Array<{ role: 'character' | 'user'; text: string }>
+}) {
+  const [turns, setTurns] = useState(defaultValue)
+  const update = (i: number, text: string) => setTurns(turns.map((t, j) => (j === i ? { ...t, text } : t)))
+  const remove = (i: number) => setTurns(turns.filter((_, j) => j !== i))
+  const add = (role: 'character' | 'user') => { if (turns.length < 12) setTurns([...turns, { role, text: '' }]) }
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      <input type="hidden" name={name} value={JSON.stringify(turns.filter((t) => t.text.trim()))} />
+      {turns.map((t, i) => (
+        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', justifyContent: t.role === 'user' ? 'flex-end' : 'flex-start' }}>
+          <div style={{
+            flex: '0 1 88%', background: t.role === 'user' ? 'var(--color-surface-3)' : 'var(--color-surface-2)',
+            borderRadius: 'var(--radius-md)', padding: '8px 12px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
+                {t.role === 'user' ? '나' : characterName || '캐릭터'}
+              </span>
+              <button type="button" onClick={() => remove(i)} aria-label="이 말 지우기"
+                style={{ background: 'none', border: 0, padding: 2, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
+                <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            </div>
+            <textarea value={t.text} onChange={(e) => update(i, e.target.value)} rows={2} maxLength={500}
+              placeholder={t.role === 'user' ? '직접 설명드리고 싶은데요.' : '*눈을 들지 않는다* 문 옆에 두고 가십시오.'}
+              style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.5, fontFamily: 'inherit' }} />
+          </div>
+        </div>
+      ))}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button type="button" onClick={() => add('character')} disabled={turns.length >= 12} style={addBtn}>+ {characterName || '캐릭터'}의 말</button>
+        <button type="button" onClick={() => add('user')} disabled={turns.length >= 12} style={addBtn}>+ 내 말</button>
+        <span className="t-micro" style={{ marginLeft: 'auto', alignSelf: 'center', textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{turns.length}/12</span>
+      </div>
+    </div>
+  )
+}
+const addBtn: React.CSSProperties = {
+  padding: '8px 12px', borderRadius: 'var(--radius-button)', border: 0, cursor: 'pointer',
+  background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)',
+}

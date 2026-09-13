@@ -103,6 +103,8 @@ export type CharacterVisualIdentity = {
 export type ContactProfile = {
   id: string
   characterId: string
+  /** false 면 어떤 이유로도 먼저 연락하지 않는다. 없으면 켜진 것으로 본다. */
+  enabled?: boolean
   contactFrequency: number      // 0-100
   replyDelayMinutes: number
   preferredChannel: ContactChannel
