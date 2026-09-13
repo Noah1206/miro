@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db, termsConsents } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { Button, Card, Page, PageHeader, Stagger, StaggerItem } from '@/components/ui'
+import { Button, Page, PageHeader, Stagger, StaggerItem } from '@/components/ui'
 import { agreeToTerms } from './actions'
 
 const ITEMS = [
@@ -10,6 +10,17 @@ const ITEMS = [
   ['개인정보 처리방침', '계정 식별 정보와 역할극 기록의 처리 목적·보관 범위를 안내합니다.'],
   ['AI 생성 콘텐츠 안내', '캐릭터의 응답과 생성 이미지는 AI가 만든 허구의 콘텐츠입니다.'],
 ]
+
+/** 동의는 아래 버튼 하나로 한다 — 각 줄의 체크는 '포함된다'는 표시다. */
+function Check() {
+  return (
+    <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none"
+      stroke="var(--color-text-tertiary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ flexShrink: 0, marginTop: 2 }}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  )
+}
 
 export default async function TermsPage() {
   const user = await currentUser()
@@ -19,9 +30,15 @@ export default async function TermsPage() {
   return (
     <Page style={{ maxWidth: 480, paddingTop: 'var(--space-7)' }}>
       <PageHeader title="시작하기 전에" lead="MIRO를 이용하려면 아래 항목에 동의해야 합니다." />
-      <Stagger as="div" className="stack" style={{ gap: 12 }}>
+      <Stagger as="ul" className="stack" style={{ gap: 20, listStyle: 'none', padding: 0, margin: 0 }}>
         {ITEMS.map(([t, b]) => (
-          <StaggerItem key={t}><Card level={1} style={{ padding: 18 }}><p className="t-body" style={{ fontWeight: 'var(--weight-semibold)', marginBottom: 4 }}>{t}</p><p className="t-caption">{b}</p></Card></StaggerItem>
+          <StaggerItem key={t} as="li" style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)', marginBottom: 4 }}>{t}</p>
+              <p className="t-caption">{b}</p>
+            </div>
+            <Check />
+          </StaggerItem>
         ))}
       </Stagger>
       <form action={agreeToTerms} style={{ marginTop: 'var(--space-6)' }}>
