@@ -6,7 +6,7 @@ import { Accordion, Button, MenuItem, Notice, Page, Popover } from '@/components
 import { duration, ease, tween } from '@/lib/motion/tokens'
 import { createDraft, saveCharacter, type DraftState } from './actions'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
-import { CreateHeader, STEPS, type CreateStep } from './header'
+import { CreateHeader } from './header'
 import { CountedInput, CountedTextArea, ImagePicker, LabeledField } from './form-parts'
 
 const EXAMPLES = [
@@ -104,52 +104,36 @@ function Chooser({ onManual, action, pending, state }: {
 type Draft = NonNullable<DraftState['draft']>
 
 /**
- * 단계형 만들기.
+ * 한 장짜리 만들기 폼.
  *
- * 레퍼런스는 탭 하나에 모든 칸을 쌓아 두지만 여기서는 한 화면에 한 가지만 묻는다:
- * 누구인가 → 어디에 사는가 → 어떻게 만나는가. 각 단계는 큰 질문 하나로 열리고,
- * 덜 중요한 칸은 '자세히' 안에 접힌다. 모든 칸은 DOM 에 남아 있으므로 마지막에 한 번에 제출된다.
+ * 단계로 나누지 않는다 — 캐릭터를 만드는 일은 앞뒤를 오가며 고치는 일이고,
+ * '다음' 으로 막아 두면 뒤 칸을 보려고 앞 칸을 대충 채우게 된다.
+ * 대신 섹션 제목으로 나눈다: 캐릭터 → 세계 → 첫 장면. 제목은 카드 바깥에 둔다.
  */
 function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNotice: string | null }) {
-  const [index, setIndex] = useState(0)
   const [name, setName] = useState(draft?.identity.name ?? '')
   const [nameTouched, setNameTouched] = useState(false)
   const [title, setTitle] = useState('')
   const [build, setBuild] = useState<string>(draft?.appearance.body.build ?? 'average')
   const [gender, setGender] = useState<string>(draft?.appearance.body.gender ?? 'male')
-  const reduce = useReducedMotion()
 
-  const step: CreateStep = STEPS[index]!.key
-  // 첫 단계는 이름이 있어야 넘어간다. 나머지는 비워 둔 채 지나갈 수 있다 — 나중에 고칠 수 있으니까.
-  const canAdvance = step === 'who' ? name.trim().length > 0 : true
   const canSubmit = name.trim().length > 0 && title.trim().length > 0
-  const last = index === STEPS.length - 1
 
   return (
     // Page 는 등장 애니메이션으로 transform 을 건다 — transform 된 조상 안에서는 sticky 가
     // 뷰포트가 아니라 그 조상에 붙어 머리가 화면 중간에 떠 버린다. 그래서 여기서는 쓰지 않는다.
-    <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, outline: 'none' }}>
+    <main id="main" tabIndex={-1} className="page"
+      style={{ maxWidth: 560, paddingTop: 0, paddingBottom: 'calc(var(--nav-h) + 96px)', outline: 'none' }}>
       <form action={saveCharacter} className="stack" style={{ gap: 0 }}>
         {draft && <input type="hidden" name="draft" value={JSON.stringify(draft)} />}
         <input type="hidden" name="build" value={build} />
         <input type="hidden" name="gender" value={gender} />
 
-        <CreateHeader index={index} onBack={() => setIndex((i) => Math.max(0, i - 1))} />
+        <CreateHeader />
 
         {providerNotice && <Notice style={{ marginTop: 16 }}>⚠ {providerNotice}</Notice>}
 
-        {/* 질문이 먼저 온다 — 칸보다 크게. */}
-        <motion.h1 key={step} className="t-title-1"
-          initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: duration.normal, ease: ease.enter }}
-          style={{ margin: 'var(--space-6) 0 var(--space-5)' }}>
-          {/* 단계 위치는 화면에 띄우지 않되 제목과 함께 읽히게 한다 — 막대를 없앴으므로 여기가 유일한 자리다. */}
-          <span className="sr-only">{STEPS.length}단계 중 {index + 1}단계. </span>
-          {QUESTION[step]}
-        </motion.h1>
-
-        {/* 단계는 보이기만 바뀐다. DOM 에서 빼면 앞 단계에 쓴 값이 사라진다. */}
-        <StepPanel show={step === 'who'}>
+        <Section title="캐릭터">
           <Card>
             <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
             <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
@@ -165,21 +149,17 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
               </LabeledField>
             </div>
           </Card>
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            <Accordion title="자세히">
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="말투">
-                  <CountedInput name="speechStyle" placeholder="예) 존대. 문장이 짧다." max={300}
-                    defaultValue={draft?.personality.speechStyle ?? ''} />
-                </LabeledField>
-                <BodyPicker build={build} onBuild={setBuild} gender={gender} onGender={setGender}
-                  height={draft?.appearance.body.height ?? ''} />
-              </div>
-            </Accordion>
-          </div>
-        </StepPanel>
+          <Folded title="자세히">
+            <LabeledField label="말투">
+              <CountedInput name="speechStyle" placeholder="예) 존대. 문장이 짧다." max={300}
+                defaultValue={draft?.personality.speechStyle ?? ''} />
+            </LabeledField>
+            <BodyPicker build={build} onBuild={setBuild} gender={gender} onGender={setGender}
+              height={draft?.appearance.body.height ?? ''} />
+          </Folded>
+        </Section>
 
-        <StepPanel show={step === 'world'}>
+        <Section title="세계">
           <Card>
             <div className="stack" style={{ gap: 18 }}>
               <LabeledField label="제목" required hint="목록과 카드에 걸리는 한 줄입니다.">
@@ -192,24 +172,20 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
               </LabeledField>
             </div>
           </Card>
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            <Accordion title="자세히">
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="시대">
-                  <CountedInput name="era" placeholder="예) 현대" max={40} defaultValue={draft?.world.era ?? ''} />
-                </LabeledField>
-                <LabeledField label="장소">
-                  <CountedInput name="location" placeholder="예) 런던 구시가지" max={60} defaultValue={draft?.world.location ?? ''} />
-                </LabeledField>
-                <LabeledField label="장르">
-                  <CountedInput name="genre" placeholder="예) 현대 드라마 · 미스터리" max={60} defaultValue={draft?.world.genre ?? ''} />
-                </LabeledField>
-              </div>
-            </Accordion>
-          </div>
-        </StepPanel>
+          <Folded title="자세히">
+            <LabeledField label="시대">
+              <CountedInput name="era" placeholder="예) 현대" max={40} defaultValue={draft?.world.era ?? ''} />
+            </LabeledField>
+            <LabeledField label="장소">
+              <CountedInput name="location" placeholder="예) 런던 구시가지" max={60} defaultValue={draft?.world.location ?? ''} />
+            </LabeledField>
+            <LabeledField label="장르">
+              <CountedInput name="genre" placeholder="예) 현대 드라마 · 미스터리" max={60} defaultValue={draft?.world.genre ?? ''} />
+            </LabeledField>
+          </Folded>
+        </Section>
 
-        <StepPanel show={step === 'scene'}>
+        <Section title="첫 장면">
           <Card>
             <div className="stack" style={{ gap: 18 }}>
               <LabeledField label="첫 장면">
@@ -222,43 +198,26 @@ function CreateForm({ draft, providerNotice }: { draft: Draft | null; providerNo
               </LabeledField>
             </div>
           </Card>
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            <Accordion title="상황 예시">
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label={`${name || '캐릭터'}의 말`}>
-                  <CountedTextArea name="sampleCharacter" max={2000} rows={3}
-                    placeholder="*작업대에서 눈을 들지 않는다* 의뢰라면 문 옆에 두고 가십시오." />
-                </LabeledField>
-                <LabeledField label="내 말">
-                  <CountedTextArea name="sampleUser" max={2000} rows={3} placeholder="직접 설명드리고 싶은데요." />
-                </LabeledField>
-              </div>
-            </Accordion>
-          </div>
-        </StepPanel>
+          <Folded title="상황 예시">
+            <LabeledField label={`${name || '캐릭터'}의 말`}>
+              <CountedTextArea name="sampleCharacter" max={2000} rows={3}
+                placeholder="*작업대에서 눈을 들지 않는다* 의뢰라면 문 옆에 두고 가십시오." />
+            </LabeledField>
+            <LabeledField label="내 말">
+              <CountedTextArea name="sampleUser" max={2000} rows={3} placeholder="직접 설명드리고 싶은데요." />
+            </LabeledField>
+          </Folded>
+        </Section>
 
-        {/* 하나의 문. 마지막 단계에서만 저장이 된다. */}
-        <div style={{ marginTop: 'var(--space-7)' }}>
-          {last ? (
-            <Button type="submit" variant="primary" size="lg" full disabled={!canSubmit}>
-              {canSubmit ? '저장하고 시작하기' : '이름과 제목을 채워주세요'}
-            </Button>
-          ) : (
-            <Button type="button" variant="primary" size="lg" full disabled={!canAdvance}
-              onClick={() => setIndex((i) => Math.min(STEPS.length - 1, i + 1))}>
-              다음
-            </Button>
-          )}
+        {/* 문은 하나. 스크롤 끝까지 가지 않아도 늘 손에 닿는다. */}
+        <div className="detail-cta" style={{ zIndex: 25, padding: '14px var(--space-5)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
+          <Button type="submit" variant="primary" size="lg" full disabled={!canSubmit}>
+            {canSubmit ? '저장하고 시작하기' : '이름과 제목을 채워주세요'}
+          </Button>
         </div>
       </form>
     </main>
   )
-}
-
-const QUESTION: Record<CreateStep, string> = {
-  who: '어떤 사람인가요?',
-  world: '어떤 세계에 살고 있나요?',
-  scene: '어떻게 만나게 되나요?',
 }
 
 /**
@@ -277,27 +236,7 @@ function Card({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * 단계 하나. 감추더라도 DOM 에 남긴다 — 값이 살아 있어야 마지막에 한 번에 제출된다.
- * hidden 이면 초점도 받지 않아야 해서 inert 를 함께 건다.
- */
-function StepPanel({ show, children }: { show: boolean; children: React.ReactNode }) {
-  const reduce = useReducedMotion()
-  return (
-    <motion.div
-      animate={show ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
-      initial={false}
-      transition={reduce ? { duration: 0 } : { duration: duration.normal, ease: ease.enter }}
-      inert={!show}
-      style={show
-        ? { display: 'block' }
-        : { display: 'none' }}>
-      {children}
-    </motion.div>
-  )
-}
-
-/**
- * 값을 바깥이 들고 있는 한 줄 입력 (단계 진행 판정에 쓰인다).
+ * 값을 바깥이 들고 있는 한 줄 입력 (필수 판정에 쓰인다).
  * 상자 대신 밑줄 — form-parts 의 CountedInput 과 같은 규칙이다.
  */
 function ControlledInput({ name, placeholder, max, value, onChange, invalid }: {
@@ -320,6 +259,25 @@ function ControlledInput({ name, placeholder, max, value, onChange, invalid }: {
         </span>
       )}
     </div>
+  )
+}
+
+/** 섹션 — 제목은 카드 바깥에 두고, 그 아래에 카드가 온다. */
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section style={{ marginTop: 'var(--space-6)' }}>
+      <h2 className="t-title-3" style={{ marginBottom: 12 }}>{title}</h2>
+      <div className="stack" style={{ gap: 'var(--space-3)' }}>{children}</div>
+    </section>
+  )
+}
+
+/** 접힌 칸 묶음 — 덜 중요한 것은 펼쳐야 보인다. */
+function Folded({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Accordion title={title}>
+      <div className="stack" style={{ gap: 18 }}>{children}</div>
+    </Accordion>
   )
 }
 
