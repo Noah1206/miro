@@ -293,28 +293,47 @@ function BodyPicker({ build, onBuild, gender, onGender, height }: {
   gender: string; onGender: (g: string) => void
   height: string
 }) {
+  const reduce = useReducedMotion()
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
       <legend className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>
         성별 · 체형{height ? ` · ${height}` : ''}
       </legend>
 
-      <div className="stack" style={{ gap: 8 }}>
-        <ChoiceRow options={GENDER_TYPES.map((g) => ({ value: g, label: GENDER_PRESETS[g].label }))}
-          value={gender} onChange={onGender} />
-        <ChoiceRow options={BUILD_TYPES.map((b) => ({ value: b, label: BUILD_PRESETS[b].label }))}
-          value={build} onChange={onBuild} />
-      </div>
+      <ChoiceRow options={GENDER_TYPES.map((g) => ({ value: g, label: GENDER_PRESETS[g].label }))}
+        value={gender} onChange={onGender} />
 
-      {/* 고른 값이 선 사람. 칸 밑에 세워 두면 바꿀 때마다 바로 보인다. */}
-      <div style={{
-        display: 'grid', placeItems: 'center', padding: 'var(--space-5) 0 var(--space-4)',
-        marginTop: 'var(--space-4)', background: 'var(--color-surface-2)', borderRadius: 'var(--radius-lg)',
-      }}>
-        <Avatar build={build} gender={gender} />
-        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginTop: 10 }}>
-          {GENDER_PRESETS[gender as keyof typeof GENDER_PRESETS]?.label} · {BUILD_PRESETS[build as keyof typeof BUILD_PRESETS]?.label}
-        </span>
+      {/*
+        체형은 낱말이 아니라 사진에서 고른다 — '표준' 이 무엇인지는 사람마다 다르게 떠올린다.
+        네 장은 같은 옷·같은 배경·같은 거리에서 찍혀 체형만 다르다.
+      */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 8 }}>
+        {BUILD_TYPES.map((b) => {
+          const on = b === build
+          return (
+            <motion.button key={b} type="button" onClick={() => onBuild(b)} aria-pressed={on}
+              aria-label={`${GENDER_PRESETS[gender as keyof typeof GENDER_PRESETS]?.label} ${BUILD_PRESETS[b].label}`}
+              whileTap={reduce ? undefined : { scale: 0.97 }}
+              style={{
+                padding: 3, cursor: 'pointer', borderRadius: 'var(--radius-md)', background: 'none',
+                border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+              }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/builds/${gender}-${b}.webp`} alt="" width={120} height={160} loading="lazy" decoding="async"
+                style={{
+                  width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block',
+                  borderRadius: 'var(--radius-sm)', opacity: on ? 1 : 0.5,
+                  transition: 'opacity var(--motion-fast) var(--ease-standard)',
+                }} />
+              <span className="t-micro" style={{
+                display: 'block', textAlign: 'center', textTransform: 'none', letterSpacing: 0, marginTop: 5,
+                color: on ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)',
+              }}>
+                {BUILD_PRESETS[b].label}
+              </span>
+            </motion.button>
+          )
+        })}
       </div>
     </fieldset>
   )
@@ -347,64 +366,3 @@ function ChoiceRow({ options, value, onChange }: {
   )
 }
 
-/**
- * 전신 아바타. 머리·목·몸통·팔·다리를 가진 한 사람으로 그린다.
- *
- * 체형은 어깨·허리 폭으로, 성별은 어깨 대비 엉덩이 폭과 가슴선으로 구분한다 —
- * 옷이나 머리 모양으로 성별을 표시하지 않는다 (그건 사람마다 다르고, 여기서 정할 일이 아니다).
- * 값이 이어져 보이도록 폭이 바뀔 때 Motion 이 path 를 잇는다.
- */
-function Avatar({ build, gender }: { build: string; gender: string }) {
-  const reduce = useReducedMotion()
-  const female = gender === 'female'
-
-  // 체형별 [어깨 반너비, 허리 반너비, 배 볼록]
-  const byBuild: Record<string, [number, number, number]> = {
-    slim: [10, 7, 0],
-    average: [12, 9, 0],
-    muscular: [15.5, 9.5, 0],
-    heavy: [13.5, 14.5, 2.5],
-  }
-  const [shoulder, waist, belly] = byBuild[build] ?? byBuild.average!
-  // 여성은 어깨를 조금 좁히고 골반을 넓힌다.
-  const sh = female ? shoulder * 0.88 : shoulder
-  const hip = female ? waist * 1.3 : waist * 1.05
-  const cx = 40
-
-  // 팔은 몸통 옆선 바깥에 붙되 1.5 만큼 띄운다 — 붙이면 몸통에 먹히고, 멀면 떠 보인다.
-  const armIn = Math.max(sh, waist + belly) + 1.5
-  const t = reduce ? { duration: 0 } : { duration: 0.32, ease: 'easeOut' as const }
-
-  return (
-    <svg aria-hidden width="92" height="160" viewBox="0 0 80 140" fill="currentColor"
-      style={{ color: 'var(--color-accent)' }}>
-      <circle cx={cx} cy="14" r="8.5" />
-      {/* 목 — 짧게. 길면 사람이 아니라 인형처럼 보인다. */}
-      <rect x={cx - 3} y="21" width="6" height="3.5" />
-
-      {/* 몸통: 어깨 → 허리 → 골반 */}
-      <motion.path
-        animate={{
-          d: [
-            `M${cx - sh} 26`,
-            `Q${cx - sh} 38 ${cx - waist - belly} 50`,
-            `L${cx - hip} 64`,
-            `Q${cx} 68 ${cx + hip} 64`,
-            `L${cx + waist + belly} 50`,
-            `Q${cx + sh} 38 ${cx + sh} 26`,
-            `Q${cx} 23 ${cx - sh} 26`,
-            'Z',
-          ].join(' '),
-        }}
-        transition={t} />
-
-      {/* 팔 — 어깨 높이에서 시작해 손목까지. 폭은 체형을 따라간다. */}
-      <motion.path animate={{ d: `M${cx - armIn - 4.5} 29 L${cx - armIn} 28 L${cx - armIn + 1} 62 L${cx - armIn - 3.5} 62 Z` }} transition={t} />
-      <motion.path animate={{ d: `M${cx + armIn + 4.5} 29 L${cx + armIn} 28 L${cx + armIn - 1} 62 L${cx + armIn + 3.5} 62 Z` }} transition={t} />
-
-      {/* 다리 — 골반에서 내려온다. 가운데를 갈라 두 다리로 읽히게. */}
-      <motion.path animate={{ d: `M${cx - hip + 0.5} 64 L${cx - 1.6} 64 L${cx - 2.4} 124 L${cx - hip + 2.5} 124 Z` }} transition={t} />
-      <motion.path animate={{ d: `M${cx + hip - 0.5} 64 L${cx + 1.6} 64 L${cx + 2.4} 124 L${cx + hip - 2.5} 124 Z` }} transition={t} />
-    </svg>
-  )
-}
