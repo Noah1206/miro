@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { spring } from '@/lib/motion/tokens'
 import { TransitionLink } from '@/components/ui'
-import { CharacterVisual } from '@/components/character-visual'
+import { CharacterVisual, portraitFor } from '@/components/character-visual'
 import type { OfficialCard } from '@/lib/characters'
 
 /**
@@ -27,7 +27,7 @@ export function WorldPager({ items }: { items: OfficialCard[] }) {
       <div ref={ref} className="pager">
         {items.map((c, i) => (
           <TransitionLink key={c.id} href={`/character/${c.slug}`} data-index={i} style={{ display: 'block' }}>
-            <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug} ratio="3 / 4" />
+            <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug} photo={portraitFor(c.slug)} ratio="3 / 4" />
             <div style={{ padding: '12px 2px 0' }}>
               <p className="t-title-3 t-name">{c.name}</p>
               <p className="t-caption">{c.role}</p>
