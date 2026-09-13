@@ -101,7 +101,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </Section>
         )}
 
-        <Section title="인트로">
+        <Section title="인트로" noBg>
           <div className="detail-prose">
             <p className="t-body-lg t-quote">{c.startingContext}</p>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>

@@ -17,10 +17,12 @@ export function Section({ title, image, noBg, children }: { title: string; image
     <motion.section
       initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
-      style={{
-        marginTop: 'var(--space-6)', padding: 'var(--space-5)',
-        background: noBg ? 'transparent' : 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
-      }}>
+      style={noBg
+        ? { marginTop: 'var(--space-6)' }
+        : {
+          marginTop: 'var(--space-6)', padding: 'var(--space-5)',
+          background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)',
+        }}>
       <h2 className="t-title-2" style={{ marginBottom: 14 }}>{title}</h2>
       {image && (
         // eslint-disable-next-line @next/next/no-img-element
