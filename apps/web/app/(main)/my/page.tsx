@@ -75,7 +75,8 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
             )
           })}
         </div>
-        <h2 className="t-title-3" style={{ marginBottom: 12 }}>캐릭터 목록 <span style={{ color: 'var(--color-text-tertiary)', fontWeight: 'var(--weight-regular)' }}>{shown.length}</span></h2>
+        {/* 칩이 이미 무엇인지 말한다 — 제목은 개수만 작고 옅게. */}
+        <h2 className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{shown.length}개</h2>
         {cards.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 'var(--space-8) 0' }}>
             <p className="t-body" style={{ marginBottom: 14 }}>{name}님이 만든 캐릭터가 {filter === 'all' ? '아직 없어요' : '여기엔 없어요'}.</p>
