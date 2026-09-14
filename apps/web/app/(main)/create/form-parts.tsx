@@ -333,7 +333,7 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
               minHeight: 36, padding: '6px 12px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
               background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-              border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+              border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
               color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
             }}>
             {o.label}
@@ -420,7 +420,7 @@ export function Stepped({ name, label, options, defaultValue }: {
                 minHeight: 40, padding: '8px 6px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
                 fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
                 background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-                border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
                 color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
               }}>
               {o.label}
