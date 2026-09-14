@@ -53,7 +53,7 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending }: {
               style={{
                 position: 'relative', flexShrink: 0, padding: '12px 10px', background: 'transparent', border: 0, cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: 4,
-                fontSize: 'var(--font-body-size)', fontWeight: active ? 'var(--weight-semibold)' : 'var(--weight-medium)',
+                fontSize: 'var(--font-body-size)', fontWeight: active ? 'var(--weight-medium)' : 'var(--weight-regular)',
                 color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               }}>
               {t.label}
