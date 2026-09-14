@@ -224,10 +224,8 @@ export default function CreatePage() {
             <Card>
               <BodyPicker build={build} onBuild={setBuild} gender={gender} onGender={setGender} />
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                <Two>
-                  <LabeledField label="키"><CountedInput name="height" placeholder="예) 186cm" max={20} defaultValue={''} /></LabeledField>
-                  <LabeledField label="체형 설명"><CountedInput name="detail" placeholder="예) 어깨가 넓다" max={120} defaultValue={''} /></LabeledField>
-                </Two>
+                <LabeledField label="키"><CountedInput name="height" placeholder="예) 186cm" max={20} defaultValue={''} /></LabeledField>
+                <LabeledField label="체형 설명"><CountedInput name="detail" placeholder="예) 어깨가 넓다" max={120} defaultValue={''} /></LabeledField>
               </div>
             </Card>
           </Section>
