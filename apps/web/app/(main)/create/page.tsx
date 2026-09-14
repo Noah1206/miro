@@ -143,7 +143,7 @@ export default function CreatePage() {
     <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, outline: 'none' }}>
       <form action={saveCharacter} onSubmit={() => setPending(true)} className="stack" style={{ gap: 0 }}>
 
-        <CreateHeader tab={tab} onTab={setTab} missing={missing} canSubmit={canSubmit} canDraft={canDraft} pending={pending} />
+        <CreateHeader tab={tab} onTab={setTab} canSubmit={canSubmit} canDraft={canDraft} pending={pending} />
         <Tip id="create" style={{ marginTop: 'var(--space-4)' }}>이름·성격·첫 장면만 채우면 등록할 수 있어요. 나머지는 나중에 고쳐도 됩니다.</Tip>
 
         {/* ── 프로필 ── */}

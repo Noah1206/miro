@@ -8,8 +8,7 @@ test('필수 세 칸을 채우면 등록되고 역할극이 시작된다', async
   await signUp(page, BASE)
   await page.goto(`${BASE}/create`)
 
-  // 필수 탭에 ! 배지, 등록은 잠김.
-  await expect(page.getByLabel('필수 항목이 비어 있음')).toHaveCount(3)
+  // 필수가 비어 있으면 등록은 잠김.
   await expect(page.getByRole('button', { name: '등록' })).toBeDisabled()
 
   await page.locator('input[name="name"]').fill('윤지훈')
@@ -19,7 +18,7 @@ test('필수 세 칸을 채우면 등록되고 역할극이 시작된다', async
   await page.getByRole('tab', { name: /인트로/ }).click()
   await page.locator('textarea[name="startingContext"]').fill('검찰청 복도에서 처음 마주쳤다.')
 
-  await expect(page.getByLabel('필수 항목이 비어 있음')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '등록' })).toBeEnabled()
   await page.getByRole('button', { name: '등록' }).click()
 
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
