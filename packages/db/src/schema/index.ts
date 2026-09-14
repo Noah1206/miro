@@ -121,7 +121,7 @@ export const characters = pgTable('characters', {
    * 상세의 '상황 예시' — 이 캐릭터와의 대화가 어떤 느낌인지 보여주는 짧은 주고받음.
    * 실제 역할극이 아니라 소개용 샘플이라 세션과 무관하게 캐릭터에 붙는다.
    */
-  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user'; text: string }>>().notNull().default([]),
+  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
   accentA: text('accent_a'),
   accentB: text('accent_b'),

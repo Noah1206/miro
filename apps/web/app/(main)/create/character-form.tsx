@@ -116,7 +116,7 @@ export type FormInitial = {
   contactEnabled: boolean; contactFrequency: number; initiativeLevel: number; replyDelayMinutes: number
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
-  startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user'; text: string }>
+  startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
   isPublic: boolean
 }
 

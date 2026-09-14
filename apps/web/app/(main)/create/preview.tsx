@@ -9,7 +9,7 @@ export type Snapshot = {
   name: string; tagline: string; age: string; nationality: string; occupation: string; mbti: string
   personality: string; startingContext: string; startingTime: string
   keywords: string[]; hobbies: string[]; dislikes: string[]
-  dialogue: Array<{ role: 'character' | 'user'; text: string }>
+  dialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
   /** 고른 사진의 object URL. 아직 저장소가 없어 미리보기에서만 보인다. */
   photo: string | null
 }

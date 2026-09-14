@@ -34,14 +34,14 @@ export function parseCharacterForm(form: FormData) {
   const gender = oneOf('gender', GENDER_TYPES, 'male')
 
   // 상황 예시 — DialogueEditor 가 JSON 으로 싣는다. 모양이 이상하면 버린다.
-  let sampleDialogue: Array<{ role: 'character' | 'user'; text: string }> = []
+  let sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }> = []
   try {
     const raw = JSON.parse(s('sampleDialogue') || '[]') as unknown
     if (Array.isArray(raw)) {
       sampleDialogue = raw
         .filter((t): t is { role: string; text: string } => typeof t === 'object' && t !== null && typeof (t as { text?: unknown }).text === 'string')
-        .filter((t) => t.role === 'character' || t.role === 'user')
-        .map((t) => ({ role: t.role as 'character' | 'user', text: t.text.trim().slice(0, 500) }))
+        .filter((t) => t.role === 'character' || t.role === 'user' || t.role === 'narrator')
+        .map((t) => ({ role: t.role as 'character' | 'user' | 'narrator', text: t.text.trim().slice(0, 500) }))
         .filter((t) => t.text).slice(0, 12)
     }
   } catch { /* 빈 배열 */ }

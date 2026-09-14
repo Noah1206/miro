@@ -40,7 +40,7 @@ export type OfficialSeed = {
   /** 카드에 얹는 한 줄 — 캐릭터가 직접 하는 말. */
   tagline: string
   /** 상세의 '상황 예시' — 대화가 어떤 느낌인지 보여주는 짧은 주고받음. */
-  sampleDialogue: Array<{ role: 'character' | 'user'; text: string }>
+  sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
 
   socialPosition: string
   startingContext: string

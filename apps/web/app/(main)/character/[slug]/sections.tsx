@@ -38,7 +38,7 @@ export function Rule({ label, action, children }: { label: string; action?: Reac
  */
 export function SampleDialogue({ name, portrait, turns }: {
   name: string; portrait: string | null
-  turns: Array<{ role: 'character' | 'user'; text: string }>
+  turns: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
 }) {
   const reduce = useReducedMotion()
   return (
@@ -50,7 +50,12 @@ export function SampleDialogue({ name, portrait, turns }: {
           transition={{ duration: duration.normal, ease: ease.enter, delay: i * 0.08 }}
           style={t.role === 'user'
             ? { display: 'flex', justifyContent: 'flex-end' }
-            : { display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            : t.role === 'narrator'
+              ? { display: 'flex', justifyContent: 'center', padding: '0 8%' }
+              : { display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          {t.role === 'narrator' && (
+            <p className="t-caption" style={{ margin: 0, textAlign: 'center', color: 'var(--color-text-secondary)', fontStyle: 'italic', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{t.text}</p>
+          )}
           {t.role === 'character' && (
             <>
               {portrait

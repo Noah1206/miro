@@ -283,51 +283,141 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
 }
 
 /**
- * 상황 예시 편집기 — 캐릭터 말 / 내 말을 번갈아 쌓는다 (제타의 '상황 예시').
- * 값은 JSON 으로 hidden 에 싣는다. 채팅과 같은 규칙: *별표* 안은 서술.
+ * 상황 예시 — 채팅처럼 쌓는다. 아래에서 화자(내레이터·유저·캐릭터)를 고르고 한 마디씩 올린다.
+ * 올린 말은 말풍선으로 보이고, 연필로 고치고 휴지통으로 지운다. 상세 페이지가 같은 모양으로 보여준다.
  */
 export function DialogueEditor({ name, characterName, defaultValue = [] }: {
-  name: string; characterName: string; defaultValue?: Array<{ role: 'character' | 'user'; text: string }>
+  name: string; characterName: string; defaultValue?: Turn[]
 }) {
-  const [turns, setTurns] = useState(defaultValue)
-  const update = (i: number, text: string) => setTurns(turns.map((t, j) => (j === i ? { ...t, text } : t)))
-  const remove = (i: number) => setTurns(turns.filter((_, j) => j !== i))
-  const add = (role: 'character' | 'user') => { if (turns.length < 12) setTurns([...turns, { role, text: '' }]) }
+  const [turns, setTurns] = useState<Turn[]>(defaultValue)
+  const [role, setRole] = useState<Turn['role']>('character')
+  const [draft, setDraft] = useState('')
+  const [editing, setEditing] = useState<number | null>(null)
+  const [editText, setEditText] = useState('')
+  const who = characterName || '캐릭터'
+  const label = (r: Turn['role']) => (r === 'narrator' ? '내레이터' : r === 'user' ? '유저' : who)
+  const full = turns.length >= MAX_TURNS
+
+  const add = () => {
+    const text = draft.trim()
+    if (!text || full) return
+    setTurns([...turns, { role, text: text.slice(0, 500) }]); setDraft('')
+  }
+  const remove = (i: number) => { setTurns(turns.filter((_, j) => j !== i)); if (editing === i) setEditing(null) }
+  const startEdit = (i: number) => { setEditing(i); setEditText(turns[i]!.text) }
+  const commitEdit = () => {
+    if (editing === null) return
+    const text = editText.trim()
+    setTurns(text ? turns.map((t, j) => (j === editing ? { ...t, text } : t)) : turns.filter((_, j) => j !== editing))
+    setEditing(null)
+  }
+  // 한글 조합 중 Enter 는 글자 확정이지 전송이 아니다.
+  const onEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>, fn: () => void) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); fn() }
+  }
+
   return (
-    <div className="stack" style={{ gap: 10 }}>
-      <input type="hidden" name={name} value={JSON.stringify(turns.filter((t) => t.text.trim()))} />
-      {turns.map((t, i) => (
-        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', justifyContent: t.role === 'user' ? 'flex-end' : 'flex-start' }}>
-          <div style={{
-            flex: '0 1 88%', background: t.role === 'user' ? 'var(--color-surface-3)' : 'var(--color-surface-2)',
-            borderRadius: 'var(--radius-md)', padding: '8px 12px',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-                {t.role === 'user' ? '나' : characterName || '캐릭터'}
-              </span>
-              <button type="button" onClick={() => remove(i)} aria-label="이 말 지우기"
-                style={{ background: 'none', border: 0, padding: 2, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
-                <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+    <div className="stack" style={{ gap: 12 }}>
+      <input type="hidden" name={name} value={JSON.stringify(turns)} />
+
+      {turns.length === 0 && (
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', textAlign: 'center', padding: '14px 0' }}>
+          아래에서 누가 말할지 고르고 첫 마디를 적어 보세요.
+        </p>
+      )}
+      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 12 }}>
+        {turns.map((t, i) => {
+          const isEditing = editing === i
+          const tools = (
+            <span style={{ display: 'inline-flex', gap: 4, flexShrink: 0 }}>
+              <button type="button" onClick={() => (isEditing ? commitEdit() : startEdit(i))} aria-label={isEditing ? '고친 말 확인' : '이 말 고치기'} style={roundBtn}>
+                {isEditing
+                  ? <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                  : <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z" /><path d="M13.5 6.5l3 3" /></svg>}
               </button>
-            </div>
-            <textarea value={t.text} onChange={(e) => update(i, e.target.value)} rows={2} maxLength={500}
-              placeholder={t.role === 'user' ? '직접 설명드리고 싶은데요.' : '*눈을 들지 않는다* 문 옆에 두고 가십시오.'}
-              style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.5, fontFamily: 'inherit' }} />
-          </div>
+              <button type="button" onClick={() => remove(i)} aria-label="이 말 지우기" style={roundBtn}>
+                <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+              </button>
+            </span>
+          )
+          const body = isEditing
+            ? <textarea autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={500}
+                style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
+            : <span style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.5, color: 'var(--color-text-primary)' }}>{t.text}</span>
+
+          if (t.role === 'narrator') {
+            return (
+              <li key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '0 6%' }}>
+                <div style={{ width: '100%', textAlign: 'center', fontStyle: isEditing ? 'normal' : 'italic', color: 'var(--color-text-secondary)', ...(isEditing ? { padding: '6px 10px', ...box(true) } : {}) }}>{body}</div>
+                {tools}
+              </li>
+            )
+          }
+          if (t.role === 'user') {
+            return (
+              <li key={i} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
+                {tools}
+                <div style={{ maxWidth: '72%', flex: isEditing ? 1 : undefined, background: 'var(--color-surface-3)', borderRadius: 'var(--radius-md)', padding: '8px 12px', ...(isEditing ? box(true) : {}) }}>{body}</div>
+              </li>
+            )
+          }
+          return (
+            <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+              <span aria-hidden style={{ width: 28, height: 28, borderRadius: 14, background: 'var(--color-surface-3)', flexShrink: 0, marginTop: 16 }} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)', marginBottom: 4 }}>{who}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ maxWidth: '80%', flex: isEditing ? 1 : undefined, background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: '8px 12px', ...(isEditing ? box(true) : {}) }}>{body}</div>
+                  {tools}
+                </div>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* 입력 — 화자 고르기 → 한 마디 → 올리기 */}
+      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 8 }}>
+        <div role="radiogroup" aria-label="말하는 사람" style={{ display: 'flex', gap: 2 }}>
+          {(['narrator', 'user', 'character'] as const).map((r) => {
+            const on = r === role
+            return (
+              <button key={r} type="button" role="radio" aria-checked={on} onClick={() => setRole(r)}
+                style={{
+                  padding: '8px 10px', background: 'transparent', border: 0, cursor: 'pointer',
+                  borderBottom: `2px solid ${on ? 'var(--color-white)' : 'transparent'}`,
+                  fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                  color: on ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                }}>
+                {label(r)}
+              </button>
+            )
+          })}
+          <span className="t-micro" style={{ marginLeft: 'auto', alignSelf: 'center', textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{turns.length}/{MAX_TURNS}</span>
         </div>
-      ))}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button type="button" onClick={() => add('character')} disabled={turns.length >= 12} style={addBtn}>+ {characterName || '캐릭터'}의 말</button>
-        <button type="button" onClick={() => add('user')} disabled={turns.length >= 12} style={addBtn}>+ 내 말</button>
-        <span className="t-micro" style={{ marginLeft: 'auto', alignSelf: 'center', textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{turns.length}/12</span>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginTop: 8 }}>
+          <textarea value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
+            placeholder={full ? '12마디까지 넣을 수 있어요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
+            style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
+          <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기"
+            style={{
+              width: 38, height: 38, borderRadius: 19, border: 0, flexShrink: 0, display: 'grid', placeItems: 'center',
+              cursor: draft.trim() && !full ? 'pointer' : 'default',
+              background: draft.trim() && !full ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              color: draft.trim() && !full ? 'var(--color-accent-on)' : 'var(--color-text-disabled)',
+            }}>
+            <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
+          </button>
+        </div>
       </div>
     </div>
   )
 }
-const addBtn: React.CSSProperties = {
-  padding: '8px 12px', borderRadius: 'var(--radius-button)', border: 0, cursor: 'pointer',
-  background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)',
+type Turn = { role: 'character' | 'user' | 'narrator'; text: string }
+const MAX_TURNS = 12
+const roundBtn: React.CSSProperties = {
+  width: 28, height: 28, borderRadius: 14, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer',
+  background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)',
 }
 
 export type Step = { value: number; label: string; hint: string }
