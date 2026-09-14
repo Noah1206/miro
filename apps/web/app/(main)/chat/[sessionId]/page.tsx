@@ -11,6 +11,7 @@ import { COPY } from '@/lib/copy'
 import { IncomingCall } from '@/components/incoming-call'
 import { ChatComposer } from './composer'
 import { MediaBar } from './media-bar'
+import { feature } from '@miro/config'
 import { MessageList, type Msg } from './messages'
 import { StylePicker } from './style-picker'
 import { ContextTrigger, type ContextData } from './context'
@@ -74,7 +75,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <MessageList items={items} characterName={loaded.characterName} />
         </div>
 
-        <MediaBar sessionId={sessionId} matureAllowed={mature.allowed} />
+        <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
+          enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: feature('voiceCall'), video: feature('videoCall') }} />
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
 

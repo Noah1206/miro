@@ -7,7 +7,7 @@ import {
   applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories,
 } from '@miro/domain'
 import { POLICY } from '@miro/config'
-import type { RelationshipState } from '@miro/domain'
+import type { CharacterState, RelationshipState } from '@miro/domain'
 import type { ValidatedTransition } from '@miro/engine'
 
 export class StaleStateError extends Error {
@@ -31,6 +31,8 @@ export type CommitInput = {
   currentRelationship: RelationshipState
   /** 중복 기억 판정을 위한 기존 기억. */
   existingMemories: Array<{ content: string; importance: number; persistence: number }>
+  /** 이번 턴 이후의 캐릭터 상태. runTurn 이 만든다. */
+  characterState?: CharacterState
 }
 
 /**
@@ -223,6 +225,7 @@ export async function commitTurn(input: CommitInput): Promise<void> {
         turnCount: input.turnIndex,
         lastInteractionAt: new Date(),
         pendingRealityIntent: t.realityIntent ?? null,
+        ...(input.characterState ? { characterState: input.characterState } : {}),
       })
       .where(eq(roleplaySessions.id, input.sessionId))
   })

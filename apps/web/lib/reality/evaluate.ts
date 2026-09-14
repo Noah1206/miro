@@ -1,17 +1,15 @@
 import { and, desc, eq, isNull } from 'drizzle-orm'
-import { POLICY } from '@miro/config'
+import { POLICY, feature } from '@miro/config'
 import {
   db, characters, contactProfiles, events, messages, pushSubscriptions,
   realityContacts, relationships, roleplaySessions, userSettings, worldStates,
 } from '@miro/db'
 import {
-  deriveIntent, describeRelationship, evaluateRealityContact, presentContact,
+  DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
 } from '@miro/domain'
-import type { ContactChannel, RealityContact, SuppressReason } from '@miro/domain'
-import {
-  MockLLMProvider, buildMockRealityContent, generateRealityContent,
-  resolveLLM, resolvePush,
-} from '@miro/providers'
+import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
+import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
+import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { getOrGenerate } from '@/lib/simulation/media'
 import { startIncomingCall } from '@/lib/call/service'
 import { track } from '@/lib/analytics/track'
@@ -19,8 +17,10 @@ import { observe } from '@/lib/observe'
 import { shouldChargeRealityContact } from '@miro/domain'
 
 export type EvaluateOutcome =
-  | { outcome: 'sent'; channel: ContactChannel; contactId: string }
+  | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
   | { outcome: 'suppressed'; reason: SuppressReason }
+  /** 사건 규칙이 발동했지만 delay 가 있어 예약만 했다. 스케줄러가 notBefore 뒤에 다시 판단한다. */
+  | { outcome: 'scheduled'; ruleId: string; notBefore: string }
   | { outcome: 'no_intent' }
   | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' }
 
@@ -31,7 +31,11 @@ export type EvaluateOutcome =
  * 이 함수가 현재 상태(관계·사건·성향·설정·시각)로 결정한다.
  * 가입 후 경과 시간 같은 값은 입력에 없다.
  */
-export async function evaluateSession(sessionId: string, now = new Date()): Promise<EvaluateOutcome> {
+export async function evaluateSession(
+  sessionId: string, now = new Date(),
+  /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 조용한 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
+  opts: { inline?: boolean } = {},
+): Promise<EvaluateOutcome> {
   const rows = await db
     .select({
       session: roleplaySessions, character: characters, world: worldStates,
@@ -71,12 +75,34 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
   }
 
   const idleMinutes = (now.getTime() - row.session.lastInteractionAt.getTime()) / 60_000
+  const characterState: CharacterState = { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) }
+  let pending = (row.session.pendingRealityIntent as RealityIntentRow | null) ?? null
+
+  // Event Engine(유휴 시간 규칙) — 스케줄러는 "다시 볼 시점인가" 만 묻고, 무슨 일이 일어날지는 규칙이 정한다.
+  if (!pending && !opts.inline && feature('eventEngine')) {
+    const fired = evaluateEventRules({ relationship: row.relationship as never, characterState, semanticEvents: [], idleMinutes, turnCount: row.session.turnCount })
+    const rule = fired.find((r) => r.effect.realityIntent)
+    if (rule?.effect.realityIntent) {
+      const { channel, reason, urgency, delayMinutes } = rule.effect.realityIntent
+      const nextState = rule.once ? { ...characterState, firedRules: [...characterState.firedRules, rule.id] } : characterState
+      if (delayMinutes > 0) {
+        const notBefore = new Date(now.getTime() + delayMinutes * 60_000).toISOString()
+        await db.update(roleplaySessions).set({ pendingRealityIntent: { channel, reason, urgency, notBefore }, characterState: nextState })
+          .where(eq(roleplaySessions.id, sessionId))
+        return { outcome: 'scheduled', ruleId: rule.id, notBefore }
+      }
+      pending = { channel, reason, urgency }
+      if (rule.once) await db.update(roleplaySessions).set({ characterState: nextState }).where(eq(roleplaySessions.id, sessionId))
+    }
+  }
+
   const intent = deriveIntent({
     relationship: row.relationship as never,
     activeEvents: activeEvents as never,
     contactProfile: profile,
     idleMinutes,
-    pending: (row.session.pendingRealityIntent as never) ?? null,
+    pending: pending as never,
+    now,
   })
   if (!intent) return { outcome: 'no_intent' }
 
@@ -91,7 +117,9 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
   }
 
   const lastSent = recent.find((c) => c.status === 'sent' || c.status === 'opened')
-  const decision = evaluateRealityContact({
+  let decision: RealityDecision = opts.inline
+    ? { send: true, channel: intent.channel, dedupeKey: `inline:${row.session.turnCount}:${intent.reason}` }
+    : evaluateRealityContact({
     intent,
     contactProfile: profile,
     personality: {
@@ -112,8 +140,16 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
       dedupeKey: `suppressed:${now.toISOString()}`,
       status: 'suppressed', suppressedReason: decision.reason,
     })
+    // 예약된 의도가 막혔으면 다음 재판단 시점으로 미룬다 — 매 틱마다 같은 억제를 반복하지 않는다.
+    if (pending?.notBefore) {
+      await db.update(roleplaySessions)
+        .set({ pendingRealityIntent: { ...pending, notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } })
+        .where(eq(roleplaySessions.id, sessionId))
+    }
     return { outcome: 'suppressed', reason: decision.reason }
   }
+  // 기능 플래그 — 알파에서는 사진·통화가 꺼져 있다. 채널만 낮추고 연락 자체는 보낸다.
+  decision = { ...decision, channel: downgradeByFeature(decision.channel) }
 
   const presented = presentContact(decision.channel, row.character.name, row.profile.presentation)
 
@@ -146,10 +182,8 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
   }
 
   // ---- 내용 생성 (Provider 미구성 시 Mock, 숨기지 않음) ----
-  const configured = resolveLLM()
-  const llm = configured.info.mode === 'live'
-    ? configured
-    : new MockLLMProvider((p) => buildMockRealityContent(p))
+  installAIUsageSink()
+  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId } })
 
   const content = await generateRealityContent(llm, {
     characterName: row.character.name,
@@ -231,7 +265,15 @@ export async function evaluateSession(sessionId: string, now = new Date()): Prom
     })
   }
 
-  return { outcome: 'sent', channel: decision.channel, contactId }
+  return { outcome: 'sent', channel: decision.channel, contactId, text: content.text }
+}
+
+type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string }
+
+function downgradeByFeature(c: ContactChannel): ContactChannel {
+  if ((c === 'voice_call' && !feature('voiceCall')) || (c === 'video_call' && !feature('videoCall'))) return 'message'
+  if (c === 'photo' && !feature('imageGeneration')) return 'message'
+  return c
 }
 
 async function pushToUser(userId: string, payload: {

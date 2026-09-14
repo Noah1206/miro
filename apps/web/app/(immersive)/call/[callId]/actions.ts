@@ -1,5 +1,8 @@
 'use server'
 
+import { feature } from '@miro/config'
+import { COPY } from '@/lib/copy'
+
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { renderBlocks, runTurn } from '@miro/engine'
@@ -47,6 +50,7 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
         transition: result.transition,
         worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version,
         currentRelationship: snapshot.relationship, existingMemories: snapshot.memories,
+        characterState: result.characterState,
       })
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue
@@ -72,6 +76,7 @@ export async function placeCallAction(_prev: PlaceCallState, form: FormData): Pr
   const user = await requireUser()
   const sessionId = String(form.get('sessionId') ?? '')
   const channel = form.get('channel') === 'video' ? 'video' : 'voice'
+  if (!feature(channel === 'video' ? 'videoCall' : 'voiceCall')) return { error: COPY.error.featureOff }
   let callId: string
   try {
     callId = await startOutgoingCall(user.id, sessionId, channel)

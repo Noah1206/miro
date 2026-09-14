@@ -108,6 +108,10 @@ export const SimulationProposal = z.object({
   rp: z.object({
     blocks: z.array(RpBlock).min(1).max(12),
   }),
+  /** 이 응답에서 캐릭터가 느끼는 감정 (표시·로그용, 상태를 바꾸지 않는다). */
+  emotion: z.enum(['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious']).optional(),
+  /** 이 응답의 의도 한 줄 (예: '떠보기', '화제 돌리기'). */
+  intent: z.string().max(80).optional(),
   worldDelta: WorldDeltaProposal.nullable().default(null),
   relationshipDelta: RelationshipDeltaProposal.nullable().default(null),
   sceneDelta: SceneDeltaProposal.nullable().default(null),

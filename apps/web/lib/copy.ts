@@ -14,6 +14,8 @@ export const COPY = {
     callStart: '통화를 시작하지 못했어요.',
     callNotActive: '진행 중인 통화가 아니에요.',
     callUnstable: '연결이 불안정해요. 텍스트로 이어갈까요?',
+    featureOff: '지금 단계에서는 열리지 않은 기능이에요.',
+    budget: '오늘 준비된 대화가 모두 끝났어요. 내일 다시 이어갈 수 있어요.',
   },
   status: {
     thinking: (name: string) => `${name}이(가) 답을 고르고 있다…`,

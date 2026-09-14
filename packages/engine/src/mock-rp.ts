@@ -1,3 +1,5 @@
+import { MOODS, type Mood } from '@miro/domain'
+import { fallbackLine } from './fallback'
 import type { SimulationProposal } from './proposal.schema'
 
 /**
@@ -8,28 +10,31 @@ import type { SimulationProposal } from './proposal.schema'
  */
 export function buildMockProposal(
   prompt: string,
-  opts: { characterName: string },
+  opts: { characterName: string; system?: string },
 ): SimulationProposal {
   const distance = num(prompt, /정서적 거리 (\d+)/) ?? 50
   const trust = num(prompt, /신뢰 (\d+)/) ?? 30
   const name = opts.characterName
   const activeEventIds = [...prompt.matchAll(/\[([a-z_]+)\]\s*\{.*?"__id":"([0-9a-f-]+)"/g)]
 
-  // 거리가 멀면 짧고 건조하게, 가까우면 조금 더 길게 — 상태가 출력을 바꾼다.
+  // 기분(코드가 정한 상태)과 말투(system 의 정체성)에 맞는 한 줄 — 상태가 출력을 바꾼다.
+  const moodMatch = prompt.match(/## 지금 기분[^\n]*\n(\w+):/)?.[1]
+  const mood: Mood = (MOODS as readonly string[]).includes(moodMatch ?? '') ? (moodMatch as Mood) : 'neutral'
+  const speechStyle = opts.system?.match(/말투: ([^\n]+)/)?.[1] ?? null
+  const seed = num(prompt, /턴 (\d+)/) ?? prompt.length
   const cold = distance > 60
   const onCall = /전화 통화 중|영상통화 중/.test(prompt)
+  const messenger = /메신저 대화처럼/.test(opts.system ?? '')
   const blocks: SimulationProposal['rp']['blocks'] = onCall
     ? [{ type: 'dialogue', speaker: name, text: cold ? '…듣고 있어요. 말해요.' : '목소리 들으니까 좀 낫네요.' }]
     : [
-        { type: 'action', speaker: null, text: cold ? '그는 시선을 돌렸다.' : '그가 잠깐 말을 멈췄다.' },
-        {
-          type: 'dialogue', speaker: name,
-          text: cold ? '…그래서요?' : '조금 놀랐어요. 그런 말을 할 줄은 몰랐는데.',
-        },
+        ...(messenger ? [] : [{ type: 'action' as const, speaker: null, text: cold ? '시선을 돌린다.' : '잠깐 말을 멈춘다.' }]),
+        { type: 'dialogue', speaker: name, text: fallbackLine(mood, speechStyle, seed) },
       ]
 
   return {
     rp: { blocks },
+    emotion: mood,
     worldDelta: null,
     // 신뢰가 낮을수록 변화 폭이 작다.
     relationshipDelta: { trust: trust < 40 ? 1 : 2, emotionalDistance: -1, reason: 'mock turn' },

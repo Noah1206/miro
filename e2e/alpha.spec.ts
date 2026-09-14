@@ -9,16 +9,15 @@ test('알파: 회원가입 없이 대화하고, 행동에 따라 유진이 먼�
   await page.getByRole('button', { name: '답장하기' }).click()
   await expect(page).toHaveURL(/\/alpha\/chat/)
 
-  // 빠른 답장 → 유진의 답
+  // 빠른 답장 → 유진의 답 (정식 파이프라인: 의미 이벤트 → 규칙 → 상태 → AI → 검증 → 커밋)
   await page.getByRole('button', { name: '친구들이랑 있었어' }).click()
   await expect(page.getByRole('log')).toContainText('친구들이랑 있었어')
-  await expect(page.getByRole('log').locator('p')).toHaveCount(3, { timeout: 8000 })
+  await expect(page.getByRole('log').locator('p').nth(2)).toBeVisible({ timeout: 30000 })
 
-  // 자유 입력 — 질투 트리거 → 답장 뒤 유진이 먼저 두 줄을 보낸다 (리얼리티 메시지)
+  // 자유 입력 — 질투 규칙(jealousy_spike) → 답장 뒤 유진이 먼저 메시지를 보낸다 (리얼리티 메시지, 즉시 발송)
   await page.getByLabel('메시지 입력').fill('오늘 다른 남자랑 술 마셨어')
   await page.keyboard.press('Enter')
-  await expect(page.locator('[data-reality-message]')).toHaveCount(2, { timeout: 15000 })
-  await expect(page.getByRole('log')).toContainText('아까 같이 술 마셨다는 사람 누구야?')
+  await expect(page.locator('[data-reality-message]').first()).toBeVisible({ timeout: 45000 })
 
   // 관계 숫자는 화면 어디에도 없다
   await expect(page.locator('body')).not.toContainText(/affection|jealousy|trust/i)

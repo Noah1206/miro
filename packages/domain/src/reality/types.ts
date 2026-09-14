@@ -22,6 +22,8 @@ export type RealityIntent = {
   channel: ContactChannel
   reason: string
   urgency: number // 0-1
+  /** 스케줄러가 이 시각 전에는 보내지 않는다 (ISO). 없으면 유휴 시간 규칙을 따른다. */
+  notBefore?: string
 }
 
 export type NotificationSettings = {

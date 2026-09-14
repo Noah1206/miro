@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server'
-import { getAlphaSession, saveAlphaSession, clientIp } from '@/lib/alpha/session'
-import { applyUserMessage } from '@/lib/alpha/relationship'
-import { buildPrompt, cleanReply, type AlphaMessage } from '@/lib/alpha/prompt'
-import { checkLimits, recordCall, type LimitKind } from '@/lib/alpha/limits'
-import { resolveAlphaAI } from '@/lib/alpha/ai'
-import { REALITY_DELAYS_MS, REPLY_DELAY_MS, fallbackReply, realityLines, type RealityTrigger } from '@/lib/alpha/character'
+import { and, count, eq } from 'drizzle-orm'
+import { db, realityContacts } from '@miro/db'
+import { clientIp, getAlphaSession } from '@/lib/alpha/session'
+import { REALITY_DELAY_MS, REPLY_DELAY_MS } from '@/lib/alpha/character'
 import { trackAlpha } from '@/lib/alpha/track'
-import { observe } from '@/lib/observe'
+import { runConversationTurn, type ConversationOutcome } from '@/lib/simulation/turn'
+import { COPY } from '@/lib/copy'
 
 export const runtime = 'nodejs'
 
-/** 최근 몇 마디만 프롬프트에 싣는다 — 전체 대화를 보내지 않는다. */
-const RECENT = 8
 /** 리얼리티 메시지를 본 뒤 이만큼 더 이야기하면 가장 재밌는 순간에 끊는다. */
 const CLIFF_AFTER_REALITY = 6
 const CLIFF_HARD = 10
 
+export type LimitKind = 'user' | 'ip' | 'global'
 export type ChatResponse = {
   reply: string
   delayMs: number
@@ -23,11 +21,12 @@ export type ChatResponse = {
   wow?: boolean
   cliffhanger?: boolean
   limit?: LimitKind
+  error?: string
 }
 
 /**
- * Browser → /api/chat → 관계 엔진 → 프롬프트 → AI Provider → 대사.
- * AI 는 여기서만 호출된다. 한도에 걸리면 호출 없이 limit 만 돌려준다.
+ * Browser → /api/chat → State Update Pipeline(runConversationTurn) → 대사.
+ * 웹의 /chat 액션과 같은 코드가 돈다. 한도에 걸리면 AI 호출 없이 limit 만 돌려준다.
  */
 export async function POST(req: Request): Promise<Response> {
   const session = await getAlphaSession()
@@ -38,60 +37,36 @@ export async function POST(req: Request): Promise<Response> {
   if (!text) return NextResponse.json({ error: 'empty' }, { status: 400 })
 
   const ip = await clientIp()
-  const limit = await checkLimits(session.id, ip)
-  if (limit) return NextResponse.json({ reply: '', delayMs: 0, limit } satisfies ChatResponse)
+  const r = await runConversationTurn({ userId: session.userId, sessionId: session.sessionId, input: text, ip })
+  if (!r.ok) return NextResponse.json(failure(r))
 
-  // 1) 관계 — 우리 코드가 바꾼다.
-  const applied = applyUserMessage(session.state, text)
-  const now = new Date()
-  session.state = applied.state
-  session.memories = [...session.memories, ...applied.memories].slice(-6)
-  session.messages = [...session.messages, { role: 'user', text, at: now.toISOString() } satisfies AlphaMessage]
-  session.userMessages += 1
-  const wowNow = applied.wow && !session.wowAt
-  if (wowNow) session.wowAt = now
+  const [reality] = await db.select({ n: count() }).from(realityContacts)
+    .where(and(eq(realityContacts.sessionId, session.sessionId), eq(realityContacts.status, 'sent')))
+  const realitySeen = (reality?.n ?? 0) > 0
+  const cliffhanger = (realitySeen && r.turnIndex === CLIFF_AFTER_REALITY) || r.turnIndex === CLIFF_HARD
+  const wow = r.firedRules.length > 0
+  const followUp = r.reality && r.reality.channel !== 'status'
+    ? { lines: [r.reality.text], delaysMs: [REALITY_DELAY_MS] } : undefined
 
-  // 2) 대사 — AI 는 여기에만.
-  const { system, prompt } = buildPrompt({ state: session.state, memories: session.memories, recent: session.messages.slice(-RECENT) })
-  await recordCall(session.id, ip)
-  let reply = ''
-  try {
-    reply = cleanReply(await resolveAlphaAI().generateResponse({ system, prompt, maxTokens: 160 }))
-  } catch (e) {
-    observe('alpha.ai_failed', { error: (e as Error).message })
-  }
-  if (!reply) reply = fallbackReply(session.state.currentMood, session.userMessages)
-  session.messages = [...session.messages, { role: 'character', text: reply, at: new Date().toISOString() }]
-
-  // 3) 리얼리티 메시지 — 문턱을 처음 넘는 순간, 미리 쓴 대사로. 세션에 한 번.
-  let followUp: ChatResponse['followUp']
-  if (!session.realityAt) {
-    const trigger: RealityTrigger | null =
-      session.state.jealousy >= 45 ? 'jealousy_high'
-        : session.state.anger >= 55 ? 'anger_high'
-          : session.state.affection >= 75 ? 'affection_high' : null
-    if (trigger) {
-      const lines = realityLines(trigger, session.memories)
-      followUp = { lines, delaysMs: REALITY_DELAYS_MS.slice(0, lines.length) }
-      session.realityAt = new Date()
-      session.messages = [...session.messages, ...lines.map((t) => ({ role: 'character' as const, text: t, at: new Date().toISOString() }))]
-    }
-  }
-
-  // 4) 클리프행어 — 리얼리티를 본 뒤 몇 마디, 또는 충분히 오래 이야기했을 때 한 번.
-  let cliffhanger = false
-  if (!session.cliffAt && ((session.realityAt && session.userMessages >= CLIFF_AFTER_REALITY) || session.userMessages >= CLIFF_HARD)) {
-    cliffhanger = true
-    session.cliffAt = new Date()
-  }
-
-  await saveAlphaSession(session)
-
-  if (session.userMessages === 1) trackAlpha(session.id, 'first_message_sent')
-  if (session.userMessages === 3) trackAlpha(session.id, 'third_message_sent')
-  if (wowNow) trackAlpha(session.id, 'wow_event_triggered', { rule: applied.fired[0] ?? 'delta' })
+  if (r.turnIndex === 1) trackAlpha(session.userId, 'first_message_sent')
+  if (r.turnIndex === 3) trackAlpha(session.userId, 'third_message_sent')
+  if (wow) trackAlpha(session.userId, 'wow_event_triggered', { rule: r.firedRules[0] })
 
   return NextResponse.json({
-    reply, delayMs: REPLY_DELAY_MS[session.state.currentMood], followUp, wow: wowNow || undefined, cliffhanger: cliffhanger || undefined,
+    reply: messengerText(r.blocks), delayMs: REPLY_DELAY_MS[r.characterState.mood],
+    followUp, wow: wow || undefined, cliffhanger: cliffhanger || undefined,
   } satisfies ChatResponse)
+}
+
+/** 실패는 문장으로만 나간다 — 오류 코드나 스택은 화면에 닿지 않는다. */
+function failure(r: Exclude<ConversationOutcome, { ok: true }>): ChatResponse {
+  if (r.reason === 'budget') return { reply: '', delayMs: 0, limit: r.kind === 'user' ? 'user' : r.kind === 'ip' ? 'ip' : 'global' }
+  if (r.reason === 'usage') return { reply: '', delayMs: 0, limit: 'user' }
+  if (r.reason === 'too_long') return { reply: '', delayMs: 0, error: COPY.error.tooLong(500) }
+  return { reply: '', delayMs: 0, error: COPY.error.generation }
+}
+
+/** 메신저 화면용 — 대사는 그대로, 행동·서술은 *별표* 로. */
+function messengerText(blocks: Extract<ConversationOutcome, { ok: true }>['blocks']): string {
+  return blocks.map((b) => (b.type === 'dialogue' || b.type === 'npc' ? b.text : `*${b.text}*`)).join('\n')
 }

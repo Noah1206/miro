@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  bigserial, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigserial, boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile } from '@miro/domain'
 
@@ -9,6 +9,8 @@ export const users = pgTable('users', {
   /** 소셜 제공자가 이메일을 주지 않을 수 있다 (카카오·네이버 선택 동의). 있으면 계정 연결 키로 쓴다. */
   email: text('email').unique(),
   displayName: text('display_name'),
+  /** 로그인 없이 시작한 체험 계정(Closed Alpha). 이메일이 없고, 나중에 소셜 로그인으로 이어붙일 수 있다. */
+  isGuest: boolean('is_guest').notNull().default(false),
 
   /** Free/Pro 자격. 결제(Phase 13) 이전에는 dev 토글/Admin 이 이 값을 쓴다. */
   plan: text('plan', { enum: ['free', 'pro'] }).notNull().default('free'),
@@ -239,7 +241,9 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
 
   /** RP 턴에서 AI 가 제안한 "나중에 연락하고 싶은 이유". 스케줄러가 우선 참고한다. */
   pendingRealityIntent: jsonb('pending_reality_intent')
-    .$type<{ channel: string; reason: string; urgency: number }>(),
+    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string }>(),
+  /** 턴마다 변하는 캐릭터 상태(기분·스트레스·목표·발동한 규칙). 프로필(characters)과 분리한다. */
+  characterState: jsonb('character_state').$type<Record<string, unknown>>().notNull().default({}),
   /** 스케줄러가 마지막으로 이 세션의 선연락을 판단한 시각. */
   realityCheckedAt: timestamp('reality_checked_at', { withTimezone: true }),
   /** 캐릭터 상태 한 줄 ('status' 채널). Chats 목록과 헤더에 표시. */
@@ -699,38 +703,35 @@ export const characterBookmarks = pgTable('character_bookmarks', {
 }))
 
 /**
- * Closed Alpha — 로그인 없이 쿠키 하나로 체험한다. 관계 상태·기억·대화가 한 줄에 있다.
- * 정식 데이터 모델(characters/roleplay_sessions)과 섞지 않는다 — 검증이 끝나면 통째로 지운다.
+ * AI 호출 한 번 = 한 줄 (성공·실패 모두). Usage Manager 가 쓰고 Budget Guard 가 읽는다.
+ * 사용자·IP·전체 요청 수·전체 추정 비용 한도가 전부 이 표에서 나온다.
  */
-export const alphaSessions = pgTable('alpha_sessions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  ip: text('ip'),
-  state: jsonb('state').$type<Record<string, number | string>>().notNull(),
-  memories: jsonb('memories').$type<string[]>().notNull().default([]),
-  messages: jsonb('messages').$type<Array<{ role: 'user' | 'character'; text: string; at: string }>>().notNull().default([]),
-  userMessages: integer('user_messages').notNull().default(0),
-  wowAt: timestamp('wow_at', { withTimezone: true }),
-  realityAt: timestamp('reality_at', { withTimezone: true }),
-  cliffAt: timestamp('cliff_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
-})
-
-/** AI 호출 한 번 = 한 줄. 사용자·IP·전체 한도가 전부 여기서 나온다. */
-export const alphaAiCalls = pgTable('alpha_ai_calls', {
+export const aiUsage = pgTable('ai_usage', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
-  sessionId: uuid('session_id').notNull().references(() => alphaSessions.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
+  sessionId: uuid('session_id'),
   ip: text('ip'),
+  task: text('task').notNull(),
+  provider: text('provider').notNull(),
+  model: text('model').notNull(),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
+  /** 달러. 무료 등급 모델은 0. */
+  estimatedCost: numeric('estimated_cost', { precision: 12, scale: 8 }).notNull().default('0'),
+  latencyMs: integer('latency_ms').notNull(),
+  ok: boolean('ok').notNull(),
+  error: text('error'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
-  createdIdx: index('alpha_ai_calls_created_idx').on(t.createdAt),
-  sessionIdx: index('alpha_ai_calls_session_idx').on(t.sessionId, t.createdAt),
-  ipIdx: index('alpha_ai_calls_ip_idx').on(t.ip, t.createdAt),
+  createdIdx: index('ai_usage_created_idx').on(t.createdAt),
+  userIdx: index('ai_usage_user_idx').on(t.userId, t.createdAt),
+  ipIdx: index('ai_usage_ip_idx').on(t.ip, t.createdAt),
 }))
 
+/** Closed Alpha 웨이트리스트 — 체험(게스트 계정) 뒤에 남기는 이메일. */
 export const alphaWaitlist = pgTable('alpha_waitlist', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
-  sessionId: uuid('session_id').references(() => alphaSessions.id, { onDelete: 'set null' }),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

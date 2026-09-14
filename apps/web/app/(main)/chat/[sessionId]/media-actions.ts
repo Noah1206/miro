@@ -8,6 +8,8 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { matureGateFor } from '@/lib/ops/safety'
+import { feature } from '@miro/config'
+import { COPY } from '@/lib/copy'
 
 export type MediaState = { error: string | null; notice: string | null }
 
@@ -19,6 +21,7 @@ export type MediaState = { error: string | null; notice: string | null }
  * 현재 World State 를 읽으므로 Chat 에서 이동한 장소가 그대로 반영된다.
  */
 export async function requestPhoto(_prev: MediaState, form: FormData): Promise<MediaState> {
+  if (!feature('imageGeneration')) return { error: COPY.error.featureOff, notice: null }
   const user = await requireUser()
   const sessionId = String(form.get('sessionId') ?? '')
 

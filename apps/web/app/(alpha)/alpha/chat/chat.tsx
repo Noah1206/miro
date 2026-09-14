@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Button, ButtonLink, Sheet, TextArea, TransitionLink } from '@/components/ui'
 import { CharacterText, Line, UserText } from '@/components/scene/text'
 import { YUJIN } from '@/lib/alpha/character'
-import type { AlphaMessage } from '@/lib/alpha/prompt'
+import type { AlphaMessage } from '@/lib/alpha/session'
 import type { ChatResponse } from '@/app/api/chat/route'
 
 type Item = AlphaMessage & { id: string; reality?: boolean }
@@ -17,13 +17,14 @@ const withId = (m: AlphaMessage, reality = false): Item => ({ ...m, id: `${m.at}
  * 처음엔 빠른 답장 세 개, 그 뒤엔 자유 입력.
  */
 export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; hasReplied: boolean }) {
-  const [items, setItems] = useState<Item[]>(() => initial.map((m) => withId(m)))
+  const [items, setItems] = useState<Item[]>(() => initial.map((m) => withId(m, m.reality === true)))
   const [typing, setTyping] = useState(false)
   const [pending, setPending] = useState(false)
   const [quick, setQuick] = useState(!hasReplied)
   const [limit, setLimit] = useState<ChatResponse['limit'] | null>(null)
   const [cliff, setCliff] = useState(false)
   const [text, setText] = useState('')
+  const [notice, setNotice] = useState<string | null>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
   const bottom = useRef<HTMLDivElement>(null)
 
@@ -32,7 +33,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
   async function send(raw: string) {
     const msg = raw.trim()
     if (!msg || pending) return
-    setPending(true); setQuick(false); setText('')
+    setPending(true); setQuick(false); setText(''); setNotice(null)
     if (ta.current) ta.current.style.height = 'auto'
     setItems((xs) => [...xs, withId({ role: 'user', text: msg, at: new Date().toISOString() })])
 
@@ -43,7 +44,8 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
       res = (await r.json()) as ChatResponse
     } catch { /* 아래에서 대체 */ }
 
-    if (!res || res.limit) { setLimit(res?.limit ?? 'global'); setPending(false); return }
+    if (res?.limit) { setLimit(res.limit); setPending(false); return }
+    if (!res || res.error || !res.reply) { setNotice(res?.error ?? '잠시 연결이 끊겼어요. 다시 이어볼까요?'); setPending(false); return }
 
     // 읽고 나서 답이 오기까지 — 기분에 따라 다르다. 그 사이는 '입력 중'.
     setTyping(true); await sleep(res.delayMs); setTyping(false)
@@ -106,6 +108,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
               <Button type="button" size="sm" onClick={() => { setQuick(false); ta.current?.focus() }}>직접 입력하기</Button>
             </div>
           )}
+          {notice && <p role="alert" className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 8 }}>{notice}</p>}
           <form onSubmit={(e) => { e.preventDefault(); send(text) }} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <TextArea ref={ta} value={text} onChange={(e) => setText(e.target.value)} rows={1} maxLength={500} placeholder="메시지 입력" aria-label="메시지 입력" disabled={pending}
               onInput={(e) => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 140)}px` }}

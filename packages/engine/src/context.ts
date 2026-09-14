@@ -1,7 +1,7 @@
 import { POLICY } from '@miro/config'
-import { CALL_MODE_RULES, describeRelationship, selectRelevantMemories } from '@miro/domain'
+import { CALL_MODE_RULES, MOOD_GUIDE, describeRelationship, groupByLayer, retrieveMemories } from '@miro/domain'
 import type {
-  CharacterCore, Memory, RelationshipState, SimulationEvent, Npc, WorldState, Scene, SimulationMode,
+  CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode,
 } from '@miro/domain'
 
 export type RecentMessage = {
@@ -25,6 +25,12 @@ export type SimulationSnapshot = {
   turnCount: number
   /** chat(기본) | voice_call | video_call. 통화도 같은 시뮬레이션이다. */
   mode?: SimulationMode
+  /** 턴마다 변하는 캐릭터 상태. 없으면 기본(neutral). runTurn 이 이번 턴 값을 채워 넣는다. */
+  characterState?: CharacterState
+  /** 이번 사용자 입력에서 코드가 분류한 의미 이벤트. */
+  semanticEvents?: SemanticEvent[]
+  /** 기억 검색의 질의. 이번 사용자 입력. */
+  userInput?: string
 }
 
 export type BuiltContext = {
@@ -48,25 +54,30 @@ const STYLE_GUIDE = {
  * 예산을 넘으면 중요도가 낮은 항목부터 제외하고, 무엇을 뺐는지 기록한다.
  */
 export function buildContext(s: SimulationSnapshot): BuiltContext {
-  const dropped: string[] = []
-
-  const memories = selectRelevantMemories(
-    s.memories, s.relationship.sessionId, POLICY.context.relevantMemoryCount,
-  )
-  if (s.memories.length > memories.length) {
-    dropped.push(`memories(${s.memories.length - memories.length})`)
-  }
-
-  const recent = s.recentMessages.slice(-POLICY.context.recentMessageCount)
-  if (s.recentMessages.length > recent.length) {
-    dropped.push(`messages(${s.recentMessages.length - recent.length})`)
-  }
-
   const system = buildSystem(s)
-  const prompt = buildPrompt(s, memories, recent)
-  const approxTokens = estimateTokens(system) + estimateTokens(prompt)
+  const systemTokens = estimateTokens(system)
 
-  return { system, prompt, approxTokens, dropped }
+  // 예산 안에 들 때까지 단계적으로 줄인다: 기억 → 최근 대화 순. 정체성(system)은 줄이지 않는다.
+  const plans: Array<{ memories: number; messages: number }> = [
+    { memories: POLICY.context.relevantMemoryCount, messages: POLICY.context.recentMessageCount },
+    { memories: Math.ceil(POLICY.context.relevantMemoryCount / 2), messages: POLICY.context.recentMessageCount },
+    { memories: Math.ceil(POLICY.context.relevantMemoryCount / 2), messages: Math.ceil(POLICY.context.recentMessageCount / 2) },
+    { memories: 2, messages: 4 },
+  ]
+  let last: BuiltContext | null = null
+  for (const plan of plans) {
+    const dropped: string[] = []
+    const memories = retrieveMemories(s.memories, s.relationship.sessionId, plan.memories, s.userInput ?? '')
+    if (s.memories.length > memories.length) dropped.push(`memories(${s.memories.length - memories.length})`)
+    const recent = s.recentMessages.slice(-plan.messages)
+    if (s.recentMessages.length > recent.length) dropped.push(`messages(${s.recentMessages.length - recent.length})`)
+
+    const prompt = buildPrompt(s, memories, recent)
+    last = { system, prompt, approxTokens: systemTokens + estimateTokens(prompt), dropped }
+    if (last.approxTokens <= POLICY.context.maxTokens) return last
+  }
+  last!.dropped.push('over_budget')
+  return last!
 }
 
 /** Character Core — 매 턴 성격을 새로 정의하지 않도록 안정적으로 고정한다. */
@@ -175,9 +186,25 @@ function buildPrompt(
     parts.push('NPC 는 자신이 아는 정보로만 행동합니다.')
   }
 
+  const state = s.characterState
+  if (state) {
+    parts.push('', '## 지금 기분 (내부 상태 — 말로 설명하지 말고 태도로 드러낼 것)')
+    parts.push(`${state.mood}: ${MOOD_GUIDE[state.mood]}`)
+    if (state.stress >= 60) parts.push('스트레스가 높다. 말이 짧아지고 먼저 묻지 않는다.')
+    for (const g of state.currentGoals) parts.push(`지금 하고 싶은 것: ${g}`)
+    for (const t of state.currentThoughts) parts.push(`속마음: ${t}`)
+  }
+
   if (memories.length > 0) {
-    parts.push('', '## 기억하고 있는 것')
-    for (const m of memories) parts.push(`- ${m.content}`)
+    const layers = groupByLayer(memories)
+    if (layers.long_term.length > 0) {
+      parts.push('', '## 기억하고 있는 것 (사용자에 대한 사실·약속·취향)')
+      for (const m of layers.long_term) parts.push(`- ${m.content}`)
+    }
+    if (layers.relationship.length > 0) {
+      parts.push('', '## 둘 사이에 있었던 일')
+      for (const m of layers.relationship) parts.push(`- ${m.content}`)
+    }
   }
 
   if (s.recentRealityContacts.length > 0) {

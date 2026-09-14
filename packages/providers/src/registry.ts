@@ -1,5 +1,4 @@
-import { GatewayLLMProvider } from './llm/gateway'
-import { MockLLMProvider } from './mock/llm'
+import { createAI } from './ai/resolve'
 import { MockImageProvider } from './mock/image'
 import { ReplicateImageProvider } from './image/replicate'
 import { buildMockDraft } from './character/generate'
@@ -23,11 +22,12 @@ import type { OAuthProvider, OAuthProviderId } from './auth/types'
  * Provider 선택.
  * 설정이 없으면 Mock 으로 떨어지되, info.mode 로 그 사실을 숨기지 않는다.
  */
-export function resolveLLM(): LLMProvider {
-  const key = process.env.AI_GATEWAY_API_KEY
-  const model = process.env.MIRO_LLM_MODEL
-  if (key && model) return new GatewayLLMProvider(key, model)
-  return new MockLLMProvider((prompt) => buildMockDraft(prompt))
+/**
+ * 구조화 생성용 LLM = AI Orchestrator (체인·재시도·타임아웃·fallback·사용량).
+ * Provider 가 하나도 없으면 Mock 체인 — 캐릭터 초안 생성의 Mock 은 프롬프트에서 결정적으로 만든다.
+ */
+export function resolveLLM(context?: { userId?: string | null; sessionId?: string | null }): LLMProvider {
+  return createAI({ mock: (req) => buildMockDraft(req.prompt), context })
 }
 
 /** 이미지. REPLICATE_API_TOKEN 이 있으면 실제 생성, 없으면 자리표시. */

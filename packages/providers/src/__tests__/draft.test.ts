@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { CharacterDraft } from '../character/draft.schema'
 import { buildMockDraft, generateCharacterDraft } from '../character/generate'
-import { MockLLMProvider } from '../mock/llm'
 import { MockImageProvider } from '../mock/image'
-import { GatewayLLMProvider } from '../llm/gateway'
+import { MockAIProvider } from '../ai/mock'
+import { AIOrchestrator } from '../ai/orchestrator'
+import { OpenAICompatibleProvider } from '../ai/openai-compatible'
+
+const mockLLM = (build: (prompt: string) => unknown) => new AIOrchestrator({ chain: [new MockAIProvider((req) => build(req.prompt))], maxRetries: 0 })
 
 describe('character draft', () => {
   it('mock output satisfies the schema', () => {
@@ -34,32 +37,32 @@ describe('character draft', () => {
   })
 
   it('goes through the provider interface', async () => {
-    const llm = new MockLLMProvider(buildMockDraft)
+    const llm = mockLLM(buildMockDraft)
     const draft = await generateCharacterDraft(llm, '다른 사람에겐 싸가지 없는데 나한테만 잘해주는 30살 검사')
     expect(draft.identity.name).toContain('초안')
     expect(draft.world.location).toBeTruthy()
   })
 
   it('rejects a draft that violates the schema instead of passing it through', async () => {
-    const bad = new MockLLMProvider(() => ({ identity: { name: '' } }))
+    const bad = mockLLM(() => ({ identity: { name: '' } }))
     await expect(
       bad.generateStructured({ schema: CharacterDraft, system: '', prompt: '' }),
-    ).rejects.toThrow(/schema/)
+    ).rejects.toThrow(/ai unavailable/)
   })
 })
 
 describe('provider transparency', () => {
   it('mock providers announce that they are not real generation', () => {
-    expect(new MockLLMProvider(buildMockDraft).info.mode).toBe('mock')
-    expect(new MockLLMProvider(buildMockDraft).info.notice).toMatch(/Mock/)
+    expect(mockLLM(buildMockDraft).info.mode).toBe('mock')
+    expect(mockLLM(buildMockDraft).info.notice).toMatch(/Mock/)
     expect(new MockImageProvider().info.mode).toBe('mock')
   })
 
   it('a configured gateway provider reports itself as live', () => {
-    const p = new GatewayLLMProvider('key', 'anthropic/claude-sonnet-5')
+    const p = new OpenAICompatibleProvider('gateway', 'key', 'anthropic/claude-sonnet-5', 'https://ai-gateway.vercel.sh/v1')
     expect(p.info.mode).toBe('live')
     expect(p.info.notice).toBeNull()
-    expect(p.info.name).toBe('anthropic/claude-sonnet-5')
+    expect(p.info.name).toBe('gateway/anthropic/claude-sonnet-5')
   })
 })
 
@@ -92,10 +95,10 @@ describe('gateway retry', () => {
     const original = globalThis.fetch
     globalThis.fetch = fetchMock as typeof fetch
     try {
-      const p = new GatewayLLMProvider('k', 'test/model')
+      const p = new AIOrchestrator({ chain: [new OpenAICompatibleProvider('gateway', 'k', 'test/model', 'https://example.test/v1')], maxRetries: 1 })
       await expect(
         p.generateStructured({ schema: z.object({ ok: z.string() }), system: '', prompt: '', maxRetries: 1 }),
-      ).rejects.toThrow(/failed after 2 attempts/)
+      ).rejects.toThrow(/ai unavailable after 2 attempts/)
       expect(calls).toBe(2)
     } finally {
       globalThis.fetch = original

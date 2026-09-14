@@ -3,6 +3,7 @@ import {
   db, characters, events, memories, messages, npcs, realityContacts, relationships,
   roleplaySessions, scenes, worldStates, worlds,
 } from '@miro/db'
+import { DEFAULT_CHARACTER_STATE, type CharacterState } from '@miro/domain'
 import type { SimulationSnapshot } from '@miro/engine'
 
 export type LoadedSession = {
@@ -13,6 +14,7 @@ export type LoadedSession = {
   characterStatus: string | null
   /** 운영 제한. 새 턴/미디어를 거부한다. */
   restricted: boolean
+  lastInteractionAt: Date
 }
 
 /**
@@ -95,6 +97,7 @@ export async function loadSession(
       .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),
     outputStyle: row.session.outputStyle,
     turnCount: row.session.turnCount,
+    characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
   }
 
   return {
@@ -104,6 +107,7 @@ export async function loadSession(
     characterName: c.name,
     characterStatus: row.session.characterStatus,
     restricted: row.session.restrictedAt !== null,
+    lastInteractionAt: row.session.lastInteractionAt,
   }
 }
 

@@ -38,9 +38,13 @@ export async function runRealityScheduler(now = new Date(), wall = new Date()): 
          JOIN users u ON u.id = s2.user_id AND u.deleted_at IS NULL
         WHERE s2.status = 'active'
           AND s2.deleted_at IS NULL
-          AND s2.last_interaction_at < ${iso(new Date(now.getTime() - idleMinutesBeforeContact * 60_000))}::timestamptz
+          AND (s2.last_interaction_at < ${iso(new Date(now.getTime() - idleMinutesBeforeContact * 60_000))}::timestamptz
+               OR (s2.pending_reality_intent->>'notBefore') IS NOT NULL)
+          AND ((s2.pending_reality_intent->>'notBefore') IS NULL
+               OR (s2.pending_reality_intent->>'notBefore')::timestamptz <= ${iso(now)}::timestamptz)
           AND (s2.reality_checked_at IS NULL
-               OR s2.reality_checked_at < ${iso(new Date(now.getTime() - recheckMinutes * 60_000))}::timestamptz)
+               OR s2.reality_checked_at < ${iso(new Date(now.getTime() - recheckMinutes * 60_000))}::timestamptz
+               OR (s2.pending_reality_intent->>'notBefore')::timestamptz <= ${iso(now)}::timestamptz)
         ORDER BY s2.reality_checked_at NULLS FIRST
         LIMIT ${batchSize}
           FOR UPDATE SKIP LOCKED

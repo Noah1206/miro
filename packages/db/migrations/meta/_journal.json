@@ -148,6 +148,13 @@
       "when": 1789385096362,
       "tag": "0020_alpha",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789471496362,
+      "tag": "0021_core_architecture",
+      "breakpoints": true
     }
   ]
 }

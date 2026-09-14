@@ -8,6 +8,8 @@ import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
+import { feature } from '@miro/config'
+import { COPY } from '@/lib/copy'
 
 export type LiveState = { error: string | null; notice: string | null }
 
@@ -19,6 +21,7 @@ export type LiveState = { error: string | null; notice: string | null }
  * Chat 으로 돌아가면 이어진다.
  */
 export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveState> {
+  if (!feature('liveScene')) return { error: COPY.error.featureOff, notice: null }
   const user = await requireUser()
   const sessionId = String(form.get('sessionId') ?? '')
   const input = String(form.get('input') ?? '').trim()
@@ -63,6 +66,7 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
         relationshipVersion: loaded.snapshot.relationship.version,
         currentRelationship: loaded.snapshot.relationship,
         existingMemories: loaded.snapshot.memories,
+        characterState: result.characterState,
       })
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue
@@ -80,6 +84,7 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
 
 /** Live Scene 배경. Chat 과 같은 World State 에서 만든다. */
 export async function ensureSceneBackground(sessionId: string): Promise<string | null> {
+  if (!feature('liveScene')) return null
   const user = await requireUser()
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded) return null

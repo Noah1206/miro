@@ -11,6 +11,6 @@ export async function POST(req: Request): Promise<Response> {
     return NextResponse.json({ ok: false }, { status: 400 })
   }
   const session = await getAlphaSession()
-  trackAlpha(session?.id ?? null, event, typeof body?.props === 'object' && body?.props ? (body.props as Record<string, unknown>) : {})
+  trackAlpha(session?.userId ?? null, event, typeof body?.props === 'object' && body?.props ? (body.props as Record<string, unknown>) : {})
   return NextResponse.json({ ok: true })
 }

@@ -10,8 +10,9 @@ export type IntentInput = {
   contactProfile: ContactProfile
   /** 사용자의 마지막 상호작용 후 경과 시간(분). */
   idleMinutes: number
-  /** RP 턴에서 AI 가 남긴 의도. 있으면 우선한다. */
+  /** RP 턴이나 사건 규칙이 남긴 의도. 있으면 우선한다. notBefore 가 아직이면 그때까지 기다린다. */
   pending: RealityIntent | null
+  now?: Date
 }
 
 /** 발송 가능한 채널. missed_call 은 결과 상태이지 의도가 아니다. */
@@ -32,7 +33,11 @@ export function deriveIntent(input: IntentInput): RealityIntent | null {
   // 0. 사용자가 선연락을 껐다 — 사건이든 RP 가 남긴 의도든 밖으로 나가지 않는다.
   if (p.enabled === false) return null
 
-  if (pending) return { ...pending, channel: downgrade(pending.channel) }
+  if (pending) {
+    // 예약된 의도는 시각이 될 때까지 다른 이유로 대체하지 않는다 — 캐릭터의 계획이다.
+    if (pending.notBefore && new Date(pending.notBefore).getTime() > (input.now ?? new Date()).getTime()) return null
+    return { ...pending, channel: downgrade(pending.channel) }
+  }
 
   // 1. 미해결 사건 — 가장 강한 동기. 사건이 있으면 거리와 무관하게 이유가 생긴다.
   const event = activeEvents.find((e) => e.status === 'active' || e.status === 'escalated')

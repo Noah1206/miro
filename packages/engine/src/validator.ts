@@ -1,6 +1,6 @@
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
-import type { EventCandidate, MemoryCandidate, Npc, SimulationEvent } from '@miro/domain'
+import type { EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
 import type { SimulationProposal } from './proposal.schema'
 import type { SimulationSnapshot } from './context'
 
@@ -20,7 +20,9 @@ export type ValidatedTransition = {
   eventUpdates: SimulationProposal['eventUpdates']
   npcIntroductions: SimulationProposal['npcIntroductions']
   npcActions: SimulationProposal['npcActions']
-  realityIntent: SimulationProposal['realityIntent']
+  realityIntent: RealityIntent | null
+  emotion: SimulationProposal['emotion']
+  intent: SimulationProposal['intent']
   issues: ValidationIssue[]
 }
 
@@ -48,6 +50,8 @@ export function validateProposal(
     npcIntroductions: validateNpcIntroductions(proposal, snapshot, issues),
     npcActions: validateNpcActions(proposal, snapshot.activeNpcs, issues),
     realityIntent: proposal.realityIntent,
+    emotion: proposal.emotion,
+    intent: proposal.intent,
     issues,
   }
 }
