@@ -52,7 +52,7 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
       {/* 입력 탭 여섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
-      <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
+      <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
           {TABS.filter((t) => t.key !== 'preview').map((t) => {
             const active = t.key === tab
@@ -66,11 +66,13 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
                 }}>
                 {t.label}
                 {active && <motion.span layoutId="create-tab-underline" transition={spring.default}
-                  style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
+                  style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 1, background: 'var(--color-accent)' }} />}
               </button>
             )
           })}
         </div>
+        {/* 입력 탭 묶음과 미리보기 사이의 세로 구분선 */}
+        <span aria-hidden style={{ width: 1, height: 18, background: 'var(--color-border)', flexShrink: 0, margin: '0 4px' }} />
         <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
             flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 'var(--radius-button)',
