@@ -8,12 +8,12 @@ const KEY = 'miro:tour:create'
 
 /** 탭마다 한 문장. '다음' 이 탭도 같이 넘긴다 — 말풍선이 가리키는 곳을 보여준다. */
 const STEPS: Array<{ tab: CreateTab; text: string }> = [
-  { tab: 'profile', text: '이름과 소개 한 줄이면 시작할 수 있어요. 사진은 나중에 넣어도 돼요.' },
-  { tab: 'personality', text: '어떤 사람인지 한 칸에 적어요. 특징·가치관·말투를 섞어도 돼요.' },
-  { tab: 'appearance', text: '성별과 체형만 고르면 사진이 나와요. 얼굴·머리는 고급 설정에서.' },
-  { tab: 'relationship', text: '처음 만났을 때 두 사람의 거리예요. 대화하면서 바뀝니다.' },
-  { tab: 'contact', text: '앱을 닫아도 먼저 연락할지, 얼마나 자주 할지 정해요.' },
-  { tab: 'intro', text: '첫 장면을 적으면 등록할 수 있어요. 소개 페이지에서 미리 보세요.' },
+  { tab: 'profile', text: '이름과 소개만 있으면 시작돼요.' },
+  { tab: 'personality', text: '어떤 사람인지 한 칸에 적어요.' },
+  { tab: 'appearance', text: '성별과 체형만 고르면 돼요.' },
+  { tab: 'relationship', text: '처음 만났을 때의 거리예요.' },
+  { tab: 'contact', text: '먼저 연락할지, 얼마나 자주일지.' },
+  { tab: 'intro', text: '첫 장면을 적으면 등록할 수 있어요.' },
 ]
 
 /**
@@ -52,7 +52,7 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
         <motion.div role="note" aria-label="안내"
           initial={reduce ? false : { opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4, transition: { duration: 0.16 } }} transition={tween.enter}
-          style={{ position: 'relative', maxWidth: 300, marginTop: 'var(--space-4)', padding: '10px 12px 10px 14px',
+          style={{ position: 'relative', width: 'fit-content', maxWidth: 300, marginTop: 'var(--space-4)', padding: '10px 12px 10px 14px',
             background: 'var(--color-surface-3)', borderRadius: 'var(--radius-md)' }}>
           {/* 말풍선 꼬리 — 탭 줄 아래를 가리킨다 */}
           <span aria-hidden style={{ position: 'absolute', top: -6, left: 18, width: 12, height: 12, background: 'var(--color-surface-3)', transform: 'rotate(45deg)', borderRadius: 2 }} />
