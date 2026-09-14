@@ -4,7 +4,7 @@ import { getCharacterByKey } from '@/lib/characters'
 import { countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { Accordion, Back, Button, ButtonLink, Page, TransitionLink, Tip } from '@/components/ui'
+import { Accordion, Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { galleryFor, portraitFor } from '@/components/character-visual'
@@ -90,7 +90,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </div>
 
         <RealityStrip />
-        <Tip id="detail" style={{ marginTop: 'var(--space-4)' }}>대화 시작하기를 누르면 이 사람과의 세계가 열려요. 관계는 처음부터 가깝지 않습니다.</Tip>
 
         {/* 먼저 보여주는 것은 설명이 아니라 장면이다 — 이 사람과 말을 섞으면 어떤 느낌인지. */}
         <Rule label="첫 장면">

@@ -1,6 +1,6 @@
 import { currentUser } from '@/lib/auth'
 import { homeRows } from '@/lib/home'
-import { ButtonLink, LogoMark, Page, TransitionLink, Tip } from '@/components/ui'
+import { ButtonLink, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { IncomingCall } from '@/components/incoming-call'
 import { Row } from './row'
 
@@ -39,7 +39,6 @@ export default async function Home() {
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
           : <ButtonLink href="/login" variant="secondary" size="sm">로그인</ButtonLink>}
       </header>
-      <Tip id="home" style={{ margin: '0 var(--gutter) var(--space-4)' }}>카드를 누르면 그 사람을 먼저 살펴볼 수 있어요. 대화는 상세에서 시작합니다.</Tip>
 
       <div>
         {rows.map((row, i) => <Row key={row.key} row={row} index={i} />)}

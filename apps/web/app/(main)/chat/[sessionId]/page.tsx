@@ -6,7 +6,7 @@ import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { matureGateFor } from '@/lib/ops/safety'
 import { track } from '@/lib/analytics/track'
-import { Back, Tip } from '@/components/ui'
+import { Back } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { IncomingCall } from '@/components/incoming-call'
 import { ChatComposer } from './composer'
@@ -59,7 +59,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           </ContextTrigger>
           <StylePicker sessionId={sessionId} current={s.outputStyle} label={COPY.a11y.styleGroup} />
         </header>
-      <Tip id="chat" style={{ margin: '0 var(--gutter) var(--space-4)' }}>*별표* 안에 행동을 적으면 서술이 됩니다. 앱을 닫아도 이 사람이 먼저 연락할 수 있어요.</Tip>
 
         <div style={{ flex: 1, padding: 'var(--space-5) var(--space-4) var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {loaded.restricted && <p data-restricted role="status" className="t-caption" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>운영 정책에 따라 이 역할극은 제한되었습니다.</p>}

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { characters, db, roleplaySessions, worlds } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { ButtonLink, Page, TransitionLink, Tip } from '@/components/ui'
+import { ButtonLink, Page, TransitionLink } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { ProfileCard } from './profile-card'
 
@@ -60,7 +60,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           </svg>
         </TransitionLink>
       </div>
-      <Tip id="my" style={{ marginBottom: 'var(--space-4)' }}>알림·통화·야간 연락은 설정에서 끄고 켤 수 있어요.</Tip>
 
       <div className="stack" style={{ gap: 'var(--space-3)' }}>
         <ProfileCard name={name} handle={handle} stats={[

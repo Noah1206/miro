@@ -1,9 +1,9 @@
 'use client'
 import { useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { Tip } from '@/components/ui'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES, stageLabel } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
+import { CreateTour } from './tour'
 import { STAGES } from './parse'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
@@ -190,9 +190,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
 
         <CreateHeader tab={tab} onTab={openTab} canSubmit={canSubmit} canDraft={canDraft} pending={pending}
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
-        {mode === 'create'
-          ? <Tip id="create" style={{ marginTop: 'var(--space-4)' }}>이름·소개·성격·첫 장면만 채우면 등록할 수 있어요. 나머지는 나중에 고쳐도 됩니다.</Tip>
-          : <Tip id="edit" style={{ marginTop: 'var(--space-4)' }}>고친 뒤 저장을 누르면 소개 페이지와 대화에 바로 반영돼요.</Tip>}
+        {mode === 'create' && <CreateTour tab={tab} onTab={openTab} />}
 
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
