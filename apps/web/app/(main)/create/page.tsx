@@ -155,7 +155,8 @@ export default function CreatePage() {
                 <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
               </LabeledField>
               <div style={{ marginTop: 'var(--space-5)' }}>
-                <ImagePicker label="캐릭터 이미지" required count={0} maxCount={5} />
+                {/* 저장소가 없어 아직 미리보기만 된다 — 저장되지 않는 것을 필수로 막을 수는 없다. 업로드가 생기면 required 로. */}
+                <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
               </div>
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                 <LabeledField label="이름" required error={name === '' ? null : undefined}>
