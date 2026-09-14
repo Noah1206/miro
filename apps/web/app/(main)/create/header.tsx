@@ -33,7 +33,7 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
   return (
     <header style={{
       position: 'sticky', top: 0, zIndex: 20, margin: '0 calc(-1 * var(--gutter))',
-      background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)',
+      background: 'var(--color-bg)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '0 var(--gutter)' }}>
         <TransitionLink href={closeHref} direction="back" aria-label="닫기"
