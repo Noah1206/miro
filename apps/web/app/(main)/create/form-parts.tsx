@@ -125,7 +125,7 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
           width: 200, aspectRatio: '1 / 1', margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
           transition: 'border-color var(--motion-fast) var(--ease-standard)',
-          borderRadius: '50%', color: 'var(--color-text-tertiary)',
+          borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
         }}>
         <AnimatePresence initial={false}>
           {preview && (
