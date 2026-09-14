@@ -143,7 +143,7 @@ export default function CreatePage() {
       <form action={saveCharacter} onSubmit={() => setPending(true)} className="stack" style={{ gap: 0 }}>
 
         <CreateHeader tab={tab} onTab={setTab} missing={missing} canSubmit={canSubmit} canDraft={canDraft} pending={pending} />
-        <div style={{ marginTop: 'var(--space-4)' }}><Tip id="create">이름·성격·첫 장면만 채우면 등록할 수 있어요. 나머지는 나중에 고쳐도 됩니다.</Tip></div>
+        <Tip id="create" style={{ marginTop: 'var(--space-4)' }}>이름·성격·첫 장면만 채우면 등록할 수 있어요. 나머지는 나중에 고쳐도 됩니다.</Tip>
 
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>

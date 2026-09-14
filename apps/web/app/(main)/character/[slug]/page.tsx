@@ -83,7 +83,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </div>
 
         <RealityStrip />
-        <div style={{ marginTop: 'var(--space-4)' }}><Tip id="detail">대화 시작하기를 누르면 이 사람과의 세계가 열려요. 관계는 처음부터 가깝지 않습니다.</Tip></div>
+        <Tip id="detail" style={{ marginTop: 'var(--space-4)' }}>대화 시작하기를 누르면 이 사람과의 세계가 열려요. 관계는 처음부터 가깝지 않습니다.</Tip>
 
         {/* 먼저 보여주는 것은 설명이 아니라 장면이다 — 이 사람과 말을 섞으면 어떤 느낌인지. */}
         <Rule label="첫 장면">

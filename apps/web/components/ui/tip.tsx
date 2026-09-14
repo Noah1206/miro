@@ -7,8 +7,9 @@ import { tween } from '@/lib/motion/tokens'
  * 처음 온 사람을 위한 말풍선 한 줄. 닫으면 이 기기에서 다시 뜨지 않는다.
  * 페이지당 하나, 한 문장 — 늘어놓으면 설명서가 되고 아무도 읽지 않는다.
  * 서버에서는 그리지 않는다: 닫았는지는 브라우저만 알아서, 먼저 그리면 깜빡인다.
+ * 바깥 여백도 여기서 받는다 — 감싸는 div 에 두면 닫힌 뒤에 빈 여백만 남는다.
  */
-export function Tip({ id, children }: { id: string; children: React.ReactNode }) {
+export function Tip({ id, children, style }: { id: string; children: React.ReactNode; style?: React.CSSProperties }) {
   const key = `miro:tip:${id}`
   const [open, setOpen] = useState(false)
   const reduce = useReducedMotion()
@@ -26,7 +27,7 @@ export function Tip({ id, children }: { id: string; children: React.ReactNode })
           initial={reduce ? false : { opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4, transition: { duration: 0.16 } }} transition={tween.enter}
           style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px 10px 14px',
-            background: 'var(--color-surface-3)', borderRadius: 'var(--radius-md)' }}>
+            background: 'var(--color-surface-3)', borderRadius: 'var(--radius-md)', ...style }}>
           {/* 말풍선 꼬리 */}
           <span aria-hidden style={{ position: 'absolute', top: -6, left: 18, width: 12, height: 12, background: 'var(--color-surface-3)', transform: 'rotate(45deg)', borderRadius: 2 }} />
           <span aria-hidden style={{ flexShrink: 0, marginTop: 1, width: 18, height: 18, borderRadius: 9, display: 'grid', placeItems: 'center',

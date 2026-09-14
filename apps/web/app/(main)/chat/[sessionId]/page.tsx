@@ -59,7 +59,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           </ContextTrigger>
           <StylePicker sessionId={sessionId} current={s.outputStyle} label={COPY.a11y.styleGroup} />
         </header>
-      <div style={{ padding: '0 var(--space-5)', marginBottom: 'var(--space-4)' }}><Tip id="chat">*별표* 안에 행동을 적으면 서술이 됩니다. 앱을 닫아도 이 사람이 먼저 연락할 수 있어요.</Tip></div>
+      <Tip id="chat" style={{ margin: '0 var(--space-5) var(--space-4)' }}>*별표* 안에 행동을 적으면 서술이 됩니다. 앱을 닫아도 이 사람이 먼저 연락할 수 있어요.</Tip>
 
         <div style={{ flex: 1, padding: 'var(--space-5) var(--space-4) var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {loaded.restricted && <p data-restricted role="status" className="t-caption" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>운영 정책에 따라 이 역할극은 제한되었습니다.</p>}

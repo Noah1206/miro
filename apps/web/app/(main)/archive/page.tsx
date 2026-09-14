@@ -14,7 +14,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   return (
     <Page>
       <h1 className="t-title-1" style={{ marginBottom: 'var(--space-4)' }}>대화</h1>
-      <div style={{ marginBottom: 'var(--space-4)' }}><Tip id="archive">진행 중인 대화가 여기 모입니다. 누르면 저장된 장면에서 이어져요.</Tip></div>
+      <Tip id="archive" style={{ marginBottom: 'var(--space-4)' }}>진행 중인 대화가 여기 모입니다. 누르면 저장된 장면에서 이어져요.</Tip>
       {deleted && <p role="status" className="t-caption" style={{ marginBottom: 12 }}>역할극을 삭제했습니다.</p>}
       {items.length === 0 ? (
         <Reveal>

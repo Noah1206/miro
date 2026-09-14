@@ -51,7 +51,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   return (
     <Page>
       <h1 className="t-title-1" style={{ marginBottom: 'var(--space-5)' }}>마이페이지</h1>
-      <div style={{ marginBottom: 'var(--space-4)' }}><Tip id="my">알림·통화·야간 연락은 설정에서 끄고 켤 수 있어요.</Tip></div>
+      <Tip id="my" style={{ marginBottom: 'var(--space-4)' }}>알림·통화·야간 연락은 설정에서 끄고 켤 수 있어요.</Tip>
 
       <div className="stack" style={{ gap: 'var(--space-3)' }}>
         <ProfileCard name={name} handle={handle} stats={[

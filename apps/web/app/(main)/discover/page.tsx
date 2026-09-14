@@ -17,7 +17,7 @@ export default async function Discover() {
         <LogoMark size={22} />
         <h1 className="t-title-2" style={{ margin: 0 }}>발견</h1>
       </header>
-      <div style={{ padding: '0 var(--space-5)', marginBottom: 'var(--space-4)' }}><Tip id="discover">공식 캐릭터와 사람들이 공개한 캐릭터를 한 번에 봅니다.</Tip></div>
+      <Tip id="discover" style={{ margin: '0 var(--space-5) var(--space-4)' }}>공식 캐릭터와 사람들이 공개한 캐릭터를 한 번에 봅니다.</Tip>
 
       {items.length === 0 ? (
         <p className="t-caption" style={{ padding: '0 var(--space-5)', color: 'var(--color-text-tertiary)' }}>
