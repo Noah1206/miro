@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { tween } from '@/lib/motion/tokens'
 import type { CreateTab } from './header'
 
-const KEY = 'miro:tip:create'
+const KEY = 'miro:tour:create'
 
 /** 탭마다 한 문장. '다음' 이 탭도 같이 넘긴다 — 말풍선이 가리키는 곳을 보여준다. */
 const STEPS: Array<{ tab: CreateTab; text: string }> = [
