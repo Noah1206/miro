@@ -282,19 +282,33 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   const draftRef = useRef<HTMLTextAreaElement>(null)
   const who = characterName || '캐릭터'
   // 고른 글자를 *별표* 로 감싼다 — 채팅과 같은 규칙: 별표 안은 옅은 서술이 된다. 고른 게 없으면 별표 한 쌍을 넣고 그 사이에 커서를 둔다.
+  // 포커스는 옮기지 않는다 — 버튼이 mousedown 에서 포커스를 뺏지 않으므로 커서는 입력창에 그대로 있다.
+  // 프로그램으로 focus() 를 부르면 macOS 크로미움에서 한글 입력기가 붙지 않아 영문만 찍히는 일이 있었다.
   const wrapNarration = () => {
     const el = draftRef.current
     if (!el) return
-    const a = el.selectionStart ?? draft.length, b = el.selectionEnd ?? draft.length
-    const next = `${draft.slice(0, a)}*${draft.slice(a, b)}*${draft.slice(b)}`
-    setDraft(next)
-    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + 1, b + 1) })
+    if (document.activeElement !== el) el.focus()
+    commit(el)
+    const a = el.selectionStart ?? el.value.length, b = el.selectionEnd ?? el.value.length
+    // 값을 직접 갈아끼우지 않고 브라우저 편집 명령으로 넣는다 — input 이벤트로 상태에 반영된다.
+    const ok = document.execCommand('insertText', false, `*${el.value.slice(a, b)}*`)
+    if (!ok) setDraft(`${el.value.slice(0, a)}*${el.value.slice(a, b)}*${el.value.slice(b)}`)
+    // 고른 글자가 없었으면 커서를 별표 사이에 둔다. 넣은 직후의 실제 커서에서 계산해야 조합 확정으로 밀린 만큼이 반영된다.
+    const end = el.selectionEnd ?? el.value.length
+    const caret = a === b ? end - 1 : end
+    requestAnimationFrame(() => el.setSelectionRange(caret, caret))
   }
+  // 한글 조합 중인 마지막 글자를 확정한다 — 값을 바꾸기 전에 안 하면 IME 가 그 글자를 새 값 위에 다시 얹는다.
+  const commit = (el: HTMLTextAreaElement) => { if (document.activeElement === el) { el.blur(); el.focus() } }
+  // 입력창 옆 버튼들은 눌러도 포커스를 가져가지 않는다 — 한글 조합과 커서가 입력창에 남는다.
+  const keepFocus = (e: React.MouseEvent) => e.preventDefault()
   const label = (r: Turn['role']) => (r === 'narrator' ? '내레이터' : r === 'user' ? '유저' : who)
   const full = turns.length >= MAX_TURNS
 
   const add = () => {
-    const text = draft.trim()
+    const el = draftRef.current
+    if (el) commit(el)
+    const text = (el?.value ?? draft).trim()
     if (!text || full) return
     setTurns([...turns, { role, text: text.slice(0, 500) }]); setDraft('')
   }
@@ -380,7 +394,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           {(['narrator', 'user', 'character'] as const).map((r) => {
             const on = r === role
             return (
-              <button key={r} type="button" role="radio" aria-checked={on} onClick={() => setRole(r)}
+              <button key={r} type="button" role="radio" aria-checked={on} onClick={() => setRole(r)} onMouseDown={keepFocus}
                 style={{
                   padding: '8px 10px', background: 'transparent', border: 0, cursor: 'pointer',
                   borderBottom: `2px solid ${on ? 'var(--color-white)' : 'transparent'}`,
@@ -397,7 +411,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           <textarea ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
             placeholder={full ? '12마디까지 넣을 수 있어요.' : role === 'narrator' ? '장면을 서술해요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
             style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
-          <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기"
+          <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기" onMouseDown={keepFocus}
             style={{
               width: 38, height: 38, borderRadius: 19, border: 0, flexShrink: 0, display: 'grid', placeItems: 'center',
               cursor: draft.trim() && !full ? 'pointer' : 'default',
@@ -409,7 +423,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
         </div>
         {role !== 'narrator' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-            <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기"
+            <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기" onMouseDown={keepFocus}
               style={{ padding: '3px 9px', borderRadius: 'var(--radius-sm)', border: 0, cursor: full ? 'default' : 'pointer', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
               *서술*
             </button>
