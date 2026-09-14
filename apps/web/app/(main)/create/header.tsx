@@ -20,12 +20,15 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
  * 탭에는 표시를 달지 않는다 — 필수는 칸의 별표가 말하고, 다 차기 전엔 등록이 잠겨 있다.
  * 임시저장은 이름만 있으면 된다.
  */
-export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending }: {
+export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons, closeHref }: {
   tab: CreateTab
   onTab: (t: CreateTab) => void
   canSubmit: boolean
   canDraft: boolean
   pending: boolean
+  /** create: 임시저장·등록. save: 이미 등록한 캐릭터를 고칠 때 — 저장 하나. */
+  buttons: 'create' | 'save'
+  closeHref: string
 }) {
   return (
     <header style={{
@@ -33,14 +36,16 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending }: {
       background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '0 var(--gutter)' }}>
-        <TransitionLink href="/home" direction="back" aria-label="닫기"
+        <TransitionLink href={closeHref} direction="back" aria-label="닫기"
           style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, color: 'var(--color-text-primary)' }}>
           <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </TransitionLink>
         <h1 className="t-title-3" style={{ flex: 1 }}>캐릭터</h1>
-        <button type="submit" name="intent" value="draft" disabled={!canDraft || pending} style={chip(false, canDraft && !pending)}>임시저장</button>
+        {buttons === 'create' && (
+          <button type="submit" name="intent" value="draft" disabled={!canDraft || pending} style={chip(false, canDraft && !pending)}>임시저장</button>
+        )}
         <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending} style={chip(true, canSubmit && !pending)}>
-          {pending ? '만드는 중' : '등록'}
+          {buttons === 'save' ? (pending ? '저장 중' : '저장') : (pending ? '만드는 중' : '등록')}
         </button>
       </div>
 

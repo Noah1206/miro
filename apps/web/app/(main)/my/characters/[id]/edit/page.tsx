@@ -1,33 +1,49 @@
 import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
-import { Page, PageHeader } from '@/components/ui'
-import { EditSections } from './sections'
+import { CharacterForm, type FormInitial } from '@/app/(main)/create/character-form'
+import { updateCharacter } from './actions'
 
+/** 편집 = 만들기와 같은 폼에 저장된 값을 채운 것. 항목·모양이 다르면 두 화면이 서로 거짓말을 한다. */
 export default async function EditCharacter({ params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
   const { id } = await params
   const owned = await getOwnedCharacter(id, user.id)
   if (!owned) notFound()
-  const c = owned.character
+  const { character: c, world, contact, visual } = owned
+  const rel = c.initialRelationship as Record<string, number | string>
+  const num = (v: unknown, fallback: number) => (typeof v === 'number' ? v : fallback)
+
+  const initial: Partial<FormInitial> = {
+    name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '',
+    age: c.age == null ? '' : String(c.age), mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
+    personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
+    jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
+    gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average',
+    height: visual?.bodyProfile?.height ?? '', detail: visual?.bodyProfile?.detail ?? '',
+    eyes: visual?.baseFace?.eyes ?? '', nose: visual?.baseFace?.nose ?? '', jaw: visual?.baseFace?.jaw ?? '',
+    skin: visual?.baseFace?.skin ?? '', distinctive: visual?.baseFace?.distinctive ?? '',
+    hairColor: visual?.hair?.color ?? '', hairLength: visual?.hair?.length ?? '', hairStyle: visual?.hair?.style ?? '',
+    expression: visual?.expressionTendency ?? '', styleTags: visual?.styleTags ?? [],
+    stage: typeof rel.stage === 'string' ? rel.stage : 'stranger',
+    trust: num(rel.trust, 30), attraction: num(rel.attraction, 10), emotionalDistance: num(rel.emotionalDistance, 60),
+    attachment: num(rel.attachment, 10), protectiveness: num(rel.protectiveness, 20), relJealousy: num(rel.jealousy, 0),
+    relationshipKeywords: c.relationshipKeywords,
+    contactEnabled: contact?.enabled ?? true,
+    contactFrequency: contact?.contactFrequency ?? 50, initiativeLevel: contact?.initiativeLevel ?? 50,
+    replyDelayMinutes: contact?.replyDelayMinutes ?? 5,
+    activeHoursStart: contact?.activeHoursStart ?? '08:00', activeHoursEnd: contact?.activeHoursEnd ?? '23:00',
+    preferredChannel: contact?.preferredChannel ?? 'message',
+    photoProbability: contact?.photoProbability ?? 20, voiceMessageProbability: contact?.voiceMessageProbability ?? 20,
+    callProbability: contact?.callProbability ?? 30, videoCallProbability: contact?.videoCallProbability ?? 10,
+    senderLabel: contact?.presentation?.senderLabel ?? '',
+    startingContext: c.startingContext ?? '', startingTime: c.startingTime, sampleDialogue: c.sampleDialogue,
+    isPublic: c.isPublic,
+  }
+
   return (
-    <Page style={{ maxWidth: 560 }}>
-      <PageHeader back="/archive" eyebrow="편집" title={c.name} lead="항목마다 따로 저장됩니다." />
-      <EditSections characterId={id}
-        character={{ name: c.name, age: c.age, nationality: c.nationality, occupation: c.occupation, mbti: c.mbti, personality: c.personality, values: c.values, speechStyle: c.speechStyle, jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression, isPublic: c.isPublic }}
-        world={owned.world ? { era: owned.world.era ?? '', location: owned.world.location ?? '', genre: owned.world.genre ?? '', worldSetting: owned.world.worldSetting ?? '' } : null}
-        appearance={{
-          eyes: owned.visual?.baseFace?.eyes ?? '', nose: owned.visual?.baseFace?.nose ?? '',
-          jaw: owned.visual?.baseFace?.jaw ?? '', skin: owned.visual?.baseFace?.skin ?? '',
-          distinctive: owned.visual?.baseFace?.distinctive ?? '',
-          hairColor: owned.visual?.hair?.color ?? '', hairLength: owned.visual?.hair?.length ?? '',
-          hairStyle: owned.visual?.hair?.style ?? '',
-          build: owned.visual?.bodyProfile?.build ?? 'average',
-          height: owned.visual?.bodyProfile?.height ?? '', detail: owned.visual?.bodyProfile?.detail ?? '',
-          expression: owned.visual?.expressionTendency ?? '',
-        }}
-        contact={owned.contact ? { contactFrequency: owned.contact.contactFrequency, replyDelayMinutes: owned.contact.replyDelayMinutes, callProbability: owned.contact.callProbability, videoCallProbability: owned.contact.videoCallProbability, photoProbability: owned.contact.photoProbability, voiceMessageProbability: owned.contact.voiceMessageProbability, activeHoursStart: owned.contact.activeHoursStart, activeHoursEnd: owned.contact.activeHoursEnd, initiativeLevel: owned.contact.initiativeLevel } : null} />
-    </Page>
+    <CharacterForm mode="edit" draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+      closeHref={c.isDraft ? '/my?filter=draft' : `/character/${id}`} />
   )
 }

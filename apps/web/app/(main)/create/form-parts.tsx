@@ -204,68 +204,6 @@ function SheetRow({ children, icon, disabled }: { children: ReactNode; icon: Rea
   )
 }
 
-/** 섹션 한 덩이 — 제목 + 카드. 스크롤하며 차례로 떠오른다. */
-export function FormSection({ title, subtitle, children, action }: {
-  title: string; subtitle?: string; children: ReactNode; action?: ReactNode
-}) {
-  const reduce = useReducedMotion()
-  return (
-    <motion.section
-      initial={reduce ? false : { opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-8% 0px' }} transition={{ duration: duration.normal, ease: ease.enter }}
-      style={{ marginTop: 'var(--space-6)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <h2 className="t-title-3">{title}</h2>
-        {action}
-      </div>
-      {subtitle && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{subtitle}</p>}
-      <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>
-        {children}
-      </div>
-    </motion.section>
-  )
-}
-
-/** 항목을 늘리는 줄 — '+ 캐릭터 추가 1/10'. 한도에 닿으면 눌리지 않는다. */
-export function AddRow({ label, count, max, onClick }: { label: string; count: number; max: number; onClick?: () => void }) {
-  const full = count >= max
-  return (
-    <button type="button" onClick={onClick} disabled={full || !onClick}
-      style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
-        minHeight: 52, marginTop: 'var(--space-4)', padding: '14px 16px', borderRadius: 'var(--radius-button)',
-        background: 'var(--color-surface-1)', border: 0,
-        color: full || !onClick ? 'var(--color-text-disabled)' : 'var(--color-text-primary)',
-        cursor: full || !onClick ? 'default' : 'pointer', fontSize: 'var(--font-body-size)',
-      }}>
-      <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-        <path d="M12 5v14M5 12h14" />
-      </svg>
-      {label} {count}/{max}
-    </button>
-  )
-}
-
-/** 0–100 슬라이더. 양끝 말이 수치보다 먼저 읽히게 한다. */
-export function Slider({ name, label, defaultValue, lo, hi }: {
-  name: string; label: string; defaultValue: number; lo: string; hi: string
-}) {
-  const [v, setV] = useState(defaultValue)
-  return (
-    <label className="stack" style={{ gap: 6 }}>
-      <span style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{label}</span>
-        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{v}</span>
-      </span>
-      <input name={name} type="range" min={0} max={100} value={v} onChange={(e) => setV(Number(e.target.value))}
-        style={{ width: '100%', accentColor: 'var(--color-white)' }} />
-      <span className="t-micro" style={{ display: 'flex', justifyContent: 'space-between', textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-        <span>{lo}</span><span>{hi}</span>
-      </span>
-    </label>
-  )
-}
-
 /**
  * 태그 입력 — 해시태그·취미·싫어하는 것. 칩으로 쌓이고, 값은 쉼표로 이어 hidden 에 싣는다.
  * Enter 나 쉼표로 추가. 한도에 닿으면 입력이 닫힌다.

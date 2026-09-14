@@ -28,24 +28,21 @@ async function characterIdOf(page: import('@playwright/test').Page): Promise<str
   return body.characterId as string
 }
 
-test('advanced editor saves one section without touching others', async ({ page }) => {
+test('편집은 만들기와 같은 폼이고, 저장하면 소개 페이지로 돌아온다', async ({ page }) => {
   await createCharacter(page, '한도윤')
   const characterId = await characterIdOf(page)
 
   await page.goto(`${BASE}/my/characters/${characterId}/edit`)
-  await expect(page.getByRole('heading', { name: '한도윤' })).toBeVisible()
+  await expect(page.locator('input[name="name"]')).toHaveValue('한도윤')
 
-  // 성격 섹션만 저장
-  const personality = page.locator('form', { hasText: '성격' }).first()
-  await personality.locator('textarea[name="personality"]').fill('말수가 적고 환자 앞에서만 부드러워진다.')
-  await personality.getByRole('button', { name: '저장' }).click()
-  await expect(personality.getByRole('button', { name: '저장됨' })).toBeVisible()
+  await page.getByRole('tab', { name: /성격/ }).click()
+  await page.locator('textarea[name="personality"]').fill('말수가 적고 환자 앞에서만 부드러워진다.')
+  await page.getByRole('button', { name: '저장' }).click()
+  await expect(page).toHaveURL(new RegExp(`/character/${characterId}`))
 
-  // 새로고침해도 유지된다
-  await page.reload()
-  await expect(page.locator('textarea[name="personality"]'))
-    .toHaveValue('말수가 적고 환자 앞에서만 부드러워진다.')
-  // 이름은 건드리지 않았으므로 그대로
+  // 다시 열면 고친 값이 남아 있고, 안 건드린 이름은 그대로
+  await page.goto(`${BASE}/my/characters/${characterId}/edit`)
+  await expect(page.locator('textarea[name="personality"]')).toHaveValue('말수가 적고 환자 앞에서만 부드러워진다.')
   await expect(page.locator('input[name="name"]')).toHaveValue('한도윤')
 })
 

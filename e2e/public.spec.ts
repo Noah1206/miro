@@ -24,10 +24,9 @@ test('공개한 캐릭터는 다른 사람이 발견해서 대화를 시작할 �
   const sessionId = a.url().split('/chat/')[1]!
   const { characterId } = await a.evaluate(async (id) => (await fetch(`/api/dev/session/${id}`)).json(), sessionId)
   await a.goto(`${BASE}/my/characters/${characterId}/edit`)
-  const pub = a.locator('form', { has: a.getByRole('checkbox', { name: /다른 사람에게 공개/ }) })
-  await pub.getByRole('checkbox', { name: /다른 사람에게 공개/ }).check({ force: true })
-  await pub.getByRole('button', { name: '저장' }).click()
-  await expect(pub.getByRole('button', { name: '저장됨' })).toBeVisible()
+  await a.getByRole('switch', { name: /다른 사람에게 공개/ }).check({ force: true })
+  await a.getByRole('button', { name: '저장' }).click()
+  await expect(a).toHaveURL(/\/character\//)
 
   // B: 발견에서 보고 들어가 대화 시작
   const b = await (await browser.newContext()).newPage()
