@@ -12,7 +12,7 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'relationship', label: '관계' },
   { key: 'contact', label: '연락' },
   { key: 'intro', label: '상황' },
-  { key: 'preview', label: '소개 페이지' },
+  { key: 'preview', label: '미리보기' },
 ]
 
 /**
@@ -51,23 +51,39 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
       </div>
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
-      <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', justifyContent: 'space-between', gap: 2, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 calc(var(--gutter) - 6px)' }}>
-        {TABS.map((t) => {
-          const active = t.key === tab
-          return (
-            <button key={t.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${t.key}`} onClick={() => onTab(t.key)}
-              style={{
-                position: 'relative', flexShrink: 0, padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                fontSize: 'var(--font-body-size)', fontWeight: active ? 'var(--weight-medium)' : 'var(--weight-regular)',
-                color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
-              }}>
-              {t.label}
-              {active && <motion.span layoutId="create-tab-underline" transition={spring.default}
-                style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
-            </button>
-          )
-        })}
+      {/* 입력 탭 여섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
+      <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+          {TABS.filter((t) => t.key !== 'preview').map((t) => {
+            const active = t.key === tab
+            return (
+              <button key={t.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${t.key}`} onClick={() => onTab(t.key)}
+                style={{
+                  position: 'relative', flexShrink: 0, padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  fontSize: 'var(--font-body-size)', fontWeight: active ? 'var(--weight-medium)' : 'var(--weight-regular)',
+                  color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                }}>
+                {t.label}
+                {active && <motion.span layoutId="create-tab-underline" transition={spring.default}
+                  style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
+              </button>
+            )
+          })}
+        </div>
+        <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
+          style={{
+            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 'var(--radius-button)',
+            border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
+            background: tab === 'preview' ? 'var(--color-white)' : 'var(--color-surface-2)',
+            color: tab === 'preview' ? 'var(--color-black)' : 'var(--color-text-primary)',
+            transition: 'background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard)',
+          }}>
+          <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" />
+          </svg>
+          미리보기
+        </button>
       </div>
     </header>
   )
