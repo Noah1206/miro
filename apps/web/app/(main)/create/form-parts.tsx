@@ -18,8 +18,7 @@ function Star() {
 /**
  * 한 칸.
  *
- * 회색 상자를 두르지 않는다 — 상자를 쌓으면 화면이 서류가 되고, 어느 칸이 중요한지 사라진다.
- * 대신 밑줄 하나로 칸을 표시하고, 라벨은 값 위에 작게 얹는다. 초점이 들어오면 밑줄만 희어진다
+ * 칸은 얇은 테두리의 둥근 상자 (레퍼런스). 라벨은 값 위에 작게 얹는다. 초점이 들어오면 테두리만 희어진다
  * (초점은 흰색이다 — 라임은 상태를 뜻하므로 '선택됨' 과 '초점' 이 같은 색이면 구분이 안 된다).
  * 글자 수는 한도 근처(80%)에서만 나타난다 — 늘 떠 있으면 세라는 뜻이 되어 버린다.
  */
@@ -43,10 +42,11 @@ export function LabeledField({ label, required, hint, error, children }: {
   )
 }
 
-/** 밑줄이 초점을 따라 희어진다. 상자가 없으므로 이 선이 유일한 경계다. */
-function underline(focused: boolean, invalid?: boolean): React.CSSProperties {
+/** 입력 상자 (레퍼런스): 얇은 테두리의 둥근 네모. 초점은 흰 테두리, 오류는 빨강. 채움은 카드보다 한 단 진하게. */
+export function box(focused: boolean, invalid?: boolean): React.CSSProperties {
   return {
-    borderBottom: `1.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`,
+    background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)',
+    border: `1px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`,
     transition: 'border-color var(--motion-fast) var(--ease-standard)',
   }
 }
@@ -64,14 +64,14 @@ function Counter({ length, max }: { length: number; max: number }) {
   )
 }
 
-/** 한 줄 입력. 밑줄만 있고 상자는 없다. */
+/** 한 줄 입력. */
 export function CountedInput({ name, placeholder, max, defaultValue = '', required, invalid }: {
   name: string; placeholder: string; max: number; defaultValue?: string; required?: boolean; invalid?: boolean
 }) {
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px', ...underline(focused, invalid) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', ...box(focused, invalid) }}>
       <input name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} required={required} autoComplete="off"
@@ -81,14 +81,14 @@ export function CountedInput({ name, placeholder, max, defaultValue = '', requir
   )
 }
 
-/** 여러 줄 입력. 같은 밑줄 규칙 — 칸이 길어져도 상자가 되지 않는다. */
+/** 여러 줄 입력. 같은 상자 규칙. */
 export function CountedTextArea({ name, placeholder, max, rows = 4, defaultValue = '' }: {
   name: string; placeholder: string; max: number; rows?: number; defaultValue?: string
 }) {
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '6px 0 8px', ...underline(focused) }}>
+    <div style={{ padding: '12px 14px 8px', ...box(focused) }}>
       <textarea name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
@@ -299,7 +299,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
         </div>
       )}
       {!full && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px', borderBottom: '1.5px solid var(--color-border-strong)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', ...box(false) }}>
           <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} maxLength={maxLength} autoComplete="off"
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />

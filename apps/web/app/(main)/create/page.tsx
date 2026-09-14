@@ -5,7 +5,7 @@ import { Tip } from '@/components/ui'
 import { saveCharacter } from './actions'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES, stageLabel } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, Rows, Stepped, Switch, TagInput, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
 
 const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'ambiguous', 'flirting', 'rivalry', 'distrust', 'conflict', 'dating', 'lover'] as const
 /**
@@ -462,11 +462,10 @@ function Controlled({ name, placeholder, max, value, onChange, big }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0 10px',
-      borderBottom: `1.5px solid ${focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`, transition: 'border-color var(--motion-fast) var(--ease-standard)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', ...box(focused) }}>
       <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: big ? 'var(--font-title-3)' : 'var(--font-body-lg)' }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
       {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
     </div>
   )
@@ -477,7 +476,7 @@ function ControlledArea({ name, placeholder, max, rows, value, onChange }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '6px 0 8px', borderBottom: `1.5px solid ${focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`, transition: 'border-color var(--motion-fast) var(--ease-standard)' }}>
+    <div style={{ padding: '12px 14px 8px', ...box(focused) }}>
       <textarea name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', lineHeight: 1.6, fontFamily: 'inherit' }} />
