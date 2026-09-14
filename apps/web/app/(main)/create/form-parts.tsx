@@ -148,7 +148,7 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
         </p>
 
         <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 10 }}>
-          <label htmlFor={inputId} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10 }}>
+          <label htmlFor={inputId} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 16V4M8 8l4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
             </svg>
@@ -160,11 +160,10 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
               if (f) setPreview(URL.createObjectURL(f))
               setOpen(false)
             }} />
-          <p className="t-caption" style={{ color: 'var(--color-danger)', marginBottom: 8 }}>
-            내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요! 아니면 경고 없이 삭제나 차단될 수 있어요.
-          </p>
         </div>
-
+        <p className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 18, padding: '0 4px' }}>
+          내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요! 아니면 경고 없이 삭제나 차단될 수 있어요.
+        </p>
       </Sheet>
     </>
   )
