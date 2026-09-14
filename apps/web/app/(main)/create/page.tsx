@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { Tip } from '@/components/ui'
+import { Accordion, Tip } from '@/components/ui'
 import { saveCharacter } from './actions'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES, stageLabel } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
@@ -214,8 +214,10 @@ export default function CreatePage() {
               </div>
             </Card>
           </Section>
-          <Section title="얼굴">
-            <Card>
+          {/* 얼굴·머리는 선택 — 몸만 정해도 사진은 나온다. 원하는 사람만 펼쳐서 채운다. */}
+          <div className="stack" style={{ gap: 8, marginTop: 'var(--space-6)' }}>
+            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>더 자세히 정하고 싶다면 펼쳐서 적어 주세요. 비워 둬도 됩니다.</p>
+            <Accordion title="얼굴">
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label="눈"><CountedInput name="eyes" placeholder="예) 깊고 차가운 회청색 눈" max={80} defaultValue={''} /></LabeledField>
                 <Two>
@@ -227,10 +229,8 @@ export default function CreatePage() {
                   <CountedInput name="distinctive" placeholder="예) 왼쪽 눈썹 끝을 가로지르는 오래된 흉터" max={100} defaultValue={''} />
                 </LabeledField>
               </div>
-            </Card>
-          </Section>
-          <Section title="머리 · 인상">
-            <Card>
+            </Accordion>
+            <Accordion title="머리 · 인상">
               <div className="stack" style={{ gap: 18 }}>
                 <Two>
                   <LabeledField label="머리 색"><CountedInput name="hairColor" placeholder="예) 어두운 갈색" max={40} defaultValue={''} /></LabeledField>
@@ -242,8 +242,8 @@ export default function CreatePage() {
                   <TagInput name="styleTags" placeholder="예) 소매를 걷어 올린 셔츠" max={5} maxLength={40} defaultValue={[]} />
                 </LabeledField>
               </div>
-            </Card>
-          </Section>
+            </Accordion>
+          </div>
         </Panel>
 
         {/* ── 세계 ── */}
