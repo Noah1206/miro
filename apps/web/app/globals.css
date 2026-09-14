@@ -30,7 +30,7 @@
   --color-accent-bright: #C6FF4A; /* 눌림·호버처럼 한 단 더 밝힐 때만. */
   --color-accent-on: #111111;     /* 라임 채움 위의 글자·아이콘. */
   --color-accent-text: #BDF43F;   /* 어두운 바탕 위 라임 글자 (15.2:1). */
-  --color-accent-soft: rgba(189, 244, 63, 0.12); /* 선택된 칸의 옅은 바탕. */
+  --color-accent-soft: rgba(189, 244, 63, 0.06); /* 선택된 칸의 옅은 바탕. 12% 는 짙었다 — 테두리가 이미 말하니 바탕은 기척만. */
   /* 파괴적 버튼의 채움색. 흰 글자와 5.8:1 (--color-danger 위 흰 글자는 3.5:1 라 텍스트로만 쓴다) */
   --color-danger-strong: #B23A3A;
 
