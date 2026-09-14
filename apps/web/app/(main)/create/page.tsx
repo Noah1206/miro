@@ -116,6 +116,7 @@ export default function CreatePage() {
 
   // 필수 판정에 쓰는 값만 통제한다. 나머지는 uncontrolled — 제출 때 FormData 가 모은다.
   const [name, setName] = useState('')
+  const [title, setTitle] = useState('')
   const [personality, setPersonality] = useState('')
   const [startingContext, setStartingContext] = useState('')
   const [gender, setGender] = useState<string>('male')
@@ -128,11 +129,11 @@ export default function CreatePage() {
 
   const missing = useMemo(() => {
     const m = new Set<CreateTab>()
-    if (!name.trim()) m.add('profile')
+    if (!name.trim() || !title.trim()) m.add('profile')
     if (!personality.trim()) m.add('personality')
     if (!startingContext.trim()) m.add('intro')
     return m
-  }, [name, personality, startingContext])
+  }, [name, title, personality, startingContext])
   const canSubmit = missing.size === 0
   const canDraft = name.trim().length > 0
 
@@ -149,13 +150,16 @@ export default function CreatePage() {
         <Panel id="profile" show={tab === 'profile'}>
           <Section title="기본">
             <Card>
-              <ImagePicker label="캐릭터 이미지" required count={0} maxCount={5} />
+              {/* 제목이 먼저다 — 무엇을 만드는지 정하고 나서 얼굴과 이름을 붙인다. */}
+              <LabeledField label="제목" required hint="카드에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
+                <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
+              </LabeledField>
+              <div style={{ marginTop: 'var(--space-5)' }}>
+                <ImagePicker label="캐릭터 이미지" required count={0} maxCount={5} />
+              </div>
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                 <LabeledField label="이름" required error={name === '' ? null : undefined}>
                   <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
-                </LabeledField>
-                <LabeledField label="한 줄 소개" hint="카드에 이름 밑으로 걸리는 말. 캐릭터가 직접 하는 말이면 좋습니다.">
-                  <CountedInput name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} defaultValue="" />
                 </LabeledField>
                 <Two>
                   <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32" max={3} defaultValue="" /></LabeledField>
