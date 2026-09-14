@@ -148,16 +148,24 @@ export default function CreatePage() {
 
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
-          <Section title="기본">
+          <Section title="기본 설정">
             <Card>
               {/* 제목이 먼저다 — 무엇을 만드는지 정하고 나서 얼굴과 이름을 붙인다. */}
-              <LabeledField label="제목" required hint="카드에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
-                <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
-              </LabeledField>
-              <div style={{ marginTop: 'var(--space-5)' }}>
-                {/* 저장소가 없어 아직 미리보기만 된다 — 저장되지 않는 것을 필수로 막을 수는 없다. 업로드가 생기면 required 로. */}
-                <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
+              <div className="stack" style={{ gap: 18 }}>
+                <LabeledField label="제목" required hint="카드에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
+                  <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
+                </LabeledField>
+                <LabeledField label="설명" hint="세계 탭의 시대·장르·장소와 함께 세계관이 된다.">
+                  <CountedTextArea name="worldSetting" max={600} rows={5} defaultValue={''}
+                    placeholder="상황, 관계, 세계관 등을 설명해주세요." />
+                </LabeledField>
               </div>
+            </Card>
+          </Section>
+          <Section title="캐릭터">
+            <Card>
+              {/* 저장소가 없어 아직 미리보기만 된다 — 저장되지 않는 것을 필수로 막을 수는 없다. 업로드가 생기면 required 로. */}
+              <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                 <LabeledField label="이름" required error={name === '' ? null : undefined}>
                   <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
@@ -276,10 +284,6 @@ export default function CreatePage() {
                   <LabeledField label="장르"><CountedInput name="genre" placeholder="예) 현대 드라마 · 미스터리" max={60} defaultValue={''} /></LabeledField>
                 </Two>
                 <LabeledField label="장소"><CountedInput name="location" placeholder="예) 런던 구시가지" max={60} defaultValue={''} /></LabeledField>
-                <LabeledField label="세계관">
-                  <CountedTextArea name="worldSetting" max={600} rows={5} defaultValue={''}
-                    placeholder="상황, 관계, 세계관 등을 설명해주세요." />
-                </LabeledField>
               </div>
             </Card>
           </Section>
