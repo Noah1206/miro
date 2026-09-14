@@ -1,6 +1,6 @@
 'use client'
 import { useId, useState, type ReactNode } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Sheet, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
@@ -116,30 +116,44 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
 
   return (
     <>
-      {/* 사진은 가운데 정사각형 한 칸. 눌러서 시트를 연다. */}
+      {/* 사진은 가운데 4:5 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
       <motion.button type="button" onClick={() => setOpen(true)}
         whileTap={reduce ? undefined : { scale: 0.98 }}
         style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-          width: 200, height: 250, margin: '0 auto', cursor: 'pointer',
-          background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-surface-2)',
+          position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+          width: 200, height: 250, margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
+          transition: 'border-color var(--motion-fast) var(--ease-standard)',
           borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
         }}>
-        {!preview && (
-          <>
-            <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
-            </svg>
-            <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
-              {label}{required && <Star />}
-            </span>
-            {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-              최대 {maxCount}장
-            </span>
-          </>
-        )}
+        <AnimatePresence initial={false}>
+          {preview && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <motion.img key={preview} src={preview} alt="" draggable={false}
+              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.08 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, transition: { duration: duration.fast } }}
+              transition={{ duration: duration.normal, ease: ease.enter }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          )}
+        </AnimatePresence>
+        <AnimatePresence initial={false}>
+          {!preview && (
+            <motion.span key="empty" exit={{ opacity: 0, transition: { duration: duration.fast } }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
+              </svg>
+              <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
+                {label}{required && <Star />}
+              </span>
+              {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
+              <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
+                최대 {maxCount}장
+              </span>
+            </motion.span>
+          )}
+        </AnimatePresence>
       </motion.button>
 
       <Sheet open={open} onClose={() => setOpen(false)} title={`${label}${maxCount > 1 ? ` ${count}/${maxCount}` : ''}`}>
