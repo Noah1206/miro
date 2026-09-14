@@ -215,20 +215,18 @@ export default function CreatePage() {
               </div>
 
               {/* 얼굴·머리는 고급 — 몸만 정해도 사진은 나온다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}>
-                <button type="button" aria-expanded={advanced} aria-controls="appearance-advanced" onClick={() => setAdvanced((v) => !v)}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
-                    background: 'var(--color-surface-2)', border: '1px solid var(--color-border-strong)',
-                    color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
-                  }}>
-                  고급 설정
-                  <svg aria-hidden width="14" height="14" viewBox="0 0 16 16" fill="none"
-                    style={{ transform: advanced ? 'rotate(180deg)' : 'none', transition: 'transform var(--motion-fast) var(--ease-standard)' }}>
-                    <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
+              <button type="button" aria-expanded={advanced} aria-controls="appearance-advanced" onClick={() => setAdvanced((v) => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+                  minHeight: 52, marginTop: 'var(--space-5)', padding: '14px 16px', borderRadius: 'var(--radius-button)',
+                  background: 'var(--color-surface-3)', border: 0, cursor: 'pointer',
+                  color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
+                }}>
+                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
+                  {advanced ? <path d="M5 12h14" /> : <path d="M12 5v14M5 12h14" />}
+                </svg>
+                고급 설정
+              </button>
               <div id="appearance-advanced" hidden={!advanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                   <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>얼굴</p>
