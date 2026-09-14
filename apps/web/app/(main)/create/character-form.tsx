@@ -166,6 +166,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
   const [contactOn, setContactOn] = useState(i.contactEnabled)
   const [channel, setChannel] = useState<string>(i.preferredChannel)
   const [advanced, setAdvanced] = useState(false)
+  const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(i.isPublic)
   // 소개 페이지 미리보기 — 탭을 열 때 폼을 한 번 읽는다. 칸을 전부 controlled 로 바꾸지 않는다.
   const formRef = useRef<HTMLFormElement>(null)
@@ -222,14 +223,20 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                   <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={i.worldSetting}
                     placeholder="상황, 관계, 세계관 등을 설명해주세요." />
                 </LabeledField>
-                <Two>
-                  <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32" max={3} defaultValue={i.age} /></LabeledField>
-                  <LabeledField label="MBTI"><CountedInput name="mbti" placeholder="예) INTJ" max={4} defaultValue={i.mbti} /></LabeledField>
-                </Two>
-                <Two>
-                  <LabeledField label="국적"><CountedInput name="nationality" placeholder="예) 영국" max={40} defaultValue={i.nationality} /></LabeledField>
-                  <LabeledField label="직업"><CountedInput name="occupation" placeholder="예) 고서 복원가" max={60} defaultValue={i.occupation} /></LabeledField>
-                </Two>
+              </div>
+              {/* 나이·MBTI·국적·직업은 고급 — 이름과 소개만으로 카드가 된다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
+              <AdvancedToggle open={profileAdvanced} onToggle={() => setProfileAdvanced((v) => !v)} controls="profile-advanced" />
+              <div id="profile-advanced" hidden={!profileAdvanced}>
+                <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
+                  <Two>
+                    <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32" max={3} defaultValue={i.age} /></LabeledField>
+                    <LabeledField label="MBTI"><CountedInput name="mbti" placeholder="예) INTJ" max={4} defaultValue={i.mbti} /></LabeledField>
+                  </Two>
+                  <Two>
+                    <LabeledField label="국적"><CountedInput name="nationality" placeholder="예) 영국" max={40} defaultValue={i.nationality} /></LabeledField>
+                    <LabeledField label="직업"><CountedInput name="occupation" placeholder="예) 고서 복원가" max={60} defaultValue={i.occupation} /></LabeledField>
+                  </Two>
+                </div>
               </div>
             </Card>
           </Section>
@@ -282,19 +289,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
               </div>
 
               {/* 얼굴·머리는 고급 — 몸만 정해도 사진은 나온다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
-              <button type="button" aria-expanded={advanced} aria-controls="appearance-advanced" onClick={() => setAdvanced((v) => !v)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
-                  minHeight: 52, marginTop: 'var(--space-5)', padding: '14px 16px', borderRadius: 'var(--radius-button)',
-                  background: 'var(--color-surface-3)', border: 0, cursor: 'pointer',
-                  color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
-                }}>
-                고급 설정
-                <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none"
-                  style={{ transform: advanced ? 'rotate(180deg)' : 'none', transition: 'transform var(--motion-fast) var(--ease-standard)' }}>
-                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              <AdvancedToggle open={advanced} onToggle={() => setAdvanced((v) => !v)} controls="appearance-advanced" />
               <div id="appearance-advanced" hidden={!advanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                   <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>얼굴</p>
@@ -454,6 +449,25 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 /** 칸을 묶는 판. 페이지 바닥보다 한 단 밝다. */
 function Card({ children }: { children: React.ReactNode }) {
   return <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>{children}</div>
+}
+
+/** '고급 설정' 접기 버튼 — 카드 아래 전체 너비. 열리면 화살표가 뒤집힌다. 접힌 내용은 hidden 으로만 감춰 제출에 포함된다. */
+function AdvancedToggle({ open, onToggle, controls }: { open: boolean; onToggle: () => void; controls: string }) {
+  return (
+    <button type="button" aria-expanded={open} aria-controls={controls} onClick={onToggle}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%',
+        minHeight: 52, marginTop: 'var(--space-5)', padding: '14px 16px', borderRadius: 'var(--radius-button)',
+        background: 'var(--color-surface-3)', border: 0, cursor: 'pointer',
+        color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
+      }}>
+      고급 설정
+      <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none"
+        style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform var(--motion-fast) var(--ease-standard)' }}>
+        <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  )
 }
 
 /** 좌우 두 칸. 1fr 은 최소 폭이 입력 고유 폭에 잡혀 오른쪽 칸이 카드를 넘친다 — minmax(0,1fr) 로 눌러야 한다. */
