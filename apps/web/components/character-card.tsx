@@ -20,6 +20,8 @@ export type CardCharacter = {
   sessionId?: string | null
   /** 접근성 이름에 덧붙일 한 줄 (역할·현재 상태). */
   caption?: string | null
+  /** 목적지를 직접 정할 때 (임시저장은 상세가 없어 편집 화면으로 보낸다). */
+  href?: string
 }
 
 /**
@@ -33,7 +35,7 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
   const tags = hashtags(c)
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
-      <TransitionLink href={c.sessionId ? `/chat/${c.sessionId}` : `/character/${slug}`}
+      <TransitionLink href={c.href ?? (c.sessionId ? `/chat/${c.sessionId}` : `/character/${slug}`)}
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
         style={{ display: 'block', position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
         <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={portraitFor(slug)} ratio="10 / 16" />
