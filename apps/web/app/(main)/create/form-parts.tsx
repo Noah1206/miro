@@ -162,7 +162,8 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
             }} />
         </div>
         <p className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 18, padding: '0 4px' }}>
-          내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요! 아니면 경고 없이 삭제나 차단될 수 있어요.
+          내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요!<br />
+          아니면 경고 없이 삭제나 차단될 수 있어요.
         </p>
       </Sheet>
     </>
