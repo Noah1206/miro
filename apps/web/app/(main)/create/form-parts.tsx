@@ -334,7 +334,7 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
               background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
               border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
-              color: on ? 'var(--color-accent-text)' : 'var(--color-text-secondary)',
+              color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
             }}>
             {o.label}
           </motion.button>
@@ -421,7 +421,7 @@ export function Stepped({ name, label, options, defaultValue }: {
                 fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
                 background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
                 border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
-                color: on ? 'var(--color-accent-text)' : 'var(--color-text-secondary)',
+                color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
               }}>
               {o.label}
             </motion.button>
