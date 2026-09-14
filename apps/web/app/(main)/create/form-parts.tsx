@@ -1,9 +1,10 @@
 'use client'
-import { useId, useState, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Sheet, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
+import { Line } from '../character/[slug]/sections'
 
 /**
  * 만들기 폼의 조각들 (레퍼런스 UI).
@@ -278,7 +279,17 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   const [draft, setDraft] = useState('')
   const [editing, setEditing] = useState<number | null>(null)
   const [editText, setEditText] = useState('')
+  const draftRef = useRef<HTMLTextAreaElement>(null)
   const who = characterName || '캐릭터'
+  // 고른 글자를 *별표* 로 감싼다 — 채팅과 같은 규칙: 별표 안은 옅은 서술이 된다. 고른 게 없으면 별표 한 쌍을 넣고 그 사이에 커서를 둔다.
+  const wrapNarration = () => {
+    const el = draftRef.current
+    if (!el) return
+    const a = el.selectionStart ?? draft.length, b = el.selectionEnd ?? draft.length
+    const next = `${draft.slice(0, a)}*${draft.slice(a, b)}*${draft.slice(b)}`
+    setDraft(next)
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(a + 1, b + 1) })
+  }
   const label = (r: Turn['role']) => (r === 'narrator' ? '내레이터' : r === 'user' ? '유저' : who)
   const full = turns.length >= MAX_TURNS
 
@@ -329,7 +340,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           const body = isEditing
             ? <textarea autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={500}
                 style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
-            : <span style={{ whiteSpace: 'pre-wrap', fontSize: 14, lineHeight: 1.5, color: 'var(--color-text-primary)' }}>{t.text}</span>
+            : <span style={{ display: 'block', fontSize: 14 }}><Line text={t.text} /></span>
 
           if (t.role === 'narrator') {
             return (
@@ -383,8 +394,8 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           <span className="t-micro" style={{ marginLeft: 'auto', alignSelf: 'center', textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{turns.length}/{MAX_TURNS}</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginTop: 8 }}>
-          <textarea value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
-            placeholder={full ? '12마디까지 넣을 수 있어요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
+          <textarea ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
+            placeholder={full ? '12마디까지 넣을 수 있어요.' : role === 'narrator' ? '장면을 서술해요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
             style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
           <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기"
             style={{
@@ -396,6 +407,15 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
           </button>
         </div>
+        {role !== 'narrator' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
+            <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기"
+              style={{ padding: '3px 9px', borderRadius: 'var(--radius-sm)', border: 0, cursor: full ? 'default' : 'pointer', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
+              *서술*
+            </button>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>별표 안은 옅은 서술로 보여요. 예) <em style={{ color: 'var(--color-text-tertiary)' }}>손을 흔들며</em> 하이~</span>
+          </div>
+        )}
       </div>
     </div>
   )

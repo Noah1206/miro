@@ -83,7 +83,7 @@ export function SampleDialogue({ name, portrait, turns }: {
 }
 
 /** *별표* 로 감싼 부분은 서술 — 채팅 화면과 같은 규칙. */
-function Line({ text }: { text: string }) {
+export function Line({ text }: { text: string }) {
   const parts = text.split(/(\*[^*]+\*)/g).filter(Boolean)
   return (
     <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-primary)', margin: 0 }}>
