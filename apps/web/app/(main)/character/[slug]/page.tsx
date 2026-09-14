@@ -64,7 +64,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} />
 
-      <div style={{ padding: '0 var(--space-5)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
+      <div style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em' }}>{c.name}</h1>
         {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-primary)', lineHeight: 1.6, marginBottom: 12 }}>{c.tagline}</p>}
 
@@ -126,7 +126,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       {similar.length > 0 && (
         <section aria-labelledby="similar" style={{ marginTop: 'var(--space-7)' }}>
-          <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--space-5)', marginBottom: 12 }}>
+          <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>
             {subject(c.name)} 마음에 들었다면
           </h2>
           <SimilarRow items={similar} />
@@ -136,7 +136,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {/* n18 — 문. 고정 하단. 내비 위에 올라앉는다 (2.5.8 / 2.4.11). */}
       {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
-      <div className="detail-cta" style={{ zIndex: 25, padding: '14px var(--space-5)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
+      <div className="detail-cta" style={{ zIndex: 25, padding: '14px var(--gutter)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
         {user
           ? <form action={enter}><Button type="submit" variant="primary" size="lg" full>{COPY.cta.startRoleplay}</Button></form>
           : <ButtonLink href={`/login?next=${encodeURIComponent(`/character/${slug}`)}`} variant="primary" size="lg" full>로그인하고 시작하기</ButtonLink>}

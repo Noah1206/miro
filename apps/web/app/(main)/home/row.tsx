@@ -16,7 +16,7 @@ export function Row({ row, index }: { row: HomeRow; index: number }) {
       transition={{ duration: duration.slow, ease: ease.enter, delay: 0.08 * index }}
       style={{ marginBottom: 'var(--space-7)' }}>
       <h2 id={`row-${row.key}`} className="t-title-2"
-        style={{ padding: '0 var(--space-5)', marginBottom: 14 }}>{row.title}</h2>
+        style={{ padding: '0 var(--gutter)', marginBottom: 14 }}>{row.title}</h2>
       <div className="row-scroll">
         {row.items.map((c, i) => (
           <motion.div key={`${row.key}-${c.id}`}

@@ -17,14 +17,14 @@ export default async function Discover() {
         <LogoMark size={22} />
         <h1 className="t-title-2" style={{ margin: 0 }}>발견</h1>
       </header>
-      <Tip id="discover" style={{ margin: '0 var(--space-5) var(--space-4)' }}>공식 캐릭터와 사람들이 공개한 캐릭터를 한 번에 봅니다.</Tip>
+      <Tip id="discover" style={{ margin: '0 var(--gutter) var(--space-4)' }}>공식 캐릭터와 사람들이 공개한 캐릭터를 한 번에 봅니다.</Tip>
 
       {items.length === 0 ? (
-        <p className="t-caption" style={{ padding: '0 var(--space-5)', color: 'var(--color-text-tertiary)' }}>
+        <p className="t-caption" style={{ padding: '0 var(--gutter)', color: 'var(--color-text-tertiary)' }}>
           아직 보여드릴 캐릭터가 없어요.
         </p>
       ) : (
-        <div className="grid-2" style={{ padding: '0 var(--space-5)' }}>
+        <div className="grid-2" style={{ padding: '0 var(--gutter)' }}>
           {items.map((c) => <CharacterCard key={c.id} c={c} />)}
         </div>
       )}

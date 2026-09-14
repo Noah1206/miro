@@ -32,10 +32,10 @@ export function CreateHeader({ tab, onTab, missing, canSubmit, canDraft, pending
 }) {
   return (
     <header style={{
-      position: 'sticky', top: 0, zIndex: 20, margin: '0 calc(-1 * var(--space-5))',
+      position: 'sticky', top: 0, zIndex: 20, margin: '0 calc(-1 * var(--gutter))',
       background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '0 var(--space-5)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '0 var(--gutter)' }}>
         <TransitionLink href="/home" direction="back" aria-label="닫기"
           style={{ display: 'inline-flex', color: 'var(--color-text-primary)', padding: 4 }}>
           <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>

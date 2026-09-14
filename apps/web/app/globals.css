@@ -58,6 +58,8 @@
 
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
   --nav-h: 64px; --app-w: 430px;
+  /* 화면 좌우 여백. 24px 은 폰에서 답답했다 — 레퍼런스(제타·크랙)는 16px 언저리다. 카드 안쪽 여백과는 별개. */
+  --gutter: 16px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -97,7 +99,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); letter-spacing: -0.005em; }
 
 /* layout */
-.page { min-height: 100dvh; padding: var(--space-5) var(--space-5) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
+.page { min-height: 100dvh; padding: var(--space-5) var(--gutter) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
 .page--immersive { max-width: none; padding: 0; }
 .stack { display: flex; flex-direction: column; }
 .hairline { height: 1px; background: var(--color-border); border: 0; margin: 0; }
@@ -152,7 +154,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* horizontal pager — native scroll-snap does momentum + snap; Motion only draws the indicator */
 .row-scroll { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
-  -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); }
+  -webkit-overflow-scrolling: touch; padding: 0 var(--gutter); scroll-padding: 0 var(--gutter); }
 .row-scroll::-webkit-scrollbar { display: none; }
 /* 카드 폭: 한 화면에 2장 + 다음 장이 걸쳐 보이게. 상한을 두지 않는다 — 앱 폭이 이미 고정이다. */
 .row-scroll > * { scroll-snap-align: start; flex: 0 0 58%; }
@@ -179,7 +181,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* 발견 — 2열 그리드. 카드는 행과 같은 것을 쓴다. */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 
-.pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--space-5); scroll-padding: 0 var(--space-5); touch-action: pan-x pan-y; }
+.pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--gutter); scroll-padding: 0 var(--gutter); touch-action: pan-x pan-y; }
 .pager::-webkit-scrollbar { display: none; }
 .pager > * { scroll-snap-align: start; flex: 0 0 82%; }
 

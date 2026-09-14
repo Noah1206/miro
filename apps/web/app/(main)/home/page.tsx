@@ -32,14 +32,14 @@ export default async function Home() {
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       {user && <IncomingCall userId={user.id} />}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--space-5) var(--space-5)' }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--gutter) var(--space-5)' }}>
         <LogoMark size={22} />
         <h1 className="sr-only">한 사람의 세계 안으로</h1>
         {user
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
           : <ButtonLink href="/login" variant="secondary" size="sm">로그인</ButtonLink>}
       </header>
-      <Tip id="home" style={{ margin: '0 var(--space-5) var(--space-4)' }}>카드를 누르면 그 사람을 먼저 살펴볼 수 있어요. 대화는 상세에서 시작합니다.</Tip>
+      <Tip id="home" style={{ margin: '0 var(--gutter) var(--space-4)' }}>카드를 누르면 그 사람을 먼저 살펴볼 수 있어요. 대화는 상세에서 시작합니다.</Tip>
 
       <div>
         {rows.map((row, i) => <Row key={row.key} row={row} index={i} />)}

@@ -24,7 +24,7 @@ export function LiveStage({ sessionId, characterName, background, header, lines 
       <h1 className="sr-only">{characterName} · <span lang="en">Live Scene</span></h1>
       <header style={{ position: 'relative', padding: 'var(--space-4) var(--space-5)' }}>{header}</header>
 
-      <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '0 var(--space-5) var(--space-3)', gap: 'var(--space-4)', maxWidth: 720, width: '100%', margin: '0 auto' }}>
+      <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '0 var(--gutter) var(--space-3)', gap: 'var(--space-4)', maxWidth: 720, width: '100%', margin: '0 auto' }}>
         <AnimatePresence initial={false}>
           {lines.map((m) => (
             <Line key={m.id}>
