@@ -116,7 +116,6 @@ export default function CreatePage() {
 
   // 필수 판정에 쓰는 값만 통제한다. 나머지는 uncontrolled — 제출 때 FormData 가 모은다.
   const [name, setName] = useState('')
-  const [title, setTitle] = useState('')
   const [personality, setPersonality] = useState('')
   const [startingContext, setStartingContext] = useState('')
   const [gender, setGender] = useState<string>('male')
@@ -129,11 +128,11 @@ export default function CreatePage() {
 
   const missing = useMemo(() => {
     const m = new Set<CreateTab>()
-    if (!name.trim() || !title.trim()) m.add('profile')
+    if (!name.trim()) m.add('profile')
     if (!personality.trim()) m.add('personality')
     if (!startingContext.trim()) m.add('intro')
     return m
-  }, [name, title, personality, startingContext])
+  }, [name, personality, startingContext])
   const canSubmit = missing.size === 0
   const canDraft = name.trim().length > 0
 
@@ -148,20 +147,6 @@ export default function CreatePage() {
 
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
-          <Section title="기본 설정">
-            <Card>
-              {/* 제목이 먼저다 — 무엇을 만드는지 정하고 나서 얼굴과 이름을 붙인다. */}
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="제목" required hint="카드에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
-                  <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
-                </LabeledField>
-                <LabeledField label="설명" hint="세계 탭의 시대·장르·장소와 함께 세계관이 된다.">
-                  <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={''}
-                    placeholder="상황, 관계, 세계관 등을 설명해주세요." />
-                </LabeledField>
-              </div>
-            </Card>
-          </Section>
           <Section title="캐릭터">
             <Card>
               {/* 저장소가 없어 아직 미리보기만 된다 — 저장되지 않는 것을 필수로 막을 수는 없다. 업로드가 생기면 required 로. */}
@@ -169,6 +154,10 @@ export default function CreatePage() {
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
                 <LabeledField label="이름" required error={name === '' ? null : undefined}>
                   <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
+                </LabeledField>
+                <LabeledField label="설명" hint="세계 탭의 시대·장르·장소와 함께 세계관이 된다.">
+                  <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={''}
+                    placeholder="상황, 관계, 세계관 등을 설명해주세요." />
                 </LabeledField>
                 <Two>
                   <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32" max={3} defaultValue="" /></LabeledField>
