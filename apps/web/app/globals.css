@@ -57,7 +57,8 @@
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
-  --nav-h: 64px; --app-w: 430px;
+  /* 넓은 화면에서의 앱 폭. 제타가 480 — 430 은 옆에 두고 보면 좁았다. 폰에서는 화면 폭이 이긴다. */
+  --nav-h: 64px; --app-w: 480px;
   /* 화면 좌우 여백. 24px 은 폰에서 답답했다 — 레퍼런스(제타·크랙)는 16px 언저리다. 카드 안쪽 여백과는 별개. */
   --gutter: 16px;
 }
@@ -200,7 +201,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   width: 100%; max-width: var(--app-w); margin: 0 auto; min-height: 100dvh;
   position: relative; background: var(--color-bg);
 }
-@media (min-width: 460px) { body { background: #000; } }
+@media (min-width: 500px) { body { background: #000; } }
 
 /* fields */
 .field { border-color: var(--color-border-input) !important; }
@@ -214,7 +215,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .nav__item { flex: 1; display: flex; justify-content: center; padding: 8px 0; min-height: 48px; }
 .nav__inner { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; padding: 4px 8px; }
 /* 넓은 화면에서도 앱 폭 안에 머문다 (fixed 는 뷰포트 기준이므로 직접 가둔다). */
-@media (min-width: 460px) {
+@media (min-width: 500px) {
   .nav { left: 50%; right: auto; width: 100%; max-width: var(--app-w); transform: translateX(-50%); }
 }
 
@@ -237,7 +238,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
  * transform 대신 margin 으로 가운데 정렬한다 — Motion 이 transform 을 쥐는 요소(시트)에
  * translateX 를 얹으면 서로 덮어써서 어긋난다.
  */
-@media (min-width: 460px) {
+@media (min-width: 500px) {
   .detail-cta, .app-fixed {
     left: 0; right: 0; width: var(--app-w);
     margin-left: auto; margin-right: auto;
