@@ -3,17 +3,16 @@ import { motion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { spring } from '@/lib/motion/tokens'
 
-export type CreateTab = 'profile' | 'personality' | 'appearance' | 'world' | 'relationship' | 'contact' | 'intro' | 'settings'
+export type CreateTab = 'profile' | 'personality' | 'appearance' | 'relationship' | 'contact' | 'intro' | 'preview'
 
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: '프로필' },
   { key: 'personality', label: '성격' },
   { key: 'appearance', label: '외형' },
-  { key: 'world', label: '세계' },
   { key: 'relationship', label: '관계' },
   { key: 'contact', label: '연락' },
   { key: 'intro', label: '인트로' },
-  { key: 'settings', label: '설정' },
+  { key: 'preview', label: '소개 페이지' },
 ]
 
 /**

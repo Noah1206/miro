@@ -106,6 +106,7 @@ export async function saveCharacter(form: FormData): Promise<void> {
   const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
       ownerId: user.id, isOfficial: false, name,
+      tagline: orNull(s('title')),
       age,
       nationality: orNull(s('nationality')) ?? null,
       occupation: orNull(s('occupation')) ?? null,

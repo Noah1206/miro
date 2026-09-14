@@ -8,6 +8,7 @@ async function createCharacter(page: import('@playwright/test').Page, name: stri
 
   await page.goto(`${BASE}/create`)
   await page.locator('input[name="name"]').fill(name)
+  await page.locator('input[name="title"]').fill('한 줄 소개')
   await page.getByRole('tab', { name: /성격/ }).click()
   await page.locator('textarea[name="personality"]').fill('무뚝뚝한 외과의.')
   await page.getByRole('tab', { name: /인트로/ }).click()

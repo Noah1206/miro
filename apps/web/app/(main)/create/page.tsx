@@ -1,10 +1,11 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Tip } from '@/components/ui'
 import { saveCharacter } from './actions'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES, stageLabel } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
+import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
 
 const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'ambiguous', 'flirting', 'rivalry', 'distrust', 'conflict', 'dating', 'lover'] as const
@@ -20,11 +21,6 @@ const CHANNELS = [
   { value: 'message', label: '메시지' }, { value: 'photo', label: '사진' },
   // 4열 칩이라 '음성 메시지' 는 두 줄로 꺾인다 — 칩만 짧게. 아래 항목 제목은 온전한 이름을 쓴다.
   { value: 'voice_message', label: '음성' }, { value: 'voice_call', label: '전화' },
-] as const
-const OUTPUT_STYLES = [
-  { value: 'messenger', label: '메신저형', hint: '짧은 대사 위주. 카톡처럼.' },
-  { value: 'balanced', label: '균형형', hint: '대사와 서술을 섞는다.' },
-  { value: 'narrative', label: '서사형', hint: '소설처럼 길게 묘사한다.' },
 ] as const
 
 
@@ -116,6 +112,7 @@ export default function CreatePage() {
 
   // 필수 판정에 쓰는 값만 통제한다. 나머지는 uncontrolled — 제출 때 FormData 가 모은다.
   const [name, setName] = useState('')
+  const [title, setTitle] = useState('')
   const [personality, setPersonality] = useState('')
   const [startingContext, setStartingContext] = useState('')
   const [gender, setGender] = useState<string>('male')
@@ -123,17 +120,22 @@ export default function CreatePage() {
   const [stage, setStage] = useState<string>('stranger')
   const [contactOn, setContactOn] = useState(true)
   const [channel, setChannel] = useState<string>('message')
-  const [outputStyle, setOutputStyle] = useState('balanced')
-  const [isPublic, setIsPublic] = useState(false)
   const [advanced, setAdvanced] = useState(false)
+  // 소개 페이지 미리보기 — 탭을 열 때 폼을 한 번 읽는다. 칸을 전부 controlled 로 바꾸지 않는다.
+  const formRef = useRef<HTMLFormElement>(null)
+  const [snap, setSnap] = useState<Snapshot | null>(null)
+  const openTab = (t: CreateTab) => {
+    if (t === 'preview' && formRef.current) setSnap((prev) => { if (prev?.photo) URL.revokeObjectURL(prev.photo); return snapshot(formRef.current!) })
+    setTab(t)
+  }
 
   const missing = useMemo(() => {
     const m = new Set<CreateTab>()
-    if (!name.trim()) m.add('profile')
+    if (!name.trim() || !title.trim()) m.add('profile')
     if (!personality.trim()) m.add('personality')
     if (!startingContext.trim()) m.add('intro')
     return m
-  }, [name, personality, startingContext])
+  }, [name, title, personality, startingContext])
   const canSubmit = missing.size === 0
   const canDraft = name.trim().length > 0
 
@@ -141,10 +143,10 @@ export default function CreatePage() {
   return (
     // Page 는 transform 을 걸어 sticky 를 깨뜨리므로 쓰지 않는다.
     <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, outline: 'none' }}>
-      <form action={saveCharacter} onSubmit={() => setPending(true)} className="stack" style={{ gap: 0 }}>
+      <form ref={formRef} action={saveCharacter} onSubmit={() => setPending(true)} className="stack" style={{ gap: 0 }}>
 
-        <CreateHeader tab={tab} onTab={setTab} canSubmit={canSubmit} canDraft={canDraft} pending={pending} />
-        <Tip id="create" style={{ marginTop: 'var(--space-4)' }}>이름·성격·첫 장면만 채우면 등록할 수 있어요. 나머지는 나중에 고쳐도 됩니다.</Tip>
+        <CreateHeader tab={tab} onTab={openTab} canSubmit={canSubmit} canDraft={canDraft} pending={pending} />
+        <Tip id="create" style={{ marginTop: 'var(--space-4)' }}>이름·소개·성격·첫 장면만 채우면 등록할 수 있어요. 나머지는 나중에 고쳐도 됩니다.</Tip>
 
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
@@ -156,7 +158,10 @@ export default function CreatePage() {
                 <LabeledField label="이름" required error={name === '' ? null : undefined}>
                   <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
                 </LabeledField>
-                <LabeledField label="설명" hint="세계 탭의 시대·장르·장소와 함께 세계관이 된다.">
+                <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
+                  <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
+                </LabeledField>
+                <LabeledField label="설명" hint="시대·장소·장르까지 여기에 적으면 세계관이 됩니다.">
                   <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={''}
                     placeholder="상황, 관계, 세계관 등을 설명해주세요." />
                 </LabeledField>
@@ -257,21 +262,6 @@ export default function CreatePage() {
           </Section>
         </Panel>
 
-        {/* ── 세계 ── */}
-        <Panel id="world" show={tab === 'world'}>
-          <Section title="세계">
-            <Card>
-              <div className="stack" style={{ gap: 18 }}>
-                <Two>
-                  <LabeledField label="시대"><CountedInput name="era" placeholder="예) 현대" max={40} defaultValue={''} /></LabeledField>
-                  <LabeledField label="장르"><CountedInput name="genre" placeholder="예) 현대 드라마 · 미스터리" max={60} defaultValue={''} /></LabeledField>
-                </Two>
-                <LabeledField label="장소"><CountedInput name="location" placeholder="예) 런던 구시가지" max={60} defaultValue={''} /></LabeledField>
-              </div>
-            </Card>
-          </Section>
-        </Panel>
-
         {/* ── 관계 ── */}
         <Panel id="relationship" show={tab === 'relationship'}>
           <Section title="시작 관계" subtitle="처음 만났을 때 두 사람이 서 있는 자리. 대화하면서 바뀝니다.">
@@ -367,40 +357,11 @@ export default function CreatePage() {
           </Section>
         </Panel>
 
-        {/* ── 설정 ── */}
-        <Panel id="settings" show={tab === 'settings'}>
-          <Section title="역할극 스타일" subtitle="대화 중에도 바꿀 수 있습니다.">
-            <Card>
-              <input type="hidden" name="outputStyle" value={outputStyle} />
-              <div className="stack" style={{ gap: 8 }}>
-                {OUTPUT_STYLES.map((o) => {
-                  const on = o.value === outputStyle
-                  return (
-                    <button key={o.value} type="button" onClick={() => setOutputStyle(o.value)} aria-pressed={on}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '14px 16px', textAlign: 'left',
-                        borderRadius: 'var(--radius-md)', cursor: 'pointer',
-                        background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-                        border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
-                      }}>
-                      <span className="stack" style={{ gap: 2, flex: 1 }}>
-                        <span className="t-body" style={{ color: on ? 'var(--color-accent-text)' : 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{o.label}</span>
-                        <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{o.hint}</span>
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-            </Card>
-          </Section>
-          <Section title="공개" subtitle="켜면 홈과 발견에 실리고, 다른 사람이 이 캐릭터와 대화를 시작할 수 있습니다.">
-            <Card>
-              <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
-                label="다른 사람에게 공개"
-                hint="임시저장은 공개되지 않습니다. 대화 내용은 각자 따로 — 다른 사람의 대화가 내게 보이지 않습니다." />
-            </Card>
-          </Section>
+        {/* ── 소개 페이지 ── */}
+        <Panel id="preview" show={tab === 'preview'}>
+          <DetailPreview d={snap} />
         </Panel>
+
       </form>
     </main>
   )
