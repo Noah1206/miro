@@ -381,7 +381,7 @@ export default function CreatePage() {
                         display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '14px 16px', textAlign: 'left',
                         borderRadius: 'var(--radius-md)', cursor: 'pointer',
                         background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-                        border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                        border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
                       }}>
                       <span className="stack" style={{ gap: 2, flex: 1 }}>
                         <span className="t-body" style={{ color: on ? 'var(--color-accent-text)' : 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{o.label}</span>
@@ -488,7 +488,7 @@ function BodyPicker({ build, onBuild, gender, onGender }: {
             <motion.button key={b} type="button" onClick={() => onBuild(b)} aria-pressed={on}
               aria-label={`${GENDER_PRESETS[gender as keyof typeof GENDER_PRESETS]?.label} ${BUILD_PRESETS[b].label}`}
               whileTap={reduce ? undefined : { scale: 0.97 }}
-              style={{ padding: 3, cursor: 'pointer', borderRadius: 'var(--radius-md)', background: 'none', border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}` }}>
+              style={{ padding: 3, cursor: 'pointer', borderRadius: 'var(--radius-md)', background: 'none', border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/builds/${gender}-${b}.webp`} alt="" width={120} height={160} loading="lazy" decoding="async"
                 style={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block', borderRadius: 'var(--radius-sm)', opacity: on ? 1 : 0.5, transition: 'opacity var(--motion-fast) var(--ease-standard)' }} />
