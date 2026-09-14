@@ -222,10 +222,11 @@ export default function CreatePage() {
                   background: 'var(--color-surface-3)', border: 0, cursor: 'pointer',
                   color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
                 }}>
-                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round">
-                  {advanced ? <path d="M5 12h14" /> : <path d="M12 5v14M5 12h14" />}
-                </svg>
                 고급 설정
+                <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none"
+                  style={{ transform: advanced ? 'rotate(180deg)' : 'none', transition: 'transform var(--motion-fast) var(--ease-standard)' }}>
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
               <div id="appearance-advanced" hidden={!advanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
