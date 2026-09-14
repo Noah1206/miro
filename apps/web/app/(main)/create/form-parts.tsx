@@ -1,5 +1,5 @@
 'use client'
-import { useId, useState, type ReactNode } from 'react'
+import { Children, useId, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { Sheet } from '@/components/ui'
 import { duration, ease } from '@/lib/motion/tokens'
@@ -422,4 +422,59 @@ export function DialogueEditor({ name, characterName, defaultValue = [] }: {
 const addBtn: React.CSSProperties = {
   padding: '8px 12px', borderRadius: 'var(--radius-button)', border: 0, cursor: 'pointer',
   background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)',
+}
+
+export type Step = { value: number; label: string; hint: string }
+
+/**
+ * 단계 선택 (레퍼런스 '난이도 · 전개 속도' 꼴). 슬라이더 대신 3–4단계 버튼 — 숫자는 감이 안 오고
+ * '보통/예민함' 은 바로 읽힌다. 저장 값은 여전히 0–100 이다 (엔진·스키마 불변).
+ * 고른 단계의 한 줄 설명이 밑에 붙는다. 기본값은 가장 가까운 단계로 맞춘다.
+ */
+export function Stepped({ name, label, options, defaultValue }: {
+  name: string; label: string; options: readonly Step[]; defaultValue: number
+}) {
+  const nearest = options.reduce((a, b) => (Math.abs(b.value - defaultValue) < Math.abs(a.value - defaultValue) ? b : a))
+  const [value, setValue] = useState(nearest.value)
+  const current = options.find((o) => o.value === value) ?? nearest
+  const reduce = useReducedMotion()
+  return (
+    <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+      <legend className="t-body" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)', marginBottom: 10 }}>{label}</legend>
+      <input type="hidden" name={name} value={value} />
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 6 }}>
+        {options.map((o) => {
+          const on = o.value === value
+          return (
+            <motion.button key={o.value} type="button" onClick={() => setValue(o.value)} aria-pressed={on}
+              whileTap={reduce ? undefined : { scale: 0.97 }}
+              style={{
+                minHeight: 44, padding: '10px 6px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+                fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
+                border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                color: on ? 'var(--color-accent-text)' : 'var(--color-text-secondary)',
+              }}>
+              {o.label}
+            </motion.button>
+          )
+        })}
+      </div>
+      <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>{current.hint}</p>
+    </fieldset>
+  )
+}
+
+/** 카드 안의 항목들을 가는 선으로 나눈다 (레퍼런스). 첫 항목 위에는 선이 없다. */
+export function Rows({ children, style }: { children: ReactNode; style?: React.CSSProperties }) {
+  const items = Children.toArray(children)
+  return (
+    <div className="stack" style={{ gap: 0, ...style }}>
+      {items.map((c, i) => (
+        <div key={i} style={{ padding: i === 0 ? '0 0 16px' : '16px 0', borderTop: i === 0 ? 0 : '1px solid var(--color-border)' }}>
+          {c}
+        </div>
+      ))}
+    </div>
+  )
 }
