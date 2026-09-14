@@ -1,5 +1,5 @@
 'use client'
-import { useId, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Sheet, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
@@ -43,11 +43,11 @@ export function LabeledField({ label, required, hint, error, children }: {
   )
 }
 
-/** 입력 상자 (레퍼런스): 얇은 테두리의 둥근 네모. 초점은 흰 테두리, 오류는 빨강. 채움은 카드보다 한 단 진하게. */
+/** 입력 상자 (레퍼런스): 얇은 테두리의 둥근 네모. 초점은 한 단 밝은 회색, 오류는 빨강. 채움은 카드보다 한 단 진하게. */
 export function box(focused: boolean, invalid?: boolean): React.CSSProperties {
   return {
     background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)',
-    border: `1px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-white)' : 'var(--color-border-strong)'}`,
+    border: `0.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-border-hover)' : 'var(--color-border-strong)'}`,
     transition: 'border-color var(--motion-fast) var(--ease-standard)',
   }
 }
@@ -107,82 +107,144 @@ export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue
  * 캐릭터 이미지 — 첫 장은 큰 칸(대표), 그 아래 작은 줄에 나머지와 '+' 칸. 최대 maxCount 장.
  * 저장소가 없어 아직 미리보기만 된다 — 업로드가 붙으면 objectURL 대신 올린 주소를 쓴다.
  */
-export function ImagePicker({ label, maxCount = 5, required }: {
-  label: string; count?: number; maxCount?: number; required?: boolean
+type Picked = { url: string; file: File }
+
+export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
+  label: string; maxCount?: number; required?: boolean
+  /** 편집 화면에서 이미 저장된 사진 URL — 새로 고르지 않으면 그대로 유지된다. */
+  existing?: string[]
 }) {
   const [open, setOpen] = useState(false)
-  const [previews, setPreviews] = useState<string[]>([])
+  const [previews, setPreviews] = useState<Picked[]>([])
+  const [kept, setKept] = useState<string[]>(existing)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const inputId = useId()
   const reduce = useReducedMotion()
-  const main = previews[0] ?? null
-  const full = previews.length >= maxCount
+  // 기존 사진(이미 저장됨)이 새 사진 앞에 온다. 대표는 언제나 0번째.
+  const items: Array<{ url: string; kind: 'existing' | 'new' }> = [
+    ...kept.map((url) => ({ url, kind: 'existing' as const })),
+    ...previews.map((p) => ({ url: p.url, kind: 'new' as const })),
+  ]
+  const main = items[0]?.url ?? null
+  const full = items.length >= maxCount
 
-  const remove = (i: number) => setPreviews((xs) => { URL.revokeObjectURL(xs[i]!); return xs.filter((_, j) => j !== i) })
+  // 폼 제출용 실제 파일 input — 순서가 바뀔 때마다 DataTransfer 로 다시 채운다.
+  useEffect(() => {
+    const input = fileInputRef.current
+    if (!input) return
+    const dt = new DataTransfer()
+    for (const p of previews) dt.items.add(p.file)
+    input.files = dt.files
+  }, [previews])
+
+  const removeAt = (i: number) => {
+    if (i < kept.length) { setKept((xs) => xs.filter((_, j) => j !== i)); return }
+    const ni = i - kept.length
+    setPreviews((xs) => { URL.revokeObjectURL(xs[ni]!.url); return xs.filter((_, j) => j !== ni) })
+  }
+
+  /** 드래그로 순서 교체 — 첫 칸(index 0)에 놓으면 그 사진이 대표가 된다. 기존·새 사진을 하나의 순서로 합쳐서 다룬다. */
+  const reorder = (from: number, to: number) => {
+    if (from === to) return
+    const merged = items.map((it) => it.url)
+    const [moved] = merged.splice(from, 1)
+    merged.splice(to, 0, moved!)
+    const nextKept = merged.filter((u) => kept.includes(u))
+    const nextPreviews = merged
+      .map((u) => previews.find((p) => p.url === u))
+      .filter((p): p is Picked => p !== undefined)
+    setKept(nextKept)
+    setPreviews(nextPreviews)
+  }
+  const dragHandlers = (i: number) => ({
+    draggable: true,
+    onDragStart: (e: React.DragEvent) => { setDragIndex(i); e.dataTransfer.effectAllowed = 'move' },
+    onDragOver: (e: React.DragEvent) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (overIndex !== i) setOverIndex(i) },
+    onDragLeave: () => setOverIndex((v) => (v === i ? null : v)),
+    onDrop: (e: React.DragEvent) => { e.preventDefault(); if (dragIndex !== null) reorder(dragIndex, i); setDragIndex(null); setOverIndex(null) },
+    onDragEnd: () => { setDragIndex(null); setOverIndex(null) },
+  })
 
   return (
     <>
-      {/* 미리보기 탭이 읽는다 — 서버는 무시한다 (objectURL 은 이 문서 안에서만 유효). */}
-      {previews.map((src) => <input key={src} type="hidden" name="imagePreview" value={src} />)}
-      {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
-      <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? `${label} 대표 사진 바꾸기` : label}
-        whileTap={reduce ? undefined : { scale: 0.98 }}
-        style={{
-          position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-          width: 200, aspectRatio: '1 / 1', margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
-          border: `1.5px ${main ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
-          transition: 'border-color var(--motion-fast) var(--ease-standard)',
-          borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
-        }}>
-        <AnimatePresence initial={false}>
-          {main && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <motion.img key={main} src={main} alt="" draggable={false}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.08 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, transition: { duration: duration.fast } }}
-              transition={{ duration: duration.normal, ease: ease.enter }}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          )}
-        </AnimatePresence>
-        <AnimatePresence initial={false}>
-          {!main && (
-            <motion.span key="empty" exit={{ opacity: 0, transition: { duration: duration.fast } }}
-              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-              <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
-              </svg>
-              <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
-                {label}{required && <Star />}
-              </span>
-              {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
-              <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-                최대 {maxCount}장
-              </span>
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.button>
+      {/* 실제 파일 — 서버 액션(saveCharacter)이 업로드한다. 순서가 바뀔 때마다 useEffect 가 다시 채운다. */}
+      <input ref={fileInputRef} type="file" name="images" multiple hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" />
+      {/* 이미 저장된 사진 — 새로 고르지 않으면 이 URL 목록 그대로 유지된다 (편집 화면). */}
+      {kept.map((url) => <input key={url} type="hidden" name="keptImages" value={url} />)}
+      {/* 최종 순서 — 'kept'(기존 URL 그대로) 또는 'new'(방금 고른 파일, images 의 순서대로) 토큰을 대표부터 나열한다.
+          기존·새 사진을 드래그로 섞어도 서버가 같은 순서로 합칠 수 있게 한다. */}
+      {items.map((it) => <input key={it.url} type="hidden" name="imageOrder" value={it.kind} />)}
+      {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
+          다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
+      <div {...(main ? dragHandlers(0) : {})} style={{ width: 200, margin: '0 auto', cursor: main ? 'grab' : undefined }}>
+        <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? `${label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)` : label}
+          whileTap={reduce ? undefined : { scale: 0.98 }}
+          style={{
+            position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+            width: 200, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'pointer', background: 'var(--color-surface-2)',
+            border: `1.5px solid ${overIndex === 0 && dragIndex !== null && dragIndex !== 0 ? 'var(--color-border-hover)' : main ? 'transparent' : 'var(--color-border-strong)'}`,
+            borderStyle: main ? 'solid' : 'dashed',
+            opacity: dragIndex === 0 ? 0.5 : 1,
+            transition: 'border-color var(--motion-fast) var(--ease-standard)',
+            borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
+          }}>
+          <AnimatePresence initial={false}>
+            {main && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <motion.img key={main} src={main} alt="" draggable={false}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.08 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, transition: { duration: duration.fast } }}
+                transition={{ duration: duration.normal, ease: ease.enter }}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            )}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {!main && (
+              <motion.span key="empty" exit={{ opacity: 0, transition: { duration: duration.fast } }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
+                </svg>
+                <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
+                  {label}{required && <Star />}
+                </span>
+                {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
+                <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
+                  최대 {maxCount}장
+                </span>
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
+      </div>
 
-      {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. */}
+      {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. 드래그로 순서를 바꿀 수 있다. */}
       {main && (
         <ul aria-label="추가 사진" style={{ listStyle: 'none', margin: '12px auto 0', padding: 0, width: 200, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
           <AnimatePresence initial={false}>
-            {previews.slice(1).map((src, i) => (
-              <motion.li key={src} initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: duration.fast }}>
-                <button type="button" onClick={() => remove(i + 1)} aria-label={`${i + 2}번째 사진 빼기`}
-                  style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', padding: 0, border: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', background: 'var(--color-surface-2)' }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  <span aria-hidden style={{ position: 'absolute', top: 3, right: 3, width: 16, height: 16, borderRadius: 8, display: 'grid', placeItems: 'center', background: 'rgba(10,10,11,0.75)', color: 'var(--color-white)' }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                  </span>
-                </button>
-              </motion.li>
+            {items.slice(1).map((it, i) => (
+              // 드래그(li, 네이티브)와 애니메이션(motion.div)을 분리한다 — 대표 사진 칸과 같은 이유.
+              <li key={it.url} {...dragHandlers(i + 1)} style={{ opacity: dragIndex === i + 1 ? 0.5 : 1, cursor: 'grab' }}>
+                <motion.div initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: duration.fast }}>
+                  <button type="button" onClick={() => removeAt(i + 1)} aria-label={`${i + 2}번째 사진 빼기 (드래그로 순서 변경 가능)`}
+                    style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', padding: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', background: 'var(--color-surface-2)',
+                      border: `1.5px solid ${overIndex === i + 1 && dragIndex !== null && dragIndex !== i + 1 ? 'var(--color-border-hover)' : 'transparent'}` }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={it.url} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <span aria-hidden style={{ position: 'absolute', top: 3, right: 3, width: 16, height: 16, borderRadius: 8, display: 'grid', placeItems: 'center', background: 'rgba(10,10,11,0.75)', color: 'var(--color-white)' }}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </span>
+                  </button>
+                </motion.div>
+              </li>
             ))}
           </AnimatePresence>
           {!full && (
             <li>
-              <button type="button" onClick={() => setOpen(true)} aria-label={`사진 추가 (${previews.length}/${maxCount})`}
+              <button type="button" onClick={() => setOpen(true)} aria-label={`사진 추가 (${items.length}/${maxCount})`}
                 style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'var(--color-surface-2)',
                   border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)' }}>
                 <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -192,7 +254,7 @@ export function ImagePicker({ label, maxCount = 5, required }: {
         </ul>
       )}
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={`${label} ${previews.length}/${maxCount}`}>
+      <Sheet open={open} onClose={() => setOpen(false)} title={`${label} ${items.length}/${maxCount}`}>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
           한 장당 5MB 이하 (jpg, jpeg, png, webp, heic, heif)
         </p>
@@ -206,8 +268,8 @@ export function ImagePicker({ label, maxCount = 5, required }: {
           </label>
           <input id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
             onChange={(e) => {
-              const files = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - previews.length))
-              if (files.length > 0) setPreviews((xs) => [...xs, ...files.map((f) => URL.createObjectURL(f))])
+              const files = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
+              if (files.length > 0) setPreviews((xs) => [...xs, ...files.map((f) => ({ url: URL.createObjectURL(f), file: f }))])
               e.target.value = ''
               setOpen(false)
             }} />

@@ -17,7 +17,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
 
   const initial: Partial<FormInitial> = {
     name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '',
-    age: c.age == null ? '' : String(c.age), mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
+    age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
     mood: (world?.genre ?? '').split('·').map((m) => m.trim()).filter(Boolean),
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
@@ -41,6 +41,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     senderLabel: contact?.presentation?.senderLabel ?? '',
     startingContext: c.startingContext ?? '', startingTime: c.startingTime, sampleDialogue: c.sampleDialogue,
     isPublic: c.isPublic,
+    images: c.images,
   }
 
   return (

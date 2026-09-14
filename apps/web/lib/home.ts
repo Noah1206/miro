@@ -60,6 +60,7 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
     accentB: r.character.accentB,
     genre: null,
     tagline: r.character.tagline,
+    images: r.character.images,
     plays: 0,
     sessionId: r.session.id,
     caption: r.session.characterStatus
@@ -71,7 +72,7 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
     occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
     accentA: characters.accentA, accentB: characters.accentB, genre: worlds.genre,
-    tagline: characters.tagline,
+    tagline: characters.tagline, images: characters.images,
   })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
@@ -109,7 +110,7 @@ async function publicCharacters(viewerId: string | null, limit: number): Promise
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
     occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
     accentA: characters.accentA, accentB: characters.accentB, genre: worlds.genre,
-    tagline: characters.tagline,
+    tagline: characters.tagline, images: characters.images,
   })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
@@ -148,7 +149,7 @@ export async function discoverGrid(userId: string | null): Promise<HomeCard[]> {
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
     occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
     accentA: characters.accentA, accentB: characters.accentB, genre: worlds.genre,
-    tagline: characters.tagline,
+    tagline: characters.tagline, images: characters.images,
   })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))

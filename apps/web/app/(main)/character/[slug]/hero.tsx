@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { CharacterVisual, portraitFor } from '@/components/character-visual'
 
 /** Scroll-linked: 스크롤 위치가 곧 progress. 위로 밀면 비주얼이 조금 커지며 가라앉는다 (transform·opacity 만). */
-export function DetailHero({ name, accent, slug }: { name: string; accent: string | null; slug: string }) {
+export function DetailHero({ name, accent, slug, image }: { name: string; accent: string | null; slug: string; image?: string | null }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08])
@@ -14,7 +14,7 @@ export function DetailHero({ name, accent, slug }: { name: string; accent: strin
   return (
     <div ref={ref} style={{ position: 'relative', overflow: 'hidden', borderRadius: 0 }}>
       <motion.div style={reduce ? undefined : { scale, opacity, y, transformOrigin: 'center top' }}>
-        <CharacterVisual name={name} accent={accent} slug={slug} photo={portraitFor(slug)} ratio="4 / 5" style={{ borderRadius: 0, border: 0 }} />
+        <CharacterVisual name={name} accent={accent} slug={slug} photo={portraitFor(slug) ?? image ?? null} ratio="4 / 5" style={{ borderRadius: 0, border: 0 }} />
       </motion.div>
     </div>
   )

@@ -29,8 +29,8 @@ export function parseCharacterForm(form: FormData) {
   const personality = s('personality') || (publish ? '' : `${name}에 대한 설명은 아직 적히지 않았다.`)
   if (publish && !personality) throw new Error('PERSONALITY_REQUIRED')
 
-  const ageN = Number(s('age'))
-  const age = Number.isInteger(ageN) && ageN >= 18 && ageN <= 99 ? ageN : null
+  // 나이는 숫자로 제한하지 않는다 — "추정불가", "1000살" 처럼 캐릭터마다 다를 수 있다.
+  const age = orNull(s('age').slice(0, 20))
 
   const build = oneOf('build', BUILD_TYPES, 'average')
   const gender = oneOf('gender', GENDER_TYPES, 'male')

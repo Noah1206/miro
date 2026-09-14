@@ -1,9 +1,9 @@
 /**
  * 캐릭터 비주얼.
  *
- * 대표 사진이 있으면 그 사진을, 없으면 이름의 글자로 존재감을 만든다 —
- * 장식 Gradient 는 쓰지 않는다. 사진은 slug 로 찾으므로 공식 캐릭터가 먼저 갖는다.
- * (사용자 생성 캐릭터의 대표 사진은 Image Provider 가 붙은 뒤 여기에 이어진다.)
+ * 대표 사진이 있으면 그 사진을, 없으면 이름의 글자로 존재감을 만든다 — 장식 Gradient 는 쓰지 않는다.
+ * 호출부가 photo 를 정한다: 공식 캐릭터는 portraitFor(slug), 사용자 캐릭터는 characters.images[0]
+ * (Supabase Storage 의 공개 URL, 만들기에서 올린 사진).
  */
 export function CharacterVisual({ name, accent, slug, photo, ratio = '4 / 5', shared = true, className, style }: {
   name: string; accent: string | null; slug: string

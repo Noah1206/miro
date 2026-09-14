@@ -145,7 +145,7 @@ export async function similarCharacters(characterId: string, genre: string | nul
   const rows = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name,
     role: characters.role, tagline: characters.tagline, accentA: characters.accentA,
-    genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords,
+    genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords, images: characters.images,
     // 카드의 조회수 배지 — 홈과 같은 기준(대화한 사람 수)으로 센다.
     plays: sql<number>`(
       select count(distinct s.user_id)::int from roleplay_sessions s

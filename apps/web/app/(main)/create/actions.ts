@@ -5,6 +5,7 @@ import {
   db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { track } from '@/lib/analytics/track'
+import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from './parse'
 
 /**
@@ -12,14 +13,19 @@ import { parseCharacterForm } from './parse'
  *
  * intent=draft 면 isDraft 로 저장만 하고 편집 화면으로 보낸다 (명세서 2.2 예외: 임시저장).
  * intent=publish 면 세션까지 만들고 역할극으로 들어간다.
+ *
+ * 사진은 트랜잭션 밖에서 먼저 올린다 — Storage 업로드는 롤백할 수 없어서, DB 실패 시
+ * 고아 파일이 남을지언정(드문 경우) 반대로 사진 없이 저장되는 쪽보다 안전하다.
  */
 export async function saveCharacter(form: FormData): Promise<void> {
   const user = await requireUser()
   const p = parseCharacterForm(form)
 
+  const images = await resolveCharacterImages(form, user.id)
+
   const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
-      ownerId: user.id, isOfficial: false, ...p.character,
+      ownerId: user.id, isOfficial: false, ...p.character, images,
       isDraft: !p.publish,
       // 초안은 절대 공개되지 않는다. 만들기에는 공개 스위치가 없어 등록 직후엔 비공개다 — 편집에서 켠다.
       isPublic: p.publish && p.isPublicOn,

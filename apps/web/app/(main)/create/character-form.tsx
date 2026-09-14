@@ -17,6 +17,10 @@ const STAGE_PICK: Partial<Record<(typeof STAGES)[number], string>> = {
   ambiguous: '애매한 사이',
   flirting: '썸 타는 중',
 }
+const MBTI_TYPES = [
+  'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
+  'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP',
+] as const
 const CHANNELS = [
   { value: 'message', label: '메시지' }, { value: 'photo', label: '사진' },
   // 4열 칩이라 '음성 메시지' 는 두 줄로 꺾인다 — 칩만 짧게. 아래 항목 제목은 온전한 이름을 쓴다.
@@ -119,6 +123,8 @@ export type FormInitial = {
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
   startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
   isPublic: boolean
+  /** 이미 저장된 사진 URL (편집 화면). 대표가 첫 번째. */
+  images: string[]
 }
 
 /** 빈 폼. 숫자 기본값은 parse.ts 의 fallback 과 같아야 한다. */
@@ -135,6 +141,7 @@ export const EMPTY: FormInitial = {
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
   startingContext: '', startingTime: '', sampleDialogue: [],
   isPublic: false,
+  images: [],
 }
 
 /**
@@ -160,6 +167,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
   const [title, setTitle] = useState(i.title)
   const [personality, setPersonality] = useState(i.personality)
   const [startingContext, setStartingContext] = useState(i.startingContext)
+  const [mbti, setMbti] = useState<string>(i.mbti)
   const [gender, setGender] = useState<string>(i.gender)
   const [build, setBuild] = useState<string>(i.build)
   const [stage, setStage] = useState<string>(i.stage)
@@ -210,28 +218,32 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
           )}
           <Section title="캐릭터">
             <Card>
-              {/* 저장소가 없어 아직 미리보기만 된다 — 저장되지 않는 것을 필수로 막을 수는 없다. 업로드가 생기면 required 로. */}
-              <ImagePicker label="캐릭터 이미지" count={0} maxCount={5} />
-              <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                <LabeledField label="이름" required error={name === '' ? null : undefined}>
-                  <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
-                </LabeledField>
-                <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
-                  <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
-                </LabeledField>
-                <LabeledField label="설명" hint="시대·장소·장르까지 여기에 적으면 세계관이 됩니다.">
-                  <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={i.worldSetting}
-                    placeholder="상황, 관계, 세계관 등을 설명해주세요." />
-                </LabeledField>
+              <ImagePicker label="캐릭터 이미지" maxCount={5} existing={i.images} />
+              <div style={{ marginTop: 'var(--space-5)' }}>
+                <IdentityCard>
+                  <div className="stack" style={{ gap: 18 }}>
+                    <LabeledField label="이름" required error={name === '' ? null : undefined}>
+                      <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
+                    </LabeledField>
+                    <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
+                      <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
+                    </LabeledField>
+                    <LabeledField label="설명" hint="시대·장소·장르까지 여기에 적으면 세계관이 됩니다.">
+                      <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={i.worldSetting}
+                        placeholder="상황, 관계, 세계관 등을 설명해주세요." />
+                    </LabeledField>
+                  </div>
+                </IdentityCard>
               </div>
               {/* 나이·MBTI·국적·직업은 고급 — 이름과 소개만으로 카드가 된다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
               <AdvancedToggle open={profileAdvanced} onToggle={() => setProfileAdvanced((v) => !v)} controls="profile-advanced" />
               <div id="profile-advanced" hidden={!profileAdvanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                  <Two>
-                    <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32" max={3} defaultValue={i.age} /></LabeledField>
-                    <LabeledField label="MBTI"><CountedInput name="mbti" placeholder="예) INTJ" max={4} defaultValue={i.mbti} /></LabeledField>
-                  </Two>
+                  <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32, 1000, 추정불가" max={10} defaultValue={i.age} /></LabeledField>
+                  <LabeledField label="MBTI">
+                    <ChoiceChips name="mbti" value={mbti} onChange={setMbti} columns={4}
+                      options={[{ value: '', label: '선택 안 함' }, ...MBTI_TYPES.map((m) => ({ value: m, label: m }))]} />
+                  </LabeledField>
                   <Two>
                     <LabeledField label="국적"><CountedInput name="nationality" placeholder="예) 영국" max={40} defaultValue={i.nationality} /></LabeledField>
                     <LabeledField label="직업"><CountedInput name="occupation" placeholder="예) 고서 복원가" max={60} defaultValue={i.occupation} /></LabeledField>
@@ -335,11 +347,6 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                 <Stepped name="protectiveness" label="보호 성향" defaultValue={i.protectiveness} options={S.protectiveness} />
                 <Stepped name="relJealousy" label="질투 (관계)" defaultValue={i.relJealousy} options={S.relJealousy} />
               </Rows>
-            </Card>
-          </Section>
-          <Section title="관계 키워드" subtitle="카드와 상세에 해시태그로 붙습니다.">
-            <Card>
-              <TagInput name="relationshipKeywords" placeholder="예) 거리를 두는" max={4} defaultValue={i.relationshipKeywords} />
             </Card>
           </Section>
         </Panel>
@@ -449,6 +456,11 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 /** 섹션의 칸 묶음. 판(배경)은 두지 않는다 — 입력칸과 버튼이 각자 면을 갖고 있어 페이지 바닥 위에 바로 놓인다. */
 function Card({ children }: { children: React.ReactNode }) {
   return <div>{children}</div>
+}
+
+/** 이름·소개·설명만 따로 묶는 판 — 카드의 핵심 정보라 다른 필드와 시각적으로 구분한다. */
+function IdentityCard({ children }: { children: React.ReactNode }) {
+  return <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>{children}</div>
 }
 
 /** '고급 설정' 접기 버튼 — 카드 아래 전체 너비. 열리면 화살표가 뒤집힌다. 접힌 내용은 hidden 으로만 감춰 제출에 포함된다. */

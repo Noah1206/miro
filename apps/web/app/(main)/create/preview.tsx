@@ -10,7 +10,7 @@ export type Snapshot = {
   personality: string; startingContext: string; startingTime: string
   keywords: string[]; hobbies: string[]; dislikes: string[]
   dialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
-  /** 고른 사진들의 object URL. 첫 장이 대표, 나머지는 갤러리. 아직 저장소가 없어 미리보기에서만 보인다. */
+  /** 고른 사진들의 URL. 첫 장이 대표, 나머지는 갤러리. 새로 고른 파일은 이 화면 동안만 유효한 object URL. */
   photo: string | null
   gallery: string[]
 }
@@ -21,12 +21,25 @@ export function snapshot(form: HTMLFormElement): Snapshot {
   const csv = (k: string) => s(k).split(',').map((t) => t.trim()).filter(Boolean)
   let dialogue: Snapshot['dialogue'] = []
   try { const raw = JSON.parse(s('sampleDialogue') || '[]'); if (Array.isArray(raw)) dialogue = raw } catch { /* 비어 있는 것으로 */ }
-  const photos = fd.getAll('imagePreview').map(String).filter(Boolean)
+  // 이미 저장된 사진(keptImages) + 새로 고른 파일(images) 을 imageOrder 순서로 합친다 — ImagePicker 와 같은 규칙.
+  const keptImages = fd.getAll('keptImages').map(String)
+  const newFiles = fd.getAll('images').filter((f): f is File => f instanceof File && f.size > 0)
+  const order = fd.getAll('imageOrder').map(String)
+  let keptIdx = 0
+  let newIdx = 0
+  const photos = order.length > 0
+    ? order.map((kind) => {
+        if (kind === 'existing') return keptImages[keptIdx++]
+        const f = newFiles[newIdx++]
+        return f ? URL.createObjectURL(f) : undefined
+      })
+    : [...keptImages, ...newFiles.map((f) => URL.createObjectURL(f))]
+  const photoUrls = photos.filter((u): u is string => Boolean(u))
   return {
     name: s('name'), tagline: s('title'), age: s('age'), nationality: s('nationality'), occupation: s('occupation'), mbti: s('mbti'),
     personality: s('personality'), startingContext: s('startingContext'), startingTime: s('startingTime'),
     keywords: [...csv('mood'), ...csv('relationshipKeywords')], hobbies: csv('hobbies'), dislikes: csv('dislikes'),
-    dialogue, photo: photos[0] ?? null, gallery: photos.slice(1),
+    dialogue, photo: photoUrls[0] ?? null, gallery: photoUrls.slice(1),
   }
 }
 

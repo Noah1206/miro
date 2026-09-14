@@ -7,6 +7,7 @@ import { db, characters, worlds, contactProfiles, roleplaySessions, worldStates,
 import { requireUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
 import { track } from '@/lib/analytics/track'
+import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from '@/app/(main)/create/parse'
 
 /**
@@ -25,9 +26,12 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   const stillDraft = wasDraft && !p.publish
   const publishNow = wasDraft && p.publish
 
+  // 사진 — 만들기(actions.ts)와 같은 규칙.
+  const images = await resolveCharacterImages(form, user.id)
+
   const sessionId = await db.transaction(async (tx) => {
     await tx.update(characters).set({
-      ...p.character,
+      ...p.character, images,
       isDraft: stillDraft,
       // 초안은 절대 공개되지 않는다.
       isPublic: !stillDraft && p.isPublicOn,
