@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigserial, boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile } from '@miro/domain'
 
@@ -697,3 +697,40 @@ export const characterBookmarks = pgTable('character_bookmarks', {
   uniq: uniqueIndex('character_bookmarks_uniq').on(t.userId, t.characterId),
   userIdx: index('character_bookmarks_user_idx').on(t.userId, t.createdAt),
 }))
+
+/**
+ * Closed Alpha — 로그인 없이 쿠키 하나로 체험한다. 관계 상태·기억·대화가 한 줄에 있다.
+ * 정식 데이터 모델(characters/roleplay_sessions)과 섞지 않는다 — 검증이 끝나면 통째로 지운다.
+ */
+export const alphaSessions = pgTable('alpha_sessions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ip: text('ip'),
+  state: jsonb('state').$type<Record<string, number | string>>().notNull(),
+  memories: jsonb('memories').$type<string[]>().notNull().default([]),
+  messages: jsonb('messages').$type<Array<{ role: 'user' | 'character'; text: string; at: string }>>().notNull().default([]),
+  userMessages: integer('user_messages').notNull().default(0),
+  wowAt: timestamp('wow_at', { withTimezone: true }),
+  realityAt: timestamp('reality_at', { withTimezone: true }),
+  cliffAt: timestamp('cliff_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+/** AI 호출 한 번 = 한 줄. 사용자·IP·전체 한도가 전부 여기서 나온다. */
+export const alphaAiCalls = pgTable('alpha_ai_calls', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  sessionId: uuid('session_id').notNull().references(() => alphaSessions.id, { onDelete: 'cascade' }),
+  ip: text('ip'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  createdIdx: index('alpha_ai_calls_created_idx').on(t.createdAt),
+  sessionIdx: index('alpha_ai_calls_session_idx').on(t.sessionId, t.createdAt),
+  ipIdx: index('alpha_ai_calls_ip_idx').on(t.ip, t.createdAt),
+}))
+
+export const alphaWaitlist = pgTable('alpha_waitlist', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: text('email').notNull().unique(),
+  sessionId: uuid('session_id').references(() => alphaSessions.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})

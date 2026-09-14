@@ -4,6 +4,9 @@ export const ANALYTICS_EVENTS = [
   'event_triggered', 'scene_changed', 'reality_contact_sent', 'reality_contact_opened',
   'call_started', 'call_completed', 'usage_limit_reached', 'upgrade_viewed', 'subscription_started',
   'archive_opened', 'session_archived', 'session_deleted', 'report_submitted', 'account_deleted',
+  // Closed Alpha 퍼널 — 로그인 없는 체험. userId 는 null, props.alphaSession 으로 묶는다.
+  'landing_view', 'experience_start', 'first_message_sent', 'third_message_sent',
+  'wow_event_triggered', 'reality_message_seen', 'waitlist_view', 'waitlist_complete',
 ] as const
 export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number]
 
