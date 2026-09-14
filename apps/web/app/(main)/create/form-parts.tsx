@@ -121,6 +121,8 @@ export function ImagePicker({ label, maxCount = 5, required }: {
 
   return (
     <>
+      {/* 미리보기 탭이 읽는다 — 서버는 무시한다 (objectURL 은 이 문서 안에서만 유효). */}
+      {previews.map((src) => <input key={src} type="hidden" name="imagePreview" value={src} />)}
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
       <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? `${label} 대표 사진 바꾸기` : label}
         whileTap={reduce ? undefined : { scale: 0.98 }}
