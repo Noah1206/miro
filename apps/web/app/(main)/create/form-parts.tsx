@@ -1,7 +1,8 @@
 'use client'
-import { Children, useId, useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { Sheet } from '@/components/ui'
+import { Sheet, Rows, Switch } from '@/components/ui'
+export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
 
 /**
@@ -245,39 +246,6 @@ export function AddRow({ label, count, max, onClick }: { label: string; count: n
   )
 }
 
-/**
- * 스위치 (제타식 토글). 켜짐만 라임 — 상태이므로 accent 규칙에 맞는다.
- * 실제 요소는 checkbox 라 폼 제출에 그대로 실리고, role=switch 로 읽힌다.
- */
-export function Switch({ name, label, hint, checked, onChange }: {
-  name: string; label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-      <span className="stack" style={{ gap: 3, flex: 1, minWidth: 0 }}>
-        <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{label}</span>
-        {hint && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</span>}
-      </span>
-      <span style={{ position: 'relative', width: 46, height: 26, flexShrink: 0 }}>
-        <input type="checkbox" role="switch" name={name} checked={checked} onChange={(e) => onChange(e.target.checked)}
-          aria-checked={checked}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, margin: 0, cursor: 'pointer' }} />
-        <span aria-hidden style={{
-          position: 'absolute', inset: 0, borderRadius: 13,
-          background: checked ? 'var(--color-accent)' : 'var(--color-surface-3)',
-          transition: 'background var(--motion-fast) var(--ease-standard)',
-        }} />
-        <span aria-hidden style={{
-          position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: 10,
-          background: checked ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
-          transform: checked ? 'translateX(20px)' : 'none',
-          transition: 'transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard)',
-        }} />
-      </span>
-    </label>
-  )
-}
-
 /** 0–100 슬라이더. 양끝 말이 수치보다 먼저 읽히게 한다. */
 export function Slider({ name, label, defaultValue, lo, hi }: {
   name: string; label: string; defaultValue: number; lo: string; hi: string
@@ -465,16 +433,3 @@ export function Stepped({ name, label, options, defaultValue }: {
   )
 }
 
-/** 카드 안의 항목들을 가는 선으로 나눈다 (레퍼런스). 첫 항목 위에는 선이 없다. */
-export function Rows({ children, style }: { children: ReactNode; style?: React.CSSProperties }) {
-  const items = Children.toArray(children)
-  return (
-    <div className="stack" style={{ gap: 0, ...style }}>
-      {items.map((c, i) => (
-        <div key={i} style={{ padding: i === 0 ? '0 0 16px' : '16px 0', borderTop: i === 0 ? 0 : '1px solid var(--color-border)' }}>
-          {c}
-        </div>
-      ))}
-    </div>
-  )
-}
