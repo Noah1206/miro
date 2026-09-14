@@ -16,8 +16,9 @@ test('필수 세 칸을 채우면 등록되고 역할극이 시작된다', async
   await page.locator('input[name="title"]').fill('한 줄 소개')
   await page.getByRole('tab', { name: /성격/ }).click()
   await page.locator('textarea[name="personality"]').fill('다른 사람한텐 싸가지 없는데 나한테만 잘해준다.')
-  await page.getByRole('tab', { name: /인트로/ }).click()
+  await page.getByRole('tab', { name: /상황/ }).click()
   await page.locator('textarea[name="startingContext"]').fill('검찰청 복도에서 처음 마주쳤다.')
+  await page.getByRole('button', { name: '확인' }).click()
 
   await expect(page.getByRole('button', { name: '등록' })).toBeEnabled()
   await page.getByRole('button', { name: '등록' }).click()

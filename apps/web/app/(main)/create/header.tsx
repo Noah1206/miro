@@ -11,7 +11,7 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'appearance', label: '외형' },
   { key: 'relationship', label: '관계' },
   { key: 'contact', label: '연락' },
-  { key: 'intro', label: '인트로' },
+  { key: 'intro', label: '상황' },
   { key: 'preview', label: '소개 페이지' },
 ]
 

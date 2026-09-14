@@ -16,7 +16,7 @@ const STEPS: Array<{ tab: CreateTab; lines: string[] }> = [
   { tab: 'appearance', lines: ['성별과 체형을 고르면 사진이 돼요.', '얼굴과 머리를 적으면 더 닮아져요.'] },
   { tab: 'relationship', lines: ['단계를 고르면 첫 만남의 거리가 돼요.', '키워드를 적으면 해시태그가 돼요.'] },
   { tab: 'contact', lines: ['켜 두면 앱 밖에서 먼저 연락이 와요.', '빈도를 고르면 오는 간격이 정해져요.'] },
-  { tab: 'intro', lines: ['첫 장면을 적으면 대화가 거기서 시작돼요.', '상황 예시를 쌓으면 소개 페이지에 실려요.'] },
+  { tab: 'intro', lines: ['상황을 누르면 채팅 화면이 열려요.', '첫 장면을 적으면 등록할 수 있어요.'] },
 ]
 
 /**
@@ -71,7 +71,8 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
     if (step >= STEPS.length - 1) return dismiss()
     const s = STEPS[step + 1]!
     setStep(step + 1)
-    onTab(s.tab)
+    // 상황은 전체 화면이라 말풍선을 덮는다 — 가리키기만 한다.
+    if (s.tab !== 'intro') onTab(s.tab)
   }
   const last = step >= STEPS.length - 1
 

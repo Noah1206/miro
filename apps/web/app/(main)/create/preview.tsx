@@ -24,7 +24,7 @@ export function snapshot(form: HTMLFormElement): Snapshot {
   return {
     name: s('name'), tagline: s('title'), age: s('age'), nationality: s('nationality'), occupation: s('occupation'), mbti: s('mbti'),
     personality: s('personality'), startingContext: s('startingContext'), startingTime: s('startingTime'),
-    keywords: csv('relationshipKeywords'), hobbies: csv('hobbies'), dislikes: csv('dislikes'),
+    keywords: [...csv('mood'), ...csv('relationshipKeywords')], hobbies: csv('hobbies'), dislikes: csv('dislikes'),
     dialogue, photo: file ? URL.createObjectURL(file) : null,
   }
 }

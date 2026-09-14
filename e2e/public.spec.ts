@@ -15,8 +15,9 @@ test('공개한 캐릭터는 다른 사람이 발견해서 대화를 시작할 �
   await a.locator('input[name="title"]').fill('한 줄 소개')
   await a.getByRole('tab', { name: /성격/ }).click()
   await a.locator('textarea[name="personality"]').fill('말이 짧고 군더더기가 없다.')
-  await a.getByRole('tab', { name: /인트로/ }).click()
+  await a.getByRole('tab', { name: /상황/ }).click()
   await a.locator('textarea[name="startingContext"]').fill('비 내리는 저녁, 공방을 처음 찾았다.')
+  await a.getByRole('button', { name: '확인' }).click()
   await a.getByRole('button', { name: '등록' }).click()
   await expect(a).toHaveURL(/\/chat\//)
 
@@ -48,8 +49,9 @@ test('공개하지 않은 캐릭터는 다른 사람에게 보이지 않는다',
   await a.locator('input[name="title"]').fill('한 줄 소개')
   await a.getByRole('tab', { name: /성격/ }).click()
   await a.locator('textarea[name="personality"]').fill('조용하다.')
-  await a.getByRole('tab', { name: /인트로/ }).click()
+  await a.getByRole('tab', { name: /상황/ }).click()
   await a.locator('textarea[name="startingContext"]').fill('첫 만남.')
+  await a.getByRole('button', { name: '확인' }).click()
   await a.getByRole('button', { name: '등록' }).click()
   await expect(a).toHaveURL(/\/chat\//)
 

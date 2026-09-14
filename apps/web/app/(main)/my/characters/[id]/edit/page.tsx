@@ -19,6 +19,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '',
     age: c.age == null ? '' : String(c.age), mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
+    mood: (world?.genre ?? '').split('·').map((m) => m.trim()).filter(Boolean),
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
     gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average',
     height: visual?.bodyProfile?.height ?? '', detail: visual?.bodyProfile?.detail ?? '',

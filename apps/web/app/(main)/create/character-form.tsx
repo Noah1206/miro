@@ -6,7 +6,8 @@ import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { STAGES } from './parse'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
+import { MOODS } from './parse'
 
 /**
  * 선택지용 라벨. 대화 화면의 stageLabel 은 ambiguous 와 flirting 을 일부러 같은 말('서로를 의식함')로
@@ -107,7 +108,7 @@ const S = {
  */
 export type FormInitial = {
   name: string; title: string; worldSetting: string; age: string; mbti: string; nationality: string; occupation: string
-  personality: string; hobbies: string[]; dislikes: string[]; jealousy: number; initiative: number; emotionalExpression: number
+  personality: string; hobbies: string[]; dislikes: string[]; mood: string[]; jealousy: number; initiative: number; emotionalExpression: number
   gender: string; build: string; height: string; detail: string
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
@@ -123,7 +124,7 @@ export type FormInitial = {
 /** 빈 폼. 숫자 기본값은 parse.ts 의 fallback 과 같아야 한다. */
 export const EMPTY: FormInitial = {
   name: '', title: '', worldSetting: '', age: '', mbti: '', nationality: '', occupation: '',
-  personality: '', hobbies: [], dislikes: [], jealousy: 50, initiative: 50, emotionalExpression: 50,
+  personality: '', hobbies: [], dislikes: [], mood: [], jealousy: 50, initiative: 50, emotionalExpression: 50,
   gender: 'male', build: 'average', height: '', detail: '',
   eyes: '', nose: '', jaw: '', skin: '', distinctive: '',
   hairColor: '', hairLength: '', hairStyle: '', expression: '', styleTags: [],
@@ -150,6 +151,8 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
 }) {
   const i: FormInitial = { ...EMPTY, ...initial }
   const [tab, setTab] = useState<CreateTab>('profile')
+  // 상황은 전체 화면으로 열린다 — 닫으면 열기 전 탭으로 돌아간다.
+  const [prevTab, setPrevTab] = useState<CreateTab>('profile')
   const [pending, setPending] = useState(false)
 
   // 필수 판정에 쓰는 값만 통제한다. 나머지는 uncontrolled — 제출 때 FormData 가 모은다.
@@ -168,6 +171,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
   const formRef = useRef<HTMLFormElement>(null)
   const [snap, setSnap] = useState<Snapshot | null>(null)
   const openTab = (t: CreateTab) => {
+    if (t === 'intro' && tab !== 'intro') setPrevTab(tab)
     if (t === 'preview' && formRef.current) setSnap((prev) => { if (prev?.photo) URL.revokeObjectURL(prev.photo); return snapshot(formRef.current!) })
     setTab(t)
   }
@@ -249,6 +253,11 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                 <LabeledField label="좋아하는 것"><TagInput name="hobbies" placeholder="예) 고서 수집" max={6} defaultValue={i.hobbies} /></LabeledField>
                 <LabeledField label="싫어하는 것"><TagInput name="dislikes" placeholder="예) 무례함" max={6} defaultValue={i.dislikes} /></LabeledField>
               </div>
+            </Card>
+          </Section>
+          <Section title="분위기" subtitle="카드에 해시태그로 붙고, 비슷한 캐릭터를 찾는 기준이 됩니다.">
+            <Card>
+              <PresetTags name="mood" options={MOODS} max={5} defaultValue={i.mood} />
             </Card>
           </Section>
           <Section title="성향" subtitle="같은 말에도 캐릭터마다 다르게 반응하게 하는 값입니다.">
@@ -344,6 +353,10 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
         <Panel id="contact" show={tab === 'contact'}>
           <Section title="앱 밖에서">
             <Card>
+              {/* 답장 시간·활동 시간은 화면에서 뺐다 — 기본값(5분, 08–23시)을 쓰고, 편집에서는 저장된 값을 그대로 넘긴다. */}
+              <input type="hidden" name="replyDelayMinutes" value={String(i.replyDelayMinutes)} />
+              <input type="hidden" name="activeHoursStart" value={i.activeHoursStart} />
+              <input type="hidden" name="activeHoursEnd" value={i.activeHoursEnd} />
               <Switch name="contactEnabled" checked={contactOn} onChange={setContactOn}
                 label="먼저 연락하기"
                 hint="앱을 닫아도 캐릭터가 상황과 성격에 맞춰 먼저 메시지·사진·통화를 보냅니다." />
@@ -356,13 +369,6 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                   <Rows>
                     <Stepped name="contactFrequency" label="연락 빈도" defaultValue={i.contactFrequency} options={S.contactFrequency} />
                     <Stepped name="initiativeLevel" label="주도성" defaultValue={i.initiativeLevel} options={S.initiativeLevel} />
-                    <LabeledField label="답장까지 걸리는 시간 (분)">
-                      <CountedInput name="replyDelayMinutes" placeholder="예) 5" max={4} defaultValue={String(i.replyDelayMinutes)} />
-                    </LabeledField>
-                    <Two>
-                      <LabeledField label="활동 시작"><TimeInput name="activeHoursStart" defaultValue={i.activeHoursStart} /></LabeledField>
-                      <LabeledField label="활동 종료"><TimeInput name="activeHoursEnd" defaultValue={i.activeHoursEnd} /></LabeledField>
-                    </Two>
                   </Rows>
                 </Card>
               </Section>
@@ -390,24 +396,33 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
           )}
         </Panel>
 
-        {/* ── 인트로 ── */}
+        {/* ── 상황 — 탭 아래 카드가 아니라 채팅 편집 화면이 전체로 열린다. 칸은 닫혀도 DOM 에 남는다. ── */}
         <Panel id="intro" show={tab === 'intro'}>
-          <Section title="첫 장면" subtitle="대화가 시작되는 장면입니다.">
-            <Card>
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="첫 장면" required>
-                  <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={3}
-                    placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
-                </LabeledField>
-                <LabeledField label="시작 시간"><CountedInput name="startingTime" placeholder="예) 저녁" max={20} defaultValue={i.startingTime} /></LabeledField>
-              </div>
-            </Card>
-          </Section>
-          <Section title="상황 예시" subtitle="이 캐릭터와의 대화가 어떤 느낌인지 보여줍니다. 상세 페이지에 실립니다.">
-            <Card>
-              <DialogueEditor name="sampleDialogue" characterName={name} defaultValue={i.sampleDialogue} />
-            </Card>
-          </Section>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+              <button type="button" onClick={() => setTab(prevTab)} aria-label="닫기"
+                style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
+                <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+              <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>상황</h2>
+              <button type="button" onClick={() => setTab(prevTab)}
+                style={{ padding: '8px 4px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-accent-text)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>
+                확인
+              </button>
+            </div>
+            <div style={{ flex: 1, minHeight: 0, padding: '0 var(--gutter)' }}>
+              <DialogueEditor name="sampleDialogue" characterName={name} defaultValue={i.sampleDialogue} fill
+                header={
+                  <div style={{ padding: '14px 0 6px' }}>
+                    <LabeledField label="첫 장면" required hint="대화가 여기서 시작돼요. 아래 예시는 소개 페이지에 실립니다.">
+                      <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={3}
+                        placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
+                    </LabeledField>
+                  </div>
+                } />
+              <input type="hidden" name="startingTime" value={i.startingTime} />
+            </div>
+          </div>
         </Panel>
 
         {/* ── 소개 페이지 ── */}
@@ -444,13 +459,6 @@ function Card({ children }: { children: React.ReactNode }) {
 /** 좌우 두 칸. 1fr 은 최소 폭이 입력 고유 폭에 잡혀 오른쪽 칸이 카드를 넘친다 — minmax(0,1fr) 로 눌러야 한다. */
 function Two({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 12 }}>{children}</div>
-}
-
-function TimeInput({ name, defaultValue }: { name: string; defaultValue: string }) {
-  return (
-    <input name={name} type="time" defaultValue={defaultValue}
-      style={{ width: '100%', padding: '6px 10px', outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, colorScheme: 'dark', ...box(false) }} />
-  )
 }
 
 /** 값을 바깥이 들고 있는 한 줄 입력 (필수 판정용). 밑줄만, 상자 없음. */

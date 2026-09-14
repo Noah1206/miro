@@ -11,8 +11,9 @@ async function createCharacter(page: import('@playwright/test').Page, name: stri
   await page.locator('input[name="title"]').fill('한 줄 소개')
   await page.getByRole('tab', { name: /성격/ }).click()
   await page.locator('textarea[name="personality"]').fill('무뚝뚝한 외과의.')
-  await page.getByRole('tab', { name: /인트로/ }).click()
+  await page.getByRole('tab', { name: /상황/ }).click()
   await page.locator('textarea[name="startingContext"]').fill('같은 병원 복도.')
+  await page.getByRole('button', { name: '확인' }).click()
   await page.getByRole('button', { name: '등록' }).click()
   await expect(page).toHaveURL(/\/chat\//)
 }

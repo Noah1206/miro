@@ -252,8 +252,12 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
  * 상황 예시 — 채팅처럼 쌓는다. 아래에서 화자(내레이터·유저·캐릭터)를 고르고 한 마디씩 올린다.
  * 올린 말은 말풍선으로 보이고, 연필로 고치고 휴지통으로 지운다. 상세 페이지가 같은 모양으로 보여준다.
  */
-export function DialogueEditor({ name, characterName, defaultValue = [] }: {
+export function DialogueEditor({ name, characterName, defaultValue = [], fill = false, header }: {
   name: string; characterName: string; defaultValue?: Turn[]
+  /** 전체 화면: 목록이 남는 높이를 채우며 스크롤되고, 입력은 바닥에 붙는다. */
+  fill?: boolean
+  /** 목록 위에 얹을 것 (첫 장면). */
+  header?: React.ReactNode
 }) {
   const [turns, setTurns] = useState<Turn[]>(defaultValue)
   const [role, setRole] = useState<Turn['role']>('character')
@@ -283,8 +287,10 @@ export function DialogueEditor({ name, characterName, defaultValue = [] }: {
   }
 
   return (
-    <div className="stack" style={{ gap: 12 }}>
+    <div className="stack" style={{ gap: 12, ...(fill ? { height: '100%' } : {}) }}>
       <input type="hidden" name={name} value={JSON.stringify(turns)} />
+      <div style={fill ? { flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 8 } : undefined}>
+      {header}
 
       {turns.length === 0 && (
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', textAlign: 'center', padding: '14px 0' }}>
@@ -342,8 +348,9 @@ export function DialogueEditor({ name, characterName, defaultValue = [] }: {
         })}
       </ul>
 
+      </div>
       {/* 입력 — 화자 고르기 → 한 마디 → 올리기 */}
-      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 8 }}>
+      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 8, ...(fill ? { flexShrink: 0, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' } : {}) }}>
         <div role="radiogroup" aria-label="말하는 사람" style={{ display: 'flex', gap: 2 }}>
           {(['narrator', 'user', 'character'] as const).map((r) => {
             const on = r === role
@@ -384,6 +391,44 @@ const MAX_TURNS = 12
 const roundBtn: React.CSSProperties = {
   width: 28, height: 28, borderRadius: 14, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer',
   background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)',
+}
+
+/**
+ * 미리 적어 둔 태그를 눌러서 고른다 (분위기). 직접 적는 TagInput 과 달리 고를 수만 있어 값이 흩어지지 않는다.
+ * 저장은 CSV 한 칸 — TagInput 과 같은 모양이라 읽는 쪽이 같다.
+ */
+export function PresetTags({ name, options, max, defaultValue = [] }: {
+  name: string; options: readonly string[]; max: number; defaultValue?: string[]
+}) {
+  const [picked, setPicked] = useState<string[]>(defaultValue.filter((v) => options.includes(v)))
+  const reduce = useReducedMotion()
+  const full = picked.length >= max
+  const toggle = (o: string) => setPicked(picked.includes(o) ? picked.filter((v) => v !== o) : full ? picked : [...picked, o])
+  return (
+    <div>
+      <input type="hidden" name={name} value={picked.join(',')} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        {options.map((o) => {
+          const on = picked.includes(o)
+          const off = !on && full
+          return (
+            <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed={on} disabled={off}
+              whileTap={reduce || off ? undefined : { scale: 0.97 }}
+              style={{
+                minHeight: 34, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
+                fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
+                border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
+              }}>
+              {o}
+            </motion.button>
+          )
+        })}
+      </div>
+      <p className="t-micro" style={{ textAlign: 'right', marginTop: 8, textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{picked.length}/{max}</p>
+    </div>
+  )
 }
 
 export type Step = { value: number; label: string; hint: string }
