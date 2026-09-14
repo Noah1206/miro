@@ -50,20 +50,21 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
         </button>
       </div>
 
-      <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', gap: 2, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--space-4)' }}>
+      {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
+      <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', justifyContent: 'space-between', gap: 2, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 calc(var(--gutter) - 6px)' }}>
         {TABS.map((t) => {
           const active = t.key === tab
           return (
             <button key={t.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${t.key}`} onClick={() => onTab(t.key)}
               style={{
-                position: 'relative', flexShrink: 0, padding: '12px 10px', background: 'transparent', border: 0, cursor: 'pointer',
+                position: 'relative', flexShrink: 0, padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: 4,
                 fontSize: 'var(--font-body-size)', fontWeight: active ? 'var(--weight-medium)' : 'var(--weight-regular)',
                 color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
               }}>
               {t.label}
               {active && <motion.span layoutId="create-tab-underline" transition={spring.default}
-                style={{ position: 'absolute', left: 8, right: 8, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
+                style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
             </button>
           )
         })}
