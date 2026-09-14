@@ -104,33 +104,37 @@ export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue
 }
 
 /**
- * 이미지 자리. 점선 사각형을 누르면 바텀시트가 열린다 (레퍼런스).
- * 저장소가 아직 없으므로 고른 파일은 이 화면에서 미리보기로만 쓰인다 — 시트에서 그렇게 밝힌다.
+ * 캐릭터 이미지 — 첫 장은 큰 칸(대표), 그 아래 작은 줄에 나머지와 '+' 칸. 최대 maxCount 장.
+ * 저장소가 없어 아직 미리보기만 된다 — 업로드가 붙으면 objectURL 대신 올린 주소를 쓴다.
  */
-export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
+export function ImagePicker({ label, maxCount = 5, required }: {
   label: string; count?: number; maxCount?: number; required?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const [preview, setPreview] = useState<string | null>(null)
+  const [previews, setPreviews] = useState<string[]>([])
   const inputId = useId()
   const reduce = useReducedMotion()
+  const main = previews[0] ?? null
+  const full = previews.length >= maxCount
+
+  const remove = (i: number) => setPreviews((xs) => { URL.revokeObjectURL(xs[i]!); return xs.filter((_, j) => j !== i) })
 
   return (
     <>
-      {/* 사진은 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
-      <motion.button type="button" onClick={() => setOpen(true)}
+      {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
+      <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? `${label} 대표 사진 바꾸기` : label}
         whileTap={reduce ? undefined : { scale: 0.98 }}
         style={{
           position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
           width: 200, aspectRatio: '1 / 1', margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
-          border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
+          border: `1.5px ${main ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
           transition: 'border-color var(--motion-fast) var(--ease-standard)',
           borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
         }}>
         <AnimatePresence initial={false}>
-          {preview && (
+          {main && (
             // eslint-disable-next-line @next/next/no-img-element
-            <motion.img key={preview} src={preview} alt="" draggable={false}
+            <motion.img key={main} src={main} alt="" draggable={false}
               initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 1.08 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, transition: { duration: duration.fast } }}
@@ -139,7 +143,7 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
           )}
         </AnimatePresence>
         <AnimatePresence initial={false}>
-          {!preview && (
+          {!main && (
             <motion.span key="empty" exit={{ opacity: 0, transition: { duration: duration.fast } }}
               style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
               <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -157,7 +161,36 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
         </AnimatePresence>
       </motion.button>
 
-      <Sheet open={open} onClose={() => setOpen(false)} title={`${label}${maxCount > 1 ? ` ${count}/${maxCount}` : ''}`}>
+      {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. */}
+      {main && (
+        <ul aria-label="추가 사진" style={{ listStyle: 'none', margin: '12px auto 0', padding: 0, width: 200, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+          <AnimatePresence initial={false}>
+            {previews.slice(1).map((src, i) => (
+              <motion.li key={src} initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: duration.fast }}>
+                <button type="button" onClick={() => remove(i + 1)} aria-label={`${i + 2}번째 사진 빼기`}
+                  style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', padding: 0, border: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', background: 'var(--color-surface-2)' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <span aria-hidden style={{ position: 'absolute', top: 3, right: 3, width: 16, height: 16, borderRadius: 8, display: 'grid', placeItems: 'center', background: 'rgba(10,10,11,0.75)', color: 'var(--color-white)' }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  </span>
+                </button>
+              </motion.li>
+            ))}
+          </AnimatePresence>
+          {!full && (
+            <li>
+              <button type="button" onClick={() => setOpen(true)} aria-label={`사진 추가 (${previews.length}/${maxCount})`}
+                style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'var(--color-surface-2)',
+                  border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)' }}>
+                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+              </button>
+            </li>
+          )}
+        </ul>
+      )}
+
+      <Sheet open={open} onClose={() => setOpen(false)} title={`${label} ${previews.length}/${maxCount}`}>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
           한 장당 5MB 이하 (jpg, jpeg, png, webp, heic, heif)
         </p>
@@ -169,10 +202,11 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
             </svg>
             <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>기기에서 가져오기</span>
           </label>
-          <input id={inputId} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
+          <input id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
             onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) setPreview(URL.createObjectURL(f))
+              const files = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - previews.length))
+              if (files.length > 0) setPreviews((xs) => [...xs, ...files.map((f) => URL.createObjectURL(f))])
+              e.target.value = ''
               setOpen(false)
             }} />
         </div>
