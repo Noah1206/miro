@@ -10,7 +10,7 @@ import type { BuildType, GenderType } from '@miro/domain'
 export type OfficialSeed = {
   slug: string
   name: string
-  age: number
+  age: string
   nationality: string
   occupation: string
   mbti: string
@@ -74,7 +74,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
   {
     slug: 'thomas',
     name: '토마스',
-    age: 32,
+    age: '32',
     nationality: '영국',
     occupation: '고서 복원가',
     mbti: 'INTJ',
@@ -148,7 +148,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
   {
     slug: 'taeyun',
     name: '강태윤',
-    age: 29,
+    age: '29',
     nationality: '한국',
     occupation: '호텔 총지배인',
     mbti: 'ENTJ',
@@ -227,7 +227,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
   {
     slug: 'hisashi',
     name: '히사시',
-    age: 34,
+    age: '34',
     nationality: '일본',
     occupation: '조직의 중간 간부',
     mbti: 'ISTP',
@@ -307,7 +307,7 @@ export const OFFICIAL_CHARACTERS: OfficialSeed[] = [
   {
     slug: 'yujin',
     name: '유진',
-    age: 24,
+    age: '24',
     nationality: '한국',
     occupation: '대학원생',
     mbti: 'ISTP',

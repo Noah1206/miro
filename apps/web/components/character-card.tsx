@@ -14,6 +14,8 @@ export type CardCharacter = {
   accentA: string | null
   genre: string | null
   relationshipKeywords: string[]
+  /** 사용자가 올린 사진. 첫 번째가 대표. 공식 캐릭터는 비어 있고 portraitFor(slug) 가 대신한다. */
+  images: string[]
   /** 대화한 사람 수. 0 이면 배지를 띄우지 않는다. */
   plays: number
   /** 진행 중인 역할극이면 그 세션으로 바로 들어간다. */
@@ -38,7 +40,7 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
       <TransitionLink href={c.href ?? (c.sessionId ? `/chat/${c.sessionId}` : `/character/${slug}`)}
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
         style={{ display: 'block', position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={portraitFor(slug)} ratio="10 / 16" />
+        <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={portraitFor(slug) ?? c.images[0] ?? null} ratio="10 / 16" />
 
         {/* 조회수는 실제로 대화한 사람이 있을 때만 — 0 을 보여주면 아무도 안 쓴다는 말이 된다. */}
         {c.plays > 0 && (

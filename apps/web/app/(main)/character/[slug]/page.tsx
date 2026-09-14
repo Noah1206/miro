@@ -34,7 +34,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   ])
 
   const enter = startRoleplay.bind(null, slug)
-  const gallery = galleryFor(slug)
+  // 공식 캐릭터는 준비된 장면 사진, 사용자 캐릭터는 만들기에서 올린 사진(대표 제외 나머지)을 갤러리로 쓴다.
+  const gallery = galleryFor(slug).length > 0 ? galleryFor(slug) : c.images.slice(1)
   const tags = [...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean)
   // 라벨을 붙인 표 대신 읽히는 문장으로. 값이 없으면 그 문장이 통째로 빠진다.
   const hobbies = c.hobbies as string[]
@@ -69,7 +70,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </TransitionLink>
       )}
 
-      <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} />
+      <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} image={c.images[0]} />
 
       <div style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em' }}>{c.name}</h1>
@@ -101,7 +102,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </div>
           {c.sampleDialogue.length > 0 && (
             <div style={{ marginTop: 18 }}>
-              <SampleDialogue name={c.name} portrait={portraitFor(slug)} turns={c.sampleDialogue} />
+              <SampleDialogue name={c.name} portrait={portraitFor(slug) ?? c.images[0] ?? null} turns={c.sampleDialogue} />
             </div>
           )}
         </Rule>

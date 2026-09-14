@@ -155,6 +155,20 @@
       "when": 1789471496362,
       "tag": "0021_core_architecture",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789475000000,
+      "tag": "0022_age_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789476000000,
+      "tag": "0023_character_images",
+      "breakpoints": true
     }
   ]
 }

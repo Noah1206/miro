@@ -14,6 +14,8 @@ export type OfficialCard = {
   genre: string | null
   /** 카드에 얹는 한 줄 — 캐릭터가 직접 하는 말. */
   tagline: string | null
+  /** 사용자가 올린 사진. 첫 번째가 대표. 공식 캐릭터는 비어 있고 portraitFor(slug) 가 대신한다. */
+  images: string[]
 }
 
 /** Home 은 대량 Grid 가 아니라 3인 중심의 작품 포스터형 카드다 (명세서 2.1 표시). */
@@ -33,6 +35,7 @@ export async function listOfficials(): Promise<OfficialCard[]> {
       accentB: characters.accentB,
       genre: worlds.genre,
       tagline: characters.tagline,
+      images: characters.images,
     })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
@@ -90,6 +93,7 @@ async function getOne(where: ReturnType<typeof and>) {
       hobbies: characters.hobbies,
       dislikes: characters.dislikes,
       startingTime: characters.startingTime,
+      images: characters.images,
       worldLocation: worlds.location,
       worldEra: worlds.era,
       worldGenre: worlds.genre,

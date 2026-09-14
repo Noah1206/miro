@@ -4,7 +4,7 @@ import type { CharacterCore, Npc, RelationshipState, SimulationEvent, WorldState
 export function character(over: Partial<CharacterCore['personality']> = {}): CharacterCore {
   return {
     id: 'c1', ownerId: null, isOfficial: true,
-    identity: { name: '토마스', age: 32, nationality: '영국', occupation: '복원가', mbti: 'INTJ' },
+    identity: { name: '토마스', age: '32', nationality: '영국', occupation: '복원가', mbti: 'INTJ' },
     personality: {
       personality: '거리를 둔다', values: '약속', speechStyle: '짧은 존대',
       userNickname: null, hobbies: ['고서'], dislikes: ['무례함'],

@@ -95,7 +95,8 @@ export const characters = pgTable('characters', {
   slug: text('slug').unique(),
 
   name: text('name').notNull(),
-  age: integer('age'),
+  /** 자유 텍스트 — 숫자만이 아니라 '추정불가', '1000' 같은 값도 그대로 담는다. */
+  age: text('age'),
   nationality: text('nationality'),
   occupation: text('occupation'),
   mbti: text('mbti'),
@@ -125,6 +126,8 @@ export const characters = pgTable('characters', {
    */
   sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
+  /** 대표 사진(첫 번째)과 추가 사진. Supabase Storage 의 공개 URL. */
+  images: jsonb('images').$type<string[]>().notNull().default([]),
   accentA: text('accent_a'),
   accentB: text('accent_b'),
 

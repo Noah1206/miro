@@ -9,7 +9,7 @@ export type CharacterCore = {
 
   identity: {
     name: string
-    age: number | null
+    age: string | null
     nationality: string | null
     occupation: string | null
     mbti: string | null
