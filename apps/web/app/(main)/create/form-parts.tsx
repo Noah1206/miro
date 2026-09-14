@@ -170,9 +170,6 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
           </p>
         </div>
 
-        <p className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginTop: 4 }}>
-          이미지 보관은 아직 준비 중이에요. 지금 고른 사진은 이 화면에서 미리보기로만 쓰입니다.
-        </p>
       </Sheet>
     </>
   )
