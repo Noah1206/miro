@@ -61,6 +61,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5, padding: '6px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(10,10,11,0.6)' }}>
         <Back href="/home" />
       </div>
+      {/* 등록한 캐릭터를 고치는 길은 여기 하나다 — 주인에게만 보인다. */}
+      {user && c.ownerId === user.id && (
+        <TransitionLink href={`/my/characters/${c.id}/edit`} className="t-caption"
+          style={{ position: 'absolute', top: 16, right: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(10,10,11,0.6)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)' }}>
+          편집
+        </TransitionLink>
+      )}
 
       <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} />
 

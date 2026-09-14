@@ -50,7 +50,16 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
 
   return (
     <Page>
-      <h1 className="t-title-1" style={{ marginBottom: 'var(--space-5)' }}>마이페이지</h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-5)' }}>
+        <h1 className="t-title-1">마이페이지</h1>
+        <TransitionLink href="/my/settings" aria-label="설정"
+          style={{ width: 40, height: 40, marginRight: -8, borderRadius: 20, display: 'grid', placeItems: 'center', color: 'var(--color-text-secondary)' }}>
+          <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+          </svg>
+        </TransitionLink>
+      </div>
       <Tip id="my" style={{ marginBottom: 'var(--space-4)' }}>알림·통화·야간 연락은 설정에서 끄고 켤 수 있어요.</Tip>
 
       <div className="stack" style={{ gap: 'var(--space-3)' }}>
