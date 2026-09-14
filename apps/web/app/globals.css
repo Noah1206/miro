@@ -70,6 +70,8 @@ body {
   font-family: var(--font-body); font-size: var(--font-body-size); line-height: 1.6;
   font-weight: var(--weight-regular); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
+  /* 한국어는 낱말 중간에서 끊지 않는다 — '사/진은' 이 되면 안 된다. 긴 영문·URL 만 어디서든 접는다. */
+  word-break: keep-all; overflow-wrap: anywhere;
 }
 a { color: inherit; text-decoration: none; }
 button, input, textarea, select { font: inherit; color: inherit; }

@@ -8,12 +8,12 @@ const KEY = 'miro:tour:create'
 
 /** 탭마다 한 문장. '다음' 이 탭도 같이 넘긴다 — 말풍선이 가리키는 곳을 보여준다. */
 const STEPS: Array<{ tab: CreateTab; text: string }> = [
-  { tab: 'profile', text: '이름과 소개 한 줄만 있으면 시작할 수 있어요. 사진은 나중에 넣어도 됩니다.' },
-  { tab: 'personality', text: '어떤 사람인지 한 칸에 적어요. 특징·가치관·말투를 섞어 써도 됩니다.' },
+  { tab: 'profile', text: '이름과 소개 한 줄이면 시작할 수 있어요. 사진은 나중에 넣어도 돼요.' },
+  { tab: 'personality', text: '어떤 사람인지 한 칸에 적어요. 특징·가치관·말투를 섞어도 돼요.' },
   { tab: 'appearance', text: '성별과 체형만 고르면 사진이 나와요. 얼굴·머리는 고급 설정에서.' },
   { tab: 'relationship', text: '처음 만났을 때 두 사람의 거리예요. 대화하면서 바뀝니다.' },
   { tab: 'contact', text: '앱을 닫아도 먼저 연락할지, 얼마나 자주 할지 정해요.' },
-  { tab: 'intro', text: '첫 장면을 적으면 등록할 수 있어요. 소개 페이지 탭에서 미리 볼 수 있습니다.' },
+  { tab: 'intro', text: '첫 장면을 적으면 등록할 수 있어요. 소개 페이지에서 미리 보세요.' },
 ]
 
 /**
