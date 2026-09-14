@@ -121,14 +121,14 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
         whileTap={reduce ? undefined : { scale: 0.98 }}
         style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-          width: 132, height: 132, margin: '0 auto', cursor: 'pointer',
+          width: 200, height: 250, margin: '0 auto', cursor: 'pointer',
           background: preview ? `center/cover no-repeat url(${preview})` : 'var(--color-surface-2)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
           borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
         }}>
         {!preview && (
           <>
-            <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
             </svg>
             <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
