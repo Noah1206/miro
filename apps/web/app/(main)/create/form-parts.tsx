@@ -117,12 +117,12 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
 
   return (
     <>
-      {/* 사진은 가운데 4:5 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
+      {/* 사진은 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다. */}
       <motion.button type="button" onClick={() => setOpen(true)}
         whileTap={reduce ? undefined : { scale: 0.98 }}
         style={{
           position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-          width: 200, height: 250, margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
+          width: 250, height: 250, margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
           transition: 'border-color var(--motion-fast) var(--ease-standard)',
           borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
