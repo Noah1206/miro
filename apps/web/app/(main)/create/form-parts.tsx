@@ -27,7 +27,7 @@ export function LabeledField({ label, required, hint, error, children }: {
 }) {
   return (
     <div className="stack" style={{ gap: 4 }}>
-      <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: error ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
+      <span className="t-caption" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)' }}>
         {label}{required && <Star />}
       </span>
       {children}
@@ -71,11 +71,11 @@ export function CountedInput({ name, placeholder, max, defaultValue = '', requir
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', ...box(focused, invalid) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', ...box(focused, invalid) }}>
       <input name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} required={required} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
       <Counter length={value.length} max={max} />
     </div>
   )
@@ -88,12 +88,12 @@ export function CountedTextArea({ name, placeholder, max, rows = 4, defaultValue
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '12px 14px 8px', ...box(focused) }}>
+    <div style={{ padding: '10px 12px 6px', ...box(focused) }}>
       <textarea name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none',
-          color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', lineHeight: 1.6, fontFamily: 'inherit',
+          color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.55, fontFamily: 'inherit',
         }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
         <Counter length={value.length} max={max} />
@@ -299,7 +299,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
         </div>
       )}
       {!full && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', ...box(false) }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', ...box(false) }}>
           <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} maxLength={maxLength} autoComplete="off"
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />

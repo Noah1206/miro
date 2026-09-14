@@ -452,7 +452,7 @@ function Two({ children }: { children: React.ReactNode }) {
 function TimeInput({ name, defaultValue }: { name: string; defaultValue: string }) {
   return (
     <input name={name} type="time" defaultValue={defaultValue}
-      style={{ width: '100%', padding: '6px 0 10px', background: 'none', border: 0, outline: 'none', borderBottom: '1.5px solid var(--color-border-strong)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', colorScheme: 'dark' }} />
+      style={{ width: '100%', padding: '10px 12px', outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', colorScheme: 'dark', ...box(false) }} />
   )
 }
 
@@ -462,10 +462,10 @@ function Controlled({ name, placeholder, max, value, onChange, big }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 14px', ...box(focused) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', ...box(focused) }}>
       <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
       {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
     </div>
   )
@@ -476,10 +476,10 @@ function ControlledArea({ name, placeholder, max, rows, value, onChange }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '12px 14px 8px', ...box(focused) }}>
+    <div style={{ padding: '10px 12px 6px', ...box(focused) }}>
       <textarea name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', lineHeight: 1.6, fontFamily: 'inherit' }} />
+        style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.55, fontFamily: 'inherit' }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
         {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
       </div>
