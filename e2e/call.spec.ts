@@ -46,7 +46,7 @@ test('incoming video call: the user sees it is video before accepting, talks, ha
   await expect(page.locator('[data-call-record]')).toContainText('영상통화')
   await expect(page.locator('[data-incoming-call]')).toHaveCount(0)
 
-  await page.goto(`${BASE}/my`)
+  await page.goto(`${BASE}/my/subscription`)
   await expect(page.locator('[data-usage-remaining]')).not.toHaveAttribute('data-usage-remaining', '100')  // 통화 시간이 차감됐다
 })
 

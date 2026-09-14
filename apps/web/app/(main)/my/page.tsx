@@ -2,10 +2,8 @@ import { redirect } from 'next/navigation'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { characters, db, roleplaySessions, worlds } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { usageStatus } from '@/lib/usage/guard'
 import { ButtonLink, Page, Stagger, StaggerItem, TransitionLink, Tip } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
-import { COPY } from '@/lib/copy'
 import { ProfileCard } from './profile-card'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
@@ -14,9 +12,9 @@ const FILTERS: Array<{ key: Filter; label: string }> = [
 ]
 
 /**
- * 마이페이지 (레퍼런스 구조): 프로필 카드 → Pro → 사용량 → 내 캐릭터(필터·목록) → 설정 → 푸터.
+ * 마이페이지 (레퍼런스 구조): 프로필 카드 → 내 캐릭터(필터·목록) → 설정 → 푸터.
+ * 요금제·사용량은 '구독 관리' 에 있다 — 여기 카드로 두면 매번 구독 권유를 보는 셈이다.
  * 팔로우·프로필 공유·회사 정보처럼 실체가 없는 것은 넣지 않는다.
- * 사용량은 조용한 선 하나. 차감값을 강조하지 않는다 (명세서 6.1).
  */
 export default async function MyPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const user = await currentUser()
@@ -27,8 +25,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   const handle = user.email?.split('@')[0] ?? 'me'
   const name = user.displayName ?? handle
 
-  const [u, mine, [sessions]] = await Promise.all([
-    usageStatus(user.id),
+  const [mine, [sessions]] = await Promise.all([
     db.select({
       id: characters.id, slug: characters.slug, name: characters.name, tagline: characters.tagline,
       accentA: characters.accentA, genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords,
@@ -50,9 +47,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
     href: c.isDraft ? `/my/characters/${c.id}/edit` : undefined,
   }))
 
-  const pct = Math.round((u.remaining / u.limit) * 100)
-  const reset = u.resetsAt ? `${u.resetsAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 초기화` : `첫 사용부터 ${u.windowHours}시간 단위로 초기화`
-  const pro = u.plan === 'pro'
 
   return (
     <Page>
@@ -65,33 +59,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           { label: '공개', value: mine.filter((c) => c.isPublic && !c.isDraft).length },
           { label: '대화 중', value: sessions?.n ?? 0 },
         ]} />
-
-        {/* Pro — 레퍼런스의 '제타패스' 자리. 이미 Pro 면 관리로. */}
-        <section style={{ display: 'flex', alignItems: 'center', gap: 14, padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p data-plan={u.plan} className="t-title-3">MIRO {pro ? 'Pro' : 'Free'}</p>
-            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>
-              {pro ? '더 많은 대화·사진·통화를 쓰고 있어요.' : '대화·사진·통화 한도를 늘려요.'}
-            </p>
-          </div>
-          <ButtonLink href={pro ? '/my/subscription' : '/subscribe'} variant={pro ? 'secondary' : 'primary'}>{pro ? '관리' : '구독하기'}</ButtonLink>
-        </section>
-
-        {/* 사용량 — 레퍼런스의 '내 피스' 자리. */}
-        <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div>
-              <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>남은 사용량</p>
-              <p className="t-title-3" data-usage-remaining={u.remaining}>{pct}%</p>
-            </div>
-            <ButtonLink href="/plans" variant="secondary" size="sm">요금제 비교</ButtonLink>
-          </div>
-          <div role="meter" aria-label={COPY.a11y.usageMeter} aria-valuemin={0} aria-valuemax={u.limit} aria-valuenow={u.remaining} aria-valuetext={`${pct}% 남음`}
-            style={{ height: 3, background: 'var(--color-surface-3)', overflow: 'hidden', borderRadius: 2 }}>
-            <div style={{ width: `${pct}%`, height: '100%', background: 'var(--color-white)', transition: 'width var(--motion-slow) var(--ease-standard)' }} />
-          </div>
-          <p className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>{reset}</p>
-        </section>
       </div>
 
       {/* 내 캐릭터 — 레퍼런스의 '작품' 탭. 칩으로 거른다. */}

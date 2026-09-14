@@ -23,7 +23,7 @@ test('free user hits the wall, subscribes, and continues in the same window', as
   await page.getByRole('button', { name: '결제 성공' }).click()
   await expect(page.locator('[data-payment-result="success"]')).toBeVisible()
 
-  await page.goto(`${BASE}/my`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()
+  await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()
   await page.goBack(); await page.goBack(); await page.goBack(); await page.goBack()
   await page.goto(page.url().includes('/chat/') ? page.url() : `${BASE}/archive`)
   if (!page.url().includes('/chat/')) await page.locator('[data-session-row] a').first().click()
@@ -36,7 +36,7 @@ test('a failed payment grants nothing; cancel keeps Pro until the period ends; r
   await page.goto(`${BASE}/subscribe`); await page.locator('[data-checkout]').click()
   await page.getByRole('button', { name: '결제 실패' }).click()
   await expect(page.locator('[data-payment-result="failed"]')).toBeVisible()
-  await page.goto(`${BASE}/my`); await expect(page.locator('[data-plan="free"]')).toBeVisible()
+  await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-plan="free"]')).toBeVisible()
 
   await page.goto(`${BASE}/subscribe`); await page.locator('[data-checkout]').click(); await page.getByRole('button', { name: '결제 성공' }).click()
   await expect(page.locator('[data-payment-result="success"]')).toBeVisible()   // 서버 액션 완료를 기다린 뒤 이동한다
@@ -44,7 +44,7 @@ test('a failed payment grants nothing; cancel keeps Pro until the period ends; r
   await page.getByRole('button', { name: '구독 해지' }).click()
   await expect(page.locator('[data-sub-status="cancelled"]')).toBeVisible()
   await expect(page.locator('[data-keeps-until]')).toContainText('까지 유지')
-  await page.goto(`${BASE}/my`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()     // 해지 직후에도 Pro
+  await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()     // 해지 직후에도 Pro
 })
 
 test('the webhook rejects a bad signature', async ({ request }) => {

@@ -38,19 +38,19 @@ test('free user hits the limit, is pointed to Pro, and continues after upgrading
   await page.evaluate(() => fetch('/api/dev/plan', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: 'pro' }),
   }))
-  await page.goto(`${BASE}/my`)
+  await page.goto(`${BASE}/my/subscription`)
   await expect(page.locator('[data-plan="pro"]')).toBeVisible()
 
   // 기존 창은 Free 한도로 소진돼 있다 — Pro 는 다음 창부터 새 한도. 현재 창의 남은 양은 0.
   await expect(page.locator('[data-usage-remaining="0"]')).toBeVisible()
 })
 
-test('my page shows the plan and reset time', async ({ page }) => {
+test('subscription page shows the plan and reset time', async ({ page }) => {
   await enterRoleplay(page)
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('안녕하세요.')
   await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByText('안녕하세요.')).toBeVisible()
-  await page.goto(`${BASE}/my`)
+  await page.goto(`${BASE}/my/subscription`)
   await expect(page.locator('[data-plan="free"]')).toBeVisible()
   await expect(page.getByText(/에 초기화/)).toBeVisible()
   await expect(page.locator('body')).not.toContainText(/호감도|신뢰 \d+/)
