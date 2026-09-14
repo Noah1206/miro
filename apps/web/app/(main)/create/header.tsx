@@ -73,13 +73,13 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
         </div>
         <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
-            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', marginLeft: 20, borderRadius: 'var(--radius-button)',
-            border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
+            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', marginLeft: 20, borderRadius: 'var(--radius-sm)',
+            border: 0, cursor: 'pointer', fontSize: 'var(--font-micro)', fontWeight: 'var(--weight-medium)',
             background: tab === 'preview' ? 'var(--color-white)' : 'var(--color-surface-2)',
             color: tab === 'preview' ? 'var(--color-black)' : 'var(--color-text-primary)',
             transition: 'background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard)',
           }}>
-          <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" />
           </svg>
           미리보기
