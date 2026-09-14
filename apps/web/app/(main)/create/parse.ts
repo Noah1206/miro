@@ -2,7 +2,7 @@ import { BUILD_TYPES, GENDER_TYPES } from '@miro/domain'
 
 export const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'ambiguous', 'flirting', 'rivalry', 'distrust', 'conflict', 'dating', 'lover'] as const
 export const CHANNELS = ['message', 'photo', 'voice_message', 'voice_call'] as const
-/** 분위기 — 눌러서 고른다. 세계의 장르 칸에 ' · ' 로 이어 저장되어 카드 해시태그와 비슷한 캐릭터 찾기에 쓰인다. */
+/** 분위기 — 눌러서 고르거나 직접 적는다. 세계의 장르 칸에 ' · ' 로 이어 저장되어 카드 해시태그와 비슷한 캐릭터 찾기에 쓰인다. */
 export const MOODS = ['로맨스', '얀데레', '츤데레', '순애', '집착', '힐링', '일상', '드라마', '코미디', '호러', '미스터리', '느와르', '판타지', '학원', '오피스', '소꿉친구'] as const
 
 export type ParsedCharacter = ReturnType<typeof parseCharacterForm>
@@ -80,7 +80,7 @@ export function parseCharacterForm(form: FormData) {
   }
 
   // 시대·장소·장르는 설명 한 칸에 적는다.
-  const mood = tags('mood', 5, 20).filter((m) => (MOODS as readonly string[]).includes(m))
+  const mood = tags('mood', 5, 20)
   const world = { era: null, location: null, genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }
 
   // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.

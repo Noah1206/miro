@@ -122,10 +122,10 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
         whileTap={reduce ? undefined : { scale: 0.98 }}
         style={{
           position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-          width: 250, height: 250, margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
+          width: 200, aspectRatio: '1 / 1', margin: '0 auto', cursor: 'pointer', background: 'var(--color-surface-2)',
           border: `1.5px ${preview ? 'solid transparent' : 'dashed var(--color-border-strong)'}`,
           transition: 'border-color var(--motion-fast) var(--ease-standard)',
-          borderRadius: 'var(--radius-lg)', color: 'var(--color-text-tertiary)',
+          borderRadius: '50%', color: 'var(--color-text-tertiary)',
         }}>
         <AnimatePresence initial={false}>
           {preview && (
@@ -442,38 +442,70 @@ const roundBtn: React.CSSProperties = {
 }
 
 /**
- * 미리 적어 둔 태그를 눌러서 고른다 (분위기). 직접 적는 TagInput 과 달리 고를 수만 있어 값이 흩어지지 않는다.
+ * 미리 적어 둔 태그를 눌러서 고르고, 없는 건 + 로 직접 적는다 (분위기).
  * 저장은 CSV 한 칸 — TagInput 과 같은 모양이라 읽는 쪽이 같다.
  */
-export function PresetTags({ name, options, max, defaultValue = [] }: {
-  name: string; options: readonly string[]; max: number; defaultValue?: string[]
+export function PresetTags({ name, options, max, maxLength = 20, defaultValue = [] }: {
+  name: string; options: readonly string[]; max: number; maxLength?: number; defaultValue?: string[]
 }) {
-  const [picked, setPicked] = useState<string[]>(defaultValue.filter((v) => options.includes(v)))
+  const [picked, setPicked] = useState<string[]>(defaultValue)
+  const [adding, setAdding] = useState(false)
+  const [text, setText] = useState('')
   const reduce = useReducedMotion()
   const full = picked.length >= max
   const toggle = (o: string) => setPicked(picked.includes(o) ? picked.filter((v) => v !== o) : full ? picked : [...picked, o])
+  const custom = picked.filter((v) => !options.includes(v))
+  const addCustom = () => {
+    const t = text.trim().replace(/\s+/g, ' ').slice(0, maxLength)
+    if (!t || full || picked.includes(t)) return
+    setPicked([...picked, t]); setText('')
+  }
+  const chip = (on: boolean, off: boolean): React.CSSProperties => ({
+    minHeight: 34, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
+    fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+    background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
+    border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+    color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
+  })
   return (
     <div>
       <input type="hidden" name={name} value={picked.join(',')} />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {options.map((o) => {
-          const on = picked.includes(o)
-          const off = !on && full
+          const on = picked.includes(o), off = !on && full
           return (
             <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed={on} disabled={off}
-              whileTap={reduce || off ? undefined : { scale: 0.97 }}
-              style={{
-                minHeight: 34, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
-                fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-                border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
-                color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
-              }}>
+              whileTap={reduce || off ? undefined : { scale: 0.97 }} style={chip(on, off)}>
               {o}
             </motion.button>
           )
         })}
+        {/* 직접 적은 태그 — 누르면 빠진다 */}
+        {custom.map((o) => (
+          <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed aria-label={`${o} 빼기`}
+            whileTap={reduce ? undefined : { scale: 0.97 }} style={{ ...chip(true, false), display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            {o}
+            <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </motion.button>
+        ))}
+        <button type="button" onClick={() => setAdding((v) => !v)} disabled={full && !adding} aria-expanded={adding} aria-label="직접 입력"
+          style={{ ...chip(false, full && !adding), display: 'inline-flex', alignItems: 'center', gap: 4, borderStyle: 'dashed', borderColor: 'var(--color-border-strong)' }}>
+          <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          직접 입력
+        </button>
       </div>
+      {adding && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '6px 10px', ...box(true) }}>
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength} placeholder="예) 재벌가, 첫사랑" autoFocus disabled={full}
+            aria-label="분위기 직접 입력"
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addCustom() } }}
+            style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addCustom} disabled={!text.trim() || full}
+            style={{ padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: 0, cursor: 'pointer', background: text.trim() && !full ? 'var(--color-accent)' : 'var(--color-surface-3)', color: text.trim() && !full ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
+            추가
+          </button>
+        </div>
+      )}
       <p className="t-micro" style={{ textAlign: 'right', marginTop: 8, textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{picked.length}/{max}</p>
     </div>
   )
