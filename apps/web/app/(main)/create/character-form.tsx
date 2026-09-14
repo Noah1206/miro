@@ -446,9 +446,9 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
   )
 }
 
-/** 칸을 묶는 판. 페이지 바닥보다 한 단 밝다. */
+/** 섹션의 칸 묶음. 판(배경)은 두지 않는다 — 입력칸과 버튼이 각자 면을 갖고 있어 페이지 바닥 위에 바로 놓인다. */
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>{children}</div>
+  return <div>{children}</div>
 }
 
 /** '고급 설정' 접기 버튼 — 카드 아래 전체 너비. 열리면 화살표가 뒤집힌다. 접힌 내용은 hidden 으로만 감춰 제출에 포함된다. */
