@@ -394,7 +394,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
         {/* ── 상황 — 탭 아래 카드가 아니라 채팅 편집 화면이 전체로 열린다. 칸은 닫혀도 DOM 에 남는다. ── */}
         <Panel id="intro" show={tab === 'intro'}>
           <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', borderBottom: '1px solid var(--color-border)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', flexShrink: 0 }}>
               <button type="button" onClick={() => setTab(prevTab)} aria-label="닫기"
                 style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
                 <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
