@@ -71,8 +71,6 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
             )
           })}
         </div>
-        {/* 입력 탭 묶음과 미리보기 사이의 세로 구분선 */}
-        <span aria-hidden style={{ width: 1, height: 18, background: 'var(--color-border)', flexShrink: 0, margin: '0 4px' }} />
         <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
             flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 'var(--radius-button)',
