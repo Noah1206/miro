@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { characters, db, roleplaySessions, worlds } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { ButtonLink, Page, Stagger, StaggerItem, TransitionLink, Tip } from '@/components/ui'
+import { ButtonLink, Page, TransitionLink, Tip } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { ProfileCard } from './profile-card'
 
@@ -86,13 +86,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         )}
       </section>
 
-      <Stagger as="div" className="stack" style={{ gap: 8, marginTop: 'var(--space-7)' }}>
-        {[['/my/subscription', '구독 관리'], ['/my/settings', '알림 · 통화 · 야간 연락'], ['/my/verify', '성인 인증'], ['/my/permissions', '권한 안내']].map(([h, l]) => (
-          <StaggerItem key={h}><Row href={h!} label={l!} /></StaggerItem>
-        ))}
-        <StaggerItem><Row href="/my/delete" label="계정 삭제" danger /></StaggerItem>
-      </Stagger>
-
       {/* 푸터 — 실제로 있는 문서만. 회사 정보는 정해진 것이 없어 적지 않는다. */}
       <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
         <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>MIRO</p>
@@ -105,14 +98,5 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         </p>
       </footer>
     </Page>
-  )
-}
-
-function Row({ href, label, danger }: { href: string; label: string; danger?: boolean }) {
-  return (
-    <TransitionLink href={href} className="hoverable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)', color: danger ? 'var(--color-danger)' : 'inherit' }}>
-      <span className="t-body">{label}</span>
-      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-tertiary)' }}><path d="M9 5l7 7-7 7" /></svg>
-    </TransitionLink>
   )
 }
