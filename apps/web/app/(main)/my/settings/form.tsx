@@ -5,7 +5,18 @@ import { saveSettings, type SettingsState } from './actions'
 
 type Values = { pushEnabled: boolean; voiceCallEnabled: boolean; videoCallEnabled: boolean; quietHoursEnabled: boolean; quietHoursStart: string; quietHoursEnd: string; timeZone: string }
 
-const ZONES = ['Asia/Seoul', 'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Singapore', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles']
+/** 값은 IANA 이름 그대로 저장한다 (엔진이 읽는다). 보이는 글자만 한국어. */
+const ZONE_LABELS: Record<string, string> = {
+  'Asia/Seoul': '서울 (한국 표준시)',
+  'Asia/Tokyo': '도쿄 (일본 표준시)',
+  'Asia/Shanghai': '상하이 (중국 표준시)',
+  'Asia/Singapore': '싱가포르',
+  'Europe/London': '런던 (영국)',
+  'Europe/Paris': '파리 (중앙유럽)',
+  'America/New_York': '뉴욕 (미국 동부)',
+  'America/Los_Angeles': '로스앤젤레스 (미국 서부)',
+}
+const ZONES = Object.keys(ZONE_LABELS)
 
 /**
  * 연락 설정. 두 덩이 — '받기' 와 '야간 연락 차단'.
@@ -50,7 +61,7 @@ export function SettingsForm({ initial }: { initial: Values }) {
                   <select name="timeZone" value={zone} onChange={(e) => setZone(e.target.value)}
                     style={{ width: '100%', appearance: 'none', WebkitAppearance: 'none', padding: '10px 32px 10px 0', background: 'none', border: 0, outline: 'none',
                       borderBottom: '1.5px solid var(--color-border-strong)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', cursor: 'pointer' }}>
-                    {ZONES.map((z) => <option key={z} value={z}>{z}</option>)}
+                    {ZONES.map((z) => <option key={z} value={z}>{ZONE_LABELS[z]}</option>)}
                   </select>
                   <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
                     style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-tertiary)', pointerEvents: 'none' }}><path d="M6 9l6 6 6-6" /></svg>
