@@ -503,7 +503,7 @@ function BodyPicker({ build, onBuild, gender, onGender }: {
       <ChoiceChips name="gender" value={gender} onChange={onGender} columns={2}
         options={GENDER_TYPES.map((g) => ({ value: g, label: GENDER_PRESETS[g].label }))} />
       <input type="hidden" name="build" value={build} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 8 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 'var(--space-4)' }}>
         {BUILD_TYPES.map((b) => {
           const on = b === build
           return (
