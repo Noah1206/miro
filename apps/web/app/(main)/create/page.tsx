@@ -177,12 +177,10 @@ export default function CreatePage() {
           <Section title="성격">
             <Card>
               <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="어떤 사람인가요" required>
-                  <ControlledArea name="personality" value={personality} onChange={setPersonality} max={600} rows={3}
-                    placeholder={'특징, 행동, 감정 표현을 적어주시면 개성이 살아납니다.\n예) 감정을 드러내지 않고 거리를 둔다. 예의는 갖추지만 다정하지는 않다.'} />
+                <LabeledField label="어떤 사람인가요" required hint="특징·가치관·말투를 한 번에 적어 주세요.">
+                  <ControlledArea name="personality" value={personality} onChange={setPersonality} max={1000} rows={6}
+                    placeholder={'예) 감정을 드러내지 않고 거리를 둔다. 예의는 갖추지만 다정하지는 않다.\n약속과 원칙을 지키고, 말보다 행동으로 증명한다.\n존대. 문장이 짧고 군더더기가 없다.'} />
                 </LabeledField>
-                <LabeledField label="가치관"><CountedTextArea name="values" max={300} rows={2} defaultValue={''} placeholder="예) 약속과 원칙. 말보다 행동으로 증명하는 것." /></LabeledField>
-                <LabeledField label="말투"><CountedTextArea name="speechStyle" max={300} rows={2} defaultValue={''} placeholder="예) 존대. 문장이 짧고 군더더기가 없다. 감탄사를 거의 쓰지 않는다." /></LabeledField>
               </div>
             </Card>
           </Section>

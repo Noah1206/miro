@@ -111,8 +111,6 @@ export async function saveCharacter(form: FormData): Promise<void> {
       occupation: orNull(s('occupation')) ?? null,
       mbti: orNull(s('mbti').toUpperCase().slice(0, 4)) ?? null,
       personality,
-      values: orNull(s('values')) ?? null,
-      speechStyle: orNull(s('speechStyle')) ?? null,
       userNickname: orNull(s('userNickname')),
       hobbies: tags('hobbies', 6, 30).length > 0 ? tags('hobbies', 6, 30) : ([]),
       dislikes: tags('dislikes', 6, 30).length > 0 ? tags('dislikes', 6, 30) : ([]),
