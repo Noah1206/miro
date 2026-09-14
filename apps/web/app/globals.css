@@ -42,9 +42,9 @@
   --font-title-3: 18px; --font-body-lg: 17px; --font-body-size: 15px; --font-caption: 13px; --font-micro: 11px;
   --weight-regular: 400; --weight-medium: 500; --weight-semibold: 600; --weight-bold: 700;
 
-  /* radius — sharp minimal, never pill by default */
-  --radius-xs: 6px; --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px;
-  --radius-button: 10px; --radius-sheet: 18px;
+  /* radius — sharp minimal, never pill by default. 한 단씩 줄였다: 입력·칩까지 둥글면 장난감처럼 보인다. */
+  --radius-xs: 4px; --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 14px;
+  --radius-button: 8px; --radius-sheet: 16px;
 
   /* space — 8px grid, generous */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;

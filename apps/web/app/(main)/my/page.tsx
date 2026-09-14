@@ -69,7 +69,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
             return (
               <TransitionLink key={f.key} href={f.key === 'all' ? '/my' : `/my?filter=${f.key}`} aria-current={on ? 'true' : undefined}
                 style={{
-                  padding: '8px 14px', borderRadius: 999, fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
+                  padding: '8px 14px', borderRadius: 'var(--radius-button)', fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
                   background: on ? 'var(--color-white)' : 'var(--color-surface-1)', color: on ? 'var(--color-black)' : 'var(--color-text-secondary)',
                 }}>{f.label}</TransitionLink>
             )

@@ -20,7 +20,7 @@ export function Chip({ children, tone = 'default', ...rest }: React.ComponentPro
   const color = tone === 'relationship' ? 'var(--color-accent-text)' : tone === 'strong' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)'
   const border = tone === 'relationship' ? 'rgba(216,92,121,0.45)' : tone === 'strong' ? 'var(--color-border-strong)' : 'var(--color-border)'
   return (
-    <span {...rest} style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 999, border: `1px solid ${border}`, color, fontSize: 'var(--font-micro)', letterSpacing: '0.04em', lineHeight: 1.4, whiteSpace: 'nowrap', ...rest.style }}>
+    <span {...rest} style={{ display: 'inline-flex', alignItems: 'center', padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: `1px solid ${border}`, color, fontSize: 'var(--font-micro)', letterSpacing: '0.04em', lineHeight: 1.4, whiteSpace: 'nowrap', ...rest.style }}>
       {children}
     </span>
   )

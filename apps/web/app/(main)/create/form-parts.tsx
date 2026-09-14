@@ -289,7 +289,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
           {tags.map((t) => (
             <button key={t} type="button" onClick={() => setTags(tags.filter((x) => x !== t))} aria-label={`${t} 지우기`}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 999, border: 0,
+                display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: 0,
                 background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', cursor: 'pointer',
               }}>
               #{t}
