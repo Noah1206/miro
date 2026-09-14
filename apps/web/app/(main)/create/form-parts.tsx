@@ -71,29 +71,29 @@ export function CountedInput({ name, placeholder, max, defaultValue = '', requir
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', ...box(focused, invalid) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(focused, invalid) }}>
       <input name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} required={required} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
       <Counter length={value.length} max={max} />
     </div>
   )
 }
 
 /** 여러 줄 입력. 같은 상자 규칙. */
-export function CountedTextArea({ name, placeholder, max, rows = 4, defaultValue = '' }: {
+export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue = '' }: {
   name: string; placeholder: string; max: number; rows?: number; defaultValue?: string
 }) {
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '10px 12px 6px', ...box(focused) }}>
+    <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
       <textarea name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none',
-          color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.55, fontFamily: 'inherit',
+          color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit',
         }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
         <Counter length={value.length} max={max} />
@@ -299,7 +299,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
         </div>
       )}
       {!full && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', ...box(false) }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(false) }}>
           <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} maxLength={maxLength} autoComplete="off"
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
@@ -330,7 +330,7 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
           <motion.button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={on}
             whileTap={reduce ? undefined : { scale: 0.97 }}
             style={{
-              minHeight: 40, padding: '8px 14px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+              minHeight: 36, padding: '6px 12px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
               background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
               border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
@@ -417,7 +417,7 @@ export function Stepped({ name, label, options, defaultValue }: {
             <motion.button key={o.value} type="button" onClick={() => setValue(o.value)} aria-pressed={on}
               whileTap={reduce ? undefined : { scale: 0.97 }}
               style={{
-                minHeight: 44, padding: '10px 6px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+                minHeight: 40, padding: '8px 6px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
                 fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
                 background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
                 border: `1.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,

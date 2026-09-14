@@ -156,7 +156,7 @@ export default function CreatePage() {
                   <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
                 </LabeledField>
                 <LabeledField label="설명" hint="세계 탭의 시대·장르·장소와 함께 세계관이 된다.">
-                  <CountedTextArea name="worldSetting" max={600} rows={5} defaultValue={''}
+                  <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={''}
                     placeholder="상황, 관계, 세계관 등을 설명해주세요." />
                 </LabeledField>
               </div>
@@ -204,7 +204,7 @@ export default function CreatePage() {
             <Card>
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label="어떤 사람인가요" required>
-                  <ControlledArea name="personality" value={personality} onChange={setPersonality} max={600} rows={5}
+                  <ControlledArea name="personality" value={personality} onChange={setPersonality} max={600} rows={3}
                     placeholder={'특징, 행동, 감정 표현을 적어주시면 개성이 살아납니다.\n예) 감정을 드러내지 않고 거리를 둔다. 예의는 갖추지만 다정하지는 않다.'} />
                 </LabeledField>
                 <LabeledField label="가치관"><CountedTextArea name="values" max={300} rows={2} defaultValue={''} placeholder="예) 약속과 원칙. 말보다 행동으로 증명하는 것." /></LabeledField>
@@ -370,7 +370,7 @@ export default function CreatePage() {
             <Card>
               <div className="stack" style={{ gap: 18 }}>
                 <LabeledField label="첫 장면" required>
-                  <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={4}
+                  <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={3}
                     placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
                 </LabeledField>
                 <LabeledField label="시작 시간"><CountedInput name="startingTime" placeholder="예) 저녁" max={20} defaultValue={''} /></LabeledField>
@@ -441,7 +441,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
 
 /** 칸을 묶는 판. 페이지 바닥보다 한 단 밝다. */
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5) var(--space-4)' }}>{children}</div>
+  return <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>{children}</div>
 }
 
 /** 좌우 두 칸. 1fr 은 최소 폭이 입력 고유 폭에 잡혀 오른쪽 칸이 카드를 넘친다 — minmax(0,1fr) 로 눌러야 한다. */
@@ -452,7 +452,7 @@ function Two({ children }: { children: React.ReactNode }) {
 function TimeInput({ name, defaultValue }: { name: string; defaultValue: string }) {
   return (
     <input name={name} type="time" defaultValue={defaultValue}
-      style={{ width: '100%', padding: '10px 12px', outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', colorScheme: 'dark', ...box(false) }} />
+      style={{ width: '100%', padding: '6px 10px', outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, colorScheme: 'dark', ...box(false) }} />
   )
 }
 
@@ -462,10 +462,10 @@ function Controlled({ name, placeholder, max, value, onChange, big }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', ...box(focused) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(focused) }}>
       <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
       {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
     </div>
   )
@@ -476,10 +476,10 @@ function ControlledArea({ name, placeholder, max, rows, value, onChange }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '10px 12px 6px', ...box(focused) }}>
+    <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
       <textarea name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', lineHeight: 1.55, fontFamily: 'inherit' }} />
+        style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
         {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
       </div>
