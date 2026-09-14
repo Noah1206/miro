@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { Accordion, Tip } from '@/components/ui'
+import { Tip } from '@/components/ui'
 import { saveCharacter } from './actions'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES, stageLabel } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
@@ -125,6 +125,7 @@ export default function CreatePage() {
   const [channel, setChannel] = useState<string>('message')
   const [outputStyle, setOutputStyle] = useState('balanced')
   const [isPublic, setIsPublic] = useState(false)
+  const [advanced, setAdvanced] = useState(false)
 
   const missing = useMemo(() => {
     const m = new Set<CreateTab>()
@@ -212,38 +213,49 @@ export default function CreatePage() {
                 <LabeledField label="키"><CountedInput name="height" placeholder="예) 186cm" max={20} defaultValue={''} /></LabeledField>
                 <LabeledField label="체형 설명"><CountedInput name="detail" placeholder="예) 어깨가 넓다" max={120} defaultValue={''} /></LabeledField>
               </div>
+
+              {/* 얼굴·머리는 고급 — 몸만 정해도 사진은 나온다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}>
+                <button type="button" aria-expanded={advanced} aria-controls="appearance-advanced" onClick={() => setAdvanced((v) => !v)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 18px', borderRadius: 999, cursor: 'pointer',
+                    background: 'var(--color-surface-2)', border: '1px solid var(--color-border-strong)',
+                    color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
+                  }}>
+                  고급 설정
+                  <svg aria-hidden width="14" height="14" viewBox="0 0 16 16" fill="none"
+                    style={{ transform: advanced ? 'rotate(180deg)' : 'none', transition: 'transform var(--motion-fast) var(--ease-standard)' }}>
+                    <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+              <div id="appearance-advanced" hidden={!advanced}>
+                <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
+                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>얼굴</p>
+                  <LabeledField label="눈"><CountedInput name="eyes" placeholder="예) 깊고 차가운 회청색 눈" max={80} defaultValue={''} /></LabeledField>
+                  <Two>
+                    <LabeledField label="코"><CountedInput name="nose" placeholder="예) 곧고 높은 콧대" max={80} defaultValue={''} /></LabeledField>
+                    <LabeledField label="턱"><CountedInput name="jaw" placeholder="예) 선이 분명한 턱" max={80} defaultValue={''} /></LabeledField>
+                  </Two>
+                  <LabeledField label="피부"><CountedInput name="skin" placeholder="예) 창백하고 건조한 피부" max={80} defaultValue={''} /></LabeledField>
+                  <LabeledField label="알아보게 하는 특징" hint="흉터, 점, 문신처럼 그 사람을 알아보게 하는 한 가지.">
+                    <CountedInput name="distinctive" placeholder="예) 왼쪽 눈썹 끝을 가로지르는 오래된 흉터" max={100} defaultValue={''} />
+                  </LabeledField>
+
+                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)', marginTop: 'var(--space-2)' }}>머리 · 인상</p>
+                  <Two>
+                    <LabeledField label="머리 색"><CountedInput name="hairColor" placeholder="예) 어두운 갈색" max={40} defaultValue={''} /></LabeledField>
+                    <LabeledField label="머리 길이"><CountedInput name="hairLength" placeholder="예) 짧고 단정한" max={40} defaultValue={''} /></LabeledField>
+                  </Two>
+                  <LabeledField label="머리 스타일"><CountedInput name="hairStyle" placeholder="예) 이마를 드러내게 넘긴" max={60} defaultValue={''} /></LabeledField>
+                  <LabeledField label="평소 표정"><CountedInput name="expression" placeholder="예) 표정 변화가 거의 없다" max={120} defaultValue={''} /></LabeledField>
+                  <LabeledField label="스타일 태그" hint="옷차림·분위기. 사진 생성이 읽습니다.">
+                    <TagInput name="styleTags" placeholder="예) 소매를 걷어 올린 셔츠" max={5} maxLength={40} defaultValue={[]} />
+                  </LabeledField>
+                </div>
+              </div>
             </Card>
           </Section>
-          {/* 얼굴·머리는 선택 — 몸만 정해도 사진은 나온다. 원하는 사람만 펼쳐서 채운다. */}
-          <div className="stack" style={{ gap: 8, marginTop: 'var(--space-6)' }}>
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>더 자세히 정하고 싶다면 펼쳐서 적어 주세요. 비워 둬도 됩니다.</p>
-            <Accordion title="얼굴">
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="눈"><CountedInput name="eyes" placeholder="예) 깊고 차가운 회청색 눈" max={80} defaultValue={''} /></LabeledField>
-                <Two>
-                  <LabeledField label="코"><CountedInput name="nose" placeholder="예) 곧고 높은 콧대" max={80} defaultValue={''} /></LabeledField>
-                  <LabeledField label="턱"><CountedInput name="jaw" placeholder="예) 선이 분명한 턱" max={80} defaultValue={''} /></LabeledField>
-                </Two>
-                <LabeledField label="피부"><CountedInput name="skin" placeholder="예) 창백하고 건조한 피부" max={80} defaultValue={''} /></LabeledField>
-                <LabeledField label="알아보게 하는 특징" hint="흉터, 점, 문신처럼 그 사람을 알아보게 하는 한 가지.">
-                  <CountedInput name="distinctive" placeholder="예) 왼쪽 눈썹 끝을 가로지르는 오래된 흉터" max={100} defaultValue={''} />
-                </LabeledField>
-              </div>
-            </Accordion>
-            <Accordion title="머리 · 인상">
-              <div className="stack" style={{ gap: 18 }}>
-                <Two>
-                  <LabeledField label="머리 색"><CountedInput name="hairColor" placeholder="예) 어두운 갈색" max={40} defaultValue={''} /></LabeledField>
-                  <LabeledField label="머리 길이"><CountedInput name="hairLength" placeholder="예) 짧고 단정한" max={40} defaultValue={''} /></LabeledField>
-                </Two>
-                <LabeledField label="머리 스타일"><CountedInput name="hairStyle" placeholder="예) 이마를 드러내게 넘긴" max={60} defaultValue={''} /></LabeledField>
-                <LabeledField label="평소 표정"><CountedInput name="expression" placeholder="예) 표정 변화가 거의 없다" max={120} defaultValue={''} /></LabeledField>
-                <LabeledField label="스타일 태그" hint="옷차림·분위기. 사진 생성이 읽습니다.">
-                  <TagInput name="styleTags" placeholder="예) 소매를 걷어 올린 셔츠" max={5} maxLength={40} defaultValue={[]} />
-                </LabeledField>
-              </div>
-            </Accordion>
-          </div>
         </Panel>
 
         {/* ── 세계 ── */}
