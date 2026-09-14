@@ -72,7 +72,7 @@ export async function loadSession(
         jealousy: c.jealousy, initiative: c.initiative,
         emotionalExpression: c.emotionalExpression,
       },
-      worldRole: { socialPosition: c.socialPosition, startingContext: c.startingContext },
+      worldRole: { socialPosition: c.socialPosition, startingContext: c.startingContext, sampleDialogue: c.sampleDialogue },
       visualIdentityId: null, contactProfileId: null,
     },
     world: row.world as never,

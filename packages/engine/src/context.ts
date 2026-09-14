@@ -85,6 +85,8 @@ function buildSystem(s: SimulationSnapshot): string {
     c.personality.hobbies.length ? `좋아하는 것: ${c.personality.hobbies.join(', ')}` : null,
     c.personality.dislikes.length ? `싫어하는 것: ${c.personality.dislikes.join(', ')}` : null,
     `질투 성향 ${c.personality.jealousy}/100, 주도성 ${c.personality.initiative}/100, 감정표현 ${c.personality.emotionalExpression}/100`,
+    ...startingScene(c),
+    ...sampleLines(c),
     '',
     '## 규칙',
     '- 이 캐릭터의 성격과 말투를 유지합니다. 상황에 따라 감정과 태도는 변하지만 정체성은 변하지 않습니다.',
@@ -101,6 +103,31 @@ function buildSystem(s: SimulationSnapshot): string {
     '',
     '반드시 지정된 JSON 스키마에 맞는 객체만 반환합니다.',
   ].filter(Boolean).join('\n')
+}
+
+/** 첫 장면 — 만들 때 적은 시작 상황. 비어 있으면 줄 자체가 없다. */
+function startingScene(c: SimulationSnapshot['character']): string[] {
+  const text = c.worldRole.startingContext?.trim()
+  if (!text) return []
+  return ['', '## 첫 장면 (대화는 여기서 시작했다)', text.slice(0, 600)]
+}
+
+/**
+ * 상황 예시 — 만든 사람이 적은 '이 캐릭터는 이렇게 말한다' 견본. 선택 입력이라 없을 수 있다.
+ * *별표* 안은 서술이라는 규칙을 그대로 둔다 — 채팅 화면이 같은 규칙으로 그린다.
+ */
+function sampleLines(c: SimulationSnapshot['character']): string[] {
+  const turns = (c.worldRole.sampleDialogue ?? []).filter((t) => t && typeof t.text === 'string' && t.text.trim())
+  if (turns.length === 0) return []
+  const name = c.identity.name
+  return [
+    '',
+    '## 말투 예시 (이 캐릭터는 이렇게 말한다 — 분위기와 말투만 따르고 문장을 그대로 반복하지 않는다)',
+    ...turns.slice(0, 12).map((t) => {
+      const text = t.text.trim().slice(0, 300)
+      return t.role === 'narrator' ? `(서술) ${text}` : t.role === 'user' ? `유저: ${text}` : `${name}: ${text}`
+    }),
+  ]
 }
 
 /** Dynamic State — 매 턴 달라지는 부분. */

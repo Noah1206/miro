@@ -31,6 +31,8 @@ export type CharacterCore = {
   worldRole: {
     socialPosition: string | null
     startingContext: string | null
+    /** 상황 예시 — 만들 때 선택 입력. 없으면 프롬프트에서 통째로 빠진다. */
+    sampleDialogue?: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
   }
 
   visualIdentityId: string | null

@@ -12,6 +12,28 @@ function memory(sessionId: string, content: string, importance = 0.9): Memory {
 }
 
 describe('context builder', () => {
+  it('puts the starting scene and sample dialogue in the system prompt only when they exist', () => {
+    const none = buildContext(snapshot())
+    expect(none.system).not.toContain('## 첫 장면')
+    expect(none.system).not.toContain('## 말투 예시')
+
+    const s = snapshot()
+    s.character.worldRole.startingContext = '검찰청 복도에서 처음 마주쳤다.'
+    s.character.worldRole.sampleDialogue = [
+      { role: 'narrator', text: '비 내리는 저녁.' },
+      { role: 'user', text: '치킨게임할래?' },
+      { role: 'character', text: '*서류를 넘기며* 왜 왔지.' },
+    ]
+    const some = buildContext(s)
+    expect(some.system).toContain('## 첫 장면')
+    expect(some.system).toContain('검찰청 복도에서 처음 마주쳤다.')
+    expect(some.system).toContain('(서술) 비 내리는 저녁.')
+    expect(some.system).toContain('유저: 치킨게임할래?')
+    expect(some.system).toContain('토마스: *서류를 넘기며* 왜 왔지.')
+    // 견본은 정체성(system)에만 — 매 턴 프롬프트에 되풀이하지 않는다
+    expect(some.prompt).not.toContain('치킨게임할래?')
+  })
+
   it('keeps character identity in the system prompt, not the turn prompt', () => {
     const c = buildContext(snapshot())
     expect(c.system).toContain('토마스')
