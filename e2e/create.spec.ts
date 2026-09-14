@@ -3,33 +3,22 @@ import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
-async function signup(page: import('@playwright/test').Page) {
+/** Scenario 2 (부분) — Character Create → RP 진입. 만들기는 바로 폼이다 (AI 초안 경로 없음). */
+test('필수 세 칸을 채우면 등록되고 역할극이 시작된다', async ({ page }) => {
   await signUp(page, BASE)
-  await expect(page).toHaveURL(/\/home/)
-}
-
-/** Scenario 2 (부분) — Character Create → RP 진입. */
-test('quick create produces an editable draft and starts a roleplay', async ({ page }) => {
-  await signup(page)
   await page.goto(`${BASE}/create`)
 
-  await page.getByPlaceholder('어떤 캐릭터를 원하시나요?')
-    .fill('다른 사람한텐 싸가지 없는데 나한테만 잘해주는 30살 검사')
-  await page.getByRole('button', { name: 'AI 로 초안 만들기' }).click()
+  // 필수 탭에 ! 배지, 등록은 잠김.
+  await expect(page.getByLabel('필수 항목이 비어 있음')).toHaveCount(3)
+  await expect(page.getByRole('button', { name: '등록' })).toBeDisabled()
 
-  // 초안이 도착하면 고급 만들기 폼으로 넘어간다 — 빈칸이 이미 채워진 상태로.
-  await expect(page.getByRole('tab', { name: /프로필/ })).toBeVisible()
-
-  // Provider 미구성 상태는 사용자에게 숨기지 않는다
-  await expect(page.getByText(/Mock 출력입니다/)).toBeVisible()
-
-  // 이름은 편집 가능해야 한다 — 확정값이 아니라 Draft 다
-  const nameField = page.locator('input[name="name"]')
-  await expect(nameField).toBeVisible()
-  await nameField.fill('윤지훈')
+  await page.locator('input[name="name"]').fill('윤지훈')
   await page.locator('input[name="title"]').fill('검사와의 계약')
+  await page.getByRole('tab', { name: /성격/ }).click()
+  await page.locator('textarea[name="personality"]').fill('다른 사람한텐 싸가지 없는데 나한테만 잘해준다.')
+  await page.getByRole('tab', { name: /인트로/ }).click()
+  await page.locator('textarea[name="startingContext"]').fill('검찰청 복도에서 처음 마주쳤다.')
 
-  // 초안이 성격·첫 장면을 채워 두므로 필수 탭에 ! 배지가 없어야 하고 등록이 열린다.
   await expect(page.getByLabel('필수 항목이 비어 있음')).toHaveCount(0)
   await page.getByRole('button', { name: '등록' }).click()
 
@@ -37,10 +26,11 @@ test('quick create produces an editable draft and starts a roleplay', async ({ p
   await expect(page.getByText('윤지훈').first()).toBeVisible()
 })
 
-test('rejects input that is too short to build from', async ({ page }) => {
-  await signup(page)
+test('임시저장은 이름만 있으면 되고, 편집 화면으로 간다', async ({ page }) => {
+  await signUp(page, BASE)
   await page.goto(`${BASE}/create`)
-  await page.getByPlaceholder('어떤 캐릭터를 원하시나요?').fill('음')
-  await page.getByRole('button', { name: 'AI 로 초안 만들기' }).click()
-  await expect(page.getByText('조금 더 자세히 적어 주세요.')).toBeVisible()
+  await expect(page.getByRole('button', { name: '임시저장' })).toBeDisabled()
+  await page.locator('input[name="name"]').fill('초안')
+  await page.getByRole('button', { name: '임시저장' }).click()
+  await expect(page).toHaveURL(/\/my\/characters\/[0-9a-f-]{36}\/edit/)
 })

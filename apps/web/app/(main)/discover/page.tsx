@@ -1,6 +1,6 @@
 import { currentUser } from '@/lib/auth'
 import { discoverGrid } from '@/lib/home'
-import { LogoMark, Page } from '@/components/ui'
+import { LogoMark, Page, Tip } from '@/components/ui'
 import { CharacterCard } from '@/components/character-card'
 
 /**
@@ -17,6 +17,7 @@ export default async function Discover() {
         <LogoMark size={22} />
         <h1 className="t-title-2" style={{ margin: 0 }}>발견</h1>
       </header>
+      <div style={{ padding: '0 var(--space-5)', marginBottom: 'var(--space-4)' }}><Tip id="discover">공식 캐릭터와 사람들이 공개한 캐릭터를 한 번에 봅니다.</Tip></div>
 
       {items.length === 0 ? (
         <p className="t-caption" style={{ padding: '0 var(--space-5)', color: 'var(--color-text-tertiary)' }}>

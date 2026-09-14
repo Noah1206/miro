@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { listSessions } from '@/lib/ops/archive'
-import { Page, Reveal, TransitionLink } from '@/components/ui'
+import { Page, Reveal, TransitionLink, Tip } from '@/components/ui'
 import { ArchiveList } from './list'
 import { archive, restore } from './actions'
 
@@ -14,6 +14,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   return (
     <Page>
       <h1 className="t-title-1" style={{ marginBottom: 'var(--space-4)' }}>대화</h1>
+      <div style={{ marginBottom: 'var(--space-4)' }}><Tip id="archive">진행 중인 대화가 여기 모입니다. 누르면 저장된 장면에서 이어져요.</Tip></div>
       {deleted && <p role="status" className="t-caption" style={{ marginBottom: 12 }}>역할극을 삭제했습니다.</p>}
       {items.length === 0 ? (
         <Reveal>

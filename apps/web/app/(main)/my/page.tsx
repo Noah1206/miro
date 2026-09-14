@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { usageStatus } from '@/lib/usage/guard'
-import { Page, Stagger, StaggerItem, TransitionLink } from '@/components/ui'
+import { Page, Stagger, StaggerItem, TransitionLink, Tip } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 
 /** 사용량은 조용한 선 하나. 차감값을 강조하지 않는다 (명세서 6.1). */
@@ -14,6 +14,7 @@ export default async function MyPage() {
   return (
     <Page>
       <h1 className="t-title-1" style={{ marginBottom: 'var(--space-5)' }}>내 정보</h1>
+      <div style={{ marginBottom: 'var(--space-4)' }}><Tip id="my">알림·통화·야간 연락은 설정에서 끄고 켤 수 있어요.</Tip></div>
       <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-4)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 18 }}>
           <h2 className="t-micro">요금제</h2>

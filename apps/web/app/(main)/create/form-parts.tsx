@@ -31,7 +31,8 @@ export function LabeledField({ label, required, hint, error, children }: {
         {label}{required && <Star />}
       </span>
       {children}
-      {hint && !error && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-quaternary)' }}>{hint}</span>}
+      {/* 힌트는 카드(surface-1) 위에 놓인다 — quaternary 는 3.6:1 이라 tertiary 로 (axe). */}
+      {hint && !error && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{hint}</span>}
       {error && (
         <span role="alert" className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-danger)' }}>
           {error}
@@ -132,7 +133,8 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
             <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
               {label}{required && <Star />}
             </span>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-quaternary)' }}>
+            {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
               최대 {maxCount}장
             </span>
           </>
