@@ -1,21 +1,24 @@
-'use client'
-import { useState } from 'react'
-import { Button, ButtonLink, Sheet } from '@/components/ui'
-import { updateDisplayName } from './actions'
+import { TransitionLink } from '@/components/ui'
 
 /**
- * 프로필 카드 (레퍼런스 구조): 아바타 · 이름 · @핸들 · 숫자 · 버튼 두 개.
+ * 프로필 카드: 아바타 · 이름 · @핸들 · 숫자. 오른쪽 위에 설정 톱니 하나.
  * 팔로우는 없으니 숫자는 실제 있는 것 — 만든 캐릭터 · 공개 · 진행 중 대화.
- * '프로필 편집' 은 이름만 바꾼다. 그 이상은 아직 바꿀 것이 없다.
+ * 버튼 줄은 두지 않는다 — 여기서 바꿀 것이 없고, 설정은 아이콘 하나면 찾는다.
  */
 export function ProfileCard({ name, handle, stats }: {
   name: string; handle: string; stats: Array<{ label: string; value: number }>
 }) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(name)
   return (
-    <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+    <section style={{ position: 'relative', padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
+      <TransitionLink href="/my/settings" aria-label="설정"
+        style={{ position: 'absolute', top: 14, right: 14, width: 36, height: 36, borderRadius: 18, display: 'grid', placeItems: 'center', color: 'var(--color-text-secondary)' }}>
+        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+        </svg>
+      </TransitionLink>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingRight: 44 }}>
         <span aria-hidden style={{
           width: 64, height: 64, borderRadius: 32, flexShrink: 0, display: 'grid', placeItems: 'center',
           background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 24, fontWeight: 700,
@@ -34,23 +37,6 @@ export function ProfileCard({ name, handle, stats }: {
           </div>
         ))}
       </dl>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 18 }}>
-        <Button type="button" variant="secondary" onClick={() => { setDraft(name); setEditing(true) }}>프로필 편집</Button>
-        <ButtonLink href="/my/settings" variant="secondary">설정</ButtonLink>
-      </div>
-
-      <Sheet open={editing} onClose={() => setEditing(false)} title="프로필 편집">
-        <form action={async (f) => { await updateDisplayName(f); setEditing(false) }} className="stack" style={{ gap: 14 }}>
-          <label className="stack" style={{ gap: 6 }}>
-            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>표시 이름</span>
-            <input name="displayName" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={20} autoComplete="off"
-              style={{ width: '100%', padding: '10px 0', background: 'none', border: 0, outline: 'none', borderBottom: '1.5px solid var(--color-border-strong)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>비우면 계정 이름으로 돌아갑니다.</span>
-          </label>
-          <Button type="submit" variant="primary" size="lg" full>저장</Button>
-        </form>
-      </Sheet>
     </section>
   )
 }
