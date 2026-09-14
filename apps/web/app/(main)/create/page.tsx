@@ -181,21 +181,6 @@ export default function CreatePage() {
               </div>
             </Card>
           </Section>
-          <Section title="자리">
-            <Card>
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="역할" hint="카드에 짧게 붙는 한 단어. 예) 복원가, 검사, 간부">
-                  <CountedInput name="role" placeholder="예) 복원가" max={30} defaultValue={''} />
-                </LabeledField>
-                <LabeledField label="사회적 위치" hint="이 사람이 세계 안에서 서 있는 자리.">
-                  <CountedInput name="socialPosition" placeholder="예) 런던 구시가지 복원 공방의 주인" max={80} defaultValue={''} />
-                </LabeledField>
-                <LabeledField label="나를 부르는 호칭" hint="비워 두면 상황에 맞게 부릅니다.">
-                  <CountedInput name="userNickname" placeholder="예) 손님, 너, 이름" max={20} defaultValue="" />
-                </LabeledField>
-              </div>
-            </Card>
-          </Section>
         </Panel>
 
         {/* ── 성격 ── */}
