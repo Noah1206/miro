@@ -264,7 +264,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
 
         {/* ── 외형 ── */}
         <Panel id="appearance" show={tab === 'appearance'}>
-          <Section title="몸" subtitle="사진·Live Scene·영상통화가 전부 이 값으로 같은 사람을 그립니다.">
+          <Section title="몸">
             <Card>
               <BodyPicker build={build} onBuild={setBuild} gender={gender} onGender={setGender} />
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
