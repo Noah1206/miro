@@ -170,37 +170,11 @@ export function ImagePicker({ label, count = 0, maxCount = 5, required }: {
           </p>
         </div>
 
-        <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)' }}>
-          <SheetRow disabled icon={
-            <><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z" /></>
-          }>이미지 생성하기</SheetRow>
-          <div style={{ height: 1, background: 'var(--color-border)' }} />
-          <SheetRow disabled icon={
-            <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 14h5l1.5 2h5L16 14h5" /></>
-          }>생성 기록에서 가져오기</SheetRow>
-        </div>
-        <p className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginTop: 10 }}>
-          이미지 생성과 보관은 아직 준비 중이에요. 지금 고른 사진은 이 화면에서 미리보기로만 쓰입니다.
+        <p className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginTop: 4 }}>
+          이미지 보관은 아직 준비 중이에요. 지금 고른 사진은 이 화면에서 미리보기로만 쓰입니다.
         </p>
       </Sheet>
     </>
-  )
-}
-
-function SheetRow({ children, icon, disabled }: { children: ReactNode; icon: ReactNode; disabled?: boolean }) {
-  return (
-    <button type="button" disabled={disabled}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: 16,
-        background: 'transparent', border: 0, textAlign: 'left',
-        color: disabled ? 'var(--color-text-disabled)' : 'var(--color-text-primary)',
-        cursor: disabled ? 'default' : 'pointer',
-      }}>
-      <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        {icon}
-      </svg>
-      <span className="t-body">{children}</span>
-    </button>
   )
 }
 
