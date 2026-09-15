@@ -1,5 +1,5 @@
 import { and, desc, eq, gt, lte } from 'drizzle-orm'
-import { POLICY } from '@miro/config'
+import { usagePolicy, POLICY } from '@miro/config'
 import { db, paymentEvents, subscriptions, usageWindows } from '@miro/db'
 import { applyCancel, applyExpiry, applyPurchase, applyRefund, isEntitled, type Subscription } from '@miro/domain'
 import { resolvePayment, type PaymentEvent } from '@miro/providers'
@@ -54,7 +54,7 @@ export async function applyPaymentEvent(providerName: string, ev: PaymentEvent):
 
     if (ev.type === 'purchase' || ev.type === 'renewal') {
       // 방금 한도에 막혀 결제한 사용자가 바로 이어갈 수 있도록 현재 창의 한도를 Pro 로 올린다.
-      await tx.update(usageWindows).set({ plan: 'pro', limit: POLICY.usage.limits.pro })
+      await tx.update(usageWindows).set({ plan: 'pro', limit: usagePolicy().monthly.pro })
         .where(and(eq(usageWindows.userId, userId), gt(usageWindows.endsAt, now)))
       void track(userId, 'subscription_started', { provider: providerName, type: ev.type })
     }

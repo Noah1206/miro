@@ -1,7 +1,7 @@
 import { and, eq, sql } from 'drizzle-orm'
 import {
   db, events, memories, messages, npcs, relationships, roleplaySessions,
-  scenes, worldStates,
+  scenes, worldStates, usageLedger, conversationRequests,
 } from '@miro/db'
 import {
   applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories,
@@ -19,6 +19,9 @@ export class StaleStateError extends Error {
 
 export type CommitInput = {
   sessionId: string
+  reservationId?: string
+  requestId?: string
+  requestResult?: unknown
   characterId: string
   turnIndex: number
   userInput: string
@@ -44,6 +47,15 @@ export type CommitInput = {
  */
 export async function commitTurn(input: CommitInput): Promise<void> {
   await db.transaction(async (tx) => {
+    if (input.requestId) {
+      const [r] = await tx.select().from(conversationRequests).where(eq(conversationRequests.id, input.requestId)).for('update')
+      if (!r || r.status !== 'pending' || r.leaseUntil < new Date()) throw new StaleStateError()
+      await tx.update(conversationRequests).set({ status: 'completed', result: input.requestResult }).where(eq(conversationRequests.id, input.requestId))
+    }
+    if (input.reservationId) {
+      const [r] = await tx.update(usageLedger).set({ status: 'committed' }).where(and(eq(usageLedger.id, input.reservationId), eq(usageLedger.status, 'reserved'))).returning({ id: usageLedger.id })
+      if (!r) throw new StaleStateError()
+    }
     const t = input.transition
 
     /* ---- world ---- */

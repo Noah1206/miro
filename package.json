@@ -13,7 +13,8 @@
     "e2e": "playwright test",
     "db:migrate:sql": "for f in packages/db/migrations/*.sql; do psql -q \"$DATABASE_URL\" -f \"$f\"; done",
     "db:seed": "tsx packages/db/seed.ts",
-    "db:seed:admin": "tsx packages/db/seed-admin.ts"
+    "db:seed:admin": "tsx packages/db/seed-admin.ts",
+    "ai:eval": "tsx ai/evals/run.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10",

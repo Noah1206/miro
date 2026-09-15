@@ -14,7 +14,7 @@ export default async function SubscribePage({ searchParams }: { searchParams: Pr
   const provider = resolvePayment()
   return (
     <Page style={{ maxWidth: 480 }}>
-      <PageHeader back="/plans" title="MIRO Pro" lead={`같은 기능, ${POLICY.usage.windowHours}시간당 ${POLICY.usage.limits.pro}의 시간.`} />
+      <PageHeader back="/plans" title="MIRO Pro" lead="같은 기능과 품질, 더 넉넉한 월간 사용량." />
       <p className="t-body" style={{ marginBottom: 16 }}>가격: <b>{POLICY.subscription.priceLabel}</b> <span className="t-caption">(확정 전)</span></p>
       {provider.info.notice && <Notice style={{ marginBottom: 16 }}>⚠ {provider.info.notice}</Notice>}
       {!checkout ? (

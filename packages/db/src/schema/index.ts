@@ -9,6 +9,10 @@ export const users = pgTable('users', {
   /** 소셜 제공자가 이메일을 주지 않을 수 있다 (카카오·네이버 선택 동의). 있으면 계정 연결 키로 쓴다. */
   email: text('email').unique(),
   displayName: text('display_name'),
+  allowTraining: boolean('allow_training').notNull().default(false),
+  allowEvaluation: boolean('allow_evaluation').notNull().default(false),
+  aiConsentVersion: text('ai_consent_version'),
+  aiConsentAt: timestamp('ai_consent_at', { withTimezone: true }),
   /** 로그인 없이 시작한 체험 계정(Closed Alpha). 이메일이 없고, 나중에 소셜 로그인으로 이어붙일 수 있다. */
   isGuest: boolean('is_guest').notNull().default(false),
 
@@ -479,10 +483,13 @@ export const realityContacts = pgTable('reality_contacts', {
 /* ─────────────── Usage & entitlement (M3) ─────────────── */
 
 /**
- * 5시간 사용량 창. 창 시작 = 첫 생성 AI Request 시각 (소진 시점이 아니다).
+ * Asia/Seoul 달력 월 기준 공통 사용량. 기존 5시간 창은 legacy 기록으로 보존한다.
  * Free/Pro 는 같은 기능에 접근하고 limit 만 다르다.
  */
 export const usageWindows = pgTable('usage_windows', {
+  period: text('period').notNull().default('monthly'),
+  policyVersion: text('policy_version').notNull().default('monthly-v1-dev'),
+  continuityConsumed: integer('continuity_consumed').notNull().default(0),
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   plan: text('plan', { enum: ['free', 'pro'] }).notNull(),
@@ -490,7 +497,7 @@ export const usageWindows = pgTable('usage_windows', {
   endsAt: timestamp('ends_at', { withTimezone: true }).notNull(),
   consumed: integer('consumed').notNull().default(0),
   limit: integer('limit').notNull(),
-}, (t) => ({ userIdx: index('usage_windows_user_ends_idx').on(t.userId, t.endsAt) }))
+}, (t) => ({ userIdx: index('usage_windows_user_ends_idx').on(t.userId, t.endsAt), monthlyUniq: uniqueIndex('usage_windows_monthly_uniq').on(t.userId, t.startedAt).where(sql`${t.period} = 'monthly'`) }))
 
 /** 차감 원장. idempotency_key UNIQUE 가 이중 차감을 DB 레벨에서 막는다. */
 export const usageLedger = pgTable('usage_ledger', {
@@ -498,6 +505,7 @@ export const usageLedger = pgTable('usage_ledger', {
   windowId: uuid('window_id').notNull().references(() => usageWindows.id, { onDelete: 'cascade' }),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   kind: text('kind').notNull(),
+  continuity: boolean('continuity').notNull().default(false),
   units: integer('units').notNull().default(1),
   amount: integer('amount').notNull(),
   idempotencyKey: text('idempotency_key').notNull().unique(),
@@ -707,9 +715,20 @@ export const characterBookmarks = pgTable('character_bookmarks', {
 
 /**
  * AI 호출 한 번 = 한 줄 (성공·실패 모두). Usage Manager 가 쓰고 Budget Guard 가 읽는다.
- * 사용자·IP·전체 요청 수·전체 추정 비용 한도가 전부 이 표에서 나온다.
+ * 원가 기록은 이 표에, 호출 전 원자적 한도 예약은 ai_budget_counters에 저장한다.
  */
 export const aiUsage = pgTable('ai_usage', {
+  attemptId: uuid('attempt_id').unique(),
+  traceId: uuid('trace_id'), requestId: uuid('request_id'),
+  modelId: text('model_id'), modelVersion: text('model_version'), promptVersion: text('prompt_version'),
+  usageUnits: integer('usage_units').notNull().default(0),
+  actualCost: numeric('actual_cost', { precision: 12, scale: 8 }),
+  reservedCost: numeric('reserved_cost', { precision: 12, scale: 8 }).notNull().default('0'),
+  budgetKeys: jsonb('budget_keys').$type<string[]>().notNull().default([]),
+  status: text('status').notNull().default('completed'),
+  fallbackUsed: boolean('fallback_used').notNull().default(false),
+  shadow: boolean('shadow').notNull().default(false),
+
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
   sessionId: uuid('session_id'),
@@ -720,16 +739,18 @@ export const aiUsage = pgTable('ai_usage', {
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),
   /** 달러. 무료 등급 모델은 0. */
-  estimatedCost: numeric('estimated_cost', { precision: 12, scale: 8 }).notNull().default('0'),
+  estimatedCost: numeric('estimated_cost', { precision: 12, scale: 8 }),
   latencyMs: integer('latency_ms').notNull(),
   ok: boolean('ok').notNull(),
   error: text('error'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
+  traceIdx: index('ai_usage_trace_idx').on(t.traceId),
+  modelIdx: index('ai_usage_model_time_idx').on(t.modelId, t.createdAt),
   createdIdx: index('ai_usage_created_idx').on(t.createdAt),
   userIdx: index('ai_usage_user_idx').on(t.userId, t.createdAt),
   ipIdx: index('ai_usage_ip_idx').on(t.ip, t.createdAt),
-}))
+})).enableRLS()
 
 /** Closed Alpha 웨이트리스트 — 체험(게스트 계정) 뒤에 남기는 이메일. */
 export const alphaWaitlist = pgTable('alpha_waitlist', {
@@ -738,3 +759,35 @@ export const alphaWaitlist = pgTable('alpha_waitlist', {
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+/** Atomic counters; reserve before inference. Failed/unknown calls retain their conservative cost reservation. */
+export const aiBudgetCounters = pgTable('ai_budget_counters', {
+  key: text('key').primaryKey(), requests: integer('requests').notNull().default(0),
+  cost: numeric('cost', { precision: 16, scale: 8 }).notNull().default('0'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+}).enableRLS()
+
+/** Request deduplication stores IDs and output only as application data, never as training data. */
+export const conversationRequests = pgTable('conversation_requests', {
+  id: uuid('id').primaryKey(), userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  inputHash: text('input_hash').notNull(), status: text('status').notNull().default('pending'),
+  result: jsonb('result'), leaseUntil: timestamp('lease_until', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ sessionIdx: index('conversation_requests_session_idx').on(t.sessionId, t.status), userIdx: index('conversation_requests_user_idx').on(t.userId) })).enableRLS()
+
+/** Consent-gated signals, no conversation body in operational telemetry. */
+export const aiFeedback = pgTable('ai_feedback', {
+  id: uuid('id').primaryKey().defaultRandom(), userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id').notNull().references(() => conversationRequests.id, { onDelete: 'cascade' }),
+  signal: text('signal').notNull(), consentVersion: text('consent_version').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ userIdx: index('ai_feedback_user_idx').on(t.userId), requestIdx: index('ai_feedback_request_idx').on(t.requestId) })).enableRLS()
+
+export const aiEvaluationSamples = pgTable('ai_evaluation_samples', {
+  id: uuid('id').primaryKey().defaultRandom(), userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id').notNull().references(() => conversationRequests.id, { onDelete: 'cascade' }),
+  consentVersion: text('consent_version').notNull(), content: jsonb('content').notNull(),
+  reviewStatus: text('review_status').notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ userIdx: index('ai_evaluation_samples_user_idx').on(t.userId), requestIdx: uniqueIndex('ai_evaluation_samples_request_idx').on(t.requestId) })).enableRLS()

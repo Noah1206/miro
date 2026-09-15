@@ -16,6 +16,7 @@ import { StripePaymentProvider } from './payment/stripe'
 import type { PaymentProvider } from './payment/types'
 import { OAuth2Provider } from './auth/oauth'
 import { MockOAuthProvider } from './auth/mock'
+import { SupabaseOAuthProvider } from './auth/supabase'
 import type { OAuthProvider, OAuthProviderId } from './auth/types'
 
 /**
@@ -92,6 +93,12 @@ export function resolvePayment(): PaymentProvider {
 export function resolveOAuth(id: OAuthProviderId): OAuthProvider {
   const forceMock = process.env.MIRO_MOCK_OAUTH === '1' && process.env.VERCEL_ENV !== 'production'
   if (forceMock) return new MockOAuthProvider(id)
+  if (process.env.AUTH_PROVIDER === 'supabase') {
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY
+    if (!url || !key) throw new Error('Supabase Auth URL or public API key missing')
+    return new SupabaseOAuthProvider(id, url, key)
+  }
   const key = id.toUpperCase()
   const clientId = process.env[`${key}_CLIENT_ID`], secret = process.env[`${key}_CLIENT_SECRET`]
   return clientId && secret ? new OAuth2Provider(id, clientId, secret) : new MockOAuthProvider(id)

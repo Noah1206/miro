@@ -51,7 +51,7 @@ export async function inferAppearance(characterId: string): Promise<Appearance |
   if (!c) return null
 
   try {
-    return await resolveLLM().generateStructured({
+    return await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'appearance:v1',
       schema: Appearance,
       system: SYSTEM,
       prompt: [

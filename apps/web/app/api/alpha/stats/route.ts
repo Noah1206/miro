@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { sql } from 'drizzle-orm'
 import { db } from '@miro/db'
-import { BUDGET } from '@/lib/usage/ai-usage'
+import { budgetPolicy } from '@/lib/usage/ai-usage'
 
 /**
  * 알파 퍼널 숫자. 대시보드 대신 JSON 한 장 — `Authorization: Bearer $CRON_SECRET` 로 연다.
@@ -29,6 +29,6 @@ export async function GET(req: Request): Promise<Response> {
   ])
   return NextResponse.json({
     funnel: [...funnel], sessions: sessions[0], waitlist: waitlist[0], ai: ai[0],
-    budget: { userPerDay: BUDGET.userPerDay(), globalRequestsPerDay: BUDGET.globalRequestsPerDay(), globalCostPerDay: BUDGET.globalCostPerDay(), ipPerMinute: BUDGET.ipPerMinute() },
+    budget: budgetPolicy(),
   })
 }

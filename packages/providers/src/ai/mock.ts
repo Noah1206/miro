@@ -9,6 +9,8 @@ export class MockAIProvider implements AIProvider {
   readonly info: ProviderInfo = { mode: 'mock', name: 'mock', notice: 'AI Provider 미구성 — Mock 출력입니다. 실제 생성이 아닙니다.' }
   constructor(private readonly build: (req: GenerationRequest) => unknown) {}
 
+  async healthCheck(): Promise<boolean> { return true }
+
   async generate(req: GenerationRequest): Promise<GenerationResult> {
     const out = this.build(req)
     return {

@@ -8,6 +8,8 @@ export class GeminiProvider implements AIProvider {
     this.info = { mode: 'live', name: `gemini/${model}`, notice: null }
   }
 
+  async healthCheck(): Promise<boolean> { try { return (await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.model}`, { headers: { 'x-goog-api-key': this.apiKey }, signal: AbortSignal.timeout(5000) })).ok } catch { return false } }
+
   async generate(req: GenerationRequest): Promise<GenerationResult> {
     const t0 = Date.now()
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`, {

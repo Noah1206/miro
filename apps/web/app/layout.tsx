@@ -3,7 +3,7 @@ import './globals.css'
 import { Providers } from '@/components/ui/providers'
 
 export const metadata: Metadata = {
-  title: { default: 'MIRO', template: '%s · MIRO' }, description: '한 사람의 세계 안으로', manifest: '/manifest.json',
+  title: { default: 'MIRO', template: '%s · MIRO' }, manifest: '/manifest.json',
   icons: { icon: '/icon-192.png', apple: '/icon-180.png' },
 }
 export const viewport: Viewport = { themeColor: '#0A0A0B', width: 'device-width', initialScale: 1, viewportFit: 'cover' }

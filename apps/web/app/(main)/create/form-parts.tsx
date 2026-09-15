@@ -105,7 +105,7 @@ export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue
 
 /**
  * 캐릭터 이미지 — 첫 장은 큰 칸(대표), 그 아래 작은 줄에 나머지와 '+' 칸. 최대 maxCount 장.
- * 저장소가 없어 아직 미리보기만 된다 — 업로드가 붙으면 objectURL 대신 올린 주소를 쓴다.
+ * 선택 중에는 로컬 미리보기를 사용하고, 제출 시 서버가 Storage에 업로드한다.
  */
 type Picked = { url: string; file: File }
 
@@ -117,6 +117,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
   const [open, setOpen] = useState(false)
   const [previews, setPreviews] = useState<Picked[]>([])
   const [kept, setKept] = useState<string[]>(existing)
+  const [imageOrder, setImageOrder] = useState<string[]>(existing)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -126,7 +127,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
   const items: Array<{ url: string; kind: 'existing' | 'new' }> = [
     ...kept.map((url) => ({ url, kind: 'existing' as const })),
     ...previews.map((p) => ({ url: p.url, kind: 'new' as const })),
-  ]
+  ].sort((a, b) => imageOrder.indexOf(a.url) - imageOrder.indexOf(b.url))
   const main = items[0]?.url ?? null
   const full = items.length >= maxCount
 
@@ -135,28 +136,30 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
     const input = fileInputRef.current
     if (!input) return
     const dt = new DataTransfer()
-    for (const p of previews) dt.items.add(p.file)
+    for (const item of items) {
+      const picked = previews.find(p => p.url === item.url)
+      if (picked) dt.items.add(picked.file)
+    }
     input.files = dt.files
-  }, [previews])
+  }, [previews, imageOrder])
 
   const removeAt = (i: number) => {
-    if (i < kept.length) { setKept((xs) => xs.filter((_, j) => j !== i)); return }
-    const ni = i - kept.length
-    setPreviews((xs) => { URL.revokeObjectURL(xs[ni]!.url); return xs.filter((_, j) => j !== ni) })
+    const item = items[i]
+    if (!item) return
+    setImageOrder(xs => xs.filter(url => url !== item.url))
+    if (item.kind === 'existing') setKept(xs => xs.filter(url => url !== item.url))
+    else {
+      URL.revokeObjectURL(item.url)
+      setPreviews(xs => xs.filter(p => p.url !== item.url))
+    }
   }
 
-  /** 드래그로 순서 교체 — 첫 칸(index 0)에 놓으면 그 사진이 대표가 된다. 기존·새 사진을 하나의 순서로 합쳐서 다룬다. */
   const reorder = (from: number, to: number) => {
     if (from === to) return
-    const merged = items.map((it) => it.url)
-    const [moved] = merged.splice(from, 1)
-    merged.splice(to, 0, moved!)
-    const nextKept = merged.filter((u) => kept.includes(u))
-    const nextPreviews = merged
-      .map((u) => previews.find((p) => p.url === u))
-      .filter((p): p is Picked => p !== undefined)
-    setKept(nextKept)
-    setPreviews(nextPreviews)
+    const ordered = items.map(item => item.url)
+    const [moved] = ordered.splice(from, 1)
+    ordered.splice(to, 0, moved!)
+    setImageOrder(ordered)
   }
   const dragHandlers = (i: number) => ({
     draggable: true,
@@ -172,8 +175,8 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 실제 파일 — 서버 액션(saveCharacter)이 업로드한다. 순서가 바뀔 때마다 useEffect 가 다시 채운다. */}
       <input ref={fileInputRef} type="file" name="images" multiple hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif" />
       {/* 이미 저장된 사진 — 새로 고르지 않으면 이 URL 목록 그대로 유지된다 (편집 화면). */}
-      {kept.map((url) => <input key={url} type="hidden" name="keptImages" value={url} />)}
-      {/* 최종 순서 — 'kept'(기존 URL 그대로) 또는 'new'(방금 고른 파일, images 의 순서대로) 토큰을 대표부터 나열한다.
+      {items.filter(it => it.kind === 'existing').map(({ url }) => <input key={url} type="hidden" name="keptImages" value={url} />)}
+      {/* 최종 순서 — 'existing'(기존 URL 그대로) 또는 'new'(방금 고른 파일, images 의 순서대로) 토큰을 대표부터 나열한다.
           기존·새 사진을 드래그로 섞어도 서버가 같은 순서로 합칠 수 있게 한다. */}
       {items.map((it) => <input key={it.url} type="hidden" name="imageOrder" value={it.kind} />)}
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
@@ -184,7 +187,8 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
             width: 200, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'pointer', background: 'var(--color-surface-2)',
-            border: `1.5px solid ${overIndex === 0 && dragIndex !== null && dragIndex !== 0 ? 'var(--color-border-hover)' : main ? 'transparent' : 'var(--color-border-strong)'}`,
+            borderWidth: 1.5,
+            borderColor: overIndex === 0 && dragIndex !== null && dragIndex !== 0 ? 'var(--color-border-hover)' : main ? 'transparent' : 'var(--color-border-strong)',
             borderStyle: main ? 'solid' : 'dashed',
             opacity: dragIndex === 0 ? 0.5 : 1,
             transition: 'border-color var(--motion-fast) var(--ease-standard)',
@@ -269,7 +273,11 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           <input id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
             onChange={(e) => {
               const files = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
-              if (files.length > 0) setPreviews((xs) => [...xs, ...files.map((f) => ({ url: URL.createObjectURL(f), file: f }))])
+              if (files.length > 0) {
+                const added = files.map(file => ({ url: URL.createObjectURL(file), file }))
+                setPreviews(xs => [...xs, ...added])
+                setImageOrder(xs => [...xs, ...added.map(p => p.url)])
+              }
               e.target.value = ''
               setOpen(false)
             }} />
@@ -284,7 +292,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
 }
 
 /**
- * 태그 입력 — 해시태그·취미·싫어하는 것. 칩으로 쌓이고, 값은 쉼표로 이어 hidden 에 싣는다.
+ * 태그 입력 — 분위기·스타일 같은 복수 선택값. 칩으로 쌓이고, 값은 쉼표로 이어 hidden 에 싣는다.
  * Enter 나 쉼표로 추가. 한도에 닿으면 입력이 닫힌다.
  */
 export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue = [] }: {
@@ -649,4 +657,3 @@ export function Stepped({ name, label, options, defaultValue }: {
     </fieldset>
   )
 }
-

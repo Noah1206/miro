@@ -14,7 +14,7 @@ export interface LLMProvider {
   readonly info: ProviderInfo
   /**
    * 구조화 생성. 자유 문자열이 아니라 검증된 스키마를 반환한다.
-   * 한 User Message 에 대해 여러 LLM 을 연속 호출하지 않는다 — 1회 호출로 끝낸다.
+   * TaskRouter는 필요한 분석 작업만 선택한다. 기본 대화는 1회 구조화 생성이다.
    */
   generateStructured<Out, In = Out>(opts: {
     /** 파싱 결과(Out)를 반환한다. .default() 가 있으면 In 과 Out 이 다르다. */
@@ -23,6 +23,10 @@ export interface LLMProvider {
     prompt: string
     /** 스키마 위반 시 재시도 횟수. 무한 재시도 금지. */
     maxRetries?: number
+    task?: string
+    maxTokens?: number
+    promptVersion?: string
+    importance?: import('./ai/tasks').InteractionImportance
   }): Promise<Out>
 }
 

@@ -39,7 +39,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
 
     let res: ChatResponse | null = null
     try {
-      const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: msg }) })
+      const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify({ text: msg }) })
       if (r.status === 401) { window.location.href = '/alpha'; return }
       res = (await r.json()) as ChatResponse
     } catch { /* 아래에서 대체 */ }
@@ -97,7 +97,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
       {limit ? (
         <section aria-label="오늘의 체험 종료" style={{ position: 'sticky', bottom: 0, padding: 'var(--space-5) var(--gutter) calc(var(--space-5) + env(safe-area-inset-bottom))', background: 'var(--color-bg)', borderTop: '1px solid var(--color-border)' }}>
           <p className="t-title-3" style={{ marginBottom: 6 }}>오늘 준비된 Miro 체험이 모두 끝났어요.</p>
-          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-4)' }}>내일 다시 이야기를 이어갈 수 있어요.</p>
+          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-4)' }}>사용량이 다시 열리면 이야기를 이어갈 수 있어요.</p>
           <ButtonLink href="/alpha/waitlist" variant="primary" size="lg" full>다음 테스트 초대받기</ButtonLink>
         </section>
       ) : (

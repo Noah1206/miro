@@ -26,10 +26,16 @@ export function Nav() {
       {ITEMS.map((it) => {
         const active = pathname === it.href || pathname.startsWith(it.href + '/')
         return (
-          <TransitionLink key={it.href} href={it.href} aria-current={active ? 'page' : undefined} className="nav__item"
+          <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item"
             style={{ color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }}>
             <span className="nav__inner">
-              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{it.icon}</svg>
+              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={active && (it.href === '/home' || it.href === '/archive' || it.href === '/my') ? 'var(--color-white)' : 'none'} stroke={active && it.href !== '/create' ? 'var(--color-white)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                {active && it.href === '/my'
+                  ? <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></>
+                  : active && it.href === '/discover'
+                  ? <><circle cx="12" cy="12" r="9" fill="var(--color-white)" /><path d="m15.5 8.5-2 5-5 2 2-5z" fill="var(--color-bg)" stroke="var(--color-bg)" /></>
+                  : it.icon}
+              </svg>
               <span style={{ fontSize: 'var(--font-caption)', letterSpacing: 0 }}>{it.label}</span>
               {active && <motion.span aria-hidden layoutId="nav-dot" transition={spring.default} style={{ position: 'absolute', top: -8, width: 4, height: 4, borderRadius: 2, background: 'var(--color-accent)' }} />}
             </span>

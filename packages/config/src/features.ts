@@ -11,7 +11,7 @@ export type FeatureName =
   /** 의미 이벤트 분류에 LLM 을 보조로 쓴다 (비용 발생). 규칙 분류는 항상 켜져 있다. */
   | 'llmSemanticAnalysis'
   /** 최근 대화를 주기적으로 요약해 단기 기억으로 남긴다 (비용 발생). */
-  | 'memorySummaries'
+  | 'memorySummaries' | 'memoryExtraction'
 
 export type Mode = 'alpha' | 'production'
 
@@ -19,12 +19,12 @@ const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: false,
+    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: false, memoryExtraction: false,
   },
   production: {
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: false, llmSemanticAnalysis: false, memorySummaries: false,
+    inlineReality: false, llmSemanticAnalysis: false, memorySummaries: false, memoryExtraction: false,
   },
 }
 

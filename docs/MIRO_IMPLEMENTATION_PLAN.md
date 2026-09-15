@@ -1,7 +1,7 @@
 # MIRO Launch v1 — Implementation Plan
 
-> **Status**: **Phase 0–13 완료 + UI 리디자인(DESIGN.md) + Motion System + WCAG 2.2 AA 패스 완료.** 남은 것은 Product Decision(Provider 선택·가격·한도)과 배포 설정뿐
-> **Last updated**: 2026-09-12 (Phase 6 이후 재감사)
+> **Status**: 기존 Phase 0–13 작업 기록. 2026-09-14 AI Platform 기반을 추가했으며 실제 모델 품질, SLM 학습·서빙, 음성/영상 AI 연결 등은 후속 작업이다. 아래 과거 완료 기록은 전체 운영 준비 완료를 뜻하지 않는다.
+> **Last updated**: 2026-09-14. 최신 AI 구조·운영 범위는 [MIRO_AI_PLATFORM.md](MIRO_AI_PLATFORM.md) 참조.
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`
 
 ---
@@ -61,7 +61,7 @@
 | 3 | 자유 역할극 대화 | **Implemented** | 1회 Structured Generation, 3가지 출력 스타일, 사건 카드 |
 | 4 | 세계·관계·사건 엔진 | **Implemented** | version lock, delta clamp, eligibility+cooldown, NPC 지식 경계, 사건 해결/NPC 등장 |
 | 5 | 현실 연동 및 몰입 미디어 | **Implemented** | Photo·Background·Live Scene·선연락·**음성/영상통화(수신/발신/거절/부재중/분당 과금, 실시간 미디어는 Mock Adapter)** |
-| 6 | 사용량·구독 및 설정 | **Implemented** | Usage Guard, 5h 창, Free/Pro 자격, /my·/plans, 알림/통화/Quiet Hours/timezone 설정, 구독 관리 |
+| 6 | 사용량·구독 및 설정 | **Implemented** | 월간 공통 Usage Pool, Free/Pro 자격, /my·/plans, 알림/통화/Quiet Hours/timezone 설정, 구독 관리 |
 | 7 | 안전·권리 및 데이터 보호 | **Implemented** | 성인 인증(Mock Provider, 24h 재시도 잠금) + 정책 동의 + 실존 인물 참조 차단(gateMature) + 기기 권한 동의 기록 |
 | 8 | 캐릭터 및 역할극 보관함 | **Implemented** | 진행 중/보관됨, 미확인 선연락 배지, 현재 장면, 삭제 확인, soft delete + 보존기간 후 purge(Cron) |
 | 9 | 콘텐츠 신고 및 운영 대응 | **Implemented** | 신고 제출 + 별도 Admin 앱(자체 인증, RBAC, 목록/상세/맥락/조치/감사로그, 낙관적 잠금). 숨김·제한이 사용자 앱에 적용 |
@@ -295,14 +295,14 @@ AI Request
   → UsageGuard.commit(reservationId, actualUsage)   실패 시 rollback
 ```
 
-**5시간 Window**: 시작 시점 = **첫 생성 AI Request 시각**. 소진 시점이 아니다.
+**2026-09-14 변경 — 월간 Usage Pool**: Asia/Seoul 달력 월 기준, 매월 1일 00:00 초기화. 기존 5시간 창은 `legacy` 감사 기록으로 보존하며 전환 후 첫 월간 풀은 새로 시작한다.
 
-**정책값 전부 `packages/config/policy.ts`에 중앙화** — 코드에 하드코딩 금지:
+**Usage 정책은 `packages/config/src/ai-policy.ts`, 나머지 기본 정책은 config index에 중앙화** — 코드에 하드코딩 금지:
 
 ```ts
 export const POLICY = {
   usage: {
-    windowHours: 5,
+    period: 'monthly',
     freeLimit:  DEV_DEFAULT(100),   // TBD
     proLimit:   DEV_DEFAULT(1000),  // TBD
     weights: { textRP: DEV_DEFAULT(1), photo: DEV_DEFAULT(10), /* TBD */ },

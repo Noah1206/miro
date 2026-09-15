@@ -8,9 +8,11 @@ import type { Memory, MemoryType } from './types'
  *   relationship 두 사람 사이의 사건 — 갈등·화해·관계 변화
  *   world        세계 상태·사건·NPC (world_states/events/npcs 표가 곧 world memory)
  */
-export type MemoryLayer = 'long_term' | 'relationship'
+export type MemoryLayer = 'long_term' | 'relationship' | 'short_term' | 'world'
 
 export function layerOf(type: MemoryType): MemoryLayer {
+  if (type === 'short_term_summary') return 'short_term'
+  if (type === 'world_fact') return 'world'
   return type === 'shared_event' || type === 'relationship_change' || type === 'conflict' ? 'relationship' : 'long_term'
 }
 
@@ -39,7 +41,11 @@ export function retrieveMemories<T extends Pick<Memory, 'sessionId' | 'importanc
 
 /** 프롬프트에 계층별로 나눠 싣는다 — 어떤 기억이 어떤 종류인지 모델이 구분한다. */
 export function groupByLayer<T extends Pick<Memory, 'type'>>(memories: T[]): Record<MemoryLayer, T[]> {
-  const out: Record<MemoryLayer, T[]> = { long_term: [], relationship: [] }
+  const out: Record<MemoryLayer, T[]> = { long_term: [], relationship: [], short_term: [], world: [] }
   for (const m of memories) out[layerOf(m.type)].push(m)
   return out
 }
+
+export type MemoryQuery = { sessionId: string; userId: string; query: string; limit: number }
+/** Application adapters may use lexical SQL today and scoped vector retrieval later. */
+export interface MemoryRetriever { retrieve(query: MemoryQuery): Promise<Memory[]> }

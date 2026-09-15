@@ -12,8 +12,8 @@ export default async function SubscriptionPage() {
   if (!user) redirect('/login')
   const [s, u] = await Promise.all([subscriptionStatus(user.id), usageStatus(user.id)])
   const fmt = (d: Date) => d.toLocaleDateString('ko-KR')
-  const pct = Math.round((u.remaining / u.limit) * 100)
-  const reset = u.resetsAt ? `${u.resetsAt.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}에 초기화` : `첫 사용부터 ${u.windowHours}시간 단위로 초기화`
+  const pct = u.usedPercent
+  const reset = u.resetsAt ? `${u.resetsAt.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' })}에 초기화` : '매월 1일에 초기화'
   const pro = u.plan === 'pro'
   return (
     <Page style={{ maxWidth: 480 }}>
@@ -31,10 +31,10 @@ export default async function SubscriptionPage() {
           {!pro && <ButtonLink href="/subscribe" variant="primary">구독하기</ButtonLink>}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-          <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>남은 사용량</span>
+          <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>이번 달 AI 사용량</span>
           <span className="t-body" data-usage-remaining={u.remaining} style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{pct}%</span>
         </div>
-        <div role="meter" aria-label={COPY.a11y.usageMeter} aria-valuemin={0} aria-valuemax={u.limit} aria-valuenow={u.remaining} aria-valuetext={`${pct}% 남음`}
+        <div role="meter" aria-label={COPY.a11y.usageMeter} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-valuetext={`${pct}% 사용`}
           style={{ height: 3, background: 'var(--color-surface-3)', overflow: 'hidden', borderRadius: 2 }}>
           <div style={{ width: `${pct}%`, height: '100%', background: 'var(--color-white)', transition: 'width var(--motion-slow) var(--ease-standard)' }} />
         </div>

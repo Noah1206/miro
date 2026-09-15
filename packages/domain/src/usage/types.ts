@@ -1,7 +1,8 @@
 import type { Plan } from '@miro/config'
 
 export type UsageKind =
-  | 'textRP' | 'complexEvent' | 'characterDraft' | 'photo' | 'faceCast'
+  | 'semantic_event' | 'relationship_analysis' | 'memory_extraction' | 'memory_summary' | 'event_generation' | 'world_update' | 'image_prompt' | 'moderation'
+  | 'textRP' | 'complexEvent' | 'majorEvent' | 'characterDraft' | 'photo' | 'faceCast'
   | 'background' | 'liveScene' | 'voiceCallPerMinute' | 'videoCallPerMinute'
 
 export type UsageWindow = {

@@ -64,9 +64,7 @@ test('signup through entering a roleplay', async ({ page }) => {
   await page.getByRole('link', { name: '로그인' }).click()
 
   await expect(page).toHaveURL(/\/login/)
-  // 가입/로그인이 나뉘지 않는다 — 소셜 버튼 하나. "계정이 없으신가요?" 는 안내를 펼친다.
-  await page.getByRole('button', { name: '계정이 없으신가요?' }).click()
-  await expect(page.getByText(/따로 가입하지 않아도/)).toBeVisible()
+  // 가입/로그인이 나뉘지 않는다 — 소셜 버튼 하나로 즉시 진행한다.
   await signUp(page, BASE)
 
   // 동의를 마치면 곧장 홈이다 — 별도의 시작 화면을 두지 않는다.

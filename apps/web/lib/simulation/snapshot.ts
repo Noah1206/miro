@@ -1,3 +1,4 @@
+import { memoryRetriever } from '@/lib/ai/memory'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   db, characters, events, memories, messages, npcs, realityContacts, relationships,
@@ -24,6 +25,7 @@ export type LoadedSession = {
 export async function loadSession(
   sessionId: string,
   userId: string,
+  input = '',
 ): Promise<LoadedSession | null> {
   const rows = await db
     .select({ session: roleplaySessions, character: characters, world: worldStates,
@@ -46,7 +48,7 @@ export async function loadSession(
   const [allEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts] = await Promise.all([
     db.select().from(events).where(eq(events.sessionId, sessionId)),
     db.select().from(npcs).where(and(eq(npcs.sessionId, sessionId), eq(npcs.isActive, true))),
-    db.select().from(memories).where(eq(memories.sessionId, sessionId)),
+    memoryRetriever.retrieve({ sessionId, userId, query: input, limit: 24 }),
     row.world.currentSceneId
       ? db.select().from(scenes).where(eq(scenes.id, row.world.currentSceneId)).limit(1)
       : Promise.resolve([]),
@@ -81,12 +83,7 @@ export async function loadSession(
     worldSetting: row.worldSetting,
     relationship: row.relationship as never,
     scene: (currentScene[0] ?? null) as never,
-    memories: sessionMemories.map((m) => ({
-      ...m,
-      importance: m.importance / 100,
-      persistence: m.persistence / 100,
-      confidence: m.confidence / 100,
-    })) as never,
+    memories: sessionMemories,
     recentMessages: recent.reverse()
       .filter((m) => m.role === 'user' || m.role === 'character')
       .map((m) => ({ role: m.role as 'user' | 'character', content: m.content })),

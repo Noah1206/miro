@@ -1,3 +1,5 @@
+import { budgetedImage } from '@/lib/ai/media-budget'
+import { usageWeight } from '@miro/config'
 import { and, desc, eq } from 'drizzle-orm'
 import {
   db, characterVisualIdentities, generatedMedia, roleplaySessions, worldStates,
@@ -100,34 +102,38 @@ export async function getOrGenerate(opts: {
     kind: opts.kind,
   })
 
-  const generate = () => resolveImage().generate({
-    prompt,
-    sceneKey: cacheKey,
-    aspect: opts.aspect ?? (opts.kind === 'background' ? '16:9' : '3:4'),
-  })
   const usageKind = opts.kind === 'background' ? 'background'
     : opts.kind === 'face_cast' ? 'faceCast'
     : opts.kind === 'live_scene' ? 'liveScene' : 'photo'
-  const image = opts.usage
+  const provider = resolveImage()
+  const [session] = await db.select({ userId: roleplaySessions.userId }).from(roleplaySessions).where(eq(roleplaySessions.id, opts.sessionId)).limit(1)
+  const generate = () => budgetedImage({kind:opts.kind,info:provider.info,userId:session?.userId ?? null,sessionId:opts.sessionId,usageUnits:opts.usage ? usageWeight(usageKind) : 0}, () => provider.generate({
+    prompt, sceneKey: cacheKey, aspect: opts.aspect ?? (opts.kind === 'background' ? '16:9' : '3:4'),
+  }))
+  const generateAndSave = async () => {
+    const image = await generate()
+    const [saved] = await db.insert(generatedMedia).values({
+      sessionId: opts.sessionId,
+      characterId: opts.characterId,
+      kind: opts.kind,
+      url: image.url,
+      cacheKey,
+      prompt,
+      visualIdentityId: identity.id,
+      visualIdentityVersion: identity.version,
+      providerMetadata: image.providerMetadata,
+    }).returning({ id: generatedMedia.id, url: generatedMedia.url })
+    return saved!
+  }
+  // Persist the asset before committing the user's usage. A storage failure refunds their reservation.
+  const saved = opts.usage
     ? await guarded(
         { userId: opts.usage.userId, kind: usageKind, idempotencyKey: `media:${opts.usage.userId}:${cacheKey}:${Date.now()}` },
-        generate,
+        generateAndSave,
       )
-    : await generate()
+    : await generateAndSave()
 
-  const [saved] = await db.insert(generatedMedia).values({
-    sessionId: opts.sessionId,
-    characterId: opts.characterId,
-    kind: opts.kind,
-    url: image.url,
-    cacheKey,
-    prompt,
-    visualIdentityId: identity.id,
-    visualIdentityVersion: identity.version,
-    providerMetadata: image.providerMetadata,
-  }).returning({ id: generatedMedia.id, url: generatedMedia.url })
-
-  return { ...saved!, cached: false, providerNotice: notice() }
+  return { ...saved, cached: false, providerNotice: notice() }
 }
 
 /** 캐시된 asset 도 Mock 으로 만들어졌다면 그 사실을 계속 알린다. */

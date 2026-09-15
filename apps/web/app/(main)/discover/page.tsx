@@ -28,7 +28,7 @@ export default async function Discover({ searchParams }: { searchParams: Promise
       ) : (
         <>
           {q && <p className="t-micro" style={{ padding: '0 var(--gutter)', marginBottom: 10, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}개</p>}
-          <div className="grid-2" style={{ padding: '0 var(--gutter)' }}>
+          <div className="grid-2" style={{ gap: 4, padding: '0 var(--gutter)' }}>
             {items.map((c) => <CharacterCard key={c.id} c={c} />)}
           </div>
         </>

@@ -37,7 +37,7 @@ export async function POST(req: Request): Promise<Response> {
   if (!text) return NextResponse.json({ error: 'empty' }, { status: 400 })
 
   const ip = await clientIp()
-  const r = await runConversationTurn({ userId: session.userId, sessionId: session.sessionId, input: text, ip })
+  const r = await runConversationTurn({ userId: session.userId, sessionId: session.sessionId, input: text, ip, requestId: req.headers.get('idempotency-key') ?? undefined })
   if (!r.ok) return NextResponse.json(failure(r))
 
   const [reality] = await db.select({ n: count() }).from(realityContacts)

@@ -1,16 +1,26 @@
 import { defineConfig } from '@playwright/test'
+import { testDatabaseUrl } from './tooling/test-database'
 
-const WEB = 3000, ADMIN = 3100
+const database = testDatabaseUrl(process.env.TEST_DATABASE_URL ?? (process.env.CI ? process.env.DATABASE_URL : undefined))
+if (!database) throw new Error('Set TEST_DATABASE_URL to a local test database before running E2E.')
+const WEB = Number(process.env.E2E_WEB_PORT ?? 3200), ADMIN = Number(process.env.E2E_ADMIN_PORT ?? 3300)
+process.env.E2E_BASE = `http://localhost:${WEB}`
+process.env.E2E_ADMIN = `http://localhost:${ADMIN}`
 const env = {
-  DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://localhost/miro_dev',
+  DATABASE_URL: database,
   CRON_SECRET: process.env.CRON_SECRET ?? 'e2e-cron-secret',
   MIRO_ENABLE_DEV_API: '1',
   /** E2E 는 실제 구글·카카오 계정으로 로그인할 수 없다 — 소셜 로그인만 시뮬레이션으로 돌린다. */
   MIRO_MOCK_OAUTH: '1',
+  AI_PROVIDER: 'mock', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '',
+  REPLICATE_API_TOKEN: '', LIVEKIT_API_KEY: '', STRIPE_SECRET_KEY: '',
+  AI_DAILY_BUDGET: '0', AI_DAILY_REQUEST_LIMIT: '10000',
+  AUTH_BASE_URL: `http://localhost:${WEB}`,
+  MIRO_CANARY_MODEL: '', MIRO_SHADOW_MODEL: '', MIRO_EVAL_SAMPLE_PERCENT: '0',
 }
 
 /**
- * 두 앱을 띄우고 E2E 를 돈다. 이미 떠 있으면 재사용한다 (로컬 개발).
+ * 전용 테스트 DB와 별도 포트로 두 앱을 띄운다. 실행 중인 사용자 앱은 재사용하지 않는다.
  * 서버는 `pnpm build` 결과를 사용한다 — CI 는 build 후 실행한다.
  */
 export default defineConfig({
@@ -31,7 +41,7 @@ export default defineConfig({
   use: { headless: true, baseURL: `http://localhost:${WEB}`, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   webServer: [
-    { command: `pnpm --filter @miro/web exec next start -p ${WEB}`, port: WEB, reuseExistingServer: true, env, timeout: 60_000 },
-    { command: `pnpm --filter @miro/admin exec next start -p ${ADMIN}`, port: ADMIN, reuseExistingServer: true, env, timeout: 60_000 },
+    { command: `pnpm --filter @miro/web exec next start -p ${WEB}`, port: WEB, reuseExistingServer: false, env, timeout: 60_000 },
+    { command: `pnpm --filter @miro/admin exec next start -p ${ADMIN}`, port: ADMIN, reuseExistingServer: false, env, timeout: 60_000 },
   ],
 })

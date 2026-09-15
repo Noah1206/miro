@@ -1,97 +1,79 @@
-import { and, count, eq, gte, isNotNull, sql } from 'drizzle-orm'
-import { db, aiUsage } from '@miro/db'
-import { setAIUsageSink, type AIUsageRecord } from '@miro/providers'
-import { observe } from '@/lib/observe'
+import { createHash } from 'node:crypto'
+import { eq, sql } from 'drizzle-orm'
+import { db, aiUsage, aiBudgetCounters } from '@miro/db'
+import { setAIUsageSink, setAIBudgetGuard, modelCost, type AIUsageRecord, type BudgetGuard } from '@miro/providers'
+import { effectivePlan } from './guard'
 
-/**
- * Usage Manager + Budget Guard.
- * 모든 AI 호출은 Orchestrator 를 지나며 여기 기록된다 (성공·실패 모두). 토큰·모델·추정 비용이 한 표에 쌓인다.
- * Budget Guard 는 그 표에서 오늘 쓴 만큼을 세어 문턱을 넘으면 호출 전에 막는다 — 무료 등급이든 유료든 같은 코드다.
- */
-
-/** 모델별 100만 토큰당 달러. 없는 모델은 0 — 무료 등급(Gemini/Cloudflare)이 기본이다. 유료 모델은 여기에 한 줄 추가. */
-const PRICE_PER_MTOK: Record<string, { input: number; output: number }> = {
-  'anthropic/claude-haiku-4-5': { input: 1, output: 5 },
-  'anthropic/claude-sonnet-5': { input: 2, output: 10 },
-  'anthropic/claude-opus-5': { input: 5, output: 25 },
-}
-export function estimateCost(model: string, inputTokens: number | null, outputTokens: number | null): number {
-  const p = PRICE_PER_MTOK[model]
-  if (!p) return 0
-  return ((inputTokens ?? 0) * p.input + (outputTokens ?? 0) * p.output) / 1_000_000
-}
-
-let installed = false
-/** Orchestrator 에 기록기를 꽂는다. 여러 번 불러도 한 번만. */
-export function installAIUsageSink(): void {
-  if (installed) return
-  installed = true
-  setAIUsageSink(recordAIUsage)
-}
-
-export async function recordAIUsage(r: AIUsageRecord): Promise<void> {
-  try {
-    await db.insert(aiUsage).values({
-      userId: r.userId, sessionId: r.sessionId, task: r.task, provider: r.provider, model: r.model,
-      inputTokens: r.inputTokens, outputTokens: r.outputTokens, estimatedCost: String(estimateCost(r.model, r.inputTokens, r.outputTokens)),
-      latencyMs: r.latencyMs, ok: r.ok, error: r.error,
-    })
-  } catch (e) {
-    observe('ai.usage_write_failed', { error: (e as Error).message })
-  }
-}
-
-/* ───────────── Budget Guard ───────────── */
-
-export type BudgetKind = 'user' | 'ip' | 'global_requests' | 'global_cost'
-
+export type BudgetKind = 'user' | 'ip' | 'global_requests' | 'global_cost' | 'provider' | 'model' | 'plan' | 'unknown_price'
 export class BudgetExceededError extends Error {
   constructor(public readonly kind: BudgetKind) { super(`ai budget exceeded: ${kind}`) }
 }
-
-const num = (k: string): number | null => { const n = Number(process.env[k]); return Number.isFinite(n) && n > 0 ? n : null }
-/** 비어 있으면 그 한도는 없다. 프로덕션에서는 Free/Pro 창(usage_windows)이 사용자 한도를 맡고, 여기는 전체 예산만 남겨도 된다. */
-export const BUDGET = {
-  userPerDay: () => num('AI_USER_DAILY_LIMIT'),
-  globalRequestsPerDay: () => num('AI_DAILY_REQUEST_LIMIT'),
-  globalCostPerDay: () => num('AI_DAILY_BUDGET'),
-  ipPerMinute: () => num('AI_IP_RATE_LIMIT_PER_MINUTE'),
-}
-
-/** 한국 시간 기준 오늘 0시 — "내일 다시" 가 사용자 감각과 맞아야 한다. */
 export function startOfDayKST(now = new Date()): Date {
-  const kst = new Date(now.getTime() + 9 * 3_600_000)
-  kst.setUTCHours(0, 0, 0, 0)
+  const kst = new Date(now.getTime() + 9 * 3_600_000); kst.setUTCHours(0, 0, 0, 0)
   return new Date(kst.getTime() - 9 * 3_600_000)
 }
-
-/** 호출 전에 부른다. 넘으면 throw — AI 는 불리지 않는다. */
-export async function assertAIBudget(opts: { userId: string | null; ip?: string | null }): Promise<void> {
-  const day = startOfDayKST()
-  const [userLimit, reqLimit, costLimit, ipLimit] = [BUDGET.userPerDay(), BUDGET.globalRequestsPerDay(), BUDGET.globalCostPerDay(), BUDGET.ipPerMinute()]
-  if (!userLimit && !reqLimit && !costLimit && !ipLimit) return
-
-  const [[user], [global], [perIp]] = await Promise.all([
-    userLimit && opts.userId
-      ? db.select({ n: count() }).from(aiUsage).where(and(eq(aiUsage.userId, opts.userId), eq(aiUsage.task, 'character_response'), gte(aiUsage.createdAt, day)))
-      : Promise.resolve([{ n: 0 }]),
-    reqLimit || costLimit
-      ? db.select({ n: count(), cost: sql<string>`coalesce(sum(${aiUsage.estimatedCost}), 0)` }).from(aiUsage).where(gte(aiUsage.createdAt, day))
-      : Promise.resolve([{ n: 0, cost: '0' }]),
-    ipLimit && opts.ip
-      ? db.select({ n: count() }).from(aiUsage).where(and(eq(aiUsage.ip, opts.ip), isNotNull(aiUsage.ip), gte(aiUsage.createdAt, new Date(Date.now() - 60_000))))
-      : Promise.resolve([{ n: 0 }]),
-  ])
-  if (userLimit && (user?.n ?? 0) >= userLimit) throw new BudgetExceededError('user')
-  if (ipLimit && (perIp?.n ?? 0) >= ipLimit) throw new BudgetExceededError('ip')
-  if (reqLimit && (global?.n ?? 0) >= reqLimit) throw new BudgetExceededError('global_requests')
-  if (costLimit && Number((global as { cost?: string })?.cost ?? 0) >= costLimit) throw new BudgetExceededError('global_cost')
+const configured = (name: string, fallback?: number) => {
+  const raw = process.env[name]
+  if (!raw) return fallback
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) throw new Error('invalid budget configuration')
+  return n
 }
+type Limit = { requests?: number; cost?: number }
+export function budgetPolicy(): Record<string, Limit> {
+  const custom = JSON.parse(process.env.MIRO_BUDGET_POLICY || '{}') as Record<string, Limit>
+  for (const v of Object.values(custom)) for (const n of Object.values(v)) if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) throw new Error('invalid budget policy')
+  return { global: { requests: configured('AI_DAILY_REQUEST_LIMIT', 1000), cost: configured('AI_DAILY_BUDGET', 0) }, user: { requests: configured('AI_USER_DAILY_LIMIT', 200) }, ip: { requests: configured('AI_IP_RATE_LIMIT_PER_MINUTE', 20) }, ...custom }
+}
+/** Hash at request creation; never attach IP to an arbitrary user's latest record. */
+export function ipHash(ip?: string | null): string | null { return ip ? createHash('sha256').update(ip).digest('hex') : null }
 
-/** IP 는 Orchestrator 가 모른다 — 요청 경계에서 마지막 기록에 붙인다. 없으면 조용히 넘어간다. */
-export async function tagLastUsageWithIp(userId: string, ip: string | null): Promise<void> {
-  if (!ip) return
-  try {
-    await db.execute(sql`update ai_usage set ip = ${ip} where id = (select id from ai_usage where user_id = ${userId} order by created_at desc limit 1)`)
-  } catch { /* 태그 실패는 무시 */ }
+export const productionBudgetGuard: BudgetGuard = {
+  async authorize(request, model, context, attemptId) {
+    // UTF-8 byte count is a conservative input token reservation, not a user-facing usage unit.
+    const estimate = request.costCeilingUSD ?? modelCost(model, Buffer.byteLength(request.system + request.prompt, 'utf8') + 512, request.maxTokens ?? model.maxOutputTokens)
+    if (estimate !== null && (!Number.isFinite(estimate) || estimate < 0)) throw new Error('invalid cost ceiling')
+    if (estimate === null) return { allowed: false, reason: 'unknown_price' }
+    const plan = context.userId ? await effectivePlan(context.userId) : 'free'
+    const policy = budgetPolicy(), day = startOfDayKST().toISOString(), minute = Math.floor(Date.now() / 60_000)
+    const scopes = [ ['global', 'global'], ['provider:' + model.provider, 'provider'], ['model:' + model.id, 'model'], ['plan:' + plan, 'plan'],
+      ...(context.userId ? [['user:' + context.userId, 'user']] : []), ...(context.ip ? [['ip:' + ipHash(context.ip), 'ip']] : []) ]
+    const entries = scopes.map(([scope, category]) => ({ key: (category === 'ip' ? minute : day) + ':' + scope!, limit: policy[scope!] ?? policy[category!] ?? {}, category: category! })).sort((a,b) => a.key.localeCompare(b.key))
+    try {
+      await db.transaction(async tx => {
+        for (const entry of entries) {
+          await tx.insert(aiBudgetCounters).values({ key: entry.key, expiresAt: new Date(Date.now() + 2 * 86400_000) }).onConflictDoNothing()
+          const [counter] = await tx.select().from(aiBudgetCounters).where(eq(aiBudgetCounters.key, entry.key)).for('update')
+          if ((entry.limit.requests !== undefined && counter!.requests + 1 > entry.limit.requests) || (estimate > 0 && entry.limit.cost !== undefined && Number(counter!.cost) + estimate > entry.limit.cost + 1e-10)) {
+            throw new BudgetExceededError(entry.category === 'global' ? (estimate > 0 && entry.limit.cost !== undefined && Number(counter!.cost) + estimate > entry.limit.cost + 1e-10 ? 'global_cost' : 'global_requests') : entry.category as BudgetKind)
+          }
+          await tx.update(aiBudgetCounters).set({ requests: sql`${aiBudgetCounters.requests} + 1`, cost: sql`${aiBudgetCounters.cost} + ${estimate}` }).where(eq(aiBudgetCounters.key, entry.key))
+        }
+        await tx.insert(aiUsage).values({ attemptId, traceId: context.traceId, requestId: context.requestId,
+          userId: context.userId, sessionId: context.sessionId, ip: ipHash(context.ip), task: request.task,
+          provider: model.provider, model: model.providerModelId, modelId: model.id, modelVersion: model.version,
+          promptVersion: request.promptVersion, status: 'reserved', reservedCost: String(estimate), budgetKeys: entries.map(e => e.key), ok: false, latencyMs: 0 })
+      })
+      return { allowed: true, reservationId: attemptId, maxUsageUnits: context.usageUnits ?? 0 }
+    } catch (e) { if (e instanceof BudgetExceededError) return { allowed: false, reason: e.kind }; throw e }
+  },
+}
+export function installAIUsageSink(): void { setAIUsageSink(recordAIUsage); setAIBudgetGuard(productionBudgetGuard) }
+
+export async function recordAIUsage(r: AIUsageRecord): Promise<void> {
+  await db.transaction(async tx => {
+    const [pending] = r.attemptId ? await tx.select().from(aiUsage).where(eq(aiUsage.attemptId, r.attemptId)).for('update') : []
+    if (pending?.status === 'completed') return
+    if (pending) {
+      // Missing usage (timeout, transport failure): keep the full reservation; a failed request may still cost money.
+      const charged = r.estimatedCost ?? Number(pending.reservedCost)
+      const adjustment = charged - Number(pending.reservedCost)
+      for (const key of [...pending.budgetKeys].sort()) await tx.update(aiBudgetCounters).set({ cost: sql`greatest(0, ${aiBudgetCounters.cost} + ${adjustment})` }).where(eq(aiBudgetCounters.key, key))
+      await tx.update(aiUsage).set({ status: 'completed', estimatedCost: r.estimatedCost == null ? null : String(r.estimatedCost), actualCost: r.actualCost == null ? null : String(r.actualCost),
+        inputTokens: r.inputTokens, outputTokens: r.outputTokens, usageUnits: r.usageUnits ?? 0, latencyMs: r.latencyMs, ok: r.ok, error: r.error,
+        fallbackUsed: r.fallbackUsed ?? false, shadow: r.shadow ?? false }).where(eq(aiUsage.id, pending.id))
+    } else {
+      await tx.insert(aiUsage).values({ ...r, estimatedCost: r.estimatedCost == null ? null : String(r.estimatedCost), actualCost: r.actualCost == null ? null : String(r.actualCost), ip: ipHash(r.ip) })
+    }
+  })
 }

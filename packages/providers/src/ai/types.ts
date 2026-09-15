@@ -1,4 +1,6 @@
 import type { ProviderInfo } from '../types'
+import type { AITask, InteractionImportance } from './tasks'
+import type { ModelDefinition } from './model-registry'
 
 /**
  * 통합 AI Provider 계약. Miro 의 다른 코드는 이 인터페이스로만 모델을 부른다 —
@@ -15,6 +17,10 @@ export type GenerationRequest = {
   maxTokens?: number
   temperature?: number
   signal?: AbortSignal
+  promptVersion?: string
+  /** Trusted server-side flat media ceiling, never accepted from client input. */
+  costCeilingUSD?: number
+  importance?: InteractionImportance
 }
 
 export type GenerationResult = {
@@ -30,11 +36,25 @@ export type GenerationResult = {
 export interface AIProvider {
   readonly info: ProviderInfo
   generate(input: GenerationRequest): Promise<GenerationResult>
+  healthCheck(): Promise<boolean>
+  estimateCost?(input: GenerationRequest): Promise<number | null>
 }
 
 /** 호출 한 번의 기록. Usage Manager 가 받아 저장한다. 실패도 기록한다 — 비용은 실패해도 든다. */
 export type AIUsageRecord = {
   task: string
+  traceId?: string
+  requestId?: string
+  attemptId?: string
+  modelId?: string
+  modelVersion?: string
+  promptVersion?: string
+  usageUnits?: number
+  estimatedCost?: number | null
+  actualCost?: number | null
+  fallbackUsed?: boolean
+  shadow?: boolean
+  ip?: string | null
   provider: string
   model: string
   inputTokens: number | null
@@ -46,4 +66,10 @@ export type AIUsageRecord = {
   sessionId: string | null
 }
 
-export type AIContext = { userId?: string | null; sessionId?: string | null }
+export type AIContext = { userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean }
+export type AIRequest = GenerationRequest & { task: AITask }
+export type AIResponse = GenerationResult
+export type BudgetDecision = { allowed: true; reservationId: string; maxUsageUnits: number } | { allowed: false; reason: string }
+export interface BudgetGuard {
+  authorize(request: GenerationRequest, model: ModelDefinition, context: AIContext, attemptId: string): Promise<BudgetDecision>
+}

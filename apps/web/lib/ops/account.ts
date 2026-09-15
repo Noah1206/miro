@@ -1,7 +1,7 @@
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
   db, accountDeletions, authSessions, characters, events, memories, pushSubscriptions,
-  roleplaySessions, subscriptions, users,
+  roleplaySessions, subscriptions, users, aiFeedback, aiEvaluationSamples,
 } from '@miro/db'
 
 export type DeletionImpact = {
@@ -44,7 +44,9 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
   const now = new Date()
   await db.transaction(async (tx) => {
     const [req] = await tx.insert(accountDeletions).values({ userId, impact }).returning({ id: accountDeletions.id })
-    await tx.update(users).set({ deletedAt: now }).where(eq(users.id, userId))
+    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false }).where(eq(users.id, userId))
+    await tx.delete(aiFeedback).where(eq(aiFeedback.userId, userId))
+    await tx.delete(aiEvaluationSamples).where(eq(aiEvaluationSamples.userId, userId))
     await tx.delete(authSessions).where(eq(authSessions.userId, userId))
     await tx.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId))
     await tx.update(roleplaySessions).set({ deletedAt: now, status: 'archived' })

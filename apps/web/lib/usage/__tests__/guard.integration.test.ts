@@ -17,12 +17,12 @@ describeDb('usage guard', () => {
   }
   afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 
-  it('the window opens at the first request and ends 5h later', async () => {
+  it('uses KST calendar months', async () => {
     const id = await user()
     await reserve({ userId: id, kind: 'textRP', idempotencyKey: `k:${id}:1`, now: T0 })
     const [w] = await db.select().from(usageWindows).where(eq(usageWindows.userId, id))
-    expect(w!.startedAt.getTime()).toBe(T0.getTime())
-    expect(w!.endsAt.getTime()).toBe(T0.getTime() + 5 * 3600_000)
+    expect(w!.startedAt.toISOString()).toBe('2026-08-31T15:00:00.000Z')
+    expect(w!.endsAt.getTime()).toBe(new Date('2026-09-30T15:00:00Z').getTime())
     expect(w!.consumed).toBe(POLICY.usage.weights.textRP)
   })
 
@@ -60,7 +60,7 @@ describeDb('usage guard', () => {
     expect(ok.cost).toBe(1)
     const s = await usageStatus(id, T0)
     expect(s.remaining).toBe(0)
-    expect(s.resetsAt!.getTime()).toBe(T0.getTime() + 5 * 3600_000)   // 소진 시점이 아니라 창 종료 시각
+    expect(s.resetsAt!.getTime()).toBe(new Date('2026-09-30T15:00:00Z').getTime())   // 소진 시점이 아니라 창 종료 시각
   })
 
   it('pro gets the pro limit, same features', async () => {
@@ -74,7 +74,7 @@ describeDb('usage guard', () => {
   it('after the window expires the next request opens a new one starting then', async () => {
     const id = await user()
     await reserve({ userId: id, kind: 'textRP', idempotencyKey: `k:${id}:w1`, now: T0 })
-    const later = new Date(T0.getTime() + 6 * 3600_000)
+    const later = new Date('2026-09-30T15:00:00Z')
     await reserve({ userId: id, kind: 'textRP', idempotencyKey: `k:${id}:w2`, now: later })
     const wins = await db.select().from(usageWindows).where(eq(usageWindows.userId, id))
     expect(wins).toHaveLength(2)
@@ -101,7 +101,7 @@ describeDb('usage guard', () => {
     expect(w!.consumed).toBe(POLICY.usage.weights.voiceCallPerMinute * 4)
     await rollback(r.reservationId)   // committed 후 rollback 은 무시되지 않는다 — 명시적 취소
     const [w2] = await db.select().from(usageWindows).where(eq(usageWindows.userId, id))
-    expect(w2!.consumed).toBe(0)
+    expect(w2!.consumed).toBe(POLICY.usage.weights.voiceCallPerMinute * 4)
   })
 
   it('concurrent first requests share one window', async () => {

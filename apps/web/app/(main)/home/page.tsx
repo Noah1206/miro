@@ -2,7 +2,7 @@ import { currentUser } from '@/lib/auth'
 import { homeRows } from '@/lib/home'
 import { ButtonLink, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { IncomingCall } from '@/components/incoming-call'
-import { Row } from './row'
+import { HomeFeed } from './feed'
 
 /** 로그인했다는 표시. 이름이나 이메일의 첫 글자를 담고, 누르면 내 정보로 간다. */
 function ProfileBadge({ label, name }: { label: string; name: string }) {
@@ -33,17 +33,19 @@ export default async function Home() {
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       {user && <IncomingCall userId={user.id} />}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--gutter) var(--space-5)' }}>
-        <LogoMark size={22} />
-        <h1 className="sr-only">한 사람의 세계 안으로</h1>
-        {user
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><LogoMark size={22} /><span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span></div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <TransitionLink href="/discover" aria-label="캐릭터 검색" style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, color: 'var(--color-text-primary)' }}>
+            <svg aria-hidden width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+          </TransitionLink>
+          {user
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
           : <ButtonLink href="/login" variant="secondary" size="sm">로그인</ButtonLink>}
+        </div>
       </header>
 
-      <div>
-        {rows.map((row, i) => <Row key={row.key} row={row} index={i} />)}
-
-      </div>
+      <HomeFeed rows={rows} />
     </Page>
   )
 }

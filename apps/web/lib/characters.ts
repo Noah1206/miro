@@ -1,7 +1,9 @@
 import { and, or, eq, isNull } from 'drizzle-orm'
-import { db, characters, worlds } from '@miro/db'
+import { db, characters, worlds, contactProfiles } from '@miro/db'
 
 export type OfficialCard = {
+  contactEnabled?: boolean | null
+  startingContext?: string | null,
   id: string
   slug: string
   name: string
@@ -14,7 +16,7 @@ export type OfficialCard = {
   genre: string | null
   /** 카드에 얹는 한 줄 — 캐릭터가 직접 하는 말. */
   tagline: string | null
-  /** 사용자가 올린 사진. 첫 번째가 대표. 공식 캐릭터는 비어 있고 portraitFor(slug) 가 대신한다. */
+  /** 사용자가 올린 사진. 첫 번째가 대표. */
   images: string[]
 }
 
@@ -34,11 +36,13 @@ export async function listOfficials(): Promise<OfficialCard[]> {
       accentA: characters.accentA,
       accentB: characters.accentB,
       genre: worlds.genre,
-      tagline: characters.tagline,
+      tagline: characters.tagline, startingContext: characters.startingContext,
       images: characters.images,
+      contactEnabled: contactProfiles.enabled,
     })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
+    .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .where(and(eq(characters.isOfficial, true), isNull(characters.deletedAt)))
     .orderBy(characters.createdAt) as Promise<OfficialCard[]>
 }
@@ -94,6 +98,7 @@ async function getOne(where: ReturnType<typeof and>) {
       dislikes: characters.dislikes,
       startingTime: characters.startingTime,
       images: characters.images,
+      contactEnabled: contactProfiles.enabled,
       worldLocation: worlds.location,
       worldEra: worlds.era,
       worldGenre: worlds.genre,
@@ -101,6 +106,7 @@ async function getOne(where: ReturnType<typeof and>) {
     })
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
+    .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .where(where)
     .limit(1)
 
