@@ -15,7 +15,7 @@ export class AIBudgetDeniedError extends Error {
 }
 export type OrchestratorOptions = {
   chain: AIProvider[]; registry?: ModelRegistry; resolveModel?: (m: ModelDefinition) => AIProvider
-  timeoutMs?: number; maxRetries?: number; onUsage?: (r: AIUsageRecord) => void | Promise<void>
+  timeoutMs?: number; maxRetries?: number; rateLimitBackoffMs?: number; onUsage?: (r: AIUsageRecord) => void | Promise<void>
   explicitModel?: ModelDefinition
   shadow?: { model: ModelDefinition; provider: AIProvider }
   context?: AIContext; budgetGuard?: BudgetGuard; rollout?: RolloutPolicy
@@ -32,10 +32,13 @@ export class AIOrchestrator implements LLMProvider {
   lastFallbackUsed = false
   private readonly timeoutMs: number
   private readonly maxRetries: number
+  /** 429 재시도 전 대기(ms). 테스트에서 0 으로 줄일 수 있게 주입 가능하다. */
+  private readonly rateLimitBackoffMs: number
   constructor(private readonly opts: OrchestratorOptions) {
     if (!opts.chain.length) throw new Error('AI chain is empty')
     this.timeoutMs = Math.max(1, Math.min(60_000, opts.timeoutMs ?? 20_000))
     this.maxRetries = Math.min(1, Math.max(0, opts.maxRetries ?? 1))
+    this.rateLimitBackoffMs = Math.max(0, opts.rateLimitBackoffMs ?? 1000)
     this.traceId = opts.context?.traceId ?? randomUUID()
     this.requestId = opts.context?.requestId ?? randomUUID()
     this.info = { ...opts.chain[0]!.info }
@@ -93,6 +96,9 @@ export class AIOrchestrator implements LLMProvider {
         throw new AIBudgetDeniedError('production_guard_required')
       }
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
+        // 속도 제한은 곧바로 다시 걸린다 — 재시도 전에 잠깐 기다린다.
+        // 스키마 오류처럼 즉시 고쳐지는 실패에는 기다리지 않는다.
+        if (retry > 0 && last === 'provider_http_429') await new Promise(r => setTimeout(r, this.rateLimitBackoffMs))
         const attemptId = randomUUID()
         const request = { ...req, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens),
           prompt: retry ? req.prompt + '\nReturn only valid JSON matching the requested schema.' : req.prompt }

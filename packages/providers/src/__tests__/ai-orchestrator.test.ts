@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { AIOrchestrator, AIUnavailableError } from '../ai/orchestrator'
+import { ModelRegistry } from '../ai/model-registry'
 import type { AIProvider, AIUsageRecord, GenerationRequest } from '../ai/types'
 import { resolveAIChain } from '../ai/resolve'
 
@@ -51,4 +52,24 @@ describe('AIOrchestrator', () => {
     process.env.AI_FALLBACK_PROVIDER = 'cloudflare'; process.env.CLOUDFLARE_ACCOUNT_ID = 'a'; process.env.CLOUDFLARE_API_TOKEN = 't'
     expect(resolveAIChain(() => 'x').map((p) => p.info.name)).toEqual(['gemini/gemini-3.5-flash-lite', 'cloudflare/@cf/meta/llama-3.1-8b-instruct'])
   })
+
+  it('waits before retrying a rate limit, but not a schema error', async () => {
+    const delays: number[] = []
+    let t = Date.now()
+    const failing = (error: string) => ({
+      info: { mode: 'live' as const, name: 'p', notice: null }, healthCheck: async () => true,
+      generate: async () => { delays.push(Date.now() - t); t = Date.now(); throw new Error(error) },
+    })
+    const registry = new ModelRegistry([{ id: 'm', provider: 'mock', providerModelId: 'm', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32000 }])
+
+    for (const [error, expectWait] of [['provider_http_429', true], ['invalid_schema', false]] as const) {
+      delays.length = 0; t = Date.now()
+      const ai = new AIOrchestrator({ chain: [failing(error)], registry, resolveModel: () => failing(error), rateLimitBackoffMs: 120 })
+      await expect(ai.generateText({ task: 'dialogue', system: '', prompt: 'x' })).rejects.toThrow()
+      expect(delays.length).toBe(2)                      // 두 번 시도한다
+      if (expectWait) expect(delays[1]).toBeGreaterThanOrEqual(100)
+      else expect(delays[1]).toBeLessThan(100)           // 즉시 고쳐질 실패는 기다리지 않는다
+    }
+  })
+
 })

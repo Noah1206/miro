@@ -14,7 +14,8 @@
     "db:migrate:sql": "set -e; for f in packages/db/migrations/*.sql; do psql -X -v ON_ERROR_STOP=1 --single-transaction -q \"$DATABASE_URL\" -f \"$f\"; done",
     "db:seed": "tsx packages/db/seed.ts",
     "db:seed:admin": "tsx packages/db/seed-admin.ts",
-    "ai:eval": "tsx ai/evals/run.ts"
+    "ai:eval": "tsx ai/evals/run.ts",
+    "ai:cost": "tsx ai/evals/chat-cost.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10",
