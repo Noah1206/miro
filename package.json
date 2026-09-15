@@ -11,7 +11,7 @@
     "db:generate": "pnpm --filter @miro/db generate",
     "db:migrate": "pnpm --filter @miro/db migrate",
     "e2e": "playwright test",
-    "db:migrate:sql": "for f in packages/db/migrations/*.sql; do psql -q \"$DATABASE_URL\" -f \"$f\"; done",
+    "db:migrate:sql": "set -e; for f in packages/db/migrations/*.sql; do psql -X -v ON_ERROR_STOP=1 --single-transaction -q \"$DATABASE_URL\" -f \"$f\"; done",
     "db:seed": "tsx packages/db/seed.ts",
     "db:seed:admin": "tsx packages/db/seed-admin.ts",
     "ai:eval": "tsx ai/evals/run.ts"
