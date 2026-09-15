@@ -62,3 +62,8 @@ ALTER TABLE admin_actions ADD COLUMN IF NOT EXISTS bank_order_id uuid REFERENCES
 ALTER TABLE bank_transfer_orders ADD COLUMN IF NOT EXISTS settled_at timestamptz;
 CREATE INDEX IF NOT EXISTS bank_transfer_orders_unsettled_idx
   ON bank_transfer_orders (decided_at) WHERE status = 'approved' AND settled_at IS NULL;
+
+-- 결제 관련 테이블과 같은 방침: RLS 를 켜고 정책을 두지 않는다. anon/authenticated 키로는
+-- 한 줄도 읽거나 쓸 수 없고, 앱은 service role 로만 접근한다. 남의 입금 금액·입금자명·
+-- 대조 코드가 클라이언트 키로 노출되지 않게 한다.
+ALTER TABLE bank_transfer_orders ENABLE ROW LEVEL SECURITY;
