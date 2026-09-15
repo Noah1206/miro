@@ -57,6 +57,7 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
         {state.error && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
             {state.error}
+            {state.limit && <> <TransitionLink href="/recharge" style={{ textDecoration: 'underline', marginLeft: 6, color: 'var(--color-text-primary)' }}>충전소</TransitionLink></>}
             {state.limit?.plan === 'free' && <> <TransitionLink href="/plans" style={{ textDecoration: 'underline', marginLeft: 6, color: 'var(--color-text-primary)' }}>Pro 알아보기</TransitionLink></>}
           </motion.p>
         )}

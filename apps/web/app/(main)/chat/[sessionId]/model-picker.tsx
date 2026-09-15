@@ -23,6 +23,7 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
       <div className={sheet.content}>
         <p className={sheet.description}>MIRO 기본 대화는 무료예요. ECHO와 추가 인터랙션은 사용량이 차감돼요.</p>
         <TransitionLink className={sheet.planLink} href="/my/subscription">현재 요금제 · {isPro ? 'Pro' : 'Free'} <span aria-hidden>↗</span></TransitionLink>
+        <TransitionLink className={sheet.planLink} href="/recharge">충전소 <span aria-hidden>↗</span></TransitionLink>
         <div className={sheet.cards}>
           <button type="button" className={sheet.card} aria-pressed={model === 'miro'} disabled={!freeReady} onClick={() => { setModel('miro'); setOpen(false) }}>
             <span className={sheet.cardHeading}><strong>MIRO</strong>{model === 'miro' && <span aria-label="선택됨">✓</span>}</span>

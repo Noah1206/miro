@@ -6,14 +6,16 @@ async function signupAndPlay(page: Page) {
   await page.goto(`${BASE}/character/taeyun`); await page.getByRole('button', { name: '대화 시작하기' }).click(); await expect(page).toHaveURL(/\/chat\//)
 }
 
-/** Scenario 3 (완결) — Free → 한도 → Pro 안내 → 결제 → 새 한도로 즉시 계속. */
+/** Scenario 3 (완결) — Free → 제공량 소진 → 요금제 안내 → 결제 → 새 한도로 즉시 계속. */
 test('free user hits the wall, subscribes, and continues in the same window', async ({ page }) => {
   await signupAndPlay(page)
   const composer = page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…')
   await composer.fill('첫 마디.'); await page.getByRole('button', { name: '전송' }).click(); await expect(page.getByText('첫 마디.')).toBeVisible()
   await page.evaluate(() => fetch('/api/dev/usage', { method: 'POST' }))
+  // 제공량을 다 써도 MIRO 대화는 막히지 않는다 — 업그레이드는 요금제 화면에서 시작한다.
   await composer.fill('막힌 마디.'); await page.getByRole('button', { name: '전송' }).click()
-  await page.getByRole('link', { name: 'Pro 알아보기' }).click()
+  await expect(page.getByText('막힌 마디.')).toBeVisible()
+  await page.goto(`${BASE}/plans`)
   await page.locator('[data-upgrade]').click()
   await expect(page).toHaveURL(/\/subscribe/)
   await expect(page.getByText(/실제 결제가 일어나지 않는/)).toBeVisible()      // Mock 임을 숨기지 않는다
@@ -24,9 +26,9 @@ test('free user hits the wall, subscribes, and continues in the same window', as
   await expect(page.locator('[data-payment-result="success"]')).toBeVisible()
 
   await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()
-  await page.goBack(); await page.goBack(); await page.goBack(); await page.goBack()
-  await page.goto(page.url().includes('/chat/') ? page.url() : `${BASE}/archive`)
-  if (!page.url().includes('/chat/')) await page.locator('[data-session-row] a').first().click()
+  await page.goto(`${BASE}/archive`)
+  await page.locator('[data-session-row] a').first().click()
+  await expect(page).toHaveURL(/\/chat\//)
   await composer.fill('이제 되나.'); await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByText('이제 되나.')).toBeVisible()                    // 같은 창에서 바로 이어진다
 })
