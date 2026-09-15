@@ -85,7 +85,7 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
             입금자명 뒤에 <b>{awaiting.referenceCode}</b> 를 꼭 붙여 주세요. 확인되면 반영해 드려요 —
             보통 하루 안에 처리돼요. {new Date(awaiting.expiresAt).toLocaleString('ko-KR')}까지 입금이 없으면 주문이 취소돼요.
           </p>
-          <TransferActions accountNumber={account.number} amount={awaiting.amountMinor}
+          <TransferActions bank={account.bank} accountNumber={account.number} amount={awaiting.amountMinor}
             depositName={`${awaiting.depositorName} ${awaiting.referenceCode}`} />
         </Card>
       )}
