@@ -1,4 +1,4 @@
-import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type AITask, type LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
   DEFAULT_CHARACTER_STATE, applyRelationshipDelta, deltaFromSemanticEvents, deriveCharacterState,
@@ -54,11 +54,9 @@ export async function runTurn(opts: {
     worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
     recent: snapshot.recentMessages, input: opts.userInput })
 
-  const planned = planTasks(opts.userInput, snapshot.turnCount + 1)
-  // ECHO: 규칙이 요구하지 않아도 의미 분석과 기억 추출을 돌려 관계·기억을 더 촘촘히 쌓는다.
-  const tasks = opts.auxiliary === 'always'
-    ? [...new Set<AITask>([...planned, 'semantic_event', 'memory_extraction'])]
-    : planned
+  // ECHO: 규칙이 요구하지 않아도 의미 분석과 기억 추출을 돌린다.
+  // 어떤 기능이 켜져 있는지는 planTasks 가 판단한다 — 배포가 끈 작업을 여기서 되살리지 않는다.
+  const tasks = planTasks(opts.userInput, snapshot.turnCount + 1, opts.auxiliary)
   let semanticEvents = detectSemanticEvents(opts.userInput)
   const extraMemories: MemoryCandidate[] = []
   if (opts.auxiliaryLLM && tasks.includes('semantic_event')) {

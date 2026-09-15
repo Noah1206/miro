@@ -6,10 +6,15 @@ import { MemoryCandidateProposal } from './proposal.schema'
 import type { SimulationSnapshot } from './context'
 export const SemanticResult = z.object({ events: z.array(z.object({ type: z.enum(SEMANTIC_EVENT_TYPES), confidence: z.number().min(0).max(1) })).max(5) })
 export const MemoryResult = z.object({ memories: z.array(MemoryCandidateProposal).max(3) })
-export function planTasks(input: string, turn: number): AITask[] {
+/**
+ * 이 턴에 돌릴 작업. `always` 는 ECHO 처럼 보조 분석을 아끼지 않는 등급이다 —
+ * 규칙(중요도·키워드·주기)을 건너뛸 뿐, **배포가 끈 기능을 되살리지는 않는다.**
+ */
+export function planTasks(input: string, turn: number, mode: 'planned' | 'always' = 'planned'): AITask[] {
+  const all = mode === 'always'
   const tasks: AITask[] = []
-  if (feature('llmSemanticAnalysis') && importanceScore(interactionImportance(input)) >= .35) tasks.push('semantic_event')
-  if (feature('memoryExtraction') && /기억|약속|비밀|사실|좋아하|좋아해|정정|바뀌|바꿨|이제|대신/.test(input)) tasks.push('memory_extraction')
+  if (feature('llmSemanticAnalysis') && (all || importanceScore(interactionImportance(input)) >= .35)) tasks.push('semantic_event')
+  if (feature('memoryExtraction') && (all || /기억|약속|비밀|사실|좋아하|좋아해|정정|바뀌|바꿨|이제|대신/.test(input))) tasks.push('memory_extraction')
   if (feature('memorySummaries') && turn > 0 && turn % 12 === 0) tasks.push('memory_summary')
   return [...tasks, 'dialogue']
 }

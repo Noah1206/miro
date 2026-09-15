@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AIOrchestrator, MockAIProvider, type GenerationRequest } from '@miro/providers'
 import { runTurn } from '../orchestrator'
 import { buildMockProposal } from '../mock-rp'
@@ -8,6 +8,7 @@ const llm = (over: Record<string, unknown> = {}) => new AIOrchestrator({ chain: 
   new MockAIProvider((req: GenerationRequest) => ({ ...buildMockProposal(req.prompt, { characterName: '토마스' }), ...over })),
 ] })
 
+afterEach(() => vi.unstubAllEnvs())
 describe('runTurn — state update pipeline', () => {
   it('rules move the relationship; the model only adds nuance', async () => {
     const r = await runTurn({
@@ -50,11 +51,26 @@ describe('runTurn — state update pipeline', () => {
   })
 
   /** ECHO 는 같은 모델을 쓰되 보조 분석을 매 턴 돌린다. */
+  it('an ECHO turn never revives a task the deployment turned off', async () => {
+    // production 프리셋은 memoryExtraction / llmSemanticAnalysis 가 꺼져 있다.
+    vi.stubEnv('MIRO_MODE', 'production')
+    const tasks: string[] = []
+    const auxiliaryLLM = new AIOrchestrator({ chain: [
+      new MockAIProvider((req: GenerationRequest) => { tasks.push(req.task); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
+    ] })
+    await runTurn({ llm: llm(), snapshot: snapshot(), userInput: '기억해줘 나 커피 좋아해', auxiliaryLLM, auxiliary: 'always' })
+    expect(tasks).not.toContain('memory_extraction')
+    expect(tasks).not.toContain('semantic_event')
+  })
+
   it('an ECHO turn runs the auxiliary analysis a MIRO turn would skip', async () => {
     const tasks: string[] = []
     const auxiliaryLLM = new AIOrchestrator({ chain: [
       new MockAIProvider((req: GenerationRequest) => { tasks.push(req.task); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
     ] })
+    // 기능이 켜진 배포를 가정한다 — 등급 차이만 보기 위해서다.
+    vi.stubEnv('MIRO_FEATURE_LLM_SEMANTIC_ANALYSIS', '1')
+    vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '1')
     // 규칙이 보조 분석을 요구하지 않는 평범한 입력.
     const plain = '응 그렇구나'
 
