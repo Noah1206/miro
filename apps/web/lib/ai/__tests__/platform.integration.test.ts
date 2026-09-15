@@ -20,7 +20,7 @@ afterAll(async()=>{if(process.env.DATABASE_URL)for(const id of made)await db.del
 describeDb('production AI accounting',()=>{
   it('accepts the blank optional JSON values supplied in the environment example',()=>{
     for(const name of ['MIRO_USAGE_POLICY','MIRO_BUDGET_POLICY','MIRO_PROMPT_EXPERIMENTS']) vi.stubEnv(name,'')
-    expect(usagePolicy().monthly.free).toBe(100)
+    expect(usagePolicy().monthly.free).toBe(200)
     expect(budgetPolicy().global).toBeDefined()
     expect(prompts.select('dialogue','test').version).toBe('v1')
   })

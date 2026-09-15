@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { PLANNED_RECHARGE_PRICES_KRW, productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
+import { PLANNED_RECHARGE_TIERS, productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { rechargeHistory, usageStatus, type RechargeHistoryItem, type UsageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
@@ -85,13 +85,13 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
       ) : (
         <Card data-recharge-products="pending" style={{ marginBottom: 'var(--space-3)' }}>
           <p className="t-title-3">충전 상품</p>
-          {PLANNED_RECHARGE_PRICES_KRW.map(price => <div key={price} data-planned-price={price} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--color-border)' }}>
-            <span className="t-body">{price.toLocaleString('ko-KR')}원</span>
-            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>제공량 준비 중</span>
+          {PLANNED_RECHARGE_TIERS.map(tier => <div key={tier.priceKRW} data-planned-price={tier.priceKRW} data-planned-units={tier.units} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--color-border)' }}>
+            <span className="t-body">{tier.priceKRW.toLocaleString('ko-KR')}원</span>
+            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{tier.units.toLocaleString('ko-KR')} 사용량</span>
           </div>)}
           <p className="t-caption" style={{ marginTop: 12 }}>충전 잔액은 만료 없이 이용하는 정책으로 준비 중이에요.</p>
           <p className="t-caption" style={{ marginTop: 6, color: 'var(--color-text-secondary)' }}>
-            계좌이체 충전을 준비 중이에요. 제공량이 확정되면 구매할 수 있어요.
+            계좌이체 충전을 준비 중이에요. 결제가 열리면 구매할 수 있어요.
           </p>
         </Card>
       )}

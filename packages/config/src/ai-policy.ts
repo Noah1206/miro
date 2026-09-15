@@ -4,7 +4,7 @@ export type UsagePolicy = {
   continuity: { enabled: boolean; reserve: number; maxOutputTokens: number }
 }
 const defaults: UsagePolicy = {
-  version: 'monthly-v1-dev', monthly: { free: 100, pro: 1000 },
+  version: 'monthly-v1', monthly: { free: 200, pro: 1000 },
   weights: { textRP: 1, complexEvent: 2, majorEvent: 3, characterDraft: 3, photo: 10, faceCast: 15, background: 8, liveScene: 12, voiceCallPerMinute: 5, videoCallPerMinute: 20,
     semantic_event: 1, relationship_analysis: 1, memory_extraction: 1, memory_summary: 1, event_generation: 3, world_update: 1, image_prompt: 1, moderation: 1 },
   continuity: { enabled: false, reserve: 5, maxOutputTokens: 128 },
