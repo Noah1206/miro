@@ -459,7 +459,7 @@ function BodyPicker({ build, onBuild, gender, onGender }: {
               whileTap={reduce ? undefined : { scale: 0.97 }}
               style={{ padding: 3, cursor: 'pointer', borderRadius: 'var(--radius-md)', background: 'none', border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/builds/${gender}-${b}.webp${b === "average" ? "?v=4" : ""}`} alt="" width={120} height={160} loading="lazy" decoding="async"
+              <img src={`/builds/${gender}-${b}.webp${b === "average" ? "?v=5" : ""}`} alt="" width={120} height={160} loading="lazy" decoding="async"
                 style={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block', borderRadius: 'var(--radius-sm)', opacity: on ? 1 : 0.5, transition: 'opacity var(--motion-fast) var(--ease-standard)' }} />
               <span className="t-micro" style={{ display: 'block', textAlign: 'center', textTransform: 'none', letterSpacing: 0, marginTop: 5, color: on ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>{BUILD_PRESETS[b].label}</span>
             </motion.button>
