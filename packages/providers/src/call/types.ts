@@ -21,5 +21,5 @@ export interface CallMediaProvider {
   readonly kind: 'voice' | 'video'
   readonly info: ProviderInfo
   startSession(spec: CallMediaSpec): Promise<CallMediaSession>
-  endSession(token: string): Promise<void>
+  endSession(session: { callId: string }): Promise<void>
 }

@@ -5,6 +5,7 @@ import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
 import { commit, reserve, rollback, UsageExceededError } from '@/lib/usage/guard'
 import { track } from '@/lib/analytics/track'
+import { observe } from '@/lib/observe'
 
 export { UsageExceededError }
 
@@ -106,7 +107,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
       .where(eq(roleplaySessions.id, call.sessionId))
   })
   if (call.usageReservationId) await commit(call.usageReservationId, minutes)
-  await resolveCallMedia(call.channel).endSession(`mock:${call.channel}:${callId}`).catch(() => {})
+  await resolveCallMedia(call.channel).endSession({ callId }).catch(() => observe('call.cleanup_failed', { callId, channel: call.channel }))
   void track(userId, 'call_completed', { sessionId: call.sessionId, channel: call.channel, minutes, result })
   return { durationSec, minutes }
 }

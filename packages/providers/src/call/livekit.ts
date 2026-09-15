@@ -51,21 +51,22 @@ export class LiveKitCallMediaProvider implements CallMediaProvider {
 
   /**
    * 방 정리. 서버 API 는 같은 자격증명으로 서명한 토큰을 요구한다.
-   * 실패해도 통화 종료 자체는 이미 DB 에 기록되므로 throw 하지 않는다.
+   * 서버가 소유권을 확인한 통화 ID로 정리한다. 클라이언트 토큰은 필요하지 않다.
    */
-  async endSession(token: string): Promise<void> {
-    const room = roomOf(token)
-    if (!room) return
+  async endSession({ callId }: { callId: string }): Promise<void> {
+    const room = `miro-${callId}`
     const now = Math.floor(Date.now() / 1000)
     const admin = sign(this.apiKey, this.apiSecret, {
       sub: 'miro-server', nbf: now, exp: now + 60,
       video: { roomAdmin: true, room },
     })
-    await fetch(`${this.url.replace(/^ws/, 'http')}/twirp/livekit.RoomService/DeleteRoom`, {
+    const response = await fetch(`${this.url.replace(/^ws/, 'http')}/twirp/livekit.RoomService/DeleteRoom`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${admin}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ room }),
-    }).catch(() => undefined)
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!response.ok && response.status !== 404) throw new Error('CALL_ROOM_CLEANUP_FAILED')
   }
 }
 
@@ -75,12 +76,4 @@ function sign(apiKey: string, secret: string, claims: Record<string, unknown>): 
   const body = enc({ iss: apiKey, ...claims })
   const sig = createHmac('sha256', secret).update(`${head}.${body}`).digest('base64url')
   return `${head}.${body}.${sig}`
-}
-
-function roomOf(token: string): string | null {
-  try {
-    const [, body] = token.split('.')
-    const c = JSON.parse(Buffer.from(body!, 'base64url').toString('utf8')) as { video?: { room?: string } }
-    return c.video?.room ?? null
-  } catch { return null }
 }

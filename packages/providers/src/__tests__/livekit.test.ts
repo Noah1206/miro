@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LiveKitCallMediaProvider } from '../call/livekit'
 
 const spec = { callId: 'c1', characterName: '토마스', voiceIdentity: null, visualPrompt: 'a face' }
@@ -36,5 +36,27 @@ describe('livekit token', () => {
     expect(JSON.parse(decode((await voice.startSession(spec)).token).metadata).visualPrompt).toBeNull()
     const video = new LiveKitCallMediaProvider('video', 'k', 's', 'wss://x')
     expect(JSON.parse(decode((await video.startSession(spec)).token).metadata).visualPrompt).toBe('a face')
+  })
+})
+
+ describe('livekit room cleanup', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  it('deletes the same room using a server-side call id', async () => {
+    const request = vi.fn().mockResolvedValue(new Response(null, { status: 200 }))
+    vi.stubGlobal('fetch', request)
+    const provider = new LiveKitCallMediaProvider('voice', 'key', 'secret', 'wss://x.livekit.cloud')
+    await provider.endSession({ callId: 'c1' })
+    const [url, options] = request.mock.calls[0]!
+    expect(url).toBe('https://x.livekit.cloud/twirp/livekit.RoomService/DeleteRoom')
+    expect(JSON.parse(options.body)).toEqual({ room: 'miro-c1' })
+    expect(decode(options.headers.Authorization.slice(7)).video).toEqual({ roomAdmin: true, room: 'miro-c1' })
+    expect(options.signal).toBeInstanceOf(AbortSignal)
+  })
+  it('reports cleanup failure but accepts an already removed room', async () => {
+    const request = vi.fn().mockResolvedValueOnce(new Response(null, { status: 503 })).mockResolvedValueOnce(new Response(null, { status: 404 }))
+    vi.stubGlobal('fetch', request)
+    const provider = new LiveKitCallMediaProvider('video', 'key', 'secret', 'wss://x')
+    await expect(provider.endSession({ callId: 'c1' })).rejects.toThrow('CALL_ROOM_CLEANUP_FAILED')
+    await expect(provider.endSession({ callId: 'c1' })).resolves.toBeUndefined()
   })
 })
