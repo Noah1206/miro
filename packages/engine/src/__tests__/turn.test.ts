@@ -48,4 +48,40 @@ describe('runTurn — state update pipeline', () => {
     expect(r.transition.relationshipDelta.jealousy).toBe(-2)
     expect(Math.abs(r.transition.relationshipDelta.trust ?? 0)).toBeLessThanOrEqual(3)
   })
+
+  /** ECHO 는 같은 모델을 쓰되 보조 분석을 매 턴 돌린다. */
+  it('an ECHO turn runs the auxiliary analysis a MIRO turn would skip', async () => {
+    const tasks: string[] = []
+    const auxiliaryLLM = new AIOrchestrator({ chain: [
+      new MockAIProvider((req: GenerationRequest) => { tasks.push(req.task); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
+    ] })
+    // 규칙이 보조 분석을 요구하지 않는 평범한 입력.
+    const plain = '응 그렇구나'
+
+    tasks.length = 0
+    await runTurn({ llm: llm(), snapshot: snapshot(), userInput: plain, auxiliaryLLM, auxiliary: 'planned' })
+    const miroTasks = [...tasks]
+
+    tasks.length = 0
+    await runTurn({ llm: llm(), snapshot: snapshot(), userInput: plain, auxiliaryLLM, auxiliary: 'always' })
+    const echoTasks = [...tasks]
+
+    expect(echoTasks).toContain('semantic_event')
+    expect(echoTasks).toContain('memory_extraction')
+    expect(echoTasks.length).toBeGreaterThan(miroTasks.length)
+  })
+
+  it('asks for the tier output limit, still bounded by what the model allows', async () => {
+    const seen: (number | undefined)[] = []
+    const capturing = () => new AIOrchestrator({ chain: [
+      new MockAIProvider((req: GenerationRequest) => { seen.push(req.maxTokens); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
+    ] })
+    await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', maxOutputTokens: 512 })
+    await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', maxOutputTokens: 4096 })
+    // 등급이 요청한 값이 그대로 내려가되, 모델의 maxOutputTokens 를 넘지는 않는다.
+    expect(seen[0]).toBe(512)
+    expect(seen[1]).toBeLessThanOrEqual(4096)
+    expect(seen[1]).toBeGreaterThan(seen[0]!)
+  })
+
 })

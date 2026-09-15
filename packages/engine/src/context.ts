@@ -55,7 +55,7 @@ const STYLE_GUIDE = {
  * 전체 대화 원문을 매번 보내지 않는다. 최근 메시지 일부 + 요약된 장기 기억만 사용한다.
  * 예산을 넘으면 중요도가 낮은 항목부터 제외하고, 무엇을 뺐는지 기록한다.
  */
-export function buildContext(s: SimulationSnapshot): BuiltContext {
+export function buildContext(s: SimulationSnapshot, contextScale = 1): BuiltContext {
   const template = prompts.select('dialogue', s.relationship.sessionId)
   const system = template.system + '\n' + buildSystem(s) + '\n' + DIALOGUE_CONTRACT + `
 최상위 안전 규칙: 일반 연령 대상 서비스입니다. 노골적인 성적 콘텐츠, 미성년자 성적 대상화,
@@ -65,8 +65,14 @@ export function buildContext(s: SimulationSnapshot): BuiltContext {
 관계나 기억에 없는 사실을 이미 알고 있었다고 주장하지 마세요.`
   const systemTokens = estimateTokens(system)
 
+  // ECHO 는 같은 모델에 맥락을 더 넣는다. 늘어난 양도 아래 예산 검사를 똑같이 통과해야 한다.
+  const scale = Math.max(1, contextScale)
+  const memoryCount = Math.ceil(POLICY.context.relevantMemoryCount * scale)
+  const messageCount = Math.ceil(POLICY.context.recentMessageCount * scale)
+
   // 예산 안에 들 때까지 단계적으로 줄인다: 기억 → 최근 대화 순. 정체성(system)은 줄이지 않는다.
   const plans: Array<{ memories: number; messages: number }> = [
+    ...(scale > 1 ? [{ memories: memoryCount, messages: messageCount }] : []),
     { memories: POLICY.context.relevantMemoryCount, messages: POLICY.context.recentMessageCount },
     { memories: Math.ceil(POLICY.context.relevantMemoryCount / 2), messages: POLICY.context.recentMessageCount },
     { memories: Math.ceil(POLICY.context.relevantMemoryCount / 2), messages: Math.ceil(POLICY.context.recentMessageCount / 2) },

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ModelRegistry, AIOrchestrator } from '@miro/providers'
+import { POLICY } from '@miro/config'
 import { chatModelOptions, resolveChatModel } from '../chat-models'
 const plan = vi.hoisted(() => vi.fn(async () => 'free'))
 vi.mock('@/lib/usage/guard', () => ({ effectivePlan: plan }))
@@ -7,13 +8,32 @@ const models = [
   { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768 },
   { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768 },
 ]
-beforeEach(() => { plan.mockResolvedValue('free'); vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(models)); vi.stubEnv('MIRO_CHAT_FREE_MODEL_ID', ''); vi.stubEnv('MIRO_CHAT_PRO_MODEL_ID', '') })
+beforeEach(() => { plan.mockResolvedValue('free'); vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(models)); vi.stubEnv('MIRO_CHAT_MODEL_ID', '') })
 afterEach(() => vi.unstubAllEnvs())
 describe('plan-based chat models', () => {
-  it('defaults to a basic model even for Pro subscribers', async () => {
+  it('serves MIRO and ECHO from the same model', async () => {
     plan.mockResolvedValue('pro')
-    expect(await resolveChatModel('u', 'miro')).toEqual({ modelId: 'basic', metered: false })
-    expect(await resolveChatModel('u', 'pro')).toEqual({ modelId: 'advanced', metered: true })
+    const miro = await resolveChatModel('u', 'miro')
+    const echo = await resolveChatModel('u', 'pro')
+    expect(echo.modelId).toBe(miro.modelId)
+  })
+  it('separates the two by what each turn spends, not by the backend', async () => {
+    plan.mockResolvedValue('pro')
+    const miro = await resolveChatModel('u', 'miro')
+    const echo = await resolveChatModel('u', 'pro')
+    expect(miro.metered).toBe(false)
+    expect(echo.metered).toBe(true)
+    // ECHO 는 같은 모델에 더 들인다 — 맥락도, 응답 길이도, 보조 분석도.
+    expect(echo.tier.contextScale).toBeGreaterThan(miro.tier.contextScale)
+    expect(echo.tier.maxOutputTokens).toBeGreaterThan(miro.tier.maxOutputTokens)
+    expect(echo.tier.auxiliary).toBe('always')
+    expect(miro.tier.auxiliary).toBe('planned')
+  })
+  it('honours a pinned model id for both', async () => {
+    plan.mockResolvedValue('pro')
+    vi.stubEnv('MIRO_CHAT_MODEL_ID', 'advanced')
+    expect((await resolveChatModel('u', 'miro')).modelId).toBe('advanced')
+    expect((await resolveChatModel('u', 'pro')).modelId).toBe('advanced')
   })
   it('rejects forged Pro choices for Free accounts and arbitrary IDs', async () => {
     await expect(resolveChatModel('u', 'pro')).rejects.toThrow('pro required')
@@ -22,13 +42,10 @@ describe('plan-based chat models', () => {
   it('never lets an unknown choice pass itself off as unmetered chat', async () => {
     for (const forged of ['echo', 'MIRO', 'free', '']) await expect(resolveChatModel('u', forged)).rejects.toThrow('invalid')
   })
-  it('does not present the same backend as two different models', async () => {
-    vi.stubEnv('MIRO_CHAT_PRO_MODEL_ID', 'basic')
-    expect((await chatModelOptions('u')).proReady).toBe(false)
-  })
-  it('marks an unconfigured Pro model unavailable', async () => {
-    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([models[0]]))
-    expect(await chatModelOptions('u')).toEqual({ freeReady: true, proReady: false, isPro: false })
+  it('both are ready together, and neither without a dialogue model', async () => {
+    expect(await chatModelOptions('u')).toEqual({ freeReady: true, proReady: true, isPro: false })
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ ...models[0], capabilities: ['image_prompt'] }]))
+    expect(await chatModelOptions('u')).toEqual({ freeReady: false, proReady: false, isPro: false })
   })
   it('routes dialogue to the selected model rather than another tier', async () => {
     const registry = new ModelRegistry(models)
@@ -40,5 +57,9 @@ describe('plan-based chat models', () => {
       expect(await ai.generateText({ task: 'dialogue', system: '', prompt: '안녕' })).toBe('안녕')
     }
     expect(calls).toEqual(['basic', 'advanced'])
+  })
+  it('keeps the tiers as policy values rather than hardcoded numbers', () => {
+    expect(POLICY.chatTier.miro.contextScale).toBe(1)
+    expect(POLICY.chatTier.echo.contextScale).toBeGreaterThan(1)
   })
 })

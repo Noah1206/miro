@@ -57,3 +57,14 @@ Miro의 가치는 내 삶 속에 계속 존재하는 캐릭터와 관계를 유�
 사용자 최신 결정으로 채팅 헤더의 답변 스타일 메뉴를 제거하고 `MIRO` / `MIRO Pro` 모델 메뉴를 표시한다. 기본 선택은 `MIRO`(무료형)다. Pro 모델은 유효한 Pro 요금제와 별도 연결 모델이 모두 있을 때만 선택 가능하며, 매 요청마다 서버가 권한을 재확인한다. 모델 선택은 월간 Usage Pool을 대체하거나 별도 턴 과금을 추가하지 않는다.
 
 서버의 `MIRO_CHAT_FREE_MODEL_ID` / `MIRO_CHAT_PRO_MODEL_ID`는 Model Registry의 ID를 지정한다. 미지정 시 활성 dialogue 모델 중 무료형은 non-premium, Pro는 premium을 사용한다. 동일 모델을 두 상품으로 노출하지 않는다. Pro 모델이 없으면 준비 중으로 표시한다. 실제 모델 검증과 운영 예산 0 유지 지시는 그대로 유효하다.
+
+### 2026-09-15 갱신 — 위 문단은 더 이상 구현과 맞지 않는다
+
+고급 모델은 `ECHO` 로 이름이 바뀌었고, **MIRO 와 같은 모델을 쓴다.** 두 상품을 가르는 것은
+모델이 아니라 한 턴에 들이는 양이다 — ECHO 는 맥락을 더 넣고, 더 길게 답하고, 기억·관계
+보조 분석을 매 턴 돌린 뒤 그만큼 사용량을 더 쓴다. 등급 값은 `POLICY.chatTier` 에 있다.
+
+따라서 `MIRO_CHAT_FREE_MODEL_ID` / `MIRO_CHAT_PRO_MODEL_ID` 는 없어지고 `MIRO_CHAT_MODEL_ID`
+하나가 두 상품이 공유할 모델을 고정한다. premium 모델이 없어도 ECHO 는 준비 중이 아니며,
+Pro 요금제만 확인한다. MIRO 기본 대화는 월간 사용량을 차감하지 않는다 —
+자세한 내용은 `MIRO_ECHO_RECHARGE_PLAN.md` 를 따른다.

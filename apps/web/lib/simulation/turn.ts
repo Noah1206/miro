@@ -69,7 +69,7 @@ async function executeTurn(opts: {
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
 
-    let model: { modelId: string; metered: boolean }
+    let model: Awaited<ReturnType<typeof resolveChatModel>>
     try { model = await resolveChatModel(userId, opts.chatModel ?? 'miro') }
     catch { return { ok: false, reason: 'model_unavailable' } }
     const dialogueModelId = model.modelId
@@ -93,7 +93,10 @@ async function executeTurn(opts: {
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode },
         () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context),
-          maxOutputTokens: reservation?.continuity ? usagePolicy().continuity.maxOutputTokens : undefined,
+          // continuity 여유분으로 나가는 턴은 등급과 무관하게 최소한으로 답한다.
+          maxOutputTokens: reservation?.continuity ? usagePolicy().continuity.maxOutputTokens : model.tier.maxOutputTokens,
+          contextScale: reservation?.continuity ? 1 : model.tier.contextScale,
+          auxiliary: reservation?.continuity ? 'planned' : model.tier.auxiliary,
         }))
 
     } catch (e) {

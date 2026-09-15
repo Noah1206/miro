@@ -123,6 +123,31 @@ export const POLICY = {
     relevantMemoryCount: DEV_DEFAULT(8),
   },
 
+  /**
+   * 대화 등급. MIRO 와 ECHO 는 **같은 모델**을 쓴다 — 다른 건 한 턴에 얼마나 들이느냐다.
+   * 사용량을 더 쓰는 대신 맥락을 더 넣고, 더 길게 답하고, 보조 분석을 더 돌린다.
+   * 배수는 원가 측정 후 확정한다.
+   */
+  chatTier: {
+    miro: {
+      contextScale: DEV_DEFAULT(1),
+      maxOutputTokens: DEV_DEFAULT(1024),
+      /** 보조 분석(기억 추출·의미 이벤트)을 규칙이 요구할 때만 돌린다. */
+      auxiliary: 'planned' as const,
+    },
+    echo: {
+      /** 최근 대화·기억을 이 배수만큼 더 넣는다. maxTokens 예산 안에서만 늘어난다. */
+      contextScale: DEV_DEFAULT(2),
+      /**
+       * 더 길게 답한다. 실제 상한은 모델의 maxOutputTokens 로 한 번 더 잘리므로,
+       * 이 값을 올리려면 MIRO_MODEL_REGISTRY 의 해당 모델도 같이 올려야 한다.
+       */
+      maxOutputTokens: DEV_DEFAULT(2048),
+      /** 기억·관계 보조 분석을 매 턴 돌린다. */
+      auxiliary: 'always' as const,
+    },
+  },
+
   generation: {
     /** Structured Output 검증 실패 시 재시도 횟수. 무한 재시도 금지. */
     maxRetries: 1,

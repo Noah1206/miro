@@ -1,4 +1,4 @@
-import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type AITask, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
   DEFAULT_CHARACTER_STATE, applyRelationshipDelta, deltaFromSemanticEvents, deriveCharacterState,
@@ -41,6 +41,10 @@ export async function runTurn(opts: {
   now?: Date
   auxiliaryLLM?: LLMProvider
   maxOutputTokens?: number
+  /** ECHO 는 맥락을 이 배수만큼 더 넣는다. 예산(POLICY.context.maxTokens)은 그대로 지킨다. */
+  contextScale?: number
+  /** 'always' 면 보조 분석(의미 이벤트·기억)을 규칙과 무관하게 매 턴 돌린다. */
+  auxiliary?: 'planned' | 'always'
 }): Promise<TurnResult> {
   const { snapshot } = opts
   const now = opts.now ?? new Date()
@@ -50,7 +54,11 @@ export async function runTurn(opts: {
     worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
     recent: snapshot.recentMessages, input: opts.userInput })
 
-  const tasks = planTasks(opts.userInput, snapshot.turnCount + 1)
+  const planned = planTasks(opts.userInput, snapshot.turnCount + 1)
+  // ECHO: 규칙이 요구하지 않아도 의미 분석과 기억 추출을 돌려 관계·기억을 더 촘촘히 쌓는다.
+  const tasks = opts.auxiliary === 'always'
+    ? [...new Set<AITask>([...planned, 'semantic_event', 'memory_extraction'])]
+    : planned
   let semanticEvents = detectSemanticEvents(opts.userInput)
   const extraMemories: MemoryCandidate[] = []
   if (opts.auxiliaryLLM && tasks.includes('semantic_event')) {
@@ -67,7 +75,7 @@ export async function runTurn(opts: {
   const prevState = snapshot.characterState ?? DEFAULT_CHARACTER_STATE
   const characterState = deriveCharacterState(prevState, projected, semanticEvents)
 
-  const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput })
+  const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale)
 
   let proposal: SimulationProposal
   let providerMode: TurnResult['providerMode'] = opts.llm.info.mode

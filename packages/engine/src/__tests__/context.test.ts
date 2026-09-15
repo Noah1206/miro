@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildContext } from '../context'
 import { character, event, npc, relationship, snapshot } from './fixtures'
 import type { Memory } from '@miro/domain'
+import { POLICY } from '@miro/config'
 
 function memory(sessionId: string, content: string, importance = 0.9): Memory {
   return {
@@ -134,4 +135,26 @@ describe('call mode context', () => {
     expect(c.prompt).toContain('런던 구시가지')
     expect(c.prompt).toMatch(/절대 노출하지 말 것/)
   })
+
+  /** ECHO 는 같은 모델에 맥락을 더 넣는다. */
+  it('an ECHO turn carries more of the conversation than a MIRO turn', () => {
+    const recentMessages = Array.from({ length: 40 }, (_, i) => ({ role: i % 2 ? 'character' as const : 'user' as const, content: `대화 ${i}` }))
+    const memories = Array.from({ length: 20 }, (_, i) => memory('s1', `기억 ${i}`, 0.9))
+    const s = snapshot({ recentMessages, memories })
+
+    const miro = buildContext(s, 1)
+    const echo = buildContext(s, 2)
+    const kept = (c: { prompt: string }) => recentMessages.filter(m => c.prompt.includes(m.content)).length
+    expect(kept(echo)).toBeGreaterThan(kept(miro))
+    expect(echo.approxTokens).toBeGreaterThan(miro.approxTokens)
+  })
+
+  it('a larger ECHO context still respects the token budget', () => {
+    // 예산을 넘길 만큼 긴 대화에서도 단계적 축소가 그대로 동작한다.
+    const recentMessages = Array.from({ length: 200 }, (_, i) => ({ role: 'user' as const, content: `아주 긴 대화 내용입니다 ${i} `.repeat(20) }))
+    const echo = buildContext(snapshot({ recentMessages }), 4)
+    expect(echo.approxTokens).toBeLessThanOrEqual(POLICY.context.maxTokens)
+    expect(echo.dropped.join(',')).toContain('messages')
+  })
+
 })

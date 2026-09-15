@@ -43,7 +43,7 @@ test('state survives leaving and re-entering the chat', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 })
 
-test('model menu defaults to MIRO and does not expose an unconfigured ECHO model', async ({ page }) => {
+test('model menu defaults to MIRO and keeps ECHO closed to a free account', async ({ page }) => {
   await enterRoleplay(page)
   const picker = page.getByRole('button', { name: 'AI 모델 선택' })
   await expect(picker).toHaveText('MIRO')
@@ -51,6 +51,7 @@ test('model menu defaults to MIRO and does not expose an unconfigured ECHO model
   await expect(page.getByRole('dialog', { name: '모델 선택' })).toBeVisible()
   await expect(page.getByText(/MIRO 기본 대화는 무료예요/)).toBeVisible()
   await expect(page.getByRole('dialog').getByRole('button', { name: /편하게 이어가는 일상 대화/ })).toHaveAttribute('aria-pressed', 'true')
+  // ECHO 는 같은 모델을 쓰지만 Pro 전용이다 — Free 계정에는 열리지 않는다.
   await expect(page.getByRole('dialog').getByRole('button', { name: /ECHO/ })).toBeDisabled()
   await expect(page.getByText('서사형', { exact: true })).toHaveCount(0)
   await page.getByRole('dialog').getByRole('button', { name: '닫기', exact: true }).click()
