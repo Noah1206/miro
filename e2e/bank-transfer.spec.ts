@@ -22,6 +22,11 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   await expect(awaiting).toContainText('000-000-0000')
   await expect(awaiting.locator('[data-order-amount="9900"]')).toBeVisible()
   const code = (await awaiting.textContent())!.match(/홍길동 ([A-Z2-9]{6})/)![1]!
+  // 입금을 돕는 버튼들. 은행 앱이 금액까지 채워 주지는 않는다는 사실도 함께 보인다.
+  await expect(awaiting.locator('[data-copy-account]')).toBeVisible()
+  await expect(awaiting.locator('[data-open-bank="toss"]')).toBeVisible()
+  await expect(awaiting.locator('[data-open-bank="kakaobank"]')).toBeVisible()
+  await expect(awaiting).toContainText('앱에서 직접 넣어야')
 
   await page.goto(`${WEB}/my/subscription`)
   await expect(page.locator('[data-plan="free"]')).toBeVisible()   // 주문은 지급이 아니다
