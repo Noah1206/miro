@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { and, eq, gt, isNull, sql } from 'drizzle-orm'
-import { db, conversationRequests, roleplaySessions } from '@miro/db'
+import { db, conversationRequests, roleplaySessions, usageLedger } from '@miro/db'
+import { rollbackInTransaction } from '@/lib/usage/guard'
 import type { ConversationOutcome } from '@/lib/simulation/turn'
 
 export async function beginRequest(userId: string, sessionId: string, input: string, requestId: string = randomUUID()) {
@@ -27,6 +28,15 @@ export async function beginRequest(userId: string, sessionId: string, input: str
     return { requestId, cached: null }
   })
 }
-export async function failRequest(requestId: string) {
-  await db.update(conversationRequests).set({ status: 'failed' }).where(and(eq(conversationRequests.id, requestId), eq(conversationRequests.status, 'pending')))
+export async function failRequest(requestId: string, expiredBefore?: Date): Promise<boolean> {
+  return db.transaction(async tx => {
+    // Same lock order as commitTurn: request -> ledger -> usage window.
+    const [request] = await tx.select().from(conversationRequests).where(eq(conversationRequests.id, requestId)).for('update')
+    if (!request || request.status !== 'pending' || (expiredBefore && request.leaseUntil > expiredBefore)) return false
+    const [ledger] = await tx.select({ id: usageLedger.id }).from(usageLedger)
+      .where(eq(usageLedger.idempotencyKey, `turn:${requestId}`)).limit(1)
+    if (ledger) await rollbackInTransaction(tx, ledger.id)
+    await tx.update(conversationRequests).set({ status: 'failed' }).where(eq(conversationRequests.id, requestId))
+    return true
+  })
 }

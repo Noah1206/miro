@@ -114,15 +114,20 @@ export async function commit(reservationId: string, actualUnits?: number): Promi
 }
 
 /** Provider 실패 시 되돌린다. 실패한 생성에 사용량을 물리지 않는다. */
-export async function rollback(reservationId: string): Promise<void> {
-  await db.transaction(async (tx) => {
+export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+/** Reuse the caller transaction so request failure and refund commit together. */
+export async function rollbackInTransaction(tx: UsageTransaction, reservationId: string): Promise<void> {
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
     if (!l || l.status !== 'reserved') return
     await tx.update(usageLedger).set({ status: 'rolled_back' }).where(eq(usageLedger.id, reservationId))
     await tx.update(usageWindows)
       .set(l.continuity ? { continuityConsumed: sql`greatest(0, ${usageWindows.continuityConsumed} - ${l.amount})` } : { consumed: sql`greatest(0, ${usageWindows.consumed} - ${l.amount})` })
       .where(eq(usageWindows.id, l.windowId))
-  })
+}
+
+export async function rollback(reservationId: string): Promise<void> {
+  await db.transaction(tx => rollbackInTransaction(tx, reservationId))
 }
 
 /** Provider 호출을 예약/확정/롤백으로 감싼다. 호출부 6곳이 이 한 함수를 쓴다. */

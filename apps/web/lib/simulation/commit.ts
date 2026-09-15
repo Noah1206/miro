@@ -47,9 +47,12 @@ export type CommitInput = {
  */
 export async function commitTurn(input: CommitInput): Promise<void> {
   await db.transaction(async (tx) => {
+    // Recheck after inference: deletion/restriction may happen while the model runs.
+    const [session] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, input.sessionId)).for('update')
+    if (!session || session.deletedAt || session.restrictedAt || session.characterId !== input.characterId) throw new StaleStateError()
     if (input.requestId) {
       const [r] = await tx.select().from(conversationRequests).where(eq(conversationRequests.id, input.requestId)).for('update')
-      if (!r || r.status !== 'pending' || r.leaseUntil < new Date()) throw new StaleStateError()
+      if (!r || r.sessionId !== input.sessionId || r.userId !== session.userId || r.status !== 'pending' || r.leaseUntil <= new Date()) throw new StaleStateError()
       await tx.update(conversationRequests).set({ status: 'completed', result: input.requestResult }).where(eq(conversationRequests.id, input.requestId))
     }
     if (input.reservationId) {

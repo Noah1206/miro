@@ -71,6 +71,18 @@ describeDb('P0 real persistence paths', () => {
     expect(await db.select().from(memories).where(eq(memories.id, foreign!.id))).toHaveLength(1)
     expect((await memoryRetriever.retrieve({ sessionId: s.sessionId, userId: s.userId, query: 'unrelated', limit: 1 }))[0]!.content).toBe('새 요약')
   })
+  it.each(['deletedAt', 'restrictedAt'] as const)('rejects a turn when %s changes during generation', async (field) => {
+    const s = await session()
+    const current = (await loadSession(s.sessionId, s.userId))!
+    const ai = new AIOrchestrator({ chain: [new MockAIProvider(req => buildMockProposal(req.prompt, { characterName: '토마스' }))] })
+    const turn = await runTurn({ llm: ai, snapshot: current.snapshot, userInput: '안녕' })
+    await db.update(roleplaySessions).set({ [field]: new Date() }).where(eq(roleplaySessions.id, s.sessionId))
+    await expect(commitTurn({ sessionId: s.sessionId, characterId: current.characterId, turnIndex: current.snapshot.turnCount + 1,
+      userInput: '안녕', responseText: '안녕', blocks: turn.transition.blocks, transition: turn.transition,
+      worldVersion: current.snapshot.world.version, relationshipVersion: current.snapshot.relationship.version,
+      currentRelationship: current.snapshot.relationship, existingMemories: current.snapshot.memories })).rejects.toThrow('simulation state changed')
+    expect(await db.select().from(messages).where(eq(messages.sessionId, s.sessionId))).toHaveLength(0)
+  })
   it('does not reintroduce hidden messages to model context', async () => {
     const s = await session()
     await db.insert(messages).values({ sessionId: s.sessionId, role: 'user', content: 'HIDDEN_PRIVATE_TEXT', turnIndex: 1, hiddenAt: new Date() })

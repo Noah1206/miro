@@ -1,5 +1,5 @@
 import { eq, and } from 'drizzle-orm'
-import { db, users, usageLedger, conversationRequests } from '@miro/db'
+import { db, users, conversationRequests } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@miro/providers'
@@ -169,16 +169,11 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (request.cached) return request.cached
   try {
     const result = await executeTurn({ ...opts, requestId: request.requestId, traceId: randomUUID() })
-    if (!result.ok) { await releaseFailedUsage(request.requestId); await failRequest(request.requestId) }
+    if (!result.ok) await failRequest(request.requestId)
     return result
   } catch {
-    await releaseFailedUsage(request.requestId)
     await failRequest(request.requestId)
     return { ok: false, reason: 'generation' }
   }
 }
 
-async function releaseFailedUsage(requestId: string) {
-  const [r] = await db.select({ id: usageLedger.id }).from(usageLedger).where(and(eq(usageLedger.idempotencyKey, `turn:${requestId}`), eq(usageLedger.status, 'reserved'))).limit(1)
-  if (r) await rollback(r.id)
-}
