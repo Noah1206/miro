@@ -18,6 +18,12 @@ export type PaymentEvent = {
    * 지급량은 이 id 로 서버 카탈로그에서 찾는다 — 이벤트가 실어 온 수량을 믿지 않는다.
    */
   productId?: string | null
+  /**
+   * 서버가 이미 확정해 둔 지급량. **외부 webhook 은 절대 채우지 않는다** — 채우면
+   * 결제사가 지급량을 정하게 된다. 서버가 주문 시점에 카탈로그를 읽어 저장해 둔
+   * 계좌이체 주문처럼, 출처가 우리 DB 인 경우에만 쓴다. 없으면 카탈로그를 다시 읽는다.
+   */
+  serverUnits?: number | null
   raw: Record<string, unknown>
 }
 

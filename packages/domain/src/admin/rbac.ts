@@ -1,10 +1,16 @@
 export type AdminRole = 'viewer' | 'reviewer' | 'superadmin'
 export type AdminPermission = 'reports.view' | 'reports.review' | 'reports.act' | 'audit.view' | 'admins.manage'
+  /** 입금 확인 목록 열람. */
+  | 'payments.view'
+  /** 입금 승인·거절 — 돈이 오가므로 신고 처리 권한과 별개다. */
+  | 'payments.act'
 
 const GRANTS: Record<AdminRole, ReadonlySet<AdminPermission>> = {
-  viewer: new Set(['reports.view', 'audit.view']),
-  reviewer: new Set(['reports.view', 'reports.review', 'reports.act', 'audit.view']),
-  superadmin: new Set(['reports.view', 'reports.review', 'reports.act', 'audit.view', 'admins.manage']),
+  viewer: new Set(['reports.view', 'audit.view', 'payments.view']),
+  reviewer: new Set(['reports.view', 'reports.review', 'reports.act', 'audit.view', 'payments.view']),
+  // 지급은 superadmin 만 한다. reviewer 가 콘텐츠를 다루는 것과 잔액을 늘리는 것은 다른 위험이다.
+  superadmin: new Set(['reports.view', 'reports.review', 'reports.act', 'audit.view', 'admins.manage',
+    'payments.view', 'payments.act']),
 }
 
 /** 역할 → 권한. 화면과 액션 양쪽이 같은 표를 본다. */

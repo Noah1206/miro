@@ -115,15 +115,18 @@ async function applyRechargeEvent(providerName: string, ev: PaymentEvent, userId
   if (ev.type !== 'purchase') { observe('payment.failed', { userId, provider: providerName }); return 'applied' }
 
   const product = rechargeProduct(ev.productId!)
-  if (!product) { observe('recharge.unknown_product', { userId, provider: providerName, productId: ev.productId }); return 'applied' }
+  // 서버가 주문 시점에 확정한 지급량이 있으면 그것을 쓴다 — 접수 뒤 카탈로그가 바뀌어도
+  // 사용자가 주문할 때 본 조건으로 지급된다. 없으면(외부 webhook) 카탈로그를 읽는다.
+  const units = ev.serverUnits ?? product?.units
+  if (!units) { observe('recharge.unknown_product', { userId, provider: providerName, productId: ev.productId }); return 'applied' }
   const { granted } = await grantRecharge({
-    userId, amount: product.units, source: 'purchase',
+    userId, amount: units, source: 'purchase',
     provider: providerName, externalRef: ev.externalRef,
-    expiresAt: product.validDays ? new Date(Date.now() + product.validDays * 86_400_000) : null,
+    expiresAt: product?.validDays ? new Date(Date.now() + product.validDays * 86_400_000) : null,
   })
   if (granted) {
-    observe('recharge.granted', { userId, provider: providerName, productId: product.id, units: product.units })
-    void track(userId, 'recharge_purchased', { provider: providerName, productId: product.id, units: product.units })
+    observe('recharge.granted', { userId, provider: providerName, productId: ev.productId, units })
+    void track(userId, 'recharge_purchased', { provider: providerName, productId: ev.productId!, units })
   }
   return 'applied'
 }

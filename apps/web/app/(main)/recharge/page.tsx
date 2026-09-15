@@ -1,20 +1,21 @@
 import { redirect } from 'next/navigation'
-import { PLANNED_RECHARGE_TIERS, productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
+import { BANK_TRANSFER_WINDOW_HOURS, PLANNED_RECHARGE_TIERS, bankAccount, productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { rechargeHistory, usageStatus, type RechargeHistoryItem, type UsageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 import { Button, Card, Notice, Page, PageHeader, TransitionLink } from '@/components/ui'
 import { observe } from '@/lib/observe'
-import { beginRecharge, simulateRecharge } from './actions'
+import { beginRecharge, orderByTransfer, simulateRecharge } from './actions'
+import { bankOrderHistory, pendingBankOrder } from '@/lib/payments/bank-transfer'
 
 /** 잔액은 계정 상태다 — 빌드 시점에 굳히지 않는다. */
 export const dynamic = 'force-dynamic'
 
 /** 실제 원장을 조회하고, 미정 제공량은 판매하지 않는다. */
-export default async function RechargePage({ searchParams }: { searchParams: Promise<{ checkout?: string; result?: string }> }) {
+export default async function RechargePage({ searchParams }: { searchParams: Promise<{ checkout?: string; result?: string; order?: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
-  const { checkout, result } = await searchParams
+  const { checkout, result, order } = await searchParams
 
   let usage: UsageStatus | null = null
   let history: RechargeHistoryItem[] = []
@@ -26,6 +27,13 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
   try { products = rechargeCatalog().products }
   catch (e) { observe('recharge.catalog_invalid', { error: (e as Error).message }) }
   const sellable = products.length > 0 && !productionRuntime()
+
+  // 계좌이체는 계좌가 설정돼야 열린다. 설정이 잘못됐으면 받지 않는다 — 입금부터 받고
+  // 어디로 갔는지 모르는 상태를 만들지 않는다.
+  let account: ReturnType<typeof bankAccount> = null
+  try { account = bankAccount() }
+  catch (e) { observe('recharge.bank_account_invalid', { error: (e as Error).message }) }
+  const [awaiting, orders] = await Promise.all([pendingBankOrder(user.id), bankOrderHistory(user.id, 5)])
 
   return (
     <Page style={{ maxWidth: 480 }}>
@@ -55,6 +63,68 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
         <Notice data-recharge-result={result} tone={result === 'success' ? 'muted' : 'danger'} style={{ marginBottom: 'var(--space-3)' }}>
           {result === 'success' ? '충전이 완료됐어요. 잔액에 반영됐습니다.' : '결제가 완료되지 않았어요. 잔액은 그대로예요.'}
         </Notice>
+      )}
+
+      {order && <Notice data-order-result={order} tone={order === 'created' ? 'muted' : 'danger'} style={{ marginBottom: 'var(--space-3)' }}>
+        {order === 'created' ? '입금 안내를 보냈어요. 아래 계좌로 보내 주시면 확인 후 반영해 드릴게요.'
+          : order === 'pending' ? '이미 입금 대기 중인 주문이 있어요. 먼저 그 주문을 마쳐 주세요.'
+          : order === 'name' ? '입금자명을 적어 주세요. 입금을 찾는 데 꼭 필요해요.'
+          : order === 'unavailable' ? '지금은 계좌이체를 받지 않고 있어요.'
+          : '주문을 접수하지 못했어요. 잠시 후 다시 시도해 주세요.'}
+      </Notice>}
+
+      {awaiting && account && (
+        <Card data-bank-order="awaiting" style={{ marginBottom: 'var(--space-3)' }} className="stack">
+          <p className="t-title-3">입금 대기 중</p>
+          <p className="t-body">{account.bank} <b>{account.number}</b> ({account.holder})</p>
+          <p className="t-body">보낼 금액 · <b data-order-amount={awaiting.amountMinor}>{awaiting.amountMinor.toLocaleString('ko-KR')}원</b></p>
+          {/* 같은 금액의 입금이 여럿일 때 이 코드가 어느 주문인지 가른다. */}
+          <p className="t-body">입금자명 · <b>{awaiting.depositorName} {awaiting.referenceCode}</b></p>
+          <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
+            입금자명 뒤에 <b>{awaiting.referenceCode}</b> 를 꼭 붙여 주세요. 확인되면 반영해 드려요 —
+            보통 하루 안에 처리돼요. {new Date(awaiting.expiresAt).toLocaleString('ko-KR')}까지 입금이 없으면 주문이 취소돼요.
+          </p>
+        </Card>
+      )}
+
+      {!awaiting && account && (
+        <Card data-bank-order="open" style={{ marginBottom: 'var(--space-3)' }} className="stack">
+          <p className="t-title-3">계좌이체로 받기</p>
+          <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
+            주문하면 입금 계좌를 알려드려요. 입금을 확인한 뒤 반영되고, {BANK_TRANSFER_WINDOW_HOURS}시간 안에 입금하지 않으면 주문이 취소돼요.
+          </p>
+          {[{ kind: 'pass' as const, id: undefined, label: '1개월 이용권', sub: 'Pro · 9,900원' },
+            ...products.map(p => ({ kind: 'recharge' as const, id: p.id, label: p.name, sub: `${p.units.toLocaleString('ko-KR')} 사용량` }))]
+            .map(item => (
+              <form key={item.id ?? 'pass'} action={orderByTransfer} data-order-kind={item.kind}
+                style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
+                <input type="hidden" name="kind" value={item.kind} />
+                {item.id && <input type="hidden" name="productId" value={item.id} />}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="t-body">{item.label}</p>
+                  <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 2 }}>{item.sub}</p>
+                </div>
+                <input name="depositorName" placeholder="입금자명" required maxLength={40} aria-label="입금자명"
+                  style={{ width: 110, padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }} />
+                <Button type="submit" variant="primary" size="sm">주문</Button>
+              </form>
+            ))}
+        </Card>
+      )}
+
+      {orders.length > 0 && (
+        <Card data-bank-order-history style={{ marginBottom: 'var(--space-3)' }} className="stack">
+          <p className="t-title-3">계좌이체 주문</p>
+          {orders.map(o => (
+            <div key={o.id} data-order-status={o.status} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
+              <div style={{ minWidth: 0 }}>
+                <p className="t-body">{o.kind === 'pass' ? '1개월 이용권' : `충전 ${o.units?.toLocaleString('ko-KR') ?? ''}`}</p>
+                <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{o.createdAt.toLocaleDateString('ko-KR')} · {o.referenceCode}</p>
+              </div>
+              <span className="t-caption">{o.status === 'awaiting' ? '입금 대기' : o.status === 'approved' ? '완료' : o.status === 'rejected' ? '취소됨' : '기한 지남'}</span>
+            </div>
+          ))}
+        </Card>
       )}
 
       {checkout && sellable ? (

@@ -4,6 +4,10 @@ describe('admin rbac', () => {
   it('viewer can look but not act', () => { expect(can('viewer', 'reports.view')).toBe(true); expect(can('viewer', 'reports.act')).toBe(false) })
   it('reviewer can act but not manage admins', () => { expect(can('reviewer', 'reports.act')).toBe(true); expect(can('reviewer', 'admins.manage')).toBe(false) })
   it('superadmin can everything', () => { expect(can('superadmin', 'admins.manage')).toBe(true) })
+  it('only a superadmin approves a deposit, though reviewers can look', () => {
+    expect(can('reviewer', 'payments.view')).toBe(true); expect(can('reviewer', 'payments.act')).toBe(false)
+    expect(can('superadmin', 'payments.act')).toBe(true); expect(can('viewer', 'payments.act')).toBe(false)
+  })
 })
 describe('report transitions', () => {
   it('pending → reviewing → resolved', () => { expect(nextStatus('pending', 'start_review')).toBe('reviewing'); expect(nextStatus('reviewing', 'hide_content')).toBe('resolved') })

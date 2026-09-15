@@ -662,14 +662,52 @@ export const adminActions = pgTable('admin_actions', {
   adminId: uuid('admin_id').notNull().references(() => adminUsers.id),
   reportId: uuid('report_id').references(() => reports.id, { onDelete: 'set null' }),
   action: text('action', {
-    enum: ['start_review', 'hide_content', 'restrict_session', 'resolve_no_action', 'dismiss', 'reopen'],
+    enum: ['start_review', 'hide_content', 'restrict_session', 'resolve_no_action', 'dismiss', 'reopen',
+      'bank_order_approve', 'bank_order_reject'],
   }).notNull(),
   previousStatus: text('previous_status'),
   newStatus: text('new_status'),
   note: text('note').notNull().default(''),
+  /** 계좌이체 승인·거절도 같은 감사 로그를 쓴다. */
+  bankOrderId: uuid('bank_order_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ reportIdx: index('admin_actions_report_idx').on(t.reportId, t.createdAt) }))
 
+
+/**
+ * 계좌이체 주문. 사용자가 입금하겠다고 선언하면 한 줄이 생기고, 운영자가 실제 입금을
+ * 확인해 승인해야 지급된다. **주문 생성은 지급이 아니다.**
+ *
+ * 승인은 payment_events 를 거쳐 지급하므로 이중 지급을 막는 지점은 그쪽 UNIQUE 하나뿐이다.
+ * 금액·지급량은 주문 시점에 서버 카탈로그에서 확정해 여기 박는다 — 카탈로그가 나중에
+ * 바뀌어도 접수된 주문은 접수 당시 조건으로 처리된다.
+ */
+export const bankTransferOrders = pgTable('bank_transfer_orders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  kind: text('kind', { enum: ['pass', 'recharge'] }).notNull(),
+  /** 충전이면 서버 카탈로그의 상품 id, 이용권이면 null. */
+  productId: text('product_id'),
+  amountMinor: integer('amount_minor').notNull(),
+  currency: text('currency').notNull(),
+  units: integer('units'),
+  /** 입금자명 — 같은 금액의 주문이 여럿일 때 어느 입금인지 가르는 단서. */
+  depositorName: text('depositor_name').notNull(),
+  /** 사용자에게 보여 주는 대조 코드. 입금자명 뒤에 붙이도록 안내한다. */
+  referenceCode: text('reference_code').notNull().unique(),
+  status: text('status', { enum: ['awaiting', 'approved', 'rejected', 'expired'] }).notNull().default('awaiting'),
+  decidedBy: uuid('decided_by').references(() => adminUsers.id),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  note: text('note').notNull().default(''),
+  /** 지급이 끝난 시각. 승인(운영 앱)과 지급(web cron)이 나뉘어 있어 그 사이를 이 값이 가른다. */
+  settledAt: timestamp('settled_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  /** 지나도 입금이 없으면 만료. 무기한 대기 주문을 남기지 않는다. */
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+}, (t) => ({
+  statusIdx: index('bank_transfer_orders_status_idx').on(t.status, t.createdAt),
+  userIdx: index('bank_transfer_orders_user_idx').on(t.userId, t.createdAt),
+}))
 
 /* ─────────────── Analytics (P12) ─────────────── */
 

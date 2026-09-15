@@ -19,6 +19,8 @@ const env = {
   AI_DAILY_BUDGET: '0', AI_DAILY_REQUEST_LIMIT: '10000',
   AUTH_BASE_URL: `http://localhost:${WEB}`,
   MIRO_CANARY_MODEL: '', MIRO_SHADOW_MODEL: '', MIRO_EVAL_SAMPLE_PERCENT: '0',
+  /** 계좌이체 수납 E2E. 실제 계좌가 아니며, 승인해도 실제 돈은 움직이지 않는다. */
+  MIRO_BANK_ACCOUNT: JSON.stringify({ bank: 'E2E은행', number: '000-000-0000', holder: 'MIRO' }),
 }
 
 /**

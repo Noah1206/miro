@@ -158,4 +158,5 @@ export * from './features'
 
 export * from './ai-policy'
 export * from './recharge-policy'
+export * from './bank-transfer'
 export * from './runtime'

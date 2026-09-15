@@ -8,6 +8,7 @@ import { expireCalls } from '@/lib/call/service'
 import { purgeDeleted } from '@/lib/ops/archive'
 import { expireSubscriptions } from '@/lib/payments/service'
 import { notifyExpiringPasses } from '@/lib/payments/expiry-notice'
+import { expireBankOrders, settleApprovedOrders } from '@/lib/payments/bank-transfer'
 import { observe } from '@/lib/observe'
 
 export type SchedulerRun = {
@@ -18,6 +19,7 @@ export type SchedulerRun = {
   purged: number
   expiredSubscriptions: number
   passNotices: { soon: number; ended: number }
+  bankOrders: { settled: number; failed: number; expired: number }
 }
 
 /**
@@ -77,9 +79,13 @@ export async function runRealityScheduler(now = new Date(), wall = new Date()): 
   const purged = await purgeDeleted(wall)   // 보존 기간이 지난 삭제 역할극 영구 삭제
   // 만료 안내를 sweep 보다 먼저 보낸다. 순서가 바뀌면 status 가 expired 로 넘어가
   // 당일 안내 대상에서 빠진다 — 사용자는 끝났다는 사실만 화면에서 발견하게 된다.
+  // 운영자가 승인한 계좌이체 주문을 지급한다. 승인과 지급을 나눠 지급 경로를 하나로 둔다.
+  const settlement = await settleApprovedOrders(wall)
+  const expiredOrders = await expireBankOrders(wall)
+  const bankOrders = { ...settlement, expired: expiredOrders }
   const passNotices = await notifyExpiringPasses(wall)
   const expiredSubscriptions = await expireSubscriptions(wall)
   await maintainAI(wall)
   await deliverRealityPush(wall)
-  return { claimed: claimed.length, results, errors, calls, purged, expiredSubscriptions, passNotices }
+  return { claimed: claimed.length, results, errors, calls, purged, expiredSubscriptions, passNotices, bankOrders }
 }

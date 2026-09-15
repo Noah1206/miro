@@ -1,8 +1,9 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
-import { db, adminActions, adminUsers, characters, hashPassword, messages, relationships, reports, roleplaySessions, users, worldStates, worlds } from '@miro/db'
+import { db, adminActions, adminUsers, bankTransferOrders, characters, hashPassword, messages, relationships, reports, roleplaySessions, users, worldStates, worlds } from '@miro/db'
 import { act, reportDetail } from '../reports'
+import { approveBankOrder, listBankOrders, rejectBankOrder } from '../payments'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
@@ -70,7 +71,68 @@ describeDb('admin review', () => {
 
   it('the user app has no route or link into the admin console', async () => {
     const { execSync } = await import('node:child_process')
-    const hits = execSync(`grep -rl "miro_admin\\|/admin\\|admin_users" apps/web/app apps/web/lib apps/web/components || true`, { cwd: process.cwd() }).toString().trim()
+    // 출시되는 코드만 본다. __tests__ 는 라우트도 링크도 만들지 않으며, 운영 테이블을
+    // 검증하는 테스트가 여기 걸리면 제약을 우회하도록 테스트를 고치게 된다.
+    const hits = execSync(`grep -rl --exclude-dir=__tests__ "miro_admin\\|/admin\\|admin_users" apps/web/app apps/web/lib apps/web/components || true`, { cwd: process.cwd() }).toString().trim()
     expect(hits).toBe('')
+  })
+})
+
+describeDb('bank transfer decisions', () => {
+  const made: string[] = []
+  const admins: string[] = []
+  async function user() {
+    const [u] = await db.insert(users).values({ email: `btadm-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
+    made.push(u!.id); return u!.id
+  }
+  async function admin() {
+    const [a] = await db.insert(adminUsers).values({
+      email: `adm-${randomBytes(5).toString('hex')}@miro.dev`, passwordHash: 'x', role: 'superadmin',
+    }).returning()
+    admins.push(a!.id); return a!.id
+  }
+  async function order(userId: string) {
+    const [o] = await db.insert(bankTransferOrders).values({
+      userId, kind: 'pass', amountMinor: 9900, currency: 'KRW',
+      depositorName: '홍길동', referenceCode: randomBytes(3).toString('hex').toUpperCase(),
+      expiresAt: new Date(Date.now() + 72 * 3600_000),
+    }).returning()
+    return o!.id
+  }
+  afterAll(async () => {
+    for (const id of admins) await db.delete(adminActions).where(eq(adminActions.adminId, id))
+    for (const id of made) await db.delete(users).where(eq(users.id, id))
+    for (const id of admins) await db.delete(adminUsers).where(eq(adminUsers.id, id))
+  })
+
+  it('approving marks the order for settlement, and only once', async () => {
+    const o = await order(await user()); const a = await admin()
+    expect(await approveBankOrder(a, o, '9/16 입금 확인')).toBe('approved')
+    // 두 번째는 상태 관문에서 멈춘다 — 지급이 두 번 예약되지 않는다.
+    expect(await approveBankOrder(a, o)).toBe('not_pending')
+    const [row] = await db.select().from(bankTransferOrders).where(eq(bankTransferOrders.id, o))
+    expect(row!.status).toBe('approved'); expect(row!.decidedBy).toBe(a)
+    // 승인은 예약일 뿐 — 지급은 web cron 이 한다.
+    expect(row!.settledAt).toBe(null)
+  })
+
+  it('two admins approving at the same moment approve once', async () => {
+    const o = await order(await user()); const [a1, a2] = [await admin(), await admin()]
+    const results = await Promise.all([approveBankOrder(a1, o), approveBankOrder(a2, o)])
+    expect(results.filter(r => r === 'approved')).toHaveLength(1)
+  })
+
+  it('rejecting needs a reason, blocks later approval, and is audited', async () => {
+    const o = await order(await user()); const a = await admin()
+    await expect(rejectBankOrder(a, o, '   ')).rejects.toThrow('NOTE_REQUIRED')
+    expect(await rejectBankOrder(a, o, '입금 확인 안 됨')).toBe('rejected')
+    expect(await approveBankOrder(a, o)).toBe('not_pending')
+    const audit = await db.select().from(adminActions).where(eq(adminActions.bankOrderId, o))
+    expect(audit.map(r => r.action)).toEqual(['bank_order_reject'])
+  })
+
+  it('lists waiting orders oldest first', async () => {
+    const rows = await listBankOrders('awaiting')
+    expect(rows.every(r => r.status === 'awaiting')).toBe(true)
   })
 })
