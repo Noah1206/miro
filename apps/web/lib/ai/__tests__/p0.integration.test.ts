@@ -13,6 +13,8 @@ import { reserve, usageStatus } from '@/lib/usage/guard'
 import { startOutgoingCall } from '@/lib/call/service'
 import { memoryRetriever } from '../memory'
 import { POLICY } from '@miro/config'
+import { installAIUsageSink } from '@/lib/usage/ai-usage'
+import { COPY } from '@/lib/copy'
 
 /** A premium model must exist for ECHO to resolve at all. */
 const ECHO_REGISTRY = [
@@ -89,6 +91,19 @@ describeDb('P0 real persistence paths', () => {
     const r = await runConversationTurn({ ...s, requestId: randomUUID(), input: '보고 싶었어', chatModel: 'pro' })
     expect(r).toMatchObject({ ok: false, reason: 'usage' })
   })
+  it('a monthly abuse ceiling stops free chat and says so without promising tomorrow', async () => {
+    // mock 은 원가가 항상 0 이라 원가 상한에 걸릴 수 없다 — 요청 수 상한으로 막는 걸 본다.
+    vi.stubEnv('AI_PROVIDER', 'mock'); vi.stubEnv('MIRO_MODEL_REGISTRY', '')
+    vi.stubEnv('AI_DAILY_BUDGET', '1000'); vi.stubEnv('AI_USER_MONTHLY_LIMIT', '0')
+    installAIUsageSink()
+    const s = await session()
+    const r = await runConversationTurn({ ...s, requestId: randomUUID(), input: '한 마디 더.' })
+    // 무료 대화라도 월간 상한에는 걸린다 — 사용량(usage)이 아니라 예산(budget)으로.
+    expect(r).toMatchObject({ ok: false, reason: 'budget', kind: 'user_monthly' })
+    expect(COPY.error.budgetMonthly).toContain('다음 달')
+    expect(COPY.error.budgetMonthly).not.toContain('내일')
+  })
+
   it('denies cross-user and restricted calls before charging', async () => {
     const owner = await session(), other = await session()
     await expect(startOutgoingCall(other.userId, owner.sessionId, 'voice')).rejects.toThrow('SESSION_NOT_FOUND')

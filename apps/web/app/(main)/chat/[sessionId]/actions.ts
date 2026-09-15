@@ -31,7 +31,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
       case 'model_unavailable': return fail('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.')
-      case 'budget': return fail(COPY.error.budget)
+      case 'budget': return fail(r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
       case 'too_long': return fail(COPY.error.tooLong(2000))
       case 'not_found': return fail(COPY.error.sessionNotFound)
       case 'restricted': return fail(COPY.error.restricted)
