@@ -27,3 +27,10 @@ export async function signInAgain(page: Page, base: string, email: string): Prom
   await page.waitForLoadState('networkidle')
   return page.url()
 }
+
+/** 가입 계정의 기본 시간대(Asia/Seoul) 오후 2시. 실행 머신의 TZ와 무관하다. */
+export function daytime(): string {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const part = (name: string) => parts.find(p => p.type === name)!.value
+  return `${part('year')}-${part('month')}-${part('day')}T14:00:00+09:00`
+}

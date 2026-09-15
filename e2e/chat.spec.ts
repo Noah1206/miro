@@ -32,14 +32,16 @@ test('state survives leaving and re-entering the chat', async ({ page }) => {
 
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('처음 뵙겠습니다.')
   await page.getByRole('button', { name: '전송' }).click()
-  await expect(page.getByText('처음 뵙겠습니다.')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveValue('')
+  await expect(page.getByLabel('토마스 대화').getByText('처음 뵙겠습니다.', { exact: true })).toBeVisible()
 
   // 앱을 떠났다가 돌아온다
   await page.goto(`${BASE}/home`)
   await page.goto(url)
 
   // 마지막 메시지가 아니라 대화 전체와 세계 상태가 복구된다
-  await expect(page.getByText('처음 뵙겠습니다.')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveValue('')
+  await expect(page.getByLabel('토마스 대화').getByText('처음 뵙겠습니다.', { exact: true })).toBeVisible()
   await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 })
 
