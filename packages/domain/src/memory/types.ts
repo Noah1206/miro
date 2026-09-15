@@ -1,6 +1,6 @@
 export type MemoryType =
   | 'user_fact' | 'promise' | 'shared_event'
-  | 'relationship_change' | 'preference' | 'conflict'
+  | 'relationship_change' | 'preference' | 'conflict' | 'short_term_summary' | 'world_fact'
 
 export type Memory = {
   id: string

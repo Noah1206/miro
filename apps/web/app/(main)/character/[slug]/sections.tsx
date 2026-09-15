@@ -14,7 +14,7 @@ import { bookmark, deleteComment, likeComment } from './social-actions'
  * 규칙선을 세우고 라벨을 작게 얹는다. 선은 무채색이다 — 구역을 나누는 일은 상태가 아니라
  * 구조이고, 라임은 상태에만 쓴다.
  */
-export function Rule({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
+export function Rule({ label, action, children, accent }: { label: string; action?: React.ReactNode; children: React.ReactNode; accent?: string }) {
   const reduce = useReducedMotion()
   return (
     <motion.section
@@ -22,7 +22,7 @@ export function Rule({ label, action, children }: { label: string; action?: Reac
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
       style={{ marginTop: 'var(--space-7)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: 'var(--color-border-strong)', flexShrink: 0 }} />
+        <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: accent ?? 'var(--color-border-strong)', flexShrink: 0 }} />
         <h2 className="t-title-3" style={{ flex: 1 }}>{label}</h2>
         {action}
       </div>

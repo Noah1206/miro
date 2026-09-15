@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { prompts } from '../ai/prompts/registry'
 import type { LLMProvider } from '../types'
 
 /** 선연락 본문. 짧고, 캐릭터 목소리이며, 채널에 맞는다. */
@@ -50,7 +51,7 @@ export async function generateRealityContent(
     '위 상황에서 캐릭터가 먼저 보낼 연락을 JSON 으로 작성하세요: { "text": string, "tone": "warm"|"neutral"|"terse"|"urgent" }',
   ].filter(Boolean).join('\n')
 
-  return llm.generateStructured({ schema: RealityContent, system: SYSTEM, prompt })
+  return llm.generateStructured({ schema: RealityContent, task: 'dialogue', promptVersion: 'reality:v1', system: prompts.get('reality').system + '\n' + SYSTEM, prompt })
 }
 
 /**

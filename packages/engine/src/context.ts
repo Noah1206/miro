@@ -1,3 +1,4 @@
+import { prompts } from '@miro/providers'
 import { POLICY } from '@miro/config'
 import { CALL_MODE_RULES, MOOD_GUIDE, describeRelationship, groupByLayer, retrieveMemories } from '@miro/domain'
 import type {
@@ -36,6 +37,7 @@ export type SimulationSnapshot = {
 export type BuiltContext = {
   system: string
   prompt: string
+  promptVersion: string
   /** 대략적 토큰 추정. 예산 초과 시 무엇이 잘렸는지 확인용. */
   approxTokens: number
   dropped: string[]
@@ -54,7 +56,8 @@ const STYLE_GUIDE = {
  * 예산을 넘으면 중요도가 낮은 항목부터 제외하고, 무엇을 뺐는지 기록한다.
  */
 export function buildContext(s: SimulationSnapshot): BuiltContext {
-  const system = buildSystem(s)
+  const template = prompts.select('dialogue', s.relationship.sessionId)
+  const system = template.system + '\n' + buildSystem(s) + '\n' + DIALOGUE_CONTRACT
   const systemTokens = estimateTokens(system)
 
   // 예산 안에 들 때까지 단계적으로 줄인다: 기억 → 최근 대화 순. 정체성(system)은 줄이지 않는다.
@@ -73,11 +76,10 @@ export function buildContext(s: SimulationSnapshot): BuiltContext {
     if (s.recentMessages.length > recent.length) dropped.push(`messages(${s.recentMessages.length - recent.length})`)
 
     const prompt = buildPrompt(s, memories, recent)
-    last = { system, prompt, approxTokens: systemTokens + estimateTokens(prompt), dropped }
+    last = { system, prompt, promptVersion: `dialogue:${template.version}`, approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
-  last!.dropped.push('over_budget')
-  return last!
+  throw new Error('context_budget_exceeded')
 }
 
 /** Character Core — 매 턴 성격을 새로 정의하지 않도록 안정적으로 고정한다. */
@@ -108,7 +110,7 @@ function buildSystem(s: SimulationSnapshot): string {
     s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : `- 출력 스타일: ${STYLE_GUIDE[s.outputStyle]}`,
     '',
     '## 상태 변화 제안',
-    '- 관계 변화는 delta 로만 제안합니다. 한 턴에 큰 폭으로 움직이지 않습니다.',
+    '- 관계 변화는 Miro Core 규칙이 결정합니다. relationshipDelta는 null로 반환합니다.',
     '- 사건은 지금 상황에서 자연스러울 때만 제안합니다. 매 턴 사건을 만들지 않습니다.',
     '- 기억은 관계에 실제로 중요한 것만 남깁니다.',
     '',
@@ -197,6 +199,9 @@ function buildPrompt(
 
   if (memories.length > 0) {
     const layers = groupByLayer(memories)
+    for (const [key, label] of [['short_term', '최근 사건 요약'], ['world', '세계와 NPC에 대한 사실']] as const) {
+      if (layers[key].length) { parts.push('', '## ' + label); for (const m of layers[key]) parts.push('- ' + m.content) }
+    }
     if (layers.long_term.length > 0) {
       parts.push('', '## 기억하고 있는 것 (사용자에 대한 사실·약속·취향)')
       for (const m of layers.long_term) parts.push(`- ${m.content}`)
@@ -226,3 +231,15 @@ function buildPrompt(
 export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 2.2)
 }
+
+const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
+{"rp":{"blocks":[{"type":"dialogue","speaker":"character name","text":"response"}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
+Block type: dialogue|action|narrative|npc|world; speaker is a name or null. text: 1..2000 characters.
+Memory: {type:user_fact|promise|shared_event|relationship_change|preference|conflict|world_fact,content:string,importance:0..1,persistence:0..1,confidence:0..1}; max 3.
+World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
+Scene: {location?:string,time?:string,mood?:string,weather?:string}.
+Event candidate: {type:conflict|jealousy|business_trip|crisis|rival|scandal|injury|npc_arrival|location_change|work|promise|misunderstanding|reconciliation,summary:string,relevance:0..1,salience:0..1,participantNpcIds:[]}; max 2.
+Event update: {eventId:existing id,status:active|escalated|resolved|cancelled,consequence?:string}; max 3.
+NPC introduction: {name:string,role:string,knows:string[],relationshipToCharacter:string,relationshipToUser:string}; max 2.
+NPC action: {npcId:existing id,action:string,basedOn:string[]}; max 3.
+Reality intent: {channel:message|push|photo|voice_message|status|missed_call|voice_call|video_call,reason:string,urgency:0..1}.`

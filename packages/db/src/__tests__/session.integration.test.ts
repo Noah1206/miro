@@ -51,7 +51,7 @@ describeDb('roleplay session creation', () => {
 
   beforeAll(async () => {
     const seeded = await db.select().from(characters).where(eq(characters.isOfficial, true))
-    expect(seeded.length).toBe(3) // seed 가 먼저 실행되어 있어야 한다
+    expect(seeded.length).toBe(4) // seed 가 먼저 실행되어 있어야 한다
   })
 
   afterAll(async () => {

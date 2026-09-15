@@ -1,3 +1,4 @@
+import { usagePolicy } from './ai-policy'
 /**
  * MIRO Policy Configuration
  *
@@ -14,26 +15,9 @@ export type Plan = 'free' | 'pro'
 
 export const POLICY = {
   usage: {
-    /** 사용량 창 길이(시간). 창 시작 = 첫 생성 AI Request 시각 (소진 시점 아님). */
-    windowHours: 5,
-    limits: {
-      free: DEV_DEFAULT(100),
-      pro: DEV_DEFAULT(1000),
-    } satisfies Record<Plan, number>,
-    /** 생성 종류별 소비 가중치. Provider 확정 후 실측으로 교체. */
-    weights: {
-      textRP: DEV_DEFAULT(1),
-      complexEvent: DEV_DEFAULT(2),
-      characterDraft: DEV_DEFAULT(3),
-      photo: DEV_DEFAULT(10),
-      faceCast: DEV_DEFAULT(15),
-      background: DEV_DEFAULT(8),
-      liveScene: DEV_DEFAULT(12),
-      /** 통화는 분당 가중치 */
-      voiceCallPerMinute: DEV_DEFAULT(5),
-      videoCallPerMinute: DEV_DEFAULT(20),
-    },
-    /** 단순 선연락/Push 는 사용량을 차감하지 않는 방향을 우선 적용 (명세서 정책 1). */
+    period: 'monthly' as const,
+    get limits() { return usagePolicy().monthly },
+    get weights() { return usagePolicy().weights },
     chargeRealityContact: DEV_DEFAULT(false),
   },
 
@@ -145,3 +129,5 @@ export const POLICY = {
   },
 } as const
 export * from './features'
+
+export * from './ai-policy'

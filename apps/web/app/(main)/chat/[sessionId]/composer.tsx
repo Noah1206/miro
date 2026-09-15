@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon, TextArea, TransitionLink } from '@/components/ui'
 import { tween } from '@/lib/motion/tokens'
@@ -9,6 +9,8 @@ import { sendTurn, type TurnState } from './actions'
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). */
 export function ChatComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
   const [state, action, pending] = useActionState(sendTurn, { error: null, notice: null, limit: null } satisfies TurnState)
+  const [requestId, setRequestId] = useState('')
+  useEffect(() => { if (!pending) setRequestId(crypto.randomUUID()) }, [pending, state])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
   useEffect(() => { if (!pending && !state.error) { ref.current?.reset(); if (ta.current) ta.current.style.height = 'auto' } }, [pending, state.error])
@@ -26,6 +28,7 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
         )}
       </AnimatePresence>
       <form ref={ref} action={action} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+        <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="sessionId" value={sessionId} />
         <TextArea ref={ta} name="input" rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
           onInput={(e) => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 140)}px` }}

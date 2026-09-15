@@ -5,6 +5,8 @@ import { purgeBefore } from '@miro/domain'
 export type ArchiveItem = {
   id: string
   characterName: string
+  characterSlug: string | null
+  characterImages: string[]
   role: string | null
   accentA: string | null
   status: 'active' | 'archived'
@@ -12,6 +14,7 @@ export type ArchiveItem = {
   location: string
   time: string
   characterStatus: string | null
+  lastMessage: string | null
   unread: number
 }
 
@@ -21,10 +24,12 @@ export type ArchiveItem = {
  */
 export async function listSessions(userId: string, status?: 'active' | 'archived'): Promise<ArchiveItem[]> {
   const rows = await db.select({
-    id: roleplaySessions.id, characterName: characters.name, role: characters.role, accentA: characters.accentA,
+    id: roleplaySessions.id, characterName: characters.name, characterSlug: characters.slug, characterImages: characters.images,
+    role: characters.role, accentA: characters.accentA,
     status: roleplaySessions.status, lastInteractionAt: roleplaySessions.lastInteractionAt,
     location: worldStates.currentLocation, time: worldStates.currentTime,
     characterStatus: roleplaySessions.characterStatus,
+    lastMessage: sql<string | null>`(select "content" from "messages" where "session_id" = ${roleplaySessions.id} and "hidden_at" is null order by "created_at" desc limit 1)`,
     unread: sql<number>`(select count(*)::int from ${realityContacts} rc where rc.session_id = ${roleplaySessions.id} and rc.status = 'sent')`,
   })
     .from(roleplaySessions)
@@ -40,6 +45,7 @@ export async function listSessions(userId: string, status?: 'active' | 'archived
   return rows as ArchiveItem[]
 }
 
+/** 내부 상태 전환. 현재 사용자 화면에서는 보관 기능을 노출하지 않는다. */
 export async function setArchived(userId: string, sessionId: string, archived: boolean) {
   await db.update(roleplaySessions).set({ status: archived ? 'archived' : 'active' })
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt)))

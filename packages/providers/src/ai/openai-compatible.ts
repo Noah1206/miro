@@ -16,6 +16,8 @@ export class OpenAICompatibleProvider implements AIProvider {
     this.info = { mode: 'live', name: `${name}/${model}`, notice: null }
   }
 
+  async healthCheck(): Promise<boolean> { try { return (await fetch(`${this.baseUrl}/models`, { headers: { Authorization: `Bearer ${this.apiKey}` }, signal: AbortSignal.timeout(5000) })).ok } catch { return false } }
+
   async generate(req: GenerationRequest): Promise<GenerationResult> {
     const t0 = Date.now()
     const res = await fetch(`${this.baseUrl}/chat/completions`, {

@@ -1,6 +1,7 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import {
   db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
@@ -45,6 +46,10 @@ export async function saveCharacter(form: FormData): Promise<void> {
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     return { characterId, sessionId: session!.id }
   })
+
+  revalidatePath('/home')
+  revalidatePath('/discover')
+  revalidatePath('/my')
 
   if (!result.sessionId) {
     // 임시저장 — 이어서 고칠 수 있는 편집 화면으로.

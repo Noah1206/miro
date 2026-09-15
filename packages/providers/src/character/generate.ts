@@ -25,7 +25,7 @@ export async function generateCharacterDraft(
   oneLiner: string,
 ): Promise<CharacterDraft> {
   return llm.generateStructured({
-    schema: CharacterDraft,
+    schema: CharacterDraft, task: 'world_update', promptVersion: 'character-draft:v1',
     system: SYSTEM,
     prompt: `다음 설명에 맞는 캐릭터 초안을 만들어 주세요.\n\n설명: ${oneLiner}`,
   })

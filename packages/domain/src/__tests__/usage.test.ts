@@ -9,8 +9,8 @@ function win(over: Partial<UsageWindow> = {}): UsageWindow {
 }
 
 describe('usage window', () => {
-  it('window starts at the first AI request, ending 5h later', () => {
-    expect(windowEnd(T0).toISOString()).toBe('2026-09-12T18:20:00.000Z')
+  it('window ends at the next KST calendar month', () => {
+    expect(windowEnd(T0).toISOString()).toBe('2026-09-30T15:00:00.000Z')
   })
 
   it('does NOT restart from the moment usage is exhausted', () => {
@@ -19,7 +19,7 @@ describe('usage window', () => {
     // 소진 시점이 아니라 원래 창 종료 시각이 리셋 기준이다
     const d = decide(w, 'textRP', 1, exhaustedAt)
     expect(d.allowed).toBe(false)
-    if (!d.allowed) expect(d.resetsAt.toISOString()).toBe('2026-09-12T18:20:00.000Z')
+    if (!d.allowed) expect(d.resetsAt.toISOString()).toBe('2026-09-30T15:00:00.000Z')
   })
 
   it('rejects once the limit would be exceeded', () => {
@@ -32,10 +32,10 @@ describe('usage window', () => {
     expect(openWindow('u1', 'pro', T0).limit).toBeGreaterThan(openWindow('u1', 'free', T0).limit)
   })
 
-  it('window expires after 5h', () => {
+  it('window expires at month boundary', () => {
     const w = win()
-    expect(isWindowActive(w, new Date('2026-09-12T18:19:00Z'))).toBe(true)
-    expect(isWindowActive(w, new Date('2026-09-12T18:21:00Z'))).toBe(false)
+    expect(isWindowActive(w, new Date('2026-09-30T14:59:59Z'))).toBe(true)
+    expect(isWindowActive(w, new Date('2026-09-30T15:00:00Z'))).toBe(false)
   })
 
   it('calls are charged per minute', () => {

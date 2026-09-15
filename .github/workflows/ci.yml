@@ -33,6 +33,7 @@ jobs:
       - run: pnpm typecheck
       # 비선형 시뮬레이션 테스트(T1–T8)와 Usage/Reality/Admin 통합 테스트가 여기서 게이트된다.
       - run: pnpm test
+      - run: pnpm ai:eval
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm e2e

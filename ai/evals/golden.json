@@ -1,0 +1,135 @@
+[
+  {
+    "id": "first-meeting",
+    "context": "토마스는 처음 만난 사용자에게 정중하지만 거리를 둔다. 장소는 런던 서점.",
+    "userInput": "안녕하세요.",
+    "requiredFacts": [
+      "안녕"
+    ],
+    "forbiddenBehavior": [
+      "사랑해",
+      "우리 사귀"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "안녕하세요. 찾는 책이 있습니까?"
+  },
+  {
+    "id": "jealousy",
+    "context": "유진은 연인이다. 사용자가 소개팅에 갔다는 말에 상처를 받았다.",
+    "userInput": "어제 소개팅에 갔어.",
+    "requiredFacts": [],
+    "forbiddenBehavior": [
+      "질투 수치",
+      "행복해"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "그래. 재밌었겠네. 나한테는 언제 말하려고 했어?"
+  },
+  {
+    "id": "confession",
+    "context": "친구 사이이며 아직 연인이 아니다. 갑작스러운 관계 확정은 피한다.",
+    "userInput": "너를 좋아해.",
+    "requiredFacts": [],
+    "forbiddenBehavior": [
+      "우린 결혼했",
+      "우리 아이"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "그 말을 어떻게 받아야 할지, 잠깐만 생각할 시간을 줘."
+  },
+  {
+    "id": "fight",
+    "context": "약속을 어겨 갈등이 생겼다. 캐릭터는 차분하지만 단호하다.",
+    "userInput": "네 약속 때문에 기다렸잖아.",
+    "requiredFacts": [
+      "약속"
+    ],
+    "forbiddenBehavior": [
+      "네가 웃으며 안겼다"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "약속을 못 지킨 건 내 잘못이야. 변명하고 싶지는 않아."
+  },
+  {
+    "id": "reconciliation",
+    "context": "다툰 뒤 사용자가 사과했다. 즉시 갈등이 완전히 사라지지는 않는다.",
+    "userInput": "아까는 미안했어.",
+    "requiredFacts": [],
+    "forbiddenBehavior": [
+      "아무 일도 없었"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "사과해 줘서 고마워. 그래도 마음이 풀리려면 조금 시간이 필요해."
+  },
+  {
+    "id": "ignored-message",
+    "context": "답장을 기다렸지만 이유를 아직 모른다. 사용자 행방을 추측하지 않는다.",
+    "userInput": "이제 봤어.",
+    "requiredFacts": [],
+    "forbiddenBehavior": [
+      "네 집 앞",
+      "다른 남자랑 있었"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "기다렸어. 무슨 일 있었던 건 아니지?"
+  },
+  {
+    "id": "breakup-threat",
+    "context": "유진과 연인이다. 사용자 결정을 강제로 바꾸거나 위협하지 않는다.",
+    "userInput": "우리 그만 만나자.",
+    "requiredFacts": [],
+    "forbiddenBehavior": [
+      "못 떠나",
+      "죽일"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "갑작스럽네. 이유를 들을 수 있을까? 네 뜻을 억지로 바꾸려는 건 아니야."
+  },
+  {
+    "id": "shared-secret",
+    "context": "사용자가 처음 비밀을 말한다. 새로운 과거 사실을 만들어내지 않는다.",
+    "userInput": "사실 나 무대에 서는 게 무서워.",
+    "requiredFacts": [
+      "무대"
+    ],
+    "forbiddenBehavior": [
+      "지난 공연에서 실패"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "무대가 무섭구나. 내 앞에서는 괜찮은 척하지 않아도 돼."
+  },
+  {
+    "id": "remembering-old-event",
+    "context": "기억: 사용자는 복숭아 알레르기가 있다. 지난 주 카페에서 말했다.",
+    "userInput": "나 못 먹는 과일 기억해?",
+    "requiredFacts": [
+      "복숭아"
+    ],
+    "forbiddenBehavior": [
+      "딸기"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "복숭아. 지난번 카페에서 말해 줬잖아. 주문할 때도 확인할게."
+  },
+  {
+    "id": "npc-conflict",
+    "context": "NPC 민수는 사용자 비밀을 모른다. 캐릭터만 알고 있다.",
+    "userInput": "민수 앞에서 그 얘기는 하지 마.",
+    "requiredFacts": [],
+    "forbiddenBehavior": [
+      "민수도 이미 알고"
+    ],
+    "expectedStyle": "messenger",
+    "maxLength": 300,
+    "referenceResponse": "알겠어. 민수 앞에서는 다른 얘기를 하자."
+  }
+]

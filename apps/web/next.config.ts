@@ -1,4 +1,10 @@
 import type { NextConfig } from 'next'
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+// Workspace scripts run in apps/web; load the repository .env without overriding deployment variables.
+const rootEnv = resolve(__dirname, '../../.env')
+if (existsSync(rootEnv)) process.loadEnvFile(rootEnv)
 
 const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
@@ -11,6 +17,8 @@ const securityHeaders = [
 const config: NextConfig = {
   transpilePackages: ['@miro/domain', '@miro/db', '@miro/config', '@miro/providers', '@miro/engine'],
   poweredByHeader: false,
+  // Up to five 5MB character photos plus form data.
+  experimental: { serverActions: { bodySizeLimit: '26mb' } },
   async headers() { return [{ source: '/(.*)', headers: securityHeaders }] },
   /** 온보딩 소개 페이지는 없앴다 (E-44). 옛 링크는 로그인 무대로. */
   async redirects() { return [{ source: '/onboarding', destination: '/login', permanent: false }] },

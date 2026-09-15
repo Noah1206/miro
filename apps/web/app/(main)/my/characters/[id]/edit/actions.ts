@@ -64,6 +64,9 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
 
   revalidatePath(`/character/${characterId}`)
   revalidatePath('/my')
+  revalidatePath('/home')
+  revalidatePath('/discover')
+  revalidatePath('/archive')
   if (sessionId) {
     void track(user.id, 'character_created', { sessionId })
     void track(user.id, 'rp_started', { sessionId, official: false })

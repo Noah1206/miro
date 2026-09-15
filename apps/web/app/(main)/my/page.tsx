@@ -100,6 +100,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
         <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>MIRO</p>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
+          <TransitionLink href="/my/ai-data">AI 개선 참여</TransitionLink>
           <TransitionLink href="/terms/service">서비스 이용약관</TransitionLink>
           <span aria-hidden>|</span>
           <TransitionLink href="/terms/privacy">개인정보 처리방침</TransitionLink>

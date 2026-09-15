@@ -199,25 +199,26 @@ export async function evaluateSession(
       : null,
   })
 
+  // Network inference finishes before acquiring the persistence transaction.
+  let mediaUrl: string | null = null
+  if (decision.channel === 'photo') {
+    const media = await getOrGenerate({
+      sessionId, characterId: row.character.id, characterName: row.character.name,
+      kind: 'photo',
+      context: {
+        location: row.world.currentLocation, time: row.world.currentTime,
+        mood: row.world.worldStatus ?? 'neutral', outfit: '', visualVersion: 0,
+      },
+      // 단순 선연락은 무차감 우선 (명세서 정책 1). 정책값으로 제어한다.
+      usage: shouldChargeRealityContact() ? { userId: row.session.userId } : null,
+    })
+    mediaUrl = media.url
+  }
+
   // ---- 발송: 메시지 + 기록 + Push, 한 트랜잭션 ----
   let contactId: string
   try {
     contactId = await db.transaction(async (tx) => {
-      let mediaUrl: string | null = null
-      if (decision.channel === 'photo') {
-        const media = await getOrGenerate({
-          sessionId, characterId: row.character.id, characterName: row.character.name,
-          kind: 'photo',
-          context: {
-            location: row.world.currentLocation, time: row.world.currentTime,
-            mood: row.world.worldStatus ?? 'neutral', outfit: '', visualVersion: 0,
-          },
-          // 단순 선연락은 무차감 우선 (명세서 정책 1). 정책값으로 제어한다.
-          usage: shouldChargeRealityContact() ? { userId: row.session.userId } : null,
-        })
-        mediaUrl = media.url
-      }
-
       if (decision.channel === 'status') {
         await tx.update(roleplaySessions).set({ characterStatus: content.text })
           .where(eq(roleplaySessions.id, sessionId))

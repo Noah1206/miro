@@ -1,3 +1,4 @@
+import { maintainAI } from '@/lib/ai/maintenance'
 import { sql } from 'drizzle-orm'
 import { POLICY } from '@miro/config'
 import { db } from '@miro/db'
@@ -71,5 +72,6 @@ export async function runRealityScheduler(now = new Date(), wall = new Date()): 
   const calls = await expireCalls(wall)
   const purged = await purgeDeleted(wall)   // 보존 기간이 지난 삭제 역할극 영구 삭제
   const expiredSubscriptions = await expireSubscriptions(wall)
+  await maintainAI(wall)
   return { claimed: claimed.length, results, errors, calls, purged, expiredSubscriptions }
 }

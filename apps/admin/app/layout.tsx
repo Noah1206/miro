@@ -13,7 +13,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
       <header style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '14px 24px', borderBottom: '1px solid var(--border)' }}>
         <strong style={{ letterSpacing: '.18em', fontWeight: 500 }}>MIRO ADMIN</strong>
         {admin && <>
-          <Link href="/reports">신고</Link><Link href="/audit">감사 로그</Link>
+          <Link href="/ai">AI 운영</Link><Link href="/reports">신고</Link><Link href="/audit">감사 로그</Link>
           <span style={{ marginLeft: 'auto', color: 'var(--muted)', fontSize: 12 }} data-admin-role={admin.role}>{admin.email} · {admin.role}</span>
           <form action={async () => { 'use server'; await logout() }}><button className="btn" type="submit">로그아웃</button></form>
         </>}

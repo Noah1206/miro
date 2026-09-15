@@ -1,20 +1,14 @@
 'use client'
-import { motion, useReducedMotion } from 'motion/react'
+import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
-import { fadeUp, stagger, tween } from '@/lib/motion/tokens'
+import { fadeUp, stagger } from '@/lib/motion/tokens'
 import { TransitionLink } from './transition-link'
 
-/**
- * 직접 진입(새로고침·딥링크)에도 같은 등장: fade + y 12. View Transition 이 담당하는 링크 이동과 결이 같다.
- * variant 트리의 뿌리 — 안쪽의 Card·Notice·Field·PageHeader 줄은 `fadeUp` variants 만 들고 있으면
- * 여기서 120ms 간격으로 차례로 나타난다. 나중에 마운트되는 것(오류 안내 등)도 같은 등장을 탄다.
- * Reduce Motion 이면 initial=false 가 하위 전체에 전파되어 바로 있다.
- */
+/** Render page content together without entry fades or staggered reveals. */
 export function Page({ children, immersive, className, style }: { children: ReactNode; immersive?: boolean; className?: string; style?: React.CSSProperties }) {
-  const reduce = useReducedMotion()
   return (
-    <motion.main id="main" tabIndex={-1} initial={reduce ? false : 'hidden'} animate="show"
-      variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { ...tween.enter, staggerChildren: stagger.normal } } }}
+    <motion.main id="main" tabIndex={-1} initial={false} animate="show"
+      variants={{ show: { opacity: 1, y: 0 } }}
       className={`page ${immersive ? 'page--immersive' : ''} ${className ?? ''}`} style={{ outline: 'none', ...style }}>
       {children}
     </motion.main>

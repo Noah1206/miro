@@ -63,7 +63,7 @@ describeDb('reality activation — real send path', () => {
   }
 
   beforeAll(async () => {
-    expect((await db.select().from(characters).where(eq(characters.isOfficial, true))).length).toBe(3)
+    expect((await db.select().from(characters).where(eq(characters.isOfficial, true))).length).toBe(4)
   })
   afterAll(async () => {
     for (const id of made) await db.delete(users).where(eq(users.id, id))
@@ -80,7 +80,7 @@ describeDb('reality activation — real send path', () => {
   it('an active event produces a real in-app message with world translation', async () => {
     const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
     const r = await evaluateSession(id, DAY)
-    expect(r.outcome).toBe('sent')
+    expect(r, JSON.stringify(r)).toMatchObject({ outcome: 'sent' })
 
     const [m] = await realityMessages(id)
     expect(m).toBeDefined()
@@ -94,7 +94,7 @@ describeDb('reality activation — real send path', () => {
     const id = await session('hisashi', { activeEvent: true, relationship: ESTABLISHED })
     // 히사시 활동시간 18:00-04:00 → 밤 22:00 에 판단
     const r = await evaluateSession(id, new Date('2026-09-12T22:00:00+09:00'))
-    expect(r.outcome).toBe('sent')
+    expect(r, JSON.stringify(r)).toMatchObject({ outcome: 'sent' })
     const [m] = await realityMessages(id)
     expect((m!.blocks as Array<Record<string, unknown>>)[0]!.senderLabel).toBe('알 수 없는 번호')
   })
@@ -139,8 +139,10 @@ describeDb('reality activation — real send path', () => {
       activeEvent: true,
       relationship: { trust: 15, attachment: 70, emotionalDistance: 85 },
     })
+    // Force the high-urgency event intent explicitly; ordinary post-fight motivation may suppress contact.
+    await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '공방 위기 알림', urgency: 1 } }).where(eq(roleplaySessions.id, id))
     const r = await evaluateSession(id, DAY)
-    expect(r.outcome).toBe('sent')
+    expect(r, JSON.stringify(r)).toMatchObject({ outcome: 'sent' })
     const [c] = await contacts(id)
     expect((c!.payload as { tone: string }).tone).toBe('terse')
     expect((c!.payload as { text: string }).text).not.toMatch(/생각나서|어땠어요/)

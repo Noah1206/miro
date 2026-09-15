@@ -28,6 +28,7 @@ export class ReplicateImageProvider implements ImageProvider {
     const size = ASPECT[spec.aspect]
     const res = await fetch(`https://api.replicate.com/v1/models/${this.model}/predictions`, {
       method: 'POST',
+      signal: AbortSignal.timeout(30_000),
       headers: {
         Authorization: `Bearer ${this.token}`,
         'Content-Type': 'application/json',

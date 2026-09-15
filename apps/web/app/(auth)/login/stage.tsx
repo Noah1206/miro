@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { LogoIntro, Notice, Stagger, StaggerItem } from '@/components/ui'
 import { spring, stagger } from '@/lib/motion/tokens'
-import { NoAccount } from './no-account'
 
 export type SocialProvider = { id: 'google' | 'kakao'; label: string }
 
@@ -27,7 +26,6 @@ export function LoginStage({ providers, notice, error, next }: { providers: Soci
           {error && <Notice role="alert" tone="danger">{error}</Notice>}
           {notice && <Notice>⚠ {notice}</Notice>}
           {providers.map((p) => <StaggerItem key={p.id}><SocialButton {...p} next={next} /></StaggerItem>)}
-          <StaggerItem><NoAccount /></StaggerItem>
         </Stagger>
       )}
     </main>

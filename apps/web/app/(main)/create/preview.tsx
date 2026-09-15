@@ -1,14 +1,17 @@
 'use client'
+import { CharacterSettingsView } from '../character/[slug]/settings-view'
+import { parseCharacterForm } from './parse'
 import { Accordion, Button } from '@/components/ui'
-import { CharacterVisual } from '@/components/character-visual'
-import { Gallery, Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
-import { subject, withParticle } from '@/lib/format'
+import { Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
+import { PhotoHero } from '../character/[slug]/hero'
+import { subject } from '@/lib/format'
 
 /** 소개 페이지 미리보기에 필요한 값. 탭을 열 때 폼에서 한 번 읽는다. */
 export type Snapshot = {
+  settings: ReturnType<typeof parseCharacterForm>
   name: string; tagline: string; age: string; nationality: string; occupation: string; mbti: string
-  personality: string; startingContext: string; startingTime: string
-  keywords: string[]; hobbies: string[]; dislikes: string[]
+  personality: string; worldSetting: string; startingContext: string; startingTime: string
+  keywords: string[]
   dialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
   /** 고른 사진들의 URL. 첫 장이 대표, 나머지는 갤러리. 새로 고른 파일은 이 화면 동안만 유효한 object URL. */
   photo: string | null
@@ -36,9 +39,10 @@ export function snapshot(form: HTMLFormElement): Snapshot {
     : [...keptImages, ...newFiles.map((f) => URL.createObjectURL(f))]
   const photoUrls = photos.filter((u): u is string => Boolean(u))
   return {
+    settings: parseCharacterForm((() => { const data = new FormData(); fd.forEach((value, key) => data.append(key, value)); data.set('intent', 'draft'); if (!s('name')) data.set('name', '이름'); return data })()),
     name: s('name'), tagline: s('title'), age: s('age'), nationality: s('nationality'), occupation: s('occupation'), mbti: s('mbti'),
-    personality: s('personality'), startingContext: s('startingContext'), startingTime: s('startingTime'),
-    keywords: [...csv('mood'), ...csv('relationshipKeywords')], hobbies: csv('hobbies'), dislikes: csv('dislikes'),
+    personality: s('personality'), worldSetting: s('worldSetting'), startingContext: s('startingContext'), startingTime: s('startingTime'),
+    keywords: [...csv('mood'), ...csv('relationshipKeywords')],
     dialogue, photo: photoUrls[0] ?? null, gallery: photoUrls.slice(1),
   }
 }
@@ -50,16 +54,12 @@ export function snapshot(form: HTMLFormElement): Snapshot {
 export function DetailPreview({ d }: { d: Snapshot | null }) {
   if (!d) return null
   const name = d.name || '이름'
-  // 상세와 같은 문장 규칙: '32세 · 한국 · 검사.' / 'MBTI는 INTJ.' / '커피를 좋아하고, 무례함은 싫어한다.'
+  // 상세와 같은 문장 규칙: '32세 · 한국 · 검사.' / 'MBTI는 INTJ.'
   const profile: string[] = [
     [
       [[d.age && `${d.age}세`, d.nationality, d.occupation].filter(Boolean).join(' · '), '.'].join(''),
       d.mbti ? `MBTI는 ${d.mbti}.` : '',
     ].filter((x) => x && x !== '.').join(' '),
-    [
-      d.hobbies.length > 0 ? `${withParticle(d.hobbies.join(', '), '을', '를')} 좋아하고,` : '',
-      d.dislikes.length > 0 ? `${withParticle(d.dislikes.join(', '), '은', '는')} 싫어한다.` : '',
-    ].filter(Boolean).join(' '),
   ].filter((line) => line.trim())
   const pill: React.CSSProperties = { position: 'absolute', top: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(10,10,11,0.6)', color: 'var(--color-text-primary)' }
 
@@ -73,9 +73,9 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
         </span>
         <span aria-hidden className="t-caption" style={{ ...pill, right: 16, fontWeight: 'var(--weight-medium)' }}>편집</span>
 
-        <CharacterVisual name={name} accent={null} slug="preview" photo={d.photo} ratio="4 / 5" shared={false} style={{ borderRadius: 0, border: 0 }} />
+        <PhotoHero name={name} accent={null} slug="preview" photos={[d.photo, ...d.gallery].filter((src): src is string => Boolean(src))} shared={false} />
 
-        <div style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
+        <div className="character-detail-copy" style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
           <p className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em', color: d.name ? undefined : 'var(--color-text-tertiary)' }}>{name}</p>
           <p className="t-body-lg t-quote" style={{ color: d.tagline ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', lineHeight: 1.6, marginBottom: 12 }}>
             {d.tagline || '소개 한 줄이 여기에 걸립니다.'}
@@ -93,6 +93,12 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
           </div>
 
           <RealityStrip />
+          {d.worldSetting && (
+            <Rule label="세계관">
+              <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{d.worldSetting}</p>
+            </Rule>
+          )}
+          <CharacterSettingsView name={name} visual={d.settings.visual} contact={d.settings.contact} />
 
           <Rule label="첫 장면">
             <div className="detail-prose">
@@ -105,10 +111,6 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
               <div style={{ marginTop: 18 }}><SampleDialogue name={name} portrait={d.photo} turns={d.dialogue} /></div>
             )}
           </Rule>
-
-          {d.gallery.length > 0 && (
-            <div style={{ marginTop: 'var(--space-7)' }}><Gallery name={name} images={d.gallery} /></div>
-          )}
 
           <div style={{ marginTop: 'var(--space-7)' }}>
             <Accordion title="이 사람에 대해">

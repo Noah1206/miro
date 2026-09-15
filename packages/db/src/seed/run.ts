@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '../client'
 import { characterVisualIdentities, characters, contactProfiles, worlds } from '../schema/index'
 import { OFFICIAL_CHARACTERS } from './officials'
+import { testDatabaseUrl } from './test-database'
 
 /**
  * 공식 캐릭터 시드. slug 기준 upsert 이므로 반복 실행해도 중복이 생기지 않는다.
@@ -9,6 +10,7 @@ import { OFFICIAL_CHARACTERS } from './officials'
  * 세션별로 생성되어야 같은 캐릭터라도 사용자마다 다른 관계가 형성된다.
  */
 export async function seedOfficials(): Promise<void> {
+  if (!testDatabaseUrl(process.env.DATABASE_URL)) throw new Error('A local test database is required for demo characters.')
   for (const c of OFFICIAL_CHARACTERS) {
     const existing = await db.select({ id: characters.id })
       .from(characters).where(eq(characters.slug, c.slug)).limit(1)

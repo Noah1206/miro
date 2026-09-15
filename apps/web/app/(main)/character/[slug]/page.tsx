@@ -1,3 +1,4 @@
+import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
@@ -7,8 +8,7 @@ import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Accordion, Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { galleryFor, portraitFor } from '@/components/character-visual'
-import { Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, Gallery, RealityStrip } from './sections'
+import { Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 
@@ -34,12 +34,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   ])
 
   const enter = startRoleplay.bind(null, slug)
-  // 공식 캐릭터는 준비된 장면 사진, 사용자 캐릭터는 만들기에서 올린 사진(대표 제외 나머지)을 갤러리로 쓴다.
-  const gallery = galleryFor(slug).length > 0 ? galleryFor(slug) : c.images.slice(1)
+  // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
+  const heroImages = c.images
   const tags = [...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean)
   // 라벨을 붙인 표 대신 읽히는 문장으로. 값이 없으면 그 문장이 통째로 빠진다.
-  const hobbies = c.hobbies as string[]
-  const dislikes = c.dislikes as string[]
   // socialPosition 이 직업을 이미 품고 있으면 직업을 빼서 같은 말을 두 번 하지 않는다
   // (히사시: '조직의 중간 간부' + '오사카 조직의 중간 간부').
   const job = c.occupation && c.socialPosition?.includes(c.occupation) ? null : c.occupation
@@ -50,10 +48,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       c.socialPosition ? `${withParticle(c.socialPosition, '이다', '다')}.` : '',
       c.mbti ? `MBTI는 ${c.mbti}.` : '',
     ].filter((x) => x && x !== '.').join(' '),
-    [
-      hobbies.length > 0 ? `${withParticle(hobbies.join(', '), '을', '를')} 좋아하고,` : '',
-      dislikes.length > 0 ? `${withParticle(dislikes.join(', '), '은', '는')} 싫어한다.` : '',
-    ].filter(Boolean).join(' '),
     [c.speechStyle, c.values].filter(Boolean).join(' '),
   ].filter((line) => line.trim())
 
@@ -70,9 +64,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </TransitionLink>
       )}
 
-      <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} image={c.images[0]} />
+      <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
 
-      <div style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
+      <div className="character-detail-copy" style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em' }}>{c.name}</h1>
         {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-primary)', lineHeight: 1.6, marginBottom: 12 }}>{c.tagline}</p>}
 
@@ -91,6 +85,12 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </div>
 
         <RealityStrip />
+        {c.worldSetting && (
+          <Rule label="세계관">
+            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.worldSetting}</p>
+          </Rule>
+        )}
+        <CharacterSettings characterId={c.id} name={c.name} />
 
         {/* 먼저 보여주는 것은 설명이 아니라 장면이다 — 이 사람과 말을 섞으면 어떤 느낌인지. */}
         <Rule label="첫 장면">
@@ -102,16 +102,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </div>
           {c.sampleDialogue.length > 0 && (
             <div style={{ marginTop: 18 }}>
-              <SampleDialogue name={c.name} portrait={portraitFor(slug) ?? c.images[0] ?? null} turns={c.sampleDialogue} />
+              <SampleDialogue name={c.name} portrait={c.images[0] ?? null} turns={c.sampleDialogue} />
             </div>
           )}
         </Rule>
-
-        {gallery.length > 0 && (
-          <div style={{ marginTop: 'var(--space-7)' }}>
-            <Gallery name={c.name} images={gallery} />
-          </div>
-        )}
 
         {/* 설명글은 읽고 싶은 사람만 편다 — 카드를 쌓는 대신 한 겹 접어 둔다. */}
         <div style={{ marginTop: 'var(--space-7)' }}>
@@ -159,5 +153,3 @@ async function playCount(characterId: string): Promise<number> {
     .where(and(eq(roleplaySessions.characterId, characterId), isNull(roleplaySessions.deletedAt)))
   return r?.n ?? 0
 }
-
-

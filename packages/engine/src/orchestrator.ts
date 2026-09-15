@@ -1,7 +1,8 @@
-import type { LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, interactionImportance, type LLMProvider } from '@miro/providers'
+import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
   DEFAULT_CHARACTER_STATE, applyRelationshipDelta, deltaFromSemanticEvents, deriveCharacterState,
-  detectSemanticEvents, evaluateEventRules, mergeRelationshipDelta,
+  detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient,
 } from '@miro/domain'
 import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent } from '@miro/domain'
 import { SimulationProposal } from './proposal.schema'
@@ -37,12 +38,22 @@ export async function runTurn(opts: {
   snapshot: SimulationSnapshot
   userInput: string
   now?: Date
+  auxiliaryLLM?: LLMProvider
+  maxOutputTokens?: number
 }): Promise<TurnResult> {
   const { snapshot } = opts
   const now = opts.now ?? new Date()
   const personality = snapshot.character.personality
 
-  const semanticEvents = detectSemanticEvents(opts.userInput)
+  const tasks = planTasks(opts.userInput, snapshot.turnCount + 1)
+  let semanticEvents = detectSemanticEvents(opts.userInput)
+  const extraMemories: MemoryCandidate[] = []
+  if (opts.auxiliaryLLM && tasks.includes('semantic_event')) {
+    try { const result = await analyzeSemantic(opts.auxiliaryLLM, opts.userInput, snapshot); semanticEvents = mergeSemanticEvents(semanticEvents, result.events.filter(e => e.confidence >= .8)) } catch { /* optional classification falls back to Core rules */ }
+  }
+  if (opts.auxiliaryLLM) for (const task of tasks) if (task === 'memory_extraction' || task === 'memory_summary') {
+    try { extraMemories.push(...filterSalient((await analyzeMemory(opts.auxiliaryLLM, task, opts.userInput, snapshot)).memories)) } catch { /* keep the existing memories */ }
+  }
   const codeDelta = deltaFromSemanticEvents(semanticEvents, personality)
   // 이번 턴의 관계(규칙 적용 후)로 기분을 정한다 — 모델은 수치가 아니라 기분을 본다.
   const projected = applyRelationshipDelta(snapshot.relationship, codeDelta)
@@ -56,11 +67,12 @@ export async function runTurn(opts: {
   let fallbackReason: string | undefined
   try {
     proposal = await opts.llm.generateStructured({
-      schema: SimulationProposal,
+      schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, importance: interactionImportance(opts.userInput), maxTokens: opts.maxOutputTokens,
       system: context.system,
       prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
     })
   } catch (e) {
+    if (e instanceof AIBudgetDeniedError) throw e
     // Fallback chain 의 끝 — 서비스는 멈추지 않는다. 관계는 규칙 delta 로만 움직인다.
     providerMode = 'fallback'
     fallbackReason = (e as Error).message
@@ -71,7 +83,8 @@ export async function runTurn(opts: {
   }
 
   const transition = validateProposal(proposal, snapshot)
-  transition.relationshipDelta = mergeRelationshipDelta(codeDelta, transition.relationshipDelta as RelationshipDelta) as never
+  transition.relationshipDelta = codeDelta as never
+  transition.memories = filterSalient([...transition.memories, ...extraMemories])
 
   // 사건 규칙 — "무슨 일이 일어나야 하는가" 는 코드가 정한다. LLM 제안은 규칙이 없을 때만 남는다.
   const fired = evaluateEventRules({

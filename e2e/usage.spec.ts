@@ -41,8 +41,8 @@ test('free user hits the limit, is pointed to Pro, and continues after upgrading
   await page.goto(`${BASE}/my/subscription`)
   await expect(page.locator('[data-plan="pro"]')).toBeVisible()
 
-  // 기존 창은 Free 한도로 소진돼 있다 — Pro 는 다음 창부터 새 한도. 현재 창의 남은 양은 0.
-  await expect(page.locator('[data-usage-remaining="0"]')).toBeVisible()
+  // 월간 창은 유지하고 Pro 한도를 즉시 적용한다.
+  await expect(page.locator('[data-usage-remaining]')).not.toHaveAttribute('data-usage-remaining', '0')
 })
 
 test('subscription page shows the plan and reset time', async ({ page }) => {

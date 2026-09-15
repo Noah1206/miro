@@ -1,7 +1,6 @@
 {
   "name": "MIRO",
   "short_name": "MIRO",
-  "description": "한 사람의 세계 안으로",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A0A0B",

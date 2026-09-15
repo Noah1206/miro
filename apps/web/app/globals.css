@@ -101,6 +101,14 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .t-name    { font-family: var(--font-display); font-weight: var(--weight-bold); letter-spacing: -0.02em; }
 .t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); letter-spacing: -0.005em; }
 
+/* Character profile density follows the compact hierarchy used by content-first profile pages. */
+.character-detail-copy > .t-hero { font-size: 24px; line-height: 1.18; }
+.character-detail-copy .t-title-3 { font-size: 16px; line-height: 1.35; }
+.character-detail-copy .t-body-lg { font-size: 14px; line-height: 1.65; }
+.character-detail-copy .t-body { font-size: 14px; line-height: 1.55; }
+.character-detail-copy .t-caption { font-size: 12px; line-height: 1.5; }
+.character-detail-copy .detail-prose { font-size: 14px; }
+
 /* layout */
 .page { min-height: 100dvh; padding: var(--space-5) var(--gutter) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
 .page--immersive { max-width: none; padding: 0; }
@@ -117,23 +125,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 /* Motion 이 opacity 를 인라인으로 쥐고 있으므로 비활성 흐림은 규칙으로 이긴다 */
 .btn:disabled { opacity: 0.45 !important; }
 
-/* text entrance — 컴포넌트를 거치지 않은 날것의 문장도 나타날 때 움직인다. 같은 부모 안에서 순서대로 (최대 10번째까지 120ms 간격). */
-@keyframes text-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: no-preference) {
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption) { animation: text-in var(--motion-slow) var(--ease-enter) backwards; animation-delay: calc(var(--text-i, 0) * 120ms); }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(1) { --text-i: 0; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(2) { --text-i: 1; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(3) { --text-i: 2; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(4) { --text-i: 3; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(5) { --text-i: 4; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(6) { --text-i: 5; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(7) { --text-i: 6; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(8) { --text-i: 7; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(9) { --text-i: 8; }
-  .page :is(h1, h2, h3, p, label, legend, dt, dd, summary, figcaption):nth-child(n + 10) { --text-i: 9; }
-  /* 이름 있는 공유 요소(View Transition)와 라이브 영역은 자기 방식대로 움직인다 */
-  .page [style*="view-transition-name"] :is(h1, h2, h3, p), .page [aria-live] :is(p), .page [role="log"] p { animation: none; }
-}
+/* Page text is visible immediately when navigating. */
 
 /* page transitions — View Transition API. fade + translateY 12px; direction from html[data-nav] */
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--motion-normal); animation-timing-function: var(--ease-standard); mix-blend-mode: normal; }

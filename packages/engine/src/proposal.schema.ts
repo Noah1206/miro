@@ -3,7 +3,7 @@ import { z } from 'zod'
 /**
  * 한 번의 Structured Generation 으로 받는 전체 제안.
  *
- * 관계/사건/세계/기억/NPC 를 각각 별도 LLM 호출로 나누지 않는다 — 1회로 끝낸다.
+ * 기본 대화는 1회 생성. 선택적 분석 작업은 별도 task와 모델로 실행하고 여기서 검증한다.
  * 이것은 제안일 뿐이며, Validator 를 통과하기 전에는 어떤 상태도 바뀌지 않는다.
  */
 
@@ -13,7 +13,7 @@ export const RpBlock = z.object({
   type: z.enum(RP_BLOCK_TYPES),
   /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. */
   speaker: z.string().max(40).nullable(),
-  text: z.string().min(1).max(2000),
+  text: z.string().min(1).max(2000).refine(text => !/(?:질투|신뢰|호감도|애착)\s*(?:수치|점수)\s*(?:가|는|:)?\s*\d|토큰\s*\d/i.test(text), 'internal state disclosure'),
 })
 
 /** 관계는 절대값이 아니라 delta 로만 제안할 수 있다 — AI 가 상태를 덮어쓰지 못하게. */
@@ -48,7 +48,7 @@ export const SceneDeltaProposal = z.object({
 })
 
 export const MemoryCandidateProposal = z.object({
-  type: z.enum(['user_fact', 'promise', 'shared_event', 'relationship_change', 'preference', 'conflict']),
+  type: z.enum(['user_fact', 'promise', 'shared_event', 'relationship_change', 'preference', 'conflict', 'short_term_summary', 'world_fact']),
   content: z.string().min(2).max(300),
   importance: z.number().min(0).max(1),
   persistence: z.number().min(0).max(1),

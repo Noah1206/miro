@@ -1,33 +1,33 @@
-import { POLICY, type Plan } from '@miro/config'
+import { POLICY, usagePolicy, usageWeight, type Plan } from '@miro/config'
 import type { UsageKind, UsageWindow, UsageDecision } from './types'
 
 export function windowEnd(startedAt: Date): Date {
-  return new Date(startedAt.getTime() + POLICY.usage.windowHours * 3600_000)
+  const kst = new Date(startedAt.getTime() + 9 * 3600_000)
+  return new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth() + 1, 1) - 9 * 3600_000)
 }
 
 export function isWindowActive(w: UsageWindow, now: Date): boolean {
-  return now < w.endsAt
+  return now >= w.startedAt && now < w.endsAt
 }
 
 export function limitFor(plan: Plan): number {
-  return POLICY.usage.limits[plan]
+  return usagePolicy().monthly[plan]
 }
 
 export function costOf(kind: UsageKind, units = 1): number {
-  return POLICY.usage.weights[kind] * units
+  return usageWeight(kind, units)
 }
 
-/**
- * 새 사용량 창 생성. 호출 시점이 창 시작점이 된다.
- *
- * 주의: "사용량을 모두 소비한 시점부터 다시 5시간" 이 아니다.
- * 첫 AI Request 시각부터 5시간이며, 그 창이 끝난 뒤의 다음 Request 가 새 창을 연다.
- */
+/** Calendar month in Asia/Seoul; reset does not depend on exhaustion or subscription billing date. */
+export function monthStart(now: Date): Date {
+  const kst = new Date(now.getTime() + 9 * 3600_000)
+  return new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), 1) - 9 * 3600_000)
+}
 export function openWindow(userId: string, plan: Plan, now: Date): Omit<UsageWindow, 'id'> {
   return {
     userId,
     plan,
-    startedAt: now,
+    startedAt: monthStart(now),
     endsAt: windowEnd(now),
     consumed: 0,
     limit: limitFor(plan),

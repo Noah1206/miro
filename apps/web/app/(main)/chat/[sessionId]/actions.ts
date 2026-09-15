@@ -24,7 +24,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
   const input = String(form.get('input') ?? '').trim()
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
-  const r = await runConversationTurn({ userId: user.id, sessionId, input })
+  const r = await runConversationTurn({ userId: user.id, sessionId, input, requestId: String(form.get('requestId') ?? '') || undefined })
   if (!r.ok) {
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
