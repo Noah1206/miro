@@ -12,12 +12,15 @@ afterEach(() => vi.unstubAllEnvs())
 describe('plan-based chat models', () => {
   it('defaults to a basic model even for Pro subscribers', async () => {
     plan.mockResolvedValue('pro')
-    expect(await resolveChatModel('u', 'miro')).toBe('basic')
-    expect(await resolveChatModel('u', 'pro')).toBe('advanced')
+    expect(await resolveChatModel('u', 'miro')).toEqual({ modelId: 'basic', metered: false })
+    expect(await resolveChatModel('u', 'pro')).toEqual({ modelId: 'advanced', metered: true })
   })
   it('rejects forged Pro choices for Free accounts and arbitrary IDs', async () => {
     await expect(resolveChatModel('u', 'pro')).rejects.toThrow('pro required')
     await expect(resolveChatModel('u', 'advanced')).rejects.toThrow('invalid')
+  })
+  it('never lets an unknown choice pass itself off as unmetered chat', async () => {
+    for (const forged of ['echo', 'MIRO', 'free', '']) await expect(resolveChatModel('u', forged)).rejects.toThrow('invalid')
   })
   it('does not present the same backend as two different models', async () => {
     vi.stubEnv('MIRO_CHAT_PRO_MODEL_ID', 'basic')

@@ -11,7 +11,7 @@ import { renderBlocks, runTurn, UnsafeContentError, type TurnResult } from '@mir
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError } from './commit'
 import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
-import { UsageExceededError, reserve, rollback } from '@/lib/usage/guard'
+import { UsageExceededError, reserve, rollback, type Reservation } from '@/lib/usage/guard'
 import { type BudgetKind } from '@/lib/usage/ai-usage'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { track } from '@/lib/analytics/track'
@@ -69,16 +69,22 @@ async function executeTurn(opts: {
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
 
-    let dialogueModelId: string
-    try { dialogueModelId = await resolveChatModel(userId, opts.chatModel ?? 'miro') }
+    let model: { modelId: string; metered: boolean }
+    try { model = await resolveChatModel(userId, opts.chatModel ?? 'miro') }
     catch { return { ok: false, reason: 'model_unavailable' } }
+    const dialogueModelId = model.modelId
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
-    let reservation
-    try { reservation = await reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` }) }
-    catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
+    // MIRO basic chat does not draw down the monthly allowance. Everything else the
+    // pipeline enforces — request dedupe, AI cost budget, rate limits, safety — still runs.
+    let reservation: Reservation | null = null
+    if (model.metered) {
+      try { reservation = await reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` }) }
+      catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
+    }
+    const refund = () => reservation ? rollback(reservation.reservationId) : Promise.resolve()
     const [consent] = await db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1)
-    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation.continuity, usageUnits: reservation.cost }
+    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0 }
     const llm = resolveRpLLM(loaded.characterName, context)
     const turnIndex = loaded.snapshot.turnCount + 1
 
@@ -86,12 +92,12 @@ async function executeTurn(opts: {
     try {
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode },
         () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input,
-          auxiliaryLLM: reservation.continuity ? undefined : auxiliaryLLM(loaded.characterName, context),
-          maxOutputTokens: reservation.continuity ? usagePolicy().continuity.maxOutputTokens : undefined,
+          auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context),
+          maxOutputTokens: reservation?.continuity ? usagePolicy().continuity.maxOutputTokens : undefined,
         }))
 
     } catch (e) {
-      await rollback(reservation.reservationId)
+      await refund()
       if (e instanceof UnsafeContentError) return { ok: false, reason: 'safety' }
       if (e instanceof AIBudgetDeniedError) return { ok: false, reason: 'budget', kind: e.reason as BudgetKind }
       if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }
@@ -101,7 +107,7 @@ async function executeTurn(opts: {
 
     const { transition } = result
     if (result.providerMode === 'fallback') {
-      await rollback(reservation.reservationId)
+      await refund()
       observe('provider.llm.fallback', { sessionId, turn: turnIndex })
       return { ok: false, reason: 'generation' }
     }
@@ -109,7 +115,7 @@ async function executeTurn(opts: {
     if (transition.issues.length > 0) {
       observe('provider.llm.validation_issues', { sessionId, turn: turnIndex, count: transition.issues.length, fields: transition.issues.map((i) => i.field).join(',') })
     }
-    if (transition.blocks.length === 0) { await rollback(reservation.reservationId); return { ok: false, reason: 'generation' } }
+    if (transition.blocks.length === 0) { await refund(); return { ok: false, reason: 'generation' } }
 
     const responseText = renderBlocks(transition.blocks)
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
@@ -120,7 +126,7 @@ async function executeTurn(opts: {
     }
     try {
       await commitTurn({
-        reservationId: reservation.reservationId, requestId: opts.requestId, requestResult: outcome,
+        reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
         userInput: input, responseText, blocks: transition.blocks, transition,
         worldVersion: loaded.snapshot.world.version,
@@ -130,7 +136,7 @@ async function executeTurn(opts: {
         characterState: result.characterState,
       })
     } catch (e) {
-      await rollback(reservation.reservationId)
+      await refund()
       // 다른 요청이 먼저 커밋했다. 최신 상태로 한 번 더 시도한다.
       if (e instanceof StaleStateError && attempt === 0) { observe('state.stale_retry', { sessionId, turn: turnIndex }); continue }
       observe('state.commit_failed', { sessionId, turn: turnIndex, error: (e as Error).message })

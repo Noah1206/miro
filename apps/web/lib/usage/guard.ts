@@ -175,11 +175,15 @@ export async function usageStatus(userId: string, now = new Date()): Promise<Usa
   }
 }
 
-/** 서버 액션이 사용자에게 돌려줄 한도 안내. Free 는 Pro 안내, Pro 는 초기화 대기. */
+/**
+ * 서버 액션이 사용자에게 돌려줄 한도 안내.
+ * 사용량이 0 이어도 MIRO 기본 대화는 계속 가능하므로 그 길을 함께 알린다 — 모델을 몰래 바꾸지는 않는다.
+ */
 export function exceededMessage(e: UsageExceededError): string {
   const t = e.resetsAt.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' })
-  if (productionRuntime()) return `이번 달 Reality 사용량을 모두 썼어요. ${t}에 초기화됩니다. 기존 대화와 기억은 유지돼요.`
+  const miro = ' MIRO 기본 대화는 계속 이어갈 수 있어요.'
+  if (productionRuntime()) return `이번 달 Reality 사용량을 모두 썼어요. ${t}에 초기화됩니다. 기존 대화와 기억은 유지돼요.${miro}`
   return e.plan === 'free'
-    ? `이번 사용량을 모두 썼어요. ${t}에 초기화되거나, Pro로 더 넉넉하게 이어갈 수 있어요.`
-    : `이번 사용량을 모두 썼어요. ${t}에 초기화됩니다.`
+    ? `이번 사용량을 모두 썼어요. ${t}에 초기화되거나, Pro로 더 넉넉하게 이어갈 수 있어요.${miro}`
+    : `이번 사용량을 모두 썼어요. ${t}에 초기화됩니다.${miro}`
 }

@@ -19,7 +19,8 @@ export class StaleStateError extends Error {
 
 export type CommitInput = {
   sessionId: string
-  reservationId?: string
+  /** null for unmetered MIRO turns — there is no ledger row to commit. */
+  reservationId?: string | null
   requestId?: string
   requestResult?: unknown
   characterId: string

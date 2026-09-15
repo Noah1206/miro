@@ -102,7 +102,8 @@ describeDb('production AI accounting',()=>{
     const first=await runConversationTurn(request);expect(first.ok).toBe(true)
     const second=await runConversationTurn(request);expect(second).toEqual(first)
     const logs=await db.select().from(messages).where(eq(messages.sessionId,sessionId));expect(logs).toHaveLength(2)
-    const ledger=await db.select().from(usageLedger).where(eq(usageLedger.userId,id));expect(ledger).toHaveLength(1);expect(ledger[0]!.status).toBe('committed')
+    // MIRO basic chat is unmetered: the replay is deduped by the request record, not by a ledger row.
+    const ledger=await db.select().from(usageLedger).where(eq(usageLedger.userId,id));expect(ledger).toHaveLength(0)
     const conflict=await runConversationTurn({...request,input:'다른 입력'});expect(conflict.ok).toBe(false)
   })
   it('rejects cross-user access and a second in-flight request for a session',async()=>{

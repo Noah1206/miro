@@ -9,9 +9,16 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { commitTurn } from '@/lib/simulation/commit'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import * as llms from '@/lib/simulation/mock-llm'
-import { usageStatus } from '@/lib/usage/guard'
+import { reserve, usageStatus } from '@/lib/usage/guard'
 import { startOutgoingCall } from '@/lib/call/service'
 import { memoryRetriever } from '../memory'
+import { POLICY } from '@miro/config'
+
+/** A premium model must exist for ECHO to resolve at all. */
+const ECHO_REGISTRY = [
+  { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768 },
+  { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768 },
+]
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 const made: string[] = []
@@ -24,18 +31,63 @@ afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs() })
 afterAll(async () => { if (process.env.DATABASE_URL) for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 describeDb('P0 real persistence paths', () => {
   it('rolls back the monthly charge and does not save a fallback or relationship change', async () => {
-    vi.stubEnv('AI_PROVIDER', 'mock'); vi.stubEnv('MIRO_MODEL_REGISTRY', '')
+    vi.stubEnv('AI_PROVIDER', 'mock')
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(ECHO_REGISTRY))
     const s = await session(), requestId = randomUUID()
+    await db.update(users).set({ plan: 'pro' }).where(eq(users.id, s.userId))
     const before = await loadSession(s.sessionId, s.userId)
     const broken = new AIOrchestrator({ chain: [new MockAIProvider(() => { throw new Error('offline') })], maxRetries: 0 })
     vi.spyOn(llms, 'resolveRpLLM').mockReturnValue(broken)
-    expect(await runConversationTurn({ ...s, requestId, input: '사랑해' })).toMatchObject({ ok: false, reason: 'generation' })
+    // ECHO is the metered model — only it produces a ledger row to roll back.
+    expect(await runConversationTurn({ ...s, requestId, input: '사랑해', chatModel: 'pro' })).toMatchObject({ ok: false, reason: 'generation' })
     expect((await usageStatus(s.userId)).consumed).toBe(0)
     const after = await loadSession(s.sessionId, s.userId)
     expect(after!.snapshot.relationship).toEqual(before!.snapshot.relationship)
     expect(after!.snapshot.turnCount).toBe(before!.snapshot.turnCount)
     const [ledger] = await db.select().from(usageLedger).where(eq(usageLedger.idempotencyKey, `turn:${requestId}`))
     expect(ledger!.status).toBe('rolled_back')
+  })
+
+  it('MIRO basic chat is never charged, even with the monthly allowance spent', async () => {
+    vi.stubEnv('AI_PROVIDER', 'mock'); vi.stubEnv('MIRO_MODEL_REGISTRY', '')
+    const s = await session()
+    // Spend the whole monthly allowance, then keep talking on MIRO.
+    await reserve({ userId: s.userId, kind: 'photo', units: POLICY.usage.limits.free / POLICY.usage.weights.photo, idempotencyKey: `drain:${s.userId}` })
+    const spent = (await usageStatus(s.userId)).consumed
+    expect(spent).toBe(POLICY.usage.limits.free)
+
+    const r = await runConversationTurn({ ...s, requestId: randomUUID(), input: '오늘 뭐 했어?' })
+    expect(r.ok).toBe(true)
+    // No user allowance was drawn, and no ledger row was written for the turn.
+    expect((await usageStatus(s.userId)).consumed).toBe(spent)
+    const rows = await db.select().from(usageLedger).where(eq(usageLedger.userId, s.userId))
+    expect(rows.map(r => r.kind)).toEqual(['photo'])
+  })
+
+  it('replaying an ECHO turn charges the allowance once', async () => {
+    vi.stubEnv('AI_PROVIDER', 'mock')
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(ECHO_REGISTRY))
+    const s = await session(), requestId = randomUUID()
+    await db.update(users).set({ plan: 'pro' }).where(eq(users.id, s.userId))
+    const first = await runConversationTurn({ ...s, requestId, input: '잘 지냈어?', chatModel: 'pro' })
+    expect(first.ok).toBe(true)
+    const charged = (await usageStatus(s.userId)).consumed
+    expect(charged).toBeGreaterThan(0)
+    expect(await runConversationTurn({ ...s, requestId, input: '잘 지냈어?', chatModel: 'pro' })).toEqual(first)
+    expect((await usageStatus(s.userId)).consumed).toBe(charged)
+    const rows = await db.select().from(usageLedger).where(eq(usageLedger.idempotencyKey, `turn:${requestId}`))
+    expect(rows).toHaveLength(1)
+    expect(rows[0]!.status).toBe('committed')
+  })
+
+  it('ECHO is still blocked once the allowance is spent', async () => {
+    vi.stubEnv('AI_PROVIDER', 'mock')
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(ECHO_REGISTRY))
+    const s = await session()
+    await db.update(users).set({ plan: 'pro' }).where(eq(users.id, s.userId))
+    await reserve({ userId: s.userId, kind: 'photo', units: POLICY.usage.limits.pro / POLICY.usage.weights.photo, idempotencyKey: `drain-pro:${s.userId}` })
+    const r = await runConversationTurn({ ...s, requestId: randomUUID(), input: '보고 싶었어', chatModel: 'pro' })
+    expect(r).toMatchObject({ ok: false, reason: 'usage' })
   })
   it('denies cross-user and restricted calls before charging', async () => {
     const owner = await session(), other = await session()
