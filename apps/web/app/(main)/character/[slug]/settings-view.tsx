@@ -50,7 +50,8 @@ export function CharacterSettingsView({ visual, contact, name }: { name: string;
   const gender = visual?.bodyProfile.gender
   const build = visual?.bodyProfile.build
   const bodyAvatar = gender && build
-    ? { src: `/builds/${gender}-${build}.webp${build === "average" ? "?v=6" : ""}`, alt: `${name}의 ${GENDER_PRESETS[gender]?.label} ${BUILD_PRESETS[build]?.label} 체형` }
+    // 체형 참고 이미지는 종종 다시 그려진다 — 전부 같은 캐시 버전을 붙여 새 파일이 바로 반영되게 한다.
+    ? { src: `/builds/${gender}-${build}.webp?v=7`, alt: `${name}의 ${GENDER_PRESETS[gender]?.label} ${BUILD_PRESETS[build]?.label} 체형` }
     : undefined
   const appearance: [string, string | null | undefined][] = visual ? [
     ['성별', visual.bodyProfile.gender ? GENDER_PRESETS[visual.bodyProfile.gender]?.label : null],
