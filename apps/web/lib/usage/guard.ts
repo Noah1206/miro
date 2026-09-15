@@ -1,5 +1,5 @@
-import { and, desc, eq, gt, sql } from 'drizzle-orm'
-import { db, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
+import { and, asc, desc, eq, gt, isNull, or, sql } from 'drizzle-orm'
+import { db, rechargeGrants, rechargeLedger, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
 import { usagePolicy, productionRuntime, type Plan } from '@miro/config'
 import { costOf, decide, isEntitled, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
 import { track } from '@/lib/analytics/track'
@@ -12,7 +12,9 @@ export class UsageExceededError extends Error {
   }
 }
 
-export type Reservation = { reservationId: string; cost: number; windowId: string; reused: boolean; continuity: boolean }
+export type Reservation = { reservationId: string; cost: number; windowId: string; reused: boolean; continuity: boolean
+  /** 이 예약이 충전 잔액에서 쓴 양. 월간에서 쓴 양은 cost - fromGrants. */
+  fromGrants: number }
 
 /** `db` 또는 열려 있는 트랜잭션(tx) 어느 쪽으로도 읽을 수 있게. */
 type Reader = Pick<typeof db, 'select'>
@@ -31,6 +33,49 @@ export async function effectivePlan(userId: string, now = new Date(), reader: Re
   if (productionRuntime()) return 'free'
   const [u] = await reader.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
   return u?.plan ?? 'free'
+}
+
+export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+/**
+ * 충전 잔액에서 need 만큼 확보한다. 먼저 만료되는 잔액부터, 같으면 오래된 것부터 쓴다.
+ *
+ * 행을 FOR UPDATE 로 잠그므로 동시 요청이 같은 잔액을 두 번 쓰지 못한다 —
+ * 호출부가 이미 사용자 advisory lock 을 쥐고 있고, 이 잠금이 그 안에서 한 번 더 막는다.
+ * 확보한 총량이 need 에 못 미치면 부분 목록을 그대로 돌려준다 — 판단은 호출부가 한다.
+ */
+async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date): Promise<{ grantId: string; amount: number }[]> {
+  const rows = await tx.select().from(rechargeGrants)
+    .where(and(
+      eq(rechargeGrants.userId, userId),
+      eq(rechargeGrants.status, 'active'),
+      or(isNull(rechargeGrants.expiresAt), gt(rechargeGrants.expiresAt, now)),
+      sql`${rechargeGrants.amount} - ${rechargeGrants.consumed} - ${rechargeGrants.refunded} > 0`,
+    ))
+    .orderBy(asc(rechargeGrants.expiresAt), asc(rechargeGrants.createdAt))
+    .for('update')
+
+  const picked: { grantId: string; amount: number }[] = []
+  let left = need
+  for (const g of rows) {
+    if (left <= 0) break
+    const available = g.amount - g.consumed - g.refunded
+    const take = Math.min(available, left)
+    if (take > 0) { picked.push({ grantId: g.id, amount: take }); left -= take }
+  }
+  return picked
+}
+
+/** 남은 충전 잔액. 만료된 것과 회수된 것은 세지 않는다. */
+export async function rechargeBalance(userId: string, now = new Date()): Promise<number> {
+  const [row] = await db.select({ total: sql<number>`coalesce(sum(${rechargeGrants.amount} - ${rechargeGrants.consumed} - ${rechargeGrants.refunded}), 0)::int` })
+    .from(rechargeGrants)
+    .where(and(
+      eq(rechargeGrants.userId, userId),
+      eq(rechargeGrants.status, 'active'),
+      or(isNull(rechargeGrants.expiresAt), gt(rechargeGrants.expiresAt, now)),
+    ))
+  return row?.total ?? 0
 }
 
 /**
@@ -57,7 +102,7 @@ export async function reserve(opts: {
       .where(eq(usageLedger.idempotencyKey, opts.idempotencyKey)).limit(1)
     if (existing && (existing.userId !== opts.userId || existing.kind !== opts.kind || existing.units !== units)) throw new Error('idempotency mismatch')
     if (existing && existing.status !== 'rolled_back') {
-      return { reservationId: existing.id, cost: existing.amount, windowId: existing.windowId, reused: true, continuity: existing.continuity }
+      return { reservationId: existing.id, cost: existing.amount, windowId: existing.windowId, reused: true, continuity: existing.continuity, fromGrants: existing.fromGrants }
     }
 
     let [win] = await tx.select().from(usageWindows)
@@ -75,22 +120,41 @@ export async function reserve(opts: {
     win = { ...win!, plan, limit }
     const decision = decide(win, opts.kind, units, now)
     const cost = costOf(opts.kind, units)
-    const continuity = !decision.allowed && ['textRP', 'complexEvent', 'majorEvent'].includes(opts.kind) && policy.continuity.enabled && win.continuityConsumed + cost <= policy.continuity.reserve
-    if (!decision.allowed && !continuity) {
+
+    // 월간 제공량을 먼저 쓰고, 모자란 만큼만 충전 잔액에서 가져온다.
+    const fromMonthly = Math.max(0, Math.min(cost, limit - win.consumed))
+    const shortfall = cost - fromMonthly
+    const picked = shortfall > 0 ? await takeFromGrants(tx, opts.userId, shortfall, now) : []
+    const fromGrants = picked.reduce((n, g) => n + g.amount, 0)
+    const covered = decision.allowed || fromMonthly + fromGrants === cost
+
+    const continuity = !covered && ['textRP', 'complexEvent', 'majorEvent'].includes(opts.kind) && policy.continuity.enabled && win.continuityConsumed + cost <= policy.continuity.reserve
+    if (!covered && !continuity) {
       observe('usage.limit_reached', { userId: opts.userId, kind: opts.kind, plan: decision.plan })
       void track(opts.userId, 'usage_limit_reached', { kind: opts.kind, plan: decision.plan })
       throw new UsageExceededError(decision.plan, decision.resetsAt)
     }
+    // continuity 여유분으로 나가는 턴은 두 잔액 어느 쪽도 쓰지 않는다.
+    const grantSplit = continuity ? [] : picked
+    const grantAmount = continuity ? 0 : fromGrants
+    const monthlyAmount = continuity ? cost : cost - grantAmount
 
     const values = { windowId: win.id, userId: opts.userId, kind: opts.kind, units, amount: cost,
-      idempotencyKey: opts.idempotencyKey, continuity, status: 'reserved' as const }
+      idempotencyKey: opts.idempotencyKey, continuity, fromGrants: grantAmount, status: 'reserved' as const }
     const [ledger] = existing
       ? await tx.update(usageLedger).set(values).where(eq(usageLedger.id, existing.id)).returning({ id: usageLedger.id })
       : await tx.insert(usageLedger).values(values).returning({ id: usageLedger.id })
+
+    // 재시도로 되살아난 예약에 이전 분배가 남아 있으면 지운다 — 아래에서 새로 기록한다.
+    if (existing) await tx.delete(rechargeLedger).where(eq(rechargeLedger.ledgerId, ledger!.id))
+    for (const g of grantSplit) {
+      await tx.update(rechargeGrants).set({ consumed: sql`${rechargeGrants.consumed} + ${g.amount}` }).where(eq(rechargeGrants.id, g.grantId))
+      await tx.insert(rechargeLedger).values({ ledgerId: ledger!.id, grantId: g.grantId, amount: g.amount })
+    }
     await tx.update(usageWindows).set(continuity
       ? { continuityConsumed: sql`${usageWindows.continuityConsumed} + ${cost}` }
-      : { consumed: sql`${usageWindows.consumed} + ${cost}` }).where(eq(usageWindows.id, win.id))
-    return { reservationId: ledger!.id, cost, windowId: win.id, reused: false, continuity }
+      : { consumed: sql`${usageWindows.consumed} + ${monthlyAmount}` }).where(eq(usageWindows.id, win.id))
+    return { reservationId: ledger!.id, cost, windowId: win.id, reused: false, continuity, fromGrants: grantAmount }
 
   })
 }
@@ -101,28 +165,44 @@ export async function commit(reservationId: string, actualUnits?: number): Promi
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
     if (!l || l.status !== 'reserved') return
     let amount = l.amount
+    let fromGrants = l.fromGrants
     if (actualUnits !== undefined && actualUnits !== l.units) {
       if (!Number.isSafeInteger(actualUnits) || actualUnits < 0) throw new Error('invalid actual usage')
       amount = l.units > 0 ? Math.ceil(l.amount / l.units * actualUnits) : 0
+      // 줄어든 만큼은 나중에 쓴 출처인 충전 잔액부터 돌려준다. 늘어나면 월간 쪽이 받는다.
+      let giveBack = Math.max(0, Math.min(l.fromGrants, l.amount - amount))
+      for (const part of await tx.select().from(rechargeLedger).where(eq(rechargeLedger.ledgerId, reservationId))) {
+        if (giveBack <= 0) break
+        const back = Math.min(part.amount, giveBack)
+        await tx.update(rechargeGrants).set({ consumed: sql`greatest(0, ${rechargeGrants.consumed} - ${back})` }).where(eq(rechargeGrants.id, part.grantId))
+        if (back === part.amount) await tx.delete(rechargeLedger).where(eq(rechargeLedger.id, part.id))
+        else await tx.update(rechargeLedger).set({ amount: part.amount - back }).where(eq(rechargeLedger.id, part.id))
+        giveBack -= back; fromGrants -= back
+      }
+      const monthlyDelta = (amount - fromGrants) - (l.amount - l.fromGrants)
       await tx.update(usageWindows)
-        .set(l.continuity ? { continuityConsumed: sql`${usageWindows.continuityConsumed} + ${amount - l.amount}` } : { consumed: sql`${usageWindows.consumed} + ${amount - l.amount}` })
+        .set(l.continuity ? { continuityConsumed: sql`${usageWindows.continuityConsumed} + ${amount - l.amount}` } : { consumed: sql`${usageWindows.consumed} + ${monthlyDelta}` })
         .where(eq(usageWindows.id, l.windowId))
     }
-    await tx.update(usageLedger).set({ status: 'committed', units: actualUnits ?? l.units, amount })
+    await tx.update(usageLedger).set({ status: 'committed', units: actualUnits ?? l.units, amount, fromGrants })
       .where(eq(usageLedger.id, reservationId))
   })
 }
 
 /** Provider 실패 시 되돌린다. 실패한 생성에 사용량을 물리지 않는다. */
-export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
-
 /** Reuse the caller transaction so request failure and refund commit together. */
 export async function rollbackInTransaction(tx: UsageTransaction, reservationId: string): Promise<void> {
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
     if (!l || l.status !== 'reserved') return
     await tx.update(usageLedger).set({ status: 'rolled_back' }).where(eq(usageLedger.id, reservationId))
+    // 각 출처로 정확히 되돌린다 — 충전에서 쓴 만큼은 그 잔액으로, 나머지는 월간 창으로.
+    for (const part of await tx.select().from(rechargeLedger).where(eq(rechargeLedger.ledgerId, reservationId))) {
+      await tx.update(rechargeGrants).set({ consumed: sql`greatest(0, ${rechargeGrants.consumed} - ${part.amount})` }).where(eq(rechargeGrants.id, part.grantId))
+    }
+    await tx.delete(rechargeLedger).where(eq(rechargeLedger.ledgerId, reservationId))
+    const monthly = l.amount - l.fromGrants
     await tx.update(usageWindows)
-      .set(l.continuity ? { continuityConsumed: sql`greatest(0, ${usageWindows.continuityConsumed} - ${l.amount})` } : { consumed: sql`greatest(0, ${usageWindows.consumed} - ${l.amount})` })
+      .set(l.continuity ? { continuityConsumed: sql`greatest(0, ${usageWindows.continuityConsumed} - ${l.amount})` } : { consumed: sql`greatest(0, ${usageWindows.consumed} - ${monthly})` })
       .where(eq(usageWindows.id, l.windowId))
 }
 
@@ -157,21 +237,25 @@ export type UsageStatus = {
   period: 'monthly'
   usedPercent: number
   continuityRemaining: number
+  /** 구매한 충전 잔액. 월간 제공량과 합치지 않고 따로 보여준다. */
+  rechargeRemaining: number
 }
 
 export async function usageStatus(userId: string, now = new Date()): Promise<UsageStatus> {
   const plan = await effectivePlan(userId, now)
+  const rechargeRemaining = await rechargeBalance(userId, now)
   const [win] = await db.select().from(usageWindows)
     .where(and(eq(usageWindows.userId, userId), gt(usageWindows.endsAt, now), eq(usageWindows.period, 'monthly')))
     .orderBy(desc(usageWindows.startedAt)).limit(1)
   const policy = usagePolicy()
   const limit = policy.monthly[plan]
-  if (!win) return { plan, limit, consumed: 0, remaining: limit, resetsAt: openWindow(userId, plan, now).endsAt, period: 'monthly', usedPercent: 0, continuityRemaining: policy.continuity.enabled ? policy.continuity.reserve : 0 }
+  if (!win) return { plan, limit, consumed: 0, remaining: limit, resetsAt: openWindow(userId, plan, now).endsAt, period: 'monthly', usedPercent: 0, continuityRemaining: policy.continuity.enabled ? policy.continuity.reserve : 0, rechargeRemaining }
   return {
     plan, limit, consumed: win.consumed,
     remaining: Math.max(0, limit - win.consumed), resetsAt: win.endsAt,
     period: 'monthly', usedPercent: Math.min(100, Math.round(win.consumed / limit * 100)),
     continuityRemaining: policy.continuity.enabled ? Math.max(0, policy.continuity.reserve - win.continuityConsumed) : 0,
+    rechargeRemaining,
   }
 }
 
@@ -186,4 +270,43 @@ export function exceededMessage(e: UsageExceededError): string {
   return e.plan === 'free'
     ? `이번 사용량을 모두 썼어요. ${t}에 초기화되거나, Pro로 더 넉넉하게 이어갈 수 있어요.${miro}`
     : `이번 사용량을 모두 썼어요. ${t}에 초기화됩니다.${miro}`
+}
+
+/**
+ * 충전 잔액 지급. 검증된 서버 결제 결과만 이 함수를 부른다 — 브라우저의 성공 화면으로는 지급하지 않는다.
+ *
+ * (provider, externalRef) 가 같은 지급은 DB UNIQUE 가 막는다. 같은 결제 이벤트가 두 번 와도
+ * 잔액이 두 번 늘지 않고, 이미 지급된 행을 그대로 돌려준다.
+ */
+export async function grantRecharge(opts: {
+  userId: string; amount: number; source: 'purchase' | 'grant' | 'refund_reversal'
+  provider?: string; externalRef?: string; expiresAt?: Date | null
+}): Promise<{ grantId: string; granted: boolean }> {
+  if (!Number.isSafeInteger(opts.amount) || opts.amount <= 0) throw new Error('invalid recharge amount')
+  const [row] = await db.insert(rechargeGrants).values({
+    userId: opts.userId, amount: opts.amount, source: opts.source,
+    provider: opts.provider ?? null, externalRef: opts.externalRef ?? null, expiresAt: opts.expiresAt ?? null,
+  }).onConflictDoNothing().returning({ id: rechargeGrants.id })
+  if (row) return { grantId: row.id, granted: true }
+  const [existing] = await db.select({ id: rechargeGrants.id }).from(rechargeGrants)
+    .where(and(eq(rechargeGrants.provider, opts.provider ?? ''), eq(rechargeGrants.externalRef, opts.externalRef ?? ''))).limit(1)
+  if (!existing) throw new Error('recharge grant failed')
+  observe('recharge.duplicate_grant', { userId: opts.userId, provider: opts.provider, externalRef: opts.externalRef })
+  return { grantId: existing.id, granted: false }
+}
+
+/**
+ * 환불·결제 취소. 아직 쓰지 않은 잔액만 회수한다 — 이미 쓴 만큼은 되돌리지 않는다.
+ * 부분 사용 후 환불에서 잔액이 음수가 되지 않게 남은 양까지만 refunded 로 옮긴다.
+ */
+export async function revokeRecharge(provider: string, externalRef: string): Promise<{ revoked: number }> {
+  return db.transaction(async (tx) => {
+    const [g] = await tx.select().from(rechargeGrants)
+      .where(and(eq(rechargeGrants.provider, provider), eq(rechargeGrants.externalRef, externalRef))).limit(1).for('update')
+    if (!g) return { revoked: 0 }
+    const unused = g.amount - g.consumed - g.refunded
+    if (unused > 0) await tx.update(rechargeGrants).set({ refunded: g.refunded + unused }).where(eq(rechargeGrants.id, g.id))
+    await tx.update(rechargeGrants).set({ status: 'revoked' }).where(eq(rechargeGrants.id, g.id))
+    return { revoked: unused }
+  })
 }

@@ -74,7 +74,7 @@ test('the recharge page reports real usage and sells nothing yet', async ({ page
   await expect(page.getByText(/에 초기화/)).toBeVisible()
   // 상품과 잔액은 준비 중이라고만 말한다 — 가격도, 구매 버튼도, 가짜 0 잔액도 없다.
   await expect(page.locator('[data-recharge-products="pending"]')).toBeVisible()
-  await expect(page.locator('[data-recharge-balance="unavailable"]')).toBeVisible()
+  await expect(page.locator('[data-recharge-balance="0"]')).toBeVisible()
   await expect(page.getByRole('button', { name: /구매|결제|충전하기/ })).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText(/원 |₩|\$/)
 

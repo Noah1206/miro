@@ -510,8 +510,38 @@ export const usageLedger = pgTable('usage_ledger', {
   amount: integer('amount').notNull(),
   idempotencyKey: text('idempotency_key').notNull().unique(),
   status: text('status', { enum: ['reserved', 'committed', 'rolled_back'] }).notNull().default('reserved'),
+  /** 이 예약이 충전 잔액에서 쓴 양. 월간에서 쓴 양은 amount - fromGrants. 복구가 출처를 가리는 근거다. */
+  fromGrants: integer('from_grants').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ windowIdx: index('usage_ledger_window_idx').on(t.windowId) }))
+
+/**
+ * 충전 잔액. 월간 창과 분리돼 있어 월초 초기화의 영향을 받지 않는다.
+ * 남은 양 = amount - consumed - refunded. 유효기간 정책은 미확정이라 expiresAt 은 null 을 허용한다.
+ */
+export const rechargeGrants = pgTable('recharge_grants', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(),
+  consumed: integer('consumed').notNull().default(0),
+  refunded: integer('refunded').notNull().default(0),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  source: text('source', { enum: ['purchase', 'grant', 'refund_reversal'] }).notNull(),
+  /** 검증된 서버 결제 결과만 채운다. (provider, externalRef) UNIQUE 가 이중 지급을 막는다. */
+  provider: text('provider'),
+  externalRef: text('external_ref'),
+  status: text('status', { enum: ['active', 'revoked'] }).notNull().default('active'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ activeIdx: index('recharge_grants_user_active_idx').on(t.userId, t.expiresAt, t.createdAt) }))
+
+/** 예약 한 건이 어느 잔액에서 얼마를 썼는지. 한 예약이 여러 잔액에 걸칠 수 있다. */
+export const rechargeLedger = pgTable('recharge_ledger', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ledgerId: uuid('ledger_id').notNull().references(() => usageLedger.id, { onDelete: 'cascade' }),
+  grantId: uuid('grant_id').notNull().references(() => rechargeGrants.id, { onDelete: 'restrict' }),
+  amount: integer('amount').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ ledgerIdx: index('recharge_ledger_ledger_idx').on(t.ledgerId) }))
 
 /**
  * 구독 자격. 결제(P13)는 이 행을 쓰는 주체일 뿐이며 Usage Guard 는 여기와 users.plan 만 읽는다.

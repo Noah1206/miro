@@ -32,12 +32,19 @@ export default async function RechargePage() {
         </Notice>
       )}
 
-      <Card style={{ marginBottom: 'var(--space-3)' }}>
-        <p className="t-title-3">충전 잔액</p>
-        <p data-recharge-balance="unavailable" className="t-caption" style={{ marginTop: 6, color: 'var(--color-text-secondary)' }}>
-          아직 충전 기능이 열리지 않아, 따로 쌓인 잔액이 없어요. 지금은 위의 월간 제공량으로만 이용해요.
-        </p>
-      </Card>
+      {usage && (
+        <Card style={{ marginBottom: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <p className="t-title-3">충전 잔액</p>
+            <span data-recharge-balance={usage.rechargeRemaining} className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{usage.rechargeRemaining}</span>
+          </div>
+          <p className="t-caption" style={{ marginTop: 6, color: 'var(--color-text-secondary)' }}>
+            {usage.rechargeRemaining > 0
+              ? '월간 제공량을 다 쓰면 이 잔액에서 이어서 차감돼요. 월초에 초기화되지 않아요.'
+              : '아직 충전한 잔액이 없어요. 지금은 위의 월간 제공량으로 이용해요.'}
+          </p>
+        </Card>
+      )}
 
       <Card data-recharge-products="pending">
         <p className="t-title-3">충전 상품</p>
