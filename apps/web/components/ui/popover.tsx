@@ -5,7 +5,7 @@ import { tween } from '@/lib/motion/tokens'
 import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 
 /** 작은 UI 는 작게 움직인다: opacity + scale 0.97 + y −4px. */
-export function Popover({ open, onClose, anchor = 'left', children }: { open: boolean; onClose: () => void; anchor?: 'left' | 'right'; children: ReactNode }) {
+export function Popover({ open, onClose, anchor = 'left', children, style }: { open: boolean; onClose: () => void; anchor?: 'left' | 'right'; children: ReactNode; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null)
   useFocusTrap(ref, open)
   useEffect(() => {
@@ -19,7 +19,7 @@ export function Popover({ open, onClose, anchor = 'left', children }: { open: bo
     <AnimatePresence>
       {open && (
         <motion.div ref={ref} role="menu" tabIndex={-1} initial={{ opacity: 0, scale: 0.97, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: -4, transition: tween.exit }} transition={tween.enter}
-          style={{ position: 'absolute', top: 'calc(100% + 6px)', [anchor]: 0, zIndex: 50, minWidth: 220, transformOrigin: `top ${anchor}`, background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: 6, boxShadow: 'var(--shadow-soft)' }}>
+          style={{ position: 'absolute', top: 'calc(100% + 6px)', [anchor]: 0, zIndex: 50, minWidth: 220, transformOrigin: `top ${anchor}`, background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: 6, boxShadow: 'var(--shadow-soft)', ...style }}>
           {children}
         </motion.div>
       )}

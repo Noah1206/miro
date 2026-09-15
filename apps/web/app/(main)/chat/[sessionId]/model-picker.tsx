@@ -17,11 +17,11 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
       {model === 'pro' ? 'MIRO Pro' : 'MIRO'}
       <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
     </button>
-    <Popover open={open} onClose={() => setOpen(false)} anchor="right">
-      <MenuItem type="button" disabled={!freeReady} aria-pressed={model === 'miro'} onClick={() => { setModel('miro'); setOpen(false) }}>
+    <Popover open={open} onClose={() => setOpen(false)} anchor="right" style={{ minWidth: 180, padding: 4 }}>
+      <MenuItem style={{ fontSize: 12, lineHeight: 1.4, minHeight: 34, padding: '8px 16px', whiteSpace: 'nowrap' }} type="button" disabled={!freeReady} aria-pressed={model === 'miro'} onClick={() => { setModel('miro'); setOpen(false) }}>
         MIRO · 기본 무료형{model === 'miro' ? ' ✓' : ''}{!freeReady ? ' · 준비 중' : ''}
       </MenuItem>
-      <MenuItem type="button" disabled={!isPro || !proReady} aria-pressed={model === 'pro'} onClick={() => { setModel('pro'); setOpen(false) }}>
+      <MenuItem style={{ fontSize: 12, lineHeight: 1.4, minHeight: 34, padding: '8px 16px', whiteSpace: 'nowrap' }} type="button" disabled={!isPro || !proReady} aria-pressed={model === 'pro'} onClick={() => { setModel('pro'); setOpen(false) }}>
         MIRO Pro{!proReady ? ' · 준비 중' : !isPro ? ' · Pro 전용' : model === 'pro' ? ' ✓' : ''}
       </MenuItem>
     </Popover>
