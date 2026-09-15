@@ -42,7 +42,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
         <th>접수</th><th>계정</th><th>상품</th><th>금액</th><th>입금자명</th><th>대조 코드</th><th>기한</th><th>상태</th><th>처리</th>
       </tr></thead><tbody>
         {rows.map((r) => (
-          <tr key={r.id} data-order-row data-order-status={r.status}>
+          <tr key={r.id} data-order-row data-order-status={r.status} data-order-code={r.referenceCode}>
             <td>{r.createdAt.toLocaleString('ko-KR')}</td>
             <td>{r.email}</td>
             <td>{r.kind === 'pass' ? '1개월 이용권' : `충전 ${r.productId}`}{r.units ? ` · ${r.units.toLocaleString('ko-KR')}` : ''}</td>

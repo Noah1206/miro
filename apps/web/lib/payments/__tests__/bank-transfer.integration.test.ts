@@ -126,15 +126,17 @@ describeDb('bank transfer orders', () => {
     await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' }))
       .rejects.toBeInstanceOf(OrderPendingError)
     // 기한이 지나면 만료되고 다시 주문할 수 있다.
+    // 반드시 이 사용자로 범위를 좁힌다 — 인자 없이 부르면 DB 안의 모든 대기 주문이
+    // 만료돼 같은 테스트 DB 를 쓰는 다른 스위트(E2E 포함)의 주문까지 쓸어버린다.
     const later = new Date(first.expiresAt.getTime() + 1000)
-    expect(await expireBankOrders(later)).toBeGreaterThanOrEqual(1)
+    expect(await expireBankOrders(later, u)).toBe(1)
     await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동', now: later })).resolves.toBeTruthy()
   })
 
   it('an expired order is never settled', async () => {
     const u = await user()
     const order = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
-    await expireBankOrders(new Date(order.expiresAt.getTime() + 1000))
+    await expireBankOrders(new Date(order.expiresAt.getTime() + 1000), u)
     await markApproved(order.id)   // 만료된 주문은 승인 상태로 넘어가지 않는다
     await settleApprovedOrders()
     expect(await effectivePlan(u)).toBe('free')
