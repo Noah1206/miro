@@ -12,6 +12,8 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   await page.goto(`${WEB}/recharge`)
 
   // 1) 주문 — 입금 계좌와 대조 코드를 받는다. 아직 Pro 가 아니다.
+  // 환불 조건은 사기 전에 보여야 한다.
+  await expect(page.locator('[data-refund-terms]')).toContainText('7일')
   const order = page.locator('[data-bank-order="open"] form[data-order-kind="pass"]')
   await order.getByLabel('입금자명').fill('홍길동')
   await order.getByRole('button', { name: '주문' }).click()

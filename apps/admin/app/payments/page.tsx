@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { bankAccount } from '@miro/config'
 import { can } from '@miro/domain'
 import { currentAdmin } from '@/lib/auth'
-import { listBankOrders, type OrderStatus } from '@/lib/payments'
+import { listBankOrders, recentSpendByUser, type OrderStatus } from '@/lib/payments'
 import { DecisionPanel } from './panel'
 
 const STATUSES = ['awaiting', 'approved', 'rejected', 'expired', 'all'] as const
@@ -17,6 +17,8 @@ export default async function Payments({ searchParams }: { searchParams: Promise
   const { status = 'awaiting' } = await searchParams
   const rows = await listBankOrders(status as OrderStatus | 'all')
   const canAct = can(admin.role, 'payments.act')
+  // 결제 상한을 두지 않는 대신 운영자가 최근 결제 합계를 보고 판단한다.
+  const spend = await recentSpendByUser(rows.map(r => r.userId))
 
   let account: ReturnType<typeof bankAccount> = null
   let accountError = false
@@ -39,12 +41,14 @@ export default async function Payments({ searchParams }: { searchParams: Promise
       </p>
 
       <table><thead><tr>
-        <th>접수</th><th>계정</th><th>상품</th><th>금액</th><th>입금자명</th><th>대조 코드</th><th>기한</th><th>상태</th><th>처리</th>
+        <th>접수</th><th>계정</th><th>최근 30일</th><th>상품</th><th>금액</th><th>입금자명</th><th>대조 코드</th><th>기한</th><th>상태</th><th>처리</th>
       </tr></thead><tbody>
         {rows.map((r) => (
           <tr key={r.id} data-order-row data-order-status={r.status} data-order-code={r.referenceCode}>
             <td>{r.createdAt.toLocaleString('ko-KR')}</td>
             <td>{r.email}</td>
+            {/* 이 계정이 최근 30일 승인받은 합계. 많으면 승인 전에 확인한다. */}
+            <td data-recent-spend={spend.get(r.userId) ?? 0}>{money(spend.get(r.userId) ?? 0, r.currency)}</td>
             <td>{r.kind === 'pass' ? '1개월 이용권' : `충전 ${r.productId}`}{r.units ? ` · ${r.units.toLocaleString('ko-KR')}` : ''}</td>
             <td><b>{money(r.amountMinor, r.currency)}</b></td>
             <td>{r.depositorName}</td>
@@ -54,7 +58,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
             <td>{r.status === 'awaiting' ? <DecisionPanel orderId={r.id} canAct={canAct} /> : (r.decidedAt?.toLocaleString('ko-KR') ?? '-')}</td>
           </tr>
         ))}
-        {rows.length === 0 && <tr><td colSpan={9} style={{ color: 'var(--muted)' }}>주문이 없습니다.</td></tr>}
+        {rows.length === 0 && <tr><td colSpan={10} style={{ color: 'var(--muted)' }}>주문이 없습니다.</td></tr>}
       </tbody></table>
     </>
   )

@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import { db, adminActions, adminUsers, bankTransferOrders, characters, hashPassword, messages, relationships, reports, roleplaySessions, users, worldStates, worlds } from '@miro/db'
 import { act, reportDetail } from '../reports'
-import { approveBankOrder, listBankOrders, rejectBankOrder } from '../payments'
+import { approveBankOrder, listBankOrders, recentSpendByUser, rejectBankOrder } from '../payments'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
@@ -129,6 +129,24 @@ describeDb('bank transfer decisions', () => {
     expect(await approveBankOrder(a, o)).toBe('not_pending')
     const audit = await db.select().from(adminActions).where(eq(adminActions.bankOrderId, o))
     expect(audit.map(r => r.action)).toEqual(['bank_order_reject'])
+  })
+
+  it('sums only this account\'s approved spend inside the window', async () => {
+    // 상한을 두지 않는 대신 운영자가 이 숫자를 보고 판단한다 — 틀리면 판단 근거가 사라진다.
+    const u = await user(); const other = await user(); const a = await admin()
+    // 대기 주문은 사용자당 하나뿐이라(부분 UNIQUE) 한 건씩 처리하며 쌓는다.
+    const paid = await order(u); await approveBankOrder(a, paid)
+    const rejected = await order(u); await rejectBankOrder(a, rejected, '입금 없음')
+    await order(u)                                   // 대기 중 — 아직 낸 돈이 아니다
+    const someoneElse = await order(other); await approveBankOrder(a, someoneElse)
+
+    const spend = await recentSpendByUser([u, other])
+    expect(spend.get(u)).toBe(9900)                  // 승인된 한 건만
+    expect(spend.get(other)).toBe(9900)              // 남의 결제가 섞이지 않는다
+
+    // 30일보다 오래된 승인은 창 밖이다.
+    const later = new Date(Date.now() + 31 * 86_400_000)
+    expect((await recentSpendByUser([u], later)).get(u)).toBeUndefined()
   })
 
   it('lists waiting orders oldest first', async () => {

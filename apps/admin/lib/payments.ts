@@ -1,4 +1,4 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray } from 'drizzle-orm'
 import { db, adminActions, bankTransferOrders, users } from '@miro/db'
 
 export type OrderStatus = 'awaiting' | 'approved' | 'rejected' | 'expired'
@@ -17,12 +17,35 @@ export async function listBankOrders(status: OrderStatus | 'all' = 'awaiting') {
     status: bankTransferOrders.status, note: bankTransferOrders.note,
     createdAt: bankTransferOrders.createdAt, expiresAt: bankTransferOrders.expiresAt,
     decidedAt: bankTransferOrders.decidedAt,
+    userId: bankTransferOrders.userId,
     email: users.email,
   }).from(bankTransferOrders).innerJoin(users, eq(users.id, bankTransferOrders.userId))
     .where(status === 'all' ? undefined : eq(bankTransferOrders.status, status))
     .orderBy(status === 'awaiting' ? bankTransferOrders.createdAt : desc(bankTransferOrders.createdAt))
     .limit(200)
   return rows
+}
+
+/**
+ * 이 계정이 최근 30일 안에 승인받은 결제 합계. 결제 상한을 두지 않는 대신
+ * 운영자가 승인 전에 보고 판단한다 — 과소비나 명의도용이 의심되면 승인하지 않는다.
+ *
+ * ponytail: 주문 수가 적어 승인 대기 건마다 한 번씩 센다. 목록이 길어지면 한 번의
+ * group by 로 합친다.
+ */
+export async function recentSpendByUser(userIds: string[], now = new Date()): Promise<Map<string, number>> {
+  if (!userIds.length) return new Map()
+  const since = new Date(now.getTime() - 30 * 86_400_000)
+  const rows = await db.select({ userId: bankTransferOrders.userId, amountMinor: bankTransferOrders.amountMinor })
+    .from(bankTransferOrders)
+    .where(and(
+      inArray(bankTransferOrders.userId, userIds),
+      eq(bankTransferOrders.status, 'approved'),
+      gte(bankTransferOrders.decidedAt, since),
+    ))
+  const out = new Map<string, number>()
+  for (const r of rows) out.set(r.userId, (out.get(r.userId) ?? 0) + r.amountMinor)
+  return out
 }
 
 export async function awaitingCount(): Promise<number> {

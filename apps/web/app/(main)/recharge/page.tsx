@@ -109,6 +109,12 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
                 <Button type="submit" variant="primary" size="sm">주문</Button>
               </form>
             ))}
+          {/* 환불 조건은 사기 전에 보인다 — 숨기지 않는 것이 확정된 방침이다. */}
+          <div data-refund-terms style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{COPY.refund.recharge}</p>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>{COPY.refund.pass}</p>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>{COPY.refund.failure} {COPY.refund.how}</p>
+          </div>
         </Card>
       )}
 
