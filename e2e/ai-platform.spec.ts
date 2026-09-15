@@ -4,7 +4,7 @@ const BASE=process.env.E2E_BASE ?? 'http://localhost:3000'
 test('monthly usage and independently revocable AI consent',async({page})=>{
   await signUp(page,BASE)
   await page.goto(`${BASE}/my/subscription`)
-  await expect(page.getByText('이번 달 AI 사용량')).toBeVisible()
+  await expect(page.getByText('이번 달 Reality 사용량')).toBeVisible()
   await expect(page.getByRole('meter')).toHaveAttribute('aria-valuemax','100')
   const usage=await page.request.get(`${BASE}/api/usage`)
   const body=await usage.json()

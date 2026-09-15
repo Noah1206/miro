@@ -1,3 +1,4 @@
+import { productionRuntime } from '@miro/config'
 import { redirect } from 'next/navigation'
 import { currentUser, requireUser } from '@/lib/auth'
 import { cancelSubscription, subscriptionStatus } from '@/lib/payments/service'
@@ -25,14 +26,14 @@ export default async function SubscriptionPage() {
           <div style={{ flex: 1, minWidth: 0 }}>
             <p data-plan={u.plan} className="t-title-3">MIRO {pro ? 'Pro' : 'Free'}</p>
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>
-              {pro ? '더 많은 대화·사진·통화를 쓰고 있어요.' : '대화·사진·통화 한도를 늘려요.'}
+              {pro ? '하나의 월간 사용량으로 캐릭터와의 관계를 이어가요.' : '캐릭터와 대화하며 관계를 쌓아가요.'}
             </p>
           </div>
-          {!pro && <ButtonLink href="/subscribe" variant="primary">구독하기</ButtonLink>}
+          {!pro && !productionRuntime() && <ButtonLink href="/subscribe" variant="primary">구독하기</ButtonLink>}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-          <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>이번 달 AI 사용량</span>
-          <span className="t-body" data-usage-remaining={u.remaining} style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{pct}%</span>
+          <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>이번 달 Reality 사용량</span>
+          <span className="t-body" data-usage-remaining={u.remaining} style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{pct}% 사용</span>
         </div>
         <div role="meter" aria-label={COPY.a11y.usageMeter} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-valuetext={`${pct}% 사용`}
           style={{ height: 3, background: 'var(--color-surface-3)', overflow: 'hidden', borderRadius: 2 }}>
@@ -51,7 +52,7 @@ export default async function SubscriptionPage() {
           <p className="t-caption">현재 기간 {fmt(s.currentPeriodStart)} ~ {fmt(s.currentPeriodEnd)}</p>
           {s.status === 'cancelled' && s.entitled && <p data-keeps-until className="t-body" style={{ marginTop: 10 }}>Pro 자격은 {fmt(s.currentPeriodEnd)}까지 유지됩니다.</p>}
           {s.status === 'active' && <form action={cancel} style={{ marginTop: 16 }}><Button type="submit" variant="danger" size="sm">구독 해지</Button></form>}
-          {s.status === 'expired' && <TransitionLink href="/subscribe" className="t-caption" style={{ marginTop: 12, textDecoration: 'underline' }}>다시 구독</TransitionLink>}
+          {s.status === 'expired' && !productionRuntime() && <TransitionLink href="/subscribe" className="t-caption" style={{ marginTop: 12, textDecoration: 'underline' }}>다시 구독</TransitionLink>}
         </section>
       )}
     </Page>

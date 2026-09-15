@@ -178,6 +178,7 @@ export async function usageStatus(userId: string, now = new Date()): Promise<Usa
 /** 서버 액션이 사용자에게 돌려줄 한도 안내. Free 는 Pro 안내, Pro 는 초기화 대기. */
 export function exceededMessage(e: UsageExceededError): string {
   const t = e.resetsAt.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' })
+  if (productionRuntime()) return `이번 달 Reality 사용량을 모두 썼어요. ${t}에 초기화됩니다. 기존 대화와 기억은 유지돼요.`
   return e.plan === 'free'
     ? `이번 사용량을 모두 썼어요. ${t}에 초기화되거나, Pro로 더 넉넉하게 이어갈 수 있어요.`
     : `이번 사용량을 모두 썼어요. ${t}에 초기화됩니다.`

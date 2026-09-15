@@ -9,13 +9,39 @@ import { sendTurn, type TurnState } from './actions'
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). */
 export function ChatComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
-  const [state, action, pending] = useActionState(sendTurn, { error: null, notice: null, limit: null } satisfies TurnState)
+  const [state, action, pending] = useActionState(async (previous: TurnState, form: FormData): Promise<TurnState> => {
+    try { return await sendTurn(previous, form) }
+    catch { return { error: '연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.', notice: null, limit: null, retryWithSameId: true } }
+  }, { error: null, notice: null, limit: null } satisfies TurnState)
   const [requestId, setRequestId] = useState('')
-  const [hasText, setHasText] = useState(false)
-  useEffect(() => { if (!pending) setRequestId(crypto.randomUUID()) }, [pending, state])
+  const [draft, setDraft] = useState('')
+  const [ready, setReady] = useState(false)
+  const hasText = !!draft.trim()
+  const storageKey = `miro:chat-draft:${sessionId}`
+  useEffect(() => {
+    let input = '', id = crypto.randomUUID()
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
+      if (saved && typeof saved.input === 'string' && saved.input.length <= 2000 && typeof saved.requestId === 'string' && /^[0-9a-f-]{36}$/i.test(saved.requestId)) {
+        input = saved.input; id = saved.requestId
+      }
+    } catch { /* Storage may be unavailable in private browsing. */ }
+    setDraft(input); setRequestId(id); setReady(true)
+  }, [storageKey])
+  useEffect(() => {
+    if (!ready) return
+    try {
+      if (draft) sessionStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId }))
+      else sessionStorage.removeItem(storageKey)
+    } catch { /* Draft persistence must not prevent sending. */ }
+  }, [draft, requestId, ready, storageKey])
+  useEffect(() => {
+    if (state.succeeded) { setDraft(''); setRequestId(crypto.randomUUID()) }
+    else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
+  }, [state])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => { if (!pending && !state.error) { ref.current?.reset(); setHasText(false); if (ta.current) ta.current.style.height = 'auto' } }, [pending, state.error])
+  useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, 140)}px` } }, [draft])
 
   return (
     <div className={styles.composer}>
@@ -32,11 +58,11 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
       <form ref={ref} action={action} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="sessionId" value={sessionId} />
-        <textarea className={styles.input} ref={ta} name="input" rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
-          onInput={(e) => { const el = e.currentTarget; setHasText(!!el.value.trim()); el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 140)}px` }}
+        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || !ready} rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
+          onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
           />
-        <Pressable type="submit" disabled={pending || !hasText} aria-label={COPY.cta.send} className={styles.send}>
+        <Pressable type="submit" disabled={pending || !ready || !hasText} aria-label={COPY.cta.send} className={styles.send}>
           {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
         </Pressable>
       </form>

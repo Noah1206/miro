@@ -15,13 +15,13 @@ export default async function PlansPage() {
   void track(user.id, 'upgrade_viewed', { plan })
   return (
     <Page style={{ maxWidth: 560 }}>
-      <PageHeader back="/my" title="같은 세계, 더 긴 시간" lead="두 요금제는 같은 기능과 품질을 제공해요. 차이는 매달 사용할 수 있는 양이에요." />
+      <PageHeader back="/my" title="MIRO Free · Pro" lead="캐릭터와 관계를 쌓고, 같은 세계의 이야기를 이어가요." />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         {([['Free', free, plan === 'free'], ['Pro', pro, plan === 'pro']] as const).map(([name, limit, current]) => (
           <Reveal key={name} delay={name === 'Pro' ? 0.06 : 0}>
             <div style={{ padding: 18, borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', border: `1px solid ${name === 'Pro' ? 'var(--color-white)' : 'var(--color-border)'}` }}>
               <h2 className="t-title-3">MIRO {name}</h2>
-              <p className="t-caption" style={{ marginTop: 4 }}>{name === 'Free' ? '기본 월간 사용량' : '더 넉넉한 월간 사용량'}</p>
+              <p className="t-caption" style={{ marginTop: 4 }}>{name === 'Free' ? '기본 월간 사용량' : '더 깊고 잦은 연결을 준비 중이에요'}</p>
               {current && <p className="t-micro" style={{ marginTop: 12, color: 'var(--color-text-primary)' }}>현재 요금제</p>}
             </div>
           </Reveal>
@@ -33,7 +33,7 @@ export default async function PlansPage() {
       <div style={{ marginTop: 'var(--space-5)' }}>
         <Accordion title="가격은 언제 정해지나요?"><p className="t-caption">원가 측정이 끝난 뒤 확정됩니다. 지금 보이는 한도는 개발용 임시값입니다.</p></Accordion>
       </div>
-      {productionRuntime() && <p role="status" className="t-caption" style={{ marginTop: 20 }}>Pro는 준비 중입니다. 현재 무료로 이용할 수 있어요.</p>}
+      {productionRuntime() && <p role="status" className="t-caption" style={{ marginTop: 20 }}>Pro는 준비 중입니다. 기억과 연락의 깊이를 넓히는 경험을 준비하고 있어요. 제공 범위와 가격은 출시 전에 안내할게요.</p>}
       {plan === 'free' && !productionRuntime() && (
         <div style={{ marginTop: 'var(--space-6)' }}>
           <ButtonLink href="/subscribe" data-upgrade variant="primary" size="lg" full>Pro 시작하기</ButtonLink>

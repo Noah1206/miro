@@ -29,6 +29,6 @@ export const COPY = {
   },
   a11y: {
     composer: '역할극 입력', liveInput: '행동 입력', callInput: '통화 중 말하기', styleGroup: '출력 스타일',
-    messageLog: '대화', usageMeter: '남은 사용량', hero: (name: string) => `${name}의 세계로 들어가기`,
+    messageLog: '대화', usageMeter: '이번 달 Reality 사용량', hero: (name: string) => `${name}의 세계로 들어가기`,
   },
 } as const

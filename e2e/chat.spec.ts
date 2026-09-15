@@ -14,16 +14,16 @@ test('a free-form turn persists and the world header reflects state', async ({ p
   await enterRoleplay(page)
 
   // 현재 세계 상태가 헤더에 보인다
-  await expect(page.getByText(/런던 구시가지 · 저녁/).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 
   const composer = page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…')
   await composer.fill('책상을 주먹으로 친다.\n"그건 제 실수가 아닙니다."')
   await page.getByRole('button', { name: '전송' }).click()
 
   // 사용자 입력과 캐릭터 응답이 모두 남는다
-  await expect(page.getByText('그건 제 실수가 아닙니다')).toBeVisible()
+  await expect(page.getByText(/그건 제 실수가 아닙니다/).first()).toBeVisible()
   await expect(page.getByText(/Mock 응답입니다/)).toBeVisible()
-  await expect(page.locator('text=토마스:')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveValue('')
 })
 
 test('state survives leaving and re-entering the chat', async ({ page }) => {
@@ -40,15 +40,18 @@ test('state survives leaving and re-entering the chat', async ({ page }) => {
 
   // 마지막 메시지가 아니라 대화 전체와 세계 상태가 복구된다
   await expect(page.getByText('처음 뵙겠습니다.')).toBeVisible()
-  await expect(page.getByText(/런던 구시가지/).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 })
 
 test('output style can be switched', async ({ page }) => {
   await enterRoleplay(page)
-  await page.getByRole('button', { name: '서사형' }).click()
-  await expect(page.getByRole('button', { name: '서사형' })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: '출력 스타일' }).click()
+  await page.getByRole('menuitem', { name: /서사형/ }).click()
+  await page.getByRole('button', { name: '출력 스타일' }).click()
+  await expect(page.getByRole('menuitem', { name: /서사형/ })).toHaveAttribute('aria-pressed', 'true')
   await page.reload()
-  await expect(page.getByRole('button', { name: '서사형' })).toHaveAttribute('aria-pressed', 'true')
+  await page.getByRole('button', { name: '출력 스타일' }).click()
+  await expect(page.getByRole('menuitem', { name: /서사형/ })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('relationship numbers are never shown to the user', async ({ page }) => {
@@ -59,4 +62,24 @@ test('relationship numbers are never shown to the user', async ({ page }) => {
 
   const body = await page.locator('body').innerText()
   expect(body).not.toMatch(/호감도|신뢰 \d+|애착 \d+|관계 수치/)
+})
+
+
+test('unsent draft survives reload and a failed transport preserves it', async ({ page }) => {
+  await enterRoleplay(page)
+  const composer = page.getByRole('textbox', { name: '역할극 입력' })
+  await composer.fill('이 내용은 실패해도 남아야 해요.')
+  await page.reload()
+  await expect(composer).toHaveValue('이 내용은 실패해도 남아야 해요.')
+  await page.route('**/chat/**', async route => {
+    if (route.request().method() === 'POST') await route.abort('failed')
+    else await route.continue()
+  })
+  await page.getByRole('button', { name: '전송', exact: true }).click()
+  await expect(page.getByRole('alert').filter({ hasText: '연결이 끊겼어요' })).toBeVisible()
+  await expect(composer).toHaveValue('이 내용은 실패해도 남아야 해요.')
+  await page.unroute('**/chat/**')
+  await page.getByRole('button', { name: '전송', exact: true }).click()
+  await expect(composer).toHaveValue('')
+  await expect(page.getByText('이 내용은 실패해도 남아야 해요.', { exact: true })).toHaveCount(1)
 })
