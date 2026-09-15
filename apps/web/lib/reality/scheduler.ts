@@ -7,6 +7,7 @@ import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
 import { purgeDeleted } from '@/lib/ops/archive'
 import { expireSubscriptions } from '@/lib/payments/service'
+import { notifyExpiringPasses } from '@/lib/payments/expiry-notice'
 import { observe } from '@/lib/observe'
 
 export type SchedulerRun = {
@@ -16,6 +17,7 @@ export type SchedulerRun = {
   calls: { missed: number; timedOut: number }
   purged: number
   expiredSubscriptions: number
+  passNotices: { soon: number; ended: number }
 }
 
 /**
@@ -73,8 +75,11 @@ export async function runRealityScheduler(now = new Date(), wall = new Date()): 
   // 생성 시각(실제 시각)과 비교하는 만료 판정에 섞이면 방금 만든 통화가 부재중이 된다.
   const calls = await expireCalls(wall)
   const purged = await purgeDeleted(wall)   // 보존 기간이 지난 삭제 역할극 영구 삭제
+  // 만료 안내를 sweep 보다 먼저 보낸다. 순서가 바뀌면 status 가 expired 로 넘어가
+  // 당일 안내 대상에서 빠진다 — 사용자는 끝났다는 사실만 화면에서 발견하게 된다.
+  const passNotices = await notifyExpiringPasses(wall)
   const expiredSubscriptions = await expireSubscriptions(wall)
   await maintainAI(wall)
   await deliverRealityPush(wall)
-  return { claimed: claimed.length, results, errors, calls, purged, expiredSubscriptions }
+  return { claimed: claimed.length, results, errors, calls, purged, expiredSubscriptions, passNotices }
 }

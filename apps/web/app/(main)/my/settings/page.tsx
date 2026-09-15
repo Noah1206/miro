@@ -20,7 +20,7 @@ export default async function SettingsPage() {
 
       <h2 className="t-title-3" style={{ margin: 'var(--space-7) 0 12px' }}>계정</h2>
       <Stagger as="div" className="stack" style={{ gap: 8 }}>
-        {[['/my/subscription', '구독 관리'], ['/my/verify', '성인 인증'], ['/my/permissions', '권한 안내']].map(([h, l]) => (
+        {[['/my/subscription', '이용권 관리'], ['/my/verify', '성인 인증'], ['/my/permissions', '권한 안내']].map(([h, l]) => (
           <StaggerItem key={h}><Row href={h!} label={l!} /></StaggerItem>
         ))}
         <StaggerItem><Row href="/my/delete" label="계정 삭제" danger /></StaggerItem>

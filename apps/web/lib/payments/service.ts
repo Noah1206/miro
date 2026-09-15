@@ -1,8 +1,8 @@
 import { mockProvidersAllowed, productionRuntime } from '@miro/config'
-import { and, desc, eq, gt, lte } from 'drizzle-orm'
+import { and, desc, eq, gt, lte, ne } from 'drizzle-orm'
 import { usagePolicy, rechargeProduct, POLICY } from '@miro/config'
 import { db, paymentEvents, subscriptions, usageWindows } from '@miro/db'
-import { applyCancel, applyExpiry, applyPurchase, applyRefund, isEntitled, type Subscription } from '@miro/domain'
+import { applyExpiry, applyPurchase, applyRefund, isEntitled, type Subscription } from '@miro/domain'
 import { resolvePayment, type PaymentEvent } from '@miro/providers'
 import { grantRecharge, revokeRecharge } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
@@ -72,13 +72,17 @@ export async function applyPaymentEvent(providerName: string, ev: PaymentEvent):
 
     let next: Subscription | null = null
     if (ev.type === 'purchase' || ev.type === 'renewal') next = applyPurchase(current, now, ev.externalRef, ev.periodEnd ?? undefined)
-    else if (ev.type === 'cancel' && current) next = applyCancel(current)
+    // 이용권은 자동 갱신이 없다. 외부에서 온 취소는 멈출 갱신이 없으므로 상태만 남기고
+    // 자격은 기간 끝까지 유지한다 — 환불(applyRefund)만 자격을 즉시 끊는다.
+    else if (ev.type === 'cancel' && current) next = { ...current, status: 'cancelled' }
     else if (ev.type === 'refund' && current) next = applyRefund(current, now)
     else if (ev.type === 'failed') { observe('payment.failed', { userId, provider: providerName }); return 'applied' }
     if (!next) return 'applied'
 
-    await tx.insert(subscriptions).values({ userId, plan: 'pro', provider: providerName, ...next, updatedAt: now })
-      .onConflictDoUpdate({ target: subscriptions.userId, set: { provider: providerName, ...next, updatedAt: now } })
+    // 새 기간이 시작되면 지난 만료 안내를 비운다 — 다음 만료도 다시 알려야 한다.
+    const notice = ev.type === 'purchase' || ev.type === 'renewal' ? { expiryNotice: null } : {}
+    await tx.insert(subscriptions).values({ userId, plan: 'pro', provider: providerName, ...next, ...notice, updatedAt: now })
+      .onConflictDoUpdate({ target: subscriptions.userId, set: { provider: providerName, ...next, ...notice, updatedAt: now } })
 
     if (ev.type === 'purchase' || ev.type === 'renewal') {
       // 방금 한도에 막혀 결제한 사용자가 바로 이어갈 수 있도록 현재 창의 한도를 Pro 로 올린다.
@@ -136,26 +140,21 @@ export async function restorePurchase(userId: string): Promise<'restored' | 'not
   return r === 'unknown_user' ? 'nothing' : 'restored'
 }
 
-/** 해지. 현재 결제 기간이 끝날 때까지 Pro 를 유지한다. */
-export async function cancelSubscription(userId: string): Promise<boolean> {
-  const [row] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
-  if (!row || row.status !== 'active') return false
-  if (row.externalRef) await resolvePayment().cancel(row.externalRef)
-  await db.update(subscriptions).set({ ...applyCancel(row as never), updatedAt: new Date() }).where(eq(subscriptions.userId, userId))
-  observe('payment.cancelled', { userId })
-  return true
-}
-
 export async function subscriptionStatus(userId: string) {
   const [row] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
   if (!row) return null
   return { ...row, entitled: isEntitled(row as never, new Date()) }
 }
 
-/** 기간이 끝났고 갱신이 없는 구독을 만료 처리한다. Cron 에서 호출. */
+/**
+ * 기간이 끝난 이용권을 만료 처리한다. Cron 에서 호출.
+ *
+ * 자동 갱신이 없으므로 `active` 인 이용권도 기간이 지나면 여기서 끝난다 — 해지를 기다리지
+ * 않는다. 이미 `expired` 인 행만 건너뛴다.
+ */
 export async function expireSubscriptions(now = new Date()): Promise<number> {
   const due = await db.select().from(subscriptions)
-    .where(and(eq(subscriptions.renewalStatus, 'cancelled'), lte(subscriptions.currentPeriodEnd, now), eq(subscriptions.status, 'cancelled')))
+    .where(and(eq(subscriptions.renewalStatus, 'cancelled'), lte(subscriptions.currentPeriodEnd, now), ne(subscriptions.status, 'expired')))
   for (const s of due) {
     await db.update(subscriptions).set({ ...applyExpiry(s as never, now), updatedAt: now }).where(eq(subscriptions.id, s.id))
   }

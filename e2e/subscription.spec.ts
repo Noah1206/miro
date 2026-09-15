@@ -19,7 +19,8 @@ test('free user hits the wall, subscribes, and continues in the same window', as
   await page.locator('[data-upgrade]').click()
   await expect(page).toHaveURL(/\/subscribe/)
   await expect(page.getByText(/실제 결제가 일어나지 않는/)).toBeVisible()      // Mock 임을 숨기지 않는다
-  await expect(page.getByText(/가격: 9,900원/)).toBeVisible()
+  await expect(page.getByText(/1개월 이용권: 9,900원/)).toBeVisible()
+  await expect(page.getByText(/자동 결제되지 않고/)).toBeVisible()   // 자동 갱신이 없음을 구매 전에 밝힌다
   await page.locator('[data-checkout]').click()
   await expect(page.locator('[data-mock-checkout]')).toBeVisible()
   await page.getByRole('button', { name: '결제 성공' }).click()
@@ -33,7 +34,7 @@ test('free user hits the wall, subscribes, and continues in the same window', as
   await expect(page.getByText('이제 되나.')).toBeVisible()                    // 같은 창에서 바로 이어진다
 })
 
-test('a failed payment grants nothing; cancel keeps Pro until the period ends; restore works', async ({ page }) => {
+test('a failed payment grants nothing; a bought pass runs to its end date; restore works', async ({ page }) => {
   await signupAndPlay(page)
   await page.goto(`${BASE}/subscribe`); await page.locator('[data-checkout]').click()
   await page.getByRole('button', { name: '결제 실패' }).click()
@@ -43,10 +44,10 @@ test('a failed payment grants nothing; cancel keeps Pro until the period ends; r
   await page.goto(`${BASE}/subscribe`); await page.locator('[data-checkout]').click(); await page.getByRole('button', { name: '결제 성공' }).click()
   await expect(page.locator('[data-payment-result="success"]')).toBeVisible()   // 서버 액션 완료를 기다린 뒤 이동한다
   await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-sub-status="active"]')).toBeVisible()
-  await page.getByRole('button', { name: '구독 해지' }).click()
-  await expect(page.locator('[data-sub-status="cancelled"]')).toBeVisible()
+  // 자동 갱신이 없으므로 해지 버튼도 없다 — 기간이 끝나는 날짜를 그대로 보여준다.
+  await expect(page.getByRole('button', { name: '구독 해지' })).toHaveCount(0)
   await expect(page.locator('[data-keeps-until]')).toContainText('까지 유지')
-  await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()     // 해지 직후에도 Pro
+  await page.goto(`${BASE}/my/subscription`); await expect(page.locator('[data-plan="pro"]')).toBeVisible()
 })
 
 test('the webhook rejects a bad signature', async ({ request }) => {

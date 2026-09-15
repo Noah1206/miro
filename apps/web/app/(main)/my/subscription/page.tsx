@@ -1,12 +1,10 @@
 import { productionRuntime } from '@miro/config'
 import { redirect } from 'next/navigation'
-import { currentUser, requireUser } from '@/lib/auth'
-import { cancelSubscription, subscriptionStatus } from '@/lib/payments/service'
+import { currentUser } from '@/lib/auth'
+import { subscriptionStatus } from '@/lib/payments/service'
 import { usageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
-import { Button, ButtonLink, Page, PageHeader, TransitionLink } from '@/components/ui'
-
-async function cancel() { 'use server'; const u = await requireUser(); await cancelSubscription(u.id); redirect('/my/subscription') }
+import { ButtonLink, Page, PageHeader, TransitionLink } from '@/components/ui'
 
 export default async function SubscriptionPage() {
   const user = await currentUser()
@@ -18,9 +16,9 @@ export default async function SubscriptionPage() {
   const pro = u.plan === 'pro'
   return (
     <Page style={{ maxWidth: 480 }}>
-      <PageHeader back="/my" title="구독" />
+      <PageHeader back="/my" title="이용권" />
 
-      {/* 요금제와 사용량. 마이페이지에 두면 매번 구독 권유를 보는 셈이라 여기로 옮겼다. 사용량은 조용한 선 하나 (명세서 6.1). */}
+      {/* 요금제와 사용량. 마이페이지에 두면 매번 구매 권유를 보는 셈이라 여기로 옮겼다. 사용량은 조용한 선 하나 (명세서 6.1). */}
       <section style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-3)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -29,7 +27,7 @@ export default async function SubscriptionPage() {
               {pro ? '하나의 월간 사용량으로 캐릭터와의 관계를 이어가요.' : '캐릭터와 대화하며 관계를 쌓아가요.'}
             </p>
           </div>
-          {!pro && !productionRuntime() && <ButtonLink href="/subscribe" variant="primary">구독하기</ButtonLink>}
+          {!pro && !productionRuntime() && <ButtonLink href="/subscribe" variant="primary">이용권 받기</ButtonLink>}
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
           <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>이번 달 Reality 사용량</span>
@@ -48,15 +46,15 @@ export default async function SubscriptionPage() {
       </section>
 
       {!s ? (
-        <p data-sub-status="none" className="t-body" style={{ color: 'var(--color-text-secondary)' }}>구독이 없습니다. <TransitionLink href="/plans" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 보기</TransitionLink></p>
+        <p data-sub-status="none" className="t-body" style={{ color: 'var(--color-text-secondary)' }}>이용권이 없습니다. <TransitionLink href="/plans" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 보기</TransitionLink></p>
       ) : (
         <section data-sub-status={s.status} style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }} className="stack">
           <p className="t-title-3">MIRO Pro {s.entitled ? '' : <span className="t-caption">(만료)</span>}</p>
-          <p className="t-caption" style={{ marginTop: 6 }}>{s.renewalStatus === 'auto' ? '자동 갱신' : '해지됨 — 갱신되지 않음'}</p>
-          <p className="t-caption">현재 기간 {fmt(s.currentPeriodStart)} ~ {fmt(s.currentPeriodEnd)}</p>
-          {s.status === 'cancelled' && s.entitled && <p data-keeps-until className="t-body" style={{ marginTop: 10 }}>Pro 자격은 {fmt(s.currentPeriodEnd)}까지 유지됩니다.</p>}
-          {s.status === 'active' && <form action={cancel} style={{ marginTop: 16 }}><Button type="submit" variant="danger" size="sm">구독 해지</Button></form>}
-          {s.status === 'expired' && !productionRuntime() && <TransitionLink href="/subscribe" className="t-caption" style={{ marginTop: 12, textDecoration: 'underline' }}>다시 구독</TransitionLink>}
+          {/* 자동 갱신이 없다 — 남은 기간을 알리고, 끝나면 다시 받게 한다. */}
+          <p className="t-caption" style={{ marginTop: 6 }}>자동으로 갱신되지 않아요</p>
+          <p className="t-caption">이용 기간 {fmt(s.currentPeriodStart)} ~ {fmt(s.currentPeriodEnd)}</p>
+          {s.entitled && <p data-keeps-until className="t-body" style={{ marginTop: 10 }}>Pro 자격은 {fmt(s.currentPeriodEnd)}까지 유지돼요. 끝나기 전에 알려드릴게요.</p>}
+          {!s.entitled && !productionRuntime() && <TransitionLink href="/subscribe" className="t-caption" style={{ marginTop: 12, textDecoration: 'underline' }}>이용권 다시 받기</TransitionLink>}
         </section>
       )}
     </Page>

@@ -8,25 +8,26 @@ export type Subscription = {
   externalRef: string | null
 }
 
-/** 해지 후에도 현재 결제 기간 종료까지 Pro 자격을 유지한다 (명세서 10.3). */
+/** 기간이 끝나기 전까지 Pro 자격을 유지한다. 만료된 이용권은 자격이 없다. */
 export function isEntitled(sub: Subscription | null, now: Date): boolean {
   if (!sub) return false
   return sub.status !== 'expired' && sub.currentPeriodEnd > now
 }
 
-/** 구매/갱신 적용. 기간이 남아 있으면 그 끝에서 이어 붙이고, 아니면 지금부터 시작한다. */
+/**
+ * 이용권 구매 적용. 기간이 남아 있으면 그 끝에서 이어 붙이고, 아니면 지금부터 시작한다.
+ *
+ * **자동 갱신은 없다.** 한 번 산 이용권은 기간이 끝나면 만료되고, 이어가려면 다시 산다.
+ * 그래서 `renewalStatus` 는 항상 `cancelled` — 만료 sweep 이 이 값으로 대상을 고르므로
+ * `auto` 로 두면 기간이 지나도 영영 만료되지 않고 Pro 자격이 남는다.
+ */
 export function applyPurchase(sub: Subscription | null, now: Date, externalRef: string, periodEnd?: Date): Subscription {
   const base = sub && sub.currentPeriodEnd > now ? sub.currentPeriodEnd : now
   const end = periodEnd ?? new Date(base.getTime() + POLICY.subscription.periodDays * 86_400_000)
-  return { status: 'active', renewalStatus: 'auto', currentPeriodStart: sub && sub.currentPeriodEnd > now ? sub.currentPeriodStart : now, currentPeriodEnd: end, externalRef }
+  return { status: 'active', renewalStatus: 'cancelled', currentPeriodStart: sub && sub.currentPeriodEnd > now ? sub.currentPeriodStart : now, currentPeriodEnd: end, externalRef }
 }
 
-/** 해지: 즉시 자격을 빼앗지 않는다. 갱신만 멈춘다. */
-export function applyCancel(sub: Subscription): Subscription {
-  return { ...sub, status: 'cancelled', renewalStatus: 'cancelled' }
-}
-
-/** 기간이 끝났고 갱신이 없으면 만료. Cron 이 호출한다. */
+/** 기간이 끝나면 만료. Cron 이 호출한다. 갱신이 없으므로 모든 이용권이 여기를 지난다. */
 export function applyExpiry(sub: Subscription, now: Date): Subscription {
   if (sub.currentPeriodEnd <= now && sub.renewalStatus === 'cancelled') return { ...sub, status: 'expired' }
   return sub

@@ -31,12 +31,12 @@ export default async function PlansPage() {
         {FEATURES.map((f) => <li key={f} className="t-body" style={{ padding: '11px 0', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between' }}><span>{f}</span><span className="t-caption">Free · Pro</span></li>)}
       </ul>
       <div style={{ marginTop: 'var(--space-5)' }}>
-        <Accordion title="Pro는 언제 이용할 수 있나요?"><p className="t-caption">월 9,900원으로 준비 중입니다. 제공량과 결제 준비가 완료되면 안내할게요.</p></Accordion>
+        <Accordion title="Pro는 언제 이용할 수 있나요?"><p className="t-caption">1개월 이용권 9,900원으로 준비 중입니다. 자동 갱신 없이 필요할 때만 받는 방식이고, 결제 준비가 완료되면 안내할게요.</p></Accordion>
       </div>
       {productionRuntime() && <p role="status" className="t-caption" style={{ marginTop: 20 }}>Pro는 준비 중입니다. 기억과 연락의 깊이를 넓히는 경험을 준비하고 있어요. 제공 범위와 사용량은 출시 전에 안내할게요.</p>}
       {plan === 'free' && !productionRuntime() && (
         <div style={{ marginTop: 'var(--space-6)' }}>
-          <ButtonLink href="/subscribe" data-upgrade variant="primary" size="lg" full>Pro 시작하기</ButtonLink>
+          <ButtonLink href="/subscribe" data-upgrade variant="primary" size="lg" full>Pro 이용권 받기</ButtonLink>
         </div>
       )}
     </Page>

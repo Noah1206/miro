@@ -18,12 +18,13 @@ export default async function SubscribePage({ searchParams }: { searchParams: Pr
   const provider = resolvePayment()
   return (
     <Page style={{ maxWidth: 480 }}>
-      <PageHeader back="/plans" title="MIRO Pro" lead="같은 기능과 품질, 더 넉넉한 월간 사용량." />
-      <p className="t-body" style={{ marginBottom: 16 }}>월 가격: <b>{POLICY.subscription.priceLabel}</b> <span className="t-caption">(판매 준비 중)</span></p>
+      <PageHeader back="/plans" title="MIRO Pro" lead="같은 기능과 품질, 더 넉넉한 월간 사용량. 자동 갱신은 없어요." />
+      <p className="t-body" style={{ marginBottom: 16 }}>1개월 이용권: <b>{POLICY.subscription.priceLabel}</b> <span className="t-caption">(판매 준비 중)</span></p>
+      <p className="t-caption" style={{ marginBottom: 16, color: 'var(--color-text-secondary)' }}>30일 뒤 자동으로 끝나요. 자동 결제되지 않고, 끝나기 전에 알려드릴게요.</p>
       {provider.info.notice && <Notice style={{ marginBottom: 16 }}>⚠ {provider.info.notice}</Notice>}
       {!checkout ? (
         <Reveal>
-          <form action={beginCheckout}><Button type="submit" variant="primary" size="lg" full data-checkout>Pro 구독 시작</Button></form>
+          <form action={beginCheckout}><Button type="submit" variant="primary" size="lg" full data-checkout>Pro 이용권 받기</Button></form>
           <form action={restore} style={{ marginTop: 14, textAlign: 'center' }}><Button type="submit" variant="ghost" size="sm">이전 구매 복원</Button></form>
         </Reveal>
       ) : (

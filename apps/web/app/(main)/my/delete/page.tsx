@@ -22,7 +22,7 @@ export default async function DeleteAccountPage() {
         <li>역할극 {i.sessions}개와 그 세계·관계·사건·기억</li>
         <li>직접 만든 캐릭터 {i.createdCharacters}개</li>
         <li>기억 {i.memories}건 · 사건 {i.events}건</li>
-        <li>구독: {i.subscription === 'none' ? '없음' : i.subscription === 'active' ? 'Pro 자격이 해지됩니다' : '해지 예정 상태 유지'}</li>
+        <li>이용권: {i.subscription === 'none' ? '없음' : i.subscription === 'active' ? 'Pro 자격이 종료됩니다' : '남은 기간 그대로'}</li>
       </ul>
       <form action={confirm} style={{ display: 'flex', gap: 10 }}>
         <ButtonLink href="/my" direction="back" variant="secondary" style={{ flex: 1 }}>취소</ButtonLink>

@@ -13,7 +13,7 @@ const FILTERS: Array<{ key: Filter; label: string }> = [
 
 /**
  * 마이페이지 (레퍼런스 구조): 프로필 카드 → 내 캐릭터(필터·목록) → 설정 → 푸터.
- * 요금제·사용량은 '구독 관리' 에 있다 — 여기 카드로 두면 매번 구독 권유를 보는 셈이다.
+ * 요금제·사용량은 '이용권 관리' 에 있다 — 여기 카드로 두면 매번 구매 권유를 보는 셈이다.
  * 팔로우·프로필 공유·회사 정보처럼 실체가 없는 것은 넣지 않는다.
  */
 export default async function MyPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {

@@ -558,6 +558,11 @@ export const subscriptions = pgTable('subscriptions', {
   /** 외부 결제 거래/구독 식별자. 복원(restore) 시 계정과 연결한다. */
   externalRef: text('external_ref').unique(),
   provider: text('provider'),
+  /**
+   * 마지막으로 보낸 만료 안내. 자동 갱신이 없으므로 끝나기 전에 알려야 이어서 쓸 수 있다.
+   * null → 'soon'(3일 전) → 'ended'(당일). 행에 남겨 15분마다 도는 cron 의 중복 발송을 막는다.
+   */
+  expiryNotice: text('expiry_notice', { enum: ['soon', 'ended'] }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })

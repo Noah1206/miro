@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import { db, paymentEvents, subscriptions, usageWindows, users } from '@miro/db'
 import { POLICY } from '@miro/config'
-import { applyPaymentEvent, cancelSubscription, expireSubscriptions, restorePurchase, startRechargeCheckout, subscriptionStatus } from '../service'
+import { applyPaymentEvent, expireSubscriptions, restorePurchase, startRechargeCheckout, subscriptionStatus } from '../service'
 import { effectivePlan, rechargeBalance, rechargeHistory, reserve } from '@/lib/usage/guard'
 import { resolvePayment } from '@miro/providers'
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
@@ -38,10 +38,11 @@ describeDb('payments', () => {
     const u = await user(); await applyPaymentEvent('mock', ev(u, { type: 'failed' })); expect(await effectivePlan(u)).toBe('free')
   })
 
-  it('cancel keeps Pro until the period ends; the sweep expires it after', async () => {
+  it('a bought pass keeps Pro to the period end, then the sweep expires it without any cancel', async () => {
+    // 자동 갱신이 없으므로 아무도 해지하지 않아도 만료돼야 한다. renewalStatus 가 'auto' 면
+    // sweep 이 이 행을 건너뛰어 기간이 지나도 Pro 가 남는다 — 그것을 막는 테스트다.
     const u = await user(); await applyPaymentEvent('mock', ev(u))
-    expect(await cancelSubscription(u)).toBe(true)
-    const s = await subscriptionStatus(u); expect(s!.status).toBe('cancelled'); expect(s!.entitled).toBe(true); expect(await effectivePlan(u)).toBe('pro')
+    const s = await subscriptionStatus(u); expect(s!.entitled).toBe(true); expect(await effectivePlan(u)).toBe('pro')
     expect(await expireSubscriptions(new Date())).toBe(0)
     const after = new Date(s!.currentPeriodEnd.getTime() + 1000)
     expect(await expireSubscriptions(after)).toBeGreaterThanOrEqual(1); expect(await effectivePlan(u, after)).toBe('free')
