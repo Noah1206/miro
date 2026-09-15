@@ -3,7 +3,7 @@ import { db, users, conversationRequests } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@miro/providers'
-import { beginRequest, failRequest } from '@/lib/ai/gateway'
+import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { feature, usagePolicy } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
 import { renderBlocks, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
@@ -165,7 +165,7 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
   try { request = await beginRequest(opts.userId, opts.sessionId, opts.input, opts.requestId) }
-  catch { return { ok: false, reason: 'conflict' } }
+  catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached
   try {
     const result = await executeTurn({ ...opts, requestId: request.requestId, traceId: randomUUID() })

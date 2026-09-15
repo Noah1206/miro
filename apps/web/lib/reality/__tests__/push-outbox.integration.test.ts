@@ -65,7 +65,7 @@ describeDb('durable proactive push', () => {
   })
   it('is inaccessible to public API roles', async () => {
     const result = await db.execute<{ enabled: boolean; allowed: boolean }>(sql`select relrowsecurity as enabled,
-      has_table_privilege('anon','reality_push_jobs','SELECT') OR has_table_privilege('authenticated','reality_push_jobs','INSERT') as allowed
+      exists (select 1 from (values ('anon'), ('authenticated')) roles(name) cross join (values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')) permissions(name) where has_table_privilege(roles.name, 'reality_push_jobs', permissions.name)) as allowed
       from pg_class where oid='reality_push_jobs'::regclass`)
     expect(result[0]).toEqual({ enabled: true, allowed: false })
   })

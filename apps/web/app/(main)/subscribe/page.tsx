@@ -6,6 +6,9 @@ import { effectivePlan } from '@/lib/usage/guard'
 import { Button, Notice, Page, PageHeader, Reveal } from '@/components/ui'
 import { beginCheckout, restore, simulateOutcome } from './actions'
 
+// Runtime environment and account state must never be frozen into a build-time redirect.
+export const dynamic = 'force-dynamic'
+
 export default async function SubscribePage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
   if (productionRuntime()) redirect('/plans')
   const user = await currentUser()

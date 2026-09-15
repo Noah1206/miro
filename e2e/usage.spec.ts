@@ -17,6 +17,7 @@ test('free user hits the limit, is pointed to Pro, and continues after upgrading
 
   await composer.fill('첫 출근입니다.')
   await page.getByRole('button', { name: '전송' }).click()
+  await expect(composer).toHaveValue('')
   await expect(page.getByText('첫 출근입니다.')).toBeVisible()
 
   // 창을 소진한다

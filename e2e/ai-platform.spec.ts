@@ -19,7 +19,7 @@ test('monthly usage and independently revocable AI consent',async({page})=>{
   await evaluation.uncheck();await page.getByRole('button',{name:'저장하기'}).click()
   await expect(evaluation).not.toBeChecked()
   await page.goto(`${BASE}/my/ai-data`)
-  await expect(page.locator('main')).toHaveCSS('opacity','1')
+  await expect(page.locator('main').first()).toHaveCSS('opacity','1')
   await expect(page.getByRole('heading',{name:'AI 개선 참여'})).toHaveCSS('opacity','1')
   await page.screenshot({path:'/tmp/miro-ai-consent.png',fullPage:true})
 })

@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { db, users, conversationRequests, usageLedger } from '@miro/db'
+import { db, users, conversationRequests, usageLedger, roleplaySessions } from '@miro/db'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { reserve, commit, usageStatus } from '@/lib/usage/guard'
 import { beginRequest, failRequest } from '../gateway'
+import { runConversationTurn } from '@/lib/simulation/turn'
 import { maintainAI } from '../maintenance'
 
 const made: string[] = []
@@ -19,6 +20,14 @@ async function pending() {
 }
 afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 describeDb('request recovery atomicity', () => {
+  it('reports restrictions without charging or exposing another user session', async () => {
+    const s = await pending()
+    await failRequest(s.requestId)
+    await db.update(roleplaySessions).set({ restrictedAt: new Date() }).where(eq(roleplaySessions.id, s.sessionId))
+    expect(await runConversationTurn({ userId: s.userId, sessionId: s.sessionId, input: '안녕' })).toEqual({ ok: false, reason: 'restricted' })
+    expect(await runConversationTurn({ userId: randomUUID(), sessionId: s.sessionId, input: '안녕' })).toEqual({ ok: false, reason: 'not_found' })
+    expect((await usageStatus(s.userId)).consumed).toBe(0)
+  })
   it('concurrent failure handlers refund a request only once', async () => {
     const s = await pending()
     const results = await Promise.all([failRequest(s.requestId), failRequest(s.requestId)])

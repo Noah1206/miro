@@ -12,7 +12,7 @@ async function roleplay(page: Page, slug = 'thomas') {
   return page.url().split('/chat/')[1]!
 }
 
-test('archive: list, archive, restore, delete with confirmation, and empty state', async ({ page }) => {
+test('chat list: search and delete with confirmation and empty state', async ({ page }) => {
   await signup(page)
   await page.goto(`${BASE}/archive`)
   await expect(page.getByText('진행 중인 역할극이 없습니다.')).toBeVisible()
@@ -21,25 +21,23 @@ test('archive: list, archive, restore, delete with confirmation, and empty state
   const row = page.locator('[data-session-row]')
   await expect(row).toHaveCount(1)
   await expect(row).toContainText('토마스')
-  await expect(row).toContainText('런던 구시가지')
+  await expect(row.getByRole('link').first()).toHaveAttribute('href', `/chat/${id}`)
   await expect(page.locator('body')).not.toContainText(/신뢰|호감도/)
 
-  // 목록을 나누지 않는다 — 보관해도 같은 자리에 '보관됨' 으로 남는다.
-  await row.getByRole('button', { name: '보관' }).click()
-  await expect(page.locator('[data-session-row][data-status="archived"]')).toHaveCount(1)
-  await expect(page.locator('[data-session-row]')).toContainText('보관됨')
-  await page.getByRole('button', { name: '복원' }).click()
-  await expect(page.locator('[data-session-row][data-status="active"]')).toHaveCount(1)
-
-  await page.goto(`${BASE}/archive`)
-  await page.getByRole('link', { name: '삭제' }).click()
+  await page.getByPlaceholder('캐릭터 이름으로 검색').fill('없는캐릭터')
+  await expect(row).toHaveCount(0)
+  await page.getByPlaceholder('캐릭터 이름으로 검색').fill('')
+  await page.getByRole('button', { name: '대화 관리' }).click()
+  await page.getByRole('link', { name: '토마스와의 역할극 삭제' }).click()
   await expect(page).toHaveURL(new RegExp(`/archive/delete/${id}`))
   await expect(page.getByText(/복구를 요청할 수 있으며/)).toBeVisible()
   await page.getByRole('button', { name: '삭제 확정' }).click()
   await expect(page.getByText('역할극을 삭제했습니다.')).toBeVisible()
   await expect(page.locator('[data-session-row]')).toHaveCount(0)
   // 삭제된 대화는 열 수 없다
-  expect((await page.goto(`${BASE}/chat/${id}`))?.status()).toBe(404)
+  await page.goto(`${BASE}/chat/${id}`)
+  await expect(page.getByRole('heading', { name: '404', exact: true })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveCount(0)
 })
 
 test('settings: quiet hours off is saved and survives reload', async ({ page }) => {

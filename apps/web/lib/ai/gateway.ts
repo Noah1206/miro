@@ -4,13 +4,18 @@ import { db, conversationRequests, roleplaySessions, usageLedger } from '@miro/d
 import { rollbackInTransaction } from '@/lib/usage/guard'
 import type { ConversationOutcome } from '@/lib/simulation/turn'
 
+export class SessionUnavailableError extends Error {
+  constructor(readonly reason: 'not_found' | 'restricted') { super(reason) }
+}
+
 export async function beginRequest(userId: string, sessionId: string, input: string, requestId: string = randomUUID()) {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) throw new Error('invalid request id')
   return db.transaction(async tx => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`gateway:${userId}`}))`)
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`conversation:${sessionId}`}))`)
-    const [owner] = await tx.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
-    if (!owner) throw new Error('session unavailable')
+    const [owner] = await tx.select({ id: roleplaySessions.id, restrictedAt: roleplaySessions.restrictedAt }).from(roleplaySessions).where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))).limit(1)
+    if (!owner) throw new SessionUnavailableError('not_found')
+    if (owner.restrictedAt) throw new SessionUnavailableError('restricted')
     const inputHash = createHash('sha256').update(input).digest('hex')
     const [previous] = await tx.select().from(conversationRequests).where(eq(conversationRequests.id, requestId)).limit(1)
     if (previous) {

@@ -8,6 +8,7 @@ process.env.E2E_BASE = `http://localhost:${WEB}`
 process.env.E2E_ADMIN = `http://localhost:${ADMIN}`
 const env = {
   MIRO_TEST_MODE: '1',
+  MIRO_MODE: 'production', MIRO_FEATURE_INLINE_REALITY: '1', MIRO_FEATURE_REALITY_MESSAGE: '1',
   DATABASE_URL: database,
   CRON_SECRET: process.env.CRON_SECRET ?? 'e2e-cron-secret',
   MIRO_ENABLE_DEV_API: '1',
@@ -39,7 +40,7 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 3,
   // reducedMotion: Motion/CSS 가 즉시 최종 상태로 가므로 타이밍이 테스트를 흔들지 않는다.
   // 모바일 우선 제품이므로 기본 뷰포트도 모바일. 데스크톱 레이아웃은 별도 프로젝트로 추가할 수 있다.
-  use: { headless: true, baseURL: `http://localhost:${WEB}`, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure', headless: true, baseURL: `http://localhost:${WEB}`, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   webServer: [
     { command: `pnpm --filter @miro/web exec next start -p ${WEB}`, port: WEB, reuseExistingServer: false, env, timeout: 60_000 },

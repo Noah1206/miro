@@ -56,6 +56,8 @@ test('another user cannot open someone else\'s editor', async ({ page, browser }
   await signUp(otherPage, BASE)
 
   const res = await otherPage.goto(`${BASE}/my/characters/${characterId}/edit`)
-  expect(res?.status()).toBe(404)
+  // Next streams the not-found boundary with 200 after headers have been sent.
+  await expect(otherPage.getByRole('heading', { name: '404', exact: true })).toBeVisible()
+  await expect(otherPage.locator('input[name="name"]')).toHaveCount(0)
   await other.close()
 })

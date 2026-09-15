@@ -7,7 +7,7 @@
     "build": "pnpm --filter @miro/web build && pnpm --filter @miro/admin build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false && tsc -p tsconfig.tests.json --pretty false",
     "db:generate": "pnpm --filter @miro/db generate",
     "db:migrate": "pnpm --filter @miro/db migrate",
     "e2e": "playwright test",

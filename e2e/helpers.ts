@@ -12,6 +12,8 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   // 동의는 실제로 체크해야 열린다 — '모두 동의' 로 한 번에 켜고 진행한다.
   await page.getByRole('button', { name: '모두 동의하고 가입하기' }).click()
   await page.getByRole('button', { name: '다음으로 진행하기' }).click()
+  // Wait for the signup action and redirect before a test starts another navigation.
+  await expect(page).not.toHaveURL(/\/terms(?:\?|$)/)
   return email
 }
 

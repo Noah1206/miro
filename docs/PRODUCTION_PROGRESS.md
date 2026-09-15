@@ -16,8 +16,8 @@
 ## Remaining gates
 
 - Live model/browser end-to-end and long conversation quality (deferred by user).
-- Stable retry/reload UX and complete interruption/concurrency testing.
-- Memory-grounded safe proactive messaging, durable notification delivery and scheduling recovery.
+- Staging interruption/concurrency load validation beyond the passing local retry/reload tests.
+- Live relevance/safety and real-device delivery validation for the implemented grounded proactive messaging and durable outbox.
 - Reality pool UI and plan-specific depth/frequency after numeric policy decisions.
 - Staging load, recovery, security and backup restore verification.
 - Real subscription lifecycle validation; then beta and Pro release.
@@ -30,3 +30,5 @@
 - Durable Push outbox: contact persistence atomically enqueues per-subscription jobs. Leased workers retry transient failure up to five attempts, recover abandoned leases, cancel deleted/disabled/opened/expired contacts, and stop expired endpoints. Push timeout is bounded. Delivery is at-least-once; stable notification tags collapse repeats, not a guarantee of exactly-once device delivery. Local-only migration `20260915100230_reality_notification_outbox.sql` applied; no shared DB migration performed. 345 isolated tests and both production builds passed. RLS/client-grant denial checked.
 
 - Migration/recovery tooling: SQL migration runner now stops on the first error and applies each file transactionally. All migrations applied successfully to a fresh local `miro_release_test` database. A full local dump/restore into `miro_restore_test` preserved a synthetic user record. This is a local rehearsal, not verification of a managed production backup. CI creates non-login Supabase-style API roles before migrations so permission tests run on plain Postgres.
+
+- Regression fixes: restricted sessions now return the correct user-facing reason without reserving usage; other users still receive not-found. Subscription gating is evaluated dynamically at request time. Workspace package builds exclude test files from declaration output, while a separate no-emit pass still checks package/tooling tests. Full isolated suite: 346 passed; both builds and workspace typecheck passed; reference-only evaluation harness: 20/20. Final mock browser suite: all 45 passed with two workers and retries disabled. The signup helper now waits for its redirect, preventing navigation from racing its pending server action. Production-readiness branch CI is enabled. Local port 3000 serves the new build; health confirms database up and AI_OPERATING_BUDGET_REQUIRED. No live generation was attempted.

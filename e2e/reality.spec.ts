@@ -28,6 +28,7 @@ test('the character reaches out while the user is away, in the world\'s own idio
   // 한 턴 진행해 관계를 만든다
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('의뢰 건으로 왔습니다.')
   await page.getByRole('button', { name: '전송' }).click()
+  await expect(page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…')).toHaveValue('')
   await expect(page.getByText('의뢰 건으로 왔습니다.')).toBeVisible()
 
   // 앱을 떠났다 — 며칠 지났고, 관계가 형성돼 있으며, 그 사이 공방에 일이 생겼다
@@ -56,7 +57,7 @@ test('the character reaches out while the user is away, in the world\'s own idio
   await expect(page.locator('[data-reality-message]')).toBeVisible()
   await expect(page.getByText('토마스 · 편지')).toBeVisible()
   await expect(page.getByText('의뢰 건으로 왔습니다.')).toBeVisible()
-  await expect(page.getByText(/런던 구시가지/).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 })
 
 test('the cron endpoint refuses calls without the secret', async ({ request }) => {

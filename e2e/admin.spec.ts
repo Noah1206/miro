@@ -23,7 +23,9 @@ async function userReports(page: Page) {
 test('admin flow: login → report list → detail with context → restrict → audit; user sees the restriction', async ({ page, browser }) => {
   const { chat, reportId } = await userReports(page)
 
-  const admin = await (await browser.newContext()).newPage()
+  const adminContext = await browser.newContext()
+  const admin = await adminContext.newPage()
+  try {
   await admin.goto(`${ADMIN}/reports`)
   await expect(admin).toHaveURL(/\/login/)                          // 미인증은 진입 불가
   await admin.getByPlaceholder('이메일').fill('e2e-admin@miro.dev')
@@ -52,6 +54,7 @@ test('admin flow: login → report list → detail with context → restrict →
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('한 마디 더')
   await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByRole('alert').filter({ hasText: '제한되었습니다' })).toBeVisible()
+  } finally { await adminContext.close() }
 })
 
 test('a wrong password does not get in, and the admin origin serves nothing to the user app', async ({ page }) => {
