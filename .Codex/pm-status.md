@@ -1,8 +1,16 @@
 # PM Status — MIRO
 
-**Last briefing**: 2026-09-15 · main, HEAD 48b4ef1 이후 로컬 미커밋 작업
-**Current focus**: Free Reality MVP의 실제 운영 검증 → Pro 정책 연결 → 미디어 단계적 출시
-**최신 보고서**: docs/MIRO_AI_PLATFORM.md
+**Last briefing**: 2026-09-15 · codex/production-readiness · 4fa7859
+**Current focus**: CI pnpm 설정 충돌 해소 → 출시 전 검증. 운영 예산 0, 실제 AI 검증 보류.
+**최신 보고서**: docs/PRODUCTION_PROGRESS.md / docs/PRODUCTION_RELEASE_GATES.md
+
+## 최신 검증 상태
+
+- 4fa7859까지 GitHub 작업 브랜치에 푸시 완료. main 병합·배포는 하지 않음.
+- 로컬 단위/통합 346개, 모의 브라우저 45개, 타입 검사와 두 앱 빌드 통과.
+- GitHub CI 34958067391은 pnpm 설치 단계에서 실패: workflow version 9와 packageManager pnpm@9.0.0 중복 지정. 원격 테스트는 실행되지 않음.
+- 실제 AI 품질·기기 Push·실결제 검증, 신규 outbox의 운영 DB 적용, 음성/영상 등은 미완료.
+- 아래는 이전 구현 이력이며 최신 상태는 위 기록과 PRODUCTION_PROGRESS.md를 우선한다.
 
 ## 제품과 확정 정책
 
