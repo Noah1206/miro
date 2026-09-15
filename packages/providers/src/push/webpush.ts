@@ -16,7 +16,7 @@ export class WebPushProvider implements PushProvider {
       await webpush.sendNotification(
         { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },
         JSON.stringify(payload),
-        { TTL: 60 * 60 * 12 },
+        { TTL: 60 * 60 * 12, timeout: 10_000 },
       )
       return { ok: true }
     } catch (e) {

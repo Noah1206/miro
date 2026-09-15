@@ -798,3 +798,20 @@ export const characterLikes = pgTable('character_likes', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ uniq: uniqueIndex('character_likes_uniq').on(t.characterId, t.userId) }))
+
+/** Server-only durable Web Push work, created in the message transaction. */
+export const realityPushJobs = pgTable('reality_push_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contactId: uuid('contact_id').notNull().references(() => realityContacts.id, { onDelete: 'cascade' }),
+  subscriptionId: uuid('subscription_id').notNull().references(() => pushSubscriptions.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['pending', 'sending', 'sent', 'cancelled', 'failed'] }).notNull().default('pending'),
+  attempts: integer('attempts').notNull().default(0),
+  nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  leaseToken: uuid('lease_token'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({
+  uniqueDelivery: uniqueIndex('reality_push_jobs_delivery_uniq').on(t.contactId, t.subscriptionId),
+  due: index('reality_push_jobs_due_idx').on(t.nextAttemptAt).where(sql`${t.status} in ('pending', 'sending')`),
+  subscription: index('reality_push_jobs_subscription_idx').on(t.subscriptionId),
+}))

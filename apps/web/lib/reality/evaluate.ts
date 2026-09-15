@@ -15,6 +15,7 @@ import { startIncomingCall } from '@/lib/call/service'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
 import { requireSafeContent } from '@miro/engine'
+import { enqueueRealityPush, deliverRealityPush } from './push-outbox'
 import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
 
@@ -263,6 +264,7 @@ export async function evaluateSession(
       await tx.update(roleplaySessions).set({ pendingRealityIntent: null })
         .where(eq(roleplaySessions.id, sessionId))
 
+      if (settings.pushEnabled && !inQuietHours(now, settings)) await enqueueRealityPush(tx, contact!.id, row.session.userId)
       return contact!.id
     })
   } catch (e) {
@@ -273,15 +275,8 @@ export async function evaluateSession(
   }
   void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
 
-  // Push 는 트랜잭션 밖에서. 실패해도 인앱 메시지는 이미 남아 있다.
-  if (settings.pushEnabled && !inQuietHours(now, settings)) {
-    await pushToUser(row.session.userId, {
-      title: presented.senderLabel,
-      body: content.text.length > 90 ? `${content.text.slice(0, 88)}…` : content.text,
-      url: `/chat/${sessionId}`,
-      tag: `session:${sessionId}`,
-    })
-  }
+  // A failed delivery remains queued without regenerating the message.
+  await deliverRealityPush(now).catch(() => observe('reality.push_worker_failed', { sessionId }))
 
   return { outcome: 'sent', channel: decision.channel, contactId, text: content.text }
 }
