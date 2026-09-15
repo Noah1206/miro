@@ -1,11 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { and, eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import {
   db, users, userSettings, characters, worlds, roleplaySessions, worldStates,
-  relationships, events, messages, realityContacts,
+  relationships, events, messages, realityContacts, memories,
 } from '@miro/db'
 import { POLICY } from '@miro/config'
+import * as providers from '@miro/providers'
+import { loadRealityContext } from '../context'
 import { evaluateSession } from '../evaluate'
 import { runRealityScheduler } from '../scheduler'
 
@@ -20,6 +22,7 @@ const ESTABLISHED = { trust: 45, attachment: 50, emotionalDistance: 45 }
 
 describeDb('reality activation — real send path', () => {
   const made: string[] = []
+  afterEach(() => vi.restoreAllMocks())
 
   async function session(slug: string, opts: {
     idleMinutes?: number
@@ -75,6 +78,32 @@ describeDb('reality activation — real send path', () => {
     const r = await evaluateSession(id, DAY)
     expect(r.outcome).toBe('no_intent')
     expect(await realityMessages(id)).toHaveLength(0)
+  })
+
+  it('grounds contact in visible owned history and memory', async () => {
+    const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
+    const [owner] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, id))
+    await db.insert(messages).values([
+      { sessionId: id, role: 'user', kind: 'text', content: '약속은 취소했어', turnIndex: 1 },
+      { sessionId: id, role: 'user', kind: 'text', content: 'HIDDEN_SECRET', hiddenAt: new Date(), turnIndex: 2 },
+    ])
+    await db.insert(memories).values({ sessionId: id, characterId: owner!.characterId, type: 'preference', content: '차를 좋아함', importance: 90, persistence: 90, confidence: 100 })
+    const context = await loadRealityContext(id, owner!.userId, '약속')
+    expect(JSON.stringify(context)).toContain('약속은 취소했어')
+    expect(JSON.stringify(context)).toContain('차를 좋아함')
+    expect(JSON.stringify(context)).not.toContain('HIDDEN_SECRET')
+    expect(await loadRealityContext(id, '00000000-0000-4000-8000-000000000000', '약속')).toBeNull()
+  })
+
+  it.each(['deletedAt', 'restrictedAt', 'lastInteractionAt'] as const)('does not persist a stale contact after %s changes during inference', async field => {
+    const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
+    vi.spyOn(providers, 'generateRealityContent').mockImplementation(async () => {
+      await db.update(roleplaySessions).set({ [field]: new Date() }).where(eq(roleplaySessions.id, id))
+      return { text: '잘 지내요?', tone: 'warm' }
+    })
+    expect(await evaluateSession(id, DAY)).toEqual({ outcome: 'skipped', reason: 'state_changed' })
+    expect(await realityMessages(id)).toHaveLength(0)
+    expect(await contacts(id)).toHaveLength(0)
   })
 
   it('an active event produces a real in-app message with world translation', async () => {
@@ -202,6 +231,7 @@ describeDb('reality activation — real send path', () => {
 
 describeDb('reality scheduler', () => {
   const made: string[] = []
+  afterEach(() => vi.restoreAllMocks())
   afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 
   async function idleSession(idleMinutes: number) {

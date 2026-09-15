@@ -22,3 +22,5 @@
 - Staging load, recovery, security and backup restore verification.
 - Real subscription lifecycle validation; then beta and Pro release.
 - Image, voice, video and Live/Face Cast provider implementation and independent release validation.
+
+- Grounded Reality: visible owned recent text and memories now enter proactive generation with explicit time and untrusted-data instructions. Input/output safety checks added. Session deletion/restriction/new interaction during generation stops persistence. Account and notification settings rechecked before Push. 339 isolated tests and web typecheck passed. Production activation and real model quality remain deferred.

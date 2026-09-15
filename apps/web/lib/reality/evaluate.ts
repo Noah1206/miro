@@ -2,7 +2,7 @@ import { and, desc, eq, isNull } from 'drizzle-orm'
 import { POLICY, feature } from '@miro/config'
 import {
   db, characters, contactProfiles, events, messages, pushSubscriptions,
-  realityContacts, relationships, roleplaySessions, userSettings, worldStates,
+  realityContacts, relationships, roleplaySessions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
   DEFAULT_CHARACTER_STATE, inQuietHours, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
@@ -14,6 +14,8 @@ import { getOrGenerate } from '@/lib/simulation/media'
 import { startIncomingCall } from '@/lib/call/service'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
+import { requireSafeContent } from '@miro/engine'
+import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
 
 export type EvaluateOutcome =
@@ -22,7 +24,7 @@ export type EvaluateOutcome =
   /** 사건 규칙이 발동했지만 delay 가 있어 예약만 했다. 스케줄러가 notBefore 뒤에 다시 판단한다. */
   | { outcome: 'scheduled'; ruleId: string; notBefore: string }
   | { outcome: 'no_intent' }
-  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' }
+  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' }
 
 /**
  * 한 세션에 대한 선연락 판단과 발송.
@@ -186,7 +188,9 @@ export async function evaluateSession(
   installAIUsageSink()
   const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId } })
 
-  const content = await generateRealityContent(llm, {
+  const grounding = await loadRealityContext(sessionId, row.session.userId, intent.reason)
+  if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }
+  const contentInput = {
     characterName: row.character.name,
     personality: row.character.personality,
     speechStyle: row.character.speechStyle,
@@ -198,7 +202,12 @@ export async function evaluateSession(
     activeEventSummary: activeEvents[0]
       ? String((activeEvents[0].continuationState as { summary?: string }).summary ?? activeEvents[0].type)
       : null,
-  })
+    currentTime: now.toISOString(),
+    ...grounding,
+  }
+  await requireSafeContent(llm, contentInput)
+  const content = await generateRealityContent(llm, contentInput)
+  await requireSafeContent(llm, { text: content.text })
 
   // Network inference finishes before acquiring the persistence transaction.
   let mediaUrl: string | null = null
@@ -220,6 +229,12 @@ export async function evaluateSession(
   let contactId: string
   try {
     contactId = await db.transaction(async (tx) => {
+      const [current] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).for('update')
+      const [owner] = await tx.select().from(users).where(eq(users.id, row.session.userId)).limit(1)
+      const [profile] = await tx.select().from(contactProfiles).where(eq(contactProfiles.characterId, row.character.id)).limit(1)
+      if (!current || current.deletedAt || current.restrictedAt || current.status !== 'active' || !owner || owner.deletedAt || !profile?.enabled
+        || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
+        || current.turnCount !== row.session.turnCount) throw new RealityStateChangedError()
       if (decision.channel === 'status') {
         await tx.update(roleplaySessions).set({ characterStatus: content.text })
           .where(eq(roleplaySessions.id, sessionId))
@@ -251,6 +266,7 @@ export async function evaluateSession(
       return contact!.id
     })
   } catch (e) {
+    if (e instanceof RealityStateChangedError) return { outcome: 'skipped', reason: 'state_changed' }
     // (session_id, dedupe_key) UNIQUE — 같은 사유가 이미 발송됐다. 조용히 넘기되 기록한다.
     if ((e as { code?: string }).code === '23505') { observe('reality.duplicate_prevented', { sessionId, channel: decision.channel }); return { outcome: 'skipped', reason: 'duplicate' } }
     throw e
@@ -270,6 +286,8 @@ export async function evaluateSession(
   return { outcome: 'sent', channel: decision.channel, contactId, text: content.text }
 }
 
+class RealityStateChangedError extends Error {}
+
 type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string }
 
 function downgradeByFeature(c: ContactChannel): ContactChannel {
@@ -281,6 +299,13 @@ function downgradeByFeature(c: ContactChannel): ContactChannel {
 async function pushToUser(userId: string, payload: {
   title: string; body: string; url: string; tag: string
 }): Promise<void> {
+  const [owner] = await db.select({ deletedAt: users.deletedAt }).from(users).where(eq(users.id, userId)).limit(1)
+  const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId)).limit(1)
+  if (!owner || owner.deletedAt || settings?.pushEnabled === false || (settings && inQuietHours(new Date(), {
+    pushEnabled: settings.pushEnabled, voiceCallEnabled: settings.voiceCallEnabled, videoCallEnabled: settings.videoCallEnabled,
+    quietHoursEnabled: settings.quietHoursEnabled, quietHoursStart: settings.quietHoursStart,
+    quietHoursEnd: settings.quietHoursEnd, timeZone: settings.timeZone ?? POLICY.reality.defaultTimeZone,
+  }))) return
   const subs = await db.select().from(pushSubscriptions)
     .where(and(eq(pushSubscriptions.userId, userId), isNull(pushSubscriptions.failedAt)))
   if (subs.length === 0) return
