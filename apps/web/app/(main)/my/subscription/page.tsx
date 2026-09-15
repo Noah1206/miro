@@ -40,6 +40,7 @@ export default async function SubscriptionPage() {
           <div style={{ width: `${pct}%`, height: '100%', background: 'var(--color-white)', transition: 'width var(--motion-slow) var(--ease-standard)' }} />
         </div>
         <p className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>{reset}</p>
+        <p className="t-caption" data-recharge-balance={u.rechargeRemaining} style={{ marginTop: 12 }}>충전 잔액 · {u.rechargeRemaining}</p>
         <div style={{ display: 'flex', gap: 14, marginTop: 12 }}>
           <TransitionLink href="/plans" className="t-caption" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 비교</TransitionLink>
           <TransitionLink href="/recharge" className="t-caption" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>충전소</TransitionLink>

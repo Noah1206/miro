@@ -1,3 +1,6 @@
+/** 확정된 가격 안내. 제공량 미정이므로 판매 카탈로그에는 넣지 않는다. */
+export const PLANNED_RECHARGE_PRICES_KRW = [3000, 7000, 14000] as const
+
 /**
  * 충전 상품 카탈로그. 가격·제공량·유효기간은 Product Decision 이라 코드에 박지 않는다.
  *

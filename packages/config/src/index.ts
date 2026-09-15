@@ -105,8 +105,9 @@ export const POLICY = {
   subscription: {
     /** 결제 기간(일). 실제 PG 의 주기를 따르게 되며, Mock 은 이 값을 쓴다. */
     periodDays: DEV_DEFAULT(30),
-    /** 가격은 Product Decision — 확정 전까지 숫자를 두지 않는다. */
-    priceLabel: 'TBD',
+    /** 2026-09-15 사용자 확정. 가격 표시가 판매 활성화를 의미하지 않는다. */
+    priceLabel: '9,900원',
+    priceKRW: 9900,
   },
 
   retention: {

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
+import { PLANNED_RECHARGE_PRICES_KRW, productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { rechargeHistory, usageStatus, type RechargeHistoryItem, type UsageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
@@ -10,12 +10,7 @@ import { beginRecharge, simulateRecharge } from './actions'
 /** 잔액은 계정 상태다 — 빌드 시점에 굳히지 않는다. */
 export const dynamic = 'force-dynamic'
 
-/**
- * 충전소. 지금은 실제 월간 사용량을 읽어 보여주는 데까지만 한다.
- *
- * 충전 상품·가격·결제 연결은 아직 정해지지 않았고 구매 잔액을 담는 원장도 없다.
- * 그래서 가격표도, 구매 버튼도, 0 으로 찍은 가짜 잔액도 두지 않는다 — 준비 중이라고만 말한다.
- */
+/** 실제 원장을 조회하고, 미정 제공량은 판매하지 않는다. */
 export default async function RechargePage({ searchParams }: { searchParams: Promise<{ checkout?: string; result?: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
@@ -90,8 +85,13 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
       ) : (
         <Card data-recharge-products="pending" style={{ marginBottom: 'var(--space-3)' }}>
           <p className="t-title-3">충전 상품</p>
+          {PLANNED_RECHARGE_PRICES_KRW.map(price => <div key={price} data-planned-price={price} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--color-border)' }}>
+            <span className="t-body">{price.toLocaleString('ko-KR')}원</span>
+            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>제공량 준비 중</span>
+          </div>)}
+          <p className="t-caption" style={{ marginTop: 12 }}>충전 잔액은 만료 없이 이용하는 정책으로 준비 중이에요.</p>
           <p className="t-caption" style={{ marginTop: 6, color: 'var(--color-text-secondary)' }}>
-            준비 중이에요. 가격과 제공량이 정해지면 여기에서 안내하고, 그때부터 구매할 수 있어요.
+            계좌이체 충전을 준비 중이에요. 제공량이 확정되면 구매할 수 있어요.
           </p>
         </Card>
       )}

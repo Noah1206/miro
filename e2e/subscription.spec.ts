@@ -19,7 +19,7 @@ test('free user hits the wall, subscribes, and continues in the same window', as
   await page.locator('[data-upgrade]').click()
   await expect(page).toHaveURL(/\/subscribe/)
   await expect(page.getByText(/실제 결제가 일어나지 않는/)).toBeVisible()      // Mock 임을 숨기지 않는다
-  await expect(page.getByText(/가격: TBD/)).toBeVisible()
+  await expect(page.getByText(/가격: 9,900원/)).toBeVisible()
   await page.locator('[data-checkout]').click()
   await expect(page.locator('[data-mock-checkout]')).toBeVisible()
   await page.getByRole('button', { name: '결제 성공' }).click()
