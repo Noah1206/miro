@@ -19,16 +19,31 @@ export class MockPaymentProvider implements PaymentProvider {
     return { checkoutId: `mockco_${req.userId}_${randomUUID()}`, redirectUrl: null }
   }
 
+  /** 충전 결제 시뮬레이션. checkoutId 에 상품 id 를 실어 webhook 이 되짚을 수 있게 한다. */
+  async createRechargeCheckout(req: { userId: string; productId: string; priceMinor: number; currency: string }): Promise<Checkout> {
+    return { checkoutId: `mockrc_${req.userId}_${req.productId}_${randomUUID()}`, redirectUrl: null }
+  }
+
   async parseWebhook(rawBody: string, signature: string | null): Promise<PaymentEvent | null> {
     let body: { checkoutId?: string; outcome?: 'success' | 'failed' | 'cancel' | 'refund'; externalRef?: string; eventId?: string }
     try { body = JSON.parse(rawBody) } catch { return null }
     const userId = signature?.startsWith('mock:') ? signature.slice(5) : null
     if (!userId || !body.checkoutId?.includes(userId)) return null   // 서명과 본문이 맞아야 한다
+    const type = body.outcome === 'success' ? 'purchase' : body.outcome === 'cancel' ? 'cancel' : body.outcome === 'refund' ? 'refund' : 'failed'
+
+    // 충전 결제는 checkoutId 가 상품을 지목한다: mockrc_<userId>_<productId>_<uuid>
+    const recharge = body.checkoutId.startsWith('mockrc_')
+      ? body.checkoutId.slice(`mockrc_${userId}_`.length).split('_').slice(0, -1).join('_')
+      : null
+    if (recharge) {
+      const externalRef = body.externalRef ?? body.checkoutId
+      return { externalEventId: body.eventId ?? body.checkoutId, externalRef, type, userId, periodEnd: null, productId: recharge, raw: body as Record<string, unknown> }
+    }
+
     const externalRef = body.externalRef ?? `mocksub_${userId}`
     const periodEnd = new Date(Date.now() + POLICY.subscription.periodDays * 86_400_000)
-    const type = body.outcome === 'success' ? 'purchase' : body.outcome === 'cancel' ? 'cancel' : body.outcome === 'refund' ? 'refund' : 'failed'
     if (type === 'purchase') this.purchases.set(userId, { externalRef, periodEnd })
-    return { externalEventId: body.eventId ?? body.checkoutId, externalRef, type, userId, periodEnd: type === 'purchase' ? periodEnd : null, raw: body as Record<string, unknown> }
+    return { externalEventId: body.eventId ?? body.checkoutId, externalRef, type, userId, periodEnd: type === 'purchase' ? periodEnd : null, productId: null, raw: body as Record<string, unknown> }
   }
 
   async restore(req: { userId: string }) { return this.purchases.get(req.userId) ?? null }

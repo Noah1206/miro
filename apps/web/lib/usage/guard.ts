@@ -310,3 +310,19 @@ export async function revokeRecharge(provider: string, externalRef: string): Pro
     return { revoked: unused }
   })
 }
+
+export type RechargeHistoryItem = {
+  id: string; amount: number; remaining: number; source: 'purchase' | 'grant' | 'refund_reversal'
+  status: 'active' | 'revoked'; expiresAt: Date | null; createdAt: Date
+}
+
+/** 구매 내역. 회수된 것과 만료된 것도 숨기지 않고 상태와 함께 보여준다. */
+export async function rechargeHistory(userId: string, limit = 20): Promise<RechargeHistoryItem[]> {
+  const rows = await db.select().from(rechargeGrants)
+    .where(eq(rechargeGrants.userId, userId))
+    .orderBy(desc(rechargeGrants.createdAt)).limit(limit)
+  return rows.map(r => ({
+    id: r.id, amount: r.amount, remaining: Math.max(0, r.amount - r.consumed - r.refunded),
+    source: r.source, status: r.status, expiresAt: r.expiresAt, createdAt: r.createdAt,
+  }))
+}
