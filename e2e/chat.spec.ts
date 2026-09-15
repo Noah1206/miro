@@ -43,15 +43,16 @@ test('state survives leaving and re-entering the chat', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 })
 
-test('output style can be switched', async ({ page }) => {
+test('model menu defaults to MIRO and does not expose an unconfigured Pro model', async ({ page }) => {
   await enterRoleplay(page)
-  await page.getByRole('button', { name: '출력 스타일' }).click()
-  await page.getByRole('menuitem', { name: /서사형/ }).click()
-  await page.getByRole('button', { name: '출력 스타일' }).click()
-  await expect(page.getByRole('menuitem', { name: /서사형/ })).toHaveAttribute('aria-pressed', 'true')
+  const picker = page.getByRole('button', { name: 'AI 모델 선택' })
+  await expect(picker).toHaveText('MIRO')
+  await picker.click()
+  await expect(page.getByRole('menuitem', { name: /MIRO · 기본 무료형/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('menuitem', { name: /MIRO Pro/ })).toBeDisabled()
+  await expect(page.getByText('서사형', { exact: true })).toHaveCount(0)
   await page.reload()
-  await page.getByRole('button', { name: '출력 스타일' }).click()
-  await expect(page.getByRole('menuitem', { name: /서사형/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(picker).toHaveText('MIRO')
 })
 
 test('relationship numbers are never shown to the user', async ({ page }) => {

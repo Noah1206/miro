@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
+import { useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
 
@@ -13,6 +14,9 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
     try { return await sendTurn(previous, form) }
     catch { return { error: '연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.', notice: null, limit: null, retryWithSameId: true } }
   }, { error: null, notice: null, limit: null } satisfies TurnState)
+  const { model, setModel } = useChatModel()
+  const previousModel = useRef(model)
+  useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
   const [requestId, setRequestId] = useState('')
   const [draft, setDraft] = useState('')
   const [ready, setReady] = useState(false)
@@ -24,6 +28,8 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
       const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
       if (saved && typeof saved.input === 'string' && saved.input.length <= 2000 && typeof saved.requestId === 'string' && /^[0-9a-f-]{36}$/i.test(saved.requestId)) {
         input = saved.input; id = saved.requestId
+        const restoredModel = saved.model === 'pro' ? 'pro' : 'miro'
+        previousModel.current = restoredModel; setModel(restoredModel)
       }
     } catch { /* Storage may be unavailable in private browsing. */ }
     setDraft(input); setRequestId(id); setReady(true)
@@ -31,10 +37,10 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
   useEffect(() => {
     if (!ready) return
     try {
-      if (draft) sessionStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId }))
+      if (draft) sessionStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId, model }))
       else sessionStorage.removeItem(storageKey)
     } catch { /* Draft persistence must not prevent sending. */ }
-  }, [draft, requestId, ready, storageKey])
+  }, [draft, requestId, model, ready, storageKey])
   useEffect(() => {
     if (state.succeeded) { setDraft(''); setRequestId(crypto.randomUUID()) }
     else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
@@ -57,6 +63,7 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
       </AnimatePresence>
       <form ref={ref} action={action} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
+        <input type="hidden" name="chatModel" value={model} />
         <input type="hidden" name="sessionId" value={sessionId} />
         <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || !ready} rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}

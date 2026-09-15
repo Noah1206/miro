@@ -14,7 +14,8 @@ import { ChatComposer } from './composer'
 import { MediaBar } from './media-bar'
 import { feature } from '@miro/config'
 import { MessageList, type Msg } from './messages'
-import { StylePicker } from './style-picker'
+import { ChatModelProvider, ModelPicker } from './model-picker'
+import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -31,6 +32,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   ])
   if (opened.length > 0) void track(user.id, 'reality_contact_opened', { sessionId, count: opened.length })
 
+  const modelOptions = await chatModelOptions(user.id)
   const s = loaded.snapshot
   const mature = await matureGateFor(user.id, loaded.characterId)
   const ctx: ContextData = {
@@ -47,13 +49,13 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   }))
 
   return (
-    <main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <IncomingCall userId={user.id} characterName={loaded.characterName} />
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
           <h1 className={styles.title}>{loaded.characterName}</h1>
-          <StylePicker sessionId={sessionId} current={s.outputStyle} label={COPY.a11y.styleGroup} />
+          <ModelPicker {...modelOptions} />
           <ContextTrigger d={ctx} className={styles.contextButton}>
             <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h11M4 18h16" /></svg>
           </ContextTrigger>
@@ -79,6 +81,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
 
-    </main>
+    </main></ChatModelProvider>
   )
 }

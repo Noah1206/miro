@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { and, eq } from 'drizzle-orm'
-import { db, roleplaySessions, conversationRequests } from '@miro/db'
+import { db, conversationRequests } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { exceededMessage } from '@/lib/usage/guard'
@@ -26,10 +26,11 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
   const input = String(form.get('input') ?? '').trim()
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
-  const r = await runConversationTurn({ userId: user.id, sessionId, input, requestId: String(form.get('requestId') ?? '') || undefined })
+  const r = await runConversationTurn({ userId: user.id, sessionId, input, chatModel: String(form.get('chatModel') ?? 'miro'), requestId: String(form.get('requestId') ?? '') || undefined })
   if (!r.ok) {
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
+      case 'model_unavailable': return fail('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.')
       case 'budget': return fail(COPY.error.budget)
       case 'too_long': return fail(COPY.error.tooLong(2000))
       case 'not_found': return fail(COPY.error.sessionNotFound)
@@ -48,16 +49,4 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
   }
   revalidatePath(`/chat/${sessionId}`)
   return { succeeded: true, error: null, notice: r.providerMode === 'mock' ? COPY.status.mockLLM : null, limit: null }
-}
-
-/** 출력 스타일 변경 (n29). */
-export async function setOutputStyle(sessionId: string, style: string): Promise<void> {
-  const user = await requireUser()
-  if (!['messenger', 'balanced', 'narrative'].includes(style)) return
-
-  await db.update(roleplaySessions)
-    .set({ outputStyle: style as 'messenger' | 'balanced' | 'narrative' })
-    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id)))
-
-  revalidatePath(`/chat/${sessionId}`)
 }

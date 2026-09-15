@@ -70,6 +70,11 @@ export class AIOrchestrator implements LLMProvider {
   private selections(req: GenerationRequest): Array<{ model: ModelDefinition; provider: AIProvider }> {
     if (this.opts.explicitModel) return [{ model: this.opts.explicitModel, provider: this.opts.chain[0]! }]
     if (this.opts.registry && this.opts.resolveModel) {
+      if (req.task === 'dialogue' && this.opts.context?.dialogueModelId) {
+        const model = this.opts.registry.get(this.opts.context.dialogueModelId)
+        if (!model.capabilities.includes('dialogue') || model.maxContextTokens < Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8')) + model.maxOutputTokens) throw new Error('selected model cannot handle dialogue context')
+        return [{ model, provider: this.opts.resolveModel(model) }]
+      }
       const models = routeModels(this.opts.registry, taskOf(req.task), req.importance ?? interactionImportance(req.prompt),
         Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8')), this.opts.context?.userId ?? this.traceId, this.opts.rollout, this.opts.context?.continuity)
       return models.map(model => ({ model, provider: this.opts.resolveModel!(model) }))

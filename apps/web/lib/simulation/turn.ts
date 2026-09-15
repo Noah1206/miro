@@ -1,3 +1,4 @@
+import { resolveChatModel } from '@/lib/ai/chat-models'
 import { eq, and } from 'drizzle-orm'
 import { db, users, conversationRequests } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
@@ -21,6 +22,7 @@ export type ConversationOutcome =
       ok: true
       requestId: string
       traceId: string
+  chatModel?: string
       turnIndex: number
       blocks: TurnResult['transition']['blocks']
       responseText: string
@@ -33,7 +35,7 @@ export type ConversationOutcome =
       newEventType: string | null
       sceneChanged: boolean
     }
-  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' }
+  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' | 'model_unavailable' }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
   | { ok: false; reason: 'budget'; kind: BudgetKind }
 
@@ -55,6 +57,7 @@ async function executeTurn(opts: {
   ip?: string | null
   requestId: string
   traceId: string
+  chatModel?: string
 }): Promise<ConversationOutcome> {
   const input = opts.input.trim()
   if (input.length === 0) return { ok: false, reason: 'empty' }
@@ -66,13 +69,16 @@ async function executeTurn(opts: {
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
 
+    let dialogueModelId: string
+    try { dialogueModelId = await resolveChatModel(userId, opts.chatModel ?? 'miro') }
+    catch { return { ok: false, reason: 'model_unavailable' } }
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
     let reservation
     try { reservation = await reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` }) }
     catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     const [consent] = await db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1)
-    const context = { allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation.continuity, usageUnits: reservation.cost }
+    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation.continuity, usageUnits: reservation.cost }
     const llm = resolveRpLLM(loaded.characterName, context)
     const turnIndex = loaded.snapshot.turnCount + 1
 
@@ -160,11 +166,11 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string }): Promise<ConversationOutcome> {
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
-  try { request = await beginRequest(opts.userId, opts.sessionId, opts.input, opts.requestId) }
+  try { request = await beginRequest(opts.userId, opts.sessionId, opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.input, opts.requestId) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached
   try {

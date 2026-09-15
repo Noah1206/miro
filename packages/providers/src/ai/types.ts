@@ -71,7 +71,7 @@ export type AIUsageRecord = {
   sessionId: string | null
 }
 
-export type AIContext = { userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean }
+export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean }
 export type AIRequest = GenerationRequest & { task: AITask }
 export type AIResponse = GenerationResult
 export type BudgetDecision = { allowed: true; reservationId: string; maxUsageUnits: number } | { allowed: false; reason: string }
