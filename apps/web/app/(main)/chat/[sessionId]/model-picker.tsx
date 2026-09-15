@@ -15,7 +15,7 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
   return <div className={styles.stylePicker}>
     <button type="button" className={styles.styleButton} aria-label="AI 모델 선택" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
       {model === 'pro' ? 'MIRO Pro' : 'MIRO'}
-      <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+      <svg aria-hidden width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
     </button>
     <Popover open={open} onClose={() => setOpen(false)} anchor="right" style={{ minWidth: 180, padding: 4 }}>
       <MenuItem style={{ fontSize: 12, lineHeight: 1.4, minHeight: 34, padding: '8px 16px', whiteSpace: 'nowrap' }} type="button" disabled={!freeReady} aria-pressed={model === 'miro'} onClick={() => { setModel('miro'); setOpen(false) }}>
