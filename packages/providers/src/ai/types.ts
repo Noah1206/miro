@@ -24,6 +24,7 @@ export type GenerationRequest = {
 }
 
 export type GenerationResult = {
+  blocked?: boolean
   text: string
   provider: string
   model: string
@@ -31,6 +32,10 @@ export type GenerationResult = {
   inputTokens: number | null
   outputTokens: number | null
   latencyMs: number
+}
+
+export class AIContentBlockedError extends Error {
+  constructor() { super('content_blocked') }
 }
 
 export interface AIProvider {

@@ -26,7 +26,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   const sessionId = String(form.get('sessionId') ?? '')
 
   const loaded = await loadSession(sessionId, user.id)
-  if (!loaded) return { error: '대화를 찾을 수 없습니다.', notice: null }
+  if (!loaded || loaded.restricted) return { error: '대화를 찾을 수 없습니다.', notice: null }
 
   const context = await contextFromWorld(sessionId)
   if (!context) return { error: '현재 상태를 불러오지 못했습니다.', notice: null }

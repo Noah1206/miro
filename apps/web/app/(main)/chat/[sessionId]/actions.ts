@@ -34,6 +34,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
       case 'restricted': return fail(COPY.error.restricted)
       case 'conflict': return fail(COPY.error.saveConflict)
       case 'generation': return fail(COPY.error.generation)
+      case 'safety': return fail('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')
       default: return { error: null, notice: null, limit: null }
     }
   }

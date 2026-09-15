@@ -2,7 +2,7 @@
 import { CharacterSettingsView } from '../character/[slug]/settings-view'
 import { parseCharacterForm } from './parse'
 import { Accordion, Button } from '@/components/ui'
-import { Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
+import { BookmarkButton, LikeButton, Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
 import { PhotoHero } from '../character/[slug]/hero'
 import { subject } from '@/lib/format'
 
@@ -66,30 +66,28 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
       <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>등록하면 다른 사람에게 이렇게 보입니다.</p>
-      <div aria-label="소개 페이지 미리보기" style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-bg)' }}>
+      <div className="character-detail-theme" aria-label="소개 페이지 미리보기" style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: '#141416' }}>
         {/* 상세와 같은 자리: 왼쪽 위 뒤로, 오른쪽 위 편집(주인에게만 보이는 것) */}
         <span aria-hidden style={{ ...pill, left: 16, padding: '0 10px', color: 'var(--color-text-secondary)' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
         </span>
         <span aria-hidden className="t-caption" style={{ ...pill, right: 16, fontWeight: 'var(--weight-medium)' }}>편집</span>
 
-        <PhotoHero name={name} accent={null} slug="preview" photos={[d.photo, ...d.gallery].filter((src): src is string => Boolean(src))} shared={false} />
+        <div style={{ position: 'relative' }}><PhotoHero name={name} accent={null} slug="preview" photos={[d.photo, ...d.gallery].filter((src): src is string => Boolean(src))} shared={false} /><div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton overlay /></div></div>
 
-        <div className="character-detail-copy" style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
-          <p className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em', color: d.name ? undefined : 'var(--color-text-tertiary)' }}>{name}</p>
-          <p className="t-body-lg t-quote" style={{ color: d.tagline ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', lineHeight: 1.6, marginBottom: 12 }}>
+        <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
+          <p className="t-hero t-name" style={{ marginBottom: 4, fontWeight: 800, letterSpacing: '-0.045em', color: d.name ? undefined : 'var(--color-text-tertiary)' }}>{name}</p>
+          <p className="t-body-lg t-quote" style={{ color: d.tagline ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', lineHeight: 1.45, letterSpacing: '-0.025em', marginBottom: 6 }}>
             {d.tagline || '소개 한 줄이 여기에 걸립니다.'}
           </p>
           {d.keywords.length > 0 && (
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 14 }}>{d.keywords.map((t) => `#${t.replace(/\s+/g, '')}`).join(' ')}</p>
+            <p className="t-caption" style={{ color: 'var(--color-white)', letterSpacing: '-0.025em', marginBottom: 10 }}>{d.keywords.map((t) => `#${t.replace(/\s+/g, '')}`).join(' ')}</p>
           )}
           {/* 통계 칩 — 대화한 사람 수는 0 이라 상세처럼 숨긴다. 보관하기는 모양만. */}
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
             <Stat icon="comment" label="댓글 0" />
-            <span aria-hidden style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', minHeight: 32, borderRadius: 7, fontSize: 'var(--font-caption)', background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)' }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" /></svg>
-              보관하기
-            </span>
+            <LikeButton />
+
           </div>
 
           <RealityStrip />
@@ -135,8 +133,8 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
         </section>
 
         {/* 상세의 고정 하단 문 — 미리보기 안에서는 맨 아래에 */}
-        <div aria-hidden style={{ padding: '14px var(--gutter) var(--space-5)', marginTop: 'var(--space-6)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
-          <Button type="button" variant="primary" size="lg" full disabled>대화 시작하기</Button>
+        <div aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--color-border-strong)', padding: '10px var(--gutter)', marginTop: 'var(--space-6)', background: '#141416' }}>
+          <BookmarkButton saved={false} iconOnly /><div style={{ flex: 1 }}><Button type="button" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full disabled>대화 시작하기</Button></div>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   db, events, memories, messages, npcs, relationships, roleplaySessions,
   scenes, worldStates, usageLedger, conversationRequests,
@@ -7,7 +7,7 @@ import {
   applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories,
 } from '@miro/domain'
 import { POLICY } from '@miro/config'
-import type { CharacterState, RelationshipState } from '@miro/domain'
+import type { Memory, CharacterState, RelationshipState } from '@miro/domain'
 import type { ValidatedTransition } from '@miro/engine'
 
 export class StaleStateError extends Error {
@@ -33,7 +33,7 @@ export type CommitInput = {
   relationshipVersion: number
   currentRelationship: RelationshipState
   /** 중복 기억 판정을 위한 기존 기억. */
-  existingMemories: Array<{ content: string; importance: number; persistence: number }>
+  existingMemories: Memory[]
   /** 이번 턴 이후의 캐릭터 상태. runTurn 이 만든다. */
   characterState?: CharacterState
 }
@@ -75,7 +75,7 @@ export async function commitTurn(input: CommitInput): Promise<void> {
     if (worldUpdated.length === 0) throw new StaleStateError()
 
     /* ---- relationship ---- */
-    const next = applyRelationshipDelta(input.currentRelationship, t.relationshipDelta as never)
+    const next = applyRelationshipDelta(input.currentRelationship, t.relationshipDelta)
     const relUpdated = await tx.update(relationships)
       .set({
         trust: next.trust, attraction: next.attraction, jealousy: next.jealousy,
@@ -180,8 +180,14 @@ export async function commitTurn(input: CommitInput): Promise<void> {
 
     /* ---- memories ---- */
     // 같은 사실을 반복 저장하지 않는다.
-    const fresh = dedupeCandidates(t.memories, input.existingMemories as never)
+    const replacements = t.memories.filter(m => m.replaces && input.existingMemories.some(old => old.id === m.replaces && old.sessionId === input.sessionId && old.type === m.type))
+      .map(m => m.replaces!)
+    const candidates = t.memories.filter(m => !m.replaces || replacements.includes(m.replaces))
+    const fresh = dedupeCandidates(candidates, input.existingMemories.filter(m => !replacements.includes(m.id)) as never)
     if (fresh.length > 0) {
+      const accepted = fresh.flatMap(m => m.replaces ? [m.replaces] : [])
+      if (accepted.length) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), inArray(memories.id, accepted)))
+      if (fresh.some(m => m.type === 'short_term_summary')) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), eq(memories.type, 'short_term_summary')))
       await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,

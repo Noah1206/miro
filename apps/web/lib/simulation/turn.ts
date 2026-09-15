@@ -6,7 +6,7 @@ import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@mi
 import { beginRequest, failRequest } from '@/lib/ai/gateway'
 import { feature, usagePolicy } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
-import { renderBlocks, runTurn, type TurnResult } from '@miro/engine'
+import { renderBlocks, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError } from './commit'
 import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
@@ -33,7 +33,7 @@ export type ConversationOutcome =
       newEventType: string | null
       sceneChanged: boolean
     }
-  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' }
+  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
   | { ok: false; reason: 'budget'; kind: BudgetKind }
 
@@ -86,14 +86,19 @@ async function executeTurn(opts: {
 
     } catch (e) {
       await rollback(reservation.reservationId)
+      if (e instanceof UnsafeContentError) return { ok: false, reason: 'safety' }
       if (e instanceof AIBudgetDeniedError) return { ok: false, reason: 'budget', kind: e.reason as BudgetKind }
       if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }
-      observe('turn.failed', { sessionId, turn: turnIndex, error: (e as Error).message })
+      observe('turn.failed', { sessionId, turn: turnIndex, error: 'generation_failed' })
       return { ok: false, reason: 'generation' }
     }
 
     const { transition } = result
-    if (result.providerMode === 'fallback') observe('provider.llm.fallback', { sessionId, turn: turnIndex, error: result.fallbackReason })
+    if (result.providerMode === 'fallback') {
+      await rollback(reservation.reservationId)
+      observe('provider.llm.fallback', { sessionId, turn: turnIndex })
+      return { ok: false, reason: 'generation' }
+    }
     // 검증에서 걸러진 항목은 조용히 버리지 않는다 — Provider 품질 신호다.
     if (transition.issues.length > 0) {
       observe('provider.llm.validation_issues', { sessionId, turn: turnIndex, count: transition.issues.length, fields: transition.issues.map((i) => i.field).join(',') })

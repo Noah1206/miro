@@ -49,6 +49,6 @@ describe('AIOrchestrator', () => {
     expect(resolveAIChain(() => 'x').map((p) => p.info.mode)).toEqual(['mock'])
     process.env.AI_PROVIDER = 'gemini'; process.env.GEMINI_API_KEY = 'k'
     process.env.AI_FALLBACK_PROVIDER = 'cloudflare'; process.env.CLOUDFLARE_ACCOUNT_ID = 'a'; process.env.CLOUDFLARE_API_TOKEN = 't'
-    expect(resolveAIChain(() => 'x').map((p) => p.info.name)).toEqual(['gemini/gemini-2.5-flash-lite', 'cloudflare/@cf/meta/llama-3.1-8b-instruct'])
+    expect(resolveAIChain(() => 'x').map((p) => p.info.name)).toEqual(['gemini/gemini-3.5-flash-lite', 'cloudflare/@cf/meta/llama-3.1-8b-instruct'])
   })
 })

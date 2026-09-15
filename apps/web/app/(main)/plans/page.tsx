@@ -1,11 +1,11 @@
 import { redirect } from 'next/navigation'
-import { usagePolicy } from '@miro/config'
+import { usagePolicy, productionRuntime } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { effectivePlan } from '@/lib/usage/guard'
 import { track } from '@/lib/analytics/track'
 import { Accordion, ButtonLink, Page, PageHeader, Reveal } from '@/components/ui'
 
-const FEATURES = ['자유 역할극 · 세계·관계·사건', '캐릭터 만들기 · Face Cast', 'AI 사진 · Live Scene', '캐릭터 선연락', '음성통화 · 영상통화', '장기 기억']
+const FEATURES = ['텍스트 역할극', '캐릭터 만들기', '대화 저장']
 
 export default async function PlansPage() {
   const user = await currentUser()
@@ -33,7 +33,8 @@ export default async function PlansPage() {
       <div style={{ marginTop: 'var(--space-5)' }}>
         <Accordion title="가격은 언제 정해지나요?"><p className="t-caption">원가 측정이 끝난 뒤 확정됩니다. 지금 보이는 한도는 개발용 임시값입니다.</p></Accordion>
       </div>
-      {plan === 'free' && (
+      {productionRuntime() && <p role="status" className="t-caption" style={{ marginTop: 20 }}>Pro는 준비 중입니다. 현재 무료로 이용할 수 있어요.</p>}
+      {plan === 'free' && !productionRuntime() && (
         <div style={{ marginTop: 'var(--space-6)' }}>
           <ButtonLink href="/subscribe" data-upgrade variant="primary" size="lg" full>Pro 시작하기</ButtonLink>
         </div>

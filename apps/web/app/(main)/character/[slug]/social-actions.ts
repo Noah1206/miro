@@ -52,3 +52,15 @@ export async function bookmark(slug: string): Promise<void> {
   await toggleBookmark(id, user.id)
   revalidatePath(`/character/${slug}`)
 }
+
+export async function likeCharacter(key: string, liked: boolean) {
+  const user = await currentUser()
+  if (!user) loginThenBack(key)
+  const { getCharacterByKey } = await import('@/lib/characters')
+  const character = await getCharacterByKey(key, user.id)
+  if (!character) throw new Error('캐릭터를 찾을 수 없습니다.')
+  const { setCharacterLiked } = await import('@/lib/social')
+  const state = await setCharacterLiked(character.id, user.id, liked)
+  revalidatePath(`/character/${key}`)
+  return state
+}

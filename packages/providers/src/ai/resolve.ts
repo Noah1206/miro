@@ -1,3 +1,4 @@
+import { mockProvidersAllowed, productionRuntime } from '@miro/config'
 import { ModelRegistry, type ModelDefinition } from './model-registry'
 import { AI_TASKS } from './tasks'
 import { AnthropicProvider } from './anthropic'
@@ -40,6 +41,7 @@ export function providerFromEnv(name: string | undefined, model?: string): AIPro
 export function resolveAIChain(mock: (req: GenerationRequest) => unknown): AIProvider[] {
   const chain = [providerFromEnv(process.env.AI_PROVIDER), providerFromEnv(process.env.AI_FALLBACK_PROVIDER)]
     .filter((p): p is AIProvider => p !== null)
+  if (!chain.length && !mockProvidersAllowed()) throw new Error('AI_CONFIGURATION_REQUIRED')
   return chain.length > 0 ? chain : [new MockAIProvider(mock)]
 }
 
@@ -59,10 +61,16 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
       const p = providerFromEnv(name)
       if (!p) throw new Error('configured AI provider is missing credentials')
       const e = process.env
-      const models: Record<string, string | undefined> = { gemini: e.GEMINI_MODEL ?? 'gemini-2.5-flash-lite', cloudflare: e.CLOUDFLARE_AI_MODEL ?? '@cf/meta/llama-3.1-8b-instruct', gateway: e.MIRO_LLM_MODEL, openai: e.OPENAI_MODEL, anthropic: e.ANTHROPIC_MODEL, 'miro-slm': e.MIRO_SLM_MODEL }
+      const models: Record<string, string | undefined> = { gemini: e.GEMINI_MODEL ?? 'gemini-3.5-flash-lite', cloudflare: e.CLOUDFLARE_AI_MODEL ?? '@cf/meta/llama-3.1-8b-instruct', gateway: e.MIRO_LLM_MODEL, openai: e.OPENAI_MODEL, anthropic: e.ANTHROPIC_MODEL, 'miro-slm': e.MIRO_SLM_MODEL }
       return { id: `default-${i}`, provider: name, providerModelId: models[name], tier: 'standard', capabilities: [...AI_TASKS], maxContextTokens: 32768, enabled: true }
     })
     registry = new ModelRegistry(definitions.length ? definitions : [{ id: 'mock', provider: 'mock', providerModelId: 'mock', tier: 'small', capabilities: [...AI_TASKS], maxContextTokens: 32768, enabled: true, inputCost: 0, outputCost: 0 }])
+  }
+  if (productionRuntime()) {
+    const enabled = registry.models.filter(m => m.enabled)
+    if (!enabled.length || enabled.some(m => m.provider === 'mock')) throw new Error('AI_CONFIGURATION_REQUIRED')
+    if (enabled.some(m => m.inputCost === undefined || m.outputCost === undefined)) throw new Error('AI_MODEL_PRICES_REQUIRED')
+    if (!enabled.some(m => m.provider !== 'miro-slm' && m.capabilities.includes('dialogue'))) throw new Error('AI_DIALOGUE_MODEL_REQUIRED')
   }
   const resolveModel = (m: ModelDefinition): AIProvider => {
     if (m.provider === 'mock') return new MockAIProvider(mock)

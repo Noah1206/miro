@@ -791,3 +791,10 @@ export const aiEvaluationSamples = pgTable('ai_evaluation_samples', {
   reviewStatus: text('review_status').notNull().default('pending'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({ userIdx: index('ai_evaluation_samples_user_idx').on(t.userId), requestIdx: uniqueIndex('ai_evaluation_samples_request_idx').on(t.requestId) })).enableRLS()
+
+export const characterLikes = pgTable('character_likes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ uniq: uniqueIndex('character_likes_uniq').on(t.characterId, t.userId) }))

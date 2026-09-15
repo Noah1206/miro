@@ -1,3 +1,4 @@
+import { mockProvidersAllowed } from '@miro/config'
 import type { ProviderInfo } from '../types'
 import type { OAuthProfile, OAuthProvider, OAuthProviderId } from './types'
 import { OAUTH_LABEL } from './types'
@@ -17,6 +18,7 @@ export class MockOAuthProvider implements OAuthProvider {
     return `/auth/mock/${this.id}?${new URLSearchParams({ state, redirect_uri: redirectUri })}`
   }
   async exchange({ code }: { code: string }): Promise<OAuthProfile> {
+    if (!mockProvidersAllowed()) throw new Error('MOCK_AUTH_DISABLED')
     const json = Buffer.from(code, 'base64url').toString('utf8')
     const { email, name } = JSON.parse(json) as { email?: string; name?: string }
     if (!email) throw new Error('mock profile needs an email')

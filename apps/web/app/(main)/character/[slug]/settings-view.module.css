@@ -11,7 +11,7 @@
 .label, .value { font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); }
 .value { text-align: right; white-space: nowrap; }
 .track { height: 9px; min-width: 0; }
-.fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #77383e, #F15B62); }
+.fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #617d20, var(--color-accent)); }
 @media (max-width: 380px) {
   .contactCard { padding: 16px; }
   .meterRow { grid-template-columns: 65px minmax(0, 1fr) 54px; gap: 8px; }

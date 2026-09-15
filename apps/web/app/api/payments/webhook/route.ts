@@ -1,3 +1,4 @@
+import { mockProvidersAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
 import { resolvePayment } from '@miro/providers'
 import { applyPaymentEvent } from '@/lib/payments/service'
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
   const provider = resolvePayment()
   // PG 마다 서명 헤더 이름이 다르다. Adapter 가 형식을 검증하므로 여기서는 넘겨주기만 한다.
   const signature = req.headers.get('stripe-signature') ?? req.headers.get('x-payment-signature')
-  if (provider.info.mode === 'mock' && process.env.NODE_ENV === 'production' && process.env.MIRO_ENABLE_DEV_API !== '1') {
+  if (provider.info.mode === 'mock' && !mockProvidersAllowed()) {
     return NextResponse.json({ error: 'payment provider not configured' }, { status: 503 })
   }
   const ev = await provider.parseWebhook(await req.text(), signature)

@@ -20,17 +20,19 @@ export type CallTurnState = { error: string | null }
  * 통화에서 한 말이 관계·세계·기억에 그대로 반영된다. 사용량은 통화 시간으로 이미 차감된다.
  */
 export async function callTurn(_prev: CallTurnState, form: FormData): Promise<CallTurnState> {
+  if (!feature('voiceCall') && !feature('videoCall')) return { error: COPY.error.featureOff }
   const user = await requireUser()
   const callId = String(form.get('callId') ?? '')
   const input = String(form.get('input') ?? '').trim()
   if (!input) return { error: null }
+  if (input.length > 500) return { error: '500자 이내로 입력해 주세요.' }
 
   const call = await owned(user.id, callId)
   if (!call || call.status !== 'active') return { error: '통화가 진행 중이 아닙니다.' }
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(call.sessionId, user.id)
-    if (!loaded) return { error: '대화를 찾을 수 없습니다.' }
+    if (!loaded || loaded.restricted) return { error: '대화를 찾을 수 없습니다.' }
     const snapshot = { ...loaded.snapshot, mode: call.channel === 'voice' ? 'voice_call' as const : 'video_call' as const }
     const turnIndex = snapshot.turnCount + 1
 

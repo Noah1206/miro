@@ -40,11 +40,11 @@ export function ContextContent({ d }: { d: ContextData }) {
 }
 
 /** 모바일: 헤더를 누르면 시트. 데스크톱: 오른쪽 패널이 항상 보인다. */
-export function ContextTrigger({ d, children }: { d: ContextData; children: React.ReactNode }) {
+export function ContextTrigger({ d, children, className }: { d: ContextData; children: React.ReactNode; className?: string }) {
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={`${d.name} — 관계와 세계 보기`} style={{ background: 'transparent', border: 0, padding: 0, textAlign: 'left', flex: 1, minWidth: 0, color: 'inherit' }}>{children}</button>
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-label={`${d.name} — 관계와 세계 보기`} className={className}>{children}</button>
       <Sheet open={open} onClose={() => setOpen(false)} title={d.name}><ContextContent d={d} /></Sheet>
     </>
   )

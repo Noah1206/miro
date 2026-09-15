@@ -1,5 +1,5 @@
 import { and, desc, eq, ilike, inArray, isNull, ne, or, sql } from 'drizzle-orm'
-import { characterBookmarks, characterCommentLikes, characterComments, characters, db, users, worlds } from '@miro/db'
+import { characterLikes, characterBookmarks, characterCommentLikes, characterComments, characters, db, users, worlds } from '@miro/db'
 import { genreKeywords } from './genres'
 
 export type CommentItem = {
@@ -163,4 +163,16 @@ export async function similarCharacters(characterId: string, genre: string | nul
     ))
     .limit(limit)
   return rows
+}
+
+export async function characterLikeState(characterId: string, userId: string | null) {
+  const [row] = await db.select({ count: sql<number>`count(*)::int`, liked: sql<boolean>`coalesce(bool_or(${characterLikes.userId} = ${userId}), false)` })
+    .from(characterLikes).where(eq(characterLikes.characterId, characterId))
+  return row ?? { count: 0, liked: false }
+}
+
+export async function setCharacterLiked(characterId: string, userId: string, liked: boolean) {
+  if (liked) await db.insert(characterLikes).values({ characterId, userId }).onConflictDoNothing()
+  else await db.delete(characterLikes).where(and(eq(characterLikes.characterId, characterId), eq(characterLikes.userId, userId)))
+  return characterLikeState(characterId, userId)
 }

@@ -63,7 +63,7 @@ export function CharacterSettingsView({ visual, contact, name }: { name: string;
   ] : []
   return <>
     {appearance.some(([, value]) => value?.trim()) && <Rule label="외형"><Details rows={appearance} avatar={bodyAvatar} /></Rule>}
-    {contact && <Rule label="연락" accent="#F15B62">
+    {contact && <Rule label="연락">
       <div className={styles.contactCard}>
         <div className={styles.summary}>
           <strong>먼저 연락하기 · {contact.enabled ? '켜짐' : '꺼짐'}</strong>

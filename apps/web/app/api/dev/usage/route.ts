@@ -1,3 +1,4 @@
+import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
 import { and, desc, eq, gt } from 'drizzle-orm'
 import { db, usageWindows } from '@miro/db'
@@ -6,7 +7,7 @@ import { reserve } from '@/lib/usage/guard'
 
 /** 개발/E2E 전용. 현재 창의 사용량을 한도까지 채워 한도 도달 UX 를 재현한다. */
 export async function POST() {
-  if (process.env.NODE_ENV === 'production' && process.env.MIRO_ENABLE_DEV_API !== '1') {
+  if (!devApiAllowed()) {
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
   const user = await currentUser()

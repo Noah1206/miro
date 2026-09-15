@@ -3,6 +3,8 @@
  * MIRO_MODE=alpha 면 돈 드는 기능(이미지·통화·Live Scene)을 끄고, 관계·기억·사건·리얼리티는 그대로 켠다.
  * 개별 플래그는 MIRO_FEATURE_<NAME>=1|0 으로 덮어쓸 수 있다.
  */
+import { productionRuntime } from './runtime'
+
 export type FeatureName =
   | 'imageGeneration' | 'voiceCall' | 'videoCall' | 'liveScene'
   | 'relationshipEngine' | 'memoryEngine' | 'eventEngine' | 'realityMessage'
@@ -33,6 +35,8 @@ export function currentMode(): Mode {
 }
 
 export function feature(name: FeatureName): boolean {
+  // These transports are not implemented yet. A production env override must not expose them.
+  if (productionRuntime() && ['voiceCall', 'videoCall', 'liveScene', 'imageGeneration', 'realityMessage', 'inlineReality'].includes(name)) return false
   const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]
   if (override === '1') return true
   if (override === '0') return false

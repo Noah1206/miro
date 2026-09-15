@@ -12,6 +12,7 @@ export type LoadedSession = {
   sessionId: string
   characterId: string
   characterName: string
+  characterPhoto?: string | null
   characterStatus: string | null
   /** 운영 제한. 새 턴/미디어를 거부한다. */
   restricted: boolean
@@ -53,7 +54,7 @@ export async function loadSession(
       ? db.select().from(scenes).where(eq(scenes.id, row.world.currentSceneId)).limit(1)
       : Promise.resolve([]),
     db.select().from(messages)
-      .where(eq(messages.sessionId, sessionId))
+      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt)))
       .orderBy(desc(messages.turnIndex), desc(messages.createdAt))
       .limit(24),
     db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
@@ -102,6 +103,7 @@ export async function loadSession(
     sessionId,
     characterId: c.id,
     characterName: c.name,
+    characterPhoto: c.images[0] ?? null,
     characterStatus: row.session.characterStatus,
     restricted: row.session.restrictedAt !== null,
     lastInteractionAt: row.session.lastInteractionAt,

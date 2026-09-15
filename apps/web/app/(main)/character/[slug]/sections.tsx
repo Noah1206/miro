@@ -1,11 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink, useToast } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
-import { bookmark, deleteComment, likeComment } from './social-actions'
+import { likeCharacter, bookmark, deleteComment, likeComment } from './social-actions'
 
 /**
  * 한 덩이.
@@ -84,12 +84,12 @@ export function SampleDialogue({ name, portrait, turns }: {
 
 /** *별표* 로 감싼 부분은 서술 — 채팅 화면과 같은 규칙. */
 export function Line({ text }: { text: string }) {
-  const parts = text.split(/(\*[^*]+\*)/g).filter(Boolean)
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean)
   return (
-    <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-primary)', margin: 0 }}>
+    <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
       {parts.map((part, i) =>
         part.startsWith('*') && part.endsWith('*')
-          ? <em key={i} style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{part.slice(1, -1)}</em>
+          ? <em key={i} style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{part.startsWith('**') ? part.slice(2, -2) : part.slice(1, -1)}</em>
           : <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>,
       )}
     </p>
@@ -130,11 +130,11 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
       : <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
   return (
     <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', borderRadius: 7,
-      background: 'var(--color-surface-2)', fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
+      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', borderRadius: 6, height: 22, boxSizing: 'border-box', lineHeight: '18px',
+      background: 'var(--color-surface-2)', fontSize: 12, color: 'var(--color-text-secondary)',
     }}>
       <svg aria-hidden width="14" height="14" viewBox="0 0 24 24"
-        fill={icon === 'book' ? 'none' : 'var(--color-danger)'}
+        fill={icon === 'book' ? 'none' : 'currentColor'}
         stroke={icon === 'book' ? 'currentColor' : 'none'} strokeWidth="1.75" strokeLinejoin="round">
         {path}
       </svg>
@@ -156,15 +156,15 @@ export function RealityStrip() {
   ]
   return (
     <div style={{
-      display: 'flex', gap: 8, padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)',
+      display: 'flex', gap: 4, padding: '12px 8px', borderRadius: 12,
       background: 'var(--color-surface-1)',
     }}>
       {items.map((item) => (
         <span key={item.label} style={{
-          flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-          fontSize: 'var(--font-caption)', color: 'var(--color-text-secondary)',
+          flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6,
+          fontSize: 12, fontWeight: 500, letterSpacing: '-0.025em', whiteSpace: 'nowrap', color: 'var(--color-text-primary)',
         }}>
-          <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
+          <svg aria-hidden width="18" height="18" style={{ color: 'var(--color-accent)', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
           {item.label}
         </span>
       ))}
@@ -182,25 +182,26 @@ export function SimilarRow({ items }: { items: CardCharacter[] }) {
 }
 
 /** 북마크. 눌린 즉시 상태가 바뀌고, 서버가 확정한다. */
-export function BookmarkButton({ slug, saved }: { slug: string; saved: boolean }) {
+export function BookmarkButton({ slug, saved, iconOnly = false }: { slug?: string; saved: boolean; iconOnly?: boolean }) {
   const [on, setOn] = useState(saved)
   const toast = useToast()
   const reduce = useReducedMotion()
   return (
-    <form action={async () => { setOn((v) => !v); await bookmark(slug); toast(on ? '보관함에서 뺐어요.' : '보관함에 담았어요.') }}>
-      <motion.button type="submit" aria-pressed={on} aria-label={on ? '보관함에서 빼기' : '보관함에 담기'}
+    <form action={async () => { if (!slug) return; setOn((v) => !v); await bookmark(slug); toast(on ? '보관함에서 뺐어요.' : '보관함에 담았어요.') }}>
+      <motion.button type="submit" disabled={!slug} aria-pressed={on} aria-label={on ? '보관함에서 빼기' : '보관함에 담기'}
         whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
         style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', minHeight: 32,
-          borderRadius: 7, border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)',
+          display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', minHeight: 22, height: 22, lineHeight: '18px',
+          borderRadius: 7, border: 0, cursor: 'pointer', fontSize: 12,
           background: on ? 'var(--color-white)' : 'var(--color-surface-2)',
-          color: on ? 'var(--color-black)' : 'var(--color-text-secondary)',
+          color: on ? 'var(--color-black)' : 'var(--color-white)',
+          ...(iconOnly ? { width: 42, height: 42, padding: 0, justifyContent: 'center', borderRadius: 10, background: 'var(--color-accent)', color: 'var(--color-white)' } : {}),
         }}>
-        <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'}
+        <svg aria-hidden width={iconOnly ? 24 : 14} height={iconOnly ? 24 : 14} viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'}
           stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
         </svg>
-        {on ? '보관함에 있음' : '보관하기'}
+        {!iconOnly && (on ? '보관함에 있음' : '보관하기')}
       </motion.button>
     </form>
   )
@@ -269,3 +270,22 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
 }
 
 const day = (d: Date) => new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+
+export function LikeButton({ overlay = false, slug, initial = { count: 0, liked: false } }: { overlay?: boolean; slug?: string; initial?: { count: number; liked: boolean } }) {
+  const [state, setState] = useState(initial)
+  const [pending, setPending] = useState(false)
+  const toast = useToast()
+  useEffect(() => setState(initial), [initial.count, initial.liked])
+  return <button type="button" aria-label={state.liked ? '좋아요 취소' : '좋아요'} aria-pressed={state.liked} disabled={pending || !slug}
+    onClick={async () => {
+      if (!slug || pending) return
+      setPending(true)
+      try { setState(await likeCharacter(slug, !state.liked)) }
+      catch { toast('좋아요를 저장하지 못했어요. 다시 시도해 주세요.') }
+      finally { setPending(false) }
+    }}
+    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', height: 22, border: 0, borderRadius: 6, fontSize: 12, lineHeight: '18px', background: 'var(--color-surface-2)', color: overlay ? 'var(--color-white)' : 'var(--color-text-secondary)', cursor: pending ? 'wait' : 'pointer', ...(overlay ? { height: 36, padding: '0 12px', borderRadius: 999, background: 'rgba(0,0,0,.65)', fontSize: 14 } : {}) }}>
+    <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill={state.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
+    {!overlay && '좋아요 '} {state.count}
+  </button>
+}

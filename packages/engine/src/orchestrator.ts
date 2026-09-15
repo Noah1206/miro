@@ -1,11 +1,12 @@
-import { AIBudgetDeniedError, interactionImportance, type LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
   DEFAULT_CHARACTER_STATE, applyRelationshipDelta, deltaFromSemanticEvents, deriveCharacterState,
-  detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient,
+  detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, nextRelationshipStage,
 } from '@miro/domain'
 import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent } from '@miro/domain'
 import { SimulationProposal } from './proposal.schema'
+import { requireSafeContent, UnsafeContentError } from './safety'
 import { fallbackProposal } from './fallback'
 import { buildContext, type BuiltContext, type SimulationSnapshot } from './context'
 import { validateProposal, type ValidatedTransition } from './validator'
@@ -45,6 +46,10 @@ export async function runTurn(opts: {
   const now = opts.now ?? new Date()
   const personality = snapshot.character.personality
 
+  await requireSafeContent(opts.llm, { phase: 'input', character: snapshot.character,
+    worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
+    recent: snapshot.recentMessages, input: opts.userInput })
+
   const tasks = planTasks(opts.userInput, snapshot.turnCount + 1)
   let semanticEvents = detectSemanticEvents(opts.userInput)
   const extraMemories: MemoryCandidate[] = []
@@ -57,10 +62,12 @@ export async function runTurn(opts: {
   const codeDelta = deltaFromSemanticEvents(semanticEvents, personality)
   // 이번 턴의 관계(규칙 적용 후)로 기분을 정한다 — 모델은 수치가 아니라 기분을 본다.
   const projected = applyRelationshipDelta(snapshot.relationship, codeDelta)
+  codeDelta.stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1)
+  projected.stage = codeDelta.stage
   const prevState = snapshot.characterState ?? DEFAULT_CHARACTER_STATE
   const characterState = deriveCharacterState(prevState, projected, semanticEvents)
 
-  const context = buildContext({ ...snapshot, characterState, semanticEvents, userInput: opts.userInput })
+  const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput })
 
   let proposal: SimulationProposal
   let providerMode: TurnResult['providerMode'] = opts.llm.info.mode
@@ -72,6 +79,7 @@ export async function runTurn(opts: {
       prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
     })
   } catch (e) {
+    if (e instanceof AIContentBlockedError) throw new UnsafeContentError()
     if (e instanceof AIBudgetDeniedError) throw e
     // Fallback chain 의 끝 — 서비스는 멈추지 않는다. 관계는 규칙 delta 로만 움직인다.
     providerMode = 'fallback'
@@ -83,8 +91,10 @@ export async function runTurn(opts: {
   }
 
   const transition = validateProposal(proposal, snapshot)
-  transition.relationshipDelta = codeDelta as never
-  transition.memories = filterSalient([...transition.memories, ...extraMemories])
+  if (providerMode !== 'fallback') await requireSafeContent(opts.llm, { phase: 'output', input: opts.userInput, proposal })
+  transition.relationshipDelta = codeDelta
+  // The dialogue model cannot delete memories. Corrections come only from the scoped extraction task.
+  transition.memories = filterSalient([...extraMemories, ...transition.memories.map(({ replaces: _ignored, ...m }) => m)])
 
   // 사건 규칙 — "무슨 일이 일어나야 하는가" 는 코드가 정한다. LLM 제안은 규칙이 없을 때만 남는다.
   const fired = evaluateEventRules({

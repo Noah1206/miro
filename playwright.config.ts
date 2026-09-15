@@ -7,6 +7,7 @@ const WEB = Number(process.env.E2E_WEB_PORT ?? 3200), ADMIN = Number(process.env
 process.env.E2E_BASE = `http://localhost:${WEB}`
 process.env.E2E_ADMIN = `http://localhost:${ADMIN}`
 const env = {
+  MIRO_TEST_MODE: '1',
   DATABASE_URL: database,
   CRON_SECRET: process.env.CRON_SECRET ?? 'e2e-cron-secret',
   MIRO_ENABLE_DEV_API: '1',

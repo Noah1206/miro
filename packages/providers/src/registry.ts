@@ -1,3 +1,4 @@
+import { mockProvidersAllowed } from '@miro/config'
 import { createAI } from './ai/resolve'
 import { MockImageProvider } from './mock/image'
 import { ReplicateImageProvider } from './image/replicate'
@@ -91,7 +92,7 @@ export function resolvePayment(): PaymentProvider {
  * NODE_ENV 로는 구분할 수 없다. 실제 배포 환경(VERCEL_ENV=production) 에서만 무시한다.
  */
 export function resolveOAuth(id: OAuthProviderId): OAuthProvider {
-  const forceMock = process.env.MIRO_MOCK_OAUTH === '1' && process.env.VERCEL_ENV !== 'production'
+  const forceMock = process.env.MIRO_MOCK_OAUTH === '1' && mockProvidersAllowed()
   if (forceMock) return new MockOAuthProvider(id)
   if (process.env.AUTH_PROVIDER === 'supabase') {
     const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL

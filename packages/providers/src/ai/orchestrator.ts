@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto'
+import { productionRuntime } from '@miro/config'
 import type { ZodType, ZodTypeDef } from 'zod'
 import type { LLMProvider, ProviderInfo } from '../types'
 import type { AIContext, AIProvider, AIUsageRecord, BudgetGuard, GenerationRequest, GenerationResult } from './types'
+import { AIContentBlockedError } from './types'
 import { AI_TASKS, interactionImportance, taskOf } from './tasks'
 import { ModelRegistry, modelCost, routeModels, type ModelDefinition, type RolloutPolicy } from './model-registry'
 
@@ -82,6 +84,9 @@ export class AIOrchestrator implements LLMProvider {
     const selections = this.selections(req)
     for (let index = 0; index < selections.length; index++) {
       const { provider, model } = selections[index]!
+      if (productionRuntime() && (provider.info.mode === 'mock' || !this.opts.budgetGuard)) {
+        throw new AIBudgetDeniedError('production_guard_required')
+      }
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
         const attemptId = randomUUID()
         const request = { ...req, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens),
@@ -100,12 +105,13 @@ export class AIOrchestrator implements LLMProvider {
             provider.generate({ ...request, signal: controller.signal }),
             new Promise<never>((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error(`timeout ${this.timeoutMs}ms`)) }, this.timeoutMs) }),
           ])
+          if (result.blocked) throw new AIContentBlockedError()
           output = validate(result.text)
           ok = true
         } catch (e) {
           // Never log provider response bodies, keys, prompts or private reasoning.
           const message = e instanceof Error ? e.message : ''
-          last = controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message === 'invalid_schema' || message === 'empty_output' ? message : 'provider_error'
+          last = e instanceof AIContentBlockedError ? 'content_blocked' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message === 'invalid_schema' || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
         } finally { clearTimeout(timer) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null
         await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
@@ -115,6 +121,7 @@ export class AIOrchestrator implements LLMProvider {
           inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out), actualCost: null,
           usageUnits: ok ? context.usageUnits ?? 0 : 0, latencyMs: Date.now() - started, ok, error: ok ? null : last, fallbackUsed: index > 0, shadow: context.shadow ?? false,
         })
+        if (result?.blocked) throw new AIContentBlockedError()
         if (ok) {
           this.info.mode = provider.info.mode
           this.lastModelId = model.id; this.lastPromptVersion = req.promptVersion ?? `${req.task}:v1`; this.lastFallbackUsed = index > 0

@@ -1,6 +1,6 @@
 import { and, desc, eq, gt, sql } from 'drizzle-orm'
 import { db, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
-import { usagePolicy, type Plan } from '@miro/config'
+import { usagePolicy, productionRuntime, type Plan } from '@miro/config'
 import { costOf, decide, isEntitled, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
@@ -27,7 +27,8 @@ type Reader = Pick<typeof db, 'select'>
  */
 export async function effectivePlan(userId: string, now = new Date(), reader: Reader = db): Promise<Plan> {
   const [sub] = await reader.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
-  if (isEntitled(sub ? (sub as never) : null, now)) return 'pro'
+  if (sub && (!productionRuntime() || sub.provider === 'stripe') && isEntitled(sub as never, now)) return 'pro'
+  if (productionRuntime()) return 'free'
   const [u] = await reader.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
   return u?.plan ?? 'free'
 }

@@ -1,14 +1,14 @@
 # PM Status — MIRO
 
-**Last briefing**: 2026-09-14 · main, baseline f46f935 이후 로컬 미커밋 작업
-**Current focus**: MIRO Production AI Platform Phase A–E 기반 구현 및 검증
+**Last briefing**: 2026-09-15 · main, HEAD 48b4ef1 이후 로컬 미커밋 작업
+**Current focus**: Free Reality MVP의 실제 운영 검증 → Pro 정책 연결 → 미디어 단계적 출시
 **최신 보고서**: docs/MIRO_AI_PLATFORM.md
 
 ## 제품과 확정 정책
 
 - AI 캐릭터 관계·세계 시뮬레이션. Character/Relationship/Memory/Event/World/Scene의 상태를 Core가 유지한다.
 - 사용자 최신 지시에 따라 Free/Pro는 **월간 공통 AI Usage Pool**을 사용한다. 기존 5시간 정책은 대체됨.
-- 플랜별 모델 품질/기능 차등은 없고 사용량만 다르다. 가격·월간 한도·가중치는 운영 확정 전 개발값이다.
+- 최신 요금 방향은 docs/MIRO_PRICING_POLICY.md 우선: 모델별 상품 없이 Free에서도 핵심 Reality 경험을 제공하고, Pro는 월간 공통 풀로 깊이·빈도를 확대한다. 가격·월간 한도·빈도 수치는 미정이다.
 - 웹앱(PWA) 우선, 1캐릭터=1세계관. 유료 충전권/별도 기능 결제는 만들지 않는다.
 
 ## 이번 구현
@@ -55,3 +55,30 @@
 - memoryExtraction/memorySummaries/llmSemanticAnalysis 플래그가 실행 서버에서 false.
 - 읽기 전용 HTTP 확인: home/discover/archive/terms/privacy 200, create/my/plans 307(비로그인 요청). 인증된 전체 E2E, 실결제/실통화/유료 생성은 미실행.
 - 우선순위: 실제 Provider 및 통화 연결 → 종료 오류 → 편집/사진 회귀 → 보관 잔존 상태 및 약관.
+
+
+## 2026-09-15 최신 프로덕션 전환 점검
+
+이전 항목은 당시 기록이다. 현재 상태는 이 절과 docs/P0_PROGRESS_2026-09-15.md를 따른다.
+
+- P0 1차 검증 기록: 격리 단위/통합 328개, mock 브라우저 E2E 8개, 실제 Gemini 합성 평가 4개 통과. 이번 PM 점검에서는 재실행하지 않음.
+- 현재 health: DB up, LLM live, AI_OPERATING_BUDGET_REQUIRED로 생성 차단. 기억 추출·요약 활성, 운영 Reality/이미지/음성/영상/Live Scene 비활성.
+- Reality 생성에는 캐릭터·관계·사건 전달이 있지만 최근 대화와 관련 기억이 직접 입력되지 않는다. 사용자 발화 기반 선톡을 위해 공통 맥락 연결·안전 검증 필요.
+- 최신 정책은 문서에 반영됐고 Pro 기억·빈도 차이 및 실제 판매는 아직 완성되지 않음.
+
+### 차기 마일스톤 및 통과 기준 (제안)
+
+1. 실제 모델 기반 텍스트 수직 경로: 로그인→생성→저장→재진입→기억·관계 반영. 실패·동시 요청·한도 소진 시 중복/유실/이중 차감 없음.
+2. Free Reality: 관련 기억 기반 텍스트 선톡→저장→재방문→답장 맥락 연결. 중복·야간/거부 설정·탈퇴·삭제·생성/Push 실패와 재시작 검증.
+3. 운영 안정화: 스테이징 분리, 자동 회귀, 부하·복구·예약 정산, 배포 롤백·알림 및 데이터 복원 훈련. 목표 지연·실패율·원가의 수치는 부하 측정 후 확정.
+4. 제한적 Free 베타: 위 기준 통과와 운영 예산 확정 후 소수 초대 검증.
+5. Pro: 실제 원가로 가격·한도·기억/빈도 정책 확정 후 결제/갱신/해지/환불/중복 webhook 검증.
+6. 미디어: 사진→음성 메시지→음성통화→영상/Live/Face Cast 순서 제안. 각각 동일 풀·권한·안전·실패정산 검증.
+
+### 미해결 결정
+
+- 운영 일일 예산과 초대 사용자 규모.
+- Pro 가격, Free/Pro 제공량, 기억·선톡 빈도 차이.
+- 한도 소진 시 짧은 답장 유예 및 선톡 발생의 사용자 풀 차감 규칙.
+
+앱 코드·DB·운영 예산·배포는 이 PM 점검에서 변경하지 않았다.

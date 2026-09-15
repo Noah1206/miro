@@ -1,4 +1,5 @@
 'use server'
+import { mockProvidersAllowed, productionRuntime } from '@miro/config'
 import { redirect } from 'next/navigation'
 import { requireUser } from '@/lib/auth'
 import { resolvePayment } from '@miro/providers'
@@ -6,6 +7,7 @@ import { applyPaymentEvent, restorePurchase, startCheckout } from '@/lib/payment
 
 /** n56 — 결제 시작. 실 PG 는 redirectUrl 로 보낸다. Mock 은 앱 안 시뮬레이션 화면으로. */
 export async function beginCheckout() {
+  if (productionRuntime()) redirect('/plans')
   const user = await requireUser()
   const c = await startCheckout(user.id)
   if (c.redirectUrl) redirect(c.redirectUrl)
@@ -17,6 +19,7 @@ export async function beginCheckout() {
  * 같은 applyPaymentEvent 를 타므로 자격 적용 로직은 하나다.
  */
 export async function simulateOutcome(checkoutId: string, outcome: 'success' | 'failed') {
+  if (!mockProvidersAllowed()) redirect('/plans')
   const user = await requireUser()
   const provider = resolvePayment()
   if (provider.info.mode !== 'mock') redirect('/subscribe/result?status=failed')

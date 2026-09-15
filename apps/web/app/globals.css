@@ -102,8 +102,15 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); letter-spacing: -0.005em; }
 
 /* Character profile density follows the compact hierarchy used by content-first profile pages. */
-.character-detail-copy > .t-hero { font-size: 24px; line-height: 1.18; }
-.character-detail-copy .t-title-3 { font-size: 16px; line-height: 1.35; }
+.character-detail-theme {
+  --color-surface-1: #222226;
+  --color-surface-2: #2C2C31;
+  --color-surface-3: #36363D;
+}
+.character-detail-copy > .t-hero { font-size: 28px; line-height: 1.18; }
+.character-detail-copy > .t-body-lg.t-quote { font-size: 14px; }
+.character-detail-theme .character-detail-copy > .t-caption { font-size: 12px; }
+.character-detail-copy .t-title-3 { font-size: 20px; font-weight: 700; line-height: 1.4; }
 .character-detail-copy .t-body-lg { font-size: 14px; line-height: 1.65; }
 .character-detail-copy .t-body { font-size: 14px; line-height: 1.55; }
 .character-detail-copy .t-caption { font-size: 12px; line-height: 1.5; }

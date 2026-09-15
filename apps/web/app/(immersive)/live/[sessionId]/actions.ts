@@ -31,7 +31,7 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(sessionId, user.id)
-    if (!loaded) return { error: '장면을 찾을 수 없습니다.', notice: null }
+    if (!loaded || loaded.restricted) return { error: '장면을 찾을 수 없습니다.', notice: null }
 
     const llm = resolveRpLLM(loaded.characterName)
     const turnIndex = loaded.snapshot.turnCount + 1
@@ -87,7 +87,7 @@ export async function ensureSceneBackground(sessionId: string): Promise<string |
   if (!feature('liveScene')) return null
   const user = await requireUser()
   const loaded = await loadSession(sessionId, user.id)
-  if (!loaded) return null
+  if (!loaded || loaded.restricted) return null
 
   const context = await contextFromWorld(sessionId)
   if (!context) return null

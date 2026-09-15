@@ -7,6 +7,7 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { matureGateFor } from '@/lib/ops/safety'
 import { track } from '@/lib/analytics/track'
 import { Back } from '@/components/ui'
+import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
 import { IncomingCall } from '@/components/incoming-call'
 import { ChatComposer } from './composer'
@@ -46,25 +47,23 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   }))
 
   return (
-    <main id="main" tabIndex={-1} className="chat-layout" style={{ outline: 'none' }}>
+    <main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <IncomingCall userId={user.id} characterName={loaded.characterName} />
-      <section className="chat-main">
-        <header className="chat-header" style={{ position: 'sticky', top: 0, zIndex: 15, padding: '10px var(--space-4)', background: 'rgba(10,10,11,0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--color-border)' }}>
+      <section className={`chat-main ${styles.main}`}>
+        <header className={styles.header}>
           <Back href="/archive" />
-          <ContextTrigger d={ctx}>
-            <h1 className="t-title-3 t-name" style={{ lineHeight: 1.2 }}>{loaded.characterName}</h1>
-            <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {s.world.currentLocation} · {s.world.currentTime}{s.world.worldStatus ? ` · ${s.world.worldStatus}` : ''}
-            </p>
-            {loaded.characterStatus && <p className="t-caption" style={{ color: 'var(--color-text-primary)' }}>{loaded.characterStatus}</p>}
-          </ContextTrigger>
+          <h1 className={styles.title}>{loaded.characterName}</h1>
           <StylePicker sessionId={sessionId} current={s.outputStyle} label={COPY.a11y.styleGroup} />
+          <ContextTrigger d={ctx} className={styles.contextButton}>
+            <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h11M4 18h16" /></svg>
+          </ContextTrigger>
         </header>
 
-        <div style={{ flex: 1, padding: 'var(--space-5) var(--space-4) var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className={styles.transcript}>
+          <p className={styles.aiNotice}><svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M12 7v6m0 3v1" /></svg>AI가 생성한 대화예요</p>
           {loaded.restricted && <p data-restricted role="status" className="t-caption" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>운영 정책에 따라 이 역할극은 제한되었습니다.</p>}
           {history.length === 0 && s.character.worldRole.startingContext && (
-            <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.85, padding: 'var(--space-5) var(--space-3)' }}>{s.character.worldRole.startingContext}</p>
+            <p className={styles.opening}>{s.character.worldRole.startingContext}</p>
           )}
           {s.activeEvents[0] && (
             <aside style={{ padding: '14px 16px', borderLeft: '2px solid var(--color-accent)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
@@ -72,7 +71,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{ctx.events[0]!.summary}</p>
             </aside>
           )}
-          <MessageList items={items} characterName={loaded.characterName} />
+          <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} />
         </div>
 
         <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}

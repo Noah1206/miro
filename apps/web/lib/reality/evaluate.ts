@@ -5,7 +5,7 @@ import {
   realityContacts, relationships, roleplaySessions, userSettings, worldStates,
 } from '@miro/db'
 import {
-  DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
+  DEFAULT_CHARACTER_STATE, inQuietHours, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
 import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
@@ -22,7 +22,7 @@ export type EvaluateOutcome =
   /** 사건 규칙이 발동했지만 delay 가 있어 예약만 했다. 스케줄러가 notBefore 뒤에 다시 판단한다. */
   | { outcome: 'scheduled'; ruleId: string; notBefore: string }
   | { outcome: 'no_intent' }
-  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' }
+  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' }
 
 /**
  * 한 세션에 대한 선연락 판단과 발송.
@@ -36,6 +36,7 @@ export async function evaluateSession(
   /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 조용한 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
   opts: { inline?: boolean } = {},
 ): Promise<EvaluateOutcome> {
+  if (!feature('realityMessage')) return { outcome: 'skipped', reason: 'feature_disabled' }
   const rows = await db
     .select({
       session: roleplaySessions, character: characters, world: worldStates,
@@ -47,7 +48,7 @@ export async function evaluateSession(
     .innerJoin(relationships, eq(relationships.sessionId, roleplaySessions.id))
     .innerJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .leftJoin(userSettings, eq(userSettings.userId, roleplaySessions.userId))
-    .where(and(eq(roleplaySessions.id, sessionId), isNull(roleplaySessions.deletedAt)))
+    .where(and(eq(roleplaySessions.id, sessionId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt)))
     .limit(1)
 
   const row = rows[0]
@@ -170,7 +171,7 @@ export async function evaluateSession(
       if ((e as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'duplicate' }
       throw e
     }
-    if (settings.pushEnabled) {
+    if (settings.pushEnabled && !inQuietHours(now, settings)) {
       await pushToUser(row.session.userId, {
         title: presented.senderLabel,
         body: channel === 'video' ? '영상통화 수신' : '전화 수신',
@@ -257,7 +258,7 @@ export async function evaluateSession(
   void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
 
   // Push 는 트랜잭션 밖에서. 실패해도 인앱 메시지는 이미 남아 있다.
-  if (settings.pushEnabled) {
+  if (settings.pushEnabled && !inQuietHours(now, settings)) {
     await pushToUser(row.session.userId, {
       title: presented.senderLabel,
       body: content.text.length > 90 ? `${content.text.slice(0, 88)}…` : content.text,

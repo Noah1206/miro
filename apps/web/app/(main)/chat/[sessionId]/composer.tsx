@@ -1,7 +1,8 @@
 'use client'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon, TextArea, TransitionLink } from '@/components/ui'
+import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
+import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
@@ -10,13 +11,14 @@ import { sendTurn, type TurnState } from './actions'
 export function ChatComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
   const [state, action, pending] = useActionState(sendTurn, { error: null, notice: null, limit: null } satisfies TurnState)
   const [requestId, setRequestId] = useState('')
+  const [hasText, setHasText] = useState(false)
   useEffect(() => { if (!pending) setRequestId(crypto.randomUUID()) }, [pending, state])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => { if (!pending && !state.error) { ref.current?.reset(); if (ta.current) ta.current.style.height = 'auto' } }, [pending, state.error])
+  useEffect(() => { if (!pending && !state.error) { ref.current?.reset(); setHasText(false); if (ta.current) ta.current.style.height = 'auto' } }, [pending, state.error])
 
   return (
-    <div style={{ position: 'sticky', bottom: 0, zIndex: 15, background: 'rgba(10,10,11,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid var(--color-border)', padding: '10px var(--space-4)', paddingBottom: 'calc(10px + env(safe-area-inset-bottom))' }}>
+    <div className={styles.composer}>
       <AnimatePresence initial={false}>
         {pending && <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>{characterName}이(가) 답을 고르고 있다…</motion.p>}
         {state.notice && !pending && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {state.notice}</motion.p>}
@@ -27,15 +29,15 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
           </motion.p>
         )}
       </AnimatePresence>
-      <form ref={ref} action={action} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+      <form ref={ref} action={action} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="sessionId" value={sessionId} />
-        <TextArea ref={ta} name="input" rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
-          onInput={(e) => { const el = e.currentTarget; el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 140)}px` }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.form?.requestSubmit() } }}
-          style={{ resize: 'none', maxHeight: 140, borderRadius: 'var(--radius-md)', padding: '12px 14px' }} />
-        <Pressable type="submit" disabled={pending} aria-label={COPY.cta.send} style={{ width: 46, height: 46, flexShrink: 0, borderRadius: 'var(--radius-md)', border: '1px solid var(--color-white)', background: 'var(--color-white)', color: 'var(--color-black)', display: 'grid', placeItems: 'center' }}>
-          {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M5 12l7-7 7 7" /></svg>}
+        <textarea className={styles.input} ref={ta} name="input" rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
+          onInput={(e) => { const el = e.currentTarget; setHasText(!!el.value.trim()); el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 140)}px` }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
+          />
+        <Pressable type="submit" disabled={pending || !hasText} aria-label={COPY.cta.send} className={styles.send}>
+          {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
         </Pressable>
       </form>
     </div>

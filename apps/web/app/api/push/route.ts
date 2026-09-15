@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db, pushSubscriptions } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 
@@ -31,6 +31,6 @@ export async function DELETE(req: Request) {
   const user = await currentUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   const { endpoint } = (await req.json().catch(() => ({}))) as { endpoint?: string }
-  if (endpoint) await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint))
+  if (endpoint) await db.delete(pushSubscriptions).where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, user.id)))
   return NextResponse.json({ ok: true })
 }

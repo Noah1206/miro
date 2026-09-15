@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { POLICY } from '@miro/config'
+import { POLICY, productionRuntime } from '@miro/config'
 import { resolvePayment } from '@miro/providers'
 import { currentUser } from '@/lib/auth'
 import { effectivePlan } from '@/lib/usage/guard'
@@ -7,6 +7,7 @@ import { Button, Notice, Page, PageHeader, Reveal } from '@/components/ui'
 import { beginCheckout, restore, simulateOutcome } from './actions'
 
 export default async function SubscribePage({ searchParams }: { searchParams: Promise<{ checkout?: string }> }) {
+  if (productionRuntime()) redirect('/plans')
   const user = await currentUser()
   if (!user) redirect('/login')
   if ((await effectivePlan(user.id)) === 'pro') redirect('/my/subscription')

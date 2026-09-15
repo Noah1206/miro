@@ -39,7 +39,7 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
   const tags = hashtags(c)
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
-      <TransitionLink href={c.href ?? (c.sessionId ? `/chat/${c.sessionId}` : `/character/${slug}`)}
+      <TransitionLink href={c.href ?? `/character/${slug}`}
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
         style={{ display: 'block', position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
         <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="10 / 16" />
@@ -48,13 +48,13 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
         <span style={{ position: 'absolute', top: 9, left: 9, zIndex: 1, display: 'flex', alignItems: 'center', gap: 5 }}>
         {c.plays > 0 && (
           <span style={{
-            height: 24, boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', gap: 4,
-            padding: '2px 8px', borderRadius: 8, background: 'rgba(70,70,78,0.35)',
+            height: 20, boxSizing: 'border-box', display: 'inline-flex', alignItems: 'center', gap: 3,
+            padding: '1px 5px', borderRadius: 6, background: 'rgba(70,70,78,0.35)',
             backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-            fontSize: 14, lineHeight: '20px', color: 'var(--color-text-primary)', letterSpacing: 0,
+            fontSize: 12, lineHeight: '18px', color: 'var(--color-text-primary)', letterSpacing: 0,
             fontWeight: 'var(--weight-semibold)',
           }}>
-            <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="#fff">
+            <svg aria-hidden width="11" height="11" viewBox="0 0 24 24" fill="#fff">
               <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
             </svg>
             {compact(c.plays)}

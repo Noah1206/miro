@@ -15,7 +15,7 @@ function PhotoDetails({ c, small = false }: { c: HomeCard; small?: boolean }) {
   return <>
     <span className={styles.cardBadges}>
     {c.plays > 0 && <span className={styles.plays} aria-label={`대화한 사람 ${c.plays}명`}>
-      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-3 2V11.5a10 10 0 0 1 20 0Z" /></svg>
+      <svg aria-hidden width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-3 2V11.5a10 10 0 0 1 20 0Z" /></svg>
       {compact(c.plays)}
     </span>}
     </span>
@@ -28,7 +28,7 @@ function PhotoDetails({ c, small = false }: { c: HomeCard; small?: boolean }) {
   </>
 }
 function StoryCard({ c, resume = false }: { c: HomeCard; resume?: boolean }) {
-  return <TransitionLink className={styles.story} href={resume ? `/chat/${c.sessionId}` : `/character/${c.slug || c.id}`} aria-label={resume ? `${c.name}와 이어서 대화하기` : `${c.name}, ${c.role || '이야기 살펴보기'}`}>
+  return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || '이야기 살펴보기'}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
       <PhotoDetails c={c} />

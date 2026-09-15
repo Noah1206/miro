@@ -428,7 +428,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   }
   // 한글 조합 중 Enter 는 글자 확정이지 전송이 아니다.
   const onEnter = (e: React.KeyboardEvent<HTMLTextAreaElement>, fn: () => void) => {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); fn() }
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.nativeEvent.isComposing) { e.preventDefault(); fn() }
   }
 
   return (
@@ -458,7 +458,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             </span>
           )
           const body = isEditing
-            ? <textarea autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={500}
+            ? <textarea enterKeyHint="enter" autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={500}
                 style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
             : <span style={{ display: 'block', fontSize: 14 }}><Line text={t.text} /></span>
 
@@ -514,12 +514,12 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           <span className="t-micro" style={{ marginLeft: 'auto', alignSelf: 'center', textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{turns.length}/{MAX_TURNS}</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginTop: 8 }}>
-          <textarea ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
+          <textarea enterKeyHint="enter" ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
             placeholder={full ? '12마디까지 넣을 수 있어요.' : role === 'narrator' ? '장면을 서술해요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
             style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
           <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기" onMouseDown={keepFocus}
             style={{
-              width: 38, height: 38, borderRadius: 19, border: 0, flexShrink: 0, display: 'grid', placeItems: 'center',
+              width: 44, height: 44, borderRadius: 22, border: 0, flexShrink: 0, display: 'grid', placeItems: 'center',
               cursor: draft.trim() && !full ? 'pointer' : 'default',
               background: draft.trim() && !full ? 'var(--color-accent)' : 'var(--color-surface-2)',
               color: draft.trim() && !full ? 'var(--color-accent-on)' : 'var(--color-text-disabled)',
@@ -527,6 +527,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
           </button>
         </div>
+        <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-tertiary)' }}>엔터로 줄바꿈하고, ↑ 버튼을 눌러 올려 주세요.</p>
         {role !== 'narrator' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
             <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기" onMouseDown={keepFocus}

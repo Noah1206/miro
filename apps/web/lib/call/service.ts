@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
-import { POLICY } from '@miro/config'
+import { POLICY, feature } from '@miro/config'
 import { db, callSessions, messages, realityContacts, roleplaySessions } from '@miro/db'
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
@@ -13,16 +13,22 @@ const usageKind = (c: CallChannel): 'voiceCallPerMinute' | 'videoCallPerMinute' 
 
 /** 사용자가 Chat 에서 거는 통화. 1분을 먼저 예약하고 종료 시 실제 분으로 보정한다. */
 export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel) {
+  if (!feature(channel === 'voice' ? 'voiceCall' : 'videoCall')) throw new Error('CALL_NOT_AVAILABLE')
+  const [session] = await db.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
+    eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
+  if (!session) throw new Error('SESSION_NOT_FOUND')
   const r = await reserve({
     userId, kind: usageKind(channel), units: 1,
     idempotencyKey: `call:out:${sessionId}:${Date.now()}`,
   })
+  try {
   const [call] = await db.insert(callSessions).values({
     sessionId, channel, direction: 'outgoing', status: 'active',
     startedAt: new Date(), usageReservationId: r.reservationId,
   }).returning({ id: callSessions.id })
   void track(userId, 'call_started', { sessionId, channel, direction: 'outgoing' })
   return call!.id
+  } catch (e) { await rollback(r.reservationId); throw e }
 }
 
 /**
@@ -30,6 +36,10 @@ export async function startOutgoingCall(userId: string, sessionId: string, chann
  * 세션당 ringing 하나 (partial UNIQUE) — 이미 울리는 중이면 null.
  */
 export async function startIncomingCall(sessionId: string, channel: CallChannel, reason: string) {
+  if (!feature(channel === 'voice' ? 'voiceCall' : 'videoCall')) return null
+  const [session] = await db.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
+    eq(roleplaySessions.id, sessionId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
+  if (!session) return null
   try {
     const [call] = await db.insert(callSessions).values({
       sessionId, channel, direction: 'incoming', status: 'ringing', reason,
@@ -45,6 +55,7 @@ export async function startIncomingCall(sessionId: string, channel: CallChannel,
 export async function acceptCall(userId: string, callId: string) {
   const call = await owned(userId, callId)
   if (!call || call.status !== 'ringing') return null
+  if (!feature(call.channel === 'voice' ? 'voiceCall' : 'videoCall')) return null
   const r = await reserve({
     userId, kind: usageKind(call.channel), units: 1, idempotencyKey: `call:accept:${callId}`,
   })
@@ -102,6 +113,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
 
 /** 연결이 끊긴 통화(active 가 너무 오래) 와 받지 않은 통화(ringing 만료)를 정리한다. Cron 에서 호출. */
 export async function expireCalls(now = new Date()) {
+  if (!feature('voiceCall') && !feature('videoCall')) return { missed: 0, timedOut: 0 }
   const ringingBefore = new Date(now.getTime() - POLICY.call.ringingTimeoutMinutes * 60_000)
   const missed = await db.select().from(callSessions)
     .where(and(eq(callSessions.status, 'ringing'), lt(callSessions.createdAt, ringingBefore)))
@@ -132,6 +144,7 @@ export async function expireCalls(now = new Date()) {
 
 /** 사용자의 세션에서 지금 울리고 있는 통화. 수신 화면 표시용. */
 export async function ringingFor(userId: string) {
+  if (!feature('voiceCall') && !feature('videoCall')) return null
   const rows = await db.select({
     id: callSessions.id, channel: callSessions.channel, sessionId: callSessions.sessionId,
     reason: callSessions.reason, createdAt: callSessions.createdAt,
@@ -139,7 +152,7 @@ export async function ringingFor(userId: string) {
     .from(callSessions)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, callSessions.sessionId))
     .where(and(
-      eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt),
+      eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt),
       eq(callSessions.status, 'ringing'),
     ))
     .limit(1)
@@ -150,7 +163,7 @@ export async function owned(userId: string, callId: string) {
   const rows = await db.select({ call: callSessions })
     .from(callSessions)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, callSessions.sessionId))
-    .where(and(eq(callSessions.id, callId), eq(roleplaySessions.userId, userId)))
+    .where(and(eq(callSessions.id, callId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt)))
     .limit(1)
   return rows[0]?.call ?? null
 }

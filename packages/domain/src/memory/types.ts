@@ -19,6 +19,8 @@ export type Memory = {
 }
 
 export type MemoryCandidate = {
+  /** Only accepted from scoped, explicit memory corrections. */
+  replaces?: string
   type: MemoryType
   content: string
   importance: number

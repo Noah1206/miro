@@ -1,5 +1,7 @@
 # MIRO Launch v1 — Implementation Plan
 
+> **2026-09-15 요금 정책:** 제품 방향은 [Miro Free / Pro 요금 정책](MIRO_PRICING_POLICY.md)을 우선한다. 아래 구현 기록과 구분하며, 새 정책의 깊이·빈도 혜택은 아직 구현 완료가 아니다.
+
 > **Status**: 기존 Phase 0–13 작업 기록. 2026-09-14 AI Platform 기반을 추가했으며 실제 모델 품질, SLM 학습·서빙, 음성/영상 AI 연결 등은 후속 작업이다. 아래 과거 완료 기록은 전체 운영 준비 완료를 뜻하지 않는다.
 > **Last updated**: 2026-09-14. 최신 AI 구조·운영 범위는 [MIRO_AI_PLATFORM.md](MIRO_AI_PLATFORM.md) 참조.
 > **Source of Truth**: `미로_기능명세서.md`, `미로_유저플로우.md`

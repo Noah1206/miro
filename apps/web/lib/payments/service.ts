@@ -1,3 +1,4 @@
+import { mockProvidersAllowed, productionRuntime } from '@miro/config'
 import { and, desc, eq, gt, lte } from 'drizzle-orm'
 import { usagePolicy, POLICY } from '@miro/config'
 import { db, paymentEvents, subscriptions, usageWindows } from '@miro/db'
@@ -7,6 +8,7 @@ import { observe } from '@/lib/observe'
 import { track } from '@/lib/analytics/track'
 
 export async function startCheckout(userId: string) {
+  if (productionRuntime()) throw new Error('BILLING_NOT_RELEASED')
   const provider = resolvePayment()
   const checkout = await provider.createCheckout({ userId, plan: 'pro' })
   observe('payment.checkout_started', { userId, provider: provider.name })
@@ -19,6 +21,7 @@ export async function startCheckout(userId: string) {
  * 결제 결과 확인이 지연되어도 자격은 확인 완료 후에만 갱신된다 (명세서 10.2 예외).
  */
 export async function applyPaymentEvent(providerName: string, ev: PaymentEvent): Promise<'applied' | 'duplicate' | 'unknown_user'> {
+  if (providerName === 'mock' && !mockProvidersAllowed()) throw new Error('MOCK_PAYMENT_DISABLED')
   const now = new Date()
   return db.transaction(async (tx) => {
     // 트랜잭션 안에서 UNIQUE 위반이 나면 트랜잭션 전체가 abort 되므로 먼저 조회한다.
@@ -79,7 +82,7 @@ export async function restorePurchase(userId: string): Promise<'restored' | 'not
 export async function cancelSubscription(userId: string): Promise<boolean> {
   const [row] = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
   if (!row || row.status !== 'active') return false
-  if (row.externalRef) await resolvePayment().cancel(row.externalRef).catch(() => {})
+  if (row.externalRef) await resolvePayment().cancel(row.externalRef)
   await db.update(subscriptions).set({ ...applyCancel(row as never), updatedAt: new Date() }).where(eq(subscriptions.userId, userId))
   observe('payment.cancelled', { userId })
   return true

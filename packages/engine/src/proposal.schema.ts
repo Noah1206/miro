@@ -48,6 +48,7 @@ export const SceneDeltaProposal = z.object({
 })
 
 export const MemoryCandidateProposal = z.object({
+  replaces: z.string().uuid().optional(),
   type: z.enum(['user_fact', 'promise', 'shared_event', 'relationship_change', 'preference', 'conflict', 'short_term_summary', 'world_fact']),
   content: z.string().min(2).max(300),
   importance: z.number().min(0).max(1),

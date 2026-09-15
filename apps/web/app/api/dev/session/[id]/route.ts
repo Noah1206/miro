@@ -1,3 +1,4 @@
+import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
 import { and, eq } from 'drizzle-orm'
 import { db, roleplaySessions } from '@miro/db'
@@ -5,7 +6,7 @@ import { currentUser } from '@/lib/auth'
 
 /** 개발/E2E 보조 라우트. 본인 세션의 characterId 만 반환한다. */
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  if (process.env.NODE_ENV === 'production' && process.env.MIRO_ENABLE_DEV_API !== '1') {
+  if (!devApiAllowed()) {
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
   const user = await currentUser()

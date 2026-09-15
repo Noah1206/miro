@@ -2,13 +2,13 @@ import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
-import { countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
+import { characterLikeState, countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Accordion, Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, RealityStrip } from './sections'
+import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 
@@ -25,12 +25,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const c = await getCharacterByKey(slug, user?.id ?? null)
   if (!c) notFound()
 
-  const [plays, comments, commentCount, saved, similar] = await Promise.all([
+  const [plays, comments, commentCount, saved, similar, likes] = await Promise.all([
     playCount(c.id),
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     isBookmarked(c.id, user?.id ?? null),
     similarCharacters(c.id, c.worldGenre),
+    characterLikeState(c.id, user?.id ?? null),
   ])
 
   const enter = startRoleplay.bind(null, slug)
@@ -52,7 +53,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   ].filter((line) => line.trim())
 
   return (
-    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + 110px)' }}>
+    <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: '#141416' }}>
       <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5, padding: '6px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(10,10,11,0.6)' }}>
         <Back href="/home" />
       </div>
@@ -64,24 +65,28 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </TransitionLink>
       )}
 
-      <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
+      <div style={{ position: 'relative' }}>
+        <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
+        <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
+      </div>
 
-      <div className="character-detail-copy" style={{ padding: '0 var(--gutter)', marginTop: 'calc(-1 * var(--space-6))', position: 'relative' }}>
-        <h1 className="t-hero t-name" style={{ marginBottom: 8, fontWeight: 800, letterSpacing: '-0.03em' }}>{c.name}</h1>
-        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-primary)', lineHeight: 1.6, marginBottom: 12 }}>{c.tagline}</p>}
+      <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
+        <h1 className="t-hero t-name" style={{ marginBottom: 4, fontWeight: 800, letterSpacing: '-0.045em' }}>{c.name}</h1>
+        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-primary)', lineHeight: 1.45, letterSpacing: '-0.025em', marginBottom: 6 }}>{c.tagline}</p>}
 
         {tags.length > 0 && (
-          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 14 }}>
+          <p className="t-caption" style={{ color: 'var(--color-white)', letterSpacing: '-0.025em', marginBottom: 10 }}>
             {tags.map((t) => `#${t}`).join(' ')}
           </p>
         )}
 
         {/* 통계 칩 — 레퍼런스의 '대화량 · 설정집 · 댓글' 자리. */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
           {plays > 0 && <Stat icon="chat" label={`${compact(plays)}`} />}
           <Stat icon="comment" label={`댓글 ${commentCount}`} />
+          <LikeButton slug={slug} initial={likes} />
           {/* 하단 CTA 는 '대화 시작하기' 하나만 둔다 — 북마크는 여기에 (사용자 결정). */}
-          <BookmarkButton slug={slug} saved={saved} />
+
         </div>
 
         <RealityStrip />
@@ -137,10 +142,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {/* n18 — 문. 고정 하단. 내비 위에 올라앉는다 (2.5.8 / 2.4.11). */}
       {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
-      <div className="detail-cta" style={{ zIndex: 25, padding: '14px var(--gutter)', background: 'linear-gradient(to top, rgba(10,10,11,0.96) 60%, rgba(10,10,11,0))' }}>
+      <div className="detail-cta" style={{ zIndex: 25, bottom: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: '#141416' }}>
+        <BookmarkButton slug={slug} saved={saved} iconOnly />
+        <div style={{ flex: 1 }}>
         {user
-          ? <form action={enter}><Button type="submit" variant="primary" size="lg" full>{COPY.cta.startRoleplay}</Button></form>
-          : <ButtonLink href={`/login?next=${encodeURIComponent(`/character/${slug}`)}`} variant="primary" size="lg" full>로그인하고 시작하기</ButtonLink>}
+          ? <form action={enter}><Button type="submit" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full>{COPY.cta.startRoleplay}</Button></form>
+          : <ButtonLink href={`/login?next=${encodeURIComponent(`/character/${slug}`)}`} variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full>로그인하고 시작하기</ButtonLink>}
+        </div>
       </div>
     </Page>
   )

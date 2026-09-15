@@ -38,9 +38,18 @@ const PATTERNS: Pattern[] = [
 
 /** 규칙 분류. 순수 함수 — 같은 문장이면 같은 사건. */
 export function detectSemanticEvents(text: string): SemanticEvent[] {
+  // Reported speech, quotations and negation are not actions toward this character.
+  const clauses = text.replace(/```[\s\S]*?```|"[^"\n]*"|“[^”\n]*”|'[^'\n]*'|「[^」]*」/g, '')
+    .split(/[.!?\n,]+/).filter(c => !/(라고|다고|라며|다며)\s*(말|했|하|들|적|쓰)|(라는|단)\s*(대사|말|문장)|예를\s*들|가정|만약/.test(c))
   const out: SemanticEvent[] = []
   for (const p of PATTERNS) {
-    if (p.test.test(text) && !out.some((e) => e.type === p.type)) out.push({ type: p.type, confidence: p.confidence })
+    const matches = clauses.some(c => {
+      if (!p.test.test(c)) return false
+      if (/않|아니|안\s+(?:사랑|좋아|미안|약속)|못\s+(?:사랑|약속)/.test(c)) return false
+      if (p.type === 'confession' && /(친구|그|그녀|걔|다른\s*사람|커피|음식|영화|음악|책|노래)(?:를|을|가|는|도|랑|에게)/.test(c)) return false
+      return true
+    })
+    if (matches && !out.some(e => e.type === p.type)) out.push({ type: p.type, confidence: p.confidence })
   }
   // 사과가 있으면 같은 문장의 적대는 사과의 일부로 본다 ("짜증 나서 그랬어, 미안").
   if (out.some((e) => e.type === 'apologized')) return out.filter((e) => e.type !== 'hostility')

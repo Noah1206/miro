@@ -1,3 +1,4 @@
+import { feature } from '@miro/config'
 import { notFound, redirect } from 'next/navigation'
 import { desc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
@@ -9,11 +10,12 @@ import { LiveStage } from './stage'
 
 /** Live Scene — 장면이 화면 전체. Chat 과 같은 상태, 자유 입력은 항상. */
 export default async function LiveScene({ params }: { params: Promise<{ sessionId: string }> }) {
+  if (!feature('liveScene')) notFound()
   const user = await currentUser()
   if (!user) redirect('/login')
   const { sessionId } = await params
   const loaded = await loadSession(sessionId, user.id)
-  if (!loaded) notFound()
+  if (!loaded || loaded.restricted) notFound()
   const [background, recent] = await Promise.all([
     ensureSceneBackground(sessionId),
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(desc(messages.turnIndex), desc(messages.createdAt)).limit(4),

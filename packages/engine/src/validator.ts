@@ -1,6 +1,6 @@
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
-import type { EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
+import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
 import type { SimulationProposal } from './proposal.schema'
 import type { SimulationSnapshot } from './context'
 
@@ -13,7 +13,7 @@ export type ValidationIssue = {
 export type ValidatedTransition = {
   blocks: SimulationProposal['rp']['blocks']
   worldDelta: { currentLocation?: string; currentTime?: string; worldStatus?: string } | null
-  relationshipDelta: Record<string, number> & { stage?: string }
+  relationshipDelta: RelationshipDelta
   sceneDelta: SimulationProposal['sceneDelta']
   memories: MemoryCandidate[]
   newEvent: { candidate: EventCandidate; score: number } | null
@@ -116,7 +116,7 @@ function validateRelationshipDelta(
   p: SimulationProposal,
   issues: ValidationIssue[],
 ): ValidatedTransition['relationshipDelta'] {
-  const out: Record<string, number> & { stage?: string } = {}
+  const out: RelationshipDelta = {}
   if (!p.relationshipDelta) return out
 
   const limit = POLICY.relationship.deltaClampPerTurn

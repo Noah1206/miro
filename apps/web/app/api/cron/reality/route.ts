@@ -1,3 +1,4 @@
+import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
 import { runRealityScheduler } from '@/lib/reality/scheduler'
 
@@ -13,7 +14,7 @@ export async function GET(req: Request) {
   }
 
   // 개발/E2E 에서만 판단 시각을 고정할 수 있다. 활동 시간·Quiet Hours 가 실시간에 묶이지 않게.
-  const devApi = process.env.NODE_ENV !== 'production' || process.env.MIRO_ENABLE_DEV_API === '1'
+  const devApi = devApiAllowed()
   const override = devApi ? new URL(req.url).searchParams.get('now') : null
   const now = override && !Number.isNaN(Date.parse(override)) ? new Date(override) : new Date()
 
