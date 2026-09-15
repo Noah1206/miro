@@ -37,8 +37,6 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
             <span className={sheet.badge}>{!proReady ? '출시 준비 중' : isPro ? 'Pro 구독에 포함' : 'Pro 전용'}</span>
           </button>
         </div>
-        <p className={sheet.note}>무료도 월간 사용량 한도가 있어요. 사진·음성·영상 등 추가 교감 기능과 Pro 혜택은 준비되는 대로 안내할게요.</p>
-        <TransitionLink className={sheet.details} href="/plans">요금제 자세히 알아보기 <span aria-hidden>→</span></TransitionLink>
       </div>
     </Sheet>
   </div>

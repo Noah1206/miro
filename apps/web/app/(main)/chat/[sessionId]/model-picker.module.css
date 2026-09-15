@@ -6,13 +6,11 @@
 .card { display: flex; flex-direction: column; gap: 7px; width: 100%; padding: 20px; border: 1px solid #414145; border-radius: 18px; background: #2b2b2e; color: #ededf0; text-align: left; cursor: pointer; }
 .card[aria-pressed="true"] { border-color: #bcf33b; background: #303725; box-shadow: inset 0 0 0 1px #bcf33b; }
 .card:disabled { cursor: default; opacity: 1; }
-.card:focus-visible, .planLink:focus-visible, .details:focus-visible { outline: 2px solid #bcf33b; outline-offset: 4px; }
+.card:focus-visible, .planLink:focus-visible { outline: 2px solid #bcf33b; outline-offset: 4px; }
 .cardHeading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 24px; line-height: 1.2; letter-spacing: -.5px; }
 .cardHeading > span { color: #bcf33b; font-size: 20px; }
 .cardLead { font-size: 14px; font-weight: 600; line-height: 1.45; word-break: keep-all; }
 .cardDescription { color: #aaaab0; font-size: 12px; line-height: 1.6; word-break: keep-all; }
 .badge { margin-top: 5px; color: #bcf33b; font-size: 12px; font-weight: 600; }
 .card:disabled .badge { color: #b4b4ba; }
-.note { margin: 18px 0 12px; color: #97979e; font-size: 11px; line-height: 1.65; word-break: keep-all; }
-.details { display: flex; justify-content: space-between; align-items: center; color: #e4e4e7; font-size: 13px; padding: 12px 0 2px; border-top: 1px solid #3c3c40; }
 @media (max-width: 360px) { .card { padding: 16px; } .intro { font-size: 20px; } }
