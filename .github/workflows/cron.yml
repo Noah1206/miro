@@ -2,9 +2,14 @@ name: cron
 
 # Vercel Hobby 플랜은 cron 을 하루 1회만 허용한다. 이 스케줄러는 계좌이체 승인 건 지급,
 # 이용권 만료와 만료 안내, 선연락 판단까지 맡으므로 하루 1회로는 입금 후 지급이 최대
-# 하루 늦어진다. 그래서 호출만 여기서 대신한다 — 앱 코드는 그대로다.
+# 하루 늦어진다. 그래서 호출만 밖에서 대신한다 — 앱 코드는 그대로다.
 #
-# Pro 플랜으로 올리면 vercel.json 에 crons 를 되돌리고 이 워크플로를 지운다.
+# ⚠ 이 워크플로는 **백업**이다. GitHub 스케줄은 저활동 저장소에서 수 시간씩 밀린다
+# (2026-09-16 실측: 15분 설정에 실제 5시간 간격). 주 경로는 운영 Postgres 의 pg_cron 잡
+# `miro-reality-scheduler`(*/15, pg_net 으로 같은 엔드포인트 호출)다. 둘이 겹쳐 돌아도
+# 스케줄러가 idempotent 해서 문제되지 않는다. 확인: `SELECT * FROM cron.job_run_details`.
+#
+# Pro 플랜으로 올리면 vercel.json 에 crons 를 되돌리고 이 워크플로와 pg_cron 잡을 지운다.
 on:
   schedule:
     # GitHub 의 스케줄은 혼잡하면 수 분 밀린다. 스케줄러가 idempotent 해서 문제되지 않는다.
