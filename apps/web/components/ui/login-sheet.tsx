@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import { Sheet } from './sheet'
+import { LogoMark } from './logo'
 
 export type SocialProviderId = 'google' | 'kakao'
 export type LoginProvider = { id: SocialProviderId; label: string }
@@ -29,11 +30,18 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
   return (
     <Ctx.Provider value={ask}>
       {children}
-      <Sheet open={open} onClose={() => setOpen(false)} title="로그인하고 이어가기" snap={{ half: 0.42, full: 0.6 }}>
-        <div data-login-sheet style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 0 8px' }}>
-          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 4 }}>
-            대화와 기억은 계정에 남아요. 다음에 와도 이어서 이야기할 수 있어요.
-          </p>
+      {/* 제목 줄 대신 로고와 한 줄을 가운데 세운다 — 무엇에 로그인하는지가 먼저 보인다. */}
+      <Sheet open={open} onClose={() => setOpen(false)} label="MIRO 로그인" snap={{ half: 0.46, full: 0.62 }}>
+        <div data-login-sheet style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 22px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <LogoMark size={26} />
+              <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span>
+            </div>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
+              내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요
+            </p>
+          </div>
           {providers.map(p => <SocialButton key={p.id} {...p} next={next} />)}
         </div>
       </Sheet>

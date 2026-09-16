@@ -8,6 +8,8 @@ type Props = {
   open: boolean
   onClose: () => void
   title?: string
+  /** 제목을 화면에 두지 않을 때의 접근성 이름. title 이 있으면 그쪽이 우선한다. */
+  label?: string
   children: ReactNode
   /** 화면 높이 대비 열린 높이. drag 로 half ↔ full 스냅. */
   snap?: { half: number; full: number }
@@ -18,7 +20,7 @@ type Props = {
  * 손가락과 시트가 직접 연결된다 (dragElastic 이 경계 rubber band). 열린 뒤에도 항상 잡을 수 있다.
  * 시트 안에서의 세로 스크롤은 브라우저에 두고, 손잡이·헤더에서만 drag 를 잡는다.
  */
-export function Sheet({ open, onClose, title, children, snap = { half: 0.55, full: 0.92 } }: Props) {
+export function Sheet({ open, onClose, title, label, children, snap = { half: 0.55, full: 0.92 } }: Props) {
   const reduce = useReducedMotion()
   const ref = useRef<HTMLDivElement>(null)
   const titleId = useId()
@@ -48,7 +50,7 @@ export function Sheet({ open, onClose, title, children, snap = { half: 0.55, ful
           <motion.div key="backdrop" onClick={onClose} aria-hidden
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.enter}
             style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)' }} />
-          <motion.div key="sheet" className="app-fixed" ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : '시트'}
+          <motion.div key="sheet" className="app-fixed" ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : (label ?? '시트')}
             initial={reduce ? { y: 0, opacity: 0 } : { y: '100%' }}
             animate={reduce ? { y: 0, opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0, transition: tween.exit } : { y: '100%', transition: { ...tween.exit, duration: 0.2 } }}
