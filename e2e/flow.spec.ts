@@ -47,9 +47,17 @@ test('a visitor can browse before signing in, and lands back where they were', a
   // 상세까지는 로그인 없이 볼 수 있고, 입장할 때 묻는다.
   await page.locator('a[href="/character/thomas"]').first().click()
   await expect(page).toHaveURL(/\/character\/thomas/)
-  await page.getByRole('link', { name: '로그인하고 시작하기' }).click()
-  await expect(page).toHaveURL(/\/login\?next=/)
+  // 로그인은 화면을 떠나지 않고 시트로 묻는다 — 보던 캐릭터가 뒤에 그대로 남는다.
+  await page.getByRole('button', { name: '로그인하고 시작하기' }).click()
+  await expect(page.locator('[data-login-sheet]')).toBeVisible()
+  await expect(page).toHaveURL(/\/character\/thomas/)
+  // 시트의 제공자 버튼이 보던 곳으로 돌아올 next 를 들고 있다.
+  await expect(page.locator('[data-login-provider="google"]'))
+    .toHaveAttribute('href', /next=%2Fcharacter%2Fthomas/)
 
+  // signUp 이 로그인 화면부터 진행하므로 시트를 닫고 평소 경로로 들어간다.
+  await page.keyboard.press('Escape')
+  await page.goto(`${BASE}/login?next=${encodeURIComponent('/character/thomas')}`)
   await signUp(page, BASE)
   // 로그인·동의를 마치면 보던 캐릭터로 돌아온다.
   await expect(page).toHaveURL(/\/character\/thomas/)

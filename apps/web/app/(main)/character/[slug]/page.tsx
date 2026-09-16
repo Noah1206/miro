@@ -5,12 +5,13 @@ import { getCharacterByKey } from '@/lib/characters'
 import { characterLikeState, countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { Accordion, Back, Button, ButtonLink, Page, TransitionLink } from '@/components/ui'
+import { Accordion, Back, Button, Page, TransitionLink } from '@/components/ui'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
+import { StartWithLogin } from './start-button'
 
 /**
  * 상세는 '이 사람과 말을 섞으면 어떤 느낌인가' 를 먼저 보여주는 화면이다.
@@ -147,7 +148,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <div style={{ flex: 1 }}>
         {user
           ? <form action={enter}><Button type="submit" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full>{COPY.cta.startRoleplay}</Button></form>
-          : <ButtonLink href={`/login?next=${encodeURIComponent(`/character/${slug}`)}`} variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full>로그인하고 시작하기</ButtonLink>}
+          : <StartWithLogin slug={slug} label="로그인하고 시작하기" />}
         </div>
       </div>
     </Page>

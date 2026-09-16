@@ -58,7 +58,7 @@ test('subscription page shows the plan and reset time', async ({ page }) => {
   await expect(page.locator('body')).not.toContainText(/호감도|신뢰 \d+/)
 })
 
-test('the recharge page reports real usage and sells nothing yet', async ({ page }) => {
+test('the recharge page reports real usage and takes orders without granting', async ({ page }) => {
   await enterRoleplay(page)
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('안녕하세요.')
   await page.getByRole('button', { name: '전송' }).click()
@@ -72,11 +72,11 @@ test('the recharge page reports real usage and sells nothing yet', async ({ page
   // 실제 월간 사용량을 읽어 보여준다.
   await expect(page.locator('[data-usage-remaining]')).toBeVisible()
   await expect(page.getByText(/에 초기화/)).toBeVisible()
-  // 상품과 잔액은 준비 중이라고만 말한다 — 가격도, 구매 버튼도, 가짜 0 잔액도 없다.
-  await expect(page.locator('[data-recharge-products="pending"]')).toBeVisible()
+  // 잔액은 실제 값이고, 지급은 주문만으로 일어나지 않는다.
   await expect(page.locator('[data-recharge-balance="0"]')).toBeVisible()
-  await expect(page.getByRole('button', { name: /구매|결제|충전하기/ })).toHaveCount(0)
-  await expect(page.locator('body')).not.toContainText(/원 |₩|\$/)
+  // E2E 는 계좌가 설정돼 있어 계좌이체 주문 카드가 열린다. 환불 조건도 사기 전에 보인다.
+  await expect(page.locator('[data-bank-order="open"]')).toBeVisible()
+  await expect(page.locator('[data-refund-terms]')).toContainText('7일')
 
   // 제공량을 다 써도 충전소는 소진 상태와 MIRO 로 이어가는 길을 알린다.
   await page.evaluate(() => fetch('/api/dev/usage', { method: 'POST' }))
