@@ -31,7 +31,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     isBookmarked(c.id, user?.id ?? null),
-    similarCharacters(c.id, c.worldGenre),
+    similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
   ])
 
@@ -90,7 +90,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         </div>
 
-        <RealityStrip />
+        {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
+        {c.experienceType === 'reality' && <RealityStrip />}
         {c.worldSetting && (
           <Rule label="세계관">
             <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.worldSetting}</p>

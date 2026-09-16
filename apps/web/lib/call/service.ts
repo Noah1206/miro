@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { POLICY, feature } from '@miro/config'
-import { db, callSessions, messages, realityContacts, roleplaySessions } from '@miro/db'
+import { db, callSessions, characters, messages, realityContacts, roleplaySessions } from '@miro/db'
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
 import { commit, reserve, rollback, UsageExceededError } from '@/lib/usage/guard'
@@ -15,9 +15,12 @@ const usageKind = (c: CallChannel): 'voiceCallPerMinute' | 'videoCallPerMinute' 
 /** 사용자가 Chat 에서 거는 통화. 1분을 먼저 예약하고 종료 시 실제 분으로 보정한다. */
 export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel) {
   if (!feature(channel === 'voice' ? 'voiceCall' : 'videoCall')) throw new Error('CALL_NOT_AVAILABLE')
-  const [session] = await db.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
+  const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType })
+    .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).where(and(
     eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!session) throw new Error('SESSION_NOT_FOUND')
+  // 통화는 미로 캐릭터와만 한다. 사용량 예약보다 먼저 거절해 차감이 생기지 않게 한다.
+  if (session.experienceType !== 'reality') throw new Error('CALL_NOT_AVAILABLE')
   const r = await reserve({
     userId, kind: usageKind(channel), units: 1,
     idempotencyKey: `call:out:${sessionId}:${Date.now()}`,

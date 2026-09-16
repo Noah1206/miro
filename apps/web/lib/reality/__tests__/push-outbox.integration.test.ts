@@ -5,6 +5,7 @@ import { db, users, userSettings, realityContacts, realityPushJobs, pushSubscrip
 import * as providers from '@miro/providers'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { enqueueRealityPush, deliverRealityPush } from '../push-outbox'
+import { cloneAsReality, dropRealityClones } from './fixtures'
 
 const made: string[] = []
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
@@ -13,7 +14,9 @@ async function queued() {
   const [u] = await db.insert(users).values({ email: `push-${randomUUID()}@example.test` }).returning()
   made.push(u!.id)
   await db.insert(userSettings).values({ userId: u!.id, pushEnabled: true, quietHoursEnabled: false })
-  const { sessionId } = await createRoleplaySession(u!.id, 'thomas')
+  // 발송은 미로 캐릭터에만 열린다. 시드 토마스는 chat 이라 사용자 소유의 reality 복제본으로 세션을 연다.
+  const thomas = await cloneAsReality('thomas', { ownerId: u!.id })
+  const { sessionId } = await createRoleplaySession(u!.id, thomas.id)
   const [sub] = await db.insert(pushSubscriptions).values({ userId: u!.id, endpoint: `https://example.test/${randomUUID()}`, p256dh: 'test', auth: 'test' }).returning()
   const [contact] = await db.insert(realityContacts).values({ sessionId, channel: 'message', dedupeKey: randomUUID(), status: 'sent', payload: { text: '안녕', senderLabel: '토마스' } }).returning()
   await db.transaction(tx => enqueueRealityPush(tx, contact!.id, u!.id))
@@ -24,7 +27,7 @@ async function queued() {
   return { userId: u!.id, sessionId, sub: sub!, contact: contact!, job: job!, send }
 }
 afterEach(() => vi.restoreAllMocks())
-afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
+afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)); await dropRealityClones() })
 describeDb('durable proactive push', () => {
   it('deduplicates enqueue and concurrent workers', async () => {
     const s = await queued()

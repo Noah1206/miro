@@ -1,9 +1,10 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
-import { db, adminActions, adminUsers, bankTransferOrders, characters, hashPassword, messages, relationships, reports, roleplaySessions, users, worldStates, worlds } from '@miro/db'
+import { db, adminActions, adminUsers, bankTransferOrders, characters, hashPassword, messages, pushSubscriptions, realityContacts, realityPushJobs, relationships, reports, roleplaySessions, users, worldStates, worlds } from '@miro/db'
 import { act, reportDetail } from '../reports'
 import { approveBankOrder, listBankOrders, recentSpendByUser, rejectBankOrder } from '../payments'
+import { listCharactersForAdmin, setExperienceType } from '../characters'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
@@ -75,6 +76,57 @@ describeDb('admin review', () => {
     // 검증하는 테스트가 여기 걸리면 제약을 우회하도록 테스트를 고치게 된다.
     const hits = execSync(`grep -rl --exclude-dir=__tests__ "miro_admin\\|/admin\\|admin_users" apps/web/app apps/web/lib apps/web/components || true`, { cwd: process.cwd() }).toString().trim()
     expect(hits).toBe('')
+  })
+})
+
+describeDb('experience type designation', () => {
+  const madeUsers: string[] = []; const madeAdmins: string[] = []; const madeChars: string[] = []
+  async function admin() {
+    const [a] = await db.insert(adminUsers).values({ email: `adm-${randomBytes(5).toString('hex')}@miro.dev`, passwordHash: 'x', role: 'superadmin' }).returning()
+    madeAdmins.push(a!.id); return a!.id
+  }
+  async function character() {
+    const [u] = await db.insert(users).values({ email: `xa-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
+    madeUsers.push(u!.id)
+    const [c] = await db.insert(characters).values({ ownerId: u!.id, name: '지정', personality: '차분하다.' }).returning({ id: characters.id })
+    madeChars.push(c!.id)
+    const [w] = await db.insert(worlds).values({ characterId: c!.id, location: '서울' }).returning({ id: worlds.id })
+    return { userId: u!.id, id: c!.id, worldId: w!.id }
+  }
+  afterAll(async () => {
+    for (const id of madeAdmins) await db.delete(adminActions).where(eq(adminActions.adminId, id))
+    for (const id of madeChars) await db.delete(characters).where(eq(characters.id, id))
+    for (const id of madeUsers) await db.delete(users).where(eq(users.id, id))
+    for (const id of madeAdmins) await db.delete(adminUsers).where(eq(adminUsers.id, id))
+  })
+
+  it('a new character starts as chat, and putting it in 미로 is audited once', async () => {
+    const a = await admin(); const c = await character()
+    expect((await db.select({ t: characters.experienceType }).from(characters).where(eq(characters.id, c.id)))[0]!.t).toBe('chat')
+    expect(await setExperienceType(a, c.id, 'reality', '초기 미로 대상')).toMatchObject({ result: 'changed', from: 'chat' })
+    // 이미 그 유형이면 아무것도 하지 않는다 — 감사 기록도 남기지 않는다.
+    expect(await setExperienceType(a, c.id, 'reality')).toEqual({ result: 'unchanged' })
+    const audit = await db.select().from(adminActions).where(eq(adminActions.characterId, c.id))
+    expect(audit.map(r => r.action)).toEqual(['character_set_reality'])
+    expect((await listCharactersForAdmin('reality')).some(r => r.id === c.id)).toBe(true)
+  })
+
+  it('moving a character back to chat clears pending intents and cancels queued pushes in the same step', async () => {
+    const a = await admin(); const c = await character()
+    await setExperienceType(a, c.id, 'reality')
+    const [s] = await db.insert(roleplaySessions).values({
+      userId: c.userId, characterId: c.id, worldId: c.worldId,
+      pendingRealityIntent: { channel: 'message', reason: '보고 싶다', urgency: 0.7 },
+    }).returning({ id: roleplaySessions.id })
+    const [sub] = await db.insert(pushSubscriptions).values({ userId: c.userId, endpoint: `https://push.test/${c.userId}`, p256dh: 'k', auth: 'a' }).returning({ id: pushSubscriptions.id })
+    const [contact] = await db.insert(realityContacts).values({ sessionId: s!.id, channel: 'message', dedupeKey: `y:${s!.id}`, status: 'sent', payload: { text: 'x' } }).returning({ id: realityContacts.id })
+    await db.insert(realityPushJobs).values({ contactId: contact!.id, subscriptionId: sub!.id })
+
+    const r = await setExperienceType(a, c.id, 'chat', '검증 종료')
+    expect(r).toMatchObject({ result: 'changed', from: 'reality', clearedIntents: 1, cancelledPushes: 1 })
+    expect((await db.select({ p: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, s!.id)))[0]!.p).toBeNull()
+    expect((await db.select({ st: realityPushJobs.status }).from(realityPushJobs).where(eq(realityPushJobs.contactId, contact!.id)))[0]!.st).toBe('cancelled')
+    expect((await db.select().from(adminActions).where(eq(adminActions.characterId, c.id))).map(r => r.action)).toEqual(['character_set_reality', 'character_set_chat'])
   })
 })
 

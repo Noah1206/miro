@@ -5,6 +5,7 @@ import { db, callSessions, characters, messages, relationships, roleplaySessions
 import { POLICY } from '@miro/config'
 import { acceptCall, declineCall, endCall, expireCalls, startIncomingCall, startOutgoingCall } from '../service'
 import { evaluateSession } from '@/lib/reality/evaluate'
+import { cloneAsReality, dropRealityClones } from '@/lib/reality/__tests__/fixtures'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 const DAY = new Date('2026-09-12T14:00:00+09:00')
@@ -15,16 +16,16 @@ describeDb('calls', () => {
     const [u] = await db.insert(users).values({ email: `cl-${randomBytes(5).toString('hex')}@miro.dev`, plan }).returning()
     made.push(u!.id)
     await db.insert(userSettings).values({ userId: u!.id, quietHoursEnabled: false })
-    const [c] = await db.select({ id: characters.id, worldId: worlds.id })
-      .from(characters).innerJoin(worlds, eq(worlds.characterId, characters.id)).where(eq(characters.slug, 'taeyun')).limit(1)
+    // 통화는 미로 캐릭터와만 한다. 시드 태윤은 chat 이라, 같은 성향의 reality 복제본을 쓴다.
+    const c = await cloneAsReality('taeyun')
     const [s] = await db.insert(roleplaySessions).values({
-      userId: u!.id, characterId: c!.id, worldId: c!.worldId, lastInteractionAt: new Date(DAY.getTime() - 3 * 3600_000),
+      userId: u!.id, characterId: c.id, worldId: c.worldId, lastInteractionAt: new Date(DAY.getTime() - 3 * 3600_000),
     }).returning({ id: roleplaySessions.id })
     await db.insert(worldStates).values({ sessionId: s!.id, currentLocation: '서울', currentTime: '저녁' })
     await db.insert(relationships).values({ sessionId: s!.id, trust: 50, attachment: 50, emotionalDistance: 40 })
     return { userId: u!.id, sessionId: s!.id }
   }
-  afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
+  afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)); await dropRealityClones() })
 
   it('only one ringing call per session', async () => {
     const { sessionId } = await session()

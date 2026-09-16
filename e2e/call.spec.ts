@@ -1,12 +1,14 @@
-import { signUp, daytime } from './helpers'
+import { realityCharacter, signUp, daytime } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 const CRON_SECRET = process.env.CRON_SECRET ?? 'e2e-cron-secret'
 
+/** 통화는 미로 캐릭터와만 한다. 시드 태윤의 reality 복제본으로 들어간다. */
 async function enterRoleplay(page: Page) {
   await signUp(page, BASE)
-  await page.goto(`${BASE}/character/taeyun`)
+  const id = await realityCharacter(page, 'taeyun')
+  await page.goto(`${BASE}/character/${id}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
   return page.url().split('/chat/')[1]!

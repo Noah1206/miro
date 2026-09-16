@@ -147,8 +147,18 @@ export const characters = pgTable('characters', {
 
   /** Quick Create 초안 자동 임시저장 (명세서 2.2 예외). */
   isDraft: boolean('is_draft').notNull().default(false),
-  /** 다른 사람에게 보이는가. 공식이 아닌 캐릭터는 이 값이 켜져야 홈·발견·상세에 노출된다. 초안은 절대 공개되지 않는다. */
+  /** 다른 사람에게 보이는가. 공식이 아닌 캐릭터는 이 값이 켜져야 홈·검색·상세에 노출된다. 초안은 절대 공개되지 않는다. */
   isPublic: boolean('is_public').notNull().default(false),
+
+  /**
+   * 경험 유형. `chat` 은 홈의 일반 캐릭터챗 — 말투·기억·관계는 이어지지만 먼저 연락하지 않는다.
+   * `reality` 는 미로 전용 — 대화·관계·시간을 근거로 선연락과 사진·통화가 열린다.
+   *
+   * 유형은 캐릭터 한 곳에서만 정한다. 세션은 characterId 를 따라가고, 폼·URL 로는 바꿀 수 없다.
+   * isOfficial(제작 주체)이나 contact_profiles.enabled(연락 스위치)로 대신하지 않는다 —
+   * 둘 다 기본값이 기존 캐릭터를 잘못 편입시킨다. 지정은 운영 콘솔에서만 한다.
+   */
+  experienceType: text('experience_type', { enum: ['chat', 'reality'] }).notNull().default('chat'),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -156,6 +166,7 @@ export const characters = pgTable('characters', {
   ownerIdx: index('characters_owner_idx').on(t.ownerId),
   officialIdx: index('characters_official_idx').on(t.isOfficial),
   publicIdx: index('characters_public_idx').on(t.isPublic),
+  experienceIdx: index('characters_experience_idx').on(t.experienceType),
 }))
 
 /**
@@ -663,13 +674,16 @@ export const adminActions = pgTable('admin_actions', {
   reportId: uuid('report_id').references(() => reports.id, { onDelete: 'set null' }),
   action: text('action', {
     enum: ['start_review', 'hide_content', 'restrict_session', 'resolve_no_action', 'dismiss', 'reopen',
-      'bank_order_approve', 'bank_order_reject'],
+      'bank_order_approve', 'bank_order_reject',
+      'character_set_reality', 'character_set_chat'],
   }).notNull(),
   previousStatus: text('previous_status'),
   newStatus: text('new_status'),
   note: text('note').notNull().default(''),
   /** 계좌이체 승인·거절도 같은 감사 로그를 쓴다. */
   bankOrderId: uuid('bank_order_id'),
+  /** 캐릭터 경험 유형 지정도 여기 남긴다 — 누가 언제 어느 캐릭터를 미로에 넣었는지. */
+  characterId: uuid('character_id'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ reportIdx: index('admin_actions_report_idx').on(t.reportId, t.createdAt) }))
 

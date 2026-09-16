@@ -27,6 +27,8 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
 
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded || loaded.restricted) return { error: '대화를 찾을 수 없습니다.', notice: null }
+  // 사진은 미로 캐릭터의 것이다. 버튼을 숨기는 것과 별개로 서버가 거절한다.
+  if (loaded.experienceType !== 'reality') return { error: COPY.error.featureOff, notice: null }
 
   const context = await contextFromWorld(sessionId)
   if (!context) return { error: '현재 상태를 불러오지 못했습니다.', notice: null }

@@ -20,8 +20,13 @@ export type OfficialCard = {
   images: string[]
 }
 
-/** Home 은 대량 Grid 가 아니라 3인 중심의 작품 포스터형 카드다 (명세서 2.1 표시). */
-export async function listOfficials(): Promise<OfficialCard[]> {
+export type ExperienceType = 'chat' | 'reality'
+
+/**
+ * 공식 캐릭터 목록. 유형을 반드시 받는다 — 홈은 chat, 미로는 reality 만 보여준다.
+ * Home 은 대량 Grid 가 아니라 3인 중심의 작품 포스터형 카드다 (명세서 2.1 표시).
+ */
+export async function listOfficials(type: ExperienceType): Promise<OfficialCard[]> {
   return db
     .select({
       id: characters.id,
@@ -43,7 +48,7 @@ export async function listOfficials(): Promise<OfficialCard[]> {
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(eq(characters.isOfficial, true), isNull(characters.deletedAt)))
+    .where(and(eq(characters.isOfficial, true), eq(characters.experienceType, type), isNull(characters.deletedAt)))
     .orderBy(characters.createdAt) as Promise<OfficialCard[]>
 }
 
@@ -78,6 +83,7 @@ async function getOne(where: ReturnType<typeof and>) {
       ownerId: characters.ownerId,
       isOfficial: characters.isOfficial,
       isPublic: characters.isPublic,
+      experienceType: characters.experienceType,
       name: characters.name,
       role: characters.role,
       age: characters.age,

@@ -48,7 +48,8 @@ export async function saveCharacter(form: FormData): Promise<void> {
   })
 
   revalidatePath('/home')
-  revalidatePath('/discover')
+  revalidatePath('/home/search')
+  revalidatePath('/miro')
   revalidatePath('/my')
 
   if (!result.sessionId) {

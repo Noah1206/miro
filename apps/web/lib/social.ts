@@ -139,7 +139,7 @@ export async function toggleBookmark(characterId: string, userId: string): Promi
  * 홈의 행과 같은 분류를 쓴다 — 앞부분 문자열로 자르면 '현대 드라마' 와 '현대 로맨스' 가
  * 서로 다른 장르로 갈려 아무것도 매칭되지 않는다 (실제로 그 버그가 있었다).
  */
-export async function similarCharacters(characterId: string, genre: string | null, limit = 6) {
+export async function similarCharacters(characterId: string, genre: string | null, type: 'chat' | 'reality', limit = 6) {
   const keywords = genreKeywords(genre)
   if (keywords.length === 0) return []
   const rows = await db.select({
@@ -158,6 +158,8 @@ export async function similarCharacters(characterId: string, genre: string | nul
       or(...keywords.map((k) => ilike(worlds.genre, `%${k}%`))),
       ne(characters.id, characterId),
       or(eq(characters.isOfficial, true), eq(characters.isPublic, true)),
+      // 홈 캐릭터 상세에서 미로 캐릭터를, 그 반대도 권하지 않는다.
+      eq(characters.experienceType, type),
       eq(characters.isDraft, false),
       isNull(characters.deletedAt),
     ))

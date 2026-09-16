@@ -1,11 +1,13 @@
-import { signUp } from './helpers'
+import { realityCharacter, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
+/** 사진·Live 는 미로 캐릭터에만 열린다. 시드 토마스의 reality 복제본으로 들어간다. */
 async function enterRoleplay(page: Page) {
   await signUp(page, BASE)
-  await page.goto(`${BASE}/character/thomas`)
+  const id = await realityCharacter(page, 'thomas')
+  await page.goto(`${BASE}/character/${id}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
 }

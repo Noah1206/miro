@@ -76,8 +76,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} />
         </div>
 
-        <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
-          enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: feature('voiceCall'), video: feature('videoCall') }} />
+        {/* 사진·통화·Live 는 미로 캐릭터의 것이다. 서버가 어차피 거절하지만, 없는 기능의 버튼을 그리지 않는다. */}
+        {loaded.experienceType === 'reality' && <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
+          enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: feature('voiceCall'), video: feature('videoCall') }} />}
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
 

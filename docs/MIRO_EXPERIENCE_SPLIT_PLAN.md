@@ -2,6 +2,21 @@
 
 2026-09-16. 기준 커밋 e3aa78c. 이 문서는 제안 계획이며 앱 구현 완료를 뜻하지 않는다.
 
+## 구현 상태 — 2026-09-16
+
+7장의 순서 1~5 를 구현했다. 순서 6(실제 Reality 검증 후 활성화)은 하지 않았다 —
+운영의 `realityMessage`·`inlineReality`·사진·통화·Live 차단은 그대로이고, 결제도 바꾸지 않았다.
+
+- `characters.experience_type` (`chat`|`reality`, CHECK, 기본 `chat`). 기존 캐릭터는 전부 chat 으로 남았다.
+- 서버 경계: scheduler 후보 JOIN, `evaluateSession` 최종 검사(+chat 세션에 남은 의도 정리), 턴 직후
+  inline·`pendingRealityIntent` 저장 차단, push-outbox 재시도 시 재검증, 사진·통화·Live 직접 요청 거절.
+- 홈·검색·비슷한 캐릭터·이어서 대화하기는 chat 만, `/miro` 는 reality 만. `/discover` 는 `q` 를 들고
+  `/home/search` 로 간다. `/archive` 는 둘 다 보존한다.
+- UGC 는 파서가 필드를 화이트리스트해 유형을 넣을 수 없다. 지정은 운영 콘솔 `/characters`
+  (`characters.manage`, superadmin) 에서만 하고, reality→chat 은 같은 트랜잭션에서 그 캐릭터 세션의
+  대기 의도와 대기 Push 를 정리하며 감사 로그에 남는다.
+- **미로에 넣을 캐릭터는 아직 지정하지 않았다.** `/miro` 는 비어 있다. 8장의 결정은 그대로 남는다.
+
 ## 1. 확정된 제품 방향
 
 - 홈: 일반 캐릭터챗 전용 캐릭터. 유저가 들어와서 대화하며 자동 Reality 연락은 발생하지 않는다.

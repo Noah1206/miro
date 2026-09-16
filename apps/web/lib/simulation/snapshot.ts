@@ -16,6 +16,8 @@ export type LoadedSession = {
   characterStatus: string | null
   /** 운영 제한. 새 턴/미디어를 거부한다. */
   restricted: boolean
+  /** chat 이면 선연락·사진·통화·Live 가 이 세션에서 열리지 않는다. */
+  experienceType: 'chat' | 'reality'
   lastInteractionAt: Date
 }
 
@@ -106,6 +108,7 @@ export async function loadSession(
     characterPhoto: c.images[0] ?? null,
     characterStatus: row.session.characterStatus,
     restricted: row.session.restrictedAt !== null,
+    experienceType: c.experienceType,
     lastInteractionAt: row.session.lastInteractionAt,
   }
 }

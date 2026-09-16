@@ -15,7 +15,8 @@ export default async function LiveScene({ params }: { params: Promise<{ sessionI
   if (!user) redirect('/login')
   const { sessionId } = await params
   const loaded = await loadSession(sessionId, user.id)
-  if (!loaded || loaded.restricted) notFound()
+  // Live 는 미로 캐릭터의 장면이다. 일반 캐릭터챗 세션 주소로는 열리지 않는다.
+  if (!loaded || loaded.restricted || loaded.experienceType !== 'reality') notFound()
   const [background, recent] = await Promise.all([
     ensureSceneBackground(sessionId),
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(desc(messages.turnIndex), desc(messages.createdAt)).limit(4),

@@ -76,7 +76,7 @@ export function HomeFeed({ rows }: { rows: HomeRow[] }) {
           <p className={styles.emptyLead}>첫 캐릭터를 만들면 여기에서 시작돼요.</p>
           <div className={styles.emptyActions}>
             <TransitionLink href="/create">캐릭터 만들기</TransitionLink>
-            <TransitionLink href="/discover">둘러보기</TransitionLink>
+            <TransitionLink href="/home/search">둘러보기</TransitionLink>
           </div>
         </div>
       )}

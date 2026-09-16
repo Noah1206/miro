@@ -36,7 +36,7 @@ export default async function Home() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><LogoMark size={22} /><span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span></div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <TransitionLink href="/discover" aria-label="캐릭터 검색" style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, color: 'var(--color-text-primary)' }}>
+          <TransitionLink href="/home/search" aria-label="캐릭터 검색" style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, color: 'var(--color-text-primary)' }}>
             <svg aria-hidden width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           </TransitionLink>
           {user

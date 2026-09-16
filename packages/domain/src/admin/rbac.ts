@@ -4,13 +4,15 @@ export type AdminPermission = 'reports.view' | 'reports.review' | 'reports.act' 
   | 'payments.view'
   /** 입금 승인·거절 — 돈이 오가므로 신고 처리 권한과 별개다. */
   | 'payments.act'
+  /** 캐릭터를 미로(Reality)에 넣거나 빼는 지정. 선연락·사진·통화가 열리는 자격이라 운영자만 한다. */
+  | 'characters.manage'
 
 const GRANTS: Record<AdminRole, ReadonlySet<AdminPermission>> = {
   viewer: new Set(['reports.view', 'audit.view', 'payments.view']),
   reviewer: new Set(['reports.view', 'reports.review', 'reports.act', 'audit.view', 'payments.view']),
   // 지급은 superadmin 만 한다. reviewer 가 콘텐츠를 다루는 것과 잔액을 늘리는 것은 다른 위험이다.
   superadmin: new Set(['reports.view', 'reports.review', 'reports.act', 'audit.view', 'admins.manage',
-    'payments.view', 'payments.act']),
+    'payments.view', 'payments.act', 'characters.manage']),
 }
 
 /** 역할 → 권한. 화면과 액션 양쪽이 같은 표를 본다. */

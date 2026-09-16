@@ -1,4 +1,4 @@
-import { signInAgain, signUp } from './helpers'
+import { realityCharacter, signInAgain, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
@@ -90,7 +90,8 @@ test('adult verification: failure locks for 24h; success unlocks the mature togg
   await page.getByLabel(/사용 정책에 동의/).check()
   await page.getByRole('button', { name: '인증하기' }).click()
   await expect(page.locator('[data-verified]')).toBeVisible()
-  await roleplay(page)
+  // '성인' 토글은 사진 요청에 붙어 있고, 사진은 미로 캐릭터에만 열린다 — reality 복제본으로 들어간다.
+  await roleplay(page, await realityCharacter(page, 'thomas'))
   await expect(page.getByLabel('성인')).toBeVisible()
 })
 

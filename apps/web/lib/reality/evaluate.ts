@@ -25,7 +25,7 @@ export type EvaluateOutcome =
   /** 사건 규칙이 발동했지만 delay 가 있어 예약만 했다. 스케줄러가 notBefore 뒤에 다시 판단한다. */
   | { outcome: 'scheduled'; ruleId: string; notBefore: string }
   | { outcome: 'no_intent' }
-  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' }
+  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' | 'not_reality' }
 
 /**
  * 한 세션에 대한 선연락 판단과 발송.
@@ -56,6 +56,12 @@ export async function evaluateSession(
 
   const row = rows[0]
   if (!row) return { outcome: 'skipped', reason: 'session_not_found' }
+  // 스케줄러·inline·큐 어느 쪽으로 왔든 마지막에 한 번 더 본다. 유형이 바뀐 뒤 남은 의도는 여기서 지운다 —
+  // 두면 스케줄러가 매 주기 다시 집어 든다.
+  if (row.character.experienceType !== 'reality') {
+    if (row.session.pendingRealityIntent) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
+    return { outcome: 'skipped', reason: 'not_reality' }
+  }
 
   const [activeEvents, recent] = await Promise.all([
     db.select().from(events).where(and(eq(events.sessionId, sessionId), eq(events.status, 'active'))),

@@ -109,6 +109,12 @@ async function executeTurn(opts: {
     }
 
     const { transition } = result
+    // 일반 캐릭터챗은 먼저 연락하지 않는다. 엔진이 의도를 냈더라도 여기서 버린다 —
+    // 저장하면 스케줄러가, 남겨두면 inline 이 그것을 실행하기 때문이다.
+    if (loaded.experienceType !== 'reality' && transition.realityIntent) {
+      observe('reality.intent_dropped_chat', { sessionId, turn: turnIndex })
+      transition.realityIntent = null
+    }
     if (result.providerMode === 'fallback') {
       await refund()
       observe('provider.llm.fallback', { sessionId, turn: turnIndex })
@@ -155,7 +161,7 @@ async function executeTurn(opts: {
 
     // Event Engine 은 "무엇" 을, Scheduler 는 "언제" 를 맡는다. notBefore 가 없는 의도만 지금 보낸다.
     let reality: { channel: ContactChannel; text: string } | null = null
-    if (feature('inlineReality') && transition.realityIntent && !transition.realityIntent.notBefore) {
+    if (feature('inlineReality') && loaded.experienceType === 'reality' && transition.realityIntent && !transition.realityIntent.notBefore) {
       try {
         const r = await evaluateSession(sessionId, new Date(), { inline: true })
         if (r.outcome === 'sent' && r.text) reality = { channel: r.channel, text: r.text }

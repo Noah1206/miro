@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray, isNull, sql, ne } from 'drizzle-orm'
 import { db, characters, relationships, roleplaySessions, worldStates, worlds, messages, realityContacts, contactProfiles } from '@miro/db'
 import { stageLabel } from '@miro/domain'
-import { listOfficials, type OfficialCard } from './characters'
+import { listOfficials, type ExperienceType, type OfficialCard } from './characters'
 
 export type HomeCard = OfficialCard & {
   lastMessage?: string | null
@@ -19,11 +19,14 @@ export type HomeRow = { key: string; title: string; items: HomeCard[] }
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
   ({ ...c, sessionId: null, caption: c.role, plays: 0, ...over })
 
-/** Home supplies distinct continuing, official and community collections for the compact feed. */
+/**
+ * Home supplies distinct continuing, official and community collections for the compact feed.
+ * 홈은 일반 캐릭터챗(chat)만 다룬다. 미로(reality) 캐릭터는 /miro 가 보여준다.
+ */
 export async function homeRows(userId: string | null): Promise<HomeRow[]> {
   const [officials, shared] = await Promise.all([
-    listOfficials(),
-    userId ? publicCharacters(userId, 12) : Promise.resolve([]),
+    listOfficials('chat'),
+    userId ? publicCharacters(userId, 12, 'chat') : Promise.resolve([]),
   ])
   const plays = await playCounts([...officials, ...shared].map(c => c.id))
   const withPlays = (c: OfficialCard) => card(c, { plays: plays.get(c.id) ?? 0 })
@@ -42,7 +45,9 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .innerJoin(worldStates, eq(worldStates.sessionId, roleplaySessions.id))
     .innerJoin(relationships, eq(relationships.sessionId, roleplaySessions.id))
-    .where(and(eq(roleplaySessions.userId, userId), eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt)))
+    .where(and(eq(roleplaySessions.userId, userId), eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt),
+      // 미로 캐릭터와의 대화는 홈에 섞지 않는다. /archive 는 둘 다 보존한다.
+      eq(characters.experienceType, 'chat')))
     .orderBy(desc(roleplaySessions.lastInteractionAt))
     .limit(12)
 
@@ -86,8 +91,8 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
 }
 
 
-/** 다른 사람이 공개한 캐릭터 (초안·삭제 제외, 내 것 제외). 최근 것부터. */
-async function publicCharacters(viewerId: string | null, limit: number): Promise<OfficialCard[]> {
+/** 다른 사람이 공개한 캐릭터 (초안·삭제 제외, 내 것 제외). 최근 것부터. 유형은 호출자가 정한다. */
+async function publicCharacters(viewerId: string | null, limit: number, type: ExperienceType): Promise<OfficialCard[]> {
   const rows = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
     occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
@@ -100,6 +105,7 @@ async function publicCharacters(viewerId: string | null, limit: number): Promise
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .where(and(
       eq(characters.isPublic, true), eq(characters.isOfficial, false), eq(characters.isDraft, false),
+      eq(characters.experienceType, type),
       isNull(characters.deletedAt),
       ...(viewerId ? [ne(characters.ownerId, viewerId)] : []),
     ))
@@ -119,12 +125,15 @@ async function playCounts(ids: string[]): Promise<Map<string, number>> {
 }
 
 
-/** 발견 그리드. 주제로 나누지 않고 한 번에 보여준다. */
-export async function discoverGrid(userId: string | null): Promise<HomeCard[]> {
+/**
+ * 한 유형의 전체 그리드. 주제로 나누지 않고 한 번에 보여준다.
+ * chat 은 /home/search(검색), reality 는 /miro 가 쓴다 — 같은 카드, 다른 대상.
+ */
+export async function discoverGrid(userId: string | null, type: ExperienceType): Promise<HomeCard[]> {
   // Fetch independent card collections together; aggregate counts once after IDs are known.
   const [officials, shared, mine] = await Promise.all([
-    listOfficials(),
-    publicCharacters(userId, 60),
+    listOfficials(type),
+    publicCharacters(userId, 60, type),
     userId ? db.select({
     id: characters.id, slug: characters.slug, name: characters.name, role: characters.role,
     occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
@@ -135,7 +144,7 @@ export async function discoverGrid(userId: string | null): Promise<HomeCard[]> {
     .from(characters)
     .leftJoin(worlds, eq(worlds.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(eq(characters.ownerId, userId), isNull(characters.deletedAt)))
+    .where(and(eq(characters.ownerId, userId), eq(characters.experienceType, type), isNull(characters.deletedAt)))
     .orderBy(desc(characters.createdAt))
     .limit(30) : Promise.resolve([]),
   ])

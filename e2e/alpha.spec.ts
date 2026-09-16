@@ -3,7 +3,11 @@ import { expect, test } from '@playwright/test'
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 /** Closed Alpha — 로그인 없이 랜딩 → 대화 → 관계 변화 → 리얼리티 메시지 → 웨이트리스트. AI 는 mock 이어도 흐름은 끝까지 돈다. */
-test('알파: 회원가입 없이 대화하고, 행동에 따라 유진이 먼저 메시지를 보내고, 웨이트리스트로 이어진다', async ({ page }) => {
+test('알파: 회원가입 없이 대화하고, 행동에 따라 유진이 먼저 메시지를 보내고, 웨이트리스트로 이어진다', async ({ page, request }) => {
+  // 알파의 '먼저 오는 메시지' 는 미로(reality) 캐릭터에만 열린다. 시드 유진은 chat 이므로 운영자가
+  // /characters 에서 하는 지정을 여기서 dev 라우트로 대신한다. 운영 DB 의 유진은 지정하지 않았다.
+  const designated = await request.post(`${BASE}/api/dev/character-type`, { data: { slug: 'yujin', type: 'reality' } })
+  expect(designated.ok()).toBe(true)
   await page.goto(`${BASE}/alpha`)
   await expect(page.getByText('아까 전화 왜 안 받았어?')).toBeVisible()
   await page.getByRole('button', { name: '답장하기' }).click()

@@ -17,6 +17,20 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   return email
 }
 
+/**
+ * 시드 캐릭터를 내 소유의 미로(reality) 캐릭터로 복제하고 그 id 를 돌려준다.
+ * 시드는 chat 이라 사진·통화·Live·선연락이 열리지 않는다 — Reality 를 검증하는 테스트는 이걸로 들어간다.
+ * 복제본은 비공개·비공식이라 다른 워커의 홈·미로·검색에 나타나지 않는다.
+ */
+export async function realityCharacter(page: Page, slug = 'thomas'): Promise<string> {
+  const id = await page.evaluate(async (s) => {
+    const r = await fetch('/api/dev/reality-character', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug: s }) })
+    if (!r.ok) throw new Error(`reality clone failed: ${r.status}`)
+    return ((await r.json()) as { id: string }).id
+  }, slug)
+  return id
+}
+
 /** 기존 계정으로 다시 로그인 시도. 결과 URL 을 돌려준다 (삭제된 계정이면 /login?error=deleted). */
 export async function signInAgain(page: Page, base: string, email: string): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.

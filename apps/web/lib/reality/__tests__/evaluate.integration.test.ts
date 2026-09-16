@@ -10,6 +10,15 @@ import * as providers from '@miro/providers'
 import { loadRealityContext } from '../context'
 import { evaluateSession } from '../evaluate'
 import { runRealityScheduler } from '../scheduler'
+import { cloneAsReality, dropRealityClones } from './fixtures'
+
+/** 시드 공식 캐릭터는 chat 이다. 엔진 테스트는 같은 성향의 reality 복제본 위에서 돈다 — slug 당 한 번. */
+afterAll(dropRealityClones)
+const realityBySlug = new Map<string, ReturnType<typeof cloneAsReality>>()
+const reality = (slug: string) => {
+  if (!realityBySlug.has(slug)) realityBySlug.set(slug, cloneAsReality(slug))
+  return realityBySlug.get(slug)!
+}
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
@@ -37,17 +46,15 @@ describeDb('reality activation — real send path', () => {
       userId: u!.id, quietHoursEnabled: opts.quietHours ?? false, timeZone: 'Asia/Seoul',
     })
 
-    const [c] = await db.select({ id: characters.id, worldId: worlds.id, initial: characters.initialRelationship })
-      .from(characters).innerJoin(worlds, eq(worlds.characterId, characters.id))
-      .where(eq(characters.slug, slug)).limit(1)
+    const c = await reality(slug)
 
     const idle = opts.idleMinutes ?? 60 * 30
     const [s] = await db.insert(roleplaySessions).values({
-      userId: u!.id, characterId: c!.id, worldId: c!.worldId,
+      userId: u!.id, characterId: c.id, worldId: c.worldId,
       lastInteractionAt: new Date(DAY.getTime() - idle * 60_000),
     }).returning({ id: roleplaySessions.id })
     await db.insert(worldStates).values({ sessionId: s!.id, currentLocation: '런던', currentTime: '저녁' })
-    await db.insert(relationships).values({ sessionId: s!.id, ...c!.initial, ...opts.relationship })
+    await db.insert(relationships).values({ sessionId: s!.id, ...c.initial, ...opts.relationship })
     if (opts.activeEvent) {
       await db.insert(events).values({
         sessionId: s!.id, type: 'crisis', status: 'active', createdAtTurn: 1,
@@ -238,11 +245,9 @@ describeDb('reality scheduler', () => {
     const [u] = await db.insert(users)
       .values({ email: `rs-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
     made.push(u!.id)
-    const [c] = await db.select({ id: characters.id, worldId: worlds.id })
-      .from(characters).innerJoin(worlds, eq(worlds.characterId, characters.id))
-      .where(eq(characters.slug, 'thomas')).limit(1)
+    const c = await reality('thomas')
     const [s] = await db.insert(roleplaySessions).values({
-      userId: u!.id, characterId: c!.id, worldId: c!.worldId,
+      userId: u!.id, characterId: c.id, worldId: c.worldId,
       lastInteractionAt: new Date(DAY.getTime() - idleMinutes * 60_000),
     }).returning({ id: roleplaySessions.id })
     await db.insert(worldStates).values({ sessionId: s!.id, currentLocation: 'x', currentTime: 'y' })
