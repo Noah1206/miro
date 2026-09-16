@@ -76,6 +76,5 @@ export function HomeFeed({ rows }: { rows: HomeRow[] }) {
       <div className={styles.grid}>{featured.map(c => <StoryCard key={c.id} c={c} />)}</div>
     </section>}
 
-    <TransitionLink href="/discover" className={styles.discover}>더 많은 이야기 발견하기 <span aria-hidden>↗</span></TransitionLink>
   </div>
 }
