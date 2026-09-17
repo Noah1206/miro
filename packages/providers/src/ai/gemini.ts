@@ -1,6 +1,15 @@
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
 import type { ProviderInfo } from '../types'
 
+/** 모델별로 허용되는 최소 생각 설정. 잘못 주면 400 이라 이름으로 가른다. */
+export function thinkingConfig(model: string): { thinkingConfig?: Record<string, unknown> } {
+  if (model.startsWith('gemini-2.5')) return { thinkingConfig: { thinkingBudget: 0 } }
+  if (model === 'gemini-3.5-flash-lite') return { thinkingConfig: { thinkingLevel: 'minimal' } }
+  if (model === 'gemini-3.5-flash') return { thinkingConfig: { thinkingBudget: 0 } }
+  if (model.startsWith('gemini-3.')) return { thinkingConfig: { thinkingLevel: 'low' } }
+  return {}
+}
+
 /** Google Gemini (Generative Language API). 무료 등급이 있어 초기 기본 Provider. 키는 서버 env 에서만. */
 export class GeminiProvider implements AIProvider {
   readonly info: ProviderInfo
@@ -24,9 +33,10 @@ export class GeminiProvider implements AIProvider {
         generationConfig: {
           maxOutputTokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9,
           ...(req.json ? { responseMimeType: 'application/json' } : {}),
-          // 2.5 계열은 생각 토큰이 출력 한도를 먹는다 — 대사 생성에는 끈다.
-          ...(this.model.startsWith('gemini-2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
-          ...(this.model === 'gemini-3.5-flash-lite' ? { thinkingConfig: { thinkingLevel: 'minimal' } } : {}),
+          // 생각 토큰은 출력 단가로 과금되고 maxOutputTokens 를 같이 먹는다 — 대사 생성에는 최소로.
+          // 모델마다 받는 값이 다르다 (2026-09 실측): 3.5-flash-lite 는 minimal 만, 3.5-flash 는 budget 0 만,
+          // 3.8-flash 는 low 로 0 이 되고, 3.1-pro 는 끌 수 없어 low 가 최선(≈630 토큰).
+          ...thinkingConfig(this.model),
         },
       }),
     })
