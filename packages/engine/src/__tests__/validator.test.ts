@@ -322,4 +322,37 @@ describe('memory extraction result', () => {
     ] })
     expect(mixed.memories.map((m) => m.content)).toEqual(['고양이 루나를 키운다'])
   })
+
+  /** 실측 원문: 요약 요청에 모델이 타입 이름을 키로 쓴다. 내용은 살리고 모양만 바로잡는다. */
+  it('accepts a summary given as {"short_term_summary": "…"}', async () => {
+    const { MemoryResult } = await import('../task-router')
+    const r = MemoryResult.parse({ memories: [{ short_term_summary: '사용자는 성수동으로 이사했으며 고양이 루나와 산다.' }] })
+    expect(r.memories).toHaveLength(1)
+    expect(r.memories[0]).toMatchObject({ type: 'short_term_summary', content: '사용자는 성수동으로 이사했으며 고양이 루나와 산다.' })
+    // 정상 모양은 손대지 않는다.
+    const ok = MemoryResult.parse({ memories: [{ type: 'user_fact', content: 'x', importance: .5, persistence: .5, confidence: .5 }] })
+    expect(ok.memories[0]!.importance).toBe(.5)
+  })
+
+  /** 실측 원문: content 만 있고 type 이 없다. 요약 요청이면 요약이다. 추출 요청이면 무엇인지 몰라 버린다. */
+  it('fills a missing type only when the task says what it must be', async () => {
+    const { memoryResult, MemoryResult } = await import('../task-router')
+    const summary = memoryResult('short_term_summary').parse({ memories: [{ content: '사용자는 성수동으로 이사했다.' }] })
+    expect(summary.memories).toHaveLength(1)
+    expect(summary.memories[0]!.type).toBe('short_term_summary')
+    expect(MemoryResult.parse({ memories: [{ content: '사용자는 성수동으로 이사했다.' }] }).memories).toEqual([])
+    // id 가 붙은 복사본은 여전히 떨어진다.
+    expect(memoryResult('short_term_summary').parse({ memories: [{ id: 'x', type: 'user_fact', content: '옛 기억' }] }).memories).toEqual([])
+  })
+
+  /** 실측: 요약이 300자를 넘겨 통째로 떨어졌다. 문장 경계에서 잘라 살린다. */
+  it('clips an over-long summary at a sentence boundary instead of dropping it', async () => {
+    const { memoryResult } = await import('../task-router')
+    const long = Array.from({ length: 12 }, (_, i) => `사용자는 ${i}번째 사실을 말했다.`).join(' ')  // ≈ 300자 초과
+    expect(long.length).toBeGreaterThan(300)
+    const r = memoryResult('short_term_summary').parse({ memories: [{ type: 'short_term_summary', content: long }] })
+    expect(r.memories).toHaveLength(1)
+    expect(r.memories[0]!.content.length).toBeLessThanOrEqual(300)
+    expect(r.memories[0]!.content.endsWith('.')).toBe(true)
+  })
 })
