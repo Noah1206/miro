@@ -11,13 +11,51 @@ function proposal(over: Partial<SimulationProposal> = {}): SimulationProposal {
 }
 
 describe('relationship delta validation', () => {
-  it('the schema itself refuses an absurd delta', () => {
-    // 1차 방어선: 스키마가 ±100 을 넘는 값을 아예 파싱하지 않는다.
-    const r = SimulationProposal.safeParse({
+  it('the schema drops an absurd delta without losing the reply', () => {
+    // 1차 방어선: ±100 을 넘는 값은 적용되지 않는다. 대사는 그대로 살아남는다 —
+    // 어차피 엔진이 규칙 delta 로 덮어쓰므로, 이 필드 때문에 턴을 버릴 이유가 없다.
+    const r = SimulationProposal.parse({
       rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: 'x' }] },
       relationshipDelta: { trust: 9999 },
     })
-    expect(r.success).toBe(false)
+    expect(r.relationshipDelta).toBeNull()
+    expect(r.rp.blocks).toHaveLength(1)
+  })
+
+  /**
+   * 실측: 유료 등급에서도 6턴 중 2턴이 invalid_schema 였다. 원문은 남지 않지만 출력이 짧았으므로
+   * 잘림이 아니라 모양의 문제다 — 모델은 화자를 생략하고, 감정을 목록 밖 단어로 쓰고, 항목 하나를 어긋나게 준다.
+   * 그 어느 것도 대사를 버릴 이유가 아니다.
+   */
+  it('survives a sloppy but usable model reply', () => {
+    const r = SimulationProposal.parse({
+      rp: { blocks: [
+        { type: 'narrative', text: '창밖으로 비가 내린다' },                 // speaker 생략
+        { type: 'dialogue', speaker: '토마스', text: '…그래서요?' },
+        { type: 'dialogue', speaker: '토마스', text: '' },                 // 빈 텍스트 — 이 블록만 버린다
+      ] },
+      emotion: 'calm',                                                   // 목록에 없는 값
+      intent: 'x'.repeat(200),                                           // 상한 초과
+      relationshipDelta: { trust: 2.5 },                                 // 정수가 아님
+      memoryCandidates: [
+        { type: 'user_fact', content: '비를 좋아한다', importance: 5, persistence: .5, confidence: .9 },   // importance 범위 밖
+        { type: 'user_fact', content: '창가 자리를 좋아한다', importance: .7, persistence: .7, confidence: .9 },
+      ],
+      realityIntent: { channel: 'telepathy', reason: 'x', urgency: .5 }, // 없는 채널
+    })
+    expect(r.rp.blocks.map((b) => b.type)).toEqual(['narrative', 'dialogue'])
+    expect(r.rp.blocks[0]!.speaker).toBeNull()
+    expect(r.emotion).toBeUndefined()
+    expect(r.intent).toBeUndefined()
+    expect(r.relationshipDelta).toBeNull()
+    expect(r.memoryCandidates.map((m) => m.content)).toEqual(['창가 자리를 좋아한다'])
+    expect(r.realityIntent).toBeNull()
+  })
+
+  it('still fails when no usable block remains', () => {
+    // 대사가 하나도 없으면 답이 없는 것이다 — 이건 살릴 수 없다.
+    expect(SimulationProposal.safeParse({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '' }] } }).success).toBe(false)
+    expect(SimulationProposal.safeParse({ rp: { blocks: [] } }).success).toBe(false)
   })
 
   it('clamps a schema-legal but policy-excessive delta', () => {
@@ -266,5 +304,22 @@ describe('call mode', () => {
       ] },
     }), snapshot({ mode: 'video_call' }))
     expect(v.blocks).toHaveLength(2)
+  })
+})
+
+describe('memory extraction result', () => {
+  /** 실측 원문: 새 사실이 없을 때 모델은 previousMemories 를 id 째 되돌려준다. 점수가 없다. */
+  it('drops echoed previous memories instead of failing the whole extraction', async () => {
+    const { MemoryResult } = await import('../task-router')
+    const echoed = MemoryResult.parse({ memories: [
+      { id: '7540ae39-a68d-4e0a-92fe-328294384910', type: 'user_fact', content: '사용자는 성수동으로 이사함', tags: ['성수동', '이사'] },
+      { id: '3a3ecc66-f2bf-41df-84f5-6294954bb7a2', type: 'user_fact', content: '사용자의 생일은 10월 3일이다.', tags: ['생일'] },
+    ] })
+    expect(echoed.memories).toEqual([])
+    const mixed = MemoryResult.parse({ memories: [
+      { id: '7540ae39-a68d-4e0a-92fe-328294384910', type: 'user_fact', content: '사용자는 성수동으로 이사함', tags: ['성수동'] },
+      { type: 'user_fact', content: '고양이 루나를 키운다', importance: .8, persistence: .9, confidence: 1, tags: ['루나', '고양이'] },
+    ] })
+    expect(mixed.memories.map((m) => m.content)).toEqual(['고양이 루나를 키운다'])
   })
 })

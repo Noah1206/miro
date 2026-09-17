@@ -11,8 +11,8 @@ const RP_BLOCK_TYPES = ['dialogue', 'action', 'narrative', 'npc', 'world'] as co
 
 export const RpBlock = z.object({
   type: z.enum(RP_BLOCK_TYPES),
-  /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. */
-  speaker: z.string().max(40).nullable(),
+  /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. 모델은 null 대신 생략을 잘 한다 — 검증기가 처리한다. */
+  speaker: z.string().max(40).nullable().default(null),
   text: z.string().min(1).max(2000).refine(text => !/(?:질투|신뢰|호감도|애착)\s*(?:수치|점수)\s*(?:가|는|:)?\s*\d|토큰\s*\d/i.test(text), 'internal state disclosure'),
 })
 
@@ -114,23 +114,37 @@ export const RealityIntentProposal = z.object({
   urgency: z.number().min(0).max(1),
 })
 
+/**
+ * 제안 목록은 항목 단위로 받는다. 한 항목이 어긋났다고 대사까지 버리면
+ * 유저는 부가 정보 하나 때문에 답을 못 받는다. 어긋난 항목만 떨어뜨리고 상한을 자른다.
+ * 무엇이 떨어졌는지는 검증기 issues 가 아니라 여기서 사라지므로, 대사 품질 신호는 usage 의 ok 로 본다.
+ */
+export function lenientArray<T extends z.ZodTypeAny>(item: T, max: number) {
+  return z.preprocess(
+    (v) => (Array.isArray(v) ? v.filter((x) => item.safeParse(x).success).slice(0, max) : []),
+    z.array(item).max(max),
+  ).default([])
+}
+
 export const SimulationProposal = z.object({
+  /** 대사만이 이 응답의 필수 부분이다. 블록 하나가 어긋나면 그 블록만 버리되, 남는 것이 없으면 실패다. */
   rp: z.object({
-    blocks: z.array(RpBlock).min(1).max(12),
+    blocks: lenientArray(RpBlock, 12).pipe(z.array(RpBlock).min(1)),
   }),
-  /** 이 응답에서 캐릭터가 느끼는 감정 (표시·로그용, 상태를 바꾸지 않는다). */
-  emotion: z.enum(['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious']).optional(),
+  /** 이 응답에서 캐릭터가 느끼는 감정 (표시·로그용, 상태를 바꾸지 않는다). 모르는 값은 없는 것으로. */
+  emotion: z.enum(['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious']).optional().catch(undefined),
   /** 이 응답의 의도 한 줄 (예: '떠보기', '화제 돌리기'). */
-  intent: z.string().max(80).optional(),
-  worldDelta: WorldDeltaProposal.nullable().default(null),
-  relationshipDelta: RelationshipDeltaProposal.nullable().default(null),
-  sceneDelta: SceneDeltaProposal.nullable().default(null),
-  memoryCandidates: z.array(MemoryCandidateProposal).max(3).default([]),
-  eventCandidates: z.array(EventCandidateProposal).max(2).default([]),
-  eventUpdates: z.array(EventUpdateProposal).max(3).default([]),
-  npcIntroductions: z.array(NpcIntroductionProposal).max(2).default([]),
-  npcActions: z.array(NpcActionProposal).max(3).default([]),
-  realityIntent: RealityIntentProposal.nullable().default(null),
+  intent: z.string().max(80).optional().catch(undefined),
+  worldDelta: WorldDeltaProposal.nullable().default(null).catch(null),
+  /** 어긋난 delta 는 적용되지 않는다 — null 이면 엔진의 규칙 delta 만 남는다. 스키마가 턴을 버릴 이유는 아니다. */
+  relationshipDelta: RelationshipDeltaProposal.nullable().default(null).catch(null),
+  sceneDelta: SceneDeltaProposal.nullable().default(null).catch(null),
+  memoryCandidates: lenientArray(MemoryCandidateProposal, 3),
+  eventCandidates: lenientArray(EventCandidateProposal, 2),
+  eventUpdates: lenientArray(EventUpdateProposal, 3),
+  npcIntroductions: lenientArray(NpcIntroductionProposal, 2),
+  npcActions: lenientArray(NpcActionProposal, 3),
+  realityIntent: RealityIntentProposal.nullable().default(null).catch(null),
 })
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>

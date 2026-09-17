@@ -149,5 +149,36 @@ export function extractJson(raw: string): unknown {
   try { return JSON.parse(trimmed) } catch { /* tolerate surrounding prose, still validate the entire result */ }
   const start = trimmed.indexOf('{'), end = trimmed.lastIndexOf('}')
   if (start === -1 || end <= start) return null
-  try { return JSON.parse(trimmed.slice(start, end + 1)) } catch { return null }
+  const body = trimmed.slice(start, end + 1)
+  try { return JSON.parse(body) } catch { /* fall through to bracket repair */ }
+  try { return JSON.parse(dropUnmatchedClosers(body)) } catch { return null }
+}
+
+/**
+ * 짝이 없는 닫는 괄호를 버린다. 실측: gemini-3.5-flash-lite 는 `"rp":{"blocks":[…]}]` 처럼
+ * 객체를 닫은 뒤 `]` 를 하나 더 뱉는 일이 잦다(8회 중 3회). 문법 오류 하나로 대사 전체가 버려지므로,
+ * 문자열 안은 건드리지 않고 스택과 맞지 않는 `]`/`}` 만 떨어뜨린다. 여는 괄호는 추가하지 않는다 —
+ * 잘린 출력을 지어내 완성하는 것은 다른 문제다.
+ */
+function dropUnmatchedClosers(text: string): string {
+  const stack: string[] = []
+  let out = '', inString = false, escaped = false
+  for (const ch of text) {
+    if (inString) {
+      out += ch
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
+      else if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') { inString = true; out += ch; continue }
+    if (ch === '{' || ch === '[') { stack.push(ch === '{' ? '}' : ']'); out += ch; continue }
+    if (ch === '}' || ch === ']') {
+      if (stack[stack.length - 1] === ch) { stack.pop(); out += ch }
+      // 짝이 없으면 버린다.
+      continue
+    }
+    out += ch
+  }
+  return out
 }
