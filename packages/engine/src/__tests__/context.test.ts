@@ -8,7 +8,7 @@ function memory(sessionId: string, content: string, importance = 0.9): Memory {
   return {
     id: content, sessionId, characterId: 'c1', type: 'user_fact', content,
     importance, persistence: 0.9, confidence: 0.9,
-    sourceMessageId: null, createdAt: new Date(),
+    tags: [], sourceMessageId: null, createdAt: new Date(),
   }
 }
 

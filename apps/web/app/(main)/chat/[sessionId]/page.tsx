@@ -41,6 +41,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     scene: s.scene ? { mood: s.scene.mood, weather: s.scene.weather } : null,
     events: s.activeEvents.map((e) => ({ type: e.type, summary: String((e.continuationState as { summary?: string }).summary ?? e.type) })),
     npcs: s.activeNpcs.map((n) => n.name),
+    sessionId, turnCount: s.turnCount,
   }
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,

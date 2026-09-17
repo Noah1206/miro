@@ -4,7 +4,7 @@ import {
   scenes, worldStates, usageLedger, conversationRequests,
 } from '@miro/db'
 import {
-  applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories,
+  applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
 } from '@miro/domain'
 import { POLICY } from '@miro/config'
 import type { Memory, CharacterState, RelationshipState } from '@miro/domain'
@@ -200,6 +200,7 @@ export async function commitTurn(input: CommitInput): Promise<void> {
         importance: Math.round(m.importance * 100),
         persistence: Math.round(m.persistence * 100),
         confidence: Math.round(m.confidence * 100),
+        tags: tagsOf({ content: m.content, tags: m.tags ?? [] }),
       })))
 
       // 한도를 넘으면 중요도가 낮은 것부터 정리한다.

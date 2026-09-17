@@ -54,6 +54,15 @@ export const MemoryCandidateProposal = z.object({
   importance: z.number().min(0).max(1),
   persistence: z.number().min(0).max(1),
   confidence: z.number().min(0).max(1),
+  /**
+   * 기억 그래프의 엣지. 없으면 content 에서 뽑는다.
+   * 모델이 배열 대신 "성수동, 이사" 같은 문자열을 주는 일이 잦다 — 태그 하나 때문에
+   * 턴 전체를 버리지 않도록 받아서 쪼갠다.
+   */
+  tags: z.preprocess(
+    (v) => typeof v === 'string' ? v.split(/[,·]/).map((t) => t.trim()).filter(Boolean) : v,
+    z.array(z.string().min(1).max(24)).max(5).catch([]),
+  ).default([]),
 })
 
 export const EventCandidateProposal = z.object({

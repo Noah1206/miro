@@ -26,7 +26,7 @@ describe('P0 safety and memory', () => {
     await expect(runTurn({ llm: live(async () => { throw new Error('timeout') }), snapshot: snapshot(), userInput: '안녕' })).rejects.toThrow('timeout')
   })
   it('includes the prior summary and 24 messages in incremental summarization', async () => {
-    const s = snapshot({ memories: [{ id: '11111111-1111-4111-8111-111111111111', sessionId: 's1', characterId: 'c1', type: 'short_term_summary', content: '루나라는 고양이', importance: .1, persistence: .1, confidence: 1, sourceMessageId: null, createdAt: new Date() }],
+    const s = snapshot({ memories: [{ id: '11111111-1111-4111-8111-111111111111', sessionId: 's1', characterId: 'c1', type: 'short_term_summary', content: '루나라는 고양이', importance: .1, persistence: .1, confidence: 1, tags: [], sourceMessageId: null, createdAt: new Date() }],
       recentMessages: Array.from({ length: 24 }, (_, i) => ({ role: 'user', content: `message ${i}` })) })
     const ai = live(async o => {
       const payload = JSON.parse(o.prompt)
@@ -40,7 +40,7 @@ describe('P0 safety and memory', () => {
   it('ignores correction targets belonging to another session', async () => {
     const id = '11111111-1111-4111-8111-111111111111'
     const result = await analyzeMemory(live(async () => ({ memories: [{ type: 'user_fact', content: '바뀐 사실', importance: .8, persistence: .8, confidence: 1, replaces: id }] })),
-      'memory_extraction', '정정할게요', snapshot({ memories: [{ id, sessionId: 'someone-else', characterId: 'c2', type: 'user_fact', content: '다른 사용자', importance: .8, persistence: .8, confidence: 1, sourceMessageId: null, createdAt: new Date() }] }))
+      'memory_extraction', '정정할게요', snapshot({ memories: [{ id, sessionId: 'someone-else', characterId: 'c2', type: 'user_fact', content: '다른 사용자', importance: .8, persistence: .8, confidence: 1, tags: [], sourceMessageId: null, createdAt: new Date() }] }))
     expect(result.memories[0]?.replaces).toBeUndefined()
   })
 })

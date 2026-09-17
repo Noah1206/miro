@@ -15,6 +15,8 @@ export type Memory = {
   persistence: number
   confidence: number
   sourceMessageId: string | null
+  /** 기억 그래프의 엣지. 태그를 공유하는 기억끼리 이어진다. */
+  tags: string[]
   createdAt: Date
 }
 
@@ -26,4 +28,6 @@ export type MemoryCandidate = {
   importance: number
   persistence: number
   confidence: number
+  /** 그래프 엣지용 주제어. 비어 있으면 content 에서 뽑는다. */
+  tags?: string[]
 }

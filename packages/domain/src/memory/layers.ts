@@ -17,7 +17,7 @@ export function layerOf(type: MemoryType): MemoryLayer {
 }
 
 /** 한국어·영어 낱말 조각. 2글자 이상만 — 조사·한 글자는 잡음이다. */
-function terms(text: string): string[] {
+export function terms(text: string): string[] {
   return text.toLowerCase().split(/[\s,.!?~·、。'"“”()\[\]]+/).map((t) => t.replace(/(은|는|이|가|을|를|에|의|도|로|와|과|랑|한테|에게)$/, '')).filter((t) => t.length >= 2)
 }
 

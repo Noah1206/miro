@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
 import { Popover, MenuItem, TransitionLink } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
+import { Emphasis } from '@/components/scene/emphasis'
 import { usePress } from '@/lib/motion/use-press'
 
 export type Msg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
@@ -64,7 +65,7 @@ function CharacterBubble({ m, name, portrait }: { m: Msg; name: string; portrait
       <p className={styles.speaker}>{name}</p>
       <div className={styles.bubble}>
         {paragraphs.map((p, i) => <p key={i} className={p.action ? styles.action : undefined}>
-          {p.speaker && p.speaker !== name && `${p.speaker}: `}{p.text}
+          {p.speaker && p.speaker !== name && `${p.speaker}: `}<Emphasis text={p.text} />
         </p>)}
       </div>
     </div>

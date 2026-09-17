@@ -6,7 +6,7 @@ function mem(sessionId: string, id: string, importance = 0.9): Memory {
   return {
     id, sessionId, characterId: 'c1', type: 'user_fact', content: id,
     importance, persistence: 0.9, confidence: 0.9,
-    sourceMessageId: null, createdAt: new Date(),
+    tags: [], sourceMessageId: null, createdAt: new Date(),
   }
 }
 

@@ -21,12 +21,12 @@ const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: false, memoryExtraction: false,
+    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true,
   },
   production: {
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: false, llmSemanticAnalysis: false, memorySummaries: false, memoryExtraction: false,
+    inlineReality: false, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true,
   },
 }
 

@@ -6,7 +6,7 @@ function mem(content: string, importance = 0.9, persistence = 0.9): Memory {
   return {
     id: content, sessionId: 's1', characterId: 'c1', type: 'user_fact',
     content, importance, persistence, confidence: 0.9,
-    sourceMessageId: null, createdAt: new Date(),
+    tags: [], sourceMessageId: null, createdAt: new Date(),
   }
 }
 function cand(content: string): MemoryCandidate {

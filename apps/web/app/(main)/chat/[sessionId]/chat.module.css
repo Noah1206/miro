@@ -21,6 +21,9 @@
 .bubble p { margin: 0; white-space: pre-wrap; }
 .bubble p + p { margin-top: 12px; }
 .action { color: #aaa; font-style: italic; }
+/* 이미 기울어진 서술 안에서 *강조* 는 반대로 세워야 보인다. */
+.action em { font-style: normal; }
+.bubble strong { font-weight: 600; color: #fff; }
 .userRow { display: flex; justify-content: flex-end; }
 .userBubble { max-width: 84%; padding: 11px 14px; margin: 0; border-radius: 20px 4px 20px 20px; background: #333; color: #f4f4f4; font-size: 16px; line-height: 1.6; letter-spacing: -.3px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .composer { flex: 0 0 auto; background: #141414; border-top: 1px solid #252525; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }

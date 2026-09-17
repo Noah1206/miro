@@ -1,6 +1,7 @@
 'use client'
 import { motion, useReducedMotion } from 'motion/react'
 import { fadeUp } from '@/lib/motion/tokens'
+import { Emphasis } from './emphasis'
 
 /**
  * Chat · Live Scene · Call 이 같은 문장 규칙을 쓴다 (DESIGN §11).
@@ -17,11 +18,11 @@ export function CharacterText({ content, name, size = 'md' }: { content: string;
         if (m && (m[1] === name || m[1]!.length <= 12) && m[2]) {
           return (
             <p key={i} style={{ fontSize: fs, lineHeight: 1.75 }}>
-              <span className="t-name" style={{ marginRight: 2 }}>{m[1]}</span><span style={{ color: 'var(--color-text-tertiary)' }}>:</span> {m[2]}
+              <span className="t-name" style={{ marginRight: 2 }}>{m[1]}</span><span style={{ color: 'var(--color-text-tertiary)' }}>:</span> <Emphasis text={m[2]!} />
             </p>
           )
         }
-        return <p key={i} className="t-quote" style={{ fontSize: fs, lineHeight: 1.75, color: 'var(--color-text-secondary)' }}>{line}</p>
+        return <p key={i} className="t-quote" style={{ fontSize: fs, lineHeight: 1.75, color: 'var(--color-text-secondary)' }}><Emphasis text={line} /></p>
       })}
     </div>
   )

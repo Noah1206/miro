@@ -406,9 +406,12 @@ export const memories = pgTable('memories', {
   persistence: integer('persistence').notNull(),
   confidence: integer('confidence').notNull(),
   sourceMessageId: uuid('source_message_id'),
+  /** 기억 그래프의 엣지. 태그를 공유하는 기억끼리 연결된다. */
+  tags: text('tags').array().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   sessionIdx: index('memories_session_idx').on(t.sessionId, t.importance),
+  tagsIdx: index('memories_tags_idx').using('gin', t.tags),
 }))
 
 export const scenes = pgTable('scenes', {

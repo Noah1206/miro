@@ -52,8 +52,9 @@ describe('runTurn — state update pipeline', () => {
 
   /** ECHO 는 같은 모델을 쓰되 보조 분석을 매 턴 돌린다. */
   it('an ECHO turn never revives a task the deployment turned off', async () => {
-    // production 프리셋은 memoryExtraction / llmSemanticAnalysis 가 꺼져 있다.
+    // llmSemanticAnalysis 는 두 프리셋 모두에서 꺼져 있다. 끈 기능은 ECHO 도 되살리지 못한다.
     vi.stubEnv('MIRO_MODE', 'production')
+    vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '0')
     const tasks: string[] = []
     const auxiliaryLLM = new AIOrchestrator({ chain: [
       new MockAIProvider((req: GenerationRequest) => { tasks.push(req.task); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),

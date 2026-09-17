@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { SimulationProposal } from '../proposal.schema'
+import { MemoryCandidateProposal, SimulationProposal } from '../proposal.schema'
 import { validateProposal } from '../validator'
 import { event, npc, snapshot } from './fixtures'
 
@@ -139,11 +139,22 @@ describe('memory salience', () => {
   it('drops trivia and keeps what matters', () => {
     const v = validateProposal(proposal({
       memoryCandidates: [
-        { type: 'user_fact', content: '사소함', importance: 0.05, persistence: 0.1, confidence: 0.9 },
-        { type: 'promise', content: '주말에 만나기로 했다', importance: 0.9, persistence: 0.9, confidence: 0.9 },
+        { type: 'user_fact', content: '사소함', importance: 0.05, persistence: 0.1, confidence: 0.9, tags: [] },
+        { type: 'promise', content: '주말에 만나기로 했다', importance: 0.9, persistence: 0.9, confidence: 0.9, tags: [] },
       ],
     }), snapshot())
     expect(v.memories.map((m) => m.content)).toEqual(['주말에 만나기로 했다'])
+  })
+
+  /** 태그 하나가 어긋났다고 턴 전체를 버리지 않는다 — 모델은 배열 대신 문자열을 자주 준다. */
+  it('accepts tags given as a string and never fails the turn on a bad tag', () => {
+    const parsed = MemoryCandidateProposal.parse({
+      type: 'user_fact', content: '성수동으로 이사했다', importance: .8, persistence: .8, confidence: .9,
+      tags: '성수동, 이사',
+    })
+    expect(parsed.tags).toEqual(['성수동', '이사'])
+    expect(MemoryCandidateProposal.parse({ type: 'user_fact', content: '고양이를 키운다', importance: .8, persistence: .8, confidence: .9, tags: 42 }).tags).toEqual([])
+    expect(MemoryCandidateProposal.parse({ type: 'user_fact', content: '커피를 좋아한다', importance: .8, persistence: .8, confidence: .9 }).tags).toEqual([])
   })
 })
 

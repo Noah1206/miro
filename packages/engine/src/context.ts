@@ -250,7 +250,7 @@ export function estimateTokens(text: string): number {
 const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
 {"rp":{"blocks":[{"type":"dialogue","speaker":"character name","text":"response"}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
 Block type: dialogue|action|narrative|npc|world; speaker is a name or null. text: 1..2000 characters.
-Memory: {type:user_fact|promise|shared_event|relationship_change|preference|conflict|world_fact,content:string,importance:0..1,persistence:0..1,confidence:0..1}; max 3.
+Memory: {type:user_fact|promise|shared_event|relationship_change|preference|conflict|world_fact,content:string,importance:0..1,persistence:0..1,confidence:0..1,tags:["주제어","같은 낱말을 다음 턴에도 재사용"] (array of 1..5 short Korean words)}; max 3.
 World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
 Scene: {location?:string,time?:string,mood?:string,weather?:string}.
 Event candidate: {type:conflict|jealousy|business_trip|crisis|rival|scandal|injury|npc_arrival|location_change|work|promise|misunderstanding|reconciliation,summary:string,relevance:0..1,salience:0..1,participantNpcIds:[]}; max 2.

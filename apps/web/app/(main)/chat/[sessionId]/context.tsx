@@ -1,12 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { Chip, Sheet } from '@/components/ui'
+import { MemoryGraphView } from './memory-graph'
 
 export type ContextData = {
   name: string; location: string; time: string; status: string | null
   relationship: string; scene: { mood: string; weather: string } | null
   events: Array<{ type: string; summary: string }>
   npcs: string[]
+  sessionId: string
+  /** 턴마다 바뀐다 — 기억 그래프를 다시 불러오는 신호. */
+  turnCount: number
 }
 
 /** 관계는 문장으로, 세계는 장면으로. 숫자는 어디에도 없다. */
@@ -35,6 +39,10 @@ export function ContextContent({ d }: { d: ContextData }) {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{d.npcs.map((n) => <Chip key={n}>{n}</Chip>)}</div>
         </section>
       )}
+      <section>
+        <h3 className="t-micro" style={{ marginBottom: 8 }}>{d.name}이(가) 기억하는 것</h3>
+        <MemoryGraphView sessionId={d.sessionId} refreshKey={d.turnCount} />
+      </section>
     </div>
   )
 }
