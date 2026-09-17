@@ -7,7 +7,7 @@ import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { STAGES } from './parse'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, LoreEditor, PresetTags, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
 import { MOODS } from './parse'
 
 /**
@@ -51,6 +51,7 @@ export type FormInitial = {
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
   startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
+  lore: Array<{ keywords: string[]; content: string }>
   isPublic: boolean
   /** 이미 저장된 사진 URL (편집 화면). 대표가 첫 번째. */
   images: string[]
@@ -68,7 +69,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', startingTime: '', sampleDialogue: [],
+  startingContext: '', startingTime: '', sampleDialogue: [], lore: [],
   isPublic: false,
   images: [],
 }
@@ -193,6 +194,11 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                     placeholder={'예) 감정을 드러내지 않고 거리를 둔다. 예의는 갖추지만 다정하지는 않다.\n약속과 원칙을 지키고, 말보다 행동으로 증명한다.\n존대. 문장이 짧고 군더더기가 없다.'} />
                 </LabeledField>
               </div>
+            </Card>
+          </Section>
+          <Section title="알고 있는 것" subtitle="캐릭터가 원래 아는 배경. 대화에 키워드가 나온 순간에만 떠올립니다 — 많이 적어도 매 턴 무거워지지 않습니다.">
+            <Card>
+              <LoreEditor name="lore" defaultValue={i.lore} />
             </Card>
           </Section>
           <Section title="분위기" subtitle="카드에 해시태그로 붙고, 비슷한 캐릭터를 찾는 기준이 됩니다.">

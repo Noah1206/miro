@@ -1,6 +1,6 @@
 import { prompts } from '@miro/providers'
 import { POLICY } from '@miro/config'
-import { CALL_MODE_RULES, MOOD_GUIDE, describeRelationship, groupByLayer, retrieveMemories } from '@miro/domain'
+import { CALL_MODE_RULES, MOOD_GUIDE, describeRelationship, groupByLayer, retrieveMemories, selectLore } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode,
 } from '@miro/domain'
@@ -151,7 +151,7 @@ function sampleLines(c: SimulationSnapshot['character']): string[] {
   return [
     '',
     '## 말투 예시 (이 캐릭터는 이렇게 말한다 — 분위기와 말투만 따르고 문장을 그대로 반복하지 않는다)',
-    ...turns.slice(0, 12).map((t) => {
+    ...turns.slice(0, 20).map((t) => {
       const text = t.text.trim().slice(0, 300)
       return t.role === 'narrator' ? `(서술) ${text}` : t.role === 'user' ? `유저: ${text}` : `${name}: ${text}`
     }),
@@ -172,6 +172,13 @@ function buildPrompt(
   if (s.world.worldStatus) parts.push(`상황: ${s.world.worldStatus}`)
   if (s.worldSetting) parts.push(`세계관: ${s.worldSetting}`)
   if (s.scene) parts.push(`장면: ${s.scene.mood} / ${s.scene.weather}`)
+
+  // 로어북 — 이번 입력이 건드린 항목만. 캐릭터가 원래 알던 것이므로 기억과 구분해서 싣는다.
+  const lore = selectLore(s.character.worldRole.lore ?? [], s.userInput ?? '')
+  if (lore.length > 0) {
+    parts.push('', '## 캐릭터가 알고 있는 것 (원래 알던 배경 — 새로 알게 된 척하지 말 것)')
+    for (const entry of lore) parts.push(`- ${entry.content}`)
+  }
 
   const r = s.relationship
   parts.push('', '## 현재 관계 (내부 상태 — 절대 노출하지 말 것)')

@@ -2,6 +2,8 @@
  * Character Core — 안정적으로 유지되는 정체성.
  * AI 가 매 턴 성격을 새로 정의하지 못하도록 Dynamic State 와 분리한다.
  */
+import type { LoreEntry } from './lore'
+
 export type CharacterCore = {
   id: string
   ownerId: string | null // null = 공식 캐릭터
@@ -33,6 +35,8 @@ export type CharacterCore = {
     startingContext: string | null
     /** 상황 예시 — 만들 때 선택 입력. 없으면 프롬프트에서 통째로 빠진다. */
     sampleDialogue?: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
+    /** 로어북 — 매 턴이 아니라 유저 입력이 키워드를 건드린 턴에만 실린다. */
+    lore?: LoreEntry[]
   }
 
   visualIdentityId: string | null

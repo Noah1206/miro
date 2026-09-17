@@ -542,7 +542,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   )
 }
 type Turn = { role: 'character' | 'user' | 'narrator'; text: string }
-const MAX_TURNS = 12
+const MAX_TURNS = 20
 const roundBtn: React.CSSProperties = {
   width: 28, height: 28, borderRadius: 14, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer',
   background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)',
@@ -658,3 +658,73 @@ export function Stepped({ name, label, options, defaultValue }: {
     </fieldset>
   )
 }
+
+/**
+ * 로어북 — 캐릭터가 아는 배경 지식. 키워드가 대화에 나온 턴에만 프롬프트에 실린다.
+ *
+ * 성격은 매 턴 들어가고(정체성) 로어는 불렸을 때만 들어간다(지식). 그래서 항목을 많이 적어도
+ * 매 턴 값이 오르지 않는다 — 키워드를 비워 두면 "항상 실림" 이 되므로 그것만 주의한다.
+ */
+export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultValue?: LoreItem[] }) {
+  const [items, setItems] = useState<LoreItem[]>(defaultValue)
+  const [keywords, setKeywords] = useState('')
+  const [content, setContent] = useState('')
+  const full = items.length >= MAX_LORE
+
+  const add = () => {
+    const text = content.trim()
+    if (!text || full) return
+    const keys = [...new Set(keywords.split(',').map((k) => k.trim()).filter(Boolean))].slice(0, MAX_LORE_KEYWORDS)
+    setItems([...items, { keywords: keys, content: text.slice(0, MAX_LORE_CONTENT) }])
+    setKeywords(''); setContent('')
+  }
+  const remove = (i: number) => setItems(items.filter((_, j) => j !== i))
+
+  return (
+    <div className="stack" style={{ gap: 12 }}>
+      <input type="hidden" name={name} value={JSON.stringify(items)} />
+
+      {items.length > 0 && (
+        <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
+          {items.map((item, i) => (
+            <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', ...box(false) }}>
+              <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
+                <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: item.keywords.length ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>
+                  {item.keywords.length ? item.keywords.map((k) => `#${k}`).join(' ') : '항상 실림 (키워드 없음)'}
+                </span>
+                <span style={{ fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>{item.content}</span>
+              </div>
+              <button type="button" onClick={() => remove(i)} aria-label="이 항목 지우기" style={roundBtn}>
+                <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {!full && (
+        <div className="stack" style={{ gap: 8, padding: '10px 12px', ...box(false) }}>
+          <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="키워드 (쉼표로 구분) — 예) 민준, 사촌형"
+            maxLength={120} autoComplete="off"
+            style={{ width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit' }} />
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={2} maxLength={MAX_LORE_CONTENT}
+            placeholder="이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다."
+            style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}/{MAX_LORE}</span>
+            <button type="button" onClick={add} disabled={!content.trim()}
+              style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: 0, cursor: content.trim() ? 'pointer' : 'default',
+                background: content.trim() ? 'var(--color-accent)' : 'var(--color-surface-3)', color: content.trim() ? 'var(--color-accent-on)' : 'var(--color-text-tertiary)', fontSize: 13 }}>
+              추가
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export type LoreItem = { keywords: string[]; content: string }
+const MAX_LORE = 24
+const MAX_LORE_KEYWORDS = 8
+const MAX_LORE_CONTENT = 600

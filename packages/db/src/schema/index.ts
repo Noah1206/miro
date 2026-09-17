@@ -129,6 +129,8 @@ export const characters = pgTable('characters', {
    * 실제 역할극이 아니라 소개용 샘플이라 세션과 무관하게 캐릭터에 붙는다.
    */
   sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string }>>().notNull().default([]),
+  /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
+  lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
   /** 대표 사진(첫 번째)과 추가 사진. Supabase Storage 의 공개 URL. */
   images: jsonb('images').$type<string[]>().notNull().default([]),

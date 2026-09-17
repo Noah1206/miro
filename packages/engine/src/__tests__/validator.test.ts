@@ -330,7 +330,7 @@ describe('memory extraction result', () => {
     expect(r.memories).toHaveLength(1)
     expect(r.memories[0]).toMatchObject({ type: 'short_term_summary', content: '사용자는 성수동으로 이사했으며 고양이 루나와 산다.' })
     // 정상 모양은 손대지 않는다.
-    const ok = MemoryResult.parse({ memories: [{ type: 'user_fact', content: 'x', importance: .5, persistence: .5, confidence: .5 }] })
+    const ok = MemoryResult.parse({ memories: [{ type: 'user_fact', content: '커피를 좋아한다', importance: .5, persistence: .5, confidence: .5 }] })
     expect(ok.memories[0]!.importance).toBe(.5)
   })
 
@@ -348,7 +348,7 @@ describe('memory extraction result', () => {
   /** 실측: 요약이 300자를 넘겨 통째로 떨어졌다. 문장 경계에서 잘라 살린다. */
   it('clips an over-long summary at a sentence boundary instead of dropping it', async () => {
     const { memoryResult } = await import('../task-router')
-    const long = Array.from({ length: 12 }, (_, i) => `사용자는 ${i}번째 사실을 말했다.`).join(' ')  // ≈ 300자 초과
+    const long = Array.from({ length: 20 }, (_, i) => `사용자는 ${i}번째 사실을 말했다.`).join(' ')
     expect(long.length).toBeGreaterThan(300)
     const r = memoryResult('short_term_summary').parse({ memories: [{ type: 'short_term_summary', content: long }] })
     expect(r.memories).toHaveLength(1)

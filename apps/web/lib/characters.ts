@@ -96,6 +96,7 @@ async function getOne(where: ReturnType<typeof and>) {
       startingContext: characters.startingContext,
       tagline: characters.tagline,
       sampleDialogue: characters.sampleDialogue,
+      lore: characters.lore,
       mbti: characters.mbti,
       personality: characters.personality,
       values: characters.values,

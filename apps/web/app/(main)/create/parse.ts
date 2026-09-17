@@ -1,4 +1,4 @@
-import { BUILD_TYPES, GENDER_TYPES } from '@miro/domain'
+import { BUILD_TYPES, GENDER_TYPES, normalizeLore } from '@miro/domain'
 
 export const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'ambiguous', 'flirting', 'rivalry', 'distrust', 'conflict', 'dating', 'lover'] as const
 export const CHANNELS = ['message', 'photo', 'voice_message', 'voice_call'] as const
@@ -44,9 +44,13 @@ export function parseCharacterForm(form: FormData) {
         .filter((t): t is { role: string; text: string } => typeof t === 'object' && t !== null && typeof (t as { text?: unknown }).text === 'string')
         .filter((t) => t.role === 'character' || t.role === 'user' || t.role === 'narrator')
         .map((t) => ({ role: t.role as 'character' | 'user' | 'narrator', text: t.text.trim().slice(0, 500) }))
-        .filter((t) => t.text).slice(0, 12)
+        .filter((t) => t.text).slice(0, 20)
     }
   } catch { /* 빈 배열 */ }
+
+  // 로어북 — LoreEditor 가 JSON 으로 싣는다. 모양이 이상하면 버린다(상황 예시와 같은 규칙).
+  let lore: ReturnType<typeof normalizeLore> = []
+  try { lore = normalizeLore(JSON.parse(s('lore') || '[]')) } catch { /* 빈 배열 */ }
 
   const startingTime = orNull(s('startingTime'))
   const initialRelationship = {
@@ -76,6 +80,7 @@ export function parseCharacterForm(form: FormData) {
     startingContext: orNull(s('startingContext')),
     ...(startingTime ? { startingTime } : {}),
     sampleDialogue,
+    lore,
     initialRelationship,
   }
 
