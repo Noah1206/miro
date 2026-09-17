@@ -35,3 +35,11 @@
 .send:disabled { opacity: .45; cursor: default; }
 .styleButton:focus-visible, .contextButton:focus-visible, .send:focus-visible { outline: 2px solid white; outline-offset: 2px; }
 @media (max-width: 360px) { .header { gap: 4px; padding-inline: 8px; } .title { font-size: 16px; } .styleButton { padding: 0 8px 0 12px; font-size: 11px; } .transcript { padding-inline: 12px; } }
+
+/* 입력 중 — 실제 메신저의 점 세 개. 기다림을 "아무 일도 없음" 이 아니라 "쓰고 있음" 으로 보이게 한다. */
+.typingDots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.typingDots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .35; animation: typingBlink 1.3s infinite; }
+.typingDots i:nth-child(2) { animation-delay: .18s; }
+.typingDots i:nth-child(3) { animation-delay: .36s; }
+@keyframes typingBlink { 0%, 60%, 100% { opacity: .25; transform: translateY(0); } 30% { opacity: .9; transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .typingDots i { animation: none; opacity: .5; } }

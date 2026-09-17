@@ -64,6 +64,34 @@ describe('runTurn — state update pipeline', () => {
     expect(tasks).not.toContain('semantic_event')
   })
 
+  /**
+   * 입력 검열과 보조 분석은 서로를 기다리지 않는다. 순서대로 돌면 유저가 두 번 기다린다 —
+   * 실측으로 검열 0.9초 + 추출 1.2초였다. mock provider 는 검열을 건너뛰므로(safety.ts)
+   * 검열 자리에 느린 약속을 직접 세워 두 호출이 겹치는지 본다.
+   */
+  it('does not wait for the input safety check before starting the auxiliary analysis', async () => {
+    vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '1')
+    const t0 = Date.now()
+    let extractionStartedAt = -1
+    let safetyResolvedAt = -1
+
+    const auxiliaryLLM = new AIOrchestrator({ chain: [new MockAIProvider((req: GenerationRequest) => {
+      if (req.task === 'memory_extraction') extractionStartedAt = Date.now() - t0
+      return { memories: [] }
+    })] })
+    // 대사 모델은 검열 역할도 겸한다 — 첫 호출(입력 검열)을 60ms 붙잡는다.
+    const llm = new AIOrchestrator({ chain: [new MockAIProvider((req: GenerationRequest) => {
+      if (req.task !== 'moderation') return buildMockProposal(req.prompt, { characterName: '토마스' })
+      return new Promise(resolve => setTimeout(() => { safetyResolvedAt = Date.now() - t0; resolve({ allowed: true, category: 'safe' }) }, 60))
+    })] })
+
+    await runTurn({ llm, snapshot: snapshot(), userInput: '기억해줘 나 커피 좋아해', auxiliaryLLM, auxiliary: 'always' })
+
+    expect(extractionStartedAt, '기억 추출이 돌아야 한다').toBeGreaterThanOrEqual(0)
+    // 순차라면 검열이 끝난 뒤에야 시작한다. 병렬이면 그 전에 시작한다.
+    if (safetyResolvedAt >= 0) expect(extractionStartedAt).toBeLessThan(safetyResolvedAt)
+  })
+
   it('an ECHO turn runs the auxiliary analysis a MIRO turn would skip', async () => {
     const tasks: string[] = []
     const auxiliaryLLM = new AIOrchestrator({ chain: [

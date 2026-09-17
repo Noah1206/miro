@@ -74,7 +74,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{ctx.events[0]!.summary}</p>
             </aside>
           )}
-          <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} />
+          <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} />
         </div>
 
         {/* 사진·통화·Live 는 미로 캐릭터의 것이다. 서버가 어차피 거절하지만, 없는 기능의 버튼을 그리지 않는다. */}
