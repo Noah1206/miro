@@ -249,7 +249,11 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
   worldId: uuid('world_id').notNull().references(() => worlds.id),
 
-  /** 메신저형 | 균형형 | 서사형 (명세서 3.1) */
+  /**
+   * Legacy (2026-09-18 폐지, 명세서 §3). 출력 스타일은 이제 엔진이 인터랙션·맥락으로
+   * 턴마다 결정한다 (`packages/engine/src/context.ts` styleDirective). 이 컬럼은 읽지도
+   * 쓰지도 않으며, 파괴적 마이그레이션을 피하기 위해 남겨 둔다.
+   */
   outputStyle: text('output_style', { enum: ['messenger', 'balanced', 'narrative'] })
     .notNull().default('balanced'),
 

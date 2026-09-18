@@ -118,7 +118,6 @@ export function parseCharacterForm(form: FormData) {
   return {
     publish,
     isPublicOn: form.get('isPublic') === 'on',
-    outputStyle: oneOf('outputStyle', ['messenger', 'balanced', 'narrative'] as const, 'balanced'),
     startingTime,
     character, world, contact, visual, initialRelationship,
   }

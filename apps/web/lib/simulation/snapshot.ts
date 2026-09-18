@@ -95,7 +95,6 @@ export async function loadSession(
     activeNpcs: sessionNpcs as never,
     recentRealityContacts: recentContacts
       .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),
-    outputStyle: row.session.outputStyle,
     turnCount: row.session.turnCount,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
   }

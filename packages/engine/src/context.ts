@@ -22,7 +22,6 @@ export type SimulationSnapshot = {
   recentlyResolvedEvents: SimulationEvent[]
   activeNpcs: Npc[]
   recentRealityContacts: Array<{ channel: string; sentAt: Date }>
-  outputStyle: 'messenger' | 'balanced' | 'narrative'
   turnCount: number
   /** chat(기본) | voice_call | video_call. 통화도 같은 시뮬레이션이다. */
   mode?: SimulationMode
@@ -43,11 +42,21 @@ export type BuiltContext = {
   dropped: string[]
 }
 
-const STYLE_GUIDE = {
-  messenger: '짧은 대사 위주로. 서술은 최소한으로. 메신저 대화처럼.',
-  balanced: '대사와 짧은 행동 묘사를 섞어서. 일상 장면은 짧게, 중요한 장면은 길게.',
-  narrative: '서술과 묘사를 충분히. 장면의 공기와 감각을 함께 전달.',
-} as const
+/**
+ * 출력 스타일 — 사용자가 고르지 않는다 (2026-09-18 결정, 명세서 §3).
+ * 이번 턴의 인터랙션(입력의 형식·길이)과 장면의 긴장이 형식의 기준을 정하고,
+ * 성격·말투·관계·세계관은 이미 프롬프트에 들어 있으므로 모델이 그 맥락에 맞춰 마무리한다.
+ */
+function styleDirective(s: SimulationSnapshot): string {
+  const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''
+  const prose = /\*[^*]+\*/.test(input) || input.includes('\n') || input.length > 120
+  const tense = s.activeEvents.length > 0 || (s.characterState !== undefined && s.characterState.mood !== 'neutral')
+  const base = '- 출력 스타일: 형식은 고정되어 있지 않습니다. 사용자가 쓰는 방식과 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 스스로 고릅니다.'
+  if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.'
+  if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 대사에 행동과 환경 반응을 붙여 무게를 줍니다.'
+  if (input.length > 60) return base + ' 대사와 짧은 행동 묘사를 섞습니다. 일상 장면은 짧게, 중요한 장면은 길게.'
+  return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 메신저 대화처럼 짧은 대사 위주로, 서술은 최소한으로.'
+}
 
 /**
  * Context 조립.
@@ -122,7 +131,7 @@ function buildSystem(s: SimulationSnapshot): string {
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
     '- 정해진 줄거리를 따라가지 않습니다. 현재 상태에서 자연스럽게 이어지는 반응을 만듭니다.',
-    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : `- 출력 스타일: ${STYLE_GUIDE[s.outputStyle]}`,
+    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s),
     '',
     '## 상태 변화 제안',
     '- 관계 변화는 Miro Core 규칙이 결정합니다. relationshipDelta는 null로 반환합니다.',

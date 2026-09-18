@@ -100,11 +100,17 @@ describe('context builder', () => {
     expect(c.prompt).toMatch(/아는 정보로만 행동/)
   })
 
-  it('changes output guidance with the selected style', () => {
-    const m = buildContext(snapshot({ outputStyle: 'messenger' }))
-    const n = buildContext(snapshot({ outputStyle: 'narrative' }))
-    expect(m.system).toMatch(/메신저/)
-    expect(n.system).toMatch(/서술과 묘사/)
+  it('adapts output guidance to the interaction', () => {
+    const m = buildContext(snapshot({ userInput: '뭐해' }))
+    const n = buildContext(snapshot({ userInput: '*창밖을 오래 바라보다가* 오늘은 왠지 네 생각이 많이 났어. 이유는 모르겠는데, 그냥 그랬어.' }))
+    expect(m.system).toMatch(/메신저 대화처럼/)
+    expect(n.system).toMatch(/서술과 묘사를 충분히/)
+    expect(n.system).not.toMatch(/메신저 대화처럼/)
+  })
+
+  it('weights the scene when an event or emotion is active', () => {
+    const c = buildContext(snapshot({ userInput: '응', activeEvents: [event()] }))
+    expect(c.system).toMatch(/행동과 환경 반응/)
   })
 
   it('forbids acting on the user\'s behalf', () => {

@@ -55,7 +55,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
 
     if (!publishNow) return null
     const [session] = await tx.insert(roleplaySessions).values({
-      userId: user.id, characterId, worldId, outputStyle: p.outputStyle,
+      userId: user.id, characterId, worldId,
     }).returning({ id: roleplaySessions.id })
     await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })

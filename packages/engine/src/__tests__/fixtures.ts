@@ -63,7 +63,6 @@ export function snapshot(over: Partial<SimulationSnapshot> = {}): SimulationSnap
     recentlyResolvedEvents: [],
     activeNpcs: [],
     recentRealityContacts: [],
-    outputStyle: 'balanced',
     turnCount: 5,
     ...over,
   }

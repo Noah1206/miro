@@ -40,7 +40,7 @@ export async function createAlphaSession(): Promise<AlphaSession> {
     userId = guest!.id
     await createSession(userId)
   }
-  const s = await createRoleplaySession(userId, YUJIN.slug, { outputStyle: 'messenger', opening: YUJIN.opening })
+  const s = await createRoleplaySession(userId, YUJIN.slug, { opening: YUJIN.opening })
   return { userId, sessionId: s.sessionId, turnCount: 0 }
 }
 

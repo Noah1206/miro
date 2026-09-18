@@ -20,7 +20,7 @@ export type StartedSession = { sessionId: string; characterId: string; isOfficia
  */
 export async function createRoleplaySession(
   userId: string, key: string,
-  opts: { outputStyle?: 'messenger' | 'balanced' | 'narrative'; opening?: string } = {},
+  opts: { opening?: string } = {},
 ): Promise<StartedSession> {
   const found = await db
     .select({
@@ -51,7 +51,6 @@ export async function createRoleplaySession(
   const sessionId = await db.transaction(async (tx) => {
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: character.worldId,
-      ...(opts.outputStyle ? { outputStyle: opts.outputStyle } : {}),
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.
