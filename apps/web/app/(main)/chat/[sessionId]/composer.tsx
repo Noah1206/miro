@@ -8,6 +8,9 @@ import { useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
 
+/** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
+const KEEP_WAITING_MS = 12_000
+
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). */
 export function ChatComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
   const [state, action, pending] = useActionState(async (previous: TurnState, form: FormData): Promise<TurnState> => {
@@ -45,6 +48,25 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
     if (state.succeeded) { setDraft(''); setRequestId(crypto.randomUUID()) }
     else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
   }, [state])
+
+  /**
+   * 생성이 실패한 턴은 오류 문구 대신 기다림을 이어 둔다 — 캐릭터가 아직 쓰는 중인 것처럼.
+   *
+   * 다만 영원히 두지는 않는다. 답은 오지 않으므로, 한참 지나면 조용히 거둬 다시 입력할 수 있게 한다.
+   * 그대로 두면 유저는 앱이 멈춘 줄 알고 나가고, 새로고침하면 점마저 사라져 아무 기록도 남지 않는다.
+   */
+  const [waiting, setWaiting] = useState(false)
+  useEffect(() => {
+    if (!state.keepWaiting) return
+    setWaiting(true)
+    setDraft('')
+    setRequestId(crypto.randomUUID())
+    const timer = setTimeout(() => setWaiting(false), KEEP_WAITING_MS)
+    return () => clearTimeout(timer)
+  }, [state])
+  // 유저가 다시 쓰기 시작하면 기다림은 끝난 것이다.
+  useEffect(() => { if (draft) setWaiting(false) }, [draft])
+  const showTyping = pending || waiting
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
   useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, 140)}px` } }, [draft])
@@ -52,13 +74,13 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
   return (
     <div className={styles.composer}>
       <AnimatePresence initial={false}>
-        {pending && (
+        {showTyping && (
           <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>
             {characterName}이(가) 입력 중
             <span className={styles.typingDots} aria-hidden><i /><i /><i /></span>
           </motion.p>
         )}
-        {state.notice && !pending && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {state.notice}</motion.p>}
+        {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {state.notice}</motion.p>}
         {state.error && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
             {state.error}

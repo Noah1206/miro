@@ -15,6 +15,11 @@ export type TurnState = {
   notice: string | null
   /** 한도 도달 시 UI 가 Pro 안내 / 초기화 대기를 구분해 보여준다. */
   limit: { plan: 'free' | 'pro'; resetsAt: string } | null
+  /**
+   * 생성이 실패했지만 오류 문구를 띄우지 않는다 — 캐릭터가 아직 쓰는 중인 것처럼 점을 계속 돌린다.
+   * 유저가 손쓸 수 있는 실패(한도·안전·세션 없음)는 해당하지 않는다. 그건 말해 줘야 풀린다.
+   */
+  keepWaiting?: boolean
 }
 
 const fail = (error: string): TurnState => ({ error, notice: null, limit: null })
@@ -42,7 +47,8 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
           .where(and(eq(conversationRequests.id, id), eq(conversationRequests.userId, user.id), eq(conversationRequests.sessionId, sessionId))).limit(1) : []
         return { ...fail(COPY.error.saveConflict), retryWithSameId: request?.status !== 'failed' }
       }
-      case 'generation': return fail(COPY.error.generation)
+      // 답을 못 만든 것은 유저가 고칠 수 있는 일이 아니다. 오류 문구 대신 기다림을 이어 둔다.
+      case 'generation': return { error: null, notice: null, limit: null, keepWaiting: true }
       case 'safety': return fail('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')
       default: return { error: null, notice: null, limit: null }
     }
