@@ -37,6 +37,8 @@ export type CommitInput = {
   existingMemories: Memory[]
   /** 이번 턴 이후의 캐릭터 상태. runTurn 이 만든다. */
   characterState?: CharacterState
+  /** Live Scene 장면 표시 한 줄 (장소 · 시간). 미로 세션에서 장면이 바뀐 턴에만 온다. */
+  sceneMarker?: string | null
 }
 
 /**
@@ -101,6 +103,11 @@ export async function commitTurn(input: CommitInput): Promise<void> {
         sessionId: input.sessionId, role: 'user', kind: 'text',
         content: input.userInput, blocks: [], turnIndex: input.turnIndex,
       },
+      // 장면 표시는 답장보다 먼저 — 장소가 바뀌고, 그 안에서 대사가 이어진다.
+      ...(input.sceneMarker ? [{
+        sessionId: input.sessionId, role: 'narrator' as const, kind: 'live_scene' as const,
+        content: input.sceneMarker, blocks: [], turnIndex: input.turnIndex,
+      }] : []),
       {
         sessionId: input.sessionId, role: 'character', kind: 'text',
         content: input.responseText,

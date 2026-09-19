@@ -126,6 +126,15 @@ async function executeTurn(opts: {
     }
     if (transition.blocks.length === 0) { await refund(); return { ok: false, reason: 'generation' } }
 
+    // Live Scene v1 (2026-09-19, 명세서 §5.3): 미로(Reality) 세션에서 장소가 실제로 바뀌거나
+    // 새 장면이 열리면 스트림에 장소·시간 한 줄을 남긴다. 이미지는 없다 — 이 표시가 전부다.
+    const movedTo = transition.worldDelta?.currentLocation ?? null
+    const sceneMarker = loaded.experienceType === 'reality'
+      && (transition.sceneDelta !== null || (movedTo !== null && movedTo !== loaded.snapshot.world.currentLocation))
+      ? [movedTo ?? loaded.snapshot.world.currentLocation, transition.worldDelta?.currentTime ?? loaded.snapshot.world.currentTime]
+        .filter(Boolean).join(' · ')
+      : null
+
     const responseText = renderBlocks(transition.blocks)
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, turnIndex, blocks: transition.blocks, responseText,
@@ -137,7 +146,7 @@ async function executeTurn(opts: {
       await commitTurn({
         reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, responseText, blocks: transition.blocks, transition,
+        userInput: input, responseText, blocks: transition.blocks, transition, sceneMarker,
         worldVersion: loaded.snapshot.world.version,
         relationshipVersion: loaded.snapshot.relationship.version,
         currentRelationship: loaded.snapshot.relationship,
