@@ -29,6 +29,8 @@ const env = {
  */
 export default defineConfig({
   testDir: './e2e',
+  /** 테스트 DB 스키마를 먼저 세운다 — 없으면 51개가 전부 이유 없는 타임아웃으로 죽는다. */
+  globalSetup: './e2e/global-setup.ts',
   /**
    * 원격 DB(Supabase) 기준. 같은 테스트가 단독이면 8~13초, 병렬이면 그 2~4배까지 늘어난다 —
    * 왕복 지연이 워커 수만큼 겹치기 때문이다. 30초로는 여유가 없어 간헐적으로 터졌다.
