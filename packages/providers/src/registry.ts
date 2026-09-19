@@ -9,6 +9,7 @@ import { WebPushProvider } from './push/webpush'
 import type { PushProvider } from './push/types'
 import { MockCallMediaProvider } from './call/mock'
 import { LiveKitCallMediaProvider } from './call/livekit'
+import { GeminiLiveCallMediaProvider } from './call/gemini-live'
 import type { CallMediaProvider } from './call/types'
 import { MockAdultVerificationProvider } from './verify/mock'
 import type { AdultVerificationProvider } from './verify/types'
@@ -57,6 +58,14 @@ export function resolvePush(): PushProvider {
  * Domain/서비스 코드는 어느 쪽이든 바뀌지 않는다.
  */
 export function resolveCallMedia(kind: 'voice' | 'video'): CallMediaProvider {
+  // 음성은 Gemini Live 가 기본 — 서버 없이 클라이언트가 Google 에 직결한다.
+  if (kind === 'voice' && process.env.GEMINI_API_KEY) {
+    return new GeminiLiveCallMediaProvider(
+      process.env.GEMINI_API_KEY,
+      process.env.GEMINI_LIVE_MODEL || 'gemini-3.8-live',
+      process.env.GEMINI_LIVE_VOICE || 'Kore',
+    )
+  }
   const key = process.env.LIVEKIT_API_KEY
   const secret = process.env.LIVEKIT_API_SECRET
   const url = process.env.LIVEKIT_URL
