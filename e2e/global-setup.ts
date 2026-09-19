@@ -43,5 +43,17 @@ export default function globalSetup() {
     { encoding: 'utf8' }).trim())
   if (!characters) throw new Error('globalSetup: 공식 캐릭터 시드가 비어 있다')
 
-  console.info(`[e2e] 테스트 DB 준비됨 — 테이블 ${count}개, 캐릭터 ${characters}명, 이번 실행에서 적용 ${applied}/${files.length}`)
+  // 운영자 계정. 사용자 앱에는 운영자 가입 경로가 없으므로 시드로만 생긴다 —
+  // 없으면 admin/bank-transfer 테스트가 login?error=1 에서 멈춘다.
+  // e2e/admin.spec.ts 와 bank-transfer.spec.ts 가 이 값을 그대로 쓴다.
+  execFileSync('npx', ['tsx', join(__dirname, '..', 'packages', 'db', 'seed-admin.ts')], {
+    stdio: 'pipe',
+    env: { ...process.env, DATABASE_URL: url, ADMIN_SEED_EMAIL: ADMIN_EMAIL, ADMIN_SEED_PASSWORD: ADMIN_PASSWORD, ADMIN_SEED_ROLE: 'superadmin' },
+  })
+
+  console.info(`[e2e] 테스트 DB 준비됨 — 테이블 ${count}개, 캐릭터 ${characters}명, 운영자 ${ADMIN_EMAIL}, 이번 실행에서 적용 ${applied}/${files.length}`)
 }
+
+/** e2e/admin.spec.ts · bank-transfer.spec.ts 가 입력하는 값과 같아야 한다. */
+const ADMIN_EMAIL = 'e2e-admin@miro.dev'
+const ADMIN_PASSWORD = 'admin-pass-123'

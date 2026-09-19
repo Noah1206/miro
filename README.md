@@ -49,11 +49,23 @@ pnpm e2e           # 로컬 TEST_DATABASE_URL 필수, 별도 포트 3200/3300에
 pnpm ai:eval       # 합성 reference fixture로 평가 실행기 검증. 실제 모델 평가는 --live + 명시적 예산 필요
 ```
 
-테스트 DB는 `miro_test`처럼 이름에 `_test` 접미사를 붙인 로컬 DB를 사용합니다. `TEST_DATABASE_URL=postgres://localhost/miro_test`를 지정하고, 해당 DB에만 마이그레이션과 `db:seed`를 실행하세요. 기본 캐릭터 시드는 테스트 DB에서만 실행되며, E2E는 실행 중인 사용자 서버를 재사용하지 않습니다.
+테스트 DB는 `miro_test`처럼 이름에 `_test` 접미사를 붙인 로컬 DB를 사용합니다. `TEST_DATABASE_URL=postgres://localhost/miro_test` 만 지정하면 되고, 마이그레이션·캐릭터 시드·운영자 계정은 E2E 의 `globalSetup`(`e2e/global-setup.ts`)이 알아서 준비합니다 — 빈 DB 를 줘도 됩니다. 준비가 안 되면 무엇을 실행해야 하는지 알려주고 멈춥니다. 기본 캐릭터 시드는 테스트 DB에서만 실행되며, E2E는 실행 중인 사용자 서버를 재사용하지 않습니다.
 
 ## 스케줄러
 
-`vercel.json` 의 Cron 이 15분마다 `/api/cron/reality` 를 `Authorization: Bearer $CRON_SECRET` 로 호출한다.
+Postgres 의 `pg_cron` 잡(`miro-reality-scheduler`)이 15분마다 `/api/cron/reality` 를
+`Authorization: Bearer $CRON_SECRET` 로 호출한다 — `vercel.json` 이 아니다(그 파일은 비어 있다).
+
+스케줄은 `packages/db/migrations/20260919160000_reality_cron.sql` 에 있고, 호스트와 시크릿은
+DB 의 `ops_cron_config` 표에서 읽는다. 새 환경에 세울 때는 그 표를 먼저 채운다:
+
+```sql
+insert into ops_cron_config (key, value) values
+  ('base_url', 'https://<호스트>'), ('secret', '<CRON_SECRET>')
+on conflict (key) do update set value = excluded.value;
+```
+
+`secret` 은 배포 환경의 `CRON_SECRET` 과 같아야 한다. 값이 없으면 잡을 만들지 않는다.
 스케줄러는 "지금 판단해볼 세션"만 고르고, 연락 여부는 현재 상태가 정한다. 통화 만료와 삭제 역할극 정리도 여기서 돈다.
 
 ## 결정되지 않은 것 (Product)
