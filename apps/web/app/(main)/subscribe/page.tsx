@@ -3,7 +3,8 @@ import { POLICY, productionRuntime } from '@miro/config'
 import { resolvePayment } from '@miro/providers'
 import { currentUser } from '@/lib/auth'
 import { effectivePlan } from '@/lib/usage/guard'
-import { Button, Notice, Page, PageHeader, Reveal } from '@/components/ui'
+import { Notice, Page, PageHeader, Reveal } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { beginCheckout, restore, simulateOutcome } from './actions'
 
 // Runtime environment and account state must never be frozen into a build-time redirect.
@@ -24,16 +25,16 @@ export default async function SubscribePage({ searchParams }: { searchParams: Pr
       {provider.info.notice && <Notice style={{ marginBottom: 16 }}>⚠ {provider.info.notice}</Notice>}
       {!checkout ? (
         <Reveal>
-          <form action={beginCheckout}><Button type="submit" variant="primary" size="lg" full data-checkout>Pro 이용권 받기</Button></form>
-          <form action={restore} style={{ marginTop: 14, textAlign: 'center' }}><Button type="submit" variant="ghost" size="sm">이전 구매 복원</Button></form>
+          <form action={beginCheckout}><SubmitButton variant="primary" size="lg" full data-checkout>Pro 이용권 받기</SubmitButton></form>
+          <form action={restore} style={{ marginTop: 14, textAlign: 'center' }}><SubmitButton variant="ghost" size="sm">이전 구매 복원</SubmitButton></form>
         </Reveal>
       ) : (
         <Reveal>
           <section data-mock-checkout style={{ padding: 18, background: 'var(--color-surface-1)', border: '1px dashed var(--color-border-strong)', borderRadius: 'var(--radius-lg)' }}>
             <p className="t-caption" style={{ marginBottom: 14 }}>결제 시뮬레이션 — 실제 PG 에서는 결제창으로 이동하고 결과는 webhook 으로 들어옵니다.</p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <form action={simulateOutcome.bind(null, checkout, 'success')} style={{ flex: 1 }}><Button type="submit" variant="primary" full>결제 성공</Button></form>
-              <form action={simulateOutcome.bind(null, checkout, 'failed')} style={{ flex: 1 }}><Button type="submit" variant="danger" full>결제 실패</Button></form>
+              <form action={simulateOutcome.bind(null, checkout, 'success')} style={{ flex: 1 }}><SubmitButton variant="primary" full>결제 성공</SubmitButton></form>
+              <form action={simulateOutcome.bind(null, checkout, 'failed')}><SubmitButton variant="ghost">결제 실패</SubmitButton></form>
             </div>
           </section>
         </Reveal>

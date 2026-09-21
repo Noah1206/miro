@@ -190,12 +190,13 @@ export function BookmarkButton({ slug, saved, iconOnly = false }: { slug?: strin
     <form action={async () => { if (!slug) return; setOn((v) => !v); await bookmark(slug); toast(on ? '보관함에서 뺐어요.' : '보관함에 담았어요.') }}>
       <motion.button type="submit" disabled={!slug} aria-pressed={on} aria-label={on ? '보관함에서 빼기' : '보관함에 담기'}
         whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
+        className="hit"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', minHeight: 22, height: 22, lineHeight: '18px',
           borderRadius: 7, border: 0, cursor: 'pointer', fontSize: 12,
           background: on ? 'var(--color-white)' : 'var(--color-surface-2)',
           color: on ? 'var(--color-black)' : 'var(--color-white)',
-          ...(iconOnly ? { width: 42, height: 42, padding: 0, justifyContent: 'center', borderRadius: 10, background: 'var(--color-accent)', color: 'var(--color-white)' } : {}),
+          ...(iconOnly ? { width: 44, height: 44, padding: 0, justifyContent: 'center', borderRadius: 10, background: 'var(--color-accent)', color: 'var(--color-white)' } : {}),
         }}>
         <svg aria-hidden width={iconOnly ? 24 : 14} height={iconOnly ? 24 : 14} viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'}
           stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -244,14 +245,14 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
         ...(clamp ? { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}),
       }}>{c.body}</p>
       {clamp && c.body.length > 60 && (
-        <button type="button" onClick={() => setExpanded(true)} className="t-caption"
+        <button type="button" onClick={() => setExpanded(true)} className="t-caption hit"
           style={{ background: 'none', border: 0, padding: 0, marginTop: 6, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
           더보기
         </button>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
         <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{day(c.createdAt)}</span>
-        <button type="button" aria-pressed={liked} aria-label={liked ? '좋아요 취소' : '좋아요'}
+        <button type="button" aria-pressed={liked} aria-label={liked ? '좋아요 취소' : '좋아요'} className="hit"
           onClick={async () => { setLiked((v) => !v); setLikeCount((n) => n + (liked ? -1 : 1)); await likeComment(slug, c.id) }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: liked ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
           <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round">
@@ -261,7 +262,7 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
         </button>
         {c.mine && (
           <form action={async () => { await deleteComment(slug, c.id); toast('댓글을 지웠어요.') }} style={{ marginLeft: 'auto' }}>
-            <button type="submit" className="t-micro" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>삭제</button>
+            <button type="submit" className="t-micro hit" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>삭제</button>
           </form>
         )}
       </div>
@@ -276,7 +277,7 @@ export function LikeButton({ overlay = false, slug, initial = { count: 0, liked:
   const [pending, setPending] = useState(false)
   const toast = useToast()
   useEffect(() => setState(initial), [initial.count, initial.liked])
-  return <button type="button" aria-label={state.liked ? '좋아요 취소' : '좋아요'} aria-pressed={state.liked} disabled={pending || !slug}
+  return <button type="button" className="hit" aria-label={state.liked ? '좋아요 취소' : '좋아요'} aria-pressed={state.liked} disabled={pending || !slug}
     onClick={async () => {
       if (!slug || pending) return
       setPending(true)

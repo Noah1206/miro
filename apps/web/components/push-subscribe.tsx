@@ -45,7 +45,7 @@ export function PushSubscribe({ vapidPublicKey }: { vapidPublicKey: string | nul
         <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>캐릭터는 자기 사정과 관계에 따라 가끔 먼저 연락합니다. 야간 연락은 기본으로 막혀 있고, 설정에서 바꿀 수 있어요.</p>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
           <Button variant="ghost" type="button" onClick={() => setAsk(false)}>나중에</Button>
-          <Button variant="primary" type="button" onClick={subscribe}>허용</Button>
+          <Button variant="primary" type="button" onClick={subscribe} status={status === 'working' ? 'loading' : 'idle'} disabled={status === 'working'}>허용</Button>
         </div>
       </Modal>
     </>

@@ -3,7 +3,8 @@ import { and, eq } from 'drizzle-orm'
 import { db, characters, roleplaySessions } from '@miro/db'
 import { POLICY } from '@miro/config'
 import { currentUser } from '@/lib/auth'
-import { Button, ButtonLink, Page } from '@/components/ui'
+import { ButtonLink, Page } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { confirmDelete } from '../../actions'
 
 /** n49 — 삭제 확인. 무엇이 사라지고 언제까지 되돌릴 수 있는지, 확정과 취소. */
@@ -26,7 +27,7 @@ export default async function DeleteConfirm({ params }: { params: Promise<{ id: 
       </ul>
       <form action={confirmDelete.bind(null, id)} style={{ display: 'flex', gap: 10 }}>
         <ButtonLink href="/archive" direction="back" variant="secondary" style={{ flex: 1 }}>취소</ButtonLink>
-        <Button type="submit" variant="destructive" full style={{ flex: 1 }}>삭제 확정</Button>
+        <SubmitButton variant="destructive" full style={{ flex: 1 }}>삭제 확정</SubmitButton>
       </form>
     </Page>
   )

@@ -30,7 +30,8 @@ const VARIANT: Record<ButtonVariant, React.CSSProperties> = {
   relationship: { background: 'var(--color-accent)', color: 'var(--color-accent-on)', border: '1px solid var(--color-accent)' },
 }
 const SIZE = {
-  sm: { minHeight: 36, padding: '6px 14px', fontSize: 'var(--font-caption)' },
+  /* sm 도 44 — 패턴 문서 §6: 터치 영역 최소 44px. 글자·좌우 패딩은 작게 유지한다. */
+  sm: { minHeight: 44, padding: '6px 14px', fontSize: 'var(--font-caption)' },
   md: { minHeight: 48, padding: '10px 20px', fontSize: 'var(--font-body-size)' },
   lg: { minHeight: 56, padding: '12px 24px', fontSize: 'var(--font-body-lg)' },
 } as const

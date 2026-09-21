@@ -24,7 +24,7 @@ export function MediaBar({ sessionId, matureAllowed, enabled }: { sessionId: str
         {enabled.photo && <form action={action} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input type="hidden" name="sessionId" value={sessionId} />
           <Button type="submit" size="sm" variant="secondary" status={pending ? 'loading' : 'idle'}>{pending ? '사진 요청 중' : '사진'}</Button>
-          {matureAllowed && <label className="t-micro" style={{ display: 'flex', gap: 5, alignItems: 'center', textTransform: 'none', letterSpacing: 0 }}><input type="checkbox" name="mature" style={{ accentColor: 'var(--color-white)' }} />성인</label>}
+          {matureAllowed && <label className="t-micro" style={{ display: 'flex', gap: 5, alignItems: 'center', minHeight: 44, textTransform: 'none', letterSpacing: 0, cursor: 'pointer' }}><input type="checkbox" name="mature" style={{ accentColor: 'var(--color-white)', width: 16, height: 16 }} />성인</label>}
         </form>}
         {enabled.live && <ButtonLink href={`/live/${sessionId}`} size="sm" variant="secondary"><span lang="en">Live Scene</span></ButtonLink>}
         {(['voice', 'video'] as const).filter((ch) => enabled[ch]).map((ch) => (

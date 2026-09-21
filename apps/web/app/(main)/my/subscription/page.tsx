@@ -40,13 +40,13 @@ export default async function SubscriptionPage() {
         <p className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>{reset}</p>
         <p className="t-caption" data-recharge-balance={u.rechargeRemaining} style={{ marginTop: 12 }}>충전 잔액 · {u.rechargeRemaining}</p>
         <div style={{ display: 'flex', gap: 14, marginTop: 12 }}>
-          <TransitionLink href="/plans" className="t-caption" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 비교</TransitionLink>
-          <TransitionLink href="/recharge" className="t-caption" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>충전소</TransitionLink>
+          <TransitionLink href="/plans" className="t-caption hit" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 비교</TransitionLink>
+          <TransitionLink href="/recharge" className="t-caption hit" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>충전소</TransitionLink>
         </div>
       </section>
 
       {!s ? (
-        <p data-sub-status="none" className="t-body" style={{ color: 'var(--color-text-secondary)' }}>이용권이 없습니다. <TransitionLink href="/plans" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 보기</TransitionLink></p>
+        <p data-sub-status="none" className="t-body" style={{ color: 'var(--color-text-secondary)' }}>이용권이 없습니다. <TransitionLink href="/plans" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 보기</TransitionLink></p>
       ) : (
         <section data-sub-status={s.status} style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }} className="stack">
           <p className="t-title-3">MIRO Pro {s.entitled ? '' : <span className="t-caption">(만료)</span>}</p>
@@ -54,7 +54,7 @@ export default async function SubscriptionPage() {
           <p className="t-caption" style={{ marginTop: 6 }}>자동으로 갱신되지 않아요</p>
           <p className="t-caption">이용 기간 {fmt(s.currentPeriodStart)} ~ {fmt(s.currentPeriodEnd)}</p>
           {s.entitled && <p data-keeps-until className="t-body" style={{ marginTop: 10 }}>Pro 자격은 {fmt(s.currentPeriodEnd)}까지 유지돼요. 끝나기 전에 알려드릴게요.</p>}
-          {!s.entitled && !productionRuntime() && <TransitionLink href="/subscribe" className="t-caption" style={{ marginTop: 12, textDecoration: 'underline' }}>이용권 다시 받기</TransitionLink>}
+          {!s.entitled && !productionRuntime() && <TransitionLink href="/subscribe" className="t-caption hit" style={{ marginTop: 12, textDecoration: 'underline' }}>이용권 다시 받기</TransitionLink>}
         </section>
       )}
     </Page>

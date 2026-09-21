@@ -47,7 +47,7 @@ export function Segmented({ options, value, onChange, size = 'sm', label }: { op
       {options.map((o) => {
         const on = o.value === local
         return (
-          <button key={o.value} type="button" aria-pressed={on} onClick={() => { setLocal(o.value); setPicked(true); onChange(o.value) }} style={{ position: 'relative', minHeight: size === 'sm' ? 28 : 36, padding: size === 'sm' ? '4px 10px' : '8px 14px', border: 0, background: 'transparent', borderRadius: 6, fontSize: size === 'sm' ? 'var(--font-micro)' : 'var(--font-caption)', letterSpacing: 0, textTransform: 'none', color: on ? 'var(--color-black)' : 'var(--color-text-secondary)', zIndex: 1 }}>
+          <button key={o.value} type="button" aria-pressed={on} onClick={() => { setLocal(o.value); setPicked(true); onChange(o.value) }} style={{ position: 'relative', minHeight: 44, padding: size === 'sm' ? '4px 10px' : '8px 14px', border: 0, background: 'transparent', borderRadius: 6, fontSize: size === 'sm' ? 'var(--font-micro)' : 'var(--font-caption)', letterSpacing: 0, textTransform: 'none', color: on ? 'var(--color-black)' : 'var(--color-text-secondary)', zIndex: 1 }}>
             {on && <motion.span layoutId="segmented-thumb" transition={spring.default} style={{ position: 'absolute', inset: 0, background: 'var(--color-white)', borderRadius: 6, zIndex: -1 }} />}
             {o.label}
           </button>

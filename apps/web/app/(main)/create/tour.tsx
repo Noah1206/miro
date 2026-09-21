@@ -92,16 +92,16 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
             <p key={step} className="t-caption" style={{ flex: 1, margin: 0, color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
               {STEPS[step]!.lines.map((line) => <span key={line} style={{ display: 'block', whiteSpace: 'nowrap' }}>{line}</span>)}
             </p>
-            <button type="button" onClick={dismiss} aria-label="안내 닫기"
+            <button type="button" onClick={dismiss} aria-label="안내 닫기" className="hit"
               style={{ flexShrink: 0, background: 'none', border: 0, padding: 2, marginRight: -4, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
               <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
             <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>{step + 1}/{STEPS.length}</span>
-            <button type="button" onClick={next}
+            <button type="button" onClick={next} className="hit"
               style={{ padding: '5px 12px', borderRadius: 'var(--radius-button)', border: 0, cursor: 'pointer',
-                background: 'var(--color-white)', color: 'var(--color-black)', fontSize: 'var(--font-micro)', fontWeight: 'var(--weight-semibold)' }}>
+                background: 'var(--color-white)', color: 'var(--color-black)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
               {last ? '완료' : '다음'}
             </button>
           </div>

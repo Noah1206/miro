@@ -8,7 +8,7 @@ export function Switch({ name, label, hint, checked, onChange }: {
   name: string; label: string; hint?: string; checked: boolean; onChange: (v: boolean) => void
 }) {
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
+    <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '10px 0' }}>
       <span className="stack" style={{ gap: 3, flex: 1, minWidth: 0 }}>
         <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{label}</span>
         {hint && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</span>}

@@ -73,8 +73,8 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
         </div>
         <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
-            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', marginLeft: 20, borderRadius: 'var(--radius-sm)',
-            border: 0, cursor: 'pointer', fontSize: 'var(--font-micro)', fontWeight: 'var(--weight-medium)',
+            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 44, padding: '4px 10px', marginLeft: 20, borderRadius: 'var(--radius-sm)',
+            border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
             background: tab === 'preview' ? 'var(--color-white)' : 'var(--color-surface-2)',
             color: tab === 'preview' ? 'var(--color-black)' : 'var(--color-text-primary)',
             transition: 'background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard)',
@@ -91,7 +91,7 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
 
 function chip(primary: boolean, on: boolean): React.CSSProperties {
   return {
-    minHeight: 34, padding: '6px 14px', borderRadius: 'var(--radius-button)', border: 0, cursor: on ? 'pointer' : 'default',
+    minHeight: 44, padding: '6px 14px', borderRadius: 'var(--radius-button)', border: 0, cursor: on ? 'pointer' : 'default',
     fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)',
     background: primary && on ? 'var(--color-accent)' : 'var(--color-surface-2)',
     color: primary && on ? 'var(--color-accent-on)' : on ? 'var(--color-text-primary)' : 'var(--color-text-disabled)',

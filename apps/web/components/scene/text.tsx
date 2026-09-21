@@ -12,7 +12,7 @@ export function CharacterText({ content, name, size = 'md' }: { content: string;
   const lines = content.split('\n').filter((l) => l.trim().length > 0)
   const fs = size === 'lg' ? 'var(--font-body-lg)' : 'var(--font-body-size)'
   return (
-    <div className="stack" style={{ gap: 6, maxWidth: '88%' }}>
+    <div className="stack" style={{ gap: 6, maxWidth: '85%' }}>
       {lines.map((line, i) => {
         const m = line.match(/^([^:\n]{1,24}):\s?(.*)$/)
         if (m && (m[1] === name || m[1]!.length <= 12) && m[2]) {

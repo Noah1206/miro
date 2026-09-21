@@ -13,6 +13,7 @@
 - 위생: `.env.bak-*` 2개 삭제됨. 로컬 Node 18(스토리지 테스트 2개가 `File` 전역 부재로 실패 — CI 는 신형 Node 라 green). 로컬 `miro_dev` DB 는 낡음(최근 개발은 운영 DB 직결).
 
 ## 결정 로그
+- 2026-09-22: UI 규칙 기준 = `docs/MIRO_DESIGN_PATTERNS.md` (DESIGN.md 와 충돌 시 패턴 문서 우선). 전 화면 감사 후 위반 수정: micro 12px, 터치 44px(`.hit` 유틸), SubmitButton(제출 잠금), 빈 상태 CTA, 색상 단독 표시 보완. 단위 473·E2E 52 통과.
 - 2026-09-22: 선톡 운영 개방 — features.ts 하드 차단에서 realityMessage·inlineReality 제거(b46a8f7), 미디어 4종은 검증 전까지 유지. 미로 카나리아로 서연(테스트 계정 소유) 지정 — 실계정 영향 없이 파이프라인 검증 목적, 실캐릭터 제작 후 교체.
 - 2026-09-22: 운영 DB 마이그레이션 누락 1건(`reality_push_jobs`) 적용. 레거시 alpha 테이블 2개는 코드 미참조라 미생성 유지.
 - 2026-09-19: 음성통화 = Gemini Live API(gemini-3.8-live, ephemeral token 클라이언트 직결). 서버는 토큰 발급만(모델·프롬프트·보이스 잠금). ≈$0.023/분, 차감 5 units/분 유지. 실패 시 텍스트 강등. 게이트: 실기기 검증·원가 실측 후 운영 개방. 음성 발화 기억 저장은 v2. → 구현 완료(df52536), 개방 전.

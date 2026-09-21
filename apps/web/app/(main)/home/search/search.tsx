@@ -53,7 +53,7 @@ export function SearchHeader({ q, base, children }: { q: string; base: string; c
                 }}
                 style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
               {value && (
-                <button type="button" onClick={() => { setValue(''); input.current?.focus(); if (q) router.push(base) }} aria-label="검색어 지우기"
+                <button type="button" onClick={() => { setValue(''); input.current?.focus(); if (q) router.push(base) }} aria-label="검색어 지우기" className="hit"
                   style={{ background: 'none', border: 0, padding: 2, color: 'var(--color-text-tertiary)', cursor: 'pointer', flexShrink: 0 }}>
                   <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                 </button>

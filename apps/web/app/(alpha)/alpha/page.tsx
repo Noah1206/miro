@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { YUJIN } from '@/lib/alpha/character'
 import { startExperience } from './actions'
 import { TrackView } from './track-view'
@@ -28,7 +28,7 @@ export default function AlphaLanding() {
       </section>
 
       <form action={startExperience} className="stack" style={{ gap: 10 }}>
-        <Button type="submit" variant="primary" size="lg" full>답장하기</Button>
+        <SubmitButton variant="primary" size="lg" full>답장하기</SubmitButton>
         <p className="t-caption" style={{ textAlign: 'center', color: 'var(--color-text-tertiary)' }}>회원가입 없이 바로 시작해요.</p>
       </form>
     </main>

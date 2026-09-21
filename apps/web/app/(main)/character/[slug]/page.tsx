@@ -6,6 +6,7 @@ import { characterLikeState, countComments, isBookmarked, listComments, similarC
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Accordion, Back, Button, Page, TransitionLink } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, RealityStrip } from './sections'
@@ -148,7 +149,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <BookmarkButton slug={slug} saved={saved} iconOnly />
         <div style={{ flex: 1 }}>
         {user
-          ? <form action={enter}><Button type="submit" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full>{COPY.cta.startRoleplay}</Button></form>
+          ? <form action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{COPY.cta.startRoleplay}</SubmitButton></form>
           : <StartWithLogin slug={slug} label="로그인하고 시작하기" />}
         </div>
       </div>

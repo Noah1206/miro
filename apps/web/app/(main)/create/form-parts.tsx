@@ -312,7 +312,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
       {tags.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {tags.map((t) => (
-            <button key={t} type="button" onClick={() => setTags(tags.filter((x) => x !== t))} aria-label={`${t} 지우기`}
+            <button key={t} type="button" onClick={() => setTags(tags.filter((x) => x !== t))} aria-label={`${t} 지우기`} className="hit"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: 0,
                 background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', cursor: 'pointer',
@@ -328,7 +328,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
           <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} maxLength={maxLength} autoComplete="off"
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
-          <button type="button" onClick={commit} className="t-caption"
+          <button type="button" onClick={commit} className="t-caption hit"
             style={{ background: 'none', border: 0, padding: '2px 4px', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
             + 추가 {tags.length}/{max}
           </button>
@@ -355,7 +355,7 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
           <motion.button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={on}
             whileTap={reduce ? undefined : { scale: 0.97 }}
             style={{
-              minHeight: 36, padding: '6px 12px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+              minHeight: 44, padding: '6px 12px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
               background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
               border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
@@ -447,12 +447,12 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           const isEditing = editing === i
           const tools = (
             <span style={{ display: 'inline-flex', gap: 4, flexShrink: 0 }}>
-              <button type="button" onClick={() => (isEditing ? commitEdit() : startEdit(i))} aria-label={isEditing ? '고친 말 확인' : '이 말 고치기'} style={roundBtn}>
+              <button type="button" onClick={() => (isEditing ? commitEdit() : startEdit(i))} aria-label={isEditing ? '고친 말 확인' : '이 말 고치기'} className="hit" style={roundBtn}>
                 {isEditing
                   ? <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                   : <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z" /><path d="M13.5 6.5l3 3" /></svg>}
               </button>
-              <button type="button" onClick={() => remove(i)} aria-label="이 말 지우기" style={roundBtn}>
+              <button type="button" onClick={() => remove(i)} aria-label="이 말 지우기" className="hit" style={roundBtn}>
                 <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
               </button>
             </span>
@@ -527,10 +527,10 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
           </button>
         </div>
-        <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--color-text-tertiary)' }}>엔터로 줄바꿈하고, ↑ 버튼을 눌러 올려 주세요.</p>
+        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>엔터로 줄바꿈하고, ↑ 버튼을 눌러 올려 주세요.</p>
         {role !== 'narrator' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-            <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기" onMouseDown={keepFocus}
+            <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기" onMouseDown={keepFocus} className="hit"
               style={{ padding: '3px 9px', borderRadius: 'var(--radius-sm)', border: 0, cursor: full ? 'default' : 'pointer', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
               *서술*
             </button>
@@ -568,7 +568,7 @@ export function PresetTags({ name, options, max, maxLength = 20, defaultValue = 
     setPicked([...picked, t]); setText('')
   }
   const chip = (on: boolean, off: boolean): React.CSSProperties => ({
-    minHeight: 34, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
+    minHeight: 44, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
     fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
     background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
     border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
@@ -607,7 +607,7 @@ export function PresetTags({ name, options, max, maxLength = 20, defaultValue = 
             aria-label="분위기 직접 입력"
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addCustom() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
-          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addCustom} disabled={!text.trim() || full}
+          <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addCustom} disabled={!text.trim() || full} className="hit"
             style={{ padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: 0, cursor: 'pointer', background: text.trim() && !full ? 'var(--color-accent)' : 'var(--color-surface-3)', color: text.trim() && !full ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
             추가
           </button>
@@ -694,7 +694,7 @@ export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultV
                 </span>
                 <span style={{ fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>{item.content}</span>
               </div>
-              <button type="button" onClick={() => remove(i)} aria-label="이 항목 지우기" style={roundBtn}>
+              <button type="button" onClick={() => remove(i)} aria-label="이 항목 지우기" className="hit" style={roundBtn}>
                 <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
               </button>
             </li>
@@ -712,7 +712,7 @@ export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultV
             style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}/{MAX_LORE}</span>
-            <button type="button" onClick={add} disabled={!content.trim()}
+            <button type="button" onClick={add} disabled={!content.trim()} className="hit"
               style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: 0, cursor: content.trim() ? 'pointer' : 'default',
                 background: content.trim() ? 'var(--color-accent)' : 'var(--color-surface-3)', color: content.trim() ? 'var(--color-accent-on)' : 'var(--color-text-tertiary)', fontSize: 13 }}>
               추가

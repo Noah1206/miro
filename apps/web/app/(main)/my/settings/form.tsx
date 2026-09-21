@@ -112,7 +112,7 @@ function TimeStepper({ name, label, defaultValue }: { name: string; label: strin
 
 function StepBtn({ dir, onClick, label }: { dir: 'prev' | 'next'; onClick: () => void; label: string }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label}
+    <button type="button" onClick={onClick} aria-label={label} className="hit"
       style={{ width: 32, height: 32, borderRadius: 16, border: 0, background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', display: 'grid', placeItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
       <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d={dir === 'prev' ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} />

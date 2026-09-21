@@ -1,13 +1,15 @@
 .page { background: var(--color-bg); }
 .main { height: 100dvh; min-height: 0; overflow: hidden; }
 .header { display: flex; align-items: center; flex: 0 0 auto; gap: 8px; min-height: 64px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); }
-.header > a { width: 32px; min-height: 44px; justify-content: center; flex-shrink: 0; color: var(--color-text-primary) !important; }
+.header > a { width: 32px; min-height: 44px; justify-content: center; flex-shrink: 0; color: var(--color-text-primary) !important; position: relative; }
+/* 뒤로가기 폭이 32px 이라 터치 영역만 좌우로 넓힌다 (§6) */
+.header > a::after { content: ''; position: absolute; inset: 0 -6px; }
 .header > a svg { width: 22px; height: 22px; }
 .title { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.4px; }
-.contextButton { width: 36px; height: 36px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
+.contextButton { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
 .contextButton svg { width: 20px; height: 20px; }
 .stylePicker { position: relative; flex-shrink: 0; }
-.styleButton { display: flex; align-items: center; gap: 5px; min-height: 26px; padding: 0 8px 0 12px; border: 0; border-radius: 24px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 11px; line-height: 1; font-weight: 600; cursor: pointer; }
+.styleButton { display: flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 8px 0 12px; border: 0; border-radius: 22px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; }
 .transcript { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 18px 16px 24px; scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
 .aiNotice { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 0 0 28px; color: var(--color-text-tertiary); font-size: 12px; line-height: 1.5; }
 .opening { margin: 0 0 28px; padding: 0 12px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; letter-spacing: -.3px; font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -17,7 +19,7 @@
 .avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; border-radius: inherit; }
 .characterContent { flex: 1; min-width: 0; max-width: calc(100% - 40px); }
 .speaker { margin: 0 0 5px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
-.bubble { width: fit-content; max-width: 100%; padding: 12px 14px; border-radius: 4px 20px 20px 20px; background: var(--color-surface-2); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.bubble { width: fit-content; max-width: 95%; padding: 12px 14px; border-radius: 4px 20px 20px 20px; background: var(--color-surface-2); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
 .bubble p { margin: 0; white-space: pre-wrap; }
 .bubble p + p { margin-top: 12px; }
 .action { color: var(--color-text-secondary); font-style: italic; }
@@ -28,13 +30,13 @@
 .userBubble { max-width: 84%; padding: 11px 14px; margin: 0; border-radius: 20px 4px 20px 20px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .composer { flex: 0 0 auto; background: var(--color-bg); border-top: 1px solid var(--color-border); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
 .composerForm { display: flex; align-items: flex-end; gap: 8px; }
-.input { display: block; flex: 1; width: 100%; min-width: 0; height: 44px; min-height: 44px; max-height: 140px; resize: none; overflow-y: auto; padding: 10px 16px; border: 1px solid transparent; border-radius: 24px; background: var(--color-surface-2); color: var(--color-text-primary); font-family: inherit; font-size: 16px; line-height: 22px; letter-spacing: -.3px; }
+.input { display: block; flex: 1; width: 100%; min-width: 0; min-height: 44px; max-height: 140px; resize: none; overflow-y: auto; padding: 10px 16px; border: 1px solid transparent; border-radius: 24px; background: var(--color-surface-2); color: var(--color-text-primary); font-family: inherit; font-size: 16px; line-height: 22px; letter-spacing: -.3px; }
 .input::placeholder { color: var(--color-text-tertiary); }
 .input:focus-visible { outline: none; border-color: var(--color-border-input); }
-.send { display: grid; place-items: center; width: 36px; height: 36px; margin-bottom: 4px; flex-shrink: 0; padding: 0; border: 0; border-radius: 50%; background: var(--color-accent); color: var(--color-accent-on); cursor: pointer; }
+.send { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; padding: 0; border: 0; border-radius: 50%; background: var(--color-accent); color: var(--color-accent-on); cursor: pointer; }
 .send:disabled { opacity: .45; cursor: default; }
 .styleButton:focus-visible, .contextButton:focus-visible, .send:focus-visible { outline: 2px solid var(--color-white); outline-offset: 2px; }
-@media (max-width: 360px) { .header { gap: 4px; padding-inline: 8px; } .title { font-size: 16px; } .styleButton { padding: 0 8px 0 12px; font-size: 11px; } .transcript { padding-inline: 12px; } }
+@media (max-width: 360px) { .header { gap: 4px; padding-inline: 8px; } .title { font-size: 16px; } .styleButton { padding: 0 8px 0 12px; font-size: 12px; } .transcript { padding-inline: 12px; } }
 
 /* 입력 중 — 실제 메신저의 점 세 개. 기다림을 "아무 일도 없음" 이 아니라 "쓰고 있음" 으로 보이게 한다. */
 .typingDots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }

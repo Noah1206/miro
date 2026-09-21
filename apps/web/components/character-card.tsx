@@ -69,7 +69,7 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
           position: 'absolute', left: 0, right: 0, bottom: 0, padding: '30px 12px 12px',
           background: 'linear-gradient(to top, rgba(8,8,9,0.94) 28%, rgba(8,8,9,0.72) 60%, rgba(8,8,9,0))',
         }}>
-          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', marginBottom: 3 }}>{c.name}</p>
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
           {c.tagline && (
             <p className="t-caption" style={{
               color: 'var(--color-text-primary)', lineHeight: 1.45, marginBottom: 6,

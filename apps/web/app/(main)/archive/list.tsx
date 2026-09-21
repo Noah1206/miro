@@ -59,7 +59,7 @@ export function ArchiveList({ items }: {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <h2 className="t-name" style={{ display: 'flex', alignItems: 'baseline', gap: 6, fontSize: 16, lineHeight: 1.35 }}>
+                  <h2 className="t-name" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 16, lineHeight: 1.35 }}>
                     {s.characterName}
                   </h2>
                 </div>
@@ -67,7 +67,7 @@ export function ArchiveList({ items }: {
               </div>
               <div style={{ width: 44, minHeight: 54, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: 7 }}>
                 <time className="t-micro" dateTime={new Date(s.lastInteractionAt).toISOString()} style={{ textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{dateLabel(s.lastInteractionAt)}</time>
-                {s.unread > 0 && <span data-unread className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 21, height: 21, padding: '0 6px', borderRadius: 11, background: 'var(--color-danger)', color: 'var(--color-white)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
+                {s.unread > 0 && <span data-unread aria-label={`안 읽은 메시지 ${s.unread}개`} className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 21, height: 21, padding: '0 6px', borderRadius: 11, background: 'var(--color-danger)', color: 'var(--color-white)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
               </div>
             </TransitionLink>
             {managing && (
@@ -80,7 +80,13 @@ export function ArchiveList({ items }: {
         })}
         </AnimatePresence>
       </ul>
-      {filtered.length === 0 && <p className="t-caption" style={{ padding: 'var(--space-7) 0', textAlign: 'center' }}>해당 이름의 캐릭터가 없어요.</p>}
+      {filtered.length === 0 && (
+        <div className="stack" style={{ padding: 'var(--space-7) 0', gap: 12, alignItems: 'center' }}>
+          <p className="t-caption">해당 이름의 캐릭터가 없어요.</p>
+          <button type="button" className="t-caption hit" onClick={() => setQuery('')}
+            style={{ background: 'none', border: 0, padding: 0, textDecoration: 'underline', color: 'var(--color-text-primary)', cursor: 'pointer' }}>검색어 지우기</button>
+        </div>
+      )}
     </>
   )
 }

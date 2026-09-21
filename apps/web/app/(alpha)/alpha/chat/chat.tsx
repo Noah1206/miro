@@ -45,7 +45,8 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
     } catch { /* 아래에서 대체 */ }
 
     if (res?.limit) { setLimit(res.limit); setPending(false); return }
-    if (!res || res.error || !res.reply) { setNotice(res?.error ?? '잠시 연결이 끊겼어요. 다시 이어볼까요?'); setPending(false); return }
+    // 서버의 기계 코드('no_session' 등)는 그대로 보여주지 않는다 (패턴 문서 §20).
+    if (!res || res.error || !res.reply) { setNotice('잠시 연결이 끊겼어요. 다시 이어볼까요?'); setPending(false); return }
 
     // 읽고 나서 답이 오기까지 — 기분에 따라 다르다. 그 사이는 '입력 중'.
     setTyping(true); await sleep(res.delayMs); setTyping(false)

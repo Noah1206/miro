@@ -4,6 +4,10 @@
 > **Brand Principle:** UI는 조용하게, 캐릭터와 세계는 강하게.  
 > **Core Idea:** MIRO는 “AI 채팅 앱”이 아니라, 관계와 세계가 변화하는 **관계 시뮬레이션 플랫폼**이다.
 
+UI 구현·수정 시 컴포넌트/UX 규칙은 [MIRO_DESIGN_PATTERNS.md](MIRO_DESIGN_PATTERNS.md)가 기준이다
+(최소 글자 12px, 터치 영역 44px, 버튼 상태, 그룹핑, 상태 설계 등). 이 문서는 브랜드·색·모션의 방향을 정한다.
+두 문서가 어긋나면 패턴 문서가 이긴다.
+
 ---
 
 ## 1. Brand Identity

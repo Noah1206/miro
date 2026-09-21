@@ -18,7 +18,7 @@ export function Page({ children, immersive, className, style }: { children: Reac
 /** 뒤로 가기. 화살표 하나, 조용하게. */
 export function Back({ href, label = '뒤로' }: { href: string; label?: string }) {
   return (
-    <TransitionLink href={href} direction="back" aria-label={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--color-text-secondary)', fontSize: 'var(--font-caption)', padding: '6px 0' }}>
+    <TransitionLink href={href} direction="back" aria-label={label} className="hit" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--color-text-secondary)', fontSize: 'var(--font-caption)', padding: '6px 0' }}>
       <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
     </TransitionLink>
   )

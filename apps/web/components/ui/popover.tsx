@@ -27,5 +27,5 @@ export function Popover({ open, onClose, anchor = 'left', children, style }: { o
   )
 }
 export function MenuItem({ children, ...rest }: React.ComponentPropsWithoutRef<'button'>) {
-  return <button {...rest} role="menuitem" style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', minHeight: 40, background: 'transparent', border: 0, borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-body-size)', ...rest.style }}>{children}</button>
+  return <button {...rest} role="menuitem" style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', minHeight: 44, background: 'transparent', border: 0, borderRadius: 'var(--radius-sm)', fontSize: 'var(--font-body-size)', ...rest.style }}>{children}</button>
 }

@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db, userSettings } from '@miro/db'
 import { currentUser, requireUser } from '@/lib/auth'
-import { Button, Page, PageHeader, Stagger, StaggerItem } from '@/components/ui'
+import { Page, PageHeader, Stagger, StaggerItem } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 async function consent(kind: 'camera' | 'mic' | 'image') {
   'use server'
@@ -29,7 +30,7 @@ export default async function PermissionsPage() {
               <p className="t-title-3">{i.label}</p>
               <p className="t-caption" style={{ margin: '4px 0 12px' }}>{i.why}</p>
               {i.at ? <p data-consent={i.kind} className="t-caption" style={{ color: 'var(--color-success)' }}>동의함 · {i.at.toLocaleDateString('ko-KR')}</p>
-                : <form action={consent.bind(null, i.kind)}><Button type="submit" size="sm" variant="secondary">동의</Button></form>}
+                : <form action={consent.bind(null, i.kind)}><SubmitButton size="sm" variant="secondary">동의</SubmitButton></form>}
             </section>
           </StaggerItem>
         ))}

@@ -78,6 +78,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
             return (
               <TransitionLink key={f.key} href={f.key === 'all' ? '/my' : `/my?filter=${f.key}`} aria-current={on ? 'true' : undefined}
                 style={{
+                  display: 'inline-flex', alignItems: 'center', minHeight: 44,
                   padding: '8px 14px', borderRadius: 'var(--radius-button)', fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
                   background: on ? 'var(--color-white)' : 'var(--color-surface-1)', color: on ? 'var(--color-black)' : 'var(--color-text-secondary)',
                 }}>{f.label}</TransitionLink>
@@ -89,7 +90,9 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         {cards.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 'var(--space-8) 0' }}>
             <p className="t-body" style={{ marginBottom: 14 }}>{name}님이 만든 캐릭터가 {filter === 'all' ? '아직 없어요' : '여기엔 없어요'}.</p>
-            {filter === 'all' && <ButtonLink href="/create" variant="primary">한 사람 만들기</ButtonLink>}
+            {filter === 'all'
+              ? <ButtonLink href="/create" variant="primary">한 사람 만들기</ButtonLink>
+              : <ButtonLink href="/my" variant="secondary" size="sm">전체 보기</ButtonLink>}
           </div>
         ) : (
           <div className="grid-2">{cards.map((c) => <CharacterCard key={c.id} c={c} />)}</div>
@@ -99,13 +102,13 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       {/* 푸터 — 실제로 있는 문서만. 회사 정보는 정해진 것이 없어 적지 않는다. */}
       <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
         <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>MIRO</p>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
-          <TransitionLink href="/my/ai-data">AI 개선 참여</TransitionLink>
-          <TransitionLink href="/terms/service">서비스 이용약관</TransitionLink>
+        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
+          <TransitionLink href="/my/ai-data" className="hit">AI 개선 참여</TransitionLink>
+          <TransitionLink href="/terms/service" className="hit">서비스 이용약관</TransitionLink>
           <span aria-hidden>|</span>
-          <TransitionLink href="/terms/privacy">개인정보 처리방침</TransitionLink>
+          <TransitionLink href="/terms/privacy" className="hit">개인정보 처리방침</TransitionLink>
           <span aria-hidden>|</span>
-          <TransitionLink href="/terms/ai">AI 생성 콘텐츠 안내</TransitionLink>
+          <TransitionLink href="/terms/ai" className="hit">AI 생성 콘텐츠 안내</TransitionLink>
         </p>
       </footer>
     </Page>

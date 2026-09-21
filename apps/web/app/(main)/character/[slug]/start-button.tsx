@@ -6,7 +6,7 @@ export function StartWithLogin({ slug, label }: { slug: string; label: string })
   const askLogin = useLoginSheet()
   return (
     <Button type="button" variant="primary" size="lg" data-start-login
-      style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full
+      style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full
       onClick={() => askLogin(`/character/${slug}`)}>
       {label}
     </Button>

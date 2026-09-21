@@ -3,7 +3,8 @@ import { BANK_TRANSFER_WINDOW_HOURS, PLANNED_RECHARGE_TIERS, bankAccount, produc
 import { currentUser } from '@/lib/auth'
 import { rechargeHistory, usageStatus, type RechargeHistoryItem, type UsageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
-import { Button, Card, Notice, Page, PageHeader, TransitionLink } from '@/components/ui'
+import { Card, Notice, Page, PageHeader, TransitionLink } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { observe } from '@/lib/observe'
 import { beginRecharge, orderByTransfer, simulateRecharge } from './actions'
 import { TransferActions } from './transfer-actions'
@@ -108,8 +109,8 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
                   <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 2 }}>{item.sub}</p>
                 </div>
                 <input name="depositorName" placeholder="입금자명" required maxLength={40} aria-label="입금자명"
-                  style={{ width: 110, padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }} />
-                <Button type="submit" variant="secondary" size="sm">주문</Button>
+                  style={{ width: 110, minHeight: 44, padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }} />
+                <SubmitButton variant="secondary" size="sm">주문</SubmitButton>
               </form>
             ))}
           {/* 환불 조건은 사기 전에 보인다 — 숨기지 않는 것이 확정된 방침이다. */}
@@ -140,8 +141,8 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
         <Card data-mock-recharge-checkout style={{ marginBottom: 'var(--space-3)' }}>
           <p className="t-caption" style={{ marginBottom: 14 }}>결제 시뮬레이션 — 실제 PG 에서는 결제창으로 이동하고 결과는 webhook 으로 들어옵니다.</p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <form action={simulateRecharge.bind(null, checkout, 'success')} style={{ flex: 1 }}><Button type="submit" variant="primary" full>결제 성공</Button></form>
-            <form action={simulateRecharge.bind(null, checkout, 'failed')} style={{ flex: 1 }}><Button type="submit" variant="danger" full>결제 실패</Button></form>
+            <form action={simulateRecharge.bind(null, checkout, 'success')} style={{ flex: 1 }}><SubmitButton variant="primary" full>결제 성공</SubmitButton></form>
+            <form action={simulateRecharge.bind(null, checkout, 'failed')}><SubmitButton variant="ghost">결제 실패</SubmitButton></form>
           </div>
         </Card>
       ) : sellable ? (
@@ -157,7 +158,7 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
                   {p.units} 사용량{p.validDays ? ` · ${p.validDays}일 유효` : ' · 만료 없음'}
                 </p>
               </div>
-              <Button type="submit" variant="secondary" size="sm">{formatPrice(p)}</Button>
+              <SubmitButton variant="secondary" size="sm">{formatPrice(p)}</SubmitButton>
             </form>
           ))}
         </Card>

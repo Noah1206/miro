@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import { currentUser, requireUser, destroySession } from '@/lib/auth'
 import { deleteAccount, deletionImpact } from '@/lib/ops/account'
 import { track } from '@/lib/analytics/track'
-import { Button, ButtonLink, Page } from '@/components/ui'
+import { ButtonLink, Page } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 
 async function confirm() {
   'use server'
@@ -26,7 +27,7 @@ export default async function DeleteAccountPage() {
       </ul>
       <form action={confirm} style={{ display: 'flex', gap: 10 }}>
         <ButtonLink href="/my" direction="back" variant="secondary" style={{ flex: 1 }}>취소</ButtonLink>
-        <Button type="submit" variant="destructive" full style={{ flex: 1 }}>계정 삭제 확정</Button>
+        <SubmitButton variant="destructive" full style={{ flex: 1 }}>계정 삭제 확정</SubmitButton>
       </form>
     </Page>
   )

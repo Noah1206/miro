@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Button } from '@/components/ui'
+import { SubmitButton } from '@/components/ui/submit-button'
 import { duration, ease, press, spring, stagger } from '@/lib/motion/tokens'
 
 export type TermsItem = { key: string; title: string; href: string }
@@ -41,7 +42,7 @@ export function TermsList({ items, action }: { items: TermsItem[]; action: () =>
       {/* CTA 는 위아래로. 위가 진행, 아래가 한 번에 동의. */}
       <div className="stack" style={{ gap: 4, marginTop: 'var(--space-7)' }}>
         <form action={action}>
-          <Button type="submit" variant="primary" size="lg" full disabled={!all}>
+          <SubmitButton variant="primary" size="lg" full disabled={!all}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.span key={all ? 'go' : 'wait'}
                 initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -51,7 +52,7 @@ export function TermsList({ items, action }: { items: TermsItem[]; action: () =>
                 {all ? '다음으로 진행하기' : '동의하고 가입하기'}
               </motion.span>
             </AnimatePresence>
-          </Button>
+          </SubmitButton>
         </form>
         <AnimatePresence initial={false}>
           {!all && (
@@ -82,11 +83,12 @@ function CheckRow({ checked, onToggle, title }: { checked: boolean; onToggle: ()
         background: 'transparent', border: 0, padding: '12px 4px', minHeight: 48, cursor: 'pointer',
         borderRadius: 'var(--radius-sm)', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
       }}>
+      {/* 꺼짐 = 빈 박스, 켜짐 = 체크 — 색만이 아니라 모양으로도 갈린다 (패턴 문서 §4.2) */}
       <motion.svg aria-hidden viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
         animate={{ stroke: checked ? 'var(--color-white)' : 'var(--color-border-strong)', scale: checked ? [1, 1.18, 1] : 1 }}
         transition={{ duration: reduce ? 0 : 0.34, ease: ease.enter, times: [0, 0.45, 1] }}
         style={{ width: 20, height: 20, flexShrink: 0 }}>
-        <path d="M20 6 9 17l-5-5" />
+        {checked ? <path d="M20 6 9 17l-5-5" /> : <rect x="4" y="4" width="16" height="16" rx="3" strokeWidth="2" />}
       </motion.svg>
       <motion.span className="t-body"
         animate={{ color: checked ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}

@@ -45,7 +45,7 @@ export function ToggleRow({ name, label, hint, defaultChecked }: { name: string;
 
 export function Checkbox({ name, label, required }: { name: string; label: ReactNode; required?: boolean }) {
   return (
-    <motion.label variants={fadeUp} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 'var(--font-caption)', lineHeight: 1.55, cursor: 'pointer' }}>
+    <motion.label variants={fadeUp} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 'var(--font-caption)', lineHeight: 1.55, cursor: 'pointer', padding: '12px 0' }}>
       <input name={name} type="checkbox" required={required} style={{ marginTop: 2, width: 18, height: 18, accentColor: 'var(--color-white)', flexShrink: 0 }} />
       <span>{label}</span>
     </motion.label>
