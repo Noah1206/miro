@@ -20,7 +20,7 @@ function Star() {
  * 한 칸.
  *
  * 칸은 얇은 테두리의 둥근 상자 (레퍼런스). 라벨은 값 위에 작게 얹는다. 초점이 들어오면 테두리만 희어진다
- * (초점은 흰색이다 — 라임은 상태를 뜻하므로 '선택됨' 과 '초점' 이 같은 색이면 구분이 안 된다).
+ * (초점은 흰색이다 — 주황은 상태를 뜻하므로 '선택됨' 과 '초점' 이 같은 색이면 구분이 안 된다).
  * 글자 수는 한도 근처(80%)에서만 나타난다 — 늘 떠 있으면 세라는 뜻이 되어 버린다.
  */
 export function LabeledField({ label, required, hint, error, children }: {
@@ -339,7 +339,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
   )
 }
 
-/** 여러 개 중 하나. 고른 칩만 라임. 줄바꿈해서 늘어놓는다 (관계 단계처럼 많을 때). */
+/** 여러 개 중 하나. 고른 칩만 주황. 줄바꿈해서 늘어놓는다 (관계 단계처럼 많을 때). */
 export function ChoiceChips({ name, options, value, onChange, columns }: {
   name?: string; options: Array<{ value: string; label: string }>; value: string; onChange: (v: string) => void; columns?: number
 }) {

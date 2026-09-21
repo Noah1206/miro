@@ -109,7 +109,7 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
                 </div>
                 <input name="depositorName" placeholder="입금자명" required maxLength={40} aria-label="입금자명"
                   style={{ width: 110, padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }} />
-                <Button type="submit" variant="primary" size="sm">주문</Button>
+                <Button type="submit" variant="secondary" size="sm">주문</Button>
               </form>
             ))}
           {/* 환불 조건은 사기 전에 보인다 — 숨기지 않는 것이 확정된 방침이다. */}
@@ -157,7 +157,7 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
                   {p.units} 사용량{p.validDays ? ` · ${p.validDays}일 유효` : ' · 만료 없음'}
                 </p>
               </div>
-              <Button type="submit" variant="primary" size="sm">{formatPrice(p)}</Button>
+              <Button type="submit" variant="secondary" size="sm">{formatPrice(p)}</Button>
             </form>
           ))}
         </Card>

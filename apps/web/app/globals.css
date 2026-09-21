@@ -18,19 +18,19 @@
   --color-white: #FFFFFF; --color-black: #000000;
   --color-relationship: #D85C79; --color-danger: #E65A5A; --color-success: #5CBF88;
   /**
-   * Accent — 라임. 화면은 무채색이고, 이 색은 '지금 이것' 을 가리킬 때만 켠다:
+   * Accent — 주황. 화면은 무채색이고, 이 색은 '지금 이것' 을 가리킬 때만 켠다:
    * 선택된 탭, 주요 CTA(화면당 하나), 안 읽은 것, 관계 변화, 리얼리티 연락. 그 밖에는 쓰지 않는다.
    * (온라인 상태도 이 목록에 들어가지만 아직 그 기능이 없다.)
    *
-   * 라임은 밝다. 채움 위의 글자는 반드시 검정이어야 한다 (검정 14.6:1 / 흰색 1.3:1 — 흰 글자는
+   * 주황은 밝다. 채움 위의 글자는 반드시 검정이어야 한다 (검정 5.3:1 / 흰색 3.6:1 — 흰 글자는
    * 읽히지 않는다). --color-accent-on 이 그 글자색을 들고 있으니 버튼마다 다시 고르지 않는다.
    * 그라데이션·glow·네온 금지 — 평평한 한 색으로만 쓴다.
    */
-  --color-accent: #BDF43F;        /* 기본 라임. 채움. */
-  --color-accent-bright: #C6FF4A; /* 눌림·호버처럼 한 단 더 밝힐 때만. */
-  --color-accent-on: #111111;     /* 라임 채움 위의 글자·아이콘. */
-  --color-accent-text: #BDF43F;   /* 어두운 바탕 위 라임 글자 (15.2:1). */
-  --color-accent-soft: rgba(189, 244, 63, 0.06); /* 선택된 칸의 옅은 바탕. 12% 는 짙었다 — 테두리가 이미 말하니 바탕은 기척만. */
+  --color-accent: #E8590C;        /* 기본 주황. 채움. */
+  --color-accent-bright: #F26419; /* 눌림·호버처럼 한 단 더 밝힐 때만. */
+  --color-accent-on: #111111;     /* 주황 채움 위의 글자·아이콘. */
+  --color-accent-text: #E8590C;   /* 어두운 바탕 위 주황 글자 (5.5:1). */
+  --color-accent-soft: rgba(232, 89, 12, 0.06); /* 선택된 칸의 옅은 바탕. 12% 는 짙었다 — 테두리가 이미 말하니 바탕은 기척만. */
   /* 파괴적 버튼의 채움색. 흰 글자와 5.8:1 (--color-danger 위 흰 글자는 3.5:1 라 텍스트로만 쓴다) */
   --color-danger-strong: #B23A3A;
 
@@ -130,7 +130,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 }
 
 /* Motion 이 opacity 를 인라인으로 쥐고 있으므로 비활성 흐림은 규칙으로 이긴다 */
-.btn:disabled { opacity: 0.45 !important; }
+/* 비활성은 채움색을 빼고 무채색으로. 주황 45% 는 진흙색이 된다. 로딩 중(aria-busy)은 제외 — 회색으로 꺼지면 실패처럼 보인다. */
+.btn:disabled:not([aria-busy="true"]) { background: var(--color-surface-3) !important; color: var(--color-text-disabled) !important; border-color: transparent !important; }
 
 /* Page text is visible immediately when navigating. */
 

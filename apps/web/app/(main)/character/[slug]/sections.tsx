@@ -12,7 +12,7 @@ import { likeCharacter, bookmark, deleteComment, likeComment } from './social-ac
  *
  * 카드로 감싸지 않는다 — 카드를 쌓으면 어느 것이 중요한지 사라진다. 대신 왼쪽에 짧은
  * 규칙선을 세우고 라벨을 작게 얹는다. 선은 무채색이다 — 구역을 나누는 일은 상태가 아니라
- * 구조이고, 라임은 상태에만 쓴다.
+ * 구조이고, 주황은 상태에만 쓴다.
  */
 export function Rule({ label, action, children, accent }: { label: string; action?: React.ReactNode; children: React.ReactNode; accent?: string }) {
   const reduce = useReducedMotion()

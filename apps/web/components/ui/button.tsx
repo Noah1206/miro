@@ -19,7 +19,7 @@ type Props = PressableProps & {
 }
 
 const VARIANT: Record<ButtonVariant, React.CSSProperties> = {
-  /** 주요 행동만 라임이 채운다. 글자는 검정 — 라임 위 흰 글자는 1.3:1 로 읽히지 않는다. */
+  /** 주요 행동만 주황이 채운다. 글자는 검정 — 주황 위 흰 글자는 3.6:1 로 본문 기준에 못 미친다. */
   primary: { background: 'var(--color-accent)', color: 'var(--color-accent-on)', border: '1px solid var(--color-accent)' },
   secondary: { background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' },
   ghost: { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid transparent' },
@@ -35,7 +35,7 @@ const SIZE = {
   lg: { minHeight: 56, padding: '12px 24px', fontSize: 'var(--font-body-lg)' },
 } as const
 
-/** Primary = 라임 배경 + 검은 글자. Gradient / Glow / Pill 없음. */
+/** Primary = 주황 배경 + 검은 글자. Gradient / Glow / Pill 없음. */
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   { variant = 'secondary', size = 'md', status = 'idle', full, children, style, disabled, ...rest }, ref,
 ) {

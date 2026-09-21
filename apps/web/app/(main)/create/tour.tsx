@@ -101,7 +101,7 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
             <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>{step + 1}/{STEPS.length}</span>
             <button type="button" onClick={next}
               style={{ padding: '5px 12px', borderRadius: 'var(--radius-button)', border: 0, cursor: 'pointer',
-                background: 'var(--color-accent)', color: 'var(--color-accent-on)', fontSize: 'var(--font-micro)', fontWeight: 'var(--weight-semibold)' }}>
+                background: 'var(--color-white)', color: 'var(--color-black)', fontSize: 'var(--font-micro)', fontWeight: 'var(--weight-semibold)' }}>
               {last ? '완료' : '다음'}
             </button>
           </div>
