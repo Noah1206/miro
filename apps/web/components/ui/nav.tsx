@@ -13,8 +13,8 @@ const ITEMS = [
 ]
 
 /**
- * 조용한 내비게이션. 활성 = 주황 아이콘(채움), 비활성 = 회색. 배경·점 없음.
- * Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
+ * 조용한 내비게이션. 활성 = 아이콘 몸통이 주황으로 채워지고 윤곽·속은 흰 선, 비활성 = 회색 선.
+ * 배경·점 없음. Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
  */
 export function Nav({ signedIn = true }: { signedIn?: boolean }) {
   const pathname = usePathname()
@@ -26,11 +26,10 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
         const active = pathname === it.href || pathname.startsWith(it.href + '/')
         // 로그인이 필요한 탭은 비로그인일 때 시트로 묻는다 — 보던 화면을 떠나지 않는다.
         const gated = !signedIn && it.auth
-        const filled = active && (it.href === '/home' || it.href === '/archive' || it.href === '/my')
         const inner = (
             <span className="nav__inner">
-              {/* 현재 페이지 = 아이콘이 주황으로 켜진다. 배경 없음 — 글자용 밝은 주황(5.5:1)을 쓴다. */}
-              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'var(--color-accent-text)' : 'none'} stroke={active ? 'var(--color-accent-text)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              {/* 현재 페이지 = 아이콘 몸통이 주황(밝은 쪽, 어두운 바탕 5.5:1)으로 채워지고 선은 흰색. */}
+              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={active ? 'var(--color-accent-text)' : 'none'} stroke={active ? 'var(--color-white)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 {active && it.href === '/my'
                   ? <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></>
                   : it.icon}
