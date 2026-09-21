@@ -5,21 +5,27 @@ import { useLoginSheet } from './login-sheet'
 
 /**
  * 만들기가 한가운데 — 다섯 칸의 중심이 '새로 만드는 일' 이다 (레퍼런스).
- * iconActive 는 채움 상태에서 속(바늘·플러스)이 몸통에 묻히는 아이콘만 따로 그린다.
+ *
+ * 아이콘은 선이 아니라 꽉 찬 실루엣이다. 속(나침반 바늘·플러스·말풍선 점)은 같은 path 안의
+ * 하위 도형으로 두고 fill-rule=evenodd 로 뚫는다 — 배경색으로 덮으면 내비의 반투명 블러와
+ * 어긋나므로, 진짜 구멍을 내서 뒤가 그대로 비치게 한다.
  */
 const ITEMS = [
-  { href: '/home', label: '홈', icon: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /> },
-  { href: '/miro', label: '미로', icon: <><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5z" /></>,
-    iconActive: <><circle cx="12" cy="12" r="9" /><path d="m15.5 8.5-2 5-5 2 2-5z" fill="var(--color-white)" /></> },
-  { href: '/create', label: '만들기', icon: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></>,
-    iconActive: <><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" stroke="var(--color-white)" strokeWidth="1.75" strokeLinecap="round" /></> },
-  { href: '/archive', label: '대화', auth: true, icon: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" /> },
-  { href: '/my', label: '나', auth: true, icon: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></>,
-    iconActive: <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></> },
+  { href: '/home', label: '홈',
+    icon: <path d="M10.9 3.2 3.6 9.6a2.4 2.4 0 0 0-.8 1.8v8.1A1.5 1.5 0 0 0 4.3 21h15.4a1.5 1.5 0 0 0 1.5-1.5v-8.1a2.4 2.4 0 0 0-.8-1.8l-7.3-6.4a1.7 1.7 0 0 0-2.2 0z" /> },
+  { href: '/miro', label: '미로',
+    icon: <path d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8zm3.5 5.9-2 5-5 2 2-5z" /> },
+  { href: '/create', label: '만들기',
+    icon: <path d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8zm1 5.4a1 1 0 0 0-2 0v3H8a1 1 0 0 0 0 2h3v3a1 1 0 0 0 2 0v-3h3a1 1 0 0 0 0-2h-3z" /> },
+  { href: '/archive', label: '대화', auth: true,
+    icon: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5zM7.6 11.5a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0z" /> },
+  // 머리가 크고 어깨에 바로 붙는다 (레퍼런스). 둘이 겹치므로 여기만 nonzero — evenodd 면 겹친 자리가 뚫린다.
+  { href: '/my', label: '나', auth: true,
+    icon: <g fillRule="nonzero"><circle cx="12" cy="8.9" r="6.4" /><path d="M12 14.8c-5.2 0-9.4 2.9-9.4 6.1 0 .3.2.5.5.5h17.8c.3 0 .5-.2.5-.5 0-3.2-4.2-6.1-9.4-6.1z" /></g> },
 ]
 
 /**
- * 조용한 내비게이션. 활성 = 아이콘 몸통만 주황 채움(윤곽선 없음), 속은 흰색·뚫림. 비활성 = 회색 선.
+ * 조용한 내비게이션. 아이콘은 늘 꽉 찬 실루엣이고 색만 바뀐다 — 활성 = 주황, 비활성 = 회색.
  * 배경·점 없음. Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
  */
 export function Nav({ signedIn = true }: { signedIn?: boolean }) {
@@ -36,8 +42,8 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
             <span className="nav__inner">
               {/* 현재 페이지 = 아이콘 몸통만 주황으로 채워진다 (밝은 쪽, 어두운 바탕 5.5:1). 윤곽선은 긋지 않는다. */}
               {/* 아이콘 : 라벨 ≈ 2.4 : 1 — 아이콘이 이끌고 라벨은 따라붙는다 (레퍼런스 실측). */}
-              <svg aria-hidden width="32" height="32" viewBox="0 0 24 24" fill={active ? 'var(--color-accent-text)' : 'none'} stroke={active ? 'none' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                {active ? (it.iconActive ?? it.icon) : it.icon}
+              <svg aria-hidden width="32" height="32" viewBox="0 0 24 24" fill={active ? 'var(--color-accent-text)' : 'currentColor'} fillRule="evenodd" clipRule="evenodd">
+                {it.icon}
               </svg>
               <span style={{ fontSize: 'var(--font-caption)', lineHeight: 1.3, letterSpacing: 0 }}>{it.label}</span>
             </span>
