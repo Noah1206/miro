@@ -1,39 +1,35 @@
 # PM Status — MIRO
 
-**Last briefing**: 2026-09-16 22:10
-**Current focus**: 배포된 앱(e3aa78c)은 판매·AI 켜짐, 그러나 캐릭터 0개. main(9241e3b)의 홈/미로 분리는 미배포. cron 은 pg_cron 으로 15분 복구됨.
-**Active sprint goal**: 초대 베타 — 캐릭터 신규 제작(사용자)·미로 지정 → split 배포 → 실기기 로그인·토스 확인
+**Last briefing**: 2026-09-21 23:30
+**Current focus**: 최신 main(bed3f16)이 운영에 배포됨(홈/미로 분리 포함). 유저 7명 유입, 캐릭터 1개 생성. 그러나 미로(reality) 지정 0 + 운영 realityMessage 차단 → 선톡은 아직 아무에게도 안 나감.
+**Active sprint goal**: 초대 베타 — 미로 캐릭터 지정 + realityMessage/inlineReality 운영 개방 → 실기기 로그인·토스 확인
 
-## 상태 요약 (2026-09-16)
-- 운영: https://miro-web-ashen.vercel.app (web) · https://miro-admin-five.vercel.app (admin, admin@miro.dev). Vercel Hobby, git 자동배포 없음(수동 `vercel deploy --prod`).
-- 운영 DB: users 1 / characters 0 / reality 0 / orders 0. 마이그레이션 최신(experience_type 포함) 적용됨.
-- 결제: 계좌이체(카카오뱅크 3333362382600 조현웅) 열림. 이용권 9,900원/30일·자동갱신 없음, 충전 5단계(3천~5만), 환불 법정기준(7일 미사용분), 결제 상한 없음(운영자 30일 합계 표시). 운영자 승인 → cron 지급.
-- AI: gemini-3.5-flash-lite 무료 티어, AI_DAILY_BUDGET=1 안전망. 운영 realityMessage·inlineReality·사진·통화·Live 는 코드로 차단(productionRuntime).
-- 홈/미로 분리(9241e3b): experience_type chat|reality, 서버 경계 5곳, /miro, /home/search, 운영 콘솔 /characters 지정. 미배포. 미로 대상 미지정.
-- 테스트: 단위·통합 426, E2E 51/51, CI green. `ops.spec` 성인인증·quiet hours 는 부하 시 첫 시도 flaky(main 에서도 동일).
-- cron: 주 경로는 운영 Postgres pg_cron 잡 `miro-reality-scheduler`(*/15, pg_net → /api/cron/reality). 2026-09-16 22:00·22:15 KST 정시 실행 확인(HTTP 200). GitHub Actions 는 백업(실측 5시간 지연).
+## 상태 요약 (2026-09-21)
+- 운영: https://miro-web-ashen.vercel.app 이 **bed3f16(최신 main)** 으로 배포됨. `/miro` 200 — 홈/미로 분리 배포 완료.
+- health: ai.ready true, llm live(`gemini/gemini-3.8-flash`), voice **live**, push live. features: relationship/memory/event/memorySummaries/memoryExtraction on. **realityMessage·inlineReality·voiceCall·liveScene·image·video off** (productionRuntime 차단).
+- 운영 DB: users **7** / characters **1** / reality 지정 **0** / orders **0**.
+- cron: pg_cron `miro-reality-scheduler` */15 active, 2026-09-21 23:15 KST까지 succeeded 연속. 스케줄 SQL 은 저장소(`packages/db/migrations/20260919160000_reality_cron.sql`)에 있음.
+- 9/16 이후 15커밋: Gemini Live 음성통화 구현(provider+tests, 운영 미개방), Live Scene 인라인 장면 전환, 스트리밍 도착, 출력 스타일 자동화, 캐릭터 지식(lore)+회상, 기억 태그 UI, 모델 출력 모양 오류 내성 3건, E2E 자립화(DB·운영자 자동 준비), 실패 턴 기다림 처리.
+- E2E 스펙 18개 파일. 마지막 확인 수치(9/16): 단위·통합 426, E2E 51/51 — 이후 재측정 안 함.
+- 위생: 루트에 `.env.bak-*` 2개 untracked(시크릿 사본), `.Codex/config.toml` 미커밋 수정.
 
 ## 결정 로그
-- 2026-09-19: 음성통화 실시간 레이어 = **Gemini Live API** (gemini-3.8-live, ephemeral token, 클라이언트 직결 — 별도 서버 없음). 영상통화는 v1 제외(이미지 배제 결정과 충돌·품질 하방). 서버는 토큰 발급만: 모델·캐릭터 시스템 프롬프트·보이스(기본 Kore)를 토큰에 잠금. 오디오 단가 입력 $0.005/분·출력 $0.018/분(25tok/s, 공식 가격표) → 통화 ≈ $0.023/분, 차감은 기존 voiceCallPerMinute 5 units/분 유지(개방 전 재검토). 실패 시 텍스트 통화로 강등. 남은 게이트: 실기기 마이크·오디오 실통화 검증, 오디오 원가 실측, 운영 feature 개방. 한계(후속): 순수 음성 발화는 기억에 저장 안 됨(텍스트 입력 턴만 커밋) — transcription 캡처는 v2.
-- 2026-09-19: Live Scene v1 확정 — 이미지 전면 배제(생성·프리셋 배경 모두). 텍스트 연출 + 스트림 내 장면 전환 표시(장소·시간 한 줄)로 구현. 트리거는 엔진 자동, 미로(Reality) 캐릭터 전용, 무차감. 명세서 §5.3 재작성.
-- 2026-09-19: AI 사진(캐릭터 사진 전송) 기능을 스코프에서 삭제 — 다른 Reality 인터랙션(메시지·상태·통화·Live Scene)으로 충분. 시각적 보상은 Live Scene으로 통합. Live Scene은 화면 전환 대신 채팅 스트림 내 인라인·비동기 도착으로 재정의(전체 화면은 사용자 탭 시에만). 명세서 §1·§5·§9·정책 갱신 완료. 코드의 photo 경로(photoProbability·features.photo 등)는 이미 운영 차단 상태라 제거는 보류 — 미디어 트랙 착수 시 정리.
-- 2026-09-18: 출력 스타일 3종(메신저형·균형형·서사형) 수동 선택 폐지 → 유저 인터랙션(입력 방식·길이)·캐릭터 성향·성격·관계·세계관 기반 자동 조절. 명세서 §3 갱신 및 구현 완료 — 엔진 `styleDirective`가 턴마다 결정(입력 형식·길이 + 사건·기분), 세션 `output_style` 컬럼은 legacy로 보존(미사용). 선택 UI는 원래 없었음. engine+domain 206 테스트·typecheck·web build 통과.
-- 2026-09-16: 제공량 Free 200 / Pro 1,000 units. 충전 300/800/1,800/4,200/7,500 (10원→6.67원/unit).
-- 2026-09-16: 구독제 폐지 → 1개월 이용권. 만료 3일 전·당일 알림. 해지 버튼 없음.
-- 2026-09-16: PG 안 씀. 계좌이체 + 운영자 승인. 토스 딥링크(`supertoss://send`)로 원클릭, 카뱅은 앱 열기+계좌 복사.
-- 2026-09-16: 환불 = 법정(7일 미사용분 전액, 이용권 일할). 결제 상한 없음, 운영자 화면에 최근 30일 합계.
-- 2026-09-16: cron 을 GitHub Actions 로 이전 → 5시간 지연 실측 → pg_cron+pg_net 으로 주 경로 교체, Actions 는 백업 유지.
-- 2026-09-16: 홈=chat, 미로=reality. 시드·공식 캐릭터 자동 편입 안 함. 지정은 superadmin 만. 알파(유진)도 지정 전엔 선톡 없음.
-- 2026-09-16: 운영 DB 사용자·캐릭터 정리(테스트 계정 2, 캐릭터 3 삭제). 본인 계정만 남김.
-- 2026-09-16: 운영 캐릭터는 시드 투입 없이 **새로 제작**(사용자 직접). 로컬(운영 DB) /create → 편집에서 공개 → admin /characters 로 미로 지정.
-- 2026-09-15: 멀티 캐릭터 보류, ECHO 는 같은 모델에 자원만 더 씀.
+- 2026-09-19: 음성통화 = Gemini Live API(gemini-3.8-live, ephemeral token 클라이언트 직결). 서버는 토큰 발급만(모델·프롬프트·보이스 잠금). ≈$0.023/분, 차감 5 units/분 유지. 실패 시 텍스트 강등. 게이트: 실기기 검증·원가 실측 후 운영 개방. 음성 발화 기억 저장은 v2. → 구현 완료(df52536), 개방 전.
+- 2026-09-19: Live Scene v1 = 이미지 전면 배제, 텍스트 연출 + 스트림 인라인 장면 전환. Reality 전용, 무차감. → 구현 완료(24f4937), 운영 off.
+- 2026-09-19: AI 사진 기능 스코프 삭제. 시각 보상은 Live Scene 으로 통합. photo 코드 경로 정리는 미디어 트랙 때.
+- 2026-09-18: 출력 스타일 수동 선택 폐지 → 인터랙션·장면 기반 자동(`styleDirective`). 구현 완료(d64a37c).
+- 2026-09-16: 제공량 Free 200 / Pro 1,000 units. 충전 300~7,500 units(3천~5만원). 구독제 폐지 → 1개월 이용권 9,900원, PG 없이 계좌이체+운영자 승인, 토스 딥링크. 환불 법정 기준.
+- 2026-09-16: cron 주 경로 pg_cron(*/15), GitHub Actions 백업(5시간 지연 실측).
+- 2026-09-16: 홈=chat / 미로=reality, 지정은 superadmin 만. 운영 캐릭터는 시드 없이 사용자가 새로 제작.
+- 2026-09-15: 멀티 캐릭터 보류.
 
 ## 미해결 질문
-- [ ] 미로 대상 캐릭터 (사용자가 정하기로 함). 알파 유진 포함 여부
-- [ ] 초기화 기준(월초 vs 결제일), Free 의 충전 구매 허용, 해지 후 잔액, 선톡 차감 활성 시점
-- [ ] 미디어 가중치(faceCast 15 / video 20, photo 는 스코프 삭제로 제외) 실측 — 미디어 열기 전 `pnpm ai:cost`
-- [ ] 비주얼 정체성 데이터의 소비처 재검토 — 사진·Live Scene 이미지 삭제로 남은 소비처는 영상통화뿐. 영상통화 미구현 상태에서 캐릭터 생성 폼의 외형 입력(얼굴·체형 등) 유지 여부
+- [ ] 미로 대상 캐릭터: 현재 유일한 캐릭터 1개를 지정할지, 새로 제작할지 (사용자 결정 대기 — 이게 선톡 개방의 마지막 관문)
+- [ ] realityMessage·inlineReality 운영 개방 시점 (미로 지정과 동시 권장)
+- [ ] 초기화 기준(월초 vs 결제일), Free 충전 허용, 해지 후 잔액, 선톡 차감 시점
+- [ ] 캐릭터 생성 폼의 외형 입력 유지 여부 (소비처가 미구현 영상통화뿐)
+- [ ] 미디어 가중치 실측(`pnpm ai:cost`) — 미디어 개방 전
 
 ## 차기 마일스톤
-**M-초대베타** — 잔여: 캐릭터 신규 제작+미로 지정, split 배포, 실계정 구글 로그인(Supabase redirect 확인), 실기기 토스 딥링크, 출시 게이트(백업 복원·모니터링 알림·부하) 중 최소 백업·알림
-**M-공개** — 순서 6(Reality 실검증), 미디어 원가 실측 후 활성화, 문서 갱신(명세서·유저플로우·IMPLEMENTATION_PLAN 의 발견/구독 표기)
+**M-초대베타** — 잔여: ① 미로 캐릭터 지정+reality feature 개방 → cron 선톡 실확인 ② 실기기 구글 로그인(Supabase redirect)·토스 딥링크 ③ 출시 게이트 중 최소 백업 복원·모니터링 알림. (split 배포 ✅ 완료)
+**M-공개** — 음성통화 실기기 검증 후 voiceCall 개방, Live Scene 개방, 미디어 원가 실측, 문서 갱신

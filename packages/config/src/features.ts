@@ -35,8 +35,8 @@ export function currentMode(): Mode {
 }
 
 export function feature(name: FeatureName): boolean {
-  // These transports are not implemented yet. A production env override must not expose them.
-  if (productionRuntime() && ['voiceCall', 'videoCall', 'liveScene', 'imageGeneration', 'realityMessage', 'inlineReality'].includes(name)) return false
+  // Media transports are not production-verified yet. A production env override must not expose them.
+  if (productionRuntime() && ['voiceCall', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
   const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]
   if (override === '1') return true
   if (override === '0') return false
