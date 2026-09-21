@@ -16,8 +16,14 @@
 .unread { position: absolute; bottom: 42px; right: 12px; width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 0 3px var(--color-surface-1); }
 .resume { display: flex; align-items: center; justify-content: space-between; padding: 3px 3px 2px; font-size: 12px; color: var(--color-text-tertiary); }
 .resume > span { font-size: 13px; }
-.filters { display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; margin-bottom: 16px; }
-.filters button { flex-shrink: 0; min-height: 44px; padding: 5px 11px; border: none; border-radius: var(--radius-sm); background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 14px; font-weight: 400; line-height: 20px; cursor: pointer; }
+/* 전체·인기는 따로 뜬 버튼이 아니라 한 덩어리 토글이다 — 바탕을 깔고 그 안에서 눌린 칸만 켠다. */
+.filters { display: inline-flex; align-items: center; gap: 2px; padding: 2px; margin-bottom: 16px;
+  background: var(--color-surface-2); border-radius: 9px; }
+/* 보이는 높이는 30px 이지만 터치 영역은 44px 을 지킨다 (패턴 문서 §6) — ::after 로 위아래만 넓힌다. */
+.filters button { position: relative; flex-shrink: 0; min-height: 30px; padding: 0 13px; border: none; border-radius: 7px;
+  background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 13px; font-weight: 500; line-height: 30px; cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+.filters button::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
 .filters button[aria-pressed="true"] { background: var(--color-white); color: var(--color-black); font-weight: 600; }
 .count { font-size: 12px; color: var(--color-text-tertiary); white-space: nowrap; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
@@ -32,11 +38,11 @@
 .originals { padding-top: 25px; margin-top: 32px; }
 .originalLabel { display: block; font-size: 12px; letter-spacing: .16em; color: var(--color-text-tertiary); margin-bottom: 7px; }
 .originalMark { color: var(--color-accent-text); font-size: 23px; }
-.empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-8) var(--gutter);
+/* 한 줄과 갈 곳만 남긴다 — 버튼이 이미 '캐릭터 만들기' 라고 말하므로 그걸 풀어쓴 문장은 군더더기다. */
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-6) var(--gutter);
   border: 1px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-1); }
-.emptyMark { color: var(--color-text-tertiary); font-size: 18px; line-height: 1; margin-bottom: 12px; }
-.emptyTitle { font-size: 15px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 6px; }
-.emptyLead { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 18px; }
+.emptyMark { color: var(--color-text-tertiary); font-size: 18px; line-height: 1; margin-bottom: 10px; }
+.emptyTitle { font-size: 15px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 16px; }
 .emptyActions { display: flex; gap: 8px; }
 .emptyActions a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: var(--radius-button);
   font-size: 13px; font-weight: 600; border: 1px solid var(--color-border-strong); color: var(--color-text-primary); }
