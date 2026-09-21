@@ -220,9 +220,10 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around;
   background: rgba(10,10,11,0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom); }
 /* 링크와 버튼이 섞여 있다 — 로그인이 필요한 탭은 button 이라 브라우저 기본 배경·테두리가 붙는다. */
-.nav__item { flex: 1; display: flex; justify-content: center; padding: 8px 0; min-height: 48px;
-  background: none; border: 0; font: inherit; -webkit-tap-highlight-color: transparent; }
-.nav__inner { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; padding: 4px 8px; }
+/* 여백은 바 높이(--nav-h)가 만든다 — 칸마다 따로 주지 않는다. min-height 는 터치 규칙(44px)을 지킨다. */
+.nav__item { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 48px;
+  background: none; border: 0; padding: 0; font: inherit; -webkit-tap-highlight-color: transparent; }
+.nav__inner { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
 /* 넓은 화면에서도 앱 폭 안에 머문다 (fixed 는 뷰포트 기준이므로 직접 가둔다). */
 @media (min-width: 500px) {
   .nav { left: 50%; right: auto; width: 100%; max-width: var(--app-w); transform: translateX(-50%); }

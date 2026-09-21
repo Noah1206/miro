@@ -35,10 +35,10 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
         const inner = (
             <span className="nav__inner">
               {/* 현재 페이지 = 아이콘 몸통만 주황으로 채워진다 (밝은 쪽, 어두운 바탕 5.5:1). 윤곽선은 긋지 않는다. */}
-              <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill={active ? 'var(--color-accent-text)' : 'none'} stroke={active ? 'none' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill={active ? 'var(--color-accent-text)' : 'none'} stroke={active ? 'none' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                 {active ? (it.iconActive ?? it.icon) : it.icon}
               </svg>
-              <span style={{ fontSize: 'var(--font-caption)', letterSpacing: 0 }}>{it.label}</span>
+              <span style={{ fontSize: 'var(--font-body-size)', letterSpacing: 0 }}>{it.label}</span>
             </span>
         )
         const style = { color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }
