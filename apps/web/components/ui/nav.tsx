@@ -13,8 +13,16 @@ import { useLoginSheet } from './login-sheet'
 const ITEMS = [
   { href: '/home', label: '홈',
     icon: <path d="M10.9 3.2 3.6 9.6a2.4 2.4 0 0 0-.8 1.8v8.1A1.5 1.5 0 0 0 4.3 21h15.4a1.5 1.5 0 0 0 1.5-1.5v-8.1a2.4 2.4 0 0 0-.8-1.8l-7.3-6.4a1.7 1.7 0 0 0-2.2 0z" /> },
+  // 미로 — 나침반(탐색)이 아니라 이름 그대로 미로다. 아래로 열린 입구에서 한 바퀴 돌아 가운데로 든다.
+  // 길은 mask 로 파낸다: 선을 그려 뚫으면 굽이를 좌표로 일일이 닫지 않아도 된다.
   { href: '/miro', label: '미로',
-    icon: <path d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8zm3.5 5.9-2 5-5 2 2-5z" /> },
+    icon: <>
+      <mask id="nav-maze" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24">
+        <rect width="24" height="24" fill="#fff" />
+        <path d="M12 22.6V17.2H6.8V6.8H17.2V12.4H12" fill="none" stroke="#000" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      </mask>
+      <rect x="2.6" y="2.6" width="18.8" height="18.8" rx="4.2" mask="url(#nav-maze)" />
+    </> },
   { href: '/create', label: '만들기',
     icon: <path d="M12 2.6a9.4 9.4 0 1 0 0 18.8 9.4 9.4 0 0 0 0-18.8zm1 5.4a1 1 0 0 0-2 0v3H8a1 1 0 0 0 0 2h3v3a1 1 0 0 0 2 0v-3h3a1 1 0 0 0 0-2h-3z" /> },
   { href: '/archive', label: '대화', auth: true,
