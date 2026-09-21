@@ -13,7 +13,7 @@ const ITEMS = [
 ]
 
 /**
- * 조용한 내비게이션. 활성 = 아이콘 뒤 주황 알약 채움 + 흰 아이콘, 비활성 = 회색.
+ * 조용한 내비게이션. 활성 = 주황 아이콘(채움), 비활성 = 회색. 배경·점 없음.
  * Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
  */
 export function Nav({ signedIn = true }: { signedIn?: boolean }) {
@@ -29,18 +29,12 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
         const filled = active && (it.href === '/home' || it.href === '/archive' || it.href === '/my')
         const inner = (
             <span className="nav__inner">
-              {/* 현재 페이지 = 아이콘 뒤가 주황으로 채워진다. 점 이동 대신 자리 자체가 켜진다. */}
-              <span aria-hidden style={{
-                display: 'grid', placeItems: 'center', width: 46, height: 26, borderRadius: 13,
-                background: active ? 'var(--color-accent)' : 'transparent',
-                transition: 'background var(--motion-fast) var(--ease-standard)',
-              }}>
-                <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'var(--color-accent-on)' : 'none'} stroke={active ? 'var(--color-accent-on)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  {active && it.href === '/my'
-                    ? <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></>
-                    : it.icon}
-                </svg>
-              </span>
+              {/* 현재 페이지 = 아이콘이 주황으로 켜진다. 배경 없음 — 글자용 밝은 주황(5.5:1)을 쓴다. */}
+              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'var(--color-accent-text)' : 'none'} stroke={active ? 'var(--color-accent-text)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                {active && it.href === '/my'
+                  ? <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></>
+                  : it.icon}
+              </svg>
               <span style={{ fontSize: 'var(--font-caption)', letterSpacing: 0 }}>{it.label}</span>
             </span>
         )
