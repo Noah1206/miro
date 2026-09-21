@@ -19,24 +19,9 @@ export type HomeRow = { key: string; title: string; items: HomeCard[] }
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
   ({ ...c, sessionId: null, caption: c.role, plays: 0, ...over })
 
-/**
- * Home supplies distinct continuing, official and community collections for the compact feed.
- * 홈은 일반 캐릭터챗(chat)만 다룬다. 미로(reality) 캐릭터는 /miro 가 보여준다.
- */
-export async function homeRows(userId: string | null): Promise<HomeRow[]> {
-  const [officials, shared] = await Promise.all([
-    listOfficials('chat'),
-    userId ? publicCharacters(userId, 12, 'chat') : Promise.resolve([]),
-  ])
-  const plays = await playCounts([...officials, ...shared].map(c => c.id))
-  const withPlays = (c: OfficialCard) => card(c, { plays: plays.get(c.id) ?? 0 })
-  // 로그인 전에는 보여줄 개인 기록이 없다 — ORIGINALS 한 줄로 시작한다.
-  if (!userId) {
-    const all = officials.map(withPlays)
-    return [{ key: 'originals', title: 'MIRO ORIGINALS', items: all }]
-  }
-
-  const active = await db.select({ contactEnabled: contactProfiles.enabled, session: roleplaySessions, character: characters, world: worldStates, rel: relationships,
+/** 진행 중인 캐릭터챗 세션. 마지막 메시지·안 읽은 선연락을 함께 싣는다. */
+function activeSessions(userId: string) {
+  return db.select({ contactEnabled: contactProfiles.enabled, session: roleplaySessions, character: characters, world: worldStates, rel: relationships,
     lastMessage: sql<string | null>`(select m.content from ${messages} m where m.session_id = ${roleplaySessions.id} and m.kind in ('text', 'reality_message') order by m.created_at desc limit 1)`,
     unread: sql<number>`(select count(*)::int from ${realityContacts} rc where rc.session_id = ${roleplaySessions.id} and rc.status = 'sent')`,
   })
@@ -50,8 +35,28 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
       eq(characters.experienceType, 'chat')))
     .orderBy(desc(roleplaySessions.lastInteractionAt))
     .limit(12)
+}
 
-  const continuingPlays = await playCounts(active.map(r => r.character.id))
+/**
+ * Home supplies distinct continuing, official and community collections for the compact feed.
+ * 홈은 일반 캐릭터챗(chat)만 다룬다. 미로(reality) 캐릭터는 /miro 가 보여준다.
+ */
+export async function homeRows(userId: string | null): Promise<HomeRow[]> {
+  // 세 목록은 서로를 모른다 — 한 번에 읽고, 대화 인원은 세 목록의 캐릭터를 모아 한 번만 센다 (4왕복 → 2왕복).
+  const [officials, shared, active] = await Promise.all([
+    listOfficials('chat'),
+    userId ? publicCharacters(userId, 12, 'chat') : Promise.resolve([]),
+    userId ? activeSessions(userId) : Promise.resolve([]),
+  ])
+  const plays = await playCounts([...new Set([...officials, ...shared].map(c => c.id).concat(active.map(r => r.character.id)))])
+  const withPlays = (c: OfficialCard) => card(c, { plays: plays.get(c.id) ?? 0 })
+  // 로그인 전에는 보여줄 개인 기록이 없다 — ORIGINALS 한 줄로 시작한다.
+  if (!userId) {
+    const all = officials.map(withPlays)
+    return [{ key: 'originals', title: 'MIRO ORIGINALS', items: all }]
+  }
+
+
   const continuing: HomeCard[] = active.map((r) => ({
     id: r.character.id,
     slug: r.character.slug ?? r.character.id,
@@ -66,7 +71,7 @@ export async function homeRows(userId: string | null): Promise<HomeRow[]> {
     startingContext: r.character.startingContext,
     images: r.character.images,
     contactEnabled: r.contactEnabled,
-    plays: continuingPlays.get(r.character.id) ?? 0,
+    plays: plays.get(r.character.id) ?? 0,
     sessionId: r.session.id,
     lastMessage: r.lastMessage, unread: r.unread,
     caption: r.session.characterStatus

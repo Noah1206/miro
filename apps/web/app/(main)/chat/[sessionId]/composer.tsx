@@ -1,5 +1,6 @@
 'use client'
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
@@ -7,6 +8,7 @@ import { tween } from '@/lib/motion/tokens'
 import { useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
+import { useTurns } from './turns'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
@@ -18,6 +20,8 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
     catch { return { error: '연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.', notice: null, limit: null, retryWithSameId: true } }
   }, { error: null, notice: null, limit: null } satisfies TurnState)
   const { model, setModel } = useChatModel()
+  const { append } = useTurns()
+  const router = useRouter()
   const previousModel = useRef(model)
   useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
   const [requestId, setRequestId] = useState('')
@@ -45,9 +49,16 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
     } catch { /* Draft persistence must not prevent sending. */ }
   }, [draft, requestId, model, ready, storageKey])
   useEffect(() => {
-    if (state.succeeded) { setDraft(''); setRequestId(crypto.randomUUID()) }
+    if (state.succeeded) {
+      setDraft(''); setRequestId(crypto.randomUUID())
+      if (state.messages?.length) {
+        // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다.
+        append(state.messages)
+        startTransition(() => router.refresh())
+      }
+    }
     else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
-  }, [state])
+  }, [state, append, router])
 
   /**
    * 생성이 실패한 턴은 오류 문구 대신 기다림을 이어 둔다 — 캐릭터가 아직 쓰는 중인 것처럼.

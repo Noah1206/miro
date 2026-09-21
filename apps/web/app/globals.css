@@ -1,7 +1,6 @@
 /* MIRO — Dark Cinematic × Human × Sharp Minimal  (docs/DESIGN.md) */
-@import url("https://static.toss.im/tps/main.css");
-@import url("https://static.toss.im/tps/others.css");
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+/* 서체 CSS(Toss Product Sans · Pretendard)는 app/layout.tsx 의 <head> 에서 잇는다 — 여기 @import 로 두면
+   이 파일을 받은 뒤에야 발견돼 첫 그리기가 한 왕복 늦어진다. */
 
 :root {
   color-scheme: dark;

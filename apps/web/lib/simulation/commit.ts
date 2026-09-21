@@ -17,6 +17,9 @@ export class StaleStateError extends Error {
   }
 }
 
+/** 이번 턴에 저장된 메시지 행. 액션이 그대로 화면에 붙인다 — 페이지를 다시 받아 오지 않는다. */
+export type CommittedMessage = { id: string; role: string; kind: string; content: string; blocks: unknown; turnIndex: number }
+
 export type CommitInput = {
   sessionId: string
   /** null for unmetered MIRO turns — there is no ledger row to commit. */
@@ -48,15 +51,14 @@ export type CommitInput = {
  * 동시에 두 요청이 들어오면 뒤늦은 쪽이 StaleStateError 로 실패하고,
  * 호출자가 최신 상태를 다시 읽어 재시도한다 — 조용한 덮어쓰기를 막는다.
  */
-export async function commitTurn(input: CommitInput): Promise<void> {
-  await db.transaction(async (tx) => {
+export async function commitTurn(input: CommitInput): Promise<{ messages: CommittedMessage[] }> {
+  return db.transaction(async (tx) => {
     // Recheck after inference: deletion/restriction may happen while the model runs.
     const [session] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, input.sessionId)).for('update')
     if (!session || session.deletedAt || session.restrictedAt || session.characterId !== input.characterId) throw new StaleStateError()
     if (input.requestId) {
       const [r] = await tx.select().from(conversationRequests).where(eq(conversationRequests.id, input.requestId)).for('update')
       if (!r || r.sessionId !== input.sessionId || r.userId !== session.userId || r.status !== 'pending' || r.leaseUntil <= new Date()) throw new StaleStateError()
-      await tx.update(conversationRequests).set({ status: 'completed', result: input.requestResult }).where(eq(conversationRequests.id, input.requestId))
     }
     if (input.reservationId) {
       const [r] = await tx.update(usageLedger).set({ status: 'committed' }).where(and(eq(usageLedger.id, input.reservationId), eq(usageLedger.status, 'reserved'))).returning({ id: usageLedger.id })
@@ -98,7 +100,8 @@ export async function commitTurn(input: CommitInput): Promise<void> {
     if (relUpdated.length === 0) throw new StaleStateError()
 
     /* ---- messages ---- */
-    await tx.insert(messages).values([
+    const ORDER: Record<string, number> = { user: 0, narrator: 1, character: 2 }
+    const inserted = (await tx.insert(messages).values([
       {
         sessionId: input.sessionId, role: 'user', kind: 'text',
         content: input.userInput, blocks: [], turnIndex: input.turnIndex,
@@ -113,7 +116,14 @@ export async function commitTurn(input: CommitInput): Promise<void> {
         content: input.responseText,
         blocks: input.blocks as never, turnIndex: input.turnIndex,
       },
-    ])
+    ]).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))
+      .sort((a, b) => (ORDER[a.role] ?? 9) - (ORDER[b.role] ?? 9))
+    // 재전송이 같은 결과를 돌려받도록 메시지까지 함께 남긴다.
+    if (input.requestId) {
+      await tx.update(conversationRequests)
+        .set({ status: 'completed', result: { ...(input.requestResult as Record<string, unknown> | undefined), messages: inserted } })
+        .where(eq(conversationRequests.id, input.requestId))
+    }
 
     /* ---- event ---- */
     if (t.newEvent) {
@@ -258,5 +268,6 @@ export async function commitTurn(input: CommitInput): Promise<void> {
         ...(input.characterState ? { characterState: input.characterState } : {}),
       })
       .where(eq(roleplaySessions.id, input.sessionId))
+    return { messages: inserted }
   })
 }

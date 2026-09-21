@@ -8,20 +8,29 @@ import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
+import { useTurns } from './turns'
 
 export type Msg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items, characterName, portrait, mood = 'neutral' }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral' }: {
   items: Msg[]; characterName: string; portrait?: string | null
   /** 캐릭터의 지금 기분 — 타이핑 속도가 여기서 나온다. */
   mood?: Mood
 }) {
+  // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
+  const { appended } = useTurns()
+  const known = new Set(server.map((m) => m.id))
+  const items = [...server, ...appended.filter((m) => !known.has(m.id))]
   const end = useRef<HTMLDivElement>(null)
   // 이미 화면에 있던 메시지는 다시 치지 않는다. 처음 열 때 전부 다시 치면 대화가 재생된다.
   const seen = useRef<Set<string> | null>(null)
   if (seen.current === null) seen.current = new Set(items.map((m) => m.id))
   const last = items[items.length - 1]
-  const typingId = last && last.role !== 'user' && !seen.current.has(last.id) ? last.id : null
+  // 치는 중인 메시지는 한 번 정해지면 다음 메시지가 올 때까지 바뀌지 않는다 — 백그라운드 refresh 로 목록이 갈려도 타이핑이 끊기지 않는다.
+  const typing = useRef<string | null>(null)
+  if (last && last.role !== 'user' && !seen.current.has(last.id)) typing.current = last.id
+  else if (!last || typing.current !== last.id) typing.current = null
+  const typingId = typing.current
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
   const follow = () => end.current?.scrollIntoView({ block: 'end' })

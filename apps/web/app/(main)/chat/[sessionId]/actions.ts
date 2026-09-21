@@ -7,6 +7,7 @@ import { requireUser } from '@/lib/auth'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
+import type { Msg } from './messages'
 
 export type TurnState = {
   succeeded?: boolean
@@ -20,6 +21,8 @@ export type TurnState = {
    * 유저가 손쓸 수 있는 실패(한도·안전·세션 없음)는 해당하지 않는다. 그건 말해 줘야 풀린다.
    */
   keepWaiting?: boolean
+  /** 이번 턴에 저장된 메시지. 화면이 바로 붙인다. */
+  messages?: Msg[]
 }
 
 const fail = (error: string): TurnState => ({ error, notice: null, limit: null })
@@ -53,6 +56,8 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
       default: return { error: null, notice: null, limit: null }
     }
   }
-  revalidatePath(`/chat/${sessionId}`)
-  return { succeeded: true, error: null, notice: r.providerMode === 'mock' ? COPY.status.mockLLM : null, limit: null }
+  const messages: Msg[] = (r.messages ?? []).map((m) => ({ id: m.id, role: m.role, kind: m.kind, content: m.content, blocks: (m.blocks ?? []) as Msg['blocks'] }))
+  // 답은 액션이 그대로 들고 간다. 재전송으로 되살린 옛 결과에 메시지가 없을 때만 페이지를 다시 받아 온다.
+  if (messages.length === 0) revalidatePath(`/chat/${sessionId}`)
+  return { succeeded: true, messages, error: null, notice: r.providerMode === 'mock' ? COPY.status.mockLLM : null, limit: null }
 }

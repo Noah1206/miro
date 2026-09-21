@@ -17,24 +17,26 @@ import { MessageList, type Msg } from './messages'
 import { ChatModelProvider, ModelPicker } from './model-picker'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
+import { TurnsProvider } from './turns'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
   const { sessionId } = await params
-  const loaded = await loadSession(sessionId, user.id)
-  if (!loaded) notFound()
-
-  const [history, opened] = await Promise.all([
+  // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
+  const session = loadSession(sessionId, user.id)
+  const [loaded, history, opened, modelOptions, mature] = await Promise.all([
+    session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))).returning({ id: realityContacts.id }),
+    chatModelOptions(user.id),
+    session.then((l) => l && matureGateFor(user.id, l.characterId)),
   ])
+  if (!loaded || !mature) notFound()
   if (opened.length > 0) void track(user.id, 'reality_contact_opened', { sessionId, count: opened.length })
 
-  const modelOptions = await chatModelOptions(user.id)
   const s = loaded.snapshot
-  const mature = await matureGateFor(user.id, loaded.characterId)
   const ctx: ContextData = {
     name: loaded.characterName, location: s.world.currentLocation, time: s.world.currentTime, status: loaded.characterStatus,
     relationship: stageLabel(s.relationship.stage, s.relationship),
@@ -50,7 +52,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   }))
 
   return (
-    <ChatModelProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider><TurnsProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <IncomingCall userId={user.id} characterName={loaded.characterName} />
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
@@ -83,6 +85,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
 
-    </main></ChatModelProvider>
+    </main></TurnsProvider></ChatModelProvider>
   )
 }

@@ -1,8 +1,10 @@
 import { createHash } from 'node:crypto'
-import { eq, sql } from 'drizzle-orm'
+import { eq, inArray, sql } from 'drizzle-orm'
 import { db, aiUsage, aiBudgetCounters } from '@miro/db'
 import { setAIUsageSink, setAIBudgetGuard, modelCost, type AIUsageRecord, type BudgetGuard } from '@miro/providers'
 import { effectivePlan } from './guard'
+import { afterResponse } from '@/lib/defer'
+import { observe } from '@/lib/observe'
 
 export type BudgetKind = 'user' | 'user_monthly' | 'ip' | 'global_requests' | 'global_cost' | 'provider' | 'model' | 'plan' | 'unknown_price'
 export class BudgetExceededError extends Error {
@@ -62,13 +64,23 @@ export const productionBudgetGuard: BudgetGuard = {
       ttlMs: category === 'user_monthly' ? 40 * 86400_000 : 2 * 86400_000 })).sort((a,b) => a.key.localeCompare(b.key))
     try {
       await db.transaction(async tx => {
+        /**
+         * 카운터 일곱 개를 한 문장으로 올리고 결과로 판정한다. 한도를 넘긴 것이 있으면 던져서
+         * 트랜잭션째 되돌린다 — 키마다 잠그고·읽고·올리던 세 문장씩(왕복 21회)과 같은 결과다.
+         * 여러 행을 한 UPDATE 로 잠그면 동시 요청도 같은 순서로 행을 지나므로 서로 엇갈리지 않는다.
+         */
+        await tx.insert(aiBudgetCounters).values(entries.map(e => ({ key: e.key, expiresAt: new Date(Date.now() + e.ttlMs) }))).onConflictDoNothing()
+        const counters = await tx.update(aiBudgetCounters)
+          .set({ requests: sql`${aiBudgetCounters.requests} + 1`, cost: sql`${aiBudgetCounters.cost} + ${estimate}` })
+          .where(inArray(aiBudgetCounters.key, entries.map(e => e.key)))
+          .returning({ key: aiBudgetCounters.key, requests: aiBudgetCounters.requests, cost: aiBudgetCounters.cost })
+        const byKey = new Map(counters.map(c => [c.key, c]))
         for (const entry of entries) {
-          await tx.insert(aiBudgetCounters).values({ key: entry.key, expiresAt: new Date(Date.now() + entry.ttlMs) }).onConflictDoNothing()
-          const [counter] = await tx.select().from(aiBudgetCounters).where(eq(aiBudgetCounters.key, entry.key)).for('update')
-          if ((entry.limit.requests !== undefined && counter!.requests + 1 > entry.limit.requests) || (estimate > 0 && entry.limit.cost !== undefined && Number(counter!.cost) + estimate > entry.limit.cost + 1e-10)) {
-            throw new BudgetExceededError(entry.category === 'global' ? (estimate > 0 && entry.limit.cost !== undefined && Number(counter!.cost) + estimate > entry.limit.cost + 1e-10 ? 'global_cost' : 'global_requests') : entry.category as BudgetKind)
+          const counter = byKey.get(entry.key)!
+          const overCost = estimate > 0 && entry.limit.cost !== undefined && Number(counter.cost) > entry.limit.cost + 1e-10
+          if ((entry.limit.requests !== undefined && counter.requests > entry.limit.requests) || overCost) {
+            throw new BudgetExceededError(entry.category === 'global' ? (overCost ? 'global_cost' : 'global_requests') : entry.category as BudgetKind)
           }
-          await tx.update(aiBudgetCounters).set({ requests: sql`${aiBudgetCounters.requests} + 1`, cost: sql`${aiBudgetCounters.cost} + ${estimate}` }).where(eq(aiBudgetCounters.key, entry.key))
         }
         await tx.insert(aiUsage).values({ attemptId, traceId: context.traceId, requestId: context.requestId,
           userId: context.userId, sessionId: context.sessionId, ip: ipHash(context.ip), task: request.task,
@@ -79,7 +91,14 @@ export const productionBudgetGuard: BudgetGuard = {
     } catch (e) { if (e instanceof BudgetExceededError) return { allowed: false, reason: e.kind }; throw e }
   },
 }
-export function installAIUsageSink(): void { setAIUsageSink(recordAIUsage); setAIBudgetGuard(productionBudgetGuard) }
+/**
+ * 정산은 응답 뒤에 한다 — 유저가 답을 기다리는 동안 원가 기록 왕복을 세지 않는다.
+ * 예약(authorize)은 여전히 호출 전에 막으므로 한도는 그대로 지켜진다. 기록 실패는 턴을 깨지 않고 남긴다.
+ */
+export function installAIUsageSink(): void {
+  setAIUsageSink(r => afterResponse(() => recordAIUsage(r).catch(e => observe('ai.usage_record_failed', { attemptId: r.attemptId, error: (e as Error).message }))))
+  setAIBudgetGuard(productionBudgetGuard)
+}
 
 export async function recordAIUsage(r: AIUsageRecord): Promise<void> {
   await db.transaction(async tx => {
@@ -89,7 +108,8 @@ export async function recordAIUsage(r: AIUsageRecord): Promise<void> {
       // Missing usage (timeout, transport failure): keep the full reservation; a failed request may still cost money.
       const charged = r.estimatedCost ?? Number(pending.reservedCost)
       const adjustment = charged - Number(pending.reservedCost)
-      for (const key of [...pending.budgetKeys].sort()) await tx.update(aiBudgetCounters).set({ cost: sql`greatest(0, ${aiBudgetCounters.cost} + ${adjustment})` }).where(eq(aiBudgetCounters.key, key))
+      // 예약과 실제의 차이만 카운터에 반영한다. 차이가 없으면 쓰지 않는다 — 한 문장으로 모든 키를 고친다.
+      if (adjustment !== 0 && pending.budgetKeys.length) await tx.update(aiBudgetCounters).set({ cost: sql`greatest(0, ${aiBudgetCounters.cost} + ${adjustment})` }).where(inArray(aiBudgetCounters.key, pending.budgetKeys))
       await tx.update(aiUsage).set({ status: 'completed', estimatedCost: r.estimatedCost == null ? null : String(r.estimatedCost), actualCost: r.actualCost == null ? null : String(r.actualCost),
         inputTokens: r.inputTokens, outputTokens: r.outputTokens, usageUnits: r.usageUnits ?? 0, latencyMs: r.latencyMs, ok: r.ok, error: r.error,
         fallbackUsed: r.fallbackUsed ?? false, shadow: r.shadow ?? false }).where(eq(aiUsage.id, pending.id))

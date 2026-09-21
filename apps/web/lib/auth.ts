@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { eq, and, isNull, gt } from 'drizzle-orm'
 import { db, users, accounts, authSessions } from '@miro/db'
@@ -42,8 +43,11 @@ export async function destroySession(): Promise<void> {
 /**
  * 현재 로그인 사용자. 삭제된 계정(deletedAt)은 로그인 상태로 취급하지 않는다
  * — 명세서 12.1: 삭제 완료 후 동일 계정으로 접근할 수 없어야 한다.
+ *
+ * 한 요청 안에서는 한 번만 읽는다(React cache) — 레이아웃과 페이지가 각자 불러 같은 쿼리가 두 번 나가고 있었다.
+ * 세션을 만들거나 지우는 핸들러는 그 뒤에 다시 읽지 않으므로(callback·delete·alpha) 요청 단위 캐시가 안전하다.
  */
-export async function currentUser(): Promise<SessionUser | null> {
+export const currentUser = cache(async (): Promise<SessionUser | null> => {
   const jar = await cookies()
   const token = jar.get(COOKIE)?.value
   if (!token) return null
@@ -66,7 +70,7 @@ export async function currentUser(): Promise<SessionUser | null> {
     .limit(1)
 
   return rows[0] ?? null
-}
+})
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await currentUser()

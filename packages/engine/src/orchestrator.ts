@@ -66,19 +66,22 @@ export async function runTurn(opts: {
   const safety = requireSafeContent(opts.llm, { phase: 'input', character: snapshot.character,
     worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
     recent: snapshot.recentMessages, input: opts.userInput })
-  const auxiliary = opts.auxiliaryLLM ? Promise.all([
-    tasks.includes('semantic_event')
-      ? analyzeSemantic(opts.auxiliaryLLM, opts.userInput, snapshot).then(r => r.events.filter(e => e.confidence >= .8), () => [])
-      : Promise.resolve([]),
-    ...tasks.filter(t => t === 'memory_extraction' || t === 'memory_summary')
-      .map(task => analyzeMemory(opts.auxiliaryLLM!, task, opts.userInput, snapshot).then(r => filterSalient(r.memories), () => [])),
-  ]) : Promise.resolve([])
+  const auxiliary = opts.auxiliaryLLM ?? null
+  const semantic = auxiliary && tasks.includes('semantic_event')
+    ? analyzeSemantic(auxiliary, opts.userInput, snapshot).then(r => r.events.filter(e => e.confidence >= .8), () => [])
+    : Promise.resolve([])
+  /**
+   * 기억 추출·요약은 대사 프롬프트에 들어가지 않는다 — 커밋 때만 쓴다. 그래서 지금 띄우되
+   * 대사 생성이 끝난 뒤에 거둔다. 대사보다 먼저 기다리면 매 턴 그 호출만큼 첫 답이 늦어진다.
+   */
+  const memoryTasks: Promise<MemoryCandidate[][]> = auxiliary ? Promise.all(
+    tasks.filter(t => t === 'memory_extraction' || t === 'memory_summary')
+      .map(task => analyzeMemory(auxiliary, task, opts.userInput, snapshot).then(r => filterSalient(r.memories), () => []))) : Promise.resolve([])
 
   // 검열이 막으면 여기서 끝난다. 보조 분석은 이미 떠 있으므로 결과를 버리고 나간다.
-  try { await safety } catch (e) { void auxiliary.catch(() => {}); throw e }
-  const [events, ...memoryGroups] = await auxiliary
-  if (events?.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
-  for (const group of memoryGroups) extraMemories.push(...(group as MemoryCandidate[]))
+  try { await safety } catch (e) { void semantic.catch(() => {}); void memoryTasks.catch(() => {}); throw e }
+  const events = await semantic
+  if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
 
   const codeDelta = deltaFromSemanticEvents(semanticEvents, personality)
   // 이번 턴의 관계(규칙 적용 후)로 기분을 정한다 — 모델은 수치가 아니라 기분을 본다.
@@ -112,7 +115,12 @@ export async function runTurn(opts: {
   }
 
   const transition = validateProposal(proposal, snapshot)
-  if (providerMode !== 'fallback') await requireSafeContent(opts.llm, { phase: 'output', input: opts.userInput, proposal })
+  // 출력 검열과 기억 추출은 서로 무관하다 — 같이 기다린다.
+  const [, memoryGroups] = await Promise.all([
+    providerMode !== 'fallback' ? requireSafeContent(opts.llm, { phase: 'output', input: opts.userInput, proposal }) : Promise.resolve(),
+    memoryTasks,
+  ])
+  for (const group of memoryGroups) extraMemories.push(...group)
   transition.relationshipDelta = codeDelta
   // The dialogue model cannot delete memories. Corrections come only from the scoped extraction task.
   transition.memories = filterSalient([...extraMemories, ...transition.memories.map(({ replaces: _ignored, ...m }) => m)])

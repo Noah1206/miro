@@ -9,7 +9,8 @@ import { feature, usagePolicy } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
 import { renderBlocks, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
 import { loadSession } from './snapshot'
-import { commitTurn, StaleStateError } from './commit'
+import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
+import { afterResponse } from '@/lib/defer'
 import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
 import { UsageExceededError, reserve, rollback, type Reservation } from '@/lib/usage/guard'
 import { type BudgetKind } from '@/lib/usage/ai-usage'
@@ -34,6 +35,8 @@ export type ConversationOutcome =
       reality: { channel: ContactChannel; text: string } | null
       newEventType: string | null
       sceneChanged: boolean
+      /** 이번 턴에 저장된 메시지. 화면이 바로 붙인다. 옛 결과를 되살린 경우 비어 있을 수 있다. */
+      messages?: CommittedMessage[]
     }
   | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' | 'model_unavailable' }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
@@ -65,13 +68,15 @@ async function executeTurn(opts: {
   const { userId, sessionId } = opts
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    const loaded = await loadSession(sessionId, userId, input)
+    // 세션·모델·동의는 서로를 모른다 — 한 번에 읽는다.
+    const [loaded, model, consent] = await Promise.all([
+      loadSession(sessionId, userId, input),
+      resolveChatModel(userId, opts.chatModel ?? 'miro').catch(() => null),
+      db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1).then(rows => rows[0]),
+    ])
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
-
-    let model: Awaited<ReturnType<typeof resolveChatModel>>
-    try { model = await resolveChatModel(userId, opts.chatModel ?? 'miro') }
-    catch { return { ok: false, reason: 'model_unavailable' } }
+    if (!model) return { ok: false, reason: 'model_unavailable' }
     const dialogueModelId = model.modelId
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
@@ -83,7 +88,6 @@ async function executeTurn(opts: {
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     }
     const refund = () => reservation ? rollback(reservation.reservationId) : Promise.resolve()
-    const [consent] = await db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1)
     const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0 }
     const llm = resolveRpLLM(loaded.characterName, context)
     const turnIndex = loaded.snapshot.turnCount + 1
@@ -143,7 +147,7 @@ async function executeTurn(opts: {
       sceneChanged: transition.sceneDelta !== null,
     }
     try {
-      await commitTurn({
+      const committed = await commitTurn({
         reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
         userInput: input, responseText, blocks: transition.blocks, transition, sceneMarker,
@@ -153,6 +157,7 @@ async function executeTurn(opts: {
         existingMemories: loaded.snapshot.memories,
         characterState: result.characterState,
       })
+      outcome.messages = committed.messages
     } catch (e) {
       await refund()
       // 다른 요청이 먼저 커밋했다. 최신 상태로 한 번 더 시도한다.
@@ -181,8 +186,11 @@ async function executeTurn(opts: {
     }
 
     const completed = { ...outcome, reality }
-    await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
-    await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
+    // 재전송용 결과 갱신과 평가 샘플은 유저가 기다릴 일이 아니다 — 응답을 보낸 뒤에 한다 (요청 밖에서는 그 자리에서).
+    await afterResponse(async () => {
+      await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
+      await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
+    })
     return completed
 
   }
