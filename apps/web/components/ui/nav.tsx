@@ -1,7 +1,5 @@
 'use client'
-import { motion } from 'motion/react'
 import { usePathname } from 'next/navigation'
-import { spring } from '@/lib/motion/tokens'
 import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
 
@@ -15,8 +13,7 @@ const ITEMS = [
 ]
 
 /**
- * 조용한 내비게이션. 활성 = 흰 글자 + 주황 점, 비활성 = 회색.
- * 모바일: 하단. 데스크톱(≥1024): 왼쪽 세로. 활성 표시는 하나의 점이 이동한다(layoutId).
+ * 조용한 내비게이션. 활성 = 아이콘 뒤 주황 알약 채움 + 흰 아이콘, 비활성 = 회색.
  * Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
  */
 export function Nav({ signedIn = true }: { signedIn?: boolean }) {
@@ -29,17 +26,22 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
         const active = pathname === it.href || pathname.startsWith(it.href + '/')
         // 로그인이 필요한 탭은 비로그인일 때 시트로 묻는다 — 보던 화면을 떠나지 않는다.
         const gated = !signedIn && it.auth
+        const filled = active && (it.href === '/home' || it.href === '/archive' || it.href === '/my')
         const inner = (
             <span className="nav__inner">
-              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={active && (it.href === '/home' || it.href === '/archive' || it.href === '/my') ? 'var(--color-white)' : 'none'} stroke={active && it.href !== '/create' ? 'var(--color-white)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                {active && it.href === '/my'
-                  ? <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></>
-                  : active && it.href === '/miro'
-                  ? <><circle cx="12" cy="12" r="9" fill="var(--color-white)" /><path d="m15.5 8.5-2 5-5 2 2-5z" fill="var(--color-bg)" stroke="var(--color-bg)" /></>
-                  : it.icon}
-              </svg>
+              {/* 현재 페이지 = 아이콘 뒤가 주황으로 채워진다. 점 이동 대신 자리 자체가 켜진다. */}
+              <span aria-hidden style={{
+                display: 'grid', placeItems: 'center', width: 46, height: 26, borderRadius: 13,
+                background: active ? 'var(--color-accent)' : 'transparent',
+                transition: 'background var(--motion-fast) var(--ease-standard)',
+              }}>
+                <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill={filled ? 'var(--color-accent-on)' : 'none'} stroke={active ? 'var(--color-accent-on)' : 'currentColor'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  {active && it.href === '/my'
+                    ? <><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0z" /></>
+                    : it.icon}
+                </svg>
+              </span>
               <span style={{ fontSize: 'var(--font-caption)', letterSpacing: 0 }}>{it.label}</span>
-              {active && <motion.span aria-hidden layoutId="nav-dot" transition={spring.default} style={{ position: 'absolute', top: -8, width: 4, height: 4, borderRadius: 2, background: 'var(--color-accent)' }} />}
             </span>
         )
         const style = { color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }
