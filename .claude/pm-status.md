@@ -1,7 +1,7 @@
 # PM Status — MIRO
 
-**Last briefing**: 2026-09-23 00:55
-**Current focus**: UI 트랙(패턴 문서 준수·주황 액센트·내비·빈 상태) 배포 완료(7cf48d6). **카나리아(서연)는 구조상 선톡을 못 보낸다** — 9/21 말투 테스트가 mock 으로 만든 대화라 관계가 stranger 에 멈춰 있음. 선톡 발송 경로(생성→메시지→outbox→Push)는 운영에서 아직 한 번도 실행되지 않았다.
+**Last briefing**: 2026-09-23 01:10
+**Current focus**: **선톡 발송 경로가 운영에서 처음 끝까지 돌았다**(01:01 KST, 검증 레버). 카나리아(서연)는 mock 대화라 자연 발송은 불가능했고, 사건 1건을 넣어 생성→메시지→contacts 까지 확인. 남은 미검증 단계는 Push 배달뿐(구독 0건) — 실기기 로그인·Push 허용이 다음 관문.
 **Active sprint goal**: 초대 베타 — 실기기 로그인·Push 구독 → 본인 캐릭터 제작·미로 지정 → live 대화로 관계 축적 → 첫 선톡
 
 ## 상태 요약 (2026-09-23 00:55)
@@ -9,6 +9,8 @@
 - 9/22 배포분: 디자인 패턴 문서 위반 수정(d1cd4c2), 짙은 주황 액센트·내비 재설계(3acb192~7f2d44a), 홈 토글·빈 상태 한 줄 가운데 정렬(ed6ffba~38b9a8c), AI 동의 e2e 경쟁 수정(7cf48d6). 단위·E2E 52/52(깨끗한 테스트 DB 기준).
 - cron: 15분마다 200, errors 0 (pg_net 응답은 6시간만 보관). 서연 세션은 30분마다 claim 되고 매번 `no_intent`.
 - **카나리아 진단**: 서연 세션 20턴은 `ai_usage.provider = mock`(9/21 16~17시 KST, "지금은 뭐 해?" 13회 반복). 결과 relationships = stranger(애착 5·신뢰 30·정서적 거리 65), memories 0, events 0, pending_reality_intent 없음. `deriveIntent` 는 사건 없음 + (애착≥40·거리≤55) 불충족 → null. 의도를 넣어도 motivation = 0.475×0.3 + 0.175×0.3 + urgency×0.35 − 0.65×0.35 ≈ 0.28(urgency 0.9) < 임계 0.5 → `no_motivation`. 사건 1건이 active 면 +0.3 으로 0.51 → 발송 가능(활성 08–23시·quiet hours 밖).
+- **검증 레버 결과(01:01 KST)**: 서연 세션에 `events`(misunderstanding, active) 1건 삽입 + 서연 활성 시간 임시 00:00–23:59 + `reality_checked_at` NULL → 크론 수동 호출(`Authorization: Bearer <ops_cron_config.secret>`). 응답 `{claimed:1, results:{sent:1}, errors:0}`, 6.6초. 생성물: "어제 물어본 거 바로 답 못해서 신경 쓰였어. 별일 있는 건 아니지? 시간 날 때 연락 줘."(tone warm). DB: `messages` kind=reality_message + reality 블록, `reality_contacts` sent(dedupe `message:<eventId>:event:misunderstanding`), `pending_reality_intent` 비움, push job 0(구독 없음·quiet hours). ai_usage 3행 = moderation(gemini-3.5-flash-lite) → dialogue(gemini-3.8-flash) → moderation, 추정 비용 ≈ $0.0013/건, `actual_cost` 는 비어 있음(estimated 만 기록). 정리: 활성 시간 08:00–23:00 복원, 사건 resolved → 재실행 시 `no_intent`·LLM 호출 0 확인. **운영 DB 의 live LLM 호출 기록은 이 3행이 전부** — 실계정 대화는 아직 한 번도 없었다.
+- 발견한 비효율(칩 task_e5fafa76): 사건이 resolved 되지 않으면 쿨다운(90분) 뒤 매 판단마다 LLM 3회를 돌린 뒤 UNIQUE 위반으로 버린다. 생성 전에 dedupe_key 로 걸러야 한다.
 - Push 구독 0건(어느 계정도 기기 등록 없음). 실계정(ab40905045@gmail.com) 세션 0. 서연은 비공개(is_public=false)라 미로 탭은 모든 계정에서 빈 화면 — 카나리아 목적과 정합.
 - 운영 env: GOOGLE/KAKAO 클라이언트, AUTH_BASE_URL, VAPID, MIRO_BANK_ACCOUNT, MIRO_RECHARGE_PRODUCTS 모두 설정됨. 콜백 경로 `/api/auth/{provider}/callback`.
 - 위생: `.claude/launch.json` 미추적(로컬 실행 설정, nvm 경로 포함). E2E 테스트 DB 가 실행마다 안 비워져 누적 → flaky 원인(칩 task_da313f08 로 분리, 미착수).
@@ -34,5 +36,5 @@
 - [ ] 미디어 가중치 실측(`pnpm ai:cost`) — 미디어 개방 전
 
 ## 차기 마일스톤
-**M-초대베타** — 순서 재조정(카나리아 진단 반영): ③ 실기기 구글 로그인 + Push 허용(구독 1건 확보) → ② 본인 캐릭터 제작→admin 에서 미로 지정→live 대화(관계·사건이 실제로 쌓이는지 relationships 로 확인) → ① 첫 선톡 관찰: 자연 경로(애착≥40·거리≤55 + 침묵 ≈42h @빈도 45, 또는 사건 발생) 또는 검증 레버(서연 세션에 active 사건 1건 삽입 → 다음 틱에 발송 경로 실행, Push 는 구독 없어 제외) → ④ 최소 알림(코드에 알림 경로 0건, `observe` 만 있음)·백업 복원(로컬 리허설만 됨). (split 배포 ✅ · reality 개방 ✅ · UI 트랙 ✅)
+**M-초대베타** — 순서 재조정(카나리아 진단 반영): ③ 실기기 구글 로그인 + Push 허용(구독 1건 확보) → ② 본인 캐릭터 제작→admin 에서 미로 지정→live 대화(관계·사건이 실제로 쌓이는지 relationships 로 확인) → ① 첫 선톡 관찰: 발송 경로는 검증 레버로 ✅(9/23). 남은 것은 실계정 세션에서의 자연 발생(애착≥40·거리≤55 + 침묵 ≈42h @빈도 45, 또는 사건)과 Push 배달·답장 왕복 → ④ 최소 알림(코드에 알림 경로 0건, `observe` 만 있음)·백업 복원(로컬 리허설만 됨). (split 배포 ✅ · reality 개방 ✅ · UI 트랙 ✅)
 **M-공개** — 음성통화 실기기 검증 후 voiceCall 개방, Live Scene 개방, 미디어 원가 실측, 문서 갱신
