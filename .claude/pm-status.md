@@ -1,18 +1,20 @@
 # PM Status — MIRO
 
-**Last briefing**: 2026-09-22 00:05
-**Current focus**: 선톡(realityMessage) 운영 개방 완료·cron 200 검증됨. 미로 카나리아 = 서연(tone2 테스트 계정 소유). 남은 관문: 실캐릭터 제작·지정, 실기기 로그인·토스, 첫 실제 선톡 관찰(quiet hours 해제되는 08:00 이후).
-**Active sprint goal**: 초대 베타 — 사용자 본인 캐릭터 제작→미로 지정, 실기기 로그인·토스 확인
+**Last briefing**: 2026-09-23 00:55
+**Current focus**: UI 트랙(패턴 문서 준수·주황 액센트·내비·빈 상태) 배포 완료(7cf48d6). **카나리아(서연)는 구조상 선톡을 못 보낸다** — 9/21 말투 테스트가 mock 으로 만든 대화라 관계가 stranger 에 멈춰 있음. 선톡 발송 경로(생성→메시지→outbox→Push)는 운영에서 아직 한 번도 실행되지 않았다.
+**Active sprint goal**: 초대 베타 — 실기기 로그인·Push 구독 → 본인 캐릭터 제작·미로 지정 → live 대화로 관계 축적 → 첫 선톡
 
-## 상태 요약 (2026-09-22 00:05)
-- 운영: https://miro-web-ashen.vercel.app = **b46a8f7**. 포함: 선톡 개방(내 커밋) + 유저의 9/21 지연 개선·주황 액센트·icn1 리전(8987cee·d04d159).
-- health: `realityMessage: true`, inlineReality false(프리셋), 미디어 4종 off(하드 차단 유지). llm live(`gemini/gemini-3.8-flash`), voice live, push live.
-- **9/21 밤 인시던트**: 개방 첫 틱(23:45)이 500 — 운영 DB 에 `reality_push_jobs` 테이블 부재(마이그레이션 `20260915100230_reality_notification_outbox.sql` 미적용). 게이트가 항상 일찍 반환해 잠복해 있었음. supabase migration `reality_notification_outbox` 로 적용, 00:00 틱 200 확인. 전체 마이그레이션 replay 를 스크래치 DB 에 만들어 운영과 컬럼 단위 대조 — 이제 차이는 죽은 레거시 `alpha_sessions`/`alpha_ai_calls` 뿐(코드 참조 0, 의도적으로 미생성).
-- 운영 DB 정체: users 7 = 실계정 1(본인 구글) + **tone 테스트 계정 6**(9/21 말투 테스트). characters 1 = 서연(tone2 소유, 비공개, 40 메시지) → **미로(reality) 로 카나리아 지정**(SQL 직접, admin 감사로그 없음 — admin 에서 되돌리면 정리까지 자동).
-- cron: 23:45 틱에서 서연 세션 claim·평가 실행 확인(reality_checked_at 기록). 발송 0 은 quiet hours(기본 23:00–08:00)·동기 임계값과 정합. 첫 실제 선톡은 08:00 이후 상태에 따라.
-- 위생: `.env.bak-*` 2개 삭제됨. 로컬 Node 18(스토리지 테스트 2개가 `File` 전역 부재로 실패 — CI 는 신형 Node 라 green). 로컬 `miro_dev` DB 는 낡음(최근 개발은 운영 DB 직결).
+## 상태 요약 (2026-09-23 00:55)
+- 운영: https://miro-web-ashen.vercel.app = **7cf48d6**. health ok, db up, `realityMessage: true`, 미디어 4종 off, llm live(`gemini/gemini-3.8-flash`), push·voice live.
+- 9/22 배포분: 디자인 패턴 문서 위반 수정(d1cd4c2), 짙은 주황 액센트·내비 재설계(3acb192~7f2d44a), 홈 토글·빈 상태 한 줄 가운데 정렬(ed6ffba~38b9a8c), AI 동의 e2e 경쟁 수정(7cf48d6). 단위·E2E 52/52(깨끗한 테스트 DB 기준).
+- cron: 15분마다 200, errors 0 (pg_net 응답은 6시간만 보관). 서연 세션은 30분마다 claim 되고 매번 `no_intent`.
+- **카나리아 진단**: 서연 세션 20턴은 `ai_usage.provider = mock`(9/21 16~17시 KST, "지금은 뭐 해?" 13회 반복). 결과 relationships = stranger(애착 5·신뢰 30·정서적 거리 65), memories 0, events 0, pending_reality_intent 없음. `deriveIntent` 는 사건 없음 + (애착≥40·거리≤55) 불충족 → null. 의도를 넣어도 motivation = 0.475×0.3 + 0.175×0.3 + urgency×0.35 − 0.65×0.35 ≈ 0.28(urgency 0.9) < 임계 0.5 → `no_motivation`. 사건 1건이 active 면 +0.3 으로 0.51 → 발송 가능(활성 08–23시·quiet hours 밖).
+- Push 구독 0건(어느 계정도 기기 등록 없음). 실계정(ab40905045@gmail.com) 세션 0. 서연은 비공개(is_public=false)라 미로 탭은 모든 계정에서 빈 화면 — 카나리아 목적과 정합.
+- 운영 env: GOOGLE/KAKAO 클라이언트, AUTH_BASE_URL, VAPID, MIRO_BANK_ACCOUNT, MIRO_RECHARGE_PRODUCTS 모두 설정됨. 콜백 경로 `/api/auth/{provider}/callback`.
+- 위생: `.claude/launch.json` 미추적(로컬 실행 설정, nvm 경로 포함). E2E 테스트 DB 가 실행마다 안 비워져 누적 → flaky 원인(칩 task_da313f08 로 분리, 미착수).
 
 ## 결정 로그
+- 2026-09-22: 내비 = 꽉 찬 실루엣 아이콘 32px + 라벨, 활성은 주황 아이콘만(배경·점·윤곽 없음), 미로 탭 = 겹친 두 카드. 홈 전체·인기 = 작은 세그먼트 토글. 빈 상태 = 상자·버튼 없는 한 줄, 남은 공간 세로 가운데(`.empty-state--fill`). '나' 화면만 푸터가 있어 한 줄 고정.
 - 2026-09-22: UI 규칙 기준 = `docs/MIRO_DESIGN_PATTERNS.md` (DESIGN.md 와 충돌 시 패턴 문서 우선). 전 화면 감사 후 위반 수정: micro 12px, 터치 44px(`.hit` 유틸), SubmitButton(제출 잠금), 빈 상태 CTA, 색상 단독 표시 보완. 단위 473·E2E 52 통과.
 - 2026-09-22: 선톡 운영 개방 — features.ts 하드 차단에서 realityMessage·inlineReality 제거(b46a8f7), 미디어 4종은 검증 전까지 유지. 미로 카나리아로 서연(테스트 계정 소유) 지정 — 실계정 영향 없이 파이프라인 검증 목적, 실캐릭터 제작 후 교체.
 - 2026-09-22: 운영 DB 마이그레이션 누락 1건(`reality_push_jobs`) 적용. 레거시 alpha 테이블 2개는 코드 미참조라 미생성 유지.
@@ -32,5 +34,5 @@
 - [ ] 미디어 가중치 실측(`pnpm ai:cost`) — 미디어 개방 전
 
 ## 차기 마일스톤
-**M-초대베타** — 잔여: ① 카나리아 첫 선톡 관찰(08:00 이후)과 답장 왕복 확인 ② 사용자 본인 캐릭터 제작→미로 지정 ③ 실기기 구글 로그인(Supabase redirect)·토스 딥링크 ④ 출시 게이트 중 최소 백업 복원·모니터링 알림. (split 배포 ✅ · reality 개방 ✅)
+**M-초대베타** — 순서 재조정(카나리아 진단 반영): ③ 실기기 구글 로그인 + Push 허용(구독 1건 확보) → ② 본인 캐릭터 제작→admin 에서 미로 지정→live 대화(관계·사건이 실제로 쌓이는지 relationships 로 확인) → ① 첫 선톡 관찰: 자연 경로(애착≥40·거리≤55 + 침묵 ≈42h @빈도 45, 또는 사건 발생) 또는 검증 레버(서연 세션에 active 사건 1건 삽입 → 다음 틱에 발송 경로 실행, Push 는 구독 없어 제외) → ④ 최소 알림(코드에 알림 경로 0건, `observe` 만 있음)·백업 복원(로컬 리허설만 됨). (split 배포 ✅ · reality 개방 ✅ · UI 트랙 ✅)
 **M-공개** — 음성통화 실기기 검증 후 voiceCall 개방, Live Scene 개방, 미디어 원가 실측, 문서 갱신
