@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { characters, db, roleplaySessions, worlds } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { ButtonLink, Page, TransitionLink } from '@/components/ui'
+import { Page, TransitionLink } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { ProfileCard } from './profile-card'
 
@@ -88,12 +88,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         {/* 칩이 이미 무엇인지 말한다 — 제목은 개수만 작고 옅게. */}
         <h2 className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{shown.length}개</h2>
         {cards.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 'var(--space-8) 0' }}>
-            <p className="t-body" style={{ marginBottom: 14 }}>{name}님이 만든 캐릭터가 {filter === 'all' ? '아직 없어요' : '여기엔 없어요'}.</p>
-            {filter === 'all'
-              ? <ButtonLink href="/create" variant="primary">한 사람 만들기</ButtonLink>
-              : <ButtonLink href="/my" variant="secondary" size="sm">전체 보기</ButtonLink>}
-          </div>
+          <p className="empty-state">{name}님이 만든 캐릭터가 {filter === 'all' ? '아직 없어요' : '여기엔 없어요'}</p>
         ) : (
           <div className="grid-2">{cards.map((c) => <CharacterCard key={c.id} c={c} />)}</div>
         )}

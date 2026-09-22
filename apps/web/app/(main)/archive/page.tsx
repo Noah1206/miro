@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { listSessions } from '@/lib/ops/archive'
-import { Page, Reveal, TransitionLink } from '@/components/ui'
+import { Page, Reveal } from '@/components/ui'
 import { ArchiveList } from './list'
 
 export default async function ArchivePage({ searchParams }: { searchParams: Promise<{ deleted?: string }> }) {
@@ -14,14 +14,12 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
     <Page>
       {deleted && <p role="status" className="t-caption" style={{ marginBottom: 12 }}>역할극을 삭제했습니다.</p>}
       {items.length === 0 ? (
-        <Reveal>
+        // Reveal 은 .page 와 빈 상태 사이의 감싸개라, 빈 상태가 늘어나도록 함께 세로로 늘어난다.
+        <Reveal style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <header style={{ marginBottom: 'var(--space-6)' }}>
             <h1 className="t-title-1" style={{ marginBottom: 6 }}>내 채팅</h1>
           </header>
-          <div style={{ textAlign: 'center', padding: 'var(--space-8) 0' }}>
-            <p className="t-caption" style={{ marginBottom: 'var(--space-5)' }}>진행 중인 역할극이 없습니다.</p>
-            <p className="t-caption"><TransitionLink href="/home" style={{ textDecoration: 'underline' }}>캐릭터 둘러보기</TransitionLink> · <TransitionLink href="/create" style={{ textDecoration: 'underline' }}>직접 만들기</TransitionLink></p>
-          </div>
+          <p className="empty-state empty-state--fill">진행 중인 역할극이 없습니다.</p>
         </Reveal>
       ) : <ArchiveList items={items} />}
     </Page>

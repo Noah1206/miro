@@ -10,7 +10,7 @@ export default async function ReportPage({ searchParams }: { searchParams: Promi
   const { type, id } = await searchParams
   const t = (['message', 'photo', 'live_scene'] as const).find((x) => x === type)
   const target = t && id ? await resolveTarget(user.id, { type: t, id }) : null
-  if (!t || !id || !target) return <Page style={{ textAlign: 'center' }}><p className="t-caption" style={{ paddingTop: 'var(--space-8)' }}>신고할 콘텐츠를 찾을 수 없습니다.</p></Page>
+  if (!t || !id || !target) return <Page><p className="empty-state empty-state--fill">신고할 콘텐츠를 찾을 수 없습니다.</p></Page>
   const preview = typeof target.snapshot.content === 'string' ? target.snapshot.content : `${target.snapshot.location ?? ''} · ${target.snapshot.time ?? ''}`
   return (
     <Page style={{ maxWidth: 520 }}>

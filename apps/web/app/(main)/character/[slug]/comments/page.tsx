@@ -26,7 +26,7 @@ export default async function CommentsPage({ params, searchParams }: {
   ])
 
   return (
-    <Page style={{ paddingBottom: 'var(--space-8)' }}>
+    <Page>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <Back href={`/character/${slug}`} />
       </div>

@@ -49,9 +49,9 @@ export function HomeFeed({ rows }: { rows: HomeRow[] }) {
   const recommendations = filter === 'popular'
     ? [...catalog].sort((a, b) => b.plays - a.plays).slice(0, 6)
     : catalog.filter(c => !featuredIds.has(c.id)).slice(0, 6)
+  const empty = recommendations.length === 0
 
-
-  return <div className={styles.feed}>
+  return <div className={`${styles.feed} ${empty ? styles.fill : ''}`}>
     {continuing.length > 0 && <section className={styles.continuing} aria-labelledby="continue-title">
       <div className={styles.sectionHeading}><h2 id="continue-title">이어서 대화하기</h2><TransitionLink href="/archive">대화함 <span aria-hidden>↗</span></TransitionLink></div>
       <div className={styles.grid}>
@@ -65,12 +65,10 @@ export function HomeFeed({ rows }: { rows: HomeRow[] }) {
       <button type="button" aria-pressed={filter === 'popular'} onClick={() => setFilter('popular')}>인기</button>
     </div>
 
-    <section aria-labelledby="recommend-title">
+    <section aria-labelledby="recommend-title" className={empty ? styles.fill : undefined}>
       <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? '인기 이야기' : '주간 트렌드'}</h2></div>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
-      {recommendations.length === 0 && (
-        <p className={styles.empty}>{filter === 'popular' ? '아직 인기 이야기가 없어요' : '아직 이야기가 없어요'}</p>
-      )}
+      {empty && <p className="empty-state empty-state--fill">{filter === 'popular' ? '아직 인기 이야기가 없어요' : '아직 이야기가 없어요'}</p>}
     </section>
 
     {filter === 'all' && featured.length > 0 && <section className={styles.originals} aria-labelledby="originals-title">

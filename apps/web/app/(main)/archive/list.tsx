@@ -80,13 +80,7 @@ export function ArchiveList({ items }: {
         })}
         </AnimatePresence>
       </ul>
-      {filtered.length === 0 && (
-        <div className="stack" style={{ padding: 'var(--space-7) 0', gap: 12, alignItems: 'center' }}>
-          <p className="t-caption">해당 이름의 캐릭터가 없어요.</p>
-          <button type="button" className="t-caption hit" onClick={() => setQuery('')}
-            style={{ background: 'none', border: 0, padding: 0, textDecoration: 'underline', color: 'var(--color-text-primary)', cursor: 'pointer' }}>검색어 지우기</button>
-        </div>
-      )}
+      {filtered.length === 0 && <p className="empty-state empty-state--fill">해당 이름의 캐릭터가 없어요</p>}
     </>
   )
 }

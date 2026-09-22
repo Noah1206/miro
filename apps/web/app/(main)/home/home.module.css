@@ -17,7 +17,7 @@
 .resume { display: flex; align-items: center; justify-content: space-between; padding: 3px 3px 2px; font-size: 12px; color: var(--color-text-tertiary); }
 .resume > span { font-size: 13px; }
 /* 전체·인기는 따로 뜬 버튼이 아니라 한 덩어리 토글이다 — 바탕을 깔고 그 안에서 눌린 칸만 켠다. */
-.filters { display: inline-flex; align-items: center; gap: 2px; padding: 2px; margin-bottom: 16px;
+.filters { display: inline-flex; align-self: flex-start; align-items: center; gap: 2px; padding: 2px; margin-bottom: 16px;
   background: var(--color-surface-2); border-radius: 9px; }
 /* 보이는 높이는 30px 이지만 터치 영역은 44px 을 지킨다 (패턴 문서 §6) — ::after 로 위아래만 넓힌다. */
 .filters button { position: relative; flex-shrink: 0; min-height: 30px; padding: 0 13px; border: none; border-radius: 7px;
@@ -38,9 +38,8 @@
 .originals { padding-top: 25px; margin-top: 32px; }
 .originalLabel { display: block; font-size: 12px; letter-spacing: .16em; color: var(--color-text-tertiary); margin-bottom: 7px; }
 .originalMark { color: var(--color-accent-text); font-size: 23px; }
-/* 빈 상태는 상자 없이 한 줄만. 갈 곳(만들기)은 바로 아래 내비 한가운데에 늘 있다.
-   제목(주간 트렌드) 바로 밑이라 같은 굵은 흰 글씨면 제목이 두 개로 보인다 — 옅게 가라앉힌다. */
-.empty { padding: var(--space-6) 0; text-align: center; font-size: 14px; color: var(--color-text-tertiary); }
+/* 추천이 비면 빈 상태 한 줄(.empty-state--fill)이 남은 높이를 채워 한가운데 앉는다 — 그 사이의 칸들도 세로로 늘어나야 한다. */
+.fill { flex: 1; display: flex; flex-direction: column; }
 .feed a:focus-visible, .feed button:focus-visible { outline: 2px solid var(--color-white); outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { .poster img { transition: none; } }
 

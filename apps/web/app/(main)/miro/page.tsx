@@ -1,6 +1,6 @@
 import { currentUser } from '@/lib/auth'
 import { discoverGrid } from '@/lib/home'
-import { ButtonLink, LogoMark, Page } from '@/components/ui'
+import { LogoMark, Page } from '@/components/ui'
 import { CharacterCard } from '@/components/character-card'
 
 /**
@@ -20,12 +20,7 @@ export default async function Miro() {
       </header>
 
       {items.length === 0 ? (
-        <div data-miro-empty className="stack" style={{ padding: '0 var(--gutter)', gap: 14, alignItems: 'flex-start' }}>
-          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-            아직 미로에 있는 캐릭터가 없어요. 그동안 홈에서 대화를 시작해 보세요.
-          </p>
-          <ButtonLink href="/home" variant="secondary" size="sm">홈 둘러보기</ButtonLink>
-        </div>
+        <p data-miro-empty className="empty-state empty-state--fill">아직 미로에 있는 캐릭터가 없어요</p>
       ) : (
         <div data-miro-grid className="grid-2" style={{ gap: 4, padding: '0 var(--gutter)' }}>
           {items.map((c) => <CharacterCard key={c.id} c={c} />)}

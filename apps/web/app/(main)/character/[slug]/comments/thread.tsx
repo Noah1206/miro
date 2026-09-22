@@ -41,7 +41,7 @@ export function CommentThread({ slug, items, sort, signedIn }: {
   const toast = useToast()
 
   return (
-    <div className="stack" style={{ gap: 16 }}>
+    <div className="stack" style={{ gap: 16, flex: items.length === 0 ? 1 : undefined }}>
       <form action={async (f) => { await postComment(slug, f); setBody(''); if (signedIn) toast('댓글을 남겼어요.') }}>
         <Composer name="body" value={body} onChange={setBody} disabled={signedIn && !body.trim()}
           placeholder={signedIn ? '이 캐릭터에 대해 남겨보세요' : '로그인하고 댓글을 남겨보세요'} />
@@ -55,7 +55,7 @@ export function CommentThread({ slug, items, sort, signedIn }: {
         active={sort} />
 
       {items.length === 0
-        ? <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', padding: '24px 0' }}>아직 댓글이 없어요.</p>
+        ? <p className="empty-state empty-state--fill">아직 댓글이 없어요</p>
         : (
           <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 20 }}>
             {items.map((c) => <ThreadItem key={c.id} slug={slug} c={c} signedIn={signedIn} />)}

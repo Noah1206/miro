@@ -1,6 +1,6 @@
 import { currentUser } from '@/lib/auth'
 import { discoverGrid, type HomeCard } from '@/lib/home'
-import { ButtonLink, LogoMark, Page } from '@/components/ui'
+import { LogoMark, Page } from '@/components/ui'
 import { CharacterCard } from '@/components/character-card'
 import { SearchHeader } from './search'
 
@@ -23,12 +23,7 @@ export default async function HomeSearch({ searchParams }: { searchParams: Promi
       </SearchHeader>
 
       {items.length === 0 ? (
-        <div className="stack" style={{ padding: '0 var(--gutter)', gap: 14, alignItems: 'flex-start' }}>
-          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-            {q ? `'${q}'에 맞는 캐릭터가 없어요. 다른 키워드로 찾아보거나, 직접 만들 수 있어요.` : '아직 보여드릴 캐릭터가 없어요. 첫 캐릭터를 직접 만들 수 있어요.'}
-          </p>
-          <ButtonLink href="/create" variant="secondary" size="sm">캐릭터 만들기</ButtonLink>
-        </div>
+        <p className="empty-state empty-state--fill">{q ? `'${q}'에 맞는 캐릭터가 없어요` : '아직 보여드릴 캐릭터가 없어요'}</p>
       ) : (
         <>
           {q && <p className="t-micro" style={{ padding: '0 var(--gutter)', marginBottom: 10, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}개</p>}
