@@ -38,15 +38,9 @@
 .originals { padding-top: 25px; margin-top: 32px; }
 .originalLabel { display: block; font-size: 12px; letter-spacing: .16em; color: var(--color-text-tertiary); margin-bottom: 7px; }
 .originalMark { color: var(--color-accent-text); font-size: 23px; }
-/* 한 줄과 갈 곳만 남긴다 — 버튼이 이미 '캐릭터 만들기' 라고 말하므로 그걸 풀어쓴 문장은 군더더기다. */
-.empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-6) var(--gutter);
-  border: 1px dashed var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface-1); }
-.emptyMark { color: var(--color-text-tertiary); font-size: 18px; line-height: 1; margin-bottom: 10px; }
-.emptyTitle { font-size: 15px; font-weight: 600; color: var(--color-text-primary); margin-bottom: 16px; }
-.emptyActions { display: flex; gap: 8px; }
-.emptyActions a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: var(--radius-button);
-  font-size: 13px; font-weight: 600; border: 1px solid var(--color-border-strong); color: var(--color-text-primary); }
-.emptyActions a:first-child { background: var(--color-white); color: var(--color-black); border-color: var(--color-white); }
+/* 빈 상태는 상자 없이 한 줄만. 갈 곳(만들기)은 바로 아래 내비 한가운데에 늘 있다.
+   제목(주간 트렌드) 바로 밑이라 같은 굵은 흰 글씨면 제목이 두 개로 보인다 — 옅게 가라앉힌다. */
+.empty { padding: var(--space-6) 0; text-align: center; font-size: 14px; color: var(--color-text-tertiary); }
 .feed a:focus-visible, .feed button:focus-visible { outline: 2px solid var(--color-white); outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { .poster img { transition: none; } }
 

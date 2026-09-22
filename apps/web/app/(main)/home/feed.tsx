@@ -68,16 +68,8 @@ export function HomeFeed({ rows }: { rows: HomeRow[] }) {
     <section aria-labelledby="recommend-title">
       <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? '인기 이야기' : '주간 트렌드'}</h2></div>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
-      {/* 빈 화면에서 멈추지 않게 한다 — 한 줄과 갈 곳만. 버튼이 할 일을 말하므로 설명은 얹지 않는다. */}
       {recommendations.length === 0 && (
-        <div className={styles.empty}>
-          <span className={styles.emptyMark} aria-hidden>✳</span>
-          <p className={styles.emptyTitle}>{filter === 'popular' ? '아직 인기 이야기가 없어요' : '아직 이야기가 없어요'}</p>
-          <div className={styles.emptyActions}>
-            <TransitionLink href="/create">캐릭터 만들기</TransitionLink>
-            <TransitionLink href="/home/search">둘러보기</TransitionLink>
-          </div>
-        </div>
+        <p className={styles.empty}>{filter === 'popular' ? '아직 인기 이야기가 없어요' : '아직 이야기가 없어요'}</p>
       )}
     </section>
 
