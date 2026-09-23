@@ -2,7 +2,7 @@
 import { CharacterSettingsView } from '../character/[slug]/settings-view'
 import { parseCharacterForm } from './parse'
 import { Accordion, Button } from '@/components/ui'
-import { BookmarkButton, LikeButton, Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
+import { LikeButton, Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
 import { PhotoHero } from '../character/[slug]/hero'
 import { subject } from '@/lib/format'
 
@@ -65,10 +65,10 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
 
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
-      <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>등록하면 다른 사람에게 이렇게 보입니다.</p>
+      <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{d.settings.isPublicOn ? '공개 게시하면 다른 사람에게 이렇게 보여요.' : '나만 볼 수 있는 캐릭터로 게시돼요.'}</p>
       <div className="character-detail-theme" aria-label="소개 페이지 미리보기" style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: '#141416' }}>
         {/* 상세와 같은 자리: 왼쪽 위 뒤로, 오른쪽 위 편집(주인에게만 보이는 것) */}
-        <span aria-hidden style={{ ...pill, left: 16, padding: '0 10px', color: 'var(--color-text-secondary)' }}>
+        <span aria-hidden style={{ ...pill, left: 16, padding: '0 10px', background: 'transparent', color: 'var(--color-text-secondary)' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
         </span>
         <span aria-hidden className="t-caption" style={{ ...pill, right: 16, fontWeight: 'var(--weight-medium)' }}>편집</span>
@@ -134,7 +134,7 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
 
         {/* 상세의 고정 하단 문 — 미리보기 안에서는 맨 아래에 */}
         <div aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--color-border-strong)', padding: '10px var(--gutter)', marginTop: 'var(--space-6)', background: '#141416' }}>
-          <BookmarkButton saved={false} iconOnly /><div style={{ flex: 1 }}><Button type="button" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full disabled>대화 시작하기</Button></div>
+          <div style={{ flex: 1 }}><Button type="button" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full disabled>대화 시작하기</Button></div>
         </div>
       </div>
     </div>

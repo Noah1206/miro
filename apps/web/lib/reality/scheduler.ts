@@ -69,6 +69,7 @@ export async function runRealityEvaluations(now = new Date()): Promise<Evaluatio
          JOIN users u ON u.id = s2.user_id AND u.deleted_at IS NULL
          -- 홈의 일반 캐릭터는 후보에서 빠진다. evaluateSession 이 한 번 더 보지만, 매 주기 헛도는 claim 은 여기서 막는다.
          JOIN characters c ON c.id = s2.character_id AND c.experience_type = 'reality' AND c.deleted_at IS NULL
+         JOIN contact_profiles cp ON cp.character_id = c.id AND cp.enabled = true
         WHERE s2.status = 'active'
           AND s2.deleted_at IS NULL
           AND s2.restricted_at IS NULL

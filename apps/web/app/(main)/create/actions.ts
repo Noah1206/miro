@@ -1,9 +1,11 @@
 'use server'
+import { characterExperience } from '@/lib/character-experience'
+import { introMessages } from '@/lib/intro-dialogue'
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import {
-  db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
+  db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages } from '@/lib/storage/images'
@@ -28,6 +30,7 @@ export async function saveCharacter(form: FormData): Promise<void> {
     const [character] = await tx.insert(characters).values({
       ownerId: user.id, isOfficial: false, ...p.character, images,
       isDraft: !p.publish,
+      experienceType: characterExperience(p.contact.enabled),
       // 초안은 절대 공개되지 않는다. 등록할 때만 폼에서 선택한 공개 상태를 적용한다.
       isPublic: p.publish && p.isPublicOn,
     }).returning({ id: characters.id })
@@ -44,6 +47,8 @@ export async function saveCharacter(form: FormData): Promise<void> {
     }).returning({ id: roleplaySessions.id })
     await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
+    const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
+    if (openingMessages.length) await tx.insert(messages).values(openingMessages)
     return { characterId, sessionId: session!.id }
   })
 

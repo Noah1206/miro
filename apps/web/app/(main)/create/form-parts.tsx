@@ -28,7 +28,7 @@ export function LabeledField({ label, required, hint, error, children }: {
 }) {
   return (
     <div className="stack" style={{ gap: 4 }}>
-      <span className="t-caption" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)' }}>
+      <span className="t-body" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)', marginBottom: 4 }}>
         {label}{required && <Star />}
       </span>
       {children}
@@ -340,8 +340,8 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
 }
 
 /** 여러 개 중 하나. 고른 칩만 주황. 줄바꿈해서 늘어놓는다 (관계 단계처럼 많을 때). */
-export function ChoiceChips({ name, options, value, onChange, columns }: {
-  name?: string; options: Array<{ value: string; label: string }>; value: string; onChange: (v: string) => void; columns?: number
+export function ChoiceChips({ name, options, value, onChange, columns, pill = false }: {
+  name?: string; options: Array<{ value: string; label: string }>; value: string; onChange: (v: string) => void; columns?: number; pill?: boolean
 }) {
   const reduce = useReducedMotion()
   return (
@@ -355,10 +355,10 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
           <motion.button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={on}
             whileTap={reduce ? undefined : { scale: 0.97 }}
             style={{
-              minHeight: 44, padding: '6px 12px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+              minHeight: pill ? 32 : 44, padding: pill ? '4px 12px' : '6px 12px', cursor: 'pointer', borderRadius: pill ? 999 : 'var(--radius-button)',
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-              background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-              border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+              background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              border: 0,
               color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
             }}>
             {o.label}
@@ -373,14 +373,17 @@ export function ChoiceChips({ name, options, value, onChange, columns }: {
  * 상황 예시 — 채팅처럼 쌓는다. 아래에서 화자(내레이터·유저·캐릭터)를 고르고 한 마디씩 올린다.
  * 올린 말은 말풍선으로 보이고, 연필로 고치고 휴지통으로 지운다. 상세 페이지가 같은 모양으로 보여준다.
  */
-export function DialogueEditor({ name, characterName, defaultValue = [], fill = false, header }: {
+export function DialogueEditor({ name, characterName, defaultValue = [], fill = false, header, onCharacterCountChange, intro = false }: {
   name: string; characterName: string; defaultValue?: Turn[]
   /** 전체 화면: 목록이 남는 높이를 채우며 스크롤되고, 입력은 바닥에 붙는다. */
   fill?: boolean
   /** 목록 위에 얹을 것 (첫 장면). */
   header?: React.ReactNode
+  intro?: boolean
+  onCharacterCountChange?: (count: number) => void
 }) {
   const [turns, setTurns] = useState<Turn[]>(defaultValue)
+  useEffect(() => { onCharacterCountChange?.(turns.reduce((sum, turn) => sum + turn.text.length, 0)) }, [turns, onCharacterCountChange])
   const [role, setRole] = useState<Turn['role']>('character')
   const [draft, setDraft] = useState('')
   const [editing, setEditing] = useState<number | null>(null)
@@ -409,13 +412,15 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   // 입력창 옆 버튼들은 눌러도 포커스를 가져가지 않는다 — 한글 조합과 커서가 입력창에 남는다.
   const keepFocus = (e: React.MouseEvent) => e.preventDefault()
   const label = (r: Turn['role']) => (r === 'narrator' ? '내레이터' : r === 'user' ? '유저' : who)
-  const full = turns.length >= MAX_TURNS
+  const totalCharacters = turns.reduce((sum, turn) => sum + turn.text.length, 0)
+  const remaining = intro ? Math.max(0, 2000 - totalCharacters) : 500
+  const full = turns.length >= MAX_TURNS || remaining === 0
 
   const add = () => {
     const el = draftRef.current
     if (el) commit(el)
     const text = (el?.value ?? draft).trim()
-    if (!text || full) return
+    if (!text || full || (intro && text.length > remaining)) return
     setTurns([...turns, { role, text: text.slice(0, 500) }]); setDraft('')
   }
   const remove = (i: number) => { setTurns(turns.filter((_, j) => j !== i)); if (editing === i) setEditing(null) }
@@ -423,6 +428,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   const commitEdit = () => {
     if (editing === null) return
     const text = editText.trim()
+    if (intro && totalCharacters - turns[editing]!.text.length + text.length > 2000) return
     setTurns(text ? turns.map((t, j) => (j === editing ? { ...t, text } : t)) : turns.filter((_, j) => j !== editing))
     setEditing(null)
   }
@@ -458,7 +464,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             </span>
           )
           const body = isEditing
-            ? <textarea enterKeyHint="enter" autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={500}
+            ? <textarea enterKeyHint="enter" autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={intro ? Math.min(500, 2000 - totalCharacters + turns[i]!.text.length) : 500}
                 style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
             : <span style={{ display: 'block', fontSize: 14 }}><Line text={t.text} /></span>
 
@@ -497,7 +503,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
       {/* 입력 — 화자 고르기 → 한 마디 → 올리기 */}
       <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 8, ...(fill ? { flexShrink: 0, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' } : {}) }}>
         <div role="radiogroup" aria-label="말하는 사람" style={{ display: 'flex', gap: 2 }}>
-          {(['narrator', 'user', 'character'] as const).map((r) => {
+          {(intro ? (['narrator', 'character'] as const) : (['narrator', 'user', 'character'] as const)).map((r) => {
             const on = r === role
             return (
               <button key={r} type="button" role="radio" aria-checked={on} onClick={() => setRole(r)} onMouseDown={keepFocus}
@@ -514,8 +520,8 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           <span className="t-micro" style={{ marginLeft: 'auto', alignSelf: 'center', textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{turns.length}/{MAX_TURNS}</span>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginTop: 8 }}>
-          <textarea enterKeyHint="enter" ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={500}
-            placeholder={full ? '12마디까지 넣을 수 있어요.' : role === 'narrator' ? '장면을 서술해요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
+          <textarea enterKeyHint="enter" ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={Math.min(500, remaining)}
+            placeholder={full ? '입력 한도에 도달했어요.' : role === 'narrator' ? '장면을 서술해요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
             style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
           <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기" onMouseDown={keepFocus}
             style={{
@@ -573,8 +579,8 @@ export function PresetTags({ name, label = '태그', options, max, maxLength = 2
   const chip = (on: boolean, off: boolean): React.CSSProperties => ({
     minHeight: 44, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
     fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-    background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-    border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+    background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
+    border: 0,
     color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
   })
   return (
@@ -628,28 +634,28 @@ export type Step = { value: number; label: string; hint: string }
  * '보통/예민함' 은 바로 읽힌다. 저장 값은 여전히 0–100 이다 (엔진·스키마 불변).
  * 고른 단계의 한 줄 설명이 밑에 붙는다. 기본값은 가장 가까운 단계로 맞춘다.
  */
-export function Stepped({ name, label, options, defaultValue }: {
-  name: string; label: string; options: readonly Step[]; defaultValue: number
+export function Stepped({ name, label, options, defaultValue, value: controlled, onChange, pill = false }: {
+  name: string; label: string; options: readonly Step[]; defaultValue: number; value?: number; onChange?: (value: number) => void; pill?: boolean
 }) {
-  const nearest = options.reduce((a, b) => (Math.abs(b.value - defaultValue) < Math.abs(a.value - defaultValue) ? b : a))
-  const [value, setValue] = useState(nearest.value)
-  const current = options.find((o) => o.value === value) ?? nearest
+  const [localValue, setValue] = useState(defaultValue)
+  const value = controlled ?? localValue
+  const current = options.reduce((a, b) => Math.abs(b.value - value) < Math.abs(a.value - value) ? b : a)
   const reduce = useReducedMotion()
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
       <legend className="t-body" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)', marginBottom: 10 }}>{label}</legend>
       <input type="hidden" name={name} value={value} />
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 6 }}>
+      <div style={pill ? { display: 'flex', flexWrap: 'wrap', gap: 6 } : { display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 6 }}>
         {options.map((o) => {
-          const on = o.value === value
+          const on = o.value === current.value
           return (
-            <motion.button key={o.value} type="button" onClick={() => setValue(o.value)} aria-pressed={on}
+            <motion.button key={o.value} type="button" onClick={() => { setValue(o.value); onChange?.(o.value) }} aria-pressed={on}
               whileTap={reduce ? undefined : { scale: 0.97 }}
               style={{
-                minHeight: 40, padding: '8px 6px', cursor: 'pointer', borderRadius: 'var(--radius-button)',
+                minHeight: pill ? 32 : 40, padding: pill ? '4px 12px' : '8px 6px', cursor: 'pointer', borderRadius: pill ? 999 : 'var(--radius-button)',
                 fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                background: on ? 'var(--color-accent-soft)' : 'var(--color-surface-2)',
-                border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
+                background: on ? 'color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-2))' : 'var(--color-surface-2)',
+                border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
                 color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
               }}>
               {o.label}

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { eq, sql } from 'drizzle-orm'
-import { db, users, userSettings, realityContacts, realityPushJobs, pushSubscriptions, roleplaySessions } from '@miro/db'
+import { db, users, userSettings, contactProfiles, realityContacts, realityPushJobs, pushSubscriptions, roleplaySessions } from '@miro/db'
 import * as providers from '@miro/providers'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { enqueueRealityPush, deliverRealityPush } from '../push-outbox'
@@ -69,6 +69,14 @@ describeDb('durable proactive push', () => {
     await deliverRealityPush(new Date(retry!.nextAttemptAt.getTime() + 1))
     expect(tags).toEqual([`session:${s.sessionId}`, `session:${s.sessionId}`])
     expect(await db.select().from(realityContacts).where(eq(realityContacts.id, s.contact.id))).toHaveLength(1)
+  })
+  it('cancels queued delivery after the creator disables contact', async () => {
+    const s = await queued()
+    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, s.sessionId))
+    await db.update(contactProfiles).set({ enabled: false }).where(eq(contactProfiles.characterId, session!.characterId))
+    await deliverRealityPush(now)
+    expect(s.send).not.toHaveBeenCalled()
+    expect((await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id)))[0]!.status).toBe('cancelled')
   })
   it('honours revoked notifications before delivery', async () => {
     const s = await queued()

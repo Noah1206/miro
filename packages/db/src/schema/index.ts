@@ -126,9 +126,9 @@ export const characters = pgTable('characters', {
   tagline: text('tagline'),
   /**
    * 상세의 '상황 예시' — 이 캐릭터와의 대화가 어떤 느낌인지 보여주는 짧은 주고받음.
-   * 실제 역할극이 아니라 소개용 샘플이라 세션과 무관하게 캐릭터에 붙는다.
+   * purpose가 없는 기존 항목은 소개용. purpose='intro' 항목은 새 세션에만 첫 메시지로 복사한다.
    */
-  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string }>>().notNull().default([]),
+  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>>().notNull().default([]),
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),

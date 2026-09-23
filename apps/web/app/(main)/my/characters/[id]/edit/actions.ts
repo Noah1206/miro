@@ -1,9 +1,11 @@
 'use server'
+import { characterExperience } from '@/lib/character-experience'
+import { introMessages } from '@/lib/intro-dialogue'
 
 import { notFound, redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
-import { db, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
+import { db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
 import { track } from '@/lib/analytics/track'
@@ -33,6 +35,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     await tx.update(characters).set({
       ...p.character, images,
       isDraft: stillDraft,
+      experienceType: characterExperience(p.contact.enabled, owned.character.experienceType, form.get('contactChanged') === 'on'),
       // 초안은 절대 공개되지 않는다.
       isPublic: !stillDraft && p.isPublicOn,
     }).where(eq(characters.id, characterId))
@@ -40,6 +43,9 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     let worldId = owned.world?.id
     if (worldId) await tx.update(worlds).set(p.world).where(eq(worlds.id, worldId))
     else worldId = (await tx.insert(worlds).values({ characterId, ...p.world }).returning({ id: worlds.id }))[0]!.id
+
+    if (!p.contact.enabled) await tx.update(roleplaySessions).set({ pendingRealityIntent: null })
+      .where(eq(roleplaySessions.characterId, characterId))
 
     if (owned.contact) await tx.update(contactProfiles).set(p.contact).where(eq(contactProfiles.characterId, characterId))
     else await tx.insert(contactProfiles).values({ characterId, ...p.contact })
@@ -59,6 +65,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     }).returning({ id: roleplaySessions.id })
     await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
+    const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
+    if (openingMessages.length) await tx.insert(messages).values(openingMessages)
     return session!.id
   })
 

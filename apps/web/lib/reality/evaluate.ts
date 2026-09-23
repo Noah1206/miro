@@ -25,7 +25,7 @@ export type EvaluateOutcome =
   /** 사건 규칙이 발동했지만 delay 가 있어 예약만 했다. 스케줄러가 notBefore 뒤에 다시 판단한다. */
   | { outcome: 'scheduled'; ruleId: string; notBefore: string }
   | { outcome: 'no_intent' }
-  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' | 'not_reality' }
+  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' | 'not_reality' | 'contact_disabled' }
 
 /**
  * 한 세션에 대한 선연락 판단과 발송.
@@ -61,6 +61,11 @@ export async function evaluateSession(
   if (row.character.experienceType !== 'reality') {
     if (row.session.pendingRealityIntent) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
     return { outcome: 'skipped', reason: 'not_reality' }
+  }
+
+  if (!row.profile.enabled) {
+    if (row.session.pendingRealityIntent) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
+    return { outcome: 'skipped', reason: 'contact_disabled' }
   }
 
   const [activeEvents, recent] = await Promise.all([
@@ -125,6 +130,12 @@ export async function evaluateSession(
     quietHoursEnd: row.settings?.quietHoursEnd ?? POLICY.quietHours.defaultEnd,
     timeZone: row.settings?.timeZone ?? POLICY.reality.defaultTimeZone,
   }
+
+  // Inline bypasses timing/motivation, never the recipient's call permissions.
+  if ((intent.channel === 'voice_call' && !settings.voiceCallEnabled) || (intent.channel === 'video_call' && !settings.videoCallEnabled))
+    return { outcome: 'suppressed', reason: 'channel_disabled' }
+  if (['voice_call', 'video_call', 'push', 'missed_call'].includes(intent.channel) && inQuietHours(now, settings))
+    return { outcome: 'suppressed', reason: 'quiet_hours' }
 
   const lastSent = recent.find((c) => c.status === 'sent' || c.status === 'opened')
   let decision: RealityDecision = opts.inline
@@ -238,8 +249,9 @@ export async function evaluateSession(
     contactId = await db.transaction(async (tx) => {
       const [current] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).for('update')
       const [owner] = await tx.select().from(users).where(eq(users.id, row.session.userId)).limit(1)
-      const [profile] = await tx.select().from(contactProfiles).where(eq(contactProfiles.characterId, row.character.id)).limit(1)
-      if (!current || current.deletedAt || current.restrictedAt || current.status !== 'active' || !owner || owner.deletedAt || !profile?.enabled
+      const [profile] = await tx.select().from(contactProfiles).where(eq(contactProfiles.characterId, row.character.id)).limit(1).for('share')
+      const [character] = await tx.select({ experienceType: characters.experienceType, deletedAt: characters.deletedAt }).from(characters).where(eq(characters.id, row.character.id)).limit(1)
+      if (!character || character.experienceType !== 'reality' || character.deletedAt || !current || current.deletedAt || current.restrictedAt || current.status !== 'active' || !owner || owner.deletedAt || !profile?.enabled
         || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
         || current.turnCount !== row.session.turnCount) throw new RealityStateChangedError()
       if (decision.channel === 'status') {

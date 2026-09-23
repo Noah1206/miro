@@ -7,26 +7,25 @@ export type CreateTab = 'profile' | 'personality' | 'appearance' | 'relationship
 
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: '프로필' },
-  { key: 'personality', label: '성격·장르' },
+  { key: 'personality', label: '세계관' },
   { key: 'appearance', label: '외형' },
   { key: 'relationship', label: '관계' },
-  { key: 'contact', label: '연락' },
-  { key: 'intro', label: '상황' },
+  { key: 'contact', label: '일상·연락' },
+  { key: 'intro', label: '인트로' },
   { key: 'preview', label: '미리보기' },
 ]
 
 /**
- * 만들기 머리 (레퍼런스 구조): 닫기 · 제목 · 임시저장 · 등록, 그 아래 가로 스크롤 탭.
+ * 만들기 머리 (레퍼런스 구조): 닫기 · 제목 · 등록, 그 아래 가로 스크롤 탭.
  * 탭에는 표시를 달지 않는다 — 필수는 칸의 별표가 말하고, 다 차기 전엔 등록이 잠겨 있다.
- * 임시저장은 이름만 있으면 된다.
  */
-export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons, closeHref }: {
+export function CreateHeader({ tab, onTab, canSubmit, pending, buttons, closeHref, missingHint }: {
   tab: CreateTab
   onTab: (t: CreateTab) => void
+  missingHint?: string
   canSubmit: boolean
-  canDraft: boolean
   pending: boolean
-  /** create: 임시저장·등록. save: 이미 등록한 캐릭터를 고칠 때 — 저장 하나. */
+  /** create: 등록. save: 이미 등록한 캐릭터를 고칠 때 — 저장 하나. */
   buttons: 'create' | 'save'
   closeHref: string
 }) {
@@ -41,19 +40,16 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
           <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </TransitionLink>
         <h1 className="sr-only">캐릭터</h1>
-        <span style={{ flex: 1 }} />
-        {buttons === 'create' && (
-          <button type="submit" name="intent" value="draft" disabled={!canDraft || pending} style={chip(false, canDraft && !pending)}>임시저장</button>
-        )}
+        <span className="t-caption" style={{ flex: 1, textAlign: 'right', fontSize: 'var(--font-micro)', transform: 'translateY(3px)', color: 'var(--color-text-secondary)' }} aria-live="polite">{missingHint}</span>
         <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending} style={chip(true, canSubmit && !pending)}>
-          {buttons === 'save' ? (pending ? '저장 중' : '저장') : (pending ? '만드는 중' : '등록')}
+          {buttons === 'save' ? (pending ? '저장 중' : '저장') : (pending ? '게시 중' : '게시')}
         </button>
       </div>
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
       {/* 입력 탭 여섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
       <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+        <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
           {TABS.filter((t) => t.key !== 'preview').map((t) => {
             const active = t.key === tab
             return (
@@ -73,7 +69,7 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
         </div>
         <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
-            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 44, padding: '4px 10px', marginLeft: 20, borderRadius: 'var(--radius-sm)',
+            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 32, padding: '2px 10px', marginLeft: 20, borderRadius: 'var(--radius-sm)',
             border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
             background: tab === 'preview' ? 'var(--color-white)' : 'var(--color-surface-2)',
             color: tab === 'preview' ? 'var(--color-black)' : 'var(--color-text-primary)',
@@ -91,7 +87,7 @@ export function CreateHeader({ tab, onTab, canSubmit, canDraft, pending, buttons
 
 function chip(primary: boolean, on: boolean): React.CSSProperties {
   return {
-    minHeight: 44, padding: '6px 14px', borderRadius: 'var(--radius-button)', border: 0, cursor: on ? 'pointer' : 'default',
+    minHeight: 32, padding: '4px 10px', borderRadius: 'var(--radius-button)', border: 0, cursor: on ? 'pointer' : 'default',
     fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)',
     background: primary && on ? 'var(--color-accent)' : 'var(--color-surface-2)',
     color: primary && on ? 'var(--color-accent-on)' : on ? 'var(--color-text-primary)' : 'var(--color-text-disabled)',

@@ -1,4 +1,5 @@
-import { and, eq, isNull, or } from 'drizzle-orm'
+import { introMessages } from '@/lib/intro-dialogue'
+import { and, eq, isNull, or, sql } from 'drizzle-orm'
 import { db, characters, messages, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 
 /** 시작 관계 기본값. 캐릭터는 처음부터 사용자에게 호감을 보이지 않는다 (명세서 4.1). */
@@ -27,6 +28,7 @@ export async function createRoleplaySession(
       characterId: characters.id, isOfficial: characters.isOfficial, worldId: worlds.id,
       worldLocation: worlds.location, startingTime: characters.startingTime,
       initialRelationship: characters.initialRelationship,
+      dialogue: characters.sampleDialogue,
     })
     .from(characters)
     .innerJoin(worlds, eq(worlds.characterId, characters.id))
@@ -48,7 +50,15 @@ export async function createRoleplaySession(
   // 재진입은 저장된 상태 위에서 이어진다. 새 세션을 만들지 않는다.
   if (existing[0]) return { sessionId: existing[0].id, characterId: character.characterId, isOfficial: character.isOfficial, created: false }
 
-  const sessionId = await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
+    // Serialize double-clicks/retries for the same user's character before seeding intro messages.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${userId + ':' + character.characterId}, 0))`)
+    const [active] = await tx.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
+      eq(roleplaySessions.userId, userId), eq(roleplaySessions.characterId, character.characterId),
+      eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt),
+    )).limit(1)
+    if (active) return { sessionId: active.id, created: false }
+
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: character.worldId,
     }).returning({ id: roleplaySessions.id })
@@ -60,10 +70,9 @@ export async function createRoleplaySession(
     // 캐릭터별 시작 관계. 값이 없으면 안전한 기본값으로 떨어진다.
     await tx.insert(relationships).values({ sessionId: id, ...DEFAULT_START, ...character.initialRelationship })
     // 캐릭터가 먼저 보낸 첫 마디 — 있으면 대화가 이미 시작된 상태로 들어간다.
-    if (opts.opening) {
-      await tx.insert(messages).values({ sessionId: id, role: 'character', kind: 'text', content: opts.opening, blocks: [], turnIndex: 0 })
-    }
-    return id
+    const openingMessages = introMessages(id, character.dialogue, opts.opening)
+    if (openingMessages.length) await tx.insert(messages).values(openingMessages)
+    return { sessionId: id, created: true }
   })
-  return { sessionId, characterId: character.characterId, isOfficial: character.isOfficial, created: true }
+  return { ...result, characterId: character.characterId, isOfficial: character.isOfficial }
 }

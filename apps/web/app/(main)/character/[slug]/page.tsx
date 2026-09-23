@@ -1,3 +1,4 @@
+import { sampleDialogue } from '@/lib/intro-dialogue'
 import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
@@ -106,9 +107,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
               {[c.worldLocation, c.startingTime].filter(Boolean).join(' · ')}부터 시작합니다.
             </p>
           </div>
-          {c.sampleDialogue.length > 0 && (
+          {sampleDialogue(c.sampleDialogue).length > 0 && (
             <div style={{ marginTop: 18 }}>
-              <SampleDialogue name={c.name} portrait={c.images[0] ?? null} turns={c.sampleDialogue} />
+              <SampleDialogue name={c.name} portrait={c.images[0] ?? null} turns={sampleDialogue(c.sampleDialogue)} />
             </div>
           )}
         </Rule>

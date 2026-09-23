@@ -1,3 +1,4 @@
+import { feature } from '@miro/config'
 import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
@@ -17,6 +18,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   const num = (v: unknown, fallback: number) => (typeof v === 'number' ? v : fallback)
 
   const initial: Partial<FormInitial> = {
+    experienceType: c.experienceType,
     name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '',
     age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
@@ -46,7 +48,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <CharacterForm mode="edit" draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" capabilities={{ message: feature('realityMessage'), photo: feature('imageGeneration'), voiceCall: feature('voiceCall') }} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my?filter=draft' : `/character/${id}`} />
   )
 }

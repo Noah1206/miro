@@ -12,11 +12,11 @@ const KEY = 'miro:tour:create'
  */
 const STEPS: Array<{ tab: CreateTab; lines: string[] }> = [
   { tab: 'profile', lines: ['이름과 소개를 적으면 카드가 돼요.', '사진을 넣으면 카드 얼굴이 돼요.'] },
-  { tab: 'personality', lines: ['성격을 적으면 말투와 반응이 돼요.', '단계를 고르면 질투·주도성이 정해져요.'] },
+  { tab: 'personality', lines: ['캐릭터가 살아가는 시대와 장소를 적어 주세요.', '이야기에 어울리는 장르를 골라 주세요.'] },
   { tab: 'appearance', lines: ['성별과 체형을 고르면 사진이 돼요.', '얼굴과 머리를 적으면 더 닮아져요.'] },
-  { tab: 'relationship', lines: ['단계를 고르면 첫 만남의 거리가 돼요.', '키워드를 적으면 해시태그가 돼요.'] },
-  { tab: 'contact', lines: ['켜 두면 앱 밖에서 먼저 연락이 와요.', '빈도를 고르면 오는 간격이 정해져요.'] },
-  { tab: 'intro', lines: ['상황을 누르면 채팅 화면이 열려요.', '첫 장면을 적으면 등록할 수 있어요.'] },
+  { tab: 'relationship', lines: ['단계를 고르면 첫 만남의 거리가 돼요.', '세부 감정은 필요할 때 조정해요.'] },
+  { tab: 'contact', lines: ['켜 두면 앱 밖에서 먼저 연락이 와요.', '관계와 상황에 따라 연락해요.'] },
+  { tab: 'intro', lines: ['인트로에서 첫 대화를 작성해요.', '첫 장면을 적으면 게시할 수 있어요.'] },
 ]
 
 /**

@@ -1,3 +1,4 @@
+import { sampleDialogue } from '@/lib/intro-dialogue'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
 import {
@@ -89,7 +90,7 @@ export async function loadSession(
         jealousy: c.jealousy, initiative: c.initiative,
         emotionalExpression: c.emotionalExpression,
       },
-      worldRole: { socialPosition: c.socialPosition, startingContext: c.startingContext, sampleDialogue: c.sampleDialogue, lore: c.lore },
+      worldRole: { socialPosition: c.socialPosition, startingContext: c.startingContext, sampleDialogue: sampleDialogue(c.sampleDialogue), lore: c.lore },
       visualIdentityId: null, contactProfileId: null,
     },
     world: row.world as never,

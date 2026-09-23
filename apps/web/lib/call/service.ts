@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { POLICY, feature } from '@miro/config'
-import { db, callSessions, characters, messages, realityContacts, roleplaySessions } from '@miro/db'
+import { db, callSessions, characters, contactProfiles, messages, realityContacts, roleplaySessions, userSettings, users } from '@miro/db'
+import { inQuietHours } from '@miro/domain'
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
 import { commit, reserve, rollback, UsageExceededError } from '@/lib/usage/guard'
@@ -41,18 +42,33 @@ export async function startOutgoingCall(userId: string, sessionId: string, chann
  */
 export async function startIncomingCall(sessionId: string, channel: CallChannel, reason: string) {
   if (!feature(channel === 'voice' ? 'voiceCall' : 'videoCall')) return null
-  const [session] = await db.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
-    eq(roleplaySessions.id, sessionId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
-  if (!session) return null
-  try {
-    const [call] = await db.insert(callSessions).values({
-      sessionId, channel, direction: 'incoming', status: 'ringing', reason,
-    }).returning({ id: callSessions.id })
-    return call!.id
-  } catch (e) {
-    if ((e as { code?: string }).code === '23505') return null
-    throw e
-  }
+  return db.transaction(async tx => {
+    const [row] = await tx.select({ session: roleplaySessions, character: characters, profile: contactProfiles, settings: userSettings, user: users })
+      .from(roleplaySessions)
+      .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+      .innerJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
+      .innerJoin(users, eq(users.id, roleplaySessions.userId))
+      .leftJoin(userSettings, eq(userSettings.userId, users.id))
+      .where(eq(roleplaySessions.id, sessionId)).limit(1)
+    if (!row || row.session.deletedAt || row.session.restrictedAt || row.session.status !== 'active'
+      || row.character.deletedAt || row.character.experienceType !== 'reality' || row.user.deletedAt) return null
+    // Serialize the last check with creator contact edits before opening a ringing call.
+    const [profile] = await tx.select().from(contactProfiles).where(eq(contactProfiles.characterId, row.character.id)).limit(1).for('share')
+    if (!profile?.enabled) return null
+    const settings = {
+      pushEnabled: row.settings?.pushEnabled ?? true,
+      voiceCallEnabled: row.settings?.voiceCallEnabled ?? true,
+      videoCallEnabled: row.settings?.videoCallEnabled ?? true,
+      quietHoursEnabled: row.settings?.quietHoursEnabled ?? POLICY.quietHours.defaultEnabled,
+      quietHoursStart: row.settings?.quietHoursStart ?? POLICY.quietHours.defaultStart,
+      quietHoursEnd: row.settings?.quietHoursEnd ?? POLICY.quietHours.defaultEnd,
+      timeZone: row.settings?.timeZone ?? POLICY.reality.defaultTimeZone,
+    }
+    if (!(channel === 'voice' ? settings.voiceCallEnabled : settings.videoCallEnabled) || inQuietHours(new Date(), settings)) return null
+    const [call] = await tx.insert(callSessions).values({ sessionId, channel, direction: 'incoming', status: 'ringing', reason })
+      .onConflictDoNothing().returning({ id: callSessions.id })
+    return call?.id ?? null
+  })
 }
 
 /** 수락. 이 시점에 사용량을 예약한다 — 받지 않은 통화에 사용량을 물리지 않는다. */

@@ -1,44 +1,19 @@
 'use client'
-import { S } from '@/lib/character-options'
+import { introDialogue, sampleDialogue } from '@/lib/intro-dialogue'
+import { ContactSettings, RelationshipSettings, type ContactCapabilities } from './creation-settings'
 import { useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES, stageLabel } from '@miro/domain'
+import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
-import { STAGES } from './parse'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, LoreEditor, PresetTags, Rows, Stepped, Switch, TagInput, box, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, type Step } from './form-parts'
 import { MOODS } from './parse'
 
-/**
- * 선택지용 라벨. 대화 화면의 stageLabel 은 ambiguous 와 flirting 을 일부러 같은 말('서로를 의식함')로
- * 보여주지만, 고르는 자리에서 같은 글자가 두 번 나오면 무엇을 고르는지 알 수 없다.
- */
-const STAGE_PICK: Partial<Record<(typeof STAGES)[number], string>> = {
-  ambiguous: '애매한 사이',
-  flirting: '썸 타는 중',
-}
 const MBTI_TYPES = [
   'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
   'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP',
 ] as const
-const CHANNELS = [
-  { value: 'message', label: '메시지' }, { value: 'photo', label: '사진' },
-  // 4열 칩이라 '음성 메시지' 는 두 줄로 꺾인다 — 칩만 짧게. 아래 항목 제목은 온전한 이름을 쓴다.
-  { value: 'voice_message', label: '음성' }, { value: 'voice_call', label: '전화' },
-] as const
-
-
-/**
- * 단계 정의. 값은 0–100 그대로 저장되고, 라벨·설명만 사람 말이다.
- * 연락 빈도의 시간은 엔진 공식(72h − 빈도×0.66h)에서 역산한 실제 값이다.
- */
-
-
-/**
- * 고급 만들기 (명세서 2.2): 프로필·성격·외형·세계·관계·연락 성향을 직접 정한다.
- * 탭은 보이기만 바꾼다 — 모든 칸이 DOM 에 남아 마지막에 한 번에 제출된다.
- */
 export type FormInitial = {
   name: string; title: string; worldSetting: string; age: string; mbti: string; nationality: string; occupation: string
   personality: string; hobbies: string[]; dislikes: string[]; mood: string[]; jealousy: number; initiative: number; emotionalExpression: number
@@ -50,8 +25,9 @@ export type FormInitial = {
   contactEnabled: boolean; contactFrequency: number; initiativeLevel: number; replyDelayMinutes: number
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
-  startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
+  startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
+  experienceType?: 'chat' | 'reality'
   isPublic: boolean
   /** 이미 저장된 사진 URL (편집 화면). 대표가 첫 번째. */
   images: string[]
@@ -79,8 +55,9 @@ export const EMPTY: FormInitial = {
  * 탭은 보이기만 바꾼다 — 모든 칸이 DOM 에 남아 마지막에 한 번에 제출된다.
  * 등록 시 공개 여부를 선택할 수 있다. 임시저장은 항상 비공개다.
  */
-export function CharacterForm({ mode, draft = false, initial, action, closeHref }: {
+export function CharacterForm({ mode, draft = false, initial, action, closeHref, capabilities }: {
   mode: 'create' | 'edit'
+  capabilities: ContactCapabilities
   draft?: boolean
   initial?: Partial<FormInitial>
   action: (form: FormData) => Promise<void>
@@ -97,51 +74,54 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
   const [title, setTitle] = useState(i.title)
   const [personality, setPersonality] = useState(i.personality)
   const [startingContext, setStartingContext] = useState(i.startingContext)
+  const [sampleCharacterCount, setSampleCharacterCount] = useState(() => sampleDialogue(i.sampleDialogue).reduce((sum, turn) => sum + turn.text.length, 0))
+  const [sampleOpen, setSampleOpen] = useState(false)
+  const reduceMotion = useReducedMotion()
   const [mbti, setMbti] = useState<string>(i.mbti)
   const [gender, setGender] = useState<string>(i.gender)
   const [build, setBuild] = useState<string>(i.build)
-  const [stage, setStage] = useState<string>(i.stage)
-  const [contactOn, setContactOn] = useState(i.contactEnabled)
-  const [channel, setChannel] = useState<string>(i.preferredChannel)
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(draft ? true : i.isPublic)
   // 소개 페이지 미리보기 — 탭을 열 때 폼을 한 번 읽는다. 칸을 전부 controlled 로 바꾸지 않는다.
   const formRef = useRef<HTMLFormElement>(null)
+  const [previewMode, setPreviewMode] = useState('detail')
   const [snap, setSnap] = useState<Snapshot | null>(null)
   const openTab = (t: CreateTab) => {
     if (t === 'intro' && tab !== 'intro') setPrevTab(tab)
-    if (t === 'preview' && formRef.current) setSnap((prev) => { if (prev?.photo) URL.revokeObjectURL(prev.photo); return snapshot(formRef.current!) })
+    if (t === 'preview' && formRef.current) setSnap((prev) => { if (prev) [prev.photo, ...prev.gallery].forEach(url => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url) }); return snapshot(formRef.current!) })
     setTab(t)
   }
 
   const missing = useMemo(() => {
     const m = new Set<CreateTab>()
     if (!name.trim() || !title.trim()) m.add('profile')
-    if (!personality.trim()) m.add('personality')
+    if (!personality.trim()) m.add('profile')
     if (!startingContext.trim()) m.add('intro')
     return m
   }, [name, title, personality, startingContext])
   const canSubmit = missing.size === 0
-  const canDraft = name.trim().length > 0
 
 
   return (
     // Page 는 transform 을 걸어 sticky 를 깨뜨리므로 쓰지 않는다.
-    <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, outline: 'none' }}>
+    <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
       <form ref={formRef} action={action} onSubmit={() => setPending(true)} className="stack" style={{ gap: 0 }}>
 
-        <CreateHeader tab={tab} onTab={openTab} canSubmit={canSubmit} canDraft={canDraft} pending={pending}
+        <CreateHeader tab={tab} onTab={openTab} canSubmit={canSubmit} pending={pending} missingHint={!canSubmit ? `${[!name.trim() && '이름', !title.trim() && '소개', !personality.trim() && '성격', !startingContext.trim() && '첫 장면'].filter(Boolean).join(' · ')} 입력` : isPublic ? '공개 게시' : '나만 보기'}
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
         {mode === 'create' && <CreateTour tab={tab} onTab={openTab} />}
 
+        <input type="hidden" name="hobbies" value={i.hobbies.join(',')} />
+        <input type="hidden" name="dislikes" value={i.dislikes.join(',')} />
+        <input type="hidden" name="relationshipKeywords" value={i.relationshipKeywords.join(',')} />
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
           <Section title="공개">
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
                 label="다른 사람에게 공개"
-                hint="등록할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다. 임시저장은 공개되지 않습니다." />
+                hint="게시할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다." />
             </Card>
           </Section>
           <Section title="캐릭터">
@@ -156,10 +136,11 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                     <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
                       <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
                     </LabeledField>
-                    <LabeledField label="설명" hint="시대·장소 등 세계관을 적어 주세요. 장르는 성격·장르 탭에서 따로 선택합니다.">
-                      <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={i.worldSetting}
-                        placeholder="상황, 관계, 세계관 등을 설명해주세요." />
+                    <LabeledField label="성격 설명" required hint="캐릭터의 성격, 가치관, 말투를 적어 주세요.">
+                      <ControlledArea name="personality" value={personality} onChange={setPersonality} max={1000} rows={4}
+                        placeholder="예) 침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다." />
                     </LabeledField>
+                    <ReactionTraits initial={i} />
                   </div>
                 </IdentityCard>
               </div>
@@ -180,39 +161,54 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
               </div>
             </Card>
           </Section>
+
+          <Section title="상황 예시 · 선택">
+            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
+              상황 예시로 캐릭터의 성격과 말투를 표현해 주세요. 상세페이지에 표시됩니다.<br />
+              {sampleCharacterCount.toLocaleString()}자
+            </p>
+            <motion.button type="button" aria-expanded={sampleOpen} aria-controls="sample-dialogue-editor" onClick={() => setSampleOpen((open) => !open)}
+              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, marginTop: 20, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+              상황 예시 추가
+            </motion.button>
+            <div id="sample-dialogue-editor" hidden={!sampleOpen} inert={!sampleOpen}>
+              <motion.div initial={false} animate={{ y: reduceMotion || sampleOpen ? 0 : '100%' }} transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', flexShrink: 0 }}>
+                  <button type="button" onClick={() => setSampleOpen(false)} aria-label="상황 예시 닫기"
+                    style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
+                    <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                  </button>
+                  <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>상황 예시</h2>
+                  <button type="button" onClick={() => setSampleOpen(false)}
+                    style={{ padding: '8px 4px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-white)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>확인</button>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, padding: '0 var(--gutter)' }}>
+                  <DialogueEditor name="sampleDialogue" characterName={name} defaultValue={sampleDialogue(i.sampleDialogue)} onCharacterCountChange={setSampleCharacterCount} fill />
+                </div>
+              </motion.div>
+            </div>
+          </Section>
         </Panel>
 
-        {/* ── 성격 ── */}
+        {/* ── 세계관 ── */}
         <Panel id="personality" show={tab === 'personality'}>
-          <Section title="성격">
+          <Section title="세계관">
             <Card>
-              <div className="stack" style={{ gap: 18 }}>
-                <LabeledField label="어떤 사람인가요" required hint="특징·가치관·말투를 한 번에 적어 주세요.">
-                  <ControlledArea name="personality" value={personality} onChange={setPersonality} max={1000} rows={6}
-                    placeholder={'예) 감정을 드러내지 않고 거리를 둔다. 예의는 갖추지만 다정하지는 않다.\n약속과 원칙을 지키고, 말보다 행동으로 증명한다.\n존대. 문장이 짧고 군더더기가 없다.'} />
-                </LabeledField>
-              </div>
+              <LabeledField label="세계관 설명" hint="캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.">
+                <CountedTextArea name="worldSetting" max={600} rows={4} defaultValue={i.worldSetting}
+                  placeholder="예) 현대 서울. 도심의 경호업체를 중심으로 다양한 사건이 벌어진다." />
+              </LabeledField>
             </Card>
           </Section>
-          <Section title="알고 있는 것" subtitle="캐릭터가 원래 아는 배경. 대화에 키워드가 나온 순간에만 떠올립니다 — 많이 적어도 매 턴 무거워지지 않습니다.">
-            <Card>
-              <LoreEditor name="lore" defaultValue={i.lore} />
-            </Card>
-          </Section>
+          <input type="hidden" name="lore" value={JSON.stringify(i.lore)} />
           <Section title="장르" subtitle="여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 검색 장르와 카드 해시태그에 반영됩니다.">
             <Card>
               <PresetTags name="mood" label="장르" options={MOODS} max={5} defaultValue={i.mood} />
             </Card>
           </Section>
-          <Section title="성향" subtitle="같은 상황에서도 이 캐릭터가 어떻게 느끼고 반응할지 정합니다.">
-            <Card>
-              <Rows>
-                <Stepped name="jealousy" label="질투" defaultValue={i.jealousy} options={S.jealousy} />
-                <Stepped name="initiative" label="주도성" defaultValue={i.initiative} options={S.initiative} />
-                <Stepped name="emotionalExpression" label="감정 표현" defaultValue={i.emotionalExpression} options={S.emotionalExpression} />
-              </Rows>
-            </Card>
-          </Section>
+
         </Panel>
 
         {/* ── 외형 ── */}
@@ -258,90 +254,36 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
 
         {/* ── 관계 ── */}
         <Panel id="relationship" show={tab === 'relationship'}>
-          <Section title="시작 관계" subtitle="처음 만났을 때 두 사람이 서 있는 자리. 대화하면서 바뀝니다.">
-            <Card>
-              <LabeledField label="관계 단계">
-                <ChoiceChips name="stage" value={stage} onChange={setStage}
-                  options={STAGES.map((s) => ({ value: s, label: STAGE_PICK[s] ?? stageLabel(s) }))} />
-              </LabeledField>
-              <Rows style={{ marginTop: 'var(--space-5)' }}>
-                <Stepped name="trust" label="신뢰" defaultValue={i.trust} options={S.trust} />
-                <Stepped name="attraction" label="호감" defaultValue={i.attraction} options={S.attraction} />
-                <Stepped name="emotionalDistance" label="정서적 거리" defaultValue={i.emotionalDistance} options={S.emotionalDistance} />
-                <Stepped name="attachment" label="애착" defaultValue={i.attachment} options={S.attachment} />
-                <Stepped name="protectiveness" label="보호 성향" defaultValue={i.protectiveness} options={S.protectiveness} />
-                <Stepped name="relJealousy" label="질투 (관계)" defaultValue={i.relJealousy} options={S.relJealousy} />
-              </Rows>
-            </Card>
+          <Section title="시작 관계" subtitle="처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.">
+            <RelationshipSettings initial={i} />
           </Section>
         </Panel>
 
-        {/* ── 연락 ── */}
         <Panel id="contact" show={tab === 'contact'}>
-          <Section title="앱 밖에서">
-            <Card>
-              {/* 답장 시간·활동 시간은 화면에서 뺐다 — 기본값(5분, 08–23시)을 쓰고, 편집에서는 저장된 값을 그대로 넘긴다. */}
-              <input type="hidden" name="replyDelayMinutes" value={String(i.replyDelayMinutes)} />
-              <input type="hidden" name="activeHoursStart" value={i.activeHoursStart} />
-              <input type="hidden" name="activeHoursEnd" value={i.activeHoursEnd} />
-              <Switch name="contactEnabled" checked={contactOn} onChange={setContactOn}
-                label="먼저 연락하기"
-                hint="앱을 닫아도 캐릭터가 상황과 성격에 맞춰 먼저 메시지·사진·통화를 보냅니다." />
-            </Card>
+          <Section title="일상·연락">
+            <ContactSettings initial={i} mode={mode} capabilities={capabilities} />
           </Section>
-          {contactOn && (
-            <>
-              <Section title="세계 안에서 보이는 모습" subtitle="같은 기능도 세계관에 맞게 다르게 보입니다.">
-                <Card>
-                  <LabeledField label="발신자 표시" hint="예) 히사시는 '알 수 없는 번호', 토마스는 '편지'.">
-                    <CountedInput name="senderLabel" placeholder="비워 두면 이름으로 옵니다" max={30} defaultValue={i.senderLabel} />
-                  </LabeledField>
-                </Card>
-              </Section>
-              <Section title="얼마나">
-                <Card>
-                  <Rows>
-                    <Stepped name="contactFrequency" label="연락 빈도" defaultValue={i.contactFrequency} options={S.contactFrequency} />
-                    <Stepped name="initiativeLevel" label="주도성" defaultValue={i.initiativeLevel} options={S.initiativeLevel} />
-                  </Rows>
-                </Card>
-              </Section>
-              <Section title="어떻게">
-                <Card>
-                  <LabeledField label="선호 채널">
-                    <ChoiceChips name="preferredChannel" value={channel} onChange={setChannel} options={[...CHANNELS]} columns={4} />
-                  </LabeledField>
-                  <Rows style={{ marginTop: 'var(--space-5)' }}>
-                    <Stepped name="photoProbability" label="사진" defaultValue={i.photoProbability} options={S.media} />
-                    <Stepped name="voiceMessageProbability" label="음성 메시지" defaultValue={i.voiceMessageProbability} options={S.media} />
-                    <Stepped name="callProbability" label="전화" defaultValue={i.callProbability} options={S.media} />
-                    <Stepped name="videoCallProbability" label="영상통화" defaultValue={i.videoCallProbability} options={S.media} />
-                  </Rows>
-                </Card>
-              </Section>
-            </>
-          )}
         </Panel>
 
         {/* ── 상황 — 탭 아래 카드가 아니라 채팅 편집 화면이 전체로 열린다. 칸은 닫혀도 DOM 에 남는다. ── */}
         <Panel id="intro" show={tab === 'intro'}>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
+          <motion.div initial={false} animate={{ y: reduceMotion || tab === 'intro' ? 0 : '100%' }} transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
             <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', flexShrink: 0 }}>
-              <button type="button" onClick={() => setTab(prevTab)} aria-label="닫기"
+              <button type="button" onClick={() => openTab(prevTab)} aria-label="닫기"
                 style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
                 <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
-              <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>상황</h2>
-              <button type="button" onClick={() => setTab(prevTab)}
-                style={{ padding: '8px 4px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-accent-text)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>
-                확인
+              <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>인트로 대화</h2>
+              <button type="button" onClick={() => openTab(prevTab)} aria-label="인트로 확인"
+                style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, padding: 0, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-white)' }}>
+                <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>
               </button>
             </div>
             <div style={{ flex: 1, minHeight: 0, padding: '0 var(--gutter)' }}>
-              <DialogueEditor name="sampleDialogue" characterName={name} defaultValue={i.sampleDialogue} fill
+              <DialogueEditor name="introDialogue" intro characterName={name} defaultValue={introDialogue(i.sampleDialogue)} fill
                 header={
                   <div style={{ padding: '14px 0 6px' }}>
-                    <LabeledField label="첫 장면" required hint="대화가 여기서 시작돼요. 아래 예시는 소개 페이지에 실립니다.">
+                    <LabeledField label="첫 장면" required hint="대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.">
                       <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={3}
                         placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
                     </LabeledField>
@@ -349,12 +291,20 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                 } />
               <input type="hidden" name="startingTime" value={i.startingTime} />
             </div>
-          </div>
+          </motion.div>
         </Panel>
 
         {/* ── 소개 페이지 ── */}
         <Panel id="preview" show={tab === 'preview'}>
-          <DetailPreview d={snap} />
+          <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: '소개 페이지' }, { value: 'chat', label: '첫 대화' }]} /></div>
+          {previewMode === 'detail' ? <DetailPreview d={snap} /> : <div aria-label="첫 대화 미리보기" style={{ marginTop: 24 }}>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>새 대화를 시작할 때 이렇게 보여요.</p>
+            {snap && introDialogue(snap.settings.character.sampleDialogue).map((turn, n) => <div key={n} style={{ marginBottom: 16, whiteSpace: 'pre-wrap' }}>
+              {turn.role === 'character' && <p className="t-caption" style={{ marginBottom: 6 }}>{snap.name || '캐릭터'}</p>}
+              <p className="t-body" style={{ padding: turn.role === 'character' ? 14 : 0, borderRadius: 12, background: turn.role === 'character' ? 'var(--color-surface-2)' : undefined, color: turn.role === 'narrator' ? 'var(--color-text-secondary)' : undefined }}>{turn.text}</p>
+            </div>)}
+            {snap && introDialogue(snap.settings.character.sampleDialogue).length === 0 && <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>작성한 인트로 메시지가 없어요. 인트로에서 첫 대사를 추가할 수 있어요.</p>}
+          </div>}
         </Panel>
 
       </form>
@@ -471,5 +421,53 @@ function BodyPicker({ build, onBuild, gender, onGender }: {
         })}
       </div>
     </fieldset>
+  )
+}
+
+
+const REACTION_TRAITS = [
+  { name: 'jealousy', label: '질투', choices: ['적음', '보통', '많음'], summaries: ['질투 적음', '질투 보통', '질투 많음'] },
+  { name: 'initiative', label: '다가가는 방식', choices: ['기다림', '상황에 따라', '먼저'], summaries: ['수동', '유연', '주도'] },
+  { name: 'emotionalExpression', label: '감정 표현', choices: ['절제함', '적당히', '솔직함'], summaries: ['표현 절제', '표현 보통', '표현 솔직'] },
+] as const
+
+function ReactionTraits({ initial }: { initial: FormInitial }) {
+  const [open, setOpen] = useState(false)
+  const reduceMotion = useReducedMotion()
+  // Keep exact saved values until the user explicitly chooses a new level.
+  const [values, setValues] = useState(() => ({
+    jealousy: initial.jealousy,
+    initiative: initial.initiative,
+    emotionalExpression: initial.emotionalExpression,
+  }))
+  const level = (value: number) => value < 34 ? 0 : value > 66 ? 2 : 1
+  const balanced = REACTION_TRAITS.every(({ name }) => level(values[name]) === 1)
+  const summary = balanced ? '균형' : REACTION_TRAITS.map(({ name, summaries }) => summaries[level(values[name])]).join(' · ')
+  return (
+    <div className="stack" style={{ gap: 12, paddingTop: 20 }}>
+      {REACTION_TRAITS.map(({ name }) => <input key={name} type="hidden" name={name} value={values[name]} />)}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span className="t-body" style={{ flex: 1, minWidth: 0, fontWeight: 'var(--weight-semibold)' }}>반응 성향</span>
+        <motion.button whileTap={reduceMotion ? undefined : { scale: 0.9 }} transition={{ type: 'spring', stiffness: 450, damping: 25 }} type="button" aria-label={open ? '반응 성향 편집 접기' : '반응 성향 편집'} aria-expanded={open} aria-controls="reaction-traits" onClick={() => setOpen((v) => !v)}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, padding: 4, border: 0, borderRadius: 'var(--radius-sm)', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--color-text-secondary)', cursor: 'pointer', flexShrink: 0 }}>
+          <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m16 3 5 5M4 20l4.5-1L21 6.5a2.12 2.12 0 0 0-3-3L5.5 16 4 20Z" />
+          </svg>
+        </motion.button>
+      </div>
+      <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: -8 }}>{summary}</p>
+      <div id="reaction-traits" hidden={!open}>
+        <div className="stack" style={{ gap: 16 }}>
+          {REACTION_TRAITS.map(({ name, label, choices }) => (
+            <fieldset key={name} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+              <legend className="t-body" style={{ marginBottom: 8, fontWeight: 'var(--weight-semibold)' }}>{label}</legend>
+              <ChoiceChips columns={3} value={String(level(values[name]))}
+                options={choices.map((label, index) => ({ value: String(index), label }))}
+                onChange={(value) => setValues((previous) => ({ ...previous, [name]: [20, 50, 80][Number(value)] }))} />
+            </fieldset>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }

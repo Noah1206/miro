@@ -39,7 +39,7 @@ const ITEMS = [
 export function Nav({ signedIn = true }: { signedIn?: boolean }) {
   const pathname = usePathname()
   const askLogin = useLoginSheet()
-  if (/^\/(chat|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
+  if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
   return (
     <nav aria-label="주요" className="nav">
       {ITEMS.map((it) => {

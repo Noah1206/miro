@@ -25,7 +25,7 @@ export function Switch({ name, label, hint, checked, onChange }: {
         }} />
         <span aria-hidden style={{
           position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: 10, pointerEvents: 'none',
-          background: checked ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+          background: checked ? 'color-mix(in srgb, var(--color-accent-text), #ffb347 40%)' : 'var(--color-text-secondary)',
           transform: checked ? 'translateX(20px)' : 'none',
           transition: 'transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard)',
         }} />

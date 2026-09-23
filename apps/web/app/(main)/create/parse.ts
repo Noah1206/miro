@@ -1,3 +1,4 @@
+import { parseIntroDialogue } from '@/lib/intro-dialogue'
 import { BUILD_TYPES, GENDER_TYPES, normalizeLore } from '@miro/domain'
 import { searchNeedle } from '@/lib/search-params'
 export { MOODS } from '@/lib/genres'
@@ -14,6 +15,7 @@ export function parseCharacterForm(form: FormData) {
   const s = (k: string): string => String(form.get(k) ?? '').trim()
   const orNull = (v: string): string | null => (v.length > 0 ? v : null)
   const clamp = (k: string, fallback: number): number => {
+    if (!s(k)) return fallback
     const n = Number(s(k)); return Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : fallback
   }
   const tags = (k: string, max: number, len: number): string[] =>
@@ -78,7 +80,7 @@ export function parseCharacterForm(form: FormData) {
     relationshipKeywords: tags('relationshipKeywords', 4, 20),
     startingContext: orNull(s('startingContext')),
     ...(startingTime ? { startingTime } : {}),
-    sampleDialogue,
+    sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
     lore,
     initialRelationship,
   }
