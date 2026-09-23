@@ -52,6 +52,8 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
         width: full ? '100%' : undefined, borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)',
         whiteSpace: 'nowrap', cursor: disabled ? 'not-allowed' : 'pointer',
+        // 브라우저 기본 outset 테두리를 지운다 — 테두리가 있는 변형은 아래에서 제 것을 다시 그린다.
+        border: 0,
         ...SIZE[size], ...VARIANT[variant], ...style,
       }}
     >
