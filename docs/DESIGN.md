@@ -618,11 +618,14 @@ App Launch에서 로고를 활용할 수 있다.
 ### Sequence
 
 1. Black Screen
-2. 흰색의 두 조각 등장
+2. 흰 M 은 왼쪽에서, 주황 팔은 오른쪽에서 등장
 3. 서로 가까워짐
 4. 하나의 Logo 완성
-5. 중앙 공간이 벌어짐
+5. 주황 점이 제자리에서 찍힘
 6. Character World가 Reveal
+
+마크 원본은 `docs/brand/logo-mark-source.webp`. `apps/web/public` 의 `logo-mark.png`(투명 정사각형)와
+세 층(`logo-m` 흰 몸통 · `logo-s` 주황 팔 · `logo-d` 주황 점), PWA 아이콘은 모두 거기서 만든다.
 
 이 Motion은 다음 메시지를 가진다.
 
