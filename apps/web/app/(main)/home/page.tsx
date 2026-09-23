@@ -33,7 +33,8 @@ export default async function Home() {
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       {user && <IncomingCall userId={user.id} />}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--gutter) var(--space-5)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}><LogoMark size={22} /><span style={{ fontSize: 17, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span></div>
+        {/* 마크 하나만 — 글자 없이 마크가 이름을 맡는다. 오른쪽 아이콘 상자(34px)와 눈높이가 맞는 크기. */}
+        <LogoMark size={30} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <TransitionLink href="/home/search" aria-label="캐릭터 검색" className="hit" style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, color: 'var(--color-text-primary)' }}>

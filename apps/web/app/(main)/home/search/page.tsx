@@ -18,7 +18,7 @@ export default async function HomeSearch({ searchParams }: { searchParams: Promi
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       <SearchHeader q={q} base="/home/search">
-        <LogoMark size={22} />
+        <LogoMark size={30} />
         <h1 className="t-title-2" style={{ margin: 0 }}>검색</h1>
       </SearchHeader>
 

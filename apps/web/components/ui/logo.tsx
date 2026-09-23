@@ -26,7 +26,7 @@ type Phase = 'hidden' | 'join' | 'open'
  * 세 단계는 차례로 일어나야 한다 — 한 번에 두 variant 를 주면 마지막 값이 이겨서 '붙는' 순간이 사라진다.
  * reduce-motion 이면 마지막 프레임만.
  */
-export function LogoIntro({ onDone, size = 132 }: { onDone?: () => void; size?: number }) {
+export function LogoIntro({ onDone, size = 156 }: { onDone?: () => void; size?: number }) {
   const reduce = useReducedMotion()
   const [phase, setPhase] = useState<Phase>(reduce ? 'open' : 'hidden')
 

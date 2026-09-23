@@ -15,8 +15,9 @@ export default async function Miro() {
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 'var(--space-5) var(--space-5) var(--space-4)' }}>
-        <LogoMark size={22} />
-        <h1 className="t-title-2" style={{ margin: 0 }}>미로</h1>
+        <LogoMark size={30} />
+        {/* 보이는 제목은 없다 — 탭이 이미 '미로' 다. 제목은 읽어 주는 기기만 듣는다. */}
+        <h1 className="sr-only">미로</h1>
       </header>
 
       {items.length === 0 ? (

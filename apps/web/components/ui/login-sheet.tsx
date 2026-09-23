@@ -35,7 +35,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
         <div data-login-sheet style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 22px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <LogoMark size={26} />
+              <LogoMark size={32} />
               <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span>
             </div>
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
