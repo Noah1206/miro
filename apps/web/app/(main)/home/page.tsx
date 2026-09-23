@@ -32,7 +32,9 @@ export default async function Home() {
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       {user && <IncomingCall userId={user.id} />}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-5) var(--gutter) var(--space-5)' }}>
+      {/* 위 여백은 8px 만 — 홈 화면에 추가한 앱에서는 상태 표시줄(safe-area)만큼 더 내린다. */}
+      {/* 내용 높이 40 = 세 탭(홈·미로·검색) 공통 — 탭을 옮겨도 마크가 같은 자리에 있다. */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 40, boxSizing: 'content-box', padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-5)' }}>
         {/* 마크 하나만 — 글자 없이 마크가 이름을 맡는다. 오른쪽 아이콘 상자(34px)와 눈높이가 맞는 크기. */}
         <LogoMark size={30} />
 
@@ -43,7 +45,7 @@ export default async function Home() {
           {user
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
           // 헤더에서는 검색 아이콘 상자(38px)와 같은 눈높이 — 글자를 키우고 채움은 글자에 붙인다. 터치 영역은 .hit 이 44px 로 넓힌다.
-          : <LoginButton variant="primary" size="sm" className="hit" style={{ minHeight: 34, padding: '0 12px', fontSize: 14 }}>로그인</LoginButton>}
+          : <LoginButton variant="primary" size="sm" className="hit" style={{ minHeight: 34, padding: '0 9px', fontSize: 14 }}>로그인</LoginButton>}
         </div>
       </header>
 

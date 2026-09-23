@@ -22,7 +22,7 @@ export function SearchHeader({ q, base, children }: { q: string; base: string; c
   const close = () => { setOpen(false); if (q) { setValue(''); router.push(base) } }
 
   return (
-    <header style={{ padding: 'var(--space-5) var(--space-5) var(--space-4)' }}>
+    <header style={{ padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {children}
         <button type="button" onClick={() => (open ? close() : setOpen(true))} aria-expanded={open} aria-controls="character-search" aria-label={open ? '검색 닫기' : '검색'}
