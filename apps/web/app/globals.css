@@ -12,7 +12,7 @@
   --color-surface-1: #1D1D22;  --color-surface-2: #26262C;  --color-surface-3: #2F2F36;
   --color-border: #33333A;     --color-border-strong: #3E3E46; --color-border-hover: #45454D;
   --color-text-primary: #F5F5F7; --color-text-secondary: #A1A1A8;
-  --color-text-tertiary: #8A8A92; --color-text-quaternary: #76767D; --color-text-disabled: #4D4D52;
+  --color-text-tertiary: #8E8E96; --color-text-quaternary: #76767D; --color-text-disabled: #4D4D52;
   /* 폼 경계는 3:1 이상이어야 한다 (1.4.11). 장식 테두리(--color-border)와 구분한다. */
   --color-border-input: #62626A;
   --color-white: #FFFFFF; --color-black: #000000;

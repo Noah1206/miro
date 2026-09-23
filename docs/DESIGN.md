@@ -86,7 +86,7 @@ MIRO 로고는 다음 원칙을 따른다.
 
   --color-text-primary: #F5F5F7;
   --color-text-secondary: #A1A1A8;
-  --color-text-tertiary: #8A8A92;
+  --color-text-tertiary: #8E8E96;
   --color-text-disabled: #4D4D52;
 
   --color-white: #FFFFFF;
