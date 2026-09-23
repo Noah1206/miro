@@ -43,7 +43,7 @@ export default async function Home() {
           {user
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
           // 헤더에서는 검색 아이콘 상자(34px)와 같은 눈높이로 낮춘다. 터치 영역은 .hit 이 44px 로 넓힌다.
-          : <LoginButton variant="secondary" size="sm" className="hit" style={{ minHeight: 32, padding: '0 12px' }}>로그인</LoginButton>}
+          : <LoginButton variant="primary" size="sm" className="hit" style={{ minHeight: 32, padding: '0 12px' }}>로그인</LoginButton>}
         </div>
       </header>
 
