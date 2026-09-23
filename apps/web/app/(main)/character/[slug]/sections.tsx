@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink, useToast } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
+import { CharacterPhoto } from '@/components/character-visual'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
 import { likeCharacter, bookmark, deleteComment, likeComment } from './social-actions'
@@ -59,8 +60,7 @@ export function SampleDialogue({ name, portrait, turns }: {
           {t.role === 'character' && (
             <>
               {portrait
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={portrait} alt="" width={34} height={34} loading="lazy"
+                ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="34px" width={34} height={34}
                     style={{ width: 34, height: 34, borderRadius: 17, objectFit: 'cover', objectPosition: 'center 20%', flexShrink: 0 }} />
                 : <span aria-hidden style={{ width: 34, height: 34, borderRadius: 17, background: 'var(--color-surface-2)', flexShrink: 0 }} />}
               <div style={{ minWidth: 0 }}>
@@ -111,8 +111,7 @@ export function Gallery({ name, images }: { name: string; images: string[] }) {
           initial={reduce ? false : { opacity: 0, x: 14 }} whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: '-5% 0px' }}
           transition={{ duration: duration.normal, ease: ease.enter, delay: i * 0.06 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={`${name} ${i + 1}번째 사진`} width={640} height={853} loading="lazy" decoding="async"
+          <CharacterPhoto src={src} alt={`${name} ${i + 1}번째 사진`} size="detail" sizes="(max-width: 768px) 42vw, 320px" width={640} height={853}
             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-md)', display: 'block' }} />
         </motion.div>
       ))}

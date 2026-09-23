@@ -1,4 +1,4 @@
-import { and, or, eq, isNull } from 'drizzle-orm'
+import { and, or, eq, isNull, sql } from 'drizzle-orm'
 import { db, characters, worlds, contactProfiles } from '@miro/db'
 
 export type OfficialCard = {
@@ -40,15 +40,14 @@ export async function listOfficials(type: ExperienceType): Promise<OfficialCard[
       relationshipKeywords: characters.relationshipKeywords,
       accentA: characters.accentA,
       accentB: characters.accentB,
-      genre: worlds.genre,
+      genre: sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`,
       tagline: characters.tagline, startingContext: characters.startingContext,
       images: characters.images,
       contactEnabled: contactProfiles.enabled,
     })
     .from(characters)
-    .leftJoin(worlds, eq(worlds.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(eq(characters.isOfficial, true), eq(characters.experienceType, type), isNull(characters.deletedAt)))
+    .where(and(eq(characters.isOfficial, true), eq(characters.isDraft, false), eq(characters.experienceType, type), isNull(characters.deletedAt)))
     .orderBy(characters.createdAt) as Promise<OfficialCard[]>
 }
 

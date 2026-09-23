@@ -1,6 +1,6 @@
 import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
-import { runRealityScheduler } from '@/lib/reality/scheduler'
+import { runRealityEvaluations, runRealityMaintenance, runRealityScheduler } from '@/lib/reality/scheduler'
 
 /**
  * Vercel Cron 진입점. 앱이 닫혀 있어도 서버에서 돈다.
@@ -17,8 +17,10 @@ export async function GET(req: Request) {
   const devApi = devApiAllowed()
   const override = devApi ? new URL(req.url).searchParams.get('now') : null
   const now = override && !Number.isNaN(Date.parse(override)) ? new Date(override) : new Date()
+  const work = new URL(req.url).pathname.endsWith('/maintenance') ? 'maintenance' : new URL(req.url).searchParams.get('work')
+  if (work && work !== 'maintenance' && work !== 'ai') return NextResponse.json({ error: 'invalid_work' }, { status: 400 })
 
-  const run = await runRealityScheduler(now)
+  const run = work === 'maintenance' ? await runRealityMaintenance() : work === 'ai' ? await runRealityEvaluations(now) : await runRealityScheduler(now)
   console.info('[reality] scheduler run', JSON.stringify({ at: now.toISOString(), ...run }))
   return NextResponse.json(run)
 }

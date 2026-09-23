@@ -24,3 +24,23 @@ export async function timed<T>(event: string, fields: ObserveFields, work: () =>
     throw e
   }
 }
+
+export function metric(name: string, startedAt: number, ok = true): number {
+  const elapsedMs = Math.round((performance.now() - startedAt) * 10) / 10
+  const configured = Number(process.env.PERF_SAMPLE_RATE ?? '0.05')
+  const sampleRate = Number.isFinite(configured) ? Math.min(1, Math.max(0, configured)) : 0.05
+  if (Math.random() < sampleRate) observe('perf.metric', { name, elapsedMs, ok })
+  return elapsedMs
+}
+
+export async function measured<T>(name: string, work: () => Promise<T>): Promise<T> {
+  const startedAt = performance.now()
+  try {
+    const result = await work()
+    metric(name, startedAt)
+    return result
+  } catch (error) {
+    metric(name, startedAt, false)
+    throw error
+  }
+}

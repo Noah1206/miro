@@ -70,14 +70,14 @@ export const EMPTY: FormInitial = {
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
   startingContext: '', startingTime: '', sampleDialogue: [], lore: [],
-  isPublic: false,
+  isPublic: true,
   images: [],
 }
 
 /**
  * 캐릭터 폼 — 만들기와 편집이 같은 화면이다 (명세서 2.2).
  * 탭은 보이기만 바꾼다 — 모든 칸이 DOM 에 남아 마지막에 한 번에 제출된다.
- * mode=edit 이고 draft 가 아니면 머리에 '저장' 하나, 프로필 맨 위에 공개 스위치가 붙는다.
+ * 등록 시 공개 여부를 선택할 수 있다. 임시저장은 항상 비공개다.
  */
 export function CharacterForm({ mode, draft = false, initial, action, closeHref }: {
   mode: 'create' | 'edit'
@@ -105,7 +105,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
   const [channel, setChannel] = useState<string>(i.preferredChannel)
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
-  const [isPublic, setIsPublic] = useState(i.isPublic)
+  const [isPublic, setIsPublic] = useState(draft ? true : i.isPublic)
   // 소개 페이지 미리보기 — 탭을 열 때 폼을 한 번 읽는다. 칸을 전부 controlled 로 바꾸지 않는다.
   const formRef = useRef<HTMLFormElement>(null)
   const [snap, setSnap] = useState<Snapshot | null>(null)
@@ -137,15 +137,13 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
 
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
-          {mode === 'edit' && !draft && (
-            <Section title="공개">
-              <Card>
-                <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
-                  label="다른 사람에게 공개"
-                  hint="켜면 홈과 발견에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다." />
-              </Card>
-            </Section>
-          )}
+          <Section title="공개">
+            <Card>
+              <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
+                label="다른 사람에게 공개"
+                hint="등록할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다. 임시저장은 공개되지 않습니다." />
+            </Card>
+          </Section>
           <Section title="캐릭터">
             <Card>
               <ImagePicker label="캐릭터 이미지" maxCount={5} existing={i.images} />
@@ -158,7 +156,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
                     <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
                       <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
                     </LabeledField>
-                    <LabeledField label="설명" hint="시대·장소·장르까지 여기에 적으면 세계관이 됩니다.">
+                    <LabeledField label="설명" hint="시대·장소 등 세계관을 적어 주세요. 장르는 성격·장르 탭에서 따로 선택합니다.">
                       <CountedTextArea name="worldSetting" max={600} rows={3} defaultValue={i.worldSetting}
                         placeholder="상황, 관계, 세계관 등을 설명해주세요." />
                     </LabeledField>
@@ -201,9 +199,9 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref 
               <LoreEditor name="lore" defaultValue={i.lore} />
             </Card>
           </Section>
-          <Section title="분위기" subtitle="카드에 해시태그로 붙고, 비슷한 캐릭터를 찾는 기준이 됩니다.">
+          <Section title="장르" subtitle="여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 검색 장르와 카드 해시태그에 반영됩니다.">
             <Card>
-              <PresetTags name="mood" options={MOODS} max={5} defaultValue={i.mood} />
+              <PresetTags name="mood" label="장르" options={MOODS} max={5} defaultValue={i.mood} />
             </Card>
           </Section>
           <Section title="성향" subtitle="같은 상황에서도 이 캐릭터가 어떻게 느끼고 반응할지 정합니다.">

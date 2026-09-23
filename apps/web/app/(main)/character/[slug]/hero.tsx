@@ -1,7 +1,7 @@
 'use client'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef, useState } from 'react'
-import { CharacterVisual } from '@/components/character-visual'
+import { CharacterPhoto, CharacterVisual } from '@/components/character-visual'
 
 export function PhotoHero({ name, accent, slug, photos, shared = true }: {
   name: string; accent: string | null; slug: string; photos: string[]; shared?: boolean
@@ -10,7 +10,7 @@ export function PhotoHero({ name, accent, slug, photos, shared = true }: {
   const photo = photos[selected] ?? null
   return (
     <div style={{ position: 'relative' }}>
-      <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" shared={shared} style={{ borderRadius: 0, border: 0 }} />
+      <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
       {photos.length > 1 && (
         <div role="group" aria-label={`${name} 사진 선택`} style={{
           position: 'absolute', left: 'var(--gutter)', right: 'var(--gutter)', bottom: 'var(--space-7)', zIndex: 3,
@@ -22,8 +22,8 @@ export function PhotoHero({ name, accent, slug, photos, shared = true }: {
               borderRadius: 8, border: selected === index ? '1.5px solid var(--color-white)' : '1px solid rgba(255,255,255,.18)',
               background: 'var(--color-surface-2)', opacity: selected === index ? 1 : 0.68,
             }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt="" width={52} height={66} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <CharacterPhoto src={src} alt="" size="avatar" sizes="52px" width={52} height={66}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
             </button>
           ))}
         </div>

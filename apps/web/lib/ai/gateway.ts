@@ -3,9 +3,85 @@ import { eq, sql } from 'drizzle-orm'
 import { db, conversationRequests, roleplaySessions, usageLedger } from '@miro/db'
 import { rollbackInTransaction } from '@/lib/usage/guard'
 import type { ConversationOutcome } from '@/lib/simulation/turn'
+import type { AILeaseGuard } from '@miro/providers'
 
 export class SessionUnavailableError extends Error {
   constructor(readonly reason: 'not_found' | 'restricted') { super(reason) }
+}
+
+function concurrencyLimit(name: string, fallback: number): number {
+  const limit = Number(process.env[name] ?? fallback)
+  if (!Number.isSafeInteger(limit) || limit < 1) throw new Error(`invalid ${name}`)
+  return limit
+}
+
+let pendingLeaseAcquisitions = 0
+
+export const databaseAILeaseGuard: AILeaseGuard = {
+  async acquire(provider, workload) {
+    const globalLimit = concurrencyLimit('MIRO_AI_GLOBAL_CONCURRENCY', 8)
+    const providerLimit = concurrencyLimit('MIRO_AI_PROVIDER_CONCURRENCY', 4)
+    if (pendingLeaseAcquisitions >= globalLimit) return null
+    pendingLeaseAcquisitions++
+    const token = randomUUID()
+    let expired = false
+    const admission = db.transaction(async tx => {
+      if (expired) return false
+      await tx.execute(sql`SET LOCAL statement_timeout = '1000ms'`)
+      const [lock] = await tx.execute<{ acquired: boolean }>(sql`SELECT pg_try_advisory_xact_lock(hashtext('miro:ai-provider-leases')) AS acquired`)
+      if (!lock?.acquired || expired) return false
+      await tx.execute(sql`DELETE FROM ai_provider_leases WHERE lease_until <= now()`)
+      const [load] = await tx.execute(sql`SELECT count(*)::int AS global_active,
+        count(*) FILTER (WHERE provider = ${provider})::int AS provider_active,
+        count(*) FILTER (WHERE workload = 'background')::int AS global_background,
+        count(*) FILTER (WHERE provider = ${provider} AND workload = 'background')::int AS provider_background
+        FROM ai_provider_leases`) as Array<{ global_active: number; provider_active: number; global_background: number; provider_background: number }>
+      if (!load || load.global_active >= globalLimit || load.provider_active >= providerLimit
+        || (workload === 'background' && (load.global_background >= 1 || load.provider_background >= 1
+          || load.global_active >= globalLimit - 1 || load.provider_active >= providerLimit - 1)) || expired) return false
+      await tx.execute(sql`INSERT INTO ai_provider_leases (token, provider, workload, lease_until)
+        VALUES (${token}::uuid, ${provider}, ${workload}, now() + interval '30 seconds')`)
+      return true
+    }).finally(() => { pendingLeaseAcquisitions-- })
+    const admitted = await new Promise<boolean>((resolve, reject) => {
+      const deadline = setTimeout(() => { expired = true; reject(new Error('lease_admission_timeout')) }, 1500)
+      void admission.then(value => {
+        if (expired) {
+          if (value) void db.execute(sql`DELETE FROM ai_provider_leases WHERE token = ${token}::uuid`).catch(() => {})
+          return
+        }
+        clearTimeout(deadline)
+        resolve(value)
+      }, error => {
+        if (expired) return
+        clearTimeout(deadline)
+        reject(error)
+      })
+    })
+    if (!admitted) return null
+    return {
+      heartbeat: async () => {
+        const renewed = await db.execute(sql`UPDATE ai_provider_leases SET lease_until = now() + interval '30 seconds'
+          WHERE token = ${token}::uuid AND lease_until > now() RETURNING token`)
+        return renewed.length === 1
+      },
+      release: async () => { await db.execute(sql`DELETE FROM ai_provider_leases WHERE token = ${token}::uuid`) },
+    }
+  },
+}
+
+export async function reconcileStaleAIReservations(now = new Date()): Promise<number> {
+  const stale = await db.execute<{ id: number }>(sql`
+    WITH picked AS MATERIALIZED (
+      SELECT id FROM ai_usage
+      WHERE status = 'reserved' AND created_at < ${new Date(now.getTime() - 60 * 60_000).toISOString()}::timestamptz
+      ORDER BY created_at, id LIMIT 100 FOR UPDATE SKIP LOCKED
+    )
+    UPDATE ai_usage SET status = 'completed', estimated_cost = reserved_cost,
+      error = 'interrupted_unknown_usage', ok = false
+    FROM picked WHERE ai_usage.id = picked.id RETURNING ai_usage.id
+  `)
+  return stale.length
 }
 
 export async function beginRequest(userId: string, sessionId: string, input: string, requestId: string = randomUUID()) {

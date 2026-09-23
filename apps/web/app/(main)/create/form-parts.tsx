@@ -552,8 +552,8 @@ const roundBtn: React.CSSProperties = {
  * 미리 적어 둔 태그를 눌러서 고르고, 없는 건 + 로 직접 적는다 (분위기).
  * 저장은 CSV 한 칸 — TagInput 과 같은 모양이라 읽는 쪽이 같다.
  */
-export function PresetTags({ name, options, max, maxLength = 20, defaultValue = [] }: {
-  name: string; options: readonly string[]; max: number; maxLength?: number; defaultValue?: string[]
+export function PresetTags({ name, label = '태그', options, max, maxLength = 20, defaultValue = [] }: {
+  name: string; label?: string; options: readonly string[]; max: number; maxLength?: number; defaultValue?: string[]
 }) {
   const [picked, setPicked] = useState<string[]>(defaultValue)
   const [adding, setAdding] = useState(false)
@@ -563,9 +563,12 @@ export function PresetTags({ name, options, max, maxLength = 20, defaultValue = 
   const toggle = (o: string) => setPicked(picked.includes(o) ? picked.filter((v) => v !== o) : full ? picked : [...picked, o])
   const custom = picked.filter((v) => !options.includes(v))
   const addCustom = () => {
-    const t = text.trim().replace(/\s+/g, ' ').slice(0, maxLength)
-    if (!t || full || picked.includes(t)) return
-    setPicked([...picked, t]); setText('')
+    const next = [...picked]
+    for (const value of text.split(/[,·]/).map(value => value.trim().replace(/\s+/g, ' ').slice(0, maxLength)).filter(Boolean)) {
+      if (next.length >= max) break
+      if (!next.some(pickedValue => pickedValue.replace(/\s+/g, '').toLowerCase() === value.replace(/\s+/g, '').toLowerCase())) next.push(value)
+    }
+    setPicked(next); setText('')
   }
   const chip = (on: boolean, off: boolean): React.CSSProperties => ({
     minHeight: 44, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
@@ -575,7 +578,7 @@ export function PresetTags({ name, options, max, maxLength = 20, defaultValue = 
     color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
   })
   return (
-    <div>
+    <div role="group" aria-label={label}>
       <input type="hidden" name={name} value={picked.join(',')} />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {options.map((o) => {
@@ -603,8 +606,8 @@ export function PresetTags({ name, options, max, maxLength = 20, defaultValue = 
       </div>
       {adding && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '6px 10px', ...box(true) }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength} placeholder="예) 재벌가, 첫사랑" autoFocus disabled={full}
-            aria-label="분위기 직접 입력"
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength * max} placeholder="예) 재벌가, 첫사랑" autoFocus disabled={full}
+            aria-label={`${label} 직접 입력`}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addCustom() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
           <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addCustom} disabled={!text.trim() || full} className="hit"

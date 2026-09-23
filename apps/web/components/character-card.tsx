@@ -1,5 +1,4 @@
 'use client'
-import { ContactBadge } from './contact-badge'
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
@@ -62,8 +61,6 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
         )}
 
         </span>
-        <ContactBadge enabled={c.contactEnabled} />
-
         {/* 아래 절반을 덮는 그라디언트 위에 글을 올린다 — 이미지가 밝아도 글이 읽힌다. */}
         <div style={{
           position: 'absolute', left: 0, right: 0, bottom: 0, padding: '30px 12px 12px',

@@ -10,6 +10,9 @@ import * as providers from '@miro/providers'
 import { loadRealityContext } from '../context'
 import { evaluateSession } from '../evaluate'
 import { runRealityScheduler } from '../scheduler'
+import { GET as runMaintenanceCron } from '@/app/api/cron/reality/maintenance/route'
+import { GET as runRealityCron } from '@/app/api/cron/reality/route'
+import * as pushOutbox from '../push-outbox'
 import { cloneAsReality, dropRealityClones } from './fixtures'
 
 /** 시드 공식 캐릭터는 chat 이다. 엔진 테스트는 같은 성향의 reality 복제본 위에서 돈다 — slug 당 한 번. */
@@ -238,10 +241,10 @@ describeDb('reality activation — real send path', () => {
 
 describeDb('reality scheduler', () => {
   const made: string[] = []
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs() })
   afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 
-  async function idleSession(idleMinutes: number) {
+  async function idleSession(idleMinutes: number, activeEvent = false) {
     const [u] = await db.insert(users)
       .values({ email: `rs-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
     made.push(u!.id)
@@ -251,7 +254,10 @@ describeDb('reality scheduler', () => {
       lastInteractionAt: new Date(DAY.getTime() - idleMinutes * 60_000),
     }).returning({ id: roleplaySessions.id })
     await db.insert(worldStates).values({ sessionId: s!.id, currentLocation: 'x', currentTime: 'y' })
-    await db.insert(relationships).values({ sessionId: s!.id })
+    await db.insert(relationships).values({ sessionId: s!.id,
+      ...(activeEvent ? ESTABLISHED : {}) })
+    if (activeEvent) await db.insert(events).values({ sessionId: s!.id, type: 'crisis', status: 'active', createdAtTurn: 1,
+      continuationState: { summary: '공방에 불이 났다' } })
     return s!.id
   }
 
@@ -271,5 +277,78 @@ describeDb('reality scheduler', () => {
     const [i2] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, idle))
     expect(i2!.realityCheckedAt?.getTime()).toBe(DAY.getTime())
     expect(second.errors).toBe(0)
+  })
+
+  it('retries an interrupted claim after the recheck interval', async () => {
+    const id = await idleSession(POLICY.reality.idleMinutesBeforeContact + 30)
+    await db.update(roleplaySessions).set({ realityCheckedAt: DAY }).where(eq(roleplaySessions.id, id))
+    await runRealityScheduler(new Date(DAY.getTime() + 15 * 60_000))
+    expect((await db.select({ at: roleplaySessions.realityCheckedAt }).from(roleplaySessions).where(eq(roleplaySessions.id, id)))[0]!.at?.getTime()).toBe(DAY.getTime())
+    const retryAt = new Date(DAY.getTime() + (POLICY.reality.recheckMinutes + 1) * 60_000)
+    await runRealityScheduler(retryAt)
+    expect((await db.select({ at: roleplaySessions.realityCheckedAt }).from(roleplaySessions).where(eq(roleplaySessions.id, id)))[0]!.at?.getTime()).toBe(retryAt.getTime())
+  })
+
+  it('includes an old due session when fresh sessions exceed the batch cap', async () => {
+    const old = await idleSession(POLICY.reality.idleMinutesBeforeContact + 60)
+    await db.update(roleplaySessions).set({ realityCheckedAt: new Date(DAY.getTime() - 120 * 60_000) }).where(eq(roleplaySessions.id, old))
+    for (let index = 0; index < 10; index++) await idleSession(POLICY.reality.idleMinutesBeforeContact + 30)
+    const run = await runRealityScheduler(DAY)
+    expect(run.claimed).toBeLessThanOrEqual(10)
+    expect((await db.select({ at: roleplaySessions.realityCheckedAt }).from(roleplaySessions).where(eq(roleplaySessions.id, old)))[0]!.at?.getTime()).toBe(DAY.getTime())
+  })
+
+  it('runs existing maintenance and push work before slow AI evaluation', async () => {
+    await idleSession(POLICY.reality.idleMinutesBeforeContact + 30, true)
+    const push = vi.spyOn(pushOutbox, 'deliverRealityPush').mockResolvedValue(0)
+    let started!: () => void
+    let release!: () => void
+    const entered = new Promise<void>(resolve => { started = resolve })
+    const blocked = new Promise<void>(resolve => { release = resolve })
+    vi.spyOn(providers, 'generateRealityContent').mockImplementation(async () => {
+      started()
+      await blocked
+      return { text: '잘 지내요?', tone: 'warm' }
+    })
+    const run = runRealityScheduler(DAY)
+    try {
+      await entered
+      expect(push).toHaveBeenCalledTimes(1)
+    } finally { release() }
+    await run
+  })
+
+  it('runs maintenance and push independently while a slow AI evaluation remains blocked', async () => {
+    vi.stubEnv('CRON_SECRET', 'isolation-test')
+    expect((await runMaintenanceCron(new Request('http://localhost/api/cron/reality/maintenance'))).status).toBe(401)
+    expect((await runRealityCron(new Request('http://localhost/api/cron/reality?work=unknown', {
+      headers: { authorization: 'Bearer isolation-test' },
+    }))).status).toBe(400)
+    await idleSession(POLICY.reality.idleMinutesBeforeContact + 30, true)
+    const push = vi.spyOn(pushOutbox, 'deliverRealityPush').mockResolvedValue(0)
+    let started!: () => void
+    let release!: () => void
+    const entered = new Promise<void>(resolve => { started = resolve })
+    const blocked = new Promise<void>(resolve => { release = resolve })
+    vi.spyOn(providers, 'generateRealityContent').mockImplementation(async () => {
+      started()
+      await blocked
+      return { text: '잘 지내요?', tone: 'warm' }
+    })
+    const evaluation = runRealityCron(new Request(`http://localhost/api/cron/reality?work=ai&now=${encodeURIComponent(DAY.toISOString())}`, {
+      headers: { authorization: 'Bearer isolation-test' },
+    }))
+    try {
+      await entered
+      const response = await runMaintenanceCron(new Request('http://localhost/api/cron/reality/maintenance', {
+        headers: { authorization: 'Bearer isolation-test' },
+      }))
+      expect(response.status).toBe(200)
+      const maintenance = await response.json()
+      expect(maintenance.bankOrders).toBeDefined()
+      expect(maintenance.passNotices).toBeDefined()
+      expect(push).toHaveBeenCalledTimes(1)
+    } finally { release() }
+    expect((await evaluation).status).toBe(200)
   })
 })

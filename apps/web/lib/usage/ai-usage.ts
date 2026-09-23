@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto'
 import { eq, inArray, sql } from 'drizzle-orm'
 import { db, aiUsage, aiBudgetCounters } from '@miro/db'
-import { setAIUsageSink, setAIBudgetGuard, modelCost, type AIUsageRecord, type BudgetGuard } from '@miro/providers'
+import { setAIUsageSink, setAIBudgetGuard, setAILeaseGuard, modelCost, type AIUsageRecord, type BudgetGuard } from '@miro/providers'
+import { databaseAILeaseGuard } from '@/lib/ai/gateway'
 import { effectivePlan } from './guard'
 import { afterResponse } from '@/lib/defer'
 import { observe } from '@/lib/observe'
@@ -98,6 +99,7 @@ export const productionBudgetGuard: BudgetGuard = {
 export function installAIUsageSink(): void {
   setAIUsageSink(r => afterResponse(() => recordAIUsage(r).catch(e => observe('ai.usage_record_failed', { attemptId: r.attemptId, error: (e as Error).message }))))
   setAIBudgetGuard(productionBudgetGuard)
+  setAILeaseGuard(process.env.MIRO_AI_DB_LEASES === '1' ? databaseAILeaseGuard : undefined)
 }
 
 export async function recordAIUsage(r: AIUsageRecord): Promise<void> {

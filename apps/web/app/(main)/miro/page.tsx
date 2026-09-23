@@ -1,7 +1,8 @@
 import { currentUser } from '@/lib/auth'
-import { discoverGrid } from '@/lib/home'
+import { miroPage } from '@/lib/home'
 import { LogoMark, Page } from '@/components/ui'
-import { CharacterCard } from '@/components/character-card'
+import { MiroGrid } from './grid'
+import { measured } from '@/lib/observe'
 
 /**
  * 미로 — Reality 전용 캐릭터만. 카드 → 상세 → 대화 진입은 홈과 같은 길을 쓴다.
@@ -10,7 +11,7 @@ import { CharacterCard } from '@/components/character-card'
  */
 export default async function Miro() {
   const user = await currentUser()
-  const items = await discoverGrid(user?.id ?? null, 'reality')
+  const page = await measured('nav.miro_data', () => miroPage(user?.id ?? null))
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
@@ -21,13 +22,7 @@ export default async function Miro() {
         <h1 className="sr-only">미로</h1>
       </header>
 
-      {items.length === 0 ? (
-        <p data-miro-empty className="empty-state empty-state--fill">아직 미로에 있는 캐릭터가 없어요</p>
-      ) : (
-        <div data-miro-grid className="grid-2" style={{ gap: 4, padding: '0 var(--gutter)' }}>
-          {items.map((c) => <CharacterCard key={c.id} c={c} />)}
-        </div>
-      )}
+      <MiroGrid key={crypto.randomUUID()} initial={page} />
     </Page>
   )
 }

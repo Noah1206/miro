@@ -1,23 +1,71 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ButtonLink, TransitionLink } from '@/components/ui'
+import { Button, ButtonLink, TransitionLink } from '@/components/ui'
+import { CharacterPhoto } from '@/components/character-visual'
 import { spring, tween } from '@/lib/motion/tokens'
-import type { ArchiveItem } from '@/lib/ops/archive'
+import type { ArchiveCursor, ArchivePage } from '@/lib/ops/archive'
+import { loadArchivePage } from './actions'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
  * 보관/복원은 서버 액션. 눌린 즉시 토스트로 확인.
  */
-export function ArchiveList({ items }: {
-  items: ArchiveItem[]
+export function ArchiveList({ initialPage }: {
+  initialPage: ArchivePage
 }) {
+  const [items, setItems] = useState(initialPage.items)
+  const [nextCursor, setNextCursor] = useState<ArchiveCursor | null>(initialPage.nextCursor)
   const [query, setQuery] = useState('')
   const [managing, setManaging] = useState(false)
-  const filtered = useMemo(() => {
-    const keyword = query.trim().toLocaleLowerCase('ko')
-    return keyword ? items.filter((item) => item.characterName.toLocaleLowerCase('ko').includes(keyword)) : items
-  }, [items, query])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
+  const requestId = useRef(0)
+
+  useEffect(() => {
+    const currentRequest = ++requestId.current
+    setError(false)
+    if (!query.trim()) {
+      setItems(initialPage.items)
+      setNextCursor(initialPage.nextCursor)
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    setItems([])
+    setNextCursor(null)
+    const timer = setTimeout(async () => {
+      try {
+        const page = await loadArchivePage(query)
+        if (currentRequest !== requestId.current) return
+        setItems(page.items)
+        setNextCursor(page.nextCursor)
+      } catch {
+        if (currentRequest === requestId.current) setError(true)
+      } finally {
+        if (currentRequest === requestId.current) setLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query, initialPage, retryKey])
+
+  async function loadMore() {
+    if (!nextCursor || loading) return
+    const currentRequest = ++requestId.current
+    setLoading(true)
+    setError(false)
+    try {
+      const page = await loadArchivePage(query, nextCursor)
+      if (currentRequest !== requestId.current) return
+      setItems((current) => [...current, ...page.items])
+      setNextCursor(page.nextCursor)
+    } catch {
+      if (currentRequest === requestId.current) setError(true)
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false)
+    }
+  }
   return (
     <>
       <header style={{ marginBottom: 'var(--space-6)' }}>
@@ -38,23 +86,23 @@ export function ArchiveList({ items }: {
         <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }}>
           <circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" />
         </svg>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="캐릭터 이름으로 검색" style={{
+        <input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder="캐릭터 이름으로 검색" style={{
           width: '100%', minHeight: 52, padding: '0 16px 0 46px', border: 0, outline: 0,
           borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
         }} />
       </label>
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
         <AnimatePresence initial={false}>
-        {filtered.map((s) => {
-          const portrait = s.characterImages[0] ?? null
+        {items.map((s) => {
+          const portrait = s.characterImage
           return (
           <motion.li key={s.id} data-session-row data-status={s.status} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12, transition: tween.exit }} transition={spring.default}
             style={{ position: 'relative', padding: '10px 12px', borderRadius: 'var(--radius-lg)', background: 'rgba(255, 255, 255, 0.035)' }}>
             <TransitionLink href={`/chat/${s.id}`} style={{ display: 'flex', gap: 12, alignItems: 'center', minHeight: 68 }}>
               <div aria-hidden style={{ width: 56, height: 56, borderRadius: 18, overflow: 'hidden', flexShrink: 0, background: 'var(--color-surface-2)', display: 'grid', placeItems: 'center' }}>
                 {portrait
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={portrait} alt="" width={56} height={56} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="56px" width={56} height={56}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   : <span className="t-name" style={{ fontSize: 22, color: s.accentA ?? 'var(--color-text-tertiary)', opacity: 0.8 }}>{s.characterName.slice(0, 1)}</span>}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -80,7 +128,10 @@ export function ArchiveList({ items }: {
         })}
         </AnimatePresence>
       </ul>
-      {filtered.length === 0 && <p className="empty-state empty-state--fill">해당 이름의 캐릭터가 없어요</p>}
+      {loading && <p role="status" className="t-caption" style={{ marginTop: 16 }}>불러오는 중…</p>}
+      {error && <div role="alert" className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>목록을 불러오지 못했어요. <Button type="button" size="sm" variant="ghost" onClick={() => nextCursor ? void loadMore() : setRetryKey((value) => value + 1)}>다시 시도</Button></div>}
+      {!loading && !error && items.length === 0 && <p className="empty-state empty-state--fill">{query.trim() ? '해당 이름의 캐릭터가 없어요' : '진행 중인 역할극이 없습니다.'}</p>}
+      {nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>더 보기</Button></div>}
     </>
   )
 }

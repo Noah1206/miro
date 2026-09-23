@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
+import { genreValues } from '@/lib/genres'
 import { CharacterForm, type FormInitial } from '@/app/(main)/create/character-form'
 import { updateCharacter } from './actions'
 
@@ -19,7 +20,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '',
     age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
-    mood: (world?.genre ?? '').split('·').map((m) => m.trim()).filter(Boolean),
+    mood: genreValues(world?.genre ?? null),
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
     gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average',
     height: visual?.bodyProfile?.height ?? '', detail: visual?.bodyProfile?.detail ?? '',

@@ -7,7 +7,7 @@ export type CreateTab = 'profile' | 'personality' | 'appearance' | 'relationship
 
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: '프로필' },
-  { key: 'personality', label: '성격' },
+  { key: 'personality', label: '성격·장르' },
   { key: 'appearance', label: '외형' },
   { key: 'relationship', label: '관계' },
   { key: 'contact', label: '연락' },

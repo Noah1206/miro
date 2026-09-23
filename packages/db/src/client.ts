@@ -13,7 +13,7 @@ function connect(): Db {
   if (instance) return instance
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not set')
-  instance = drizzle(postgres(url, options(url)), { schema })
+  instance = drizzle(postgres(url, poolOptions(url)), { schema })
   return instance
 }
 
@@ -24,11 +24,15 @@ function connect(): Db {
  *  - Direct / Session (:5432) — 마이그레이션처럼 한 연결을 오래 쥐는 작업용.
  * 어느 쪽이든 TLS 는 필수다. 로컬 Postgres 는 이 모든 것에 해당하지 않으므로 건드리지 않는다.
  */
-function options(url: string): postgres.Options<Record<string, never>> {
+export function poolOptions(url: string, configuredMax = process.env.DB_POOL_MAX): postgres.Options<Record<string, never>> {
   const { hostname, port } = new URL(url)
   const supabase = hostname.endsWith('.supabase.com') || hostname.endsWith('.supabase.co')
   if (!supabase) return {}
   const pooled = port === '6543' || hostname.includes('pooler')
+  const max = configuredMax === undefined ? 5 : Number(configuredMax)
+  if (!Number.isInteger(max) || max < 2 || max > 20) {
+    throw new Error('DB_POOL_MAX must be an integer between 2 and 20')
+  }
   return {
     ssl: 'require',
     // Transaction pooler 는 문장마다 연결이 바뀔 수 있어 named prepared statement 를 못 쓴다.
@@ -37,11 +41,12 @@ function options(url: string): postgres.Options<Record<string, never>> {
      * 동시에 들어오는 요청 수만큼은 커넥션이 있어야 한다. 1 로 묶으면 한 요청이
      * 트랜잭션을 연 사이 다른 요청이 풀을 기다리다 타임아웃한다 — 트랜잭션 안에서
      * 커넥션을 하나 더 잡으려는 코드가 있으면 아예 자기 자신과 교착한다.
-     * Supabase pooler 가 뒤에서 실제 Postgres 연결을 이미 모아 주므로 이 값은 넉넉해도 된다.
-     * DB_POOL_MAX 로 배포 환경(서버리스는 낮게)에 맞춰 조정한다.
+     * 인스턴스마다 별도 풀이 생기므로 최대 동시 인스턴스 수와 곱한 총 연결 수를
+     * Supavisor 클라이언트 한도 및 DB 연결 여유 안에 둔다.
      */
-    max: Number(process.env.DB_POOL_MAX ?? 10),
+    max,
     idle_timeout: 20,
+    connect_timeout: 5,
   }
 }
 

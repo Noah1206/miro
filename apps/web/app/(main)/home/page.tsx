@@ -1,7 +1,8 @@
 import { currentUser } from '@/lib/auth'
-import { homeRows } from '@/lib/home'
+import { homePage } from '@/lib/home'
 import { LoginButton, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { IncomingCall } from '@/components/incoming-call'
+import { measured } from '@/lib/observe'
 import { HomeFeed } from './feed'
 
 /** 로그인했다는 표시. 이름이나 이메일의 첫 글자를 담고, 누르면 내 정보로 간다. */
@@ -26,8 +27,7 @@ function initial(user: { displayName: string | null; email: string | null }): st
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
-  const user = await currentUser()
-  const rows = await homeRows(user?.id ?? null)
+  const [user, page] = await Promise.all([currentUser(), measured('nav.home_data', () => homePage())])
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
@@ -49,7 +49,7 @@ export default async function Home() {
         </div>
       </header>
 
-      <HomeFeed rows={rows} />
+      <HomeFeed key={crypto.randomUUID()} initial={page} />
     </Page>
   )
 }

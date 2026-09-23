@@ -2,24 +2,18 @@ import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
-import { characterLikeState, countComments, isBookmarked, listComments, similarCharacters } from '@/lib/social'
+import { characterLikeState, countComments, listComments, similarCharacters } from '@/lib/social'
 import { db, roleplaySessions } from '@miro/db'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { Accordion, Back, Button, Page, TransitionLink } from '@/components/ui'
+import { Back, Page, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, BookmarkButton, SampleDialogue, RealityStrip } from './sections'
+import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, SampleDialogue, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 import { StartWithLogin } from './start-button'
 
-/**
- * 상세는 '이 사람과 말을 섞으면 어떤 느낌인가' 를 먼저 보여주는 화면이다.
- * 히어로 → 이름·한 줄·해시태그·통계 → 현실 기능 → 첫 장면과 예시 대화 → 사진 →
- * 접어 둔 설명 → 댓글 → 비슷한 작품 → 문.
- * 설명을 위에 쌓지 않는다 — 읽고 싶은 사람만 펴게 두고, 장면을 먼저 보여준다.
- */
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
   const user = await currentUser()
@@ -27,11 +21,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const c = await getCharacterByKey(slug, user?.id ?? null)
   if (!c) notFound()
 
-  const [plays, comments, commentCount, saved, similar, likes] = await Promise.all([
+  const [plays, comments, commentCount, similar, likes] = await Promise.all([
     playCount(c.id),
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
-    isBookmarked(c.id, user?.id ?? null),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
   ])
@@ -87,12 +80,18 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           {plays > 0 && <Stat icon="chat" label={`${compact(plays)}`} />}
           <Stat icon="comment" label={`댓글 ${commentCount}`} />
           <LikeButton slug={slug} initial={likes} />
-          {/* 하단 CTA 는 '대화 시작하기' 하나만 둔다 — 북마크는 여기에 (사용자 결정). */}
-
         </div>
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
         {c.experienceType === 'reality' && <RealityStrip />}
+        <Rule label="이 사람에 대해">
+          <div className="detail-prose">
+            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>
+            {profile.map((line) => (
+              <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
+            ))}
+          </div>
+        </Rule>
         {c.worldSetting && (
           <Rule label="세계관">
             <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.worldSetting}</p>
@@ -100,7 +99,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         )}
         <CharacterSettings characterId={c.id} name={c.name} />
 
-        {/* 먼저 보여주는 것은 설명이 아니라 장면이다 — 이 사람과 말을 섞으면 어떤 느낌인지. */}
         <Rule label="첫 장면">
           <div className="detail-prose">
             <p className="t-body-lg t-quote">{c.startingContext}</p>
@@ -114,18 +112,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             </div>
           )}
         </Rule>
-
-        {/* 설명글은 읽고 싶은 사람만 편다 — 카드를 쌓는 대신 한 겹 접어 둔다. */}
-        <div style={{ marginTop: 'var(--space-7)' }}>
-          <Accordion title="이 사람에 대해">
-            <div className="detail-prose">
-              <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>
-              {profile.map((line) => (
-                <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
-              ))}
-            </div>
-          </Accordion>
-        </div>
 
         <Rule label={`댓글 ${commentCount}`}
           action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>전체보기</TransitionLink>}>
@@ -145,13 +131,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {/* n18 — 문. 고정 하단. 내비 위에 올라앉는다 (2.5.8 / 2.4.11). */}
       {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
-      <div className="detail-cta" style={{ zIndex: 25, bottom: 0, display: 'flex', alignItems: 'center', gap: 10, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: 'var(--color-bg)' }}>
-        <BookmarkButton slug={slug} saved={saved} iconOnly />
-        <div style={{ flex: 1 }}>
+      <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: 'var(--color-bg)' }}>
         {user
           ? <form action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{COPY.cta.startRoleplay}</SubmitButton></form>
           : <StartWithLogin slug={slug} label="로그인하고 시작하기" />}
-        </div>
       </div>
     </Page>
   )

@@ -53,6 +53,23 @@ describeDb('durable proactive push', () => {
     await deliverRealityPush(now)
     expect(s.send).toHaveBeenCalledTimes(1)
   })
+  it('may repeat a push after delivery succeeds but completion is interrupted', async () => {
+    const s = await queued()
+    const tags: string[] = []
+    s.send.mockImplementationOnce(async (_subscription, payload) => {
+      tags.push(payload.tag)
+      throw new Error('ack lost after delivery')
+    }).mockImplementationOnce(async (_subscription, payload) => {
+      tags.push(payload.tag)
+      return { ok: true }
+    })
+    await deliverRealityPush(now)
+    const [retry] = await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id))
+    expect(retry!.status).toBe('pending')
+    await deliverRealityPush(new Date(retry!.nextAttemptAt.getTime() + 1))
+    expect(tags).toEqual([`session:${s.sessionId}`, `session:${s.sessionId}`])
+    expect(await db.select().from(realityContacts).where(eq(realityContacts.id, s.contact.id))).toHaveLength(1)
+  })
   it('honours revoked notifications before delivery', async () => {
     const s = await queued()
     await db.update(userSettings).set({ pushEnabled: false }).where(eq(userSettings.userId, s.userId))

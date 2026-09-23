@@ -12,10 +12,10 @@ export const TransitionLink = forwardRef<HTMLAnchorElement, Props>(function Tran
   return (
     <Link ref={ref} href={href} {...rest} onClick={(e: MouseEvent<HTMLAnchorElement>) => {
       onClick?.(e)
-      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0 || e.currentTarget.download || (e.currentTarget.target && e.currentTarget.target !== '_self')) return
       if (typeof href !== 'string') return
       e.preventDefault()
-      startNavigation(direction, () => router.push(href))
+      startNavigation(direction, () => router.push(href), href)
     }} />
   )
 })

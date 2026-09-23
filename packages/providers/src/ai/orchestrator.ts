@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { productionRuntime } from '@miro/config'
 import type { ZodType, ZodTypeDef } from 'zod'
 import type { LLMProvider, ProviderInfo } from '../types'
-import type { AIContext, AIProvider, AIUsageRecord, BudgetGuard, GenerationRequest, GenerationResult } from './types'
+import type { AIContext, AILeaseGuard, AIProvider, AIUsageRecord, BudgetGuard, GenerationRequest, GenerationResult } from './types'
 import { AIContentBlockedError } from './types'
 import { AI_TASKS, interactionImportance, taskOf } from './tasks'
 import { ModelRegistry, modelCost, routeModels, type ModelDefinition, type RolloutPolicy } from './model-registry'
@@ -13,12 +13,36 @@ export class AIUnavailableError extends Error {
 export class AIBudgetDeniedError extends Error {
   constructor(readonly reason: string) { super('AI budget denied: ' + reason) }
 }
+type ProviderLoad = { active: number; background: number; retryAfter: number }
+const providerLoad = new Map<string, ProviderLoad>()
+
+function providerConcurrency(): number {
+  const limit = Number(process.env.MIRO_AI_PROVIDER_CONCURRENCY ?? 4)
+  if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('invalid AI provider concurrency')
+  return limit
+}
+
+function acquireProvider(key: string, background: boolean): (() => void) | null {
+  const limit = providerConcurrency()
+  const load = providerLoad.get(key) ?? { active: 0, background: 0, retryAfter: 0 }
+  providerLoad.set(key, load)
+  if (Date.now() < load.retryAfter || load.active >= limit || (background && (load.background >= 1 || load.active >= limit - 1))) return null
+  load.active++
+  if (background) load.background++
+  return () => { load.active--; if (background) load.background-- }
+}
+
+function rateLimitProvider(key: string, backoffMs: number): void {
+  const load = providerLoad.get(key)
+  if (load) load.retryAfter = Math.max(load.retryAfter, Date.now() + backoffMs)
+}
 export type OrchestratorOptions = {
   chain: AIProvider[]; registry?: ModelRegistry; resolveModel?: (m: ModelDefinition) => AIProvider
   timeoutMs?: number; maxRetries?: number; rateLimitBackoffMs?: number; onUsage?: (r: AIUsageRecord) => void | Promise<void>
+  leaseHeartbeatMs?: number; maxLeaseHoldMs?: number
   explicitModel?: ModelDefinition
   shadow?: { model: ModelDefinition; provider: AIProvider }
-  context?: AIContext; budgetGuard?: BudgetGuard; rollout?: RolloutPolicy
+  context?: AIContext; budgetGuard?: BudgetGuard; leaseGuard?: AILeaseGuard; rollout?: RolloutPolicy
 }
 
 /** One entry point for every task. No provider data can reach Core before runtime validation. */
@@ -31,12 +55,14 @@ export class AIOrchestrator implements LLMProvider {
   lastPromptVersion: string | null = null
   lastFallbackUsed = false
   private readonly timeoutMs: number
+  private readonly maxLeaseHoldMs: number
   private readonly maxRetries: number
   /** 429 재시도 전 대기(ms). 테스트에서 0 으로 줄일 수 있게 주입 가능하다. */
   private readonly rateLimitBackoffMs: number
   constructor(private readonly opts: OrchestratorOptions) {
     if (!opts.chain.length) throw new Error('AI chain is empty')
     this.timeoutMs = Math.max(1, Math.min(60_000, opts.timeoutMs ?? 20_000))
+    this.maxLeaseHoldMs = Math.max(this.timeoutMs + 1, Math.min(300_000, opts.maxLeaseHoldMs ?? 300_000))
     this.maxRetries = Math.min(1, Math.max(0, opts.maxRetries ?? 1))
     this.rateLimitBackoffMs = Math.max(0, opts.rateLimitBackoffMs ?? 1000)
     this.traceId = opts.context?.traceId ?? randomUUID()
@@ -52,7 +78,7 @@ export class AIOrchestrator implements LLMProvider {
     const shadow = this.opts.shadow
     if (shadow && shadow.model.capabilities.includes(taskOf(opts.task)) && this.opts.context?.allowEvaluation) {
       const ai = new AIOrchestrator({ chain: [shadow.provider], explicitModel: shadow.model,
-        context: { ...this.opts.context, traceId: this.traceId, requestId: this.requestId, usageUnits: 0, shadow: true }, budgetGuard: this.opts.budgetGuard,
+        context: { ...this.opts.context, traceId: this.traceId, requestId: this.requestId, usageUnits: 0, shadow: true }, budgetGuard: this.opts.budgetGuard, leaseGuard: this.opts.leaseGuard,
         onUsage: this.opts.onUsage, maxRetries: 0, timeoutMs: Math.min(2000, this.timeoutMs) })
       const comparison = ai.execute(opts).then(result => { this.shadowOutput = result }, () => {})
       const [result] = await Promise.all([production, comparison])
@@ -88,42 +114,134 @@ export class AIOrchestrator implements LLMProvider {
     } }))
   }
   private async run<T>(req: GenerationRequest, validate: (text: string) => T, overrideRetries?: number): Promise<T> {
+    if (req.signal?.aborted) throw new AIUnavailableError(0, 'cancelled')
     let attempts = 0, last = 'unavailable', denied: string | null = null
     const selections = this.selections(req)
     for (let index = 0; index < selections.length; index++) {
       const { provider, model } = selections[index]!
-      if (productionRuntime() && (provider.info.mode === 'mock' || !this.opts.budgetGuard)) {
+      const providerKey = this.opts.registry || this.opts.explicitModel ? model.provider : provider.info.name.split('/')[0]!
+      if (productionRuntime() && (provider.info.mode === 'mock' || !this.opts.budgetGuard
+        || (process.env.MIRO_AI_DB_LEASES === '1' && !this.opts.leaseGuard))) {
         throw new AIBudgetDeniedError('production_guard_required')
       }
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
         // 속도 제한은 곧바로 다시 걸린다 — 재시도 전에 잠깐 기다린다.
         // 스키마 오류처럼 즉시 고쳐지는 실패에는 기다리지 않는다.
-        if (retry > 0 && last === 'provider_http_429') await new Promise(r => setTimeout(r, this.rateLimitBackoffMs))
+        if (retry > 0 && last === 'provider_http_429') {
+          const wait = Math.max(this.rateLimitBackoffMs, (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now())
+          if (wait > 0) await new Promise(r => setTimeout(r, wait))
+        }
         const attemptId = randomUUID()
         const request = { ...req, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens),
           prompt: retry ? req.prompt + '\nReturn only valid JSON matching the requested schema.' : req.prompt }
         const context = { ...this.opts.context, traceId: this.traceId, requestId: this.requestId }
+        const release = acquireProvider(providerKey, context.workload === 'background')
+        if (!release) { last = 'provider_overloaded'; break }
+        let lease: Awaited<ReturnType<AILeaseGuard['acquire']>> = null
+        try {
+          lease = await this.opts.leaseGuard?.acquire(providerKey, context.workload === 'background' ? 'background' : 'interactive') ?? null
+        } catch {
+          release()
+          throw new AIUnavailableError(attempts, 'lease_store_unavailable')
+        }
+        if (this.opts.leaseGuard && !lease) { release(); last = 'provider_overloaded'; break }
+        let admissionReleased = false
+        const releaseAdmission = async () => {
+          if (admissionReleased) return
+          admissionReleased = true
+          release()
+          await lease?.release()
+        }
+        if (req.signal?.aborted) { await releaseAdmission(); throw new AIUnavailableError(attempts, 'cancelled') }
         if (this.opts.budgetGuard) {
-          const decision = await this.opts.budgetGuard.authorize(request, model, context, attemptId)
-          if (!decision.allowed) { denied = decision.reason; break }
+          try {
+            const decision = await this.opts.budgetGuard.authorize(request, model, context, attemptId)
+            if (!decision.allowed) { await releaseAdmission(); denied = decision.reason; break }
+          } catch (error) { await releaseAdmission(); throw error }
+        }
+        if (lease) {
+          let valid = false
+          try { valid = await lease.heartbeat() } catch {}
+          if (!valid) {
+            await releaseAdmission().catch(() => {})
+            await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
+              userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null,
+              provider: model.provider, model: model.providerModelId, modelId: model.id, modelVersion: model.version,
+              promptVersion: req.promptVersion ?? `${req.task}:v1`, inputTokens: null, outputTokens: null,
+              estimatedCost: 0, actualCost: 0, usageUnits: 0, latencyMs: 0, ok: false, error: 'lease_lost_before_call',
+              fallbackUsed: index > 0, shadow: context.shadow ?? false })
+            throw new AIUnavailableError(attempts, 'lease_lost')
+          }
         }
         attempts++
         const started = Date.now(), controller = new AbortController()
         let timer: ReturnType<typeof setTimeout> | undefined
+        let cancel: (() => void) | undefined
+        let heartbeatTimer: ReturnType<typeof setInterval> | undefined
+        let heartbeatTimeout: ReturnType<typeof setTimeout> | undefined
+        let maxHoldTimer: ReturnType<typeof setTimeout> | undefined
+        let rejectLeaseLoss: ((reason: Error) => void) | undefined
+        let rejectHoldExpiry: ((reason: Error) => void) | undefined
+        let settled = false, leaseLost = false, holdExpired = false, renewing = false
+        const leaseFailure = new Promise<never>((_, reject) => { rejectLeaseLoss = reject })
+        const holdFailure = new Promise<never>((_, reject) => { rejectHoldExpiry = reject })
+        const loseLease = () => {
+          if (settled || leaseLost || holdExpired) return
+          leaseLost = true
+          controller.abort()
+          rejectLeaseLoss?.(new Error('lease_lost'))
+        }
+        if (lease) heartbeatTimer = setInterval(() => {
+          if (renewing || leaseLost || settled) return
+          renewing = true
+          heartbeatTimeout = setTimeout(loseLease, 5000)
+          void lease.heartbeat().then(valid => {
+            clearTimeout(heartbeatTimeout); renewing = false
+            if (!valid) loseLease()
+          }, () => {
+            clearTimeout(heartbeatTimeout); renewing = false; loseLease()
+          })
+        }, this.opts.leaseHeartbeatMs ?? 10_000)
+        maxHoldTimer = setTimeout(() => {
+          if (settled || holdExpired) return
+          holdExpired = true
+          controller.abort()
+          clearInterval(heartbeatTimer); clearTimeout(heartbeatTimeout)
+          void releaseAdmission().catch(() => {})
+          rejectHoldExpiry?.(new Error('lease_hold_expired'))
+        }, this.maxLeaseHoldMs)
         let result: GenerationResult | undefined, output: T | undefined, ok = false
         try {
+          const generation = Promise.resolve().then(() => provider.generate({ ...request, signal: controller.signal }))
+          const finish = () => {
+            settled = true
+            clearInterval(heartbeatTimer); clearTimeout(heartbeatTimeout); clearTimeout(maxHoldTimer)
+            void releaseAdmission().catch(() => {})
+          }
+          void generation.then(finish, finish)
+          const cancelled = new Promise<never>((_, reject) => {
+            cancel = () => { controller.abort(); reject(new Error('cancelled')) }
+            req.signal?.addEventListener('abort', cancel, { once: true })
+            if (req.signal?.aborted) cancel()
+          })
           result = await Promise.race([
-            provider.generate({ ...request, signal: controller.signal }),
+            generation,
+            cancelled,
+            leaseFailure,
+            holdFailure,
             new Promise<never>((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error(`timeout ${this.timeoutMs}ms`)) }, this.timeoutMs) }),
           ])
+          if (leaseLost) throw new Error('lease_lost')
+          if (holdExpired) throw new Error('lease_hold_expired')
           if (result.blocked) throw new AIContentBlockedError()
           output = validate(result.text)
           ok = true
         } catch (e) {
           // Never log provider response bodies, keys, prompts or private reasoning.
           const message = e instanceof Error ? e.message : ''
-          last = e instanceof AIContentBlockedError ? 'content_blocked' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message === 'invalid_schema' || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
-        } finally { clearTimeout(timer) }
+          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message === 'invalid_schema' || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
+          if (last === 'provider_http_429') rateLimitProvider(providerKey, this.rateLimitBackoffMs)
+        } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null
         await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
           userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null,
@@ -133,6 +251,7 @@ export class AIOrchestrator implements LLMProvider {
           usageUnits: ok ? context.usageUnits ?? 0 : 0, latencyMs: Date.now() - started, ok, error: ok ? null : last, fallbackUsed: index > 0, shadow: context.shadow ?? false,
         })
         if (result?.blocked) throw new AIContentBlockedError()
+        if (last === 'cancelled' || last === 'lease_lost' || last === 'lease_hold_expired') throw new AIUnavailableError(attempts, last)
         if (ok) {
           this.info.mode = provider.info.mode
           this.lastModelId = model.id; this.lastPromptVersion = req.promptVersion ?? `${req.task}:v1`; this.lastFallbackUsed = index > 0

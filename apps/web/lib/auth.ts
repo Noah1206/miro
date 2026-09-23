@@ -3,6 +3,7 @@ import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { eq, and, isNull, gt } from 'drizzle-orm'
 import { db, users, accounts, authSessions } from '@miro/db'
+import { measured } from '@/lib/observe'
 
 const COOKIE = 'miro_session'
 const SESSION_DAYS = 30
@@ -52,7 +53,7 @@ export const currentUser = cache(async (): Promise<SessionUser | null> => {
   const token = jar.get(COOKIE)?.value
   if (!token) return null
 
-  const rows = await db
+  const rows = await measured('auth.session_db', () => db
     .select({
       id: users.id,
       email: users.email,
@@ -67,7 +68,7 @@ export const currentUser = cache(async (): Promise<SessionUser | null> => {
       gt(authSessions.expiresAt, new Date()),
       isNull(users.deletedAt),
     ))
-    .limit(1)
+    .limit(1))
 
   return rows[0] ?? null
 })

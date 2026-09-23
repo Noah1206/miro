@@ -1,44 +1,48 @@
 import { currentUser } from '@/lib/auth'
-import { discoverGrid, type HomeCard } from '@/lib/home'
-import { LogoMark, Page } from '@/components/ui'
-import { CharacterCard } from '@/components/character-card'
+import { searchPage } from '@/lib/home'
+import { Page, TransitionLink } from '@/components/ui'
+import { SearchResultsSkeleton } from '@/components/page-skeletons'
 import { SearchHeader } from './search'
+import { SearchGrid } from './grid'
+import styles from './search.module.css'
+import { measured } from '@/lib/observe'
+import { searchGenres, searchQuery, searchUrl } from '@/lib/search-params'
+import { notFound, redirect } from 'next/navigation'
+import { Suspense } from 'react'
 
-/**
- * 일반 캐릭터 검색 — 홈이 '주제별로 고르는 곳' 이라면 여기는 '전부 보는 곳' 이다.
- * 2열 그리드로 한 번에 훑고, 검색은 ?q= 로 — 주소를 공유하면 같은 결과가 열린다.
- * 미로(reality) 캐릭터는 여기 나오지 않는다. 그쪽은 /miro.
- */
-export default async function HomeSearch({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const [user, { q: rawQ }] = await Promise.all([currentUser(), searchParams])
-  const q = (rawQ ?? '').trim().slice(0, 40)
-  const all = await discoverGrid(user?.id ?? null, 'chat')
-  const items = q ? all.filter((c) => matches(c, q)) : all
+async function SearchResults({ viewerId, q, tag, genres }: { viewerId: string | null; q: string; tag: string | null; genres: string[] }) {
+  let failed = false
+  const page = await measured('nav.search_data', () => searchPage(viewerId, q, null, tag, genres)).catch(() => {
+    failed = true
+    return { items: [], nextCursor: null }
+  })
+  return <SearchGrid key={JSON.stringify([viewerId, q, tag, genres])} query={q} tag={tag} genres={genres} viewerId={viewerId} initial={page} initialError={failed} />
+}
+
+export default async function HomeSearch({ searchParams }: { searchParams: Promise<{ q?: string; tag?: string; genre?: string | string[]; type?: string | string[] }> }) {
+  const [user, params] = await Promise.all([currentUser(), searchParams])
+  const q = searchQuery(params.q ?? '')
+  const tag = params.tag === undefined ? null : searchQuery(params.tag)
+  const rawGenres = params.genre === undefined ? [] : Array.isArray(params.genre) ? params.genre : [params.genre]
+  const genres = searchGenres(rawGenres)
+  if (!genres) notFound()
+  if (params.type !== undefined || JSON.stringify(rawGenres) !== JSON.stringify(genres)) redirect(searchUrl('/home/search', q, tag, genres))
+  const viewerId = user?.id ?? null
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
-      <SearchHeader q={q} base="/home/search">
-        <LogoMark size={30} />
-        <h1 className="t-title-2" style={{ margin: 0 }}>검색</h1>
+      <SearchHeader q={q} tag={tag} genres={genres} viewerId={viewerId} base="/home/search">
+        <TransitionLink href="/home" direction="back" aria-label="홈으로 돌아가기" className="hit"
+          style={{ display: 'grid', placeItems: 'center', width: 40, height: 40, color: 'var(--color-text-primary)' }}>
+          <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5 8 12l7 7" /></svg>
+        </TransitionLink>
       </SearchHeader>
 
-      {items.length === 0 ? (
-        <p className="empty-state empty-state--fill">{q ? `'${q}'에 맞는 캐릭터가 없어요` : '아직 보여드릴 캐릭터가 없어요'}</p>
-      ) : (
-        <>
-          {q && <p className="t-micro" style={{ padding: '0 var(--gutter)', marginBottom: 10, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}개</p>}
-          <div className="grid-2" style={{ gap: 4, padding: '0 var(--gutter)' }}>
-            {items.map((c) => <CharacterCard key={c.id} c={c} />)}
-          </div>
-        </>
-      )}
+      <div className={styles.results}>
+        <Suspense key={JSON.stringify([viewerId, q, tag, genres])} fallback={<SearchResultsSkeleton />}>
+          <SearchResults viewerId={viewerId} q={q} tag={tag} genres={genres} />
+        </Suspense>
+      </div>
     </Page>
   )
-}
-
-/** 이름·소개·직업·분위기(장르)·관계 키워드 어디에든 들어 있으면 잡는다. 대소문자·공백은 무시. */
-function matches(c: HomeCard, q: string): boolean {
-  const needle = q.replace(/\s+/g, '').toLowerCase()
-  const hay = [c.name, c.tagline, c.occupation, c.role, c.genre, ...c.relationshipKeywords].filter(Boolean).join(' ').replace(/\s+/g, '').toLowerCase()
-  return hay.includes(needle)
 }

@@ -1,16 +1,15 @@
 'use client'
-import { ContactBadge } from '@/components/contact-badge'
 import { useState } from 'react'
-import { TransitionLink } from '@/components/ui'
+import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
 import { compact } from '@/lib/format'
-import type { HomeCard, HomeRow } from '@/lib/home'
+import type { CardPage, HomeCard } from '@/lib/home'
 import styles from './home.module.css'
 
 const unique = (items: HomeCard[]) => [...new Map(items.map(c => [c.id, c])).values()]
 const picture = (c: HomeCard) => c.images[0] ?? null
 
-function PhotoDetails({ c, small = false }: { c: HomeCard; small?: boolean }) {
+function PhotoDetails({ c }: { c: HomeCard }) {
   const tags = [...new Set([...(c.genre ?? '').split('·').map(t => t.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 2)
   return <>
     <span className={styles.cardBadges}>
@@ -19,15 +18,14 @@ function PhotoDetails({ c, small = false }: { c: HomeCard; small?: boolean }) {
       {compact(c.plays)}
     </span>}
     </span>
-    <ContactBadge enabled={c.contactEnabled} />
-    <span className={`${styles.photoDetails} ${small ? styles.photoDetailsSmall : ''}`}>
+    <span className={styles.photoDetails}>
       <strong>{c.name}</strong>
-      {!small && (c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
+      {(c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
       {tags.length > 0 && <span className={styles.photoTags}>{tags.map(t => `#${t.replace(/\s+/g, '')}`).join('  ')}</span>}
     </span>
   </>
 }
-function StoryCard({ c, resume = false }: { c: HomeCard; resume?: boolean }) {
+function StoryCard({ c }: { c: HomeCard }) {
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || '이야기 살펴보기'}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
@@ -36,45 +34,58 @@ function StoryCard({ c, resume = false }: { c: HomeCard; resume?: boolean }) {
   </TransitionLink>
 }
 
-export function HomeFeed({ rows }: { rows: HomeRow[] }) {
+export function HomeFeed({ initial }: { initial: CardPage }) {
   const [filter, setFilter] = useState<'all' | 'popular'>('all')
-  const row = (key: string) => rows.find(r => r.key === key)?.items ?? []
-  const continuing = row('continuing')
-  const officials = unique(row('originals'))
-  // Home recommendations require a cover and an introduction. Incomplete public creations remain in Discover.
-  const community = row('shared').filter(c => picture(c) && (c.startingContext?.trim() || c.tagline?.trim()))
-  const catalog = unique([...officials, ...community])
-  const featured = officials.length > 2 ? officials.slice(-2) : []
-  const featuredIds = new Set(featured.map(c => c.id))
-  const recommendations = filter === 'popular'
-    ? [...catalog].sort((a, b) => b.plays - a.plays).slice(0, 6)
-    : catalog.filter(c => !featuredIds.has(c.id)).slice(0, 6)
-  const empty = recommendations.length === 0
+  const [items, setItems] = useState(initial.items)
+  const [cursor, setCursor] = useState(initial.nextCursor)
+  const [popular, setPopular] = useState<HomeCard[] | null>(null)
+  const [moreLoading, setMoreLoading] = useState(false)
+  const [popularLoading, setPopularLoading] = useState(false)
+  const [moreError, setMoreError] = useState(false)
+  const [popularError, setPopularError] = useState(false)
+  const recommendations = filter === 'popular' ? popular ?? [] : items
+  const loading = filter === 'popular' ? popularLoading : moreLoading
+  const error = filter === 'popular' ? popularError : moreError
+  const empty = recommendations.length === 0 && !loading && !error
+
+  async function loadMore() {
+    if (!cursor || moreLoading) return
+    setMoreLoading(true); setMoreError(false)
+    try {
+      const response = await fetch(`/api/home/cards?cursor=${encodeURIComponent(cursor)}`, { cache: 'no-store' })
+      if (!response.ok) throw new Error('LOAD_FAILED')
+      const page: CardPage = await response.json()
+      setItems(current => unique([...current, ...page.items]))
+      setCursor(page.nextCursor)
+    } catch { setMoreError(true) } finally { setMoreLoading(false) }
+  }
+
+  async function showPopular() {
+    setFilter('popular')
+    if (popular || popularLoading) return
+    setPopularLoading(true); setPopularError(false)
+    try {
+      const response = await fetch('/api/home/cards?sort=popular', { cache: 'no-store' })
+      if (!response.ok) throw new Error('LOAD_FAILED')
+      setPopular(await response.json())
+    } catch { setPopularError(true) } finally { setPopularLoading(false) }
+  }
 
   return <div className={`${styles.feed} ${empty ? styles.fill : ''}`}>
-    {continuing.length > 0 && <section className={styles.continuing} aria-labelledby="continue-title">
-      <div className={styles.sectionHeading}><h2 id="continue-title">이어서 대화하기</h2><TransitionLink href="/archive">대화함 <span aria-hidden>↗</span></TransitionLink></div>
-      <div className={styles.grid}>
-        {continuing.slice(0, 6).map(c => <StoryCard key={c.sessionId} c={c} resume />)}
-      </div>
-    </section>}
-
     <h1 className="sr-only">홈</h1>
     <div className={styles.filters} role="group" aria-label="이야기 정렬">
       <button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>전체</button>
-      <button type="button" aria-pressed={filter === 'popular'} onClick={() => setFilter('popular')}>인기</button>
+      <button type="button" aria-pressed={filter === 'popular'} onClick={showPopular}>인기</button>
     </div>
 
     <section aria-labelledby="recommend-title" className={empty ? styles.fill : undefined}>
-      <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? '인기 이야기' : '주간 트렌드'}</h2></div>
+      <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? '인기 이야기' : '전체 이야기'}</h2></div>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
+      {loading && <p role="status">불러오는 중</p>}
+      {error && <p role="alert">목록을 불러오지 못했어요. <Button type="button" size="sm" variant="ghost" onClick={filter === 'popular' ? showPopular : loadMore}>다시 시도</Button></p>}
       {empty && <p className="empty-state empty-state--fill">{filter === 'popular' ? '아직 인기 이야기가 없어요' : '아직 이야기가 없어요'}</p>}
+      {filter === 'all' && cursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={moreLoading}>{moreLoading ? '불러오는 중' : '더 보기'}</Button></div>}
     </section>
-
-    {filter === 'all' && featured.length > 0 && <section className={styles.originals} aria-labelledby="originals-title">
-      <div className={styles.sectionHeading}><div><h2 id="originals-title">신작</h2></div><span className={styles.originalMark} aria-hidden>✳</span></div>
-      <div className={styles.grid}>{featured.map(c => <StoryCard key={c.id} c={c} />)}</div>
-    </section>}
 
   </div>
 }

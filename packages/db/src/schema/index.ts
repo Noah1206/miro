@@ -169,6 +169,8 @@ export const characters = pgTable('characters', {
   officialIdx: index('characters_official_idx').on(t.isOfficial),
   publicIdx: index('characters_public_idx').on(t.isPublic),
   experienceIdx: index('characters_experience_idx').on(t.experienceType),
+  visibleRecentIdx: index('characters_visible_recent_idx').on(t.createdAt.desc(), t.id.desc())
+    .where(sql`${t.deletedAt} IS NULL AND ${t.isDraft} = false`),
 }))
 
 /**
@@ -352,6 +354,9 @@ export const messages = pgTable('messages', {
 }, (t) => ({
   // 한 턴에 캐릭터/NPC/서술 메시지가 여러 개 나올 수 있으므로 unique 제약을 두지 않는다.
   sessionIdx: index('messages_session_idx').on(t.sessionId, t.turnIndex),
+  archivePreviewIdx: index('messages_archive_preview_idx')
+    .on(t.sessionId, t.createdAt.desc(), t.id.desc())
+    .where(sql`${t.hiddenAt} IS NULL`),
 }))
 
 
@@ -380,6 +385,12 @@ export const events = pgTable('events', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   sessionIdx: index('events_session_status_idx').on(t.sessionId, t.status),
+  resolvedRecentIdx: index('events_resolved_recent_idx')
+    .on(t.sessionId, t.resolvedAtTurn.desc().nullsLast(), t.id.desc())
+    .where(sql`${t.status} = 'resolved'`),
+  resolvedCooldownIdx: index('events_resolved_cooldown_idx')
+    .on(t.sessionId, t.cooldownUntilTurn.desc(), t.type, t.id.desc())
+    .where(sql`${t.status} = 'resolved'`),
 }))
 
 export const npcs = pgTable('npcs', {

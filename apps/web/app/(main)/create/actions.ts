@@ -28,7 +28,7 @@ export async function saveCharacter(form: FormData): Promise<void> {
     const [character] = await tx.insert(characters).values({
       ownerId: user.id, isOfficial: false, ...p.character, images,
       isDraft: !p.publish,
-      // 초안은 절대 공개되지 않는다. 만들기에는 공개 스위치가 없어 등록 직후엔 비공개다 — 편집에서 켠다.
+      // 초안은 절대 공개되지 않는다. 등록할 때만 폼에서 선택한 공개 상태를 적용한다.
       isPublic: p.publish && p.isPublicOn,
     }).returning({ id: characters.id })
     const characterId = character!.id

@@ -1,5 +1,5 @@
 import { memoryRetriever } from '@/lib/ai/memory'
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
 import {
   db, characters, events, memories, messages, npcs, realityContacts, relationships,
   roleplaySessions, scenes, worldStates, worlds,
@@ -20,6 +20,8 @@ export type LoadedSession = {
   experienceType: 'chat' | 'reality'
   lastInteractionAt: Date
 }
+
+const RECENT_RESOLVED_EVENT_LIMIT = 24
 
 /**
  * 재진입 시 마지막 메시지가 아니라 Simulation State 전체를 복구한다.
@@ -48,8 +50,16 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [allEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts] = await Promise.all([
-    db.select().from(events).where(eq(events.sessionId, sessionId)),
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts] = await Promise.all([
+    db.select().from(events)
+      .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
+    db.select().from(events)
+      .where(and(eq(events.sessionId, sessionId), eq(events.status, 'resolved')))
+      .orderBy(sql`${events.resolvedAtTurn} DESC NULLS LAST`, desc(events.id))
+      .limit(RECENT_RESOLVED_EVENT_LIMIT),
+    db.selectDistinctOn([events.type]).from(events)
+      .where(and(eq(events.sessionId, sessionId), eq(events.status, 'resolved'), gt(events.cooldownUntilTurn, row.session.turnCount)))
+      .orderBy(events.type, desc(events.cooldownUntilTurn), desc(events.id)),
     db.select().from(npcs).where(and(eq(npcs.sessionId, sessionId), eq(npcs.isActive, true))),
     memoryRetriever.retrieve({ sessionId, userId, query: input, limit: 24 }),
     row.world.currentSceneId
@@ -90,8 +100,8 @@ export async function loadSession(
     recentMessages: recent.reverse()
       .filter((m) => m.role === 'user' || m.role === 'character')
       .map((m) => ({ role: m.role as 'user' | 'character', content: m.content })),
-    activeEvents: allEvents.filter((e) => e.status === 'active' || e.status === 'escalated') as never,
-    recentlyResolvedEvents: allEvents.filter((e) => e.status === 'resolved') as never,
+    activeEvents: activeEvents as never,
+    recentlyResolvedEvents: [...new Map([...recentlyResolvedEvents, ...coolingEvents].map((event) => [event.id, event])).values()] as never,
     activeNpcs: sessionNpcs as never,
     recentRealityContacts: recentContacts
       .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),

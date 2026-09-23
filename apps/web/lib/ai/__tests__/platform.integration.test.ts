@@ -8,7 +8,7 @@ import { reserve, rollback, commit, usageStatus } from '@/lib/usage/guard'
 import { productionBudgetGuard, recordAIUsage, budgetPolicy } from '@/lib/usage/ai-usage'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { runConversationTurn } from '@/lib/simulation/turn'
-import { beginRequest } from '../gateway'
+import { beginRequest, reconcileStaleAIReservations } from '../gateway'
 import { memoryRetriever } from '../memory'
 import { budgetedImage } from '../media-budget'
 import { captureEvaluation } from '../evaluation'
@@ -25,11 +25,12 @@ describeDb('production AI accounting',()=>{
     expect(prompts.select('dialogue','test').version).toBe('v1')
   })
   it('only one concurrent reservation passes a global request ceiling',async()=>{
-    const id=await user(), key=`model-test-${randomUUID()}`
+    const id=await user(), other=await user(), key=`model-test-${randomUUID()}`
     vi.stubEnv('MIRO_BUDGET_POLICY',JSON.stringify({global:{cost:0,requests:100000},[`model:${key}`]:{requests:1}}))
     const model=new ModelRegistry([{id:key,provider:'mock',providerModelId:'mock',tier:'small',capabilities:['dialogue'],maxContextTokens:32000}]).get(key)
-    const req={task:'dialogue',system:'s',prompt:'p'},context={userId:id,traceId:randomUUID(),requestId:randomUUID()}
-    const decisions=await Promise.all(Array.from({length:5},()=>productionBudgetGuard.authorize(req,model,context,randomUUID())))
+    const req={task:'dialogue',system:'s',prompt:'p'}
+    const decisions=await Promise.all(Array.from({length:5},(_,index)=>productionBudgetGuard.authorize(req,model,
+      {userId:index % 2 ? other : id,sessionId:randomUUID(),traceId:randomUUID(),requestId:randomUUID()},randomUUID())))
     expect(decisions.filter(d=>d.allowed)).toHaveLength(1)
     const attempts=await db.select().from(aiUsage).where(eq(aiUsage.modelId,key));expect(attempts).toHaveLength(1)
   })
@@ -79,6 +80,16 @@ describeDb('production AI accounting',()=>{
     const rows=await db.select().from(aiUsage).where(eq(aiUsage.attemptId,attemptId));expect(rows).toHaveLength(1)
     const [counter]=await db.select().from(aiBudgetCounters).where(sql`${aiBudgetCounters.key} like ${`%:model:${key}`}`)
     expect(Number(counter!.cost)).toBeGreaterThan(0);expect(rows[0]!.estimatedCost).toBeNull()
+  })
+  it('closes a crash-left reservation without refunding unknown provider cost',async()=>{
+    const id=await user(),attemptId=randomUUID()
+    await db.insert(aiUsage).values({attemptId,userId:id,task:'dialogue',provider:'openai',model:'test',status:'reserved',reservedCost:'0.02000000',budgetKeys:[],ok:false,latencyMs:0,
+      createdAt:new Date(Date.now()-2*60*60_000)})
+    await reconcileStaleAIReservations()
+    const [row]=await db.select().from(aiUsage).where(eq(aiUsage.attemptId,attemptId))
+    expect(row).toMatchObject({status:'completed',estimatedCost:'0.02000000',actualCost:null,error:'interrupted_unknown_usage',ok:false})
+    await recordAIUsage({attemptId,userId:id,sessionId:null,task:'dialogue',provider:'openai',model:'test',latencyMs:1,ok:false,error:'late',inputTokens:null,outputTokens:null,estimatedCost:null})
+    expect((await db.select().from(aiUsage).where(eq(aiUsage.attemptId,attemptId)))[0]).toMatchObject({error:'interrupted_unknown_usage',estimatedCost:'0.02000000'})
   })
   it('refund/retry and simultaneous commit never double debit',async()=>{
     const id=await user(),opts={userId:id,kind:'photo' as const,idempotencyKey:randomUUID()}

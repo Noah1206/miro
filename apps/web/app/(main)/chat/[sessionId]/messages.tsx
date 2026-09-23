@@ -6,6 +6,7 @@ import { Popover, MenuItem, TransitionLink } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
+import { CharacterPhoto } from '@/components/character-visual'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { useTurns } from './turns'
@@ -34,7 +35,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
   const follow = () => end.current?.scrollIntoView({ block: 'end' })
-  useEffect(follow, [items.length])
+  useEffect(() => { follow() }, [items.length])
   useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
 
   return (
@@ -99,7 +100,9 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const [typed, setTyped] = useState(0)
 
   return <div className={styles.characterRow}>
-    <span className={styles.avatar} aria-hidden>{portrait ? <img src={portrait} alt="" width={32} height={32} /> : name.slice(0, 1)}</span>
+    <span className={styles.avatar} aria-hidden>{portrait
+      ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
+      : name.slice(0, 1)}</span>
     <div className={styles.characterContent}>
       <p className={styles.speaker}>{name}</p>
       <div className={styles.bubble}>

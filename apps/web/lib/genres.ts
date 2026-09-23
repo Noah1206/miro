@@ -5,6 +5,11 @@
  * `worlds.genre` 는 '현대 드라마 · 미스터리' 처럼 여러 장르가 붙어 오므로
  * 문자열 앞부분으로 자르지 않고 키워드 포함으로 가른다.
  */
+export const MOODS = ['로맨스', '얀데레', '츤데레', '순애', '집착', '힐링', '일상', '드라마', '코미디', '호러', '미스터리', '느와르', '판타지', '학원', '오피스', '소꿉친구'] as const
+
+export const genreValues = (genre: string | null): string[] =>
+  (genre ?? '').split('·').map(value => value.trim()).filter(Boolean)
+
 export const GENRES: Array<{ key: string; title: string; match: string[] }> = [
   { key: 'romance', title: '로맨스', match: ['로맨스', '연애'] },
   { key: 'thriller', title: '스릴러', match: ['스릴러', '느와르', '범죄', '미스터리'] },

@@ -165,6 +165,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .skeleton { position: relative; overflow: hidden; background: var(--color-surface-2); border-radius: var(--radius-sm); }
 .skeleton::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); animation: shimmer 1.4s var(--ease-standard) infinite;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.045), transparent); }
+@media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; display: none; } }
 
 /* scene scrim — the one gradient we allow: readability over character imagery */
 .scrim { background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0)); }

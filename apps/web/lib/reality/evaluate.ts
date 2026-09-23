@@ -37,7 +37,7 @@ export type EvaluateOutcome =
 export async function evaluateSession(
   sessionId: string, now = new Date(),
   /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 조용한 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
-  opts: { inline?: boolean } = {},
+  opts: { inline?: boolean; background?: boolean } = {},
 ): Promise<EvaluateOutcome> {
   if (!feature('realityMessage')) return { outcome: 'skipped', reason: 'feature_disabled' }
   const rows = await db
@@ -193,7 +193,7 @@ export async function evaluateSession(
 
   // ---- 내용 생성 (Provider 미구성 시 Mock, 숨기지 않음) ----
   installAIUsageSink()
-  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId } })
+  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId, workload: opts.background ? 'background' : 'interactive' } })
 
   const grounding = await loadRealityContext(sessionId, row.session.userId, intent.reason)
   if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }

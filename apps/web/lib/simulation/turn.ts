@@ -16,7 +16,7 @@ import { UsageExceededError, reserve, rollback, type Reservation } from '@/lib/u
 import { type BudgetKind } from '@/lib/usage/ai-usage'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { track } from '@/lib/analytics/track'
-import { observe, timed } from '@/lib/observe'
+import { measured, observe, timed } from '@/lib/observe'
 
 export type ConversationOutcome =
   | {
@@ -70,9 +70,9 @@ async function executeTurn(opts: {
   for (let attempt = 0; attempt < 2; attempt++) {
     // 세션·모델·동의는 서로를 모른다 — 한 번에 읽는다.
     const [loaded, model, consent] = await Promise.all([
-      loadSession(sessionId, userId, input),
-      resolveChatModel(userId, opts.chatModel ?? 'miro').catch(() => null),
-      db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1).then(rows => rows[0]),
+      measured('chat.snapshot', () => loadSession(sessionId, userId, input)),
+      measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro')).catch(() => null),
+      measured('chat.consent_db', () => db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1)).then(rows => rows[0]),
     ])
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
@@ -84,7 +84,7 @@ async function executeTurn(opts: {
     // pipeline enforces — request dedupe, AI cost budget, rate limits, safety — still runs.
     let reservation: Reservation | null = null
     if (model.metered) {
-      try { reservation = await reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` }) }
+      try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` })) }
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     }
     const refund = () => reservation ? rollback(reservation.reservationId) : Promise.resolve()
@@ -147,7 +147,7 @@ async function executeTurn(opts: {
       sceneChanged: transition.sceneDelta !== null,
     }
     try {
-      const committed = await commitTurn({
+      const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
         userInput: input, responseText, blocks: transition.blocks, transition, sceneMarker,
@@ -156,7 +156,7 @@ async function executeTurn(opts: {
         currentRelationship: loaded.snapshot.relationship,
         existingMemories: loaded.snapshot.memories,
         characterState: result.characterState,
-      })
+      }))
       outcome.messages = committed.messages
     } catch (e) {
       await refund()
@@ -177,7 +177,7 @@ async function executeTurn(opts: {
     let reality: { channel: ContactChannel; text: string } | null = null
     if (feature('inlineReality') && loaded.experienceType === 'reality' && transition.realityIntent && !transition.realityIntent.notBefore) {
       try {
-        const r = await evaluateSession(sessionId, new Date(), { inline: true })
+        const r = await measured('chat.inline_reality', () => evaluateSession(sessionId, new Date(), { inline: true }))
         if (r.outcome === 'sent' && r.text) reality = { channel: r.channel, text: r.text }
         else observe('reality.inline_not_sent', { sessionId, outcome: r.outcome, reason: 'reason' in r ? r.reason : undefined })
       } catch (e) {
@@ -202,7 +202,7 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
-  try { request = await beginRequest(opts.userId, opts.sessionId, opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.input, opts.requestId) }
+  try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.input, opts.requestId)) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached
   try {

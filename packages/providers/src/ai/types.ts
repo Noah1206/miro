@@ -71,10 +71,14 @@ export type AIUsageRecord = {
   sessionId: string | null
 }
 
-export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean }
+export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean; workload?: 'interactive' | 'background' }
 export type AIRequest = GenerationRequest & { task: AITask }
 export type AIResponse = GenerationResult
 export type BudgetDecision = { allowed: true; reservationId: string; maxUsageUnits: number } | { allowed: false; reason: string }
 export interface BudgetGuard {
   authorize(request: GenerationRequest, model: ModelDefinition, context: AIContext, attemptId: string): Promise<BudgetDecision>
+}
+export type AIProviderLease = { heartbeat(): Promise<boolean>; release(): Promise<void> }
+export interface AILeaseGuard {
+  acquire(provider: string, workload: 'interactive' | 'background'): Promise<AIProviderLease | null>
 }

@@ -3,7 +3,7 @@ import { ModelRegistry, type ModelDefinition } from './model-registry'
 import { AI_TASKS } from './tasks'
 import { AnthropicProvider } from './anthropic'
 import { MiroSLMProvider } from './miro-slm'
-import type { BudgetGuard } from './types'
+import type { AILeaseGuard, BudgetGuard } from './types'
 import { CloudflareProvider } from './cloudflare'
 import { GeminiProvider } from './gemini'
 import { MockAIProvider } from './mock'
@@ -51,6 +51,8 @@ export function setAIUsageSink(sink: (r: AIUsageRecord) => void | Promise<void>)
 
 let guard: BudgetGuard | undefined
 export function setAIBudgetGuard(value: BudgetGuard): void { guard = value }
+let leaseGuard: AILeaseGuard | undefined
+export function setAILeaseGuard(value: AILeaseGuard | undefined): void { leaseGuard = value }
 
 export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { registry: ModelRegistry; resolveModel: (m: ModelDefinition) => AIProvider } {
   let registry: ModelRegistry
@@ -89,7 +91,7 @@ export function createAI(opts: { mock: (req: GenerationRequest) => unknown; cont
     shadow: shadowModel ? { model: shadowModel, provider: resolveModel(shadowModel) } : undefined,
     chain: [resolveModel(enabled[0]!)], registry, resolveModel,
     timeoutMs: opts.timeoutMs ?? (Number(process.env.AI_TIMEOUT_MS) || 20_000), maxRetries: opts.maxRetries,
-    onUsage: usageSink ?? undefined, budgetGuard: guard, context: opts.context,
+    onUsage: usageSink ?? undefined, budgetGuard: guard, leaseGuard, context: opts.context,
     rollout: { shadowModel: process.env.MIRO_SHADOW_MODEL, canaryModel: process.env.MIRO_CANARY_MODEL, canaryPercent: Number(process.env.MIRO_CANARY_PERCENT ?? 0), approved: process.env.MIRO_CANARY_APPROVED === '1', rollback: process.env.MIRO_MODEL_ROLLBACK === '1' },
   })
 }
