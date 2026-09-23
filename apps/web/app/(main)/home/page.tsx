@@ -37,13 +37,13 @@ export default async function Home() {
         <LogoMark size={30} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <TransitionLink href="/home/search" aria-label="캐릭터 검색" className="hit" style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, color: 'var(--color-text-primary)' }}>
-            <svg aria-hidden width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
+          <TransitionLink href="/home/search" aria-label="캐릭터 검색" className="hit" style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
+            <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           </TransitionLink>
           {user
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
-          // 헤더에서는 검색 아이콘 상자(34px)와 같은 눈높이로 낮춘다. 터치 영역은 .hit 이 44px 로 넓힌다.
-          : <LoginButton variant="primary" size="sm" className="hit" style={{ minHeight: 30, padding: '0 9px' }}>로그인</LoginButton>}
+          // 헤더에서는 검색 아이콘 상자(38px)와 같은 눈높이 — 글자를 키우고 채움은 글자에 붙인다. 터치 영역은 .hit 이 44px 로 넓힌다.
+          : <LoginButton variant="primary" size="sm" className="hit" style={{ minHeight: 34, padding: '0 12px', fontSize: 14 }}>로그인</LoginButton>}
         </div>
       </header>
 
