@@ -1,6 +1,6 @@
 import { currentUser } from '@/lib/auth'
 import { homeRows } from '@/lib/home'
-import { ButtonLink, LogoMark, Page, TransitionLink } from '@/components/ui'
+import { LoginButton, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { IncomingCall } from '@/components/incoming-call'
 import { HomeFeed } from './feed'
 
@@ -42,7 +42,7 @@ export default async function Home() {
           </TransitionLink>
           {user
           ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
-          : <ButtonLink href="/login" variant="secondary" size="sm">로그인</ButtonLink>}
+          : <LoginButton variant="secondary" size="sm">로그인</LoginButton>}
         </div>
       </header>
 

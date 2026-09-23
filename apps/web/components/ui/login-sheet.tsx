@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import { Sheet } from './sheet'
 import { LogoMark } from './logo'
+import { Button } from './button'
 
 export type SocialProviderId = 'google' | 'kakao'
 export type LoginProvider = { id: SocialProviderId; label: string }
@@ -11,6 +12,12 @@ const Ctx = createContext<Ask>(() => {})
 
 /** 로그인이 필요한 곳에서 부른다. 인자는 로그인 후 돌아올 경로. */
 export const useLoginSheet = () => useContext(Ctx)
+
+/** 로그인 화면으로 보내지 않고 시트로 묻는 버튼. 로그인 뒤에는 지금 보던 화면으로 돌아온다. 로그인 화면 자체는 직접 열면 그대로 있다. */
+export function LoginButton({ next, ...rest }: Omit<React.ComponentProps<typeof Button>, 'onClick' | 'type'> & { next?: string }) {
+  const ask = useLoginSheet()
+  return <Button type="button" onClick={() => ask(next)} {...rest} />
+}
 
 /**
  * 로그인을 화면 이동 대신 시트로 묻는다.
