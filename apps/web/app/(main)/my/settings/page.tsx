@@ -16,7 +16,8 @@ export default async function SettingsPage() {
   return (
     <Page style={{ maxWidth: 520 }}>
       <PageHeader back="/my" title="설정" lead="캐릭터가 언제, 어떻게 먼저 다가올 수 있는지." />
-      <SettingsForm initial={{ pushEnabled: s?.pushEnabled ?? true, voiceCallEnabled: s?.voiceCallEnabled ?? true, videoCallEnabled: s?.videoCallEnabled ?? true, quietHoursEnabled: s?.quietHoursEnabled ?? true, quietHoursStart: s?.quietHoursStart ?? '23:00', quietHoursEnd: s?.quietHoursEnd ?? '08:00', timeZone: s?.timeZone ?? 'Asia/Seoul' }} />
+      <SettingsForm vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
+        initial={{ pushEnabled: s?.pushEnabled ?? true, voiceCallEnabled: s?.voiceCallEnabled ?? true, videoCallEnabled: s?.videoCallEnabled ?? true, quietHoursEnabled: s?.quietHoursEnabled ?? true, quietHoursStart: s?.quietHoursStart ?? '23:00', quietHoursEnd: s?.quietHoursEnd ?? '08:00', timeZone: s?.timeZone ?? 'Asia/Seoul' }} />
 
       <h2 className="t-title-3" style={{ margin: 'var(--space-7) 0 12px' }}>계정</h2>
       <Stagger as="div" className="stack" style={{ gap: 8 }}>

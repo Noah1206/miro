@@ -1,6 +1,7 @@
 'use client'
 import { useActionState, useId, useState } from 'react'
 import { Button, Rows, Switch } from '@/components/ui'
+import { PushSubscribe } from '@/components/push-subscribe'
 import { saveSettings, type SettingsState } from './actions'
 
 type Values = { pushEnabled: boolean; voiceCallEnabled: boolean; videoCallEnabled: boolean; quietHoursEnabled: boolean; quietHoursStart: string; quietHoursEnd: string; timeZone: string }
@@ -22,7 +23,7 @@ const ZONES = Object.keys(ZONE_LABELS)
  * 연락 설정. 두 덩이 — '받기' 와 '야간 연락 차단'.
  * 시간은 OS 위젯 대신 우리 톤: 30분 스텝퍼 + 24시 입력 + 한글 표기. 값은 그대로 HH:MM 이라 엔진이 읽는 형식이 바뀌지 않는다.
  */
-export function SettingsForm({ initial }: { initial: Values }) {
+export function SettingsForm({ initial, vapidPublicKey }: { initial: Values; vapidPublicKey: string | null }) {
   const [state, action, pending] = useActionState(saveSettings, { saved: false, error: null } satisfies SettingsState)
   const [push, setPush] = useState(initial.pushEnabled)
   const [voice, setVoice] = useState(initial.voiceCallEnabled)
@@ -35,7 +36,11 @@ export function SettingsForm({ initial }: { initial: Values }) {
       <Section title="받기" subtitle="캐릭터가 먼저 다가오는 방법을 고릅니다.">
         <Card>
           <Rows>
-            <Switch name="pushEnabled" label="먼저 연락 알림" hint="앱을 닫아도 캐릭터의 메시지·사진이 알림으로 와요." checked={push} onChange={setPush} />
+            {/* 스위치는 우리 값, 아래 한 줄은 브라우저 권한·구독 — 둘 다 있어야 앱 밖으로 알림이 간다. 한 행으로 묶는다. */}
+            <>
+              <Switch name="pushEnabled" label="먼저 연락 알림" hint="앱을 닫아도 캐릭터의 메시지·사진이 알림으로 와요." checked={push} onChange={setPush} />
+              {push && <PushSubscribe vapidPublicKey={vapidPublicKey} />}
+            </>
             <Switch name="voiceCallEnabled" label="음성통화 수신" hint="캐릭터가 전화를 걸 수 있어요. 받지 않으면 부재중으로 남아요." checked={voice} onChange={setVoice} />
             <Switch name="videoCallEnabled" label="영상통화 수신" hint="캐릭터가 영상통화를 걸 수 있어요." checked={video} onChange={setVideo} />
           </Rows>
