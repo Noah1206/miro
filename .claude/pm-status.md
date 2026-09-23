@@ -13,7 +13,7 @@
 - 발견한 비효율(칩 task_e5fafa76): 사건이 resolved 되지 않으면 쿨다운(90분) 뒤 매 판단마다 LLM 3회를 돌린 뒤 UNIQUE 위반으로 버린다. 생성 전에 dedupe_key 로 걸러야 한다.
 - **알림 허용 UI 가 없었다(9/23 수리, fa99eeb)**: `PushSubscribe` 가 9/13 홈 공개 커밋(e7b3dfa)에서 홈에서 빠진 뒤 어디에도 안 붙어, 설정의 '먼저 연락 알림' 스위치는 값만 저장하고 브라우저 권한·구독은 아무도 만들 수 없었다. 스위치 아래 한 행으로 붙임(알림 켜기 → 모달 → 권한 요청 → `/api/push` 저장). iPhone Safari(비-PWA)에는 '공유 → 홈 화면에 추가' 안내. CI(E2E 포함) green. 로그인 상태 렌더링은 실기기에서 확인 예정.
 - 실기기 경로: 이 Mac 에 Chrome 없음(Brave·Safari 뿐, Claude in Chrome 미연결), 내장 브라우저는 알림 거부 상태, iPhone 미러링은 사용자 거부 → ③은 사용자가 폰에서 직접. 완료 신호 = `push_subscriptions` 에 실계정 행.
-- GitHub Actions 백업 크론(`cron.yml`)이 **401** 로 계속 실패 — `CRON_SECRET` 시크릿이 Vercel 값과 다르다. pg_cron 주 경로는 정상. 수리: `gh secret set CRON_SECRET` 에 `ops_cron_config.secret` 값.
+- GitHub Actions 백업 크론(`cron.yml`)이 9/19 이후 **401** 로 실패했었다 — 저장소 `CRON_SECRET`(9/16 설정)이 9/19 에 바뀐 운영 값과 달랐다. 9/23 02:29 `gh secret set` 으로 `ops_cron_config.secret` 값에 맞추고 수동 실행(workflow_dispatch) 200 확인. pg_cron 주 경로는 내내 정상.
 - Push 구독 0건(어느 계정도 기기 등록 없음). 실계정(ab40905045@gmail.com) 세션 0. 서연은 비공개(is_public=false)라 미로 탭은 모든 계정에서 빈 화면 — 카나리아 목적과 정합.
 - 운영 env: GOOGLE/KAKAO 클라이언트, AUTH_BASE_URL, VAPID, MIRO_BANK_ACCOUNT, MIRO_RECHARGE_PRODUCTS 모두 설정됨. 콜백 경로 `/api/auth/{provider}/callback`.
 - 위생: `.claude/launch.json` 미추적(로컬 실행 설정, nvm 경로 포함). E2E global-setup 이 실행 시작 때 테스트 DB 를 비운다(2026-09-23, `TRUNCATE … RESTART IDENTITY CASCADE`, ops_cron_config 유지, localhost·`_test` 재검사 통과 시에만). 누적은 해소됐지만 flaky 의 원인은 아니었다 — 빈 DB 로 6연속 실행해도 ai-platform 동의 저장·ops quiet hours·성인 인증이 첫 시도(때로 재시도까지) 10초 시간 초과. trace 기준 서버는 액션 결과를 9~20ms 에 정상 반환(통과·실패 응답 본문 동일)하는데 클라이언트가 반영하지 않는다. 1 워커로는 3/3 통과, 3 워커 + 머신 부하(RAM 8GB·스왑 3.6/4GB·XProtect 스캔)에서 재현. 스위트 시간 1.5m→2.4m 증가도 CPU 시간은 일정하고 wall time 만 늘어난 것이라 메모리 압박 쪽. 클라이언트 쪽 원인 추적은 별도 칩.
