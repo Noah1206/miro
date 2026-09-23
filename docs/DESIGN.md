@@ -74,15 +74,15 @@ MIRO 로고는 다음 원칙을 따른다.
 
 ```css
 :root {
-  --color-bg: #0A0A0B;
+  --color-bg: #141417;
   --color-bg-deep: #000000;
 
-  --color-surface-1: #16161A;
-  --color-surface-2: #1E1E23;
-  --color-surface-3: #26262C;
+  --color-surface-1: #1D1D22;
+  --color-surface-2: #26262C;
+  --color-surface-3: #2F2F36;
 
-  --color-border: #2A2A2F;
-  --color-border-strong: #35353A;
+  --color-border: #33333A;
+  --color-border-strong: #3E3E46;
 
   --color-text-primary: #F5F5F7;
   --color-text-secondary: #A1A1A8;
@@ -525,7 +525,7 @@ border: 1px solid #27272B;
 Hover:
 
 ```css
-border-color: #3A3A40;
+border-color: #45454D;
 ```
 
 Strong:
@@ -882,7 +882,7 @@ Claude Code에게 UI 구현을 요청할 때 아래 내용을 기본 규칙으�
 MIRO의 UI는 Dark Cinematic × Human × Sharp Minimal을 따른다.
 
 필수 규칙:
-- Background는 #0A0A0B 중심
+- Background는 #141417 중심
 - White / Gray 중심의 Monochrome UI
 - Gradient 사용 금지
 - Neon / Glow 사용 금지

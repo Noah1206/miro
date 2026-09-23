@@ -26,7 +26,7 @@ export default async function LiveScene({ params }: { params: Promise<{ sessionI
     <LiveStage sessionId={sessionId} characterName={loaded.characterName} background={background}
       header={
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <TransitionLink href={`/chat/${sessionId}`} direction="back" className="t-caption hit" style={{ padding: '7px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(10,10,11,0.6)' }}>‹ 대화로</TransitionLink>
+          <TransitionLink href={`/chat/${sessionId}`} direction="back" className="t-caption hit" style={{ padding: '7px 10px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)' }}>‹ 대화로</TransitionLink>
           <p className="t-caption" style={{ textShadow: '0 1px 8px rgba(0,0,0,.7)' }}>
             {s.world.currentLocation} · {s.world.currentTime}
             {s.world.currentSceneId && <> · <TransitionLink href={`/report?type=live_scene&id=${s.world.currentSceneId}`} className="hit" style={{ textDecoration: 'underline' }}>신고</TransitionLink></>}

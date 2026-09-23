@@ -66,7 +66,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
 
   return (
     <main id="main" tabIndex={-1} style={{ display: 'flex', flexDirection: 'column', minHeight: '100dvh', outline: 'none' }}>
-      <header style={{ position: 'sticky', top: 0, zIndex: 15, display: 'flex', alignItems: 'center', gap: 12, padding: '10px var(--gutter)', background: 'rgba(10,10,11,0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--color-border)' }}>
+      <header style={{ position: 'sticky', top: 0, zIndex: 15, display: 'flex', alignItems: 'center', gap: 12, padding: '10px var(--gutter)', background: 'rgba(var(--color-bg-rgb),0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderBottom: '1px solid var(--color-border)' }}>
         <span aria-hidden style={{ width: 36, height: 36, borderRadius: 18, display: 'grid', placeItems: 'center', background: 'var(--color-surface-3)', fontWeight: 700 }}>{YUJIN.name.slice(0, 1)}</span>
         <div style={{ minWidth: 0, flex: 1 }}>
           <h1 className="t-title-3 t-name" style={{ lineHeight: 1.2 }}>{YUJIN.name}</h1>
@@ -102,7 +102,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
           <ButtonLink href="/alpha/waitlist" variant="primary" size="lg" full>다음 테스트 초대받기</ButtonLink>
         </section>
       ) : (
-        <div style={{ position: 'sticky', bottom: 0, zIndex: 15, background: 'rgba(10,10,11,0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid var(--color-border)', padding: '10px var(--gutter)', paddingBottom: 'calc(10px + env(safe-area-inset-bottom))' }}>
+        <div style={{ position: 'sticky', bottom: 0, zIndex: 15, background: 'rgba(var(--color-bg-rgb),0.92)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', borderTop: '1px solid var(--color-border)', padding: '10px var(--gutter)', paddingBottom: 'calc(10px + env(safe-area-inset-bottom))' }}>
           {quick && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
               {YUJIN.quickReplies.map((q) => <Button key={q} type="button" size="sm" onClick={() => send(q)}>{q}</Button>)}

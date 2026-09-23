@@ -52,7 +52,7 @@ export function StickyHeader({ children, threshold = 24 }: { children: ReactNode
   return (
     <motion.header
       animate={{ y: hidden && !reduce ? '-100%' : 0 }} transition={tween.enter}
-      style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(10,10,11,0.86)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid var(--color-border)' }}
+      style={{ position: 'sticky', top: 0, zIndex: 20, background: 'rgba(var(--color-bg-rgb),0.86)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid var(--color-border)' }}
     >{children}</motion.header>
   )
 }

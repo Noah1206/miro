@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   // 탭 아이콘은 투명 마크, 홈 화면(apple)은 검정 바탕 — iOS 는 투명을 검정으로 채우고 모서리를 깎으므로 바탕이 있어야 한다.
   icons: { icon: '/favicon.png', apple: '/icon-180.png' },
 }
-export const viewport: Viewport = { themeColor: '#0A0A0B', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
+export const viewport: Viewport = { themeColor: '#141417', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -44,7 +44,7 @@ export function LiveStage({ sessionId, characterName, background, header, lines 
         </AnimatePresence>
         {/* 제안은 힌트일 뿐 — 입력창을 채우기만 하고 보내지 않는다. */}
         <div role="group" aria-label="행동 제안" style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
-          {suggestions.map((s) => <Button key={s} type="button" size="sm" variant="ghost" style={{ background: 'rgba(10,10,11,0.5)' }} onClick={() => { if (ta.current) { ta.current.value = s; ta.current.focus() } }}>{s}</Button>)}
+          {suggestions.map((s) => <Button key={s} type="button" size="sm" variant="ghost" style={{ background: 'rgba(var(--color-bg-rgb),0.5)' }} onClick={() => { if (ta.current) { ta.current.value = s; ta.current.focus() } }}>{s}</Button>)}
         </div>
         <form ref={formRef} action={action} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
           <input type="hidden" name="sessionId" value={sessionId} />

@@ -48,9 +48,9 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
         const gated = !signedIn && it.auth
         const inner = (
             <span className="nav__inner">
-              {/* 현재 페이지 = 아이콘 몸통만 주황으로 채워진다 (밝은 쪽, 어두운 바탕 5.5:1). 윤곽선은 긋지 않는다. */}
+              {/* 현재 페이지 = 아이콘과 라벨이 흰색, 나머지는 회색. 주황은 쓰지 않는다 — 내비는 자리를 알릴 뿐 포인트가 아니다. */}
               {/* 아이콘 : 라벨 ≈ 2.4 : 1 — 아이콘이 이끌고 라벨은 따라붙는다 (레퍼런스 실측). */}
-              <svg aria-hidden width="32" height="32" viewBox="0 0 24 24" fill={active ? 'var(--color-accent-text)' : 'currentColor'} fillRule="evenodd" clipRule="evenodd">
+              <svg aria-hidden width="32" height="32" viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" clipRule="evenodd">
                 {it.icon}
               </svg>
               <span style={{ fontSize: 'var(--font-caption)', lineHeight: 1.3, letterSpacing: 0 }}>{it.label}</span>

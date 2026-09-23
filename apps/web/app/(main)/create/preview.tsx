@@ -61,7 +61,7 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
       d.mbti ? `MBTI는 ${d.mbti}.` : '',
     ].filter((x) => x && x !== '.').join(' '),
   ].filter((line) => line.trim())
-  const pill: React.CSSProperties = { position: 'absolute', top: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(10,10,11,0.6)', color: 'var(--color-text-primary)' }
+  const pill: React.CSSProperties = { position: 'absolute', top: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)', color: 'var(--color-text-primary)' }
 
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
