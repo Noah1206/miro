@@ -129,9 +129,11 @@ export class AIOrchestrator implements LLMProvider {
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
         // 속도 제한은 곧바로 다시 걸린다 — 재시도 전에 잠깐 기다린다.
         // 스키마 오류처럼 즉시 고쳐지는 실패에는 기다리지 않는다.
+        // 타이머는 Date.now() 기준으로 1ms 일찍 깰 수 있다(실측 약 3.5%). 그러면 아래 입장 게이트(retryAfter)에
+        // 자기 백오프로 막혀 재시도가 조용히 빠진다 — 게이트를 실제로 지날 때까지 남은 만큼 더 기다린다.
         if (retry > 0 && last === 'provider_http_429') {
-          const wait = Math.max(this.rateLimitBackoffMs, (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now())
-          if (wait > 0) await new Promise(r => setTimeout(r, wait))
+          for (let wait = Math.max(this.rateLimitBackoffMs, (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now()); wait > 0;
+            wait = (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now()) await new Promise(r => setTimeout(r, wait))
         }
         const attemptId = randomUUID()
         const request = { ...req, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens),

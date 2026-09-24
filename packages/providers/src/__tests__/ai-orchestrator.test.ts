@@ -90,6 +90,21 @@ describe('AIOrchestrator', () => {
     }
   })
 
+  it('still retries a rate limit when the timer wakes a little early', async () => {
+    // Node 타이머가 Date.now() 기준으로 일찍 깨는 경우를 고정으로 만든다 (실제로는 약 3.5%).
+    const real = globalThis.setTimeout
+    const early = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: () => void, ms?: number) => real(fn, Math.max(0, (ms ?? 0) - 5))) as typeof setTimeout)
+    try {
+      let calls = 0
+      const failing: AIProvider = { info: { mode: 'live', name: 'p', notice: null }, healthCheck: async () => true,
+        generate: async () => { calls++; throw new Error('provider_http_429') } }
+      const registry = new ModelRegistry([{ id: 'm', provider: 'anthropic', providerModelId: 'm', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32000 }])
+      const ai = new AIOrchestrator({ chain: [failing], registry, resolveModel: () => failing, rateLimitBackoffMs: 50 })
+      await expect(ai.generateText({ task: 'dialogue', system: '', prompt: 'x' })).rejects.toThrow()
+      expect(calls).toBe(2)
+    } finally { early.mockRestore() }
+  })
+
   it('records which schema paths an invalid structured output broke, without its text', async () => {
     const usage: AIUsageRecord[] = []
     const provider: AIProvider = { info: { mode: 'live', name: 'p', notice: null }, healthCheck: async () => true,
