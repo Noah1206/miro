@@ -1,4 +1,4 @@
-import { signUp } from './helpers'
+import { publishCharacter, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -10,16 +10,7 @@ test('공개한 캐릭터는 다른 사람이 발견해서 대화를 시작할 �
   // A: 만들고 공개
   const a = await (await browser.newContext()).newPage()
   await signUp(a, BASE)
-  await a.goto(`${BASE}/create?mode=manual`)
-  await a.locator('input[name="name"]').fill(name)
-  await a.locator('input[name="title"]').fill('한 줄 소개')
-  await a.getByRole('tab', { name: /성격/ }).click()
-  await a.locator('textarea[name="personality"]').fill('말이 짧고 군더더기가 없다.')
-  await a.getByRole('tab', { name: /상황/ }).click()
-  await a.locator('textarea[name="startingContext"]').fill('비 내리는 저녁, 공방을 처음 찾았다.')
-  await a.getByRole('button', { name: '확인' }).click()
-  await a.getByRole('button', { name: '등록' }).click()
-  await expect(a).toHaveURL(/\/chat\//)
+  await publishCharacter(a, BASE, { name, personality: '말이 짧고 군더더기가 없다.', startingContext: '비 내리는 저녁, 공방을 처음 찾았다.' })
 
   // 만들기의 공개 스위치는 기본으로 켜져 있다 — 편집 페이지에서도 켜진 채 저장되는지 본다.
   const sessionId = a.url().split('/chat/')[1]!
@@ -44,18 +35,8 @@ test('공개하지 않은 캐릭터는 다른 사람에게 보이지 않는다',
   const name = `비공개${Date.now() % 100000}`
   const a = await (await browser.newContext()).newPage()
   await signUp(a, BASE)
-  await a.goto(`${BASE}/create?mode=manual`)
-  await a.locator('input[name="name"]').fill(name)
-  await a.locator('input[name="title"]').fill('한 줄 소개')
-  // 만들기의 공개 스위치는 기본으로 켜져 있다 — 이 테스트는 끄고 등록한다.
-  await a.getByRole('switch', { name: /다른 사람에게 공개/ }).uncheck({ force: true })
-  await a.getByRole('tab', { name: /성격/ }).click()
-  await a.locator('textarea[name="personality"]').fill('조용하다.')
-  await a.getByRole('tab', { name: /상황/ }).click()
-  await a.locator('textarea[name="startingContext"]').fill('첫 만남.')
-  await a.getByRole('button', { name: '확인' }).click()
-  await a.getByRole('button', { name: '등록' }).click()
-  await expect(a).toHaveURL(/\/chat\//)
+  // 만들기의 공개 스위치는 기본으로 켜져 있다 — 이 테스트는 끄고 게시한다.
+  await publishCharacter(a, BASE, { name, personality: '조용하다.', startingContext: '첫 만남.', isPublic: false })
 
   const b = await (await browser.newContext()).newPage()
   await signUp(b, BASE)

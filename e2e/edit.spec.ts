@@ -1,21 +1,11 @@
-import { signUp } from './helpers'
+import { publishCharacter, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
 async function createCharacter(page: import('@playwright/test').Page, name: string) {
   await signUp(page, BASE)
-
-  await page.goto(`${BASE}/create`)
-  await page.locator('input[name="name"]').fill(name)
-  await page.locator('input[name="title"]').fill('한 줄 소개')
-  await page.getByRole('tab', { name: /성격/ }).click()
-  await page.locator('textarea[name="personality"]').fill('무뚝뚝한 외과의.')
-  await page.getByRole('tab', { name: /상황/ }).click()
-  await page.locator('textarea[name="startingContext"]').fill('같은 병원 복도.')
-  await page.getByRole('button', { name: '확인' }).click()
-  await page.getByRole('button', { name: '등록' }).click()
-  await expect(page).toHaveURL(/\/chat\//)
+  await publishCharacter(page, BASE, { name, personality: '무뚝뚝한 외과의.', startingContext: '같은 병원 복도.' })
 }
 
 /** page 컨텍스트로 조회해야 세션 쿠키가 실린다. */
@@ -36,7 +26,7 @@ test('편집은 만들기와 같은 폼이고, 저장하면 소개 페이지로 
   await page.goto(`${BASE}/my/characters/${characterId}/edit`)
   await expect(page.locator('input[name="name"]')).toHaveValue('한도윤')
 
-  await page.getByRole('tab', { name: /성격/ }).click()
+  // 성격 설명은 첫 탭(프로필)에 있다. 게시한 캐릭터의 편집 버튼은 저장 하나다.
   await page.locator('textarea[name="personality"]').fill('말수가 적고 환자 앞에서만 부드러워진다.')
   await page.getByRole('button', { name: '저장' }).click()
   await expect(page).toHaveURL(new RegExp(`/character/${characterId}`))
