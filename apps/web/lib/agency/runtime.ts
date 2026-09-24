@@ -34,11 +34,12 @@ export async function compileAgencyRevision(revisionId: string, llm: LLMProvider
     const updated = await db.update(characterRevisions).set({ compiled: result.compiled, status: 'ready', providerMode: result.providerMode, leaseToken: null, leaseUntil: null })
       .where(and(eq(characterRevisions.id, job.id), eq(characterRevisions.leaseToken, token))).returning({ id: characterRevisions.id })
     return updated.length === 1
-  } catch {
+  } catch (error) {
     await db.update(characterRevisions).set({ status: 'failed', errorCode: 'compilation_failed', leaseToken: null,
       leaseUntil: new Date(Date.now() + Math.max(1, job.attempts) * 5 * 60_000) })
       .where(and(eq(characterRevisions.id, job.id), eq(characterRevisions.leaseToken, token)))
-    observe('agency.compilation_failed', { revisionId: job.id })
+    // A routing failure (no model serves the task) happens before any ai_usage row, so this is its only trace.
+    observe('agency.compilation_failed', { revisionId: job.id, error: (error as Error).message })
     return false
   }
 }

@@ -72,7 +72,8 @@ export class AIOrchestrator implements LLMProvider {
   async execute<Out, In = Out>(opts: GenerationRequest & { schema: ZodType<Out, ZodTypeDef, In>; maxRetries?: number }): Promise<Out> {
     const production = this.run({ ...opts, task: taskOf(opts.task), json: true }, text => {
       const parsed = opts.schema.safeParse(extractJson(text))
-      if (!parsed.success) throw new Error('invalid_schema')
+      // Schema paths and issue codes only, never output text: enough to see which field a model keeps breaking.
+      if (!parsed.success) throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}`).join(' ')}`)
       return parsed.data
     }, opts.maxRetries)
     const shadow = this.opts.shadow
@@ -239,7 +240,7 @@ export class AIOrchestrator implements LLMProvider {
         } catch (e) {
           // Never log provider response bodies, keys, prompts or private reasoning.
           const message = e instanceof Error ? e.message : ''
-          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message === 'invalid_schema' || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
+          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message.startsWith('invalid_schema') || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
           if (last === 'provider_http_429') rateLimitProvider(providerKey, this.rateLimitBackoffMs)
         } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null

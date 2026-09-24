@@ -90,6 +90,15 @@ describe('AIOrchestrator', () => {
     }
   })
 
+  it('records which schema paths an invalid structured output broke, without its text', async () => {
+    const usage: AIUsageRecord[] = []
+    const provider: AIProvider = { info: { mode: 'live', name: 'p', notice: null }, healthCheck: async () => true,
+      generate: async () => ({ text: '{"mood":5,"secret":"model text"}', inputTokens: 1, outputTokens: 1, latencyMs: 1, provider: 'p', model: 'm' }) }
+    const ai = new AIOrchestrator({ chain: [provider], maxRetries: 0, onUsage: r => { usage.push(r) } })
+    await expect(ai.generateStructured({ task: 'dialogue', system: '', prompt: 'x', schema: z.object({ mood: z.string() }).strict() })).rejects.toThrow('invalid_schema')
+    expect(usage[0]!.error).toBe('invalid_schema mood:invalid_type $:unrecognized_keys')
+  })
+
   it('caps aggregate provider calls and reserves capacity for interactive work', async () => {
     process.env.MIRO_AI_PROVIDER_CONCURRENCY = '2'
     const usage: AIUsageRecord[] = []
