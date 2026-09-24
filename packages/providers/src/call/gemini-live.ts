@@ -53,6 +53,9 @@ export class GeminiLiveCallMediaProvider implements CallMediaProvider {
           ...(spec.systemInstruction
             ? { systemInstruction: { parts: [{ text: spec.systemInstruction }] } }
             : {}),
+          // 두 사람의 말을 글로 돌려받는다 — 통화 내용을 채팅 턴처럼 기억·관계에 남기기 위해서다.
+          inputAudioTranscription: {},
+          outputAudioTranscription: {},
         },
       }),
       signal: AbortSignal.timeout(10_000),

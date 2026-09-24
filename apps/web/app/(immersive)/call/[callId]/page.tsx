@@ -80,7 +80,7 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
         <h1 className="t-display t-name" style={{ marginTop: 10 }}>{loaded.characterName}</h1>
         {media.mode === 'mock' && <p role="status" className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>⚠ {provider.info.notice ?? '실시간 음성을 시작하지 못했어요 — 텍스트로 진행합니다.'}</p>}
         {media.mode === 'live' && media.connectUrl && call.channel === 'voice' && (
-          <LiveAudio token={media.token} url={media.connectUrl} model={media.model ?? ''} />
+          <LiveAudio callId={callId} token={media.token} url={media.connectUrl} model={media.model ?? ''} />
         )}
       </header>
       <div style={{ position: 'relative', flex: 1, padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 12, maxWidth: 560, width: '100%', margin: '0 auto' }}>

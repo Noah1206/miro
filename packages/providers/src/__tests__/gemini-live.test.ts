@@ -34,6 +34,8 @@ describe('gemini live ephemeral token', () => {
     expect(setup.systemInstruction.parts[0].text).toContain('유진')
     expect(setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Kore')
     expect(setup.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 })
+    expect(setup.inputAudioTranscription).toEqual({})
+    expect(setup.outputAudioTranscription).toEqual({})
   })
 
   it('prefers the character voice over the default when given', async () => {

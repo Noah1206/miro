@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from 'react'
  * 실시간 음성 레이어 (Gemini Live).
  *
  * 마이크를 기기 기본 샘플레이트로 받아 PCM16 16kHz 로 줄여 WebSocket 으로 올리고, 24kHz PCM 응답을 이어서 재생한다.
- * 토큰에 모델·프롬프트·보이스가 잠겨 있으므로 여기서는 소리만 나른다.
+ * 토큰에 모델·프롬프트·보이스가 잠겨 있으므로 여기서는 소리를 나르고, 두 사람의 말(받아쓰기)을 턴마다 서버에 넘긴다 —
+ * 서버가 채팅 턴처럼 기억·관계에 남긴다.
  * 어떤 실패든 조용히 물러난다 — 아래 텍스트 통화 UI 가 그대로 남아 있다 (명세서 5.2 예외).
  */
-export function LiveAudio({ token, url, model }: { token: string; url: string; model: string }) {
+export function LiveAudio({ callId, token, url, model }: { callId: string; token: string; url: string; model: string }) {
   const [status, setStatus] = useState<'connecting' | 'live' | 'ended' | 'error'>('connecting')
   const [detail, setDetail] = useState<string | null>(null)
   // iOS Safari 는 탭 밖에서 만든 AudioContext 를 멈춘 채로 둔다 — 그때만 '소리 켜기'를 보여 탭으로 깨운다.
@@ -29,12 +30,34 @@ export function LiveAudio({ token, url, model }: { token: string; url: string; m
     const playing = new Set<AudioBufferSourceNode>()
     let playCursor = 0
 
+    // 한 턴 = 사용자가 한 말(heard) + 캐릭터가 한 말(said). 서버가 순서대로 반영하도록 하나씩 보낸다.
+    let heard = '', said = ''
+    const turns: Array<{ user: string; character: string }> = []
+    let sending = false
+    const flush = async () => {
+      if (sending) return
+      sending = true
+      while (turns.length) {
+        // keepalive: 통화를 끊고 화면을 떠나도 마지막 턴은 전송을 마친다.
+        await fetch(`/api/calls/${callId}/turns`, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(turns.shift()) }).catch(() => {})
+      }
+      sending = false
+    }
+    const closeTurn = () => {
+      if (!said.trim()) return // 캐릭터가 아직 답하지 않았다 — 사용자의 말은 다음 답과 함께 보낸다.
+      turns.push({ user: heard.trim(), character: said.trim() })
+      heard = ''; said = ''
+      void flush()
+    }
+
     const checkMuted = () => setMuted(inCtx.state === 'suspended' || outCtx.state === 'suspended')
     void Promise.all([inCtx.resume(), outCtx.resume()]).catch(() => {}).finally(checkMuted)
 
     const stop = () => {
       if (closed) return
       closed = true
+      closeTurn()
       try { proc?.disconnect() } catch { /* already gone */ }
       micStream?.getTracks().forEach((t) => t.stop())
       void inCtx.close().catch(() => {})
@@ -97,11 +120,20 @@ export function LiveAudio({ token, url, model }: { token: string; url: string; m
       const text = typeof event.data === 'string' ? event.data : await (event.data as Blob).text()
       let msg: {
         setupComplete?: unknown
-        serverContent?: { interrupted?: boolean; modelTurn?: { parts?: Array<{ inlineData?: { data?: string } }> } }
+        serverContent?: {
+          interrupted?: boolean; turnComplete?: boolean
+          modelTurn?: { parts?: Array<{ inlineData?: { data?: string } }> }
+          inputTranscription?: { text?: string }; outputTranscription?: { text?: string }
+        }
       }
       try { msg = JSON.parse(text) } catch { return }
       if (msg.setupComplete) setStatus('live')
+      if (msg.serverContent?.inputTranscription?.text) heard += msg.serverContent.inputTranscription.text
+      if (msg.serverContent?.outputTranscription?.text) said += msg.serverContent.outputTranscription.text
+      // 사용자 말의 받아쓰기는 캐릭터의 답보다 조금 늦게 끝나기도 한다 — 잠깐 기다렸다 턴을 닫는다.
+      if (msg.serverContent?.turnComplete) setTimeout(closeTurn, 400)
       if (msg.serverContent?.interrupted) {
+        closeTurn() // 끊기 전까지 캐릭터가 한 말은 한 말이다.
         // 사용자가 말을 끊었다 — 이미 예약된 캐릭터의 말도 바로 멈춘다.
         for (const src of playing) { try { src.stop() } catch { /* already ended */ } }
         playing.clear()

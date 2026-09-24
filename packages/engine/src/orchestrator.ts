@@ -50,6 +50,11 @@ export async function runTurn(opts: {
   /** 'always' 면 보조 분석(의미 이벤트·기억)을 규칙과 무관하게 매 턴 돌린다. */
   auxiliary?: 'planned' | 'always'
   agency?: AgencyTurnInput
+  /**
+   * 실시간 음성 통화에서 캐릭터가 이미 소리로 한 말. 있으면 대사를 새로 만들지 않고 이 말을 이번 턴의 답으로 받는다 —
+   * 입력·출력 검열, 관계·기억·사건 규칙은 채팅 턴과 똑같이 돈다. 통화에서 한 말도 기억에 남기기 위한 경로다.
+   */
+  spokenReply?: string
 }): Promise<TurnResult> {
   if (opts.agency?.mode === 'live') return runAgencyTurn({ ...opts, agency: opts.agency })
   let agencyShadow: TurnResult['agencyShadow']
@@ -114,7 +119,9 @@ export async function runTurn(opts: {
   let proposal: SimulationProposal
   let providerMode: TurnResult['providerMode'] = opts.llm.info.mode
   let fallbackReason: string | undefined
-  try {
+  if (opts.spokenReply !== undefined) {
+    proposal = SimulationProposal.parse({ rp: { blocks: [{ type: 'dialogue', speaker: snapshot.character.identity.name, text: opts.spokenReply }] } })
+  } else try {
     proposal = await opts.llm.generateStructured({
       schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, importance: interactionImportance(opts.userInput), maxTokens: opts.maxOutputTokens,
       system: context.system,

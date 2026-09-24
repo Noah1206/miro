@@ -117,11 +117,12 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
     /* ---- messages ---- */
     const ORDER: Record<string, number> = { user: 0, narrator: 1, character: 2 }
     const rows: Array<typeof messages.$inferInsert> = [
-      {
+      // 음성 통화에서는 사용자가 말하기 전에 캐릭터가 먼저 말할 수 있다 — 그때는 캐릭터의 말만 남긴다.
+      ...(input.userInput ? [{
         ...(input.userMessageId ? { id: input.userMessageId } : {}),
-        sessionId: input.sessionId, role: 'user', kind: 'text',
+        sessionId: input.sessionId, role: 'user' as const, kind: 'text' as const,
         content: input.userInput, blocks: [], turnIndex: input.turnIndex,
-      },
+      }] : []),
       // 장면 표시는 답장보다 먼저 — 장소가 바뀌고, 그 안에서 대사가 이어진다.
       ...(input.sceneMarker ? [{
         sessionId: input.sessionId, role: 'narrator' as const, kind: 'live_scene' as const,

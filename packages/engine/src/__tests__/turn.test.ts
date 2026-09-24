@@ -63,6 +63,16 @@ describe('runTurn — state update pipeline', () => {
     expect((await runTurn({ llm: llm(), snapshot: steady, userInput: input })).transition.relationshipDelta.attachment).toBe(1)
   })
 
+  // 실시간 음성: 캐릭터는 이미 소리로 말했다. 새로 만들지 않고 그 말을 받아 관계·기억을 채팅 턴처럼 움직인다.
+  it('a spoken turn keeps what was said and never calls the dialogue model', async () => {
+    const tasks: string[] = []
+    const spy = new AIOrchestrator({ chain: [new MockAIProvider((req: GenerationRequest) => { tasks.push(req.task); return buildMockProposal(req.prompt, { characterName: '토마스' }) })] })
+    const r = await runTurn({ llm: spy, snapshot: snapshot({ turnCount: 5, mode: 'voice_call' }), userInput: '오늘 공방에 온 이유를 말씀드릴게요', spokenReply: '그래요. 천천히 말해 봐요.' })
+    expect(r.transition.blocks).toEqual([{ type: 'dialogue', speaker: '토마스', text: '그래요. 천천히 말해 봐요.' }])
+    expect(tasks).not.toContain('dialogue')
+    expect(r.transition.relationshipDelta).toMatchObject({ attachment: 1, emotionalDistance: -1 })
+  })
+
   // 2026-09-24: 운영에서도 관계용 AI 분류를 매 턴 돌린다 — 표현 규칙이 못 잡는 평범한 문장 때문에 관계가 멈춰 있었다.
   it('the production preset classifies every turn, not only keyword turns', () => {
     vi.stubEnv('MIRO_MODE', 'production')
