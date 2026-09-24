@@ -23,6 +23,8 @@ export interface LLMProvider {
     prompt: string
     /** 스키마 위반 시 재시도 횟수. 무한 재시도 금지. */
     maxRetries?: number
+    /** Optional JSON Schema for providers that can constrain decoding. The zod schema remains the validator. */
+    responseSchema?: Record<string, unknown>
     task?: string
     maxTokens?: number
     promptVersion?: string

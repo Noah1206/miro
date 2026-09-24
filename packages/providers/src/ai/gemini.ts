@@ -32,7 +32,7 @@ export class GeminiProvider implements AIProvider {
           .map(category => ({ category, threshold: 'BLOCK_MEDIUM_AND_ABOVE' })),
         generationConfig: {
           maxOutputTokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9,
-          ...(req.json ? { responseMimeType: 'application/json' } : {}),
+          ...(req.json ? { responseMimeType: 'application/json', ...(req.responseSchema ? { responseJsonSchema: req.responseSchema } : {}) } : {}),
           // 생각 토큰은 출력 단가로 과금되고 maxOutputTokens 를 같이 먹는다 — 대사 생성에는 최소로.
           // 모델마다 받는 값이 다르다 (2026-09 실측): 3.5-flash-lite 는 minimal 만, 3.5-flash 는 budget 0 만,
           // 3.8-flash 는 low 로 0 이 되고, 3.1-pro 는 끌 수 없어 low 가 최선(≈630 토큰).

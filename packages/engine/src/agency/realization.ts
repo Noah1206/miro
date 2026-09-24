@@ -72,7 +72,21 @@ Mark unsupported spans and violations even when the renderer supplied no claim a
 Return aligned:true only if all claims and the actual behavior are supported. This is a fallible semantic check, not a proof.
 Contract: {decisionId,aligned:boolean,claims:[{blockIndex,start,end,quote,kind:authored_fact|observed_fact|reported_claim|belief|intention|action_result|current_state,evidenceIds:string[],ruleIds:string[],actionIds:string[],statePaths?:string[]}],unsupported:[{blockIndex,start,end,quote,reason:unsupported_success|unavailable_evidence|invented_canon|contradicts_decision|controls_user|violates_boundary|uncertain_as_fact|unapproved_world_change}],violations:[same reason codes]}.`
 
-function spanMatches(claim: { blockIndex: number; start: number; end: number; quote: string }, blocks: AgencyRealizationBlock[]): boolean {
+type Span = { blockIndex: number; start: number; end: number; quote: string }
+/**
+ * Models miscount UTF-16 offsets (most live rejections on 2026-09-24), so the quote is authoritative and the server
+ * places it, preferring the occurrence nearest the claimed start. A quote that is not in the block stays unmatched.
+ */
+function placeSpan<T extends Span>(claim: T, blocks: AgencyRealizationBlock[]): T {
+  const text = blocks[claim.blockIndex]?.text ?? ''
+  let best = -1
+  for (let at = claim.quote ? text.indexOf(claim.quote) : -1; at !== -1; at = text.indexOf(claim.quote, at + 1)) {
+    if (best === -1 || Math.abs(at - claim.start) < Math.abs(best - claim.start)) best = at
+  }
+  return best === -1 ? claim : { ...claim, start: best, end: best + claim.quote.length }
+}
+
+function spanMatches(claim: Span, blocks: AgencyRealizationBlock[]): boolean {
   const block = blocks[claim.blockIndex]
   return !!block && claim.end > claim.start && claim.end <= block.text.length && block.text.slice(claim.start, claim.end) === claim.quote
 }
@@ -143,8 +157,9 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   const declared = input.claims ?? []
   const parsedDeclared = z.array(AgencyRealizationClaimSchema).max(24).safeParse(declared)
   if (!parsedDeclared.success) return { ...initialTrace, ok: false, issues: [{ field: 'claims', reason: 'invalid_claim_schema' }], claims: [] }
-  issues.push(...validateClaims(parsedDeclared.data, input))
-  if (issues.length) return { ...initialTrace, ok: false, issues, claims: parsedDeclared.data }
+  const placedDeclared = parsedDeclared.data.map(claim => placeSpan(claim, input.blocks))
+  issues.push(...validateClaims(placedDeclared, input))
+  if (issues.length) return { ...initialTrace, ok: false, issues, claims: placedDeclared }
   const visibleEvidence = input.context.evidence.filter(e => agencyEvidence(e.id, input.context))
   const payload = {
     decision: input.decision, rules: input.context.compiled.rules, evidence: visibleEvidence,
@@ -159,14 +174,15 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
     promptVersion: AGENCY_REALIZATION_VERSION, maxTokens: 3072,
   })
   const trace = agencyProviderTrace(llm, AGENCY_REALIZATION_VERSION)
+  const claims = assessment.claims.map(claim => placeSpan(claim, input.blocks))
   if (assessment.decisionId !== input.decision.id) issues.push({ field: 'decisionId', reason: 'decision_mismatch' })
   if (!assessment.aligned) issues.push({ field: 'realization', reason: 'semantic_alignment_rejected' })
   issues.push(...assessment.violations.map(reason => ({ field: 'realization', reason })))
   for (const rejected of assessment.unsupported) {
     issues.push({ field: `blocks.${rejected.blockIndex}`, reason: rejected.reason })
-    if (!spanMatches(rejected, input.blocks)) issues.push({ field: 'unsupported', reason: 'claim_span_mismatch' })
+    if (!spanMatches(placeSpan(rejected, input.blocks), input.blocks)) issues.push({ field: 'unsupported', reason: 'claim_span_mismatch' })
   }
-  issues.push(...validateClaims(assessment.claims, input))
+  issues.push(...validateClaims(claims, input))
   // Conservative backstop: do not trust an empty/incomplete claim list for obvious success wording.
   // A question, negation or condition about completion ("잘 도착했어?", "아직 안 보냈어", "보냈으면")
   // asserts nothing. Otherwise the words need an attested result, an observed fact, or a restated user
@@ -178,10 +194,10 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   for (const [blockIndex, block] of input.blocks.entries()) {
     for (const match of block.text.matchAll(completion)) {
       if (!asserted(block.text, match.index!, match.index! + match[0].length)) continue
-      const covered = assessment.claims.some(claim => claim.blockIndex === blockIndex && claim.start <= match.index!
+      const covered = claims.some(claim => claim.blockIndex === blockIndex && claim.start <= match.index!
         && claim.end >= match.index! + match[0].length && ['action_result', 'observed_fact', 'reported_claim'].includes(claim.kind))
       if (!covered) issues.push({ field: `blocks.${blockIndex}`, reason: 'undeclared_success_claim' })
     }
   }
-  return { ...trace, ok: issues.length === 0, issues, claims: assessment.claims }
+  return { ...trace, ok: issues.length === 0, issues, claims }
 }

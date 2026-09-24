@@ -105,7 +105,8 @@ async function main() {
   const failuresPath = join(directory, 'failures.json')
   const failuresStatus = vitest('apps/web/lib/agency/baseline-failures.eval.ts', { ...blank, MIRO_CHARACTER_AGENCY_MODE: 'off', MIRO_AGENCY_FAILURES_OUT: failuresPath })
   const arms: Record<string, Arm | null> = {}
-  for (const [arm, mode] of [['legacy', 'off'], ['agency', 'live']] as const) {
+  const selected = (option('--arms') ?? 'legacy,agency').split(',')
+  for (const [arm, mode] of ([['legacy', 'off'], ['agency', 'live']] as const).filter(([arm]) => selected.includes(arm))) {
     const out = join(directory, `${arm}.json`)
     const status = vitest('apps/web/lib/agency/baseline-measure.eval.ts', { MIRO_CHARACTER_AGENCY_MODE: mode, MIRO_CHARACTER_AGENCY_SESSIONS: mode === 'off' ? '' : '*', MIRO_AGENCY_MEASURE_OUT: out })
     arms[arm] = status === 0 && existsSync(out) ? JSON.parse(await readFile(out, 'utf8')) : null

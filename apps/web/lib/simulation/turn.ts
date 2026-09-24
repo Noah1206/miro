@@ -115,7 +115,7 @@ async function executeTurn(opts: {
       if (e instanceof AIBudgetDeniedError) return { ok: false, reason: 'budget', kind: e.reason as BudgetKind }
       if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }
       // Only our own stage codes: a DB error message can carry query parameters, i.e. user text.
-      const cause = e instanceof Error && /^(agency_[a-z_]+|ai unavailable after \d+ attempts: [\w .:$-]+|no capable model fits context|selected model cannot handle dialogue context)$/.test(e.message) ? e.message : 'other'
+      const cause = e instanceof Error && /^(agency_[a-z_]+( [a-z_]+)*|ai unavailable after \d+ attempts: [\w .:$-]+|no capable model fits context|selected model cannot handle dialogue context)$/.test(e.message) ? e.message : 'other'
       observe('turn.failed', { sessionId, turn: turnIndex, error: 'generation_failed', cause })
       return { ok: false, reason: 'generation' }
     }

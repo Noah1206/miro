@@ -54,7 +54,8 @@ export async function runAgencyTurn(opts: {
   transition.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
   const verification = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context,
     state: plan.state, blocks: transition.blocks })
-  if (!verification.ok) throw new Error('agency_realization_rejected')
+  // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
+  if (!verification.ok) throw new Error(['agency_realization_rejected', ...new Set(verification.issues.map(i => i.reason))].join(' '))
   if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
   const characterState = { mood: 'neutral' as const, stress: plan.state.affect.stress, energy: plan.state.affect.energy,
     currentGoals: plan.state.goals.filter(g => g.status === 'active').map(g => g.description),

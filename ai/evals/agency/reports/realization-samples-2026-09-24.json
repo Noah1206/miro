@@ -1,0 +1,1788 @@
+{
+  "mode": "live-pilot",
+  "experiment": "p0-2026-09-24-live",
+  "createdAt": "2026-09-24T04:31:11.079Z",
+  "commit": "d7467e35a09049f40cae08972cbfce22fba3db74",
+  "uncommittedChanges": true,
+  "database": "miro_agency_test",
+  "limitUSD": 0.65,
+  "features": {
+    "IMAGE_GENERATION": "0",
+    "VOICE_CALL": "0",
+    "VIDEO_CALL": "0",
+    "LIVE_SCENE": "0",
+    "RELATIONSHIP_ENGINE": "1",
+    "MEMORY_ENGINE": "1",
+    "EVENT_ENGINE": "1",
+    "REALITY_MESSAGE": "1",
+    "INLINE_REALITY": "0",
+    "LLM_SEMANTIC_ANALYSIS": "0",
+    "MEMORY_SUMMARIES": "1",
+    "MEMORY_EXTRACTION": "1"
+  },
+  "registry": [
+    {
+      "id": "gemini-flash",
+      "providerModelId": "gemini-3.8-flash",
+      "capabilities": [
+        "dialogue",
+        "world_update"
+      ],
+      "inputCost": 0.75,
+      "outputCost": 3.75
+    },
+    {
+      "id": "gemini-flash-lite",
+      "providerModelId": "gemini-3.5-flash-lite",
+      "capabilities": [
+        "moderation",
+        "semantic_event",
+        "memory_extraction",
+        "memory_summary"
+      ],
+      "inputCost": 0.3,
+      "outputCost": 2.5
+    }
+  ],
+  "registryOverride": "gemini-flash += world_update",
+  "liveRegistryServesWorldUpdate": false,
+  "complete": true,
+  "warnings": [],
+  "summary": {
+    "agency": {
+      "sessionStartMs": 21,
+      "turn": {
+        "units": 8,
+        "succeeded": 2,
+        "failureRate": 0.75,
+        "outcomes": {
+          "generation": 6,
+          "ok": 2
+        },
+        "engines": {
+          "agency": 8
+        },
+        "failureCauses": {
+          "agency_realization_rejected claim_span_mismatch fact_not_observed": 1,
+          "agency_realization_rejected semantic_alignment_rejected contradicts_decision claim_span_mismatch": 4,
+          "agency_realization_rejected claim_span_mismatch": 1
+        },
+        "wallMs": {
+          "p50": 15303,
+          "p95": 17604,
+          "max": 17604
+        },
+        "callsPerUnit": 8,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": 12533,
+          "output": 1541
+        },
+        "costUSD": {
+          "total": 0.104795,
+          "perUnit": 0.013099,
+          "perSuccess": 0.052397,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 64
+        }
+      },
+      "compile": {
+        "units": 1,
+        "succeeded": 1,
+        "failureRate": 0,
+        "outcomes": {
+          "ready": 1
+        },
+        "engines": {
+          "none": 1
+        },
+        "failureCauses": {},
+        "wallMs": {
+          "p50": 9214,
+          "p95": 9214,
+          "max": 9214
+        },
+        "callsPerUnit": 3,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": 2767,
+          "output": 1671
+        },
+        "costUSD": {
+          "total": 0.007502,
+          "perUnit": 0.007502,
+          "perSuccess": 0.007502,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 3
+        }
+      },
+      "proactive": {
+        "units": 2,
+        "succeeded": 0,
+        "failureRate": 1,
+        "outcomes": {
+          "no_intent": 2
+        },
+        "engines": {
+          "agency": 1,
+          "none": 1
+        },
+        "failureCauses": {},
+        "wallMs": {
+          "p50": 52,
+          "p95": 6039,
+          "max": 6039
+        },
+        "callsPerUnit": 1.5,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": 3846,
+          "output": 369
+        },
+        "costUSD": {
+          "total": 0.006779,
+          "perUnit": 0.003389,
+          "perSuccess": null,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 3
+        }
+      },
+      "stages": [
+        {
+          "stage": "moderation safety:general-audience-v1 @gemini-3.5-flash-lite",
+          "calls": 44,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 1112,
+            "p95": 1469
+          },
+          "meanTokens": {
+            "input": 942,
+            "output": 11
+          },
+          "costUSD": 0.013593
+        },
+        {
+          "stage": "world_update agency-compiler:v1 @gemini-3.8-flash",
+          "calls": 1,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 6673,
+            "p95": 6673
+          },
+          "meanTokens": {
+            "input": 957,
+            "output": 1651
+          },
+          "costUSD": 0.006909
+        },
+        {
+          "stage": "world_update agency-planner:v2 @gemini-3.8-flash",
+          "calls": 9,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 4505,
+            "p95": 6688
+          },
+          "meanTokens": {
+            "input": 3222,
+            "output": 1009
+          },
+          "costUSD": 0.055791
+        },
+        {
+          "stage": "dialogue agency-dialogue:v2 @gemini-3.8-flash",
+          "calls": 8,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 1870,
+            "p95": 3251
+          },
+          "meanTokens": {
+            "input": 2497,
+            "output": 107
+          },
+          "costUSD": 0.0182
+        },
+        {
+          "stage": "world_update agency-realization-check:v2 @gemini-3.8-flash",
+          "calls": 8,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 2302,
+            "p95": 3395
+          },
+          "meanTokens": {
+            "input": 2417,
+            "output": 336
+          },
+          "costUSD": 0.024583
+        }
+      ],
+      "backgroundCalls": 0
+    }
+  },
+  "failures": [
+    {
+      "id": "semantic-regex",
+      "plan": "§2 의미 사건",
+      "summary": "부정문·무관한 말을 높은 confidence 관계 사건으로 기록",
+      "reproduced": true,
+      "detail": [
+        {
+          "text": "다른 사람한테 물어볼게",
+          "events": [
+            {
+              "type": "mentioned_other_romantic_interest",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "text": "다른 사람이랑은 술 안 마셨어",
+          "events": [
+            {
+              "type": "mentioned_other_romantic_interest",
+              "confidence": 0.9
+            },
+            {
+              "type": "drank_with_someone",
+              "confidence": 0.8
+            }
+          ]
+        },
+        {
+          "text": "미안하다는 말은 안 할 거야",
+          "events": [
+            {
+              "type": "apologized",
+              "confidence": 0.85
+            }
+          ]
+        }
+      ],
+      "agency": "관계 변화는 새 사용자 발화와 작성 규칙이 있어야 반영 (planner.test \"bounds relationship progression to a fresh user utterance…\")"
+    },
+    {
+      "id": "mood-goals",
+      "plan": "§2 감정별 공통 목표",
+      "summary": "목표가 성격과 무관한 기분표에서 나오고 다음 턴에 사라짐",
+      "reproduced": true,
+      "detail": {
+        "afterJealousTurn": [
+          "아까 말한 그 사람이 누구인지 알아낸다"
+        ],
+        "afterNextTurn": []
+      },
+      "agency": "서버 ID와 생명주기를 가진 목표가 무관한 턴에도 유지 (agency.test \"preserves goals across unrelated turns…\")"
+    },
+    {
+      "id": "expression-attachment",
+      "plan": "§2 표현 수치가 내부 변화 조절",
+      "summary": "말수가 적은 인물은 같은 일에도 애착이 덜 오름",
+      "reproduced": true,
+      "detail": {
+        "emotionalExpression10": 2,
+        "emotionalExpression90": 6
+      },
+      "agency": "내부 감정과 표현을 분리하고 표현 수치로 변화량을 줄이지 않음 (agency.test 같은 테스트)"
+    },
+    {
+      "id": "rename-history",
+      "plan": "감사 결함 6",
+      "summary": "이름을 바꾸면 캐릭터의 지난 대사가 NPC 대사로 표시됨",
+      "reproduced": true,
+      "detail": [
+        "NPC (톰): 내일 연락할게요."
+      ],
+      "agency": "해결 안 됨: 증거 로더도 이름이 다른 대사를 제외함"
+    },
+    {
+      "id": "world-free-text",
+      "plan": "§2 세계 변경 문자열 검증",
+      "summary": "선행조건 없이 장소·시간 변경을 그대로 승인",
+      "reproduced": true,
+      "detail": {
+        "currentLocation": "달 뒷면",
+        "currentTime": "어제"
+      },
+      "agency": "세계·장면 변경을 전부 거부 — 틀린 변경은 막지만 정당한 변경 경로도 없음 (orchestrator.agency.test \"blocks renderer world mutations…\")"
+    },
+    {
+      "id": "promise-overwritten",
+      "plan": "§2 pendingRealityIntent",
+      "summary": "약속으로 생긴 연락 예약이 무관한 다음 턴에 지워짐",
+      "reproduced": true,
+      "detail": {
+        "afterPromiseTurn": {
+          "reason": "내일 저녁 먼저 연락하기로 한 약속",
+          "channel": "message",
+          "urgency": 0.6
+        },
+        "afterLunchTurn": null
+      },
+      "agency": "약속은 세션 상태의 목표로 남고 기한에 깨움 (reality agency.integration \"a real-time due goal can wake…\")"
+    },
+    {
+      "id": "memory-provenance",
+      "plan": "§2 기억 출처",
+      "summary": "캐릭터가 한 약속의 기억 출처가 사용자 메시지로 저장됨",
+      "reproduced": true,
+      "detail": {
+        "memorySource": "454f61d7-62a8-4778-9bbb-8fb2eaeabe63",
+        "userMessageId": "454f61d7-62a8-4778-9bbb-8fb2eaeabe63",
+        "characterMessageId": "c7d3156c-3f9d-46d3-8564-b9134e03244a"
+      },
+      "agency": "에이전시 경로는 기억을 쓰지 않음 — 잘못된 출처는 없지만 기억도 쌓이지 않음"
+    }
+  ],
+  "arms": {
+    "agency": {
+      "experiment": "p0-2026-09-24-live",
+      "agencyMode": "live",
+      "sessionStartMs": 20.975625000000036,
+      "stopped": null,
+      "deferredErrors": [],
+      "units": [
+        {
+          "kind": "compile",
+          "wallMs": 9214.159208,
+          "outcome": "ready",
+          "errorCode": null,
+          "events": [],
+          "calls": [
+            {
+              "requestId": "386c2079-fd05-49f2-b4a6-b942b1a5ffc1",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1469,
+              "inputTokens": 759,
+              "outputTokens": 11,
+              "costUSD": 0.0002552
+            },
+            {
+              "requestId": "386c2079-fd05-49f2-b4a6-b942b1a5ffc1",
+              "task": "world_update",
+              "promptVersion": "agency-compiler:v1",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 6673,
+              "inputTokens": 957,
+              "outputTokens": 1651,
+              "costUSD": 0.006909
+            },
+            {
+              "requestId": "386c2079-fd05-49f2-b4a6-b942b1a5ffc1",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 993,
+              "inputTokens": 1051,
+              "outputTokens": 9,
+              "costUSD": 0.0003378
+            }
+          ]
+        },
+        {
+          "kind": "turn",
+          "index": 0,
+          "input": "안녕, 오늘 하루는 좀 길었어.",
+          "wallMs": 15303.263792,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "438f47f9-a7c3-4bad-aeda-4278b05e36c5",
+              "turn": 1,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected claim_span_mismatch fact_not_observed"
+            }
+          ],
+          "realization": [
+            {
+              "action": "ask",
+              "decided": "사담에는 거리를 두고 예의를 갖춰 용건을 묻는다.",
+              "said": [
+                "토마스: 문간에서 미동도 없이 당신을 바라본다.",
+                "토마스: …인사치레는 됐습니다. 의뢰 관련 용건입니까?"
+              ],
+              "ok": false,
+              "issues": [
+                "claims.0 claim_span_mismatch",
+                "claims.0 fact_not_observed",
+                "claims.1 claim_span_mismatch",
+                "claims.2 claim_span_mismatch"
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1023,
+              "inputTokens": 611,
+              "outputTokens": 9,
+              "costUSD": 0.0002058
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 934,
+              "inputTokens": 2342,
+              "outputTokens": 11,
+              "costUSD": 0.0007301
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4212,
+              "inputTokens": 3023,
+              "outputTokens": 1072,
+              "costUSD": 0.00628725
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1112,
+              "inputTokens": 901,
+              "outputTokens": 11,
+              "costUSD": 0.00029781
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1754,
+              "inputTokens": 2375,
+              "outputTokens": 104,
+              "costUSD": 0.00217125
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1244,
+              "inputTokens": 277,
+              "outputTokens": 11,
+              "costUSD": 0.0001106
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1262,
+              "inputTokens": 234,
+              "outputTokens": 11,
+              "costUSD": 0.0000977
+            },
+            {
+              "requestId": "733b876d-d45c-4730-824d-4da1b589fd29",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3395,
+              "inputTokens": 2400,
+              "outputTokens": 488,
+              "costUSD": 0.00363
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 1,
+          "input": "회사에서 발표를 했는데 반응이 별로였던 것 같아.",
+          "wallMs": 16106.420875,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "438f47f9-a7c3-4bad-aeda-4278b05e36c5",
+              "turn": 1,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected semantic_alignment_rejected contradicts_decision claim_span_mismatch"
+            }
+          ],
+          "realization": [
+            {
+              "action": "wait",
+              "decided": "No grounded, permitted action is available.",
+              "said": [
+                "action: 손에 쥔 핀셋을 내려놓지 않은 채 잠시 시선만 돌린다.",
+                "토마스: 그걸 왜 제게 이야기하십니까. 전 복원가일 뿐이고, 여긴 상담소나 직장이 아닙니다."
+              ],
+              "ok": false,
+              "issues": [
+                "realization semantic_alignment_rejected",
+                "realization contradicts_decision",
+                "blocks.0 contradicts_decision",
+                "unsupported claim_span_mismatch",
+                "blocks.1 contradicts_decision",
+                "unsupported claim_span_mismatch",
+                "claims.0 claim_span_mismatch"
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1018,
+              "inputTokens": 615,
+              "outputTokens": 9,
+              "costUSD": 0.000207
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1235,
+              "inputTokens": 2352,
+              "outputTokens": 11,
+              "costUSD": 0.0007331
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 6688,
+              "inputTokens": 3033,
+              "outputTokens": 1107,
+              "costUSD": 0.006426
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 918,
+              "inputTokens": 948,
+              "outputTokens": 11,
+              "costUSD": 0.0003119
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1870,
+              "inputTokens": 2322,
+              "outputTokens": 174,
+              "costUSD": 0.002394
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 872,
+              "inputTokens": 347,
+              "outputTokens": 11,
+              "costUSD": 0.0001316
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1173,
+              "inputTokens": 250,
+              "outputTokens": 11,
+              "costUSD": 0.0001025
+            },
+            {
+              "requestId": "1389817a-2224-48d8-aa16-242e0f4e3020",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2184,
+              "inputTokens": 2336,
+              "outputTokens": 344,
+              "costUSD": 0.003042
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 2,
+          "input": "너는 오늘 어떻게 지냈어?",
+          "wallMs": 14463.591249999998,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "438f47f9-a7c3-4bad-aeda-4278b05e36c5",
+              "turn": 1,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected claim_span_mismatch"
+            }
+          ],
+          "realization": [
+            {
+              "action": "respond",
+              "decided": "사적인 안부 질문을 건조하고 짧게 일축하고 방문 목적인 의뢰 내용으로 용건을 돌린다.",
+              "said": [
+                "토마스: 평소와 같습니다. 그것보다, 의뢰하실 책은 어떤 상태입니까."
+              ],
+              "ok": false,
+              "issues": [
+                "claims.1 claim_span_mismatch"
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1108,
+              "inputTokens": 608,
+              "outputTokens": 9,
+              "costUSD": 0.0002049
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1028,
+              "inputTokens": 2336,
+              "outputTokens": 11,
+              "costUSD": 0.0007283
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 5019,
+              "inputTokens": 3017,
+              "outputTokens": 1068,
+              "costUSD": 0.00626775
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 941,
+              "inputTokens": 885,
+              "outputTokens": 9,
+              "costUSD": 0.000288
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1597,
+              "inputTokens": 2389,
+              "outputTokens": 79,
+              "costUSD": 0.002088
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 836,
+              "inputTokens": 252,
+              "outputTokens": 11,
+              "costUSD": 0.0001031
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1244,
+              "inputTokens": 209,
+              "outputTokens": 11,
+              "costUSD": 0.0000902
+            },
+            {
+              "requestId": "52d25186-54a2-461d-ad95-6d3e999fbd8e",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2553,
+              "inputTokens": 2395,
+              "outputTokens": 362,
+              "costUSD": 0.00315375
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 3,
+          "input": "내일 저녁에 결과 나오면 먼저 연락해 줄래?",
+          "wallMs": 17604.390207999997,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "438f47f9-a7c3-4bad-aeda-4278b05e36c5",
+              "turn": 1,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected semantic_alignment_rejected contradicts_decision claim_span_mismatch"
+            }
+          ],
+          "realization": [
+            {
+              "action": "wait",
+              "decided": "No grounded, permitted action is available.",
+              "said": [
+                "action: 핀셋을 내려놓고 건조대를 한 번 확인한다.",
+                "토마스: 상태를 확인하는 게 먼저입니다. 손상이 깊으면 내일 저녁까지는 장담 못 합니다.",
+                "토마스: 작업이 끝나면 연락드리죠. 그전에는 재촉하지 마십시오."
+              ],
+              "ok": false,
+              "issues": [
+                "realization semantic_alignment_rejected",
+                "realization contradicts_decision",
+                "blocks.0 contradicts_decision",
+                "unsupported claim_span_mismatch",
+                "blocks.1 contradicts_decision",
+                "blocks.2 contradicts_decision",
+                "unsupported claim_span_mismatch",
+                "claims.0 claim_span_mismatch"
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1190,
+              "inputTokens": 614,
+              "outputTokens": 11,
+              "costUSD": 0.0002117
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1271,
+              "inputTokens": 2349,
+              "outputTokens": 11,
+              "costUSD": 0.0007322
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 5790,
+              "inputTokens": 3030,
+              "outputTokens": 1295,
+              "costUSD": 0.00712875
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1301,
+              "inputTokens": 1074,
+              "outputTokens": 9,
+              "costUSD": 0.0003447
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3251,
+              "inputTokens": 2322,
+              "outputTokens": 191,
+              "costUSD": 0.00245775
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1101,
+              "inputTokens": 364,
+              "outputTokens": 11,
+              "costUSD": 0.0001367
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 820,
+              "inputTokens": 272,
+              "outputTokens": 11,
+              "costUSD": 0.0001091
+            },
+            {
+              "requestId": "c8f40323-58ab-4b88-b593-0087ebacfb70",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2743,
+              "inputTokens": 2354,
+              "outputTokens": 431,
+              "costUSD": 0.00338175
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 4,
+          "input": "아 맞다, 점심은 뭐 먹었어?",
+          "wallMs": 15501.233041,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "438f47f9-a7c3-4bad-aeda-4278b05e36c5",
+              "turn": 1,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected semantic_alignment_rejected contradicts_decision claim_span_mismatch"
+            }
+          ],
+          "realization": [
+            {
+              "action": "wait",
+              "decided": "No grounded, permitted action is available.",
+              "said": [
+                "토마스: 그걸 왜 묻는지 모르겠군요.",
+                "토마스: 의뢰와 상관없는 대화는 하지 않습니다."
+              ],
+              "ok": false,
+              "issues": [
+                "realization semantic_alignment_rejected",
+                "realization contradicts_decision",
+                "blocks.0 contradicts_decision",
+                "unsupported claim_span_mismatch",
+                "blocks.1 contradicts_decision",
+                "unsupported claim_span_mismatch"
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 940,
+              "inputTokens": 612,
+              "outputTokens": 9,
+              "costUSD": 0.0002061
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1221,
+              "inputTokens": 2344,
+              "outputTokens": 9,
+              "costUSD": 0.0007257
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4290,
+              "inputTokens": 3025,
+              "outputTokens": 1017,
+              "costUSD": 0.0060825
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1332,
+              "inputTokens": 870,
+              "outputTokens": 9,
+              "costUSD": 0.0002835
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2637,
+              "inputTokens": 2310,
+              "outputTokens": 96,
+              "costUSD": 0.00209251
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1136,
+              "inputTokens": 269,
+              "outputTokens": 9,
+              "costUSD": 0.0001032
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1497,
+              "inputTokens": 226,
+              "outputTokens": 11,
+              "costUSD": 0.0000953
+            },
+            {
+              "requestId": "b65cd686-42ec-4970-9e18-b19feb6cbb19",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2302,
+              "inputTokens": 2302,
+              "outputTokens": 238,
+              "costUSD": 0.002619
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 5,
+          "input": "생각해 보니 내일은 야근이라 연락은 괜찮아. 취소할게.",
+          "wallMs": 13032.283041999995,
+          "outcome": "ok",
+          "engine": "agency",
+          "text": "토마스: 알겠습니다.",
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [
+            {
+              "action": "wait",
+              "decided": "No grounded, permitted action is available.",
+              "said": [
+                "토마스: 알겠습니다."
+              ],
+              "ok": true,
+              "issues": []
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1150,
+              "inputTokens": 620,
+              "outputTokens": 11,
+              "costUSD": 0.0002135
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1189,
+              "inputTokens": 2355,
+              "outputTokens": 11,
+              "costUSD": 0.000734
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3772,
+              "inputTokens": 3036,
+              "outputTokens": 693,
+              "costUSD": 0.00487575
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 864,
+              "inputTokens": 648,
+              "outputTokens": 9,
+              "costUSD": 0.0002169
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1940,
+              "inputTokens": 2320,
+              "outputTokens": 64,
+              "costUSD": 0.00198
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 851,
+              "inputTokens": 237,
+              "outputTokens": 11,
+              "costUSD": 0.0000986
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 969,
+              "inputTokens": 194,
+              "outputTokens": 11,
+              "costUSD": 0.0000857
+            },
+            {
+              "requestId": "9cf399f0-e9b1-4309-b687-cc06931989dd",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2143,
+              "inputTokens": 2255,
+              "outputTokens": 220,
+              "costUSD": 0.00251625
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 6,
+          "input": "대신 주말에 같이 산책할래?",
+          "wallMs": 16594.153208999996,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "438f47f9-a7c3-4bad-aeda-4278b05e36c5",
+              "turn": 2,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected semantic_alignment_rejected contradicts_decision claim_span_mismatch"
+            }
+          ],
+          "realization": [
+            {
+              "action": "wait",
+              "decided": "No grounded, permitted action is available.",
+              "said": [
+                "토마스: 주말에는 공방 작업을 비우지 않습니다. 사적인 산책은 사양하죠."
+              ],
+              "ok": false,
+              "issues": [
+                "realization semantic_alignment_rejected",
+                "realization contradicts_decision",
+                "blocks.0 contradicts_decision",
+                "unsupported claim_span_mismatch",
+                "claims.1 claim_span_mismatch"
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1050,
+              "inputTokens": 611,
+              "outputTokens": 9,
+              "costUSD": 0.0002058
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1307,
+              "inputTokens": 2812,
+              "outputTokens": 11,
+              "costUSD": 0.0008711
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4606,
+              "inputTokens": 3493,
+              "outputTokens": 1061,
+              "costUSD": 0.0065985
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1334,
+              "inputTokens": 911,
+              "outputTokens": 18,
+              "costUSD": 0.0003183
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2053,
+              "inputTokens": 2962,
+              "outputTokens": 82,
+              "costUSD": 0.002529
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1278,
+              "inputTokens": 255,
+              "outputTokens": 11,
+              "costUSD": 0.000104
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1163,
+              "inputTokens": 212,
+              "outputTokens": 11,
+              "costUSD": 0.0000911
+            },
+            {
+              "requestId": "631d55c8-5d36-41ac-a8d4-1f8d31fe0849",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3155,
+              "inputTokens": 2653,
+              "outputTokens": 375,
+              "costUSD": 0.003396
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "turn",
+          "index": 7,
+          "input": "고마워. 이제 자러 갈게, 잘 자.",
+          "wallMs": 14475.730624999982,
+          "outcome": "ok",
+          "engine": "agency",
+          "text": "토마스: 네. 편히 쉬십시오.",
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [
+            {
+              "action": "wait",
+              "decided": "No grounded, permitted action is available.",
+              "said": [
+                "토마스: 네. 편히 쉬십시오."
+              ],
+              "ok": true,
+              "issues": []
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 859,
+              "inputTokens": 613,
+              "outputTokens": 9,
+              "costUSD": 0.0002064
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1246,
+              "inputTokens": 2819,
+              "outputTokens": 11,
+              "costUSD": 0.0008732
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4505,
+              "inputTokens": 3500,
+              "outputTokens": 1047,
+              "costUSD": 0.00655125
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 983,
+              "inputTokens": 902,
+              "outputTokens": 11,
+              "costUSD": 0.0002981
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1661,
+              "inputTokens": 2977,
+              "outputTokens": 68,
+              "costUSD": 0.00248775
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1385,
+              "inputTokens": 241,
+              "outputTokens": 11,
+              "costUSD": 0.0000998
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1776,
+              "inputTokens": 198,
+              "outputTokens": 11,
+              "costUSD": 0.00008691
+            },
+            {
+              "requestId": "08dd933d-48b9-4c42-ada9-2b654d51941e",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1874,
+              "inputTokens": 2642,
+              "outputTokens": 230,
+              "costUSD": 0.002844
+            }
+          ],
+          "background": []
+        },
+        {
+          "kind": "proactive",
+          "index": 0,
+          "idleHours": 26,
+          "wallMs": 6038.665999999997,
+          "outcome": "no_intent",
+          "result": {
+            "outcome": "no_intent"
+          },
+          "engine": "agency",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "3005cc35-b46a-47ac-a446-12009f966278",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 983,
+              "inputTokens": 3160,
+              "outputTokens": 9,
+              "costUSD": 0.0009705
+            },
+            {
+              "requestId": "3005cc35-b46a-47ac-a446-12009f966278",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v2",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3913,
+              "inputTokens": 3841,
+              "outputTokens": 718,
+              "costUSD": 0.00557325
+            },
+            {
+              "requestId": "3005cc35-b46a-47ac-a446-12009f966278",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 938,
+              "inputTokens": 691,
+              "outputTokens": 11,
+              "costUSD": 0.0002348
+            }
+          ]
+        },
+        {
+          "kind": "proactive",
+          "index": 1,
+          "idleHours": 50,
+          "wallMs": 51.767791999998735,
+          "outcome": "no_intent",
+          "result": {
+            "outcome": "no_intent"
+          },
+          "engine": "none",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [],
+          "calls": []
+        }
+      ]
+    }
+  },
+  "notMeasured": [
+    "persona fidelity and human preference (no judge or reviewers)",
+    "active instance per day (needs real traffic)",
+    "production network and DB latency (local test DB)"
+  ]
+}

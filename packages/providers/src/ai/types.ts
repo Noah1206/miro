@@ -14,6 +14,8 @@ export type GenerationRequest = {
   prompt: string
   /** true 면 JSON 객체만 돌려주도록 요청한다 (모델이 지원하면 JSON 모드). */
   json?: boolean
+  /** JSON Schema the provider may enforce while decoding (Gemini responseJsonSchema). Others ignore it; the caller still validates. */
+  responseSchema?: Record<string, unknown>
   maxTokens?: number
   temperature?: number
   signal?: AbortSignal

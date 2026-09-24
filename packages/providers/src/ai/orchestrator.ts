@@ -90,6 +90,7 @@ export class AIOrchestrator implements LLMProvider {
   async generateStructured<Out, In = Out>(opts: {
     schema: ZodType<Out, ZodTypeDef, In>; system: string; prompt: string; maxRetries?: number
     task?: string; maxTokens?: number; promptVersion?: string; importance?: GenerationRequest['importance']
+    responseSchema?: GenerationRequest['responseSchema']
   }): Promise<Out> { return this.execute({ ...opts, task: taskOf(opts.task) }) }
   async generateText(opts: { system: string; prompt: string; task?: string; maxTokens?: number; temperature?: number; promptVersion?: string }): Promise<string> {
     return this.run({ ...opts, task: taskOf(opts.task) }, text => {

@@ -5,6 +5,7 @@ import { and, asc, eq, gt, sql } from 'drizzle-orm'
 import { db, aiUsage, characterRevisions, characterRuntimeStates, contactProfiles, roleplaySessions, users, userSettings } from '@miro/db'
 import { cloneCharacterAsReality } from '@/lib/dev/reality-clone'
 import * as observability from '@/lib/observe'
+import * as agencyEngine from '../../../../packages/engine/src/agency'
 import * as push from '@/lib/reality/push-outbox'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { createRoleplaySession } from '@/lib/simulation/start'
@@ -56,6 +57,17 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       log(event, fields)
     })
     const drain = () => events.splice(0)
+    // Synthetic replies only: what was decided, what was said, and why the check refused it.
+    const realizations: Array<Record<string, unknown>> = []
+    const verify = agencyEngine.verifyAgencyRealization
+    vi.spyOn(agencyEngine, 'verifyAgencyRealization').mockImplementation(async (llm, input) => {
+      const result = await verify(llm, input)
+      realizations.push({ action: input.decision.action, decided: input.decision.candidate.description,
+        said: input.blocks.map(b => `${b.speaker ?? b.type}: ${b.text}`), ok: result.ok, issues: result.issues.map(i => `${i.field} ${i.reason}`),
+        ids: { decision: input.decision.id, candidate: input.decision.candidate.id },
+        claims: result.claims.map(c => ({ kind: c.kind, quote: c.quote, actionIds: c.actionIds, evidenceIds: c.evidenceIds, ruleIds: c.ruleIds })) })
+      return result
+    })
     // One user per experiment: its monthly AI budget counter is the experiment's durable total cap.
     const email = `agency-measure-${EXPERIMENT}@example.test`
     const [found] = await db.select().from(users).where(eq(users.email, email)).limit(1)
@@ -100,7 +112,7 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       const calls = await since(from)
       const own = calls.filter(c => c.requestId === requestId)
       units.push({ kind: 'turn', index, input, wallMs, outcome: outcome.ok ? 'ok' : outcome.reason, engine: engineOf(own),
-        text: outcome.ok ? outcome.responseText : null, state: await state(sessionId), events: drain(), calls: own,
+        text: outcome.ok ? outcome.responseText : null, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls: own,
         background: calls.filter(c => c.requestId !== requestId) })
       if (!outcome.ok && outcome.reason === 'budget') { stopped = 'budget'; break }
     }
@@ -111,7 +123,7 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       const wallMs = performance.now() - started
       await flush()
       const calls = await since(from)
-      units.push({ kind: 'proactive', index, idleHours: hours, wallMs, outcome: result.outcome, result, engine: engineOf(calls), text, state: await state(sessionId), events: drain(), calls })
+      units.push({ kind: 'proactive', index, idleHours: hours, wallMs, outcome: result.outcome, result, engine: engineOf(calls), text, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls })
     }
     await writeFile(OUT!, JSON.stringify({ experiment: EXPERIMENT, agencyMode: process.env.MIRO_CHARACTER_AGENCY_MODE ?? 'off',
       sessionStartMs, stopped, deferredErrors: deferred.errors, units }, null, 2) + '\n')

@@ -92,7 +92,8 @@ export function validateAgencyCandidate(a: AgencyCandidate, c: AgencyDecisionCon
   if (a.preconditions.length > 12) out.push(issue('preconditions', 'too_many_preconditions'))
   for (const p of a.preconditions) {
     switch (p.kind) {
-      case 'evidence': if (!a.evidenceIds.includes(p.evidenceId) || !agencyEvidence(p.evidenceId, c, true)) out.push(issue('preconditions', 'evidence_not_observed')); break
+      // That the user said something is observed even when what they said is only reported.
+      case 'evidence': if (!a.evidenceIds.includes(p.evidenceId) || !(agencyEvidence(p.evidenceId, c, true) || agencyUserUtterance(p.evidenceId, c))) out.push(issue('preconditions', 'evidence_not_observed')); break
       case 'goal_active': if (!a.goalIds.includes(p.goalId) || goals.get(p.goalId)?.status !== 'active') out.push(issue('preconditions', 'goal_not_active')); break
       case 'location': if (p.location !== c.location) out.push(issue('preconditions', 'location_mismatch')); break
       case 'capability': if (!c.permissions.capabilities.includes(p.capability)) out.push(issue('preconditions', 'capability_unavailable')); break

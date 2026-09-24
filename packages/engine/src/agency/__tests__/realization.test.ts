@@ -94,9 +94,17 @@ describe('authorized decision realization', () => {
     expect(checked.issues.some(issue => issue.reason === 'fact_not_observed')).toBe(true)
   })
 
-  it('validates exact text spans and decision IDs rather than trusting checker approval', async () => {
-    const input = await realization('내 이름은 도윤이야.')
+  it('places miscounted offsets from a verbatim quote', async () => {
+    const input = await realization('음. 내 이름은 도윤이야.')
     const claim = { blockIndex: 0, start: 0, end: 2, quote: '내 이름은 도윤이야.', kind: 'authored_fact', evidenceIds: [], ruleIds: ['identity-name'], actionIds: [] }
+    const checked = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [claim] }]), input)
+    expect(checked.issues.map(issue => issue.reason)).not.toContain('claim_span_mismatch')
+    expect(checked.claims[0]).toMatchObject({ start: 3, end: 3 + claim.quote.length })
+  })
+
+  it('validates quoted text and decision IDs rather than trusting checker approval', async () => {
+    const input = await realization('내 이름은 도윤이야.')
+    const claim = { blockIndex: 0, start: 0, end: 2, quote: '내 이름은 서린이야.', kind: 'authored_fact', evidenceIds: [], ruleIds: ['identity-name'], actionIds: [] }
     const checked = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), decisionId: 'invented', claims: [claim] }]), input)
     expect(checked.ok).toBe(false)
     expect(checked.issues.map(issue => issue.reason)).toEqual(expect.arrayContaining(['claim_span_mismatch', 'decision_mismatch']))

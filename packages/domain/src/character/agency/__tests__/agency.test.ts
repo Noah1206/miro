@@ -43,6 +43,11 @@ describe('agency provenance and candidate contracts', () => {
     expect(validateAgencyCandidate(candidate(), c)).toEqual([])
     expect(validateAgencyCandidate(candidate({ preconditions: [{ kind: 'evidence', evidenceId: 'message' }] }), c).map(i => i.reason)).toContain('evidence_not_observed')
   })
+  it('lets a reply depend on the user having spoken, not on a third party\'s report', () => {
+    const precondition = candidate({ preconditions: [{ kind: 'evidence', evidenceId: 'message' }] })
+    expect(validateAgencyCandidate(precondition, context({ evidence: [{ ...evidence(), epistemic: 'reported' }] }))).toEqual([])
+    expect(validateAgencyCandidate(precondition, context({ evidence: [{ ...evidence(), actor: 'npc', epistemic: 'reported' }] })).map(i => i.reason)).toContain('evidence_not_observed')
+  })
   it('cannot control the user, spend nonexistent capabilities, or override contact OFF', () => {
     const c = context({ permissions: { contact: false, capabilities: [] } })
     const issues = validateAgencyCandidate(candidate({ targetActor: 'user', preconditions: [{ kind: 'capability', capability: 'video' }] }), c)
