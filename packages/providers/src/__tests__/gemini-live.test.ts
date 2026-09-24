@@ -19,18 +19,21 @@ describe('gemini live ephemeral token', () => {
     expect(s.mode).toBe('live')
     expect(s.token).toBe('auth_tokens/abc')
     expect(s.model).toBe('models/gemini-3.8-live')
-    expect(s.connectUrl).toContain('BidiGenerateContent')
+    expect(s.connectUrl).toMatch(/BidiGenerateContentConstrained$/)
 
     const [url, init] = fetchMock.mock.calls[0]!
     expect(String(url)).toContain('/v1beta/auth_tokens')
     expect((init!.headers as Record<string, string>)['x-goog-api-key']).toBe('key')
     const body = JSON.parse(String(init!.body))
     expect(body.uses).toBe(1)
-    const config = body.liveConnectConstraints.config
-    expect(body.liveConnectConstraints.model).toBe('models/gemini-3.8-live')
-    expect(config.responseModalities).toEqual(['AUDIO'])
-    expect(config.systemInstruction.parts[0].text).toContain('유진')
-    expect(config.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Kore')
+    // REST 형식. SDK 이름(liveConnectConstraints)을 보내면 실제 API 가 400 을 낸다.
+    const setup = body.bidiGenerateContentSetup
+    expect(body.liveConnectConstraints).toBeUndefined()
+    expect(setup.model).toBe('models/gemini-3.8-live')
+    expect(setup.generationConfig.responseModalities).toEqual(['AUDIO'])
+    expect(setup.systemInstruction.parts[0].text).toContain('유진')
+    expect(setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Kore')
+    expect(setup.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 })
   })
 
   it('prefers the character voice over the default when given', async () => {
@@ -40,7 +43,7 @@ describe('gemini live ephemeral token', () => {
     const p = new GeminiLiveCallMediaProvider('key', 'gemini-3.8-live', 'Kore')
     await p.startSession({ ...spec, voiceName: 'Aoede' })
     const body = JSON.parse(String((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0]![1].body))
-    expect(body.liveConnectConstraints.config.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Aoede')
+    expect(body.bidiGenerateContentSetup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName).toBe('Aoede')
   })
 
   it('fails loudly when the token endpoint rejects — no silent mock', async () => {

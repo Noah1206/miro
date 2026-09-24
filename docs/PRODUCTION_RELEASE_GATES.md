@@ -45,6 +45,16 @@ Pro requires explicit price, pool size and depth/frequency settings plus real pu
 
 Photo, voice message, call, video, Live Scene and Face Cast each require a working provider, permission/safety checks, saved results, bounded costs and failure recovery. A mock adapter or UI does not pass a release gate.
 
+### 음성통화 (2026-09-24 검증 중)
+
+- 실측으로 찾은 결함: 임시 토큰 요청이 SDK 이름(`liveConnectConstraints`)이라 REST 가 400 을 냈고, 웹소켓이 `BidiGenerateContent` 라 임시 토큰을 1008 로 거절했다 — 운영에서 켰어도 항상 텍스트 통화로 떨어졌을 것이다. `bidiGenerateContentSetup` + `BidiGenerateContentConstrained` 로 고쳤다(토큰에 모델·지시문·보이스가 잠기고 브라우저 setup 은 무시된다).
+- 통화 지시문에 채팅용 JSON 계약·상태 변화 제안이 섞여 있었고, 관계·장소·기억·최근 대화가 빠져 있었다 → `buildSpokenSystem`.
+- 생각을 끄면(`thinkingBudget: 0`) 말을 건 뒤 첫 목소리 0.6초. `thinkingLevel` 은 이 모델이 거부한다.
+- 브라우저: 기기 샘플레이트로 받아 16kHz 로 줄이고, iOS 에서 소리가 막히면 '소리 켜기'로 깨우고, 말을 끊으면 예약된 음성을 멈춘다. 화면이 다시 그려져도 다시 연결하지 않는다.
+- 요금: 종료 버튼 없이 떠나면 브라우저가 종료 신호(`/api/calls/[id]/end`)를 보내 실제 시간으로 끝낸다. 신호가 끝내 없으면 정리 크론이 30분이 아니라 예약한 1분만 청구한다.
+- 공개 순서: `MIRO_VOICE_CALL_USERS` 계정만 사용자가 거는 통화를 먼저 연다 → 사람이 실제 기기(안드로이드 크롬·아이폰 홈 화면 앱)로 통화 확인 → 차단 목록에서 `voiceCall` 을 빼 전체 공개(그때 캐릭터가 거는 통화도 열린다).
+- 남은 한계: 실시간 음성 대화는 기억·관계에 남지 않는다(통화창에 글로 입력한 말만 남는다). 음성 출력은 우리 쪽 검열을 거치지 않고 모델 안전 설정과 지시문에 의존한다. 비용은 분당 약 $0.023(입력 $0.005 + 출력 $0.018, 2026-09-19 가격표 기준).
+
 ## Evidence for this development pass
 
 See `PRODUCTION_PROGRESS.md` for actual test results and pushed units. Unit/mock E2E success does not establish real AI quality, live payment correctness or production capacity.

@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
-import { POLICY, feature } from '@miro/config'
+import { POLICY, feature, voiceCallAllowed, voiceCallTesters } from '@miro/config'
 import { db, callSessions, characters, contactProfiles, messages, realityContacts, roleplaySessions, users } from '@miro/db'
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
@@ -14,7 +14,7 @@ const usageKind = (c: CallChannel): 'voiceCallPerMinute' | 'videoCallPerMinute' 
 
 /** 사용자가 Chat 에서 거는 통화. 1분을 먼저 예약하고 종료 시 실제 분으로 보정한다. */
 export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel) {
-  if (!feature(channel === 'voice' ? 'voiceCall' : 'videoCall')) throw new Error('CALL_NOT_AVAILABLE')
+  if (!(channel === 'voice' ? voiceCallAllowed(userId) : feature('videoCall'))) throw new Error('CALL_NOT_AVAILABLE')
   const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).where(and(
     eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
@@ -121,7 +121,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
 
 /** 연결이 끊긴 통화(active 가 너무 오래) 와 받지 않은 통화(ringing 만료)를 정리한다. Cron 에서 호출. */
 export async function expireCalls(now = new Date()) {
-  if (!feature('voiceCall') && !feature('videoCall')) return { missed: 0, timedOut: 0 }
+  if (!feature('voiceCall') && !feature('videoCall') && voiceCallTesters().length === 0) return { missed: 0, timedOut: 0 }
   const ringingBefore = new Date(now.getTime() - POLICY.call.ringingTimeoutMinutes * 60_000)
   const missed = await db.select().from(callSessions)
     .where(and(eq(callSessions.status, 'ringing'), lt(callSessions.createdAt, ringingBefore)))
@@ -142,10 +142,11 @@ export async function expireCalls(now = new Date()) {
   const stale = await db.select().from(callSessions)
     .where(and(eq(callSessions.status, 'active'), lt(callSessions.startedAt, activeBefore)))
   for (const c of stale) {
-    const durationSec = POLICY.call.maxMinutes * 60
-    await db.update(callSessions).set({ status: 'ended', endedAt: now, durationSec, result: 'timeout' })
-      .where(eq(callSessions.id, c.id))
-    if (c.usageReservationId) await commit(c.usageReservationId, POLICY.call.maxMinutes)
+    // 종료 신호를 끝내 못 받은 통화다. 실제 길이를 모르니 예약해 둔 첫 1분만 청구한다 — 30분을 물리지 않는다.
+    // (실시간 음성은 Google 세션이 15분이면 끝나 우리 쪽 비용도 거기서 멈춘다.)
+    await db.update(callSessions).set({ status: 'ended', endedAt: now, durationSec: null, result: 'timeout' })
+      .where(and(eq(callSessions.id, c.id), eq(callSessions.status, 'active')))
+    if (c.usageReservationId) await commit(c.usageReservationId, 1)
   }
   return { missed: missed.length, timedOut: stale.length }
 }

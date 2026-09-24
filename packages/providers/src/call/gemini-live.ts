@@ -1,15 +1,17 @@
 import type { ProviderInfo } from '../types'
 import type { CallMediaProvider, CallMediaSession, CallMediaSpec } from './types'
 
-const WS_URL = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent'
+// Ephemeral tokens connect only to the Constrained method; plain BidiGenerateContent closes them with 1008 (measured 2026-09-24).
+const WS_URL = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained'
 
 /**
  * Gemini Live API 어댑터 — 음성 전용.
  *
  * 서버는 ephemeral token 만 발급한다. 클라이언트가 그 토큰으로 Google 에 직접
  * WebSocket 을 연결하므로 상시 서버가 필요 없고, 세션은 Google 이 들고 있는다.
- * 모델·시스템 프롬프트·보이스를 토큰의 liveConnectConstraints 에 잠가 두어
- * 클라이언트가 다른 지시문으로 바꿔치기할 수 없다.
+ * 모델·시스템 프롬프트·보이스를 토큰의 bidiGenerateContentSetup 에 담는다 — fieldMask 가 비어 있으면
+ * 클라이언트가 보내는 setup 은 무시되므로 다른 지시문으로 바꿔치기할 수 없다.
+ * (REST 이름이다. SDK 의 liveConnectConstraints 를 그대로 보내면 400 — 2026-09-24 실측.)
  *
  * 세션 자체 한도: 오디오 전용 15분 (API 상한). 우리 쪽 상한은 POLICY.call.maxMinutes 와
  * expireCalls cron 이 따로 건다. 오디오 과금은 초당 25토큰 — 입력 $0.005/분, 출력 $0.018/분
@@ -37,17 +39,20 @@ export class GeminiLiveCallMediaProvider implements CallMediaProvider {
         // 토큰 수명은 통화 상한을 넉넉히 덮되, 새 세션 시작은 2분 안에만 허용한다.
         expireTime: new Date(now + 30 * 60_000).toISOString(),
         newSessionExpireTime: new Date(now + 2 * 60_000).toISOString(),
-        liveConnectConstraints: {
+        bidiGenerateContentSetup: {
           model: `models/${this.model}`,
-          config: {
+          generationConfig: {
             responseModalities: ['AUDIO'],
-            ...(spec.systemInstruction
-              ? { systemInstruction: { parts: [{ text: spec.systemInstruction }] } }
-              : {}),
             speechConfig: {
               voiceConfig: { prebuiltVoiceConfig: { voiceName: spec.voiceName ?? this.defaultVoice } },
             },
+            // 통화는 침묵이 길면 끊긴 것 같다. 생각을 끄면 첫 목소리가 3.0초 → 2.2초(연결 포함, 2026-09-24 실측).
+            // thinkingLevel 은 이 모델이 거부한다(1007).
+            thinkingConfig: { thinkingBudget: 0 },
           },
+          ...(spec.systemInstruction
+            ? { systemInstruction: { parts: [{ text: spec.systemInstruction }] } }
+            : {}),
         },
       }),
       signal: AbortSignal.timeout(10_000),

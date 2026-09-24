@@ -13,7 +13,7 @@ import { IncomingCall } from '@/components/incoming-call'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MediaBar } from './media-bar'
-import { feature } from '@miro/config'
+import { feature, voiceCallAllowed } from '@miro/config'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider, ModelPicker } from './model-picker'
 import { chatModelOptions } from '@/lib/ai/chat-models'
@@ -84,7 +84,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
         {/* 사진·통화·Live 는 미로 캐릭터의 것이다. 서버가 어차피 거절하지만, 없는 기능의 버튼을 그리지 않는다. */}
         {loaded.experienceType === 'reality' && <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
-          enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: feature('voiceCall'), video: feature('videoCall') }} />}
+          enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: voiceCallAllowed(user.id), video: feature('videoCall') }} />}
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
 

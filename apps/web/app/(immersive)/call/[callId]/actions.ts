@@ -1,6 +1,6 @@
 'use server'
 
-import { feature } from '@miro/config'
+import { feature, voiceCallAllowed } from '@miro/config'
 import { COPY } from '@/lib/copy'
 
 import { redirect } from 'next/navigation'
@@ -22,8 +22,8 @@ export type CallTurnState = { error: string | null }
  * 통화에서 한 말이 관계·세계·기억에 그대로 반영된다. 사용량은 통화 시간으로 이미 차감된다.
  */
 export async function callTurn(_prev: CallTurnState, form: FormData): Promise<CallTurnState> {
-  if (!feature('voiceCall') && !feature('videoCall')) return { error: COPY.error.featureOff }
   const user = await requireUser()
+  if (!voiceCallAllowed(user.id) && !feature('videoCall')) return { error: COPY.error.featureOff }
   const callId = String(form.get('callId') ?? '')
   const input = String(form.get('input') ?? '').trim()
   if (!input) return { error: null }
@@ -85,7 +85,7 @@ export async function placeCallAction(_prev: PlaceCallState, form: FormData): Pr
   const user = await requireUser()
   const sessionId = String(form.get('sessionId') ?? '')
   const channel = form.get('channel') === 'video' ? 'video' : 'voice'
-  if (!feature(channel === 'video' ? 'videoCall' : 'voiceCall')) return { error: COPY.error.featureOff }
+  if (channel === 'video' ? !feature('videoCall') : !voiceCallAllowed(user.id)) return { error: COPY.error.featureOff }
   let callId: string
   try {
     callId = await startOutgoingCall(user.id, sessionId, channel)

@@ -1,8 +1,8 @@
-import { feature, characterAgencyMode } from '@miro/config'
+import { feature, characterAgencyMode, voiceCallAllowed } from '@miro/config'
 import { notFound, redirect } from 'next/navigation'
 import { and, desc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
-import { buildContext } from '@miro/engine'
+import { buildSpokenSystem } from '@miro/engine'
 import { resolveCallMedia } from '@miro/providers'
 import type { CallMediaSession } from '@miro/providers'
 import { currentUser } from '@/lib/auth'
@@ -19,16 +19,16 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   if (!user) redirect('/login')
   const { callId } = await params
   const call = await owned(user.id, callId)
-  if (!call || !feature(call.channel === 'voice' ? 'voiceCall' : 'videoCall')) notFound()
+  if (!call || !(call.channel === 'voice' ? voiceCallAllowed(user.id) : feature('videoCall'))) notFound()
   if (call.status !== 'active') redirect(`/chat/${call.sessionId}`)
 
   const loaded = await loadSession(call.sessionId, user.id)
   if (!loaded || loaded.restricted) notFound()
 
-  // 통화용 시스템 프롬프트 — Chat 과 같은 컨텍스트(성격·관계·기억·장면)에 통화 모드 규칙을 얹고,
-  // 소리로 나갈 수 없는 것을 금지한다. 토큰에 잠기므로 클라이언트가 바꿀 수 없다.
+  // 통화용 시스템 프롬프트 — Chat 과 같은 성격·관계·기억·장면·최근 대화에 통화 모드 규칙을 얹고,
+  // JSON 계약처럼 소리로 나갈 수 없는 것은 뺀다. 토큰에 잠기므로 클라이언트가 바꿀 수 없다.
   const spokenSystem = call.channel === 'voice'
-    ? buildContext({ ...loaded.snapshot, mode: 'voice_call' }).system + [
+    ? buildSpokenSystem({ ...loaded.snapshot, mode: 'voice_call' }) + [
       '', '## 실시간 통화 규칙',
       '- 지금은 실제 음성 통화다. 한국어로 말한다.',
       '- 말하듯 짧게 — 한 번에 한두 문장. 긴 독백을 하지 않는다.',

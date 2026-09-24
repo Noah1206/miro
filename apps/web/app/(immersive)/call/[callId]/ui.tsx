@@ -23,9 +23,23 @@ export function CallComposer({ callId }: { callId: string }) {
   )
 }
 
+/** 마운트된 통화 화면 수. 개발 모드의 이중 마운트는 곧바로 다시 붙으므로 0 일 때만 떠난 것으로 본다. */
+const mounted = new Map<string, number>()
+
 export function HangUp({ callId }: { callId: string }) {
   const [sec, setSec] = useState(0)
   useEffect(() => { const t = setInterval(() => setSec((s) => s + 1), 1000); return () => clearInterval(t) }, [])
+  // 종료 버튼 없이 떠나도(창 닫기·뒤로 가기) 실제 통화 시간으로 끝낸다. 없으면 정리 크론이 끊긴 통화로 처리한다.
+  useEffect(() => {
+    const end = () => navigator.sendBeacon(`/api/calls/${callId}/end`)
+    mounted.set(callId, (mounted.get(callId) ?? 0) + 1)
+    window.addEventListener('pagehide', end)
+    return () => {
+      window.removeEventListener('pagehide', end)
+      mounted.set(callId, (mounted.get(callId) ?? 1) - 1)
+      setTimeout(() => { if (!mounted.get(callId)) end() }, 0)
+    }
+  }, [callId])
   return (
     <form action={hangUp.bind(null, callId)} style={{ padding: '8px 16px 28px', textAlign: 'center' }}>
       <p data-call-timer className="t-micro" aria-label="통화 시간" style={{ marginBottom: 14, fontVariantNumeric: 'tabular-nums' }}>{String(Math.floor(sec / 60)).padStart(2, '0')}:{String(sec % 60).padStart(2, '0')}</p>

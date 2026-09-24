@@ -44,6 +44,19 @@ export function feature(name: FeatureName): boolean {
   return PRESET[currentMode()][name]
 }
 
+/**
+ * 음성통화를 운영에서 먼저 열어 볼 계정(MIRO_VOICE_CALL_USERS, 쉼표 구분 사용자 ID).
+ * 사람이 실제 기기로 통화해 본 뒤 전체 공개는 위 차단 목록에서 voiceCall 을 빼는 것으로 한다.
+ * 사용자가 거는 통화만 해당한다 — 캐릭터가 먼저 거는 통화는 전체 공개 전까지 열리지 않는다.
+ */
+export function voiceCallAllowed(userId: string | null | undefined): boolean {
+  if (feature('voiceCall')) return true
+  return !!userId && voiceCallTesters().includes(userId)
+}
+export function voiceCallTesters(): string[] {
+  return (process.env.MIRO_VOICE_CALL_USERS ?? '').split(',').map((id) => id.trim()).filter(Boolean)
+}
+
 export function features(): Record<FeatureName, boolean> {
   const out = {} as Record<FeatureName, boolean>
   for (const k of Object.keys(PRESET.production) as FeatureName[]) out[k] = feature(k)

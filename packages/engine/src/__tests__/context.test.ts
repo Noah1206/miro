@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildContext } from '../context'
+import { buildContext, buildSpokenSystem } from '../context'
 import { character, event, npc, relationship, snapshot } from './fixtures'
 import type { Memory } from '@miro/domain'
 import { POLICY } from '@miro/config'
@@ -212,4 +212,16 @@ describe('call mode context', () => {
     expect(echo.dropped.join(',')).toContain('messages')
   })
 
+
+  // 실시간 음성은 소리로 나간다 — JSON 계약·상태 변화 제안이 실리면 모델이 그 형식을 말하려 한다.
+  // 대신 턴마다 프롬프트를 받지 않으므로 최근 대화·장소가 지시문 안에 있어야 한다.
+  it('the spoken system carries the scene and recent talk, never the JSON contract', () => {
+    const s = snapshot({ recentMessages: [{ id: 'm1', role: 'user', content: '내일 공방에 다시 올게요', at: new Date().toISOString(), knowledgeScope: 'participant' }] })
+    const spoken = buildSpokenSystem(s)
+    expect(spoken).toContain('내일 공방에 다시 올게요')
+    expect(spoken).toContain(s.world.currentLocation)
+    expect(spoken).toContain(s.character.identity.name)
+    for (const leak of ['JSON', 'relationshipDelta', 'eventUpdates', 'Block type']) expect(spoken).not.toContain(leak)
+    expect(buildContext(s).system).toContain('JSON')
+  })
 })
