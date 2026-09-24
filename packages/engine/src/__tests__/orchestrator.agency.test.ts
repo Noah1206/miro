@@ -70,7 +70,7 @@ describe('runTurn agency integration', () => {
     }
     return llm
   }
-  it.each(['agency-planner:v4', 'agency-dialogue:v3', 'agency-realization-check:v4'])(
+  it.each(['agency-planner:v4', 'agency-dialogue:v4', 'agency-realization-check:v4'])(
     'retains %s fallback provenance after later primary calls', async fallbackAt => {
       const llm = changingTraceProvider(fallbackAt)
       const result = await runTurn({ llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
@@ -79,7 +79,7 @@ describe('runTurn agency integration', () => {
   )
   it.each([
     ['agency-planner:v4', 'agency_planner_not_live'],
-    ['agency-dialogue:v3', 'agency_renderer_not_live'],
+    ['agency-dialogue:v4', 'agency_renderer_not_live'],
     ['agency-realization-check:v4', 'agency_verifier_not_live'],
   ])('fails closed in production when %s used fallback', async (fallbackAt, failure) => {
     vi.stubEnv('VERCEL_ENV', 'production')
@@ -99,7 +99,7 @@ describe('runTurn agency integration', () => {
     expect(result.semanticEvents).toEqual([])
     expect(result.agency?.plan.state.affect.stress).toBe(23)
     expect(input.state.sequence).toBe(0)
-    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v4', 'agency-dialogue:v3', 'agency-realization-check:v4'])
+    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v4', 'agency-dialogue:v4', 'agency-realization-check:v4'])
     expect(stub.calls[1]?.system).toContain('Server-authorized character choice')
   })
   it('shadow planning never changes the legacy turn or returns state for persistence', async () => {
@@ -140,7 +140,7 @@ describe('runTurn agency integration', () => {
     ] }), userInput: proof.quote, agency: agency() })
     expect(result.agency?.plan.decision.action).toBe('wait')
     expect(result.agency?.plan.issues.map(i => i.reason)).toContain('action_executor_unavailable')
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v3')?.prompt).not.toContain('비가시성정답')
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.prompt).not.toContain('비가시성정답')
   })
   it('applies an explicit reported-user cancellation and preserves it on the following turn', async () => {
     const input = agency()

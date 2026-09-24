@@ -95,6 +95,7 @@ export async function loadSession(
     recentRealityContacts: recentContacts
       .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),
     turnCount: row.session.turnCount,
+    experienceType: c.experienceType,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
   }
 

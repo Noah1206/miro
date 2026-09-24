@@ -142,6 +142,11 @@ describe('context builder', () => {
     expect(m.system).toMatch(/상황 한 줄, 속마음 한 줄/)
     expect(n.system).toMatch(/서술과 묘사를 충분히/)
     for (const c of [m, n]) expect(c.system).toMatch(/thought 블록은 이 캐릭터 자신의 말하지 않은 속마음/)
+    // A reality character's chat is the in-person scene; its messages and calls live in the Reality layer.
+    const met = buildContext(snapshot({ userInput: '뭐해', experienceType: 'reality' }))
+    expect(met.system).toMatch(/직접 만나 같은 공간에 있는 장면/)
+    expect(met.promptVersion).toBe('dialogue:v1+scene-thought+in-person')
+    expect(m.system).not.toMatch(/직접 만나 같은 공간/)
     // A call is the reality layer: spoken words only, no narration or inner voice.
     expect(buildContext(snapshot({ userInput: '뭐해', mode: 'voice_call' })).system).not.toMatch(/thought 블록/)
   })

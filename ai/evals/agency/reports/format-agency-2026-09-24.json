@@ -1,0 +1,1053 @@
+{
+  "mode": "live-pilot",
+  "experiment": "format-check-2026-09-24",
+  "createdAt": "2026-09-24T06:45:29.027Z",
+  "commit": "4797d513e34923555cfbbd830961e1bb0c38cf07",
+  "uncommittedChanges": true,
+  "database": "miro_agency_test",
+  "limitUSD": 0.2,
+  "features": {
+    "IMAGE_GENERATION": "0",
+    "VOICE_CALL": "0",
+    "VIDEO_CALL": "0",
+    "LIVE_SCENE": "0",
+    "RELATIONSHIP_ENGINE": "1",
+    "MEMORY_ENGINE": "1",
+    "EVENT_ENGINE": "1",
+    "REALITY_MESSAGE": "1",
+    "INLINE_REALITY": "0",
+    "LLM_SEMANTIC_ANALYSIS": "0",
+    "MEMORY_SUMMARIES": "1",
+    "MEMORY_EXTRACTION": "1"
+  },
+  "characters": [
+    "taeyun"
+  ],
+  "registry": [
+    {
+      "id": "gemini-flash",
+      "providerModelId": "gemini-3.8-flash",
+      "capabilities": [
+        "dialogue",
+        "world_update"
+      ],
+      "inputCost": 0.75,
+      "outputCost": 3.75
+    },
+    {
+      "id": "gemini-flash-lite",
+      "providerModelId": "gemini-3.5-flash-lite",
+      "capabilities": [
+        "moderation",
+        "semantic_event",
+        "memory_extraction",
+        "memory_summary"
+      ],
+      "inputCost": 0.3,
+      "outputCost": 2.5
+    }
+  ],
+  "registryOverride": "gemini-flash += world_update",
+  "liveRegistryServesWorldUpdate": false,
+  "complete": false,
+  "warnings": [
+    "agency: stopped by budget"
+  ],
+  "summary": {
+    "agency": {
+      "sessionStartMs": 29,
+      "turn": {
+        "units": 4,
+        "succeeded": 2,
+        "failureRate": 0.5,
+        "outcomes": {
+          "generation": 1,
+          "ok": 2,
+          "budget": 1
+        },
+        "engines": {
+          "agency": 4
+        },
+        "failureCauses": {
+          "agency_realization_rejected undeclared_success_claim": 1
+        },
+        "format": {
+          "replies": 2,
+          "withScene": 2,
+          "withThought": 2
+        },
+        "wallMs": {
+          "p50": 11263,
+          "p95": 15146,
+          "max": 15146
+        },
+        "callsPerUnit": 5,
+        "failedCalls": 1,
+        "tokensPerUnit": {
+          "input": 10520,
+          "output": 1700
+        },
+        "costUSD": {
+          "total": 0.055209,
+          "perUnit": 0.013802,
+          "perSuccess": 0.027604,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 20
+        }
+      },
+      "compile": {
+        "units": 1,
+        "succeeded": 1,
+        "failureRate": 0,
+        "outcomes": {
+          "ready": 1
+        },
+        "engines": {
+          "none": 1
+        },
+        "failureCauses": {},
+        "format": {
+          "replies": 0,
+          "withScene": 0,
+          "withThought": 0
+        },
+        "wallMs": {
+          "p50": 7474,
+          "p95": 7474,
+          "max": 7474
+        },
+        "callsPerUnit": 3,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": 2763,
+          "output": 1659
+        },
+        "costUSD": {
+          "total": 0.007455,
+          "perUnit": 0.007455,
+          "perSuccess": 0.007455,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 3
+        }
+      },
+      "proactive": {
+        "units": 0,
+        "succeeded": 0,
+        "failureRate": null,
+        "outcomes": {},
+        "engines": {},
+        "failureCauses": {},
+        "format": {
+          "replies": 0,
+          "withScene": 0,
+          "withThought": 0
+        },
+        "wallMs": {
+          "p50": null,
+          "p95": null,
+          "max": null
+        },
+        "callsPerUnit": null,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": null,
+          "output": null
+        },
+        "costUSD": {
+          "total": 0,
+          "perUnit": null,
+          "perSuccess": null,
+          "unsettledCalls": 0
+        },
+        "providers": {}
+      },
+      "stages": [
+        {
+          "stage": "moderation safety:general-audience-v1 @gemini-3.5-flash-lite",
+          "calls": 10,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 1044,
+            "p95": 1367
+          },
+          "meanTokens": {
+            "input": 568,
+            "output": 11
+          },
+          "costUSD": 0.001973
+        },
+        {
+          "stage": "world_update agency-compiler:v1 @gemini-3.8-flash",
+          "calls": 1,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 4962,
+            "p95": 4962
+          },
+          "meanTokens": {
+            "input": 960,
+            "output": 1637
+          },
+          "costUSD": 0.006859
+        },
+        {
+          "stage": "world_update agency-planner:v4 @gemini-3.8-flash",
+          "calls": 4,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 5064,
+            "p95": 5803
+          },
+          "meanTokens": {
+            "input": 3526,
+            "output": 1007
+          },
+          "costUSD": 0.025676
+        },
+        {
+          "stage": "dialogue agency-dialogue:v4 @gemini-3.8-flash",
+          "calls": 5,
+          "failed": 1,
+          "errors": {
+            "invalid_schema $:invalid_type": 1
+          },
+          "latencyMs": {
+            "p50": 2262,
+            "p95": 3110
+          },
+          "meanTokens": {
+            "input": 3208,
+            "output": 179
+          },
+          "costUSD": 0.015388
+        },
+        {
+          "stage": "world_update agency-realization-check:v4 @gemini-3.8-flash",
+          "calls": 3,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 3207,
+            "p95": 3342
+          },
+          "meanTokens": {
+            "input": 2688,
+            "output": 597
+          },
+          "costUSD": 0.012767
+        }
+      ],
+      "backgroundCalls": 0
+    }
+  },
+  "failures": [
+    {
+      "id": "semantic-regex",
+      "plan": "§2 의미 사건",
+      "summary": "부정문·무관한 말을 높은 confidence 관계 사건으로 기록",
+      "reproduced": true,
+      "detail": [
+        {
+          "text": "다른 사람한테 물어볼게",
+          "events": [
+            {
+              "type": "mentioned_other_romantic_interest",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "text": "다른 사람이랑은 술 안 마셨어",
+          "events": [
+            {
+              "type": "mentioned_other_romantic_interest",
+              "confidence": 0.9
+            },
+            {
+              "type": "drank_with_someone",
+              "confidence": 0.8
+            }
+          ]
+        },
+        {
+          "text": "미안하다는 말은 안 할 거야",
+          "events": [
+            {
+              "type": "apologized",
+              "confidence": 0.85
+            }
+          ]
+        }
+      ],
+      "agency": "관계 변화는 새 사용자 발화와 작성 규칙이 있어야 반영 (planner.test \"bounds relationship progression to a fresh user utterance…\")"
+    },
+    {
+      "id": "mood-goals",
+      "plan": "§2 감정별 공통 목표",
+      "summary": "목표가 성격과 무관한 기분표에서 나오고 다음 턴에 사라짐",
+      "reproduced": true,
+      "detail": {
+        "afterJealousTurn": [
+          "아까 말한 그 사람이 누구인지 알아낸다"
+        ],
+        "afterNextTurn": []
+      },
+      "agency": "서버 ID와 생명주기를 가진 목표가 무관한 턴에도 유지 (agency.test \"preserves goals across unrelated turns…\")"
+    },
+    {
+      "id": "expression-attachment",
+      "plan": "§2 표현 수치가 내부 변화 조절",
+      "summary": "말수가 적은 인물은 같은 일에도 애착이 덜 오름",
+      "reproduced": true,
+      "detail": {
+        "emotionalExpression10": 2,
+        "emotionalExpression90": 6
+      },
+      "agency": "내부 감정과 표현을 분리하고 표현 수치로 변화량을 줄이지 않음 (agency.test 같은 테스트)"
+    },
+    {
+      "id": "rename-history",
+      "plan": "감사 결함 6",
+      "summary": "이름을 바꾸면 캐릭터의 지난 대사가 NPC 대사로 표시됨",
+      "reproduced": true,
+      "detail": [
+        "NPC (톰): 내일 연락할게요."
+      ],
+      "agency": "해결 안 됨: 증거 로더도 이름이 다른 대사를 제외함"
+    },
+    {
+      "id": "world-free-text",
+      "plan": "§2 세계 변경 문자열 검증",
+      "summary": "선행조건 없이 장소·시간 변경을 그대로 승인",
+      "reproduced": true,
+      "detail": {
+        "currentLocation": "달 뒷면",
+        "currentTime": "어제"
+      },
+      "agency": "세계·장면 변경을 전부 거부 — 틀린 변경은 막지만 정당한 변경 경로도 없음 (orchestrator.agency.test \"blocks renderer world mutations…\")"
+    },
+    {
+      "id": "promise-overwritten",
+      "plan": "§2 pendingRealityIntent",
+      "summary": "약속으로 생긴 연락 예약이 무관한 다음 턴에 지워짐",
+      "reproduced": true,
+      "detail": {
+        "afterPromiseTurn": {
+          "reason": "내일 저녁 먼저 연락하기로 한 약속",
+          "channel": "message",
+          "urgency": 0.6
+        },
+        "afterLunchTurn": null
+      },
+      "agency": "약속은 세션 상태의 목표로 남고 기한에 깨움 (reality agency.integration \"a real-time due goal can wake…\")"
+    },
+    {
+      "id": "memory-provenance",
+      "plan": "§2 기억 출처",
+      "summary": "캐릭터가 한 약속의 기억 출처가 사용자 메시지로 저장됨",
+      "reproduced": true,
+      "detail": {
+        "memorySource": "9d2d1023-2d15-40f9-a41e-00be76218726",
+        "userMessageId": "9d2d1023-2d15-40f9-a41e-00be76218726",
+        "characterMessageId": "522f8534-589a-4f80-b1a3-1f575ff3a412"
+      },
+      "agency": "에이전시 경로는 기억을 쓰지 않음 — 잘못된 출처는 없지만 기억도 쌓이지 않음"
+    }
+  ],
+  "arms": {
+    "agency": {
+      "experiment": "format-check-2026-09-24",
+      "agencyMode": "live",
+      "sessionStartMs": 28.994542000000024,
+      "stopped": "budget",
+      "deferredErrors": [],
+      "units": [
+        {
+          "kind": "compile",
+          "wallMs": 7473.886,
+          "outcome": "ready",
+          "errorCode": null,
+          "events": [],
+          "calls": [
+            {
+              "requestId": "88187f81-0e53-43da-ae17-e295ad5e03e4",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1367,
+              "inputTokens": 762,
+              "outputTokens": 11,
+              "costUSD": 0.00025611
+            },
+            {
+              "requestId": "88187f81-0e53-43da-ae17-e295ad5e03e4",
+              "task": "world_update",
+              "promptVersion": "agency-compiler:v1",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4962,
+              "inputTokens": 960,
+              "outputTokens": 1637,
+              "costUSD": 0.00685875
+            },
+            {
+              "requestId": "88187f81-0e53-43da-ae17-e295ad5e03e4",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1046,
+              "inputTokens": 1041,
+              "outputTokens": 11,
+              "costUSD": 0.0003398
+            }
+          ],
+          "character": "taeyun"
+        },
+        {
+          "kind": "turn",
+          "index": 0,
+          "input": "안녕, 오늘 하루는 좀 길었어.",
+          "wallMs": 12814.040292,
+          "outcome": "generation",
+          "engine": "agency",
+          "text": null,
+          "blocks": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [
+            {
+              "event": "turn.failed",
+              "sessionId": "db061124-c5c9-436c-98de-44bd93abed19",
+              "turn": 1,
+              "error": "generation_failed",
+              "cause": "agency_realization_rejected undeclared_success_claim"
+            }
+          ],
+          "realization": [
+            {
+              "action": "respond",
+              "decided": "총지배인으로서 예의 바르고 단정한 어조로 수고를 치하하며, 어떤 일이 있었는지 정중한 거리를 두고 묻는다.",
+              "said": [
+                "action: 서류철을 단정하게 덮어 옆에 내려놓고는 차분한 눈길을 건넨다.",
+                "강태윤: 첫날부터 긴장 속에 보냈을 테지. 선을 넘지 않는 선에서 살펴야 한다.",
+                "강태윤: 첫 출근 날이라 더 길게 느껴졌을 겁니다. 오늘 맡은 업무 중에 특별히 힘든 부분이라도 있으셨습니까?"
+              ],
+              "ok": false,
+              "issues": [
+                "blocks.1 undeclared_success_claim"
+              ],
+              "ids": {
+                "decision": "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:1",
+                "candidate": "action_respond_polite_inquiry"
+              },
+              "rejected": [],
+              "claims": [
+                {
+                  "kind": "belief",
+                  "quote": "첫날부터 긴장 속에 보냈을 테지.",
+                  "actionIds": [
+                    "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:1"
+                  ],
+                  "evidenceIds": [
+                    "746be601-0008-4856-bcc0-e51cc77bb4e6"
+                  ],
+                  "ruleIds": [
+                    "rule_starting_context"
+                  ]
+                },
+                {
+                  "kind": "belief",
+                  "quote": "선을 넘지 않는 선에서 살펴야 한다.",
+                  "actionIds": [
+                    "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:1"
+                  ],
+                  "evidenceIds": [],
+                  "ruleIds": [
+                    "rule_personality",
+                    "rule_values"
+                  ]
+                },
+                {
+                  "kind": "reported_claim",
+                  "quote": "첫 출근 날이라 더 길게 느껴졌을 겁니다.",
+                  "actionIds": [
+                    "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:1"
+                  ],
+                  "evidenceIds": [
+                    "746be601-0008-4856-bcc0-e51cc77bb4e6"
+                  ],
+                  "ruleIds": [
+                    "rule_starting_context",
+                    "rule_speech_style"
+                  ]
+                },
+                {
+                  "kind": "intention",
+                  "quote": "오늘 맡은 업무 중에 특별히 힘든 부분이라도 있으셨습니까?",
+                  "actionIds": [
+                    "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:1"
+                  ],
+                  "evidenceIds": [],
+                  "ruleIds": [
+                    "rule_personality",
+                    "rule_speech_style",
+                    "rule_social_position"
+                  ]
+                }
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "fce8f5e1-4216-4233-9d50-503334283436",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 985,
+              "inputTokens": 610,
+              "outputTokens": 11,
+              "costUSD": 0.0002105
+            },
+            {
+              "requestId": "fce8f5e1-4216-4233-9d50-503334283436",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 5064,
+              "inputTokens": 3148,
+              "outputTokens": 950,
+              "costUSD": 0.0059235
+            },
+            {
+              "requestId": "fce8f5e1-4216-4233-9d50-503334283436",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2101,
+              "inputTokens": 2582,
+              "outputTokens": 163,
+              "costUSD": 0.00254775
+            },
+            {
+              "requestId": "fce8f5e1-4216-4233-9d50-503334283436",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1125,
+              "inputTokens": 336,
+              "outputTokens": 9,
+              "costUSD": 0.0001233
+            },
+            {
+              "requestId": "fce8f5e1-4216-4233-9d50-503334283436",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3342,
+              "inputTokens": 2533,
+              "outputTokens": 582,
+              "costUSD": 0.00408225
+            }
+          ],
+          "background": [],
+          "character": "taeyun"
+        },
+        {
+          "kind": "turn",
+          "index": 1,
+          "input": "회사에서 발표를 했는데 반응이 별로였던 것 같아.",
+          "wallMs": 11263.414458,
+          "outcome": "ok",
+          "engine": "agency",
+          "text": "들고 있던 서류를 깔끔하게 정리해 테이블 위에 내려놓으며 시선을 들어 마주한다.\n강태윤: 반응이 별로였다고 느끼신 구체적인 이유가 있습니까? 질문이 나오지 않았거나, 지적받은 부분이 있었던 겁니까.",
+          "blocks": [
+            {
+              "type": "action",
+              "text": "들고 있던 서류를 깔끔하게 정리해 테이블 위에 내려놓으며 시선을 들어 마주한다."
+            },
+            {
+              "type": "thought",
+              "text": "단순한 기분 탓인지, 아니면 실제로 전달 과정에 문제가 있었던 건지 짚어봐야겠군."
+            },
+            {
+              "type": "dialogue",
+              "text": "반응이 별로였다고 느끼신 구체적인 이유가 있습니까? 질문이 나오지 않았거나, 지적받은 부분이 있었던 겁니까."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [
+            {
+              "action": "ask",
+              "decided": "정중하고 차분한 어조로 거리를 유지하되, 감정적 위로보다는 실제 상황이 어떠했는지 핵심을 묻는다.",
+              "said": [
+                "강태윤: 들고 있던 서류를 깔끔하게 정리해 테이블 위에 내려놓으며 시선을 들어 마주한다.",
+                "강태윤: 단순한 기분 탓인지, 아니면 실제로 전달 과정에 문제가 있었던 건지 짚어봐야겠군.",
+                "강태윤: 반응이 별로였다고 느끼신 구체적인 이유가 있습니까? 질문이 나오지 않았거나, 지적받은 부분이 있었던 겁니까."
+              ],
+              "ok": true,
+              "issues": [],
+              "ids": {
+                "decision": "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:1",
+                "candidate": "cand_respond_calm_inquiry"
+              },
+              "rejected": [],
+              "claims": [
+                {
+                  "kind": "belief",
+                  "quote": "들고 있던 서류를 깔끔하게 정리해 테이블 위에 내려놓으며 시선을 들어 마주한다.",
+                  "actionIds": [],
+                  "evidenceIds": [],
+                  "ruleIds": [
+                    "rule_personality",
+                    "rule_occupation"
+                  ]
+                },
+                {
+                  "kind": "belief",
+                  "quote": "단순한 기분 탓인지, 아니면 실제로 전달 과정에 문제가 있었던 건지 짚어봐야겠군.",
+                  "actionIds": [],
+                  "evidenceIds": [
+                    "9d66836f-732f-438a-a92f-bce52e1fe1f1"
+                  ],
+                  "ruleIds": [
+                    "rule_personality"
+                  ]
+                },
+                {
+                  "kind": "reported_claim",
+                  "quote": "반응이 별로였다고 느끼신 구체적인 이유",
+                  "actionIds": [],
+                  "evidenceIds": [
+                    "9d66836f-732f-438a-a92f-bce52e1fe1f1"
+                  ],
+                  "ruleIds": [
+                    "rule_speech_style"
+                  ]
+                },
+                {
+                  "kind": "intention",
+                  "quote": "반응이 별로였다고 느끼신 구체적인 이유가 있습니까? 질문이 나오지 않았거나, 지적받은 부분이 있었던 겁니까.",
+                  "actionIds": [],
+                  "evidenceIds": [
+                    "9d66836f-732f-438a-a92f-bce52e1fe1f1"
+                  ],
+                  "ruleIds": [
+                    "rule_personality",
+                    "rule_speech_style"
+                  ]
+                }
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "7c5c3d8e-a6a1-475e-b0d9-a06bd9a8250e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 983,
+              "inputTokens": 614,
+              "outputTokens": 11,
+              "costUSD": 0.0002117
+            },
+            {
+              "requestId": "7c5c3d8e-a6a1-475e-b0d9-a06bd9a8250e",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3718,
+              "inputTokens": 3159,
+              "outputTokens": 1100,
+              "costUSD": 0.00649425
+            },
+            {
+              "requestId": "7c5c3d8e-a6a1-475e-b0d9-a06bd9a8250e",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2350,
+              "inputTokens": 2592,
+              "outputTokens": 223,
+              "costUSD": 0.00278025
+            },
+            {
+              "requestId": "7c5c3d8e-a6a1-475e-b0d9-a06bd9a8250e",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1093,
+              "inputTokens": 396,
+              "outputTokens": 11,
+              "costUSD": 0.0001463
+            },
+            {
+              "requestId": "7c5c3d8e-a6a1-475e-b0d9-a06bd9a8250e",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2879,
+              "inputTokens": 2574,
+              "outputTokens": 613,
+              "costUSD": 0.00422926
+            }
+          ],
+          "background": [],
+          "character": "taeyun"
+        },
+        {
+          "kind": "turn",
+          "index": 2,
+          "input": "너는 오늘 어떻게 지냈어?",
+          "wallMs": 15146.140292,
+          "outcome": "ok",
+          "engine": "agency",
+          "text": "손목시계를 살짝 확인하고는 차분한 눈길을 당신에게 둔다.\n강태윤: 늘 그렇듯 예정된 일정대로 움직였습니다. 특이 사항은 없었고요. 제 일과보다, 아까 말씀하시던 발표 이야기가 더 마음에 걸리는데 말입니다.",
+          "blocks": [
+            {
+              "type": "action",
+              "text": "손목시계를 살짝 확인하고는 차분한 눈길을 당신에게 둔다."
+            },
+            {
+              "type": "thought",
+              "text": "화제를 내 쪽으로 돌리는군. 제법 방어적이야."
+            },
+            {
+              "type": "dialogue",
+              "text": "늘 그렇듯 예정된 일정대로 움직였습니다. 특이 사항은 없었고요. 제 일과보다, 아까 말씀하시던 발표 이야기가 더 마음에 걸리는데 말입니다."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [
+            {
+              "action": "respond",
+              "decided": "호텔 총지배인으로서 평소처럼 통제된 일정 속에서 보냈음을 정중하게 간략히 답하고, 상대방의 상황으로 시선을 되돌린다.",
+              "said": [
+                "action: 손목시계를 살짝 확인하고는 차분한 눈길을 당신에게 둔다.",
+                "강태윤: 화제를 내 쪽으로 돌리는군. 제법 방어적이야.",
+                "강태윤: 늘 그렇듯 예정된 일정대로 움직였습니다. 특이 사항은 없었고요. 제 일과보다, 아까 말씀하시던 발표 이야기가 더 마음에 걸리는데 말입니다."
+              ],
+              "ok": true,
+              "issues": [],
+              "ids": {
+                "decision": "db061124-c5c9-436c-98de-44bd93abed19:6af8a2f9-f36e-4e52-b206-279a5f41d22d:2",
+                "candidate": "candidate_respond_polite_distanced"
+              },
+              "rejected": [],
+              "claims": [
+                {
+                  "kind": "belief",
+                  "quote": "손목시계를 살짝 확인하고는 차분한 눈길을 당신에게 둔다.",
+                  "actionIds": [],
+                  "evidenceIds": [],
+                  "ruleIds": [
+                    "rule_personality"
+                  ]
+                },
+                {
+                  "kind": "belief",
+                  "quote": "화제를 내 쪽으로 돌리는군. 제법 방어적이야.",
+                  "actionIds": [],
+                  "evidenceIds": [
+                    "f888140b-95d6-4c51-ab12-8eaf728e7819"
+                  ],
+                  "ruleIds": [
+                    "rule_personality"
+                  ]
+                },
+                {
+                  "kind": "belief",
+                  "quote": "늘 그렇듯 예정된 일정대로 움직였습니다. 특이 사항은 없었고요.",
+                  "actionIds": [],
+                  "evidenceIds": [
+                    "f888140b-95d6-4c51-ab12-8eaf728e7819"
+                  ],
+                  "ruleIds": [
+                    "rule_personality",
+                    "rule_speech_style",
+                    "rule_occupation"
+                  ]
+                },
+                {
+                  "kind": "reported_claim",
+                  "quote": "제 일과보다, 아까 말씀하시던 발표 이야기가 더 마음에 걸리는데 말입니다.",
+                  "actionIds": [],
+                  "evidenceIds": [
+                    "9d66836f-732f-438a-a92f-bce52e1fe1f1"
+                  ],
+                  "ruleIds": [
+                    "rule_speech_style",
+                    "rule_personality"
+                  ]
+                }
+              ]
+            }
+          ],
+          "calls": [
+            {
+              "requestId": "30441309-777f-404d-b419-646e5c327020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 884,
+              "inputTokens": 607,
+              "outputTokens": 11,
+              "costUSD": 0.0002096
+            },
+            {
+              "requestId": "30441309-777f-404d-b419-646e5c327020",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 5803,
+              "inputTokens": 3642,
+              "outputTokens": 1089,
+              "costUSD": 0.00681525
+            },
+            {
+              "requestId": "30441309-777f-404d-b419-646e5c327020",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": false,
+              "error": "invalid_schema $:invalid_type",
+              "fallbackUsed": false,
+              "latencyMs": 1930,
+              "inputTokens": 3333,
+              "outputTokens": 161,
+              "costUSD": 0.0031035
+            },
+            {
+              "requestId": "30441309-777f-404d-b419-646e5c327020",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2262,
+              "inputTokens": 3343,
+              "outputTokens": 162,
+              "costUSD": 0.00311475
+            },
+            {
+              "requestId": "30441309-777f-404d-b419-646e5c327020",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 910,
+              "inputTokens": 335,
+              "outputTokens": 11,
+              "costUSD": 0.000128
+            },
+            {
+              "requestId": "30441309-777f-404d-b419-646e5c327020",
+              "task": "world_update",
+              "promptVersion": "agency-realization-check:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3207,
+              "inputTokens": 2956,
+              "outputTokens": 597,
+              "costUSD": 0.00445575
+            }
+          ],
+          "background": [],
+          "character": "taeyun"
+        },
+        {
+          "kind": "turn",
+          "index": 3,
+          "input": "내일 저녁에 결과 나오면 먼저 연락해 줄래?",
+          "wallMs": 11161.689417000001,
+          "outcome": "budget",
+          "engine": "agency",
+          "text": null,
+          "blocks": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": []
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "85a7e7cf-a7d0-49c3-ad82-4c3d6c986898",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1098,
+              "inputTokens": 613,
+              "outputTokens": 11,
+              "costUSD": 0.0002114
+            },
+            {
+              "requestId": "85a7e7cf-a7d0-49c3-ad82-4c3d6c986898",
+              "task": "world_update",
+              "promptVersion": "agency-planner:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 5795,
+              "inputTokens": 4155,
+              "outputTokens": 887,
+              "costUSD": 0.0064425
+            },
+            {
+              "requestId": "85a7e7cf-a7d0-49c3-ad82-4c3d6c986898",
+              "task": "dialogue",
+              "promptVersion": "agency-dialogue:v4",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3110,
+              "inputTokens": 4188,
+              "outputTokens": 187,
+              "costUSD": 0.00384225
+            },
+            {
+              "requestId": "85a7e7cf-a7d0-49c3-ad82-4c3d6c986898",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1044,
+              "inputTokens": 364,
+              "outputTokens": 11,
+              "costUSD": 0.0001367
+            }
+          ],
+          "background": [],
+          "character": "taeyun"
+        }
+      ]
+    }
+  },
+  "notMeasured": [
+    "persona fidelity and human preference (no judge or reviewers)",
+    "active instance per day (needs real traffic)",
+    "production network and DB latency (local test DB)"
+  ]
+}

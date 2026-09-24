@@ -32,6 +32,8 @@ export type SimulationSnapshot = {
   turnCount: number
   /** chat(기본) | voice_call | video_call. 통화도 같은 시뮬레이션이다. */
   mode?: SimulationMode
+  /** reality 캐릭터의 채팅은 만나서 나누는 장면이다. 메시지·통화는 Reality 기능이 따로 맡는다. */
+  experienceType?: 'chat' | 'reality'
   /** 턴마다 변하는 캐릭터 상태. 없으면 기본(neutral). runTurn 이 이번 턴 값을 채워 넣는다. */
   characterState?: CharacterState
   /** 이번 사용자 입력에서 코드가 분류한 의미 이벤트. */
@@ -60,7 +62,9 @@ function styleDirective(s: SimulationSnapshot): string {
   const tense = s.activeEvents.length > 0 || (s.characterState !== undefined && s.characterState.mood !== 'neutral')
   // 캐릭터챗은 만나서 나누는 장면이다(2026-09-24 결정). 입력이 짧아도 상황과 속마음은 빠지지 않고 짧아질 뿐이다.
   const base = '- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
-  const thought = '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
+  // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
+  const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
+  const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
   if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 줍니다.' + thought
   if (input.length > 60) return base + ' 일상 장면은 짧게, 중요한 장면은 길게.' + thought
@@ -110,7 +114,8 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1): BuiltCont
 
     const prompt = buildPrompt(s, memories, recent)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+scene-thought`, approxTokens: systemTokens + estimateTokens(prompt), dropped }
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+scene-thought${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}`,
+      approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
   throw new Error('context_budget_exceeded')

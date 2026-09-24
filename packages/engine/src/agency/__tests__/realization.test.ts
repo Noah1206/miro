@@ -86,7 +86,7 @@ describe('authorized decision realization', () => {
       kind: 'intention', evidenceIds: [], ruleIds: [], actionIds: [] }
     expect((await verifyAgencyRealization(recordedProvider([{ ...assessment(claimed), claims: [intention] }]), claimed)).issues.map(issue => issue.reason))
       .toContain('undeclared_success_claim')
-    for (const text of ['집에 잘 도착했어?', '아직 안 보냈어.', '사진을 보냈으면 좋겠다.', '먼저 연락을 보냈어야 했는데.']) {
+    for (const text of ['집에 잘 도착했어?', '아직 안 보냈어.', '사진을 보냈으면 좋겠다.', '먼저 연락을 보냈어야 했는데.', '첫날부터 긴장 속에 보냈을 테지.', '벌써 도착했겠지.']) {
       const input = await realization(text)
       expect((await verifyAgencyRealization(recordedProvider([assessment(input)]), input)).ok).toBe(true)
     }

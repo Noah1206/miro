@@ -197,7 +197,8 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   const completion = /보냈|전송했|전화했|예약했|결제했|도착했|이동했|완료했|전달했|취소했|\b(?:sent|called|booked|paid|arrived|completed|delivered|cancelled|canceled)\b/gi
   const asserted = (text: string, start: number, end: number) => text.slice(end).match(/[.!?\n]/)?.[0] !== '?'
     && !/(?:안|못|not|n't|never)\s*$/i.test(text.slice(Math.max(0, start - 6), start))
-    && !/^(?:으면|다면|더라면|을까|을지|어야)/.test(text.slice(end))
+    // Conditions, regrets and guesses ("보냈으면", "보냈어야", "긴장 속에 보냈을 테지", "도착했겠지") assert nothing done.
+    && !/^(?:으면|다면|더라면|을까|을지|어야|을 ?테|을 ?거|겠)/.test(text.slice(end))
   for (const [blockIndex, block] of input.blocks.entries()) {
     for (const match of block.text.matchAll(completion)) {
       if (!asserted(block.text, match.index!, match.index! + match[0].length)) continue
