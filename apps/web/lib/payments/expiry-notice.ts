@@ -1,7 +1,7 @@
 import { and, eq, gt, isNull, lte, or, sql } from 'drizzle-orm'
 import { db, subscriptions, pushSubscriptions, users, userSettings } from '@miro/db'
 import { POLICY, productionRuntime } from '@miro/config'
-import { inQuietHours } from '@miro/domain'
+import { localMinutes } from '@miro/domain'
 import { resolvePush } from '@miro/providers'
 import { observe } from '@/lib/observe'
 import { COPY } from '@/lib/copy'
@@ -41,22 +41,14 @@ export async function notifyExpiringPasses(now = new Date()): Promise<{ soon: nu
     if (row.sub.expiryNotice === stage) continue
     // 3일 전 안내를 놓친 채 이미 만료됐다면 'ended' 만 보낸다 — 지난 예고를 뒤늦게 보내지 않는다.
 
-    const settings = {
-      pushEnabled: row.settings?.pushEnabled ?? true,
-      voiceCallEnabled: false, videoCallEnabled: false,
-      quietHoursEnabled: row.settings?.quietHoursEnabled ?? POLICY.quietHours.defaultEnabled,
-      quietHoursStart: row.settings?.quietHoursStart ?? POLICY.quietHours.defaultStart,
-      quietHoursEnd: row.settings?.quietHoursEnd ?? POLICY.quietHours.defaultEnd,
-      timeZone: row.settings?.timeZone ?? POLICY.reality.defaultTimeZone,
-    }
-    // Quiet Hours 에는 보내지 않고 단계도 남기지 않는다 — 다음 cron 이 깨어 있는 시간에 보낸다.
-    if (settings.quietHoursEnabled && inQuietHours(now, settings)) continue
+    // 밤(사용자 시간대 23~8시)에는 보내지 않고 단계도 남기지 않는다 — 다음 cron 이 깨어 있는 시간에 보낸다.
+    // 알림 수신은 사용자가 끌 수 없다 (2026-09-24). 이 시간 창은 설정이 아니라 고정값이다.
+    const minute = localMinutes(now, row.settings?.timeZone ?? POLICY.reality.defaultTimeZone)
+    if (minute >= 23 * 60 || minute < 8 * 60) continue
 
     const mark = () => db.update(subscriptions)
       .set({ expiryNotice: stage, updatedAt: now })
       .where(and(eq(subscriptions.id, row.sub.id), sql`${subscriptions.expiryNotice} IS NOT DISTINCT FROM ${row.sub.expiryNotice}`))
-
-    if (settings.pushEnabled === false) { await mark(); continue }
 
     const targets = await db.select().from(pushSubscriptions)
       .where(and(eq(pushSubscriptions.userId, row.sub.userId), isNull(pushSubscriptions.failedAt)))

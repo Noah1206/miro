@@ -1,6 +1,7 @@
 import type { contactProfiles, characterVisualIdentities } from '@miro/db'
-import { BUILD_PRESETS, GENDER_PRESETS } from '@miro/domain'
+import { BUILD_PRESETS, GENDER_PRESETS, type ContactChannel } from '@miro/domain'
 import { S } from '@/lib/character-options'
+import { deliverableChannel, type ContactCapabilities } from '@/lib/reality/channels'
 import { Rule } from './sections'
 import styles from './settings-view.module.css'
 const step = (value: number, options: readonly { value: number; label: string }[]) =>
@@ -46,7 +47,7 @@ function Details({ rows, avatar }: { rows: [string, string | null | undefined][]
   </div>
 }
 
-export function CharacterSettingsView({ visual, contact, name }: { name: string; visual?: Pick<typeof characterVisualIdentities.$inferSelect, 'bodyProfile' | 'baseFace' | 'hair' | 'styleTags' | 'expressionTendency'>; contact?: Pick<typeof contactProfiles.$inferSelect, 'enabled' | 'presentation' | 'contactFrequency' | 'initiativeLevel' | 'preferredChannel' | 'photoProbability' | 'voiceMessageProbability' | 'callProbability' | 'videoCallProbability'> }) {
+export function CharacterSettingsView({ visual, contact, name, can }: { name: string; can: ContactCapabilities; visual?: Pick<typeof characterVisualIdentities.$inferSelect, 'bodyProfile' | 'baseFace' | 'hair' | 'styleTags' | 'expressionTendency'>; contact?: Pick<typeof contactProfiles.$inferSelect, 'enabled' | 'presentation' | 'contactFrequency' | 'initiativeLevel' | 'preferredChannel' | 'photoProbability' | 'voiceMessageProbability' | 'callProbability' | 'videoCallProbability'> }) {
   const gender = visual?.bodyProfile.gender
   const build = visual?.bodyProfile.build
   const bodyAvatar = gender && build
@@ -69,17 +70,18 @@ export function CharacterSettingsView({ visual, contact, name }: { name: string;
           <strong>먼저 연락하기 · {contact.enabled ? '켜짐' : '꺼짐'}</strong>
           {contact.enabled && <dl className={styles.identity}>
             <div><dt>발신자 표시</dt><dd>{contact.presentation.senderLabel || name}</dd></div>
-            <div><dt>선호 채널</dt><dd>{({ message: '메시지', photo: '사진', voice_message: '음성', voice_call: '전화' } as Record<string, string>)[contact.preferredChannel] || contact.preferredChannel}</dd></div>
+            <div><dt>선호 채널</dt><dd>{({ message: '메시지', photo: '사진', voice_message: '음성', voice_call: '전화', video_call: '영상통화' } as Record<string, string>)[deliverableChannel(contact.preferredChannel as ContactChannel, can)] || contact.preferredChannel}</dd></div>
           </dl>}
         </div>
         {contact.enabled && <div className={styles.meters}>
           {([
             ['연락 빈도', contact.contactFrequency, S.contactFrequency],
             ['주도성', contact.initiativeLevel, S.initiativeLevel],
-            ['사진', contact.photoProbability, S.media],
+            ...(can.imageGeneration ? [['사진', contact.photoProbability, S.media] as const] : []),
             ['음성 메시지', contact.voiceMessageProbability, S.media],
-            ['전화', contact.callProbability, S.media],
-            ['영상통화', contact.videoCallProbability, S.media],
+            // 꺼진 수단은 빈도도 보이지 않는다 — 운영에서 오지 않을 연락을 약속하지 않는다.
+            ...(can.voiceCall ? [['전화', contact.callProbability, S.media] as const] : []),
+            ...(can.videoCall ? [['영상통화', contact.videoCallProbability, S.media] as const] : []),
           ] as const).map(([label, value, options]) => {
             const amount = Math.max(0, Math.min(100, value))
             const description = step(value, options)

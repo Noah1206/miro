@@ -10,6 +10,7 @@ import { Back } from '@/components/ui'
 import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
 import { IncomingCall } from '@/components/incoming-call'
+import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MediaBar } from './media-bar'
 import { feature } from '@miro/config'
@@ -79,6 +80,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} />
         </div>
 
+        {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
+        {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
         {/* 사진·통화·Live 는 미로 캐릭터의 것이다. 서버가 어차피 거절하지만, 없는 기능의 버튼을 그리지 않는다. */}
         {loaded.experienceType === 'reality' && <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
           enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: feature('voiceCall'), video: feature('videoCall') }} />}

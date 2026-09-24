@@ -13,7 +13,7 @@
 - [ ] Real browser login → real AI reply → save → reload passes, including failure and retry.
 - [ ] Long multi-character conversations pass the agreed memory/correction/relationship rubric.
 - [ ] Memory-grounded proactive messages pass live input/output safety and relevance checks.
-- [ ] Actual Push delivery verified on supported devices, with opt-out/quiet hours/revisit checks.
+- [ ] Actual Push delivery verified on supported devices (Android Chrome, iOS home-screen app, desktop), with browser-permission denial and revisit checks. There is no in-app opt-out or quiet-hours setting since 2026-09-24; night silence comes from each character's active hours.
 - [ ] Daily operating budget and invitation size explicitly set; current budget remains zero.
 - [ ] Concurrent load test meets agreed error, latency and cost targets. Targets must be measured and agreed, not assumed.
 - [ ] Database backup restored into an isolated environment and record integrity checked.

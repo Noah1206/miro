@@ -40,14 +40,11 @@ describeDb('reality activation — real send path', () => {
     idleMinutes?: number
     relationship?: Partial<{ trust: number; attachment: number; emotionalDistance: number }>
     activeEvent?: boolean
-    quietHours?: boolean
   } = {}) {
     const [u] = await db.insert(users)
       .values({ email: `ra-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
     made.push(u!.id)
-    await db.insert(userSettings).values({
-      userId: u!.id, quietHoursEnabled: opts.quietHours ?? false, timeZone: 'Asia/Seoul',
-    })
+    await db.insert(userSettings).values({ userId: u!.id, timeZone: 'Asia/Seoul' })
 
     const c = await reality(slug)
 
@@ -147,15 +144,14 @@ describeDb('reality activation — real send path', () => {
     expect(e!.status).toBe('active')   // 사건은 그대로 살아 있다
   })
 
-  it('Scenario 5: quiet hours suppress push-class contact and keep simulation state', async () => {
-    const id = await session('taeyun', { activeEvent: true, quietHours: true, relationship: ESTABLISHED })
-    // 태윤의 선호 채널은 message(비방해) 이므로 quiet hours 는 통과한다 — 방해성 채널만 차단.
-    // push 채널로 강제하려면 pending intent 를 심는다.
+  // 사용자 쪽 야간 차단은 없다 (2026-09-24). 밤에 조용한 건 캐릭터의 활동 시간(태윤 07~24시) 때문이다.
+  it('Scenario 5: at night the character keeps to its own active hours and simulation state stays', async () => {
+    const id = await session('taeyun', { activeEvent: true, relationship: ESTABLISHED })
     await db.update(roleplaySessions)
       .set({ pendingRealityIntent: { channel: 'push', reason: 'test', urgency: 0.9 } })
       .where(eq(roleplaySessions.id, id))
     const r = await evaluateSession(id, NIGHT)
-    expect(r).toEqual({ outcome: 'suppressed', reason: 'quiet_hours' })
+    expect(r).toEqual({ outcome: 'suppressed', reason: 'outside_active_hours' })
 
     const [rel] = await db.select().from(relationships).where(eq(relationships.sessionId, id))
     expect(rel!.version).toBe(1)                          // 관계 상태 변화 없음

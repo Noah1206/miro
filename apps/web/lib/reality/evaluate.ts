@@ -1,11 +1,11 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
-import { POLICY, feature } from '@miro/config'
+import { POLICY, feature, features } from '@miro/config'
 import {
   db, characters, contactProfiles, events, messages, pushSubscriptions,
   realityContacts, relationships, roleplaySessions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
-  DEFAULT_CHARACTER_STATE, inQuietHours, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
+  DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
 import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
@@ -16,6 +16,7 @@ import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
 import { requireSafeContent } from '@miro/engine'
 import { enqueueRealityPush, deliverRealityPush } from './push-outbox'
+import { deliverableChannel } from './channels'
 import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
 import { evaluateAgencyReality } from './agency'
@@ -37,7 +38,7 @@ export type EvaluateOutcome =
  */
 export async function evaluateSession(
   sessionId: string, now = new Date(),
-  /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 조용한 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
+  /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 활동 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
   opts: { inline?: boolean; background?: boolean } = {},
 ): Promise<EvaluateOutcome> {
   if (!feature('realityMessage')) return { outcome: 'skipped', reason: 'feature_disabled' }
@@ -125,21 +126,8 @@ export async function evaluateSession(
   })
   if (!intent) return { outcome: 'no_intent' }
 
-  const settings = {
-    pushEnabled: row.settings?.pushEnabled ?? true,
-    voiceCallEnabled: row.settings?.voiceCallEnabled ?? true,
-    videoCallEnabled: row.settings?.videoCallEnabled ?? true,
-    quietHoursEnabled: row.settings?.quietHoursEnabled ?? POLICY.quietHours.defaultEnabled,
-    quietHoursStart: row.settings?.quietHoursStart ?? POLICY.quietHours.defaultStart,
-    quietHoursEnd: row.settings?.quietHoursEnd ?? POLICY.quietHours.defaultEnd,
-    timeZone: row.settings?.timeZone ?? POLICY.reality.defaultTimeZone,
-  }
-
-  // Inline bypasses timing/motivation, never the recipient's call permissions.
-  if ((intent.channel === 'voice_call' && !settings.voiceCallEnabled) || (intent.channel === 'video_call' && !settings.videoCallEnabled))
-    return { outcome: 'suppressed', reason: 'channel_disabled' }
-  if (['voice_call', 'video_call', 'push', 'missed_call'].includes(intent.channel) && inQuietHours(now, settings))
-    return { outcome: 'suppressed', reason: 'quiet_hours' }
+  // 앱 밖 연락은 사용자가 끌 수 없다 (2026-09-24 결정). 시간대만 읽어 캐릭터의 활동 시간을 사용자 현지 시각으로 본다.
+  const timeZone = row.settings?.timeZone ?? POLICY.reality.defaultTimeZone
 
   const lastSent = recent.find((c) => c.status === 'sent' || c.status === 'opened')
   let decision: RealityDecision = opts.inline
@@ -153,7 +141,7 @@ export async function evaluateSession(
     },
     relationship: row.relationship as never,
     activeEvents: activeEvents as never,
-    settings,
+    timeZone,
     lastContactAt: lastSent?.sentAt ?? null,
     pendingContacts: recent.filter((c) => c.status === 'sent') as unknown as RealityContact[],
     now,
@@ -174,7 +162,7 @@ export async function evaluateSession(
     return { outcome: 'suppressed', reason: decision.reason }
   }
   // 기능 플래그 — 알파에서는 사진·통화가 꺼져 있다. 채널만 낮추고 연락 자체는 보낸다.
-  decision = { ...decision, channel: downgradeByFeature(decision.channel) }
+  decision = { ...decision, channel: deliverableChannel(decision.channel, features()) }
 
   const presented = presentContact(decision.channel, row.character.name, row.profile.presentation)
 
@@ -195,13 +183,11 @@ export async function evaluateSession(
       if ((e as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'duplicate' }
       throw e
     }
-    if (settings.pushEnabled && !inQuietHours(now, settings)) {
-      await pushToUser(row.session.userId, {
-        title: presented.senderLabel,
-        body: channel === 'video' ? '영상통화 수신' : '전화 수신',
-        url: `/chat/${sessionId}`, tag: `call:${sessionId}`,
-      })
-    }
+    await pushToUser(row.session.userId, {
+      title: presented.senderLabel,
+      body: channel === 'video' ? '영상통화 수신' : '전화 수신',
+      url: `/chat/${sessionId}`, tag: `call:${sessionId}`,
+    })
     void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
     return { outcome: 'sent', channel: decision.channel, contactId }
   }
@@ -286,7 +272,7 @@ export async function evaluateSession(
       await tx.update(roleplaySessions).set({ pendingRealityIntent: null })
         .where(eq(roleplaySessions.id, sessionId))
 
-      if (settings.pushEnabled && !inQuietHours(now, settings)) await enqueueRealityPush(tx, contact!.id, row.session.userId)
+      await enqueueRealityPush(tx, contact!.id, row.session.userId)
       return contact!.id
     })
   } catch (e) {
@@ -307,22 +293,11 @@ class RealityStateChangedError extends Error {}
 
 type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string }
 
-function downgradeByFeature(c: ContactChannel): ContactChannel {
-  if ((c === 'voice_call' && !feature('voiceCall')) || (c === 'video_call' && !feature('videoCall'))) return 'message'
-  if (c === 'photo' && !feature('imageGeneration')) return 'message'
-  return c
-}
-
 async function pushToUser(userId: string, payload: {
   title: string; body: string; url: string; tag: string
 }): Promise<void> {
   const [owner] = await db.select({ deletedAt: users.deletedAt }).from(users).where(eq(users.id, userId)).limit(1)
-  const [settings] = await db.select().from(userSettings).where(eq(userSettings.userId, userId)).limit(1)
-  if (!owner || owner.deletedAt || settings?.pushEnabled === false || (settings && inQuietHours(new Date(), {
-    pushEnabled: settings.pushEnabled, voiceCallEnabled: settings.voiceCallEnabled, videoCallEnabled: settings.videoCallEnabled,
-    quietHoursEnabled: settings.quietHoursEnabled, quietHoursStart: settings.quietHoursStart,
-    quietHoursEnd: settings.quietHoursEnd, timeZone: settings.timeZone ?? POLICY.reality.defaultTimeZone,
-  }))) return
+  if (!owner || owner.deletedAt) return
   const subs = await db.select().from(pushSubscriptions)
     .where(and(eq(pushSubscriptions.userId, userId), isNull(pushSubscriptions.failedAt)))
   if (subs.length === 0) return

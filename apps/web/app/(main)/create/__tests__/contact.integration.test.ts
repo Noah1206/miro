@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { db, users, userSettings, characters, contactProfiles, roleplaySessions, messages, callSessions } from '@miro/db'
+import { db, users, characters, contactProfiles, roleplaySessions, messages, callSessions } from '@miro/db'
 import { saveCharacter } from '../actions'
 import { updateCharacter } from '../../my/characters/[id]/edit/actions'
 import { runRealityEvaluations } from '@/lib/reality/scheduler'
@@ -27,7 +27,6 @@ function form(enabled = true) {
 async function create(enabled = true) {
   const [u] = await db.insert(users).values({ email: `creator-${randomUUID()}@example.test` }).returning()
   auth.userId = u!.id; made.push(u!.id)
-  await db.insert(userSettings).values({ userId: u!.id, quietHoursEnabled: false, voiceCallEnabled: false, videoCallEnabled: false })
   await expect(saveCharacter(form(enabled))).rejects.toThrow('REDIRECT:/chat/')
   const [c] = await db.select().from(characters).where(eq(characters.ownerId, u!.id))
   const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, c!.id))
@@ -59,21 +58,19 @@ describeDb('creator Reality wiring', () => {
     await expect(updateCharacter(c.id, optIn)).rejects.toThrow('REDIRECT:')
     expect((await db.select().from(characters).where(eq(characters.id, c.id)))[0]!.experienceType).toBe('reality')
   })
-  it('respects recipient call preferences even for inline contact', async () => {
+  // 받는 사람 쪽 통화 거절 설정은 없다 (2026-09-24). 켜진 기능이면 inline 통화는 울린다.
+  it('has no recipient switch: an inline call rings', async () => {
     const { session } = await create()
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'voice_call', reason: 'test', urgency: 1 } }).where(eq(roleplaySessions.id, session.id))
-    expect(await evaluateSession(session.id, new Date(), { inline: true })).toEqual({ outcome: 'suppressed', reason: 'channel_disabled' })
-    expect(await db.select().from(callSessions).where(eq(callSessions.sessionId, session.id))).toHaveLength(0)
+    expect(await evaluateSession(session.id, new Date(), { inline: true })).toMatchObject({ outcome: 'sent', channel: 'voice_call' })
+    expect(await db.select().from(callSessions).where(eq(callSessions.sessionId, session.id))).toHaveLength(1)
   })
-  it('does not schedule a disabled character and respects quiet hours for inline calls', async () => {
-    const { c, session, userId } = await create()
+  it('does not schedule a disabled character', async () => {
+    const { c, session } = await create()
     await db.update(contactProfiles).set({ enabled: false }).where(eq(contactProfiles.characterId, c.id))
     await db.update(roleplaySessions).set({ lastInteractionAt: new Date(Date.now() - 7 * 86400_000), pendingRealityIntent: { channel: 'voice_call', reason: 'test', urgency: 1 } }).where(eq(roleplaySessions.id, session.id))
     await runRealityEvaluations()
     expect((await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, session.id)))[0]!.realityCheckedAt).toBeNull()
-    await db.update(contactProfiles).set({ enabled: true }).where(eq(contactProfiles.characterId, c.id))
-    await db.update(userSettings).set({ voiceCallEnabled: true, quietHoursEnabled: true, quietHoursStart: '23:00', quietHoursEnd: '08:00', timeZone: 'Asia/Seoul' }).where(eq(userSettings.userId, userId))
-    expect(await evaluateSession(session.id, new Date('2026-09-23T02:00:00+09:00'), { inline: true })).toEqual({ outcome: 'suppressed', reason: 'quiet_hours' })
   })
   it('rejects editing a character owned by another user', async () => {
     const first = await create()

@@ -57,14 +57,17 @@ export const termsConsents = pgTable('terms_consents', {
 /** 알림·통화·야간 연락 설정. Reality Activation 이 발송 전 반드시 참조한다. */
 export const userSettings = pgTable('user_settings', {
   userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  /**
+   * 아래 여섯 컬럼(알림·통화 수신·야간 차단)은 2026-09-24 부터 읽지 않는다 — 앱 밖 연락은 사용자가 끌 수 없다.
+   * 지우려면 운영 마이그레이션이 필요해 남겨 둔다. 다시 읽기 전에 그 결정부터 확인할 것.
+   */
   pushEnabled: boolean('push_enabled').notNull().default(true),
   voiceCallEnabled: boolean('voice_call_enabled').notNull().default(true),
   videoCallEnabled: boolean('video_call_enabled').notNull().default(true),
-  /** 명세서 5.1: 야간 선연락은 기본 차단, 사용자가 끌 수 있다. */
   quietHoursEnabled: boolean('quiet_hours_enabled').notNull().default(true),
   quietHoursStart: text('quiet_hours_start').notNull().default('23:00'),
   quietHoursEnd: text('quiet_hours_end').notNull().default('08:00'),
-  /** Quiet Hours / Active Hours 는 사용자 현지 시각 기준이다. */
+  /** 캐릭터의 활동 시간은 사용자 현지 시각 기준이다. 대화방에서 알림을 구독할 때 기기 시간대로 맞춘다. */
   timeZone: text('time_zone').notNull().default('Asia/Seoul'),
   /** 기기 권한은 명시적 동의 후에만 사용한다 (명세서 7.1). 동의 시각을 남긴다. */
   cameraConsentAt: timestamp('camera_consent_at', { withTimezone: true }),

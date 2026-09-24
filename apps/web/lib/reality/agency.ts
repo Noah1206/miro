@@ -5,8 +5,7 @@ import {
   db, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
   realityContacts, relationships, roleplaySessions, userSettings, users, worldStates,
 } from '@miro/db'
-import { applyRelationshipDelta, describeRelationship, inQuietHours, localMinutes, presentContact,
-  type NotificationSettings, type SuppressReason } from '@miro/domain'
+import { applyRelationshipDelta, describeRelationship, localMinutes, presentContact, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, requireSafeContent, verifyAgencyRealization } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
@@ -36,21 +35,12 @@ async function deliveryContacts(sessionId: string, query: Pick<typeof db, 'selec
   return [...new Map([...last, ...pending].map(contact => [contact.id, contact])).values()]
 }
 
-function settingsFor(settings: RealityRow['settings']): NotificationSettings {
-  return {
-    pushEnabled: settings?.pushEnabled ?? true,
-    voiceCallEnabled: settings?.voiceCallEnabled ?? true,
-    videoCallEnabled: settings?.videoCallEnabled ?? true,
-    quietHoursEnabled: settings?.quietHoursEnabled ?? POLICY.quietHours.defaultEnabled,
-    quietHoursStart: settings?.quietHoursStart ?? POLICY.quietHours.defaultStart,
-    quietHoursEnd: settings?.quietHoursEnd ?? POLICY.quietHours.defaultEnd,
-    timeZone: settings?.timeZone ?? POLICY.reality.defaultTimeZone,
-  }
-}
+/** The user's time zone is the only setting read; out-of-app contact cannot be turned off (2026-09-24). */
+const timeZoneOf = (settings: RealityRow['settings']): string => settings?.timeZone ?? POLICY.reality.defaultTimeZone
 
 /** Delivery constraints only. Legacy motivation never overrides a validated agency choice. */
-function deliveryBlock(profile: RealityRow['profile'], settings: NotificationSettings, recent: ContactRow[], now: Date): SuppressReason | null {
-  const minute = localMinutes(now, settings.timeZone)
+function deliveryBlock(profile: RealityRow['profile'], timeZone: string, recent: ContactRow[], now: Date): SuppressReason | null {
+  const minute = localMinutes(now, timeZone)
   const toMinute = (value: string) => { const [h = 0, m = 0] = value.split(':').map(Number); return h * 60 + m }
   const start = toMinute(profile.activeHoursStart), end = toMinute(profile.activeHoursEnd)
   if (!(start <= end ? minute >= start && minute < end : minute >= start || minute < end)) return 'outside_active_hours'
@@ -93,8 +83,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       if (existing) return { outcome: 'skipped', reason: 'duplicate' }
     }
     const recent = await deliveryContacts(sessionId)
-    const settings = settingsFor(row.settings)
-    const blocked = deliveryBlock(row.profile, settings, recent, now)
+    const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now)
     // Reserve two evidence slots for the application's queued/sent attestations.
     const evidence = (await loadAgencyEvidence(sessionId, snapshot, runtime, undefined, now)).slice(-126)
     const dueGoals = runtime.state.goals.filter(goal => goal.status === 'active' && goal.clock === 'real_time'
@@ -177,8 +166,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       let contactId: string | null = null
       if (send && content) {
         const newest = await deliveryContacts(sessionId, tx)
-        const currentNotificationSettings = settingsFor(currentSettings ?? null)
-        if (deliveryBlock(profile, currentNotificationSettings, newest, now)) throw new AgencyRealityConflict()
+        if (deliveryBlock(profile, timeZoneOf(currentSettings ?? null), newest, now)) throw new AgencyRealityConflict()
         const messageId = randomUUID()
         contactId = randomUUID()
         await tx.insert(messages).values({ id: messageId, sessionId, role: 'character', kind: 'reality_message',
@@ -190,7 +178,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
           status: 'sent', sentAt: now, messageId,
         })
         nextState = applyMessageReceipt(plan, messageId)
-        if (currentNotificationSettings.pushEnabled && !inQuietHours(now, currentNotificationSettings)) await enqueueRealityPush(tx, contactId, userId)
+        await enqueueRealityPush(tx, contactId, userId)
       }
       if (Object.keys(plan.relationshipDelta).length) {
         const next = applyRelationshipDelta(snapshot.relationship, plan.relationshipDelta)

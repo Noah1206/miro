@@ -5,6 +5,7 @@ import { Accordion, Button } from '@/components/ui'
 import { LikeButton, Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
 import { PhotoHero } from '../character/[slug]/hero'
 import { subject } from '@/lib/format'
+import type { ContactCapabilities } from '@/lib/reality/channels'
 
 /** 소개 페이지 미리보기에 필요한 값. 탭을 열 때 폼에서 한 번 읽는다. */
 export type Snapshot = {
@@ -51,7 +52,7 @@ export function snapshot(form: HTMLFormElement): Snapshot {
  * 상세 페이지(character/[slug]/page.tsx)와 같은 순서·같은 부품으로 그린다.
  * 실제 페이지의 구조가 바뀌면 여기도 같이 바꿔야 한다 — 둘이 어긋나면 미리보기가 거짓말을 한다.
  */
-export function DetailPreview({ d }: { d: Snapshot | null }) {
+export function DetailPreview({ d, can }: { d: Snapshot | null; can: ContactCapabilities }) {
   if (!d) return null
   const name = d.name || '이름'
   // 상세와 같은 문장 규칙: '32세 · 한국 · 검사.' / 'MBTI는 INTJ.'
@@ -90,13 +91,13 @@ export function DetailPreview({ d }: { d: Snapshot | null }) {
 
           </div>
 
-          <RealityStrip />
+          <RealityStrip can={can} />
           {d.worldSetting && (
             <Rule label="세계관">
               <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{d.worldSetting}</p>
             </Rule>
           )}
-          <CharacterSettingsView name={name} visual={d.settings.visual} contact={d.settings.contact} />
+          <CharacterSettingsView name={name} visual={d.settings.visual} contact={d.settings.contact} can={can} />
 
           <Rule label="첫 장면">
             <div className="detail-prose">

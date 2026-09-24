@@ -31,7 +31,7 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
   async function user() {
     const [u] = await db.insert(users).values({ email: `xs-${randomBytes(5).toString('hex')}@miro.dev`, plan: 'pro' }).returning()
     made.push(u!.id)
-    await db.insert(userSettings).values({ userId: u!.id, quietHoursEnabled: false, timeZone: 'Asia/Seoul' })
+    await db.insert(userSettings).values({ userId: u!.id, timeZone: 'Asia/Seoul' })
     return u!.id
   }
   /** 공개 캐릭터 하나. 연락 스위치는 켠다 — 유형만이 Reality 를 가르는지 보기 위해서다. */

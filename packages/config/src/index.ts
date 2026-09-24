@@ -75,16 +75,6 @@ export const POLICY = {
     motivationThreshold: DEV_DEFAULT(0.5),
   },
 
-  quietHours: {
-    /**
-     * 명세서 5.1 예외: 야간 선연락은 기본 차단하고 사용자가 설정에서 켤 수 있다.
-     * 차단 대상은 발송(Push/수신통화)이며 Simulation State 진행은 계속된다.
-     */
-    defaultEnabled: true,
-    defaultStart: DEV_DEFAULT('23:00'),
-    defaultEnd: DEV_DEFAULT('08:00'),
-  },
-
   call: {
     /** 수신 통화가 이 시간 안에 수락되지 않으면 부재중으로 기록한다. */
     ringingTimeoutMinutes: DEV_DEFAULT(2),

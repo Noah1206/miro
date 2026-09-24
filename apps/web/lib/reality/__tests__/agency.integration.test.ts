@@ -88,7 +88,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const character = await cloneAsReality('thomas', { ownerId: owner!.id })
     await db.update(contactProfiles).set({ activeHoursStart: '00:00', activeHoursEnd: '23:59', enabled: true })
       .where(eq(contactProfiles.characterId, character.id))
-    await db.insert(userSettings).values({ userId: owner!.id, quietHoursEnabled: false, pushEnabled: false, timeZone: 'Asia/Seoul' })
+    await db.insert(userSettings).values({ userId: owner!.id, timeZone: 'Asia/Seoul' })
     const [session] = await db.insert(roleplaySessions).values({ userId: owner!.id, characterId: character.id, worldId: character.worldId,
       lastInteractionAt: BEFORE, pendingRealityIntent: { channel: 'video_call', reason: 'legacy should not choose this action', urgency: 1 },
     }).returning()
@@ -240,14 +240,15 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(push.deliverRealityPush).not.toHaveBeenCalled()
   })
 
-  it('quiet hours permit an in-app message but never enqueue an intrusive push', async () => {
+  // 앱 밖 연락은 끌 수 없다 (2026-09-24) — 예전에 저장된 알림 끄기·야간 차단 값은 읽지 않는다.
+  it('always enqueues the out-of-app push, whatever old settings say', async () => {
     const { id, userId } = await fixture()
-    await db.update(userSettings).set({ pushEnabled: true, quietHoursEnabled: true, quietHoursStart: '13:00', quietHoursEnd: '15:00' })
+    await db.update(userSettings).set({ pushEnabled: false, quietHoursEnabled: true, quietHoursStart: '00:00', quietHoursEnd: '23:59' })
       .where(eq(userSettings.userId, userId))
     const enqueue = vi.spyOn(push, 'enqueueRealityPush')
     provider()
     expect((await evaluateSession(id, NOW)).outcome).toBe('sent')
-    expect(enqueue).not.toHaveBeenCalled()
+    expect(enqueue).toHaveBeenCalledTimes(1)
     expect((await stored(id)).contacts).toHaveLength(1)
   })
 

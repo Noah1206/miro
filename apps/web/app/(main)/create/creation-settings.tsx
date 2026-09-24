@@ -6,6 +6,7 @@ import { S } from '@/lib/character-options'
 import { STAGES } from './parse'
 import { ChoiceChips, CountedInput, LabeledField, Stepped, Switch } from './form-parts'
 import type { FormInitial } from './character-form'
+import type { ContactCapabilities } from '@/lib/reality/channels'
 
 const PRESETS = [
   { stage: 'stranger', label: '낯선 사이', hint: '서로를 알아가며 조심스럽게 대화를 시작해요.', values: [30, 10, 60, 10, 20, 0] },
@@ -77,7 +78,6 @@ export function RelationshipSettings({ initial }: { initial: FormInitial }) {
   </div>
 }
 
-export type ContactCapabilities = { message: boolean; photo: boolean; voiceCall: boolean }
 const FREQUENCY = [
   { value: 20, label: '드물게', hint: '특별히 할 이야기가 생기면 먼저 연락해요.' },
   { value: 50, label: '가끔', hint: '관계와 상황에 따라 안부를 건네요.' },
@@ -102,7 +102,7 @@ export function ContactSettings({ initial: i, mode, capabilities }: { initial: F
     <input type="hidden" name="activeHoursEnd" value={i.activeHoursEnd} />
     <Switch name="contactToggle" checked={enabled} onChange={v => { setEnabled(v); setChanged(true) }} label="먼저 연락하기"
       hint="대화하지 않는 동안에도 성격과 상황에 맞춰 먼저 연락해요." />
-    {!capabilities.message && <p className="t-caption" style={caption}>먼저 연락하기는 현재 준비 중이에요. 설정은 저장됩니다.</p>}
+    {!capabilities.realityMessage && <p className="t-caption" style={caption}>먼저 연락하기는 현재 준비 중이에요. 설정은 저장됩니다.</p>}
     {legacyChat && !changed && <p className="t-caption" style={caption}>켜면 이 캐릭터도 리얼리티로 사용할 수 있어요.</p>}
     <div hidden={!enabled} style={{ marginTop: 24 }}>
       <Stepped name="contactFrequency" label="연락 빈도" defaultValue={i.contactFrequency} value={frequency} onChange={setFrequency} options={FREQUENCY} />

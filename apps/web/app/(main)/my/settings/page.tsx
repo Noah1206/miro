@@ -1,25 +1,20 @@
 import { redirect } from 'next/navigation'
-import { eq } from 'drizzle-orm'
-import { db, userSettings } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { Page, PageHeader, Stagger, StaggerItem, TransitionLink } from '@/components/ui'
-import { SettingsForm } from './form'
 
 /**
- * 설정. 위는 연락(받기 · 야간 연락 차단), 아래는 나머지 항목으로 가는 행.
- * 마이페이지에는 톱니 하나만 두고 전부 여기로 모았다.
+ * 설정. 나머지 항목으로 가는 행만 둔다. 마이페이지에는 톱니 하나만 두고 전부 여기로 모았다.
+ * 연락 설정(알림·통화 수신·야간 차단)은 없다 — 캐릭터의 앱 밖 연락은 항상 받는다 (2026-09-24 결정).
+ * 알림 권한은 미로 캐릭터 대화방에서 묻는다.
  */
 export default async function SettingsPage() {
   const user = await currentUser()
   if (!user) redirect('/login')
-  const [s] = await db.select().from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   return (
     <Page style={{ maxWidth: 520 }}>
-      <PageHeader back="/my" title="설정" lead="캐릭터가 언제, 어떻게 먼저 다가올 수 있는지." />
-      <SettingsForm vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null}
-        initial={{ pushEnabled: s?.pushEnabled ?? true, voiceCallEnabled: s?.voiceCallEnabled ?? true, videoCallEnabled: s?.videoCallEnabled ?? true, quietHoursEnabled: s?.quietHoursEnabled ?? true, quietHoursStart: s?.quietHoursStart ?? '23:00', quietHoursEnd: s?.quietHoursEnd ?? '08:00', timeZone: s?.timeZone ?? 'Asia/Seoul' }} />
+      <PageHeader back="/my" title="설정" />
 
-      <h2 className="t-title-3" style={{ margin: 'var(--space-7) 0 12px' }}>계정</h2>
+      <h2 className="t-title-3" style={{ margin: 'var(--space-5) 0 12px' }}>계정</h2>
       <Stagger as="div" className="stack" style={{ gap: 8 }}>
         {[['/my/subscription', '이용권 관리'], ['/my/verify', '성인 인증'], ['/my/permissions', '권한 안내']].map(([h, l]) => (
           <StaggerItem key={h}><Row href={h!} label={l!} /></StaggerItem>

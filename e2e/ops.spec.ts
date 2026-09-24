@@ -40,18 +40,12 @@ test('chat list: search and delete with confirmation and empty state', async ({ 
   await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveCount(0)
 })
 
-test('settings: quiet hours off is saved and survives reload', async ({ page }) => {
+// 앱 밖 연락은 끌 수 없다 (2026-09-24) — 설정에는 연락 스위치가 없다.
+test('settings: no switch turns off character contact', async ({ page }) => {
   await signup(page)
   await page.goto(`${BASE}/my/settings`)
-  const quiet = page.getByLabel(/야간 연락 차단/)
-  await expect(quiet).toBeChecked()                      // 기본 차단 (명세서 5.1)
-  await quiet.uncheck()
-  await page.getByLabel('시작').fill('22:00')
-  await page.getByRole('button', { name: '저장' }).click()
-  await expect(page.getByRole('button', { name: '저장됨' })).toBeVisible()
-  await page.reload()
-  await expect(page.getByLabel(/야간 연락 차단/)).not.toBeChecked()
-  await expect(page.getByLabel('시작')).toHaveValue('22:00')
+  await expect(page.getByRole('link', { name: '이용권 관리' })).toBeVisible()
+  await expect(page.getByLabel(/먼저 연락 알림|야간 연락 차단|통화 수신/)).toHaveCount(0)
 })
 
 test('report a character message and see it accepted; duplicates are refused', async ({ page }) => {

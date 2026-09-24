@@ -1,8 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { db, realityPushJobs, realityContacts, pushSubscriptions, roleplaySessions, users, userSettings, contactProfiles, messages, characters } from '@miro/db'
-import { feature, POLICY, productionRuntime } from '@miro/config'
-import { inQuietHours } from '@miro/domain'
+import { db, realityPushJobs, realityContacts, pushSubscriptions, roleplaySessions, users, contactProfiles, messages, characters } from '@miro/db'
+import { feature, productionRuntime } from '@miro/config'
 import { resolvePush } from '@miro/providers'
 import type { UsageTransaction } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
@@ -31,14 +30,13 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
   `)
   for (const job of claimed) {
     const [row] = await db.select({ job: realityPushJobs, contact: realityContacts, subscription: pushSubscriptions,
-      session: roleplaySessions, user: users, settings: userSettings, profile: contactProfiles, message: messages,
+      session: roleplaySessions, user: users, profile: contactProfiles, message: messages,
       experienceType: characters.experienceType, characterDeletedAt: characters.deletedAt }).from(realityPushJobs)
       .innerJoin(realityContacts, eq(realityContacts.id, realityPushJobs.contactId))
       .innerJoin(pushSubscriptions, eq(pushSubscriptions.id, realityPushJobs.subscriptionId))
       .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
       .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
       .innerJoin(users, eq(users.id, roleplaySessions.userId))
-      .leftJoin(userSettings, eq(userSettings.userId, users.id))
       .leftJoin(contactProfiles, eq(contactProfiles.characterId, roleplaySessions.characterId))
       .leftJoin(messages, eq(messages.id, realityContacts.messageId))
       .where(and(eq(realityPushJobs.id, job.id), eq(realityPushJobs.leaseToken, token))).limit(1)
@@ -51,20 +49,12 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
     if (row.experienceType !== 'reality' || row.characterDeletedAt
       || row.user.deletedAt || row.session.deletedAt || row.session.restrictedAt || row.session.status !== 'active'
       || !row.profile?.enabled || row.message?.hiddenAt
-      || row.subscription.userId !== row.user.id || row.subscription.failedAt || row.settings?.pushEnabled === false
+      || row.subscription.userId !== row.user.id || row.subscription.failedAt
       || row.contact.status === 'opened' || row.contact.status === 'suppressed'
       || now.getTime() - row.contact.createdAt.getTime() > 12 * 3600_000) {
       await finish('cancelled'); continue
     }
     if (row.job.attempts > 5) { await finish('failed'); continue }
-    const settings = {
-      pushEnabled: true, voiceCallEnabled: false, videoCallEnabled: false,
-      quietHoursEnabled: row.settings?.quietHoursEnabled ?? POLICY.quietHours.defaultEnabled,
-      quietHoursStart: row.settings?.quietHoursStart ?? POLICY.quietHours.defaultStart,
-      quietHoursEnd: row.settings?.quietHoursEnd ?? POLICY.quietHours.defaultEnd,
-      timeZone: row.settings?.timeZone ?? POLICY.reality.defaultTimeZone,
-    }
-    if (inQuietHours(now, settings)) { await finish('cancelled'); continue }
     const payload = row.contact.payload
     try {
       const provider = resolvePush()

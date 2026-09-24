@@ -2,7 +2,7 @@ import { POLICY } from '@miro/config'
 import type { ContactChannel, ContactProfile } from '../character/types'
 import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
-import type { NotificationSettings, RealityContact, RealityIntent, SuppressReason } from './types'
+import type { RealityContact, RealityIntent, SuppressReason } from './types'
 
 export type RealityInput = {
   intent: RealityIntent
@@ -10,7 +10,8 @@ export type RealityInput = {
   personality: { initiative: number; emotionalExpression: number }
   relationship: RelationshipState
   activeEvents: SimulationEvent[]
-  settings: NotificationSettings
+  /** 사용자 IANA 시간대. 캐릭터의 활동 시간은 사용자 현지 시각으로 판정한다. */
+  timeZone: string
   lastContactAt: Date | null
   pendingContacts: RealityContact[]
   now: Date
@@ -20,9 +21,6 @@ export type RealityDecision =
   | { send: true; channel: ContactChannel; dedupeKey: string }
   | { send: false; reason: SuppressReason }
 
-/** 방해성 채널. Quiet Hours 에 차단 대상이 된다. */
-const INTRUSIVE: ContactChannel[] = ['push', 'voice_call', 'video_call', 'missed_call']
-
 /**
  * 선연락 발송 여부 판정.
  *
@@ -31,18 +29,14 @@ const INTRUSIVE: ContactChannel[] = ['push', 'voice_call', 'video_call', 'missed
  *
  * 하나의 관계 수치로 판단하지 않는다 — 싸운 상태 + 자존심 높은 캐릭터는 연락하지
  * 않을 수 있지만, 중요한 사건 + 높은 애착이면 싸운 상태여도 연락할 수 있다.
+ *
+ * 사용자 쪽 수신 설정(알림 끄기·통화 거절·야간 차단)은 없다 — 앱 밖 연락은 항상 받는다 (2026-09-24 결정).
+ * 밤에 오지 않는 이유는 캐릭터의 활동 시간(기본 08~23시)이다.
  */
 export function evaluateRealityContact(input: RealityInput): RealityDecision {
-  const { intent, settings, now } = input
+  const { intent, now } = input
 
-  if (!isChannelAllowed(intent.channel, settings)) {
-    return { send: false, reason: 'channel_disabled' }
-  }
-  if (isIntrusive(intent.channel) && inQuietHours(now, settings)) {
-    // Simulation State 는 그대로 진행하고 발송만 억제한다.
-    return { send: false, reason: 'quiet_hours' }
-  }
-  if (!inActiveHours(now, input.contactProfile, settings.timeZone)) {
+  if (!inActiveHours(now, input.contactProfile, input.timeZone)) {
     return { send: false, reason: 'outside_active_hours' }
   }
   if (input.pendingContacts.length >= POLICY.reality.maxPending) {
@@ -75,22 +69,6 @@ function motivation(input: RealityInput): number {
   return clamp01(
     initiative * 0.3 + bond * 0.3 + intent.urgency * 0.35 + eventPressure - distance * 0.35,
   )
-}
-
-function isIntrusive(c: ContactChannel): boolean {
-  return INTRUSIVE.includes(c)
-}
-
-function isChannelAllowed(c: ContactChannel, s: NotificationSettings): boolean {
-  if (c === 'voice_call') return s.voiceCallEnabled
-  if (c === 'video_call') return s.videoCallEnabled
-  if (c === 'push' || c === 'missed_call') return s.pushEnabled
-  return true
-}
-
-export function inQuietHours(now: Date, s: NotificationSettings): boolean {
-  if (!s.quietHoursEnabled) return false
-  return inWindow(now, s.quietHoursStart, s.quietHoursEnd, s.timeZone)
 }
 
 function inActiveHours(now: Date, p: ContactProfile, timeZone: string): boolean {

@@ -1,15 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateRealityContact, inQuietHours } from '../reality/evaluator'
-import type { NotificationSettings } from '../reality/types'
+import { evaluateRealityContact } from '../reality/evaluator'
 import type { RealityDecision, RealityInput } from '../reality/evaluator'
 import type { ContactProfile } from '../character/types'
 import type { RelationshipState } from '../relationship/types'
-
-const settings: NotificationSettings = {
-  pushEnabled: true, voiceCallEnabled: true, videoCallEnabled: true,
-  quietHoursEnabled: true, quietHoursStart: '23:00', quietHoursEnd: '08:00',
-  timeZone: 'Asia/Seoul',
-}
 
 const profile: ContactProfile = {
   id: 'cp1', characterId: 'c1', contactFrequency: 50, replyDelayMinutes: 5,
@@ -32,7 +25,7 @@ function input(over: Partial<RealityInput> = {}): RealityInput {
     personality: { initiative: 80, emotionalExpression: 60 },
     relationship: rel,
     activeEvents: [],
-    settings,
+    timeZone: 'Asia/Seoul',
     lastContactAt: null,
     pendingContacts: [],
     now: new Date('2026-09-12T14:00:00+09:00'),
@@ -46,23 +39,16 @@ describe('reality activation', () => {
     expect(d.send).toBe(true)
   })
 
-  it('T-QuietHours: suppresses intrusive channels at night but keeps state intact', () => {
-    const d = evaluateRealityContact(input({ now: new Date('2026-09-12T02:00:00+09:00') }))
-    expect(d).toEqual({ send: false, reason: 'quiet_hours' })
+  // 사용자 쪽 야간 차단은 없다. 밤에 조용한 건 캐릭터의 활동 시간(기본 08~23시) 때문이고, 사용자 현지 시각으로 본다.
+  it('at night the character keeps to its own active hours, in the user\'s time zone', () => {
+    const daytime = { ...profile, activeHours: { start: '08:00', end: '23:00' } }
+    const instant = new Date('2026-09-12T17:00:00Z') // 02:00 Seoul, 18:00 London
+    expect(evaluateRealityContact(input({ contactProfile: daytime, now: instant }))).toEqual({ send: false, reason: 'outside_active_hours' })
+    expect(evaluateRealityContact(input({ contactProfile: daytime, now: instant, timeZone: 'Europe/London' })).send).toBe(true)
   })
 
-  it('quiet hours spanning midnight is handled correctly', () => {
-    expect(inQuietHours(new Date('2026-09-12T23:30:00+09:00'), settings)).toBe(true)
-    expect(inQuietHours(new Date('2026-09-12T03:00:00+09:00'), settings)).toBe(true)
-    expect(inQuietHours(new Date('2026-09-12T12:00:00+09:00'), settings)).toBe(false)
-  })
-
-  it('respects a disabled channel', () => {
-    const d = evaluateRealityContact(input({
-      intent: { channel: 'video_call', reason: 'x', urgency: 1 },
-      settings: { ...settings, videoCallEnabled: false },
-    }))
-    expect(d).toEqual({ send: false, reason: 'channel_disabled' })
+  it('no user switch turns a channel off', () => {
+    expect(evaluateRealityContact(input({ intent: { channel: 'video_call', reason: 'x', urgency: 1 } })).send).toBe(true)
   })
 
   it('T-Dedupe: cooldown prevents repeat contact spam', () => {

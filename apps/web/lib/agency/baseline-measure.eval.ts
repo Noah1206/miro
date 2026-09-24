@@ -72,7 +72,7 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
     const email = `agency-measure-${EXPERIMENT}@example.test`
     const [found] = await db.select().from(users).where(eq(users.email, email)).limit(1)
     const owner = found ?? (await db.insert(users).values({ email }).returning())[0]!
-    await db.insert(userSettings).values({ userId: owner.id, quietHoursEnabled: false, pushEnabled: false, timeZone: 'Asia/Seoul' }).onConflictDoNothing()
+    await db.insert(userSettings).values({ userId: owner.id, timeZone: 'Asia/Seoul' }).onConflictDoNothing()
     const character = await cloneCharacterAsReality(process.env.MIRO_AGENCY_MEASURE_CHARACTER ?? 'thomas', { ownerId: owner.id })
     // In-app messages only: the agency path has no call/photo executor, so both arms compete on one channel.
     await db.update(contactProfiles).set({ enabled: true, activeHoursStart: '00:00', activeHoursEnd: '23:59', preferredChannel: 'message',

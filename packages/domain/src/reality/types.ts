@@ -13,9 +13,7 @@ export type RealityContact = {
   sentAt: Date | null
 }
 
-export type SuppressReason =
-  | 'quiet_hours' | 'channel_disabled' | 'cooldown'
-  | 'max_pending' | 'no_motivation' | 'outside_active_hours'
+export type SuppressReason = 'cooldown' | 'max_pending' | 'no_motivation' | 'outside_active_hours'
 
 /** AI 가 제안하는 선연락 의도. 실제 발송 여부는 Evaluator 가 결정한다. */
 export type RealityIntent = {
@@ -24,15 +22,4 @@ export type RealityIntent = {
   urgency: number // 0-1
   /** 스케줄러가 이 시각 전에는 보내지 않는다 (ISO). 없으면 유휴 시간 규칙을 따른다. */
   notBefore?: string
-}
-
-export type NotificationSettings = {
-  pushEnabled: boolean
-  voiceCallEnabled: boolean
-  videoCallEnabled: boolean
-  quietHoursEnabled: boolean
-  quietHoursStart: string // 'HH:MM'
-  quietHoursEnd: string
-  /** IANA timezone. Quiet/Active Hours 는 사용자 현지 시각으로 판정한다. */
-  timeZone: string
 }

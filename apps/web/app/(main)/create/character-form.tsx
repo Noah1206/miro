@@ -1,6 +1,7 @@
 'use client'
 import { introDialogue, sampleDialogue } from '@/lib/intro-dialogue'
-import { ContactSettings, RelationshipSettings, type ContactCapabilities } from './creation-settings'
+import { ContactSettings, RelationshipSettings } from './creation-settings'
+import type { ContactCapabilities } from '@/lib/reality/channels'
 import { useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
@@ -297,7 +298,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
         {/* ── 소개 페이지 ── */}
         <Panel id="preview" show={tab === 'preview'}>
           <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: '소개 페이지' }, { value: 'chat', label: '첫 대화' }]} /></div>
-          {previewMode === 'detail' ? <DetailPreview d={snap} /> : <div aria-label="첫 대화 미리보기" style={{ marginTop: 24 }}>
+          {previewMode === 'detail' ? <DetailPreview d={snap} can={capabilities} /> : <div aria-label="첫 대화 미리보기" style={{ marginTop: 24 }}>
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>새 대화를 시작할 때 이렇게 보여요.</p>
             {snap && introDialogue(snap.settings.character.sampleDialogue).map((turn, n) => <div key={n} style={{ marginBottom: 16, whiteSpace: 'pre-wrap' }}>
               {turn.role === 'character' && <p className="t-caption" style={{ marginBottom: 6 }}>{snap.name || '캐릭터'}</p>}

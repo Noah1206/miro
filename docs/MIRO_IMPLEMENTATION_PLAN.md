@@ -15,7 +15,7 @@
 | C-1 | 문서명 불일치 | 지시서는 `MIRO_기능명세서_수정본.md` / `MIRO_유저플로우_수정본.md`를 참조하나, 실제 파일은 `미로_기능명세서.md` / `미로_유저플로우.md` (수정본 접미사 없음) | 실제 존재 파일을 SoT로 사용. 더 최신 "수정본" 제공 시 재반영 |
 | C-2 | 플랫폼 | 기능명세서 "디바이스: 모바일 앱". 사용자 지시: **웹앱 우선, 유저 확보 후 네이티브 앱** | 웹앱(PWA) 우선. 도메인/API는 플랫폼 무관하게 설계하여 네이티브 전환 시 100% 재사용 |
 | C-3 | 결제 | 기능명세서 10장 Pro 결제 전체 | **Launch v1 범위에서 최후순위(Phase 13)로 이동.** 자격(entitlement) 모델·Usage Guard·요금제 비교 화면은 지금 구현, PG 연동만 보류 |
-| C-4 | 야간 연락 | 명세서 5.1 예외: "야간 선연락은 **기본으로 차단**하고 사용자가 설정에서 켤 수 있다" / 지시서 18장: "야간 Contact를 시스템 전역에서 강제 차단하지 않는다" | 명세서 우선. `quietHours`가 **기본 활성(DEV_DEFAULT 23:00–08:00)**, 사용자가 끌 수 있음. 지시서의 "전역 강제 차단 금지"는 "Simulation State는 유지하고 발송만 억제"로 해석 — 양자 만족 |
+| C-4 | 야간 연락 | 명세서 5.1 예외: "야간 선연락은 **기본으로 차단**하고 사용자가 설정에서 켤 수 있다" / 지시서 18장: "야간 Contact를 시스템 전역에서 강제 차단하지 않는다" | ~~명세서 우선. `quietHours` 기본 활성, 사용자가 끌 수 있음.~~ **2026-09-24 사용자 결정으로 대체:** 앱 밖 연락은 항상 받고 사용자 쪽 설정(알림 끄기·통화 거절·야간 차단)은 없다. 밤에 오지 않는 이유는 캐릭터의 활동 시간(`contact_profiles.active_hours`, 새 캐릭터 기본 08–23시, 사용자 현지 시각)이다. 활동 시간이 밤까지인 캐릭터는 밤에도 연락한다. 결제 만료 안내만 고정 야간 창(23–08시)을 둔다 |
 | C-5 | 성인 인증 재시도 | 명세서 7.1: 실패 시 24시간 후 재시도 | 그대로 채택 |
 
 ---
@@ -312,7 +312,6 @@ export const POLICY = {
   },
   event:    { maxActive: DEV_DEFAULT(2), cooldownTurns: DEV_DEFAULT(8) },  // TBD
   reality:  { minGapMinutes: DEV_DEFAULT(90), maxPending: DEV_DEFAULT(2) }, // TBD
-  quietHours:{ defaultEnabled: true, start: DEV_DEFAULT('23:00'), end: DEV_DEFAULT('08:00') },
   relationship: { deltaClampPerTurn: DEV_DEFAULT(15) },  // TBD
 }
 ```

@@ -15,7 +15,6 @@ describeDb('calls', () => {
   async function session(plan: 'free' | 'pro' = 'pro') {
     const [u] = await db.insert(users).values({ email: `cl-${randomBytes(5).toString('hex')}@miro.dev`, plan }).returning()
     made.push(u!.id)
-    await db.insert(userSettings).values({ userId: u!.id, quietHoursEnabled: false })
     // 통화는 미로 캐릭터와만 한다. 시드 태윤은 chat 이라, 같은 성향의 reality 복제본을 쓴다.
     const c = await cloneAsReality('taeyun')
     const [s] = await db.insert(roleplaySessions).values({
@@ -105,12 +104,13 @@ describeDb('calls', () => {
     expect(await db.select().from(messages).where(eq(messages.sessionId, sessionId))).toHaveLength(0)
   })
 
-  it('video calls are blocked when the user disabled them', async () => {
+  // 사용자 설정은 더 이상 읽지 않는다 — 예전에 영상통화를 꺼 둔 값이 남아 있어도 울린다.
+  it('a stored old refusal no longer blocks a call', async () => {
     const { userId, sessionId } = await session()
-    await db.update(userSettings).set({ videoCallEnabled: false }).where(eq(userSettings.userId, userId))
+    await db.insert(userSettings).values({ userId, videoCallEnabled: false, quietHoursEnabled: true, quietHoursStart: '00:00', quietHoursEnd: '23:59' })
     await db.update(roleplaySessions)
       .set({ pendingRealityIntent: { channel: 'video_call', reason: 'x', urgency: 0.95 } })
       .where(eq(roleplaySessions.id, sessionId))
-    expect(await evaluateSession(sessionId, DAY)).toEqual({ outcome: 'suppressed', reason: 'channel_disabled' })
+    expect(await evaluateSession(sessionId, DAY)).toMatchObject({ outcome: 'sent', channel: 'video_call' })
   })
 })

@@ -6,6 +6,7 @@ import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { CharacterPhoto } from '@/components/character-visual'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
+import type { ContactCapabilities } from '@/lib/reality/channels'
 import { likeCharacter, bookmark, deleteComment, likeComment } from './social-actions'
 
 /**
@@ -144,15 +145,17 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
 
 /**
  * 와우 포인트: 이 캐릭터가 앱 밖에서도 먼저 연락하고, 사진·통화·영상통화·Live Scene 으로
- * 관계가 현실까지 이어진다는 걸 진입 전에 알려준다. 문구가 아니라 아이콘 3개로 즉시 읽히게.
+ * 관계가 현실까지 이어진다는 걸 진입 전에 알려준다. 문구가 아니라 아이콘으로 즉시 읽히게.
+ * 꺼진 기능은 그리지 않는다 — 없는 기능을 약속하지 않는다.
  */
-export function RealityStrip() {
+export function RealityStrip({ can }: { can: ContactCapabilities }) {
   // 내비게이션과 같은 선 아이콘 규칙: viewBox 24, stroke currentColor, strokeWidth 1.75 — 이모지 대신.
-  const items: Array<{ label: string; icon: React.ReactNode }> = [
-    { label: '사진', icon: <><rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" /></> },
-    { label: '음성통화', icon: <><path d="M4.5 5.5c0-1 .8-1.5 1.7-1.5H8c.8 0 1.4.5 1.6 1.2l.8 2.7c.2.6 0 1.3-.5 1.7L9 10.7c1 2.3 2.9 4.2 5.3 5.3l1.1-.9c.4-.5 1.1-.7 1.7-.5l2.7.8c.7.2 1.2.8 1.2 1.6v1.8c0 .9-.5 1.7-1.5 1.7C13.5 20.5 4.5 11.5 4.5 5.5z" /></> },
-    { label: '영상통화', icon: <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5 21 7v10l-6-3.5z" /></> },
-  ]
+  const items: Array<{ label: string; on: boolean; icon: React.ReactNode }> = [
+    { label: '사진', on: can.imageGeneration, icon: <><rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" /></> },
+    { label: '음성통화', on: can.voiceCall, icon: <><path d="M4.5 5.5c0-1 .8-1.5 1.7-1.5H8c.8 0 1.4.5 1.6 1.2l.8 2.7c.2.6 0 1.3-.5 1.7L9 10.7c1 2.3 2.9 4.2 5.3 5.3l1.1-.9c.4-.5 1.1-.7 1.7-.5l2.7.8c.7.2 1.2.8 1.2 1.6v1.8c0 .9-.5 1.7-1.5 1.7C13.5 20.5 4.5 11.5 4.5 5.5z" /></> },
+    { label: '영상통화', on: can.videoCall, icon: <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5 21 7v10l-6-3.5z" /></> },
+  ].filter(item => item.on)
+  if (!items.length) return null
   return (
     <div style={{
       display: 'flex', gap: 4, padding: '12px 8px', borderRadius: 12,

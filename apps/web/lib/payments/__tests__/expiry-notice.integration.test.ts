@@ -30,7 +30,7 @@ describeDb('pass expiry notice', () => {
 
   afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 
-  // Quiet Hours 를 피한 시각을 쓴다 (KST 정오). 야간이면 발송을 미루는 게 정상 동작이라 테스트가 흔들린다.
+  // 밤을 피한 시각을 쓴다 (KST 정오). 밤(23~8시)에는 발송을 미루는 게 정상 동작이라 테스트가 흔들린다.
   const noon = new Date('2026-09-16T03:00:00Z')
 
   it('notifies three days out, and not twice for the same stage', async () => {
@@ -62,10 +62,11 @@ describeDb('pass expiry notice', () => {
     expect(await run(u, noon)).toBe('ended')
   })
 
-  it('respects a user who turned push off, without leaving the notice to retry forever', async () => {
+  // 알림 수신은 끌 수 없다 (2026-09-24) — 예전에 꺼 둔 값은 읽지 않는다. 밤에는 단계도 남기지 않고 낮에 보낸다.
+  it('waits out the night, whatever the stored push setting', async () => {
     const u = await user(); await pass(u, 2 * day, noon)
     await db.insert(userSettings).values({ userId: u, pushEnabled: false })
-    // 보내지 않았으므로 합계에는 잡히지 않지만, 단계는 남아 매 15분 재시도하지 않는다.
+    expect(await run(u, new Date('2026-09-15T17:00:00Z'))).toBeNull() // 02:00 KST
     expect(await run(u, noon)).toBe('soon')
   })
 })

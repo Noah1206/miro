@@ -1,3 +1,4 @@
+import { features } from '@miro/config'
 import { sampleDialogue } from '@/lib/intro-dialogue'
 import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
@@ -84,7 +85,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </div>
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
-        {c.experienceType === 'reality' && <RealityStrip />}
+        {c.experienceType === 'reality' && <RealityStrip can={features()} />}
         <Rule label="이 사람에 대해">
           <div className="detail-prose">
             <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>

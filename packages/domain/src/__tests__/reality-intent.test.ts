@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { deriveIntent } from '../reality/intent'
 import { presentContact } from '../reality/present'
-import { inQuietHours, localMinutes } from '../reality/evaluator'
+import { localMinutes } from '../reality/evaluator'
 import type { ContactProfile } from '../character/types'
 import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
-import type { NotificationSettings } from '../reality/types'
 
 const profile: ContactProfile = {
   id: 'cp', characterId: 'c', contactFrequency: 50, replyDelayMinutes: 5,
@@ -105,23 +104,13 @@ describe('world translation', () => {
   })
 })
 
-describe('quiet hours are judged in the user\'s timezone', () => {
-  const base: NotificationSettings = {
-    pushEnabled: true, voiceCallEnabled: true, videoCallEnabled: true,
-    quietHoursEnabled: true, quietHoursStart: '23:00', quietHoursEnd: '08:00',
-    timeZone: 'Asia/Seoul',
-  }
+describe('local time is judged in the user\'s timezone', () => {
   // 17:00Z = 02:00 Seoul (밤) = 18:00 London (낮)
   const instant = new Date('2026-09-12T17:00:00Z')
 
-  it('the same instant is night in Seoul', () => {
+  it('the same instant is night in Seoul and daytime in London', () => {
     expect(localMinutes(instant, 'Asia/Seoul')).toBe(2 * 60)
-    expect(inQuietHours(instant, base)).toBe(true)
-  })
-
-  it('and daytime in London', () => {
     expect(localMinutes(instant, 'Europe/London')).toBe(18 * 60)
-    expect(inQuietHours(instant, { ...base, timeZone: 'Europe/London' })).toBe(false)
   })
 })
 
