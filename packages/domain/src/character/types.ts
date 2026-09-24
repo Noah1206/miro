@@ -75,9 +75,13 @@ export const BUILD_PRESETS: Record<BuildType, { label: string; prompt: string }>
 export const GENDER_TYPES = ['male', 'female'] as const
 export type GenderType = (typeof GENDER_TYPES)[number]
 
-export const GENDER_PRESETS: Record<GenderType, { label: string; prompt: string }> = {
-  male: { label: '남성', prompt: 'man' },
-  female: { label: '여성', prompt: 'woman' },
+/**
+ * voice 는 통화 목소리(Gemini Live 기본 목소리) — 목소리를 고르는 칸이 생기기 전까지 성별로 정한다.
+ * 2026-09-24 실측: 같은 문장의 기본 주파수 중앙값 Alnilam 123Hz · Kore 240Hz, 받아쓰기는 원문 그대로.
+ */
+export const GENDER_PRESETS: Record<GenderType, { label: string; prompt: string; voice: string }> = {
+  male: { label: '남성', prompt: 'man', voice: 'Alnilam' },
+  female: { label: '여성', prompt: 'woman', voice: 'Kore' },
 }
 
 /**

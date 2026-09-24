@@ -54,6 +54,7 @@ Photo, voice message, call, video, Live Scene and Face Cast each require a worki
 - 요금: 종료 버튼 없이 떠나면 브라우저가 종료 신호(`/api/calls/[id]/end`)를 보내 실제 시간으로 끝낸다. 신호가 끝내 없으면 정리 크론이 30분이 아니라 예약한 1분만 청구한다.
 - 공개 순서: `MIRO_VOICE_CALL_USERS` 계정만 사용자가 거는 통화를 먼저 연다 → 사람이 실제 기기(안드로이드 크롬·아이폰 홈 화면 앱)로 통화 확인 → 차단 목록에서 `voiceCall` 을 빼 전체 공개(그때 캐릭터가 거는 통화도 열린다).
 - 기억: 토큰에 두 사람의 받아쓰기를 켜고(`inputAudioTranscription`·`outputAudioTranscription`), 브라우저가 턴마다 순서대로 `/api/calls/[id]/turns` 로 보낸다. 서버는 대사를 새로 만들지 않고(`runTurn` 의 `spokenReply`) 채팅 턴과 같은 파이프라인으로 입력·출력 검열, 관계, 기억, 사건 규칙을 돌려 대화 기록에 남긴다. 검열에 걸린 턴은 남기지 않는다. 끊은 직후 2분 안에 온 마지막 턴까지 받는다. 실측: 합성 한국어 음성을 16kHz 로 흘렸을 때 받아쓰기 "내일 저녁에 공방에 다시 들를게요." 그대로.
+- 목소리: 캐릭터 성별로 정한다(남성 Alnilam, 여성 Kore — `GENDER_PRESETS`). 전에는 모두 Kore(여성)라 운영 캐릭터 2명(둘 다 남성)이 여성 목소리로 통화했을 것이다. 같은 문장 실측 기본 주파수 중앙값 123Hz / 240Hz, 받아쓰기는 원문 그대로. 성별이 없으면 `GEMINI_LIVE_VOICE`(기본 Kore). 만들 때 고르는 칸은 다음 단계.
 - 남은 한계: 음성 출력은 소리로 나가기 전에는 우리 검열을 거치지 않는다(모델 안전 설정과 지시문에 의존, 저장만 검열). 비용은 분당 약 $0.023(입력 $0.005 + 출력 $0.018, 2026-09-19 가격표 기준)에 음성 턴마다 검열·분류 약 $0.001.
 
 ## Evidence for this development pass

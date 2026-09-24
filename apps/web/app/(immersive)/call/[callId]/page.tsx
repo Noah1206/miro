@@ -2,6 +2,7 @@ import { feature, characterAgencyMode, voiceCallAllowed } from '@miro/config'
 import { notFound, redirect } from 'next/navigation'
 import { and, desc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
+import { GENDER_PRESETS } from '@miro/domain'
 import { buildSpokenSystem } from '@miro/engine'
 import { resolveCallMedia } from '@miro/providers'
 import type { CallMediaSession } from '@miro/providers'
@@ -42,8 +43,11 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
     // Streaming audio currently bypasses server action approval/commit. Keep experimental sessions
     // on the existing text-call adapter until streamed turns have the same authority boundary.
     if (characterAgencyMode(call.sessionId) === 'live') throw new Error('agency_requires_server_turns')
+    // 목소리는 성별로 정한다. 성별이 없는 캐릭터는 제공자 기본값(GEMINI_LIVE_VOICE)을 쓴다.
+    const gender = loaded.snapshot.character.appearance?.bodyProfile.gender
     media = await provider.startSession({
       callId, characterName: loaded.characterName, voiceIdentity: null, visualPrompt: null,
+      voiceName: gender ? GENDER_PRESETS[gender]?.voice ?? null : null,
       systemInstruction: spokenSystem,
     })
   } catch {
