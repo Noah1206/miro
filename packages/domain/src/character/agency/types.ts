@@ -71,6 +71,8 @@ export type AgencyActionRecord = {
   status: AgencyActionStatus
   evidenceIds: string[]
   goalIds: string[]
+  /** Goals this action carries out. Only these complete from the action's receipt. */
+  fulfillsGoalIds?: string[]
   createdAt: string
   updatedAt: string
   outcomeEvidenceId?: string
@@ -92,6 +94,8 @@ export type AgencyCandidate = {
   evidenceIds: string[]
   ruleIds: string[]
   goalIds: string[]
+  /** Goals this action itself carries out now. Citing a goal is not fulfilling it. */
+  fulfillsGoalIds?: string[]
   /** Every affinity must name a compiled rule. Scores are hypotheses, not facts. */
   ruleFit: Array<{ ruleId: string; fit: number }>
   goalFit: Array<{ goalId: string; fit: number }>

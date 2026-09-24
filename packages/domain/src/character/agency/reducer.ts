@@ -3,11 +3,12 @@ import { AGENCY_LIMITS, agencyEvidence, agencyGoalId, agencyUserUtterance, finit
 
 const TERMINAL_GOALS = new Set<AgencyGoal['status']>(['completed', 'abandoned', 'cancelled', 'expired'])
 const SPEECH_ACTIONS = new Set(['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'wait'])
-/** A persisted message is still only sent. Retire its working copy once its work is
- * closed; the database decision/message audit retains it without inventing delivery. */
+/** A persisted message is still only sent. Retire its working copy once the goals it was carrying
+ * out are closed (goals it merely cited never hold it); the database audit retains it without
+ * inventing delivery. */
 function retiredSentReceipt(action: AgencyActionRecord, goals: AgencyGoal[]): boolean {
   return action.status === 'sent' && (SPEECH_ACTIONS.has(action.type) || action.type === 'contact')
-    && action.goalIds.every(id => !goals.some(g => g.id === id && !TERMINAL_GOALS.has(g.status)))
+    && (action.fulfillsGoalIds ?? []).every(id => !goals.some(g => g.id === id && !TERMINAL_GOALS.has(g.status)))
 }
 const ACTION_EDGES: Record<AgencyActionStatus, AgencyActionStatus[]> = {
   authorized: ['queued', 'completed', 'failed', 'cancelled'], queued: ['sent', 'failed', 'cancelled'],
@@ -106,8 +107,10 @@ export function reduceAgencyState(previous: AgencyState, transition: AgencyTrans
     }
     if (state.actions.some(a => a.id === d.id)) return { state: previous, issues: [{ field: 'decision', reason: 'duplicate_action' }], applied: false }
     // Ordinary replies have no asynchronous delivery lifecycle in this core. The application
-    // commits their decision with the message; only ongoing or goal-linked work needs receipts.
-    const needsReceipt = d.action !== 'cancel_commitment' && (d.action === 'contact' || d.action === 'continue_activity' || d.candidate.goalIds.length > 0)
+    // commits their decision with the message; only ongoing work or work that fulfills a goal needs
+    // receipts. Merely citing a goal (e.g. "I'll call you tonight") leaves it open.
+    const fulfills = d.candidate.fulfillsGoalIds ?? []
+    const needsReceipt = d.action !== 'cancel_commitment' && (d.action === 'contact' || d.action === 'continue_activity' || fulfills.length > 0)
     if (needsReceipt && state.actions.length >= AGENCY_LIMITS.actions) {
       const removable = state.actions.findIndex(a => retiredSentReceipt(a, state.goals)
         || (['completed', 'failed', 'cancelled', 'delivered', 'answered'].includes(a.status)
@@ -116,7 +119,8 @@ export function reduceAgencyState(previous: AgencyState, transition: AgencyTrans
       state.actions.splice(removable, 1)
     }
     state.decision = d
-    if (needsReceipt) state.actions.push({ id: d.id, type: d.action, status: 'authorized', evidenceIds: [...d.candidate.evidenceIds], goalIds: [...d.candidate.goalIds], createdAt: now, updatedAt: now })
+    if (needsReceipt) state.actions.push({ id: d.id, type: d.action, status: 'authorized', evidenceIds: [...d.candidate.evidenceIds], goalIds: [...d.candidate.goalIds],
+      ...(fulfills.length ? { fulfillsGoalIds: [...fulfills] } : {}), createdAt: now, updatedAt: now })
   }
 
   if ((transition.outcomes?.length ?? 0) > 8) reject('outcomes', 'outcome_limit')
@@ -136,7 +140,7 @@ export function reduceAgencyState(previous: AgencyState, transition: AgencyTrans
     if (!goal || goal.status !== 'active' || !proof) { reject('goals', 'completion_not_observed'); continue }
     let completed = false
     if (goal.success === 'observed_event') completed = (proof.kind === 'event' || proof.kind === 'outcome') && Boolean(proof.goalIds?.includes(goal.id))
-    else if (action?.goalIds.includes(goal.id) && proof.actionId === action.id && proof.id === action.outcomeEvidenceId) {
+    else if (action?.fulfillsGoalIds?.includes(goal.id) && proof.actionId === action.id && proof.id === action.outcomeEvidenceId) {
       const acceptable: Record<Exclude<AgencyGoal['success'], 'observed_event'>, AgencyActionStatus[]> = {
         action_accepted: ['queued', 'sent', 'delivered', 'answered', 'completed'], sent: ['sent', 'delivered', 'answered'], delivered: ['delivered', 'answered'], answered: ['answered'],
       }

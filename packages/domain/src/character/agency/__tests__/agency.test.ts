@@ -175,14 +175,14 @@ describe('persistent agency state', () => {
     expect(added.state.goals).toHaveLength(24)
     added.state.goals.at(-1)!.status = 'active'
     const c = context({ sequence: 102, goals: added.state.goals })
-    const decision = selectAgencyDecision([candidate({ action: 'respond', goalIds: [agencyGoalId(101, 0)] })], c)
+    const decision = selectAgencyDecision([candidate({ action: 'respond', goalIds: [agencyGoalId(101, 0)], fulfillsGoalIds: [agencyGoalId(101, 0)] })], c)
     const next = reduceAgencyState(added.state, { expectedSequence: 101, decision }, c)
     expect(next.applied).toBe(true)
     expect(next.issues).toEqual([])
     expect(next.state.actions).toHaveLength(48)
     expect(next.state.actions.filter(a => a.id !== decision.id).every(a => a.status === 'sent')).toBe(true)
     // A contact linked to an active delivery-dependent goal cannot use this exception.
-    added.state.actions = added.state.actions.map(a => ({ ...a, type: 'contact', goalIds: [agencyGoalId(101, 0)] }))
+    added.state.actions = added.state.actions.map(a => ({ ...a, type: 'contact', goalIds: [agencyGoalId(101, 0)], fulfillsGoalIds: [agencyGoalId(101, 0)] }))
     expect(reduceAgencyState(added.state, { expectedSequence: 101, decision }, c).issues.map(i => i.reason)).toContain('unresolved_action_limit')
   })
   it('keeps proactive messages working beyond 48 sent receipts without claiming they were read', () => {
@@ -229,7 +229,7 @@ describe('persistent agency state', () => {
   it('queued is not delivered: completion requires ordered, correlated actual receipts', () => {
     let state = initial()
     let c = context({ goals: state.goals })
-    const decision = selectAgencyDecision([candidate({ goalIds: ['promise-goal'] })], c)
+    const decision = selectAgencyDecision([candidate({ goalIds: ['promise-goal'], fulfillsGoalIds: ['promise-goal'] })], c)
     state = reduceAgencyState(state, { expectedSequence: 0, decision }, c).state
     const apply = (status: 'queued' | 'sent' | 'delivered', complete = false) => {
       const proof = receipt(status, status, decision.id)
@@ -247,6 +247,34 @@ describe('persistent agency state', () => {
     expect(state.goals[0]?.status).toBe('active')
     apply('delivered', true)
     expect(state.goals[0]?.status).toBe('completed')
+  })
+  it('retires sent contacts that only cited a still-open goal, so citations cannot fill the action limit', () => {
+    const state = initial()
+    state.goals = [goal({ status: 'active', success: 'sent' })]
+    state.actions = Array.from({ length: 48 }, (_, i) => ({ id: `cited:${i}`, type: 'contact' as const, status: 'sent' as const,
+      evidenceIds: ['message'], goalIds: ['promise-goal'], createdAt: now, updatedAt: now }))
+    const c = context({ goals: state.goals })
+    const next = reduceAgencyState(state, { expectedSequence: 0, decision: selectAgencyDecision([candidate()], c) }, c)
+    expect(next.issues).toEqual([])
+    expect(next.state.actions).toHaveLength(48)
+  })
+  it('completes a promise only through an action that carries it out, never by citing, deferring or acting early', () => {
+    const state = { ...initial(), goals: [goal({ success: 'sent' })] }
+    const c = context({ goals: state.goals })
+    expect(validateAgencyCandidate(candidate({ action: 'defer', goalIds: ['promise-goal'], fulfillsGoalIds: ['promise-goal'] }), c).map(i => i.reason)).toContain('action_cannot_fulfill')
+    expect(validateAgencyCandidate(candidate({ fulfillsGoalIds: ['promise-goal'] }), c).map(i => i.reason)).toContain('invalid_fulfillment_refs')
+    const evening = [goal({ success: 'sent', clock: 'real_time', dueAt: '2026-09-24T18:00:00.000Z' })]
+    expect(validateAgencyCandidate(candidate({ goalIds: ['promise-goal'], fulfillsGoalIds: ['promise-goal'] }), context({ goals: evening })).map(i => i.reason)).toContain('goal_not_due:promise-goal')
+    // "I'll call you tonight" cites the promise; it records no receipt, so nothing can complete it.
+    const cited = selectAgencyDecision([candidate({ action: 'respond', goalIds: ['promise-goal'] })], c)
+    const replied = reduceAgencyState(state, { expectedSequence: 0, decision: cited }, c)
+    expect(replied.applied).toBe(true)
+    expect(replied.state.actions).toEqual([])
+    const proof = receipt('sent-proof', 'sent', cited.id)
+    const attempt = reduceAgencyState(replied.state, { expectedSequence: 1, goals: [{ kind: 'complete', goalId: 'promise-goal', actionId: cited.id, evidenceId: proof.id }] },
+      context({ sequence: 2, goals: replied.state.goals, evidence: [evidence(), proof] }))
+    expect(attempt.state.goals[0]?.status).toBe('active')
+    expect(attempt.issues.map(i => i.reason)).toContain('success_condition_unmet')
   })
   it('refuses an unrelated real event as evidence of goal completion', () => {
     const state = { ...initial(), goals: [goal({ success: 'observed_event' })] }

@@ -2,7 +2,7 @@ import { deliverRealityPush } from './push-outbox'
 import { maintainAI } from '@/lib/ai/maintenance'
 import { reconcileStaleAIReservations } from '@/lib/ai/gateway'
 import { sql } from 'drizzle-orm'
-import { POLICY, characterAgencyMode } from '@miro/config'
+import { POLICY, characterAgencyCohort, characterAgencyMode } from '@miro/config'
 import { db } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
@@ -57,16 +57,28 @@ export async function runRealityMaintenance(wall = new Date()): Promise<Maintena
   return { calls, purged, expiredSubscriptions, passNotices, bankOrders }
 }
 
+/**
+ * Wake a live cohort session at its goal's due time even before the usual idle gap. Only sessions
+ * still listed in the cohort: the additive table is not referenced until a cohort exists, and a
+ * session removed from the cohort stops waking.
+ */
+export function agencyDueCondition(now: Date) {
+  const cohort = characterAgencyCohort()
+  const ids = cohort.ids.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+  if (characterAgencyMode() !== 'live' || (!cohort.all && ids.length === 0)) return sql`false`
+  return sql`EXISTS (
+    SELECT 1 FROM character_runtime_states ar WHERE ar.session_id = s2.id AND ar.mode = 'live'
+      AND ar.next_wake_at <= ${now.toISOString()}::timestamptz
+      ${cohort.all ? sql`` : sql`AND ar.session_id IN (${sql.join(ids.map(id => sql`${id}::uuid`), sql`, `)})`}
+  )`
+}
+
 export async function runRealityEvaluations(now = new Date()): Promise<EvaluationRun> {
   const { idleMinutesBeforeContact, recheckMinutes, batchSize } = POLICY.reality
   const claimLimit = Math.min(batchSize, 10)
 
   const iso = (d: Date) => d.toISOString()
-  // Do not reference additive tables until the deployment explicitly opts into the new runtime.
-  const agencyDue = characterAgencyMode() === 'live' ? sql`EXISTS (
-    SELECT 1 FROM character_runtime_states ar WHERE ar.session_id = s2.id AND ar.mode = 'live'
-      AND ar.next_wake_at <= ${iso(now)}::timestamptz
-  )` : sql`false`
+  const agencyDue = agencyDueCondition(now)
   const claimed = await db.execute<{ id: string }>(sql`
     WITH picked AS MATERIALIZED (
        SELECT s2.id

@@ -1,8 +1,8 @@
 import { introMessages } from '@/lib/intro-dialogue'
 import { and, eq, isNull, or, sql } from 'drizzle-orm'
 import { db, characters, messages, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
-import { characterAgencyMode } from '@miro/config'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
+import { inWrittenOrder } from './commit'
 
 /** 시작 관계 기본값. 캐릭터는 처음부터 사용자에게 호감을 보이지 않는다 (명세서 4.1). */
 const DEFAULT_START = {
@@ -81,8 +81,8 @@ export async function createRoleplaySession(
     await tx.insert(relationships).values({ sessionId: id, ...DEFAULT_START, ...starting.initialRelationship })
     // 캐릭터가 먼저 보낸 첫 마디 — 있으면 대화가 이미 시작된 상태로 들어간다.
     const openingMessages = introMessages(id, starting.dialogue, opts.opening)
-    if (openingMessages.length) await tx.insert(messages).values(openingMessages)
-    const revision = characterAgencyMode(id) === 'off' ? null : await captureAgencyRevision(tx, character.characterId)
+    if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
+    const revision = await captureAgencyRevision(tx, character.characterId, { sessionId: id })
     await pinAgencyRevision(tx, id, revision)
     return { sessionId: id, created: true, revisionId: revision?.id }
   })

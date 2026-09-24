@@ -1,11 +1,11 @@
 import { z } from 'zod'
-import { agencyEvidence, type AgencyDecision, type AgencyDecisionContext, type AgencyIssue, type AgencyState } from '@miro/domain'
+import { agencyEvidence, agencyUserUtterance, type AgencyDecision, type AgencyDecisionContext, type AgencyIssue, type AgencyState } from '@miro/domain'
 import type { LLMProvider } from '@miro/providers'
 import { requireSafeContent } from '../safety'
 import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace } from './provider'
 import type { AgencyGroundedContext } from './planner'
 
-export const AGENCY_REALIZATION_VERSION = 'agency-realization-check:v1'
+export const AGENCY_REALIZATION_VERSION = 'agency-realization-check:v2'
 export type AgencyRealizationBlock = { type: string; speaker: string | null; text: string }
 const Ref = z.string().min(1).max(128)
 const SpanSchema = z.object({
@@ -13,7 +13,7 @@ const SpanSchema = z.object({
   quote: z.string().min(1).max(2000),
 })
 export const AgencyRealizationClaimSchema = SpanSchema.extend({
-  kind: z.enum(['authored_fact', 'observed_fact', 'belief', 'intention', 'action_result', 'current_state']),
+  kind: z.enum(['authored_fact', 'observed_fact', 'reported_claim', 'belief', 'intention', 'action_result', 'current_state']),
   evidenceIds: z.array(Ref).max(12), ruleIds: z.array(Ref).max(12), actionIds: z.array(Ref).max(12),
   statePaths: z.array(z.string().max(100)).max(8).optional(),
 }).strict()
@@ -46,11 +46,12 @@ Preserve authored identity, user agency, source uncertainty and conditional exce
 An authorized action is NOT a sent/delivered/completed action. Do not claim a call, photo, message, trip, purchase or promise has already happened without an observed outcome.
 Do not add worldDelta/sceneDelta/event completion/NPC introductions/realityIntent or unrelated commitments to realize this choice; return those mutations null/empty.
 If the choice is wait or defer, do not silently perform the deferred action in text. A direct user message may receive a brief grounded acknowledgement or clarification.
+If fulfillsGoalIds is not empty, the text must actually carry out those goals now; do not postpone them or only promise them again.
 For cancellation, express the intention within the selected scope; do not invent an outcome or claim another actor accepted it.
 No internal scores, IDs, private reasoning or model/policy metadata should appear in the user's text.
 AUTHORIZED_CHOICE_DATA: ${JSON.stringify({ decisionId: decision.id, action: decision.action, status: 'authorized', description: decision.candidate.description,
     evidenceIds: decision.candidate.evidenceIds, ruleIds: decision.candidate.ruleIds, goalIds: decision.candidate.goalIds,
-    constraints: decision.candidate.constraints ?? [] })}\n`
+    fulfillsGoalIds: decision.candidate.fulfillsGoalIds ?? [], constraints: decision.candidate.constraints ?? [] })}\n`
 }
 
 const VERIFY_SYSTEM = `You verify rendered character text against a SERVER-authorized action and sourced state.
@@ -60,14 +61,16 @@ Identify every factual, belief, intention or completed-action assertion as a cla
 Each claim cites actual rule/evidence/action IDs or whitelisted statePaths from the supplied data. Never invent refs or treat names as IDs.
 authored_fact requires a source rule and cannot contradict its exact authored text or exceptions.
 observed_fact requires an observed fact, not another person's allegation, a hypothetical, retracted evidence or an uncertain belief.
+reported_claim restates or responds to what the user said (for example "잘 도착했구나" after the user says they arrived). Cite that user message. It stays the user's report: never an observed fact or this character's completed action.
 belief must be linguistically marked as uncertainty/opinion, not turned into world canon. Intention is future/proposed, never a completed effect.
 action_result requires a completed external/domain outcome; an authorized/queued action is not completed. A failed or cancelled action cannot be called delivered.
 current_state can use only world.currentLocation, world.currentTime, world.worldStatus, relationship.stage from supplied current state.
 Reject new unsupported world movement, event resolution, NPC knowledge, canon facts, controlling user action/consent, or violation of explicit boundaries.
 Compare the actual wording to the chosen action. A polite sentence that silently performs a refused/deferred action is not aligned.
+If decision.candidate.fulfillsGoalIds is not empty, text that postpones or merely promises those goals again contradicts the decision.
 Mark unsupported spans and violations even when the renderer supplied no claim annotations. Do not fix or rewrite text.
 Return aligned:true only if all claims and the actual behavior are supported. This is a fallible semantic check, not a proof.
-Contract: {decisionId,aligned:boolean,claims:[{blockIndex,start,end,quote,kind:authored_fact|observed_fact|belief|intention|action_result|current_state,evidenceIds:string[],ruleIds:string[],actionIds:string[],statePaths?:string[]}],unsupported:[{blockIndex,start,end,quote,reason:unsupported_success|unavailable_evidence|invented_canon|contradicts_decision|controls_user|violates_boundary|uncertain_as_fact|unapproved_world_change}],violations:[same reason codes]}.`
+Contract: {decisionId,aligned:boolean,claims:[{blockIndex,start,end,quote,kind:authored_fact|observed_fact|reported_claim|belief|intention|action_result|current_state,evidenceIds:string[],ruleIds:string[],actionIds:string[],statePaths?:string[]}],unsupported:[{blockIndex,start,end,quote,reason:unsupported_success|unavailable_evidence|invented_canon|contradicts_decision|controls_user|violates_boundary|uncertain_as_fact|unapproved_world_change}],violations:[same reason codes]}.`
 
 function spanMatches(claim: { blockIndex: number; start: number; end: number; quote: string }, blocks: AgencyRealizationBlock[]): boolean {
   const block = blocks[claim.blockIndex]
@@ -97,6 +100,10 @@ function validateClaims(claims: AgencyRealizationClaim[], input: AgencyRealizati
         break
       case 'observed_fact':
         if (!claim.evidenceIds.length || claim.evidenceIds.some(id => !agencyEvidence(id, input.context, true))) issues.push({ field, reason: 'fact_not_observed' })
+        break
+      case 'reported_claim':
+        // Acknowledging the user's own words is not verifying them; it must point at those words.
+        if (!claim.evidenceIds.length || claim.evidenceIds.some(id => !agencyUserUtterance(id, input.context))) issues.push({ field, reason: 'unsupported_report' })
         break
       case 'belief':
         if (!claim.evidenceIds.length && !claim.ruleIds.length) issues.push({ field, reason: 'ungrounded_belief' })
@@ -161,12 +168,18 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   }
   issues.push(...validateClaims(assessment.claims, input))
   // Conservative backstop: do not trust an empty/incomplete claim list for obvious success wording.
-  // Semantic review remains necessary; this pattern is not an exhaustive language classifier.
+  // A question, negation or condition about completion ("잘 도착했어?", "아직 안 보냈어", "보냈으면")
+  // asserts nothing. Otherwise the words need an attested result, an observed fact, or a restated user
+  // report; each was validated above. Semantic review remains necessary; this is not a language classifier.
   const completion = /보냈|전송했|전화했|예약했|결제했|도착했|이동했|완료했|전달했|취소했|\b(?:sent|called|booked|paid|arrived|completed|delivered|cancelled|canceled)\b/gi
+  const asserted = (text: string, start: number, end: number) => text.slice(end).match(/[.!?\n]/)?.[0] !== '?'
+    && !/(?:안|못|not|n't|never)\s*$/i.test(text.slice(Math.max(0, start - 6), start))
+    && !/^(?:으면|다면|더라면|을까|을지)/.test(text.slice(end))
   for (const [blockIndex, block] of input.blocks.entries()) {
     for (const match of block.text.matchAll(completion)) {
+      if (!asserted(block.text, match.index!, match.index! + match[0].length)) continue
       const covered = assessment.claims.some(claim => claim.blockIndex === blockIndex && claim.start <= match.index!
-        && claim.end >= match.index! + match[0].length && ['action_result', 'observed_fact'].includes(claim.kind))
+        && claim.end >= match.index! + match[0].length && ['action_result', 'observed_fact', 'reported_claim'].includes(claim.kind))
       if (!covered) issues.push({ field: `blocks.${blockIndex}`, reason: 'undeclared_success_claim' })
     }
   }

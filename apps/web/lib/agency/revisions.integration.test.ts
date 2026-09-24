@@ -143,6 +143,8 @@ describeDb('authored revision save/edit/start lifecycle', () => {
     expect(ready[0]!.compiled!.rules[0]!.statement).toBe(firstForm.get('personality'))
     expect(ready[1]!.compiled!.rules[0]!.statement).toBe(changed.get('personality'))
     expect(effects.contexts.every(context => context.userId === saved.userId && context.workload === 'background' && context.usageUnits === 0)).toBe(true)
+    // ai_usage.request_id is a uuid column; anything else makes the budget reservation, and the compile, fail.
+    expect(effects.contexts.every(context => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(String(context.requestId)))).toBe(true)
 
     await expect(updateCharacter(saved.character.id, changed)).rejects.toThrow('REDIRECT:/character/')
     await flush()
@@ -185,6 +187,24 @@ describeDb('authored revision save/edit/start lifecycle', () => {
     const viewer = await newUser()
     const next = await createRoleplaySession(viewer, saved.character.id)
     expect(await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, next.sessionId))).toHaveLength(0)
+  })
+
+  it('with an explicit session cohort, ordinary saves and edits capture and compile nothing until a session is listed', async () => {
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', randomUUID())
+    const saved = await save()
+    await expect(updateCharacter(saved.character.id, form('편집해도 캡처하지 않는다.'))).rejects.toThrow('REDIRECT:/character/')
+    expect(await revisions(saved.character.id)).toEqual([])
+    expect(effects.tasks).toEqual([])
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', saved.session.id)
+    const snapshot = (await loadSession(saved.session.id, saved.userId))!.snapshot
+    expect(await loadAgencyRuntime(saved.session.id, saved.userId, snapshot, resolveRpLLM('Recorded fixture', { userId: saved.userId }))).toBeNull()
+    const [captured] = await revisions(saved.character.id)
+    expect(captured!.status).toBe('pending')
+    expect((await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, saved.session.id)))[0]!.revisionId).toBe(captured!.id)
+    expect(effects.tasks).toHaveLength(1)
+    await flush()
+    expect((await revisions(saved.character.id))[0]!.status).toBe('ready')
+    expect(effects.contexts.at(-1)).toMatchObject({ userId: saved.userId, workload: 'background', usageUnits: 0 })
   })
 
   it('does not capture or enqueue on ordinary saves when disabled, or on unauthorized edits', async () => {

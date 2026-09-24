@@ -12,6 +12,12 @@ import type { Memory, CharacterState, RelationshipState } from '@miro/domain'
 import type { ValidatedTransition, AgencyPlan } from '@miro/engine'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
 
+/** One INSERT shares one now(). Step rows by a microsecond so every reader ordering by created_at
+ * (snapshot, reality context, chat page, archive preview) keeps the order they were written in. */
+export function inWrittenOrder<T extends object>(rows: T[]) {
+  return rows.map((row, index) => ({ ...row, createdAt: sql.raw(`now() + interval '${index} microseconds'`) }))
+}
+
 export class StaleStateError extends Error {
   constructor() {
     super('simulation state changed underneath this turn')
@@ -110,7 +116,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
 
     /* ---- messages ---- */
     const ORDER: Record<string, number> = { user: 0, narrator: 1, character: 2 }
-    const inserted = (await tx.insert(messages).values([
+    const rows: Array<typeof messages.$inferInsert> = [
       {
         ...(input.userMessageId ? { id: input.userMessageId } : {}),
         sessionId: input.sessionId, role: 'user', kind: 'text',
@@ -126,7 +132,8 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         content: input.responseText,
         blocks: input.blocks as never, turnIndex: input.turnIndex,
       },
-    ]).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))
+    ]
+    const inserted = (await tx.insert(messages).values(inWrittenOrder(rows)).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))
       .sort((a, b) => (ORDER[a.role] ?? 9) - (ORDER[b.role] ?? 9))
     if (input.agency) {
       const { plan, version } = input.agency

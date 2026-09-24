@@ -13,6 +13,7 @@ import { loadSession, type LoadedSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError, type CommitInput } from '@/lib/simulation/commit'
 import { authoredDocument } from './authored'
 import { loadAgencyEvidence, loadAgencyRuntime, type LoadedAgency } from './runtime'
+import { prepareAgencyTurn } from './turn-context'
 
 // Observe real database entry points; no query result or transaction is mocked.
 const databaseAccess = vi.hoisted(() => ({ methods: [] as string[] }))
@@ -23,6 +24,10 @@ vi.mock('@miro/db', async (original) => {
     return Reflect.get(target, key)
   } }) }
 })
+
+// Scheduled compiles are observed, not run: this suite records provider calls explicitly.
+const deferred = vi.hoisted(() => ({ tasks: [] as Array<() => Promise<unknown>> }))
+vi.mock('@/lib/defer', () => ({ afterResponse: async (task: () => Promise<unknown>) => { deferred.tasks.push(task) } }))
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 const createdUsers: string[] = []
@@ -81,15 +86,16 @@ async function runtime(f: Fixture) {
   return result!
 }
 
-type PlanOptions = { goalIds?: string[]; newGoals?: number; cancelGoal?: string; activateGoal?: string }
+/** goalIds are cited and, unless fulfill is false, carried out by this reply. */
+type PlanOptions = { goalIds?: string[]; fulfill?: boolean; newGoals?: number; cancelGoal?: string; activateGoal?: string }
 async function planned(f: Fixture, loaded: LoadedAgency, options: PlanOptions = {}, fullTurn = false) {
   const input = { id: randomUUID(), text: options.cancelGoal ? '오늘 약속은 취소할게.' : '약속한 이야기를 들려줘.' }
   const now = new Date(Math.max(Date.now(), Date.parse(loaded.state.updatedAt) + 1))
   const evidence = await loadAgencyEvidence(f.sessionId, f.loaded.snapshot, loaded, input, now)
   const ids = [input.id]
   const llm: LLMProvider = { info: { name: 'recorded-db-contract', mode: 'mock', notice: 'Recorded contract, not model quality' }, async generateStructured(request) {
-    if (request.promptVersion === 'agency-dialogue:v1') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: reply }] } })
-    if (request.promptVersion === 'agency-realization-check:v1') return request.schema.parse({
+    if (request.promptVersion === 'agency-dialogue:v2') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: reply }] } })
+    if (request.promptVersion === 'agency-realization-check:v2') return request.schema.parse({
       decisionId: JSON.parse(request.prompt).decision.id, aligned: true, claims: [], unsupported: [], violations: [],
     })
     return request.schema.parse({
@@ -101,6 +107,7 @@ async function planned(f: Fixture, loaded: LoadedAgency, options: PlanOptions = 
       candidates: [{ id: 'answer', action: options.cancelGoal ? 'cancel_commitment' : 'respond',
         description: options.cancelGoal ? '사용자의 약속 취소를 받아들인다.' : '약속한 이야기를 답장한다.', targetActor: f.loaded.characterId,
         evidenceIds: ids, ruleIds: ['respect'], goalIds: options.cancelGoal ? [options.cancelGoal] : options.goalIds ?? [],
+        fulfillsGoalIds: options.cancelGoal || options.fulfill === false ? [] : options.goalIds ?? [],
         ruleFit: [{ ruleId: 'respect', fit: 1 }], goalFit: [], preconditions: [], uncertainty: 0, cost: 0,
       }],
       newGoals: Array.from({ length: options.newGoals ?? 0 }, (_, index) => ({
@@ -304,22 +311,57 @@ describeDb('agency runtime and atomic persistence (local test database)', () => 
     const committed = await commitTurn(commitInput(f, loaded, p))
     const saved = await persisted(f.sessionId)
     const responseId = committed.messages.find(m => m.role === 'character')!.id
+    const receiptId = `${responseId}:sent`
     expect(saved.runtime!.state.goals).toHaveLength(4)
-    expect(saved.runtime!.state.goals[0]).toMatchObject({ status: 'completed', outcomeEvidenceId: responseId })
+    expect(saved.runtime!.state.goals[0]).toMatchObject({ status: 'completed', outcomeEvidenceId: receiptId })
     expect(saved.runtime!.state.goals.slice(1).every(g => g.status === 'proposed')).toBe(true)
-    expect(saved.runtime!.state.actions[0]).toMatchObject({ status: 'sent', outcomeEvidenceId: responseId })
+    expect(saved.runtime!.state.actions[0]).toMatchObject({ status: 'sent', outcomeEvidenceId: receiptId, fulfillsGoalIds: [loaded.state.goals[0]!.id] })
+    // Re-enter the session: the reply is now in the recent window, next to its receipt.
+    f.loaded = (await loadSession(f.sessionId, f.userId))!
     const evidence = await loadAgencyEvidence(f.sessionId, f.loaded.snapshot, await runtime(f))
-    expect(evidence.find(e => e.id === responseId)).toMatchObject({ kind: 'outcome', epistemic: 'observed', outcomeStatus: 'sent' })
-    expect(evidence.find(e => e.id === responseId)?.quote).toContain('does not prove receipt or reading')
+    // The character keeps what it actually said; the receipt sits beside it under its own ID.
+    expect(evidence.find(e => e.id === responseId)).toMatchObject({ kind: 'message', quote: reply })
+    expect(evidence.find(e => e.id === receiptId)).toMatchObject({ kind: 'outcome', epistemic: 'observed', outcomeStatus: 'sent' })
+    expect(evidence.find(e => e.id === receiptId)?.quote).toContain('does not prove receipt or reading')
+  })
+
+  it('keeps a promise open when the reply only mentions it', async () => {
+    const f = await fixture()
+    const loaded = await seedGoal(f, await runtime(f))
+    await commitTurn(commitInput(f, loaded, await planned(f, loaded, { goalIds: [loaded.state.goals[0]!.id], fulfill: false })))
+    const saved = await persisted(f.sessionId)
+    expect(saved.runtime!.state.goals[0]!.status).toBe('active')
+    expect(saved.runtime!.state.actions).toEqual([])
+    expect(saved.decisions[0]!.decision.candidate.goalIds).toEqual([loaded.state.goals[0]!.id])
+  })
+
+  it('keeps a live cohort session on the existing conversation until its pinned revision compiles', async () => {
+    const f = await fixture()
+    await db.update(characterRevisions).set({ status: 'pending', compiled: null, providerMode: null }).where(eq(characterRevisions.characterId, f.loaded.characterId))
+    deferred.tasks = []
+    const input = { id: randomUUID(), text: '안녕하세요.' }
+    const pending = await prepareAgencyTurn(f.sessionId, f.userId, f.loaded.snapshot, unusedProvider, input)
+    expect(pending).toEqual({ runtime: null, snapshot: f.loaded.snapshot, agency: undefined })
+    expect(deferred.tasks).toHaveLength(1) // the compile is scheduled in the background
+    const [pinned] = await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, f.sessionId))
+    const [revision] = await db.select().from(characterRevisions).where(eq(characterRevisions.id, pinned!.revisionId))
+    expect(revision!.status).toBe('pending')
+    // A revision that exhausted its attempts keeps the session on the old path instead of failing every turn.
+    await db.update(characterRevisions).set({ status: 'failed', attempts: 3, leaseUntil: new Date(0) }).where(eq(characterRevisions.id, revision!.id))
+    deferred.tasks = []
+    expect((await prepareAgencyTurn(f.sessionId, f.userId, f.loaded.snapshot, unusedProvider, input)).agency).toBeUndefined()
+    expect(deferred.tasks).toEqual([])
   })
 
   it('never upgrades a persisted reply to delivered or answered, or completes a delivery-dependent goal', async () => {
     const f = await fixture()
     const loaded = await seedGoal(f, await runtime(f), 'delivered')
-    await commitTurn(commitInput(f, loaded, await planned(f, loaded, { goalIds: [loaded.state.goals[0]!.id] })))
+    // The app attests only queued/sent receipts, so the planner never lets a reply claim to fulfil a
+    // delivery-dependent goal (see the planner test); citing it leaves the goal open and adds no receipt.
+    await commitTurn(commitInput(f, loaded, await planned(f, loaded, { goalIds: [loaded.state.goals[0]!.id], fulfill: false })))
     const saved = await persisted(f.sessionId)
     expect(saved.runtime!.state.goals[0]!.status).toBe('active')
-    expect(saved.runtime!.state.actions[0]!.status).toBe('sent')
+    expect(saved.runtime!.state.actions).toEqual([])
   })
 
   it('persists user cancellation and does not create a fictional delivery receipt', async () => {

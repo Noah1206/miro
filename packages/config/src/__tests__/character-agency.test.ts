@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { characterAgencyMode } from '../character-agency'
+import { characterAgencyCohort, characterAgencyMode } from '../character-agency'
 afterEach(() => vi.unstubAllEnvs())
 describe('character agency rollout gate', () => {
   it('is off by default and for unknown modes', () => {
@@ -15,6 +15,13 @@ describe('character agency rollout gate', () => {
     expect(characterAgencyMode('s3')).toBe('off')
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
     expect(characterAgencyMode('s1')).toBe('off')
+  })
+  it('reads one cohort list for every caller and ignores the wildcard in production', () => {
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', ' s1, *,s2 ,')
+    vi.stubEnv('VERCEL_ENV', 'preview')
+    expect(characterAgencyCohort()).toEqual({ all: true, ids: ['s1', 's2'] })
+    vi.stubEnv('VERCEL_ENV', 'production')
+    expect(characterAgencyCohort()).toEqual({ all: false, ids: ['s1', 's2'] })
   })
   it('permits wildcard only outside production', () => {
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'shadow')

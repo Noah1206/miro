@@ -28,7 +28,7 @@ describe('authorized decision realization', () => {
     const checked = await verifyAgencyRealization(recordedProvider([assessment(input)], calls), input)
     expect(checked.ok).toBe(true)
     expect(checked.providerMode).toBe('mock')
-    expect(calls[0]?.promptVersion).toBe('agency-realization-check:v1')
+    expect(calls[0]?.promptVersion).toBe('agency-realization-check:v2')
   })
 
   it('rejects undeclared obvious success text even when a checker returns an empty aligned claim list', async () => {
@@ -36,6 +36,31 @@ describe('authorized decision realization', () => {
     const checked = await verifyAgencyRealization(recordedProvider([assessment(input)]), input)
     expect(checked.ok).toBe(false)
     expect(checked.issues.some(issue => issue.reason === 'undeclared_success_claim')).toBe(true)
+  })
+
+  it("lets the character acknowledge the user's own report without calling it observed or completed", async () => {
+    const input = await realization('잘 도착했구나. 오늘 고생 많았어.')
+    expect((await verifyAgencyRealization(recordedProvider([assessment(input)]), input)).issues.map(issue => issue.reason)).toContain('undeclared_success_claim')
+    const span = { blockIndex: 0, start: 0, end: 7, quote: '잘 도착했구나' }
+    const acknowledged = await verifyAgencyRealization(recordedProvider([{ ...assessment(input),
+      claims: [{ ...span, kind: 'reported_claim', evidenceIds: ['message-1'], ruleIds: [], actionIds: [] }] }]), input)
+    expect(acknowledged.issues).toEqual([])
+    expect(acknowledged.ok).toBe(true)
+    const invented = await verifyAgencyRealization(recordedProvider([{ ...assessment(input),
+      claims: [{ ...span, kind: 'reported_claim', evidenceIds: ['invented'], ruleIds: [], actionIds: [] }] }]), input)
+    expect(invented.issues.map(issue => issue.reason)).toContain('unsupported_report')
+  })
+
+  it('does not let a mislabelled claim hide a completion, while questions, negations and wishes assert nothing', async () => {
+    const claimed = await realization('사진을 보냈어.')
+    const intention = { blockIndex: 0, start: 0, end: claimed.blocks[0]!.text.length, quote: claimed.blocks[0]!.text,
+      kind: 'intention', evidenceIds: [], ruleIds: [], actionIds: [] }
+    expect((await verifyAgencyRealization(recordedProvider([{ ...assessment(claimed), claims: [intention] }]), claimed)).issues.map(issue => issue.reason))
+      .toContain('undeclared_success_claim')
+    for (const text of ['집에 잘 도착했어?', '아직 안 보냈어.', '사진을 보냈으면 좋겠다.']) {
+      const input = await realization(text)
+      expect((await verifyAgencyRealization(recordedProvider([assessment(input)]), input)).ok).toBe(true)
+    }
   })
 
   it('refuses to treat authorization as a completed action', async () => {

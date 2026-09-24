@@ -1,4 +1,5 @@
 import { characterAgencyMode } from '@miro/config'
+import { observe } from '@/lib/observe'
 import type { SimulationSnapshot, runTurn } from '@miro/engine'
 import type { LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from './runtime'
@@ -7,13 +8,18 @@ import { loadAgencyEvidence, loadAgencyRuntime } from './runtime'
 export async function prepareAgencyTurn(sessionId: string, userId: string, source: SimulationSnapshot,
   llm: LLMProvider, input: { id: string; text: string }, now = new Date()) {
   const runtime = await loadAgencyRuntime(sessionId, userId, source, llm, now)
-  if (runtime?.mode !== 'live' && characterAgencyMode(sessionId) === 'live') throw new Error('agency_not_ready')
+  // Until the pinned revision compiles, keep the verified conversation path and hold back only the
+  // new autonomy (plan §3.1). loadAgencyRuntime has already scheduled the compile.
+  if (runtime?.mode !== 'live' && characterAgencyMode(sessionId) === 'live') {
+    observe('agency.not_ready_fallback', { sessionId })
+    return { runtime: null, snapshot: source, agency: undefined }
+  }
   const snapshot = runtime?.mode === 'live' ? { ...source, ...runtime.revision.profile } : source
   const agency: Parameters<typeof runTurn>[0]['agency'] = runtime ? {
     mode: runtime.mode, compiled: runtime.revision.compiled, state: runtime.state,
     context: { sessionId, revisionId: runtime.revision.id, actor: snapshot.character.id,
       authored: runtime.revision.authored, world: snapshot.world, relationship: snapshot.relationship,
-      evidence: await loadAgencyEvidence(sessionId, snapshot, runtime, input, now),
+      evidence: (await loadAgencyEvidence(sessionId, snapshot, runtime, input, now)).slice(-126),
       clock: { now: now.toISOString(), mode: 'real_time', trigger: 'user', allowOfflineAdvance: false },
       permissions: { contact: false, capabilities: ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'cancel_commitment', 'wait'] },
       location: snapshot.world.currentLocation,

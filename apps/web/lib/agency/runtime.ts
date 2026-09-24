@@ -5,9 +5,9 @@ import { characterAgencyMode, productionRuntime } from '@miro/config'
 import { createAgencyState, type AgencyEvidence, type AgencyState } from '@miro/domain'
 import { compileAuthoredCharacter, type SimulationSnapshot } from '@miro/engine'
 import type { LLMProvider } from '@miro/providers'
-import { afterResponse } from '@/lib/defer'
 import { observe } from '@/lib/observe'
-import { captureAgencyRevision, pinAgencyRevision } from './revisions'
+import { agencyReceiptId } from './receipts'
+import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from './revisions'
 
 export type LoadedAgency = {
   mode: 'live' | 'shadow'
@@ -60,7 +60,7 @@ export async function loadAgencyRuntime(sessionId: string, userId: string, snaps
     ;[revision] = await db.select().from(characterRevisions).where(and(eq(characterRevisions.id, runtime.revisionId), eq(characterRevisions.characterId, snapshot.character.id))).limit(1)
   } else {
     revision = await db.transaction(async tx => {
-      const captured = await captureAgencyRevision(tx, snapshot.character.id)
+      const captured = await captureAgencyRevision(tx, snapshot.character.id, { sessionId })
       await pinAgencyRevision(tx, sessionId, captured, now)
       return captured ?? undefined
     })
@@ -74,9 +74,9 @@ export async function loadAgencyRuntime(sessionId: string, userId: string, snaps
   }
   if (!revision) return null
   if (revision.status !== 'ready' || !revision.compiled) {
+    // A separate background request: never the chat turn's request ID, reservation or interactive slot.
     if (revision.status === 'pending' || revision.status === 'compiling' || (revision.status === 'failed' && revision.attempts < 3)) {
-      const revisionId = revision.id
-      await afterResponse(() => compileAgencyRevision(revisionId, llm))
+      await scheduleAgencyCompilation(revision.id, userId)
     }
     return null
   }
@@ -99,8 +99,14 @@ export async function loadAgencyRuntime(sessionId: string, userId: string, snaps
 
 /** Goals retain actual message IDs even after those messages leave the recent window. */
 export async function loadAgencyEvidence(sessionId: string, snapshot: SimulationSnapshot, runtime: LoadedAgency, input?: { id: string; text: string }, now = new Date()): Promise<AgencyEvidence[]> {
+  const messageIdOf = (id: string) => id.replace(/:(?:queued|sent)$/, '')
+  // Re-read old receipts only while their work is open. Following every retained receipt pulled up to
+  // 48 old messages, each with its receipt, into every prompt and overran the context budget.
+  const closed = new Set(['completed', 'abandoned', 'cancelled', 'expired'])
+  const open = (goalId: string) => runtime.state.goals.some(g => g.id === goalId && !closed.has(g.status))
+  const unfinished = runtime.state.actions.filter(a => a.status !== 'sent' || (a.fulfillsGoalIds ?? []).some(open))
   const refs = [...new Set([...runtime.state.goals.flatMap(g => g.evidenceIds), ...runtime.state.beliefs.flatMap(b => b.evidenceIds),
-    ...runtime.state.actions.flatMap(a => a.outcomeEvidenceId ? [a.outcomeEvidenceId] : [])])]
+    ...unfinished.flatMap(a => a.outcomeEvidenceId ? [a.outcomeEvidenceId] : [])].map(messageIdOf))]
     .filter(id => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 64)
   const stored = refs.length ? await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.id, refs), isNull(messages.hiddenAt))) : []
   const evidence: AgencyEvidence[] = []
@@ -114,8 +120,10 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
     const at = 'createdAt' in message ? message.createdAt.toISOString() : message.at ?? now.toISOString()
     evidence.push({ sessionId, id: message.id, quote: text.slice(0, 2000), actor: message.role === 'user' ? 'user' : actor,
       occurredAt: at, kind: 'message', epistemic: 'reported', knownTo: [actor] })
-    const outcome = message.role === 'character' ? runtime.state.actions.find(a => a.outcomeEvidenceId === message.id) : undefined
-    if (outcome && ['sent', 'completed'].includes(outcome.status)) evidence.push({ sessionId, id: message.id,
+    // The receipt sits beside the message under its own ID; the character keeps its actual words.
+    const receipt = agencyReceiptId(message.id, 'sent')
+    const outcome = message.role === 'character' ? runtime.state.actions.find(a => a.outcomeEvidenceId === receipt) : undefined
+    if (outcome && ['sent', 'completed'].includes(outcome.status)) evidence.push({ sessionId, id: receipt,
       quote: 'The application persisted this character message. This does not prove receipt or reading.', actor,
       occurredAt: at, kind: 'outcome', epistemic: 'observed', knownTo: [actor], actionId: outcome.id,
       goalIds: outcome.goalIds, outcomeStatus: outcome.status })

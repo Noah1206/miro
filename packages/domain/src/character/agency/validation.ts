@@ -68,6 +68,14 @@ export function validateAgencyCandidate(a: AgencyCandidate, c: AgencyDecisionCon
   for (const id of a.ruleIds) if (!rules.has(id)) out.push(issue('ruleIds', `unknown_rule:${id}`))
   for (const id of a.goalIds) if (!goals.has(id) || goals.get(id)!.status !== 'active') out.push(issue('goalIds', `inactive_goal:${id}`))
   if (a.action === 'cancel_commitment' && a.goalIds.length === 0) out.push(issue('goalIds', 'cancellation_requires_goal'))
+  const fulfills = a.fulfillsGoalIds ?? []
+  if (fulfills.length > AGENCY_LIMITS.changes || !unique(fulfills) || fulfills.some(id => !a.goalIds.includes(id))) out.push(issue('fulfillsGoalIds', 'invalid_fulfillment_refs'))
+  // Waiting, deferring or cancelling mentions a promise; it never carries it out.
+  if (fulfills.length && ['wait', 'defer', 'cancel_commitment'].includes(a.action)) out.push(issue('fulfillsGoalIds', 'action_cannot_fulfill'))
+  for (const id of fulfills) {
+    const goal = goals.get(id)
+    if (goal?.dueAt && goal.clock === 'real_time' && Date.parse(goal.dueAt) > Date.parse(c.clock.now)) out.push(issue('fulfillsGoalIds', `goal_not_due:${id}`))
+  }
   if (!finiteRange(a.uncertainty, 0, 1) || !finiteRange(a.cost, 0, 1)) out.push(issue('score', 'invalid_score'))
   if (a.ruleFit.length > 12 || !unique(a.ruleFit.map(f => f.ruleId)) || a.goalFit.length > 12 || !unique(a.goalFit.map(f => f.goalId))) out.push(issue('fit', 'unbounded_or_duplicate_fit'))
   for (const fit of a.ruleFit) {

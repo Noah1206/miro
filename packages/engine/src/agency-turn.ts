@@ -39,10 +39,10 @@ export async function runAgencyTurn(opts: {
     beliefs: plan.state.beliefs.filter(b => b.status === 'active' && b.evidenceIds.every(id => evidence.has(id))),
     goals: plan.state.goals.filter(g => g.status === 'active'), affect: plan.state.affect, expression: plan.state.expression })}`
   const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
-    promptVersion: 'agency-dialogue:v1', system: context.system,
+    promptVersion: 'agency-dialogue:v2', system: context.system,
     prompt: `${context.prompt}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
   // A later primary moderation/check call must not erase a fallback renderer's provenance.
-  const renderer = agencyProviderTrace(llm, 'agency-dialogue:v1')
+  const renderer = agencyProviderTrace(llm, 'agency-dialogue:v2')
   if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
   await requireSafeContent(llm, { phase: 'output', proposal })
   // The candidate contract currently grants speech, not arbitrary world/NPC edits.

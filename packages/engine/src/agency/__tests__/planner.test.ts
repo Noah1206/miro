@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { AIBudgetDeniedError } from '@miro/providers'
 import { AgencyPlanningError, planAgencyDecision } from '../planner'
-import { evidence, planProposal, recordedProvider, setupCompiled } from './fixtures'
+import type { AgencyGoal } from '@miro/domain'
+import { NOW, evidence, planProposal, recordedProvider, setupCompiled } from './fixtures'
 
 describe('bounded agency planning', () => {
   it('selects through domain policy and proposes a new state without mutating the input', async () => {
@@ -14,6 +15,28 @@ describe('bounded agency planning', () => {
     expect(result.state.expression.openness).toBe(30)
     expect(JSON.stringify(state)).toBe(before)
     expect(result.providerMode).toBe('mock')
+  })
+
+  it('keeps a candidate but drops fulfillment it cannot attest yet, and lets a due contact carry out its promise', async () => {
+    const { compiled, state, context } = await setupCompiled()
+    const goal = (id: string, over: Partial<AgencyGoal> = {}): AgencyGoal => ({ id, description: `약속 ${id}`, evidenceIds: ['message-1'],
+      ruleIds: ['value-promise'], priority: .8, status: 'active', success: 'sent', createdAt: NOW, updatedAt: NOW, ...over })
+    state.goals = [
+      goal('due', { clock: 'real_time', dueAt: '2026-09-24T05:00:00.000Z' }),
+      goal('later', { clock: 'real_time', dueAt: '2026-09-24T09:00:00.000Z' }),
+      goal('delivered', { success: 'delivered' }),
+    ]
+    const answer = planProposal()
+    answer.candidates[0] = { ...answer.candidates[0]!, action: 'respond', goalIds: ['due', 'later', 'delivered'], fulfillsGoalIds: ['due', 'later', 'delivered'] }
+    const answered = await planAgencyDecision(recordedProvider([answer]), compiled, state, context)
+    expect(answered.decision.action).toBe('respond')
+    expect(answered.decision.candidate.fulfillsGoalIds).toEqual(['due'])
+    expect(answered.issues.map(issue => issue.reason)).toEqual(expect.arrayContaining(['unfulfillable_goal_dropped:later', 'unfulfillable_goal_dropped:delivered']))
+    const contact = planProposal()
+    contact.candidates[0] = { ...contact.candidates[0]!, action: 'contact', goalIds: ['due'], preconditions: [{ kind: 'capability', capability: 'message' }] }
+    const sent = await planAgencyDecision(recordedProvider([contact]), compiled, state, context)
+    expect(sent.decision.action).toBe('contact')
+    expect(sent.decision.candidate.fulfillsGoalIds).toEqual(['due'])
   })
 
   it('filters another session or private NPC evidence before it reaches the provider', async () => {

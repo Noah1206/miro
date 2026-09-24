@@ -11,6 +11,7 @@ import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
+import { inWrittenOrder } from '@/lib/simulation/commit'
 
 /**
  * 저장. 읽는 법은 parse.ts — 편집과 같다.
@@ -50,7 +51,7 @@ export async function saveCharacter(form: FormData): Promise<void> {
     await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
-    if (openingMessages.length) await tx.insert(messages).values(openingMessages)
+    if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
     await pinAgencyRevision(tx, session!.id, revision)
     return { characterId, sessionId: session!.id, revisionId: revision?.id }
   })

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import {
   db, users, userSettings, characters, contactProfiles, roleplaySessions, worldStates, relationships, events,
   messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions,
@@ -15,6 +15,7 @@ import * as receipts from '@/lib/agency/receipts'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { evaluateSession } from '../evaluate'
 import { evaluateAgencyReality } from '../agency'
+import { agencyDueCondition } from '../scheduler'
 import * as push from '../push-outbox'
 import { cloneAsReality, dropRealityClones } from './fixtures'
 
@@ -30,7 +31,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
     async generateStructured(request) {
       const version = request.promptVersion ?? ''
       calls.push({ version, prompt: request.prompt, system: request.system })
-      if (version === 'agency-planner:v1') {
+      if (version === 'agency-planner:v2') {
         const context = JSON.parse(request.prompt)
         const evidenceId = context.evidence.find((item: { actor: string }) => item.actor === 'user')?.id
         const refs = evidenceId ? [evidenceId] : []
@@ -44,6 +45,8 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
           candidates: [{ id: 'choice', action, targetActor: context.actor,
             description: action === 'wait' ? '지금은 연락하지 않고 기다린다.' : '대화할 수 있는지 짧게 묻는다.',
             evidenceIds: refs, ruleIds: ['personality'], goalIds: opts.goalIds ?? [],
+            // Sending the contact carries out the cited goals; waiting never does.
+            fulfillsGoalIds: action === 'contact' ? opts.goalIds ?? [] : [],
             ruleFit: [{ ruleId: 'personality', fit: 1 }], goalFit: [], uncertainty: 0, cost: 0,
             preconditions: action === 'contact' ? [{ kind: 'capability', capability: 'message' }] : [],
           }], newGoals: [], goalChanges: [],
@@ -53,7 +56,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
         await opts.duringRender?.()
         return request.schema.parse({ text: '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
       }
-      if (version === 'agency-realization-check:v1') {
+      if (version === 'agency-realization-check:v2') {
         const context = JSON.parse(request.prompt)
         return request.schema.parse({ decisionId: context.decision.id, aligned: !opts.reject, claims: [], unsupported: [],
           violations: opts.reject ? ['contradicts_decision'] : [],
@@ -168,13 +171,15 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect((await stored(id)).runtime.nextWakeAt!.getTime()).toBeGreaterThanOrEqual(later.getTime() + POLICY.reality.recheckMinutes * 60_000)
   })
 
-  it('a live cohort never falls back to legacy when a pre-existing runtime is still shadow', async () => {
+  it('a live cohort never falls back to legacy when a pre-existing runtime is still shadow, and drops the legacy intent', async () => {
     const { id } = await fixture()
     await db.update(characterRuntimeStates).set({ mode: 'shadow' }).where(eq(characterRuntimeStates.sessionId, id))
     const { calls } = provider()
     expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'skipped', reason: 'agency_unavailable' })
     expect((await stored(id)).contacts).toHaveLength(0)
     expect(calls).toHaveLength(0)
+    const [session] = await db.select({ pending: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, id))
+    expect(session!.pending).toBeNull()
   })
 
   it('persists actual message, contact, sent receipt and decision together; legacy motivation cannot veto it', async () => {
@@ -186,13 +191,15 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(state.messages).toHaveLength(1)
     expect(state.decisions).toHaveLength(1)
     expect(state.contacts[0]!.messageId).toBe(state.messages[0]!.id)
-    expect(state.runtime.state.actions).toEqual([expect.objectContaining({ type: 'contact', status: 'sent', outcomeEvidenceId: state.messages[0]!.id })])
+    expect(state.runtime.state.actions).toEqual([expect.objectContaining({ type: 'contact', status: 'sent', outcomeEvidenceId: `${state.messages[0]!.id}:sent` })])
     expect(state.runtime.version).toBe(1)
     expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'skipped', reason: 'duplicate' })
     const loaded = await loadSession(id, userId)
     const runtime = await loadAgencyRuntime(id, userId, loaded!.snapshot, llm)
     const evidence = await loadAgencyEvidence(id, loaded!.snapshot, runtime!, undefined, NOW)
-    expect(evidence).toContainEqual(expect.objectContaining({ id: state.messages[0]!.id, kind: 'outcome', epistemic: 'observed', outcomeStatus: 'sent' }))
+    expect(evidence).toContainEqual(expect.objectContaining({ id: `${state.messages[0]!.id}:sent`, kind: 'outcome', epistemic: 'observed', outcomeStatus: 'sent' }))
+    // The earlier proactive message stays visible as what the character actually said.
+    expect(evidence).toContainEqual(expect.objectContaining({ id: state.messages[0]!.id, kind: 'message', quote: state.messages[0]!.content }))
   })
 
   it('renders only pinned authored fields and participant evidence, excluding legacy secret memory/narration', async () => {
@@ -316,6 +323,22 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const next = (await stored(id)).runtime.state
     expect(next.goals.map(goal => goal.status)).toEqual(['completed', 'active', 'active'])
     expect(next.actions[0]!.status).toBe('sent')
+  })
+
+  it('the scheduler wakes a due goal only for sessions still listed in a live cohort', async () => {
+    const { id } = await fixture()
+    await db.update(characterRuntimeStates).set({ nextWakeAt: BEFORE }).where(eq(characterRuntimeStates.sessionId, id))
+    const due = async () => (await db.execute(sql`SELECT s2.id FROM roleplay_sessions s2 WHERE s2.id = ${id} AND ${agencyDueCondition(NOW)}`)).length
+    expect(await due()).toBe(1)
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', id)
+    expect(await due()).toBe(1)
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', randomUUID())
+    expect(await due()).toBe(0)
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', '')
+    expect(await due()).toBe(0)
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', id)
+    expect(await due()).toBe(0)
   })
 
   it('shadow and off paths cannot persist agency decisions, runtime changes or contact output', async () => {

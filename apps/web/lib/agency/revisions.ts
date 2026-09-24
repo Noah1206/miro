@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { and, desc, eq, isNull } from 'drizzle-orm'
-import { characterAgencyMode } from '@miro/config'
+import { characterAgencyCohort, characterAgencyMode } from '@miro/config'
 import { createAgencyState } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
 import { db, characters, worlds, characterVisualIdentities, characterRevisions, characterRuntimeStates, roleplaySessions } from '@miro/db'
@@ -14,11 +14,20 @@ type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
 export type CharacterRevision = typeof characterRevisions.$inferSelect
 const NUMERIC_TRAITS = new Set(['personality.jealousy', 'personality.initiative', 'personality.emotionalExpression'])
 
+/**
+ * Capture only for the experiment: a cohort session, or any save while the non-production '*' cohort
+ * is on. A production cohort lists existing session IDs, so ordinary saves never capture or compile.
+ */
+function captureAllowed(sessionId?: string): boolean {
+  if (sessionId) return characterAgencyMode(sessionId) !== 'off'
+  return characterAgencyMode() !== 'off' && characterAgencyCohort().all
+}
+
 /** Called inside the authenticated character save/start transaction. Never rewrites an existing revision. */
 export async function captureAgencyRevision(
-  tx: Transaction, characterId: string, options: { explicitFields?: string[] } = {},
+  tx: Transaction, characterId: string, options: { explicitFields?: string[]; sessionId?: string } = {},
 ): Promise<CharacterRevision | null> {
-  if (characterAgencyMode() === 'off') return null
+  if (!captureAllowed(options.sessionId)) return null
   // All capture/edit callers take the character row lock before related profile writes/reads.
   // A new session consequently receives one complete saved profile, not half of a concurrent edit.
   const [character] = await tx.select().from(characters)
@@ -66,8 +75,9 @@ export async function scheduleAgencyCompilation(revisionId: string | null | unde
     try {
       // Dynamic import keeps capture independent from runtime loading and its lazy capture path.
       const { compileAgencyRevision } = await import('./runtime')
+      // ai_usage.request_id is a uuid column: a composite key here made every compile fail.
       const llm = resolveRpLLM('캐릭터 설정', {
-        userId, requestId: `agency-compile:${revisionId}:${randomUUID()}`, workload: 'background', usageUnits: 0,
+        userId, requestId: randomUUID(), workload: 'background', usageUnits: 0,
         shadow: characterAgencyMode() === 'shadow',
       })
       await compileAgencyRevision(revisionId, llm)

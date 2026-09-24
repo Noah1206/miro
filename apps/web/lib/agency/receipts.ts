@@ -1,19 +1,23 @@
 import { reduceAgencyState, type AgencyEvidence, type AgencyGoalChange } from '@miro/domain'
 import type { AgencyPlan } from '@miro/engine'
 
+/** Receipt evidence gets its own ID so the message itself stays loadable as what was actually said. */
+export const agencyReceiptId = (messageId: string, status: 'queued' | 'sent') => `${messageId}:${status}`
+
 /** Called inside the transaction that actually inserts this message, never from model output. */
 export function applyMessageReceipt(plan: AgencyPlan, messageId: string) {
   const action = plan.state.actions.find(a => a.id === plan.decision.id)
   if (!action) return plan.state
   const evidence: AgencyEvidence[] = (['queued', 'sent'] as const).map(status => ({
-    id: status === 'sent' ? messageId : `${messageId}:queued`, sessionId: plan.context.sessionId, actor: plan.context.actor,
+    id: agencyReceiptId(messageId, status), sessionId: plan.context.sessionId, actor: plan.context.actor,
     quote: 'The application persisted this character message; this does not prove receipt or reading.',
     occurredAt: plan.context.clock.now, kind: 'outcome', epistemic: 'observed', knownTo: [plan.context.actor],
     actionId: action.id, goalIds: action.goalIds, outcomeStatus: status,
   }))
-  const completions: AgencyGoalChange[] = plan.state.goals.filter(g => action.goalIds.includes(g.id)
+  // Only goals this action carries out complete; a reply that merely mentions a promise leaves it open.
+  const completions: AgencyGoalChange[] = plan.state.goals.filter(g => action.fulfillsGoalIds?.includes(g.id)
     && g.status === 'active' && ['action_accepted', 'sent'].includes(g.success)).map(g => ({
-      kind: 'complete', goalId: g.id, actionId: action.id, evidenceId: messageId,
+      kind: 'complete', goalId: g.id, actionId: action.id, evidenceId: agencyReceiptId(messageId, 'sent'),
     }))
   // Do not drop planner cancellation/suspension when receipts also complete goals.
   // Separate bounded transitions share one DB transaction, including their sequence increments.

@@ -75,8 +75,13 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     const loaded = await loadSession(sessionId, userId)
     if (!loaded) return requestedMode === 'shadow' ? null : { outcome: 'skipped', reason: 'session_not_found' }
     const runtime = await loadAgencyRuntime(sessionId, userId, loaded.snapshot, llm, now)
-    if (!runtime) return requestedMode === 'shadow' ? null : { outcome: 'skipped', reason: 'agency_unavailable' }
-    if (requestedMode === 'live' && runtime.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
+    if (!runtime && requestedMode === 'shadow') return null
+    if (!runtime || (requestedMode === 'live' && runtime.mode !== 'live')) {
+      // Fallback chat turns may leave a legacy intent with notBefore, which would re-claim this session on
+      // every scheduler run. Proactive contact here belongs to agency once the revision is ready.
+      if (row.session.pendingRealityIntent) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
+      return { outcome: 'skipped', reason: 'agency_unavailable' }
+    }
     // Existing sessions remain pinned to their compiled authored revision, including the renderer.
     const snapshot = { ...loaded.snapshot, character: runtime.revision.profile.character,
       worldSetting: runtime.revision.profile.worldSetting, worldGenre: runtime.revision.profile.worldGenre }

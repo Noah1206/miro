@@ -9,7 +9,7 @@ import { requireSafeContent } from '../safety'
 import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace } from './provider'
 import { hashAuthoredCharacter } from './compiler'
 
-export const AGENCY_PLANNER_VERSION = 'agency-planner:v1'
+export const AGENCY_PLANNER_VERSION = 'agency-planner:v2'
 const Id = z.string().min(1).max(128)
 const Refs = z.array(Id).max(12)
 const Time = z.string().datetime({ offset: true })
@@ -29,6 +29,7 @@ export const AgencyCandidateSchema = z.object({
   description: z.string().min(1).max(1000),
   targetActor: Id,
   evidenceIds: Refs, ruleIds: Refs, goalIds: Refs,
+  fulfillsGoalIds: z.array(Id).max(3).optional(),
   ruleFit: z.array(z.object({ ruleId: Id, fit: Fit }).strict()).max(12),
   goalFit: z.array(z.object({ goalId: Id, fit: Fit }).strict()).max(12),
   preconditions: z.array(ConditionSchema).max(12),
@@ -97,6 +98,7 @@ Return 1..5 candidate actions; the SERVER validates and selects the winner. Do n
 targetActor must equal actor: the character controls only their own choice, never the user's dialogue, consent or actions.
 Evidence IDs must come from visible evidence. A reported claim or belief is not an observed fact. Do not invent an ID or claim completed external work.
 goalIds and goalFit may name existing ACTIVE goals only, not newGoals. New goals are proposals, not completed promises.
+fulfillsGoalIds lists only cited goals that THIS action itself carries out right now, such as sending the promised contact. Mentioning, confirming, deferring or waiting on a promise does not fulfill it: use [] then. A goal cannot be fulfilled before its real-time dueAt.
 Explicit cancellation/suspension changes need supporting evidence. Do not complete goals: only verified runtime outcomes do that.
 Clock timestamps must already be supported by evidence; do not convert a fictional evening to a real notification deadline.
 contact requires contact permission and appropriate capability preconditions; wait/defer are valid, especially when no reason to contact exists.
@@ -106,7 +108,7 @@ Optional appraisal.relationshipChanges is at most one item per dimension: {dimen
 interpretation is a short observable evidence summary, NOT private chain of thought. Preserve uncertain interpretations as beliefs only.
 Scores are bounded hypotheses, not truth. ruleFit must cite the matching authored rule; goalFit must cite an active goal.
 No worldDelta, relationshipDelta, identity rewrites, new NPC facts, provider calls, action outcomes or free-form policy code.
-Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait,description,targetActor,evidenceIds,ruleIds,goalIds,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
+Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait,description,targetActor,evidenceIds,ruleIds,goalIds,fulfillsGoalIds?,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
 
 /** No DB writes. The returned state is a proposal until the caller's CAS transaction commits it. */
 export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCharacter, state: AgencyState, input: AgencyPlanningContext): Promise<AgencyPlan> {
@@ -166,7 +168,23 @@ export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCha
     if (!valid) { issues.push({ field: `relationshipChanges.${change.dimension}`, reason: 'ungrounded_or_replayed_relationship_change' }); continue }
     relationshipDelta[change.dimension] = change.delta
   }
-  const decision = selectAgencyDecision(proposal.candidates, context)
+  // Fulfillment is recorded only from an app receipt (queued/sent today). Drop an entry the app could
+  // never attest, or one not yet due, instead of discarding the whole candidate. A proactive contact
+  // that cites a due promise without saying otherwise carries it out.
+  const goalsById = new Map(state.goals.map(goal => [goal.id, goal]))
+  const due = (dueAt?: string, clock?: string) => !dueAt || clock !== 'real_time' || Date.parse(dueAt) <= Date.parse(input.clock.now)
+  const candidates = proposal.candidates.map(candidate => {
+    const requested = candidate.fulfillsGoalIds ?? (candidate.action === 'contact'
+      ? candidate.goalIds.filter(id => { const goal = goalsById.get(id); return Boolean(goal?.dueAt) && goal?.clock === 'real_time' && due(goal?.dueAt, goal?.clock) })
+      : [])
+    const kept = ['wait', 'defer', 'cancel_commitment'].includes(candidate.action) ? [] : requested.filter(id => {
+      const goal = goalsById.get(id)
+      return candidate.goalIds.includes(id) && goal?.status === 'active' && ['sent', 'action_accepted'].includes(goal.success) && due(goal.dueAt, goal.clock)
+    })
+    for (const id of requested) if (!kept.includes(id)) issues.push({ field: `candidates.${candidate.id}.fulfillsGoalIds`, reason: `unfulfillable_goal_dropped:${id}` })
+    return { ...candidate, fulfillsGoalIds: kept }
+  })
+  const decision = selectAgencyDecision(candidates, context)
   issues.push(...decision.rejected.flatMap(rejected => rejected.reasons.map(reason => ({ field: `candidates.${rejected.candidateId}`, reason }))))
   const goals: AgencyGoalChange[] = [
     ...proposal.goalChanges,

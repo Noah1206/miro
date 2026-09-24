@@ -38,11 +38,11 @@ function provider(options: StubOptions = {}) {
     info: { mode: 'mock', name: 'recorded-agency-fixture', notice: 'Recorded contract fixture' },
     async generateStructured(request) {
       calls.push({ version: request.promptVersion, system: request.system, prompt: request.prompt })
-      if (request.promptVersion === 'agency-planner:v1') {
+      if (request.promptVersion === 'agency-planner:v2') {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
-      if (request.promptVersion === 'agency-realization-check:v1') {
+      if (request.promptVersion === 'agency-realization-check:v2') {
         const payload = JSON.parse(request.prompt)
         return request.schema.parse({ decisionId: payload.decision.id, aligned: !options.rejectRealization, claims: [], unsupported: [],
           violations: options.rejectRealization ? ['contradicts_decision'] : [] })
@@ -70,7 +70,7 @@ describe('runTurn agency integration', () => {
     }
     return llm
   }
-  it.each(['agency-planner:v1', 'agency-dialogue:v1', 'agency-realization-check:v1'])(
+  it.each(['agency-planner:v2', 'agency-dialogue:v2', 'agency-realization-check:v2'])(
     'retains %s fallback provenance after later primary calls', async fallbackAt => {
       const llm = changingTraceProvider(fallbackAt)
       const result = await runTurn({ llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
@@ -78,9 +78,9 @@ describe('runTurn agency integration', () => {
     },
   )
   it.each([
-    ['agency-planner:v1', 'agency_planner_not_live'],
-    ['agency-dialogue:v1', 'agency_renderer_not_live'],
-    ['agency-realization-check:v1', 'agency_verifier_not_live'],
+    ['agency-planner:v2', 'agency_planner_not_live'],
+    ['agency-dialogue:v2', 'agency_renderer_not_live'],
+    ['agency-realization-check:v2', 'agency_verifier_not_live'],
   ])('fails closed in production when %s used fallback', async (fallbackAt, failure) => {
     vi.stubEnv('VERCEL_ENV', 'production')
     await expect(runTurn({ llm: changingTraceProvider(fallbackAt), snapshot: snapshot(), userInput: proof.quote, agency: agency() }))
@@ -99,7 +99,7 @@ describe('runTurn agency integration', () => {
     expect(result.semanticEvents).toEqual([])
     expect(result.agency?.plan.state.affect.stress).toBe(23)
     expect(input.state.sequence).toBe(0)
-    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v1', 'agency-dialogue:v1', 'agency-realization-check:v1'])
+    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v2', 'agency-dialogue:v2', 'agency-realization-check:v2'])
     expect(stub.calls[1]?.system).toContain('Server-authorized character choice')
   })
   it('shadow planning never changes the legacy turn or returns state for persistence', async () => {
@@ -121,12 +121,12 @@ describe('runTurn agency integration', () => {
   it('blocks renderer world mutations rather than committing an unplanned event', async () => {
     const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }] }, worldDelta: { currentLocation: '서울' } } })
     await expect(runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow('agency_unapproved_mutation')
-    expect(stub.calls.some(c => c.version === 'agency-realization-check:v1')).toBe(false)
+    expect(stub.calls.some(c => c.version === 'agency-realization-check:v2')).toBe(false)
   })
   it('rejects a selected action whose actual dialogue fails semantic verification', async () => {
     const stub = provider({ rejectRealization: true })
     await expect(runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow('agency_realization_rejected')
-    expect(stub.calls.at(-1)?.version).toBe('agency-realization-check:v1')
+    expect(stub.calls.at(-1)?.version).toBe('agency-realization-check:v2')
   })
   it('catches undeclared delivery claims even if a recorded verifier incorrectly says aligned', async () => {
     const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '사진을 보냈어요.' }] } } })
@@ -140,7 +140,7 @@ describe('runTurn agency integration', () => {
     ] }), userInput: proof.quote, agency: agency() })
     expect(result.agency?.plan.decision.action).toBe('wait')
     expect(result.agency?.plan.issues.map(i => i.reason)).toContain('action_executor_unavailable')
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v1')?.prompt).not.toContain('비가시성정답')
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v2')?.prompt).not.toContain('비가시성정답')
   })
   it('applies an explicit reported-user cancellation and preserves it on the following turn', async () => {
     const input = agency()
