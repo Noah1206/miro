@@ -78,7 +78,8 @@ export async function createRoleplaySession(
       sessionId: id, currentLocation: starting.worldLocation ?? '알 수 없는 장소', currentTime: starting.startingTime,
     })
     // 캐릭터별 시작 관계. 값이 없으면 안전한 기본값으로 떨어진다.
-    await tx.insert(relationships).values({ sessionId: id, ...DEFAULT_START, ...starting.initialRelationship })
+    const { bonding: _curve, ...startingRelationship } = starting.initialRelationship
+    await tx.insert(relationships).values({ sessionId: id, ...DEFAULT_START, ...startingRelationship })
     // 캐릭터가 먼저 보낸 첫 마디 — 있으면 대화가 이미 시작된 상태로 들어간다.
     const openingMessages = introMessages(id, starting.dialogue, opts.opening)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))

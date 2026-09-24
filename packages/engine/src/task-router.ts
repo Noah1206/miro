@@ -54,7 +54,8 @@ export const MemoryResult = memoryResult()
 export function planTasks(input: string, turn: number, mode: 'planned' | 'always' = 'planned'): AITask[] {
   const all = mode === 'always'
   const tasks: AITask[] = []
-  if (feature('llmSemanticAnalysis') && (all || importanceScore(interactionImportance(input)) >= .35)) tasks.push('semantic_event')
+  // 관계는 매 턴의 일로 움직인다 — 표현 규칙이 못 잡는 평범한 문장도 AI 가 분류한다 (2026-09-24 결정).
+  if (feature('llmSemanticAnalysis')) tasks.push('semantic_event')
   // 그래프를 채우려면 키워드가 없는 평범한 대화에서도 사실이 나와야 한다.
   // 키워드는 즉시 통과, 그 외에는 중요도 기준으로 통과시킨다.
   if (feature('memoryExtraction') && (all || /기억|약속|비밀|사실|좋아하|좋아해|정정|바뀌|바꿨|이제|대신/.test(input)

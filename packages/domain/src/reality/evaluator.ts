@@ -45,7 +45,8 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   if (inCooldown(input.lastContactAt, now)) {
     return { send: false, reason: 'cooldown' }
   }
-  if (motivation(input) < POLICY.reality.motivationThreshold) {
+  // 침묵 연락은 deriveIntent 가 관계성·성격·친밀도로 이미 정했다 — 같은 관계를 다른 공식으로 다시 막지 않는다.
+  if (input.intent.reason !== 'silence' && motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
   return { send: true, channel: intent.channel, dedupeKey: buildDedupeKey(input) }

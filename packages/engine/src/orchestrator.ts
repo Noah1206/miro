@@ -1,8 +1,8 @@
 import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
-  DEFAULT_CHARACTER_STATE, applyRelationshipDelta, deltaFromSemanticEvents, deriveCharacterState,
-  detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, nextRelationshipStage,
+  DEFAULT_CHARACTER_STATE, addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, deltaFromSemanticEvents,
+  deriveCharacterState, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, nextRelationshipStage, scaleCloser,
 } from '@miro/domain'
 import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent } from '@miro/domain'
 import { SimulationProposal } from './proposal.schema'
@@ -32,10 +32,10 @@ export type TurnResult = {
 /**
  * 한 턴의 RP 처리 — State Update Pipeline.
  *
- *   사용자 입력 → 의미 이벤트(코드) → 관계 delta(규칙) → 캐릭터 상태(코드)
- *   → Context 조립 → 1회 Structured Generation → 검증 → 규칙 delta + LLM 뉘앙스 병합 → 사건 규칙
+ *   사용자 입력 → 의미 이벤트(규칙 + AI 분류) → 관계 delta(규칙 + 함께한 시간, 성격의 곡선) → 캐릭터 상태(코드)
+ *   → Context 조립 → 1회 Structured Generation → 검증 → 사건 규칙
  *
- * 관계 수치를 움직이는 것은 규칙이다. LLM 은 ±LLM_NUANCE_LIMIT 안에서만 보정한다.
+ * 관계 수치를 움직이는 것은 규칙이다. 모델이 제안한 관계 숫자는 반영하지 않는다.
  * DB 커밋은 여기서 하지 않는다 — 영속화는 호출자(웹 앱)의 트랜잭션 안에서 이뤄진다.
  */
 export async function runTurn(opts: {
@@ -97,7 +97,11 @@ export async function runTurn(opts: {
   const events = await semantic
   if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
 
-  const codeDelta = deltaFromSemanticEvents(semanticEvents, personality)
+  // 사건이 움직인 만큼은 성격의 곡선이 키우거나 줄이고, 나쁜 일이 없던 턴은 함께한 시간만큼 가까워진다 (relationship/dynamics).
+  const curve = personality.bonding ?? bondingCurveOf(personality)
+  const codeDelta = addDelta(
+    scaleCloser(deltaFromSemanticEvents(semanticEvents, personality), curve, closeness(snapshot.relationship)),
+    companionshipDelta({ curve, relationship: snapshot.relationship, events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput }))
   // 이번 턴의 관계(규칙 적용 후)로 기분을 정한다 — 모델은 수치가 아니라 기분을 본다.
   const projected = applyRelationshipDelta(snapshot.relationship, codeDelta)
   codeDelta.stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1)

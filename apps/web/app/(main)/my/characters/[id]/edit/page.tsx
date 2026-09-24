@@ -33,6 +33,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     stage: typeof rel.stage === 'string' ? rel.stage : 'stranger',
     trust: num(rel.trust, 30), attraction: num(rel.attraction, 10), emotionalDistance: num(rel.emotionalDistance, 60),
     attachment: num(rel.attachment, 10), protectiveness: num(rel.protectiveness, 20), relJealousy: num(rel.jealousy, 0),
+    bonding: typeof rel.bonding === 'string' ? rel.bonding : '',
     relationshipKeywords: c.relationshipKeywords,
     contactEnabled: contact?.enabled ?? true,
     contactFrequency: contact?.contactFrequency ?? 50, initiativeLevel: contact?.initiativeLevel ?? 50,

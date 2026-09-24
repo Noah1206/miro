@@ -1,5 +1,5 @@
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
-import { BUILD_TYPES, GENDER_TYPES, normalizeLore } from '@miro/domain'
+import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore } from '@miro/domain'
 import { searchNeedle } from '@/lib/search-params'
 export { MOODS } from '@/lib/genres'
 
@@ -62,6 +62,8 @@ export function parseCharacterForm(form: FormData) {
     protectiveness: clamp('protectiveness', 20),
     emotionalDistance: clamp('emotionalDistance', 60),
     attachment: clamp('attachment', 10),
+    // 작성자가 고른 친해지는 곡선만 남긴다. '자동'이면 비워 두고 실행할 때 성향값으로 정한다.
+    ...((BONDING_CURVES as readonly string[]).includes(s('bonding')) ? { bonding: s('bonding') } : {}),
   }
 
   const character = {

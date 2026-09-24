@@ -3,6 +3,7 @@
  * AI 가 매 턴 성격을 새로 정의하지 못하도록 Dynamic State 와 분리한다.
  */
 import type { LoreEntry } from './lore'
+import type { BondingCurve } from '../relationship/dynamics'
 
 export type CharacterCore = {
   id: string
@@ -28,6 +29,8 @@ export type CharacterCore = {
     jealousy: number
     initiative: number
     emotionalExpression: number
+    /** 친해지는 곡선. 없으면 성향값으로 정한다 (relationship/dynamics). */
+    bonding?: BondingCurve
   }
 
   worldRole: {

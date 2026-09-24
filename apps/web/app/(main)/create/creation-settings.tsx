@@ -21,6 +21,14 @@ const PRESETS = [
   { stage: 'dating', label: '특별한 사이', hint: '서로에게 특별하지만 관계를 정해 두지는 않았어요.', values: [65, 70, 25, 60, 50, 20] },
   { stage: 'lover', label: '연인', hint: '서로를 믿고 애정과 일상을 나눠요.', values: [80, 80, 15, 75, 65, 25] },
 ]
+/** 친해지는 곡선 (relationship/dynamics). 대화할수록 가까워지는 모양과 먼저 연락하는 시점이 달라진다. */
+const BONDING = [
+  { value: '', label: '자동', hint: '다가가는 방식과 감정 표현에 맞춰 정해요.' },
+  { value: 'accelerating', label: '빠르게', hint: '처음엔 조심스럽지만, 가까워질수록 마음이 빠르게 열려요.' },
+  { value: 'stepwise', label: '계단식', hint: '평소엔 그대로지만, 특별한 순간마다 한 단계씩 가까워져요.' },
+  { value: 'steady', label: '꾸준히', hint: '대화할수록 조금씩 꾸준히 가까워져요.' },
+  { value: 'slow', label: '아주 천천히', hint: '마음을 여는 데 오래 걸려요.' },
+] as const
 const FIELDS = [
   ['trust', '신뢰'], ['attraction', '호감'], ['emotionalDistance', '정서적 거리'],
   ['attachment', '애착'], ['protectiveness', '보호 성향'], ['relJealousy', '질투'],
@@ -39,6 +47,7 @@ const smallButton = { border: 0, borderRadius: 8, background: 'var(--color-surfa
 
 export function RelationshipSettings({ initial }: { initial: FormInitial }) {
   const [stage, setStage] = useState(initial.stage)
+  const [bonding, setBonding] = useState(BONDING.some(b => b.value === initial.bonding) ? initial.bonding : '')
   const [values, setValues] = useState(() => FIELDS.map(([key]) => initial[key]))
   const [edited, setEdited] = useState(false)
   const [pending, setPending] = useState<(typeof PRESETS)[number] | null>(null)
@@ -61,6 +70,11 @@ export function RelationshipSettings({ initial }: { initial: FormInitial }) {
         <button type="button" style={smallButton} onClick={() => setPending(null)}>취소</button>
       </div>
     </div>}
+    <section aria-label="가까워지는 속도" style={{ marginTop: 24 }}>
+      <h3 className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>가까워지는 속도</h3>
+      <ChoiceChips name="bonding" pill value={bonding} onChange={setBonding} options={BONDING.map(b => ({ value: b.value, label: b.label }))} />
+      <p className="t-caption" style={caption}>{BONDING.find(b => b.value === bonding)!.hint} 가까워질수록 먼저 연락하는 간격도 짧아져요.</p>
+    </section>
     <div id="relationship-details" className="stack" style={{ gap: 20, marginTop: 24 }}>
       {[
         { title: '신뢰와 거리', indices: [0, 2] },

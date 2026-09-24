@@ -3,6 +3,7 @@ import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
 import type { RealityIntent } from './types'
 import { pickCallChannel } from '../call/pick'
+import { readyToReachOut, silenceHours } from '../relationship/dynamics'
 
 export type IntentInput = {
   relationship: RelationshipState
@@ -50,9 +51,9 @@ export function deriveIntent(input: IntentInput): RealityIntent | null {
     }
   }
 
-  // 2. 침묵이 길고 애착이 있으면 — 단, 정서적 거리가 멀면 먼저 연락하지 않는다.
-  const bonded = r.attachment >= 40 && r.emotionalDistance <= 55
-  if (bonded && idleMinutes >= longSilence(p)) {
+  // 2. 연락이 오래 없을 때 — 관계성(연애·친구·일…)과 연락 주도성, 지금의 친밀도로 문턱과 간격을 매번 다시 정한다.
+  //    가까워질수록 문턱을 넘고, 간격도 짧아진다 (relationship/dynamics).
+  if (readyToReachOut(r, p.initiativeLevel) && idleMinutes >= silenceHours(r, p.contactFrequency, p.initiativeLevel) * 60) {
     return {
       channel: preferred(p),
       reason: 'silence',
@@ -73,8 +74,3 @@ function downgrade(c: ContactChannel): ContactChannel {
   return SENDABLE.includes(c) ? c : 'message'
 }
 
-/** 연락 빈도 성향이 낮을수록 더 오래 기다린다. 0→약 3일, 100→약 6시간. */
-function longSilence(p: ContactProfile): number {
-  const hours = 72 - (p.contactFrequency / 100) * 66
-  return Math.round(hours * 60)
-}

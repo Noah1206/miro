@@ -26,7 +26,7 @@ export const RELATIONSHIP_RULES: Record<SemanticEventType, RelationshipDelta> = 
   deliberate_avoidance: { trust: -4, emotionalDistance: 6, jealousy: 3 },
 }
 
-/** 한 턴에 아무 사건도 없을 때의 자연 감쇠 — 질투는 가라앉고, 거리는 아주 조금 좁혀진다. */
+/** 한 턴에 아무 사건도 없을 때의 자연 감쇠 — 질투가 가라앉는다. 함께한 시간으로 가까워지는 것은 dynamics.companionshipDelta 가 맡는다. */
 const DECAY: RelationshipDelta = { jealousy: -2 }
 
 /** LLM 이 제안한 delta 는 이만큼만 '뉘앙스' 로 얹을 수 있다. 큰 변화는 오직 규칙에서 나온다. */

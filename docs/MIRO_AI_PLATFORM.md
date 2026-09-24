@@ -79,6 +79,8 @@ Core는 특정 Provider SDK를 호출하지 않는다. Task와 모델을 분리�
 
 `Semantic Events → Relationship Rules → codeDelta`가 최종 관계 변화를 결정한다. 기존 LLM delta 보정을 제거했다. AI가 관계 변경 숫자를 제안하더라도 실제 관계에 반영하지 않는다. 신뢰·질투·거리·애착 등 기존 clamp와 단계 전이 규칙을 유지했다.
 
+2026-09-24부터 `codeDelta`에 캐릭터 곡선(가속·계단·꾸준·아주 느림)에 따른 사건 배율과, 나쁜 일이 없는 대화다운 턴의 '함께한 시간' 성장이 더해진다. 의미 이벤트의 AI 분류는 운영에서도 매 턴 돈다. 숫자는 여전히 규칙이 정한다. 자세한 규칙과 표는 `docs/relationship-dynamics.md`.
+
 캐릭터 감정·사건·세계·장면은 같은 snapshot을 사용한다. Event Engine과 기존 스케줄러/quiet hours/쿨다운을 유지했으며, 이미지 추론을 리얼리티 발송 DB 트랜잭션 밖으로 이동했다.
 
 ## 9. Memory 연결

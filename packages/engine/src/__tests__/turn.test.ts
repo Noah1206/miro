@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AIOrchestrator, MockAIProvider, type GenerationRequest } from '@miro/providers'
 import { runTurn } from '../orchestrator'
+import { planTasks } from '../task-router'
 import { buildMockProposal } from '../mock-rp'
 import { snapshot, relationship } from './fixtures'
 
@@ -50,11 +51,32 @@ describe('runTurn — state update pipeline', () => {
     expect(Math.abs(r.transition.relationshipDelta.trust ?? 0)).toBeLessThanOrEqual(3)
   })
 
+  // 사건이 없어도 대화다운 턴은 캐릭터의 곡선대로 관계를 움직인다. 픽스처의 토마스는 절제·기다림이라 '아주 천천히'(3턴에 한 번).
+  it('an ordinary turn brings them a little closer, at the character\'s own pace', async () => {
+    const input = '오늘 공방에 온 이유를 천천히 말씀드릴게요'
+    const moved = await runTurn({ llm: llm(), snapshot: snapshot({ turnCount: 5 }), userInput: input })
+    expect(moved.transition.relationshipDelta).toMatchObject({ trust: 1, attachment: 1, emotionalDistance: -1 })
+    const still = await runTurn({ llm: llm(), snapshot: snapshot({ turnCount: 6 }), userInput: input })
+    expect(still.transition.relationshipDelta.attachment ?? 0).toBe(0)
+    const steady = snapshot({ turnCount: 6 })
+    steady.character = { ...steady.character, personality: { ...steady.character.personality, bonding: 'steady' } }
+    expect((await runTurn({ llm: llm(), snapshot: steady, userInput: input })).transition.relationshipDelta.attachment).toBe(1)
+  })
+
+  // 2026-09-24: 운영에서도 관계용 AI 분류를 매 턴 돌린다 — 표현 규칙이 못 잡는 평범한 문장 때문에 관계가 멈춰 있었다.
+  it('the production preset classifies every turn, not only keyword turns', () => {
+    vi.stubEnv('MIRO_MODE', 'production')
+    expect(planTasks('오늘 공방에 온 이유를 말씀드릴게요', 1)).toContain('semantic_event')
+    vi.stubEnv('MIRO_FEATURE_LLM_SEMANTIC_ANALYSIS', '0')
+    expect(planTasks('오늘 공방에 온 이유를 말씀드릴게요', 1)).not.toContain('semantic_event')
+  })
+
   /** ECHO 는 같은 모델을 쓰되 보조 분석을 매 턴 돌린다. */
   it('an ECHO turn never revives a task the deployment turned off', async () => {
-    // llmSemanticAnalysis 는 두 프리셋 모두에서 꺼져 있다. 끈 기능은 ECHO 도 되살리지 못한다.
+    // 배포가 끈 기능은 ECHO 도 되살리지 못한다.
     vi.stubEnv('MIRO_MODE', 'production')
     vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '0')
+    vi.stubEnv('MIRO_FEATURE_LLM_SEMANTIC_ANALYSIS', '0')
     const tasks: string[] = []
     const auxiliaryLLM = new AIOrchestrator({ chain: [
       new MockAIProvider((req: GenerationRequest) => { tasks.push(req.task); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),

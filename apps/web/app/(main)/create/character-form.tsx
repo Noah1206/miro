@@ -22,6 +22,8 @@ export type FormInitial = {
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
+  /** 친해지는 곡선. '' 이면 성향값으로 정한다. */
+  bonding: string
   relationshipKeywords: string[]
   contactEnabled: boolean; contactFrequency: number; initiativeLevel: number; replyDelayMinutes: number
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
@@ -41,7 +43,7 @@ export const EMPTY: FormInitial = {
   gender: 'male', build: 'average', height: '', detail: '',
   eyes: '', nose: '', jaw: '', skin: '', distinctive: '',
   hairColor: '', hairLength: '', hairStyle: '', expression: '', styleTags: [],
-  stage: 'stranger', trust: 30, attraction: 10, emotionalDistance: 60, attachment: 10, protectiveness: 20, relJealousy: 0,
+  stage: 'stranger', trust: 30, attraction: 10, emotionalDistance: 60, attachment: 10, protectiveness: 20, relJealousy: 0, bonding: '',
   relationshipKeywords: [],
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',

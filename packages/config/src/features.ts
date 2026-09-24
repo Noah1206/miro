@@ -10,7 +10,7 @@ export type FeatureName =
   | 'relationshipEngine' | 'memoryEngine' | 'eventEngine' | 'realityMessage'
   /** 리얼리티 메시지를 크론을 기다리지 않고 턴 직후 바로 보낸다 (알파의 즉시 후속 메시지). */
   | 'inlineReality'
-  /** 의미 이벤트 분류에 LLM 을 보조로 쓴다 (비용 발생). 규칙 분류는 항상 켜져 있다. */
+  /** 의미 이벤트 분류에 LLM 을 보조로 매 턴 쓴다 (비용 발생). 규칙 분류는 항상 켜져 있다. */
   | 'llmSemanticAnalysis'
   /** 최근 대화를 주기적으로 요약해 단기 기억으로 남긴다 (비용 발생). */
   | 'memorySummaries' | 'memoryExtraction'
@@ -26,7 +26,8 @@ const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   production: {
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: false, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true,
+    // 2026-09-24: 관계가 표현 규칙에만 걸려 움직이지 않았다 — AI 분류를 매 턴 붙인다(턴 원가 약 +10%).
+    inlineReality: false, llmSemanticAnalysis: true, memorySummaries: true, memoryExtraction: true,
   },
 }
 
