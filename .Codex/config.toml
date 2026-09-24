@@ -2,3 +2,6 @@ approval_policy = "never"
 sandbox_mode = "danger-full-access"
 web_search = "live"
 model_reasoning_summary = "auto"
+
+[mcp_servers.supabase]
+url = "https://mcp.supabase.com/mcp?project_ref=rmuirlqxuxzpqoqeceej&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"

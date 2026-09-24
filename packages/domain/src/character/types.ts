@@ -41,6 +41,8 @@ export type CharacterCore = {
 
   visualIdentityId: string | null
   contactProfileId: string | null
+  /** Authored visual facts, shared by dialogue and media. Images alone are not inferred facts. */
+  appearance?: Pick<CharacterVisualIdentity, 'baseFace' | 'bodyProfile' | 'hair' | 'styleTags' | 'expressionTendency' | 'outfitProfile'>
 }
 
 /**

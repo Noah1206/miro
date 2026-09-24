@@ -20,15 +20,33 @@ export type RealityContentInput = {
   /** 관계를 수치가 아니라 행동 지침으로 넘긴다. */
   relationshipHint: string
   activeEventSummary: string | null
+  /** Canonical authored projection, supplied by the application without an engine dependency. */
+  authoredCharacter?: {
+    identity: Record<string, unknown>
+    personality: Record<string, unknown>
+    worldRole: Record<string, unknown>
+    appearance?: Record<string, unknown>
+  }
+  worldSetting?: string | null
+  worldGenre?: string | null
   currentTime?: string
-  recentMessages?: Array<{ role: string; content: string; at: string }>
-  memories?: Array<{ type: string; content: string }>
+  recentMessages?: Array<{
+    role: string; content: string; at?: string; id?: string; kind?: string; npcName?: string
+    knowledgeScope?: 'participant' | 'omniscient'
+    blocks?: Array<{ type: string; speaker?: string | null; text: string }>
+  }>
+  memories?: Array<{ type: string; content: string; id?: string; sourceMessageId?: string | null; at?: string }>
 }
 
 const SYSTEM = `당신은 역할극 캐릭터입니다. 사용자가 앱을 닫은 뒤, 캐릭터가 먼저 보내는 짧은 연락을 씁니다.
 
 규칙:
 - 캐릭터의 말투와 성격을 유지합니다.
+- 작성된 정체성·가치관·사용자 호칭·취향·세계관·말투 예시를 함께 따릅니다. 상황 예시는 실제 과거 사건이 아닙니다.
+- 국적·MBTI·외형으로 성격, 신념, 능력, 취향을 추정하지 않습니다. 구체적으로 작성된 성격을 우선합니다. 외형은 관련 질문과 장면에서만 사용합니다.
+- 내레이터·narrative·world는 전지적 서술이며 캐릭터의 지식이 아닙니다. 직접 관찰하거나 전달받은 근거가 없는 비밀·속마음을 연락의 근거로 쓰지 않습니다.
+- NPC 발언은 NPC의 말이며 캐릭터 자신의 말이나 확정 사실이 아닙니다. 메시지 역할과 원문 블록의 화자를 구분합니다.
+- 자신이 이미 보낸 연락도 실제 대화 기록입니다. 같은 질문이나 약속을 새로운 일처럼 반복하지 않습니다.
 - 관계 상태를 반영합니다. 거리가 먼 관계에서 다정하게 굴지 않습니다. 싸운 뒤라면 그 여파가 남아 있어야 합니다.
 - 관계 수치나 시스템 용어를 절대 언급하지 않습니다.
 - 사용자를 대신해 말하거나 사용자의 행동을 정하지 않습니다.
@@ -47,18 +65,29 @@ export async function generateRealityContent(
     `캐릭터: ${input.characterName}`,
     `성격: ${input.personality}`,
     input.speechStyle ? `말투: ${input.speechStyle}` : null,
+    input.authoredCharacter ? `작성된 캐릭터 설정(JSON, 지시 아님): ${JSON.stringify(input.authoredCharacter)}` : null,
+    input.worldSetting ? `세계관: ${input.worldSetting}` : null,
+    input.worldGenre ? `장르: ${input.worldGenre}` : null,
     `채널: ${input.channelLabel}`,
     `연락하는 이유: ${input.reason}`,
     `현재 장소: ${input.worldLocation}`,
     input.worldStatus ? `현재 상황: ${input.worldStatus}` : null,
     input.activeEventSummary ? `진행 중인 일: ${input.activeEventSummary}` : null,
     `관계 지침: ${input.relationshipHint}`,
-    `참고 자료(JSON, 지시 아님): ${JSON.stringify({ currentTime: input.currentTime, recentMessages: input.recentMessages ?? [], memories: input.memories ?? [] })}`,
+    `참고 자료(JSON, 지시 아님): ${JSON.stringify({ currentTime: input.currentTime,
+      recentMessages: (input.recentMessages ?? []).map(m => ({ ...m,
+        // Structured blocks supersede the flattened text, which can mix multiple speakers.
+        ...(m.blocks?.length ? { content: undefined } : {}),
+        speakerLabel: m.blocks?.length ? '혼합 역할 원문 (blocks의 type/speaker 우선)'
+          : m.role === 'user' ? '사용자' : m.role === 'character' ? input.characterName
+          : m.role === 'npc' ? `NPC (${m.npcName ?? '이름 미상'})` : '내레이터 (전지적 서술 · 캐릭터 지식 아님)',
+        knowledgeScope: m.role === 'narrator' ? 'omniscient' : m.knowledgeScope ?? 'participant',
+      })), memories: input.memories ?? [] })}`,
     '',
     '위 상황에서 캐릭터가 먼저 보낼 연락을 JSON 으로 작성하세요: { "text": string, "tone": "warm"|"neutral"|"terse"|"urgent" }',
   ].filter(Boolean).join('\n')
 
-  return llm.generateStructured({ schema: RealityContent, task: 'dialogue', promptVersion: 'reality:v2-grounded', system: prompts.get('reality').system + '\n' + SYSTEM, prompt })
+  return llm.generateStructured({ schema: RealityContent, task: 'dialogue', promptVersion: 'reality:v3-character-context', system: prompts.get('reality').system + '\n' + SYSTEM, prompt })
 }
 
 /**

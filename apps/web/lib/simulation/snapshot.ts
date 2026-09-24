@@ -1,8 +1,8 @@
-import { sampleDialogue } from '@/lib/intro-dialogue'
+import { characterContext, conversationContext } from './character-context'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
 import {
-  db, characters, events, memories, messages, npcs, realityContacts, relationships,
+  db, characters, characterVisualIdentities, events, memories, messages, npcs, realityContacts, relationships,
   roleplaySessions, scenes, worldStates, worlds,
 } from '@miro/db'
 import { DEFAULT_CHARACTER_STATE, type CharacterState } from '@miro/domain'
@@ -35,7 +35,7 @@ export async function loadSession(
 ): Promise<LoadedSession | null> {
   const rows = await db
     .select({ session: roleplaySessions, character: characters, world: worldStates,
-              relationship: relationships, worldSetting: worlds.worldSetting })
+              relationship: relationships, worldSetting: worlds.worldSetting, worldGenre: worlds.genre })
     .from(roleplaySessions)
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .innerJoin(worldStates, eq(worldStates.sessionId, roleplaySessions.id))
@@ -51,7 +51,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -67,40 +67,28 @@ export async function loadSession(
       ? db.select().from(scenes).where(eq(scenes.id, row.world.currentSceneId)).limit(1)
       : Promise.resolve([]),
     db.select().from(messages)
-      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt)))
-      .orderBy(desc(messages.turnIndex), desc(messages.createdAt))
+      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc'])))
+      .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id))
       .limit(24),
     db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
       .from(realityContacts)
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
       .orderBy(desc(realityContacts.sentAt)).limit(3),
+    db.select().from(characterVisualIdentities)
+      .where(and(eq(characterVisualIdentities.characterId, row.character.id), eq(characterVisualIdentities.isActive, true)))
+      .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
   ])
 
   const c = row.character
   const snapshot: SimulationSnapshot = {
-    character: {
-      id: c.id, ownerId: c.ownerId, isOfficial: c.isOfficial,
-      identity: {
-        name: c.name, age: c.age, nationality: c.nationality,
-        occupation: c.occupation, mbti: c.mbti,
-      },
-      personality: {
-        personality: c.personality, values: c.values, speechStyle: c.speechStyle,
-        userNickname: c.userNickname, hobbies: c.hobbies, dislikes: c.dislikes,
-        jealousy: c.jealousy, initiative: c.initiative,
-        emotionalExpression: c.emotionalExpression,
-      },
-      worldRole: { socialPosition: c.socialPosition, startingContext: c.startingContext, sampleDialogue: sampleDialogue(c.sampleDialogue), lore: c.lore },
-      visualIdentityId: null, contactProfileId: null,
-    },
+    character: characterContext(c, visual[0]),
     world: row.world as never,
     worldSetting: row.worldSetting,
+    worldGenre: row.worldGenre,
     relationship: row.relationship as never,
     scene: (currentScene[0] ?? null) as never,
     memories: sessionMemories,
-    recentMessages: recent.reverse()
-      .filter((m) => m.role === 'user' || m.role === 'character')
-      .map((m) => ({ role: m.role as 'user' | 'character', content: m.content })),
+    recentMessages: conversationContext(recent.reverse()),
     activeEvents: activeEvents as never,
     recentlyResolvedEvents: [...new Map([...recentlyResolvedEvents, ...coolingEvents].map((event) => [event.id, event])).values()] as never,
     activeNpcs: sessionNpcs as never,

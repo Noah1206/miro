@@ -17,6 +17,8 @@ import { type BudgetKind } from '@/lib/usage/ai-usage'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { track } from '@/lib/analytics/track'
 import { measured, observe, timed } from '@/lib/observe'
+import { type LoadedAgency } from '@/lib/agency/runtime'
+import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 
 export type ConversationOutcome =
   | {
@@ -66,6 +68,7 @@ async function executeTurn(opts: {
   if (input.length === 0) return { ok: false, reason: 'empty' }
   if (input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   const { userId, sessionId } = opts
+  const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
     // 세션·모델·동의는 서로를 모른다 — 한 번에 읽는다.
@@ -93,9 +96,12 @@ async function executeTurn(opts: {
     const turnIndex = loaded.snapshot.turnCount + 1
 
     let result: TurnResult
+    let agency: LoadedAgency | null = null
     try {
+      const prepared = await prepareAgencyTurn(sessionId, userId, loaded.snapshot, llm, { id: userMessageId, text: input })
+      agency = prepared.runtime
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode },
-        () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input,
+        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context),
           // continuity 여유분으로 나가는 턴은 등급과 무관하게 최소한으로 답한다.
           maxOutputTokens: reservation?.continuity ? usagePolicy().continuity.maxOutputTokens : model.tier.maxOutputTokens,
@@ -113,6 +119,7 @@ async function executeTurn(opts: {
     }
 
     const { transition } = result
+    if (result.agencyShadow) observe('agency.shadow', { sessionId, ...result.agencyShadow })
     // 일반 캐릭터챗은 먼저 연락하지 않는다. 엔진이 의도를 냈더라도 여기서 버린다 —
     // 저장하면 스케줄러가, 남겨두면 inline 이 그것을 실행하기 때문이다.
     if (loaded.experienceType !== 'reality' && transition.realityIntent) {
@@ -150,7 +157,8 @@ async function executeTurn(opts: {
       const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, responseText, blocks: transition.blocks, transition, sceneMarker,
+        userInput: input, userMessageId, responseText, blocks: transition.blocks, transition, sceneMarker,
+        ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),
         worldVersion: loaded.snapshot.world.version,
         relationshipVersion: loaded.snapshot.relationship.version,
         currentRelationship: loaded.snapshot.relationship,

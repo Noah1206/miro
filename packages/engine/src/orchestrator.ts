@@ -10,8 +10,12 @@ import { requireSafeContent, UnsafeContentError } from './safety'
 import { fallbackProposal } from './fallback'
 import { buildContext, type BuiltContext, type SimulationSnapshot } from './context'
 import { validateProposal, type ValidatedTransition } from './validator'
+import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
+import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck } from './agency'
 
 export type TurnResult = {
+  agency?: { plan: AgencyPlan; verification: AgencyRealizationCheck }
+  agencyShadow?: { action: string; issueCount: number } | { error: true }
   transition: ValidatedTransition
   context: BuiltContext
   /** fallback: 모든 Provider 가 실패해 정해진 대사로 답했다. 사용자에게는 오류를 보이지 않는다. */
@@ -45,7 +49,17 @@ export async function runTurn(opts: {
   contextScale?: number
   /** 'always' 면 보조 분석(의미 이벤트·기억)을 규칙과 무관하게 매 턴 돌린다. */
   auxiliary?: 'planned' | 'always'
+  agency?: AgencyTurnInput
 }): Promise<TurnResult> {
+  if (opts.agency?.mode === 'live') return runAgencyTurn({ ...opts, agency: opts.agency })
+  let agencyShadow: TurnResult['agencyShadow']
+  if (opts.agency?.mode === 'shadow' && opts.llm.info.mode === 'mock') {
+    // One-step comparison only. Never persist or realize a shadow choice in the live session.
+    try {
+      const plan = await planAgencyDecision(opts.llm, opts.agency.compiled, opts.agency.state, { ...opts.agency.context, input: opts.userInput })
+      agencyShadow = { action: plan.decision.action, issueCount: plan.issues.length }
+    } catch { agencyShadow = { error: true } }
+  } else if (opts.agency?.mode === 'shadow') agencyShadow = { error: true }
   const { snapshot } = opts
   const now = opts.now ?? new Date()
   const personality = snapshot.character.personality
@@ -146,7 +160,7 @@ export async function runTurn(opts: {
   const firedRules = fired.map((r) => r.id)
   characterState.firedRules = [...new Set([...prevState.firedRules, ...fired.filter((r) => r.once).map((r) => r.id)])]
 
-  return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules }
+  return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow }
 }
 
 /** 검증된 블록을 화면/저장용 텍스트로 합친다. */

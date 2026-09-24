@@ -10,6 +10,7 @@ import { requireUser } from '@/lib/auth'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from './parse'
+import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 
 /**
  * 저장. 읽는 법은 parse.ts — 편집과 같다.
@@ -39,8 +40,9 @@ export async function saveCharacter(form: FormData): Promise<void> {
     const [w] = await tx.insert(worlds).values({ characterId, ...p.world }).returning({ id: worlds.id })
     await tx.insert(contactProfiles).values({ characterId, ...p.contact })
     await tx.insert(characterVisualIdentities).values({ characterId, ...p.visual, referenceSource: 'text' })
+    const revision = await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields })
 
-    if (!p.publish) return { characterId, sessionId: null }
+    if (!p.publish) return { characterId, sessionId: null, revisionId: revision?.id }
 
     const [session] = await tx.insert(roleplaySessions).values({
       userId: user.id, characterId, worldId: w!.id,
@@ -49,8 +51,10 @@ export async function saveCharacter(form: FormData): Promise<void> {
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
     if (openingMessages.length) await tx.insert(messages).values(openingMessages)
-    return { characterId, sessionId: session!.id }
+    await pinAgencyRevision(tx, session!.id, revision)
+    return { characterId, sessionId: session!.id, revisionId: revision?.id }
   })
+  await scheduleAgencyCompilation(result.revisionId, user.id)
 
   revalidatePath('/home')
   revalidatePath('/home/search')

@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigserial, boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
-import type { BaseFace, BodyProfile, HairProfile } from '@miro/domain'
+import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision } from '@miro/domain'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -922,3 +922,42 @@ export const realityPushJobs = pgTable('reality_push_jobs', {
   due: index('reality_push_jobs_due_idx').on(t.nextAttemptAt).where(sql`${t.status} in ('pending', 'sending')`),
   subscription: index('reality_push_jobs_subscription_idx').on(t.subscriptionId),
 }))
+
+/** Private authored revisions: public characters never expose these via the Data API. */
+export const characterRevisions = pgTable('character_revisions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  sourceHash: text('source_hash').notNull(),
+  authored: jsonb('authored').$type<AuthoredDocument>().notNull(),
+  profile: jsonb('profile').$type<{ character: CharacterCore; worldSetting: string | null; worldGenre?: string | null }>().notNull(),
+  compiled: jsonb('compiled').$type<CompiledCharacter>(),
+  status: text('status', { enum: ['pending', 'compiling', 'ready', 'failed'] }).notNull().default('pending'),
+  compilerVersion: text('compiler_version').notNull().default('agency-compiler:v1'),
+  providerMode: text('provider_mode'),
+  attempts: integer('attempts').notNull().default(0),
+  leaseToken: uuid('lease_token'),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  errorCode: text('error_code'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ hash: uniqueIndex('character_revisions_hash_uniq').on(t.characterId, t.sourceHash) })).enableRLS()
+
+export const characterRuntimeStates = pgTable('character_runtime_states', {
+  sessionId: uuid('session_id').primaryKey().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  revisionId: uuid('revision_id').notNull().references(() => characterRevisions.id, { onDelete: 'cascade' }),
+  mode: text('mode', { enum: ['shadow', 'live'] }).notNull(),
+  state: jsonb('state').$type<AgencyState>().notNull(),
+  version: integer('version').notNull().default(0),
+  nextWakeAt: timestamp('next_wake_at', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ due: index('character_runtime_states_due_idx').on(t.nextWakeAt).where(sql`${t.nextWakeAt} IS NOT NULL`) })).enableRLS()
+
+export const characterDecisions = pgTable('character_decisions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  revisionId: uuid('revision_id').notNull().references(() => characterRevisions.id, { onDelete: 'cascade' }),
+  triggerKey: text('trigger_key').notNull(),
+  mode: text('mode', { enum: ['shadow', 'live'] }).notNull(),
+  decision: jsonb('decision').$type<AgencyDecision>().notNull(),
+  providerMode: text('provider_mode').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ trigger: uniqueIndex('character_decisions_trigger_uniq').on(t.sessionId, t.triggerKey) })).enableRLS()

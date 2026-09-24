@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { POLICY, feature } from '@miro/config'
 import {
   db, characters, contactProfiles, events, messages, pushSubscriptions,
@@ -18,6 +18,7 @@ import { requireSafeContent } from '@miro/engine'
 import { enqueueRealityPush, deliverRealityPush } from './push-outbox'
 import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
+import { evaluateAgencyReality } from './agency'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -25,7 +26,7 @@ export type EvaluateOutcome =
   /** 사건 규칙이 발동했지만 delay 가 있어 예약만 했다. 스케줄러가 notBefore 뒤에 다시 판단한다. */
   | { outcome: 'scheduled'; ruleId: string; notBefore: string }
   | { outcome: 'no_intent' }
-  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' | 'not_reality' | 'contact_disabled' }
+  | { outcome: 'skipped'; reason: 'session_not_found' | 'duplicate' | 'feature_disabled' | 'state_changed' | 'not_reality' | 'contact_disabled' | 'agency_unavailable' | 'agency_rejected' }
 
 /**
  * 한 세션에 대한 선연락 판단과 발송.
@@ -68,8 +69,11 @@ export async function evaluateSession(
     return { outcome: 'skipped', reason: 'contact_disabled' }
   }
 
+  const agency = await evaluateAgencyReality(row, now, opts)
+  if (agency) return agency
+
   const [activeEvents, recent] = await Promise.all([
-    db.select().from(events).where(and(eq(events.sessionId, sessionId), eq(events.status, 'active'))),
+    db.select().from(events).where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(realityContacts)
       .where(eq(realityContacts.sessionId, sessionId))
       .orderBy(desc(realityContacts.createdAt)).limit(10),

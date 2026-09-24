@@ -11,6 +11,7 @@ import { getOwnedCharacter } from '@/lib/owned'
 import { track } from '@/lib/analytics/track'
 import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from '@/app/(main)/create/parse'
+import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 
 /**
  * 편집 저장. 만들기와 같은 폼, 같은 읽는 법(parse.ts).
@@ -31,7 +32,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   // 사진 — 만들기(actions.ts)와 같은 규칙.
   const images = await resolveCharacterImages(form, user.id)
 
-  const sessionId = await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     await tx.update(characters).set({
       ...p.character, images,
       isDraft: stillDraft,
@@ -59,7 +60,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
       await tx.insert(characterVisualIdentities).values({ characterId, ...p.visual, referenceSource: 'text' })
     }
 
-    if (!publishNow) return null
+    const revision = await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields })
+    if (!publishNow) return { sessionId: null, revisionId: revision?.id }
     const [session] = await tx.insert(roleplaySessions).values({
       userId: user.id, characterId, worldId,
     }).returning({ id: roleplaySessions.id })
@@ -67,8 +69,11 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
     if (openingMessages.length) await tx.insert(messages).values(openingMessages)
-    return session!.id
+    await pinAgencyRevision(tx, session!.id, revision)
+    return { sessionId: session!.id, revisionId: revision?.id }
   })
+  await scheduleAgencyCompilation(result.revisionId, user.id)
+  const sessionId = result.sessionId
 
   revalidatePath(`/character/${characterId}`)
   revalidatePath('/my')

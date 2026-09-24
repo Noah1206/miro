@@ -8,12 +8,19 @@ import type {
 export type RecentMessage = {
   role: 'user' | 'character' | 'narrator' | 'npc'
   content: string
+  id?: string
+  kind?: string
+  at?: string
+  npcName?: string
+  knowledgeScope?: 'participant' | 'omniscient'
+  blocks?: Array<{ type: string; speaker?: string | null; text: string }>
 }
 
 export type SimulationSnapshot = {
   character: CharacterCore
   world: WorldState
   worldSetting: string | null
+  worldGenre?: string | null
   relationship: RelationshipState
   scene: Scene | null
   memories: Memory[]
@@ -115,18 +122,26 @@ function buildSystem(s: SimulationSnapshot): string {
     '## 캐릭터 (변하지 않는 정체성)',
     `이름: ${c.identity.name}`,
     c.identity.age ? `나이: ${c.identity.age}` : null,
+    c.identity.nationality ? `국적 (작성된 사실): ${c.identity.nationality}` : null,
     c.identity.occupation ? `직업: ${c.identity.occupation}` : null,
+    c.identity.mbti ? `MBTI (작성자의 참고 설정): ${c.identity.mbti}` : null,
     `성격: ${c.personality.personality}`,
     c.personality.values ? `가치관: ${c.personality.values}` : null,
     c.personality.speechStyle ? `말투: ${c.personality.speechStyle}` : null,
+    c.personality.userNickname ? `사용자를 부르는 호칭: ${c.personality.userNickname}` : null,
     c.personality.hobbies.length ? `좋아하는 것: ${c.personality.hobbies.join(', ')}` : null,
     c.personality.dislikes.length ? `싫어하는 것: ${c.personality.dislikes.join(', ')}` : null,
     `질투 성향 ${c.personality.jealousy}/100, 주도성 ${c.personality.initiative}/100, 감정표현 ${c.personality.emotionalExpression}/100`,
+    c.worldRole.socialPosition ? `세계 안에서의 위치: ${c.worldRole.socialPosition}` : null,
+    c.appearance ? `외형 설정 (관련 장면에서만 참고): ${JSON.stringify(c.appearance)}` : null,
     ...startingScene(c),
     ...sampleLines(c),
     '',
     '## 규칙',
     '- 이 캐릭터의 성격과 말투를 유지합니다. 상황에 따라 감정과 태도는 변하지만 정체성은 변하지 않습니다.',
+    '- 국적·MBTI·외형으로 성격, 신념, 능력, 취향을 추정하지 않습니다. 구체적으로 작성된 성격을 우선합니다. 외형은 관련 질문과 장면에서만 사용합니다.',
+    '- 내레이터·narrative·world는 전지적 서술 자료이며 캐릭터의 지식이 아닙니다. 캐릭터가 직접 관찰하거나 전달받은 근거가 없는 비밀·속마음은 캐릭터의 대사와 판단에 사용하지 않습니다.',
+    '- NPC 발언은 그 NPC의 말입니다. 캐릭터 자신의 말이나 사실로 바꾸지 않습니다. 상황 예시는 실제로 일어난 사건이 아닙니다.',
     '- 사용자에게 무조건 호의적으로 굴지 않습니다. 관계 상태에 맞게 행동합니다.',
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
@@ -180,6 +195,7 @@ function buildPrompt(
   parts.push(`시간: ${s.world.currentTime}`)
   if (s.world.worldStatus) parts.push(`상황: ${s.world.worldStatus}`)
   if (s.worldSetting) parts.push(`세계관: ${s.worldSetting}`)
+  if (s.worldGenre) parts.push(`장르: ${s.worldGenre}`)
   if (s.scene) parts.push(`장면: ${s.scene.mood} / ${s.scene.weather}`)
 
   // 로어북 — 이번 입력이 건드린 항목만. 캐릭터가 원래 알던 것이므로 기억과 구분해서 싣는다.
@@ -251,7 +267,22 @@ function buildPrompt(
   if (recent.length > 0) {
     parts.push('', '## 최근 대화')
     for (const m of recent) {
-      parts.push(`${m.role === 'user' ? '사용자' : s.character.identity.name}: ${m.content}`)
+      const label = m.role === 'user' ? '사용자'
+        : m.role === 'narrator' ? '내레이터 (전지적 서술 · 캐릭터 지식 아님)'
+        : m.role === 'npc' ? `NPC (${m.npcName ?? '이름 미상'})` : s.character.identity.name
+      const source = { id: m.id, kind: m.kind, at: m.at, knowledgeScope: m.knowledgeScope }
+      if (m.blocks?.length) {
+        for (const block of m.blocks) {
+          const speaker = block.type === 'narrative' || block.type === 'world'
+            ? '내레이터 (전지적 서술 · 캐릭터 지식 아님)'
+            : block.type === 'npc' ? `NPC (${block.speaker ?? m.npcName ?? '이름 미상'})`
+            : block.type === 'action' ? `행동 서술 (${block.speaker ?? label})`
+            : m.role !== 'user' && block.speaker && block.speaker !== s.character.identity.name
+              ? `NPC (${block.speaker})` : label
+          parts.push(`${speaker}: ${block.text}`)
+        }
+      } else parts.push(`${label}: ${m.content}`)
+      if (Object.values(source).some(v => v !== undefined)) parts.push(`출처: ${JSON.stringify(source)}`)
     }
   }
 

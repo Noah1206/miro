@@ -123,6 +123,9 @@ export function parseCharacterForm(form: FormData) {
 
   return {
     publish,
+    // Only deliberate choices carry numeric authorship; hidden default values alone do not.
+    agencyExplicitFields: [...new Set(form.getAll('agencyExplicitField').filter((field): field is string =>
+      typeof field === 'string' && ['personality.jealousy', 'personality.initiative', 'personality.emotionalExpression'].includes(field)))],
     isPublicOn: form.get('isPublic') === 'on',
     startingTime,
     character, world, contact, visual, initialRelationship,

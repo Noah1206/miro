@@ -10,6 +10,8 @@ import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 import { feature } from '@miro/config'
 import { COPY } from '@/lib/copy'
+import { randomUUID } from 'node:crypto'
+import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 
 export type LiveState = { error: string | null; notice: string | null }
 
@@ -28,19 +30,22 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
 
   if (input.length === 0) return { error: null, notice: null }
   if (input.length > 2000) return { error: '2000자 이내로 입력해 주세요.', notice: null }
+  const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(sessionId, user.id)
     if (!loaded || loaded.restricted) return { error: '장면을 찾을 수 없습니다.', notice: null }
     if (loaded.experienceType !== 'reality') return { error: COPY.error.featureOff, notice: null }
 
-    const llm = resolveRpLLM(loaded.characterName)
+    const llm = resolveRpLLM(loaded.characterName, { userId: user.id, sessionId })
     const turnIndex = loaded.snapshot.turnCount + 1
     let result
+    let prepared
     try {
+      prepared = await prepareAgencyTurn(sessionId, user.id, loaded.snapshot, llm, { id: userMessageId, text: input })
       result = await guarded(
         { userId: user.id, kind: 'liveScene', idempotencyKey: `live:${sessionId}:${turnIndex}` },
-        () => runTurn({ llm, snapshot: loaded.snapshot, userInput: input }),
+        () => runTurn({ llm, snapshot: prepared!.snapshot, userInput: input, agency: prepared!.agency }),
       )
     } catch (e) {
       if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
@@ -59,7 +64,8 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
         sessionId,
         characterId: loaded.characterId,
         turnIndex,
-        userInput: input,
+        userInput: input, userMessageId,
+        ...(prepared.runtime?.mode === 'live' && result.agency ? { agency: { version: prepared.runtime.version, plan: result.agency.plan } } : {}),
         responseText: renderBlocks(result.transition.blocks),
         blocks: result.transition.blocks,
         transition: result.transition,

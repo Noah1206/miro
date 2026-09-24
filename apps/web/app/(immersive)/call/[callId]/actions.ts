@@ -12,6 +12,8 @@ import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { endCall, owned, startOutgoingCall, UsageExceededError } from '@/lib/call/service'
 import { exceededMessage } from '@/lib/usage/guard'
+import { randomUUID } from 'node:crypto'
+import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 
 export type CallTurnState = { error: string | null }
 
@@ -29,6 +31,7 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
 
   const call = await owned(user.id, callId)
   if (!call || call.status !== 'active') return { error: '통화가 진행 중이 아닙니다.' }
+  const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(call.sessionId, user.id)
@@ -37,8 +40,11 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
     const turnIndex = snapshot.turnCount + 1
 
     let result
+    let prepared
     try {
-      result = await runTurn({ llm: resolveRpLLM(loaded.characterName), snapshot, userInput: input })
+      const llm = resolveRpLLM(loaded.characterName, { userId: user.id, sessionId: call.sessionId })
+      prepared = await prepareAgencyTurn(call.sessionId, user.id, snapshot, llm, { id: userMessageId, text: input })
+      result = await runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency })
     } catch {
       return { error: '연결이 불안정합니다. 텍스트 대화로 이어가시겠어요?' }
     }
@@ -47,7 +53,8 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
     try {
       await commitTurn({
         sessionId: call.sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, responseText: renderBlocks(result.transition.blocks),
+        userInput: input, userMessageId, responseText: renderBlocks(result.transition.blocks),
+        ...(prepared.runtime?.mode === 'live' && result.agency ? { agency: { version: prepared.runtime.version, plan: result.agency.plan } } : {}),
         blocks: [...result.transition.blocks, { type: 'call_line' as never, speaker: null, text: callId }],
         transition: result.transition,
         worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version,

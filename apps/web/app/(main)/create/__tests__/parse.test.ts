@@ -3,6 +3,17 @@ import { parseCharacterForm } from '../parse'
 import { genreValues } from '@/lib/genres'
 
 describe('character form parser', () => {
+  it('tracks only the three deliberately touched numeric traits without making defaults explicit', () => {
+    const form = new FormData()
+    form.set('name', '성향'); form.set('personality', '조용하다.'); form.set('jealousy', '50')
+    expect(parseCharacterForm(form).agencyExplicitFields).toEqual([])
+    form.append('agencyExplicitField', 'personality.jealousy')
+    form.append('agencyExplicitField', 'personality.jealousy')
+    form.append('agencyExplicitField', 'personality.initiative')
+    form.append('agencyExplicitField', 'invented.canon')
+    expect(parseCharacterForm(form).agencyExplicitFields).toEqual(['personality.jealousy', 'personality.initiative'])
+  })
+
   it('never carries an experience type, even when the form tries to send one', () => {
     // 유형 자체는 폼에서 받지 않는다. 생성/편집 액션이 저장된 유형과 명시적 연락 선택으로 결정한다.
     const form = new FormData()

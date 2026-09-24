@@ -13,6 +13,42 @@ function memory(sessionId: string, content: string, importance = 0.9): Memory {
 }
 
 describe('context builder', () => {
+  it('preserves authored identity and appearance without deriving personality from labels', () => {
+    const s = snapshot()
+    s.character.personality.userNickname = '선배'
+    s.character.worldRole.socialPosition = '폐역의 관리자'
+    s.character.appearance = { baseFace: { distinctive: '왼쪽 눈썹 흉터' }, hair: { color: '은색' },
+      bodyProfile: { height: '178cm' }, styleTags: ['단정함'], expressionTendency: '잘 웃지 않음', outfitProfile: {} }
+    const { system } = buildContext(s)
+    for (const fact of ['국적 (작성된 사실): 영국', 'MBTI (작성자의 참고 설정): INTJ', '사용자를 부르는 호칭: 선배',
+      '세계 안에서의 위치: 폐역의 관리자', '왼쪽 눈썹 흉터', '은색', '178cm']) expect(system).toContain(fact)
+    expect(system).toContain('국적·MBTI·외형으로 성격, 신념, 능력, 취향을 추정하지 않습니다')
+    const noAppearance = buildContext(snapshot())
+    expect(noAppearance.system).not.toContain('외형 설정 (관련 장면에서만 참고)')
+  })
+
+  it('does not attribute narrator or NPC messages to the character and keeps their source', () => {
+    const { system, prompt } = buildContext(snapshot({ recentMessages: [
+      { role: 'narrator', content: '그가 모르는 곳에 편지가 숨겨져 있다.', id: 'narration-1', kind: 'text', at: '2026-09-24T01:00:00Z', knowledgeScope: 'omniscient' },
+      { role: 'npc', npcName: '서연', content: '문은 잠겼어요.', id: 'npc-1' },
+      { role: 'character', kind: 'reality_message', content: '도착하면 알려 줘.' },
+      { role: 'character', content: '안녕. MIXED_NARRATION', blocks: [
+        { type: 'dialogue', speaker: '토마스', text: '안녕.' },
+        { type: 'narrative', text: 'MIXED_NARRATION' },
+      ] },
+    ] }))
+    expect(prompt).toContain('내레이터 (전지적 서술 · 캐릭터 지식 아님): 그가 모르는 곳')
+    expect(prompt).toContain('NPC (서연): 문은 잠겼어요.')
+    expect(prompt).not.toContain('토마스: 그가 모르는 곳')
+    expect(prompt).not.toContain('토마스: 문은 잠겼어요.')
+    expect(prompt).toContain('narration-1')
+    expect(prompt).toContain('2026-09-24T01:00:00Z')
+    expect(prompt).toContain('reality_message')
+    expect(prompt).toContain('내레이터 (전지적 서술 · 캐릭터 지식 아님): MIXED_NARRATION')
+    expect(prompt).not.toContain('토마스: 안녕. MIXED_NARRATION')
+    expect(system).toContain('직접 관찰하거나 전달받은 근거가 없는 비밀')
+  })
+
   it('puts the starting scene and sample dialogue in the system prompt only when they exist', () => {
     const none = buildContext(snapshot())
     expect(none.system).not.toContain('## 첫 장면')

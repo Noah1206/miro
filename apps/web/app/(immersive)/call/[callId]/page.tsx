@@ -1,4 +1,4 @@
-import { feature } from '@miro/config'
+import { feature, characterAgencyMode } from '@miro/config'
 import { notFound, redirect } from 'next/navigation'
 import { and, desc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
@@ -39,6 +39,9 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   const provider = resolveCallMedia(call.channel)
   let media: CallMediaSession
   try {
+    // Streaming audio currently bypasses server action approval/commit. Keep experimental sessions
+    // on the existing text-call adapter until streamed turns have the same authority boundary.
+    if (characterAgencyMode(call.sessionId) === 'live') throw new Error('agency_requires_server_turns')
     media = await provider.startSession({
       callId, characterName: loaded.characterName, voiceIdentity: null, visualPrompt: null,
       systemInstruction: spokenSystem,

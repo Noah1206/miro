@@ -433,6 +433,7 @@ const REACTION_TRAITS = [
 
 function ReactionTraits({ initial }: { initial: FormInitial }) {
   const [open, setOpen] = useState(false)
+  const [touched, setTouched] = useState<string[]>([])
   const reduceMotion = useReducedMotion()
   // Keep exact saved values until the user explicitly chooses a new level.
   const [values, setValues] = useState(() => ({
@@ -446,6 +447,7 @@ function ReactionTraits({ initial }: { initial: FormInitial }) {
   return (
     <div className="stack" style={{ gap: 12, paddingTop: 20 }}>
       {REACTION_TRAITS.map(({ name }) => <input key={name} type="hidden" name={name} value={values[name]} />)}
+      {touched.map(name => <input key={name} type="hidden" name="agencyExplicitField" value={`personality.${name}`} />)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <span className="t-body" style={{ flex: 1, minWidth: 0, fontWeight: 'var(--weight-semibold)' }}>반응 성향</span>
         <motion.button whileTap={reduceMotion ? undefined : { scale: 0.9 }} transition={{ type: 'spring', stiffness: 450, damping: 25 }} type="button" aria-label={open ? '반응 성향 편집 접기' : '반응 성향 편집'} aria-expanded={open} aria-controls="reaction-traits" onClick={() => setOpen((v) => !v)}
@@ -463,7 +465,10 @@ function ReactionTraits({ initial }: { initial: FormInitial }) {
               <legend className="t-body" style={{ marginBottom: 8, fontWeight: 'var(--weight-semibold)' }}>{label}</legend>
               <ChoiceChips columns={3} value={String(level(values[name]))}
                 options={choices.map((label, index) => ({ value: String(index), label }))}
-                onChange={(value) => setValues((previous) => ({ ...previous, [name]: [20, 50, 80][Number(value)] }))} />
+                onChange={(value) => {
+                  setTouched(previous => previous.includes(name) ? previous : [...previous, name])
+                  setValues((previous) => ({ ...previous, [name]: [20, 50, 80][Number(value)] }))
+                }} />
             </fieldset>
           ))}
         </div>

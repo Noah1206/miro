@@ -2,7 +2,7 @@ import { deliverRealityPush } from './push-outbox'
 import { maintainAI } from '@/lib/ai/maintenance'
 import { reconcileStaleAIReservations } from '@/lib/ai/gateway'
 import { sql } from 'drizzle-orm'
-import { POLICY } from '@miro/config'
+import { POLICY, characterAgencyMode } from '@miro/config'
 import { db } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
@@ -62,6 +62,11 @@ export async function runRealityEvaluations(now = new Date()): Promise<Evaluatio
   const claimLimit = Math.min(batchSize, 10)
 
   const iso = (d: Date) => d.toISOString()
+  // Do not reference additive tables until the deployment explicitly opts into the new runtime.
+  const agencyDue = characterAgencyMode() === 'live' ? sql`EXISTS (
+    SELECT 1 FROM character_runtime_states ar WHERE ar.session_id = s2.id AND ar.mode = 'live'
+      AND ar.next_wake_at <= ${iso(now)}::timestamptz
+  )` : sql`false`
   const claimed = await db.execute<{ id: string }>(sql`
     WITH picked AS MATERIALIZED (
        SELECT s2.id
@@ -74,9 +79,9 @@ export async function runRealityEvaluations(now = new Date()): Promise<Evaluatio
           AND s2.deleted_at IS NULL
           AND s2.restricted_at IS NULL
           AND (s2.last_interaction_at < ${iso(new Date(now.getTime() - idleMinutesBeforeContact * 60_000))}::timestamptz
-               OR (s2.pending_reality_intent->>'notBefore') IS NOT NULL)
+               OR (s2.pending_reality_intent->>'notBefore') IS NOT NULL OR ${agencyDue})
           AND ((s2.pending_reality_intent->>'notBefore') IS NULL
-               OR (s2.pending_reality_intent->>'notBefore')::timestamptz <= ${iso(now)}::timestamptz)
+               OR (s2.pending_reality_intent->>'notBefore')::timestamptz <= ${iso(now)}::timestamptz OR ${agencyDue})
           AND (s2.reality_checked_at IS NULL
                OR s2.reality_checked_at < ${iso(new Date(now.getTime() - recheckMinutes * 60_000))}::timestamptz
                OR (s2.pending_reality_intent->>'notBefore')::timestamptz <= ${iso(now)}::timestamptz)

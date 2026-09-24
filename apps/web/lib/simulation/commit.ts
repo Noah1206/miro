@@ -2,13 +2,15 @@ import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   db, events, memories, messages, npcs, relationships, roleplaySessions,
   scenes, worldStates, usageLedger, conversationRequests,
+  characterRuntimeStates, characterDecisions, characters, users,
 } from '@miro/db'
 import {
   applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
 } from '@miro/domain'
-import { POLICY } from '@miro/config'
+import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import type { Memory, CharacterState, RelationshipState } from '@miro/domain'
-import type { ValidatedTransition } from '@miro/engine'
+import type { ValidatedTransition, AgencyPlan } from '@miro/engine'
+import { applyMessageReceipt } from '@/lib/agency/receipts'
 
 export class StaleStateError extends Error {
   constructor() {
@@ -29,6 +31,8 @@ export type CommitInput = {
   characterId: string
   turnIndex: number
   userInput: string
+  userMessageId?: string
+  agency?: { version: number; plan: AgencyPlan }
   responseText: string
   blocks: ValidatedTransition['blocks']
   transition: ValidatedTransition
@@ -55,7 +59,12 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
   return db.transaction(async (tx) => {
     // Recheck after inference: deletion/restriction may happen while the model runs.
     const [session] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, input.sessionId)).for('update')
-    if (!session || session.deletedAt || session.restrictedAt || session.characterId !== input.characterId) throw new StaleStateError()
+    if (!session || session.status !== 'active' || session.deletedAt || session.restrictedAt || session.characterId !== input.characterId) throw new StaleStateError()
+    if (input.agency) {
+      const [character] = await tx.select().from(characters).where(eq(characters.id, input.characterId)).for('share')
+      const [user] = await tx.select().from(users).where(eq(users.id, session.userId)).for('share')
+      if (!character || character.deletedAt || !user || user.deletedAt) throw new StaleStateError()
+    }
     if (input.requestId) {
       const [r] = await tx.select().from(conversationRequests).where(eq(conversationRequests.id, input.requestId)).for('update')
       if (!r || r.sessionId !== input.sessionId || r.userId !== session.userId || r.status !== 'pending' || r.leaseUntil <= new Date()) throw new StaleStateError()
@@ -103,6 +112,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
     const ORDER: Record<string, number> = { user: 0, narrator: 1, character: 2 }
     const inserted = (await tx.insert(messages).values([
       {
+        ...(input.userMessageId ? { id: input.userMessageId } : {}),
         sessionId: input.sessionId, role: 'user', kind: 'text',
         content: input.userInput, blocks: [], turnIndex: input.turnIndex,
       },
@@ -118,6 +128,25 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       },
     ]).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))
       .sort((a, b) => (ORDER[a.role] ?? 9) - (ORDER[b.role] ?? 9))
+    if (input.agency) {
+      const { plan, version } = input.agency
+      if (characterAgencyMode(input.sessionId) !== 'live' || (productionRuntime() && plan.providerMode !== 'live')
+        || plan.decision.sessionId !== input.sessionId || plan.context.actor !== input.characterId) throw new StaleStateError()
+      const [runtime] = await tx.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, input.sessionId)).for('update')
+      if (!runtime || runtime.mode !== 'live' || runtime.version !== version || runtime.revisionId !== plan.decision.revisionId
+        || runtime.state.sequence !== plan.transition.expectedSequence) throw new StaleStateError()
+      const reply = inserted.find(m => m.role === 'character')!
+      const nextState = applyMessageReceipt(plan, reply.id)
+      const due = nextState.goals.filter(g => g.status === 'active' && g.clock === 'real_time' && g.dueAt)
+        .map(g => new Date(g.dueAt!)).sort((a, b) => a.getTime() - b.getTime())[0] ?? null
+      const updated = await tx.update(characterRuntimeStates).set({ state: nextState, version: version + 1,
+        nextWakeAt: due, updatedAt: new Date() }).where(and(eq(characterRuntimeStates.sessionId, input.sessionId),
+          eq(characterRuntimeStates.version, version))).returning({ id: characterRuntimeStates.sessionId })
+      if (!updated.length) throw new StaleStateError()
+      await tx.insert(characterDecisions).values({ sessionId: input.sessionId, revisionId: runtime.revisionId,
+        triggerKey: `chat:${input.requestId ?? inserted.find(m => m.role === 'user')!.id}`, mode: 'live',
+        decision: plan.decision, providerMode: plan.providerMode })
+    }
     // 재전송이 같은 결과를 돌려받도록 메시지까지 함께 남긴다.
     if (input.requestId) {
       await tx.update(conversationRequests)
@@ -212,6 +241,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,
+        sourceMessageId: inserted.find(message => message.role === 'user')!.id,
         type: m.type,
         content: m.content,
         importance: Math.round(m.importance * 100),
