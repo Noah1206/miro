@@ -9,7 +9,7 @@ import type { SimulationSnapshot } from './context'
 function participantHistory(s: SimulationSnapshot) {
   return s.recentMessages.filter(m => m.role !== 'narrator' && m.knowledgeScope !== 'omniscient').flatMap(m => {
     if (!m.blocks?.length) return [m]
-    const blocks = m.blocks.filter(b => b.type !== 'narrative' && b.type !== 'world')
+    const blocks = m.blocks.filter(b => b.type !== 'narrative' && b.type !== 'world' && b.type !== 'thought')
     return blocks.length ? [{ ...m, content: blocks.map(b => b.text).join('\n'), blocks }] : []
   })
 }

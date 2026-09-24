@@ -94,8 +94,8 @@ async function planned(f: Fixture, loaded: LoadedAgency, options: PlanOptions = 
   const evidence = await loadAgencyEvidence(f.sessionId, f.loaded.snapshot, loaded, input, now)
   const ids = [input.id]
   const llm: LLMProvider = { info: { name: 'recorded-db-contract', mode: 'mock', notice: 'Recorded contract, not model quality' }, async generateStructured(request) {
-    if (request.promptVersion === 'agency-dialogue:v2') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: reply }] } })
-    if (request.promptVersion === 'agency-realization-check:v2') return request.schema.parse({
+    if (request.promptVersion === 'agency-dialogue:v3') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: reply }] } })
+    if (request.promptVersion === 'agency-realization-check:v4') return request.schema.parse({
       decisionId: JSON.parse(request.prompt).decision.id, aligned: true, claims: [], unsupported: [], violations: [],
     })
     return request.schema.parse({

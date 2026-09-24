@@ -1,15 +1,14 @@
 import { z } from 'zod'
 import {
-  AGENCY_ACTIONS, agencyEvidence, agencyGoalId, agencyUserUtterance, reduceAgencyState, selectAgencyDecision,
+  AGENCY_ACTIONS, AGENCY_COMMITTING_ACTIONS, agencyEvidence, agencyGoalId, agencyUserUtterance, reduceAgencyState, selectAgencyDecision,
   type AgencyBelief, type AgencyDecision, type AgencyDecisionContext, type AgencyGoalChange,
   type AgencyIssue, type AgencyState, type AgencyTransition, type AuthoredDocument, type CompiledCharacter, type RelationshipDelta, type RelationshipState,
 } from '@miro/domain'
 import type { LLMProvider } from '@miro/providers'
-import { requireSafeContent } from '../safety'
 import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace } from './provider'
 import { hashAuthoredCharacter } from './compiler'
 
-export const AGENCY_PLANNER_VERSION = 'agency-planner:v2'
+export const AGENCY_PLANNER_VERSION = 'agency-planner:v4'
 const Id = z.string().min(1).max(128)
 const Refs = z.array(Id).max(12)
 const Time = z.string().datetime({ offset: true })
@@ -42,6 +41,7 @@ const ProposedGoal = z.object({
   id: Id, description: z.string().min(1).max(500), evidenceIds: Refs, ruleIds: Refs,
   priority: Unit, dueAt: Time.optional(), clock: z.enum(['real_time', 'narrative']).optional(),
   success: z.enum(['action_accepted', 'sent', 'delivered', 'answered', 'observed_event']),
+  commitment: z.boolean().optional(),
 }).strict()
 
 export const AgencyPlanProposalSchema = z.object({
@@ -83,9 +83,22 @@ export type AgencyPlan = AgencyProviderTrace & {
   issues: AgencyIssue[]
 }
 
+/**
+ * Models restyle rule IDs they were given ("speechStyle" for "speech_style"). A spelling that matches exactly one
+ * compiled rule, ignoring case and separators, becomes that rule; anything else stays as written and fails as before.
+ */
+export function ruleIdResolver(rules: Array<{ id: string }>): (ids: string[]) => string[] {
+  const key = (id: string) => id.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const exact = new Set(rules.map(rule => rule.id))
+  const keyed = new Map<string, string | null>()
+  for (const { id } of rules) keyed.set(key(id), keyed.has(key(id)) ? null : id)
+  return ids => [...new Set(ids.map(id => exact.has(id) ? id : keyed.get(key(id)) ?? id))]
+}
+
 export class AgencyPlanningError extends Error {
   constructor(readonly issues: AgencyIssue[]) {
-    super('agency_planning_invalid')
+    // Codes only (never text), so a failed turn's log says which check stopped it.
+    super(['agency_planning_invalid', ...new Set(issues.map(issue => issue.reason.split(':')[0]!))].join(' '))
     this.name = 'AgencyPlanningError'
   }
 }
@@ -98,6 +111,8 @@ Return 1..5 candidate actions; the SERVER validates and selects the winner. Do n
 targetActor must equal actor: the character controls only their own choice, never the user's dialogue, consent or actions.
 Evidence IDs must come from visible evidence. A reported claim or belief is not an observed fact. Do not invent an ID or claim completed external work.
 goalIds and goalFit may name existing ACTIVE goals only, not newGoals. New goals are proposals, not completed promises.
+Set commitment:true on a newGoal only when the reply you expect to be chosen itself promises that future action to the user, such as agreeing to contact them later. The server activates it once that reply is delivered and ignores it if a refusal or wait is chosen. Omit it for private or tentative goals. A vague time such as "내일 저녁" is not a real-time dueAt.
+A conversation turn cannot contact the user; a later proactive decision does that. When the character agrees to do something later (such as contacting the user), choose respond or defer now, without contact/message capability or future due preconditions, and record the promise as a newGoal with commitment:true.
 fulfillsGoalIds lists only cited goals that THIS action itself carries out right now, such as sending the promised contact. Mentioning, confirming, deferring or waiting on a promise does not fulfill it: use [] then. A goal cannot be fulfilled before its real-time dueAt.
 Explicit cancellation/suspension changes need supporting evidence. Do not complete goals: only verified runtime outcomes do that.
 Clock timestamps must already be supported by evidence; do not convert a fictional evening to a real notification deadline.
@@ -108,7 +123,7 @@ Optional appraisal.relationshipChanges is at most one item per dimension: {dimen
 interpretation is a short observable evidence summary, NOT private chain of thought. Preserve uncertain interpretations as beliefs only.
 Scores are bounded hypotheses, not truth. ruleFit must cite the matching authored rule; goalFit must cite an active goal.
 No worldDelta, relationshipDelta, identity rewrites, new NPC facts, provider calls, action outcomes or free-form policy code.
-Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait,description,targetActor,evidenceIds,ruleIds,goalIds,fulfillsGoalIds?,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
+Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait,description,targetActor,evidenceIds,ruleIds,goalIds,fulfillsGoalIds?,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event,commitment?:boolean}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
 
 /** No DB writes. The returned state is a proposal until the caller's CAS transaction commits it. */
 export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCharacter, state: AgencyState, input: AgencyPlanningContext): Promise<AgencyPlan> {
@@ -137,13 +152,23 @@ export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCha
   }
   const prompt = JSON.stringify(payload)
   if (prompt.length > 48_000) throw new AgencyPlanningError([{ field: 'context', reason: 'context_budget_exceeded' }])
-  await requireSafeContent(llm, { phase: 'agency_plan_input', ...payload })
+  // Moderation sits at the product boundary: the user's input and the text actually shown (runAgencyTurn,
+  // evaluateAgencyReality). This payload is authored/compiled or already-moderated conversation data.
   const proposal = await generateAgencyStructured(llm, {
     schema: AgencyPlanProposalSchema, system: PLANNER_SYSTEM, prompt, promptVersion: AGENCY_PLANNER_VERSION, maxTokens: 4096,
   })
   const trace = agencyProviderTrace(llm, AGENCY_PLANNER_VERSION)
-  await requireSafeContent(llm, { phase: 'agency_plan_output', proposal })
   const availableRules = new Set(compiled.rules.map(rule => rule.id))
+  const rules = ruleIdResolver(compiled.rules)
+  proposal.appraisal.ruleIds = rules(proposal.appraisal.ruleIds)
+  for (const change of proposal.appraisal.relationshipChanges ?? []) change.ruleIds = rules(change.ruleIds)
+  for (const goal of proposal.newGoals) goal.ruleIds = rules(goal.ruleIds)
+  for (const candidate of proposal.candidates) {
+    candidate.ruleIds = rules(candidate.ruleIds)
+    const fits = new Map<string, number>()
+    for (const fit of candidate.ruleFit) { const id = rules([fit.ruleId])[0]!; if (!fits.has(id)) fits.set(id, fit.fit) }
+    candidate.ruleFit = [...fits].map(([ruleId, fit]) => ({ ruleId, fit }))
+  }
   const appraisedIds = new Set(state.appraisedEvidenceIds ?? [])
   const freshEvidence = (id: string) => {
     const source = agencyEvidence(id, context)
@@ -186,9 +211,17 @@ export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCha
   })
   const decision = selectAgencyDecision(candidates, context)
   issues.push(...decision.rejected.flatMap(rejected => rejected.reasons.map(reason => ({ field: `candidates.${rejected.candidateId}`, reason }))))
+  // Choosing to cancel a commitment is itself the cancellation: add a change the model left out, on the decision's
+  // own user-utterance or observed evidence (the reducer accepts nothing weaker for a cancellation).
+  const cancelEvidence = decision.candidate.evidenceIds.filter(id => agencyUserUtterance(id, context) || agencyEvidence(id, context, true))
+  const cancels = decision.action !== 'cancel_commitment' || !cancelEvidence.length ? [] : decision.candidate.goalIds
+    .filter(id => !proposal.goalChanges.some(change => change.kind === 'cancel' && change.goalId === id))
+    .map(goalId => ({ kind: 'cancel' as const, goalId, evidenceIds: cancelEvidence }))
   const goals: AgencyGoalChange[] = [
     ...proposal.goalChanges,
-    ...proposal.newGoals.map((goal, index) => ({ kind: 'add' as const, goal: { ...goal, id: agencyGoalId(context.sequence, index), status: 'proposed' as const, createdAt: input.clock.now, updatedAt: input.clock.now } })),
+    ...cancels,
+    ...proposal.newGoals.slice(0, Math.max(0, 3 - proposal.goalChanges.length - cancels.length)).map(({ commitment, ...goal }, index) => ({ kind: 'add' as const, goal: { ...goal, id: agencyGoalId(context.sequence, index),
+      status: commitment && AGENCY_COMMITTING_ACTIONS.includes(decision.action) ? 'active' as const : 'proposed' as const, createdAt: input.clock.now, updatedAt: input.clock.now } })),
   ]
   // Total state writes are bounded, including mixes of additions and lifecycle changes.
   if (goals.length > 3) throw new AgencyPlanningError([{ field: 'goals', reason: 'goal_change_limit' }])

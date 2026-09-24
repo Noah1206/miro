@@ -88,6 +88,16 @@ describe('agency provenance and candidate contracts', () => {
 })
 
 describe('persistent agency state', () => {
+  it('starts a promise voiced by the chosen reply as active, but not one made alongside waiting', () => {
+    const promise = goal({ id: agencyGoalId(1, 0), description: '결과가 나오면 먼저 연락한다.' })
+    for (const [action, status] of [['respond', 'active'], ['wait', undefined]] as const) {
+      const c = context({ goals: [] })
+      const decision = selectAgencyDecision([candidate({ id: action, action })], c)
+      const result = reduceAgencyState(createAgencyState('revision', now), { expectedSequence: 0, decision, goals: [{ kind: 'add', goal: promise }] }, c)
+      expect(result.applied).toBe(true)
+      expect(result.state.goals[0]?.status).toBe(status)
+    }
+  })
   it('preserves goals across unrelated turns and keeps feeling independent of outward expression', () => {
     const result = reduceAgencyState(initial(), { expectedSequence: 0, appraisalEvidenceIds: ['message'], affectDelta: { valence: -12, stress: 10 }, expression: { openness: 5, directness: 10 } }, context({ goals: initial().goals }))
     expect(result.applied).toBe(true)
@@ -154,6 +164,19 @@ describe('persistent agency state', () => {
     const recycled = reduceAgencyState(added.state, { expectedSequence: 25, goals: [{ kind: 'add', goal: goal({ id: agencyGoalId(1, 0), status: 'proposed' }) }] }, context({ sequence: 26, goals: added.state.goals }))
     expect(recycled.issues.map(i => i.reason)).toContain('invalid_goal')
     expect(recycled.state.goals.some(g => g.id === agencyGoalId(1, 0))).toBe(false)
+  })
+  it('keeps a reply that accepts a cancellation, but not a contact for the cancelled goal', () => {
+    const state = initial()
+    const c = context({ goals: state.goals })
+    const cancel = [{ kind: 'cancel' as const, goalId: 'promise-goal', evidenceIds: ['message'] }]
+    const reply = selectAgencyDecision([candidate({ id: 'ok', action: 'respond', goalIds: ['promise-goal'] })], c)
+    const accepted = reduceAgencyState(state, { expectedSequence: 0, decision: reply, goals: cancel }, c)
+    expect(accepted.applied).toBe(true)
+    expect(accepted.state.goals[0]?.status).toBe('cancelled')
+    const contact = selectAgencyDecision([candidate({ goalIds: ['promise-goal'] })], c)
+    const sent = reduceAgencyState(state, { expectedSequence: 0, decision: contact, goals: cancel }, c)
+    expect(sent.applied).toBe(false)
+    expect(sent.issues.map(i => i.reason)).toContain('goal_changed_before_action')
   })
   it('can choose cancellation and apply it atomically without invalidating its own selected goal', () => {
     const state = initial()

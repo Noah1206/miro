@@ -7,7 +7,7 @@ import { z } from 'zod'
  * 이것은 제안일 뿐이며, Validator 를 통과하기 전에는 어떤 상태도 바뀌지 않는다.
  */
 
-const RP_BLOCK_TYPES = ['dialogue', 'action', 'narrative', 'npc', 'world'] as const
+const RP_BLOCK_TYPES = ['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'] as const
 
 export const RpBlock = z.object({
   type: z.enum(RP_BLOCK_TYPES),

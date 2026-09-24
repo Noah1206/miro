@@ -164,8 +164,10 @@ export async function runTurn(opts: {
 }
 
 /** 검증된 블록을 화면/저장용 텍스트로 합친다. */
+/** Message text as said and seen in the scene. The unspoken inner voice lives only in blocks. */
 export function renderBlocks(blocks: ValidatedTransition['blocks']): string {
   return blocks
+    .filter((b) => b.type !== 'thought')
     .map((b) => (b.type === 'dialogue' || b.type === 'npc'
       ? `${b.speaker}: ${b.text}`
       : b.text))

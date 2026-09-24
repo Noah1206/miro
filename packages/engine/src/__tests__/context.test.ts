@@ -136,12 +136,20 @@ describe('context builder', () => {
     expect(c.prompt).toMatch(/아는 정보로만 행동/)
   })
 
-  it('adapts output guidance to the interaction', () => {
+  it('keeps the scene and inner voice in every chat reply, only shorter for short input', () => {
     const m = buildContext(snapshot({ userInput: '뭐해' }))
     const n = buildContext(snapshot({ userInput: '*창밖을 오래 바라보다가* 오늘은 왠지 네 생각이 많이 났어. 이유는 모르겠는데, 그냥 그랬어.' }))
-    expect(m.system).toMatch(/메신저 대화처럼/)
+    expect(m.system).toMatch(/상황 한 줄, 속마음 한 줄/)
     expect(n.system).toMatch(/서술과 묘사를 충분히/)
-    expect(n.system).not.toMatch(/메신저 대화처럼/)
+    for (const c of [m, n]) expect(c.system).toMatch(/thought 블록은 이 캐릭터 자신의 말하지 않은 속마음/)
+    // A call is the reality layer: spoken words only, no narration or inner voice.
+    expect(buildContext(snapshot({ userInput: '뭐해', mode: 'voice_call' })).system).not.toMatch(/thought 블록/)
+  })
+
+  it('shows past inner voice as unspoken, not as something the user heard', () => {
+    const c = buildContext(snapshot({ recentMessages: [{ role: 'character', content: '응.',
+      blocks: [{ type: 'thought', speaker: '토마스', text: '사실 기다렸다.' }, { type: 'dialogue', speaker: '토마스', text: '응.' }] }] }))
+    expect(c.prompt).toContain('속마음 (토마스, 소리 내어 말하지 않음): 사실 기다렸다.')
   })
 
   it('weights the scene when an event or emotion is active', () => {

@@ -12,15 +12,16 @@ import { testDatabaseUrl } from '../../../tooling/test-database'
  * failures are re-executed. Live mode reads only GEMINI_API_KEY and MIRO_MODEL_REGISTRY from the root .env;
  * its DATABASE_URL is never used.
  *
- *   TEST_DATABASE_URL=postgres://localhost/miro_test pnpm exec tsx ai/evals/agency/baseline.ts
- *   TEST_DATABASE_URL=postgres://localhost/miro_test pnpm exec tsx ai/evals/agency/baseline.ts --live --limit-usd 0.5
+ *   TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/agency/baseline.ts
+ *   TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/agency/baseline.ts --live --limit-usd 0.5 --characters thomas,yujin
  *
  * Without --live every provider is the app's mock: this checks wiring and accounting, not cost or latency
  * (mock moderation makes no call at all).
  */
 type Call = { requestId: string | null; task: string; promptVersion: string | null; provider: string; model: string; status: string
   ok: boolean; error: string | null; fallbackUsed: boolean; latencyMs: number; inputTokens: number | null; outputTokens: number | null; costUSD: number | null }
-type Unit = { kind: string; wallMs: number; outcome: string; engine?: string; calls: Call[]; background?: Call[]; events?: Array<Record<string, unknown>> }
+type Unit = { kind: string; wallMs: number; outcome: string; engine?: string; calls: Call[]; background?: Call[]; events?: Array<Record<string, unknown>>
+  blocks?: Array<{ type: string; text: string }> | null }
 type Arm = { experiment: string; agencyMode: string; sessionStartMs: number; stopped: string | null; deferredErrors: string[]; units: Unit[] }
 
 const flag = (name: string) => process.argv.includes(name)
@@ -43,6 +44,9 @@ function summarize(units: Unit[], succeeded: (unit: Unit) => boolean) {
   return { units: units.length, succeeded: wins, failureRate: units.length ? round((units.length - wins) / units.length, 3) : null,
     outcomes: countBy(units, u => u.outcome), engines: countBy(units, u => u.engine ?? 'none'),
     failureCauses: countBy(units.flatMap(u => (u.events ?? []).filter(e => e.event === 'turn.failed')), e => String(e.cause)),
+    // Character chat format (2026-09-24): every reply carries scene narration and an inner voice.
+    format: { replies: units.filter(u => u.blocks).length, withScene: units.filter(u => u.blocks?.some(b => b.type === 'action' || b.type === 'narrative')).length,
+      withThought: units.filter(u => u.blocks?.some(b => b.type === 'thought')).length },
     wallMs: { p50: round(percentile(wall, 50)), p95: round(percentile(wall, 95)), max: round(wall.length ? Math.max(...wall) : null) },
     callsPerUnit: round(units.length ? calls.length / units.length : null, 2), failedCalls: calls.filter(c => !c.ok).length,
     tokensPerUnit: { input: round(units.length ? sum(calls.map(c => c.inputTokens ?? 0)) / units.length : null), output: round(units.length ? sum(calls.map(c => c.outputTokens ?? 0)) / units.length : null) },
@@ -95,8 +99,9 @@ async function main() {
   const blank = { AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '', GEMINI_API_KEY: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '' }
   const common = { ...process.env, ...blank, TEST_DATABASE_URL: database, MIRO_AGENCY_MEASURE_EXPERIMENT: experiment, MIRO_MODE: '',
     ...Object.fromEntries(Object.entries(features).map(([name, on]) => [`MIRO_FEATURE_${name}`, on])),
-    // Durable experiment cap: the experiment user's monthly cost counter plus the day's global cost in the test DB.
-    AI_DAILY_BUDGET: String(limitUSD), MIRO_BUDGET_POLICY: JSON.stringify({ user_monthly: { cost: limitUSD, requests: 100_000 } }),
+    // Durable experiment cap: the experiment user's monthly cost counter. The day's global counter is shared by every
+    // experiment in this database, so it must not be the cap (it would stop a new experiment on an old one's spend).
+    AI_DAILY_BUDGET: live ? '100' : '0', MIRO_BUDGET_POLICY: JSON.stringify({ user_monthly: { cost: limitUSD, requests: 100_000 } }),
     AI_DAILY_REQUEST_LIMIT: '100000', AI_USER_DAILY_LIMIT: '100000', MIRO_REQUESTS_PER_MINUTE: '120',
     ...(provider ? { MIRO_MODEL_REGISTRY: JSON.stringify(provider.registry), GEMINI_API_KEY: provider.key } : {}) }
   const vitest = (file: string, env: Record<string, string | undefined>) => spawnSync('pnpm',
@@ -105,15 +110,25 @@ async function main() {
   const failuresPath = join(directory, 'failures.json')
   const failuresStatus = vitest('apps/web/lib/agency/baseline-failures.eval.ts', { ...blank, MIRO_CHARACTER_AGENCY_MODE: 'off', MIRO_AGENCY_FAILURES_OUT: failuresPath })
   const arms: Record<string, Arm | null> = {}
+  const warnings: string[] = []
   const selected = (option('--arms') ?? 'legacy,agency').split(',')
+  const characters = (option('--characters') ?? 'thomas').split(',')
   for (const [arm, mode] of ([['legacy', 'off'], ['agency', 'live']] as const).filter(([arm]) => selected.includes(arm))) {
-    const out = join(directory, `${arm}.json`)
-    const status = vitest('apps/web/lib/agency/baseline-measure.eval.ts', { MIRO_CHARACTER_AGENCY_MODE: mode, MIRO_CHARACTER_AGENCY_SESSIONS: mode === 'off' ? '' : '*', MIRO_AGENCY_MEASURE_OUT: out })
-    arms[arm] = status === 0 && existsSync(out) ? JSON.parse(await readFile(out, 'utf8')) : null
+    const runs: Arm[] = []
+    for (const character of characters) {
+      const out = join(directory, `${arm}-${character}.json`)
+      const status = vitest('apps/web/lib/agency/baseline-measure.eval.ts', { MIRO_CHARACTER_AGENCY_MODE: mode, MIRO_CHARACTER_AGENCY_SESSIONS: mode === 'off' ? '' : '*',
+        MIRO_AGENCY_MEASURE_CHARACTER: character, MIRO_AGENCY_MEASURE_OUT: out })
+      const data: Arm | null = status === 0 && existsSync(out) ? JSON.parse(await readFile(out, 'utf8')) : null
+      if (!data) { warnings.push(`${arm}/${character}: did not complete`); continue }
+      runs.push({ ...data, units: data.units.map(unit => ({ ...unit, character })) })
+      if (data.stopped) break
+    }
+    arms[arm] = runs.length ? { ...runs[0]!, sessionStartMs: sum(runs.map(r => r.sessionStartMs)) / runs.length,
+      stopped: runs.find(r => r.stopped)?.stopped ?? null, deferredErrors: runs.flatMap(r => r.deferredErrors), units: runs.flatMap(r => r.units) } : null
     if (arms[arm]?.stopped) break
   }
 
-  const warnings: string[] = []
   const summary = Object.fromEntries(Object.entries(arms).map(([arm, data]) => {
     if (!data) { warnings.push(`${arm}: arm did not complete`); return [arm, null] }
     if (data.stopped) warnings.push(`${arm}: stopped by ${data.stopped}`)
@@ -133,7 +148,7 @@ async function main() {
   const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8' }).trim()
   const report = { mode: live ? 'live-pilot' : 'mock-wiring', experiment, createdAt: new Date().toISOString(),
     commit: git('rev-parse', 'HEAD'), uncommittedChanges: git('status', '--porcelain').length > 0,
-    database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features,
+    database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features, characters,
     registry: provider?.registry.map(({ id, providerModelId, capabilities, inputCost, outputCost }) => ({ id, providerModelId, capabilities, inputCost, outputCost })) ?? null,
     registryOverride: provider?.override ?? null, liveRegistryServesWorldUpdate: provider?.servesWorldUpdate ?? null,
     complete: warnings.length === 0, warnings, summary, failures, arms,

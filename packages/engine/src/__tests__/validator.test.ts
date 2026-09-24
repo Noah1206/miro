@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MemoryCandidateProposal, SimulationProposal } from '../proposal.schema'
 import { validateProposal } from '../validator'
+import { renderBlocks } from '../orchestrator'
 import { event, npc, snapshot } from './fixtures'
 
 function proposal(over: Partial<SimulationProposal> = {}): SimulationProposal {
@@ -9,6 +10,21 @@ function proposal(over: Partial<SimulationProposal> = {}): SimulationProposal {
     ...over,
   })
 }
+
+describe('inner voice blocks', () => {
+  it("keeps the character's own thought, drops anyone else's or one said on a call, and never puts it in the message text", () => {
+    const v = validateProposal(proposal({ rp: { blocks: [
+      { type: 'action', speaker: null, text: '책장을 넘긴다.' },
+      { type: 'thought', speaker: '토마스', text: '오늘은 좀 반갑네.' },
+      { type: 'thought', speaker: '이수현', text: '남의 속마음.' },
+      { type: 'dialogue', speaker: '토마스', text: '왔어요?' },
+    ] } }), snapshot({ activeNpcs: [npc()] }))
+    expect(v.blocks.map(b => b.text)).toEqual(['책장을 넘긴다.', '오늘은 좀 반갑네.', '왔어요?'])
+    expect(renderBlocks(v.blocks)).toBe('책장을 넘긴다.\n토마스: 왔어요?')
+    const call = validateProposal(proposal({ rp: { blocks: [{ type: 'thought', speaker: '토마스', text: '떨린다.' }, { type: 'dialogue', speaker: '토마스', text: '여보세요.' }] } }), snapshot({ mode: 'voice_call' }))
+    expect(call.blocks.map(b => b.type)).toEqual(['dialogue'])
+  })
+})
 
 describe('relationship delta validation', () => {
   it('the schema drops an absurd delta without losing the reply', () => {

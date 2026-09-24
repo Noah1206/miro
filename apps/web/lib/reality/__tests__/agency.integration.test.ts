@@ -31,7 +31,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
     async generateStructured(request) {
       const version = request.promptVersion ?? ''
       calls.push({ version, prompt: request.prompt, system: request.system })
-      if (version === 'agency-planner:v2') {
+      if (version === 'agency-planner:v4') {
         const context = JSON.parse(request.prompt)
         const evidenceId = context.evidence.find((item: { actor: string }) => item.actor === 'user')?.id
         const refs = evidenceId ? [evidenceId] : []
@@ -56,7 +56,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
         await opts.duringRender?.()
         return request.schema.parse({ text: '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
       }
-      if (version === 'agency-realization-check:v2') {
+      if (version === 'agency-realization-check:v4') {
         const context = JSON.parse(request.prompt)
         return request.schema.parse({ decisionId: context.decision.id, aligned: !opts.reject, claims: [], unsupported: [],
           violations: opts.reject ? ['contradicts_decision'] : [],

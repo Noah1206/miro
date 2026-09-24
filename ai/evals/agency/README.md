@@ -25,7 +25,7 @@ TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/a
 
 Use a database the unit tests do not share: `apps/web/lib/usage/__tests__/abuse-limits.integration.test.ts` deletes the current day's and month's budget counters, which resets the experiment cap.
 
-- `--arms agency` (or `legacy`) runs one arm; the default runs both.
+- `--arms agency` (or `legacy`) runs one arm; the default runs both. `--characters thomas,yujin` repeats the script per seed character (default `thomas`).
 - Without `--live` every provider is the app mock. That checks wiring and accounting only: mock moderation makes no call and costs are zero.
 - `--live` takes only `GEMINI_API_KEY` and `MIRO_MODEL_REGISTRY` from the root `.env`. The cap is the experiment user's monthly AI cost counter plus the day's global cost in that database, so a rerun with the same `--experiment` continues the same budget. A budget denial stops the run and marks it incomplete.
 - Feature switches are pinned to production's `/api/health` values of 2026-09-24.

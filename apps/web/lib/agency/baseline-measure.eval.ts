@@ -64,7 +64,7 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       const result = await verify(llm, input)
       realizations.push({ action: input.decision.action, decided: input.decision.candidate.description,
         said: input.blocks.map(b => `${b.speaker ?? b.type}: ${b.text}`), ok: result.ok, issues: result.issues.map(i => `${i.field} ${i.reason}`),
-        ids: { decision: input.decision.id, candidate: input.decision.candidate.id },
+        ids: { decision: input.decision.id, candidate: input.decision.candidate.id }, rejected: input.decision.rejected,
         claims: result.claims.map(c => ({ kind: c.kind, quote: c.quote, actionIds: c.actionIds, evidenceIds: c.evidenceIds, ruleIds: c.ruleIds })) })
       return result
     })
@@ -73,7 +73,7 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
     const [found] = await db.select().from(users).where(eq(users.email, email)).limit(1)
     const owner = found ?? (await db.insert(users).values({ email }).returning())[0]!
     await db.insert(userSettings).values({ userId: owner.id, quietHoursEnabled: false, pushEnabled: false, timeZone: 'Asia/Seoul' }).onConflictDoNothing()
-    const character = await cloneCharacterAsReality('thomas', { ownerId: owner.id })
+    const character = await cloneCharacterAsReality(process.env.MIRO_AGENCY_MEASURE_CHARACTER ?? 'thomas', { ownerId: owner.id })
     // In-app messages only: the agency path has no call/photo executor, so both arms compete on one channel.
     await db.update(contactProfiles).set({ enabled: true, activeHoursStart: '00:00', activeHoursEnd: '23:59', preferredChannel: 'message',
       callProbability: 0, videoCallProbability: 0, photoProbability: 0, voiceMessageProbability: 0 })
@@ -112,7 +112,8 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       const calls = await since(from)
       const own = calls.filter(c => c.requestId === requestId)
       units.push({ kind: 'turn', index, input, wallMs, outcome: outcome.ok ? 'ok' : outcome.reason, engine: engineOf(own),
-        text: outcome.ok ? outcome.responseText : null, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls: own,
+        text: outcome.ok ? outcome.responseText : null, blocks: outcome.ok ? outcome.blocks.map(b => ({ type: b.type, text: b.text })) : null,
+        state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls: own,
         background: calls.filter(c => c.requestId !== requestId) })
       if (!outcome.ok && outcome.reason === 'budget') { stopped = 'budget'; break }
     }

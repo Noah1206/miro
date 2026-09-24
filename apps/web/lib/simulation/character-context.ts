@@ -32,7 +32,7 @@ export function characterContext(
 export function conversationContext(rows: Array<typeof messages.$inferSelect>): RecentMessage[] {
   return rows.filter(m => m.role !== 'system' && !m.hiddenAt).map(m => {
     const blocks = m.blocks.filter((b): b is { type: string; speaker?: string | null; text: string } =>
-      ['dialogue', 'action', 'narrative', 'npc', 'world'].includes(String(b.type)) && typeof b.text === 'string')
+      ['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'].includes(String(b.type)) && typeof b.text === 'string')
     const speaker = blocks.find(b => b.type === 'npc' && typeof b.speaker === 'string')?.speaker
     return {
       id: m.id, role: m.role as RecentMessage['role'], kind: m.kind,

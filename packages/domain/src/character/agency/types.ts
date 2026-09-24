@@ -64,6 +64,8 @@ export type AgencyExpression = { openness: number; directness: number }
 
 export const AGENCY_ACTIONS = ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'continue_activity', 'contact', 'cancel_commitment', 'wait'] as const
 export type AgencyAction = (typeof AGENCY_ACTIONS)[number]
+/** Chosen actions that answer or act for the user, so a promise made with them is actually voiced. */
+export const AGENCY_COMMITTING_ACTIONS: readonly AgencyAction[] = ['respond', 'ask', 'defer', 'disclose', 'continue_activity', 'contact']
 export type AgencyActionStatus = 'authorized' | 'queued' | 'sent' | 'delivered' | 'answered' | 'completed' | 'failed' | 'cancelled'
 export type AgencyActionRecord = {
   id: string

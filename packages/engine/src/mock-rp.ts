@@ -29,6 +29,7 @@ export function buildMockProposal(
     ? [{ type: 'dialogue', speaker: name, text: cold ? '…듣고 있어요. 말해요.' : '목소리 들으니까 좀 낫네요.' }]
     : [
         ...(messenger ? [] : [{ type: 'action' as const, speaker: null, text: cold ? '시선을 돌린다.' : '잠깐 말을 멈춘다.' }]),
+        { type: 'thought', speaker: name, text: cold ? '괜히 신경 쓰이게 하네.' : '조금은 반가운 것 같기도 하고.' },
         { type: 'dialogue', speaker: name, text: fallbackLine(mood, speechStyle, seed) },
       ]
 

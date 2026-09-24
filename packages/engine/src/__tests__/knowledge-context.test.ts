@@ -17,6 +17,7 @@ describe('participant evidence boundary', () => {
       { role: 'character', content: '말해 볼까요. MIXED_SECRET', id: 'mixed-1', blocks: [
         { type: 'dialogue', speaker: '토마스', text: '말해 볼까요.' },
         { type: 'narrative', text: 'MIXED_SECRET' },
+        { type: 'thought', speaker: '토마스', text: 'UNSPOKEN_THOUGHT' },
       ] },
       { role: 'npc', npcName: '서연', content: 'PUBLIC_CLAIM', id: 'npc-1' },
     ] })
@@ -24,6 +25,7 @@ describe('participant evidence boundary', () => {
     else await analyzeMemory(llm, task, '안녕', s)
     expect(prompt).not.toContain('NARRATOR_SECRET')
     expect(prompt).not.toContain('MIXED_SECRET')
+    expect(prompt).not.toContain('UNSPOKEN_THOUGHT')
     expect(prompt).toContain('말해 볼까요.')
     expect(prompt).toContain('PUBLIC_CLAIM')
     expect(prompt).toContain('"role":"npc"')

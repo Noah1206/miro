@@ -17,5 +17,5 @@ export const CALL_MODE_RULES: Record<Exclude<SimulationMode, 'chat'>, string> = 
 export function allowedBlockTypes(mode: SimulationMode): ReadonlySet<string> {
   if (mode === 'voice_call') return new Set(['dialogue', 'npc'])
   if (mode === 'video_call') return new Set(['dialogue', 'npc', 'action'])
-  return new Set(['dialogue', 'action', 'narrative', 'npc', 'world'])
+  return new Set(['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'])
 }

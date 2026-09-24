@@ -71,6 +71,11 @@ function validateBlocks(
       issues.push({ field: 'rp.blocks', reason: `${b.type} not allowed in ${s.mode ?? 'chat'}` })
       return false
     }
+    // An inner voice belongs to this character alone. Other people's minds are not the character's knowledge.
+    if (b.type === 'thought' && b.speaker && b.speaker !== s.character.identity.name) {
+      issues.push({ field: 'rp.blocks', reason: 'thought of someone else' })
+      return false
+    }
     if (b.type === 'dialogue' || b.type === 'npc') {
       if (!b.speaker) {
         issues.push({ field: 'rp.blocks', reason: `${b.type} block has no speaker` })

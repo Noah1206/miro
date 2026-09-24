@@ -1,5 +1,4 @@
 'use server'
-import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db, users } from '@miro/db'
 import { canRetryVerification, verifyRetryAt } from '@miro/domain'
@@ -26,6 +25,6 @@ export async function verifyAdult(_p: VerifyState, form: FormData): Promise<Veri
     return { error: `인증에 실패했습니다: ${result.reason} 24시간 후 다시 시도할 수 있습니다.`, done: false }
   }
   await db.update(users).set({ adultVerifiedAt: now, maturePolicyAgreedAt: now, adultVerifyFailedAt: null }).where(eq(users.id, user.id))
-  revalidatePath('/my/verify')
+  // The form shows completion from this state; a reload renders the verified page. Re-sending the tree only delayed it.
   return { error: null, done: true }
 }

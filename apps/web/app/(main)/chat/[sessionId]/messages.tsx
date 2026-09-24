@@ -89,12 +89,13 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
 function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow }: {
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
-  const blocks = m.blocks.filter(b => ['dialogue', 'action', 'narrative', 'npc', 'world'].includes(String(b.type)) && typeof b.text === 'string')
-  const paragraphs = blocks.length ? blocks.map(b => ({ text: String(b.text), action: ['action', 'narrative', 'world'].includes(String(b.type)), speaker: typeof b.speaker === 'string' ? b.speaker : null }))
+  const blocks = m.blocks.filter(b => ['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'].includes(String(b.type)) && typeof b.text === 'string')
+  const paragraphs = blocks.length ? blocks.map(b => ({ text: String(b.text), action: ['action', 'narrative', 'world'].includes(String(b.type)),
+    thought: b.type === 'thought', speaker: typeof b.speaker === 'string' && b.type !== 'thought' ? b.speaker : null }))
     : m.content.split(/\n\s*\n/).map(text => {
       const prefix = `${name}:`
       const dialogue = text.startsWith(prefix)
-      return { text: dialogue ? text.slice(prefix.length).trimStart() : text, action: !dialogue && /^\*[^*]/.test(text), speaker: null }
+      return { text: dialogue ? text.slice(prefix.length).trimStart() : text, action: !dialogue && /^\*[^*]/.test(text), thought: false, speaker: null }
     })
   // 문단을 하나씩 친다 — 메신저에서 여러 줄이 연달아 오는 느낌.
   const [typed, setTyped] = useState(0)
@@ -107,7 +108,8 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
       <p className={styles.speaker}>{name}</p>
       <div className={styles.bubble}>
         {paragraphs.map((p, i) => (
-          <p key={i} className={p.action ? styles.action : undefined} hidden={typing && i > typed}>
+          <p key={i} className={p.thought ? styles.thought : p.action ? styles.action : undefined} hidden={typing && i > typed} data-thought={p.thought || undefined}>
+            {p.thought && <span className="sr-only">속마음: </span>}
             {p.speaker && p.speaker !== name && `${p.speaker}: `}
             {typing && i === typed
               ? <TypedText text={p.text} mood={mood} onDone={() => { setTyped(i + 1); onGrow?.() }} />

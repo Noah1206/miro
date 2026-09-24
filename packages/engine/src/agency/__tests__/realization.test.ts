@@ -28,7 +28,7 @@ describe('authorized decision realization', () => {
     const checked = await verifyAgencyRealization(recordedProvider([assessment(input)], calls), input)
     expect(checked.ok).toBe(true)
     expect(checked.providerMode).toBe('mock')
-    expect(calls[0]?.promptVersion).toBe('agency-realization-check:v2')
+    expect(calls[0]?.promptVersion).toBe('agency-realization-check:v4')
   })
 
   it('rejects undeclared obvious success text even when a checker returns an empty aligned claim list', async () => {
@@ -49,6 +49,35 @@ describe('authorized decision realization', () => {
     const invented = await verifyAgencyRealization(recordedProvider([{ ...assessment(input),
       claims: [{ ...span, kind: 'reported_claim', evidenceIds: ['invented'], ruleIds: [], actionIds: [] }] }]), input)
     expect(invented.issues.map(issue => issue.reason)).toContain('unsupported_report')
+    input.context.evidence.push(evidence({ id: 'reply-1', actor: 'character-1' }))
+    const withContext = await verifyAgencyRealization(recordedProvider([{ ...assessment(input),
+      claims: [{ ...span, kind: 'reported_claim', evidenceIds: ['message-1', 'reply-1'], ruleIds: [], actionIds: [] }] }]), input)
+    expect(withContext.issues).toEqual([])
+    const withoutUser = await verifyAgencyRealization(recordedProvider([{ ...assessment(input),
+      claims: [{ ...span, kind: 'reported_claim', evidenceIds: ['reply-1'], ruleIds: [], actionIds: [] }] }]), input)
+    expect(withoutUser.issues.map(issue => issue.reason)).toContain('unsupported_report')
+  })
+
+  it('lets any claim about this reply cite the current decision, but no unknown action', async () => {
+    const input = await realization('내 이름은 도윤이야.')
+    const claim = { blockIndex: 0, start: 0, end: input.blocks[0]!.text.length, quote: input.blocks[0]!.text,
+      kind: 'authored_fact', evidenceIds: [], ruleIds: ['identityName'], actionIds: [input.decision.id] }
+    const checked = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [claim] }]), input)
+    expect(checked.issues).toEqual([])
+    expect(checked.claims[0]!.ruleIds).toEqual(['identity-name'])
+    const other = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [{ ...claim, actionIds: ['elsewhere'] }] }]), input)
+    expect(other.issues.map(issue => issue.reason)).toContain('unknown_claim_action')
+  })
+
+  it("treats the chosen candidate's ID as the decision it became", async () => {
+    const input = await realization('어떤 책을 읽고 싶어?')
+    const claim = { blockIndex: 0, start: 0, end: input.blocks[0]!.text.length, quote: input.blocks[0]!.text,
+      kind: 'intention', evidenceIds: ['message-1'], ruleIds: [], actionIds: [input.decision.candidate.id] }
+    const checked = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [claim] }]), input)
+    expect(checked.issues).toEqual([])
+    expect(checked.claims[0]!.actionIds).toEqual([input.decision.id])
+    const other = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [{ ...claim, actionIds: ['some-other-candidate'] }] }]), input)
+    expect(other.issues.map(issue => issue.reason)).toEqual(expect.arrayContaining(['unknown_claim_action', 'unselected_intention']))
   })
 
   it('does not let a mislabelled claim hide a completion, while questions, negations and wishes assert nothing', async () => {
@@ -57,7 +86,7 @@ describe('authorized decision realization', () => {
       kind: 'intention', evidenceIds: [], ruleIds: [], actionIds: [] }
     expect((await verifyAgencyRealization(recordedProvider([{ ...assessment(claimed), claims: [intention] }]), claimed)).issues.map(issue => issue.reason))
       .toContain('undeclared_success_claim')
-    for (const text of ['집에 잘 도착했어?', '아직 안 보냈어.', '사진을 보냈으면 좋겠다.']) {
+    for (const text of ['집에 잘 도착했어?', '아직 안 보냈어.', '사진을 보냈으면 좋겠다.', '먼저 연락을 보냈어야 했는데.']) {
       const input = await realization(text)
       expect((await verifyAgencyRealization(recordedProvider([assessment(input)]), input)).ok).toBe(true)
     }

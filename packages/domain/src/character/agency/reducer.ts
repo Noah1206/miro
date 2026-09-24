@@ -1,4 +1,4 @@
-import type { AgencyActionRecord, AgencyActionStatus, AgencyDecisionContext, AgencyGoal, AgencyIssue, AgencyState, AgencyTransition } from './types'
+import { AGENCY_COMMITTING_ACTIONS, type AgencyActionRecord, type AgencyActionStatus, type AgencyDecisionContext, type AgencyGoal, type AgencyIssue, type AgencyState, type AgencyTransition } from './types'
 import { AGENCY_LIMITS, agencyEvidence, agencyGoalId, agencyUserUtterance, finiteRange, validAgencyTime, validateAgencyCandidate } from './validation'
 
 const TERMINAL_GOALS = new Set<AgencyGoal['status']>(['completed', 'abandoned', 'cancelled', 'expired'])
@@ -45,12 +45,14 @@ export function reduceAgencyState(previous: AgencyState, transition: AgencyTrans
     && new Set(ids).size === ids.length && ids.every(id => Boolean(agencyEvidence(id, context)))
   const ruleIds = new Set(context.compiled.rules.map(r => r.id))
 
+  // A promise voiced by this turn's reply starts active; any other new goal waits for an explicit activation.
+  const voiced = Boolean(transition.decision && AGENCY_COMMITTING_ACTIONS.includes(transition.decision.action))
   if ((transition.goals?.length ?? 0) > AGENCY_LIMITS.changes) reject('goals', 'goal_change_limit')
   for (const change of (transition.goals ?? []).slice(0, AGENCY_LIMITS.changes)) {
     if (change.kind === 'add') {
       const g = change.goal
       if (state.goals.some(old => old.id === g.id)) { reject('goals', 'goal_exists'); continue }
-      if (!g.id || g.id.length > 100 || !g.description.trim() || g.description.length > 1000 || g.status !== 'proposed'
+      if (!g.id || g.id.length > 100 || !g.description.trim() || g.description.length > 1000 || (g.status !== 'proposed' && !(g.status === 'active' && voiced))
         || !Array.from({ length: AGENCY_LIMITS.changes }, (_, i) => agencyGoalId(context.sequence, i)).includes(g.id)
         || !grounded(g.evidenceIds) || g.ruleIds.length > 12 || g.ruleIds.some(id => !ruleIds.has(id)) || !finiteRange(g.priority, 0, 1)
         || !['action_accepted', 'sent', 'delivered', 'answered', 'observed_event'].includes(g.success)
@@ -97,12 +99,11 @@ export function reduceAgencyState(previous: AgencyState, transition: AgencyTrans
 
   if (transition.decision) {
     const d = transition.decision
-    // A cancellation in the same batch invalidates a previously selected action.
-    if (d.candidate.goalIds.some(id => {
-      const status = state.goals.find(g => g.id === id)?.status
-      return status !== 'active' && !(d.action === 'cancel_commitment' && status === 'cancelled'
-        && transition.goals?.some(g => g.kind === 'cancel' && g.goalId === id))
-    })) {
+    // A cancellation in the same batch invalidates an action that would still carry the goal out: fulfilling it, or
+    // contacting/continuing work for it. A reply that only mentions it, such as accepting the cancellation, stays valid;
+    // rejecting that reply dropped the cancellation too and let the cancelled promise be sent later (live, 2026-09-24).
+    const carried = [...(d.candidate.fulfillsGoalIds ?? []), ...(['contact', 'continue_activity'].includes(d.action) ? d.candidate.goalIds : [])]
+    if (carried.some(id => state.goals.find(g => g.id === id)?.status !== 'active')) {
       return { state: previous, issues: [...issues, { field: 'decision', reason: 'goal_changed_before_action' }], applied: false }
     }
     if (state.actions.some(a => a.id === d.id)) return { state: previous, issues: [{ field: 'decision', reason: 'duplicate_action' }], applied: false }

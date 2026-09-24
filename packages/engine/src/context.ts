@@ -58,11 +58,13 @@ function styleDirective(s: SimulationSnapshot): string {
   const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''
   const prose = /\*[^*]+\*/.test(input) || input.includes('\n') || input.length > 120
   const tense = s.activeEvents.length > 0 || (s.characterState !== undefined && s.characterState.mood !== 'neutral')
-  const base = '- 출력 스타일: 형식은 고정되어 있지 않습니다. 사용자가 쓰는 방식과 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 스스로 고릅니다.'
-  if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.'
-  if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 대사에 행동과 환경 반응을 붙여 무게를 줍니다.'
-  if (input.length > 60) return base + ' 대사와 짧은 행동 묘사를 섞습니다. 일상 장면은 짧게, 중요한 장면은 길게.'
-  return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 메신저 대화처럼 짧은 대사 위주로, 서술은 최소한으로.'
+  // 캐릭터챗은 만나서 나누는 장면이다(2026-09-24 결정). 입력이 짧아도 상황과 속마음은 빠지지 않고 짧아질 뿐이다.
+  const base = '- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
+  const thought = '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
+  if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
+  if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 줍니다.' + thought
+  if (input.length > 60) return base + ' 일상 장면은 짧게, 중요한 장면은 길게.' + thought
+  return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 상황 한 줄, 속마음 한 줄, 짧은 대사로 가볍게 씁니다.' + thought
 }
 
 /**
@@ -107,7 +109,8 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1): BuiltCont
     if (s.recentMessages.length > recent.length) dropped.push(`messages(${s.recentMessages.length - recent.length})`)
 
     const prompt = buildPrompt(s, memories, recent)
-    last = { system, prompt, promptVersion: `dialogue:${template.version}`, approxTokens: systemTokens + estimateTokens(prompt), dropped }
+    // The engine's own format rules ride on the template; record their revision too.
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+scene-thought`, approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
   throw new Error('context_budget_exceeded')
@@ -237,7 +240,7 @@ function buildPrompt(
 
   const state = s.characterState
   if (state) {
-    parts.push('', '## 지금 기분 (내부 상태 — 말로 설명하지 말고 태도로 드러낼 것)')
+    parts.push('', '## 지금 기분 (내부 상태 — 대사로 설명하지 말고 태도로, 채팅에서는 속마음으로도 드러낼 것)')
     parts.push(`${state.mood}: ${MOOD_GUIDE[state.mood]}`)
     if (state.stress >= 60) parts.push('스트레스가 높다. 말이 짧아지고 먼저 묻지 않는다.')
     for (const g of state.currentGoals) parts.push(`지금 하고 싶은 것: ${g}`)
@@ -277,6 +280,7 @@ function buildPrompt(
             ? '내레이터 (전지적 서술 · 캐릭터 지식 아님)'
             : block.type === 'npc' ? `NPC (${block.speaker ?? m.npcName ?? '이름 미상'})`
             : block.type === 'action' ? `행동 서술 (${block.speaker ?? label})`
+            : block.type === 'thought' ? `속마음 (${s.character.identity.name}, 소리 내어 말하지 않음)`
             : m.role !== 'user' && block.speaker && block.speaker !== s.character.identity.name
               ? `NPC (${block.speaker})` : label
           parts.push(`${speaker}: ${block.text}`)
@@ -296,7 +300,7 @@ export function estimateTokens(text: string): number {
 
 const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
 {"rp":{"blocks":[{"type":"dialogue","speaker":"character name","text":"response"}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
-Block type: dialogue|action|narrative|npc|world; speaker is a name or null. text: 1..2000 characters.
+Block type: dialogue|action|narrative|npc|world|thought; speaker is a name or null (thought: this character's own unspoken inner voice). text: 1..2000 characters.
 Memory: {type:user_fact|promise|shared_event|relationship_change|preference|conflict|world_fact,content:string,importance:0..1,persistence:0..1,confidence:0..1,tags:["주제어","같은 낱말을 다음 턴에도 재사용"] (array of 1..5 short Korean words)}; max 3.
 World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
 Scene: {location?:string,time?:string,mood?:string,weather?:string}.

@@ -1,5 +1,4 @@
 'use server'
-import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { db, userSettings } from '@miro/db'
 import { requireUser } from '@/lib/auth'
@@ -24,6 +23,7 @@ export async function saveSettings(_p: SettingsState, form: FormData): Promise<S
   try { Intl.DateTimeFormat(undefined, { timeZone: parsed.data.timeZone }) } catch { return { saved: false, error: '알 수 없는 시간대입니다.' } }
   await db.insert(userSettings).values({ userId: user.id, ...parsed.data })
     .onConflictDoUpdate({ target: userSettings.userId, set: { ...parsed.data, updatedAt: new Date() } })
-  revalidatePath('/my/settings')
+  // No revalidation: every input is controlled and already shows the saved values. Re-sending the page tree kept
+  // the form pending past the E2E 10s wait under load; other pages are dynamic and re-read on navigation.
   return { saved: true, error: null }
 }

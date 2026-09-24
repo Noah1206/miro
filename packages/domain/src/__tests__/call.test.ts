@@ -41,6 +41,8 @@ describe('call mode blocks', () => {
     expect([...allowedBlockTypes('voice_call')].sort()).toEqual(['dialogue', 'npc'])
     expect(allowedBlockTypes('video_call').has('action')).toBe(true)
     expect(allowedBlockTypes('video_call').has('narrative')).toBe(false)
+    expect(allowedBlockTypes('chat').has('thought')).toBe(true)
+    expect(allowedBlockTypes('video_call').has('thought')).toBe(false)
     expect(allowedBlockTypes('chat').has('narrative')).toBe(true)
   })
 })

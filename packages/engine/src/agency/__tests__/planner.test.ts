@@ -17,6 +17,36 @@ describe('bounded agency planning', () => {
     expect(result.providerMode).toBe('mock')
   })
 
+  it('maps a restyled rule ID to the one compiled rule it names', async () => {
+    const { compiled, state, context } = await setupCompiled()
+    const proposal = planProposal()
+    proposal.candidates[0] = { ...proposal.candidates[0]!, ruleIds: ['valuePromise'], ruleFit: [{ ruleId: 'VALUE_PROMISE', fit: .5 }] }
+    const result = await planAgencyDecision(recordedProvider([proposal]), compiled, state, context)
+    expect(result.decision.action).toBe('ask')
+    expect(result.decision.candidate.ruleIds).toEqual(['value-promise'])
+  })
+
+  it('cancels the goals a chosen cancellation names even when the model omits the change', async () => {
+    const { compiled, state, context } = await setupCompiled()
+    state.goals = [{ id: 'promise', description: '결과가 나오면 먼저 연락한다.', evidenceIds: ['message-1'], ruleIds: ['value-promise'], priority: .8,
+      status: 'active', createdAt: state.updatedAt, updatedAt: state.updatedAt, success: 'sent' }]
+    const proposal = planProposal()
+    proposal.candidates = [{ ...proposal.candidates[0]!, id: 'cancel', action: 'cancel_commitment', description: '약속한 연락을 취소한다.', goalIds: ['promise'] }]
+    const result = await planAgencyDecision(recordedProvider([proposal]), compiled, state, context)
+    expect(result.decision.action).toBe('cancel_commitment')
+    expect(result.state.goals[0]?.status).toBe('cancelled')
+  })
+
+  it('activates a promise the chosen reply voices and keeps other new goals proposed', async () => {
+    const { compiled, state, context } = await setupCompiled()
+    const goal = { id: 'g', description: '결과가 나오면 먼저 연락한다.', evidenceIds: ['message-1'], ruleIds: ['value-promise'], priority: .8, success: 'sent' as const }
+    const proposal = { ...planProposal(), newGoals: [{ ...goal, commitment: true }, { ...goal, description: '다음에 읽을 책을 떠올린다.' }] }
+    const result = await planAgencyDecision(recordedProvider([proposal]), compiled, state, context)
+    expect(result.decision.action).toBe('ask')
+    expect(result.state.goals.map(g => g.status)).toEqual(['active', 'proposed'])
+    expect(result.state.goals[0]).not.toHaveProperty('commitment')
+  })
+
   it('keeps a candidate but drops fulfillment it cannot attest yet, and lets a due contact carry out its promise', async () => {
     const { compiled, state, context } = await setupCompiled()
     const goal = (id: string, over: Partial<AgencyGoal> = {}): AgencyGoal => ({ id, description: `약속 ${id}`, evidenceIds: ['message-1'],
