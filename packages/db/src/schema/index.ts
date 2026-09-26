@@ -223,6 +223,8 @@ export const contactProfiles = pgTable('contact_profiles', {
   voiceMessageProbability: integer('voice_message_probability').notNull().default(20),
   activeHoursStart: text('active_hours_start').notNull().default('08:00'),
   activeHoursEnd: text('active_hours_end').notNull().default('23:00'),
+  /** 생활 리듬(domain Routine). 없으면 활동 시간 밖을 자는 것으로 본다. 캐릭터 설정에서 한 번 만들어 둔다. */
+  routine: jsonb('routine').$type<Record<string, unknown>>(),
   initiativeLevel: integer('initiative_level').notNull().default(50),
 
   /**
@@ -270,7 +272,7 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
 
   /** RP 턴에서 AI 가 제안한 "나중에 연락하고 싶은 이유". 스케줄러가 우선 참고한다. */
   pendingRealityIntent: jsonb('pending_reality_intent')
-    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string }>(),
+    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call' }>(),
   /** 턴마다 변하는 캐릭터 상태(기분·스트레스·목표·발동한 규칙). 프로필(characters)과 분리한다. */
   characterState: jsonb('character_state').$type<Record<string, unknown>>().notNull().default({}),
   /** 스케줄러가 마지막으로 이 세션의 선연락을 판단한 시각. */
@@ -342,7 +344,8 @@ export const messages = pgTable('messages', {
   sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['user', 'character', 'narrator', 'npc', 'system'] }).notNull(),
   kind: text('kind', {
-    enum: ['text', 'photo', 'voice_message', 'event_card', 'call_record', 'live_scene', 'reality_message'],
+    // messenger = 사용자가 문자로 보낸 것. 캐릭터의 문자는 선연락과 같은 reality_message.
+    enum: ['text', 'photo', 'voice_message', 'event_card', 'call_record', 'live_scene', 'reality_message', 'messenger'],
   }).notNull().default('text'),
 
   content: text('content').notNull(),
@@ -614,7 +617,8 @@ export const callSessions = pgTable('call_sessions', {
     .references(() => roleplaySessions.id, { onDelete: 'cascade' }),
   channel: text('channel', { enum: ['voice', 'video'] }).notNull(),
   direction: text('direction', { enum: ['incoming', 'outgoing'] }).notNull(),
-  status: text('status', { enum: ['ringing', 'active', 'ended', 'missed', 'declined'] }).notNull(),
+  // unanswered = 사용자가 걸었지만 캐릭터가 (생활 리듬상) 받지 않음. missed 는 그 반대 — 캐릭터가 걸었는데 사용자가 안 받음.
+  status: text('status', { enum: ['ringing', 'active', 'ended', 'missed', 'declined', 'unanswered'] }).notNull(),
   reason: text('reason'),
   startedAt: timestamp('started_at', { withTimezone: true }),
   endedAt: timestamp('ended_at', { withTimezone: true }),

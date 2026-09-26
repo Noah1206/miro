@@ -14,6 +14,10 @@ export type EventRuleContext = {
   /** 사용자의 마지막 상호작용 후 경과 시간(분). 턴 안에서는 0. */
   idleMinutes: number
   turnCount: number
+  /** 사용자가 마지막으로 말한 곳 — scene(만나서) / messenger(문자). 스케줄러만 채운다. */
+  lastUserChannel?: 'scene' | 'messenger'
+  /** 이번 장면(마지막 상호작용)에 대해 '잘 들어갔어?' 를 이미 보냈는가. 스케줄러만 채운다. */
+  sceneFollowUpSent?: boolean
 }
 
 export type RealityEffect = { channel: ContactChannel; reason: string; urgency: number; delayMinutes: number }
@@ -49,6 +53,13 @@ export const EVENT_RULES: EventRule[] = [
     id: 'after_conflict', once: true,
     when: (c) => has(c, 'hostility', 'rejection') && c.characterState.stress >= 50,
     effect: { realityIntent: { channel: 'status', reason: '다툰 뒤 말없이 상태만 바뀐다', urgency: 0.5, delayMinutes: 2 } },
+  },
+  {
+    // 만나고 헤어진 뒤 — 장면이 끝나고 한 시간쯤 지나면 "잘 들어갔어?". 장면 하나에 한 번, 문자만 주고받았으면 안 한다, 낯선 사이엔 안 한다.
+    id: 'after_scene',
+    when: (c) => c.lastUserChannel === 'scene' && !c.sceneFollowUpSent
+      && c.turnCount >= 4 && c.idleMinutes >= 45 && c.idleMinutes < 240 && c.relationship.trust >= 30 && c.relationship.emotionalDistance < 70,
+    effect: { realityIntent: { channel: 'message', reason: '조금 전 만나고 헤어진 뒤 안부 — 잘 들어갔는지 묻고, 아까 나눈 이야기나 한 일을 짧게 되짚는다', urgency: 0.5, delayMinutes: 0 } },
   },
   {
     id: 'cold_silence',

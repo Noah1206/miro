@@ -2,7 +2,7 @@ import { prompts } from '@miro/providers'
 import { POLICY } from '@miro/config'
 import { CALL_MODE_RULES, MOOD_GUIDE, describeRelationship, groupByLayer, retrieveMemories, selectLore } from '@miro/domain'
 import type {
-  CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode,
+  CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock,
 } from '@miro/domain'
 
 export type RecentMessage = {
@@ -30,8 +30,14 @@ export type SimulationSnapshot = {
   activeNpcs: Npc[]
   recentRealityContacts: Array<{ channel: string; sentAt: Date }>
   turnCount: number
-  /** chat(기본) | voice_call | video_call. 통화도 같은 시뮬레이션이다. */
+  /** chat(기본) | messenger | voice_call | video_call. 문자와 통화도 같은 시뮬레이션이다. */
   mode?: SimulationMode
+  /** 현실 시계(사용자 현지). 없으면 세계 시간만 안다 — 테스트·옛 호출 경로. */
+  clock?: LocalClock
+  /** 캐릭터의 생활 리듬 한 줄(지금 뭐 하는 중인지). 미로 캐릭터만. */
+  routine?: string | null
+  /** 최근 통화 기록 — 캐릭터가 아는 사실이다. 못 받은 전화를 나중에 언급할 근거. */
+  recentCalls?: string[]
   /** reality 캐릭터의 채팅은 만나서 나누는 장면이다. 메시지·통화는 Reality 기능이 따로 맡는다. */
   experienceType?: 'chat' | 'reality'
   /** 턴마다 변하는 캐릭터 상태. 없으면 기본(neutral). runTurn 이 이번 턴 값을 채워 넣는다. */
@@ -110,7 +116,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+scene-thought${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+scene-thought${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
@@ -216,6 +222,13 @@ function buildPrompt(
   parts.push('## 현재 세계')
   parts.push(`장소: ${s.world.currentLocation}`)
   parts.push(`시간: ${s.world.currentTime}`)
+  // 현실 시계 — 세계관의 시대가 달라도 하루의 때와 요일은 사용자의 지금과 같이 흐른다. 밤 11시에 점심을 권하지 않는다.
+  if (s.clock) parts.push(`현실 시각(사용자 기준, ${s.clock.timeZone}): ${s.clock.label} · ${s.clock.period}. 세계의 하루도 이 때를 따릅니다.`)
+  if (s.routine) parts.push(`캐릭터의 생활 리듬: ${s.routine}`)
+  if (s.recentCalls?.length) {
+    parts.push('', '## 최근 통화 (캐릭터가 아는 사실)')
+    for (const line of s.recentCalls) parts.push(`- ${line}`)
+  }
   if (s.world.worldStatus) parts.push(`상황: ${s.world.worldStatus}`)
   if (s.worldSetting) parts.push(`세계관: ${s.worldSetting}`)
   if (s.worldGenre) parts.push(`장르: ${s.worldGenre}`)

@@ -1,24 +1,21 @@
 import { notFound, redirect } from 'next/navigation'
-import { and, asc, eq } from 'drizzle-orm'
-import { db, messages, realityContacts } from '@miro/db'
+import { asc, eq } from 'drizzle-orm'
+import { db, messages } from '@miro/db'
 import { stageLabel } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { matureGateFor } from '@/lib/ops/safety'
-import { track } from '@/lib/analytics/track'
-import { Back } from '@/components/ui'
+import { Back, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
-import { IncomingCall } from '@/components/incoming-call'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
-import { MediaBar } from './media-bar'
-import { feature, voiceCallAllowed } from '@miro/config'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
 import { TurnsProvider } from './turns'
+import { isMessengerMessage } from '@/lib/messenger'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
@@ -26,16 +23,15 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const { sessionId } = await params
   // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
   const session = loadSession(sessionId, user.id)
-  const [loaded, history, opened, modelOptions, mature] = await Promise.all([
+  const [loaded, all, modelOptions, mature] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
-    db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
-      .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))).returning({ id: realityContacts.id }),
     chatModelOptions(user.id),
     session.then((l) => l && matureGateFor(user.id, l.characterId)),
   ])
   if (!loaded || !mature) notFound()
-  if (opened.length > 0) void track(user.id, 'reality_contact_opened', { sessionId, count: opened.length })
+  // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
+  const history = all.filter((m) => !isMessengerMessage(m))
 
   const s = loaded.snapshot
   const ctx: ContextData = {
@@ -54,11 +50,16 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
 
   return (
     <ChatModelProvider><TurnsProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
-      <IncomingCall userId={user.id} characterName={loaded.characterName} />
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
           <h1 className={styles.title}>{loaded.characterName}</h1>
+          {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
+          {loaded.experienceType === 'reality' && (
+            <TransitionLink href={`/messages/${sessionId}`} aria-label="문자" className={styles.contextButton}>
+              <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" /></svg>
+            </TransitionLink>
+          )}
           <ContextTrigger d={ctx} className={styles.contextButton}>
             <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h11M4 18h16" /></svg>
           </ContextTrigger>
@@ -81,9 +82,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
-        {/* 사진·통화·Live 는 미로 캐릭터의 것이다. 서버가 어차피 거절하지만, 없는 기능의 버튼을 그리지 않는다. */}
-        {loaded.experienceType === 'reality' && <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
-          enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: voiceCallAllowed(user.id), video: feature('videoCall') }} />}
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} />
       </section>
 

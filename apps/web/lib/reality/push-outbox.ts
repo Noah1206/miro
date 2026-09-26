@@ -62,7 +62,7 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
       const result = await provider.send(row.subscription, {
         title: typeof payload.senderLabel === 'string' ? payload.senderLabel : 'MIRO',
         body: typeof payload.text === 'string' ? payload.text.slice(0, 90) : '새로운 연락이 왔어요.',
-        url: `/chat/${row.session.id}`, tag: `session:${row.session.id}`,
+        url: `/messages/${row.session.id}`, tag: `session:${row.session.id}`,
       })
       if (result.ok) await finish('sent')
       else {

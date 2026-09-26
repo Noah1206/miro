@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { allowedBlockTypes } from '../call/types'
+import { CALL_MODE_RULES, allowedBlockTypes } from '../call/types'
 import { pickCallChannel } from '../call/pick'
 import { deriveIntent } from '../reality/intent'
 import type { ContactProfile } from '../character/types'
@@ -44,5 +44,16 @@ describe('call mode blocks', () => {
     expect(allowedBlockTypes('chat').has('thought')).toBe(true)
     expect(allowedBlockTypes('video_call').has('thought')).toBe(false)
     expect(allowedBlockTypes('chat').has('narrative')).toBe(true)
+  })
+})
+
+describe('messenger mode', () => {
+  it('allows dialogue only — nothing that cannot be sent as a text message', () => {
+    expect([...allowedBlockTypes('messenger')]).toEqual(['dialogue'])
+  })
+  it('tells the model the two are not in the same place and to write real texts', () => {
+    expect(CALL_MODE_RULES.messenger).toContain('메신저(문자) 대화')
+    expect(CALL_MODE_RULES.messenger).toContain('같은 공간에 있지 않고')
+    expect(CALL_MODE_RULES.messenger).toContain('dialogue')
   })
 })

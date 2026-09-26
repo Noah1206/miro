@@ -21,10 +21,23 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   const { callId } = await params
   const call = await owned(user.id, callId)
   if (!call || !(call.channel === 'voice' ? voiceCallAllowed(user.id) : feature('videoCall'))) notFound()
-  if (call.status !== 'active') redirect(`/chat/${call.sessionId}`)
+  if (call.status !== 'active' && call.status !== 'unanswered') redirect(`/messages/${call.sessionId}`)
 
   const loaded = await loadSession(call.sessionId, user.id)
   if (!loaded || loaded.restricted) notFound()
+
+  // 캐릭터가 받지 않은 통화 — 근무·수면 중이다. 벨만 울리다 끊긴 화면. 사용량은 없고, 문자로 남길 수 있다.
+  if (call.status === 'unanswered') {
+    return (
+      <main id="main" tabIndex={-1} data-call-unanswered className="page page--immersive" style={{ outline: 'none', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: 'var(--color-bg-deep)', textAlign: 'center' }}>
+        <p className="t-micro">{call.channel === 'voice' ? '음성통화' : '영상통화'}</p>
+        <h1 className="t-display t-name">{loaded.characterName}</h1>
+        <p className="t-body" style={{ color: 'var(--color-text-secondary)' }}>받지 않아요</p>
+        {call.reason && <p className="t-caption t-quote">지금은 {call.reason} 중인 것 같아요</p>}
+        <a href={`/messages/${call.sessionId}`} className="button-link" style={{ marginTop: 20, padding: '12px 20px', borderRadius: 'var(--radius-button)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }}>문자 남기기</a>
+      </main>
+    )
+  }
 
   // 통화용 시스템 프롬프트 — Chat 과 같은 성격·관계·기억·장면·최근 대화에 통화 모드 규칙을 얹고,
   // JSON 계약처럼 소리로 나갈 수 없는 것은 뺀다. 토큰에 잠기므로 클라이언트가 바꿀 수 없다.

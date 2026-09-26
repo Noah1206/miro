@@ -4,6 +4,8 @@ import type { SimulationEvent } from '../event/types'
 import type { RealityIntent } from './types'
 import { pickCallChannel } from '../call/pick'
 import { readyToReachOut, silenceHours } from '../relationship/dynamics'
+import type { LocalClock } from '../time/clock'
+import type { Availability } from './routine'
 
 export type IntentInput = {
   relationship: RelationshipState
@@ -14,7 +16,18 @@ export type IntentInput = {
   /** RP 턴이나 사건 규칙이 남긴 의도. 있으면 우선한다. notBefore 가 아직이면 그때까지 기다린다. */
   pending: RealityIntent | null
   now?: Date
+  /** 현실 시계·생활 리듬 — 있으면 하루의 때에 맞춘 안부(식사 시간)가 가능하다. */
+  clock?: LocalClock
+  availability?: Availability
+  lastContactAt?: Date | null
 }
+
+/** 하루 세 번의 안부 창. 이 시간에 캐릭터가 비어 있고 관계가 됐으면 "밥 먹었어?" 를 보낼 이유가 생긴다. */
+const MEALS: Array<{ name: string; from: number; to: number; reason: string }> = [
+  { name: '아침', from: 7, to: 9, reason: 'checkin:아침 — 잘 잤는지, 하루 시작을 가볍게 묻는다' },
+  { name: '점심', from: 12, to: 13, reason: 'checkin:점심 — 점심 먹었는지, 오전이 어땠는지 묻는다' },
+  { name: '저녁', from: 18, to: 20, reason: 'checkin:저녁 — 저녁 먹었는지, 오늘 하루가 어땠는지 묻는다' },
+]
 
 /** 발송 가능한 채널. missed_call 은 결과 상태이지 의도가 아니다. */
 const SENDABLE: ContactChannel[] = [
@@ -49,6 +62,13 @@ export function deriveIntent(input: IntentInput): RealityIntent | null {
       reason: `event:${event.type}`,
       urgency,
     }
+  }
+
+  // 1.5 식사 시간 안부 — 관계가 됐고(readyToReachOut), 캐릭터가 비어 있고, 오늘 몇 시간 조용했을 때. 하루 한 번씩만(evaluator 의 날짜 dedupe).
+  if (input.clock && input.availability === 'free' && readyToReachOut(r, p.initiativeLevel) && idleMinutes >= 180) {
+    const sinceContact = input.lastContactAt ? ((input.now ?? new Date()).getTime() - input.lastContactAt.getTime()) / 3_600_000 : Infinity
+    const meal = MEALS.find((m) => input.clock!.hour >= m.from && input.clock!.hour < m.to)
+    if (meal && sinceContact >= 6) return { channel: preferred(p), reason: meal.reason, urgency: 0.4 }
   }
 
   // 2. 연락이 오래 없을 때 — 관계성(연애·친구·일…)과 연락 주도성, 지금의 친밀도로 문턱과 간격을 매번 다시 정한다.

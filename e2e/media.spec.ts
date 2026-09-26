@@ -12,7 +12,8 @@ async function enterRoleplay(page: Page) {
   await expect(page).toHaveURL(/\/chat\//)
 }
 
-test('a character photo appears in the chat', async ({ page }) => {
+// 9/26 사용자 요청으로 채팅 입력란 위의 Reality 버튼(사진·Live·통화)을 없앴다 — 사진 요청 진입점이 새로 정해지면 다시 켠다.
+test.skip('a character photo appears in the chat', async ({ page }) => {
   await enterRoleplay(page)
   await page.getByRole('button', { name: '사진' }).click()
 
@@ -27,7 +28,8 @@ test('live scene continues the same simulation and returns to chat', async ({ pa
   const chatUrl = page.url()
   const sessionId = chatUrl.split('/chat/')[1]!
 
-  await page.getByRole('link', { name: 'Live Scene' }).click()
+  // 채팅 화면의 Live Scene 버튼은 없앴다 — 직접 들어간다.
+  await page.goto(`${BASE}/live/${sessionId}`)
   await expect(page).toHaveURL(new RegExp(`/live/${sessionId}`))
 
   // Chat 과 같은 세계 상태를 쓴다

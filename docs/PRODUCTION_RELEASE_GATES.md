@@ -57,6 +57,14 @@ Photo, voice message, call, video, Live Scene and Face Cast each require a worki
 - 목소리: 캐릭터 성별로 정한다(남성 Alnilam, 여성 Kore — `GENDER_PRESETS`). 전에는 모두 Kore(여성)라 운영 캐릭터 2명(둘 다 남성)이 여성 목소리로 통화했을 것이다. 같은 문장 실측 기본 주파수 중앙값 123Hz / 240Hz, 받아쓰기는 원문 그대로. 성별이 없으면 `GEMINI_LIVE_VOICE`(기본 Kore). 만들 때 고르는 칸은 다음 단계.
 - 남은 한계: 음성 출력은 소리로 나가기 전에는 우리 검열을 거치지 않는다(모델 안전 설정과 지시문에 의존, 저장만 검열). 비용은 분당 약 $0.023(입력 $0.005 + 출력 $0.018, 2026-09-19 가격표 기준)에 음성 턴마다 검열·분류 약 $0.001.
 
+### 문자 페이지·생활 리듬 (2026-09-26 배포)
+
+- **순서: 마이그레이션 먼저.** `20260926140000_contact_routine.sql`(contact_profiles.routine 추가)이 없으면 contact_profiles 를 읽는 모든 곳(미로 채팅·문자·통화·홈·스케줄러)이 `column "routine" does not exist` 로 500 이 난다. 추가 컬럼이라 코드보다 먼저 적용해도 안전하다.
+- 미로 캐릭터의 문자는 `/messages/[sessionId]`, 만나서 나누는 장면은 `/chat` — 메시지 kind(`messenger`·`reality_message`·`call_record`)로 나뉜다. DB 에 kind/status CHECK 제약은 없다(운영 확인).
+- 생활 리듬은 캐릭터당 한 번 dialogue 모델로 만든다(운영 레지스트리에 world_update 담당 모델이 없다). 실패하면 활동 시간 밖=수면 기본 리듬을 저장하고 24시간 뒤 다시 시도한다. 화면·턴은 기다리지 않는다.
+- 운영은 통화 기능이 꺼져 있어 수신 벨 폴링(`/api/calls/ringing`)도 돌지 않는다. 통화를 열면 탭마다 8초 간격 조회가 생긴다.
+- 배포 전 검토에서 고친 것: 미뤄진 문자가 요청을 'pending' 으로 남겨 15분간 세션을 막던 문제, 늦은 답장이 동기 검사에 걸려 영영 안 나가던 문제, 같은 날 같은 사유의 예약 연락이 매 크론마다 모델을 부르던 문제(중복 키를 모델 호출 전에 확인).
+
 ## Evidence for this development pass
 
 See `PRODUCTION_PROGRESS.md` for actual test results and pushed units. Unit/mock E2E success does not establish real AI quality, live payment correctness or production capacity.

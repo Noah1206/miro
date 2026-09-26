@@ -3,6 +3,7 @@ import { Nav } from '@/components/ui/nav'
 import { NavigationFeedback } from '@/components/navigation-feedback'
 import { LoginSheetProvider } from '@/components/ui/login-sheet'
 import { currentUser } from '@/lib/auth'
+import { IncomingCall } from '@/components/incoming-call'
 import { measured } from '@/lib/observe'
 
 const IDS: OAuthProviderId[] = ['google', 'kakao']
@@ -15,6 +16,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   return (
     <LoginSheetProvider providers={providers}>
       <div className="app-shell">
+        {/* 캐릭터가 거는 전화는 어느 화면에서든 울린다. */}
+        {user && <IncomingCall userId={user.id} />}
         <Nav signedIn={!!user} />
         <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>
       </div>

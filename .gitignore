@@ -13,3 +13,4 @@ playwright-report/
 undefined/
 .vercel
 .env*.local
+.next-e2e/

@@ -1,6 +1,6 @@
 import { resolveChatModel } from '@/lib/ai/chat-models'
 import { eq, and } from 'drizzle-orm'
-import { db, users, conversationRequests } from '@miro/db'
+import { db, users, conversationRequests, contactProfiles, messages, roleplaySessions } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@miro/providers'
@@ -19,6 +19,7 @@ import { track } from '@/lib/analytics/track'
 import { measured, observe, timed } from '@/lib/observe'
 import { type LoadedAgency } from '@/lib/agency/runtime'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
+import { characterAvailability } from '@/lib/reality/routine'
 
 export type ConversationOutcome =
   | {
@@ -39,6 +40,8 @@ export type ConversationOutcome =
       sceneChanged: boolean
       /** 이번 턴에 저장된 메시지. 화면이 바로 붙인다. 옛 결과를 되살린 경우 비어 있을 수 있다. */
       messages?: CommittedMessage[]
+      /** 문자: 캐릭터가 지금 바빠서 답장을 나중으로 미뤘다. until 은 ISO, label 은 뭘 하는 중인지. */
+      delayed?: { until: string; label: string }
     }
   | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' | 'model_unavailable' }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
@@ -63,6 +66,8 @@ async function executeTurn(opts: {
   requestId: string
   traceId: string
   chatModel?: string
+  /** messenger = 문자 페이지에서 온 턴. 문자로 답하고 messenger kind 로 남는다. 미로 캐릭터에만 있다. */
+  mode?: 'chat' | 'messenger'
 }): Promise<ConversationOutcome> {
   const input = opts.input.trim()
   if (input.length === 0) return { ok: false, reason: 'empty' }
@@ -80,6 +85,39 @@ async function executeTurn(opts: {
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
     if (!model) return { ok: false, reason: 'model_unavailable' }
+    const messenger = opts.mode === 'messenger'
+    // 문자는 미로 캐릭터의 것이다 — 일반 캐릭터챗 세션에는 문자 페이지가 없다.
+    if (messenger && loaded.experienceType !== 'reality') return { ok: false, reason: 'not_found' }
+    // 문자인데 캐릭터가 바쁘거나 닿지 않는 중이면 지금 답하지 않는다 — 내 문자만 남고, 답장은 리듬이 풀린 뒤 스케줄러가 보낸다.
+    // 연락이 꺼진 캐릭터는 스케줄러가 답장을 보내지 않으므로 여기서 미루지 않고 바로 답한다.
+    if (messenger) {
+      const now = new Date()
+      const [profile] = await db.select({ enabled: contactProfiles.enabled }).from(contactProfiles).where(eq(contactProfiles.characterId, loaded.characterId)).limit(1)
+      const availability = profile?.enabled ? await characterAvailability(loaded.characterId, now, loaded.snapshot.clock?.timeZone) : null
+      if (availability && availability.availability !== 'free') {
+        const wait = (availability.minutesUntilFree ?? 30) + 3 + (loaded.snapshot.turnCount % 9)
+        const until = new Date(now.getTime() + wait * 60_000).toISOString()
+        const label = availability.label ?? ''
+        const row = await db.transaction(async (tx) => {
+          const [inserted] = await tx.insert(messages).values({ id: userMessageId, sessionId, role: 'user', kind: 'messenger', content: input, blocks: [], turnIndex: loaded.snapshot.turnCount })
+            .returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex })
+          await tx.update(roleplaySessions).set({ lastInteractionAt: now, pendingRealityIntent: {
+            channel: 'message', urgency: 0.9, notBefore: until, answers: 'user_message',
+            reason: `${label} 중에 사용자가 문자를 보냈다 — 이제야 보고 답장한다(늦은 것을 어떻게 말할지는 성격대로)`,
+          } }).where(eq(roleplaySessions.id, sessionId))
+          const delayedOutcome = {
+            ok: true as const, requestId: opts.requestId, traceId: opts.traceId, turnIndex: loaded.snapshot.turnCount, blocks: [], responseText: '',
+            providerMode: 'live' as const, characterState: loaded.snapshot.characterState!, firedRules: [], realityIntent: null, reality: null,
+            newEventType: null, sceneChanged: false, messages: [inserted!], delayed: { until, label },
+          }
+          // 요청을 끝낸 것으로 남긴다 — 안 하면 15분 동안 'pending' 이라 이 세션의 다음 문자·채팅이 모두 막힌다. 같은 id 재전송은 이 결과를 돌려받는다.
+          await tx.update(conversationRequests).set({ status: 'completed', result: delayedOutcome }).where(eq(conversationRequests.id, opts.requestId))
+          return delayedOutcome
+        })
+        observe('messenger.reply_delayed', { sessionId, until, label })
+        return row
+      }
+    }
     const dialogueModelId = model.modelId
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
@@ -98,7 +136,7 @@ async function executeTurn(opts: {
     let result: TurnResult
     let agency: LoadedAgency | null = null
     try {
-      const prepared = await prepareAgencyTurn(sessionId, userId, loaded.snapshot, llm, { id: userMessageId, text: input })
+      const prepared = await prepareAgencyTurn(sessionId, userId, messenger ? { ...loaded.snapshot, mode: 'messenger' } : loaded.snapshot, llm, { id: userMessageId, text: input })
       agency = prepared.runtime
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode },
         () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency,
@@ -142,7 +180,7 @@ async function executeTurn(opts: {
     // Live Scene v1 (2026-09-19, 명세서 §5.3): 미로(Reality) 세션에서 장소가 실제로 바뀌거나
     // 새 장면이 열리면 스트림에 장소·시간 한 줄을 남긴다. 이미지는 없다 — 이 표시가 전부다.
     const movedTo = transition.worldDelta?.currentLocation ?? null
-    const sceneMarker = loaded.experienceType === 'reality'
+    const sceneMarker = loaded.experienceType === 'reality' && !messenger
       && (transition.sceneDelta !== null || (movedTo !== null && movedTo !== loaded.snapshot.world.currentLocation))
       ? [movedTo ?? loaded.snapshot.world.currentLocation, transition.worldDelta?.currentTime ?? loaded.snapshot.world.currentTime]
         .filter(Boolean).join(' · ')
@@ -159,7 +197,7 @@ async function executeTurn(opts: {
       const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, userMessageId, responseText, blocks: transition.blocks, transition, sceneMarker,
+        userInput: input, userMessageId, responseText, blocks: transition.blocks, transition, sceneMarker, channel: messenger ? 'messenger' : 'scene',
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),
         worldVersion: loaded.snapshot.world.version,
         relationshipVersion: loaded.snapshot.relationship.version,
@@ -208,7 +246,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string; mode?: 'chat' | 'messenger' }): Promise<ConversationOutcome> {
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request

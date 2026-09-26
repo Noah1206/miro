@@ -225,3 +225,24 @@ describe('call mode context', () => {
     expect(buildContext(s).system).toContain('JSON')
   })
 })
+
+describe('messenger mode', () => {
+  it('replaces the in-person scene directive with messenger rules and marks the prompt version', () => {
+    const s = snapshot({ experienceType: 'reality', mode: 'messenger' })
+    const built = buildContext(s)
+    expect(built.system).toContain('메신저(문자) 대화')
+    expect(built.system).not.toContain('직접 만나 같은 공간에 있는 장면')
+    expect(built.promptVersion).toContain('+messenger')
+    expect(built.promptVersion).not.toContain('+in-person')
+    // 문자는 상태 변화 제안(JSON 계약)을 그대로 쓴다 — 통화처럼 소리로 나가는 것이 아니다.
+    expect(built.system).toContain('반드시 지정된 JSON 스키마')
+  })
+})
+
+describe('real clock', () => {
+  it('tells the character the user-local time and that the world day follows it', () => {
+    const { prompt } = buildContext(snapshot({ clock: { iso: '2026-09-26T14:10:00Z', timeZone: 'Asia/Seoul', label: '2026-09-26 (토) 23:10', weekday: 6, hour: 23, minute: 10, period: '밤' } }))
+    expect(prompt).toContain('현실 시각(사용자 기준, Asia/Seoul): 2026-09-26 (토) 23:10 · 밤')
+    expect(buildContext(snapshot()).prompt).not.toContain('현실 시각')
+  })
+})

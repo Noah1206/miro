@@ -1,26 +1,58 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { POLICY, feature, voiceCallAllowed, voiceCallTesters } from '@miro/config'
-import { db, callSessions, characters, contactProfiles, messages, realityContacts, roleplaySessions, users } from '@miro/db'
+import { db, callSessions, characters, contactProfiles, messages, realityContacts, relationships, roleplaySessions, userSettings, users } from '@miro/db'
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
 import { commit, reserve, rollback, UsageExceededError } from '@/lib/usage/guard'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
+import { characterAvailability } from '@/lib/reality/routine'
 
 export { UsageExceededError }
 
 const usageKind = (c: CallChannel): 'voiceCallPerMinute' | 'videoCallPerMinute' =>
   c === 'voice' ? 'voiceCallPerMinute' : 'videoCallPerMinute'
 
-/** 사용자가 Chat 에서 거는 통화. 1분을 먼저 예약하고 종료 시 실제 분으로 보정한다. */
-export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel) {
+/**
+ * 사용자가 거는 통화. 캐릭터가 지금 받을 수 있으면(생활 리듬이 free) 바로 연결하고 1분을 먼저 예약한다.
+ * 근무·수면 중이면 받지 않는다 — 기록만 남고 사용량은 없다. 성격에 따라 나중에 "못 받아서 미안" 문자가 예약된다.
+ */
+export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel, now = new Date()) {
   if (!(channel === 'voice' ? voiceCallAllowed(userId) : feature('videoCall'))) throw new Error('CALL_NOT_AVAILABLE')
-  const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType })
-    .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).where(and(
+  const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType, character: characters, timeZone: userSettings.timeZone, pendingIntent: roleplaySessions.pendingRealityIntent, turnCount: roleplaySessions.turnCount })
+    .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+    .leftJoin(userSettings, eq(userSettings.userId, roleplaySessions.userId)).where(and(
     eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!session) throw new Error('SESSION_NOT_FOUND')
   // 통화는 미로 캐릭터와만 한다. 사용량 예약보다 먼저 거절해 차감이 생기지 않게 한다.
   if (session.experienceType !== 'reality') throw new Error('CALL_NOT_AVAILABLE')
+
+  const availability = await characterAvailability(session.character.id, now, session.timeZone ?? POLICY.reality.defaultTimeZone)
+  if (availability.availability !== 'free') {
+    const c = session.character
+    const [call] = await db.transaction(async (tx) => {
+      const inserted = await tx.insert(callSessions).values({
+        sessionId, channel, direction: 'outgoing', status: 'unanswered', reason: availability.label, endedAt: now, result: 'unanswered',
+      }).returning({ id: callSessions.id })
+      await tx.insert(messages).values({
+        sessionId, role: 'system', kind: 'call_record',
+        content: `${label(channel)} 연결 안 됨 — ${availability.label} 중`,
+        blocks: [{ type: 'call', callId: inserted[0]!.id, channel, result: 'unanswered', busy: availability.label }],
+        turnIndex: session.turnCount,
+      })
+      // 후속은 성격이 정한다: 표현이 많거나 먼저 나서는 성격은 사과 문자를, 아니면 아무 말 없이 지나간다. 이미 계획된 연락은 밀어내지 않는다.
+      if (!session.pendingIntent && (c.emotionalExpression >= 40 || c.initiative >= 50)) {
+        const notBefore = new Date(now.getTime() + ((availability.minutesUntilFree ?? 30) + 10) * 60_000).toISOString()
+        await tx.update(roleplaySessions).set({ pendingRealityIntent: {
+          channel: 'message', urgency: 0.75, notBefore, answers: 'call',
+          reason: `아까 사용자의 전화를 못 받았다(${availability.label} 중이었다) — 미안하다고 하고 무슨 일이었는지 묻는다`,
+        } }).where(eq(roleplaySessions.id, sessionId))
+      }
+      return inserted
+    })
+    void track(userId, 'call_unanswered', { sessionId, channel, busy: availability.label })
+    return call!.id
+  }
   const r = await reserve({
     userId, kind: usageKind(channel), units: 1,
     idempotencyKey: `call:out:${sessionId}:${Date.now()}`,
@@ -74,20 +106,50 @@ export async function acceptCall(userId: string, callId: string) {
   return call
 }
 
-/** 거절. 부재중/캐릭터 반응으로 이어질 수 있도록 기록을 남긴다 (명세서 5.2). */
-export async function declineCall(userId: string, callId: string) {
+/**
+ * 거절. 부재중/캐릭터 반응으로 이어질 수 있도록 기록을 남긴다 (명세서 5.2).
+ * reason='usage' 는 사용자가 받으려 했지만 통화 제공량이 없어 못 받은 경우 — 거절이 아니므로 캐릭터가 서운해하지 않는다.
+ */
+export async function declineCall(userId: string, callId: string, reason: 'user' | 'usage' = 'user') {
   const call = await owned(userId, callId)
   if (!call || call.status !== 'ringing') return
+  const now = new Date()
   await db.transaction(async (tx) => {
-    await tx.update(callSessions).set({ status: 'declined', endedAt: new Date(), result: 'declined' })
-      .where(eq(callSessions.id, callId))
+    const updated = await tx.update(callSessions).set({ status: 'declined', endedAt: now, result: reason === 'usage' ? 'usage_limit' : 'declined' })
+      .where(and(eq(callSessions.id, callId), eq(callSessions.status, 'ringing'))).returning({ id: callSessions.id })
+    if (!updated.length) return
     await tx.insert(messages).values({
       sessionId: call.sessionId, role: 'system', kind: 'call_record',
-      content: `${label(call.channel)} 거절`,
-      blocks: [{ type: 'call', callId, channel: call.channel, result: 'declined' }],
+      content: reason === 'usage' ? `${label(call.channel)} — 통화 제공량이 없어 받지 못함` : `${label(call.channel)} 거절`,
+      blocks: [{ type: 'call', callId, channel: call.channel, result: reason === 'usage' ? 'usage_limit' : 'declined' }],
       turnIndex: await turnOf(call.sessionId, tx),
     })
+    if (reason === 'user') await scheduleMissedCallFollowUp(tx, call.sessionId, 'declined', now)
   })
+}
+
+/**
+ * 캐릭터가 걸었는데 사용자가 안 받았을 때(거절·부재중)의 후속. 성격과 관계가 정한다 —
+ * 질투가 큰 캐릭터는 서운해하고, 애착이 큰 캐릭터는 걱정하고, 그 밖에는 아무 말 없이 지나간다.
+ * 이미 계획된 연락이 있으면 그것을 밀어내지 않는다.
+ */
+async function scheduleMissedCallFollowUp(tx: Pick<typeof db, 'select' | 'update'>, sessionId: string, how: 'declined' | 'missed', now: Date) {
+  const [row] = await tx.select({ pending: roleplaySessions.pendingRealityIntent, jealousy: characters.jealousy, expression: characters.emotionalExpression, attachment: relationships.attachment })
+    .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+    .innerJoin(relationships, eq(relationships.sessionId, roleplaySessions.id))
+    .where(eq(roleplaySessions.id, sessionId)).limit(1)
+  if (!row || row.pending) return
+  const what = how === 'declined' ? '내 전화를 끊었다' : '내 전화를 받지 않았다'
+  const intent = row.jealousy >= 60
+    ? { reason: `사용자가 ${what} — 서운하고 신경 쓰인다. 왜 못 받았는지 묻는다(질투가 조금 섞인다)`, urgency: 0.7, minutes: 30 }
+    : row.attachment >= 50 || row.expression >= 50
+      ? { reason: `사용자가 ${what} — 무슨 일 있나 걱정돼서 괜찮은지 묻는다`, urgency: 0.6, minutes: 45 }
+      : null
+  if (!intent) return
+  await tx.update(roleplaySessions).set({ pendingRealityIntent: {
+    channel: 'message', reason: intent.reason, urgency: intent.urgency, answers: 'call',
+    notBefore: new Date(now.getTime() + intent.minutes * 60_000).toISOString(),
+  } }).where(eq(roleplaySessions.id, sessionId))
 }
 
 /** 종료. 길이를 기록하고 실제 분으로 사용량을 확정한다. 통화 기록은 Chat 타임라인에 남는다. */
@@ -127,14 +189,17 @@ export async function expireCalls(now = new Date()) {
     .where(and(eq(callSessions.status, 'ringing'), lt(callSessions.createdAt, ringingBefore)))
   for (const c of missed) {
     await db.transaction(async (tx) => {
-      await tx.update(callSessions).set({ status: 'missed', endedAt: now, result: 'missed' })
-        .where(and(eq(callSessions.id, c.id), eq(callSessions.status, 'ringing')))
+      // 고른 뒤 사용자가 받았을 수 있다 — 실제로 ringing 에서 바뀐 행만 부재중으로 남긴다.
+      const updated = await tx.update(callSessions).set({ status: 'missed', endedAt: now, result: 'missed' })
+        .where(and(eq(callSessions.id, c.id), eq(callSessions.status, 'ringing'))).returning({ id: callSessions.id })
+      if (!updated.length) return
       await tx.insert(messages).values({
         sessionId: c.sessionId, role: 'system', kind: 'call_record',
         content: `부재중 ${label(c.channel)}`,
         blocks: [{ type: 'call', callId: c.id, channel: c.channel, result: 'missed' }],
         turnIndex: await turnOf(c.sessionId, tx),
       })
+      await scheduleMissedCallFollowUp(tx, c.sessionId, 'missed', now)
     })
   }
 
@@ -156,10 +221,11 @@ export async function ringingFor(userId: string) {
   if (!feature('voiceCall') && !feature('videoCall')) return null
   const rows = await db.select({
     id: callSessions.id, channel: callSessions.channel, sessionId: callSessions.sessionId,
-    reason: callSessions.reason, createdAt: callSessions.createdAt,
+    reason: callSessions.reason, createdAt: callSessions.createdAt, characterName: characters.name,
   })
     .from(callSessions)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, callSessions.sessionId))
+    .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(
       eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt),
       eq(callSessions.status, 'ringing'),
