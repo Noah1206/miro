@@ -28,14 +28,15 @@ export class OrderPendingError extends Error {}
  * 금액과 지급량은 서버 카탈로그에서만 온다. 브라우저는 무엇을 살지만 고른다.
  */
 export async function createBankOrder(opts: {
-  userId: string; kind: OrderKind; productId?: string; depositorName: string; now?: Date
+  userId: string; kind: OrderKind; productId?: string; depositorName?: string; now?: Date
 }): Promise<{ id: string; referenceCode: string; amountMinor: number; currency: string; expiresAt: Date }> {
   const account = bankAccount()
   if (!account) throw new BankTransferUnavailableError('BANK_TRANSFER_UNAVAILABLE')
 
-  const depositorName = opts.depositorName.trim()
-  // 입금자명이 없으면 어느 입금인지 맞출 수 없다. 받아 놓고 못 찾는 주문을 만들지 않는다.
-  if (depositorName.length < 1 || depositorName.length > 40) throw new Error('INVALID_DEPOSITOR_NAME')
+  // 입금자명을 따로 묻지 않으면 대조 코드를 입금자명으로 쓴다 — 입금은 그 코드로 찾는다.
+  const code = referenceCode()
+  const depositorName = (opts.depositorName ?? '').trim() || code
+  if (depositorName.length > 40) throw new Error('INVALID_DEPOSITOR_NAME')
 
   let amountMinor: number, currency: string, units: number | null, productId: string | null
   if (opts.kind === 'recharge') {
@@ -56,7 +57,7 @@ export async function createBankOrder(opts: {
   try {
     const [row] = await db.insert(bankTransferOrders).values({
       userId: opts.userId, kind: opts.kind, productId, amountMinor, currency, units,
-      depositorName, referenceCode: referenceCode(), expiresAt,
+      depositorName, referenceCode: code, expiresAt,
     }).returning()
     observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
     return { id: row!.id, referenceCode: row!.referenceCode, amountMinor, currency, expiresAt }

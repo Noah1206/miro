@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
-import { BANK_TRANSFER_WINDOW_HOURS, PLANNED_RECHARGE_TIERS, bankAccount, productionRuntime, rechargeCatalog, type RechargeProduct } from '@miro/config'
+import { BANK_TRANSFER_WINDOW_HOURS, bankAccount, rechargeCatalog, type RechargeProduct } from '@miro/config'
 import { currentUser } from '@/lib/auth'
-import { rechargeHistory, usageStatus, type RechargeHistoryItem, type UsageStatus } from '@/lib/usage/guard'
+import { dailyUsage, rechargeHistory, usageStatus, type RechargeHistoryItem, type UsageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
-import { Card, Notice, Page, PageHeader, TransitionLink } from '@/components/ui'
+import { Card, Notice, Page, PageHeader } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { observe } from '@/lib/observe'
-import { beginRecharge, orderByTransfer, simulateRecharge } from './actions'
+import { orderByTransfer } from './actions'
 import { TransferActions } from './transfer-actions'
 import { bankOrderHistory, pendingBankOrder } from '@/lib/payments/bank-transfer'
 
@@ -14,21 +14,23 @@ import { bankOrderHistory, pendingBankOrder } from '@/lib/payments/bank-transfer
 export const dynamic = 'force-dynamic'
 
 /** 실제 원장을 조회하고, 미정 제공량은 판매하지 않는다. */
-export default async function RechargePage({ searchParams }: { searchParams: Promise<{ checkout?: string; result?: string; order?: string }> }) {
+export default async function RechargePage({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
-  const { checkout, result, order } = await searchParams
+  const { order } = await searchParams
 
   let usage: UsageStatus | null = null
   let history: RechargeHistoryItem[] = []
-  try { [usage, history] = await Promise.all([usageStatus(user.id), rechargeHistory(user.id)]) }
+  let days: Record<string, number> = {}
+  const today = kstDate(new Date())
+  const since = monthStart(today, MONTHS - 1)
+  try { [usage, history, days] = await Promise.all([usageStatus(user.id), rechargeHistory(user.id), dailyUsage(user.id, new Date(`${since}T00:00:00+09:00`))]) }
   catch (e) { observe('recharge.usage_unavailable', { userId: user.id, error: (e as Error).message }) }
 
   // 상품이 설정되지 않았으면 아무것도 팔지 않는다. 가격을 코드가 지어내지 않는다.
   let products: RechargeProduct[] = []
   try { products = rechargeCatalog().products }
   catch (e) { observe('recharge.catalog_invalid', { error: (e as Error).message }) }
-  const sellable = products.length > 0 && !productionRuntime()
 
   // 계좌이체는 계좌가 설정돼야 열린다. 설정이 잘못됐으면 받지 않는다 — 입금부터 받고
   // 어디로 갔는지 모르는 상태를 만들지 않는다.
@@ -41,29 +43,23 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
     <Page style={{ maxWidth: 480 }}>
       <PageHeader back="/my/subscription" title="충전소" lead="추가 사용량을 확인하고 채우는 곳이에요." />
 
-      {usage ? <MonthlyAllowance usage={usage} /> : (
-        <Notice tone="danger" style={{ marginBottom: 'var(--space-3)' }}>
-          사용량을 불러오지 못했어요. 잠시 후 다시 열어 주세요.
-        </Notice>
-      )}
-
       {usage && (
         <Card style={{ marginBottom: 'var(--space-3)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <p className="t-title-3">충전 잔액</p>
+            <p className="t-title-3">현재 남은 크레딧</p>
             <span data-recharge-balance={usage.rechargeRemaining} className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{usage.rechargeRemaining}</span>
           </div>
           <p className="t-caption" style={{ marginTop: 6, color: 'var(--color-text-secondary)' }}>
             {usage.rechargeRemaining > 0
-              ? '월간 제공량을 다 쓰면 이 잔액에서 이어서 차감돼요. 월초에 초기화되지 않아요.'
-              : '아직 충전한 잔액이 없어요. 지금은 위의 월간 제공량으로 이용해요.'}
+              ? '월간 제공량을 다 쓰면 여기서 이어서 차감돼요. 월초에 초기화되지 않아요.'
+              : '아직 충전한 크레딧이 없어요. 지금은 월간 제공량으로 이용해요.'}
           </p>
         </Card>
       )}
 
-      {result && (
-        <Notice data-recharge-result={result} tone={result === 'success' ? 'muted' : 'danger'} style={{ marginBottom: 'var(--space-3)' }}>
-          {result === 'success' ? '충전이 완료됐어요. 잔액에 반영됐습니다.' : '결제가 완료되지 않았어요. 잔액은 그대로예요.'}
+      {usage ? <MonthlyAllowance usage={usage} days={days} today={today} /> : (
+        <Notice tone="danger" style={{ marginBottom: 'var(--space-3)' }}>
+          사용량을 불러오지 못했어요. 잠시 후 다시 열어 주세요.
         </Notice>
       )}
 
@@ -81,21 +77,21 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
           <p className="t-body">{account.bank} <b>{account.number}</b> ({account.holder})</p>
           <p className="t-body">보낼 금액 · <b data-order-amount={awaiting.amountMinor}>{awaiting.amountMinor.toLocaleString('ko-KR')}원</b></p>
           {/* 같은 금액의 입금이 여럿일 때 이 코드가 어느 주문인지 가른다. */}
-          <p className="t-body">입금자명 · <b>{awaiting.depositorName} {awaiting.referenceCode}</b></p>
+          <p className="t-body">입금자명 · <b>{depositName(awaiting)}</b></p>
           <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-            입금자명 뒤에 <b>{awaiting.referenceCode}</b> 를 꼭 붙여 주세요. 확인되면 반영해 드려요 —
+            보낼 때 입금자명(받는 분 통장 표시)을 <b>{depositName(awaiting)}</b>(으)로 꼭 바꿔 주세요. 확인되면 반영해 드려요 —
             보통 하루 안에 처리돼요. {new Date(awaiting.expiresAt).toLocaleString('ko-KR')}까지 입금이 없으면 주문이 취소돼요.
           </p>
           <TransferActions bank={account.bank} accountNumber={account.number} amount={awaiting.amountMinor}
-            depositName={`${awaiting.depositorName} ${awaiting.referenceCode}`} />
+            depositName={depositName(awaiting)} />
         </Card>
       )}
 
       {!awaiting && account && (
         <Card data-bank-order="open" style={{ marginBottom: 'var(--space-3)' }} className="stack">
-          <p className="t-title-3">계좌이체로 받기</p>
+          <p className="t-title-3">충전하기</p>
           <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-            주문하면 입금 계좌를 알려드려요. 입금을 확인한 뒤 반영되고, {BANK_TRANSFER_WINDOW_HOURS}시간 안에 입금하지 않으면 주문이 취소돼요.
+            주문 후 {BANK_TRANSFER_WINDOW_HOURS}시간 안에 입금하면 확인 뒤 반영돼요.
           </p>
           {[{ kind: 'pass' as const, id: undefined, label: '1개월 이용권', sub: 'Pro · 9,900원' },
             ...products.map(p => ({ kind: 'recharge' as const, id: p.id, label: p.name, sub: `${p.units.toLocaleString('ko-KR')} 사용량` }))]
@@ -108,17 +104,18 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
                   <p className="t-body">{item.label}</p>
                   <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 2 }}>{item.sub}</p>
                 </div>
-                <input name="depositorName" placeholder="입금자명" required maxLength={40} aria-label="입금자명"
-                  style={{ width: 110, minHeight: 44, padding: '8px 10px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }} />
                 <SubmitButton variant="secondary" size="sm">주문</SubmitButton>
               </form>
             ))}
           {/* 환불 조건은 사기 전에 보인다 — 숨기지 않는 것이 확정된 방침이다. */}
-          <div data-refund-terms style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
-            <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{COPY.refund.recharge}</p>
-            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>{COPY.refund.pass}</p>
-            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 4 }}>{COPY.refund.failure} {COPY.refund.how}</p>
-          </div>
+          <ul data-refund-terms style={{ margin: '28px 0 0', padding: '16px 0 0', listStyle: 'none', display: 'grid', gap: 6, borderTop: '1px solid var(--color-border)' }}>
+            {[COPY.refund.recharge, COPY.refund.pass, COPY.refund.failure, COPY.refund.how].map((line) => (
+              <li key={line} className="t-caption" style={{ display: 'flex', alignItems: 'baseline', gap: 8, color: 'var(--color-text-secondary)' }}>
+                <span aria-hidden style={{ width: 4, height: 4, flexShrink: 0, borderRadius: '50%', background: 'var(--color-text-tertiary)', transform: 'translateY(-2px)' }} />
+                {line}
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 
@@ -134,45 +131,6 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
               <span className="t-caption">{o.status === 'awaiting' ? '입금 대기' : o.status === 'approved' ? '완료' : o.status === 'rejected' ? '취소됨' : '기한 지남'}</span>
             </div>
           ))}
-        </Card>
-      )}
-
-      {checkout && sellable ? (
-        <Card data-mock-recharge-checkout style={{ marginBottom: 'var(--space-3)' }}>
-          <p className="t-caption" style={{ marginBottom: 14 }}>결제 시뮬레이션 — 실제 PG 에서는 결제창으로 이동하고 결과는 webhook 으로 들어옵니다.</p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <form action={simulateRecharge.bind(null, checkout, 'success')} style={{ flex: 1 }}><SubmitButton variant="primary" full>결제 성공</SubmitButton></form>
-            <form action={simulateRecharge.bind(null, checkout, 'failed')}><SubmitButton variant="ghost">결제 실패</SubmitButton></form>
-          </div>
-        </Card>
-      ) : sellable ? (
-        <Card data-recharge-products="open" style={{ marginBottom: 'var(--space-3)' }} className="stack">
-          <p className="t-title-3">충전 상품</p>
-          {products.map((p) => (
-            <form key={p.id} action={beginRecharge} data-product={p.id}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
-              <input type="hidden" name="productId" value={p.id} />
-              <div style={{ minWidth: 0 }}>
-                <p className="t-body">{p.name}</p>
-                <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 2 }}>
-                  {p.units} 사용량{p.validDays ? ` · ${p.validDays}일 유효` : ' · 만료 없음'}
-                </p>
-              </div>
-              <SubmitButton variant="secondary" size="sm">{formatPrice(p)}</SubmitButton>
-            </form>
-          ))}
-        </Card>
-      ) : (
-        <Card data-recharge-products="pending" style={{ marginBottom: 'var(--space-3)' }}>
-          <p className="t-title-3">충전 상품</p>
-          {PLANNED_RECHARGE_TIERS.map(tier => <div key={tier.priceKRW} data-planned-price={tier.priceKRW} data-planned-units={tier.units} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--color-border)' }}>
-            <span className="t-body">{tier.priceKRW.toLocaleString('ko-KR')}원</span>
-            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{tier.units.toLocaleString('ko-KR')} 사용량</span>
-          </div>)}
-          <p className="t-caption" style={{ marginTop: 12 }}>충전 잔액은 만료 없이 이용하는 정책으로 준비 중이에요.</p>
-          <p className="t-caption" style={{ marginTop: 6, color: 'var(--color-text-secondary)' }}>
-            계좌이체 충전을 준비 중이에요. 결제가 열리면 구매할 수 있어요.
-          </p>
         </Card>
       )}
 
@@ -196,54 +154,67 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
         </Card>
       )}
 
-      <section className="stack" style={{ marginTop: 'var(--space-5)', gap: 6 }}>
-        <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-          MIRO 기본 대화는 사용량과 무관하게 이어갈 수 있어요. ECHO 대화와 사진·통화 같은 추가 인터랙션이 사용량을 씁니다.
-        </p>
-        <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-          사용량을 다 써도 기존 대화·관계·기억은 그대로 남아요.
-        </p>
-      </section>
     </Page>
   )
 }
 
-function MonthlyAllowance({ usage }: { usage: UsageStatus }) {
-  const reset = usage.resetsAt
-    ? `${usage.resetsAt.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' })}에 초기화`
-    : '매월 1일에 초기화'
+/** 입금자명을 따로 받지 않은 주문은 대조 코드 자체가 입금자명이다. 예전 주문은 '이름 코드'. */
+const depositName = (o: { depositorName: string; referenceCode: string }) =>
+  o.depositorName === o.referenceCode ? o.referenceCode : `${o.depositorName} ${o.referenceCode}`
+
+/** 칸 그림에 보이는 달 수 — 이번 달 포함. */
+const MONTHS = 4
+const kstDate = (d: Date) => d.toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' })
+/** YYYY-MM-DD 에서 back 달 전의 1일. */
+function monthStart(day: string, back: number): string {
+  const [y, m] = day.split('-').map(Number)
+  return new Date(Date.UTC(y!, m! - 1 - back, 1)).toISOString().slice(0, 10)
+}
+
+/** 날짜별 사용량을 GitHub 잔디처럼: 세로 7칸(일~토) × 주, 위에 달 이름. 진하기는 이 기간 최대치 대비 4단계. */
+function UsageGrid({ days, today }: { days: Record<string, number>, today: string }) {
+  const start = monthStart(today, MONTHS - 1)
+  const first = new Date(`${start}T00:00:00Z`)
+  const offset = first.getUTCDay()
+  const cells: Array<{ day: string; amount: number } | null> = Array(offset).fill(null)
+  for (let d = first; ; d = new Date(d.getTime() + 86_400_000)) {
+    const day = d.toISOString().slice(0, 10)
+    if (day > today) break
+    cells.push({ day, amount: days[day] ?? 0 })
+  }
+  const weeks = Math.ceil(cells.length / 7)
+  const max = Math.max(0, ...cells.map((c) => c?.amount ?? 0))
+  const level = (a: number) => (a === 0 || max === 0 ? 0 : Math.ceil((a / max) * 4))
+  const months = cells.flatMap((c, i) => (c && c.day.endsWith('-01') ? [{ col: Math.floor(i / 7) + 1, label: `${Number(c.day.slice(5, 7))}월` }] : []))
+  const total = cells.reduce((n, c) => n + (c?.amount ?? 0), 0)
+  return (
+    <div role="img" aria-label={`최근 ${MONTHS}개월 날짜별 사용량, 합계 ${total}`}>
+      <div aria-hidden style={{ display: 'grid', gridTemplateColumns: `repeat(${weeks}, 1fr)`, gap: 4, marginBottom: 4 }}>
+        {months.map((m) => <span key={m.col} className="t-caption" style={{ gridColumn: m.col, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>{m.label}</span>)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateRows: 'repeat(7, auto)', gridTemplateColumns: `repeat(${weeks}, 1fr)`, gridAutoFlow: 'column', gap: 4 }}>
+        {cells.map((c, i) => c
+          ? <span key={c.day} data-usage-day={c.day} data-level={level(c.amount)} title={`${Number(c.day.slice(5, 7))}월 ${Number(c.day.slice(8))}일 · 사용량 ${c.amount}`}
+              style={{ aspectRatio: '1', borderRadius: 4, background: level(c.amount) ? `rgb(59 110 220 / ${[0, .3, .5, .75, 1][level(c.amount)]})` : 'var(--color-surface-3)' }} />
+          : <span key={`pad-${i}`} />)}
+      </div>
+    </div>
+  )
+}
+
+function MonthlyAllowance({ usage, days, today }: { usage: UsageStatus, days: Record<string, number>, today: string }) {
   const spent = usage.remaining === 0
   return (
     <Card style={{ marginBottom: 'var(--space-3)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-        <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>이번 달 제공량 · MIRO {usage.plan === 'pro' ? 'Pro' : 'Free'}</span>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'baseline', marginBottom: 8 }}>
         <span data-usage-remaining={usage.remaining} className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{usage.usedPercent}% 사용</span>
       </div>
-      <div role="meter" aria-label={COPY.a11y.usageMeter} aria-valuemin={0} aria-valuemax={100} aria-valuenow={usage.usedPercent} aria-valuetext={`${usage.usedPercent}% 사용`}
-        style={{ height: 3, background: 'var(--color-surface-3)', overflow: 'hidden', borderRadius: 2 }}>
-        <div style={{ width: `${usage.usedPercent}%`, height: '100%', background: 'var(--color-white)' }} />
-      </div>
-      <p className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>{reset}</p>
+      <UsageGrid days={days} today={today} />
       {spent && (
         <p data-usage-spent className="t-body" style={{ marginTop: 12 }}>
           이번 달 제공량을 모두 썼어요. MIRO 기본 대화는 계속 이어갈 수 있어요.
         </p>
       )}
-      <TransitionLink href="/my/subscription" className="t-caption" style={{ display: 'inline-block', marginTop: 12, textDecoration: 'underline', color: 'var(--color-text-primary)' }}>내 요금제</TransitionLink>
     </Card>
   )
-}
-
-/**
- * 최소 화폐 단위를 사용자에게 보이는 금액으로. 금액을 코드가 만들지 않고 받은 값만 옮긴다.
- *
- * KRW 는 보조 단위가 없어 그대로지만 USD 는 100 으로 나눠야 한다 —
- * 통화별 소수 자릿수를 Intl 에서 읽어 나눈다. 여기서 틀리면 가격이 100 배로 보인다.
- */
-function formatPrice(p: RechargeProduct): string {
-  try {
-    const fmt = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: p.currency })
-    const digits = fmt.resolvedOptions().maximumFractionDigits ?? 0
-    return fmt.format(p.priceMinor / 10 ** digits)
-  } catch { return `${p.priceMinor} ${p.currency}` }
 }

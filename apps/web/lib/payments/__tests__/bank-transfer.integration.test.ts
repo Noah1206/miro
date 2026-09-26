@@ -117,7 +117,7 @@ describeDb('bank transfer orders', () => {
   it('refuses an unknown product and an empty depositor name', async () => {
     const u = await user()
     await expect(createBankOrder({ userId: u, kind: 'recharge', productId: 'nope', depositorName: '홍길동' })).rejects.toThrow()
-    await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: '   ' })).rejects.toThrow('INVALID_DEPOSITOR_NAME')
+    await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: 'x'.repeat(41) })).rejects.toThrow('INVALID_DEPOSITOR_NAME')
   })
 
   it('allows only one waiting order per user, and frees it once expired', async () => {

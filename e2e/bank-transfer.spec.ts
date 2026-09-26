@@ -15,13 +15,12 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   // 환불 조건은 사기 전에 보여야 한다.
   await expect(page.locator('[data-refund-terms]')).toContainText('7일')
   const order = page.locator('[data-bank-order="open"] form[data-order-kind="pass"]')
-  await order.getByLabel('입금자명').fill('홍길동')
   await order.getByRole('button', { name: '주문' }).click()
   await expect(page.locator('[data-order-result="created"]')).toBeVisible()
   const awaiting = page.locator('[data-bank-order="awaiting"]')
   await expect(awaiting).toContainText('000-000-0000')
   await expect(awaiting.locator('[data-order-amount="9900"]')).toBeVisible()
-  const code = (await awaiting.textContent())!.match(/홍길동 ([A-Z2-9]{6})/)![1]!
+  const code = (await awaiting.textContent())!.match(/입금자명 · ([A-Z2-9]{6})/)![1]!
   // 토스는 금액까지 채운 송금창이 열리고, 카카오뱅크는 앱만 열린다 — 그 차이가 화면에 보인다.
   await expect(awaiting.locator('[data-open-bank="toss"]')).toBeVisible()
   await expect(awaiting.locator('[data-open-bank="kakaobank"]')).toBeVisible()
@@ -74,7 +73,6 @@ test('bank transfer: one waiting order at a time', async ({ page }) => {
   await signUp(page, WEB)
   await page.goto(`${WEB}/recharge`)
   const order = page.locator('[data-bank-order="open"] form[data-order-kind="pass"]')
-  await order.getByLabel('입금자명').fill('김미로')
   await order.getByRole('button', { name: '주문' }).click()
   await expect(page.locator('[data-order-result="created"]')).toBeVisible()
   // 대기 중이면 주문 카드가 사라지고 안내만 남는다.

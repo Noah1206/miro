@@ -15,7 +15,7 @@ import { ChatComposer } from './composer'
 import { MediaBar } from './media-bar'
 import { feature, voiceCallAllowed } from '@miro/config'
 import { MessageList, type Msg } from './messages'
-import { ChatModelProvider, ModelPicker } from './model-picker'
+import { ChatModelProvider } from './model-picker'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
 import { TurnsProvider } from './turns'
@@ -59,7 +59,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <header className={styles.header}>
           <Back href="/archive" />
           <h1 className={styles.title}>{loaded.characterName}</h1>
-          <ModelPicker {...modelOptions} />
           <ContextTrigger d={ctx} className={styles.contextButton}>
             <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h11M4 18h16" /></svg>
           </ContextTrigger>
@@ -85,7 +84,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* 사진·통화·Live 는 미로 캐릭터의 것이다. 서버가 어차피 거절하지만, 없는 기능의 버튼을 그리지 않는다. */}
         {loaded.experienceType === 'reality' && <MediaBar sessionId={sessionId} matureAllowed={mature.allowed}
           enabled={{ photo: feature('imageGeneration'), live: feature('liveScene'), voice: voiceCallAllowed(user.id), video: feature('videoCall') }} />}
-        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} />
+        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} />
       </section>
 
     </main></TurnsProvider></ChatModelProvider>

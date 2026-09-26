@@ -259,6 +259,15 @@ export async function usageStatus(userId: string, now = new Date()): Promise<Usa
   }
 }
 
+/** 날짜(KST, YYYY-MM-DD)별 확정 사용량. 충전소의 월별 칸 그림에 쓴다. */
+export async function dailyUsage(userId: string, since: Date): Promise<Record<string, number>> {
+  const day = sql<string>`to_char(${usageLedger.createdAt} at time zone 'Asia/Seoul', 'YYYY-MM-DD')`
+  const rows = await db.select({ day, amount: sql<number>`sum(${usageLedger.amount})::int` }).from(usageLedger)
+    .where(and(eq(usageLedger.userId, userId), eq(usageLedger.status, 'committed'), gt(usageLedger.createdAt, since)))
+    .groupBy(day)
+  return Object.fromEntries(rows.map((r) => [r.day, r.amount]))
+}
+
 /**
  * 서버 액션이 사용자에게 돌려줄 한도 안내.
  * 사용량이 0 이어도 MIRO 기본 대화는 계속 가능하므로 그 길을 함께 알린다 — 모델을 몰래 바꾸지는 않는다.

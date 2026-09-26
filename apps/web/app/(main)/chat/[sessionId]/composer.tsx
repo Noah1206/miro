@@ -1,11 +1,11 @@
 'use client'
-import { startTransition, useActionState, useEffect, useRef, useState } from 'react'
+import { startTransition, useActionState, useEffect, useRef, useState, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
-import { useChatModel } from './model-picker'
+import { ModelPicker, useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
 import { useTurns } from './turns'
@@ -13,8 +13,8 @@ import { useTurns } from './turns'
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
 
-/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). */
-export function ChatComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
+/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력창 아래 줄에 둔다. */
+export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
   const [state, action, pending] = useActionState(async (previous: TurnState, form: FormData): Promise<TurnState> => {
     try { return await sendTurn(previous, form) }
     catch { return { error: '연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.', notice: null, limit: null, retryWithSameId: true } }
@@ -108,9 +108,12 @@ export function ChatComposer({ sessionId, characterName }: { sessionId: string; 
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
           />
-        <Pressable type="submit" disabled={pending || !ready || !hasText} aria-label={COPY.cta.send} className={styles.send}>
-          {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
-        </Pressable>
+        <div className={styles.composerBar}>
+          <ModelPicker {...modelOptions} />
+          <Pressable type="submit" disabled={pending || !ready || !hasText} aria-label={COPY.cta.send} className={styles.send}>
+            {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
+          </Pressable>
+        </div>
       </form>
     </div>
   )

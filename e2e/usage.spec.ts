@@ -71,7 +71,7 @@ test('the recharge page reports real usage and takes orders without granting', a
 
   // 실제 월간 사용량을 읽어 보여준다.
   await expect(page.locator('[data-usage-remaining]')).toBeVisible()
-  await expect(page.getByText(/에 초기화/)).toBeVisible()
+  await expect(page.locator('[data-usage-day]').first()).toBeVisible()
   // 잔액은 실제 값이고, 지급은 주문만으로 일어나지 않는다.
   await expect(page.locator('[data-recharge-balance="0"]')).toBeVisible()
   // E2E 는 계좌가 설정돼 있어 계좌이체 주문 카드가 열린다. 환불 조건도 사기 전에 보인다.
