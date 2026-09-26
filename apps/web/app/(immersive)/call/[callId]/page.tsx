@@ -80,18 +80,21 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
     }
   }
 
-  const lines = (await db.select().from(messages)
+  // 이 통화에서 오간 말만. 캐릭터의 말에 이 통화 표시(call_line)가 붙고, 내 말은 같은 턴에 있다 —
+  // 턴으로 묶지 않으면 캐릭터챗 장면·지난 통화의 내 말까지 통화 화면에 뜬다(9/26 데모에서 발견).
+  const recent = await db.select().from(messages)
     .where(and(eq(messages.sessionId, call.sessionId), eq(messages.kind, 'text')))
-    .orderBy(desc(messages.turnIndex), desc(messages.createdAt)).limit(12))
-    .filter((m) => (m.blocks as Array<{ type: string; text?: string }>).some((b) => b.type === 'call_line' && b.text === callId) || m.role === 'user')
-    .reverse()
+    .orderBy(desc(messages.turnIndex), desc(messages.createdAt)).limit(24)
+  const callTurns = new Set(recent.filter((m) => (m.blocks as Array<{ type: string; text?: string }>).some((b) => b.type === 'call_line' && b.text === callId)).map((m) => m.turnIndex))
+  const lines = recent.filter((m) => callTurns.has(m.turnIndex)).slice(0, 12).reverse()
 
   return (
     <main id="main" tabIndex={-1} data-call-channel={call.channel} className="page page--immersive" style={{ outline: 'none',
       minHeight: '100dvh', display: 'flex', flexDirection: 'column', position: 'relative', background: 'var(--color-bg-deep)',
     }}>
-      {face && <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url(${face})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
-      <div aria-hidden style={{ position: 'absolute', inset: 0, background: face ? 'linear-gradient(to top, rgba(0,0,0,0.94) 30%, rgba(0,0,0,0.35))' : 'transparent' }} />
+      {/* 배경 층은 장식이다 — 터치를 받지 않는다. 받으면 아래 말하기 입력칸을 덮어 눌리지 않는다(9/26 데모에서 발견). */}
+      {face && <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `url(${face})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
+      <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: face ? 'linear-gradient(to top, rgba(0,0,0,0.94) 30%, rgba(0,0,0,0.35))' : 'transparent' }} />
       <header style={{ position: 'relative', padding: '32px 24px 8px', textAlign: 'center' }}>
         <p className="t-micro">{call.channel === 'voice' ? '음성통화' : '영상통화'} · {loaded.snapshot.world.currentLocation}</p>
         <h1 className="t-display t-name" style={{ marginTop: 10 }}>{loaded.characterName}</h1>

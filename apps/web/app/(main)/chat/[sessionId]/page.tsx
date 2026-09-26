@@ -15,7 +15,7 @@ import { ChatModelProvider } from './model-picker'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
 import { TurnsProvider } from './turns'
-import { isMessengerMessage } from '@/lib/messenger'
+import { sceneMessages } from '@/lib/messenger'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
@@ -31,7 +31,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   ])
   if (!loaded || !mature) notFound()
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
-  const history = all.filter((m) => !isMessengerMessage(m))
+  const history = sceneMessages(all)
 
   const s = loaded.snapshot
   const ctx: ContextData = {

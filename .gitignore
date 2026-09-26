@@ -14,3 +14,4 @@ undefined/
 .vercel
 .env*.local
 .next-e2e/
+.next-demo/
