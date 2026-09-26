@@ -128,6 +128,8 @@ export const POLICY = {
        * 잘리면 JSON 이 깨져 턴 전체가 실패한다. 운영 dialogue 모델(gemini-flash)의 상한도 2048 이다.
        */
       maxOutputTokens: DEV_DEFAULT(2048),
+      /** 캐릭터챗 한 응답의 길이 — scene: 장면 하나(500~900자). */
+      replyLength: 'scene' as const,
       /** 보조 분석(기억 추출·의미 이벤트)을 규칙이 요구할 때만 돌린다. */
       auxiliary: 'planned' as const,
     },
@@ -139,6 +141,11 @@ export const POLICY = {
        * 이 값을 올리려면 MIRO_MODEL_REGISTRY 의 해당 모델도 같이 올려야 한다.
        */
       maxOutputTokens: DEV_DEFAULT(4096),
+      /**
+       * long: 더 긴 장면(900~1500자, 2026-09-26). 상한만 올리면 모델은 지시대로 500~900자에 멈춘다 — 길이는 지시가 정한다.
+       * 긴 장면은 JSON 까지 2048 토큰을 넘을 수 있어 MIRO_MODEL_REGISTRY 의 dialogue 모델 상한도 4096 이어야 한다.
+       */
+      replyLength: 'long' as const,
       /** 기억·관계 보조 분석을 매 턴 돌린다. */
       auxiliary: 'always' as const,
     },

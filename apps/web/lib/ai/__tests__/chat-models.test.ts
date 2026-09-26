@@ -27,6 +27,9 @@ describe('plan-based chat models', () => {
     expect(echo.tier.contextScale).toBeGreaterThan(miro.tier.contextScale)
     expect(echo.tier.maxOutputTokens).toBeGreaterThan(miro.tier.maxOutputTokens)
     expect(echo.tier.auxiliary).toBe('always')
+    // 상한만 올리면 모델은 지시대로 500~900자에 멈춘다 — 긴 장면은 지시가 정한다.
+    expect(echo.tier.replyLength).toBe('long')
+    expect(miro.tier.replyLength).toBe('scene')
     expect(miro.tier.auxiliary).toBe('planned')
   })
   it('honours a pinned model id for both', async () => {

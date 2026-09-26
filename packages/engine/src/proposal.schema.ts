@@ -139,7 +139,24 @@ export function lenientArray<T extends z.ZodTypeAny>(item: T, max: number) {
   ).default([])
 }
 
-export const SimulationProposal = z.object({
+/**
+ * 실측(2026-09-26, gemini-3.8-flash): 모델이 rp 를 닫는 괄호를 빠뜨리면 뒤의 키(worldDelta, memoryCandidates …)가 rp 안에 들어간다.
+ * 괄호는 extractJson 이 채우고, 여기서는 rp 안에 들어간 최상위 키를 제자리로 옮긴다. 이미 최상위에 있는 키는 건드리지 않는다.
+ */
+const ROOT_KEYS = ['emotion', 'intent', 'worldDelta', 'relationshipDelta', 'sceneDelta', 'memoryCandidates', 'eventCandidates',
+  'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent'] as const
+function hoistFromRp(v: unknown): unknown {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+  const root = v as Record<string, unknown>
+  const rp = root.rp
+  if (!rp || typeof rp !== 'object' || Array.isArray(rp)) return v
+  const inner = { ...(rp as Record<string, unknown>) }
+  const moved: Record<string, unknown> = {}
+  for (const key of ROOT_KEYS) if (key in inner && !(key in root)) { moved[key] = inner[key]; delete inner[key] }
+  return Object.keys(moved).length ? { ...root, ...moved, rp: inner } : v
+}
+
+export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   /** 대사만이 이 응답의 필수 부분이다. 블록 하나가 어긋나면 그 블록만 버리되, 남는 것이 없으면 실패다. */
   rp: z.object({
     blocks: lenientArray(RpBlock, 12).pipe(z.array(RpBlock).min(1)),
@@ -158,7 +175,7 @@ export const SimulationProposal = z.object({
   npcIntroductions: lenientArray(NpcIntroductionProposal, 2),
   npcActions: lenientArray(NpcActionProposal, 3),
   realityIntent: RealityIntentProposal.nullable().default(null).catch(null),
-})
+}))
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>
 export type RpBlock = z.infer<typeof RpBlock>

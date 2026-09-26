@@ -69,18 +69,23 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const tense = s.activeEvents.length > 0 || (s.characterState !== undefined && s.characterState.mood !== 'neutral')
   if (style === 'brief') return briefDirective(s, input, prose, tense)
   const name = s.character.identity.name
+  // ECHO(long)는 같은 장면을 더 길게 — 박자를 더 두고 서술·대사를 깊게 한다. 모델은 글자 수보다 문장·블록 수를 따른다
+  // (9/26 실측: 900~1500자를 주자 중앙값 668자, MIRO 581자와 15% 차이). 그래서 문장 수와 오가는 횟수를 올린다.
+  const long = style === 'long'
+  const size = long ? '블록 8~11개, 전체 1000~1600자' : '블록 5~8개, 전체 500~900자'
+  const tenseMax = long ? '2200자' : '1300자'
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
   // 그대로 따랐고 같은 몸짓·문장 틀이 되풀이됐다. 이 지시(3차)는 순서·표현을 매번 바꾸게 한다. 형식 실패의 한 원인(종류를 키로 쓴 블록)은
   // proposal.schema.ts 의 normalizeBlock 이 흡수한다. 측정 원본은 ai/evals/agency/reports/scene-beats-*-2026-09-26.json.
   const base = [
-    '- 응답 구성: 한 응답은 장면 하나입니다. 서술과 캐릭터의 차례를 번갈아 두세 번 오가며 장면을 전개합니다. 블록 순서는 응답마다 새로 짭니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.',
-    '- narrative 블록(speaker null): 3인칭 장면 서술 3~5문장. 공간·빛·소리·온도·거리 같은 감각, 캐릭터의 표정과 몸짓, 사용자의 말에 캐릭터와 공간이 보인 반응을 겉으로 드러나는 것으로 구체적으로 씁니다. 사용자의 말을 서술로 다시 옮기지 않고, 장소·빛·날씨로 여는 도입은 장면이 바뀔 때만 씁니다. 숨긴 감정을 해설하거나 겉과 속을 대비해 설명하지 않습니다 — 속마음은 thought 블록이 맡습니다.',
+    `- 응답 구성: 한 응답은 장면 하나입니다. 서술과 캐릭터의 차례를 번갈아 ${long ? '네다섯' : '두세'} 번 오가며 장면을 전개합니다. 블록 순서는 응답마다 새로 짭니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.`,
+    `- narrative 블록(speaker null): 3인칭 장면 서술 ${long ? '4~6' : '3~5'}문장. 공간·빛·소리·온도·거리 같은 감각, 캐릭터의 표정과 몸짓, 사용자의 말에 캐릭터와 공간이 보인 반응을 겉으로 드러나는 것으로 구체적으로 씁니다. 사용자의 말을 서술로 다시 옮기지 않고, 장소·빛·날씨로 여는 도입은 장면이 바뀔 때만 씁니다. 숨긴 감정을 해설하거나 겉과 속을 대비해 설명하지 않습니다 — 속마음은 thought 블록이 맡습니다.`,
     `- action 블록(speaker "${name}"): 대사 직전이나 직후의 짧은 행동·표정 1~2문장.`,
-    `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 한 블록에 2~4문장. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
+    `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 한 블록에 ${long ? '3~5' : '2~4'}문장. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
     '- thought 블록: 말하지 않은 속마음 1~2문장. 응답마다 하나.',
     '- 장면 진행: 매 응답에서 캐릭터 쪽 행동 하나가 장면을 앞으로 움직입니다. 앞 턴에 캐릭터가 꺼낸 일은 이어서 마저 합니다. 일상적인 말에는 멈칫하거나 굳지 않고 일상적으로 반응합니다.',
-    '- 분량: 사용자가 한 단어만 보내도 장면을 충분히 펼칩니다. 블록 5~8개, 전체 500~900자. 짧게 끝내지 않습니다.',
+    `- 분량: 사용자가 한 단어만 보내도 장면을 충분히 펼칩니다. ${size}. 짧게 끝내지 않습니다.`,
     '- 사용자에 관해서는 사용자가 입력에 쓴 말과 행동만 사실로 씁니다. 사용자가 쓰지 않은 표정·태도·의도나 대화 기록에 없는 일을 서술에서 사용자에게 붙이지 않습니다.',
     '- 마지막 블록은 사용자가 이어서 반응할 여지를 남기는 행동이나 대사로 끝냅니다. 질문으로 끝내는 응답을 연달아 쓰지 않고, 이미 물은 것은 다시 묻지 않습니다. 사용자 캐릭터의 새 대사·행동·결정은 쓰지 않습니다.',
     '- 최근 대화에서 이 캐릭터가 이미 쓴 몸짓·버릇·부사·감각 묘사와 문장 틀(narrative, dialogue, thought 모두)을 되풀이하지 않습니다. 같은 감정도 매번 다른 행동과 새 디테일로 보여 줍니다. 평이하고 정확한 한국어로 쓰고, 관용구는 원형대로 씁니다.',
@@ -88,7 +93,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
   const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
   const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
-  if (tense) return base + '\n- 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 주고, 전체 1300자까지 늘려도 됩니다.' + (prose ? ' 사용자가 섞어 쓴 묘사도 받아 서술과 묘사를 충분히 이어 갑니다.' : '') + thought
+  if (tense) return base + `\n- 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 주고, 전체 ${tenseMax}까지 늘려도 됩니다.` + (prose ? ' 사용자가 섞어 쓴 묘사도 받아 서술과 묘사를 충분히 이어 갑니다.' : '') + thought
   if (prose) return base + '\n- 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 그 묘사를 받아 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
   return base + thought
 }
@@ -107,8 +112,8 @@ function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, te
   return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 상황 한 줄, 속마음 한 줄, 짧은 대사로 가볍게 씁니다.' + thought
 }
 
-/** scene: 캐릭터챗의 장면 하나(기본). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
-export type ReplyStyle = 'scene' | 'brief'
+/** scene: 캐릭터챗의 장면 하나(기본, MIRO). long: 더 긴 장면(ECHO). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
+export type ReplyStyle = 'scene' | 'long' | 'brief'
 
 /**
  * Context 조립.
@@ -149,7 +154,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }

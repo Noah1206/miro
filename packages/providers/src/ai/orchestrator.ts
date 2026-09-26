@@ -70,8 +70,10 @@ export class AIOrchestrator implements LLMProvider {
     this.info = { ...opts.chain[0]!.info }
   }
   async execute<Out, In = Out>(opts: GenerationRequest & { schema: ZodType<Out, ZodTypeDef, In>; maxRetries?: number }): Promise<Out> {
-    const production = this.run({ ...opts, task: taskOf(opts.task), json: true }, text => {
-      const parsed = opts.schema.safeParse(extractJson(text))
+    const production = this.run({ ...opts, task: taskOf(opts.task), json: true }, (text, truncated) => {
+      // 잘린 답은 닫는 괄호를 채워 완성하지 않는다 — 없는 끝을 지어내는 것이다. 공급자가 다 썼다고 알린 답의 빠진 괄호만 채운다
+      // (끝을 알리지 않는 공급자의 답은 채우지 않는다).
+      const parsed = opts.schema.safeParse(extractJson(text, { closeUnclosed: truncated === false }))
       // Schema paths and issue codes only, never output text: enough to see which field a model keeps breaking.
       if (!parsed.success) throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}`).join(' ')}`)
       return parsed.data
@@ -115,7 +117,7 @@ export class AIOrchestrator implements LLMProvider {
       tier: 'standard', capabilities: [...AI_TASKS], enabled: true, version: 'legacy', maxContextTokens: 32768, maxOutputTokens: 1024, trainingAllowed: false,
     } }))
   }
-  private async run<T>(req: GenerationRequest, validate: (text: string) => T, overrideRetries?: number): Promise<T> {
+  private async run<T>(req: GenerationRequest, validate: (text: string, truncated?: boolean) => T, overrideRetries?: number): Promise<T> {
     if (req.signal?.aborted) throw new AIUnavailableError(0, 'cancelled')
     let attempts = 0, last = 'unavailable', denied: string | null = null
     const selections = this.selections(req)
@@ -238,7 +240,7 @@ export class AIOrchestrator implements LLMProvider {
           if (leaseLost) throw new Error('lease_lost')
           if (holdExpired) throw new Error('lease_hold_expired')
           if (result.blocked) throw new AIContentBlockedError()
-          output = validate(result.text)
+          output = validate(result.text, result.truncated)
           ok = true
         } catch (e) {
           // Never log provider response bodies, keys, prompts or private reasoning.
@@ -267,14 +269,43 @@ export class AIOrchestrator implements LLMProvider {
     throw new AIUnavailableError(attempts, last)
   }
 }
-export function extractJson(raw: string): unknown {
+export function extractJson(raw: string, opts: { closeUnclosed?: boolean } = {}): unknown {
   const trimmed = raw.trim().replace(/^```(?:json)?\s*|\s*```$/g, '')
   try { return JSON.parse(trimmed) } catch { /* tolerate surrounding prose, still validate the entire result */ }
   const start = trimmed.indexOf('{'), end = trimmed.lastIndexOf('}')
   if (start === -1 || end <= start) return null
   const body = trimmed.slice(start, end + 1)
   try { return JSON.parse(body) } catch { /* fall through to bracket repair */ }
-  try { return JSON.parse(dropUnmatchedClosers(body)) } catch { return null }
+  const balanced = dropUnmatchedClosers(body)
+  try { return JSON.parse(balanced) } catch { if (!opts.closeUnclosed) return null }
+  /**
+   * 실측(2026-09-26, gemini-3.8-flash, 원문 2건): 다 쓴 답에서 `"rp":{"blocks":[…]` 뒤 rp 를 닫는 `}` 하나를 빠뜨린다.
+   * 나머지 키가 rp 안으로 들어가고 끝에서 바깥 객체가 닫히지 않는다. 문자열 밖에서 열린 채 끝난 괄호만 닫는다 —
+   * 끝이 문자열 한가운데면 잘린 것이라 손대지 않는다. 안으로 들어간 키를 제자리로 옮기는 것은 호출자의 스키마 몫이다.
+   */
+  // 마지막 `}` 뒤에 글이 남아 있으면 끝이 잘린 것이다(문자열 한가운데나 쉼표 뒤에서 끊김) — 채우지 않는다.
+  if (trimmed.slice(end + 1).trim()) return null
+  const closers = openClosers(balanced)
+  if (!closers) return null
+  try { return JSON.parse(balanced + closers) } catch { return null }
+}
+
+/** 문자열 밖에서 열린 채 남은 괄호를 닫는 문자열. 끝이 문자열 안이거나 닫을 것이 없으면 null. */
+function openClosers(text: string): string | null {
+  const stack: string[] = []
+  let inString = false, escaped = false
+  for (const ch of text) {
+    if (inString) {
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
+      else if (ch === '"') inString = false
+      continue
+    }
+    if (ch === '"') inString = true
+    else if (ch === '{' || ch === '[') stack.push(ch === '{' ? '}' : ']')
+    else if (ch === '}' || ch === ']') stack.pop()
+  }
+  return inString || !stack.length ? null : stack.reverse().join('')
 }
 
 /**

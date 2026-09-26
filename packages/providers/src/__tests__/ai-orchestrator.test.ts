@@ -261,3 +261,25 @@ describe('AIOrchestrator', () => {
   })
 
 })
+
+describe('missing closing bracket', () => {
+  const raw = '{"rp":{"blocks":[{"type":"dialogue","speaker":"유진","text":"왔어?"}],"worldDelta":null,"realityIntent":null}'
+  const provider = (truncated: boolean | undefined): AIProvider => ({ info: { mode: 'live', name: 'raw/test', notice: null }, healthCheck: async () => true,
+    generate: async () => ({ text: raw, provider: 'raw', model: 'test', inputTokens: 1, outputTokens: 1, latencyMs: 1, truncated }) })
+  const schema = z.object({ rp: z.object({ blocks: z.array(z.object({ text: z.string() })) }) })
+
+  it('closes it on a complete reply', async () => {
+    const out = await new AIOrchestrator({ chain: [provider(false)], maxRetries: 0 }).execute({ task: 'dialogue', system: '', prompt: '', schema })
+    expect(out.rp.blocks[0]?.text).toBe('왔어?')
+  })
+
+  it('does not guess for a provider that does not report how the reply ended', async () => {
+    await expect(new AIOrchestrator({ chain: [provider(undefined)], maxRetries: 0 }).execute({ task: 'dialogue', system: '', prompt: '', schema }))
+      .rejects.toThrow(/invalid_schema/)
+  })
+
+  it('does not complete a reply the output limit cut off', async () => {
+    await expect(new AIOrchestrator({ chain: [provider(true)], maxRetries: 0 }).execute({ task: 'dialogue', system: '', prompt: '', schema }))
+      .rejects.toThrow(/max_tokens/)
+  })
+})

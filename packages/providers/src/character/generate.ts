@@ -25,7 +25,8 @@ export async function generateCharacterDraft(
   oneLiner: string,
 ): Promise<CharacterDraft> {
   return llm.generateStructured({
-    schema: CharacterDraft, task: 'world_update', promptVersion: 'character-draft:v1',
+    // world_update 를 맡는 dialogue 모델 상한이 ECHO 때문에 4096 이 되어도 전과 같은 2048 에 묶는다.
+    schema: CharacterDraft, task: 'world_update', promptVersion: 'character-draft:v1', maxTokens: 2048,
     system: SYSTEM,
     prompt: `다음 설명에 맞는 캐릭터 초안을 만들어 주세요.\n\n설명: ${oneLiner}`,
   })

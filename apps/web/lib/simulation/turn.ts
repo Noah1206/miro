@@ -7,7 +7,7 @@ import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@mi
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { feature, usagePolicy } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
-import { renderBlocks, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
+import { renderBlocks, requireSafeContent, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -95,6 +95,11 @@ async function executeTurn(opts: {
       const [profile] = await db.select({ enabled: contactProfiles.enabled }).from(contactProfiles).where(eq(contactProfiles.characterId, loaded.characterId)).limit(1)
       const availability = profile?.enabled ? await characterAvailability(loaded.characterId, now, loaded.snapshot.clock?.timeZone) : null
       if (availability && availability.availability !== 'free') {
+        // 미뤄진 문자는 지금 모델에 가지 않고 나중에 기록으로만 실린다. 기록은 검열에서 줄어들 수 있으니 저장할 때 판정한다.
+        try {
+          await requireSafeContent(resolveRpLLM(loaded.characterName, { userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip }),
+            { phase: 'input', character: loaded.snapshot.character, input })
+        } catch (e) { if (e instanceof UnsafeContentError) return { ok: false, reason: 'safety' }; throw e }
         const wait = (availability.minutesUntilFree ?? 30) + 3 + (loaded.snapshot.turnCount % 9)
         const until = new Date(now.getTime() + wait * 60_000).toISOString()
         const label = availability.label ?? ''
@@ -145,6 +150,7 @@ async function executeTurn(opts: {
           maxOutputTokens: reservation?.continuity ? usagePolicy().continuity.maxOutputTokens : model.tier.maxOutputTokens,
           contextScale: reservation?.continuity ? 1 : model.tier.contextScale,
           auxiliary: reservation?.continuity ? 'planned' : model.tier.auxiliary,
+          replyLength: reservation?.continuity ? 'scene' : model.tier.replyLength,
         }))
 
     } catch (e) {

@@ -158,6 +158,13 @@ describe('context builder', () => {
     expect(buildContext(snapshot({ userInput: '뭐해', mode: 'voice_call' })).system).not.toMatch(/thought 블록/)
   })
 
+  it('lets a tense scene run longer, more so for ECHO', () => {
+    const tense = { userInput: '응', activeEvents: [event()] }
+    expect(buildContext(snapshot(tense)).system).toMatch(/전체 1300자까지/)
+    expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/전체 2200자까지/)
+    expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/네다섯 번 오가며/)
+  })
+
   it('keeps the agency renderer on the measured brief directive', () => {
     // 자율성 엔진의 검증기는 모든 서술에 근거를 요구한다 — 근거 없는 긴 장면 지시를 주지 않는다.
     const c = buildContext(snapshot({ userInput: '뭐해' }), 1, false, 'brief')

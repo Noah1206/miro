@@ -51,7 +51,8 @@ export async function inferAppearance(characterId: string): Promise<Appearance |
   if (!c) return null
 
   try {
-    return await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'appearance:v1',
+    // dialogue 모델 상한이 ECHO 때문에 4096 이 되어도 전과 같은 2048 에 묶는다.
+    return await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'appearance:v1', maxTokens: 2048,
       schema: Appearance,
       system: SYSTEM,
       prompt: [

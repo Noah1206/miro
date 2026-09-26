@@ -118,6 +118,8 @@ async function main() {
     for (const character of characters) {
       const out = join(directory, `${arm}-${character}.json`)
       const status = vitest('apps/web/lib/agency/baseline-measure.eval.ts', { MIRO_CHARACTER_AGENCY_MODE: mode, MIRO_CHARACTER_AGENCY_SESSIONS: mode === 'off' ? '' : '*',
+        // --chat-model pro: ECHO 등급(긴 장면·맥락 2배·보조 분석 매 턴)으로 턴을 돈다. 측정 사용자는 pro 요금제가 된다.
+        MIRO_AGENCY_MEASURE_CHAT_MODEL: option('--chat-model') ?? 'miro',
         MIRO_AGENCY_MEASURE_CHARACTER: character, MIRO_AGENCY_MEASURE_OUT: out })
       const data: Arm | null = status === 0 && existsSync(out) ? JSON.parse(await readFile(out, 'utf8')) : null
       if (!data) { warnings.push(`${arm}/${character}: did not complete`); continue }
@@ -148,7 +150,7 @@ async function main() {
   const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8' }).trim()
   const report = { mode: live ? 'live-pilot' : 'mock-wiring', experiment, createdAt: new Date().toISOString(),
     commit: git('rev-parse', 'HEAD'), uncommittedChanges: git('status', '--porcelain').length > 0,
-    database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features, characters,
+    database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features, characters, chatModel: option('--chat-model') ?? 'miro',
     registry: provider?.registry.map(({ id, providerModelId, capabilities, inputCost, outputCost }) => ({ id, providerModelId, capabilities, inputCost, outputCost })) ?? null,
     registryOverride: provider?.override ?? null, liveRegistryServesWorldUpdate: provider?.servesWorldUpdate ?? null,
     complete: warnings.length === 0, warnings, summary, failures, arms,

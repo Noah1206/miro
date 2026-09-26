@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { extractJson } from '@miro/providers'
 import { MemoryCandidateProposal, SimulationProposal } from '../proposal.schema'
 import { validateProposal } from '../validator'
 import { renderBlocks } from '../orchestrator'
@@ -93,6 +95,18 @@ describe('relationship delta validation', () => {
 })
 
 describe('rp block validation', () => {
+  it('recovers a complete reply whose rp object was never closed (measured raw output)', () => {
+    const [first, second] = JSON.parse(readFileSync(new URL('./model-quirks.json', import.meta.url), 'utf8')).missingRpCloser as string[]
+    const a = SimulationProposal.parse(extractJson(first!, { closeUnclosed: true }))
+    expect(a.rp.blocks).toHaveLength(6)
+    expect(a.sceneDelta?.mood).toBe('다소 서늘하고 절제된 긴장감')
+    // 둘째 원문은 블록 종류를 키로 쓴 모양까지 겹쳤다 — 블록도, rp 안에 들어간 기억 후보도 제자리를 찾는다.
+    const b = SimulationProposal.parse(extractJson(second!, { closeUnclosed: true }))
+    expect(b.rp.blocks.map((x) => x.type)).toEqual(['action', 'dialogue', 'narrative', 'thought', 'dialogue', 'action', 'dialogue'])
+    expect(b.memoryCandidates).toHaveLength(1)
+    expect(b.memoryCandidates[0]?.type).toBe('promise')
+  })
+
   it('accepts blocks written with the type as the key (measured model quirk)', () => {
     // 9/26 실측 원문 그대로의 모양: 종류 이름이 키, 화자가 값.
     const p = SimulationProposal.parse({ rp: { blocks: [

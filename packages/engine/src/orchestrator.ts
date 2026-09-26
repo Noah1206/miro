@@ -1,3 +1,4 @@
+import { POLICY } from '@miro/config'
 import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
@@ -49,6 +50,8 @@ export async function runTurn(opts: {
   contextScale?: number
   /** 'always' 면 보조 분석(의미 이벤트·기억)을 규칙과 무관하게 매 턴 돌린다. */
   auxiliary?: 'planned' | 'always'
+  /** 캐릭터챗 한 응답의 길이. ECHO 는 'long'. 자율성 엔진은 자기 형식을 쓴다. */
+  replyLength?: 'scene' | 'long'
   agency?: AgencyTurnInput
   /**
    * 실시간 음성 통화에서 캐릭터가 이미 소리로 한 말. 있으면 대사를 새로 만들지 않고 이 말을 이번 턴의 답으로 받는다 —
@@ -56,6 +59,8 @@ export async function runTurn(opts: {
    */
   spokenReply?: string
 }): Promise<TurnResult> {
+  // 등급을 넘기지 않는 호출(통화·Live Scene·음성)은 MIRO 한도를 쓴다 — 모델 상한(ECHO 때문에 4096)을 그대로 물려받지 않는다.
+  opts = { ...opts, maxOutputTokens: opts.maxOutputTokens ?? POLICY.chatTier.miro.maxOutputTokens }
   if (opts.agency?.mode === 'live') return runAgencyTurn({ ...opts, agency: opts.agency })
   let agencyShadow: TurnResult['agencyShadow']
   if (opts.agency?.mode === 'shadow' && opts.llm.info.mode === 'mock') {
@@ -114,7 +119,7 @@ export async function runTurn(opts: {
   const prevState = snapshot.characterState ?? DEFAULT_CHARACTER_STATE
   const characterState = deriveCharacterState(prevState, projected, semanticEvents)
 
-  const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale)
+  const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale, false, opts.replyLength ?? 'scene')
 
   let proposal: SimulationProposal
   let providerMode: TurnResult['providerMode'] = opts.llm.info.mode
