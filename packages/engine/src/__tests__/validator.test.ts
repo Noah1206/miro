@@ -93,6 +93,17 @@ describe('relationship delta validation', () => {
 })
 
 describe('rp block validation', () => {
+  it('accepts blocks written with the type as the key (measured model quirk)', () => {
+    // 9/26 실측 원문 그대로의 모양: 종류 이름이 키, 화자가 값.
+    const p = SimulationProposal.parse({ rp: { blocks: [
+      { action: '토마스', text: '칼을 내려놓으려다 멈춘다.' }, { dialogue: '토마스', text: '…고맙다는 말은 왜 하시는 겁니까.' },
+      { thought: '토마스', text: '제멋대로다.' }, { narrative: null, text: '빗소리가 공방을 두드린다.' },
+    ] } })
+    expect(p.rp.blocks.map((b) => [b.type, b.speaker])).toEqual([['action', '토마스'], ['dialogue', '토마스'], ['thought', '토마스'], ['narrative', null]])
+    // 종류 키가 둘 이상이면 추측하지 않는다.
+    expect(SimulationProposal.safeParse({ rp: { blocks: [{ action: '토마스', dialogue: '토마스', text: 'x' }] } }).success).toBe(false)
+  })
+
   it('drops a block that speaks for the user', () => {
     const v = validateProposal(proposal({
       rp: { blocks: [

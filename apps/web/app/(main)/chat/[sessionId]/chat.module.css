@@ -15,6 +15,15 @@
 .opening { margin: 0 0 28px; padding: 0 12px; color: var(--color-text-secondary); font-size: 16px; line-height: 1.65; letter-spacing: -.3px; font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere; }
 .messages { display: flex; flex-direction: column; gap: 22px; }
 .characterRow { display: flex; align-items: flex-start; gap: 8px; }
+/* 한 응답 = 장면 하나. 서술(말풍선 밖)과 인물의 말풍선이 번갈아 쌓인다 (2026-09-26). */
+.reply { display: flex; flex-direction: column; gap: 18px; }
+.reply > [hidden] { display: none; }
+.narration { display: flex; align-items: flex-start; gap: 8px; }
+.narrationIcon { width: 32px; height: 16px; flex-shrink: 0; margin-top: 4px; color: var(--color-text-tertiary); }
+.narrationText { flex: 1; min-width: 0; color: var(--color-text-secondary); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; font-style: italic; overflow-wrap: anywhere; }
+.narrationText p { margin: 0; white-space: pre-wrap; }
+.narrationText p + p { margin-top: 12px; }
+.narrationText em { font-style: normal; }
 .avatar { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 14px; font-weight: 600; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; border-radius: inherit; }
 .characterContent { flex: 1; min-width: 0; max-width: calc(100% - 40px); }

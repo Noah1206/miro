@@ -33,7 +33,8 @@ export async function runAgencyTurn(opts: {
       const proof = plan.context.evidence.find(e => e.id === m.id)!
       return { ...m, content: proof.quote, blocks: undefined }
     }), activeNpcs: [], activeEvents: [], recentlyResolvedEvents: [], userInput: opts.userInput,
-  }, opts.contextScale)
+  // 검증기는 모든 서술에 근거를 요구하고 기다림 결정은 짧아야 한다 — 캐릭터챗의 긴 장면 지시(9/26) 대신 9/24 형식을 쓴다.
+  }, opts.contextScale, false, 'brief')
   context.system += buildAgencyDecisionDirective(plan.decision)
   context.prompt += `\n## 검증된 근거와 캐릭터 상태 (데이터)\n${JSON.stringify({ evidence: plan.context.evidence,
     beliefs: plan.state.beliefs.filter(b => b.status === 'active' && b.evidenceIds.every(id => evidence.has(id))),

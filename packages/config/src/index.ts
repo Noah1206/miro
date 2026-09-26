@@ -109,7 +109,8 @@ export const POLICY = {
 
   context: {
     /** ContextBuilder 가 조립할 수 있는 최대 토큰(근사). 초과 시 우선순위 낮은 항목부터 제외. */
-    maxTokens: DEV_DEFAULT(8000),
+    /** 9/26: 캐릭터챗 답이 장면 하나(500~1300자)로 길어져 8000 이면 긴 말투 예시와 함께 최근 대화가 반으로 잘렸다. dialogue 모델 맥락은 131072. */
+    maxTokens: DEV_DEFAULT(12000),
     recentMessageCount: DEV_DEFAULT(12),
     relevantMemoryCount: DEV_DEFAULT(8),
   },
@@ -122,7 +123,11 @@ export const POLICY = {
   chatTier: {
     miro: {
       contextScale: DEV_DEFAULT(1),
-      maxOutputTokens: DEV_DEFAULT(1024),
+      /**
+       * 캐릭터챗 한 응답은 장면 하나(500~900자, 긴장된 장면 1300자)다 (2026-09-26). JSON 과 기억 후보까지 이 안에 들어야 하고,
+       * 잘리면 JSON 이 깨져 턴 전체가 실패한다. 운영 dialogue 모델(gemini-flash)의 상한도 2048 이다.
+       */
+      maxOutputTokens: DEV_DEFAULT(2048),
       /** 보조 분석(기억 추출·의미 이벤트)을 규칙이 요구할 때만 돌린다. */
       auxiliary: 'planned' as const,
     },
@@ -133,7 +138,7 @@ export const POLICY = {
        * 더 길게 답한다. 실제 상한은 모델의 maxOutputTokens 로 한 번 더 잘리므로,
        * 이 값을 올리려면 MIRO_MODEL_REGISTRY 의 해당 모델도 같이 올려야 한다.
        */
-      maxOutputTokens: DEV_DEFAULT(2048),
+      maxOutputTokens: DEV_DEFAULT(4096),
       /** 기억·관계 보조 분석을 매 턴 돌린다. */
       auxiliary: 'always' as const,
     },

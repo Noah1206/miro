@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, msPerChar, pauseAfter } from '../typing'
+import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MAX_REPLY_MS, msPerChar, pauseAfter, replyPace } from '../typing'
 
 describe('typing rhythm', () => {
   it('types slower when the character is hurt than when angry', () => {
@@ -35,5 +35,15 @@ describe('typing rhythm', () => {
 
   it('stretches the pauses for a hurt character', () => {
     expect(pauseAfter('…', ' ', 'hurt')).toBeGreaterThan(pauseAfter('…', ' ', 'angry'))
+  })
+
+  it('speeds up a whole scene so a long reply does not take half a minute', () => {
+    // 짧은 응답은 기분 그대로 친다.
+    expect(replyPace(3)).toBe(1)
+    // 문단 7개짜리 장면은 각 문단 상한을 모두 채워도 전체 상한 안에 든다.
+    const pace = replyPace(7)
+    expect(pace).toBeLessThan(1)
+    const long = '가'.repeat(300)
+    expect(7 * long.length * msPerChar(long, 'neutral', pace)).toBeLessThanOrEqual(MAX_REPLY_MS + 7)
   })
 })

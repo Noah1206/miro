@@ -54,6 +54,7 @@ export class GeminiProvider implements AIProvider {
       inputTokens: body.usageMetadata?.promptTokenCount ?? null,
       outputTokens: body.usageMetadata?.candidatesTokenCount == null ? null : body.usageMetadata.candidatesTokenCount + (body.usageMetadata.thoughtsTokenCount ?? 0),
       latencyMs: Date.now() - t0,
+      truncated: body.candidates?.[0]?.finishReason === 'MAX_TOKENS',
     }
   }
 }

@@ -136,19 +136,40 @@ describe('context builder', () => {
     expect(c.prompt).toMatch(/아는 정보로만 행동/)
   })
 
-  it('keeps the scene and inner voice in every chat reply, only shorter for short input', () => {
+  it('writes a full multi-beat scene for every chat reply, even a one-word input', () => {
     const m = buildContext(snapshot({ userInput: '뭐해' }))
     const n = buildContext(snapshot({ userInput: '*창밖을 오래 바라보다가* 오늘은 왠지 네 생각이 많이 났어. 이유는 모르겠는데, 그냥 그랬어.' }))
-    expect(m.system).toMatch(/상황 한 줄, 속마음 한 줄/)
+    // 9/24 실측: 짧은 입력에 "한 줄씩" 규칙을 주면 답이 3블록·100자 안팎에 머물렀다. 길이는 입력이 아니라 장면이 정한다.
+    expect(m.system).not.toMatch(/상황 한 줄, 속마음 한 줄/)
+    for (const c of [m, n]) {
+      expect(c.system).toMatch(/한 단어만 보내도 장면을 충분히 펼칩니다/)
+      expect(c.system).toMatch(/블록 5~8개, 전체 500~900자/)
+      // 계약의 예시가 대사 한 블록이면 모델도 한 블록으로 답한다 — 장면의 박자를 보여 준다.
+      expect(c.system).toContain('{"type":"narrative","speaker":null,"text":"scene"},{"type":"action","speaker":"토마스"')
+    }
     expect(n.system).toMatch(/서술과 묘사를 충분히/)
     for (const c of [m, n]) expect(c.system).toMatch(/thought 블록은 이 캐릭터 자신의 말하지 않은 속마음/)
     // A reality character's chat is the in-person scene; its messages and calls live in the Reality layer.
     const met = buildContext(snapshot({ userInput: '뭐해', experienceType: 'reality' }))
     expect(met.system).toMatch(/직접 만나 같은 공간에 있는 장면/)
-    expect(met.promptVersion).toBe('dialogue:v1+scene-thought+in-person')
+    expect(met.promptVersion).toBe('dialogue:v1+scene-beats+in-person')
     expect(m.system).not.toMatch(/직접 만나 같은 공간/)
     // A call is the reality layer: spoken words only, no narration or inner voice.
     expect(buildContext(snapshot({ userInput: '뭐해', mode: 'voice_call' })).system).not.toMatch(/thought 블록/)
+  })
+
+  it('keeps the agency renderer on the measured brief directive', () => {
+    // 자율성 엔진의 검증기는 모든 서술에 근거를 요구한다 — 근거 없는 긴 장면 지시를 주지 않는다.
+    const c = buildContext(snapshot({ userInput: '뭐해' }), 1, false, 'brief')
+    expect(c.system).toMatch(/상황 한 줄, 속마음 한 줄/)
+    expect(c.system).not.toMatch(/500~900자/)
+    expect(c.system).toContain('{"type":"dialogue","speaker":"character name","text":"response"}')
+    expect(c.promptVersion).toBe('dialogue:v1+scene-thought')
+  })
+
+  it('puts a character name with $ into the contract literally', () => {
+    const c = buildContext(snapshot({ character: { ...snapshot().character, identity: { ...snapshot().character.identity, name: "Neo$'" } } }))
+    expect(c.system).toContain(`"speaker":"Neo$'","text":"gesture"`)
   })
 
   it('shows past inner voice as unspoken, not as something the user heard', () => {
@@ -236,6 +257,9 @@ describe('messenger mode', () => {
     expect(built.promptVersion).not.toContain('+in-person')
     // 문자는 상태 변화 제안(JSON 계약)을 그대로 쓴다 — 통화처럼 소리로 나가는 것이 아니다.
     expect(built.system).toContain('반드시 지정된 JSON 스키마')
+    // 문자는 대사만 오간다 — 장면 박자 예시와 분량 규칙을 싣지 않는다.
+    expect(built.system).not.toContain('"type":"narrative"')
+    expect(built.system).not.toMatch(/500~900자/)
   })
 })
 

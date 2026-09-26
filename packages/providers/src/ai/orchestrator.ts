@@ -243,7 +243,7 @@ export class AIOrchestrator implements LLMProvider {
         } catch (e) {
           // Never log provider response bodies, keys, prompts or private reasoning.
           const message = e instanceof Error ? e.message : ''
-          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : message.startsWith('invalid_schema') || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
+          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : result?.truncated && message.startsWith('invalid_schema') ? 'max_tokens' : message.startsWith('invalid_schema') || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
           if (last === 'provider_http_429') rateLimitProvider(providerKey, this.rateLimitBackoffMs)
         } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null

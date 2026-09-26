@@ -31,8 +31,20 @@ export function pauseAfter(char: string, next: string, mood: Mood): number {
  * 이 문단을 치는 데 쓸 글자당 시간. 긴 대사는 상한 안에 들도록 자동으로 빨라진다 —
  * 200자짜리 서술을 기분대로 치면 10초가 넘는다.
  */
-export function msPerChar(text: string, mood: Mood): number {
-  const base = TYPING_MS_PER_CHAR[mood]
-  const estimated = text.length * base
-  return estimated <= MAX_PARAGRAPH_MS ? base : Math.max(8, MAX_PARAGRAPH_MS / text.length)
+export function msPerChar(text: string, mood: Mood, pace = 1): number {
+  const base = TYPING_MS_PER_CHAR[mood] * pace
+  const max = MAX_PARAGRAPH_MS * pace
+  // 바닥은 브라우저가 이어지는 타이머에 지키는 최소 간격(4ms) 위에 둔다.
+  return text.length * base <= max ? base : Math.max(Math.max(4, 8 * pace), max / text.length)
+}
+
+/** 한 응답 전체를 치는 데 쓸 시간의 대략적 상한. */
+export const MAX_REPLY_MS = 12000
+
+/**
+ * 응답 전체의 빠르기(1 = 기분 그대로). 캐릭터챗 답은 장면 하나라 문단이 5~8개다 (2026-09-26) —
+ * 문단마다 상한까지 치면 30초가 넘게 흐른다. 문단이 많으면 글자 속도와 멈칫을 같은 비율로 줄인다.
+ */
+export function replyPace(paragraphs: number): number {
+  return Math.min(1, MAX_REPLY_MS / (Math.max(1, paragraphs) * MAX_PARAGRAPH_MS))
 }

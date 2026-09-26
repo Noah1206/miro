@@ -6,10 +6,12 @@ import { Popover, MenuItem, TransitionLink } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
+import { replyPace } from '@/components/scene/typing'
 import { CharacterPhoto } from '@/components/character-visual'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { useTurns } from './turns'
+import { segmentReply, type Paragraph } from './reply-segments'
 
 export type Msg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
@@ -89,36 +91,56 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
 function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow }: {
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
-  const blocks = m.blocks.filter(b => ['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'].includes(String(b.type)) && typeof b.text === 'string')
-  const paragraphs = blocks.length ? blocks.map(b => ({ text: String(b.text), action: ['action', 'narrative', 'world'].includes(String(b.type)),
-    thought: b.type === 'thought', speaker: typeof b.speaker === 'string' && b.type !== 'thought' ? b.speaker : null }))
-    : m.content.split(/\n\s*\n/).map(text => {
-      const prefix = `${name}:`
-      const dialogue = text.startsWith(prefix)
-      return { text: dialogue ? text.slice(prefix.length).trimStart() : text, action: !dialogue && /^\*[^*]/.test(text), thought: false, speaker: null }
-    })
-  // 문단을 하나씩 친다 — 메신저에서 여러 줄이 연달아 오는 느낌.
+  // 장면 서술은 말풍선 밖, 인물의 행동·속마음·대사는 말풍선 안. 서술과 인물이 오가면 말풍선도 번갈아 생긴다.
+  const segments = segmentReply(m.blocks, m.content, name)
+  const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
+  // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
+  const pace = replyPace(count)
+  const line = (p: Paragraph) => typing && p.index === typed
+    ? <TypedText text={p.text} mood={mood} pace={pace} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
+    : <Emphasis text={p.text} />
 
-  return <div className={styles.characterRow}>
-    <span className={styles.avatar} aria-hidden>{portrait
-      ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
-      : name.slice(0, 1)}</span>
-    <div className={styles.characterContent}>
-      <p className={styles.speaker}>{name}</p>
-      <div className={styles.bubble}>
-        {paragraphs.map((p, i) => (
-          <p key={i} className={p.thought ? styles.thought : p.action ? styles.action : undefined} hidden={typing && i > typed} data-thought={p.thought || undefined}>
-            {p.thought && <span className="sr-only">속마음: </span>}
-            {p.speaker && p.speaker !== name && `${p.speaker}: `}
-            {typing && i === typed
-              ? <TypedText text={p.text} mood={mood} onDone={() => { setTyped(i + 1); onGrow?.() }} />
-              : <Emphasis text={p.text} />}
-          </p>
-        ))}
-      </div>
-    </div>
+  return <div className={styles.reply}>
+    {segments.map((seg, i) => {
+      const hidden = typing && seg.paragraphs[0]!.index > typed
+      if (seg.kind === 'narration') return (
+        <div key={i} className={styles.narration} hidden={hidden} data-narration>
+          <NarrationIcon />
+          <div className={styles.narrationText}>
+            {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{line(p)}</p>)}
+          </div>
+        </div>
+      )
+      const own = seg.speaker === name
+      return (
+        <div key={i} className={styles.characterRow} hidden={hidden}>
+          <span className={styles.avatar} aria-hidden>{own && portrait
+            ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
+            : seg.speaker.slice(0, 1)}</span>
+          <div className={styles.characterContent}>
+            <p className={styles.speaker}>{seg.speaker}</p>
+            <div className={styles.bubble}>
+              {seg.paragraphs.map((p) => (
+                <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
+                  hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
+                  {p.kind === 'thought' && <span className="sr-only">속마음: </span>}
+                  {line(p)}
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    })}
   </div>
+}
+
+/** 장면 서술 표시 — 글줄 세 개. 말풍선 밖 서술이 캐릭터의 말이 아님을 모양으로 알린다. */
+function NarrationIcon() {
+  return <svg className={styles.narrationIcon} viewBox="0 0 16 16" width="16" height="16" aria-hidden focusable="false">
+    <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+  </svg>
 }
 
 function RealityTag({ sender, channel }: { sender?: string; channel?: string }) {

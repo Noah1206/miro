@@ -10,6 +10,8 @@ import * as push from '@/lib/reality/push-outbox'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { runConversationTurn } from '@/lib/simulation/turn'
+import { GeminiProvider, extractJson } from '@miro/providers'
+import { SimulationProposal } from '@miro/engine'
 
 /**
  * One arm of the P0 baseline: a scripted synthetic user through the real app entry points. Deferred work
@@ -57,6 +59,18 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       log(event, fields)
     })
     const drain = () => events.splice(0)
+    // 운영은 모델 원문을 남기지 않는다. 측정에서만, 캐릭터챗 응답이 스키마에 떨어진 원문을 턴에 붙인다 — 9/26 형식 실패의 원인을 기록으로 보려고.
+    const rawFailures: Array<{ promptVersion: string; issues: string[]; text: string }> = []
+    const generate = GeminiProvider.prototype.generate
+    vi.spyOn(GeminiProvider.prototype, 'generate').mockImplementation(async function (this: GeminiProvider, req) {
+      const result = await generate.call(this, req)
+      const version = String((req as { promptVersion?: string }).promptVersion ?? '')
+      if (version.startsWith('dialogue:')) {
+        const parsed = SimulationProposal.safeParse(extractJson(result.text))
+        if (!parsed.success) rawFailures.push({ promptVersion: version, issues: parsed.error.issues.slice(0, 5).map(i => `${i.path.join('.') || '$'}:${i.code}`), text: result.text })
+      }
+      return result
+    })
     // Synthetic replies only: what was decided, what was said, and why the check refused it.
     const realizations: Array<Record<string, unknown>> = []
     const verify = agencyEngine.verifyAgencyRealization
@@ -113,7 +127,7 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       const own = calls.filter(c => c.requestId === requestId)
       units.push({ kind: 'turn', index, input, wallMs, outcome: outcome.ok ? 'ok' : outcome.reason, engine: engineOf(own),
         text: outcome.ok ? outcome.responseText : null, blocks: outcome.ok ? outcome.blocks.map(b => ({ type: b.type, text: b.text })) : null,
-        state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls: own,
+        state: await state(sessionId), events: drain(), realization: realizations.splice(0), rawFailures: rawFailures.splice(0), calls: own,
         background: calls.filter(c => c.requestId !== requestId) })
       if (!outcome.ok && outcome.reason === 'budget') { stopped = 'budget'; break }
     }

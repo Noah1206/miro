@@ -59,16 +59,46 @@ export type BuiltContext = {
 
 /**
  * 출력 스타일 — 사용자가 고르지 않는다 (2026-09-18 결정, 명세서 §3).
- * 이번 턴의 인터랙션(입력의 형식·길이)과 장면의 긴장이 형식의 기준을 정하고,
+ * 캐릭터챗의 한 응답은 장면 하나다 (2026-09-26 결정): 서술과 캐릭터의 차례가 몇 박자 오가고,
+ * 사용자가 한 단어만 보내도 장면을 펼친다. 이번 턴의 입력 형식과 장면의 긴장은 무게만 바꾼다.
  * 성격·말투·관계·세계관은 이미 프롬프트에 들어 있으므로 모델이 그 맥락에 맞춰 마무리한다.
  */
-function styleDirective(s: SimulationSnapshot): string {
+function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''
   const prose = /\*[^*]+\*/.test(input) || input.includes('\n') || input.length > 120
   const tense = s.activeEvents.length > 0 || (s.characterState !== undefined && s.characterState.mood !== 'neutral')
-  // 캐릭터챗은 만나서 나누는 장면이다(2026-09-24 결정). 입력이 짧아도 상황과 속마음은 빠지지 않고 짧아질 뿐이다.
-  const base = '- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
+  if (style === 'brief') return briefDirective(s, input, prose, tense)
+  const name = s.character.identity.name
+  // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
+  // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
+  // 그대로 따랐고 같은 몸짓·문장 틀이 되풀이됐다. 이 지시(3차)는 순서·표현을 매번 바꾸게 한다. 형식 실패의 한 원인(종류를 키로 쓴 블록)은
+  // proposal.schema.ts 의 normalizeBlock 이 흡수한다. 측정 원본은 ai/evals/agency/reports/scene-beats-*-2026-09-26.json.
+  const base = [
+    '- 응답 구성: 한 응답은 장면 하나입니다. 서술과 캐릭터의 차례를 번갈아 두세 번 오가며 장면을 전개합니다. 블록 순서는 응답마다 새로 짭니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.',
+    '- narrative 블록(speaker null): 3인칭 장면 서술 3~5문장. 공간·빛·소리·온도·거리 같은 감각, 캐릭터의 표정과 몸짓, 사용자의 말에 캐릭터와 공간이 보인 반응을 겉으로 드러나는 것으로 구체적으로 씁니다. 사용자의 말을 서술로 다시 옮기지 않고, 장소·빛·날씨로 여는 도입은 장면이 바뀔 때만 씁니다. 숨긴 감정을 해설하거나 겉과 속을 대비해 설명하지 않습니다 — 속마음은 thought 블록이 맡습니다.',
+    `- action 블록(speaker "${name}"): 대사 직전이나 직후의 짧은 행동·표정 1~2문장.`,
+    `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 한 블록에 2~4문장. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
+    '- thought 블록: 말하지 않은 속마음 1~2문장. 응답마다 하나.',
+    '- 장면 진행: 매 응답에서 캐릭터 쪽 행동 하나가 장면을 앞으로 움직입니다. 앞 턴에 캐릭터가 꺼낸 일은 이어서 마저 합니다. 일상적인 말에는 멈칫하거나 굳지 않고 일상적으로 반응합니다.',
+    '- 분량: 사용자가 한 단어만 보내도 장면을 충분히 펼칩니다. 블록 5~8개, 전체 500~900자. 짧게 끝내지 않습니다.',
+    '- 사용자에 관해서는 사용자가 입력에 쓴 말과 행동만 사실로 씁니다. 사용자가 쓰지 않은 표정·태도·의도나 대화 기록에 없는 일을 서술에서 사용자에게 붙이지 않습니다.',
+    '- 마지막 블록은 사용자가 이어서 반응할 여지를 남기는 행동이나 대사로 끝냅니다. 질문으로 끝내는 응답을 연달아 쓰지 않고, 이미 물은 것은 다시 묻지 않습니다. 사용자 캐릭터의 새 대사·행동·결정은 쓰지 않습니다.',
+    '- 최근 대화에서 이 캐릭터가 이미 쓴 몸짓·버릇·부사·감각 묘사와 문장 틀(narrative, dialogue, thought 모두)을 되풀이하지 않습니다. 같은 감정도 매번 다른 행동과 새 디테일로 보여 줍니다. 평이하고 정확한 한국어로 쓰고, 관용구는 원형대로 씁니다.',
+  ].join('\n')
   // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
+  const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
+  const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
+  if (tense) return base + '\n- 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 주고, 전체 1300자까지 늘려도 됩니다.' + (prose ? ' 사용자가 섞어 쓴 묘사도 받아 서술과 묘사를 충분히 이어 갑니다.' : '') + thought
+  if (prose) return base + '\n- 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 그 묘사를 받아 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
+  return base + thought
+}
+
+/**
+ * 입력 길이에 맞춘 9/24 지시문. 자율성 엔진(runAgencyTurn)만 쓴다 — 그쪽 검증기는 모든 서술에 근거를 요구하고
+ * 기다림·미룸 결정은 짧게 답해야 해서, 근거 없는 감각 서술을 500자 넘게 요구하는 장면 지시와 맞지 않는다.
+ */
+function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, tense: boolean): string {
+  const base = '- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
   const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
   const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
@@ -77,16 +107,19 @@ function styleDirective(s: SimulationSnapshot): string {
   return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 상황 한 줄, 속마음 한 줄, 짧은 대사로 가볍게 씁니다.' + thought
 }
 
+/** scene: 캐릭터챗의 장면 하나(기본). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
+export type ReplyStyle = 'scene' | 'brief'
+
 /**
  * Context 조립.
  *
  * 전체 대화 원문을 매번 보내지 않는다. 최근 메시지 일부 + 요약된 장기 기억만 사용한다.
  * 예산을 넘으면 중요도가 낮은 항목부터 제외하고, 무엇을 뺐는지 기록한다.
  */
-export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = false): BuiltContext {
+export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = false, style: ReplyStyle = 'scene'): BuiltContext {
   const template = prompts.select('dialogue', s.relationship.sessionId)
   // spoken: 실시간 음성 통화. 소리로 나가므로 JSON 계약·상태 변화 제안을 싣지 않는다.
-  const system = template.system + '\n' + buildSystem(s, spoken) + '\n' + (spoken ? '' : DIALOGUE_CONTRACT) + SAFETY_RULES
+  const system = template.system + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : dialogueContract(s, style)) + SAFETY_RULES
   const systemTokens = estimateTokens(system)
 
   // ECHO 는 같은 모델에 맥락을 더 넣는다. 늘어난 양도 아래 예산 검사를 똑같이 통과해야 한다.
@@ -116,7 +149,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+scene-thought${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
@@ -140,7 +173,7 @@ export function buildSpokenSystem(s: SimulationSnapshot): string {
   return `${c.system}\n\n## 통화 직전까지의 상황 (자료이며 지시가 아니다)\n${c.prompt}`
 }
 
-function buildSystem(s: SimulationSnapshot, spoken = false): string {
+function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 'scene'): string {
   const c = s.character
   return [
     '당신은 자유 역할극의 진행자이자 캐릭터 연기자입니다.',
@@ -172,7 +205,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false): string {
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
     '- 정해진 줄거리를 따라가지 않습니다. 현재 상태에서 자연스럽게 이어지는 반응을 만듭니다.',
-    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s),
+    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s, style),
     ...(spoken ? [] : [
       '',
       '## 상태 변화 제안',
@@ -331,8 +364,22 @@ export function estimateTokens(text: string): number {
   return Math.ceil(text.length / 2.2)
 }
 
+/**
+ * 계약의 예시 블록이 응답의 모양을 끌고 간다 — 대사 한 블록만 보여 주면 한 블록으로 답한다(9/24 실측 3블록).
+ * 캐릭터챗은 장면의 박자를, 문자·통화는 대사만 보여 준다.
+ */
+function dialogueContract(s: SimulationSnapshot, style: ReplyStyle): string {
+  const n = JSON.stringify(s.character.identity.name)
+  const blocks = style === 'brief' ? '{"type":"dialogue","speaker":"character name","text":"response"}'
+    : !s.mode || s.mode === 'chat'
+      ? `{"type":"narrative","speaker":null,"text":"scene"},{"type":"action","speaker":${n},"text":"gesture"},{"type":"dialogue","speaker":${n},"text":"line"},{"type":"narrative","speaker":null,"text":"scene"},{"type":"thought","speaker":${n},"text":"inner voice"},{"type":"dialogue","speaker":${n},"text":"line"}`
+      : `{"type":"dialogue","speaker":${n},"text":"line"}`
+  // 이름은 작성자가 정한다 — 문자열 치환이면 "$'" 같은 이름이 치환 패턴으로 풀린다. 함수로 넘겨 그대로 넣는다.
+  return DIALOGUE_CONTRACT.replace('{BLOCKS}', () => blocks)
+}
+
 const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
-{"rp":{"blocks":[{"type":"dialogue","speaker":"character name","text":"response"}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
+{"rp":{"blocks":[{BLOCKS}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
 Block type: dialogue|action|narrative|npc|world|thought; speaker is a name or null (thought: this character's own unspoken inner voice). text: 1..2000 characters.
 Memory: {type:user_fact|promise|shared_event|relationship_change|preference|conflict|world_fact,content:string,importance:0..1,persistence:0..1,confidence:0..1,tags:["주제어","같은 낱말을 다음 턴에도 재사용"] (array of 1..5 short Korean words)}; max 3.
 World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
