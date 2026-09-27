@@ -186,11 +186,13 @@ async function executeTurn(opts: {
     // Live Scene v1 (2026-09-19, 명세서 §5.3): 미로(Reality) 세션에서 장소가 실제로 바뀌거나
     // 새 장면이 열리면 스트림에 장소·시간 한 줄을 남긴다. 이미지는 없다 — 이 표시가 전부다.
     const movedTo = transition.worldDelta?.currentLocation ?? null
-    const sceneMarker = loaded.experienceType === 'reality' && !messenger
+    const sceneLine = (location: string | null, time: string | null) => [location, time].filter(Boolean).join(' · ')
+    const sceneBefore = sceneLine(loaded.snapshot.world.currentLocation, loaded.snapshot.world.currentTime)
+    const sceneAfter = sceneLine(movedTo ?? loaded.snapshot.world.currentLocation, transition.worldDelta?.currentTime ?? loaded.snapshot.world.currentTime)
+    // 장소·시간이 그대로면 남기지 않는다 — 모델이 sceneDelta 를 매 턴 내면 같은 줄("어딘가 · 저녁")이 턴마다 찍혔다(9/27 운영 실측).
+    const sceneMarker = loaded.experienceType === 'reality' && !messenger && sceneAfter !== sceneBefore
       && (transition.sceneDelta !== null || (movedTo !== null && movedTo !== loaded.snapshot.world.currentLocation))
-      ? [movedTo ?? loaded.snapshot.world.currentLocation, transition.worldDelta?.currentTime ?? loaded.snapshot.world.currentTime]
-        .filter(Boolean).join(' · ')
-      : null
+      ? sceneAfter : null
 
     const responseText = renderBlocks(transition.blocks)
     const outcome: Extract<ConversationOutcome, { ok: true }> = {

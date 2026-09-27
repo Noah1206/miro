@@ -75,7 +75,8 @@ export async function createRoleplaySession(
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.
     await tx.insert(worldStates).values({
-      sessionId: id, currentLocation: starting.worldLocation ?? '알 수 없는 장소', currentTime: starting.startingTime,
+      // 만들기·편집의 소유자 세션(create/edit actions)과 같은 자리표시 — 화면의 장면 표시("어딘가 · 저녁")가 경로마다 다르지 않게.
+      sessionId: id, currentLocation: starting.worldLocation ?? '어딘가', currentTime: starting.startingTime,
     })
     // 캐릭터별 시작 관계. 값이 없으면 안전한 기본값으로 떨어진다.
     const { bonding: _curve, ...startingRelationship } = starting.initialRelationship

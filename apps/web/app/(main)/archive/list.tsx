@@ -7,6 +7,7 @@ import { spring, tween } from '@/lib/motion/tokens'
 import type { ArchiveCursor, ArchivePage } from '@/lib/ops/archive'
 import { loadArchivePage } from './actions'
 import { withParticle } from '@/lib/format'
+import { dateLabel, preview } from '@/lib/archive-format'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -112,7 +113,7 @@ export function ArchiveList({ initialPage }: {
                     {s.characterName}
                   </h2>
                 </div>
-                <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>{s.lastMessage ?? s.characterStatus ?? `${s.location} · ${s.time}`}</p>
+                <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : s.characterStatus ?? `${s.location} · ${s.time}`}</p>
               </div>
               <div style={{ width: 44, minHeight: 54, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: 7 }}>
                 <time className="t-micro" dateTime={new Date(s.lastInteractionAt).toISOString()} style={{ textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{dateLabel(s.lastInteractionAt)}</time>
@@ -135,13 +136,4 @@ export function ArchiveList({ initialPage }: {
       {nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>더 보기</Button></div>}
     </>
   )
-}
-function dateLabel(d: Date | string) {
-  const date = new Date(d)
-  const today = new Date()
-  const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
-  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime()
-  if (day === start) return date.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })
-  if (day === start - 86_400_000) return '어제'
-  return `${date.getMonth() + 1}.${date.getDate()}`
 }
