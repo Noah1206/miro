@@ -14,6 +14,16 @@ describe('character form parser', () => {
     expect(parseCharacterForm(form).agencyExplicitFields).toEqual(['personality.jealousy', 'personality.initiative'])
   })
 
+  it('keeps the intro location on the world and leaves it empty when the field is blank', () => {
+    const form = new FormData()
+    form.set('name', '장소'); form.set('personality', '조용하다.')
+    expect(parseCharacterForm(form).world.location).toBeNull()
+    form.set('worldLocation', '  서울, 경호업체 사무실  ')
+    expect(parseCharacterForm(form).world.location).toBe('서울, 경호업체 사무실')
+    form.set('worldLocation', '가'.repeat(80))
+    expect(parseCharacterForm(form).world.location).toHaveLength(60)
+  })
+
   it('never carries an experience type, even when the form tries to send one', () => {
     // 유형 자체는 폼에서 받지 않는다. 생성/편집 액션이 저장된 유형과 명시적 연락 선택으로 결정한다.
     const form = new FormData()

@@ -48,7 +48,7 @@ export async function saveCharacter(form: FormData): Promise<void> {
     const [session] = await tx.insert(roleplaySessions).values({
       userId: user.id, characterId, worldId: w!.id,
     }).returning({ id: roleplaySessions.id })
-    await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: '어딘가', currentTime: p.startingTime ?? '저녁' })
+    await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: p.world.location ?? '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))

@@ -28,7 +28,7 @@ export type FormInitial = {
   contactEnabled: boolean; contactFrequency: number; initiativeLevel: number; replyDelayMinutes: number
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
-  startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
+  startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
   experienceType?: 'chat' | 'reality'
   isPublic: boolean
@@ -48,7 +48,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', startingTime: '', sampleDialogue: [], lore: [],
+  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [],
   isPublic: true,
   images: [],
 }
@@ -289,6 +289,10 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
                     <LabeledField label="첫 장면" required hint="대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.">
                       <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={3}
                         placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
+                    </LabeledField>
+                    {/* 첫 장면의 장소 — 비우면 세계는 '어딘가' 에서 시작한다(9/27 운영 실측에서 장면 표시가 "어딘가 · 저녁" 이었다). */}
+                    <LabeledField label="장소" hint="첫 장면이 펼쳐지는 곳이에요. 채팅의 장면 표시와 소개 페이지에 보여요.">
+                      <CountedInput name="worldLocation" placeholder="예) 서울, 경호업체 사무실" max={60} defaultValue={i.worldLocation} />
                     </LabeledField>
                   </div>
                 } />

@@ -94,7 +94,7 @@ export function parseCharacterForm(form: FormData) {
     if (moodByNeedle.size === 5) break
   }
   const mood = [...moodByNeedle.values()]
-  const world = { era: null, location: null, genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }
+  const world = { era: null, location: orNull(s('worldLocation').slice(0, 60)), genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }
 
   // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.
   const delayN = Number(s('replyDelayMinutes'))
