@@ -4,6 +4,7 @@ import { Pressable, StatusIcon } from '@/components/ui'
 import styles from './messages.module.css'
 import { sendMessengerTurn, type TurnState } from './actions'
 import { useTurns } from '../../chat/[sessionId]/turns'
+import { withParticle } from '@/lib/format'
 
 /** 문자 입력. 캐릭터챗 입력과 같은 파이프라인이지만 모델 선택·초안 저장 없이 문자답게 가볍다. */
 export function MessengerComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
@@ -26,7 +27,7 @@ export function MessengerComposer({ sessionId, characterName }: { sessionId: str
       {(pending || state.keepWaiting) && <p role="status" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>{characterName} 입력 중<span className={styles.typing} aria-hidden><i /><i /><i /></span></p>}
       {state.error && <p role="alert" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-danger)' }}>{state.error}</p>}
       {state.notice && !pending && <p role="status" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>⚠ {state.notice}</p>}
-      {state.delayed && !pending && <p role="status" data-reply-delayed className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>{characterName}은(는) 지금 {state.delayed.label} 중이에요 — 끝나면 답장이 와요.</p>}
+      {state.delayed && !pending && <p role="status" data-reply-delayed className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>{withParticle(characterName, '은', '는')} 지금 {state.delayed.label} 중이에요 — 끝나면 답장이 와요.</p>}
       <form action={action} className={styles.form}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="sessionId" value={sessionId} />

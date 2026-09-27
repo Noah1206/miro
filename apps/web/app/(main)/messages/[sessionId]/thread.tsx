@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import styles from './messages.module.css'
 import { CharacterPhoto } from '@/components/character-visual'
 import { useTurns } from '../../chat/[sessionId]/turns'
+import { subject } from '@/lib/format'
 
 export type MsgItem = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>; at?: string }
 
@@ -18,7 +19,7 @@ export function MessengerThread({ items: server, characterName, portrait }: { it
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [items.length])
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={characterName + ' 문자'} className={styles.thread}>
-      {items.length === 0 && <p className={styles.notice}>{characterName}이(가) 먼저 문자를 보내면 여기에 와요. 먼저 보내도 돼요.</p>}
+      {items.length === 0 && <p className={styles.notice}>{subject(characterName)} 먼저 문자를 보내면 여기에 와요. 먼저 보내도 돼요.</p>}
       {items.map((m) => {
         if (m.role === 'user') return <div key={m.id} className={styles.userRow}><span className={styles.time} style={{ alignSelf: 'flex-end', marginRight: 6 }}>{clock(m.at)}</span><p className={styles.userBubble}>{m.content}</p></div>
         if (m.kind === 'call_record') return <p key={m.id} className={styles.meta} data-call-record>☏ {m.content}</p>

@@ -1,3 +1,5 @@
+import { subject } from './format'
+
 /** 사용자에게 보이는 공통 문장. docs/COPY.md 의 규칙을 코드로 고정한다. */
 export const COPY = {
   error: {
@@ -38,7 +40,7 @@ export const COPY = {
     how: '환불은 설정에서 문의하면 입금 계좌로 보내 드려요.',
   },
   status: {
-    thinking: (name: string) => `${name}이(가) 답을 고르고 있다…`,
+    thinking: (name: string) => `${subject(name)} 답을 고르고 있다…`,
     scene: '장면을 이어가는 중…',
     loading: '불러오는 중',
     mockLLM: 'LLM Provider 미구성 — Mock 응답입니다.',

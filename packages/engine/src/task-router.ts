@@ -24,7 +24,13 @@ function memoryHistory(s: SimulationSnapshot) {
     content: m.role === 'user' ? m.content : clip(m.blocks?.length
       ? m.blocks.map(b => b.speaker && b.speaker !== self ? `${b.speaker}: ${b.text}` : b.text).join('\n') : m.content, 400) }))
 }
-export const SemanticResult = z.object({ events: z.array(z.object({ type: z.enum(SEMANTIC_EVENT_TYPES), confidence: z.number().min(0).max(1) })).max(5) })
+/**
+ * 실측(2026-09-26, gemini-3.5-flash-lite): 사건이 없으면 {"events":[]} 로 답하지만, 사건을 찾으면 [{"type","confidence"}] 처럼
+ * 배열만 돌려준다. 그래서 분류할 것이 있는 턴만 골라 실패했다(데모 10회 중 9회). 배열이면 events 로 감싼다.
+ * confidence 도 계약 예시('0..1')를 따라 "0.9" 처럼 문자열로 자주 온다(6회 중 4회) — 숫자 문자열은 숫자로 읽는다.
+ */
+export const SemanticResult = z.preprocess((v) => (Array.isArray(v) ? { events: v } : v),
+  z.object({ events: z.array(z.object({ type: z.enum(SEMANTIC_EVENT_TYPES), confidence: z.coerce.number().min(0).max(1) })).max(5) }))
 /**
  * 실측: 모델은 새 사실이 없으면 previousMemories 를 id 째 그대로 돌려준다(8회 중 2회). 점수가 없어
  * 항목 단위로 떨어지지만, 그 때문에 같은 응답의 진짜 새 사실까지 버리지는 않는다.

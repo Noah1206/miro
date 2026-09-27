@@ -19,7 +19,8 @@ import { cloneAsReality, dropRealityClones } from './fixtures'
 afterAll(dropRealityClones)
 const realityBySlug = new Map<string, ReturnType<typeof cloneAsReality>>()
 const reality = (slug: string) => {
-  if (!realityBySlug.has(slug)) realityBySlug.set(slug, cloneAsReality(slug))
+  // 이 파일은 시각(DAY·NIGHT)을 고정해 활동 시간 규칙을 검증한다 — 기본 리듬을 그대로 쓴다.
+  if (!realityBySlug.has(slug)) realityBySlug.set(slug, cloneAsReality(slug, { routine: 'default' }))
   return realityBySlug.get(slug)!
 }
 

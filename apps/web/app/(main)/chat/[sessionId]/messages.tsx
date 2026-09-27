@@ -59,7 +59,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
   m: Msg; characterName: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
   const reality = m.blocks.find((b) => b.type === 'reality') as { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
-  if (m.role === 'user') return <div className={styles.userRow}><p className={styles.userBubble}>{m.content}</p></div>
+  if (m.role === 'user') return <div className={styles.userRow}><p className={styles.userBubble}><Emphasis text={m.content} /></p></div>
   if (m.kind === 'hidden') return <p data-hidden-message className="t-caption" style={{ fontStyle: 'italic' }}>{m.content}</p>
   if (m.kind === 'call_record') return <SceneMeta><span data-call-record>☏ {m.content}</span></SceneMeta>
   // Live Scene 장면 전환 — 장소·시간 한 줄이 조용히 지나간다. 이미지 없음, 흐름 중단 없음 (명세서 §5.3).

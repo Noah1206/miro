@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Chip, Sheet } from '@/components/ui'
 import { MemoryGraphView } from './memory-graph'
+import { subject } from '@/lib/format'
 
 export type ContextData = {
   name: string; location: string; time: string; status: string | null
@@ -40,7 +41,7 @@ export function ContextContent({ d }: { d: ContextData }) {
         </section>
       )}
       <section>
-        <h3 className="t-micro" style={{ marginBottom: 8 }}>{d.name}이(가) 기억하는 것</h3>
+        <h3 className="t-micro" style={{ marginBottom: 8 }}>{subject(d.name)} 기억하는 것</h3>
         <MemoryGraphView sessionId={d.sessionId} refreshKey={d.turnCount} />
       </section>
     </div>

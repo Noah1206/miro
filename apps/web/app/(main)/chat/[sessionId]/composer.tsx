@@ -9,6 +9,7 @@ import { ModelPicker, useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
 import { useTurns } from './turns'
+import { subject } from '@/lib/format'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
@@ -87,7 +88,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
       <AnimatePresence initial={false}>
         {showTyping && (
           <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>
-            {characterName}이(가) 입력 중
+            {subject(characterName)} 입력 중
             <span className={styles.typingDots} aria-hidden><i /><i /><i /></span>
           </motion.p>
         )}

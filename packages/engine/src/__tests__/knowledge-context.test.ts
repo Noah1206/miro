@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { AIOrchestrator, MockAIProvider } from '@miro/providers'
-import { analyzeMemory, analyzeSemantic } from '../task-router'
+import { SemanticResult, analyzeMemory, analyzeSemantic } from '../task-router'
 import { snapshot } from './fixtures'
 
 describe('participant evidence boundary', () => {
@@ -44,6 +44,16 @@ describe('participant evidence boundary', () => {
     const s = snapshot({ recentMessages: Array.from({ length: 12 }).flatMap(() => [{ role: 'user' as const, content: '오늘 어땠어? 나는 토요일에 이사해.' }, reply]) })
     await analyzeMemory(llm, 'memory_extraction', '안녕', s)
     expect(bytes + 2048).toBeLessThanOrEqual(32768)
+  })
+
+  it('accepts the bare event array the small model returns when it finds something', () => {
+    // 9/26 실측 원문: 사건이 없으면 {"events":[]}, 있으면 배열만.
+    expect(SemanticResult.parse(JSON.parse('{\n  "events": []\n}'))).toEqual({ events: [] })
+    expect(SemanticResult.parse(JSON.parse('[\n  {\n    "type": "shared_secret",\n    "confidence": 0.9\n  }\n]')))
+      .toEqual({ events: [{ type: 'shared_secret', confidence: 0.9 }] })
+    // confidence 가 문자열로 오는 모양(실측 원문). 숫자가 아닌 문자열은 여전히 거절한다.
+    expect(SemanticResult.parse(JSON.parse('{"events":[{"type":"shared_secret","confidence":"0.95"},{"type":"compliment","confidence":"0.7"}]}')).events.map(e => e.confidence)).toEqual([0.95, 0.7])
+    expect(SemanticResult.safeParse({ events: [{ type: 'compliment', confidence: 'high' }] }).success).toBe(false)
   })
 })
 
