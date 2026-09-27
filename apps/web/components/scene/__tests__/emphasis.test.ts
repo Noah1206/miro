@@ -56,12 +56,13 @@ describe('emphasis', () => {
   })
 
   /**
-   * 폴백 경로(블록이 없을 때)는 원문의 선행 별표로 서술을 가려낸다.
-   * 그 판정이 먼저 끝난 뒤 강조가 렌더되므로, 서술 스타일과 별표 제거가 같이 일어난다.
+   * 폴백 경로(블록이 없을 때)는 첫 문단이 기울임 강조로 시작하는지로 서술을 가려낸다 — 렌더와 같은 파서라
+   * 별표가 그대로 남는 글(`*^^* 안녕`)은 서술로 잡히지 않는다.
    */
   it('still lets the fallback path detect narration before the marks are consumed', () => {
     const raw = '*문을 닫고 나간다*'
-    expect(/^\*[^*]/.test(raw)).toBe(true)
+    expect(parseEmphasis(raw)[0]?.style).toBe('italic')
+    expect(parseEmphasis('*^^* 안녕')[0]?.style).toBe('plain')
     expect(stripEmphasis(raw)).toBe('문을 닫고 나간다')
   })
 

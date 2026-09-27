@@ -31,4 +31,10 @@ describe('segmentReply', () => {
     expect(segments).toHaveLength(1)
     expect(segments[0]!.paragraphs.map((p) => [p.kind, p.text])).toEqual([['action', '*창밖을 본다.*'], ['dialogue', '늦었네요.']])
   })
+
+  it('classifies an old paragraph as action only when the emphasis parser would italicize its start', () => {
+    // 별표가 글자 그대로 남는 글(이모티콘, 공백에 닿은 별표)은 렌더와 마찬가지로 행동이 아니다.
+    const kinds = segmentReply([], '*^^* 안녕\n\n* 창밖을 본다*\n\n*…* 늦었네요.', '토마스')[0]!.paragraphs.map((p) => p.kind)
+    expect(kinds).toEqual(['dialogue', 'dialogue', 'action'])
+  })
 })
