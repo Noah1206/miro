@@ -79,8 +79,8 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
           {/* 같은 금액의 입금이 여럿일 때 이 코드가 어느 주문인지 가른다. */}
           <p className="t-body">입금자명 · <b>{depositName(awaiting)}</b></p>
           <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>
-            보낼 때 입금자명(받는 분 통장 표시)을 <b>{depositName(awaiting)}</b>(으)로 꼭 바꿔 주세요. 확인되면 반영해 드려요 —
-            보통 하루 안에 처리돼요. {new Date(awaiting.expiresAt).toLocaleString('ko-KR')}까지 입금이 없으면 주문이 취소돼요.
+            보낼 때 입금자명(받는 분 통장 표시)에 <b>{depositName(awaiting)}</b>만 적어 주세요 — 이름은 없어도 돼요. 확인되면 반영해 드려요,
+            보통 하루 안에 처리돼요. {formatKST(awaiting.expiresAt)}까지 입금이 없으면 주문이 취소돼요.
           </p>
           <TransferActions bank={account.bank} accountNumber={account.number} amount={awaiting.amountMinor}
             depositName={depositName(awaiting)} />
@@ -126,7 +126,7 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
             <div key={o.id} data-order-status={o.status} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
               <div style={{ minWidth: 0 }}>
                 <p className="t-body">{o.kind === 'pass' ? '1개월 이용권' : `충전 ${o.units?.toLocaleString('ko-KR') ?? ''}`}</p>
-                <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{o.createdAt.toLocaleDateString('ko-KR')} · {o.referenceCode}</p>
+                <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{o.createdAt.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })} · {o.referenceCode}</p>
               </div>
               <span className="t-caption">{o.status === 'awaiting' ? '입금 대기' : o.status === 'approved' ? '완료' : o.status === 'rejected' ? '취소됨' : '기한 지남'}</span>
             </div>
@@ -157,6 +157,9 @@ export default async function RechargePage({ searchParams }: { searchParams: Pro
     </Page>
   )
 }
+
+/** 서버는 UTC 라 시간대를 적지 않으면 "오전 9:27" 처럼 아홉 시간 어긋난 글자가 나간다(9/27 운영). */
+const formatKST = (d: Date | string) => new Date(d).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' })
 
 /** 입금자명을 따로 받지 않은 주문은 대조 코드 자체가 입금자명이다. 예전 주문은 '이름 코드'. */
 const depositName = (o: { depositorName: string; referenceCode: string }) =>

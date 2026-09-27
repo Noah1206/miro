@@ -29,7 +29,9 @@ type Reader = Pick<typeof db, 'select'>
  */
 export async function effectivePlan(userId: string, now = new Date(), reader: Reader = db): Promise<Plan> {
   const [sub] = await reader.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
-  if (sub && (!productionRuntime() || sub.provider === 'stripe') && isEntitled(sub as never, now)) return 'pro'
+  // 운영에서는 실제 결제로 생긴 구독만 Pro 다 — 계좌이체 지급(provider 'bank_transfer', 9/16)도 실제 결제인데 9/15 게이트에 빠져
+  // 승인·지급이 끝나도 ECHO 가 잠겨 있었다(9/27 운영 실측). users.plan 은 여전히 운영 판정에 쓰지 않는다.
+  if (sub && (!productionRuntime() || sub.provider === 'stripe' || sub.provider === 'bank_transfer') && isEntitled(sub as never, now)) return 'pro'
   if (productionRuntime()) return 'free'
   const [u] = await reader.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
   return u?.plan ?? 'free'

@@ -9,6 +9,8 @@ import { DecisionPanel } from './panel'
 const STATUSES = ['awaiting', 'approved', 'rejected', 'expired', 'all'] as const
 const money = (minor: number, currency: string) =>
   currency === 'KRW' ? `${minor.toLocaleString('ko-KR')}원` : `${(minor / 100).toLocaleString('en-US')} ${currency}`
+/** 서버는 UTC 라 시간대를 적지 않으면 한국 시각과 아홉 시간 어긋난 글자가 나간다. */
+const kst = (d: Date) => d.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' })
 
 /** 계좌이체 입금 확인. 승인하면 지급이 예약되고, web cron 이 실제 지급한다. */
 export default async function Payments({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
@@ -37,7 +39,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
           : <p className="card" data-account="none" style={{ color: 'var(--muted)' }}>입금 계좌가 설정되지 않아 주문을 받지 않습니다.</p>}
 
       <p style={{ color: 'var(--muted)', fontSize: 12.5, margin: '12px 0' }}>
-        통장에서 <b>금액</b>과 <b>입금자명 + 대조 코드</b>가 맞는지 확인한 뒤 승인하세요. 승인은 지급을 일으킵니다.
+        통장에서 <b>금액</b>과 <b>입금자명이 대조 코드</b>인지 확인한 뒤 승인하세요(예전 주문은 '이름 코드'). 승인은 지급을 일으킵니다.
       </p>
 
       <table><thead><tr>
@@ -45,7 +47,7 @@ export default async function Payments({ searchParams }: { searchParams: Promise
       </tr></thead><tbody>
         {rows.map((r) => (
           <tr key={r.id} data-order-row data-order-status={r.status} data-order-code={r.referenceCode}>
-            <td>{r.createdAt.toLocaleString('ko-KR')}</td>
+            <td>{kst(r.createdAt)}</td>
             <td>{r.email}</td>
             {/* 이 계정이 최근 30일 승인받은 합계. 많으면 승인 전에 확인한다. */}
             <td data-recent-spend={spend.get(r.userId) ?? 0}>{money(spend.get(r.userId) ?? 0, r.currency)}</td>
@@ -53,9 +55,9 @@ export default async function Payments({ searchParams }: { searchParams: Promise
             <td><b>{money(r.amountMinor, r.currency)}</b></td>
             <td>{r.depositorName}</td>
             <td><code data-reference-code>{r.referenceCode}</code></td>
-            <td>{r.expiresAt.toLocaleString('ko-KR')}</td>
+            <td>{kst(r.expiresAt)}</td>
             <td><span className="tag">{r.status}</span>{r.note && <div style={{ color: 'var(--muted)', fontSize: 12 }}>{r.note}</div>}</td>
-            <td>{r.status === 'awaiting' ? <DecisionPanel orderId={r.id} canAct={canAct} /> : (r.decidedAt?.toLocaleString('ko-KR') ?? '-')}</td>
+            <td>{r.status === 'awaiting' ? <DecisionPanel orderId={r.id} canAct={canAct} /> : (r.decidedAt ? kst(r.decidedAt) : '-')}</td>
           </tr>
         ))}
         {rows.length === 0 && <tr><td colSpan={10} style={{ color: 'var(--muted)' }}>주문이 없습니다.</td></tr>}

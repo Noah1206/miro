@@ -61,8 +61,8 @@ export function TransferActions({ bank, accountNumber, amount, depositName }: {
         토스로 송금하기
       </Button>
       <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: -4 }}>
-        은행·계좌번호·{amount.toLocaleString('ko-KR')}원이 채워진 송금창이 열려요. 입금자명 뒤에
-        코드만 붙여 주세요.
+        은행·계좌번호·{amount.toLocaleString('ko-KR')}원이 채워진 송금창이 열려요. 입금자명에는
+        코드만 적어 주세요.
       </p>
 
       <div style={{ display: 'flex', gap: 8 }}>
