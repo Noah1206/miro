@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink, useToast } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { CharacterPhoto } from '@/components/character-visual'
+import { parseEmphasis } from '@/components/scene/emphasis'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
 import type { ContactCapabilities } from '@/lib/reality/channels'
@@ -83,16 +84,13 @@ export function SampleDialogue({ name, portrait, turns }: {
   )
 }
 
-/** *별표* 로 감싼 부분은 서술 — 채팅 화면과 같은 규칙. */
+/** *별표* 로 감싼 부분은 서술 — 무엇이 강조인지는 채팅 말풍선과 같은 파서(parseEmphasis)가 정하고, 여기서는 서술을 2차 톤으로만 칠한다. */
 export function Line({ text }: { text: string }) {
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean)
   return (
     <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-      {parts.map((part, i) =>
-        part.startsWith('*') && part.endsWith('*')
-          ? <em key={i} style={{ color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>{part.startsWith('**') ? part.slice(2, -2) : part.slice(1, -1)}</em>
-          : <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part}</span>,
-      )}
+      {parseEmphasis(text).map((s, i) =>
+        s.style === 'italic' ? <em key={i} style={{ color: 'var(--color-text-secondary)' }}>{s.text}</em>
+          : s.style === 'bold' ? <strong key={i}>{s.text}</strong> : s.text)}
     </p>
   )
 }
