@@ -10,12 +10,12 @@ export function compact(n: number): string {
 
 /**
  * 한글 조사. 받침 유무로 갈린다 — '담배을' 처럼 쓰지 않는다.
- * 한글이 아니면(영문·숫자) 조사를 붙이지 않는다.
+ * 한글이 아니면(영문·숫자) 조사를 붙이지 않는다("Thomas 입력 중"). 빠지면 뜻이 바뀌는 조사('와의' → '의')는 fallback 으로 대신 붙인다.
  */
-export function withParticle(word: string, withFinal: string, withoutFinal: string): string {
+export function withParticle(word: string, withFinal: string, withoutFinal: string, fallback = ''): string {
   const last = word.trim().slice(-1)
   const code = last.charCodeAt(0)
-  if (code < 0xac00 || code > 0xd7a3) return word
+  if (code < 0xac00 || code > 0xd7a3) return `${word}${fallback}`
   return `${word}${(code - 0xac00) % 28 !== 0 ? withFinal : withoutFinal}`
 }
 

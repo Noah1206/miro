@@ -25,6 +25,30 @@ describe('emphasis', () => {
     expect(render('**')).toBe('**')
   })
 
+  it('leaves emoticons alone — asterisks around only symbols are not emphasis', () => {
+    // 사용자 말풍선에서 *^^* 의 별표가 지워지고 ^^ 만 기울어졌다(9/27). 글자·숫자가 없는 짝은 그대로 둔다.
+    expect(render('고마워요 *^^*')).toBe('고마워요 *^^*')
+    expect(render('좋아 *_* 헐 *.*')).toBe('좋아 *_* 헐 *.*')
+    expect(render('**^^**')).toBe('**^^**')
+    expect(render('* 공백 *')).toBe('* 공백 *')
+    expect(render('*조심스럽게 고개를 숙이며* 안녕하세요')).toBe('<italic>조심스럽게 고개를 숙이며</italic> 안녕하세요')
+    expect(render('*1위*')).toBe('<italic>1위</italic>')
+    expect(render('고마워 *ㅠㅠ*')).toBe('고마워 *ㅠㅠ*')
+    expect(render('*ㅋㅋ*')).toBe('*ㅋㅋ*')
+    expect(render('*ㅋㅋ 진짜*')).toBe('<italic>ㅋㅋ 진짜</italic>')
+  })
+
+  it('keeps the model’s silence and exclamation marks as emphasis', () => {
+    expect(render('*…* 침묵 *...* 그리고 *!*')).toBe('<italic>…</italic> 침묵 <italic>...</italic> 그리고 <italic>!</italic>')
+  })
+
+  it('stays fast on a line of nothing but asterisks', () => {
+    const stars = '*'.repeat(2000)
+    const t = performance.now()
+    expect(render(stars)).toBe(stars)
+    expect(performance.now() - t).toBeLessThan(50)
+  })
+
   it('keeps plain text untouched', () => {
     const plain = '오늘은 비가 온다'
     expect(render(plain)).toBe(plain)

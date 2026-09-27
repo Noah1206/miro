@@ -6,6 +6,7 @@ import { CharacterPhoto } from '@/components/character-visual'
 import { spring, tween } from '@/lib/motion/tokens'
 import type { ArchiveCursor, ArchivePage } from '@/lib/ops/archive'
 import { loadArchivePage } from './actions'
+import { withParticle } from '@/lib/format'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -120,7 +121,7 @@ export function ArchiveList({ initialPage }: {
             </TransitionLink>
             {managing && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
-                <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={`${s.characterName}와의 역할극 삭제`}>삭제</ButtonLink>
+                <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={`${withParticle(s.characterName, '과', '와', '와')}의 역할극 삭제`}>삭제</ButtonLink>
               </div>
             )}
           </motion.li>

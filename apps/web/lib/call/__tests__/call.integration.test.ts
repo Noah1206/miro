@@ -12,11 +12,11 @@ const DAY = new Date('2026-09-12T14:00:00+09:00')
 
 describeDb('calls', () => {
   const made: string[] = []
-  async function session(plan: 'free' | 'pro' = 'pro') {
+  async function session(plan: 'free' | 'pro' = 'pro', routine: 'free' | 'default' = 'free') {
     const [u] = await db.insert(users).values({ email: `cl-${randomBytes(5).toString('hex')}@miro.dev`, plan }).returning()
     made.push(u!.id)
     // 통화는 미로 캐릭터와만 한다. 시드 태윤은 chat 이라, 같은 성향의 reality 복제본을 쓴다.
-    const c = await cloneAsReality('taeyun')
+    const c = await cloneAsReality('taeyun', { routine })
     const [s] = await db.insert(roleplaySessions).values({
       userId: u!.id, characterId: c.id, worldId: c.worldId, lastInteractionAt: new Date(DAY.getTime() - 3 * 3600_000),
     }).returning({ id: roleplaySessions.id })
@@ -80,6 +80,18 @@ describeDb('calls', () => {
     const a = await session(); const b = await session()
     const callId = (await startIncomingCall(a.sessionId, 'voice', 'x'))!
     expect(await acceptCall(b.userId, callId)).toBeNull()
+  })
+
+  it('an outgoing call while the character is asleep is not answered: a record, no charge', async () => {
+    // 복제본은 하루 종일 연락이 닿는 리듬이라 이 경로를 타지 않는다 — 기본 리듬(활동 시간 밖은 잠)으로 새벽 3시에 건다.
+    const { userId, sessionId } = await session('pro', 'default')
+    const callId = await startOutgoingCall(userId, sessionId, 'voice', new Date('2026-09-12T03:00:00+09:00'))
+    const [c] = await db.select().from(callSessions).where(eq(callSessions.id, callId))
+    expect(c).toMatchObject({ status: 'unanswered', direction: 'outgoing', result: 'unanswered' })
+    const [rec] = await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'call_record')))
+    expect(rec!.content).toBe('음성통화 연결 안 됨 — 수면 중')
+    expect(rec!.blocks[0]).toMatchObject({ type: 'call', result: 'unanswered', busy: '수면' })
+    expect(await db.select().from(usageWindows).where(eq(usageWindows.userId, userId))).toHaveLength(0)
   })
 
   it('an outgoing call is refused when usage is exhausted, with state untouched', async () => {

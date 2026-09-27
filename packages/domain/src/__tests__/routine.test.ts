@@ -29,7 +29,7 @@ describe('routine availability', () => {
   })
   it('default routine sleeps outside active hours', () => {
     const r = defaultRoutine({ start: '08:00', end: '23:00' }, 'x')
-    expect(availabilityAt(r, at('2026-09-26T16:00:00Z'))).toMatchObject({ availability: 'unreachable', label: '자는 중', minutesUntilFree: 420 })  // 01:00
+    expect(availabilityAt(r, at('2026-09-26T16:00:00Z'))).toMatchObject({ availability: 'unreachable', label: '수면', minutesUntilFree: 420 })  // 01:00
     expect(availabilityAt(r, at('2026-09-26T03:00:00Z')).availability).toBe('free')  // 12:00
   })
 })

@@ -12,7 +12,7 @@ export type RoutineBlock = {
   /** 'HH:MM'. end < start 면 자정을 넘는다(23:00~07:00). */
   start: string
   end: string
-  /** 캐릭터 말로 된 이름 — '야간 순찰', '수업', '자는 중'. 화면과 프롬프트에 그대로 쓴다. */
+  /** 캐릭터 말로 된 이름 — '야간 순찰', '수업', '수면'. 화면이 "{이름} 중" 으로 잇는다. */
   label: string
   /** busy = 짧게는 되지만 긴 연락은 못 함(전화 못 받음), unreachable = 아예 닿지 않음(수면·이동·차단). */
   availability: Availability
@@ -75,7 +75,8 @@ export function normalizeActiveHours(h: { start: string; end: string }): { start
 export function defaultRoutine(activeHours: { start: string; end: string }, generatedAt: string): Routine {
   const h = normalizeActiveHours(activeHours)
   return { version: 1, source: 'default', note: null, generatedAt,
-    blocks: h ? [{ days: [], start: h.end, end: h.start, label: '자는 중', availability: 'unreachable' }]
+    // 라벨은 명사로 — 화면이 "{라벨} 중" 으로 잇는다('자는 중' 이면 "자는 중 중" 이 됐다, 9/27).
+    blocks: h ? [{ days: [], start: h.end, end: h.start, label: '수면', availability: 'unreachable' }]
       : [{ days: [], start: '00:00', end: '23:59', label: '깨어 있음', availability: 'free' }] }
 }
 
