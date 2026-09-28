@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache'
 import { and, eq } from 'drizzle-orm'
 import { db, conversationRequests } from '@miro/db'
 import { runConversationTurn } from '@/lib/simulation/turn'
+import { clientIp } from '@/lib/alpha/session'
 import { exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 
@@ -36,7 +37,7 @@ export async function turnFromForm(userId: string, form: FormData, opts: { mode:
   const input = String(form.get('input') ?? '').trim()
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
-  const r = await runConversationTurn({ userId, sessionId, input, mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), requestId: String(form.get('requestId') ?? '') || undefined })
+  const r = await runConversationTurn({ userId, sessionId, input, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), requestId: String(form.get('requestId') ?? '') || undefined })
   if (!r.ok) {
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }

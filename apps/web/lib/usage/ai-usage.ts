@@ -34,7 +34,7 @@ export function budgetPolicy(): Record<string, Limit> {
   return {
     global: { requests: configured('AI_DAILY_REQUEST_LIMIT', 1000), cost: configured('AI_DAILY_BUDGET', 0) },
     user: { requests: configured('AI_USER_DAILY_LIMIT', 200) },
-    ip: { requests: configured('AI_IP_RATE_LIMIT_PER_MINUTE', 20) },
+    ip: { requests: configured('AI_IP_RATE_LIMIT_PER_MINUTE', 20) },   // 분당 턴 수(대사 호출 기준)
     /**
      * 한 사용자가 한 달에 태울 수 있는 원가 상한. 무료 대화는 월간 사용량을 차감하지 않으므로
      * 이 상한이 없으면 한 계정이 하루 한도를 매일 채워 원가를 끝없이 늘릴 수 있다.
@@ -58,7 +58,8 @@ export const productionBudgetGuard: BudgetGuard = {
     const month = startOfMonthKST().toISOString()
     const scopes = [ ['global', 'global'], ['provider:' + model.provider, 'provider'], ['model:' + model.id, 'model'], ['plan:' + plan, 'plan'],
       ...(context.userId ? [['user:' + context.userId, 'user'], ['user_monthly:' + context.userId, 'user_monthly']] : []),
-      ...(context.ip ? [['ip:' + ipHash(context.ip), 'ip']] : []) ]
+      // IP 분당 제한은 사용자가 보낸 턴(dialogue)만 센다 — 한 턴이 검열·분류·추출까지 5회를 부르니 전부 세면 두 턴째에 막힌다.
+      ...(context.ip && request.task === 'dialogue' ? [['ip:' + ipHash(context.ip), 'ip']] : []) ]
     const window = (category: string) => category === 'ip' ? String(minute) : category === 'user_monthly' ? month : day
     const entries = scopes.map(([scope, category]) => ({ key: window(category!) + ':' + scope!, limit: policy[scope!] ?? policy[category!] ?? {}, category: category!,
       // 월간 카운터는 달이 끝나기 전에 지워지면 한도가 초기화된다 — 넉넉히 살려 둔다.

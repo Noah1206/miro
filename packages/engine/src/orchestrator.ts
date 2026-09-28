@@ -94,16 +94,15 @@ export async function runTurn(opts: {
   const semantic = auxiliary && tasks.includes('semantic_event')
     ? analyzeSemantic(auxiliary, opts.userInput, snapshot).then(r => r.events.filter(e => e.confidence >= .8), () => [])
     : Promise.resolve([])
+  // 검열이 막으면 여기서 끝난다. 의미 분류는 이미 떠 있으므로 결과를 버리고 나간다.
+  try { await safety } catch (e) { void semantic.catch(() => {}); throw e }
   /**
-   * 기억 추출·요약은 대사 프롬프트에 들어가지 않는다 — 커밋 때만 쓴다. 그래서 지금 띄우되
-   * 대사 생성이 끝난 뒤에 거둔다. 대사보다 먼저 기다리면 매 턴 그 호출만큼 첫 답이 늦어진다.
+   * 기억 추출·요약은 대사 프롬프트에 들어가지 않는다 — 커밋 때만 쓴다. 검열이 지난 뒤에 띄우고
+   * 대사 생성이 끝난 뒤에 거둔다(대사가 더 오래 걸리니 첫 답은 늦어지지 않는다). 차단된 턴은 이 호출을 내지 않는다.
    */
   const memoryTasks: Promise<MemoryCandidate[][]> = auxiliary ? Promise.all(
     tasks.filter(t => t === 'memory_extraction' || t === 'memory_summary')
       .map(task => analyzeMemory(auxiliary, task, opts.userInput, snapshot).then(r => filterSalient(r.memories), () => []))) : Promise.resolve([])
-
-  // 검열이 막으면 여기서 끝난다. 보조 분석은 이미 떠 있으므로 결과를 버리고 나간다.
-  try { await safety } catch (e) { void semantic.catch(() => {}); void memoryTasks.catch(() => {}); throw e }
   const events = await semantic
   if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
 

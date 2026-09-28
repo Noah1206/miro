@@ -618,14 +618,14 @@ App Launch에서 로고를 활용할 수 있다.
 ### Sequence
 
 1. Black Screen
-2. 흰 M 은 왼쪽에서, 주황 팔은 오른쪽에서 등장
+2. 왼쪽 조각은 왼쪽에서, 오른쪽 조각은 오른쪽에서 등장
 3. 서로 가까워짐
-4. 하나의 Logo 완성
-5. 주황 점이 제자리에서 찍힘
+4. 가운데 V 에서 만나 하나의 Logo 완성
+5. 이름(MIRO)이 뜸
 6. Character World가 Reveal
 
-마크 원본은 `docs/brand/logo-mark-source.webp`. `apps/web/public` 의 `logo-mark.png`(투명 정사각형)와
-세 층(`logo-m` 흰 몸통 · `logo-s` 주황 팔 · `logo-d` 주황 점), PWA 아이콘은 모두 거기서 만든다.
+마크 원본은 `docs/brand/logo-mark-source.png`(2026-09-28, 접힌 M — 흰 두 조각, 안쪽 면은 주황·검정). `apps/web/public` 의
+`logo-mark.png`(투명 정사각형)와 두 층(`logo-m` 왼쪽 조각 · `logo-s` 오른쪽 조각), PWA 아이콘은 모두 `docs/brand/make-logo-assets.py` 로 만든다.
 
 이 Motion은 다음 메시지를 가진다.
 
