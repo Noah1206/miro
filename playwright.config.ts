@@ -3,6 +3,8 @@ import { testDatabaseUrl } from './tooling/test-database'
 
 const database = testDatabaseUrl(process.env.TEST_DATABASE_URL ?? (process.env.CI ? process.env.DATABASE_URL : undefined))
 if (!database) throw new Error('Set TEST_DATABASE_URL to a local test database before running E2E.')
+// DB assertions in test workers use the same guarded database as the two servers.
+process.env.DATABASE_URL = database
 const WEB = Number(process.env.E2E_WEB_PORT ?? 3200), ADMIN = Number(process.env.E2E_ADMIN_PORT ?? 3300)
 process.env.E2E_BASE = `http://localhost:${WEB}`
 process.env.E2E_ADMIN = `http://localhost:${ADMIN}`
@@ -21,6 +23,11 @@ const env = {
   MIRO_CANARY_MODEL: '', MIRO_SHADOW_MODEL: '', MIRO_EVAL_SAMPLE_PERCENT: '0',
   /** 계좌이체 수납 E2E. 실제 계좌가 아니며, 승인해도 실제 돈은 움직이지 않는다. */
   MIRO_BANK_ACCOUNT: JSON.stringify({ bank: 'E2E은행', number: '000-000-0000', holder: 'MIRO' }),
+  MIRO_RECHARGE_PRODUCTS: JSON.stringify([
+    { id: 'e2e_small', name: '기본 충전', units: 300, priceMinor: 3000, currency: 'KRW' },
+    { id: 'e2e_medium', name: '넉넉한 충전', units: 800, priceMinor: 7000, currency: 'KRW' },
+    { id: 'e2e_large', name: '큰 충전', units: 1800, priceMinor: 14000, currency: 'KRW' },
+  ]),
 }
 
 /**

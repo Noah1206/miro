@@ -41,7 +41,7 @@ export default async function SubscriptionPage() {
         <p className="t-caption" data-recharge-balance={u.rechargeRemaining} style={{ marginTop: 12 }}>충전 잔액 · {u.rechargeRemaining}</p>
         <div style={{ display: 'flex', gap: 14, marginTop: 12 }}>
           <TransitionLink href="/plans" className="t-caption hit" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>요금제 비교</TransitionLink>
-          <TransitionLink href="/recharge" className="t-caption hit" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>충전소</TransitionLink>
+          <TransitionLink href="/recharge" className="t-caption hit" style={{ textDecoration: 'underline', color: 'var(--color-text-primary)' }}>Miro Pay</TransitionLink>
         </div>
       </section>
 

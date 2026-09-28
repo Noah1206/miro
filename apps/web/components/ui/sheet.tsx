@@ -11,6 +11,8 @@ type Props = {
   /** 제목을 화면에 두지 않을 때의 접근성 이름. title 이 있으면 그쪽이 우선한다. */
   label?: string
   children: ReactNode
+  /** Larger title and softer top edge for a small set of primary choices. */
+  variant?: 'default' | 'choice'
   /** 화면 높이 대비 열린 높이. drag 로 half ↔ full 스냅. */
   snap?: { half: number; full: number }
 }
@@ -20,8 +22,9 @@ type Props = {
  * 손가락과 시트가 직접 연결된다 (dragElastic 이 경계 rubber band). 열린 뒤에도 항상 잡을 수 있다.
  * 시트 안에서의 세로 스크롤은 브라우저에 두고, 손잡이·헤더에서만 drag 를 잡는다.
  */
-export function Sheet({ open, onClose, title, label, children, snap = { half: 0.55, full: 0.92 } }: Props) {
+export function Sheet({ open, onClose, title, label, children, variant = 'default', snap = { half: 0.55, full: 0.92 } }: Props) {
   const reduce = useReducedMotion()
+  const choice = variant === 'choice'
   const ref = useRef<HTMLDivElement>(null)
   const titleId = useId()
   useFocusTrap(ref, open)
@@ -58,22 +61,24 @@ export function Sheet({ open, onClose, title, label, children, snap = { half: 0.
             drag={reduce ? false : 'y'} dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.06, bottom: 0.5 }} onDragEnd={onDragEnd}
             style={{
               position: 'fixed', bottom: 0, zIndex: 61, maxHeight: `${snap.full * 100}dvh`,
-              background: 'var(--color-surface-2)', borderTop: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0', touchAction: 'none',
+              background: 'var(--color-surface-2)', borderTop: choice ? 'none' : '1px solid var(--color-border)',
+              borderRadius: choice ? '20px 20px 0 0' : 'var(--radius-sheet) var(--radius-sheet) 0 0', touchAction: 'none',
               paddingBottom: 'env(safe-area-inset-bottom)', display: 'flex', flexDirection: 'column',
               maxWidth: 720, margin: '0 auto',
             }}>
             <div aria-hidden style={{ padding: '10px 0 4px', display: 'grid', placeItems: 'center', cursor: 'grab' }}>
-              <span style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--color-border-strong)' }} />
+              <span style={{ width: choice ? 48 : 36, height: 4, borderRadius: 2, background: 'var(--color-border-strong)' }} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px var(--space-4) 12px var(--space-5)' }}>
-              {title ? <h2 id={titleId} className="t-title-3">{title}</h2> : <span />}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: choice ? '8px var(--space-4) 12px var(--space-5)' : '4px var(--space-4) 12px var(--space-5)' }}>
+              {title ? <h2 id={titleId} className={choice ? 't-title-2' : 't-title-3'}
+                tabIndex={choice ? -1 : undefined} data-initial-focus={choice ? '' : undefined}
+                style={choice ? { outline: 'none', boxShadow: 'none' } : undefined}>{title}</h2> : <span />}
               {/* 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7) */}
-              <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 44, height: 44, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
+              <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
                 <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
               </button>
             </div>
-            <div style={{ overflowY: 'auto', padding: '0 var(--space-5) var(--space-5)', touchAction: 'pan-y' }} onPointerDown={(e) => e.stopPropagation()}>
+            <div style={{ overflowY: 'auto', padding: choice ? 'var(--space-4) var(--space-5) var(--space-6)' : '0 var(--space-5) var(--space-5)', touchAction: 'pan-y' }} onPointerDown={(e) => e.stopPropagation()}>
               {children}
             </div>
           </motion.div>

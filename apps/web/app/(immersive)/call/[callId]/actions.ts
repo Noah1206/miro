@@ -75,7 +75,8 @@ export async function hangUp(callId: string): Promise<void> {
   const user = await requireUser()
   const call = await owned(user.id, callId)
   await endCall(user.id, callId)
-  redirect(call ? `/chat/${call.sessionId}` : '/home')
+  // 통화 기록은 문자 페이지에 남는다 — 끊으면 거기로 돌아간다.
+  redirect(call ? `/messages/${call.sessionId}` : '/home')
 }
 
 export type PlaceCallState = { error: string | null }

@@ -88,7 +88,8 @@ export async function generateRealityContent(
     '위 상황에서 캐릭터가 먼저 보낼 연락을 JSON 으로 작성하세요: { "text": string, "tone": "warm"|"neutral"|"terse"|"urgent" }',
   ].filter(Boolean).join('\n')
 
-  return llm.generateStructured({ schema: RealityContent, task: 'dialogue', promptVersion: 'reality:v3-character-context', system: prompts.get('reality').system + '\n' + SYSTEM, prompt })
+  // 400자 이하 한 통이다. dialogue 모델 상한(ECHO 때문에 4096)을 그대로 물려받지 않게 묶는다.
+  return llm.generateStructured({ schema: RealityContent, task: 'dialogue', promptVersion: 'reality:v3-character-context', system: prompts.get('reality').system + '\n' + SYSTEM, prompt, maxTokens: 1024 })
 }
 
 /**

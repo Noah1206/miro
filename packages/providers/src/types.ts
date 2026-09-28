@@ -27,6 +27,8 @@ export interface LLMProvider {
     responseSchema?: Record<string, unknown>
     task?: string
     maxTokens?: number
+    /** 분류처럼 답이 하나로 정해져야 하는 작업은 낮게 준다. 없으면 공급자 기본값(Gemini 0.9). */
+    temperature?: number
     promptVersion?: string
     importance?: import('./ai/tasks').InteractionImportance
   }): Promise<Out>

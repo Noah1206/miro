@@ -11,7 +11,7 @@ export type ParsedCharacter = ReturnType<typeof parseCharacterForm>
  * 만들기·편집이 같은 폼을 쓰므로 읽는 법도 하나다.
  * 비워 둔 칸은 스키마 기본값이 메운다 — 빈칸 때문에 저장이 막히면 안 된다.
  */
-export function parseCharacterForm(form: FormData) {
+export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'reality') {
   const s = (k: string): string => String(form.get(k) ?? '').trim()
   const orNull = (v: string): string | null => (v.length > 0 ? v : null)
   const clamp = (k: string, fallback: number): number => {
@@ -24,9 +24,23 @@ export function parseCharacterForm(form: FormData) {
     (allowed as readonly string[]).includes(s(k)) ? (s(k) as T) : fallback
 
   const publish = s('intent') !== 'draft'
+  const rawType = s('experienceType')
+  if (rawType !== 'chat' && rawType !== 'reality') throw new Error('INVALID_CHARACTER_TYPE')
+  const experienceType: 'chat' | 'reality' = rawType
+  if (expectedType && experienceType !== expectedType) throw new Error('CHARACTER_TYPE_IMMUTABLE')
+  if (experienceType === 'chat' && [
+    'contactEnabled', 'contactToggle', 'contactChanged', 'contactFrequency', 'initiativeLevel',
+    'replyDelayMinutes', 'preferredChannel', 'callProbability', 'videoCallProbability',
+    'photoProbability', 'voiceMessageProbability', 'activeHoursStart', 'activeHoursEnd', 'senderLabel',
+    'stage', 'trust', 'attraction', 'relJealousy', 'protectiveness', 'emotionalDistance',
+    'attachment', 'bonding', 'jealousy', 'initiative', 'emotionalExpression', 'agencyExplicitField',
+  ].some(key => form.has(key))) throw new Error('CHARACTER_TYPE_SETTINGS_INVALID')
 
   const name = s('name')
   if (!name) throw new Error('NAME_REQUIRED')
+  if (name.length > 10 || s('title').length > 40 || s('personality').length > 1000 || s('startingContext').length > 600) throw new Error('CHARACTER_FIELD_TOO_LONG')
+  if (publish && !s('title')) throw new Error('TITLE_REQUIRED')
+  if (publish && !s('startingContext')) throw new Error('STARTING_CONTEXT_REQUIRED')
   const personality = s('personality') || (publish ? '' : `${name}에 대한 설명은 아직 적히지 않았다.`)
   if (publish && !personality) throw new Error('PERSONALITY_REQUIRED')
 
@@ -94,12 +108,12 @@ export function parseCharacterForm(form: FormData) {
     if (moodByNeedle.size === 5) break
   }
   const mood = [...moodByNeedle.values()]
-  const world = { era: null, location: null, genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }
+  const world = { era: null, location: orNull(s('worldLocation').slice(0, 60)), genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }
 
   // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.
   const delayN = Number(s('replyDelayMinutes'))
   const contact = {
-    enabled: form.get('contactEnabled') === 'on',
+    enabled: experienceType === 'reality' && form.get('contactEnabled') === 'on',
     contactFrequency: clamp('contactFrequency', 50),
     initiativeLevel: clamp('initiativeLevel', 50),
     replyDelayMinutes: Number.isInteger(delayN) && delayN >= 0 && delayN <= 1440 ? delayN : 5,
@@ -124,6 +138,7 @@ export function parseCharacterForm(form: FormData) {
   }
 
   return {
+    experienceType,
     publish,
     // Only deliberate choices carry numeric authorship; hidden default values alone do not.
     agencyExplicitFields: [...new Set(form.getAll('agencyExplicitField').filter((field): field is string =>

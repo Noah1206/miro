@@ -50,12 +50,14 @@ test('the character reaches out while the user is away, in the world\'s own idio
   const run = await cron.json()
   expect(run.claimed).toBeGreaterThanOrEqual(1)
 
-  // 재진입: 캐릭터가 먼저 보낸 편지가 있고, 기존 대화와 세계 상태도 그대로다
-  await page.goto(`${BASE}/chat/${sessionId}`)
+  // 재진입: 캐릭터가 먼저 보낸 편지는 문자 페이지에 있고, 캐릭터챗에는 섞이지 않는다 (9/26: 두 페이지 분리)
+  await page.goto(`${BASE}/messages/${sessionId}`)
   await expect(page.locator('[data-reality-message]')).toBeVisible()
-  await expect(page.getByText('토마스 · 편지')).toBeVisible()
-  await expect(page.getByText('의뢰 건으로 왔습니다.')).toBeVisible()
+  await expect(page.locator('[data-reality-message]').getByText('편지')).toBeVisible()
   await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
+  await page.goto(`${BASE}/chat/${sessionId}`)
+  await expect(page.locator('[data-reality-message]')).toHaveCount(0)
+  await expect(page.getByText('의뢰 건으로 왔습니다.')).toBeVisible()
 })
 
 test('the cron endpoint refuses calls without the secret', async ({ request }) => {
@@ -73,6 +75,32 @@ test('a fresh stranger with nothing going on is left alone', async ({ page, requ
   }, [sessionId])
   await request.get(`${BASE}${CRON}`, { headers: { Authorization: `Bearer ${CRON_SECRET}` } })
 
-  await page.goto(`${BASE}/chat/${sessionId}`)
+  await page.goto(`${BASE}/messages/${sessionId}`)
   await expect(page.locator('[data-reality-message]')).toHaveCount(0)
+})
+
+/**
+ * 문자 페이지 — 캐릭터가 근무 중이면 답장이 미뤄지고, 그동안 보낸 문자도 막히지 않는다.
+ * (9/26 회귀: 미뤄진 문자가 요청을 'pending' 으로 남겨 15분 동안 다음 문자가 '저장 충돌' 로 실패했다.)
+ */
+test('texting a busy character: replies are deferred and a second text is not blocked', async ({ page }) => {
+  const sessionId = await enterRoleplay(page)
+  const db = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL!
+  const { execFileSync } = await import('node:child_process')
+  execFileSync('psql', ['-X', '-q', db, '-c', `update contact_profiles cp set routine = '{"version":1,"source":"authored","note":null,"generatedAt":"x","blocks":[{"days":[],"start":"00:00","end":"23:59","label":"근무","availability":"busy"}]}'::jsonb from roleplay_sessions rs where rs.id = '${sessionId}' and cp.character_id = rs.character_id`])
+
+  await page.goto(`${BASE}/messages/${sessionId}`)
+  const input = page.getByLabel('문자 입력')
+  await input.fill('바빠?')
+  await page.getByRole('button', { name: '보내기' }).click()
+  await expect(page.locator('[data-reply-delayed]')).toContainText('근무')
+  await input.fill('끝나면 연락해')
+  await page.getByRole('button', { name: '보내기' }).click()
+  await expect(page.getByText('끝나면 연락해')).toBeVisible()
+  // 입력창의 오류 문구(저장 충돌 등)가 없어야 한다 — Next 의 경로 안내기도 role=alert 라 입력창 안만 본다.
+  await expect(page.locator('form').locator('xpath=..').getByRole('alert')).toHaveCount(0)
+  await expect(page.locator('[data-reply-delayed]')).toBeVisible()
+  // 문자는 캐릭터챗 기록에 섞이지 않는다
+  await page.goto(`${BASE}/chat/${sessionId}`)
+  await expect(page.getByText('끝나면 연락해')).toHaveCount(0)
 })

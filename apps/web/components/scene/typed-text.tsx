@@ -13,10 +13,12 @@ import { msPerChar, pauseAfter } from './typing'
  *
  * 애니메이션을 줄이는 설정(prefers-reduced-motion)이면 통째로 보여준다.
  */
-export function TypedText({ text, mood = 'neutral', onDone, animate = true }: {
+export function TypedText({ text, mood = 'neutral', onDone, animate = true, pace = 1 }: {
   text: string
   mood?: Mood
   onDone?: () => void
+  /** 1 보다 작으면 글자와 멈칫을 같은 비율로 빨리 친다 — 문단이 많은 응답 (replyPace). */
+  pace?: number
   /** 지난 메시지는 이미 다 도착한 것이다 — 다시 칠 이유가 없다. */
   animate?: boolean
 }) {
@@ -31,16 +33,16 @@ export function TypedText({ text, mood = 'neutral', onDone, animate = true }: {
     setShown(0)
     let i = 0
     let timer: ReturnType<typeof setTimeout>
-    const speed = msPerChar(text, mood)
+    const speed = msPerChar(text, mood, pace)
     const step = () => {
       i += 1
       setShown(i)
       if (i >= text.length) { done.current?.(); return }
-      timer = setTimeout(step, speed + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood))
+      timer = setTimeout(step, speed + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood) * pace)
     }
     timer = setTimeout(step, speed)
     return () => clearTimeout(timer)
-  }, [text, mood, instant])
+  }, [text, mood, instant, pace])
 
   // 자르는 위치가 **강조** 한가운데면 별표가 글자로 보인다 — 짝이 맞는 데까지만 넘긴다.
   const visible = instant ? text : trimToPair(text.slice(0, shown))

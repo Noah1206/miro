@@ -19,6 +19,7 @@ describeDb('persisted chat intro', () => {
     const [u] = await db.insert(users).values({ email: `intro-${randomUUID()}@example.test` }).returning()
     userIds.push(u!.id)
     const form = new FormData()
+    form.set('experienceType', 'chat'); form.set('intent', 'draft')
     form.set('name', 'Intro Test'); form.set('personality', 'Calm')
     form.set('sampleDialogue', JSON.stringify([{ role: 'user', text: 'legacy example' }]))
     form.set('introDialogue', JSON.stringify([{ role: 'narrator', text: 'The door opens.' }, { role: 'character', text: 'Welcome.' }]))

@@ -62,6 +62,7 @@ export async function createRoleplaySession(
     const [starting] = await tx.select({
       worldId: worlds.id, worldLocation: worlds.location, startingTime: characters.startingTime,
       initialRelationship: characters.initialRelationship, dialogue: characters.sampleDialogue,
+      experienceType: characters.experienceType,
     }).from(characters).innerJoin(worlds, eq(worlds.characterId, characters.id)).where(and(
       eq(characters.id, character.characterId),
       or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.ownerId, userId)),
@@ -75,7 +76,8 @@ export async function createRoleplaySession(
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.
     await tx.insert(worldStates).values({
-      sessionId: id, currentLocation: starting.worldLocation ?? '알 수 없는 장소', currentTime: starting.startingTime,
+      // 만들기·편집의 소유자 세션(create/edit actions)과 같은 자리표시 — 화면의 장면 표시("어딘가 · 저녁")가 경로마다 다르지 않게.
+      sessionId: id, currentLocation: starting.worldLocation ?? '어딘가', currentTime: starting.startingTime,
     })
     // 캐릭터별 시작 관계. 값이 없으면 안전한 기본값으로 떨어진다.
     const { bonding: _curve, ...startingRelationship } = starting.initialRelationship
@@ -83,7 +85,8 @@ export async function createRoleplaySession(
     // 캐릭터가 먼저 보낸 첫 마디 — 있으면 대화가 이미 시작된 상태로 들어간다.
     const openingMessages = introMessages(id, starting.dialogue, opts.opening)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
-    const revision = await captureAgencyRevision(tx, character.characterId, { sessionId: id })
+    const revision = starting.experienceType === 'reality'
+      ? await captureAgencyRevision(tx, character.characterId, { sessionId: id }) : null
     await pinAgencyRevision(tx, id, revision)
     return { sessionId: id, created: true, revisionId: revision?.id }
   })

@@ -3,9 +3,11 @@ import { memoryRetriever } from '@/lib/ai/memory'
 import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
 import {
   db, characters, characterVisualIdentities, events, memories, messages, npcs, realityContacts, relationships,
-  roleplaySessions, scenes, worldStates, worlds,
+  callSessions, roleplaySessions, scenes, userSettings, worldStates, worlds,
 } from '@miro/db'
-import { DEFAULT_CHARACTER_STATE, type CharacterState } from '@miro/domain'
+import { DEFAULT_CHARACTER_STATE, describeRoutine, localClock, type CharacterState } from '@miro/domain'
+import { characterAvailability } from '@/lib/reality/routine'
+import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
 export type LoadedSession = {
@@ -51,7 +53,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -77,7 +79,16 @@ export async function loadSession(
     db.select().from(characterVisualIdentities)
       .where(and(eq(characterVisualIdentities.characterId, row.character.id), eq(characterVisualIdentities.isActive, true)))
       .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
+    // 현실 시계는 사용자 시간대로 — 캐릭터가 "지금 몇 시인지" 알아야 하루의 때에 맞게 말한다.
+    db.select({ timeZone: userSettings.timeZone }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1),
+    // 최근 통화 — 못 받은 전화, 끊은 전화를 캐릭터가 안다. 울리는 중인 것은 아직 사실이 아니다.
+    db.select().from(callSessions).where(and(eq(callSessions.sessionId, sessionId), inArray(callSessions.status, ['ended', 'missed', 'declined', 'unanswered'])))
+      .orderBy(desc(callSessions.createdAt)).limit(3),
   ])
+  const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
+  const now = new Date()
+  // 생활 리듬은 미로 캐릭터의 것이다(연락 프로필이 있어야 한다).
+  const availability = row.character.experienceType === 'reality' ? await characterAvailability(row.character.id, now, timeZone) : null
 
   const c = row.character
   const snapshot: SimulationSnapshot = {
@@ -97,6 +108,17 @@ export async function loadSession(
     turnCount: row.session.turnCount,
     experienceType: c.experienceType,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
+    clock: localClock(now, timeZone),
+    routine: availability ? describeRoutine(availability.routine, availability) : null,
+    recentCalls: calls.map((c) => {
+      const when = localClock(c.endedAt ?? c.createdAt, timeZone).label
+      const kind = c.channel === 'voice' ? '음성통화' : '영상통화'
+      const what = c.status === 'unanswered' ? `사용자가 걸었지만 내가 받지 못함(${c.reason ?? '바쁜'} 중)`
+        : c.status === 'missed' ? '내가 걸었지만 사용자가 받지 않음'
+        : c.status === 'declined' ? '내가 걸었지만 사용자가 끊음'
+        : `${c.direction === 'incoming' ? '내가 건' : '사용자가 건'} ${kind} ${Math.round((c.durationSec ?? 0) / 60)}분`
+      return `${when} · ${what}`
+    }),
   }
 
   return {

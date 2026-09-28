@@ -138,3 +138,20 @@ describe('선연락 on/off 스위치', () => {
     expect(i).toBeNull()
   })
 })
+
+describe('meal-time check-in', () => {
+  const clock = (hour: number) => ({ iso: '2026-09-26T00:00:00Z', timeZone: 'Asia/Seoul', label: 'x', weekday: 6, hour, minute: 10, period: '저녁' as const })
+  const base = { relationship: rel({ trust: 70, attachment: 70, emotionalDistance: 20 }), activeEvents: [], contactProfile: profile, idleMinutes: 240, pending: null, availability: 'free' as const, lastContactAt: null }
+  it('asks about dinner at dinner time when the character is free and it has been quiet', () => {
+    const intent = deriveIntent({ ...base, clock: clock(19) })
+    expect(intent?.reason).toContain('checkin:저녁')
+    expect(intent?.channel).toBe('message')
+  })
+  it('stays quiet outside meal windows, when busy, when recently in touch, or when the relationship is not there yet', () => {
+    const reason = (over: object) => deriveIntent({ ...base, ...over })?.reason ?? ''
+    expect(reason({ clock: clock(15) })).not.toContain('checkin')
+    expect(reason({ clock: clock(19), availability: 'busy' })).not.toContain('checkin')
+    expect(reason({ clock: clock(19), lastContactAt: new Date(Date.now() - 2 * 3_600_000) })).not.toContain('checkin')
+    expect(deriveIntent({ ...base, clock: clock(19), relationship: rel({ attachment: 5, trust: 5, emotionalDistance: 80 }) })).toBeNull()
+  })
+})

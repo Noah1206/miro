@@ -1,9 +1,8 @@
 'use server'
-import { characterExperience } from '@/lib/character-experience'
 import { introMessages } from '@/lib/intro-dialogue'
 
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { and, eq, asc } from 'drizzle-orm'
 import {
   db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
@@ -14,6 +13,8 @@ import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } f
 import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableVoice } from '@/lib/voice'
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
 /**
  * 저장. 읽는 법은 parse.ts — 편집과 같다.
  *
@@ -23,41 +24,65 @@ import { selectableVoice } from '@/lib/voice'
  * 사진은 트랜잭션 밖에서 먼저 올린다 — Storage 업로드는 롤백할 수 없어서, DB 실패 시
  * 고아 파일이 남을지언정(드문 경우) 반대로 사진 없이 저장되는 쪽보다 안전하다.
  */
-export async function saveCharacter(form: FormData): Promise<void> {
+export async function saveCharacter(form: FormData): Promise<string> {
   const user = await requireUser()
   const p = parseCharacterForm(form)
+  const creationId = String(form.get('creationId') ?? '')
+  if (!UUID.test(creationId)) throw new Error('INVALID_CREATION_ID')
+
+  // A retried submission keeps its draft ID. Return the existing result before uploading files again.
+  const [already] = await db.select({ ownerId: characters.ownerId, experienceType: characters.experienceType, isDraft: characters.isDraft })
+    .from(characters).where(eq(characters.id, creationId)).limit(1)
+  if (already) {
+    if (already.ownerId !== user.id || already.experienceType !== p.experienceType) throw new Error('INVALID_CREATION_ID')
+    if (already.isDraft) return `/my/characters/${creationId}/edit`
+    const [session] = await db.select({ id: roleplaySessions.id }).from(roleplaySessions)
+      .where(and(eq(roleplaySessions.characterId, creationId), eq(roleplaySessions.userId, user.id)))
+      .orderBy(asc(roleplaySessions.createdAt)).limit(1)
+    return session ? `/chat/${session.id}` : `/character/${creationId}`
+  }
 
   const images = await resolveCharacterImages(form, user.id)
   const voiceId = await selectableVoice(p.voiceId)
 
   const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
-      ownerId: user.id, isOfficial: false, ...p.character, images, voiceId,
+      id: creationId, ownerId: user.id, isOfficial: false, ...p.character, images, voiceId,
       isDraft: !p.publish,
-      experienceType: characterExperience(p.contact.enabled),
+      experienceType: p.experienceType,
       // 초안은 절대 공개되지 않는다. 등록할 때만 폼에서 선택한 공개 상태를 적용한다.
       isPublic: p.publish && p.isPublicOn,
-    }).returning({ id: characters.id })
-    const characterId = character!.id
+    }).onConflictDoNothing({ target: characters.id }).returning({ id: characters.id })
+    if (!character) {
+      const [existing] = await tx.select({ ownerId: characters.ownerId, experienceType: characters.experienceType, isDraft: characters.isDraft })
+        .from(characters).where(eq(characters.id, creationId)).limit(1)
+      if (!existing || existing.ownerId !== user.id || existing.experienceType !== p.experienceType) throw new Error('INVALID_CREATION_ID')
+      const [session] = await tx.select({ id: roleplaySessions.id }).from(roleplaySessions)
+        .where(and(eq(roleplaySessions.characterId, creationId), eq(roleplaySessions.userId, user.id)))
+        .orderBy(asc(roleplaySessions.createdAt)).limit(1)
+      return { characterId: creationId, sessionId: session?.id ?? null, revisionId: null, duplicate: true }
+    }
+    const characterId = character.id
 
     const [w] = await tx.insert(worlds).values({ characterId, ...p.world }).returning({ id: worlds.id })
     await tx.insert(contactProfiles).values({ characterId, ...p.contact })
     await tx.insert(characterVisualIdentities).values({ characterId, ...p.visual, referenceSource: 'text' })
-    const revision = await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields })
+    const revision = p.experienceType === 'reality'
+      ? await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields }) : null
 
-    if (!p.publish) return { characterId, sessionId: null, revisionId: revision?.id }
+    if (!p.publish) return { characterId, sessionId: null, revisionId: revision?.id ?? null, duplicate: false }
 
     const [session] = await tx.insert(roleplaySessions).values({
       userId: user.id, characterId, worldId: w!.id,
     }).returning({ id: roleplaySessions.id })
-    await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: '어딘가', currentTime: p.startingTime ?? '저녁' })
+    await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: p.world.location ?? '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
-    await pinAgencyRevision(tx, session!.id, revision)
-    return { characterId, sessionId: session!.id, revisionId: revision?.id }
+    if (revision) await pinAgencyRevision(tx, session!.id, revision)
+    return { characterId, sessionId: session!.id, revisionId: revision?.id ?? null, duplicate: false }
   })
-  await scheduleAgencyCompilation(result.revisionId, user.id)
+  if (!result.duplicate && result.revisionId) await scheduleAgencyCompilation(result.revisionId, user.id)
 
   revalidatePath('/home')
   revalidatePath('/home/search')
@@ -66,9 +91,11 @@ export async function saveCharacter(form: FormData): Promise<void> {
 
   if (!result.sessionId) {
     // 임시저장 — 이어서 고칠 수 있는 편집 화면으로.
-    redirect(`/my/characters/${result.characterId}/edit`)
+    return `/my/characters/${result.characterId}/edit`
   }
-  void track(user.id, 'character_created', { sessionId: result.sessionId })
-  void track(user.id, 'rp_started', { sessionId: result.sessionId, official: false })
-  redirect(`/chat/${result.sessionId}`)
+  if (!result.duplicate) {
+    void track(user.id, 'character_created', { sessionId: result.sessionId })
+    void track(user.id, 'rp_started', { sessionId: result.sessionId, official: false })
+  }
+  return `/chat/${result.sessionId}`
 }

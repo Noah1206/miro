@@ -5,6 +5,7 @@ import { db, users, characters, officialVoices } from '@miro/db'
 import { saveCharacter } from '@/app/(main)/create/actions'
 import { updateCharacter } from '@/app/(main)/my/characters/[id]/edit/actions'
 import { selectableVoice, voiceOptions } from '../voice'
+import { testDatabaseUrl } from '../../../../tooling/test-database'
 
 const auth = vi.hoisted(() => ({ userId: '' }))
 vi.mock('@/lib/auth', () => ({ requireUser: async () => ({ id: auth.userId }) }))
@@ -13,7 +14,7 @@ vi.mock('@/lib/analytics/track', () => ({ track: async () => {} }))
 vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
 vi.mock('next/navigation', () => ({ redirect: (url: string) => { throw new Error(`REDIRECT:${url}`) }, notFound: () => { throw new Error('NOT_FOUND') } }))
 
-const describeDb = process.env.DATABASE_URL ? describe : describe.skip
+const describeDb = testDatabaseUrl(process.env.DATABASE_URL) ? describe : describe.skip
 const tag = randomUUID().slice(0, 8)
 const active = `it-on-${tag}`, retired = `it-off-${tag}`
 const users_: string[] = []
@@ -23,12 +24,14 @@ afterAll(async () => {
   await db.delete(officialVoices).where(inArray(officialVoices.id, [active, retired]))
 })
 
-async function creator(voiceId: string) {
+async function creator(voiceId: string, experienceType: 'chat' | 'reality') {
   const [u] = await db.insert(users).values({ email: `voice-${randomUUID()}@example.test` }).returning()
   auth.userId = u!.id; users_.push(u!.id)
   const fd = new FormData()
-  for (const [k, v] of Object.entries({ name: '목소리 테스트', title: 'hi', personality: 'calm', startingContext: 'at home', voiceId })) fd.set(k, v)
-  await expect(saveCharacter(fd)).rejects.toThrow('REDIRECT:/chat/')
+  for (const [k, v] of Object.entries({ creationId: randomUUID(), experienceType, name: '목소리 테스트', title: 'hi', personality: 'calm', startingContext: 'at home', voiceId })) fd.set(k, v)
+  const target = await saveCharacter(fd)
+  expect(target).toMatch(/^\/chat\//)
+  expect(await saveCharacter(fd)).toBe(target)
   const [c] = await db.select().from(characters).where(eq(characters.ownerId, u!.id))
   return { c: c!, userId: u!.id, fd }
 }
@@ -49,11 +52,14 @@ describeDb('official voices in Miro', () => {
     expect(await selectableVoice(retired)).toBeNull()
     expect(await selectableVoice('nope')).toBeNull()
 
-    const { c, fd } = await creator(active)
-    expect(c.voiceId).toBe(active)
-    fd.set('voiceId', retired)
-    await expect(updateCharacter(c.id, fd)).rejects.toThrow('REDIRECT:')
-    expect((await db.select().from(characters).where(eq(characters.id, c.id)))[0]!.voiceId).toBeNull()
-    expect((await creator('made-up')).c.voiceId).toBeNull()
+    for (const type of ['chat', 'reality'] as const) {
+      const { c, fd } = await creator(active, type)
+      expect(c.voiceId).toBe(active)
+      expect(c.experienceType).toBe(type)
+      fd.set('voiceId', retired)
+      expect(await updateCharacter(c.id, fd)).toBe(`/character/${c.id}`)
+      expect((await db.select().from(characters).where(eq(characters.id, c.id)))[0]!.voiceId).toBeNull()
+      expect((await creator('made-up', type)).c.voiceId).toBeNull()
+    }
   })
 })

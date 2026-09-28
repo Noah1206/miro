@@ -19,11 +19,13 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
  * 만들기 머리 (레퍼런스 구조): 닫기 · 제목 · 등록, 그 아래 가로 스크롤 탭.
  * 탭에는 표시를 달지 않는다 — 필수는 칸의 별표가 말하고, 다 차기 전엔 등록이 잠겨 있다.
  */
-export function CreateHeader({ tab, onTab, canSubmit, pending, buttons, closeHref, missingHint }: {
+export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, pending, buttons, closeHref, missingHint }: {
   tab: CreateTab
   onTab: (t: CreateTab) => void
+  experienceType: 'chat' | 'reality'
   missingHint?: string
   canSubmit: boolean
+  canDraft: boolean
   pending: boolean
   /** create: 등록. save: 이미 등록한 캐릭터를 고칠 때 — 저장 하나. */
   buttons: 'create' | 'save'
@@ -39,8 +41,10 @@ export function CreateHeader({ tab, onTab, canSubmit, pending, buttons, closeHre
           style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, color: 'var(--color-text-primary)' }}>
           <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </TransitionLink>
-        <h1 className="sr-only">캐릭터</h1>
+        <h1 className="t-caption" style={{ flexShrink: 0 }}>{experienceType === 'chat' ? '일반 캐릭터' : '미로 캐릭터'}</h1>
         <span className="t-caption" style={{ flex: 1, textAlign: 'right', fontSize: 'var(--font-micro)', transform: 'translateY(3px)', color: 'var(--color-text-secondary)' }} aria-live="polite">{missingHint}</span>
+        {buttons === 'create' && <button type="submit" name="intent" value="draft" disabled={!canDraft || pending}
+          style={{ minHeight: 44, padding: '4px 6px', background: 'none', border: 0, color: canDraft && !pending ? 'var(--color-text-secondary)' : 'var(--color-text-disabled)', cursor: canDraft && !pending ? 'pointer' : 'default', fontSize: 'var(--font-caption)' }}>임시저장</button>}
         <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending} style={chip(true, canSubmit && !pending)}>
           {buttons === 'save' ? (pending ? '저장 중' : '저장') : (pending ? '게시 중' : '게시')}
         </button>
@@ -50,7 +54,7 @@ export function CreateHeader({ tab, onTab, canSubmit, pending, buttons, closeHre
       {/* 입력 탭 여섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
       <div role="tablist" aria-label="만들기 항목" style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-          {TABS.filter((t) => t.key !== 'preview').map((t) => {
+          {TABS.filter((t) => t.key !== 'preview' && (experienceType === 'reality' || (t.key !== 'relationship' && t.key !== 'contact'))).map((t) => {
             const active = t.key === tab
             return (
               <button key={t.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${t.key}`} onClick={() => onTab(t.key)}

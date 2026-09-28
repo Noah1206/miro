@@ -66,14 +66,14 @@ function Counter({ length, max }: { length: number; max: number }) {
 }
 
 /** 한 줄 입력. */
-export function CountedInput({ name, placeholder, max, defaultValue = '', required, invalid }: {
-  name: string; placeholder: string; max: number; defaultValue?: string; required?: boolean; invalid?: boolean
+export function CountedInput({ name, placeholder, max, defaultValue = '', required, invalid, ariaLabel }: {
+  name: string; placeholder: string; max: number; defaultValue?: string; required?: boolean; invalid?: boolean; ariaLabel?: string
 }) {
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(focused, invalid) }}>
-      <input name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
+      <input name={name} aria-label={ariaLabel ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} required={required} autoComplete="off"
         style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
@@ -83,14 +83,14 @@ export function CountedInput({ name, placeholder, max, defaultValue = '', requir
 }
 
 /** 여러 줄 입력. 같은 상자 규칙. */
-export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue = '' }: {
-  name: string; placeholder: string; max: number; rows?: number; defaultValue?: string
+export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue = '', ariaLabel }: {
+  name: string; placeholder: string; max: number; rows?: number; defaultValue?: string; ariaLabel?: string
 }) {
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
     <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
-      <textarea name={name} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
+      <textarea name={name} aria-label={ariaLabel ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none',

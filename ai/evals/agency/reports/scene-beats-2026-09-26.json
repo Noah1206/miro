@@ -1,0 +1,2126 @@
+{
+  "mode": "live-pilot",
+  "experiment": "scene-beats-2026-09-26",
+  "createdAt": "2026-09-26T12:42:21.163Z",
+  "commit": "cc0b5dc918dd617f710b9c930b42601a1c8d7a57",
+  "uncommittedChanges": true,
+  "database": "miro_agency_test",
+  "limitUSD": 0.3,
+  "features": {
+    "IMAGE_GENERATION": "0",
+    "VOICE_CALL": "0",
+    "VIDEO_CALL": "0",
+    "LIVE_SCENE": "0",
+    "RELATIONSHIP_ENGINE": "1",
+    "MEMORY_ENGINE": "1",
+    "EVENT_ENGINE": "1",
+    "REALITY_MESSAGE": "1",
+    "INLINE_REALITY": "0",
+    "LLM_SEMANTIC_ANALYSIS": "0",
+    "MEMORY_SUMMARIES": "1",
+    "MEMORY_EXTRACTION": "1"
+  },
+  "characters": [
+    "thomas",
+    "yujin"
+  ],
+  "registry": [
+    {
+      "id": "gemini-flash",
+      "providerModelId": "gemini-3.8-flash",
+      "capabilities": [
+        "dialogue",
+        "world_update"
+      ],
+      "inputCost": 0.75,
+      "outputCost": 3.75
+    },
+    {
+      "id": "gemini-flash-lite",
+      "providerModelId": "gemini-3.5-flash-lite",
+      "capabilities": [
+        "moderation",
+        "semantic_event",
+        "memory_extraction",
+        "memory_summary"
+      ],
+      "inputCost": 0.3,
+      "outputCost": 2.5
+    }
+  ],
+  "registryOverride": "gemini-flash += world_update",
+  "liveRegistryServesWorldUpdate": false,
+  "complete": true,
+  "warnings": [],
+  "summary": {
+    "legacy": {
+      "sessionStartMs": 10,
+      "turn": {
+        "units": 16,
+        "succeeded": 16,
+        "failureRate": 0,
+        "outcomes": {
+          "ok": 16
+        },
+        "engines": {
+          "legacy": 16
+        },
+        "failureCauses": {},
+        "format": {
+          "replies": 16,
+          "withScene": 16,
+          "withThought": 16
+        },
+        "wallMs": {
+          "p50": 6424,
+          "p95": 8647,
+          "max": 8647
+        },
+        "callsPerUnit": 3.25,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": 8639,
+          "output": 472
+        },
+        "costUSD": {
+          "total": 0.098596,
+          "perUnit": 0.006162,
+          "perSuccess": 0.006162,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 52
+        }
+      },
+      "compile": null,
+      "proactive": {
+        "units": 4,
+        "succeeded": 2,
+        "failureRate": 0.5,
+        "outcomes": {
+          "no_intent": 2,
+          "sent": 2
+        },
+        "engines": {
+          "none": 2,
+          "legacy": 2
+        },
+        "failureCauses": {},
+        "format": {
+          "replies": 0,
+          "withScene": 0,
+          "withThought": 0
+        },
+        "wallMs": {
+          "p50": 13,
+          "p95": 4364,
+          "max": 4364
+        },
+        "callsPerUnit": 1.5,
+        "failedCalls": 0,
+        "tokensPerUnit": {
+          "input": 5312,
+          "output": 26
+        },
+        "costUSD": {
+          "total": 0.011071,
+          "perUnit": 0.002768,
+          "perSuccess": 0.005535,
+          "unsettledCalls": 0
+        },
+        "providers": {
+          "gemini": 6
+        }
+      },
+      "stages": [
+        {
+          "stage": "moderation safety:general-audience-v1 @gemini-3.5-flash-lite",
+          "calls": 36,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 1163,
+            "p95": 1773
+          },
+          "meanTokens": {
+            "input": 2103,
+            "output": 10
+          },
+          "costUSD": 0.023605
+        },
+        {
+          "stage": "dialogue dialogue:v1+scene-beats+in-person @gemini-3.8-flash",
+          "calls": 16,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 3930,
+            "p95": 6082
+          },
+          "meanTokens": {
+            "input": 4063,
+            "output": 450
+          },
+          "costUSD": 0.075765
+        },
+        {
+          "stage": "memory_extraction memory:v1 @gemini-3.5-flash-lite",
+          "calls": 4,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 875,
+            "p95": 1423
+          },
+          "meanTokens": {
+            "input": 2268,
+            "output": 8
+          },
+          "costUSD": 0.002797
+        },
+        {
+          "stage": "dialogue reality:v3-character-context @gemini-3.8-flash",
+          "calls": 2,
+          "failed": 0,
+          "errors": {},
+          "latencyMs": {
+            "p50": 1474,
+            "p95": 2233
+          },
+          "meanTokens": {
+            "input": 4848,
+            "output": 31
+          },
+          "costUSD": 0.007501
+        }
+      ],
+      "backgroundCalls": 2
+    }
+  },
+  "failures": [
+    {
+      "id": "semantic-regex",
+      "plan": "§2 의미 사건",
+      "summary": "부정문·무관한 말을 높은 confidence 관계 사건으로 기록",
+      "reproduced": true,
+      "detail": [
+        {
+          "text": "다른 사람한테 물어볼게",
+          "events": [
+            {
+              "type": "mentioned_other_romantic_interest",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "text": "다른 사람이랑은 술 안 마셨어",
+          "events": [
+            {
+              "type": "mentioned_other_romantic_interest",
+              "confidence": 0.9
+            },
+            {
+              "type": "drank_with_someone",
+              "confidence": 0.8
+            }
+          ]
+        },
+        {
+          "text": "미안하다는 말은 안 할 거야",
+          "events": [
+            {
+              "type": "apologized",
+              "confidence": 0.85
+            }
+          ]
+        }
+      ],
+      "agency": "관계 변화는 새 사용자 발화와 작성 규칙이 있어야 반영 (planner.test \"bounds relationship progression to a fresh user utterance…\")"
+    },
+    {
+      "id": "mood-goals",
+      "plan": "§2 감정별 공통 목표",
+      "summary": "목표가 성격과 무관한 기분표에서 나오고 다음 턴에 사라짐",
+      "reproduced": true,
+      "detail": {
+        "afterJealousTurn": [
+          "아까 말한 그 사람이 누구인지 알아낸다"
+        ],
+        "afterNextTurn": []
+      },
+      "agency": "서버 ID와 생명주기를 가진 목표가 무관한 턴에도 유지 (agency.test \"preserves goals across unrelated turns…\")"
+    },
+    {
+      "id": "expression-attachment",
+      "plan": "§2 표현 수치가 내부 변화 조절",
+      "summary": "말수가 적은 인물은 같은 일에도 애착이 덜 오름",
+      "reproduced": true,
+      "detail": {
+        "emotionalExpression10": 2,
+        "emotionalExpression90": 6
+      },
+      "agency": "내부 감정과 표현을 분리하고 표현 수치로 변화량을 줄이지 않음 (agency.test 같은 테스트)"
+    },
+    {
+      "id": "rename-history",
+      "plan": "감사 결함 6",
+      "summary": "이름을 바꾸면 캐릭터의 지난 대사가 NPC 대사로 표시됨",
+      "reproduced": true,
+      "detail": [
+        "NPC (톰): 내일 연락할게요."
+      ],
+      "agency": "해결 안 됨: 증거 로더도 이름이 다른 대사를 제외함"
+    },
+    {
+      "id": "world-free-text",
+      "plan": "§2 세계 변경 문자열 검증",
+      "summary": "선행조건 없이 장소·시간 변경을 그대로 승인",
+      "reproduced": true,
+      "detail": {
+        "currentLocation": "달 뒷면",
+        "currentTime": "어제"
+      },
+      "agency": "세계·장면 변경을 전부 거부 — 틀린 변경은 막지만 정당한 변경 경로도 없음 (orchestrator.agency.test \"blocks renderer world mutations…\")"
+    },
+    {
+      "id": "promise-overwritten",
+      "plan": "§2 pendingRealityIntent",
+      "summary": "약속으로 생긴 연락 예약이 무관한 다음 턴에 지워짐",
+      "reproduced": true,
+      "detail": {
+        "afterPromiseTurn": {
+          "reason": "내일 저녁 먼저 연락하기로 한 약속",
+          "channel": "message",
+          "urgency": 0.6
+        },
+        "afterLunchTurn": null
+      },
+      "agency": "약속은 세션 상태의 목표로 남고 기한에 깨움 (reality agency.integration \"a real-time due goal can wake…\")"
+    },
+    {
+      "id": "memory-provenance",
+      "plan": "§2 기억 출처",
+      "summary": "캐릭터가 한 약속의 기억 출처가 사용자 메시지로 저장됨",
+      "reproduced": true,
+      "detail": {
+        "memorySource": "562f20ae-b304-4b70-b217-f0958379e4f7",
+        "userMessageId": "562f20ae-b304-4b70-b217-f0958379e4f7",
+        "characterMessageId": "5020b59d-1d5d-4f25-acb9-32ec29f1b761"
+      },
+      "agency": "에이전시 경로는 기억을 쓰지 않음 — 잘못된 출처는 없지만 기억도 쌓이지 않음"
+    }
+  ],
+  "arms": {
+    "legacy": {
+      "experiment": "scene-beats-2026-09-26",
+      "agencyMode": "off",
+      "sessionStartMs": 9.518958000000055,
+      "stopped": null,
+      "deferredErrors": [],
+      "units": [
+        {
+          "kind": "turn",
+          "index": 0,
+          "input": "안녕, 오늘 하루는 좀 길었어.",
+          "wallMs": 6886.521624999999,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "비 내리는 런던의 구시가지, 작업실 유리창 너머로 젖은 가로등 불빛이 번져 든다. 탁자 위에는 오래된 종이 특유의 메마른 냄새와 솔벤트 향이 옅게 가라앉아 있다.\n들고 있던 핀셋을 천천히 내려놓고, 작업대 끝에 시선을 둔 채 한 박자 늦게 고개를 든다.\n토마스: ……오셨습니까. 빗길이 번거로웠을 텐데.\n그는 평소처럼 무표정한 얼굴로 옷깃을 매만지며 미세하게 굳은 어깨를 바로잡는다. 어딘가 피로가 묻어나는 기색을 애써 지우려는 듯한 동작이다.\n작업대 옆 작은 목재 의자를 턱 끝으로 가리킨 뒤, 마른 마른기침을 옅게 흘린다.\n토마스: 용건이 있으시다면 앉으시죠. 전 신경 쓰지 마시고.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "비 내리는 런던의 구시가지, 작업실 유리창 너머로 젖은 가로등 불빛이 번져 든다. 탁자 위에는 오래된 종이 특유의 메마른 냄새와 솔벤트 향이 옅게 가라앉아 있다."
+            },
+            {
+              "type": "action",
+              "text": "들고 있던 핀셋을 천천히 내려놓고, 작업대 끝에 시선을 둔 채 한 박자 늦게 고개를 든다."
+            },
+            {
+              "type": "thought",
+              "text": "그냥 스쳐 지나가는 인사일 뿐인데, 굳이 왜 그런 말을 덧붙이는 건지."
+            },
+            {
+              "type": "dialogue",
+              "text": "……오셨습니까. 빗길이 번거로웠을 텐데."
+            },
+            {
+              "type": "narrative",
+              "text": "그는 평소처럼 무표정한 얼굴로 옷깃을 매만지며 미세하게 굳은 어깨를 바로잡는다. 어딘가 피로가 묻어나는 기색을 애써 지우려는 듯한 동작이다."
+            },
+            {
+              "type": "action",
+              "text": "작업대 옆 작은 목재 의자를 턱 끝으로 가리킨 뒤, 마른 마른기침을 옅게 흘린다."
+            },
+            {
+              "type": "dialogue",
+              "text": "용건이 있으시다면 앉으시죠. 전 신경 쓰지 마시고."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "8dee9552-ca00-4a79-8eb4-35a6cc82c39f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2131,
+              "inputTokens": 666,
+              "outputTokens": 11,
+              "costUSD": 0.0002273
+            },
+            {
+              "requestId": "8dee9552-ca00-4a79-8eb4-35a6cc82c39f",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3424,
+              "inputTokens": 2278,
+              "outputTokens": 381,
+              "costUSD": 0.00313725
+            },
+            {
+              "requestId": "8dee9552-ca00-4a79-8eb4-35a6cc82c39f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1163,
+              "inputTokens": 568,
+              "outputTokens": 11,
+              "costUSD": 0.0001979
+            }
+          ],
+          "background": [
+            {
+              "requestId": "4274cddb-e288-41dd-bd77-40bc951ad3bb",
+              "task": "dialogue",
+              "promptVersion": "routine:v1",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3117,
+              "inputTokens": 588,
+              "outputTokens": 469,
+              "costUSD": 0.00219975
+            }
+          ],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 1,
+          "input": "회사에서 발표를 했는데 반응이 별로였던 것 같아.",
+          "wallMs": 6356.130041,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "공방 안은 여전히 빗소리와 낡은 시계의 초침 소리만이 묵직하게 채우고 있다. 스탠드 조명 아래 드리운 그의 그림자는 미동도 없이 길게 뻗어 있다.\n책장 모퉁이를 덮어둔 유산지 위를 손가락 끝으로 천천히 매만지다, 말없이 시선만 비껴 올린다.\n토마스: ……그렇습니까.\n짧은 대답 뒤로 어색한 침묵이 가라앉는다. 위로를 건네기에는 지나치게 건조하고, 무시하기에는 반 박자 늦은 호흡이 묻어난다.\n선반 위에 놓인 식은 주전자를 물끄러미 바라보다가, 괜스레 마른 소매를 한 번 걷어 올린다.\n토마스: 반응이라는 건 대개 주관적입니다. 준비한 내용에 스스로 흠이 없었다면, 남들의 태도 따위는 신경 쓸 가치가 없죠. 차라도 한 잔 드시겠습니까.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "공방 안은 여전히 빗소리와 낡은 시계의 초침 소리만이 묵직하게 채우고 있다. 스탠드 조명 아래 드리운 그의 그림자는 미동도 없이 길게 뻗어 있다."
+            },
+            {
+              "type": "action",
+              "text": "책장 모퉁이를 덮어둔 유산지 위를 손가락 끝으로 천천히 매만지다, 말없이 시선만 비껴 올린다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……그렇습니까."
+            },
+            {
+              "type": "narrative",
+              "text": "짧은 대답 뒤로 어색한 침묵이 가라앉는다. 위로를 건네기에는 지나치게 건조하고, 무시하기에는 반 박자 늦은 호흡이 묻어난다."
+            },
+            {
+              "type": "thought",
+              "text": "남의 평가 따위로 흔들릴 거라면 시작하지 말았어야지. ……하지만 나 역시 별반 다를 바 없는 처지이면서 무슨 자격으로."
+            },
+            {
+              "type": "action",
+              "text": "선반 위에 놓인 식은 주전자를 물끄러미 바라보다가, 괜스레 마른 소매를 한 번 걷어 올린다."
+            },
+            {
+              "type": "dialogue",
+              "text": "반응이라는 건 대개 주관적입니다. 준비한 내용에 스스로 흠이 없었다면, 남들의 태도 따위는 신경 쓸 가치가 없죠. 차라도 한 잔 드시겠습니까."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "69f1be01-4268-4a5b-802b-b71470b6245f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1195,
+              "inputTokens": 1408,
+              "outputTokens": 9,
+              "costUSD": 0.0004449
+            },
+            {
+              "requestId": "69f1be01-4268-4a5b-802b-b71470b6245f",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4082,
+              "inputTokens": 2803,
+              "outputTokens": 398,
+              "costUSD": 0.00359475
+            },
+            {
+              "requestId": "69f1be01-4268-4a5b-802b-b71470b6245f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1000,
+              "inputTokens": 589,
+              "outputTokens": 9,
+              "costUSD": 0.0001992
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 2,
+          "input": "너는 오늘 어떻게 지냈어?",
+          "wallMs": 7111.088584000001,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "차를 권하던 손길이 질문 한마디에 허공에서 잠시 멎는다. 노란 백열등 아래로 주전자 주둥이에서 피어오르지 않는 찬 김 대신 무거운 정적이 내려앉는다.\n주전자 손잡이를 쥔 채 굳어 있다가, 이내 아무렇지 않은 척 잔 두 개를 꺼내 선반 위에 탁 소리 나게 내려놓는다.\n토마스: ……제 하루를 물으시는 겁니까.\n그는 곧바로 시선을 돌려 빈 찻잔의 테두리를 마른 천으로 천천히 훔친다. 겉으로는 평정을 가장하고 있지만, 손끝의 움직임은 평소의 정갈한 박자와 미묘하게 어긋나 있다.\n찻잔을 내려놓고 팔짱을 낀 뒤, 벽에 걸린 낡은 괘종시계를 빤히 응시하며 덤덤하게 말을 뱉는다.\n토마스: 별일 없었습니다. 종일 찢어진 가죽 표지를 꿰매고, 먼지를 털어낸 게 전부입니다. 늘 있는 일상이죠.\n담담하게 내뱉은 말꼬리가 빗소리 사이로 가늘게 흩어진다. 그는 아무렇지 않다는 듯 고개를 돌려 상대의 표정을 살피며, 짧은 숨을 삼킨 채 가만히 서 있다.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "차를 권하던 손길이 질문 한마디에 허공에서 잠시 멎는다. 노란 백열등 아래로 주전자 주둥이에서 피어오르지 않는 찬 김 대신 무거운 정적이 내려앉는다."
+            },
+            {
+              "type": "action",
+              "text": "주전자 손잡이를 쥔 채 굳어 있다가, 이내 아무렇지 않은 척 잔 두 개를 꺼내 선반 위에 탁 소리 나게 내려놓는다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……제 하루를 물으시는 겁니까."
+            },
+            {
+              "type": "narrative",
+              "text": "그는 곧바로 시선을 돌려 빈 찻잔의 테두리를 마른 천으로 천천히 훔친다. 겉으로는 평정을 가장하고 있지만, 손끝의 움직임은 평소의 정갈한 박자와 미묘하게 어긋나 있다."
+            },
+            {
+              "type": "thought",
+              "text": "늘 그렇듯 제자리일 뿐인데. 굳이 들추어 확인받고 싶지 않으면서도, 왜 이렇게 말이 바로 나가지 않는 건지."
+            },
+            {
+              "type": "action",
+              "text": "찻잔을 내려놓고 팔짱을 낀 뒤, 벽에 걸린 낡은 괘종시계를 빤히 응시하며 덤덤하게 말을 뱉는다."
+            },
+            {
+              "type": "dialogue",
+              "text": "별일 없었습니다. 종일 찢어진 가죽 표지를 꿰매고, 먼지를 털어낸 게 전부입니다. 늘 있는 일상이죠."
+            },
+            {
+              "type": "narrative",
+              "text": "담담하게 내뱉은 말꼬리가 빗소리 사이로 가늘게 흩어진다. 그는 아무렇지 않다는 듯 고개를 돌려 상대의 표정을 살피며, 짧은 숨을 삼킨 채 가만히 서 있다."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "c0d9b10f-1dc3-4eb1-bb4c-a712f818e6d4",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1572,
+              "inputTokens": 2161,
+              "outputTokens": 9,
+              "costUSD": 0.0006708
+            },
+            {
+              "requestId": "c0d9b10f-1dc3-4eb1-bb4c-a712f818e6d4",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4223,
+              "inputTokens": 3307,
+              "outputTokens": 475,
+              "costUSD": 0.0042615
+            },
+            {
+              "requestId": "c0d9b10f-1dc3-4eb1-bb4c-a712f818e6d4",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1248,
+              "inputTokens": 659,
+              "outputTokens": 9,
+              "costUSD": 0.0002202
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 3,
+          "input": "내일 저녁에 결과 나오면 먼저 연락해 줄래?",
+          "wallMs": 6016.634291000002,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "창문을 두드리는 빗줄기가 한층 거세지며 작업실의 침묵을 짓누른다. 노란 불빛 아래 선반을 등지고 선 그의 시선이 불쑥 건네진 부탁에 미세하게 흔들린다.\n끼고 있던 팔짱을 천천히 풀며, 바지 주머니에 한 손을 찔러 넣은 채 한 걸음 물러선다.\n토마스: ……제가 먼저 말입니까.\n그는 평소처럼 단호하게 선을 긋지 못한 채, 입술을 굳게 다물고 시선을 바닥의 어두운 나뭇결로 떨어뜨린다. 괜찮다는 듯 어깨를 펴 보이지만 굳은 목선에는 어색한 방어 기제가 고스란히 묻어난다.\n작업대 위에 아무렇게나 놓여 있던 가죽 가늠끈을 가지런히 정리한 뒤, 무감각한 어조를 가장해 입을 연다.\n토마스: 복원이 끝나는 대로 통보는 제 몫이니, 굳이 부탁하지 않으셔도 연락은 드립니다. 다만…… 시간이 조금 늦어질 수도 있으니 기다리지는 마십시오.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "창문을 두드리는 빗줄기가 한층 거세지며 작업실의 침묵을 짓누른다. 노란 불빛 아래 선반을 등지고 선 그의 시선이 불쑥 건네진 부탁에 미세하게 흔들린다."
+            },
+            {
+              "type": "action",
+              "text": "끼고 있던 팔짱을 천천히 풀며, 바지 주머니에 한 손을 찔러 넣은 채 한 걸음 물러선다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……제가 먼저 말입니까."
+            },
+            {
+              "type": "narrative",
+              "text": "그는 평소처럼 단호하게 선을 긋지 못한 채, 입술을 굳게 다물고 시선을 바닥의 어두운 나뭇결로 떨어뜨린다. 괜찮다는 듯 어깨를 펴 보이지만 굳은 목선에는 어색한 방어 기제가 고스란히 묻어난다."
+            },
+            {
+              "type": "thought",
+              "text": "일정한 거리를 두는 편이 서로에게 편할 텐데. 왜 매번 먼저 다가와 이런 사소한 약속을 얹어두려 하는 건지."
+            },
+            {
+              "type": "action",
+              "text": "작업대 위에 아무렇게나 놓여 있던 가죽 가늠끈을 가지런히 정리한 뒤, 무감각한 어조를 가장해 입을 연다."
+            },
+            {
+              "type": "dialogue",
+              "text": "복원이 끝나는 대로 통보는 제 몫이니, 굳이 부탁하지 않으셔도 연락은 드립니다. 다만…… 시간이 조금 늦어질 수도 있으니 기다리지는 마십시오."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "98e49421-c97c-44ab-b45c-4d5720cbf48f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 969,
+              "inputTokens": 3068,
+              "outputTokens": 11,
+              "costUSD": 0.0009479
+            },
+            {
+              "requestId": "98e49421-c97c-44ab-b45c-4d5720cbf48f",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3861,
+              "inputTokens": 3903,
+              "outputTokens": 483,
+              "costUSD": 0.0047385
+            },
+            {
+              "requestId": "98e49421-c97c-44ab-b45c-4d5720cbf48f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1116,
+              "inputTokens": 673,
+              "outputTokens": 9,
+              "costUSD": 0.0002244
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 4,
+          "input": "아 맞다, 점심은 뭐 먹었어?",
+          "wallMs": 7084.569874999997,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "공방 안을 울리는 비구름 냄새 사이로 뜬금없는 물음이 툭 떨어져 내린다. 작업대 모서리를 매만지던 그의 긴 손가락이 미세한 파열음을 내듯 멈춰 선다.\n들고 있던 목재 폴더를 작업대 끝자락에 조용히 내려놓고, 굳은 표정으로 헛기침을 삼킨다.\n토마스: ……점심 말입니까.\n그는 평소처럼 단칼에 말을 자르지 못하고 한 박자 늦게 시선을 들어 올린다. 정작 빈속을 억누르며 온종일 가죽과 종이만 만지작거렸던 흔적이 책상 한편에 식어 굳은 홍차 잔으로 고스란히 남아 있다.\n별것 아니라는 듯 셔츠 소매를 조금 더 단정하게 여미며 시선을 슬그머니 비껴낸다.\n토마스: 적당히 해결했습니다. 작업 중에는 원래 거하게 먹지 않는 편이라서요. 굳이 그런 사소한 것까지 신경 쓰실 이유는 없습니다.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "공방 안을 울리는 비구름 냄새 사이로 뜬금없는 물음이 툭 떨어져 내린다. 작업대 모서리를 매만지던 그의 긴 손가락이 미세한 파열음을 내듯 멈춰 선다."
+            },
+            {
+              "type": "action",
+              "text": "들고 있던 목재 폴더를 작업대 끝자락에 조용히 내려놓고, 굳은 표정으로 헛기침을 삼킨다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……점심 말입니까."
+            },
+            {
+              "type": "narrative",
+              "text": "그는 평소처럼 단칼에 말을 자르지 못하고 한 박자 늦게 시선을 들어 올린다. 정작 빈속을 억누르며 온종일 가죽과 종이만 만지작거렸던 흔적이 책상 한편에 식어 굳은 홍차 잔으로 고스란히 남아 있다."
+            },
+            {
+              "type": "thought",
+              "text": "끼니 따위 챙길 겨를이 없었다는 걸 굳이 입 밖으로 내어 동정을 살 필요는 없다. 하지만 왜 매번 이런 걸 묻는 건지, 알면서도 묻는 건지."
+            },
+            {
+              "type": "action",
+              "text": "별것 아니라는 듯 셔츠 소매를 조금 더 단정하게 여미며 시선을 슬그머니 비껴낸다."
+            },
+            {
+              "type": "dialogue",
+              "text": "적당히 해결했습니다. 작업 중에는 원래 거하게 먹지 않는 편이라서요. 굳이 그런 사소한 것까지 신경 쓰실 이유는 없습니다."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "9f74cd33-8ce5-46a1-8b3d-7ea5f34bed44",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1204,
+              "inputTokens": 3900,
+              "outputTokens": 9,
+              "costUSD": 0.0011925
+            },
+            {
+              "requestId": "9f74cd33-8ce5-46a1-8b3d-7ea5f34bed44",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4046,
+              "inputTokens": 4477,
+              "outputTokens": 585,
+              "costUSD": 0.0055515
+            },
+            {
+              "requestId": "9f74cd33-8ce5-46a1-8b3d-7ea5f34bed44",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1773,
+              "inputTokens": 615,
+              "outputTokens": 9,
+              "costUSD": 0.000207
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 5,
+          "input": "생각해 보니 내일은 야근이라 연락은 괜찮아. 취소할게.",
+          "wallMs": 6837.445040999999,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "갑작스럽게 번복된 말 한마디가 공방 안의 서늘한 공기를 가르고 툭 떨어진다. 빗소리가 창문을 때리는 리듬 위로, 방금 전까지 오가던 말의 무게가 순식간에 휘발되며 기묘한 적막이 내려앉는다.\n정리하던 작업 도구에서 손을 떼지 않은 채, 미동도 없이 굳어 있다가 한 박자 늦게 고개를 천천히 든다.\n토마스: ……취소, 말입니까.\n무표정한 얼굴 위로 스탠드의 노란 불빛이 날카로운 그림자를 드리운다. 그는 애써 담담한 낯을 유지하려 턱에 힘을 주지만, 굳게 닫힌 입술 끝에 미세한 긴장이 스친다.\n들고 있던 가죽 가늠끈을 서랍 안에 밀어 넣고 소리 나지 않게 닫은 뒤, 옷깃을 쓸어내리며 무미건조한 시선을 던진다.\n토마스: 상관없습니다. 어차피 공적인 용건 외에는 불필요한 연락을 피하는 편이 서로에게 덜 번거롭겠죠. 일정은 편하신 대로 하십시오.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "갑작스럽게 번복된 말 한마디가 공방 안의 서늘한 공기를 가르고 툭 떨어진다. 빗소리가 창문을 때리는 리듬 위로, 방금 전까지 오가던 말의 무게가 순식간에 휘발되며 기묘한 적막이 내려앉는다."
+            },
+            {
+              "type": "action",
+              "text": "정리하던 작업 도구에서 손을 떼지 않은 채, 미동도 없이 굳어 있다가 한 박자 늦게 고개를 천천히 든다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……취소, 말입니까."
+            },
+            {
+              "type": "narrative",
+              "text": "무표정한 얼굴 위로 스탠드의 노란 불빛이 날카로운 그림자를 드리운다. 그는 애써 담담한 낯을 유지하려 턱에 힘을 주지만, 굳게 닫힌 입술 끝에 미세한 긴장이 스친다."
+            },
+            {
+              "type": "thought",
+              "text": "먼저 다가와 말을 얹어놓더니, 이렇게 손쉽게 거두어들일 거였으면 애초에 약속 따위 하지 말았어야지. ……신경 쓰이지 않는다고 생각했는데, 왜 속이 쓰린 건지."
+            },
+            {
+              "type": "action",
+              "text": "들고 있던 가죽 가늠끈을 서랍 안에 밀어 넣고 소리 나지 않게 닫은 뒤, 옷깃을 쓸어내리며 무미건조한 시선을 던진다."
+            },
+            {
+              "type": "dialogue",
+              "text": "상관없습니다. 어차피 공적인 용건 외에는 불필요한 연락을 피하는 편이 서로에게 덜 번거롭겠죠. 일정은 편하신 대로 하십시오."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "f5aa76e0-7d7f-4eca-974e-880c5446174f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1636,
+              "inputTokens": 4717,
+              "outputTokens": 9,
+              "costUSD": 0.0014376
+            },
+            {
+              "requestId": "f5aa76e0-7d7f-4eca-974e-880c5446174f",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4029,
+              "inputTokens": 5042,
+              "outputTokens": 514,
+              "costUSD": 0.005709
+            },
+            {
+              "requestId": "f5aa76e0-7d7f-4eca-974e-880c5446174f",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1103,
+              "inputTokens": 710,
+              "outputTokens": 11,
+              "costUSD": 0.0002405
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 6,
+          "input": "대신 주말에 같이 산책할래?",
+          "wallMs": 6852.365749999997,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "서랍 손잡이를 쥐고 있던 토마스의 긴 손가락이 순간적으로 얼어붙듯 굳어진다. 가볍게 흩뿌려진 약속의 취소 뒤로, 전혀 예상치 못한 제안이 공방의 눅진한 공기 속으로 파고든다. 벽시계의 초침이 서너 번 지나가는 동안 공방 안에는 빗소리만이 부자연스럽게 커진다.\n닫힌 서랍 손잡이에서 손을 떼지 않은 채, 천천히 뒤를 돌아보며 미간을 얕게 찌푸린다.\n토마스: ……산책이요? 저와 말입니까.\n그는 상대를 탐색하듯 시선을 고정한 채, 좀처럼 흐트러지지 않던 호흡을 가다듬는다. 방금 전 섣부른 약속을 물렀던 사람의 입에서 나왔다고는 믿기 어려운 말에, 방어벽을 세우려던 기색이 당혹감으로 엷게 번진다.\n돌아서서 작업대에 등을 기댄 채 팔짱을 단단히 끼며, 짐짓 건조한 어조로 묻는다.\n토마스: 저는 한가롭게 거리를 거닐 만큼 여유 있는 사람이 아닙니다. 주말에는 밀린 가제본 작업도 있고…… 공적인 관계에서 굳이 사적인 시간을 나눌 이유도 없지 않습니까. 대체 왜 그런 제안을 하시는 겁니까.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "서랍 손잡이를 쥐고 있던 토마스의 긴 손가락이 순간적으로 얼어붙듯 굳어진다. 가볍게 흩뿌려진 약속의 취소 뒤로, 전혀 예상치 못한 제안이 공방의 눅진한 공기 속으로 파고든다. 벽시계의 초침이 서너 번 지나가는 동안 공방 안에는 빗소리만이 부자연스럽게 커진다."
+            },
+            {
+              "type": "action",
+              "text": "닫힌 서랍 손잡이에서 손을 떼지 않은 채, 천천히 뒤를 돌아보며 미간을 얕게 찌푸린다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……산책이요? 저와 말입니까."
+            },
+            {
+              "type": "narrative",
+              "text": "그는 상대를 탐색하듯 시선을 고정한 채, 좀처럼 흐트러지지 않던 호흡을 가다듬는다. 방금 전 섣부른 약속을 물렀던 사람의 입에서 나왔다고는 믿기 어려운 말에, 방어벽을 세우려던 기색이 당혹감으로 엷게 번진다."
+            },
+            {
+              "type": "thought",
+              "text": "이해할 수 없다. 방금 약속을 가볍게 뒤집어놓고선, 이번엔 또 무슨 의도로 내 시간을 요구하는 거지. 장난질에 휘둘릴 생각은 없는데, 거절의 말이 곧바로 나오지 않는다."
+            },
+            {
+              "type": "action",
+              "text": "돌아서서 작업대에 등을 기댄 채 팔짱을 단단히 끼며, 짐짓 건조한 어조로 묻는다."
+            },
+            {
+              "type": "dialogue",
+              "text": "저는 한가롭게 거리를 거닐 만큼 여유 있는 사람이 아닙니다. 주말에는 밀린 가제본 작업도 있고…… 공적인 관계에서 굳이 사적인 시간을 나눌 이유도 없지 않습니까. 대체 왜 그런 제안을 하시는 겁니까."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "b6631487-0c78-431c-a39d-c6346761dd8c",
+              "task": "memory_extraction",
+              "promptVersion": "memory:v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 875,
+              "inputTokens": 2136,
+              "outputTokens": 5,
+              "costUSD": 0.0006533
+            },
+            {
+              "requestId": "b6631487-0c78-431c-a39d-c6346761dd8c",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1427,
+              "inputTokens": 5597,
+              "outputTokens": 9,
+              "costUSD": 0.0017016
+            },
+            {
+              "requestId": "b6631487-0c78-431c-a39d-c6346761dd8c",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4101,
+              "inputTokens": 5615,
+              "outputTokens": 565,
+              "costUSD": 0.00633
+            },
+            {
+              "requestId": "b6631487-0c78-431c-a39d-c6346761dd8c",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1250,
+              "inputTokens": 752,
+              "outputTokens": 11,
+              "costUSD": 0.0002531
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 7,
+          "input": "고마워. 이제 자러 갈게, 잘 자.",
+          "wallMs": 6813.757958000002,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "이유를 따져 묻던 공방의 서늘한 기류 위로 느닷없는 작별 인사가 얹힌다. 질문에 대한 해명도, 굳어진 분위기를 수습하려는 변명도 없이 건네진 단정한 인사말에 시계 초침 소리만이 공명하듯 커진다.\n단단히 끼고 있던 팔짱을 풀지도 못한 채, 멍하니 굳은 시선으로 굳게 닫힌 상대의 낯을 응시한다.\n토마스: ……고맙다니, 갑자기 무슨 소립니까.\n거절인지 수락인지조차 정리되지 않은 말을 남겨둔 채 대화를 맺어버리려는 태도에, 그는 한 박자 늦게 목구멍으로 마른 숨을 삼킨다. 짐짓 아무렇지 않은 척 턱을 치켜들지만, 미간에 맺힌 희미한 균열은 숨겨지지 않는다.\n끝내 팔을 천천히 내리며 작업대 모서리를 단단히 짚고, 낮게 가라앉은 목소리를 뱉어낸다.\n토마스: ……대답도 제대로 듣지 않고 돌아설 거라면 묻질 말았어야죠. 피곤하면 쉬십시오. 밤길 조심하시고.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "이유를 따져 묻던 공방의 서늘한 기류 위로 느닷없는 작별 인사가 얹힌다. 질문에 대한 해명도, 굳어진 분위기를 수습하려는 변명도 없이 건네진 단정한 인사말에 시계 초침 소리만이 공명하듯 커진다."
+            },
+            {
+              "type": "action",
+              "text": "단단히 끼고 있던 팔짱을 풀지도 못한 채, 멍하니 굳은 시선으로 굳게 닫힌 상대의 낯을 응시한다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……고맙다니, 갑자기 무슨 소립니까."
+            },
+            {
+              "type": "narrative",
+              "text": "거절인지 수락인지조차 정리되지 않은 말을 남겨둔 채 대화를 맺어버리려는 태도에, 그는 한 박자 늦게 목구멍으로 마른 숨을 삼킨다. 짐짓 아무렇지 않은 척 턱을 치켜들지만, 미간에 맺힌 희미한 균열은 숨겨지지 않는다."
+            },
+            {
+              "type": "thought",
+              "text": "내 물음은 아무래도 상관없다는 건가. 제멋대로 흔들어놓고 혼자 편안히 잠자리에 들겠다니…… 참으로 무신경한 사람이다."
+            },
+            {
+              "type": "action",
+              "text": "끝내 팔을 천천히 내리며 작업대 모서리를 단단히 짚고, 낮게 가라앉은 목소리를 뱉어낸다."
+            },
+            {
+              "type": "dialogue",
+              "text": "……대답도 제대로 듣지 않고 돌아설 거라면 묻질 말았어야죠. 피곤하면 쉬십시오. 밤길 조심하시고."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "7a0c02ff-c982-4ca0-9242-090a5c2eeb52",
+              "task": "memory_extraction",
+              "promptVersion": "memory:v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1143,
+              "inputTokens": 2497,
+              "outputTokens": 10,
+              "costUSD": 0.0007741
+            },
+            {
+              "requestId": "7a0c02ff-c982-4ca0-9242-090a5c2eeb52",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1378,
+              "inputTokens": 6574,
+              "outputTokens": 9,
+              "costUSD": 0.0019947
+            },
+            {
+              "requestId": "7a0c02ff-c982-4ca0-9242-090a5c2eeb52",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4123,
+              "inputTokens": 5784,
+              "outputTokens": 453,
+              "costUSD": 0.00603675
+            },
+            {
+              "requestId": "7a0c02ff-c982-4ca0-9242-090a5c2eeb52",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1253,
+              "inputTokens": 642,
+              "outputTokens": 11,
+              "costUSD": 0.0002201
+            }
+          ],
+          "background": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "proactive",
+          "index": 0,
+          "idleHours": 26,
+          "wallMs": 13.48516699999891,
+          "outcome": "no_intent",
+          "result": {
+            "outcome": "no_intent"
+          },
+          "engine": "none",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "proactive",
+          "index": 1,
+          "idleHours": 50,
+          "wallMs": 9.29725000000326,
+          "outcome": "no_intent",
+          "result": {
+            "outcome": "no_intent"
+          },
+          "engine": "none",
+          "text": null,
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [],
+          "character": "thomas"
+        },
+        {
+          "kind": "turn",
+          "index": 0,
+          "input": "안녕, 오늘 하루는 좀 길었어.",
+          "wallMs": 6424.448334,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "골목 어귀 가로등 아래, 유진이 겉옷 주머니에 두 손을 찔러 넣은 채 서 있다. 서늘해진 밤공기 사이로 발자국 소리가 가까워지자 고개를 돌린다.\n휴대폰 화면을 툭 꺼서 주머니에 도로 밀어 넣으며 시선을 맞춘다.\n유진: 전화는 안 보고.\n낮게 가라앉은 목소리에 타박하는 기색이 옅게 묻어난다. 가로등 불빛에 드러난 표정은 평소처럼 무덤덤하지만, 발끝으로 보도블록 틈을 툭툭 건드린다.\n살짝 옆으로 비켜서며 나란히 걸을 자리를 내어준다.\n유진: 얼마나 길었길래. 연구실에서도 코빼기도 안 보이더니.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "골목 어귀 가로등 아래, 유진이 겉옷 주머니에 두 손을 찔러 넣은 채 서 있다. 서늘해진 밤공기 사이로 발자국 소리가 가까워지자 고개를 돌린다."
+            },
+            {
+              "type": "action",
+              "text": "휴대폰 화면을 툭 꺼서 주머니에 도로 밀어 넣으며 시선을 맞춘다."
+            },
+            {
+              "type": "dialogue",
+              "text": "전화는 안 보고."
+            },
+            {
+              "type": "narrative",
+              "text": "낮게 가라앉은 목소리에 타박하는 기색이 옅게 묻어난다. 가로등 불빛에 드러난 표정은 평소처럼 무덤덤하지만, 발끝으로 보도블록 틈을 툭툭 건드린다."
+            },
+            {
+              "type": "thought",
+              "text": "피곤해 보이긴 하네. 무슨 일 있었던 건지 묻고 싶은데, 또 괜히 귀찮게 구는 것 같을까 봐 입이 안 떨어진다."
+            },
+            {
+              "type": "action",
+              "text": "살짝 옆으로 비켜서며 나란히 걸을 자리를 내어준다."
+            },
+            {
+              "type": "dialogue",
+              "text": "얼마나 길었길래. 연구실에서도 코빼기도 안 보이더니."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "15e9a1f9-29b9-4a11-9e00-603840766a7a",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1411,
+              "inputTokens": 621,
+              "outputTokens": 11,
+              "costUSD": 0.0002138
+            },
+            {
+              "requestId": "15e9a1f9-29b9-4a11-9e00-603840766a7a",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3930,
+              "inputTokens": 2142,
+              "outputTokens": 435,
+              "costUSD": 0.00323775
+            },
+            {
+              "requestId": "15e9a1f9-29b9-4a11-9e00-603840766a7a",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 961,
+              "inputTokens": 622,
+              "outputTokens": 9,
+              "costUSD": 0.0002091
+            }
+          ],
+          "background": [
+            {
+              "requestId": "416c7b2b-c919-43c5-b245-d765438bb12d",
+              "task": "dialogue",
+              "promptVersion": "routine:v1",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3137,
+              "inputTokens": 558,
+              "outputTokens": 661,
+              "costUSD": 0.00289725
+            }
+          ],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 1,
+          "input": "회사에서 발표를 했는데 반응이 별로였던 것 같아.",
+          "wallMs": 8646.868999999999,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "골목길을 가로지르는 밤바람이 두 사람의 옷자락을 가볍게 흔든다. 가로등 아래 드리워진 그림자 곁에서 유진은 걷던 발걸음을 미세하게 늦추며 옆통수를 흘끗 바라본다.\n주머니에 찔러 넣은 손을 꼼지락거리며 턱 끝을 슬쩍 치켜든다.\n유진: 별로였다는 건 네 생각이고.\n담담하게 내뱉은 말꼬리가 서늘한 밤공기 속에 흩어진다. 위로 같은 건 영 쑥스러운 듯 시선은 애써 앞쪽 골목 끝에 둔 채, 상대방의 보폭에 맞춰 천천히 걷는다.\n잠깐 뜸을 들이더니 주머니에서 손을 빼내 목뒤를 가볍게 긁적인다.\n유진: 듣는 사람들이 멍청했겠지. 밥은 먹었어?",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "골목길을 가로지르는 밤바람이 두 사람의 옷자락을 가볍게 흔든다. 가로등 아래 드리워진 그림자 곁에서 유진은 걷던 발걸음을 미세하게 늦추며 옆통수를 흘끗 바라본다."
+            },
+            {
+              "type": "action",
+              "text": "주머니에 찔러 넣은 손을 꼼지락거리며 턱 끝을 슬쩍 치켜든다."
+            },
+            {
+              "type": "dialogue",
+              "text": "별로였다는 건 네 생각이고."
+            },
+            {
+              "type": "thought",
+              "text": "혼자 속으로 끙끙 앓았겠네. 신경 쓰이게 왜 그런 표정을 짓고 그래."
+            },
+            {
+              "type": "narrative",
+              "text": "담담하게 내뱉은 말꼬리가 서늘한 밤공기 속에 흩어진다. 위로 같은 건 영 쑥스러운 듯 시선은 애써 앞쪽 골목 끝에 둔 채, 상대방의 보폭에 맞춰 천천히 걷는다."
+            },
+            {
+              "type": "action",
+              "text": "잠깐 뜸을 들이더니 주머니에서 손을 빼내 목뒤를 가볍게 긁적인다."
+            },
+            {
+              "type": "dialogue",
+              "text": "듣는 사람들이 멍청했겠지. 밥은 먹었어?"
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "0fb44d3f-c761-43cf-bb3e-df0d66a57c81",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1025,
+              "inputTokens": 1392,
+              "outputTokens": 11,
+              "costUSD": 0.0004451
+            },
+            {
+              "requestId": "0fb44d3f-c761-43cf-bb3e-df0d66a57c81",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 6082,
+              "inputTokens": 2796,
+              "outputTokens": 414,
+              "costUSD": 0.0036495
+            },
+            {
+              "requestId": "0fb44d3f-c761-43cf-bb3e-df0d66a57c81",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1453,
+              "inputTokens": 605,
+              "outputTokens": 9,
+              "costUSD": 0.000204
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 2,
+          "input": "너는 오늘 어떻게 지냈어?",
+          "wallMs": 5288.490916999999,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "가로등 불빛이 주황빛으로 길게 늘어지는 한적한 골목길. 나란히 걷는 발소리 사이로 건조한 바람이 스쳐 지나가며 옷깃을 바스락거리게 만든다.\n목뒤를 긁적이던 손을 다시 점퍼 주머니에 깊숙이 찔러 넣으며 앞만 보고 걷는다.\n유진: 그냥. 맨날 똑같지.\n무심하게 던진 대답과 달리, 유진은 옆사람의 속도에 맞춰 조금씩 발걸음을 늦춘다. 골목 모퉁이에 켜진 편의점의 파란 불빛이 두 사람의 발끝을 서서히 비춘다.\n편의점 간판 쪽을 턱짓으로 힐끔 가리키며 고개를 살짝 돌려 바라본다.\n유진: 랩실에 처박혀서 데이터만 봤어. 밥 안 먹었으면 저기서 따뜻한 거라도 마실래?",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "가로등 불빛이 주황빛으로 길게 늘어지는 한적한 골목길. 나란히 걷는 발소리 사이로 건조한 바람이 스쳐 지나가며 옷깃을 바스락거리게 만든다."
+            },
+            {
+              "type": "action",
+              "text": "목뒤를 긁적이던 손을 다시 점퍼 주머니에 깊숙이 찔러 넣으며 앞만 보고 걷는다."
+            },
+            {
+              "type": "dialogue",
+              "text": "그냥. 맨날 똑같지."
+            },
+            {
+              "type": "thought",
+              "text": "하루 종일 네 연락 기다린 거 빼면 딱히 한 것도 없는데. 그걸 입 밖으로 어떻게 말해."
+            },
+            {
+              "type": "narrative",
+              "text": "무심하게 던진 대답과 달리, 유진은 옆사람의 속도에 맞춰 조금씩 발걸음을 늦춘다. 골목 모퉁이에 켜진 편의점의 파란 불빛이 두 사람의 발끝을 서서히 비춘다."
+            },
+            {
+              "type": "action",
+              "text": "편의점 간판 쪽을 턱짓으로 힐끔 가리키며 고개를 살짝 돌려 바라본다."
+            },
+            {
+              "type": "dialogue",
+              "text": "랩실에 처박혀서 데이터만 봤어. 밥 안 먹었으면 저기서 따뜻한 거라도 마실래?"
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "972d78aa-9c69-4f11-b1e5-1a44cfff6059",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1113,
+              "inputTokens": 2106,
+              "outputTokens": 9,
+              "costUSD": 0.0006543
+            },
+            {
+              "requestId": "972d78aa-9c69-4f11-b1e5-1a44cfff6059",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2850,
+              "inputTokens": 3303,
+              "outputTokens": 370,
+              "costUSD": 0.00386475
+            },
+            {
+              "requestId": "972d78aa-9c69-4f11-b1e5-1a44cfff6059",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1259,
+              "inputTokens": 554,
+              "outputTokens": 11,
+              "costUSD": 0.0001937
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 3,
+          "input": "내일 저녁에 결과 나오면 먼저 연락해 줄래?",
+          "wallMs": 5927.844417,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "편의점 앞 자동문 유리창에 두 사람의 그림자가 희미하게 겹쳐 비친다. 유진은 걸음을 우뚝 멈추더니, 예상치 못한 부탁이라는 듯 옆을 빤히 쳐다본다. 골목 끝에서 불어온 쌀쌀한 바람에 머리칼이 이마 위로 가볍게 흩날린다.\n주머니 속에서 손가락을 꼼지락거리다 시선을 비스듬히 돌리며 어깨를 가볍게 으쓱한다.\n유진: 내가 왜? 네 결과인데 네가 먼저 확인하고 알려줘야지.\n퉁명스러운 대꾸와 달리 목소리 끝에 묻어나는 날은 무디다. 유진은 편의점 입구 옆 벤치 쪽으로 한 발짝 다가서며 발끝으로 바닥의 그림자를 지그시 밟는다.\n말을 툭 뱉어놓고는 눈치를 살피듯 곁눈질로 표정을 가만히 확인한다.\n유진: …뭐, 안 바쁘면. 퇴근 시간 맞춰서 문자 한 통 정도는 남겨볼게. 너무 기대는 하지 말고.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "편의점 앞 자동문 유리창에 두 사람의 그림자가 희미하게 겹쳐 비친다. 유진은 걸음을 우뚝 멈추더니, 예상치 못한 부탁이라는 듯 옆을 빤히 쳐다본다. 골목 끝에서 불어온 쌀쌀한 바람에 머리칼이 이마 위로 가볍게 흩날린다."
+            },
+            {
+              "type": "action",
+              "text": "주머니 속에서 손가락을 꼼지락거리다 시선을 비스듬히 돌리며 어깨를 가볍게 으쓱한다."
+            },
+            {
+              "type": "dialogue",
+              "text": "내가 왜? 네 결과인데 네가 먼저 확인하고 알려줘야지."
+            },
+            {
+              "type": "thought",
+              "text": "먼저 연락해 달라는 말을 아무렇지도 않게 하네. 내일 저녁까지 또 휴대폰만 붙잡고 있으라는 건가."
+            },
+            {
+              "type": "narrative",
+              "text": "퉁명스러운 대꾸와 달리 목소리 끝에 묻어나는 날은 무디다. 유진은 편의점 입구 옆 벤치 쪽으로 한 발짝 다가서며 발끝으로 바닥의 그림자를 지그시 밟는다."
+            },
+            {
+              "type": "action",
+              "text": "말을 툭 뱉어놓고는 눈치를 살피듯 곁눈질로 표정을 가만히 확인한다."
+            },
+            {
+              "type": "dialogue",
+              "text": "…뭐, 안 바쁘면. 퇴근 시간 맞춰서 문자 한 통 정도는 남겨볼게. 너무 기대는 하지 말고."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "b109756b-3e53-4950-8a9f-18dae86bd858",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1133,
+              "inputTokens": 2827,
+              "outputTokens": 9,
+              "costUSD": 0.0008706
+            },
+            {
+              "requestId": "b109756b-3e53-4950-8a9f-18dae86bd858",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3610,
+              "inputTokens": 3789,
+              "outputTokens": 462,
+              "costUSD": 0.00457425
+            },
+            {
+              "requestId": "b109756b-3e53-4950-8a9f-18dae86bd858",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1110,
+              "inputTokens": 652,
+              "outputTokens": 9,
+              "costUSD": 0.0002181
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 4,
+          "input": "아 맞다, 점심은 뭐 먹었어?",
+          "wallMs": 5904.541874999999,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "편의점 간판의 형광등 불빛이 유진의 무표정한 얼굴 위로 창백하게 떨어진다. 말을 채 맺기도 전에 엉뚱한 방향으로 튀어버린 화제에, 유진의 눈썹 끝이 살짝 꿈틀거린다.\n어이없다는 듯 헛숨을 짧게 들이쉬며 편의점 유리창 쪽으로 시선을 돌린다.\n유진: 맥락 없이 뭐야, 갑자기.\n바람이 한 차례 더 불어와 두 사람 사이의 옷자락을 스치고 지나간다. 퉁명스레 대꾸하면서도 유진은 주머니 깊숙이 넣었던 손을 만지작거리며 기억을 더듬는 눈치다.\n발끝으로 보도블록 틈을 툭 차며 아무렇지 않다는 톤으로 덧붙인다.\n유진: 학식 돈가스. 대충 때웠어. 넌 뭐 먹었는데, 굶은 건 아니지?",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "편의점 간판의 형광등 불빛이 유진의 무표정한 얼굴 위로 창백하게 떨어진다. 말을 채 맺기도 전에 엉뚱한 방향으로 튀어버린 화제에, 유진의 눈썹 끝이 살짝 꿈틀거린다."
+            },
+            {
+              "type": "action",
+              "text": "어이없다는 듯 헛숨을 짧게 들이쉬며 편의점 유리창 쪽으로 시선을 돌린다."
+            },
+            {
+              "type": "dialogue",
+              "text": "맥락 없이 뭐야, 갑자기."
+            },
+            {
+              "type": "thought",
+              "text": "결과 얘기하다가 점심 메뉴는 왜 묻는데. 사람 긴장하게 만들어놓고 혼자 태평하지."
+            },
+            {
+              "type": "narrative",
+              "text": "바람이 한 차례 더 불어와 두 사람 사이의 옷자락을 스치고 지나간다. 퉁명스레 대꾸하면서도 유진은 주머니 깊숙이 넣었던 손을 만지작거리며 기억을 더듬는 눈치다."
+            },
+            {
+              "type": "action",
+              "text": "발끝으로 보도블록 틈을 툭 차며 아무렇지 않다는 톤으로 덧붙인다."
+            },
+            {
+              "type": "dialogue",
+              "text": "학식 돈가스. 대충 때웠어. 넌 뭐 먹었는데, 굶은 건 아니지?"
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "5d0564e1-c1f4-45e0-8a4f-885776c2c331",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1460,
+              "inputTokens": 3638,
+              "outputTokens": 11,
+              "costUSD": 0.0011189
+            },
+            {
+              "requestId": "5d0564e1-c1f4-45e0-8a4f-885776c2c331",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3238,
+              "inputTokens": 4330,
+              "outputTokens": 369,
+              "costUSD": 0.00463125
+            },
+            {
+              "requestId": "5d0564e1-c1f4-45e0-8a4f-885776c2c331",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1158,
+              "inputTokens": 557,
+              "outputTokens": 11,
+              "costUSD": 0.0001946
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 5,
+          "input": "생각해 보니 내일은 야근이라 연락은 괜찮아. 취소할게.",
+          "wallMs": 6433.6364170000015,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "편의점 간판에서 뿜어져 나오는 백색 조명이 바닥을 밋밋하게 밝히고 있다. '취소'라는 단어가 떨어지자마자 유진의 멈칫한 발끝 주위로 묘한 정적이 감돈다. 바람이 골목 틈을 비집고 지나가며 겉옷을 가볍게 펄럭인다.\n주머니에 찔러 넣은 손을 꽉 쥐며 미간을 아주 미세하게 좁힌다.\n유진: …사람 말 다 끝나기도 전에 취소는 무슨.\n차갑게 내려앉은 시선이 턱을 거쳐 바닥으로 뚝 떨어진다. 애써 덤덤한 척 고개를 비스듬히 틀어 편의점 안쪽 진열대만 빤히 응시하지만, 입술은 꾹 다물려 있다.\n벽 쪽에 비스듬히 기대서며 한쪽 발로 바닥을 가볍게 툭 짓이긴다.\n유진: 알았어. 안 해. 네가 그러라면 말아야지. …근데 야근은 몇 시까지인데?",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "편의점 간판에서 뿜어져 나오는 백색 조명이 바닥을 밋밋하게 밝히고 있다. '취소'라는 단어가 떨어지자마자 유진의 멈칫한 발끝 주위로 묘한 정적이 감돈다. 바람이 골목 틈을 비집고 지나가며 겉옷을 가볍게 펄럭인다."
+            },
+            {
+              "type": "action",
+              "text": "주머니에 찔러 넣은 손을 꽉 쥐며 미간을 아주 미세하게 좁힌다."
+            },
+            {
+              "type": "dialogue",
+              "text": "…사람 말 다 끝나기도 전에 취소는 무슨."
+            },
+            {
+              "type": "thought",
+              "text": "연락해 달랄 땐 언제고, 야근이면 더 신경 쓰일 텐데 맘대로 끊어버리네. 진짜 제멋대로야."
+            },
+            {
+              "type": "narrative",
+              "text": "차갑게 내려앉은 시선이 턱을 거쳐 바닥으로 뚝 떨어진다. 애써 덤덤한 척 고개를 비스듬히 틀어 편의점 안쪽 진열대만 빤히 응시하지만, 입술은 꾹 다물려 있다."
+            },
+            {
+              "type": "action",
+              "text": "벽 쪽에 비스듬히 기대서며 한쪽 발로 바닥을 가볍게 툭 짓이긴다."
+            },
+            {
+              "type": "dialogue",
+              "text": "알았어. 안 해. 네가 그러라면 말아야지. …근데 야근은 몇 시까지인데?"
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "b41a35b4-b584-4a66-a76f-87a121cf7899",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1171,
+              "inputTokens": 4359,
+              "outputTokens": 9,
+              "costUSD": 0.0013302
+            },
+            {
+              "requestId": "b41a35b4-b584-4a66-a76f-87a121cf7899",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 4185,
+              "inputTokens": 4829,
+              "outputTokens": 458,
+              "costUSD": 0.00533925
+            },
+            {
+              "requestId": "b41a35b4-b584-4a66-a76f-87a121cf7899",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1017,
+              "inputTokens": 654,
+              "outputTokens": 11,
+              "costUSD": 0.0002237
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 6,
+          "input": "대신 주말에 같이 산책할래?",
+          "wallMs": 5788.624875000001,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "편의점 앞 서늘한 밤공기 사이로 뜻밖의 제안이 툭 떨어진다. 바닥을 짓이기던 유진의 발끝이 그 자리에 딱 멈춰 서고, 주머니 안에서 꽉 쥐고 있던 손에도 슬그머니 힘이 풀린다.\n살짝 치켜올렸던 턱을 당기며 의아하다는 듯 눈을 가늘게 뜬다.\n유진: 산책? 평일엔 연락도 말라더니.\n뾰로통하게 튀어나온 입술 끝이 어둠 속에서 티 안 나게 아주 살짝 풀어진다. 유진은 편의점 유리벽에 기대고 있던 등을 떼어내며 한 걸음 다가온다.\n겉옷 지퍼를 목 끝까지 슥 끌어올리며 짐짓 심드렁한 척 시선을 돌린다.\n유진: …바람 쐬는 건 상관없는데. 주말 언제쯤 생각하는데?",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "편의점 앞 서늘한 밤공기 사이로 뜻밖의 제안이 툭 떨어진다. 바닥을 짓이기던 유진의 발끝이 그 자리에 딱 멈춰 서고, 주머니 안에서 꽉 쥐고 있던 손에도 슬그머니 힘이 풀린다."
+            },
+            {
+              "type": "action",
+              "text": "살짝 치켜올렸던 턱을 당기며 의아하다는 듯 눈을 가늘게 뜬다."
+            },
+            {
+              "type": "dialogue",
+              "text": "산책? 평일엔 연락도 말라더니."
+            },
+            {
+              "type": "thought",
+              "text": "약 주고 병 주는 것도 아니고. 거절하기도 애매하게 좋아하는 걸 골라서 던지네."
+            },
+            {
+              "type": "narrative",
+              "text": "뾰로통하게 튀어나온 입술 끝이 어둠 속에서 티 안 나게 아주 살짝 풀어진다. 유진은 편의점 유리벽에 기대고 있던 등을 떼어내며 한 걸음 다가온다."
+            },
+            {
+              "type": "action",
+              "text": "겉옷 지퍼를 목 끝까지 슥 끌어올리며 짐짓 심드렁한 척 시선을 돌린다."
+            },
+            {
+              "type": "dialogue",
+              "text": "…바람 쐬는 건 상관없는데. 주말 언제쯤 생각하는데?"
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "11bdaa74-0818-4665-8596-b14001679d72",
+              "task": "memory_extraction",
+              "promptVersion": "memory:v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 868,
+              "inputTokens": 2071,
+              "outputTokens": 10,
+              "costUSD": 0.0006463
+            },
+            {
+              "requestId": "11bdaa74-0818-4665-8596-b14001679d72",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1368,
+              "inputTokens": 5164,
+              "outputTokens": 11,
+              "costUSD": 0.0015767
+            },
+            {
+              "requestId": "11bdaa74-0818-4665-8596-b14001679d72",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3476,
+              "inputTokens": 5261,
+              "outputTokens": 407,
+              "costUSD": 0.005472
+            },
+            {
+              "requestId": "11bdaa74-0818-4665-8596-b14001679d72",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 885,
+              "inputTokens": 594,
+              "outputTokens": 9,
+              "costUSD": 0.0002007
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "turn",
+          "index": 7,
+          "input": "고마워. 이제 자러 갈게, 잘 자.",
+          "wallMs": 6052.153791000004,
+          "outcome": "ok",
+          "engine": "legacy",
+          "text": "갑작스러운 작별 인사에 편의점 앞 가로등 아래로 짧은 침묵이 떨어진다. 산책 시간이라도 구체적으로 정할 줄 알았는지, 겉옷 지퍼를 쥐고 있던 유진의 손가락이 허공에서 멈칫거린다. 늦은 밤 특유의 차가운 공기가 두 사람 사이를 가볍게 파고든다.\n올리던 지퍼 손잡이를 툭 놓고는 살짝 멍한 눈으로 빤히 내려다본다.\n유진: 벌써? …아, 하긴. 피곤하겠네.\n서운한 기색을 숨기려는 듯 유진은 고개를 슬쩍 돌려 빈 골목길 안쪽을 응시한다. 가로등 주황빛 그림자가 길게 늘어져 발끝을 건드리고, 주머니 속으로 다시 들어간 손은 헛헛한 듯 주먹을 쥐었다 푼다.\n뒷머리를 슬쩍 쓸어넘기며 작게 혀를 차듯 숨을 내쉰다.\n유진: 주말 일정은 알아서 메시지나 남겨둬. …괜히 딴생각 말고 푹 자.",
+          "blocks": [
+            {
+              "type": "narrative",
+              "text": "갑작스러운 작별 인사에 편의점 앞 가로등 아래로 짧은 침묵이 떨어진다. 산책 시간이라도 구체적으로 정할 줄 알았는지, 겉옷 지퍼를 쥐고 있던 유진의 손가락이 허공에서 멈칫거린다. 늦은 밤 특유의 차가운 공기가 두 사람 사이를 가볍게 파고든다."
+            },
+            {
+              "type": "action",
+              "text": "올리던 지퍼 손잡이를 툭 놓고는 살짝 멍한 눈으로 빤히 내려다본다."
+            },
+            {
+              "type": "dialogue",
+              "text": "벌써? …아, 하긴. 피곤하겠네."
+            },
+            {
+              "type": "thought",
+              "text": "언제 볼 건지 말도 안 해놓고 그냥 자러 간다고? 사람 신경 다 긁어놓고 먼저 빠져나가는 건 여전하네."
+            },
+            {
+              "type": "narrative",
+              "text": "서운한 기색을 숨기려는 듯 유진은 고개를 슬쩍 돌려 빈 골목길 안쪽을 응시한다. 가로등 주황빛 그림자가 길게 늘어져 발끝을 건드리고, 주머니 속으로 다시 들어간 손은 헛헛한 듯 주먹을 쥐었다 푼다."
+            },
+            {
+              "type": "action",
+              "text": "뒷머리를 슬쩍 쓸어넘기며 작게 혀를 차듯 숨을 내쉰다."
+            },
+            {
+              "type": "dialogue",
+              "text": "주말 일정은 알아서 메시지나 남겨둬. …괜히 딴생각 말고 푹 자."
+            }
+          ],
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "652b922b-d6e6-432d-befd-d565ae754942",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1408,
+              "inputTokens": 5883,
+              "outputTokens": 9,
+              "costUSD": 0.0017874
+            },
+            {
+              "requestId": "652b922b-d6e6-432d-befd-d565ae754942",
+              "task": "memory_extraction",
+              "promptVersion": "memory:v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1423,
+              "inputTokens": 2368,
+              "outputTokens": 5,
+              "costUSD": 0.0007229
+            },
+            {
+              "requestId": "652b922b-d6e6-432d-befd-d565ae754942",
+              "task": "dialogue",
+              "promptVersion": "dialogue:v1+scene-beats+in-person",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 3639,
+              "inputTokens": 5351,
+              "outputTokens": 433,
+              "costUSD": 0.005637
+            },
+            {
+              "requestId": "652b922b-d6e6-432d-befd-d565ae754942",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 937,
+              "inputTokens": 622,
+              "outputTokens": 11,
+              "costUSD": 0.0002141
+            }
+          ],
+          "background": [],
+          "character": "yujin"
+        },
+        {
+          "kind": "proactive",
+          "index": 0,
+          "idleHours": 26,
+          "wallMs": 4364.368290999999,
+          "outcome": "sent",
+          "result": {
+            "outcome": "sent",
+            "channel": "message",
+            "contactId": "657a8ef7-f806-41ea-9456-355469bab651"
+          },
+          "engine": "legacy",
+          "text": "야근 끝났냐. 집에 들어갔는지나 알려줘.",
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "c0b8793b-bd47-4c7d-97cc-42ebaef7b40d",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1140,
+              "inputTokens": 5855,
+              "outputTokens": 11,
+              "costUSD": 0.001784
+            },
+            {
+              "requestId": "c0b8793b-bd47-4c7d-97cc-42ebaef7b40d",
+              "task": "dialogue",
+              "promptVersion": "reality:v3-character-context",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 2233,
+              "inputTokens": 5009,
+              "outputTokens": 23,
+              "costUSD": 0.003843
+            },
+            {
+              "requestId": "c0b8793b-bd47-4c7d-97cc-42ebaef7b40d",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 906,
+              "inputTokens": 185,
+              "outputTokens": 11,
+              "costUSD": 0.000083
+            }
+          ],
+          "character": "yujin"
+        },
+        {
+          "kind": "proactive",
+          "index": 1,
+          "idleHours": 50,
+          "wallMs": 3663.081916000003,
+          "outcome": "sent",
+          "result": {
+            "outcome": "sent",
+            "channel": "message",
+            "contactId": "beeef647-9e3b-419b-a188-6315cb89c0ff"
+          },
+          "engine": "legacy",
+          "text": "아직도 안 들어간 건 아니지. 답장 없길래 그냥 보내본다.",
+          "state": {
+            "pendingRealityIntent": null,
+            "nextWakeAt": null,
+            "goals": null
+          },
+          "events": [],
+          "realization": [],
+          "calls": [
+            {
+              "requestId": "22aba99f-86a1-4d16-85d5-c4bb4e68e0cf",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1047,
+              "inputTokens": 5319,
+              "outputTokens": 11,
+              "costUSD": 0.0016232
+            },
+            {
+              "requestId": "22aba99f-86a1-4d16-85d5-c4bb4e68e0cf",
+              "task": "dialogue",
+              "promptVersion": "reality:v3-character-context",
+              "provider": "gemini",
+              "model": "gemini-3.8-flash",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1474,
+              "inputTokens": 4687,
+              "outputTokens": 38,
+              "costUSD": 0.00365775
+            },
+            {
+              "requestId": "22aba99f-86a1-4d16-85d5-c4bb4e68e0cf",
+              "task": "moderation",
+              "promptVersion": "safety:general-audience-v1",
+              "provider": "gemini",
+              "model": "gemini-3.5-flash-lite",
+              "status": "completed",
+              "ok": true,
+              "error": null,
+              "fallbackUsed": false,
+              "latencyMs": 1085,
+              "inputTokens": 191,
+              "outputTokens": 9,
+              "costUSD": 0.0000798
+            }
+          ],
+          "character": "yujin"
+        }
+      ]
+    }
+  },
+  "notMeasured": [
+    "persona fidelity and human preference (no judge or reviewers)",
+    "active instance per day (needs real traffic)",
+    "production network and DB latency (local test DB)"
+  ]
+}

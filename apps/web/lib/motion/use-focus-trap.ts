@@ -12,8 +12,9 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, open: boolean) 
     if (!open) return
     const root = ref.current; if (!root) return
     const opener = document.activeElement as HTMLElement | null
+    const initial = root.querySelector<HTMLElement>('[data-initial-focus]')
     const first = root.querySelector<HTMLElement>(FOCUSABLE)
-    ;(first ?? root).focus({ preventScroll: true })
+    ;(initial ?? first ?? root).focus({ preventScroll: true })
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Tab') return
       const items = Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null)

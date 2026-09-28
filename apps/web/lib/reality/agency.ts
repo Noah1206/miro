@@ -154,7 +154,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         || current.deletedAt || current.restrictedAt || current.status !== 'active'
         || current.turnCount !== row.session.turnCount || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
         || !owner || owner.deletedAt || !character || character.deletedAt || character.experienceType !== 'reality'
-        || !profile?.enabled || JSON.stringify(profile) !== JSON.stringify(row.profile)
+        // 생활 리듬(routine)은 제작자 설정이 아니라 뒤에서 만들어지는 파생 값이다 — 그게 채워졌다고 판단을 버리지 않는다.
+        || !profile?.enabled || JSON.stringify({ ...profile, routine: null }) !== JSON.stringify({ ...row.profile, routine: null })
         || !state || state.version !== runtime.version || state.revisionId !== runtime.revision.id || state.mode !== 'live'
         || state.state.sequence !== plan.transition.expectedSequence
         || world?.version !== snapshot.world.version || relationship?.version !== snapshot.relationship.version

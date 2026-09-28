@@ -11,6 +11,19 @@ const llm = (over: Record<string, unknown> = {}) => new AIOrchestrator({ chain: 
 
 afterEach(() => vi.unstubAllEnvs())
 describe('runTurn — state update pipeline', () => {
+  it('keeps a standard chat in dialogue even when the provider proposes Reality effects', async () => {
+    const proposed = llm({
+      worldDelta: { currentLocation: '다른 도시' },
+      eventCandidates: [{ type: 'crisis', summary: '갑작스러운 사건', relevance: 1, salience: 1, participantNpcIds: [] }],
+      realityIntent: { channel: 'message', reason: '먼저 연락', urgency: 1 },
+    })
+    const result = await runTurn({ llm: proposed, snapshot: snapshot({ experienceType: 'chat' }), userInput: '안녕' })
+    expect(result.transition.blocks.some(block => block.type === 'dialogue')).toBe(true)
+    expect(result.transition.worldDelta).toBeNull()
+    expect(result.transition.newEvent).toBeNull()
+    expect(result.transition.realityIntent).toBeNull()
+    expect(result.firedRules).toEqual([])
+  })
   it('rules move the relationship; the model only adds nuance', async () => {
     const r = await runTurn({
       llm: llm({ relationshipDelta: { jealousy: 40, trust: 30 } }),
@@ -146,6 +159,29 @@ describe('runTurn — state update pipeline', () => {
     expect(echoTasks).toContain('semantic_event')
     expect(echoTasks).toContain('memory_extraction')
     expect(echoTasks.length).toBeGreaterThan(miroTasks.length)
+  })
+
+  it('caps a turn that names no tier at the MIRO limit, not the model limit', async () => {
+    // 통화·Live Scene 은 등급을 넘기지 않는다 — dialogue 모델 상한(ECHO 때문에 4096)을 물려받지 않는다.
+    const seen: Array<number | undefined> = []
+    const llm = { info: { mode: 'live' as const, name: 'test', notice: null }, generateStructured: async (o: { task?: string; maxTokens?: number; prompt: string }) => {
+      if (o.task === 'moderation') return { allowed: true, category: 'safe' }
+      seen.push(o.maxTokens); return buildMockProposal(o.prompt, { characterName: '토마스' })
+    } }
+    await runTurn({ llm: llm as never, snapshot: snapshot(), userInput: '안녕' })
+    expect(seen).toEqual([2048])
+  })
+
+  it('writes the longer ECHO scene only when the tier asks for it', async () => {
+    const systems: string[] = [], versions: (string | undefined)[] = []
+    const capturing = () => new AIOrchestrator({ chain: [
+      new MockAIProvider((req: GenerationRequest) => { if (req.task === 'dialogue') { systems.push(req.system); versions.push(req.promptVersion) } return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
+    ] })
+    await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕' })
+    await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', replyLength: 'long' })
+    expect(systems[0]).toMatch(/블록 5~8개, 전체 500~900자/)
+    expect(systems[1]).toMatch(/블록 8~11개, 전체 1000~1600자/)
+    expect(versions).toEqual(['dialogue:v1+scene-beats', 'dialogue:v1+scene-long'])
   })
 
   it('asks for the tier output limit, still bounded by what the model allows', async () => {

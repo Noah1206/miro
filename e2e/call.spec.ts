@@ -43,7 +43,8 @@ test('incoming video call: the user sees it is video before accepting, talks, ha
   await expect(page.getByText('잘 지냈어요?')).toBeVisible()
 
   await page.getByRole('button', { name: '종료' }).click()
-  await expect(page).toHaveURL(`${BASE}/chat/${sessionId}`)
+  // 통화 기록은 문자 페이지에 남는다 (9/26) — 끊으면 거기로 돌아간다.
+  await expect(page).toHaveURL(`${BASE}/messages/${sessionId}`)
   await expect(page.locator('[data-call-record]')).toContainText('영상통화')
   await expect(page.locator('[data-incoming-call]')).toHaveCount(0)
 
@@ -64,10 +65,13 @@ test('declining leaves a record and no call screen', async ({ page, request }) =
   await page.goto(`${BASE}/chat/${sessionId}`)
   await expect(page.locator('[data-incoming-call="voice"]')).toBeVisible()
   await page.getByRole('button', { name: '거절' }).click()
+  await expect(page.locator('[data-incoming-call]')).toHaveCount(0)
+  await page.goto(`${BASE}/messages/${sessionId}`)
   await expect(page.locator('[data-call-record]')).toContainText('음성통화 거절')
 })
 
-test('outgoing voice call from the chat', async ({ page }) => {
+// 9/26 사용자 요청으로 채팅 입력란 위의 '통화' 버튼을 없앴다 — 유저가 거는 통화의 진입점이 새로 정해지면 다시 켠다.
+test.skip('outgoing voice call from the chat', async ({ page }) => {
   const sessionId = await enterRoleplay(page)
   await page.getByRole('button', { name: '통화', exact: true }).click()
   await expect(page).toHaveURL(/\/call\//)

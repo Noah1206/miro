@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Button, ButtonLink, Sheet, TextArea, TransitionLink } from '@/components/ui'
 import { CharacterText, Line, UserText } from '@/components/scene/text'
 import { YUJIN } from '@/lib/alpha/character'
+import { subject } from '@/lib/format'
 import type { AlphaMessage } from '@/lib/alpha/session'
 import type { ChatResponse } from '@/app/api/chat/route'
 
@@ -88,7 +89,7 @@ export function AlphaChat({ initial, hasReplied }: { initial: AlphaMessage[]; ha
             ))}
             {typing && (
               <motion.p key="typing" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{ color: 'var(--color-text-tertiary)' }}>{YUJIN.name}이(가) 입력 중…</motion.p>
+                style={{ color: 'var(--color-text-tertiary)' }}>{subject(YUJIN.name)} 입력 중…</motion.p>
             )}
           </AnimatePresence>
         </div>

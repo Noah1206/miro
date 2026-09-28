@@ -52,6 +52,8 @@ export type CommitInput = {
   characterState?: CharacterState
   /** Live Scene 장면 표시 한 줄 (장소 · 시간). 미로 세션에서 장면이 바뀐 턴에만 온다. */
   sceneMarker?: string | null
+  /** scene(기본) = 만나서 나누는 장면, messenger = 문자. 메시지 kind 가 여기서 갈린다 — 화면이 kind 로 두 페이지를 나눈다. */
+  channel?: 'scene' | 'messenger'
 }
 
 /**
@@ -120,7 +122,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       // 음성 통화에서는 사용자가 말하기 전에 캐릭터가 먼저 말할 수 있다 — 그때는 캐릭터의 말만 남긴다.
       ...(input.userInput ? [{
         ...(input.userMessageId ? { id: input.userMessageId } : {}),
-        sessionId: input.sessionId, role: 'user' as const, kind: 'text' as const,
+        sessionId: input.sessionId, role: 'user' as const, kind: input.channel === 'messenger' ? 'messenger' as const : 'text' as const,
         content: input.userInput, blocks: [], turnIndex: input.turnIndex,
       }] : []),
       // 장면 표시는 답장보다 먼저 — 장소가 바뀌고, 그 안에서 대사가 이어진다.
@@ -129,7 +131,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         content: input.sceneMarker, blocks: [], turnIndex: input.turnIndex,
       }] : []),
       {
-        sessionId: input.sessionId, role: 'character', kind: 'text',
+        sessionId: input.sessionId, role: 'character', kind: input.channel === 'messenger' ? 'reality_message' : 'text',
         content: input.responseText,
         blocks: input.blocks as never, turnIndex: input.turnIndex,
       },

@@ -20,7 +20,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
 
   const initial: Partial<FormInitial> = {
     experienceType: c.experienceType,
-    name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '',
+    name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '', worldLocation: world?.location ?? '',
     age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
     mood: genreValues(world?.genre ?? null),
@@ -50,7 +50,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <CharacterForm mode="edit" capabilities={features()} voices={await voiceOptions()} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={await voiceOptions()} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my?filter=draft' : `/character/${id}`} />
   )
 }

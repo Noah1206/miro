@@ -11,7 +11,6 @@ export function searchGenres(values: string[]): string[] | null {
     if (!value || value.length > 20 || value.includes('·')) return null
     const needle = searchNeedle(value)
     if (!unique.has(needle)) unique.set(needle, MOODS.find(mood => searchNeedle(mood) === needle) ?? needle)
-    if (unique.size > 5) return null
   }
   return [...unique.values()].sort((left, right) => searchNeedle(left) < searchNeedle(right) ? -1 : searchNeedle(left) > searchNeedle(right) ? 1 : 0)
 }

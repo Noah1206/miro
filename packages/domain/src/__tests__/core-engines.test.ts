@@ -72,6 +72,18 @@ describe('event rules', () => {
     expect(fired.find((r) => r.id === 'jealousy_spike')!.effect.realityIntent!.delayMinutes).toBe(0)
     expect(evaluateEventRules({ ...c, characterState: { ...DEFAULT_CHARACTER_STATE, firedRules: ['jealousy_spike'] } }).map((r) => r.id)).not.toContain('jealousy_spike')
   })
+  it('after_scene fires an hour after a scene ends, only for a real relationship, and only in that window', () => {
+    const base = { relationship: rel({ trust: 50, emotionalDistance: 30 }), characterState: DEFAULT_CHARACTER_STATE, semanticEvents: [], turnCount: 6, lastUserChannel: 'scene' as const }
+    const ids = (c: object) => evaluateEventRules({ ...base, idleMinutes: 60, ...c }).map((r) => r.id)
+    expect(ids({})).toContain('after_scene')
+    expect(ids({ idleMinutes: 10 })).not.toContain('after_scene')
+    expect(ids({ idleMinutes: 300 })).not.toContain('after_scene')
+    expect(ids({ turnCount: 2 })).not.toContain('after_scene')
+    expect(ids({ relationship: rel({ trust: 10 }) })).not.toContain('after_scene')
+    expect(ids({ lastUserChannel: 'messenger' })).not.toContain('after_scene')   // 문자만 주고받았으면 '만났다' 가 아니다
+    expect(ids({ sceneFollowUpSent: true })).not.toContain('after_scene')          // 장면 하나에 한 번
+    expect(evaluateEventRules({ ...base, idleMinutes: 60 }).find((r) => r.id === 'after_scene')?.effect.realityIntent?.reason).toContain('잘 들어갔는지')
+  })
   it('jealous_follow_up waits for silence and carries a delay for the scheduler', () => {
     const base = { relationship: rel({ jealousy: 80 }), characterState: DEFAULT_CHARACTER_STATE, semanticEvents: [], turnCount: 5 }
     expect(evaluateEventRules({ ...base, idleMinutes: 5 }).map((r) => r.id)).not.toContain('jealous_follow_up')

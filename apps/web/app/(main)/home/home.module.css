@@ -1,3 +1,6 @@
+.headerItem { scale: .88; }
+/* 배치 크기는 유지하고 가운데를 기준으로 축소한다. 실제 터치 영역은 50 × .88 = 44px. */
+.headerItem.headerAction::after { width: max(100%, 50px); height: max(100%, 50px); }
 .feed { padding: 0 var(--gutter); }
 .sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .sectionHeading h2 { font-size: 17px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; }

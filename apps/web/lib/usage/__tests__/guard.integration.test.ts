@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import { db, rechargeGrants, rechargeLedger, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
@@ -91,6 +91,22 @@ describeDb('usage guard', () => {
     })
     expect(await effectivePlan(id, now)).toBe('pro')
     expect(await effectivePlan(id, new Date(now.getTime() + 2 * 86_400_000))).toBe('free')
+  })
+
+  it('in production only real payments count as pro: stripe and bank transfer, never users.plan or mock', async () => {
+    // 9/27 운영 실측: 계좌이체 승인·지급이 끝나도 ECHO 가 잠겨 있었다 — 9/15 게이트가 stripe 만 인정했다.
+    vi.stubEnv('VERCEL_ENV', 'production')
+    try {
+      const now = new Date()
+      const period = { currentPeriodStart: new Date(now.getTime() - 86_400_000), currentPeriodEnd: new Date(now.getTime() + 86_400_000) }
+      const paid = await user('free')
+      await db.insert(subscriptions).values({ userId: paid, provider: 'bank_transfer', status: 'active', renewalStatus: 'cancelled', ...period })
+      expect(await effectivePlan(paid, now)).toBe('pro')
+      const mocked = await user('free')
+      await db.insert(subscriptions).values({ userId: mocked, provider: 'mock', status: 'active', renewalStatus: 'auto', ...period })
+      expect(await effectivePlan(mocked, now)).toBe('free')
+      expect(await effectivePlan(await user('pro'), now)).toBe('free')
+    } finally { vi.unstubAllEnvs() }
   })
 
   it('commit can adjust to actual units (calls are billed per minute)', async () => {

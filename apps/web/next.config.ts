@@ -15,6 +15,8 @@ const securityHeaders = [
 ]
 
 const config: NextConfig = {
+  // 검증용 두 번째 dev 서버(테스트 DB)가 같은 .next 를 덮어쓰지 않게 — 기본은 그대로 .next.
+  ...(process.env.MIRO_DIST_DIR ? { distDir: process.env.MIRO_DIST_DIR } : {}),
   transpilePackages: ['@miro/domain', '@miro/db', '@miro/config', '@miro/providers', '@miro/engine'],
   poweredByHeader: false,
   // Up to five 5MB character photos plus form data.

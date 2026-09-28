@@ -103,3 +103,40 @@ describe('reality activation', () => {
       .toEqual({ send: false, reason: 'max_pending' })
   })
 })
+
+describe('routine availability gates contact', () => {
+  it('nothing goes out while the character is unreachable, even with a strong reason', () => {
+    expect(evaluateRealityContact(input({ availability: 'unreachable', intent: { channel: 'message', reason: 'event:crisis', urgency: 0.95 } })))
+      .toEqual({ send: false, reason: 'outside_active_hours' })
+  })
+  it('busy lets only urgent contact through', () => {
+    expect(evaluateRealityContact(input({ availability: 'busy', intent: { channel: 'message', reason: 'silence', urgency: 0.4 } })))
+      .toEqual({ send: false, reason: 'busy' })
+    expect(evaluateRealityContact(input({ availability: 'busy', intent: { channel: 'message', reason: 'event:crisis', urgency: 0.9 } })).send).toBe(true)
+  })
+  it('free ignores the old active-hours window — the routine is the schedule now', () => {
+    const night = new Date('2026-09-12T03:00:00+09:00')
+    expect(evaluateRealityContact(input({ now: night, availability: 'free', contactProfile: { ...profile, activeHours: { start: '08:00', end: '23:00' } } })).send).toBe(true)
+    expect(evaluateRealityContact(input({ now: night, contactProfile: { ...profile, activeHours: { start: '08:00', end: '23:00' } } })).send).toBe(false)
+  })
+})
+
+describe('replies and call follow-ups are not contacts', () => {
+  const cold = { ...rel, trust: 20, attachment: 10, emotionalDistance: 60 }
+  it('a delayed reply to the user skips motivation, cooldown and the unread cap', () => {
+    const r = evaluateRealityContact(input({ relationship: cold, lastContactAt: new Date('2026-09-12T13:50:00+09:00'),
+      pendingContacts: [{} as never, {} as never, {} as never],
+      intent: { channel: 'message', reason: '수업 중에 온 문자에 답장', urgency: 0.9, notBefore: '2026-09-12T13:59:00+09:00', answers: 'user_message' } }))
+    expect(r.send).toBe(true)
+  })
+  it('a call follow-up skips motivation but still respects cooldown', () => {
+    expect(evaluateRealityContact(input({ relationship: cold, intent: { channel: 'message', reason: '못 받은 전화', urgency: 0.6, answers: 'call' } })).send).toBe(true)
+    expect(evaluateRealityContact(input({ relationship: cold, lastContactAt: new Date('2026-09-12T13:50:00+09:00'), intent: { channel: 'message', reason: '못 받은 전화', urgency: 0.6, answers: 'call' } })))
+      .toEqual({ send: false, reason: 'cooldown' })
+  })
+  it('two scheduled intents with the same reason on one day get different dedupe keys', () => {
+    const a = evaluateRealityContact(input({ intent: { channel: 'message', reason: '답장', urgency: 0.9, notBefore: '2026-09-12T10:00:00Z', answers: 'user_message' } }))
+    const b = evaluateRealityContact(input({ intent: { channel: 'message', reason: '답장', urgency: 0.9, notBefore: '2026-09-12T12:00:00Z', answers: 'user_message' } }))
+    expect(a.send && b.send && a.dedupeKey !== b.dedupeKey).toBe(true)
+  })
+})

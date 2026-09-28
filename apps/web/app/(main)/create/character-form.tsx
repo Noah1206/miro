@@ -2,7 +2,8 @@
 import { introDialogue, sampleDialogue } from '@/lib/intro-dialogue'
 import { ContactSettings, RelationshipSettings } from './creation-settings'
 import type { ContactCapabilities } from '@/lib/reality/channels'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'motion/react'
 import { BUILD_PRESETS, BUILD_TYPES, GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
@@ -10,6 +11,7 @@ import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, type Step } from './form-parts'
 import { MOODS } from './parse'
+import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from './draft-storage'
 
 const MBTI_TYPES = [
   'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
@@ -30,7 +32,7 @@ export type FormInitial = {
   contactEnabled: boolean; contactFrequency: number; initiativeLevel: number; replyDelayMinutes: number
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
-  startingContext: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
+  startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
   experienceType?: 'chat' | 'reality'
   isPublic: boolean
@@ -50,7 +52,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', startingTime: '', sampleDialogue: [], lore: [],
+  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [],
   isPublic: true,
   images: [],
 }
@@ -60,21 +62,50 @@ export const EMPTY: FormInitial = {
  * 탭은 보이기만 바꾼다 — 모든 칸이 DOM 에 남아 마지막에 한 번에 제출된다.
  * 등록 시 공개 여부를 선택할 수 있다. 임시저장은 항상 비공개다.
  */
-export function CharacterForm({ mode, draft = false, initial, action, closeHref, capabilities, voices = [] }: {
+type CharacterFormProps = {
   mode: 'create' | 'edit'
+  experienceType: 'chat' | 'reality'
+  creationId?: string
+  userId?: string
   capabilities: ContactCapabilities
   /** 운영자가 승인한 공식 목소리. 없으면 목소리 칸 자체를 보이지 않는다. */
   voices?: Array<{ id: string; label: string }>
   draft?: boolean
   initial?: Partial<FormInitial>
-  action: (form: FormData) => Promise<void>
+  action: (form: FormData) => Promise<string>
   closeHref: string
-}) {
+}
+
+export function CharacterForm(props: CharacterFormProps) {
+  const { mode, userId, experienceType, creationId } = props
+  const key = mode === 'create' && userId && creationId ? draftStorageKey(userId, experienceType, creationId) : null
+  const [restored, setRestored] = useState<Partial<FormInitial> | null>(mode === 'edit' ? {} : null)
+  useEffect(() => {
+    if (!key || !userId || !creationId) return
+    try {
+      localStorage.setItem(activeDraftKey(userId, experienceType), creationId)
+      const raw = localStorage.getItem(key)
+      setRestored(raw ? restoreDraft(JSON.parse(raw) as Array<[string, string]>, experienceType) : {})
+    } catch { setRestored({}) }
+  }, [key, userId, creationId, experienceType])
+  if (mode === 'create' && restored === null) return <main id="main" className="page"><p role="status" className="t-caption">작성 중인 내용을 불러오는 중...</p></main>
+  return <CharacterFormBody {...props} initial={mode === 'create' ? restored ?? {} : props.initial} storageKey={key} />
+}
+
+function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [] }: CharacterFormProps & { storageKey: string | null }) {
+  const router = useRouter()
   const i: FormInitial = { ...EMPTY, ...initial }
   const [tab, setTab] = useState<CreateTab>('profile')
   // 상황은 전체 화면으로 열린다 — 닫으면 열기 전 탭으로 돌아간다.
   const [prevTab, setPrevTab] = useState<CreateTab>('profile')
   const [pending, setPending] = useState(false)
+  const pendingRef = useRef(false)
+  const mountedRef = useRef(true)
+  const [saveError, setSaveError] = useState('')
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
 
   // 필수 판정에 쓰는 값만 통제한다. 나머지는 uncontrolled — 제출 때 FormData 가 모은다.
   const [name, setName] = useState(i.name)
@@ -90,9 +121,28 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
   const [voiceId, setVoiceId] = useState<string>(i.voiceId)
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
-  const [isPublic, setIsPublic] = useState(draft ? true : i.isPublic)
+  const [isPublic, setIsPublic] = useState(i.isPublic)
   // 소개 페이지 미리보기 — 탭을 열 때 폼을 한 번 읽는다. 칸을 전부 controlled 로 바꾸지 않는다.
   const formRef = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    if (!storageKey) return
+    const form = formRef.current
+    if (!form) return
+    const save = () => {
+      try { localStorage.setItem(storageKey, JSON.stringify(serializableDraft(form))) } catch { /* local storage may be unavailable */ }
+    }
+    const queueSave = () => requestAnimationFrame(save)
+    form.addEventListener('input', queueSave)
+    form.addEventListener('change', queueSave)
+    form.addEventListener('click', queueSave)
+    window.addEventListener('pagehide', save)
+    return () => {
+      form.removeEventListener('input', queueSave)
+      form.removeEventListener('change', queueSave)
+      form.removeEventListener('click', queueSave)
+      window.removeEventListener('pagehide', save)
+    }
+  }, [storageKey])
   const [previewMode, setPreviewMode] = useState('detail')
   const [snap, setSnap] = useState<Snapshot | null>(null)
   const openTab = (t: CreateTab) => {
@@ -109,16 +159,55 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
     return m
   }, [name, title, personality, startingContext])
   const canSubmit = missing.size === 0
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (pendingRef.current) return
+    pendingRef.current = true
+    const submitter = (event.nativeEvent as SubmitEvent).submitter
+    const form = submitter instanceof HTMLButtonElement
+      ? new FormData(event.currentTarget, submitter)
+      : new FormData(event.currentTarget)
+    const submittedDraft = storageKey ? JSON.stringify(serializableDraft(event.currentTarget)) : null
+    setPending(true)
+    setSaveError('')
+    try {
+      const destination = await action(form)
+      if (storageKey) {
+        try {
+          const currentDraft = localStorage.getItem(storageKey)
+          if (currentDraft === submittedDraft || currentDraft === null) localStorage.removeItem(storageKey)
+        } catch { /* Storage may be unavailable. The saved record is authoritative. */ }
+      }
+      // Publishing a saved draft also finishes the draft resumed by the navigation sheet.
+      if (form.get('intent') !== 'draft' && userId && creationId) {
+        try {
+          if (localStorage.getItem(activeDraftKey(userId, experienceType)) === creationId) {
+            localStorage.removeItem(activeDraftKey(userId, experienceType))
+          }
+        } catch { /* Storage may be unavailable. The saved record is authoritative. */ }
+      }
+      if (mountedRef.current) router.push(destination)
+    } catch {
+      if (mountedRef.current) setSaveError('저장하지 못했어요. 작성한 내용은 이 화면에 남아 있습니다. 다시 시도해 주세요.')
+    } finally {
+      pendingRef.current = false
+      if (mountedRef.current) setPending(false)
+    }
+  }
 
 
   return (
     // Page 는 transform 을 걸어 sticky 를 깨뜨리므로 쓰지 않는다.
     <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
-      <form ref={formRef} action={action} onSubmit={() => setPending(true)} className="stack" style={{ gap: 0 }}>
+      <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
-        <CreateHeader tab={tab} onTab={openTab} canSubmit={canSubmit} pending={pending} missingHint={!canSubmit ? `${[!name.trim() && '이름', !title.trim() && '소개', !personality.trim() && '성격', !startingContext.trim() && '첫 장면'].filter(Boolean).join(' · ')} 입력` : isPublic ? '공개 게시' : '나만 보기'}
+        <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending} missingHint={canSubmit ? (isPublic ? '공개 게시' : '나만 보기') : undefined}
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
-        {mode === 'create' && <CreateTour tab={tab} onTab={openTab} />}
+        {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{saveError}</p>}
+        {mode === 'create' && experienceType === 'reality' && <CreateTour tab={tab} onTab={openTab} />}
+
+        <input type="hidden" name="experienceType" value={experienceType} />
+        {mode === 'create' && <input type="hidden" name="creationId" value={creationId ?? ''} />}
 
         <input type="hidden" name="hobbies" value={i.hobbies.join(',')} />
         <input type="hidden" name="dislikes" value={i.dislikes.join(',')} />
@@ -135,20 +224,22 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
           <Section title="캐릭터">
             <Card>
               <ImagePicker label="캐릭터 이미지" maxCount={5} existing={i.images} />
+              {mode === 'create' && <p className="t-caption" style={{ marginTop: 8, color: 'var(--color-text-tertiary)' }}>선택한 이미지는 임시저장해야 다음에도 유지됩니다.</p>}
               <div style={{ marginTop: 'var(--space-5)' }}>
                 <IdentityCard>
                   <div className="stack" style={{ gap: 18 }}>
                     <LabeledField label="이름" required error={name === '' ? null : undefined}>
-                      <Controlled name="name" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
+                      <Controlled name="name" label="이름" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
                     </LabeledField>
                     <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
-                      <Controlled name="title" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
+                      <Controlled name="title" label="소개" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
                     </LabeledField>
-                    <LabeledField label="성격 설명" required hint="캐릭터의 성격, 가치관, 말투를 적어 주세요.">
-                      <ControlledArea name="personality" value={personality} onChange={setPersonality} max={1000} rows={4}
+                    <LabeledField label={experienceType === 'chat' ? '성격·말투 설정' : '성격 설명'} required
+                      hint={experienceType === 'chat' ? '대화에 반영되며 공개 소개에는 표시되지 않아요.' : '캐릭터의 성격, 가치관, 말투를 적어 주세요.'}>
+                      <ControlledArea name="personality" label={experienceType === 'chat' ? '성격·말투 설정' : '성격 설명'} value={personality} onChange={setPersonality} max={1000} rows={4}
                         placeholder="예) 침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다." />
                     </LabeledField>
-                    <ReactionTraits initial={i} />
+                    {experienceType === 'reality' && <ReactionTraits initial={i} />}
                   </div>
                 </IdentityCard>
               </div>
@@ -204,8 +295,8 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
         <Panel id="personality" show={tab === 'personality'}>
           <Section title="세계관">
             <Card>
-              <LabeledField label="세계관 설명" hint="캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.">
-                <CountedTextArea name="worldSetting" max={600} rows={4} defaultValue={i.worldSetting}
+              <LabeledField label="세계관 설명" hint={experienceType === 'chat' ? '대화에 반영되며 공개 소개에는 표시되지 않아요.' : '캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.'}>
+                <CountedTextArea name="worldSetting" ariaLabel="세계관 설명" max={600} rows={4} defaultValue={i.worldSetting}
                   placeholder="예) 현대 서울. 도심의 경호업체를 중심으로 다양한 사건이 벌어진다." />
               </LabeledField>
             </Card>
@@ -269,17 +360,17 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
         </Panel>
 
         {/* ── 관계 ── */}
-        <Panel id="relationship" show={tab === 'relationship'}>
+        {experienceType === 'reality' && <Panel id="relationship" show={tab === 'relationship'}>
           <Section title="시작 관계" subtitle="처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.">
             <RelationshipSettings initial={i} />
           </Section>
-        </Panel>
+        </Panel>}
 
-        <Panel id="contact" show={tab === 'contact'}>
+        {experienceType === 'reality' && <Panel id="contact" show={tab === 'contact'}>
           <Section title="일상·연락">
             <ContactSettings initial={i} mode={mode} capabilities={capabilities} />
           </Section>
-        </Panel>
+        </Panel>}
 
         {/* ── 상황 — 탭 아래 카드가 아니라 채팅 편집 화면이 전체로 열린다. 칸은 닫혀도 DOM 에 남는다. ── */}
         <Panel id="intro" show={tab === 'intro'}>
@@ -300,8 +391,12 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
                 header={
                   <div style={{ padding: '14px 0 6px' }}>
                     <LabeledField label="첫 장면" required hint="대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.">
-                      <ControlledArea name="startingContext" value={startingContext} onChange={setStartingContext} max={600} rows={3}
+                      <ControlledArea name="startingContext" label="첫 장면" value={startingContext} onChange={setStartingContext} max={600} rows={3}
                         placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
+                    </LabeledField>
+                    {/* 첫 장면의 장소 — 비우면 세계는 '어딘가' 에서 시작한다(9/27 운영 실측에서 장면 표시가 "어딘가 · 저녁" 이었다). */}
+                    <LabeledField label="장소" hint="첫 장면이 펼쳐지는 곳이에요. 채팅의 장면 표시와 소개 페이지에 보여요.">
+                      <CountedInput name="worldLocation" ariaLabel="장소" placeholder="예) 서울, 경호업체 사무실" max={60} defaultValue={i.worldLocation} />
                     </LabeledField>
                   </div>
                 } />
@@ -313,7 +408,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
         {/* ── 소개 페이지 ── */}
         <Panel id="preview" show={tab === 'preview'}>
           <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: '소개 페이지' }, { value: 'chat', label: '첫 대화' }]} /></div>
-          {previewMode === 'detail' ? <DetailPreview d={snap} can={capabilities} /> : <div aria-label="첫 대화 미리보기" style={{ marginTop: 24 }}>
+          {previewMode === 'detail' ? <DetailPreview d={snap} can={capabilities} experienceType={experienceType} /> : <div aria-label="첫 대화 미리보기" style={{ marginTop: 24 }}>
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>새 대화를 시작할 때 이렇게 보여요.</p>
             {snap && introDialogue(snap.settings.character.sampleDialogue).map((turn, n) => <div key={n} style={{ marginBottom: 16, whiteSpace: 'pre-wrap' }}>
               {turn.role === 'character' && <p className="t-caption" style={{ marginBottom: 6 }}>{snap.name || '캐릭터'}</p>}
@@ -379,13 +474,13 @@ function Two({ children }: { children: React.ReactNode }) {
 }
 
 /** 값을 바깥이 들고 있는 한 줄 입력 (필수 판정용). 밑줄만, 상자 없음. */
-function Controlled({ name, placeholder, max, value, onChange, big }: {
-  name: string; placeholder: string; max: number; value: string; onChange: (v: string) => void; big?: boolean
+function Controlled({ name, label, placeholder, max, value, onChange, big }: {
+  name: string; label: string; placeholder: string; max: number; value: string; onChange: (v: string) => void; big?: boolean
 }) {
   const [focused, setFocused] = useState(false)
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(focused) }}>
-      <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
+      <input name={name} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder} autoComplete="off"
         style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
       {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
@@ -393,13 +488,13 @@ function Controlled({ name, placeholder, max, value, onChange, big }: {
   )
 }
 
-function ControlledArea({ name, placeholder, max, rows, value, onChange }: {
-  name: string; placeholder: string; max: number; rows: number; value: string; onChange: (v: string) => void
+function ControlledArea({ name, label, placeholder, max, rows, value, onChange }: {
+  name: string; label: string; placeholder: string; max: number; rows: number; value: string; onChange: (v: string) => void
 }) {
   const [focused, setFocused] = useState(false)
   return (
     <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
-      <textarea name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
+      <textarea name={name} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>

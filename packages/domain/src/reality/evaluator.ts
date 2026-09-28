@@ -3,6 +3,7 @@ import type { ContactChannel, ContactProfile } from '../character/types'
 import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
 import type { RealityContact, RealityIntent, SuppressReason } from './types'
+import type { Availability } from './routine'
 
 export type RealityInput = {
   intent: RealityIntent
@@ -15,6 +16,8 @@ export type RealityInput = {
   lastContactAt: Date | null
   pendingContacts: RealityContact[]
   now: Date
+  /** 생활 리듬이 말하는 지금 상태. 없으면 활동 시간(activeHours)만 본다. */
+  availability?: Availability
 }
 
 export type RealityDecision =
@@ -36,17 +39,23 @@ export type RealityDecision =
 export function evaluateRealityContact(input: RealityInput): RealityDecision {
   const { intent, now } = input
 
-  if (!inActiveHours(now, input.contactProfile, input.timeZone)) {
+  // 생활 리듬이 있으면 그것이 활동 시간이다 — 자는 중·이동 중엔 아무것도 안 나가고, 바쁠 땐 급한 것만 나간다.
+  if (input.availability === 'unreachable') return { send: false, reason: 'outside_active_hours' }
+  if (input.availability === 'busy' && intent.urgency < 0.8) return { send: false, reason: 'busy' }
+  if (input.availability === undefined && !inActiveHours(now, input.contactProfile, input.timeZone)) {
     return { send: false, reason: 'outside_active_hours' }
   }
-  if (input.pendingContacts.length >= POLICY.reality.maxPending) {
+  // 사용자가 보낸 문자에 대한 답장은 연락이 아니라 대답이다 — 읽지 않은 연락 수·쿨다운으로 막지 않는다.
+  const reply = intent.answers === 'user_message'
+  if (!reply && input.pendingContacts.length >= POLICY.reality.maxPending) {
     return { send: false, reason: 'max_pending' }
   }
-  if (inCooldown(input.lastContactAt, now)) {
+  if (!reply && inCooldown(input.lastContactAt, now)) {
     return { send: false, reason: 'cooldown' }
   }
   // 침묵 연락은 deriveIntent 가 관계성·성격·친밀도로 이미 정했다 — 같은 관계를 다른 공식으로 다시 막지 않는다.
-  if (input.intent.reason !== 'silence' && motivation(input) < POLICY.reality.motivationThreshold) {
+  // 답장과 전화 후속도 마찬가지(성격으로 이미 걸렀다) — 여기서 막으면 사용자의 문자가 영영 답을 못 받는다.
+  if (input.intent.reason !== 'silence' && !intent.answers && motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
   return { send: true, channel: intent.channel, dedupeKey: buildDedupeKey(input) }
@@ -110,7 +119,8 @@ function inCooldown(last: Date | null, now: Date): boolean {
  */
 function buildDedupeKey(input: RealityInput): string {
   const eventPart = input.activeEvents.map((e) => e.id).sort().join(',')
-  const bucket = eventPart || input.now.toISOString().slice(0, 10)
+  // 예약된 의도(답장·전화 후속)는 예약 시각이 곧 정체성이다 — 같은 날 같은 사유가 두 번 와도 둘 다 나가야 한다.
+  const bucket = input.intent.notBefore ? `at:${input.intent.notBefore}` : eventPart || input.now.toISOString().slice(0, 10)
   return `${input.intent.channel}:${bucket}:${input.intent.reason}`
 }
 

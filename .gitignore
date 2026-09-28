@@ -15,3 +15,5 @@ undefined/
 .env*.local
 __pycache__/
 *.py[cod]
+.next-e2e/
+.next-demo/

@@ -54,8 +54,15 @@ export function daytime(): string {
  * 첫 장면은 인트로 탭의 전체 화면 편집기 안에 있다 — '인트로 확인'으로 닫아야 머리의 게시 버튼이 드러난다.
  * 공개 스위치는 기본으로 켜져 있다.
  */
-export async function publishCharacter(page: Page, base: string, c: { name: string; personality: string; startingContext: string; isPublic?: boolean }) {
+export async function enterCharacterCreate(page: Page, base: string, type: 'chat' | 'reality' = 'reality') {
   await page.goto(`${base}/create`)
+  await page.getByRole('radio', { name: type === 'chat' ? /^일반 캐릭터/ : /^미로 캐릭터/ }).click()
+  await page.getByRole('button', { name: '계속', exact: true }).click()
+  await expect(page.getByRole('heading', { name: type === 'chat' ? '일반 캐릭터' : '미로 캐릭터', exact: true })).toBeVisible()
+}
+
+export async function publishCharacter(page: Page, base: string, c: { name: string; personality: string; startingContext: string; isPublic?: boolean; type?: 'chat' | 'reality' }) {
+  await enterCharacterCreate(page, base, c.type)
   await page.locator('input[name="name"]').fill(c.name)
   await page.locator('input[name="title"]').fill('한 줄 소개')
   await page.locator('textarea[name="personality"]').fill(c.personality)

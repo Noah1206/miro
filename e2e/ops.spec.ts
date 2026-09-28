@@ -1,4 +1,4 @@
-import { realityCharacter, signInAgain, signUp } from './helpers'
+import { signInAgain, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
@@ -65,7 +65,7 @@ test('report a character message and see it accepted; duplicates are refused', a
   await expect(page.getByRole('alert').filter({ hasText: '이미 접수된 신고' })).toBeVisible()
 })
 
-test('adult verification: failure locks for 24h; success unlocks the mature toggle', async ({ page }) => {
+test('adult verification: failure locks for 24h; success marks the account verified', async ({ page }) => {
   await signup(page)
   await page.goto(`${BASE}/my/verify`)
   await expect(page.getByText(/성인 인증 Provider 미구성/)).toBeVisible()
@@ -84,9 +84,7 @@ test('adult verification: failure locks for 24h; success unlocks the mature togg
   await page.getByLabel(/사용 정책에 동의/).check()
   await page.getByRole('button', { name: '인증하기' }).click()
   await expect(page.locator('[data-verified]')).toBeVisible()
-  // '성인' 토글은 사진 요청에 붙어 있고, 사진은 미로 캐릭터에만 열린다 — reality 복제본으로 들어간다.
-  await roleplay(page, await realityCharacter(page, 'thomas'))
-  await expect(page.getByLabel('성인')).toBeVisible()
+  // 9/26 '성인' 토글은 채팅의 사진 요청 버튼과 함께 없어졌다 — 사진 요청 진입점이 새로 정해지면 토글 검증을 되살린다.
 })
 
 test('unverified users never see the mature toggle', async ({ page }) => {

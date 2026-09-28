@@ -1,3 +1,4 @@
+import { localClock } from '@miro/domain'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { POLICY, feature, features } from '@miro/config'
 import {
@@ -20,6 +21,7 @@ import { deliverableChannel } from './channels'
 import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
 import { evaluateAgencyReality } from './agency'
+import { characterAvailability } from './routine'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -73,11 +75,14 @@ export async function evaluateSession(
   const agency = await evaluateAgencyReality(row, now, opts)
   if (agency) return agency
 
-  const [activeEvents, recent] = await Promise.all([
+  const [activeEvents, recent, lastUser] = await Promise.all([
     db.select().from(events).where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(realityContacts)
       .where(eq(realityContacts.sessionId, sessionId))
       .orderBy(desc(realityContacts.createdAt)).limit(10),
+    // 사용자가 마지막으로 말한 곳 — 만나서(text) 였는지 문자(messenger) 였는지. '잘 들어갔어?' 는 만난 뒤에만.
+    db.select({ kind: messages.kind }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.role, 'user')))
+      .orderBy(desc(messages.createdAt)).limit(1),
   ])
 
   const profile = {
@@ -100,11 +105,17 @@ export async function evaluateSession(
 
   // Event Engine(유휴 시간 규칙) — 스케줄러는 "다시 볼 시점인가" 만 묻고, 무슨 일이 일어날지는 규칙이 정한다.
   if (!pending && !opts.inline && feature('eventEngine')) {
-    const fired = evaluateEventRules({ relationship: row.relationship as never, characterState, semanticEvents: [], idleMinutes, turnCount: row.session.turnCount })
+    const sceneMarker = `after_scene:${row.session.lastInteractionAt.toISOString()}`
+    const fired = evaluateEventRules({ relationship: row.relationship as never, characterState, semanticEvents: [], idleMinutes, turnCount: row.session.turnCount,
+      lastUserChannel: lastUser[0]?.kind === 'messenger' ? 'messenger' : lastUser[0] ? 'scene' : undefined,
+      sceneFollowUpSent: characterState.firedRules.includes(sceneMarker) })
     const rule = fired.find((r) => r.effect.realityIntent)
     if (rule?.effect.realityIntent) {
       const { channel, reason, urgency, delayMinutes } = rule.effect.realityIntent
-      const nextState = rule.once ? { ...characterState, firedRules: [...characterState.firedRules, rule.id] } : characterState
+      // after_scene 은 장면(마지막 상호작용)마다 한 번 — 표시는 가장 최근 것 하나만 남긴다.
+      const nextState = rule.id === 'after_scene'
+        ? { ...characterState, firedRules: [...characterState.firedRules.filter((f) => !f.startsWith('after_scene:')), sceneMarker] }
+        : rule.once ? { ...characterState, firedRules: [...characterState.firedRules, rule.id] } : characterState
       if (delayMinutes > 0) {
         const notBefore = new Date(now.getTime() + delayMinutes * 60_000).toISOString()
         await db.update(roleplaySessions).set({ pendingRealityIntent: { channel, reason, urgency, notBefore }, characterState: nextState })
@@ -112,9 +123,15 @@ export async function evaluateSession(
         return { outcome: 'scheduled', ruleId: rule.id, notBefore }
       }
       pending = { channel, reason, urgency }
-      if (rule.once) await db.update(roleplaySessions).set({ characterState: nextState }).where(eq(roleplaySessions.id, sessionId))
+      if (nextState !== characterState) await db.update(roleplaySessions).set({ characterState: nextState }).where(eq(roleplaySessions.id, sessionId))
     }
   }
+
+  // 앱 밖 연락은 사용자가 끌 수 없다 (2026-09-24 결정). 시간대만 읽어 캐릭터의 활동 시간을 사용자 현지 시각으로 본다.
+  const timeZone = row.settings?.timeZone ?? POLICY.reality.defaultTimeZone
+  // 생활 리듬 — 자는 중이면 아무것도 안 나가고, 바쁘면 급한 것만, 비어 있으면 식사 시간 안부도 생긴다.
+  const availability = await characterAvailability(row.character.id, now, timeZone, { wait: true })
+  const lastSent = recent.find((c) => c.status === 'sent' || c.status === 'opened')
 
   const intent = deriveIntent({
     relationship: row.relationship as never,
@@ -123,13 +140,10 @@ export async function evaluateSession(
     idleMinutes,
     pending: pending as never,
     now,
+    clock: localClock(now, timeZone), availability: availability.availability, lastContactAt: lastSent?.sentAt ?? null,
   })
   if (!intent) return { outcome: 'no_intent' }
 
-  // 앱 밖 연락은 사용자가 끌 수 없다 (2026-09-24 결정). 시간대만 읽어 캐릭터의 활동 시간을 사용자 현지 시각으로 본다.
-  const timeZone = row.settings?.timeZone ?? POLICY.reality.defaultTimeZone
-
-  const lastSent = recent.find((c) => c.status === 'sent' || c.status === 'opened')
   let decision: RealityDecision = opts.inline
     ? { send: true, channel: intent.channel, dedupeKey: `inline:${row.session.turnCount}:${intent.reason}` }
     : evaluateRealityContact({
@@ -145,6 +159,7 @@ export async function evaluateSession(
     lastContactAt: lastSent?.sentAt ?? null,
     pendingContacts: recent.filter((c) => c.status === 'sent') as unknown as RealityContact[],
     now,
+    availability: availability.availability,
   })
 
   if (!decision.send) {
@@ -163,6 +178,16 @@ export async function evaluateSession(
   }
   // 기능 플래그 — 알파에서는 사진·통화가 꺼져 있다. 채널만 낮추고 연락 자체는 보낸다.
   decision = { ...decision, channel: deliverableChannel(decision.channel, features()) }
+
+  // 같은 사유가 이미 나갔으면 통화를 울리거나 본문을 만들기 전에 멈춘다 — 모델을 부른 뒤 중복 키로 버리는 일(비용)을 없앤다.
+  // 예약된 의도가 중복이면 지운다 — 남겨 두면 스케줄러가 매 주기 다시 집어 든다.
+  const [dupe] = await db.select({ id: realityContacts.id }).from(realityContacts)
+    .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.dedupeKey, decision.dedupeKey))).limit(1)
+  if (dupe) {
+    if (pending) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
+    observe('reality.duplicate_prevented', { sessionId, channel: decision.channel })
+    return { outcome: 'skipped', reason: 'duplicate' }
+  }
 
   const presented = presentContact(decision.channel, row.character.name, row.profile.presentation)
 
@@ -186,7 +211,7 @@ export async function evaluateSession(
     await pushToUser(row.session.userId, {
       title: presented.senderLabel,
       body: channel === 'video' ? '영상통화 수신' : '전화 수신',
-      url: `/chat/${sessionId}`, tag: `call:${sessionId}`,
+      url: `/messages/${sessionId}`, tag: `call:${sessionId}`,
     })
     void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
     return { outcome: 'sent', channel: decision.channel, contactId }
@@ -210,7 +235,8 @@ export async function evaluateSession(
     activeEventSummary: activeEvents[0]
       ? String((activeEvents[0].continuationState as { summary?: string }).summary ?? activeEvents[0].type)
       : null,
-    currentTime: now.toISOString(),
+    // 현지 시각과 하루의 때 — 캐릭터가 '저녁 먹었어?' 를 저녁에 보내려면 지금이 저녁인지 알아야 한다.
+    currentTime: `${localClock(now, timeZone).label} (${localClock(now, timeZone).period})`,
     ...grounding,
   }
   await requireSafeContent(llm, contentInput)
@@ -278,7 +304,11 @@ export async function evaluateSession(
   } catch (e) {
     if (e instanceof RealityStateChangedError) return { outcome: 'skipped', reason: 'state_changed' }
     // (session_id, dedupe_key) UNIQUE — 같은 사유가 이미 발송됐다. 조용히 넘기되 기록한다.
-    if ((e as { code?: string }).code === '23505') { observe('reality.duplicate_prevented', { sessionId, channel: decision.channel }); return { outcome: 'skipped', reason: 'duplicate' } }
+    if ((e as { code?: string }).code === '23505') {
+      // 트랜잭션이 되돌려 의도가 남았다 — 지우지 않으면 다음 주기에 다시 만든다.
+      if (pending) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId)).catch(() => undefined)
+      observe('reality.duplicate_prevented', { sessionId, channel: decision.channel }); return { outcome: 'skipped', reason: 'duplicate' }
+    }
     throw e
   }
   void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })

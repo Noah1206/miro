@@ -27,11 +27,20 @@ export function buildMockProposal(
   const messenger = /메신저 대화처럼/.test(opts.system ?? '')
   const blocks: SimulationProposal['rp']['blocks'] = onCall
     ? [{ type: 'dialogue', speaker: name, text: cold ? '…듣고 있어요. 말해요.' : '목소리 들으니까 좀 낫네요.' }]
-    : [
-        ...(messenger ? [] : [{ type: 'action' as const, speaker: null, text: cold ? '시선을 돌린다.' : '잠깐 말을 멈춘다.' }]),
-        { type: 'thought', speaker: name, text: cold ? '괜히 신경 쓰이게 하네.' : '조금은 반가운 것 같기도 하고.' },
-        { type: 'dialogue', speaker: name, text: fallbackLine(mood, speechStyle, seed) },
-      ]
+    : messenger
+      ? [
+          { type: 'thought', speaker: name, text: cold ? '괜히 신경 쓰이게 하네.' : '조금은 반가운 것 같기도 하고.' },
+          { type: 'dialogue', speaker: name, text: fallbackLine(mood, speechStyle, seed) },
+        ]
+      // 캐릭터챗은 장면 하나 — 서술과 캐릭터의 차례가 두 번 오간다(실제 프롬프트가 요구하는 모양).
+      : [
+          { type: 'narrative', speaker: null, text: cold ? '방 안의 공기가 한 톤 식었다. 창밖 소음만 낮게 이어지고, 탁자 위의 찻잔은 손도 대지 않은 채 식어 간다.' : '창으로 들어온 오후 빛이 탁자 위에 길게 누웠다. 방 안이 잠깐 조용해지고, 멀리서 문 닫히는 소리가 한 번 울렸다.' },
+          { type: 'action', speaker: name, text: cold ? '시선을 창밖으로 돌린다.' : '잠깐 말을 멈추고 턱을 괸다.' },
+          { type: 'dialogue', speaker: name, text: fallbackLine(mood, speechStyle, seed) },
+          { type: 'narrative', speaker: null, text: cold ? '대답을 기다리는 침묵이 길어진다. 의자 다리가 바닥을 짧게 긁었다.' : '말끝에 웃음이 살짝 묻어났다. 찻잔에서 김이 가늘게 올라온다.' },
+          { type: 'thought', speaker: name, text: cold ? '괜히 신경 쓰이게 하네.' : '조금은 반가운 것 같기도 하고.' },
+          { type: 'dialogue', speaker: name, text: cold ? '할 말 있으면 해요.' : '그래서, 오늘은 무슨 일로 왔어요?' },
+        ]
 
   return {
     rp: { blocks },

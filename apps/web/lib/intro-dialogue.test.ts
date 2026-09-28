@@ -26,6 +26,7 @@ describe('intro dialogue', () => {
   })
   it('round-trips independent samples and intro through the create/edit parser', () => {
     const f = new FormData()
+    f.set('experienceType', 'chat'); f.set('intent', 'draft')
     f.set('name', 'test'); f.set('personality', 'calm')
     f.set('sampleDialogue', JSON.stringify([{ role: 'user', text: 'legacy' }]))
     f.set('introDialogue', JSON.stringify([{ role: 'character', text: 'hello' }]))

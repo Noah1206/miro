@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, desc, eq, isNull, lt } from 'drizzle-orm'
+import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, bankTransferOrders } from '@miro/db'
 import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, rechargeProduct } from '@miro/config'
 import { observe } from '@/lib/observe'
@@ -28,19 +28,31 @@ export class OrderPendingError extends Error {}
  * 금액과 지급량은 서버 카탈로그에서만 온다. 브라우저는 무엇을 살지만 고른다.
  */
 export async function createBankOrder(opts: {
-  userId: string; kind: OrderKind; productId?: string; depositorName: string; now?: Date
+  userId: string; kind: OrderKind; productId?: string; depositorName?: string; now?: Date; requestId?: string
 }): Promise<{ id: string; referenceCode: string; amountMinor: number; currency: string; expiresAt: Date }> {
+  if (opts.requestId && !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(opts.requestId)) throw new Error('INVALID_REQUEST_ID')
+  // Reuse the order primary key as the durable request key, including after settlement.
+  const previous = async (reader: Pick<typeof db, 'select'>) => {
+    if (!opts.requestId) return null
+    const [o] = await reader.select().from(bankTransferOrders).where(eq(bankTransferOrders.id, opts.requestId)).limit(1)
+    if (o && (o.userId !== opts.userId || o.kind !== opts.kind || o.productId !== (opts.productId ?? null))) throw new Error('ORDER_REQUEST_MISMATCH')
+    return o ?? null
+  }
+  const existing = await previous(db)
+  if (existing) return existing
   const account = bankAccount()
   if (!account) throw new BankTransferUnavailableError('BANK_TRANSFER_UNAVAILABLE')
 
-  const depositorName = opts.depositorName.trim()
-  // 입금자명이 없으면 어느 입금인지 맞출 수 없다. 받아 놓고 못 찾는 주문을 만들지 않는다.
-  if (depositorName.length < 1 || depositorName.length > 40) throw new Error('INVALID_DEPOSITOR_NAME')
+  // 입금자명을 따로 묻지 않으면 대조 코드를 입금자명으로 쓴다 — 입금은 그 코드로 찾는다.
+  const code = referenceCode()
+  const depositorName = (opts.depositorName ?? '').trim() || code
+  if (depositorName.length > 40) throw new Error('INVALID_DEPOSITOR_NAME')
 
   let amountMinor: number, currency: string, units: number | null, productId: string | null
   if (opts.kind === 'recharge') {
     const product = opts.productId ? rechargeProduct(opts.productId) : null
     if (!product) throw new Error('RECHARGE_PRODUCT_UNAVAILABLE')
+    if (product.currency !== 'KRW') throw new Error('RECHARGE_CURRENCY_UNSUPPORTED')
     ;({ priceMinor: amountMinor, currency } = product)
     units = product.units; productId = product.id
   } else {
@@ -51,15 +63,26 @@ export async function createBankOrder(opts: {
   const now = opts.now ?? new Date()
   const expiresAt = new Date(now.getTime() + BANK_TRANSFER_WINDOW_HOURS * 3600_000)
   // 기한이 지난 내 주문은 먼저 정리한다 — 하나만 대기하도록 막혀 새 주문을 못 넣는 일이 없게.
-  await expireBankOrders(now, opts.userId)
-
   try {
-    const [row] = await db.insert(bankTransferOrders).values({
-      userId: opts.userId, kind: opts.kind, productId, amountMinor, currency, units,
-      depositorName, referenceCode: referenceCode(), expiresAt,
-    }).returning()
-    observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
-    return { id: row!.id, referenceCode: row!.referenceCode, amountMinor, currency, expiresAt }
+    const result = await db.transaction(async tx => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'bank-order:' + opts.userId}))`)
+      const replay = await previous(tx)
+      if (replay) return { row: replay, created: false }
+      await tx.update(bankTransferOrders).set({ status: 'expired' }).where(and(
+        eq(bankTransferOrders.userId, opts.userId), eq(bankTransferOrders.status, 'awaiting'), lt(bankTransferOrders.expiresAt, now)))
+      const [pending] = await tx.select({ id: bankTransferOrders.id }).from(bankTransferOrders).where(and(
+        eq(bankTransferOrders.userId, opts.userId), or(eq(bankTransferOrders.status, 'awaiting'),
+          and(eq(bankTransferOrders.status, 'approved'), isNull(bankTransferOrders.settledAt))))).limit(1)
+      if (pending) throw new OrderPendingError('ORDER_ALREADY_PENDING')
+      const [created] = await tx.insert(bankTransferOrders).values({
+        ...(opts.requestId ? { id: opts.requestId } : {}),
+        userId: opts.userId, kind: opts.kind, productId, amountMinor, currency, units,
+        depositorName, referenceCode: code, expiresAt,
+      }).returning()
+      return { row: created!, created: true }
+    })
+    if (result.created) observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
+    return result.row
   } catch (e) {
     // 부분 UNIQUE 인덱스: 사용자당 대기 주문은 하나. 이미 있으면 그걸 쓰라고 알린다.
     if (String((e as { code?: string }).code) === '23505') throw new OrderPendingError('ORDER_ALREADY_PENDING')
@@ -132,4 +155,3 @@ export async function settleApprovedOrders(now = new Date(), limit = 50): Promis
   }
   return { settled, failed }
 }
-

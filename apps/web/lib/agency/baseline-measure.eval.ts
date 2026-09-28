@@ -10,6 +10,8 @@ import * as push from '@/lib/reality/push-outbox'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { runConversationTurn } from '@/lib/simulation/turn'
+import { GeminiProvider, extractJson } from '@miro/providers'
+import { SimulationProposal } from '@miro/engine'
 
 /**
  * One arm of the P0 baseline: a scripted synthetic user through the real app entry points. Deferred work
@@ -57,6 +59,19 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       log(event, fields)
     })
     const drain = () => events.splice(0)
+    // 운영은 모델 원문을 남기지 않는다. 측정에서만, 캐릭터챗 응답이 스키마에 떨어진 원문을 턴에 붙인다 — 9/26 형식 실패의 원인을 기록으로 보려고.
+    const rawFailures: Array<{ promptVersion: string; issues: string[]; text: string }> = []
+    const generate = GeminiProvider.prototype.generate
+    vi.spyOn(GeminiProvider.prototype, 'generate').mockImplementation(async function (this: GeminiProvider, req) {
+      const result = await generate.call(this, req)
+      const version = String((req as { promptVersion?: string }).promptVersion ?? '')
+      if (version.startsWith('dialogue:')) {
+        // 앱과 같은 방식으로 읽는다 — 다 쓴 답의 빠진 괄호는 앱이 채우므로 실패가 아니다.
+        const parsed = SimulationProposal.safeParse(extractJson(result.text, { closeUnclosed: result.truncated === false }))
+        if (!parsed.success) rawFailures.push({ promptVersion: version, issues: parsed.error.issues.slice(0, 5).map(i => `${i.path.join('.') || '$'}:${i.code}`), text: result.text })
+      }
+      return result
+    })
     // Synthetic replies only: what was decided, what was said, and why the check refused it.
     const realizations: Array<Record<string, unknown>> = []
     const verify = agencyEngine.verifyAgencyRealization
@@ -73,6 +88,9 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
     const [found] = await db.select().from(users).where(eq(users.email, email)).limit(1)
     const owner = found ?? (await db.insert(users).values({ email }).returning())[0]!
     await db.insert(userSettings).values({ userId: owner.id, timeZone: 'Asia/Seoul' }).onConflictDoNothing()
+    // ECHO 는 pro 요금제만 고를 수 있다. 측정 환경(비운영)에서는 users.plan 이 요금제다.
+    const chatModel = process.env.MIRO_AGENCY_MEASURE_CHAT_MODEL === 'pro' ? 'pro' : 'miro'
+    if (chatModel === 'pro') await db.update(users).set({ plan: 'pro' }).where(eq(users.id, owner.id))
     const character = await cloneCharacterAsReality(process.env.MIRO_AGENCY_MEASURE_CHARACTER ?? 'thomas', { ownerId: owner.id })
     // In-app messages only: the agency path has no call/photo executor, so both arms compete on one channel.
     await db.update(contactProfiles).set({ enabled: true, activeHoursStart: '00:00', activeHoursEnd: '23:59', preferredChannel: 'message',
@@ -106,25 +124,30 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       from = await mark()
       const requestId = randomUUID()
       started = performance.now()
-      const outcome = await runConversationTurn({ userId: owner.id, sessionId, input, requestId })
+      const outcome = await runConversationTurn({ userId: owner.id, sessionId, input, requestId, chatModel })
       const wallMs = performance.now() - started
       await flush()
       const calls = await since(from)
       const own = calls.filter(c => c.requestId === requestId)
       units.push({ kind: 'turn', index, input, wallMs, outcome: outcome.ok ? 'ok' : outcome.reason, engine: engineOf(own),
         text: outcome.ok ? outcome.responseText : null, blocks: outcome.ok ? outcome.blocks.map(b => ({ type: b.type, text: b.text })) : null,
-        state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls: own,
+        state: await state(sessionId), events: drain(), realization: realizations.splice(0), rawFailures: rawFailures.splice(0), calls: own,
         background: calls.filter(c => c.requestId !== requestId) })
       if (!outcome.ok && outcome.reason === 'budget') { stopped = 'budget'; break }
     }
     if (!stopped) for (const [index, hours] of PROACTIVE_AFTER_HOURS.entries()) {
       from = await mark()
       started = performance.now()
-      const { text, ...result } = { text: null, ...(await evaluateSession(sessionId, new Date(Date.now() + hours * 3_600_000), { background: true })) }
+      // 예산이 바닥나 여기서 던지면 보고서가 통째로 사라진다(9/26: 앞선 턴의 실패 원문까지 잃었다). 결과로 남기고 멈춘다.
+      let evaluated: Awaited<ReturnType<typeof evaluateSession>> | { outcome: string; error: string }
+      try { evaluated = await evaluateSession(sessionId, new Date(Date.now() + hours * 3_600_000), { background: true }) }
+      catch (e) { evaluated = { outcome: 'error', error: e instanceof Error ? e.message : String(e) } }
+      const { text, ...result } = { text: null, ...evaluated }
       const wallMs = performance.now() - started
       await flush()
       const calls = await since(from)
       units.push({ kind: 'proactive', index, idleHours: hours, wallMs, outcome: result.outcome, result, engine: engineOf(calls), text, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls })
+      if (result.outcome === 'error') { stopped = /budget/i.test(String((result as { error?: string }).error)) ? 'budget' : 'error'; break }
     }
     await writeFile(OUT!, JSON.stringify({ experiment: EXPERIMENT, agencyMode: process.env.MIRO_CHARACTER_AGENCY_MODE ?? 'off',
       sessionStartMs, stopped, deferredErrors: deferred.errors, units }, null, 2) + '\n')

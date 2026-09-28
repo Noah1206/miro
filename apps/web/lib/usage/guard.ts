@@ -29,7 +29,9 @@ type Reader = Pick<typeof db, 'select'>
  */
 export async function effectivePlan(userId: string, now = new Date(), reader: Reader = db): Promise<Plan> {
   const [sub] = await reader.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1)
-  if (sub && (!productionRuntime() || sub.provider === 'stripe') && isEntitled(sub as never, now)) return 'pro'
+  // 운영에서는 실제 결제로 생긴 구독만 Pro 다 — 계좌이체 지급(provider 'bank_transfer', 9/16)도 실제 결제인데 9/15 게이트에 빠져
+  // 승인·지급이 끝나도 ECHO 가 잠겨 있었다(9/27 운영 실측). users.plan 은 여전히 운영 판정에 쓰지 않는다.
+  if (sub && (!productionRuntime() || sub.provider === 'stripe' || sub.provider === 'bank_transfer') && isEntitled(sub as never, now)) return 'pro'
   if (productionRuntime()) return 'free'
   const [u] = await reader.select({ plan: users.plan }).from(users).where(eq(users.id, userId)).limit(1)
   return u?.plan ?? 'free'
@@ -257,6 +259,15 @@ export async function usageStatus(userId: string, now = new Date()): Promise<Usa
     continuityRemaining: policy.continuity.enabled ? Math.max(0, policy.continuity.reserve - win.continuityConsumed) : 0,
     rechargeRemaining,
   }
+}
+
+/** 날짜(KST, YYYY-MM-DD)별 확정 사용량. 충전소의 월별 칸 그림에 쓴다. */
+export async function dailyUsage(userId: string, since: Date): Promise<Record<string, number>> {
+  const day = sql<string>`to_char(${usageLedger.createdAt} at time zone 'Asia/Seoul', 'YYYY-MM-DD')`
+  const rows = await db.select({ day, amount: sql<number>`sum(${usageLedger.amount})::int` }).from(usageLedger)
+    .where(and(eq(usageLedger.userId, userId), eq(usageLedger.status, 'committed'), gt(usageLedger.createdAt, since)))
+    .groupBy(day)
+  return Object.fromEntries(rows.map((r) => [r.day, r.amount]))
 }
 
 /**

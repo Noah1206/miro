@@ -9,12 +9,25 @@ import { z } from 'zod'
 
 const RP_BLOCK_TYPES = ['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'] as const
 
-export const RpBlock = z.object({
+/**
+ * 실측(2026-09-26, gemini-3.8-flash): 지시가 길어지면 블록을 `{"action":"토마스","text":"…"}` 처럼 종류 이름을 키로,
+ * 화자를 값으로 쓴다. 내용은 멀쩡한데 모든 블록이 떨어져 턴이 실패했다. 종류 키가 정확히 하나일 때만 원래 모양으로 옮긴다.
+ */
+function normalizeBlock(v: unknown): unknown {
+  if (!v || typeof v !== 'object' || Array.isArray(v) || 'type' in v) return v
+  const o = v as Record<string, unknown>
+  const keys = RP_BLOCK_TYPES.filter((t) => t in o)
+  if (keys.length !== 1) return v
+  const speaker = o[keys[0]!]
+  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text }
+}
+
+export const RpBlock = z.preprocess(normalizeBlock, z.object({
   type: z.enum(RP_BLOCK_TYPES),
   /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. 모델은 null 대신 생략을 잘 한다 — 검증기가 처리한다. */
   speaker: z.string().max(40).nullable().default(null),
   text: z.string().min(1).max(2000).refine(text => !/(?:질투|신뢰|호감도|애착)\s*(?:수치|점수)\s*(?:가|는|:)?\s*\d|토큰\s*\d/i.test(text), 'internal state disclosure'),
-})
+}))
 
 /** 관계는 절대값이 아니라 delta 로만 제안할 수 있다 — AI 가 상태를 덮어쓰지 못하게. */
 const delta = z.number().int().min(-100).max(100)
@@ -126,7 +139,24 @@ export function lenientArray<T extends z.ZodTypeAny>(item: T, max: number) {
   ).default([])
 }
 
-export const SimulationProposal = z.object({
+/**
+ * 실측(2026-09-26, gemini-3.8-flash): 모델이 rp 를 닫는 괄호를 빠뜨리면 뒤의 키(worldDelta, memoryCandidates …)가 rp 안에 들어간다.
+ * 괄호는 extractJson 이 채우고, 여기서는 rp 안에 들어간 최상위 키를 제자리로 옮긴다. 이미 최상위에 있는 키는 건드리지 않는다.
+ */
+const ROOT_KEYS = ['emotion', 'intent', 'worldDelta', 'relationshipDelta', 'sceneDelta', 'memoryCandidates', 'eventCandidates',
+  'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent'] as const
+function hoistFromRp(v: unknown): unknown {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+  const root = v as Record<string, unknown>
+  const rp = root.rp
+  if (!rp || typeof rp !== 'object' || Array.isArray(rp)) return v
+  const inner = { ...(rp as Record<string, unknown>) }
+  const moved: Record<string, unknown> = {}
+  for (const key of ROOT_KEYS) if (key in inner && !(key in root)) { moved[key] = inner[key]; delete inner[key] }
+  return Object.keys(moved).length ? { ...root, ...moved, rp: inner } : v
+}
+
+export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   /** 대사만이 이 응답의 필수 부분이다. 블록 하나가 어긋나면 그 블록만 버리되, 남는 것이 없으면 실패다. */
   rp: z.object({
     blocks: lenientArray(RpBlock, 12).pipe(z.array(RpBlock).min(1)),
@@ -145,7 +175,7 @@ export const SimulationProposal = z.object({
   npcIntroductions: lenientArray(NpcIntroductionProposal, 2),
   npcActions: lenientArray(NpcActionProposal, 3),
   realityIntent: RealityIntentProposal.nullable().default(null).catch(null),
-})
+}))
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>
 export type RpBlock = z.infer<typeof RpBlock>

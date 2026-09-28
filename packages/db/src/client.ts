@@ -3,18 +3,22 @@ import postgres from 'postgres'
 import * as schema from './schema/index'
 
 type Db = ReturnType<typeof drizzle<typeof schema>>
-let instance: Db | null = null
+/**
+ * 프로세스에 풀 하나. 개발 서버는 라우트마다 이 모듈을 따로 올리고 고칠 때마다 다시 올린다 —
+ * 모듈 변수에만 두면 풀이 그 수만큼 생겨 로컬 Postgres 의 연결 100개가 금방 찬다(9/26 데모에서 'too many clients').
+ */
+const shared = globalThis as { __miroDb?: Db }
 
 /**
  * 첫 사용 시점에 연결한다. import 시점에 DATABASE_URL 을 요구하면
  * `next build` 의 페이지 데이터 수집이 DB 없이는 실패한다 — 빌드는 DB 를 몰라도 되어야 한다.
  */
 function connect(): Db {
-  if (instance) return instance
+  if (shared.__miroDb) return shared.__miroDb
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL is not set')
-  instance = drizzle(postgres(url, poolOptions(url)), { schema })
-  return instance
+  shared.__miroDb = drizzle(postgres(url, poolOptions(url)), { schema })
+  return shared.__miroDb
 }
 
 /**
@@ -27,7 +31,8 @@ function connect(): Db {
 export function poolOptions(url: string, configuredMax = process.env.DB_POOL_MAX): postgres.Options<Record<string, never>> {
   const { hostname, port } = new URL(url)
   const supabase = hostname.endsWith('.supabase.com') || hostname.endsWith('.supabase.co')
-  if (!supabase) return {}
+  // 로컬: 쉬는 연결은 닫는다 — 기본값(영원히 유지)이면 개발 서버가 연결을 쥐고 놓지 않는다.
+  if (!supabase) return { idle_timeout: 20 }
   const pooled = port === '6543' || hostname.includes('pooler')
   const max = configuredMax === undefined ? 5 : Number(configuredMax)
   if (!Number.isInteger(max) || max < 2 || max > 20) {

@@ -5,9 +5,9 @@ import { MockAIProvider } from '../ai/mock'
 
 describe('grounded reality prompt', () => {
   it('uses canonical authored settings and labels narrator, NPC, and its own prior contact correctly', async () => {
-    let prompt = '', system = ''
+    let prompt = '', system = '', maxTokens: number | undefined
     const ai = new MockAIProvider(req => {
-      prompt = req.prompt; system = req.system
+      prompt = req.prompt; system = req.system; maxTokens = req.maxTokens
       return { text: '선배, 도착하면 알려 주세요.', tone: 'neutral' }
     })
     await generateRealityContent(new AIOrchestrator({ chain: [ai] }), {
@@ -27,6 +27,8 @@ describe('grounded reality prompt', () => {
       ],
     })
     for (const fact of ['INTJ', '선배', '폐역 관리자', '눈썹 흉터', '기억을 잃은 승객들이 찾는 역', '미스터리']) expect(prompt).toContain(fact)
+    // 400자 한 통 — dialogue 모델 상한(ECHO 때문에 4096)을 물려받지 않는다.
+    expect(maxTokens).toBe(1024)
     expect(prompt).toContain('"speakerLabel":"내레이터 (전지적 서술 · 캐릭터 지식 아님)"')
     expect(prompt).toContain('"knowledgeScope":"omniscient"')
     expect(prompt).toContain('"speakerLabel":"NPC (서연)"')

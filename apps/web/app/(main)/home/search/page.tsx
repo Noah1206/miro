@@ -33,7 +33,7 @@ export default async function HomeSearch({ searchParams }: { searchParams: Promi
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       <SearchHeader q={q} tag={tag} genres={genres} viewerId={viewerId} base="/home/search">
         <TransitionLink href="/home" direction="back" aria-label="홈으로 돌아가기" className="hit"
-          style={{ display: 'grid', placeItems: 'center', width: 40, height: 40, color: 'var(--color-text-primary)' }}>
+          style={{ display: 'grid', placeItems: 'center', width: 40, height: 40, marginLeft: 'calc(-1 * var(--gutter))', color: 'var(--color-text-primary)' }}>
           <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5 8 12l7 7" /></svg>
         </TransitionLink>
       </SearchHeader>

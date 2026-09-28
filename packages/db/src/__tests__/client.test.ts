@@ -19,7 +19,8 @@ describe('database pool options', () => {
     expect(() => poolOptions(pooler, value)).toThrow('DB_POOL_MAX')
   })
 
-  it('does not change local Postgres defaults', () => {
-    expect(poolOptions('postgres://user:pass@localhost:5432/miro_test', '1')).toEqual({})
+  it('leaves local pool size and TLS alone, only closing idle connections', () => {
+    // 로컬은 풀 크기·TLS 를 건드리지 않고, 쉬는 연결만 닫는다(개발 서버가 연결을 쥐고 놓지 않던 문제).
+    expect(poolOptions('postgres://user:pass@localhost:5432/miro_test', '1')).toEqual({ idle_timeout: 20 })
   })
 })
