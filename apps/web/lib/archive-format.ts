@@ -6,7 +6,13 @@ const ymd = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE,
 export function dateLabel(d: Date | string, now = new Date()) {
   const date = new Date(d)
   const day = ymd(date)
-  if (day === ymd(now)) return date.toLocaleTimeString('ko-KR', { timeZone: TIME_ZONE, hour: 'numeric', minute: '2-digit' })
+  if (day === ymd(now)) {
+    // ICU versions disagree on ko-KR day-period labels (PM vs 오후). Keep product copy stable.
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, hour: 'numeric', minute: '2-digit', hourCycle: 'h23' }).formatToParts(date)
+    const hour = Number(parts.find(p => p.type === 'hour')!.value)
+    const minute = parts.find(p => p.type === 'minute')!.value
+    return `${hour < 12 ? '오전' : '오후'} ${hour % 12 || 12}:${minute}`
+  }
   if (day === ymd(new Date(now.getTime() - 86_400_000))) return '어제'
   const [, month, dayOfMonth] = day.split('-')
   return `${Number(month)}.${Number(dayOfMonth)}`

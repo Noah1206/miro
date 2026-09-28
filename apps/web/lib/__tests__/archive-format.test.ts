@@ -7,6 +7,8 @@ describe('archive list text', () => {
     expect(dateLabel('2026-09-27T08:46:00Z', now)).toBe('오후 5:46')
     // UTC 로는 아직 26일이지만 한국은 27일 01:30 — 서버(UTC)가 '어제' 를 그리면 브라우저와 어긋난다.
     expect(dateLabel('2026-09-26T16:30:00Z', now)).toBe('오전 1:30')
+    expect(dateLabel('2026-09-26T15:00:00Z', now)).toBe('오전 12:00')
+    expect(dateLabel('2026-09-27T03:00:00Z', now)).toBe('오후 12:00')
     expect(dateLabel('2026-09-25T20:00:00Z', now)).toBe('어제')  // 한국 26일 05:00
     expect(dateLabel('2026-09-20T03:00:00Z', now)).toBe('9.20')
   })
