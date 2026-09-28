@@ -13,6 +13,8 @@ type Props = {
   children: ReactNode
   /** Larger title and softer top edge for a small set of primary choices. */
   variant?: 'default' | 'choice'
+  /** 닫기 왼쪽에 놓는 작은 버튼 하나(예: 도움말 ?). */
+  headerAction?: ReactNode
   /** 화면 높이 대비 열린 높이. drag 로 half ↔ full 스냅. */
   snap?: { half: number; full: number }
 }
@@ -22,7 +24,7 @@ type Props = {
  * 손가락과 시트가 직접 연결된다 (dragElastic 이 경계 rubber band). 열린 뒤에도 항상 잡을 수 있다.
  * 시트 안에서의 세로 스크롤은 브라우저에 두고, 손잡이·헤더에서만 drag 를 잡는다.
  */
-export function Sheet({ open, onClose, title, label, children, variant = 'default', snap = { half: 0.55, full: 0.92 } }: Props) {
+export function Sheet({ open, onClose, title, label, children, variant = 'default', headerAction, snap = { half: 0.55, full: 0.92 } }: Props) {
   const reduce = useReducedMotion()
   const choice = variant === 'choice'
   const ref = useRef<HTMLDivElement>(null)
@@ -74,10 +76,13 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
               {title ? <h2 id={titleId} className={choice ? 't-title-2' : 't-title-3'}
                 tabIndex={choice ? -1 : undefined} data-initial-focus={choice ? '' : undefined}
                 style={choice ? { outline: 'none', boxShadow: 'none' } : undefined}>{title}</h2> : <span />}
-              {/* 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7) */}
-              <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
-                <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                {headerAction}
+                {/* 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7) */}
+                <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
+                  <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+                </button>
+              </div>
             </div>
             <div style={{ overflowY: 'auto', padding: choice ? 'var(--space-4) var(--space-5) var(--space-6)' : '0 var(--space-5) var(--space-5)', touchAction: 'pan-y' }} onPointerDown={(e) => e.stopPropagation()}>
               {children}

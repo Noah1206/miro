@@ -11,8 +11,11 @@
 .actions { display: grid; gap: var(--space-2); }
 .dangerIcon { width: 40px; height: 40px; color: var(--color-danger); }
 /* 설명은 ? 뒤에 둔다 — 화면에는 숫자와 행동만 남긴다. */
-.helpButton { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; font-size: var(--font-caption); font-weight: var(--weight-semibold); flex-shrink: 0; }
-.helpButton[aria-expanded="true"] { color: var(--color-text-primary); border-color: var(--color-text-tertiary); }
+/* 작게. 시트에서는 닫기 왼쪽, 지갑 페이지에서는 라벨 줄 오른쪽. 터치 영역은 padding 으로 44 를 채운다. */
+.helpButton { width: 44px; height: 44px; border: 0; background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; flex-shrink: 0; }
+.helpDot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--color-border-strong); display: grid; place-items: center; font-size: var(--font-micro); font-weight: var(--weight-semibold); line-height: 1; }
+.helpButton[aria-expanded="true"] { color: var(--color-text-primary); }
+.helpButton[aria-expanded="true"] .helpDot { border-color: var(--color-text-tertiary); }
 .help { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface-3); }
 .banks { display: grid; gap: var(--space-3); }
 .options { border: 0; padding: 0; margin: 0; min-width: 0; }

@@ -180,14 +180,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync: setWallet, openRecharge: () => { void openRecharge() }, requireBalance }}>
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
-    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}>
+    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}
+      headerAction={!insufficient && !done && wallet?.account ? <HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-sheet-help" /> : undefined}>
       <div className={styles.stack} data-pay-state={state}>
         {!insufficient && wallet && <div className={styles.balanceLine}>
           <span>충전 잔액</span>
-          <span className={styles.inline}>
-            <strong data-sheet-balance={wallet.rechargeRemaining}>{wallet.rechargeRemaining.toLocaleString('ko-KR')} 크레딧</strong>
-            {!done && <HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-sheet-help" />}
-          </span>
+          <strong data-sheet-balance={wallet.rechargeRemaining}>{wallet.rechargeRemaining.toLocaleString('ko-KR')} 크레딧</strong>
         </div>}
         {error && <Notice tone="danger" role="alert">{error}</Notice>}
         {state === 'failed' && pending.current && <Button onClick={() => void retryAction()}>다시 확인하기</Button>}
@@ -251,5 +249,5 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
 /** 둥근 ? — 누르면 설명이 펼쳐진다. */
 export function HelpToggle({ open, onToggle, controls }: { open: boolean; onToggle: () => void; controls: string }) {
-  return <button type="button" className={styles.helpButton} aria-label="도움말" aria-expanded={open} aria-controls={controls} onClick={onToggle}>?</button>
+  return <button type="button" className={styles.helpButton} aria-label="도움말" aria-expanded={open} aria-controls={controls} onClick={onToggle}><span className={styles.helpDot} aria-hidden>?</span></button>
 }
