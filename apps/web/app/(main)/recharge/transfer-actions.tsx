@@ -53,10 +53,13 @@ export function TransferActions({ bank, accountNumber, amount, onOpen }: {
   )
 }
 
-/* 브랜드 색의 단순 표식 — 공식 로고 자산이 아니다. 색은 두 브랜드가 정한 값이라 토큰으로 두지 않는다. */
+/**
+ * 공식 심벌 — 토스는 toss.im 이 쓰는 로고 PNG 에서 심벌만 잘랐고(2026-09-28), 카카오뱅크는 브랜드 리소스 페이지의 심벌 SVG 를
+ * 브랜드 노랑(#FFE300) 타일 위에 놓았다. 비율·색을 바꾸지 않는다(카카오뱅크 브랜드 규정).
+ */
 function TossMark() {
-  return <svg aria-hidden width="20" height="20" viewBox="0 0 20 20"><rect width="20" height="20" rx="5" fill="#0064FF" /><path d="M6 6.5h8M10 6.5V14" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" /></svg>
+  return <img src="/brand/toss-symbol.png" alt="" width={20} height={20} style={{ objectFit: 'contain' }} />
 }
 function KakaoBankMark() {
-  return <svg aria-hidden width="20" height="20" viewBox="0 0 20 20"><rect width="20" height="20" rx="5" fill="#FFE300" /><path d="M6.5 5.5v9M6.5 10l6-4.5M6.5 10l6.5 4.5" stroke="#1E1E1E" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  return <img src="/brand/kakaobank.svg" alt="" width={20} height={20} />
 }
