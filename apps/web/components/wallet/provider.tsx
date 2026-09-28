@@ -230,15 +230,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               <legend className="t-title-3">충전할 금액</legend>
               {products?.map(p => <label key={p.id} className={styles.option}>
                 <input type="radio" name="wallet-product" value={`recharge:${p.id}`} checked={selected === `recharge:${p.id}`} onChange={() => setSelected(`recharge:${p.id}`)} />
-                <span><strong>{p.units.toLocaleString('ko-KR')} 크레딧</strong><small>{p.name}{p.validDays ? ` · 지급 후 ${p.validDays}일` : ''}</small></span>
+                <span><strong>{p.units.toLocaleString('ko-KR')} 크레딧</strong></span>
                 <b>{krw(p.priceMinor)}</b>
               </label>)}
               {!wallet.products.length && <p className={`t-caption ${styles.muted}`}>판매 중인 크레딧 상품이 없어요.</p>}
               {(wallet.products.length > 3 && !expanded) && <Button variant="ghost" full onClick={() => setExpanded(true)}>금액 더 보기</Button>}
-              <label className={styles.option}>
-                <input type="radio" name="wallet-product" value="pass" checked={selected === 'pass'} onChange={() => setSelected('pass')} />
-                <span><strong>Pro 1개월 이용권</strong><small>크레딧 충전과 별도 · 자동 갱신 없음</small></span><b>{krw(wallet.passPrice)}</b>
-              </label>
             </fieldset>
             {help && <div id="wallet-sheet-help" className={styles.help}>
               <p className={`t-caption ${styles.muted}`}>계좌이체로 입금하면 확인 후 지급해요.</p>

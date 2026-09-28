@@ -30,14 +30,14 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
     } catch { setError(true) }
     finally { setLoading(false) }
   }
-  return <div className={styles.content}>
+  return <div className={styles.stack}>
     <Card>
       <div className={styles.balanceLine}><p className={`t-caption ${styles.muted}`}>충전 잔액</p><HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-help" /></div>
       <motion.p key={value.rechargeRemaining} className={`t-title-1 ${styles.amount}`} data-recharge-balance={value.rechargeRemaining}
         initial={{ opacity: 0.6 }} animate={{ opacity: 1 }} transition={tween.fast} aria-live="polite" aria-atomic>
         {value.rechargeRemaining.toLocaleString('ko-KR')} <span className="t-body">크레딧</span>
       </motion.p>
-      <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'}>충전하기</Button>
+      <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'} style={{ marginTop: 'var(--space-5)' }}>충전하기</Button>
       {help && <p id="wallet-help" className={`t-caption ${styles.muted}`} style={{ marginTop: 'var(--space-3)' }}>월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요.</p>}
     </Card>
     <div className={styles.balanceLine}>
@@ -48,7 +48,7 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
     {value.order && !value.order.settledAt && ['awaiting', 'approved'].includes(value.order.status) && <Button full onClick={openRecharge}>
       {value.order.status === 'approved' ? '입금 확인 · 지급 대기' : '입금 대기 중'} · 안내 보기
     </Button>}
-    <section aria-labelledby="wallet-history-title">
+    <section aria-labelledby="wallet-history-title" className={styles.list}>
       <div className={styles.balanceLine}>
         <h2 id="wallet-history-title" className="t-title-3">최근 내역</h2>
         <Button variant="ghost" size="sm" onClick={() => void loadHistory()}>전체 내역</Button>

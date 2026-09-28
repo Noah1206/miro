@@ -17,10 +17,12 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   // 환불 조건은 사기 전에 볼 수 있다 — 시트의 ? 뒤에 있다.
   await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
   await expect(page.locator('[data-refund-terms]')).toContainText('7일')
-  await page.locator('input[value="pass"]').check()
+  // 시트는 크레딧 상품만 판다 — Pro 이용권 항목은 뺐다(9/28).
+  await expect(page.locator('input[value="pass"]')).toHaveCount(0)
+  await page.locator('input[value="recharge:e2e_small"]').check()
   await page.getByRole('button', { name: '입금 안내 받기' }).click()
   const awaiting = page.locator('[data-bank-order="awaiting"]')
-  await expect(awaiting.locator('[data-order-amount="9900"]')).toBeVisible()
+  await expect(awaiting.locator('[data-order-amount="3000"]')).toBeVisible()
   // 계좌번호·대조 코드는 ? 뒤에 있다. 송금 버튼 둘은 같은 위상으로 보인다.
   await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
   await expect(awaiting).toContainText('000-000-0000')
@@ -48,7 +50,7 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
     await admin.goto(`${ADMIN}/payments?status=awaiting`)
     const row = admin.locator(`[data-order-code="${code}"]`)
     await expect(row).toBeVisible()
-    await expect(row).toContainText('9,900원')
+    await expect(row).toContainText('3,000원')
     await row.getByPlaceholder('입금 확인 메모').fill('E2E 입금 확인')
     await row.locator('[data-approve]').click()
     // 승인하면 이 주문은 대기 목록에서 빠진다 — 결과 메시지를 띄우던 패널도 함께 사라지므로
@@ -64,18 +66,19 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   })
   expect(cron.ok()).toBe(true)
 
-  // 4) 사용자 화면에 반영된다.
-  await page.goto(`${WEB}/my/subscription`)
-  await expect(page.locator('[data-plan="pro"]')).toBeVisible()
+  // 4) 사용자 화면에 반영된다 — 크레딧 300 이 잔액에 들어오고, 이용권은 그대로 없다.
   await page.goto(`${WEB}/recharge`)
+  await expect(page.locator('[data-recharge-balance="300"]')).toBeVisible()
   await expect(page.locator('[data-wallet-history]')).toContainText('지급 완료')
+  await page.goto(`${WEB}/my/subscription`)
+  await expect(page.locator('[data-plan="free"]')).toBeVisible()
 })
 
 test('bank transfer: one waiting order at a time', async ({ page }) => {
   await signUp(page, WEB)
   await page.goto(`${WEB}/recharge`)
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
-  await page.locator('input[value="pass"]').check()
+  await page.locator('input[value="recharge:e2e_small"]').check()
   await page.getByRole('button', { name: '입금 안내 받기' }).click()
   // 대기 중에는 새 구매 버튼이 없고 기존 주문 안내만 남는다.
   await expect(page.getByRole('button', { name: '입금 안내 받기' })).toHaveCount(0)
