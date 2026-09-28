@@ -53,7 +53,7 @@ test('insufficient balance → recharge → admin approval → settlement → or
   await page.locator('input[value="recharge:e2e_small"]').check()
   const a11y = await new AxeBuilder({ page }).include('[role="dialog"]').analyze()
   expect(a11y.violations.filter(v => ['serious', 'critical'].includes(v.impact ?? ''))).toEqual([])
-  await page.getByRole('button', { name: '입금 안내 받기' }).click()
+  await page.getByRole('button', { name: '다음으로' }).click()
   const awaiting = page.locator('[data-bank-order="awaiting"]')
   await expect(awaiting).toBeVisible()
   await expect(page).toHaveURL(`${WEB}/messages/${sessionId}`)

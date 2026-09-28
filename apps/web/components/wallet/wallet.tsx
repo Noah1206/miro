@@ -31,7 +31,8 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
     finally { setLoading(false) }
   }
   return <div className={styles.stack}>
-    <Card>
+    {/* 잔액 카드는 안쪽 여백을 한 단계 줄여 라벨·?·버튼이 모서리 가까이 붙는다. */}
+    <Card style={{ padding: 'var(--space-4)' }}>
       <div className={styles.balanceLine}><p className={`t-caption ${styles.muted}`}>충전 잔액</p><HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-help" /></div>
       <motion.p key={value.rechargeRemaining} className={`t-title-1 ${styles.amount}`} data-recharge-balance={value.rechargeRemaining}
         initial={{ opacity: 0.6 }} animate={{ opacity: 1 }} transition={tween.fast} aria-live="polite" aria-atomic>

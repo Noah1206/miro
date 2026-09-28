@@ -181,7 +181,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
     <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}
-      headerAction={!insufficient && !done && wallet?.account ? <HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-sheet-help" /> : undefined}>
+      headerAction={!insufficient && !done && waiting && wallet?.account ? <HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-sheet-help" /> : undefined}>
       <div className={styles.stack} data-pay-state={state}>
         {!insufficient && wallet && <div className={styles.balanceLine}>
           <span>충전 잔액</span>
@@ -210,6 +210,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               <p className="t-body">{wallet.account.bank} <b>{wallet.account.number}</b> ({wallet.account.holder})</p>
               <p className="t-body">입금자명 · <b>{order.depositName}</b></p>
               <p className={`t-caption ${styles.muted}`}>입금자명에 위 코드를 적으면 더 빨리 확인돼요. {new Date(order.expiresAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' })}까지 입금해 주세요. 닫아도 주문은 남아요.</p>
+              <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.pass, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{line}</li>)}</ul>
             </div>}
             <TransferActions bank={wallet.account.bank} accountNumber={wallet.account.number} amount={order.amountMinor} onOpen={() => setTransferTapped(true)} />
           </>}
@@ -234,11 +235,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               {!wallet.products.length && <p className={`t-caption ${styles.muted}`}>판매 중인 크레딧 상품이 없어요.</p>}
               {(wallet.products.length > 3 && !expanded) && <Button variant="ghost" full onClick={() => setExpanded(true)}>금액 더 보기</Button>}
             </fieldset>
-            {help && <div id="wallet-sheet-help" className={styles.help}>
-              <p className={`t-caption ${styles.muted}`}>계좌이체로 입금하면 확인 후 지급해요.</p>
-              <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.pass, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{line}</li>)}</ul>
-            </div>}
-            <div className={styles.footer}><Button full variant="secondary" style={SHEET_BUTTON} onClick={() => void checkout()} status={state === 'loading' ? 'loading' : 'idle'} disabled={!selected}>입금 안내 받기</Button></div>
+            <div className={`${styles.footer} ${styles.actions}`}>
+              <Button full variant="secondary" style={SHEET_BUTTON} onClick={() => void checkout()} status={state === 'loading' ? 'loading' : 'idle'} disabled={!selected}>다음으로</Button>
+              <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
+            </div>
           </>}
           {!wallet && <Button onClick={() => void refresh()} status={checking ? 'loading' : 'idle'} full>잔액 다시 불러오기</Button>}
         </>}

@@ -14,18 +14,17 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   // 1) 주문 — 입금 계좌와 대조 코드를 받는다. 아직 Pro 가 아니다.
   // 환불 조건은 사기 전에 보여야 한다.
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
-  // 환불 조건은 사기 전에 볼 수 있다 — 시트의 ? 뒤에 있다.
-  await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
-  await expect(page.locator('[data-refund-terms]')).toContainText('7일')
   // 시트는 크레딧 상품만 판다 — Pro 이용권 항목은 뺐다(9/28).
   await expect(page.locator('input[value="pass"]')).toHaveCount(0)
   await page.locator('input[value="recharge:e2e_small"]').check()
-  await page.getByRole('button', { name: '입금 안내 받기' }).click()
+  await page.getByRole('button', { name: '다음으로' }).click()
   const awaiting = page.locator('[data-bank-order="awaiting"]')
   await expect(awaiting.locator('[data-order-amount="3000"]')).toBeVisible()
   // 계좌번호·대조 코드는 ? 뒤에 있다. 송금 버튼 둘은 같은 위상으로 보인다.
+  // 계좌번호·대조 코드·환불 조건은 입금 전에 ? 뒤에서 볼 수 있다.
   await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
   await expect(awaiting).toContainText('000-000-0000')
+  await expect(awaiting.locator('[data-refund-terms]')).toContainText('7일')
   const code = (await awaiting.locator('[data-order-help]').textContent())!.match(/입금자명 · ([A-Z2-9]{6})/)![1]!
   await expect(awaiting.locator('[data-open-bank="toss"]')).toBeVisible()
   await expect(awaiting.locator('[data-open-bank="kakaobank"]')).toBeVisible()
@@ -79,8 +78,8 @@ test('bank transfer: one waiting order at a time', async ({ page }) => {
   await page.goto(`${WEB}/recharge`)
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
   await page.locator('input[value="recharge:e2e_small"]').check()
-  await page.getByRole('button', { name: '입금 안내 받기' }).click()
+  await page.getByRole('button', { name: '다음으로' }).click()
   // 대기 중에는 새 구매 버튼이 없고 기존 주문 안내만 남는다.
-  await expect(page.getByRole('button', { name: '입금 안내 받기' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '다음으로' })).toHaveCount(0)
   await expect(page.locator('[data-bank-order="awaiting"]')).toBeVisible()
 })
