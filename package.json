@@ -15,7 +15,8 @@
     "db:seed": "tsx packages/db/seed.ts",
     "db:seed:admin": "tsx packages/db/seed-admin.ts",
     "ai:eval": "tsx ai/evals/run.ts",
-    "ai:cost": "tsx ai/evals/chat-cost.ts"
+    "ai:cost": "tsx ai/evals/chat-cost.ts",
+    "voice": "tsx tooling/voice/import.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10",

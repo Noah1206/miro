@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
 import { genreValues } from '@/lib/genres'
+import { voiceOptions } from '@/lib/voice'
 import { CharacterForm, type FormInitial } from '@/app/(main)/create/character-form'
 import { updateCharacter } from './actions'
 
@@ -24,7 +25,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
     mood: genreValues(world?.genre ?? null),
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
-    gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average',
+    gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average', voiceId: c.voiceId ?? '',
     height: visual?.bodyProfile?.height ?? '', detail: visual?.bodyProfile?.detail ?? '',
     eyes: visual?.baseFace?.eyes ?? '', nose: visual?.baseFace?.nose ?? '', jaw: visual?.baseFace?.jaw ?? '',
     skin: visual?.baseFace?.skin ?? '', distinctive: visual?.baseFace?.distinctive ?? '',
@@ -49,7 +50,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <CharacterForm mode="edit" capabilities={features()} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" capabilities={features()} voices={await voiceOptions()} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my?filter=draft' : `/character/${id}`} />
   )
 }

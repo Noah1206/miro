@@ -19,6 +19,8 @@ export type FormInitial = {
   name: string; title: string; worldSetting: string; age: string; mbti: string; nationality: string; occupation: string
   personality: string; hobbies: string[]; dislikes: string[]; mood: string[]; jealousy: number; initiative: number; emotionalExpression: number
   gender: string; build: string; height: string; detail: string
+  /** 공식 목소리 ID. '' 이면 기본 목소리. */
+  voiceId: string
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
@@ -40,7 +42,7 @@ export type FormInitial = {
 export const EMPTY: FormInitial = {
   name: '', title: '', worldSetting: '', age: '', mbti: '', nationality: '', occupation: '',
   personality: '', hobbies: [], dislikes: [], mood: [], jealousy: 50, initiative: 50, emotionalExpression: 50,
-  gender: 'male', build: 'average', height: '', detail: '',
+  gender: 'male', build: 'average', height: '', detail: '', voiceId: '',
   eyes: '', nose: '', jaw: '', skin: '', distinctive: '',
   hairColor: '', hairLength: '', hairStyle: '', expression: '', styleTags: [],
   stage: 'stranger', trust: 30, attraction: 10, emotionalDistance: 60, attachment: 10, protectiveness: 20, relJealousy: 0, bonding: '',
@@ -58,9 +60,11 @@ export const EMPTY: FormInitial = {
  * 탭은 보이기만 바꾼다 — 모든 칸이 DOM 에 남아 마지막에 한 번에 제출된다.
  * 등록 시 공개 여부를 선택할 수 있다. 임시저장은 항상 비공개다.
  */
-export function CharacterForm({ mode, draft = false, initial, action, closeHref, capabilities }: {
+export function CharacterForm({ mode, draft = false, initial, action, closeHref, capabilities, voices = [] }: {
   mode: 'create' | 'edit'
   capabilities: ContactCapabilities
+  /** 운영자가 승인한 공식 목소리. 없으면 목소리 칸 자체를 보이지 않는다. */
+  voices?: Array<{ id: string; label: string }>
   draft?: boolean
   initial?: Partial<FormInitial>
   action: (form: FormData) => Promise<void>
@@ -83,6 +87,7 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
   const [mbti, setMbti] = useState<string>(i.mbti)
   const [gender, setGender] = useState<string>(i.gender)
   const [build, setBuild] = useState<string>(i.build)
+  const [voiceId, setVoiceId] = useState<string>(i.voiceId)
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(draft ? true : i.isPublic)
@@ -253,6 +258,14 @@ export function CharacterForm({ mode, draft = false, initial, action, closeHref,
               </div>
             </Card>
           </Section>
+          {voices.length > 0 && (
+            <Section title="목소리" subtitle="운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.">
+              <Card>
+                <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
+                  options={[{ value: '', label: '기본' }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
+              </Card>
+            </Section>
+          )}
         </Panel>
 
         {/* ── 관계 ── */}

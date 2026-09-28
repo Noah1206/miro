@@ -1,6 +1,18 @@
 {
   "version": 1,
   "skills": {
+    "openai-whisper": {
+      "source": "openclaw/openclaw",
+      "sourceType": "github",
+      "skillPath": "skills/openai-whisper/SKILL.md",
+      "computedHash": "91dfa3149f593d2e794aadc9f78cffd5d274ff1366f01b777b77abfd2b5474d8"
+    },
+    "resemble-chatterbox": {
+      "source": "calesthio/generative-media-skills",
+      "sourceType": "github",
+      "skillPath": "skills/providers/text-to-speech/resemble-chatterbox/SKILL.md",
+      "computedHash": "ee2a43030375ac6fb52400f6c30f1177b2bdb9d06499e08bfc4379081256d39e"
+    },
     "supabase": {
       "source": "supabase/agent-skills",
       "sourceType": "github",

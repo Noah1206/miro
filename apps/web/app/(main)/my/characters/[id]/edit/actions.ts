@@ -13,6 +13,7 @@ import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from '@/app/(main)/create/parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
+import { selectableVoice } from '@/lib/voice'
 
 /**
  * 편집 저장. 만들기와 같은 폼, 같은 읽는 법(parse.ts).
@@ -32,10 +33,11 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
 
   // 사진 — 만들기(actions.ts)와 같은 규칙.
   const images = await resolveCharacterImages(form, user.id)
+  const voiceId = await selectableVoice(p.voiceId)
 
   const result = await db.transaction(async (tx) => {
     await tx.update(characters).set({
-      ...p.character, images,
+      ...p.character, images, voiceId,
       isDraft: stillDraft,
       experienceType: characterExperience(p.contact.enabled, owned.character.experienceType, form.get('contactChanged') === 'on'),
       // 초안은 절대 공개되지 않는다.

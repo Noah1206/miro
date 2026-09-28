@@ -12,6 +12,7 @@ import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
+import { selectableVoice } from '@/lib/voice'
 
 /**
  * 저장. 읽는 법은 parse.ts — 편집과 같다.
@@ -27,10 +28,11 @@ export async function saveCharacter(form: FormData): Promise<void> {
   const p = parseCharacterForm(form)
 
   const images = await resolveCharacterImages(form, user.id)
+  const voiceId = await selectableVoice(p.voiceId)
 
   const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
-      ownerId: user.id, isOfficial: false, ...p.character, images,
+      ownerId: user.id, isOfficial: false, ...p.character, images, voiceId,
       isDraft: !p.publish,
       experienceType: characterExperience(p.contact.enabled),
       // 초안은 절대 공개되지 않는다. 등록할 때만 폼에서 선택한 공개 상태를 적용한다.

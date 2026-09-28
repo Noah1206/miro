@@ -1,0 +1,6 @@
+# 로컬 음성 엔진 — tooling/voice 전용(운영자 PC). 프로덕션 번들에 들어가지 않는다. Python 3.11.
+chatterbox-tts==0.1.7
+openai-whisper==20250625
+# resemble-perth(chatterbox 의 워터마크)가 pkg_resources 를 쓰면서 의존성으로 적지 않았다. 없으면 모델 로드가
+# 'NoneType' object is not callable 로 죽는다(2026-09-25 실측). setuptools 81+ 에는 pkg_resources 가 없다.
+setuptools<81

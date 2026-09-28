@@ -129,6 +129,8 @@ export function parseCharacterForm(form: FormData) {
     agencyExplicitFields: [...new Set(form.getAll('agencyExplicitField').filter((field): field is string =>
       typeof field === 'string' && ['personality.jealousy', 'personality.initiative', 'personality.emotionalExpression'].includes(field)))],
     isPublicOn: form.get('isPublic') === 'on',
+    // 공식 목소리 ID. 지금 고를 수 있는 것인지는 저장할 때 서버가 DB 로 다시 본다(lib/voice.ts).
+    voiceId: orNull(s('voiceId').slice(0, 40)),
     startingTime,
     character, world, contact, visual, initialRelationship,
   }

@@ -10,7 +10,7 @@ export default defineConfig({
   },
   test: {
     env: { DATABASE_URL: database ?? '' },
-    include: ['packages/**/*.test.ts', 'apps/web/**/*.test.ts', 'apps/admin/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'apps/web/**/*.test.ts', 'apps/admin/**/*.test.ts', 'tooling/**/*.test.ts'],
     fileParallelism: false,
     environment: 'node',
   },
