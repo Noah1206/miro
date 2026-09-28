@@ -34,7 +34,10 @@ describeDb('Miro Pay uses authoritative wallet and payment records', () => {
     const orders = await Promise.all(Array.from({ length: 5 }, () => createBankOrder(input)))
     expect(new Set(orders.map(o => o.id)).size).toBe(1)
     expect(orders[0]!.amountMinor).toBe(3000)
-    expect((await walletSnapshot(userId)).rechargeRemaining).toBe(0)
+    const placed = await walletSnapshot(userId)
+    expect(placed.rechargeRemaining).toBe(0)
+    // 내역의 주문 줄은 원화를 '3,000원' 으로 적는다 — 운영 지갑에 '9900 KRW' 가 날것으로 보였다(9/28).
+    expect(placed.history.entries.find(e => e.id.startsWith('order:'))).toMatchObject({ detail: '3,000원', status: '입금 대기' })
     await approve(requestId)
     const awaiting = await walletSnapshot(userId)
     expect(awaiting.order).toMatchObject({ status: 'approved', settledAt: null })

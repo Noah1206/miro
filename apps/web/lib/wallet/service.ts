@@ -41,7 +41,10 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       union all
       select 'order:' || ${bankTransferOrders.id}::text, ${bankTransferOrders.createdAt},
         case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '크레딧 충전 주문' end,
-        null::integer, ${bankTransferOrders.amountMinor}::text || ' ' || ${bankTransferOrders.currency},
+        null::integer,
+        -- 원화는 '9,900원' 으로. 다른 통화는 그대로 표기한다(운영 계좌는 원화만 받는다).
+        case when ${bankTransferOrders.currency} = 'KRW' then to_char(${bankTransferOrders.amountMinor}, 'FM999,999,999') || '원'
+          else ${bankTransferOrders.amountMinor}::text || ' ' || ${bankTransferOrders.currency} end,
         case when ${bankTransferOrders.settledAt} is not null then '지급 완료'
           when ${bankTransferOrders.status} = 'approved' then '지급 대기'
           when ${bankTransferOrders.status} = 'rejected' then '취소됨'
