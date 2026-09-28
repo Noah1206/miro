@@ -76,6 +76,7 @@ test('the recharge page reports real usage and takes orders without granting', a
   await expect(page.locator('[data-recharge-balance="0"]')).toBeVisible()
   // E2E 는 계좌가 설정돼 있어 계좌이체 주문 카드가 열린다. 환불 조건도 사기 전에 보인다.
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
   await expect(page.locator('[data-refund-terms]')).toContainText('7일')
   await page.getByRole('button', { name: '닫기', exact: true }).click()
 

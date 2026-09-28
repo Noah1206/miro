@@ -5,7 +5,7 @@ import { Button, Card, Notice, Sheet, TransitionLink } from '@/components/ui'
 import { readWalletHistory } from '@/app/(main)/recharge/wallet-actions'
 import { tween } from '@/lib/motion/tokens'
 import type { WalletEntry, WalletSnapshot } from '@/lib/wallet/types'
-import { useWallet } from './provider'
+import { HelpToggle, useWallet } from './provider'
 import styles from './wallet.module.css'
 
 export function Wallet({ initial, children, showOrder = false }: { initial: WalletSnapshot; children?: ReactNode; showOrder?: boolean }) {
@@ -15,6 +15,7 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
   const [cursor, setCursor] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  const [help, setHelp] = useState(false)
   useEffect(() => { sync(initial) }, [initial, sync])
   // Legacy server actions can still return to /recharge?order=created.
   useEffect(() => { if (showOrder) openRecharge() }, [])
@@ -31,13 +32,13 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
   }
   return <div className={styles.content}>
     <Card>
-      <p className={`t-caption ${styles.muted}`}>충전 잔액</p>
+      <div className={styles.balanceLine}><p className={`t-caption ${styles.muted}`}>충전 잔액</p><HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-help" /></div>
       <motion.p key={value.rechargeRemaining} className={`t-title-1 ${styles.amount}`} data-recharge-balance={value.rechargeRemaining}
         initial={{ opacity: 0.6 }} animate={{ opacity: 1 }} transition={tween.fast} aria-live="polite" aria-atomic>
         {value.rechargeRemaining.toLocaleString('ko-KR')} <span className="t-body">크레딧</span>
       </motion.p>
       <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'}>충전하기</Button>
-      <p className={`t-caption ${styles.muted}`} style={{ marginTop: 'var(--space-3)' }}>월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요.</p>
+      {help && <p id="wallet-help" className={`t-caption ${styles.muted}`} style={{ marginTop: 'var(--space-3)' }}>월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요.</p>}
     </Card>
     <div className={styles.balanceLine}>
       <span data-usage-remaining={value.monthlyRemaining}>이번 달 남은 제공량 · {value.monthlyRemaining.toLocaleString('ko-KR')}</span>

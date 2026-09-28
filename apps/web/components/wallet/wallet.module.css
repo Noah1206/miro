@@ -1,7 +1,15 @@
 .content { display: grid; gap: var(--space-4); }
 .muted { color: var(--color-text-secondary); }
 .balanceLine { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; font-size: var(--font-caption); }
+.inline { display: inline-flex; align-items: center; gap: var(--space-2); }
 .amount { margin: var(--space-3) 0 var(--space-5); font-variant-numeric: tabular-nums; }
+.center { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-2) 0 var(--space-3); }
+.dangerIcon { width: 40px; height: 40px; color: var(--color-danger); }
+/* 설명은 ? 뒤에 둔다 — 화면에는 숫자와 행동만 남긴다. */
+.helpButton { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; font-size: var(--font-caption); font-weight: var(--weight-semibold); flex-shrink: 0; }
+.helpButton[aria-expanded="true"] { color: var(--color-text-primary); border-color: var(--color-text-tertiary); }
+.help { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface-3); }
+.banks { display: grid; gap: var(--space-3); }
 .options { border: 0; padding: 0; margin: 0; min-width: 0; }
 .options legend { padding: 0 0 var(--space-3); }
 .option { display: flex; align-items: center; gap: var(--space-3); min-height: 64px; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-border); cursor: pointer; font-size: var(--font-caption); }
@@ -9,7 +17,8 @@
 .option span { flex: 1; min-width: 0; }
 .option small { display: block; color: var(--color-text-secondary); margin-top: 4px; }
 .option b { white-space: nowrap; }
-.option:focus-within { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+/* 탭·클릭으로 고른 행에는 테두리를 그리지 않는다. 키보드 초점일 때만 보인다. */
+.option:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 .terms { margin: 0; padding-left: var(--space-4); color: var(--color-text-secondary); font-size: var(--font-caption); line-height: 1.6; }
 .footer { position: sticky; bottom: calc(-1 * var(--space-5)); background: var(--color-surface-2); padding: var(--space-3) 0; }
 .historyRow { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) 0; border-bottom: 1px solid var(--color-border); }

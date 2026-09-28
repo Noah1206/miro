@@ -61,8 +61,9 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
             drag={reduce ? false : 'y'} dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.06, bottom: 0.5 }} onDragEnd={onDragEnd}
             style={{
               position: 'fixed', bottom: 0, zIndex: 61, maxHeight: `${snap.full * 100}dvh`,
-              background: 'var(--color-surface-2)', borderTop: choice ? 'none' : '1px solid var(--color-border)',
-              borderRadius: choice ? '20px 20px 0 0' : 'var(--radius-sheet) var(--radius-sheet) 0 0', touchAction: 'none',
+              // 모서리·테두리는 모든 시트가 같다 — choice 는 제목 크기와 손잡이만 다르다.
+              background: 'var(--color-surface-2)', borderTop: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0', touchAction: 'none',
               paddingBottom: 'env(safe-area-inset-bottom)', display: 'flex', flexDirection: 'column',
               maxWidth: 720, margin: '0 auto',
             }}>

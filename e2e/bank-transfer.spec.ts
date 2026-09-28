@@ -14,18 +14,20 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   // 1) 주문 — 입금 계좌와 대조 코드를 받는다. 아직 Pro 가 아니다.
   // 환불 조건은 사기 전에 보여야 한다.
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
+  // 환불 조건은 사기 전에 볼 수 있다 — 시트의 ? 뒤에 있다.
+  await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
   await expect(page.locator('[data-refund-terms]')).toContainText('7일')
   await page.locator('input[value="pass"]').check()
   await page.getByRole('button', { name: '입금 안내 받기' }).click()
   const awaiting = page.locator('[data-bank-order="awaiting"]')
-  await expect(awaiting).toContainText('000-000-0000')
   await expect(awaiting.locator('[data-order-amount="9900"]')).toBeVisible()
-  const code = (await awaiting.textContent())!.match(/입금자명 · ([A-Z2-9]{6})/)![1]!
-  // 토스는 금액까지 채운 송금창이 열리고, 카카오뱅크는 앱만 열린다 — 그 차이가 화면에 보인다.
+  // 계좌번호·대조 코드는 ? 뒤에 있다. 송금 버튼 둘은 같은 위상으로 보인다.
+  await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
+  await expect(awaiting).toContainText('000-000-0000')
+  const code = (await awaiting.locator('[data-order-help]').textContent())!.match(/입금자명 · ([A-Z2-9]{6})/)![1]!
   await expect(awaiting.locator('[data-open-bank="toss"]')).toBeVisible()
   await expect(awaiting.locator('[data-open-bank="kakaobank"]')).toBeVisible()
-  await expect(awaiting).toContainText('채워진 송금창이 열려요')
-  await expect(awaiting).toContainText('카카오뱅크는 계좌번호를 복사해')
+  await expect(awaiting.locator('[data-confirm-deposit]')).toBeDisabled()
 
   await page.goto(`${WEB}/my/subscription`)
   await expect(page.locator('[data-plan="free"]')).toBeVisible()   // 주문은 지급이 아니다
