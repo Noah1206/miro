@@ -3,7 +3,10 @@
 .balanceLine { display: flex; justify-content: space-between; gap: var(--space-3); align-items: baseline; font-size: var(--font-caption); }
 .inline { display: inline-flex; align-items: center; gap: var(--space-2); }
 .amount { margin: var(--space-3) 0 var(--space-5); font-variant-numeric: tabular-nums; }
-.center { display: grid; justify-items: center; gap: var(--space-2); text-align: center; padding: var(--space-2) 0 var(--space-3); }
+.center { display: grid; justify-items: center; gap: var(--space-3); text-align: center; padding-top: var(--space-2); }
+.center h2 { margin: 0; line-height: 1.3; }
+.stack { display: grid; gap: var(--space-5); }
+.actions { display: grid; gap: var(--space-2); }
 .dangerIcon { width: 40px; height: 40px; color: var(--color-danger); }
 /* 설명은 ? 뒤에 둔다 — 화면에는 숫자와 행동만 남긴다. */
 .helpButton { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; font-size: var(--font-caption); font-weight: var(--weight-semibold); flex-shrink: 0; }

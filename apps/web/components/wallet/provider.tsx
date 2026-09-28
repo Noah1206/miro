@@ -182,10 +182,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
     <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}>
       <div className={styles.content} data-pay-state={state}>
-        {insufficient ? <div className={styles.center} data-balance-required={needed?.cost}>
-          <svg className={styles.dangerIcon} aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
-          <h2 className="t-title-2">크레딧이 부족해요</h2>
-        </div> : wallet && <div className={styles.balanceLine}>
+        {!insufficient && wallet && <div className={styles.balanceLine}>
           <span>충전 잔액</span>
           <span className={styles.inline}>
             <strong data-sheet-balance={wallet.rechargeRemaining}>{wallet.rechargeRemaining.toLocaleString('ko-KR')} 크레딧</strong>
@@ -194,10 +191,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         </div>}
         {error && <Notice tone="danger" role="alert">{error}</Notice>}
         {state === 'failed' && pending.current && <Button onClick={() => void retryAction()}>다시 확인하기</Button>}
-        {insufficient ? <>
-          <Button variant="secondary" style={SHEET_BUTTON} full onClick={() => setStage('catalog')}>충전하고 이어가기</Button>
-          <Button variant="ghost" full onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
-        </> : waiting ? <section className={styles.content} data-bank-order={order.status}>
+        {insufficient ? <div className={styles.stack} data-balance-required={needed?.cost}>
+          {/* 세로 리듬: 아이콘–제목 12, 제목–버튼 24, 버튼–버튼 8, 아래 여백은 시트의 24. */}
+          <div className={styles.center}>
+            <svg className={styles.dangerIcon} aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
+            <h2 className="t-title-2">크레딧이 부족해요</h2>
+          </div>
+          <div className={styles.actions}>
+            <Button variant="secondary" style={SHEET_BUTTON} full onClick={() => setStage('catalog')}>충전하고 이어가기</Button>
+            <Button variant="ghost" full onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
+          </div>
+        </div> : waiting ? <section className={styles.content} data-bank-order={order.status}>
           <h3 className="t-title-3">{order.status === 'approved' ? '입금 확인 · 지급 대기' : '입금 대기 중'}</h3>
           {order.status === 'awaiting' && wallet?.account && <>
             <div>
