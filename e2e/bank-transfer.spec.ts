@@ -1,5 +1,10 @@
 import { signUp } from './helpers'
 import { expect, test } from '@playwright/test'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import { db, bankTransferOrders } from '../packages/db/src'
+// The db workspace owns the existing Drizzle dependency.
+const { desc } = createRequire(join(__dirname, '../packages/db/package.json'))('drizzle-orm')
 const WEB = process.env.E2E_BASE ?? 'http://localhost:3000'
 const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
 
@@ -21,11 +26,9 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   const awaiting = page.locator('[data-bank-order="awaiting"]')
   await expect(awaiting.locator('[data-order-amount="3000"]')).toBeVisible()
   // 계좌번호·대조 코드는 ? 뒤에 있다. 송금 버튼 둘은 같은 위상으로 보인다.
-  // 계좌번호·대조 코드·환불 조건은 입금 전에 ? 뒤에서 볼 수 있다.
-  await page.getByRole('dialog').getByRole('button', { name: '도움말' }).click()
-  await expect(awaiting).toContainText('000-000-0000')
-  await expect(awaiting.locator('[data-refund-terms]')).toContainText('7일')
-  const code = (await awaiting.locator('[data-order-help]').textContent())!.match(/입금자명 · ([A-Z2-9]{6})/)![1]!
+  // 화면에는 금액과 송금 버튼만 있다. 운영자가 찾는 대조 코드는 주문 행에서 읽는다.
+  const [placed] = await db.select().from(bankTransferOrders).orderBy(desc(bankTransferOrders.createdAt)).limit(1)
+  const code = placed!.referenceCode
   await expect(awaiting.locator('[data-open-bank="toss"]')).toBeVisible()
   await expect(awaiting.locator('[data-open-bank="kakaobank"]')).toBeVisible()
   await expect(awaiting.locator('[data-confirm-deposit]')).toBeDisabled()

@@ -78,6 +78,9 @@ test('the recharge page reports real usage and takes orders without granting', a
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
   await expect(page.getByRole('dialog')).toContainText('충전할 금액')
   await page.getByRole('button', { name: '닫기', exact: true }).click()
+  // 환불 조건은 지갑 카드의 ? 뒤에 있다 — 사기 전에 볼 수 있다.
+  await page.getByRole('button', { name: '도움말' }).click()
+  await expect(page.locator('[data-refund-terms]')).toContainText('7일')
 
   // 제공량을 다 써도 충전소는 소진 상태와 MIRO 로 이어가는 길을 알린다.
   await page.evaluate(() => fetch('/api/dev/usage', { method: 'POST' }))

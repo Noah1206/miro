@@ -4,7 +4,6 @@ import { usePathname } from 'next/navigation'
 import { Button, Notice, Sheet, useToast } from '@/components/ui'
 import { readWallet, purchaseCredits } from '@/app/(main)/recharge/wallet-actions'
 import { SHEET_BUTTON, TransferActions } from '@/app/(main)/recharge/transfer-actions'
-import { COPY } from '@/lib/copy'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
 import styles from './wallet.module.css'
 
@@ -34,7 +33,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [selected, setSelected] = useState('')
   const [expanded, setExpanded] = useState(false)
   const [checking, setChecking] = useState(false)
-  const [help, setHelp] = useState(false)
   const [transferTapped, setTransferTapped] = useState(false)
   const pending = useRef<Pending | null>(null)
   const epoch = useRef(0)
@@ -54,7 +52,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setOpen(false); setState('idle'); setError(null); setNeeded(null)
   }, [pathname])
   useEffect(() => () => { epoch.current++; pending.current = null }, [])
-  useEffect(() => { setHelp(false); setTransferTapped(false) }, [stage, wallet?.order?.id])
+  useEffect(() => { setTransferTapped(false) }, [stage, wallet?.order?.id])
 
   async function execute(request: Pending, token: number) {
     if (token !== epoch.current || executing.current) return
@@ -180,8 +178,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync: setWallet, openRecharge: () => { void openRecharge() }, requireBalance }}>
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
-    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}
-      headerAction={!insufficient && !done && waiting && wallet?.account ? <HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-sheet-help" /> : undefined}>
+    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}>
       <div className={styles.stack} data-pay-state={state}>
         {!insufficient && wallet && <div className={styles.balanceLine}>
           <span>충전 잔액</span>
@@ -206,19 +203,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               <p className={`t-caption ${styles.muted}`}>보낼 금액</p>
               <p className={`t-title-1 ${styles.amount}`} style={{ margin: 'var(--space-1) 0 0' }} data-order-amount={order.amountMinor}>{krw(order.amountMinor)}</p>
             </div>
-            {help && <div id="wallet-sheet-help" className={styles.help} data-order-help>
-              <p className="t-body">{wallet.account.bank} <b>{wallet.account.number}</b> ({wallet.account.holder})</p>
-              <p className="t-body">입금자명 · <b>{order.depositName}</b></p>
-              <p className={`t-caption ${styles.muted}`}>입금자명에 위 코드를 적으면 더 빨리 확인돼요. {new Date(order.expiresAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'medium', timeStyle: 'short' })}까지 입금해 주세요. 닫아도 주문은 남아요.</p>
-              <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.pass, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{line}</li>)}</ul>
-            </div>}
             <TransferActions bank={wallet.account.bank} accountNumber={wallet.account.number} amount={order.amountMinor} onOpen={() => setTransferTapped(true)} />
           </>}
           {order.status === 'approved' && <p className="t-body">입금이 확인됐어요. 잔액 반영까지 최대 15분 정도 걸릴 수 있어요.</p>}
           {/* 송금 버튼을 눌러야 열린다 — 그 전엔 흐린 글씨로 잠겨 있다. */}
-          <Button variant="secondary" full data-confirm-deposit onClick={() => void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
-            disabled={order.status === 'awaiting' && !transferTapped}
-            style={{ ...SHEET_BUTTON, ...(order.status === 'awaiting' && !transferTapped ? { color: 'var(--color-text-quaternary)' } : {}) }}>입금 확인하기</Button>
+          <div className={styles.actions}>
+            <Button variant="secondary" full data-confirm-deposit onClick={() => void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
+              disabled={order.status === 'awaiting' && !transferTapped}
+              style={{ ...SHEET_BUTTON, ...(order.status === 'awaiting' && !transferTapped ? { color: 'var(--color-text-quaternary)' } : {}) }}>입금 확인하기</Button>
+            <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
+          </div>
         </section> : done ? <>
           <Notice>지급이 완료됐어요. 잔액에 반영했습니다.</Notice>
           <Button full variant="primary" onClick={cancel}>확인</Button>

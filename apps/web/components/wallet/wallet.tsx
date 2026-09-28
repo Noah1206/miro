@@ -4,6 +4,7 @@ import { motion } from 'motion/react'
 import { Button, Card, Notice, Sheet, TransitionLink } from '@/components/ui'
 import { readWalletHistory } from '@/app/(main)/recharge/wallet-actions'
 import { tween } from '@/lib/motion/tokens'
+import { COPY } from '@/lib/copy'
 import type { WalletEntry, WalletSnapshot } from '@/lib/wallet/types'
 import { HelpToggle, useWallet } from './provider'
 import styles from './wallet.module.css'
@@ -39,7 +40,10 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
         {value.rechargeRemaining.toLocaleString('ko-KR')} <span className="t-body">크레딧</span>
       </motion.p>
       <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'} style={{ marginTop: 'var(--space-5)' }}>충전하기</Button>
-      {help && <p id="wallet-help" className={`t-caption ${styles.muted}`} style={{ marginTop: 'var(--space-3)' }}>월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요.</p>}
+      {help && <div id="wallet-help" className={styles.help} style={{ marginTop: 'var(--space-3)' }}>
+        <p className={`t-caption ${styles.muted}`}>월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요. 충전은 계좌이체로 받고, 입금이 확인되면 지급해요.</p>
+        <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.pass, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{line}</li>)}</ul>
+      </div>}
     </Card>
     <div className={styles.balanceLine}>
       <span data-usage-remaining={value.monthlyRemaining}>이번 달 남은 제공량 · {value.monthlyRemaining.toLocaleString('ko-KR')}</span>
