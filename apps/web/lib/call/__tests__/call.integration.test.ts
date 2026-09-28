@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { and, eq } from 'drizzle-orm'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import { db, callSessions, characters, messages, relationships, roleplaySessions, usageWindows, userSettings, users, worldStates, worlds } from '@miro/db'
 import { POLICY } from '@miro/config'
 import { acceptCall, declineCall, endCall, expireCalls, startIncomingCall, startOutgoingCall } from '../service'
@@ -25,6 +25,17 @@ describeDb('calls', () => {
     return { userId: u!.id, sessionId: s!.id }
   }
   afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)); await dropRealityClones() })
+
+  it('a repeated outgoing request reserves once and returns the original call', async () => {
+    const { userId, sessionId } = await session()
+    const requestId = randomUUID()
+    await Promise.allSettled(Array.from({ length: 5 }, () => startOutgoingCall(userId, sessionId, 'voice', DAY, requestId)))
+    const callId = await startOutgoingCall(userId, sessionId, 'voice', DAY, requestId)
+    expect(callId).toBe(requestId)
+    expect(await db.select().from(callSessions).where(eq(callSessions.sessionId, sessionId))).toHaveLength(1)
+    const [window] = await db.select().from(usageWindows).where(eq(usageWindows.userId, userId))
+    expect(window!.consumed).toBe(POLICY.usage.weights.voiceCallPerMinute)
+  })
 
   it('only one ringing call per session', async () => {
     const { sessionId } = await session()

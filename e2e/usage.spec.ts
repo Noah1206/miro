@@ -66,22 +66,23 @@ test('the recharge page reports real usage and takes orders without granting', a
 
   // 내 요금제에서 충전소로 들어간다.
   await page.goto(`${BASE}/my/subscription`)
-  await page.getByRole('link', { name: '충전소' }).click()
+  await page.getByRole('link', { name: 'Miro Pay' }).click()
   await expect(page).toHaveURL(/\/recharge$/)
 
   // 실제 월간 사용량을 읽어 보여준다.
-  await expect(page.locator('[data-usage-remaining]')).toBeVisible()
-  await expect(page.locator('[data-usage-day]').first()).toBeVisible()
+  await expect(page.locator('[data-usage-remaining]').first()).toBeVisible()
+  await expect(page.locator('[data-usage-day]')).toHaveCount(0)
   // 잔액은 실제 값이고, 지급은 주문만으로 일어나지 않는다.
   await expect(page.locator('[data-recharge-balance="0"]')).toBeVisible()
   // E2E 는 계좌가 설정돼 있어 계좌이체 주문 카드가 열린다. 환불 조건도 사기 전에 보인다.
-  await expect(page.locator('[data-bank-order="open"]')).toBeVisible()
+  await page.getByRole('button', { name: '충전하기', exact: true }).click()
   await expect(page.locator('[data-refund-terms]')).toContainText('7일')
+  await page.getByRole('button', { name: '닫기', exact: true }).click()
 
   // 제공량을 다 써도 충전소는 소진 상태와 MIRO 로 이어가는 길을 알린다.
   await page.evaluate(() => fetch('/api/dev/usage', { method: 'POST' }))
   await page.reload()
-  await expect(page.locator('[data-usage-spent]')).toContainText('MIRO 기본 대화는 계속 이어갈 수 있어요')
+  await expect(page.locator('[data-usage-spent]').first()).toContainText('MIRO 기본 대화는 계속 이어갈 수 있어요')
 })
 
 test('the recharge page requires a login', async ({ page }) => {

@@ -13,10 +13,10 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
 
   // 1) 주문 — 입금 계좌와 대조 코드를 받는다. 아직 Pro 가 아니다.
   // 환불 조건은 사기 전에 보여야 한다.
+  await page.getByRole('button', { name: '충전하기', exact: true }).click()
   await expect(page.locator('[data-refund-terms]')).toContainText('7일')
-  const order = page.locator('[data-bank-order="open"] form[data-order-kind="pass"]')
-  await order.getByRole('button', { name: '주문' }).click()
-  await expect(page.locator('[data-order-result="created"]')).toBeVisible()
+  await page.locator('input[value="pass"]').check()
+  await page.getByRole('button', { name: '입금 안내 받기' }).click()
   const awaiting = page.locator('[data-bank-order="awaiting"]')
   await expect(awaiting).toContainText('000-000-0000')
   await expect(awaiting.locator('[data-order-amount="9900"]')).toBeVisible()
@@ -66,16 +66,16 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   await page.goto(`${WEB}/my/subscription`)
   await expect(page.locator('[data-plan="pro"]')).toBeVisible()
   await page.goto(`${WEB}/recharge`)
-  await expect(page.locator('[data-bank-order-history] [data-order-status="approved"]').first()).toBeVisible()
+  await expect(page.locator('[data-wallet-history]')).toContainText('지급 완료')
 })
 
 test('bank transfer: one waiting order at a time', async ({ page }) => {
   await signUp(page, WEB)
   await page.goto(`${WEB}/recharge`)
-  const order = page.locator('[data-bank-order="open"] form[data-order-kind="pass"]')
-  await order.getByRole('button', { name: '주문' }).click()
-  await expect(page.locator('[data-order-result="created"]')).toBeVisible()
-  // 대기 중이면 주문 카드가 사라지고 안내만 남는다.
-  await expect(page.locator('[data-bank-order="open"]')).toHaveCount(0)
+  await page.getByRole('button', { name: '충전하기', exact: true }).click()
+  await page.locator('input[value="pass"]').check()
+  await page.getByRole('button', { name: '입금 안내 받기' }).click()
+  // 대기 중에는 새 구매 버튼이 없고 기존 주문 안내만 남는다.
+  await expect(page.getByRole('button', { name: '입금 안내 받기' })).toHaveCount(0)
   await expect(page.locator('[data-bank-order="awaiting"]')).toBeVisible()
 })

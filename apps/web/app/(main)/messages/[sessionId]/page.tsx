@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import { db, messages, realityContacts } from '@miro/db'
 import { voiceCallAllowed } from '@miro/config'
+import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { Back, Notice, TransitionLink } from '@/components/ui'
@@ -10,7 +11,7 @@ import { TurnsProvider } from '../../chat/[sessionId]/turns'
 import styles from './messages.module.css'
 import { MessengerThread, type MsgItem } from './thread'
 import { MessengerComposer } from './composer'
-import { placeVoiceCall } from './actions'
+import { CallButton } from './call-button'
 import { MESSENGER_KINDS, isMessengerMessage } from '@/lib/messenger'
 
 /**
@@ -48,12 +49,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           <Back href="/archive" />
           <h1 className={styles.title}>{loaded.characterName}</h1>
           {voiceCallAllowed(user.id) && (
-            <form action={placeVoiceCall}>
-              <input type="hidden" name="sessionId" value={sessionId} />
-              <button type="submit" className={styles.headerButton} aria-label="통화">
-                <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" /></svg>
-              </button>
-            </form>
+            <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}
           <TransitionLink href={`/chat/${sessionId}`} className={styles.headerLink}>캐릭터챗</TransitionLink>
         </header>

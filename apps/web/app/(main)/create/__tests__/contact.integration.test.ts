@@ -1,12 +1,15 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { db, users, characters, contactProfiles, roleplaySessions, messages, callSessions } from '@miro/db'
+import { db, users, characters, contactProfiles, roleplaySessions, messages, callSessions, characterRevisions } from '@miro/db'
 import { saveCharacter } from '../actions'
 import { updateCharacter } from '../../my/characters/[id]/edit/actions'
 import { runRealityEvaluations } from '@/lib/reality/scheduler'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { startIncomingCall } from '@/lib/call/service'
+import { loadSession } from '@/lib/simulation/snapshot'
+import { buildContext } from '@miro/engine'
+import { testDatabaseUrl } from '../../../../../../tooling/test-database'
 
 const auth = vi.hoisted(() => ({ userId: '' }))
 vi.mock('@/lib/auth', () => ({ requireUser: async () => ({ id: auth.userId }) }))
@@ -15,24 +18,59 @@ vi.mock('@/lib/analytics/track', () => ({ track: async () => {} }))
 vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
 vi.mock('next/navigation', () => ({ redirect: (url: string) => { throw new Error(`REDIRECT:${url}`) }, notFound: () => { throw new Error('NOT_FOUND') } }))
 
-const describeDb = process.env.DATABASE_URL ? describe : describe.skip
+const describeDb = testDatabaseUrl(process.env.DATABASE_URL) ? describe : describe.skip
 const made: string[] = []
 afterAll(async () => { for (const id of made) { await db.delete(characters).where(eq(characters.ownerId, id)); await db.delete(users).where(eq(users.id, id)) } })
 function form(enabled = true) {
   const fd = new FormData()
-  for (const [k, v] of Object.entries({ name: 'UX Test', title: 'hello', personality: 'calm', startingContext: 'at home', trust: '37', contactFrequency: '63', photoProbability: '17', introDialogue: '[{"role":"character","text":"안녕"}]' })) fd.set(k, v)
+  for (const [k, v] of Object.entries({ creationId: randomUUID(), experienceType: 'reality', name: 'UX Test', title: 'hello', personality: 'calm', startingContext: 'at home', trust: '37', contactFrequency: '63', photoProbability: '17', introDialogue: '[{"role":"character","text":"안녕"}]' })) fd.set(k, v)
   if (enabled) fd.set('contactEnabled', 'on')
   return fd
 }
 async function create(enabled = true) {
   const [u] = await db.insert(users).values({ email: `creator-${randomUUID()}@example.test` }).returning()
   auth.userId = u!.id; made.push(u!.id)
-  await expect(saveCharacter(form(enabled))).rejects.toThrow('REDIRECT:/chat/')
+  expect(await saveCharacter(form(enabled))).toMatch(/^\/chat\//)
   const [c] = await db.select().from(characters).where(eq(characters.ownerId, u!.id))
   const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, c!.id))
   return { c: c!, session: session!, userId: u!.id }
 }
 describeDb('creator Reality wiring', () => {
+  it('saves standard chat once, includes its authored prompt and intro, and never enables Reality', async () => {
+    const [owner] = await db.insert(users).values({ email: `standard-${randomUUID()}@example.test` }).returning()
+    auth.userId = owner!.id; made.push(owner!.id)
+    const creationId = randomUUID()
+    const standard = new FormData()
+    for (const [key, value] of Object.entries({ creationId, experienceType: 'chat', name: '대화 친구', title: '서점에서 만난 사람',
+      personality: '조용하지만 다정하고, 짧은 존댓말로 답한다.', startingContext: '비 오는 날 서점에서 처음 만났다.',
+      introDialogue: '[{"role":"character","text":"어서 오세요."}]' })) standard.set(key, value)
+    const first = await saveCharacter(standard)
+    expect(first).toMatch(/^\/chat\//)
+    expect(await saveCharacter(standard)).toBe(first)
+    const [c] = await db.select().from(characters).where(eq(characters.id, creationId))
+    expect(c).toMatchObject({ ownerId: owner!.id, experienceType: 'chat', isDraft: false })
+    expect(await db.select().from(characters).where(eq(characters.ownerId, owner!.id))).toHaveLength(1)
+    expect(await db.select().from(characterRevisions).where(eq(characterRevisions.characterId, creationId))).toHaveLength(0)
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, creationId))
+    expect(profile!.enabled).toBe(false)
+    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, creationId))
+    expect(await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, creationId))).toHaveLength(1)
+    expect((await db.select().from(messages).where(eq(messages.sessionId, session!.id))).map(row => row.content)).toEqual(['어서 오세요.'])
+    const loaded = await loadSession(session!.id, owner!.id)
+    expect(loaded!.snapshot.experienceType).toBe('chat')
+    const prompt = buildContext(loaded!.snapshot)
+    expect(prompt.system).toContain('짧은 존댓말')
+    expect(prompt.system).toContain('비 오는 날 서점')
+    expect(await evaluateSession(session!.id, new Date(), { inline: true })).toMatchObject({ outcome: 'skipped' })
+    expect(await startIncomingCall(session!.id, 'voice', 'test')).toBeNull()
+    const edited = new FormData()
+    standard.forEach((value, key) => edited.append(key, value))
+    edited.set('personality', '활기차고, 반말로 친근하게 답한다.')
+    expect(await updateCharacter(creationId, edited)).toBe(`/character/${creationId}`)
+    expect((await db.select().from(characters).where(eq(characters.id, creationId)))[0]).toMatchObject({ experienceType: 'chat', personality: '활기차고, 반말로 친근하게 답한다.' })
+    edited.set('contactEnabled', 'on')
+    await expect(updateCharacter(creationId, edited)).rejects.toThrow('CHARACTER_TYPE_SETTINGS_INVALID')
+  })
   it('persists Reality, intro and exact settings, then stops pending contact without downgrading', async () => {
     const { c, session } = await create()
     expect(c.experienceType).toBe('reality')
@@ -40,7 +78,7 @@ describeDb('creator Reality wiring', () => {
     expect((await db.select().from(messages).where(eq(messages.sessionId, session.id))).map(m => m.content)).toEqual(['안녕'])
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'voice_call', reason: 'test', urgency: 1 } }).where(eq(roleplaySessions.id, session.id))
     const off = form(false); off.set('contactChanged', 'on')
-    await expect(updateCharacter(c.id, off)).rejects.toThrow('REDIRECT:/character/')
+    expect(await updateCharacter(c.id, off)).toMatch(/^\/character\//)
     const [updated] = await db.select().from(characters).where(eq(characters.id, c.id))
     const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, c.id))
     expect(updated!.experienceType).toBe('reality')
@@ -49,13 +87,11 @@ describeDb('creator Reality wiring', () => {
     expect(await evaluateSession(session.id, new Date(), { inline: true })).toEqual({ outcome: 'skipped', reason: 'contact_disabled' })
     expect(await startIncomingCall(session.id, 'voice', 'test')).toBeNull()
   })
-  it('does not silently promote a legacy chat, but supports explicit opt-in', async () => {
+  it('does not change the saved type through contact edits', async () => {
     const { c } = await create(false)
-    expect(c.experienceType).toBe('chat')
-    await expect(updateCharacter(c.id, form())).rejects.toThrow('REDIRECT:')
-    expect((await db.select().from(characters).where(eq(characters.id, c.id)))[0]!.experienceType).toBe('chat')
-    const optIn = form(); optIn.set('contactChanged', 'on')
-    await expect(updateCharacter(c.id, optIn)).rejects.toThrow('REDIRECT:')
+    expect(c.experienceType).toBe('reality')
+    const optIn = form(); optIn.set('experienceType', 'chat')
+    await expect(updateCharacter(c.id, optIn)).rejects.toThrow('CHARACTER_TYPE_IMMUTABLE')
     expect((await db.select().from(characters).where(eq(characters.id, c.id)))[0]!.experienceType).toBe('reality')
   })
   // 받는 사람 쪽 통화 거절 설정은 없다 (2026-09-24). 켜진 기능이면 inline 통화는 울린다.

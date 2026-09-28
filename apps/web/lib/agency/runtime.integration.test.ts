@@ -64,7 +64,7 @@ async function readyRevision(loaded: LoadedSession) {
 async function fixture(): Promise<Fixture> {
   const userId = await user()
   const [character] = await db.insert(characters).values({
-    ownerId: userId, name: '지안', personality: value, isPublic: true,
+    ownerId: userId, name: '지안', personality: value, isPublic: true, experienceType: 'reality',
     initialRelationship: { trust: 15, stage: 'stranger' }, sampleDialogue: [],
   }).returning()
   await db.insert(worlds).values({ characterId: character!.id, location: '서울', worldSetting: '현대 서울의 작업실' })

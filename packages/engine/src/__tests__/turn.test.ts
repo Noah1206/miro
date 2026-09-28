@@ -11,6 +11,19 @@ const llm = (over: Record<string, unknown> = {}) => new AIOrchestrator({ chain: 
 
 afterEach(() => vi.unstubAllEnvs())
 describe('runTurn — state update pipeline', () => {
+  it('keeps a standard chat in dialogue even when the provider proposes Reality effects', async () => {
+    const proposed = llm({
+      worldDelta: { currentLocation: '다른 도시' },
+      eventCandidates: [{ type: 'crisis', summary: '갑작스러운 사건', relevance: 1, salience: 1, participantNpcIds: [] }],
+      realityIntent: { channel: 'message', reason: '먼저 연락', urgency: 1 },
+    })
+    const result = await runTurn({ llm: proposed, snapshot: snapshot({ experienceType: 'chat' }), userInput: '안녕' })
+    expect(result.transition.blocks.some(block => block.type === 'dialogue')).toBe(true)
+    expect(result.transition.worldDelta).toBeNull()
+    expect(result.transition.newEvent).toBeNull()
+    expect(result.transition.realityIntent).toBeNull()
+    expect(result.firedRules).toEqual([])
+  })
   it('rules move the relationship; the model only adds nuance', async () => {
     const r = await runTurn({
       llm: llm({ relationshipDelta: { jealousy: 40, trust: 30 } }),

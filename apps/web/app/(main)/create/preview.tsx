@@ -52,7 +52,7 @@ export function snapshot(form: HTMLFormElement): Snapshot {
  * 상세 페이지(character/[slug]/page.tsx)와 같은 순서·같은 부품으로 그린다.
  * 실제 페이지의 구조가 바뀌면 여기도 같이 바꿔야 한다 — 둘이 어긋나면 미리보기가 거짓말을 한다.
  */
-export function DetailPreview({ d, can }: { d: Snapshot | null; can: ContactCapabilities }) {
+export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; can: ContactCapabilities; experienceType: 'chat' | 'reality' }) {
   if (!d) return null
   const name = d.name || '이름'
   // 상세와 같은 문장 규칙: '32세 · 한국 · 검사.' / 'MBTI는 INTJ.'
@@ -91,13 +91,13 @@ export function DetailPreview({ d, can }: { d: Snapshot | null; can: ContactCapa
 
           </div>
 
-          <RealityStrip can={can} />
-          {d.worldSetting && (
+          {experienceType === 'reality' && <RealityStrip can={can} />}
+          {experienceType === 'reality' && d.worldSetting && (
             <Rule label="세계관">
               <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{d.worldSetting}</p>
             </Rule>
           )}
-          <CharacterSettingsView name={name} visual={d.settings.visual} contact={d.settings.contact} can={can} />
+          <CharacterSettingsView name={name} visual={d.settings.visual} contact={experienceType === 'reality' ? d.settings.contact : undefined} can={can} />
 
           <Rule label="첫 장면">
             <div className="detail-prose">
@@ -111,16 +111,16 @@ export function DetailPreview({ d, can }: { d: Snapshot | null; can: ContactCapa
             )}
           </Rule>
 
-          <div style={{ marginTop: 'var(--space-7)' }}>
+          {(experienceType === 'reality' || profile.length > 0) && <div style={{ marginTop: 'var(--space-7)' }}>
             <Accordion title="이 사람에 대해">
               <div className="detail-prose">
-                <p className="t-body-lg" style={{ color: d.personality ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
+                {experienceType === 'reality' && <p className="t-body-lg" style={{ color: d.personality ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
                   {d.personality || '성격을 아직 적지 않았어요.'}
-                </p>
+                </p>}
                 {profile.map((line) => <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>)}
               </div>
             </Accordion>
-          </div>
+          </div>}
 
           <Rule label="댓글 0" action={<span className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>전체보기</span>}>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>아직 댓글이 없어요.</p>

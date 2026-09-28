@@ -1,26 +1,23 @@
-import { signUp } from './helpers'
+import { enterCharacterCreate, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
-/**
- * Scenario 2 (부분) — Character Create → RP 진입. 만들기는 바로 폼이다 (AI 초안 경로 없음).
- * 머리에는 게시 버튼 하나만 있다 — 임시저장 버튼은 만들기 화면에서 없어졌다.
- */
+/** 유형 선택 → 필수 항목 검증 → 게시 → 저장한 세계로 대화 진입. */
 test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async ({ page }) => {
   await signUp(page, BASE)
-  await page.goto(`${BASE}/create`)
+  await enterCharacterCreate(page, BASE, 'reality')
   const publish = page.getByRole('button', { name: '게시', exact: true })
 
-  // 필수가 비어 있으면 게시는 잠기고, 버튼 옆에 무엇이 비었는지 보인다.
+  // 필수가 비어 있으면 게시가 잠긴다. 사용자가 삭제한 중복 안내는 다시 요구하지 않는다.
   await expect(publish).toBeDisabled()
-  await expect(page.getByText('이름 · 소개 · 성격 · 첫 장면 입력', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '임시저장', exact: true })).toBeDisabled()
 
   // 이름·소개·성격 설명은 첫 탭(프로필)에 함께 있다.
   await page.locator('input[name="name"]').fill('윤지훈')
   await page.locator('input[name="title"]').fill('한 줄 소개')
   await page.locator('textarea[name="personality"]').fill('다른 사람한텐 싸가지 없는데 나한테만 잘해준다.')
-  await expect(page.getByText('첫 장면 입력', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: '임시저장', exact: true })).toBeEnabled()
   await expect(publish).toBeDisabled()
 
   // 첫 장면은 인트로 탭의 전체 화면 편집기에 있다. 확인으로 닫아야 게시 버튼이 드러난다.
@@ -42,4 +39,55 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   const world = page.getByRole('dialog').getByText(/검찰청 복도/)
   await expect(world).toBeVisible()
   await expect(world).not.toContainText('어딘가')
+})
+
+test('일반 비공개 초안을 재개해 게시하면 다음 만들기는 새 초안이다', async ({ page }) => {
+  await signUp(page, BASE)
+  const create = page.getByRole('button', { name: '만들기', exact: true })
+  await create.click()
+  const sheet = page.getByRole('dialog', { name: '어떤 캐릭터를 만들까요?' })
+  await expect(sheet).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(sheet).toBeHidden()
+  await expect(create).toBeFocused()
+  await create.click()
+  await sheet.getByRole('button', { name: /^일반 캐릭터/ }).click()
+  await expect(page.getByRole('heading', { name: '일반 캐릭터', exact: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: '관계', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('tab', { name: '일상·연락', exact: true })).toHaveCount(0)
+  await page.getByLabel('이름', { exact: true }).fill('비공개서점')
+  await page.getByLabel('소개', { exact: true }).fill('따뜻한 차를 건네는 서점 주인')
+  await page.getByLabel('성격·말투 설정', { exact: true }).fill('차분하고 다정한 존댓말을 쓴다.')
+  await page.getByRole('switch', { name: /다른 사람에게 공개/ }).uncheck()
+  await page.getByRole('tab', { name: '인트로', exact: true }).click()
+  await page.getByLabel('첫 장면', { exact: true }).fill('비 오는 저녁의 서점에서 만났다.')
+  await page.getByRole('button', { name: '인트로 확인' }).click()
+  await page.getByRole('button', { name: '임시저장', exact: true }).click()
+  await expect(page).toHaveURL(/\/my\/characters\/[0-9a-f-]+\/edit$/)
+  await page.reload()
+  await expect(page.getByRole('switch', { name: /다른 사람에게 공개/ })).not.toBeChecked()
+  await expect(page.getByLabel('이름', { exact: true })).toHaveValue('비공개서점')
+  await page.getByRole('button', { name: '게시', exact: true }).click()
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/)
+  await expect(page.getByRole('link', { name: '문자', exact: true })).toHaveCount(0)
+  await page.goto(`${BASE}/my?filter=private`)
+  await expect(page.getByRole('link', { name: /비공개서점, 비공개/ })).toBeVisible()
+  await page.getByRole('button', { name: '만들기', exact: true }).click()
+  await page.getByRole('dialog').getByRole('button', { name: /^일반 캐릭터/ }).click()
+  await expect(page).toHaveURL(/\/create\?type=chat&draft=/)
+  await expect(page.getByLabel('이름', { exact: true })).toHaveValue('')
+})
+
+test('일반과 미로의 작성 중 내용이 서로 섞이지 않는다', async ({ page }) => {
+  await signUp(page, BASE)
+  await enterCharacterCreate(page, BASE, 'chat')
+  await page.getByLabel('이름', { exact: true }).fill('일반초안')
+  await enterCharacterCreate(page, BASE, 'reality')
+  await expect(page.getByLabel('이름', { exact: true })).toHaveValue('')
+  await page.getByLabel('이름', { exact: true }).fill('미로초안')
+  await expect(page.getByRole('tab', { name: '관계', exact: true })).toBeVisible()
+  await enterCharacterCreate(page, BASE, 'chat')
+  await expect(page.getByLabel('이름', { exact: true })).toHaveValue('일반초안')
+  await enterCharacterCreate(page, BASE, 'reality')
+  await expect(page.getByLabel('이름', { exact: true })).toHaveValue('미로초안')
 })

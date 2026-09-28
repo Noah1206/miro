@@ -23,6 +23,7 @@ describeDb('creator fields shared by dialogue and proactive context', () => {
     ]).returning()
     userIds.push(owner!.id, other!.id)
     const form = new FormData()
+    form.set('experienceType', 'reality'); form.set('intent', 'draft')
     for (const [key, value] of Object.entries({
       name: '서린', personality: '약속을 지키지만 누구에게나 다정하지 않다.', age: '29', nationality: '한국',
       occupation: '복원사', mbti: 'intj', hobbies: '독서,산책', dislikes: '거짓말', jealousy: '21', initiative: '36', emotionalExpression: '42',

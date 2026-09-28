@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { asc, eq } from 'drizzle-orm'
-import { db, characters, characterRevisions, characterRuntimeStates, roleplaySessions, users } from '@miro/db'
+import { db, characters, characterRevisions, characterRuntimeStates, contactProfiles, roleplaySessions, users, worlds } from '@miro/db'
 import { hashAuthoredCharacter } from '@miro/engine'
 import { saveCharacter } from '@/app/(main)/create/actions'
 import { updateCharacter } from '@/app/(main)/my/characters/[id]/edit/actions'
@@ -16,6 +16,8 @@ const effects = vi.hoisted(() => ({
 }))
 vi.mock('@/lib/auth', () => ({ requireUser: async () => ({ id: effects.userId }) }))
 vi.mock('@/lib/storage/images', () => ({ resolveCharacterImages: async () => [] }))
+// Routine scheduling belongs to a different subsystem; these assertions count revision jobs only.
+vi.mock('@/lib/reality/routine', () => ({ characterAvailability: async () => null }))
 vi.mock('@/lib/analytics/track', () => ({ track: async () => {} }))
 vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
 vi.mock('next/navigation', () => ({ redirect: (url: string) => { throw new Error(`REDIRECT:${url}`) }, notFound: () => { throw new Error('NOT_FOUND') } }))
@@ -44,13 +46,15 @@ async function newUser() {
 }
 function form(personality = '약속을 지키고 감정을 절제한다.') {
   const value = new FormData()
+  value.set('experienceType', 'reality')
+  value.set('creationId', randomUUID())
   for (const [key, text] of Object.entries({ name: '리비전', title: '소개', personality, mood: '드라마',
     startingContext: '서울의 서점에서 만난다.', worldSetting: '현대 서울의 서점.', jealousy: '50', initiative: '50', emotionalExpression: '50', isPublic: 'on' })) value.set(key, text)
   return value
 }
 async function save(value = form()) {
   effects.userId = await newUser()
-  await expect(saveCharacter(value)).rejects.toThrow('REDIRECT:/chat/')
+  expect(await saveCharacter(value)).toMatch(/^\/chat\//)
   const [character] = await db.select().from(characters).where(eq(characters.ownerId, effects.userId))
   const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, character!.id))
   return { character: character!, session: session!, userId: effects.userId }
@@ -88,6 +92,25 @@ describe('disabled revision helpers', () => {
 })
 
 describeDb('authored revision save/edit/start lifecycle', () => {
+  it('starts a standard chat without capturing or compiling agency state', async () => {
+    const ownerId = await newUser()
+    const viewerId = await newUser()
+    const [character] = await db.insert(characters).values({
+      ownerId, experienceType: 'chat', isPublic: true, isDraft: false,
+      name: '일반 대화', personality: '차분하다.', images: ['https://img.test/chat.png'],
+    }).returning({ id: characters.id })
+    await db.insert(worlds).values({ characterId: character!.id, location: '서울' })
+    // A stale contact setting must not turn a standard character into a Reality one.
+    await db.insert(contactProfiles).values({ characterId: character!.id, enabled: true })
+
+    const started = await createRoleplaySession(viewerId, character!.id)
+    expect(started.created).toBe(true)
+    expect(await revisions(character!.id)).toEqual([])
+    expect(await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, started.sessionId))).toEqual([])
+    expect(effects.tasks).toEqual([])
+    expect(effects.contexts).toEqual([])
+  })
+
   it('pins the initial pending source when a legacy session first opts in, even if edited before compilation', async () => {
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
     const saved = await save()
@@ -99,7 +122,7 @@ describeDb('authored revision save/edit/start lifecycle', () => {
     expect(original!.status).toBe('pending')
     const [pin] = await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, saved.session.id))
     expect(pin!.revisionId).toBe(original!.id)
-    await expect(updateCharacter(saved.character.id, form('더 솔직하게 감정을 표현한다.'))).rejects.toThrow('REDIRECT:/character/')
+    expect(await updateCharacter(saved.character.id, form('더 솔직하게 감정을 표현한다.'))).toMatch(/^\/character\//)
     await flush()
     const fresh = (await loadSession(saved.session.id, saved.userId))!.snapshot
     expect(fresh.character.personality.personality).toBe('더 솔직하게 감정을 표현한다.')
@@ -129,7 +152,7 @@ describeDb('authored revision save/edit/start lifecycle', () => {
     const changed = form('잘못을 인정하고 사과한다.')
     changed.set('jealousy', '80'); changed.set('initiative', '20')
     changed.set('mood', '미스터리'); changed.append('agencyExplicitField', 'personality.initiative')
-    await expect(updateCharacter(saved.character.id, changed)).rejects.toThrow('REDIRECT:/character/')
+    expect(await updateCharacter(saved.character.id, changed)).toMatch(/^\/character\//)
     const [original, second] = await revisions(saved.character.id)
     expect(original).toEqual(first)
     expect(second!.authored.explicitFields).toEqual(expect.arrayContaining(['personality.jealousy', 'personality.initiative']))
@@ -146,7 +169,7 @@ describeDb('authored revision save/edit/start lifecycle', () => {
     // ai_usage.request_id is a uuid column; anything else makes the budget reservation, and the compile, fail.
     expect(effects.contexts.every(context => /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(String(context.requestId)))).toBe(true)
 
-    await expect(updateCharacter(saved.character.id, changed)).rejects.toThrow('REDIRECT:/character/')
+    expect(await updateCharacter(saved.character.id, changed)).toMatch(/^\/character\//)
     await flush()
     expect(await revisions(saved.character.id)).toEqual(ready)
     expect(effects.generations).toBe(2) // Ready immutable rows cannot be recompiled by repeated saves.
@@ -192,7 +215,7 @@ describeDb('authored revision save/edit/start lifecycle', () => {
   it('with an explicit session cohort, ordinary saves and edits capture and compile nothing until a session is listed', async () => {
     vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', randomUUID())
     const saved = await save()
-    await expect(updateCharacter(saved.character.id, form('편집해도 캡처하지 않는다.'))).rejects.toThrow('REDIRECT:/character/')
+    expect(await updateCharacter(saved.character.id, form('편집해도 캡처하지 않는다.'))).toMatch(/^\/character\//)
     expect(await revisions(saved.character.id)).toEqual([])
     expect(effects.tasks).toEqual([])
     vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', saved.session.id)

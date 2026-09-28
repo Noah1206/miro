@@ -6,6 +6,7 @@ import { testDatabaseUrl } from '../../../tooling/test-database'
 import { parseCharacterForm } from '../app/(main)/create/parse'
 import { homePage, searchPage } from './home'
 import { searchGenres, searchNeedle, searchQuery, searchUrl } from './search-params'
+import { MOODS } from './genres'
 
 const databaseUrl = process.env.DATABASE_URL
 const describeDb = databaseUrl && (() => {
@@ -105,6 +106,7 @@ describeDb('search page visibility and cursor', () => {
     expect((await searchPage(viewer, '%_mix')).items.map(item => item.id)).toContain(id)
     expect((await searchPage(viewer, '느와르')).items.map(item => item.id)).toContain(id)
     expect((await searchPage(viewer, '', null, '느와르')).items.map(item => item.id)).toContain(id)
+    expect((await searchPage(viewer, prefix, null, null, [...MOODS])).items.map(item => item.id)).toContain(id)
     expect((await searchPage(viewer, '', null, '와르')).items.map(item => item.id)).not.toContain(id)
     expect((await searchPage(viewer, '%Amix')).items.map(item => item.id)).not.toContain(id)
   })
@@ -114,8 +116,10 @@ describeDb('search page visibility and cursor', () => {
     const viewer = await user()
     const genreA = `${prefix}A`
     const genreB = `${prefix}B`
+    const createdName = `장르${randomUUID().slice(0, 6)}`
     const form = new FormData()
-    form.set('name', `${prefix} created`)
+    form.set('experienceType', 'chat'); form.set('intent', 'draft')
+    form.set('name', createdName)
     form.set('personality', '조용하다.')
     form.set('mood', `${genreA},${genreB}`)
     const parsed = parseCharacterForm(form)
@@ -146,7 +150,7 @@ describeDb('search page visibility and cursor', () => {
     expect((await searchPage(owner, '', null, null, [genreB])).items.map(item => item.id)).toContain(privateCard)
     expect((await searchPage(viewer, `${prefix} alternate`, null, null, [genreB])).items.map(item => item.id)).toEqual([alternate])
     expect((await searchPage(viewer, `${prefix} keyword`, null, genreA, [genreA])).items).toEqual([])
-    expect((await searchPage(viewer, `${prefix} created`, null, genreB, [genreA])).items.map(item => item.id)).toEqual([created])
+    expect((await searchPage(viewer, createdName, null, genreB, [genreA])).items.map(item => item.id)).toEqual([created])
     expect((await searchPage(viewer, '', null, genreA)).items.map(item => item.id)).toContain(keywordOnly)
     await expect(searchPage(viewer, '', first.nextCursor, null, [genreA])).rejects.toThrow('INVALID_CURSOR')
     const [schema] = await db.execute<{ installed: string | null }>(sql`SELECT to_regclass('miro_perf.character_search_docs')::text AS installed`)
@@ -154,7 +158,7 @@ describeDb('search page visibility and cursor', () => {
       const previous = process.env.MIRO_FEATURE_INDEXED_DISCOVERY
       process.env.MIRO_FEATURE_INDEXED_DISCOVERY = '1'
       try {
-        expect((await searchPage(viewer, `${prefix} created`, null, genreB, [genreA])).items.map(item => item.id)).toEqual([created])
+        expect((await searchPage(viewer, createdName, null, genreB, [genreA])).items.map(item => item.id)).toEqual([created])
         expect((await searchPage(viewer, `${prefix} keyword`, null, null, [genreA])).items).toEqual([])
       } finally {
         if (previous === undefined) delete process.env.MIRO_FEATURE_INDEXED_DISCOVERY
@@ -171,10 +175,19 @@ describe('search query normalization', () => {
     expect(searchNeedle('   ')).toBe('')
     expect(searchGenres(['느와르', '드라마', '느 와 르'])).toEqual(searchGenres(['드라마', '느와르']))
     expect(searchGenres(['Custom Genre', 'customgenre'])).toEqual(['customgenre'])
-    expect(searchGenres(Array(6).fill(null).map((_, index) => `장르${index}`))).toBeNull()
+    expect(searchGenres(Array(6).fill(null).map((_, index) => `장르${index}`))).toHaveLength(6)
     expect(searchGenres(['장르·혼합'])).toBeNull()
     expect(searchGenres(['가'.repeat(21)])).toBeNull()
     expect(searchUrl('/home/search', '강태준', null, ['느와르', '드라마'])).not.toContain('type=')
     expect(searchUrl('/home/search', '', null, ['느와르', '드라마', '느와르'])).toBe(searchUrl('/home/search', '', null, ['드라마', '느와르']))
+  })
+
+  it('accepts every displayed genre and preserves the selection in the search URL', () => {
+    const genres = searchGenres([...MOODS])
+    expect(genres).toHaveLength(MOODS.length)
+    expect(genres).toEqual(expect.arrayContaining([...MOODS]))
+    const url = new URL(searchUrl('/home/search', '', null, [...MOODS]), 'http://localhost')
+    expect(searchGenres(url.searchParams.getAll('genre'))).toEqual(genres)
+    expect(searchGenres(Array.from({ length: 21 }, (_, index) => `장르${index}`))).toBeNull()
   })
 })

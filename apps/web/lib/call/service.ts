@@ -1,4 +1,5 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
+import { randomUUID } from 'node:crypto'
 import { POLICY, feature, voiceCallAllowed, voiceCallTesters } from '@miro/config'
 import { db, callSessions, characters, contactProfiles, messages, realityContacts, relationships, roleplaySessions, userSettings, users } from '@miro/db'
 import type { CallChannel } from '@miro/domain'
@@ -17,7 +18,7 @@ const usageKind = (c: CallChannel): 'voiceCallPerMinute' | 'videoCallPerMinute' 
  * 사용자가 거는 통화. 캐릭터가 지금 받을 수 있으면(생활 리듬이 free) 바로 연결하고 1분을 먼저 예약한다.
  * 근무·수면 중이면 받지 않는다 — 기록만 남고 사용량은 없다. 성격에 따라 나중에 "못 받아서 미안" 문자가 예약된다.
  */
-export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel, now = new Date()) {
+export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel, now = new Date(), requestId: string = randomUUID()) {
   if (!(channel === 'voice' ? voiceCallAllowed(userId) : feature('videoCall'))) throw new Error('CALL_NOT_AVAILABLE')
   const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType, character: characters, timeZone: userSettings.timeZone, pendingIntent: roleplaySessions.pendingRealityIntent, turnCount: roleplaySessions.turnCount })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
@@ -26,14 +27,25 @@ export async function startOutgoingCall(userId: string, sessionId: string, chann
   if (!session) throw new Error('SESSION_NOT_FOUND')
   // 통화는 미로 캐릭터와만 한다. 사용량 예약보다 먼저 거절해 차감이 생기지 않게 한다.
   if (session.experienceType !== 'reality') throw new Error('CALL_NOT_AVAILABLE')
+  const previous = await owned(userId, requestId)
+  if (previous) {
+    if (previous.sessionId !== sessionId || previous.channel !== channel || previous.direction !== 'outgoing') throw new Error('CALL_REQUEST_MISMATCH')
+    return previous.id
+  }
 
   const availability = await characterAvailability(session.character.id, now, session.timeZone ?? POLICY.reality.defaultTimeZone)
   if (availability.availability !== 'free') {
     const c = session.character
     const [call] = await db.transaction(async (tx) => {
       const inserted = await tx.insert(callSessions).values({
+        id: requestId,
         sessionId, channel, direction: 'outgoing', status: 'unanswered', reason: availability.label, endedAt: now, result: 'unanswered',
-      }).returning({ id: callSessions.id })
+      }).onConflictDoNothing().returning({ id: callSessions.id })
+      if (!inserted.length) {
+        const [replay] = await tx.select().from(callSessions).where(and(eq(callSessions.id, requestId), eq(callSessions.sessionId, sessionId), eq(callSessions.channel, channel)))
+        if (!replay) throw new Error('CALL_REQUEST_MISMATCH')
+        return [{ id: replay.id }]
+      }
       await tx.insert(messages).values({
         sessionId, role: 'system', kind: 'call_record',
         content: `${label(channel)} 연결 안 됨 — ${availability.label} 중`,
@@ -55,10 +67,16 @@ export async function startOutgoingCall(userId: string, sessionId: string, chann
   }
   const r = await reserve({
     userId, kind: usageKind(channel), units: 1,
-    idempotencyKey: `call:out:${sessionId}:${Date.now()}`,
+    idempotencyKey: `call:out:${sessionId}:${requestId}`,
   })
+  if (r.reused) {
+    const previous = await owned(userId, requestId)
+    if (previous) return previous.id
+    throw new Error('CALL_START_PENDING')
+  }
   try {
   const [call] = await db.insert(callSessions).values({
+    id: requestId,
     sessionId, channel, direction: 'outgoing', status: 'active',
     startedAt: new Date(), usageReservationId: r.reservationId,
   }).returning({ id: callSessions.id })

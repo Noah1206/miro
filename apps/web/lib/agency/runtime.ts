@@ -46,6 +46,7 @@ export async function compileAgencyRevision(revisionId: string, llm: LLMProvider
 
 /** Called only after authenticated loadSession. Recheck here before creating a private revision. */
 export async function loadAgencyRuntime(sessionId: string, userId: string, snapshot: SimulationSnapshot, llm: LLMProvider, now = new Date()): Promise<LoadedAgency | null> {
+  if (snapshot.experienceType !== 'reality') return null
   const mode = characterAgencyMode(sessionId)
   if (mode === 'off') return null // No new schema query when disabled, including during rollout.
   if (mode === 'shadow' && llm.info.mode !== 'mock') return null // No interactive-user budget spent on a comparison.
@@ -53,7 +54,8 @@ export async function loadAgencyRuntime(sessionId: string, userId: string, snaps
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId),
       eq(roleplaySessions.characterId, snapshot.character.id), eq(roleplaySessions.status, 'active'),
-      isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt), isNull(characters.deletedAt))).limit(1)
+      isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt), isNull(characters.deletedAt),
+      eq(characters.experienceType, 'reality'))).limit(1)
   if (!owned) return null
   let [runtime] = await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, sessionId)).limit(1)
   let revision: typeof characterRevisions.$inferSelect | undefined

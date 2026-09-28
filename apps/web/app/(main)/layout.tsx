@@ -5,6 +5,7 @@ import { LoginSheetProvider } from '@/components/ui/login-sheet'
 import { currentUser } from '@/lib/auth'
 import { IncomingCall } from '@/components/incoming-call'
 import { measured } from '@/lib/observe'
+import { WalletProvider } from '@/components/wallet/provider'
 
 const IDS: OAuthProviderId[] = ['google', 'kakao']
 
@@ -15,12 +16,12 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   const providers = user ? [] : IDS.filter(id => resolveOAuth(id)).map(id => ({ id, label: OAUTH_LABEL[id] }))
   return (
     <LoginSheetProvider providers={providers}>
-      <div className="app-shell">
+      <WalletProvider><div className="app-shell">
         {/* 캐릭터가 거는 전화는 어느 화면에서든 울린다. */}
         {user && <IncomingCall userId={user.id} />}
-        <Nav signedIn={!!user} />
+        <Nav signedIn={!!user} userId={user?.id} />
         <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>
-      </div>
+      </div></WalletProvider>
     </LoginSheetProvider>
   )
 }

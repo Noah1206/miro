@@ -62,6 +62,7 @@ export async function createRoleplaySession(
     const [starting] = await tx.select({
       worldId: worlds.id, worldLocation: worlds.location, startingTime: characters.startingTime,
       initialRelationship: characters.initialRelationship, dialogue: characters.sampleDialogue,
+      experienceType: characters.experienceType,
     }).from(characters).innerJoin(worlds, eq(worlds.characterId, characters.id)).where(and(
       eq(characters.id, character.characterId),
       or(eq(characters.isOfficial, true), eq(characters.isPublic, true), eq(characters.ownerId, userId)),
@@ -84,7 +85,8 @@ export async function createRoleplaySession(
     // 캐릭터가 먼저 보낸 첫 마디 — 있으면 대화가 이미 시작된 상태로 들어간다.
     const openingMessages = introMessages(id, starting.dialogue, opts.opening)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
-    const revision = await captureAgencyRevision(tx, character.characterId, { sessionId: id })
+    const revision = starting.experienceType === 'reality'
+      ? await captureAgencyRevision(tx, character.characterId, { sessionId: id }) : null
     await pinAgencyRevision(tx, id, revision)
     return { sessionId: id, created: true, revisionId: revision?.id }
   })

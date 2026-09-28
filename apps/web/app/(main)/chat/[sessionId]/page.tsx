@@ -60,9 +60,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" /></svg>
             </TransitionLink>
           )}
-          <ContextTrigger d={ctx} className={styles.contextButton}>
+          {loaded.experienceType === 'reality' && <ContextTrigger d={ctx} className={styles.contextButton}>
             <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h11M4 18h16" /></svg>
-          </ContextTrigger>
+          </ContextTrigger>}
         </header>
 
         <div className={styles.transcript}>
@@ -71,8 +71,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           {history.length === 0 && s.character.worldRole.startingContext && (
             <p className={styles.opening}>{s.character.worldRole.startingContext}</p>
           )}
-          {s.activeEvents[0] && (
-            <aside style={{ padding: '14px 16px', borderLeft: '2px solid var(--color-accent)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
+          {loaded.experienceType === 'reality' && s.activeEvents[0] && (
+            <aside style={{ marginBottom: 'var(--space-5)', padding: '14px 16px', borderLeft: '2px solid var(--color-accent)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
               <h2 className="t-micro" style={{ marginBottom: 4 }}>지금 이 세계에서</h2>
               <p className="t-body t-quote">{ctx.events[0]!.summary}</p>
             </aside>

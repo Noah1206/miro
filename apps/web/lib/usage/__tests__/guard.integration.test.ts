@@ -103,7 +103,7 @@ describeDb('usage guard', () => {
       await db.insert(subscriptions).values({ userId: paid, provider: 'bank_transfer', status: 'active', renewalStatus: 'cancelled', ...period })
       expect(await effectivePlan(paid, now)).toBe('pro')
       const mocked = await user('free')
-      await db.insert(subscriptions).values({ userId: mocked, provider: 'mock', status: 'active', renewalStatus: 'active', ...period })
+      await db.insert(subscriptions).values({ userId: mocked, provider: 'mock', status: 'active', renewalStatus: 'auto', ...period })
       expect(await effectivePlan(mocked, now)).toBe('free')
       expect(await effectivePlan(await user('pro'), now)).toBe('free')
     } finally { vi.unstubAllEnvs() }

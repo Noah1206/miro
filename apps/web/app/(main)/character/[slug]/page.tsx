@@ -46,7 +46,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       c.socialPosition ? `${withParticle(c.socialPosition, '이다', '다')}.` : '',
       c.mbti ? `MBTI는 ${c.mbti}.` : '',
     ].filter((x) => x && x !== '.').join(' '),
-    [c.speechStyle, c.values].filter(Boolean).join(' '),
+    ...(c.experienceType === 'reality' ? [[c.speechStyle, c.values].filter(Boolean).join(' ')] : []),
   ].filter((line) => line.trim())
 
   return (
@@ -86,20 +86,20 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
-        <Rule label="이 사람에 대해">
+        {(c.experienceType === 'reality' || profile.length > 0) && <Rule label="이 사람에 대해">
           <div className="detail-prose">
-            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>
+            {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>}
             {profile.map((line) => (
               <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
             ))}
           </div>
-        </Rule>
-        {c.worldSetting && (
+        </Rule>}
+        {c.experienceType === 'reality' && c.worldSetting && (
           <Rule label="세계관">
             <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.worldSetting}</p>
           </Rule>
         )}
-        <CharacterSettings characterId={c.id} name={c.name} />
+        <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
 
         <Rule label="첫 장면">
           <div className="detail-prose">

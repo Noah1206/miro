@@ -1,8 +1,7 @@
 'use server'
-import { characterExperience } from '@/lib/character-experience'
 import { introMessages } from '@/lib/intro-dialogue'
 
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
 import { db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
@@ -20,12 +19,12 @@ import { inWrittenOrder } from '@/lib/simulation/commit'
  * - 이미 등록한 캐릭터는 저장 후 소개 페이지로 돌아간다.
  * - 외형이 바뀌면 version 을 올려 이전 외형으로 만든 이미지를 재사용하지 않는다.
  */
-export async function updateCharacter(characterId: string, form: FormData): Promise<void> {
+export async function updateCharacter(characterId: string, form: FormData): Promise<string> {
   const user = await requireUser()
   const owned = await getOwnedCharacter(characterId, user.id)
   if (!owned) notFound()
 
-  const p = parseCharacterForm(form)
+  const p = parseCharacterForm(form, owned.character.experienceType)
   const wasDraft = owned.character.isDraft
   const stillDraft = wasDraft && !p.publish
   const publishNow = wasDraft && p.publish
@@ -37,7 +36,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     await tx.update(characters).set({
       ...p.character, images,
       isDraft: stillDraft,
-      experienceType: characterExperience(p.contact.enabled, owned.character.experienceType, form.get('contactChanged') === 'on'),
+      // The saved type owns the execution policy; editing cannot convert it.
+      experienceType: owned.character.experienceType,
       // 초안은 절대 공개되지 않는다.
       isPublic: !stillDraft && p.isPublicOn,
     }).where(eq(characters.id, characterId))
@@ -46,7 +46,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     if (worldId) await tx.update(worlds).set(p.world).where(eq(worlds.id, worldId))
     else worldId = (await tx.insert(worlds).values({ characterId, ...p.world }).returning({ id: worlds.id }))[0]!.id
 
-    if (!p.contact.enabled) await tx.update(roleplaySessions).set({ pendingRealityIntent: null })
+    if (owned.character.experienceType === 'chat' || !p.contact.enabled) await tx.update(roleplaySessions).set({ pendingRealityIntent: null })
       .where(eq(roleplaySessions.characterId, characterId))
 
     if (owned.contact) await tx.update(contactProfiles).set(p.contact).where(eq(contactProfiles.characterId, characterId))
@@ -61,7 +61,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
       await tx.insert(characterVisualIdentities).values({ characterId, ...p.visual, referenceSource: 'text' })
     }
 
-    const revision = await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields })
+    const revision = owned.character.experienceType === 'reality'
+      ? await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields }) : null
     if (!publishNow) return { sessionId: null, revisionId: revision?.id }
     const [session] = await tx.insert(roleplaySessions).values({
       userId: user.id, characterId, worldId,
@@ -70,10 +71,10 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })
     const openingMessages = introMessages(session!.id, p.character.sampleDialogue)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
-    await pinAgencyRevision(tx, session!.id, revision)
+    if (revision) await pinAgencyRevision(tx, session!.id, revision)
     return { sessionId: session!.id, revisionId: revision?.id }
   })
-  await scheduleAgencyCompilation(result.revisionId, user.id)
+  if (result.revisionId) await scheduleAgencyCompilation(result.revisionId, user.id)
   const sessionId = result.sessionId
 
   revalidatePath(`/character/${characterId}`)
@@ -85,7 +86,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   if (sessionId) {
     void track(user.id, 'character_created', { sessionId })
     void track(user.id, 'rp_started', { sessionId, official: false })
-    redirect(`/chat/${sessionId}`)
+    return `/chat/${sessionId}`
   }
-  redirect(stillDraft ? '/my?filter=draft' : `/character/${characterId}`)
+  return stillDraft ? '/my?filter=draft' : `/character/${characterId}`
 }
