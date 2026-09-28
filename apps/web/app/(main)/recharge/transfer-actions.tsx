@@ -58,7 +58,7 @@ export function TransferActions({ bank, accountNumber, amount, onOpen }: {
  * 브랜드 노랑(#FFE300) 타일 위에 놓았다. 비율·색을 바꾸지 않는다(카카오뱅크 브랜드 규정).
  */
 // 전역 img 는 block 이라 버튼 글자 옆에 두려면 inline 으로 되돌린다.
-const MARK = { display: 'inline-block', verticalAlign: '-5px', marginRight: 8, objectFit: 'contain' } as const
+const MARK = { display: 'inline-block', verticalAlign: '-5px', marginRight: 'var(--space-4)', objectFit: 'contain' } as const
 function TossMark() {
   return <img src="/brand/toss-symbol.png" alt="" width={20} height={20} style={MARK} />
 }
