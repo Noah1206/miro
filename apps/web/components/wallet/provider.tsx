@@ -181,7 +181,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
     <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? '크레딧이 부족해요' : undefined}>
-      <div className={styles.content} data-pay-state={state}>
+      <div className={styles.stack} data-pay-state={state}>
         {!insufficient && wallet && <div className={styles.balanceLine}>
           <span>충전 잔액</span>
           <span className={styles.inline}>
@@ -201,12 +201,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             <Button variant="secondary" style={SHEET_BUTTON} full onClick={() => setStage('catalog')}>충전하고 이어가기</Button>
             <Button variant="ghost" full onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
           </div>
-        </div> : waiting ? <section className={styles.content} data-bank-order={order.status}>
+        </div> : waiting ? <section className={styles.stack} data-bank-order={order.status}>
           <h3 className="t-title-3">{order.status === 'approved' ? '입금 확인 · 지급 대기' : '입금 대기 중'}</h3>
           {order.status === 'awaiting' && wallet?.account && <>
             <div>
               <p className={`t-caption ${styles.muted}`}>보낼 금액</p>
-              <p className={`t-title-1 ${styles.amount}`} style={{ marginBottom: 0 }} data-order-amount={order.amountMinor}>{krw(order.amountMinor)}</p>
+              <p className={`t-title-1 ${styles.amount}`} style={{ margin: 'var(--space-1) 0 0' }} data-order-amount={order.amountMinor}>{krw(order.amountMinor)}</p>
             </div>
             {help && <div id="wallet-sheet-help" className={styles.help} data-order-help>
               <p className="t-body">{wallet.account.bank} <b>{wallet.account.number}</b> ({wallet.account.holder})</p>
