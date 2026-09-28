@@ -40,7 +40,7 @@ describeDb('home cards with multiple worlds', () => {
       let homeGenre: string | null = null
       let cursor: string | null = null
       do {
-        const page = await homePage(cursor)
+        const page = await homePage(null, cursor)
         expect(page.items.length).toBeLessThanOrEqual(12)
         for (const item of page.items) {
           expect(seen.has(item.id)).toBe(false)

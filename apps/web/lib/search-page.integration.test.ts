@@ -66,7 +66,7 @@ describeDb('search page visibility and cursor', () => {
         expect((await searchPage(viewer, prefix)).items.map(item => item.id)).toEqual(expect.arrayContaining([chat, reality]))
         expect((await searchPage(viewer, '', null, 'visibleTag')).items.map(item => item.id)).toEqual([reality])
         expect((await searchPage(owner, '', null, 'visibleTag')).items.map(item => item.id)).toContain(privateCard)
-        expect((await homePage()).items.map(item => item.id)).not.toContain(privateCard)
+        expect((await homePage(null)).items.map(item => item.id)).not.toContain(privateCard)
       } finally {
         if (previous === undefined) delete process.env.MIRO_FEATURE_INDEXED_DISCOVERY
         else process.env.MIRO_FEATURE_INDEXED_DISCOVERY = previous

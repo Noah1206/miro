@@ -164,7 +164,7 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     const seen = new Set<string>()
     let cursor: string | null = null
     do {
-      const page = await homePage(cursor)
+      const page = await homePage(null, cursor)
       expect(page.items.length).toBeLessThanOrEqual(12)
       for (const item of page.items) {
         expect(seen.has(item.id)).toBe(false)
@@ -175,12 +175,22 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     for (const item of created) expect(seen.has(item.id)).toBe(true)
     expect(seen.has(privateReality.id)).toBe(false)
 
+    // 홈은 미로 탭과 같은 규칙: 만든 사람은 자기 비공개 캐릭터를 보고, 임시저장은 아무도 못 본다 (2026-09-29).
+    const ownerHome = new Set<string>()
+    for (let next: string | null = null; ; ) {
+      const page: { items: { id: string }[]; nextCursor: string | null } = await homePage(owner, next)
+      for (const item of page.items) ownerHome.add(item.id)
+      if (!(next = page.nextCursor)) break
+    }
+    expect(ownerHome.has(privateReality.id)).toBe(true)
+    expect(ownerHome.has(draftReality.id)).toBe(false)
+
     const ownerMiro = await miroPage(owner)
     const viewerMiro = await miroPage(viewer)
     expect(ownerMiro.items.some(item => item.id === privateReality.id)).toBe(true)
     expect(ownerMiro.items.some(item => item.id === draftReality.id)).toBe(false)
     expect(viewerMiro.items.some(item => item.id === privateReality.id)).toBe(false)
-    await expect(homePage('invalid')).rejects.toThrow('INVALID_CURSOR')
+    await expect(homePage(null, 'invalid')).rejects.toThrow('INVALID_CURSOR')
   })
 
   it('popular home cards include played reality characters, not unplayed ones', async () => {

@@ -23,7 +23,7 @@ async function run() {
           .where(eq(roleplaySessions.id, request.sessionId))
         process.stdout.write(JSON.stringify({ id: request.id }) + '\n')
       } else {
-        const cards = request.kind === 'feed' ? (await homePage()).items : await popularHomeCards()
+        const cards = request.kind === 'feed' ? (await homePage(null)).items : await popularHomeCards()
         process.stdout.write(JSON.stringify({ id: request.id, ids: cards.map(card => card.id) }) + '\n')
       }
     } catch (error) {

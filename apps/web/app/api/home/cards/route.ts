@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { homePage, popularHomeCards } from '@/lib/home'
+import { currentUser } from '@/lib/auth'
 import { measured, metric } from '@/lib/observe'
 
 export async function GET(request: NextRequest) {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const data = popular
       ? await measured('api.home_popular_data', () => popularHomeCards())
-      : await measured('api.home_page_data', () => homePage(params.get('cursor')))
+      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor')))
     const elapsedMs = metric(popular ? 'api.home_popular_total' : 'api.home_page_total', startedAt)
     return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store', 'Server-Timing': `app;dur=${elapsedMs}` } })
   } catch (error) {

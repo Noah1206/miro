@@ -27,7 +27,7 @@ const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w wher
  * 홈은 공개된 chat·reality 캐릭터를 모두 보여준다. /miro 와 /home/search 는 유형별 목록이다.
  */
 export async function homeRows(): Promise<HomeRow[]> {
-  const { items } = await homePage()
+  const { items } = await homePage(null)
 
   const rows: HomeRow[] = [
     { key: 'shared', title: '전체 이야기', items },
@@ -114,7 +114,9 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   }
 }
 
-export const homePage = (cursor: string | null = null) => cardPage(null, null, cursor)
+/** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). */
+export const homePage = (userId: string | null, cursor: string | null = null) => cardPage(null, userId, cursor, '', true)
+/** 미로 = 그중 미로(reality) 캐릭터만. */
 export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
 export const searchPage = (userId: string | null, query: string, cursor: string | null = null, tag: string | null = null, genres: string[] = []) => cardPage(null, userId, cursor, query, true, true, tag, genres)
 

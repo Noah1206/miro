@@ -27,7 +27,8 @@ function initial(user: { displayName: string | null; email: string | null }): st
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
-  const [user, page] = await Promise.all([currentUser(), measured('nav.home_data', () => homePage())])
+  const user = await currentUser()
+  const page = await measured('nav.home_data', () => homePage(user?.id ?? null))
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
