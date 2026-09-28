@@ -22,7 +22,7 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
     <Sheet open={open} onClose={() => setOpen(false)} title="모델 선택" snap={{ half: 0.7, full: 0.9 }}>
       <div className={sheet.content}>
         <p className={sheet.description}>MIRO 기본 대화는 무료예요. ECHO와 추가 인터랙션은 사용량이 차감돼요.</p>
-        <TransitionLink className={sheet.planLink} href="/my/subscription">현재 요금제 · {isPro ? 'Pro' : 'Free'} <span aria-hidden>↗</span></TransitionLink>
+        <TransitionLink className={sheet.planLink} href="/my/subscription">사용량 보기 <span aria-hidden>↗</span></TransitionLink>
         <TransitionLink className={sheet.planLink} href="/recharge">Miro Pay <span aria-hidden>↗</span></TransitionLink>
         <div className={sheet.cards}>
           <button type="button" className={sheet.card} aria-pressed={model === 'miro'} disabled={!freeReady} onClick={() => { setModel('miro'); setOpen(false) }}>
@@ -32,8 +32,9 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
           </button>
           <button type="button" className={sheet.card} aria-pressed={model === 'pro'} disabled={!isPro || !proReady} onClick={() => { setModel('pro'); setOpen(false) }}>
             <span className={sheet.cardHeading}><strong>ECHO</strong>{model === 'pro' && <span aria-label="선택됨">✓</span>}</span>
-            <span className={sheet.cardLead}>더 깊게 이어가는 대화 · Pro 전용</span>
-            <span className={sheet.badge}>{!proReady ? '준비 중' : isPro ? '이용 가능' : 'Pro 전용'}</span>
+            <span className={sheet.cardLead}>더 깊게 이어가는 대화</span>
+            {/* Pro 는 팔지 않는다(2026-09-28) — 열리지 않은 계정에는 이유 대신 '준비 중'만 보인다. */}
+            <span className={sheet.badge}>{proReady && isPro ? '이용 가능' : '준비 중'}</span>
           </button>
         </div>
       </div>

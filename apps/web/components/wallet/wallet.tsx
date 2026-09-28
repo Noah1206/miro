@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, type ReactNode } from 'react'
 import { motion } from 'motion/react'
-import { Button, Card, Notice, Sheet, TransitionLink } from '@/components/ui'
+import { Button, Card, Notice, Sheet } from '@/components/ui'
 import { readWalletHistory } from '@/app/(main)/recharge/wallet-actions'
 import { tween } from '@/lib/motion/tokens'
 import { COPY } from '@/lib/copy'
@@ -47,7 +47,6 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
     </Card>
     <div className={styles.balanceLine}>
       <span data-usage-remaining={value.monthlyRemaining}>이번 달 남은 제공량 · {value.monthlyRemaining.toLocaleString('ko-KR')}</span>
-      <TransitionLink href="/my/subscription" className="hit">{value.plan === 'pro' ? 'Pro' : 'Free'} 이용권</TransitionLink>
     </div>
     {value.monthlyRemaining === 0 && <Notice data-usage-spent>MIRO 기본 대화는 계속 이어갈 수 있어요.</Notice>}
     {value.order && !value.order.settledAt && ['awaiting', 'approved'].includes(value.order.status) && <Button full onClick={openRecharge}>
