@@ -31,11 +31,6 @@ test('a free user keeps chatting on MIRO after the allowance runs out, and upgra
   // 상태는 유지된다 — 대화 기록이 남아 있다
   await expect(page.getByText('첫 출근입니다.')).toBeVisible()
 
-  // 요금제 비교 → 현재 Free 표시
-  await page.goto(`${BASE}/plans`)
-  await expect(page.locator('text=현재 요금제')).toBeVisible()
-  await expect(page.locator('[data-upgrade]')).toBeVisible()
-
   // Pro 전환 (P13 전까지 dev 토글)
   await page.evaluate(() => fetch('/api/dev/plan', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: 'pro' }),

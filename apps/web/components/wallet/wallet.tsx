@@ -42,7 +42,7 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
       <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'} style={{ marginTop: 'var(--space-5)' }}>충전하기</Button>
       {help && <div id="wallet-help" className={styles.help} style={{ marginTop: 'var(--space-3)' }}>
         <p className={`t-caption ${styles.muted}`}>월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요. 충전은 계좌이체로 받고, 입금이 확인되면 지급해요.</p>
-        <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.pass, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{line}</li>)}</ul>
+        <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{line}</li>)}</ul>
       </div>}
     </Card>
     <div className={styles.balanceLine}>

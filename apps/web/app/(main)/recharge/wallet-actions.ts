@@ -20,10 +20,10 @@ export async function readWalletHistory(cursor?: string) {
 /** Browser supplies identity only. Catalog prices and settlement remain server-owned. */
 export async function purchaseCredits(selection: string, requestId: string) {
   const user = await requireUser()
-  if (!UUID.test(requestId) || typeof selection !== 'string' || !(selection === 'pass' || selection.startsWith('recharge:'))) return { ok: false as const, error: '주문 정보를 확인해 주세요.' }
+  if (!UUID.test(requestId) || typeof selection !== 'string' || !selection.startsWith('recharge:')) return { ok: false as const, error: '주문 정보를 확인해 주세요.' }
   try {
-    const order = await createBankOrder({ userId: user.id, kind: selection === 'pass' ? 'pass' : 'recharge',
-      productId: selection === 'pass' ? undefined : selection.slice('recharge:'.length), requestId })
+    const order = await createBankOrder({ userId: user.id, kind: 'recharge',
+      productId: selection.slice('recharge:'.length), requestId })
     return { ok: true as const, wallet: await walletSnapshot(user.id, order.id) }
   } catch (e) {
     if (e instanceof OrderPendingError) return { ok: true as const, wallet: await walletSnapshot(user.id) }

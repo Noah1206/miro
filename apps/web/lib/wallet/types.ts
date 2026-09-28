@@ -12,7 +12,7 @@ export type WalletHistory = { entries: WalletEntry[]; cursor: string | null }
 export type WalletSnapshot = {
   rechargeRemaining: number; monthlyRemaining: number; available: number
   plan: 'free' | 'pro'; resetsAt: string | null
-  account: BankAccount | null; products: RechargeProduct[]; passPrice: number
+  account: BankAccount | null; products: RechargeProduct[]
   order: WalletOrder | null; history: WalletHistory
 }
 export type BalanceActionResult =

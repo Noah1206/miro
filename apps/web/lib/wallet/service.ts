@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { bankTransferOrders, db, rechargeGrants, usageLedger } from '@miro/db'
-import { bankAccount, POLICY, rechargeCatalog } from '@miro/config'
+import { bankAccount, rechargeCatalog } from '@miro/config'
 import { usageStatus } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
 import type { WalletEntry, WalletHistory, WalletOrder, WalletSnapshot } from './types'
@@ -86,5 +86,5 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
   } : null
   return { rechargeRemaining: usage.rechargeRemaining, monthlyRemaining: usage.remaining,
     available: usage.remaining + usage.rechargeRemaining, resetsAt: usage.resetsAt?.toISOString() ?? null,
-    plan: usage.plan, account, products, passPrice: POLICY.subscription.priceKRW, order, history }
+    plan: usage.plan, account, products, order, history }
 }

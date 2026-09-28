@@ -110,7 +110,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const order = fresh.order
     if (order?.settledAt && settledSeen.current !== order.id) {
       settledSeen.current = order.id; purchase.current = null
-      setState('success'); toast(order.kind === 'pass' ? '이용권이 반영됐어요' : '충전이 반영됐어요')
+      setState('success'); toast('충전이 반영됐어요')
       const request = pending.current
       if (request && fresh.available >= request.cost) await execute(request, token)
       else if (request) { setStage('insufficient'); setState('idle') }
