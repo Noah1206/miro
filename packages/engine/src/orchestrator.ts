@@ -81,24 +81,19 @@ export async function runTurn(opts: {
   const extraMemories: MemoryCandidate[] = []
 
   /**
-   * 입력 검열과 보조 분석은 서로의 결과를 쓰지 않는다 — 같이 보낸다.
-   * 순서대로 기다리면 유저는 두 번 기다리고, 그 시간은 대사 생성만큼 길다 (실측 0.9초 + 1.2초).
-   *
-   * 검열이 막으면 보조 분석 결과는 버려진다. 이미 나간 호출의 비용은 그대로 기록되지만,
-   * 차단된 턴은 애초에 드물고 그 대가로 모든 정상 턴이 1.2초 빨라진다.
+   * 입력 검열이 먼저다. 보조 분석(의미 분류·기억 추출)은 검열이 지난 뒤에만 띄운다 — 차단된 턴은 호출 하나로 끝나고 비용이 남지 않는다.
+   * 대가는 의미 분류만큼의 지연(실측 약 1.2초)이 매 정상 턴에 붙는 것(사용자 결정 2026-09-28; 전에는 검열과 병렬이었다).
    */
-  const safety = requireSafeContent(opts.llm, { phase: 'input', character: snapshot.character,
+  await requireSafeContent(opts.llm, { phase: 'input', character: snapshot.character,
     worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
     recent: snapshot.recentMessages, input: opts.userInput })
   const auxiliary = opts.auxiliaryLLM ?? null
   const semantic = auxiliary && tasks.includes('semantic_event')
     ? analyzeSemantic(auxiliary, opts.userInput, snapshot).then(r => r.events.filter(e => e.confidence >= .8), () => [])
     : Promise.resolve([])
-  // 검열이 막으면 여기서 끝난다. 의미 분류는 이미 떠 있으므로 결과를 버리고 나간다.
-  try { await safety } catch (e) { void semantic.catch(() => {}); throw e }
   /**
-   * 기억 추출·요약은 대사 프롬프트에 들어가지 않는다 — 커밋 때만 쓴다. 검열이 지난 뒤에 띄우고
-   * 대사 생성이 끝난 뒤에 거둔다(대사가 더 오래 걸리니 첫 답은 늦어지지 않는다). 차단된 턴은 이 호출을 내지 않는다.
+   * 기억 추출·요약은 대사 프롬프트에 들어가지 않는다 — 커밋 때만 쓴다. 지금 띄우되 대사 생성이 끝난 뒤에 거둔다
+   * (대사가 더 오래 걸리니 첫 답은 늦어지지 않는다).
    */
   const memoryTasks: Promise<MemoryCandidate[][]> = auxiliary ? Promise.all(
     tasks.filter(t => t === 'memory_extraction' || t === 'memory_summary')
