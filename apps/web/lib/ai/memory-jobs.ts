@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, eq, gt, inArray, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { db, memories, memoryJobs, messages, roleplaySessions, users } from '@miro/db'
 import { POLICY } from '@miro/config'
 import { dedupeCandidates, filterSalient, pruneMemories, tagsOf } from '@miro/domain'
@@ -7,6 +7,7 @@ import { analyzeMemory, planTasks } from '@miro/engine'
 import type { AITask } from '@miro/providers'
 import type { UsageTransaction } from '@/lib/usage/guard'
 import { loadSession } from '@/lib/simulation/snapshot'
+import { conversationContext } from '@/lib/simulation/character-context'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
 import { observe } from '@/lib/observe'
 
@@ -44,34 +45,43 @@ export type MemoryJobRun = { claimed: number; results: Record<string, number> }
  * 한 세션 안에서는 앞선 턴의 작업이 끝나야 뒤 작업을 잡는다 — 요약이 옛 결과에 덮이지 않는다.
  * 커밋 직후(afterResponse)에 그 세션 것만, 크론에서는 전부.
  */
-export async function runMemoryJobs(now = new Date(), opts: { limit?: number; sessionId?: string; analyze?: typeof analyzeMemory } = {}): Promise<MemoryJobRun> {
+export async function runMemoryJobs(now = new Date(), opts: { limit?: number; sessionId?: string; analyze?: typeof analyzeMemory; inline?: boolean } = {}): Promise<MemoryJobRun> {
+  // 응답 직후 실행을 끄는 스위치(운영·테스트). 크론 sweep 은 inline 이 아니다.
+  if (opts.inline && process.env.MIRO_MEMORY_JOBS_INLINE === '0') return { claimed: 0, results: {} }
   const limit = Math.min(50, Math.max(1, opts.limit ?? 10))
   const token = randomUUID()
-  const claimed = await db.execute<{ id: string }>(sql`
-    UPDATE memory_jobs SET status = 'running', lease_token = ${token}::uuid,
-      lease_until = ${new Date(now.getTime() + LEASE_MS).toISOString()}::timestamptz, attempts = attempts + 1
-    WHERE id IN (
-      SELECT m.id FROM memory_jobs m
-      WHERE ((m.status = 'pending' AND m.next_attempt_at <= ${now.toISOString()}::timestamptz)
-          OR (m.status = 'running' AND m.lease_until <= ${now.toISOString()}::timestamptz))
-        AND (${opts.sessionId ?? null}::uuid IS NULL OR m.session_id = ${opts.sessionId ?? null}::uuid)
-        -- 세션 안 순서: 앞선 턴(또는 같은 턴의 먼저 만든 작업)이 아직 안 끝났으면 기다린다.
-        AND NOT EXISTS (
-          SELECT 1 FROM memory_jobs o WHERE o.session_id = m.session_id AND o.id <> m.id AND o.status IN ('pending', 'running')
-            AND (o.through_turn < m.through_turn OR (o.through_turn = m.through_turn AND o.created_at < m.created_at)))
-      ORDER BY m.through_turn, m.created_at LIMIT ${limit} FOR UPDATE SKIP LOCKED
-    ) RETURNING id
-  `)
   const results: Record<string, number> = {}
   const count = (k: string) => { results[k] = (results[k] ?? 0) + 1 }
-  for (const { id } of claimed) {
-    const outcome = await runOne(id, token, now, opts.analyze ?? analyzeMemory).catch((e: Error) => {
-      observe('memory.job_failed', { jobId: id, error: e.message.slice(0, 120) })
-      return 'error' as const
-    })
-    count(outcome)
+  let claimed = 0
+  // 세션 안 순서 때문에 한 번의 claim 은 세션당 첫 작업만 돌려준다 — 끝나면 같은 세션의 다음 것을 다시 잡는다(limit 까지).
+  for (let round = 0; round < limit && claimed < limit; round++) {
+    // 시각은 DB 가 정한다: next_attempt_at 은 DB now()(µs) 라 앱 시각(ms, 다른 호스트)과 비교하면 방금 만든 작업을 놓친다.
+    const batch = await db.execute<{ id: string }>(sql`
+      UPDATE memory_jobs SET status = 'running', lease_token = ${token}::uuid,
+        lease_until = now() + make_interval(secs => ${LEASE_MS / 1000}), attempts = attempts + 1
+      WHERE id IN (
+        SELECT m.id FROM memory_jobs m
+        WHERE ((m.status = 'pending' AND m.next_attempt_at <= now())
+            OR (m.status = 'running' AND m.lease_until <= now()))
+          AND m.attempts < ${MAX_ATTEMPTS}
+          AND (${opts.sessionId ?? null}::uuid IS NULL OR m.session_id = ${opts.sessionId ?? null}::uuid)
+          -- 세션 안 순서: 앞선 턴(또는 같은 턴의 먼저 만든 작업)이 아직 안 끝났으면 기다린다.
+          AND NOT EXISTS (
+            SELECT 1 FROM memory_jobs o WHERE o.session_id = m.session_id AND o.id <> m.id AND o.status IN ('pending', 'running')
+              AND (o.through_turn < m.through_turn OR (o.through_turn = m.through_turn AND o.created_at < m.created_at)))
+        ORDER BY m.through_turn, m.created_at LIMIT ${limit - claimed} FOR UPDATE SKIP LOCKED
+      ) RETURNING id
+    `)
+    if (!batch.length) break
+    claimed += batch.length
+    for (const { id } of batch) count(await runOne(id, token, now, opts.analyze ?? analyzeMemory))
+    // 특정 세션이 아니면 한 바퀴로 끝낸다 — 크론은 다음 주기에 이어 간다.
+    if (!opts.sessionId) break
   }
-  return { claimed: claimed.length, results }
+  // 임대가 만료된 채 3회를 다 쓴 작업은 다시 잡히지 않는다 — 실패로 닫아 뒤 작업을 막지 않게.
+  await db.update(memoryJobs).set({ status: 'failed', errorCode: 'attempts_exhausted', leaseToken: null, leaseUntil: null, finishedAt: now })
+    .where(and(eq(memoryJobs.status, 'running'), sql`${memoryJobs.leaseUntil} <= now()`, sql`${memoryJobs.attempts} >= ${MAX_ATTEMPTS}`))
+  return { claimed, results }
 }
 
 async function runOne(id: string, token: string, now: Date, analyze: typeof analyzeMemory) {
@@ -82,6 +92,17 @@ async function runOne(id: string, token: string, now: Date, analyze: typeof anal
     nextAttemptAt: new Date(now.getTime() + Math.min(3600_000, 60_000 * 2 ** Math.min(job.attempts, 6))),
   }).where(and(eq(memoryJobs.id, id), eq(memoryJobs.leaseToken, token)))
   const retryOrFail = (code: string) => finish(job.attempts >= MAX_ATTEMPTS ? 'failed' : 'pending', code)
+  // 어느 단계에서 던지든 재시도 횟수 안에서 끝난다 — 무한히 다시 잡혀 매번 모델을 부르며 세션의 뒤 작업을 막지 않게.
+  try { return await processJob(job, id, token, now, analyze, finish, retryOrFail) }
+  catch (e) {
+    observe('memory.job_failed', { jobId: id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' })
+    await retryOrFail(e instanceof Error && /^[a-z_]+$/.test(e.message) ? e.message : 'job_error').catch(() => undefined)
+    return 'retry'
+  }
+}
+
+async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token: string, now: Date, analyze: typeof analyzeMemory,
+  finish: (status: typeof job.status, errorCode?: string | null) => Promise<unknown>, retryOrFail: (code: string) => Promise<unknown>) {
 
   // 삭제·제한 뒤에는 결과를 남기지 않는다. 원문이 숨겨졌으면(운영 조치) 그 턴도 기억이 되지 않는다.
   const [state] = await db.select({ deletedAt: roleplaySessions.deletedAt, restrictedAt: roleplaySessions.restrictedAt, status: roleplaySessions.status, userDeleted: users.deletedAt })
@@ -98,9 +119,15 @@ async function runOne(id: string, token: string, now: Date, analyze: typeof anal
 
   const loaded = await loadSession(job.sessionId, job.userId, source.content)
   if (!loaded) { await finish('cancelled', 'session_unavailable'); return 'cancelled' }
-  // 재시도가 미래 메시지를 입력에 섞지 않는다 — 원인 메시지까지의 대화만 본다.
-  const cutoff = source.createdAt.toISOString()
-  const snapshot = { ...loaded.snapshot, recentMessages: loaded.snapshot.recentMessages.filter(m => !m.at || m.at <= cutoff), turnCount: job.throughTurn }
+  // 재시도가 미래 메시지를 입력에 섞지 않는다 — 원인 메시지까지의 대화를 따로 읽는다(스냅샷의 최신 24개를 거르면 늦은 작업은 빈 창을 본다).
+  const window = await db.select().from(messages)
+    .where(and(eq(messages.sessionId, job.sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc']),
+      or(sql`${messages.turnIndex} < ${job.throughTurn}`, lte(messages.createdAt, source.createdAt))))
+    .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id)).limit(24)
+  const recentMessages = conversationContext(window.reverse())
+  // 요약은 그 범위의 대화가 있어야 뜻이 있다 — 비어 있으면 옛 요약을 빈 것으로 덮지 않고 나중에 다시 본다.
+  if (job.kind === 'memory_summary' && !recentMessages.length) { await retryOrFail('summary_window_empty'); return 'retry' }
+  const snapshot = { ...loaded.snapshot, recentMessages, turnCount: job.throughTurn }
   const llm = auxiliaryLLM(loaded.characterName, { userId: job.userId, sessionId: job.sessionId, requestId: job.requestId ?? job.id, workload: 'background', origin: `memory:${job.kind}` })
   let candidates
   try { candidates = filterSalient((await analyze(llm, job.kind, source.content, snapshot)).memories) }

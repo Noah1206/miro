@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { desc, eq } from 'drizzle-orm'
+import { and, desc, eq, like, or } from 'drizzle-orm'
 import { db, roleplaySessions, stateTransitions } from '@miro/db'
 
 /**
@@ -8,10 +8,10 @@ import { db, roleplaySessions, stateTransitions } from '@miro/db'
  */
 export async function explainSession(sessionId: string, opts: { limit?: number; field?: string } = {}) {
   const limit = Math.min(200, Math.max(1, opts.limit ?? 50))
-  const rows = await db.select().from(stateTransitions).where(eq(stateTransitions.sessionId, sessionId))
-    .orderBy(desc(stateTransitions.createdAt), desc(stateTransitions.seq)).limit(limit * 4)
-  return rows.filter(r => !opts.field || r.field === opts.field || r.field.startsWith(opts.field + '.')).slice(0, limit)
-    .map(r => ({ at: r.createdAt, trigger: r.triggerKey, engine: r.engine, policy: r.policyVersion, field: r.field, before: r.before, after: r.after,
+  const rows = await db.select().from(stateTransitions)
+    .where(and(eq(stateTransitions.sessionId, sessionId), ...(opts.field ? [or(eq(stateTransitions.field, opts.field), like(stateTransitions.field, `${opts.field}.%`))] : [])))
+    .orderBy(desc(stateTransitions.createdAt), desc(stateTransitions.seq)).limit(limit)
+  return rows.map(r => ({ at: r.createdAt, trigger: r.triggerKey, engine: r.engine, policy: r.policyVersion, field: r.field, before: r.before, after: r.after,
       rule: r.rule, status: r.status, clock: r.clock, actor: r.actor, decisionId: r.decisionId, cause: r.causeMessageId, outcome: r.outcomeRef,
       versions: { world: r.worldVersion, relationship: r.relationshipVersion, runtime: r.runtimeVersion } }))
 }

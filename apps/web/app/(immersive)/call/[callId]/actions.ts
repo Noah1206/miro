@@ -74,7 +74,7 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
       if (e instanceof StaleStateError && attempt === 0) continue
       return { error: '상태를 저장하지 못했습니다.' }
     }
-    await afterResponse(() => runMemoryJobs(new Date(), { sessionId: call.sessionId, limit: 2 }))
+    await afterResponse(() => runMemoryJobs(new Date(), { sessionId: call.sessionId, limit: 2, inline: true }))
     revalidatePath(`/call/${callId}`)
     return { error: null }
   }

@@ -250,7 +250,7 @@ async function executeTurn(opts: {
     await afterResponse(async () => {
       await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
       // 기억 작업은 바로 시도한다. 여기서 유실돼도 DB 의 작업은 남아 크론이 거둔다.
-      if (process.env.MIRO_MEMORY_JOBS_INLINE !== '0') await runMemoryJobs(new Date(), { sessionId, limit: 2 }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
+      await runMemoryJobs(new Date(), { sessionId, limit: 2, inline: true }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
       await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
     })
     return completed

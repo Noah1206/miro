@@ -55,7 +55,7 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
         ledger: { policy: result.policy, records: result.records, triggerKey: `voice:${requestId}` },
         memoryJobs: { userId, auxiliary: 'planned' },
       })
-      await runMemoryJobs(now, { sessionId: call.sessionId, limit: 2 }).catch(() => observe('memory.jobs_after_response_failed', { sessionId: call.sessionId }))
+      await runMemoryJobs(new Date(), { sessionId: call.sessionId, limit: 2, inline: true }).catch(() => observe('memory.jobs_after_response_failed', { sessionId: call.sessionId }))
       return 'stored'
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue

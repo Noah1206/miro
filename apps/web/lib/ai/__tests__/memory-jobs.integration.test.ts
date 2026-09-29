@@ -33,7 +33,7 @@ describeDb('memory jobs (§3.5)', () => {
     const s = await session()
     const requestId = randomUUID()
     // 응답 뒤 자동 실행이 작업을 먼저 끝내지 않게 — 여기서는 워커를 직접 돌려 계약을 본다.
-    vi.stubEnv('MIRO_MEMORY_JOBS_INLINE', '0')
+    vi.stubEnv('MIRO_MEMORY_JOBS_INLINE', '0')   // 응답 직후 실행을 끄고 워커를 직접 돌린다
     const r = await runConversationTurn({ ...s, requestId, input: '기억해줘 나 커피 좋아해' })
     expect(r.ok).toBe(true)
     const jobs = await db.select().from(memoryJobs).where(eq(memoryJobs.sessionId, s.sessionId))
@@ -71,13 +71,11 @@ describeDb('memory jobs (§3.5)', () => {
     ])
     const seen: Array<{ kind: string; input: string; messageAts: string[] }> = []
     const summary = (text: string) => [{ type: 'short_term_summary', content: text, importance: .8, persistence: .8, confidence: 1, tags: [] }]
-    // 한 번에 하나만 잡힌다 — 앞선 턴이 끝나야 뒤가 잡힌다.
-    const first = await runMemoryJobs(new Date(), { sessionId: s.sessionId, limit: 10, analyze: analyzer(seen, (_k, input) => summary(`요약: ${input}`)) })
-    expect(first.claimed).toBe(1)
-    expect(seen[0]!.input).toBe('첫 번째 말')
-    expect(seen[0]!.messageAts.every(t => t <= at(10).toISOString())).toBe(true)   // 두 번째 말은 아직 입력에 없다
-    const second = await runMemoryJobs(new Date(), { sessionId: s.sessionId, limit: 10, analyze: analyzer(seen, (_k, input) => summary(`요약: ${input}`)) })
-    expect(second.claimed).toBe(1)
+    // 앞선 턴이 끝나야 뒤가 잡힌다 — 한 세션을 지정하면 끝난 뒤 다음 것을 이어서 잡아 한 번에 둘 다 처리한다.
+    const run = await runMemoryJobs(new Date(), { sessionId: s.sessionId, limit: 10, analyze: analyzer(seen, (_k, input) => summary(`요약: ${input}`)) })
+    expect(run.claimed).toBe(2)
+    expect(seen.map(x => x.input)).toEqual(['첫 번째 말', '두 번째 말'])
+    expect(seen[0]!.messageAts.every(t => t <= at(10).toISOString())).toBe(true)   // 두 번째 말은 첫 작업의 입력에 없다
     const stored = await db.select().from(memories).where(and(eq(memories.sessionId, s.sessionId), eq(memories.type, 'short_term_summary')))
     expect(stored.map(m => m.content)).toEqual(['요약: 두 번째 말'])
 
