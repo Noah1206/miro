@@ -7,6 +7,8 @@ import { productionRuntime } from './runtime'
 
 export type FeatureName =
   | 'imageGeneration' | 'voiceCall' | 'videoCall' | 'liveScene'
+  /** 통화의 실시간 음성 전송(Gemini Live). 꺼져 있으면 통화는 문자 통화로 진행된다 — 2026-09-29 운영은 문자 통화만 연다. */
+  | 'voiceCallAudio'
   | 'relationshipEngine' | 'memoryEngine' | 'eventEngine' | 'realityMessage'
   /** 리얼리티 메시지를 크론을 기다리지 않고 턴 직후 바로 보낸다 (알파의 즉시 후속 메시지). */
   | 'inlineReality'
@@ -19,12 +21,12 @@ export type Mode = 'alpha' | 'production'
 
 const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
-    imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false,
+    imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false, voiceCallAudio: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true,
   },
   production: {
-    imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true,
+    imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true, voiceCallAudio: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     // 2026-09-24: 관계가 표현 규칙에만 걸려 움직이지 않았다 — AI 분류를 매 턴 붙인다(턴 원가 약 +10%).
     inlineReality: false, llmSemanticAnalysis: true, memorySummaries: true, memoryExtraction: true,
@@ -37,7 +39,8 @@ export function currentMode(): Mode {
 
 export function feature(name: FeatureName): boolean {
   // Media transports are not production-verified yet. A production env override must not expose them.
-  if (productionRuntime() && ['voiceCall', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
+  // 2026-09-29: 통화(voiceCall)는 문자 통화로 전체 공개 — 실시간 음성(voiceCallAudio)만 운영에서 계속 막는다(Gemini 목소리 불합격).
+  if (productionRuntime() && ['voiceCallAudio', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
   const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]
   if (override === '1') return true
   if (override === '0') return false
@@ -45,9 +48,8 @@ export function feature(name: FeatureName): boolean {
 }
 
 /**
- * 음성통화를 운영에서 먼저 열어 볼 계정(MIRO_VOICE_CALL_USERS, 쉼표 구분 사용자 ID).
- * 사람이 실제 기기로 통화해 본 뒤 전체 공개는 위 차단 목록에서 voiceCall 을 빼는 것으로 한다.
- * 사용자가 거는 통화만 해당한다 — 캐릭터가 먼저 거는 통화는 전체 공개 전까지 열리지 않는다.
+ * 통화 허용. voiceCall 플래그가 켜져 있으면(2026-09-29 부터 운영 기본) 누구나 걸 수 있고,
+ * 꺼져 있으면 MIRO_VOICE_CALL_USERS(쉼표 구분 사용자 ID)에 적힌 계정만 건다 — 다시 닫을 때의 안전장치.
  */
 export function voiceCallAllowed(userId: string | null | undefined): boolean {
   if (feature('voiceCall')) return true

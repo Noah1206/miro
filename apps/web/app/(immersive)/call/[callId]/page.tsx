@@ -39,9 +39,11 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
     )
   }
 
+  // 실시간 음성은 운영에서 꺼져 있다(2026-09-29) — 그때 음성통화는 처음부터 문자 통화다. 세션 토큰을 청하지도, 경고를 띄우지도 않는다.
+  const audio = call.channel === 'voice' && feature('voiceCallAudio')
   // 통화용 시스템 프롬프트 — Chat 과 같은 성격·관계·기억·장면·최근 대화에 통화 모드 규칙을 얹고,
   // JSON 계약처럼 소리로 나갈 수 없는 것은 뺀다. 토큰에 잠기므로 클라이언트가 바꿀 수 없다.
-  const spokenSystem = call.channel === 'voice'
+  const spokenSystem = audio
     ? buildSpokenSystem({ ...loaded.snapshot, mode: 'voice_call' }) + [
       '', '## 실시간 통화 규칙',
       '- 지금은 실제 음성 통화다. 한국어로 말한다.',
@@ -51,8 +53,8 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
     : null
 
   const provider = resolveCallMedia(call.channel)
-  let media: CallMediaSession
-  try {
+  let media: CallMediaSession = { token: '', mode: 'mock', connectUrl: null }
+  if (audio || call.channel === 'video') try {
     // Streaming audio currently bypasses server action approval/commit. Keep experimental sessions
     // on the existing text-call adapter until streamed turns have the same authority boundary.
     if (characterAgencyMode(call.sessionId) === 'live') throw new Error('agency_requires_server_turns')
@@ -96,9 +98,9 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
       {face && <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `url(${face})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
       <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: face ? 'linear-gradient(to top, rgba(0,0,0,0.94) 30%, rgba(0,0,0,0.35))' : 'transparent' }} />
       <header style={{ position: 'relative', padding: '32px 24px 8px', textAlign: 'center' }}>
-        <p className="t-micro">{call.channel === 'voice' ? '음성통화' : '영상통화'} · {loaded.snapshot.world.currentLocation}</p>
+        <p className="t-micro">{call.channel === 'voice' ? (audio ? '음성통화' : '문자 통화') : '영상통화'} · {loaded.snapshot.world.currentLocation}</p>
         <h1 className="t-display t-name" style={{ marginTop: 10 }}>{loaded.characterName}</h1>
-        {media.mode === 'mock' && <p role="status" className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>⚠ {provider.info.notice ?? '실시간 음성을 시작하지 못했어요 — 텍스트로 진행합니다.'}</p>}
+        {media.mode === 'mock' && (audio || call.channel === 'video') && <p role="status" className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>⚠ {provider.info.notice ?? '실시간 음성을 시작하지 못했어요 — 텍스트로 진행합니다.'}</p>}
         {media.mode === 'live' && media.connectUrl && call.channel === 'voice' && (
           <LiveAudio callId={callId} token={media.token} url={media.connectUrl} model={media.model ?? ''} />
         )}

@@ -45,7 +45,9 @@ Pro requires explicit price, pool size and depth/frequency settings plus real pu
 
 Photo, voice message, call, video, Live Scene and Face Cast each require a working provider, permission/safety checks, saved results, bounded costs and failure recovery. A mock adapter or UI does not pass a release gate.
 
-### 음성통화 (2026-09-24 검증 중)
+### 음성통화 (2026-09-24 검증 중 → 2026-09-29 문자 통화로 전체 공개)
+
+- **2026-09-29:** Gemini 목소리가 불합격이라 실시간 음성은 계속 닫고(`voiceCallAudio` 운영 차단), 통화 자체는 문자 통화로 모두에게 열었다 — `voiceCall` 을 차단 목록에서 뺐다. 사용자가 거는 통화와 캐릭터가 거는 통화 모두 문자로 진행되고, 과금은 분당 5 크레딧 그대로. 수신 벨 폴링(탭마다 8초)이 운영에서 돈다. `MIRO_VOICE_CALL_USERS` 는 플래그를 다시 끌 때의 허용 목록으로만 남는다.
 
 - 실측으로 찾은 결함: 임시 토큰 요청이 SDK 이름(`liveConnectConstraints`)이라 REST 가 400 을 냈고, 웹소켓이 `BidiGenerateContent` 라 임시 토큰을 1008 로 거절했다 — 운영에서 켰어도 항상 텍스트 통화로 떨어졌을 것이다. `bidiGenerateContentSetup` + `BidiGenerateContentConstrained` 로 고쳤다(토큰에 모델·지시문·보이스가 잠기고 브라우저 setup 은 무시된다).
 - 통화 지시문에 채팅용 JSON 계약·상태 변화 제안이 섞여 있었고, 관계·장소·기억·최근 대화가 빠져 있었다 → `buildSpokenSystem`.
