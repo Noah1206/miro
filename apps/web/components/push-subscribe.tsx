@@ -11,10 +11,28 @@ type Status = 'checking' | 'unsupported' | 'ios_install' | 'unconfigured' | 'pro
  * 이미 허용된 기기는 묻지 않고 구독을 서버와 다시 맞춘다(다른 계정으로 바뀌었거나 서버가 실패로 표시한 경우).
  * iOS Safari 는 홈 화면에 추가된 PWA 에서만 Push 를 허용한다.
  */
-export function PushSubscribe({ vapidPublicKey, name }: { vapidPublicKey: string | null; name: string }) {
+/** 한 브라우저 세션에 한 번만 먼저 묻는다 — '나중에' 를 누른 사람에게 화면마다 다시 묻지 않는다. */
+const ASKED_KEY = 'miro:push-asked'
+function askedThisSession(): boolean {
+  try { return sessionStorage.getItem(ASKED_KEY) === '1' } catch { return false }
+}
+function markAsked() { try { sessionStorage.setItem(ASKED_KEY, '1') } catch {} }
+
+/**
+ * autoPrompt: 로그인한 사용자가 들어오면 화면 어디서든 바로 팝업으로 묻는다(2026-09-29 결정). 이때는 줄을 그리지 않고
+ * 팝업만 띄우며, iPhone 미설치·차단 상태도 한 번은 알려 준다.
+ */
+export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { vapidPublicKey: string | null; name: string; autoPrompt?: boolean }) {
   const [status, setStatus] = useState<Status>('checking')
   const [ask, setAsk] = useState(false)
+  const [guide, setGuide] = useState(false)
   const toast = useToast()
+
+  useEffect(() => {
+    if (!autoPrompt || askedThisSession()) return
+    if (status === 'prompt') { markAsked(); setAsk(true) }
+    else if (status === 'ios_install' || status === 'denied') { markAsked(); setGuide(true) }
+  }, [autoPrompt, status])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -47,6 +65,17 @@ export function PushSubscribe({ vapidPublicKey, name }: { vapidPublicKey: string
 
   // 확인 중이거나, 미구성(개발·E2E)·미지원 브라우저라 사용자가 할 일이 없으면 대화 화면에 그리지 않는다.
   if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed') return null
+  if (autoPrompt) return (
+    <>
+      <AskModal open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
+      <Modal open={guide} onClose={() => setGuide(false)} title="먼저 연락이 올 수 있게">
+        <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>
+          {status === 'ios_install' ? `iPhone에서는 공유 → 홈 화면에 추가한 뒤 홈 화면 아이콘으로 열어 알림을 켜야 ${name}의 연락을 받을 수 있어요.` : '알림이 차단되어 있어요. 브라우저 설정에서 이 사이트의 알림을 허용하면 캐릭터의 연락을 받을 수 있어요.'}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}><Button variant="primary" type="button" onClick={() => setGuide(false)}>확인</Button></div>
+      </Modal>
+    </>
+  )
   const text: Record<Exclude<Status, 'checking' | 'unsupported' | 'unconfigured' | 'subscribed'>, string> = {
     ios_install: `iPhone에서는 공유 → 홈 화면에 추가한 뒤 알림을 켜야 ${name}의 연락을 받을 수 있어요.`,
     prompt: `앱을 닫아도 ${name}의 연락을 받으려면`,
@@ -60,14 +89,20 @@ export function PushSubscribe({ vapidPublicKey, name }: { vapidPublicKey: string
         <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{text[status]}</span>
         {status === 'prompt' && <Button size="sm" variant="secondary" type="button" onClick={() => setAsk(true)}>알림 켜기</Button>}
       </div>
-      <Modal open={ask} onClose={() => setAsk(false)} title="먼저 연락이 올 수 있게">
-        <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>{withParticle(name, '은', '는')} 자기 사정과 관계에 따라 가끔 먼저 연락해요. 앱을 닫아 두어도 알림으로 받을 수 있어요.</p>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-          <Button variant="ghost" type="button" onClick={() => setAsk(false)}>나중에</Button>
-          <Button variant="primary" type="button" onClick={() => subscribe()} status={status === 'working' ? 'loading' : 'idle'} disabled={status === 'working'}>허용</Button>
-        </div>
-      </Modal>
+      <AskModal open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
     </>
+  )
+}
+
+function AskModal({ open, onClose, name, working, onAllow }: { open: boolean; onClose: () => void; name: string; working: boolean; onAllow: () => void }) {
+  return (
+    <Modal open={open} onClose={onClose} title="먼저 연락이 올 수 있게">
+      <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>{withParticle(name, '은', '는')} 자기 사정과 관계에 따라 가끔 먼저 연락해요. 앱을 닫아 두어도 알림으로 받을 수 있어요.</p>
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <Button variant="ghost" type="button" onClick={onClose}>나중에</Button>
+        <Button variant="primary" type="button" onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>허용</Button>
+      </div>
+    </Modal>
   )
 }
 function toUint8(base64: string): Uint8Array<ArrayBuffer> {
