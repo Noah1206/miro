@@ -56,7 +56,7 @@ const P1: Array<{ input: string; mode?: 'messenger' }> = [
   { input: '좋아, 그럼 토요일 오후로 하자.' },
   { input: '고마워. 이제 자러 갈게, 잘 자.' },
 ]
-const SCRIPT_LINES = process.env.MIRO_AGENCY_MEASURE_SCRIPT === 'p1' ? P1 : SCRIPT.map(input => ({ input }))
+const SCRIPT_LINES: Array<{ input: string; mode?: 'messenger' }> = process.env.MIRO_AGENCY_MEASURE_SCRIPT === 'p1' ? P1 : SCRIPT.map(input => ({ input }))
 /** Simulated idle gaps before a scheduler tick; the evaluator takes `now` as input. */
 const PROACTIVE_AFTER_HOURS = [26, 50]
 
