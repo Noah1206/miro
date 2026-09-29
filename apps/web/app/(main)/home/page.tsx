@@ -31,7 +31,7 @@ export default async function Home() {
   const page = await measured('nav.home_data', () => homePage(user?.id ?? null))
 
   return (
-    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
+    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
       {/* 위 여백은 8px 만 — 홈 화면에 추가한 앱에서는 상태 표시줄(safe-area)만큼 더 내린다. */}
       {/* 내용 높이 40 = 세 탭(홈·미로·검색) 공통 — 탭을 옮겨도 마크가 같은 자리에 있다. */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 40, boxSizing: 'content-box', padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-5)' }}>

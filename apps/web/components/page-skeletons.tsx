@@ -21,7 +21,7 @@ export function SearchResultsSkeleton() {
 }
 
 export function HomePageSkeleton() {
-  return <Status label="홈 불러오는 중" className="page page--immersive" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
+  return <Status label="홈 불러오는 중" className="page page--immersive" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-5)' }}>
       <Block width={30} height={30} style={{ borderRadius: 10 }} /><Block width={38} height={38} style={{ borderRadius: 19 }} />
     </div>
@@ -34,7 +34,7 @@ export function HomePageSkeleton() {
 }
 
 export function MiroPageSkeleton() {
-  return <Status label="미로 불러오는 중" className="page page--immersive" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
+  return <Status label="미로 불러오는 중" className="page page--immersive" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
     <div style={{ minHeight: 40, padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
       <Block width={30} height={30} style={{ borderRadius: 10 }} />
     </div>
@@ -43,7 +43,7 @@ export function MiroPageSkeleton() {
 }
 
 export function SearchPageSkeleton() {
-  return <Status label="검색 불러오는 중" className="page page--immersive" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
+  return <Status label="검색 불러오는 중" className="page page--immersive" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
     <div style={{ padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
       <Block width={40} height={40} style={{ borderRadius: 20 }} />
       <Block height={42} style={{ marginTop: 'var(--space-4)', borderRadius: 'var(--radius-md)' }} />

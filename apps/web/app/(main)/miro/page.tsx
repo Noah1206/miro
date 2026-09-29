@@ -14,7 +14,7 @@ export default async function Miro() {
   const page = await measured('nav.miro_data', () => miroPage(user?.id ?? null))
 
   return (
-    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
+    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
       {/* 홈과 같은 높이에 마크가 놓인다 — 탭을 옮겨도 마크가 뛰지 않게. */}
       <header style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 40, boxSizing: 'content-box', padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
         <LogoMark size={30} />

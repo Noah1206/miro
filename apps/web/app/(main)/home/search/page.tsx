@@ -30,7 +30,7 @@ export default async function HomeSearch({ searchParams }: { searchParams: Promi
   const viewerId = user?.id ?? null
 
   return (
-    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
+    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
       <SearchHeader q={q} tag={tag} genres={genres} viewerId={viewerId} base="/home/search">
         <TransitionLink href="/home" direction="back" aria-label="홈으로 돌아가기" className="hit"
           style={{ display: 'grid', placeItems: 'center', width: 40, height: 40, marginLeft: 'calc(-1 * var(--gutter))', color: 'var(--color-text-primary)' }}>

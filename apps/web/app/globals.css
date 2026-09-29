@@ -60,7 +60,7 @@
 
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
   /* 넓은 화면에서의 앱 폭. 제타가 480 — 430 은 옆에 두고 보면 좁았다. 폰에서는 화면 폭이 이긴다. */
-  --nav-h: 76px; --app-w: 480px;
+  --nav-h: 56px; --app-w: 480px;
   /* 하단 내비 폭 = 휴대폰 가로 폭(가장 넓은 기종 430). 본문보다 좁게 가운데에 둔다 (9/26 사용자 요청). */
   --nav-w: 430px;
   /* 화면 좌우 여백. 24px 은 폰에서 답답했다 — 레퍼런스(제타·크랙)는 16px 언저리다. 카드 안쪽 여백과는 별개. */
@@ -68,7 +68,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: calc(var(--nav-h) + 24px); scroll-padding-top: 72px; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: calc(var(--nav-h) + 12px); scroll-padding-top: 72px; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: var(--color-bg); color: var(--color-text-primary); }
 body {
   font-family: var(--font-body); font-size: var(--font-body-size); line-height: 1.6;
@@ -133,7 +133,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .character-detail-copy .detail-prose { font-size: 14px; }
 
 /* layout */
-.page { min-height: 100dvh; padding: var(--space-5) var(--gutter) calc(var(--nav-h) + var(--space-6)); max-width: 640px; margin: 0 auto; }
+.page { min-height: 100dvh; padding: var(--space-5) var(--gutter) calc(var(--nav-h) + var(--space-3)); max-width: 640px; margin: 0 auto; }
 .page--immersive { max-width: none; padding: 0; }
 .stack { display: flex; flex-direction: column; }
 .hairline { height: 1px; background: var(--color-border); border: 0; margin: 0; }
@@ -232,10 +232,10 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: var(--nav-w); margin: 0 auto; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around;
   background: rgba(var(--color-bg-rgb), 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom); }
 /* 링크와 버튼이 섞여 있다 — 로그인이 필요한 탭은 button 이라 브라우저 기본 배경·테두리가 붙는다. */
-/* 여백은 바 높이(--nav-h)가 만든다 — 칸마다 따로 주지 않는다. min-height 는 터치 규칙(44px)을 지킨다. */
+/* 여백은 바 높이(--nav-h, 2026-09-29 76→56)가 만든다 — 칸마다 따로 주지 않는다. min-height 는 터치 규칙(44px)을 지킨다. */
 .nav__item { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 48px;
   background: none; border: 0; padding: 0; font: inherit; -webkit-tap-highlight-color: transparent; }
-.nav__inner { display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative; }
+.nav__inner { display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; }
 /* fixed 는 뷰포트 기준이라 폭을 직접 가둔다 — left/right 0 + margin auto 로 어느 화면에서나 가운데. */
 
 /* chat: mobile = one column; desktop = scene + context panel (DESIGN §31, main scene always widest) */
