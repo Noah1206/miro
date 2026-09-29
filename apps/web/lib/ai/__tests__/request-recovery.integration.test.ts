@@ -1,3 +1,4 @@
+import { POLICY } from '@miro/config'
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
@@ -41,7 +42,7 @@ describeDb('request recovery atomicity', () => {
   it('does not expire a request whose lease is still active', async () => {
     const s = await pending()
     expect(await failRequest(s.requestId, new Date())).toBe(false)
-    expect((await usageStatus(s.userId)).consumed).toBe(1)
+    expect((await usageStatus(s.userId)).consumed).toBe(POLICY.usage.weights.textRP)
     await failRequest(s.requestId)
   })
   it('does not change a committed result or charge when cleanup sees it late', async () => {
@@ -49,7 +50,7 @@ describeDb('request recovery atomicity', () => {
     await commit(s.reservation.reservationId)
     await db.update(conversationRequests).set({ status: 'completed', result: { ok: true } }).where(eq(conversationRequests.id, s.requestId))
     expect(await failRequest(s.requestId, new Date(Date.now() + 3600_000))).toBe(false)
-    expect((await usageStatus(s.userId)).consumed).toBe(1)
+    expect((await usageStatus(s.userId)).consumed).toBe(POLICY.usage.weights.textRP)
     expect((await beginRequest(s.userId, s.sessionId, '안녕', s.requestId)).cached).toEqual({ ok: true })
   })
   it('maintenance closes expired requests and releases their reservations', async () => {

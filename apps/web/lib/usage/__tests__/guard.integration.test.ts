@@ -51,13 +51,14 @@ describeDb('usage guard', () => {
   it('rejects once the limit would be exceeded, without touching any state', async () => {
     const id = await user()
     await reserve({ userId: id, kind: 'textRP', idempotencyKey: `k:${id}:open`, now: T0 })
-    await db.update(usageWindows).set({ consumed: POLICY.usage.limits.free - 1 })
+    const TEXT = POLICY.usage.weights.textRP
+    await db.update(usageWindows).set({ consumed: POLICY.usage.limits.free - TEXT })
       .where(eq(usageWindows.userId, id))
     await expect(reserve({ userId: id, kind: 'photo', idempotencyKey: `k:${id}:over`, now: T0 }))
       .rejects.toBeInstanceOf(UsageExceededError)
-    // 1단위짜리는 아직 들어간다
+    // 대화 한 턴 값만큼은 아직 들어간다
     const ok = await reserve({ userId: id, kind: 'textRP', idempotencyKey: `k:${id}:last`, now: T0 })
-    expect(ok.cost).toBe(1)
+    expect(ok.cost).toBe(TEXT)
     const s = await usageStatus(id, T0)
     expect(s.remaining).toBe(0)
     expect(s.resetsAt!.getTime()).toBe(new Date('2026-09-30T15:00:00Z').getTime())   // 소진 시점이 아니라 창 종료 시각
@@ -126,7 +127,7 @@ describeDb('usage guard', () => {
       reserve({ userId: id, kind: 'textRP', idempotencyKey: `k:${id}:c${i}`, now: T0 })))
     const wins = await db.select().from(usageWindows).where(eq(usageWindows.userId, id))
     expect(wins).toHaveLength(1)
-    expect(wins[0]!.consumed).toBe(5)
+    expect(wins[0]!.consumed).toBe(5 * POLICY.usage.weights.textRP)
   })
 
   /** 4단계 — 충전 원장과 통합 차감. */
@@ -149,13 +150,14 @@ describeDb('usage guard', () => {
     it('splits one reservation across both sources and records each share', async () => {
       const id = await user()
       await grantRecharge({ userId: id, amount: 50, source: 'grant' })
-      // 월간을 한 칸만 남기고 비운다 — textRP 는 1 단위라 정확히 맞출 수 있다.
-      await reserve({ userId: id, kind: 'textRP', units: FREE - 1, idempotencyKey: `k:${id}:almost`, now: T0 })
+      // 월간을 대화 턴으로 채울 수 있는 데까지 비운다 — 남는 칸(left)은 턴 값에 따라 1~TEXT.
+      const TEXT = POLICY.usage.weights.textRP, fill = Math.floor((FREE - 1) / TEXT), left = FREE - TEXT * fill
+      await reserve({ userId: id, kind: 'textRP', units: fill, idempotencyKey: `k:${id}:almost`, now: T0 })
       const r = await reserve({ userId: id, kind: 'photo', idempotencyKey: `k:${id}:split`, now: T0 })
-      expect(r.fromGrants).toBe(PHOTO - 1)
+      expect(r.fromGrants).toBe(PHOTO - left)
       const [w] = await db.select().from(usageWindows).where(eq(usageWindows.userId, id))
       expect(w!.consumed).toBe(FREE)                       // 월간은 딱 한도까지만
-      expect(await rechargeBalance(id)).toBe(50 - (PHOTO - 1))
+      expect(await rechargeBalance(id)).toBe(50 - (PHOTO - left))
     })
 
     it('refunds a failed generation to the exact source it came from', async () => {

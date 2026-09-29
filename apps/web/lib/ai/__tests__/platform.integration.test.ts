@@ -100,7 +100,7 @@ describeDb('production AI accounting',()=>{
     expect((await usageStatus(id)).consumed).toBe(10)
   })
   it('reserves only low-cost text continuity and rejects images on the same exhausted pool',async()=>{
-    const id=await user();vi.stubEnv('MIRO_USAGE_POLICY',JSON.stringify({monthly:{free:1},continuity:{enabled:true,reserve:2,maxOutputTokens:128}}))
+    const id=await user();vi.stubEnv('MIRO_USAGE_POLICY',JSON.stringify({monthly:{free:1},weights:{textRP:1},continuity:{enabled:true,reserve:2,maxOutputTokens:128}}))
     await reserve({userId:id,kind:'textRP',idempotencyKey:randomUUID()})
     const r=await reserve({userId:id,kind:'textRP',idempotencyKey:randomUUID()});expect(r.continuity).toBe(true)
     await expect(reserve({userId:id,kind:'photo',idempotencyKey:randomUUID()})).rejects.toThrow('usage limit')
