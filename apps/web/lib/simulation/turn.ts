@@ -128,7 +128,7 @@ async function executeTurn(opts: {
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
     // 정책은 서버가 여기서 한 번 확정한다(§3.1). 등급은 서버가 검증한 선택에서, 경험은 캐릭터에서, 채널은 진입 경로에서 온다.
-    const policyInput = { experience: loaded.experienceType, tier: model.metered ? 'echo' as const : 'miro' as const, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId), memory: 'deferred' as const }
+    const policyInput = { experience: loaded.experienceType, tier: model.metered ? 'echo' as const : 'miro' as const, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId, loaded.policyVersion), memory: 'deferred' as const }
     // MIRO basic chat does not draw down the monthly allowance. Everything else the
     // pipeline enforces — request dedupe, AI cost budget, rate limits, safety — still runs.
     let reservation: Reservation | null = null
@@ -145,7 +145,7 @@ async function executeTurn(opts: {
     const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin }
     const llm = resolveRpLLM(loaded.characterName, context)
     try {
-      const prepared = await prepareAgencyTurn(sessionId, userId, messenger ? { ...loaded.snapshot, mode: 'messenger' } : loaded.snapshot, llm, { id: userMessageId, text: input })
+      const prepared = await prepareAgencyTurn(sessionId, userId, messenger ? { ...loaded.snapshot, mode: 'messenger' } : loaded.snapshot, llm, { id: userMessageId, text: input }, new Date(), loaded.policyVersion)
       agency = prepared.runtime
       // 개정판이 준비됐는지는 여기서야 안다 — 정책의 engine 은 준비 상태까지 본 결과다(준비 전이면 legacy 로 보류).
       policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false })

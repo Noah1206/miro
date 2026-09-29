@@ -18,16 +18,16 @@ const NUMERIC_TRAITS = new Set(['personality.jealousy', 'personality.initiative'
  * Capture only for the experiment: a cohort session, or any save while the non-production '*' cohort
  * is on. A production cohort lists existing session IDs, so ordinary saves never capture or compile.
  */
-function captureAllowed(sessionId?: string): boolean {
-  if (sessionId) return characterAgencyMode(sessionId) !== 'off'
+function captureAllowed(sessionId?: string, policyVersion?: string): boolean {
+  if (sessionId) return characterAgencyMode(sessionId, policyVersion) !== 'off'
   return characterAgencyMode() !== 'off' && characterAgencyCohort().all
 }
 
 /** Called inside the authenticated character save/start transaction. Never rewrites an existing revision. */
 export async function captureAgencyRevision(
-  tx: Transaction, characterId: string, options: { explicitFields?: string[]; sessionId?: string } = {},
+  tx: Transaction, characterId: string, options: { explicitFields?: string[]; sessionId?: string; policyVersion?: string } = {},
 ): Promise<CharacterRevision | null> {
-  if (!captureAllowed(options.sessionId)) return null
+  if (!captureAllowed(options.sessionId, options.policyVersion)) return null
   // All capture/edit callers take the character row lock before related profile writes/reads.
   // A new session consequently receives one complete saved profile, not half of a concurrent edit.
   const [character] = await tx.select().from(characters)
@@ -55,8 +55,8 @@ export async function captureAgencyRevision(
 }
 
 /** Pin the source even while compilation is pending. An edit cannot replace this session's character. */
-export async function pinAgencyRevision(tx: Transaction, sessionId: string, revision: CharacterRevision | null, now = new Date()): Promise<boolean> {
-  if (!revision || characterAgencyMode(sessionId) !== 'live') return false
+export async function pinAgencyRevision(tx: Transaction, sessionId: string, revision: CharacterRevision | null, now = new Date(), policyVersion?: string): Promise<boolean> {
+  if (!revision || characterAgencyMode(sessionId, policyVersion) !== 'live') return false
   const [session] = await tx.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
     eq(roleplaySessions.id, sessionId), eq(roleplaySessions.characterId, revision.characterId),
     eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt),

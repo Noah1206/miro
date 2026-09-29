@@ -61,7 +61,7 @@ class AgencyRealityConflict extends Error {}
 /** null means the legacy path retains control (off/shadow); live never falls back to its policy. */
 export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { inline?: boolean; background?: boolean }): Promise<EvaluateOutcome | null> {
   const sessionId = row.session.id, userId = row.session.userId
-  const requestedMode = characterAgencyMode(sessionId)
+  const requestedMode = characterAgencyMode(sessionId, row.session.policyVersion)
   if (requestedMode === 'off') return null
   installAIUsageSink()
   const llm = createAI({ mock: req => buildMockRealityContent(req.prompt), context: {
@@ -71,7 +71,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
   try {
     const loaded = await loadSession(sessionId, userId)
     if (!loaded) return requestedMode === 'shadow' ? null : { outcome: 'skipped', reason: 'session_not_found' }
-    const runtime = await loadAgencyRuntime(sessionId, userId, loaded.snapshot, llm, now)
+    const runtime = await loadAgencyRuntime(sessionId, userId, loaded.snapshot, llm, now, row.session.policyVersion)
     if (!runtime && requestedMode === 'shadow') return null
     if (!runtime || (requestedMode === 'live' && runtime.mode !== 'live')) {
       // Fallback chat turns may leave a legacy intent with notBefore, which would re-claim this session on
@@ -167,7 +167,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         || !state || state.version !== runtime.version || state.revisionId !== runtime.revision.id || state.mode !== 'live'
         || state.state.sequence !== plan.transition.expectedSequence
         || world?.version !== snapshot.world.version || relationship?.version !== snapshot.relationship.version
-        || characterAgencyMode(sessionId) !== 'live' || !feature('realityMessage')) throw new AgencyRealityConflict()
+        || characterAgencyMode(sessionId, current.policyVersion) !== 'live' || !feature('realityMessage')) throw new AgencyRealityConflict()
       const [duplicate] = await tx.select({ id: characterDecisions.id }).from(characterDecisions)
         .where(and(eq(characterDecisions.sessionId, sessionId), eq(characterDecisions.triggerKey, triggerKey))).limit(1)
       if (duplicate) throw new AgencyRealityConflict()

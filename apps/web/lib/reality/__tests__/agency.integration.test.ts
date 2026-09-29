@@ -367,6 +367,13 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
     vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', id)
     expect(await due()).toBe(0)
+    // §6: 정책 버전이 agency:v1 인 세션은 목록에 없어도 깨어난다 — 중단 스위치가 꺼져 있을 때만.
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'live')
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', '')
+    await db.update(roleplaySessions).set({ policyVersion: 'agency:v1' }).where(eq(roleplaySessions.id, id))
+    expect(await due()).toBe(1)
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
+    expect(await due()).toBe(0)
   })
 
   it('shadow and off paths cannot persist agency decisions, runtime changes or contact output', async () => {

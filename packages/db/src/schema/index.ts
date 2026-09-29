@@ -293,6 +293,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
 
   /** Event cooldown 계산의 기준. 스토리 진행 트리거로는 사용하지 않는다. */
   turnCount: integer('turn_count').notNull().default(0),
+  /** 세션의 정책 버전(agency-core-transition-plan §6). legacy:v1 | agency:v1. 코호트 env 와 별개의 제품 기본값. */
+  policyVersion: text('policy_version', { enum: ['legacy:v1', 'agency:v1'] }).notNull().default('legacy:v1'),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

@@ -2,6 +2,7 @@ import { introMessages } from '@/lib/intro-dialogue'
 import { and, eq, isNull, or, sql } from 'drizzle-orm'
 import { db, characters, messages, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
+import { defaultSessionPolicy } from '@miro/config'
 import { inWrittenOrder } from './commit'
 
 /** 시작 관계 기본값. 캐릭터는 처음부터 사용자에게 호감을 보이지 않는다 (명세서 4.1). */
@@ -72,6 +73,8 @@ export async function createRoleplaySession(
 
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: starting.worldId,
+      // 세션 정책 버전은 만들 때 한 번 정해진다(§6). 이후는 switchSessionPolicy 가 전환 표시와 함께 바꾼다.
+      policyVersion: defaultSessionPolicy(starting.experienceType),
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.

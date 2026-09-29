@@ -45,9 +45,9 @@ export async function compileAgencyRevision(revisionId: string, llm: LLMProvider
 }
 
 /** Called only after authenticated loadSession. Recheck here before creating a private revision. */
-export async function loadAgencyRuntime(sessionId: string, userId: string, snapshot: SimulationSnapshot, llm: LLMProvider, now = new Date()): Promise<LoadedAgency | null> {
+export async function loadAgencyRuntime(sessionId: string, userId: string, snapshot: SimulationSnapshot, llm: LLMProvider, now = new Date(), policyVersion?: string): Promise<LoadedAgency | null> {
   if (snapshot.experienceType !== 'reality') return null
-  const mode = characterAgencyMode(sessionId)
+  const mode = characterAgencyMode(sessionId, policyVersion)
   if (mode === 'off') return null // No new schema query when disabled, including during rollout.
   if (mode === 'shadow' && llm.info.mode !== 'mock') return null // No interactive-user budget spent on a comparison.
   const [owned] = await db.select({ id: roleplaySessions.id }).from(roleplaySessions)
@@ -63,8 +63,8 @@ export async function loadAgencyRuntime(sessionId: string, userId: string, snaps
     ;[revision] = await db.select().from(characterRevisions).where(and(eq(characterRevisions.id, runtime.revisionId), eq(characterRevisions.characterId, snapshot.character.id))).limit(1)
   } else {
     revision = await db.transaction(async tx => {
-      const captured = await captureAgencyRevision(tx, snapshot.character.id, { sessionId })
-      await pinAgencyRevision(tx, sessionId, captured, now)
+      const captured = await captureAgencyRevision(tx, snapshot.character.id, { sessionId, policyVersion })
+      await pinAgencyRevision(tx, sessionId, captured, now, policyVersion)
       return captured ?? undefined
     })
     // Legacy sessions pin pending sources too; concurrent loaders may already have pinned another source.

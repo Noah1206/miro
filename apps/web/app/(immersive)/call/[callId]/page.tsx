@@ -60,7 +60,7 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   if (audio || call.channel === 'video') try {
     // Streaming audio currently bypasses server action approval/commit. Keep experimental sessions
     // on the existing text-call adapter until streamed turns have the same authority boundary.
-    if (characterAgencyMode(call.sessionId) === 'live') throw new Error('agency_requires_server_turns')
+    if (characterAgencyMode(call.sessionId, loaded.policyVersion) === 'live') throw new Error('agency_requires_server_turns')
     // 목소리는 성별로 정한다. 성별이 없는 캐릭터는 제공자 기본값(GEMINI_LIVE_VOICE)을 쓴다.
     const gender = loaded.snapshot.character.appearance?.bodyProfile.gender
     media = await provider.startSession({

@@ -148,7 +148,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       .sort((a, b) => (ORDER[a.role] ?? 9) - (ORDER[b.role] ?? 9))
     if (input.agency) {
       const { plan, version } = input.agency
-      if (characterAgencyMode(input.sessionId) !== 'live' || (productionRuntime() && plan.providerMode !== 'live')
+      if (characterAgencyMode(input.sessionId, session.policyVersion) !== 'live' || (productionRuntime() && plan.providerMode !== 'live')
         || plan.decision.sessionId !== input.sessionId || plan.context.actor !== input.characterId) throw new StaleStateError()
       const [runtime] = await tx.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, input.sessionId)).for('update')
       if (!runtime || runtime.mode !== 'live' || runtime.version !== version || runtime.revisionId !== plan.decision.revisionId
@@ -314,10 +314,16 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
 
     /* ---- ledger ---- */
     // 원장은 저장된 사실만 가리킨다: 이 턴의 요청/메시지, 읽어온 버전, 결정. (session_id, trigger_key, seq) 고유 — 재시도가 효과를 두 번 남기지 못한다.
-    if (input.ledger?.records.length) {
+    if (input.ledger) {
       const cause = inserted.find(m => m.role === 'user')?.id ?? null
       const triggerKey = input.ledger.triggerKey ?? (input.requestId ? `chat:${input.requestId}` : `turn:${cause ?? input.turnIndex}`)
-      await tx.insert(stateTransitions).values(input.ledger.records.map((r, seq) => ({
+      // 전환 표시(§6.4): 이 세션의 마지막 턴과 다른 경로로 답했으면 원장에 남긴다 — 관계·대화는 그대로 이어진다.
+      const [last] = await tx.select({ engine: stateTransitions.engine }).from(stateTransitions).where(eq(stateTransitions.sessionId, input.sessionId))
+        .orderBy(sql`${stateTransitions.createdAt} desc, ${stateTransitions.seq} desc`).limit(1)
+      const records = [...(last && last.engine !== input.ledger.policy.engine
+        ? [{ field: 'session.engine', before: last.engine, after: input.ledger.policy.engine, rule: 'policy_switch' as const, status: 'applied' as const, clock: 'real' as const, actor: 'server' }] : []),
+        ...input.ledger.records]
+      if (records.length) await tx.insert(stateTransitions).values(records.map((r, seq) => ({
         sessionId: input.sessionId, triggerKey, seq, policyVersion: input.ledger!.policy.version, engine: input.ledger!.policy.engine,
         revisionId: input.agency ? input.agency.plan.decision.revisionId : null, decisionId: r.decisionId ?? null, causeMessageId: cause,
         actor: r.actor, target: r.target ?? null, field: r.field, before: r.before ?? null, after: r.after ?? null, rule: r.rule, status: r.status, clock: r.clock,

@@ -26,12 +26,11 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
   if (!call || call.channel !== 'voice') return 'not_found'
   const late = call.status === 'ended' && call.endedAt && now.getTime() - call.endedAt.getTime() <= LATE_TURN_MS
   if (call.status !== 'active' && !late) return 'closed'
-  // 자율성 엔진 코호트는 통화가 텍스트로만 진행된다(통화 화면이 막는다). 여기로 오는 음성 턴은 없어야 한다.
-  if (characterAgencyMode(call.sessionId) === 'live') return 'skipped'
-
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(call.sessionId, userId, said)
     if (!loaded || loaded.restricted) return 'not_found'
+    // 자율성 엔진 코호트는 통화가 텍스트로만 진행된다(통화 화면이 막는다). 여기로 오는 음성 턴은 없어야 한다.
+    if (characterAgencyMode(call.sessionId, loaded.policyVersion) === 'live') return 'skipped'
     const snapshot = { ...loaded.snapshot, mode: 'voice_call' as const }
     const requestId = randomUUID()
     // 통화는 MIRO 한도·채널 길이. 자율성 코호트는 위에서 걸렀으므로 legacy 로 확정된다.

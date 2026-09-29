@@ -45,11 +45,11 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
     let prepared
     try {
       const channel = call.channel === 'voice' ? 'voice_call' as const : 'video_call' as const
-      const context = { userId: user.id, sessionId: call.sessionId, origin: resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId), agencyReady: false }).origin }
+      const context = { userId: user.id, sessionId: call.sessionId, origin: resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId, loaded.policyVersion), agencyReady: false }).origin }
       const llm = resolveRpLLM(loaded.characterName, context)
-      prepared = await prepareAgencyTurn(call.sessionId, user.id, snapshot, llm, { id: userMessageId, text: input })
+      prepared = await prepareAgencyTurn(call.sessionId, user.id, snapshot, llm, { id: userMessageId, text: input }, new Date(), loaded.policyVersion)
       // 문자 통화도 같은 정책 객체를 쓴다 — 통화 시간으로 이미 차감됐으므로 등급은 MIRO 다.
-      const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId), agencyReady: prepared.agency?.mode === 'live', memory: 'deferred' })
+      const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId, loaded.policyVersion), agencyReady: prepared.agency?.mode === 'live', memory: 'deferred' })
       context.origin = policy.origin
       result = await runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy })
     } catch {

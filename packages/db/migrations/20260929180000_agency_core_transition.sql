@@ -65,3 +65,6 @@ DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN REVOKE ALL ON memory_jobs FROM anon; END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN REVOKE ALL ON memory_jobs FROM authenticated; END IF;
 END $$;
+-- 6단계: 세션별 정책 버전. 운영 코호트(env 목록)와 별개로 세션에 붙는 제품 기본값. legacy:v1 = 지금까지의 경로.
+-- agency:v1 이어도 MIRO_CHARACTER_AGENCY_MODE 가 live 가 아니면 legacy 로 돈다(중단 스위치). 값·기록·상태는 지우지 않는다.
+ALTER TABLE roleplay_sessions ADD COLUMN IF NOT EXISTS policy_version text NOT NULL DEFAULT 'legacy:v1';

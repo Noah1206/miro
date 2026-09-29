@@ -22,6 +22,8 @@ export type LoadedSession = {
   restricted: boolean
   /** chat 이면 선연락·사진·통화·Live 가 이 세션에서 열리지 않는다. */
   experienceType: 'chat' | 'reality'
+  /** 세션 정책 버전(§6). 자율성 코호트 판정에 세션 id 와 함께 넘긴다. */
+  policyVersion: 'legacy:v1' | 'agency:v1'
   lastInteractionAt: Date
 }
 
@@ -133,6 +135,7 @@ export async function loadSession(
     characterStatus: row.session.characterStatus,
     restricted: row.session.restrictedAt !== null,
     experienceType: c.experienceType,
+    policyVersion: row.session.policyVersion,
     lastInteractionAt: row.session.lastInteractionAt,
   }
 }

@@ -73,11 +73,13 @@ export async function runRealityMaintenance(wall = new Date()): Promise<Maintena
 export function agencyDueCondition(now: Date) {
   const cohort = characterAgencyCohort()
   const ids = cohort.ids.filter(id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
-  if (characterAgencyMode() !== 'live' || (!cohort.all && ids.length === 0)) return sql`false`
+  if (characterAgencyMode() !== 'live') return sql`false`
+  // 코호트 목록의 세션과, 정책 버전이 agency:v1 인 세션(§6) 둘 다 깨운다. 중단 스위치(mode≠live)면 어느 쪽도 아니다.
+  const listed = cohort.all ? sql`true` : ids.length ? sql`ar.session_id IN (${sql.join(ids.map(id => sql`${id}::uuid`), sql`, `)})` : sql`false`
   return sql`EXISTS (
     SELECT 1 FROM character_runtime_states ar WHERE ar.session_id = s2.id AND ar.mode = 'live'
       AND ar.next_wake_at <= ${now.toISOString()}::timestamptz
-      ${cohort.all ? sql`` : sql`AND ar.session_id IN (${sql.join(ids.map(id => sql`${id}::uuid`), sql`, `)})`}
+      AND (${listed} OR s2.policy_version = 'agency:v1')
   )`
 }
 

@@ -6,12 +6,12 @@ import { loadAgencyEvidence, loadAgencyRuntime } from './runtime'
 
 /** All server-mediated conversation surfaces pin and consume the same session personality. */
 export async function prepareAgencyTurn(sessionId: string, userId: string, source: SimulationSnapshot,
-  llm: LLMProvider, input: { id: string; text: string }, now = new Date()) {
+  llm: LLMProvider, input: { id: string; text: string }, now = new Date(), policyVersion?: string) {
   if (source.experienceType !== 'reality') return { runtime: null, snapshot: source, agency: undefined }
-  const runtime = await loadAgencyRuntime(sessionId, userId, source, llm, now)
+  const runtime = await loadAgencyRuntime(sessionId, userId, source, llm, now, policyVersion)
   // Until the pinned revision compiles, keep the verified conversation path and hold back only the
   // new autonomy (plan §3.1). loadAgencyRuntime has already scheduled the compile.
-  if (runtime?.mode !== 'live' && characterAgencyMode(sessionId) === 'live') {
+  if (runtime?.mode !== 'live' && characterAgencyMode(sessionId, policyVersion) === 'live') {
     observe('agency.not_ready_fallback', { sessionId })
     return { runtime: null, snapshot: source, agency: undefined }
   }
