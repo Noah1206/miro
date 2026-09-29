@@ -995,3 +995,10 @@ export const characterDecisions = pgTable('character_decisions', {
   providerMode: text('provider_mode').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({ trigger: uniqueIndex('character_decisions_trigger_uniq').on(t.sessionId, t.triggerKey) })).enableRLS()
+
+/** 운영자 알림 상태 — 같은 알림을 몇 시간 안에 다시 보내지 않기 위한 마지막 발송 시각(lib/ops/alerts). */
+export const opsAlerts = pgTable('ops_alerts', {
+  key: text('key').primaryKey(),
+  lastSentAt: timestamp('last_sent_at', { withTimezone: true }).notNull(),
+  detail: text('detail'),
+}).enableRLS()

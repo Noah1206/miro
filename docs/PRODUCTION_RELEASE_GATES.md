@@ -18,7 +18,7 @@
 - [ ] Concurrent load test meets agreed error, latency and cost targets. Targets must be measured and agreed, not assumed.
 - [ ] Database backup restored into an isolated environment and record integrity checked.
 - [ ] Privacy/deletion/retention behavior matches user-facing documents.
-- [ ] Monitoring alerts reach an operator, including provider failure and budget exhaustion.
+- [x] Monitoring alerts reach an operator, including provider failure and budget exhaustion. **2026-09-29:** 유지보수 크론(15분)이 `lib/ops/alerts.ts` 로 DB 기록을 보고 Discord 웹훅(`MIRO_OPS_DISCORD_WEBHOOK`)에 보낸다 — AI 제공자 장애 의심(15분 안 실패 절반 이상), 일일 예산·호출 한도 80%/소진, 24시간 넘은 입금 대기, 푸시 실패 누적. 같은 알림은 6시간에 한 번(`ops_alerts` 표). 웹훅을 처음 본 뒤 '연결됨' 인사를 한 번 보낸다. 받는 사람은 운영자뿐이다. 대시보드·오류 추적 도구는 아직 없다.
 
 ## Deployment order
 
