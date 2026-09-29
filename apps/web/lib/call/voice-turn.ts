@@ -52,6 +52,7 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
         blocks: [...result.transition.blocks, { type: 'call_line' as never, speaker: null, text: callId }],
         transition: result.transition, worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version,
         currentRelationship: snapshot.relationship, existingMemories: snapshot.memories, characterState: result.characterState,
+        ledger: { policy: result.policy, records: result.records, triggerKey: `voice:${requestId}` },
       })
       return 'stored'
     } catch (e) {

@@ -1,5 +1,6 @@
 export * from './character/types'
 export * from './world/types'
+export * from './world/transition'
 export * from './scene/types'
 export * from './relationship/types'
 export * from './relationship/apply'

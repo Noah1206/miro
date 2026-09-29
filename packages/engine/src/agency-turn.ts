@@ -9,6 +9,7 @@ import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealizati
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
+import { approveTransition } from './transition'
 
 export type AgencyTurnInput = {
   mode: 'shadow' | 'live'
@@ -51,9 +52,12 @@ export async function runAgencyTurn(opts: {
   if (proposal.worldDelta || proposal.sceneDelta || proposal.realityIntent || proposal.eventCandidates.length
     || proposal.eventUpdates.length || proposal.npcIntroductions.length || proposal.npcActions.length
     || proposal.rp.blocks.some(b => b.type === 'npc' || b.type === 'world')) throw new Error('agency_unapproved_mutation')
-  const transition = validateProposal(proposal, snapshot)
-  transition.relationshipDelta = plan.relationshipDelta
-  transition.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
+  const validated = validateProposal(proposal, snapshot)
+  validated.relationshipDelta = plan.relationshipDelta
+  validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
+  const { transition, records } = approveTransition(validated, snapshot, opts.policy, { relationshipOwner: 'appraisal', decisionId: plan.decision.id })
+  if (plan.transition.affectDelta) records.push({ field: 'agency.affect', before: agency.state.affect, after: plan.state.affect, rule: 'affect_appraisal', status: 'applied', clock: 'real', actor: snapshot.character.id, decisionId: plan.decision.id })
+  for (const change of plan.transition.goals ?? []) records.push({ field: `agency.goal.${change.kind === 'add' ? change.goal.id : change.goalId}`, after: change.kind, rule: 'goal_change', status: 'applied', clock: 'real', actor: snapshot.character.id, decisionId: plan.decision.id })
   const verification = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context,
     state: plan.state, blocks: transition.blocks })
   // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
@@ -65,5 +69,5 @@ export async function runAgencyTurn(opts: {
   const stages = [plan.providerMode, renderer.providerMode, verification.providerMode]
   const providerMode = stages.includes('fallback') ? 'fallback' : stages.includes('mock') ? 'mock' : 'live'
   return { transition, context, providerMode, semanticEvents: [], characterState, firedRules: [],
-    agency: { plan, verification }, policy: opts.policy }
+    agency: { plan, verification }, policy: opts.policy, records }
 }

@@ -2,14 +2,14 @@ import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   db, events, memories, messages, npcs, relationships, roleplaySessions,
   scenes, worldStates, usageLedger, conversationRequests,
-  characterRuntimeStates, characterDecisions, characters, users,
+  characterRuntimeStates, characterDecisions, characters, users, stateTransitions,
 } from '@miro/db'
 import {
   applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
 } from '@miro/domain'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
-import type { Memory, CharacterState, RelationshipState } from '@miro/domain'
-import type { ValidatedTransition, AgencyPlan } from '@miro/engine'
+import type { Memory, CharacterState, RelationshipState, StateTransitionRecord } from '@miro/domain'
+import type { ValidatedTransition, AgencyPlan, TurnPolicy } from '@miro/engine'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
 
 /** One INSERT shares one now(). Step rows by a microsecond so every reader ordering by created_at
@@ -54,6 +54,11 @@ export type CommitInput = {
   sceneMarker?: string | null
   /** scene(기본) = 만나서 나누는 장면, messenger = 문자. 메시지 kind 가 여기서 갈린다 — 화면이 kind 로 두 페이지를 나눈다. */
   channel?: 'scene' | 'messenger'
+  /**
+   * 원장(§3.4): 이 턴이 승인·거부·보류한 변경과 그것을 정한 정책. 같은 트랜잭션에 남는다.
+   * 없으면(옛 호출) 기록하지 않는다 — 원장은 추가 기능이지 커밋의 전제가 아니다.
+   */
+  ledger?: { policy: TurnPolicy; records: StateTransitionRecord[]; triggerKey?: string }
 }
 
 /**
@@ -295,6 +300,20 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         await tx.update(worldStates).set({ currentSceneId: sceneId })
           .where(eq(worldStates.sessionId, input.sessionId))
       }
+    }
+
+    /* ---- ledger ---- */
+    // 원장은 저장된 사실만 가리킨다: 이 턴의 요청/메시지, 읽어온 버전, 결정. (session_id, trigger_key, seq) 고유 — 재시도가 효과를 두 번 남기지 못한다.
+    if (input.ledger?.records.length) {
+      const cause = inserted.find(m => m.role === 'user')?.id ?? null
+      const triggerKey = input.ledger.triggerKey ?? (input.requestId ? `chat:${input.requestId}` : `turn:${cause ?? input.turnIndex}`)
+      await tx.insert(stateTransitions).values(input.ledger.records.map((r, seq) => ({
+        sessionId: input.sessionId, triggerKey, seq, policyVersion: input.ledger!.policy.version, engine: input.ledger!.policy.engine,
+        revisionId: input.agency ? input.agency.plan.decision.revisionId : null, decisionId: r.decisionId ?? null, causeMessageId: cause,
+        actor: r.actor, target: r.target ?? null, field: r.field, before: r.before ?? null, after: r.after ?? null, rule: r.rule, status: r.status, clock: r.clock,
+        worldVersion: input.worldVersion + 1, relationshipVersion: input.relationshipVersion + 1, runtimeVersion: input.agency ? input.agency.version + 1 : null,
+        outcomeRef: r.outcomeRef ?? null,
+      })))
     }
 
     /* ---- session ---- */

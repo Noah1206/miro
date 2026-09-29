@@ -4,7 +4,7 @@ import {
   DEFAULT_CHARACTER_STATE, addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, deltaFromSemanticEvents,
   deriveCharacterState, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, nextRelationshipStage, scaleCloser,
 } from '@miro/domain'
-import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent } from '@miro/domain'
+import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent, StateTransitionRecord } from '@miro/domain'
 import { SimulationProposal } from './proposal.schema'
 import { requireSafeContent, UnsafeContentError } from './safety'
 import { fallbackProposal } from './fallback'
@@ -13,6 +13,7 @@ import { validateProposal, type ValidatedTransition } from './validator'
 import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
 import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck } from './agency'
 import { policyForSnapshot, type TurnPolicy } from './policy'
+import { approveTransition } from './transition'
 
 export type TurnResult = {
   agency?: { plan: AgencyPlan; verification: AgencyRealizationCheck }
@@ -30,6 +31,8 @@ export type TurnResult = {
   firedRules: string[]
   /** 이 턴을 결정한 정책. 호출자가 안 넘겼으면 스냅샷과 옵션에서 만든 기본값이다. */
   policy: TurnPolicy
+  /** 승인·거부·보류된 상태 변경(원장 행). 커밋이 그대로 저장한다. */
+  records: StateTransitionRecord[]
 }
 
 /**
@@ -149,29 +152,24 @@ export async function runTurn(opts: {
     })
   }
 
-  const transition = validateProposal(proposal, snapshot)
+  const validated = validateProposal(proposal, snapshot)
   // 출력 검열과 기억 추출은 서로 무관하다 — 같이 기다린다.
   const [, memoryGroups] = await Promise.all([
     providerMode !== 'fallback' ? requireSafeContent(opts.llm, { phase: 'output', input: opts.userInput, proposal }) : Promise.resolve(),
     memoryTasks,
   ])
   for (const group of memoryGroups) extraMemories.push(...group)
-  transition.relationshipDelta = codeDelta
+  validated.relationshipDelta = codeDelta
   // The dialogue model cannot delete memories. Corrections come only from the scoped extraction task.
-  transition.memories = filterSalient([...extraMemories, ...transition.memories.map(({ replaces: _ignored, ...m }) => m)])
+  validated.memories = filterSalient([...extraMemories, ...validated.memories.map(({ replaces: _ignored, ...m }) => m)])
 
   // Standard characters retain dialogue, relationship and memory, but have no autonomous world or Reality effects.
   // This is an application boundary: provider proposals cannot opt into those effects. The policy owns it, not the tier.
   if (!policy.permissions.worldChange) {
-    transition.worldDelta = null
-    transition.sceneDelta = null
-    transition.newEvent = null
-    transition.eventUpdates = []
-    transition.npcIntroductions = []
-    transition.npcActions = []
-    transition.realityIntent = null
-    return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules: [], agencyShadow, policy }
+    const { transition, records } = approveTransition(validated, snapshot, policy)
+    return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules: [], agencyShadow, policy, records }
   }
+  const transition = validated
 
   // 사건 규칙 — "무슨 일이 일어나야 하는가" 는 코드가 정한다. LLM 제안은 규칙이 없을 때만 남는다.
   const fired = evaluateEventRules({
@@ -194,7 +192,8 @@ export async function runTurn(opts: {
   const firedRules = fired.map((r) => r.id)
   characterState.firedRules = [...new Set([...prevState.firedRules, ...fired.filter((r) => r.once).map((r) => r.id)])]
 
-  return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow, policy }
+  const approved = approveTransition(transition, snapshot, policy)
+  return { transition: approved.transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow, policy, records: approved.records }
 }
 
 /** 검증된 블록을 화면/저장용 텍스트로 합친다. */

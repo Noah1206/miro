@@ -212,6 +212,7 @@ async function executeTurn(opts: {
         currentRelationship: loaded.snapshot.relationship,
         existingMemories: loaded.snapshot.memories,
         characterState: result.characterState,
+        ledger: { policy: result.policy, records: result.records },
       }))
       outcome.messages = committed.messages
     } catch (e) {

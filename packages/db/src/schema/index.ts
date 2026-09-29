@@ -998,6 +998,35 @@ export const characterDecisions = pgTable('character_decisions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({ trigger: uniqueIndex('character_decisions_trigger_uniq').on(t.sessionId, t.triggerKey) })).enableRLS()
 
+/** 상태 전이 원장(agency-core-transition-plan §3.4) — 서버가 승인·거부·보류한 변경 한 행. 대화 원문은 없다. */
+export const stateTransitions = pgTable('state_transitions', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  triggerKey: text('trigger_key').notNull(),
+  seq: integer('seq').notNull(),
+  policyVersion: text('policy_version').notNull(),
+  engine: text('engine', { enum: ['legacy', 'agency'] }).notNull(),
+  revisionId: uuid('revision_id').references(() => characterRevisions.id, { onDelete: 'set null' }),
+  decisionId: text('decision_id'),
+  causeMessageId: uuid('cause_message_id'),
+  actor: text('actor').notNull(),
+  target: text('target'),
+  field: text('field').notNull(),
+  before: jsonb('before'),
+  after: jsonb('after'),
+  rule: text('rule').notNull(),
+  status: text('status', { enum: ['applied', 'rejected', 'held'] }).notNull(),
+  clock: text('clock', { enum: ['real', 'narrative'] }).notNull(),
+  worldVersion: integer('world_version'),
+  relationshipVersion: integer('relationship_version'),
+  runtimeVersion: integer('runtime_version'),
+  outcomeRef: text('outcome_ref'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({
+  trigger: uniqueIndex('state_transitions_trigger_uniq').on(t.sessionId, t.triggerKey, t.seq),
+  session: index('state_transitions_session_idx').on(t.sessionId, t.createdAt.desc()),
+})).enableRLS()
+
 /** 운영자 알림 상태 — 같은 알림을 몇 시간 안에 다시 보내지 않기 위한 마지막 발송 시각(lib/ops/alerts). */
 export const opsAlerts = pgTable('ops_alerts', {
   key: text('key').primaryKey(),

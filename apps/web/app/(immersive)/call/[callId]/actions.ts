@@ -65,6 +65,7 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
         worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version,
         currentRelationship: snapshot.relationship, existingMemories: snapshot.memories,
         characterState: result.characterState,
+        ledger: { policy: result.policy, records: result.records, triggerKey: `call:${userMessageId}` },
       })
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue
