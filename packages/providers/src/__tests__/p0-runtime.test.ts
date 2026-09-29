@@ -23,8 +23,10 @@ describe('production gates and validation spending', () => {
   it('does not allow env flags to reopen production mocks or unfinished media', () => {
     vi.stubEnv('NODE_ENV', 'production'); vi.stubEnv('MIRO_ENABLE_DEV_API', '1')
     vi.stubEnv('MIRO_TEST_MODE', '1'); vi.stubEnv('DATABASE_URL', 'postgres://remote/miro')
-    vi.stubEnv('MIRO_FEATURE_VOICE_CALL', '1')
-    expect(devApiAllowed()).toBe(false); expect(mockProvidersAllowed()).toBe(false); expect(feature('voiceCall')).toBe(false)
+    vi.stubEnv('MIRO_FEATURE_VOICE_CALL_AUDIO', '1'); vi.stubEnv('MIRO_FEATURE_VIDEO_CALL', '1')
+    expect(devApiAllowed()).toBe(false); expect(mockProvidersAllowed()).toBe(false)
+    // 문자 통화(voiceCall)는 9/29 공개됐다 — 막혀 있어야 하는 건 실시간 음성과 영상
+    expect(feature('voiceCallAudio')).toBe(false); expect(feature('videoCall')).toBe(false)
     vi.stubEnv('MIRO_MODEL_REGISTRY', ''); vi.stubEnv('AI_PROVIDER', ''); vi.stubEnv('AI_FALLBACK_PROVIDER', '')
     expect(() => registryFromEnv(() => null)).toThrow()
   })
