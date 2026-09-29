@@ -16,7 +16,7 @@ describeDb('home cards with multiple worlds', () => {
     try {
       const [chat] = await db.insert(characters).values({
         ownerId: owner!.id, name: 'two worlds chat', personality: 'test',
-        isOfficial: true, isPublic: false, isDraft: false, experienceType: 'chat',
+        isOfficial: true, isPublic: false, isDraft: false, experienceType: 'reality',
       }).returning({ id: characters.id })
       const [first] = await db.insert(worlds).values({ characterId: chat!.id, location: '첫 세계', genre: '첫세계장르' }).returning({ id: worlds.id })
       const [second] = await db.insert(worlds).values({ characterId: chat!.id, location: '둘째 세계', genre: '둘째세계장르' }).returning({ id: worlds.id })
@@ -33,7 +33,7 @@ describeDb('home cards with multiple worlds', () => {
       ])
       const fillers = await db.insert(characters).values(Array.from({ length: 13 }, (_, index) => ({
         ownerId: owner!.id, name: `world page filler ${index}`, personality: 'test',
-        isOfficial: false, isPublic: true, isDraft: false, experienceType: 'chat' as const,
+        isOfficial: false, isPublic: true, isDraft: false, experienceType: 'reality' as const,
       }))).returning({ id: characters.id })
 
       const seen = new Set<string>()
@@ -58,9 +58,16 @@ describeDb('home cards with multiple worlds', () => {
       expect(search.items.filter(item => item.id === chat!.id)).toHaveLength(1)
       expect(search.items.find(item => item.id === chat!.id)?.genre).toBe(selectedGenre)
       expect((await searchPage(viewer!.id, 'worldpagefiller0')).items.some(item => item.id === fillers[0]!.id)).toBe(true)
-      expect((await listOfficials('chat')).filter(item => item.id === chat!.id)).toHaveLength(1)
-      expect((await discoverGrid(viewer!.id, 'chat')).filter(item => item.id === chat!.id)).toHaveLength(1)
-      expect((await miroPage(viewer!.id)).items.filter(item => item.id === reality!.id)).toHaveLength(1)
+      expect((await listOfficials('reality')).filter(item => item.id === chat!.id)).toHaveLength(1)
+      expect((await discoverGrid(viewer!.id, 'reality')).filter(item => item.id === chat!.id)).toHaveLength(1)
+      // 채움 캐릭터도 미로라 첫 페이지를 넘길 수 있다 — 끝까지 넘겨 한 번만 나오는지 본다.
+      const miroIds: string[] = []
+      for (let next: string | null = null; ; ) {
+        const page: { items: { id: string }[]; nextCursor: string | null } = await miroPage(viewer!.id, next)
+        miroIds.push(...page.items.map(item => item.id))
+        if (!(next = page.nextCursor)) break
+      }
+      expect(miroIds.filter(id => id === reality!.id)).toHaveLength(1)
 
       const [session] = await db.insert(roleplaySessions).values({
         userId: viewer!.id, characterId: chat!.id, worldId: first!.id,

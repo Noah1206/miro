@@ -51,15 +51,14 @@ test('예전 /discover 링크는 검색어를 들고 /home/search 로 간다', a
   expect(new URL(page.url()).searchParams.get('q')).toBe('비공개')
 })
 
-test('하단 탭의 발견 자리는 미로이고, 미로에는 지정된 캐릭터만 실린다', async ({ page }) => {
+test('하단 탭의 발견 자리는 미로이고, 미로에는 공식 미로 캐릭터가 실린다', async ({ page }) => {
   await page.goto(`${BASE}/home`)
   await expect(page.locator('nav a[href="/miro"]')).toHaveText(/미로/)
   await expect(page.locator('nav a[href="/discover"]')).toHaveCount(0)
   await page.locator('nav a[href="/miro"]').click()
   await expect(page).toHaveURL(/\/miro$/)
   await expect(page.getByRole('heading', { name: '미로' })).toBeVisible()
-  // 시드는 chat 으로 시작한다. 지정하지 않은 공식 캐릭터는 여기 나오지 않는다 —
-  // (알파 spec 이 유진을 지정하므로 '비어 있음' 은 단정하지 않고, 지정되지 않은 쪽만 본다.)
-  await expect(page.getByRole('link', { name: /토마스/ })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: /강태윤/ })).toHaveCount(0)
+  // 2026-09-29: 앱은 미로 캐릭터만 — 공식 시드도 미로 캐릭터라 미로 탭에 실린다.
+  await expect(page.getByRole('link', { name: /토마스/ }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /강태윤/ }).first()).toBeVisible()
 })

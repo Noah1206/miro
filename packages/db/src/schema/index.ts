@@ -187,7 +187,8 @@ export const characters = pgTable('characters', {
    * isOfficial(제작 주체)이나 contact_profiles.enabled(연락 스위치)로 대신하지 않는다 —
    * 둘 다 기본값이 기존 캐릭터를 잘못 편입시킨다. 지정은 운영 콘솔에서만 한다.
    */
-  experienceType: text('experience_type', { enum: ['chat', 'reality'] }).notNull().default('chat'),
+  /** 앱은 미로(reality) 캐릭터만 만든다(2026-09-29). chat 은 옛 캐릭터용으로만 남는다. */
+  experienceType: text('experience_type', { enum: ['chat', 'reality'] }).notNull().default('reality'),
 
   /** 공식 보이스(미로 내부 ID). null 이면 기본 목소리. 제작자는 공식 보이스 중에서만 고른다. */
   voiceId: text('voice_id').references(() => officialVoices.id, { onDelete: 'set null' }),

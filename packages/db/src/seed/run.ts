@@ -42,6 +42,8 @@ export async function seedOfficials(): Promise<void> {
       accentB: c.accent.b,
       initialRelationship: c.initialRelationship,
       isDraft: false,
+      // 앱은 미로 캐릭터만 보여준다(2026-09-29) — 공식 시드도 미로 캐릭터다.
+      experienceType: 'reality' as const,
     }
 
     const characterId = existing[0]

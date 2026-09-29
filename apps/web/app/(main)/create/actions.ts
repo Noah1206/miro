@@ -27,7 +27,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
  */
 export async function saveCharacter(form: FormData): Promise<string> {
   const user = await requireUser()
-  const p = parseCharacterForm(form)
+  // 앱은 미로 캐릭터만 만든다(2026-09-29 결정). 일반 캐릭터는 기존 것만 편집으로 남는다.
+  const p = parseCharacterForm(form, 'reality')
   const creationId = String(form.get('creationId') ?? '')
   if (!UUID.test(creationId)) throw new Error('INVALID_CREATION_ID')
 

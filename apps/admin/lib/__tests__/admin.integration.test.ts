@@ -88,7 +88,8 @@ describeDb('experience type designation', () => {
   async function character() {
     const [u] = await db.insert(users).values({ email: `xa-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
     madeUsers.push(u!.id)
-    const [c] = await db.insert(characters).values({ ownerId: u!.id, name: '지정', personality: '차분하다.' }).returning({ id: characters.id })
+    // 결정(2026-09-29) 전에 만들어진 일반 캐릭터 — 새 행의 기본값은 이제 reality 라 유형을 적는다.
+    const [c] = await db.insert(characters).values({ ownerId: u!.id, name: '지정', personality: '차분하다.', experienceType: 'chat' }).returning({ id: characters.id })
     madeChars.push(c!.id)
     const [w] = await db.insert(worlds).values({ characterId: c!.id, location: '서울' }).returning({ id: worlds.id })
     return { userId: u!.id, id: c!.id, worldId: w!.id }
@@ -100,8 +101,11 @@ describeDb('experience type designation', () => {
     for (const id of madeAdmins) await db.delete(adminUsers).where(eq(adminUsers.id, id))
   })
 
-  it('a new character starts as chat, and putting it in 미로 is audited once', async () => {
+  it('a new character row defaults to 미로; an old chat character moved into 미로 is audited once', async () => {
     const a = await admin(); const c = await character()
+    const [fresh] = await db.insert(characters).values({ ownerId: c.userId, name: '기본값', personality: '차분하다.' }).returning({ id: characters.id, t: characters.experienceType })
+    madeChars.push(fresh!.id)
+    expect(fresh!.t).toBe('reality')
     expect((await db.select({ t: characters.experienceType }).from(characters).where(eq(characters.id, c.id)))[0]!.t).toBe('chat')
     expect(await setExperienceType(a, c.id, 'reality', '초기 미로 대상')).toMatchObject({ result: 'changed', from: 'chat' })
     // 이미 그 유형이면 아무것도 하지 않는다 — 감사 기록도 남기지 않는다.

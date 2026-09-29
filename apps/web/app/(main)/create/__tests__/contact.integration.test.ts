@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { db, users, characters, contactProfiles, roleplaySessions, messages, callSessions, characterRevisions } from '@miro/db'
+import { db, users, characters, contactProfiles, roleplaySessions, messages, callSessions, characterRevisions, worlds } from '@miro/db'
+import { createRoleplaySession } from '@/lib/simulation/start'
 import { saveCharacter } from '../actions'
 import { updateCharacter } from '../../my/characters/[id]/edit/actions'
 import { runRealityEvaluations } from '@/lib/reality/scheduler'
@@ -36,7 +37,8 @@ async function create(enabled = true) {
   return { c: c!, session: session!, userId: u!.id }
 }
 describeDb('creator Reality wiring', () => {
-  it('saves standard chat once, includes its authored prompt and intro, and never enables Reality', async () => {
+  // 2026-09-29: 앱은 미로 캐릭터만 만든다. 일반 캐릭터 만들기는 서버가 거부하고, 이미 있는 일반 캐릭터는 편집·대화만 이어진다.
+  it('refuses to create a standard chat character; an existing one keeps its prompt, stays out of Reality and edits as chat', async () => {
     const [owner] = await db.insert(users).values({ email: `standard-${randomUUID()}@example.test` }).returning()
     auth.userId = owner!.id; made.push(owner!.id)
     const creationId = randomUUID()
@@ -44,25 +46,22 @@ describeDb('creator Reality wiring', () => {
     for (const [key, value] of Object.entries({ creationId, experienceType: 'chat', name: '대화 친구', title: '서점에서 만난 사람',
       personality: '조용하지만 다정하고, 짧은 존댓말로 답한다.', startingContext: '비 오는 날 서점에서 처음 만났다.',
       introDialogue: '[{"role":"character","text":"어서 오세요."}]' })) standard.set(key, value)
-    const first = await saveCharacter(standard)
-    expect(first).toMatch(/^\/chat\//)
-    expect(await saveCharacter(standard)).toBe(first)
-    const [c] = await db.select().from(characters).where(eq(characters.id, creationId))
-    expect(c).toMatchObject({ ownerId: owner!.id, experienceType: 'chat', isDraft: false })
-    expect(await db.select().from(characters).where(eq(characters.ownerId, owner!.id))).toHaveLength(1)
-    expect(await db.select().from(characterRevisions).where(eq(characterRevisions.characterId, creationId))).toHaveLength(0)
-    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, creationId))
-    expect(profile!.enabled).toBe(false)
-    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, creationId))
-    expect(await db.select().from(roleplaySessions).where(eq(roleplaySessions.characterId, creationId))).toHaveLength(1)
-    expect((await db.select().from(messages).where(eq(messages.sessionId, session!.id))).map(row => row.content)).toEqual(['어서 오세요.'])
-    const loaded = await loadSession(session!.id, owner!.id)
+    await expect(saveCharacter(standard)).rejects.toThrow('CHARACTER_TYPE_IMMUTABLE')
+    expect(await db.select().from(characters).where(eq(characters.ownerId, owner!.id))).toHaveLength(0)
+
+    // 결정 전에 만들어진 일반 캐릭터(직접 넣는다).
+    await db.insert(characters).values({ id: creationId, ownerId: owner!.id, experienceType: 'chat', isDraft: false, isPublic: false,
+      name: '대화 친구', personality: '조용하지만 다정하고, 짧은 존댓말로 답한다.', startingContext: '비 오는 날 서점에서 처음 만났다.' })
+    await db.insert(worlds).values({ characterId: creationId, location: '서점' })
+    await db.insert(contactProfiles).values({ characterId: creationId, enabled: false })
+    const { sessionId } = await createRoleplaySession(owner!.id, creationId)
+    const loaded = await loadSession(sessionId, owner!.id)
     expect(loaded!.snapshot.experienceType).toBe('chat')
     const prompt = buildContext(loaded!.snapshot)
     expect(prompt.system).toContain('짧은 존댓말')
     expect(prompt.system).toContain('비 오는 날 서점')
-    expect(await evaluateSession(session!.id, new Date(), { inline: true })).toMatchObject({ outcome: 'skipped' })
-    expect(await startIncomingCall(session!.id, 'voice', 'test')).toBeNull()
+    expect(await evaluateSession(sessionId, new Date(), { inline: true })).toMatchObject({ outcome: 'skipped' })
+    expect(await startIncomingCall(sessionId, 'voice', 'test')).toBeNull()
     const edited = new FormData()
     standard.forEach((value, key) => edited.append(key, value))
     edited.set('personality', '활기차고, 반말로 친근하게 답한다.')
@@ -70,6 +69,7 @@ describeDb('creator Reality wiring', () => {
     expect((await db.select().from(characters).where(eq(characters.id, creationId)))[0]).toMatchObject({ experienceType: 'chat', personality: '활기차고, 반말로 친근하게 답한다.' })
     edited.set('contactEnabled', 'on')
     await expect(updateCharacter(creationId, edited)).rejects.toThrow('CHARACTER_TYPE_SETTINGS_INVALID')
+    expect(await db.select().from(characterRevisions).where(eq(characterRevisions.characterId, creationId))).toHaveLength(0)
   })
   it('persists Reality, intro and exact settings, then stops pending contact without downgrading', async () => {
     const { c, session } = await create()

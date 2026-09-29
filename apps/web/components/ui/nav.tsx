@@ -1,9 +1,8 @@
 'use client'
-import { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
-import { CreateNavSheet } from './create-nav-sheet'
+import { activeDraftKey } from '@/lib/create-character-types'
 
 /**
  * 만들기가 한가운데 — 다섯 칸의 중심이 '새로 만드는 일' 이다 (레퍼런스).
@@ -40,8 +39,17 @@ const ITEMS = [
  */
 export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; userId?: string | null }) {
   const pathname = usePathname()
+  const router = useRouter()
+  /** 만들기는 미로 캐릭터 편집기로 바로 간다. 쓰다 만 초안이 있으면 그것을 이어 연다(브라우저 저장소가 막혀 있으면 새 초안). */
+  const openCreate = (id: string) => {
+    let href = '/create?type=reality'
+    try {
+      const active = localStorage.getItem(activeDraftKey(id, 'reality'))
+      if (active && /^[0-9a-f-]{36}$/i.test(active)) href += `&draft=${active}`
+    } catch { /* storage blocked */ }
+    router.push(href)
+  }
   const askLogin = useLoginSheet()
-  const [createOpen, setCreateOpen] = useState(false)
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
   return (
     <><nav aria-label="주요" className="nav">
@@ -64,8 +72,7 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
           <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style}
             onClick={() => askLogin(it.href)}>{inner}</button>
         ) : it.href === '/create' && userId ? (
-          <button key={it.href} type="button" className="nav__item" aria-haspopup="dialog" aria-expanded={createOpen}
-            onClick={() => setCreateOpen(true)} style={style}>{inner}</button>
+          <button key={it.href} type="button" className="nav__item" onClick={() => openCreate(userId)} style={style}>{inner}</button>
         ) : (
           <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style}>
             {inner}
@@ -73,7 +80,6 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
         )
       })}
     </nav>
-    {userId && <CreateNavSheet open={createOpen} onClose={() => setCreateOpen(false)} userId={userId} />}
     </>
   )
 }

@@ -24,7 +24,7 @@ const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
 const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`
 
 /**
- * 홈은 공개된 chat·reality 캐릭터를 모두 보여준다. /miro 와 /home/search 는 유형별 목록이다.
+ * 앱은 미로 캐릭터만 보여준다(2026-09-29 결정). 옛 일반 캐릭터는 목록·검색에 나오지 않고, 이미 연 대화만 이어진다.
  */
 export async function homeRows(): Promise<HomeRow[]> {
   const { items } = await homePage(null)
@@ -115,10 +115,10 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
 }
 
 /** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). */
-export const homePage = (userId: string | null, cursor: string | null = null) => cardPage(null, userId, cursor, '', true)
+export const homePage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
 /** 미로 = 그중 미로(reality) 캐릭터만. */
 export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
-export const searchPage = (userId: string | null, query: string, cursor: string | null = null, tag: string | null = null, genres: string[] = []) => cardPage(null, userId, cursor, query, true, true, tag, genres)
+export const searchPage = (userId: string | null, query: string, cursor: string | null = null, tag: string | null = null, genres: string[] = []) => cardPage('reality', userId, cursor, query, true, true, tag, genres)
 
 export async function popularHomeCards(): Promise<HomeCard[]> {
   if (indexedDiscoveryEnabled()) {

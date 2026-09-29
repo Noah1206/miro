@@ -35,7 +35,8 @@ describeDb('search page visibility and cursor', () => {
     return row!.id
   }
 
-  it('finds both types while preserving owner, official, draft and deletion rules', async () => {
+  // 2026-09-29: 검색은 미로 캐릭터만 — 옛 일반 캐릭터는 이름이 맞아도 나오지 않는다.
+  it('finds 미로 characters only while preserving owner, official, draft and deletion rules', async () => {
     const owner = await user()
     const viewer = await user()
     const chat = await character(owner, `${prefix} chat`, 'chat')
@@ -54,16 +55,17 @@ describeDb('search page visibility and cursor', () => {
         const anonymous = (await searchPage(null, prefix)).items.map(item => item.id)
         const visible = (await searchPage(viewer, prefix)).items.map(item => item.id)
         const mine = (await searchPage(owner, prefix)).items.map(item => item.id)
-        for (const id of [chat, reality, official]) {
+        for (const id of [reality, official]) {
           expect(anonymous).toContain(id)
           expect(visible).toContain(id)
           expect(mine).toContain(id)
         }
+        for (const list of [anonymous, visible, mine]) expect(list).not.toContain(chat)
         expect(anonymous).not.toContain(privateCard)
         expect(visible).not.toContain(privateCard)
         expect(mine).toContain(privateCard)
         for (const id of [draft, deleted]) expect(mine).not.toContain(id)
-        expect((await searchPage(viewer, prefix)).items.map(item => item.id)).toEqual(expect.arrayContaining([chat, reality]))
+        expect((await searchPage(viewer, prefix)).items.map(item => item.id)).toEqual(expect.arrayContaining([reality]))
         expect((await searchPage(viewer, '', null, 'visibleTag')).items.map(item => item.id)).toEqual([reality])
         expect((await searchPage(owner, '', null, 'visibleTag')).items.map(item => item.id)).toContain(privateCard)
         expect((await homePage(null)).items.map(item => item.id)).not.toContain(privateCard)
@@ -79,7 +81,7 @@ describeDb('search page visibility and cursor', () => {
     const viewer = await user()
     const name = `${prefix} pages`
     const createdAt = new Date('2026-09-20T00:00:00Z')
-    const ids = await Promise.all(Array.from({ length: 15 }, (_, index) => character(owner, `${name} ${index}`, index % 2 ? 'chat' : 'reality', { createdAt })))
+    const ids = await Promise.all(Array.from({ length: 15 }, (_, index) => character(owner, `${name} ${index}`, 'reality', { createdAt })))
     const privateCard = await character(owner, `${name} private`, 'reality', { isPublic: false })
     const first = await searchPage(viewer, name)
     expect(first.items).toHaveLength(12)
@@ -123,16 +125,16 @@ describeDb('search page visibility and cursor', () => {
     form.set('personality', '조용하다.')
     form.set('mood', `${genreA},${genreB}`)
     const parsed = parseCharacterForm(form)
-    const created = await character(owner, parsed.character.name, 'chat', parsed.character)
+    const created = await character(owner, parsed.character.name, 'reality', parsed.character)
     await db.insert(worlds).values({ characterId: created, ...parsed.world })
     const alternate = await character(owner, `${prefix} alternate`, 'reality')
     await db.insert(worlds).values([{ characterId: alternate, genre: genreA }, { characterId: alternate, genre: genreB }])
-    const keywordOnly = await character(owner, `${prefix} keyword`, 'chat', { relationshipKeywords: [genreA] })
+    const keywordOnly = await character(owner, `${prefix} keyword`, 'reality', { relationshipKeywords: [genreA] })
     const privateCard = await character(owner, `${prefix} private genre`, 'reality', { isPublic: false })
     await db.insert(worlds).values({ characterId: privateCard, genre: genreB })
     const createdAt = new Date('2026-09-20T00:00:00Z')
     const pageIds = await Promise.all(Array.from({ length: 13 }, async (_, index) => {
-      const id = await character(owner, `${prefix} page ${index}`, 'chat', { createdAt })
+      const id = await character(owner, `${prefix} page ${index}`, 'reality', { createdAt })
       await db.insert(worlds).values({ characterId: id, genre: genreA })
       return id
     }))
