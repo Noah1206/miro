@@ -64,6 +64,7 @@ export type AIUsageRecord = {
   fallbackUsed?: boolean
   shadow?: boolean
   ip?: string | null
+  origin?: string | null
   provider: string
   model: string
   inputTokens: number | null
@@ -75,7 +76,9 @@ export type AIUsageRecord = {
   sessionId: string | null
 }
 
-export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean; workload?: 'interactive' | 'background' }
+export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean; workload?: 'interactive' | 'background'
+  /** 호출이 나온 경로(턴 정책의 origin). ai_usage 에 남아 경로별 원가·지연을 비교한다. */
+  origin?: string }
 export type AIRequest = GenerationRequest & { task: AITask }
 export type AIResponse = GenerationResult
 export type BudgetDecision = { allowed: true; reservationId: string; maxUsageUnits: number } | { allowed: false; reason: string }

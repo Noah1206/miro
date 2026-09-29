@@ -85,7 +85,7 @@ export const productionBudgetGuard: BudgetGuard = {
           }
         }
         await tx.insert(aiUsage).values({ attemptId, traceId: context.traceId, requestId: context.requestId,
-          userId: context.userId, sessionId: context.sessionId, ip: ipHash(context.ip), task: request.task,
+          userId: context.userId, sessionId: context.sessionId, ip: ipHash(context.ip), origin: context.origin ?? null, task: request.task,
           provider: model.provider, model: model.providerModelId, modelId: model.id, modelVersion: model.version,
           promptVersion: request.promptVersion, status: 'reserved', reservedCost: String(estimate), budgetKeys: entries.map(e => e.key), ok: false, latencyMs: 0 })
       })

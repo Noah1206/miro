@@ -5,9 +5,9 @@ import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
-import { feature, usagePolicy } from '@miro/config'
+import { characterAgencyMode, feature } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
-import { renderBlocks, requireSafeContent, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
+import { renderBlocks, requireSafeContent, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -126,32 +126,32 @@ async function executeTurn(opts: {
     const dialogueModelId = model.modelId
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
+    // 정책은 서버가 여기서 한 번 확정한다(§3.1). 등급은 서버가 검증한 선택에서, 경험은 캐릭터에서, 채널은 진입 경로에서 온다.
+    const policyInput = { experience: loaded.experienceType, tier: model.metered ? 'echo' as const : 'miro' as const, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId) }
     // MIRO basic chat does not draw down the monthly allowance. Everything else the
     // pipeline enforces — request dedupe, AI cost budget, rate limits, safety — still runs.
     let reservation: Reservation | null = null
-    if (model.metered) {
+    if (resolveTurnPolicy({ ...policyInput, agencyReady: false }).metered) {
       try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` })) }
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     }
     const refund = () => reservation ? rollback(reservation.reservationId) : Promise.resolve()
-    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0 }
-    const llm = resolveRpLLM(loaded.characterName, context)
     const turnIndex = loaded.snapshot.turnCount + 1
 
     let result: TurnResult
     let agency: LoadedAgency | null = null
+    let policy = resolveTurnPolicy({ ...policyInput, agencyReady: false, continuity: reservation?.continuity ?? false })
+    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin }
+    const llm = resolveRpLLM(loaded.characterName, context)
     try {
       const prepared = await prepareAgencyTurn(sessionId, userId, messenger ? { ...loaded.snapshot, mode: 'messenger' } : loaded.snapshot, llm, { id: userMessageId, text: input })
       agency = prepared.runtime
-      result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode },
-        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency,
-          auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context),
-          // continuity 여유분으로 나가는 턴은 등급과 무관하게 최소한으로 답한다.
-          maxOutputTokens: reservation?.continuity ? usagePolicy().continuity.maxOutputTokens : model.tier.maxOutputTokens,
-          contextScale: reservation?.continuity ? 1 : model.tier.contextScale,
-          auxiliary: reservation?.continuity ? 'planned' : model.tier.auxiliary,
-          replyLength: reservation?.continuity ? 'scene' : model.tier.replyLength,
-        }))
+      // 개정판이 준비됐는지는 여기서야 안다 — 정책의 engine 은 준비 상태까지 본 결과다(준비 전이면 legacy 로 보류).
+      policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false })
+      context.origin = policy.origin
+      result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
+        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy,
+          auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context) }))
 
     } catch (e) {
       await refund()
@@ -167,8 +167,8 @@ async function executeTurn(opts: {
     const { transition } = result
     if (result.agencyShadow) observe('agency.shadow', { sessionId, ...result.agencyShadow })
     // 일반 캐릭터챗은 먼저 연락하지 않는다. 엔진이 의도를 냈더라도 여기서 버린다 —
-    // 저장하면 스케줄러가, 남겨두면 inline 이 그것을 실행하기 때문이다.
-    if (loaded.experienceType !== 'reality' && transition.realityIntent) {
+    // 저장하면 스케줄러가, 남겨두면 inline 이 그것을 실행하기 때문이다. (엔진도 같은 정책으로 막는다 — 두 겹.)
+    if (!policy.permissions.proactiveContact && transition.realityIntent) {
       observe('reality.intent_dropped_chat', { sessionId, turn: turnIndex })
       transition.realityIntent = null
     }
@@ -231,7 +231,7 @@ async function executeTurn(opts: {
 
     // Event Engine 은 "무엇" 을, Scheduler 는 "언제" 를 맡는다. notBefore 가 없는 의도만 지금 보낸다.
     let reality: { channel: ContactChannel; text: string } | null = null
-    if (feature('inlineReality') && loaded.experienceType === 'reality' && transition.realityIntent && !transition.realityIntent.notBefore) {
+    if (feature('inlineReality') && policy.permissions.proactiveContact && transition.realityIntent && !transition.realityIntent.notBefore) {
       try {
         const r = await measured('chat.inline_reality', () => evaluateSession(sessionId, new Date(), { inline: true }))
         if (r.outcome === 'sent' && r.text) reality = { channel: r.channel, text: r.text }

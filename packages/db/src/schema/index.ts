@@ -869,6 +869,8 @@ export const aiUsage = pgTable('ai_usage', {
   status: text('status').notNull().default('completed'),
   fallbackUsed: boolean('fallback_used').notNull().default(false),
   shadow: boolean('shadow').notNull().default(false),
+  /** 호출이 나온 경로(turn-policy origin: turn:legacy:reality:echo:scene 등). 경로별 원가·지연 비교의 축. */
+  origin: text('origin'),
 
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'set null' }),

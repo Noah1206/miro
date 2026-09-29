@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { characterAgencyMode } from '@miro/config'
-import { renderBlocks, runTurn, UnsafeContentError } from '@miro/engine'
+import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError } from '@miro/engine'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { auxiliaryLLM, resolveRpLLM } from '@/lib/simulation/mock-llm'
@@ -33,12 +33,14 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
     if (!loaded || loaded.restricted) return 'not_found'
     const snapshot = { ...loaded.snapshot, mode: 'voice_call' as const }
     const requestId = randomUUID()
-    const context = { userId, sessionId: call.sessionId, requestId }
+    // 통화는 MIRO 한도·채널 길이. 자율성 코호트는 위에서 걸렀으므로 legacy 로 확정된다.
+    const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel: 'voice_call', agencyMode: 'off', agencyReady: false })
+    const context = { userId, sessionId: call.sessionId, requestId, origin: policy.origin }
     let result
     try {
       // 사용자가 아무 말도 안 한 턴(캐릭터가 먼저 말함)은 분류할 것이 없다 — 보조 분석을 부르지 않는다.
       result = await runTurn({ llm: resolveRpLLM(loaded.characterName, context), auxiliaryLLM: said ? auxiliaryLLM(loaded.characterName, context) : undefined,
-        snapshot, userInput: said, spokenReply: reply, auxiliary: 'planned', now })
+        snapshot, userInput: said, spokenReply: reply, policy, now })
     } catch (e) {
       if (e instanceof UnsafeContentError) { observe('call.voice_turn_unsafe', { callId }); return 'unsafe' }
       throw e

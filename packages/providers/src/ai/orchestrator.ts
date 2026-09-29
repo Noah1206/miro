@@ -171,7 +171,7 @@ export class AIOrchestrator implements LLMProvider {
           if (!valid) {
             await releaseAdmission().catch(() => {})
             await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
-              userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null,
+              userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null, origin: context.origin ?? null,
               provider: model.provider, model: model.providerModelId, modelId: model.id, modelVersion: model.version,
               promptVersion: req.promptVersion ?? `${req.task}:v1`, inputTokens: null, outputTokens: null,
               estimatedCost: 0, actualCost: 0, usageUnits: 0, latencyMs: 0, ok: false, error: 'lease_lost_before_call',
@@ -250,7 +250,7 @@ export class AIOrchestrator implements LLMProvider {
         } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null
         await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
-          userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null,
+          userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null, origin: context.origin ?? null,
           provider: result?.provider ?? model.provider, model: result?.model ?? model.providerModelId,
           modelId: model.id, modelVersion: model.version, promptVersion: req.promptVersion ?? `${req.task}:v1`,
           inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out), actualCost: null,

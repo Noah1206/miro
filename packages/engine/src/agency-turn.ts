@@ -8,6 +8,7 @@ import { requireSafeContent } from './safety'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, type AgencyPlanningContext } from './agency'
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
+import type { TurnPolicy } from './policy'
 
 export type AgencyTurnInput = {
   mode: 'shadow' | 'live'
@@ -18,7 +19,7 @@ export type AgencyTurnInput = {
 
 /** A separate path keeps legacy event templates from overriding a validated character choice. */
 export async function runAgencyTurn(opts: {
-  llm: LLMProvider; snapshot: SimulationSnapshot; userInput: string; agency: AgencyTurnInput
+  llm: LLMProvider; snapshot: SimulationSnapshot; userInput: string; agency: AgencyTurnInput; policy: TurnPolicy
   maxOutputTokens?: number; contextScale?: number
 }): Promise<TurnResult> {
   const { llm, agency, snapshot } = opts
@@ -64,5 +65,5 @@ export async function runAgencyTurn(opts: {
   const stages = [plan.providerMode, renderer.providerMode, verification.providerMode]
   const providerMode = stages.includes('fallback') ? 'fallback' : stages.includes('mock') ? 'mock' : 'live'
   return { transition, context, providerMode, semanticEvents: [], characterState, firedRules: [],
-    agency: { plan, verification } }
+    agency: { plan, verification }, policy: opts.policy }
 }

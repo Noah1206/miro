@@ -1,4 +1,3 @@
-import { POLICY } from '@miro/config'
 import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
@@ -9,10 +8,11 @@ import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent 
 import { SimulationProposal } from './proposal.schema'
 import { requireSafeContent, UnsafeContentError } from './safety'
 import { fallbackProposal } from './fallback'
-import { buildContext, type BuiltContext, type SimulationSnapshot } from './context'
+import { buildContext, type BuiltContext, type ReplyStyle, type SimulationSnapshot } from './context'
 import { validateProposal, type ValidatedTransition } from './validator'
 import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
 import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck } from './agency'
+import { policyForSnapshot, type TurnPolicy } from './policy'
 
 export type TurnResult = {
   agency?: { plan: AgencyPlan; verification: AgencyRealizationCheck }
@@ -28,6 +28,8 @@ export type TurnResult = {
   characterState: CharacterState
   /** 발동한 사건 규칙 id. */
   firedRules: string[]
+  /** 이 턴을 결정한 정책. 호출자가 안 넘겼으면 스냅샷과 옵션에서 만든 기본값이다. */
+  policy: TurnPolicy
 }
 
 /**
@@ -51,17 +53,25 @@ export async function runTurn(opts: {
   /** 'always' 면 보조 분석(의미 이벤트·기억)을 규칙과 무관하게 매 턴 돌린다. */
   auxiliary?: 'planned' | 'always'
   /** 캐릭터챗 한 응답의 길이. ECHO 는 'long'. 자율성 엔진은 자기 형식을 쓴다. */
-  replyLength?: 'scene' | 'long'
+  replyLength?: ReplyStyle
   agency?: AgencyTurnInput
   /**
    * 실시간 음성 통화에서 캐릭터가 이미 소리로 한 말. 있으면 대사를 새로 만들지 않고 이 말을 이번 턴의 답으로 받는다 —
    * 입력·출력 검열, 관계·기억·사건 규칙은 채팅 턴과 똑같이 돈다. 통화에서 한 말도 기억에 남기기 위한 경로다.
    */
   spokenReply?: string
+  /**
+   * 서버가 확정한 턴 정책(§3.1). 있으면 위의 낱개 옵션 대신 이것이 생성 옵션·권한·경로를 정한다.
+   * 없으면 낱개 옵션과 스냅샷에서 같은 뜻의 기본값을 만든다 — 등급을 넘기지 않는 호출(통화·Live Scene·음성)은 MIRO 한도다.
+   */
+  policy?: TurnPolicy
 }): Promise<TurnResult> {
-  // 등급을 넘기지 않는 호출(통화·Live Scene·음성)은 MIRO 한도를 쓴다 — 모델 상한(ECHO 때문에 4096)을 그대로 물려받지 않는다.
-  opts = { ...opts, maxOutputTokens: opts.maxOutputTokens ?? POLICY.chatTier.miro.maxOutputTokens }
-  if (opts.agency?.mode === 'live' && opts.snapshot.experienceType !== 'chat') return runAgencyTurn({ ...opts, agency: opts.agency })
+  const policy = opts.policy ?? policyForSnapshot(opts.snapshot, { ...opts, agencyMode: opts.agency?.mode ?? 'off', agencyReady: opts.agency?.mode === 'live' })
+  opts = { ...opts, ...policy.generation }
+  if (policy.engine === 'agency') {
+    if (opts.agency?.mode !== 'live') throw new Error('agency_runtime_missing')
+    return runAgencyTurn({ ...opts, agency: opts.agency, policy })
+  }
   let agencyShadow: TurnResult['agencyShadow']
   if (opts.snapshot.experienceType !== 'chat' && opts.agency?.mode === 'shadow' && opts.llm.info.mode === 'mock') {
     // One-step comparison only. Never persist or realize a shadow choice in the live session.
@@ -95,7 +105,8 @@ export async function runTurn(opts: {
    * 기억 추출·요약은 대사 프롬프트에 들어가지 않는다 — 커밋 때만 쓴다. 지금 띄우되 대사 생성이 끝난 뒤에 거둔다
    * (대사가 더 오래 걸리니 첫 답은 늦어지지 않는다).
    */
-  const memoryTasks: Promise<MemoryCandidate[][]> = auxiliary ? Promise.all(
+  // deferred(§3.5): 추출·요약은 커밋 뒤 작업(memory_jobs)이 맡는다. 응답 안에서는 부르지 않는다.
+  const memoryTasks: Promise<MemoryCandidate[][]> = auxiliary && policy.memory === 'inline' ? Promise.all(
     tasks.filter(t => t === 'memory_extraction' || t === 'memory_summary')
       .map(task => analyzeMemory(auxiliary, task, opts.userInput, snapshot).then(r => filterSalient(r.memories), () => []))) : Promise.resolve([])
   const events = await semantic
@@ -150,8 +161,8 @@ export async function runTurn(opts: {
   transition.memories = filterSalient([...extraMemories, ...transition.memories.map(({ replaces: _ignored, ...m }) => m)])
 
   // Standard characters retain dialogue, relationship and memory, but have no autonomous world or Reality effects.
-  // This is an application boundary: provider proposals cannot opt into those effects.
-  if (snapshot.experienceType === 'chat') {
+  // This is an application boundary: provider proposals cannot opt into those effects. The policy owns it, not the tier.
+  if (!policy.permissions.worldChange) {
     transition.worldDelta = null
     transition.sceneDelta = null
     transition.newEvent = null
@@ -159,7 +170,7 @@ export async function runTurn(opts: {
     transition.npcIntroductions = []
     transition.npcActions = []
     transition.realityIntent = null
-    return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules: [], agencyShadow }
+    return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules: [], agencyShadow, policy }
   }
 
   // 사건 규칙 — "무슨 일이 일어나야 하는가" 는 코드가 정한다. LLM 제안은 규칙이 없을 때만 남는다.
@@ -183,7 +194,7 @@ export async function runTurn(opts: {
   const firedRules = fired.map((r) => r.id)
   characterState.firedRules = [...new Set([...prevState.firedRules, ...fired.filter((r) => r.once).map((r) => r.id)])]
 
-  return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow }
+  return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow, policy }
 }
 
 /** 검증된 블록을 화면/저장용 텍스트로 합친다. */

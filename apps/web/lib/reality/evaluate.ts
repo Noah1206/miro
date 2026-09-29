@@ -219,7 +219,7 @@ export async function evaluateSession(
 
   // ---- 내용 생성 (Provider 미구성 시 Mock, 숨기지 않음) ----
   installAIUsageSink()
-  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId, workload: opts.background ? 'background' : 'interactive' } })
+  const llm = createAI({ mock: (req) => buildMockRealityContent(req.prompt), context: { userId: row.session.userId, sessionId, workload: opts.background ? 'background' : 'interactive', origin: 'reality:legacy:reality:miro:background' } })
 
   const grounding = await loadRealityContext(sessionId, row.session.userId, intent.reason)
   if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }

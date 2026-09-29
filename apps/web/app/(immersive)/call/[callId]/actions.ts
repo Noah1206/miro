@@ -1,11 +1,11 @@
 'use server'
 
-import { feature, voiceCallAllowed } from '@miro/config'
+import { characterAgencyMode, feature, voiceCallAllowed } from '@miro/config'
 import { COPY } from '@/lib/copy'
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { renderBlocks, runTurn } from '@miro/engine'
+import { renderBlocks, resolveTurnPolicy, runTurn } from '@miro/engine'
 import { requireUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
@@ -42,9 +42,14 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
     let result
     let prepared
     try {
-      const llm = resolveRpLLM(loaded.characterName, { userId: user.id, sessionId: call.sessionId })
+      const channel = call.channel === 'voice' ? 'voice_call' as const : 'video_call' as const
+      const context = { userId: user.id, sessionId: call.sessionId, origin: resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId), agencyReady: false }).origin }
+      const llm = resolveRpLLM(loaded.characterName, context)
       prepared = await prepareAgencyTurn(call.sessionId, user.id, snapshot, llm, { id: userMessageId, text: input })
-      result = await runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency })
+      // 문자 통화도 같은 정책 객체를 쓴다 — 통화 시간으로 이미 차감됐으므로 등급은 MIRO 다.
+      const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId), agencyReady: prepared.agency?.mode === 'live' })
+      context.origin = policy.origin
+      result = await runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy })
     } catch {
       return { error: '연결이 불안정합니다. 텍스트 대화로 이어가시겠어요?' }
     }

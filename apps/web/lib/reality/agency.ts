@@ -60,6 +60,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
   installAIUsageSink()
   const llm = createAI({ mock: req => buildMockRealityContent(req.prompt), context: {
     userId, sessionId, workload: opts.background ? 'background' : 'interactive', shadow: requestedMode === 'shadow',
+    origin: 'reality:agency:reality:miro:background',
   } })
   try {
     const loaded = await loadSession(sessionId, userId)
