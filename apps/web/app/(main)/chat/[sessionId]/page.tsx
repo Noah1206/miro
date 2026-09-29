@@ -16,6 +16,7 @@ import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
+import { requirePersona } from '@/lib/persona'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const user = await currentUser()
@@ -30,6 +31,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     session.then((l) => l && matureGateFor(user.id, l.characterId)),
   ])
   if (!loaded || !mature) notFound()
+  // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
+  await requirePersona(loaded.snapshot.userPersona, `/chat/${sessionId}`)
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 

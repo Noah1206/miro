@@ -1,7 +1,11 @@
 import { expect, type Page } from '@playwright/test'
 
-/** 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 약관까지 통과한다. 사용한 이메일을 돌려준다. */
-export async function signUp(page: Page, base: string, email = `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`): Promise<string> {
+/**
+ * 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 약관까지 통과한다. 사용한 이메일을 돌려준다.
+ * 채팅·문자 화면은 페르소나가 없으면 페르소나 화면으로 보낸다(2026-09-29) — 그 흐름을 시험하지 않는 테스트를 위해
+ * 기본으로 페르소나를 만들어 둔다. 페르소나 흐름을 시험하는 테스트는 { persona: false }.
+ */
+export async function signUp(page: Page, base: string, email = `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`, opts: { persona?: boolean } = {}): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
   if (!/\/login/.test(page.url())) await page.goto(`${base}/login`)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
@@ -14,7 +18,14 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   await page.getByRole('button', { name: '다음으로 진행하기' }).click()
   // Wait for the signup action and redirect before a test starts another navigation.
   await expect(page).not.toHaveURL(/\/terms(?:\?|$)/)
+  if (opts.persona !== false) await createPersona(page)
   return email
+}
+
+/** 로그인한 사용자의 페르소나를 개발 API 로 만든다 — 화면을 옮기지 않는다. */
+export async function createPersona(page: Page, name = '테스터') {
+  const ok = await page.evaluate(async (n) => (await fetch('/api/dev/persona', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: n }) })).ok, name)
+  expect(ok).toBe(true)
 }
 
 /**

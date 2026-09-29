@@ -5,6 +5,7 @@ import { voiceCallAllowed } from '@miro/config'
 import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
+import { requirePersona } from '@/lib/persona'
 import { Back, Notice, TransitionLink } from '@/components/ui'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { TurnsProvider } from '../../chat/[sessionId]/turns'
@@ -26,6 +27,8 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded || loaded.experienceType !== 'reality') notFound()
+  // 문자도 채팅이다 — 페르소나가 없으면 먼저 만든다(저장하면 이 문자방으로 돌아온다).
+  await requirePersona(loaded.snapshot.userPersona, `/messages/${sessionId}`)
   const [rows] = await Promise.all([
     db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.kind, [...MESSENGER_KINDS]))).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     // 여기서 읽었으니 '읽음'. 선연락 기록은 열어 본 시각을 남긴다.

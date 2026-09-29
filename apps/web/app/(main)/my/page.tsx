@@ -5,6 +5,7 @@ import { currentUser } from '@/lib/auth'
 import { Page, TransitionLink } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { ProfileCard } from './profile-card'
+import { getPersona } from '@/lib/persona'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
 const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -25,7 +26,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   const handle = user.email?.split('@')[0] ?? 'me'
   const name = user.displayName ?? handle
 
-  const [mine, [sessions]] = await Promise.all([
+  const [mine, [sessions], persona] = await Promise.all([
     db.select({
       id: characters.id, slug: characters.slug, name: characters.name, tagline: characters.tagline,
       accentA: characters.accentA, genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords,
@@ -38,6 +39,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       .orderBy(desc(characters.createdAt)),
     db.select({ n: sql<number>`count(*)::int` }).from(roleplaySessions)
       .where(and(eq(roleplaySessions.userId, user.id), eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt))),
+    getPersona(user.id),
   ])
 
   const shown = mine.filter((c) =>
@@ -68,6 +70,16 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           { label: '공개', value: mine.filter((c) => c.isPublic && !c.isDraft).length },
           { label: '대화 중', value: sessions?.n ?? 0 },
         ]} />
+        {/* 페르소나 — 캐릭터가 대화에서 알게 되는 내 모습. 채팅을 처음 진행할 때 만들고 여기서 고친다. */}
+        <TransitionLink href="/persona?next=/my" aria-label={persona ? `내 페르소나 ${persona.name} 바꾸기` : '내 페르소나 만들기'}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, minHeight: 56, padding: '12px 16px',
+            borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)' }}>
+          <span className="stack" style={{ gap: 2, minWidth: 0 }}>
+            <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>내 페르소나</span>
+            <span className="t-body" style={{ fontWeight: 'var(--weight-semibold)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{persona?.name ?? '아직 없어요'}</span>
+          </span>
+          <span className="t-caption" style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>{persona ? '바꾸기' : '만들기'}</span>
+        </TransitionLink>
       </div>
 
       {/* 내 캐릭터 — 레퍼런스의 '작품' 탭. 칩으로 거른다. */}

@@ -29,6 +29,19 @@ export const users = pgTable('users', {
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 })
 
+/**
+ * 사용자 페르소나 — 채팅을 처음 진행할 때 만드는 사용자의 자기 설정(2026-09-29 결정). 캐릭터가 부를 이름과 소개.
+ * 사용자당 하나. 계정 삭제 때 지운다(users 는 표시만 하는 삭제라 cascade 가 돌지 않는다).
+ */
+export const userPersonas = pgTable('user_personas', {
+  userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  gender: text('gender', { enum: ['female', 'male'] }),
+  description: text('description'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const accounts = pgTable('accounts', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

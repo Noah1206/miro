@@ -8,6 +8,7 @@ import {
 import { DEFAULT_CHARACTER_STATE, describeRoutine, localClock, type CharacterState } from '@miro/domain'
 import { characterAvailability } from '@/lib/reality/routine'
 import { memoryLagFor } from '@/lib/ai/memory-jobs'
+import { getPersona } from '@/lib/persona'
 import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
@@ -56,7 +57,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -88,6 +89,8 @@ export async function loadSession(
     db.select().from(callSessions).where(and(eq(callSessions.sessionId, sessionId), inArray(callSessions.status, ['ended', 'missed', 'declined', 'unanswered'])))
       .orderBy(desc(callSessions.createdAt)).limit(3),
     memoryLagFor(sessionId),
+    // 사용자가 정한 자기 설정 — 캐릭터가 부를 이름과 소개(없으면 '사용자').
+    getPersona(userId),
   ])
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
@@ -111,6 +114,7 @@ export async function loadSession(
       .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),
     turnCount: row.session.turnCount,
     memoryLag,
+    userPersona,
     experienceType: c.experienceType,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
     clock: localClock(now, timeZone),

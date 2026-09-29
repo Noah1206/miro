@@ -42,7 +42,7 @@ test('public screens', async ({ page }) => {
 test.describe.configure({ timeout: 150_000 })
 test('signed-in screens', async ({ page }) => {
   const chat = await signupAndPlay(page)
-  for (const [path, name] of [['/home', 'home'], ['/alpha', 'alpha'], ['/alpha/waitlist', 'alpha-waitlist'], ['/character/thomas', 'detail'], ['/create', 'create'], ['/archive', 'archive'], ['/my', 'my'], ['/my/settings', 'settings'], ['/my/verify', 'verify'], ['/my/delete', 'delete'], ['/subscribe', 'subscribe']] as const) {
+  for (const [path, name] of [['/home', 'home'], ['/alpha', 'alpha'], ['/alpha/waitlist', 'alpha-waitlist'], ['/character/thomas', 'detail'], ['/create', 'create'], ['/archive', 'archive'], ['/my', 'my'], ['/persona', 'persona'], ['/my/settings', 'settings'], ['/my/verify', 'verify'], ['/my/delete', 'delete'], ['/subscribe', 'subscribe']] as const) {
     await page.goto(`${BASE}${path}`); await audit(page, name)
   }
   await page.goto(chat); await audit(page, 'chat')

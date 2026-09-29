@@ -1,8 +1,7 @@
 import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
-  DEFAULT_CHARACTER_STATE, addDelta, applyRelationshipDelta, authoredCharacter, bondingCurveOf, closeness, companionshipDelta, deltaFromSemanticEvents,
-  deriveCharacterState, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, nextRelationshipStage, scaleCloser,
+  DEFAULT_CHARACTER_STATE, authoredCharacter, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, relationshipTurn,
 } from '@miro/domain'
 import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent, StateTransitionRecord } from '@miro/domain'
 import { SimulationProposal } from './proposal.schema'
@@ -117,17 +116,11 @@ export async function runTurn(opts: {
   const events = await semantic
   if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
 
-  // 사건이 움직인 만큼은 성격의 곡선이 키우거나 줄이고, 나쁜 일이 없던 턴은 함께한 시간만큼 가까워진다 (relationship/dynamics).
-  const curve = personality.bonding ?? bondingCurveOf(personality)
-  const codeDelta = addDelta(
-    scaleCloser(deltaFromSemanticEvents(semanticEvents, personality, profile), curve, closeness(snapshot.relationship)),
-    companionshipDelta({ curve, relationship: snapshot.relationship, events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput, profile }))
-  // 이번 턴의 관계(규칙 적용 후)로 기분을 정한다 — 모델은 수치가 아니라 기분을 본다.
-  const projected = applyRelationshipDelta(snapshot.relationship, codeDelta)
-  codeDelta.stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1, profile)
-  projected.stage = codeDelta.stage
+  // 관계가 이번 턴의 사건에 스스로 반응한다(domain/relationship/turn) — 단계·기분까지.
   const prevState = snapshot.characterState ?? DEFAULT_CHARACTER_STATE
-  const characterState = deriveCharacterState(prevState, projected, semanticEvents, profile)
+  const { delta: codeDelta, relationship: projected, characterState } = relationshipTurn({
+    character: snapshot.character, relationship: snapshot.relationship, characterState: prevState,
+    events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput })
 
   const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale, false, opts.replyLength ?? 'scene')
 

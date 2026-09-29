@@ -1,7 +1,7 @@
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import {
   db, accountDeletions, authSessions, characters, events, memories, pushSubscriptions,
-  roleplaySessions, subscriptions, users, aiFeedback, aiEvaluationSamples,
+  roleplaySessions, subscriptions, users, aiFeedback, aiEvaluationSamples, userPersonas,
 } from '@miro/db'
 import { postOperatorNote } from '@/lib/ops/alerts'
 import { observe } from '@/lib/observe'
@@ -51,6 +51,8 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
     await tx.delete(aiEvaluationSamples).where(eq(aiEvaluationSamples.userId, userId))
     await tx.delete(authSessions).where(eq(authSessions.userId, userId))
     await tx.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId))
+    // 페르소나는 사용자가 쓴 자기 소개다 — 계정이 지워지면 남기지 않는다(users 는 표시만 하는 삭제라 cascade 가 돌지 않는다).
+    await tx.delete(userPersonas).where(eq(userPersonas.userId, userId))
     await tx.update(roleplaySessions).set({ deletedAt: now, status: 'archived' })
       .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt)))
     await tx.update(characters).set({ deletedAt: now })

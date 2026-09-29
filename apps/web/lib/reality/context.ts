@@ -1,8 +1,9 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
-import { authoredCharacter } from '@miro/domain'
+import { authoredCharacter, personaLines } from '@miro/domain'
 import { db, characters, characterVisualIdentities, messages, roleplaySessions, users, worlds } from '@miro/db'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { characterContext, conversationContext } from '@/lib/simulation/character-context'
+import { getPersona } from '@/lib/persona'
 
 /** Only visible, owned conversation data may ground a proactive message. */
 export async function loadRealityContext(sessionId: string, userId: string, reason: string) {
@@ -13,7 +14,7 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId),
       isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt), isNull(users.deletedAt), isNull(characters.deletedAt))).limit(1)
   if (!owner) return null
-  const [recent, memories, visual] = await Promise.all([
+  const [recent, memories, visual, persona] = await Promise.all([
     db.select().from(messages)
       .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc'])))
       .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id)).limit(12),
@@ -21,6 +22,7 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     db.select().from(characterVisualIdentities)
       .where(and(eq(characterVisualIdentities.characterId, owner.character.id), eq(characterVisualIdentities.isActive, true)))
       .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
+    getPersona(userId),
   ])
   // 먼저 연락 문장에는 작성자가 쓴 설정만 — 관계 성격표는 규칙이 읽는 파생 값이다.
   const { identity, personality, worldRole, appearance } = authoredCharacter(characterContext(owner.character, visual[0]))
@@ -28,6 +30,8 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
     worldSetting: owner.worldSetting,
     worldGenre: owner.worldGenre,
+    // 문자는 상대를 이름으로 부른다 — 사용자가 정한 페르소나(없으면 줄이 없다).
+    userPersona: persona ? personaLines(persona) : null,
     recentMessages: conversationContext(recent.reverse()).map(m => ({ ...m, content: m.content.slice(0, 1000),
       blocks: m.blocks?.map(b => ({ ...b, text: b.text.slice(0, 1000) })) })),
     memories: memories.map(m => ({ id: m.id, type: m.type, content: m.content.slice(0, 600), sourceMessageId: m.sourceMessageId, at: m.createdAt.toISOString() })),

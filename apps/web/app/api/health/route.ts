@@ -14,7 +14,8 @@ export async function GET() {
     const rows = await db.execute<{ ok: boolean }>(sql`select to_regclass('public.state_transitions') is not null and to_regclass('public.memory_jobs') is not null
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'policy_version')
       and exists (select 1 from information_schema.columns where table_name = 'ai_usage' and column_name = 'origin')
-      and exists (select 1 from information_schema.columns where table_name = 'characters' and column_name = 'relationship_profile') as ok`)
+      and exists (select 1 from information_schema.columns where table_name = 'characters' and column_name = 'relationship_profile')
+      and to_regclass('public.user_personas') is not null as ok`)
     schema = (rows[0] as { ok: boolean } | undefined)?.ok ? 'ready' : 'behind'
   } catch { schema = 'unknown' }
   const ai = aiReadiness()
