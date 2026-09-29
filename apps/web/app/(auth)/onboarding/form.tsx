@@ -106,7 +106,7 @@ export function OnboardingForm() {
             <div role="radiogroup" aria-label={t('언어')} className="stack" style={{ gap: 8 }}>
               {/* 언어 이름은 번역하지 않는다 — 자기 언어를 그 언어의 글자로 알아본다. */}
               {(Object.keys(LANGUAGES) as Language[]).map((l) => (
-                <Option key={l} role="radio" selected={language === l} title={LANGUAGES[l]} lang={l} center
+                <Option key={l} role="radio" selected={language === l} dimmed={language !== l} title={LANGUAGES[l]} lang={l} center
                   onClick={() => pickLanguage(l)} />
               ))}
             </div>
@@ -117,7 +117,7 @@ export function OnboardingForm() {
           {step === 3 && (
             <div role="radiogroup" aria-label={t('성별')} className="stack" style={{ gap: 8 }}>
               {GENDERS.map((g) => (
-                <Option key={g.value} role="radio" selected={gender === g.value} title={t(g.label)} center icon={<GenderIcon kind={g.value} />} onClick={() => setGender(g.value)} />
+                <Option key={g.value} role="radio" selected={gender === g.value} dimmed={!!gender && gender !== g.value} title={t(g.label)} center icon={<GenderIcon kind={g.value} />} onClick={() => setGender(g.value)} />
               ))}
             </div>
           )}
@@ -125,7 +125,7 @@ export function OnboardingForm() {
           {step === 4 && (
             <div role="group" aria-label={t('좋아하는 관계')} className="stack" style={{ gap: 8 }}>
               {TASTE_OPTIONS.map((o) => (
-                <Option key={o.value} role="checkbox" selected={tastes.includes(o.value)} title={o.label} sub={t(o.sub)}
+                <Option key={o.value} role="checkbox" selected={tastes.includes(o.value)} dimmed={tastes.length > 0 && !tastes.includes(o.value)} center title={o.label} sub={t(o.sub)}
                   onClick={() => setTastes((cur) => cur.includes(o.value) ? cur.filter((x) => x !== o.value) : [...cur, o.value])} />
               ))}
             </div>
@@ -204,22 +204,27 @@ function BirthDateField({ value, onChange, invalid }: { value: string; onChange:
 }
 
 /** 큰 선택 칸. 고르면 한 단 밝은 바탕과 흰 체크(2026-09-30 요청) — 색만이 아니라 체크 모양으로도 갈린다. */
-function Option({ role, selected, title, sub, lang, center, icon, onClick }: { role: 'radio' | 'checkbox'; selected: boolean; title: string; sub?: string; lang?: string; center?: boolean; icon?: React.ReactNode; onClick: () => void }) {
+function Option({ role, selected, dimmed, title, sub, lang, center, icon, onClick }: { role: 'radio' | 'checkbox'; selected: boolean; dimmed?: boolean; title: string; sub?: string; lang?: string; center?: boolean; icon?: React.ReactNode; onClick: () => void }) {
   const reduce = useReducedMotion()
   return (
     <motion.button type="button" role={role} aria-checked={selected} onClick={onClick} lang={lang}
       whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
       style={{
-        position: 'relative', display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 60, padding: center ? '12px 44px' : '12px 16px', textAlign: center ? 'center' : 'left', cursor: 'pointer',
+        position: 'relative', display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 50, padding: center ? '8px 44px' : '8px 16px', textAlign: center ? 'center' : 'left', cursor: 'pointer',
         borderRadius: 'var(--radius-lg)', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
         background: selected ? 'var(--color-surface-2)' : 'var(--color-surface-1)',
         // 고른 칸은 테두리 없이 한 단 밝은 바탕과 흰 체크로만 갈린다(2026-09-30 요청). 굵기는 그대로 둬 칸이 움직이지 않게.
         border: `1px solid ${selected ? 'transparent' : 'var(--color-border)'}`,
-        transition: 'background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard)',
+        // 무리 안에서 하나라도 골랐으면 안 고른 칸은 옅게 — 고른 것이 한눈에 보이게(2026-09-30 요청). 누를 수는 그대로다.
+        opacity: dimmed ? 0.45 : 1,
+        transition: 'background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), opacity var(--motion-fast) var(--ease-standard)',
       }}>
       <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: icon ? 'center' : 'baseline', justifyContent: center ? 'center' : undefined, gap: 10, flexWrap: 'wrap' }}>
-        {icon}
-        <span className="t-body-lg" style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>{title}</span>
+        {/* 가운데 정렬은 글자 기준 — 그림은 글자 왼쪽 옆에 띄워 둬서 가운데를 밀지 않는다(2026-09-30 요청). */}
+        <span className="t-body-lg" style={{ position: 'relative', fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>
+          {icon && <span style={{ position: 'absolute', right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: 8, display: 'flex' }}>{icon}</span>}
+          {title}
+        </span>
         {sub && <span className="t-caption">{sub}</span>}
       </span>
       <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
