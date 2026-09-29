@@ -117,7 +117,7 @@ export function OnboardingForm() {
           {step === 3 && (
             <div role="radiogroup" aria-label={t('성별')} className="stack" style={{ gap: 8 }}>
               {GENDERS.map((g) => (
-                <Option key={g.value} role="radio" selected={gender === g.value} title={t(g.label)} onClick={() => setGender(g.value)} />
+                <Option key={g.value} role="radio" selected={gender === g.value} title={t(g.label)} center icon={<GenderIcon kind={g.value} />} onClick={() => setGender(g.value)} />
               ))}
             </div>
           )}
@@ -204,7 +204,7 @@ function BirthDateField({ value, onChange, invalid }: { value: string; onChange:
 }
 
 /** 큰 선택 칸. 고르면 한 단 밝은 바탕과 흰 체크(2026-09-30 요청) — 색만이 아니라 체크 모양으로도 갈린다. */
-function Option({ role, selected, title, sub, lang, center, onClick }: { role: 'radio' | 'checkbox'; selected: boolean; title: string; sub?: string; lang?: string; center?: boolean; onClick: () => void }) {
+function Option({ role, selected, title, sub, lang, center, icon, onClick }: { role: 'radio' | 'checkbox'; selected: boolean; title: string; sub?: string; lang?: string; center?: boolean; icon?: React.ReactNode; onClick: () => void }) {
   const reduce = useReducedMotion()
   return (
     <motion.button type="button" role={role} aria-checked={selected} onClick={onClick} lang={lang}
@@ -217,7 +217,8 @@ function Option({ role, selected, title, sub, lang, center, onClick }: { role: '
         border: `1px solid ${selected ? 'transparent' : 'var(--color-border)'}`,
         transition: 'background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard)',
       }}>
-      <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', justifyContent: center ? 'center' : undefined, gap: 10, flexWrap: 'wrap' }}>
+      <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: icon ? 'center' : 'baseline', justifyContent: center ? 'center' : undefined, gap: 10, flexWrap: 'wrap' }}>
+        {icon}
         <span className="t-body-lg" style={{ fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>{title}</span>
         {sub && <span className="t-caption">{sub}</span>}
       </span>
@@ -250,5 +251,24 @@ function CheckRow({ checked, onToggle, title, sub, strong }: { checked: boolean;
         {sub && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</span>}
       </span>
     </motion.button>
+  )
+}
+
+/**
+ * 성별 그림(직접 그린 것 — 이모지는 기기마다 모양이 달라서 쓰지 않는다). 바탕 없이 사람 하나:
+ * 여성은 치마(사다리꼴), 남성은 어깨가 각진 몸, 밝히지 않음은 둥근 몸에 물음표.
+ */
+/** 성별마다 한 색(2026-09-30 요청) — 여성 분홍, 남성 파랑, 밝히지 않음 회색. 이 화면에서만 쓰는 색이라 토큰으로 올리지 않았다. */
+const GENDER_COLOR = { female: '#F472B6', male: '#60A5FA', none: 'var(--color-text-tertiary)' } as const
+function GenderIcon({ kind }: { kind: 'female' | 'male' | 'none' }) {
+  return (
+    <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 28, height: 28, flexShrink: 0, color: GENDER_COLOR[kind] }}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="5" r="3" />
+        {kind === 'female' && <><path d="M9.6 9.5h4.8l3.1 8H6.5z" /><rect x="9.4" y="17" width="1.9" height="5" rx=".95" /><rect x="12.7" y="17" width="1.9" height="5" rx=".95" /></>}
+        {kind === 'male' && <><rect x="7.5" y="9.5" width="9" height="7.5" rx="1.6" /><rect x="8.9" y="16" width="2.2" height="6" rx="1.1" /><rect x="12.9" y="16" width="2.2" height="6" rx="1.1" /></>}
+        {kind === 'none' && <><rect x="7.5" y="9.5" width="9" height="12.5" rx="4.5" opacity=".35" /><text x="12" y="19.4" textAnchor="middle" fontSize="9" fontWeight="700" fontFamily="system-ui, sans-serif">?</text></>}
+      </svg>
+    </span>
   )
 }
