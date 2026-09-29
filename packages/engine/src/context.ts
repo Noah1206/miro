@@ -81,7 +81,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
   // 그대로 따랐고 같은 몸짓·문장 틀이 되풀이됐다. 이 지시(3차)는 순서·표현을 매번 바꾸게 한다. 형식 실패의 한 원인(종류를 키로 쓴 블록)은
-  // proposal.schema.ts 의 normalizeBlock 이 흡수한다. 측정 원본은 ai/evals/agency/reports/scene-beats-*-2026-09-26.json.
+  // proposal.schema.ts 의 normalizeBlock 이 흡수한다. 측정 원본은 ai/evals/agency/reports/scene-beats-*-2026-09-26.json(9/29 삭제 — git 기록에만 남음).
   const base = [
     `- 응답 구성: 한 응답은 장면 하나입니다. 서술과 캐릭터의 차례를 번갈아 ${long ? '네다섯' : '두세'} 번 오가며 장면을 전개합니다. 블록 순서는 응답마다 새로 짭니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.`,
     `- narrative 블록(speaker null): 3인칭 장면 서술 ${long ? '4~6' : '3~5'}문장. 공간·빛·소리·온도·거리 같은 감각, 캐릭터의 표정과 몸짓, 사용자의 말에 캐릭터와 공간이 보인 반응을 겉으로 드러나는 것으로 구체적으로 씁니다. 사용자의 말을 서술로 다시 옮기지 않고, 장소·빛·날씨로 여는 도입은 장면이 바뀔 때만 씁니다. 숨긴 감정을 해설하거나 겉과 속을 대비해 설명하지 않습니다 — 속마음은 thought 블록이 맡습니다.`,

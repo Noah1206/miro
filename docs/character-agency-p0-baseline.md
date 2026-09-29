@@ -219,7 +219,7 @@ TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/a
 TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/agency/baseline.ts --live --limit-usd 1 --out ai/evals/agency/reports/<이름>.json
 ```
 
-원본 보고서: `ai/evals/agency/reports/p0-2026-09-24-live.json`(1차, 오류 경로 기록 전), `p0-2026-09-24-live-2.json`(2차), 후속 `structured-output-2026-09-24-rejected.json`(3차), `structured-output-2026-09-24.json`(4차), `realization-reasons-2026-09-24.json`·`realization-samples-2026-09-24.json`(5·6차), `verification-fixes-2026-09-24.json`(7차), 후속 2 `agency-fix-diagnostic-2026-09-24.json`·`agency-final-2026-09-24.json`·`agency-confirm-2026-09-24.json`. 사용법과 안전장치는 `ai/evals/agency/README.md`에 있다.
+원본 보고서: `ai/evals/agency/reports/p0-2026-09-24-live.json`(9/29 삭제 — git 기록에만 남음)(1차, 오류 경로 기록 전), `p0-2026-09-24-live-2.json`(2차), 후속 `structured-output-2026-09-24-rejected.json`(3차), `structured-output-2026-09-24.json`(4차), `realization-reasons-2026-09-24.json`·`realization-samples-2026-09-24.json`(5·6차), `verification-fixes-2026-09-24.json`(7차), 후속 2 `agency-fix-diagnostic-2026-09-24.json`·`agency-final-2026-09-24.json`·`agency-confirm-2026-09-24.json`. 사용법과 안전장치는 `ai/evals/agency/README.md`에 있다.
 
 ## 다음 단계 제안
 
