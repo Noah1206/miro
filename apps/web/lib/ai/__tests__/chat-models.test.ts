@@ -10,7 +10,7 @@ const models = [
 ]
 beforeEach(() => { plan.mockResolvedValue('free'); vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(models)); vi.stubEnv('MIRO_CHAT_MODEL_ID', '') })
 afterEach(() => vi.unstubAllEnvs())
-describe('plan-based chat models', () => {
+describe('chat model choice', () => {
   it('serves MIRO and ECHO from the same model', async () => {
     plan.mockResolvedValue('pro')
     const miro = await resolveChatModel('u', 'miro')
@@ -38,17 +38,22 @@ describe('plan-based chat models', () => {
     expect((await resolveChatModel('u', 'miro')).modelId).toBe('advanced')
     expect((await resolveChatModel('u', 'pro')).modelId).toBe('advanced')
   })
-  it('rejects forged Pro choices for Free accounts and arbitrary IDs', async () => {
-    await expect(resolveChatModel('u', 'pro')).rejects.toThrow('pro required')
+  it('lets a Free account pick ECHO — the plan only sizes the allowance it draws from (2026-09-29)', async () => {
+    plan.mockResolvedValue('free')
+    const echo = await resolveChatModel('u', 'pro')
+    expect(echo.metered).toBe(true)
+    expect(echo.tier).toBe(POLICY.chatTier.echo)
+  })
+  it('rejects arbitrary model IDs as a chat choice', async () => {
     await expect(resolveChatModel('u', 'advanced')).rejects.toThrow('invalid')
   })
   it('never lets an unknown choice pass itself off as unmetered chat', async () => {
     for (const forged of ['echo', 'MIRO', 'free', '']) await expect(resolveChatModel('u', forged)).rejects.toThrow('invalid')
   })
   it('both are ready together, and neither without a dialogue model', async () => {
-    expect(await chatModelOptions('u')).toEqual({ freeReady: true, proReady: true, isPro: false })
+    expect(await chatModelOptions('u')).toEqual({ freeReady: true, proReady: true })
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ ...models[0], capabilities: ['image_prompt'] }]))
-    expect(await chatModelOptions('u')).toEqual({ freeReady: false, proReady: false, isPro: false })
+    expect(await chatModelOptions('u')).toEqual({ freeReady: false, proReady: false })
   })
   it('routes dialogue to the selected model rather than another tier', async () => {
     const registry = new ModelRegistry(models)

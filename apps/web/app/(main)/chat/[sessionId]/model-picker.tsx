@@ -11,7 +11,7 @@ export function ChatModelProvider({ children }: { children: ReactNode }) {
 }
 export const useChatModel = () => useContext(Selection)
 /** 'pro' is the server-side model choice; ECHO is the product name shown for it. */
-export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean; proReady: boolean; isPro: boolean }) {
+export function ModelPicker({ freeReady, proReady }: { freeReady: boolean; proReady: boolean }) {
   const { model, setModel } = useChatModel()
   const [open, setOpen] = useState(false)
   return <div className={styles.stylePicker}>
@@ -30,11 +30,10 @@ export function ModelPicker({ freeReady, proReady, isPro }: { freeReady: boolean
             <span className={sheet.cardLead}>편하게 이어가는 일상 대화 · 무료</span>
             <span className={sheet.badge}>{freeReady ? '기본 선택' : '준비 중'}</span>
           </button>
-          <button type="button" className={sheet.card} aria-pressed={model === 'pro'} disabled={!isPro || !proReady} onClick={() => { setModel('pro'); setOpen(false) }}>
+          <button type="button" className={sheet.card} aria-pressed={model === 'pro'} disabled={!proReady} onClick={() => { setModel('pro'); setOpen(false) }}>
             <span className={sheet.cardHeading}><strong>ECHO</strong>{model === 'pro' && <span aria-label="선택됨">✓</span>}</span>
-            <span className={sheet.cardLead}>더 깊게 이어가는 대화</span>
-            {/* Pro 는 팔지 않는다(2026-09-28) — 열리지 않은 계정에는 이유 대신 '준비 중'만 보인다. */}
-            <span className={sheet.badge}>{proReady && isPro ? '이용 가능' : '준비 중'}</span>
+            <span className={sheet.cardLead}>더 깊게 이어가는 대화 · 사용량 차감</span>
+            <span className={sheet.badge}>{proReady ? '이용 가능' : '준비 중'}</span>
           </button>
         </div>
       </div>

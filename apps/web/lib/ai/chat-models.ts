@@ -1,6 +1,5 @@
 import { registryFromEnv } from '@miro/providers'
 import { POLICY } from '@miro/config'
-import { effectivePlan } from '@/lib/usage/guard'
 
 export type ChatModel = 'miro' | 'pro'
 export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo
@@ -18,13 +17,13 @@ function dialogueModel() {
   return pinned ? available.find(m => m.id === pinned) : available[0]
 }
 
-export async function chatModelOptions(userId: string) {
-  const plan = await effectivePlan(userId)
+/** ECHO 는 요금제와 무관하게 누구나 고른다(2026-09-29 결정) — 차이는 한 턴에 사용량이 차감되느냐뿐이다. */
+export async function chatModelOptions(_userId: string) {
   try {
     const model = dialogueModel()
     // 같은 모델을 쓰므로 하나가 준비되면 둘 다 준비된다.
-    return { freeReady: !!model, proReady: !!model, isPro: plan === 'pro' }
-  } catch { return { freeReady: false, proReady: false, isPro: plan === 'pro' } }
+    return { freeReady: !!model, proReady: !!model }
+  } catch { return { freeReady: false, proReady: false } }
 }
 
 /**
@@ -34,9 +33,8 @@ export async function chatModelOptions(userId: string) {
  * and both it and the tier are derived from the server-validated choice —
  * never from a flag the browser sends. MIRO is unmetered; ECHO is not.
  */
-export async function resolveChatModel(userId: string, choice: string): Promise<{ modelId: string; metered: boolean; tier: ChatTier }> {
+export async function resolveChatModel(_userId: string, choice: string): Promise<{ modelId: string; metered: boolean; tier: ChatTier }> {
   if (choice !== 'miro' && choice !== 'pro') throw new Error('invalid chat model')
-  if (choice === 'pro' && await effectivePlan(userId) !== 'pro') throw new Error('pro required')
   const model = dialogueModel()
   if (!model) throw new Error('chat model unavailable')
   return { modelId: model.id, metered: choice === 'pro', tier: choice === 'pro' ? POLICY.chatTier.echo : POLICY.chatTier.miro }
