@@ -1,11 +1,11 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
 import { applyRelationshipDelta, moodFromAffect, nextRelationshipStage } from '@miro/domain'
-import type { LLMProvider } from '@miro/providers'
+import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
 import { SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
-import { requireSafeContent } from './safety'
+import { requireSafeContent, UnsafeContentError } from './safety'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, type AgencyPlanningContext, type AgencyRealizationCheck } from './agency'
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
@@ -86,9 +86,11 @@ export async function runAgencyTurn(opts: {
   let renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
   let feedback = ''
   for (let attempt = 0; attempt <= REGENERATIONS; attempt++) {
+    // 제공자가 대사 출력을 막으면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다(9/29 실측 3건).
     const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
       promptVersion: 'agency-dialogue:v4', system: context.system,
       prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
+      .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
     // A later primary moderation/check call must not erase a fallback renderer's provenance.
     renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
     if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')

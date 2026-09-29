@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAgencyState, type AgencyCandidate, type AgencyEvidence, type AgencyGoal, type CompiledCharacter } from '@miro/domain'
-import type { LLMProvider } from '@miro/providers'
+import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
+import { UnsafeContentError } from '../safety'
 import { runTurn } from '../orchestrator'
 import type { AgencyTurnInput } from '../agency-turn'
 import { event, snapshot, relationship } from './fixtures'
@@ -145,6 +146,14 @@ describe('runTurn agency integration', () => {
     const always = provider({ rejectRealization: true })
     await expect(runTurn({ llm: always.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow(/^agency_realization_rejected semantic_/)
     expect(always.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(2)
+  })
+  it('reports a provider block on the rendered reply as a safety refusal, like the legacy path', async () => {
+    const stub = provider()
+    const blocking: LLMProvider = { info: stub.llm.info, async generateStructured(request) {
+      if (request.promptVersion === 'agency-dialogue:v4') throw new AIContentBlockedError()
+      return stub.llm.generateStructured(request)
+    } }
+    await expect(runTurn({ llm: blocking, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toBeInstanceOf(UnsafeContentError)
   })
   it('records a move as a held intent: the world location does not change and the renderer is told not to arrive', async () => {
     const stub = provider({ proposal: plan({ candidates: [selected({ action: 'move', destination: '역 앞 카페' })] }) })
