@@ -26,5 +26,5 @@ export default async function CreatePage({ searchParams }: {
   }
 
   return <CharacterForm key={`${user.id}:${params.type}:${params.draft}`} mode="create" experienceType={params.type} creationId={params.draft}
-    userId={user.id} action={saveCharacter} closeHref="/create" capabilities={features()} voices={await voiceOptions()} />
+    userId={user.id} action={saveCharacter} closeHref="/home" capabilities={features()} voices={await voiceOptions()} />
 }
