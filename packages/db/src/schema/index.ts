@@ -1027,6 +1027,31 @@ export const stateTransitions = pgTable('state_transitions', {
   session: index('state_transitions_session_idx').on(t.sessionId, t.createdAt.desc()),
 })).enableRLS()
 
+/** 기억 후처리 작업(§3.5) — 응답 트랜잭션에 남고 워커가 세션 안 순서대로 처리한다. */
+export const memoryJobs = pgTable('memory_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  characterId: uuid('character_id').notNull().references(() => characters.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  requestId: uuid('request_id'),
+  messageId: uuid('message_id').notNull(),
+  throughTurn: integer('through_turn').notNull(),
+  kind: text('kind', { enum: ['memory_extraction', 'memory_summary'] }).notNull(),
+  version: text('version').notNull().default('memory-job:v1'),
+  status: text('status', { enum: ['pending', 'running', 'done', 'failed', 'cancelled', 'superseded'] }).notNull().default('pending'),
+  attempts: integer('attempts').notNull().default(0),
+  nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  leaseToken: uuid('lease_token'),
+  errorCode: text('error_code'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+}, t => ({
+  message: uniqueIndex('memory_jobs_message_uniq').on(t.sessionId, t.messageId, t.kind),
+  due: index('memory_jobs_due_idx').on(t.nextAttemptAt).where(sql`${t.status} in ('pending', 'running')`),
+  session: index('memory_jobs_session_idx').on(t.sessionId, t.throughTurn, t.createdAt),
+})).enableRLS()
+
 /** 운영자 알림 상태 — 같은 알림을 몇 시간 안에 다시 보내지 않기 위한 마지막 발송 시각(lib/ops/alerts). */
 export const opsAlerts = pgTable('ops_alerts', {
   key: text('key').primaryKey(),

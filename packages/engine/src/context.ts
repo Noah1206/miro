@@ -46,6 +46,8 @@ export type SimulationSnapshot = {
   semanticEvents?: SemanticEvent[]
   /** 기억 검색의 질의. 이번 사용자 입력. */
   userInput?: string
+  /** 아직 기억에 반영되지 않은 최근 턴이 있다(memory_jobs 대기 중, §3.5). 옛 기억을 확정 사실로 내밀지 않게 한다. */
+  memoryLag?: boolean
 }
 
 export type BuiltContext = {
@@ -331,6 +333,8 @@ function buildPrompt(
       parts.push('', '## 둘 사이에 있었던 일')
       for (const m of layers.relationship) parts.push(`- ${m.content}`)
     }
+    // 후처리가 최신 턴을 따라오기 전이다 — 정정·취소는 최근 대화에 있다. 기억과 어긋나면 최근 대화가 맞다.
+    if (s.memoryLag) parts.push('', '위 기억에는 가장 최근 대화가 아직 반영되지 않았습니다. 최근 대화와 어긋나는 기억은 최근 대화를 따르고, 옛 기억을 지금의 사실로 단정하지 마세요.')
   }
 
   if (s.recentRealityContacts.length > 0) {

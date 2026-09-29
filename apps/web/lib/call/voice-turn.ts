@@ -5,6 +5,7 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError } from '@/lib/simulation/commit'
 import { auxiliaryLLM, resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { observe } from '@/lib/observe'
+import { runMemoryJobs } from '@/lib/ai/memory-jobs'
 import { owned } from './service'
 
 /** 끊은 직후 도착하는 마지막 턴은 받는다 — 브라우저가 종료 신호와 거의 동시에 보낸다. */
@@ -34,7 +35,7 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
     const snapshot = { ...loaded.snapshot, mode: 'voice_call' as const }
     const requestId = randomUUID()
     // 통화는 MIRO 한도·채널 길이. 자율성 코호트는 위에서 걸렀으므로 legacy 로 확정된다.
-    const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel: 'voice_call', agencyMode: 'off', agencyReady: false })
+    const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel: 'voice_call', agencyMode: 'off', agencyReady: false, memory: 'deferred' })
     const context = { userId, sessionId: call.sessionId, requestId, origin: policy.origin }
     let result
     try {
@@ -53,7 +54,9 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
         transition: result.transition, worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version,
         currentRelationship: snapshot.relationship, existingMemories: snapshot.memories, characterState: result.characterState,
         ledger: { policy: result.policy, records: result.records, triggerKey: `voice:${requestId}` },
+        memoryJobs: { userId, auxiliary: 'planned' },
       })
+      await runMemoryJobs(now, { sessionId: call.sessionId, limit: 2 }).catch(() => observe('memory.jobs_after_response_failed', { sessionId: call.sessionId }))
       return 'stored'
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue

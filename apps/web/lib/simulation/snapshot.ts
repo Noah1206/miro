@@ -7,6 +7,7 @@ import {
 } from '@miro/db'
 import { DEFAULT_CHARACTER_STATE, describeRoutine, localClock, type CharacterState } from '@miro/domain'
 import { characterAvailability } from '@/lib/reality/routine'
+import { memoryLagFor } from '@/lib/ai/memory-jobs'
 import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
@@ -53,7 +54,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -84,6 +85,7 @@ export async function loadSession(
     // 최근 통화 — 못 받은 전화, 끊은 전화를 캐릭터가 안다. 울리는 중인 것은 아직 사실이 아니다.
     db.select().from(callSessions).where(and(eq(callSessions.sessionId, sessionId), inArray(callSessions.status, ['ended', 'missed', 'declined', 'unanswered'])))
       .orderBy(desc(callSessions.createdAt)).limit(3),
+    memoryLagFor(sessionId),
   ])
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
@@ -106,6 +108,7 @@ export async function loadSession(
     recentRealityContacts: recentContacts
       .filter((c): c is { channel: string; sentAt: Date } => c.sentAt !== null),
     turnCount: row.session.turnCount,
+    memoryLag,
     experienceType: c.experienceType,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
     clock: localClock(now, timeZone),

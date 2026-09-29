@@ -11,6 +11,7 @@ import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import type { Memory, CharacterState, RelationshipState, StateTransitionRecord } from '@miro/domain'
 import type { ValidatedTransition, AgencyPlan, TurnPolicy } from '@miro/engine'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
+import { enqueueMemoryJobs } from '@/lib/ai/memory-jobs'
 
 /** One INSERT shares one now(). Step rows by a microsecond so every reader ordering by created_at
  * (snapshot, reality context, chat page, archive preview) keeps the order they were written in. */
@@ -59,6 +60,8 @@ export type CommitInput = {
    * 없으면(옛 호출) 기록하지 않는다 — 원장은 추가 기능이지 커밋의 전제가 아니다.
    */
   ledger?: { policy: TurnPolicy; records: StateTransitionRecord[]; triggerKey?: string }
+  /** 기억 후처리(§3.5): 정책이 deferred 면 추출·요약 작업을 메시지와 같은 트랜잭션에 남긴다. */
+  memoryJobs?: { userId: string; auxiliary: 'planned' | 'always' }
 }
 
 /**
@@ -300,6 +303,13 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         await tx.update(worldStates).set({ currentSceneId: sceneId })
           .where(eq(worldStates.sessionId, input.sessionId))
       }
+    }
+
+    /* ---- memory jobs ---- */
+    const userMessage = inserted.find(m => m.role === 'user')
+    if (input.memoryJobs && userMessage && input.userInput) {
+      await enqueueMemoryJobs(tx, { sessionId: input.sessionId, characterId: input.characterId, userId: input.memoryJobs.userId, requestId: input.requestId,
+        messageId: userMessage.id, turnIndex: input.turnIndex, input: input.userInput, auxiliary: input.memoryJobs.auxiliary })
     }
 
     /* ---- ledger ---- */

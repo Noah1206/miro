@@ -12,6 +12,7 @@ import { notifyExpiringPasses } from '@/lib/payments/expiry-notice'
 import { expireBankOrders, settleApprovedOrders } from '@/lib/payments/bank-transfer'
 import { observe } from '@/lib/observe'
 import { notifyOperators } from '@/lib/ops/alerts'
+import { runMemoryJobs, type MemoryJobRun } from '@/lib/ai/memory-jobs'
 import { AIUnavailableError } from '@miro/providers'
 
 export type SchedulerRun = EvaluationRun & MaintenanceRun
@@ -24,6 +25,7 @@ export type EvaluationRun = {
 
 export type MaintenanceRun = {
   ops: { alerts: number; sent: number }
+  memoryJobs: MemoryJobRun
   calls: { missed: number; timedOut: number }
   purged: number
   expiredSubscriptions: number
@@ -56,9 +58,11 @@ export async function runRealityMaintenance(wall = new Date()): Promise<Maintena
   const expiredSubscriptions = await expireSubscriptions(wall)
   await maintainAI(wall)
   await deliverRealityPush(wall)
+  // 응답 직후 시도가 유실된 기억 작업을 거둔다(임대 만료 포함).
+  const memoryJobsRun = await runMemoryJobs(wall, { limit: 20 }).catch((e) => { observe('memory.jobs_sweep_failed', { error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }); return { claimed: 0, results: {} } })
   // 운영자 알림은 맨 끝에 — 위 작업이 남긴 기록까지 보고 판단한다. 알림 실패가 유지보수를 막지 않는다.
   const ops = await notifyOperators(wall).catch((e) => { observe('ops.alerts_failed', { error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }); return { alerts: 0, sent: 0 } })
-  return { calls, purged, expiredSubscriptions, passNotices, bankOrders, ops }
+  return { calls, purged, expiredSubscriptions, passNotices, bankOrders, ops, memoryJobs: memoryJobsRun }
 }
 
 /**

@@ -161,7 +161,8 @@ export async function runTurn(opts: {
   for (const group of memoryGroups) extraMemories.push(...group)
   validated.relationshipDelta = codeDelta
   // The dialogue model cannot delete memories. Corrections come only from the scoped extraction task.
-  validated.memories = filterSalient([...extraMemories, ...validated.memories.map(({ replaces: _ignored, ...m }) => m)])
+  // deferred: 대사 모델의 기억 후보도 받지 않는다 — 출처 없는 동기 저장 우회로를 남기지 않는다(§3.5). 규칙이 만드는 기억은 아래서 붙는다.
+  validated.memories = policy.memory === 'deferred' ? [] : filterSalient([...extraMemories, ...validated.memories.map(({ replaces: _ignored, ...m }) => m)])
 
   // Standard characters retain dialogue, relationship and memory, but have no autonomous world or Reality effects.
   // This is an application boundary: provider proposals cannot opt into those effects. The policy owns it, not the tier.

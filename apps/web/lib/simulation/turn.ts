@@ -11,6 +11,7 @@ import { renderBlocks, requireSafeContent, resolveTurnPolicy, runTurn, UnsafeCon
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
+import { runMemoryJobs } from '@/lib/ai/memory-jobs'
 import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
 import { UsageExceededError, reserve, rollback, type Reservation } from '@/lib/usage/guard'
 import { type BudgetKind } from '@/lib/usage/ai-usage'
@@ -127,7 +128,7 @@ async function executeTurn(opts: {
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
     // 정책은 서버가 여기서 한 번 확정한다(§3.1). 등급은 서버가 검증한 선택에서, 경험은 캐릭터에서, 채널은 진입 경로에서 온다.
-    const policyInput = { experience: loaded.experienceType, tier: model.metered ? 'echo' as const : 'miro' as const, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId) }
+    const policyInput = { experience: loaded.experienceType, tier: model.metered ? 'echo' as const : 'miro' as const, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId), memory: 'deferred' as const }
     // MIRO basic chat does not draw down the monthly allowance. Everything else the
     // pipeline enforces — request dedupe, AI cost budget, rate limits, safety — still runs.
     let reservation: Reservation | null = null
@@ -213,6 +214,7 @@ async function executeTurn(opts: {
         existingMemories: loaded.snapshot.memories,
         characterState: result.characterState,
         ledger: { policy: result.policy, records: result.records },
+        ...(result.policy.memory === 'deferred' && !reservation?.continuity ? { memoryJobs: { userId, auxiliary: result.policy.generation.auxiliary } } : {}),
       }))
       outcome.messages = committed.messages
     } catch (e) {
@@ -246,6 +248,8 @@ async function executeTurn(opts: {
     // 재전송용 결과 갱신과 평가 샘플은 유저가 기다릴 일이 아니다 — 응답을 보낸 뒤에 한다 (요청 밖에서는 그 자리에서).
     await afterResponse(async () => {
       await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
+      // 기억 작업은 바로 시도한다. 여기서 유실돼도 DB 의 작업은 남아 크론이 거둔다.
+      if (process.env.MIRO_MEMORY_JOBS_INLINE !== '0') await runMemoryJobs(new Date(), { sessionId, limit: 2 }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
       await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
     })
     return completed

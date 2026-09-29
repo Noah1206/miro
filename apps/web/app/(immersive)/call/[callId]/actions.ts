@@ -14,6 +14,8 @@ import { endCall, owned, startOutgoingCall, UsageExceededError } from '@/lib/cal
 import { exceededMessage } from '@/lib/usage/guard'
 import { randomUUID } from 'node:crypto'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
+import { runMemoryJobs } from '@/lib/ai/memory-jobs'
+import { afterResponse } from '@/lib/defer'
 
 export type CallTurnState = { error: string | null }
 
@@ -47,7 +49,7 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
       const llm = resolveRpLLM(loaded.characterName, context)
       prepared = await prepareAgencyTurn(call.sessionId, user.id, snapshot, llm, { id: userMessageId, text: input })
       // 문자 통화도 같은 정책 객체를 쓴다 — 통화 시간으로 이미 차감됐으므로 등급은 MIRO 다.
-      const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId), agencyReady: prepared.agency?.mode === 'live' })
+      const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel, agencyMode: characterAgencyMode(call.sessionId), agencyReady: prepared.agency?.mode === 'live', memory: 'deferred' })
       context.origin = policy.origin
       result = await runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy })
     } catch {
@@ -66,11 +68,13 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
         currentRelationship: snapshot.relationship, existingMemories: snapshot.memories,
         characterState: result.characterState,
         ledger: { policy: result.policy, records: result.records, triggerKey: `call:${userMessageId}` },
+        memoryJobs: { userId: user.id, auxiliary: 'planned' },
       })
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue
       return { error: '상태를 저장하지 못했습니다.' }
     }
+    await afterResponse(() => runMemoryJobs(new Date(), { sessionId: call.sessionId, limit: 2 }))
     revalidatePath(`/call/${callId}`)
     return { error: null }
   }
