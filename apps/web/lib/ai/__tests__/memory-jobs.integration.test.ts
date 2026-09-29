@@ -86,6 +86,31 @@ describeDb('memory jobs (§3.5)', () => {
     expect((await db.select().from(memories).where(and(eq(memories.sessionId, s.sessionId), eq(memories.type, 'short_term_summary')))).map(m => m.content)).toEqual(['요약: 두 번째 말'])
   })
 
+  it('a failing summary does not hold back later extraction, but a later summary still waits for it', async () => {
+    const s = await session()
+    const loaded = (await loadSession(s.sessionId, s.userId))!
+    const [m1, m2] = await db.insert(messages).values([
+      { sessionId: s.sessionId, role: 'user', content: '열두 번째 말', blocks: [], turnIndex: 12 },
+      { sessionId: s.sessionId, role: 'user', content: '나 이제 녹차만 마셔', blocks: [], turnIndex: 13 },
+    ]).returning({ id: messages.id })
+    const base = { sessionId: s.sessionId, characterId: loaded.characterId, userId: s.userId }
+    await db.insert(memoryJobs).values([
+      { ...base, messageId: m1!.id, throughTurn: 12, kind: 'memory_summary' },
+      { ...base, messageId: m2!.id, throughTurn: 13, kind: 'memory_extraction' },
+      { ...base, messageId: m2!.id, throughTurn: 13, kind: 'memory_summary' },
+    ])
+    const seen: Array<{ kind: string; input: string; messageAts: string[] }> = []
+    const analyze: typeof analyzeMemory = async (llm, kind, input, snap) => {
+      if (kind === 'memory_summary') throw new Error('provider_error')
+      return analyzer(seen, () => [fact('사용자는 녹차만 마신다')])(llm, kind, input, snap)
+    }
+    const run = await runMemoryJobs(new Date(), { sessionId: s.sessionId, limit: 10, analyze })
+    expect(run.results).toEqual({ retry: 1, done: 1 })   // 요약 실패 → 재시도 대기, 뒤의 추출은 끝남, 뒤의 요약은 대기
+    const rows = await db.select({ kind: memoryJobs.kind, through: memoryJobs.throughTurn, status: memoryJobs.status }).from(memoryJobs).where(eq(memoryJobs.sessionId, s.sessionId))
+    expect(rows.find(r => r.kind === 'memory_extraction')!.status).toBe('done')
+    expect(rows.filter(r => r.kind === 'memory_summary').map(r => [r.through, r.status]).sort()).toEqual([[12, 'pending'], [13, 'pending']])
+  })
+
   it('cancels work for a deleted session without calling the model, and retries a failed analysis with a bounded count', async () => {
     const s = await session()
     const loaded = (await loadSession(s.sessionId, s.userId))!

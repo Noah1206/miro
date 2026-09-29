@@ -22,7 +22,9 @@ type Call = { requestId: string | null; task: string; promptVersion: string | nu
   ok: boolean; error: string | null; fallbackUsed: boolean; latencyMs: number; inputTokens: number | null; outputTokens: number | null; costUSD: number | null }
 type Unit = { kind: string; wallMs: number; outcome: string; engine?: string; calls: Call[]; background?: Call[]; events?: Array<Record<string, unknown>>
   blocks?: Array<{ type: string; text: string }> | null }
-type Arm = { experiment: string; agencyMode: string; sessionStartMs: number; stopped: string | null; deferredErrors: string[]; units: Unit[] }
+type Ledger = { trigger: string; engine: string; field: string; rule: string; status: string; before: unknown; after: unknown; decisionId: string | null }
+type Arm = { experiment: string; agencyMode: string; sessionStartMs: number; stopped: string | null; deferredErrors: string[]; units: Unit[]
+  ledger?: Ledger[]; memoryJobs?: Array<{ kind: string; status: string; attempts: number; errorCode: string | null; latencyMs: number | null }> }
 
 const flag = (name: string) => process.argv.includes(name)
 const option = (name: string) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined }
@@ -93,16 +95,18 @@ async function main() {
   if (!/^[a-z0-9-]{3,60}$/.test(experiment)) throw new Error('Experiment id: lowercase letters, digits and dashes')
   const provider = live ? liveProvider() : null
   const directory = await mkdtemp(join(tmpdir(), 'miro-agency-baseline-'))
-  // Production's /api/health switches on 2026-09-24. Pinned so a later flag change cannot silently move the baseline.
-  const features = { IMAGE_GENERATION: '0', VOICE_CALL: '0', VIDEO_CALL: '0', LIVE_SCENE: '0', RELATIONSHIP_ENGINE: '1', MEMORY_ENGINE: '1',
-    EVENT_ENGINE: '1', REALITY_MESSAGE: '1', INLINE_REALITY: '0', LLM_SEMANTIC_ANALYSIS: '0', MEMORY_SUMMARIES: '1', MEMORY_EXTRACTION: '1' }
+  // Production's /api/health switches on 2026-09-29 (LLM 의미 분류가 9/24 결정으로 켜졌다). Pinned so a later flag change cannot silently move the baseline.
+  const features = { IMAGE_GENERATION: '0', VOICE_CALL: '1', VIDEO_CALL: '0', LIVE_SCENE: '0', RELATIONSHIP_ENGINE: '1', MEMORY_ENGINE: '1',
+    EVENT_ENGINE: '1', REALITY_MESSAGE: '1', INLINE_REALITY: '0', LLM_SEMANTIC_ANALYSIS: '1', MEMORY_SUMMARIES: '1', MEMORY_EXTRACTION: '1' }
   const blank = { AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '', GEMINI_API_KEY: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '' }
   const common = { ...process.env, ...blank, TEST_DATABASE_URL: database, MIRO_AGENCY_MEASURE_EXPERIMENT: experiment, MIRO_MODE: '',
     ...Object.fromEntries(Object.entries(features).map(([name, on]) => [`MIRO_FEATURE_${name}`, on])),
     // Durable experiment cap: the experiment user's monthly cost counter. The day's global counter is shared by every
     // experiment in this database, so it must not be the cap (it would stop a new experiment on an old one's spend).
     AI_DAILY_BUDGET: live ? '100' : '0', MIRO_BUDGET_POLICY: JSON.stringify({ user_monthly: { cost: limitUSD, requests: 100_000 } }),
-    AI_DAILY_REQUEST_LIMIT: '100000', AI_USER_DAILY_LIMIT: '100000', MIRO_REQUESTS_PER_MINUTE: '120',
+    AI_DAILY_REQUEST_LIMIT: '100000', AI_USER_DAILY_LIMIT: '100000',
+    // mock 턴은 수 ms 라 분당 요청 한도(사용자당)에 걸린다. 실모델 턴은 수 초라 120 으로 충분하다.
+    MIRO_REQUESTS_PER_MINUTE: live ? '120' : '100000',
     ...(provider ? { MIRO_MODEL_REGISTRY: JSON.stringify(provider.registry), GEMINI_API_KEY: provider.key } : {}) }
   const vitest = (file: string, env: Record<string, string | undefined>) => spawnSync('pnpm',
     ['exec', 'vitest', 'run', '--config', 'ai/evals/agency/vitest.config.ts', file], { stdio: 'inherit', env: { ...common, ...env } }).status
@@ -112,23 +116,34 @@ async function main() {
   const arms: Record<string, Arm | null> = {}
   const warnings: string[] = []
   const selected = (option('--arms') ?? 'legacy,agency').split(',')
+  const repeat = Math.max(1, Math.min(3, Number(option('--repeat') ?? 1)))
   const characters = (option('--characters') ?? 'thomas').split(',')
-  for (const [arm, mode] of ([['legacy', 'off'], ['agency', 'live']] as const).filter(([arm]) => selected.includes(arm))) {
-    const runs: Arm[] = []
-    for (const character of characters) {
-      const out = join(directory, `${arm}-${character}.json`)
+  // --repeat 2: 같은 캐릭터를 새 세션으로 한 번 더(§5 "× 2회"). 비교가 공정하도록 두 경로를 캐릭터·회차마다 번갈아 돈다 —
+  // 예산이 먼저 떨어져도 한쪽 경로만 통째로 빠지지 않게.
+  const plan = Array.from({ length: repeat }, (_, round) => characters.map(character => ({ character, round }))).flat()
+  const armRuns: Record<string, Arm[]> = { legacy: [], agency: [] }
+  let budgetStopped = false
+  for (const { character, round } of plan) {
+   if (budgetStopped) break
+   for (const [arm, mode] of ([['legacy', 'off'], ['agency', 'live']] as const).filter(([arm]) => selected.includes(arm))) {
+    const runs = armRuns[arm]!
+    {
+      const out = join(directory, `${arm}-${character}-${round}.json`)
       const status = vitest('apps/web/lib/agency/baseline-measure.eval.ts', { MIRO_CHARACTER_AGENCY_MODE: mode, MIRO_CHARACTER_AGENCY_SESSIONS: mode === 'off' ? '' : '*',
         // --chat-model pro: ECHO 등급(긴 장면·맥락 2배·보조 분석 매 턴)으로 턴을 돈다. 측정 사용자는 pro 요금제가 된다.
         MIRO_AGENCY_MEASURE_CHAT_MODEL: option('--chat-model') ?? 'miro',
-        MIRO_AGENCY_MEASURE_CHARACTER: character, MIRO_AGENCY_MEASURE_OUT: out })
+        MIRO_AGENCY_MEASURE_CHARACTER: character, MIRO_AGENCY_MEASURE_OUT: out, MIRO_AGENCY_MEASURE_SCRIPT: option('--script') ?? '' })
       const data: Arm | null = status === 0 && existsSync(out) ? JSON.parse(await readFile(out, 'utf8')) : null
-      if (!data) { warnings.push(`${arm}/${character}: did not complete`); continue }
-      runs.push({ ...data, units: data.units.map(unit => ({ ...unit, character })) })
-      if (data.stopped) break
+      if (!data) { warnings.push(`${arm}/${character}#${round}: did not complete`); continue }
+      runs.push({ ...data, units: data.units.map(unit => ({ ...unit, character, round })) })
+      if (data.stopped === 'budget') budgetStopped = true
     }
+   }
+  }
+  for (const [arm, runs] of Object.entries(armRuns)) if (selected.includes(arm)) {
     arms[arm] = runs.length ? { ...runs[0]!, sessionStartMs: sum(runs.map(r => r.sessionStartMs)) / runs.length,
-      stopped: runs.find(r => r.stopped)?.stopped ?? null, deferredErrors: runs.flatMap(r => r.deferredErrors), units: runs.flatMap(r => r.units) } : null
-    if (arms[arm]?.stopped) break
+      stopped: runs.find(r => r.stopped)?.stopped ?? null, deferredErrors: runs.flatMap(r => r.deferredErrors), units: runs.flatMap(r => r.units),
+      ledger: runs.flatMap(r => r.ledger ?? []), memoryJobs: runs.flatMap(r => r.memoryJobs ?? []) } : null
   }
 
   const summary = Object.fromEntries(Object.entries(arms).map(([arm, data]) => {
@@ -144,16 +159,37 @@ async function main() {
       proactive: summarize(of('proactive'), u => u.outcome === 'sent'), stages: stages(data.units),
       backgroundCalls: turns.flatMap(t => t.background ?? []).length }]
   }))
+  // §5 게이트(자동으로 셀 수 있는 것만). 사람 평가·인물 일관성은 여기서 재지 않는다.
+  const turnsOf = (arm: string) => arms[arm]?.units.filter(u => u.kind === 'turn') ?? []
+  const ok = (u: Unit) => u.outcome === 'ok'
+  const p95 = (arm: string) => percentile(turnsOf(arm).map(u => u.wallMs), 95)
+  const costPerSuccess = (arm: string) => { const t = turnsOf(arm); const c = sum(t.flatMap(u => [...u.calls, ...(u.background ?? [])]).map(c => c.costUSD ?? 0)); const w = t.filter(ok).length; return w ? c / w : null }
+  const agencyLedger = arms.agency?.ledger ?? []
+  const gates = arms.agency && arms.legacy ? {
+    successRate: { value: round(turnsOf('agency').filter(ok).length / Math.max(1, turnsOf('agency').length), 3), target: '>= 0.98', baseline: round(turnsOf('legacy').filter(ok).length / Math.max(1, turnsOf('legacy').length), 3) },
+    p95Ratio: { value: round((p95('agency') ?? 0) / Math.max(1, p95('legacy') ?? 1), 2), target: '<= 1.25', agencyMs: round(p95('agency')), legacyMs: round(p95('legacy')) },
+    costPerSuccessRatio: { value: round((costPerSuccess('agency') ?? 0) / Math.max(1e-9, costPerSuccess('legacy') ?? 1e-9), 2), target: '<= 2', agencyUSD: round(costPerSuccess('agency'), 5), legacyUSD: round(costPerSuccess('legacy'), 5) },
+    // 권한 없는 세계 변경: 자율성 경로에서 장소가 '적용' 된 행. 이동은 held 여야 한다.
+    unauthorizedWorldChange: agencyLedger.filter(r => r.field === 'world.currentLocation' && r.status === 'applied').length,
+    heldMoves: agencyLedger.filter(r => r.rule === 'move_intent_held').length,
+    strippedMutations: agencyLedger.filter(r => r.rule === 'unapproved_mutation').length,
+    // 같은 트리거에서 같은 필드가 두 번 '적용' 되면 중복 효과다(거부·보류 행은 코드가 같아도 여러 번일 수 있다).
+    duplicateEffects: (() => { const applied = agencyLedger.filter(r => r.status === 'applied'); return applied.length - new Set(applied.map(r => `${r.trigger}:${r.field}`)).size })(),
+    // 취소 뒤 발송: 약속이 취소된 뒤의 선연락 발송 수(사람이 내용을 확인할 후보).
+    sentAfterCancel: (arms.agency?.units ?? []).filter(u => u.kind === 'proactive' && u.outcome === 'sent').length,
+    verifierRejections: countBy((arms.agency?.units ?? []).flatMap(u => ((u as { realization?: Array<{ ok: boolean; issues: string[] }> }).realization ?? []).filter(r => !r.ok).flatMap(r => r.issues.map(i => i.split(' ').at(-1)!.split(':')[0]!))), x => x),
+    memoryJobP95Ms: { agency: percentile((arms.agency?.memoryJobs ?? []).flatMap(j => j.latencyMs == null ? [] : [j.latencyMs]), 95), legacy: percentile((arms.legacy?.memoryJobs ?? []).flatMap(j => j.latencyMs == null ? [] : [j.latencyMs]), 95), target: '<= 10000' },
+  } : null
   const failures = failuresStatus === 0 && existsSync(failuresPath) ? JSON.parse(await readFile(failuresPath, 'utf8')) : null
   if (!failures) warnings.push('failure reproductions did not complete')
 
   const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8' }).trim()
   const report = { mode: live ? 'live-pilot' : 'mock-wiring', experiment, createdAt: new Date().toISOString(),
     commit: git('rev-parse', 'HEAD'), uncommittedChanges: git('status', '--porcelain').length > 0,
-    database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features, characters, chatModel: option('--chat-model') ?? 'miro',
+    database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features, characters, repeat, script: option('--script') ?? 'p0', chatModel: option('--chat-model') ?? 'miro',
     registry: provider?.registry.map(({ id, providerModelId, capabilities, inputCost, outputCost }) => ({ id, providerModelId, capabilities, inputCost, outputCost })) ?? null,
     registryOverride: provider?.override ?? null, liveRegistryServesWorldUpdate: provider?.servesWorldUpdate ?? null,
-    complete: warnings.length === 0, warnings, summary, failures, arms,
+    complete: warnings.length === 0, warnings, gates, summary, failures, arms,
     notMeasured: ['persona fidelity and human preference (no judge or reviewers)', 'active instance per day (needs real traffic)',
       'production network and DB latency (local test DB)', ...(live ? [] : ['cost and moderation calls (mock skips moderation)'])] }
   const output = option('--out') ?? join(directory, 'report.json')
@@ -167,6 +203,7 @@ async function main() {
       'USD/unit': v!.costUSD.perUnit, 'USD/success': v!.costUSD.perSuccess }])))
   }
   if (failures) console.table(failures.map((f: { id: string; reproduced: boolean }) => ({ case: f.id, reproduced: f.reproduced })))
+  if (gates) console.log(JSON.stringify(gates, null, 1))
   console.log(`${report.mode}: ${report.complete ? 'complete' : 'INCOMPLETE — ' + warnings.join('; ')}\n${output}`)
   if (!report.complete) process.exitCode = 1
 }

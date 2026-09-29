@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import { describe, it, vi } from 'vitest'
 import { and, asc, eq, gt, sql } from 'drizzle-orm'
-import { db, aiUsage, characterRevisions, characterRuntimeStates, contactProfiles, roleplaySessions, users, userSettings } from '@miro/db'
+import { db, aiUsage, characterRevisions, characterRuntimeStates, contactProfiles, memoryJobs, roleplaySessions, stateTransitions, users, userSettings } from '@miro/db'
 import { cloneCharacterAsReality } from '@/lib/dev/reality-clone'
 import * as observability from '@/lib/observe'
 import * as agencyEngine from '../../../../packages/engine/src/agency'
@@ -30,6 +30,33 @@ const SCRIPT = [
   '대신 주말에 같이 산책할래?',
   '고마워. 이제 자러 갈게, 잘 자.',
 ]
+/**
+ * p1(agency-core-transition-plan §5): 20턴. 인사·갈등·정정·거절·가정/인용된 고백·약속→취소·채널 전환(문자)·도착 제안·사과를 섞는다.
+ * m = 문자 페이지에서 보낸 턴. 같은 시나리오를 두 경로에 똑같이 돌린다.
+ */
+const P1: Array<{ input: string; mode?: 'messenger' }> = [
+  { input: '안녕, 오늘 하루는 좀 길었어.' },
+  { input: '회사에서 발표를 했는데 반응이 별로였던 것 같아.' },
+  { input: '너는 오늘 어떻게 지냈어?' },
+  { input: '친구가 어제 나한테 "너 걔 좋아하지?"라고 하더라. 웃기지 않아?' },
+  { input: '아 그리고 나 커피 좋아한다고 했었지? 이제 안 마셔. 녹차로 바꿨어.' },
+  { input: '부탁이 있는데, 내 상사한테 내가 아프다고 대신 거짓말 좀 해 줄래?' },
+  { input: '솔직히 아까 네 반응은 좀 서운했어.' },
+  { input: '내일 저녁 8시에 결과 나오면 먼저 연락해 줄래?' },
+  { input: '지금 집에 가는 길이야. 문자로 할게.', mode: 'messenger' },
+  { input: '방금 도착했어. 오늘 뭐 먹었어?', mode: 'messenger' },
+  { input: '아 맞다, 내일은 야근이라 연락은 괜찮아. 아까 부탁한 거 취소할게.', mode: 'messenger' },
+  { input: '다시 만나서 얘기하자.' },
+  { input: '나 지금 너희 집 앞이야. 들어가도 돼?' },
+  { input: '농담이야. 그냥 네 반응이 궁금했어.' },
+  { input: '아까 서운하다고 한 거, 내가 좀 예민했던 것 같아. 미안.' },
+  { input: '요즘 제일 신경 쓰이는 일이 뭐야?' },
+  { input: '그 얘기 해 줘서 고마워. 나한테는 편하게 말해도 돼.' },
+  { input: '대신 이번 주말에 같이 산책할래?' },
+  { input: '좋아, 그럼 토요일 오후로 하자.' },
+  { input: '고마워. 이제 자러 갈게, 잘 자.' },
+]
+const SCRIPT_LINES = process.env.MIRO_AGENCY_MEASURE_SCRIPT === 'p1' ? P1 : SCRIPT.map(input => ({ input }))
 /** Simulated idle gaps before a scheduler tick; the evaluator takes `now` as input. */
 const PROACTIVE_AFTER_HOURS = [26, 50]
 
@@ -93,8 +120,10 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
     if (chatModel === 'pro') await db.update(users).set({ plan: 'pro' }).where(eq(users.id, owner.id))
     const character = await cloneCharacterAsReality(process.env.MIRO_AGENCY_MEASURE_CHARACTER ?? 'thomas', { ownerId: owner.id })
     // In-app messages only: the agency path has no call/photo executor, so both arms compete on one channel.
+    // 생활 리듬은 하루 종일 비어 있게 — 벽시계에 따라 문자 답장이 미뤄지거나 리듬 생성 호출이 섞이지 않게.
     await db.update(contactProfiles).set({ enabled: true, activeHoursStart: '00:00', activeHoursEnd: '23:59', preferredChannel: 'message',
-      callProbability: 0, videoCallProbability: 0, photoProbability: 0, voiceMessageProbability: 0 })
+      callProbability: 0, videoCallProbability: 0, photoProbability: 0, voiceMessageProbability: 0,
+      routine: { version: 1, source: 'authored', note: null, generatedAt: new Date().toISOString(), blocks: [{ days: [], start: '00:00', end: '23:59', label: '자유 시간', availability: 'free' }] } })
       .where(eq(contactProfiles.characterId, character.id))
 
     const mark = async () => Number((await db.select({ id: sql<string>`coalesce(max(${aiUsage.id}), 0)` }).from(aiUsage).where(eq(aiUsage.userId, owner.id)))[0]!.id)
@@ -120,16 +149,16 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
     if (revision) units.push({ kind: 'compile', wallMs: performance.now() - started, outcome: revision.status, errorCode: revision.errorCode, events: drain(), calls: await since(from) })
 
     let stopped: string | null = null
-    for (const [index, input] of SCRIPT.entries()) {
+    for (const [index, { input, mode }] of SCRIPT_LINES.entries()) {
       from = await mark()
       const requestId = randomUUID()
       started = performance.now()
-      const outcome = await runConversationTurn({ userId: owner.id, sessionId, input, requestId, chatModel })
+      const outcome = await runConversationTurn({ userId: owner.id, sessionId, input, requestId, chatModel, mode: mode ?? 'chat' })
       const wallMs = performance.now() - started
       await flush()
       const calls = await since(from)
       const own = calls.filter(c => c.requestId === requestId)
-      units.push({ kind: 'turn', index, input, wallMs, outcome: outcome.ok ? 'ok' : outcome.reason, engine: engineOf(own),
+      units.push({ kind: 'turn', index, input, mode: mode ?? 'chat', wallMs, outcome: outcome.ok ? 'ok' : outcome.reason, engine: engineOf(own),
         text: outcome.ok ? outcome.responseText : null, blocks: outcome.ok ? outcome.blocks.map(b => ({ type: b.type, text: b.text })) : null,
         state: await state(sessionId), events: drain(), realization: realizations.splice(0), rawFailures: rawFailures.splice(0), calls: own,
         background: calls.filter(c => c.requestId !== requestId) })
@@ -149,7 +178,12 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
       units.push({ kind: 'proactive', index, idleHours: hours, wallMs, outcome: result.outcome, result, engine: engineOf(calls), text, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls })
       if (result.outcome === 'error') { stopped = /budget/i.test(String((result as { error?: string }).error)) ? 'budget' : 'error'; break }
     }
+    // 원장(원문 없음)과 기억 작업 지연 — 계약 게이트(권한 없는 세계 변경·허위 완료·중복)와 워커 p95 를 보고서에서 셀 수 있게.
+    const ledger = (await db.select().from(stateTransitions).where(eq(stateTransitions.sessionId, sessionId)).orderBy(asc(stateTransitions.createdAt), asc(stateTransitions.seq)))
+      .map(r => ({ trigger: r.triggerKey, engine: r.engine, field: r.field, rule: r.rule, status: r.status, before: r.before, after: r.after, decisionId: r.decisionId }))
+    const jobs = (await db.select().from(memoryJobs).where(eq(memoryJobs.sessionId, sessionId)))
+      .map(j => ({ kind: j.kind, status: j.status, attempts: j.attempts, errorCode: j.errorCode, latencyMs: j.finishedAt ? j.finishedAt.getTime() - j.createdAt.getTime() : null }))
     await writeFile(OUT!, JSON.stringify({ experiment: EXPERIMENT, agencyMode: process.env.MIRO_CHARACTER_AGENCY_MODE ?? 'off',
-      sessionStartMs, stopped, deferredErrors: deferred.errors, units }, null, 2) + '\n')
+      sessionStartMs, stopped, deferredErrors: deferred.errors, units, ledger, memoryJobs: jobs }, null, 2) + '\n')
   })
 })

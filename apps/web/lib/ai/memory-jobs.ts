@@ -65,9 +65,11 @@ export async function runMemoryJobs(now = new Date(), opts: { limit?: number; se
             OR (m.status = 'running' AND m.lease_until <= now()))
           AND m.attempts < ${MAX_ATTEMPTS}
           AND (${opts.sessionId ?? null}::uuid IS NULL OR m.session_id = ${opts.sessionId ?? null}::uuid)
-          -- 세션 안 순서: 앞선 턴(또는 같은 턴의 먼저 만든 작업)이 아직 안 끝났으면 기다린다.
+          -- 세션 안 순서: 추출은 앞선 추출을(정정·교체가 순서대로), 요약은 앞선 모든 작업을 기다린다(범위를 빠뜨린 채 끝나지 않게).
+          -- 실패 중인 요약이 뒤의 추출을 막지는 않는다.
           AND NOT EXISTS (
             SELECT 1 FROM memory_jobs o WHERE o.session_id = m.session_id AND o.id <> m.id AND o.status IN ('pending', 'running')
+              AND (m.kind = 'memory_summary' OR o.kind = 'memory_extraction')
               AND (o.through_turn < m.through_turn OR (o.through_turn = m.through_turn AND o.created_at < m.created_at)))
         ORDER BY m.through_turn, m.created_at LIMIT ${limit - claimed} FOR UPDATE SKIP LOCKED
       ) RETURNING id
@@ -153,7 +155,8 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
       const all = await tx.select().from(memories).where(eq(memories.sessionId, job.sessionId))
       for (const m of pruneMemories(all as never, POLICY.memory.maxPerSession).drop) await tx.delete(memories).where(eq(memories.id, m.id))
     }
-    await tx.update(memoryJobs).set({ status: 'done', leaseToken: null, leaseUntil: null, finishedAt: now, errorCode: null })
+    // 완료 시각은 실제로 끝난 때 — 워커가 시작할 때 받은 now 가 아니다(지연 측정이 틀렸다).
+    await tx.update(memoryJobs).set({ status: 'done', leaseToken: null, leaseUntil: null, finishedAt: sql`now()`, errorCode: null })
       .where(and(eq(memoryJobs.id, id), eq(memoryJobs.leaseToken, token)))
   })
   observe('memory.job_done', { jobId: id, kind: job.kind, stored: candidates.length })
