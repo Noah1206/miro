@@ -13,8 +13,9 @@ test('onboarding cannot finish without the required terms, and ends with the wel
   await page.getByPlaceholder('이메일').fill(`gate-${Date.now()}@miro.dev`)
   await page.getByRole('button', { name: '계속' }).click()
   await expect(page).toHaveURL(/\/onboarding/)
-  // 닉네임이 비면 다음으로 갈 수 없다.
-  await expect(page.getByRole('button', { name: '다음' })).toBeDisabled()
+  // 언어는 골라도 바로 넘어가지 않는다 — '다음' 으로 넘어간다(기본 언어가 골라져 있어 처음부터 열려 있다).
+  await expect(page.getByRole('heading', { name: '언어를 골라 주세요' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '다음' })).toBeEnabled()
   await passOnboardingProfile(page)
 
   const submit = page.getByRole('button', { name: '시작하기', exact: true })

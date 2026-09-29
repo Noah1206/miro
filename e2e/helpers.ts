@@ -29,9 +29,11 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
 /** 온보딩 1~5단계(언어 → 닉네임 → 성별 → 취향 → 생년월일 건너뛰기). 약관 단계 앞에서 멈춘다. */
 export async function passOnboardingProfile(page: Page, nickname = '테스터') {
   await page.getByRole('radio', { name: '한국어' }).click()
+  await page.getByRole('button', { name: '다음' }).click()
   await page.getByLabel('닉네임').fill(nickname)
   await page.getByRole('button', { name: '다음' }).click()
   await page.getByRole('radio', { name: '밝히지 않음' }).click()
+  await page.getByRole('button', { name: '다음' }).click()
   await page.getByRole('checkbox', { name: /HL/ }).click()
   await page.getByRole('button', { name: '다음' }).click()
   await page.getByRole('button', { name: '건너뛰기' }).click()

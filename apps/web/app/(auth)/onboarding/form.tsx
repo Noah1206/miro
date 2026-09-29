@@ -14,7 +14,7 @@ import { msg } from '@/lib/i18n'
 import { finishOnboarding } from './actions'
 
 const COPY = [
-  { title: msg('언어를 골라 주세요'), lead: msg('앱 화면과 캐릭터의 말이 이 언어로 바뀌어요. 마이페이지에서 언제든 바꿀 수 있어요.') },
+  { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자·전화가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
   { title: msg('어떻게 불러 드릴까요?'), lead: msg('캐릭터가 대화에서 부를 닉네임이에요. 마이페이지에서 언제든 바꿀 수 있어요.') },
   { title: msg('성별을 알려 주세요'), lead: msg('캐릭터가 나를 알아보는 데 쓰여요.') },
   { title: msg('좋아하는 관계를 모두 골라 주세요'), lead: msg('취향에 맞는 캐릭터를 추천할 때 써요.') },
@@ -60,11 +60,14 @@ export function OnboardingForm() {
 
   const go = (n: number) => { focusHeading.current = true; setError(null); setStep(n) }
   const nameOk = nickname.trim().length > 0
+  // 단계별로 '다음' 을 누를 수 있는가.
+  const ready: Record<number, boolean> = { 1: true, 2: nameOk, 3: !!gender, 4: tastes.length > 0 }
   const requiredOk = REQUIRED_TERMS.every((k) => checked[k])
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
   const copy = COPY[step - 1]!
-  const pickLanguage = (l: Language) => startSwitch(async () => { if (l !== language) await setLanguage(l); go(2) })
+  // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
+  const pickLanguage = (l: Language) => { if (l !== language) startSwitch(() => setLanguage(l)) }
 
   return (
     <form action={action} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -94,10 +97,9 @@ export function OnboardingForm() {
           initial={reduce ? false : { opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
           exit={reduce ? undefined : { opacity: 0, x: -16, transition: { duration: duration.fast, ease: ease.exit } }}
           transition={{ duration: duration.normal, ease: ease.enter }}>
-          {/* 언어 고르기는 가운데 정렬 — 첫 화면이라 한가운데서 묻는다(2026-09-30 요청). */}
-          <header className="stack" style={{ gap: 6, margin: 'var(--space-6) 0 var(--space-6)', ...(step === 1 ? { alignItems: 'center', textAlign: 'center' } : {}) }}>
+          <header className="stack" style={{ gap: 6, margin: 'var(--space-6) 0 var(--space-6)' }}>
             <h1 ref={(el) => { if (el && focusHeading.current) { focusHeading.current = false; el.focus() } }} tabIndex={-1} className="t-title-1" style={{ outline: 'none' }}>{t(copy.title)}</h1>
-            <p className="t-body" style={{ color: 'var(--color-text-secondary)' }}>{t(copy.lead)}</p>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t(copy.lead)}</p>
           </header>
 
           {step === 1 && (
@@ -105,7 +107,7 @@ export function OnboardingForm() {
               {/* 언어 이름은 번역하지 않는다 — 자기 언어를 그 언어의 글자로 알아본다. */}
               {(Object.keys(LANGUAGES) as Language[]).map((l) => (
                 <Option key={l} role="radio" selected={language === l} title={LANGUAGES[l]} lang={l} center
-                  onClick={() => { if (!switching) pickLanguage(l) }} />
+                  onClick={() => pickLanguage(l)} />
               ))}
             </div>
           )}
@@ -115,9 +117,7 @@ export function OnboardingForm() {
           {step === 3 && (
             <div role="radiogroup" aria-label={t('성별')} className="stack" style={{ gap: 8 }}>
               {GENDERS.map((g) => (
-                <Option key={g.value} role="radio" selected={gender === g.value} title={t(g.label)}
-                  // 고르면 바로 다음 질문으로 — 고를 것이 하나뿐인 단계라 '다음' 을 한 번 더 누르게 하지 않는다.
-                  onClick={() => { setGender(g.value); setTimeout(() => go(4), reduce ? 0 : 180) }} />
+                <Option key={g.value} role="radio" selected={gender === g.value} title={t(g.label)} onClick={() => setGender(g.value)} />
               ))}
             </div>
           )}
@@ -155,8 +155,8 @@ export function OnboardingForm() {
           {error && <p role="alert" className="t-caption" style={{ marginTop: 12, color: 'var(--color-danger)' }}>{t(error)}</p>}
 
           <div className="stack" style={{ gap: 4, marginTop: 'auto', paddingTop: 'var(--space-6)' }}>
-            {step === 2 && <Button type="button" variant="primary" size="lg" full disabled={!nameOk} onClick={() => go(3)}>{t('다음')}</Button>}
-            {step === 4 && <Button type="button" variant="primary" size="lg" full disabled={tastes.length === 0} onClick={() => go(5)}>{t('다음')}</Button>}
+            {/* 고르는 단계는 모두 같은 '다음' 하나로 넘어간다 — 고르기만으로는 넘어가지 않는다(2026-09-30 요청). */}
+            {step <= 4 && <Button type="button" variant="primary" size="lg" full disabled={!ready[step] || switching} onClick={() => go(step + 1)}>{t('다음')}</Button>}
             {step === 5 && <>
               <Button type="button" variant="primary" size="lg" full disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
               <Button type="button" variant="ghost" size="sm" full onClick={() => { setBirthDate(''); go(6) }}>{t('건너뛰기')}</Button>
@@ -203,7 +203,7 @@ function BirthDateField({ value, onChange, invalid }: { value: string; onChange:
   )
 }
 
-/** 큰 선택 칸. 고르면 옅은 주황 바탕과 주황 테두리, 오른쪽에 체크 — 색만이 아니라 체크 모양으로도 갈린다. */
+/** 큰 선택 칸. 고르면 한 단 밝은 바탕과 흰 체크(2026-09-30 요청) — 색만이 아니라 체크 모양으로도 갈린다. */
 function Option({ role, selected, title, sub, lang, center, onClick }: { role: 'radio' | 'checkbox'; selected: boolean; title: string; sub?: string; lang?: string; center?: boolean; onClick: () => void }) {
   const reduce = useReducedMotion()
   return (
@@ -212,8 +212,9 @@ function Option({ role, selected, title, sub, lang, center, onClick }: { role: '
       style={{
         position: 'relative', display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 60, padding: center ? '12px 44px' : '12px 16px', textAlign: center ? 'center' : 'left', cursor: 'pointer',
         borderRadius: 'var(--radius-lg)', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
-        background: selected ? 'var(--color-accent-soft)' : 'var(--color-surface-1)',
-        border: `1px solid ${selected ? 'var(--color-accent)' : 'var(--color-border)'}`,
+        background: selected ? 'var(--color-surface-2)' : 'var(--color-surface-1)',
+        // 고른 칸은 테두리 없이 한 단 밝은 바탕과 흰 체크로만 갈린다(2026-09-30 요청). 굵기는 그대로 둬 칸이 움직이지 않게.
+        border: `1px solid ${selected ? 'transparent' : 'var(--color-border)'}`,
         transition: 'background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard)',
       }}>
       <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'baseline', justifyContent: center ? 'center' : undefined, gap: 10, flexWrap: 'wrap' }}>
@@ -222,7 +223,7 @@ function Option({ role, selected, title, sub, lang, center, onClick }: { role: '
       </span>
       <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
         // 가운데 정렬일 때 체크는 오른쪽 끝에 띄워 둔다 — 글자가 정확히 가운데에 오게.
-        style={{ flexShrink: 0, stroke: selected ? 'var(--color-accent-text)' : 'transparent', ...(center ? { position: 'absolute', right: 16 } : {}) }}><path d="M20 6 9 17l-5-5" /></svg>
+        style={{ flexShrink: 0, stroke: selected ? 'var(--color-white)' : 'transparent', ...(center ? { position: 'absolute', right: 16 } : {}) }}><path d="M20 6 9 17l-5-5" /></svg>
     </motion.button>
   )
 }
