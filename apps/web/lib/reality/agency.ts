@@ -3,9 +3,9 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { characterAgencyMode, feature, POLICY, productionRuntime } from '@miro/config'
 import {
   db, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
-  realityContacts, relationships, roleplaySessions, userSettings, users, worldStates,
+  realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
-import { applyRelationshipDelta, describeRelationship, localMinutes, presentContact, type SuppressReason } from '@miro/domain'
+import { applyRelationshipDelta, describeRelationship, localMinutes, presentContact, RELATIONSHIP_DIMENSIONS, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, requireSafeContent, verifyAgencyRealization } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
@@ -14,6 +14,7 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { observe } from '@/lib/observe'
 import { deliverRealityPush, enqueueRealityPush } from './push-outbox'
+import { characterAvailability } from './routine'
 import type { EvaluateOutcome } from './evaluate'
 
 type RealityRow = {
@@ -38,8 +39,13 @@ async function deliveryContacts(sessionId: string, query: Pick<typeof db, 'selec
 /** The user's time zone is the only setting read; out-of-app contact cannot be turned off (2026-09-24). */
 const timeZoneOf = (settings: RealityRow['settings']): string => settings?.timeZone ?? POLICY.reality.defaultTimeZone
 
-/** Delivery constraints only. Legacy motivation never overrides a validated agency choice. */
-function deliveryBlock(profile: RealityRow['profile'], timeZone: string, recent: ContactRow[], now: Date): SuppressReason | null {
+/**
+ * Delivery constraints only. Legacy motivation never overrides a validated agency choice.
+ * 생활 리듬(§5 채널 일관성)은 legacy 와 같은 규칙: 자는 중이면 아무것도, 바쁘면 보내지 않는다 — 판단이 아니라 전달 제약이다.
+ */
+function deliveryBlock(profile: RealityRow['profile'], timeZone: string, recent: ContactRow[], now: Date, availability?: 'free' | 'busy' | 'unreachable'): SuppressReason | null {
+  if (availability === 'unreachable') return 'outside_active_hours'
+  if (availability === 'busy') return 'busy'
   const minute = localMinutes(now, timeZone)
   const toMinute = (value: string) => { const [h = 0, m = 0] = value.split(':').map(Number); return h * 60 + m }
   const start = toMinute(profile.activeHoursStart), end = toMinute(profile.activeHoursEnd)
@@ -84,7 +90,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       if (existing) return { outcome: 'skipped', reason: 'duplicate' }
     }
     const recent = await deliveryContacts(sessionId)
-    const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now)
+    const availability = await characterAvailability(row.character.id, now, timeZoneOf(row.settings), { wait: true })
+    const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now, availability.availability)
     // Reserve two evidence slots for the application's queued/sent attestations.
     const evidence = (await loadAgencyEvidence(sessionId, snapshot, runtime, undefined, now)).slice(-126)
     const dueGoals = runtime.state.goals.filter(goal => goal.status === 'active' && goal.clock === 'real_time'
@@ -168,7 +175,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       let contactId: string | null = null
       if (send && content) {
         const newest = await deliveryContacts(sessionId, tx)
-        if (deliveryBlock(profile, timeZoneOf(currentSettings ?? null), newest, now)) throw new AgencyRealityConflict()
+        if (deliveryBlock(profile, timeZoneOf(currentSettings ?? null), newest, now, availability.availability)) throw new AgencyRealityConflict()
         const messageId = randomUUID()
         contactId = randomUUID()
         await tx.insert(messages).values({ id: messageId, sessionId, role: 'character', kind: 'reality_message',
@@ -193,6 +200,20 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       await tx.insert(characterDecisions).values({ sessionId, revisionId: runtime.revision.id, triggerKey,
         mode: 'live', decision: plan.decision, providerMode: plan.providerMode,
       })
+      // 원장(§3.4): 선연락도 대화와 같은 원장에, 같은 정책 버전으로. 발송은 '저장·큐 등록' 까지만 사실이다 — 도달·열람은 별개.
+      const nextRelationship = applyRelationshipDelta(snapshot.relationship, plan.relationshipDelta)
+      const ledger = [
+        ...RELATIONSHIP_DIMENSIONS.filter(dim => nextRelationship[dim] !== snapshot.relationship[dim]).map(dim => ({
+          field: `relationship.${dim}`, before: snapshot.relationship[dim], after: nextRelationship[dim], rule: 'relationship_appraisal', status: 'applied' as const, clock: 'real' as const })),
+        ...(plan.transition.goals ?? []).map(change => ({ field: `agency.goal.${change.kind === 'add' ? change.goal.id : change.goalId}`, after: change.kind, rule: 'goal_change', status: 'applied' as const, clock: 'real' as const })),
+        ...(contactId ? [{ field: 'contact.message', after: 'queued', rule: 'contact_dispatched', status: 'applied' as const, clock: 'real' as const, outcomeRef: contactId }] : []),
+      ]
+      if (ledger.length) await tx.insert(stateTransitions).values(ledger.map((r, seq) => ({
+        sessionId, triggerKey: `reality:${triggerKey}`, seq, policyVersion: 'turn-policy:v1', engine: 'agency' as const, revisionId: runtime.revision.id,
+        decisionId: plan.decision.id, causeMessageId: null, actor: snapshot.character.id, field: r.field, before: 'before' in r ? r.before : null, after: r.after, rule: r.rule,
+        status: r.status, clock: r.clock, worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version + (r.field.startsWith('relationship.') ? 1 : 0),
+        runtimeVersion: runtime.version + 1, outcomeRef: 'outcomeRef' in r ? r.outcomeRef : null,
+      })))
       const nextDue = nextState.goals.filter(goal => goal.status === 'active' && goal.clock === 'real_time' && goal.dueAt)
         .map(goal => Date.parse(goal.dueAt!)).sort((a, b) => a - b)[0]
       const backoffMinutes = Math.min(360, POLICY.reality.recheckMinutes * 2 ** Math.min(4, nextState.sequence - 1))

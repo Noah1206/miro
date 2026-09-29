@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { db, realityPushJobs, realityContacts, pushSubscriptions, roleplaySessions, users, contactProfiles, messages, characters } from '@miro/db'
+import { db, realityPushJobs, realityContacts, pushSubscriptions, roleplaySessions, users, contactProfiles, messages, characters, characterRuntimeStates } from '@miro/db'
 import { feature, productionRuntime } from '@miro/config'
 import { resolvePush } from '@miro/providers'
 import type { UsageTransaction } from '@/lib/usage/guard'
@@ -56,6 +56,15 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
     }
     if (row.job.attempts > 5) { await finish('failed'); continue }
     const payload = row.contact.payload
+    // 약속 취소 뒤 발송 0(§5): 결정에서 나온 연락은 그 행동이 취소됐으면 큐에서 멈춘다. 이미 나간 외부 전송은 되돌리지 않고 결과만 남는다.
+    if (typeof payload.decisionId === 'string') {
+      const [runtime] = await db.select({ state: characterRuntimeStates.state }).from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, row.session.id)).limit(1)
+      const action = runtime?.state.actions.find(a => a.id === payload.decisionId)
+      if (action && (action.status === 'cancelled' || action.cancelRequestedAt)) {
+        observe('reality.push_cancelled_after_decision', { jobId: job.id, sessionId: row.session.id })
+        await finish('cancelled'); continue
+      }
+    }
     try {
       const provider = resolvePush()
       if (productionRuntime() && provider.info.mode !== 'live') throw new Error('PUSH_NOT_READY')

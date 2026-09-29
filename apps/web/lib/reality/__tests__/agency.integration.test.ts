@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { and, eq, sql } from 'drizzle-orm'
 import {
   db, users, userSettings, characters, contactProfiles, roleplaySessions, worldStates, relationships, events,
-  messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions,
+  messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions, stateTransitions,
 } from '@miro/db'
 import { createAgencyState, type AgencyAction, type CompiledCharacter } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
@@ -286,6 +286,33 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(JSON.parse(calls[0]!.prompt).permissions.contact).toBe(false)
     expect(calls.filter(call => call.version === 'reality:v3-character-context')).toHaveLength(0)
     expect((await stored(id)).messages).toHaveLength(0)
+  })
+
+  // §5: 생활 리듬은 legacy 와 같은 전달 제약이다 — 바쁜 캐릭터는 결정이 contact 여도 보내지 않는다.
+  it('a busy routine blocks dispatch the same way it does on the legacy path', async () => {
+    const { id, characterId } = await fixture()
+    await db.update(contactProfiles).set({ routine: { version: 1, source: 'authored', note: null, generatedAt: NOW.toISOString(),
+      blocks: [{ days: [], start: '00:00', end: '23:59', label: '회의', availability: 'busy' }] } }).where(eq(contactProfiles.characterId, characterId))
+    const { calls } = provider()
+    // 쿨다운과 같은 꼴: 연락 권한이 빠진 채 계획되고, contact 후보는 선택되지 못한다.
+    expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'no_intent' })
+    expect(JSON.parse(calls[0]!.prompt).permissions.contact).toBe(false)
+    expect(JSON.parse(JSON.parse(calls[0]!.prompt).input).deliveryBlocked).toBe('busy')
+    expect((await stored(id)).messages).toHaveLength(0)
+  })
+
+  it('leaves a ledger row for the queued contact and the appraisal, under the same policy version as chat', async () => {
+    const { id, messageId } = await fixture()
+    provider({ relationship: true })
+    const result = await evaluateSession(id, NOW)
+    expect(result.outcome).toBe('sent')
+    const rows = await db.select().from(stateTransitions).where(eq(stateTransitions.sessionId, id))
+    expect(rows.every(r => r.policyVersion === 'turn-policy:v1' && r.engine === 'agency' && r.decisionId)).toBe(true)
+    expect(rows.find(r => r.rule === 'contact_dispatched')).toMatchObject({ field: 'contact.message', after: 'queued', status: 'applied', clock: 'real',
+      outcomeRef: result.outcome === 'sent' ? result.contactId : null })
+    expect(rows.find(r => r.field === 'relationship.trust')).toMatchObject({ rule: 'relationship_appraisal', before: expect.any(Number), after: expect.any(Number) })
+    expect(rows.some(r => JSON.stringify([r.before, r.after]).includes('이야기할 수 있어요'))).toBe(false)
+    expect(messageId).toBeTruthy()
   })
 
   it('counts old unread contacts even behind many newer opened contacts', async () => {

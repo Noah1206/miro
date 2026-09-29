@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { eq, sql } from 'drizzle-orm'
-import { db, users, userSettings, contactProfiles, realityContacts, realityPushJobs, pushSubscriptions, roleplaySessions } from '@miro/db'
+import { db, users, userSettings, contactProfiles, realityContacts, realityPushJobs, pushSubscriptions, roleplaySessions, characterRevisions, characterRuntimeStates } from '@miro/db'
+import { createAgencyState } from '@miro/domain'
 import * as providers from '@miro/providers'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { enqueueRealityPush, deliverRealityPush } from '../push-outbox'
@@ -85,6 +86,21 @@ describeDb('durable proactive push', () => {
     await deliverRealityPush(now)
     expect(s.send).toHaveBeenCalledTimes(1)
     expect((await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id)))[0]!.status).toBe('sent')
+  })
+  // §5: 약속 취소 뒤 발송 0 — 큐에 든 뒤 결정의 행동이 취소되면 기기로 나가지 않는다.
+  it('cancels a queued push whose decision was cancelled after it was queued', async () => {
+    const s = await queued()
+    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, s.sessionId))
+    const [revision] = await db.insert(characterRevisions).values({ characterId: session!.characterId, sourceHash: randomUUID(), authored: { fields: {}, explicitFields: [] },
+      profile: {} as never, status: 'pending' }).returning({ id: characterRevisions.id })
+    const state = createAgencyState(revision!.id, now.toISOString())
+    const decisionId = `${s.sessionId}:${revision!.id}:1`
+    state.actions = [{ id: decisionId, type: 'contact', status: 'queued', evidenceIds: [], goalIds: [], createdAt: now.toISOString(), updatedAt: now.toISOString(), cancelRequestedAt: now.toISOString() }]
+    await db.insert(characterRuntimeStates).values({ sessionId: s.sessionId, revisionId: revision!.id, mode: 'live', state })
+    await db.update(realityContacts).set({ payload: { text: '안녕', senderLabel: '토마스', decisionId } }).where(eq(realityContacts.id, s.contact.id))
+    await deliverRealityPush(now)
+    expect(s.send).not.toHaveBeenCalled()
+    expect((await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id)))[0]!.status).toBe('cancelled')
   })
   it('does not deliver for a deleted conversation', async () => {
     const s = await queued()

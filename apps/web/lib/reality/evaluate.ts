@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { POLICY, feature, features } from '@miro/config'
 import {
   db, characters, contactProfiles, events, messages, pushSubscriptions,
-  realityContacts, relationships, roleplaySessions, userSettings, worldStates, users,
+  realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
   DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
@@ -299,6 +299,10 @@ export async function evaluateSession(
         .where(eq(roleplaySessions.id, sessionId))
 
       await enqueueRealityPush(tx, contact!.id, row.session.userId)
+      // 원장(§3.4): legacy 선연락도 같은 원장에. 큐 등록까지가 사실이다.
+      await tx.insert(stateTransitions).values({ sessionId, triggerKey: `reality:${decision.dedupeKey}`, seq: 0, policyVersion: 'turn-policy:v1', engine: 'legacy',
+        actor: row.character.id, field: `contact.${decision.channel}`, after: 'queued', rule: 'contact_dispatched', status: 'applied', clock: 'real',
+        worldVersion: row.world.version, relationshipVersion: row.relationship.version, outcomeRef: contact!.id }).onConflictDoNothing()
       return contact!.id
     })
   } catch (e) {
