@@ -10,9 +10,14 @@ const { profileStatus, refreshRelationshipProfile } = await import('../lib/relat
 const apply = process.argv.includes('--apply')
 const rows = await db.select().from(characters)
   .where(and(eq(characters.experienceType, 'reality'), eq(characters.isDraft, false), isNull(characters.deletedAt)))
+const refresh = (c: typeof rows[number]) => refreshRelationshipProfile(c.id, c.ownerId).catch((e: Error) => `failed: ${e.message}`)
 for (const c of rows) {
   const { status } = profileStatus(c)
   if (status === 'ready') continue
-  console.log(c.id, c.name, status, apply ? await refreshRelationshipProfile(c.id, c.ownerId).catch((e: Error) => `failed: ${e.message}`) : '(dry run)')
+  if (!apply) { console.log(c.id, c.name, status, '(dry run)'); continue }
+  let result = await refresh(c)
+  // 공급자 동시 실행 제한·일시 오류는 잠깐 뒤 한 번만 다시 — 그래도 실패하면 다음 실행이나 캐릭터 저장이 다시 만든다.
+  if (result.startsWith('failed')) { await new Promise(r => setTimeout(r, 3000)); result = await refresh(c) }
+  console.log(c.id, c.name, status, result)
 }
 process.exit(0)

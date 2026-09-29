@@ -18,6 +18,11 @@ describe('gemini thinking config', () => {
   it('sends nothing for a model it has not measured', () => {
     expect(thinkingConfig('gemini-4.0-something')).toEqual({})
   })
+  it('raises the level only where the model takes a level (2026-09-29: 3.8-flash medium ≈ 135 thought tokens on a trivial prompt)', () => {
+    expect(thinkingConfig('gemini-3.8-flash', 'medium')).toEqual({ thinkingConfig: { thinkingLevel: 'medium' } })
+    expect(thinkingConfig('gemini-3.5-flash-lite', 'high')).toEqual({ thinkingConfig: { thinkingLevel: 'minimal' } })
+    expect(thinkingConfig('gemini-3.5-flash', 'high')).toEqual({ thinkingConfig: { thinkingBudget: 0 } })
+  })
 })
 
 describe('gemini structured output', () => {

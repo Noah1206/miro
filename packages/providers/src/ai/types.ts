@@ -23,6 +23,11 @@ export type GenerationRequest = {
   /** Trusted server-side flat media ceiling, never accepted from client input. */
   costCeilingUSD?: number
   importance?: InteractionImportance
+  /**
+   * 생각 수준. 없으면 모델의 최소값(대사 생성용). 한 번 하고 끝나는 분석처럼 품질이 비용보다 중요한 호출만 올린다 —
+   * 생각 토큰은 출력 단가로 과금되고 maxTokens 를 같이 쓴다. 생각 수준을 받지 않는 모델은 무시한다.
+   */
+  thinking?: 'low' | 'medium' | 'high'
 }
 
 export type GenerationResult = {

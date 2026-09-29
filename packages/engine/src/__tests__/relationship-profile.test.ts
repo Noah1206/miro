@@ -50,11 +50,13 @@ describe('관계 성격표 만들기', () => {
       reactions: [{ event: 'lied', level: 'averse', quote: '신뢰와 약속을 중시하고' }, { event: 'lied', level: 'extreme', quote: '신뢰와 약속을 중시하고' }],
       grows: [], moods: [], reachOut: [],
       pace: [{ aspect: 'opening', value: 'never', quote: '침착하고' }, { aspect: 'opening', value: 'slow', quote: '침착하고' },
-        { aspect: 'turningPoint', value: 'lied', quote: '침착하고' }, { aspect: 'turningPoint', value: 'made_promise', quote: '신뢰와 약속을 중시하고' }],
+        { aspect: 'turningPoint', value: 'lied', quote: '침착하고' }, { aspect: 'turningPoint', value: 'made_promise', quote: '신뢰와 약속을 중시하고' },
+        { aspect: 'forgiveness', value: 'normal', quote: '침착하고' }],
     }, source, 'hash', now)
     expect(p.reactions.lied?.value).toBe('extreme')
     expect(p.opening?.value).toBe('slow')
     expect(p.turningPoint?.value).toBe('made_promise')
+    expect(p.forgiveness).toBeUndefined()   // 보통은 기본과 같아 싣지 않는다
   })
 
   it('asks the dialogue model once with a decoding schema and stamps the source fingerprint', async () => {
@@ -66,6 +68,7 @@ describe('관계 성격표 만들기', () => {
     const p = await compileRelationshipProfile(llm, source, now)
     expect(seen).toHaveLength(1)
     expect(seen[0]!.task).toBe('dialogue')
+    expect(seen[0]!.thinking).toBe('medium')   // 성격에서 반응을 추론하는 일 — 대사(low)보다 생각을 더 한다
     expect(seen[0]!.responseSchema).toBeTruthy()
     expect(String(seen[0]!.prompt)).toContain('신뢰와 약속을 중시하고')
     expect(p.sourceHash).toBe(temperamentHash(source))

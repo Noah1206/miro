@@ -31,6 +31,8 @@ export interface LLMProvider {
     temperature?: number
     promptVersion?: string
     importance?: import('./ai/tasks').InteractionImportance
+    /** 생각 수준(ai/types GenerationRequest.thinking). 없으면 모델의 최소값. */
+    thinking?: 'low' | 'medium' | 'high'
   }): Promise<Out>
 }
 
