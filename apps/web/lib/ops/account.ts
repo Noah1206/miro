@@ -3,6 +3,8 @@ import {
   db, accountDeletions, authSessions, characters, events, memories, pushSubscriptions,
   roleplaySessions, subscriptions, users, aiFeedback, aiEvaluationSamples,
 } from '@miro/db'
+import { postOperatorNote } from '@/lib/ops/alerts'
+import { observe } from '@/lib/observe'
 
 export type DeletionImpact = {
   sessions: number
@@ -58,5 +60,9 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
     await tx.update(accountDeletions).set({ status: 'completed', completedAt: now })
       .where(eq(accountDeletions.id, req!.id))
   })
+  // 삭제는 DB 안의 표시라, 그보다 앞선 백업에서 복구하면 계정이 되살아난다. 운영자 채널(DB 밖)에 남겨
+  // 복구 뒤 다시 지울 목록으로 쓴다(miro-backups README). 이메일은 보내지 않는다. 실패해도 삭제는 끝난 것이다.
+  const noted = await postOperatorNote(`계정 삭제 기록 · ${userId} · ${now.toISOString()}\n백업에서 복구하면 이 계정을 다시 삭제해야 해요.`).catch(() => false)
+  if (!noted) observe('account.deletion_note_unsent', { userId })
   return 'completed'
 }

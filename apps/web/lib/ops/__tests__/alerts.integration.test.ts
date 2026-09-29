@@ -1,16 +1,19 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { eq, inArray } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
-import { db, aiBudgetCounters, aiUsage, bankTransferOrders, opsAlerts, users } from '@miro/db'
+import { db, aiBudgetCounters, aiUsage, bankTransferOrders, opsAlerts, opsBackupRuns, users } from '@miro/db'
 import { startOfDayKST } from '@/lib/usage/ai-usage'
 import { collectOpsAlerts, notifyOperators } from '../alerts'
+import { deleteAccount } from '../account'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 // 먼 미래 날짜 — 같은 DB 를 쓰는 다른 테스트의 오늘 카운터와 키가 겹치지 않게.
 const NOW = new Date('2031-03-01T06:00:00+09:00')
-const KEYS = ['connected', 'ai_failures', 'budget_cost', 'budget_requests', 'orders_waiting', 'push_failed']
+const KEYS = ['connected', 'ai_failures', 'budget_cost', 'budget_requests', 'orders_waiting', 'push_failed', 'backup_stale']
 
 describeDb('operator alerts', () => {
+  // 백업 기록은 이 파일만 쓴다. 실제 백업 행이 있으면 먼 미래 NOW 기준으로 전부 '멈춤' 이 되므로 비우고 시작한다.
+  beforeEach(async () => { await db.delete(opsBackupRuns) })
   afterEach(async () => {
     vi.unstubAllEnvs(); vi.unstubAllGlobals()
     await db.delete(opsAlerts).where(inArray(opsAlerts.key, KEYS))
@@ -34,6 +37,28 @@ describeDb('operator alerts', () => {
     expect(keys).toContain('budget_cost')
     expect(keys).toContain('orders_waiting')
     await db.delete(bankTransferOrders).where(eq(bankTransferOrders.userId, u!.id))
+    await db.delete(users).where(eq(users.id, u!.id))
+  })
+
+  it('warns when the last verified backup is older than 36 hours, but not before the first backup exists', async () => {
+    const run = (hoursAgo: number) => ({ finishedAt: new Date(NOW.getTime() - hoursAgo * 3600_000), snapshotAt: new Date(NOW.getTime() - hoursAgo * 3600_000), dbTables: 1, dbRows: 1, dbBytes: 1, files: 0, fileBytes: 0 })
+    expect((await collectOpsAlerts(NOW)).map((a) => a.key)).not.toContain('backup_stale')   // 아직 설정 전
+    await db.insert(opsBackupRuns).values(run(40))
+    const stale = (await collectOpsAlerts(NOW)).find((a) => a.key === 'backup_stale')
+    expect(stale?.detail).toContain('40시간 전')
+    await db.insert(opsBackupRuns).values(run(30))   // 가장 최근 것이 기준
+    expect((await collectOpsAlerts(NOW)).map((a) => a.key)).not.toContain('backup_stale')
+  })
+
+  it('writes each account deletion to the operator channel so a restore can re-apply it', async () => {
+    const posts: string[] = []
+    vi.stubGlobal('fetch', vi.fn(async (_url: string, init: RequestInit) => { posts.push(String(init.body)); return new Response(null, { status: 204 }) }))
+    vi.stubEnv('MIRO_OPS_DISCORD_WEBHOOK', 'https://discord.test/hook')
+    const [u] = await db.insert(users).values({ email: `ops-del-${randomUUID()}@test.local` }).returning({ id: users.id })
+    expect(await deleteAccount(u!.id)).toBe('completed')
+    expect(posts).toHaveLength(1)
+    expect(posts[0]).toContain(u!.id)
+    expect(posts[0]).not.toContain('@test.local')   // 이메일은 보내지 않는다
     await db.delete(users).where(eq(users.id, u!.id))
   })
 

@@ -104,7 +104,7 @@ Pro 구독 수십 건으로 덮인다. 다만 아래 전제가 깨지면 다시 
 | 충전 상품 | ✅ | `MIRO_RECHARGE_PRODUCTS` 운영 값: 300 크레딧/3,000원 · 800/7,000원 · 1,800/14,000원 · 4,200/30,000원 외. `validDays` 미설정 = 충전 잔액 만료 없음. Pro 1개월 이용권은 9/28 충전 시트에서 뺐다 — 당분간 Pro 는 팔지 않는다(서버 `purchaseCredits` 는 `pass` 를 아직 받는다). |
 | 부하 검증 | ❌ | 미실시. 운영 AI 예산은 일 $2·사용자 월 $3 이고 최근 7일 61건 실패 0 이지만, 동시 부하 수치는 없다. |
 | ECHO 응답 길이 | ✅ | 정책 `chatTier.echo.maxOutputTokens` 4096, 운영 `MIRO_MODEL_REGISTRY` 의 gemini-flash 도 4096(9/27). 9/27 운영 ECHO 한 턴 648자 확인. MIRO 는 2048 그대로. |
-| 모니터링·복구 | ⚠ | `observe` 이벤트·예산 카운터·pg_cron(스케줄러·유지보수 15분) 동작 확인. 9/29 운영자 알림(Discord) 연결, 운영 DB 백업 복구 리허설 통과(`packages/db/restore-rehearsal.ts`, 56개 표 불일치 0). 정기 백업, 오류 추적 도구(Sentry 등), 대시보드는 없다. |
+| 모니터링·복구 | ⚠ | `observe` 이벤트·예산 카운터·pg_cron(스케줄러·유지보수 15분) 동작 확인. 9/29 운영자 알림(Discord) 연결, 운영 DB 백업 복구 리허설 통과(56개 표 불일치 0), 정기 백업(비공개 저장소 miro-backups 의 Actions, 매일 03시 DB+Storage 이미지를 복원 검증 후 14일 보관, 멈추면 Discord). 오류 추적 도구(Sentry 등), 대시보드는 없다. |
 
 ## 5. 재측정 방법
 

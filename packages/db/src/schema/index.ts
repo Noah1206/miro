@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  bigserial, boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigint, bigserial, boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision } from '@miro/domain'
 
@@ -1001,4 +1001,16 @@ export const opsAlerts = pgTable('ops_alerts', {
   key: text('key').primaryKey(),
   lastSentAt: timestamp('last_sent_at', { withTimezone: true }).notNull(),
   detail: text('detail'),
+}).enableRLS()
+
+/** 정기 백업 기록 — 복원 검증을 통과한 백업마다 한 줄(packages/db/backup.ts). 36시간 넘게 없으면 운영자 알림. */
+export const opsBackupRuns = pgTable('ops_backup_runs', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }).notNull().defaultNow(),
+  snapshotAt: timestamp('snapshot_at', { withTimezone: true }).notNull(),
+  dbTables: integer('db_tables').notNull(),
+  dbRows: integer('db_rows').notNull(),
+  dbBytes: integer('db_bytes').notNull(),
+  files: integer('files').notNull(),
+  fileBytes: bigint('file_bytes', { mode: 'number' }).notNull(),
 }).enableRLS()

@@ -1,5 +1,5 @@
 import { and, eq, gte, lt, sql } from 'drizzle-orm'
-import { db, aiBudgetCounters, aiUsage, bankTransferOrders, opsAlerts, realityPushJobs } from '@miro/db'
+import { db, aiBudgetCounters, aiUsage, bankTransferOrders, opsAlerts, opsBackupRuns, realityPushJobs } from '@miro/db'
 import { budgetPolicy, startOfDayKST } from '@/lib/usage/ai-usage'
 import { observe } from '@/lib/observe'
 
@@ -7,7 +7,9 @@ export type OpsAlert = { key: string; title: string; detail: string }
 
 /** 같은 알림은 이 간격 안에 다시 보내지 않는다. */
 const REPEAT_MS = 6 * 3600_000
-const CONNECTED: OpsAlert = { key: 'connected', title: 'MIRO 운영자 알림 연결됨', detail: '이 채널로 AI 제공자 장애, 일일 예산 소진, 24시간 넘은 입금 대기, 푸시 발송 실패를 알려요.' }
+/** 백업은 하루 한 번(03시 KST)인데 GitHub 스케줄이 몇 시간씩 밀리므로 하루 반을 넘겨야 멈춘 것으로 본다. */
+const BACKUP_STALE_MS = 36 * 3600_000
+const CONNECTED: OpsAlert = { key: 'connected', title: 'MIRO 운영자 알림 연결됨', detail: '이 채널로 AI 제공자 장애, 일일 예산 소진, 24시간 넘은 입금 대기, 푸시 발송 실패, 정기 백업 멈춤을 알려요.' }
 
 /**
  * 운영자가 알아야 할 상태만 고른다 — 사용자에게 가는 알림이 아니다.
@@ -46,6 +48,19 @@ export async function collectOpsAlerts(now = new Date()): Promise<OpsAlert[]> {
   const [push] = await db.select({ n: sql<number>`count(*)::int` }).from(realityPushJobs)
     .where(and(eq(realityPushJobs.status, 'failed'), gte(realityPushJobs.createdAt, dayAgo)))
   if (push && push.n >= 3) out.push({ key: 'push_failed', title: '푸시 발송 실패 누적', detail: `최근 24시간 실패 ${push.n}건` })
+
+  // 백업이 한 번도 없던 때(설정 전)는 조용히 둔다 — 한 번 돌기 시작한 백업이 멈추는 것을 잡는다.
+  // 이 조회가 실패해도(표 누락 등) 위에서 모은 알림은 보내야 한다 — 따로 잡아 그 자체를 알림으로 올린다.
+  try {
+    const [backup] = await db.select({ at: sql<string | null>`max(${opsBackupRuns.finishedAt})::text` }).from(opsBackupRuns)
+    const lastBackup = backup?.at ? new Date(backup.at) : null
+    if (lastBackup && now.getTime() - lastBackup.getTime() > BACKUP_STALE_MS) {
+      const hours = Math.floor((now.getTime() - lastBackup.getTime()) / 3600_000)
+      out.push({ key: 'backup_stale', title: '정기 백업 멈춤', detail: `마지막으로 보관된 백업이 ${hours}시간 전이에요. GitHub 비공개 저장소 miro-backups 의 Actions 실행 기록을 확인해 주세요.` })
+    }
+  } catch (e) {
+    out.push({ key: 'backup_check_failed', title: '백업 상태 확인 실패', detail: `ops_backup_runs 를 읽지 못했어요: ${(e as Error).message.slice(0, 120)}` })
+  }
   return out
 }
 
@@ -71,6 +86,15 @@ export async function notifyOperators(now = new Date()): Promise<{ alerts: numbe
     sent++
   }
   return { alerts: alerts.length, sent }
+}
+
+/**
+ * 알림이 아닌 운영 기록 한 줄(반복 억제 없음). 웹훅이 없으면 보내지 않고 false.
+ * DB 밖에 남아야 하는 사실(예: 계정 삭제 — 백업에서 복구하면 되살아난다)을 운영자 채널에 적어 둔다.
+ */
+export async function postOperatorNote(content: string): Promise<boolean> {
+  const webhook = process.env.MIRO_OPS_DISCORD_WEBHOOK
+  return webhook ? postDiscord(webhook, content) : false
 }
 
 async function postDiscord(url: string, content: string): Promise<boolean> {

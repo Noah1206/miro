@@ -17,3 +17,5 @@ __pycache__/
 *.py[cod]
 .next-e2e/
 .next-demo/
+# 운영 백업(packages/db/backup.ts) — 사용자 데이터가 들어 있다. 공개 저장소에 올리지 않는다.
+*.dump
