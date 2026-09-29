@@ -16,7 +16,7 @@
 - [ ] Actual Push delivery verified on supported devices (Android Chrome, iOS home-screen app, desktop), with browser-permission denial and revisit checks. There is no in-app opt-out or quiet-hours setting since 2026-09-24; night silence comes from each character's active hours.
 - [ ] Daily operating budget and invitation size explicitly set; current budget remains zero.
 - [ ] Concurrent load test meets agreed error, latency and cost targets. Targets must be measured and agreed, not assumed.
-- [ ] Database backup restored into an isolated environment and record integrity checked.
+- [x] Database backup restored into an isolated environment and record integrity checked. **2026-09-29:** `packages/db/restore-rehearsal.ts` 로 운영 DB 를 읽기 전용 스냅샷으로 `pg_dump`(PG17, `public`+`miro_perf`) → 임시 PG17 서버에 한 트랜잭션으로 복원 → 같은 스냅샷의 표별 행 수·체크섬 대조. 결과: 56개 표 684행 불일치 0, 제약·외래키 전부 복원 시 검증, drizzle 표 50/50 조회, 검색 트리거 동작, 덤프 3.9초·복원 0.15초. 덤프와 임시 서버는 끝나면 지운다. 남은 것: 이건 우리가 뜬 백업이다 — 정기 백업은 없다(Supabase 관리형 백업은 요금제 미확인, Free 면 없음). Storage 의 캐릭터 이미지(`character-images`)와 auth·storage 스키마는 이 백업에 없다.
 - [ ] Privacy/deletion/retention behavior matches user-facing documents.
 - [x] Monitoring alerts reach an operator, including provider failure and budget exhaustion. **2026-09-29:** 유지보수 크론(15분)이 `lib/ops/alerts.ts` 로 DB 기록을 보고 Discord 웹훅(`MIRO_OPS_DISCORD_WEBHOOK`)에 보낸다 — AI 제공자 장애 의심(15분 안 실패 절반 이상), 일일 예산·호출 한도 80%/소진, 24시간 넘은 입금 대기, 푸시 실패 누적. 같은 알림은 6시간에 한 번(`ops_alerts` 표). 웹훅을 처음 본 뒤 '연결됨' 인사를 한 번 보낸다. 받는 사람은 운영자뿐이다. 대시보드·오류 추적 도구는 아직 없다.
 
@@ -37,6 +37,7 @@
 - Push outage: persistent jobs retry with bounded attempts. Expired leases recover; stable tags collapse repeated notifications. Device delivery remains at-least-once, not exactly-once.
 - Outbox failure: inspect pending/sending/failed counts and attempts via server-authorized DB access. Do not log raw subscriptions, private text or credentials.
 - App regression: return to the recorded previous compatible app revision. Keep additive tables; do not delete user data as rollback.
+- Database loss: restore the latest `pg_dump -Fc -n public -n miro_perf --no-owner --no-privileges` into the new database with `pg_restore --no-owner --no-privileges --single-transaction` (create `pg_trgm` in schema `extensions` first; skip the `SCHEMA public` TOC entry). `ops_cron_config` comes back with the data, so re-run the two cron migrations (`20260919160000_reality_cron.sql`, `20260923180000_reality_workload_isolation.sql`) with pg_cron and pg_net enabled to recreate the 15-minute jobs. Rehearse with `SOURCE_DATABASE_URL=... pnpm --filter @miro/db exec tsx restore-rehearsal.ts`.
 - Suspected access leak: disable affected endpoint/feature, preserve restricted audit metadata, investigate scope before recovery.
 
 ## Pro and media gates
