@@ -26,9 +26,9 @@ describe('turn policy', () => {
     expect(echo.generation).toEqual({ maxOutputTokens: POLICY.chatTier.echo.maxOutputTokens, contextScale: POLICY.chatTier.echo.contextScale, auxiliary: 'always', replyLength: 'long' })
     expect(miro.generation).toEqual({ maxOutputTokens: POLICY.chatTier.miro.maxOutputTokens, contextScale: 1, auxiliary: 'planned', replyLength: 'scene' })
   })
-  it('messenger and calls keep channel length even on ECHO; continuity turns are minimal and unmetered', () => {
-    expect(resolveTurnPolicy({ experience: 'reality', tier: 'echo', channel: 'messenger', agencyMode: 'off', agencyReady: false }).generation.replyLength).toBe('scene')
-    expect(resolveTurnPolicy({ experience: 'reality', tier: 'echo', channel: 'voice_call', agencyMode: 'off', agencyReady: false }).generation.replyLength).toBe('scene')
+  it('keeps the tier style label on messenger and calls (mode rules shape those prompts); continuity turns are minimal and unmetered', () => {
+    expect(resolveTurnPolicy({ experience: 'reality', tier: 'echo', channel: 'messenger', agencyMode: 'off', agencyReady: false }).generation.replyLength).toBe('long')
+    expect(resolveTurnPolicy({ experience: 'reality', tier: 'miro', channel: 'voice_call', agencyMode: 'off', agencyReady: false }).generation.replyLength).toBe('scene')
     const c = resolveTurnPolicy({ experience: 'reality', tier: 'echo', channel: 'scene', agencyMode: 'off', agencyReady: false, continuity: true })
     expect(c.metered).toBe(false)
     expect(c.generation.maxOutputTokens).toBeLessThan(POLICY.chatTier.miro.maxOutputTokens)

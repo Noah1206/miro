@@ -56,11 +56,14 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
     }
     if (row.job.attempts > 5) { await finish('failed'); continue }
     const payload = row.contact.payload
-    // 약속 취소 뒤 발송 0(§5): 결정에서 나온 연락은 그 행동이 취소됐으면 큐에서 멈춘다. 이미 나간 외부 전송은 되돌리지 않고 결과만 남는다.
+    // 약속 취소 뒤 발송 0(§5): 결정에서 나온 연락은 그 행동이 취소됐거나, 그 행동이 이행하던 약속이 취소됐으면 큐에서 멈춘다.
+    // (메시지 저장과 함께 행동은 이미 'sent' 라 취소 표시는 목표에 남는다.) 이미 나간 외부 전송은 되돌리지 않고 결과만 남는다.
     if (typeof payload.decisionId === 'string') {
       const [runtime] = await db.select({ state: characterRuntimeStates.state }).from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, row.session.id)).limit(1)
       const action = runtime?.state.actions.find(a => a.id === payload.decisionId)
-      if (action && (action.status === 'cancelled' || action.cancelRequestedAt)) {
+      const carried = [...(action?.fulfillsGoalIds ?? []), ...(action?.type === 'contact' ? action.goalIds : [])]
+      const goalCancelled = carried.some(id => runtime?.state.goals.some(g => g.id === id && g.status === 'cancelled'))
+      if (action && (action.status === 'cancelled' || action.cancelRequestedAt || goalCancelled)) {
         observe('reality.push_cancelled_after_decision', { jobId: job.id, sessionId: row.session.id })
         await finish('cancelled'); continue
       }

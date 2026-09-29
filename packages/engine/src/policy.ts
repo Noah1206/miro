@@ -48,8 +48,8 @@ export function resolveTurnPolicy(input: TurnPolicyInput): TurnPolicy {
   const reality = input.experience === 'reality'
   const engine: TurnEngine = reality && input.agencyMode === 'live' && input.agencyReady ? 'agency' : 'legacy'
   const tier = POLICY.chatTier[input.tier]
-  // 통화·문자는 채널이 길이를 정한다 — ECHO 여도 긴 장면을 억지로 쓰지 않는다. 장면(scene)만 등급의 길이를 따른다.
-  const replyLength: ReplyStyle = input.channel === 'scene' ? tier.replyLength : 'scene'
+  // 문자·통화의 길이는 모드 규칙(CALL_MODE_RULES)이 정하고 장면 지시는 무시된다 — 등급의 값을 그대로 둬야 promptVersion 라벨이 안 바뀐다(1단계: 동작 보존).
+  const replyLength: ReplyStyle = tier.replyLength
   const generation = input.continuity
     ? { maxOutputTokens: usagePolicy().continuity.maxOutputTokens, contextScale: 1, auxiliary: 'planned' as const, replyLength: 'scene' as const }
     : { maxOutputTokens: tier.maxOutputTokens, contextScale: tier.contextScale, auxiliary: tier.auxiliary, replyLength }

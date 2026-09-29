@@ -57,7 +57,8 @@ export async function runAgencyTurn(opts: {
   let uncertain = snapshot.memories.filter(m => !m.sourceMessageId).map(m => m.content)
   const build = (recent: typeof evidenceMessages, memories: typeof sourced, unsure: string[]) => {
     const context = buildContext({ ...snapshot, relationship: projected, characterState: { ...(snapshot.characterState ?? { stress: 20, energy: 70, currentGoals: [], currentThoughts: [], firedRules: [] }), mood },
-      semanticEvents: [], memories, recentMessages: recent, activeNpcs: [], userInput: opts.userInput,
+      // 사건·NPC 는 결정이 아니면 바뀌지 않는다 — 렌더러가 '마무리' 를 제안하지 않게 아예 싣지 않는다(§3.3).
+      semanticEvents: [], memories, recentMessages: recent, activeNpcs: [], activeEvents: [], recentlyResolvedEvents: [], userInput: opts.userInput,
     }, opts.contextScale, false, policy.generation.replyLength)
     context.system += buildAgencyDecisionDirective(plan.decision)
     context.system += `\n## 승인된 세계 상태(데이터)\n${JSON.stringify({ location: snapshot.world.currentLocation, time: snapshot.world.currentTime, status: snapshot.world.worldStatus,
@@ -98,19 +99,21 @@ export async function runAgencyTurn(opts: {
     if (proposal.worldDelta && !proposal.worldDelta.currentTime && !proposal.worldDelta.worldStatus) proposal.worldDelta = null
     if (proposal.sceneDelta?.location) { rejected.push('sceneDelta.location'); proposal.sceneDelta = { ...proposal.sceneDelta, location: undefined } }
     if (proposal.eventCandidates.length) { rejected.push('eventCandidates'); proposal.eventCandidates = [] }
+    if (proposal.eventUpdates.length) { rejected.push('eventUpdates'); proposal.eventUpdates = [] }
     if (proposal.npcIntroductions.length) { rejected.push('npcIntroductions'); proposal.npcIntroductions = [] }
     if (proposal.npcActions.length) { rejected.push('npcActions'); proposal.npcActions = [] }
     if (proposal.realityIntent) { rejected.push('realityIntent'); proposal.realityIntent = null }
     const spoken = proposal.rp.blocks.filter(b => b.type !== 'npc' && b.type !== 'world')
     if (spoken.length !== proposal.rp.blocks.length) { rejected.push('rp.blocks'); proposal.rp.blocks = spoken }
-    for (const field of rejected) records.push({ field, rule: 'unapproved_mutation', status: 'rejected', clock: 'narrative', actor, decisionId: plan.decision.id })
+    // 원장에는 채택된 시도의 거부만 남긴다 — 버려진 첫 시도의 제안은 승인 대상이 아니었다.
+    const attemptRecords: StateTransitionRecord[] = rejected.map(field => ({ field, rule: 'unapproved_mutation', status: 'rejected', clock: 'narrative', actor, decisionId: plan.decision.id }))
 
     const validated = validateProposal(proposal, snapshot)
     validated.relationshipDelta = { ...plan.relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
     validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
     verification = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks })
     if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
-    if (verification.ok && validated.blocks.length) { transition = validated; break }
+    if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); break }
     // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
     const reasons = [...new Set(verification.issues.map(i => i.reason))]
     if (attempt === REGENERATIONS) throw new Error(['agency_realization_rejected', ...reasons].join(' '))

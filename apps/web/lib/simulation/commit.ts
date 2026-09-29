@@ -318,7 +318,9 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       const cause = inserted.find(m => m.role === 'user')?.id ?? null
       const triggerKey = input.ledger.triggerKey ?? (input.requestId ? `chat:${input.requestId}` : `turn:${cause ?? input.turnIndex}`)
       // 전환 표시(§6.4): 이 세션의 마지막 턴과 다른 경로로 답했으면 원장에 남긴다 — 관계·대화는 그대로 이어진다.
-      const [last] = await tx.select({ engine: stateTransitions.engine }).from(stateTransitions).where(eq(stateTransitions.sessionId, input.sessionId))
+      // 운영자의 전환 행(actor operator)은 '요청' 이지 실제로 돈 경로가 아니다 — 실제 턴끼리만 비교한다.
+      const [last] = await tx.select({ engine: stateTransitions.engine }).from(stateTransitions)
+        .where(and(eq(stateTransitions.sessionId, input.sessionId), sql`${stateTransitions.actor} <> 'operator'`))
         .orderBy(sql`${stateTransitions.createdAt} desc, ${stateTransitions.seq} desc`).limit(1)
       const records = [...(last && last.engine !== input.ledger.policy.engine
         ? [{ field: 'session.engine', before: last.engine, after: input.ledger.policy.engine, rule: 'policy_switch' as const, status: 'applied' as const, clock: 'real' as const, actor: 'server' }] : []),

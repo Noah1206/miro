@@ -1,4 +1,5 @@
 'use server'
+import { defaultSessionPolicy } from '@miro/config'
 import { introMessages } from '@/lib/intro-dialogue'
 
 import { notFound } from 'next/navigation'
@@ -67,7 +68,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
       ? await captureAgencyRevision(tx, characterId, { explicitFields: p.agencyExplicitFields }) : null
     if (!publishNow) return { sessionId: null, revisionId: revision?.id }
     const [session] = await tx.insert(roleplaySessions).values({
-      userId: user.id, characterId, worldId,
+      userId: user.id, characterId, worldId, policyVersion: defaultSessionPolicy(owned.character.experienceType),
     }).returning({ id: roleplaySessions.id })
     await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: p.world.location ?? '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })

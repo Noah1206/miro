@@ -1,4 +1,5 @@
 'use server'
+import { defaultSessionPolicy } from '@miro/config'
 import { introMessages } from '@/lib/intro-dialogue'
 
 import { revalidatePath } from 'next/cache'
@@ -73,7 +74,7 @@ export async function saveCharacter(form: FormData): Promise<string> {
     if (!p.publish) return { characterId, sessionId: null, revisionId: revision?.id ?? null, duplicate: false }
 
     const [session] = await tx.insert(roleplaySessions).values({
-      userId: user.id, characterId, worldId: w!.id,
+      userId: user.id, characterId, worldId: w!.id, policyVersion: defaultSessionPolicy(p.experienceType),
     }).returning({ id: roleplaySessions.id })
     await tx.insert(worldStates).values({ sessionId: session!.id, currentLocation: p.world.location ?? '어딘가', currentTime: p.startingTime ?? '저녁' })
     await tx.insert(relationships).values({ sessionId: session!.id, ...p.initialRelationship })

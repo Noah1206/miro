@@ -55,8 +55,8 @@ describeDb('state transition ledger', () => {
     expect(first.ok).toBe(true)
     const rows = await explainSession(sessionId)
     expect(rows.find(r => r.field === 'session.policyVersion')).toMatchObject({ rule: 'policy_switch', before: 'legacy:v1', after: 'agency:v1', actor: 'operator' })
-    // 스위치가 꺼져 있으니 이 턴은 legacy 다. 원장의 마지막 경로(agency 표시) 와 달라 전환 표시가 한 줄 더 남는다.
-    expect(rows.filter(r => r.field === 'session.engine')).toEqual([expect.objectContaining({ before: 'agency', after: 'legacy', rule: 'policy_switch' })])
+    // 스위치가 꺼져 있으니 이 턴은 legacy 다. 운영자의 전환 행은 실제로 돈 경로가 아니므로 첫 턴에 경로 변경 표시는 없다.
+    expect(rows.filter(r => r.field === 'session.engine')).toEqual([])
     expect(rows.some(r => r.field === 'relationship.jealousy' && r.engine === 'legacy')).toBe(true)
   })
 })

@@ -95,7 +95,9 @@ describeDb('durable proactive push', () => {
       profile: {} as never, status: 'pending' }).returning({ id: characterRevisions.id })
     const state = createAgencyState(revision!.id, now.toISOString())
     const decisionId = `${s.sessionId}:${revision!.id}:1`
-    state.actions = [{ id: decisionId, type: 'contact', status: 'queued', evidenceIds: [], goalIds: [], createdAt: now.toISOString(), updatedAt: now.toISOString(), cancelRequestedAt: now.toISOString() }]
+    // 운영에서 실제로 생기는 모양: 메시지 저장과 함께 행동은 이미 'sent', 취소 표시는 그 행동이 이행하던 약속에 남는다.
+    state.goals = [{ id: 'goal:1:0', description: '저녁에 연락한다.', evidenceIds: [], ruleIds: [], priority: 1, status: 'cancelled', createdAt: now.toISOString(), updatedAt: now.toISOString(), success: 'sent' }]
+    state.actions = [{ id: decisionId, type: 'contact', status: 'sent', evidenceIds: [], goalIds: ['goal:1:0'], fulfillsGoalIds: ['goal:1:0'], createdAt: now.toISOString(), updatedAt: now.toISOString() }]
     await db.insert(characterRuntimeStates).values({ sessionId: s.sessionId, revisionId: revision!.id, mode: 'live', state })
     await db.update(realityContacts).set({ payload: { text: '안녕', senderLabel: '토마스', decisionId } }).where(eq(realityContacts.id, s.contact.id))
     await deliverRealityPush(now)

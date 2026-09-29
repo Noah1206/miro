@@ -214,7 +214,8 @@ async function executeTurn(opts: {
         existingMemories: loaded.snapshot.memories,
         characterState: result.characterState,
         ledger: { policy: result.policy, records: result.records },
-        ...(result.policy.memory === 'deferred' && !reservation?.continuity ? { memoryJobs: { userId, auxiliary: result.policy.generation.auxiliary } } : {}),
+        // continuity 턴도 기억은 남긴다 — 후처리는 배경 작업이라 사용자 예산을 더 쓰지 않는다.
+        ...(result.policy.memory === 'deferred' ? { memoryJobs: { userId, auxiliary: result.policy.generation.auxiliary } } : {}),
       }))
       outcome.messages = committed.messages
     } catch (e) {

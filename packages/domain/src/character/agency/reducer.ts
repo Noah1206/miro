@@ -2,7 +2,8 @@ import { AGENCY_COMMITTING_ACTIONS, type AgencyActionRecord, type AgencyActionSt
 import { AGENCY_LIMITS, agencyEvidence, agencyGoalId, agencyUserUtterance, finiteRange, validAgencyTime, validateAgencyCandidate } from './validation'
 
 const TERMINAL_GOALS = new Set<AgencyGoal['status']>(['completed', 'abandoned', 'cancelled', 'expired'])
-const SPEECH_ACTIONS = new Set(['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'wait'])
+/** move 는 배달 수명이 없다 — 말과 같이 저장된 순간 끝난다. 남겨 두면 48개 한도를 채워 계획이 멈춘다. */
+const SPEECH_ACTIONS = new Set(['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'wait', 'move'])
 /** A persisted message is still only sent. Retire its working copy once the goals it was carrying
  * out are closed (goals it merely cited never hold it); the database audit retains it without
  * inventing delivery. */

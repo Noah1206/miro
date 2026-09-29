@@ -71,10 +71,10 @@ export async function createRoleplaySession(
     )).for('update', { of: characters }).limit(1)
     if (!starting) throw new Error('CHARACTER_NOT_FOUND')
 
+    // 세션 정책 버전은 만들 때 한 번 정해진다(§6). 이후는 switchSessionPolicy 가 전환 표시와 함께 바꾼다.
+    const policyVersion = defaultSessionPolicy(starting.experienceType)
     const [session] = await tx.insert(roleplaySessions).values({
-      userId, characterId: character.characterId, worldId: starting.worldId,
-      // 세션 정책 버전은 만들 때 한 번 정해진다(§6). 이후는 switchSessionPolicy 가 전환 표시와 함께 바꾼다.
-      policyVersion: defaultSessionPolicy(starting.experienceType),
+      userId, characterId: character.characterId, worldId: starting.worldId, policyVersion,
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.
@@ -89,8 +89,8 @@ export async function createRoleplaySession(
     const openingMessages = introMessages(id, starting.dialogue, opts.opening)
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
     const revision = starting.experienceType === 'reality'
-      ? await captureAgencyRevision(tx, character.characterId, { sessionId: id }) : null
-    await pinAgencyRevision(tx, id, revision)
+      ? await captureAgencyRevision(tx, character.characterId, { sessionId: id, policyVersion }) : null
+    await pinAgencyRevision(tx, id, revision, new Date(), policyVersion)
     return { sessionId: id, created: true, revisionId: revision?.id }
   })
   await scheduleAgencyCompilation(result.revisionId, userId)

@@ -21,8 +21,9 @@ const Violation = z.enum(['unsupported_success', 'unavailable_evidence', 'invent
 export const AgencyRealizationAssessmentSchema = z.object({
   decisionId: Ref,
   aligned: z.boolean(),
-  claims: z.array(AgencyRealizationClaimSchema).max(24),
-  unsupported: z.array(SpanSchema.extend({ reason: Violation }).strict()).max(24),
+  // 장면 길이(500~1600자)의 답도 담는다 — 24 였을 때는 긴 답의 주장 목록이 스키마에서 잘려 턴이 통째로 실패했다.
+  claims: z.array(AgencyRealizationClaimSchema).max(48),
+  unsupported: z.array(SpanSchema.extend({ reason: Violation }).strict()).max(48),
   violations: z.array(Violation).max(12),
 }).strict()
 
@@ -69,6 +70,7 @@ Reject new unsupported world movement, event resolution, NPC knowledge, canon fa
 Compare the actual wording to the chosen action. A polite sentence that silently performs a refused/deferred action is not aligned.
 If decision.candidate.fulfillsGoalIds is not empty, text that postpones or merely promises those goals again contradicts the decision.
 A thought block is this character's unspoken inner voice: treat its feelings and interpretations as beliefs about itself. It still cannot claim completed actions, new world facts or knowledge the character lacks.
+Ambient description of the supplied current location and moment (light, sound, weather, temperature, distance, this character's own gestures, expressions and unspoken feelings) is scene dressing, not a claim, as long as it asserts no new place, arrival, completed external action, event outcome, other person's knowledge or fact about the user. Claim only substantive assertions; do not enumerate every descriptive sentence.
 Mark unsupported spans and violations even when the renderer supplied no claim annotations. Do not fix or rewrite text.
 Return aligned:true only if all claims and the actual behavior are supported. This is a fallible semantic check, not a proof.
 Contract: {decisionId,aligned:boolean,claims:[{blockIndex,start,end,quote,kind:authored_fact|observed_fact|reported_claim|belief|intention|action_result|current_state,evidenceIds:string[],ruleIds:string[],actionIds:string[],statePaths?:string[]}],unsupported:[{blockIndex,start,end,quote,reason:unsupported_success|unavailable_evidence|invented_canon|contradicts_decision|controls_user|violates_boundary|uncertain_as_fact|unapproved_world_change}],violations:[same reason codes]}.`
@@ -197,6 +199,8 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   const completion = /보냈|전송했|전화했|예약했|결제했|도착했|이동했|완료했|전달했|취소했|\b(?:sent|called|booked|paid|arrived|completed|delivered|cancelled|canceled)\b/gi
   const asserted = (text: string, start: number, end: number) => text.slice(end).match(/[.!?\n]/)?.[0] !== '?'
     && !/(?:안|못|not|n't|never)\s*$/i.test(text.slice(Math.max(0, start - 6), start))
+    // 몸짓 관용구("미소를 보냈다", "시선을 보냈다")는 발송이 아니다 — 장면 서술에서 매번 걸려 정상 턴을 떨어뜨렸다.
+    && !/(?:미소|시선|눈빛|눈길|웃음|고개|손짓|입맞춤)\s*(?:를|을)?\s*$/.test(text.slice(Math.max(0, start - 8), start))
     // Conditions, regrets and guesses ("보냈으면", "보냈어야", "긴장 속에 보냈을 테지", "도착했겠지") assert nothing done.
     && !/^(?:으면|다면|더라면|을까|을지|어야|을 ?테|을 ?거|겠)/.test(text.slice(end))
   for (const [blockIndex, block] of input.blocks.entries()) {

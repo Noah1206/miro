@@ -3,7 +3,7 @@ import { createAgencyState, type AgencyCandidate, type AgencyEvidence, type Agen
 import type { LLMProvider } from '@miro/providers'
 import { runTurn } from '../orchestrator'
 import type { AgencyTurnInput } from '../agency-turn'
-import { snapshot, relationship } from './fixtures'
+import { event, snapshot, relationship } from './fixtures'
 
 const now = '2026-09-24T12:00:00.000Z'
 const statement = '상대를 소유하려 하지 않는다.'
@@ -124,12 +124,15 @@ describe('runTurn agency integration', () => {
   // §3.3: 승인 밖 변경은 제안에서 걷어 내고 거부로 기록한다 — 대사는 남고, 세계는 그대로다.
   it('strips renderer world mutations, keeps the reply, and records the rejection instead of failing the turn', async () => {
     const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }, { type: 'npc', speaker: '이수현', text: '안녕' }] },
-      worldDelta: { currentLocation: '서울', currentTime: '밤' }, eventCandidates: [{ type: 'crisis', summary: '사건', relevance: 1, salience: 1, participantNpcIds: [] }] } })
-    const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
+      worldDelta: { currentLocation: '서울', currentTime: '밤' }, eventCandidates: [{ type: 'crisis', summary: '사건', relevance: 1, salience: 1, participantNpcIds: [] }],
+      eventUpdates: [{ eventId: 'e1', status: 'resolved' }] } })
+    const result = await runTurn({ llm: stub.llm, snapshot: snapshot({ activeEvents: [event()] }), userInput: proof.quote, agency: agency() })
     expect(result.transition.worldDelta).toEqual({ currentTime: '밤' })   // 시간은 장면의 공기 — 허용. 장소는 결정이 아니다.
     expect(result.transition.newEvent).toBeNull()
+    expect(result.transition.eventUpdates).toEqual([])
     expect(result.transition.blocks.map(b => b.type)).toEqual(['dialogue'])
-    expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field).sort()).toEqual(['eventCandidates', 'rp.blocks', 'worldDelta.currentLocation'])
+    expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field).sort()).toEqual(['eventCandidates', 'eventUpdates', 'rp.blocks', 'worldDelta.currentLocation'])
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.prompt).not.toContain('왼팔 부상')
     expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentTime', rule: 'world_delta', status: 'applied', decisionId: result.agency!.plan.decision.id }))
     expect(stub.calls.some(c => c.version === 'agency-realization-check:v4')).toBe(true)
   })

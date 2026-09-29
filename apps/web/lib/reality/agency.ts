@@ -90,7 +90,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       if (existing) return { outcome: 'skipped', reason: 'duplicate' }
     }
     const recent = await deliveryContacts(sessionId)
-    const availability = await characterAvailability(row.character.id, now, timeZoneOf(row.settings), { wait: true })
+    // 리듬이 없으면 배경에서 만든다. inline(사용자 턴 직후)에서는 기다리지 않는다 — 사용자의 응답에 모델 호출을 얹지 않게.
+    const availability = await characterAvailability(row.character.id, now, timeZoneOf(row.settings), { wait: !opts.inline })
     const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now, availability.availability)
     // Reserve two evidence slots for the application's queued/sent attestations.
     const evidence = (await loadAgencyEvidence(sessionId, snapshot, runtime, undefined, now)).slice(-126)
@@ -202,6 +203,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       })
       // 원장(§3.4): 선연락도 대화와 같은 원장에, 같은 정책 버전으로. 발송은 '저장·큐 등록' 까지만 사실이다 — 도달·열람은 별개.
       const nextRelationship = applyRelationshipDelta(snapshot.relationship, plan.relationshipDelta)
+      const relationshipVersion = snapshot.relationship.version + (Object.keys(plan.relationshipDelta).length ? 1 : 0)
       const ledger = [
         ...RELATIONSHIP_DIMENSIONS.filter(dim => nextRelationship[dim] !== snapshot.relationship[dim]).map(dim => ({
           field: `relationship.${dim}`, before: snapshot.relationship[dim], after: nextRelationship[dim], rule: 'relationship_appraisal', status: 'applied' as const, clock: 'real' as const })),
@@ -211,7 +213,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       if (ledger.length) await tx.insert(stateTransitions).values(ledger.map((r, seq) => ({
         sessionId, triggerKey: `reality:${triggerKey}`, seq, policyVersion: 'turn-policy:v1', engine: 'agency' as const, revisionId: runtime.revision.id,
         decisionId: plan.decision.id, causeMessageId: null, actor: snapshot.character.id, field: r.field, before: 'before' in r ? r.before : null, after: r.after, rule: r.rule,
-        status: r.status, clock: r.clock, worldVersion: snapshot.world.version, relationshipVersion: snapshot.relationship.version + (r.field.startsWith('relationship.') ? 1 : 0),
+        status: r.status, clock: r.clock, worldVersion: snapshot.world.version, relationshipVersion,
         runtimeVersion: runtime.version + 1, outcomeRef: 'outcomeRef' in r ? r.outcomeRef : null,
       })))
       const nextDue = nextState.goals.filter(goal => goal.status === 'active' && goal.clock === 'real_time' && goal.dueAt)
