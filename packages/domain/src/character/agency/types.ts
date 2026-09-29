@@ -62,7 +62,8 @@ export type AgencyBelief = {
 export type AgencyAffect = { valence: number; arousal: number; stress: number; energy: number }
 export type AgencyExpression = { openness: number; directness: number }
 
-export const AGENCY_ACTIONS = ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'continue_activity', 'contact', 'cancel_commitment', 'wait'] as const
+/** move: 이동 *의도*(§3.3). 서버가 도착을 확인할 수 없으므로 장소는 바뀌지 않고 의도만 기록된다. 범용 이동 시뮬레이터는 없다. */
+export const AGENCY_ACTIONS = ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'continue_activity', 'contact', 'cancel_commitment', 'wait', 'move'] as const
 export type AgencyAction = (typeof AGENCY_ACTIONS)[number]
 /** Chosen actions that answer or act for the user, so a promise made with them is actually voiced. */
 export const AGENCY_COMMITTING_ACTIONS: readonly AgencyAction[] = ['respond', 'ask', 'defer', 'disclose', 'continue_activity', 'contact']
@@ -107,6 +108,8 @@ export type AgencyCandidate = {
   expiresAt?: string
   /** Descriptive limitations for realization, not performed world changes. */
   constraints?: string[]
+  /** move 만: 가려는 곳. 도착이 아니라 의도다. */
+  destination?: string
 }
 export type AgencyClock = {
   now: string

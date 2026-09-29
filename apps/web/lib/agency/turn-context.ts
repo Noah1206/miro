@@ -22,7 +22,8 @@ export async function prepareAgencyTurn(sessionId: string, userId: string, sourc
       authored: runtime.revision.authored, world: snapshot.world, relationship: snapshot.relationship,
       evidence: (await loadAgencyEvidence(sessionId, snapshot, runtime, input, now)).slice(-126),
       clock: { now: now.toISOString(), mode: 'real_time', trigger: 'user', allowOfflineAdvance: false },
-      permissions: { contact: false, capabilities: ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'cancel_commitment', 'wait'] },
+      // 이동 의도는 만나서 나누는 장면에서만 — 문자·통화 중에 자리를 옮긴다고 서술할 화면이 없다.
+      permissions: { contact: false, capabilities: ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'cancel_commitment', 'wait', ...(!snapshot.mode || snapshot.mode === 'chat' ? ['move'] : [])] },
       location: snapshot.world.currentLocation,
     },
   } : undefined

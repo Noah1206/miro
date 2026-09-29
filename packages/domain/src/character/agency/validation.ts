@@ -68,6 +68,7 @@ export function validateAgencyCandidate(a: AgencyCandidate, c: AgencyDecisionCon
   for (const id of a.ruleIds) if (!rules.has(id)) out.push(issue('ruleIds', `unknown_rule:${id}`))
   for (const id of a.goalIds) if (!goals.has(id) || goals.get(id)!.status !== 'active') out.push(issue('goalIds', `inactive_goal:${id}`))
   if (a.action === 'cancel_commitment' && a.goalIds.length === 0) out.push(issue('goalIds', 'cancellation_requires_goal'))
+  if (a.action === 'move' ? !short(a.destination ?? '', 120) : a.destination !== undefined) out.push(issue('destination', 'move_requires_destination'))
   const fulfills = a.fulfillsGoalIds ?? []
   if (fulfills.length > AGENCY_LIMITS.changes || !unique(fulfills) || fulfills.some(id => !a.goalIds.includes(id))) out.push(issue('fulfillsGoalIds', 'invalid_fulfillment_refs'))
   // Waiting, deferring or cancelling mentions a promise; it never carries it out.

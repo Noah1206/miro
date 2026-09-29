@@ -35,6 +35,7 @@ export const AgencyCandidateSchema = z.object({
   uncertainty: Unit, cost: Unit,
   expiresAt: Time.optional(),
   constraints: z.array(z.string().min(1).max(240)).max(8).optional(),
+  destination: z.string().min(1).max(120).optional(),
 }).strict()
 
 const ProposedGoal = z.object({
@@ -117,13 +118,14 @@ fulfillsGoalIds lists only cited goals that THIS action itself carries out right
 Explicit cancellation/suspension changes need supporting evidence. Do not complete goals: only verified runtime outcomes do that.
 Clock timestamps must already be supported by evidence; do not convert a fictional evening to a real notification deadline.
 contact requires contact permission and appropriate capability preconditions; wait/defer are valid, especially when no reason to contact exists.
+move is an intention to go somewhere (destination required). The server does not confirm arrival: the reply may start moving but must not narrate having arrived or a changed location.
 There must be no guilt, threat or fabricated emergency whose purpose is making the user return.
 Appraisal separates internal feeling from outward expression. Affect deltas are bounded -10..10, expression is 0..100.
 Optional appraisal.relationshipChanges is at most one item per dimension: {dimension:trust|attraction|jealousy|protectiveness|emotionalDistance|attachment,delta:-3..3,evidenceIds,ruleIds}. It needs a NEW actual user utterance and a relevant authored rule. The fact the user said something is observable, while the claim inside their message may only be reported. Never infer emotional weakness from restrained expression. Never propose stage changes or reuse an old event to repeatedly increase affection.
 interpretation is a short observable evidence summary, NOT private chain of thought. Preserve uncertain interpretations as beliefs only.
 Scores are bounded hypotheses, not truth. ruleFit must cite the matching authored rule; goalFit must cite an active goal.
 No worldDelta, relationshipDelta, identity rewrites, new NPC facts, provider calls, action outcomes or free-form policy code.
-Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait,description,targetActor,evidenceIds,ruleIds,goalIds,fulfillsGoalIds?,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event,commitment?:boolean}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
+Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait|move,description,destination?(move only: where the character intends to go; the server records intent, never arrival),targetActor,evidenceIds,ruleIds,goalIds,fulfillsGoalIds?,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event,commitment?:boolean}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
 
 /** No DB writes. The returned state is a proposal until the caller's CAS transaction commits it. */
 export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCharacter, state: AgencyState, input: AgencyPlanningContext): Promise<AgencyPlan> {

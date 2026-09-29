@@ -1,4 +1,5 @@
 import type { RelationshipState } from '../relationship/types'
+import type { AgencyAffect } from './agency/types'
 import type { SemanticEvent } from '../relationship/semantic'
 
 /**
@@ -79,4 +80,18 @@ function describeEvent(t: SemanticEvent['type']): string {
     gave_excuse: '이유를 설명했다', deliberate_avoidance: '일부러 피했다고 했다',
   }
   return m[t]
+}
+
+/**
+ * 자율성 경로의 기분(§3.2): 관계 전이와 같은 appraisal 에서 나온 affect 로 정한다 — 규칙 경로의 deriveCharacterState 와
+ * 같은 Mood 어휘를 쓰되, 의미 사건 대신 affect(valence·arousal·stress)와 관계 수치를 본다. 순수 함수.
+ */
+export function moodFromAffect(affect: AgencyAffect, r: Pick<RelationshipState, 'trust' | 'jealousy' | 'attachment' | 'emotionalDistance' | 'attraction'>): Mood {
+  if (affect.valence <= -30 && affect.arousal >= 40 && r.trust < 40) return 'angry'
+  if (r.jealousy >= 55) return 'jealous'
+  if (affect.valence <= -30) return 'hurt'
+  if (affect.valence >= 30) return 'happy'
+  if (affect.stress >= 60 && r.attachment >= 60) return 'anxious'
+  if (affect.arousal >= 50 || r.attraction >= 60) return 'curious'
+  return 'neutral'
 }

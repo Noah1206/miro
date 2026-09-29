@@ -126,7 +126,7 @@ function validateClaims(claims: AgencyRealizationClaim[], input: AgencyRealizati
         if (!claim.evidenceIds.length && !claim.ruleIds.length) issues.push({ field, reason: 'ungrounded_belief' })
         break
       case 'intention':
-        if (!['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'continue_activity', 'contact', 'cancel_commitment', 'wait'].includes(input.decision.action)) issues.push({ field, reason: 'no_authorized_intention' })
+        if (!['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'continue_activity', 'contact', 'cancel_commitment', 'wait', 'move'].includes(input.decision.action)) issues.push({ field, reason: 'no_authorized_intention' })
         if (claim.actionIds.some(id => id !== input.decision.id)) issues.push({ field, reason: 'unselected_intention' })
         break
       case 'current_state':

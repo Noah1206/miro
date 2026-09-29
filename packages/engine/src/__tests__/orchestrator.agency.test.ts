@@ -30,7 +30,7 @@ function plan(overrides: Record<string, unknown> = {}) {
     responsibility: 'uncertain', affectDelta: { valence: 0, arousal: 0, stress: 3, energy: 0 }, expression: { openness: 20, directness: 50 }, beliefs: [], relationshipChanges: [],
   }, candidates: [selected()], newGoals: [], goalChanges: [], ...overrides }
 }
-type StubOptions = { proposal?: Record<string, unknown>; dialogue?: Record<string, unknown>; rejectRealization?: boolean; failPlanner?: boolean }
+type StubOptions = { proposal?: Record<string, unknown>; dialogue?: Record<string, unknown>; rejectRealization?: boolean | number; failPlanner?: boolean }
 /** Recorded model outputs exercise the real engine/reducer/verifier path, not model quality. */
 function provider(options: StubOptions = {}) {
   const calls: Array<{ version?: string; system: string; prompt: string }> = []
@@ -44,8 +44,11 @@ function provider(options: StubOptions = {}) {
       }
       if (request.promptVersion === 'agency-realization-check:v4') {
         const payload = JSON.parse(request.prompt)
-        return request.schema.parse({ decisionId: payload.decision.id, aligned: !options.rejectRealization, claims: [], unsupported: [],
-          violations: options.rejectRealization ? ['contradicts_decision'] : [] })
+        // number = 처음 n 번만 거부(재생성 계약을 본다). true = 항상 거부.
+        const checks = calls.filter(c => c.version === 'agency-realization-check:v4').length
+        const reject = typeof options.rejectRealization === 'number' ? checks <= options.rejectRealization : Boolean(options.rejectRealization)
+        return request.schema.parse({ decisionId: payload.decision.id, aligned: !reject, claims: [], unsupported: [],
+          violations: reject ? ['contradicts_decision'] : [] })
       }
       return request.schema.parse(options.dialogue ?? { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }] } })
     },
@@ -118,15 +121,47 @@ describe('runTurn agency integration', () => {
     expect(shadow.transition.blocks.length).toBeGreaterThan(0)
     await expect(runTurn({ llm: provider({ failPlanner: true }).llm, snapshot: snapshot(), userInput: '안녕', agency: agency('live') })).rejects.toThrow('recorded_provider_failure')
   })
-  it('blocks renderer world mutations rather than committing an unplanned event', async () => {
-    const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }] }, worldDelta: { currentLocation: '서울' } } })
-    await expect(runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow('agency_unapproved_mutation')
-    expect(stub.calls.some(c => c.version === 'agency-realization-check:v4')).toBe(false)
+  // §3.3: 승인 밖 변경은 제안에서 걷어 내고 거부로 기록한다 — 대사는 남고, 세계는 그대로다.
+  it('strips renderer world mutations, keeps the reply, and records the rejection instead of failing the turn', async () => {
+    const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }, { type: 'npc', speaker: '이수현', text: '안녕' }] },
+      worldDelta: { currentLocation: '서울', currentTime: '밤' }, eventCandidates: [{ type: 'crisis', summary: '사건', relevance: 1, salience: 1, participantNpcIds: [] }] } })
+    const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
+    expect(result.transition.worldDelta).toEqual({ currentTime: '밤' })   // 시간은 장면의 공기 — 허용. 장소는 결정이 아니다.
+    expect(result.transition.newEvent).toBeNull()
+    expect(result.transition.blocks.map(b => b.type)).toEqual(['dialogue'])
+    expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field).sort()).toEqual(['eventCandidates', 'rp.blocks', 'worldDelta.currentLocation'])
+    expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentTime', rule: 'world_delta', status: 'applied', decisionId: result.agency!.plan.decision.id }))
+    expect(stub.calls.some(c => c.version === 'agency-realization-check:v4')).toBe(true)
   })
-  it('rejects a selected action whose actual dialogue fails semantic verification', async () => {
-    const stub = provider({ rejectRealization: true })
-    await expect(runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow('agency_realization_rejected')
-    expect(stub.calls.at(-1)?.version).toBe('agency-realization-check:v4')
+  it('rewrites once with the rejection codes when verification fails, then gives up with the codes', async () => {
+    const once = provider({ rejectRealization: 1 })
+    const result = await runTurn({ llm: once.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
+    expect(result.agency?.verification.ok).toBe(true)
+    expect(once.calls.map(c => c.version)).toEqual(['agency-planner:v4', 'agency-dialogue:v4', 'agency-realization-check:v4', 'agency-dialogue:v4', 'agency-realization-check:v4'])
+    expect(once.calls[3]?.prompt).toContain('이전 응답이 거부된 이유')
+    const always = provider({ rejectRealization: true })
+    await expect(runTurn({ llm: always.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow(/^agency_realization_rejected semantic_/)
+    expect(always.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(2)
+  })
+  it('records a move as a held intent: the world location does not change and the renderer is told not to arrive', async () => {
+    const stub = provider({ proposal: plan({ candidates: [selected({ action: 'move', destination: '역 앞 카페' })] }) })
+    const input = agency()
+    input.context.permissions.capabilities.push('move')
+    const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: input })
+    expect(result.agency?.plan.decision.action).toBe('move')
+    expect(result.transition.worldDelta).toBeNull()
+    expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentLocation', before: '런던 구시가지', after: '역 앞 카페', rule: 'move_intent_held', status: 'held' }))
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.system).toContain('도착했거나 장소가 바뀌었다고 쓰지 않는다')
+  })
+  it('renders the same scene length as the policy asks and derives mood and stage from the appraisal', async () => {
+    const stub = provider({ proposal: plan({ appraisal: { ...plan().appraisal, affectDelta: { valence: -10, arousal: 8, stress: 10, energy: 0 },
+      relationshipChanges: [{ dimension: 'trust', delta: 2, evidenceIds: ['input-1'], ruleIds: ['respect'] }] } }) })
+    const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency(), replyLength: 'long' })
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.system).toMatch(/블록 8~11개, 전체 1000~1600자/)
+    expect(result.transition.relationshipDelta.trust).toBe(2)
+    expect(result.records.filter(r => r.field === 'relationship.trust').map(r => r.rule)).toEqual(['relationship_appraisal'])
+    expect(result.characterState.mood).toBe('neutral')
+    expect(result.firedRules).toEqual([])
   })
   it('catches undeclared delivery claims even if a recorded verifier incorrectly says aligned', async () => {
     const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '사진을 보냈어요.' }] } } })
