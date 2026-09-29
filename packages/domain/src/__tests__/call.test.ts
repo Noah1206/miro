@@ -39,6 +39,8 @@ describe('call channel selection is deterministic, not random', () => {
 describe('call mode blocks', () => {
   it('voice allows dialogue only; video also allows short actions; chat allows all', () => {
     expect([...allowedBlockTypes('voice_call')].sort()).toEqual(['dialogue', 'npc'])
+    // 문자 통화(2026-09-29): 괄호 지문이 화면에 그대로 보였다 — 지시로 막는다.
+    expect(CALL_MODE_RULES.voice_call).toContain('괄호 지문을 쓰지 않습니다')
     expect(allowedBlockTypes('video_call').has('action')).toBe(true)
     expect(allowedBlockTypes('video_call').has('narrative')).toBe(false)
     expect(allowedBlockTypes('chat').has('thought')).toBe(true)

@@ -12,7 +12,10 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { CallComposer, HangUp } from './ui'
 import { LiveAudio } from './live-audio'
-import { CharacterText } from '@/components/scene/text'
+import { Emphasis } from '@/components/scene/emphasis'
+
+/** 통화 화면은 말만 보여 준다 — 이름 접두 없이. 옛 답에 남은 짧은 괄호 지문("(작게 웃음)")은 앞에서 떼어 낸다. */
+const spoken = (text: string) => text.replace(/^\s*\([^()]{1,12}\)\s*/, '')
 
 /** 음성/영상 통화 화면. 채널은 수락 전에 정해져 있으므로 여기서 바뀌지 않는다. */
 export default async function CallPage({ params }: { params: Promise<{ callId: string }> }) {
@@ -108,7 +111,12 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
       <div style={{ position: 'relative', flex: 1, padding: '16px 24px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 12, maxWidth: 560, width: '100%', margin: '0 auto' }}>
         {lines.map((m) => m.role === 'user'
           ? <p key={m.id} className="t-caption" style={{ textAlign: 'right', color: 'var(--color-text-secondary)' }}>{m.content}</p>
-          : <div key={m.id} style={{ textShadow: '0 1px 10px rgba(0,0,0,.7)' }}><CharacterText content={m.content} name={loaded.characterName} size="lg" /></div>)}
+          : <div key={m.id} className="stack" style={{ gap: 6, maxWidth: '85%', textShadow: '0 1px 10px rgba(0,0,0,.7)' }}>
+              {(m.blocks as Array<{ type: string; text?: string }>).filter((b) => (b.type === 'dialogue' || b.type === 'npc' || b.type === 'action') && b.text).map((b, i) =>
+                b.type === 'action'
+                  ? <p key={i} className="t-quote" style={{ fontSize: 'var(--font-body-lg)', lineHeight: 1.75, color: 'var(--color-text-secondary)' }}><Emphasis text={b.text!} /></p>
+                  : <p key={i} style={{ fontSize: 'var(--font-body-lg)', lineHeight: 1.75 }}><Emphasis text={spoken(b.text!)} /></p>)}
+            </div>)}
       </div>
       <CallComposer callId={callId} />
       <HangUp callId={callId} />

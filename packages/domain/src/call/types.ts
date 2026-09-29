@@ -8,7 +8,8 @@ export type SimulationMode = 'chat' | 'messenger' | 'voice_call' | 'video_call'
 export const CALL_MODE_RULES: Record<Exclude<SimulationMode, 'chat'>, string> = {
   voice_call:
     '- 지금은 전화 통화 중입니다. 대사(dialogue)만 말합니다. 서술(narrative)이나 행동 묘사는 넣지 않습니다.\n' +
-    '- 전화 특유의 짧은 호흡. 침묵, 한숨, 웃음은 대사 안에서 표현합니다.',
+    '- 전화 특유의 짧은 호흡 — 한 번에 한두 문장. 침묵, 한숨, 웃음은 말소리로 대사 안에 씁니다("하하", "후…").\n' +
+    '- 괄호 지문을 쓰지 않습니다: "(작게 웃음)", "(한숨)" 처럼 괄호로 행동·소리를 적지 않습니다. 상대는 소리만 듣습니다.',
   video_call:
     '- 지금은 영상통화 중입니다. 대사(dialogue) 위주이며, 표정이나 시선 같은 짧은 행동(action)만 허용합니다.\n' +
     '- 화면 너머로 보이는 것만 묘사합니다. 장면 서술(narrative)은 넣지 않습니다.',
