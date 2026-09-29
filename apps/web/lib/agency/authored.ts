@@ -1,4 +1,4 @@
-import type { AuthoredDocument, CharacterCore } from '@miro/domain'
+import { authoredCharacter, type AuthoredDocument, type CharacterCore } from '@miro/domain'
 
 /** Stable field names and exact authored text; no traits inferred from demographic labels. */
 export function authoredDocument(character: CharacterCore, worldSetting: string | null, explicitFields: string[] = [], worldGenre?: string | null): AuthoredDocument {
@@ -14,7 +14,8 @@ export function authoredDocument(character: CharacterCore, worldSetting: string 
     }
   }
   add('identity', character.identity)
-  add('personality', character.personality)
+  // 관계 성격표는 AI 가 설정에서 만든 파생 값이다 — 작성자 원문이 아니므로 싣지 않는다(실으면 표가 바뀔 때마다 판이 새로 생긴다).
+  add('personality', authoredCharacter(character).personality)
   add('worldRole', character.worldRole)
   add('appearance', character.appearance)
   add('worldSetting', worldSetting)

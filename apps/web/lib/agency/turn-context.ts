@@ -1,4 +1,5 @@
 import { characterAgencyMode } from '@miro/config'
+import { withRelationshipProfile } from '@miro/domain'
 import { observe } from '@/lib/observe'
 import type { SimulationSnapshot, runTurn } from '@miro/engine'
 import type { LLMProvider } from '@miro/providers'
@@ -15,7 +16,9 @@ export async function prepareAgencyTurn(sessionId: string, userId: string, sourc
     observe('agency.not_ready_fallback', { sessionId })
     return { runtime: null, snapshot: source, agency: undefined }
   }
-  const snapshot = runtime?.mode === 'live' ? { ...source, ...runtime.revision.profile } : source
+  // 관계 성격표는 판에 고정하지 않는다 — 설정에서 파생돼 따로 갱신되므로 지금의 표를 얹는다.
+  const snapshot = runtime?.mode === 'live' ? { ...source, ...runtime.revision.profile,
+    character: withRelationshipProfile(runtime.revision.profile.character, source.character.personality.relationshipProfile) } : source
   const agency: Parameters<typeof runTurn>[0]['agency'] = runtime ? {
     mode: runtime.mode, compiled: runtime.revision.compiled, state: runtime.state,
     context: { sessionId, revisionId: runtime.revision.id, actor: snapshot.character.id,

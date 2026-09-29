@@ -13,6 +13,7 @@ import { parseCharacterForm } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableVoice } from '@/lib/voice'
+import { scheduleRelationshipProfile } from '@/lib/relationship-profile'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -85,6 +86,8 @@ export async function saveCharacter(form: FormData): Promise<string> {
     return { characterId, sessionId: session!.id, revisionId: revision?.id ?? null, duplicate: false }
   })
   if (!result.duplicate && result.revisionId) await scheduleAgencyCompilation(result.revisionId, user.id)
+  // 관계 성격표는 저장 뒤에 성격 설명에서 만든다 — 편집기에서 확인하고 고친다(설정이 그대로면 모델을 부르지 않는다).
+  if (!result.duplicate) await scheduleRelationshipProfile(result.characterId, user.id)
 
   revalidatePath('/home')
   revalidatePath('/home/search')

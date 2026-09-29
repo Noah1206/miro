@@ -1,7 +1,7 @@
 import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
-  DEFAULT_CHARACTER_STATE, addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, deltaFromSemanticEvents,
+  DEFAULT_CHARACTER_STATE, addDelta, applyRelationshipDelta, authoredCharacter, bondingCurveOf, closeness, companionshipDelta, deltaFromSemanticEvents,
   deriveCharacterState, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, nextRelationshipStage, scaleCloser,
 } from '@miro/domain'
 import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent, StateTransitionRecord } from '@miro/domain'
@@ -86,6 +86,8 @@ export async function runTurn(opts: {
   const { snapshot } = opts
   const now = opts.now ?? new Date()
   const personality = snapshot.character.personality
+  // 캐릭터별 관계 성격표 — 같은 사건에도 캐릭터마다 다른 세기·단계·기분으로 받는다. 없으면 기본 규칙.
+  const profile = personality.relationshipProfile ?? null
 
   // ECHO: 규칙이 요구하지 않아도 의미 분석과 기억 추출을 돌린다.
   // 어떤 기능이 켜져 있는지는 planTasks 가 판단한다 — 배포가 끈 작업을 여기서 되살리지 않는다.
@@ -97,7 +99,7 @@ export async function runTurn(opts: {
    * 입력 검열이 먼저다. 보조 분석(의미 분류·기억 추출)은 검열이 지난 뒤에만 띄운다 — 차단된 턴은 호출 하나로 끝나고 비용이 남지 않는다.
    * 대가는 의미 분류만큼의 지연(실측 약 1.2초)이 매 정상 턴에 붙는 것(사용자 결정 2026-09-28; 전에는 검열과 병렬이었다).
    */
-  await requireSafeContent(opts.llm, { phase: 'input', character: snapshot.character,
+  await requireSafeContent(opts.llm, { phase: 'input', character: authoredCharacter(snapshot.character),
     worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
     recent: snapshot.recentMessages, input: opts.userInput })
   const auxiliary = opts.auxiliaryLLM ?? null
@@ -118,14 +120,14 @@ export async function runTurn(opts: {
   // 사건이 움직인 만큼은 성격의 곡선이 키우거나 줄이고, 나쁜 일이 없던 턴은 함께한 시간만큼 가까워진다 (relationship/dynamics).
   const curve = personality.bonding ?? bondingCurveOf(personality)
   const codeDelta = addDelta(
-    scaleCloser(deltaFromSemanticEvents(semanticEvents, personality), curve, closeness(snapshot.relationship)),
-    companionshipDelta({ curve, relationship: snapshot.relationship, events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput }))
+    scaleCloser(deltaFromSemanticEvents(semanticEvents, personality, profile), curve, closeness(snapshot.relationship)),
+    companionshipDelta({ curve, relationship: snapshot.relationship, events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput, profile }))
   // 이번 턴의 관계(규칙 적용 후)로 기분을 정한다 — 모델은 수치가 아니라 기분을 본다.
   const projected = applyRelationshipDelta(snapshot.relationship, codeDelta)
-  codeDelta.stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1)
+  codeDelta.stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1, profile)
   projected.stage = codeDelta.stage
   const prevState = snapshot.characterState ?? DEFAULT_CHARACTER_STATE
-  const characterState = deriveCharacterState(prevState, projected, semanticEvents)
+  const characterState = deriveCharacterState(prevState, projected, semanticEvents, profile)
 
   const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale, false, opts.replyLength ?? 'scene')
 
@@ -174,7 +176,7 @@ export async function runTurn(opts: {
 
   // 사건 규칙 — "무슨 일이 일어나야 하는가" 는 코드가 정한다. LLM 제안은 규칙이 없을 때만 남는다.
   const fired = evaluateEventRules({
-    relationship: projected, characterState, semanticEvents, idleMinutes: 0, turnCount: snapshot.turnCount + 1,
+    relationship: projected, characterState, semanticEvents, idleMinutes: 0, turnCount: snapshot.turnCount + 1, profile,
   })
   const withIntent = fired.find((r) => r.effect.realityIntent)
   if (withIntent?.effect.realityIntent) {

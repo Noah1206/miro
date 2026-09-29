@@ -6,6 +6,7 @@ import { genreValues } from '@/lib/genres'
 import { voiceOptions } from '@/lib/voice'
 import { CharacterForm, type FormInitial } from '@/app/(main)/create/character-form'
 import { updateCharacter } from './actions'
+import { profileStatus } from '@/lib/relationship-profile'
 
 /** 편집 = 만들기와 같은 폼에 저장된 값을 채운 것. 항목·모양이 다르면 두 화면이 서로 거짓말을 한다. */
 export default async function EditCharacter({ params }: { params: Promise<{ id: string }> }) {
@@ -17,6 +18,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   const { character: c, world, contact, visual } = owned
   const rel = c.initialRelationship as Record<string, number | string>
   const num = (v: unknown, fallback: number) => (typeof v === 'number' ? v : fallback)
+  const table = profileStatus(c)
 
   const initial: Partial<FormInitial> = {
     experienceType: c.experienceType,
@@ -35,6 +37,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     trust: num(rel.trust, 30), attraction: num(rel.attraction, 10), emotionalDistance: num(rel.emotionalDistance, 60),
     attachment: num(rel.attachment, 10), protectiveness: num(rel.protectiveness, 20), relJealousy: num(rel.jealousy, 0),
     bonding: typeof rel.bonding === 'string' ? rel.bonding : '',
+    relationshipProfile: table.profile, profileStatus: table.status,
     relationshipKeywords: c.relationshipKeywords,
     contactEnabled: contact?.enabled ?? true,
     contactFrequency: contact?.contactFrequency ?? 50, initiativeLevel: contact?.initiativeLevel ?? 50,

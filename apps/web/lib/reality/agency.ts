@@ -5,7 +5,7 @@ import {
   db, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
-import { applyRelationshipDelta, describeRelationship, localMinutes, presentContact, RELATIONSHIP_DIMENSIONS, type SuppressReason } from '@miro/domain'
+import { applyRelationshipDelta, authoredCharacter, describeRelationship, localMinutes, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, requireSafeContent, verifyAgencyRealization } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
@@ -80,7 +80,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       return { outcome: 'skipped', reason: 'agency_unavailable' }
     }
     // Existing sessions remain pinned to their compiled authored revision, including the renderer.
-    const snapshot = { ...loaded.snapshot, character: runtime.revision.profile.character,
+    // 관계 성격표는 판에 고정하지 않는다 — 설정에서 파생돼 따로 갱신되므로 지금의 표를 얹는다.
+    const snapshot = { ...loaded.snapshot, character: withRelationshipProfile(runtime.revision.profile.character, loaded.snapshot.character.personality.relationshipProfile),
       worldSetting: runtime.revision.profile.worldSetting, worldGenre: runtime.revision.profile.worldGenre }
     const bucket = Math.floor(now.getTime() / (POLICY.reality.recheckMinutes * 60_000))
     const triggerKey = `reality:${bucket}:${row.session.turnCount}:${row.session.lastInteractionAt.toISOString()}`
@@ -123,7 +124,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     const presented = presentContact('message', snapshot.character.identity.name, row.profile.presentation)
     let content: Awaited<ReturnType<typeof generateRealityContent>> | null = null
     if (send) {
-      const { identity, personality, worldRole, appearance } = snapshot.character
+      const { identity, personality, worldRole, appearance } = authoredCharacter(snapshot.character)
       const renderer: LLMProvider = { info: llm.info, generateStructured: request => llm.generateStructured({
         ...request, system: request.system + buildAgencyDecisionDirective(plan.decision)
           + `\nGROUNDED_RUNTIME_DATA: ${JSON.stringify({ affect: plan.state.affect, expression: plan.state.expression,

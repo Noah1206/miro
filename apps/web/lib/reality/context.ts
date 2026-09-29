@@ -1,4 +1,5 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { authoredCharacter } from '@miro/domain'
 import { db, characters, characterVisualIdentities, messages, roleplaySessions, users, worlds } from '@miro/db'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { characterContext, conversationContext } from '@/lib/simulation/character-context'
@@ -21,7 +22,8 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
       .where(and(eq(characterVisualIdentities.characterId, owner.character.id), eq(characterVisualIdentities.isActive, true)))
       .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
   ])
-  const { identity, personality, worldRole, appearance } = characterContext(owner.character, visual[0])
+  // 먼저 연락 문장에는 작성자가 쓴 설정만 — 관계 성격표는 규칙이 읽는 파생 값이다.
+  const { identity, personality, worldRole, appearance } = authoredCharacter(characterContext(owner.character, visual[0]))
   return {
     authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
     worldSetting: owner.worldSetting,

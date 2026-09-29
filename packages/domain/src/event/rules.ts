@@ -2,6 +2,7 @@ import type { CharacterState } from '../character/state'
 import type { RelationshipState } from '../relationship/types'
 import type { SemanticEvent } from '../relationship/semantic'
 import type { ContactChannel } from '../character/types'
+import { feltEvents, type ReachOutRule, type RelationshipProfile } from '../relationship/profile'
 
 /**
  * Event Rules — "무슨 일이 일어나야 하는가" 를 코드가 정한다. LLM 은 여기에 없다.
@@ -18,6 +19,8 @@ export type EventRuleContext = {
   lastUserChannel?: 'scene' | 'messenger'
   /** 이번 장면(마지막 상호작용)에 대해 '잘 들어갔어?' 를 이미 보냈는가. 스케줄러만 채운다. */
   sceneFollowUpSent?: boolean
+  /** 캐릭터의 관계 성격표 — 어떤 일에 먼저 연락하는지와 그 이유가 캐릭터마다 다르다. */
+  profile?: RelationshipProfile | null
 }
 
 export type RealityEffect = { channel: ContactChannel; reason: string; urgency: number; delayMinutes: number }
@@ -30,7 +33,7 @@ export type EventRule = {
   effect: { realityIntent?: RealityEffect; memory?: string }
 }
 
-const has = (c: EventRuleContext, ...types: SemanticEvent['type'][]) => c.semanticEvents.some((e) => types.includes(e.type) && e.confidence >= 0.6)
+const has = (c: EventRuleContext, ...types: SemanticEvent['type'][]) => feltEvents(c.semanticEvents, c.profile).some((e) => types.includes(e.type) && e.confidence >= 0.6)
 
 export const EVENT_RULES: EventRule[] = [
   {
@@ -68,7 +71,14 @@ export const EVENT_RULES: EventRule[] = [
   },
 ]
 
-/** 발동한 규칙. once 규칙은 firedRules 에 있으면 건너뛴다. */
+/**
+ * 발동한 규칙. once 규칙은 firedRules 에 있으면 건너뛴다.
+ * 관계 성격표가 끈 규칙은 발동하지 않고, 표가 준 이유가 있으면 연락 이유를 그 캐릭터의 말로 바꾼다(조건·채널·시각은 그대로).
+ */
 export function evaluateEventRules(c: EventRuleContext, rules: EventRule[] = EVENT_RULES): EventRule[] {
-  return rules.filter((r) => !(r.once && c.characterState.firedRules.includes(r.id)) && r.when(c))
+  const own = (id: string) => c.profile?.reachOut[id as ReachOutRule]?.value
+  return rules.filter((r) => !(r.once && c.characterState.firedRules.includes(r.id)) && own(r.id)?.on !== false && r.when(c)).map((r) => {
+    const reason = own(r.id)?.reason.trim()
+    return reason && r.effect.realityIntent ? { ...r, effect: { ...r.effect, realityIntent: { ...r.effect.realityIntent, reason } } } : r
+  })
 }

@@ -1,5 +1,5 @@
 import type { characters, characterVisualIdentities, messages } from '@miro/db'
-import { bondingCurveOf, type CharacterCore } from '@miro/domain'
+import { bondingCurveOf, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
 import { sampleDialogue } from '@/lib/intro-dialogue'
 
@@ -16,6 +16,7 @@ export function characterContext(
       userNickname: c.userNickname, hobbies: c.hobbies, dislikes: c.dislikes,
       jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
       bonding: bondingCurveOf(c, c.initialRelationship.bonding),
+      relationshipProfile: parseRelationshipProfile(c.relationshipProfile),
     },
     worldRole: {
       socialPosition: c.socialPosition, startingContext: c.startingContext,

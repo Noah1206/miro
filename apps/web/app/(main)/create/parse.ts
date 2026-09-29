@@ -1,5 +1,5 @@
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
-import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore } from '@miro/domain'
+import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
 import { searchNeedle } from '@/lib/search-params'
 export { MOODS } from '@/lib/genres'
 
@@ -34,6 +34,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     'photoProbability', 'voiceMessageProbability', 'activeHoursStart', 'activeHoursEnd', 'senderLabel',
     'stage', 'trust', 'attraction', 'relJealousy', 'protectiveness', 'emotionalDistance',
     'attachment', 'bonding', 'jealousy', 'initiative', 'emotionalExpression', 'agencyExplicitField',
+    'relationshipProfile', 'relationshipProfileChanged',
   ].some(key => form.has(key))) throw new Error('CHARACTER_TYPE_SETTINGS_INVALID')
 
   const name = s('name')
@@ -80,6 +81,13 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     ...((BONDING_CURVES as readonly string[]).includes(s('bonding')) ? { bonding: s('bonding') } : {}),
   }
 
+  // 관계 성격표 — 작성자가 편집기에서 고쳤을 때만 싣는다. 안 고쳤으면 저장된 표(뒤에서 AI 가 만든 것일 수 있다)를 건드리지 않는다.
+  // 값은 선택지 안으로만 들어온다(parseRelationshipProfile). 모양이 틀리면 고치지 않은 것으로 본다.
+  let relationshipProfile: ReturnType<typeof parseRelationshipProfile> = null
+  if (form.get('relationshipProfileChanged') === 'on') {
+    try { relationshipProfile = parseRelationshipProfile(JSON.parse(s('relationshipProfile') || 'null')) } catch { /* 고치지 않은 것으로 본다 */ }
+  }
+
   const character = {
     name,
     tagline: orNull(s('title')),
@@ -99,6 +107,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
     lore,
     initialRelationship,
+    ...(relationshipProfile ? { relationshipProfile } : {}),
   }
 
   const moodByNeedle = new Map<string, string>()

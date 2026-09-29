@@ -171,6 +171,12 @@ export const characters = pgTable('characters', {
   initialRelationship: jsonb('initial_relationship')
     .$type<Record<string, number | string>>().notNull().default({}),
 
+  /**
+   * 관계 성격표(domain/relationship/profile) — 사건 반응·단계·기분 표현·화해·먼저 연락이 캐릭터마다 다르다.
+   * 저장 때 AI 가 만들고(sourceHash 로 설정 변경을 안다) 작성자가 편집기에서 고친다. null 이면 기본 규칙.
+   */
+  relationshipProfile: jsonb('relationship_profile').$type<Record<string, unknown>>(),
+
   /** 시작 시각 표현. 세션의 최초 world_state 에 복사된다. */
   startingTime: text('starting_time').notNull().default('저녁'),
 

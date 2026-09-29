@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { authoredCharacter } from '@miro/domain'
 import { afterAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { db, users, characters, worlds, characterVisualIdentities, messages } from '@miro/db'
@@ -55,7 +56,8 @@ describeDb('creator fields shared by dialogue and proactive context', () => {
     const proactive = await loadRealityContext(session.sessionId, owner!.id, '약속')
     expect(loaded).not.toBeNull()
     expect(proactive).not.toBeNull()
-    const { identity, personality, worldRole, appearance } = loaded!.snapshot.character
+    // 둘 다 작성자가 쓴 같은 설정이다. 관계 성격표는 규칙만 읽는 파생 값이라 모델에 보내는 쪽에는 없다.
+    const { identity, personality, worldRole, appearance } = authoredCharacter(loaded!.snapshot.character)
     expect(proactive!.authoredCharacter).toEqual({ identity, personality, worldRole, appearance })
     expect(proactive!.authoredCharacter).not.toHaveProperty('ownerId')
     expect(proactive!.worldSetting).toBe(parsed.world.worldSetting)

@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature } from '@miro/config'
-import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
+import { authoredCharacter, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
 import { renderBlocks, requireSafeContent, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
@@ -99,7 +99,7 @@ async function executeTurn(opts: {
         // 미뤄진 문자는 지금 모델에 가지 않고 나중에 기록으로만 실린다. 기록은 검열에서 줄어들 수 있으니 저장할 때 판정한다.
         try {
           await requireSafeContent(resolveRpLLM(loaded.characterName, { userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip }),
-            { phase: 'input', character: loaded.snapshot.character, input })
+            { phase: 'input', character: authoredCharacter(loaded.snapshot.character), input })
         } catch (e) { if (e instanceof UnsafeContentError) return { ok: false, reason: 'safety' }; throw e }
         const wait = (availability.minutesUntilFree ?? 30) + 3 + (loaded.snapshot.turnCount % 9)
         const until = new Date(now.getTime() + wait * 60_000).toISOString()

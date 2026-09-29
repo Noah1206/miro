@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { characterAgencyCohort, characterAgencyMode } from '@miro/config'
-import { createAgencyState } from '@miro/domain'
+import { authoredCharacter, createAgencyState } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
 import { db, characters, worlds, characterVisualIdentities, characterRevisions, characterRuntimeStates, roleplaySessions } from '@miro/db'
 import { afterResponse } from '@/lib/defer'
@@ -41,7 +41,8 @@ export async function captureAgencyRevision(
     .orderBy(desc(characterRevisions.createdAt), desc(characterRevisions.id)).limit(1)
   const explicitFields = [...(previous?.authored.explicitFields ?? []), ...(options.explicitFields ?? [])]
     .filter(field => NUMERIC_TRAITS.has(field))
-  const profile = { character: characterContext(character, visual), worldSetting: world?.worldSetting ?? null, worldGenre: world?.genre ?? null }
+  // 판에는 작성자가 쓴 것만 고정한다 — 관계 성격표는 저장 뒤에 따로 만들어져 실행 때 지금의 표를 얹는다(turn-context).
+  const profile = { character: authoredCharacter(characterContext(character, visual)), worldSetting: world?.worldSetting ?? null, worldGenre: world?.genre ?? null }
   const authored = authoredDocument(profile.character, profile.worldSetting, explicitFields, profile.worldGenre)
   const sourceHash = hashAuthoredCharacter(authored)
   const [inserted] = await tx.insert(characterRevisions).values({ characterId, sourceHash, authored, profile })

@@ -6,7 +6,7 @@ import {
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
-  DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, presentContact,
+  DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, parseRelationshipProfile, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
 import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
@@ -108,7 +108,7 @@ export async function evaluateSession(
     const sceneMarker = `after_scene:${row.session.lastInteractionAt.toISOString()}`
     const fired = evaluateEventRules({ relationship: row.relationship as never, characterState, semanticEvents: [], idleMinutes, turnCount: row.session.turnCount,
       lastUserChannel: lastUser[0]?.kind === 'messenger' ? 'messenger' : lastUser[0] ? 'scene' : undefined,
-      sceneFollowUpSent: characterState.firedRules.includes(sceneMarker) })
+      sceneFollowUpSent: characterState.firedRules.includes(sceneMarker), profile: parseRelationshipProfile(row.character.relationshipProfile) })
     const rule = fired.find((r) => r.effect.realityIntent)
     if (rule?.effect.realityIntent) {
       const { channel, reason, urgency, delayMinutes } = rule.effect.realityIntent

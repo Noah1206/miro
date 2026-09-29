@@ -4,6 +4,7 @@
  */
 import type { LoreEntry } from './lore'
 import type { BondingCurve } from '../relationship/dynamics'
+import type { RelationshipProfile } from '../relationship/profile'
 
 export type CharacterCore = {
   id: string
@@ -31,6 +32,8 @@ export type CharacterCore = {
     emotionalExpression: number
     /** 친해지는 곡선. 없으면 성향값으로 정한다 (relationship/dynamics). */
     bonding?: BondingCurve
+    /** 관계 성격표 — 사건 반응·단계·기분 표현·화해·먼저 연락이 캐릭터마다 다르다. 없으면 기본 규칙 (relationship/profile). */
+    relationshipProfile?: RelationshipProfile | null
   }
 
   worldRole: {

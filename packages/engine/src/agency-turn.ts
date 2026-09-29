@@ -1,5 +1,5 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
-import { applyRelationshipDelta, moodFromAffect, nextRelationshipStage } from '@miro/domain'
+import { applyRelationshipDelta, authoredCharacter, moodFromAffect, nextRelationshipStage } from '@miro/domain'
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
@@ -33,14 +33,16 @@ export async function runAgencyTurn(opts: {
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
   const actor = snapshot.character.id
-  await requireSafeContent(llm, { phase: 'input', character: snapshot.character, input: opts.userInput })
+  await requireSafeContent(llm, { phase: 'input', character: authoredCharacter(snapshot.character), input: opts.userInput })
   const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context, input: opts.userInput })
   if (productionRuntime() && plan.providerMode !== 'live') throw new Error('agency_planner_not_live')
 
   // ── 승인 (표현 전) ──────────────────────────────────────────────────────────────────────────────
   // 관계·기분·단계는 한 appraisal 에서 파생된다(§3.2). 규칙 경로의 의미 사건은 여기 없다 — 같은 사건을 두 번 반영하지 않는다.
   const projected = applyRelationshipDelta(snapshot.relationship, plan.relationshipDelta)
-  const stage = nextRelationshipStage(snapshot.relationship.stage, projected, [], snapshot.turnCount + 1)
+  // 이 경로에는 의미 사건이 없다 — '친구가 되는 계기' 는 관찰할 수 없으니 빼고 문턱만 본다(빼지 않으면 친구가 될 수 없다).
+  const table = snapshot.character.personality.relationshipProfile
+  const stage = nextRelationshipStage(snapshot.relationship.stage, projected, [], snapshot.turnCount + 1, table && { ...table, turningPoint: undefined })
   projected.stage = stage
   const mood = moodFromAffect(plan.state.affect, projected)
   const move = plan.decision.action === 'move' ? plan.decision.candidate.destination ?? null : null

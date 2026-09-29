@@ -41,7 +41,7 @@ export const SemanticResult = z.preprocess((v) => (Array.isArray(v)
  * 사건마다 뜻을 준다. 실측(9/27, 뜻 없이 이름만 줬을 때): "회사 그만두려고 해, 아무한테도 말 안 했어" 와 "보고 싶었어" 에
  * confession(연애 고백) 을 0.9 이상으로 붙였다 — 고백은 호감을 가장 크게 올리고 관계 단계 전환의 조건이라 오분류가 비싸다.
  */
-const SEMANTIC_EVENT_MEANINGS: Record<(typeof SEMANTIC_EVENT_TYPES)[number], string> = {
+export const SEMANTIC_EVENT_MEANINGS: Record<(typeof SEMANTIC_EVENT_TYPES)[number], string> = {
   compliment: '캐릭터를 칭찬하거나 캐릭터에게 고마움을 표한다',
   confession: '캐릭터에게 연애 감정을 말로 밝힌다(좋아해·사랑해·사귀자·너밖에 없어). 보고 싶다·생각난다는 expressed_longing 이지 고백이 아니고, 비밀이나 속사정을 털어놓는 것도 아니다',
   expressed_longing: '캐릭터가 보고 싶다·생각난다·그립다고 한다(연애 감정을 말로 밝히지는 않음)',

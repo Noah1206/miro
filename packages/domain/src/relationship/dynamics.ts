@@ -11,6 +11,7 @@
  */
 import { RELATIONSHIP_DIMENSIONS, type RelationshipDelta, type RelationshipDimension, type RelationshipStage, type RelationshipState } from './types'
 import type { SemanticEvent, SemanticEventType } from './semantic'
+import { GROWABLE, feltEvents, type RelationshipProfile } from './profile'
 
 export const BONDING_CURVES = ['accelerating', 'stepwise', 'steady', 'slow'] as const
 export type BondingCurve = (typeof BONDING_CURVES)[number]
@@ -66,15 +67,22 @@ const GROWS: Record<RelationshipKind, readonly RelationshipDimension[]> = {
   new: ['trust', 'attachment'], friendship: ['trust', 'attachment'], romance: ['attachment', 'attraction'], work: ['trust'], tension: [],
 }
 
-/** 함께 보낸 시간. 나쁜 일이 없는 대화다운 턴마다 성격의 곡선대로 가까워진다. "ㅇㅇ" 같은 턴은 세지 않는다. */
+/**
+ * 함께 보낸 시간. 나쁜 일이 없는 대화다운 턴마다 성격의 곡선대로 가까워진다. "ㅇㅇ" 같은 턴은 세지 않는다.
+ * 관계 성격표의 '함께할수록 커지는 마음'(예: 지키려는 마음)은 관계 종류가 키우는 것에 더해 자란다 — 긴장 관계에서는 자라지 않는다.
+ * 캐릭터가 개의치 않는 나쁜 일은 함께한 시간을 끊지 않는다.
+ */
 export function companionshipDelta(input: {
-  curve: BondingCurve; relationship: Relation; events: SemanticEvent[]; turn: number; userInput: string
+  curve: BondingCurve; relationship: Relation; events: SemanticEvent[]; turn: number; userInput: string; profile?: RelationshipProfile | null
 }): RelationshipDelta {
-  if (input.userInput.replace(/\s/g, '').length < 6 || input.events.some(e => NEGATIVE.includes(e.type))) return {}
-  const g = stride(input.curve, closeness(input.relationship), input.turn, input.events)
+  const felt = feltEvents(input.events, input.profile)
+  if (input.userInput.replace(/\s/g, '').length < 6 || felt.some(e => NEGATIVE.includes(e.type))) return {}
+  const g = stride(input.curve, closeness(input.relationship), input.turn, felt)
   if (!g) return {}
+  const kind = relationshipKind(input.relationship.stage)
   const out: RelationshipDelta = { emotionalDistance: -g }
-  for (const dim of GROWS[relationshipKind(input.relationship.stage)]) out[dim] = g
+  const own = kind === 'tension' ? [] : GROWABLE.filter(dim => input.profile?.grows[dim])
+  for (const dim of new Set([...GROWS[kind], ...own])) out[dim] = g
   return out
 }
 

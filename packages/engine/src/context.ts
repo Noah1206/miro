@@ -1,6 +1,6 @@
 import { prompts } from '@miro/providers'
 import { POLICY } from '@miro/config'
-import { CALL_MODE_RULES, MOOD_GUIDE, describeRelationship, groupByLayer, retrieveMemories, selectLore } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, groupByLayer, moodGuide, retrieveMemories, selectLore } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock,
 } from '@miro/domain'
@@ -314,7 +314,7 @@ function buildPrompt(
   const state = s.characterState
   if (state) {
     parts.push('', '## 지금 기분 (내부 상태 — 대사로 설명하지 말고 태도로, 채팅에서는 속마음으로도 드러낼 것)')
-    parts.push(`${state.mood}: ${MOOD_GUIDE[state.mood]}`)
+    parts.push(`${state.mood}: ${moodGuide(state.mood, s.character.personality.relationshipProfile)}`)
     if (state.stress >= 60) parts.push('스트레스가 높다. 말이 짧아지고 먼저 묻지 않는다.')
     for (const g of state.currentGoals) parts.push(`지금 하고 싶은 것: ${g}`)
     for (const t of state.currentThoughts) parts.push(`속마음: ${t}`)

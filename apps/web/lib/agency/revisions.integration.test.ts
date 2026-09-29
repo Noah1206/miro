@@ -22,6 +22,8 @@ vi.mock('@/lib/analytics/track', () => ({ track: async () => {} }))
 vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
 vi.mock('next/navigation', () => ({ redirect: (url: string) => { throw new Error(`REDIRECT:${url}`) }, notFound: () => { throw new Error('NOT_FOUND') } }))
 vi.mock('@/lib/defer', () => ({ afterResponse: async (task: () => Promise<unknown>) => { effects.tasks.push(task) } }))
+// 관계 성격표도 저장 뒤 작업이지만 이 파일은 자율성 컴파일 예약만 센다.
+vi.mock('@/lib/relationship-profile', () => ({ scheduleRelationshipProfile: async () => {} }))
 // Synthetic recorded extraction exercises the actual compiler, lease worker and database; never a paid provider.
 vi.mock('@/lib/simulation/mock-llm', () => ({ resolveRpLLM: (_name: string, context: Record<string, unknown>) => {
   effects.contexts.push(context)

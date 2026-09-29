@@ -1,6 +1,8 @@
 'use client'
 import { introDialogue, sampleDialogue } from '@/lib/intro-dialogue'
 import { ContactSettings, RelationshipSettings } from './creation-settings'
+import { ProfileSettings, type ProfileStatus } from './profile-settings'
+import type { RelationshipProfile } from '@miro/domain'
 import type { ContactCapabilities } from '@/lib/reality/channels'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -28,6 +30,9 @@ export type FormInitial = {
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
   /** 친해지는 곡선. '' 이면 성향값으로 정한다. */
   bonding: string
+  /** 관계 성격표 — 저장 때 AI 가 성격 설명에서 만들고 여기서 고친다. 만들기 화면에는 아직 없다. */
+  relationshipProfile: RelationshipProfile | null
+  profileStatus: ProfileStatus
   relationshipKeywords: string[]
   contactEnabled: boolean; contactFrequency: number; initiativeLevel: number; replyDelayMinutes: number
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
@@ -48,6 +53,7 @@ export const EMPTY: FormInitial = {
   eyes: '', nose: '', jaw: '', skin: '', distinctive: '',
   hairColor: '', hairLength: '', hairStyle: '', expression: '', styleTags: [],
   stage: 'stranger', trust: 30, attraction: 10, emotionalDistance: 60, attachment: 10, protectiveness: 20, relJealousy: 0, bonding: '',
+  relationshipProfile: null, profileStatus: 'none',
   relationshipKeywords: [],
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
@@ -363,6 +369,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {experienceType === 'reality' && <Panel id="relationship" show={tab === 'relationship'}>
           <Section title="시작 관계" subtitle="처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.">
             <RelationshipSettings initial={i} />
+          </Section>
+          <Section title="관계 성격" subtitle="같은 일에도 이 캐릭터가 어떻게 반응하고, 어떤 속도로 가까워지는지예요.">
+            <ProfileSettings profile={i.relationshipProfile} status={i.profileStatus} />
           </Section>
         </Panel>}
 

@@ -14,6 +14,7 @@ import { parseCharacterForm } from '@/app/(main)/create/parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
 import { selectableVoice } from '@/lib/voice'
+import { scheduleRelationshipProfile } from '@/lib/relationship-profile'
 
 /**
  * 편집 저장. 만들기와 같은 폼, 같은 읽는 법(parse.ts).
@@ -78,6 +79,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     return { sessionId: session!.id, revisionId: revision?.id }
   })
   if (result.revisionId) await scheduleAgencyCompilation(result.revisionId, user.id)
+  if (owned.character.experienceType === 'reality') await scheduleRelationshipProfile(characterId, user.id)
   const sessionId = result.sessionId
 
   revalidatePath(`/character/${characterId}`)

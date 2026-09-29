@@ -2,6 +2,7 @@ import { POLICY } from '@miro/config'
 import { modulateByPersonality } from './apply'
 import { RELATIONSHIP_DIMENSIONS, type RelationshipDelta } from './types'
 import type { SemanticEvent, SemanticEventType } from './semantic'
+import { reactionFactor, type RelationshipProfile } from './profile'
 
 /**
  * Relationship Rules — 의미 이벤트가 관계를 얼마나 움직이는지는 여기 숫자가 정한다. LLM 이 아니다.
@@ -32,18 +33,20 @@ const DECAY: RelationshipDelta = { jealousy: -2 }
 /** LLM 이 제안한 delta 는 이만큼만 '뉘앙스' 로 얹을 수 있다. 큰 변화는 오직 규칙에서 나온다. */
 export const LLM_NUANCE_LIMIT = 3
 
-/** 의미 이벤트 → 코드가 정한 delta. */
+/** 의미 이벤트 → 코드가 정한 delta. 관계 성격표가 있으면 사건마다 이 캐릭터가 받아들이는 세기(0~2배, 싫어함은 반대로 절반)를 곱한다. */
 export function deltaFromSemanticEvents(
   events: SemanticEvent[],
   personality: { jealousy: number; emotionalExpression: number },
+  profile?: RelationshipProfile | null,
 ): RelationshipDelta {
   const sum: RelationshipDelta = { ...DECAY }
   for (const e of events) {
     const rule = RELATIONSHIP_RULES[e.type]
+    const factor = reactionFactor(profile, e.type)
     for (const dim of RELATIONSHIP_DIMENSIONS) {
       const v = rule[dim]
-      if (v === undefined) continue
-      sum[dim] = (sum[dim] ?? 0) + v * e.confidence
+      if (v === undefined || factor === 0) continue
+      sum[dim] = (sum[dim] ?? 0) + v * e.confidence * factor
     }
   }
   const modulated = modulateByPersonality(sum, personality)
