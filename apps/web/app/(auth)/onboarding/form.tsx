@@ -134,20 +134,14 @@ export function OnboardingForm() {
           {step === 5 && <BirthDateField value={birthDate} onChange={setBirthDate} invalid={!!error} />}
 
           {step === 6 && (
-            <div className="stack" style={{ gap: 2 }}>
-              <CheckRow checked={allOn} onToggle={() => agreeAll(!allOn)} title={t('전체 동의')} strong />
-              <hr style={{ border: 0, borderTop: '1px solid var(--color-border)', margin: '6px 0' }} />
+            // 약관은 글자 줄로 — 토스 약관 동의 화면처럼(2026-09-30 요청): 위에 큰 '전체 동의'(동그라미 체크), 아래에 항목 줄(작은 체크 + 글자 + 보기 화살표).
+            <div>
+              <TermsCheck all checked={allOn} title={t('전체 동의')} onToggle={() => agreeAll(!allOn)} />
+              <hr style={{ border: 0, borderTop: '1px solid var(--color-border)', margin: '8px 0' }} />
               {TERMS.map((item) => (
-                <div key={item.key} style={{ display: 'flex', alignItems: 'center' }}>
-                  <CheckRow checked={!!checked[item.key]} onToggle={() => setChecked((c) => ({ ...c, [item.key]: !c[item.key] }))}
-                    title={t(item.title)} sub={'sub' in item ? t(item.sub) : undefined} />
-                  {'href' in item && (
-                    <a href={item.href} target="_blank" rel="noreferrer" aria-label={t('{title} 전문 보기', { title: t(item.title) })}
-                      style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, flexShrink: 0, color: 'var(--color-text-tertiary)' }}>
-                      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                    </a>
-                  )}
-                </div>
+                <TermsCheck key={item.key} checked={!!checked[item.key]} title={t(item.title)} sub={'sub' in item ? t(item.sub) : undefined}
+                  onToggle={() => setChecked((c) => ({ ...c, [item.key]: !c[item.key] }))}
+                  link={'href' in item ? { href: item.href, label: t('{title} 전문 보기', { title: t(item.title) }) } : undefined} />
               ))}
             </div>
           )}
@@ -234,28 +228,44 @@ function Option({ role, selected, dimmed, title, sub, lang, center, icon, onClic
   )
 }
 
-/** 체크 표시 + 항목명이 하나의 버튼. 꺼짐 = 빈 박스, 켜짐 = 흰 체크 (옛 약관 화면과 같은 모양). */
-function CheckRow({ checked, onToggle, title, sub, strong }: { checked: boolean; onToggle: () => void; title: string; sub?: string; strong?: boolean }) {
+/**
+ * 약관 한 줄(토스 약관 동의 화면 방식). 전체 동의는 큰 동그라미 체크 + 굵은 글자, 항목은 작은 체크 + 글자.
+ * 켜지면 체크와 글자가 흰색으로 — 꺼져 있으면 옅은 회색. 문서가 있으면 오른쪽 끝에 보기 화살표(버튼 밖 링크).
+ */
+function TermsCheck({ all, checked, title, sub, link, onToggle }: {
+  all?: boolean; checked: boolean; title: string; sub?: string; link?: { href: string; label: string }; onToggle: () => void
+}) {
   const reduce = useReducedMotion()
+  const on = checked ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)'
   return (
-    <motion.button type="button" role="checkbox" aria-checked={checked} onClick={onToggle}
-      whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
-      style={{
-        flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
-        background: 'transparent', border: 0, padding: '10px 4px', minHeight: 48, cursor: 'pointer',
-        borderRadius: 'var(--radius-sm)', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
-      }}>
-      <motion.svg aria-hidden viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-        animate={{ stroke: checked ? 'var(--color-white)' : 'var(--color-border-strong)', scale: checked && !reduce ? [1, 1.18, 1] : 1 }}
-        transition={{ duration: reduce ? 0 : 0.34, ease: ease.enter, times: [0, 0.45, 1] }}
-        style={{ width: 20, height: 20, flexShrink: 0 }}>
-        {checked ? <path d="M20 6 9 17l-5-5" /> : <rect x="4" y="4" width="16" height="16" rx="3" strokeWidth="2" />}
-      </motion.svg>
-      <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
-        <span className="t-body" style={{ color: checked ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', fontWeight: strong ? 'var(--weight-semibold)' : undefined }}>{title}</span>
-        {sub && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</span>}
-      </span>
-    </motion.button>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <motion.button type="button" role="checkbox" aria-checked={checked} onClick={onToggle}
+        whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
+        style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: sub ? 'flex-start' : 'center', gap: all ? 12 : 10, textAlign: 'left',
+          minHeight: all ? 56 : 44, padding: all ? '10px 0' : '8px 0', background: 'none', border: 0, cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+        {all ? (
+          <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 26, height: 26, flexShrink: 0, borderRadius: 13,
+            background: checked ? 'var(--color-white)' : 'var(--color-surface-3)', transition: 'background var(--motion-fast) var(--ease-standard)' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-black)' : 'var(--color-text-tertiary)'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+          </span>
+        ) : (
+          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ flexShrink: 0, marginTop: sub ? 1 : 0, transition: 'stroke var(--motion-fast) var(--ease-standard)' }}><path d="M20 6 9 17l-5-5" /></svg>
+        )}
+        <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
+          <span className={all ? 't-body-lg' : 't-body'} style={{ color: all ? 'var(--color-text-primary)' : on, fontWeight: all ? 'var(--weight-bold)' : undefined,
+            transition: 'color var(--motion-fast) var(--ease-standard)' }}>{title}</span>
+          {sub && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</span>}
+        </span>
+      </motion.button>
+      {link && (
+        <a href={link.href} target="_blank" rel="noreferrer" aria-label={link.label}
+          style={{ display: 'grid', placeItems: 'center', width: 36, height: 44, marginRight: -10, flexShrink: 0, color: 'var(--color-text-tertiary)' }}>
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+        </a>
+      )}
+    </div>
   )
 }
 
