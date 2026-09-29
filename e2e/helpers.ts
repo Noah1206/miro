@@ -1,9 +1,9 @@
 import { expect, type Page } from '@playwright/test'
 
 /**
- * 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 약관까지 통과한다. 사용한 이메일을 돌려준다.
- * 채팅·문자 화면은 페르소나가 없으면 페르소나 화면으로 보낸다(2026-09-29) — 그 흐름을 시험하지 않는 테스트를 위해
- * 기본으로 페르소나를 만들어 둔다. 페르소나 흐름을 시험하는 테스트는 { persona: false }.
+ * 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 온보딩(언어·닉네임·성별·취향·생년월일·약관)까지 통과한다. 사용한 이메일을 돌려준다.
+ * 온보딩이 닉네임으로 페르소나를 만들고, 끝나면 가입 선물 시트가 뜬다 — 닫고 돌려준다.
+ * 페르소나 관문을 시험하는 테스트는 { persona: false } — 온보딩이 만든 페르소나를 개발 API 로 지운다.
  */
 export async function signUp(page: Page, base: string, email = `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`, opts: { persona?: boolean } = {}): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
@@ -12,14 +12,38 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   await expect(page).toHaveURL(/\/auth\/mock\/google/)
   await page.getByPlaceholder('이메일').fill(email)
   await page.getByRole('button', { name: '계속' }).click()
-  await expect(page).toHaveURL(/\/terms/)
-  // 동의는 실제로 체크해야 열린다 — '모두 동의' 로 한 번에 켜고 진행한다.
-  await page.getByRole('button', { name: '모두 동의하고 가입하기' }).click()
-  await page.getByRole('button', { name: '다음으로 진행하기' }).click()
+  await expect(page).toHaveURL(/\/onboarding/)
+  await passOnboardingProfile(page)
+  // 약관은 '전체 동의하고 시작하기' 로 한 번에 켜고 진행한다.
+  await page.getByRole('button', { name: '전체 동의하고 시작하기' }).click()
   // Wait for the signup action and redirect before a test starts another navigation.
-  await expect(page).not.toHaveURL(/\/terms(?:\?|$)/)
-  if (opts.persona !== false) await createPersona(page)
+  await expect(page).not.toHaveURL(/\/onboarding/)
+  await closeWelcome(page)
+  if (opts.persona === false) {
+    const ok = await page.evaluate(async () => (await fetch('/api/dev/persona', { method: 'DELETE' })).ok)
+    expect(ok).toBe(true)
+  }
   return email
+}
+
+/** 온보딩 1~5단계(언어 → 닉네임 → 성별 → 취향 → 생년월일 건너뛰기). 약관 단계 앞에서 멈춘다. */
+export async function passOnboardingProfile(page: Page, nickname = '테스터') {
+  await page.getByRole('radio', { name: '한국어' }).click()
+  await page.getByLabel('닉네임').fill(nickname)
+  await page.getByRole('button', { name: '다음' }).click()
+  await page.getByRole('radio', { name: '밝히지 않음' }).click()
+  await page.getByRole('checkbox', { name: /HL/ }).click()
+  await page.getByRole('button', { name: '다음' }).click()
+  await page.getByRole('button', { name: '건너뛰기' }).click()
+  await expect(page.getByRole('heading', { name: '시작하기 전에' })).toBeVisible()
+}
+
+/** 가입 선물 시트를 닫는다 — 닫으면 주소의 ?welcome=1 도 지워진다. */
+export async function closeWelcome(page: Page) {
+  const sheet = page.locator('[data-welcome-sheet]')
+  await expect(sheet).toBeVisible()
+  await sheet.getByRole('button', { name: '대화 시작하기' }).click()
+  await expect(sheet).toBeHidden()
 }
 
 /** 로그인한 사용자의 페르소나를 개발 API 로 만든다 — 화면을 옮기지 않는다. */

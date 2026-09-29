@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { OAUTH_LABEL, resolveOAuth } from '@miro/providers'
 import { Button, Field, Input, Notice, Page, PageHeader } from '@/components/ui'
 import { isProvider } from '@/lib/oauth-state'
+import { getT } from '@/lib/i18n/server'
 
 /**
  * 제공자 미구성 시의 동의 화면 시뮬레이션. 실제 키가 있으면 이 화면은 존재하지 않는다.
@@ -13,16 +14,17 @@ export default async function MockConsent({ params, searchParams }: { params: Pr
   if (resolveOAuth(provider).info.mode !== 'mock') notFound()
   if (process.env.VERCEL_ENV === 'production') notFound()
   const { state = '', redirect_uri = '' } = await searchParams
+  const t = await getT()
   return (
     <Page style={{ maxWidth: 420, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <PageHeader align="center" eyebrow="개발용 시뮬레이션" title={`${OAUTH_LABEL[provider]} 로그인`} lead="실제 인증이 아닙니다. 아래 이메일로 계정을 만들거나 이어서 들어갑니다." />
+      <PageHeader align="center" eyebrow={t('개발용 시뮬레이션')} title={t('{provider} 로그인', { provider: OAUTH_LABEL[provider] })} lead={t('실제 인증이 아닙니다. 아래 이메일로 계정을 만들거나 이어서 들어갑니다.')} />
       <Notice style={{ marginBottom: 16 }}>⚠ {resolveOAuth(provider).info.notice}</Notice>
       <form method="GET" action={redirect_uri} className="stack" style={{ gap: 12 }}>
         <input type="hidden" name="state" value={state} />
-        <Field label="이메일"><Input name="email" type="email" placeholder="이메일" required autoComplete="email" /></Field>
-        <Field label="이름 (선택)"><Input name="name" placeholder="표시 이름" autoComplete="name" /></Field>
+        <Field label={t('이메일')}><Input name="email" type="email" placeholder={t('이메일')} required autoComplete="email" /></Field>
+        <Field label={t('이름 (선택)')}><Input name="name" placeholder={t('표시 이름')} autoComplete="name" /></Field>
         <MockCode />
-        <Button type="submit" variant="primary" size="lg" full>계속</Button>
+        <Button type="submit" variant="primary" size="lg" full>{t('계속')}</Button>
       </form>
     </Page>
   )

@@ -1,8 +1,12 @@
+import { INTL_LOCALE, type Language } from '@/lib/i18n'
+
 /**
  * 96.1만 처럼 짧게. 서버·클라이언트 양쪽에서 쓰므로 'use client' 파일에 두지 않는다
  * (클라이언트 모듈의 함수는 서버에서 호출할 수 없다).
+ * language 를 주면(한국어 외) 그 언어의 짧은 표기(1.2K, 1.2万).
  */
-export function compact(n: number): string {
+export function compact(n: number, language?: Language): string {
+  if (language && language !== 'ko') return new Intl.NumberFormat(INTL_LOCALE[language], { notation: 'compact', maximumFractionDigits: 1 }).format(n)
   if (n >= 10_000) return `${(n / 10_000).toFixed(1).replace(/\.0$/, '')}만`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}천`
   return String(n)

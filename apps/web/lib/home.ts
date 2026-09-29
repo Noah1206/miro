@@ -4,6 +4,7 @@ import { db, characters, roleplaySessions, contactProfiles } from '@miro/db'
 import { listOfficials, type ExperienceType, type OfficialCard } from './characters'
 import { indexedDiscoveryEnabled, indexedSearchMatch, rankedPopularIds } from './search-index'
 import { searchGenres, searchNeedle } from './search-params'
+import { msg } from '@/lib/i18n'
 
 export type HomeCard = OfficialCard & {
   /** 실제로 이 캐릭터와 대화한 사람 수. 초기에는 0 이며 그때는 표시하지 않는다. */
@@ -30,7 +31,7 @@ export async function homeRows(): Promise<HomeRow[]> {
   const { items } = await homePage(null)
 
   const rows: HomeRow[] = [
-    { key: 'shared', title: '전체 이야기', items },
+    { key: 'shared', title: msg('전체 이야기'), items },
   ]
   return rows.filter((r) => r.items.length > 0)
 }

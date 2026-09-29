@@ -1,6 +1,7 @@
 'use client'
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
+import { useLanguage } from '@/lib/i18n/client'
 import { CharacterVisual } from '@/components/character-visual'
 import { press, spring } from '@/lib/motion/tokens'
 import { compact } from '@/lib/format'
@@ -34,6 +35,7 @@ export type CardCharacter = {
  */
 export function CharacterCard({ c }: { c: CardCharacter }) {
   const reduce = useReducedMotion()
+  const language = useLanguage()
   const slug = c.slug ?? c.id
   const tags = hashtags(c)
   return (
@@ -56,7 +58,7 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
             <svg aria-hidden width="11" height="11" viewBox="0 0 24 24" fill="#fff">
               <path d="M12 3C6.9 3 2.8 6.6 2.8 11c0 2.5 1.3 4.7 3.4 6.2L5 21.4l4.6-2.2c.8.2 1.6.3 2.4.3 5.1 0 9.2-3.6 9.2-8s-4.1-8.5-9.2-8.5z" />
             </svg>
-            {compact(c.plays)}
+            {compact(c.plays, language)}
           </span>
         )}
 

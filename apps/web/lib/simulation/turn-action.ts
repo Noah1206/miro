@@ -5,6 +5,7 @@ import { runConversationTurn } from '@/lib/simulation/turn'
 import { clientIp } from '@/lib/alpha/session'
 import { exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
+import { msg } from '@/lib/i18n'
 
 export type TurnMsg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
@@ -41,7 +42,7 @@ export async function turnFromForm(userId: string, form: FormData, opts: { mode:
   if (!r.ok) {
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
-      case 'model_unavailable': return fail('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.')
+      case 'model_unavailable': return fail(msg('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.'))
       case 'budget': return fail(r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
       case 'too_long': return fail(COPY.error.tooLong(2000))
       case 'not_found': return fail(COPY.error.sessionNotFound)
@@ -55,7 +56,7 @@ export async function turnFromForm(userId: string, form: FormData, opts: { mode:
       }
       // 답을 못 만든 것은 유저가 고칠 수 있는 일이 아니다. 오류 문구 대신 기다림을 이어 둔다.
       case 'generation': return { error: null, notice: null, limit: null, keepWaiting: true }
-      case 'safety': return fail('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.')
+      case 'safety': return fail(msg('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.'))
       default: return { error: null, notice: null, limit: null }
     }
   }

@@ -22,6 +22,8 @@ import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
 import { evaluateAgencyReality } from './agency'
 import { characterAvailability } from './routine'
+import { msg } from '@/lib/i18n'
+import { translateTo } from '@/lib/i18n/server'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -208,9 +210,10 @@ export async function evaluateSession(
       if ((e as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'duplicate' }
       throw e
     }
+    const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, row.session.userId)).limit(1)
     await pushToUser(row.session.userId, {
       title: presented.senderLabel,
-      body: channel === 'video' ? '영상통화 수신' : '전화 수신',
+      body: translateTo(settings?.language, channel === 'video' ? msg('영상통화 수신') : msg('전화 수신')),
       url: `/messages/${sessionId}`, tag: `call:${sessionId}`,
     })
     void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })

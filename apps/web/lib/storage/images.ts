@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
+import { msg } from '@/lib/i18n'
 
 /**
  * 캐릭터 사진 업로드 — Supabase Storage 의 `character-images` 버킷(공개 읽기).
@@ -22,18 +23,18 @@ export type UploadResult = { ok: true; url: string } | { ok: false; error: strin
 
 /** 파일 하나를 올리고 공개 URL을 돌려준다. 저장소가 설정되지 않았으면 명확히 실패한다 — 조용히 무시하지 않는다. */
 export async function uploadCharacterImage(file: File, ownerId: string): Promise<UploadResult> {
-  if (!ALLOWED.has(file.type)) return { ok: false, error: '지원하지 않는 이미지 형식이에요.' }
-  if (file.size > MAX_BYTES) return { ok: false, error: '5MB 이하 사진만 올릴 수 있어요.' }
+  if (!ALLOWED.has(file.type)) return { ok: false, error: msg('지원하지 않는 이미지 형식이에요.') }
+  if (file.size > MAX_BYTES) return { ok: false, error: msg('5MB 이하 사진만 올릴 수 있어요.') }
 
   const supabase = storageClient()
-  if (!supabase) return { ok: false, error: '이미지 저장소가 설정되지 않았어요.' }
+  if (!supabase) return { ok: false, error: msg('이미지 저장소가 설정되지 않았어요.') }
 
   const ext = (file.type.split('/')[1] ?? 'jpg').replace('jpeg', 'jpg')
   const path = `${ownerId}/${randomUUID()}.${ext}`
   const bytes = new Uint8Array(await file.arrayBuffer())
 
   const { error } = await supabase.storage.from(BUCKET).upload(path, bytes, { contentType: file.type, upsert: false })
-  if (error) return { ok: false, error: '사진을 올리지 못했어요.' }
+  if (error) return { ok: false, error: msg('사진을 올리지 못했어요.') }
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path)
   return { ok: true, url: data.publicUrl }

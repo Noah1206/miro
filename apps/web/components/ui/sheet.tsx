@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'motion/
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { spring, tween } from '@/lib/motion/tokens'
 import { useFocusTrap } from '@/lib/motion/use-focus-trap'
+import { useT } from '@/lib/i18n/client'
 
 type Props = {
   open: boolean
@@ -29,6 +30,7 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
   const choice = variant === 'choice'
   const ref = useRef<HTMLDivElement>(null)
   const titleId = useId()
+  const t = useT()
   useFocusTrap(ref, open)
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
           <motion.div key="backdrop" onClick={onClose} aria-hidden
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.enter}
             style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.55)' }} />
-          <motion.div key="sheet" className="app-fixed" ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : (label ?? '시트')}
+          <motion.div key="sheet" className="app-fixed" ref={ref} role="dialog" aria-modal tabIndex={-1} aria-labelledby={title ? titleId : undefined} aria-label={title ? undefined : (label ?? t('시트'))}
             initial={reduce ? { y: 0, opacity: 0 } : { y: '100%' }}
             animate={reduce ? { y: 0, opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0, transition: tween.exit } : { y: '100%', transition: { ...tween.exit, duration: 0.2 } }}
@@ -79,7 +81,7 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
                 {headerAction}
                 {/* 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7) */}
-                <button type="button" onClick={onClose} aria-label="닫기" style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
+                <button type="button" onClick={onClose} aria-label={t('닫기')} style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
                   <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
                 </button>
               </div>

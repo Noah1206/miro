@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
 import { Pressable } from '@/components/ui'
 import { ease, spring, tween } from '@/lib/motion/tokens'
+import { useT } from '@/lib/i18n/client'
 
 /**
  * Timeline: 배경 → 아바타(scale) → 이름 → 이유 → 버튼. 각 단계는 variants 의 delay 로 조립된다.
@@ -12,16 +13,17 @@ export function IncomingCallScreen({ channel, name, reason, acceptAction, declin
   channel: 'voice' | 'video'; name: string; reason: string | null; acceptAction: () => Promise<void>; declineAction: () => Promise<void>
 }) {
   const video = channel === 'video'
+  const t = useT()
   const accept = useRef<HTMLButtonElement>(null)
   useEffect(() => { accept.current?.focus({ preventScroll: true }) }, [])   // 전화가 오면 초점도 온다
   // 받기·거절은 한 번만 — 제출이 시작되면 두 버튼을 함께 잠근다 (패턴 문서 §7.2).
   const [acting, setActing] = useState<'accept' | 'decline' | null>(null)
   const at = (d: number) => ({ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0, transition: { ...tween.enter, delay: d } } })
   return (
-    <motion.div data-incoming-call={channel} role="dialog" aria-label={video ? '수신 영상통화' : '수신 음성통화'}
+    <motion.div data-incoming-call={channel} role="dialog" aria-label={video ? t('수신 영상통화') : t('수신 음성통화')}
       initial="hidden" animate="show" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.3, ease: ease.enter } } }}
       style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 14, padding: 24, background: 'var(--color-bg-deep)' }}>
-      <motion.p variants={at(0.15)} className="t-micro" style={{ color: video ? 'var(--color-accent-text)' : 'var(--color-text-secondary)' }}>{video ? '● 영상통화 수신' : '음성통화 수신'}</motion.p>
+      <motion.p variants={at(0.15)} className="t-micro" style={{ color: video ? 'var(--color-accent-text)' : 'var(--color-text-secondary)' }}>{video ? t('● 영상통화 수신') : t('음성통화 수신')}</motion.p>
       <motion.div variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1, transition: { ...spring.default, delay: 0.25 } } }}
         style={{ width: 120, height: 120, borderRadius: video ? 'var(--radius-lg)' : 999, background: 'var(--color-surface-2)', border: `1px solid ${video ? 'var(--color-white)' : 'var(--color-border-strong)'}`, display: 'grid', placeItems: 'center' }}>
         <span className="t-name" style={{ fontSize: 44, color: 'var(--color-text-tertiary)' }}>{name.slice(0, 1)}</span>
@@ -32,13 +34,13 @@ export function IncomingCallScreen({ channel, name, reason, acceptAction, declin
         <form action={declineAction} onSubmit={() => setActing('decline')}>
           <Pressable type="submit" disabled={acting !== null} aria-busy={acting === 'decline' || undefined}
             style={{ ...round('var(--color-danger-strong)', '#fff'), opacity: acting && acting !== 'decline' ? 0.5 : 1 }}>
-            {acting === 'decline' ? '끊는 중…' : '거절'}
+            {acting === 'decline' ? t('끊는 중…') : t('거절')}
           </Pressable>
         </form>
         <form action={acceptAction} onSubmit={() => setActing('accept')}>
           <Pressable ref={accept} type="submit" disabled={acting !== null} aria-busy={acting === 'accept' || undefined}
             style={{ ...round('#FFFFFF', '#000'), opacity: acting && acting !== 'accept' ? 0.5 : 1 }}>
-            {acting === 'accept' ? '연결 중…' : video ? '영상으로 받기' : '받기'}
+            {acting === 'accept' ? t('연결 중…') : video ? t('영상으로 받기') : t('받기')}
           </Pressable>
         </form>
       </motion.div>

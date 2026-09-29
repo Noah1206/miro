@@ -30,7 +30,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       from ${usageLedger} where ${usageLedger.userId} = ${userId}
       union all
       select 'grant:' || ${rechargeGrants.id}::text, ${rechargeGrants.createdAt},
-        case ${rechargeGrants.source} when 'purchase' then '크레딧 충전' else '크레딧 지급' end,
+        case when ${rechargeGrants.source} = 'purchase' then '크레딧 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' else '크레딧 지급' end,
         ${rechargeGrants.amount} - ${rechargeGrants.refunded},
         case when ${rechargeGrants.refunded} > 0 then '회수 ' || ${rechargeGrants.refunded}::text
           when ${rechargeGrants.expiresAt} is not null then to_char(${rechargeGrants.expiresAt} at time zone 'Asia/Seoul', 'YYYY.MM.DD') || '까지'

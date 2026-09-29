@@ -9,6 +9,7 @@ import { measured } from '@/lib/observe'
 import { searchGenres, searchQuery, searchUrl } from '@/lib/search-params'
 import { notFound, redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import { getT } from '@/lib/i18n/server'
 
 async function SearchResults({ viewerId, q, tag, genres }: { viewerId: string | null; q: string; tag: string | null; genres: string[] }) {
   let failed = false
@@ -28,11 +29,12 @@ export default async function HomeSearch({ searchParams }: { searchParams: Promi
   if (!genres) notFound()
   if (params.type !== undefined || JSON.stringify(rawGenres) !== JSON.stringify(genres)) redirect(searchUrl('/home/search', q, tag, genres))
   const viewerId = user?.id ?? null
+  const t = await getT()
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
       <SearchHeader q={q} tag={tag} genres={genres} viewerId={viewerId} base="/home/search">
-        <TransitionLink href="/home" direction="back" aria-label="홈으로 돌아가기" className="hit"
+        <TransitionLink href="/home" direction="back" aria-label={t('홈으로 돌아가기')} className="hit"
           style={{ display: 'grid', placeItems: 'center', width: 40, height: 40, marginLeft: 'calc(-1 * var(--gutter))', color: 'var(--color-text-primary)' }}>
           <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5 8 12l7 7" /></svg>
         </TransitionLink>

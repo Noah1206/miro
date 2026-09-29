@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { LogoIntro, Notice, Stagger, StaggerItem } from '@/components/ui'
 import { spring, stagger } from '@/lib/motion/tokens'
+import { useT } from '@/lib/i18n/client'
 
 export type SocialProvider = { id: 'google' | 'kakao'; label: string }
 
@@ -13,17 +14,18 @@ export type SocialProvider = { id: 'google' | 'kakao'; label: string }
  */
 export function LoginStage({ providers, notice, error, next }: { providers: SocialProvider[]; notice: string | null; error: string | null; next?: string | null }) {
   const reduce = useReducedMotion()
+  const t = useT()
   const [ready, setReady] = useState(false)
   useEffect(() => { if (reduce) setReady(true) }, [reduce])
   return (
     <main id="main" tabIndex={-1} className="page page--immersive" style={{ minHeight: '100dvh', background: 'var(--color-bg-deep)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 var(--space-5) var(--space-7)', outline: 'none' }}>
-      <h1 className="sr-only">MIRO 로그인</h1>
+      <h1 className="sr-only">{t('MIRO 로그인')}</h1>
       <motion.div layout transition={spring.gentle} style={{ marginBottom: ready ? 'var(--space-9)' : 0 }}>
         <LogoIntro onDone={() => setReady(true)} />
       </motion.div>
       {ready && (
         <Stagger gap={stagger.normal} delay={0.25} style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {error && <Notice role="alert" tone="danger">{error}</Notice>}
+          {error && <Notice role="alert" tone="danger">{t(error)}</Notice>}
           {notice && <Notice>⚠ {notice}</Notice>}
           {providers.map((p) => <StaggerItem key={p.id}><SocialButton {...p} next={next} /></StaggerItem>)}
         </Stagger>
@@ -37,6 +39,7 @@ export function LoginStage({ providers, notice, error, next }: { providers: Soci
  * 초록을 아이콘에만 쓰고 글자는 어두운 면 위 흰색으로 둔다 (AA).
  */
 function SocialButton({ id, label, next }: SocialProvider & { next?: string | null }) {
+  const t = useT()
   const style: Record<SocialProvider['id'], React.CSSProperties> = {
     google: { background: '#FFFFFF', color: '#111111', border: '1px solid #FFFFFF' },
     kakao: { background: '#FEE500', color: '#000000', border: '1px solid #FEE500' },
@@ -44,7 +47,7 @@ function SocialButton({ id, label, next }: SocialProvider & { next?: string | nu
   return (
     <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 52, padding: '12px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
       <Icon id={id} />
-      <span>{label}로 계속하기</span>
+      <span>{t('{provider}로 계속하기', { provider: label })}</span>
     </a>
   )
 }

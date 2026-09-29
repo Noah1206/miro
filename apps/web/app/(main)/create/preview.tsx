@@ -6,6 +6,7 @@ import { LikeButton, Rule, RealityStrip, SampleDialogue, Stat } from '../charact
 import { PhotoHero } from '../character/[slug]/hero'
 import { subject } from '@/lib/format'
 import type { ContactCapabilities } from '@/lib/reality/channels'
+import { useLanguage, useT } from '@/lib/i18n/client'
 
 /** 소개 페이지 미리보기에 필요한 값. 탭을 열 때 폼에서 한 번 읽는다. */
 export type Snapshot = {
@@ -53,58 +54,60 @@ export function snapshot(form: HTMLFormElement): Snapshot {
  * 실제 페이지의 구조가 바뀌면 여기도 같이 바꿔야 한다 — 둘이 어긋나면 미리보기가 거짓말을 한다.
  */
 export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; can: ContactCapabilities; experienceType: 'chat' | 'reality' }) {
+  const t = useT()
+  const language = useLanguage()
   if (!d) return null
-  const name = d.name || '이름'
+  const name = d.name || t('이름')
   // 상세와 같은 문장 규칙: '32세 · 한국 · 검사.' / 'MBTI는 INTJ.'
   const profile: string[] = [
     [
-      [[d.age && `${d.age}세`, d.nationality, d.occupation].filter(Boolean).join(' · '), '.'].join(''),
-      d.mbti ? `MBTI는 ${d.mbti}.` : '',
+      [[d.age && t('{age}세', { age: d.age }), d.nationality, d.occupation].filter(Boolean).join(' · '), '.'].join(''),
+      d.mbti ? t('MBTI는 {mbti}.', { mbti: d.mbti }) : '',
     ].filter((x) => x && x !== '.').join(' '),
   ].filter((line) => line.trim())
   const pill: React.CSSProperties = { position: 'absolute', top: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)', color: 'var(--color-text-primary)' }
 
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
-      <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{d.settings.isPublicOn ? '공개 게시하면 다른 사람에게 이렇게 보여요.' : '나만 볼 수 있는 캐릭터로 게시돼요.'}</p>
-      <div className="character-detail-theme" aria-label="소개 페이지 미리보기" style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: '#141416' }}>
+      <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{d.settings.isPublicOn ? t('공개 게시하면 다른 사람에게 이렇게 보여요.') : t('나만 볼 수 있는 캐릭터로 게시돼요.')}</p>
+      <div className="character-detail-theme" aria-label={t('소개 페이지 미리보기')} style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: '#141416' }}>
         {/* 상세와 같은 자리: 왼쪽 위 뒤로, 오른쪽 위 편집(주인에게만 보이는 것) */}
         <span aria-hidden style={{ ...pill, left: 16, padding: '0 10px', background: 'transparent', color: 'var(--color-text-secondary)' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
         </span>
-        <span aria-hidden className="t-caption" style={{ ...pill, right: 16, fontWeight: 'var(--weight-medium)' }}>편집</span>
+        <span aria-hidden className="t-caption" style={{ ...pill, right: 16, fontWeight: 'var(--weight-medium)' }}>{t('편집')}</span>
 
         <div style={{ position: 'relative' }}><PhotoHero name={name} accent={null} slug="preview" photos={[d.photo, ...d.gallery].filter((src): src is string => Boolean(src))} shared={false} /><div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton overlay /></div></div>
 
         <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
           <p className="t-hero t-name" style={{ marginBottom: 4, fontWeight: 800, letterSpacing: '-0.045em', color: d.name ? undefined : 'var(--color-text-tertiary)' }}>{name}</p>
           <p className="t-body-lg t-quote" style={{ color: d.tagline ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', lineHeight: 1.45, letterSpacing: '-0.025em', marginBottom: 6 }}>
-            {d.tagline || '소개 한 줄이 여기에 걸립니다.'}
+            {d.tagline || t('소개 한 줄이 여기에 걸립니다.')}
           </p>
           {d.keywords.length > 0 && (
-            <p className="t-caption" style={{ color: 'var(--color-white)', letterSpacing: '-0.025em', marginBottom: 10 }}>{d.keywords.map((t) => `#${t.replace(/\s+/g, '')}`).join(' ')}</p>
+            <p className="t-caption" style={{ color: 'var(--color-white)', letterSpacing: '-0.025em', marginBottom: 10 }}>{d.keywords.map((k) => `#${k.replace(/\s+/g, '')}`).join(' ')}</p>
           )}
           {/* 통계 칩 — 대화한 사람 수는 0 이라 상세처럼 숨긴다. 보관하기는 모양만. */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-            <Stat icon="comment" label="댓글 0" />
+            <Stat icon="comment" label={t('댓글 {n}', { n: 0 })} />
             <LikeButton />
 
           </div>
 
           {experienceType === 'reality' && <RealityStrip can={can} />}
           {experienceType === 'reality' && d.worldSetting && (
-            <Rule label="세계관">
+            <Rule label={t('세계관')}>
               <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{d.worldSetting}</p>
             </Rule>
           )}
           <CharacterSettingsView name={name} visual={d.settings.visual} contact={experienceType === 'reality' ? d.settings.contact : undefined} can={can} />
 
-          <Rule label="첫 장면">
+          <Rule label={t('첫 장면')}>
             <div className="detail-prose">
               <p className="t-body-lg t-quote" style={{ color: d.startingContext ? undefined : 'var(--color-text-tertiary)' }}>
-                {d.startingContext || '첫 장면을 아직 적지 않았어요.'}
+                {d.startingContext || t('첫 장면을 아직 적지 않았어요.')}
               </p>
-              <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{d.startingTime || '저녁'}부터 시작합니다.</p>
+              <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{t('{time}부터 시작합니다.', { time: d.startingTime || t('저녁') })}</p>
             </div>
             {d.dialogue.length > 0 && (
               <div style={{ marginTop: 18 }}><SampleDialogue name={name} portrait={d.photo} turns={d.dialogue} /></div>
@@ -112,30 +115,30 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
           </Rule>
 
           {(experienceType === 'reality' || profile.length > 0) && <div style={{ marginTop: 'var(--space-7)' }}>
-            <Accordion title="이 사람에 대해">
+            <Accordion title={t('이 사람에 대해')}>
               <div className="detail-prose">
                 {experienceType === 'reality' && <p className="t-body-lg" style={{ color: d.personality ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
-                  {d.personality || '성격을 아직 적지 않았어요.'}
+                  {d.personality || t('성격을 아직 적지 않았어요.')}
                 </p>}
                 {profile.map((line) => <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>)}
               </div>
             </Accordion>
           </div>}
 
-          <Rule label="댓글 0" action={<span className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>전체보기</span>}>
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>아직 댓글이 없어요.</p>
+          <Rule label={t('댓글 {n}', { n: 0 })} action={<span className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>{t('전체보기')}</span>}>
+            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('아직 댓글이 없어요.')}</p>
           </Rule>
         </div>
 
         {/* 비슷한 캐릭터 — 같은 분위기의 다른 캐릭터가 있을 때 여기에 실린다. */}
-        <section aria-label="비슷한 캐릭터" style={{ marginTop: 'var(--space-7)', padding: '0 var(--gutter)' }}>
-          <h2 className="t-title-3" style={{ marginBottom: 8 }}>{subject(name)} 마음에 들었다면</h2>
-          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>같은 분위기의 다른 캐릭터가 등록되어 있으면 여기에 실립니다.</p>
+        <section aria-label={t('비슷한 캐릭터')} style={{ marginTop: 'var(--space-7)', padding: '0 var(--gutter)' }}>
+          <h2 className="t-title-3" style={{ marginBottom: 8 }}>{t('{name} 마음에 들었다면', { name: language === 'ko' ? subject(name) : name })}</h2>
+          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('같은 분위기의 다른 캐릭터가 등록되어 있으면 여기에 실립니다.')}</p>
         </section>
 
         {/* 상세의 고정 하단 문 — 미리보기 안에서는 맨 아래에 */}
         <div aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--color-border-strong)', padding: '10px var(--gutter)', marginTop: 'var(--space-6)', background: '#141416' }}>
-          <div style={{ flex: 1 }}><Button type="button" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full disabled>대화 시작하기</Button></div>
+          <div style={{ flex: 1 }}><Button type="button" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full disabled>{t('대화 시작하기')}</Button></div>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
 import { countComments, listComments } from '@/lib/social'
 import { Back, Page } from '@/components/ui'
+import { getT } from '@/lib/i18n/server'
 import { CommentThread } from './thread'
 
 /**
@@ -13,6 +14,7 @@ export default async function CommentsPage({ params, searchParams }: {
   params: Promise<{ slug: string }>
   searchParams: Promise<{ sort?: string }>
 }) {
+  const t = await getT()
   const user = await currentUser()
   const { slug } = await params
   const { sort } = await searchParams
@@ -30,7 +32,7 @@ export default async function CommentsPage({ params, searchParams }: {
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
         <Back href={`/character/${slug}`} />
       </div>
-      <h1 className="t-title-1" style={{ marginBottom: 16 }}>{c.name}에게 남긴 댓글 ({count})</h1>
+      <h1 className="t-title-1" style={{ marginBottom: 16 }}>{t('{name}에게 남긴 댓글 ({count})', { name: c.name, count })}</h1>
       <CommentThread slug={slug} items={items} sort={activeSort} signedIn={Boolean(user)} />
     </Page>
   )

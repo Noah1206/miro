@@ -1,5 +1,7 @@
 import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
+import { eq } from 'drizzle-orm'
+import { db, userPersonas } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { savePersona } from '@/lib/persona'
 
@@ -14,4 +16,13 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
   const result = await savePersona(user.id, { name: body.name ?? '테스터', gender: body.gender, description: body.description })
   return result.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: result.error }, { status: 400 })
+}
+
+/** 개발/E2E 전용 — 페르소나를 지운다. 온보딩이 닉네임으로 페르소나를 만들기 때문에, 페르소나 관문을 시험할 때 지운다. */
+export async function DELETE() {
+  if (!devApiAllowed()) return NextResponse.json({ error: 'not found' }, { status: 404 })
+  const user = await currentUser()
+  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  await db.delete(userPersonas).where(eq(userPersonas.userId, user.id))
+  return NextResponse.json({ ok: true })
 }

@@ -12,6 +12,7 @@ import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
+import { useT } from '@/lib/i18n/client'
 
 export type Msg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
@@ -21,6 +22,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   mood?: Mood
 }) {
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
+  const t = useT()
   const { appended } = useTurns()
   const known = new Set(server.map((m) => m.id))
   const items = [...server, ...appended.filter((m) => !known.has(m.id))]
@@ -41,7 +43,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
 
   return (
-    <div role="log" aria-live="polite" aria-relevant="additions" aria-label={characterName + ' 대화'} className={styles.messages}>
+    <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}>
       <AnimatePresence initial={false}>
         {items.map((m) => (
           <Line key={m.id}>
@@ -58,6 +60,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow }: {
   m: Msg; characterName: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
+  const t = useT()
   const reality = m.blocks.find((b) => b.type === 'reality') as { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
   if (m.role === 'user') return <div className={styles.userRow}><p className={styles.userBubble}><Emphasis text={m.content} /></p></div>
   if (m.kind === 'hidden') return <p data-hidden-message className="t-caption" style={{ fontStyle: 'italic' }}>{m.content}</p>
@@ -69,7 +72,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       <Reportable id={m.id} kind="photo">
         {reality && <RealityTag sender={reality.senderLabel} channel={reality.channelLabel} />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={m.content} alt={reality?.caption ? `캐릭터가 보낸 사진 — ${reality.caption}` : '캐릭터가 보낸 사진'} style={{ maxWidth: '72%', borderRadius: 'var(--radius-md)' }} />
+        <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} style={{ maxWidth: '72%', borderRadius: 'var(--radius-md)' }} />
         {reality?.caption && <p className="t-caption t-quote">{reality.caption}</p>}
       </Reportable>
     )
@@ -92,6 +95,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
   // 장면 서술은 말풍선 밖, 인물의 행동·속마음·대사는 말풍선 안. 서술과 인물이 오가면 말풍선도 번갈아 생긴다.
+  const t = useT()
   const segments = segmentReply(m.blocks, m.content, name)
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
@@ -124,7 +128,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
               {seg.paragraphs.map((p) => (
                 <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
                   hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
-                  {p.kind === 'thought' && <span className="sr-only">속마음: </span>}
+                  {p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}
                   {line(p)}
                 </p>
               ))}
@@ -152,15 +156,16 @@ function RealityTag({ sender, channel }: { sender?: string; channel?: string }) 
  * 제스처만으로 접근되는 기능은 두지 않는다.
  */
 function Reportable({ id, kind, children }: { id: string; kind: 'message' | 'photo'; children: React.ReactNode }) {
+  const t = useT()
   const [menu, setMenu] = useState(false)
   const { handlers } = usePress({ onLongPress: () => setMenu(true) })
   const href = `/report?type=${kind}&id=${id}`
   return (
     <div {...handlers} className="stack" style={{ gap: 6, position: 'relative', touchAction: 'pan-y' }}>
       {children}
-      <TransitionLink href={href} aria-label="신고" className="t-micro hit" style={{ alignSelf: 'flex-start', textTransform: 'none', letterSpacing: 0, minHeight: 24, display: 'inline-flex', alignItems: 'center', padding: '0 6px', marginLeft: -6 }}>신고</TransitionLink>
+      <TransitionLink href={href} aria-label={t('신고')} className="t-micro hit" style={{ alignSelf: 'flex-start', textTransform: 'none', letterSpacing: 0, minHeight: 24, display: 'inline-flex', alignItems: 'center', padding: '0 6px', marginLeft: -6 }}>{t('신고')}</TransitionLink>
       <Popover open={menu} onClose={() => setMenu(false)}>
-        <MenuItem type="button" onClick={() => { setMenu(false); window.location.href = href }}>이 내용 신고</MenuItem>
+        <MenuItem type="button" onClick={() => { setMenu(false); window.location.href = href }}>{t('이 내용 신고')}</MenuItem>
       </Popover>
     </div>
   )

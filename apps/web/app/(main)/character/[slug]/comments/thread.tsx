@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from 'motion/react'
 import { Tabs, useToast } from '@/components/ui'
 import type { CommentItem } from '@/lib/social'
 import { duration, ease } from '@/lib/motion/tokens'
+import { useLanguage, useT } from '@/lib/i18n/client'
+import { INTL_LOCALE } from '@/lib/i18n'
 import { postComment, deleteComment, likeComment } from '../social-actions'
 
 /** 알약형 한 줄 입력창 — 플레이스홀더 + 원형 전송 버튼 (레퍼런스). */
@@ -12,6 +14,7 @@ function Composer({ name, placeholder, value, onChange, disabled, parentId }: {
   name: string; placeholder: string; value: string; onChange: (v: string) => void; disabled?: boolean; parentId?: string
 }) {
   // 전송 중에는 다시 못 누른다 (§7.2) — 연타로 같은 댓글이 두 번 올라가지 않게.
+  const t = useT()
   const { pending } = useFormStatus()
   const off = disabled || pending
   return (
@@ -20,7 +23,7 @@ function Composer({ name, placeholder, value, onChange, disabled, parentId }: {
       <input name={name} value={value} onChange={(e) => onChange(e.target.value)} maxLength={500} placeholder={placeholder}
         aria-label={placeholder} autoComplete="off" disabled={pending}
         style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
-      <button type="submit" disabled={off} aria-busy={pending || undefined} aria-label="전송" style={{
+      <button type="submit" disabled={off} aria-busy={pending || undefined} aria-label={t('전송')} style={{
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, borderRadius: 22,
         border: 0, flexShrink: 0, background: 'var(--color-white)', color: 'var(--color-black)',
         cursor: off ? 'default' : 'pointer', opacity: off ? 0.4 : 1,
@@ -37,25 +40,26 @@ function Composer({ name, placeholder, value, onChange, disabled, parentId }: {
 export function CommentThread({ slug, items, sort, signedIn }: {
   slug: string; items: CommentItem[]; sort: 'popular' | 'recent'; signedIn: boolean
 }) {
+  const t = useT()
   const [body, setBody] = useState('')
   const toast = useToast()
 
   return (
     <div className="stack" style={{ gap: 16, flex: items.length === 0 ? 1 : undefined }}>
-      <form action={async (f) => { await postComment(slug, f); setBody(''); if (signedIn) toast('댓글을 남겼어요.') }}>
+      <form action={async (f) => { await postComment(slug, f); setBody(''); if (signedIn) toast(t('댓글을 남겼어요.')) }}>
         <Composer name="body" value={body} onChange={setBody} disabled={signedIn && !body.trim()}
-          placeholder={signedIn ? '이 캐릭터에 대해 남겨보세요' : '로그인하고 댓글을 남겨보세요'} />
+          placeholder={signedIn ? t('이 캐릭터에 대해 남겨보세요') : t('로그인하고 댓글을 남겨보세요')} />
       </form>
 
       <Tabs id="comment-sort"
         tabs={[
-          { key: 'popular', label: '인기순', href: `/character/${slug}/comments?sort=popular` },
-          { key: 'recent', label: '최신순', href: `/character/${slug}/comments?sort=recent` },
+          { key: 'popular', label: t('인기순'), href: `/character/${slug}/comments?sort=popular` },
+          { key: 'recent', label: t('최신순'), href: `/character/${slug}/comments?sort=recent` },
         ]}
         active={sort} />
 
       {items.length === 0
-        ? <p className="empty-state empty-state--fill">아직 댓글이 없어요</p>
+        ? <p className="empty-state empty-state--fill">{t('아직 댓글이 없어요')}</p>
         : (
           <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 20 }}>
             {items.map((c) => <ThreadItem key={c.id} slug={slug} c={c} signedIn={signedIn} />)}
@@ -66,6 +70,7 @@ export function CommentThread({ slug, items, sort, signedIn }: {
 }
 
 function ThreadItem({ slug, c, signedIn }: { slug: string; c: CommentItem; signedIn: boolean }) {
+  const t = useT()
   const [replying, setReplying] = useState(false)
   const [showReplies, setShowReplies] = useState(c.replies.length <= 2)
   return (
@@ -78,7 +83,7 @@ function ThreadItem({ slug, c, signedIn }: { slug: string; c: CommentItem; signe
           {!showReplies ? (
             <button type="button" onClick={() => setShowReplies(true)} className="t-caption hit"
               style={{ background: 'none', border: 0, padding: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
-              답글 {c.replies.length}개 더보기
+              {t('답글 {n}개 더보기', { n: c.replies.length })}
             </button>
           ) : (
             <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 14 }}>
@@ -92,6 +97,8 @@ function ThreadItem({ slug, c, signedIn }: { slug: string; c: CommentItem; signe
 }
 
 function CommentRow({ slug, c, onReply }: { slug: string; c: CommentItem; onReply?: () => void }) {
+  const t = useT()
+  const language = useLanguage()
   const [liked, setLiked] = useState(c.liked)
   const [likeCount, setLikeCount] = useState(c.likeCount)
   const toast = useToast()
@@ -100,11 +107,11 @@ function CommentRow({ slug, c, onReply }: { slug: string; c: CommentItem; onRepl
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
         <span aria-hidden style={{ width: 28, height: 28, borderRadius: 14, background: 'var(--color-surface-2)', flexShrink: 0 }} />
         <span className="t-caption" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>@{c.authorName}</span>
-        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{day(c.createdAt)}</span>
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{day(c.createdAt, INTL_LOCALE[language])}</span>
       </div>
       <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap', margin: 0 }}>{c.body}</p>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 8 }}>
-        <button type="button" className="hit" aria-pressed={liked} aria-label={liked ? '좋아요 취소' : '좋아요'}
+        <button type="button" className="hit" aria-pressed={liked} aria-label={liked ? t('좋아요 취소') : t('좋아요')}
           onClick={async () => { setLiked((v) => !v); setLikeCount((n) => n + (liked ? -1 : 1)); await likeComment(slug, c.id) }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: liked ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
           <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round">
@@ -115,12 +122,12 @@ function CommentRow({ slug, c, onReply }: { slug: string; c: CommentItem; onRepl
         {onReply && (
           <button type="button" onClick={onReply} className="t-caption hit"
             style={{ background: 'none', border: 0, padding: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
-            답글 달기
+            {t('답글 달기')}
           </button>
         )}
         {c.mine && (
-          <form action={async () => { await deleteComment(slug, c.id); toast('댓글을 지웠어요.') }} style={{ marginLeft: 'auto' }}>
-            <button type="submit" className="t-micro hit" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>삭제</button>
+          <form action={async () => { await deleteComment(slug, c.id); toast(t('댓글을 지웠어요.')) }} style={{ marginLeft: 'auto' }}>
+            <button type="submit" className="t-micro hit" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>{t('삭제')}</button>
           </form>
         )}
       </div>
@@ -129,6 +136,7 @@ function CommentRow({ slug, c, onReply }: { slug: string; c: CommentItem; onRepl
 }
 
 function ReplyForm({ slug, parentId, signedIn, onDone }: { slug: string; parentId: string; signedIn: boolean; onDone: () => void }) {
+  const t = useT()
   const [body, setBody] = useState('')
   const reduce = useReducedMotion()
   return (
@@ -136,13 +144,13 @@ function ReplyForm({ slug, parentId, signedIn, onDone }: { slug: string; parentI
       action={async (f) => { await postComment(slug, f); setBody(''); onDone() }}
       className="stack" style={{ gap: 6, marginTop: 10, marginLeft: 36 }}>
       <Composer name="body" parentId={parentId} value={body} onChange={setBody} disabled={signedIn && !body.trim()}
-        placeholder={signedIn ? '답글 남기기' : '로그인하고 답글을 남겨보세요'} />
+        placeholder={signedIn ? t('답글 남기기') : t('로그인하고 답글을 남겨보세요')} />
       <button type="button" onClick={onDone} className="t-caption hit"
         style={{ alignSelf: 'flex-end', background: 'none', border: 0, padding: '0 8px', color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
-        취소
+        {t('취소')}
       </button>
     </motion.form>
   )
 }
 
-const day = (d: Date) => new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+const day = (d: Date, locale: string) => new Date(d).toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' })

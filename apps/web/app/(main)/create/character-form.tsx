@@ -14,6 +14,8 @@ import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, type Step } from './form-parts'
 import { MOODS } from './parse'
 import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from './draft-storage'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 
 const MBTI_TYPES = [
   'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
@@ -84,6 +86,7 @@ type CharacterFormProps = {
 
 export function CharacterForm(props: CharacterFormProps) {
   const { mode, userId, experienceType, creationId } = props
+  const t = useT()
   const key = mode === 'create' && userId && creationId ? draftStorageKey(userId, experienceType, creationId) : null
   const [restored, setRestored] = useState<Partial<FormInitial> | null>(mode === 'edit' ? {} : null)
   useEffect(() => {
@@ -94,12 +97,13 @@ export function CharacterForm(props: CharacterFormProps) {
       setRestored(raw ? restoreDraft(JSON.parse(raw) as Array<[string, string]>, experienceType) : {})
     } catch { setRestored({}) }
   }, [key, userId, creationId, experienceType])
-  if (mode === 'create' && restored === null) return <main id="main" className="page"><p role="status" className="t-caption">작성 중인 내용을 불러오는 중...</p></main>
+  if (mode === 'create' && restored === null) return <main id="main" className="page"><p role="status" className="t-caption">{t('작성 중인 내용을 불러오는 중...')}</p></main>
   return <CharacterFormBody {...props} initial={mode === 'create' ? restored ?? {} : props.initial} storageKey={key} />
 }
 
 function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [] }: CharacterFormProps & { storageKey: string | null }) {
   const router = useRouter()
+  const t = useT()
   const i: FormInitial = { ...EMPTY, ...initial }
   const [tab, setTab] = useState<CreateTab>('profile')
   // 상황은 전체 화면으로 열린다 — 닫으면 열기 전 탭으로 돌아간다.
@@ -151,10 +155,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   }, [storageKey])
   const [previewMode, setPreviewMode] = useState('detail')
   const [snap, setSnap] = useState<Snapshot | null>(null)
-  const openTab = (t: CreateTab) => {
-    if (t === 'intro' && tab !== 'intro') setPrevTab(tab)
-    if (t === 'preview' && formRef.current) setSnap((prev) => { if (prev) [prev.photo, ...prev.gallery].forEach(url => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url) }); return snapshot(formRef.current!) })
-    setTab(t)
+  const openTab = (next: CreateTab) => {
+    if (next === 'intro' && tab !== 'intro') setPrevTab(tab)
+    if (next === 'preview' && formRef.current) setSnap((prev) => { if (prev) [prev.photo, ...prev.gallery].forEach(url => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url) }); return snapshot(formRef.current!) })
+    setTab(next)
   }
 
   const missing = useMemo(() => {
@@ -194,7 +198,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
       }
       if (mountedRef.current) router.push(destination)
     } catch {
-      if (mountedRef.current) setSaveError('저장하지 못했어요. 작성한 내용은 이 화면에 남아 있습니다. 다시 시도해 주세요.')
+      if (mountedRef.current) setSaveError(msg('저장하지 못했어요. 작성한 내용은 이 화면에 남아 있습니다. 다시 시도해 주세요.'))
     } finally {
       pendingRef.current = false
       if (mountedRef.current) setPending(false)
@@ -207,9 +211,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
     <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
       <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
-        <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending} missingHint={canSubmit ? (isPublic ? '공개 게시' : '나만 보기') : undefined}
+        <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending} missingHint={canSubmit ? (isPublic ? t('공개 게시') : t('나만 보기')) : undefined}
           buttons={mode === 'edit' && !draft ? 'save' : 'create'} closeHref={closeHref} />
-        {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{saveError}</p>}
+        {saveError && <p role="alert" className="t-caption" style={{ padding: '8px var(--gutter)', color: 'var(--color-danger)' }}>{t(saveError)}</p>}
         {mode === 'create' && experienceType === 'reality' && <CreateTour tab={tab} onTab={openTab} />}
 
         <input type="hidden" name="experienceType" value={experienceType} />
@@ -220,30 +224,30 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <input type="hidden" name="relationshipKeywords" value={i.relationshipKeywords.join(',')} />
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
-          <Section title="공개">
+          <Section title={t('공개')}>
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
-                label="다른 사람에게 공개"
-                hint="게시할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다." />
+                label={t('다른 사람에게 공개')}
+                hint={t('게시할 때 켜져 있으면 홈과 검색에 실리고, 누구나 이 캐릭터와 대화를 시작할 수 있습니다.')} />
             </Card>
           </Section>
-          <Section title="캐릭터">
+          <Section title={t('캐릭터')}>
             <Card>
-              <ImagePicker label="캐릭터 이미지" maxCount={5} existing={i.images} />
-              {mode === 'create' && <p className="t-caption" style={{ marginTop: 8, color: 'var(--color-text-tertiary)' }}>선택한 이미지는 임시저장해야 다음에도 유지됩니다.</p>}
+              <ImagePicker label={t('캐릭터 이미지')} maxCount={5} existing={i.images} />
+              {mode === 'create' && <p className="t-caption" style={{ marginTop: 8, color: 'var(--color-text-tertiary)' }}>{t('선택한 이미지는 임시저장해야 다음에도 유지됩니다.')}</p>}
               <div style={{ marginTop: 'var(--space-5)' }}>
                 <IdentityCard>
                   <div className="stack" style={{ gap: 18 }}>
-                    <LabeledField label="이름" required error={name === '' ? null : undefined}>
-                      <Controlled name="name" label="이름" placeholder="짧은 이름이 부르기 편해요. 예) 수현" max={10} value={name} onChange={setName} big />
+                    <LabeledField label={t('이름')} required error={name === '' ? null : undefined}>
+                      <Controlled name="name" label={t('이름')} placeholder={t('짧은 이름이 부르기 편해요. 예) 수현')} max={10} value={name} onChange={setName} big />
                     </LabeledField>
-                    <LabeledField label="소개" required hint="카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.">
-                      <Controlled name="title" label="소개" placeholder="예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다." max={40} value={title} onChange={setTitle} big />
+                    <LabeledField label={t('소개')} required hint={t('카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.')}>
+                      <Controlled name="title" label={t('소개')} placeholder={t('예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다.')} max={40} value={title} onChange={setTitle} big />
                     </LabeledField>
-                    <LabeledField label={experienceType === 'chat' ? '성격·말투 설정' : '성격 설명'} required
-                      hint={experienceType === 'chat' ? '대화에 반영되며 공개 소개에는 표시되지 않아요.' : '캐릭터의 성격, 가치관, 말투를 적어 주세요.'}>
-                      <ControlledArea name="personality" label={experienceType === 'chat' ? '성격·말투 설정' : '성격 설명'} value={personality} onChange={setPersonality} max={1000} rows={4}
-                        placeholder="예) 침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다." />
+                    <LabeledField label={experienceType === 'chat' ? t('성격·말투 설정') : t('성격 설명')} required
+                      hint={experienceType === 'chat' ? t('대화에 반영되며 공개 소개에는 표시되지 않아요.') : t('캐릭터의 성격, 가치관, 말투를 적어 주세요.')}>
+                      <ControlledArea name="personality" label={experienceType === 'chat' ? t('성격·말투 설정') : t('성격 설명')} value={personality} onChange={setPersonality} max={1000} rows={4}
+                        placeholder={t('예) 침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다.')} />
                     </LabeledField>
                     {experienceType === 'reality' && <ReactionTraits initial={i} />}
                   </div>
@@ -253,41 +257,41 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               <AdvancedToggle open={profileAdvanced} onToggle={() => setProfileAdvanced((v) => !v)} controls="profile-advanced" />
               <div id="profile-advanced" hidden={!profileAdvanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                  <LabeledField label="나이"><CountedInput name="age" placeholder="예) 32, 1000, 추정불가" max={10} defaultValue={i.age} /></LabeledField>
+                  <LabeledField label={t('나이')}><CountedInput name="age" placeholder={t('예) 32, 1000, 추정불가')} max={10} defaultValue={i.age} /></LabeledField>
                   <LabeledField label="MBTI">
                     <ChoiceChips name="mbti" value={mbti} onChange={setMbti} columns={4}
-                      options={[{ value: '', label: '선택 안 함' }, ...MBTI_TYPES.map((m) => ({ value: m, label: m }))]} />
+                      options={[{ value: '', label: t('선택 안 함') }, ...MBTI_TYPES.map((m) => ({ value: m, label: m }))]} />
                   </LabeledField>
                   <Two>
-                    <LabeledField label="국적"><CountedInput name="nationality" placeholder="예) 영국" max={40} defaultValue={i.nationality} /></LabeledField>
-                    <LabeledField label="직업"><CountedInput name="occupation" placeholder="예) 고서 복원가" max={60} defaultValue={i.occupation} /></LabeledField>
+                    <LabeledField label={t('국적')}><CountedInput name="nationality" placeholder={t('예) 영국')} max={40} defaultValue={i.nationality} /></LabeledField>
+                    <LabeledField label={t('직업')}><CountedInput name="occupation" placeholder={t('예) 고서 복원가')} max={60} defaultValue={i.occupation} /></LabeledField>
                   </Two>
                 </div>
               </div>
             </Card>
           </Section>
 
-          <Section title="상황 예시 · 선택">
+          <Section title={t('상황 예시 · 선택')}>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-              상황 예시로 캐릭터의 성격과 말투를 표현해 주세요. 상세페이지에 표시됩니다.<br />
-              {sampleCharacterCount.toLocaleString()}자
+              {t('상황 예시로 캐릭터의 성격과 말투를 표현해 주세요. 상세페이지에 표시됩니다.')}<br />
+              {t('{n}자', { n: sampleCharacterCount.toLocaleString() })}
             </p>
             <motion.button type="button" aria-expanded={sampleOpen} aria-controls="sample-dialogue-editor" onClick={() => setSampleOpen((open) => !open)}
               whileTap={reduceMotion ? undefined : { scale: 0.98 }}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, marginTop: 20, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
               <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-              상황 예시 추가
+              {t('상황 예시 추가')}
             </motion.button>
             <div id="sample-dialogue-editor" hidden={!sampleOpen} inert={!sampleOpen}>
               <motion.div initial={false} animate={{ y: reduceMotion || sampleOpen ? 0 : '100%' }} transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', flexShrink: 0 }}>
-                  <button type="button" onClick={() => setSampleOpen(false)} aria-label="상황 예시 닫기"
+                  <button type="button" onClick={() => setSampleOpen(false)} aria-label={t('상황 예시 닫기')}
                     style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
                     <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
                   </button>
-                  <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>상황 예시</h2>
+                  <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>{t('상황 예시')}</h2>
                   <button type="button" onClick={() => setSampleOpen(false)}
-                    style={{ padding: '8px 4px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-white)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>확인</button>
+                    style={{ padding: '8px 4px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-white)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>{t('확인')}</button>
                 </div>
                 <div style={{ flex: 1, minHeight: 0, padding: '0 var(--gutter)' }}>
                   <DialogueEditor name="sampleDialogue" characterName={name} defaultValue={sampleDialogue(i.sampleDialogue)} onCharacterCountChange={setSampleCharacterCount} fill />
@@ -299,18 +303,18 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 세계관 ── */}
         <Panel id="personality" show={tab === 'personality'}>
-          <Section title="세계관">
+          <Section title={t('세계관')}>
             <Card>
-              <LabeledField label="세계관 설명" hint={experienceType === 'chat' ? '대화에 반영되며 공개 소개에는 표시되지 않아요.' : '캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.'}>
-                <CountedTextArea name="worldSetting" ariaLabel="세계관 설명" max={600} rows={4} defaultValue={i.worldSetting}
-                  placeholder="예) 현대 서울. 도심의 경호업체를 중심으로 다양한 사건이 벌어진다." />
+              <LabeledField label={t('세계관 설명')} hint={experienceType === 'chat' ? t('대화에 반영되며 공개 소개에는 표시되지 않아요.') : t('캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.')}>
+                <CountedTextArea name="worldSetting" ariaLabel={t('세계관 설명')} max={600} rows={4} defaultValue={i.worldSetting}
+                  placeholder={t('예) 현대 서울. 도심의 경호업체를 중심으로 다양한 사건이 벌어진다.')} />
               </LabeledField>
             </Card>
           </Section>
           <input type="hidden" name="lore" value={JSON.stringify(i.lore)} />
-          <Section title="장르" subtitle="여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 검색 장르와 카드 해시태그에 반영됩니다.">
+          <Section title={t('장르')} subtitle={t('여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 검색 장르와 카드 해시태그에 반영됩니다.')}>
             <Card>
-              <PresetTags name="mood" label="장르" options={MOODS} max={5} defaultValue={i.mood} />
+              <PresetTags name="mood" label={msg('장르')} options={MOODS} max={5} defaultValue={i.mood} />
             </Card>
           </Section>
 
@@ -318,48 +322,48 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 외형 ── */}
         <Panel id="appearance" show={tab === 'appearance'}>
-          <Section title="몸">
+          <Section title={t('몸')}>
             <Card>
               <BodyPicker build={build} onBuild={setBuild} gender={gender} onGender={setGender} />
               <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                <LabeledField label="키"><CountedInput name="height" placeholder="예) 186cm" max={20} defaultValue={i.height} /></LabeledField>
-                <LabeledField label="체형 설명"><CountedInput name="detail" placeholder="예) 어깨가 넓다" max={120} defaultValue={i.detail} /></LabeledField>
+                <LabeledField label={t('키')}><CountedInput name="height" placeholder={t('예) 186cm')} max={20} defaultValue={i.height} /></LabeledField>
+                <LabeledField label={t('체형 설명')}><CountedInput name="detail" placeholder={t('예) 어깨가 넓다')} max={120} defaultValue={i.detail} /></LabeledField>
               </div>
 
               {/* 얼굴·머리는 고급 — 몸만 정해도 사진은 나온다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
               <AdvancedToggle open={advanced} onToggle={() => setAdvanced((v) => !v)} controls="appearance-advanced" />
               <div id="appearance-advanced" hidden={!advanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>얼굴</p>
-                  <LabeledField label="눈"><CountedInput name="eyes" placeholder="예) 깊고 차가운 회청색 눈" max={80} defaultValue={i.eyes} /></LabeledField>
+                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{t('얼굴')}</p>
+                  <LabeledField label={t('눈')}><CountedInput name="eyes" placeholder={t('예) 깊고 차가운 회청색 눈')} max={80} defaultValue={i.eyes} /></LabeledField>
                   <Two>
-                    <LabeledField label="코"><CountedInput name="nose" placeholder="예) 곧고 높은 콧대" max={80} defaultValue={i.nose} /></LabeledField>
-                    <LabeledField label="턱"><CountedInput name="jaw" placeholder="예) 선이 분명한 턱" max={80} defaultValue={i.jaw} /></LabeledField>
+                    <LabeledField label={t('코')}><CountedInput name="nose" placeholder={t('예) 곧고 높은 콧대')} max={80} defaultValue={i.nose} /></LabeledField>
+                    <LabeledField label={t('턱')}><CountedInput name="jaw" placeholder={t('예) 선이 분명한 턱')} max={80} defaultValue={i.jaw} /></LabeledField>
                   </Two>
-                  <LabeledField label="피부"><CountedInput name="skin" placeholder="예) 창백하고 건조한 피부" max={80} defaultValue={i.skin} /></LabeledField>
-                  <LabeledField label="알아보게 하는 특징" hint="흉터, 점, 문신처럼 그 사람을 알아보게 하는 한 가지.">
-                    <CountedInput name="distinctive" placeholder="예) 왼쪽 눈썹 끝을 가로지르는 오래된 흉터" max={100} defaultValue={i.distinctive} />
+                  <LabeledField label={t('피부')}><CountedInput name="skin" placeholder={t('예) 창백하고 건조한 피부')} max={80} defaultValue={i.skin} /></LabeledField>
+                  <LabeledField label={t('알아보게 하는 특징')} hint={t('흉터, 점, 문신처럼 그 사람을 알아보게 하는 한 가지.')}>
+                    <CountedInput name="distinctive" placeholder={t('예) 왼쪽 눈썹 끝을 가로지르는 오래된 흉터')} max={100} defaultValue={i.distinctive} />
                   </LabeledField>
 
-                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)', marginTop: 'var(--space-2)' }}>머리 · 인상</p>
+                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)', marginTop: 'var(--space-2)' }}>{t('머리 · 인상')}</p>
                   <Two>
-                    <LabeledField label="머리 색"><CountedInput name="hairColor" placeholder="예) 어두운 갈색" max={40} defaultValue={i.hairColor} /></LabeledField>
-                    <LabeledField label="머리 길이"><CountedInput name="hairLength" placeholder="예) 짧고 단정한" max={40} defaultValue={i.hairLength} /></LabeledField>
+                    <LabeledField label={t('머리 색')}><CountedInput name="hairColor" placeholder={t('예) 어두운 갈색')} max={40} defaultValue={i.hairColor} /></LabeledField>
+                    <LabeledField label={t('머리 길이')}><CountedInput name="hairLength" placeholder={t('예) 짧고 단정한')} max={40} defaultValue={i.hairLength} /></LabeledField>
                   </Two>
-                  <LabeledField label="머리 스타일"><CountedInput name="hairStyle" placeholder="예) 이마를 드러내게 넘긴" max={60} defaultValue={i.hairStyle} /></LabeledField>
-                  <LabeledField label="평소 표정"><CountedInput name="expression" placeholder="예) 표정 변화가 거의 없다" max={120} defaultValue={i.expression} /></LabeledField>
-                  <LabeledField label="스타일 태그" hint="옷차림·분위기. 사진 생성이 읽습니다.">
-                    <TagInput name="styleTags" placeholder="예) 소매를 걷어 올린 셔츠" max={5} maxLength={40} defaultValue={i.styleTags} />
+                  <LabeledField label={t('머리 스타일')}><CountedInput name="hairStyle" placeholder={t('예) 이마를 드러내게 넘긴')} max={60} defaultValue={i.hairStyle} /></LabeledField>
+                  <LabeledField label={t('평소 표정')}><CountedInput name="expression" placeholder={t('예) 표정 변화가 거의 없다')} max={120} defaultValue={i.expression} /></LabeledField>
+                  <LabeledField label={t('스타일 태그')} hint={t('옷차림·분위기. 사진 생성이 읽습니다.')}>
+                    <TagInput name="styleTags" placeholder={t('예) 소매를 걷어 올린 셔츠')} max={5} maxLength={40} defaultValue={i.styleTags} />
                   </LabeledField>
                 </div>
               </div>
             </Card>
           </Section>
           {voices.length > 0 && (
-            <Section title="목소리" subtitle="운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.">
+            <Section title={t('목소리')} subtitle={t('운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.')}>
               <Card>
                 <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
-                  options={[{ value: '', label: '기본' }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
+                  options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
               </Card>
             </Section>
           )}
@@ -367,16 +371,16 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 관계 ── */}
         {experienceType === 'reality' && <Panel id="relationship" show={tab === 'relationship'}>
-          <Section title="시작 관계" subtitle="처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.">
+          <Section title={t('시작 관계')} subtitle={t('처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.')}>
             <RelationshipSettings initial={i} />
           </Section>
-          <Section title="관계 성격" subtitle="같은 일에도 이 캐릭터가 어떻게 반응하고, 어떤 속도로 가까워지는지예요.">
+          <Section title={t('관계 성격')} subtitle={t('같은 일에도 이 캐릭터가 어떻게 반응하고, 어떤 속도로 가까워지는지예요.')}>
             <ProfileSettings profile={i.relationshipProfile} status={i.profileStatus} />
           </Section>
         </Panel>}
 
         {experienceType === 'reality' && <Panel id="contact" show={tab === 'contact'}>
-          <Section title="일상·연락">
+          <Section title={t('일상·연락')}>
             <ContactSettings initial={i} mode={mode} capabilities={capabilities} />
           </Section>
         </Panel>}
@@ -385,12 +389,12 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="intro" show={tab === 'intro'}>
           <motion.div initial={false} animate={{ y: reduceMotion || tab === 'intro' ? 0 : '100%' }} transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
             <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', flexShrink: 0 }}>
-              <button type="button" onClick={() => openTab(prevTab)} aria-label="닫기"
+              <button type="button" onClick={() => openTab(prevTab)} aria-label={t('닫기')}
                 style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
                 <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
-              <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>인트로 대화</h2>
-              <button type="button" onClick={() => openTab(prevTab)} aria-label="인트로 확인"
+              <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>{t('인트로 대화')}</h2>
+              <button type="button" onClick={() => openTab(prevTab)} aria-label={t('인트로 확인')}
                 style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, padding: 0, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-white)' }}>
                 <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 12 4 4L19 6" /></svg>
               </button>
@@ -399,13 +403,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               <DialogueEditor name="introDialogue" intro characterName={name} defaultValue={introDialogue(i.sampleDialogue)} fill
                 header={
                   <div style={{ padding: '14px 0 6px' }}>
-                    <LabeledField label="첫 장면" required hint="대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.">
-                      <ControlledArea name="startingContext" label="첫 장면" value={startingContext} onChange={setStartingContext} max={600} rows={3}
-                        placeholder="비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다." />
+                    <LabeledField label={t('첫 장면')} required hint={t('대화가 시작되는 배경이에요. 아래 인트로는 새 채팅에 실제 메시지로 표시됩니다.')}>
+                      <ControlledArea name="startingContext" label={t('첫 장면')} value={startingContext} onChange={setStartingContext} max={600} rows={3}
+                        placeholder={t('비 내리는 저녁, 당신은 의뢰 때문에 그의 공방을 처음 찾았다.')} />
                     </LabeledField>
                     {/* 첫 장면의 장소 — 비우면 세계는 '어딘가' 에서 시작한다(9/27 운영 실측에서 장면 표시가 "어딘가 · 저녁" 이었다). */}
-                    <LabeledField label="장소" hint="첫 장면이 펼쳐지는 곳이에요. 채팅의 장면 표시와 소개 페이지에 보여요.">
-                      <CountedInput name="worldLocation" ariaLabel="장소" placeholder="예) 서울, 경호업체 사무실" max={60} defaultValue={i.worldLocation} />
+                    <LabeledField label={t('장소')} hint={t('첫 장면이 펼쳐지는 곳이에요. 채팅의 장면 표시와 소개 페이지에 보여요.')}>
+                      <CountedInput name="worldLocation" ariaLabel={t('장소')} placeholder={t('예) 서울, 경호업체 사무실')} max={60} defaultValue={i.worldLocation} />
                     </LabeledField>
                   </div>
                 } />
@@ -416,14 +420,14 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 소개 페이지 ── */}
         <Panel id="preview" show={tab === 'preview'}>
-          <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: '소개 페이지' }, { value: 'chat', label: '첫 대화' }]} /></div>
-          {previewMode === 'detail' ? <DetailPreview d={snap} can={capabilities} experienceType={experienceType} /> : <div aria-label="첫 대화 미리보기" style={{ marginTop: 24 }}>
-            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>새 대화를 시작할 때 이렇게 보여요.</p>
+          <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: t('소개 페이지') }, { value: 'chat', label: t('첫 대화') }]} /></div>
+          {previewMode === 'detail' ? <DetailPreview d={snap} can={capabilities} experienceType={experienceType} /> : <div aria-label={t('첫 대화 미리보기')} style={{ marginTop: 24 }}>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>{t('새 대화를 시작할 때 이렇게 보여요.')}</p>
             {snap && introDialogue(snap.settings.character.sampleDialogue).map((turn, n) => <div key={n} style={{ marginBottom: 16, whiteSpace: 'pre-wrap' }}>
-              {turn.role === 'character' && <p className="t-caption" style={{ marginBottom: 6 }}>{snap.name || '캐릭터'}</p>}
+              {turn.role === 'character' && <p className="t-caption" style={{ marginBottom: 6 }}>{snap.name || t('캐릭터')}</p>}
               <p className="t-body" style={{ padding: turn.role === 'character' ? 14 : 0, borderRadius: 12, background: turn.role === 'character' ? 'var(--color-surface-2)' : undefined, color: turn.role === 'narrator' ? 'var(--color-text-secondary)' : undefined }}>{turn.text}</p>
             </div>)}
-            {snap && introDialogue(snap.settings.character.sampleDialogue).length === 0 && <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>작성한 인트로 메시지가 없어요. 인트로에서 첫 대사를 추가할 수 있어요.</p>}
+            {snap && introDialogue(snap.settings.character.sampleDialogue).length === 0 && <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('작성한 인트로 메시지가 없어요. 인트로에서 첫 대사를 추가할 수 있어요.')}</p>}
           </div>}
         </Panel>
 
@@ -460,6 +464,7 @@ function IdentityCard({ children }: { children: React.ReactNode }) {
 
 /** '고급 설정' 접기 버튼 — 카드 아래 전체 너비. 열리면 화살표가 뒤집힌다. 접힌 내용은 hidden 으로만 감춰 제출에 포함된다. */
 function AdvancedToggle({ open, onToggle, controls }: { open: boolean; onToggle: () => void; controls: string }) {
+  const t = useT()
   return (
     <button type="button" aria-expanded={open} aria-controls={controls} onClick={onToggle}
       style={{
@@ -468,7 +473,7 @@ function AdvancedToggle({ open, onToggle, controls }: { open: boolean; onToggle:
         background: 'var(--color-surface-3)', border: 0, cursor: 'pointer',
         color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
       }}>
-      고급 설정
+      {t('고급 설정')}
       <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none"
         style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform var(--motion-fast) var(--ease-standard)' }}>
         <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
@@ -518,24 +523,25 @@ function BodyPicker({ build, onBuild, gender, onGender }: {
   build: string; onBuild: (b: string) => void; gender: string; onGender: (g: string) => void
 }) {
   const reduce = useReducedMotion()
+  const t = useT()
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-      <legend className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>성별 · 체형</legend>
+      <legend className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{t('성별 · 체형')}</legend>
       <ChoiceChips name="gender" value={gender} onChange={onGender} columns={2}
-        options={GENDER_TYPES.map((g) => ({ value: g, label: GENDER_PRESETS[g].label }))} />
+        options={GENDER_TYPES.map((g) => ({ value: g, label: t(GENDER_PRESETS[g].label) }))} />
       <input type="hidden" name="build" value={build} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 'var(--space-4)' }}>
         {BUILD_TYPES.map((b) => {
           const on = b === build
           return (
             <motion.button key={b} type="button" onClick={() => onBuild(b)} aria-pressed={on}
-              aria-label={`${GENDER_PRESETS[gender as keyof typeof GENDER_PRESETS]?.label} ${BUILD_PRESETS[b].label}`}
+              aria-label={`${t(GENDER_PRESETS[gender as keyof typeof GENDER_PRESETS]?.label ?? '')} ${t(BUILD_PRESETS[b].label)}`}
               whileTap={reduce ? undefined : { scale: 0.97 }}
               style={{ padding: 3, cursor: 'pointer', borderRadius: 'var(--radius-md)', background: 'none', border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/builds/${gender}-${b}.webp?v=7`} alt="" width={120} height={160} loading="lazy" decoding="async"
                 style={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block', borderRadius: 'var(--radius-sm)', opacity: on ? 1 : 0.5, transition: 'opacity var(--motion-fast) var(--ease-standard)' }} />
-              <span className="t-micro" style={{ display: 'block', textAlign: 'center', textTransform: 'none', letterSpacing: 0, marginTop: 5, color: on ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>{BUILD_PRESETS[b].label}</span>
+              <span className="t-micro" style={{ display: 'block', textAlign: 'center', textTransform: 'none', letterSpacing: 0, marginTop: 5, color: on ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>{t(BUILD_PRESETS[b].label)}</span>
             </motion.button>
           )
         })}
@@ -546,14 +552,15 @@ function BodyPicker({ build, onBuild, gender, onGender }: {
 
 
 const REACTION_TRAITS = [
-  { name: 'jealousy', label: '질투', choices: ['적음', '보통', '많음'], summaries: ['질투 적음', '질투 보통', '질투 많음'] },
-  { name: 'initiative', label: '다가가는 방식', choices: ['기다림', '상황에 따라', '먼저'], summaries: ['수동', '유연', '주도'] },
-  { name: 'emotionalExpression', label: '감정 표현', choices: ['절제함', '적당히', '솔직함'], summaries: ['표현 절제', '표현 보통', '표현 솔직'] },
+  { name: 'jealousy', label: msg('질투'), choices: [msg('적음'), msg('보통'), msg('많음')], summaries: [msg('질투 적음'), msg('질투 보통'), msg('질투 많음')] },
+  { name: 'initiative', label: msg('다가가는 방식'), choices: [msg('기다림'), msg('상황에 따라'), msg('먼저')], summaries: [msg('수동'), msg('유연'), msg('주도')] },
+  { name: 'emotionalExpression', label: msg('감정 표현'), choices: [msg('절제함'), msg('적당히'), msg('솔직함')], summaries: [msg('표현 절제'), msg('표현 보통'), msg('표현 솔직')] },
 ] as const
 
 function ReactionTraits({ initial }: { initial: FormInitial }) {
   const [open, setOpen] = useState(false)
   const [touched, setTouched] = useState<string[]>([])
+  const t = useT()
   const reduceMotion = useReducedMotion()
   // Keep exact saved values until the user explicitly chooses a new level.
   const [values, setValues] = useState(() => ({
@@ -563,14 +570,14 @@ function ReactionTraits({ initial }: { initial: FormInitial }) {
   }))
   const level = (value: number) => value < 34 ? 0 : value > 66 ? 2 : 1
   const balanced = REACTION_TRAITS.every(({ name }) => level(values[name]) === 1)
-  const summary = balanced ? '균형' : REACTION_TRAITS.map(({ name, summaries }) => summaries[level(values[name])]).join(' · ')
+  const summary = balanced ? t('균형') : REACTION_TRAITS.map(({ name, summaries }) => t(summaries[level(values[name])]!)).join(' · ')
   return (
     <div className="stack" style={{ gap: 12, paddingTop: 20 }}>
       {REACTION_TRAITS.map(({ name }) => <input key={name} type="hidden" name={name} value={values[name]} />)}
       {touched.map(name => <input key={name} type="hidden" name="agencyExplicitField" value={`personality.${name}`} />)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span className="t-body" style={{ flex: 1, minWidth: 0, fontWeight: 'var(--weight-semibold)' }}>반응 성향</span>
-        <motion.button whileTap={reduceMotion ? undefined : { scale: 0.9 }} transition={{ type: 'spring', stiffness: 450, damping: 25 }} type="button" aria-label={open ? '반응 성향 편집 접기' : '반응 성향 편집'} aria-expanded={open} aria-controls="reaction-traits" onClick={() => setOpen((v) => !v)}
+        <span className="t-body" style={{ flex: 1, minWidth: 0, fontWeight: 'var(--weight-semibold)' }}>{t('반응 성향')}</span>
+        <motion.button whileTap={reduceMotion ? undefined : { scale: 0.9 }} transition={{ type: 'spring', stiffness: 450, damping: 25 }} type="button" aria-label={open ? t('반응 성향 편집 접기') : t('반응 성향 편집')} aria-expanded={open} aria-controls="reaction-traits" onClick={() => setOpen((v) => !v)}
           style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, padding: 4, border: 0, borderRadius: 'var(--radius-sm)', background: 'rgba(255, 255, 255, 0.05)', color: 'var(--color-text-secondary)', cursor: 'pointer', flexShrink: 0 }}>
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="m16 3 5 5M4 20l4.5-1L21 6.5a2.12 2.12 0 0 0-3-3L5.5 16 4 20Z" />
@@ -582,9 +589,9 @@ function ReactionTraits({ initial }: { initial: FormInitial }) {
         <div className="stack" style={{ gap: 16 }}>
           {REACTION_TRAITS.map(({ name, label, choices }) => (
             <fieldset key={name} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-              <legend className="t-body" style={{ marginBottom: 8, fontWeight: 'var(--weight-semibold)' }}>{label}</legend>
+              <legend className="t-body" style={{ marginBottom: 8, fontWeight: 'var(--weight-semibold)' }}>{t(label)}</legend>
               <ChoiceChips columns={3} value={String(level(values[name]))}
-                options={choices.map((label, index) => ({ value: String(index), label }))}
+                options={choices.map((choice, index) => ({ value: String(index), label: t(choice) }))}
                 onChange={(value) => {
                   setTouched(previous => previous.includes(name) ? previous : [...previous, name])
                   setValues((previous) => ({ ...previous, [name]: [20, 50, 80][Number(value)] }))

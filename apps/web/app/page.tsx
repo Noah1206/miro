@@ -12,7 +12,7 @@ export default async function Root() {
   if (user) {
     const consent = await db.select({ id: termsConsents.id }).from(termsConsents)
       .where(eq(termsConsents.userId, user.id)).limit(1)
-    if (consent.length === 0) redirect('/terms')
+    if (consent.length === 0) redirect('/onboarding')
   }
   redirect('/home')
 }

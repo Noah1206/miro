@@ -6,6 +6,7 @@ import { searchGenres, searchNeedle, searchQuery, searchUrl } from '@/lib/search
 import { SearchResultsSkeleton } from '@/components/page-skeletons'
 import styles from './search.module.css'
 import { readSearchRestore, searchRestoreKey } from './restore'
+import { useT } from '@/lib/i18n/client'
 
 /**
  * 검색 머리 — 검색창을 바로 보여주고 입력에 초점을 맞춘다.
@@ -13,6 +14,7 @@ import { readSearchRestore, searchRestoreKey } from './restore'
  */
 export function SearchHeader({ q, tag, genres, viewerId, base, children }: { q: string; tag: string | null; genres: string[]; viewerId: string | null; base: string; children: React.ReactNode }) {
   const router = useRouter()
+  const t = useT()
   const [value, setValue] = useState(q)
   const [pending, startTransition] = useTransition()
   const input = useRef<HTMLInputElement>(null)
@@ -64,28 +66,28 @@ export function SearchHeader({ q, tag, genres, viewerId, base, children }: { q: 
             <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
           </svg>
           <input ref={input} className={styles.query} type="search" name="q" value={value} onChange={(e) => setValue(e.target.value)} maxLength={40} enterKeyHint="search"
-            placeholder="이름, 장르, 키워드" aria-label="캐릭터 검색" autoComplete="off"
+            placeholder={t('이름, 장르, 키워드')} aria-label={t('캐릭터 검색')} autoComplete="off"
             onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.nativeEvent.isComposing || composing.current || e.nativeEvent.keyCode === 229)) e.preventDefault()
             }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
           {value && (
-            <button type="button" onClick={() => { setValue(''); input.current?.focus(); if (q) startTransition(() => router.replace(searchUrl(base, '', tag, genres))) }} aria-label="검색어 지우기" className="hit"
+            <button type="button" onClick={() => { setValue(''); input.current?.focus(); if (q) startTransition(() => router.replace(searchUrl(base, '', tag, genres))) }} aria-label={t('검색어 지우기')} className="hit"
               style={{ background: 'none', border: 0, padding: 2, color: 'var(--color-text-tertiary)', cursor: 'pointer', flexShrink: 0 }}>
               <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           )}
-          <button type="submit" aria-label="검색 실행" disabled={!canSubmit || pending}
+          <button type="submit" aria-label={t('검색 실행')} disabled={!canSubmit || pending}
             style={{ background: 'none', border: 0, padding: 4, color: 'var(--color-text-primary)', cursor: 'pointer', flexShrink: 0, opacity: canSubmit ? 1 : 0.4 }}>
             <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           </button>
         </form>
       </div>
-      {value.startsWith('#') && <button type="button" onClick={submitTag} disabled={pending} style={{ marginTop: 8, border: 0, background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>태그로 검색</button>}
+      {value.startsWith('#') && <button type="button" onClick={submitTag} disabled={pending} style={{ marginTop: 8, border: 0, background: 'none', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>{t('태그로 검색')}</button>}
       {tag !== null && <button type="button" onClick={() => startTransition(() => router.replace(searchUrl(base, q, null, genres)))}
-        aria-label="태그 필터 지우기" style={{ marginTop: 8, border: 0, borderRadius: 12, padding: '5px 8px', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', cursor: 'pointer' }}>#{tag || '태그 없음'} ×</button>}
-      <div role="group" aria-label="장르 선택" style={{ marginTop: 20 }}>
+        aria-label={t('태그 필터 지우기')} style={{ marginTop: 8, border: 0, borderRadius: 12, padding: '5px 8px', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', cursor: 'pointer' }}>#{tag || t('태그 없음')} ×</button>}
+      <div role="group" aria-label={t('장르 선택')} style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
           {options.map(genre => {
             const selected = genres.some(value => searchNeedle(value) === searchNeedle(genre))

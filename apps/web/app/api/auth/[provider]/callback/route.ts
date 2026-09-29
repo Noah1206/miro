@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { eq } from 'drizzle-orm'
-import { db, termsConsents } from '@miro/db'
+import { cookies } from 'next/headers'
+import { db, termsConsents, userSettings } from '@miro/db'
+import { LANGUAGE_COOKIE } from '@/lib/i18n'
 import { resolveOAuth } from '@miro/providers'
 import { signInWithProfile } from '@/lib/auth'
 import { isProvider, takeNext, takeOAuthState } from '@/lib/oauth-state'
@@ -28,8 +30,11 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   if (!r.ok) return to('/login?error=deleted')
   if (r.isNew) void track(r.userId, 'signup', { provider })
 
+  // 계정에 고른 언어가 있으면 이 기기의 화면도 그 언어로 맞춘다(새 기기·쿠키를 지운 브라우저).
+  const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, r.userId)).limit(1)
+  if (settings) (await cookies()).set(LANGUAGE_COOKIE, settings.language, { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 24 * 365 })
   const consent = await db.select({ id: termsConsents.id }).from(termsConsents).where(eq(termsConsents.userId, r.userId)).limit(1)
-  // 동의가 남아 있으면 그 화면이 먼저다 — 돌아갈 곳은 쿠키에 그대로 두고 동의 후에 쓴다.
-  if (consent.length === 0) return to('/terms')
+  // 온보딩(프로필·약관)이 남아 있으면 그 화면이 먼저다 — 돌아갈 곳은 쿠키에 그대로 두고 동의 후에 쓴다.
+  if (consent.length === 0) return to('/onboarding')
   return to((await takeNext()) ?? '/home')
 }

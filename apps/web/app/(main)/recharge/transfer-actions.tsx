@@ -1,6 +1,7 @@
 'use client'
 import { Button, useToast } from '@/components/ui'
 import styles from '@/components/wallet/wallet.module.css'
+import { useT } from '@/lib/i18n/client'
 
 /** 시트의 행동 버튼은 배경에 녹는 어두운 채움 — 주황은 지갑 화면의 충전하기 하나만 쓴다. */
 export const SHEET_BUTTON = { background: 'var(--color-surface-3)', border: '1px solid var(--color-border-strong)' } as const
@@ -16,6 +17,7 @@ export function TransferActions({ bank, accountNumber, amount, onOpen }: {
   bank: string; accountNumber: string; amount: number; onOpen?: () => void
 }) {
   const toast = useToast()
+  const t = useT()
   // 딥링크에는 숫자만 넣는다.
   const digits = accountNumber.replace(/-/g, '')
 
@@ -36,18 +38,18 @@ export function TransferActions({ bank, accountNumber, amount, onOpen }: {
 
   async function openKakaoBank() {
     onOpen?.()
-    try { await navigator.clipboard.writeText(digits); toast('계좌번호를 복사했어요. 앱에서 붙여 넣어 주세요.') }
-    catch { toast('계좌번호를 복사하지 못했어요. ? 를 눌러 계좌번호를 확인해 주세요.') }
+    try { await navigator.clipboard.writeText(digits); toast(t('계좌번호를 복사했어요. 앱에서 붙여 넣어 주세요.')) }
+    catch { toast(t('계좌번호를 복사하지 못했어요. ? 를 눌러 계좌번호를 확인해 주세요.')) }
     open('kakaobank://', 'https://www.kakaobank.com/')
   }
 
   return (
     <div className={styles.banks}>
       <Button type="button" variant="secondary" size="lg" full style={SHEET_BUTTON} data-open-bank="toss" onClick={openToss}>
-        <TossMark />토스로 송금하기
+        <TossMark />{t('토스로 송금하기')}
       </Button>
       <Button type="button" variant="secondary" size="lg" full style={SHEET_BUTTON} data-open-bank="kakaobank" onClick={() => void openKakaoBank()}>
-        <KakaoBankMark />카카오뱅크로 송금하기
+        <KakaoBankMark />{t('카카오뱅크로 송금하기')}
       </Button>
     </div>
   )

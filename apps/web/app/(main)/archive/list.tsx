@@ -8,6 +8,7 @@ import type { ArchiveCursor, ArchivePage } from '@/lib/ops/archive'
 import { loadArchivePage } from './actions'
 import { withParticle } from '@/lib/format'
 import { dateLabel, preview } from '@/lib/archive-format'
+import { useLanguage, useT } from '@/lib/i18n/client'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -24,6 +25,8 @@ export function ArchiveList({ initialPage }: {
   const [error, setError] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
   const requestId = useRef(0)
+  const t = useT()
+  const language = useLanguage()
 
   useEffect(() => {
     const currentRequest = ++requestId.current
@@ -72,8 +75,8 @@ export function ArchiveList({ initialPage }: {
     <>
       <header style={{ marginBottom: 'var(--space-6)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
-          <h1 className="t-title-1">내 채팅</h1>
-        <button type="button" onClick={() => setManaging((value) => !value)} aria-label="대화 관리" aria-pressed={managing} style={{
+          <h1 className="t-title-1">{t('내 채팅')}</h1>
+        <button type="button" onClick={() => setManaging((value) => !value)} aria-label={t('대화 관리')} aria-pressed={managing} style={{
           width: 40, height: 40, display: 'grid', placeItems: 'center', padding: 0, border: 0, borderRadius: 'var(--radius-sm)',
           background: managing ? 'var(--color-surface-2)' : 'transparent', color: 'var(--color-text-primary)',
         }}>
@@ -84,11 +87,11 @@ export function ArchiveList({ initialPage }: {
         </div>
       </header>
       <label style={{ position: 'relative', display: 'block', marginBottom: 'var(--space-5)' }}>
-        <span className="sr-only">캐릭터 이름으로 검색</span>
+        <span className="sr-only">{t('캐릭터 이름으로 검색')}</span>
         <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }}>
           <circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" />
         </svg>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder="캐릭터 이름으로 검색" style={{
+        <input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder={t('캐릭터 이름으로 검색')} style={{
           width: '100%', minHeight: 52, padding: '0 16px 0 46px', border: 0, outline: 0,
           borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
         }} />
@@ -116,13 +119,13 @@ export function ArchiveList({ initialPage }: {
                 <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : s.characterStatus ?? `${s.location} · ${s.time}`}</p>
               </div>
               <div style={{ width: 44, minHeight: 54, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: 7 }}>
-                <time className="t-micro" dateTime={new Date(s.lastInteractionAt).toISOString()} style={{ textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{dateLabel(s.lastInteractionAt)}</time>
-                {s.unread > 0 && <span data-unread aria-label={`안 읽은 메시지 ${s.unread}개`} className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 21, height: 21, padding: '0 6px', borderRadius: 11, background: 'var(--color-danger)', color: 'var(--color-white)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
+                <time className="t-micro" dateTime={new Date(s.lastInteractionAt).toISOString()} style={{ textTransform: 'none', letterSpacing: 0, whiteSpace: 'nowrap' }}>{dateLabel(s.lastInteractionAt, undefined, t)}</time>
+                {s.unread > 0 && <span data-unread aria-label={t('안 읽은 메시지 {n}개', { n: s.unread })} className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 21, height: 21, padding: '0 6px', borderRadius: 11, background: 'var(--color-danger)', color: 'var(--color-white)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
               </div>
             </TransitionLink>
             {managing && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
-                <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={`${withParticle(s.characterName, '과', '와', '와')}의 역할극 삭제`}>삭제</ButtonLink>
+                <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={t('{name}의 역할극 삭제', { name: language === 'ko' ? withParticle(s.characterName, '과', '와', '와') : s.characterName })}>{t('삭제')}</ButtonLink>
               </div>
             )}
           </motion.li>
@@ -130,10 +133,10 @@ export function ArchiveList({ initialPage }: {
         })}
         </AnimatePresence>
       </ul>
-      {loading && <p role="status" className="t-caption" style={{ marginTop: 16 }}>불러오는 중…</p>}
-      {error && <div role="alert" className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>목록을 불러오지 못했어요. <Button type="button" size="sm" variant="ghost" onClick={() => nextCursor ? void loadMore() : setRetryKey((value) => value + 1)}>다시 시도</Button></div>}
-      {!loading && !error && items.length === 0 && <p className="empty-state empty-state--fill">{query.trim() ? '해당 이름의 캐릭터가 없어요' : '진행 중인 역할극이 없습니다.'}</p>}
-      {nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>더 보기</Button></div>}
+      {loading && <p role="status" className="t-caption" style={{ marginTop: 16 }}>{t('불러오는 중…')}</p>}
+      {error && <div role="alert" className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => nextCursor ? void loadMore() : setRetryKey((value) => value + 1)}>{t('다시 시도')}</Button></div>}
+      {!loading && !error && items.length === 0 && <p className="empty-state empty-state--fill">{query.trim() ? t('해당 이름의 캐릭터가 없어요') : t('진행 중인 역할극이 없습니다.')}</p>}
+      {nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>{t('더 보기')}</Button></div>}
     </>
   )
 }

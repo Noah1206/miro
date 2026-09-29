@@ -10,6 +10,8 @@ import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { matureGateFor } from '@/lib/ops/safety'
 import { feature } from '@miro/config'
 import { COPY } from '@/lib/copy'
+import { msg } from '@/lib/i18n'
+import { getT } from '@/lib/i18n/server'
 
 export type MediaState = { error: string | null; notice: string | null }
 
@@ -26,17 +28,17 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   const sessionId = String(form.get('sessionId') ?? '')
 
   const loaded = await loadSession(sessionId, user.id)
-  if (!loaded || loaded.restricted) return { error: '대화를 찾을 수 없습니다.', notice: null }
+  if (!loaded || loaded.restricted) return { error: msg('대화를 찾을 수 없습니다.'), notice: null }
   // 사진은 미로 캐릭터의 것이다. 버튼을 숨기는 것과 별개로 서버가 거절한다.
   if (loaded.experienceType !== 'reality') return { error: COPY.error.featureOff, notice: null }
 
   const context = await contextFromWorld(sessionId)
-  if (!context) return { error: '현재 상태를 불러오지 못했습니다.', notice: null }
+  if (!context) return { error: msg('현재 상태를 불러오지 못했습니다.'), notice: null }
 
   // 성인 표현 요청은 서버에서 다시 판정한다. 차단 시 사유와 다음 행동을 명확히 안내한다 (명세서 7.1 표시).
   if (form.get('mature') === 'on') {
     const gate = await matureGateFor(user.id, loaded.characterId)
-    if (!gate.allowed) return { error: `성인 표현을 적용할 수 없습니다. ${gate.next}`, notice: null }
+    if (!gate.allowed) { const t = await getT(); return { error: `${t('성인 표현을 적용할 수 없습니다.')} ${t(gate.next)}`, notice: null } }
     // 성숙한 비주얼은 별도 캐릭터가 아니라 현재 장면의 연장선이다 — 같은 외형·장소, 표현만 다르다.
     context.outfit = 'mature'
   }
@@ -68,6 +70,6 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   } catch (e) {
     if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
     // 이미지 생성 실패 시 텍스트 역할극은 그대로 유지한다 (명세서 5.3 예외).
-    return { error: '사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.', notice: null }
+    return { error: msg('사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.'), notice: null }
   }
 }

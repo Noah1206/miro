@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 
 /**
  * 실시간 음성 레이어 (Gemini Live).
@@ -10,6 +12,7 @@ import { useEffect, useRef, useState } from 'react'
  * 어떤 실패든 조용히 물러난다 — 아래 텍스트 통화 UI 가 그대로 남아 있다 (명세서 5.2 예외).
  */
 export function LiveAudio({ callId, token, url, model }: { callId: string; token: string; url: string; model: string }) {
+  const t = useT()
   const [status, setStatus] = useState<'connecting' | 'live' | 'ended' | 'error'>('connecting')
   const [detail, setDetail] = useState<string | null>(null)
   // iOS Safari 는 탭 밖에서 만든 AudioContext 를 멈춘 채로 둔다 — 그때만 '소리 켜기'를 보여 탭으로 깨운다.
@@ -73,7 +76,7 @@ export function LiveAudio({ callId, token, url, model }: { callId: string; token
           audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
         })
       } catch {
-        fail('마이크를 사용할 수 없어요. 아래 입력으로 계속할 수 있어요.')
+        fail(msg('마이크를 사용할 수 없어요. 아래 입력으로 계속할 수 있어요.'))
         return
       }
       if (closed) { micStream.getTracks().forEach((t) => t.stop()); return }
@@ -143,11 +146,11 @@ export function LiveAudio({ callId, token, url, model }: { callId: string; token
         if (part.inlineData?.data) play(part.inlineData.data)
       }
     }
-    ws.onerror = () => { if (!closed) fail('실시간 연결이 불안정해요. 아래 입력으로 계속할 수 있어요.') }
+    ws.onerror = () => { if (!closed) fail(msg('실시간 연결이 불안정해요. 아래 입력으로 계속할 수 있어요.')) }
     ws.onclose = () => {
       if (closed) return
       setStatus((s) => (s === 'error' ? s : 'ended'))
-      setDetail((d) => d ?? '실시간 연결이 끝났어요. 아래 입력으로 계속할 수 있어요.')
+      setDetail((d) => d ?? msg('실시간 연결이 끝났어요. 아래 입력으로 계속할 수 있어요.'))
       stop()
     }
 
@@ -162,14 +165,14 @@ export function LiveAudio({ callId, token, url, model }: { callId: string; token
   return (
     <div style={{ textAlign: 'center', marginTop: 10 }}>
       <p role="status" className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-        {status === 'connecting' && '목소리를 연결하는 중…'}
-        {status === 'live' && (muted ? '소리가 꺼져 있어요' : '통화 중 — 편하게 말하세요')}
-        {(status === 'ended' || status === 'error') && (detail ?? '실시간 연결이 끝났어요.')}
+        {status === 'connecting' && t('목소리를 연결하는 중…')}
+        {status === 'live' && (muted ? t('소리가 꺼져 있어요') : t('통화 중 — 편하게 말하세요'))}
+        {(status === 'ended' || status === 'error') && (detail ? t(detail) : t('실시간 연결이 끝났어요.'))}
       </p>
       {muted && status !== 'ended' && status !== 'error' && (
         <button type="button" onClick={unmute} className="t-caption"
           style={{ marginTop: 10, minHeight: 44, padding: '0 18px', borderRadius: 22, border: 0, background: 'var(--color-accent)', color: 'var(--color-white)', cursor: 'pointer' }}>
-          소리 켜기
+          {t('소리 켜기')}
         </button>
       )}
     </div>

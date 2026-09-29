@@ -51,7 +51,9 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 3,
   // reducedMotion: Motion/CSS 가 즉시 최종 상태로 가므로 타이밍이 테스트를 흔들지 않는다.
   // 모바일 우선 제품이므로 기본 뷰포트도 모바일. 데스크톱 레이아웃은 별도 프로젝트로 추가할 수 있다.
-  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure', headless: true, baseURL: `http://localhost:${WEB}`, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true },
+  use: { trace: 'retain-on-failure', screenshot: 'only-on-failure', headless: true, baseURL: `http://localhost:${WEB}`, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
+    // 화면 언어는 쿠키가 없으면 브라우저 언어를 따른다 — 테스트는 한국어 화면을 기준으로 쓴다.
+    locale: 'ko-KR' },
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   webServer: [
     { command: `pnpm --filter @miro/web exec next start -p ${WEB}`, port: WEB, reuseExistingServer: false, env, timeout: 60_000 },

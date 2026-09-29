@@ -84,7 +84,7 @@ export async function loadSession(
       .where(and(eq(characterVisualIdentities.characterId, row.character.id), eq(characterVisualIdentities.isActive, true)))
       .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
     // 현실 시계는 사용자 시간대로 — 캐릭터가 "지금 몇 시인지" 알아야 하루의 때에 맞게 말한다.
-    db.select({ timeZone: userSettings.timeZone }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1),
+    db.select({ timeZone: userSettings.timeZone, language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1),
     // 최근 통화 — 못 받은 전화, 끊은 전화를 캐릭터가 안다. 울리는 중인 것은 아직 사실이 아니다.
     db.select().from(callSessions).where(and(eq(callSessions.sessionId, sessionId), inArray(callSessions.status, ['ended', 'missed', 'declined', 'unanswered'])))
       .orderBy(desc(callSessions.createdAt)).limit(3),
@@ -115,6 +115,7 @@ export async function loadSession(
     turnCount: row.session.turnCount,
     memoryLag,
     userPersona,
+    userLanguage: owner[0]?.language ?? null,
     experienceType: c.experienceType,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
     clock: localClock(now, timeZone),

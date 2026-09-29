@@ -5,6 +5,8 @@ import { Sheet, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
 import { Line } from '../character/[slug]/sections'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 
 /**
  * 만들기 폼의 조각들 (레퍼런스 UI).
@@ -123,6 +125,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const inputId = useId()
   const reduce = useReducedMotion()
+  const t = useT()
   // 기존 사진(이미 저장됨)이 새 사진 앞에 온다. 대표는 언제나 0번째.
   const items: Array<{ url: string; kind: 'existing' | 'new' }> = [
     ...kept.map((url) => ({ url, kind: 'existing' as const })),
@@ -182,7 +185,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
       <div {...(main ? dragHandlers(0) : {})} style={{ width: 200, margin: '0 auto', cursor: main ? 'grab' : undefined }}>
-        <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? `${label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)` : label}
+        <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -217,7 +220,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
                 </span>
                 {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
                 <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-                  최대 {maxCount}장
+                  {t('최대 {n}장', { n: maxCount })}
                 </span>
               </motion.span>
             )}
@@ -227,13 +230,13 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
 
       {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. 드래그로 순서를 바꿀 수 있다. */}
       {main && (
-        <ul aria-label="추가 사진" style={{ listStyle: 'none', margin: '12px auto 0', padding: 0, width: 200, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: '12px auto 0', padding: 0, width: 200, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
           <AnimatePresence initial={false}>
             {items.slice(1).map((it, i) => (
               // 드래그(li, 네이티브)와 애니메이션(motion.div)을 분리한다 — 대표 사진 칸과 같은 이유.
               <li key={it.url} {...dragHandlers(i + 1)} style={{ opacity: dragIndex === i + 1 ? 0.5 : 1, cursor: 'grab' }}>
                 <motion.div initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: duration.fast }}>
-                  <button type="button" onClick={() => removeAt(i + 1)} aria-label={`${i + 2}번째 사진 빼기 (드래그로 순서 변경 가능)`}
+                  <button type="button" onClick={() => removeAt(i + 1)} aria-label={t('{n}번째 사진 빼기 (드래그로 순서 변경 가능)', { n: i + 2 })}
                     style={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', padding: 0, borderRadius: 'var(--radius-sm)', overflow: 'hidden', cursor: 'pointer', background: 'var(--color-surface-2)',
                       border: `1.5px solid ${overIndex === i + 1 && dragIndex !== null && dragIndex !== i + 1 ? 'var(--color-border-hover)' : 'transparent'}` }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -248,7 +251,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           </AnimatePresence>
           {!full && (
             <li>
-              <button type="button" onClick={() => setOpen(true)} aria-label={`사진 추가 (${items.length}/${maxCount})`}
+              <button type="button" onClick={() => setOpen(true)} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
                 style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'var(--color-surface-2)',
                   border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)' }}>
                 <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -260,7 +263,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
 
       <Sheet open={open} onClose={() => setOpen(false)} title={`${label} ${items.length}/${maxCount}`}>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
-          한 장당 5MB 이하 (jpg, jpeg, png, webp, heic, heif)
+          {t('한 장당 5MB 이하 (jpg, jpeg, png, webp, heic, heif)')}
         </p>
 
         <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 10 }}>
@@ -268,7 +271,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 16V4M8 8l4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
             </svg>
-            <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>기기에서 가져오기</span>
+            <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{t('기기에서 가져오기')}</span>
           </label>
           <input id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
             onChange={(e) => {
@@ -283,8 +286,8 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             }} />
         </div>
         <p className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 18, padding: '0 4px' }}>
-          내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요!<br />
-          아니면 경고 없이 삭제나 차단될 수 있어요.
+          {t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요!')}<br />
+          {t('아니면 경고 없이 삭제나 차단될 수 있어요.')}
         </p>
       </Sheet>
     </>
@@ -301,23 +304,24 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
   const [tags, setTags] = useState<string[]>(defaultValue)
   const [draft, setDraft] = useState('')
   const full = tags.length >= max
+  const t = useT()
   function commit() {
-    const t = draft.trim().replace(/^#/, '').slice(0, maxLength)
-    if (!t || tags.includes(t) || full) { setDraft(''); return }
-    setTags([...tags, t]); setDraft('')
+    const tag = draft.trim().replace(/^#/, '').slice(0, maxLength)
+    if (!tag || tags.includes(tag) || full) { setDraft(''); return }
+    setTags([...tags, tag]); setDraft('')
   }
   return (
     <div className="stack" style={{ gap: 8 }}>
       <input type="hidden" name={name} value={tags.join(',')} />
       {tags.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-          {tags.map((t) => (
-            <button key={t} type="button" onClick={() => setTags(tags.filter((x) => x !== t))} aria-label={`${t} 지우기`} className="hit"
+          {tags.map((tag) => (
+            <button key={tag} type="button" onClick={() => setTags(tags.filter((x) => x !== tag))} aria-label={t('{tag} 지우기', { tag })} className="hit"
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 'var(--radius-sm)', border: 0,
                 background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', cursor: 'pointer',
               }}>
-              #{t}
+              #{tag}
               <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
           ))}
@@ -330,7 +334,7 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
           <button type="button" onClick={commit} className="t-caption hit"
             style={{ background: 'none', border: 0, padding: '2px 4px', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
-            + 추가 {tags.length}/{max}
+            {t('+ 추가 {count}/{max}', { count: tags.length, max })}
           </button>
         </div>
       )}
@@ -389,7 +393,8 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   const [editing, setEditing] = useState<number | null>(null)
   const [editText, setEditText] = useState('')
   const draftRef = useRef<HTMLTextAreaElement>(null)
-  const who = characterName || '캐릭터'
+  const t = useT()
+  const who = characterName || t('캐릭터')
   // 고른 글자를 *별표* 로 감싼다 — 채팅과 같은 규칙: 별표 안은 옅은 서술이 된다. 고른 게 없으면 별표 한 쌍을 넣고 그 사이에 커서를 둔다.
   // 포커스는 옮기지 않는다 — 버튼이 mousedown 에서 포커스를 뺏지 않으므로 커서는 입력창에 그대로 있다.
   // 프로그램으로 focus() 를 부르면 macOS 크로미움에서 한글 입력기가 붙지 않아 영문만 찍히는 일이 있었다.
@@ -411,7 +416,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   const commit = (el: HTMLTextAreaElement) => { if (document.activeElement === el) { el.blur(); el.focus() } }
   // 입력창 옆 버튼들은 눌러도 포커스를 가져가지 않는다 — 한글 조합과 커서가 입력창에 남는다.
   const keepFocus = (e: React.MouseEvent) => e.preventDefault()
-  const label = (r: Turn['role']) => (r === 'narrator' ? '내레이터' : r === 'user' ? '유저' : who)
+  const label = (r: Turn['role']) => (r === 'narrator' ? t('내레이터') : r === 'user' ? t('유저') : who)
   const totalCharacters = turns.reduce((sum, turn) => sum + turn.text.length, 0)
   const remaining = intro ? Math.max(0, 2000 - totalCharacters) : 500
   const full = turns.length >= MAX_TURNS || remaining === 0
@@ -429,7 +434,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
     if (editing === null) return
     const text = editText.trim()
     if (intro && totalCharacters - turns[editing]!.text.length + text.length > 2000) return
-    setTurns(text ? turns.map((t, j) => (j === editing ? { ...t, text } : t)) : turns.filter((_, j) => j !== editing))
+    setTurns(text ? turns.map((turn, j) => (j === editing ? { ...turn, text } : turn)) : turns.filter((_, j) => j !== editing))
     setEditing(null)
   }
   // 한글 조합 중 Enter 는 글자 확정이지 전송이 아니다.
@@ -445,20 +450,20 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
 
       {turns.length === 0 && (
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', textAlign: 'center', padding: '14px 0' }}>
-          아래에서 누가 말할지 고르고 첫 마디를 적어 보세요.
+          {t('아래에서 누가 말할지 고르고 첫 마디를 적어 보세요.')}
         </p>
       )}
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 12 }}>
-        {turns.map((t, i) => {
+        {turns.map((turn, i) => {
           const isEditing = editing === i
           const tools = (
             <span style={{ display: 'inline-flex', gap: 4, flexShrink: 0 }}>
-              <button type="button" onClick={() => (isEditing ? commitEdit() : startEdit(i))} aria-label={isEditing ? '고친 말 확인' : '이 말 고치기'} className="hit" style={roundBtn}>
+              <button type="button" onClick={() => (isEditing ? commitEdit() : startEdit(i))} aria-label={isEditing ? t('고친 말 확인') : t('이 말 고치기')} className="hit" style={roundBtn}>
                 {isEditing
                   ? <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
                   : <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z" /><path d="M13.5 6.5l3 3" /></svg>}
               </button>
-              <button type="button" onClick={() => remove(i)} aria-label="이 말 지우기" className="hit" style={roundBtn}>
+              <button type="button" onClick={() => remove(i)} aria-label={t('이 말 지우기')} className="hit" style={roundBtn}>
                 <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
               </button>
             </span>
@@ -466,9 +471,9 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
           const body = isEditing
             ? <textarea enterKeyHint="enter" autoFocus value={editText} onChange={(e) => setEditText(e.target.value)} onKeyDown={(e) => onEnter(e, commitEdit)} rows={2} maxLength={intro ? Math.min(500, 2000 - totalCharacters + turns[i]!.text.length) : 500}
                 style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
-            : <span style={{ display: 'block', fontSize: 14 }}><Line text={t.text} /></span>
+            : <span style={{ display: 'block', fontSize: 14 }}><Line text={turn.text} /></span>
 
-          if (t.role === 'narrator') {
+          if (turn.role === 'narrator') {
             return (
               <li key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '0 6%' }}>
                 <div style={{ width: '100%', textAlign: 'center', fontStyle: isEditing ? 'normal' : 'italic', color: 'var(--color-text-secondary)', ...(isEditing ? { padding: '6px 10px', ...box(true) } : {}) }}>{body}</div>
@@ -476,7 +481,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
               </li>
             )
           }
-          if (t.role === 'user') {
+          if (turn.role === 'user') {
             return (
               <li key={i} style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
                 {tools}
@@ -502,7 +507,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
       </div>
       {/* 입력 — 화자 고르기 → 한 마디 → 올리기 */}
       <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 8, ...(fill ? { flexShrink: 0, paddingBottom: 'max(12px, env(safe-area-inset-bottom))' } : {}) }}>
-        <div role="radiogroup" aria-label="말하는 사람" style={{ display: 'flex', gap: 2 }}>
+        <div role="radiogroup" aria-label={t('말하는 사람')} style={{ display: 'flex', gap: 2 }}>
           {(intro ? (['narrator', 'character'] as const) : (['narrator', 'user', 'character'] as const)).map((r) => {
             const on = r === role
             return (
@@ -521,9 +526,9 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginTop: 8 }}>
           <textarea enterKeyHint="enter" ref={draftRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => onEnter(e, add)} rows={2} maxLength={Math.min(500, remaining)}
-            placeholder={full ? '입력 한도에 도달했어요.' : role === 'narrator' ? '장면을 서술해요.' : `${label(role)}의 메시지 입력`} disabled={full} aria-label={`${label(role)}의 메시지`}
+            placeholder={full ? t('입력 한도에 도달했어요.') : role === 'narrator' ? t('장면을 서술해요.') : t('{name}의 메시지 입력', { name: label(role) })} disabled={full} aria-label={t('{name}의 메시지', { name: label(role) })}
             style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
-          <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label="올리기" onMouseDown={keepFocus}
+          <button type="button" onClick={add} disabled={!draft.trim() || full} aria-label={t('올리기')} onMouseDown={keepFocus}
             style={{
               width: 44, height: 44, borderRadius: 22, border: 0, flexShrink: 0, display: 'grid', placeItems: 'center',
               cursor: draft.trim() && !full ? 'pointer' : 'default',
@@ -533,14 +538,14 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
             <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
           </button>
         </div>
-        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>엔터로 줄바꿈하고, ↑ 버튼을 눌러 올려 주세요.</p>
+        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{t('엔터로 줄바꿈하고, ↑ 버튼을 눌러 올려 주세요.')}</p>
         {role !== 'narrator' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-            <button type="button" onClick={wrapNarration} disabled={full} aria-label="서술 별표 넣기" onMouseDown={keepFocus} className="hit"
+            <button type="button" onClick={wrapNarration} disabled={full} aria-label={t('서술 별표 넣기')} onMouseDown={keepFocus} className="hit"
               style={{ padding: '3px 9px', borderRadius: 'var(--radius-sm)', border: 0, cursor: full ? 'default' : 'pointer', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
-              *서술*
+              {t('*서술*')}
             </button>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>별표 안은 옅은 서술로 보여요. 예) <em style={{ color: 'var(--color-text-tertiary)' }}>손을 흔들며</em> 하이~</span>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-secondary)' }}>{t('별표 안은 옅은 서술로 보여요. 예)')} <em style={{ color: 'var(--color-text-tertiary)' }}>{t('손을 흔들며')}</em> {t('하이~')}</span>
           </div>
         )}
       </div>
@@ -558,13 +563,14 @@ const roundBtn: React.CSSProperties = {
  * 미리 적어 둔 태그를 눌러서 고르고, 없는 건 + 로 직접 적는다 (분위기).
  * 저장은 CSV 한 칸 — TagInput 과 같은 모양이라 읽는 쪽이 같다.
  */
-export function PresetTags({ name, label = '태그', options, max, maxLength = 20, defaultValue = [] }: {
+export function PresetTags({ name, label = msg('태그'), options, max, maxLength = 20, defaultValue = [] }: {
   name: string; label?: string; options: readonly string[]; max: number; maxLength?: number; defaultValue?: string[]
 }) {
   const [picked, setPicked] = useState<string[]>(defaultValue)
   const [adding, setAdding] = useState(false)
   const [text, setText] = useState('')
   const reduce = useReducedMotion()
+  const t = useT()
   const full = picked.length >= max
   const toggle = (o: string) => setPicked(picked.includes(o) ? picked.filter((v) => v !== o) : full ? picked : [...picked, o])
   const custom = picked.filter((v) => !options.includes(v))
@@ -584,7 +590,7 @@ export function PresetTags({ name, label = '태그', options, max, maxLength = 2
     color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
   })
   return (
-    <div role="group" aria-label={label}>
+    <div role="group" aria-label={t(label)}>
       <input type="hidden" name={name} value={picked.join(',')} />
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {options.map((o) => {
@@ -598,27 +604,27 @@ export function PresetTags({ name, label = '태그', options, max, maxLength = 2
         })}
         {/* 직접 적은 태그 — 누르면 빠진다 */}
         {custom.map((o) => (
-          <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed aria-label={`${o} 빼기`}
+          <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed aria-label={t('{tag} 빼기', { tag: o })}
             whileTap={reduce ? undefined : { scale: 0.97 }} style={{ ...chip(true, false), display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             {o}
             <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </motion.button>
         ))}
-        <button type="button" onClick={() => setAdding((v) => !v)} disabled={full && !adding} aria-expanded={adding} aria-label="직접 입력"
+        <button type="button" onClick={() => setAdding((v) => !v)} disabled={full && !adding} aria-expanded={adding} aria-label={t('직접 입력')}
           style={{ ...chip(false, full && !adding), display: 'inline-flex', alignItems: 'center', gap: 4, borderStyle: 'dashed', borderColor: 'var(--color-border-strong)' }}>
           <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          직접 입력
+          {t('직접 입력')}
         </button>
       </div>
       {adding && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '6px 10px', ...box(true) }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength * max} placeholder="예) 재벌가, 첫사랑" autoFocus disabled={full}
-            aria-label={`${label} 직접 입력`}
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength * max} placeholder={t('예) 재벌가, 첫사랑')} autoFocus disabled={full}
+            aria-label={t('{label} 직접 입력', { label: t(label) })}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addCustom() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
           <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={addCustom} disabled={!text.trim() || full} className="hit"
             style={{ padding: '4px 10px', borderRadius: 'var(--radius-sm)', border: 0, cursor: 'pointer', background: text.trim() && !full ? 'var(--color-accent)' : 'var(--color-surface-3)', color: text.trim() && !full ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
-            추가
+            {t('추가')}
           </button>
         </div>
       )}
@@ -641,9 +647,10 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
   const value = controlled ?? localValue
   const current = options.reduce((a, b) => Math.abs(b.value - value) < Math.abs(a.value - value) ? b : a)
   const reduce = useReducedMotion()
+  const t = useT()
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
-      <legend className="t-body" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)', marginBottom: 10 }}>{label}</legend>
+      <legend className="t-body" style={{ color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)', marginBottom: 10 }}>{t(label)}</legend>
       <input type="hidden" name={name} value={value} />
       <div style={pill ? { display: 'flex', flexWrap: 'wrap', gap: 6 } : { display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 6 }}>
         {options.map((o) => {
@@ -658,12 +665,12 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
                 border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
                 color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
               }}>
-              {o.label}
+              {t(o.label)}
             </motion.button>
           )
         })}
       </div>
-      <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>{current.hint}</p>
+      <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: 8 }}>{t(current.hint)}</p>
     </fieldset>
   )
 }
@@ -679,6 +686,7 @@ export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultV
   const [keywords, setKeywords] = useState('')
   const [content, setContent] = useState('')
   const full = items.length >= MAX_LORE
+  const t = useT()
 
   const add = () => {
     const text = content.trim()
@@ -699,11 +707,11 @@ export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultV
             <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', ...box(false) }}>
               <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
                 <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: item.keywords.length ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>
-                  {item.keywords.length ? item.keywords.map((k) => `#${k}`).join(' ') : '항상 실림 (키워드 없음)'}
+                  {item.keywords.length ? item.keywords.map((k) => `#${k}`).join(' ') : t('항상 실림 (키워드 없음)')}
                 </span>
                 <span style={{ fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>{item.content}</span>
               </div>
-              <button type="button" onClick={() => remove(i)} aria-label="이 항목 지우기" className="hit" style={roundBtn}>
+              <button type="button" onClick={() => remove(i)} aria-label={t('이 항목 지우기')} className="hit" style={roundBtn}>
                 <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
               </button>
             </li>
@@ -713,18 +721,18 @@ export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultV
 
       {!full && (
         <div className="stack" style={{ gap: 8, padding: '10px 12px', ...box(false) }}>
-          <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="키워드 (쉼표로 구분) — 예) 민준, 사촌형"
+          <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder={t('키워드 (쉼표로 구분) — 예) 민준, 사촌형')}
             maxLength={120} autoComplete="off"
             style={{ width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit' }} />
           <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={2} maxLength={MAX_LORE_CONTENT}
-            placeholder="이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다."
+            placeholder={t('이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다.')}
             style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}/{MAX_LORE}</span>
             <button type="button" onClick={add} disabled={!content.trim()} className="hit"
               style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: 0, cursor: content.trim() ? 'pointer' : 'default',
                 background: content.trim() ? 'var(--color-accent)' : 'var(--color-surface-3)', color: content.trim() ? 'var(--color-accent-on)' : 'var(--color-text-tertiary)', fontSize: 13 }}>
-              추가
+              {t('추가')}
             </button>
           </div>
         </div>

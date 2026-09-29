@@ -1,3 +1,4 @@
 import type { Metadata } from 'next'
-export const metadata: Metadata = { title: '내 정보' }
+import { getT } from '@/lib/i18n/server'
+export async function generateMetadata(): Promise<Metadata> { const t = await getT(); return { title: t('내 정보') } }
 export default function L({ children }: { children: React.ReactNode }) { return children }

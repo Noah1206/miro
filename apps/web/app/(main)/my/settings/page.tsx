@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { currentUser, destroySession } from '@/lib/auth'
 import { Page, PageHeader, Stagger, StaggerItem, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
+import { LANGUAGES } from '@miro/domain'
+import { getLanguage, getT } from '@/lib/i18n/server'
 
 async function logout() {
   'use server'
@@ -17,26 +19,28 @@ async function logout() {
 export default async function SettingsPage() {
   const user = await currentUser()
   if (!user) redirect('/login')
+  const [language, t] = await Promise.all([getLanguage(), getT()])
   return (
     <Page style={{ maxWidth: 520 }}>
-      <PageHeader back="/my" title="설정" />
+      <PageHeader back="/my" title={t('설정')} />
 
-      <h2 className="t-title-3" style={{ margin: 'var(--space-5) 0 12px' }}>계정</h2>
+      <h2 className="t-title-3" style={{ margin: 'var(--space-5) 0 12px' }}>{t('계정')}</h2>
       <Stagger as="div" className="stack" style={{ gap: 8 }}>
-        {[['/my/subscription', '이용권 관리'], ['/my/verify', '성인 인증'], ['/my/permissions', '권한 안내']].map(([h, l]) => (
+        <StaggerItem><Row href="/my/language" label={t('언어')} sub={LANGUAGES[language]} /></StaggerItem>
+        {[['/my/subscription', t('이용권 관리')], ['/my/verify', t('성인 인증')], ['/my/permissions', t('권한 안내')]].map(([h, l]) => (
           <StaggerItem key={h}><Row href={h!} label={l!} /></StaggerItem>
         ))}
         <StaggerItem>
           <form action={logout}>
             <SubmitButton full variant="secondary" style={{ justifyContent: 'flex-start', padding: '16px 18px', background: 'var(--color-surface-1)', fontWeight: 'var(--weight-regular)' }}>
-              로그아웃
+              {t('로그아웃')}
             </SubmitButton>
           </form>
         </StaggerItem>
         {/* 파괴적 행동은 일반 항목과 같은 그룹에 두지 않는다 (패턴 문서 §9.6) — 선을 긋고 떨어뜨린다. */}
         <StaggerItem>
           <div style={{ marginTop: 'var(--space-5)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
-            <Row href="/my/delete" label="계정 삭제" sub="되돌릴 수 없어요" danger />
+            <Row href="/my/delete" label={t('계정 삭제')} sub={t('되돌릴 수 없어요')} danger />
           </div>
         </StaggerItem>
       </Stagger>

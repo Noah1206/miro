@@ -2,22 +2,24 @@
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef, useState } from 'react'
 import { CharacterPhoto, CharacterVisual } from '@/components/character-visual'
+import { useT } from '@/lib/i18n/client'
 
 export function PhotoHero({ name, accent, slug, photos, shared = true }: {
   name: string; accent: string | null; slug: string; photos: string[]; shared?: boolean
 }) {
+  const t = useT()
   const [selected, setSelected] = useState(0)
   const photo = photos[selected] ?? null
   return (
     <div style={{ position: 'relative' }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
       {photos.length > 1 && (
-        <div role="group" aria-label={`${name} 사진 선택`} style={{
+        <div role="group" aria-label={t('{name} 사진 선택', { name })} style={{
           position: 'absolute', left: 'var(--gutter)', right: 'var(--gutter)', bottom: 'var(--space-7)', zIndex: 3,
           display: 'flex', gap: 8, overflowX: 'auto', padding: '2px 0', scrollbarWidth: 'none',
         }}>
           {photos.map((src, index) => (
-            <button key={`${src}-${index}`} type="button" onClick={() => setSelected(index)} aria-label={`${index + 1}번째 사진 보기`} aria-pressed={selected === index} style={{
+            <button key={`${src}-${index}`} type="button" onClick={() => setSelected(index)} aria-label={t('{n}번째 사진 보기', { n: index + 1 })} aria-pressed={selected === index} style={{
               width: 52, height: 66, flex: '0 0 auto', padding: 0, overflow: 'hidden', cursor: 'pointer',
               borderRadius: 8, border: selected === index ? '1.5px solid var(--color-white)' : '1px solid rgba(255,255,255,.18)',
               background: 'var(--color-surface-2)', opacity: selected === index ? 1 : 0.68,

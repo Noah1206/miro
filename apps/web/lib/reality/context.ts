@@ -1,14 +1,15 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
-import { authoredCharacter, personaLines } from '@miro/domain'
-import { db, characters, characterVisualIdentities, messages, roleplaySessions, users, worlds } from '@miro/db'
+import { authoredCharacter, languageRule, personaLines } from '@miro/domain'
+import { db, characters, characterVisualIdentities, messages, roleplaySessions, users, userSettings, worlds } from '@miro/db'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { characterContext, conversationContext } from '@/lib/simulation/character-context'
 import { getPersona } from '@/lib/persona'
 
 /** Only visible, owned conversation data may ground a proactive message. */
 export async function loadRealityContext(sessionId: string, userId: string, reason: string) {
-  const [owner] = await db.select({ id: roleplaySessions.id, character: characters, worldSetting: worlds.worldSetting, worldGenre: worlds.genre }).from(roleplaySessions)
+  const [owner] = await db.select({ id: roleplaySessions.id, character: characters, worldSetting: worlds.worldSetting, worldGenre: worlds.genre, language: userSettings.language }).from(roleplaySessions)
     .innerJoin(users, eq(users.id, roleplaySessions.userId))
+    .leftJoin(userSettings, eq(userSettings.userId, roleplaySessions.userId))
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .leftJoin(worlds, eq(worlds.id, roleplaySessions.worldId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId),
@@ -32,6 +33,8 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     worldGenre: owner.worldGenre,
     // 문자는 상대를 이름으로 부른다 — 사용자가 정한 페르소나(없으면 줄이 없다).
     userPersona: persona ? personaLines(persona) : null,
+    // 사용자가 고른 언어로 쓴다(한국어면 줄이 없다).
+    languageRule: languageRule(owner.language),
     recentMessages: conversationContext(recent.reverse()).map(m => ({ ...m, content: m.content.slice(0, 1000),
       blocks: m.blocks?.map(b => ({ ...b, text: b.text.slice(0, 1000) })) })),
     memories: memories.map(m => ({ id: m.id, type: m.type, content: m.content.slice(0, 600), sourceMessageId: m.sourceMessageId, at: m.createdAt.toISOString() })),

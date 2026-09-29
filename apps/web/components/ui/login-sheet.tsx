@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import { Sheet } from './sheet'
 import { LogoMark } from './logo'
 import { Button } from './button'
+import { useT } from '@/lib/i18n/client'
 
 export type SocialProviderId = 'google' | 'kakao'
 export type LoginProvider = { id: SocialProviderId; label: string }
@@ -29,6 +30,7 @@ export function LoginButton({ next, ...rest }: Omit<React.ComponentProps<typeof 
 export function LoginSheetProvider({ providers, children }: { providers: LoginProvider[]; children: ReactNode }) {
   const [next, setNext] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
+  const t = useT()
   const ask = useCallback<Ask>((to) => {
     // 현재 화면으로 돌아오는 것이 기본이다.
     setNext(to ?? (typeof location === 'undefined' ? null : location.pathname + location.search))
@@ -38,7 +40,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
     <Ctx.Provider value={ask}>
       {children}
       {/* 제목 줄 대신 로고와 한 줄을 가운데 세운다 — 무엇에 로그인하는지가 먼저 보인다. */}
-      <Sheet open={open} onClose={() => setOpen(false)} label="MIRO 로그인" snap={{ half: 0.46, full: 0.62 }}>
+      <Sheet open={open} onClose={() => setOpen(false)} label={t('MIRO 로그인')} snap={{ half: 0.46, full: 0.62 }}>
         <div data-login-sheet style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '4px 0 22px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -46,7 +48,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
               <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '0.08em' }}>MIRO</span>
             </div>
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
-              내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요
+              {t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}
             </p>
           </div>
           {providers.map(p => <SocialButton key={p.id} {...p} next={next} />)}
@@ -58,6 +60,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
 
 /** 로그인 화면과 같은 브랜드 규정을 따른다 — Google 흰 바탕, Kakao #FEE500 에 검정 글자. */
 function SocialButton({ id, label, next }: LoginProvider & { next: string | null }) {
+  const t = useT()
   const style: Record<SocialProviderId, React.CSSProperties> = {
     google: { background: '#FFFFFF', color: '#111111', border: '1px solid #FFFFFF' },
     kakao: { background: '#FEE500', color: '#000000', border: '1px solid #FEE500' },
@@ -66,7 +69,7 @@ function SocialButton({ id, label, next }: LoginProvider & { next: string | null
     <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`} data-login-provider={id}
       className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 52, padding: '12px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
       <Icon id={id} />
-      <span>{label}로 계속하기</span>
+      <span>{t('{label}로 계속하기', { label: t(label) })}</span>
     </a>
   )
 }

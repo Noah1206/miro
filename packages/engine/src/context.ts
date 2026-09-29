@@ -1,8 +1,8 @@
 import { prompts } from '@miro/providers'
 import { POLICY } from '@miro/config'
-import { CALL_MODE_RULES, describeRelationship, groupByLayer, moodGuide, personaLines, retrieveMemories, selectLore } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore } from '@miro/domain'
 import type {
-  CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona,
+  CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
 } from '@miro/domain'
 
 export type RecentMessage = {
@@ -50,6 +50,8 @@ export type SimulationSnapshot = {
   memoryLag?: boolean
   /** 사용자가 정한 자기 설정(페르소나). 없으면 사용자는 '사용자' 로만 안다 — 옛 세션·체험·테스트 경로. */
   userPersona?: UserPersona | null
+  /** 사용자가 고른 언어. 한국어가 아니면 캐릭터가 그 언어로 말한다. */
+  userLanguage?: Language | null
 }
 
 export type BuiltContext = {
@@ -215,6 +217,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
     '- 정해진 줄거리를 따라가지 않습니다. 현재 상태에서 자연스럽게 이어지는 반응을 만듭니다.',
+    languageRule(s.userLanguage),
     s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s, style),
     ...(spoken ? [] : [
       '',

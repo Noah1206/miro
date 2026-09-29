@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  bigint, bigserial, boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision } from '@miro/domain'
 
@@ -23,6 +23,10 @@ export const users = pgTable('users', {
   adultVerifyFailedAt: timestamp('adult_verify_failed_at', { withTimezone: true }),
   /** 성인 콘텐츠 사용 정책 동의. 인증과 별개로 요구된다 (명세서 정책 2). */
   maturePolicyAgreedAt: timestamp('mature_policy_agreed_at', { withTimezone: true }),
+  /** 첫 로그인 온보딩에서 받는다(선택). 'YYYY-MM-DD'. */
+  birthDate: date('birth_date'),
+  /** 좋아하는 관계 취향(온보딩). 추천에 쓰기 전까지는 저장만 한다. */
+  tastes: text('tastes').array().$type<Array<'bl' | 'hl'>>().notNull().default(sql`'{}'`),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   /** 계정 삭제 후 동일 계정 로그인 및 보관함 접근 차단 (명세서 12.1). */
@@ -86,6 +90,11 @@ export const userSettings = pgTable('user_settings', {
   cameraConsentAt: timestamp('camera_consent_at', { withTimezone: true }),
   micConsentAt: timestamp('mic_consent_at', { withTimezone: true }),
   imageUploadConsentAt: timestamp('image_upload_consent_at', { withTimezone: true }),
+  /** 선택 동의(온보딩): 광고성 정보 수신, 야간(21시~다음날 8시) 광고성 알림 수신. null = 동의 안 함. */
+  marketingConsentAt: timestamp('marketing_consent_at', { withTimezone: true }),
+  nightMarketingConsentAt: timestamp('night_marketing_consent_at', { withTimezone: true }),
+  /** 앱 화면과 캐릭터의 말이 따르는 언어(domain LANGUAGES). */
+  language: text('language', { enum: ['ko', 'en', 'ja', 'zh'] }).notNull().default('ko'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

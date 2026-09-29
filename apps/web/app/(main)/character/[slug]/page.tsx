@@ -14,10 +14,13 @@ import { DetailHero } from './hero'
 import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, SampleDialogue, RealityStrip } from './sections'
 import { compact, subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
+import { getLanguage, getT } from '@/lib/i18n/server'
 import { StartWithLogin } from './start-button'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
+  const t = await getT()
+  const language = await getLanguage()
   const user = await currentUser()
   const { slug } = await params
   const c = await getCharacterByKey(slug, user?.id ?? null)
@@ -42,9 +45,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const profile: string[] = [
     [
       // 앞줄은 '32세 · 영국 · 고서 복원가.' 처럼 마침표로 닫는다 — 없으면 다음 문장과 붙어 읽힌다.
-      [[c.age && `${c.age}세`, c.nationality, job].filter(Boolean).join(' · '), '.'].join(''),
+      [[c.age && t('{age}세', { age: c.age }), c.nationality, job].filter(Boolean).join(' · '), '.'].join(''),
       c.socialPosition ? `${withParticle(c.socialPosition, '이다', '다')}.` : '',
-      c.mbti ? `MBTI는 ${c.mbti}.` : '',
+      c.mbti ? t('MBTI는 {mbti}.', { mbti: c.mbti }) : '',
     ].filter((x) => x && x !== '.').join(' '),
     ...(c.experienceType === 'reality' ? [[c.speechStyle, c.values].filter(Boolean).join(' ')] : []),
   ].filter((line) => line.trim())
@@ -58,7 +61,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {user && c.ownerId === user.id && (
         <TransitionLink href={`/my/characters/${c.id}/edit`} className="t-caption"
           style={{ position: 'absolute', top: 16, right: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)' }}>
-          편집
+          {t('편집')}
         </TransitionLink>
       )}
 
@@ -79,14 +82,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         {/* 통계 칩 — 레퍼런스의 '대화량 · 설정집 · 댓글' 자리. */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-          {plays > 0 && <Stat icon="chat" label={`${compact(plays)}`} />}
-          <Stat icon="comment" label={`댓글 ${commentCount}`} />
+          {plays > 0 && <Stat icon="chat" label={compact(plays, language)} />}
+          <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
           <LikeButton slug={slug} initial={likes} />
         </div>
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
-        {(c.experienceType === 'reality' || profile.length > 0) && <Rule label="이 사람에 대해">
+        {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
             {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>}
             {profile.map((line) => (
@@ -95,17 +98,17 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </div>
         </Rule>}
         {c.experienceType === 'reality' && c.worldSetting && (
-          <Rule label="세계관">
+          <Rule label={t('세계관')}>
             <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.worldSetting}</p>
           </Rule>
         )}
         <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
 
-        <Rule label="첫 장면">
+        <Rule label={t('첫 장면')}>
           <div className="detail-prose">
             <p className="t-body-lg t-quote">{c.startingContext}</p>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>
-              {[c.worldLocation, c.startingTime].filter(Boolean).join(' · ')}부터 시작합니다.
+              {t('{when}부터 시작합니다.', { when: [c.worldLocation, c.startingTime].filter(Boolean).join(' · ') })}
             </p>
           </div>
           {sampleDialogue(c.sampleDialogue).length > 0 && (
@@ -115,8 +118,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           )}
         </Rule>
 
-        <Rule label={`댓글 ${commentCount}`}
-          action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>전체보기</TransitionLink>}>
+        <Rule label={t('댓글 {n}', { n: commentCount })}
+          action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>{t('전체보기')}</TransitionLink>}>
           <CommentsPreview slug={slug} items={comments} />
         </Rule>
       </div>
@@ -124,7 +127,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {similar.length > 0 && (
         <section aria-labelledby="similar" style={{ marginTop: 'var(--space-7)' }}>
           <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>
-            {subject(c.name)} 마음에 들었다면
+            {t('{subject} 마음에 들었다면', { subject: subject(c.name), name: c.name })}
           </h2>
           <SimilarRow items={similar} />
         </section>
@@ -135,8 +138,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
       <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: 'var(--color-bg)' }}>
         {user
-          ? <form action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{COPY.cta.startRoleplay}</SubmitButton></form>
-          : <StartWithLogin slug={slug} label="로그인하고 시작하기" />}
+          ? <form action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
+          : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
       </div>
     </Page>
   )

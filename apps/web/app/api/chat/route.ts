@@ -6,6 +6,7 @@ import { REALITY_DELAY_MS, REPLY_DELAY_MS } from '@/lib/alpha/character'
 import { trackAlpha } from '@/lib/alpha/track'
 import { runConversationTurn, type ConversationOutcome } from '@/lib/simulation/turn'
 import { COPY } from '@/lib/copy'
+import { msg } from '@/lib/i18n'
 
 export const runtime = 'nodejs'
 
@@ -60,7 +61,7 @@ export async function POST(req: Request): Promise<Response> {
 
 /** 실패는 문장으로만 나간다 — 오류 코드나 스택은 화면에 닿지 않는다. */
 function failure(r: Exclude<ConversationOutcome, { ok: true }>): ChatResponse {
-  if (r.reason === 'safety') return { reply: '', delayMs: 0, error: '이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.' }
+  if (r.reason === 'safety') return { reply: '', delayMs: 0, error: msg('이 내용으로는 대화를 이어갈 수 없어요. 다른 상황으로 이야기해 주세요.') }
   if (r.reason === 'budget') return { reply: '', delayMs: 0, limit: r.kind === 'user' ? 'user' : r.kind === 'ip' ? 'ip' : 'global' }
   if (r.reason === 'usage') return { reply: '', delayMs: 0, limit: 'user' }
   if (r.reason === 'too_long') return { reply: '', delayMs: 0, error: COPY.error.tooLong(500) }

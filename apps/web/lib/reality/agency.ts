@@ -5,7 +5,7 @@ import {
   db, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
-import { applyRelationshipDelta, authoredCharacter, describeRelationship, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type SuppressReason } from '@miro/domain'
+import { applyRelationshipDelta, authoredCharacter, describeRelationship, languageRule, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, requireSafeContent, verifyAgencyRealization } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
@@ -134,6 +134,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
         worldSetting: snapshot.worldSetting, worldGenre: snapshot.worldGenre,
         userPersona: snapshot.userPersona ? personaLines(snapshot.userPersona) : null,
+        languageRule: languageRule(snapshot.userLanguage),
         characterName: identity.name, personality: personality.personality, speechStyle: personality.speechStyle,
         channelLabel: presented.channelLabel, reason: plan.decision.candidate.description,
         worldLocation: snapshot.world.currentLocation, worldStatus: snapshot.world.worldStatus,

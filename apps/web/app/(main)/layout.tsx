@@ -7,6 +7,9 @@ import { IncomingCall } from '@/components/incoming-call'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { measured } from '@/lib/observe'
 import { WalletProvider } from '@/components/wallet/provider'
+import { WelcomeSheet } from '@/components/welcome-sheet'
+import { WELCOME_GRANT } from '@miro/config'
+import { getT } from '@/lib/i18n/server'
 
 const IDS: OAuthProviderId[] = ['google', 'kakao']
 
@@ -14,14 +17,17 @@ const IDS: OAuthProviderId[] = ['google', 'kakao']
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   // 비로그인 사용자에게는 로그인을 화면 이동 대신 시트로 묻는다. 보던 화면을 잃지 않게 한다.
   const user = await measured('nav.layout_auth', () => currentUser())
+  const t = await getT()
   const providers = user ? [] : IDS.filter(id => resolveOAuth(id)).map(id => ({ id, label: OAUTH_LABEL[id] }))
   return (
     <LoginSheetProvider providers={providers}>
       <WalletProvider><div className="app-shell">
         {/* 캐릭터가 거는 전화는 어느 화면에서든 울린다. */}
         {user && <IncomingCall userId={user.id} />}
+        {/* 온보딩을 마치고 가입 보상을 받은 직후 한 번. 알림 권한 시트는 이 시트를 닫은 뒤에 올라온다. */}
+        {user && <WelcomeSheet units={WELCOME_GRANT.units} validDays={WELCOME_GRANT.validDays} />}
         {/* 로그인해서 들어오면 어디서든 먼저 알림을 켜자고 묻는다 — 세션에 한 번(2026-09-29). */}
-        {user && <PushSubscribe autoPrompt vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name="캐릭터" />}
+        {user && <PushSubscribe autoPrompt vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={t('캐릭터')} />}
         <Nav signedIn={!!user} userId={user?.id} />
         <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>
       </div></WalletProvider>

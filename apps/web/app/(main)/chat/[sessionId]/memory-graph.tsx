@@ -1,13 +1,15 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MemoryGraph, MemoryNode } from '@miro/domain'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 
 /** 계층별 색 — 기억의 종류를 색으로 구분한다. 관계 수치는 여기 없다. */
 const LAYER = {
-  long_term: { color: 'var(--color-accent)', label: '너에 대해 아는 것' },
-  relationship: { color: 'var(--color-accent-text)', label: '둘 사이에 있었던 일' },
-  world: { color: 'var(--color-text-tertiary)', label: '세계' },
-  short_term: { color: 'var(--color-text-tertiary)', label: '최근' },
+  long_term: { color: 'var(--color-accent)', label: msg('너에 대해 아는 것') },
+  relationship: { color: 'var(--color-accent-text)', label: msg('둘 사이에 있었던 일') },
+  world: { color: 'var(--color-text-tertiary)', label: msg('세계') },
+  short_term: { color: 'var(--color-text-tertiary)', label: msg('최근') },
 } as const
 
 type Placed = MemoryNode & { x: number; y: number; r: number }
@@ -66,6 +68,7 @@ const W = 320, H = 300
  * 턴이 끝날 때마다 refreshKey 가 바뀌어 새로 불러온다.
  */
 export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; refreshKey: number }) {
+  const t = useT()
   const [graph, setGraph] = useState<MemoryGraph | null>(null)
   const [failed, setFailed] = useState(false)
   const [selected, setSelected] = useState<string | null>(null)
@@ -95,13 +98,13 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
 
   if (failed) return (
     <div className="stack" style={{ gap: 8, alignItems: 'flex-start' }}>
-      <p className="t-caption" role="alert">기억을 불러오지 못했어요.</p>
+      <p className="t-caption" role="alert">{t('기억을 불러오지 못했어요.')}</p>
       <button type="button" className="t-caption hit" onClick={() => setAttempt(a => a + 1)}
-        style={{ background: 'none', border: 0, padding: 0, textDecoration: 'underline', color: 'var(--color-text-primary)' }}>다시 시도</button>
+        style={{ background: 'none', border: 0, padding: 0, textDecoration: 'underline', color: 'var(--color-text-primary)' }}>{t('다시 시도')}</button>
     </div>
   )
-  if (!graph) return <p className="t-caption">기억을 그리는 중…</p>
-  if (placed.length === 0) return <p className="t-caption">아직 기억이 쌓이지 않았어요. 대화를 나누면 여기에 남아요.</p>
+  if (!graph) return <p className="t-caption">{t('기억을 그리는 중…')}</p>
+  if (placed.length === 0) return <p className="t-caption">{t('아직 기억이 쌓이지 않았어요. 대화를 나누면 여기에 남아요.')}</p>
 
   const active = selected ? index.get(selected) : null
   const linked = new Set(
@@ -112,7 +115,7 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
   return (
     <div className="stack" style={{ gap: 10 }}>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-        aria-label={`기억 ${placed.length}개와 연결 ${graph.edges.length}개`}
+        aria-label={t('기억 {n}개와 연결 {m}개', { n: placed.length, m: graph.edges.length })}
         style={{ maxHeight: H, touchAction: 'pan-y' }}
         onClick={(e) => { if (e.target === e.currentTarget) setSelected(null) }}>
         {graph.edges.map((e, i) => {
@@ -127,7 +130,7 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
           const dim = selected !== null && n.id !== selected && !linked.has(n.id)
           const toggle = () => setSelected(n.id === selected ? null : n.id)
           return (
-            <g key={n.id} role="button" tabIndex={0} aria-label={`${LAYER[n.layer].label} 기억 열기`} onClick={toggle}
+            <g key={n.id} role="button" tabIndex={0} aria-label={t('{layer} 기억 열기', { layer: t(LAYER[n.layer].label) })} onClick={toggle}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle() } }} style={{ cursor: 'pointer' }}>
               {/* 터치 영역 — 시각 반경은 그대로 두고 히트 반경만 22px(≈44px 지름)를 보장한다 (§6) */}
               <circle cx={n.x} cy={n.y} r={Math.max(n.r + 6, 22)} fill="transparent" />
@@ -142,20 +145,20 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
 
       {/* 계층 범례 — 색만으로 구분하지 않는다 (§4.2). world/short_term 은 같은 색이라 한 항목으로 묶는다. */}
       <p className="t-caption" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 14px' }}>
-        {[['long_term', LAYER.long_term.label], ['relationship', LAYER.relationship.label], ['world', '세계 · 최근']].map(([k, label]) => (
+        {[['long_term', LAYER.long_term.label], ['relationship', LAYER.relationship.label], ['world', msg('세계 · 최근')]].map(([k, label]) => (
           <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <span aria-hidden style={{ width: 8, height: 8, borderRadius: 4, background: LAYER[k as keyof typeof LAYER].color }} />{label}
+            <span aria-hidden style={{ width: 8, height: 8, borderRadius: 4, background: LAYER[k as keyof typeof LAYER].color }} />{t(label!)}
           </span>
         ))}
       </p>
 
       {active
         ? <div className="stack" style={{ gap: 4 }}>
-            <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{LAYER[active.layer].label}</p>
+            <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{t(LAYER[active.layer].label)}</p>
             <p className="t-body t-quote">{active.content}</p>
             {active.tags.length > 0 && <p className="t-caption">{active.tags.map((t) => `#${t}`).join(' ')}</p>}
           </div>
-        : <p className="t-caption">기억 {placed.length}개 · 점을 누르면 무엇을 기억하는지 보여요.</p>}
+        : <p className="t-caption">{t('기억 {n}개 · 점을 누르면 무엇을 기억하는지 보여요.', { n: placed.length })}</p>}
     </div>
   )
 }

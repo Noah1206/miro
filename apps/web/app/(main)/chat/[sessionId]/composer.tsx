@@ -10,15 +10,18 @@ import { COPY } from '@/lib/copy'
 import { sendTurn, type TurnState } from './actions'
 import { useTurns } from './turns'
 import { subject } from '@/lib/format'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력창 아래 줄에 둔다. */
 export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
+  const t = useT()
   const [state, action, pending] = useActionState(async (previous: TurnState, form: FormData): Promise<TurnState> => {
     try { return await sendTurn(previous, form) }
-    catch { return { error: '연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.', notice: null, limit: null, retryWithSameId: true } }
+    catch { return { error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true } }
   }, { error: null, notice: null, limit: null } satisfies TurnState)
   const { model, setModel } = useChatModel()
   const { append } = useTurns()
@@ -88,14 +91,14 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
       <AnimatePresence initial={false}>
         {showTyping && (
           <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>
-            {subject(characterName)} 입력 중
+            {t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}
             <span className={styles.typingDots} aria-hidden><i /><i /><i /></span>
           </motion.p>
         )}
-        {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {state.notice}</motion.p>}
+        {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</motion.p>}
         {state.error && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
-            {state.error}
+            {t(state.error)}
             {state.limit && <> <TransitionLink href="/recharge" style={{ textDecoration: 'underline', marginLeft: 6, color: 'var(--color-text-primary)' }}>Miro Pay</TransitionLink></>}
           </motion.p>
         )}
@@ -104,13 +107,13 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
         <input type="hidden" name="sessionId" value={sessionId} />
-        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || !ready} rows={1} required maxLength={2000} placeholder="대사, 행동, 묘사를 자유롭게…" aria-label={COPY.a11y.composer}
+        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
           />
         <div className={styles.composerBar}>
           <ModelPicker {...modelOptions} />
-          <Pressable type="submit" disabled={pending || !ready || !hasText} aria-label={COPY.cta.send} className={styles.send}>
+          <Pressable type="submit" disabled={pending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
             {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
           </Pressable>
         </div>

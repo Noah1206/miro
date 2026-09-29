@@ -2,6 +2,7 @@
 
 import { characterAgencyMode, feature, voiceCallAllowed } from '@miro/config'
 import { COPY } from '@/lib/copy'
+import { msg } from '@/lib/i18n'
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -29,15 +30,15 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
   const callId = String(form.get('callId') ?? '')
   const input = String(form.get('input') ?? '').trim()
   if (!input) return { error: null }
-  if (input.length > 500) return { error: '500자 이내로 입력해 주세요.' }
+  if (input.length > 500) return { error: msg('500자 이내로 입력해 주세요.') }
 
   const call = await owned(user.id, callId)
-  if (!call || call.status !== 'active') return { error: '통화가 진행 중이 아닙니다.' }
+  if (!call || call.status !== 'active') return { error: msg('통화가 진행 중이 아닙니다.') }
   const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(call.sessionId, user.id)
-    if (!loaded || loaded.restricted) return { error: '대화를 찾을 수 없습니다.' }
+    if (!loaded || loaded.restricted) return { error: msg('대화를 찾을 수 없습니다.') }
     const snapshot = { ...loaded.snapshot, mode: call.channel === 'voice' ? 'voice_call' as const : 'video_call' as const }
     const turnIndex = snapshot.turnCount + 1
 
@@ -53,9 +54,9 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
       context.origin = policy.origin
       result = await runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy })
     } catch {
-      return { error: '연결이 불안정합니다. 텍스트 대화로 이어가시겠어요?' }
+      return { error: msg('연결이 불안정합니다. 텍스트 대화로 이어가시겠어요?') }
     }
-    if (result.transition.blocks.length === 0) return { error: '응답을 만들지 못했습니다.' }
+    if (result.transition.blocks.length === 0) return { error: msg('응답을 만들지 못했습니다.') }
 
     try {
       await commitTurn({
@@ -72,13 +73,13 @@ export async function callTurn(_prev: CallTurnState, form: FormData): Promise<Ca
       })
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue
-      return { error: '상태를 저장하지 못했습니다.' }
+      return { error: msg('상태를 저장하지 못했습니다.') }
     }
     await afterResponse(() => runMemoryJobs(new Date(), { sessionId: call.sessionId, limit: 2, inline: true }))
     revalidatePath(`/call/${callId}`)
     return { error: null }
   }
-  return { error: '다시 시도해 주세요.' }
+  return { error: msg('다시 시도해 주세요.') }
 }
 
 export async function hangUp(callId: string): Promise<void> {
@@ -102,7 +103,7 @@ export async function placeCallAction(_prev: PlaceCallState, form: FormData): Pr
     callId = await startOutgoingCall(user.id, sessionId, channel)
   } catch (e) {
     if (e instanceof UsageExceededError) return { error: exceededMessage(e) }
-    return { error: '통화를 시작하지 못했습니다.' }
+    return { error: msg('통화를 시작하지 못했습니다.') }
   }
   redirect(`/call/${callId}`)
 }

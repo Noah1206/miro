@@ -4,6 +4,8 @@ import { db, users } from '@miro/db'
 import { canRetryVerification, verifyRetryAt } from '@miro/domain'
 import { resolveAdultVerification } from '@miro/providers'
 import { requireUser } from '@/lib/auth'
+import { INTL_LOCALE, msg } from '@/lib/i18n'
+import { getLanguage, getT } from '@/lib/i18n/server'
 
 export type VerifyState = { error: string | null; done: boolean }
 
@@ -14,15 +16,17 @@ export async function verifyAdult(_p: VerifyState, form: FormData): Promise<Veri
   if (u?.verifiedAt) return { error: null, done: true }
   const now = new Date()
   if (!canRetryVerification(u?.failedAt ?? null, now)) {
-    return { error: `${verifyRetryAt(u!.failedAt)!.toLocaleString('ko-KR')} 이후에 다시 시도할 수 있습니다.`, done: false }
+    const [t, language] = await Promise.all([getT(), getLanguage()])
+    return { error: t('{at} 이후에 다시 시도할 수 있습니다.', { at: verifyRetryAt(u!.failedAt)!.toLocaleString(INTL_LOCALE[language]) }), done: false }
   }
-  if (form.get('agree') !== 'on') return { error: '성인 콘텐츠 사용 정책에 동의해 주세요.', done: false }
+  if (form.get('agree') !== 'on') return { error: msg('성인 콘텐츠 사용 정책에 동의해 주세요.'), done: false }
 
   const provider = resolveAdultVerification()
   const result = await provider.verify({ userId: user.id, birthDate: String(form.get('birthDate') ?? '') })
   if (!result.verified) {
     await db.update(users).set({ adultVerifyFailedAt: now }).where(eq(users.id, user.id))
-    return { error: `인증에 실패했습니다: ${result.reason} 24시간 후 다시 시도할 수 있습니다.`, done: false }
+    const t = await getT()
+    return { error: t('인증에 실패했습니다: {reason} 24시간 후 다시 시도할 수 있습니다.', { reason: result.reason }), done: false }
   }
   await db.update(users).set({ adultVerifiedAt: now, maturePolicyAgreedAt: now, adultVerifyFailedAt: null }).where(eq(users.id, user.id))
   // The form shows completion from this state; a reload renders the verified page. Re-sending the tree only delayed it.

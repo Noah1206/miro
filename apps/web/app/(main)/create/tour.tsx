@@ -2,6 +2,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { tween } from '@/lib/motion/tokens'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 import type { CreateTab } from './header'
 
 const KEY = 'miro:tour:create'
@@ -11,12 +13,12 @@ const KEY = 'miro:tour:create'
  * '다음' 이 탭도 같이 넘긴다 — 말풍선이 가리키는 곳을 보여준다.
  */
 const STEPS: Array<{ tab: CreateTab; lines: string[] }> = [
-  { tab: 'profile', lines: ['이름과 소개를 적으면 카드가 돼요.', '사진을 넣으면 카드 얼굴이 돼요.'] },
-  { tab: 'personality', lines: ['캐릭터가 살아가는 시대와 장소를 적어 주세요.', '이야기에 어울리는 장르를 골라 주세요.'] },
-  { tab: 'appearance', lines: ['성별과 체형을 고르면 사진이 돼요.', '얼굴과 머리를 적으면 더 닮아져요.'] },
-  { tab: 'relationship', lines: ['단계를 고르면 첫 만남의 거리가 돼요.', '세부 감정은 필요할 때 조정해요.'] },
-  { tab: 'contact', lines: ['켜 두면 앱 밖에서 먼저 연락이 와요.', '관계와 상황에 따라 연락해요.'] },
-  { tab: 'intro', lines: ['인트로에서 첫 대화를 작성해요.', '첫 장면을 적으면 게시할 수 있어요.'] },
+  { tab: 'profile', lines: [msg('이름과 소개를 적으면 카드가 돼요.'), msg('사진을 넣으면 카드 얼굴이 돼요.')] },
+  { tab: 'personality', lines: [msg('캐릭터가 살아가는 시대와 장소를 적어 주세요.'), msg('이야기에 어울리는 장르를 골라 주세요.')] },
+  { tab: 'appearance', lines: [msg('성별과 체형을 고르면 사진이 돼요.'), msg('얼굴과 머리를 적으면 더 닮아져요.')] },
+  { tab: 'relationship', lines: [msg('단계를 고르면 첫 만남의 거리가 돼요.'), msg('세부 감정은 필요할 때 조정해요.')] },
+  { tab: 'contact', lines: [msg('켜 두면 앱 밖에서 먼저 연락이 와요.'), msg('관계와 상황에 따라 연락해요.')] },
+  { tab: 'intro', lines: [msg('인트로에서 첫 대화를 작성해요.'), msg('첫 장면을 적으면 게시할 수 있어요.')] },
 ]
 
 /**
@@ -31,6 +33,7 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
   const [pos, setPos] = useState({ left: 0, caret: 18 })
   const ref = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
+  const t = useT()
 
   useEffect(() => {
     try { if (!localStorage.getItem(KEY)) setOpen(true) } catch { setOpen(true) }
@@ -79,7 +82,7 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
   return (
     <AnimatePresence initial={false}>
       {open && (
-        <motion.div ref={ref} role="note" aria-label="안내"
+        <motion.div ref={ref} role="note" aria-label={t('안내')}
           initial={reduce ? false : { opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -4, transition: { duration: 0.16 } }} transition={tween.enter}
           style={{ position: 'relative', width: 'fit-content', maxWidth: '100%', marginTop: 'var(--space-4)', marginLeft: pos.left,
@@ -90,9 +93,9 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
             transition: 'left var(--motion-fast) var(--ease-standard)' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
             <p key={step} className="t-caption" style={{ flex: 1, margin: 0, color: 'var(--color-text-primary)', lineHeight: 1.5 }}>
-              {STEPS[step]!.lines.map((line) => <span key={line} style={{ display: 'block', whiteSpace: 'nowrap' }}>{line}</span>)}
+              {STEPS[step]!.lines.map((line) => <span key={line} style={{ display: 'block', whiteSpace: 'nowrap' }}>{t(line)}</span>)}
             </p>
-            <button type="button" onClick={dismiss} aria-label="안내 닫기" className="hit"
+            <button type="button" onClick={dismiss} aria-label={t('안내 닫기')} className="hit"
               style={{ flexShrink: 0, background: 'none', border: 0, padding: 2, marginRight: -4, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
               <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
@@ -102,7 +105,7 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
             <button type="button" onClick={next} className="hit"
               style={{ padding: '5px 12px', borderRadius: 'var(--radius-button)', border: 0, cursor: 'pointer',
                 background: 'var(--color-white)', color: 'var(--color-black)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
-              {last ? '완료' : '다음'}
+              {last ? t('완료') : t('다음')}
             </button>
           </div>
         </motion.div>

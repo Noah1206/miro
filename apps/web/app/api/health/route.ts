@@ -15,7 +15,9 @@ export async function GET() {
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'policy_version')
       and exists (select 1 from information_schema.columns where table_name = 'ai_usage' and column_name = 'origin')
       and exists (select 1 from information_schema.columns where table_name = 'characters' and column_name = 'relationship_profile')
-      and to_regclass('public.user_personas') is not null as ok`)
+      and to_regclass('public.user_personas') is not null
+      and exists (select 1 from information_schema.columns where table_name = 'users' and column_name = 'tastes')
+      and exists (select 1 from information_schema.columns where table_name = 'user_settings' and column_name = 'night_marketing_consent_at') as ok`)
     schema = (rows[0] as { ok: boolean } | undefined)?.ok ? 'ready' : 'behind'
   } catch { schema = 'unknown' }
   const ai = aiReadiness()

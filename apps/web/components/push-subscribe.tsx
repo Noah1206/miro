@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import { Button, Sheet, useToast } from '@/components/ui'
 import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import styles from './push-subscribe.module.css'
+import { WELCOME_DONE_EVENT, WELCOME_PARAM } from '@/lib/onboarding-options'
+import { msg } from '@/lib/i18n'
+import { useT } from '@/lib/i18n/client'
 
 type Status = 'checking' | 'unsupported' | 'ios_install' | 'unconfigured' | 'prompt' | 'subscribed' | 'denied' | 'working'
 
@@ -28,14 +31,23 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   const [ask, setAsk] = useState(false)
   const [guide, setGuide] = useState(false)
   const toast = useToast()
+  const t = useT()
+  // 가입 직후 환영 시트가 떠 있으면 그 시트를 닫을 때까지 묻지 않는다 — 시트 두 장이 겹치지 않게.
+  const [welcoming, setWelcoming] = useState(false)
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has(WELCOME_PARAM)) return
+    setWelcoming(true)
+    const done = () => setWelcoming(false)
+    window.addEventListener(WELCOME_DONE_EVENT, done); return () => window.removeEventListener(WELCOME_DONE_EVENT, done)
+  }, [])
 
   useEffect(() => {
-    if (!autoPrompt || askedThisSession()) return
+    if (!autoPrompt || welcoming || askedThisSession()) return
     if (status !== 'prompt' && status !== 'ios_install' && status !== 'denied') return
     // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
-    const t = setTimeout(() => { markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
-    return () => clearTimeout(t)
-  }, [autoPrompt, status])
+    const timer = setTimeout(() => { markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
+    return () => clearTimeout(timer)
+  }, [autoPrompt, status, welcoming])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -62,7 +74,7 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
       // 시간대도 함께 보낸다 — 캐릭터의 활동 시간을 사용자 현지 시각으로 보는데, 시간대를 고르는 설정은 없다.
       const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...sub.toJSON(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }) })
-      setStatus(res.ok ? 'subscribed' : 'prompt'); if (res.ok && !quiet) toast('이제 먼저 연락이 올 수 있어요.', 'relationship')
+      setStatus(res.ok ? 'subscribed' : 'prompt'); if (res.ok && !quiet) toast(t('이제 먼저 연락이 올 수 있어요.'), 'relationship')
     } catch { setStatus(Notification.permission === 'denied' ? 'denied' : 'prompt') }
   }
 
@@ -75,17 +87,17 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     </>
   )
   const text: Record<Exclude<Status, 'checking' | 'unsupported' | 'unconfigured' | 'subscribed'>, string> = {
-    ios_install: `iPhone에서는 공유 → 홈 화면에 추가한 뒤 알림을 켜야 ${name}의 연락을 받을 수 있어요.`,
-    prompt: `앱을 닫아도 ${name}의 연락을 받으려면`,
-    denied: '알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.',
-    working: '확인 중…',
+    ios_install: t('iPhone에서는 공유 → 홈 화면에 추가한 뒤 알림을 켜야 {name}의 연락을 받을 수 있어요.', { name }),
+    prompt: t('앱을 닫아도 {name}의 연락을 받으려면', { name }),
+    denied: t('알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.'),
+    working: t('확인 중…'),
   }
   return (
     <>
       {/* 입력창 위 한 줄 — 미디어 버튼 줄과 같은 여백. 안 바뀌는 안내라 live region 이 아니다(대화방의 '입력 중' 상태와 겹치지 않게). */}
       <div data-push-prompt style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 var(--space-4) 8px' }}>
         <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{text[status]}</span>
-        {status === 'prompt' && <Button size="sm" variant="secondary" type="button" onClick={() => setAsk(true)}>알림 켜기</Button>}
+        {status === 'prompt' && <Button size="sm" variant="secondary" type="button" onClick={() => setAsk(true)}>{t('알림 켜기')}</Button>}
       </div>
       <PushSheet kind="ask" open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
     </>
@@ -93,9 +105,9 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
 }
 
 const COPY = {
-  ask: { title: '먼저 연락이 올 수 있게', line: (name: string) => `앱을 닫아 두어도 ${name}의 연락을 알림으로 받아요.` },
-  denied: { title: '알림이 꺼져 있어요', line: () => '브라우저 설정에서 이 사이트의 알림을 허용해 주세요.' },
-  ios_install: { title: '홈 화면에 추가해 주세요', line: () => 'iPhone은 공유 → 홈 화면에 추가 → 홈 화면의 MIRO로 열어야 알림을 받을 수 있어요.' },
+  ask: { title: msg('먼저 연락이 올 수 있게'), line: msg('앱을 닫아 두어도 {name}의 연락을 알림으로 받아요.') },
+  denied: { title: msg('알림이 꺼져 있어요'), line: msg('브라우저 설정에서 이 사이트의 알림을 허용해 주세요.') },
+  ios_install: { title: msg('홈 화면에 추가해 주세요'), line: msg('iPhone은 공유 → 홈 화면에 추가 → 홈 화면의 MIRO로 열어야 알림을 받을 수 있어요.') },
 } as const
 
 /** 지갑 시트와 같은 모양: 가운데 아이콘·제목·한 줄, 아래 어두운 버튼과 작은 '나중에'. */
@@ -103,8 +115,9 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
   kind: keyof typeof COPY; open: boolean; onClose: () => void; name: string; working?: boolean; onAllow?: () => void
 }) {
   const copy = COPY[kind]
+  const t = useT()
   return (
-    <Sheet open={open} onClose={onClose} label={copy.title}>
+    <Sheet open={open} onClose={onClose} label={t(copy.title)}>
       <div className={styles.stack} data-push-sheet={kind}>
         <div className={styles.center}>
           <svg className={styles.icon} aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -112,14 +125,14 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
             {kind === 'denied' && <path d="M4 3l16 18" />}
           </svg>
           {/* 첫 초점은 제목에 — 닫기 버튼에 주면 열리자마자 초점 테두리가 그려진다. 스크린 리더는 제목부터 읽는다. */}
-          <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{copy.title}</h2>
-          <p>{copy.line(name)}</p>
+          <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{t(copy.title)}</h2>
+          <p>{t(copy.line, { name })}</p>
         </div>
         <div className={styles.actions}>
           {onAllow ? <>
-            <Button variant="secondary" full style={SHEET_BUTTON} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>알림 받기</Button>
-            <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
-          </> : <Button variant="secondary" full style={SHEET_BUTTON} onClick={onClose}>확인</Button>}
+            <Button variant="secondary" full style={SHEET_BUTTON} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
+            <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
+          </> : <Button variant="secondary" full style={SHEET_BUTTON} onClick={onClose}>{t('확인')}</Button>}
         </div>
       </div>
     </Sheet>

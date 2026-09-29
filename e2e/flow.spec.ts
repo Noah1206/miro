@@ -1,4 +1,4 @@
-import { signUp } from './helpers'
+import { closeWelcome, passOnboardingProfile, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -7,37 +7,32 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
  * Scenario 1 (부분) — Signup → 공식 캐릭터 → 역할극 시작.
  * Phase 4 에서 RP 턴까지 이어붙인다.
  */
-test('terms cannot be skipped without checking every item', async ({ page }) => {
+test('onboarding cannot finish without the required terms, and ends with the welcome gift', async ({ page }) => {
   await page.goto(`${BASE}/login`)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await page.getByPlaceholder('이메일').fill(`gate-${Date.now()}@miro.dev`)
   await page.getByRole('button', { name: '계속' }).click()
-  await expect(page).toHaveURL(/\/terms/)
+  await expect(page).toHaveURL(/\/onboarding/)
+  // 닉네임이 비면 다음으로 갈 수 없다.
+  await expect(page.getByRole('button', { name: '다음' })).toBeDisabled()
+  await passOnboardingProfile(page)
 
-  // '모두 동의하고 가입하기' 가 부분 일치로 함께 잡히므로 정확히 일치시킨다.
-  const submit = page.getByRole('button', { name: /^(동의하고 가입하기|다음으로 진행하기)$/ })
+  const submit = page.getByRole('button', { name: '시작하기', exact: true })
   await expect(submit).toBeDisabled()
-
-  const boxes = page.getByRole('checkbox')
-  await expect(boxes).toHaveCount(3)
-  await boxes.first().click()
+  const required = ['서비스 이용약관', '개인정보 처리방침', 'AI 생성 콘텐츠 안내'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
+  await required[0]!.click()
   await expect(submit).toBeDisabled()            // 하나만으로는 열리지 않는다
-  await boxes.nth(1).click(); await boxes.nth(2).click()
-  await expect(submit).toBeEnabled()             // 전부 체크해야 열린다
-  await expect(submit).toHaveText('다음으로 진행하기')
-
-  // 다시 풀면 게이트가 닫히고 '모두 동의' 가 보이는 채로 돌아와야 한다
-  // (AnimatePresence 재등장 시 버튼이 opacity 0 으로 남던 버그).
-  await boxes.nth(2).click()
+  await required[1]!.click(); await required[2]!.click()
+  await expect(submit).toBeEnabled()             // 필수를 모두 체크해야 열린다 (선택 항목은 없어도 된다)
+  await required[2]!.click()
   await expect(submit).toBeDisabled()
-  const agreeAll = page.getByRole('button', { name: '모두 동의하고 가입하기' })
-  await expect(agreeAll).toBeVisible()
-  await expect(agreeAll).toHaveCSS('opacity', '1')
 
-  await agreeAll.click()
-  await expect(submit).toBeEnabled()
-  await submit.click()
-  await expect(page).toHaveURL(/\/home/)
+  // 전체 동의하고 시작하기 = 모두 켜고 바로 제출.
+  await page.getByRole('button', { name: '전체 동의하고 시작하기' }).click()
+  await expect(page).toHaveURL(/\/home\?welcome=1/)
+  await expect(page.locator('[data-welcome-sheet]')).toContainText('300')
+  await closeWelcome(page)
+  await expect(page).toHaveURL(/\/home$/)
 })
 
 test('a visitor can browse before signing in, and lands back where they were', async ({ page }) => {
@@ -81,7 +76,7 @@ test('signup through entering a roleplay', async ({ page }) => {
   // 가입/로그인이 나뉘지 않는다 — 소셜 버튼 하나로 즉시 진행한다.
   await signUp(page, BASE)
 
-  // 동의를 마치면 곧장 홈이다 — 별도의 시작 화면을 두지 않는다.
+  // 온보딩을 마치면 곧장 홈이다.
   await expect(page).toHaveURL(/\/home/)
   // 같은 캐릭터가 여러 행에 등장하므로 첫 번째만 본다.
   await expect(page.getByText('토마스').first()).toBeVisible()

@@ -14,12 +14,14 @@ import { MessengerThread, type MsgItem } from './thread'
 import { MessengerComposer } from './composer'
 import { CallButton } from './call-button'
 import { MESSENGER_KINDS, isMessengerMessage } from '@/lib/messenger'
+import { getT } from '@/lib/i18n/server'
 
 /**
  * 문자(카톡형) 페이지 — 미로 캐릭터가 먼저 보낸 연락, 내가 보낸 문자, 통화 기록이 여기 모인다.
  * 캐릭터챗(/chat)은 만나서 나누는 장면이고, 여기는 각자 있는 곳에서 폰으로 주고받는 곳이다.
  */
 export default async function MessagesPage({ params, searchParams }: { params: Promise<{ sessionId: string }>; searchParams: Promise<{ call?: string }> }) {
+  const t = await getT()
   const user = await currentUser()
   if (!user) redirect('/login')
   const { sessionId } = await params
@@ -41,7 +43,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
     .filter(isMessengerMessage)
     .map((m) => ({
       id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
-      content: m.hiddenAt ? '운영 정책에 따라 숨김 처리된 메시지입니다.' : m.content,
+      content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
       blocks: m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
     }))
 
@@ -54,11 +56,11 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           {voiceCallAllowed(user.id) && (
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}
-          <TransitionLink href={`/chat/${sessionId}`} className={styles.headerLink}>캐릭터챗</TransitionLink>
+          <TransitionLink href={`/chat/${sessionId}`} className={styles.headerLink}>{t('캐릭터챗')}</TransitionLink>
         </header>
         {call && (
           <Notice tone={call === 'usage' ? 'muted' : 'danger'} style={{ margin: '12px 16px 0' }}>
-            {call === 'usage' ? '이번 달 통화 제공량을 다 썼어요.' : call === 'off' ? '지금은 통화를 쓸 수 없어요.' : '통화를 시작하지 못했어요.'}
+            {call === 'usage' ? t('이번 달 통화 제공량을 다 썼어요.') : call === 'off' ? t('지금은 통화를 쓸 수 없어요.') : t('통화를 시작하지 못했어요.')}
           </Notice>
         )}
         <MessengerThread items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} />

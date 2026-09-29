@@ -6,6 +6,7 @@ import { db, userPersonas } from '@miro/db'
 import { PERSONA_LIMITS, type UserPersona } from '@miro/domain'
 import { requireSafeContent, UnsafeContentError } from '@miro/engine'
 import { observe } from '@/lib/observe'
+import { msg } from '@/lib/i18n'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 
 /**
@@ -23,9 +24,9 @@ export function parsePersona(raw: { name: unknown; gender: unknown; description:
   // 제어 문자(NUL 등)는 DB text 가 받지 않고 프롬프트에도 쓸모가 없다 — 공백으로 바꾼 뒤 공백을 하나로 모은다.
   const text = (v: unknown) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim() : '')
   const name = text(raw.name), description = text(raw.description)
-  if (!name) return { ok: false, error: '이름을 적어 주세요.' }
-  if ([...name].length > PERSONA_LIMITS.name) return { ok: false, error: `이름은 ${PERSONA_LIMITS.name}자까지 쓸 수 있어요.` }
-  if ([...description].length > PERSONA_LIMITS.description) return { ok: false, error: `소개는 ${PERSONA_LIMITS.description}자까지 쓸 수 있어요.` }
+  if (!name) return { ok: false, error: msg('이름을 적어 주세요.') }
+  if ([...name].length > PERSONA_LIMITS.name) return { ok: false, error: msg('이름은 12자까지 쓸 수 있어요.') }
+  if ([...description].length > PERSONA_LIMITS.description) return { ok: false, error: msg('소개는 300자까지 쓸 수 있어요.') }
   const gender = raw.gender === 'female' || raw.gender === 'male' ? raw.gender : null
   return { ok: true, persona: { name, gender, description: description || null } }
 }
@@ -42,10 +43,10 @@ export async function savePersona(userId: string, raw: { name: unknown; gender: 
     await requireSafeContent(resolveRpLLM('페르소나', { userId, requestId: randomUUID(), usageUnits: 0, origin: 'persona:moderation' }),
       { phase: 'input', input: [p.name, p.description].filter(Boolean).join('\n') })
   } catch (e) {
-    if (e instanceof UnsafeContentError) return { ok: false, error: '이 내용은 쓸 수 없어요. 다른 표현으로 적어 주세요.' }
+    if (e instanceof UnsafeContentError) return { ok: false, error: msg('이 내용은 쓸 수 없어요. 다른 표현으로 적어 주세요.') }
     observe('persona.moderation_failed', { userId, error: (e as Error).message })
     // 검사를 못 하는 것(공급자 장애·예산)은 사용자 탓이 아니다 — 저장은 막되, 이번에는 페르소나 없이 대화로 가게 한다(PERSONA_LATER).
-    return { ok: false, error: '지금은 저장할 수 없어요. 잠시 뒤 다시 시도하거나, 이번에는 건너뛰고 대화할 수 있어요.', canSkip: true }
+    return { ok: false, error: msg('지금은 저장할 수 없어요. 잠시 뒤 다시 시도하거나, 이번에는 건너뛰고 대화할 수 있어요.'), canSkip: true }
   }
   await db.insert(userPersonas).values({ userId, ...p })
     .onConflictDoUpdate({ target: userPersonas.userId, set: { ...p, updatedAt: new Date() } })

@@ -10,6 +10,7 @@ import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage, guarded } from '@/lib/usage/guard'
 import { feature } from '@miro/config'
 import { COPY } from '@/lib/copy'
+import { msg } from '@/lib/i18n'
 import { randomUUID } from 'node:crypto'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 
@@ -29,12 +30,12 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
   const input = String(form.get('input') ?? '').trim()
 
   if (input.length === 0) return { error: null, notice: null }
-  if (input.length > 2000) return { error: '2000자 이내로 입력해 주세요.', notice: null }
+  if (input.length > 2000) return { error: msg('2000자 이내로 입력해 주세요.'), notice: null }
   const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const loaded = await loadSession(sessionId, user.id)
-    if (!loaded || loaded.restricted) return { error: '장면을 찾을 수 없습니다.', notice: null }
+    if (!loaded || loaded.restricted) return { error: msg('장면을 찾을 수 없습니다.'), notice: null }
     if (loaded.experienceType !== 'reality') return { error: COPY.error.featureOff, notice: null }
 
     const llm = resolveRpLLM(loaded.characterName, { userId: user.id, sessionId })
@@ -49,14 +50,14 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
       )
     } catch (e) {
       if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
-      return { error: '응답을 생성하지 못했습니다.', notice: null }
+      return { error: msg('응답을 생성하지 못했습니다.'), notice: null }
     }
 
     if (result.transition.issues.length > 0) {
       console.warn('[live] proposal issues', { sessionId, issues: result.transition.issues })
     }
     if (result.transition.blocks.length === 0) {
-      return { error: '응답을 생성하지 못했습니다. 다시 시도해 주세요.', notice: null }
+      return { error: msg('응답을 생성하지 못했습니다. 다시 시도해 주세요.'), notice: null }
     }
 
     try {
@@ -77,16 +78,16 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
       })
     } catch (e) {
       if (e instanceof StaleStateError && attempt === 0) continue
-      return { error: '상태를 저장하지 못했습니다.', notice: null }
+      return { error: msg('상태를 저장하지 못했습니다.'), notice: null }
     }
 
     revalidatePath(`/live/${sessionId}`)
     return {
       error: null,
-      notice: result.providerMode === 'mock' ? 'LLM Provider 미구성 — Mock 응답입니다.' : null,
+      notice: result.providerMode === 'mock' ? msg('LLM Provider 미구성 — Mock 응답입니다.') : null,
     }
   }
-  return { error: '다시 시도해 주세요.', notice: null }
+  return { error: msg('다시 시도해 주세요.'), notice: null }
 }
 
 /** Live Scene 배경. Chat 과 같은 World State 에서 만든다. */

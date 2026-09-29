@@ -13,12 +13,14 @@ import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { CallComposer, HangUp } from './ui'
 import { LiveAudio } from './live-audio'
 import { Emphasis } from '@/components/scene/emphasis'
+import { getT } from '@/lib/i18n/server'
 
 /** 통화 화면은 말만 보여 준다 — 이름 접두 없이. 옛 답에 남은 짧은 괄호 지문("(작게 웃음)")은 앞에서 떼어 낸다. */
 const spoken = (text: string) => text.replace(/^\s*\([^()]{1,12}\)\s*/, '')
 
 /** 음성/영상 통화 화면. 채널은 수락 전에 정해져 있으므로 여기서 바뀌지 않는다. */
 export default async function CallPage({ params }: { params: Promise<{ callId: string }> }) {
+  const t = await getT()
   const user = await currentUser()
   if (!user) redirect('/login')
   const { callId } = await params
@@ -33,11 +35,11 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   if (call.status === 'unanswered') {
     return (
       <main id="main" tabIndex={-1} data-call-unanswered className="page page--immersive" style={{ outline: 'none', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, padding: 24, background: 'var(--color-bg-deep)', textAlign: 'center' }}>
-        <p className="t-micro">{call.channel === 'voice' ? '음성통화' : '영상통화'}</p>
+        <p className="t-micro">{call.channel === 'voice' ? t('음성통화') : t('영상통화')}</p>
         <h1 className="t-display t-name">{loaded.characterName}</h1>
-        <p className="t-body" style={{ color: 'var(--color-text-secondary)' }}>받지 않아요</p>
-        {call.reason && <p className="t-caption t-quote">지금은 {call.reason} 중인 것 같아요</p>}
-        <a href={`/messages/${call.sessionId}`} className="button-link" style={{ marginTop: 20, padding: '12px 20px', borderRadius: 'var(--radius-button)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }}>문자 남기기</a>
+        <p className="t-body" style={{ color: 'var(--color-text-secondary)' }}>{t('받지 않아요')}</p>
+        {call.reason && <p className="t-caption t-quote">{t('지금은 {activity} 중인 것 같아요', { activity: t(call.reason) })}</p>}
+        <a href={`/messages/${call.sessionId}`} className="button-link" style={{ marginTop: 20, padding: '12px 20px', borderRadius: 'var(--radius-button)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }}>{t('문자 남기기')}</a>
       </main>
     )
   }
@@ -49,7 +51,8 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   const spokenSystem = audio
     ? buildSpokenSystem({ ...loaded.snapshot, mode: 'voice_call' }) + [
       '', '## 실시간 통화 규칙',
-      '- 지금은 실제 음성 통화다. 한국어로 말한다.',
+      // 말할 언어는 사용자가 고른 언어다 — 한국어가 아니면 위의 언어 규칙(languageRule)이 이미 들어 있다.
+      `- 지금은 실제 음성 통화다.${(loaded.snapshot.userLanguage ?? 'ko') === 'ko' ? ' 한국어로 말한다.' : ''}`,
       '- 말하듯 짧게 — 한 번에 한두 문장. 긴 독백을 하지 않는다.',
       '- 소리 내어 읽을 수 없는 것(괄호 지문, 이모지, 특수문자, 목록)은 쓰지 않는다.',
     ].join('\n')
@@ -101,9 +104,9 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
       {face && <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: `url(${face})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />}
       <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: face ? 'linear-gradient(to top, rgba(0,0,0,0.94) 30%, rgba(0,0,0,0.35))' : 'transparent' }} />
       <header style={{ position: 'relative', padding: '32px 24px 8px', textAlign: 'center' }}>
-        <p className="t-micro">{call.channel === 'voice' ? (audio ? '음성통화' : '문자 통화') : '영상통화'} · {loaded.snapshot.world.currentLocation}</p>
+        <p className="t-micro">{call.channel === 'voice' ? (audio ? t('음성통화') : t('문자 통화')) : t('영상통화')} · {loaded.snapshot.world.currentLocation}</p>
         <h1 className="t-display t-name" style={{ marginTop: 10 }}>{loaded.characterName}</h1>
-        {media.mode === 'mock' && (audio || call.channel === 'video') && <p role="status" className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>⚠ {provider.info.notice ?? '실시간 음성을 시작하지 못했어요 — 텍스트로 진행합니다.'}</p>}
+        {media.mode === 'mock' && (audio || call.channel === 'video') && <p role="status" className="t-caption" style={{ marginTop: 10, color: 'var(--color-text-tertiary)' }}>⚠ {provider.info.notice ? t(provider.info.notice) : t('실시간 음성을 시작하지 못했어요 — 텍스트로 진행합니다.')}</p>}
         {media.mode === 'live' && media.connectUrl && call.channel === 'voice' && (
           <LiveAudio callId={callId} token={media.token} url={media.connectUrl} model={media.model ?? ''} />
         )}

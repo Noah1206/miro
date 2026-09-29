@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { characters, db } from '@miro/db'
 import { currentUser } from '@/lib/auth'
+import { msg } from '@/lib/i18n'
 import { addComment, removeComment, toggleBookmark, toggleCommentLike } from '@/lib/social'
 
 async function characterIdOf(slug: string): Promise<string | null> {
@@ -58,7 +59,7 @@ export async function likeCharacter(key: string, liked: boolean) {
   if (!user) loginThenBack(key)
   const { getCharacterByKey } = await import('@/lib/characters')
   const character = await getCharacterByKey(key, user.id)
-  if (!character) throw new Error('캐릭터를 찾을 수 없습니다.')
+  if (!character) throw new Error(msg('캐릭터를 찾을 수 없습니다.'))
   const { setCharacterLiked } = await import('@/lib/social')
   const state = await setCharacterLiked(character.id, user.id, liked)
   revalidatePath(`/character/${key}`)

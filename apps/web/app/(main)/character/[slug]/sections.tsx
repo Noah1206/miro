@@ -8,6 +8,8 @@ import { parseEmphasis } from '@/components/scene/emphasis'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
 import type { ContactCapabilities } from '@/lib/reality/channels'
+import { useLanguage, useT } from '@/lib/i18n/client'
+import { INTL_LOCALE, msg } from '@/lib/i18n'
 import { likeCharacter, bookmark, deleteComment, likeComment } from './social-actions'
 
 /**
@@ -100,17 +102,18 @@ export function Line({ text }: { text: string }) {
  * 장식이 아니라 '이 사람이 어떤 순간들을 갖는가' 를 보여주는 자리다.
  */
 export function Gallery({ name, images }: { name: string; images: string[] }) {
+  const t = useT()
   const reduce = useReducedMotion()
   return (
     // 안에 초점 가능한 요소가 없는 스크롤 영역이라 스스로 초점을 받아야 한다 —
     // 그러지 않으면 키보드만 쓰는 사람은 두 번째 사진부터 볼 수 없다 (WCAG 2.1.1).
-    <div className="gallery-scroll" tabIndex={0} role="group" aria-label={`${name} 사진 ${images.length}장`}>
+    <div className="gallery-scroll" tabIndex={0} role="group" aria-label={t('{name} 사진 {n}장', { name, n: images.length })}>
       {images.map((src, i) => (
         <motion.div key={src}
           initial={reduce ? false : { opacity: 0, x: 14 }} whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, margin: '-5% 0px' }}
           transition={{ duration: duration.normal, ease: ease.enter, delay: i * 0.06 }}>
-          <CharacterPhoto src={src} alt={`${name} ${i + 1}번째 사진`} size="detail" sizes="(max-width: 768px) 42vw, 320px" width={640} height={853}
+          <CharacterPhoto src={src} alt={t('{name} {n}번째 사진', { name, n: i + 1 })} size="detail" sizes="(max-width: 768px) 42vw, 320px" width={640} height={853}
             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-md)', display: 'block' }} />
         </motion.div>
       ))}
@@ -147,11 +150,12 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
  * 꺼진 기능은 그리지 않는다 — 없는 기능을 약속하지 않는다.
  */
 export function RealityStrip({ can }: { can: ContactCapabilities }) {
+  const t = useT()
   // 내비게이션과 같은 선 아이콘 규칙: viewBox 24, stroke currentColor, strokeWidth 1.75 — 이모지 대신.
   const items: Array<{ label: string; on: boolean; icon: React.ReactNode }> = [
-    { label: '사진', on: can.imageGeneration, icon: <><rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" /></> },
-    { label: '음성통화', on: can.voiceCall, icon: <><path d="M4.5 5.5c0-1 .8-1.5 1.7-1.5H8c.8 0 1.4.5 1.6 1.2l.8 2.7c.2.6 0 1.3-.5 1.7L9 10.7c1 2.3 2.9 4.2 5.3 5.3l1.1-.9c.4-.5 1.1-.7 1.7-.5l2.7.8c.7.2 1.2.8 1.2 1.6v1.8c0 .9-.5 1.7-1.5 1.7C13.5 20.5 4.5 11.5 4.5 5.5z" /></> },
-    { label: '영상통화', on: can.videoCall, icon: <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5 21 7v10l-6-3.5z" /></> },
+    { label: msg('사진'), on: can.imageGeneration, icon: <><rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" /></> },
+    { label: msg('음성통화'), on: can.voiceCall, icon: <><path d="M4.5 5.5c0-1 .8-1.5 1.7-1.5H8c.8 0 1.4.5 1.6 1.2l.8 2.7c.2.6 0 1.3-.5 1.7L9 10.7c1 2.3 2.9 4.2 5.3 5.3l1.1-.9c.4-.5 1.1-.7 1.7-.5l2.7.8c.7.2 1.2.8 1.2 1.6v1.8c0 .9-.5 1.7-1.5 1.7C13.5 20.5 4.5 11.5 4.5 5.5z" /></> },
+    { label: msg('영상통화'), on: can.videoCall, icon: <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="M15 10.5 21 7v10l-6-3.5z" /></> },
   ].filter(item => item.on)
   if (!items.length) return null
   return (
@@ -165,7 +169,7 @@ export function RealityStrip({ can }: { can: ContactCapabilities }) {
           fontSize: 12, fontWeight: 500, letterSpacing: '-0.025em', whiteSpace: 'nowrap', color: 'var(--color-text-primary)',
         }}>
           <svg aria-hidden width="18" height="18" style={{ color: 'var(--color-accent)', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
-          {item.label}
+          {t(item.label)}
         </span>
       ))}
     </div>
@@ -183,12 +187,13 @@ export function SimilarRow({ items }: { items: CardCharacter[] }) {
 
 /** 북마크. 눌린 즉시 상태가 바뀌고, 서버가 확정한다. */
 export function BookmarkButton({ slug, saved, iconOnly = false }: { slug?: string; saved: boolean; iconOnly?: boolean }) {
+  const t = useT()
   const [on, setOn] = useState(saved)
   const toast = useToast()
   const reduce = useReducedMotion()
   return (
-    <form action={async () => { if (!slug) return; setOn((v) => !v); await bookmark(slug); toast(on ? '보관함에서 뺐어요.' : '보관함에 담았어요.') }}>
-      <motion.button type="submit" disabled={!slug} aria-pressed={on} aria-label={on ? '보관함에서 빼기' : '보관함에 담기'}
+    <form action={async () => { if (!slug) return; setOn((v) => !v); await bookmark(slug); toast(on ? t('보관함에서 뺐어요.') : t('보관함에 담았어요.')) }}>
+      <motion.button type="submit" disabled={!slug} aria-pressed={on} aria-label={on ? t('보관함에서 빼기') : t('보관함에 담기')}
         whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
         className="hit"
         style={{
@@ -202,7 +207,7 @@ export function BookmarkButton({ slug, saved, iconOnly = false }: { slug?: strin
           stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
         </svg>
-        {!iconOnly && (on ? '보관함에 있음' : '보관하기')}
+        {!iconOnly && (on ? t('보관함에 있음') : t('보관하기'))}
       </motion.button>
     </form>
   )
@@ -214,8 +219,9 @@ export function BookmarkButton({ slug, saved, iconOnly = false }: { slug?: strin
  * (레퍼런스 UI). 입력·답글·삭제는 전체보기 페이지에서만 — 여기는 훑어보는 자리다.
  */
 export function CommentsPreview({ slug, items }: { slug: string; items: CommentItem[] }) {
+  const t = useT()
   if (items.length === 0) {
-    return <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>아직 댓글이 없어요.</p>
+    return <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('아직 댓글이 없어요.')}</p>
   }
   return (
     <div className="comment-scroll">
@@ -229,6 +235,8 @@ export function CommentsPreview({ slug, items }: { slug: string; items: CommentI
  * '더보기' 는 clamp 를 풀 뿐 실제 텍스트는 그대로다.
  */
 export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem; preview?: boolean }) {
+  const t = useT()
+  const language = useLanguage()
   const [liked, setLiked] = useState(c.liked)
   const [likeCount, setLikeCount] = useState(c.likeCount)
   const [expanded, setExpanded] = useState(false)
@@ -247,12 +255,12 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
       {clamp && c.body.length > 60 && (
         <button type="button" onClick={() => setExpanded(true)} className="t-caption hit"
           style={{ background: 'none', border: 0, padding: 0, marginTop: 6, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>
-          더보기
+          {t('더보기')}
         </button>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{day(c.createdAt)}</span>
-        <button type="button" aria-pressed={liked} aria-label={liked ? '좋아요 취소' : '좋아요'} className="hit"
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{day(c.createdAt, INTL_LOCALE[language])}</span>
+        <button type="button" aria-pressed={liked} aria-label={liked ? t('좋아요 취소') : t('좋아요')} className="hit"
           onClick={async () => { setLiked((v) => !v); setLikeCount((n) => n + (liked ? -1 : 1)); await likeComment(slug, c.id) }}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: 'none', border: 0, padding: 0, cursor: 'pointer', color: liked ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>
           <svg aria-hidden width="15" height="15" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round">
@@ -261,8 +269,8 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
           <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0 }}>{likeCount}</span>
         </button>
         {c.mine && (
-          <form action={async () => { await deleteComment(slug, c.id); toast('댓글을 지웠어요.') }} style={{ marginLeft: 'auto' }}>
-            <button type="submit" className="t-micro hit" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>삭제</button>
+          <form action={async () => { await deleteComment(slug, c.id); toast(t('댓글을 지웠어요.')) }} style={{ marginLeft: 'auto' }}>
+            <button type="submit" className="t-micro hit" style={{ background: 'none', border: 0, padding: 0, textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', cursor: 'pointer' }}>{t('삭제')}</button>
           </form>
         )}
       </div>
@@ -270,23 +278,24 @@ export function CommentCard({ slug, c, preview }: { slug: string; c: CommentItem
   )
 }
 
-const day = (d: Date) => new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })
+const day = (d: Date, locale: string) => new Date(d).toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' })
 
 export function LikeButton({ overlay = false, slug, initial = { count: 0, liked: false } }: { overlay?: boolean; slug?: string; initial?: { count: number; liked: boolean } }) {
+  const t = useT()
   const [state, setState] = useState(initial)
   const [pending, setPending] = useState(false)
   const toast = useToast()
   useEffect(() => setState(initial), [initial.count, initial.liked])
-  return <button type="button" className="hit" aria-label={state.liked ? '좋아요 취소' : '좋아요'} aria-pressed={state.liked} disabled={pending || !slug}
+  return <button type="button" className="hit" aria-label={state.liked ? t('좋아요 취소') : t('좋아요')} aria-pressed={state.liked} disabled={pending || !slug}
     onClick={async () => {
       if (!slug || pending) return
       setPending(true)
       try { setState(await likeCharacter(slug, !state.liked)) }
-      catch { toast('좋아요를 저장하지 못했어요. 다시 시도해 주세요.') }
+      catch { toast(t('좋아요를 저장하지 못했어요. 다시 시도해 주세요.')) }
       finally { setPending(false) }
     }}
     style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 5px', height: 22, border: 0, borderRadius: 6, fontSize: 12, lineHeight: '18px', background: 'var(--color-surface-2)', color: overlay ? 'var(--color-white)' : 'var(--color-text-secondary)', cursor: pending ? 'wait' : 'pointer', ...(overlay ? { height: 36, padding: '0 12px', borderRadius: 999, background: 'rgba(0,0,0,.65)', fontSize: 14 } : {}) }}>
     <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill={state.liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
-    {!overlay && '좋아요 '} {state.count}
+    {!overlay && `${t('좋아요')} `} {state.count}
   </button>
 }

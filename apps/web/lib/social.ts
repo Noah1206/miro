@@ -1,6 +1,7 @@
 import { and, desc, eq, ilike, inArray, isNull, ne, or, sql } from 'drizzle-orm'
 import { characterLikes, characterBookmarks, characterCommentLikes, characterComments, characters, db, users, worlds } from '@miro/db'
 import { genreKeywords } from './genres'
+import { msg } from '@/lib/i18n'
 
 export type CommentItem = {
   id: string
@@ -66,7 +67,7 @@ async function listAllComments(characterId: string, viewerId: string | null): Pr
       body: r.body,
       createdAt: r.createdAt,
       // 이메일 전체를 남에게 보여주지 않는다 — 앞부분만.
-      authorName: r.displayName ?? (r.email ? r.email.split('@')[0]! : '익명'),
+      authorName: r.displayName ?? (r.email ? r.email.split('@')[0]! : msg('익명')),
       mine: r.userId === viewerId,
       likeCount: likes?.n ?? 0,
       liked: Boolean(likes?.likedByMe),

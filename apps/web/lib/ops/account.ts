@@ -46,7 +46,7 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
   const now = new Date()
   await db.transaction(async (tx) => {
     const [req] = await tx.insert(accountDeletions).values({ userId, impact }).returning({ id: accountDeletions.id })
-    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false }).where(eq(users.id, userId))
+    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false, birthDate: null, tastes: [] }).where(eq(users.id, userId))
     await tx.delete(aiFeedback).where(eq(aiFeedback.userId, userId))
     await tx.delete(aiEvaluationSamples).where(eq(aiEvaluationSamples.userId, userId))
     await tx.delete(authSessions).where(eq(authSessions.userId, userId))

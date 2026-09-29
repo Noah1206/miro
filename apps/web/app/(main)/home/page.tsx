@@ -4,11 +4,13 @@ import { LoginButton, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { HomeFeed } from './feed'
 import styles from './home.module.css'
+import { getT } from '@/lib/i18n/server'
 
 /** 로그인했다는 표시. 이름이나 이메일의 첫 글자를 담고, 누르면 내 정보로 간다. */
-function ProfileBadge({ label, name }: { label: string; name: string }) {
+async function ProfileBadge({ label, name }: { label: string; name: string }) {
+  const t = await getT()
   return (
-    <TransitionLink href="/my" aria-label={`${name} · 내 정보`} className={`hit ${styles.headerItem} ${styles.headerAction}`}
+    <TransitionLink href="/my" aria-label={t('{name} · 내 정보', { name })} className={`hit ${styles.headerItem} ${styles.headerAction}`}
       style={{
         display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: 17,
         background: 'var(--color-surface-2)', color: 'var(--color-text-primary)',
@@ -29,6 +31,7 @@ function initial(user: { displayName: string | null; email: string | null }): st
 export default async function Home() {
   const user = await currentUser()
   const page = await measured('nav.home_data', () => homePage(user?.id ?? null))
+  const t = await getT()
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
@@ -39,13 +42,13 @@ export default async function Home() {
         <span className={styles.headerItem} style={{ display: 'block' }}><LogoMark size={30} /></span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: user ? 8 : 4, marginRight: -8 }}>
-          <TransitionLink href="/home/search" aria-label="캐릭터 검색" className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
+          <TransitionLink href="/home/search" aria-label={t('캐릭터 검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
             <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           </TransitionLink>
           {user
-          ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? '내 정보'} />
+          ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? t('내 정보')} />
           // 헤더에서는 검색 아이콘 상자(38px)와 같은 눈높이 — 글자를 키우고 채움은 글자에 붙인다. 터치 영역은 .hit 이 44px 로 넓힌다.
-          : <LoginButton variant="primary" size="sm" className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ minHeight: 34, padding: '0 9px', fontSize: 14 }}>로그인</LoginButton>}
+          : <LoginButton variant="primary" size="sm" className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ minHeight: 34, padding: '0 9px', fontSize: 14 }}>{t('로그인')}</LoginButton>}
         </div>
       </header>
 
