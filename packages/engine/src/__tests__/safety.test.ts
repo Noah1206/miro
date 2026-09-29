@@ -32,7 +32,14 @@ describe('moderation payload fit', () => {
     expect(fitted.memories).toEqual(memories)
   })
 
-  it('leaves a payload that already fits untouched', () => {
+  it('always keeps only the last four history lines, even when the payload is small', () => {
+    const short = Array.from({ length: 13 }, (_, i) => ({ role: i % 2 ? 'user' : 'character', content: `짧은 말 ${i}` }))
+    const fitted = fitForModeration({ phase: 'input', recent: short, input: '안녕' }) as { recent: Array<{ text: string }>; input: string }
+    expect(fitted.recent.map(m => m.text)).toEqual(['짧은 말 9', '짧은 말 10', '짧은 말 11', '짧은 말 12'])
+    expect(fitted.input).toBe('안녕')
+  })
+
+  it('leaves a payload without history untouched', () => {
     const small = { phase: 'output', input: '안녕', proposal: { rp: { blocks: [] } } }
     expect(fitForModeration(small)).toBe(small)
   })

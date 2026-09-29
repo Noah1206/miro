@@ -43,14 +43,18 @@ function historyLine(m: unknown, max: number): unknown {
 }
 
 /**
- * 대화 기록이 분류 모델에 들어가지 않으면 턴 전체가 실패한다(9/26: 장면 길이 답 13개가 32KB, 'no capable model fits context').
- * 기록(recent·recentMessages)만 최근 것부터 줄인다. 사용자 입력·캐릭터 설정·기억·이번 출력은 그대로 판정한다.
+ * 분류 모델에는 대화 기록을 항상 최근 4줄·400자만 싣는다(2026-09-29). 전에는 28KB 를 넘을 때만 줄여서
+ * 장면 길이 답이 쌓인 방에서 검열 입력이 5천 토큰·3.8초까지 커졌고, 검열이 직렬이 된 뒤로 그 시간이 그대로 첫 답을 늦췄다.
+ * 사용자 입력·캐릭터 설정·기억·이번 출력은 그대로 판정한다. 4줄로도 28KB 를 넘으면 더 줄인다
+ * (9/26: 기록이 분류 모델에 안 들어가면 'no capable model fits context' 로 턴 전체가 실패한다).
  */
 export function fitForModeration(payload: unknown): unknown {
-  if (bytes(payload) <= MODERATION_BYTES || !payload || typeof payload !== 'object' || Array.isArray(payload)) return payload
-  const shrink = (keep: number, max: number) => Object.fromEntries(Object.entries(payload as Record<string, unknown>).map(([k, v]) =>
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload
+  const entries = Object.entries(payload as Record<string, unknown>)
+  if (!entries.some(([k, v]) => HISTORY_KEYS.has(k) && Array.isArray(v) && v.length)) return payload
+  const shrink = (keep: number, max: number) => Object.fromEntries(entries.map(([k, v]) =>
     [k, HISTORY_KEYS.has(k) && Array.isArray(v) ? (keep ? v.slice(-keep).map(m => historyLine(m, max)) : []) : v]))
-  for (const [keep, max] of [[12, 800], [8, 600], [4, 400], [2, 300]] as const) {
+  for (const [keep, max] of [[4, 400], [2, 300]] as const) {
     const fitted = shrink(keep, max)
     if (bytes(fitted) <= MODERATION_BYTES) return fitted
   }
