@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Button, Modal, useToast } from '@/components/ui'
-import { withParticle } from '@/lib/format'
+import { Button, Sheet, useToast } from '@/components/ui'
+import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
+import styles from './push-subscribe.module.css'
 
 type Status = 'checking' | 'unsupported' | 'ios_install' | 'unconfigured' | 'prompt' | 'subscribed' | 'denied' | 'working'
 
@@ -30,8 +31,10 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
 
   useEffect(() => {
     if (!autoPrompt || askedThisSession()) return
-    if (status === 'prompt') { markAsked(); setAsk(true) }
-    else if (status === 'ios_install' || status === 'denied') { markAsked(); setGuide(true) }
+    if (status !== 'prompt' && status !== 'ios_install' && status !== 'denied') return
+    // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
+    const t = setTimeout(() => { markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
+    return () => clearTimeout(t)
   }, [autoPrompt, status])
 
   useEffect(() => {
@@ -67,13 +70,8 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed') return null
   if (autoPrompt) return (
     <>
-      <AskModal open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
-      <Modal open={guide} onClose={() => setGuide(false)} title="먼저 연락이 올 수 있게">
-        <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>
-          {status === 'ios_install' ? `iPhone에서는 공유 → 홈 화면에 추가한 뒤 홈 화면 아이콘으로 열어 알림을 켜야 ${name}의 연락을 받을 수 있어요.` : '알림이 차단되어 있어요. 브라우저 설정에서 이 사이트의 알림을 허용하면 캐릭터의 연락을 받을 수 있어요.'}
-        </p>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}><Button variant="primary" type="button" onClick={() => setGuide(false)}>확인</Button></div>
-      </Modal>
+      <PushSheet kind="ask" open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
+      <PushSheet kind={status === 'ios_install' ? 'ios_install' : 'denied'} open={guide} onClose={() => setGuide(false)} name={name} />
     </>
   )
   const text: Record<Exclude<Status, 'checking' | 'unsupported' | 'unconfigured' | 'subscribed'>, string> = {
@@ -89,20 +87,42 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
         <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{text[status]}</span>
         {status === 'prompt' && <Button size="sm" variant="secondary" type="button" onClick={() => setAsk(true)}>알림 켜기</Button>}
       </div>
-      <AskModal open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
+      <PushSheet kind="ask" open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
     </>
   )
 }
 
-function AskModal({ open, onClose, name, working, onAllow }: { open: boolean; onClose: () => void; name: string; working: boolean; onAllow: () => void }) {
+const COPY = {
+  ask: { title: '먼저 연락이 올 수 있게', line: (name: string) => `앱을 닫아 두어도 ${name}의 연락을 알림으로 받아요.` },
+  denied: { title: '알림이 꺼져 있어요', line: () => '브라우저 설정에서 이 사이트의 알림을 허용해 주세요.' },
+  ios_install: { title: '홈 화면에 추가해 주세요', line: () => 'iPhone은 공유 → 홈 화면에 추가 → 홈 화면의 MIRO로 열어야 알림을 받을 수 있어요.' },
+} as const
+
+/** 지갑 시트와 같은 모양: 가운데 아이콘·제목·한 줄, 아래 어두운 버튼과 작은 '나중에'. */
+function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
+  kind: keyof typeof COPY; open: boolean; onClose: () => void; name: string; working?: boolean; onAllow?: () => void
+}) {
+  const copy = COPY[kind]
   return (
-    <Modal open={open} onClose={onClose} title="먼저 연락이 올 수 있게">
-      <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>{withParticle(name, '은', '는')} 자기 사정과 관계에 따라 가끔 먼저 연락해요. 앱을 닫아 두어도 알림으로 받을 수 있어요.</p>
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        <Button variant="ghost" type="button" onClick={onClose}>나중에</Button>
-        <Button variant="primary" type="button" onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>허용</Button>
+    <Sheet open={open} onClose={onClose} label={copy.title}>
+      <div className={styles.stack} data-push-sheet={kind}>
+        <div className={styles.center}>
+          <svg className={styles.icon} aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 10a6 6 0 1 1 12 0c0 4.5 1.3 6.2 2 7H4c.7-.8 2-2.5 2-7Z" /><path d="M10 20a2 2 0 0 0 4 0" />
+            {kind === 'denied' && <path d="M4 3l16 18" />}
+          </svg>
+          {/* 첫 초점은 제목에 — 닫기 버튼에 주면 열리자마자 초점 테두리가 그려진다. 스크린 리더는 제목부터 읽는다. */}
+          <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{copy.title}</h2>
+          <p>{copy.line(name)}</p>
+        </div>
+        <div className={styles.actions}>
+          {onAllow ? <>
+            <Button variant="secondary" full style={SHEET_BUTTON} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>알림 받기</Button>
+            <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>나중에</Button>
+          </> : <Button variant="secondary" full style={SHEET_BUTTON} onClick={onClose}>확인</Button>}
+        </div>
       </div>
-    </Modal>
+    </Sheet>
   )
 }
 function toUint8(base64: string): Uint8Array<ArrayBuffer> {
