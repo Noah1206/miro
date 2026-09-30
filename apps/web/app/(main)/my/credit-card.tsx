@@ -22,10 +22,7 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
       </p>
       <div className={styles.creditActions}>
         <TransitionLink href="/recharge" className={styles.outline}>{t('사용 내역')}</TransitionLink>
-        <button type="button" className={styles.solid} onClick={openRecharge} disabled={busy}>
-          <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          {t('충전')}
-        </button>
+        <button type="button" className={styles.solid} onClick={openRecharge} disabled={busy}>{t('충전')}</button>
       </div>
     </section>
   )
