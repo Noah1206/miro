@@ -12,6 +12,7 @@ import { loadMessages, useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/c
 import { msg } from '@/lib/i18n'
 import { useRouter } from 'next/navigation'
 import { checkNickname, finishOnboarding } from './actions'
+import { markPushAsked, subscribeToPush } from '@/components/push-subscribe'
 
 const COPY = [
   { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자·전화가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
@@ -32,6 +33,8 @@ const TERMS = [
   { key: 'terms', title: msg('[필수] 서비스 이용약관'), href: '/terms/service' },
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },
+  // 브라우저 알림 권한 — 시작하기를 누를 때 묻고 구독까지 마친다(2026-09-30 요청). 서버에 남기는 동의 기록은 아니다.
+  { key: 'push', title: msg('[선택] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자·전화를 알림으로 받아요') },
   { key: 'marketing', title: msg('[선택] 이벤트·혜택 알림 받기'), sub: msg('광고성 정보 수신 동의'), href: '/terms/marketing' },
   { key: 'nightMarketing', title: msg('[선택] 야간 혜택 알림 받기'), sub: msg('오후 9시 ~ 다음날 오전 8시에도 받아요'), href: '/terms/night-marketing' },
 ] as const
@@ -58,6 +61,9 @@ export function OnboardingForm() {
   const [birthDate, setBirthDate] = useState('')
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [error, setError] = useState<string | null>(null)
+  // '캐릭터 알림 받기' 권한 창이 떠 있는 동안 — 시작하기를 잠가 둔다(넘어가 버리면 권한 창이 닫힌다).
+  const [asking, setAsking] = useState(false)
+  const pushHandled = useRef(false)
   // 단계가 바뀌면 새 제목이 나타날 때 초점을 옮긴다 — 스크린 리더가 새 질문부터 읽는다(첫 화면은 닉네임 칸이 초점).
   const focusHeading = useRef(false)
 
@@ -80,6 +86,27 @@ export function OnboardingForm() {
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
   const copy = COPY[step - 1]!
+  /**
+   * 시작하기 — '캐릭터 알림 받기' 를 골랐으면 먼저 브라우저 알림 권한을 묻고, 허용하면 구독까지 마친 뒤 제출한다.
+   * 가입 뒤 알림 시트 없이 한 번에 넘어가게(2026-09-30 요청). 웹 알림이 없는 곳(iPhone 브라우저 등)은 가입 뒤 안내 시트가 맡는다.
+   */
+  const askPushThenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (pushHandled.current || !vapid || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return
+    pushHandled.current = true
+    markPushAsked()
+    // 안 골랐거나 이미 허용·차단된 기기는 묻지 않는다 — 허용된 기기는 들어간 뒤 알림 쪽이 조용히 구독을 맞춘다.
+    if (!checked.push || Notification.permission !== 'default') return
+    e.preventDefault()
+    const form = e.currentTarget, submitter = (e.nativeEvent as SubmitEvent).submitter
+    setAsking(true)
+    void Notification.requestPermission()
+      .then((permission) => permission === 'granted'
+        ? Promise.race([subscribeToPush(vapid), new Promise((done) => setTimeout(done, 8000))]) : undefined)
+      .catch(() => {})
+      // 잠금을 먼저 풀어야(동기로 그림) 잠긴 버튼으로 제출하지 않는다.
+      .finally(() => { flushSync(() => setAsking(false)); form.requestSubmit(submitter) })
+  }
   // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
   const switchLanguage = useSwitchLanguage()
   const pickLanguage = (l: Language) => {
@@ -90,7 +117,7 @@ export function OnboardingForm() {
   useEffect(() => { for (const l of Object.keys(LANGUAGES) as Language[]) void loadMessages(l) }, [])
 
   return (
-    <form action={action} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+    <form action={action} onSubmit={askPushThenSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
       onKeyDown={(e) => { if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT' && step < ONBOARDING_STEPS) e.preventDefault() }}>
       <input type="hidden" name="language" value={language} />
       <input type="hidden" name="nickname" value={nickname} />
@@ -176,10 +203,10 @@ export function OnboardingForm() {
               <Button type="button" variant="ghost" size="sm" full onClick={() => { setBirthDate(''); go(6) }}>{t('건너뛰기')}</Button>
             </>}
             {step === 6 && <>
-              <SubmitButton variant="primary" size="lg" full disabled={!requiredOk}>{t('시작하기')}</SubmitButton>
+              <SubmitButton variant="primary" size="lg" full disabled={!requiredOk || asking}>{t('시작하기')}</SubmitButton>
               {/* 한 번에 모두 켜고 바로 제출 — 숨은 칸이 먼저 그려져야 폼 값에 들어가므로 동기로 그린다.
                   누르는 순간 사라지면 제출이 취소되므로 늘 둔다. */}
-              <SubmitButton variant="ghost" size="lg" full onClick={() => flushSync(() => agreeAll(true))}>{t('전체 동의하고 시작하기')}</SubmitButton>
+              <SubmitButton variant="ghost" size="lg" full disabled={asking} onClick={() => flushSync(() => agreeAll(true))}>{t('전체 동의하고 시작하기')}</SubmitButton>
             </>}
           </div>
         </motion.div>

@@ -45,7 +45,6 @@ if (!probe || !fingerprint.ok || !(await fingerprint.text()).includes(label)) {
 
 const routes = [
   { name: 'miroToHome', from: '/miro', to: '/home', link: 'nav a[href="/home"]', marker: '#main #recommend-title', content: '#main a[href^="/character/"]' },
-  { name: 'homeToCreate', from: '/home', to: '/create', link: 'nav a[href="/create"]', marker: '#main form', content: '#main form input[name="name"]' },
   { name: 'homeToArchive', from: '/home', to: '/archive', link: 'nav a[href="/archive"]', marker: '#main [data-session-row]', content: '#main [data-session-row] a[href^="/chat/"]' },
 ]
 const modes = ['coldNoPrefetch', 'warmNoPrefetch', 'prefetchEnabled']

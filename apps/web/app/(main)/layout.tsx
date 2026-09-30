@@ -28,7 +28,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         {user && <WelcomePopup units={WELCOME_GRANT.units} validDays={WELCOME_GRANT.validDays} />}
         {/* 로그인해서 들어오면 어디서든 먼저 알림을 켜자고 묻는다 — 세션에 한 번(2026-09-29). */}
         {user && <PushSubscribe autoPrompt vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={t('캐릭터')} />}
-        <Nav signedIn={!!user} userId={user?.id} />
+        <Nav signedIn={!!user} />
         <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>
       </div></WalletProvider>
     </LoginSheetProvider>

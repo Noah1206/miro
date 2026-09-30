@@ -20,7 +20,19 @@ const ASKED_KEY = 'miro:push-asked'
 function askedThisSession(): boolean {
   try { return sessionStorage.getItem(ASKED_KEY) === '1' } catch { return false }
 }
-function markAsked() { try { sessionStorage.setItem(ASKED_KEY, '1') } catch {} }
+/** 온보딩의 '캐릭터 알림 받기' 가 이미 물었으면 가입 직후 알림 시트를 다시 띄우지 않는다(2026-09-30). */
+export function markPushAsked() { try { sessionStorage.setItem(ASKED_KEY, '1') } catch {} }
+
+/** 이 기기를 알림에 구독하고 서버에 알린다 — 권한이 허용된 뒤에 부른다. 알림 시트와 온보딩이 같이 쓴다. */
+export async function subscribeToPush(vapidPublicKey: string): Promise<boolean> {
+  await navigator.serviceWorker.register('/sw.js')
+  const reg = await navigator.serviceWorker.ready
+  const sub = await reg.pushManager.getSubscription() ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toUint8(vapidPublicKey) })
+  // 시간대도 함께 보낸다 — 캐릭터의 활동 시간을 사용자 현지 시각으로 보는데, 시간대를 고르는 설정은 없다.
+  const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...sub.toJSON(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }) })
+  return res.ok
+}
 
 /**
  * autoPrompt: 로그인한 사용자가 들어오면 화면 어디서든 바로 팝업으로 묻는다(2026-09-29 결정). 이때는 줄을 그리지 않고
@@ -33,9 +45,9 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   const toast = useToast()
   const t = useT()
   // 먼저 묻기. 가입 직후라면 가입 선물 팝업이 이것이 끝나기를 기다린다(markPushPromptDone) — 보여 주고 닫았거나, 물을 게 없었을 때.
-  // 가입 직후(?welcome=1)에는 알림 시트를 반드시 먼저 보인다(2026-09-30 요청) — 이 탭에서 이미 물었어도, 알림이 이미 켜져 있어도
-  // ('켜져 있어요' 시트). 가입 선물 팝업은 이 시트가 끝난 뒤에 뜬다. 주소는 화면이 붙은 뒤에 읽는다 — 온보딩에서 넘어오는 순간의
-  // 첫 렌더에는 아직 이전 주소(/onboarding)라서 가입 직후인지 놓쳤다(9/30).
+  // 가입 직후(?welcome=1)에는 알림이 이미 켜져 있어도('켜져 있어요' 시트) 알림 시트를 먼저 보인다. 다만 온보딩의 '캐릭터 알림 받기' 에서
+  // 이미 물었으면(markPushAsked) 다시 띄우지 않는다 — 가입이 한 번에 끝나게(2026-09-30 요청). 주소는 화면이 붙은 뒤에 읽는다 —
+  // 온보딩에서 넘어오는 순간의 첫 렌더에는 아직 이전 주소(/onboarding)라서 가입 직후인지 놓쳤다(9/30).
   const [welcome, setWelcome] = useState(false)
   useEffect(() => { setWelcome(new URLSearchParams(window.location.search).has(WELCOME_PARAM)) }, [])
   const shown = useRef(false)
@@ -46,9 +58,9 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     // 이미 한 번 보였거나(허용 뒤 상태가 바뀐 경우) 팝업이 먼저 떠 버렸으면 시트를 다시 띄우지 않는다 — 겹치지 않게.
     if (shown.current || pushPromptDone()) { markPushPromptDone(); return }
     const asks = status === 'prompt' || status === 'ios_install' || status === 'denied' || (welcome && status === 'subscribed')
-    if (!asks || (!welcome && askedThisSession())) { markPushPromptDone(); return }
+    if (!asks || askedThisSession()) { markPushPromptDone(); return }
     // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
-    const timer = setTimeout(() => { shown.current = true; markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
+    const timer = setTimeout(() => { shown.current = true; markPushAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
     return () => clearTimeout(timer)
   }, [autoPrompt, status, welcome])
 
@@ -96,12 +108,8 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     if (!vapidPublicKey) return
     setAsk(false); if (!quiet) setStatus('working')
     try {
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription() ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: toUint8(vapidPublicKey) })
-      // 시간대도 함께 보낸다 — 캐릭터의 활동 시간을 사용자 현지 시각으로 보는데, 시간대를 고르는 설정은 없다.
-      const res = await fetch('/api/push', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...sub.toJSON(), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }) })
-      setStatus(res.ok ? 'subscribed' : 'prompt'); if (res.ok && !quiet) toast(t('이제 먼저 연락이 올 수 있어요.'), 'relationship')
+      const ok = await subscribeToPush(vapidPublicKey)
+      setStatus(ok ? 'subscribed' : 'prompt'); if (ok && !quiet) toast(t('이제 먼저 연락이 올 수 있어요.'), 'relationship')
     } catch { setStatus(Notification.permission === 'denied' ? 'denied' : 'prompt') }
   }
 

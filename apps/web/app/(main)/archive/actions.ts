@@ -5,9 +5,10 @@ import { requireUser } from '@/lib/auth'
 import { listSessions, softDelete, type ArchiveCursor } from '@/lib/ops/archive'
 import { track } from '@/lib/analytics/track'
 
-export async function loadArchivePage(query: string, cursor?: ArchiveCursor | null) {
+/** 대화 목록 다음 페이지. 이름 검색 입력칸은 없앴다(2026-09-30 요청). */
+export async function loadArchivePage(cursor: ArchiveCursor) {
   const user = await requireUser()
-  return listSessions(user.id, { query, cursor })
+  return listSessions(user.id, { cursor })
 }
 
 /** n50 — 삭제 확정. 동일 요청 반복은 이미 처리된 상태로 응답한다. */

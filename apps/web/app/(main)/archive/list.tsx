@@ -19,41 +19,21 @@ export function ArchiveList({ initialPage }: {
 }) {
   const [items, setItems] = useState(initialPage.items)
   const [nextCursor, setNextCursor] = useState<ArchiveCursor | null>(initialPage.nextCursor)
-  const [query, setQuery] = useState('')
   const [managing, setManaging] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
-  const [retryKey, setRetryKey] = useState(0)
   const requestId = useRef(0)
   const t = useT()
   const language = useLanguage()
 
+  // 서버가 목록을 새로 주면(삭제 뒤 돌아왔을 때 등) 그 목록으로 바꾼다. 이름 검색 입력칸은 없앴다(2026-09-30 요청).
   useEffect(() => {
-    const currentRequest = ++requestId.current
+    requestId.current++
+    setItems(initialPage.items)
+    setNextCursor(initialPage.nextCursor)
+    setLoading(false)
     setError(false)
-    if (!query.trim()) {
-      setItems(initialPage.items)
-      setNextCursor(initialPage.nextCursor)
-      setLoading(false)
-      return
-    }
-    setLoading(true)
-    setItems([])
-    setNextCursor(null)
-    const timer = setTimeout(async () => {
-      try {
-        const page = await loadArchivePage(query)
-        if (currentRequest !== requestId.current) return
-        setItems(page.items)
-        setNextCursor(page.nextCursor)
-      } catch {
-        if (currentRequest === requestId.current) setError(true)
-      } finally {
-        if (currentRequest === requestId.current) setLoading(false)
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [query, initialPage, retryKey])
+  }, [initialPage])
 
   async function loadMore() {
     if (!nextCursor || loading) return
@@ -61,7 +41,7 @@ export function ArchiveList({ initialPage }: {
     setLoading(true)
     setError(false)
     try {
-      const page = await loadArchivePage(query, nextCursor)
+      const page = await loadArchivePage(nextCursor)
       if (currentRequest !== requestId.current) return
       setItems((current) => [...current, ...page.items])
       setNextCursor(page.nextCursor)
@@ -86,16 +66,6 @@ export function ArchiveList({ initialPage }: {
         </button>
         </div>
       </header>
-      <label style={{ position: 'relative', display: 'block', marginBottom: 'var(--space-5)' }}>
-        <span className="sr-only">{t('캐릭터 이름으로 검색')}</span>
-        <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" style={{ position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }}>
-          <circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" />
-        </svg>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} maxLength={100} placeholder={t('캐릭터 이름으로 검색')} style={{
-          width: '100%', minHeight: 52, padding: '0 16px 0 46px', border: 0, outline: 0,
-          borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
-        }} />
-      </label>
       <ul className="stack session-list" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
         <AnimatePresence initial={false}>
         {items.map((s) => {
@@ -134,8 +104,8 @@ export function ArchiveList({ initialPage }: {
         </AnimatePresence>
       </ul>
       {loading && <p role="status" className="t-caption" style={{ marginTop: 16 }}>{t('불러오는 중…')}</p>}
-      {error && <div role="alert" className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => nextCursor ? void loadMore() : setRetryKey((value) => value + 1)}>{t('다시 시도')}</Button></div>}
-      {!loading && !error && items.length === 0 && <p className="empty-state empty-state--fill">{query.trim() ? t('해당 이름의 캐릭터가 없어요') : t('진행 중인 역할극이 없습니다.')}</p>}
+      {error && <div role="alert" className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => void loadMore()}>{t('다시 시도')}</Button></div>}
+      {!loading && !error && items.length === 0 && <p className="empty-state empty-state--fill">{t('진행 중인 역할극이 없습니다.')}</p>}
       {nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>{t('더 보기')}</Button></div>}
     </>
   )

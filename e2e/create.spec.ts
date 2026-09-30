@@ -41,10 +41,11 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   await expect(world).not.toContainText('어딘가')
 })
 
-test('만들기는 미로 캐릭터로 바로 열고, 비공개 초안을 재개해 게시하면 다음 만들기는 새 초안이다', async ({ page }) => {
+test('/create 는 미로 캐릭터로 바로 열고, 비공개 초안을 재개해 게시하면 다음 만들기는 새 초안이다', async ({ page }) => {
   await signUp(page, BASE)
-  await page.getByRole('button', { name: '만들기', exact: true }).click()
-  // 유형 선택 없이 미로 캐릭터 편집기로 간다(2026-09-29).
+  // 하단 만들기 탭은 없다(2026-09-30) — 만들기는 주소로 연다. 유형 선택 없이 미로 캐릭터 편집기로 간다.
+  await expect(page.getByRole('button', { name: '만들기', exact: true })).toHaveCount(0)
+  await page.goto(`${BASE}/create`)
   await expect(page).toHaveURL(/\/create\?type=reality&draft=/)
   await expect(page.getByRole('heading', { name: '미로 캐릭터', exact: true })).toBeVisible()
   await page.locator('input[name="name"]').fill('비공개서점')
@@ -63,7 +64,7 @@ test('만들기는 미로 캐릭터로 바로 열고, 비공개 초안을 재개
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/)
   await page.goto(`${BASE}/my?filter=private`)
   await expect(page.getByRole('link', { name: /비공개서점, 비공개/ })).toBeVisible()
-  await page.getByRole('button', { name: '만들기', exact: true }).click()
+  await page.goto(`${BASE}/create`)
   await expect(page).toHaveURL(/\/create\?type=reality&draft=/)
   await expect(page.locator('input[name="name"]')).toHaveValue('')
 })

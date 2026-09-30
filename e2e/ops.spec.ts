@@ -12,7 +12,7 @@ async function roleplay(page: Page, slug = 'thomas') {
   return page.url().split('/chat/')[1]!
 }
 
-test('chat list: search and delete with confirmation and empty state', async ({ page }) => {
+test('chat list: delete with confirmation and empty state', async ({ page }) => {
   await signup(page)
   await page.goto(`${BASE}/archive`)
   await expect(page.getByText('진행 중인 역할극이 없습니다.')).toBeVisible()
@@ -24,9 +24,8 @@ test('chat list: search and delete with confirmation and empty state', async ({ 
   await expect(row.getByRole('link').first()).toHaveAttribute('href', `/chat/${id}`)
   await expect(page.locator('body')).not.toContainText(/신뢰|호감도/)
 
-  await page.getByPlaceholder('캐릭터 이름으로 검색').fill('없는캐릭터')
-  await expect(row).toHaveCount(0)
-  await page.getByPlaceholder('캐릭터 이름으로 검색').fill('')
+  // 이름 검색 입력칸은 없다(2026-09-30).
+  await expect(page.getByPlaceholder('캐릭터 이름으로 검색')).toHaveCount(0)
   await page.getByRole('button', { name: '대화 관리' }).click()
   await page.getByRole('link', { name: '토마스와의 역할극 삭제' }).click()
   await expect(page).toHaveURL(new RegExp(`/archive/delete/${id}`))
