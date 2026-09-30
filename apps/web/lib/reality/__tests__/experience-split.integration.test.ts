@@ -9,7 +9,7 @@ import { evaluateSession } from '../evaluate'
 import { runRealityScheduler } from '../scheduler'
 import { deliverRealityPush } from '../push-outbox'
 import { startOutgoingCall } from '@/lib/call/service'
-import { discoverGrid, homePage, homeRows, miroPage, popularHomeCards, searchPage } from '@/lib/home'
+import { discoverGrid, homePage, homeRows, popularHomeCards, searchPage } from '@/lib/home'
 import { getCharacterByKey } from '@/lib/characters'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
@@ -187,8 +187,9 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     expect(ownerHome.has(privateReality.id)).toBe(true)
     expect(ownerHome.has(draftReality.id)).toBe(false)
 
-    const ownerMiro = await miroPage(owner)
-    const viewerMiro = await miroPage(viewer)
+    // 미로 탭은 없앴다(2026-09-30) — 미로 목록은 홈 목록과 같은 규칙이다.
+    const ownerMiro = await homePage(owner)
+    const viewerMiro = await homePage(viewer)
     expect(ownerMiro.items.some(item => item.id === privateReality.id)).toBe(true)
     expect(ownerMiro.items.some(item => item.id === draftReality.id)).toBe(false)
     expect(viewerMiro.items.some(item => item.id === privateReality.id)).toBe(false)

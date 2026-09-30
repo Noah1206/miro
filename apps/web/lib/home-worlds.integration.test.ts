@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 import { db, characters, roleplaySessions, users, worlds } from '@miro/db'
 import { testDatabaseUrl } from '../../../tooling/test-database'
 import { listOfficials } from './characters'
-import { discoverGrid, homePage, miroPage, popularHomeCards, searchPage } from './home'
+import { discoverGrid, homePage, popularHomeCards, searchPage } from './home'
 
 const describeDb = testDatabaseUrl(process.env.DATABASE_URL) ? describe : describe.skip
 
@@ -63,7 +63,7 @@ describeDb('home cards with multiple worlds', () => {
       // 채움 캐릭터도 미로라 첫 페이지를 넘길 수 있다 — 끝까지 넘겨 한 번만 나오는지 본다.
       const miroIds: string[] = []
       for (let next: string | null = null; ; ) {
-        const page: { items: { id: string }[]; nextCursor: string | null } = await miroPage(viewer!.id, next)
+        const page: { items: { id: string }[]; nextCursor: string | null } = await homePage(viewer!.id, next)
         miroIds.push(...page.items.map(item => item.id))
         if (!(next = page.nextCursor)) break
       }

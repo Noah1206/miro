@@ -5,8 +5,27 @@
 .sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .sectionHeading h2 { font-size: 17px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; }
 /* 전체·인기는 따로 뜬 버튼이 아니라 한 덩어리 토글이다 — 바탕을 깔고 그 안에서 눌린 칸만 켠다. */
-.filters { display: inline-flex; align-self: flex-start; align-items: center; gap: 2px; padding: 2px; margin-bottom: 16px;
+.filters { display: inline-flex; align-self: flex-start; align-items: center; gap: 2px; padding: 2px;
   background: var(--color-surface-2); border-radius: 9px; }
+/* 필터 줄 — 왼쪽에 전체·인기, 오른쪽 끝에 R 스위치(2026-09-30 요청). */
+.filterRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+/* R 스위치 — 위프의 세이프 스위치처럼 이름표(금빛 R) + 스위치. 꺼지면 금빛 R 이 옅어지고 회색 트랙·왼쪽 손잡이,
+   켜지면 금빛 R 이 또렷하게 빛나고 주황 트랙·오른쪽 손잡이. */
+.realitySwitch { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 34px; padding: 0 2px; border: 0;
+  background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.realitySwitch::after { content: ''; position: absolute; inset: -5px -4px; }
+/* 원 배지(지름 26)라 스위치 트랙(높이 26)과 가운데가 그대로 맞는다. */
+.goldR { display: block; overflow: visible; opacity: .55; filter: saturate(.55) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+  transition: opacity var(--motion-fast) var(--ease-standard), filter var(--motion-fast) var(--ease-standard); }
+.realitySwitch[aria-checked="true"] .goldR { opacity: 1; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(251, 196, 72, 0.55)); }
+.switchTrack { position: relative; width: 44px; height: 26px; border-radius: 13px; background: var(--color-surface-3);
+  transition: background var(--motion-fast) var(--ease-standard); }
+.switchKnob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--color-white);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); transition: transform var(--motion-fast) var(--ease-standard); }
+.realitySwitch[aria-checked="true"] .switchTrack { background: linear-gradient(135deg, var(--color-accent-bright), var(--color-accent)); }
+.realitySwitch[aria-checked="true"] .switchKnob { transform: translateX(18px); }
+.realitySwitch:focus-visible { outline: 2px solid var(--color-white); outline-offset: 3px; border-radius: 16px; }
+@media (prefers-reduced-motion: reduce) { .goldR, .switchTrack, .switchKnob { transition: none; } }
 /* 보이는 높이는 30px 이지만 터치 영역은 44px 을 지킨다 (패턴 문서 §6) — ::after 로 위아래만 넓힌다. */
 .filters button { position: relative; flex-shrink: 0; min-height: 30px; padding: 0 13px; border: none; border-radius: 7px;
   background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 13px; font-weight: 500; line-height: 30px; cursor: pointer;
@@ -45,21 +64,32 @@
   .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
 
-/* 컴퓨터 홈의 배너 — 헤더와 캐릭터 사이(2026-09-30 요청). 폰에서는 없다.
-   힉스필드 그림이 배너를 꽉 채우고(제타·위프 배너처럼), 글은 왼쪽을 어둡게 누른 위에 얹는다. */
-.banner { display: none; }
+/* 홈 배너 — 헤더와 캐릭터 사이(2026-09-30 요청). 힉스필드 그림이 꽉 채우고(제타·위프 배너처럼), 글은 왼쪽을 어둡게 누른 위에 얹는다.
+   폰은 2.4:1 낮은 띠에 제목만(9/30 요청: 폰에도 넣되 온라인에서 보기에 너무 커서 줄임), 컴퓨터는 6:1 띠에 설명까지. */
+/* 모서리는 overflow 대신 clip-path 로 자른다 — overflow:hidden 이면 aspect-ratio 가 높이를 고정해 긴 글이 잘린다. 이렇게 하면 글이 길 때 배너가 늘어난다. */
+.banner { position: relative; isolation: isolate; display: flex; align-items: center; aspect-ratio: 12 / 5;
+  margin: 0 var(--gutter) var(--space-5); padding: 12px 14px; border-radius: 14px; clip-path: inset(0 round 14px); background: var(--color-surface-1); }
+.bannerArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.banner::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(10, 10, 12, 0.88) 0%, rgba(10, 10, 12, 0.7) 42%, rgba(10, 10, 12, 0) 64%); }
+/* 폰에서는 글을 왼쪽 절반에 둔다 — 더 넓으면 제목 끝이 말풍선·선물 상자에 닿는다. */
+.bannerText { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 52%; }
+.bannerEyebrow { margin: 0; font-size: 11px; font-weight: 600; color: var(--color-text-primary); }
+.bannerTitle { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; color: var(--color-text-primary); }
+/* 폰에서는 설명을 숨긴다 — 낮은 띠에 설명까지 넣으면 다시 커진다. 컴퓨터에서만 보인다. */
+.bannerBody { display: none; margin: 0; color: var(--color-text-secondary); }
+/* 버튼 크기는 Button 이 인라인으로 정하므로 폭별 크기를 !important 로 준다. */
+.bannerCta { margin-top: 8px; min-height: 30px !important; padding: 0 12px !important; font-size: 12px !important; }
 @media (min-width: 1024px) {
-  /* 높이는 글이 정한다(약 190, 9/30 요청으로 줄인 높이). 그림은 흐름 밖에서 뒤를 채운다. */
-  .banner { position: relative; isolation: isolate; display: flex; align-items: center;
-    margin: 0 var(--gutter) var(--space-6); padding: 20px 48px; border-radius: 16px; overflow: hidden; background: var(--color-surface-1); }
-  /* 폭이 줄면 오른쪽을 잘라낸다(왼쪽 기준) — 인물이 글과 겹치지 않고 글 옆에 남는다. */
-  .bannerArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left center; }
-  .banner::after { content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, rgba(10, 10, 12, 0.88) 0%, rgba(10, 10, 12, 0.72) 30%, rgba(10, 10, 12, 0.25) 44%, rgba(10, 10, 12, 0) 54%); }
-  .bannerText { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
-  .bannerEyebrow { margin: 0; font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
-  .bannerTitle { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; color: var(--color-text-primary); }
-  .bannerBody { margin: 0 0 12px; font-size: 14px; line-height: 1.6; color: var(--color-text-secondary); }
+  /* 높이는 약 190(9/30 요청으로 줄인 높이) — 버튼이 없는 선물 배너도 같은 높이. 폭이 줄면 오른쪽을 잘라 인물이 글 옆에 남는다. */
+  .banner { aspect-ratio: auto; min-height: 190px; margin: 0 var(--gutter) var(--space-6); padding: 20px 48px; border-radius: 16px; clip-path: inset(0 round 16px); }
+  .bannerArt { object-position: left center; }
+  .banner::after { background: linear-gradient(90deg, rgba(10, 10, 12, 0.88) 0%, rgba(10, 10, 12, 0.72) 30%, rgba(10, 10, 12, 0.25) 44%, rgba(10, 10, 12, 0) 54%); }
+  .bannerText { max-width: 470px; }
+  .bannerEyebrow { font-size: 15px; }
+  .bannerTitle { font-size: 28px; }
+  .bannerBody { display: block; font-size: 14px; line-height: 1.6; }
+  .bannerCta { margin-top: 12px; min-height: 44px !important; padding: 4px 24px !important; font-size: 14px !important; }
 }
 
 /* 인기 목록을 불러오는 동안 가운데에서 튕기는 점 세 개(2026-09-30 요청) — 채팅 '입력 중' 점(chat.module.css)과 같은 움직임을 크게. */

@@ -5,5 +5,8 @@
 /* 제목은 첫 초점만 받는 비대화형 요소다(탭 순서 밖) — 시트 choice 제목처럼 링을 그리지 않는다. */
 .center h2:focus-visible { outline: none; box-shadow: none; }
 .center p { margin: var(--space-1) 0 0; color: var(--color-text-secondary); font-size: var(--font-caption); line-height: 1.5; max-width: 34ch; text-wrap: balance; }
-.icon { width: 40px; height: 40px; color: var(--color-accent); }
+/* 알림 아이콘은 강한 빨강(2026-09-30 요청) — --color-danger(#E65A5A)보다 선명하게. */
+.icon { width: 40px; height: 40px; color: #FF3B30; }
 .actions { display: grid; gap: var(--space-2); }
+/* 차단 시트의 '설정 방법 보기' — 설명 줄이 이 브라우저의 켜는 길로 바뀐다(2026-09-30 요청). */
+.center p.path { color: var(--color-text-primary); font-weight: var(--weight-semibold); word-break: keep-all; }

@@ -51,14 +51,14 @@ test('예전 /discover 링크는 검색어를 들고 /home/search 로 간다', a
   expect(new URL(page.url()).searchParams.get('q')).toBe('비공개')
 })
 
-test('하단 탭의 발견 자리는 미로이고, 미로에는 공식 미로 캐릭터가 실린다', async ({ page }) => {
+test('미로 탭은 없고, 예전 /miro 링크는 홈의 R(미로 캐릭터만) 스위치를 켠 채로 연다', async ({ page }) => {
   await page.goto(`${BASE}/home`)
-  await expect(page.locator('nav a[href="/miro"]')).toHaveText(/미로/)
+  await expect(page.locator('nav a[href="/miro"]')).toHaveCount(0)
   await expect(page.locator('nav a[href="/discover"]')).toHaveCount(0)
-  await page.locator('nav a[href="/miro"]').click()
-  await expect(page).toHaveURL(/\/miro$/)
-  await expect(page.getByRole('heading', { name: '미로' })).toBeVisible()
-  // 2026-09-29: 앱은 미로 캐릭터만 — 공식 시드도 미로 캐릭터라 미로 탭에 실린다.
+  await page.goto(`${BASE}/miro`)
+  await expect(page).toHaveURL(/\/home\?r=1$/)
+  await expect(page.getByRole('switch', { name: '미로 캐릭터만 보기' })).toHaveAttribute('aria-checked', 'true')
+  // 공식 시드 미로 캐릭터는 앱 밖 연락이 켜져 있어 R 을 켜도 실린다.
   await expect(page.getByRole('link', { name: /토마스/ }).first()).toBeVisible()
   await expect(page.getByRole('link', { name: /강태윤/ }).first()).toBeVisible()
 })

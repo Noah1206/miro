@@ -67,6 +67,30 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     // eslint-disable-next-line react-hooks/exhaustive-deps -- subscribe reads only vapidPublicKey
   }, [vapidPublicKey])
 
+  // 차단된 뒤 사용자가 브라우저 설정에서 알림을 허용하고 돌아오면, 새로 고침 없이 바로 구독한다(2026-09-30 요청).
+  // 권한 변경 알림(permissions.onchange)이 없는 브라우저도 있어 화면으로 돌아오는 순간(focus·visibilitychange)에도 다시 본다.
+  // 차단 상태에서는 서비스 워커를 등록하지 않았으므로 구독 전에 등록한다(ready 가 끝나지 않는다).
+  useEffect(() => {
+    if (status !== 'denied' || !('Notification' in window)) return
+    let done = false
+    const recheck = () => {
+      if (done) return
+      if (Notification.permission === 'granted') { done = true; void navigator.serviceWorker.register('/sw.js').then(() => subscribe()).catch(() => {}) }
+      else if (Notification.permission === 'default') { done = true; setStatus('prompt') }
+    }
+    let permission: PermissionStatus | null = null
+    navigator.permissions?.query({ name: 'notifications' as PermissionName }).then((p) => { permission = p; p.onchange = recheck }).catch(() => {})
+    const onVisible = () => { if (document.visibilityState === 'visible') recheck() }
+    window.addEventListener('focus', recheck)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      if (permission) permission.onchange = null
+      window.removeEventListener('focus', recheck)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- subscribe reads only vapidPublicKey
+  }, [status])
+
   /** quiet: 이미 허용된 기기 — 권한 창도 안내 문구도 없이 서버 구독만 맞춘다. */
   async function subscribe(quiet = false) {
     if (!vapidPublicKey) return
@@ -114,12 +138,31 @@ const COPY = {
   on: { title: msg('알림이 켜져 있어요'), line: msg('캐릭터가 먼저 연락하면 알림으로 알려 드려요.') },
 } as const
 
-/** 지갑 시트와 같은 모양: 가운데 아이콘·제목·한 줄, 아래 어두운 버튼과 작은 '나중에'. */
+/**
+ * 알림이 차단됐을 때 이 브라우저에서 다시 켜는 길(2026-09-30 요청). 차단은 웹 페이지가 풀 수 없어 사용자가 설정에서 허용해야 한다.
+ * 화면이 열린 뒤 누를 때만 읽으므로 navigator 를 써도 된다. 알맞은 것이 없으면 일반 안내.
+ */
+function settingsPath(): string {
+  const ua = navigator.userAgent
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
+  if (/iPhone|iPad|iPod/.test(ua)) return msg('iPhone 설정 → 알림 → MIRO → 알림 허용')
+  if (/Android/.test(ua) && standalone) return msg('휴대폰 설정 → 애플리케이션 → MIRO → 알림 → 허용')
+  if (/SamsungBrowser/.test(ua)) return msg('메뉴 → 설정 → 사이트 및 다운로드 → 사이트 권한 → 알림 → 허용')
+  if (/Firefox|FxiOS/.test(ua)) return msg('주소창 왼쪽의 권한 아이콘 → 알림 보내기 옆의 차단(×) 지우기')
+  if (/Android/.test(ua)) return msg('주소창 왼쪽의 자물쇠 아이콘 → 권한 → 알림 → 허용')
+  if (/Safari/.test(ua) && !/Chrome|Chromium|Edg\//.test(ua)) return msg('Safari → 설정 → 웹사이트 → 알림 → 이 사이트를 허용')
+  if (/Chrome|Chromium|Edg\//.test(ua)) return msg('주소창 왼쪽의 사이트 정보 아이콘 → 알림 → 허용')
+  return msg('브라우저의 사이트 설정 → 알림 → 이 사이트를 허용')
+}
+
+/** 지갑 시트와 같은 모양: 가운데 아이콘·제목·한 줄, 아래 버튼. 묻는 시트는 '알림 받기' 와 작은 '나중에', 안내 시트는 주황 '확인'(9/30 요청). */
 function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
   kind: keyof typeof COPY; open: boolean; onClose: () => void; name: string; working?: boolean; onAllow?: () => void
 }) {
   const copy = COPY[kind]
   const t = useT()
+  /** 차단 시트에서 '설정 방법 보기' 를 누르면 설명 줄이 이 브라우저의 켜는 길로 바뀐다. */
+  const [how, setHow] = useState<string | null>(null)
   return (
     <Sheet open={open} onClose={onClose} label={t(copy.title)}>
       <div className={styles.stack} data-push-sheet={kind}>
@@ -130,13 +173,16 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
           </svg>
           {/* 첫 초점은 제목에 — 닫기 버튼에 주면 열리자마자 초점 테두리가 그려진다. 스크린 리더는 제목부터 읽는다. */}
           <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{t(copy.title)}</h2>
-          <p>{t(copy.line, { name })}</p>
+          {/* 설명은 한 줄만(9/30 요청) — '설정 방법 보기' 를 누르면 그 줄이 이 브라우저의 켜는 길로 바뀐다. */}
+          <p className={how ? styles.path : undefined} role={how ? 'status' : undefined}>{how ? t(how) : t(copy.line, { name })}</p>
         </div>
         <div className={styles.actions}>
           {onAllow ? <>
             <Button variant="secondary" full style={SHEET_BUTTON} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
             <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
-          </> : <Button variant="secondary" full style={SHEET_BUTTON} onClick={onClose}>{t('확인')}</Button>}
+          </> : kind === 'denied' && !how
+            ? <Button variant="primary" full onClick={() => setHow(settingsPath())}>{t('설정 방법 보기')}</Button>
+            : <Button variant="primary" full onClick={onClose}>{t('확인')}</Button>}
         </div>
       </div>
     </Sheet>

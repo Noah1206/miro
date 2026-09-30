@@ -38,62 +38,102 @@ function StoryCard({ c }: { c: HomeCard }) {
   </TransitionLink>
 }
 
-export function HomeFeed({ initial }: { initial: CardPage }) {
-  const [filter, setFilter] = useState<'all' | 'popular'>('all')
-  const [items, setItems] = useState(initial.items)
-  const [cursor, setCursor] = useState(initial.nextCursor)
-  const [popular, setPopular] = useState<HomeCard[] | null>(null)
-  const [moreLoading, setMoreLoading] = useState(false)
-  const [popularLoading, setPopularLoading] = useState(false)
-  const [moreError, setMoreError] = useState(false)
-  const [popularError, setPopularError] = useState(false)
+type Sort = 'all' | 'popular'
+/** 목록 네 개 — 전체/인기 × R(미로 캐릭터만) 꺼짐/켜짐. 처음 볼 때 한 번 불러와 둔다. */
+type Key = Sort | `r-${Sort}`
+
+/**
+ * 금빛 R 배지 — 황금 테두리 원 안에 금빛 R(2026-09-30 요청: 겉은 황금색, 원 안에 R). 스위치 앞 이름표.
+ * 원 지름은 스위치 트랙 높이(26)와 같아 가운데가 맞는다. 글자는 페이지 글꼴의 가장 굵은 R 이고, 테두리를 먼저 그린 뒤(paint-order) 금빛 면을 얹는다.
+ */
+function RealityMark() {
+  return <svg aria-hidden width="26" height="26" viewBox="0 0 26 26" className={styles.goldR}>
+    <defs>
+      <linearGradient id="goldRFace" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#FFF8D6" /><stop offset=".32" stopColor="#FBDC72" /><stop offset=".55" stopColor="#E3AC2C" />
+        <stop offset=".78" stopColor="#B67A12" /><stop offset="1" stopColor="#F3C95C" />
+      </linearGradient>
+      <linearGradient id="goldRRim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#FFEFB0" /><stop offset=".5" stopColor="#C9921C" /><stop offset="1" stopColor="#7A4E08" />
+      </linearGradient>
+      <radialGradient id="goldRCoin" cx=".5" cy=".3" r=".75">
+        <stop offset="0" stopColor="#3B2A10" /><stop offset="1" stopColor="#140F08" />
+      </radialGradient>
+    </defs>
+    <circle cx="13" cy="13" r="11.9" fill="url(#goldRCoin)" stroke="url(#goldRRim)" strokeWidth="2.2" />
+    <text x="13" y="18.4" textAnchor="middle" fontSize="15" fontWeight="900" fill="url(#goldRFace)" stroke="#6B4306" strokeWidth=".9"
+      strokeLinejoin="round" paintOrder="stroke" style={{ fontFamily: 'inherit' }}>R</text>
+  </svg>
+}
+
+export function HomeFeed({ initial, initialReality = false }: { initial: CardPage; initialReality?: boolean }) {
+  const [filter, setFilter] = useState<Sort>('all')
+  /** R 토글(2026-09-30 요청) — 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만. 전체·인기와 함께 걸린다. */
+  const [reality, setReality] = useState(initialReality)
+  const [lists, setLists] = useState<Partial<Record<Key, CardPage>>>({ [initialReality ? 'r-all' : 'all']: initial })
+  const [loading, setLoading] = useState<Key | null>(null)
+  const [failed, setFailed] = useState<Key | null>(null)
   const t = useT()
-  const recommendations = filter === 'popular' ? popular ?? [] : items
-  const loading = filter === 'popular' ? popularLoading : moreLoading
-  const error = filter === 'popular' ? popularError : moreError
-  const empty = recommendations.length === 0 && !loading && !error
-  /** 인기를 처음 누르면 빈 목록으로 기다린다 — 글 대신 가운데에서 튕기는 점 세 개(2026-09-30 요청). */
-  const waitingPopular = filter === 'popular' && loading
+  const key: Key = reality ? `r-${filter}` : filter
+  const list = lists[key]
+  const recommendations = list?.items ?? []
+  const isLoading = loading === key
+  const error = failed === key
+  const empty = !!list && recommendations.length === 0 && !isLoading && !error
+  /** 목록을 처음 불러오는 동안은 빈 목록으로 기다린다 — 글 대신 가운데에서 튕기는 점 세 개(2026-09-30 요청). */
+  const waiting = isLoading && !list
 
-  async function loadMore() {
-    if (!cursor || moreLoading) return
-    setMoreLoading(true); setMoreError(false)
+  async function load(k: Key, more = false) {
+    const current = lists[k]
+    if (loading === k || (more ? !current?.nextCursor : current)) return
+    setLoading(k); setFailed(null)
+    const query = new URLSearchParams()
+    if (k.endsWith('popular')) query.set('sort', 'popular')
+    if (k.startsWith('r-')) query.set('reality', '1')
+    if (more && current?.nextCursor) query.set('cursor', current.nextCursor)
     try {
-      const response = await fetch(`/api/home/cards?cursor=${encodeURIComponent(cursor)}`, { cache: 'no-store' })
+      const response = await fetch(`/api/home/cards?${query}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('LOAD_FAILED')
-      const page: CardPage = await response.json()
-      setItems(current => unique([...current, ...page.items]))
-      setCursor(page.nextCursor)
-    } catch { setMoreError(true) } finally { setMoreLoading(false) }
+      const data: CardPage | HomeCard[] = await response.json()
+      // 인기는 한 번에 오는 배열(더 보기 없음), 전체는 커서가 있는 쪽 단위.
+      const page: CardPage = Array.isArray(data) ? { items: data, nextCursor: null } : data
+      setLists(all => ({ ...all, [k]: { items: unique([...(more ? all[k]?.items ?? [] : []), ...page.items]), nextCursor: page.nextCursor } }))
+    } catch { setFailed(k) } finally { setLoading(l => (l === k ? null : l)) }
   }
 
-  async function showPopular() {
-    setFilter('popular')
-    if (popular || popularLoading) return
-    setPopularLoading(true); setPopularError(false)
-    try {
-      const response = await fetch('/api/home/cards?sort=popular', { cache: 'no-store' })
-      if (!response.ok) throw new Error('LOAD_FAILED')
-      setPopular(await response.json())
-    } catch { setPopularError(true) } finally { setPopularLoading(false) }
+  function show(next: { filter?: Sort; reality?: boolean }) {
+    const f = next.filter ?? filter
+    const r = next.reality ?? reality
+    setFilter(f); setReality(r)
+    // 주소도 맞춘다 — 새로 고침하거나 공유해도 R 이 그대로. 화면을 다시 그리지 않는 replaceState.
+    if (r !== reality) window.history.replaceState(window.history.state, '', r ? '/home?r=1' : '/home')
+    void load(r ? `r-${f}` : f)
   }
 
-  return <div className={`${styles.feed} ${empty || waitingPopular ? styles.fill : ''}`}>
+  return <div className={`${styles.feed} ${empty || waiting ? styles.fill : ''}`}>
     <h1 className="sr-only">{t('홈')}</h1>
-    <div className={styles.filters} role="group" aria-label={t('이야기 정렬')}>
-      <button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>{t('전체')}</button>
-      <button type="button" aria-pressed={filter === 'popular'} onClick={showPopular}>{t('인기')}</button>
+    <div id="stories" className={styles.filterRow}>
+      <div className={styles.filters} role="group" aria-label={t('이야기 정렬')}>
+        <button type="button" aria-pressed={filter === 'all'} onClick={() => show({ filter: 'all' })}>{t('전체')}</button>
+        <button type="button" aria-pressed={filter === 'popular'} onClick={() => show({ filter: 'popular' })}>{t('인기')}</button>
+      </div>
+      {/* R 스위치 — 오른쪽 끝(2026-09-30 요청, 위프의 세이프 스위치처럼 이름표 + 스위치). 켜면 앱 밖 연락이 켜진 미로 캐릭터만. */}
+      <button type="button" role="switch" aria-checked={reality} aria-label={t('미로 캐릭터만 보기')} title={t('미로 캐릭터만 보기')}
+        className={styles.realitySwitch} onClick={() => show({ reality: !reality })}>
+        <RealityMark />
+        <span aria-hidden className={styles.switchTrack}><span className={styles.switchKnob} /></span>
+      </button>
     </div>
 
-    <section aria-labelledby="recommend-title" className={empty || waitingPopular ? styles.fill : undefined}>
+    <section aria-labelledby="recommend-title" className={empty || waiting ? styles.fill : undefined}>
       <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? t('인기 이야기') : t('전체 이야기')}</h2></div>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
-      {waitingPopular
+      {waiting
         ? <div role="status" className={`empty-state empty-state--fill ${styles.loadingDots}`}><i aria-hidden /><i aria-hidden /><i aria-hidden /><span className="sr-only">{t('불러오는 중')}</span></div>
-        : loading && <p role="status">{t('불러오는 중')}</p>}
-      {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={filter === 'popular' ? showPopular : loadMore}>{t('다시 시도')}</Button></p>}
-      {empty && <p className="empty-state empty-state--fill">{filter === 'popular' ? t('아직 인기 이야기가 없어요') : t('아직 이야기가 없어요')}</p>}
-      {filter === 'all' && cursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={moreLoading}>{moreLoading ? t('불러오는 중') : t('더 보기')}</Button></div>}
+        : isLoading && <p role="status">{t('불러오는 중')}</p>}
+      {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => load(key, !!list)}>{t('다시 시도')}</Button></p>}
+      {empty && <p className="empty-state empty-state--fill">{reality ? t('아직 미로에 있는 캐릭터가 없어요') : filter === 'popular' ? t('아직 인기 이야기가 없어요') : t('아직 이야기가 없어요')}</p>}
+      {filter === 'all' && list?.nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={() => load(key, true)} disabled={isLoading}>{isLoading ? t('불러오는 중') : t('더 보기')}</Button></div>}
     </section>
 
   </div>
