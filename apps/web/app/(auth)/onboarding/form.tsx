@@ -196,7 +196,7 @@ function NicknameField({ value, onChange, onEnter, invalid }: { value: string; o
       <input aria-label={t('닉네임')} value={value} maxLength={PERSONA_LIMITS.name} autoFocus autoComplete="nickname" placeholder={t('예) 지우')}
         onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         onKeyDown={(e) => { if (e.key === 'Enter') onEnter() }}
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)' }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
       <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{[...value].length}/{PERSONA_LIMITS.name}</span>
     </div>
   )
@@ -228,7 +228,7 @@ function BirthDateField({ value, onChange, onEnter, invalid }: { value: string; 
       <input value={text} onChange={(e) => type(e.target.value)} inputMode="numeric" enterKeyHint="next" autoComplete="bday" autoFocus placeholder="YYYY.MM.DD" maxLength={10}
         aria-invalid={wrong || invalid} onKeyDown={(e) => { if (e.key === 'Enter' && value) onEnter() }}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ minHeight: 44, padding: '0 18px', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', fontFamily: 'inherit', letterSpacing: '0.02em', outline: 'none',
+        style={{ minHeight: 44, padding: '0 18px', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit', letterSpacing: '0.02em', outline: 'none',
           ...box(focused, wrong || invalid), borderRadius: 999 }} />
       {wrong && <span role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t('생년월일을 다시 확인해 주세요.')}</span>}
     </label>
