@@ -8,7 +8,8 @@ import { useT } from '@/lib/i18n/client'
 export type SocialProviderId = 'google' | 'kakao'
 export type LoginProvider = { id: SocialProviderId; label: string }
 
-type Ask = (next?: string) => void
+/** next: 로그인 뒤 돌아올 경로. note: 시트에 한 줄 더 보일 문구(이미 번역된 것) — 예: 알림 종의 가입 선물. */
+type Ask = (next?: string, note?: string) => void
 const Ctx = createContext<Ask>(() => {})
 
 /** 로그인이 필요한 곳에서 부른다. 인자는 로그인 후 돌아올 경로. */
@@ -35,11 +36,13 @@ export function LoginTapArea({ label, className }: { label: string; className?: 
  */
 export function LoginSheetProvider({ providers, children }: { providers: LoginProvider[]; children: ReactNode }) {
   const [next, setNext] = useState<string | null>(null)
+  const [note, setNote] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const t = useT()
-  const ask = useCallback<Ask>((to) => {
+  const ask = useCallback<Ask>((to, why) => {
     // 현재 화면으로 돌아오는 것이 기본이다.
     setNext(to ?? (typeof location === 'undefined' ? null : location.pathname + location.search))
+    setNote(why ?? null)
     setOpen(true)
   }, [])
   return (
@@ -56,6 +59,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
               {t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}
             </p>
+            {note && <p className="t-caption" style={{ margin: 0, color: 'var(--color-accent-bright)', fontWeight: 'var(--weight-semibold)', textAlign: 'center' }}>{note}</p>}
           </div>
           {providers.map(p => <SocialButton key={p.id} {...p} next={next} />)}
         </div>
