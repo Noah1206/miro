@@ -29,7 +29,7 @@ export type CardCharacter = {
  * 포스터 위에 이름 → 캐릭터의 한 줄 → 해시태그를 얹는다. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청).
  * 마크업을 한 곳에 두어야 홈과 상세가 어긋나지 않는다 (실제로 어긋났었다).
  */
-export function CharacterCard({ c }: { c: CardCharacter }) {
+export function CharacterCard({ c, tagsBelow = false }: { c: CardCharacter; tagsBelow?: boolean }) {
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = hashtags(c)
@@ -52,7 +52,7 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             }}>{c.tagline}</p>
           )}
-          {tags.length > 0 && (
+          {!tagsBelow && tags.length > 0 && (
             <p className="t-micro" style={{
               color: 'var(--color-text-tertiary)', letterSpacing: 0, textTransform: 'none',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -60,6 +60,12 @@ export function CharacterCard({ c }: { c: CardCharacter }) {
           )}
         </div>
       </TransitionLink>
+      {/* 태그를 카드 밑에 — 홈 카드와 같은 모양, 넘치면 다음 줄로(2026-09-30 요청, 미로 페이지). */}
+      {tagsBelow && tags.length > 0 && (
+        <p style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px', margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: 'var(--color-text-tertiary)' }}>
+          {tags.map((t, i) => <span key={i}>#{t}</span>)}
+        </p>
+      )}
     </motion.div>
   )
 }

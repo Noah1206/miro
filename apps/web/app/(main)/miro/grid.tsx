@@ -26,8 +26,9 @@ export function MiroGrid({ initial }: { initial: CardPage }) {
 
   if (items.length === 0 && !error) return <p data-miro-empty className="empty-state empty-state--fill">{t('아직 미로에 있는 캐릭터가 없어요')}</p>
   return <>
-    <div data-miro-grid className="grid-2" style={{ gap: 4, padding: '0 var(--gutter)' }}>
-      {items.map(item => <CharacterCard key={item.id} c={item} />)}
+    {/* 태그는 카드 밑(2026-09-30 요청) — 줄 사이는 홈처럼 16px, 칸 사이는 4px. */}
+    <div data-miro-grid className="grid-2" style={{ gap: '16px 4px', padding: '0 var(--gutter)' }}>
+      {items.map(item => <CharacterCard key={item.id} c={item} tagsBelow />)}
     </div>
     {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={loadMore}>{t('다시 시도')}</Button></p>}
     {cursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>{loading ? t('불러오는 중') : t('더 보기')}</Button></div>}
