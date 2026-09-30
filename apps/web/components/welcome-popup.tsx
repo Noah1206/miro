@@ -65,9 +65,9 @@ export function WelcomePopup({ units, validDays }: { units: number; validDays: n
             <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-secondary)' }}>
               {t('MIRO에 온 걸 환영해요! 지금 바로 캐릭터와 대화를 시작해 보세요. 선물 크레딧은 ECHO 대화와 통화에 {n}일 동안 쓸 수 있어요.', { n: validDays })}
             </p>
-            {/* 흰 바탕에 검은 글자, 글자는 다른 버튼과 같은 14px(2026-09-30 요청). */}
+            {/* 흰 바탕에 검은 글자, 글자는 다른 버튼과 같은 14px, 양끝이 완전히 둥근 알약 모양(2026-09-30 요청). */}
             <Button variant="secondary" full onClick={close}
-              style={{ marginTop: 20, minHeight: 44, padding: '4px 24px', fontSize: 14, background: 'var(--color-white)', color: 'var(--color-black)', border: 0 }}>
+              style={{ marginTop: 20, minHeight: 44, padding: '4px 24px', fontSize: 14, background: 'var(--color-white)', color: 'var(--color-black)', border: 0, borderRadius: 999 }}>
               {t('대화 시작하기')}
             </Button>
           </motion.div>
