@@ -28,6 +28,14 @@ export type ArchivePage = { items: ArchiveItem[]; nextCursor: ArchiveCursor | nu
 
 const PAGE_SIZE = 25
 
+/** 안 읽은 연락 전체 수 — 캐릭터가 보낸 문자·전화 중 아직 안 본 것. 대화 목록의 방별 빨간 숫자(unread)를 모두 더한 값이고, 홈 알림 종에 쓴다. */
+export async function unreadContactCount(userId: string): Promise<number> {
+  const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(realityContacts)
+    .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
+    .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent')))
+  return row?.n ?? 0
+}
+
 /**
  * 보관함 목록. 공식/직접 생성 캐릭터를 하나의 목록으로 (명세서 8.1). 관계 수치는 싣지 않는다.
  * status 를 주지 않으면 진행 중과 보관됨을 한 목록으로 — 진행 중이 위에 온다.

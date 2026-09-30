@@ -96,7 +96,7 @@ export function ArchiveList({ initialPage }: {
           borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)',
         }} />
       </label>
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
+      <ul className="stack session-list" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
         <AnimatePresence initial={false}>
         {items.map((s) => {
           const portrait = s.characterImage

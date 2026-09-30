@@ -3,38 +3,24 @@ import { homePage } from '@/lib/home'
 import { LoginButton, LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { HomeFeed } from './feed'
+import { HomeBanner } from './banner'
+import { NotificationBell } from './bell'
+import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
-
-/** 로그인했다는 표시. 이름이나 이메일의 첫 글자를 담고, 누르면 내 정보로 간다. */
-async function ProfileBadge({ label, name }: { label: string; name: string }) {
-  const t = await getT()
-  return (
-    <TransitionLink href="/my" aria-label={t('{name} · 내 정보', { name })} className={`hit ${styles.headerItem} ${styles.headerAction}`}
-      style={{
-        display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: 17,
-        background: 'var(--color-surface-2)', color: 'var(--color-text-primary)',
-        fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)',
-      }}>
-      <span aria-hidden>{label}</span>
-    </TransitionLink>
-  )
-}
-
-/** 표시할 글자 한 자. 한글이면 그대로, 영문이면 대문자로. */
-function initial(user: { displayName: string | null; email: string | null }): string {
-  const source = (user.displayName ?? user.email ?? '').trim()
-  return source ? source.slice(0, 1).toUpperCase() : '나'
-}
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
   const user = await currentUser()
-  const page = await measured('nav.home_data', () => homePage(user?.id ?? null))
+  // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
+  const [page, unread] = await Promise.all([
+    measured('nav.home_data', () => homePage(user?.id ?? null)),
+    user ? unreadContactCount(user.id) : 0,
+  ])
   const t = await getT()
 
   return (
-    <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
+    <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
       {/* 위 여백은 8px 만 — 홈 화면에 추가한 앱에서는 상태 표시줄(safe-area)만큼 더 내린다. */}
       {/* 내용 높이 40 = 세 탭(홈·미로·검색) 공통 — 탭을 옮겨도 마크가 같은 자리에 있다. */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 40, boxSizing: 'content-box', padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-5)' }}>
@@ -45,13 +31,16 @@ export default async function Home() {
           <TransitionLink href="/home/search" aria-label={t('캐릭터 검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
             <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           </TransitionLink>
-          {user
-          ? <ProfileBadge label={initial(user)} name={user.displayName ?? user.email ?? t('내 정보')} />
-          // 헤더에서는 검색 아이콘 상자(38px)와 같은 눈높이 — 글자를 키우고 채움은 글자에 붙인다. 터치 영역은 .hit 이 44px 로 넓힌다.
-          : <LoginButton variant="primary" size="sm" className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ minHeight: 34, padding: '0 9px', fontSize: 14 }}>{t('로그인')}</LoginButton>}
+          {/* 알림 종 — 검색과 로그인 사이, 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). */}
+          <NotificationBell unread={unread} signedIn={!!user} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
+          {/* 로그인하면 내 정보 표시는 두지 않는다 — 하단 내비의 '나' 가 이미 있다(2026-09-30 요청). */}
+          {/* 헤더에서는 검색 아이콘 상자(38px)와 같은 눈높이 — 글자를 키우고 채움은 글자에 붙인다. 터치 영역은 .hit 이 44px 로 넓힌다. */}
+          {!user && <LoginButton variant="primary" size="sm" className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ minHeight: 34, padding: '0 9px', fontSize: 14 }}>{t('로그인')}</LoginButton>}
         </div>
       </header>
 
+      {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
+      <HomeBanner signedIn={!!user} />
       <HomeFeed key={crypto.randomUUID()} initial={page} />
     </Page>
   )

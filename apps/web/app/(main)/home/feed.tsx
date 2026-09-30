@@ -52,6 +52,8 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
   const loading = filter === 'popular' ? popularLoading : moreLoading
   const error = filter === 'popular' ? popularError : moreError
   const empty = recommendations.length === 0 && !loading && !error
+  /** 인기를 처음 누르면 빈 목록으로 기다린다 — 글 대신 가운데에서 튕기는 점 세 개(2026-09-30 요청). */
+  const waitingPopular = filter === 'popular' && loading
 
   async function loadMore() {
     if (!cursor || moreLoading) return
@@ -76,17 +78,19 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
     } catch { setPopularError(true) } finally { setPopularLoading(false) }
   }
 
-  return <div className={`${styles.feed} ${empty ? styles.fill : ''}`}>
+  return <div className={`${styles.feed} ${empty || waitingPopular ? styles.fill : ''}`}>
     <h1 className="sr-only">{t('홈')}</h1>
     <div className={styles.filters} role="group" aria-label={t('이야기 정렬')}>
       <button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>{t('전체')}</button>
       <button type="button" aria-pressed={filter === 'popular'} onClick={showPopular}>{t('인기')}</button>
     </div>
 
-    <section aria-labelledby="recommend-title" className={empty ? styles.fill : undefined}>
+    <section aria-labelledby="recommend-title" className={empty || waitingPopular ? styles.fill : undefined}>
       <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? t('인기 이야기') : t('전체 이야기')}</h2></div>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
-      {loading && <p role="status">{t('불러오는 중')}</p>}
+      {waitingPopular
+        ? <div role="status" className={`empty-state empty-state--fill ${styles.loadingDots}`}><i aria-hidden /><i aria-hidden /><i aria-hidden /><span className="sr-only">{t('불러오는 중')}</span></div>
+        : loading && <p role="status">{t('불러오는 중')}</p>}
       {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={filter === 'popular' ? showPopular : loadMore}>{t('다시 시도')}</Button></p>}
       {empty && <p className="empty-state empty-state--fill">{filter === 'popular' ? t('아직 인기 이야기가 없어요') : t('아직 이야기가 없어요')}</p>}
       {filter === 'all' && cursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={moreLoading}>{moreLoading ? t('불러오는 중') : t('더 보기')}</Button></div>}

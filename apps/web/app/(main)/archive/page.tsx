@@ -14,7 +14,7 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   // 진행 중과 보관됨을 나누지 않는다 — 한 목록에서 진행 중이 위에 온다.
   const page = await measured('nav.archive_data', () => listSessions(user.id))
   return (
-    <Page>
+    <Page wide>
       {deleted && <p role="status" className="t-caption" style={{ marginBottom: 12 }}>{t('역할극을 삭제했습니다.')}</p>}
       <ArchiveList initialPage={page} />
     </Page>

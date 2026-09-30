@@ -61,8 +61,10 @@
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
   /* 넓은 화면에서의 앱 폭. 제타가 480 — 430 은 옆에 두고 보면 좁았다. 폰에서는 화면 폭이 이긴다. */
   --nav-h: 56px; --app-w: 480px;
-  /* 하단 내비 폭 = 휴대폰 가로 폭(가장 넓은 기종 430). 본문보다 좁게 가운데에 둔다 (9/26 사용자 요청). */
+  /* 하단 내비 칸이 퍼지는 폭 = 휴대폰 가로 폭(가장 넓은 기종 430, 9/26 사용자 요청). 바탕은 본문 폭까지 채운다(9/30). */
   --nav-w: 430px;
+  /* 컴퓨터에서 하단 탭 화면이 펼쳐지는 폭(9/30 요청). 넓어지는 것은 셸(--shell-w)뿐 — 시트·토스트는 --app-w 그대로 폰 폭이다. */
+  --app-w-wide: 1200px; --shell-w: var(--app-w);
   /* 화면 좌우 여백. 24px 은 폰에서 답답했다 — 레퍼런스(제타·크랙)는 16px 언저리다. 카드 안쪽 여백과는 별개. */
   --gutter: 16px;
 }
@@ -219,10 +221,22 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
  * fixed 요소(.nav, .detail-cta)도 이 폭에 맞춰야 하므로 셸이 기준선을 만든다.
  */
 .app-shell {
-  width: 100%; max-width: var(--app-w); margin: 0 auto; min-height: 100dvh;
+  width: 100%; max-width: var(--shell-w); margin: 0 auto; min-height: 100dvh;
   position: relative; background: var(--color-bg);
 }
-@media (min-width: 500px) { body { background: #000; } }
+/* 넓은 화면에서도 셸 바깥을 검게 칠하지 않는다 — 바탕은 앱과 같은 --color-bg 한 색(2026-09-30 요청). */
+/**
+ * E-47 의 예외(2026-09-30 요청): 컴퓨터(1024px 이상)에서는 하단 탭 화면만 넓게 편다 — 헤더 - 배너 - 캐릭터.
+ * <Page wide> 를 단 화면(홈·검색·미로·대화·나)이 셸을 넓히고, 채팅·상세·설정 같은 나머지는 폰 폭 그대로다.
+ * 카드 모양은 그대로 두고 한 줄 칸 수만 늘린다(1200 에서 6칸, 1024 에서 5칸).
+ */
+@media (min-width: 1024px) {
+  .app-shell:has(.page--wide) { --shell-w: var(--app-w-wide); }
+  .page--wide { --gutter: 24px; max-width: none; }
+  .page--wide .grid-2 { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .page--wide .session-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+  .page--wide .my-top { display: grid; grid-template-columns: 1fr 1fr; }
+}
 
 /* fields */
 .field { border-color: var(--color-border-input) !important; }
@@ -231,7 +245,9 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .field:disabled { color: var(--color-text-disabled); }
 
 /* nav */
-.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: var(--nav-w); margin: 0 auto; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around;
+/* 바탕은 셸 폭(--shell-w)까지 채우고 — 양옆이 비어 보였다(9/30 요청) — 칸은 안쪽 여백으로 --nav-w 안에 모은다(9/26 요청). */
+.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: var(--shell-w); margin: 0 auto; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around;
+  padding-inline: max(0px, calc((min(100%, var(--shell-w)) - var(--nav-w)) / 2));
   background: rgba(var(--color-bg-rgb), 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom); }
 /* 링크와 버튼이 섞여 있다 — 로그인이 필요한 탭은 button 이라 브라우저 기본 배경·테두리가 붙는다. */
 /* 여백은 바 높이(--nav-h, 2026-09-29 76→56)가 만든다 — 칸마다 따로 주지 않는다. min-height 는 터치 규칙(44px)을 지킨다. */

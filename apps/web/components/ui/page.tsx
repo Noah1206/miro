@@ -6,12 +6,12 @@ import { TransitionLink } from './transition-link'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
-/** Render page content together without entry fades or staggered reveals. */
-export function Page({ children, immersive, className, style }: { children: ReactNode; immersive?: boolean; className?: string; style?: React.CSSProperties }) {
+/** Render page content together without entry fades or staggered reveals. wide = 컴퓨터에서 넓게 펴는 하단 탭 화면(globals.css .page--wide). */
+export function Page({ children, immersive, wide, className, style }: { children: ReactNode; immersive?: boolean; wide?: boolean; className?: string; style?: React.CSSProperties }) {
   return (
     <motion.main id="main" tabIndex={-1} initial={false} animate="show"
       variants={{ show: { opacity: 1, y: 0 } }}
-      className={`page ${immersive ? 'page--immersive' : ''} ${className ?? ''}`} style={{ outline: 'none', ...style }}>
+      className={`page ${immersive ? 'page--immersive' : ''} ${wide ? 'page--wide' : ''} ${className ?? ''}`} style={{ outline: 'none', ...style }}>
       {children}
     </motion.main>
   )

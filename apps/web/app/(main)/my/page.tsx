@@ -55,7 +55,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
 
 
   return (
-    <Page>
+    <Page wide>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-5)' }}>
         <h1 className="t-title-1">{t('마이페이지')}</h1>
         <TransitionLink href="/my/settings" aria-label={t('설정')}
@@ -67,7 +67,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         </TransitionLink>
       </div>
 
-      <div className="stack" style={{ gap: 'var(--space-3)' }}>
+      <div className="stack my-top" style={{ gap: 'var(--space-3)' }}>
         <ProfileCard name={name} handle={handle} stats={[
           { label: t('캐릭터'), value: mine.length },
           { label: t('공개'), value: mine.filter((c) => c.isPublic && !c.isDraft).length },
