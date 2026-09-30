@@ -1,9 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button, Sheet, useToast } from '@/components/ui'
 import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import styles from './push-subscribe.module.css'
-import { markPushPromptDone } from '@/lib/onboarding-options'
+import { markPushPromptDone, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -33,15 +33,24 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   const toast = useToast()
   const t = useT()
   // 먼저 묻기. 가입 직후라면 가입 선물 팝업이 이것이 끝나기를 기다린다(markPushPromptDone) — 보여 주고 닫았거나, 물을 게 없었을 때.
+  // 가입 직후(?welcome=1)에는 알림 시트를 반드시 먼저 보인다(2026-09-30 요청) — 이 탭에서 이미 물었어도, 알림이 이미 켜져 있어도
+  // ('켜져 있어요' 시트). 가입 선물 팝업은 이 시트가 끝난 뒤에 뜬다. 주소는 화면이 붙은 뒤에 읽는다 — 온보딩에서 넘어오는 순간의
+  // 첫 렌더에는 아직 이전 주소(/onboarding)라서 가입 직후인지 놓쳤다(9/30).
+  const [welcome, setWelcome] = useState(false)
+  useEffect(() => { setWelcome(new URLSearchParams(window.location.search).has(WELCOME_PARAM)) }, [])
+  const shown = useRef(false)
   useEffect(() => {
     if (!autoPrompt || status === 'working') return
     // 확인이 오래 걸리면(서비스 워커가 안 뜨는 등) 뒤의 팝업을 붙잡아 두지 않는다.
-    if (status === 'checking') { const timer = setTimeout(markPushPromptDone, 3000); return () => clearTimeout(timer) }
-    if (askedThisSession() || (status !== 'prompt' && status !== 'ios_install' && status !== 'denied')) { markPushPromptDone(); return }
+    if (status === 'checking') { const timer = setTimeout(markPushPromptDone, 8000); return () => clearTimeout(timer) }
+    // 이미 한 번 보였거나(허용 뒤 상태가 바뀐 경우) 팝업이 먼저 떠 버렸으면 시트를 다시 띄우지 않는다 — 겹치지 않게.
+    if (shown.current || pushPromptDone()) { markPushPromptDone(); return }
+    const asks = status === 'prompt' || status === 'ios_install' || status === 'denied' || (welcome && status === 'subscribed')
+    if (!asks || (!welcome && askedThisSession())) { markPushPromptDone(); return }
     // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
-    const timer = setTimeout(() => { markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
+    const timer = setTimeout(() => { shown.current = true; markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
     return () => clearTimeout(timer)
-  }, [autoPrompt, status])
+  }, [autoPrompt, status, welcome])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -73,13 +82,13 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   }
 
   // 확인 중이거나, 미구성(개발·E2E)·미지원 브라우저라 사용자가 할 일이 없으면 대화 화면에 그리지 않는다.
-  if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed') return null
   if (autoPrompt) return (
     <>
       <PushSheet kind="ask" open={ask} onClose={() => { setAsk(false); markPushPromptDone() }} name={name} working={status === 'working'} onAllow={() => subscribe()} />
-      <PushSheet kind={status === 'ios_install' ? 'ios_install' : 'denied'} open={guide} onClose={() => { setGuide(false); markPushPromptDone() }} name={name} />
+      <PushSheet kind={status === 'ios_install' ? 'ios_install' : status === 'subscribed' ? 'on' : 'denied'} open={guide} onClose={() => { setGuide(false); markPushPromptDone() }} name={name} />
     </>
   )
+  if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed') return null
   const text: Record<Exclude<Status, 'checking' | 'unsupported' | 'unconfigured' | 'subscribed'>, string> = {
     ios_install: t('iPhone에서는 공유 → 홈 화면에 추가한 뒤 알림을 켜야 {name}의 연락을 받을 수 있어요.', { name }),
     prompt: t('앱을 닫아도 {name}의 연락을 받으려면', { name }),
@@ -102,6 +111,7 @@ const COPY = {
   ask: { title: msg('먼저 연락이 올 수 있게'), line: msg('앱을 닫아 두어도 {name}의 연락을 알림으로 받아요.') },
   denied: { title: msg('알림이 꺼져 있어요'), line: msg('브라우저 설정에서 이 사이트의 알림을 허용해 주세요.') },
   ios_install: { title: msg('홈 화면에 추가해 주세요'), line: msg('iPhone은 공유 → 홈 화면에 추가 → 홈 화면의 MIRO로 열어야 알림을 받을 수 있어요.') },
+  on: { title: msg('알림이 켜져 있어요'), line: msg('캐릭터가 먼저 연락하면 알림으로 알려 드려요.') },
 } as const
 
 /** 지갑 시트와 같은 모양: 가운데 아이콘·제목·한 줄, 아래 어두운 버튼과 작은 '나중에'. */
