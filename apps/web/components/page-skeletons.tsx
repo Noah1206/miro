@@ -38,6 +38,15 @@ export function HomePageSkeleton() {
   </Status>
 }
 
+export function MiroPageSkeleton() {
+  return <Status label={msg('미로 불러오는 중')} className="page page--immersive page--wide" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
+    <div style={{ minHeight: 40, padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
+      <Block width={30} height={30} style={{ borderRadius: 10 }} />
+    </div>
+    <CardGridSkeleton />
+  </Status>
+}
+
 export function SearchPageSkeleton() {
   return <Status label={msg('검색 불러오는 중')} className="page page--immersive page--wide" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
     <div style={{ padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>

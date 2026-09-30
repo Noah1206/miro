@@ -7,12 +7,10 @@ export async function GET(request: NextRequest) {
   const startedAt = performance.now()
   const params = request.nextUrl.searchParams
   const popular = params.get('sort') === 'popular'
-  // reality=1 — 홈의 R 토글: 앱 밖 연락이 켜진 미로 캐릭터만.
-  const contactOnly = params.get('reality') === '1'
   try {
     const data = popular
-      ? await measured('api.home_popular_data', () => popularHomeCards(contactOnly))
-      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor'), contactOnly))
+      ? await measured('api.home_popular_data', () => popularHomeCards())
+      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor')))
     const elapsedMs = metric(popular ? 'api.home_popular_total' : 'api.home_page_total', startedAt)
     return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store', 'Server-Timing': `app;dur=${elapsedMs}` } })
   } catch (error) {

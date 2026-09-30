@@ -1,0 +1,27 @@
+/* 배너(홈·미로, 2026-09-30) — 헤더와 캐릭터 사이. 힉스필드 그림이 꽉 채우고(제타·위프 배너처럼), 글은 왼쪽을 어둡게 누른 위에 얹는다.
+   폰은 2.4:1 낮은 띠에 제목만(9/30 요청: 폰에도 넣되 온라인에서 보기에 너무 커서 줄임), 컴퓨터는 6:1 띠에 설명까지. */
+/* 모서리는 overflow 대신 clip-path 로 자른다 — overflow:hidden 이면 aspect-ratio 가 높이를 고정해 긴 글이 잘린다. 이렇게 하면 글이 길 때 배너가 늘어난다. */
+.banner { position: relative; isolation: isolate; display: flex; align-items: center; aspect-ratio: 12 / 5;
+  margin: 0 var(--gutter) var(--space-5); padding: 12px 14px; border-radius: 14px; clip-path: inset(0 round 14px); background: var(--color-surface-1); }
+.art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.banner::after { content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(10, 10, 12, 0.88) 0%, rgba(10, 10, 12, 0.7) 42%, rgba(10, 10, 12, 0) 64%); }
+/* 폰에서는 글을 왼쪽 절반에 둔다 — 더 넓으면 제목 끝이 말풍선·선물 상자에 닿는다. */
+.text { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: var(--banner-text-w, 52%); }
+.eyebrow { margin: 0; font-size: 11px; font-weight: 600; color: var(--color-text-primary); }
+.title { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; color: var(--color-text-primary); }
+/* 폰에서는 설명을 숨긴다 — 낮은 띠에 설명까지 넣으면 다시 커진다. 컴퓨터에서만 보인다. */
+.body { display: none; margin: 0; color: var(--color-text-secondary); }
+/* 버튼 크기는 Button 이 인라인으로 정하므로 폭별 크기를 !important 로 준다. */
+.cta { margin-top: 8px; min-height: 30px !important; padding: 0 12px !important; font-size: 12px !important; }
+@media (min-width: 1024px) {
+  /* 높이는 약 190(9/30 요청으로 줄인 높이) — 버튼이 없는 선물 배너도 같은 높이. 폭이 줄면 오른쪽을 잘라 인물이 글 옆에 남는다. */
+  .banner { aspect-ratio: auto; min-height: 190px; margin: 0 var(--gutter) var(--space-6); padding: 20px 48px; border-radius: 16px; clip-path: inset(0 round 16px); }
+  .art { object-position: var(--banner-art-x, 0%) center; }
+  .banner::after { background: linear-gradient(90deg, rgba(10, 10, 12, 0.88) 0%, rgba(10, 10, 12, 0.72) 30%, rgba(10, 10, 12, 0.25) 44%, rgba(10, 10, 12, 0) 54%); }
+  .text { max-width: 470px; }
+  .eyebrow { font-size: 15px; }
+  .title { font-size: 28px; }
+  .body { display: block; font-size: 14px; line-height: 1.6; }
+  .cta { margin-top: 12px; min-height: 44px !important; padding: 4px 24px !important; font-size: 14px !important; }
+}

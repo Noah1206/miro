@@ -91,6 +91,7 @@ export async function saveCharacter(form: FormData): Promise<string> {
 
   revalidatePath('/home')
   revalidatePath('/home/search')
+  revalidatePath('/miro')
   revalidatePath('/my')
 
   if (!result.sessionId) {

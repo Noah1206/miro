@@ -57,7 +57,7 @@ function decodeCursor(value: string | null, scope?: string) {
   } catch { throw new Error('INVALID_CURSOR') }
 }
 
-async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, query = '', includeOwned = false, searchMode = false, tag: string | null = null, genres: string[] = [], contactOnly = false): Promise<CardPage> {
+async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, query = '', includeOwned = false, searchMode = false, tag: string | null = null, genres: string[] = []): Promise<CardPage> {
   const needle = searchNeedle(query)
   const tagNeedle = tag === null ? null : searchNeedle(tag.replace(/^#/, ''))
   const normalizedGenres = searchGenres(genres)
@@ -99,7 +99,6 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       ...(search ? [search] : []),
       ...(tagMatch ? [tagMatch] : []),
       ...(genreMatch ? [genreMatch] : []),
-      ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [or(
         lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
         and(eq(characters.createdAt, sql`${cursor.createdAt}::timestamptz`), lt(characters.id, cursor.id)),
@@ -117,12 +116,12 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
 }
 
 /** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). */
-/** contactOnly = 홈의 R 토글(2026-09-30) — 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만. */
-export const homePage = (userId: string | null, cursor: string | null = null, contactOnly = false) => cardPage('reality', userId, cursor, '', true, false, null, [], contactOnly)
+export const homePage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
+/** 미로 = 그중 미로(reality) 캐릭터만. */
+export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
 export const searchPage = (userId: string | null, query: string, cursor: string | null = null, tag: string | null = null, genres: string[] = []) => cardPage('reality', userId, cursor, query, true, true, tag, genres)
 
-export async function popularHomeCards(contactOnly = false): Promise<HomeCard[]> {
-  const contact = contactOnly ? [eq(contactProfiles.enabled, true)] : []
+export async function popularHomeCards(): Promise<HomeCard[]> {
   if (indexedDiscoveryEnabled()) {
     const ranked = await rankedPopularIds()
     if (ranked.length === 0) return []
@@ -132,7 +131,7 @@ export async function popularHomeCards(contactOnly = false): Promise<HomeCard[]>
       .where(and(
         inArray(characters.id, ranked.map(row => row.character_id)),
         or(eq(characters.isOfficial, true), eq(characters.isPublic, true)),
-        eq(characters.isDraft, false), isNull(characters.deletedAt), ...contact,
+        eq(characters.isDraft, false), isNull(characters.deletedAt),
       ))
     const byId = new Map(rows.map(row => [row.id, row]))
     return ranked.flatMap(({ character_id, plays }) => {
@@ -148,7 +147,7 @@ export async function popularHomeCards(contactOnly = false): Promise<HomeCard[]>
     .from(characters)
     .innerJoin(counts, eq(counts.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), ...contact))
+    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0)))
     .orderBy(desc(counts.plays), desc(characters.createdAt), desc(characters.id))
     .limit(6)
   return rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays }))

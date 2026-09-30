@@ -1,10 +1,11 @@
 'use client'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { ArchivePageSkeleton, CreatePageSkeleton, HomePageSkeleton, MyPageSkeleton, SearchPageSkeleton } from './page-skeletons'
+import { ArchivePageSkeleton, CreatePageSkeleton, HomePageSkeleton, MiroPageSkeleton, MyPageSkeleton, SearchPageSkeleton } from './page-skeletons'
 
 const destinations: Record<string, ReactNode> = {
   '/home': <HomePageSkeleton />,
+  '/miro': <MiroPageSkeleton />,
   '/home/search': <SearchPageSkeleton />,
   '/archive': <ArchivePageSkeleton />,
   '/create': <CreatePageSkeleton />,

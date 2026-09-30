@@ -10,13 +10,11 @@ import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
-export default async function Home({ searchParams }: { searchParams: Promise<{ r?: string }> }) {
+export default async function Home() {
   const user = await currentUser()
-  // ?r=1 — R 토글(미로 캐릭터만)을 켠 채로 연다. 배너 버튼과 예전 /miro 링크가 쓴다(2026-09-30).
-  const reality = (await searchParams).r === '1'
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [page, unread] = await Promise.all([
-    measured('nav.home_data', () => homePage(user?.id ?? null, null, reality)),
+    measured('nav.home_data', () => homePage(user?.id ?? null)),
     user ? unreadContactCount(user.id) : 0,
   ])
   const t = await getT()
@@ -41,7 +39,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ r
 
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
-      <HomeFeed key={crypto.randomUUID()} initial={page} initialReality={reality} />
+      <HomeFeed key={crypto.randomUUID()} initial={page} />
     </Page>
   )
 }
