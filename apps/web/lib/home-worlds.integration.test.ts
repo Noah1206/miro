@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
-import { db, characters, roleplaySessions, users, worlds } from '@miro/db'
+import { db, characters, contactProfiles, roleplaySessions, users, worlds } from '@miro/db'
 import { testDatabaseUrl } from '../../../tooling/test-database'
 import { listOfficials } from './characters'
 import { discoverGrid, homePage, miroPage, popularHomeCards, searchPage } from './home'
@@ -31,6 +31,8 @@ describeDb('home cards with multiple worlds', () => {
         { characterId: reality!.id, location: '첫 세계', genre: '현실첫세계' },
         { characterId: reality!.id, location: '둘째 세계', genre: '현실둘째세계' },
       ])
+      // 미로 목록은 앱 밖 연락이 켜진 캐릭터만 싣는다(2026-09-30).
+      await db.insert(contactProfiles).values({ characterId: reality!.id, enabled: true })
       const fillers = await db.insert(characters).values(Array.from({ length: 13 }, (_, index) => ({
         ownerId: owner!.id, name: `world page filler ${index}`, personality: 'test',
         isOfficial: false, isPublic: true, isDraft: false, experienceType: 'reality' as const,

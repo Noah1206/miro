@@ -57,7 +57,7 @@ function decodeCursor(value: string | null, scope?: string) {
   } catch { throw new Error('INVALID_CURSOR') }
 }
 
-async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, query = '', includeOwned = false, searchMode = false, tag: string | null = null, genres: string[] = []): Promise<CardPage> {
+async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, query = '', includeOwned = false, searchMode = false, tag: string | null = null, genres: string[] = [], contactOnly = false): Promise<CardPage> {
   const needle = searchNeedle(query)
   const tagNeedle = tag === null ? null : searchNeedle(tag.replace(/^#/, ''))
   const normalizedGenres = searchGenres(genres)
@@ -99,6 +99,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       ...(search ? [search] : []),
       ...(tagMatch ? [tagMatch] : []),
       ...(genreMatch ? [genreMatch] : []),
+      ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [or(
         lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
         and(eq(characters.createdAt, sql`${cursor.createdAt}::timestamptz`), lt(characters.id, cursor.id)),
@@ -117,8 +118,8 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
 
 /** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). */
 export const homePage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
-/** 미로 = 그중 미로(reality) 캐릭터만. */
-export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
+/** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
+export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true, false, null, [], true)
 export const searchPage = (userId: string | null, query: string, cursor: string | null = null, tag: string | null = null, genres: string[] = []) => cardPage('reality', userId, cursor, query, true, true, tag, genres)
 
 export async function popularHomeCards(): Promise<HomeCard[]> {
