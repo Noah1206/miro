@@ -35,7 +35,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       accentA: characters.accentA, genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords,
       images: characters.images,
       isPublic: characters.isPublic, isDraft: characters.isDraft,
-      plays: sql<number>`(select count(distinct s.user_id)::int from roleplay_sessions s where s.character_id = ${characters.id} and s.deleted_at is null)`,
     })
       .from(characters).leftJoin(worlds, eq(worlds.characterId, characters.id))
       .where(and(eq(characters.ownerId, user.id), isNull(characters.deletedAt)))

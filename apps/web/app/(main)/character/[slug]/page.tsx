@@ -5,29 +5,25 @@ import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
 import { characterLikeState, countComments, listComments, similarCharacters } from '@/lib/social'
-import { db, roleplaySessions } from '@miro/db'
-import { and, eq, isNull, sql } from 'drizzle-orm'
 import { Back, Page, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, SampleDialogue, RealityStrip } from './sections'
-import { compact, subject, withParticle } from '@/lib/format'
+import { subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
-import { getLanguage, getT } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n/server'
 import { StartWithLogin } from './start-button'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
   const t = await getT()
-  const language = await getLanguage()
   const user = await currentUser()
   const { slug } = await params
   const c = await getCharacterByKey(slug, user?.id ?? null)
   if (!c) notFound()
 
-  const [plays, comments, commentCount, similar, likes] = await Promise.all([
-    playCount(c.id),
+  const [comments, commentCount, similar, likes] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
@@ -80,9 +76,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </p>
         )}
 
-        {/* 통계 칩 — 레퍼런스의 '대화량 · 설정집 · 댓글' 자리. */}
+        {/* 통계 칩 — 댓글·좋아요. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청). */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-          {plays > 0 && <Stat icon="chat" label={compact(plays, language)} />}
           <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
           <LikeButton slug={slug} initial={likes} />
         </div>
@@ -143,12 +138,4 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
     </Page>
   )
-}
-
-/** 실제로 이 캐릭터와 대화한 사람 수. */
-async function playCount(characterId: string): Promise<number> {
-  const [r] = await db.select({ n: sql<number>`count(distinct ${roleplaySessions.userId})::int` })
-    .from(roleplaySessions)
-    .where(and(eq(roleplaySessions.characterId, characterId), isNull(roleplaySessions.deletedAt)))
-  return r?.n ?? 0
 }

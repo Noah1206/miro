@@ -2,26 +2,18 @@
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
-import { compact } from '@/lib/format'
 import { MOODS } from '@/lib/genres'
 import type { CardPage, HomeCard } from '@/lib/home'
 import styles from './home.module.css'
-import { useLanguage, useT } from '@/lib/i18n/client'
+import { useT } from '@/lib/i18n/client'
 
 const unique = (items: HomeCard[]) => [...new Map(items.map(c => [c.id, c])).values()]
 const picture = (c: HomeCard) => c.images[0] ?? null
 
+/** 카드에 대화한 사람 수(말풍선 숫자)는 띄우지 않는다(2026-09-30 요청). */
 function PhotoDetails({ c }: { c: HomeCard }) {
-  const t = useT()
-  const language = useLanguage()
   const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 2)
   return <>
-    <span className={styles.cardBadges}>
-    {c.plays > 0 && <span className={styles.plays} aria-label={t('대화한 사람 {n}명', { n: c.plays })}>
-      <svg aria-hidden width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-3 2V11.5a10 10 0 0 1 20 0Z" /></svg>
-      {compact(c.plays, language)}
-    </span>}
-    </span>
     <span className={styles.photoDetails}>
       <strong>{c.name}</strong>
       {(c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
