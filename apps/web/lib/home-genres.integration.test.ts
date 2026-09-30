@@ -68,18 +68,37 @@ describeDb('home genre chips', () => {
       await db.insert(worlds).values({ characterId: id, genre: genreA })
       return id
     }))
-    const first = await homePage(viewer, null, [genreB, genreA])
+    const first = await homePage(viewer, null, { genres: [genreB, genreA] })
     expect(first.items).toHaveLength(12)
     expect(first.nextCursor).not.toBeNull()
-    const second = await homePage(viewer, first.nextCursor, [genreA, genreA, genreB])
+    const second = await homePage(viewer, first.nextCursor, { genres: [genreA, genreA, genreB] })
     const ids = [...first.items, ...second.items].map(item => item.id)
     for (const id of [created, alternate, partial, ...pageIds]) expect(ids).toContain(id)
     for (const id of [keywordOnly, privateCard, oldChat]) expect(ids).not.toContain(id)
     expect(new Set(ids).size).toBe(ids.length)
-    expect((await homePage(viewer, null, [genreA])).items.map(item => item.id)).toContain(created)
-    expect((await homePage(viewer, null, [genreB])).items.map(item => item.id)).toContain(created)
-    expect((await homePage(owner, null, [genreB])).items.map(item => item.id)).toContain(privateCard)
-    await expect(homePage(viewer, null, ['장르·혼합'])).rejects.toThrow('INVALID_GENRE')
+    expect((await homePage(viewer, null, { genres: [genreA] })).items.map(item => item.id)).toContain(created)
+    expect((await homePage(viewer, null, { genres: [genreB] })).items.map(item => item.id)).toContain(created)
+    expect((await homePage(owner, null, { genres: [genreB] })).items.map(item => item.id)).toContain(privateCard)
+    await expect(homePage(viewer, null, { genres: ['장르·혼합'] })).rejects.toThrow('INVALID_GENRE')
+  })
+
+  it('filters by chosen relationships, and needs both kinds when genres and relationships are chosen', async () => {
+    const owner = await user()
+    const viewer = await user()
+    const relation = `${prefix}R`
+    const genre = `${prefix}G`
+    // 만들기에서 고른 관계(relationship_keywords) — '직장 상사' 처럼 붙은 값도 '상사' 칩이 잡듯, 칩 글자를 품으면 맞는다.
+    const boss = await character(owner, `${prefix} boss`, 'reality', { relationshipKeywords: [`직장 ${relation}`] })
+    await db.insert(worlds).values({ characterId: boss, genre })
+    const bossOtherGenre = await character(owner, `${prefix} boss other`, 'reality', { relationshipKeywords: [relation] })
+    await db.insert(worlds).values({ characterId: bossOtherGenre, genre: '드라마' })
+    const genreOnly = await character(owner, `${prefix} genre only`, 'reality', { relationshipKeywords: ['친구'] })
+    await db.insert(worlds).values({ characterId: genreOnly, genre })
+    const byRelation = (await homePage(viewer, null, { relations: [relation] })).items.map(item => item.id)
+    expect(byRelation).toEqual(expect.arrayContaining([boss, bossOtherGenre]))
+    expect(byRelation).not.toContain(genreOnly)
+    expect((await homePage(viewer, null, { genres: [genre], relations: [relation] })).items.map(item => item.id)).toEqual([boss])
+    await expect(homePage(viewer, null, { relations: ['관계·혼합'] })).rejects.toThrow('INVALID_GENRE')
   })
 
   it('ranks popular cards inside the chosen genres only', async () => {

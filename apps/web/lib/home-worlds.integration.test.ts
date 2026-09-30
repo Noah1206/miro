@@ -57,7 +57,7 @@ describeDb('home cards with multiple worlds', () => {
       expect(homeGenre).toBe(selectedGenre)
 
       // 장르 칩은 어느 세계의 장르로 골라도 카드 하나 — 보이는 장르는 정해진 첫 세계 것(2026-09-30).
-      const filtered = await homePage(viewer!.id, null, [otherGenre])
+      const filtered = await homePage(viewer!.id, null, { genres: [otherGenre] })
       expect(filtered.items.filter(item => item.id === chat!.id)).toHaveLength(1)
       expect(filtered.items.find(item => item.id === chat!.id)?.genre).toBe(selectedGenre)
       expect((await listOfficials('reality')).filter(item => item.id === chat!.id)).toHaveLength(1)

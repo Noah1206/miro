@@ -56,22 +56,38 @@ function decodeCursor(value: string | null) {
   } catch { throw new Error('INVALID_CURSOR') }
 }
 
-/**
- * 홈 장르 칩(2026-09-30, 예전 검색 페이지의 장르 버튼) — 세계 중 하나라도 고른 장르 중 하나를 품으면 맞는다.
- * worlds.genre 는 '현대 로맨스 · 일상' 처럼 붙어 오므로 '로맨스' 칩이 이것도 잡는다(2026-09-30 요청). 띄어쓰기·대소문자는 무시한다.
- */
-function genreMatch(characterId: SQLWrapper, genres: string[]): SQL | undefined {
-  const normalized = searchGenres(genres)
+/** 홈 칩(장르·관계)으로 거르기. 한 종류 안에서는 하나라도, 두 종류를 같이 고르면 둘 다 맞아야 한다. */
+export type CardFilter = { genres?: string[]; relations?: string[] }
+
+/** 칩 값을 비교할 글자로 — 틀린 값이면 INVALID_GENRE. */
+function chipNeedles(values: string[] = []) {
+  const normalized = searchGenres(values)
   if (!normalized) throw new Error('INVALID_GENRE')
-  if (normalized.length === 0) return undefined
-  return sql`exists (
-    select 1 from worlds w
-    where w.character_id = ${characterId}
-      and (${sql.join(normalized.map(value => sql`position(${searchNeedle(value)} in lower(regexp_replace(w.genre, '[[:space:]]+', '', 'g'))) > 0`), sql` or `)})
-  )`
+  return normalized.map(searchNeedle)
 }
 
-async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, genres: string[] = [], contactOnly = false): Promise<CardPage> {
+/** `text` 가 칩 글자 중 하나라도 품는다 — 띄어쓰기·대소문자는 무시한다. */
+const containsAny = (text: SQL, needles: string[]) =>
+  sql.join(needles.map(needle => sql`position(${needle} in lower(regexp_replace(${text}, '[[:space:]]+', '', 'g'))) > 0`), sql` or `)
+
+/**
+ * 홈 장르 칩(2026-09-30, 예전 검색 페이지의 장르 버튼) — 세계 중 하나라도 고른 장르 중 하나를 품으면 맞는다.
+ * worlds.genre 는 '현대 로맨스 · 일상' 처럼 붙어 오므로 '로맨스' 칩이 이것도 잡는다(2026-09-30 요청).
+ */
+function genreMatch(characterId: SQLWrapper, genres?: string[]): SQL | undefined {
+  const needles = chipNeedles(genres)
+  if (needles.length === 0) return undefined
+  return sql`exists (select 1 from worlds w where w.character_id = ${characterId} and (${containsAny(sql.raw('w.genre'), needles)}))`
+}
+
+/** 홈 관계 칩(2026-09-30) — 만들기에서 고른 관계(relationship_keywords) 중 하나가 칩 글자를 품으면 맞는다. '상사' 는 '직장 상사' 도 잡는다. */
+function relationMatch(relations?: string[]): SQL | undefined {
+  const needles = chipNeedles(relations)
+  if (needles.length === 0) return undefined
+  return sql`exists (select 1 from jsonb_array_elements_text(${characters.relationshipKeywords}) as keyword(value) where ${containsAny(sql.raw('keyword.value'), needles)})`
+}
+
+async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false): Promise<CardPage> {
   const cursor = decodeCursor(cursorValue)
   const rows = await db.select(pageColumns)
     .from(characters)
@@ -85,7 +101,8 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
         eq(characters.isPublic, true),
         ...(userId ? [eq(characters.ownerId, userId)] : []),
       )] : [or(eq(characters.isOfficial, true), eq(characters.isPublic, true))]),
-      genreMatch(characters.id, genres),
+      genreMatch(characters.id, filter.genres),
+      relationMatch(filter.relations),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [or(
         lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
@@ -103,10 +120,10 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   }
 }
 
-/** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). 장르를 고르면 그 장르만(2026-09-30). */
-export const homePage = (userId: string | null, cursor: string | null = null, genres: string[] = []) => cardPage('reality', userId, cursor, true, genres)
+/** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). 장르·관계 칩으로 거른다(2026-09-30). */
+export const homePage = (userId: string | null, cursor: string | null = null, filter: CardFilter = {}) => cardPage('reality', userId, cursor, true, filter)
 /** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
-export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, [], true)
+export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, {}, true)
 
 /** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */
 export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[]> {

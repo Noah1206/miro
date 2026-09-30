@@ -8,6 +8,9 @@ import { msg } from '@/lib/i18n'
  */
 export const MOODS = [msg('로맨스'), msg('얀데레'), msg('츤데레'), msg('순애'), msg('집착'), msg('힐링'), msg('일상'), msg('드라마'), msg('코미디'), msg('호러'), msg('미스터리'), msg('느와르'), msg('판타지'), msg('학원'), msg('오피스'), msg('소꿉친구')] as const
 
+/** 관계 태그(2026-09-30 요청) — 만들기의 관계 탭에서 고르고(relationship_keywords) 홈 관계 섹션이 거른다. 소꿉친구는 장르(MOODS)에 있다. */
+export const RELATIONS = [msg('친구'), msg('연인'), msg('짝사랑'), msg('썸'), msg('동료'), msg('상사'), msg('부하'), msg('선배'), msg('후배'), msg('라이벌'), msg('주인'), msg('노예'), msg('가족'), msg('계약')] as const
+
 export const genreValues = (genre: string | null): string[] =>
   (genre ?? '').split('·').map(value => value.trim()).filter(Boolean)
 

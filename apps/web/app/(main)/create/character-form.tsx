@@ -13,6 +13,7 @@ import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, type Step } from './form-parts'
 import { MOODS } from './parse'
+import { RELATIONS } from '@/lib/genres'
 import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from './draft-storage'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
@@ -221,7 +222,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         <input type="hidden" name="hobbies" value={i.hobbies.join(',')} />
         <input type="hidden" name="dislikes" value={i.dislikes.join(',')} />
-        <input type="hidden" name="relationshipKeywords" value={i.relationshipKeywords.join(',')} />
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
           <Section title={t('공개')}>
@@ -312,7 +312,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           <input type="hidden" name="lore" value={JSON.stringify(i.lore)} />
-          <Section title={t('장르')} subtitle={t('여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 검색 장르와 카드 해시태그에 반영됩니다.')}>
+          <Section title={t('장르')} subtitle={t('여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 홈 장르 필터와 카드 해시태그에 반영됩니다.')}>
             <Card>
               <PresetTags name="mood" label={msg('장르')} options={MOODS} max={5} defaultValue={i.mood} />
             </Card>
@@ -371,6 +371,12 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 관계 ── */}
         {experienceType === 'reality' && <Panel id="relationship" show={tab === 'relationship'}>
+          {/* 관계 태그(2026-09-30 요청) — 홈 관계 섹션이 이 값으로 거른다. 친밀도(시작 관계)와는 따로다. */}
+          <Section title={t('관계 태그')} subtitle={t('어떤 사이인지 골라 주세요. 최대 4개까지 선택하거나 직접 입력하면 홈 관계 필터와 카드 해시태그에 반영됩니다.')}>
+            <Card>
+              <PresetTags name="relationshipKeywords" label={msg('관계 태그')} options={RELATIONS} max={4} defaultValue={i.relationshipKeywords} />
+            </Card>
+          </Section>
           <Section title={t('시작 관계')} subtitle={t('처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.')}>
             <RelationshipSettings initial={i} />
           </Section>

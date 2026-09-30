@@ -1,7 +1,7 @@
 'use client'
 import type { CSSProperties, ReactNode } from 'react'
 import { msg } from '@/lib/i18n'
-import { MOODS } from '@/lib/genres'
+import { MOODS, RELATIONS } from '@/lib/genres'
 import { useT } from '@/lib/i18n/client'
 
 function Block({ width = '100%', height, style }: { width?: number | string; height?: number | string; style?: CSSProperties }) {
@@ -27,10 +27,13 @@ export function HomePageSkeleton() {
       <Block width={30} height={30} style={{ borderRadius: 10 }} /><Block width={38} height={38} style={{ borderRadius: 19 }} />
     </div>
     <div style={{ padding: '0 var(--gutter)' }}>
-      <Block width={116} height={34} style={{ marginBottom: 16, borderRadius: 9 }} />
-      <div style={{ display: 'flex', gap: 6, overflow: 'hidden', margin: '0 calc(-1 * var(--gutter)) 16px', padding: '0 var(--gutter)' }}>
-        {MOODS.map(mood => <Block key={mood} width={mood.length * 13 + 20} height={36} style={{ flexShrink: 0, borderRadius: 16 }} />)}
-      </div>
+      {/* 장르·관계 섹션: 제목 + 한 줄 칩 */}
+      {[MOODS, RELATIONS].map((chips, index) => <div key={index} style={{ marginBottom: 20 }}>
+        <Block width={36} height={24} style={{ marginBottom: 10 }} />
+        <div style={{ display: 'flex', gap: 6, overflow: 'hidden', margin: '0 calc(-1 * var(--gutter))', padding: '0 var(--gutter)' }}>
+          {chips.map(chip => <Block key={chip} width={chip.length * 13 + 20} height={36} style={{ flexShrink: 0, borderRadius: 16 }} />)}
+        </div>
+      </div>)}
       <Block width={88} height={24} style={{ marginBottom: 14 }} />
     </div>
     <CardGridSkeleton ratio="2 / 3" />
