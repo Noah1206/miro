@@ -20,10 +20,10 @@ test('공개한 캐릭터는 다른 사람이 발견해서 대화를 시작할 �
   await a.getByRole('button', { name: '저장' }).click()
   await expect(a).toHaveURL(/\/character\//)
 
-  // B: 이름으로 검색해서 들어가 대화 시작 — 빈 검색은 기본 목록을 싣지 않으므로 검색어가 필요하다.
+  // B: 홈 전체 목록(최신순) 앞쪽에서 찾아 들어가 대화 시작 — 검색 페이지는 없어졌다(2026-09-30).
   const b = await (await browser.newContext()).newPage()
   await signUp(b, BASE)
-  await b.goto(`${BASE}/home/search?q=${encodeURIComponent(name)}`)
+  await b.goto(`${BASE}/home`)
   await b.getByRole('link', { name: new RegExp(name) }).first().click()
   await expect(b).toHaveURL(/\/character\//)
   await expect(b.getByRole('heading', { name })).toBeVisible()
@@ -40,15 +40,16 @@ test('공개하지 않은 캐릭터는 다른 사람에게 보이지 않는다',
 
   const b = await (await browser.newContext()).newPage()
   await signUp(b, BASE)
-  await b.goto(`${BASE}/home/search?q=${encodeURIComponent(name)}`)
-  await expect(b.getByText('검색 결과가 없어요. 검색어나 장르를 바꿔보세요.')).toBeVisible()
+  await b.goto(`${BASE}/home`)
+  await expect(b.getByRole('heading', { name: '전체 이야기' })).toBeVisible()
   await expect(b.getByRole('link', { name: new RegExp(name) })).toHaveCount(0)
 })
 
-test('예전 /discover 링크는 검색어를 들고 /home/search 로 간다', async ({ page }) => {
-  await page.goto(`${BASE}/discover?q=%EB%B9%84%EA%B3%B5%EA%B0%9C`)
-  await expect(page).toHaveURL(/\/home\/search\?q=/)
-  expect(new URL(page.url()).searchParams.get('q')).toBe('비공개')
+test('예전 /discover·/home/search 링크는 홈으로 간다', async ({ page }) => {
+  for (const path of ['/discover?q=%EB%B9%84%EA%B3%B5%EA%B0%9C', '/home/search?q=%EB%B9%84%EA%B3%B5%EA%B0%9C']) {
+    await page.goto(`${BASE}${path}`)
+    await expect(page).toHaveURL(/\/home(\?|$)/)
+  }
 })
 
 test('하단 탭의 발견 자리는 미로이고, 미로에는 공식 미로 캐릭터가 실린다', async ({ page }) => {

@@ -1,8 +1,7 @@
-import { and, desc, eq, gt, inArray, isNull, lt, ne, or, sql, type SQL } from 'drizzle-orm'
-import { createHash } from 'node:crypto'
+import { and, desc, eq, gt, inArray, isNull, lt, ne, or, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
 import { db, characters, roleplaySessions, contactProfiles } from '@miro/db'
 import { listOfficials, type ExperienceType, type OfficialCard } from './characters'
-import { indexedDiscoveryEnabled, indexedSearchMatch, rankedPopularIds } from './search-index'
+import { indexedDiscoveryEnabled, rankedPopularIds } from './search-index'
 import { searchGenres, searchNeedle } from './search-params'
 import { msg } from '@/lib/i18n'
 
@@ -46,44 +45,34 @@ const pageColumns = {
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
 }
 
-function decodeCursor(value: string | null, scope?: string) {
+function decodeCursor(value: string | null) {
   if (!value) return null
   if (value.length > 160) throw new Error('INVALID_CURSOR')
   try {
     const parsed: unknown = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'))
-    if (!Array.isArray(parsed) || parsed.length !== (scope ? 3 : 2) || typeof parsed[0] !== 'string' || typeof parsed[1] !== 'string' || !UUID.test(parsed[1]) || (scope && parsed[2] !== scope)) throw new Error('INVALID_CURSOR')
+    if (!Array.isArray(parsed) || parsed.length !== 2 || typeof parsed[0] !== 'string' || typeof parsed[1] !== 'string' || !UUID.test(parsed[1])) throw new Error('INVALID_CURSOR')
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(parsed[0]) || Number.isNaN(Date.parse(parsed[0]))) throw new Error('INVALID_CURSOR')
     return { createdAt: parsed[0], id: parsed[1] }
   } catch { throw new Error('INVALID_CURSOR') }
 }
 
-async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, query = '', includeOwned = false, searchMode = false, tag: string | null = null, genres: string[] = [], contactOnly = false): Promise<CardPage> {
-  const needle = searchNeedle(query)
-  const tagNeedle = tag === null ? null : searchNeedle(tag.replace(/^#/, ''))
-  const normalizedGenres = searchGenres(genres)
-  if (!normalizedGenres) throw new Error('INVALID_GENRE')
-  const genreNeedles = normalizedGenres.map(searchNeedle)
-  const scope = searchMode ? createHash('sha256').update(JSON.stringify([type ?? 'all', needle, tagNeedle ?? '', genreNeedles])).digest('base64url').slice(0, 16) : undefined
-  const cursor = decodeCursor(cursorValue, scope)
-  if (searchMode && ((!needle && !tagNeedle && genreNeedles.length === 0) || tagNeedle === '')) {
-    if (cursor) throw new Error('INVALID_CURSOR')
-    return { items: [], nextCursor: null }
-  }
-  const matches = (genre: SQL) => sql`position(${needle} in lower(regexp_replace(concat_ws(' ', ${characters.name}, ${characters.tagline}, ${characters.occupation}, ${characters.role}, ${genre}, array_to_string(ARRAY(select jsonb_array_elements_text(${characters.relationshipKeywords})), ' ')), '[[:space:]]+', '', 'g'))) > 0`
-  const tagMatch = tagNeedle ? sql`(
-    exists (select 1 from worlds w, unnest(string_to_array(w.genre, '·')) as genre_tag(value)
-      where w.character_id = ${characters.id} and lower(regexp_replace(genre_tag.value, '[[:space:]]+', '', 'g')) = ${tagNeedle})
-    or exists (select 1 from jsonb_array_elements_text(${characters.relationshipKeywords}) as keyword(value)
-      where lower(regexp_replace(keyword.value, '[[:space:]]+', '', 'g')) = ${tagNeedle})
-  )` : undefined
-  const genreMatch = genreNeedles.length ? sql`exists (
-    select 1 from worlds w, unnest(string_to_array(w.genre, '·')) as genre_tag(value)
-    where w.character_id = ${characters.id} and lower(regexp_replace(genre_tag.value, '[[:space:]]+', '', 'g')) in (${sql.join(genreNeedles.map(value => sql`${value}`), sql`, `)})
-  )` : undefined
-  const search = needle ? (indexedDiscoveryEnabled() ? indexedSearchMatch(needle) : sql`(
-    exists (select 1 from worlds w where w.character_id = ${characters.id} and ${matches(sql.raw('w.genre'))})
-    or (not exists (select 1 from worlds w where w.character_id = ${characters.id}) and ${matches(sql`null::text`)})
-  )`) : undefined
+/**
+ * 홈 장르 칩(2026-09-30, 예전 검색 페이지의 장르 버튼) — 세계 중 하나라도 고른 장르 중 하나를 품으면 맞는다.
+ * worlds.genre 는 '현대 로맨스 · 일상' 처럼 붙어 오므로 '로맨스' 칩이 이것도 잡는다(2026-09-30 요청). 띄어쓰기·대소문자는 무시한다.
+ */
+function genreMatch(characterId: SQLWrapper, genres: string[]): SQL | undefined {
+  const normalized = searchGenres(genres)
+  if (!normalized) throw new Error('INVALID_GENRE')
+  if (normalized.length === 0) return undefined
+  return sql`exists (
+    select 1 from worlds w
+    where w.character_id = ${characterId}
+      and (${sql.join(normalized.map(value => sql`position(${searchNeedle(value)} in lower(regexp_replace(w.genre, '[[:space:]]+', '', 'g'))) > 0`), sql` or `)})
+  )`
+}
+
+async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, genres: string[] = [], contactOnly = false): Promise<CardPage> {
+  const cursor = decodeCursor(cursorValue)
   const rows = await db.select(pageColumns)
     .from(characters)
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
@@ -96,9 +85,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
         eq(characters.isPublic, true),
         ...(userId ? [eq(characters.ownerId, userId)] : []),
       )] : [or(eq(characters.isOfficial, true), eq(characters.isPublic, true))]),
-      ...(search ? [search] : []),
-      ...(tagMatch ? [tagMatch] : []),
-      ...(genreMatch ? [genreMatch] : []),
+      genreMatch(characters.id, genres),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [or(
         lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
@@ -112,19 +99,19 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   const last = pageRows.at(-1)
   return {
     items: pageRows.map(({ createdAtKey: _createdAtKey, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0 })),
-    nextCursor: rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify([last.createdAtKey, last.id, ...(scope ? [scope] : [])])).toString('base64url') : null,
+    nextCursor: rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify([last.createdAtKey, last.id])).toString('base64url') : null,
   }
 }
 
-/** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). */
-export const homePage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true)
+/** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). 장르를 고르면 그 장르만(2026-09-30). */
+export const homePage = (userId: string | null, cursor: string | null = null, genres: string[] = []) => cardPage('reality', userId, cursor, true, genres)
 /** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
-export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, '', true, false, null, [], true)
-export const searchPage = (userId: string | null, query: string, cursor: string | null = null, tag: string | null = null, genres: string[] = []) => cardPage('reality', userId, cursor, query, true, true, tag, genres)
+export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, [], true)
 
-export async function popularHomeCards(): Promise<HomeCard[]> {
+/** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */
+export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[]> {
   if (indexedDiscoveryEnabled()) {
-    const ranked = await rankedPopularIds()
+    const ranked = await rankedPopularIds(genreMatch(sql.raw('c.id'), genres))
     if (ranked.length === 0) return []
     const rows = await db.select(pageColumns)
       .from(characters)
@@ -148,7 +135,7 @@ export async function popularHomeCards(): Promise<HomeCard[]> {
     .from(characters)
     .innerJoin(counts, eq(counts.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0)))
+    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres)))
     .orderBy(desc(counts.plays), desc(characters.createdAt), desc(characters.id))
     .limit(6)
   return rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays }))
@@ -191,7 +178,6 @@ async function playCounts(ids: string[]): Promise<Map<string, number>> {
 
 /**
  * 한 유형의 전체 그리드. 주제로 나누지 않고 한 번에 보여준다.
- * chat 은 /home/search(검색), reality 는 /miro 가 쓴다 — 같은 카드, 다른 대상.
  */
 export async function discoverGrid(userId: string | null, type: ExperienceType): Promise<HomeCard[]> {
   // Fetch independent card collections together; aggregate counts once after IDs are known.

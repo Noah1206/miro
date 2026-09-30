@@ -9,7 +9,7 @@ import { evaluateSession } from '../evaluate'
 import { runRealityScheduler } from '../scheduler'
 import { deliverRealityPush } from '../push-outbox'
 import { startOutgoingCall } from '@/lib/call/service'
-import { discoverGrid, homePage, homeRows, miroPage, popularHomeCards, searchPage } from '@/lib/home'
+import { discoverGrid, homePage, homeRows, miroPage, popularHomeCards } from '@/lib/home'
 import { getCharacterByKey } from '@/lib/characters'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
@@ -107,7 +107,7 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
   })
 
   // 2026-09-29: 앱은 미로 캐릭터만 보여준다. 옛 일반 캐릭터는 목록·검색에서 빠지고, 상세와 이미 연 대화만 남는다.
-  it('home, search and 미로 list only 미로 characters; an old chat character is still reachable by its detail page', async () => {
+  it('home and 미로 list only 미로 characters; an old chat character is still reachable by its detail page', async () => {
     const u = await user()
     const viewer = await user()
     const chat = await character('chat', u)
@@ -118,10 +118,6 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     const homeIds = home.flatMap(r => r.items.map(i => i.id))
     expect(homeIds).toContain(reality.id); expect(homeIds).not.toContain(chat.id)
     expect(home.some(r => r.key === 'continuing')).toBe(false)
-
-    // 이름이 'reality-…'·'chat-…' 이라 유형 이름으로 찾는다 — 일반 캐릭터는 이름이 맞아도 나오지 않는다.
-    expect((await searchPage(viewer, 'reality')).items.map(c => c.id)).toContain(reality.id)
-    expect((await searchPage(viewer, 'chat')).items.map(c => c.id)).not.toContain(chat.id)
 
     const miro = (await discoverGrid(viewer, 'reality')).map(c => c.id)
     expect(miro).toContain(reality.id); expect(miro).not.toContain(chat.id)
@@ -139,7 +135,7 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     const draft = await character('reality', owner)
     const deleted = await character('reality', owner)
     await db.update(characters).set({ isOfficial: true, isPublic: false }).where(eq(characters.id, official.id))
-    await db.update(characters).set({ isOfficial: true, isDraft: true, name: 'hiddenDraftSearch' }).where(eq(characters.id, draft.id))
+    await db.update(characters).set({ isOfficial: true, isDraft: true }).where(eq(characters.id, draft.id))
     await db.update(characters).set({ images: ['https://img.test/1.png', 'https://img.test/2.png'] }).where(eq(characters.id, publicReality.id))
     await db.update(characters).set({ deletedAt: new Date() }).where(eq(characters.id, deleted.id))
 
@@ -152,7 +148,6 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     for (const excluded of [publicChat, privateReality, draft, deleted]) {
       expect(home.some(item => item.id === excluded.id)).toBe(false)
     }
-    expect((await searchPage(owner, 'hiddenDraftSearch')).items.some(item => item.id === draft.id)).toBe(false)
   })
 
   it('keyset pages reach older public characters without duplicates or leaking private reality characters', async () => {
@@ -204,31 +199,5 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     const popular = await popularHomeCards()
     expect(popular.some(item => item.id === played.id)).toBe(true)
     expect(popular.some(item => item.id === idle.id)).toBe(false)
-  })
-
-  it('search reaches older 미로 matches, excludes private cards from other users, and never returns old chat characters', async () => {
-    const owner = await user()
-    const viewer = await user()
-    const created = await Promise.all(Array.from({ length: 15 }, () => character('reality', owner)))
-    const privateReality = await character('reality', owner, false)
-    const oldChat = await character('chat', owner)
-    const keywordCard = await character('reality', owner)
-    await db.update(characters).set({ relationshipKeywords: ['달빛', '친구'] }).where(eq(characters.id, keywordCard.id))
-    const seen = new Set<string>()
-    let cursor: string | null = null
-    do {
-      const page = await searchPage(viewer, 'reality', cursor)
-      expect(page.items.length).toBeLessThanOrEqual(12)
-      for (const item of page.items) {
-        expect(seen.has(item.id)).toBe(false)
-        seen.add(item.id)
-      }
-      cursor = page.nextCursor
-    } while (cursor)
-    for (const item of created) expect(seen.has(item.id)).toBe(true)
-    expect(seen.has(privateReality.id)).toBe(false)
-    expect((await searchPage(owner, 'reality')).items.some(item => item.id === privateReality.id)).toBe(true)
-    expect((await searchPage(viewer, 'chat')).items.some(item => item.id === oldChat.id)).toBe(false)
-    expect((await searchPage(viewer, '달빛 친구')).items.some(item => item.id === keywordCard.id)).toBe(true)
   })
 })

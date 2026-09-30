@@ -22,6 +22,8 @@ const config: NextConfig = {
   // Up to five 5MB character photos plus form data.
   experimental: { serverActions: { bodySizeLimit: '26mb' } },
   async headers() { return [{ source: '/(.*)', headers: securityHeaders }] },
+  // 없어진 페이지의 예전 주소 — 발견·검색은 홈의 장르 칩으로 합쳤다(2026-09-30).
+  async redirects() { return ['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })) },
 }
 
 export default config

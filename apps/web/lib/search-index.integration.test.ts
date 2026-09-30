@@ -1,10 +1,10 @@
 import { afterAll, describe, expect, it } from 'vitest'
-import { and, eq, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { characters, db, roleplaySessions, users, worlds } from '@miro/db'
 import { testDatabaseUrl } from '../../../tooling/test-database'
-import { indexedSearchMatch, rankedPopularIds } from './search-index'
+import { rankedPopularIds } from './search-index'
 
 const databaseUrl = process.env.DATABASE_URL
 const describeDb = databaseUrl && (() => {
@@ -35,46 +35,11 @@ describeDb('indexed discovery', () => {
     return { id: row!.id, worldId: world!.id }
   }
 
-  async function matched(needle: string) {
-    return db.select({ id: characters.id }).from(characters).where(and(eq(characters.isPublic, true), indexedSearchMatch(needle)))
-  }
-
   async function session(userId: string, card: { id: string; worldId: string }) {
     const [row] = await db.insert(roleplaySessions).values({ userId, characterId: card.id, worldId: card.worldId }).returning({ id: roleplaySessions.id })
     sessionIds.push(row!.id)
     return row!.id
   }
-
-  it('tracks character and deterministically chosen world search text', async () => {
-    const ownerId = await user()
-    const card = await character(ownerId, '경계 테스트')
-    expect((await matched('경계테스트첫장르')).some(row => row.id === card.id)).toBe(true)
-    await db.update(characters).set({ name: '기호%_검사', relationshipKeywords: ['달빛', '친구'] }).where(eq(characters.id, card.id))
-    expect((await matched('%_')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('호%_검')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('기호AB')).some(row => row.id === card.id)).toBe(false)
-    expect((await matched('달빛친구')).some(row => row.id === card.id)).toBe(true)
-    await db.update(worlds).set({ genre: '새장르' }).where(eq(worlds.id, card.worldId))
-    expect((await matched('새장르')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('첫장르')).some(row => row.id === card.id)).toBe(false)
-    const alternateWorldId = randomUUID()
-    await db.insert(worlds).values({ id: alternateWorldId, characterId: card.id, genre: '다른장르' })
-    expect((await matched('새장르')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('다른장르')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('기호%_검사다른장르')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('새장르다른장르')).some(row => row.id === card.id)).toBe(false)
-    await Promise.all([
-      db.update(worlds).set({ genre: '동시하나' }).where(eq(worlds.id, card.worldId)),
-      db.update(worlds).set({ genre: '동시둘' }).where(eq(worlds.id, alternateWorldId)),
-    ])
-    expect((await matched('동시하나')).some(row => row.id === card.id)).toBe(true)
-    expect((await matched('동시둘')).some(row => row.id === card.id)).toBe(true)
-    await db.delete(worlds).where(eq(worlds.id, card.worldId < alternateWorldId ? card.worldId : alternateWorldId))
-    const remainingGenre = card.worldId < alternateWorldId ? '동시둘' : '동시하나'
-    const removedGenre = card.worldId < alternateWorldId ? '동시하나' : '동시둘'
-    expect((await matched(remainingGenre)).some(row => row.id === card.id)).toBe(true)
-    expect((await matched(removedGenre)).some(row => row.id === card.id)).toBe(false)
-  })
 
   it('maintains distinct active players through soft and hard deletion', async () => {
     const firstUser = await user()

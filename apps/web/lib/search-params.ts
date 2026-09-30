@@ -1,7 +1,6 @@
 import { MOODS } from './genres'
 
-export const searchQuery = (value: string) => value.trim().slice(0, 40)
-export const searchNeedle = (value: string) => searchQuery(value).replace(/\s+/g, '').toLowerCase()
+export const searchNeedle = (value: string) => value.trim().slice(0, 40).replace(/\s+/g, '').toLowerCase()
 
 export function searchGenres(values: string[]): string[] | null {
   if (values.length > 20) return null
@@ -13,14 +12,4 @@ export function searchGenres(values: string[]): string[] | null {
     if (!unique.has(needle)) unique.set(needle, MOODS.find(mood => searchNeedle(mood) === needle) ?? needle)
   }
   return [...unique.values()].sort((left, right) => searchNeedle(left) < searchNeedle(right) ? -1 : searchNeedle(left) > searchNeedle(right) ? 1 : 0)
-}
-
-export function searchUrl(base: string, query: string, tag: string | null, genres: string[]) {
-  const normalizedGenres = searchGenres(genres)
-  if (!normalizedGenres) throw new Error('INVALID_GENRE')
-  const params = new URLSearchParams()
-  if (query) params.set('q', query)
-  if (tag !== null) params.set('tag', tag)
-  for (const genre of normalizedGenres) params.append('genre', genre)
-  return `${base}${params.size ? `?${params}` : ''}`
 }

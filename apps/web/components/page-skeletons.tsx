@@ -1,6 +1,7 @@
 'use client'
 import type { CSSProperties, ReactNode } from 'react'
 import { msg } from '@/lib/i18n'
+import { MOODS } from '@/lib/genres'
 import { useT } from '@/lib/i18n/client'
 
 function Block({ width = '100%', height, style }: { width?: number | string; height?: number | string; style?: CSSProperties }) {
@@ -20,11 +21,6 @@ export function CardGridSkeleton({ ratio = '10 / 16', count = 4 }: { ratio?: str
   </div>
 }
 
-export function SearchResultsSkeleton() {
-  const t = useT()
-  return <div role="status" aria-label={t('검색 결과 불러오는 중')} aria-busy="true"><CardGridSkeleton /></div>
-}
-
 export function HomePageSkeleton() {
   return <Status label={msg('홈 불러오는 중')} className="page page--immersive page--wide" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-5)' }}>
@@ -32,6 +28,9 @@ export function HomePageSkeleton() {
     </div>
     <div style={{ padding: '0 var(--gutter)' }}>
       <Block width={116} height={34} style={{ marginBottom: 16, borderRadius: 9 }} />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+        {MOODS.map(mood => <Block key={mood} width={mood.length * 13 + 20} height={36} style={{ borderRadius: 16 }} />)}
+      </div>
       <Block width={88} height={24} style={{ marginBottom: 14 }} />
     </div>
     <CardGridSkeleton ratio="2 / 3" />
@@ -42,20 +41,6 @@ export function MiroPageSkeleton() {
   return <Status label={msg('미로 불러오는 중')} className="page page--immersive page--wide" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
     <div style={{ minHeight: 40, padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
       <Block width={30} height={30} style={{ borderRadius: 10 }} />
-    </div>
-    <CardGridSkeleton />
-  </Status>
-}
-
-export function SearchPageSkeleton() {
-  return <Status label={msg('검색 불러오는 중')} className="page page--immersive page--wide" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
-    <div style={{ padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
-      <Block width={40} height={40} style={{ borderRadius: 20 }} />
-      <Block height={42} style={{ marginTop: 'var(--space-4)', borderRadius: 'var(--radius-md)' }} />
-      <Block width={100} height={15} style={{ marginTop: 12, marginBottom: 8 }} />
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-        {Array.from({ length: 10 }, (_, index) => <Block key={index} width={index % 3 === 0 ? 74 : 58} height={32} style={{ borderRadius: 16 }} />)}
-      </div>
     </div>
     <CardGridSkeleton />
   </Status>

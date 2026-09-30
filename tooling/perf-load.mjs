@@ -202,10 +202,10 @@ async function run() {
     ORDER BY u.email`).split('\n').filter(Boolean)
   if (tokens.length !== targetUsers || new Set(tokens).size !== targetUsers) throw new Error('Expected one distinct auth token per virtual user')
   const label = `PF${id.slice(0, 8)}`
-  const marker = await fetch(new URL(`/api/home/search/cards?q=${label}`, origin), { signal: AbortSignal.timeout(timeoutMs) })
+  const probe = query(`SELECT id FROM characters WHERE owner_id = '${owner}' AND experience_type = 'reality' ORDER BY id LIMIT 1`)
+  const marker = await fetch(new URL(`/character/${probe}`, origin), { signal: AbortSignal.timeout(timeoutMs) })
   if (!marker.ok) throw new Error(`Target fingerprint failed: HTTP ${marker.status}`)
-  const markerData = await marker.json()
-  if (!Array.isArray(markerData.items) || !markerData.items.some((item) => String(item.name).startsWith(label))) {
+  if (!(await marker.text()).includes(label)) {
     throw new Error('Target does not expose this test fixture; check isolated server DATABASE_URL')
   }
   const popularStartedAt = performance.now()
@@ -216,7 +216,7 @@ async function run() {
 
   const stop = new AbortController()
   const samples = []
-  const groups = new Map([['home', []], ['miro', []], ['search', []], ['searchMiss', []], ['popular', []]])
+  const groups = new Map([['home', []], ['miro', []], ['genreMiss', []], ['popular', []]])
   const offeredByRoute = new Map([...groups.keys()].map((name) => [name, 0]))
   let offered = 0
   let inflight = 0
@@ -228,8 +228,7 @@ async function run() {
   const routes = [
     ['home', '/api/home/cards'], ['home', '/api/home/cards'], ['home', '/api/home/cards'], ['home', '/api/home/cards'],
     ['miro', '/api/miro/cards'], ['miro', '/api/miro/cards'], ['miro', '/api/miro/cards'],
-    ['search', `/api/home/search/cards?q=${label}`], ['search', `/api/home/search/cards?q=${label}`],
-    ['searchMiss', `/api/home/search/cards?q=nevermatch${id.replaceAll('-', '')}`],
+    ['genreMiss', `/api/home/cards?genre=${label}`], ['genreMiss', `/api/home/cards?genre=${label}`], ['genreMiss', `/api/home/cards?genre=${label}`],
     ['popular', '/api/home/cards?sort=popular'],
   ]
   const workers = tokens.map(async (token, userIndex) => {
@@ -256,7 +255,7 @@ async function run() {
           const body = await response.json()
           const items = route === 'popular' ? body : body.items
           if (!Array.isArray(items)) kind = 'error'
-          else if (route === 'searchMiss') kind = items.length === 0 ? 'expectedEmpty' : 'unexpectedNonEmpty'
+          else if (route === 'genreMiss') kind = items.length === 0 ? 'expectedEmpty' : 'unexpectedNonEmpty'
           else if (items.length === 0) kind = 'empty'
         }
       } catch {

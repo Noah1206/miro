@@ -85,7 +85,6 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   revalidatePath(`/character/${characterId}`)
   revalidatePath('/my')
   revalidatePath('/home')
-  revalidatePath('/home/search')
   revalidatePath('/miro')
   revalidatePath('/archive')
   if (sessionId) {

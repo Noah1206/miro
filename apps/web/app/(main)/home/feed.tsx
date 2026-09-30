@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
 import { compact } from '@/lib/format'
+import { MOODS } from '@/lib/genres'
 import type { CardPage, HomeCard } from '@/lib/home'
 import styles from './home.module.css'
 import { useLanguage, useT } from '@/lib/i18n/client'
@@ -38,62 +39,68 @@ function StoryCard({ c }: { c: HomeCard }) {
   </TransitionLink>
 }
 
+type Sort = 'all' | 'popular'
+/** 정렬(전체·인기)과 고른 장르마다 목록을 따로 둔다 — 칩을 껐다 켜거나 전체·인기를 오가도 받은 목록은 다시 받지 않는다. */
+const listKey = (sort: Sort, genres: string[]) => JSON.stringify([sort, genres])
+
 export function HomeFeed({ initial }: { initial: CardPage }) {
-  const [filter, setFilter] = useState<'all' | 'popular'>('all')
-  const [items, setItems] = useState(initial.items)
-  const [cursor, setCursor] = useState(initial.nextCursor)
-  const [popular, setPopular] = useState<HomeCard[] | null>(null)
-  const [moreLoading, setMoreLoading] = useState(false)
-  const [popularLoading, setPopularLoading] = useState(false)
-  const [moreError, setMoreError] = useState(false)
-  const [popularError, setPopularError] = useState(false)
+  const [sort, setSort] = useState<Sort>('all')
+  const [genres, setGenres] = useState<string[]>([])
+  const [lists, setLists] = useState<Record<string, CardPage>>(() => ({ [listKey('all', [])]: initial }))
+  const [loading, setLoading] = useState<Record<string, boolean>>({})
+  const [failed, setFailed] = useState<Record<string, boolean>>({})
   const t = useT()
-  const recommendations = filter === 'popular' ? popular ?? [] : items
-  const loading = filter === 'popular' ? popularLoading : moreLoading
-  const error = filter === 'popular' ? popularError : moreError
-  const empty = recommendations.length === 0 && !loading && !error
-  /** 인기를 처음 누르면 빈 목록으로 기다린다 — 글 대신 가운데에서 튕기는 점 세 개(2026-09-30 요청). */
-  const waitingPopular = filter === 'popular' && loading
+  const key = listKey(sort, genres)
+  const list = lists[key]
+  const recommendations = list?.items ?? []
+  const busy = !!loading[key]
+  const error = !!failed[key]
+  const empty = !!list && recommendations.length === 0 && !busy && !error
+  /** 처음 여는 목록(인기·장르)은 빈 채로 기다린다 — 글 대신 가운데에서 튕기는 점 세 개(2026-09-30 요청). */
+  const waiting = !list && busy
 
-  async function loadMore() {
-    if (!cursor || moreLoading) return
-    setMoreLoading(true); setMoreError(false)
+  async function load(nextSort: Sort, nextGenres: string[], cursor: string | null = null) {
+    const k = listKey(nextSort, nextGenres)
+    if (loading[k]) return
+    setLoading(current => ({ ...current, [k]: true })); setFailed(current => ({ ...current, [k]: false }))
     try {
-      const response = await fetch(`/api/home/cards?cursor=${encodeURIComponent(cursor)}`, { cache: 'no-store' })
+      const params = new URLSearchParams(nextSort === 'popular' ? { sort: 'popular' } : cursor ? { cursor } : {})
+      for (const genre of nextGenres) params.append('genre', genre)
+      const response = await fetch(`/api/home/cards?${params}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('LOAD_FAILED')
-      const page: CardPage = await response.json()
-      setItems(current => unique([...current, ...page.items]))
-      setCursor(page.nextCursor)
-    } catch { setMoreError(true) } finally { setMoreLoading(false) }
+      const body = await response.json()
+      const page: CardPage = nextSort === 'popular' ? { items: body, nextCursor: null } : body
+      setLists(current => ({ ...current, [k]: cursor && current[k] ? { items: unique([...current[k].items, ...page.items]), nextCursor: page.nextCursor } : page }))
+    } catch { setFailed(current => ({ ...current, [k]: true })) } finally { setLoading(current => ({ ...current, [k]: false })) }
   }
 
-  async function showPopular() {
-    setFilter('popular')
-    if (popular || popularLoading) return
-    setPopularLoading(true); setPopularError(false)
-    try {
-      const response = await fetch('/api/home/cards?sort=popular', { cache: 'no-store' })
-      if (!response.ok) throw new Error('LOAD_FAILED')
-      setPopular(await response.json())
-    } catch { setPopularError(true) } finally { setPopularLoading(false) }
+  function show(nextSort: Sort, nextGenres: string[]) {
+    setSort(nextSort); setGenres(nextGenres)
+    if (!lists[listKey(nextSort, nextGenres)]) void load(nextSort, nextGenres)
   }
+  // 칩 순서대로 모은다 — 같은 장르 묶음이 누른 순서 때문에 다른 목록이 되지 않게.
+  const toggleGenre = (genre: string) => show(sort, MOODS.filter(mood => mood === genre ? !genres.includes(mood) : genres.includes(mood)))
 
-  return <div className={`${styles.feed} ${empty || waitingPopular ? styles.fill : ''}`}>
+  return <div className={`${styles.feed} ${empty || waiting ? styles.fill : ''}`}>
     <h1 className="sr-only">{t('홈')}</h1>
     <div className={styles.filters} role="group" aria-label={t('이야기 정렬')}>
-      <button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>{t('전체')}</button>
-      <button type="button" aria-pressed={filter === 'popular'} onClick={showPopular}>{t('인기')}</button>
+      <button type="button" aria-pressed={sort === 'all'} onClick={() => show('all', genres)}>{t('전체')}</button>
+      <button type="button" aria-pressed={sort === 'popular'} onClick={() => show('popular', genres)}>{t('인기')}</button>
+    </div>
+    {/* 장르 칩 — 예전 검색 페이지의 장르 버튼(2026-09-30 요청). 여러 개 고르면 그중 하나라도 맞는 이야기가 나온다. */}
+    <div className={styles.genres} role="group" aria-label={t('장르 선택')}>
+      {MOODS.map(genre => <button key={genre} type="button" aria-pressed={genres.includes(genre)} onClick={() => toggleGenre(genre)}>{t(genre)}</button>)}
     </div>
 
-    <section aria-labelledby="recommend-title" className={empty || waitingPopular ? styles.fill : undefined}>
-      <div className={styles.sectionHeading}><h2 id="recommend-title">{filter === 'popular' ? t('인기 이야기') : t('전체 이야기')}</h2></div>
+    <section aria-labelledby="recommend-title" className={empty || waiting ? styles.fill : undefined}>
+      <div className={styles.sectionHeading}><h2 id="recommend-title">{sort === 'popular' ? t('인기 이야기') : t('전체 이야기')}</h2></div>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
-      {waitingPopular
+      {waiting
         ? <div role="status" className={`empty-state empty-state--fill ${styles.loadingDots}`}><i aria-hidden /><i aria-hidden /><i aria-hidden /><span className="sr-only">{t('불러오는 중')}</span></div>
-        : loading && <p role="status">{t('불러오는 중')}</p>}
-      {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={filter === 'popular' ? showPopular : loadMore}>{t('다시 시도')}</Button></p>}
-      {empty && <p className="empty-state empty-state--fill">{filter === 'popular' ? t('아직 인기 이야기가 없어요') : t('아직 이야기가 없어요')}</p>}
-      {filter === 'all' && cursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={moreLoading}>{moreLoading ? t('불러오는 중') : t('더 보기')}</Button></div>}
+        : busy && <p role="status">{t('불러오는 중')}</p>}
+      {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => load(sort, genres, list?.nextCursor ?? null)}>{t('다시 시도')}</Button></p>}
+      {empty && <p className="empty-state empty-state--fill">{genres.length ? t('고른 장르의 이야기가 아직 없어요') : sort === 'popular' ? t('아직 인기 이야기가 없어요') : t('아직 이야기가 없어요')}</p>}
+      {sort === 'all' && list?.nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={() => load(sort, genres, list.nextCursor)} disabled={busy}>{busy ? t('불러오는 중') : t('더 보기')}</Button></div>}
     </section>
 
   </div>

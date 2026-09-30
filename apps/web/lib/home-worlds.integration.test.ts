@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm'
 import { db, characters, contactProfiles, roleplaySessions, users, worlds } from '@miro/db'
 import { testDatabaseUrl } from '../../../tooling/test-database'
 import { listOfficials } from './characters'
-import { discoverGrid, homePage, miroPage, popularHomeCards, searchPage } from './home'
+import { discoverGrid, homePage, miroPage, popularHomeCards } from './home'
 
 const describeDb = testDatabaseUrl(process.env.DATABASE_URL) ? describe : describe.skip
 
@@ -56,10 +56,10 @@ describeDb('home cards with multiple worlds', () => {
       for (const filler of fillers) expect(seen.has(filler.id)).toBe(true)
       expect(homeGenre).toBe(selectedGenre)
 
-      const search = await searchPage(viewer!.id, otherGenre)
-      expect(search.items.filter(item => item.id === chat!.id)).toHaveLength(1)
-      expect(search.items.find(item => item.id === chat!.id)?.genre).toBe(selectedGenre)
-      expect((await searchPage(viewer!.id, 'worldpagefiller0')).items.some(item => item.id === fillers[0]!.id)).toBe(true)
+      // 장르 칩은 어느 세계의 장르로 골라도 카드 하나 — 보이는 장르는 정해진 첫 세계 것(2026-09-30).
+      const filtered = await homePage(viewer!.id, null, [otherGenre])
+      expect(filtered.items.filter(item => item.id === chat!.id)).toHaveLength(1)
+      expect(filtered.items.find(item => item.id === chat!.id)?.genre).toBe(selectedGenre)
       expect((await listOfficials('reality')).filter(item => item.id === chat!.id)).toHaveLength(1)
       expect((await discoverGrid(viewer!.id, 'reality')).filter(item => item.id === chat!.id)).toHaveLength(1)
       // 채움 캐릭터도 미로라 첫 페이지를 넘길 수 있다 — 끝까지 넘겨 한 번만 나오는지 본다.

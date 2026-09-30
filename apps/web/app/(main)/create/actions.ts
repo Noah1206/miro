@@ -90,7 +90,6 @@ export async function saveCharacter(form: FormData): Promise<string> {
   if (!result.duplicate) await scheduleRelationshipProfile(result.characterId, user.id)
 
   revalidatePath('/home')
-  revalidatePath('/home/search')
   revalidatePath('/miro')
   revalidatePath('/my')
 

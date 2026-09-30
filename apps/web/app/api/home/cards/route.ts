@@ -7,15 +7,17 @@ export async function GET(request: NextRequest) {
   const startedAt = performance.now()
   const params = request.nextUrl.searchParams
   const popular = params.get('sort') === 'popular'
+  // 홈 장르 칩(2026-09-30) — genre 를 여러 번 보내면 그중 하나라도 맞는 캐릭터.
+  const genres = params.getAll('genre')
   try {
     const data = popular
-      ? await measured('api.home_popular_data', () => popularHomeCards())
-      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor')))
+      ? await measured('api.home_popular_data', () => popularHomeCards(genres))
+      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor'), genres))
     const elapsedMs = metric(popular ? 'api.home_popular_total' : 'api.home_page_total', startedAt)
     return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store', 'Server-Timing': `app;dur=${elapsedMs}` } })
   } catch (error) {
     metric(popular ? 'api.home_popular_total' : 'api.home_page_total', startedAt, false)
-    const invalid = error instanceof Error && error.message === 'INVALID_CURSOR'
-    return NextResponse.json({ error: invalid ? 'invalid_cursor' : 'unavailable' }, { status: invalid ? 400 : 503, headers: { 'Cache-Control': 'no-store' } })
+    const invalid = error instanceof Error && (error.message === 'INVALID_CURSOR' || error.message === 'INVALID_GENRE')
+    return NextResponse.json({ error: invalid ? error.message.toLowerCase() : 'unavailable' }, { status: invalid ? 400 : 503, headers: { 'Cache-Control': 'no-store' } })
   }
 }

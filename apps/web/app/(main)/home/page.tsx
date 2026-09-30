@@ -1,6 +1,6 @@
 import { currentUser } from '@/lib/auth'
 import { homePage } from '@/lib/home'
-import { LogoMark, Page, TransitionLink } from '@/components/ui'
+import { LogoMark, Page } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { HomeFeed } from './feed'
 import { HomeBanner } from './banner'
@@ -22,16 +22,12 @@ export default async function Home() {
   return (
     <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
       {/* 위 여백은 8px 만 — 홈 화면에 추가한 앱에서는 상태 표시줄(safe-area)만큼 더 내린다. */}
-      {/* 내용 높이 40 = 세 탭(홈·미로·검색) 공통 — 탭을 옮겨도 마크가 같은 자리에 있다. */}
+      {/* 내용 높이 40 = 홈·미로 공통 — 탭을 옮겨도 마크가 같은 자리에 있다. */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 40, boxSizing: 'content-box', padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-5)' }}>
         {/* 마크 하나만 — 글자 없이 마크가 이름을 맡는다. 오른쪽 아이콘 상자(34px)와 눈높이가 맞는 크기. */}
         <span className={styles.headerItem} style={{ display: 'block' }}><LogoMark size={30} /></span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: -8 }}>
-          {/* 하단 탭처럼 미리 받아 둔다 — 누르면 서버를 기다리지 않고 바로 뜬다(2026-09-30 요청). */}
-          <TransitionLink href="/home/search" prefetch={true} aria-label={t('캐릭터 검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
-            <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
-          </TransitionLink>
           {/* 알림 종 — 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). 로그인 전에는 누르면 로그인 시트가 뜬다. */}
           <NotificationBell unread={unread} signedIn={!!user} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}

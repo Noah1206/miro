@@ -37,15 +37,15 @@ const token = query(`SELECT s.token FROM auth_sessions s JOIN users u ON u.id = 
   WHERE u.email = 'perf+${id}-1@example.invalid'`)
 if (!token) throw new Error('Fixture auth session not found')
 const label = `PF${id.slice(0, 8)}`
-const fingerprint = await fetch(new URL(`/api/home/search/cards?q=${label}`, origin), { signal: AbortSignal.timeout(10_000) })
-if (!fingerprint.ok || !(await fingerprint.json()).items?.some((item) => String(item.name).startsWith(label))) {
+const probe = query(`SELECT id FROM characters WHERE owner_id = '${owner}' AND experience_type = 'reality' ORDER BY id LIMIT 1`)
+const fingerprint = await fetch(new URL(`/character/${probe}`, origin), { signal: AbortSignal.timeout(10_000) })
+if (!probe || !fingerprint.ok || !(await fingerprint.text()).includes(label)) {
   throw new Error('Target does not expose this local fixture')
 }
 
 const routes = [
   { name: 'homeToMiro', from: '/home', to: '/miro', link: 'nav a[href="/miro"]', marker: '#main [data-miro-grid]', content: '#main [data-miro-grid] a[href^="/character/"]' },
   { name: 'miroToHome', from: '/miro', to: '/home', link: 'nav a[href="/home"]', marker: '#main #recommend-title', content: '#main a[href^="/character/"]' },
-  { name: 'homeToSearch', from: '/home', to: '/home/search', link: '#main a[aria-label="캐릭터 검색"]', marker: '#main header h1', content: '#main a[href^="/character/"]' },
   { name: 'homeToCreate', from: '/home', to: '/create', link: 'nav a[href="/create"]', marker: '#main form', content: '#main form input[name="name"]' },
   { name: 'homeToArchive', from: '/home', to: '/archive', link: 'nav a[href="/archive"]', marker: '#main [data-session-row]', content: '#main [data-session-row] a[href^="/chat/"]' },
 ]
