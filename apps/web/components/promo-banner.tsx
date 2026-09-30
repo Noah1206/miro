@@ -6,7 +6,7 @@ const CTA = { background: 'var(--color-white)', color: 'var(--color-black)', bor
 
 /**
  * 힉스필드 그림이 꽉 채우는 배너 — 홈과 미로가 함께 쓴다(2026-09-30). 코드에 둔 고정 안내라 글은 번역된 채로 넘겨받는다.
- * 그림은 21:9 를 잘라 쓴다 — 폰은 2.4:1(`{art}-m.webp`), 컴퓨터는 6:1 띠(`{art}.webp`). <picture> 가 폭에 맞는 한 장만 받는다.
+ * 그림은 21:9 를 잘라 쓴다 — 폰은 3:1(`{art}-m.webp`), 컴퓨터는 6:1 띠(`{art}.webp`). <picture> 가 폭에 맞는 한 장만 받는다.
  */
 export function PromoBanner({ art, eyebrow, title, body, cta, textWidth, artX }: {
   art: string; eyebrow: string; title: string; body: string; cta?: { href: string; label: string }
@@ -22,7 +22,7 @@ export function PromoBanner({ art, eyebrow, title, body, cta, textWidth, artX }:
         <source media="(min-width: 1024px)" srcSet={`/${art}.webp`} width={2304} height={384} />
         {/* 꾸밈이라 읽지 않는다. */}
         {/* eslint-disable-next-line @next/next/no-img-element -- 배너 한 장, next/image 최적화가 필요 없다 */}
-        <img src={`/${art}-m.webp`} alt="" aria-hidden width={1152} height={480} decoding="async" className={styles.art} />
+        <img src={`/${art}-m.webp`} alt="" aria-hidden width={1152} height={384} decoding="async" className={styles.art} />
       </picture>
       <div className={styles.text}>
         <p className={styles.eyebrow}>{eyebrow}</p>

@@ -1,7 +1,7 @@
 /* 배너(홈·미로, 2026-09-30) — 헤더와 캐릭터 사이. 힉스필드 그림이 꽉 채우고(제타·위프 배너처럼), 글은 왼쪽을 어둡게 누른 위에 얹는다.
-   폰은 2.4:1 낮은 띠에 제목만(9/30 요청: 폰에도 넣되 온라인에서 보기에 너무 커서 줄임), 컴퓨터는 6:1 띠에 설명까지. */
+   폰은 3:1 낮은 띠에 제목만(9/30 요청: 폰에서 세로가 너무 커서 2.4:1 → 3:1 로 줄임), 컴퓨터는 6:1 띠에 설명까지. */
 /* 모서리는 overflow 대신 clip-path 로 자른다 — overflow:hidden 이면 aspect-ratio 가 높이를 고정해 긴 글이 잘린다. 이렇게 하면 글이 길 때 배너가 늘어난다. */
-.banner { position: relative; isolation: isolate; display: flex; align-items: center; aspect-ratio: 12 / 5;
+.banner { position: relative; isolation: isolate; display: flex; align-items: center; aspect-ratio: 3 / 1;
   margin: 0 var(--gutter) var(--space-5); padding: 12px 14px; border-radius: 14px; clip-path: inset(0 round 14px); background: var(--color-surface-1); }
 .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .banner::after { content: ''; position: absolute; inset: 0;
