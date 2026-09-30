@@ -8,8 +8,8 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { box } from '@/app/(main)/create/form-parts'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import { ONBOARDING_STEPS, REQUIRED_TERMS, type Taste } from '@/lib/onboarding-options'
-import { setLanguage } from '@/lib/i18n/actions'
-import { useLanguage, useT } from '@/lib/i18n/client'
+import { chooseLanguage } from '@/lib/i18n/actions'
+import { useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
 import { finishOnboarding } from './actions'
 
@@ -67,7 +67,10 @@ export function OnboardingForm() {
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
   const copy = COPY[step - 1]!
   // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
-  const pickLanguage = (l: Language) => { if (l !== language) startSwitch(() => setLanguage(l)) }
+  const switchLanguage = useSwitchLanguage()
+  const pickLanguage = (l: Language) => {
+    if (l !== language) startSwitch(async () => { const messages = await chooseLanguage(l); switchLanguage({ language: l, messages }) })
+  }
 
   return (
     <form action={action} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -172,7 +175,7 @@ function NicknameField({ value, onChange, onEnter, invalid }: { value: string; o
   const t = useT()
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 52, padding: '0 14px', ...box(focused, invalid) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44, padding: '0 18px', ...box(focused, invalid), borderRadius: 999 }}>
       <input aria-label={t('닉네임')} value={value} maxLength={PERSONA_LIMITS.name} autoFocus autoComplete="nickname" placeholder={t('예) 지우')}
         onChange={(e) => onChange(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         onKeyDown={(e) => { if (e.key === 'Enter') onEnter() }}
