@@ -28,7 +28,8 @@ export default async function Home() {
         <span className={styles.headerItem} style={{ display: 'block' }}><LogoMark size={30} /></span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: -8 }}>
-          <TransitionLink href="/home/search" aria-label={t('캐릭터 검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
+          {/* 하단 탭처럼 미리 받아 둔다 — 누르면 서버를 기다리지 않고 바로 뜬다(2026-09-30 요청). */}
+          <TransitionLink href="/home/search" prefetch={true} aria-label={t('캐릭터 검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 38, height: 38, color: 'var(--color-text-primary)' }}>
             <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></svg>
           </TransitionLink>
           {/* 알림 종 — 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). 로그인 전에는 누르면 로그인 시트가 뜬다. */}
