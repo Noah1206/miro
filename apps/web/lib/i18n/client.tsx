@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { translate, type Language, type Messages, type T } from './index'
+import { LANGUAGE_COOKIE, translate, type Language, type Messages, type T } from './index'
 
 type State = { language: Language; messages: Messages | null }
 const Ctx = createContext<State & { switchTo: (next: State) => void }>({ language: 'ko', messages: null, switchTo: () => {} })
@@ -20,9 +20,27 @@ export function LanguageProvider({ language, messages, children }: State & { chi
   return <Ctx.Provider value={{ ...state, switchTo }}>{children}</Ctx.Provider>
 }
 
-/** 제자리에서 언어 바꾸기 — 서버 액션 chooseLanguage 가 돌려준 사전을 넘긴다. */
-export function useSwitchLanguage(): (next: State) => void {
-  return useContext(Ctx).switchTo
+/** 다른 언어 사전은 필요할 때 따로 받는다(각 언어가 별도 파일로 나뉜다). 한 번 받으면 브라우저가 기억한다. */
+const LOADERS: Record<Exclude<Language, 'ko'>, () => Promise<{ default: Messages }>> = {
+  en: () => import('./messages/en.json'),
+  ja: () => import('./messages/ja.json'),
+  zh: () => import('./messages/zh.json'),
+}
+export function loadMessages(language: Language): Promise<Messages | null> {
+  return language === 'ko' ? Promise.resolve(null) : LOADERS[language]().then((m) => m.default)
+}
+
+/**
+ * 서버를 거치지 않고 제자리에서 언어 바꾸기(온보딩). 사전을 받아 갈아 끼우고 쿠키만 남긴다 — 서버 액션으로 쿠키를 쓰면
+ * Next 가 화면 전체를 서버에서 다시 그려 한 번 누를 때마다 느렸다(9/30). 계정 설정에는 온보딩을 마칠 때 저장된다.
+ */
+export function useSwitchLanguage(): (language: Language) => Promise<void> {
+  const { switchTo } = useContext(Ctx)
+  return useCallback(async (language) => {
+    const messages = await loadMessages(language)
+    switchTo({ language, messages })
+    document.cookie = `${LANGUAGE_COOKIE}=${language}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax${location.protocol === 'https:' ? '; secure' : ''}`
+  }, [switchTo])
 }
 
 /** 클라이언트 컴포넌트용 번역 함수. */

@@ -7,7 +7,7 @@ import { IncomingCall } from '@/components/incoming-call'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { measured } from '@/lib/observe'
 import { WalletProvider } from '@/components/wallet/provider'
-import { WelcomeSheet } from '@/components/welcome-sheet'
+import { WelcomePopup } from '@/components/welcome-popup'
 import { WELCOME_GRANT } from '@miro/config'
 import { getT } from '@/lib/i18n/server'
 
@@ -24,8 +24,8 @@ export default async function MainLayout({ children }: { children: React.ReactNo
       <WalletProvider><div className="app-shell">
         {/* 캐릭터가 거는 전화는 어느 화면에서든 울린다. */}
         {user && <IncomingCall userId={user.id} />}
-        {/* 온보딩을 마치고 가입 보상을 받은 직후 한 번. 알림 권한 시트는 이 시트를 닫은 뒤에 올라온다. */}
-        {user && <WelcomeSheet units={WELCOME_GRANT.units} validDays={WELCOME_GRANT.validDays} />}
+        {/* 온보딩을 마치고 가입 보상을 받은 직후 한 번 — 알림 시트가 먼저 끝난 뒤에 가운데 팝업으로 뜬다. */}
+        {user && <WelcomePopup units={WELCOME_GRANT.units} validDays={WELCOME_GRANT.validDays} />}
         {/* 로그인해서 들어오면 어디서든 먼저 알림을 켜자고 묻는다 — 세션에 한 번(2026-09-29). */}
         {user && <PushSubscribe autoPrompt vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={t('캐릭터')} />}
         <Nav signedIn={!!user} userId={user?.id} />

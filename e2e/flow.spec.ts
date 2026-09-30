@@ -13,9 +13,9 @@ test('onboarding cannot finish without the required terms, and ends with the wel
   await page.getByPlaceholder('이메일').fill(`gate-${Date.now()}@miro.dev`)
   await page.getByRole('button', { name: '계속' }).click()
   await expect(page).toHaveURL(/\/onboarding/)
-  // 언어는 골라도 바로 넘어가지 않는다 — '다음' 으로 넘어간다(기본 언어가 골라져 있어 처음부터 열려 있다).
+  // 언어를 직접 골라야 '다음' 이 열린다 — 처음엔 아무것도 골라져 있지 않다. 골라도 바로 넘어가지 않고 '다음' 으로 넘어간다.
   await expect(page.getByRole('heading', { name: '언어를 골라 주세요' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '다음' })).toBeEnabled()
+  await expect(page.getByRole('button', { name: '다음' })).toBeDisabled()
   await passOnboardingProfile(page)
 
   const submit = page.getByRole('button', { name: '시작하기', exact: true })
@@ -31,7 +31,7 @@ test('onboarding cannot finish without the required terms, and ends with the wel
   // 전체 동의하고 시작하기 = 모두 켜고 바로 제출.
   await page.getByRole('button', { name: '전체 동의하고 시작하기' }).click()
   await expect(page).toHaveURL(/\/home\?welcome=1/)
-  await expect(page.locator('[data-welcome-sheet]')).toContainText('300')
+  await expect(page.locator('[data-welcome-popup]')).toContainText('300')
   await closeWelcome(page)
   await expect(page).toHaveURL(/\/home$/)
 })

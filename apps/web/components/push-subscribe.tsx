@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Button, Sheet, useToast } from '@/components/ui'
 import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import styles from './push-subscribe.module.css'
-import { WELCOME_DONE_EVENT, WELCOME_PARAM } from '@/lib/onboarding-options'
+import { markPushPromptDone } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -32,22 +32,16 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   const [guide, setGuide] = useState(false)
   const toast = useToast()
   const t = useT()
-  // 가입 직후 환영 시트가 떠 있으면 그 시트를 닫을 때까지 묻지 않는다 — 시트 두 장이 겹치지 않게.
-  const [welcoming, setWelcoming] = useState(false)
+  // 먼저 묻기. 가입 직후라면 가입 선물 팝업이 이것이 끝나기를 기다린다(markPushPromptDone) — 보여 주고 닫았거나, 물을 게 없었을 때.
   useEffect(() => {
-    if (!new URLSearchParams(window.location.search).has(WELCOME_PARAM)) return
-    setWelcoming(true)
-    const done = () => setWelcoming(false)
-    window.addEventListener(WELCOME_DONE_EVENT, done); return () => window.removeEventListener(WELCOME_DONE_EVENT, done)
-  }, [])
-
-  useEffect(() => {
-    if (!autoPrompt || welcoming || askedThisSession()) return
-    if (status !== 'prompt' && status !== 'ios_install' && status !== 'denied') return
+    if (!autoPrompt || status === 'working') return
+    // 확인이 오래 걸리면(서비스 워커가 안 뜨는 등) 뒤의 팝업을 붙잡아 두지 않는다.
+    if (status === 'checking') { const timer = setTimeout(markPushPromptDone, 3000); return () => clearTimeout(timer) }
+    if (askedThisSession() || (status !== 'prompt' && status !== 'ios_install' && status !== 'denied')) { markPushPromptDone(); return }
     // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
     const timer = setTimeout(() => { markAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
     return () => clearTimeout(timer)
-  }, [autoPrompt, status, welcoming])
+  }, [autoPrompt, status])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -82,8 +76,8 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed') return null
   if (autoPrompt) return (
     <>
-      <PushSheet kind="ask" open={ask} onClose={() => setAsk(false)} name={name} working={status === 'working'} onAllow={() => subscribe()} />
-      <PushSheet kind={status === 'ios_install' ? 'ios_install' : 'denied'} open={guide} onClose={() => setGuide(false)} name={name} />
+      <PushSheet kind="ask" open={ask} onClose={() => { setAsk(false); markPushPromptDone() }} name={name} working={status === 'working'} onAllow={() => subscribe()} />
+      <PushSheet kind={status === 'ios_install' ? 'ios_install' : 'denied'} open={guide} onClose={() => { setGuide(false); markPushPromptDone() }} name={name} />
     </>
   )
   const text: Record<Exclude<Status, 'checking' | 'unsupported' | 'unconfigured' | 'subscribed'>, string> = {

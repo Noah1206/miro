@@ -148,6 +148,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 /* Motion 이 opacity 를 인라인으로 쥐고 있으므로 비활성 흐림은 규칙으로 이긴다 */
 /* 비활성은 채움색을 빼고 무채색으로. 주황 45% 는 진흙색이 된다. 로딩 중(aria-busy)은 제외 — 회색으로 꺼지면 실패처럼 보인다. */
 .btn:disabled:not([aria-busy="true"]) { background: var(--color-surface-3) !important; color: var(--color-text-disabled) !important; border-color: transparent !important; }
+/* 온보딩 '다음' 은 잠겨 있어도 회색으로 바꾸지 않고 같은 주황을 옅게 — 고르면 또렷해진다(2026-09-30 요청). */
+.btn.btn-next:disabled:not([aria-busy="true"]) { background: var(--color-accent) !important; color: var(--color-accent-on) !important; border-color: var(--color-accent) !important; opacity: 0.35 !important; }
 
 /* Page text is visible immediately when navigating. */
 

@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { isLanguage, type Language } from '@miro/domain'
 import { WELCOME_GRANT } from '@miro/config'
-import { db, termsConsents, userSettings, users } from '@miro/db'
+import { db, termsConsents, userPersonas, userSettings, users } from '@miro/db'
 import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal'
 import { observe } from '@/lib/observe'
 import { getPersona, parsePersona, savePersona } from '@/lib/persona'
@@ -52,6 +52,16 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
 }
 
 /** 'YYYY-MM-DD', 실제로 있는 날짜, 1900년 이후, 오늘 이전. */
+/**
+ * 닉네임 미리 검사(닉네임 단계에서 '다음' 을 누르면 뒤에서 돈다). 통과하면 페르소나로 저장해 두어 마지막 저장이 검사를 건너뛴다.
+ * 막히면 이유를 돌려주고, 검사를 못 하면(공급자 장애) 통과로 두어 마지막 저장에서 다시 해 본다.
+ */
+export async function precheckNickname(userId: string, nickname: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const existing = await getPersona(userId)
+  const saved = await savePersona(userId, { name: nickname, gender: existing?.gender ?? null, description: existing?.description ?? null })
+  return saved.ok || saved.canSkip ? { ok: true } : { ok: false, error: msg('이 닉네임은 쓸 수 없어요. 다른 표현으로 적어 주세요.') }
+}
+
 function validBirthDate(v: string, today: Date): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false
   const d = new Date(`${v}T00:00:00Z`)
@@ -65,7 +75,11 @@ function validBirthDate(v: string, today: Date): boolean {
  */
 export async function completeOnboarding(userId: string, input: OnboardingInput): Promise<({ ok: true; welcomed: boolean }) | ({ ok: false } & OnboardingError)> {
   const existing = await getPersona(userId)
-  const saved = await savePersona(userId, { name: input.nickname, gender: input.gender, description: existing?.description ?? null })
+  // 닉네임 단계에서 미리 검사해 저장해 둔 이름이면(checkNickname) 다시 검사하지 않는다 — 마지막 단계가 AI 호출을 기다리지 않게.
+  // 페르소나는 안전 검사를 거쳐야만 저장되므로(savePersona) 저장된 이름은 이미 검사를 통과한 것이다. 성별만 맞춘다.
+  const saved = existing?.name === input.nickname
+    ? await db.update(userPersonas).set({ gender: input.gender, updatedAt: new Date() }).where(eq(userPersonas.userId, userId)).then(() => ({ ok: true as const }))
+    : await savePersona(userId, { name: input.nickname, gender: input.gender, description: existing?.description ?? null })
   if (!saved.ok && !saved.canSkip) return { ok: false, step: 2, error: msg('이 닉네임은 쓸 수 없어요. 다른 표현으로 적어 주세요.') }
   if (!saved.ok) observe('onboarding.persona_skipped', { userId })
 

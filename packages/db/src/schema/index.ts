@@ -26,7 +26,7 @@ export const users = pgTable('users', {
   /** 첫 로그인 온보딩에서 받는다(선택). 'YYYY-MM-DD'. */
   birthDate: date('birth_date'),
   /** 좋아하는 관계 취향(온보딩). 추천에 쓰기 전까지는 저장만 한다. */
-  tastes: text('tastes').array().$type<Array<'bl' | 'hl'>>().notNull().default(sql`'{}'`),
+  tastes: text('tastes').array().$type<Array<'bl' | 'hl' | 'gl'>>().notNull().default(sql`'{}'`),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   /** 계정 삭제 후 동일 계정 로그인 및 보관함 접근 차단 (명세서 12.1). */

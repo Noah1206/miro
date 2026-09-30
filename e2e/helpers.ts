@@ -40,9 +40,9 @@ export async function passOnboardingProfile(page: Page, nickname = '테스터') 
   await expect(page.getByRole('heading', { name: '시작하기 전에' })).toBeVisible()
 }
 
-/** 가입 선물 시트를 닫는다 — 닫으면 주소의 ?welcome=1 도 지워진다. */
+/** 가입 선물 팝업을 닫는다 — 닫으면 주소의 ?welcome=1 도 지워진다. 알림 시트가 먼저 끝나야 뜬다(E2E 는 알림 미구성이라 바로). */
 export async function closeWelcome(page: Page) {
-  const sheet = page.locator('[data-welcome-sheet]')
+  const sheet = page.locator('[data-welcome-popup]')
   await expect(sheet).toBeVisible()
   await sheet.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(sheet).toBeHidden()

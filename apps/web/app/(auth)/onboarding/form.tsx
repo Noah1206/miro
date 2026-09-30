@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useEffect, useRef, useState, useTransition } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { LANGUAGES, PERSONA_LIMITS, type Language } from '@miro/domain'
@@ -8,10 +8,10 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { box } from '@/app/(main)/create/form-parts'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import { ONBOARDING_STEPS, REQUIRED_TERMS, type Taste } from '@/lib/onboarding-options'
-import { chooseLanguage } from '@/lib/i18n/actions'
-import { useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/client'
+import { loadMessages, useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
-import { finishOnboarding } from './actions'
+import { useRouter } from 'next/navigation'
+import { checkNickname, finishOnboarding } from './actions'
 
 const COPY = [
   { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자·전화가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
@@ -26,14 +26,18 @@ const GENDERS = [{ value: 'female', label: msg('여성') }, { value: 'male', lab
 const TASTE_OPTIONS: Array<{ value: Taste; label: string; sub: string }> = [
   { value: 'bl', label: 'BL', sub: msg('남자와 남자의 이야기') },
   { value: 'hl', label: 'HL', sub: msg('남자와 여자의 이야기') },
+  { value: 'gl', label: 'GL', sub: msg('여자와 여자의 이야기') },
 ]
 const TERMS = [
   { key: 'terms', title: msg('[필수] 서비스 이용약관'), href: '/terms/service' },
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },
-  { key: 'marketing', title: msg('[선택] 이벤트·혜택 알림 받기'), sub: msg('광고성 정보 수신 동의') },
-  { key: 'nightMarketing', title: msg('[선택] 야간 혜택 알림 받기'), sub: msg('오후 9시 ~ 다음날 오전 8시에도 받아요') },
+  { key: 'marketing', title: msg('[선택] 이벤트·혜택 알림 받기'), sub: msg('광고성 정보 수신 동의'), href: '/terms/marketing' },
+  { key: 'nightMarketing', title: msg('[선택] 야간 혜택 알림 받기'), sub: msg('오후 9시 ~ 다음날 오전 8시에도 받아요'), href: '/terms/night-marketing' },
 ] as const
+
+/** '다음' 은 작게(2026-09-30 요청): 높이 56 → 44(터치 영역 최소), 글자 17 → 14. 잠겨 있을 땐 옅은 주황(.btn-next). */
+const NEXT_BUTTON: React.CSSProperties = { minHeight: 44, padding: '4px 24px', fontSize: 14 }
 
 /**
  * 첫 로그인 온보딩. 한 화면에 한 질문 — 위에 뒤로·진행 막대·n/6, 아래에 다음 버튼 하나.
@@ -44,7 +48,8 @@ export function OnboardingForm() {
   const reduce = useReducedMotion()
   const t = useT()
   const language = useLanguage()
-  const [switching, startSwitch] = useTransition()
+  // 언어도 직접 골라야 '다음' 이 열린다 — 처음엔 아무것도 골라져 있지 않다(2026-09-30 요청). 화면은 기기 언어로 시작한다.
+  const [languagePicked, setLanguagePicked] = useState(false)
   const [state, action] = useActionState(finishOnboarding, null)
   const [step, setStep] = useState(1)
   const [nickname, setNickname] = useState('')
@@ -59,9 +64,18 @@ export function OnboardingForm() {
   useEffect(() => { if (state) { focusHeading.current = true; setStep(state.step); setError(state.error) } }, [state])
 
   const go = (n: number) => { focusHeading.current = true; setError(null); setStep(n) }
+  const router = useRouter()
+  // 닉네임을 넘기면 안전 검사를 뒤에서 미리 한다. 막히면 닉네임 단계로 돌아가 이유를 보인다.
+  const leaveNickname = () => {
+    const name = nickname
+    void checkNickname(name).then((r) => { if (!r.ok) { focusHeading.current = true; setStep(2); setError(r.error) } }).catch(() => {})
+    go(3)
+  }
+  // 약관 단계가 열리면 다음 화면(홈)을 미리 받아 둔다 — '시작하기' 뒤에 바로 넘어가게.
+  useEffect(() => { if (step === ONBOARDING_STEPS) router.prefetch('/home') }, [step, router])
   const nameOk = nickname.trim().length > 0
   // 단계별로 '다음' 을 누를 수 있는가.
-  const ready: Record<number, boolean> = { 1: true, 2: nameOk, 3: !!gender, 4: tastes.length > 0 }
+  const ready: Record<number, boolean> = { 1: languagePicked, 2: nameOk, 3: !!gender, 4: tastes.length > 0 }
   const requiredOk = REQUIRED_TERMS.every((k) => checked[k])
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
@@ -69,8 +83,11 @@ export function OnboardingForm() {
   // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
   const switchLanguage = useSwitchLanguage()
   const pickLanguage = (l: Language) => {
-    if (l !== language) startSwitch(async () => { const messages = await chooseLanguage(l); switchLanguage({ language: l, messages }) })
+    setLanguagePicked(true)
+    if (l !== language) void switchLanguage(l)
   }
+  // 언어 단계가 열리면 다른 언어 사전을 미리 받아 둔다 — 누르는 순간 바로 바뀌게.
+  useEffect(() => { for (const l of Object.keys(LANGUAGES) as Language[]) void loadMessages(l) }, [])
 
   return (
     <form action={action} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
@@ -109,13 +126,13 @@ export function OnboardingForm() {
             <div role="radiogroup" aria-label={t('언어')} className="stack" style={{ gap: 8 }}>
               {/* 언어 이름은 번역하지 않는다 — 자기 언어를 그 언어의 글자로 알아본다. */}
               {(Object.keys(LANGUAGES) as Language[]).map((l) => (
-                <Option key={l} role="radio" selected={language === l} dimmed={language !== l} title={LANGUAGES[l]} lang={l} center
+                <Option key={l} role="radio" selected={languagePicked && language === l} dimmed={languagePicked && language !== l} title={LANGUAGES[l]} lang={l} center
                   onClick={() => pickLanguage(l)} />
               ))}
             </div>
           )}
 
-          {step === 2 && <NicknameField value={nickname} onChange={setNickname} onEnter={() => nameOk && go(3)} invalid={!!error} />}
+          {step === 2 && <NicknameField value={nickname} onChange={setNickname} onEnter={() => nameOk && leaveNickname()} invalid={!!error} />}
 
           {step === 3 && (
             <div role="radiogroup" aria-label={t('성별')} className="stack" style={{ gap: 8 }}>
@@ -128,7 +145,7 @@ export function OnboardingForm() {
           {step === 4 && (
             <div role="group" aria-label={t('좋아하는 관계')} className="stack" style={{ gap: 8 }}>
               {TASTE_OPTIONS.map((o) => (
-                <Option key={o.value} role="checkbox" selected={tastes.includes(o.value)} dimmed={tastes.length > 0 && !tastes.includes(o.value)} center title={o.label} sub={t(o.sub)}
+                <Option key={o.value} role="checkbox" selected={tastes.includes(o.value)} dimmed={tastes.length > 0 && !tastes.includes(o.value)} center title={o.label} sub={t(o.sub)} icon={<TasteIcon kind={o.value} />}
                   onClick={() => setTastes((cur) => cur.includes(o.value) ? cur.filter((x) => x !== o.value) : [...cur, o.value])} />
               ))}
             </div>
@@ -153,9 +170,9 @@ export function OnboardingForm() {
 
           <div className="stack" style={{ gap: 4, marginTop: 'auto', paddingTop: 'var(--space-6)' }}>
             {/* 고르는 단계는 모두 같은 '다음' 하나로 넘어간다 — 고르기만으로는 넘어가지 않는다(2026-09-30 요청). */}
-            {step <= 4 && <Button type="button" variant="primary" size="lg" full disabled={!ready[step] || switching} onClick={() => go(step + 1)}>{t('다음')}</Button>}
+            {step <= 4 && <Button type="button" variant="primary" size="lg" full className="btn-next" style={NEXT_BUTTON} disabled={!ready[step]} onClick={() => (step === 2 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
             {step === 5 && <>
-              <Button type="button" variant="primary" size="lg" full disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
+              <Button type="button" variant="primary" size="lg" full className="btn-next" style={NEXT_BUTTON} disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
               <Button type="button" variant="ghost" size="sm" full onClick={() => { setBirthDate(''); go(6) }}>{t('건너뛰기')}</Button>
             </>}
             {step === 6 && <>
@@ -243,11 +260,12 @@ function Option({ role, selected, dimmed, title, sub, lang, center, icon, onClic
       }}>
       <span style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: icon ? 'center' : 'baseline', justifyContent: center ? 'center' : undefined, gap: 10, flexWrap: 'wrap' }}>
         {/* 가운데 정렬은 글자 기준 — 그림은 글자 왼쪽 옆에 띄워 둬서 가운데를 밀지 않는다(2026-09-30 요청). */}
-        <span className="t-body-lg" style={{ position: 'relative', fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>
+        {/* 글자는 작게(2026-09-30 요청): 제목 17 → 14, 설명 13 → 12. */}
+        <span style={{ position: 'relative', fontSize: 14, lineHeight: 1.4, fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>
           {icon && <span style={{ position: 'absolute', right: '100%', top: '50%', transform: 'translateY(-50%)', marginRight: 8, display: 'flex' }}>{icon}</span>}
           {title}
         </span>
-        {sub && <span className="t-caption">{sub}</span>}
+        {sub && <span className="t-caption" style={{ fontSize: 'var(--font-micro)' }}>{sub}</span>}
       </span>
       <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
         // 가운데 정렬일 때 체크는 오른쪽 끝에 띄워 둔다 — 글자가 정확히 가운데에 오게.
@@ -297,21 +315,36 @@ function TermsCheck({ all, checked, title, sub, link, onToggle }: {
   )
 }
 
-/**
- * 성별 그림(직접 그린 것 — 이모지는 기기마다 모양이 달라서 쓰지 않는다). 바탕 없이 사람 하나:
- * 여성은 치마(사다리꼴), 남성은 어깨가 각진 몸, 밝히지 않음은 둥근 몸에 물음표.
- */
 /** 성별마다 한 색(2026-09-30 요청) — 여성 분홍, 남성 파랑, 밝히지 않음 회색. 이 화면에서만 쓰는 색이라 토큰으로 올리지 않았다. */
 const GENDER_COLOR = { female: '#F472B6', male: '#60A5FA', none: 'var(--color-text-tertiary)' } as const
-function GenderIcon({ kind }: { kind: 'female' | 'male' | 'none' }) {
+
+/**
+ * 성별 기호(직접 그린 선 아이콘 — 이모지·글꼴 기호는 기기마다 모양이 달라서 쓰지 않는다, 2026-09-30 새로 그림):
+ * 남성 ♂(원 + 오른쪽 위 화살표), 여성 ♀(원 + 아래 십자), 밝히지 않음 ⚲(원 + 아래 선). 색은 성별 색.
+ */
+function GenderSymbol({ kind, size = 20 }: { kind: 'female' | 'male' | 'none'; size?: number }) {
   return (
-    <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 28, height: 28, flexShrink: 0, color: GENDER_COLOR[kind] }}>
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-        <circle cx="12" cy="5" r="3" />
-        {kind === 'female' && <><path d="M9.6 9.5h4.8l3.1 8H6.5z" /><rect x="9.4" y="17" width="1.9" height="5" rx=".95" /><rect x="12.7" y="17" width="1.9" height="5" rx=".95" /></>}
-        {kind === 'male' && <><rect x="7.5" y="9.5" width="9" height="7.5" rx="1.6" /><rect x="8.9" y="16" width="2.2" height="6" rx="1.1" /><rect x="12.9" y="16" width="2.2" height="6" rx="1.1" /></>}
-        {kind === 'none' && <><rect x="7.5" y="9.5" width="9" height="12.5" rx="4.5" opacity=".35" /><text x="12" y="19.4" textAnchor="middle" fontSize="9" fontWeight="700" fontFamily="system-ui, sans-serif">?</text></>}
-      </svg>
+    <svg aria-hidden width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ flexShrink: 0, color: GENDER_COLOR[kind] }}>
+      {kind === 'male' && <><circle cx="10" cy="14" r="6" /><path d="M14.3 9.7 20 4M15 4h5v5" /></>}
+      {kind === 'female' && <><circle cx="12" cy="9" r="6" /><path d="M12 15v7M8.5 19h7" /></>}
+      {kind === 'none' && <><circle cx="12" cy="9" r="6" /><path d="M12 15v7" /></>}
+    </svg>
+  )
+}
+
+function GenderIcon({ kind }: { kind: 'female' | 'male' | 'none' }) {
+  return <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 24, height: 24, flexShrink: 0 }}><GenderSymbol kind={kind} /></span>
+}
+
+/** 취향 기호 — 두 성별 기호를 살짝 겹쳐 한 쌍으로(2026-09-30 요청): BL ♂♂ 파랑, HL ♂♀ 파랑·분홍, GL ♀♀ 분홍. */
+const TASTE_PAIR: Record<Taste, ['male' | 'female', 'male' | 'female']> = { bl: ['male', 'male'], hl: ['male', 'female'], gl: ['female', 'female'] }
+function TasteIcon({ kind }: { kind: Taste }) {
+  const [a, b] = TASTE_PAIR[kind]
+  return (
+    <span aria-hidden style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+      <GenderSymbol kind={a} size={18} />
+      <span style={{ display: 'flex', marginLeft: -4 }}><GenderSymbol kind={b} size={18} /></span>
     </span>
   )
 }
