@@ -41,7 +41,7 @@ test('공개하지 않은 캐릭터는 다른 사람에게 보이지 않는다',
   const b = await (await browser.newContext()).newPage()
   await signUp(b, BASE)
   await b.goto(`${BASE}/home`)
-  await expect(b.getByRole('heading', { name: '전체 이야기' })).toBeVisible()
+  await expect(b.getByRole('heading', { name: '장르' })).toBeVisible()
   await expect(b.getByRole('link', { name: new RegExp(name) })).toHaveCount(0)
 })
 

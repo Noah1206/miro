@@ -2,8 +2,7 @@
 /* 배치 크기는 유지하고 가운데를 기준으로 축소한다. 실제 터치 영역은 50 × .88 = 44px. */
 .headerItem.headerAction::after { width: max(100%, 50px); height: max(100%, 50px); }
 .feed { padding: 0 var(--gutter); }
-.sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-.sectionHeading h2, .chipSection h2 { font-size: 17px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; }
+.chipSection h2 { font-size: 17px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; }
 .count { font-size: 12px; color: var(--color-text-tertiary); white-space: nowrap; }
 /* 줄 사이는 카드 밑 해시태그가 아래 카드에 붙지 않을 만큼(2026-09-30), 칸 사이는 그대로 4px. */
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 4px; }

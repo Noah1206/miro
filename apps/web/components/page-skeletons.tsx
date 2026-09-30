@@ -34,7 +34,6 @@ export function HomePageSkeleton() {
           {chips.map(chip => <Block key={chip} width={chip.length * 13 + 20} height={36} style={{ flexShrink: 0, borderRadius: 16 }} />)}
         </div>
       </div>)}
-      <Block width={88} height={24} style={{ marginBottom: 14 }} />
     </div>
     <CardGridSkeleton ratio="2 / 3" />
   </Status>

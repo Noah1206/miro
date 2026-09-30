@@ -93,7 +93,8 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
       onToggle={value => show({ ...filter, relations: toggled(RELATIONS, filter.relations, value) })} />
 
     <section aria-labelledby="recommend-title" className={empty || waiting ? styles.fill : undefined}>
-      <div className={styles.sectionHeading}><h2 id="recommend-title">{t('전체 이야기')}</h2></div>
+      {/* '전체 이야기' 제목은 화면에서 뺐다(2026-09-30 요청) — 화면 읽기용으로만 남긴다. */}
+      <h2 id="recommend-title" className="sr-only">{t('전체 이야기')}</h2>
       <div className={styles.grid}>{recommendations.map(c => <StoryCard key={c.id} c={c} />)}</div>
       {waiting
         ? <div role="status" className={`empty-state empty-state--fill ${styles.loadingDots}`}><i aria-hidden /><i aria-hidden /><i aria-hidden /><span className="sr-only">{t('불러오는 중')}</span></div>
