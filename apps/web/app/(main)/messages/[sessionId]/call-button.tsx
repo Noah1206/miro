@@ -11,7 +11,7 @@ export function CallButton({ sessionId, cost }: { sessionId: string; cost: numbe
   const { requireBalance, busy } = useWallet()
   const router = useRouter()
   const requestId = useRef<string | null>(null)
-  return <button type="button" className={styles.headerButton} aria-label={t('통화')} title={t('음성통화 · 1분당 {cost} 크레딧', { cost })} aria-busy={busy} disabled={busy}
+  return <button type="button" className={styles.headerButton} aria-label={t('통화')} title={t('음성통화 · 1분당 {cost} 미로', { cost })} aria-busy={busy} disabled={busy}
     onClick={() => {
       requestId.current ??= crypto.randomUUID()
       void requireBalance(cost, async () => {

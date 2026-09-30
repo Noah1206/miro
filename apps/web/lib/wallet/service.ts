@@ -30,7 +30,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       from ${usageLedger} where ${usageLedger.userId} = ${userId}
       union all
       select 'grant:' || ${rechargeGrants.id}::text, ${rechargeGrants.createdAt},
-        case when ${rechargeGrants.source} = 'purchase' then '크레딧 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' else '크레딧 지급' end,
+        case when ${rechargeGrants.source} = 'purchase' then '미로 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' else '미로 지급' end,
         ${rechargeGrants.amount} - ${rechargeGrants.refunded},
         case when ${rechargeGrants.refunded} > 0 then '회수 ' || ${rechargeGrants.refunded}::text
           when ${rechargeGrants.expiresAt} is not null then to_char(${rechargeGrants.expiresAt} at time zone 'Asia/Seoul', 'YYYY.MM.DD') || '까지'
@@ -40,7 +40,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       from ${rechargeGrants} where ${rechargeGrants.userId} = ${userId}
       union all
       select 'order:' || ${bankTransferOrders.id}::text, ${bankTransferOrders.createdAt},
-        case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '크레딧 충전 주문' end,
+        case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '미로 충전 주문' end,
         null::integer,
         -- 원화는 '9,900원' 으로. 다른 통화는 그대로 표기한다(운영 계좌는 원화만 받는다).
         case when ${bankTransferOrders.currency} = 'KRW' then to_char(${bankTransferOrders.amountMinor}, 'FM999,999,999') || '원'

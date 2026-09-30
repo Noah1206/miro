@@ -45,7 +45,7 @@ export function WelcomePopup({ units, validDays }: { units: number; validDays: n
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash)
   }
 
-  const title = t('가입 선물 {n} 크레딧 지급 완료!', { n: units.toLocaleString(locale) })
+  const title = t('가입 선물 {n} 미로 지급 완료!', { n: units.toLocaleString(locale) })
   return (
     <AnimatePresence>
       {open && (
@@ -63,7 +63,7 @@ export function WelcomePopup({ units, validDays }: { units: number; validDays: n
             <img src="/welcome-gift.png" alt="" aria-hidden width={240} height={240} decoding="async" style={{ display: 'block', width: 240, height: 240, margin: '4px auto 0' }} />
             <h2 id={titleId} tabIndex={-1} data-initial-focus style={{ margin: '4px 0 0', fontSize: 17, lineHeight: 1.4, fontWeight: 'var(--weight-bold)', color: 'var(--color-text-primary)', outline: 'none' }}>{title}</h2>
             <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-secondary)' }}>
-              {t('MIRO에 온 걸 환영해요! 지금 바로 캐릭터와 대화를 시작해 보세요. 선물 크레딧은 ECHO 대화와 통화에 {n}일 동안 쓸 수 있어요.', { n: validDays })}
+              {t('MIRO에 온 걸 환영해요! 지금 바로 캐릭터와 대화를 시작해 보세요. 선물 미로는 ECHO 대화와 통화에 {n}일 동안 쓸 수 있어요.', { n: validDays })}
             </p>
             {/* 흰 바탕에 검은 글자, 글자는 다른 버튼과 같은 14px, 양끝이 완전히 둥근 알약 모양(2026-09-30 요청). */}
             <Button variant="secondary" full onClick={close}

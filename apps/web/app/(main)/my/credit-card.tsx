@@ -15,10 +15,10 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
   useEffect(() => { sync(initial) }, [initial, sync])
   const value = wallet ?? initial
   return (
-    <section className={styles.credit} aria-label={t('크레딧')}>
+    <section className={styles.credit} aria-label={t('미로')}>
       <p className={styles.balance} aria-live="polite">
         <svg aria-hidden width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#F5B83D" /><circle cx="12" cy="12" r="6.6" fill="none" stroke="#FFE08A" strokeWidth="1.6" /><path d="M12 8.2v7.6M9.6 10.4h4.8" stroke="#A8680C" strokeWidth="1.7" strokeLinecap="round" /></svg>
-        {t('{n} 크레딧', { n: value.rechargeRemaining.toLocaleString(locale) })}
+        {t('{n} 미로', { n: value.rechargeRemaining.toLocaleString(locale) })}
       </p>
       <div className={styles.creditActions}>
         <TransitionLink href="/recharge" className={styles.outline}>{t('사용 내역')}</TransitionLink>

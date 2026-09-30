@@ -47,7 +47,7 @@ async function approve(browser: Browser, code: string) {
 test('insufficient balance → recharge → admin approval → settlement → original call once', async ({ page, browser, request }) => {
   const { userId, sessionId } = await enter(page)
   await page.getByRole('button', { name: '통화', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('크레딧이 부족해요')
+  await expect(page.getByRole('dialog')).toContainText('미로가 부족해요')
   expect(await db.select().from(callSessions).where(eq(callSessions.sessionId, sessionId))).toHaveLength(0)
   await page.getByRole('button', { name: '충전하고 이어가기' }).click()
   await page.locator('input[value="recharge:e2e_small"]').check()
@@ -79,7 +79,7 @@ test('insufficient balance → recharge → admin approval → settlement → or
   await page.goto(`${WEB}/recharge`)
   await expect(page.locator('[data-recharge-balance="295"]')).toBeVisible()
   await expect(page.locator('[data-wallet-history]')).toContainText('음성통화')
-  await expect(page.locator('[data-wallet-history]')).toContainText('크레딧 충전')
+  await expect(page.locator('[data-wallet-history]')).toContainText('미로 충전')
   await page.getByRole('button', { name: '전체 내역' }).click()
   await expect(page.getByRole('dialog', { name: 'Miro Pay 전체 내역' })).toContainText('지급 완료')
 })

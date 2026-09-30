@@ -16,6 +16,6 @@ export const EXTRA_KEYS = [
   // lib/wallet/service.ts 내역 줄의 label·status (SQL case)
   msg('ECHO 대화'), msg('Pro 1개월 이용권'), msg('가입 선물'), msg('기한 지남'), msg('대화 이어가기 제공량'), msg('라이브 장면'),
   msg('사용 완료'), msg('사용 중'), msg('사진 생성'), msg('영상통화'), msg('음성통화'), msg('입금 대기'), msg('지급 대기'),
-  msg('지급 완료'), msg('차감 취소'), msg('추가 인터랙션'), msg('취소됨'), msg('크레딧 지급'), msg('크레딧 충전 주문'),
-  msg('크레딧 충전'), msg('환불됨'),
+  msg('지급 완료'), msg('차감 취소'), msg('추가 인터랙션'), msg('취소됨'), msg('미로 지급'), msg('미로 충전 주문'),
+  msg('미로 충전'), msg('환불됨'),
 ]

@@ -41,7 +41,7 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
       <div className={styles.balanceLine}><p className={`t-caption ${styles.muted}`}>{t('충전 잔액')}</p><HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-help" /></div>
       <motion.p key={value.rechargeRemaining} className={`t-title-1 ${styles.amount}`} data-recharge-balance={value.rechargeRemaining}
         initial={{ opacity: 0.6 }} animate={{ opacity: 1 }} transition={tween.fast} aria-live="polite" aria-atomic>
-        {value.rechargeRemaining.toLocaleString(locale)} <span className="t-body">{t('크레딧')}</span>
+        {value.rechargeRemaining.toLocaleString(locale)} <span className="t-body">{t('미로')}</span>
       </motion.p>
       <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'} style={{ marginTop: 'var(--space-5)' }}>{t('충전하기')}</Button>
       {help && <div id="wallet-help" className={styles.help} style={{ marginTop: 'var(--space-3)' }}>

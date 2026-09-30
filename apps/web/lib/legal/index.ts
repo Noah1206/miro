@@ -5,8 +5,8 @@ import { PRIVACY_POLICY } from './privacy'
 import { SERVICE_TERMS } from './service'
 
 /** 약관/개인정보 버전(= 시행일). 동의 기록(terms_consents)에 함께 남긴다. 본문을 바꾸면 날짜를 올린다. */
-export const TERMS_VERSION = '2026-09-30'
-export const PRIVACY_VERSION = '2026-09-30'
+export const TERMS_VERSION = '2026-10-01'
+export const PRIVACY_VERSION = '2026-10-01'
 
 /**
  * 문서 한 덩어리: 문단 / 강조 문단 / 목록 / 표. 본문은 한국어 원문이 기준이라 번역하지 않는다.

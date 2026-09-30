@@ -31,7 +31,7 @@ export function NotificationBell({ unread, signedIn, className }: { unread: numb
   </>
   if (!signedIn) return (
     <button type="button" aria-label={t('알림, 가입 선물이 기다리고 있어요')} className={className} style={BOX}
-      onClick={() => askLogin(undefined, t('가입하면 {n} 크레딧을 선물로 드려요', { n: WELCOME_GRANT.units }))}>
+      onClick={() => askLogin(undefined, t('가입하면 {n} 미로를 선물로 드려요', { n: WELCOME_GRANT.units }))}>
       {inner}{VISITOR_BADGE && <span className={styles.bellBadge} aria-hidden>{VISITOR_BADGE}</span>}
     </button>
   )
