@@ -74,12 +74,18 @@ export function CreatePageSkeleton() {
 }
 
 export function MyPageSkeleton() {
+  // '나' 화면(2026-09-30) — 로고·알림·설정 → 프로필 줄 → 숫자 카드 → 크레딧 카드.
   return <Status label={msg('내 정보 불러오는 중')} className="page page--wide">
-    <div style={{ padding: 'var(--space-5)', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
-      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}><Block width={64} height={64} style={{ flexShrink: 0, borderRadius: 32 }} /><div style={{ flex: 1 }}><Block width="50%" height={23} style={{ marginBottom: 8 }} /><Block width="35%" height={16} /></div></div>
-      <Block width="70%" height={18} style={{ marginTop: 18 }} />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, marginBottom: 'var(--space-5)' }}>
+      <Block width={30} height={30} style={{ borderRadius: 10 }} />
+      <div style={{ display: 'flex', gap: 14 }}><Block width={32} height={32} style={{ borderRadius: 16 }} /><Block width={32} height={32} style={{ borderRadius: 16 }} /></div>
     </div>
-    <Block width={260} height={44} style={{ marginTop: 'var(--space-7)', marginBottom: 'var(--space-4)', borderRadius: 22 }} />
-    <div className="grid-2" style={{ gap: 4 }}><Block style={{ aspectRatio: '10 / 16' }} /><Block style={{ aspectRatio: '10 / 16' }} /></div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 'var(--space-5)' }}>
+      <Block width={64} height={64} style={{ flexShrink: 0, borderRadius: 32 }} />
+      <div style={{ flex: 1 }}><Block width="45%" height={24} style={{ marginBottom: 8 }} /><Block width="60%" height={16} /></div>
+      <Block width={32} height={32} style={{ flexShrink: 0, borderRadius: 16 }} />
+    </div>
+    <Block height={92} style={{ marginBottom: 'var(--space-4)', borderRadius: 16 }} />
+    <Block height={140} style={{ borderRadius: 16 }} />
   </Status>
 }

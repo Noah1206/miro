@@ -62,7 +62,7 @@ test('/create 는 미로 캐릭터로 바로 열고, 비공개 초안을 재개�
   await expect(page.locator('input[name="name"]')).toHaveValue('비공개서점')
   await page.getByRole('button', { name: '게시', exact: true }).click()
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/)
-  await page.goto(`${BASE}/my?filter=private`)
+  await page.goto(`${BASE}/my/characters?filter=private`)
   await expect(page.getByRole('link', { name: /비공개서점, 비공개/ })).toBeVisible()
   await page.goto(`${BASE}/create`)
   await expect(page).toHaveURL(/\/create\?type=reality&draft=/)

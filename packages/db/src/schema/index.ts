@@ -9,6 +9,8 @@ export const users = pgTable('users', {
   /** 소셜 제공자가 이메일을 주지 않을 수 있다 (카카오·네이버 선택 동의). 있으면 계정 연결 키로 쓴다. */
   email: text('email').unique(),
   displayName: text('display_name'),
+  /** 프로필 사진 공개 URL('나' 화면 편집, 2026-09-30). 없으면 MIRO 마크. */
+  avatarUrl: text('avatar_url'),
   allowTraining: boolean('allow_training').notNull().default(false),
   allowEvaluation: boolean('allow_evaluation').notNull().default(false),
   aiConsentVersion: text('ai_consent_version'),
