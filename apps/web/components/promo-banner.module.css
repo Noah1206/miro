@@ -25,3 +25,7 @@
   .body { display: block; font-size: 14px; line-height: 1.6; }
   .cta { margin-top: 12px; min-height: 44px !important; padding: 4px 24px !important; font-size: 14px !important; }
 }
+/* 배너 전체를 덮는 로그인 버튼(로그인 전 가입 선물 배너, 2026-09-30 요청) — 투명하고, 초점 테두리는 안쪽에 그린다(clip-path 에 잘리지 않게). */
+.tap { position: absolute; inset: 0; z-index: 2; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tap:focus-visible { outline: 2px solid var(--color-white); outline-offset: -3px; border-radius: inherit; }
+@media (hover: hover) and (pointer: fine) { .tap:hover { background: rgba(255, 255, 255, 0.04); } }

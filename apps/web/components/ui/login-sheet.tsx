@@ -20,6 +20,12 @@ export function LoginButton({ next, ...rest }: Omit<React.ComponentProps<typeof 
   return <Button type="button" onClick={() => ask(next)} {...rest} />
 }
 
+/** 카드·배너 전체를 덮는 투명한 버튼 — 누르면 로그인 시트(2026-09-30: 로그인 전 가입 선물 배너). 위치·모양은 className 이 정한다. */
+export function LoginTapArea({ label, className }: { label: string; className?: string }) {
+  const ask = useLoginSheet()
+  return <button type="button" aria-label={label} className={className} onClick={() => ask()} />
+}
+
 /**
  * 로그인을 화면 이동 대신 시트로 묻는다.
  *
