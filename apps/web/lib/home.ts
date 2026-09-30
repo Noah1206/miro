@@ -24,7 +24,7 @@ const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
 const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`
 
 /**
- * 앱은 미로 캐릭터만 보여준다(2026-09-29 결정). 옛 일반 캐릭터는 목록·검색에 나오지 않고, 이미 연 대화만 이어진다.
+ * 홈은 공개된 일반(캐릭터챗)·미로 캐릭터를 모두 보여준다 — 9/29 '미로만' 을 되돌림(2026-09-30). 미로 페이지는 미로 캐릭터만.
  */
 export async function homeRows(): Promise<HomeRow[]> {
   const { items } = await homePage(null)
@@ -121,7 +121,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
 }
 
 /** 홈 = 모든 캐릭터(일반·미로). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다 — 미로 탭과 같은 규칙(2026-09-29). 장르·관계 칩으로 거른다(2026-09-30). */
-export const homePage = (userId: string | null, cursor: string | null = null, filter: CardFilter = {}) => cardPage('reality', userId, cursor, true, filter)
+export const homePage = (userId: string | null, cursor: string | null = null, filter: CardFilter = {}) => cardPage(null, userId, cursor, true, filter)
 /** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
 export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, {}, true)
 

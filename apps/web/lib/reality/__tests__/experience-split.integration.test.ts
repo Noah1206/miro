@@ -106,8 +106,8 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     await expect(startOutgoingCall(u, reality, 'voice')).resolves.toMatch(/^[0-9a-f-]{36}$/)
   })
 
-  // 2026-09-29: 앱은 미로 캐릭터만 보여준다. 옛 일반 캐릭터는 목록·검색에서 빠지고, 상세와 이미 연 대화만 남는다.
-  it('home and 미로 list only 미로 characters; an old chat character is still reachable by its detail page', async () => {
+  // 2026-09-30: 홈은 일반(캐릭터챗)·미로를 모두 싣는다(9/29 '미로만' 되돌림). 미로 목록은 미로 캐릭터만.
+  it('home lists both types, 미로 lists reality only, and both detail pages open', async () => {
     const u = await user()
     const viewer = await user()
     const chat = await character('chat', u)
@@ -116,7 +116,7 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
 
     const home = await homeRows()
     const homeIds = home.flatMap(r => r.items.map(i => i.id))
-    expect(homeIds).toContain(reality.id); expect(homeIds).not.toContain(chat.id)
+    expect(homeIds).toContain(chat.id); expect(homeIds).toContain(reality.id)
     expect(home.some(r => r.key === 'continuing')).toBe(false)
 
     const miro = (await discoverGrid(viewer, 'reality')).map(c => c.id)
@@ -140,12 +140,12 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
     await db.update(characters).set({ deletedAt: new Date() }).where(eq(characters.id, deleted.id))
 
     const home = (await homeRows()).flatMap(row => row.items)
-    for (const included of [publicReality, official]) {
+    for (const included of [publicChat, publicReality, official]) {
       expect(home.filter(item => item.id === included.id)).toHaveLength(1)
       expect(home.find(item => item.id === included.id)?.plays).toBe(0)
     }
     expect(home.find(item => item.id === publicReality.id)?.images).toEqual(['https://img.test/1.png'])
-    for (const excluded of [publicChat, privateReality, draft, deleted]) {
+    for (const excluded of [privateReality, draft, deleted]) {
       expect(home.some(item => item.id === excluded.id)).toBe(false)
     }
   })
@@ -168,8 +168,7 @@ describeDb('experience split: chat characters never reach Reality paths', () => 
       }
       cursor = page.nextCursor
     } while (cursor)
-    // 홈은 미로 캐릭터만 — 섞어 만든 일반 캐릭터는 어느 페이지에도 없다.
-    for (const [index, item] of created.entries()) expect(seen.has(item.id)).toBe(index % 2 === 1)
+    for (const item of created) expect(seen.has(item.id)).toBe(true)
     expect(seen.has(privateReality.id)).toBe(false)
 
     // 홈은 미로 탭과 같은 규칙: 만든 사람은 자기 비공개 캐릭터를 보고, 임시저장은 아무도 못 본다 (2026-09-29).

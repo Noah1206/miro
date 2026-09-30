@@ -1,8 +1,9 @@
 'use client'
-import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
-import { activeDraftKey } from '@/lib/create-character-types'
+import { CreateNavSheet } from './create-nav-sheet'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -41,18 +42,10 @@ const ITEMS = [
  */
 export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; userId?: string | null }) {
   const pathname = usePathname()
-  const router = useRouter()
   const t = useT()
-  /** 만들기는 미로 캐릭터 편집기로 바로 간다. 쓰다 만 초안이 있으면 그것을 이어 연다(브라우저 저장소가 막혀 있으면 새 초안). */
-  const openCreate = (id: string) => {
-    let href = '/create?type=reality'
-    try {
-      const active = localStorage.getItem(activeDraftKey(id, 'reality'))
-      if (active && /^[0-9a-f-]{36}$/i.test(active)) href += `&draft=${active}`
-    } catch { /* storage blocked */ }
-    router.push(href)
-  }
   const askLogin = useLoginSheet()
+  // 만들기는 시트에서 일반 캐릭터(캐릭터챗)·미로 캐릭터를 고른다 — 9/29 '미로만' 에서 되돌림(2026-09-30 요청).
+  const [createOpen, setCreateOpen] = useState(false)
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
   return (
     <><nav aria-label={t('주요')} className="nav">
@@ -75,7 +68,8 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
           <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style}
             onClick={() => askLogin(it.href)}>{inner}</button>
         ) : it.href === '/create' && userId ? (
-          <button key={it.href} type="button" className="nav__item" onClick={() => openCreate(userId)} style={style}>{inner}</button>
+          <button key={it.href} type="button" className="nav__item" aria-haspopup="dialog" aria-expanded={createOpen}
+            onClick={() => setCreateOpen(true)} style={style}>{inner}</button>
         ) : (
           <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style}>
             {inner}
@@ -83,6 +77,7 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
         )
       })}
     </nav>
+    {userId && <CreateNavSheet open={createOpen} onClose={() => setCreateOpen(false)} userId={userId} />}
     </>
   )
 }

@@ -57,7 +57,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
       {/* 입력 탭 여섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
       <div role="tablist" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-          {TABS.filter((x) => x.key !== 'preview' && (experienceType === 'reality' || (x.key !== 'relationship' && x.key !== 'contact'))).map((x) => {
+          {TABS.filter((x) => x.key !== 'preview' && (experienceType === 'reality' || x.key !== 'contact')).map((x) => {
             const active = x.key === tab
             return (
               <button key={x.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${x.key}`} onClick={() => onTab(x.key)}

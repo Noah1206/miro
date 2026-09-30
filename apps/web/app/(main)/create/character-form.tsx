@@ -370,20 +370,23 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 관계 ── */}
-        {experienceType === 'reality' && <Panel id="relationship" show={tab === 'relationship'}>
+        {/* 관계 탭 — 관계 태그는 일반 캐릭터(캐릭터챗)도 고른다(2026-09-30). 시작 관계·관계 성격은 미로 캐릭터만. */}
+        <Panel id="relationship" show={tab === 'relationship'}>
           {/* 관계 태그(2026-09-30 요청) — 홈 관계 섹션이 이 값으로 거른다. 친밀도(시작 관계)와는 따로다. */}
           <Section title={t('관계 태그')} subtitle={t('어떤 사이인지 골라 주세요. 최대 4개까지 선택하거나 직접 입력하면 홈 관계 필터와 카드 해시태그에 반영됩니다.')}>
             <Card>
               <PresetTags name="relationshipKeywords" label={msg('관계 태그')} options={RELATIONS} max={4} defaultValue={i.relationshipKeywords} />
             </Card>
           </Section>
+          {experienceType === 'reality' && <>
           <Section title={t('시작 관계')} subtitle={t('처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.')}>
             <RelationshipSettings initial={i} />
           </Section>
           <Section title={t('관계 성격')} subtitle={t('같은 일에도 이 캐릭터가 어떻게 반응하고, 어떤 속도로 가까워지는지예요.')}>
             <ProfileSettings profile={i.relationshipProfile} status={i.profileStatus} />
           </Section>
-        </Panel>}
+          </>}
+        </Panel>
 
         {experienceType === 'reality' && <Panel id="contact" show={tab === 'contact'}>
           <Section title={t('일상·연락')}>

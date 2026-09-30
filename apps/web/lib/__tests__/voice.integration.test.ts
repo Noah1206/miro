@@ -52,8 +52,7 @@ describeDb('official voices in Miro', () => {
     expect(await selectableVoice(retired)).toBeNull()
     expect(await selectableVoice('nope')).toBeNull()
 
-    // 만들기는 미로 캐릭터만(2026-09-29).
-    for (const type of ['reality'] as const) {
+    for (const type of ['chat', 'reality'] as const) {
       const { c, fd } = await creator(active, type)
       expect(c.voiceId).toBe(active)
       expect(c.experienceType).toBe(type)

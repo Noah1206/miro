@@ -6,7 +6,7 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 /** 유형 선택 → 필수 항목 검증 → 게시 → 저장한 세계로 대화 진입. */
 test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async ({ page }) => {
   await signUp(page, BASE)
-  await enterCharacterCreate(page, BASE)
+  await enterCharacterCreate(page, BASE, 'reality')
   const publish = page.getByRole('button', { name: '게시', exact: true })
 
   // 필수가 비어 있으면 게시가 잠긴다. 사용자가 삭제한 중복 안내는 다시 요구하지 않는다.
@@ -41,12 +41,21 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   await expect(world).not.toContainText('어딘가')
 })
 
-test('만들기는 미로 캐릭터로 바로 열고, 비공개 초안을 재개해 게시하면 다음 만들기는 새 초안이다', async ({ page }) => {
+test('일반 비공개 초안을 재개해 게시하면 다음 만들기는 새 초안이다', async ({ page }) => {
   await signUp(page, BASE)
-  await page.getByRole('button', { name: '만들기', exact: true }).click()
-  // 유형 선택 없이 미로 캐릭터 편집기로 간다(2026-09-29).
-  await expect(page).toHaveURL(/\/create\?type=reality&draft=/)
-  await expect(page.getByRole('heading', { name: '미로 캐릭터', exact: true })).toBeVisible()
+  const create = page.getByRole('button', { name: '만들기', exact: true })
+  await create.click()
+  const sheet = page.getByRole('dialog', { name: '어떤 캐릭터를 만들까요?' })
+  await expect(sheet).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(sheet).toBeHidden()
+  await expect(create).toBeFocused()
+  await create.click()
+  await sheet.getByRole('button', { name: /^일반 캐릭터/ }).click()
+  await expect(page.getByRole('heading', { name: '일반 캐릭터', exact: true })).toBeVisible()
+  // 일반 캐릭터도 관계 탭에서 관계 태그를 고른다(2026-09-30). 일상·연락은 미로 캐릭터만.
+  await expect(page.getByRole('tab', { name: '관계', exact: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: '일상·연락', exact: true })).toHaveCount(0)
   await page.locator('input[name="name"]').fill('비공개서점')
   await page.locator('input[name="title"]').fill('따뜻한 차를 건네는 서점 주인')
   await page.locator('textarea[name="personality"]').fill('차분하고 다정한 존댓말을 쓴다.')
@@ -61,17 +70,25 @@ test('만들기는 미로 캐릭터로 바로 열고, 비공개 초안을 재개
   await expect(page.locator('input[name="name"]')).toHaveValue('비공개서점')
   await page.getByRole('button', { name: '게시', exact: true }).click()
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/)
+  await expect(page.getByRole('link', { name: '문자', exact: true })).toHaveCount(0)
   await page.goto(`${BASE}/my?filter=private`)
   await expect(page.getByRole('link', { name: /비공개서점, 비공개/ })).toBeVisible()
   await page.getByRole('button', { name: '만들기', exact: true }).click()
-  await expect(page).toHaveURL(/\/create\?type=reality&draft=/)
+  await page.getByRole('dialog').getByRole('button', { name: /^일반 캐릭터/ }).click()
+  await expect(page).toHaveURL(/\/create\?type=chat&draft=/)
   await expect(page.locator('input[name="name"]')).toHaveValue('')
 })
 
-test('옛 일반 캐릭터 만들기 주소도 미로 캐릭터 만들기로 간다', async ({ page }) => {
+test('일반과 미로의 작성 중 내용이 서로 섞이지 않는다', async ({ page }) => {
   await signUp(page, BASE)
-  await page.goto(`${BASE}/create?type=chat`)
-  await expect(page).toHaveURL(/\/create\?type=reality&draft=/)
-  await expect(page.getByRole('heading', { name: '미로 캐릭터', exact: true })).toBeVisible()
+  await enterCharacterCreate(page, BASE, 'chat')
+  await page.locator('input[name="name"]').fill('일반초안')
+  await enterCharacterCreate(page, BASE, 'reality')
+  await expect(page.locator('input[name="name"]')).toHaveValue('')
+  await page.locator('input[name="name"]').fill('미로초안')
   await expect(page.getByRole('tab', { name: '관계', exact: true })).toBeVisible()
+  await enterCharacterCreate(page, BASE, 'chat')
+  await expect(page.locator('input[name="name"]')).toHaveValue('일반초안')
+  await enterCharacterCreate(page, BASE, 'reality')
+  await expect(page.locator('input[name="name"]')).toHaveValue('미로초안')
 })
