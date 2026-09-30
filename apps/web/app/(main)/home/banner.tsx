@@ -14,6 +14,10 @@ export async function HomeBanner({ signedIn }: { signedIn: boolean }) {
   const t = await getT()
   return (
     <section className={styles.banner}>
+      {/* 배너를 꽉 채우는 힉스필드 그림(2026-09-30, GPT Image 2.5 · 21:9 를 6:1 띠로 자름). 비로그인은 선물 상자를 든 남자, 로그인은 빗속 창가에서 전화하는 남자.
+          꾸밈이라 읽지 않는다. 폰에서는 배너가 숨으므로 lazy — 받지 않는다. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- 배너 한 장, next/image 최적화가 필요 없다 */}
+      <img src={signedIn ? '/banner-contact.webp' : '/banner-gift.webp'} alt="" aria-hidden width={2304} height={384} loading="lazy" decoding="async" className={styles.bannerArt} />
       <div className={styles.bannerText}>
         {signedIn ? <>
           <p className={styles.bannerEyebrow}>{t('미로 캐릭터')}</p>
@@ -27,9 +31,6 @@ export async function HomeBanner({ signedIn }: { signedIn: boolean }) {
           <LoginButton variant="secondary" style={CTA}>{t('가입하고 선물 받기')}</LoginButton>
         </>}
       </div>
-      {/* 선물 상자는 가입 선물 팝업의 힉스필드 그림, 미로 소개는 로고 마크. 꾸밈이라 읽지 않는다. 폰에서는 배너가 숨으므로 lazy. */}
-      {/* eslint-disable-next-line @next/next/no-img-element -- 꾸밈 그림 한 장, next/image 최적화가 필요 없다 */}
-      <img src={signedIn ? '/logo-mark.png' : '/welcome-gift.png'} alt="" aria-hidden width={200} height={200} loading="lazy" decoding="async" className={styles.bannerArt} />
     </section>
   )
 }

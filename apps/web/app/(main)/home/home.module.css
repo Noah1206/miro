@@ -45,18 +45,21 @@
   .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
 
-/* 컴퓨터 홈의 배너 — 헤더와 캐릭터 사이(2026-09-30 요청). 폰에서는 없다. 주황은 그림 뒤 은은한 빛에만 쓴다. */
+/* 컴퓨터 홈의 배너 — 헤더와 캐릭터 사이(2026-09-30 요청). 폰에서는 없다.
+   힉스필드 그림이 배너를 꽉 채우고(제타·위프 배너처럼), 글은 왼쪽을 어둡게 누른 위에 얹는다. */
 .banner { display: none; }
 @media (min-width: 1024px) {
-  /* 높이만 줄였다(256→약 190, 2026-09-30 요청) — 위아래 여백·줄 간격·그림 크기. 글자와 버튼 크기는 그대로. */
-  .banner { display: flex; align-items: center; justify-content: space-between; gap: 32px;
-    margin: 0 var(--gutter) var(--space-6); padding: 20px 56px 20px 48px; border-radius: 16px; overflow: hidden;
-    background: radial-gradient(300px 200px at calc(100% - 126px) 50%, rgba(154, 52, 18, 0.5), transparent 70%), var(--color-surface-1); }
-  .bannerText { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+  /* 높이는 글이 정한다(약 190, 9/30 요청으로 줄인 높이). 그림은 흐름 밖에서 뒤를 채운다. */
+  .banner { position: relative; isolation: isolate; display: flex; align-items: center;
+    margin: 0 var(--gutter) var(--space-6); padding: 20px 48px; border-radius: 16px; overflow: hidden; background: var(--color-surface-1); }
+  /* 폭이 줄면 오른쪽을 잘라낸다(왼쪽 기준) — 인물이 글과 겹치지 않고 글 옆에 남는다. */
+  .bannerArt { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: left center; }
+  .banner::after { content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(10, 10, 12, 0.88) 0%, rgba(10, 10, 12, 0.72) 30%, rgba(10, 10, 12, 0.25) 44%, rgba(10, 10, 12, 0) 54%); }
+  .bannerText { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
   .bannerEyebrow { margin: 0; font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
   .bannerTitle { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; color: var(--color-text-primary); }
   .bannerBody { margin: 0 0 12px; font-size: 14px; line-height: 1.6; color: var(--color-text-secondary); }
-  .bannerArt { display: block; width: 140px; height: 140px; flex-shrink: 0; object-fit: contain; }
 }
 
 /* 인기 목록을 불러오는 동안 가운데에서 튕기는 점 세 개(2026-09-30 요청) — 채팅 '입력 중' 점(chat.module.css)과 같은 움직임을 크게. */
