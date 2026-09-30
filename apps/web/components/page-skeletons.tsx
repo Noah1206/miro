@@ -28,8 +28,8 @@ export function HomePageSkeleton() {
     </div>
     <div style={{ padding: '0 var(--gutter)' }}>
       <Block width={116} height={34} style={{ marginBottom: 16, borderRadius: 9 }} />
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-        {MOODS.map(mood => <Block key={mood} width={mood.length * 13 + 20} height={36} style={{ borderRadius: 16 }} />)}
+      <div style={{ display: 'flex', gap: 6, overflow: 'hidden', margin: '0 calc(-1 * var(--gutter)) 16px', padding: '0 var(--gutter)' }}>
+        {MOODS.map(mood => <Block key={mood} width={mood.length * 13 + 20} height={36} style={{ flexShrink: 0, borderRadius: 16 }} />)}
       </div>
       <Block width={88} height={24} style={{ marginBottom: 14 }} />
     </div>
