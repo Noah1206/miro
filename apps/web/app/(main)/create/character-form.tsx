@@ -370,7 +370,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 관계 ── */}
-        {/* 관계 탭 — 관계 태그는 일반 캐릭터(캐릭터챗)도 고른다(2026-09-30). 시작 관계·관계 성격은 미로 캐릭터만. */}
+        {/* 관계 탭 — 관계 태그는 캐릭터챗도 고른다(2026-09-30). 시작 관계·관계 성격은 미로 캐릭터만. */}
         <Panel id="relationship" show={tab === 'relationship'}>
           {/* 관계 태그(2026-09-30 요청) — 홈 관계 섹션이 이 값으로 거른다. 친밀도(시작 관계)와는 따로다. */}
           <Section title={t('관계 태그')} subtitle={t('어떤 사이인지 골라 주세요. 최대 4개까지 선택하거나 직접 입력하면 홈 관계 필터와 카드 해시태그에 반영됩니다.')}>

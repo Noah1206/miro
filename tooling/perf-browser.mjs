@@ -44,7 +44,6 @@ if (!probe || !fingerprint.ok || !(await fingerprint.text()).includes(label)) {
 }
 
 const routes = [
-  { name: 'homeToMiro', from: '/home', to: '/miro', link: 'nav a[href="/miro"]', marker: '#main [data-miro-grid]', content: '#main [data-miro-grid] a[href^="/character/"]' },
   { name: 'miroToHome', from: '/miro', to: '/home', link: 'nav a[href="/home"]', marker: '#main #recommend-title', content: '#main a[href^="/character/"]' },
   { name: 'homeToCreate', from: '/home', to: '/create', link: 'nav a[href="/create"]', marker: '#main form', content: '#main form input[name="name"]' },
   { name: 'homeToArchive', from: '/home', to: '/archive', link: 'nav a[href="/archive"]', marker: '#main [data-session-row]', content: '#main [data-session-row] a[href^="/chat/"]' },

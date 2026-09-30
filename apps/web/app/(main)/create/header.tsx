@@ -44,7 +44,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
           style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, color: 'var(--color-text-primary)' }}>
           <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </TransitionLink>
-        <h1 className="t-caption" style={{ flexShrink: 0 }}>{experienceType === 'chat' ? t('일반 캐릭터') : t('미로 캐릭터')}</h1>
+        <h1 className="t-caption" style={{ flexShrink: 0 }}>{experienceType === 'chat' ? t('캐릭터챗') : t('미로 캐릭터')}</h1>
         <span className="t-caption" style={{ flex: 1, textAlign: 'right', fontSize: 'var(--font-micro)', transform: 'translateY(3px)', color: 'var(--color-text-secondary)' }} aria-live="polite">{missingHint}</span>
         {buttons === 'create' && <button type="submit" name="intent" value="draft" disabled={!canDraft || pending}
           style={{ minHeight: 44, padding: '4px 6px', background: 'none', border: 0, color: canDraft && !pending ? 'var(--color-text-secondary)' : 'var(--color-text-disabled)', cursor: canDraft && !pending ? 'pointer' : 'default', fontSize: 'var(--font-caption)' }}>{t('임시저장')}</button>}

@@ -52,14 +52,13 @@ test('예전 /discover·/home/search 링크는 홈으로 간다', async ({ page 
   }
 })
 
-test('하단 탭의 발견 자리는 미로이고, 미로에는 공식 미로 캐릭터가 실린다', async ({ page }) => {
+test('하단 첫 탭은 미로(홈)이고, 공식 미로 캐릭터가 실린다', async ({ page }) => {
   await page.goto(`${BASE}/home`)
-  await expect(page.locator('nav a[href="/miro"]')).toHaveText(/미로/)
+  // 2026-09-30: 홈 탭 이름이 '미로' 이고 따로 있던 미로 탭(/miro)은 내비에서 빠졌다.
+  await expect(page.locator('nav a[href="/home"]')).toHaveText(/미로/)
+  await expect(page.locator('nav a[href="/miro"]')).toHaveCount(0)
   await expect(page.locator('nav a[href="/discover"]')).toHaveCount(0)
-  await page.locator('nav a[href="/miro"]').click()
-  await expect(page).toHaveURL(/\/miro$/)
-  await expect(page.getByRole('heading', { name: '미로' })).toBeVisible()
-  // 2026-09-29: 앱은 미로 캐릭터만 — 공식 시드도 미로 캐릭터라 미로 탭에 실린다.
+  // 앱은 미로 캐릭터만 — 공식 시드도 미로 캐릭터라 홈에 실린다.
   await expect(page.getByRole('link', { name: /토마스/ }).first()).toBeVisible()
   await expect(page.getByRole('link', { name: /강태윤/ }).first()).toBeVisible()
 })

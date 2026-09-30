@@ -1,30 +1,26 @@
 'use client'
 import { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
 import { CreateNavSheet } from './create-nav-sheet'
+import { CREATE_CHARACTER_OPTIONS, createHref } from '@/lib/create-character-types'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
 /**
- * 만들기가 한가운데 — 다섯 칸의 중심이 '새로 만드는 일' 이다 (레퍼런스).
+ * 탭은 미로 · 만들기 · 대화 · 나 넷이다(2026-09-30: 첫 베타는 미로 캐릭터만 — 홈 탭 이름을 '미로' 로 바꾸고 따로 있던 미로 탭은 뺐다).
  *
- * 아이콘은 선이 아니라 꽉 찬 실루엣이다. 속(나침반 바늘·플러스·말풍선 점)은 같은 path 안의
+ * 아이콘은 선이 아니라 꽉 찬 실루엣이다. 속(플러스·말풍선 점)은 같은 path 안의
  * 하위 도형으로 두고 fill-rule=evenodd 로 뚫는다 — 배경색으로 덮으면 내비의 반투명 블러와
  * 어긋나므로, 진짜 구멍을 내서 뒤가 그대로 비치게 한다.
  */
 const ITEMS = [
-  { href: '/home', label: msg('홈'),
-    icon: <path d="M10.9 3.2 3.6 9.6a2.4 2.4 0 0 0-.8 1.8v8.1A1.5 1.5 0 0 0 4.3 21h15.4a1.5 1.5 0 0 0 1.5-1.5v-8.1a2.4 2.4 0 0 0-.8-1.8l-7.3-6.4a1.7 1.7 0 0 0-2.2 0z" /> },
   /**
-   * 미로 — Reality 인터랙션을 가진, 중심이 되는 캐릭터들이 모인 곳. 캐릭터 카드가 겹겹이 쌓인 모양이다.
-   * 나침반(탐색)도, 별(장식)도, 빈 고리도 아니다 — 이 탭에 실제로 있는 것, 캐릭터들을 가리킨다.
-   *
-   * 겹친 자리는 evenodd 로 뚫려 틈이 된다. 배경색으로 덮지 않으므로 내비의 반투명 블러가
-   * 그대로 비치고, 그 틈 덕에 한 덩어리가 아니라 '여러 장' 으로 읽힌다.
+   * 미로 — 첫 화면(홈). 캐릭터 카드가 겹겹이 쌓인 모양이다.
+   * 겹친 자리는 evenodd 로 뚫려 틈이 된다. 그 틈 덕에 한 덩어리가 아니라 '여러 장' 으로 읽힌다.
    */
-  { href: '/miro', label: msg('미로'),
+  { href: '/home', label: msg('미로'),
     icon: <path d="M10.8 2.6h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4h-7.2a3.4 3.4 0 0 1-3.4-3.4V6a3.4 3.4 0 0 1 3.4-3.4ZM6 7.4h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4H6a3.4 3.4 0 0 1-3.4-3.4v-7.2A3.4 3.4 0 0 1 6 7.4Z" /> },
   // 만들기도 로그인 뒤에만 의미가 있다 — 비로그인이면 로그인 화면으로 보내지 않고 대화·나처럼 시트로 묻는다.
   { href: '/create', label: msg('만들기'), auth: true,
@@ -44,8 +40,11 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
   const pathname = usePathname()
   const t = useT()
   const askLogin = useLoginSheet()
-  // 만들기는 시트에서 일반 캐릭터(캐릭터챗)·미로 캐릭터를 고른다 — 9/29 '미로만' 에서 되돌림(2026-09-30 요청).
+  const router = useRouter()
+  // 만들기는 시트에서 유형을 고른다. 고를 게 하나뿐이면(첫 베타: 미로 캐릭터만) 시트 없이 바로 편집기로 간다(2026-09-30).
+  const choosing = CREATE_CHARACTER_OPTIONS.length > 1
   const [createOpen, setCreateOpen] = useState(false)
+  const openCreate = (id: string) => choosing ? setCreateOpen(true) : router.push(createHref(id, CREATE_CHARACTER_OPTIONS[0]!.type))
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
   return (
     <><nav aria-label={t('주요')} className="nav">
@@ -68,8 +67,8 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
           <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style}
             onClick={() => askLogin(it.href)}>{inner}</button>
         ) : it.href === '/create' && userId ? (
-          <button key={it.href} type="button" className="nav__item" aria-haspopup="dialog" aria-expanded={createOpen}
-            onClick={() => setCreateOpen(true)} style={style}>{inner}</button>
+          <button key={it.href} type="button" className="nav__item" aria-haspopup={choosing ? 'dialog' : undefined} aria-expanded={choosing ? createOpen : undefined}
+            onClick={() => openCreate(userId)} style={style}>{inner}</button>
         ) : (
           <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style}>
             {inner}
@@ -77,7 +76,7 @@ export function Nav({ signedIn = true, userId = null }: { signedIn?: boolean; us
         )
       })}
     </nav>
-    {userId && <CreateNavSheet open={createOpen} onClose={() => setCreateOpen(false)} userId={userId} />}
+    {userId && choosing && <CreateNavSheet open={createOpen} onClose={() => setCreateOpen(false)} userId={userId} />}
     </>
   )
 }

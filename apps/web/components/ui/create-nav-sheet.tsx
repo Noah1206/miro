@@ -1,24 +1,17 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { activeDraftKey, CREATE_CHARACTER_OPTIONS, type CreateCharacterType } from '@/lib/create-character-types'
+import { CREATE_CHARACTER_OPTIONS, createHref, type CreateCharacterType } from '@/lib/create-character-types'
 import { Sheet } from './sheet'
 import styles from './create-nav-sheet.module.css'
 import { useT } from '@/lib/i18n/client'
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export function CreateNavSheet({ open, onClose, userId }: { open: boolean; onClose: () => void; userId: string }) {
   const router = useRouter()
   const t = useT()
   const choose = (type: CreateCharacterType) => {
-    let href = `/create?type=${type}`
-    try {
-      const active = localStorage.getItem(activeDraftKey(userId, type))
-      if (active && UUID.test(active)) href += `&draft=${active}`
-    } catch { /* Browsers can block local storage; the create page will issue a fresh draft ID. */ }
     onClose()
-    router.push(href)
+    router.push(createHref(userId, type))
   }
 
   return <Sheet open={open} onClose={onClose} title={t('어떤 캐릭터를 만들까요?')} variant="choice">

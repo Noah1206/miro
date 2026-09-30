@@ -60,9 +60,8 @@ describeDb('home genre chips', () => {
     const keywordOnly = await character(owner, `${prefix} keyword`, 'reality', { relationshipKeywords: [genreA] })
     const privateCard = await character(owner, `${prefix} private genre`, 'reality', { isPublic: false })
     await db.insert(worlds).values({ characterId: privateCard, genre: genreB })
-    // 홈은 일반 캐릭터(캐릭터챗)도 싣는다(2026-09-30).
-    const chatCard = await character(owner, `${prefix} chat`, 'chat')
-    await db.insert(worlds).values({ characterId: chatCard, genre: genreA })
+    const oldChat = await character(owner, `${prefix} chat`, 'chat')
+    await db.insert(worlds).values({ characterId: oldChat, genre: genreA })
     const createdAt = new Date('2026-09-20T00:00:00Z')
     const pageIds = await Promise.all(Array.from({ length: 13 }, async (_, index) => {
       const id = await character(owner, `${prefix} page ${index}`, 'reality', { createdAt })
@@ -74,8 +73,8 @@ describeDb('home genre chips', () => {
     expect(first.nextCursor).not.toBeNull()
     const second = await homePage(viewer, first.nextCursor, { genres: [genreA, genreA, genreB] })
     const ids = [...first.items, ...second.items].map(item => item.id)
-    for (const id of [created, alternate, partial, chatCard, ...pageIds]) expect(ids).toContain(id)
-    for (const id of [keywordOnly, privateCard]) expect(ids).not.toContain(id)
+    for (const id of [created, alternate, partial, ...pageIds]) expect(ids).toContain(id)
+    for (const id of [keywordOnly, privateCard, oldChat]) expect(ids).not.toContain(id)
     expect(new Set(ids).size).toBe(ids.length)
     expect((await homePage(viewer, null, { genres: [genreA] })).items.map(item => item.id)).toContain(created)
     expect((await homePage(viewer, null, { genres: [genreB] })).items.map(item => item.id)).toContain(created)
