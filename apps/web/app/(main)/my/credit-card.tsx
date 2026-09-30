@@ -1,13 +1,12 @@
 'use client'
 import { useEffect } from 'react'
-import { TransitionLink } from '@/components/ui'
 import { useWallet } from '@/components/wallet/provider'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import styles from './my.module.css'
 
-/** '나' 화면의 크레딧 카드(2026-09-30, WHIF 프로필 모양) — 잔액 한 줄, 사용 내역(Miro Pay 화면) · 충전(충전 시트). */
+/** '나' 화면의 크레딧 카드(2026-09-30, WHIF 프로필 모양) — 잔액 한 줄, 충전(충전 시트). 사용 내역 버튼은 뺐다(2026-10-01) — Miro Pay 화면은 채팅 모델 선택에서 간다. */
 export function CreditCard({ initial }: { initial: WalletSnapshot }) {
   const { wallet, sync, openRecharge, busy } = useWallet()
   const t = useT()
@@ -21,7 +20,6 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
         {t('{n} 미로', { n: value.rechargeRemaining.toLocaleString(locale) })}
       </p>
       <div className={styles.creditActions}>
-        <TransitionLink href="/recharge" className={styles.outline}>{t('사용 내역')}</TransitionLink>
         <button type="button" className={styles.solid} onClick={openRecharge} disabled={busy}>{t('충전')}</button>
       </div>
     </section>
