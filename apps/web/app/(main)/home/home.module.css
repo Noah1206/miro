@@ -5,7 +5,8 @@
 .sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .sectionHeading h2, .chipSection h2 { font-size: 17px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; }
 .count { font-size: 12px; color: var(--color-text-tertiary); white-space: nowrap; }
-.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+/* 줄 사이는 카드 밑 해시태그가 아래 카드에 붙지 않을 만큼(2026-09-30), 칸 사이는 그대로 4px. */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 4px; }
 .story { display: block; min-width: 0; }
 .poster { position: relative; border-radius: 11px; overflow: hidden; clip-path: inset(0 round 11px); isolation: isolate; margin-bottom: 0; }
 .poster img { transition: transform .3s ease; }
@@ -22,7 +23,8 @@
 .photoDetails { position: absolute; inset: auto 0 0; display: flex; flex-direction: column; gap: 5px; padding: 18px 11px 12px; background: linear-gradient(transparent, rgba(8,8,9,.35) 45%, rgba(8,8,9,.72)); text-shadow: 0 1px 3px rgba(0,0,0,.7); color: #fff; text-align: left; }
 .photoDetails strong { font-size: 16px; font-weight: 650; line-height: 1.3; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .photoTagline { font-size: 12px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: #ededee; }
-.photoTags { font-size: 12px; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #c6c6ca; }
+/* 카드 밑 해시태그(2026-09-30 요청) — 넘치면 다음 줄로. */
+.cardTags { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 6px 2px 0; font-size: 12px; line-height: 1.45; color: var(--color-text-tertiary); }
 
 
 .newContact { color: #F15B62; font-weight: 600; }

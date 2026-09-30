@@ -12,22 +12,21 @@ const picture = (c: HomeCard) => c.images[0] ?? null
 
 /** 카드에 대화한 사람 수(말풍선 숫자)는 띄우지 않는다(2026-09-30 요청). */
 function PhotoDetails({ c }: { c: HomeCard }) {
-  const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 2)
-  return <>
-    <span className={styles.photoDetails}>
-      <strong>{c.name}</strong>
-      {(c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
-      {tags.length > 0 && <span className={styles.photoTags}>{tags.map(tag => `#${tag.replace(/\s+/g, '')}`).join('  ')}</span>}
-    </span>
-  </>
+  return <span className={styles.photoDetails}>
+    <strong>{c.name}</strong>
+    {(c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
+  </span>
 }
 function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
+  // 해시태그는 카드 밑에 — 장르 → 관계 순으로 4개까지, 넘치면 다음 줄로(2026-09-30 요청: 카드 안 한 줄에서는 관계 태그가 잘렸다).
+  const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 4)
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
       <PhotoDetails c={c} />
     </div>
+    {tags.length > 0 && <p className={styles.cardTags}>{tags.map(tag => <span key={tag}>#{tag.replace(/\s+/g, '')}</span>)}</p>}
   </TransitionLink>
 }
 
