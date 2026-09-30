@@ -18,7 +18,7 @@ const COPY = [
   { title: msg('어떻게 불러 드릴까요?'), lead: msg('캐릭터가 대화에서 부를 닉네임이에요. 마이페이지에서 언제든 바꿀 수 있어요.') },
   { title: msg('성별을 알려 주세요'), lead: msg('캐릭터가 나를 알아보는 데 쓰여요.') },
   { title: msg('좋아하는 관계를 모두 골라 주세요'), lead: msg('취향에 맞는 캐릭터를 추천할 때 써요.') },
-  { title: msg('생년월일을 알려 주세요'), lead: msg('선택 항목이에요. 비워 두고 넘어가도 돼요.') },
+  { title: msg('생년월일을 알려 주세요'), lead: msg('태어난 날을 숫자 8자리로 입력해 주세요. 예) 19980314') },
   { title: msg('시작하기 전에'), lead: msg('MIRO를 이용하려면 필수 항목에 동의해 주세요.') },
 ] as const
 
@@ -134,7 +134,7 @@ export function OnboardingForm() {
             </div>
           )}
 
-          {step === 5 && <BirthDateField value={birthDate} onChange={setBirthDate} invalid={!!error} />}
+          {step === 5 && <BirthDateField value={birthDate} onChange={setBirthDate} onEnter={() => go(6)} invalid={!!error} />}
 
           {step === 6 && (
             // 약관은 글자 줄로 — 토스 약관 동의 화면처럼(2026-09-30 요청): 위에 큰 '전체 동의'(동그라미 체크), 아래에 항목 줄(작은 체크 + 글자 + 보기 화살표).
@@ -185,19 +185,44 @@ function NicknameField({ value, onChange, onEnter, invalid }: { value: string; o
   )
 }
 
-function BirthDateField({ value, onChange, invalid }: { value: string; onChange: (v: string) => void; invalid: boolean }) {
+/**
+ * 생년월일 — 숫자만 치면 점이 알아서 들어간다(19980314 → 1998.03.14). 휴대폰은 숫자 자판.
+ * 달력 선택기는 몇 십 년 전 해를 고르려면 한참 넘겨야 해서 바꿨다(2026-09-30 요청). 8자리가 되면 바로 확인해
+ * 있을 수 없는 날짜면 그 자리에서 알려 주고, 맞으면 '다음' 이 열린다. 값은 'YYYY-MM-DD' 로 넘긴다.
+ */
+function BirthDateField({ value, onChange, onEnter, invalid }: { value: string; onChange: (v: string) => void; onEnter: () => void; invalid: boolean }) {
   const t = useT()
   const [focused, setFocused] = useState(false)
-  const today = new Date().toISOString().slice(0, 10)
+  const [text, setText] = useState(value ? value.replaceAll('-', '.') : '')
+  const digits = text.replace(/\D/g, '')
+  const wrong = digits.length === 8 && !value
+
+  function type(raw: string) {
+    let d = raw.replace(/\D/g, '').slice(0, 8)
+    // 점을 지우면 숫자는 그대로라 다시 점이 붙는다 — 글자가 줄었으면 앞 숫자 하나를 함께 지운다.
+    if (raw.length < text.length && d === digits) d = d.slice(0, -1)
+    setText(d.slice(0, 4) + (d.length > 4 ? '.' + d.slice(4, 6) : '') + (d.length > 6 ? '.' + d.slice(6) : ''))
+    onChange(d.length === 8 && realDate(d) ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}` : '')
+  }
+
   return (
     <label className="stack" style={{ gap: 8 }}>
       <span className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{t('생년월일')} <span className="t-caption" style={{ fontWeight: 'var(--weight-regular)' }}>{t('선택')}</span></span>
-      {/* 기기의 날짜 선택기를 그대로 쓴다 — 어두운 화면에 맞게 color-scheme 만 맞춘다. */}
-      <input type="date" value={value} min="1900-01-01" max={today} onChange={(e) => onChange(e.target.value)}
+      <input value={text} onChange={(e) => type(e.target.value)} inputMode="numeric" enterKeyHint="next" autoComplete="bday" autoFocus placeholder="YYYY.MM.DD" maxLength={10}
+        aria-invalid={wrong || invalid} onKeyDown={(e) => { if (e.key === 'Enter' && value) onEnter() }}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ minHeight: 52, padding: '0 14px', colorScheme: 'dark', color: value ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', fontSize: 'var(--font-body-lg)', fontFamily: 'inherit', outline: 'none', ...box(focused, invalid) }} />
+        style={{ minHeight: 44, padding: '0 18px', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-lg)', fontFamily: 'inherit', letterSpacing: '0.02em', outline: 'none',
+          ...box(focused, wrong || invalid), borderRadius: 999 }} />
+      {wrong && <span role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t('생년월일을 다시 확인해 주세요.')}</span>}
     </label>
   )
+}
+
+/** 8자리 숫자가 실제로 있는 날짜이고 1900-01-01 ~ 오늘 사이인가(서버 parseOnboarding 과 같은 기준). */
+function realDate(d: string): boolean {
+  const iso = `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}`
+  const date = new Date(`${iso}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === iso && iso >= '1900-01-01' && date <= new Date()
 }
 
 /** 큰 선택 칸. 고르면 한 단 밝은 바탕과 흰 체크(2026-09-30 요청) — 색만이 아니라 체크 모양으로도 갈린다. */
