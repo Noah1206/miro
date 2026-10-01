@@ -1,6 +1,7 @@
 /* 지갑의 잔액 부족 시트와 같은 리듬: 아이콘–제목 12, 제목–한 줄 4, 묶음–버튼 24, 버튼–버튼 8. */
 .stack { display: grid; gap: var(--space-5); }
-.center { display: grid; justify-items: center; text-align: center; padding-top: var(--space-2); }
+/* 손잡이 줄과 종 사이 여백(10/1) — 8px 은 붙어 보였다. 아래 '나중에'–시트 끝(약 42px)과 비슷하게. */
+.center { display: grid; justify-items: center; text-align: center; padding-top: var(--space-5); }
 .center h2 { margin: var(--space-3) 0 0; line-height: 1.3; }
 /* 제목은 첫 초점만 받는 비대화형 요소다(탭 순서 밖) — 시트 choice 제목처럼 링을 그리지 않는다. */
 .center h2:focus-visible { outline: none; box-shadow: none; }
