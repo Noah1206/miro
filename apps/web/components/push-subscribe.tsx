@@ -175,10 +175,8 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
     <Sheet open={open} onClose={onClose} label={t(copy.title)}>
       <div className={styles.stack} data-push-sheet={kind}>
         <div className={styles.center}>
-          <svg className={styles.icon} aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 10a6 6 0 1 1 12 0c0 4.5 1.3 6.2 2 7H4c.7-.8 2-2.5 2-7Z" /><path d="M10 20a2 2 0 0 0 4 0" />
-            {kind === 'denied' && <path d="M4 3l16 18" />}
-          </svg>
+          {/* 힉스필드 3D 종(10/1 요청, 가입 선물 그림과 같은 점토 질감) — 차단 시트만 사선이 그어진 종. */}
+          <img className={styles.icon} src={kind === 'denied' ? '/push-bell-off.png' : '/push-bell.png'} alt="" aria-hidden width={64} height={64} decoding="async" />
           {/* 첫 초점은 제목에 — 닫기 버튼에 주면 열리자마자 초점 테두리가 그려진다. 스크린 리더는 제목부터 읽는다. */}
           <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{t(copy.title)}</h2>
           {/* 설명은 한 줄만(9/30 요청) — '설정 방법 보기' 를 누르면 그 줄이 이 브라우저의 켜는 길로 바뀐다. */}
