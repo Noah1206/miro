@@ -357,8 +357,8 @@ function TermsCheck({ all, checked, title, sub, link, onToggle }: {
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-accent-on)' : 'var(--color-text-tertiary)'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
           </span>
         ) : (
-          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ flexShrink: 0, marginTop: sub ? 1 : 0, transition: 'stroke var(--motion-fast) var(--ease-standard)' }}><path d="M20 6 9 17l-5-5" /></svg>
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            style={{ flexShrink: 0, margin: sub ? '3px 2px 0' : '0 2px', transition: 'stroke var(--motion-fast) var(--ease-standard)' }}><path d="M20 6 9 17l-5-5" /></svg>
         )}
         <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
           <span className={all ? 't-body-lg' : 't-body'} style={{ color: all ? 'var(--color-text-primary)' : on, fontWeight: all ? 'var(--weight-bold)' : undefined,
