@@ -20,7 +20,7 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
         {t('{n} 미로', { n: value.rechargeRemaining.toLocaleString(locale) })}
       </p>
       <div className={styles.creditActions}>
-        <button type="button" className={styles.solid} onClick={openRecharge} disabled={busy}>{t('충전')}</button>
+        <button type="button" className={styles.outline} onClick={openRecharge} disabled={busy}>{t('충전')}</button>
       </div>
     </section>
   )
