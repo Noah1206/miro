@@ -14,8 +14,9 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   await page.getByRole('button', { name: '계속' }).click()
   await expect(page).toHaveURL(/\/onboarding/)
   await passOnboardingProfile(page)
-  // 약관은 '전체 동의하고 시작하기' 로 한 번에 켜고 진행한다.
-  await page.getByRole('button', { name: '전체 동의하고 시작하기' }).click()
+  // 약관은 '전체 동의' 로 한 번에 켜고 시작한다(테스트 환경은 알림 키가 없어 알림 허용 단계가 없다).
+  await page.getByRole('checkbox', { name: '전체 동의' }).click()
+  await page.getByRole('button', { name: '시작하기', exact: true }).click()
   // Wait for the signup action and redirect before a test starts another navigation.
   await expect(page).not.toHaveURL(/\/onboarding/)
   await closeWelcome(page)

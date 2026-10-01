@@ -30,8 +30,10 @@ test('onboarding cannot finish without the required terms, and ends with the wel
   await required[2]!.click()
   await expect(submit).toBeDisabled()
 
-  // 전체 동의하고 시작하기 = 모두 켜고 바로 제출.
-  await page.getByRole('button', { name: '전체 동의하고 시작하기' }).click()
+  // 전체 동의 = 모두 켠다(따로 있던 '전체 동의하고 시작하기' 는 2026-10-01 뺐다). 그다음 시작하기.
+  await page.getByRole('checkbox', { name: '전체 동의' }).click()
+  await expect(submit).toBeEnabled()
+  await submit.click()
   await expect(page).toHaveURL(/\/home\?welcome=1/)
   await expect(page.locator('[data-welcome-popup]')).toContainText('300')
   await closeWelcome(page)

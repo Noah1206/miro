@@ -65,6 +65,9 @@ export function OnboardingForm() {
   const [pushPath, setPushPath] = useState<string | null>(null)
   // '캐릭터 알림 받기' 권한 창이 떠 있는 동안 — 시작하기를 잠가 둔다(넘어가 버리면 권한 창이 닫힌다).
   const [asking, setAsking] = useState(false)
+  // 이 기기에서 알림이 허용됐는가 — 아래 버튼의 '알림 허용하기'(또는 알림 줄·전체 동의)로 허용해야 그 버튼이 '시작하기'로 바뀐다(2026-10-01 요청).
+  // 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 처음부터 열려 있다.
+  const [pushGranted, setPushGranted] = useState(!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)
   const pushHandled = useRef(false)
   // 단계가 바뀌면 새 제목이 나타날 때 초점을 옮긴다 — 스크린 리더가 새 질문부터 읽는다(첫 화면은 닉네임 칸이 초점).
   const focusHeading = useRef(false)
@@ -90,11 +93,12 @@ export function OnboardingForm() {
   const copy = COPY[step - 1]!
   const fail = (why: string, path: string | null = null) => { focusHeading.current = true; setError(why); setPushPath(path) }
   /**
-   * 브라우저 알림 권한을 묻는다. 허용이면 true. 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)와
-   * 차단된 기기는 이유와 켜는 길을 보이고 false. 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 true. 가입 뒤 알림 시트는 다시 뜨지 않는다(markPushAsked).
-   * 권한 창은 누른 순간에만 뜰 수 있어서 첫 await 전에 requestPermission 을 부른다.
+   * 브라우저 알림 권한을 묻는다. 허용이면 true. 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)는
+   * 이유를 보이고 false. 거절·차단이면 이유를 보이고 false — 차단은 브라우저가 다시 묻게 두지 않아서, '알림 허용하기'를 눌렀을 때(howTo)
+   * 이 브라우저에서 켜는 길을 보인다. 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 true.
+   * 가입 뒤 알림 시트는 다시 뜨지 않는다(markPushAsked). 권한 창은 누른 순간에만 뜰 수 있어서 첫 await 전에 requestPermission 을 부른다.
    */
-  const askPermission = async (): Promise<boolean> => {
+  const askPermission = async (howTo = false): Promise<boolean> => {
     if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return true
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       const ua = navigator.userAgent
@@ -103,15 +107,21 @@ export function OnboardingForm() {
         : msg('이 브라우저에서는 알림을 받을 수 없어요. 크롬이나 사파리에서 열어 주세요.'))
       return false
     }
-    if (Notification.permission === 'denied') { fail(msg('알림을 허용해야 시작할 수 있어요.'), settingsPath()); return false }
+    const blocked = (permission: NotificationPermission) => {
+      setPushGranted(false); fail(msg('알림을 허용해야 시작할 수 있어요.'), howTo && permission === 'denied' ? settingsPath() : null); return false
+    }
+    if (Notification.permission === 'denied') return blocked('denied')
     markPushAsked()
-    if (Notification.permission === 'granted') return true
+    if (Notification.permission === 'granted') { setPushGranted(true); return true }
     setAsking(true); setError(null); setPushPath(null)
     const permission = await Notification.requestPermission().catch((): NotificationPermission => 'default')
     setAsking(false)
-    if (permission !== 'granted') { fail(msg('알림을 허용해야 시작할 수 있어요.'), permission === 'denied' ? settingsPath() : null); return false }
+    if (permission !== 'granted') return blocked(permission)
+    setPushGranted(true)
     return true
   }
+  // '알림 허용하기' — 아직 정하지 않았으면 권한 창을 다시 띄우고, 설정에서 켠 뒤라면 바로 통과. 허용되면 알림 줄을 켠다.
+  const allowPush = () => { void askPermission(true).then((ok) => { if (ok) { setChecked((c) => ({ ...c, push: true })); setError(null); setPushPath(null) } }) }
   // '캐릭터 알림 받기'를 켜는 순간(그 줄·전체 동의) 그 자리에서 권한을 묻는다(2026-10-01 요청). 허용하지 않으면 다시 끈다.
   const turnOnPush = () => { void askPermission().then((ok) => { if (!ok) setChecked((c) => ({ ...c, push: false })) }) }
   const toggleTerm = (key: string) => {
@@ -120,8 +130,8 @@ export function OnboardingForm() {
     if (key === 'push' && on) turnOnPush()
   }
   /**
-   * 시작하기 — 캐릭터 알림은 필수다(2026-10-01 결정, 예외 없음). 권한(체크할 때 이미 허용했으면 묻지 않는다)과 구독까지 끝나야 제출한다.
-   * '전체 동의하고 시작하기'는 체크 단계를 건너뛰므로 여기서 권한 창이 뜬다.
+   * 시작하기 — 캐릭터 알림은 필수다(2026-10-01 결정, 예외 없음). 시작하기는 알림이 허용된 뒤에만 열리고, 여기서 구독까지 끝나야 제출한다.
+   * 권한은 한 번 더 확인한다(그사이 설정에서 끈 경우).
    */
   const askPushThenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
@@ -236,12 +246,25 @@ export function OnboardingForm() {
               <Button type="button" variant="primary" size="lg" full className="btn-next" style={NEXT_BUTTON} disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
               <Button type="button" variant="ghost" size="sm" full onClick={() => { setBirthDate(''); go(6) }}>{t('건너뛰기')}</Button>
             </>}
-            {step === 6 && <>
-              <SubmitButton variant="primary" size="lg" full disabled={!requiredOk || asking}>{t('시작하기')}</SubmitButton>
-              {/* 한 번에 모두 켜고 바로 제출 — 숨은 칸이 먼저 그려져야 폼 값에 들어가므로 동기로 그린다.
-                  누르는 순간 사라지면 제출이 취소되므로 늘 둔다. */}
-              <SubmitButton variant="ghost" size="lg" full disabled={asking} onClick={() => flushSync(() => agreeAll(true))}>{t('전체 동의하고 시작하기')}</SubmitButton>
-            </>}
+            {step === 6 && (
+              // 버튼 하나(2026-10-01 요청): '알림 허용하기'로 시작해, 알림이 허용되면 토스처럼 주황으로 차오르며 글자가 위로 넘어가 '시작하기'가 된다.
+              // 허용 전에는 눌러도 제출하지 않고 권한을 묻는다(알림 줄·전체 동의로 허용해도 똑같이 바뀐다).
+              <motion.div initial={false} animate={{ scale: pushGranted && !reduce ? [1, 1.03, 1] : 1 }} transition={{ duration: 0.4, ease: ease.standard }}>
+                <SubmitButton variant={pushGranted ? 'primary' : 'secondary'} size="lg" full disabled={asking || (pushGranted && !requiredOk)}
+                  onClick={(e) => { if (!pushGranted) { e.preventDefault(); allowPush() } }}
+                  style={{ transition: 'background-color 360ms var(--ease-standard), color 360ms var(--ease-standard), border-color 360ms var(--ease-standard)' }}>
+                  {/* 글자가 넘어가는 창 — 두 글자를 같은 칸에 겹쳐(가운데 맞춤) 위아래로만 자른다. 옆으로는 자르지 않아 긴 글자도 온전히 빠진다. */}
+                  <span style={{ display: 'inline-grid', justifyItems: 'center', clipPath: 'inset(0 -64px)' }}>
+                    <AnimatePresence initial={false}>
+                      <motion.span key={pushGranted ? 'start' : 'allow'} initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '-100%', opacity: 0 }}
+                        transition={reduce ? { duration: 0 } : spring.default} style={{ gridArea: '1 / 1', whiteSpace: 'nowrap' }}>
+                        {pushGranted ? t('시작하기') : t('알림 허용하기')}
+                      </motion.span>
+                    </AnimatePresence>
+                  </span>
+                </SubmitButton>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>

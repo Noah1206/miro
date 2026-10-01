@@ -5,7 +5,7 @@ import { Button } from '@/components/ui'
 import { PUSH_PROMPT_DONE_EVENT, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
-import { duration, ease } from '@/lib/motion/tokens'
+import { duration, ease, spring } from '@/lib/motion/tokens'
 import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 
 /** 그림 조각을 240 무대 위 제자리에 둔다(1024 원본 좌표 × 240/1024 — 예전 한 장짜리 그림과 같은 배율). */
@@ -14,6 +14,8 @@ const at = ([left, top, width, height]: readonly number[]) => ({ position: 'abso
 const kick = (delay: number, stiffness: number, damping: number) => ({ type: 'spring', delay, stiffness, damping }) as const
 /** '팡' 하고 열리는 때(초). 0.3초부터 흔들리고, 열리기 직전 꾹 눌렸다가 이때 튀어 오른다. */
 const POP = 0.85
+/** 상자가 다 열린 때(동전·반짝이가 자리 잡음) — '대화 시작하기'가 이때 나온다(2026-10-01 요청). */
+const OPENED = POP + 0.75
 /** 동전: 상자 안(입구 가운데 아래)에서 출발해 제자리로 튄다. from = 제자리에서 출발점까지. */
 const COINS = [
   { src: 'coin-2', box: [104.1, 99.8, 26.2, 25.3], from: { x: 3, y: 38, rotate: 30 }, delay: 0.02 },
@@ -49,6 +51,7 @@ export function WelcomePopup({ units, validDays }: { units: number; validDays: n
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const reduce = useReducedMotion()
+  const [opened, setOpened] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const titleId = useId()
   useFocusTrap(ref, open)
@@ -60,6 +63,14 @@ export function WelcomePopup({ units, validDays }: { units: number; validDays: n
     window.addEventListener(PUSH_PROMPT_DONE_EVENT, show, { once: true })
     return () => window.removeEventListener(PUSH_PROMPT_DONE_EVENT, show)
   }, [])
+
+  // '대화 시작하기'는 상자가 다 열린 뒤에 나온다. 움직임 줄이기면 처음부터.
+  useEffect(() => {
+    if (!open) { setOpened(false); return }
+    if (reduce) { setOpened(true); return }
+    const timer = setTimeout(() => setOpened(true), OPENED * 1000)
+    return () => clearTimeout(timer)
+  }, [open, reduce])
 
   useEffect(() => {
     if (!open) return
@@ -139,11 +150,15 @@ export function WelcomePopup({ units, validDays }: { units: number; validDays: n
             <p style={{ margin: '8px 0 0', fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-secondary)' }}>
               {t('MIRO에 온 걸 환영해요! 지금 바로 캐릭터와 대화를 시작해 보세요. 선물 미로는 ECHO 대화와 통화에 {n}일 동안 쓸 수 있어요.', { n: validDays })}
             </p>
-            {/* 흰 바탕에 검은 글자, 글자는 다른 버튼과 같은 14px, 양끝이 완전히 둥근 알약 모양(2026-09-30 요청). */}
-            <Button variant="secondary" full onClick={close}
-              style={{ marginTop: 20, minHeight: 44, padding: '4px 24px', fontSize: 14, background: 'var(--color-white)', color: 'var(--color-black)', border: 0, borderRadius: 999 }}>
-              {t('대화 시작하기')}
-            </Button>
+            {/* 흰 바탕에 검은 글자, 글자는 다른 버튼과 같은 14px, 양끝이 완전히 둥근 알약 모양(2026-09-30 요청).
+                상자가 다 열린 뒤 아래에서 떠오른다(10/1) — 자리는 처음부터 잡아 둬 팝업 크기가 바뀌지 않고, 보이기 전에는 누를 수 없다. */}
+            <motion.div initial={false} animate={opened ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }} transition={reduce ? { duration: 0 } : spring.default}
+              style={{ visibility: opened ? 'visible' : 'hidden' }}>
+              <Button variant="secondary" full onClick={close}
+                style={{ marginTop: 20, minHeight: 44, padding: '4px 24px', fontSize: 14, background: 'var(--color-white)', color: 'var(--color-black)', border: 0, borderRadius: 999 }}>
+                {t('대화 시작하기')}
+              </Button>
+            </motion.div>
           </motion.div>
         </motion.div>
       )}
