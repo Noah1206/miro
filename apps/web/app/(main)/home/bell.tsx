@@ -24,7 +24,7 @@ export function NotificationBell({ unread, signedIn, className }: { unread: numb
   const t = useT()
   const askLogin = useLoginSheet()
   const inner = <>
-    <svg aria-hidden width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+    <svg aria-hidden width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8.5a6 6 0 0 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5" /><path d="M10.2 20.5a2 2 0 0 0 3.6 0" />
     </svg>
     {unread > 0 && <span className={styles.bellBadge} aria-hidden>{unread > 999 ? '999+' : unread}</span>}
