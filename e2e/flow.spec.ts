@@ -40,7 +40,8 @@ test('onboarding cannot finish without the required terms, and ends with the wel
 
 test('a visitor can browse before signing in, and lands back where they were', async ({ page }) => {
   await page.goto(`${BASE}/home`)
-  await expect(page.getByRole('button', { name: '로그인' })).toBeVisible()
+  // 로그인 전 헤더에는 로그인 버튼 대신 알림 종(가입 선물 안내)이 있다 — 헤더 로그인 버튼은 뺐다(ff0009a).
+  await expect(page.getByRole('button', { name: '알림, 가입 선물이 기다리고 있어요' })).toBeVisible()
 
   // 상세까지는 로그인 없이 볼 수 있고, 입장할 때 묻는다.
   await page.locator('a[href="/character/thomas"]').first().click()
@@ -67,8 +68,8 @@ test('signup through entering a roleplay', async ({ page }) => {
   await page.goto(`${BASE}/`)
   await expect(page).toHaveURL(/\/home/)
   await expect(page.getByText('토마스').first()).toBeVisible()
-  // 헤더의 로그인도 화면을 떠나지 않고 시트로 묻는다 — 홈이 뒤에 그대로 남고, 돌아올 곳은 홈이다.
-  await page.getByRole('button', { name: '로그인' }).click()
+  // 헤더의 알림 종도 화면을 떠나지 않고 로그인 시트로 묻는다 — 홈이 뒤에 그대로 남고, 돌아올 곳은 홈이다.
+  await page.getByRole('button', { name: '알림, 가입 선물이 기다리고 있어요' }).click()
   await expect(page.locator('[data-login-sheet]')).toBeVisible()
   await expect(page).toHaveURL(/\/home/)
   await expect(page.locator('[data-login-provider="google"]')).toHaveAttribute('href', /next=%2Fhome/)

@@ -14,6 +14,7 @@ const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3300'
 
 async function enter(page: Page, empty = true) {
   const email = await signUp(page, WEB)
+  const [user] = await db.select().from(users).where(eq(users.email, email))
   const id = await realityCharacter(page)
   await db.update(contactProfiles).set({ routine: { version: 1, source: 'authored', generatedAt: new Date().toISOString(), note: null,
     blocks: [{ days: [], start: '00:00', end: '23:59', label: '테스트 자유 시간', availability: 'free' }] } }).where(eq(contactProfiles.characterId, id))
@@ -21,9 +22,12 @@ async function enter(page: Page, empty = true) {
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
   const sessionId = page.url().split('/chat/')[1]!
-  if (empty) expect((await page.request.post(`${WEB}/api/dev/usage`)).ok()).toBe(true)
+  if (empty) {
+    expect((await page.request.post(`${WEB}/api/dev/usage`)).ok()).toBe(true)
+    // 가입 선물(300 미로, 2026-09-30 부터)도 지운다 — '잔액 부족' 흐름은 충전 잔액이 0 이어야 보인다.
+    await db.delete(rechargeGrants).where(eq(rechargeGrants.userId, user!.id))
+  }
   await page.goto(`${WEB}/messages/${sessionId}`)
-  const [user] = await db.select().from(users).where(eq(users.email, email))
   return { sessionId, userId: user!.id }
 }
 

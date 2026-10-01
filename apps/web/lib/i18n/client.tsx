@@ -1,5 +1,5 @@
 'use client'
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode, useMemo } from 'react'
 import { LANGUAGE_COOKIE, translate, type Language, type Messages, type T } from './index'
 
 type State = { language: Language; messages: Messages | null }
@@ -11,13 +11,15 @@ const Ctx = createContext<State & { switchTo: (next: State) => void }>({ languag
  */
 export function LanguageProvider({ language, messages, children }: State & { children: ReactNode }) {
   const [state, setState] = useState<State>({ language, messages })
-  // 서버가 다른 언어로 다시 그렸으면(설정 화면·로그인) 그 값을 따른다.
-  useEffect(() => { setState({ language, messages }) }, [language, messages])
+  // 서버가 다른 언어로 다시 그렸으면(설정 화면·로그인) 그 값을 따른다. 같은 언어면 그대로 둔다 — 첫 마운트에 같은 값의 새 객체로 바꾸면
+  // 문맥이 바뀐 것으로 보여, 아직 스트리밍 중인 Suspense 경계(/my 의 loading)를 클라이언트에서 다시 그리고 서버 HTML 이 숨은 채 남았다(2026-10-01).
+  useEffect(() => { setState((s) => (s.language === language ? s : { language, messages })) }, [language, messages])
   const switchTo = useCallback((next: State) => {
     setState(next)
     document.documentElement.lang = next.language === 'zh' ? 'zh-CN' : next.language
   }, [])
-  return <Ctx.Provider value={{ ...state, switchTo }}>{children}</Ctx.Provider>
+  const value = useMemo(() => ({ ...state, switchTo }), [state, switchTo])
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
 
 /** 다른 언어 사전은 필요할 때 따로 받는다(각 언어가 별도 파일로 나뉜다). 한 번 받으면 브라우저가 기억한다. */

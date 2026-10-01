@@ -2,9 +2,9 @@ import { signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
-import { db, bankTransferOrders } from '../packages/db/src'
+import { db, bankTransferOrders, rechargeGrants, users } from '../packages/db/src'
 // The db workspace owns the existing Drizzle dependency.
-const { desc } = createRequire(join(__dirname, '../packages/db/package.json'))('drizzle-orm')
+const { desc, eq } = createRequire(join(__dirname, '../packages/db/package.json'))('drizzle-orm')
 const WEB = process.env.E2E_BASE ?? 'http://localhost:3000'
 const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
 
@@ -13,7 +13,10 @@ const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
  * 주문만으로는 아무것도 지급되지 않는다는 것이 이 테스트의 핵심이다.
  */
 test('bank transfer: an order pays out only after an admin confirms the deposit', async ({ page, browser, request }) => {
-  await signUp(page, WEB)
+  const email = await signUp(page, WEB)
+  // 가입 선물(300 미로, 2026-09-30 부터)은 지우고 시작한다 — 이 테스트는 주문·승인만으로 잔액이 생기는지를 본다.
+  const [user] = await db.select().from(users).where(eq(users.email, email))
+  await db.delete(rechargeGrants).where(eq(rechargeGrants.userId, user!.id))
   await page.goto(`${WEB}/recharge`)
 
   // 1) 주문 — 입금 계좌와 대조 코드를 받는다. 아직 Pro 가 아니다.
