@@ -66,7 +66,7 @@ export function ArchiveList({ initialPage }: {
         </button>
         </div>
       </header>
-      <ul className="stack session-list" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
+      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
         <AnimatePresence initial={false}>
         {items.map((s) => {
           const portrait = s.characterImage

@@ -227,14 +227,13 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* 넓은 화면에서도 셸 바깥을 검게 칠하지 않는다 — 바탕은 앱과 같은 --color-bg 한 색(2026-09-30 요청). */
 /**
  * E-47 의 예외(2026-09-30 요청): 컴퓨터(1024px 이상)에서는 하단 탭 화면만 넓게 편다 — 헤더 - 배너 - 캐릭터.
- * <Page wide> 를 단 화면(홈·검색·미로·대화·나)이 셸을 넓히고, 채팅·상세·설정 같은 나머지는 폰 폭 그대로다.
- * 카드 모양은 그대로 두고 한 줄 칸 수만 늘린다(1200 에서 6칸, 1024 에서 5칸).
+ * <Page wide> 를 단 화면(홈·검색·미로·대화·나·설정)이 셸을 넓히고, 채팅·상세 같은 나머지는 폰 폭 그대로다.
+ * 카드 모양은 그대로 두고 한 줄 칸 수만 늘린다(1200 에서 6칸, 1024 에서 5칸). 대화 목록은 컴퓨터에서도 한 줄에 하나(10/1 요청).
  */
 @media (min-width: 1024px) {
   .app-shell:has(.page--wide) { --shell-w: var(--app-w-wide); }
   .page--wide { --gutter: 24px; max-width: none; }
   .page--wide .grid-2 { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-  .page--wide .session-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 }
 
 /* fields */
