@@ -88,30 +88,50 @@ export function OnboardingForm() {
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
   const copy = COPY[step - 1]!
+  const fail = (why: string, path: string | null = null) => { focusHeading.current = true; setError(why); setPushPath(path) }
   /**
-   * 시작하기 — 캐릭터 알림은 필수다(2026-10-01 결정, 예외 없음). 브라우저 알림 권한을 묻고, 허용하고 구독까지 끝나야 제출한다.
-   * 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)와 차단된 기기는 이유와 켜는 길을 보이고 멈춘다.
-   * 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 그대로 제출한다. 가입 뒤 알림 시트는 다시 뜨지 않는다(markPushAsked).
+   * 브라우저 알림 권한을 묻는다. 허용이면 true. 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)와
+   * 차단된 기기는 이유와 켜는 길을 보이고 false. 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 true. 가입 뒤 알림 시트는 다시 뜨지 않는다(markPushAsked).
+   * 권한 창은 누른 순간에만 뜰 수 있어서 첫 await 전에 requestPermission 을 부른다.
+   */
+  const askPermission = async (): Promise<boolean> => {
+    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return true
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      const ua = navigator.userAgent
+      const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+      fail(ios ? msg('iPhone은 Safari에서 공유 → 홈 화면에 추가한 뒤, 홈 화면의 MIRO로 열어 시작해 주세요. 알림은 그 앱에서만 받을 수 있어요.')
+        : msg('이 브라우저에서는 알림을 받을 수 없어요. 크롬이나 사파리에서 열어 주세요.'))
+      return false
+    }
+    if (Notification.permission === 'denied') { fail(msg('알림을 허용해야 시작할 수 있어요.'), settingsPath()); return false }
+    markPushAsked()
+    if (Notification.permission === 'granted') return true
+    setAsking(true); setError(null); setPushPath(null)
+    const permission = await Notification.requestPermission().catch((): NotificationPermission => 'default')
+    setAsking(false)
+    if (permission !== 'granted') { fail(msg('알림을 허용해야 시작할 수 있어요.'), permission === 'denied' ? settingsPath() : null); return false }
+    return true
+  }
+  // '캐릭터 알림 받기'를 켜는 순간(그 줄·전체 동의) 그 자리에서 권한을 묻는다(2026-10-01 요청). 허용하지 않으면 다시 끈다.
+  const turnOnPush = () => { void askPermission().then((ok) => { if (!ok) setChecked((c) => ({ ...c, push: false })) }) }
+  const toggleTerm = (key: string) => {
+    const on = !checked[key]
+    setChecked((c) => ({ ...c, [key]: on }))
+    if (key === 'push' && on) turnOnPush()
+  }
+  /**
+   * 시작하기 — 캐릭터 알림은 필수다(2026-10-01 결정, 예외 없음). 권한(체크할 때 이미 허용했으면 묻지 않는다)과 구독까지 끝나야 제출한다.
+   * '전체 동의하고 시작하기'는 체크 단계를 건너뛰므로 여기서 권한 창이 뜬다.
    */
   const askPushThenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     if (pushHandled.current || !vapid) return
     e.preventDefault()
     const form = e.currentTarget, submitter = (e.nativeEvent as SubmitEvent).submitter
-    const fail = (why: string, path: string | null = null) => { focusHeading.current = true; setError(why); setPushPath(path) }
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-      const ua = navigator.userAgent
-      const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
-      return fail(ios ? msg('iPhone은 Safari에서 공유 → 홈 화면에 추가한 뒤, 홈 화면의 MIRO로 열어 시작해 주세요. 알림은 그 앱에서만 받을 수 있어요.')
-        : msg('이 브라우저에서는 알림을 받을 수 없어요. 크롬이나 사파리에서 열어 주세요.'))
-    }
-    if (Notification.permission === 'denied') return fail(msg('알림을 허용해야 시작할 수 있어요.'), settingsPath())
-    markPushAsked()
-    setAsking(true); setError(null); setPushPath(null)
-    const askPermission = Notification.permission === 'granted' ? Promise.resolve<NotificationPermission>('granted') : Notification.requestPermission()
-    void askPermission
-      .then(async (permission) => {
-        if (permission !== 'granted') { fail(msg('알림을 허용해야 시작할 수 있어요.'), permission === 'denied' ? settingsPath() : null); return false }
+    void askPermission()
+      .then(async (granted) => {
+        if (!granted) return false
+        setAsking(true)
         const subscribed = await Promise.race([subscribeToPush(vapid).catch(() => false), new Promise<boolean>((done) => setTimeout(() => done(false), 8000))])
         if (!subscribed) fail(msg('알림을 켜지 못했어요. 잠시 뒤 다시 눌러 주세요.'))
         return subscribed
@@ -196,11 +216,11 @@ export function OnboardingForm() {
           {step === 6 && (
             // 약관은 글자 줄로 — 토스 약관 동의 화면처럼(2026-09-30 요청): 위에 큰 '전체 동의'(동그라미 체크), 아래에 항목 줄(작은 체크 + 글자 + 보기 화살표).
             <div>
-              <TermsCheck all checked={allOn} title={t('전체 동의')} onToggle={() => agreeAll(!allOn)} />
+              <TermsCheck all checked={allOn} title={t('전체 동의')} onToggle={() => { agreeAll(!allOn); if (!allOn && !checked.push) turnOnPush() }} />
               <hr style={{ border: 0, borderTop: '1px solid var(--color-border)', margin: '8px 0' }} />
               {TERMS.map((item) => (
                 <TermsCheck key={item.key} checked={!!checked[item.key]} title={t(item.title)} sub={'sub' in item ? t(item.sub) : undefined}
-                  onToggle={() => setChecked((c) => ({ ...c, [item.key]: !c[item.key] }))}
+                  onToggle={() => toggleTerm(item.key)}
                   link={'href' in item ? { href: item.href, label: t('{title} 전문 보기', { title: t(item.title) }) } : undefined} />
               ))}
             </div>
@@ -317,7 +337,7 @@ function Option({ role, selected, dimmed, title, sub, lang, center, icon, onClic
 
 /**
  * 약관 한 줄(토스 약관 동의 화면 방식). 전체 동의는 큰 동그라미 체크 + 굵은 글자, 항목은 작은 체크 + 글자.
- * 켜지면 체크와 글자가 흰색으로 — 꺼져 있으면 옅은 회색. 문서가 있으면 오른쪽 끝에 보기 화살표(버튼 밖 링크).
+ * 켜지면 체크는 주황(전체 동의는 주황 동그라미에 흰 체크, 2026-10-01 요청), 글자는 흰색 — 꺼져 있으면 옅은 회색. 문서가 있으면 오른쪽 끝에 보기 화살표(버튼 밖 링크).
  */
 function TermsCheck({ all, checked, title, sub, link, onToggle }: {
   all?: boolean; checked: boolean; title: string; sub?: string; link?: { href: string; label: string }; onToggle: () => void
@@ -333,11 +353,11 @@ function TermsCheck({ all, checked, title, sub, link, onToggle }: {
           WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
         {all ? (
           <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 26, height: 26, flexShrink: 0, borderRadius: 13,
-            background: checked ? 'var(--color-white)' : 'var(--color-surface-3)', transition: 'background var(--motion-fast) var(--ease-standard)' }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-black)' : 'var(--color-text-tertiary)'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+            background: checked ? 'var(--color-accent)' : 'var(--color-surface-3)', transition: 'background var(--motion-fast) var(--ease-standard)' }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-accent-on)' : 'var(--color-text-tertiary)'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
           </span>
         ) : (
-          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={on} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={checked ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
             style={{ flexShrink: 0, marginTop: sub ? 1 : 0, transition: 'stroke var(--motion-fast) var(--ease-standard)' }}><path d="M20 6 9 17l-5-5" /></svg>
         )}
         <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
