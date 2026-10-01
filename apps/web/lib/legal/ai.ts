@@ -1,5 +1,5 @@
 import type { LegalDoc } from './index'
-import { geminiDataUse, operatorEmail } from './operator'
+import { operatorEmail } from './operator'
 
 /**
  * AI 생성 콘텐츠 안내 — AI 기본법 제31조(생성형 AI 사전 고지·결과물 표시)와 시행령 제23조(약관·화면으로 고지)를 따른다.
@@ -76,7 +76,7 @@ export const AI_NOTICE: Pick<LegalDoc, 'intro' | 'sections'> = {
       blocks: [
         { list: [
           '운영자는 이용자의 대화로 AI 모델을 학습시키지 않습니다.',
-          `AI가 답을 만들 때 대화 내용이 Google로 전송됩니다. ${geminiDataUse()}`,
+          'AI가 답을 만들 때 대화 내용이 Google로 전송됩니다.',
           'AI 품질 개선 참여(선택)는 처음부터 꺼져 있습니다. 켜면 개인정보를 가린 대화 일부를 최대 30일 동안 품질 검토에 쓰고, 끄면 모인 자료를 바로 삭제합니다. 참여하지 않아도 모든 기능을 똑같이 쓸 수 있습니다.',
           '자세한 내용은 개인정보 처리방침에 있습니다.',
         ] },

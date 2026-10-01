@@ -1,5 +1,5 @@
 import type { LegalDoc } from './index'
-import { geminiDataUse, operatorEmail, operatorName, privacyOfficer } from './operator'
+import { operatorEmail, operatorName, privacyOfficer } from './operator'
 
 /**
  * 개인정보 처리방침 — 개인정보 보호법 제30조·시행령 제31조와 개인정보보호위원회 작성지침의 항목 순서를 따르고,
@@ -96,7 +96,7 @@ export const PRIVACY_POLICY: Pick<LegalDoc, 'intro' | 'sections'> = {
       blocks: [
         '서비스 제공 계약을 이행하기 위해 다음 업체에 처리를 맡기거나 보관하게 하면서 개인정보가 국외로 이전(국외에서 처리·보관)됩니다. 이 방침에 공개하는 것으로 이전하며(「개인정보 보호법」 제28조의8 제1항 제3호), 각 업체의 데이터 처리 조건에 따라 보호 조치를 적용합니다.',
         { table: { head: ['이전받는 자(연락처)', '국가', '이전 항목', '시기와 방법', '이용 목적', '보유 기간'], rows: [
-          ['Google LLC (policies.google.com/privacy)', '미국', '대화 입력, 페르소나(닉네임·성별·소개), 캐릭터 설정, 최근 대화와 기억 요약, 이용자 현지 시각·언어', '대화할 때마다 암호화된 네트워크(HTTPS)로 전송', 'AI 응답 생성, 입력·출력 안전 검사, 기억 정리', `응답 생성에 필요한 동안 처리. ${geminiDataUse()}`],
+          ['Google LLC (policies.google.com/privacy)', '미국', '대화 입력, 페르소나(닉네임·성별·소개), 캐릭터 설정, 최근 대화와 기억 요약, 이용자 현지 시각·언어', '대화할 때마다 암호화된 네트워크(HTTPS)로 전송', 'AI 응답 생성, 입력·출력 안전 검사, 기억 정리', '응답 생성에 필요한 동안 처리'],
           ['GitHub, Inc. (github.com/site/privacy)', '미국', '데이터베이스 전체 백업(회원·대화·결제 기록 등)과 업로드 사진', '매일 1회 자동 전송(암호화된 네트워크)', '장애·데이터 손실 대비 복구', '데이터베이스 14일, 사진 3일'],
           ['Vercel Inc. (vercel.com/legal/privacy-policy)', '미국(서비스 실행은 서울 리전)', '서비스 요청 정보와 서버 오류 기록', '서비스를 이용할 때마다', '웹 서비스 운영', 'Vercel의 로그 보관 기간'],
           ['Discord Inc. (discord.com/privacy)', '미국', '계정 삭제 기록(내부 사용자 번호와 삭제 시각), 서비스 오류 요약', '해당하는 일이 생길 때 자동 전송', '운영자 알림', '운영 채널에서 삭제할 때까지'],
@@ -158,7 +158,7 @@ export const PRIVACY_POLICY: Pick<LegalDoc, 'intro' | 'sections'> = {
         { list: [
           '저장하는 입력과 결과물: 이용자가 보낸 글(대화·문자, 통화 중 받아 적은 글), 캐릭터가 만든 대화·문자, AI가 대화에서 정리한 기억 요약. 음성과 사진은 대화 기록으로 저장하지 않습니다.',
           '의도한 용도: 가상의 캐릭터와 이야기를 나누는 창작·놀이 서비스입니다. 실제 사람의 개인정보나 민감한 정보를 입력하지 마세요.',
-          '모델 학습: 운영자는 이용자의 대화로 AI 모델을 학습시키지 않습니다. AI 응답은 외부 AI(Google Gemini)가 만들며, ' + geminiDataUse(),
+          '모델 학습: 운영자는 이용자의 대화로 AI 모델을 학습시키지 않습니다. AI 응답은 외부 AI(Google Gemini)가 만듭니다.',
           '학습·검토 거부: AI 품질 개선 참여는 처음부터 꺼져 있고, 켰더라도 마이페이지 > AI 개선 참여에서 끄면 모인 자료를 바로 삭제합니다.',
           '부적절한 답변 신고: 대화 메시지의 신고 기능으로 알려 주면 운영자가 검토합니다.',
         ] },

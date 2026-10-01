@@ -37,5 +37,7 @@
   background: transparent; color: var(--color-text-primary); font-size: 15px; font-weight: 600; cursor: pointer; }
 .outline:disabled { opacity: .6; cursor: default; }
 
-/* 설정 톱니 — 알림 종과 같은 38px 상자. */
-.settings { position: relative; display: grid; place-items: center; width: 38px; height: 38px; color: var(--color-text-primary); }
+/* 아래 메뉴(설정 페이지를 옮겨 옴, 10/1) — 묶음 제목은 작은 회색, 줄은 상자·화살표 없이 글자만(누르는 높이 48px 이상). */
+.menu { margin-bottom: var(--space-5); }
+.menuTitle { margin: 0 0 4px; font-size: var(--font-caption); font-weight: var(--weight-semibold); color: var(--color-text-tertiary); }
+.row { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; color: var(--color-text-primary); }

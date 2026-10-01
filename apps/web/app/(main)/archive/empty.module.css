@@ -1,0 +1,14 @@
+/* 빈 대화 목록 그림 — 로고의 두 조각이 떨어졌다 만나 M 이 됐다 다시 떨어진다(2026-10-01, '로고 디자인에 맞춰서').
+   대화가 시작되면 만난다는 뜻. 두 층은 로고 인트로와 같은 logo-m(왼쪽)·logo-s(오른쪽)를 같은 자리에 겹친 것. */
+/* 연하게(10/1 요청) — 빈 화면의 장식이라 제목·버튼보다 앞에 나서지 않게. */
+.mark { position: relative; width: 112px; height: 112px; margin-bottom: 10px; opacity: .5; }
+.left, .right { position: absolute; inset: 0; background-size: 100% 100%; animation: 3.2s var(--ease-standard, ease-in-out) infinite; }
+.left { background-image: url(/logo-m.png); animation-name: left; }
+.right { background-image: url(/logo-s.png); animation-name: right; }
+@keyframes left { 0%, 100% { transform: translateX(-14%); } 42%, 58% { transform: translateX(0); } }
+@keyframes right { 0%, 100% { transform: translateX(14%); } 42%, 58% { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .left, .right { animation: none; }
+  .left { transform: translateX(-8%); }
+  .right { transform: translateX(8%); }
+}

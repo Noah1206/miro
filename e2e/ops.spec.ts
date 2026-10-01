@@ -15,7 +15,7 @@ async function roleplay(page: Page, slug = 'thomas') {
 test('chat list: delete with confirmation and empty state', async ({ page }) => {
   await signup(page)
   await page.goto(`${BASE}/archive`)
-  await expect(page.getByText('진행 중인 역할극이 없습니다.')).toBeVisible()
+  await expect(page.getByText('아직 대화가 없어요')).toBeVisible()
   const id = await roleplay(page)
   await page.goto(`${BASE}/archive`)
   const row = page.locator('[data-session-row]')
@@ -39,10 +39,10 @@ test('chat list: delete with confirmation and empty state', async ({ page }) => 
   await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveCount(0)
 })
 
-// 앱 밖 연락은 끌 수 없다 (2026-09-24) — 설정에는 연락 스위치가 없다.
+// 앱 밖 연락은 끌 수 없다 (2026-09-24) — 설정(2026-10-01 부터 '나' 화면 아래 메뉴)에는 연락 스위치가 없다.
 test('settings: no switch turns off character contact', async ({ page }) => {
   await signup(page)
-  await page.goto(`${BASE}/my/settings`)
+  await page.goto(`${BASE}/my`)
   await expect(page.getByRole('link', { name: '이용권 관리' })).toBeVisible()
   await expect(page.getByLabel(/먼저 연락 알림|야간 연락 차단|통화 수신/)).toHaveCount(0)
 })

@@ -23,7 +23,8 @@ const config: NextConfig = {
   experimental: { serverActions: { bodySizeLimit: '26mb' } },
   async headers() { return [{ source: '/(.*)', headers: securityHeaders }] },
   // 없어진 페이지의 예전 주소 — 발견·검색은 홈의 장르 칩으로 합쳤다(2026-09-30).
-  async redirects() { return ['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })) },
+  // 예전 주소 — 설정 페이지는 '나' 화면 아래 메뉴로 옮겼다(2026-10-01).
+  async redirects() { return [...['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })), { source: '/my/settings', destination: '/my', permanent: false }] },
 }
 
 export default config

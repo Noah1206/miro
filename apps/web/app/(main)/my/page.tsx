@@ -5,7 +5,12 @@ import { currentUser } from '@/lib/auth'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { getPersona } from '@/lib/persona'
 import { walletSnapshot } from '@/lib/wallet/service'
-import { getT } from '@/lib/i18n/server'
+import { LANGUAGES } from '@miro/domain'
+import { getLanguage, getT } from '@/lib/i18n/server'
+import { OPERATOR } from '@/lib/legal/operator'
+import { SubmitButton } from '@/components/ui/submit-button'
+import { logout } from './actions'
+import { MenuRow, MenuSection } from './menu'
 import homeStyles from '../home/home.module.css'
 import { CharacterPhoto } from '@/components/character-visual'
 import { CreditCard } from './credit-card'
@@ -13,14 +18,14 @@ import { ProfileEditor } from './profile-editor'
 import styles from './my.module.css'
 
 /**
- * '나' 화면(2026-09-30, WHIF 프로필 모양): 로고·설정(알림 종은 10/1 뺐다) → 프로필 줄(연필 = 닉네임·프로필 사진 시트) → 숫자 카드 → 크레딧 카드 → 푸터.
+ * '나' 화면(2026-09-30, WHIF 프로필 모양): 로고(알림 종·설정 톱니는 10/1 뺐다) → 프로필 줄(연필 = 닉네임·프로필 사진 시트) → 숫자 카드 → 크레딧 카드 → 푸터.
  * Miro 에 없는 것(팔로워·팔로잉, 친구 초대, 구독 배너, 테마 상점, 세이프)은 넣지 않는다. 활동 목록(만들기·내가 만든 캐릭터·이용권·설정)은
  * 같은 날 뺐다 — 설정만 머리의 톱니로 남긴다(언어·계정 삭제로 가는 유일한 길). 내가 만든 캐릭터 목록은 /my/characters 에 있다.
  */
 export default async function MyPage() {
   const user = await currentUser()
   if (!user) redirect('/login')
-  const t = await getT()
+  const [t, language] = await Promise.all([getT(), getLanguage()])
 
   const [[sessions], [talk], persona, wallet, [profile]] = await Promise.all([
     // 만난 캐릭터 = 대화방을 연 캐릭터 수, 대화 중 = 이어지는 대화방 수(지운 방 제외).
@@ -50,12 +55,6 @@ export default async function MyPage() {
       <h1 className="sr-only">{t('마이페이지')}</h1>
       <header className={styles.top}>
         <span className={homeStyles.headerItem} style={{ display: 'block' }}><LogoMark size={30} /></span>
-        <TransitionLink href="/my/settings" aria-label={t('설정')} className={`hit ${homeStyles.headerItem} ${homeStyles.headerAction} ${styles.settings}`}>
-          <svg aria-hidden width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-          </svg>
-        </TransitionLink>
       </header>
 
       <section className={styles.profile}>
@@ -75,9 +74,24 @@ export default async function MyPage() {
 
       <CreditCard initial={wallet} />
 
-      {/* 푸터 — 실제로 있는 문서만. 회사 정보는 정해진 것이 없어 적지 않는다. */}
+      {/* 아래 메뉴 — 설정 페이지를 여기로 옮겼다(2026-10-01). 고객센터는 운영자 정보(lib/legal/operator.ts)의 문의 이메일로 연다.
+          계정 삭제는 일반 항목과 떨어뜨려 맨 아래 문서 줄에 둔다(패턴 문서 §9.6) — 삭제 화면이 영향과 확인을 다시 묻는다. */}
       <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
-        <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>MIRO</p>
+        <MenuSection title={t('설정')}>
+          <MenuRow href="/my/language" label={t('언어')} sub={LANGUAGES[language]} />
+          <MenuRow href="/my/subscription" label={t('이용권 관리')} />
+          <MenuRow href="/my/verify" label={t('성인 인증')} />
+          <MenuRow href="/my/permissions" label={t('권한 안내')} />
+          <form action={logout}>
+            <SubmitButton full variant="ghost" style={{ justifyContent: 'flex-start', minHeight: 0, padding: '12px 0', border: 0, borderRadius: 0, fontSize: 'var(--font-body-size)', lineHeight: 1.6, fontWeight: 'var(--weight-regular)' }}>
+              {t('로그아웃')}
+            </SubmitButton>
+          </form>
+        </MenuSection>
+        <MenuSection title={t('고객지원')}>
+          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('고객센터')} sub={OPERATOR.email} />
+        </MenuSection>
+        <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', margin: 'var(--space-6) 0 12px' }}>MIRO</p>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
           <TransitionLink href="/my/ai-data" className="hit">{t('AI 개선 참여')}</TransitionLink>
           <TransitionLink href="/terms/service" className="hit">{t('서비스 이용약관')}</TransitionLink>
@@ -85,6 +99,8 @@ export default async function MyPage() {
           <TransitionLink href="/terms/privacy" className="hit">{t('개인정보 처리방침')}</TransitionLink>
           <span aria-hidden>|</span>
           <TransitionLink href="/terms/ai" className="hit">{t('AI 생성 콘텐츠 안내')}</TransitionLink>
+          <span aria-hidden>|</span>
+          <TransitionLink href="/my/delete" className="hit">{t('계정 삭제')}</TransitionLink>
         </p>
       </footer>
     </Page>

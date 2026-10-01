@@ -9,6 +9,7 @@ import { loadArchivePage } from './actions'
 import { withParticle } from '@/lib/format'
 import { dateLabel, preview } from '@/lib/archive-format'
 import { useLanguage, useT } from '@/lib/i18n/client'
+import emptyStyles from './empty.module.css'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -55,15 +56,16 @@ export function ArchiveList({ initialPage }: {
     <>
       <header style={{ marginBottom: 'var(--space-6)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
-          <h1 className="t-title-1">{t('내 채팅')}</h1>
-        <button type="button" onClick={() => setManaging((value) => !value)} aria-label={t('대화 관리')} aria-pressed={managing} style={{
+          <h1 className="t-title-1">{t('채팅')}</h1>
+        {/* 대화 관리(…) — 누르면 방마다 삭제가 보인다. 지울 방이 없으면 두지 않는다(10/1). */}
+        {items.length > 0 && <button type="button" onClick={() => setManaging((value) => !value)} aria-label={t('대화 관리')} aria-pressed={managing} style={{
           width: 40, height: 40, display: 'grid', placeItems: 'center', padding: 0, border: 0, borderRadius: 'var(--radius-sm)',
           background: managing ? 'var(--color-surface-2)' : 'transparent', color: 'var(--color-text-primary)',
         }}>
           <svg aria-hidden width="22" height="22" viewBox="0 0 18 18" fill="currentColor">
             <circle cx="3" cy="9" r="1.5" /><circle cx="9" cy="9" r="1.5" /><circle cx="15" cy="9" r="1.5" />
           </svg>
-        </button>
+        </button>}
         </div>
       </header>
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
@@ -105,7 +107,16 @@ export function ArchiveList({ initialPage }: {
       </ul>
       {loading && <p role="status" className="t-caption" style={{ marginTop: 16 }}>{t('불러오는 중…')}</p>}
       {error && <div role="alert" className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16 }}>{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => void loadMore()}>{t('다시 시도')}</Button></div>}
-      {!loading && !error && items.length === 0 && <p className="empty-state empty-state--fill">{t('진행 중인 역할극이 없습니다.')}</p>}
+      {/* 빈 목록 — 글 한 줄은 심심해서(2026-10-01 요청) 그림·제목·한 줄(버튼은 10/1 뺐다). 그림은 로고의 두 조각(3D 그림은 로고와 결이 달라 뺐다). */}
+      {!loading && !error && items.length === 0 && (
+        <div className="empty-state empty-state--fill">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <div className={emptyStyles.mark} aria-hidden><span className={emptyStyles.left} /><span className={emptyStyles.right} /></div>
+            <p className="t-title-3" style={{ color: 'var(--color-text-primary)' }}>{t('아직 대화가 없어요')}</p>
+            <p style={{ color: 'var(--color-text-secondary)' }}>{t('마음에 드는 캐릭터를 찾아 첫 대화를 시작해 보세요.')}</p>
+          </div>
+        </div>
+      )}
       {nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={loadMore} disabled={loading}>{t('더 보기')}</Button></div>}
     </>
   )

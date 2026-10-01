@@ -1,8 +1,9 @@
 'use server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db, users } from '@miro/db'
-import { requireUser } from '@/lib/auth'
+import { destroySession, requireUser } from '@/lib/auth'
 import { getPersona, savePersona } from '@/lib/persona'
 import { uploadCharacterImage } from '@/lib/storage/images'
 
@@ -29,4 +30,10 @@ export async function saveProfile(_: ProfileResult, form: FormData): Promise<Pro
   }
   revalidatePath('/my')
   return { ok: true }
+}
+
+/** 로그아웃 — 설정 페이지가 없어져 '나' 화면 아래 메뉴에서 부른다(2026-10-01). */
+export async function logout(): Promise<void> {
+  await destroySession()
+  redirect('/login')
 }

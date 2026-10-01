@@ -16,7 +16,8 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
   return (
     <section className={styles.credit} aria-label={t('미로')}>
       <p className={styles.balance} aria-live="polite">
-        <svg aria-hidden width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5" fill="#F5B83D" /><circle cx="12" cy="12" r="6.6" fill="none" stroke="#FFE08A" strokeWidth="1.6" /><path d="M12 8.2v7.6M9.6 10.4h4.8" stroke="#A8680C" strokeWidth="1.7" strokeLinecap="round" /></svg>
+        {/* 미로 동전(10/1, 힉스필드 — 가입 선물 그림의 점토 동전과 같은 결, 가운데 MIRO 마크). 그림은 3배(96px). */}
+        <img src="/miro-coin.png" alt="" aria-hidden width={26} height={26} decoding="async" style={{ display: 'block' }} />
         {t('{n} 미로', { n: value.rechargeRemaining.toLocaleString(locale) })}
       </p>
       <div className={styles.creditActions}>
