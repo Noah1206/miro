@@ -3,7 +3,8 @@ export const ONBOARDING_STEPS = 6
 export const TASTES = ['bl', 'hl', 'gl'] as const
 export type Taste = (typeof TASTES)[number]
 /** 필수 동의 — 없으면 가입이 끝나지 않는다. */
-export const REQUIRED_TERMS = ['terms', 'privacy', 'ai'] as const
+/** 캐릭터 알림(push)도 필수(2026-10-01 결정, 예외 없음) — 서버는 체크만 보고, 브라우저 허용·구독은 온보딩 화면이 끝까지 확인한다. */
+export const REQUIRED_TERMS = ['terms', 'privacy', 'ai', 'push'] as const
 /** 가입 보상을 준 직후 한 번 환영 시트를 띄우는 주소 표시. */
 export const WELCOME_PARAM = 'welcome'
 /**

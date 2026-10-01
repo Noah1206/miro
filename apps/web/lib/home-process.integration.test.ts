@@ -15,7 +15,8 @@ function startReader(url: string) {
   const processHandle: ChildProcessWithoutNullStreams = spawn(
     fileURLToPath(new URL('../../../node_modules/.bin/tsx', import.meta.url)),
     [workerPath],
-    { env: { ...process.env, DATABASE_URL: url } },
+    // apps/web 에서 띄운다 — tsx 가 그 tsconfig 의 '@/' 경로를 읽는다(저장소 루트에서 띄우면 '@/lib/i18n' 을 못 찾는다).
+    { cwd: fileURLToPath(new URL('..', import.meta.url)), env: { ...process.env, DATABASE_URL: url } },
   )
   const pending = new Map<number, { resolve: (ids: string[]) => void; reject: (error: Error) => void }>()
   let nextId = 0

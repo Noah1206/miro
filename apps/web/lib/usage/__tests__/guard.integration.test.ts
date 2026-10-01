@@ -260,7 +260,8 @@ describeDb('usage guard', () => {
       const id = await user()
       await grantRecharge({ userId: id, amount: 40, source: 'grant' })
       await reserve({ userId: id, kind: 'photo', idempotencyKey: `k:${id}:status`, now: T0 })
-      const s = await usageStatus(id)
+      // 쓴 시각(T0)과 같은 시각으로 본다 — 오늘로 보면 달이 바뀐 뒤엔 T0 의 월 창이 끝나 0 이 된다(2026-10-01 실패).
+      const s = await usageStatus(id, T0)
       expect(s.rechargeRemaining).toBe(40)
       expect(s.consumed).toBe(PHOTO)
       expect(s.remaining).toBe(FREE - PHOTO)               // 둘을 합쳐 보여주지 않는다

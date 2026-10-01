@@ -12,7 +12,7 @@ import { loadMessages, useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/c
 import { msg } from '@/lib/i18n'
 import { useRouter } from 'next/navigation'
 import { checkNickname, finishOnboarding } from './actions'
-import { markPushAsked, subscribeToPush } from '@/components/push-subscribe'
+import { markPushAsked, settingsPath, subscribeToPush } from '@/components/push-subscribe'
 
 const COPY = [
   { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자·전화가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
@@ -33,8 +33,8 @@ const TERMS = [
   { key: 'terms', title: msg('[필수] 서비스 이용약관'), href: '/terms/service' },
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },
-  // 브라우저 알림 권한 — 시작하기를 누를 때 묻고 구독까지 마친다(2026-09-30 요청). 서버에 남기는 동의 기록은 아니다.
-  { key: 'push', title: msg('[선택] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자·전화를 알림으로 받아요') },
+  // 브라우저 알림 권한 — 필수(2026-10-01 결정, 예외 없음). 시작하기를 누를 때 묻고, 허용·구독까지 끝나야 가입이 끝난다.
+  { key: 'push', title: msg('[필수] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자·전화를 알림으로 받아요') },
   { key: 'marketing', title: msg('[선택] 이벤트·혜택 알림 받기'), sub: msg('광고성 정보 수신 동의'), href: '/terms/marketing' },
   { key: 'nightMarketing', title: msg('[선택] 야간 혜택 알림 받기'), sub: msg('오후 9시 ~ 다음날 오전 8시에도 받아요'), href: '/terms/night-marketing' },
 ] as const
@@ -61,6 +61,8 @@ export function OnboardingForm() {
   const [birthDate, setBirthDate] = useState('')
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [error, setError] = useState<string | null>(null)
+  // 알림이 차단된 기기 — 이 브라우저에서 다시 켜는 길(오류 아래 한 줄).
+  const [pushPath, setPushPath] = useState<string | null>(null)
   // '캐릭터 알림 받기' 권한 창이 떠 있는 동안 — 시작하기를 잠가 둔다(넘어가 버리면 권한 창이 닫힌다).
   const [asking, setAsking] = useState(false)
   const pushHandled = useRef(false)
@@ -69,7 +71,7 @@ export function OnboardingForm() {
 
   useEffect(() => { if (state) { focusHeading.current = true; setStep(state.step); setError(state.error) } }, [state])
 
-  const go = (n: number) => { focusHeading.current = true; setError(null); setStep(n) }
+  const go = (n: number) => { focusHeading.current = true; setError(null); setPushPath(null); setStep(n) }
   const router = useRouter()
   // 닉네임을 넘기면 안전 검사를 뒤에서 미리 한다. 막히면 닉네임 단계로 돌아가 이유를 보인다.
   const leaveNickname = () => {
@@ -87,25 +89,36 @@ export function OnboardingForm() {
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
   const copy = COPY[step - 1]!
   /**
-   * 시작하기 — '캐릭터 알림 받기' 를 골랐으면 먼저 브라우저 알림 권한을 묻고, 허용하면 구독까지 마친 뒤 제출한다.
-   * 가입 뒤 알림 시트 없이 한 번에 넘어가게(2026-09-30 요청). 웹 알림이 없는 곳(iPhone 브라우저 등)은 가입 뒤 안내 시트가 맡는다.
+   * 시작하기 — 캐릭터 알림은 필수다(2026-10-01 결정, 예외 없음). 브라우저 알림 권한을 묻고, 허용하고 구독까지 끝나야 제출한다.
+   * 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)와 차단된 기기는 이유와 켜는 길을 보이고 멈춘다.
+   * 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 그대로 제출한다. 가입 뒤 알림 시트는 다시 뜨지 않는다(markPushAsked).
    */
   const askPushThenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    if (pushHandled.current || !vapid || !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return
-    pushHandled.current = true
-    markPushAsked()
-    // 안 골랐거나 이미 허용·차단된 기기는 묻지 않는다 — 허용된 기기는 들어간 뒤 알림 쪽이 조용히 구독을 맞춘다.
-    if (!checked.push || Notification.permission !== 'default') return
+    if (pushHandled.current || !vapid) return
     e.preventDefault()
     const form = e.currentTarget, submitter = (e.nativeEvent as SubmitEvent).submitter
-    setAsking(true)
-    void Notification.requestPermission()
-      .then((permission) => permission === 'granted'
-        ? Promise.race([subscribeToPush(vapid), new Promise((done) => setTimeout(done, 8000))]) : undefined)
-      .catch(() => {})
+    const fail = (why: string, path: string | null = null) => { focusHeading.current = true; setError(why); setPushPath(path) }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      const ua = navigator.userAgent
+      const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+      return fail(ios ? msg('iPhone은 Safari에서 공유 → 홈 화면에 추가한 뒤, 홈 화면의 MIRO로 열어 시작해 주세요. 알림은 그 앱에서만 받을 수 있어요.')
+        : msg('이 브라우저에서는 알림을 받을 수 없어요. 크롬이나 사파리에서 열어 주세요.'))
+    }
+    if (Notification.permission === 'denied') return fail(msg('알림을 허용해야 시작할 수 있어요.'), settingsPath())
+    markPushAsked()
+    setAsking(true); setError(null); setPushPath(null)
+    const askPermission = Notification.permission === 'granted' ? Promise.resolve<NotificationPermission>('granted') : Notification.requestPermission()
+    void askPermission
+      .then(async (permission) => {
+        if (permission !== 'granted') { fail(msg('알림을 허용해야 시작할 수 있어요.'), permission === 'denied' ? settingsPath() : null); return false }
+        const subscribed = await Promise.race([subscribeToPush(vapid).catch(() => false), new Promise<boolean>((done) => setTimeout(() => done(false), 8000))])
+        if (!subscribed) fail(msg('알림을 켜지 못했어요. 잠시 뒤 다시 눌러 주세요.'))
+        return subscribed
+      })
+      .catch(() => { fail(msg('알림을 켜지 못했어요. 잠시 뒤 다시 눌러 주세요.')); return false })
       // 잠금을 먼저 풀어야(동기로 그림) 잠긴 버튼으로 제출하지 않는다.
-      .finally(() => { flushSync(() => setAsking(false)); form.requestSubmit(submitter) })
+      .then((ok) => { flushSync(() => setAsking(false)); if (ok) { pushHandled.current = true; form.requestSubmit(submitter) } })
   }
   // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
   const switchLanguage = useSwitchLanguage()
@@ -194,6 +207,7 @@ export function OnboardingForm() {
           )}
 
           {error && <p role="alert" className="t-caption" style={{ marginTop: 12, color: 'var(--color-danger)' }}>{t(error)}</p>}
+          {pushPath && <p className="t-caption" style={{ marginTop: 4, color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)', wordBreak: 'keep-all' }}>{t(pushPath)}</p>}
 
           <div className="stack" style={{ gap: 4, marginTop: 'auto', paddingTop: 'var(--space-6)' }}>
             {/* 고르는 단계는 모두 같은 '다음' 하나로 넘어간다 — 고르기만으로는 넘어가지 않는다(2026-09-30 요청). */}

@@ -150,7 +150,7 @@ const COPY = {
  * 알림이 차단됐을 때 이 브라우저에서 다시 켜는 길(2026-09-30 요청). 차단은 웹 페이지가 풀 수 없어 사용자가 설정에서 허용해야 한다.
  * 화면이 열린 뒤 누를 때만 읽으므로 navigator 를 써도 된다. 알맞은 것이 없으면 일반 안내.
  */
-function settingsPath(): string {
+export function settingsPath(): string {
   const ua = navigator.userAgent
   const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true
   if (/iPhone|iPad|iPod/.test(ua)) return msg('iPhone 설정 → 알림 → MIRO → 알림 허용')

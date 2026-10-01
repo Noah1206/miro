@@ -20,10 +20,12 @@ test('onboarding cannot finish without the required terms, and ends with the wel
 
   const submit = page.getByRole('button', { name: '시작하기', exact: true })
   await expect(submit).toBeDisabled()
-  const required = ['서비스 이용약관', '개인정보 처리방침', 'AI 생성 콘텐츠 안내'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
+  const required = ['서비스 이용약관', '개인정보 처리방침', 'AI 생성 콘텐츠 안내', '캐릭터 알림 받기'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
   await required[0]!.click()
   await expect(submit).toBeDisabled()            // 하나만으로는 열리지 않는다
   await required[1]!.click(); await required[2]!.click()
+  await expect(submit).toBeDisabled()            // 캐릭터 알림도 필수다(2026-10-01) — 테스트 환경은 알림 키가 없어 권한은 묻지 않는다
+  await required[3]!.click()
   await expect(submit).toBeEnabled()             // 필수를 모두 체크해야 열린다 (선택 항목은 없어도 된다)
   await required[2]!.click()
   await expect(submit).toBeDisabled()
