@@ -172,7 +172,7 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
   /** 차단 시트에서 '설정 방법 보기' 를 누르면 설명 줄이 이 브라우저의 켜는 길로 바뀐다. */
   const [how, setHow] = useState<string | null>(null)
   return (
-    <Sheet open={open} onClose={onClose} label={t(copy.title)}>
+    <Sheet open={open} onClose={onClose} label={t(copy.title)} compact>
       <div className={styles.stack} data-push-sheet={kind}>
         <div className={styles.center}>
           {/* 힉스필드 3D 종(10/1 요청, 가입 선물 그림과 같은 점토 질감) — 차단 시트만 사선이 그어진 종. */}
@@ -187,7 +187,11 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
             <Button variant="secondary" full style={SHEET_BUTTON} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
             <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </> : kind === 'denied' && !how
-            ? <Button variant="primary" full onClick={() => setHow(settingsPath())}>{t('설정 방법 보기')}</Button>
+            ? <>
+              <Button variant="primary" full onClick={() => setHow(settingsPath())}>{t('설정 방법 보기')}</Button>
+              {/* 알림 받기 시트와 같은 짝 — 닫는 길이 X 하나뿐이지 않게(10/1). */}
+              <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
+            </>
             : <Button variant="primary" full onClick={onClose}>{t('확인')}</Button>}
         </div>
       </div>

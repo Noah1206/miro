@@ -18,6 +18,8 @@ type Props = {
   headerAction?: ReactNode
   /** 화면 높이 대비 열린 높이. drag 로 half ↔ full 스냅. */
   snap?: { half: number; full: number }
+  /** 제목 없는 시트: 닫기를 손잡이 줄 오른쪽 위에 겹쳐 두고 머리 줄(60px)을 없앤다 — 내용이 바로 위에 붙는다(알림 시트, 10/1 요청). */
+  compact?: boolean
 }
 
 /**
@@ -25,7 +27,7 @@ type Props = {
  * 손가락과 시트가 직접 연결된다 (dragElastic 이 경계 rubber band). 열린 뒤에도 항상 잡을 수 있다.
  * 시트 안에서의 세로 스크롤은 브라우저에 두고, 손잡이·헤더에서만 drag 를 잡는다.
  */
-export function Sheet({ open, onClose, title, label, children, variant = 'default', headerAction, snap = { half: 0.55, full: 0.92 } }: Props) {
+export function Sheet({ open, onClose, title, label, children, variant = 'default', headerAction, snap = { half: 0.55, full: 0.92 }, compact = false }: Props) {
   const reduce = useReducedMotion()
   const choice = variant === 'choice'
   const ref = useRef<HTMLDivElement>(null)
@@ -42,6 +44,13 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
   }, [open, onClose])
 
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+  // 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7)
+  const close = (
+    <button type="button" onClick={onClose} aria-label={t('닫기')} style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center',
+      ...(compact ? { position: 'absolute', top: 4, right: 'var(--space-4)' } : {}) }}>
+      <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+    </button>
+  )
   const heightPx = (r: number) => Math.round(vh * r)
 
   function onDragEnd(_: unknown, info: PanInfo) {
@@ -74,18 +83,17 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
             <div aria-hidden style={{ padding: '10px 0 4px', display: 'grid', placeItems: 'center', cursor: 'grab' }}>
               <span style={{ width: choice ? 48 : 36, height: 4, borderRadius: 2, background: 'var(--color-border-strong)' }} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: choice ? '8px var(--space-4) 12px var(--space-5)' : '4px var(--space-4) 12px var(--space-5)' }}>
-              {title ? <h2 id={titleId} className={choice ? 't-title-2' : 't-title-3'}
-                tabIndex={choice ? -1 : undefined} data-initial-focus={choice ? '' : undefined}
-                style={choice ? { outline: 'none', boxShadow: 'none' } : undefined}>{title}</h2> : <span />}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-                {headerAction}
-                {/* 드래그·Escape·배경 탭의 대안: 항상 보이는 닫기 (2.5.7) */}
-                <button type="button" onClick={onClose} aria-label={t('닫기')} style={{ width: 44, height: 44, border: 0, borderRadius: 'var(--radius-sm)', background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
-                  <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
-                </button>
+            {compact ? close : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: choice ? '8px var(--space-4) 12px var(--space-5)' : '4px var(--space-4) 12px var(--space-5)' }}>
+                {title ? <h2 id={titleId} className={choice ? 't-title-2' : 't-title-3'}
+                  tabIndex={choice ? -1 : undefined} data-initial-focus={choice ? '' : undefined}
+                  style={choice ? { outline: 'none', boxShadow: 'none' } : undefined}>{title}</h2> : <span />}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
+                  {headerAction}
+                  {close}
+                </div>
               </div>
-            </div>
+            )}
             <div style={{ overflowY: 'auto', padding: choice ? 'var(--space-4) var(--space-5) var(--space-6)' : '0 var(--space-5) var(--space-5)', touchAction: 'pan-y' }} onPointerDown={(e) => e.stopPropagation()}>
               {children}
             </div>

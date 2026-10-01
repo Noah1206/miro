@@ -4,7 +4,8 @@
 .center h2 { margin: var(--space-3) 0 0; line-height: 1.3; }
 /* 제목은 첫 초점만 받는 비대화형 요소다(탭 순서 밖) — 시트 choice 제목처럼 링을 그리지 않는다. */
 .center h2:focus-visible { outline: none; box-shadow: none; }
-.center p { margin: var(--space-1) 0 0; color: var(--color-text-secondary); font-size: var(--font-caption); line-height: 1.5; max-width: 34ch; text-wrap: balance; }
+/* 설명 한 줄은 본문 크기(15px) — 13px 은 읽기 힘들었다(10/1). */
+.center p { margin: var(--space-1) 0 0; color: var(--color-text-secondary); font-size: var(--font-body-size); line-height: 1.5; max-width: 34ch; text-wrap: balance; }
 /* 알림 아이콘 = 힉스필드 3D 빨간 종(#FF3B30, 10/1 요청). 입체감이 뭉개지지 않게 40 → 64px, 그림은 3배(192px). */
 .icon { display: block; width: 64px; height: 64px; }
 .actions { display: grid; gap: var(--space-2); }
