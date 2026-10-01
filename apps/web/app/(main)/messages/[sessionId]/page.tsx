@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import { db, messages, realityContacts } from '@miro/db'
-import { voiceCallAllowed } from '@miro/config'
+import { feature, voiceCallAllowed } from '@miro/config'
 import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
@@ -41,6 +41,8 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const items: MsgItem[] = rows
     // 사진은 문자로 보낸 것만 — 장면 안의 사진은 캐릭터챗의 것이다.
     .filter(isMessengerMessage)
+    // 통화 기록 줄은 전화가 닫혀 있으면(운영 베타, 2026-10-01) 지난 것도 보이지 않는다.
+    .filter((m) => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
     .map((m) => ({
       id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
       content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,

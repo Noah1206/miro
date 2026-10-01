@@ -15,7 +15,7 @@ import { checkNickname, finishOnboarding } from './actions'
 import { markPushAsked, settingsPath, subscribeToPush } from '@/components/push-subscribe'
 
 const COPY = [
-  { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자·전화가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
+  { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
   { title: msg('어떻게 불러 드릴까요?'), lead: msg('캐릭터가 대화에서 부를 닉네임이에요. 마이페이지에서 언제든 바꿀 수 있어요.') },
   { title: msg('성별을 알려 주세요'), lead: msg('캐릭터가 나를 알아보는 데 쓰여요.') },
   { title: msg('좋아하는 관계를 모두 골라 주세요'), lead: msg('취향에 맞는 캐릭터를 추천할 때 써요.') },
@@ -34,13 +34,15 @@ const TERMS = [
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },
   // 브라우저 알림 권한 — 필수(2026-10-01 결정, 예외 없음). 시작하기를 누를 때 묻고, 허용·구독까지 끝나야 가입이 끝난다.
-  { key: 'push', title: msg('[필수] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자·전화를 알림으로 받아요') },
+  { key: 'push', title: msg('[필수] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자를 알림으로 받아요') },
   { key: 'marketing', title: msg('[선택] 이벤트·혜택 알림 받기'), sub: msg('광고성 정보 수신 동의'), href: '/terms/marketing' },
   { key: 'nightMarketing', title: msg('[선택] 야간 혜택 알림 받기'), sub: msg('오후 9시 ~ 다음날 오전 8시에도 받아요'), href: '/terms/night-marketing' },
 ] as const
 
 /** '다음' 은 작게(2026-09-30 요청): 높이 56 → 44(터치 영역 최소), 글자 17 → 14. 잠겨 있을 땐 옅은 주황(.btn-next). */
-const NEXT_BUTTON: React.CSSProperties = { minHeight: 44, padding: '4px 24px', fontSize: 14 }
+// 모서리는 16px(2026-10-01 요청: 6 → 12 → 16 으로 키움) — 마지막 단계의 '알림 허용하기/시작하기'와 위의 선택 칸(Option)도 같은 값.
+const NEXT_RADIUS = 16
+const NEXT_BUTTON: React.CSSProperties = { minHeight: 44, padding: '4px 24px', fontSize: 14, borderRadius: NEXT_RADIUS }
 
 /**
  * 첫 로그인 온보딩. 한 화면에 한 질문 — 위에 뒤로·진행 막대·n/6, 아래에 다음 버튼 하나.
@@ -252,7 +254,7 @@ export function OnboardingForm() {
               <motion.div initial={false} animate={{ scale: pushGranted && !reduce ? [1, 1.03, 1] : 1 }} transition={{ duration: 0.4, ease: ease.standard }}>
                 <SubmitButton variant={pushGranted ? 'primary' : 'secondary'} size="lg" full disabled={asking || (pushGranted && !requiredOk)}
                   onClick={(e) => { if (!pushGranted) { e.preventDefault(); allowPush() } }}
-                  style={{ transition: 'background-color 360ms var(--ease-standard), color 360ms var(--ease-standard), border-color 360ms var(--ease-standard)' }}>
+                  style={{ borderRadius: NEXT_RADIUS, transition: 'background-color 360ms var(--ease-standard), color 360ms var(--ease-standard), border-color 360ms var(--ease-standard)' }}>
                   {/* 글자가 넘어가는 창 — 두 글자를 같은 칸에 겹쳐(가운데 맞춤) 위아래로만 자른다. 옆으로는 자르지 않아 긴 글자도 온전히 빠진다. */}
                   <span style={{ display: 'inline-grid', justifyItems: 'center', clipPath: 'inset(0 -64px)' }}>
                     <AnimatePresence initial={false}>
@@ -334,7 +336,7 @@ function Option({ role, selected, dimmed, title, sub, lang, center, icon, onClic
       whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}
       style={{
         position: 'relative', display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 50, padding: center ? '8px 44px' : '8px 16px', textAlign: center ? 'center' : 'left', cursor: 'pointer',
-        borderRadius: 'var(--radius-lg)', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
+        borderRadius: NEXT_RADIUS, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation',
         background: selected ? 'var(--color-surface-2)' : 'var(--color-surface-1)',
         // 고른 칸은 테두리 없이 한 단 밝은 바탕과 흰 체크로만 갈린다(2026-09-30 요청). 굵기는 그대로 둬 칸이 움직이지 않게.
         border: `1px solid ${selected ? 'transparent' : 'var(--color-border)'}`,

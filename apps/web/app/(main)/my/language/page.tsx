@@ -13,7 +13,7 @@ export default async function LanguagePage() {
   const [current, t] = await Promise.all([getLanguage(), getT()])
   return (
     <Page style={{ maxWidth: 520 }}>
-      <PageHeader back="/my" title={t('언어')} lead={t('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자·전화가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요.')} />
+      <PageHeader back="/my" title={t('언어')} lead={t('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요.')} />
       <div className="stack" style={{ gap: 8 }}>
         {(Object.keys(LANGUAGES) as Language[]).map((l) => (
           // 옅게는 폼에 — 버튼(Pressable)이 제 불투명도를 스스로 다룬다.

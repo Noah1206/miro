@@ -359,6 +359,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
             </Card>
           </Section>
+          {/* 목소리 칸이 없을 때(전화가 닫힌 운영 베타)도 이미 고른 목소리는 그대로 보낸다 — 고치기 저장이 지우지 않게. */}
+          {voices.length === 0 && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
           {voices.length > 0 && (
             <Section title={t('목소리')} subtitle={t('운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.')}>
               <Card>

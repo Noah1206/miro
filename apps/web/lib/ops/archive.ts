@@ -1,6 +1,7 @@
 import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, characters, realityContacts, roleplaySessions, worldStates } from '@miro/db'
 import { purgeBefore } from '@miro/domain'
+import { feature } from '@miro/config'
 
 export type ArchiveItem = {
   id: string
@@ -71,7 +72,8 @@ export async function listSessions(userId: string, options: {
     status: roleplaySessions.status, lastInteractionAt: roleplaySessions.lastInteractionAt,
     location: worldStates.currentLocation, time: worldStates.currentTime,
     characterStatus: roleplaySessions.characterStatus,
-    lastMessage: sql<string | null>`(select left("content", 180) from "messages" where "session_id" = ${roleplaySessions.id} and "hidden_at" is null order by "created_at" desc, "id" desc limit 1)`,
+    // 전화가 닫혀 있으면(운영 베타, 2026-10-01) 통화 기록은 미리보기에도 쓰지 않는다.
+    lastMessage: sql<string | null>`(select left("content", 180) from "messages" where "session_id" = ${roleplaySessions.id} and "hidden_at" is null${feature('voiceCall') || feature('videoCall') ? sql`` : sql` and "kind" <> 'call_record'`} order by "created_at" desc, "id" desc limit 1)`,
     unread: sql<number>`(select count(*)::int from ${realityContacts} rc where rc.session_id = ${roleplaySessions.id} and rc.status = 'sent')`,
     cursorTime: sql<string>`to_char(${roleplaySessions.lastInteractionAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
   })

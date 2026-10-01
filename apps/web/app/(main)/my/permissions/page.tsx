@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { and, isNull, sql } from 'drizzle-orm'
 import { db, pushSubscriptions, userSettings } from '@miro/db'
+import { feature } from '@miro/config'
 import { currentUser, requireUser } from '@/lib/auth'
 import { Page, PageHeader, Stagger, StaggerItem } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
@@ -22,9 +23,10 @@ export default async function PermissionsPage() {
   const [s] = await db.select().from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   const [t, language] = await Promise.all([getT(), getLanguage()])
   const [devices] = await db.select({ n: sql<number>`count(*)::int` }).from(pushSubscriptions).where(and(eq(pushSubscriptions.userId, user.id), isNull(pushSubscriptions.failedAt)))
+  // 마이크·카메라는 전화·영상통화에만 쓰인다 — 그 기능이 닫혀 있으면(운영 베타, 2026-10-01) 묻지도 보이지도 않는다.
   const items = [
-    { kind: 'mic' as const, label: t('마이크'), why: t('음성통화에서 목소리를 전달할 때만 사용합니다.'), at: s?.micConsentAt },
-    { kind: 'camera' as const, label: t('카메라'), why: t('영상통화에서 사용자의 화면을 표시할 때만 사용합니다.'), at: s?.cameraConsentAt },
+    ...(feature('voiceCall') ? [{ kind: 'mic' as const, label: t('마이크'), why: t('음성통화에서 목소리를 전달할 때만 사용합니다.'), at: s?.micConsentAt }] : []),
+    ...(feature('videoCall') ? [{ kind: 'camera' as const, label: t('카메라'), why: t('영상통화에서 사용자의 화면을 표시할 때만 사용합니다.'), at: s?.cameraConsentAt }] : []),
     { kind: 'image' as const, label: t('이미지 업로드'), why: t('Face Cast 참고 이미지로만 사용하며, 실존 인물 기반 성적 표현에는 사용하지 않습니다.'), at: s?.imageUploadConsentAt },
   ]
   return (
@@ -35,7 +37,7 @@ export default async function PermissionsPage() {
         <StaggerItem>
           <section data-push-section style={{ padding: 18, background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)' }}>
             <p className="t-title-3">{t('알림')}</p>
-            <p className="t-caption" style={{ margin: '4px 0 12px' }}>{t('캐릭터가 문자나 전화로 먼저 연락할 때 씁니다. 앱을 닫아도 받으려면 기기마다 한 번 켜 주세요.')}</p>
+            <p className="t-caption" style={{ margin: '4px 0 12px' }}>{t('캐릭터가 문자로 먼저 연락할 때 씁니다. 앱을 닫아도 받으려면 기기마다 한 번 켜 주세요.')}</p>
             <p data-push-devices={devices?.n ?? 0} className="t-caption" style={{ marginBottom: 12, color: 'var(--color-text-secondary)' }}>{t('알림을 켠 기기 · {n}대', { n: devices?.n ?? 0 })}</p>
             <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={t('캐릭터')} />
             <TestPushButton />

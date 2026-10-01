@@ -39,8 +39,9 @@ export function currentMode(): Mode {
 
 export function feature(name: FeatureName): boolean {
   // Media transports are not production-verified yet. A production env override must not expose them.
-  // 2026-09-29: 통화(voiceCall)는 문자 통화로 전체 공개 — 실시간 음성(voiceCallAudio)만 운영에서 계속 막는다(Gemini 목소리 불합격).
-  if (productionRuntime() && ['voiceCallAudio', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
+  // 2026-10-01 베타: 전화(voiceCall)도 운영에서 닫는다 — 사용자 화면에서 전화·영상통화를 아예 없앴다(사용자 요청, 9/29 문자 통화 공개를 되돌림).
+  // 캐릭터가 걸려던 전화는 문자로 간다(deliverableChannel). 다시 열 때는 이 목록에서 'voiceCall' 을 뺀다.
+  if (productionRuntime() && ['voiceCall', 'voiceCallAudio', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
   const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]
   if (override === '1') return true
   if (override === '0') return false
@@ -48,11 +49,12 @@ export function feature(name: FeatureName): boolean {
 }
 
 /**
- * 통화 허용. voiceCall 플래그가 켜져 있으면(2026-09-29 부터 운영 기본) 누구나 걸 수 있고,
- * 꺼져 있으면 MIRO_VOICE_CALL_USERS(쉼표 구분 사용자 ID)에 적힌 계정만 건다 — 다시 닫을 때의 안전장치.
+ * 통화 허용. voiceCall 플래그가 켜져 있으면 누구나 걸 수 있고, 꺼져 있으면 MIRO_VOICE_CALL_USERS(쉼표 구분 사용자 ID)에
+ * 적힌 계정만 건다. 단 운영 베타(2026-10-01~)는 테스터도 막는다 — 사용자 눈에 전화가 아예 없게. 테스터 목록은 운영 밖(로컬·미리보기)에서만 쓴다.
  */
 export function voiceCallAllowed(userId: string | null | undefined): boolean {
   if (feature('voiceCall')) return true
+  if (productionRuntime()) return false
   return !!userId && voiceCallTesters().includes(userId)
 }
 export function voiceCallTesters(): string[] {

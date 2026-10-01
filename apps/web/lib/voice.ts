@@ -1,8 +1,13 @@
 import { and, asc, eq } from 'drizzle-orm'
 import { db, officialVoices } from '@miro/db'
+import { feature } from '@miro/config'
 
-/** 만들기·편집 화면이 고를 수 있는 공식 목소리. 엔진 쪽 목소리 ID 는 싣지 않는다 — 화면에는 이름만 간다. */
+/**
+ * 만들기·편집 화면이 고를 수 있는 공식 목소리. 엔진 쪽 목소리 ID 는 싣지 않는다 — 화면에는 이름만 간다.
+ * 목소리는 전화에만 쓰인다 — 전화가 닫혀 있으면(운영 베타, 2026-10-01) 비워서 '목소리' 칸 자체를 보이지 않는다.
+ */
 export async function voiceOptions(): Promise<Array<{ id: string; label: string }>> {
+  if (!feature('voiceCall')) return []
   return db.select({ id: officialVoices.id, label: officialVoices.label }).from(officialVoices)
     .where(eq(officialVoices.status, 'active')).orderBy(asc(officialVoices.activatedAt))
 }

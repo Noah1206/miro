@@ -27,7 +27,7 @@ export default async function Miro() {
 
       {/* 미로 캐릭터 배너(2026-09-30 요청) — 홈 배너와 같은 틀, 그림은 빗속 밤거리의 미로 캐릭터 세 명(힉스필드). */}
       {/* 세 사람이 왼쪽 가까이까지 서 있어 폰에서는 글 폭을 40% 로, 좁은 컴퓨터에서는 양옆을 고르게 잘라(70%) 오른쪽 사람이 잘리지 않게. */}
-      <PromoBanner art="banner-miro" eyebrow={t('미로 캐릭터')} title={t('저마다의 하루를 사는 캐릭터들')} body={t('앱을 닫아도 문자와 전화로 먼저 찾아와요.')}
+      <PromoBanner art="banner-miro" eyebrow={t('미로 캐릭터')} title={t('저마다의 하루를 사는 캐릭터들')} body={t('앱을 닫아도 문자로 먼저 찾아와요.')}
         textWidth="40%" artX="70%" />
       <MiroGrid key={crypto.randomUUID()} initial={page} />
     </Page>
