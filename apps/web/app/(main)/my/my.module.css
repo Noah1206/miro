@@ -1,5 +1,7 @@
-/* '나' 화면(2026-09-30, WHIF 프로필 모양) — 로고·알림·설정 → 프로필 줄 → 숫자 카드 → 크레딧 카드. */
-.top { display: flex; align-items: center; justify-content: space-between; min-height: 40px; margin: 0 -8px var(--space-5) 0; }
+/* '나' 화면(2026-09-30, WHIF 프로필 모양) — 로고·설정 → 프로필 줄 → 숫자 카드 → 크레딧 카드.
+   머리 위 여백은 홈 머리와 같게(10/1): 페이지 위 여백(space-5) 대신 space-2 + 노치. */
+.top { display: flex; align-items: center; justify-content: space-between; min-height: 40px;
+  margin: calc(var(--space-2) + env(safe-area-inset-top) - var(--space-5)) -8px var(--space-5) 0; }
 
 .profile { display: flex; align-items: center; gap: 14px; margin-bottom: var(--space-5); }
 .avatar { width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; overflow: hidden;

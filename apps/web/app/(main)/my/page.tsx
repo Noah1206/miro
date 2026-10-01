@@ -5,9 +5,7 @@ import { currentUser } from '@/lib/auth'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { getPersona } from '@/lib/persona'
 import { walletSnapshot } from '@/lib/wallet/service'
-import { unreadContactCount } from '@/lib/ops/archive'
 import { getT } from '@/lib/i18n/server'
-import { NotificationBell } from '../home/bell'
 import homeStyles from '../home/home.module.css'
 import { CharacterPhoto } from '@/components/character-visual'
 import { CreditCard } from './credit-card'
@@ -15,7 +13,7 @@ import { ProfileEditor } from './profile-editor'
 import styles from './my.module.css'
 
 /**
- * '나' 화면(2026-09-30, WHIF 프로필 모양): 로고·알림·설정 → 프로필 줄(연필 = 닉네임·프로필 사진 시트) → 숫자 카드 → 크레딧 카드 → 푸터.
+ * '나' 화면(2026-09-30, WHIF 프로필 모양): 로고·설정(알림 종은 10/1 뺐다) → 프로필 줄(연필 = 닉네임·프로필 사진 시트) → 숫자 카드 → 크레딧 카드 → 푸터.
  * Miro 에 없는 것(팔로워·팔로잉, 친구 초대, 구독 배너, 테마 상점, 세이프)은 넣지 않는다. 활동 목록(만들기·내가 만든 캐릭터·이용권·설정)은
  * 같은 날 뺐다 — 설정만 머리의 톱니로 남긴다(언어·계정 삭제로 가는 유일한 길). 내가 만든 캐릭터 목록은 /my/characters 에 있다.
  */
@@ -24,7 +22,7 @@ export default async function MyPage() {
   if (!user) redirect('/login')
   const t = await getT()
 
-  const [[sessions], [talk], persona, wallet, unread, [profile]] = await Promise.all([
+  const [[sessions], [talk], persona, wallet, [profile]] = await Promise.all([
     // 만난 캐릭터 = 대화방을 연 캐릭터 수, 대화 중 = 이어지는 대화방 수(지운 방 제외).
     db.select({
       met: sql<number>`count(distinct ${roleplaySessions.characterId})::int`,
@@ -36,7 +34,6 @@ export default async function MyPage() {
       .where(and(eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), eq(messages.role, 'user'))),
     getPersona(user.id),
     walletSnapshot(user.id),
-    unreadContactCount(user.id),
     db.select({ avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, user.id)).limit(1),
   ])
   // 닉네임 = 온보딩에서 받은 이름(내 페르소나 이름, 캐릭터가 나를 부르는 이름). 없던 예전 계정은 계정 이름.
@@ -53,15 +50,12 @@ export default async function MyPage() {
       <h1 className="sr-only">{t('마이페이지')}</h1>
       <header className={styles.top}>
         <span className={homeStyles.headerItem} style={{ display: 'block' }}><LogoMark size={30} /></span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <NotificationBell unread={unread} signedIn className={`hit ${homeStyles.headerItem} ${homeStyles.headerAction}`} />
-          <TransitionLink href="/my/settings" aria-label={t('설정')} className={`hit ${homeStyles.headerItem} ${homeStyles.headerAction} ${styles.settings}`}>
-            <svg aria-hidden width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-            </svg>
-          </TransitionLink>
-        </div>
+        <TransitionLink href="/my/settings" aria-label={t('설정')} className={`hit ${homeStyles.headerItem} ${homeStyles.headerAction} ${styles.settings}`}>
+          <svg aria-hidden width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+          </svg>
+        </TransitionLink>
       </header>
 
       <section className={styles.profile}>

@@ -74,11 +74,11 @@ export function CreatePageSkeleton() {
 }
 
 export function MyPageSkeleton() {
-  // '나' 화면(2026-09-30) — 로고·알림·설정 → 프로필 줄 → 숫자 카드 → 크레딧 카드.
+  // '나' 화면(2026-09-30) — 로고·설정 → 프로필 줄 → 숫자 카드 → 크레딧 카드. 머리 위 여백은 홈 머리와 같게(10/1).
   return <Status label={msg('내 정보 불러오는 중')} className="page page--wide">
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, marginBottom: 'var(--space-5)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, margin: 'calc(var(--space-2) + env(safe-area-inset-top) - var(--space-5)) 0 var(--space-5)' }}>
       <Block width={30} height={30} style={{ borderRadius: 10 }} />
-      <div style={{ display: 'flex', gap: 14 }}><Block width={32} height={32} style={{ borderRadius: 16 }} /><Block width={32} height={32} style={{ borderRadius: 16 }} /></div>
+      <Block width={32} height={32} style={{ borderRadius: 16 }} />
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 'var(--space-5)' }}>
       <Block width={64} height={64} style={{ flexShrink: 0, borderRadius: 32 }} />

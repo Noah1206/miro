@@ -15,24 +15,25 @@ async function logout() {
  * 계정 설정과 로그아웃. 마이페이지에는 톱니 하나만 두고 전부 여기로 모았다.
  * 연락 설정(알림·통화 수신·야간 차단)은 없다 — 캐릭터의 앱 밖 연락은 항상 받는다 (2026-09-24 결정).
  * 알림 권한은 미로 캐릭터 대화방에서 묻는다.
+ * 컴퓨터에서는 '나' 화면처럼 넓게(10/1 요청) — 520px 폰 폭 기둥을 없앴다. 항목은 상자·화살표 없이 글자만(10/1 요청).
  */
 export default async function SettingsPage() {
   const user = await currentUser()
   if (!user) redirect('/login')
   const [language, t] = await Promise.all([getLanguage(), getT()])
   return (
-    <Page style={{ maxWidth: 520 }}>
+    <Page wide>
       <PageHeader back="/my" title={t('설정')} />
 
       <h2 className="t-title-3" style={{ margin: 'var(--space-5) 0 12px' }}>{t('계정')}</h2>
-      <Stagger as="div" className="stack" style={{ gap: 8 }}>
+      <Stagger as="div" className="stack" style={{ gap: 0 }}>
         <StaggerItem><Row href="/my/language" label={t('언어')} sub={LANGUAGES[language]} /></StaggerItem>
         {[['/my/subscription', t('이용권 관리')], ['/my/verify', t('성인 인증')], ['/my/permissions', t('권한 안내')]].map(([h, l]) => (
           <StaggerItem key={h}><Row href={h!} label={l!} /></StaggerItem>
         ))}
         <StaggerItem>
           <form action={logout}>
-            <SubmitButton full variant="secondary" style={{ justifyContent: 'flex-start', padding: '16px 18px', background: 'var(--color-surface-1)', fontWeight: 'var(--weight-regular)' }}>
+            <SubmitButton full variant="ghost" style={{ justifyContent: 'flex-start', minHeight: 0, padding: '12px 0', border: 0, borderRadius: 0, fontSize: 'var(--font-body-size)', lineHeight: 1.6, fontWeight: 'var(--weight-regular)' }}>
               {t('로그아웃')}
             </SubmitButton>
           </form>
@@ -50,13 +51,10 @@ export default async function SettingsPage() {
 
 function Row({ href, label, sub, danger }: { href: string; label: string; sub?: string; danger?: boolean }) {
   return (
-    <TransitionLink href={href} className="hoverable" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 18px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)', color: danger ? 'var(--color-danger)' : 'inherit' }}>
-      <span className="stack" style={{ gap: 2 }}>
-        <span className="t-body">{label}</span>
-        {/* 색 하나로만 위험을 말하지 않는다 (§4.2) — 무엇이 위험한지 글로 적는다. */}
-        {sub && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</span>}
-      </span>
-      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--color-text-tertiary)' }}><path d="M9 5l7 7-7 7" /></svg>
+    <TransitionLink href={href} className="stack" style={{ gap: 2, padding: '12px 0', color: danger ? 'var(--color-danger)' : 'inherit' }}>
+      <span className="t-body">{label}</span>
+      {/* 색 하나로만 위험을 말하지 않는다 (§4.2) — 무엇이 위험한지 글로 적는다. */}
+      {sub && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</span>}
     </TransitionLink>
   )
 }
