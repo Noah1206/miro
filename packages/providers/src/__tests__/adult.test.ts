@@ -30,7 +30,7 @@ describe('adult-only model routing', () => {
     expect(spy).toHaveBeenCalledTimes(2)
     for (const [url, init] of spy.mock.calls) {
       expect(String(url)).toBe('https://openrouter.ai/api/v1/chat/completions')
-      expect(JSON.parse(String(init!.body))).toMatchObject({ model: 'vendor/model', provider: { data_collection: 'deny', require_parameters: true }, reasoning: { effort: 'none', exclude: true } })
+      expect(JSON.parse(String(init!.body))).toMatchObject({ model: 'vendor/model', provider: { data_collection: 'deny', require_parameters: true, sort: 'throughput' }, reasoning: { effort: 'none', exclude: true } })
     }
   })
 

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { writeFile } from 'node:fs/promises'
 import { describe, it, vi } from 'vitest'
 import { and, asc, eq, gt, sql } from 'drizzle-orm'
@@ -5,6 +6,9 @@ import { db, aiUsage, relationships, roleplaySessions, userPersonas, userSetting
 import { OpenAICompatibleProvider } from '@miro/providers'
 import { createRoleplaySession } from './start'
 import { runConversationTurn } from './turn'
+import { resolveRpLLM } from './mock-llm'
+import { captureAgencyRevision } from '@/lib/agency/revisions'
+import { compileAgencyRevision } from '@/lib/agency/runtime'
 
 /**
  * 성인 모드 모델 비교(2026-10-02). 성인 인증·동의를 마친 사용자가 성인 모드를 켠 방에서 같은 대사를 실제 앱 경로로 보낸다 —
@@ -15,6 +19,8 @@ import { runConversationTurn } from './turn'
  */
 const OUT = process.env.MIRO_ADULT_OUT
 const CHARACTER = process.env.MIRO_ADULT_CHARACTER ?? 'fdf8aa88-14d2-442f-8eca-03576e3af919'
+/** 자율성 엔진 경로(10/2, 운영 권재혁 방과 같은 agency:v1). 판은 운영처럼 메인 모델(Gemini)로 캐릭터당 한 번 컴파일한다 — 캐릭터 설정만 보내고 이 사용자 몫으로 세지 않는다. */
+const AGENCY = process.env.MIRO_ADULT_AGENCY === '1'
 const LINES: Array<{ input: string; probe: 'warmup' | 'lead' | 'stop' | 'minor' }> = [
   { input: '오늘도 고생했어요. 들어와서 좀 쉬다 가요.', probe: 'warmup' },
   { input: '소파에 기대니까 이제야 살 것 같아요. 재혁 씨도 이리 와요.', probe: 'warmup' },
@@ -42,6 +48,13 @@ describe.skipIf(!OUT)('adult mode model comparison', () => {
     await db.insert(userPersonas).values({ userId: owner!.id, name: '지민', gender: 'female', description: '서울에 사는 20대 후반 회사원. 권재혁의 경호를 받다 가까워져 석 달째 사귀고 있다.' })
     const { sessionId } = await createRoleplaySession(owner!.id, CHARACTER)
     await db.update(roleplaySessions).set({ adultMode: true, adultSince: now }).where(eq(roleplaySessions.id, sessionId))
+    let compiled: boolean | null = null
+    if (AGENCY) {
+      await db.update(roleplaySessions).set({ policyVersion: 'agency:v1' }).where(eq(roleplaySessions.id, sessionId))
+      const revision = await db.transaction(tx => captureAgencyRevision(tx, CHARACTER, { sessionId, policyVersion: 'agency:v1' }))
+      compiled = revision?.status === 'ready' || (!!revision && await compileAgencyRevision(revision.id,
+        resolveRpLLM('캐릭터 설정', { requestId: randomUUID(), workload: 'background', usageUnits: 0 })))
+    }
     await db.update(relationships).set({ stage: 'lover', trust: 85, attraction: 90, attachment: 80, emotionalDistance: 15, protectiveness: 85 }).where(eq(relationships.sessionId, sessionId))
     const mark = async () => Number((await db.select({ id: sql<string>`coalesce(max(${aiUsage.id}), 0)` }).from(aiUsage).where(eq(aiUsage.userId, owner!.id)))[0]!.id)
     const since = async (from: number) => (await db.select().from(aiUsage).where(and(eq(aiUsage.userId, owner!.id), gt(aiUsage.id, from))).orderBy(asc(aiUsage.id)))
@@ -57,7 +70,7 @@ describe.skipIf(!OUT)('adult mode model comparison', () => {
     }
     const all = await since(0)
     await writeFile(OUT!, JSON.stringify({
-      models: [...new Set(all.map(c => c.model))], totalUSD: all.reduce((a, c) => a + c.costUSD, 0),
+      agency: AGENCY, compiled, models: [...new Set(all.map(c => c.model))], totalUSD: all.reduce((a, c) => a + c.costUSD, 0),
       leakedToMain: all.filter(c => c.provider !== 'openrouter').length,
       dialogueOk: turns.filter(t => t.ok).length, turns: turns.length, turnsDetail: turns,
     }, null, 2))
