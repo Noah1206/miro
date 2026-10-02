@@ -41,6 +41,7 @@ export function AdultToggle({ sessionId, on, everOn }: { sessionId: string; on: 
         <div className={styles.adultConsent}>
           <Checkbox name="age" required label={t('19세가 되는 해의 1월 1일이 지났습니다')} />
           <Checkbox name="policy" required label={t('성인 콘텐츠 정책에 동의합니다')} />
+          <a href="/terms/adult" target="_blank" rel="noopener" className="t-caption" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>{t('언베일 이용 정책 보기')}</a>
         </div>
         <div className={sheet.actions}>
           <Button type="submit" variant="secondary" full style={SHEET_BUTTON} status={pending ? 'loading' : 'idle'} disabled={pending}>{t('켜기')}</Button>
