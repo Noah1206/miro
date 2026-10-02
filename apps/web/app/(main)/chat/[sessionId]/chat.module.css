@@ -10,10 +10,11 @@
 .contextButton svg { width: 20px; height: 20px; }
 /*
  * 언베일 토글(10/2) — '언베일' 글자를 품은 알약 하나가 곧 스위치다. 터치 높이 44px.
- * 꺼지면 베일을 쓴 듯 가라앉아 있고, 켜면 노브가 불씨처럼 밝아지며 반대편으로 가고 알약이 옅은 주황 빛을 머금는다 —
- * 켜는 순간 빛이 한 번 알약을 훑는다(벗겨지는 베일). 주황은 이 켜진 상태에만 쓴다.
+ * 꺼지면 베일을 쓴 듯 가라앉아 있고, 켜면 노브가 빛나며 반대편으로 가고 알약이 옅은 보랏빛을 머금는다 —
+ * 켜는 순간 빛이 한 번 알약을 훑는다(벗겨지는 베일).
  */
-.adultToggle { height: 44px; flex: 0 0 auto; display: flex; align-items: center; padding: 0 2px; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* 켜진 색 = 딥 바이올렛(10/2 사용자: 주황은 너무 노골적) */
+.adultToggle { --uv-glow: #8b6cf0; --uv-knob: #cfc1ff; --uv-bg: #1d1636; --uv-label: #e6deff; height: 44px; flex: 0 0 auto; display: flex; align-items: center; padding: 0 2px; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .adultToggle:disabled { opacity: .6; cursor: default; }
 .adultToggle:focus-visible { outline: none; }
 .adultToggle:focus-visible .adultPill { outline: 2px solid var(--color-white); outline-offset: 2px; }
@@ -22,7 +23,7 @@
   transition: padding var(--motion-normal) var(--ease-standard), border-color var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard); }
 /* 켜진 바탕은 겹친 층의 투명도로 넘긴다 — 그라디언트는 직접 전환되지 않는다. */
 .adultPill::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0; transition: opacity var(--motion-normal) var(--ease-standard);
-  background: radial-gradient(90% 160% at 88% 50%, color-mix(in srgb, var(--color-accent-text) 34%, transparent), transparent 62%), linear-gradient(90deg, #1c1411, #36160a); }
+  background: radial-gradient(90% 160% at 88% 50%, color-mix(in srgb, var(--uv-glow) 34%, transparent), transparent 62%), linear-gradient(90deg, var(--color-surface-1), var(--uv-bg)); }
 .adultPill::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; transform: translateX(-120%);
   background: linear-gradient(105deg, transparent 25%, rgb(255 255 255 / .26) 50%, transparent 75%); }
 .adultLabel { position: relative; z-index: 2; font-size: 12px; font-weight: 700; line-height: 1; letter-spacing: -.01em; white-space: nowrap; color: var(--color-text-tertiary);
@@ -32,13 +33,13 @@
   transition: left var(--motion-normal) var(--ease-standard), box-shadow var(--motion-normal) var(--ease-standard); }
 /* 불씨 — 노브의 켜진 빛도 겹친 층의 투명도로 */
 .adultKnob::after { content: ''; position: absolute; inset: 0; border-radius: inherit; opacity: 0; transition: opacity var(--motion-normal) var(--ease-standard);
-  background: radial-gradient(circle at 34% 30%, #fff7f0, #ffc79e 42%, var(--color-accent-text) 100%); }
-.adultToggle[data-on] .adultPill { padding: 0 33px 0 12px; border-color: color-mix(in srgb, var(--color-accent-text) 55%, transparent);
-  box-shadow: 0 0 20px -7px color-mix(in srgb, var(--color-accent-text) 75%, transparent); }
+  background: radial-gradient(circle at 34% 30%, #fff, var(--uv-knob) 42%, var(--uv-glow) 100%); }
+.adultToggle[data-on] .adultPill { padding: 0 33px 0 12px; border-color: color-mix(in srgb, var(--uv-glow) 55%, transparent);
+  box-shadow: 0 0 20px -7px color-mix(in srgb, var(--uv-glow) 75%, transparent); }
 .adultToggle[data-on] .adultPill::before { opacity: 1; }
 .adultToggle[data-on] .adultPill::after { animation: unveilSweep 1s var(--ease-enter) 1; }
-.adultToggle[data-on] .adultLabel { color: #ffe3cf; }
-.adultToggle[data-on] .adultKnob { left: calc(100% - 25px); box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent-text) 85%, transparent), 0 0 2px rgb(255 255 255 / .7); }
+.adultToggle[data-on] .adultLabel { color: var(--uv-label); }
+.adultToggle[data-on] .adultKnob { left: calc(100% - 25px); box-shadow: 0 0 12px color-mix(in srgb, var(--uv-glow) 85%, transparent), 0 0 2px rgb(255 255 255 / .7); }
 .adultToggle[data-on] .adultKnob::after { opacity: 1; }
 @keyframes unveilSweep { from { transform: translateX(-120%); } to { transform: translateX(120%); } }
 @media (prefers-reduced-motion: reduce) {
