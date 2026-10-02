@@ -23,7 +23,9 @@ export function AdultToggle({ sessionId, on, everOn }: { sessionId: string; on: 
   })
   return <>
     <button type="button" role="switch" aria-checked={on} aria-label={t('성인 모드')} disabled={pending} data-on={on || undefined}
-      className={styles.adultToggle} onClick={() => on ? apply(false) : everOn ? apply(true) : setAsk(true)}>19</button>
+      className={styles.adultToggle} onClick={() => on ? apply(false) : everOn ? apply(true) : setAsk(true)}>
+      19<span aria-hidden className={styles.adultTrack}><span className={styles.adultKnob} /></span>
+    </button>
     <Sheet open={ask} onClose={() => setAsk(false)} label={t('성인 모드를 켤까요?')} compact>
       {/* 두 체크는 required — 브라우저가 둘 다 체크해야 제출한다. 서버도 처음 켤 때 agreed 를 다시 본다. */}
       <form className={sheet.stack} onSubmit={(e) => {
