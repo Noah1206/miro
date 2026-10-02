@@ -41,5 +41,5 @@ export async function adultModeGateFor(userId: string, characterId: string): Pro
   if (!gate.allowed) return gate
   const [c] = await db.select({ age: characters.age, occupation: characters.occupation, socialPosition: characters.socialPosition, role: characters.role, tagline: characters.tagline })
     .from(characters).where(eq(characters.id, characterId)).limit(1)
-  return c && adultCharacter(c) ? gate : { allowed: false, reason: 'character_not_adult', next: msg('만 19세 이상으로 설정된 캐릭터만 성인 모드를 켤 수 있어요.') }
+  return c && adultCharacter(c) ? gate : { allowed: false, reason: 'character_not_adult', next: msg('만 19세 이상으로 설정된 캐릭터만 언베일을 켤 수 있어요.') }
 }
