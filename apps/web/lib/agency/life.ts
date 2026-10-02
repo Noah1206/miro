@@ -65,7 +65,7 @@ export async function advanceCharacterLife(sessionId: string, now = new Date()):
   const profile = row.revision.profile
   const { identity, personality, worldRole } = profile.character
   installAIUsageSink()
-  const llm = createAI({ mock: () => ({ events: [] }), context: { userId: row.session.userId, sessionId, workload: 'background', origin: 'life:agency:reality:miro:background' } })
+  const llm = createAI({ mock: () => ({ events: [] }), context: { userId: row.session.userId, sessionId, workload: 'background', origin: 'life:agency:reality:miro:background', adult: row.session.adultSince !== null } })
   const proposed = await liveCharacterDay(llm, {
     character: { identity, personality, worldRole },
     rules: row.revision.compiled.rules.map(({ id, domain, statement }) => ({ id, domain, statement })),

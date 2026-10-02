@@ -73,7 +73,8 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
       if (productionRuntime() && provider.info.mode !== 'live') throw new Error('PUSH_NOT_READY')
       const result = await provider.send(row.subscription, {
         title: typeof payload.senderLabel === 'string' ? payload.senderLabel : 'MIRO',
-        body: typeof payload.text === 'string' ? payload.text.slice(0, 90) : '새로운 연락이 왔어요.',
+        // 성인 모드를 켠 적 있는 방은 잠금 화면에 내용을 띄우지 않는다.
+        body: typeof payload.text === 'string' && !row.session.adultSince ? payload.text.slice(0, 90) : '새로운 연락이 왔어요.',
         url: `/messages/${row.session.id}`, tag: `session:${row.session.id}`,
       })
       if (result.ok) await finish('sent')

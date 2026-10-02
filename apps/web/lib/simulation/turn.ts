@@ -126,8 +126,10 @@ async function executeTurn(opts: {
     let result: TurnResult
     let agency: LoadedAgency | null = null
     let policy = resolveTurnPolicy({ ...policyInput, agencyReady: false, continuity: reservation?.continuity ?? false })
-    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin }
-    const llm = resolveRpLLM(loaded.characterName, context)
+    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.since !== null }
+    // 성인 방인데 전용 모델이 빠져 있으면 여기서 던진다(메인 모델로 보내지 않음) — 잡아 둔 사용량은 돌려준다.
+    let llm: ReturnType<typeof resolveRpLLM>
+    try { llm = resolveRpLLM(loaded.characterName, context) } catch (e) { await refund(); throw e }
     // 문자에 답을 못 만들었으면 '입력 중'을 끝없이 띄우지 않는다 — 내 문자는 남기고, 답장은 몇 분 뒤 스케줄러가 다시 만들어 보낸다(사람이 늦게 답하듯, 10/2).
     // 장면 채팅과 연락이 꺼진 캐릭터는 예전대로 실패를 알린다.
     const replyLater = async (): Promise<ConversationOutcome> => {
@@ -245,7 +247,8 @@ async function executeTurn(opts: {
       await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
       // 기억 작업은 바로 시도한다. 여기서 유실돼도 DB 의 작업은 남아 크론이 거둔다.
       await runMemoryJobs(new Date(), { sessionId, limit: 2, inline: true }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
-      await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
+      // 성인 방의 대화는 평가 표본으로 남기지 않는다 — 표본은 나중에 메인 모델 비교에 쓰인다.
+      if (!loaded.adult.since) await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
     })
     return completed
 

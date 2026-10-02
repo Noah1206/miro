@@ -20,6 +20,7 @@ import type { AIContext, AIProvider, AIUsageRecord, GenerationRequest } from './
  *   cloudflare  CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, CLOUDFLARE_AI_MODEL
  *   gateway     AI_GATEWAY_API_KEY, MIRO_LLM_MODEL ("anthropic/claude-haiku-4-5" 처럼 provider/model)
  *   openai      OPENAI_API_KEY, OPENAI_MODEL, (OPENAI_BASE_URL — 로컬 서버도 여기로)
+ *   openrouter  OPENROUTER_API_KEY, 모델은 레지스트리에서 (성인 모드 전용 — MIRO_ADULT_MODEL_REGISTRY)
  */
 export function providerFromEnv(name: string | undefined, model?: string): AIProvider | null {
   const e = process.env
@@ -32,6 +33,9 @@ export function providerFromEnv(name: string | undefined, model?: string): AIPro
     case 'openai': return e.OPENAI_API_KEY && (model || e.OPENAI_MODEL)
       ? new OpenAICompatibleProvider('openai', e.OPENAI_API_KEY, (model || e.OPENAI_MODEL)!, e.OPENAI_BASE_URL || 'https://api.openai.com/v1') : null
     case 'anthropic': return e.ANTHROPIC_API_KEY && (model || e.ANTHROPIC_MODEL) ? new AnthropicProvider(e.ANTHROPIC_API_KEY, (model || e.ANTHROPIC_MODEL)!) : null
+    // 저장·학습하지 않는 공급자에게만, 그리고 요청한 JSON 형식을 지키는 공급자에게만 보낸다(처리방침의 '학습에 쓰지 않음'·대사 계약).
+    case 'openrouter': return e.OPENROUTER_API_KEY && model
+      ? new OpenAICompatibleProvider('openrouter', e.OPENROUTER_API_KEY, model, 'https://openrouter.ai/api/v1', { provider: { data_collection: 'deny', require_parameters: true } }) : null
     case 'miro-slm': return e.MIRO_SLM_URL && (model || e.MIRO_SLM_MODEL) ? new MiroSLMProvider(e.MIRO_SLM_URL, e.MIRO_SLM_API_KEY ?? '', (model || e.MIRO_SLM_MODEL)!) : null
     default: return null
   }
@@ -60,7 +64,7 @@ export function setAILeaseGuard(value: AILeaseGuard | undefined): void { leaseGu
  * 레지스트리에 같은 id 를 적으면 그쪽이 이긴다(가격·모델을 바꿀 때).
  */
 export const BACKUP_MODEL = { id: 'gpt-mini', provider: 'openai', providerModelId: 'gpt-5.4-mini', tier: 'standard', capabilities: ['dialogue'],
-  inputCost: 0.75, outputCost: 4.5, maxContextTokens: 400_000, maxOutputTokens: 4096, enabled: true, version: '2026-10-02', trainingAllowed: false, fallback: true }
+  inputCost: 0.75, outputCost: 4.5, maxContextTokens: 400_000, maxOutputTokens: 16_384, enabled: true, version: '2026-10-02', trainingAllowed: false, fallback: true }
 
 export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { registry: ModelRegistry; resolveModel: (m: ModelDefinition) => AIProvider } {
   let registry: ModelRegistry
@@ -94,16 +98,43 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
   }
   return { registry, resolveModel }
 }
+/**
+ * 성인 모드 대화방 전용 모델(10/2). 미로 메인 키(Gemini·예비 GPT)와 섞지 않는다 — 성인 대화가 메인 키로 가면 공급자 정책 위반으로 미로 전체가 멈출 수 있다.
+ * MIRO_ADULT_MODEL_REGISTRY 는 MIRO_MODEL_REGISTRY 와 같은 모양(JSON 배열, 가격 필수). capabilities·tier 를 비우면 모든 일·standard.
+ * 예: [{"id":"adult","provider":"openrouter","providerModelId":"<모델>","inputCost":0.5,"outputCost":2,"maxContextTokens":128000,"maxOutputTokens":4096}]
+ */
+function adultRegistry(): ModelRegistry | null {
+  if (!process.env.MIRO_ADULT_MODEL_REGISTRY) return null
+  const definitions = (JSON.parse(process.env.MIRO_ADULT_MODEL_REGISTRY) as object[]).map(d => ({ capabilities: [...AI_TASKS], tier: 'standard', ...d }))
+  const registry = new ModelRegistry(definitions)
+  const enabled = registry.models.filter(m => m.enabled)
+  return enabled.some(m => m.capabilities.includes('dialogue'))
+    && enabled.every(m => m.provider !== 'mock' && m.inputCost !== undefined && m.outputCost !== undefined && providerFromEnv(m.provider, m.providerModelId)) ? registry : null
+}
+/** 성인 전용 모델이 갖춰졌는가 — 아니면 화면에서 성인 모드 토글을 숨긴다. 설정이 깨져 있어도 false. */
+export function adultModelReady(): boolean { try { return adultRegistry() !== null } catch { return false } }
+function adultModels(mock: (req: GenerationRequest) => unknown): { registry: ModelRegistry; resolveModel: (m: ModelDefinition) => AIProvider } {
+  const registry = adultRegistry()
+  if (registry) return { registry, resolveModel: m => providerFromEnv(m.provider, m.providerModelId)! }
+  // 운영에서 전용 모델이 없으면 멈춘다 — 메인 모델로 보내지 않는다. 로컬·테스트는 정해진 답.
+  if (!mockProvidersAllowed()) throw new Error('ADULT_MODEL_REQUIRED')
+  return { registry: new ModelRegistry([{ id: 'mock', provider: 'mock', providerModelId: 'mock', tier: 'small', capabilities: [...AI_TASKS], maxContextTokens: 32768, enabled: true, inputCost: 0, outputCost: 0 }]),
+    resolveModel: () => new MockAIProvider(mock) }
+}
+
 export function createAI(opts: { mock: (req: GenerationRequest) => unknown; context?: AIContext } & Partial<Pick<OrchestratorOptions, 'timeoutMs' | 'maxRetries'>>): AIOrchestrator {
-  const { registry, resolveModel } = registryFromEnv(opts.mock)
+  // 성인 방은 전용 모델로만 — 고른 대화 모델·이어가기 소형 모델·섀도 비교는 메인 쪽이라 쓰지 않는다.
+  const adult = opts.context?.adult === true
+  const { registry, resolveModel } = adult ? adultModels(opts.mock) : registryFromEnv(opts.mock)
+  const context = adult ? { ...opts.context, dialogueModelId: undefined, continuity: false } : opts.context
   const enabled = registry.models.filter(m => m.enabled)
   if (!enabled.length) throw new Error('no enabled AI model')
-  const shadowModel = process.env.MIRO_SHADOW_MODEL && opts.context?.allowEvaluation && process.env.MIRO_MODEL_ROLLBACK !== '1' ? registry.get(process.env.MIRO_SHADOW_MODEL) : undefined
+  const shadowModel = !adult && process.env.MIRO_SHADOW_MODEL && opts.context?.allowEvaluation && process.env.MIRO_MODEL_ROLLBACK !== '1' ? registry.get(process.env.MIRO_SHADOW_MODEL) : undefined
   return new AIOrchestrator({
     shadow: shadowModel ? { model: shadowModel, provider: resolveModel(shadowModel) } : undefined,
     chain: [resolveModel(enabled[0]!)], registry, resolveModel,
     timeoutMs: opts.timeoutMs ?? (Number(process.env.AI_TIMEOUT_MS) || 20_000), maxRetries: opts.maxRetries,
-    onUsage: usageSink ?? undefined, budgetGuard: guard, leaseGuard, context: opts.context,
+    onUsage: usageSink ?? undefined, budgetGuard: guard, leaseGuard, context,
     rollout: { shadowModel: process.env.MIRO_SHADOW_MODEL, canaryModel: process.env.MIRO_CANARY_MODEL, canaryPercent: Number(process.env.MIRO_CANARY_PERCENT ?? 0), approved: process.env.MIRO_CANARY_APPROVED === '1', rollback: process.env.MIRO_MODEL_ROLLBACK === '1' },
   })
 }

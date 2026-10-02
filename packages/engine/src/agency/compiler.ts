@@ -19,8 +19,7 @@ const DocumentSchema = z.object({
   }
 })
 
-export const AgencyCompilerProposalSchema = z.object({
-  rules: z.array(z.object({
+const CompiledRuleProposal = z.object({
     id: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9:_-]{0,63}$/),
     domain: z.enum(['identity', 'value', 'boundary', 'motive', 'expression', 'world']),
     statement: z.string().min(1).max(1600),
@@ -36,7 +35,11 @@ export const AgencyCompilerProposalSchema = z.object({
     conditions: z.array(z.string().min(1).max(200)).max(5).optional(),
     exceptions: z.array(z.string().min(1).max(200)).max(5).optional(),
     priority: z.number().min(0).max(1).optional(),
-  }).strict()).max(32),
+}).strict()
+
+export const AgencyCompilerProposalSchema = z.object({
+  // 실측(10/2 운영, 예비 gpt-5.4-mini): 32개 상한을 넘겨 답해 정리가 통째로 실패했다(rules:too_big) — 앞의 32개만 받는다. 상한은 그대로다.
+  rules: z.preprocess(rules => (Array.isArray(rules) ? rules.slice(0, 32) : rules), z.array(CompiledRuleProposal).max(32)),
   unresolved: z.array(z.string().min(1).max(240)).max(12),
 }).strict()
 
@@ -84,8 +87,10 @@ export async function compileAuthoredCharacter(llm: LLMProvider, document: Autho
   if (hashAuthoredCharacter(document) !== sourceHash) throw new AgencyCompilationError([{ field: 'sourceHash', reason: 'source_hash_mismatch' }])
   const raw: AuthoredDocument = { ...document, fields: { ...document.fields }, explicitFields: [...document.explicitFields] }
   const proposal = await generateAgencyStructured(llm, {
-    task: 'agency_compile', schema: AgencyCompilerProposalSchema, system: COMPILER_SYSTEM,
-    prompt: JSON.stringify({ document: raw }), promptVersion: AGENCY_COMPILER_VERSION, maxTokens: 4096,
+    // 원문을 글자 그대로 옮겨야 한다 — 생각을 끈 예비 모델은 문장을 다듬어 explicit 규칙이 원문과 어긋났다(10/2 실측 24건). 캐릭터 저장 때 한 번이라
+    // 조금 생각하게 한다(3.8-flash 는 low 가 원래 값이라 그대로, 예비 GPT 는 생각 low). 생각이 출력 상한을 같이 쓰므로 상한을 넉넉히(medium·4096 은 잘렸다).
+    task: 'agency_compile', thinking: 'low', schema: AgencyCompilerProposalSchema, system: COMPILER_SYSTEM,
+    prompt: JSON.stringify({ document: raw }), promptVersion: AGENCY_COMPILER_VERSION, maxTokens: 8192,
   })
   const trace = agencyProviderTrace(llm, AGENCY_COMPILER_VERSION)
   const issues: AgencyIssue[] = []
@@ -104,9 +109,6 @@ export async function compileAuthoredCharacter(llm: LLMProvider, document: Autho
     if (!suppliedOffsets && text.indexOf(quote, start + 1) !== -1) {
       issues.push({ field, reason: 'ambiguous_source_span' }); continue
     }
-    if (rule.origin !== 'inferred' && rule.statement !== quote) {
-      issues.push({ field: `rules.${rule.id}.statement`, reason: 'explicit_rule_must_match_source' }); continue
-    }
     if (rule.origin === 'explicit' && !raw.explicitFields.includes(rule.source.field)) {
       issues.push({ field: `rules.${rule.id}.origin`, reason: 'unmarked_author_intent' }); continue
     }
@@ -117,7 +119,9 @@ export async function compileAuthoredCharacter(llm: LLMProvider, document: Autho
       && /(?:^|[._-])(?:nationality|gender|age|mbti|appearance|visual|baseFace|bodyProfile|hair)(?:$|[._-])/i.test(rule.source.field)) {
       issues.push({ field, reason: 'demographic_or_appearance_inference' }); continue
     }
-    rules.push({ ...rule, source: { field: rule.source.field, start, end } })
+    // 작성자가 쓴(explicit·legacy-default) 규칙의 문장은 검증된 원문 그 자체다 — 모델이 쓴 문장은 버린다. 예비 GPT 는 '권재혁' 을
+    // '이름은 권재혁이다' 처럼 문장으로 옮겨 12건이 통째로 거부됐다(10/2). 원문과 다른 해석('약속은 무시한다')도 이렇게 원문으로 돌아간다.
+    rules.push({ ...rule, statement: rule.origin === 'inferred' ? rule.statement : quote, source: { field: rule.source.field, start, end } })
   }
   const compiled: CompiledCharacter = { version: 1, sourceHash, rules, unresolved: proposal.unresolved }
   issues.push(...validateCompiledCharacter(compiled, raw, sourceHash))

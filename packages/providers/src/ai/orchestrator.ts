@@ -149,8 +149,10 @@ export class AIOrchestrator implements LLMProvider {
             wait = (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now()) await new Promise(r => setTimeout(r, wait))
         }
         const attemptId = randomUUID()
+        // 다시 보낼 때는 어느 칸이 어떻게 어긋났는지(경로·코드만, 답의 글은 아님)도 알려 준다 — '형식대로' 만으로는 같은 실수를 되풀이했다(10/2 rules:too_big 두 번).
+        const failed = retry && last.startsWith('invalid_schema ') ? ` The previous output failed validation at: ${last.slice('invalid_schema '.length)}.` : ''
         const request = { ...req, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens),
-          prompt: retry ? req.prompt + '\nReturn only valid JSON matching the requested schema.' : req.prompt }
+          prompt: retry ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt }
         const context = { ...this.opts.context, traceId: this.traceId, requestId: this.requestId }
         const release = acquireProvider(providerKey, context.workload === 'background')
         if (!release) { last = 'provider_overloaded'; break }

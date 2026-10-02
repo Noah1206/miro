@@ -1,34 +1,32 @@
 'use server'
-import { eq } from 'drizzle-orm'
-import { db, users } from '@miro/db'
-import { canRetryVerification, verifyRetryAt } from '@miro/domain'
-import { resolveAdultVerification } from '@miro/providers'
 import { requireUser } from '@/lib/auth'
+import { confirmAdult, type AdultVerifyOutcome } from '@/lib/adult-verify'
 import { INTL_LOCALE, msg } from '@/lib/i18n'
 import { getLanguage, getT } from '@/lib/i18n/server'
 
 export type VerifyState = { error: string | null; done: boolean }
 
-/** n64/n65 — 성인 인증. 실패 시 24시간 뒤 재시도 (명세서 7.1 예외). 정책 동의도 함께 기록한다. */
+/** n64/n65 — 성인 인증(생년월일 폼). 실패 시 24시간 뒤 재시도 (명세서 7.1 예외). 정책 동의도 함께 기록한다. */
 export async function verifyAdult(_p: VerifyState, form: FormData): Promise<VerifyState> {
   const user = await requireUser()
-  const [u] = await db.select({ failedAt: users.adultVerifyFailedAt, verifiedAt: users.adultVerifiedAt }).from(users).where(eq(users.id, user.id)).limit(1)
-  if (u?.verifiedAt) return { error: null, done: true }
-  const now = new Date()
-  if (!canRetryVerification(u?.failedAt ?? null, now)) {
-    const [t, language] = await Promise.all([getT(), getLanguage()])
-    return { error: t('{at} 이후에 다시 시도할 수 있습니다.', { at: verifyRetryAt(u!.failedAt)!.toLocaleString(INTL_LOCALE[language]) }), done: false }
-  }
   if (form.get('agree') !== 'on') return { error: msg('성인 콘텐츠 사용 정책에 동의해 주세요.'), done: false }
+  return toState(await confirmAdult(user.id, { birthDate: String(form.get('birthDate') ?? '') }))
+}
 
-  const provider = resolveAdultVerification()
-  const result = await provider.verify({ userId: user.id, birthDate: String(form.get('birthDate') ?? '') })
-  if (!result.verified) {
-    await db.update(users).set({ adultVerifyFailedAt: now }).where(eq(users.id, user.id))
-    const t = await getT()
-    return { error: t('인증에 실패했습니다: {reason} 24시간 후 다시 시도할 수 있습니다.', { reason: result.reason }), done: false }
+/** PortOne 본인인증 창이 닫힌 뒤(PC). 결과는 서버가 PortOne 에서 다시 받는다 — 브라우저가 보낸 결과는 믿지 않는다. */
+export async function confirmIdentity(identityVerificationId: string): Promise<VerifyState> {
+  const user = await requireUser()
+  return toState(await confirmAdult(user.id, { identityVerificationId: String(identityVerificationId) }))
+}
+
+async function toState(o: AdultVerifyOutcome): Promise<VerifyState> {
+  if (o.ok) return { error: null, done: true }
+  const [t, language] = await Promise.all([getT(), getLanguage()])
+  const at = o.lockedUntil?.toLocaleString(INTL_LOCALE[language])
+  return {
+    error: !o.reason ? t('{at} 이후에 다시 시도할 수 있습니다.', { at: at ?? '' })
+      : o.lockedUntil ? t('인증에 실패했습니다: {reason} 24시간 후 다시 시도할 수 있습니다.', { reason: o.reason })
+      : t(o.reason),
+    done: false,
   }
-  await db.update(users).set({ adultVerifiedAt: now, maturePolicyAgreedAt: now, adultVerifyFailedAt: null }).where(eq(users.id, user.id))
-  // The form shows completion from this state; a reload renders the verified page. Re-sending the tree only delayed it.
-  return { error: null, done: true }
 }

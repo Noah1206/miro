@@ -87,7 +87,9 @@ export type AIUsageRecord = {
 
 export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean; workload?: 'interactive' | 'background'
   /** 호출이 나온 경로(턴 정책의 origin). ai_usage 에 남아 경로별 원가·지연을 비교한다. */
-  origin?: string }
+  origin?: string
+  /** 성인 모드를 켠 적 있는 대화방(10/2) — 성인 전용 모델로만 간다(createAI). 메인 모델로 넘기지 않는다. */
+  adult?: boolean }
 export type AIRequest = GenerationRequest & { task: AITask }
 export type AIResponse = GenerationResult
 export type BudgetDecision = { allowed: true; reservationId: string; maxUsageUnits: number } | { allowed: false; reason: string }

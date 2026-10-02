@@ -4,7 +4,7 @@ import { db, messages } from '@miro/db'
 import { stageLabel } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
-import { matureGateFor } from '@/lib/ops/safety'
+import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
 import { Back, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
@@ -14,6 +14,7 @@ import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
+import { AdultToggle } from './adult-toggle'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
 import { requirePersona } from '@/lib/persona'
@@ -26,11 +27,12 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const { sessionId } = await params
   // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
   const session = loadSession(sessionId, user.id)
-  const [loaded, all, modelOptions, mature] = await Promise.all([
+  const [loaded, all, modelOptions, mature, adult] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     chatModelOptions(user.id),
     session.then((l) => l && matureGateFor(user.id, l.characterId)),
+    session.then((l) => l && adultModeGateFor(user.id, l.characterId)),
   ])
   if (!loaded || !mature) notFound()
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
@@ -59,6 +61,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <header className={styles.header}>
           <Back href="/archive" />
           <h1 className={styles.title}>{loaded.characterName}</h1>
+          {/* 성인 모드는 켤 수 있을 때만 보인다(성인 인증·전용 모델·성인 캐릭터). 켜져 있으면 끌 수 있게 늘 보인다. */}
+          {(loaded.adult.on || adult?.allowed) && <AdultToggle sessionId={sessionId} on={loaded.adult.on} everOn={loaded.adult.since !== null} />}
           {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
           {loaded.experienceType === 'reality' && (
             <TransitionLink href={`/messages/${sessionId}`} aria-label={t('문자')} className={styles.contextButton}>

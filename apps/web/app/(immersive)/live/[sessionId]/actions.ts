@@ -38,7 +38,7 @@ export async function liveTurn(_prev: LiveState, form: FormData): Promise<LiveSt
     if (!loaded || loaded.restricted) return { error: msg('장면을 찾을 수 없습니다.'), notice: null }
     if (loaded.experienceType !== 'reality') return { error: COPY.error.featureOff, notice: null }
 
-    const llm = resolveRpLLM(loaded.characterName, { userId: user.id, sessionId })
+    const llm = resolveRpLLM(loaded.characterName, { userId: user.id, sessionId, adult: loaded.adult.since !== null })
     const turnIndex = loaded.snapshot.turnCount + 1
     let result
     let prepared

@@ -326,6 +326,10 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   turnCount: integer('turn_count').notNull().default(0),
   /** 세션의 정책 버전(agency-core-transition-plan §6). legacy:v1 | agency:v1. 코호트 env 와 별개의 제품 기본값. */
   policyVersion: text('policy_version', { enum: ['legacy:v1', 'agency:v1'] }).notNull().default('legacy:v1'),
+  /** 성인 모드(2026-10-02, 대화방마다 사용자가 켜고 끔). 켜져 있으면 대사 지시가 성인 기준으로 바뀐다. */
+  adultMode: boolean('adult_mode').notNull().default(false),
+  /** 처음 켠 시각. 한 번 켠 방은 꺼도 성인 전용 모델로만 간다 — 이전 대화가 미로 메인 키로 가지 않게. */
+  adultSince: timestamp('adult_since', { withTimezone: true }),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

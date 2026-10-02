@@ -1,5 +1,5 @@
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
-import type { ZodType, ZodTypeAny } from 'zod'
+import type { ZodType, ZodTypeAny, ZodTypeDef } from 'zod'
 import { UnsafeContentError } from '../safety'
 
 export type AgencyProviderTrace = {
@@ -57,6 +57,8 @@ export function responseJsonSchema(schema: ZodTypeAny): Record<string, unknown> 
     case 'ZodEnum': return { type: 'string', enum: def.values }
     case 'ZodLiteral': return { type: typeof def.value, enum: [def.value] }
     case 'ZodOptional': return responseJsonSchema(def.innerType)
+    // 전처리·검사 래퍼는 받는 모양이 안쪽 스키마와 같다.
+    case 'ZodEffects': return responseJsonSchema(def.schema)
     case 'ZodDiscriminatedUnion': return { anyOf: def.options.map((option: ZodTypeAny) => responseJsonSchema(option)) }
     default: throw new Error(`responseJsonSchema: unsupported ${def.typeName}`)
   }
@@ -66,11 +68,14 @@ export function responseJsonSchema(schema: ZodTypeAny): Record<string, unknown> 
 export async function generateAgencyStructured<T>(llm: LLMProvider, opts: {
   /** 계획·검사·컴파일·자기 삶은 작업 이름이 따로다 — 역할마다 모델을 따로 줄 수 있게(10/2). */
   task: 'agency_plan' | 'agency_verify' | 'agency_compile' | 'agency_life'
-  schema: ZodType<T>
+  /** 받는 모양(Input)은 전처리로 넓을 수 있다 — 돌려주는 것은 검증된 T 다. */
+  schema: ZodType<T, ZodTypeDef, unknown>
   system: string
   prompt: string
   promptVersion: string
   maxTokens: number
+  /** 생각 수준(없으면 모델의 최소). 원문을 글자 그대로 옮겨야 하는 일회성 정리처럼 정확도가 지연보다 중요할 때만. */
+  thinking?: 'low' | 'medium' | 'high'
 }): Promise<T> {
   try {
     // 계획·검사·컴파일은 사용자 글을 자료로 읽고 출력은 보이지 않는다 — 공급자 필터는 높은 위험만 막는다.

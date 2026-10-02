@@ -12,6 +12,8 @@ export class OpenAICompatibleProvider implements AIProvider {
     private readonly apiKey: string,
     private readonly model: string,
     private readonly baseUrl: string,
+    /** 공급자별 추가 본문(OpenRouter 의 provider 라우팅 등). */
+    private readonly extra: Record<string, unknown> = {},
   ) {
     this.info = { mode: 'live', name: `${name}/${model}`, notice: null }
   }
@@ -32,11 +34,15 @@ export class OpenAICompatibleProvider implements AIProvider {
         messages: [{ role: 'system', content: req.system + (req.json ? '\nReturn only a JSON object.' : '') }, { role: 'user', content: req.prompt }],
         ...(gpt5 ? { max_completion_tokens: req.maxTokens ?? 1024, reasoning_effort: req.thinking ?? 'none' }
           : { max_tokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9 }),
+        // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).
+        // ponytail: 생각을 끌 수 없는 모델(필수 생각)은 none 을 무시한다 — 그런 모델은 비교에서 거른다.
+        ...(this.name === 'openrouter' ? { reasoning: { effort: req.thinking ?? 'none', exclude: true } } : {}),
         // 스키마는 디코딩 안내로만 준다(strict 아님) — strict 는 선택 필드가 있는 우리 스키마를 400 으로 거절한다. 검증은 오케스트레이터가 zod 로 한다.
         // ponytail: 예비가 스키마를 자주 어기면 선택 필드를 nullable 로 바꾼 strict 스키마로 올린다.
         ...(req.json ? { response_format: req.responseSchema
           ? { type: 'json_schema', json_schema: { name: 'output', schema: req.responseSchema, strict: false } }
           : { type: 'json_object' } } : {}),
+        ...this.extra,
       }),
     })
     if (!res.ok) { await res.body?.cancel(); throw new Error(`provider_http_${res.status}`) }

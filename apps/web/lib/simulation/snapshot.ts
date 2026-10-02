@@ -10,6 +10,7 @@ import { recentLife } from '@/lib/agency/life'
 import { characterAvailability } from '@/lib/reality/routine'
 import { memoryLagFor } from '@/lib/ai/memory-jobs'
 import { getPersona } from '@/lib/persona'
+import { adultModeGateFor } from '@/lib/ops/safety'
 import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
@@ -27,6 +28,8 @@ export type LoadedSession = {
   /** 세션 정책 버전(§6). 자율성 코호트 판정에 세션 id 와 함께 넘긴다. */
   policyVersion: 'legacy:v1' | 'agency:v1'
   lastInteractionAt: Date
+  /** 성인 모드 — on: 지금 켜짐(화면 토글), since: 처음 켠 시각(있으면 이 방의 모든 AI 호출이 성인 전용 모델로 간다). */
+  adult: { on: boolean; since: Date | null }
 }
 
 const RECENT_RESOLVED_EVENT_LIMIT = 24
@@ -58,7 +61,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life, adultOk] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -94,6 +97,8 @@ export async function loadSession(
     getPersona(userId),
     // 자기 삶 — 대화가 없는 동안 캐릭터가 겪은 일(미로 캐릭터의 자율성 세션에만 생긴다).
     row.character.experienceType === 'reality' ? recentLife(sessionId) : Promise.resolve([]),
+    // 성인 모드 대사 지시는 매 턴 다시 판정한다 — 켠 뒤에 캐릭터 나이가 바뀌거나 인증이 사라지면 일반 기준으로 돌아간다(모델은 그대로 전용).
+    row.session.adultMode && row.session.adultSince ? adultModeGateFor(userId, row.character.id).then((g) => g.allowed) : Promise.resolve(false),
   ])
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
@@ -124,6 +129,7 @@ export async function loadSession(
     clock: localClock(now, timeZone),
     routine: availability ? describeRoutine(availability.routine, availability) : null,
     life: lifeLines(life, timeZone),
+    adultMode: adultOk,
     recentCalls: calls.map((c) => {
       const when = localClock(c.endedAt ?? c.createdAt, timeZone).label
       const kind = c.channel === 'voice' ? '음성통화' : '영상통화'
@@ -146,6 +152,7 @@ export async function loadSession(
     experienceType: c.experienceType,
     policyVersion: row.session.policyVersion,
     lastInteractionAt: row.session.lastInteractionAt,
+    adult: { on: row.session.adultMode, since: row.session.adultSince },
   }
 }
 

@@ -12,6 +12,7 @@ import { LiveKitCallMediaProvider } from './call/livekit'
 import { GeminiLiveCallMediaProvider } from './call/gemini-live'
 import type { CallMediaProvider } from './call/types'
 import { MockAdultVerificationProvider } from './verify/mock'
+import { PortOneAdultVerificationProvider } from './verify/portone'
 import type { AdultVerificationProvider } from './verify/types'
 import { MockPaymentProvider } from './payment/mock'
 import { StripePaymentProvider } from './payment/stripe'
@@ -75,8 +76,12 @@ export function resolveCallMedia(kind: 'voice' | 'video'): CallMediaProvider {
 }
 
 /** 성인 인증 Provider. 확정되면 env 로 분기한다. */
+/** 성인 인증. PortOne 본인인증 키 세 개가 모두 있으면 실제 인증, 없으면 생년월일만 보는 Mock(운영에선 항상 거절). */
 export function resolveAdultVerification(): AdultVerificationProvider {
-  return new MockAdultVerificationProvider()
+  const e = process.env
+  return e.PORTONE_API_SECRET && e.PORTONE_STORE_ID && e.PORTONE_IDENTITY_CHANNEL_KEY
+    ? new PortOneAdultVerificationProvider(e.PORTONE_API_SECRET, e.PORTONE_STORE_ID, e.PORTONE_IDENTITY_CHANNEL_KEY)
+    : new MockAdultVerificationProvider()
 }
 
 let paymentSingleton: PaymentProvider | null = null

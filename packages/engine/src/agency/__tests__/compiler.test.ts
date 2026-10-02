@@ -20,6 +20,14 @@ describe('authored character compilation', () => {
     expect(DOCUMENT.fields['identity.name']).toBe('도윤')
   })
 
+  // 10/2 운영: 예비 모델이 상한(32)을 넘겨 규칙을 내자 정리 전체가 실패했다 — 앞의 32개만 받는다.
+  it('keeps the first 32 rules when a model returns more than the limit', async () => {
+    const name = compileProposal().rules[1]!
+    const many = { ...compileProposal(), rules: Array.from({ length: 40 }, (_, i) => ({ ...name, id: `name-${i}` })) }
+    const result = await compileAuthoredCharacter(recordedProvider([many]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))
+    expect(result.compiled.rules.map(rule => rule.id)).toEqual(Array.from({ length: 32 }, (_, i) => `name-${i}`))
+  })
+
   it('hashes field order consistently, but never normalizes substantive raw text', () => {
     const reversed = { fields: Object.fromEntries(Object.entries(DOCUMENT.fields).reverse()), explicitFields: [...DOCUMENT.explicitFields].reverse() }
     expect(hashAuthoredCharacter(reversed)).toBe(hashAuthoredCharacter(DOCUMENT))
@@ -40,9 +48,17 @@ describe('authored character compilation', () => {
       .rejects.toMatchObject({ issues: expect.arrayContaining([{ field: 'rules.value-promise.source', reason: 'source_span_mismatch' }]) })
   })
 
-  it('rejects paraphrased explicit facts, invented exceptions and demographic motives', async () => {
+  // 10/2: 작성자가 쓴 규칙의 문장은 모델 문장이 아니라 검증된 원문으로 바뀐다 — 원문과 다른 해석은 원문으로 돌아간다(전엔 정리 전체를 거부했다).
+  it('stores an explicit rule as the author\'s exact words, whatever the model paraphrased', async () => {
+    const proposal = compileProposal()
+    proposal.rules[0]!.statement = '약속은 상황에 따라 무시한다.'
+    proposal.rules[1]!.statement = '이름은 도윤이다.'
+    const { compiled } = await compileAuthoredCharacter(recordedProvider([proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))
+    expect(compiled.rules.map(rule => rule.statement)).toEqual([DOCUMENT.fields['personality.personality'], '도윤'])
+  })
+
+  it('rejects invented exceptions and demographic motives', async () => {
     for (const modify of [
-      (p: ReturnType<typeof compileProposal>) => { p.rules[0]!.statement = '약속은 상황에 따라 무시한다.' },
       (p: ReturnType<typeof compileProposal>) => { p.rules[0]!.exceptions = ['상대가 연락을 차단한 경우 무시한다'] },
       (p: ReturnType<typeof compileProposal>) => { p.rules[0]!.source = { field: 'identity.nationality', quote: '한국' }; p.rules[0]!.statement = '한국'; p.rules[0]!.exceptions = [] },
     ]) {

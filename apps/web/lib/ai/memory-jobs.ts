@@ -130,7 +130,7 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
   // 요약은 그 범위의 대화가 있어야 뜻이 있다 — 비어 있으면 옛 요약을 빈 것으로 덮지 않고 나중에 다시 본다.
   if (job.kind === 'memory_summary' && !recentMessages.length) { await retryOrFail('summary_window_empty'); return 'retry' }
   const snapshot = { ...loaded.snapshot, recentMessages, turnCount: job.throughTurn }
-  const llm = auxiliaryLLM(loaded.characterName, { userId: job.userId, sessionId: job.sessionId, requestId: job.requestId ?? job.id, workload: 'background', origin: `memory:${job.kind}` })
+  const llm = auxiliaryLLM(loaded.characterName, { userId: job.userId, sessionId: job.sessionId, requestId: job.requestId ?? job.id, workload: 'background', origin: `memory:${job.kind}`, adult: loaded.adult.since !== null })
   let candidates
   try { candidates = filterSalient((await analyze(llm, job.kind, source.content, snapshot)).memories) }
   catch (e) { await retryOrFail(e instanceof Error ? e.message.slice(0, 60) : 'analyze_failed'); return 'retry' }

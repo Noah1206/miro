@@ -35,7 +35,7 @@ export async function absorbVoiceTurn(userId: string, callId: string, user: stri
     const requestId = randomUUID()
     // 통화는 MIRO 한도·채널 길이. 자율성 코호트는 위에서 걸렀으므로 legacy 로 확정된다.
     const policy = resolveTurnPolicy({ experience: loaded.experienceType, tier: 'miro', channel: 'voice_call', agencyMode: 'off', agencyReady: false, memory: 'deferred' })
-    const context = { userId, sessionId: call.sessionId, requestId, origin: policy.origin }
+    const context = { userId, sessionId: call.sessionId, requestId, origin: policy.origin, adult: loaded.adult.since !== null }
     let result
     try {
       // 사용자가 아무 말도 안 한 턴(캐릭터가 먼저 말함)은 분류할 것이 없다 — 보조 분석을 부르지 않는다.

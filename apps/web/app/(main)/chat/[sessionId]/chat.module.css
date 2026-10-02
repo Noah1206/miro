@@ -8,6 +8,15 @@
 .title { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.4px; }
 .contextButton { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
 .contextButton svg { width: 20px; height: 20px; }
+/* 성인 모드 토글(10/2) — 머리 줄의 작은 '19' 알약, 터치 영역은 44px. 켜지면 주황 글자·테두리. */
+.adultToggle { position: relative; width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-tertiary); font-size: 12px; font-weight: 700; letter-spacing: -.2px; cursor: pointer; }
+.adultToggle::before { content: ''; position: absolute; inset: 11px 6px; border: 1.5px solid currentColor; border-radius: 999px; }
+.adultToggle[data-on] { color: var(--color-accent-text); }
+.adultToggle:disabled { opacity: .5; cursor: default; }
+.adultToggle:focus-visible { outline: 2px solid var(--color-white); outline-offset: 2px; border-radius: 50%; }
+/* 첫 켜기 시트의 두 동의 체크 — 가운데 정렬 묶음 아래에서 왼쪽 정렬로 읽힌다. */
+.adultConsent { display: grid; text-align: left; margin-top: calc(-1 * var(--space-3)); }
+.adultBadge { width: 64px; height: 64px; display: grid; place-items: center; border: 3px solid var(--color-accent-text); border-radius: 50%; color: var(--color-accent-text); font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
 .stylePicker { position: relative; flex-shrink: 0; }
 .styleButton { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 8px 0 10px; border: 0; border-radius: 8px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; }
 .transcript { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 18px 16px 24px; scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
