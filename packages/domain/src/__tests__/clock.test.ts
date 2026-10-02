@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { localClock, minutesOf, periodOf } from '../time/clock'
+import { localClock, localIso, minutesOf, periodOf } from '../time/clock'
 
 describe('local clock', () => {
   it('renders the user-local date, weekday and period', () => {
@@ -12,6 +12,12 @@ describe('local clock', () => {
   })
   it('names the periods of a day', () => {
     expect([3, 8, 12, 18, 22].map(periodOf)).toEqual(['새벽', '아침', '낮', '저녁', '밤'])
+  })
+  it('writes record times in the user\'s local date, so a Korean morning is not "yesterday"', () => {
+    const at = new Date('2026-10-01T23:50:00Z')   // 10/2 08:50 KST — UTC 로는 전날
+    expect(localIso(at, 'Asia/Seoul')).toBe('2026-10-02T08:50:00.000+09:00')
+    expect(localIso(new Date('2026-10-02T03:00:00Z'), 'America/New_York')).toBe('2026-10-01T23:00:00.000-04:00')
+    expect(Date.parse(localIso(new Date('2026-10-01T23:50:00.123Z'), 'Asia/Seoul'))).toBe(Date.parse('2026-10-01T23:50:00.123Z'))
   })
   it('parses HH:MM and rejects nonsense', () => {
     expect(minutesOf('08:30')).toBe(510)

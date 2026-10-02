@@ -78,7 +78,7 @@ export function OnboardingForm() {
 
   const go = (n: number) => { focusHeading.current = true; setError(null); setPushPath(null); setStep(n) }
   const router = useRouter()
-  // 닉네임을 넘기면 안전 검사를 뒤에서 미리 한다. 막히면 닉네임 단계로 돌아가 이유를 보인다.
+  // 닉네임을 넘기면 뒤에서 미리 저장한다. 막히면 닉네임 단계로 돌아가 이유를 보인다.
   const leaveNickname = () => {
     const name = nickname
     void checkNickname(name).then((r) => { if (!r.ok) { focusHeading.current = true; setStep(2); setError(r.error) } }).catch(() => {})

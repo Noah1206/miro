@@ -32,7 +32,7 @@ export class GeminiProvider implements AIProvider {
         systemInstruction: { parts: [{ text: req.system }] },
         contents: [{ role: 'user', parts: [{ text: req.prompt }] }],
         safetySettings: ['HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_HARASSMENT']
-          .map(category => ({ category, threshold: 'BLOCK_MEDIUM_AND_ABOVE' })),
+          .map(category => ({ category, threshold: req.safety === 'relaxed' ? 'BLOCK_ONLY_HIGH' : 'BLOCK_MEDIUM_AND_ABOVE' })),
         generationConfig: {
           maxOutputTokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9,
           ...(req.json ? { responseMimeType: 'application/json', ...(req.responseSchema ? { responseJsonSchema: req.responseSchema } : {}) } : {}),

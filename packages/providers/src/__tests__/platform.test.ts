@@ -1,18 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { ModelRegistry, routeModels, modelCost, interactionImportance, AIOrchestrator, MockAIProvider, AIBudgetDeniedError,
+import { ModelRegistry, routeModels, modelCost, AIOrchestrator, MockAIProvider, AIBudgetDeniedError,
   buildTrainingDataset, type TrainingCandidate, evaluateResponse, MiroSLMProvider, prompts } from '../index'
 const model = (id: string, tier: 'small'|'standard'|'premium', capabilities = ['dialogue']) => ({id,provider:'mock',providerModelId:id,tier,capabilities,maxContextTokens:32000,enabled:true})
 const registry = new ModelRegistry([model('small','small'),model('standard','standard'),model('premium','premium'),model('semantic','small',['semantic_event'])])
 afterEach(()=>vi.unstubAllEnvs())
 describe('model routing and governance',()=>{
-  it('routes a casual reply and a consequential breakup differently',()=>{
-    expect(routeModels(registry,'dialogue',interactionImportance('응ㅋㅋ'),100,'same')[0]!.id).toBe('small')
-    expect(routeModels(registry,'dialogue',interactionImportance('우리 그만 만나자'),100,'same')[0]!.id).toBe('premium')
+  // 10/2: 등급은 작업이 정한다 — 프롬프트가 길거나 감정적이어도 대사는 강한(standard) 모델, 분류는 그 일을 맡은 싼 모델.
+  it('routes by task, not by how long the prompt is',()=>{
+    expect(routeModels(registry,'dialogue',100,'same').map(m=>m.id)).toEqual(['standard','small','premium'])
+    expect(routeModels(registry,'dialogue',20000,'same')[0]!.id).toBe('standard')
+    expect(routeModels(registry,'semantic_event',20000,'same').map(m=>m.id)).toEqual(['semantic'])
   })
   it('uses task capabilities and rejects contexts that do not fit',()=>{
-    expect(routeModels(registry,'semantic_event',interactionImportance('응'),100,'same')[0]!.id).toBe('semantic')
-    expect(()=>routeModels(registry,'dialogue',interactionImportance('응'),40000,'same')).toThrow()
+    expect(()=>routeModels(registry,'memory_summary',100,'same')).toThrow('no capable model')
+    expect(()=>routeModels(registry,'dialogue',40000,'same')).toThrow()
+  })
+  it('lets the dialogue model serve the strong tasks and keeps the backup last',()=>{
+    const r=new ModelRegistry([{...model('backup','standard'),fallback:true},model('flash','standard'),model('lite','small',['semantic_event','memory_summary'])])
+    for (const task of ['agency_plan','agency_verify','agency_compile','world_update'] as const) expect(routeModels(r,task,100,'u').map(m=>m.id)).toEqual(['flash','backup'])
+    expect(routeModels(r,'memory_summary',100,'u').map(m=>m.id)).toEqual(['lite'])
+  })
+  it('drops task names that no longer exist instead of rejecting the whole registry',()=>{
+    expect(new ModelRegistry([model('lite','small',['moderation','semantic_event'])]).get('lite').capabilities).toEqual(['semantic_event'])
   })
   it('never silently treats an unknown live model as free',()=>{
     const m = {...registry.get('small'),provider:'openai' as const}
@@ -21,13 +31,13 @@ describe('model routing and governance',()=>{
   })
   it('requires rollout approval and supports immediate SLM rollback',()=>{
     const r=new ModelRegistry([model('old','small'),{...model('slm','small'),provider:'miro-slm'}])
-    const args = ['dialogue',interactionImportance('응'),100,'u'] as const
+    const args = ['dialogue',100,'u'] as const
     expect(routeModels(r,...args)[0]!.id).toBe('old')
     expect(routeModels(r,...args,{canaryModel:'slm',canaryPercent:100,approved:true})[0]!.id).toBe('slm')
     expect(routeModels(r,...args,{canaryModel:'slm',canaryPercent:100,approved:true,rollback:true})[0]!.id).toBe('old')
   })
-  it('continuity never promotes an exhausted conversation to premium',()=>{
-    expect(routeModels(registry,'dialogue',interactionImportance('헤어지자'),100,'u',{},true)[0]!.id).toBe('small')
+  it('continuity keeps an exhausted conversation on the small model',()=>{
+    expect(routeModels(registry,'dialogue',100,'u',{},true).map(m=>m.id)).toEqual(['small'])
   })
   it('blocks before a provider is invoked when budget is denied',async()=>{
     const generate=vi.fn(async()=>({text:'{}',provider:'mock',model:'mock',latencyMs:0,inputTokens:0,outputTokens:0}))

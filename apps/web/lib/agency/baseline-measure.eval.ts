@@ -8,6 +8,7 @@ import * as observability from '@/lib/observe'
 import * as agencyEngine from '../../../../packages/engine/src/agency'
 import * as push from '@/lib/reality/push-outbox'
 import { evaluateSession } from '@/lib/reality/evaluate'
+import { advanceCharacterLife } from '@/lib/agency/life'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { GeminiProvider, extractJson } from '@miro/providers'
@@ -164,18 +165,23 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
         background: calls.filter(c => c.requestId !== requestId) })
       if (!outcome.ok && outcome.reason === 'budget') { stopped = 'budget'; break }
     }
+    // 대화가 끝난 뒤의 시간은 캐릭터 자기 리듬대로 산다 — 대화 중엔 하루 종일 비워 둔 리듬을 지워 실제 리듬을 만들게 한다(자기 삶이 그 블록에서 생긴다).
+    if (!stopped) await db.update(contactProfiles).set({ routine: null }).where(eq(contactProfiles.characterId, character.id))
     if (!stopped) for (const [index, hours] of PROACTIVE_AFTER_HOURS.entries()) {
       from = await mark()
       started = performance.now()
+      const at = new Date(Date.now() + hours * 3_600_000)
+      // 스케줄러와 같은 순서: 자기 삶을 먼저 살고, 그 일을 근거로 먼저 연락을 판단한다.
+      const life = await advanceCharacterLife(sessionId, at).catch((e: unknown) => ({ outcome: 'error', error: e instanceof Error ? e.message : String(e) }))
       // 예산이 바닥나 여기서 던지면 보고서가 통째로 사라진다(9/26: 앞선 턴의 실패 원문까지 잃었다). 결과로 남기고 멈춘다.
       let evaluated: Awaited<ReturnType<typeof evaluateSession>> | { outcome: string; error: string }
-      try { evaluated = await evaluateSession(sessionId, new Date(Date.now() + hours * 3_600_000), { background: true }) }
+      try { evaluated = await evaluateSession(sessionId, at, { background: true }) }
       catch (e) { evaluated = { outcome: 'error', error: e instanceof Error ? e.message : String(e) } }
       const { text, ...result } = { text: null, ...evaluated }
       const wallMs = performance.now() - started
       await flush()
       const calls = await since(from)
-      units.push({ kind: 'proactive', index, idleHours: hours, wallMs, outcome: result.outcome, result, engine: engineOf(calls), text, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls })
+      units.push({ kind: 'proactive', index, idleHours: hours, wallMs, outcome: result.outcome, result, engine: engineOf(calls), text, life, state: await state(sessionId), events: drain(), realization: realizations.splice(0), calls })
       if (result.outcome === 'error') { stopped = /budget/i.test(String((result as { error?: string }).error)) ? 'budget' : 'error'; break }
     }
     // 원장(원문 없음)과 기억 작업 지연 — 계약 게이트(권한 없는 세계 변경·허위 완료·중복)와 워커 p95 를 보고서에서 셀 수 있게.

@@ -7,15 +7,6 @@ import { getPersona } from '../persona'
 import { completeOnboarding, parseOnboarding, precheckNickname, type OnboardingInput } from '../onboarding'
 import { testDatabaseUrl } from '../../../../tooling/test-database'
 
-// 안전 검사 — 기본은 mock. 거부·장애 경로만 live 모양의 가짜 분류기로 바꾼다(persona 테스트와 같은 방식).
-const safety = vi.hoisted(() => ({ verdict: null as null | 'unavailable' | { allowed: boolean; category: string } }))
-vi.mock('@/lib/simulation/mock-llm', async (original) => {
-  const real = await original<typeof import('@/lib/simulation/mock-llm')>()
-  return { ...real, resolveRpLLM: (...args: Parameters<typeof real.resolveRpLLM>) => safety.verdict
-    ? { info: { mode: 'live', name: 'test', notice: null }, generateStructured: async () => { if (safety.verdict === 'unavailable') throw new Error('provider_http_429'); return safety.verdict } }
-    : real.resolveRpLLM(...args) }
-})
-
 function form(values: Record<string, string | string[]>): FormData {
   const f = new FormData()
   for (const [k, v] of Object.entries(values)) for (const x of [v].flat()) f.append(k, x)
@@ -47,7 +38,7 @@ describe('온보딩 입력', () => {
 
 const describeDb = testDatabaseUrl(process.env.DATABASE_URL) ? describe : describe.skip
 const made: string[] = []
-afterEach(() => { safety.verdict = null; vi.unstubAllEnvs() })
+afterEach(() => { vi.unstubAllEnvs() })
 afterAll(async () => {
   for (const id of made) { await db.delete(rechargeGrants).where(eq(rechargeGrants.userId, id)); await db.delete(users).where(eq(users.id, id)) }
 })
@@ -85,33 +76,18 @@ describeDb('온보딩 저장', () => {
     expect(gone).toMatchObject({ birthDate: null, tastes: [] })
   })
 
-  it('checks the nickname on its own step, so the final save does not wait for the safety check again', async () => {
-    vi.stubEnv('AI_PROVIDER', 'mock')
+  // 10/2: AI 안전 검사를 뺐다 — 닉네임 단계는 페르소나로 미리 저장만 하고, 마지막 단계는 성별만 맞춘다.
+  it('saves the nickname on its own step, so the final save only sets the gender', async () => {
     const id = await user()
     expect(await precheckNickname(id, ' 지우 ')).toEqual({ ok: true })
     expect(await getPersona(id)).toMatchObject({ name: '지우', gender: null })
-    // 마지막 저장에서 검사를 다시 부르면 거부되도록 — 부르지 않으니 그대로 끝난다.
-    safety.verdict = { allowed: false, category: 'sexual' }
     expect(await completeOnboarding(id, INPUT)).toMatchObject({ ok: true })
     expect(await getPersona(id)).toMatchObject({ name: '지우', gender: 'female' })
-    // 미리 검사에서 막히면 이유를 돌려주고 저장하지 않는다.
+    const [u] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, id))
+    expect(u!.displayName).toBe('지우')
+    // 형식이 틀린 닉네임은 이유를 돌려주고 저장하지 않는다.
     const other = await user()
-    expect(await precheckNickname(other, '다른 이름')).toEqual({ ok: false, error: '이 닉네임은 쓸 수 없어요. 다른 표현으로 적어 주세요.' })
+    expect(await precheckNickname(other, '가'.repeat(13))).toEqual({ ok: false, error: '이름은 12자까지 쓸 수 있어요.' })
     expect(await getPersona(other)).toBeNull()
-  })
-
-  it('stops at the nickname when the safety check rejects it, and finishes without a persona when the check is down', async () => {
-    const rejected = await user()
-    safety.verdict = { allowed: false, category: 'sexual' }
-    expect(await completeOnboarding(rejected, INPUT)).toEqual({ ok: false, step: 2, error: '이 닉네임은 쓸 수 없어요. 다른 표현으로 적어 주세요.' })
-    expect(await db.select().from(termsConsents).where(eq(termsConsents.userId, rejected))).toHaveLength(0)
-
-    const down = await user()
-    safety.verdict = 'unavailable'
-    expect(await completeOnboarding(down, INPUT)).toMatchObject({ ok: true })
-    expect(await getPersona(down)).toBeNull()
-    // 검사하지 못한 닉네임은 공개 이름(작성자 이름)에 쓰지 않는다.
-    const [u] = await db.select({ displayName: users.displayName }).from(users).where(eq(users.id, down))
-    expect(u!.displayName).toBe('구글 실명')
   })
 })

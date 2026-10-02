@@ -4,8 +4,8 @@ import type { ZodType, ZodTypeDef } from 'zod'
 import type { LLMProvider, ProviderInfo } from '../types'
 import type { AIContext, AILeaseGuard, AIProvider, AIUsageRecord, BudgetGuard, GenerationRequest, GenerationResult } from './types'
 import { AIContentBlockedError } from './types'
-import { AI_TASKS, interactionImportance, taskOf } from './tasks'
-import { ModelRegistry, modelCost, routeModels, type ModelDefinition, type RolloutPolicy } from './model-registry'
+import { AI_TASKS, taskOf } from './tasks'
+import { ModelRegistry, modelCost, routeModels, serves, type ModelDefinition, type RolloutPolicy } from './model-registry'
 
 export class AIUnavailableError extends Error {
   constructor(public readonly attempts: number, public readonly last: string) { super(`ai unavailable after ${attempts} attempts: ${last}`) }
@@ -46,6 +46,14 @@ export type OrchestratorOptions = {
 }
 
 /** One entry point for every task. No provider data can reach Core before runtime validation. */
+/** 일시 과부하(5xx) 전용 추가 재시도 — 횟수와 첫 대기(ms, 회차마다 늘린다). */
+const TRANSIENT_RETRIES = 2
+const TRANSIENT_BACKOFF_MS = 600
+/** 일시 과부하 — 500·502·503(공통), 529(Anthropic 과부하). 어댑터마다 provider_http_<상태> 로 맞춰 던진다. */
+const TRANSIENT = /^provider_http_(50[023]|529)$/
+/** 공급자 쪽 실패 — 같은 모델에 다시 보내도 대개 같다. 형식 오류(invalid_schema·empty_output·max_tokens)는 그 답의 일이라 여기 없다. */
+const PROVIDER_FAILURE = /^(provider_http_|timeout|provider_error)/
+
 export class AIOrchestrator implements LLMProvider {
   readonly info: ProviderInfo
   readonly traceId: string
@@ -91,8 +99,8 @@ export class AIOrchestrator implements LLMProvider {
   }
   async generateStructured<Out, In = Out>(opts: {
     schema: ZodType<Out, ZodTypeDef, In>; system: string; prompt: string; maxRetries?: number
-    task?: string; maxTokens?: number; temperature?: number; promptVersion?: string; importance?: GenerationRequest['importance']
-    responseSchema?: GenerationRequest['responseSchema']; thinking?: GenerationRequest['thinking']
+    task?: string; maxTokens?: number; temperature?: number; promptVersion?: string
+    responseSchema?: GenerationRequest['responseSchema']; thinking?: GenerationRequest['thinking']; safety?: GenerationRequest['safety']
   }): Promise<Out> { return this.execute({ ...opts, task: taskOf(opts.task) }) }
   async generateText(opts: { system: string; prompt: string; task?: string; maxTokens?: number; temperature?: number; promptVersion?: string }): Promise<string> {
     return this.run({ ...opts, task: taskOf(opts.task) }, text => {
@@ -103,13 +111,15 @@ export class AIOrchestrator implements LLMProvider {
   private selections(req: GenerationRequest): Array<{ model: ModelDefinition; provider: AIProvider }> {
     if (this.opts.explicitModel) return [{ model: this.opts.explicitModel, provider: this.opts.chain[0]! }]
     if (this.opts.registry && this.opts.resolveModel) {
+      const registry = this.opts.registry, tokens = Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8'))
+      const fits = (m: ModelDefinition) => m.maxContextTokens >= tokens + m.maxOutputTokens
+      let models: ModelDefinition[]
       if (req.task === 'dialogue' && this.opts.context?.dialogueModelId) {
-        const model = this.opts.registry.get(this.opts.context.dialogueModelId)
-        if (!model.capabilities.includes('dialogue') || model.maxContextTokens < Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8')) + model.maxOutputTokens) throw new Error('selected model cannot handle dialogue context')
-        return [{ model, provider: this.opts.resolveModel(model) }]
-      }
-      const models = routeModels(this.opts.registry, taskOf(req.task), req.importance ?? interactionImportance(req.prompt),
-        Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8')), this.opts.context?.userId ?? this.traceId, this.opts.rollout, this.opts.context?.continuity)
+        const model = registry.get(this.opts.context.dialogueModelId)
+        if (!serves(model, 'dialogue') || !fits(model)) throw new Error('selected model cannot handle dialogue context')
+        // 고른 모델이 먼저, 그 모델이 공급자 장애로 실패할 때만 예비 — 전엔 고른 모델 하나뿐이라 10/2 Gemini 장애 때 대화가 그대로 실패했다.
+        models = [model, ...registry.models.filter(m => m.fallback && m.enabled && m.id !== model.id && serves(m, 'dialogue') && fits(m))]
+      } else models = routeModels(registry, taskOf(req.task), tokens, this.opts.context?.userId ?? this.traceId, this.opts.rollout, this.opts.context?.continuity)
       return models.map(model => ({ model, provider: this.opts.resolveModel!(model) }))
     }
     return this.opts.chain.map((provider, i) => ({ provider, model: {
@@ -128,6 +138,7 @@ export class AIOrchestrator implements LLMProvider {
         || (process.env.MIRO_AI_DB_LEASES === '1' && !this.opts.leaseGuard))) {
         throw new AIBudgetDeniedError('production_guard_required')
       }
+      let transientLeft = TRANSIENT_RETRIES
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
         // 속도 제한은 곧바로 다시 걸린다 — 재시도 전에 잠깐 기다린다.
         // 스키마 오류처럼 즉시 고쳐지는 실패에는 기다리지 않는다.
@@ -263,6 +274,17 @@ export class AIOrchestrator implements LLMProvider {
           this.lastModelId = model.id; this.lastPromptVersion = req.promptVersion ?? `${req.task}:v1`; this.lastFallbackUsed = index > 0
           return output as T
         }
+        // 공급자 쪽 일시 과부하(500·502·503)는 1~2초 안에 돌아와 금방 지나간다 — 짧게 쉬고 다시 보낸다(재시도 횟수와 따로, 최대 2번).
+        // 10/2 3.8-flash 부분 장애 때 503 이 절반쯤이라 한 번만 다시 보내면 대화가 자주 실패했다. 시간 초과·형식 오류는 그대로 한 번.
+        if (TRANSIENT.test(last) && transientLeft > 0) {
+          await new Promise(r => setTimeout(r, TRANSIENT_BACKOFF_MS * (TRANSIENT_RETRIES - transientLeft + 1)))
+          transientLeft--
+          retry--
+          continue
+        }
+        // 그래도 공급자 쪽 실패면(과부하가 이어짐·속도 제한·시간 초과·연결 실패) 같은 모델에 또 보내지 않고 다음 후보(예비)로 간다.
+        // 다음 후보가 없을 때만 같은 모델에 한 번 더 — 예전 동작 그대로다.
+        if (index < selections.length - 1 && PROVIDER_FAILURE.test(last)) break
       }
     }
     if (attempts === 0 && denied) throw new AIBudgetDeniedError(denied)

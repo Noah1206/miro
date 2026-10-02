@@ -39,14 +39,14 @@ function provider(options: StubOptions = {}) {
     info: { mode: 'mock', name: 'recorded-agency-fixture', notice: 'Recorded contract fixture' },
     async generateStructured(request) {
       calls.push({ version: request.promptVersion, system: request.system, prompt: request.prompt })
-      if (request.promptVersion === 'agency-planner:v4') {
+      if (request.promptVersion === 'agency-planner:v6') {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
-      if (request.promptVersion === 'agency-realization-check:v4') {
+      if (request.promptVersion === 'agency-realization-check:v5') {
         const payload = JSON.parse(request.prompt)
         // number = 처음 n 번만 거부(재생성 계약을 본다). true = 항상 거부.
-        const checks = calls.filter(c => c.version === 'agency-realization-check:v4').length
+        const checks = calls.filter(c => c.version === 'agency-realization-check:v5').length
         const reject = typeof options.rejectRealization === 'number' ? checks <= options.rejectRealization : Boolean(options.rejectRealization)
         return request.schema.parse({ decisionId: payload.decision.id, aligned: !reject, claims: [], unsupported: [],
           violations: reject ? ['contradicts_decision'] : [] })
@@ -61,35 +61,31 @@ beforeEach(() => vi.stubEnv('MIRO_MODE', 'alpha'))
 afterEach(() => vi.unstubAllEnvs())
 
 describe('runTurn agency integration', () => {
-  function changingTraceProvider(fallbackAt: string) {
-    const stub = provider()
-    const llm: LLMProvider & { lastFallbackUsed: boolean } = {
+  /** 의미 검토가 도는 결정(disclose) — 검토 단계의 출처·실패를 보려면 검토가 있어야 한다(대답·질문은 검토하지 않는다). */
+  const reviewed = () => plan({ candidates: [selected({ id: 'disclose', action: 'disclose', description: '자기 이야기를 조금 꺼낸다.' })] })
+  /** 한 단계만 예비 모델(gpt-mini)이 답한 것처럼 — 오케스트레이터가 남기는 표식(lastFallbackUsed·lastModelId)을 흉내 낸다. */
+  function backupAtProvider(backupAt: string) {
+    const stub = provider({ proposal: reviewed() })
+    const llm: LLMProvider & { lastFallbackUsed: boolean; lastModelId: string } = {
       info: { mode: 'live', name: 'recorded-trace-simulation', notice: 'No network: synthetic provider metadata.' },
-      lastFallbackUsed: false,
+      lastFallbackUsed: false, lastModelId: 'gemini-flash',
       async generateStructured(request) {
-        this.lastFallbackUsed = request.promptVersion === fallbackAt
-        if (request.task === 'moderation') return request.schema.parse({ allowed: true, category: 'safe' })
+        this.lastFallbackUsed = request.promptVersion === backupAt
+        this.lastModelId = this.lastFallbackUsed ? 'gpt-mini' : 'gemini-flash'
         return stub.llm.generateStructured(request)
       },
     }
     return llm
   }
-  it.each(['agency-planner:v4', 'agency-dialogue:v4', 'agency-realization-check:v4'])(
-    'retains %s fallback provenance after later primary calls', async fallbackAt => {
-      const llm = changingTraceProvider(fallbackAt)
-      const result = await runTurn({ llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
-      expect(result.providerMode).toBe('fallback')
+  // 10/2 결정: 예비 모델은 강한 일(계획·대사·검사)의 정식 예비다 — 어느 단계가 예비로 답해도 live 이고, 운영에서도 턴을 막지 않는다.
+  it.each(['agency-planner:v6', 'agency-dialogue:v4', 'agency-realization-check:v5'])(
+    'a turn whose %s step was answered by the backup model is still live, also in production', async backupAt => {
+      vi.stubEnv('VERCEL_ENV', 'production')
+      const result = await runTurn({ llm: backupAtProvider(backupAt), snapshot: snapshot(), userInput: proof.quote, agency: agency() })
+      expect(result.providerMode).toBe('live')
+      expect(result.agency?.plan.modelId).toBe(backupAt === 'agency-planner:v6' ? 'gpt-mini' : 'gemini-flash')
     },
   )
-  it.each([
-    ['agency-planner:v4', 'agency_planner_not_live'],
-    ['agency-dialogue:v4', 'agency_renderer_not_live'],
-    ['agency-realization-check:v4', 'agency_verifier_not_live'],
-  ])('fails closed in production when %s used fallback', async (fallbackAt, failure) => {
-    vi.stubEnv('VERCEL_ENV', 'production')
-    await expect(runTurn({ llm: changingTraceProvider(fallbackAt), snapshot: snapshot(), userInput: proof.quote, agency: agency() }))
-      .rejects.toThrow(failure)
-  })
 
   it('runs the live decision path without legacy jealousy templates overriding the choice', async () => {
     const stub = provider()
@@ -103,7 +99,9 @@ describe('runTurn agency integration', () => {
     expect(result.semanticEvents).toEqual([])
     expect(result.agency?.plan.state.affect.stress).toBe(23)
     expect(input.state.sequence).toBe(0)
-    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v4', 'agency-dialogue:v4', 'agency-realization-check:v4'])
+    // 대답(respond)은 실행·약속·완료 주장이 없어 의미 검토를 하지 않는다 — 결정적 검사만 한다(10/2).
+    expect(result.agency?.verification.reviewed).toBe(false)
+    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v6', 'agency-dialogue:v4'])
     expect(stub.calls[1]?.system).toContain('Server-authorized character choice')
   })
   it('shadow planning never changes the legacy turn or returns state for persistence', async () => {
@@ -135,15 +133,16 @@ describe('runTurn agency integration', () => {
     expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field).sort()).toEqual(['eventCandidates', 'eventUpdates', 'rp.blocks', 'worldDelta.currentLocation'])
     expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.prompt).not.toContain('왼팔 부상')
     expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentTime', rule: 'world_delta', status: 'applied', decisionId: result.agency!.plan.decision.id }))
-    expect(stub.calls.some(c => c.version === 'agency-realization-check:v4')).toBe(true)
+    // 걷힌 변경을 글이 서술했을 수 있다 — 대답이어도 의미 검토를 한다.
+    expect(stub.calls.some(c => c.version === 'agency-realization-check:v5')).toBe(true)
   })
   it('rewrites once with the rejection codes when verification fails, then gives up with the codes', async () => {
-    const once = provider({ rejectRealization: 1 })
+    const once = provider({ rejectRealization: 1, proposal: reviewed() })
     const result = await runTurn({ llm: once.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
     expect(result.agency?.verification.ok).toBe(true)
-    expect(once.calls.map(c => c.version)).toEqual(['agency-planner:v4', 'agency-dialogue:v4', 'agency-realization-check:v4', 'agency-dialogue:v4', 'agency-realization-check:v4'])
+    expect(once.calls.map(c => c.version)).toEqual(['agency-planner:v6', 'agency-dialogue:v4', 'agency-realization-check:v5', 'agency-dialogue:v4', 'agency-realization-check:v5'])
     expect(once.calls[3]?.prompt).toContain('이전 응답이 거부된 이유')
-    const always = provider({ rejectRealization: true })
+    const always = provider({ rejectRealization: true, proposal: reviewed() })
     await expect(runTurn({ llm: always.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow(/^agency_realization_rejected semantic_/)
     expect(always.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(2)
   })

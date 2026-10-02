@@ -9,14 +9,13 @@ import { testDatabaseUrl } from '../../../tooling/test-database'
 /**
  * P0 baseline (docs/character-agency-plan.md §6, §8): the current core and the agency core run the same scripted
  * synthetic session through the real app entry points on a guarded local test DB, and the known current-core
- * failures are re-executed. Live mode reads only GEMINI_API_KEY and MIRO_MODEL_REGISTRY from the root .env;
+ * failures are re-executed. Live mode reads only GEMINI_API_KEY, MIRO_MODEL_REGISTRY and (if present, for the GPT backup) OPENAI_API_KEY from the root .env;
  * its DATABASE_URL is never used.
  *
  *   TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/agency/baseline.ts
  *   TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/agency/baseline.ts --live --limit-usd 0.5 --characters thomas,yujin
  *
- * Without --live every provider is the app's mock: this checks wiring and accounting, not cost or latency
- * (mock moderation makes no call at all).
+ * Without --live every provider is the app's mock: this checks wiring and accounting, not cost or latency.
  */
 type Call = { requestId: string | null; task: string; promptVersion: string | null; provider: string; model: string; status: string
   ok: boolean; error: string | null; fallbackUsed: boolean; latencyMs: number; inputTokens: number | null; outputTokens: number | null; costUSD: number | null }
@@ -38,12 +37,17 @@ const percentile = (values: number[], p: number) => {
 const countBy = <T>(items: T[], key: (item: T) => string) =>
   items.reduce<Record<string, number>>((acc, item) => { acc[key(item)] = (acc[key(item)] ?? 0) + 1; return acc }, {})
 
+/** 공급자 장애(과부하·503·시간 초과·한도)로 실패한 턴 — 엔진 품질과 따로 센다(2026-10-02 3.8-flash 장애 때 결과가 장애로 채워졌다). */
+const providerFailed = (unit: Unit) => unit.outcome !== 'ok' && (unit.events ?? []).some(e => e.event === 'turn.failed'
+  && /ai unavailable after \d+ attempts: (?:provider_|timeout)/.test(String(e.cause)))
 function summarize(units: Unit[], succeeded: (unit: Unit) => boolean) {
   const calls = units.flatMap(u => u.calls)
   const cost = sum(calls.map(c => c.costUSD ?? 0))
   const wins = units.filter(succeeded).length
   const wall = units.map(u => u.wallMs)
+  const provider = units.filter(providerFailed).length
   return { units: units.length, succeeded: wins, failureRate: units.length ? round((units.length - wins) / units.length, 3) : null,
+    providerFailures: provider, successRateExcludingProvider: units.length - provider ? round(wins / (units.length - provider), 3) : null,
     outcomes: countBy(units, u => u.outcome), engines: countBy(units, u => u.engine ?? 'none'),
     failureCauses: countBy(units.flatMap(u => (u.events ?? []).filter(e => e.event === 'turn.failed')), e => String(e.cause)),
     // Character chat format (2026-09-24): every reply carries scene narration and an inner voice.
@@ -70,19 +74,16 @@ function stages(units: Unit[]) {
     costUSD: round(sum(calls.map(c => c.costUSD ?? 0)), 6) }))
 }
 
-/** Only the provider key and model registry leave the root .env. */
+/** Only the provider key and model registry leave the root .env. 자율성 계획·검사·컴파일은 대사 모델이 맡는다(STRONG_TASKS). */
 function liveProvider() {
   const env = parseEnv(readFileSync('.env', 'utf8'))
   if (!env.GEMINI_API_KEY || !env.MIRO_MODEL_REGISTRY) throw new Error('Live baseline needs GEMINI_API_KEY and MIRO_MODEL_REGISTRY in the root .env')
   const models = JSON.parse(env.MIRO_MODEL_REGISTRY) as Array<{ id: string; provider: string; providerModelId?: string; enabled?: boolean; capabilities: string[]; inputCost?: number; outputCost?: number }>
   const enabled = models.filter(m => m.enabled !== false)
   if (enabled.some(m => m.provider !== 'gemini' || m.inputCost === undefined || m.outputCost === undefined)) throw new Error('Live baseline needs priced Gemini models only')
-  // The agency compiler, planner and verifier use the world_update task. Without a capable model they cannot run at all.
-  const servesWorldUpdate = enabled.some(m => m.capabilities.includes('world_update'))
-  const dialogue = enabled.find(m => m.capabilities.includes('dialogue'))
-  if (!dialogue) throw new Error('Registry has no dialogue model')
-  if (!servesWorldUpdate) dialogue.capabilities = [...dialogue.capabilities, 'world_update']
-  return { key: env.GEMINI_API_KEY, registry: models, servesWorldUpdate, override: servesWorldUpdate ? null : `${dialogue.id} += world_update` }
+  if (!enabled.some(m => m.capabilities.includes('dialogue'))) throw new Error('Registry has no dialogue model')
+  // 예비(GPT-5.4 mini)는 키가 있을 때만 붙는다 — 운영과 같은 조건으로 잰다.
+  return { key: env.GEMINI_API_KEY, registry: models, backupKey: env.OPENAI_API_KEY ?? '' }
 }
 
 async function main() {
@@ -98,7 +99,7 @@ async function main() {
   // Production's /api/health switches on 2026-09-29 (LLM 의미 분류가 9/24 결정으로 켜졌다). Pinned so a later flag change cannot silently move the baseline.
   const features = { IMAGE_GENERATION: '0', VOICE_CALL: '1', VIDEO_CALL: '0', LIVE_SCENE: '0', RELATIONSHIP_ENGINE: '1', MEMORY_ENGINE: '1',
     EVENT_ENGINE: '1', REALITY_MESSAGE: '1', INLINE_REALITY: '0', LLM_SEMANTIC_ANALYSIS: '1', MEMORY_SUMMARIES: '1', MEMORY_EXTRACTION: '1' }
-  const blank = { AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '', GEMINI_API_KEY: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '' }
+  const blank = { AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '', GEMINI_API_KEY: '', OPENAI_API_KEY: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '' }
   const common = { ...process.env, ...blank, TEST_DATABASE_URL: database, MIRO_AGENCY_MEASURE_EXPERIMENT: experiment, MIRO_MODE: '',
     ...Object.fromEntries(Object.entries(features).map(([name, on]) => [`MIRO_FEATURE_${name}`, on])),
     // Durable experiment cap: the experiment user's monthly cost counter. The day's global counter is shared by every
@@ -107,7 +108,7 @@ async function main() {
     AI_DAILY_REQUEST_LIMIT: '100000', AI_USER_DAILY_LIMIT: '100000',
     // mock 턴은 수 ms 라 분당 요청 한도(사용자당)에 걸린다. 실모델 턴은 수 초라 120 으로 충분하다.
     MIRO_REQUESTS_PER_MINUTE: live ? '120' : '100000',
-    ...(provider ? { MIRO_MODEL_REGISTRY: JSON.stringify(provider.registry), GEMINI_API_KEY: provider.key } : {}) }
+    ...(provider ? { MIRO_MODEL_REGISTRY: JSON.stringify(provider.registry), GEMINI_API_KEY: provider.key, OPENAI_API_KEY: provider.backupKey } : {}) }
   const vitest = (file: string, env: Record<string, string | undefined>) => spawnSync('pnpm',
     ['exec', 'vitest', 'run', '--config', 'ai/evals/agency/vitest.config.ts', file], { stdio: 'inherit', env: { ...common, ...env } }).status
 
@@ -166,7 +167,9 @@ async function main() {
   const costPerSuccess = (arm: string) => { const t = turnsOf(arm); const c = sum(t.flatMap(u => [...u.calls, ...(u.background ?? [])]).map(c => c.costUSD ?? 0)); const w = t.filter(ok).length; return w ? c / w : null }
   const agencyLedger = arms.agency?.ledger ?? []
   const gates = arms.agency && arms.legacy ? {
-    successRate: { value: round(turnsOf('agency').filter(ok).length / Math.max(1, turnsOf('agency').length), 3), target: '>= 0.98', baseline: round(turnsOf('legacy').filter(ok).length / Math.max(1, turnsOf('legacy').length), 3) },
+    successRate: { value: round(turnsOf('agency').filter(ok).length / Math.max(1, turnsOf('agency').length), 3), target: '>= 0.98', baseline: round(turnsOf('legacy').filter(ok).length / Math.max(1, turnsOf('legacy').length), 3),
+      excludingProvider: { agency: round(turnsOf('agency').filter(ok).length / Math.max(1, turnsOf('agency').filter(u => !providerFailed(u)).length), 3),
+        legacy: round(turnsOf('legacy').filter(ok).length / Math.max(1, turnsOf('legacy').filter(u => !providerFailed(u)).length), 3) } },
     p95Ratio: { value: round((p95('agency') ?? 0) / Math.max(1, p95('legacy') ?? 1), 2), target: '<= 1.25', agencyMs: round(p95('agency')), legacyMs: round(p95('legacy')) },
     costPerSuccessRatio: { value: round((costPerSuccess('agency') ?? 0) / Math.max(1e-9, costPerSuccess('legacy') ?? 1e-9), 2), target: '<= 2', agencyUSD: round(costPerSuccess('agency'), 5), legacyUSD: round(costPerSuccess('legacy'), 5) },
     // 권한 없는 세계 변경: 자율성 경로에서 장소가 '적용' 된 행. 이동은 held 여야 한다.
@@ -188,10 +191,9 @@ async function main() {
     commit: git('rev-parse', 'HEAD'), uncommittedChanges: git('status', '--porcelain').length > 0,
     database: new URL(database).pathname.slice(1), limitUSD: live ? limitUSD : null, features, characters, repeat, script: option('--script') ?? 'p0', chatModel: option('--chat-model') ?? 'miro',
     registry: provider?.registry.map(({ id, providerModelId, capabilities, inputCost, outputCost }) => ({ id, providerModelId, capabilities, inputCost, outputCost })) ?? null,
-    registryOverride: provider?.override ?? null, liveRegistryServesWorldUpdate: provider?.servesWorldUpdate ?? null,
     complete: warnings.length === 0, warnings, gates, summary, failures, arms,
     notMeasured: ['persona fidelity and human preference (no judge or reviewers)', 'active instance per day (needs real traffic)',
-      'production network and DB latency (local test DB)', ...(live ? [] : ['cost and moderation calls (mock skips moderation)'])] }
+      'production network and DB latency (local test DB)', ...(live ? [] : ['cost'])] }
   const output = option('--out') ?? join(directory, 'report.json')
   await mkdir(dirname(output), { recursive: true })
   await writeFile(output, JSON.stringify(report, null, 2) + '\n')

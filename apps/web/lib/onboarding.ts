@@ -52,14 +52,11 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
 }
 
 /** 'YYYY-MM-DD', 실제로 있는 날짜, 1900년 이후, 오늘 이전. */
-/**
- * 닉네임 미리 검사(닉네임 단계에서 '다음' 을 누르면 뒤에서 돈다). 통과하면 페르소나로 저장해 두어 마지막 저장이 검사를 건너뛴다.
- * 막히면 이유를 돌려주고, 검사를 못 하면(공급자 장애) 통과로 두어 마지막 저장에서 다시 해 본다.
- */
+/** 닉네임 미리 저장(닉네임 단계에서 '다음' 을 누르면 뒤에서 돈다). 페르소나로 저장해 두어 마지막 단계가 다시 쓰지 않게 한다. */
 export async function precheckNickname(userId: string, nickname: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const existing = await getPersona(userId)
   const saved = await savePersona(userId, { name: nickname, gender: existing?.gender ?? null, description: existing?.description ?? null })
-  return saved.ok || saved.canSkip ? { ok: true } : { ok: false, error: msg('이 닉네임은 쓸 수 없어요. 다른 표현으로 적어 주세요.') }
+  return saved.ok ? { ok: true } : { ok: false, error: saved.error }
 }
 
 function validBirthDate(v: string, today: Date): boolean {
@@ -69,19 +66,16 @@ function validBirthDate(v: string, today: Date): boolean {
 }
 
 /**
- * 저장. 닉네임은 공개(작성자 이름)·프롬프트에 쓰이니 페르소나와 같은 안전 검사를 거친다 — 검사에서 막히면 1단계로 돌려보낸다.
- * 검사 자체를 못 하면(공급자 장애) 가입은 막지 않는다: 페르소나 없이 끝내고, 첫 채팅 때 페르소나 화면이 다시 묻는다.
+ * 저장. 닉네임은 페르소나 이름으로 저장한다 — 길이·빈 값이 틀리면 닉네임 단계로 돌려보낸다.
  * 가입 보상은 계정당 한 번 — (provider 'welcome', 사용자 id) UNIQUE 가 두 번째 지급을 막는다.
  */
 export async function completeOnboarding(userId: string, input: OnboardingInput): Promise<({ ok: true; welcomed: boolean }) | ({ ok: false } & OnboardingError)> {
   const existing = await getPersona(userId)
-  // 닉네임 단계에서 미리 검사해 저장해 둔 이름이면(checkNickname) 다시 검사하지 않는다 — 마지막 단계가 AI 호출을 기다리지 않게.
-  // 페르소나는 안전 검사를 거쳐야만 저장되므로(savePersona) 저장된 이름은 이미 검사를 통과한 것이다. 성별만 맞춘다.
+  // 닉네임 단계에서 미리 저장해 둔 이름이면(precheckNickname) 성별만 맞춘다.
   const saved = existing?.name === input.nickname
     ? await db.update(userPersonas).set({ gender: input.gender, updatedAt: new Date() }).where(eq(userPersonas.userId, userId)).then(() => ({ ok: true as const }))
     : await savePersona(userId, { name: input.nickname, gender: input.gender, description: existing?.description ?? null })
-  if (!saved.ok && !saved.canSkip) return { ok: false, step: 2, error: msg('이 닉네임은 쓸 수 없어요. 다른 표현으로 적어 주세요.') }
-  if (!saved.ok) observe('onboarding.persona_skipped', { userId })
+  if (!saved.ok) return { ok: false, step: 2, error: saved.error }
 
   const now = new Date()
   await db.transaction(async (tx) => {
@@ -89,7 +83,7 @@ export async function completeOnboarding(userId: string, input: OnboardingInput)
     const consents = { language: input.language, marketingConsentAt: input.marketing ? now : null, nightMarketingConsentAt: input.nightMarketing ? now : null }
     await tx.insert(userSettings).values({ userId, ...consents })
       .onConflictDoUpdate({ target: userSettings.userId, set: { ...consents, updatedAt: now } })
-    await tx.update(users).set({ birthDate: input.birthDate, tastes: input.tastes, ...(saved.ok ? { displayName: input.nickname } : {}) })
+    await tx.update(users).set({ birthDate: input.birthDate, tastes: input.tastes, displayName: input.nickname })
       .where(eq(users.id, userId))
   })
 

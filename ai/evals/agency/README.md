@@ -26,14 +26,14 @@ TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/a
 Use a database the unit tests do not share: `apps/web/lib/usage/__tests__/abuse-limits.integration.test.ts` deletes the current day's and month's budget counters, which resets the experiment cap.
 
 - `--arms agency` (or `legacy`) runs one arm; the default runs both. `--characters thomas,yujin` repeats the script per seed character (default `thomas`).
-- Without `--live` every provider is the app mock. That checks wiring and accounting only: mock moderation makes no call and costs are zero.
+- Without `--live` every provider is the app mock. That checks wiring and accounting only: costs are zero.
 - `--live` takes only `GEMINI_API_KEY` and `MIRO_MODEL_REGISTRY` from the root `.env`. The cap is the experiment user's monthly AI cost counter plus the day's global cost in that database, so a rerun with the same `--experiment` continues the same budget. A budget denial stops the run and marks it incomplete.
 - Feature switches are pinned to production's `/api/health` values of 2026-09-24.
-- If the registry has no model for `world_update`, the runner grants it to the dialogue model and records the override. The agency compiler, planner and verifier all use that task.
+- The agency compiler, planner and verifier use their own tasks (`agency_compile`, `agency_plan`, `agency_verify`). The dialogue model serves them unless the registry assigns another model.
 - Not measured: persona fidelity, human preference, cost per active instance-day (needs real traffic) and production network/DB latency.
 
 ## Live evaluation gate
 
-`--live` deliberately fails. Before adding a live experiment adapter, implement a persistent **whole-experiment** budget (including moderation, retries, user simulator and judge); do not split the existing single-writer validation cap across workers. Use isolated session branches, commit and reload every turn, record every provider's actual mode/model and count incomplete runs as incomplete. Never put production user messages into fixtures without evaluation consent.
+`--live` deliberately fails. Before adding a live experiment adapter, implement a persistent **whole-experiment** budget (including retries, user simulator and judge); do not split the existing single-writer validation cap across workers. Use isolated session branches, commit and reload every turn, record every provider's actual mode/model and count incomplete runs as incomplete. Never put production user messages into fixtures without evaluation consent.
 
 `scenarios.json` contains development scenarios only. A separately frozen, family-grouped held-out set and two independent Korean human reviewers are still required for the release claims in `docs/character-agency-plan.md`. Recorded fixtures and source-string inclusion do not establish character quality. Existing baseline, context-only baseline and agency must use the same model and external events in live comparisons; run ablations independently.

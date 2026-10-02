@@ -75,7 +75,7 @@ describeDb('memory jobs (§3.5)', () => {
     const run = await runMemoryJobs(new Date(), { sessionId: s.sessionId, limit: 10, analyze: analyzer(seen, (_k, input) => summary(`요약: ${input}`)) })
     expect(run.claimed).toBe(2)
     expect(seen.map(x => x.input)).toEqual(['첫 번째 말', '두 번째 말'])
-    expect(seen[0]!.messageAts.every(t => t <= at(10).toISOString())).toBe(true)   // 두 번째 말은 첫 작업의 입력에 없다
+    expect(seen[0]!.messageAts.every(t => Date.parse(t) <= at(10).getTime())).toBe(true)   // 두 번째 말은 첫 작업의 입력에 없다
     const stored = await db.select().from(memories).where(and(eq(memories.sessionId, s.sessionId), eq(memories.type, 'short_term_summary')))
     expect(stored.map(m => m.content)).toEqual(['요약: 두 번째 말'])
 

@@ -1,12 +1,13 @@
 import { localClock } from '@miro/domain'
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm'
 import { POLICY, feature, features } from '@miro/config'
 import {
-  db, characters, contactProfiles, events, messages, pushSubscriptions,
+  db, characterDecisions, characters, contactProfiles, events, messages, pushSubscriptions,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
-  DEFAULT_CHARACTER_STATE, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, parseRelationshipProfile, presentContact,
+  DEFAULT_CHARACTER_STATE, contactDedupeKey, dailyContactCap, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, localDay, localMinutes,
+  parseRelationshipProfile, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
 import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
@@ -15,7 +16,6 @@ import { getOrGenerate } from '@/lib/simulation/media'
 import { startIncomingCall } from '@/lib/call/service'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
-import { requireSafeContent } from '@miro/engine'
 import { enqueueRealityPush, deliverRealityPush } from './push-outbox'
 import { deliverableChannel } from './channels'
 import { loadRealityContext } from './context'
@@ -74,17 +74,23 @@ export async function evaluateSession(
     return { outcome: 'skipped', reason: 'contact_disabled' }
   }
 
-  const agency = await evaluateAgencyReality(row, now, opts)
-  if (agency) return agency
-
-  const [activeEvents, recent, lastUser] = await Promise.all([
+  const sentStatus = inArray(realityContacts.status, ['sent', 'opened'])
+  const [activeEvents, sent, eventContacts, lastUser, firstContactDecided] = await Promise.all([
     db.select().from(events).where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
-    db.select().from(realityContacts)
-      .where(eq(realityContacts.sessionId, sessionId))
-      .orderBy(desc(realityContacts.createdAt)).limit(10),
+    // 실제로 보낸 연락만 본다 — 막힌 기록까지 최근 10줄에 섞으면 하룻밤 사이 보낸 연락이 밀려나 대기 시간·안 읽은 연락 상한이 풀렸다(10/2 감사).
+    db.select({ status: realityContacts.status, sentAt: realityContacts.sentAt, payload: realityContacts.payload }).from(realityContacts)
+      .where(and(eq(realityContacts.sessionId, sessionId), sentStatus))
+      .orderBy(desc(realityContacts.sentAt)).limit(20),
+    // 이미 연락한 사건 — 같은 사건·상태로는 다시 연락하지 않고 다른 이유를 본다.
+    db.select({ key: realityContacts.dedupeKey }).from(realityContacts)
+      .where(and(eq(realityContacts.sessionId, sessionId), sentStatus, like(realityContacts.dedupeKey, '%event%'))),
     // 사용자가 마지막으로 말한 곳 — 만나서(text) 였는지 문자(messenger) 였는지. '잘 들어갔어?' 는 만난 뒤에만.
     db.select({ kind: messages.kind }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.role, 'user')))
       .orderBy(desc(messages.createdAt)).limit(1),
+    // 첫 연락 기회는 세션에 한 번 — 자율성 경로가 이미 판단했으면(보내지 않기로 했어도) 다시 내밀지 않는다. 다시 내밀면 같은 키라 매번 '중복'으로 막혀
+    // 침묵·식사 안부 같은 다른 이유가 영영 생기지 않았다(10/2 실측: 첫 연락을 기다리기로 한 뒤 50시간 동안 아무 판단도 없었다).
+    db.select({ id: characterDecisions.id }).from(characterDecisions)
+      .where(and(eq(characterDecisions.sessionId, sessionId), like(characterDecisions.triggerKey, 'reality:opportunity:%:first_contact'))).limit(1),
   ])
 
   const profile = {
@@ -103,37 +109,46 @@ export async function evaluateSession(
 
   const idleMinutes = (now.getTime() - row.session.lastInteractionAt.getTime()) / 60_000
   const characterState: CharacterState = { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) }
-  let pending = (row.session.pendingRealityIntent as RealityIntentRow | null) ?? null
+  const saved = (row.session.pendingRealityIntent as RealityIntentRow | null) ?? null
+  let pending = saved
+  // 앱 밖 연락은 사용자가 끌 수 없다 (2026-09-24 결정). 시간대만 읽어 캐릭터의 활동 시간·하루를 사용자 현지 시각으로 본다.
+  const timeZone = row.settings?.timeZone ?? POLICY.reality.defaultTimeZone
+  const today = localDay(now, timeZone)
 
   // Event Engine(유휴 시간 규칙) — 스케줄러는 "다시 볼 시점인가" 만 묻고, 무슨 일이 일어날지는 규칙이 정한다.
   if (!pending && !opts.inline && feature('eventEngine')) {
     const sceneMarker = `after_scene:${row.session.lastInteractionAt.toISOString()}`
     const fired = evaluateEventRules({ relationship: row.relationship as never, characterState, semanticEvents: [], idleMinutes, turnCount: row.session.turnCount,
       lastUserChannel: lastUser[0]?.kind === 'messenger' ? 'messenger' : lastUser[0] ? 'scene' : undefined,
-      sceneFollowUpSent: characterState.firedRules.includes(sceneMarker), profile: parseRelationshipProfile(row.character.relationshipProfile) })
+      sceneFollowUpSent: characterState.firedRules.includes(sceneMarker), profile: parseRelationshipProfile(row.character.relationshipProfile), today })
     const rule = fired.find((r) => r.effect.realityIntent)
     if (rule?.effect.realityIntent) {
       const { channel, reason, urgency, delayMinutes } = rule.effect.realityIntent
-      // after_scene 은 장면(마지막 상호작용)마다 한 번 — 표시는 가장 최근 것 하나만 남긴다.
+      // after_scene 은 장면(마지막 상호작용)마다 한 번 — 표시는 가장 최근 것 하나만 남긴다. 하루 한 번 규칙은 오늘 날짜 표시 하나만 남긴다.
       const nextState = rule.id === 'after_scene'
         ? { ...characterState, firedRules: [...characterState.firedRules.filter((f) => !f.startsWith('after_scene:')), sceneMarker] }
+        : rule.daily ? { ...characterState, firedRules: [...characterState.firedRules.filter((f) => !f.startsWith(`${rule.id}:`)), `${rule.id}:${today}`] }
         : rule.once ? { ...characterState, firedRules: [...characterState.firedRules, rule.id] } : characterState
       if (delayMinutes > 0) {
         const notBefore = new Date(now.getTime() + delayMinutes * 60_000).toISOString()
-        await db.update(roleplaySessions).set({ pendingRealityIntent: { channel, reason, urgency, notBefore }, characterState: nextState })
+        await db.update(roleplaySessions).set({ pendingRealityIntent: { channel, reason, urgency, notBefore, rule: rule.id }, characterState: nextState })
           .where(eq(roleplaySessions.id, sessionId))
         return { outcome: 'scheduled', ruleId: rule.id, notBefore }
       }
-      pending = { channel, reason, urgency }
+      pending = { channel, reason, urgency, rule: rule.id }
       if (nextState !== characterState) await db.update(roleplaySessions).set({ characterState: nextState }).where(eq(roleplaySessions.id, sessionId))
     }
   }
 
-  // 앱 밖 연락은 사용자가 끌 수 없다 (2026-09-24 결정). 시간대만 읽어 캐릭터의 활동 시간을 사용자 현지 시각으로 본다.
-  const timeZone = row.settings?.timeZone ?? POLICY.reality.defaultTimeZone
   // 생활 리듬 — 자는 중이면 아무것도 안 나가고, 바쁘면 급한 것만, 비어 있으면 식사 시간 안부도 생긴다.
   const availability = await characterAvailability(row.character.id, now, timeZone, { wait: true })
-  const lastSent = recent.find((c) => c.status === 'sent' || c.status === 'opened')
+  const lastSent = sent[0]
+  // 사용자가 아직 답하지 않은 연락 = 마지막 상호작용 뒤에 보낸 것. 문자 화면을 열어야만 읽음이 되면, 장면 채팅으로만 답하는 사용자에게는 영영 쌓여 막혔다.
+  const unanswered = sent.filter((c) => c.status === 'sent' && c.sentAt && c.sentAt > row.session.lastInteractionAt)
+  // 오늘(사용자 현지 날짜) 먼저 보낸 연락 — 답장은 세지 않는다.
+  const localMidnight = new Date(now.getTime() - localMinutes(now, timeZone) * 60_000 - (now.getUTCSeconds() * 1000 + now.getUTCMilliseconds()))
+  const contactsToday = sent.filter((c) => c.sentAt && c.sentAt >= localMidnight && (c.payload as { answers?: string } | null)?.answers !== 'user_message').length
+  const contactedEvents = contactedEventKeys(eventContacts.map((c) => c.key))
 
   const intent = deriveIntent({
     relationship: row.relationship as never,
@@ -143,7 +158,16 @@ export async function evaluateSession(
     pending: pending as never,
     now,
     clock: localClock(now, timeZone), availability: availability.availability, lastContactAt: lastSent?.sentAt ?? null,
+    contactedEvents, turnCount: row.session.turnCount, contactedBefore: sent.length > 0 || firstContactDecided.length > 0, initiative: row.character.initiative,
   })
+  const dailyCap = dailyContactCap(row.relationship as never, row.character.initiative, profile)
+
+  // 자율성 경로가 켜진 세션은 같은 연락 기회를 엔진(계획)에 판단 재료로 넘긴다 — 보낼지·무엇을 말할지는 캐릭터가 정한다(2026-10-02).
+  // 꺼져 있거나(off) 판이 아직 준비되지 않았으면 null 이고 아래 기존 경로가 그대로 맡는다.
+  // 기존 사건(events)은 넘기지 않는다 — 자율성 경로에서 사건은 관측 근거가 없는 옛 기록이라 연락 근거가 되지 않는다(loadAgencyEvidence).
+  const opportunity = intent?.eventKey ? null : intent
+  const agency = await evaluateAgencyReality(row, now, opts, { opportunity, opportunityKey: opportunity ? contactDedupeKey(opportunity, now, timeZone) : null, contactsToday, dailyCap })
+  if (agency) return agency
   if (!intent) return { outcome: 'no_intent' }
 
   let decision: RealityDecision = opts.inline
@@ -159,22 +183,30 @@ export async function evaluateSession(
     activeEvents: activeEvents as never,
     timeZone,
     lastContactAt: lastSent?.sentAt ?? null,
-    pendingContacts: recent.filter((c) => c.status === 'sent') as unknown as RealityContact[],
+    pendingContacts: unanswered as unknown as RealityContact[],
     now,
     availability: availability.availability,
+    contactsToday,
+    dailyCap,
   })
 
   if (!decision.send) {
+    // 같은 의도가 같은 이유로 막힌 기록은 하루 한 줄 — 전엔 30분마다 한 줄씩, 세션 하나에 하루 48줄이 쌓였다.
     await db.insert(realityContacts).values({
       sessionId, channel: intent.channel, reason: intent.reason,
-      dedupeKey: `suppressed:${now.toISOString()}`,
+      dedupeKey: `suppressed:${today}:${decision.reason}:${intent.reason}`,
       status: 'suppressed', suppressedReason: decision.reason,
-    })
-    // 예약된 의도가 막혔으면 다음 재판단 시점으로 미룬다 — 매 틱마다 같은 억제를 반복하지 않는다.
-    if (pending?.notBefore) {
+    }).onConflictDoNothing()
+    // 저장된 예약 의도가 막혔을 때. 답장은 끝까지 미뤘다 보낸다 — 사용자 문자가 답을 못 받으면 안 된다.
+    // 그 밖의 의도는 동기가 없거나 반나절 넘게 막히면 버린다 — 남겨 두면 다른 연락(침묵·식사 안부)을 모두 가로막았다(9/27~30 운영, 10/2 감사).
+    if (saved && pending === saved) {
+      const since = saved.deferredSince ? new Date(saved.deferredSince) : now
+      const stale = now.getTime() - since.getTime() > STALE_INTENT_HOURS * 3_600_000
+      const drop = !saved.answers && (decision.reason === 'no_motivation' || stale)
       await db.update(roleplaySessions)
-        .set({ pendingRealityIntent: { ...pending, notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } })
+        .set({ pendingRealityIntent: drop ? null : { ...saved, deferredSince: since.toISOString(), notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } })
         .where(eq(roleplaySessions.id, sessionId))
+      if (drop) observe('reality.intent_dropped', { sessionId, reason: decision.reason, stale })
     }
     return { outcome: 'suppressed', reason: decision.reason }
   }
@@ -242,9 +274,7 @@ export async function evaluateSession(
     currentTime: `${localClock(now, timeZone).label} (${localClock(now, timeZone).period})`,
     ...grounding,
   }
-  await requireSafeContent(llm, contentInput)
   const content = await generateRealityContent(llm, contentInput)
-  await requireSafeContent(llm, { text: content.text })
 
   // Network inference finishes before acquiring the persistence transaction.
   let mediaUrl: string | null = null
@@ -293,7 +323,8 @@ export async function evaluateSession(
       const [contact] = await tx.insert(realityContacts).values({
         sessionId, channel: decision.channel, reason: intent.reason,
         dedupeKey: decision.dedupeKey,
-        payload: { text: content.text, tone: content.tone, mediaUrl, ...presented },
+        // answers: 답장이면 하루 상한에서 뺀다.
+        payload: { text: content.text, tone: content.tone, mediaUrl, ...presented, ...(intent.answers ? { answers: intent.answers } : {}) },
         status: 'sent', sentAt: now, messageId: msg?.id ?? null,
       }).returning({ id: realityContacts.id })
 
@@ -321,14 +352,32 @@ export async function evaluateSession(
   void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
 
   // A failed delivery remains queued without regenerating the message.
-  await deliverRealityPush(now).catch(() => observe('reality.push_worker_failed', { sessionId }))
+  // 판단 시각(now)이 아니라 지금 — 방금 넣은 알림 작업의 시각은 AI 생성 뒤라, now 로 찾으면 못 집고 다음 크론(최대 15분)까지 늦었다.
+  await deliverRealityPush().catch(() => observe('reality.push_worker_failed', { sessionId }))
 
   return { outcome: 'sent', channel: decision.channel, contactId, text: content.text }
 }
 
 class RealityStateChangedError extends Error {}
 
-type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string }
+type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number }
+
+/** 답장이 아닌 예약 의도를 이 시간 넘게 막히면 버린다. */
+const STALE_INTENT_HOURS = 12
+
+const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi
+/**
+ * 이미 연락한 사건(`id:status`). 지금 키는 `채널:event:id:status:사유`, 예전 키(10/2 이전)는 `채널:id1,id2:event:유형` — 예전 키의 사건은 active 로 연락한 것으로 본다.
+ */
+export function contactedEventKeys(keys: string[]): Set<string> {
+  const out = new Set<string>()
+  for (const key of keys) {
+    const current = /:event:([0-9a-f-]{36}):(active|escalated):/i.exec(key)
+    if (current) { out.add(`${current[1]!.toLowerCase()}:${current[2]}`); continue }
+    if (key.includes(':event:')) for (const id of key.match(UUID) ?? []) out.add(`${id.toLowerCase()}:active`)
+  }
+  return out
+}
 
 async function pushToUser(userId: string, payload: {
   title: string; body: string; url: string; tag: string

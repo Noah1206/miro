@@ -71,7 +71,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         </header>
 
         <div className={styles.transcript}>
-          <p className={styles.aiNotice}><svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="9" /><path d="M12 7v6m0 3v1" /></svg>{t('AI가 생성한 대화예요')}</p>
+          {/* 'AI가 생성한 대화예요' 줄은 뺐다(2026-10-02 사용자: 사람처럼 느껴져야 한다). AI 라는 안내는 가입 때 필수 동의(AI 생성 콘텐츠 안내)로 한다. */}
           {loaded.restricted && <p data-restricted role="status" className="t-caption" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>{t('운영 정책에 따라 이 역할극은 제한되었습니다.')}</p>}
           {history.length === 0 && s.character.worldRole.startingContext && (
             <p className={styles.opening}>{s.character.worldRole.startingContext}</p>

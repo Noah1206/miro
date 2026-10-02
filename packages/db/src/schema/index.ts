@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, text, timestamp, uniqueIndex, uuid,
+  bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision } from '@miro/domain'
 
@@ -332,7 +332,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
 
   /** RP 턴에서 AI 가 제안한 "나중에 연락하고 싶은 이유". 스케줄러가 우선 참고한다. */
   pendingRealityIntent: jsonb('pending_reality_intent')
-    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call' }>(),
+    // deferredSince·failures: 막히거나 실패한 예약 의도를 언제 버릴지, rule: 사건 규칙이 만든 의도(2026-10-02). JSON 안이라 열 구조는 그대로다.
+    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number }>(),
   /** 턴마다 변하는 캐릭터 상태(기분·스트레스·목표·발동한 규칙). 프로필(characters)과 분리한다. */
   characterState: jsonb('character_state').$type<Record<string, unknown>>().notNull().default({}),
   /** 스케줄러가 마지막으로 이 세션의 선연락을 판단한 시각. */
@@ -1017,8 +1018,27 @@ export const characterRuntimeStates = pgTable('character_runtime_states', {
   state: jsonb('state').$type<AgencyState>().notNull(),
   version: integer('version').notNull().default(0),
   nextWakeAt: timestamp('next_wake_at', { withTimezone: true }),
+  /** 자기 삶(character_life_events)을 여기까지 살았다 — 다음 되짚기의 시작. 대화 중이던 시간은 따로 뺀다. */
+  lifeUntil: timestamp('life_until', { withTimezone: true }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({ due: index('character_runtime_states_due_idx').on(t.nextWakeAt).where(sql`${t.nextWakeAt} IS NOT NULL`) })).enableRLS()
+
+/**
+ * 캐릭터의 '자기 삶'(2026-10-02) — 대화가 없는 동안 캐릭터가 겪은 일. 세션마다(그 사용자와의 세계에서 보낸 하루).
+ * 모델 제안 중 서버가 거른 것만 남는다(domain/character/life). 사용자 대화 원문은 없다.
+ */
+export const characterLifeEvents = pgTable('character_life_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+  block: text('block_label').notNull(),
+  kind: text('kind', { enum: ['work', 'errand', 'social', 'hobby', 'rest', 'incident', 'thought'] }).notNull(),
+  summary: text('summary').notNull(),
+  valence: real('valence').notNull(),
+  intensity: real('intensity').notNull(),
+  shareable: boolean('shareable').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ session: index('character_life_events_session_idx').on(t.sessionId, t.occurredAt) })).enableRLS()
 
 export const characterDecisions = pgTable('character_decisions', {
   id: uuid('id').primaryKey().defaultRandom(),

@@ -8,7 +8,8 @@ export class AnthropicProvider implements AIProvider {
     const start = Date.now()
     const response = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: this.headers(), signal: req.signal,
       body: JSON.stringify({ model: this.model, max_tokens: req.maxTokens ?? 1024, system: req.system + (req.json ? '\nReturn only a JSON object.' : ''), messages: [{ role: 'user', content: req.prompt }], temperature: req.temperature ?? .7 }) })
-    if (!response.ok) throw new Error('anthropic HTTP ' + response.status)
+    // Gemini 와 같은 모양으로 — 오케스트레이터의 재시도·429 대기·예비 전환이 이 이름을 본다. 응답 본문은 남기지 않는다.
+    if (!response.ok) { await response.body?.cancel(); throw new Error('provider_http_' + response.status) }
     const b = await response.json() as { content?: { type: string; text?: string }[]; usage?: { input_tokens?: number; output_tokens?: number } }
     return { text: (b.content ?? []).filter(c => c.type === 'text').map(c => c.text ?? '').join(''), provider: 'anthropic', model: this.model,
       inputTokens: b.usage?.input_tokens ?? null, outputTokens: b.usage?.output_tokens ?? null, latencyMs: Date.now()-start }

@@ -8,7 +8,7 @@ const definitions: PromptDefinition[] = [
   { id: 'memory', task: 'memory_extraction', version: 'v1', system: '제공된 대화에서 확인된 사실만 기억 후보로 추출하세요. 추측과 민감한 개인정보를 새로 만들지 마세요. JSON으로 반환하세요.' },
   { id: 'summary', task: 'memory_summary', version: 'v1', system: '주어진 최근 대화와 사건을 짧게 요약하세요. 확인되지 않은 사실을 추가하지 말고 short_term_summary 기억 후보를 JSON으로 반환하세요.' },
   { id: 'reality', task: 'dialogue', version: 'v1', system: '역할극 캐릭터가 먼저 보내는 짧은 연락을 씁니다. 성격·말투·현재 세계·관계 맥락과 채널을 유지하고 사용자의 행동이나 내부 수치를 발화하지 마세요. JSON으로 반환하세요.' },
-  ...(['relationship_analysis','event_generation','world_update','image_prompt','moderation'] as const).map(task => ({id: task, task, version: 'v1', system: '주어진 맥락에서 요청된 작업만 수행하세요. 지정된 JSON 구조로 반환하고 새로운 사실을 추측하지 마세요.'})),
+  ...(['relationship_analysis','event_generation','world_update','image_prompt'] as const).map(task => ({id: task, task, version: 'v1', system: '주어진 맥락에서 요청된 작업만 수행하세요. 지정된 JSON 구조로 반환하고 새로운 사실을 추측하지 마세요.'})),
 ]
 export class PromptRegistry {
   constructor(private readonly entries = definitions) {}

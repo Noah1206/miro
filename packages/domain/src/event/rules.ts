@@ -21,6 +21,8 @@ export type EventRuleContext = {
   sceneFollowUpSent?: boolean
   /** 캐릭터의 관계 성격표 — 어떤 일에 먼저 연락하는지와 그 이유가 캐릭터마다 다르다. */
   profile?: RelationshipProfile | null
+  /** 사용자 현지 날짜 'YYYY-MM-DD'. 하루 한 번 규칙(daily)은 firedRules 의 `${id}:${today}` 로 오늘 이미 발동했는지 본다. 스케줄러만 채운다. */
+  today?: string
 }
 
 export type RealityEffect = { channel: ContactChannel; reason: string; urgency: number; delayMinutes: number }
@@ -29,6 +31,8 @@ export type EventRule = {
   id: string
   /** 세션에서 한 번만. */
   once?: boolean
+  /** 하루(사용자 현지 날짜)에 한 번만. 발동 표시는 호출자가 firedRules 에 `${id}:${today}` 로 남긴다. */
+  daily?: boolean
   when: (c: EventRuleContext) => boolean
   effect: { realityIntent?: RealityEffect; memory?: string }
 }
@@ -43,7 +47,8 @@ export const EVENT_RULES: EventRule[] = [
       memory: '사용자가 다른 사람 이야기를 꺼냈고, 캐릭터는 그것을 마음에 두고 있다.' },
   },
   {
-    id: 'jealous_follow_up',
+    // 하루 한 번 — 질투는 시간이 지나도 줄지 않아, 전엔 사용자가 없는 동안 두 시간마다 다시 연락했다(10/2 감사).
+    id: 'jealous_follow_up', daily: true,
     when: (c) => c.relationship.jealousy > 70 && c.idleMinutes >= 30,
     effect: { realityIntent: { channel: 'message', reason: '질투가 가라앉지 않아 먼저 연락한다', urgency: 0.8, delayMinutes: 37 } },
   },
@@ -77,7 +82,9 @@ export const EVENT_RULES: EventRule[] = [
  */
 export function evaluateEventRules(c: EventRuleContext, rules: EventRule[] = EVENT_RULES): EventRule[] {
   const own = (id: string) => c.profile?.reachOut[id as ReachOutRule]?.value
-  return rules.filter((r) => !(r.once && c.characterState.firedRules.includes(r.id)) && own(r.id)?.on !== false && r.when(c)).map((r) => {
+  return rules.filter((r) => !(r.once && c.characterState.firedRules.includes(r.id))
+    && !(r.daily && c.today && c.characterState.firedRules.includes(`${r.id}:${c.today}`))
+    && own(r.id)?.on !== false && r.when(c)).map((r) => {
     const reason = own(r.id)?.reason.trim()
     return reason && r.effect.realityIntent ? { ...r, effect: { ...r.effect, realityIntent: { ...r.effect.realityIntent, reason } } } : r
   })

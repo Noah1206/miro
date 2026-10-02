@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
-import { authoredCharacter, languageRule, personaLines } from '@miro/domain'
+import { POLICY } from '@miro/config'
+import { authoredCharacter, languageRule, localIso, personaLines } from '@miro/domain'
 import { db, characters, characterVisualIdentities, messages, roleplaySessions, users, userSettings, worlds } from '@miro/db'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { characterContext, conversationContext } from '@/lib/simulation/character-context'
@@ -7,7 +8,7 @@ import { getPersona } from '@/lib/persona'
 
 /** Only visible, owned conversation data may ground a proactive message. */
 export async function loadRealityContext(sessionId: string, userId: string, reason: string) {
-  const [owner] = await db.select({ id: roleplaySessions.id, character: characters, worldSetting: worlds.worldSetting, worldGenre: worlds.genre, language: userSettings.language }).from(roleplaySessions)
+  const [owner] = await db.select({ id: roleplaySessions.id, character: characters, worldSetting: worlds.worldSetting, worldGenre: worlds.genre, language: userSettings.language, timeZone: userSettings.timeZone }).from(roleplaySessions)
     .innerJoin(users, eq(users.id, roleplaySessions.userId))
     .leftJoin(userSettings, eq(userSettings.userId, roleplaySessions.userId))
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
@@ -27,6 +28,8 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
   ])
   // 먼저 연락 문장에는 작성자가 쓴 설정만 — 관계 성격표는 규칙이 읽는 파생 값이다.
   const { identity, personality, worldRole, appearance } = authoredCharacter(characterContext(owner.character, visual[0]))
+  // 기록 시각은 '지금'(currentTime, 현지)과 같은 기준으로 — UTC 면 한국 오전 대화가 '어제'로 읽혔다.
+  const timeZone = owner.timeZone ?? POLICY.reality.defaultTimeZone
   return {
     authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
     worldSetting: owner.worldSetting,
@@ -35,8 +38,8 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     userPersona: persona ? personaLines(persona) : null,
     // 사용자가 고른 언어로 쓴다(한국어면 줄이 없다).
     languageRule: languageRule(owner.language),
-    recentMessages: conversationContext(recent.reverse()).map(m => ({ ...m, content: m.content.slice(0, 1000),
+    recentMessages: conversationContext(recent.reverse(), timeZone).map(m => ({ ...m, content: m.content.slice(0, 1000),
       blocks: m.blocks?.map(b => ({ ...b, text: b.text.slice(0, 1000) })) })),
-    memories: memories.map(m => ({ id: m.id, type: m.type, content: m.content.slice(0, 600), sourceMessageId: m.sourceMessageId, at: m.createdAt.toISOString() })),
+    memories: memories.map(m => ({ id: m.id, type: m.type, content: m.content.slice(0, 600), sourceMessageId: m.sourceMessageId, at: localIso(m.createdAt, timeZone) })),
   }
 }

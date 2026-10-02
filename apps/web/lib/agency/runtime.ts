@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto'
 import { and, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, characterRevisions, characterRuntimeStates, characters, messages, roleplaySessions } from '@miro/db'
-import { characterAgencyMode, productionRuntime } from '@miro/config'
-import { createAgencyState, type AgencyEvidence, type AgencyState } from '@miro/domain'
+import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
+import { createAgencyState, lifeEvidence, localIso, type AgencyEvidence, type AgencyState } from '@miro/domain'
 import { compileAuthoredCharacter, type SimulationSnapshot } from '@miro/engine'
-import type { LLMProvider } from '@miro/providers'
+import { AIUnavailableError, type LLMProvider } from '@miro/providers'
 import { observe } from '@/lib/observe'
+import { recentLife } from './life'
 import { agencyReceiptId } from './receipts'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from './revisions'
 
@@ -35,7 +36,11 @@ export async function compileAgencyRevision(revisionId: string, llm: LLMProvider
       .where(and(eq(characterRevisions.id, job.id), eq(characterRevisions.leaseToken, token))).returning({ id: characterRevisions.id })
     return updated.length === 1
   } catch (error) {
-    await db.update(characterRevisions).set({ status: 'failed', errorCode: 'compilation_failed', leaseToken: null,
+    // 공급자 장애(과부하·시간 초과·연결)는 판의 잘못이 아니다 — 3회 한도에 세지 않고 조금 뒤 다시 정리한다.
+    // 세면 장애 한 번에 한도가 다 차서 그 캐릭터는 설정을 고치기 전까지 자율성을 영영 못 켰다(10/2 실측: 503 으로 4번 모두 실패).
+    const transient = error instanceof AIUnavailableError && /^(provider_http_|timeout|provider_error|provider_overloaded)/.test(error.last)
+    await db.update(characterRevisions).set({ status: 'failed', errorCode: transient ? 'provider_unavailable' : 'compilation_failed', leaseToken: null,
+      ...(transient ? { attempts: sql`greatest(0, ${characterRevisions.attempts} - 1)` } : {}),
       leaseUntil: new Date(Date.now() + Math.max(1, job.attempts) * 5 * 60_000) })
       .where(and(eq(characterRevisions.id, job.id), eq(characterRevisions.leaseToken, token)))
     // A routing failure (no model serves the task) happens before any ai_usage row, so this is its only trace.
@@ -114,13 +119,16 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
   const stored = refs.length ? await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.id, refs), isNull(messages.hiddenAt))) : []
   const evidence: AgencyEvidence[] = []
   const actor = snapshot.character.id
-  for (const message of [...snapshot.recentMessages, ...stored]) {
+  // 최근 대화는 대사 맥락과 같은 수만(POLICY.context.recentMessageCount) — 24개를 다 실으면 계획 입력이 7~8천 토큰이 됐다(9/29 실측).
+  // 목표·믿음이 가리키는 옛 메시지(stored)는 따로 실린다.
+  for (const message of [...snapshot.recentMessages.slice(-POLICY.context.recentMessageCount), ...stored]) {
     if (!message.id || !['user', 'character'].includes(message.role)) continue
     const blocks = message.blocks ?? []
     const text = blocks.length && message.kind !== 'reality_message' ? blocks.filter(b => b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name))
       .map(b => b.text).join('\n') : message.content
     if (!text.trim()) continue
-    const at = 'createdAt' in message ? message.createdAt.toISOString() : message.at ?? now.toISOString()
+    // 기록 시각은 사용자 현지 시각(오프셋 포함) — 대화 기록과 같은 기준이어야 '오늘·어제'를 맞게 말한다.
+    const at = 'createdAt' in message ? (snapshot.clock ? localIso(message.createdAt, snapshot.clock.timeZone) : message.createdAt.toISOString()) : message.at ?? now.toISOString()
     evidence.push({ sessionId, id: message.id, quote: text.slice(0, 2000), actor: message.role === 'user' ? 'user' : actor,
       occurredAt: at, kind: 'message', epistemic: 'reported', knownTo: [actor] })
     // The receipt sits beside the message under its own ID; the character keeps its actual words.
@@ -131,6 +139,9 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
       occurredAt: at, kind: 'outcome', epistemic: 'observed', knownTo: [actor], actionId: outcome.id,
       goalIds: outcome.goalIds, outcomeStatus: outcome.status })
   }
+  // 자기 삶 — 대화가 없는 동안 캐릭터가 직접 겪은 일(최근 것과, 목표·믿음이 가리키는 것). 캐릭터 본인의 관측이다.
+  const lifeRefs = [...runtime.state.goals.flatMap(g => g.evidenceIds), ...runtime.state.beliefs.flatMap(b => b.evidenceIds)].filter(id => id.startsWith('life:')).map(id => id.slice(5))
+  evidence.push(...lifeEvidence(await recentLife(sessionId, now, lifeRefs), sessionId, actor, snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone))
   // Legacy events have no observer/time provenance. They cannot become fresh observed facts on every tick.
   if (input) evidence.push({ sessionId, id: input.id, quote: input.text, actor: 'user', occurredAt: now.toISOString(), kind: 'message', epistemic: 'reported', knownTo: [actor] })
   return [...new Map(evidence.map(e => [e.id, e])).values()]

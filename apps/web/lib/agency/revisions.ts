@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { and, desc, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, lt, or } from 'drizzle-orm'
 import { characterAgencyCohort, characterAgencyMode } from '@miro/config'
 import { authoredCharacter, createAgencyState } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
@@ -15,12 +15,12 @@ export type CharacterRevision = typeof characterRevisions.$inferSelect
 const NUMERIC_TRAITS = new Set(['personality.jealousy', 'personality.initiative', 'personality.emotionalExpression'])
 
 /**
- * Capture only for the experiment: a cohort session, or any save while the non-production '*' cohort
- * is on. A production cohort lists existing session IDs, so ordinary saves never capture or compile.
+ * 세션: 그 세션의 자율성이 켜져 있을 때. 저장(세션 없음): 자율성이 live 이면 언제나(또는 운영 밖 '*' 코호트) —
+ * 미로 캐릭터는 저장하는 순간 성격 규칙을 정리해 둬야 첫 대화의 첫 마디부터 그 사람이다(2026-10-02, 전엔 운영 저장은 잡지 않았다).
  */
 function captureAllowed(sessionId?: string, policyVersion?: string): boolean {
   if (sessionId) return characterAgencyMode(sessionId, policyVersion) !== 'off'
-  return characterAgencyMode() !== 'off' && characterAgencyCohort().all
+  return characterAgencyMode() === 'live' || (characterAgencyMode() !== 'off' && characterAgencyCohort().all)
 }
 
 /** Called inside the authenticated character save/start transaction. Never rewrites an existing revision. */
@@ -67,6 +67,31 @@ export async function pinAgencyRevision(tx: Transaction, sessionId: string, revi
     sessionId, revisionId: revision.id, mode: 'live', state: createAgencyState(revision.id, now.toISOString()),
   }).onConflictDoNothing({ target: characterRuntimeStates.sessionId }).returning({ sessionId: characterRuntimeStates.sessionId })
   return Boolean(inserted)
+}
+
+/**
+ * 자율성이 live 인 동안 미로 캐릭터의 판을 미리 잡고 정리한다(스케줄러 정리 단계, 한 번에 limit 개).
+ * 판이 없는 캐릭터는 지금 설정으로 잡고, 정리되지 않은 판(대기·3회 미만 실패)은 정리한다 — 켠 직후의 기존 캐릭터도
+ * 첫 대화 전에 준비된다. 저장 직후의 정리(scheduleAgencyCompilation)가 응답 뒤 작업에서 유실돼도 여기서 거둔다.
+ */
+export async function precompileAgencyRevisions(limit = 2): Promise<number> {
+  if (characterAgencyMode() !== 'live') return 0
+  const missing = await db.select({ id: characters.id }).from(characters)
+    .leftJoin(characterRevisions, eq(characterRevisions.characterId, characters.id))
+    .where(and(eq(characters.experienceType, 'reality'), isNull(characters.deletedAt), isNull(characterRevisions.id))).limit(limit)
+  for (const { id } of missing) await db.transaction(tx => captureAgencyRevision(tx, id))
+  const pending = await db.select({ id: characterRevisions.id, ownerId: characters.ownerId }).from(characterRevisions)
+    .innerJoin(characters, eq(characters.id, characterRevisions.characterId))
+    .where(and(isNull(characters.deletedAt), or(eq(characterRevisions.status, 'pending'),
+      and(inArray(characterRevisions.status, ['compiling', 'failed']), lt(characterRevisions.attempts, 3), lt(characterRevisions.leaseUntil, new Date())))))
+    .orderBy(desc(characterRevisions.createdAt)).limit(limit)
+  const { compileAgencyRevision } = await import('./runtime')
+  let compiled = 0
+  for (const revision of pending) {
+    const llm = resolveRpLLM('캐릭터 설정', { userId: revision.ownerId ?? undefined, requestId: randomUUID(), workload: 'background', usageUnits: 0 })
+    if (await compileAgencyRevision(revision.id, llm)) compiled++
+  }
+  return compiled
 }
 
 /** Shares the existing provider gateway, user budget and compile lease; no model call in the save transaction. */

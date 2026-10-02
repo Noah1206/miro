@@ -126,7 +126,7 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
     .where(and(eq(messages.sessionId, job.sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc']),
       or(sql`${messages.turnIndex} < ${job.throughTurn}`, lte(messages.createdAt, source.createdAt))))
     .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id)).limit(24)
-  const recentMessages = conversationContext(window.reverse())
+  const recentMessages = conversationContext(window.reverse(), loaded.snapshot.clock?.timeZone)
   // 요약은 그 범위의 대화가 있어야 뜻이 있다 — 비어 있으면 옛 요약을 빈 것으로 덮지 않고 나중에 다시 본다.
   if (job.kind === 'memory_summary' && !recentMessages.length) { await retryOrFail('summary_window_empty'); return 'retry' }
   const snapshot = { ...loaded.snapshot, recentMessages, turnCount: job.throughTurn }

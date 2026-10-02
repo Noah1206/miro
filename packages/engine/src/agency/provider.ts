@@ -3,17 +3,20 @@ import type { ZodType, ZodTypeAny } from 'zod'
 import { UnsafeContentError } from '../safety'
 
 export type AgencyProviderTrace = {
-  providerMode: 'live' | 'mock' | 'fallback'
+  providerMode: 'live' | 'mock'
   providerName: string
   modelId: string | null
   promptVersion: string
 }
 
-/** Capture immediately after generation; later moderation calls can change orchestrator metadata. */
+/**
+ * Capture immediately after generation; a later call can change orchestrator metadata.
+ * 예비 모델(GPT-5.4 mini)이 답해도 live 다 — 강한 일의 정식 예비다(10/2 결정). 어느 모델이 답했는지는 modelId 가 남긴다.
+ */
 export function agencyProviderTrace(llm: LLMProvider, promptVersion: string): AgencyProviderTrace {
-  const metadata = llm as LLMProvider & { lastFallbackUsed?: boolean; lastModelId?: string | null }
+  const metadata = llm as LLMProvider & { lastModelId?: string | null }
   return {
-    providerMode: llm.info.mode === 'mock' ? 'mock' : metadata.lastFallbackUsed === true ? 'fallback' : 'live',
+    providerMode: llm.info.mode === 'mock' ? 'mock' : 'live',
     providerName: llm.info.name,
     modelId: metadata.lastModelId ?? null,
     promptVersion,
@@ -61,6 +64,8 @@ export function responseJsonSchema(schema: ZodTypeAny): Record<string, unknown> 
 
 /** No fabricated fallback or swallowed budget failure. At most one bounded retry (plan §6), never a loop. */
 export async function generateAgencyStructured<T>(llm: LLMProvider, opts: {
+  /** 계획·검사·컴파일·자기 삶은 작업 이름이 따로다 — 역할마다 모델을 따로 줄 수 있게(10/2). */
+  task: 'agency_plan' | 'agency_verify' | 'agency_compile' | 'agency_life'
   schema: ZodType<T>
   system: string
   prompt: string
@@ -68,7 +73,8 @@ export async function generateAgencyStructured<T>(llm: LLMProvider, opts: {
   maxTokens: number
 }): Promise<T> {
   try {
-    const result = await llm.generateStructured({ ...opts, task: 'world_update', maxRetries: 1, responseSchema: responseJsonSchema(opts.schema) })
+    // 계획·검사·컴파일은 사용자 글을 자료로 읽고 출력은 보이지 않는다 — 공급자 필터는 높은 위험만 막는다.
+    const result = await llm.generateStructured({ ...opts, maxRetries: 1, responseSchema: responseJsonSchema(opts.schema), safety: 'relaxed' })
     // The boundary is validated even for injected providers used by replay/integration adapters.
     return opts.schema.parse(result)
   } catch (error) {

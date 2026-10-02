@@ -3,7 +3,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { and, eq, sql } from 'drizzle-orm'
 import {
   db, users, userSettings, characters, contactProfiles, roleplaySessions, worldStates, relationships, events,
-  messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions, stateTransitions,
+  messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions, stateTransitions, characterLifeEvents,
 } from '@miro/db'
 import { createAgencyState, type AgencyAction, type CompiledCharacter } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
@@ -11,6 +11,7 @@ import * as providers from '@miro/providers'
 import { POLICY } from '@miro/config'
 import { authoredDocument } from '@/lib/agency/authored'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
+import { advanceCharacterLife } from '@/lib/agency/life'
 import * as receipts from '@/lib/agency/receipts'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { evaluateSession } from '../evaluate'
@@ -24,14 +25,14 @@ const BEFORE = new Date(NOW.getTime() - 60_000)
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
 /** Synthetic provider outputs exercise the real planner, reducer, verifier and DB boundary. */
-function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void> } = {}) {
+function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[] } = {}) {
   const calls: Array<{ version: string; prompt: string; system: string }> = []
   const llm: providers.LLMProvider = {
     info: { mode: 'mock', name: 'agency-reality-recorded', notice: 'Synthetic contract validation, not live model evaluation.' },
     async generateStructured(request) {
       const version = request.promptVersion ?? ''
       calls.push({ version, prompt: request.prompt, system: request.system })
-      if (version === 'agency-planner:v4') {
+      if (version === 'agency-planner:v6') {
         const context = JSON.parse(request.prompt)
         const evidenceId = context.evidence.find((item: { actor: string }) => item.actor === 'user')?.id
         const refs = evidenceId ? [evidenceId] : []
@@ -52,11 +53,12 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
           }], newGoals: [], goalChanges: [],
         })
       }
+      if (version === 'character-life:v2') return request.schema.parse({ events: opts.life ?? [] })
       if (version === 'reality:v3-character-context') {
         await opts.duringRender?.()
         return request.schema.parse({ text: '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
       }
-      if (version === 'agency-realization-check:v4') {
+      if (version === 'agency-realization-check:v5') {
         const context = JSON.parse(request.prompt)
         return request.schema.parse({ decisionId: context.decision.id, aligned: !opts.reject, claims: [], unsupported: [],
           violations: opts.reject ? ['contradicts_decision'] : [],
@@ -120,6 +122,61 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
       decisions: await db.select().from(characterDecisions).where(eq(characterDecisions.sessionId, id)),
     }
   }
+
+  // 10/2 자기 삶: 대화가 없던 시간에 깨어 있던 블록에서 겪은 일만 남기고, 다음 배경 판단이 그것을 자기 경험(ownDay)으로 본다.
+  it('lives the quiet hours, keeps only awake in-window events, and hands them to the next background review as its own day', async () => {
+    const { id, characterId } = await fixture()
+    await db.update(contactProfiles).set({ routine: { version: 1, source: 'authored', note: null, generatedAt: NOW.toISOString(), blocks: [
+      { days: [], start: '00:00', end: '07:00', label: '수면', availability: 'unreachable' },
+      { days: [], start: '09:00', end: '18:00', label: '근무', availability: 'busy' }] } }).where(eq(contactProfiles.characterId, characterId))
+    const later = new Date(NOW.getTime() + 5 * 3_600_000) // 19:00 KST
+    const { calls } = provider({ action: 'wait', life: [
+      { at: '2026-09-24T16:30:00+09:00', kind: 'work', summary: '오후 작업 중 손님이 두고 간 우산을 찾아 돌려줬다.', valence: 0.3, intensity: 0.4, shareable: true },
+      { at: '2026-09-24T03:00:00+09:00', kind: 'rest', summary: '창밖 소리에 잠이 깼다.', valence: 0, intensity: 0.2, shareable: false },
+    ] })
+    const lived = await advanceCharacterLife(id, later)
+    expect(lived.outcome).toBe('lived')
+    expect(lived.events!.map(e => [e.block, e.summary])).toEqual([['근무', '오후 작업 중 손님이 두고 간 우산을 찾아 돌려줬다.']])
+    expect(await advanceCharacterLife(id, later)).toEqual({ outcome: 'not_due' })
+    const [runtime] = await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, id))
+    expect(runtime!.lifeUntil?.toISOString()).toBe(later.toISOString())
+    expect(await evaluateSession(id, later)).toEqual({ outcome: 'no_intent' })
+    const payload = JSON.parse(calls.find(c => c.version === 'agency-planner:v6')!.prompt)
+    const own = payload.evidence.find((e: { id: string }) => e.id === `life:${lived.events![0]!.id}`)
+    expect(own).toMatchObject({ kind: 'event', epistemic: 'observed', actor: characterId, knownTo: [characterId], shareable: true })
+    expect(JSON.parse(payload.input).ownDay).toEqual([own.id])
+  })
+
+  it('keeps a day worth sharing for later instead of asking while the character cannot send', async () => {
+    const { id, characterId, revisionId } = await fixture()
+    await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, id))
+    // 마지막 판단이 사용자 말 뒤에 끝났다 — 새로 깨울 것은 자기 삶의 일뿐이다.
+    await db.update(characterRuntimeStates).set({ state: { ...createAgencyState(revisionId, NOW.toISOString()), sequence: 1 } }).where(eq(characterRuntimeStates.sessionId, id))
+    await db.update(contactProfiles).set({ routine: { version: 1, source: 'authored', note: null, generatedAt: NOW.toISOString(), blocks: [
+      { days: [], start: '09:00', end: '18:00', label: '근무', availability: 'busy' }] } }).where(eq(contactProfiles.characterId, characterId))
+    await db.insert(characterLifeEvents).values({ sessionId: id, occurredAt: new Date(NOW.getTime() + 3_600_000), block: '근무', kind: 'work',
+      summary: '손님이 두고 간 우산을 찾아 돌려줬다.', valence: 0.3, intensity: 0.5, shareable: true })
+    const { calls } = provider({ action: 'wait' })
+    // 16:00 KST 근무 중 — 보낼 수 없으니 묻지 않는다. 일은 새것으로 남는다.
+    expect(await evaluateSession(id, new Date(NOW.getTime() + 2 * 3_600_000))).toEqual({ outcome: 'suppressed', reason: 'busy' })
+    expect(calls).toHaveLength(0)
+    // 19:00 KST 퇴근 뒤 — 이제 판단한다(이번엔 기다리기로).
+    expect(await evaluateSession(id, new Date(NOW.getTime() + 5 * 3_600_000))).toEqual({ outcome: 'no_intent' })
+    expect(calls.map(c => c.version)).toEqual(['agency-planner:v6'])
+  })
+
+  // 10/2 실측: 첫 연락을 기다리기로 한 뒤 같은 첫 연락 기회가 매번 다시 나와 '중복'으로 막히고, 다른 이유가 영영 생기지 않았다.
+  it('counts the first-contact chance as used once the character has decided on it', async () => {
+    const { id } = await fixture()
+    await db.update(roleplaySessions).set({ pendingRealityIntent: null, turnCount: 3 }).where(eq(roleplaySessions.id, id))
+    const { calls } = provider({ action: 'wait' })
+    const first = new Date(BEFORE.getTime() + 14 * 3_600_000) // 성격별 첫 연락 지연(최대 13시간)을 넘긴 때
+    expect(await evaluateSession(id, first)).toEqual({ outcome: 'no_intent' })
+    const decisions = await db.select().from(characterDecisions).where(eq(characterDecisions.sessionId, id))
+    expect(decisions.map(d => d.triggerKey)).toEqual([expect.stringMatching(/^reality:opportunity:.+:first_contact$/)])
+    expect(await evaluateSession(id, new Date(first.getTime() + 24 * 3_600_000))).not.toEqual({ outcome: 'skipped', reason: 'duplicate' })
+    expect(calls.filter(c => c.version === 'agency-planner:v6')).toHaveLength(1)
+  })
 
   it('wait beats a legacy pending intent and escalated event without sending or inventing progress', async () => {
     const { id } = await fixture()
@@ -193,7 +250,9 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(state.contacts[0]!.messageId).toBe(state.messages[0]!.id)
     expect(state.runtime.state.actions).toEqual([expect.objectContaining({ type: 'contact', status: 'sent', outcomeEvidenceId: `${state.messages[0]!.id}:sent` })])
     expect(state.runtime.version).toBe(1)
-    expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'skipped', reason: 'duplicate' })
+    // 같은 기회(남은 의도)는 이미 소비됐고 새 근거도 없다 — 두 번 보내지 않는다.
+    expect((await evaluateSession(id, NOW)).outcome).not.toBe('sent')
+    expect((await stored(id)).contacts).toHaveLength(1)
     const loaded = await loadSession(id, userId)
     const runtime = await loadAgencyRuntime(id, userId, loaded!.snapshot, llm)
     const evidence = await loadAgencyEvidence(id, loaded!.snapshot, runtime!, undefined, NOW)
@@ -392,5 +451,64 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(await evaluateAgencyReality(row!, NOW, {})).toBeNull()
     expect(calls).toHaveLength(1)
     expect(await stored(id)).toEqual(before)
+  })
+  // 한 사람(2026-10-02): 기존 경로가 찾던 연락 기회(첫 연락·조용함·식사·헤어진 뒤·답장 대기)는 엔진의 판단 재료가 된다 — 보낼지는 캐릭터가 정한다.
+  /** 새 근거가 없는 상태로 — 기회만이 계획을 깨울 수 있게(대화 직후의 첫 판단과 구별). */
+  async function settled(id: string, revisionId: string, at: Date) {
+    const state = createAgencyState(revisionId, at.toISOString())
+    state.sequence = 1
+    await db.update(characterRuntimeStates).set({ state }).where(eq(characterRuntimeStates.sessionId, id))
+  }
+
+  it('weighs the first-contact chance in character and sends it once, under the legacy key', async () => {
+    const { id, revisionId } = await fixture()
+    await db.update(roleplaySessions).set({ pendingRealityIntent: null, turnCount: 4 }).where(eq(roleplaySessions.id, id))
+    await settled(id, revisionId, new Date(NOW.getTime() + 60_000))
+    const { calls } = provider()
+    const later = new Date(NOW.getTime() + 10 * 3_600_000)   // 토마스의 첫 연락 시각(약 8.8시간)이 지났다
+    expect(await evaluateSession(id, later)).toMatchObject({ outcome: 'sent' })
+    const planned = calls.filter(call => call.version === 'agency-planner:v6')
+    expect(planned).toHaveLength(1)
+    expect(JSON.parse(JSON.parse(planned[0]!.prompt).input).contactOpportunity.reason).toMatch(/처음 만난 뒤 첫 연락/)
+    expect((await stored(id)).contacts.map(c => c.dedupeKey)).toEqual(['message:first_contact'])
+    // 첫 연락은 한 번 — 다음 확인에는 기회도 새 근거도 없어 계획을 부르지 않는다.
+    expect(await evaluateSession(id, new Date(later.getTime() + 2 * 3_600_000))).toEqual({ outcome: 'no_intent' })
+    expect(calls.filter(call => call.version === 'agency-planner:v6')).toHaveLength(1)
+  })
+
+  it('a chance that cannot be delivered (daily cap) does not wake the planner', async () => {
+    const { id, revisionId } = await fixture()
+    await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '잘 들어갔는지 묻는다', urgency: 0.5, rule: 'after_scene' } }).where(eq(roleplaySessions.id, id))
+    await db.insert(realityContacts).values([8, 9, 10, 11, 12].map(h => ({ sessionId: id, channel: 'message' as const, reason: 'earlier',
+      dedupeKey: randomUUID(), status: 'opened' as const, sentAt: new Date(Date.parse('2026-09-24T00:00:00+09:00') + h * 3_600_000) })))   // 오늘 08~12시 KST
+    await settled(id, revisionId, new Date(NOW.getTime() + 60_000))
+    const { calls } = provider()
+    expect(await evaluateSession(id, new Date(NOW.getTime() + 2 * 60_000))).toEqual({ outcome: 'suppressed', reason: 'daily_cap' })
+    expect(calls).toHaveLength(0)
+  })
+
+  it("keeps the user's waiting text when the character holds its reply, and asks again later", async () => {
+    const { id, revisionId } = await fixture()
+    await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '문자에 답장한다', urgency: 0.9, answers: 'user_message',
+      notBefore: new Date(NOW.getTime() - 60_000).toISOString() } }).where(eq(roleplaySessions.id, id))
+    await settled(id, revisionId, new Date(NOW.getTime() + 60_000))
+    const { calls } = provider({ action: 'wait' })
+    const at = new Date(NOW.getTime() + 2 * 60_000)
+    expect(await evaluateSession(id, at)).toEqual({ outcome: 'no_intent' })
+    expect(JSON.parse(JSON.parse(calls[0]!.prompt).input).contactOpportunity).toMatchObject({ answers: 'user_message' })
+    const [session] = await db.select({ pending: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, id))
+    expect(session!.pending).toMatchObject({ answers: 'user_message', notBefore: new Date(at.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() })
+  })
+
+  it('holds new autonomy while the revision is not ready, but never drops a reply to the user', async () => {
+    const { id } = await fixture()
+    await db.update(characterRuntimeStates).set({ mode: 'shadow' }).where(eq(characterRuntimeStates.sessionId, id))
+    await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '문자에 답장한다', urgency: 0.9, answers: 'user_message',
+      notBefore: new Date(NOW.getTime() - 60_000).toISOString() } }).where(eq(roleplaySessions.id, id))
+    const { calls } = provider()
+    expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'skipped', reason: 'agency_unavailable' })
+    expect(calls).toHaveLength(0)
+    const [session] = await db.select({ pending: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, id))
+    expect(session!.pending).toMatchObject({ answers: 'user_message' })
   })
 })

@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AIOrchestrator, MockAIProvider, type GenerationRequest, type LLMProvider } from '@miro/providers'
 import { runTurn } from '../orchestrator'
-import { UnsafeContentError } from '../safety'
 import { planTasks } from '../task-router'
 import { buildMockProposal } from '../mock-rp'
 import { snapshot, relationship } from './fixtures'
@@ -110,40 +109,6 @@ describe('runTurn — state update pipeline', () => {
     expect(tasks).not.toContain('semantic_event')
   })
 
-  /**
-   * 입력 검열이 먼저다(2026-09-28). 보조 분석은 검열이 끝난 뒤에 시작하고, 검열이 막으면 아예 나가지 않는다 —
-   * 차단된 턴에 보조 호출 비용이 남지 않는다. mock provider 는 검열을 건너뛰므로(safety.ts) live 인 척하는
-   * 제공자를 세워 검열 자리에 느린 약속을 두고 순서를 본다.
-   */
-  it('starts the auxiliary analysis only after the input safety check passes, and not at all when it blocks', async () => {
-    vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '1')
-    const t0 = Date.now()
-    let auxStartedAt = -1, safetyResolvedAt = -1, auxCalls = 0
-    const auxiliaryLLM = new AIOrchestrator({ chain: [new MockAIProvider((req: GenerationRequest) => {
-      auxCalls++
-      if (auxStartedAt < 0) auxStartedAt = Date.now() - t0
-      return req.task === 'memory_extraction' ? { memories: [] } : { events: [] }
-    })] })
-    const gate = (allowed: boolean) => ({ info: { mode: 'live', name: 'test', notice: null },
-      generateStructured: async (o: { task: string; prompt: string }) => {
-        if (o.task !== 'moderation') return buildMockProposal(o.prompt, { characterName: '토마스' })
-        return new Promise(resolve => setTimeout(() => {
-          if (safetyResolvedAt < 0) safetyResolvedAt = Date.now() - t0
-          resolve({ allowed, category: 'safe' })
-        }, 60))
-      } } as unknown as LLMProvider)
-
-    await runTurn({ llm: gate(true), snapshot: snapshot(), userInput: '기억해줘 나 커피 좋아해', auxiliaryLLM, auxiliary: 'always' })
-    expect(auxStartedAt, '보조 분석이 돌아야 한다').toBeGreaterThanOrEqual(0)
-    expect(safetyResolvedAt).toBeGreaterThanOrEqual(0)
-    expect(auxStartedAt, '검열이 끝난 뒤에야 시작한다').toBeGreaterThanOrEqual(safetyResolvedAt)
-
-    auxCalls = 0
-    await expect(runTurn({ llm: gate(false), snapshot: snapshot(), userInput: '기억해줘 나 커피 좋아해', auxiliaryLLM, auxiliary: 'always' }))
-      .rejects.toBeInstanceOf(UnsafeContentError)
-    expect(auxCalls, '차단된 턴은 보조 호출을 내지 않는다').toBe(0)
-  })
-
   it('an ECHO turn runs the auxiliary analysis a MIRO turn would skip', async () => {
     const tasks: string[] = []
     const auxiliaryLLM = new AIOrchestrator({ chain: [
@@ -172,7 +137,6 @@ describe('runTurn — state update pipeline', () => {
     // 통화·Live Scene 은 등급을 넘기지 않는다 — dialogue 모델 상한(ECHO 때문에 4096)을 물려받지 않는다.
     const seen: Array<number | undefined> = []
     const llm = { info: { mode: 'live' as const, name: 'test', notice: null }, generateStructured: async (o: { task?: string; maxTokens?: number; prompt: string }) => {
-      if (o.task === 'moderation') return { allowed: true, category: 'safe' }
       seen.push(o.maxTokens); return buildMockProposal(o.prompt, { characterName: '토마스' })
     } }
     await runTurn({ llm: llm as never, snapshot: snapshot(), userInput: '안녕' })

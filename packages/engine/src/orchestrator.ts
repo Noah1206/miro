@@ -1,11 +1,11 @@
-import { AIBudgetDeniedError, AIContentBlockedError, interactionImportance, type LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
-  DEFAULT_CHARACTER_STATE, authoredCharacter, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, relationshipTurn,
+  DEFAULT_CHARACTER_STATE, detectSemanticEvents, evaluateEventRules, mergeSemanticEvents, filterSalient, relationshipTurn,
 } from '@miro/domain'
 import type { CharacterState, MemoryCandidate, RelationshipDelta, SemanticEvent, StateTransitionRecord } from '@miro/domain'
 import { SimulationProposal } from './proposal.schema'
-import { requireSafeContent, UnsafeContentError } from './safety'
+import { UnsafeContentError } from './safety'
 import { fallbackProposal } from './fallback'
 import { buildContext, type BuiltContext, type ReplyStyle, type SimulationSnapshot } from './context'
 import { validateProposal, type ValidatedTransition } from './validator'
@@ -94,13 +94,6 @@ export async function runTurn(opts: {
   let semanticEvents = detectSemanticEvents(opts.userInput)
   const extraMemories: MemoryCandidate[] = []
 
-  /**
-   * 입력 검열이 먼저다. 보조 분석(의미 분류·기억 추출)은 검열이 지난 뒤에만 띄운다 — 차단된 턴은 호출 하나로 끝나고 비용이 남지 않는다.
-   * 대가는 의미 분류만큼의 지연(실측 약 1.2초)이 매 정상 턴에 붙는 것(사용자 결정 2026-09-28; 전에는 검열과 병렬이었다).
-   */
-  await requireSafeContent(opts.llm, { phase: 'input', character: authoredCharacter(snapshot.character),
-    worldSetting: snapshot.worldSetting, memories: snapshot.memories.map(m => m.content),
-    recent: snapshot.recentMessages, input: opts.userInput })
   const auxiliary = opts.auxiliaryLLM ?? null
   const semantic = auxiliary && tasks.includes('semantic_event')
     ? analyzeSemantic(auxiliary, opts.userInput, snapshot).then(r => r.events.filter(e => e.confidence >= .8), () => [])
@@ -131,7 +124,7 @@ export async function runTurn(opts: {
     proposal = SimulationProposal.parse({ rp: { blocks: [{ type: 'dialogue', speaker: snapshot.character.identity.name, text: opts.spokenReply }] } })
   } else try {
     proposal = await opts.llm.generateStructured({
-      schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, importance: interactionImportance(opts.userInput), maxTokens: opts.maxOutputTokens,
+      schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
       system: context.system,
       prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
     })
@@ -148,12 +141,7 @@ export async function runTurn(opts: {
   }
 
   const validated = validateProposal(proposal, snapshot)
-  // 출력 검열과 기억 추출은 서로 무관하다 — 같이 기다린다.
-  const [, memoryGroups] = await Promise.all([
-    providerMode !== 'fallback' ? requireSafeContent(opts.llm, { phase: 'output', input: opts.userInput, proposal }) : Promise.resolve(),
-    memoryTasks,
-  ])
-  for (const group of memoryGroups) extraMemories.push(...group)
+  for (const group of await memoryTasks) extraMemories.push(...group)
   validated.relationshipDelta = codeDelta
   // The dialogue model cannot delete memories. Corrections come only from the scoped extraction task.
   // deferred: 대사 모델의 기억 후보도 받지 않는다 — 출처 없는 동기 저장 우회로를 남기지 않는다(§3.5). 규칙이 만드는 기억은 아래서 붙는다.
@@ -175,7 +163,7 @@ export async function runTurn(opts: {
   if (withIntent?.effect.realityIntent) {
     const { channel, reason, urgency, delayMinutes } = withIntent.effect.realityIntent
     transition.realityIntent = {
-      channel, reason, urgency,
+      channel, reason, urgency, rule: withIntent.id,
       ...(delayMinutes > 0 ? { notBefore: new Date(now.getTime() + delayMinutes * 60_000).toISOString() } : {}),
     }
   }

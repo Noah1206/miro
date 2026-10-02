@@ -3,8 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { AIOrchestrator, AIUnavailableError } from '../ai/orchestrator'
 import { ModelRegistry } from '../ai/model-registry'
-import type { AIProvider, AIUsageRecord, GenerationRequest } from '../ai/types'
-import { resolveAIChain } from '../ai/resolve'
+import { AIContentBlockedError, type AIProvider, type AIUsageRecord, type GenerationRequest } from '../ai/types'
+import { registryFromEnv, resolveAIChain } from '../ai/resolve'
 
 const saved = { ...process.env }
 afterEach(() => { process.env = { ...saved } })
@@ -88,6 +88,63 @@ describe('AIOrchestrator', () => {
       if (expectWait) expect(delays[1]).toBeGreaterThanOrEqual(100)
       else expect(delays[1]).toBeLessThan(100)           // 즉시 고쳐질 실패는 기다리지 않는다
     }
+  })
+
+  it('rides out a brief provider overload (5xx) with short extra retries, but gives up after them', async () => {
+    const registry = new ModelRegistry([{ id: 'm', provider: 'gemini', providerModelId: 'm', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32000 }])
+    // 503 두 번 뒤 성공 — 일시 과부하는 짧게 쉬고 다시 보내 대화를 살린다.
+    const flaky = fake('p', [new Error('provider_http_503'), new Error('provider_http_503'), 'ok'])
+    let calls = 0
+    const counted: AIProvider = { ...flaky, generate: async req => { calls++; return flaky.generate(req) } }
+    const ai = new AIOrchestrator({ chain: [counted], registry, resolveModel: () => counted })
+    expect(await ai.generateText({ task: 'dialogue', system: '', prompt: 'x' })).toBe('ok')
+    expect(calls).toBe(3)
+    // 계속 503 이면 추가 재시도 2번 + 기본 재시도 1번 = 4번 시도하고 멈춘다.
+    let down = 0
+    const outage: AIProvider = { info: { mode: 'live', name: 'p', notice: null }, healthCheck: async () => true,
+      generate: async () => { down++; throw new Error('provider_http_503') } }
+    const failing = new AIOrchestrator({ chain: [outage], registry, resolveModel: () => outage })
+    await expect(failing.generateText({ task: 'dialogue', system: '', prompt: 'x' })).rejects.toThrow('ai unavailable after 4 attempts: provider_http_503')
+    expect(down).toBe(4)
+  })
+
+  // 10/2: 고른 대화 모델이 공급자 장애로 실패하면 예비(GPT-5.4 mini)로 — 형식 오류는 같은 모델에 한 번 더, 공급자 차단은 예비로 피하지 않는다.
+  it('moves a pinned dialogue to the backup on a provider failure, never on a schema error or a block', async () => {
+    const registry = new ModelRegistry([
+      { id: 'flash', provider: 'gemini', providerModelId: 'flash', tier: 'standard', capabilities: ['dialogue'], maxContextTokens: 32000 },
+      { id: 'backup', provider: 'openai', providerModelId: 'backup', tier: 'standard', capabilities: ['dialogue'], maxContextTokens: 32000, fallback: true },
+    ])
+    const run = async (primary: AIProvider) => {
+      const calls: string[] = []
+      const providers: Record<string, AIProvider> = { flash: primary, backup: fake('backup', ['{"message":"backup"}']) }
+      const counted = (id: string): AIProvider => ({ ...providers[id]!, generate: req => { calls.push(id); return providers[id]!.generate(req) } })
+      const ai = new AIOrchestrator({ chain: [primary], registry, resolveModel: m => counted(m.id), rateLimitBackoffMs: 0, context: { dialogueModelId: 'flash' } })
+      const out = await ai.generateStructured({ task: 'dialogue', schema: Schema, system: '', prompt: 'x' }).catch((e: unknown) => e)
+      return { out, calls, backupUsed: ai.lastFallbackUsed }
+    }
+    for (const failure of ['provider_http_429', 'provider_http_400', 'fetch failed']) {
+      expect(await run(fake('flash', [new Error(failure)]))).toEqual({ out: { message: 'backup' }, calls: ['flash', 'backup'], backupUsed: true })
+    }
+    // 503 은 짧게 두 번 더 보내 본 뒤에 넘어간다 — 부분 장애 때는 같은 모델로 대부분 살아난다.
+    expect((await run(fake('flash', [new Error('provider_http_503')]))).calls).toEqual(['flash', 'flash', 'flash', 'backup'])
+    expect(await run(fake('flash', ['not json', '{"message":"flash"}']))).toEqual({ out: { message: 'flash' }, calls: ['flash', 'flash'], backupUsed: false })
+    const blocked: AIProvider = { ...fake('flash', ['']), generate: async () => ({ blocked: true, text: '', provider: 'flash', model: 'flash', inputTokens: 1, outputTokens: null, latencyMs: 1 }) }
+    const refusal = await run(blocked)
+    expect(refusal.out).toBeInstanceOf(AIContentBlockedError)
+    expect(refusal.calls).toEqual(['flash'])
+  })
+
+  it('adds the GPT backup only when its key exists, and drops task names that no longer exist', () => {
+    process.env.MIRO_MODEL_REGISTRY = JSON.stringify([{ id: 'flash', provider: 'gemini', providerModelId: 'gemini-3.8-flash', tier: 'standard',
+      capabilities: ['dialogue', 'moderation'], inputCost: 0.75, outputCost: 3.75, maxContextTokens: 131072 }])
+    process.env.GEMINI_API_KEY = 'k'
+    delete process.env.OPENAI_API_KEY
+    expect(registryFromEnv(() => null).registry.models.map(m => m.id)).toEqual(['flash'])
+    process.env.OPENAI_API_KEY = 'k'
+    const { registry } = registryFromEnv(() => null)
+    expect(registry.models.map(m => m.id)).toEqual(['flash', 'gpt-mini'])
+    expect(registry.get('gpt-mini')).toMatchObject({ provider: 'openai', providerModelId: 'gpt-5.4-mini', fallback: true })
+    expect(registry.get('flash').capabilities).toEqual(['dialogue'])
   })
 
   it('still retries a rate limit when the timer wakes a little early', async () => {

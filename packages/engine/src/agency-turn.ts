@@ -1,11 +1,11 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
-import { applyRelationshipDelta, authoredCharacter, moodFromAffect, nextRelationshipStage } from '@miro/domain'
+import { applyRelationshipDelta, moodFromAffect, nextRelationshipStage } from '@miro/domain'
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
 import { SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
-import { requireSafeContent, UnsafeContentError } from './safety'
+import { UnsafeContentError } from './safety'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, type AgencyPlanningContext, type AgencyRealizationCheck } from './agency'
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
@@ -23,7 +23,7 @@ export type AgencyTurnInput = {
 const REGENERATIONS = 1
 
 /**
- * 자율성 경로(§3.3): 계획 → 상태 전이 승인 → (승인된 결정·세계 사실을 넣은) 맥락 → 대사 → 출력 검열 + 승인 범위 검증 → 결과.
+ * 자율성 경로(§3.3): 계획 → 상태 전이 승인 → (승인된 결정·세계 사실을 넣은) 맥락 → 대사 → 승인 범위 검증 → 결과.
  * 승인되지 않은 세계 변경은 제안에서 걷어 내고 원장에 거부로 남긴다. 텍스트가 승인 밖 완료(도착·발송)를 말하면 한 번 다시 쓴다.
  * 기존 사건 템플릿은 검증된 선택을 덮지 못한다 — 별도 경로인 이유는 그대로다.
  */
@@ -33,7 +33,6 @@ export async function runAgencyTurn(opts: {
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
   const actor = snapshot.character.id
-  await requireSafeContent(llm, { phase: 'input', character: authoredCharacter(snapshot.character), input: opts.userInput })
   const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context, input: opts.userInput })
   if (productionRuntime() && plan.providerMode !== 'live') throw new Error('agency_planner_not_live')
 
@@ -81,22 +80,24 @@ export async function runAgencyTurn(opts: {
     context = build(recent, sourced, uncertain)
   }
 
-  // ── 대사 → 검열 → 승인 범위 검증 (거부되면 한 번 다시) ────────────────────────────────────────────
+  // ── 대사 → 승인 범위 검증 (거부되면 한 번 다시) ──────────────────────────────────────────────────
   const records: StateTransitionRecord[] = [...held]
+  // 이 턴에 약속이 생기거나 취소되면 말과 약속이 맞는지 의미 검토를 한다(realizationRisk).
+  const commitmentChanges = (plan.transition.goals ?? []).filter(change => change.kind === 'add' ? change.goal.status === 'active' : ['cancel', 'abandon', 'suspend'].includes(change.kind)).length
   let verification: AgencyRealizationCheck | null = null
   let transition: ReturnType<typeof validateProposal> | null = null
   let renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
   let feedback = ''
   for (let attempt = 0; attempt <= REGENERATIONS; attempt++) {
-    // 제공자가 대사 출력을 막으면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다(9/29 실측 3건).
+    // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
+    // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
     const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
-      promptVersion: 'agency-dialogue:v4', system: context.system,
+      promptVersion: 'agency-dialogue:v4', system: context.system, safety: 'relaxed',
       prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
       .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
-    // A later primary moderation/check call must not erase a fallback renderer's provenance.
+    // A later check call must not erase the renderer's provenance.
     renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
     if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
-    await requireSafeContent(llm, { phase: 'output', proposal })
     // 승인 범위 밖의 변경은 걷어 낸다(거부로 기록). 렌더러는 말과 장면의 공기만 바꿀 수 있다 — 장소·새 사건·NPC·선연락은 결정이 아니다.
     const rejected: string[] = []
     if (proposal.worldDelta?.currentLocation) { rejected.push('worldDelta.currentLocation'); proposal.worldDelta = { ...proposal.worldDelta, currentLocation: undefined } }
@@ -115,7 +116,7 @@ export async function runAgencyTurn(opts: {
     const validated = validateProposal(proposal, snapshot)
     validated.relationshipDelta = { ...plan.relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
     validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
-    verification = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks })
+    verification = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length })
     if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
     if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); break }
     // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
@@ -132,8 +133,7 @@ export async function runAgencyTurn(opts: {
   const characterState = { mood, stress: plan.state.affect.stress, energy: plan.state.affect.energy,
     currentGoals: plan.state.goals.filter(g => g.status === 'active').map(g => g.description),
     currentThoughts: [], firedRules: snapshot.characterState?.firedRules ?? [] }
-  const stages = [plan.providerMode, renderer.providerMode, verification!.providerMode]
-  const providerMode = stages.includes('fallback') ? 'fallback' : stages.includes('mock') ? 'mock' : 'live'
+  const providerMode = [plan.providerMode, renderer.providerMode, verification!.providerMode].includes('mock') ? 'mock' : 'live'
   return { transition: approved.transition, context, providerMode, semanticEvents: [], characterState, firedRules: [],
     agency: { plan, verification: verification! }, policy, records }
 }

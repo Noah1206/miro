@@ -22,7 +22,8 @@ export class CloudflareProvider implements AIProvider {
         ...(req.json ? { response_format: { type: 'json_object' } } : {}),
       }),
     })
-    if (!res.ok) throw new Error(`cloudflare ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`)
+    // Gemini 와 같은 모양으로 — 오케스트레이터의 재시도·429 대기·예비 전환이 이 이름을 본다. 응답 본문은 남기지 않는다.
+    if (!res.ok) { await res.body?.cancel(); throw new Error(`provider_http_${res.status}`) }
     const body = (await res.json()) as { result?: { response?: string; usage?: { prompt_tokens?: number; completion_tokens?: number } } }
     return {
       text: (body.result?.response ?? '').trim(),

@@ -61,11 +61,13 @@ Core는 특정 Provider SDK를 호출하지 않는다. Task와 모델을 분리�
 
 ## 6. Model Router 동작
 
-9개 Task는 `dialogue`, `semantic_event`, `relationship_analysis`, `memory_extraction`, `memory_summary`, `event_generation`, `world_update`, `image_prompt`, `moderation`이다. 능력 선언과 라우팅은 모두 지원한다. 현재 주 대화 파이프라인에서 분리 실행하는 작업은 dialogue와 선택적 semantic/memory 작업이다. 나머지는 기존 코어/기능의 호출 태그 또는 이후 독립 분석을 위한 계약이다.
+Task는 `dialogue`, `semantic_event`, `relationship_analysis`, `memory_extraction`, `memory_summary`, `event_generation`, `world_update`, `image_prompt`, `agency_plan`, `agency_verify`, `agency_compile`이다. 자율성의 계획·검사·컴파일은 2026-10-02부터 작업 이름이 따로라 역할마다 다른 모델을 줄 수 있다. 입력·출력을 판정하던 `moderation`(검열 분류기)은 같은 날 뺐다 — 안전 거름망은 공급자 필터(Gemini 안전 설정, OpenAI 거절)뿐이다.
 
-`emotionalIntensity`, `relationshipImpact`, `memoryImportance`, `eventPotential`, `complexity`를 0–1로 계산한다. 다섯 점수의 최댓값을 중요도로 사용한다. 0.35 미만은 small, 0.85 미만은 standard, 그 이상은 premium을 우선한다. 실제 문맥 크기·enabled·capabilities를 만족하는 모델만 후보가 된다. 해당 tier가 없으면 적합한 인접 tier로 이동하며 후보는 최대 3개다. 이 점수는 휴리스틱이며 감정 이해의 정확도를 실측한 ML 점수가 아니다.
+역할 배치(2026-10-02 결정): 대사·계획·검사·컴파일·캐릭터 초안(`STRONG_TASKS`)은 강한 모델(gemini-3.8-flash), 의미 분류·기억 추출·요약은 싼 모델(gemini-3.5-flash-lite)이 맡는다. 대사를 맡은 모델은 레지스트리에 적지 않아도 강한 일을 모두 맡는다. 등급은 작업이 정한다 — 강한 일은 standard, 나머지는 small에 가까운 모델이 먼저다. 프롬프트 길이로 중요도를 짐작해 등급을 고르던 방식은 버렸다(보조 호출이 가장 비싼 모델을 노렸다). 실제 문맥 크기·enabled·capabilities를 만족하는 모델만 후보가 되며 후보는 최대 3개다.
 
-유료 플랜이라 고급 모델을 강제하지 않는다. 플랜은 월간 양과 원가 제한에만 사용된다. 분류기 활성 시 confidence 0.8 이상의 의미 사건을 규칙 결과에 병합한다. Continuity는 small tier만 허용한다.
+예비(`fallback: true`): `OPENAI_API_KEY`가 있으면 GPT-5.4 mini(`gpt-mini`)가 강한 일의 예비로 붙는다. 기본 모델이 공급자 장애(5xx·429·시간 초과·연결 실패·그 밖의 HTTP 오류)로 실패하면 같은 모델에 다시 보내지 않고 예비로 간다. 503 같은 일시 과부하는 먼저 짧게 두 번 더 보내 본다. 형식 오류는 같은 모델에 한 번 더 보내고, 공급자 차단은 예비로 피하지 않는다. 사용자가 고른 대화 모델이 고정된 턴도 같은 규칙으로 예비로 넘어간다. 예비는 사용자가 고르는 대화 모델 목록에 나오지 않는다. 모든 어댑터는 실패를 `provider_http_<상태>`로 던져 재시도·429 대기·예비 전환이 공급자와 무관하게 돈다.
+
+유료 플랜이라 고급 모델을 강제하지 않는다. 플랜은 월간 양과 원가 제한에만 사용된다. 입력 중요도 점수(`interactionImportance`)는 턴 차감 종류와 기억 추출 여부를 고르는 데만 쓴다. 분류기 활성 시 confidence 0.8 이상의 의미 사건을 규칙 결과에 병합한다. Continuity는 small tier만 허용한다.
 
 ## 7. Context Builder 동작
 

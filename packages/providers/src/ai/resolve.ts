@@ -54,10 +54,22 @@ export function setAIBudgetGuard(value: BudgetGuard): void { guard = value }
 let leaseGuard: AILeaseGuard | undefined
 export function setAILeaseGuard(value: AILeaseGuard | undefined): void { leaseGuard = value }
 
+/**
+ * 강한 일(대사·계획·검사·컴파일)의 예비 모델(10/2 결정). 기본 모델이 공급자 장애로 실패할 때만 쓴다.
+ * 운영 레지스트리(MIRO_MODEL_REGISTRY)가 있고 OPENAI_API_KEY 가 있으면 붙는다 — 키가 없으면 예비 없이 예전처럼 돈다.
+ * 레지스트리에 같은 id 를 적으면 그쪽이 이긴다(가격·모델을 바꿀 때).
+ */
+export const BACKUP_MODEL = { id: 'gpt-mini', provider: 'openai', providerModelId: 'gpt-5.4-mini', tier: 'standard', capabilities: ['dialogue'],
+  inputCost: 0.75, outputCost: 4.5, maxContextTokens: 400_000, maxOutputTokens: 4096, enabled: true, version: '2026-10-02', trainingAllowed: false, fallback: true }
+
 export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { registry: ModelRegistry; resolveModel: (m: ModelDefinition) => AIProvider } {
   let registry: ModelRegistry
-  if (process.env.MIRO_MODEL_REGISTRY) registry = new ModelRegistry(JSON.parse(process.env.MIRO_MODEL_REGISTRY))
-  else {
+  if (process.env.MIRO_MODEL_REGISTRY) {
+    const definitions = JSON.parse(process.env.MIRO_MODEL_REGISTRY) as Array<{ id?: unknown; provider?: unknown; providerModelId?: unknown; fallback?: unknown }>
+    if (process.env.OPENAI_API_KEY && !definitions.some(d => d.id === BACKUP_MODEL.id)) definitions.push(BACKUP_MODEL)
+    // 키가 없는 예비는 뺀다 — 예비 하나 때문에 모든 호출이 'credentials missing' 으로 멈추지 않게.
+    registry = new ModelRegistry(definitions.filter(d => d.fallback !== true || providerFromEnv(String(d.provider), String(d.providerModelId))))
+  } else {
     const names = [process.env.AI_PROVIDER, process.env.AI_FALLBACK_PROVIDER].filter((n): n is string => !!n && n !== 'mock')
     const definitions = names.map((name, i) => {
       const p = providerFromEnv(name)
@@ -72,7 +84,7 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
     const enabled = registry.models.filter(m => m.enabled)
     if (!enabled.length || enabled.some(m => m.provider === 'mock')) throw new Error('AI_CONFIGURATION_REQUIRED')
     if (enabled.some(m => m.inputCost === undefined || m.outputCost === undefined)) throw new Error('AI_MODEL_PRICES_REQUIRED')
-    if (!enabled.some(m => m.provider !== 'miro-slm' && m.capabilities.includes('dialogue'))) throw new Error('AI_DIALOGUE_MODEL_REQUIRED')
+    if (!enabled.some(m => m.provider !== 'miro-slm' && !m.fallback && m.capabilities.includes('dialogue'))) throw new Error('AI_DIALOGUE_MODEL_REQUIRED')
   }
   const resolveModel = (m: ModelDefinition): AIProvider => {
     if (m.provider === 'mock') return new MockAIProvider(mock)

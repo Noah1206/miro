@@ -1,5 +1,5 @@
 import type { characters, characterVisualIdentities, messages } from '@miro/db'
-import { bondingCurveOf, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
+import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
 import { sampleDialogue } from '@/lib/intro-dialogue'
 
@@ -30,15 +30,18 @@ export function characterContext(
   }
 }
 
-/** System/moderated messages are never dialogue evidence; narrator knowledge stays separate. */
-export function conversationContext(rows: Array<typeof messages.$inferSelect>): RecentMessage[] {
+/**
+ * System/moderated messages are never dialogue evidence; narrator knowledge stays separate.
+ * timeZone 을 주면 기록 시각을 사용자 현지 시각(오프셋 포함)으로 쓴다 — 프롬프트의 '지금' 과 같은 날짜 기준이 된다.
+ */
+export function conversationContext(rows: Array<typeof messages.$inferSelect>, timeZone?: string): RecentMessage[] {
   return rows.filter(m => m.role !== 'system' && !m.hiddenAt).map(m => {
     const blocks = m.blocks.filter((b): b is { type: string; speaker?: string | null; text: string } =>
       ['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'].includes(String(b.type)) && typeof b.text === 'string')
     const speaker = blocks.find(b => b.type === 'npc' && typeof b.speaker === 'string')?.speaker
     return {
       id: m.id, role: m.role as RecentMessage['role'], kind: m.kind,
-      content: m.content, at: m.createdAt.toISOString(),
+      content: m.content, at: timeZone ? localIso(m.createdAt, timeZone) : m.createdAt.toISOString(),
       knowledgeScope: m.role === 'narrator' ? 'omniscient' : 'participant',
       ...(speaker ? { npcName: speaker } : {}),
       ...(blocks.length ? { blocks } : {}),

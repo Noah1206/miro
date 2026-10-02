@@ -31,7 +31,8 @@ describe('agency structured output', () => {
     const seen: Array<{ maxRetries?: number; responseSchema?: unknown }> = []
     const llm: LLMProvider = { info: { mode: 'mock', name: 'capture', notice: null },
       async generateStructured(opts) { seen.push(opts); return opts.schema.parse({ decisionId: 'd', aligned: true, claims: [], unsupported: [], violations: [] }) } }
-    await generateAgencyStructured(llm, { schema: AgencyRealizationAssessmentSchema, system: '', prompt: '', promptVersion: 'v', maxTokens: 10 })
-    expect(seen[0]).toMatchObject({ maxRetries: 1, responseSchema: responseJsonSchema(AgencyRealizationAssessmentSchema) })
+    await generateAgencyStructured(llm, { task: 'agency_verify', schema: AgencyRealizationAssessmentSchema, system: '', prompt: '', promptVersion: 'v', maxTokens: 10 })
+    // 계획·검사·컴파일은 자기 작업 이름으로 부른다 — 역할마다 모델을 따로 줄 수 있게(10/2).
+    expect(seen[0]).toMatchObject({ task: 'agency_verify', maxRetries: 1, responseSchema: responseJsonSchema(AgencyRealizationAssessmentSchema) })
   })
 })

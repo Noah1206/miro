@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import { validateCompiledCharacter, type AgencyIssue, type AuthoredDocument, type AuthoredRule, type CompiledCharacter } from '@miro/domain'
 import type { LLMProvider } from '@miro/providers'
-import { requireSafeContent } from '../safety'
 import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace } from './provider'
 
 export const AGENCY_COMPILER_VERSION = 'agency-compiler:v1'
@@ -84,9 +83,8 @@ export async function compileAuthoredCharacter(llm: LLMProvider, document: Autho
   DocumentSchema.parse(document)
   if (hashAuthoredCharacter(document) !== sourceHash) throw new AgencyCompilationError([{ field: 'sourceHash', reason: 'source_hash_mismatch' }])
   const raw: AuthoredDocument = { ...document, fields: { ...document.fields }, explicitFields: [...document.explicitFields] }
-  await requireSafeContent(llm, { phase: 'agency_compile_input', document: raw })
   const proposal = await generateAgencyStructured(llm, {
-    schema: AgencyCompilerProposalSchema, system: COMPILER_SYSTEM,
+    task: 'agency_compile', schema: AgencyCompilerProposalSchema, system: COMPILER_SYSTEM,
     prompt: JSON.stringify({ document: raw }), promptVersion: AGENCY_COMPILER_VERSION, maxTokens: 4096,
   })
   const trace = agencyProviderTrace(llm, AGENCY_COMPILER_VERSION)
@@ -125,6 +123,5 @@ export async function compileAuthoredCharacter(llm: LLMProvider, document: Autho
   issues.push(...validateCompiledCharacter(compiled, raw, sourceHash))
   if (!rules.length && Object.values(raw.fields).some(text => text.trim())) issues.push({ field: 'rules', reason: 'no_grounded_rules' })
   if (issues.length) throw new AgencyCompilationError(issues)
-  await requireSafeContent(llm, { phase: 'agency_compile_output', rules, unresolved: proposal.unresolved })
   return { ...trace, compiled, document: raw, issues: [] }
 }

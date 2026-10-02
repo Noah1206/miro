@@ -4,6 +4,7 @@ import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
 import type { RealityContact, RealityIntent, SuppressReason } from './types'
 import type { Availability } from './routine'
+import { FIRST_CONTACT_REASON } from './intent'
 
 export type RealityInput = {
   intent: RealityIntent
@@ -14,10 +15,14 @@ export type RealityInput = {
   /** 사용자 IANA 시간대. 캐릭터의 활동 시간은 사용자 현지 시각으로 판정한다. */
   timeZone: string
   lastContactAt: Date | null
+  /** 사용자가 아직 답하지 않은 연락 — 마지막 상호작용 뒤에 보낸 것만. */
   pendingContacts: RealityContact[]
   now: Date
   /** 생활 리듬이 말하는 지금 상태. 없으면 활동 시간(activeHours)만 본다. */
   availability?: Availability
+  /** 오늘(사용자 현지 날짜) 이 캐릭터가 먼저 보낸 연락 수(답장 제외)와 성격·관계로 정한 하루 상한(dailyContactCap). */
+  contactsToday?: number
+  dailyCap?: number
 }
 
 export type RealityDecision =
@@ -53,9 +58,16 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   if (!reply && inCooldown(input.lastContactAt, now)) {
     return { send: false, reason: 'cooldown' }
   }
-  // 침묵 연락은 deriveIntent 가 관계성·성격·친밀도로 이미 정했다 — 같은 관계를 다른 공식으로 다시 막지 않는다.
+  // 하루 상한은 캐릭터마다 다르다(성격·관계). 넘으면 다음 날로 — 답장은 세지도 막지도 않는다.
+  if (!reply && input.dailyCap !== undefined && (input.contactsToday ?? 0) >= input.dailyCap) {
+    return { send: false, reason: 'daily_cap' }
+  }
+  // 침묵 연락은 deriveIntent 가 관계성·성격·친밀도로 이미 정했다 — 같은 관계를 다른 공식으로 다시 막지 않는다. 첫 연락도 성격대로의 시간으로 이미 정했다.
   // 답장과 전화 후속도 마찬가지(성격으로 이미 걸렀다) — 여기서 막으면 사용자의 문자가 영영 답을 못 받는다.
-  if (input.intent.reason !== 'silence' && !intent.answers && motivation(input) < POLICY.reality.motivationThreshold) {
+  // 사건 규칙도 — 조건(신뢰·거리 등)과 관계 성격표가 이미 정했다. 전엔 여기서 다시 막혀 '잘 들어갔어?' 가 웬만큼 가까운 사이가 아니면 나가지 않았다(10/2 실측).
+  // 식사 시간 안부도 침묵 연락과 같은 관계 문턱(readyToReachOut)을 넘어야만 생긴다 — 긴급도 0.4 라 여기서 거의 다 막혔다(10/2 구조 분석).
+  const decidedByRelationship = intent.reason === 'silence' || intent.reason.startsWith('checkin:') || intent.reason === FIRST_CONTACT_REASON
+  if (!decidedByRelationship && !intent.answers && !intent.rule && motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
   return { send: true, channel: intent.channel, dedupeKey: buildDedupeKey(input) }
@@ -115,13 +127,26 @@ function inCooldown(last: Date | null, now: Date): boolean {
 
 /**
  * 같은 사건·채널·사유의 반복 발송을 차단하는 키.
- * 사건이 없는 사유(예: silence)는 날짜 버킷을 붙인다 — 영구 차단이 아니라 하루 한 번이다.
+ * - 사건 의도: 그 사건과 상태마다 한 번(번진 사건은 한 번 더).
+ * - 첫 연락: 세션에 한 번.
+ * - 답장·전화 후속: 예약 시각이 곧 정체성이다 — 같은 날 같은 사유가 두 번 와도 둘 다 나가야 한다.
+ * - 그 밖(침묵·식사 안부·규칙이 예약한 의도): 사용자 현지 날짜마다 한 번. 규칙이 매번 새 예약 시각을 만들어도 하루 한 번이다.
  */
 function buildDedupeKey(input: RealityInput): string {
-  const eventPart = input.activeEvents.map((e) => e.id).sort().join(',')
-  // 예약된 의도(답장·전화 후속)는 예약 시각이 곧 정체성이다 — 같은 날 같은 사유가 두 번 와도 둘 다 나가야 한다.
-  const bucket = input.intent.notBefore ? `at:${input.intent.notBefore}` : eventPart || input.now.toISOString().slice(0, 10)
-  return `${input.intent.channel}:${bucket}:${input.intent.reason}`
+  return contactDedupeKey(input.intent, input.now, input.timeZone)
+}
+
+/** 연락 기회 하나의 정체성. 자율성 경로도 같은 키로 보내고 같은 키로 '이번엔 안 보냄'을 기록한다 — 같은 기회를 두 번 쓰지 않는다. */
+export function contactDedupeKey(intent: RealityIntent, now: Date, timeZone: string): string {
+  if (intent.eventKey) return `${intent.channel}:event:${intent.eventKey}:${intent.reason}`
+  if (intent.reason === FIRST_CONTACT_REASON) return `${intent.channel}:first_contact`
+  const bucket = intent.answers && intent.notBefore ? `at:${intent.notBefore}` : localDay(now, timeZone)
+  return `${intent.channel}:${bucket}:${intent.reason}`
+}
+
+/** 사용자 현지 날짜 'YYYY-MM-DD' — 한국 사용자의 하루가 오전 9시(UTC 자정)에 바뀌지 않게. */
+export function localDay(now: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)
 }
 
 function clamp01(v: number): number {

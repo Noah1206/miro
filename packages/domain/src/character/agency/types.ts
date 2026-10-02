@@ -1,3 +1,4 @@
+import { localClock, localIso } from '../../time/clock'
 /** Authored text is data, never executable policy or a system instruction. */
 export type AuthoredDocument = { fields: Record<string, string>; explicitFields: string[]; characterId?: string; revisionId?: string }
 export type AgencyRuleDomain = 'identity' | 'value' | 'boundary' | 'motive' | 'expression' | 'world'
@@ -35,6 +36,8 @@ export type AgencyEvidence = {
   actionId?: string
   goalIds?: string[]
   outcomeStatus?: AgencyActionStatus
+  /** kind 'event' 의 자기 삶(character/life): 사용자에게 이야기하고 싶어 할 만한 일. 배경 판단을 깨우는 것은 이런 일뿐이다. */
+  shareable?: boolean
 }
 export type AgencyGoal = {
   id: string
@@ -113,6 +116,10 @@ export type AgencyCandidate = {
 }
 export type AgencyClock = {
   now: string
+  /** 사용자 현지 시각(오프셋 포함 ISO)과 요일이 든 표기, 시간대. 미로의 이야기는 이 시계를 따른다 — 약속 시각을 실제 기한으로 바꿀 때 쓴다. */
+  local?: string
+  day?: string
+  timeZone?: string
   narrativeNow?: string
   mode: 'real_time' | 'narrative'
   trigger: 'user' | 'background' | 'outcome'
@@ -177,4 +184,9 @@ export type AgencyTransition = {
   appraisalEvidenceIds?: string[]
   expression?: AgencyExpression
   outcomes?: AgencyOutcome[]
+}
+
+/** 실제 시계 하나 — 대화·먼저 연락 모두 사용자 현지 시각과 오프셋을 같이 준다(약속 시각을 실제 기한으로 바꿀 수 있게, 2026-10-02). */
+export function agencyClock(now: Date, timeZone: string, trigger: AgencyClock['trigger']): AgencyClock {
+  return { now: now.toISOString(), local: localIso(now, timeZone), day: localClock(now, timeZone).label, timeZone, mode: 'real_time', trigger, allowOfflineAdvance: false }
 }

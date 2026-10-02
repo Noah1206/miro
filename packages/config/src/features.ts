@@ -16,6 +16,8 @@ export type FeatureName =
   | 'llmSemanticAnalysis'
   /** 최근 대화를 주기적으로 요약해 단기 기억으로 남긴다 (비용 발생). */
   | 'memorySummaries' | 'memoryExtraction'
+  /** 미로 캐릭터의 '자기 삶' — 대화가 없는 동안 생활 리듬대로 하루를 살고 그 일을 기억한다(자율성 live 세션만, 비용 발생, 2026-10-02). */
+  | 'characterLife'
 
 export type Mode = 'alpha' | 'production'
 
@@ -23,13 +25,13 @@ const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false, voiceCallAudio: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true,
+    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true, characterLife: true,
   },
   production: {
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true, voiceCallAudio: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     // 2026-09-24: 관계가 표현 규칙에만 걸려 움직이지 않았다 — AI 분류를 매 턴 붙인다(턴 원가 약 +10%).
-    inlineReality: false, llmSemanticAnalysis: true, memorySummaries: true, memoryExtraction: true,
+    inlineReality: false, llmSemanticAnalysis: true, memorySummaries: true, memoryExtraction: true, characterLife: true,
   },
 }
 

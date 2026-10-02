@@ -7,12 +7,12 @@ import {
 } from '@miro/db'
 import { type AgencyGoal } from '@miro/domain'
 import { hashAuthoredCharacter, planAgencyDecision, runTurn, type AgencyPlan, type TurnResult, type ValidatedTransition } from '@miro/engine'
-import type { LLMProvider } from '@miro/providers'
+import { AIUnavailableError, type LLMProvider } from '@miro/providers'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { loadSession, type LoadedSession } from '@/lib/simulation/snapshot'
 import { commitTurn, StaleStateError, type CommitInput } from '@/lib/simulation/commit'
 import { authoredDocument } from './authored'
-import { loadAgencyEvidence, loadAgencyRuntime, type LoadedAgency } from './runtime'
+import { compileAgencyRevision, loadAgencyEvidence, loadAgencyRuntime, type LoadedAgency } from './runtime'
 import { prepareAgencyTurn } from './turn-context'
 
 // Observe real database entry points; no query result or transaction is mocked.
@@ -95,7 +95,7 @@ async function planned(f: Fixture, loaded: LoadedAgency, options: PlanOptions = 
   const ids = [input.id]
   const llm: LLMProvider = { info: { name: 'recorded-db-contract', mode: 'mock', notice: 'Recorded contract, not model quality' }, async generateStructured(request) {
     if (request.promptVersion === 'agency-dialogue:v4') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: reply }] } })
-    if (request.promptVersion === 'agency-realization-check:v4') return request.schema.parse({
+    if (request.promptVersion === 'agency-realization-check:v5') return request.schema.parse({
       decisionId: JSON.parse(request.prompt).decision.id, aligned: true, claims: [], unsupported: [], violations: [],
     })
     return request.schema.parse({
@@ -353,6 +353,21 @@ describeDb('agency runtime and atomic persistence (local test database)', () => 
     expect(deferred.tasks).toEqual([])
   })
 
+  // 10/2 실측: 503 으로 정리가 연달아 실패해 3회 한도가 차면 그 캐릭터는 자율성을 영영 못 켰다 — 공급자 장애는 세지 않는다.
+  it('does not spend a compile attempt on a provider outage, but does on a bad compilation', async () => {
+    const f = await fixture()
+    await db.update(characterRevisions).set({ status: 'pending', compiled: null, providerMode: null, attempts: 0 }).where(eq(characterRevisions.characterId, f.loaded.characterId))
+    const [revision] = await db.select().from(characterRevisions).where(eq(characterRevisions.characterId, f.loaded.characterId))
+    const failing = (error: Error): LLMProvider => ({ info: { mode: 'live', name: 'down', notice: null }, generateStructured: async () => { throw error } })
+    expect(await compileAgencyRevision(revision!.id, failing(new AIUnavailableError(4, 'provider_http_503')))).toBe(false)
+    let [after] = await db.select().from(characterRevisions).where(eq(characterRevisions.id, revision!.id))
+    expect(after).toMatchObject({ status: 'failed', attempts: 0, errorCode: 'provider_unavailable' })
+    await db.update(characterRevisions).set({ leaseUntil: new Date(0) }).where(eq(characterRevisions.id, revision!.id))
+    expect(await compileAgencyRevision(revision!.id, failing(new AIUnavailableError(2, 'invalid_schema rules:invalid_type')))).toBe(false)
+    ;[after] = await db.select().from(characterRevisions).where(eq(characterRevisions.id, revision!.id))
+    expect(after).toMatchObject({ status: 'failed', attempts: 1, errorCode: 'compilation_failed' })
+  })
+
   it('never upgrades a persisted reply to delivered or answered, or completes a delivery-dependent goal', async () => {
     const f = await fixture()
     const loaded = await seedGoal(f, await runtime(f), 'delivered')
@@ -423,8 +438,8 @@ describeDb('agency runtime and atomic persistence (local test database)', () => 
       select c.relname, c.relrowsecurity,
         (select count(*)::int from aclexplode(coalesce(c.relacl, acldefault('r', c.relowner))) acl where acl.grantee = 0) as public_grants
       from pg_class c join pg_namespace n on n.oid = c.relnamespace
-      where n.nspname = 'public' and c.relname in ('character_revisions', 'character_runtime_states', 'character_decisions')`)
-    expect(tables).toHaveLength(3)
+      where n.nspname = 'public' and c.relname in ('character_revisions', 'character_runtime_states', 'character_decisions', 'character_life_events')`)
+    expect(tables).toHaveLength(4)
     expect(tables.every(t => t.relrowsecurity && t.public_grants === 0)).toBe(true)
     const grants = await db.execute<{ rolname: string; relname: string; can_select: boolean; can_insert: boolean; can_update: boolean; can_delete: boolean }>(sql`
       select r.rolname, c.relname, has_table_privilege(r.oid, c.oid, 'SELECT') as can_select,
@@ -432,11 +447,11 @@ describeDb('agency runtime and atomic persistence (local test database)', () => 
         has_table_privilege(r.oid, c.oid, 'DELETE') as can_delete
       from pg_roles r cross join pg_class c join pg_namespace n on n.oid = c.relnamespace
       where r.rolname in ('anon', 'authenticated') and n.nspname = 'public'
-        and c.relname in ('character_revisions', 'character_runtime_states', 'character_decisions')`)
+        and c.relname in ('character_revisions', 'character_runtime_states', 'character_decisions', 'character_life_events')`)
     // A plain Postgres test database may omit API roles; still validate PUBLIC and RLS above.
     expect(grants.every(g => !g.can_select && !g.can_insert && !g.can_update && !g.can_delete)).toBe(true)
     const policies = await db.execute(sql`select policyname from pg_policies where schemaname = 'public'
-      and tablename in ('character_revisions', 'character_runtime_states', 'character_decisions')`)
+      and tablename in ('character_revisions', 'character_runtime_states', 'character_decisions', 'character_life_events')`)
     expect(policies).toHaveLength(0)
   })
 })

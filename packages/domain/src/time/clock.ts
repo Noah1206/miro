@@ -20,6 +20,18 @@ export type LocalClock = {
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const
 
+/**
+ * 사용자 현지 시각의 ISO 8601(오프셋 포함, '2026-10-02T08:50:00.000+09:00'). 기록 시각을 UTC 로 주면 지금 시각(현지)과 날짜가 어긋나
+ * 한국의 새벽~오전 9시 대화를 모델이 '어제'라고 불렀다(10/2 실측). Date.parse 로 다시 읽어도 같은 순간이다.
+ */
+export function localIso(at: Date, timeZone: string): string {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(at).map((x) => [x.type, x.value]))
+  const offset = Math.round((Date.UTC(+p.year!, +p.month! - 1, +p.day!, +p.hour!, +p.minute!, +p.second!) - Math.floor(at.getTime() / 1000) * 1000) / 60_000)
+  const abs = Math.abs(offset)
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}.${String(at.getUTCMilliseconds()).padStart(3, '0')}${offset < 0 ? '-' : '+'}${String(Math.floor(abs / 60)).padStart(2, '0')}:${String(abs % 60).padStart(2, '0')}`
+}
+
 export function localClock(now: Date, timeZone: string): LocalClock {
   const parts = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', weekday: 'short' }).formatToParts(now)
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''

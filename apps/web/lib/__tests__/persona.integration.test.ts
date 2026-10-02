@@ -9,18 +9,9 @@ import { deleteAccount } from '@/lib/ops/account'
 import { getPersona, parsePersona, personaNext, requirePersonaPath, savePersona } from '../persona'
 import { testDatabaseUrl } from '../../../../tooling/test-database'
 
-// 안전 검사 — 기본은 mock(개발 경로는 검사를 건너뛴다). 거부 경로만 live 모양의 가짜 분류기로 바꾼다.
-const safety = vi.hoisted(() => ({ verdict: null as null | 'unavailable' | { allowed: boolean; category: string } }))
-vi.mock('@/lib/simulation/mock-llm', async (original) => {
-  const real = await original<typeof import('@/lib/simulation/mock-llm')>()
-  return { ...real, resolveRpLLM: (...args: Parameters<typeof real.resolveRpLLM>) => safety.verdict
-    ? { info: { mode: 'live', name: 'test', notice: null }, generateStructured: async () => { if (safety.verdict === 'unavailable') throw new Error('provider_http_429'); return safety.verdict } }
-    : real.resolveRpLLM(...args) }
-})
-
 const describeDb = testDatabaseUrl(process.env.DATABASE_URL) ? describe : describe.skip
 const made: string[] = []
-afterEach(() => { safety.verdict = null; vi.unstubAllEnvs() })
+afterEach(() => { vi.unstubAllEnvs() })
 afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 async function user() {
   const [u] = await db.insert(users).values({ email: `persona-${randomUUID()}@example.test` }).returning({ id: users.id })
@@ -49,20 +40,15 @@ describe('페르소나 입력', () => {
 })
 
 describeDb('페르소나 저장과 쓰임', () => {
-  it('saves, updates in place, and refuses what the safety check rejects', async () => {
-    vi.stubEnv('AI_PROVIDER', 'mock')
+  // 10/2: AI 안전 검사를 뺐다 — 저장은 입력 형식만 본다(AI 를 부르지 않는다).
+  it('saves, updates in place, and refuses only malformed input', async () => {
     const id = await user()
     expect(await getPersona(id)).toBeNull()
     expect(await savePersona(id, { name: '지우', gender: 'female', description: '출판사 편집자' })).toEqual({ ok: true })
     expect(await savePersona(id, { name: '지우', gender: '', description: '' })).toEqual({ ok: true })
     expect(await getPersona(id)).toEqual({ name: '지우', gender: null, description: null })
     expect(await db.select().from(userPersonas).where(eq(userPersonas.userId, id))).toHaveLength(1)
-    safety.verdict = { allowed: false, category: 'sexual' }
-    expect(await savePersona(id, { name: '다른 이름', gender: '', description: '거부될 소개' })).toEqual({ ok: false, error: '이 내용은 쓸 수 없어요. 다른 표현으로 적어 주세요.' })
-    expect((await getPersona(id))?.name).toBe('지우')
-    // 검사를 못 하면 저장하지 않지만, 이번에는 건너뛰고 대화할 수 있게 알린다(장애가 대화까지 막지 않게).
-    safety.verdict = 'unavailable'
-    expect(await savePersona(id, { name: '새 이름', gender: '', description: '' })).toMatchObject({ ok: false, canSkip: true })
+    expect(await savePersona(id, { name: '  ', gender: '', description: '' })).toEqual({ ok: false, error: '이름을 적어 주세요.' })
     expect((await getPersona(id))?.name).toBe('지우')
   })
 

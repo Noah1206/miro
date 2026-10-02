@@ -7,7 +7,7 @@ import { WELCOME_PARAM } from '@/lib/onboarding-options'
 
 export type OnboardingState = OnboardingError | null
 
-/** 닉네임 단계를 넘길 때 뒤에서 안전 검사를 미리 한다 — 마지막 '시작하기' 가 AI 호출을 기다리지 않게(2026-09-30). */
+/** 닉네임 단계를 넘길 때 뒤에서 페르소나로 미리 저장한다 — 막히면(길이·빈 값) 이유를 돌려준다. */
 export async function checkNickname(nickname: string) {
   const user = await requireUser()
   return precheckNickname(user.id, nickname)

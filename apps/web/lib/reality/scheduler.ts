@@ -1,9 +1,9 @@
 import { deliverRealityPush } from './push-outbox'
 import { maintainAI } from '@/lib/ai/maintenance'
 import { reconcileStaleAIReservations } from '@/lib/ai/gateway'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { POLICY, characterAgencyCohort, characterAgencyMode } from '@miro/config'
-import { db } from '@miro/db'
+import { db, roleplaySessions } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
 import { purgeDeleted } from '@/lib/ops/archive'
@@ -13,6 +13,8 @@ import { expireBankOrders, settleApprovedOrders } from '@/lib/payments/bank-tran
 import { observe } from '@/lib/observe'
 import { notifyOperators } from '@/lib/ops/alerts'
 import { runMemoryJobs, type MemoryJobRun } from '@/lib/ai/memory-jobs'
+import { advanceCharacterLife } from '@/lib/agency/life'
+import { precompileAgencyRevisions } from '@/lib/agency/revisions'
 import { AIUnavailableError } from '@miro/providers'
 
 export type SchedulerRun = EvaluationRun & MaintenanceRun
@@ -31,6 +33,17 @@ export type MaintenanceRun = {
   expiredSubscriptions: number
   passNotices: { soon: number; ended: number }
   bankOrders: { settled: number; failed: number; expired: number }
+  /** 이번 실행에서 실패한 정리 단계. 크론 응답(pg_net 기록)에 남는다. */
+  failedSteps: string[]
+}
+
+/** 정리 단계 하나가 실패해도 나머지(특히 알림 발송·운영자 알림)는 돈다 — 전엔 앞 단계 하나가 던지면 알림이 무기한 멈췄다(10/2 감사). */
+async function step<T>(failed: string[], name: string, run: () => Promise<T>, fallback: T): Promise<T> {
+  try { return await run() } catch (e) {
+    failed.push(name)
+    observe('reality.maintenance_step_failed', { step: name, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' })
+    return fallback
+  }
 }
 
 /**
@@ -43,26 +56,29 @@ export type MaintenanceRun = {
  * 세션이 수십만 건이 되면 realityCheckedAt 에 부분 인덱스를 추가한다.
  */
 export async function runRealityMaintenance(wall = new Date()): Promise<MaintenanceRun> {
-  await reconcileStaleAIReservations(wall)
+  const failedSteps: string[] = []
+  await step(failedSteps, 'ai_reservations', () => reconcileStaleAIReservations(wall), undefined)
   // 정리 작업은 벽시계로 돈다. `now` 는 판단 시각(활동 시간·Quiet Hours)만 바꾸는 값이며,
   // 생성 시각(실제 시각)과 비교하는 만료 판정에 섞이면 방금 만든 통화가 부재중이 된다.
-  const calls = await expireCalls(wall)
-  const purged = await purgeDeleted(wall)   // 보존 기간이 지난 삭제 역할극 영구 삭제
+  const calls = await step(failedSteps, 'calls', () => expireCalls(wall), { missed: 0, timedOut: 0 })
+  const purged = await step(failedSteps, 'purge', () => purgeDeleted(wall), 0)   // 보존 기간이 지난 삭제 역할극 영구 삭제
   // 만료 안내를 sweep 보다 먼저 보낸다. 순서가 바뀌면 status 가 expired 로 넘어가
   // 당일 안내 대상에서 빠진다 — 사용자는 끝났다는 사실만 화면에서 발견하게 된다.
   // 운영자가 승인한 계좌이체 주문을 지급한다. 승인과 지급을 나눠 지급 경로를 하나로 둔다.
-  const settlement = await settleApprovedOrders(wall)
-  const expiredOrders = await expireBankOrders(wall)
+  const settlement = await step(failedSteps, 'bank_settle', () => settleApprovedOrders(wall), { settled: 0, failed: 0 })
+  const expiredOrders = await step(failedSteps, 'bank_expire', () => expireBankOrders(wall), 0)
   const bankOrders = { ...settlement, expired: expiredOrders }
-  const passNotices = await notifyExpiringPasses(wall)
-  const expiredSubscriptions = await expireSubscriptions(wall)
-  await maintainAI(wall)
-  await deliverRealityPush(wall)
+  const passNotices = await step(failedSteps, 'pass_notices', () => notifyExpiringPasses(wall), { soon: 0, ended: 0 })
+  const expiredSubscriptions = await step(failedSteps, 'subscriptions', () => expireSubscriptions(wall), 0)
+  await step(failedSteps, 'ai_maintenance', () => maintainAI(wall), undefined)
+  await step(failedSteps, 'push', () => deliverRealityPush(wall), 0)
+  // 자율성을 켠 미로 캐릭터의 성격 규칙을 미리 정리한다 — 첫 대화의 첫 마디부터 그 사람이게(2026-10-02).
+  await step(failedSteps, 'agency_revisions', () => precompileAgencyRevisions(), 0)
   // 응답 직후 시도가 유실된 기억 작업을 거둔다(임대 만료 포함).
   const memoryJobsRun = await runMemoryJobs(wall, { limit: 20 }).catch((e) => { observe('memory.jobs_sweep_failed', { error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }); return { claimed: 0, results: {} } })
   // 운영자 알림은 맨 끝에 — 위 작업이 남긴 기록까지 보고 판단한다. 알림 실패가 유지보수를 막지 않는다.
   const ops = await notifyOperators(wall).catch((e) => { observe('ops.alerts_failed', { error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }); return { alerts: 0, sent: 0 } })
-  return { calls, purged, expiredSubscriptions, passNotices, bankOrders, ops, memoryJobs: memoryJobsRun }
+  return { calls, purged, expiredSubscriptions, passNotices, bankOrders, ops, memoryJobs: memoryJobsRun, failedSteps }
 }
 
 /**
@@ -122,6 +138,8 @@ export async function runRealityEvaluations(now = new Date()): Promise<Evaluatio
   let errors = 0
 
   for (const row of claimed) {
+    // 자기 삶 먼저 — 대화가 없던 동안 겪은 일이 이번 판단(먼저 연락할지)의 근거가 된다. 실패해도 판단은 그대로 돈다.
+    await advanceCharacterLife(row.id, now).catch((e) => observe('life.failed', { sessionId: row.id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))
     try {
       const r: EvaluateOutcome = await evaluateSession(row.id, now, { background: true })
       const key = r.outcome === 'suppressed' ? `suppressed:${r.reason}` : r.outcome
@@ -131,12 +149,35 @@ export async function runRealityEvaluations(now = new Date()): Promise<Evaluatio
       if (e instanceof AIUnavailableError && e.attempts === 0 && e.last === 'provider_overloaded') {
         await db.execute(sql`UPDATE roleplay_sessions SET reality_checked_at = ${iso(new Date(now.getTime() - recheckMinutes * 60_000))}::timestamptz
           WHERE id = ${row.id} AND reality_checked_at = ${iso(now)}::timestamptz`)
+      } else {
+        await backOffFailing(row.id, now).catch(() => observe('reality.backoff_failed', { sessionId: row.id }))
       }
       observe('reality.job_failed', { sessionId: row.id, error: (e as Error).message })
     }
   }
 
   return { claimed: claimed.length, results, errors }
+}
+
+/**
+ * 같은 세션이 계속 실패하면(검열에 막힘·생성 형식 오류) 간격을 늘린다 — 전엔 크론마다 다시 잡혀 검열 비용만 계속 냈다(10/2 감사).
+ * 예약 의도는 실패 횟수를 세어 30분·1·2·4·6시간 뒤로 미루고, 답장이 아니면 세 번째 실패에 버린다(답장은 끝까지 다시 해 본다).
+ * 의도 없이 실패했으면(사건·침묵 안부) 다음 판단을 두 시간쯤 뒤로 미룬다.
+ */
+export async function backOffFailing(sessionId: string, now: Date): Promise<void> {
+  const [s] = await db.select({ pending: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).limit(1)
+  const pending = s?.pending
+  if (pending) {
+    const failures = (pending.failures ?? 0) + 1
+    const drop = !pending.answers && failures >= 3
+    const delayMinutes = Math.min(6 * 60, 30 * 2 ** (failures - 1))
+    await db.update(roleplaySessions)
+      .set({ pendingRealityIntent: drop ? null : { ...pending, failures, notBefore: new Date(now.getTime() + delayMinutes * 60_000).toISOString() } })
+      .where(eq(roleplaySessions.id, sessionId))
+    if (drop) observe('reality.intent_dropped', { sessionId, reason: 'failures', stale: false })
+    return
+  }
+  await db.update(roleplaySessions).set({ realityCheckedAt: new Date(now.getTime() + 90 * 60_000) }).where(eq(roleplaySessions.id, sessionId))
 }
 
 export async function runRealityScheduler(now = new Date(), wall = new Date()): Promise<SchedulerRun> {

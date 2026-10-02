@@ -32,6 +32,11 @@ describe('chat model choice', () => {
     expect(miro.tier.replyLength).toBe('scene')
     expect(miro.tier.auxiliary).toBe('planned')
   })
+  it('never hands the backup model to a user as the chat model, even when it is listed first', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'k')
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ ...models[0], id: 'backup', provider: 'openai', providerModelId: 'gpt-x', fallback: true }, ...models]))
+    expect((await resolveChatModel('u', 'miro')).modelId).toBe('basic')
+  })
   it('honours a pinned model id for both', async () => {
     plan.mockResolvedValue('pro')
     vi.stubEnv('MIRO_CHAT_MODEL_ID', 'advanced')

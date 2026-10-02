@@ -4,7 +4,7 @@ import type { LLMProvider } from '@miro/providers'
 import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace } from './provider'
 import { ruleIdResolver, type AgencyGroundedContext } from './planner'
 
-export const AGENCY_REALIZATION_VERSION = 'agency-realization-check:v4'
+export const AGENCY_REALIZATION_VERSION = 'agency-realization-check:v5'
 export type AgencyRealizationBlock = { type: string; speaker: string | null; text: string }
 const Ref = z.string().min(1).max(128)
 const SpanSchema = z.object({
@@ -35,8 +35,13 @@ export type AgencyRealizationInput = {
   blocks: AgencyRealizationBlock[]
   /** If the renderer emits annotations, validate them too; annotations cannot replace text review. */
   claims?: AgencyRealizationClaim[]
+  /** 이 턴에 약속이 생기거나(활성) 취소·중단되는 목표 수. 있으면 말과 약속이 맞는지 의미 검토를 한다. */
+  commitmentChanges?: number
+  /** 렌더러가 승인 없이 바꾸려다 걷힌 세계·사건 변경 수. 글이 그 변경을 서술했을 수 있어 의미 검토를 한다. */
+  strippedMutations?: number
 }
-export type AgencyRealizationCheck = AgencyProviderTrace & { ok: boolean; issues: AgencyIssue[]; claims: AgencyRealizationClaim[] }
+/** reviewed: 의미 검토(모델 호출)를 했는가. 위험이 없는 턴은 결정적 검사만 한다. */
+export type AgencyRealizationCheck = AgencyProviderTrace & { ok: boolean; issues: AgencyIssue[]; claims: AgencyRealizationClaim[]; reviewed: boolean }
 
 /** Append to the trusted renderer system prompt; JSON content below is descriptive data. */
 export function buildAgencyDecisionDirective(decision: AgencyDecision): string {
@@ -61,7 +66,7 @@ Review EVERY block, including ordinary dialogue; absence of declared claims neve
 Identify every factual, belief, intention or completed-action assertion as a claim with exact UTF-16 start/end and quote.
 Each claim cites actual rule/evidence/action IDs or whitelisted statePaths from the supplied data. Never invent refs or treat names as IDs.
 authored_fact requires a source rule and cannot contradict its exact authored text or exceptions.
-observed_fact requires an observed fact, not another person's allegation, a hypothetical, retracted evidence or an uncertain belief.
+observed_fact requires an observed fact, not another person's allegation, a hypothetical, retracted evidence or an uncertain belief. Evidence of kind event whose actor is this character is something it actually lived through off-screen (its own day): telling it is an observed_fact citing that evidence.
 reported_claim restates or responds to what the user said (for example "잘 도착했구나" after the user says they arrived). Cite that user message. It stays the user's report: never an observed fact or this character's completed action.
 belief must be linguistically marked as uncertainty/opinion, not turned into world canon. The character's own ordinary present or recent activity, feeling or preference that fits its authored rules (for example what it ate) is also a belief about itself: cite those rules. It asserts nothing about the user, other people, completed external actions or world changes. Intention is future/proposed, never a completed effect.
 action_result requires a completed external/domain outcome; an authorized/queued action is not completed. A failed or cancelled action cannot be called delivered.
@@ -116,9 +121,13 @@ function validateClaims(claims: AgencyRealizationClaim[], input: AgencyRealizati
       case 'authored_fact':
         if (!claim.ruleIds.length || claim.ruleIds.some(id => rules.get(id)?.origin === 'inferred')) issues.push({ field, reason: 'inferred_or_unsourced_canon' })
         break
-      case 'observed_fact':
-        if (!claim.evidenceIds.length || claim.evidenceIds.some(id => !agencyEvidence(id, input.context, true))) issues.push({ field, reason: 'fact_not_observed' })
+      case 'observed_fact': {
+        // 캐릭터가 자기가 한 말을 다시 짚는 것("분명히 말씀드렸을 텐데요")은 그 말이 근거다 — 자기 발화는 캐릭터가 직접 겪은 일이다.
+        // 전엔 대화 메시지가 모두 '전해 들은 말'이라 이런 정상 대사가 fact_not_observed 로 거부됐다(9/29 실측 거부 14건의 대부분).
+        const ownWords = (id: string) => { const source = agencyEvidence(id, input.context); return source?.kind === 'message' && source.actor === input.context.actor }
+        if (!claim.evidenceIds.length || claim.evidenceIds.some(id => !agencyEvidence(id, input.context, true) && !ownWords(id))) issues.push({ field, reason: 'fact_not_observed' })
         break
+      }
       case 'reported_claim':
         // Acknowledging the user's own words is not verifying them; it must point at those words. Other cited
         // context is allowed but must be available (checked above for every claim).
@@ -150,6 +159,36 @@ function validateClaims(claims: AgencyRealizationClaim[], input: AgencyRealizati
   return issues
 }
 
+/**
+ * Conservative backstop wording: obvious success claims ("보냈어", "도착했어"). A question, negation, gesture idiom or
+ * condition about completion ("잘 도착했어?", "아직 안 보냈어", "미소를 보냈다", "보냈으면") asserts nothing.
+ */
+const COMPLETION = /보냈|전송했|전화했|예약했|결제했|도착했|이동했|완료했|전달했|취소했|\b(?:sent|called|booked|paid|arrived|completed|delivered|cancelled|canceled)\b/gi
+function asserted(text: string, start: number, end: number): boolean {
+  return text.slice(end).match(/[.!?\n]/)?.[0] !== '?'
+    && !/(?:안|못|not|n't|never)\s*$/i.test(text.slice(Math.max(0, start - 6), start))
+    // 몸짓 관용구("미소를 보냈다", "시선을 보냈다")는 발송이 아니다 — 장면 서술에서 매번 걸려 정상 턴을 떨어뜨렸다.
+    && !/(?:미소|시선|눈빛|눈길|웃음|고개|손짓|입맞춤)\s*(?:를|을)?\s*$/.test(text.slice(Math.max(0, start - 8), start))
+    // Conditions, regrets and guesses ("보냈으면", "보냈어야", "긴장 속에 보냈을 테지", "도착했겠지") assert nothing done.
+    && !/^(?:으면|다면|더라면|을까|을지|어야|을 ?테|을 ?거|겠)/.test(text.slice(end))
+}
+function assertedCompletions(blocks: AgencyRealizationBlock[]): Array<{ blockIndex: number; start: number; end: number }> {
+  return blocks.flatMap((block, blockIndex) => [...block.text.matchAll(COMPLETION)]
+    .filter(match => asserted(block.text, match.index!, match.index! + match[0].length))
+    .map(match => ({ blockIndex, start: match.index!, end: match.index! + match[0].length })))
+}
+
+/** 의미 검토(모델 호출)가 필요한 턴인가 — 행동을 실행·약속·취소하거나, 무언가를 마쳤다고 말하는 턴. */
+const REVIEWED_ACTIONS = new Set(['contact', 'move', 'cancel_commitment', 'disclose'])
+export function realizationRisk(input: Pick<AgencyRealizationInput, 'decision' | 'blocks' | 'commitmentChanges' | 'strippedMutations'>): string | null {
+  if (REVIEWED_ACTIONS.has(input.decision.action)) return `action:${input.decision.action}`
+  if ((input.decision.candidate.fulfillsGoalIds ?? []).length) return 'fulfills_goal'
+  if (input.commitmentChanges) return 'commitment_change'
+  if (input.strippedMutations) return 'stripped_mutation'
+  if (assertedCompletions(input.blocks).length) return 'completion_wording'
+  return null
+}
+
 /** Separate semantic review catches undeclared assertions; schema/ref checks are deterministic gates. */
 export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRealizationInput): Promise<AgencyRealizationCheck> {
   const initialTrace = agencyProviderTrace(llm, AGENCY_REALIZATION_VERSION)
@@ -157,18 +196,21 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   if (input.decision.sessionId !== input.context.sessionId || input.decision.revisionId !== input.context.revisionId
     || input.state.revisionId !== input.context.revisionId || input.blocks.length === 0 || input.blocks.length > 12
     || input.blocks.some(block => !block.text.trim() || block.text.length > 2000)) {
-    return { ...initialTrace, ok: false, issues: [{ field: 'realization', reason: 'invalid_realization_context' }], claims: [] }
+    return { ...initialTrace, ok: false, issues: [{ field: 'realization', reason: 'invalid_realization_context' }], claims: [], reviewed: false }
   }
   const declared = input.claims ?? []
   const parsedDeclared = z.array(AgencyRealizationClaimSchema).max(24).safeParse(declared)
-  if (!parsedDeclared.success) return { ...initialTrace, ok: false, issues: [{ field: 'claims', reason: 'invalid_claim_schema' }], claims: [] }
+  if (!parsedDeclared.success) return { ...initialTrace, ok: false, issues: [{ field: 'claims', reason: 'invalid_claim_schema' }], claims: [], reviewed: false }
   // Checkers cite the chosen candidate's short ID for the decision it became; both name the same action.
   const rules = ruleIdResolver(input.context.compiled.rules)
   const normalize = (claim: AgencyRealizationClaim): AgencyRealizationClaim => ({ ...placeSpan(claim, input.blocks), ruleIds: rules(claim.ruleIds),
     actionIds: claim.actionIds.map(id => id === input.decision.candidate.id ? input.decision.id : id) })
   const placedDeclared = parsedDeclared.data.map(normalize)
   issues.push(...validateClaims(placedDeclared, input))
-  if (issues.length) return { ...initialTrace, ok: false, issues, claims: placedDeclared }
+  if (issues.length) return { ...initialTrace, ok: false, issues, claims: placedDeclared, reviewed: false }
+  // 위험이 없는 턴(대답·질문·거절·미루기 — 실행·약속·완료 주장이 없다)은 모델 검토를 하지 않는다(10/2). 전엔 모든 턴을 검토해
+  // 한 턴에 3~6초가 더 들었고, 자기 말 인용 같은 정상 대사를 거부해 턴을 떨어뜨렸다(9/29 실측).
+  if (!realizationRisk(input)) return { ...initialTrace, ok: true, issues: [], claims: placedDeclared, reviewed: false }
   const visibleEvidence = input.context.evidence.filter(e => agencyEvidence(e.id, input.context))
   const payload = {
     decision: input.decision, rules: input.context.compiled.rules, evidence: visibleEvidence,
@@ -176,10 +218,9 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
     declaredClaims: declared, blocks: input.blocks,
   }
   const prompt = JSON.stringify(payload)
-  if (prompt.length > 48_000) return { ...initialTrace, ok: false, issues: [{ field: 'realization', reason: 'context_budget_exceeded' }], claims: [] }
-  // The caller moderates these exact blocks before they are shown; checking them again here only added latency.
+  if (prompt.length > 48_000) return { ...initialTrace, ok: false, issues: [{ field: 'realization', reason: 'context_budget_exceeded' }], claims: [], reviewed: false }
   const assessment = await generateAgencyStructured(llm, {
-    schema: AgencyRealizationAssessmentSchema, system: VERIFY_SYSTEM, prompt,
+    task: 'agency_verify', schema: AgencyRealizationAssessmentSchema, system: VERIFY_SYSTEM, prompt,
     promptVersion: AGENCY_REALIZATION_VERSION, maxTokens: 3072,
   })
   const trace = agencyProviderTrace(llm, AGENCY_REALIZATION_VERSION)
@@ -192,24 +233,12 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
     if (!spanMatches(placeSpan(rejected, input.blocks), input.blocks)) issues.push({ field: 'unsupported', reason: 'claim_span_mismatch' })
   }
   issues.push(...validateClaims(claims, input))
-  // Conservative backstop: do not trust an empty/incomplete claim list for obvious success wording.
-  // A question, negation or condition about completion ("잘 도착했어?", "아직 안 보냈어", "보냈으면")
-  // asserts nothing. Otherwise the words need an attested result, an observed fact, or a restated user
-  // report; each was validated above. Semantic review remains necessary; this is not a language classifier.
-  const completion = /보냈|전송했|전화했|예약했|결제했|도착했|이동했|완료했|전달했|취소했|\b(?:sent|called|booked|paid|arrived|completed|delivered|cancelled|canceled)\b/gi
-  const asserted = (text: string, start: number, end: number) => text.slice(end).match(/[.!?\n]/)?.[0] !== '?'
-    && !/(?:안|못|not|n't|never)\s*$/i.test(text.slice(Math.max(0, start - 6), start))
-    // 몸짓 관용구("미소를 보냈다", "시선을 보냈다")는 발송이 아니다 — 장면 서술에서 매번 걸려 정상 턴을 떨어뜨렸다.
-    && !/(?:미소|시선|눈빛|눈길|웃음|고개|손짓|입맞춤)\s*(?:를|을)?\s*$/.test(text.slice(Math.max(0, start - 8), start))
-    // Conditions, regrets and guesses ("보냈으면", "보냈어야", "긴장 속에 보냈을 테지", "도착했겠지") assert nothing done.
-    && !/^(?:으면|다면|더라면|을까|을지|어야|을 ?테|을 ?거|겠)/.test(text.slice(end))
-  for (const [blockIndex, block] of input.blocks.entries()) {
-    for (const match of block.text.matchAll(completion)) {
-      if (!asserted(block.text, match.index!, match.index! + match[0].length)) continue
-      const covered = claims.some(claim => claim.blockIndex === blockIndex && claim.start <= match.index!
-        && claim.end >= match.index! + match[0].length && ['action_result', 'observed_fact', 'reported_claim'].includes(claim.kind))
-      if (!covered) issues.push({ field: `blocks.${blockIndex}`, reason: 'undeclared_success_claim' })
-    }
+  // Conservative backstop: do not trust an empty/incomplete claim list for obvious success wording. Otherwise the words
+  // need an attested result, an observed fact, or a restated user report; each was validated above.
+  for (const hit of assertedCompletions(input.blocks)) {
+    const covered = claims.some(claim => claim.blockIndex === hit.blockIndex && claim.start <= hit.start
+      && claim.end >= hit.end && ['action_result', 'observed_fact', 'reported_claim'].includes(claim.kind))
+    if (!covered) issues.push({ field: `blocks.${hit.blockIndex}`, reason: 'undeclared_success_claim' })
   }
-  return { ...trace, ok: issues.length === 0, issues, claims }
+  return { ...trace, ok: issues.length === 0, issues, claims, reviewed: true }
 }

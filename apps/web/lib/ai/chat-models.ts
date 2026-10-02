@@ -8,11 +8,11 @@ export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo
  * 대화에 쓸 모델. MIRO 와 ECHO 는 같은 모델을 공유한다 —
  * 두 상품의 차이는 모델이 아니라 한 턴에 들이는 양(chatTier)이다.
  *
- * MIRO_CHAT_MODEL_ID 로 고정할 수 있고, 없으면 dialogue 가능한 첫 모델을 쓴다.
+ * MIRO_CHAT_MODEL_ID 로 고정할 수 있고, 없으면 dialogue 가능한 첫 모델을 쓴다. 예비 모델은 고르는 대상이 아니다 — 장애 때 오케스트레이터가 쓴다.
  */
 function dialogueModel() {
   const { registry } = registryFromEnv(() => '')
-  const available = registry.models.filter(m => m.enabled && m.capabilities.includes('dialogue'))
+  const available = registry.models.filter(m => m.enabled && !m.fallback && m.capabilities.includes('dialogue'))
   const pinned = process.env.MIRO_CHAT_MODEL_ID
   return pinned ? available.find(m => m.id === pinned) : available[0]
 }

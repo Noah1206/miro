@@ -70,7 +70,9 @@ describeDb('creator fields shared by dialogue and proactive context', () => {
     }
     expect(loaded!.snapshot.recentMessages.find(m => m.content === 'INTRO_NARRATOR_SECRET')).toMatchObject({ role: 'narrator', knowledgeScope: 'omniscient' })
     expect(proactive!.recentMessages.find(m => m.id === npc!.id)).toMatchObject({ role: 'npc', npcName: '지수' })
-    expect(proactive!.recentMessages.find(m => m.id === contact!.id)).toMatchObject({ kind: 'reality_message', at: contact!.createdAt.toISOString() })
+    const contactLine = proactive!.recentMessages.find(m => m.id === contact!.id)
+    expect(contactLine).toMatchObject({ kind: 'reality_message' })
+    expect(Date.parse(contactLine!.at!)).toBe(contact!.createdAt.getTime())   // 현지 시각(오프셋 포함)으로 써도 같은 순간
     expect(compiled.prompt).toContain('NPC (지수): NPC_CLAIM')
     expect(compiled.prompt).toContain('내레이터 (전지적 서술 · 캐릭터 지식 아님): INTRO_NARRATOR_SECRET')
     for (const excluded of ['SYSTEM_PRIVATE', 'MODERATED_PRIVATE', 'OTHER_SESSION_PRIVATE', 'OLD_VISUAL', 'INACTIVE_VISUAL']) {

@@ -5,7 +5,8 @@ import {
   db, characters, characterVisualIdentities, events, memories, messages, npcs, realityContacts, relationships,
   callSessions, roleplaySessions, scenes, userSettings, worldStates, worlds,
 } from '@miro/db'
-import { DEFAULT_CHARACTER_STATE, describeRoutine, localClock, type CharacterState } from '@miro/domain'
+import { DEFAULT_CHARACTER_STATE, describeRoutine, lifeLines, localClock, type CharacterState } from '@miro/domain'
+import { recentLife } from '@/lib/agency/life'
 import { characterAvailability } from '@/lib/reality/routine'
 import { memoryLagFor } from '@/lib/ai/memory-jobs'
 import { getPersona } from '@/lib/persona'
@@ -57,7 +58,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -91,6 +92,8 @@ export async function loadSession(
     memoryLagFor(sessionId),
     // 사용자가 정한 자기 설정 — 캐릭터가 부를 이름과 소개(없으면 '사용자').
     getPersona(userId),
+    // 자기 삶 — 대화가 없는 동안 캐릭터가 겪은 일(미로 캐릭터의 자율성 세션에만 생긴다).
+    row.character.experienceType === 'reality' ? recentLife(sessionId) : Promise.resolve([]),
   ])
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
@@ -106,7 +109,7 @@ export async function loadSession(
     relationship: row.relationship as never,
     scene: (currentScene[0] ?? null) as never,
     memories: sessionMemories,
-    recentMessages: conversationContext(recent.reverse()),
+    recentMessages: conversationContext(recent.reverse(), timeZone),
     activeEvents: activeEvents as never,
     recentlyResolvedEvents: [...new Map([...recentlyResolvedEvents, ...coolingEvents].map((event) => [event.id, event])).values()] as never,
     activeNpcs: sessionNpcs as never,
@@ -120,6 +123,7 @@ export async function loadSession(
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
     clock: localClock(now, timeZone),
     routine: availability ? describeRoutine(availability.routine, availability) : null,
+    life: lifeLines(life, timeZone),
     recentCalls: calls.map((c) => {
       const when = localClock(c.endedAt ?? c.createdAt, timeZone).label
       const kind = c.channel === 'voice' ? '음성통화' : '영상통화'

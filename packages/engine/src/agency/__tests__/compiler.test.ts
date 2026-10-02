@@ -15,7 +15,7 @@ describe('authored character compilation', () => {
     expect(result.document).not.toBe(DOCUMENT)
     expect(result.compiled.rules[0]?.source).toEqual({ field: 'personality.personality', start: 0, end: DOCUMENT.fields['personality.personality']!.length })
     expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ task: 'world_update', promptVersion: 'agency-compiler:v1' })
+    expect(calls[0]).toMatchObject({ task: 'agency_compile', promptVersion: 'agency-compiler:v1' })
     result.document.fields['identity.name'] = '수정'
     expect(DOCUMENT.fields['identity.name']).toBe('도윤')
   })

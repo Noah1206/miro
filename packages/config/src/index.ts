@@ -75,6 +75,21 @@ export const POLICY = {
     motivationThreshold: DEV_DEFAULT(0.5),
   },
 
+  /** 캐릭터의 '자기 삶'(2026-10-02) — 대화가 없는 동안 보낸 시간. 비용을 묶는 값들이다. */
+  life: {
+    /** 마지막으로 하루를 되짚은 뒤 이만큼(시간) 지나야 다음 일을 만든다. */
+    stepHours: DEV_DEFAULT(3),
+    /** 한 번에 되짚는 최대 시간 — 오래 비운 방은 최근 하루만 산다. */
+    maxWindowHours: DEV_DEFAULT(24),
+    /** 사용자가 이 일수 안에 대화한 방만 산다. */
+    activeDays: DEV_DEFAULT(3),
+    /** 한 번에 생기는 일의 최대 수. 평범한 시간이 더 많으므로 0 도 정답이다. */
+    maxEvents: DEV_DEFAULT(2),
+    /** 대화·판단에 싣는 최근 일의 범위(시간)와 개수. */
+    contextHours: DEV_DEFAULT(36),
+    contextEvents: DEV_DEFAULT(8),
+  },
+
   call: {
     /** 수신 통화가 이 시간 안에 수락되지 않으면 부재중으로 기록한다. */
     ringingTimeoutMinutes: DEV_DEFAULT(2),

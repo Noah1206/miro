@@ -122,3 +122,25 @@ export function silenceHours(r: Relation, contactFrequency: number, initiativeLe
   const drive = 1.3 - (initiativeLevel / 100) * 0.6
   return base * KIND_PACE[relationshipKind(r.stage)] * near * drive
 }
+
+/** 성격의 주도성(캐릭터 성향 + 연락 설정의 주도성) 0–1. */
+const driveOf = (initiative: number, initiativeLevel: number) => (initiative + initiativeLevel) / 200
+
+/**
+ * 처음 만난 뒤 첫 연락까지(분). 관계 문턱(readyToReachOut)을 넘기 전이라도 첫 대화를 마치고 떠난 사용자에게 한 번은 먼저 연락한다 —
+ * 연락이 오는 경험이 빨라야 하지만 너무 성급하면 사람 같지 않다(2026-10-02 사용자). 그래서 성격대로: 먼저 다가가는 캐릭터는 1~2시간,
+ * 보통은 반나절 안, 조심스러운 캐릭터는 다음 날쯤. 주도성 0 → 13시간, 50 → 약 5시간, 90 → 약 1.4시간.
+ */
+export function firstContactDelayMinutes(initiative: number, initiativeLevel: number): number {
+  const reserve = 1 - Math.min(1, Math.max(0, driveOf(initiative, initiativeLevel)))
+  return Math.round((12 * reserve ** 1.5 + 1) * 60)
+}
+
+/**
+ * 이 캐릭터가 하루(사용자 현지 날짜)에 먼저 보내는 연락의 상한. 사람마다 다르다 — 성격(주도성·연락 빈도)과 지금 관계의 가까움으로 1~5통.
+ * 조심스러운 캐릭터와 처음 만난 사이는 1통, 보통 성격의 친구는 3통쯤, 먼저 다가가는 연인은 4~5통. 사용자 문자에 대한 답장은 세지 않는다(2026-10-02 사용자).
+ */
+export function dailyContactCap(r: Relation, initiative: number, profile: { initiativeLevel: number; contactFrequency: number }): number {
+  const temper = (driveOf(initiative, profile.initiativeLevel) + profile.contactFrequency / 100) / 2
+  return Math.min(5, Math.max(1, 1 + Math.round(temper * 2 + (closeness(r) / 100) * 2 - 0.4)))
+}

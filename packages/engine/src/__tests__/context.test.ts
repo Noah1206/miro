@@ -27,6 +27,14 @@ describe('context builder', () => {
     expect(noAppearance.system).not.toContain('외형 설정 (관련 장면에서만 참고)')
   })
 
+  // 10/2 자기 삶: 대화가 없던 동안 겪은 일은 캐릭터 본인의 경험으로 실린다 — 꺼낼지는 캐릭터가 정한다.
+  it('carries what the character lived through while away, as its own experience', () => {
+    const { prompt } = buildContext(snapshot({ life: ['2026-10-02 (목) 15:30 · 근무 · 오후 점검에서 사각지대를 찾았다.'] }))
+    expect(prompt).toContain('## 대화가 없는 동안 캐릭터가 보낸 시간 (캐릭터 본인이 겪은 일 — 사용자는 아직 모른다)')
+    expect(prompt).toContain('- 2026-10-02 (목) 15:30 · 근무 · 오후 점검에서 사각지대를 찾았다.')
+    expect(buildContext(snapshot()).prompt).not.toContain('대화가 없는 동안')
+  })
+
   it('does not attribute narrator or NPC messages to the character and keeps their source', () => {
     const { system, prompt } = buildContext(snapshot({ recentMessages: [
       { role: 'narrator', content: '그가 모르는 곳에 편지가 숨겨져 있다.', id: 'narration-1', kind: 'text', at: '2026-09-24T01:00:00Z', knowledgeScope: 'omniscient' },

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { deriveIntent } from '../reality/intent'
+import { deriveIntent, FIRST_CONTACT_REASON } from '../reality/intent'
+import { firstContactDelayMinutes } from '../relationship/dynamics'
 import { presentContact } from '../reality/present'
 import { localMinutes } from '../reality/evaluator'
 import type { ContactProfile } from '../character/types'
@@ -153,5 +154,35 @@ describe('meal-time check-in', () => {
     expect(reason({ clock: clock(19), availability: 'busy' })).not.toContain('checkin')
     expect(reason({ clock: clock(19), lastContactAt: new Date(Date.now() - 2 * 3_600_000) })).not.toContain('checkin')
     expect(deriveIntent({ ...base, clock: clock(19), relationship: rel({ attachment: 5, trust: 5, emotionalDistance: 80 }) })).toBeNull()
+  })
+})
+
+// 2026-10-02 감사 — 이미 연락한 사건이 다른 연락을 모두 가로막던 문제, 처음 만난 뒤 첫 연락, 방금 연락했는데 '오래 조용했다'고 다시 보내던 문제.
+describe('reasons beyond a contacted event, and the first contact', () => {
+  const ready = rel({ trust: 70, attachment: 70, emotionalDistance: 20 })
+  it('an event already contacted at the same status yields to other reasons', () => {
+    const i = deriveIntent({ relationship: ready, activeEvents: [event()], contactProfile: profile, idleMinutes: 60 * 72, pending: null, contactedEvents: new Set(['e:active']) })
+    expect(i?.reason).toBe('silence')
+    expect(i?.eventKey).toBeUndefined()
+  })
+  it('an event that escalates is worth one more contact', () => {
+    const i = deriveIntent({ relationship: ready, activeEvents: [event({ status: 'escalated' })], contactProfile: profile, idleMinutes: 10, pending: null, contactedEvents: new Set(['e:active']) })
+    expect(i).toMatchObject({ reason: 'event:crisis', eventKey: 'e:escalated' })
+  })
+  it('a new acquaintance hears once after the first conversation, sooner when the character reaches out first', () => {
+    const stranger = rel({ trust: 15, attachment: 5, emotionalDistance: 80, stage: 'stranger' })
+    const at = (idleMinutes: number, over: object = {}) => deriveIntent({ relationship: stranger, activeEvents: [], contactProfile: profile, idleMinutes, pending: null, turnCount: 3, contactedBefore: false, initiative: 50, ...over })?.reason
+    const delay = firstContactDelayMinutes(50, profile.initiativeLevel)
+    expect(at(delay + 1)).toBe(FIRST_CONTACT_REASON)
+    expect(at(delay - 1)).toBeUndefined()
+    expect(at(delay + 1, { turnCount: 2 })).toBeUndefined()            // 인사만 하고 떠난 사람에게는 보내지 않는다
+    expect(at(delay + 1, { contactedBefore: true })).toBeUndefined()   // 첫 연락은 한 번
+    expect(firstContactDelayMinutes(90, 90)).toBeLessThan(firstContactDelayMinutes(50, 50))
+    expect(firstContactDelayMinutes(10, 10)).toBeGreaterThan(firstContactDelayMinutes(50, 50))
+  })
+  it('silence counts the quiet since the last contact too — no "it has been a while" right after texting', () => {
+    const base = { relationship: ready, activeEvents: [], contactProfile: profile, idleMinutes: 60 * 72, pending: null, now: new Date('2026-09-12T14:00:00+09:00') }
+    expect(deriveIntent({ ...base, lastContactAt: new Date('2026-09-12T13:00:00+09:00') })).toBeNull()
+    expect(deriveIntent({ ...base, lastContactAt: new Date('2026-09-09T13:00:00+09:00') })?.reason).toBe('silence')
   })
 })

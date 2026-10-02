@@ -1,5 +1,5 @@
 import type { ProviderInfo } from '../types'
-import type { AITask, InteractionImportance } from './tasks'
+import type { AITask } from './tasks'
 import type { ModelDefinition } from './model-registry'
 
 /**
@@ -22,12 +22,16 @@ export type GenerationRequest = {
   promptVersion?: string
   /** Trusted server-side flat media ceiling, never accepted from client input. */
   costCeilingUSD?: number
-  importance?: InteractionImportance
   /**
    * 생각 수준. 없으면 모델의 최소값(대사 생성용). 한 번 하고 끝나는 분석처럼 품질이 비용보다 중요한 호출만 올린다 —
    * 생각 토큰은 출력 단가로 과금되고 maxTokens 를 같이 쓴다. 생각 수준을 받지 않는 모델은 무시한다.
    */
   thinking?: 'low' | 'medium' | 'high'
+  /**
+   * 공급자 안전 필터 수준. 없으면 중간 이상 차단. 'relaxed' = 높은 위험만 차단 — 사용자 글을 자료로 읽는 자율성 계획·검사·컴파일과
+   * 근거·상태 자료 때문에 막히던 자율성 대사(9/29). 따로 돌던 검열 분류기는 10/2 에 뺐다 — 이 필터가 유일한 거름망이다.
+   */
+  safety?: 'relaxed'
 }
 
 export type GenerationResult = {

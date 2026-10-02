@@ -3,7 +3,7 @@ import { useActionState, useState } from 'react'
 import { PERSONA_LIMITS, type UserPersona } from '@miro/domain'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { ChoiceChips, CountedInput, CountedTextArea, LabeledField } from '@/app/(main)/create/form-parts'
-import { savePersonaAction, skipPersonaAction } from './actions'
+import { savePersonaAction } from './actions'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -28,8 +28,6 @@ export function PersonaForm({ initial, next, submitLabel }: { initial: UserPerso
       </LabeledField>
       {state?.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
       <SubmitButton full>{submitLabel}</SubmitButton>
-      {/* 안전 검사를 못 해 막혔을 때만 — 장애가 대화까지 막지 않게. 평소에는 페르소나가 있어야 대화한다. */}
-      {state?.canSkip && next !== '/my' && <SubmitButton full variant="ghost" formAction={skipPersonaAction} formNoValidate>{t('지금은 건너뛰고 대화하기')}</SubmitButton>}
     </form>
   )
 }

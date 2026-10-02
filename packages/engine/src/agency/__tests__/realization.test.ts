@@ -4,10 +4,11 @@ import { planAgencyDecision } from '../planner'
 import { buildAgencyDecisionDirective, verifyAgencyRealization, type AgencyRealizationInput } from '../realization'
 import { evidence, planProposal, recordedProvider, setupCompiled } from './fixtures'
 
-async function realization(text = '어떤 책을 읽고 싶어?'): Promise<AgencyRealizationInput> {
+/** review: 이 턴에 약속 변화가 있다고 두어 의미 검토가 돌게 한다(검토 자체를 보는 시험). false 면 위험 판정을 그대로 따른다. */
+async function realization(text = '어떤 책을 읽고 싶어?', review = true): Promise<AgencyRealizationInput> {
   const { compiled, state, context } = await setupCompiled()
   const plan = await planAgencyDecision(recordedProvider([planProposal()]), compiled, state, context)
-  return { decision: plan.decision, context: plan.context, state: plan.state, blocks: [{ type: 'dialogue', speaker: '도윤', text }] }
+  return { decision: plan.decision, context: plan.context, state: plan.state, blocks: [{ type: 'dialogue', speaker: '도윤', text }], commitmentChanges: review ? 1 : 0 }
 }
 function assessment(input: AgencyRealizationInput) {
   return { decisionId: input.decision.id, aligned: true, claims: [], unsupported: [], violations: [] }
@@ -28,7 +29,30 @@ describe('authorized decision realization', () => {
     const checked = await verifyAgencyRealization(recordedProvider([assessment(input)], calls), input)
     expect(checked.ok).toBe(true)
     expect(checked.providerMode).toBe('mock')
-    expect(calls[0]?.promptVersion).toBe('agency-realization-check:v4')
+    expect(calls[0]?.promptVersion).toBe('agency-realization-check:v5')
+  })
+
+  it('skips the model review for a plain reply with no action, promise or completion claim', async () => {
+    const input = await realization('어떤 책을 읽고 싶어?', false)
+    const calls: Array<{ task?: string; promptVersion?: string; prompt: string }> = []
+    const checked = await verifyAgencyRealization(recordedProvider([], calls), input)
+    expect(checked).toMatchObject({ ok: true, reviewed: false, issues: [] })
+    expect(calls).toHaveLength(0)
+    // 완료를 말하면 대답이어도 검토한다 — 검토기가 '전해 들은 말'로 짚지 않으면 거부.
+    const claimed = await realization('사진을 보냈어.', false)
+    const reviewed = await verifyAgencyRealization(recordedProvider([assessment(claimed)]), claimed)
+    expect(reviewed.reviewed).toBe(true)
+    expect(reviewed.issues.map(issue => issue.reason)).toContain('undeclared_success_claim')
+  })
+
+  it("accepts the character's own earlier words as what it observed, but never the user's report", async () => {
+    const input = await realization('분명히 말씀드렸을 텐데요.')
+    input.context.evidence[0]!.epistemic = 'reported'
+    input.context.evidence.push(evidence({ id: 'reply-1', actor: input.context.actor, epistemic: 'reported', quote: '사적인 질문에는 답하지 않습니다.' }))
+    const claim = { blockIndex: 0, start: 0, end: input.blocks[0]!.text.length, quote: input.blocks[0]!.text, kind: 'observed_fact', evidenceIds: ['reply-1'], ruleIds: [], actionIds: [] }
+    expect((await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [claim] }]), input)).issues).toEqual([])
+    const fromUser = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), claims: [{ ...claim, evidenceIds: ['message-1'] }] }]), input)
+    expect(fromUser.issues.map(issue => issue.reason)).toContain('fact_not_observed')
   })
 
   it('rejects undeclared obvious success text even when a checker returns an empty aligned claim list', async () => {

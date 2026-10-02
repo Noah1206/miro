@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, deriveIntent, evaluateRealityContact,
+  addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, dailyContactCap, deriveIntent, evaluateEventRules, evaluateRealityContact,
+  DEFAULT_CHARACTER_STATE,
   readyToReachOut, relationshipKind, scaleCloser, silenceHours,
   type BondingCurve, type ContactProfile, type RelationshipStage, type RelationshipState,
 } from '../index'
@@ -117,5 +118,33 @@ describe('reaching out after a silence', () => {
       intent: intent!, contactProfile: profile, personality: { initiative: 50, emotionalExpression: 50 }, relationship: grown,
       activeEvents: [], timeZone: 'Asia/Seoul', lastContactAt: null, pendingContacts: [], now: new Date('2026-09-24T05:00:00Z'),
     }).send).toBe(true)
+  })
+})
+
+// 2026-10-02 사용자: 하루에 먼저 보내는 연락 수는 캐릭터마다 다르게 — 성격과 관계대로, 실제 사람처럼.
+describe('daily contact cap depends on who the character is and how close you are', () => {
+  const close = start({ trust: 85, attachment: 85, attraction: 80, emotionalDistance: 10, stage: 'lover' })
+  it('a reserved character with a new acquaintance sends one, an outgoing lover four or five', () => {
+    expect(dailyContactCap(start(), 20, { initiativeLevel: 20, contactFrequency: 20 })).toBe(1)
+    expect(dailyContactCap(close, 90, { initiativeLevel: 90, contactFrequency: 90 })).toBeGreaterThanOrEqual(4)
+  })
+  it('grows with closeness and stays within 1..5', () => {
+    const p = { initiativeLevel: 50, contactFrequency: 50 }
+    expect(dailyContactCap(close, 50, p)).toBeGreaterThan(dailyContactCap(start(), 50, p))
+    for (const r of [start(), close]) for (const v of [0, 50, 100]) {
+      const cap = dailyContactCap(r, v, { initiativeLevel: v, contactFrequency: v })
+      expect(cap).toBeGreaterThanOrEqual(1); expect(cap).toBeLessThanOrEqual(5)
+    }
+  })
+})
+
+describe('a jealous follow-up goes at most once a day', () => {
+  it('skips the rule once today is marked, fires again the next day', () => {
+    const jealous = start({ jealousy: 80 })
+    const ctx = (firedRules: string[], today: string) => ({ relationship: jealous, characterState: { ...DEFAULT_CHARACTER_STATE, firedRules }, semanticEvents: [], idleMinutes: 60, turnCount: 5, today })
+    const fires = (firedRules: string[], today: string) => evaluateEventRules(ctx(firedRules, today)).some(r => r.id === 'jealous_follow_up')
+    expect(fires([], '2026-10-02')).toBe(true)
+    expect(fires(['jealous_follow_up:2026-10-02'], '2026-10-02')).toBe(false)
+    expect(fires(['jealous_follow_up:2026-10-02'], '2026-10-03')).toBe(true)
   })
 })

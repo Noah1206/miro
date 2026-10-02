@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateRealityContact } from '../reality/evaluator'
+import { evaluateRealityContact, localDay } from '../reality/evaluator'
+import { FIRST_CONTACT_REASON } from '../reality/intent'
 import type { RealityDecision, RealityInput } from '../reality/evaluator'
 import type { ContactProfile } from '../character/types'
 import type { RelationshipState } from '../relationship/types'
@@ -138,5 +139,40 @@ describe('replies and call follow-ups are not contacts', () => {
     const a = evaluateRealityContact(input({ intent: { channel: 'message', reason: '답장', urgency: 0.9, notBefore: '2026-09-12T10:00:00Z', answers: 'user_message' } }))
     const b = evaluateRealityContact(input({ intent: { channel: 'message', reason: '답장', urgency: 0.9, notBefore: '2026-09-12T12:00:00Z', answers: 'user_message' } }))
     expect(a.send && b.send && a.dedupeKey !== b.dedupeKey).toBe(true)
+  })
+})
+
+// 2026-10-02 — 하루 상한은 캐릭터마다(성격·관계), 첫 연락은 동기 검사 없이 세션에 한 번, 중복 방지 키는 사건·상태 / 현지 날짜.
+describe('daily cap, first contact and dedupe keys', () => {
+  it('stops at the character\'s own daily cap, but a reply to the user still goes', () => {
+    expect(evaluateRealityContact(input({ contactsToday: 2, dailyCap: 2 }))).toEqual({ send: false, reason: 'daily_cap' })
+    expect(evaluateRealityContact(input({ contactsToday: 1, dailyCap: 2 })).send).toBe(true)
+    expect(evaluateRealityContact(input({ contactsToday: 5, dailyCap: 2, intent: { channel: 'message', reason: 'reply', urgency: 0.9, answers: 'user_message', notBefore: '2026-09-12T05:00:00.000Z' } })).send).toBe(true)
+  })
+  it('the first contact skips the motivation check and is keyed once per session', () => {
+    const stranger = { ...rel, trust: 15, attachment: 5, emotionalDistance: 80, stage: 'stranger' as const }
+    const d = evaluateRealityContact(input({ relationship: stranger, intent: { channel: 'message', reason: FIRST_CONTACT_REASON, urgency: 0.5 } }))
+    expect(d).toEqual({ send: true, channel: 'message', dedupeKey: 'message:first_contact' })
+  })
+  it('a meal-time check-in is not re-judged by the motivation formula — like silence, the relationship threshold already decided', () => {
+    const settled = { ...rel, trust: 40, attachment: 40, emotionalDistance: 55 }
+    const meal = { channel: 'message' as const, reason: 'checkin:저녁 — 저녁 먹었는지 묻는다', urgency: 0.4 }
+    expect(evaluateRealityContact(input({ relationship: settled, intent: meal })).send).toBe(true)
+    expect(evaluateRealityContact(input({ relationship: settled, intent: { ...meal, reason: '그냥 생각나서' } }))).toEqual({ send: false, reason: 'no_motivation' })
+  })
+  it('an event-rule intent is not re-judged by the motivation formula — the rule and the character\'s profile already decided', () => {
+    // 만나고 헤어진 뒤 안부: 막 알게 된 사이(신뢰 35·거리 60)라도 규칙 조건을 넘었으면 나간다. 같은 의도가 규칙 없이 오면 예전처럼 동기로 거른다.
+    const justMet = { ...rel, trust: 35, attachment: 10, emotionalDistance: 60 }
+    const afterScene = { channel: 'message' as const, reason: '조금 전 만나고 헤어진 뒤 안부', urgency: 0.5 }
+    expect(evaluateRealityContact(input({ relationship: justMet, intent: { ...afterScene, rule: 'after_scene' } })).send).toBe(true)
+    expect(evaluateRealityContact(input({ relationship: justMet, intent: afterScene }))).toEqual({ send: false, reason: 'no_motivation' })
+  })
+  it('keys event contacts by event and status, rule intents by the user\'s local day, and replies by their time', () => {
+    const key = (intent: RealityInput['intent'], now = new Date('2026-09-12T08:30:00+09:00')) => (evaluateRealityContact(input({ intent, now })) as { dedupeKey: string }).dedupeKey
+    expect(key({ channel: 'message', reason: 'event:crisis', urgency: 0.9, eventKey: 'e1:active' })).toBe('message:event:e1:active:event:crisis')
+    // 08:30 KST 는 UTC 로는 전날 — 한국 사용자의 하루는 한국 날짜로 센다.
+    expect(key({ channel: 'message', reason: '질투', urgency: 0.9, notBefore: '2026-09-11T23:00:00.000Z' })).toBe('message:2026-09-12:질투')
+    expect(key({ channel: 'message', reason: 'reply', urgency: 0.9, answers: 'user_message', notBefore: '2026-09-11T23:00:00.000Z' })).toBe('message:at:2026-09-11T23:00:00.000Z:reply')
+    expect(localDay(new Date('2026-09-12T08:30:00+09:00'), 'Asia/Seoul')).toBe('2026-09-12')
   })
 })

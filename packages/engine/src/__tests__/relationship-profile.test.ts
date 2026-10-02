@@ -91,17 +91,6 @@ describe('같은 턴, 다른 캐릭터', () => {
     snapshot: snapshot({ character: character({ jealousy: 50, emotionalExpression: 50, relationshipProfile: p }), relationship: relationship({ jealousy: 30 }) }),
   })
 
-  it('never sends the table to the safety classifier — it is derived data the rules read, not the authored character', async () => {
-    const prompts: string[] = []
-    const live: LLMProvider = { info: { mode: 'live', name: 'test', notice: null }, generateStructured: async (o: { task?: string; prompt: string }) => {
-      if (o.task === 'moderation') { prompts.push(o.prompt); return { allowed: true, category: 'safe' } }
-      return buildMockProposal(o.prompt, { characterName: '토마스' })
-    } } as never
-    await runTurn({ llm: live, userInput: '안녕', snapshot: snapshot({ character: character({ relationshipProfile: respectful }) }) })
-    expect(prompts.length).toBeGreaterThan(0)
-    for (const prompt of prompts) { expect(prompt).not.toContain('sourceHash'); expect(prompt).not.toContain('캐묻지 않는다') }
-  })
-
   it('moves the relationship by each character\'s own table and prompts each one\'s own way of showing it', async () => {
     const [plain, calm, clingy] = await Promise.all([turn(null), turn(respectful), turn(possessive)])
     expect(calm.transition.relationshipDelta.jealousy!).toBeLessThan(plain.transition.relationshipDelta.jealousy!)

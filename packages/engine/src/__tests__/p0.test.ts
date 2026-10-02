@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { LLMProvider } from '@miro/providers'
+import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { runTurn } from '../orchestrator'
 import { UnsafeContentError } from '../safety'
 import { analyzeMemory } from '../task-router'
@@ -10,20 +10,15 @@ import { buildContext } from '../context'
 afterEach(() => vi.unstubAllEnvs())
 const live = (fn: (opts: any) => any): LLMProvider => ({ info: { mode: 'live', name: 'test', notice: null }, generateStructured: fn })
 describe('P0 safety and memory', () => {
-  it('blocks unsafe input before dialogue or auxiliary calls', async () => {
-    const generate = vi.fn(async (_opts: any) => ({ allowed: false, category: 'sexual' }))
-    await expect(runTurn({ llm: live(generate), snapshot: snapshot(), userInput: 'unsafe' })).rejects.toBeInstanceOf(UnsafeContentError)
-    expect(generate).toHaveBeenCalledTimes(1)
-    expect(generate.mock.calls[0]?.[0].task).toBe('moderation')
-  })
-  it('blocks an unsafe model output after input passes', async () => {
-    let safety = 0
-    const ai = live(async o => o.task === 'moderation' ? { allowed: ++safety === 1, category: safety === 1 ? 'safe' : 'sexual' } : buildMockProposal(o.prompt, { characterName: '토마스' }))
-    await expect(runTurn({ llm: ai, snapshot: snapshot(), userInput: '안녕하세요' })).rejects.toBeInstanceOf(UnsafeContentError)
-    expect(safety).toBe(2)
-  })
-  it('does not permit a failed classifier to become a fallback reply', async () => {
-    await expect(runTurn({ llm: live(async () => { throw new Error('timeout') }), snapshot: snapshot(), userInput: '안녕' })).rejects.toThrow('timeout')
+  // 10/2: 검열 분류기를 뺐다 — 턴의 첫 호출이 바로 대사이고, 공급자 필터가 막은 대사만 안전 거부가 된다.
+  it('calls no classifier: a provider-blocked reply is the only safety refusal', async () => {
+    const tasks: string[] = []
+    await expect(runTurn({ llm: live(async o => { tasks.push(o.task); throw new AIContentBlockedError() }), snapshot: snapshot(), userInput: 'unsafe' }))
+      .rejects.toBeInstanceOf(UnsafeContentError)
+    expect(tasks).toEqual(['dialogue'])
+    const ok = await runTurn({ llm: live(async o => { tasks.push(o.task); return buildMockProposal(o.prompt, { characterName: '토마스' }) }), snapshot: snapshot(), userInput: '안녕하세요' })
+    expect(ok.providerMode).toBe('live')
+    expect(tasks).toEqual(['dialogue', 'dialogue'])
   })
   it('includes the prior summary and 24 messages in incremental summarization', async () => {
     const s = snapshot({ memories: [{ id: '11111111-1111-4111-8111-111111111111', sessionId: 's1', characterId: 'c1', type: 'short_term_summary', content: '루나라는 고양이', importance: .1, persistence: .1, confidence: 1, tags: [], sourceMessageId: null, createdAt: new Date() }],
