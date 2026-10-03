@@ -16,10 +16,10 @@ import styles from './chat.module.css'
 type Level = 'soft' | 'deep' | 'explicit'
 /** 언베일 수위 메뉴(10/3 사용자 요청: 모드 고르기 목록처럼). 수위는 한도이고, 속도는 여전히 사용자가 이끈다(engine adultRule). */
 const LEVELS: Array<{ value: Level | 'off'; title: string }> = [
-  // 단계는 한 단어(10/3 사용자 결정, 설명 줄은 뺐다). 뜻: 설렘=키스·스킨십까지, 관능=노골적 세부 없이, 언베일=노골적.
+  // 단계는 한 단어(10/3 사용자 결정, 설명 줄은 뺐다). 뜻: 설렘=키스·스킨십까지, 몰입=노골적 세부 없이, 언베일=노골적.
   { value: 'off', title: msg('끔') },
   { value: 'soft', title: msg('설렘') },
-  { value: 'deep', title: msg('관능') },
+  { value: 'deep', title: msg('몰입') },
   { value: 'explicit', title: msg('언베일') },
 ]
 
