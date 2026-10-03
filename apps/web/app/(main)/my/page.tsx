@@ -89,7 +89,7 @@ export default async function MyPage() {
           </form>
         </MenuSection>
         <MenuSection title={t('고객지원')}>
-          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('고객센터')} sub={OPERATOR.email} />
+          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} sub={OPERATOR.email} />
         </MenuSection>
         <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', margin: 'var(--space-6) 0 12px' }}>MIRO</p>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
