@@ -1,7 +1,8 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lt, sql } from 'drizzle-orm'
 import {
   db, accountDeletions, authSessions, characters, events, memories, pushSubscriptions,
   roleplaySessions, subscriptions, users, aiFeedback, aiEvaluationSamples, userPersonas,
+  characterComments, characterCommentLikes, characterBookmarks, characterLikes, userSettings, accounts, analyticsEvents, aiUsage,
 } from '@miro/db'
 import { postOperatorNote } from '@/lib/ops/alerts'
 import { observe } from '@/lib/observe'
@@ -46,7 +47,14 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
   const now = new Date()
   await db.transaction(async (tx) => {
     const [req] = await tx.insert(accountDeletions).values({ userId, impact }).returning({ id: accountDeletions.id })
-    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false, birthDate: null, tastes: [], avatarUrl: null }).where(eq(users.id, userId))
+    // 회원 정보는 삭제할 때 지운다(처리방침 3항) — 이메일·소셜 식별값만 재가입·부정 이용 방지로 1년 남긴다(purgeExpiredPersonalData).
+    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false, birthDate: null, tastes: [], avatarUrl: null, displayName: null }).where(eq(users.id, userId))
+    await tx.delete(userSettings).where(eq(userSettings.userId, userId))   // 언어·시간대·광고성 동의 기록
+    // 댓글은 본문을 지우고 숨긴다 — 행을 지우면 다른 사람의 답글까지 함께 지워진다(parent cascade).
+    await tx.update(characterComments).set({ body: '', hiddenAt: now }).where(eq(characterComments.userId, userId))
+    await tx.delete(characterCommentLikes).where(eq(characterCommentLikes.userId, userId))
+    await tx.delete(characterLikes).where(eq(characterLikes.userId, userId))
+    await tx.delete(characterBookmarks).where(eq(characterBookmarks.userId, userId))
     await tx.delete(aiFeedback).where(eq(aiFeedback.userId, userId))
     await tx.delete(aiEvaluationSamples).where(eq(aiEvaluationSamples.userId, userId))
     await tx.delete(authSessions).where(eq(authSessions.userId, userId))
@@ -67,4 +75,20 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
   const noted = await postOperatorNote(`계정 삭제 기록 · ${userId} · ${now.toISOString()}\n백업에서 복구하면 이 계정을 다시 삭제해야 해요.`).catch(() => false)
   if (!noted) observe('account.deletion_note_unsent', { userId })
   return 'completed'
+}
+
+/**
+ * 처리방침 3항의 보관 기간이 지난 개인정보를 지운다(10/3 점검: 파기 작업이 대화방에만 있었다). 정리 크론에서 매번 부른다.
+ * - 삭제한 계정의 이메일·소셜 식별값: 삭제 후 1년
+ * - 서비스 이용 기록(analytics_events)·AI 이용 기록(ai_usage): 수집 후 1년
+ * ponytail: 직접 만든 캐릭터·사진의 영구 삭제는 아직 없다 — 지우면 그 캐릭터와 나눈 다른 사람의 대화가 함께 사라져(cascade) 제품 결정이 먼저다.
+ */
+export async function purgeExpiredPersonalData(now = new Date()): Promise<{ accounts: number; logs: number }> {
+  const yearAgo = new Date(now.getTime() - 365 * 86_400_000)
+  const expired = db.select({ id: users.id }).from(users).where(lt(users.deletedAt, yearAgo))
+  const gone = await db.delete(accounts).where(inArray(accounts.userId, expired)).returning({ id: accounts.userId })
+  await db.update(users).set({ email: null }).where(and(lt(users.deletedAt, yearAgo), sql`${users.email} is not null`))
+  const events = await db.delete(analyticsEvents).where(lt(analyticsEvents.createdAt, yearAgo)).returning({ id: analyticsEvents.id })
+  const usage = await db.delete(aiUsage).where(lt(aiUsage.createdAt, yearAgo)).returning({ id: aiUsage.id })
+  return { accounts: gone.length, logs: events.length + usage.length }
 }

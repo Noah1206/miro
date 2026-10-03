@@ -7,6 +7,7 @@ import { db, roleplaySessions } from '@miro/db'
 import { evaluateSession, type EvaluateOutcome } from './evaluate'
 import { expireCalls } from '@/lib/call/service'
 import { purgeDeleted } from '@/lib/ops/archive'
+import { purgeExpiredPersonalData } from '@/lib/ops/account'
 import { expireSubscriptions } from '@/lib/payments/service'
 import { notifyExpiringPasses } from '@/lib/payments/expiry-notice'
 import { expireBankOrders, settleApprovedOrders } from '@/lib/payments/bank-transfer'
@@ -62,6 +63,7 @@ export async function runRealityMaintenance(wall = new Date()): Promise<Maintena
   // 생성 시각(실제 시각)과 비교하는 만료 판정에 섞이면 방금 만든 통화가 부재중이 된다.
   const calls = await step(failedSteps, 'calls', () => expireCalls(wall), { missed: 0, timedOut: 0 })
   const purged = await step(failedSteps, 'purge', () => purgeDeleted(wall), 0)   // 보존 기간이 지난 삭제 역할극 영구 삭제
+  await step(failedSteps, 'purge_personal', () => purgeExpiredPersonalData(wall), undefined)   // 처리방침 3항: 삭제 계정 이메일·로그 1년
   // 만료 안내를 sweep 보다 먼저 보낸다. 순서가 바뀌면 status 가 expired 로 넘어가
   // 당일 안내 대상에서 빠진다 — 사용자는 끝났다는 사실만 화면에서 발견하게 된다.
   // 운영자가 승인한 계좌이체 주문을 지급한다. 승인과 지급을 나눠 지급 경로를 하나로 둔다.
