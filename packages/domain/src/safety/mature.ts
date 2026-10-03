@@ -9,7 +9,7 @@ export type MatureGateInput = {
 
 export type MatureGate =
   | { allowed: true }
-  | { allowed: false; reason: 'not_verified' | 'policy_not_agreed' | 'real_person_reference' | 'character_not_adult' | 'adult_model_unavailable'; next: string }
+  | { allowed: false; reason: 'not_verified' | 'policy_not_agreed' | 'real_person_reference' | 'character_not_adult' | 'persona_minor' | 'adult_model_unavailable'; next: string }
 
 /**
  * 성인 비주얼 허용 판정 (명세서 정책 2).
@@ -36,6 +36,9 @@ const MINOR = /미성년|초등학|중학생|고등학생|고교생|초딩|중�
  * 성인 모드를 켤 수 있는 캐릭터(10/2) — 나이 칸의 첫 숫자가 만 19세 이상이고, 지금의 신분에 미성년자를 가리키는 말이 없다.
  * 나이가 비었거나 숫자가 없으면 막는다(모르면 막음).
  */
+/** 글에 미성년자·학생을 가리키는 말이 있는가(10/3 — 언베일에서 미성년자가 아예 나오지 않게: 페르소나에도 쓴다). */
+export function mentionsMinor(text: string | null | undefined): boolean { return !!text && MINOR.test(text) }
+
 export function adultCharacter(c: { age: string | null; occupation?: string | null; socialPosition?: string | null; role?: string | null; tagline?: string | null }): boolean {
   const age = Number(c.age?.match(/\d+/)?.[0] ?? NaN)
   return age >= POLICY.adultVerification.minimumAge && !MINOR.test([c.age, c.occupation, c.socialPosition, c.role, c.tagline].join(' '))

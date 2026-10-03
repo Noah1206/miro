@@ -1,10 +1,11 @@
 import { productionRuntime } from '@miro/config'
 import { eq } from 'drizzle-orm'
 import { db, characters, users } from '@miro/db'
-import { adultCharacter, gateMature, type MatureGate } from '@miro/domain'
+import { adultCharacter, gateMature, mentionsMinor, type MatureGate } from '@miro/domain'
 import { adultModelReady, resolveAdultVerification } from '@miro/providers'
 import { activeVisualIdentity } from '@/lib/simulation/media'
 import { msg } from '@/lib/i18n'
+import { getPersona } from '@/lib/persona'
 
 /**
  * 베타 성인 테스터(10/2 사용자 결정: "베타테스터는 내가 직접 뽑을 거라서") — MIRO_ADULT_TESTERS 의 이메일(쉼표 구분) 계정은
@@ -41,5 +42,9 @@ export async function adultModeGateFor(userId: string, characterId: string): Pro
   if (!gate.allowed) return gate
   const [c] = await db.select({ age: characters.age, occupation: characters.occupation, socialPosition: characters.socialPosition, role: characters.role, tagline: characters.tagline })
     .from(characters).where(eq(characters.id, characterId)).limit(1)
-  return c && adultCharacter(c) ? gate : { allowed: false, reason: 'character_not_adult', next: msg('만 19세 이상으로 설정된 캐릭터만 언베일을 켤 수 있어요.') }
+  if (!c || !adultCharacter(c)) return { allowed: false, reason: 'character_not_adult', next: msg('만 19세 이상으로 설정된 캐릭터만 언베일을 켤 수 있어요.') }
+  // 내 페르소나가 학생·미성년이면 켜지 않는다(10/3 — 언베일에서 미성년자는 아예 나오지 않게). 매 턴 재판정이라 켠 뒤에 바꿔도 일반 기준으로 돌아간다.
+  const persona = await getPersona(userId)
+  if (mentionsMinor(persona?.name) || mentionsMinor(persona?.description)) return { allowed: false, reason: 'persona_minor', next: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
+  return gate
 }

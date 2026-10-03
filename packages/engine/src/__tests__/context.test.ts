@@ -45,6 +45,7 @@ describe('context builder', () => {
     expect(adult).toMatch(/미성년자이거나 미성년자처럼 그려지는 인물\(.*\)의 성적 묘사, 실존 인물/)
     expect(adult).toContain('사용자가 멈추자거나 싫다고 하면 그 자리에서 멈추고')
     expect(adult).toContain('사용자가 이끌기 전에 먼저 성적인 장면으로 넘어가지 말고')
+    expect(adult).toContain('미성년자나 학생 인물을 아예 등장시키지 마세요')
     // 10/3 수위: 은은하게는 성행위를 직접 그리지 않고, 노골적만 구체적 묘사를 허락한다.
     const soft = buildContext(snapshot({ adultMode: true, adultLevel: 'soft' })).system
     expect(soft).toContain('수위: 은은하게')

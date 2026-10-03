@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adultCharacter, canRetryVerification, gateMature, purgeBefore, verifyRetryAt } from '../safety/mature'
+import { adultCharacter, mentionsMinor, canRetryVerification, gateMature, purgeBefore, verifyRetryAt } from '../safety/mature'
 import { POLICY } from '@miro/config'
 
 describe('mature gate', () => {
@@ -40,6 +40,8 @@ describe('adult character', () => {
     expect(adultCharacter({ age: '25', tagline: '교복 입은 schoolgirl' })).toBe(false)
     expect(adultCharacter({ age: '22', socialPosition: '미성년 연습생' })).toBe(false)
     expect(adultCharacter({ age: '30', occupation: '경호원', tagline: '고등학교 동창을 지키는 남자' })).toBe(true)
+    expect(mentionsMinor('서울의 고등학생')).toBe(true)
+    expect(mentionsMinor('20대 후반 회사원')).toBe(false)
   })
 })
 
