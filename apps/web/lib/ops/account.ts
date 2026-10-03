@@ -81,14 +81,18 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
  * 처리방침 3항의 보관 기간이 지난 개인정보를 지운다(10/3 점검: 파기 작업이 대화방에만 있었다). 정리 크론에서 매번 부른다.
  * - 삭제한 계정의 이메일·소셜 식별값: 삭제 후 1년
  * - 서비스 이용 기록(analytics_events)·AI 이용 기록(ai_usage): 수집 후 1년
- * ponytail: 직접 만든 캐릭터·사진의 영구 삭제는 아직 없다 — 지우면 그 캐릭터와 나눈 다른 사람의 대화가 함께 사라져(cascade) 제품 결정이 먼저다.
+ * - 삭제된 캐릭터: 삭제 후 30일이 지나고 그 캐릭터와의 대화방이 하나도 남지 않으면(다른 회원의 대화를 지우지 않게, 10/3 사용자 결정) 영구 삭제
+ * ponytail: storage 의 업로드 사진 파일은 아직 지우지 않는다.
  */
-export async function purgeExpiredPersonalData(now = new Date()): Promise<{ accounts: number; logs: number }> {
+export async function purgeExpiredPersonalData(now = new Date()): Promise<{ accounts: number; logs: number; characters: number }> {
   const yearAgo = new Date(now.getTime() - 365 * 86_400_000)
   const expired = db.select({ id: users.id }).from(users).where(lt(users.deletedAt, yearAgo))
   const gone = await db.delete(accounts).where(inArray(accounts.userId, expired)).returning({ id: accounts.userId })
   await db.update(users).set({ email: null }).where(and(lt(users.deletedAt, yearAgo), sql`${users.email} is not null`))
   const events = await db.delete(analyticsEvents).where(lt(analyticsEvents.createdAt, yearAgo)).returning({ id: analyticsEvents.id })
   const usage = await db.delete(aiUsage).where(lt(aiUsage.createdAt, yearAgo)).returning({ id: aiUsage.id })
-  return { accounts: gone.length, logs: events.length + usage.length }
+  const monthAgo = new Date(now.getTime() - 30 * 86_400_000)
+  const chars = await db.delete(characters).where(and(lt(characters.deletedAt, monthAgo),
+    sql`not exists (select 1 from roleplay_sessions s where s.character_id = ${characters.id})`)).returning({ id: characters.id })
+  return { accounts: gone.length, logs: events.length + usage.length, characters: chars.length }
 }

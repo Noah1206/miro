@@ -72,6 +72,10 @@ export function OnboardingForm() {
   // 알림 키가 없는 환경(테스트 등)은 물을 수 없으니 처음부터 열려 있다.
   const [pushGranted, setPushGranted] = useState(!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)
   const pushHandled = useRef(false)
+  // 웹 알림이 아예 없는 브라우저(카톡·인스타 안 브라우저, 홈 화면에 추가하지 않은 iPhone)는 알림 없이 가입한다(10/3 사용자 결정 — 전엔 가입이 막혔다).
+  // 알림을 지원하는 브라우저에서는 지금처럼 허용·구독까지 필수다.
+  const noWebPush = () => !('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)
+  useEffect(() => { if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && noWebPush()) setPushGranted(true) }, [])
   // 단계가 바뀌면 새 제목이 나타날 때 초점을 옮긴다 — 스크린 리더가 새 질문부터 읽는다(첫 화면은 닉네임 칸이 초점).
   const focusHeading = useRef(false)
 
@@ -103,13 +107,7 @@ export function OnboardingForm() {
    */
   const askPermission = async (howTo = false): Promise<boolean> => {
     if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return true
-    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
-      const ua = navigator.userAgent
-      const ios = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
-      fail(ios ? msg('iPhone은 Safari에서 공유 → 홈 화면에 추가한 뒤, 홈 화면의 MIRO로 열어 시작해 주세요. 알림은 그 앱에서만 받을 수 있어요.')
-        : msg('이 브라우저에서는 알림을 받을 수 없어요. 크롬이나 사파리에서 열어 주세요.'))
-      return false
-    }
+    if (noWebPush()) return true
     const blocked = (permission: NotificationPermission) => {
       setPushGranted(false); fail(msg('알림을 허용해야 시작할 수 있어요.'), howTo && permission === 'denied' ? settingsPath() : null); return false
     }
@@ -138,7 +136,7 @@ export function OnboardingForm() {
    */
   const askPushThenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    if (pushHandled.current || !vapid) return
+    if (pushHandled.current || !vapid || noWebPush()) return
     e.preventDefault()
     const form = e.currentTarget, submitter = (e.nativeEvent as SubmitEvent).submitter
     void askPermission()
