@@ -39,12 +39,17 @@ export class OAuth2Provider implements OAuthProvider {
   }
 }
 
-function parseProfile(id: OAuthProviderId, raw: unknown): OAuthProfile {
+/**
+ * 이메일은 공급자가 인증했다고 밝힌 것만 넘긴다 — 같은 이메일의 기존 계정에 연결하므로(auth.signInWithProfile),
+ * 인증 안 된 남의 이메일로 그 계정을 가져가지 못하게(10/3 점검). Supabase 경로도 같은 규칙(email_confirmed_at).
+ */
+export function parseProfile(id: OAuthProviderId, raw: unknown): OAuthProfile {
   const r = raw as Record<string, unknown>
   if (id === 'google') {
-    return { provider: id, providerAccountId: String(r.sub), email: (r.email as string | undefined) ?? null, name: (r.name as string | undefined) ?? null }
+    return { provider: id, providerAccountId: String(r.sub), email: r.email_verified === true ? (r.email as string | undefined) ?? null : null, name: (r.name as string | undefined) ?? null }
   }
   const acc = (r.kakao_account ?? {}) as Record<string, unknown>
   const prof = (acc.profile ?? {}) as Record<string, unknown>
-  return { provider: id, providerAccountId: String(r.id), email: (acc.email as string | undefined) ?? null, name: (prof.nickname as string | undefined) ?? null }
+  const verified = acc.is_email_valid === true && acc.is_email_verified === true
+  return { provider: id, providerAccountId: String(r.id), email: verified ? (acc.email as string | undefined) ?? null : null, name: (prof.nickname as string | undefined) ?? null }
 }

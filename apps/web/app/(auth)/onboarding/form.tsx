@@ -30,6 +30,7 @@ const TASTE_OPTIONS: Array<{ value: Taste; label: string; sub: string }> = [
   { value: 'gl', label: 'GL', sub: msg('여자와 여자의 이야기') },
 ]
 const TERMS = [
+  { key: 'age', title: msg('[필수] 만 18세 이상입니다') },
   { key: 'terms', title: msg('[필수] 서비스 이용약관'), href: '/terms/service' },
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },

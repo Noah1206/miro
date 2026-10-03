@@ -42,6 +42,8 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   const birth = form.get('birthDate')
   const birthDate = typeof birth === 'string' && birth ? birth : null
   if (birthDate && !validBirthDate(birthDate, today)) return { ok: false, step: 5, error: msg('생년월일을 다시 확인해 주세요.') }
+  // 약관 제4조: 만 18세 이상만 가입(10/3 점검). 생년월일을 적었으면 한국 날짜로 만 나이를 본다.
+  if (birthDate && fullAge(birthDate, today) < 18) return { ok: false, step: 5, error: msg('만 18세 이상만 가입할 수 있어요.') }
 
   if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 6, error: msg('필수 항목에 모두 동의해 주세요.') }
 
@@ -57,6 +59,11 @@ export async function precheckNickname(userId: string, nickname: string): Promis
   const existing = await getPersona(userId)
   const saved = await savePersona(userId, { name: nickname, gender: existing?.gender ?? null, description: existing?.description ?? null })
   return saved.ok ? { ok: true } : { ok: false, error: saved.error }
+}
+
+function fullAge(v: string, today: Date): number {
+  const now = today.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+  return Number(now.slice(0, 4)) - Number(v.slice(0, 4)) - (now.slice(5) < v.slice(5) ? 1 : 0)
 }
 
 function validBirthDate(v: string, today: Date): boolean {

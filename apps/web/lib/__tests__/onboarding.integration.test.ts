@@ -12,7 +12,7 @@ function form(values: Record<string, string | string[]>): FormData {
   for (const [k, v] of Object.entries(values)) for (const x of [v].flat()) f.append(k, x)
   return f
 }
-const FULL = { language: 'en', nickname: ' 지우 ', gender: 'female', taste: ['hl', 'bl', 'yuri'], birthDate: '2000-02-29', terms: 'on', privacy: 'on', ai: 'on', push: 'on', marketing: 'on' }
+const FULL = { language: 'en', nickname: ' 지우 ', gender: 'female', taste: ['hl', 'bl', 'yuri'], birthDate: '2000-02-29', age: 'on', terms: 'on', privacy: 'on', ai: 'on', push: 'on', marketing: 'on' }
 const TODAY = new Date('2026-09-30T00:00:00Z')
 
 describe('온보딩 입력', () => {
@@ -33,6 +33,8 @@ describe('온보딩 입력', () => {
     for (const bad of ['2001-02-29', '2026-10-01', '1899-12-31', '2000/01/01']) expect(step({ ...FULL, birthDate: bad })).toBe(5)
     expect(step({ ...FULL, ai: '' })).toBe(6)
     expect(step({ ...FULL, push: '' })).toBe(6) // 캐릭터 알림도 필수(2026-10-01)
+    expect(step({ ...FULL, age: '' })).toBe(6) // 만 18세 확인도 필수(10/3)
+    expect(step({ ...FULL, birthDate: '2015-05-05' })).toBe(5) // 생년월일이 만 18세 미만이면 거절
   })
 })
 
