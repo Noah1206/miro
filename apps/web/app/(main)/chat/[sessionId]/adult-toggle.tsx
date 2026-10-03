@@ -15,11 +15,12 @@ import styles from './chat.module.css'
  */
 type Level = 'soft' | 'deep' | 'explicit'
 /** 언베일 수위 메뉴(10/3 사용자 요청: 모드 고르기 목록처럼). 수위는 한도이고, 속도는 여전히 사용자가 이끈다(engine adultRule). */
-const LEVELS: Array<{ value: Level | 'off'; title: string; desc: string }> = [
-  { value: 'off', title: msg('끄기'), desc: msg('일반 대화로 돌아가요') },
-  { value: 'soft', title: msg('은은하게'), desc: msg('키스와 스킨십까지, 그 이상은 암시로') },
-  { value: 'deep', title: msg('짙게'), desc: msg('관능적으로, 노골적인 묘사는 빼고') },
-  { value: 'explicit', title: msg('노골적'), desc: msg('원하는 만큼 구체적으로') },
+const LEVELS: Array<{ value: Level | 'off'; title: string }> = [
+  // 단계는 한 단어(10/3 사용자 결정, 설명 줄은 뺐다). 뜻: 설렘=키스·스킨십까지, 관능=노골적 세부 없이, 언베일=노골적.
+  { value: 'off', title: msg('끔') },
+  { value: 'soft', title: msg('설렘') },
+  { value: 'deep', title: msg('관능') },
+  { value: 'explicit', title: msg('언베일') },
 ]
 
 export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: string; on: boolean; everOn: boolean; level: Level }) {
@@ -51,7 +52,7 @@ export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: strin
         <p className={styles.adultMenuHead}>{t('언베일')}</p>
         {LEVELS.map((l) => (
           <button key={l.value} type="button" role="menuitemradio" aria-checked={current === l.value} className={styles.adultMenuItem} onClick={() => choose(l.value)}>
-            <span><span className={styles.adultMenuTitle}>{t(l.title)}</span><span className={styles.adultMenuDesc}>{t(l.desc)}</span></span>
+            <span className={styles.adultMenuTitle}>{t(l.title)}</span>
             {current === l.value && <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
           </button>
         ))}
