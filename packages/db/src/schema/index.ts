@@ -1117,6 +1117,12 @@ export const opsAlerts = pgTable('ops_alerts', {
 }).enableRLS()
 
 /** 정기 백업 기록 — 복원 검증을 통과한 백업마다 한 줄(packages/db/backup.ts). 36시간 넘게 없으면 운영자 알림. */
+/** 크론 작업이 마지막으로 끝난 시각(10/3). /api/health 가 오래되면 실패로 알린다. */
+export const opsHeartbeats = pgTable('ops_heartbeats', {
+  name: text('name').primaryKey(),
+  at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const opsBackupRuns = pgTable('ops_backup_runs', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   finishedAt: timestamp('finished_at', { withTimezone: true }).notNull().defaultNow(),

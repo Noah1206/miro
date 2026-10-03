@@ -1,5 +1,6 @@
 import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
+import { db, opsHeartbeats } from '@miro/db'
 import { runRealityEvaluations, runRealityMaintenance, runRealityScheduler } from '@/lib/reality/scheduler'
 
 /**
@@ -22,5 +23,8 @@ export async function GET(req: Request) {
 
   const run = work === 'maintenance' ? await runRealityMaintenance() : work === 'ai' ? await runRealityEvaluations(now) : await runRealityScheduler(now)
   console.info('[reality] scheduler run', JSON.stringify({ at: now.toISOString(), ...run }))
+  // 끝난 시각을 남긴다 — /api/health 가 이게 오래되면 실패로 알린다(크론이 멈추면 크론이 보내는 경보도 멈추므로).
+  const at = new Date()
+  await db.insert(opsHeartbeats).values({ name: work ?? 'scheduler', at }).onConflictDoUpdate({ target: opsHeartbeats.name, set: { at } }).catch(() => {})
   return NextResponse.json(run)
 }
