@@ -29,7 +29,7 @@ export type LoadedSession = {
   policyVersion: 'legacy:v1' | 'agency:v1'
   lastInteractionAt: Date
   /** 성인 모드 — on: 지금 켜짐(화면 토글), since: 처음 켠 시각(있으면 이 방의 모든 AI 호출이 성인 전용 모델로 간다). */
-  adult: { on: boolean; since: Date | null }
+  adult: { on: boolean; since: Date | null; level: 'soft' | 'deep' | 'explicit' }
 }
 
 const RECENT_RESOLVED_EVENT_LIMIT = 24
@@ -130,6 +130,7 @@ export async function loadSession(
     routine: availability ? describeRoutine(availability.routine, availability) : null,
     life: lifeLines(life, timeZone),
     adultMode: adultOk,
+    adultLevel: row.session.adultLevel,
     recentCalls: calls.map((c) => {
       const when = localClock(c.endedAt ?? c.createdAt, timeZone).label
       const kind = c.channel === 'voice' ? '음성통화' : '영상통화'
@@ -152,7 +153,7 @@ export async function loadSession(
     experienceType: c.experienceType,
     policyVersion: row.session.policyVersion,
     lastInteractionAt: row.session.lastInteractionAt,
-    adult: { on: row.session.adultMode, since: row.session.adultSince },
+    adult: { on: row.session.adultMode, since: row.session.adultSince, level: row.session.adultLevel },
   }
 }
 

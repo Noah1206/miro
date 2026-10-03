@@ -20,7 +20,8 @@ export type AgencyTurnInput = {
 }
 
 /** 표현 검증이 거부한 뒤 같은 요청 예산 안에서 다시 쓰는 횟수(§3.3). */
-const REGENERATIONS = 1
+// 2: 거부 사유와 문제 문장을 받은 다시 쓰기를 한 번 더(10/3 실측: 막연한 사유만 받고 같은 완료 주장을 되풀이해 '멈춰요' 턴이 실패).
+const REGENERATIONS = 2
 
 /**
  * 자율성 경로(§3.3): 계획 → 상태 전이 승인 → (승인된 결정·세계 사실을 넣은) 맥락 → 대사 → 승인 범위 검증 → 결과.
@@ -122,7 +123,12 @@ export async function runAgencyTurn(opts: {
     // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
     const reasons = [...new Set(verification.issues.map(i => i.reason))]
     if (attempt === REGENERATIONS) throw new Error(['agency_realization_rejected', ...reasons].join(' '))
-    feedback = `\n\n## 이전 응답이 거부된 이유(코드): ${reasons.join(', ')}\n승인된 선택과 세계 상태 안에서만 다시 쓰세요. 완료되지 않은 행동·도착·발송을 사실처럼 쓰지 마세요.`
+    // 문제가 된 문장을 그대로 보여 준다 — 사유 코드만 주면 렌더러가 무엇을 고칠지 몰라 같은 말을 되풀이했다.
+    const quotes = [...new Set(verification.issues.flatMap(issue => {
+      const claim = /^claims\.(\d+)$/.exec(issue.field), block = /^blocks\.(\d+)$/.exec(issue.field)
+      return claim ? [verification!.claims[Number(claim[1])]?.quote] : block ? [validated.blocks[Number(block[1])]?.text.slice(0, 120)] : []
+    }).filter((q): q is string => !!q))].slice(0, 4)
+    feedback = `\n\n## 이전 응답이 거부된 이유(코드): ${reasons.join(', ')}\n${quotes.length ? `문제가 된 문장: ${quotes.map(q => `"${q}"`).join(' / ')}\n` : ''}승인된 선택과 세계 상태 안에서만 다시 쓰세요. 완료되지 않은 행동·확인·도착·발송을 이미 한 일처럼 쓰지 말고, 아직 하지 않은 일은 '할게요·하려고 해요'처럼 앞으로의 일로 쓰세요.`
   }
   const approved = approveTransition(transition!, snapshot, policy, { relationshipOwner: 'appraisal', decisionId: plan.decision.id })
   records.push(...approved.records)

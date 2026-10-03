@@ -62,7 +62,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <Back href="/archive" />
           <h1 className={styles.title}>{loaded.characterName}</h1>
           {/* 성인 모드는 켤 수 있을 때만 보인다(성인 인증·전용 모델·성인 캐릭터). 켜져 있으면 끌 수 있게 늘 보인다. */}
-          {(loaded.adult.on || adult?.allowed) && <AdultToggle sessionId={sessionId} on={loaded.adult.on} everOn={loaded.adult.since !== null} />}
+          {(loaded.adult.on || adult?.allowed) && <AdultToggle sessionId={sessionId} on={loaded.adult.on} everOn={loaded.adult.since !== null} level={loaded.adult.level} />}
           {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
           {loaded.experienceType === 'reality' && (
             <TransitionLink href={`/messages/${sessionId}`} aria-label={t('문자')} className={styles.contextButton}>

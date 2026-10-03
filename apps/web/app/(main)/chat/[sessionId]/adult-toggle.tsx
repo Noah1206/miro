@@ -1,6 +1,8 @@
 'use client'
 import { useState, useTransition } from 'react'
 import { Button, Checkbox, Sheet, useToast } from '@/components/ui'
+import { Popover } from '@/components/ui/popover'
+import { msg } from '@/lib/i18n'
 import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import sheet from '@/components/push-subscribe.module.css'
 import { useT } from '@/lib/i18n/client'
@@ -11,27 +13,56 @@ import styles from './chat.module.css'
  * 대화방 머리의 성인 모드 토글 '언베일'(10/2, 사용자 결정: 캐릭터가 아니라 사용자가 대화 화면에서 켜고 끔, 이름은 제타의 '언리밋'처럼 영어를 한글로).
  * 처음 켤 때만 한 번 묻는다 — 나이 확인·성인 콘텐츠 정책 동의 두 체크가 있어야 켜진다(본인인증과 함께 쓰는 동의 절차, 10/2). 한 번 켠 방은 꺼도 성인 전용 모델이 이어 맡는다(화면엔 AI 를 말하지 않는다 — 10/2 결정). 판정은 서버가 한다.
  */
-export function AdultToggle({ sessionId, on, everOn }: { sessionId: string; on: boolean; everOn: boolean }) {
+type Level = 'soft' | 'deep' | 'explicit'
+/** 언베일 수위 메뉴(10/3 사용자 요청: 모드 고르기 목록처럼). 수위는 한도이고, 속도는 여전히 사용자가 이끈다(engine adultRule). */
+const LEVELS: Array<{ value: Level | 'off'; title: string; desc: string }> = [
+  { value: 'off', title: msg('끄기'), desc: msg('일반 대화로 돌아가요') },
+  { value: 'soft', title: msg('은은하게'), desc: msg('키스와 스킨십까지, 그 이상은 암시로') },
+  { value: 'deep', title: msg('짙게'), desc: msg('관능적으로, 노골적인 묘사는 빼고') },
+  { value: 'explicit', title: msg('노골적'), desc: msg('원하는 만큼 구체적으로') },
+]
+
+export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: string; on: boolean; everOn: boolean; level: Level }) {
   const t = useT()
   const toast = useToast()
-  const [ask, setAsk] = useState(false)
+  const [menu, setMenu] = useState(false)
+  const [ask, setAsk] = useState<Level | null>(null)
   const [pending, start] = useTransition()
-  const apply = (next: boolean, agreed = false) => start(async () => {
-    const { error } = await setAdultMode(sessionId, next, agreed)
-    setAsk(false)
+  const apply = (next: Level | 'off', agreed = false) => start(async () => {
+    const { error } = await setAdultMode(sessionId, next !== 'off', agreed, next === 'off' ? undefined : next)
+    setAsk(null)
     if (error) toast(t(error))
   })
+  const current = on ? level : 'off'
+  const choose = (v: Level | 'off') => {
+    setMenu(false)
+    if (v === current) return
+    // 처음 켜는 방은 동의 시트부터 — 고른 수위는 시트를 마치면 적용한다.
+    if (v !== 'off' && !everOn) setAsk(v)
+    else apply(v)
+  }
   return <>
-    <button type="button" role="switch" aria-checked={on} aria-label={t('언베일 (성인 모드)')} disabled={pending} data-on={on || undefined}
-      className={styles.adultToggle} onClick={() => on ? apply(false) : everOn ? apply(true) : setAsk(true)}>
-      <span className={styles.adultPill}><span aria-hidden className={styles.adultKnob} /><span className={styles.adultLabel}>{t('언베일')}</span></span>
-    </button>
-    <Sheet open={ask} onClose={() => setAsk(false)} label={t('언베일을 켤까요?')} compact>
+    <span style={{ position: 'relative', flex: '0 0 auto' }}>
+      <button type="button" aria-haspopup="menu" aria-expanded={menu} aria-label={t('언베일 (성인 모드)')} disabled={pending} data-on={on || undefined}
+        className={styles.adultToggle} onClick={() => setMenu((m) => !m)}>
+        <span className={styles.adultPill}><span aria-hidden className={styles.adultKnob} /><span className={styles.adultLabel}>{t('언베일')}</span></span>
+      </button>
+      <Popover open={menu} onClose={() => setMenu(false)} anchor="right" style={{ minWidth: 268 }}>
+        <p className={styles.adultMenuHead}>{t('언베일')}</p>
+        {LEVELS.map((l) => (
+          <button key={l.value} type="button" role="menuitemradio" aria-checked={current === l.value} className={styles.adultMenuItem} onClick={() => choose(l.value)}>
+            <span><span className={styles.adultMenuTitle}>{t(l.title)}</span><span className={styles.adultMenuDesc}>{t(l.desc)}</span></span>
+            {current === l.value && <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+          </button>
+        ))}
+      </Popover>
+    </span>
+    <Sheet open={ask !== null} onClose={() => setAsk(null)} label={t('언베일을 켤까요?')} compact>
       {/* 두 체크는 required — 브라우저가 둘 다 체크해야 제출한다. 서버도 처음 켤 때 agreed 를 다시 본다. */}
       <form className={sheet.stack} onSubmit={(e) => {
         e.preventDefault()
         const f = new FormData(e.currentTarget)
-        apply(true, f.get('age') === 'on' && f.get('policy') === 'on')
+        apply(ask ?? 'deep', f.get('age') === 'on' && f.get('policy') === 'on')
       }}>
         <div className={sheet.center}>
           <span aria-hidden className={styles.adultBadge}>19</span>
@@ -45,7 +76,7 @@ export function AdultToggle({ sessionId, on, everOn }: { sessionId: string; on: 
         </div>
         <div className={sheet.actions}>
           <Button type="submit" variant="secondary" full style={SHEET_BUTTON} status={pending ? 'loading' : 'idle'} disabled={pending}>{t('켜기')}</Button>
-          <Button type="button" variant="ghost" size="sm" full onClick={() => setAsk(false)} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
+          <Button type="button" variant="ghost" size="sm" full onClick={() => setAsk(null)} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
         </div>
       </form>
     </Sheet>

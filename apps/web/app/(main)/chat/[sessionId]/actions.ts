@@ -21,7 +21,7 @@ export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnSt
  * 처음 켤 때는 나이 확인·성인 콘텐츠 정책 동의 두 체크가 있어야 한다(agreed) — 본인인증과 함께 쓰는 동의 절차다(10/2 결정).
  * 처음 켠 시각은 지우지 않는다 — 한 번 켠 방은 꺼도 성인 전용 모델로 이어진다.
  */
-export async function setAdultMode(sessionId: string, on: boolean, agreed = false): Promise<{ error: string | null }> {
+export async function setAdultMode(sessionId: string, on: boolean, agreed = false, level?: 'soft' | 'deep' | 'explicit'): Promise<{ error: string | null }> {
   const user = await requireUser()
   const [s] = await db.select({ characterId: roleplaySessions.characterId, adultSince: roleplaySessions.adultSince }).from(roleplaySessions)
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt))).limit(1)
@@ -32,7 +32,7 @@ export async function setAdultMode(sessionId: string, on: boolean, agreed = fals
     if (!gate.allowed) return { error: gate.next }
   }
   await db.update(roleplaySessions)
-    .set(on ? { adultMode: true, adultSince: sql`coalesce(${roleplaySessions.adultSince}, now())` } : { adultMode: false })
+    .set(on ? { adultMode: true, adultSince: sql`coalesce(${roleplaySessions.adultSince}, now())`, ...(level && ['soft', 'deep', 'explicit'].includes(level) ? { adultLevel: level } : {}) } : { adultMode: false })
     .where(eq(roleplaySessions.id, sessionId))
   revalidatePath(`/chat/${sessionId}`)
   return { error: null }

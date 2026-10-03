@@ -330,6 +330,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   adultMode: boolean('adult_mode').notNull().default(false),
   /** 처음 켠 시각. 한 번 켠 방은 꺼도 성인 전용 모델로만 간다 — 이전 대화가 미로 메인 키로 가지 않게. */
   adultSince: timestamp('adult_since', { withTimezone: true }),
+  /** 언베일 수위(10/3, 대화방 메뉴에서 고름). */
+  adultLevel: text('adult_level', { enum: ['soft', 'deep', 'explicit'] }).notNull().default('explicit'),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

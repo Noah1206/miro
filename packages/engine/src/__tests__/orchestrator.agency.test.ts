@@ -144,7 +144,7 @@ describe('runTurn agency integration', () => {
     expect(once.calls[3]?.prompt).toContain('이전 응답이 거부된 이유')
     const always = provider({ rejectRealization: true, proposal: reviewed() })
     await expect(runTurn({ llm: always.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow(/^agency_realization_rejected semantic_/)
-    expect(always.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(2)
+    expect(always.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(3) // 처음 + 다시 쓰기 2번(10/3)
   })
   it('reports a provider block on the rendered reply as a safety refusal, like the legacy path', async () => {
     const stub = provider()
