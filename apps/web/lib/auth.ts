@@ -1,7 +1,7 @@
-import { randomBytes } from 'node:crypto'
+import { randomBytes, createHash } from 'node:crypto'
 import { cache } from 'react'
 import { cookies } from 'next/headers'
-import { eq, and, isNull, gt } from 'drizzle-orm'
+import { eq, and, isNull, gt, inArray } from 'drizzle-orm'
 import { db, users, accounts, authSessions } from '@miro/db'
 import { measured } from '@/lib/observe'
 
@@ -18,11 +18,14 @@ export type SessionUser = {
 
 /* ---------- session ---------- */
 
+/** DB 에는 토큰 대신 해시만 둔다 — DB·백업이 새도 그 값으로 로그인할 수 없게(10/3 점검). 'sha256:' 접두어로 옛 원문 행과 가른다. */
+const hashToken = (token: string) => 'sha256:' + createHash('sha256').update(token).digest('hex')
+
 export async function createSession(userId: string): Promise<void> {
   const token = randomBytes(32).toString('hex')
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 86_400_000)
 
-  await db.insert(authSessions).values({ userId, token, expiresAt })
+  await db.insert(authSessions).values({ userId, token: hashToken(token), expiresAt })
 
   const jar = await cookies()
   jar.set(COOKIE, token, {
@@ -37,7 +40,7 @@ export async function createSession(userId: string): Promise<void> {
 export async function destroySession(): Promise<void> {
   const jar = await cookies()
   const token = jar.get(COOKIE)?.value
-  if (token) await db.delete(authSessions).where(eq(authSessions.token, token))
+  if (token) await db.delete(authSessions).where(inArray(authSessions.token, [hashToken(token), token]))
   jar.delete(COOKIE)
 }
 
@@ -64,7 +67,8 @@ export const currentUser = cache(async (): Promise<SessionUser | null> => {
     .from(authSessions)
     .innerJoin(users, eq(users.id, authSessions.userId))
     .where(and(
-      eq(authSessions.token, token),
+      // ponytail: 원문(token)은 해시 마이그레이션(20261003090000) 직전에 만든 세션용 — 적용 뒤에는 그런 행이 없다. 다음 정리 때 뺀다.
+      inArray(authSessions.token, [hashToken(token), token]),
       gt(authSessions.expiresAt, new Date()),
       isNull(users.deletedAt),
     ))
