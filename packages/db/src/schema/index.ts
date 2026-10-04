@@ -157,6 +157,11 @@ export const characters = pgTable('characters', {
   mbti: text('mbti'),
 
   personality: text('personality').notNull(),
+  /**
+   * 비공개 설정(2026-10-04) — 속마음·숨긴 사정·행동 규칙처럼 대화로만 드러나야 하는 것. 프롬프트와 성격표에만 실리고
+   * 상세 화면에는 절대 보이지 않는다(personality 는 공개 소개다). 공식 캐릭터는 시드가, 제작자는 편집기가 채운다.
+   */
+  secret: text('secret'),
   values: text('values'),
   speechStyle: text('speech_style'),
   userNickname: text('user_nickname'),

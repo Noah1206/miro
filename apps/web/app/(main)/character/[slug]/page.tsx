@@ -86,7 +86,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
-            {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{c.personality}</p>}
+            {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.personality}</p>}
             {profile.map((line) => (
               <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
             ))}

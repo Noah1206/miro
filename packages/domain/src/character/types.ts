@@ -21,6 +21,8 @@ export type CharacterCore = {
 
   personality: {
     personality: string
+    /** 비공개 설정 — 유저에게 직접 밝히지 않고 행동으로만 드러나는 속마음·사정·규칙. 화면에 보이지 않는다. */
+    secret?: string | null
     values: string | null
     speechStyle: string | null
     userNickname: string | null

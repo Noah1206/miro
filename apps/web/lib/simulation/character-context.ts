@@ -12,7 +12,7 @@ export function characterContext(
     id: c.id, ownerId: c.ownerId, isOfficial: c.isOfficial,
     identity: { name: c.name, age: c.age, nationality: c.nationality, occupation: c.occupation, mbti: c.mbti },
     personality: {
-      personality: c.personality, values: c.values, speechStyle: c.speechStyle,
+      personality: c.personality, secret: c.secret, values: c.values, speechStyle: c.speechStyle,
       userNickname: c.userNickname, hobbies: c.hobbies, dislikes: c.dislikes,
       jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
       bonding: bondingCurveOf(c, c.initialRelationship.bonding),

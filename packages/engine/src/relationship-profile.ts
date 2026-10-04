@@ -20,11 +20,11 @@ export const RELATIONSHIP_PROFILE_VERSION = 'relationship-profile:v2'
 export type TemperamentSource = Array<{ label: string; text: string }>
 
 export function temperamentSource(c: {
-  name: string; personality: string; values?: string | null; speechStyle?: string | null; occupation?: string | null
+  name: string; personality: string; secret?: string | null; values?: string | null; speechStyle?: string | null; occupation?: string | null
   socialPosition?: string | null; hobbies?: string[]; dislikes?: string[]; startingContext?: string | null
 }): TemperamentSource {
   const fields: Array<[string, string | null | undefined]> = [
-    ['이름', c.name], ['성격', c.personality], ['가치관', c.values], ['말투', c.speechStyle], ['직업', c.occupation],
+    ['이름', c.name], ['성격', c.personality], ['비공개 설정', c.secret], ['가치관', c.values], ['말투', c.speechStyle], ['직업', c.occupation],
     ['세계 안에서의 위치', c.socialPosition], ['좋아하는 것', c.hobbies?.join(', ')], ['싫어하는 것', c.dislikes?.join(', ')],
     ['첫 장면', c.startingContext],
   ]

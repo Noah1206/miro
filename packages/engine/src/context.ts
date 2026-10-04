@@ -225,6 +225,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     c.identity.occupation ? `직업: ${c.identity.occupation}` : null,
     c.identity.mbti ? `MBTI (작성자의 참고 설정): ${c.identity.mbti}` : null,
     `성격: ${c.personality.personality}`,
+    c.personality.secret ? `비공개 설정 (유저는 모른다 — 설명하거나 고백하듯 밝히지 말고, 행동·말투·망설임으로만 드러낸다): ${c.personality.secret}` : null,
     c.personality.values ? `가치관: ${c.personality.values}` : null,
     c.personality.speechStyle ? `말투: ${c.personality.speechStyle}` : null,
     c.personality.userNickname ? `사용자를 부르는 호칭: ${c.personality.userNickname}` : null,
