@@ -106,16 +106,26 @@ export async function runTurn(opts: {
   const memoryTasks: Promise<MemoryCandidate[][]> = auxiliary && policy.memory === 'inline' ? Promise.all(
     tasks.filter(t => t === 'memory_extraction' || t === 'memory_summary')
       .map(task => analyzeMemory(auxiliary, task, opts.userInput, snapshot).then(r => filterSalient(r.memories), () => []))) : Promise.resolve([])
-  const events = await semantic
-  if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
-
   // 관계가 이번 턴의 사건에 스스로 반응한다(domain/relationship/turn) — 단계·기분까지.
   const prevState = snapshot.characterState ?? DEFAULT_CHARACTER_STATE
-  const { delta: codeDelta, relationship: projected, characterState } = relationshipTurn({
+  const turnFor = (events: SemanticEvent[]) => relationshipTurn({
     character: snapshot.character, relationship: snapshot.relationship, characterState: prevState,
-    events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput })
+    events, turn: snapshot.turnCount + 1, userInput: opts.userInput })
+  // 대사는 의미 분석을 기다리지 않는다(10/5, 턴 약 1초 단축) — 프롬프트는 코드가 바로 찾은 사건으로 만들고,
+  // 분석 결과는 대사와 동시에 받아 관계·기분·사건 규칙에만 반영한다.
+  // ponytail: 분석만 잡아낸 사건은 이번 대사엔 안 보이고 다음 턴부터 보인다. 대사가 즉시 반응해야 하면 다시 기다리게 한다.
+  const early = turnFor(semanticEvents)
+  const context = buildContext({ ...snapshot, relationship: early.relationship, characterState: early.characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale, false, opts.replyLength ?? 'scene')
 
-  const context = buildContext({ ...snapshot, relationship: projected, characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale, false, opts.replyLength ?? 'scene')
+  const generated = opts.spokenReply !== undefined ? null : opts.llm.generateStructured({
+    schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
+    system: context.system,
+    prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
+  }).then((p) => ({ ok: true as const, p }), (e: unknown) => ({ ok: false as const, e }))
+
+  const events = await semantic
+  if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
+  const { delta: codeDelta, relationship: projected, characterState } = events.length ? turnFor(semanticEvents) : early
 
   let proposal: SimulationProposal
   let providerMode: TurnResult['providerMode'] = opts.llm.info.mode
@@ -123,11 +133,9 @@ export async function runTurn(opts: {
   if (opts.spokenReply !== undefined) {
     proposal = SimulationProposal.parse({ rp: { blocks: [{ type: 'dialogue', speaker: snapshot.character.identity.name, text: opts.spokenReply }] } })
   } else try {
-    proposal = await opts.llm.generateStructured({
-      schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
-      system: context.system,
-      prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
-    })
+    const r = await generated!
+    if (!r.ok) throw r.e
+    proposal = r.p
   } catch (e) {
     if (e instanceof AIContentBlockedError) throw new UnsafeContentError()
     if (e instanceof AIBudgetDeniedError) throw e

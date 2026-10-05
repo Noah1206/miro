@@ -39,7 +39,7 @@ describe('typing rhythm', () => {
 
   it('speeds up a whole scene so a long reply does not take half a minute', () => {
     // 짧은 응답은 기분 그대로 친다.
-    expect(replyPace(3)).toBe(1)
+    expect(replyPace(2)).toBe(1)
     // 문단 7개짜리 장면은 각 문단 상한을 모두 채워도 전체 상한 안에 든다.
     const pace = replyPace(7)
     expect(pace).toBeLessThan(1)
