@@ -21,6 +21,8 @@ export function personalize(text: string, name?: string | null): string {
   if (!who || !text.includes('당신')) return text
   const f = final(who)
   return text
+    // 소개의 칸 제목 '[당신]'은 그대로 둔다.
+    .replace(/\[당신\]/g, '\u0000')
     // 서술격 조사: "당신이다/당신이라고/당신이었다" → "지혁이다/지우라고/지우였다"는 다루기 어려워 '이'만 받침에 맞춘다.
     .replace(/당신이(?=라|다|야|었|에요|지만)/g, f === 'none' ? who : `${who}이`)
     .replace(/당신(이랑|으로|에게서|에게|한테|은|는|이|가|을|를|과|와|랑|로)?/g, (_m, p: string | undefined) => {
@@ -31,4 +33,5 @@ export function personalize(text: string, name?: string | null): string {
       if (p === '로' || p === '으로') return who + (f === 'other' ? '으로' : '로')
       return who + (f === 'none' ? pair[1] : pair[0])
     })
+    .replace(/\u0000/g, '[당신]')
 }

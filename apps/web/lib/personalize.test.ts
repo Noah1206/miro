@@ -10,6 +10,9 @@ describe('personalize', () => {
     expect(personalize('당신으로 정했다.', '하늘')).toBe('하늘로 정했다.')
     expect(personalize('그게 당신이라고 생각한다.', '지우')).toBe('그게 지우라고 생각한다.')
   })
+  it('칸 제목 [당신]은 그대로', () => {
+    expect(personalize('[당신]\n· 당신은 회사원.', '지우')).toBe('[당신]\n· 지우는 회사원.')
+  })
   it('이름이 없으면 그대로', () => {
     expect(personalize('당신은', null)).toBe('당신은')
     expect(personalize('당신은', 'Noah')).toBe('Noah는')
