@@ -28,7 +28,8 @@ const config: NextConfig = {
     return [
       // 정식 도메인 miroapp.app(10/5 구매). 예전 vercel.app 주소로 온 요청(로그인 콜백의 ?code&state 포함)은 경로 그대로 새 도메인으로 — 세션 쿠키가 새 도메인에 놓인다.
       // www ↔ apex 는 Vercel 도메인 설정(Primary)이 맡는다 — 여기서 www 를 건드리면 플랫폼 리다이렉트와 맞물려 돈다.
-      { source: '/:path*', has: [{ type: 'host', value: 'miro-web-ashen.vercel.app' }], destination: 'https://miroapp.app/:path*', permanent: true },
+      // /api/cron 은 제외 — pg_cron(Supabase)이 옛 주소로 부르는데 308 을 따라가지 않아 크론이 멈췄다(10/5 21:30~).
+      { source: '/:path((?!api/cron).*)', has: [{ type: 'host', value: 'miro-web-ashen.vercel.app' }], destination: 'https://miroapp.app/:path', permanent: true },
       ...['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })),
       { source: '/my/settings', destination: '/my', permanent: false },
     ]

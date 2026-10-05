@@ -24,9 +24,10 @@ export async function SiteFooter({ style }: { style?: React.CSSProperties } = {}
   return (
     <footer lang="ko" className="t-caption" style={{ marginTop: 'var(--space-8)', padding: 'var(--space-5) var(--gutter) var(--space-6)', borderTop: '1px solid var(--color-border)', color: 'var(--color-text-tertiary)', ...style }}>
       <nav aria-label={t('약관과 정책')} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 12px', marginBottom: 'var(--space-4)' }}>
+        {/* 처리방침은 다른 링크와 '구분'만 되면 된다(시행령 제31조 ②) — 색을 한 단계 밝히고 굵기는 medium 까지만(10/5 사용자: 너무 눈에 띔). */}
         {LINKS.map((key) => (
           <TransitionLink key={key} href={`/terms/${key}`} className="hit"
-            style={key === 'privacy' ? { color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)' } : undefined}>
+            style={key === 'privacy' ? { color: 'var(--color-text-secondary)', fontWeight: 'var(--weight-medium)' } : undefined}>
             {t(LEGAL_TITLES[key])}
           </TransitionLink>
         ))}
