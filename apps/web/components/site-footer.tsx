@@ -17,7 +17,7 @@ export async function SiteFooter({ style }: { style?: React.CSSProperties } = {}
   const rows: Array<[string, string]> = [
     [t('상호'), o.brand], [t('대표자'), o.representative], [t('사업자등록번호'), o.registrationNumber],
     [t('주소'), o.address], ...(o.phone ? [[t('전화'), o.phone] as [string, string]] : []), [t('이메일'), o.email],
-    ...(o.mailOrderNumber ? [[t('통신판매업 신고번호'), o.mailOrderNumber] as [string, string]] : []),
+    ...(o.mailOrder ? [[t('통신판매업'), o.mailOrder] as [string, string]] : []),
     [t('호스팅 서비스 제공'), hostingLine()],
   ]
   const revising = noticedRevisions().length > 0

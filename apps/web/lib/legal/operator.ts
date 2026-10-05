@@ -20,10 +20,13 @@ export const OPERATOR = {
   registrationNumber: '508-14-52353',
   /** 영업소 소재지(10/3 사용자 제공). */
   address: '경상남도 양산시 금오16길 122',
-  /** 전화번호 — 전자상거래법 제10조 ①·시행령 제10조가 초기화면 표시를 요구한다. 사용자가 아직 정하지 않음(10/5). 비우면 싣지 않는다. */
-  phone: '',
-  /** 통신판매업 신고번호(예: 2026-경남양산-0001). 신고 전이라 비어 있음(10/5). 비우면 싣지 않는다 — 신고 뒤 여기만 채우면 바닥글·약관에 바로 나온다. */
-  mailOrderNumber: '',
+  /** 전화번호 — 전자상거래법 제10조 ①·시행령 제10조가 초기화면 표시를 요구한다(10/5 사용자 제공). */
+  phone: '010-4090-5045',
+  /**
+   * 통신판매업 표시. 운영자는 간이과세자라 신고 의무가 면제된다(전자상거래법 제12조 ④·시행령 제13조, 10/5 사용자 확인) — 면제 사실을 적는다.
+   * 나중에 신고하면 '신고번호 2026-경남양산-0001' 처럼 바꾼다. 비우면 싣지 않는다.
+   */
+  mailOrder: '신고 면제(간이과세자)',
   /** 호스팅 서비스 제공자 — 전자상거래법 제10조 ① 6호(초기화면 표시). 처리방침 6·7항의 수탁자와 같다. */
   hosting: [
     { name: 'Vercel Inc.', role: '웹 서비스' },
@@ -39,7 +42,7 @@ export const hostingLine = () => OPERATOR.hosting.map((h) => `${h.name}(${h.role
 
 /**
  * 약관 제3조 ①의 사업자 정보 한 줄. 2026-10-13 개정(revisions.ts)이 시행되기 전에는 10/3 본문과 글자 하나 다르지 않게 유지한다 —
- * 약관 본문을 예고 없이 바꾸지 않기 위해서다. 시행 뒤에는 전화·통신판매업 신고번호(채워진 것만)와 호스팅 제공자를 더한다.
+ * 약관 본문을 예고 없이 바꾸지 않기 위해서다. 시행 뒤에는 전화·통신판매업 표시(채워진 것만)와 호스팅 제공자를 더한다.
  */
 export const businessInfo = (now = new Date()) => {
   const base = `대표자 ${OPERATOR.representative} · 주소 ${OPERATOR.address} · 사업자등록번호 ${OPERATOR.registrationNumber}`
@@ -47,7 +50,7 @@ export const businessInfo = (now = new Date()) => {
   return [
     base,
     OPERATOR.phone && `전화 ${OPERATOR.phone}`,
-    OPERATOR.mailOrderNumber && `통신판매업 신고번호 ${OPERATOR.mailOrderNumber}`,
+    OPERATOR.mailOrder && `통신판매업 ${OPERATOR.mailOrder}`,
     `호스팅 서비스 제공 ${hostingLine()}`,
   ].filter(Boolean).join(' · ')
 }

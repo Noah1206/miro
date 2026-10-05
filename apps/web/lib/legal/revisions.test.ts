@@ -36,6 +36,6 @@ describe('legal revisions', () => {
 
   it('약관 제3조 ① 본문은 시행일 전엔 10/3 그대로, 시행 뒤 호스팅 제공자가 붙는다', () => {
     expect(businessInfo(before)).toBe('대표자 조현웅 · 주소 경상남도 양산시 금오16길 122 · 사업자등록번호 508-14-52353')
-    expect(businessInfo(after)).toContain('호스팅 서비스 제공 Vercel Inc.(웹 서비스), Supabase, Inc.(데이터베이스·사진 저장)')
+    expect(businessInfo(after)).toContain('전화 010-4090-5045 · 통신판매업 신고 면제(간이과세자) · 호스팅 서비스 제공 Vercel Inc.(웹 서비스), Supabase, Inc.(데이터베이스·사진 저장)')
   })
 })
