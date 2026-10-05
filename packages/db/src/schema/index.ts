@@ -70,6 +70,8 @@ export const termsConsents = pgTable('terms_consents', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   termsVersion: text('terms_version').notNull(),
   privacyVersion: text('privacy_version').notNull(),
+  /** 개인정보 국외 이전 별도 동의(처리방침 버전, 10/5). null 이면 아직 따로 동의하지 않은 회원 — /onboarding/transfer 로 보낸다. */
+  transferVersion: text('transfer_version'),
   agreedAt: timestamp('agreed_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

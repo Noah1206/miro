@@ -33,6 +33,8 @@ const TERMS = [
   { key: 'age', title: msg('[필수] 만 18세 이상입니다') },
   { key: 'terms', title: msg('[필수] 서비스 이용약관'), href: '/terms/service' },
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
+  // 국외 이전은 처리방침과 따로 받는 동의다(개인정보 보호법 제28조의8, 10/5) — 묶어서 받지 않는다.
+  { key: 'transfer', title: msg('[필수] 개인정보 국외 이전 동의'), sub: msg('AI 응답 생성 등을 위해 개인정보가 국외 업체에서 처리돼요'), href: '/terms/transfer' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },
   // 브라우저 알림 권한 — 필수(2026-10-01 결정, 예외 없음). 시작하기를 누를 때 묻고, 허용·구독까지 끝나야 가입이 끝난다.
   { key: 'push', title: msg('[필수] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자를 알림으로 받아요') },

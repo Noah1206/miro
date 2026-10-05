@@ -9,6 +9,8 @@ import { LANGUAGES } from '@miro/domain'
 import { getLanguage, getT } from '@/lib/i18n/server'
 import { OPERATOR } from '@/lib/legal/operator'
 import { SubmitButton } from '@/components/ui/submit-button'
+import { SiteFooter } from '@/components/site-footer'
+import { LegalRevisionNotice } from '@/components/legal-revision-notice'
 import { logout } from './actions'
 import { MenuRow, MenuSection } from './menu'
 import homeStyles from '../home/home.module.css'
@@ -94,14 +96,12 @@ export default async function MyPage() {
         <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', margin: 'var(--space-6) 0 12px' }}>MIRO</p>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
           <TransitionLink href="/my/ai-data" className="hit">{t('AI 개선 참여')}</TransitionLink>
-          <TransitionLink href="/terms/service" className="hit">{t('서비스 이용약관')}</TransitionLink>
-          <span aria-hidden>|</span>
-          <TransitionLink href="/terms/privacy" className="hit">{t('개인정보 처리방침')}</TransitionLink>
-          <span aria-hidden>|</span>
-          <TransitionLink href="/terms/ai" className="hit">{t('AI 생성 콘텐츠 안내')}</TransitionLink>
           <span aria-hidden>|</span>
           <TransitionLink href="/my/delete" className="hit">{t('계정 삭제')}</TransitionLink>
         </p>
+        {/* 약관·처리방침·환불 규정 링크와 사업자 정보는 사이트 공통 바닥글이 맡는다(10/5). */}
+        <LegalRevisionNotice style={{ marginTop: 'var(--space-5)', borderRadius: 'var(--radius-sm)' }} />
+        <SiteFooter style={{ marginTop: 'var(--space-4)', padding: 'var(--space-5) 0 0' }} />
       </footer>
     </Page>
   )

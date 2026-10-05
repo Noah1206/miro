@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import { Button, Notice, Sheet, useToast } from '@/components/ui'
+import { Button, Notice, Sheet, TransitionLink, useToast } from '@/components/ui'
 import { readWallet, purchaseCredits } from '@/app/(main)/recharge/wallet-actions'
 import { SHEET_BUTTON, TransferActions } from '@/app/(main)/recharge/transfer-actions'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
@@ -210,6 +210,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             <TransferActions bank={wallet.account.bank} accountNumber={wallet.account.number} amount={order.amountMinor} onOpen={() => setTransferTapped(true)} />
           </>}
           {order.status === 'approved' && <p className="t-body">{t('입금이 확인됐어요. 잔액 반영까지 최대 15분 정도 걸릴 수 있어요.')}</p>}
+          {/* 전자상거래법 제13조 ②: 취소·환불 조건을 결제 전에. 입금 전엔 청구가 없고 72시간 뒤 자동 취소(약관 제10조 ③). */}
+          {order.status === 'awaiting' && <p className={`t-caption ${styles.muted}`}>
+            {t('입금하지 않으면 72시간 뒤 주문이 자동으로 취소되고, 아무것도 청구되지 않아요.')}{' '}
+            <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
+          </p>}
           {/* 송금 버튼을 눌러야 열린다 — 그 전엔 흐린 글씨로 잠겨 있다. */}
           <div className={styles.actions}>
             <Button variant="secondary" full data-confirm-deposit onClick={() => void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
@@ -233,6 +238,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               {!wallet.products.length && <p className={`t-caption ${styles.muted}`}>{t('판매 중인 미로 상품이 없어요.')}</p>}
               {(wallet.products.length > 3 && !expanded) && <Button variant="ghost" full onClick={() => setExpanded(true)}>{t('금액 더 보기')}</Button>}
             </fieldset>
+            {/* 청약철회 조건은 결제 전에 보인다(전자상거래법 제13조 ②·제17조) — 쓴 미로는 제공이 시작된 디지털콘텐츠라 환불되지 않는다는 사실을 미리 알린다. */}
+            <p className={`t-caption ${styles.muted}`} data-refund-notice>
+              {t('충전한 날부터 7일 안에는 쓰지 않은 미로를 환불받을 수 있어요. 이미 쓴 미로는 환불되지 않아요.')}{' '}
+              <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
+            </p>
             <div className={`${styles.footer} ${styles.actions}`}>
               <Button full variant="secondary" style={SHEET_BUTTON} onClick={() => void checkout()} status={state === 'loading' ? 'loading' : 'idle'} disabled={!selected}>{t('다음으로')}</Button>
               <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>

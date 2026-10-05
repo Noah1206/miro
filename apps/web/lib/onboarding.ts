@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { isLanguage, type Language } from '@miro/domain'
 import { WELCOME_GRANT } from '@miro/config'
 import { db, termsConsents, userPersonas, userSettings, users } from '@miro/db'
-import { PRIVACY_VERSION, TERMS_VERSION } from '@/lib/legal'
+import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
 import { getPersona, parsePersona, savePersona } from '@/lib/persona'
 import { grantRecharge } from '@/lib/usage/guard'
@@ -86,7 +86,8 @@ export async function completeOnboarding(userId: string, input: OnboardingInput)
 
   const now = new Date()
   await db.transaction(async (tx) => {
-    await tx.insert(termsConsents).values({ userId, termsVersion: TERMS_VERSION, privacyVersion: PRIVACY_VERSION })
+    // 국외 이전 동의는 처리방침 버전으로 따로 남긴다(REQUIRED_TERMS 가 체크를 보장한다).
+    await tx.insert(termsConsents).values({ userId, termsVersion: termsVersion(now), privacyVersion: privacyVersion(now), transferVersion: privacyVersion(now) })
     const consents = { language: input.language, marketingConsentAt: input.marketing ? now : null, nightMarketingConsentAt: input.nightMarketing ? now : null }
     await tx.insert(userSettings).values({ userId, ...consents })
       .onConflictDoUpdate({ target: userSettings.userId, set: { ...consents, updatedAt: now } })

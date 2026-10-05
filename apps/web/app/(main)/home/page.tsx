@@ -5,6 +5,8 @@ import { measured } from '@/lib/observe'
 import { HomeFeed } from './feed'
 import { HomeBanner } from './banner'
 import { NotificationBell } from './bell'
+import { SiteFooter } from '@/components/site-footer'
+import { LegalRevisionNotice } from '@/components/legal-revision-notice'
 import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
@@ -34,9 +36,13 @@ export default async function Home() {
         </div>
       </header>
 
+      {/* 약관·처리방침 개정이 공지 중이면 초기화면에서 알린다(약관 제3조 ③). 평소엔 아무것도 그리지 않는다. */}
+      <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
       <HomeFeed key={crypto.randomUUID()} initial={page} />
+      {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
+      <SiteFooter />
     </Page>
   )
 }

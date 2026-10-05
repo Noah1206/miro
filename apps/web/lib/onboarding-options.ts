@@ -5,7 +5,8 @@ export type Taste = (typeof TASTES)[number]
 /** 필수 동의 — 없으면 가입이 끝나지 않는다. */
 /** 캐릭터 알림(push)도 필수(2026-10-01 결정, 예외 없음) — 서버는 체크만 보고, 브라우저 허용·구독은 온보딩 화면이 끝까지 확인한다. */
 /** 만 18세 확인(age)도 필수 — 약관 제4조(18세 이상만 가입)를 가입 화면에서 지킨다(10/3 점검). */
-export const REQUIRED_TERMS = ['age', 'terms', 'privacy', 'ai', 'push'] as const
+/** 개인정보 국외 이전(transfer)도 필수 — 약관·처리방침과 따로 받는 동의(개인정보 보호법 제28조의8, 10/5). 동의 기록은 terms_consents.transfer_version. */
+export const REQUIRED_TERMS = ['age', 'terms', 'privacy', 'transfer', 'ai', 'push'] as const
 /** 가입 보상을 준 직후 한 번 환영 시트를 띄우는 주소 표시. */
 export const WELCOME_PARAM = 'welcome'
 /**

@@ -1,22 +1,53 @@
+import { revisionEffective } from './revisions'
+
 /**
- * 운영자 정보 — 약관·처리방침·안내·광고 동의 문서와 '나' 화면 고객센터가 함께 쓴다. 사용자가 정한 값(2026-10-01).
+ * 운영자 정보 — 약관·처리방침·안내·광고 동의 문서, 사이트 바닥글(SiteFooter), '나' 화면 고객센터가 함께 쓴다. 사용자가 정한 값(2026-10-01, 10/3 주소).
  * Gemini 요금 등급에 따른 데이터 이용 문장은 사용자 요청으로 뺐다(2026-10-01).
- * 비어 있으면 문서에 '입력 필요' 로 드러난다 — 지어낸 값을 싣지 않는다.
+ * 비어 있으면 화면·문서에 싣지 않고(지어낸 값을 싣지 않는다), 운영자가 채워야 할 값은 10/5 점검 보고에 적었다.
  */
 export const OPERATOR = {
-  /** 운영 주체(개인 이름 또는 상호). */
+  /** 운영 주체(상호 + 대표자) — 문서의 "운영자" 정의에 쓴다. */
   name: '현웅통신 대표 조현웅',
-  /** 이용자 문의·환불·개인정보 요청을 받는 이메일. '나' 화면 고객센터 줄도 이 주소로 연다. */
+  /** 상호(전자상거래법 제10조 ① 1호). */
+  brand: '현웅통신',
+  /** 대표자 성명. */
+  representative: '조현웅',
+  /** 이용자 문의·환불·개인정보 요청을 받는 이메일. '나' 화면 고객센터와 바닥글 고객문의도 이 주소. */
   email: 'ab40905045@gmail.com',
   /** 개인정보 보호책임자 이름(소규모 운영이면 보통 운영자 본인). */
   privacyOfficer: '조현웅',
-  /** 사업자 정보 — 대표자, 주소, 전화, 사업자등록번호, 통신판매업 신고번호(전자상거래법 제10조·제13조, 유료 판매 시). */
-  /** 10/3 사용자 제공: 주소. 전화번호는 사용자 요청으로 싣지 않는다(문의는 이메일). 통신판매업 신고번호는 아직 없음. */
-  business: '대표자 조현웅 · 주소 경상남도 양산시 금오16길 122 · 사업자등록번호 508-14-52353',
+  /** 사업자등록번호. */
+  registrationNumber: '508-14-52353',
+  /** 영업소 소재지(10/3 사용자 제공). */
+  address: '경상남도 양산시 금오16길 122',
+  /** 전화번호 — 전자상거래법 제10조 ①·시행령 제10조가 초기화면 표시를 요구한다. 사용자가 아직 정하지 않음(10/5). 비우면 싣지 않는다. */
+  phone: '',
+  /** 통신판매업 신고번호(예: 2026-경남양산-0001). 신고 전이라 비어 있음(10/5). 비우면 싣지 않는다 — 신고 뒤 여기만 채우면 바닥글·약관에 바로 나온다. */
+  mailOrderNumber: '',
+  /** 호스팅 서비스 제공자 — 전자상거래법 제10조 ① 6호(초기화면 표시). 처리방침 6·7항의 수탁자와 같다. */
+  hosting: [
+    { name: 'Vercel Inc.', role: '웹 서비스' },
+    { name: 'Supabase, Inc.', role: '데이터베이스·사진 저장' },
+  ],
 }
 
 const need = (label: string) => `[${label} 입력 필요]`
 export const operatorName = () => OPERATOR.name || need('운영자 이름·상호')
 export const operatorEmail = () => OPERATOR.email || need('문의 이메일')
 export const privacyOfficer = () => OPERATOR.privacyOfficer || need('개인정보 보호책임자')
-export const businessInfo = () => OPERATOR.business || need('사업자 정보(대표자·주소·전화·사업자등록번호·통신판매업 신고번호)')
+export const hostingLine = () => OPERATOR.hosting.map((h) => `${h.name}(${h.role})`).join(', ')
+
+/**
+ * 약관 제3조 ①의 사업자 정보 한 줄. 2026-10-13 개정(revisions.ts)이 시행되기 전에는 10/3 본문과 글자 하나 다르지 않게 유지한다 —
+ * 약관 본문을 예고 없이 바꾸지 않기 위해서다. 시행 뒤에는 전화·통신판매업 신고번호(채워진 것만)와 호스팅 제공자를 더한다.
+ */
+export const businessInfo = (now = new Date()) => {
+  const base = `대표자 ${OPERATOR.representative} · 주소 ${OPERATOR.address} · 사업자등록번호 ${OPERATOR.registrationNumber}`
+  if (!revisionEffective('service', '2026-10-13', now)) return base
+  return [
+    base,
+    OPERATOR.phone && `전화 ${OPERATOR.phone}`,
+    OPERATOR.mailOrderNumber && `통신판매업 신고번호 ${OPERATOR.mailOrderNumber}`,
+    `호스팅 서비스 제공 ${hostingLine()}`,
+  ].filter(Boolean).join(' · ')
+}

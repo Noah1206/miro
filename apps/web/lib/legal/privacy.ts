@@ -1,5 +1,6 @@
 import type { LegalDoc } from './index'
 import { operatorEmail, operatorName, privacyOfficer } from './operator'
+import { TRANSFER_HEAD, TRANSFER_ROWS } from './transfer-table'
 
 /**
  * 개인정보 처리방침 — 개인정보 보호법 제30조·시행령 제31조와 개인정보보호위원회 작성지침의 항목 순서를 따르고,
@@ -98,14 +99,8 @@ export const PRIVACY_POLICY: Pick<LegalDoc, 'intro' | 'sections'> = {
       title: '7. 개인정보의 국외 이전',
       blocks: [
         '서비스 제공 계약을 이행하기 위해 다음 업체에 처리를 맡기거나 보관하게 하면서 개인정보가 국외로 이전(국외에서 처리·보관)됩니다. 이 방침에 공개하는 것으로 이전하며(「개인정보 보호법」 제28조의8 제1항 제3호), 각 업체의 데이터 처리 조건에 따라 보호 조치를 적용합니다.',
-        { table: { head: ['이전받는 자(연락처)', '국가', '이전 항목', '시기와 방법', '이용 목적', '보유 기간'], rows: [
-          ['Google LLC (policies.google.com/privacy)', '미국', '대화 입력, 페르소나(닉네임·성별·소개), 캐릭터 설정, 최근 대화와 기억 요약, 이용자 현지 시각·언어', '대화할 때마다 암호화된 네트워크(HTTPS)로 전송', 'AI 응답 생성, 기억 정리', '응답 생성에 필요한 동안 처리'],
-          ['OpenAI, L.L.C. (openai.com/policies/privacy-policy)', '미국', '대화 입력, 페르소나(닉네임·성별·소개), 캐릭터 설정, 최근 대화와 기억 요약, 이용자 현지 시각·언어', 'Gemini가 응답하지 못할 때만 암호화된 네트워크(HTTPS)로 전송', '예비 AI 응답 생성', '남용 감시를 위해 최대 30일 보관 후 삭제(OpenAI API 데이터 정책)'],
-          ['OpenRouter, Inc. (openrouter.ai/privacy)', '미국 등(OpenRouter가 연결하는 모델 호스팅 업체의 소재국)', '언베일을 켠 대화방의 대화 입력, 페르소나(닉네임·성별·소개), 캐릭터 설정, 최근 대화와 기억 요약, 이용자 현지 시각·언어', '언베일을 켠 대화방에서 대화할 때마다 암호화된 네트워크(HTTPS)로 전송', '언베일 대화방의 AI 응답 생성, 기억 정리', '응답 생성에 필요한 동안 처리(대화를 저장·학습하지 않는 공급자에게만 전송)'],
-          ['GitHub, Inc. (github.com/site/privacy)', '미국', '데이터베이스 전체 백업(회원·대화·결제 기록 등)과 업로드 사진', '매일 1회 자동 전송(암호화된 네트워크)', '장애·데이터 손실 대비 복구', '데이터베이스 14일, 사진 3일'],
-          ['Vercel Inc. (vercel.com/legal/privacy-policy)', '미국(서비스 실행은 서울 리전)', '서비스 요청 정보와 서버 오류 기록', '서비스를 이용할 때마다', '웹 서비스 운영', 'Vercel의 로그 보관 기간'],
-          ['Discord Inc. (discord.com/privacy)', '미국', '계정 삭제 기록(내부 사용자 번호와 삭제 시각), 서비스 오류 요약', '해당하는 일이 생길 때 자동 전송', '운영자 알림', '운영 채널에서 삭제할 때까지'],
-        ] } },
+        // 표는 「개인정보 국외 이전 동의」(transfer.ts)와 공유한다 — 가입 때 따로 받는 동의와 이 방침이 어긋나지 않게.
+        { table: { head: TRANSFER_HEAD, rows: TRANSFER_ROWS } },
         '국외 이전을 원하지 않으면 계정을 삭제할 수 있습니다. 다만 AI 대화와 서비스 운영이 위 업체들을 통해 이루어지므로, 이전을 거부하면 서비스를 이용할 수 없습니다.',
       ],
     },

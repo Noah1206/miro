@@ -6,7 +6,8 @@ import { businessInfo, operatorEmail, operatorName } from './operator'
  * 내용은 코드가 실제로 하는 일(2026-09-30 팩트시트)로 채웠다. 숫자(가격·제공량·차감량)는 화면에 표시된 값을 기준으로 적는다 —
  * 운영 설정으로 바뀌는 값이라 약관에 박으면 어긋난다.
  */
-export const SERVICE_TERMS: Pick<LegalDoc, 'intro' | 'sections'> = {
+/** 요청 시점(now)의 본문 — 제3조 ①의 사업자 정보는 2026-10-13 개정(revisions.ts) 시행일부터 호스팅 제공자 등을 더해 적는다. */
+export const serviceTerms = (now = new Date()): Pick<LegalDoc, 'intro' | 'sections'> => ({
   sections: [
     {
       title: '제1조 (목적)',
@@ -29,7 +30,7 @@ export const SERVICE_TERMS: Pick<LegalDoc, 'intro' | 'sections'> = {
     {
       title: '제3조 (운영자 정보와 약관의 게시·개정)',
       blocks: [
-        `① 운영자 정보: ${operatorName()} / ${businessInfo()} / 문의 ${operatorEmail()}`,
+        `① 운영자 정보: ${operatorName()} / ${businessInfo(now)} / 문의 ${operatorEmail()}`,
         '② 운영자는 이 약관을 가입 화면과 마이페이지에서 언제든 볼 수 있게 둡니다.',
         '③ 운영자는 관련 법령을 어기지 않는 범위에서 약관을 바꿀 수 있습니다. 바꿀 때는 바뀌는 내용과 적용일을 적용일 7일 전부터 서비스 안에 알리고, 회원에게 불리하거나 중요한 변경은 적용일 30일 전부터 알리면서 바뀌기 전과 후를 비교해 보여 주고 서비스 안 알림 등으로 따로 알립니다.',
         '④ 회원은 바뀐 약관에 동의하지 않으면 적용일 전까지 계정을 삭제할 수 있습니다. 운영자가 ③의 방법으로 알리면서 적용일까지 거부 의사를 밝히지 않으면 동의한 것으로 본다고 분명히 알렸는데도 회원이 거부 의사를 밝히지 않으면, 바뀐 약관에 동의한 것으로 봅니다.',
@@ -173,4 +174,4 @@ export const SERVICE_TERMS: Pick<LegalDoc, 'intro' | 'sections'> = {
       ],
     },
   ],
-}
+})
