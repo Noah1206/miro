@@ -61,6 +61,8 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
   m: Msg; characterName: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
   const t = useT()
+  // 인트로의 상황 서술(role narrator)은 블록 없이 글만 저장된다 — 캐릭터 말풍선이 아니라 장면 서술로 그린다(10/5).
+  if (m.role === 'narrator' && m.kind === 'text' && !m.blocks.length) m = { ...m, blocks: [{ type: 'narrative', text: m.content }] }
   const reality = m.blocks.find((b) => b.type === 'reality') as { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
   if (m.role === 'user') return <div className={styles.userRow}><p className={styles.userBubble}><Emphasis text={m.content} /></p></div>
   if (m.kind === 'hidden') return <p data-hidden-message className="t-caption" style={{ fontStyle: 'italic' }}>{m.content}</p>
