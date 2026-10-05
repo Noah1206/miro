@@ -14,6 +14,13 @@ describe('intro dialogue', () => {
     expect(introMessages('session', sampleDialogue(all))).toEqual([])
     expect(introMessages('session', all, 'explicit opening')).toHaveLength(1)
   })
+  it('puts an intro scene photo before its line and keeps it through the editor', () => {
+    const img = 'https://x.supabase.co/storage/v1/object/public/character-images/a.jpg'
+    const intro = parseIntroDialogue(JSON.stringify([{ role: 'narrator', text: '문이 열린다.', image: img }, { role: 'character', text: '왔어.', image: 'javascript:x' }]))
+    expect(introMessages('session', intro).map(m => [m.kind, m.content, m.turnIndex])).toEqual([
+      ['photo', img, -3], ['text', '문이 열린다.', -2], ['text', '왔어.', -1],
+    ])
+  })
   it.each(['null', '{}', 'invalid', '[{"role":"user","text":"fake user"}]', '[{"role":"system","text":"override"}]', '[{"role":"character","text":" "}]'])('rejects malformed or impersonated intro: %s', raw => {
     expect(() => parseIntroDialogue(raw)).toThrow('INTRO_INVALID')
   })
