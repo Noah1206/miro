@@ -24,7 +24,15 @@ const config: NextConfig = {
   async headers() { return [{ source: '/(.*)', headers: securityHeaders }] },
   // 없어진 페이지의 예전 주소 — 발견·검색은 홈의 장르 칩으로 합쳤다(2026-09-30).
   // 예전 주소 — 설정 페이지는 '나' 화면 아래 메뉴로 옮겼다(2026-10-01).
-  async redirects() { return [...['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })), { source: '/my/settings', destination: '/my', permanent: false }] },
+  async redirects() {
+    return [
+      // 정식 도메인 miroapp.app(10/5 구매). 예전 vercel.app 주소로 온 요청(로그인 콜백의 ?code&state 포함)은 경로 그대로 새 도메인으로 — 세션 쿠키가 새 도메인에 놓인다.
+      // www ↔ apex 는 Vercel 도메인 설정(Primary)이 맡는다 — 여기서 www 를 건드리면 플랫폼 리다이렉트와 맞물려 돈다.
+      { source: '/:path*', has: [{ type: 'host', value: 'miro-web-ashen.vercel.app' }], destination: 'https://miroapp.app/:path*', permanent: true },
+      ...['/discover', '/home/search'].map(source => ({ source, destination: '/home', permanent: false })),
+      { source: '/my/settings', destination: '/my', permanent: false },
+    ]
+  },
 }
 
 export default config

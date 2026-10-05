@@ -45,11 +45,11 @@ D=/private/tmp/claude-501/-Users-johyeon-ung-Desktop-Miro/<session>/scratchpad/d
   && cd $D && PATH=$HOME/.nvm/versions/node/v20.19.6/bin:$PATH vercel deploy --prod --yes 2>&1 | grep -E "Aliased:|Error|error"
 cd / && rm -rf $D
 ```
-작업 트리가 아니라 커밋된 상태를 올린다(복제본). `Aliased: https://miro-web-ashen.vercel.app` 이 나와야 성공.
+작업 트리가 아니라 커밋된 상태를 올린다(복제본). `Aliased: https://miro-web-ashen.vercel.app` 이 나와야 성공(정식 도메인 https://miroapp.app 도 같은 배포를 가리킨다, 10/5).
 
 ## 6. 상태 확인
 ```bash
-curl -s https://miro-web-ashen.vercel.app/api/health | head -c 80
+curl -s https://miroapp.app/api/health | head -c 80   # 예전 vercel.app 주소는 308 로 여기로 넘어온다 — 그 주소로 확인하려면 -L
 ```
 `"ok":true` 와 `"schema":"ready"` 가 아니면 보고하고 멈춘다(푸시하지 않는다).
 
