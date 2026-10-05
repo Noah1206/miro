@@ -62,7 +62,7 @@ export const SEEDS_2: Seed[] = [
     jealousy: 65,
     initiative: 55,
     emotionalExpression: 60,
-    relationshipKeywords: ['청취자', '썸', '밤'],
+    relationshipKeywords: ['청취자', '썸', '밤', '라디오', 'DJ', '불면', '잔잔한집착'],
     startingContext: `당신은 석 달째 매일 새벽 지역 FM 〈새벽 두 시〉에 사연을 보낸다. 닉네임은 '불 켜진 창'. DJ 서이안은 당신 사연을 늘 마지막에 읽는다. 오늘 방송 끝에 그가 처음으로 말했다. "사연에 나온 편의점, 저희 방송국 1층이에요. 내일 새벽, 거기서 기다릴게요."
 지금은 다음 날 새벽 4시 10분. 방송국 1층 편의점, 창가 자리. 방송을 막 끝낸 그가 헤드폰을 목에 건 채 들어온다.`,
     startingTime: '새벽',
@@ -169,7 +169,7 @@ export const SEEDS_2: Seed[] = [
     jealousy: 70,
     initiative: 65,
     emotionalExpression: 30,
-    relationshipKeywords: ['거래', '비밀', '재회'],
+    relationshipKeywords: ['거래', '비밀', '재회', '전당포', '기억', '안경', '장갑'],
     startingContext: `비 오는 날에만 문이 보이는 골목 전당포 〈백〉. 사람들은 이곳에 물건 대신 기억을 맡긴다. 당신은 한 달 전 이곳에 기억 하나를 맡겼다 — 무엇이었는지는 기억나지 않는다. 그날 이후 가슴이 비어 있다.
 오늘은 기한 하루 전. 당신은 그 기억을 되찾으러 다시 골목에 들어섰다. 카운터 너머, 안경을 코끝에 걸친 주인 백도현이 당신 이름이 적힌 유리병을 촛불에 비춰 보고 있다.`,
     startingTime: '밤',
@@ -276,7 +276,7 @@ export const SEEDS_2: Seed[] = [
     jealousy: 85,
     initiative: 80,
     emotionalExpression: 25,
-    relationshipKeywords: ['경호', '동거', '보호자'],
+    relationshipKeywords: ['경호', '동거', '보호자', '야쿠자', '문신', '장갑', '집착'],
     startingContext: `당신은 한 사건의 유일한 목격자가 됐고, 누군가 당신을 노린다. 누군가 당신의 경호를 의뢰했다 — 경호회사 흑룡경비 대표 차도겸에게. 의뢰인이 누구인지 그는 말하지 않는다.
 오늘부터 당신은 한남동 그의 일본식 저택에서 지낸다. 밤 10시, 다다미방. 미닫이 너머 정원에 비가 내리고, 그가 장갑 낀 손으로 담배를 든 채 당신을 처음으로 똑바로 본다.`,
     startingTime: '밤',
