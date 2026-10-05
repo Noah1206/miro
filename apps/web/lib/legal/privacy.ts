@@ -87,9 +87,9 @@ export const PRIVACY_POLICY: Pick<LegalDoc, 'intro' | 'sections'> = {
         { table: { head: ['수탁자', '맡기는 업무'], rows: [
           ['Supabase, Inc.', '데이터베이스와 사진 저장, 소셜 로그인 중개(저장 위치: 대한민국 서울 리전)'],
           ['Vercel Inc.', '웹 서비스 운영(서울 리전에서 실행)'],
-          ['Google LLC', 'AI 응답 생성과 기억 정리(Gemini API)'],
-          ['OpenAI, L.L.C.', 'Gemini가 응답하지 못할 때의 예비 AI 응답 생성(OpenAI API)'],
-          ['OpenRouter, Inc.', '언베일을 켠 대화방의 AI 응답 생성과 기억 정리(DeepSeek 모델, 예비 xAI Grok 모델을 OpenRouter API로 중개)'],
+          ['Google LLC', 'AI 응답 생성과 기억 정리'],
+          ['OpenAI, L.L.C.', '예비 AI 응답 생성'],
+          ['OpenRouter, Inc.', '언베일을 켠 대화방의 AI 응답 생성과 기억 정리(모델 호스팅 업체 중개)'],
           ['GitHub, Inc.', '장애 복구용 백업 보관'],
           ['Discord Inc.', '운영자 알림 전달'],
         ] } },
@@ -158,7 +158,7 @@ export const PRIVACY_POLICY: Pick<LegalDoc, 'intro' | 'sections'> = {
         { list: [
           '저장하는 입력과 결과물: 이용자가 보낸 글(대화·문자, 통화 중 받아 적은 글), 캐릭터가 만든 대화·문자, AI가 대화에서 정리한 기억 요약, AI가 만든 캐릭터의 하루 기록(대화가 없는 동안 캐릭터가 겪은 일). 음성과 사진은 대화 기록으로 저장하지 않습니다.',
           '의도한 용도: 가상의 캐릭터와 이야기를 나누는 창작·놀이 서비스입니다. 실제 사람의 개인정보나 민감한 정보를 입력하지 마세요.',
-          '모델 학습: 운영자는 이용자의 대화로 AI 모델을 학습시키지 않습니다. AI 응답은 외부 AI(Google Gemini, Gemini가 응답하지 못할 때는 예비로 OpenAI GPT)가 만들고, 언베일을 켠 대화방은 OpenRouter를 거친 성인용 모델(DeepSeek, 예비 xAI Grok)이 만듭니다.',
+          '모델 학습: 운영자는 이용자의 대화로 AI 모델을 학습시키지 않습니다. AI 응답은 6항·7항에 적힌 외부 AI 공급자가 만들고, 언베일을 켠 대화방은 일반 대화와 다른 성인용 AI 공급자가 만듭니다.',
           '학습·검토 거부: AI 품질 개선 참여는 처음부터 꺼져 있고, 켰더라도 마이페이지 > AI 개선 참여에서 끄면 모인 자료를 바로 삭제합니다.',
           '부적절한 답변 신고: 대화 메시지의 신고 기능으로 알려 주면 운영자가 검토합니다.',
         ] },
