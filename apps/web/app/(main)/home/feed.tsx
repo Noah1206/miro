@@ -19,8 +19,8 @@ function PhotoDetails({ c }: { c: HomeCard }) {
 }
 function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
-  // 해시태그는 카드 밑에 — 장르 → 관계 순으로 8개까지, 넘치면 다음 줄로(2026-09-30, 10/5 5→8개·회색 칩).
-  const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 8)
+  // 해시태그는 카드 밑에 — 장르 → 관계 순으로 10개까지, 넘치면 다음 줄로(2026-09-30, 10/5 5→10개·회색 칩).
+  const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 10)
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
