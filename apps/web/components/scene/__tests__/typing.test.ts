@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MAX_REPLY_MS, msPerChar, pauseAfter, replyPace } from '../typing'
+import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MAX_REPLY_MS, MIN_TICK_MS, charsPerTick, msPerChar, pauseAfter, replyPace } from '../typing'
 
 describe('typing rhythm', () => {
   it('types slower when the character is hurt than when angry', () => {
@@ -16,9 +16,13 @@ describe('typing rhythm', () => {
   })
 
   it('never returns a speed that would stall the line', () => {
+    // 글자당 시간은 0 보다 크고, 한 틱(여러 글자)은 타이머 최소 간격 아래로 내려가지 않는다.
     for (const mood of Object.keys(TYPING_MS_PER_CHAR) as Array<keyof typeof TYPING_MS_PER_CHAR>) {
-      expect(msPerChar('가'.repeat(2000), mood)).toBeGreaterThanOrEqual(8)
+      const speed = msPerChar('가'.repeat(2000), mood)
+      expect(speed).toBeGreaterThan(0)
+      expect(speed * charsPerTick(speed)).toBeGreaterThanOrEqual(MIN_TICK_MS)
     }
+    expect(charsPerTick(TYPING_MS_PER_CHAR.neutral)).toBe(1)
   })
 
   it('pauses longest after an ellipsis — hesitation is silence, not words', () => {

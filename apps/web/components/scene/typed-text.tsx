@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import type { Mood } from '@miro/domain'
 import { Emphasis } from './emphasis'
-import { TYPING_MS_PER_CHAR, msPerChar, pauseAfter } from './typing'
+import { TYPING_MS_PER_CHAR, charsPerTick, msPerChar, pauseAfter } from './typing'
 
 /**
  * 한 글자씩 나타나는 대사.
@@ -36,13 +36,15 @@ export function TypedText({ text, mood = 'neutral', onDone, animate = true, pace
     const speed = msPerChar(text, mood, pace)
     // 긴 문단이라 글자 속도를 줄였으면 멈칫도 같은 비율로 줄인다 — 멈칫이 상한 밖에서 시간을 늘리지 않게.
     const squeeze = Math.min(1, speed / (TYPING_MS_PER_CHAR[mood] * pace))
+    // 글자당 시간이 타이머 최소 간격보다 짧으면 한 틱에 여러 글자 — 긴 문단도 상한 안에 끝난다.
+    const chunk = charsPerTick(speed)
     const step = () => {
-      i += 1
+      i = Math.min(text.length, i + chunk)
       setShown(i)
       if (i >= text.length) { done.current?.(); return }
-      timer = setTimeout(step, speed + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood) * pace * squeeze)
+      timer = setTimeout(step, speed * chunk + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood) * pace * squeeze)
     }
-    timer = setTimeout(step, speed)
+    timer = setTimeout(step, speed * chunk)
     return () => clearTimeout(timer)
   }, [text, mood, instant, pace])
 

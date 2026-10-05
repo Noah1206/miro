@@ -34,8 +34,16 @@ export function pauseAfter(char: string, next: string, mood: Mood): number {
 export function msPerChar(text: string, mood: Mood, pace = 1): number {
   const base = TYPING_MS_PER_CHAR[mood] * pace
   const max = MAX_PARAGRAPH_MS * pace
-  // 바닥은 브라우저가 이어지는 타이머에 지키는 최소 간격(4ms) 위에 둔다.
-  return text.length * base <= max ? base : Math.max(Math.max(4, 8 * pace), max / text.length)
+  // 상한을 넘기면 글자당 시간이 타이머 최소 간격 아래로 내려갈 수 있다 — 그때는 한 틱에 여러 글자를 보인다(charsPerTick).
+  return text.length * base <= max ? base : max / text.length
+}
+
+/** 타이머 한 틱의 최소 간격. 브라우저는 이어지는 setTimeout 을 4ms 아래로 내리지 않는다 — 그 위에서 여유 있게. */
+export const MIN_TICK_MS = 8
+
+/** 글자당 시간이 틱 최소 간격보다 짧으면 한 틱에 보일 글자 수 — 상한이 긴 문단에서도 지켜지게(10/5). */
+export function charsPerTick(speed: number): number {
+  return Math.max(1, Math.ceil(MIN_TICK_MS / speed))
 }
 
 /** 한 응답 전체를 치는 데 쓸 시간의 대략적 상한. 10/5: 12초 → 4초 — 서버 생성(약 8초) 뒤에 또 기다리게 하지 않는다. */

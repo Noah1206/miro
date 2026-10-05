@@ -20,14 +20,15 @@ test('onboarding cannot finish without the required terms, and ends with the wel
 
   const submit = page.getByRole('button', { name: '시작하기', exact: true })
   await expect(submit).toBeDisabled()
-  const required = ['서비스 이용약관', '개인정보 처리방침', 'AI 생성 콘텐츠 안내', '캐릭터 알림 받기'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
+  // 필수 6개: 만 18세(10/3)·약관·처리방침·국외 이전(처리방침과 따로 받는 동의, 10/5)·AI 안내·캐릭터 알림(10/1).
+  const required = ['만 18세 이상', '서비스 이용약관', '개인정보 처리방침', '개인정보 국외 이전 동의', 'AI 생성 콘텐츠 안내', '캐릭터 알림 받기'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
   await required[0]!.click()
   await expect(submit).toBeDisabled()            // 하나만으로는 열리지 않는다
-  await required[1]!.click(); await required[2]!.click()
+  for (const box of required.slice(1, 5)) await box.click()
   await expect(submit).toBeDisabled()            // 캐릭터 알림도 필수다(2026-10-01) — 테스트 환경은 알림 키가 없어 권한은 묻지 않는다
-  await required[3]!.click()
+  await required[5]!.click()
   await expect(submit).toBeEnabled()             // 필수를 모두 체크해야 열린다 (선택 항목은 없어도 된다)
-  await required[2]!.click()
+  await required[3]!.click()
   await expect(submit).toBeDisabled()
 
   // 전체 동의 = 모두 켠다(따로 있던 '전체 동의하고 시작하기' 는 2026-10-01 뺐다). 그다음 시작하기.

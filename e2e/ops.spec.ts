@@ -52,6 +52,8 @@ test('report a character message and see it accepted; duplicates are refused', a
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('안녕하세요.')
   await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByText('안녕하세요.')).toBeVisible()
+  // 신고 깃발은 캐릭터 프로필(신고 메뉴)을 눌러야 그 아래에 뜬다(10/5, 543df3d).
+  await page.getByRole('button', { name: '신고 메뉴' }).first().click()
   await page.getByRole('link', { name: '신고' }).first().click()
   await expect(page).toHaveURL(/\/report\?type=message/)
   const reportUrl = page.url()

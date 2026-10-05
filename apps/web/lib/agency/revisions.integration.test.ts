@@ -214,21 +214,27 @@ describeDb('authored revision save/edit/start lifecycle', () => {
     expect(await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, next.sessionId))).toHaveLength(0)
   })
 
-  it('with an explicit session cohort, ordinary saves and edits capture and compile nothing until a session is listed', async () => {
+  it('with an explicit session cohort, saves and edits still capture, but a session is pinned only once it is listed', async () => {
+    // 10/2 부터 저장은 코호트와 무관하게 잡는다 — 미로 캐릭터는 첫 대화의 첫 마디부터 그 사람이어야 해서(revisions.ts captureAllowed).
+    // 코호트는 세션 쪽만 가른다: 목록에 없는 세션은 판을 고정하지 않고 자율성 경로로 들어가지 않는다.
     vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', randomUUID())
     const saved = await save()
-    expect(await updateCharacter(saved.character.id, form('편집해도 캡처하지 않는다.'))).toMatch(/^\/character\//)
-    expect(await revisions(saved.character.id)).toEqual([])
-    expect(effects.tasks).toEqual([])
-    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', saved.session.id)
-    const snapshot = (await loadSession(saved.session.id, saved.userId))!.snapshot
-    expect(await loadAgencyRuntime(saved.session.id, saved.userId, snapshot, resolveRpLLM('Recorded fixture', { userId: saved.userId }))).toBeNull()
-    const [captured] = await revisions(saved.character.id)
-    expect(captured!.status).toBe('pending')
-    expect((await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, saved.session.id)))[0]!.revisionId).toBe(captured!.id)
+    expect((await revisions(saved.character.id)).map((r) => r.status)).toEqual(['pending'])
     expect(effects.tasks).toHaveLength(1)
+    expect(await updateCharacter(saved.character.id, form('편집도 잡는다.'))).toMatch(/^\/character\//)
+    expect(await revisions(saved.character.id)).toHaveLength(2)
+    const snapshot = (await loadSession(saved.session.id, saved.userId))!.snapshot
+    const llm = resolveRpLLM('Recorded fixture', { userId: saved.userId })
+    expect(await loadAgencyRuntime(saved.session.id, saved.userId, snapshot, llm)).toBeNull()
+    const runtimeOf = async () => (await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, saved.session.id)))[0]
+    expect((await runtimeOf())?.revisionId ?? null).toBeNull()
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_SESSIONS', saved.session.id)
+    expect(await loadAgencyRuntime(saved.session.id, saved.userId, snapshot, llm)).toBeNull() // 잡혔지만 아직 정리 전
+    const pinnedId = (await runtimeOf())!.revisionId
+    const pinned = (await revisions(saved.character.id)).find((r) => r.id === pinnedId)
+    expect(pinned?.status).toBe('pending')
     await flush()
-    expect((await revisions(saved.character.id))[0]!.status).toBe('ready')
+    expect((await revisions(saved.character.id)).find((r) => r.id === pinnedId)!.status).toBe('ready')
     expect(effects.contexts.at(-1)).toMatchObject({ userId: saved.userId, workload: 'background', usageUnits: 0 })
   })
 
