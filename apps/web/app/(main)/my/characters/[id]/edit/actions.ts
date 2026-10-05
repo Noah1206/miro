@@ -1,6 +1,6 @@
 'use server'
 import { defaultSessionPolicy } from '@miro/config'
-import { introMessages } from '@/lib/intro-dialogue'
+import { introMessages, introScenes } from '@/lib/intro-dialogue'
 
 import { notFound } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
@@ -28,6 +28,10 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   if (!owned) notFound()
 
   const p = parseCharacterForm(form, owned.character.experienceType)
+  // 편집기는 기본 도입부만 다룬다 — 다른 시작 상황(scene 이 붙은 인트로, 10/5)은 그대로 남긴다.
+  const [firstScene] = introScenes(owned.character.sampleDialogue)
+  p.character.sampleDialogue = [...p.character.sampleDialogue,
+    ...owned.character.sampleDialogue.filter((t) => t.purpose === 'intro' && (t.scene ?? '') !== (firstScene ?? ''))]
   const wasDraft = owned.character.isDraft
   const stillDraft = wasDraft && !p.publish
   const publishNow = wasDraft && p.publish

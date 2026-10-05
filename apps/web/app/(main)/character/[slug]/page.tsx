@@ -1,5 +1,7 @@
 import { features } from '@miro/config'
-import { sampleDialogue } from '@/lib/intro-dialogue'
+import { introDialogue, introScenes, sampleDialogue } from '@/lib/intro-dialogue'
+import { personalize } from '@/lib/personalize'
+import { getPersona } from '@/lib/persona'
 import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
@@ -23,12 +25,17 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const c = await getCharacterByKey(slug, user?.id ?? null)
   if (!c) notFound()
 
-  const [comments, commentCount, similar, likes] = await Promise.all([
+  const [comments, commentCount, similar, likes, persona] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
+    user ? getPersona(user.id) : null,
   ])
+  // 서술의 "당신"을 내 페르소나 이름으로(10/5, 위프처럼). 로그인 전·페르소나 없으면 그대로.
+  const me = (text: string | null) => personalize(text ?? '', persona?.name)
+  // 시작 상황(도입부)이 둘 이상이면 고른다 — 고른 값은 아래 '대화 시작하기' 폼으로 간다(form 속성).
+  const scenes = introScenes(c.sampleDialogue)
 
   const enter = startRoleplay.bind(null, slug)
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
@@ -86,7 +93,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
-            {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.personality}</p>}
+            {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{me(c.personality)}</p>}
             {profile.map((line) => (
               <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
             ))}
@@ -94,18 +101,35 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </Rule>}
         {c.experienceType === 'reality' && c.worldSetting && (
           <Rule label={t('세계관')}>
-            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{c.worldSetting}</p>
+            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{me(c.worldSetting)}</p>
           </Rule>
         )}
         <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
 
         <Rule label={t('첫 장면')}>
           <div className="detail-prose">
-            <p className="t-body-lg t-quote">{c.startingContext}</p>
+            <p className="t-body-lg t-quote">{me(c.startingContext)}</p>
             <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>
               {t('{when}부터 시작합니다.', { when: [c.worldLocation, c.startingTime].filter(Boolean).join(' · ') })}
             </p>
           </div>
+          {scenes.length > 1 && (
+            <fieldset style={{ border: 0, padding: 0, margin: '18px 0 0', display: 'grid', gap: 8 }}>
+              <legend className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 8 }}>{t('시작 상황')}</legend>
+              {scenes.map((scene, i) => {
+                const first = introDialogue(c.sampleDialogue, scene).find((d) => d.role === 'narrator')?.text ?? ''
+                return (
+                  <label key={scene} className="scene-option">
+                    <input type="radio" name="scene" value={scene} form="start-roleplay" defaultChecked={i === 0} />
+                    <span>
+                      <strong className="t-body">{scene || t('처음부터')}</strong>
+                      <span className="t-caption" style={{ display: 'block', color: 'var(--color-text-tertiary)', marginTop: 2 }}>{me(first).slice(0, 70)}{first.length > 70 ? '…' : ''}</span>
+                    </span>
+                  </label>
+                )
+              })}
+            </fieldset>
+          )}
           {sampleDialogue(c.sampleDialogue).length > 0 && (
             <div style={{ marginTop: 18 }}>
               <SampleDialogue name={c.name} portrait={c.images[0] ?? null} turns={sampleDialogue(c.sampleDialogue)} />
@@ -133,7 +157,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
       <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: 'var(--color-bg)' }}>
         {user
-          ? <form action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
+          ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
           : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
       </div>
     </Page>

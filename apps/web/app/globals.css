@@ -281,3 +281,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
     margin-left: auto; margin-right: auto;
   }
 }
+/* 상세 화면 시작 상황 고르기(10/5) — 줄 하나가 라디오 하나. 고른 줄만 테두리가 밝아진다. */
+.scene-option { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
+.scene-option:has(input:checked) { border-color: var(--color-text-secondary); background: var(--color-surface-1); }
+.scene-option input { margin-top: 3px; accent-color: var(--color-accent-text); }
