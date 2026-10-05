@@ -100,17 +100,25 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
+  // 신고는 프로필(또는 서술 아이콘)을 눌러야 그 아래에 나온다 — 메시지마다 신고 글자를 늘어놓지 않는다(10/5).
+  const [report, setReport] = useState(false)
   const pace = replyPace(count)
   const line = (p: Paragraph) => typing && p.index === typed
     ? <TypedText text={p.text} mood={mood} pace={pace} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
     : <Emphasis text={p.text} />
+
+  // 첫 인물 줄의 프로필에 신고를 단다. 인물 줄이 없는 서술뿐인 메시지면 첫 서술 아이콘에 단다.
+  const anchor = Math.max(0, segments.findIndex((s) => s.kind !== 'narration'))
+  const toggle = { 'aria-label': t('신고 메뉴'), 'aria-expanded': report, onClick: () => setReport((v) => !v) }
 
   return <div className={styles.reply}>
     {segments.map((seg, i) => {
       const hidden = typing && seg.paragraphs[0]!.index > typed
       if (seg.kind === 'narration') return (
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
-          <NarrationIcon />
+          {i === anchor
+            ? <span className={styles.avatarCol}><button type="button" className={styles.iconButton} {...toggle}><NarrationIcon /></button>{report && <ReportFlag id={m.id} kind="message" />}</span>
+            : <NarrationIcon />}
           <div className={styles.narrationText}>
             {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{line(p)}</p>)}
           </div>
@@ -119,9 +127,14 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
       const own = seg.speaker === name
       return (
         <div key={i} className={styles.characterRow} hidden={hidden}>
-          <span className={styles.avatar} aria-hidden>{own && portrait
-            ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
-            : seg.speaker.slice(0, 1)}</span>
+          {(() => {
+            const face = own && portrait
+              ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
+              : seg.speaker.slice(0, 1)
+            return i === anchor
+              ? <span className={styles.avatarCol}><button type="button" className={styles.avatar} {...toggle}>{face}</button>{report && <ReportFlag id={m.id} kind="message" />}</span>
+              : <span className={styles.avatar} aria-hidden>{face}</span>
+          })()}
           <div className={styles.characterContent}>
             <p className={styles.speaker}>{seg.speaker}</p>
             <div className={styles.bubble}>
@@ -151,19 +164,34 @@ function RealityTag({ sender, channel }: { sender?: string; channel?: string }) 
   return <p className="t-micro" style={{ color: 'var(--color-accent-text)', textTransform: 'none', letterSpacing: '0.04em' }}>{[sender, channel].filter(Boolean).join(' · ')}</p>
 }
 
+/** 프로필·서술 아이콘·사진을 누르면 그 아래에 뜨는 신고 아이콘(깃발). */
+function ReportFlag({ id, kind }: { id: string; kind: 'message' | 'photo' }) {
+  const t = useT()
+  return (
+    <TransitionLink href={`/report?type=${kind}&id=${id}`} aria-label={t('신고')} title={t('신고')} className={styles.reportFlag}>
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden focusable="false">
+        <path d="M4 14V2.5M4 3h7.5l-1.6 2.8L11.5 8.5H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </svg>
+    </TransitionLink>
+  )
+}
+
 /**
- * 신고 진입점 (n30). 작은 링크는 항상 보이고, 꾹 누르면 같은 메뉴가 뜬다 —
- * 제스처만으로 접근되는 기능은 두지 않는다.
+ * 신고 진입점 (n30). 보이는 진입점은 프로필·서술 아이콘(CharacterBubble)이나 사진(여기서 탭)이고,
+ * 꾹 누르면 같은 메뉴가 뜬다 — 제스처만으로 접근되는 기능은 두지 않는다.
  */
 function Reportable({ id, kind, children }: { id: string; kind: 'message' | 'photo'; children: React.ReactNode }) {
   const t = useT()
   const [menu, setMenu] = useState(false)
+  const [flag, setFlag] = useState(false)
   const { handlers } = usePress({ onLongPress: () => setMenu(true) })
   const href = `/report?type=${kind}&id=${id}`
   return (
     <div {...handlers} className="stack" style={{ gap: 6, position: 'relative', touchAction: 'pan-y' }}>
-      {children}
-      <TransitionLink href={href} aria-label={t('신고')} className="t-micro hit" style={{ alignSelf: 'flex-start', textTransform: 'none', letterSpacing: 0, minHeight: 24, display: 'inline-flex', alignItems: 'center', padding: '0 6px', marginLeft: -6 }}>{t('신고')}</TransitionLink>
+      {kind === 'photo'
+        ? <button type="button" className={styles.photoButton} aria-label={t('신고 메뉴')} aria-expanded={flag} onClick={() => setFlag((v) => !v)}>{children}</button>
+        : children}
+      {kind === 'photo' && flag && <ReportFlag id={id} kind={kind} />}
       <Popover open={menu} onClose={() => setMenu(false)}>
         <MenuItem type="button" onClick={() => { setMenu(false); window.location.href = href }}>{t('이 내용 신고')}</MenuItem>
       </Popover>

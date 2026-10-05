@@ -72,6 +72,15 @@
 .narrationText em { font-style: normal; }
 .avatar { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 14px; font-weight: 600; }
 .avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 25%; border-radius: inherit; }
+/* 신고 진입점(10/5): 프로필·서술 아이콘·사진을 누르면 바로 아래에 깃발 아이콘이 뜬다. */
+.avatarCol { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+button.avatar, .iconButton, .photoButton { border: 0; padding: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.iconButton { display: grid; place-items: center; width: 32px; height: 24px; background: none; color: inherit; }
+.iconButton .narrationIcon { margin-top: 0; }
+.photoButton { display: block; width: 100%; background: none; text-align: left; }
+button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visible, .reportFlag:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
+.reportFlag { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--color-surface-2); color: var(--color-text-secondary); }
+.reportFlag:hover { color: var(--color-accent-text); }
 .characterContent { flex: 1; min-width: 0; max-width: calc(100% - 40px); }
 .speaker { margin: 0 0 5px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
 .bubble { width: fit-content; max-width: 95%; padding: 12px 14px; border-radius: 4px 20px 20px 20px; background: var(--color-surface-2); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
