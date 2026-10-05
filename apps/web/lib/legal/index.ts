@@ -12,7 +12,7 @@ import { TRANSFER_CONSENT } from './transfer'
  * 약관/개인정보 기준 버전(= 시행일). 개정은 revisions.ts 에 적고, 시행일이 지나면 termsVersion()/privacyVersion() 이 그 날짜를 돌려준다.
  * 동의 기록(terms_consents)에는 동의한 시점의 시행 버전을 남긴다.
  */
-export const BASE_TERMS_VERSION = '2026-10-03'
+export const BASE_TERMS_VERSION = '2026-10-05'
 export const BASE_PRIVACY_VERSION = '2026-10-03'
 export const termsVersion = (now = new Date()) => effectiveVersion('service', BASE_TERMS_VERSION, now)
 export const privacyVersion = (now = new Date()) => effectiveVersion('privacy', BASE_PRIVACY_VERSION, now)

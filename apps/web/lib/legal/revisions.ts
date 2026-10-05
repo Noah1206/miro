@@ -21,16 +21,12 @@ export type Revision = {
 }
 export const NOTICE_DAYS: Record<Revision['kind'], number> = { minor: 7, major: 30 }
 
-export const REVISIONS: Revision[] = [
-  {
-    doc: 'service', from: '2026-10-03', to: '2026-10-13', announcedAt: '2026-10-05', kind: 'minor',
-    changes: [{
-      clause: '제3조 ① 운영자 정보',
-      before: '대표자·주소·사업자등록번호·문의 이메일을 적습니다.',
-      after: '여기에 전화번호, 통신판매업 신고 면제 사실(간이과세자), 호스팅 서비스 제공자(Vercel Inc., Supabase, Inc.)를 더해 적습니다(전자상거래법 제10조·제12조 ④). 그 밖의 조항은 바뀌지 않습니다.',
-    }],
-  },
-]
+/**
+ * 출시 전(이용자 = 운영자 계정뿐)에는 비워 두고 문서 본문을 바로 고친다(10/5 사용자 결정) — 고지 기간은 기존 이용자를 위한 절차다.
+ * 출시 뒤 첫 개정부터 여기에 적는다. 예:
+ * { doc: 'service', from: '2026-10-05', to: '2026-11-01', announcedAt: '2026-10-25', kind: 'minor', changes: [{ clause: '제3조 ①', before: '…', after: '…' }] }
+ */
+export const REVISIONS: Revision[] = []
 
 /** 한국 날짜 'YYYY-MM-DD'. 약관의 날짜 기준은 모두 한국 시간이다. */
 export const kstDate = (now = new Date()) => now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })

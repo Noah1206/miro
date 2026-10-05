@@ -1,5 +1,3 @@
-import { revisionEffective } from './revisions'
-
 /**
  * 운영자 정보 — 약관·처리방침·안내·광고 동의 문서, 사이트 바닥글(SiteFooter), '나' 화면 고객센터가 함께 쓴다. 사용자가 정한 값(2026-10-01, 10/3 주소).
  * Gemini 요금 등급에 따른 데이터 이용 문장은 사용자 요청으로 뺐다(2026-10-01).
@@ -41,16 +39,12 @@ export const privacyOfficer = () => OPERATOR.privacyOfficer || need('개인정�
 export const hostingLine = () => OPERATOR.hosting.map((h) => `${h.name}(${h.role})`).join(', ')
 
 /**
- * 약관 제3조 ①의 사업자 정보 한 줄. 2026-10-13 개정(revisions.ts)이 시행되기 전에는 10/3 본문과 글자 하나 다르지 않게 유지한다 —
- * 약관 본문을 예고 없이 바꾸지 않기 위해서다. 시행 뒤에는 전화·통신판매업 표시(채워진 것만)와 호스팅 제공자를 더한다.
+ * 약관 제3조 ①의 사업자 정보 한 줄(전자상거래법 제10조) — 대표자·주소·사업자등록번호·전화·통신판매업 표시(채워진 것만)·호스팅 제공자.
+ * 출시 전(이용자 = 운영자 계정뿐)이라 개정 절차 없이 바로 본문에 넣었다(10/5 사용자 결정). 출시 뒤 바꿀 때는 revisions.ts 절차로.
  */
-export const businessInfo = (now = new Date()) => {
-  const base = `대표자 ${OPERATOR.representative} · 주소 ${OPERATOR.address} · 사업자등록번호 ${OPERATOR.registrationNumber}`
-  if (!revisionEffective('service', '2026-10-13', now)) return base
-  return [
-    base,
-    OPERATOR.phone && `전화 ${OPERATOR.phone}`,
-    OPERATOR.mailOrder && `통신판매업 ${OPERATOR.mailOrder}`,
-    `호스팅 서비스 제공 ${hostingLine()}`,
-  ].filter(Boolean).join(' · ')
-}
+export const businessInfo = () => [
+  `대표자 ${OPERATOR.representative} · 주소 ${OPERATOR.address} · 사업자등록번호 ${OPERATOR.registrationNumber}`,
+  OPERATOR.phone && `전화 ${OPERATOR.phone}`,
+  OPERATOR.mailOrder && `통신판매업 ${OPERATOR.mailOrder}`,
+  `호스팅 서비스 제공 ${hostingLine()}`,
+].filter(Boolean).join(' · ')
