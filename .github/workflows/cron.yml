@@ -39,3 +39,24 @@ jobs:
             -H "Authorization: Bearer ${CRON_SECRET}" "${BASE}/api/cron/reality")
           cat /tmp/out.json; echo
           [ "$code" = "200" ] || { echo "스케줄러 실패: HTTP $code"; exit 1; }
+
+  # 앱 밖에서 보는 상태 확인(10/5) — 앱 안의 운영 알림은 크론이 돌아야 나가서, 크론·배포가 죽으면 조용하다.
+  # 실패하면 GitHub 가 저장소 주인에게 메일을 보내고, MIRO_OPS_DISCORD_WEBHOOK 시크릿이 있으면 Discord 로도 알린다.
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production health
+        env:
+          WEBHOOK: ${{ secrets.MIRO_OPS_DISCORD_WEBHOOK }}
+        run: |
+          set -uo pipefail
+          URL=https://miroapp.app/api/health
+          body=$(curl -sS --max-time 30 "$URL" || echo '{"ok":false,"error":"unreachable"}')
+          echo "$body"
+          if echo "$body" | grep -q '"ok":true'; then exit 0; fi
+          if [ -n "${WEBHOOK:-}" ]; then
+            msg=$(printf '**운영 상태 이상(외부 감시)** %s\n`%s`' "$URL" "$(echo "$body" | head -c 300)")
+            curl -sS --max-time 10 -H 'content-type: application/json' \
+              -d "$(jq -n --arg c "$msg" '{username:"MIRO 감시",content:$c}')" "$WEBHOOK" || true
+          fi
+          exit 1
