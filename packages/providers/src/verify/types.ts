@@ -8,7 +8,8 @@ export type VerificationRequest = {
   identityVerificationId?: string
 }
 /** lock: 24시간 재시도 잠금을 걸 실패인가. 창을 닫았거나 공급자 장애면 잠그지 않는다. */
-export type VerificationResult = { verified: true } | { verified: false; reason: string; lock: boolean }
+/** di: 본인확인기관이 준 중복가입확인정보(사이트마다 다른 값) — 한 사람이 여러 계정으로 인증하는 걸 막는 데만 쓴다. 공급자가 안 주면 없다. */
+export type VerificationResult = { verified: true; di?: string } | { verified: false; reason: string; lock: boolean }
 
 export interface AdultVerificationProvider {
   readonly info: ProviderInfo

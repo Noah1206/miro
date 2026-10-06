@@ -13,6 +13,8 @@ export const EXTRA_KEYS = [
   msg('마름'), msg('표준'), msg('근육질'), msg('과체중'), msg('남성'), msg('여성'),
   // providers OAUTH_LABEL
   msg('카카오'),
+  // providers verify/portone.ts 만료 사유
+  msg('본인인증이 만료됐어요. 다시 인증해 주세요.'),
   // lib/wallet/service.ts 내역 줄의 label·status (SQL case)
   msg('ECHO 대화'), msg('Pro 1개월 이용권'), msg('가입 선물'), msg('기한 지남'), msg('대화 이어가기 제공량'), msg('라이브 장면'),
   msg('사용 완료'), msg('사용 중'), msg('사진 생성'), msg('영상통화'), msg('음성통화'), msg('입금 대기'), msg('지급 대기'),

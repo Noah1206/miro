@@ -19,14 +19,14 @@ describe('PortOne identity verification', () => {
   const answer = (body: unknown, status = 200) => vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify(body), { status }))
 
   it('asks PortOne itself with the API secret and accepts a verified adult', async () => {
-    const spy = answer({ status: 'VERIFIED', verifiedCustomer: { birthDate: '1990-05-01' } })
+    const spy = answer({ status: 'VERIFIED', verifiedAt: new Date().toISOString(), verifiedCustomer: { birthDate: '1990-05-01' } })
     expect(await provider().verify({ userId: 'u', identityVerificationId: 'iv-u-1' })).toEqual({ verified: true })
     expect(String(spy.mock.calls[0]![0])).toBe('https://api.portone.io/identity-verifications/iv-u-1')
     expect(new Headers(spy.mock.calls[0]![1]!.headers).get('Authorization')).toBe('PortOne secret')
   })
 
   it('locks only a verified minor; a closed window or an outage stays retryable', async () => {
-    answer({ status: 'VERIFIED', verifiedCustomer: { birthDate: '2015-01-01' } })
+    answer({ status: 'VERIFIED', verifiedAt: new Date().toISOString(), verifiedCustomer: { birthDate: '2015-01-01' } })
     expect(await provider().verify({ userId: 'u', identityVerificationId: 'a' })).toMatchObject({ verified: false, lock: true })
     answer({ status: 'READY' })
     expect(await provider().verify({ userId: 'u', identityVerificationId: 'b' })).toMatchObject({ verified: false, lock: false })

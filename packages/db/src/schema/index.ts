@@ -23,6 +23,8 @@ export const users = pgTable('users', {
 
   adultVerifiedAt: timestamp('adult_verified_at', { withTimezone: true }),
   adultVerifyFailedAt: timestamp('adult_verify_failed_at', { withTimezone: true }),
+  /** 본인인증 DI 의 해시('sha256:'+hex, 10/6). 한 사람(DI)은 한 계정만 성인 인증 — 계정을 지우면 비운다. */
+  adultVerifyDi: text('adult_verify_di').unique(),
   /** 성인 콘텐츠 사용 정책 동의. 인증과 별개로 요구된다 (명세서 정책 2). */
   maturePolicyAgreedAt: timestamp('mature_policy_agreed_at', { withTimezone: true }),
   /** 첫 로그인 온보딩에서 받는다(선택). 'YYYY-MM-DD'. */

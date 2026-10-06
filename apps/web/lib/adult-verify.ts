@@ -1,7 +1,12 @@
-import { eq } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
+import { and, eq, ne } from 'drizzle-orm'
 import { db, users } from '@miro/db'
 import { canRetryVerification, verifyRetryAt } from '@miro/domain'
 import { resolveAdultVerification } from '@miro/providers'
+import { msg } from '@/lib/i18n'
+
+const DI_TAKEN = msg('이미 다른 계정에서 본인인증에 쓰인 정보예요. 한 사람은 한 계정에서만 성인 인증을 할 수 있어요.')
+const diHash = (di: string) => 'sha256:' + createHash('sha256').update(di).digest('hex')
 
 /** 본인인증 건 id 는 계정에 묶는다 — 한 사람의 인증 건을 다른 계정이 가져다 쓰지 못하게(브라우저가 이 접두어로 만들고 서버가 확인한다). */
 export const verificationPrefix = (userId: string) => `iv-${userId.replaceAll('-', '')}-`
@@ -24,6 +29,19 @@ export async function confirmAdult(userId: string, req: { birthDate?: string; id
     if (result.lock) await db.update(users).set({ adultVerifyFailedAt: now }).where(eq(users.id, userId))
     return { ok: false, reason: result.reason, lockedUntil: result.lock ? verifyRetryAt(now) : null }
   }
-  await db.update(users).set({ adultVerifiedAt: now, maturePolicyAgreedAt: now, adultVerifyFailedAt: null }).where(eq(users.id, userId))
+  // 한 사람(DI)은 한 계정만 — 인증을 빌려주거나 계정을 여러 개 만들어 돌려 쓰지 못하게(10/6). 원래 DI 는 저장하지 않고 해시만.
+  const di = result.di ? diHash(result.di) : null
+  if (di) {
+    const [taken] = await db.select({ id: users.id }).from(users).where(and(eq(users.adultVerifyDi, di), ne(users.id, userId))).limit(1)
+    if (taken) return { ok: false, reason: DI_TAKEN, lockedUntil: null }
+  }
+  try {
+    await db.update(users).set({ adultVerifiedAt: now, maturePolicyAgreedAt: now, adultVerifyFailedAt: null, ...(di ? { adultVerifyDi: di } : {}) }).where(eq(users.id, userId))
+  } catch (e) {
+    // 같은 DI 로 두 계정이 동시에 인증한 경우 — 고유 색인이 막는다.
+    const err = e as { code?: string; cause?: { code?: string } }
+    if ((err.code ?? err.cause?.code) === '23505') return { ok: false, reason: DI_TAKEN, lockedUntil: null }
+    throw e
+  }
   return { ok: true }
 }

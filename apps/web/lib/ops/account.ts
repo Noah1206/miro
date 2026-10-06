@@ -48,7 +48,7 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
   await db.transaction(async (tx) => {
     const [req] = await tx.insert(accountDeletions).values({ userId, impact }).returning({ id: accountDeletions.id })
     // 회원 정보는 삭제할 때 지운다(처리방침 3항) — 이메일·소셜 식별값만 재가입·부정 이용 방지로 1년 남긴다(purgeExpiredPersonalData).
-    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false, birthDate: null, tastes: [], avatarUrl: null, displayName: null }).where(eq(users.id, userId))
+    await tx.update(users).set({ deletedAt: now, allowTraining: false, allowEvaluation: false, birthDate: null, tastes: [], avatarUrl: null, displayName: null, adultVerifyDi: null }).where(eq(users.id, userId))
     await tx.delete(userSettings).where(eq(userSettings.userId, userId))   // 언어·시간대·광고성 동의 기록
     // 댓글은 본문을 지우고 숨긴다 — 행을 지우면 다른 사람의 답글까지 함께 지워진다(parent cascade).
     await tx.update(characterComments).set({ body: '', hiddenAt: now }).where(eq(characterComments.userId, userId))

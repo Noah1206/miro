@@ -21,7 +21,7 @@ describeDb('성인 인증 확인', () => {
   const portOne = () => {
     vi.stubEnv('PORTONE_API_SECRET', 'secret'); vi.stubEnv('PORTONE_STORE_ID', 'store'); vi.stubEnv('PORTONE_IDENTITY_CHANNEL_KEY', 'channel')
   }
-  const answer = (birthDate: string) => vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({ status: 'VERIFIED', verifiedCustomer: { birthDate } })))
+  const answer = (birthDate: string) => vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({ status: 'VERIFIED', verifiedAt: new Date().toISOString(), verifiedCustomer: { birthDate } })))
 
   it("refuses another account's verification without asking PortOne", async () => {
     portOne()
@@ -48,5 +48,18 @@ describeDb('성인 인증 확인', () => {
     const spy = vi.spyOn(globalThis, 'fetch')
     expect(await confirmAdult(minor, { identityVerificationId: verificationPrefix(minor) + 'c' })).toMatchObject({ ok: false, reason: null })
     expect(spy).not.toHaveBeenCalled()
+  })
+
+  it('한 사람(DI)은 한 계정만 — 다른 계정의 같은 DI 는 거절, 원래 DI 는 저장하지 않는다', async () => {
+    portOne()
+    const first = await user(), second = await user()
+    const di = `di-${randomUUID()}`
+    const withDi = () => vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({ status: 'VERIFIED', verifiedAt: new Date().toISOString(), verifiedCustomer: { birthDate: '1990-05-01', di } })))
+    withDi()
+    expect(await confirmAdult(first, { identityVerificationId: verificationPrefix(first) + 'd' })).toEqual({ ok: true })
+    expect((await row(first)).adultVerifyDi).toMatch(/^sha256:[0-9a-f]{64}$/)
+    withDi()
+    expect(await confirmAdult(second, { identityVerificationId: verificationPrefix(second) + 'e' })).toMatchObject({ ok: false, lockedUntil: null })
+    expect((await row(second)).adultVerifiedAt).toBeNull()
   })
 })
