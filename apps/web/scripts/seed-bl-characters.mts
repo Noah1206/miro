@@ -111,9 +111,20 @@ const { db, characters, worlds, contactProfiles, characterVisualIdentities } = a
 const { parseRoutine } = await import('@miro/domain')
 const { captureAgencyRevision } = await import('../lib/agency/revisions')
 
+// 장면 사진(upload-bl-photos 가 붙인 image)은 데이터 파일에 없다 — 덮어쓸 때 같은 도입부의 첫 인트로 줄에 되살린다(10/6, 한 번 날렸다).
+function keepSceneImages(next: Seed['sampleDialogue'], prev: Array<{ purpose?: string; scene?: string; image?: string }>) {
+  const images = new Map(prev.filter(d => d.purpose === 'intro' && d.image).map(d => [d.scene ?? '', d.image!]))
+  return next.map((d) => {
+    const image = d.purpose === 'intro' ? images.get(d.scene ?? '') : undefined
+    if (!image) return d
+    images.delete(d.scene ?? '')
+    return { ...d, image }
+  })
+}
+
 const inserted: Array<{ id: string; name: string; revisionId: string | null }> = []
 for (const s of SEEDS) {
-  const [exists] = await db.select({ id: characters.id }).from(characters).where(eq(characters.slug, s.slug)).limit(1)
+  const [exists] = await db.select({ id: characters.id, dialogue: characters.sampleDialogue }).from(characters).where(eq(characters.slug, s.slug)).limit(1)
   if (exists && !args.has('--update')) { console.log('skip (있음)', s.name, exists.id); continue }
   const routine = parseRoutine(s.contact.routine, 'authored', new Date().toISOString())
   if (!routine) throw new Error(`routine invalid: ${s.name}`)
@@ -124,7 +135,7 @@ for (const s of SEEDS) {
     hobbies: s.hobbies, dislikes: s.dislikes,
     jealousy: s.jealousy, initiative: s.initiative, emotionalExpression: s.emotionalExpression,
     relationshipKeywords: s.relationshipKeywords, startingContext: s.startingContext, startingTime: s.startingTime,
-    sampleDialogue: s.sampleDialogue, lore: s.lore, initialRelationship: s.initialRelationship,
+    sampleDialogue: keepSceneImages(s.sampleDialogue, exists?.dialogue ?? []), lore: s.lore, initialRelationship: s.initialRelationship,
   }
   const { routine: _r, ...contact } = s.contact
   const revision = await db.transaction(async (tx) => {
