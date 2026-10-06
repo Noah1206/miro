@@ -6,7 +6,7 @@
  */
 import type { Routine } from '@miro/domain'
 
-export type Dialogue = { role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; scene?: string }
+export type Dialogue = { role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; scene?: string; context?: string; time?: string; location?: string }
 export type Seed = {
   slug: string
   /** 일반 수위 전용(고등학생). 언베일은 직업의 '고등학생' 단어로 자동 차단된다. */

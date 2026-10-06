@@ -9,6 +9,7 @@ import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import { useT } from '@/lib/i18n/client'
 import { saveProfile } from './actions'
 import styles from './my.module.css'
+import { shrinkImage } from '@/lib/shrink-image'
 
 const MAX_BYTES = 5 * 1024 * 1024
 
@@ -55,10 +56,14 @@ function ProfileForm({ nickname, avatarUrl, onDone }: { nickname: string; avatar
         </span>
         {/* 크기는 여기서 먼저 막는다 — 너무 큰 파일은 서버 액션 한도에 걸려 화면이 오류로 넘어간다. */}
         <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" aria-label={t('프로필 사진 바꾸기')} className="sr-only"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            if (file.size > MAX_BYTES) { e.target.value = ''; setTooBig(true); setPreview(null); return }
+          onChange={async (e) => {
+            const input = e.target
+            const original = input.files?.[0]
+            if (!original) return
+            // 보내기 전에 줄여서 input 에 다시 넣는다(lib/shrink-image) — 서버 액션 본문 한도 4MB.
+            const file = await shrinkImage(original)
+            if (file !== original) { const dt = new DataTransfer(); dt.items.add(file); input.files = dt.files }
+            if (file.size > MAX_BYTES) { input.value = ''; setTooBig(true); setPreview(null); return }
             setTooBig(false)
             setPreview(URL.createObjectURL(file))
           }} />

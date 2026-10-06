@@ -17,7 +17,7 @@
 | Relationship | 관계 (문장으로) | relationship (수치) |
 | Reality contact | 먼저 온 연락 | reality contact |
 | Event | 일어나는 일 / 사건 | event |
-| Usage window | 시간 (남은 시간) | usage window |
+| Balance / usage | 미로 (`{n} 미로`, '미로가 부족해요'. '크레딧' 금지, 영·일·중은 MIRO) | credit, usage |
 
 ## 3. CTA
 권장: 세계로 들어가기 · 이어서 보기 · 역할극 시작하기 · 다시 만나기 · 저장하고 시작하기
@@ -36,7 +36,7 @@
 ## 4. 오류 — 무엇이 안 됐는지 + 다음 행동. 코드나 원인 설명은 넣지 않는다.
 ```
 잠시 연결이 끊겼어요. 다시 이어볼까요?        ← 네트워크·Provider
-이번 시간을 모두 썼어요. 18:20에 다시 열려요.  ← 사용량 (Free 는 Pro 안내를 덧붙인다)
+이번 달 이어갈 수 있는 대화를 모두 썼어요. …  ← 사용량 (문장은 copy.ts budgetMonthly)
 지금은 저장하지 못했어요. 한 번 더 눌러 주세요.  ← 상태 충돌
 ```
 개발 환경에서만 `observe()` 로 원인을 남긴다. 사용자 문장에는 넣지 않는다.

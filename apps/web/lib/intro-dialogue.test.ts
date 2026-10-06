@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { introDialogue, sampleDialogue, parseIntroDialogue, introMessages } from './intro-dialogue'
+import { introDialogue, sampleDialogue, parseIntroDialogue, introMessages, sceneOpening } from './intro-dialogue'
 import { parseCharacterForm } from '@/app/(main)/create/parse'
 
 describe('intro dialogue', () => {
@@ -43,5 +43,21 @@ describe('intro dialogue', () => {
     expect(parseCharacterForm(f).character.sampleDialogue).toEqual(saved)
     f.set('introDialogue', '[]')
     expect(parseCharacterForm(f).character.sampleDialogue).toEqual(sampleDialogue(saved))
+  })
+})
+
+describe('sceneOpening', () => {
+  const entries = [
+    { role: 'narrator' as const, purpose: 'intro' as const, scene: 'A', text: 'a' },
+    { role: 'narrator' as const, purpose: 'intro' as const, scene: 'B', text: 'b', context: '비 오는 밤', time: '밤', location: '옥상' },
+    { role: 'character' as const, purpose: 'intro' as const, scene: 'B', text: 'b2' },
+  ]
+  it('기본 도입부·모르는 이름은 null(캐릭터 기본값)', () => {
+    expect(sceneOpening(entries, 'A')).toBeNull()
+    expect(sceneOpening(entries, 'Z')).toBeNull()
+    expect(sceneOpening(entries, null)).toBeNull()
+  })
+  it('고른 장면의 첫 장면 설명·시각·장소', () => {
+    expect(sceneOpening(entries, 'B')).toEqual({ context: '비 오는 밤', time: '밤', location: '옥상' })
   })
 })

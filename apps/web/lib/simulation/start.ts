@@ -1,4 +1,4 @@
-import { introMessages } from '@/lib/intro-dialogue'
+import { introMessages, sceneOpening } from '@/lib/intro-dialogue'
 import { getPersona } from '@/lib/persona'
 import { and, eq, isNull, or, sql } from 'drizzle-orm'
 import { db, characters, messages, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
@@ -74,14 +74,17 @@ export async function createRoleplaySession(
 
     // 세션 정책 버전은 만들 때 한 번 정해진다(§6). 이후는 switchSessionPolicy 가 전환 표시와 함께 바꾼다.
     const policyVersion = defaultSessionPolicy(starting.experienceType)
+    // 고른 시작 상황 — 기본이 아니면 그 장면의 시각·장소로 시작하고, 대화방에 이름을 남겨 AI 의 첫 장면 설명도 바꾼다(10/6).
+    const scene = opts.opening ? null : sceneOpening(starting.dialogue, opts.scene)
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: starting.worldId, policyVersion,
+      openingScene: scene ? opts.scene : null,
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.
     await tx.insert(worldStates).values({
       // 만들기·편집의 소유자 세션(create/edit actions)과 같은 자리표시 — 화면의 장면 표시("어딘가 · 저녁")가 경로마다 다르지 않게.
-      sessionId: id, currentLocation: starting.worldLocation ?? '어딘가', currentTime: starting.startingTime,
+      sessionId: id, currentLocation: scene?.location ?? starting.worldLocation ?? '어딘가', currentTime: scene?.time ?? starting.startingTime,
     })
     // 캐릭터별 시작 관계. 값이 없으면 안전한 기본값으로 떨어진다.
     const { bonding: _curve, ...startingRelationship } = starting.initialRelationship

@@ -7,6 +7,7 @@ import { duration, ease } from '@/lib/motion/tokens'
 import { Line } from '../character/[slug]/sections'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
+import { shrinkImage } from '@/lib/shrink-image'
 
 /**
  * 만들기 폼의 조각들 (레퍼런스 UI).
@@ -274,15 +275,17 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{t('기기에서 가져오기')}</span>
           </label>
           <input id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
+            onChange={async (e) => {
+              const picked = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
+              e.target.value = ''
+              setOpen(false)
+              // 보내기 전에 줄인다 — 서버 액션 본문 한도(4MB) 안에 5장이 들어가게(lib/shrink-image).
+              const files = await Promise.all(picked.map(shrinkImage))
               if (files.length > 0) {
                 const added = files.map(file => ({ url: URL.createObjectURL(file), file }))
                 setPreviews(xs => [...xs, ...added])
                 setImageOrder(xs => [...xs, ...added.map(p => p.url)])
               }
-              e.target.value = ''
-              setOpen(false)
             }} />
         </div>
         <p className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 18, padding: '0 4px' }}>

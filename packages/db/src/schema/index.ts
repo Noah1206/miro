@@ -186,7 +186,7 @@ export const characters = pgTable('characters', {
    * 상세의 '상황 예시' — 이 캐릭터와의 대화가 어떤 느낌인지 보여주는 짧은 주고받음.
    * purpose가 없는 기존 항목은 소개용. purpose='intro' 항목은 새 세션에만 첫 메시지로 복사한다.
    */
-  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string }>>().notNull().default([]),
+  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string; context?: string; time?: string; location?: string }>>().notNull().default([]),
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
@@ -339,6 +339,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   adultSince: timestamp('adult_since', { withTimezone: true }),
   /** 언베일 수위(10/3, 대화방 메뉴에서 고름). */
   adultLevel: text('adult_level', { enum: ['soft', 'deep', 'explicit'] }).notNull().default('explicit'),
+  /** 고른 시작 상황(10/6, 인트로 줄의 scene). NULL = 기본 도입부. AI 의 첫 장면 설명을 그 장면 것으로 바꾼다. */
+  openingScene: text('opening_scene'),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

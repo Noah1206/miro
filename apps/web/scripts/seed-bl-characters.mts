@@ -13,9 +13,21 @@ import { randomUUID } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
 import { SEEDS as SEEDS_1, type Seed } from './bl-characters.data.mts'
 import { SEEDS_2 } from './bl-characters-2.data.mts'
+import { SCENE_OPENINGS } from './scene-openings.data.mts'
+
+// 기본이 아닌 도입부의 첫 인트로 줄에 그 장면의 첫 장면 설명·시각·장소를 붙인다(10/6, lib/intro-dialogue sceneOpening).
+function withSceneOpenings(s: Seed): Seed {
+  const map = SCENE_OPENINGS[s.slug] ?? {}
+  const seen = new Set<string>()
+  return { ...s, sampleDialogue: s.sampleDialogue.map((d) => {
+    if (d.purpose !== 'intro' || !d.scene || seen.has(d.scene) || !map[d.scene]) return d
+    seen.add(d.scene)
+    return { ...d, ...map[d.scene] }
+  }) }
+}
 
 // 1차 11명(10/4) + 2차 3명(10/5). slug 로 중복을 막으니 다시 돌려도 새 것만 들어간다.
-const SEEDS: Seed[] = [...SEEDS_1, ...SEEDS_2]
+const SEEDS: Seed[] = [...SEEDS_1, ...SEEDS_2].map(withSceneOpenings)
 
 const OWNER = 'f5a0dfcb-0e4c-443e-be17-c982234926c1' // 운영자(ab40905045@gmail.com) — 권재혁 소유자와 같다
 const DOC = new URL('../../../docs/bl-characters-2026-10-04.md', import.meta.url)
@@ -35,6 +47,11 @@ function check(s: Seed): string[] {
   if (s.lore.length > 20) bad.push('lore>20')
   if (s.hobbies.length > 6 || s.dislikes.length > 6) bad.push('tags>6')
   if (s.contact.routine.blocks.length > 14) bad.push('routine>14')
+  const scenes = new Set(s.sampleDialogue.filter(d => d.purpose === 'intro').map(d => d.scene ?? ''))
+  for (const [name, o] of Object.entries(SCENE_OPENINGS[s.slug] ?? {})) {
+    if (!scenes.has(name)) bad.push(`scene opening for unknown scene ${name}`)
+    if (o.context.length > 600) bad.push(`scene ${name} context ${o.context.length}>600`)
+  }
   return bad
 }
 

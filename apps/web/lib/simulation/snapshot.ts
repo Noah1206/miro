@@ -1,3 +1,4 @@
+import { sceneOpening } from '@/lib/intro-dialogue'
 import { characterContext, conversationContext } from './character-context'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { and, desc, eq, gt, inArray, isNull, sql } from 'drizzle-orm'
@@ -106,8 +107,12 @@ export async function loadSession(
   const availability = row.character.experienceType === 'reality' ? await characterAvailability(row.character.id, now, timeZone) : null
 
   const c = row.character
+  const character = characterContext(c, visual[0])
+  // 기본이 아닌 시작 상황으로 연 방은 그 장면의 첫 장면 설명을 쓴다(10/6).
+  const opening = sceneOpening(c.sampleDialogue, row.session.openingScene)?.context
+  if (opening) character.worldRole.startingContext = opening
   const snapshot: SimulationSnapshot = {
-    character: characterContext(c, visual[0]),
+    character,
     world: row.world as never,
     worldSetting: row.worldSetting,
     worldGenre: row.worldGenre,

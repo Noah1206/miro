@@ -25,8 +25,18 @@ import * as schema from './src/schema/index'
  * 운영 크론이 Discord 로 알린다. 매일 도는 곳은 비공개 저장소 Noah1206/miro-backups 의 GitHub Actions 다.
  *
  * 원본에는 읽기 전용 트랜잭션만 연다(record 의 한 줄 제외). 앱 데이터는 public 과 miro_perf(검색 문서·플레이 수·
- * 트리거 함수) 두 스키마다. auth·storage 등 Supabase 스키마의 표는 덤프에 없다. 덤프에는 사용자 데이터와
+ * 트리거 함수) 두 스키마다. Supabase Auth(auth 스키마)는 같은 스냅샷의 데이터만 auth.dump 로 따로 뜬다 — 구조는
+ * Supabase 가 관리해 새 프로젝트에 이미 있으니 복원은 데이터만 넣는다(아래 '복원'). 임시 서버 리허설에는 넣지 않는다
+ * (Supabase 역할·확장이 없어 복원이 안 된다), 대신 표별 행 수와 덤프 목차를 대조한다. 덤프에는 사용자 데이터와
  * ops_cron_config 의 크론 시크릿이 들어 있다 — BACKUP_DIR 은 이 (공개) 저장소 밖이어야 하고, 안이면 거부한다.
+ *
+ * Storage 는 모든 버킷의 모든 파일을 받는다. 공개 버킷은 공개 주소로, 비공개 버킷은 SUPABASE_SERVICE_ROLE_KEY 로 받고
+ * 키가 없으면 백업 전체가 멈춘다(조용히 빠뜨리지 않는다).
+ *
+ * 복원: 앱 데이터는 pg_restore --no-owner --no-privileges -n public -n miro_perf db.dump.
+ * Auth 는 그 다음, 새 Supabase 프로젝트에서 auth 표를 비운 뒤(새 프로젝트는 비어 있다)
+ *   PGOPTIONS='-c session_replication_role=replica' pg_restore --data-only --no-owner -d <DIRECT_DATABASE_URL> auth.dump
+ * (표 사이 외래 키 순서를 무시하려고 replica). Storage 파일은 storage/<버킷>/<경로> 를 같은 버킷·경로로 다시 올린다.
  */
 const source = process.env.SOURCE_DATABASE_URL
 if (!source) { console.error('SOURCE_DATABASE_URL required'); process.exit(1) }
@@ -51,7 +61,9 @@ const connect = (url: string) => postgres(url, { max: 1, prepare: false, ssl: lo
 
 type Manifest = {
   snapshotAt: string; source: string; schemas: string[]; dump: { file: string; bytes: number }
-  tables: Record<string, string>; rows: number; storage: { bucket: string; name: string; size: number; md5: string }[]; warnings: string[]
+  tables: Record<string, string>; rows: number
+  auth: { file: string; bytes: number; tables: Record<string, number> } | null // auth 스키마가 없으면(로컬 DB) null
+  storage: { bucket: string; name: string; size: number; md5: string }[]; warnings: string[]
 }
 
 if (process.argv[2] === 'record') {
@@ -69,6 +81,7 @@ if (process.argv[2] === 'record') {
 
 const dir = mkdtempSync(join(tmpdir(), 'miro-restore-'))
 const dump = join(dir, 'backup.dump')
+const authDump = join(dir, 'auth.dump')
 // macOS 의 postmaster 는 로캘이 없으면 "multithreaded during startup" 으로 죽는다. 리눅스(Actions)엔 C.UTF-8 이 늘 있다.
 const env = { ...process.env, LC_ALL: process.platform === 'darwin' ? 'en_US.UTF-8' : 'C.UTF-8' }
 let serverUp = false
@@ -103,14 +116,17 @@ type StorageObject = { bucket: string; name: string; size: number; etag: string 
 async function backupStorage(objects: StorageObject[], root: string) {
   const base = process.env.SUPABASE_URL?.replace(/\/$/, '')
   if (objects.length && !base) throw new Error('SUPABASE_URL required to back up Storage files')
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // 새 형식 비밀 키(sb_secret_…)는 apikey 머리글로만, 옛 JWT 서비스 키는 Authorization 도 같이 보낸다.
+  const auth: Record<string, string> = key ? { apikey: key, ...(key.startsWith('eyJ') ? { authorization: `Bearer ${key}` } : {}) } : {}
   const files: Manifest['storage'] = []
   for (const o of objects) {
     // 비공개 버킷은 서비스 키가 있어야 받는다 — 조용히 건너뛰지 않고 멈춘다.
-    if (!o.public) throw new Error(`Storage bucket ${o.bucket} is private; this backup reads public URLs only`)
+    if (!o.public && !key) throw new Error(`Storage bucket ${o.bucket} is private; SUPABASE_SERVICE_ROLE_KEY required`)
     const path = resolve(root, 'storage', o.bucket, o.name)
     if (!path.startsWith(resolve(root, 'storage') + sep)) throw new Error(`unsafe Storage object name: ${o.bucket}/${o.name}`)
-    const url = `${base}/storage/v1/object/public/${encodeURIComponent(o.bucket)}/${o.name.split('/').map(encodeURIComponent).join('/')}`
-    const res = await fetch(url, { signal: AbortSignal.timeout(60_000) })
+    const url = `${base}/storage/v1/object/${o.public ? 'public' : 'authenticated'}/${encodeURIComponent(o.bucket)}/${o.name.split('/').map(encodeURIComponent).join('/')}`
+    const res = await fetch(url, { headers: o.public ? {} : auth, signal: AbortSignal.timeout(60_000) })
     if (!res.ok) throw new Error(`Storage download ${o.bucket}/${o.name}: HTTP ${res.status}`)
     const bytes = Buffer.from(await res.arrayBuffer())
     const md5 = createHash('md5').update(bytes).digest('hex')
@@ -135,16 +151,28 @@ try {
     await tx.unsafe(setup)
     const [{ snap, at }] = await tx`select pg_export_snapshot() snap, now()::text at`
     const tables = (await tx`select format('%I.%I', schemaname, tablename) t from pg_tables where schemaname in ${tx(SCHEMAS)} order by 1`).map((r) => r.t as string)
-    const t0 = Date.now()
-    run('pg_dump', ['-h', src.hostname, '-p', src.port || '5432', ...(src.username ? ['-U', decodeURIComponent(src.username)] : []), '-d', src.pathname.slice(1) || 'postgres',
-      '-Fc', ...SCHEMAS.flatMap((s) => ['-n', s]), '--no-owner', '--no-privileges', `--snapshot=${snap}`, '-f', dump],
+    const pgDump = (args: string[]) => run('pg_dump', ['-h', src.hostname, '-p', src.port || '5432', ...(src.username ? ['-U', decodeURIComponent(src.username)] : []), '-d', src.pathname.slice(1) || 'postgres',
+      '-Fc', '--no-owner', '--no-privileges', `--snapshot=${snap}`, ...args],
       { PGPASSWORD: decodeURIComponent(src.password), PGSSLMODE: local ? 'prefer' : 'require' })
+    const t0 = Date.now()
+    pgDump([...SCHEMAS.flatMap((s) => ['-n', s]), '-f', dump])
     const dumpMs = Date.now() - t0
+    // Supabase Auth: 같은 스냅샷의 데이터만. 로컬 DB 처럼 auth 스키마가 없으면 건너뛴다(pg_dump -n 은 없는 스키마에 실패).
+    const [{ hasAuth }] = await tx`select to_regnamespace('auth') is not null "hasAuth"`
+    let authRows: Record<string, number> | null = null
+    if (hasAuth) {
+      pgDump(['-n', 'auth', '--data-only', '-f', authDump])
+      authRows = {}
+      for (const { t } of await tx`select format('%I.%I', schemaname, tablename) t from pg_tables where schemaname = 'auth' order by 1`) {
+        const [{ n }] = await tx.unsafe(`select count(*)::int n from ${t}`)
+        authRows[t as string] = n
+      }
+    }
     const [{ storage }] = await tx`select to_regclass('storage.objects') is not null storage`
     const objects: StorageObject[] = storage ? (await tx`
       select o.bucket_id bucket, o.name, coalesce((o.metadata->>'size')::bigint, 0)::int size, o.metadata->>'eTag' etag, b.public
       from storage.objects o join storage.buckets b on b.id = o.bucket_id order by 1, 2`) as unknown as StorageObject[] : []
-    return { at, tables, dumpMs, objects, sums: await checksums(tx, tables) }
+    return { at, tables, dumpMs, objects, authRows, sums: await checksums(tx, tables) }
   })
   await sourceSql.end({ timeout: 5 }); sourceSql = null
 
@@ -205,10 +233,20 @@ try {
   if (outDir) {
     mkdirSync(outDir, { recursive: true })
     copyFileSync(dump, join(outDir, 'db.dump'))
+    let auth: Manifest['auth'] = null
+    if (before.authRows) {
+      // 리허설 복원은 못 하니 덤프 목차가 auth 표마다 데이터 항목을 하나씩 담는지만 본다(깨진 파일이면 pg_restore 가 실패).
+      const entries = run('pg_restore', ['-l', authDump]).split('\n').filter((l) => / TABLE DATA auth /.test(l)).length
+      const n = Object.keys(before.authRows).length
+      if (entries !== n) throw new Error(`auth dump has ${entries} table data entries, expected ${n}`)
+      copyFileSync(authDump, join(outDir, 'auth.dump'))
+      auth = { file: 'auth.dump', bytes: statSync(authDump).size, tables: before.authRows }
+      console.log(`auth ${n} tables · ${Object.values(before.authRows).reduce((a, x) => a + x, 0)} rows · ${(auth.bytes / 1024).toFixed(0)}KB`)
+    }
     const files = await backupStorage(before.objects, outDir)
     const manifest: Manifest = {
       snapshotAt: before.at, source: `${src.hostname}${src.pathname}`, schemas: SCHEMAS, dump: { file: 'db.dump', bytes: dbBytes },
-      tables: before.sums, rows, storage: files, warnings,
+      tables: before.sums, rows, auth, storage: files, warnings,
     }
     // manifest 는 마지막에 쓴다 — 있으면 완성된 백업이다.
     writeFileSync(join(outDir, 'manifest.json'), JSON.stringify(manifest, null, 1))

@@ -1,5 +1,7 @@
 # Miro production release gates
 
+> 상태(2026-10-06): 운영은 https://miroapp.app 에서 열려 있고 운영 AI 예산은 0 이 아니다(일 $2·사용자 월 $3, MIRO_LAUNCH_READINESS 4장). 아래 9/15 문장은 당시 기준이다.
+
 2026-09-15. Implementation and release are separate. The user deferred live AI validation and kept operating budget at zero. No live test, public deployment, real checkout or media activation is approved by a passing mock suite.
 
 ## Environments
@@ -18,7 +20,7 @@
 - [ ] Concurrent load test meets agreed error, latency and cost targets. Targets must be measured and agreed, not assumed.
 - [x] Database backup restored into an isolated environment and record integrity checked. **2026-09-29:** `packages/db/backup.ts` 가 운영 DB 를 읽기 전용 스냅샷으로 `pg_dump`(PG17, `public`+`miro_perf`) → 임시 PG17 서버에 한 트랜잭션으로 복원 → 같은 스냅샷의 표별 행 수·체크섬 대조, drizzle 표 조회, 검색 트리거 확인. 첫 리허설: 56개 표 684행 불일치 0, 덤프 3.9초·복원 0.15초. **정기 백업(같은 날):** 비공개 저장소 `Noah1206/miro-backups` 의 GitHub Actions 가 매일 03:00 KST 에 같은 검증을 돌리고(TLS 강제), 통과한 덤프는 **14일**, Storage 이미지(`character-images`, 크기·md5 를 Storage 기록과 대조)는 **3일** 아티팩트로 보관한다 — 앱이 Storage 파일을 지우지 않아 최신 사본이 이전 것을 다 담는다. 두 아티팩트가 올라간 뒤에만 `ops_backup_runs` 에 기록하고, 36시간 넘게 없으면 운영 크론이 Discord 로 "정기 백업 멈춤" 을 보낸다(기록 조회 실패도 따로 알린다). 계정 삭제는 운영자 Discord 에 ID 로 남겨(DB 밖) 복구 뒤 `apps/web/scripts/redelete-accounts.mts` 로 다시 지운다. 빠진 것: Supabase `auth`·`storage` 스키마 표, 비공개 버킷(생기면 백업이 실패로 멈춘다). 백업에는 삭제된 계정의 데이터가 최대 14일, 삭제된 계정의 이미지는 Storage 에 계속 남는다 — 개인정보 문서 대조 때 반영한다.
 - [ ] Privacy/deletion/retention behavior matches user-facing documents.
-- [x] Monitoring alerts reach an operator, including provider failure and budget exhaustion. **2026-09-29:** 유지보수 크론(15분)이 `lib/ops/alerts.ts` 로 DB 기록을 보고 Discord 웹훅(`MIRO_OPS_DISCORD_WEBHOOK`)에 보낸다 — AI 제공자 장애 의심(15분 안 실패 절반 이상), 일일 예산·호출 한도 80%/소진, 24시간 넘은 입금 대기, 푸시 실패 누적. 같은 알림은 6시간에 한 번(`ops_alerts` 표). 웹훅을 처음 본 뒤 '연결됨' 인사를 한 번 보낸다. 받는 사람은 운영자뿐이다. 대시보드·오류 추적 도구는 아직 없다.
+- [x] Monitoring alerts reach an operator, including provider failure and budget exhaustion. **2026-09-29:** 유지보수 크론(15분)이 `lib/ops/alerts.ts` 로 DB 기록을 보고 Discord 웹훅(`MIRO_OPS_DISCORD_WEBHOOK`)에 보낸다 — AI 제공자 장애 의심(15분 안 실패 절반 이상), 일일 예산·호출 한도 80%/소진, 24시간 넘은 입금 대기, 푸시 실패 누적. 같은 알림은 6시간에 한 번(`ops_alerts` 표). 웹훅을 처음 본 뒤 '연결됨' 인사를 한 번 보낸다. 받는 사람은 운영자뿐이다. 대시보드·오류 추적 도구는 아직 없다. **이후:** 서버 오류는 `apps/web/instrumentation.ts` 의 `onRequestError` 가 Discord 로 보낸다(같은 오류 10분 억제). `.github/workflows/cron.yml` 의 `health` 잡이 앱 밖에서 `https://miroapp.app/api/health` 를 확인한다(ok 아니면 실패 메일, 시크릿 있으면 Discord).
 
 ## Deployment order
 
@@ -46,7 +48,9 @@ Pro requires explicit price, pool size and depth/frequency settings plus real pu
 
 Photo, voice message, call, video, Live Scene and Face Cast each require a working provider, permission/safety checks, saved results, bounded costs and failure recovery. A mock adapter or UI does not pass a release gate.
 
-### 음성통화 (2026-09-24 검증 중 → 2026-09-29 문자 통화로 전체 공개)
+### 음성통화 (2026-09-24 검증 중 → 2026-09-29 문자 통화로 전체 공개 → 2026-10-01 운영에서 닫음)
+
+- **2026-10-01 (현재):** 베타 결정으로 운영에서 전화·영상통화를 사용자 화면에서 없앴다 — `voiceCall` 을 다시 `features.ts` 운영 차단 목록에 넣었고 테스터(`MIRO_VOICE_CALL_USERS`)도 운영에선 막힌다. 캐릭터가 걸려던 전화는 문자로 간다. 다시 열려면 차단 목록에서 `voiceCall` 을 뺀다. 아래 9/29 내용은 이력이다(과금 단위 '크레딧'도 지금은 '미로').
 
 - **2026-09-29:** Gemini 목소리가 불합격이라 실시간 음성은 계속 닫고(`voiceCallAudio` 운영 차단), 통화 자체는 문자 통화로 모두에게 열었다 — `voiceCall` 을 차단 목록에서 뺐다. 사용자가 거는 통화와 캐릭터가 거는 통화 모두 문자로 진행되고, 과금은 분당 5 크레딧 그대로. 수신 벨 폴링(탭마다 8초)이 운영에서 돈다. `MIRO_VOICE_CALL_USERS` 는 플래그를 다시 끌 때의 허용 목록으로만 남는다.
 

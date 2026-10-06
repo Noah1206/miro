@@ -2,7 +2,9 @@
 
 AI 캐릭터 관계 시뮬레이션. 캐릭터·세계·관계·사건·NPC·기억이 하나의 지속되는 상태를 공유하고, 앱을 닫아도 캐릭터가 먼저 연락한다.
 
-2026-09-15 P0 수정: 운영 mock·미완성 미디어·신규 결제를 차단하고, 안전 검사·관계 단계·기억·실패 환불을 보완했다. 현재 변경과 남은 출시 조건은 [P0 검증 결과](docs/P0_PROGRESS_2026-09-15.md)를 확인한다. 이전 구조 설명은 [AI Platform 보고서](docs/MIRO_AI_PLATFORM.md)에 있다.
+운영 주소: https://miroapp.app (예전 `miro-web-ashen.vercel.app` 은 `/api/cron` 을 빼고 여기로 308 이동, `apps/web/next.config.ts`). 남은 출시 조건은 [출시 게이트](docs/PRODUCTION_RELEASE_GATES.md)·[출시 검증](docs/MIRO_LAUNCH_READINESS.md), AI 구조·모델 배치는 [AI Platform 보고서](docs/MIRO_AI_PLATFORM.md)를 본다. 9/15 P0 기록은 [P0 검증 결과](docs/P0_PROGRESS_2026-09-15.md).
+
+현재 운영 요약(2026-10-06): 전화·영상통화는 운영에서 닫혀 있다(`packages/config/src/features.ts` 차단 목록). 잔액 단위는 '미로'. 앱은 ko/en/ja/zh, 온보딩은 알림 허용까지 마쳐야 끝난다. 공식 캐릭터는 `apps/web/scripts/bl-characters*.data.mts` 를 `seed-bl-characters.mts` 로 넣는다. 성인 모드 '언베일'은 `MIRO_ADULT_TESTERS` 계정만(본인인증 계약 전).
 
 **정해진 스토리를 재생하지 않는다.** 모든 사건·연락·관계 변화는 현재 상태(관계·세계·성향·설정·시각)에서 나온다. 가입 경과일이나 턴 수만으로는 아무것도 일어나지 않으며, 이 불변식은 테스트(T1–T8)로 CI에서 게이트된다.
 
