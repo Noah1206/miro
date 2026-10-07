@@ -3,7 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { usePathname } from 'next/navigation'
 import { Button, Notice, Sheet, TransitionLink, useToast } from '@/components/ui'
 import { readWallet, purchaseCredits } from '@/app/(main)/recharge/wallet-actions'
-import { SHEET_BUTTON, TransferActions } from '@/app/(main)/recharge/transfer-actions'
+import { TransferActions } from '@/app/(main)/recharge/transfer-actions'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
 import styles from './wallet.module.css'
 import { msg, INTL_LOCALE } from '@/lib/i18n'
@@ -197,7 +197,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             <h2 className="t-title-2">{t('미로가 부족해요')}</h2>
           </div>
           <div className={styles.actions}>
-            <Button variant="secondary" style={SHEET_BUTTON} full onClick={() => setStage('catalog')}>{t('충전하고 이어가기')}</Button>
+            <Button variant="primary" full onClick={() => setStage('catalog')}>{t('충전하고 이어가기')}</Button>
             <Button variant="ghost" full onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </div>
         </div> : waiting ? <section className={styles.stack} data-bank-order={order.status}>
@@ -215,11 +215,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             {t('입금하지 않으면 72시간 뒤 주문이 자동으로 취소되고, 아무것도 청구되지 않아요.')}{' '}
             <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
           </p>}
-          {/* 송금 버튼을 눌러야 열린다 — 그 전엔 흐린 글씨로 잠겨 있다. */}
+          {/* 송금 버튼을 눌러야 열린다 — 그 전엔 비활성(회색)으로 잠겨 있고, 열리면 주황. */}
           <div className={styles.actions}>
-            <Button variant="secondary" full data-confirm-deposit onClick={() => void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
-              disabled={order.status === 'awaiting' && !transferTapped}
-              style={{ ...SHEET_BUTTON, ...(order.status === 'awaiting' && !transferTapped ? { color: 'var(--color-text-quaternary)' } : {}) }}>{t('입금 확인하기')}</Button>
+            <Button variant="primary" full data-confirm-deposit onClick={() => void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
+              disabled={order.status === 'awaiting' && !transferTapped}>{t('입금 확인하기')}</Button>
             <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </div>
         </section> : done ? <>
@@ -244,7 +243,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
             </p>
             <div className={`${styles.footer} ${styles.actions}`}>
-              <Button full variant="secondary" style={SHEET_BUTTON} onClick={() => void checkout()} status={state === 'loading' ? 'loading' : 'idle'} disabled={!selected}>{t('다음으로')}</Button>
+              <Button full variant="primary" onClick={() => void checkout()} status={state === 'loading' ? 'loading' : 'idle'} disabled={!selected}>{t('다음으로')}</Button>
               <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
             </div>
           </>}

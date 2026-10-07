@@ -10,7 +10,7 @@ import styles from './settings-view.module.css'
 const step = (value: number, options: readonly { value: number; label: string }[]) =>
   options.reduce((best, option) => Math.abs(option.value - value) < Math.abs(best.value - value) ? option : best).label
 
-function Details({ rows, avatar }: { rows: [string, string | null | undefined][]; avatar?: { src: string; alt: string } }) {
+function Details({ rows }: { rows: [string, string | null | undefined][] }) {
   const t = useT()
   const visibleRows = rows.filter(([, value]) => value?.trim())
   const flow = (items: typeof visibleRows) => <dl style={{ margin: 0, display: 'flex', flexWrap: 'wrap', gap: '8px 18px' }}>
@@ -29,36 +29,11 @@ function Details({ rows, avatar }: { rows: [string, string | null | undefined][]
       }}>{value}</dd>
     </div>)}
   </dl>
-  if (!avatar) return <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)' }}>{flow(visibleRows)}</div>
-  const summary = visibleRows.slice(0, 2)
-  const rest = visibleRows.slice(2)
-  return <div style={{ padding: 12, borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)' }}>
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 18 }}>
-      {/* 체형 선택 화면과 같은 이미지를 써서 선택값과 소개 페이지가 어긋나지 않게 한다. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={avatar.src} alt={avatar.alt} width={120} height={160} loading="lazy" decoding="async" style={{
-        width: 'clamp(94px, 27vw, 120px)', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block', flexShrink: 0,
-        borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)',
-      }} />
-      <dl style={{ margin: '44px 0 0', minWidth: 0 }}>
-        <dt style={{ marginBottom: 8, fontSize: 12, color: 'var(--color-text-tertiary)' }}>{t('선택한 외형')}</dt>
-        <dd style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--color-text-primary)' }}>
-          {summary.map(([, value]) => value).join(' · ')}
-        </dd>
-      </dl>
-    </div>
-    {rest.length > 0 && <div style={{ marginTop: 10, padding: '6px 2px 0' }}>{flow(rest)}</div>}
-  </div>
+  return <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)' }}>{flow(visibleRows)}</div>
 }
 
 export function CharacterSettingsView({ visual, contact, name, can }: { name: string; can: ContactCapabilities; visual?: Pick<typeof characterVisualIdentities.$inferSelect, 'bodyProfile' | 'baseFace' | 'hair' | 'styleTags' | 'expressionTendency'>; contact?: Pick<typeof contactProfiles.$inferSelect, 'enabled' | 'presentation' | 'contactFrequency' | 'initiativeLevel' | 'preferredChannel' | 'photoProbability' | 'voiceMessageProbability' | 'callProbability' | 'videoCallProbability'> }) {
   const t = useT()
-  const gender = visual?.bodyProfile.gender
-  const build = visual?.bodyProfile.build
-  const bodyAvatar = gender && build
-    // 체형 참고 이미지는 종종 다시 그려진다 — 전부 같은 캐시 버전을 붙여 새 파일이 바로 반영되게 한다.
-    ? { src: `/builds/${gender}-${build}.webp?v=7`, alt: t('{name}의 {gender} {build} 체형', { name, gender: t(GENDER_PRESETS[gender]?.label ?? ''), build: t(BUILD_PRESETS[build]?.label ?? '') }) }
-    : undefined
   const appearance: [string, string | null | undefined][] = visual ? [
     [msg('성별'), visual.bodyProfile.gender ? t(GENDER_PRESETS[visual.bodyProfile.gender]?.label ?? '') : null],
     [msg('체형'), visual.bodyProfile.build ? t(BUILD_PRESETS[visual.bodyProfile.build]?.label ?? '') : null],
@@ -68,7 +43,7 @@ export function CharacterSettingsView({ visual, contact, name, can }: { name: st
     [msg('스타일'), visual.styleTags.join(' · ')], [msg('표정'), visual.expressionTendency],
   ] : []
   return <>
-    {appearance.some(([, value]) => value?.trim()) && <Rule label={t('외형')}><Details rows={appearance} avatar={bodyAvatar} /></Rule>}
+    {appearance.some(([, value]) => value?.trim()) && <Rule label={t('외형')}><Details rows={appearance} /></Rule>}
     {contact && <Rule label={t('연락')}>
       <div className={styles.contactCard}>
         <div className={styles.summary}>

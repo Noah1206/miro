@@ -3,7 +3,6 @@ import { useState, useTransition } from 'react'
 import { Button, Checkbox, Sheet, useToast } from '@/components/ui'
 import { Popover } from '@/components/ui/popover'
 import { msg } from '@/lib/i18n'
-import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import sheet from '@/components/push-subscribe.module.css'
 import { useT } from '@/lib/i18n/client'
 import { setAdultMode } from './actions'
@@ -76,7 +75,7 @@ export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: strin
           <a href="/terms/adult" target="_blank" rel="noopener" className="t-caption" style={{ textDecoration: 'underline', textUnderlineOffset: 3 }}>{t('언베일 이용 정책 보기')}</a>
         </div>
         <div className={sheet.actions}>
-          <Button type="submit" variant="secondary" full style={SHEET_BUTTON} status={pending ? 'loading' : 'idle'} disabled={pending}>{t('켜기')}</Button>
+          <Button type="submit" variant="primary" full status={pending ? 'loading' : 'idle'} disabled={pending}>{t('켜기')}</Button>
           <Button type="button" variant="ghost" size="sm" full onClick={() => setAsk(null)} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
         </div>
       </form>

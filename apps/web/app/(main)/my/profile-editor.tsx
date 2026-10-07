@@ -5,7 +5,6 @@ import { LogoMark, Sheet, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { CharacterPhoto } from '@/components/character-visual'
 import { CountedInput, LabeledField } from '@/app/(main)/create/form-parts'
-import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import { useT } from '@/lib/i18n/client'
 import { saveProfile } from './actions'
 import styles from './my.module.css'
@@ -72,7 +71,7 @@ function ProfileForm({ nickname, avatarUrl, onDone }: { nickname: string; avatar
         <CountedInput name="nickname" ariaLabel={t('닉네임')} placeholder={t('예) 지우')} max={PERSONA_LIMITS.name} defaultValue={nickname} required />
       </LabeledField>
       {error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(error)}</p>}
-      <SubmitButton variant="secondary" full style={SHEET_BUTTON}>{t('저장')}</SubmitButton>
+      <SubmitButton variant="primary" full>{t('저장')}</SubmitButton>
       {/* 성별·소개는 내 페르소나 화면에 그대로 있다 — 연필이 그 화면으로 가던 길을 대신한다. */}
       <TransitionLink href="/persona?next=/my" className={`hit ${styles.personaLink}`}>{t('성별·소개 바꾸기')}</TransitionLink>
     </form>

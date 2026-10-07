@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Sheet, useToast } from '@/components/ui'
-import { SHEET_BUTTON } from '@/app/(main)/recharge/transfer-actions'
 import styles from './push-subscribe.module.css'
 import { markPushPromptDone, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
@@ -184,7 +183,7 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
         </div>
         <div className={styles.actions}>
           {onAllow ? <>
-            <Button variant="secondary" full style={SHEET_BUTTON} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
+            <Button variant="primary" full onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
             <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </> : kind === 'denied' && !how
             ? <>

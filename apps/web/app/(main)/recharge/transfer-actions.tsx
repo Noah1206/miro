@@ -3,8 +3,8 @@ import { Button, useToast } from '@/components/ui'
 import styles from '@/components/wallet/wallet.module.css'
 import { useT } from '@/lib/i18n/client'
 
-/** 시트의 행동 버튼은 배경에 녹는 어두운 채움 — 주황은 지갑 화면의 충전하기 하나만 쓴다. */
-export const SHEET_BUTTON = { background: 'var(--color-surface-3)', border: '1px solid var(--color-border-strong)' } as const
+/** 송금 앱 고르기 버튼의 어두운 채움 — 같은 위상의 선택지라 주황을 쓰지 않는다. 시트의 주요 행동은 주황(10/7). */
+const SHEET_BUTTON = { background: 'var(--color-surface-3)', border: '1px solid var(--color-border-strong)' } as const
 
 /**
  * 입금을 돕는 두 버튼. 같은 크기, 같은 위상.
