@@ -32,10 +32,6 @@
 .credit { padding: 22px 16px 16px; border-radius: 16px; background: var(--color-surface-1); }
 .balance { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
 .creditActions { display: grid; margin-top: 18px; }
-/* 충전 — 테두리만 있는 알약(10/1 요청, 스크린샷의 #B8B8BB 1px). */
-.outline { min-height: 48px; display: flex; align-items: center; justify-content: center; border: 1px solid #B8B8BB; border-radius: 999px;
-  background: transparent; color: var(--color-text-primary); font-size: 15px; font-weight: 600; cursor: pointer; }
-.outline:disabled { opacity: .6; cursor: default; }
 
 /* 아래 메뉴(설정 페이지를 옮겨 옴, 10/1) — 묶음 제목은 작은 회색, 줄은 상자·화살표 없이 글자만(누르는 높이 48px 이상). */
 .menu { margin-bottom: var(--space-5); }

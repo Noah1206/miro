@@ -5,7 +5,7 @@ import {
   EVENT_RULES, GROWABLE, MOODS, REACH_OUT_RULES, SEMANTIC_EVENT_TYPES, WELCOME_EVENTS,
   type Mood, type ProfileItem, type ReachOutRule, type ReactionLevel, type RelationshipProfile, type SemanticEventType,
 } from '@miro/domain'
-import { Switch } from '@/components/ui'
+import { Button, Switch } from '@/components/ui'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 import { ChoiceChips, box } from './form-parts'
@@ -43,8 +43,6 @@ const PACE = [
 
 const caption = { color: 'var(--color-text-secondary)', lineHeight: 1.6 } as const
 const group = { background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: '14px 16px' } as const
-const smallButton = { border: 0, borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', padding: '8px 12px', cursor: 'pointer' } as const
-
 const mine = <T,>(value: T): ProfileItem<T> => ({ value, by: 'author' })
 /** 칸 아래의 한 줄 — 무엇을 근거로 정했는지, 작성자가 고쳤는지. */
 function Why({ item }: { item?: ProfileItem<unknown> }) {
@@ -91,7 +89,7 @@ export function ProfileSettings({ profile: initial, status }: { profile: Relatio
           return <div key={type}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span className="t-body" style={{ flex: 1, minWidth: 0, fontWeight: 'var(--weight-semibold)' }}>{t(WHEN[type])}</span>
-              <button type="button" style={smallButton} aria-label={t('{item} 기본으로', { item: t(WHEN[type]) })} onClick={() => { edit({ reactions: without(profile.reactions, type) }); refocus(addReaction) }}>{t('기본으로')}</button>
+              <Button type="button" size="sm" aria-label={t('{item} 기본으로', { item: t(WHEN[type]) })} onClick={() => { edit({ reactions: without(profile.reactions, type) }); refocus(addReaction) }}>{t('기본으로')}</Button>
             </div>
             <ChoiceChips pill value={item.value} onChange={v => edit({ reactions: { ...profile.reactions, [type]: mine(v as ReactionLevel) } })}
               options={levels.map(l => ({ value: l, label: t(LEVEL[l]) }))} />
@@ -103,7 +101,7 @@ export function ProfileSettings({ profile: initial, status }: { profile: Relatio
           ? <div><p className="t-caption" style={{ ...caption, marginBottom: 8 }}>{t('어떤 상황을 정할까요?')}</p>
             <ChoiceChips pill value="" onChange={v => { edit({ reactions: { ...profile.reactions, [v]: mine('normal') } }); setAdding(null) }}
               options={SEMANTIC_EVENT_TYPES.filter(type => !profile.reactions[type]).map(type => ({ value: type, label: t(WHEN[type]) }))} /></div>
-          : <button ref={addReaction} type="button" style={smallButton} onClick={() => setAdding('reaction')}>{t('상황 추가')}</button>}
+          : <Button ref={addReaction} type="button" size="sm" onClick={() => setAdding('reaction')}>{t('상황 추가')}</Button>}
       </div>
     </section>
 
@@ -147,7 +145,7 @@ export function ProfileSettings({ profile: initial, status }: { profile: Relatio
           return <div key={mood}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span className="t-body" style={{ flex: 1, fontWeight: 'var(--weight-semibold)' }}>{t(MOOD[mood])}</span>
-              <button type="button" style={smallButton} aria-label={t('{item} 기본으로', { item: t(MOOD[mood]) })} onClick={() => { edit({ moods: without(profile.moods, mood) }); refocus(addMood) }}>{t('기본으로')}</button>
+              <Button type="button" size="sm" aria-label={t('{item} 기본으로', { item: t(MOOD[mood]) })} onClick={() => { edit({ moods: without(profile.moods, mood) }); refocus(addMood) }}>{t('기본으로')}</Button>
             </div>
             <div style={{ padding: '6px 10px', ...box(false) }}>
               <textarea aria-label={t('{mood} 드러나는 방식', { mood: t(MOOD[mood]) })} value={item.value} maxLength={160} rows={2}
@@ -162,7 +160,7 @@ export function ProfileSettings({ profile: initial, status }: { profile: Relatio
           ? <div><p className="t-caption" style={{ ...caption, marginBottom: 8 }}>{t('어떤 기분을 정할까요?')}</p>
             <ChoiceChips pill value="" onChange={v => { edit({ moods: { ...profile.moods, [v]: mine('') } }); setAdding(null) }}
               options={MOODS.filter(mood => !profile.moods[mood]).map(mood => ({ value: mood, label: t(MOOD[mood]) }))} /></div>
-          : <button ref={addMood} type="button" style={smallButton} onClick={() => setAdding('mood')}>{t('기분 추가')}</button>}
+          : <Button ref={addMood} type="button" size="sm" onClick={() => setAdding('mood')}>{t('기분 추가')}</Button>}
       </div>
     </section>
 

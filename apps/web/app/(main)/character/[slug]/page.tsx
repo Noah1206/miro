@@ -157,7 +157,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
       <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: 'var(--color-bg)' }}>
         {user
-          ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" size="lg" style={{ minHeight: 48, padding: '8px 16px', fontSize: 14 }} full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
+          ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
           : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
       </div>
     </Page>

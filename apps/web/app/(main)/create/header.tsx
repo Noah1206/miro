@@ -48,7 +48,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
         <span className="t-caption" style={{ flex: 1, textAlign: 'right', fontSize: 'var(--font-micro)', transform: 'translateY(3px)', color: 'var(--color-text-secondary)' }} aria-live="polite">{missingHint}</span>
         {buttons === 'create' && <button type="submit" name="intent" value="draft" disabled={!canDraft || pending}
           style={{ minHeight: 44, padding: '4px 6px', background: 'none', border: 0, color: canDraft && !pending ? 'var(--color-text-secondary)' : 'var(--color-text-disabled)', cursor: canDraft && !pending ? 'pointer' : 'default', fontSize: 'var(--font-caption)' }}>{t('임시저장')}</button>}
-        <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending} style={chip(true, canSubmit && !pending)}>
+        <button type="submit" name="intent" value="publish" disabled={!canSubmit || pending} className="hit" style={chip(true, canSubmit && !pending)}>
           {buttons === 'save' ? (pending ? t('저장 중') : t('저장')) : (pending ? t('게시 중') : t('게시'))}
         </button>
       </div>

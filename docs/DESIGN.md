@@ -196,7 +196,7 @@ Bold는 남발하지 않는다.
 
 ### Rule
 
-- 일반 버튼: `10px ~ 12px`
+- 일반 버튼: `6px` (`--radius-button`)
 - 카드: `12px ~ 16px`
 - 큰 이미지: `12px ~ 20px`
 - Sheet: 상단만 `16px ~ 20px`
@@ -470,9 +470,9 @@ MIRO만의 맥락 정보가 있어야 한다.
 ### Primary Button
 
 ```css
-background: #FFFFFF;
-color: #000000;
-border-radius: 10px;
+background: var(--color-accent);   /* 짙은 주황 */
+color: var(--color-accent-on);     /* 흰색 */
+border-radius: var(--radius-button); /* 6px */
 font-weight: 600;
 ```
 
@@ -888,7 +888,7 @@ MIRO의 UI는 Dark Cinematic × Human × Sharp Minimal을 따른다.
 - Neon / Glow 사용 금지
 - 과도한 Rounded UI 금지
 - Card radius는 12~16px 중심
-- Primary Button은 Orange background + Black text (화면당 하나)
+- Primary Button은 Orange background + White text (화면당 하나)
 - Accent Color는 상태에만 사용 — 선택된 탭, 주요 CTA, 온라인, 관계 변화, 새 Event
 - Character Image와 Scene이 UI보다 항상 우선
 - SaaS Dashboard처럼 만들지 말 것

@@ -17,7 +17,7 @@ export function ReportForm({ type, id }: { type: string; id: string }) {
       </fieldset>
       <TextArea name="detail" rows={3} maxLength={1000} placeholder={t('추가 설명 (선택)')} aria-label={t('추가 설명')} style={{ marginTop: 6 }} />
       {state.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
-      <Button type="submit" variant="primary" size="lg" full status={pending ? 'loading' : 'idle'} style={{ marginTop: 8 }}>{pending ? t('접수 중') : t('신고 제출')}</Button>
+      <Button type="submit" variant="primary" full status={pending ? 'loading' : 'idle'} style={{ marginTop: 8 }}>{pending ? t('접수 중') : t('신고 제출')}</Button>
     </form>
   )
 }

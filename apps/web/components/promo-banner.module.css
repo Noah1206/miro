@@ -12,7 +12,7 @@
 .title { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; color: var(--color-text-primary); }
 /* 폰에서는 설명을 숨긴다 — 낮은 띠에 설명까지 넣으면 다시 커진다. 컴퓨터에서만 보인다. */
 .body { display: none; margin: 0; color: var(--color-text-secondary); }
-/* 버튼 크기는 Button 이 인라인으로 정하므로 폭별 크기를 !important 로 준다. */
+/* 버튼 크기는 Button 이 인라인으로 정하므로 폭별 크기를 !important 로 준다. 폰에서 보이는 높이는 낮아도 .hit 가 누르는 영역을 44px 로 넓힌다. */
 .cta { margin-top: 8px; min-height: 30px !important; padding: 0 12px !important; font-size: 12px !important; }
 @media (min-width: 1024px) {
   /* 높이는 약 190(9/30 요청으로 줄인 높이) — 버튼이 없는 선물 배너도 같은 높이. 폭이 줄면 오른쪽을 잘라 인물이 글 옆에 남는다. */

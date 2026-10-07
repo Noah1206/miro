@@ -1,8 +1,8 @@
 import { ButtonLink, LoginTapArea } from '@/components/ui'
 import styles from './promo-banner.module.css'
 
-/** 가입 선물 팝업의 '대화 시작하기' 와 같은 색 — 흰 바탕, 검은 글자, 양끝이 둥근 알약. 크기는 폭에 따라 .cta 가 정한다. */
-const CTA = { background: 'var(--color-white)', color: 'var(--color-black)', border: 0, borderRadius: 999 } as const
+/** 가입 선물 팝업의 '대화 시작하기' 와 같은 색 — 흰 바탕, 검은 글자. 모서리는 다른 버튼과 같은 6px(알약 금지). 크기는 폭에 따라 .cta 가 정한다. */
+const CTA = { background: 'var(--color-white)', color: 'var(--color-black)', border: 0 } as const
 
 /**
  * 힉스필드 그림이 꽉 채우는 배너 — 홈과 미로가 함께 쓴다(2026-09-30). 코드에 둔 고정 안내라 글은 번역된 채로 넘겨받는다.
@@ -30,7 +30,7 @@ export function PromoBanner({ art, eyebrow, title, body, cta, textWidth, artX, l
         <p className={styles.eyebrow}>{eyebrow}</p>
         <p className={styles.title}>{title}</p>
         <p className={styles.body}>{body}</p>
-        {cta && <ButtonLink href={cta.href} className={styles.cta} style={CTA}>{cta.label}</ButtonLink>}
+        {cta && <ButtonLink href={cta.href} className={`${styles.cta} hit`} style={CTA}>{cta.label}</ButtonLink>}
       </div>
       {loginLabel && <LoginTapArea label={loginLabel} className={styles.tap} />}
     </section>

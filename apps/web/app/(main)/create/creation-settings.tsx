@@ -9,6 +9,7 @@ import type { FormInitial } from './character-form'
 import type { ContactCapabilities } from '@/lib/reality/channels'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
+import { Button } from '@/components/ui'
 
 const PRESETS = [
   { stage: 'stranger', label: msg('낯선 사이'), hint: msg('서로를 알아가며 조심스럽게 대화를 시작해요.'), values: [30, 10, 60, 10, 20, 0] },
@@ -45,8 +46,6 @@ const RELATIONSHIP_OPTIONS = {
 }
 
 const caption = { color: 'var(--color-text-secondary)', marginTop: 10, lineHeight: 1.6 }
-const smallButton = { border: 0, borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', padding: '8px 12px', cursor: 'pointer' }
-
 export function RelationshipSettings({ initial }: { initial: FormInitial }) {
   const [stage, setStage] = useState(initial.stage)
   const [bonding, setBonding] = useState(BONDING.some(b => b.value === initial.bonding) ? initial.bonding : '')
@@ -68,9 +67,9 @@ export function RelationshipSettings({ initial }: { initial: FormInitial }) {
     {pending && <div role="group" aria-label={t('관계 변경 방법')} style={{ marginTop: 16 }}>
       <p className="t-caption" style={caption}>{t('세부값을 유지할까요, {stage} 추천값으로 바꿀까요?', { stage: t(pending.label) })}</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-        <button type="button" style={smallButton} onClick={() => { setStage(pending.stage); setEdited(true); setPending(null) }}>{t('세부값 유지')}</button>
-        <button type="button" style={smallButton} onClick={() => apply(pending)}>{t('추천값 적용')}</button>
-        <button type="button" style={smallButton} onClick={() => setPending(null)}>{t('취소')}</button>
+        <Button type="button" size="sm" onClick={() => { setStage(pending.stage); setEdited(true); setPending(null) }}>{t('세부값 유지')}</Button>
+        <Button type="button" size="sm" onClick={() => apply(pending)}>{t('추천값 적용')}</Button>
+        <Button type="button" size="sm" onClick={() => setPending(null)}>{t('취소')}</Button>
       </div>
     </div>}
     <section aria-label={t('가까워지는 속도')} style={{ marginTop: 24 }}>

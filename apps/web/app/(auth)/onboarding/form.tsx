@@ -45,7 +45,6 @@ const TERMS = [
 /** '다음' 은 작게(2026-09-30 요청): 높이 56 → 44(터치 영역 최소), 글자 17 → 14. 잠겨 있을 땐 옅은 주황(.btn-next). */
 // 모서리는 16px(2026-10-01 요청: 6 → 12 → 16 으로 키움) — 마지막 단계의 '알림 허용하기/시작하기'와 위의 선택 칸(Option)도 같은 값.
 const NEXT_RADIUS = 16
-const NEXT_BUTTON: React.CSSProperties = { minHeight: 44, padding: '4px 24px', fontSize: 14, borderRadius: NEXT_RADIUS }
 
 /**
  * 첫 로그인 온보딩. 한 화면에 한 질문 — 위에 뒤로·진행 막대·n/6, 아래에 다음 버튼 하나.
@@ -244,18 +243,18 @@ export function OnboardingForm() {
 
           <div className="stack" style={{ gap: 4, marginTop: 'auto', paddingTop: 'var(--space-6)' }}>
             {/* 고르는 단계는 모두 같은 '다음' 하나로 넘어간다 — 고르기만으로는 넘어가지 않는다(2026-09-30 요청). */}
-            {step <= 4 && <Button type="button" variant="primary" size="lg" full className="btn-next" style={NEXT_BUTTON} disabled={!ready[step]} onClick={() => (step === 2 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
+            {step <= 4 && <Button type="button" variant="primary" full className="btn-next" disabled={!ready[step]} onClick={() => (step === 2 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
             {step === 5 && <>
-              <Button type="button" variant="primary" size="lg" full className="btn-next" style={NEXT_BUTTON} disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
+              <Button type="button" variant="primary" full className="btn-next" disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
               <Button type="button" variant="ghost" size="sm" full onClick={() => { setBirthDate(''); go(6) }}>{t('건너뛰기')}</Button>
             </>}
             {step === 6 && (
               // 버튼 하나(2026-10-01 요청): '알림 허용하기'로 시작해, 알림이 허용되면 토스처럼 주황으로 차오르며 글자가 위로 넘어가 '시작하기'가 된다.
               // 허용 전에는 눌러도 제출하지 않고 권한을 묻는다(알림 줄·전체 동의로 허용해도 똑같이 바뀐다).
               <motion.div initial={false} animate={{ scale: pushGranted && !reduce ? [1, 1.03, 1] : 1 }} transition={{ duration: 0.4, ease: ease.standard }}>
-                <SubmitButton variant={pushGranted ? 'primary' : 'secondary'} size="lg" full disabled={asking || (pushGranted && !requiredOk)}
+                <SubmitButton variant={pushGranted ? 'primary' : 'secondary'} full disabled={asking || (pushGranted && !requiredOk)}
                   onClick={(e) => { if (!pushGranted) { e.preventDefault(); allowPush() } }}
-                  style={{ borderRadius: NEXT_RADIUS, transition: 'background-color 360ms var(--ease-standard), color 360ms var(--ease-standard), border-color 360ms var(--ease-standard)' }}>
+                  style={{ transition: 'background-color 360ms var(--ease-standard), color 360ms var(--ease-standard), border-color 360ms var(--ease-standard)' }}>
                   {/* 글자가 넘어가는 창 — 두 글자를 같은 칸에 겹쳐(가운데 맞춤) 위아래로만 자른다. 옆으로는 자르지 않아 긴 글자도 온전히 빠진다. */}
                   <span style={{ display: 'inline-grid', justifyItems: 'center', clipPath: 'inset(0 -64px)' }}>
                     <AnimatePresence initial={false}>

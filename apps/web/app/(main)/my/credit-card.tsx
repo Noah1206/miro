@@ -1,10 +1,13 @@
 'use client'
 import { useEffect } from 'react'
+import { Button } from '@/components/ui'
 import { useWallet } from '@/components/wallet/provider'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import styles from './my.module.css'
+
+const OUTLINE = { background: 'transparent', border: '1px solid var(--color-border-strong)' } as const
 
 /** '나' 화면의 크레딧 카드(2026-09-30, WHIF 프로필 모양) — 잔액 한 줄, 충전(충전 시트). 사용 내역 버튼은 뺐다(2026-10-01) — Miro Pay 화면은 채팅 모델 선택에서 간다. */
 export function CreditCard({ initial }: { initial: WalletSnapshot }) {
@@ -21,7 +24,7 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
         {t('{n} 미로', { n: value.rechargeRemaining.toLocaleString(locale) })}
       </p>
       <div className={styles.creditActions}>
-        <button type="button" className={styles.outline} onClick={openRecharge} disabled={busy}>{t('충전')}</button>
+        <Button type="button" full style={OUTLINE} onClick={openRecharge} status={busy ? 'loading' : 'idle'}>{t('충전')}</Button>
       </div>
     </section>
   )

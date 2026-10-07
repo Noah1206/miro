@@ -138,7 +138,7 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
 
         {/* 상세의 고정 하단 문 — 미리보기 안에서는 맨 아래에 */}
         <div aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--color-border-strong)', padding: '10px var(--gutter)', marginTop: 'var(--space-6)', background: '#141416' }}>
-          <div style={{ flex: 1 }}><Button type="button" variant="primary" size="lg" style={{ minHeight: 42, height: 42, padding: '8px 16px', fontSize: 14 }} full disabled>{t('대화 시작하기')}</Button></div>
+          <div style={{ flex: 1 }}><Button type="button" variant="primary" full disabled>{t('대화 시작하기')}</Button></div>
         </div>
       </div>
     </div>
