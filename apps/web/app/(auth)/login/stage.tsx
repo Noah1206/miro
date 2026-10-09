@@ -21,7 +21,7 @@ export function LoginStage({ providers, notice, error, next }: { providers: Soci
     <main id="main" tabIndex={-1} className="page page--immersive" style={{ minHeight: '100dvh', background: 'var(--color-bg-deep)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 var(--space-5) var(--space-7)', outline: 'none' }}>
       <h1 className="sr-only">{t('MIRO 로그인')}</h1>
       <motion.div layout transition={spring.gentle} style={{ marginBottom: ready ? 'var(--space-9)' : 0 }}>
-        <LogoIntro onDone={() => setReady(true)} />
+        <LogoIntro size={104} caption={t('나를 기억하고, 먼저 연락하는 캐릭터')} onDone={() => setReady(true)} />
       </motion.div>
       {ready && (
         <Stagger gap={stagger.normal} delay={0.25} style={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -45,7 +45,7 @@ function SocialButton({ id, label, next }: SocialProvider & { next?: string | nu
     kakao: { background: '#FEE500', color: '#000000', border: '1px solid #FEE500' },
   }
   return (
-    <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 52, padding: '12px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
+    <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 44, padding: '8px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
       <Icon id={id} />
       <span>{t('{provider}로 계속하기', { provider: label })}</span>
     </a>

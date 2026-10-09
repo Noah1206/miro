@@ -19,7 +19,7 @@ type Phase = 'hidden' | 'join' | 'open'
  * 두 단계는 차례로 일어나야 한다 — 한 번에 두 variant 를 주면 마지막 값이 이겨서 '만나는' 순간이 사라진다.
  * 마크는 가운데 골에서 가른 두 층(logo-m · logo-s)이다. reduce-motion 이면 마지막 프레임만.
  */
-export function LogoIntro({ onDone, size = 156 }: { onDone?: () => void; size?: number }) {
+export function LogoIntro({ onDone, size = 156, caption = 'MIRO' }: { onDone?: () => void; size?: number; caption?: string }) {
   const reduce = useReducedMotion()
   const [phase, setPhase] = useState<Phase>(reduce ? 'open' : 'hidden')
 
@@ -44,9 +44,10 @@ export function LogoIntro({ onDone, size = 156 }: { onDone?: () => void; size?: 
       style={{ position: 'relative', width: size, height: size }}>
       <motion.div aria-hidden variants={piece(-1)} style={layer('/logo-m.png')} />
       <motion.div aria-hidden variants={piece(1)} style={layer('/logo-s.png')} />
-      <motion.span aria-hidden className="t-micro"
+      {/* 마크보다 넓은 한 줄 설명도 가운데에 한 줄로 */}
+      <motion.span className="t-caption"
         variants={{ hidden: { opacity: 0 }, join: { opacity: 0 }, open: { opacity: 1, transition: { ...tween.enter, delay: 0.3 } } }}
-        style={{ position: 'absolute', top: '100%', left: 0, right: 0, textAlign: 'center', marginTop: 14, letterSpacing: '0.34em', color: 'var(--color-text-secondary)' }}>MIRO</motion.span>
+        style={{ position: 'absolute', top: '100%', left: '50%', x: '-50%', marginTop: 16, whiteSpace: 'nowrap', fontSize: 14, color: 'var(--color-text-secondary)' }}>{caption}</motion.span>
     </motion.div>
   )
 }
