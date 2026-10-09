@@ -37,7 +37,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
-  const freshStatus = !!loaded.characterStatusAt && Date.now() - loaded.characterStatusAt.getTime() < 6 * 3_600_000
 
   const items: MsgItem[] = rows
     // 사진은 문자로 보낸 것만 — 장면 안의 사진은 캐릭터챗의 것이다.
@@ -55,17 +54,8 @@ export default async function MessagesPage({ params, searchParams }: { params: P
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <div className={styles.titleBox}>
-            <h1 className={styles.title}>{loaded.characterName}</h1>
-            {/* 지금 하는 일(잠 중·근무 중)은 보여 주지 않는다(10/9) — 사람 사이 문자엔 그런 표시가 없다. 상태 메시지만. */}
-            {loaded.characterStatus && (
-              <p className={styles.presence}>
-                {loaded.characterStatus && <span className={styles.status} data-fresh={freshStatus || undefined}>
-                  {freshStatus && <span className="sr-only">{t('새 상태 메시지')}</span>}{loaded.characterStatus}
-                </span>}
-              </p>
-            )}
-          </div>
+          {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
+          <h1 className={styles.title}>{loaded.characterName}</h1>
           {voiceCallAllowed(user.id) && (
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}

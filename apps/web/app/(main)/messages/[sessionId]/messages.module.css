@@ -2,11 +2,6 @@
 .header { display: flex; align-items: center; flex: 0 0 auto; gap: 8px; min-height: 64px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); }
 .header > a:first-child { width: 32px; min-height: 44px; justify-content: center; flex-shrink: 0; color: var(--color-text-primary) !important; }
 .title { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.4px; }
-/* 이름 아래 한 줄: 상태 메시지, 막 바뀌었으면 뒤에 주황 점(10/9). */
-.titleBox { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
-.presence { display: flex; align-items: center; gap: 6px; min-width: 0; margin: 0; font-size: 12px; line-height: 1.4; color: var(--color-text-tertiary); white-space: nowrap; }
-.status { min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-secondary); }
-.status[data-fresh]::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 5px; vertical-align: 2px; border-radius: 50%; background: var(--color-accent-text); }
 .headerButton { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--color-text-primary); cursor: pointer; }
 .headerButton svg { width: 22px; height: 22px; }
 .headerLink { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 8px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; font-weight: 600; }
