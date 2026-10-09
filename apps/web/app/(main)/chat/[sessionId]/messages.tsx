@@ -23,13 +23,19 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 }) {
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
   const t = useT()
-  const { appended } = useTurns()
+  const { appended, quiet, live } = useTurns()
   const known = new Set(server.map((m) => m.id))
-  const items = [...server, ...appended.filter((m) => !known.has(m.id))]
+  // 오고 있는 답(스트리밍)은 맨 뒤에 — 보낸 말과 지금까지 받은 블록. 저장된 답이 오면 사라지고 그 자리를 저장본이 채운다.
+  const liveItems: Msg[] = live ? [{ id: 'live-user', role: 'user', kind: 'text', content: live.input, blocks: [] },
+    ...(live.blocks.length ? [{ id: 'live-reply', role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
+  const settled = [...server, ...appended.filter((m) => !known.has(m.id))]
+  const items = [...settled, ...liveItems]
   const end = useRef<HTMLDivElement>(null)
   // 이미 화면에 있던 메시지는 다시 치지 않는다. 처음 열 때 전부 다시 치면 대화가 재생된다.
   const seen = useRef<Set<string> | null>(null)
   if (seen.current === null) seen.current = new Set(items.map((m) => m.id))
+  // 스트리밍으로 이미 본 답은 저장본으로 바뀌어도 다시 치지 않는다. 오는 중인 답은 블록이 생기는 대로 그대로 보인다.
+  for (const id of [...quiet, 'live-reply']) seen.current.add(id)
   const last = items[items.length - 1]
   // 치는 중인 메시지는 한 번 정해지면 다음 메시지가 올 때까지 바뀌지 않는다 — 백그라운드 refresh 로 목록이 갈려도 타이핑이 끊기지 않는다.
   const typing = useRef<string | null>(null)
@@ -39,19 +45,21 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
   const follow = () => end.current?.scrollIntoView({ block: 'end' })
-  useEffect(() => { follow() }, [items.length])
+  useEffect(() => { follow() }, [items.length, live?.blocks.length])
   useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
 
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}>
       <AnimatePresence initial={false}>
-        {items.map((m) => (
+        {settled.map((m) => (
           <Line key={m.id}>
             <Message m={m} characterName={characterName} portrait={portrait}
               typing={m.id === typingId} mood={mood} onGrow={follow} />
           </Line>
         ))}
       </AnimatePresence>
+      {/* 오고 있는 답은 사라질 때 애니메이션 없이 — 저장본과 잠깐 겹쳐 두 번 보이지 않게. */}
+      {liveItems.map((m) => <Message key={m.id} m={m} characterName={characterName} portrait={portrait} mood={mood} onGrow={follow} />)}
       <div ref={end} aria-hidden />
     </div>
   )

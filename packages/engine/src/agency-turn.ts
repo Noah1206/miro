@@ -11,6 +11,7 @@ import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
 import { approveTransition } from './transition'
+import { blockStream, type TurnStream } from './stream-blocks'
 
 export type AgencyTurnInput = {
   mode: 'shadow' | 'live'
@@ -45,7 +46,7 @@ export function routineTurn(input: string, turnCount: number, state: AgencyState
  */
 export async function runAgencyTurn(opts: {
   llm: LLMProvider; snapshot: SimulationSnapshot; userInput: string; agency: AgencyTurnInput; policy: TurnPolicy
-  maxOutputTokens?: number; contextScale?: number
+  maxOutputTokens?: number; contextScale?: number; stream?: TurnStream
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
   const actor = snapshot.character.id
@@ -106,12 +107,14 @@ export async function runAgencyTurn(opts: {
   let transition: ReturnType<typeof validateProposal> | null = null
   let renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
   let feedback = ''
+  // 다시 쓰기마다 앞에서 보여 준 블록은 지운다(같은 통로 하나 — 새 호출의 첫 시도가 reset 을 보낸다).
+  const streaming = opts.stream ? blockStream(snapshot, opts.stream, { dropWorld: true }) : {}
   for (let attempt = 0; attempt <= REGENERATIONS; attempt++) {
     // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
     // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
     const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
       promptVersion: 'agency-dialogue:v4', system: context.system, safety: 'relaxed',
-      prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
+      prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens, ...streaming })
       .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
     // A later check call must not erase the renderer's provenance.
     renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')

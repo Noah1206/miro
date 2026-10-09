@@ -7,7 +7,7 @@ import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@mi
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
-import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, verifyAgencyRealization, type TurnResult } from '@miro/engine'
+import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, verifyAgencyRealization, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -69,6 +69,8 @@ async function executeTurn(opts: {
   chatModel?: string
   /** messenger = 문자 페이지에서 온 턴. 문자로 답하고 messenger kind 로 남는다. 미로 캐릭터에만 있다. */
   mode?: 'chat' | 'messenger'
+  /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
+  stream?: TurnStream
 }): Promise<ConversationOutcome> {
   const input = opts.input.trim()
   if (input.length === 0) return { ok: false, reason: 'empty' }
@@ -147,7 +149,7 @@ async function executeTurn(opts: {
       policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false })
       context.origin = policy.origin
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
-        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy,
+        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream: opts.stream,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context) }))
 
     } catch (e) {
@@ -286,7 +288,7 @@ async function deferMessengerReply(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string; mode?: 'chat' | 'messenger' }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request

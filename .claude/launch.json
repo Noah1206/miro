@@ -4,15 +4,30 @@
     {
       "name": "web",
       "runtimeExecutable": "zsh",
-      "runtimeArgs": ["-c", "PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH pnpm dev"],
+      "runtimeArgs": [
+        "-c",
+        "PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH pnpm dev"
+      ],
       "autoPort": true,
       "port": 3050
     },
     {
       "name": "web-testdb",
       "runtimeExecutable": "zsh",
-      "runtimeArgs": ["-c", "cd apps/web && PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH DATABASE_URL=postgres://localhost/miro_e2e_test DIRECT_DATABASE_URL=postgres://localhost/miro_e2e_test MIRO_MOCK_OAUTH=1 AI_PROVIDER=mock MIRO_ENABLE_DEV_API=1 MIRO_DIST_DIR=.next-testdb npx next dev -p 3210"],
+      "runtimeArgs": [
+        "-c",
+        "cd apps/web && PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH DATABASE_URL=postgres://localhost/miro_e2e_test DIRECT_DATABASE_URL=postgres://localhost/miro_e2e_test MIRO_MOCK_OAUTH=1 AI_PROVIDER=mock MIRO_ENABLE_DEV_API=1 MIRO_DIST_DIR=.next-testdb npx next dev -p 3210"
+      ],
       "port": 3210
+    },
+    {
+      "name": "web-testdb-live",
+      "runtimeExecutable": "zsh",
+      "runtimeArgs": [
+        "-c",
+        "cd apps/web && PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH DATABASE_URL=postgres://localhost/miro_e2e_test DIRECT_DATABASE_URL=postgres://localhost/miro_e2e_test MIRO_MOCK_OAUTH=1 MIRO_ENABLE_DEV_API=1 MIRO_DIST_DIR=.next-testdb npx next dev --turbopack -p 3211"
+      ],
+      "port": 3211
     }
   ]
 }

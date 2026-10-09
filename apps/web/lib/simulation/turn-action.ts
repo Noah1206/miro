@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { and, eq } from 'drizzle-orm'
 import { db, conversationRequests } from '@miro/db'
+import type { TurnStream } from '@miro/engine'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { clientIp } from '@/lib/alpha/session'
 import { exceededMessage } from '@/lib/usage/guard'
@@ -33,12 +34,12 @@ const fail = (error: string): TurnState => ({ error, notice: null, limit: null }
  * 캐릭터챗(/chat)과 문자(/messages)가 같이 쓰는 턴 액션 본체. 폼을 읽고 파이프라인(lib/simulation/turn)을 부른 뒤
  * 결과를 화면 상태로 옮긴다. 두 페이지의 차이는 mode 와 되살릴 경로뿐이다.
  */
-export async function turnFromForm(userId: string, form: FormData, opts: { mode: 'chat' | 'messenger'; path: (sessionId: string) => string }): Promise<TurnState> {
+export async function turnFromForm(userId: string, form: FormData, opts: { mode: 'chat' | 'messenger'; path: (sessionId: string) => string; stream?: TurnStream }): Promise<TurnState> {
   const sessionId = String(form.get('sessionId') ?? '')
   const input = String(form.get('input') ?? '').trim()
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
-  const r = await runConversationTurn({ userId, sessionId, input, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), requestId: String(form.get('requestId') ?? '') || undefined })
+  const r = await runConversationTurn({ userId, sessionId, input, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }

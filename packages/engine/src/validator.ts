@@ -56,6 +56,11 @@ export function validateProposal(
   }
 }
 
+/** 스트리밍 중인 대사 블록을 최종 검증과 같은 규칙으로 거른다(10/9) — 보여 준 블록이 저장 때 빠지는 일을 줄인다. */
+export function allowedBlocks(blocks: SimulationProposal['rp']['blocks'], s: SimulationSnapshot): SimulationProposal['rp']['blocks'] {
+  return validateBlocks({ rp: { blocks } } as SimulationProposal, s, [])
+}
+
 /** 화자가 등장인물과 맞는지, 사용자를 대신 연기하지 않는지 확인한다. */
 function validateBlocks(
   p: SimulationProposal,

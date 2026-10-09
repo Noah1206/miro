@@ -77,21 +77,22 @@ export class AIOrchestrator implements LLMProvider {
     this.requestId = opts.context?.requestId ?? randomUUID()
     this.info = { ...opts.chain[0]!.info }
   }
-  async execute<Out, In = Out>(opts: GenerationRequest & { schema: ZodType<Out, ZodTypeDef, In>; maxRetries?: number }): Promise<Out> {
-    const production = this.run({ ...opts, task: taskOf(opts.task), json: true }, (text, truncated) => {
+  async execute<Out, In = Out>(opts: GenerationRequest & { schema: ZodType<Out, ZodTypeDef, In>; maxRetries?: number; onAttempt?: () => void }): Promise<Out> {
+    const { onAttempt, ...request } = opts
+    const production = this.run({ ...request, task: taskOf(opts.task), json: true }, (text, truncated) => {
       // 잘린 답은 닫는 괄호를 채워 완성하지 않는다 — 없는 끝을 지어내는 것이다. 공급자가 다 썼다고 알린 답의 빠진 괄호만 채운다
       // (끝을 알리지 않는 공급자의 답은 채우지 않는다).
       const parsed = opts.schema.safeParse(extractJson(text, { closeUnclosed: truncated === false }))
       // Schema paths and issue codes only, never output text: enough to see which field a model keeps breaking.
       if (!parsed.success) throw new Error(`invalid_schema ${parsed.error.issues.slice(0, 4).map(i => `${i.path.join('.') || '$'}:${i.code}`).join(' ')}`)
       return parsed.data
-    }, opts.maxRetries)
+    }, opts.maxRetries, onAttempt)
     const shadow = this.opts.shadow
     if (shadow && shadow.model.capabilities.includes(taskOf(opts.task)) && this.opts.context?.allowEvaluation) {
       const ai = new AIOrchestrator({ chain: [shadow.provider], explicitModel: shadow.model,
         context: { ...this.opts.context, traceId: this.traceId, requestId: this.requestId, usageUnits: 0, shadow: true }, budgetGuard: this.opts.budgetGuard, leaseGuard: this.opts.leaseGuard,
         onUsage: this.opts.onUsage, maxRetries: 0, timeoutMs: Math.min(2000, this.timeoutMs) })
-      const comparison = ai.execute(opts).then(result => { this.shadowOutput = result }, () => {})
+      const comparison = ai.execute({ ...opts, onText: undefined, onAttempt: undefined }).then(result => { this.shadowOutput = result }, () => {})
       const [result] = await Promise.all([production, comparison])
       return result
     }
@@ -101,6 +102,7 @@ export class AIOrchestrator implements LLMProvider {
     schema: ZodType<Out, ZodTypeDef, In>; system: string; prompt: string; maxRetries?: number
     task?: string; maxTokens?: number; temperature?: number; promptVersion?: string
     responseSchema?: GenerationRequest['responseSchema']; thinking?: GenerationRequest['thinking']; safety?: GenerationRequest['safety']
+    onText?: GenerationRequest['onText']; onAttempt?: () => void
   }): Promise<Out> { return this.execute({ ...opts, task: taskOf(opts.task) }) }
   async generateText(opts: { system: string; prompt: string; task?: string; maxTokens?: number; temperature?: number; promptVersion?: string }): Promise<string> {
     return this.run({ ...opts, task: taskOf(opts.task) }, text => {
@@ -127,7 +129,7 @@ export class AIOrchestrator implements LLMProvider {
       tier: 'standard', capabilities: [...AI_TASKS], enabled: true, version: 'legacy', maxContextTokens: 32768, maxOutputTokens: 1024, trainingAllowed: false,
     } }))
   }
-  private async run<T>(req: GenerationRequest, validate: (text: string, truncated?: boolean) => T, overrideRetries?: number): Promise<T> {
+  private async run<T>(req: GenerationRequest, validate: (text: string, truncated?: boolean) => T, overrideRetries?: number, onAttempt?: () => void): Promise<T> {
     if (req.signal?.aborted) throw new AIUnavailableError(0, 'cancelled')
     let attempts = 0, last = 'unavailable', denied: string | null = null
     const selections = this.selections(req)
@@ -231,6 +233,8 @@ export class AIOrchestrator implements LLMProvider {
         }, this.maxLeaseHoldMs)
         let result: GenerationResult | undefined, output: T | undefined, ok = false
         try {
+          // 시도마다 처음부터 — 받는 대로 보던 쪽은 앞 시도의 글을 버린다(재시도·다시 묻기·예비 모델).
+          onAttempt?.()
           const generation = Promise.resolve().then(() => provider.generate({ ...request, signal: controller.signal }))
           const finish = () => {
             settled = true

@@ -34,6 +34,10 @@ export interface LLMProvider {
     thinking?: 'low' | 'medium' | 'high'
     /** 공급자 안전 필터 수준(ai/types GenerationRequest.safety). */
     safety?: 'relaxed'
+    /** 받는 대로의 글(시도마다 처음부터 다시) — ai/types GenerationRequest.onText. */
+    onText?: (text: string) => void
+    /** 새 시도(재시도·다시 묻기·예비 모델)가 시작될 때. 앞 시도에서 받은 글은 버려야 한다. */
+    onAttempt?: () => void
   }): Promise<Out>
 }
 

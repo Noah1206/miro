@@ -7,8 +7,8 @@ import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
-import { sendTurn, type TurnState } from './actions'
-import { useTurns } from './turns'
+import type { TurnState } from '@/lib/simulation/turn-action'
+import { useTurns, type LiveTurn } from './turns'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
@@ -16,15 +16,45 @@ import { useT } from '@/lib/i18n/client'
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
 
+/**
+ * 한 턴을 /api/turn 으로 보내고 답을 받는 대로 onLive 로 넘긴다(10/9 스트리밍). 끝에 저장된 결과(TurnState)를 돌려준다 — 서버 액션과 같은 모양.
+ * 줄이 끝까지 오지 않으면(연결 끊김) 던진다 — 부른 쪽이 같은 requestId 로 다시 보내게 한다.
+ */
+async function streamTurn(form: FormData, onLive: (live: LiveTurn | null) => void): Promise<TurnState> {
+  const input = String(form.get('input') ?? '').trim()
+  // 액션 안에서 첫 await 전의 상태 변경은 액션이 끝날 때까지 미뤄진다 — 한 박자 넘겨 보낸 말이 바로 보이게.
+  await Promise.resolve()
+  if (input) onLive({ input, blocks: [] })
+  const res = await fetch('/api/turn', { method: 'POST', body: form })
+  if (!res.ok || !res.body) throw new Error('stream_failed')
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = '', done: TurnState | null = null
+  for (;;) {
+    const { value, done: ended } = await reader.read()
+    if (ended) break
+    buffer += value
+    for (let nl = buffer.indexOf('\n'); nl >= 0; nl = buffer.indexOf('\n')) {
+      const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1)
+      if (!line.trim()) continue
+      const event = JSON.parse(line) as { type: 'blocks'; blocks: LiveTurn['blocks'] } | { type: 'reset' } | { type: 'done'; state: TurnState }
+      if (event.type === 'blocks') onLive({ input, blocks: event.blocks })
+      else if (event.type === 'reset') onLive({ input, blocks: [] })
+      else done = event.state
+    }
+  }
+  if (!done) throw new Error('stream_incomplete')
+  return done
+}
+
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력창 아래 줄에 둔다. */
 export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
   const t = useT()
-  const [state, action, pending] = useActionState(async (previous: TurnState, form: FormData): Promise<TurnState> => {
-    try { return await sendTurn(previous, form) }
+  const { append, live, setLive } = useTurns()
+  const [state, action, pending] = useActionState(async (_previous: TurnState, form: FormData): Promise<TurnState> => {
+    try { return await streamTurn(form, setLive) }
     catch { return { error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true } }
   }, { error: null, notice: null, limit: null } satisfies TurnState)
   const { model, setModel } = useChatModel()
-  const { append } = useTurns()
   const router = useRouter()
   const previousModel = useRef(model)
   useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
@@ -53,16 +83,21 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
     } catch { /* Draft persistence must not prevent sending. */ }
   }, [draft, requestId, model, ready, storageKey])
   useEffect(() => {
+    // 결과가 오면 오던 답(스트리밍)을 거둔다 — 성공이면 같은 렌더에서 저장본이 그 자리를 채우고, 실패면 저장되지 않은 답은 사라진다.
+    const streamed = !!live?.blocks.length
+    setLive(null)
     if (state.succeeded) {
       setDraft(''); setRequestId(crypto.randomUUID())
       if (state.messages?.length) {
-        // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다.
-        append(state.messages)
+        // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다. 이미 흘려 보여 준 답은 다시 치지 않는다.
+        append(state.messages, { quiet: streamed })
         startTransition(() => router.refresh())
       }
     }
     else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
-  }, [state, append, router])
+    // live 는 결과가 올 때의 값만 본다 — 블록이 올 때마다 이 효과를 다시 돌리지 않는다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, append, router, setLive])
 
   /**
    * 생성이 실패한 턴은 오류 문구 대신 기다림을 이어 둔다 — 캐릭터가 아직 쓰는 중인 것처럼.
@@ -81,7 +116,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   }, [state])
   // 유저가 다시 쓰기 시작하면 기다림은 끝난 것이다.
   useEffect(() => { if (draft) setWaiting(false) }, [draft])
-  const showTyping = pending || waiting
+  // 첫 블록이 오면 점 대신 답이 보인다.
+  const showTyping = (pending && !live?.blocks.length) || waiting
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
   useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, 140)}px` } }, [draft])

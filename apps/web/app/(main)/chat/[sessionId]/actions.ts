@@ -6,15 +6,8 @@ import { db, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { adultModeGateFor } from '@/lib/ops/safety'
 import { msg } from '@/lib/i18n'
-import { turnFromForm, type TurnState } from '@/lib/simulation/turn-action'
 
-export type { TurnState }
-
-/** 자유 RP 한 턴. 파이프라인은 lib/simulation/turn 에 있다 — /api/chat, /messages 와 같은 코드. */
-export async function sendTurn(_prev: TurnState, form: FormData): Promise<TurnState> {
-  const user = await requireUser()
-  return turnFromForm(user.id, form, { mode: 'chat', path: (id) => `/chat/${id}` })
-}
+// 캐릭터챗 한 턴은 스트리밍 경로(/api/turn)로 간다(10/9) — 서버 액션은 답을 받는 대로 보낼 수 없다.
 
 /**
  * 이 대화방의 성인 모드 켜기·끄기(10/2). 켤 때마다 서버가 다시 판정한다(인증·정책 동의·캐릭터 나이·전용 모델).

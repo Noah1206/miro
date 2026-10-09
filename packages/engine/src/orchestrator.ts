@@ -13,6 +13,7 @@ import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
 import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { policyForSnapshot, type TurnPolicy } from './policy'
 import { approveTransition } from './transition'
+import { blockStream, type TurnStream } from './stream-blocks'
 
 export type TurnResult = {
   /** review: 응답 뒤에 할 의미 검토의 입력(검토할 거리가 있던 턴만). */
@@ -68,6 +69,8 @@ export async function runTurn(opts: {
    * 없으면 낱개 옵션과 스냅샷에서 같은 뜻의 기본값을 만든다 — 등급을 넘기지 않는 호출(통화·Live Scene·음성)은 MIRO 한도다.
    */
   policy?: TurnPolicy
+  /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9). 없으면 끝에 한 번에. */
+  stream?: TurnStream
 }): Promise<TurnResult> {
   const policy = opts.policy ?? policyForSnapshot(opts.snapshot, { ...opts, agencyMode: opts.agency?.mode ?? 'off', agencyReady: opts.agency?.mode === 'live' })
   opts = { ...opts, ...policy.generation }
@@ -120,6 +123,7 @@ export async function runTurn(opts: {
 
   const generated = opts.spokenReply !== undefined ? null : opts.llm.generateStructured({
     schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
+    ...(opts.stream ? blockStream(snapshot, opts.stream) : {}),
     system: context.system,
     prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
   }).then((p) => ({ ok: true as const, p }), (e: unknown) => ({ ok: false as const, e }))

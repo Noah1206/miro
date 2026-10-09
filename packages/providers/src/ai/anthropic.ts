@@ -44,7 +44,7 @@ export class AnthropicProvider implements AIProvider {
     const schema = req.responseSchema ? claudeSchema(req.responseSchema) as Anthropic.Beta.BetaTool.InputSchema : null
     let response: Anthropic.Beta.BetaMessage
     try {
-      response = await this.client.beta.messages.create({
+      const params: Anthropic.Beta.MessageCreateParamsNonStreaming = {
         model: this.model,
         max_tokens: req.maxTokens ?? 1024,
         system: req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''),
@@ -53,7 +53,14 @@ export class AnthropicProvider implements AIProvider {
         ...(schema ? { tools: [{ name: 'submit', description: 'Submit the complete result.', input_schema: schema }], tool_choice: { type: 'auto' as const } } : {}),
         betas: ['server-side-fallback-2026-07-01'],
         fallbacks: 'default',
-      }, { signal: req.signal })
+      }
+      // 받는 대로 넘겨 달라는 글 답(대사)은 스트리밍으로 — 도구로 받는 답은 끝에 한 번에(10/9).
+      if (req.onText && !schema) {
+        const stream = this.client.beta.messages.stream(params, { signal: req.signal })
+        let text = ''
+        stream.on('text', delta => { text += delta; req.onText!(text) })
+        response = await stream.finalMessage()
+      } else response = await this.client.beta.messages.create(params, { signal: req.signal })
     } catch (e) {
       if (e instanceof Anthropic.APIError && e.status) throw new Error(`provider_http_${e.status}`)
       throw e
