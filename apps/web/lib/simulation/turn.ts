@@ -7,7 +7,7 @@ import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@mi
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature } from '@miro/config'
 import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
-import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult } from '@miro/engine'
+import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, verifyAgencyRealization, type TurnResult } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -245,6 +245,11 @@ async function executeTurn(opts: {
     // 재전송용 결과 갱신과 평가 샘플은 유저가 기다릴 일이 아니다 — 응답을 보낸 뒤에 한다 (요청 밖에서는 그 자리에서).
     await afterResponse(async () => {
       await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
+      // 자율성 턴의 의미 검토는 답을 보낸 뒤에(10/9 속도) — 약속·완료 주장이 결정과 어긋났는지 기록만 한다. 이미 보낸 답은 바꾸지 않는다.
+      const review = result.agency?.review
+      if (review) await verifyAgencyRealization(llm, review)
+        .then(check => observe('agency.review_after', { sessionId, turn: turnIndex, ok: check.ok, risk: result.agency?.verification.deferredReview ?? null, reasons: [...new Set(check.issues.map(i => i.reason))].join(' ') || null }))
+        .catch(() => observe('agency.review_after_failed', { sessionId, turn: turnIndex }))
       // 기억 작업은 바로 시도한다. 여기서 유실돼도 DB 의 작업은 남아 크론이 거둔다.
       await runMemoryJobs(new Date(), { sessionId, limit: 2, inline: true }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
       // 성인 방의 대화는 평가 표본으로 남기지 않는다 — 표본은 나중에 메인 모델 비교에 쓰인다.

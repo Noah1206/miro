@@ -1,12 +1,12 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
-import { applyRelationshipDelta, moodFromAffect, nextRelationshipStage } from '@miro/domain'
+import { applyRelationshipDelta, momentHint, moodFromAffect, nextRelationshipStage } from '@miro/domain'
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
 import { SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
-import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, type AgencyPlanningContext, type AgencyRealizationCheck } from './agency'
+import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, type AgencyPlanningContext, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
@@ -23,6 +23,21 @@ export type AgencyTurnInput = {
 // 2: 거부 사유와 문제 문장을 받은 다시 쓰기를 한 번 더(10/3 실측: 막연한 사유만 받고 같은 완료 주장을 되풀이해 '멈춰요' 턴이 실패).
 const REGENERATIONS = 2
 
+/** 판단이 필요한 말 — 약속·부탁·제안·감정·관계·사과·비밀. 이런 말이 있으면 일상 턴이 아니다. */
+const NEEDS_PLAN = /약속|연락|부탁|취소|미안|사과|사랑|좋아해|좋아하|헤어|싫어|화나|화났|짜증|서운|섭섭|비밀|거짓|같이|만나|갈래|올래|줄래|해줘|해 줘|할래|될까|돼\?|가자|기억|잊|결혼|사귀|고백|울|죽|아파|힘들|외로|보고 ?싶/
+
+/**
+ * 일상 턴인가(10/9 속도) — 짧고, 판단할 거리(약속·감정·관계·일정)가 없고, 곧 해야 할 약속도 없는 말. 그런 턴은 계획 모델을 부르지 않는다.
+ * 세 턴에 한 번과 대화 첫 두 턴은 늘 계획한다 — 그 사이에도 관계·기분이 이번 대화를 따라 움직이게.
+ * ponytail: 낱말 목록이라 놓치는 말이 있다 — 놓치면 그 턴은 감정 평가 없이 평소처럼만 대답한다. 잦으면 싼 모델 분류로 바꾼다.
+ */
+export function routineTurn(input: string, turnCount: number, state: AgencyState, now: Date): boolean {
+  const text = input.trim()
+  if (!text || text.length > 40 || turnCount < 2 || (turnCount + 1) % 3 === 0) return false
+  if (momentHint(text) || NEEDS_PLAN.test(text)) return false
+  return !state.goals.some(goal => goal.status === 'active' && goal.dueAt && Date.parse(goal.dueAt) - now.getTime() < 2 * 3_600_000)
+}
+
 /**
  * 자율성 경로(§3.3): 계획 → 상태 전이 승인 → (승인된 결정·세계 사실을 넣은) 맥락 → 대사 → 승인 범위 검증 → 결과.
  * 승인되지 않은 세계 변경은 제안에서 걷어 내고 원장에 거부로 남긴다. 텍스트가 승인 밖 완료(도착·발송)를 말하면 한 번 다시 쓴다.
@@ -34,7 +49,8 @@ export async function runAgencyTurn(opts: {
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
   const actor = snapshot.character.id
-  const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context, input: opts.userInput })
+  const routine = routineTurn(opts.userInput, snapshot.turnCount, agency.state, new Date(agency.context.clock.now))
+  const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context, input: opts.userInput }, { routine })
   if (productionRuntime() && plan.providerMode !== 'live') throw new Error('agency_planner_not_live')
 
   // ── 승인 (표현 전) ──────────────────────────────────────────────────────────────────────────────
@@ -86,6 +102,7 @@ export async function runAgencyTurn(opts: {
   // 이 턴에 약속이 생기거나 취소되면 말과 약속이 맞는지 의미 검토를 한다(realizationRisk).
   const commitmentChanges = (plan.transition.goals ?? []).filter(change => change.kind === 'add' ? change.goal.status === 'active' : ['cancel', 'abandon', 'suspend'].includes(change.kind)).length
   let verification: AgencyRealizationCheck | null = null
+  let review: AgencyRealizationInput | undefined
   let transition: ReturnType<typeof validateProposal> | null = null
   let renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
   let feedback = ''
@@ -117,9 +134,12 @@ export async function runAgencyTurn(opts: {
     const validated = validateProposal(proposal, snapshot)
     validated.relationshipDelta = { ...plan.relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
     validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
-    verification = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length })
+    // 의미 검토(모델 호출)는 응답 뒤로 — 여기서는 규칙 검사만 해 답을 먼저 보낸다(10/9 속도: 검토·다시 쓰기가 턴을 20~44초로 늘렸다).
+    // 검토할 거리가 있었으면 그 입력을 돌려줘 호출한 쪽이 응답 뒤에 검토하고 기록한다.
+    const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length }
+    verification = await verifyAgencyRealization(llm, realization, { review: false })
     if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
-    if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); break }
+    if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); if (verification.deferredReview) review = realization; break }
     // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
     const reasons = [...new Set(verification.issues.map(i => i.reason))]
     if (attempt === REGENERATIONS) throw new Error(['agency_realization_rejected', ...reasons].join(' '))
@@ -141,5 +161,5 @@ export async function runAgencyTurn(opts: {
     currentThoughts: [], firedRules: snapshot.characterState?.firedRules ?? [] }
   const providerMode = [plan.providerMode, renderer.providerMode, verification!.providerMode].includes('mock') ? 'mock' : 'live'
   return { transition: approved.transition, context, providerMode, semanticEvents: [], characterState, firedRules: [],
-    agency: { plan, verification: verification! }, policy, records }
+    agency: { plan, verification: verification!, ...(review ? { review } : {}) }, policy, records }
 }

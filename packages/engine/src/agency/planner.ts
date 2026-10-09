@@ -131,7 +131,25 @@ No worldDelta, relationshipDelta, identity rewrites, new NPC facts, provider cal
 Contract: {appraisal:{interpretation,evidenceIds,ruleIds,goalCongruence:-1..1,valueConflict:0..1,responsibility:self|other|shared|uncertain,affectDelta:{valence,arousal,stress,energy},expression:{openness,directness},beliefs:[{id,statement,evidenceIds,confidence}]},candidates:[{id,action:respond|ask|decline|defer|disclose|set_boundary|continue_activity|contact|cancel_commitment|wait|move,description,destination?(move only: where the character intends to go; the server records intent, never arrival),targetActor,evidenceIds,ruleIds,goalIds,fulfillsGoalIds?,ruleFit:[{ruleId,fit:-1..1}],goalFit:[{goalId,fit:-1..1}],preconditions:[{kind:evidence,evidenceId}|{kind:goal_active,goalId}|{kind:due,at,clock:real_time|narrative}|{kind:location,location}|{kind:capability,capability}],uncertainty:0..1,cost:0..1,expiresAt?,constraints?:string[]}],newGoals:[{id,description,evidenceIds,ruleIds,priority:0..1,dueAt?,clock?:real_time|narrative,success:action_accepted|sent|delivered|answered|observed_event,commitment?:boolean}],goalChanges:[{kind:activate|suspend|cancel|abandon|expire,goalId,evidenceIds}]}.`
 
 /** No DB writes. The returned state is a proposal until the caller's CAS transaction commits it. */
-export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCharacter, state: AgencyState, input: AgencyPlanningContext): Promise<AgencyPlan> {
+/**
+ * 일상 턴(10/9 속도): 판단할 거리가 없는 말(인사·잡담)에는 모델을 부르지 않고 '평소처럼 대답한다' 하나를 낸다 — 계획 호출(약 7초)을 건너뛴다.
+ * 감정·관계 평가는 하지 않고(appraisal 없음), 목표도 바꾸지 않는다. 같은 검증·선택·상태 전이를 그대로 지난다.
+ * 무엇이 일상 턴인지는 호출한 쪽(runAgencyTurn)이 정한다.
+ */
+function routineProposal(context: AgencyDecisionContext, state: AgencyState): z.infer<typeof AgencyPlanProposalSchema> {
+  const said = [...context.evidence].reverse().find(e => agencyUserUtterance(e.id, context))
+  return {
+    appraisal: { interpretation: 'routine', evidenceIds: [], ruleIds: [], goalCongruence: 0, valueConflict: 0, responsibility: 'uncertain',
+      affectDelta: { valence: 0, arousal: 0, stress: 0, energy: 0 }, expression: state.expression, beliefs: [] },
+    candidates: [{ id: 'routine-respond', action: 'respond', description: '평소의 말투와 성격대로 자연스럽게 대답한다.', targetActor: context.actor,
+      evidenceIds: said ? [said.id] : [], ruleIds: said ? [] : context.compiled.rules.slice(0, 1).map(rule => rule.id), goalIds: [],
+      ruleFit: [], goalFit: [], preconditions: [], uncertainty: 0.2, cost: 0.1 }],
+    newGoals: [], goalChanges: [],
+  }
+}
+
+export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCharacter, state: AgencyState, input: AgencyPlanningContext,
+  opts: { routine?: boolean } = {}): Promise<AgencyPlan> {
   if (state.version !== 1 || state.revisionId !== input.revisionId || !Number.isSafeInteger(state.sequence) || state.sequence < 0
     || !Number.isFinite(Date.parse(input.clock.now)) || state.goals.length > 24 || state.beliefs.length > 32
     || state.actions.length > 48 || input.evidence.length > 128 || (input.input?.length ?? 0) > 12_000) {
@@ -157,10 +175,13 @@ export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCha
   }
   const prompt = JSON.stringify(payload)
   if (prompt.length > 48_000) throw new AgencyPlanningError([{ field: 'context', reason: 'context_budget_exceeded' }])
-  const proposal = await generateAgencyStructured(llm, {
+  // 일상 턴의 계획이 근거를 못 찾으면(선택이 '기다림'으로 떨어지면) 모델에게 다시 묻는다.
+  const routine = opts.routine ? routineProposal(context, state) : null
+  if (routine && selectAgencyDecision(routine.candidates, context).action !== 'respond') return planAgencyDecision(llm, compiled, state, input)
+  const proposal = routine ?? await generateAgencyStructured(llm, {
     task: 'agency_plan', schema: AgencyPlanProposalSchema, system: PLANNER_SYSTEM, prompt, promptVersion: AGENCY_PLANNER_VERSION, maxTokens: 4096,
   })
-  const trace = agencyProviderTrace(llm, AGENCY_PLANNER_VERSION)
+  const trace = agencyProviderTrace(llm, routine ? `${AGENCY_PLANNER_VERSION}+routine` : AGENCY_PLANNER_VERSION)
   const availableRules = new Set(compiled.rules.map(rule => rule.id))
   const rules = ruleIdResolver(compiled.rules)
   proposal.appraisal.ruleIds = rules(proposal.appraisal.ruleIds)

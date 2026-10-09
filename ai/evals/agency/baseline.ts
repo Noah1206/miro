@@ -9,7 +9,7 @@ import { testDatabaseUrl } from '../../../tooling/test-database'
 /**
  * P0 baseline (docs/character-agency-plan.md §6, §8): the current core and the agency core run the same scripted
  * synthetic session through the real app entry points on a guarded local test DB, and the known current-core
- * failures are re-executed. Live mode reads only GEMINI_API_KEY, MIRO_MODEL_REGISTRY and (if present, for the GPT backup) OPENAI_API_KEY from the root .env;
+ * failures are re-executed. Live mode reads only GEMINI_API_KEY / ANTHROPIC_API_KEY, MIRO_MODEL_REGISTRY and (if present, for the GPT backup) OPENAI_API_KEY from the root .env;
  * its DATABASE_URL is never used.
  *
  *   TEST_DATABASE_URL=postgres://localhost/miro_agency_test pnpm exec tsx ai/evals/agency/baseline.ts
@@ -77,13 +77,16 @@ function stages(units: Unit[]) {
 /** Only the provider key and model registry leave the root .env. 자율성 계획·검사·컴파일은 대사 모델이 맡는다(STRONG_TASKS). */
 function liveProvider() {
   const env = parseEnv(readFileSync('.env', 'utf8'))
-  if (!env.GEMINI_API_KEY || !env.MIRO_MODEL_REGISTRY) throw new Error('Live baseline needs GEMINI_API_KEY and MIRO_MODEL_REGISTRY in the root .env')
+  if (!env.MIRO_MODEL_REGISTRY) throw new Error('Live baseline needs MIRO_MODEL_REGISTRY in the root .env')
   const models = JSON.parse(env.MIRO_MODEL_REGISTRY) as Array<{ id: string; provider: string; providerModelId?: string; enabled?: boolean; capabilities: string[]; inputCost?: number; outputCost?: number }>
   const enabled = models.filter(m => m.enabled !== false)
-  if (enabled.some(m => m.provider !== 'gemini' || m.inputCost === undefined || m.outputCost === undefined)) throw new Error('Live baseline needs priced Gemini models only')
+  // 10/9 Gemini 결제 계정 정지로 Claude 가 주 공급자 — 둘 다 잰다. 키는 표에 쓰인 공급자 것만 넘긴다.
+  if (enabled.some(m => !['gemini', 'anthropic'].includes(m.provider) || m.inputCost === undefined || m.outputCost === undefined)) throw new Error('Live baseline needs priced Gemini or Claude models only')
+  if (enabled.some(m => m.provider === 'gemini') && !env.GEMINI_API_KEY) throw new Error('Registry uses Gemini but GEMINI_API_KEY is missing')
+  if (enabled.some(m => m.provider === 'anthropic') && !env.ANTHROPIC_API_KEY) throw new Error('Registry uses Claude but ANTHROPIC_API_KEY is missing')
   if (!enabled.some(m => m.capabilities.includes('dialogue'))) throw new Error('Registry has no dialogue model')
   // 예비(GPT-5.4 mini)는 키가 있을 때만 붙는다 — 운영과 같은 조건으로 잰다.
-  return { key: env.GEMINI_API_KEY, registry: models, backupKey: env.OPENAI_API_KEY ?? '' }
+  return { key: env.GEMINI_API_KEY ?? '', anthropicKey: env.ANTHROPIC_API_KEY ?? '', registry: models, backupKey: env.OPENAI_API_KEY ?? '' }
 }
 
 async function main() {
@@ -99,7 +102,7 @@ async function main() {
   // Production's /api/health switches on 2026-09-29 (LLM 의미 분류가 9/24 결정으로 켜졌다). Pinned so a later flag change cannot silently move the baseline.
   const features = { IMAGE_GENERATION: '0', VOICE_CALL: '1', VIDEO_CALL: '0', LIVE_SCENE: '0', RELATIONSHIP_ENGINE: '1', MEMORY_ENGINE: '1',
     EVENT_ENGINE: '1', REALITY_MESSAGE: '1', INLINE_REALITY: '0', LLM_SEMANTIC_ANALYSIS: '1', MEMORY_SUMMARIES: '1', MEMORY_EXTRACTION: '1' }
-  const blank = { AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '', GEMINI_API_KEY: '', OPENAI_API_KEY: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '' }
+  const blank = { AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '', GEMINI_API_KEY: '', ANTHROPIC_API_KEY: '', OPENAI_API_KEY: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '' }
   const common = { ...process.env, ...blank, TEST_DATABASE_URL: database, MIRO_AGENCY_MEASURE_EXPERIMENT: experiment, MIRO_MODE: '',
     ...Object.fromEntries(Object.entries(features).map(([name, on]) => [`MIRO_FEATURE_${name}`, on])),
     // Durable experiment cap: the experiment user's monthly cost counter. The day's global counter is shared by every
@@ -108,7 +111,7 @@ async function main() {
     AI_DAILY_REQUEST_LIMIT: '100000', AI_USER_DAILY_LIMIT: '100000',
     // mock 턴은 수 ms 라 분당 요청 한도(사용자당)에 걸린다. 실모델 턴은 수 초라 120 으로 충분하다.
     MIRO_REQUESTS_PER_MINUTE: live ? '120' : '100000',
-    ...(provider ? { MIRO_MODEL_REGISTRY: JSON.stringify(provider.registry), GEMINI_API_KEY: provider.key, OPENAI_API_KEY: provider.backupKey } : {}) }
+    ...(provider ? { MIRO_MODEL_REGISTRY: JSON.stringify(provider.registry), GEMINI_API_KEY: provider.key, ANTHROPIC_API_KEY: provider.anthropicKey, OPENAI_API_KEY: provider.backupKey } : {}) }
   const vitest = (file: string, env: Record<string, string | undefined>) => spawnSync('pnpm',
     ['exec', 'vitest', 'run', '--config', 'ai/evals/agency/vitest.config.ts', file], { stdio: 'inherit', env: { ...common, ...env } }).status
 

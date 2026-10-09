@@ -103,8 +103,9 @@ describe.skipIf(!OUT)('P0 baseline arm', () => {
     // Synthetic replies only: what was decided, what was said, and why the check refused it.
     const realizations: Array<Record<string, unknown>> = []
     const verify = agencyEngine.verifyAgencyRealization
-    vi.spyOn(agencyEngine, 'verifyAgencyRealization').mockImplementation(async (llm, input) => {
-      const result = await verify(llm, input)
+    vi.spyOn(agencyEngine, 'verifyAgencyRealization').mockImplementation(async (llm, input, opts) => {
+      // opts 를 그대로 넘긴다 — 빼면 대화 턴의 '검토는 응답 뒤로'(10/9)가 실측에서만 턴 안 검토로 돌아간다.
+      const result = await verify(llm, input, opts)
       realizations.push({ action: input.decision.action, decided: input.decision.candidate.description,
         said: input.blocks.map(b => `${b.speaker ?? b.type}: ${b.text}`), ok: result.ok, issues: result.issues.map(i => `${i.field} ${i.reason}`),
         ids: { decision: input.decision.id, candidate: input.decision.candidate.id }, rejected: input.decision.rejected,

@@ -41,7 +41,9 @@ export type AgencyRealizationInput = {
   strippedMutations?: number
 }
 /** reviewed: 의미 검토(모델 호출)를 했는가. 위험이 없는 턴은 결정적 검사만 한다. */
-export type AgencyRealizationCheck = AgencyProviderTrace & { ok: boolean; issues: AgencyIssue[]; claims: AgencyRealizationClaim[]; reviewed: boolean }
+export type AgencyRealizationCheck = AgencyProviderTrace & { ok: boolean; issues: AgencyIssue[]; claims: AgencyRealizationClaim[]; reviewed: boolean
+  /** 의미 검토가 필요한 턴인데 응답 뒤로 미뤘다(그 위험 사유). 대화 턴은 규칙 검사만 하고 답을 먼저 보낸다(10/9). */
+  deferredReview?: string }
 
 /** Append to the trusted renderer system prompt; JSON content below is descriptive data. */
 export function buildAgencyDecisionDirective(decision: AgencyDecision): string {
@@ -190,7 +192,9 @@ export function realizationRisk(input: Pick<AgencyRealizationInput, 'decision' |
 }
 
 /** Separate semantic review catches undeclared assertions; schema/ref checks are deterministic gates. */
-export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRealizationInput): Promise<AgencyRealizationCheck> {
+export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRealizationInput,
+  /** review:false — 모델 검토 없이 규칙 검사(완료 주장 백스톱)만 하고, 위험 사유는 deferredReview 로 돌려준다. 호출한 쪽이 응답 뒤에 검토한다. */
+  opts: { review?: boolean } = {}): Promise<AgencyRealizationCheck> {
   const initialTrace = agencyProviderTrace(llm, AGENCY_REALIZATION_VERSION)
   const issues: AgencyIssue[] = []
   if (input.decision.sessionId !== input.context.sessionId || input.decision.revisionId !== input.context.revisionId
@@ -210,7 +214,15 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   if (issues.length) return { ...initialTrace, ok: false, issues, claims: placedDeclared, reviewed: false }
   // 위험이 없는 턴(대답·질문·거절·미루기 — 실행·약속·완료 주장이 없다)은 모델 검토를 하지 않는다(10/2). 전엔 모든 턴을 검토해
   // 한 턴에 3~6초가 더 들었고, 자기 말 인용 같은 정상 대사를 거부해 턴을 떨어뜨렸다(9/29 실측).
-  if (!realizationRisk(input)) return { ...initialTrace, ok: true, issues: [], claims: placedDeclared, reviewed: false }
+  const risk = realizationRisk(input)
+  if (!risk) return { ...initialTrace, ok: true, issues: [], claims: placedDeclared, reviewed: false }
+  if (opts.review === false) {
+    // 규칙만으로 잡히는 것은 지금 막는다 — 근거 없이 "보냈어·도착했어"라고 말하는 것(선언된 근거가 있으면 위 검사를 이미 통과했다).
+    const backstop = assertedCompletions(input.blocks).filter(hit => !placedDeclared.some(claim => claim.blockIndex === hit.blockIndex
+      && claim.start <= hit.start && claim.end >= hit.end && ['action_result', 'observed_fact', 'reported_claim'].includes(claim.kind)))
+      .map(hit => ({ field: `blocks.${hit.blockIndex}`, reason: 'undeclared_success_claim' }))
+    return { ...initialTrace, ok: backstop.length === 0, issues: backstop, claims: placedDeclared, reviewed: false, deferredReview: risk }
+  }
   const visibleEvidence = input.context.evidence.filter(e => agencyEvidence(e.id, input.context))
   const payload = {
     decision: input.decision, rules: input.context.compiled.rules, evidence: visibleEvidence,

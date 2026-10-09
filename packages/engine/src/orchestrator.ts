@@ -10,12 +10,13 @@ import { fallbackProposal } from './fallback'
 import { buildContext, type BuiltContext, type ReplyStyle, type SimulationSnapshot } from './context'
 import { validateProposal, type ValidatedTransition } from './validator'
 import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
-import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck } from './agency'
+import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { policyForSnapshot, type TurnPolicy } from './policy'
 import { approveTransition } from './transition'
 
 export type TurnResult = {
-  agency?: { plan: AgencyPlan; verification: AgencyRealizationCheck }
+  /** review: 응답 뒤에 할 의미 검토의 입력(검토할 거리가 있던 턴만). */
+  agency?: { plan: AgencyPlan; verification: AgencyRealizationCheck; review?: AgencyRealizationInput }
   agencyShadow?: { action: string; issueCount: number } | { error: true }
   transition: ValidatedTransition
   context: BuiltContext
