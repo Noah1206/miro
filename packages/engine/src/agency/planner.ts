@@ -8,7 +8,7 @@ import type { LLMProvider } from '@miro/providers'
 import { agencyProviderTrace, generateAgencyStructured, type AgencyProviderTrace } from './provider'
 import { hashAuthoredCharacter } from './compiler'
 
-export const AGENCY_PLANNER_VERSION = 'agency-planner:v6'
+export const AGENCY_PLANNER_VERSION = 'agency-planner:v7'
 const Id = z.string().min(1).max(128)
 const Refs = z.array(Id).max(12)
 const Time = z.string().datetime({ offset: true })
@@ -118,7 +118,7 @@ A conversation turn cannot contact the user; a later proactive decision does tha
 fulfillsGoalIds lists only cited goals that THIS action itself carries out right now, such as sending the promised contact. Mentioning, confirming, deferring or waiting on a promise does not fulfill it: use [] then. A goal cannot be fulfilled before its real-time dueAt.
 Explicit cancellation/suspension changes need supporting evidence. Do not complete goals: only verified runtime outcomes do that.
 Clock timestamps come from what was actually said and clock.local; never set a deadline nobody agreed to.
-In a background review, input.contactOpportunity names a reason a real person might reach out now: the first message after meeting, a quiet stretch, a meal-time check-in, just after parting, an unresolved event, or the user's text still waiting for a reply (answers:"user_message"). Decide in character whether to contact now or wait. A waiting user text should get a reply unless this character truly would not answer.
+In a background review, input.contactOpportunity names a reason a real person might reach out now: the first message after meeting, a quiet stretch, a meal-time check-in, just after parting, an unresolved event, or the user's text still waiting for a reply (answers:"user_message"). Decide in character whether to contact now or wait. A user text that arrived while the character was asleep or busy is like a real phone message seen later: many people answer once they are free, but some personalities or a still-distant relationship let it go (aloof, guarded, prideful, swamped). Decide that from the authored personality and the relationship, not by default. Choosing wait or defer for a waiting user text means the character leaves it unanswered; the server will not ask about that text again.
 Evidence with kind:event whose actor is the character is something the character itself lived through off-screen while not talking to the user (its own day). It is the character's own observed experience: it may shape mood, beliefs and what the character brings up. In a background review, input.ownDay lists new experiences the character might want to tell the user: share one only when a real person with this personality and relationship would, otherwise wait. Never invent experiences beyond the evidence.
 contact requires contact permission and appropriate capability preconditions; wait/defer are valid, especially when no reason to contact exists.
 move is an intention to go somewhere (destination required). The server does not confirm arrival: the reply may start moving but must not narrate having arrived or a changed location.

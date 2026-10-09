@@ -5,7 +5,6 @@ import styles from './messages.module.css'
 import type { TurnState } from '@/lib/simulation/turn-action'
 import { useTurns } from '../../chat/[sessionId]/turns'
 import { streamTurn } from '../../chat/[sessionId]/stream-turn'
-import { withParticle } from '@/lib/format'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -33,7 +32,7 @@ export function MessengerComposer({ sessionId, characterName }: { sessionId: str
       {(pending || state.keepWaiting) && <p role="status" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>{t('{name} 입력 중', { name: characterName })}<span className={styles.typing} aria-hidden><i /><i /><i /></span></p>}
       {state.error && <p role="alert" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-danger)' }}>{t(state.error)}</p>}
       {state.notice && !pending && <p role="status" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</p>}
-      {state.delayed && !pending && <p role="status" data-reply-delayed className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>{t('{topic} 지금 {activity} 중이에요 — 끝나면 답장이 와요.', { topic: withParticle(characterName, '은', '는'), name: characterName, activity: t(state.delayed.label) })}</p>}
+      {/* 캐릭터가 자거나 바빠도 안내하지 않는다(10/9) — 실제 문자처럼 보낸 말만 남고, 답할지는 캐릭터가 깨어나 성격대로 정한다. */}
       <form action={action} className={styles.form}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="sessionId" value={sessionId} />

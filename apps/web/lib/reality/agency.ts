@@ -253,8 +253,10 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         nextWakeAt: nextDue === undefined ? null : new Date(Math.max(nextDue, now.getTime() + backoffMinutes * 60_000)),
       }).where(and(eq(characterRuntimeStates.sessionId, sessionId), eq(characterRuntimeStates.version, runtime.version))).returning({ id: characterRuntimeStates.sessionId })
       if (updated.length !== 1) throw new AgencyRealityConflict()
-      // 사용자 문자에 아직 답하지 않았으면(바쁨·대기 결정) 답장 의도를 남겨 다음에 다시 본다 — 답장은 사라지면 안 된다.
-      const keepReply = reply && !contactId && row.session.pendingRealityIntent
+      // 답장을 못 보낸 이유가 전달 제약(자는 중·바쁨)이면 남겨 다음에 다시 본다. 캐릭터가 성격대로 답하지 않기로 했으면 그 문자는 거기서 끝 —
+      // 실제 사람도 늦게 본 문자에 다 답하지는 않는다(10/9 사용자 결정: '끝나면 답장이 와요' 안내 없이, 답할지는 캐릭터가).
+      const keepReply = reply && !contactId && row.session.pendingRealityIntent && blocked !== null
+      if (reply && !contactId && !keepReply) observe('reality.reply_left', { sessionId, action: plan.decision.action })
       await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!,
         notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } : null }).where(eq(roleplaySessions.id, sessionId))
       return contactId
