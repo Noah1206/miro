@@ -1,0 +1,31 @@
+/* 국외 이전 동의 — 메타·인스타그램 동의 화면의 결(검정 바탕, 왼쪽 정렬 큰 제목, 아래 고정 알약 버튼). 10/9 시안 반영. */
+:global(body):has(.page) { background: #000; }
+/* 전역 .page 의 여백을 확실히 이기도록 두 클래스로 */
+.page:global(.page) { max-width: 480px; padding: 0 20px 200px; background: #000; }
+
+.topBack { width: 44px; height: 44px; margin: 4px -10px 0; display: grid; place-items: center; border-radius: 50%; background: none; border: 0; color: var(--color-text-primary); }
+.topBack:hover { background: #1F1F1F; }
+
+.title { margin-top: 28px; font-size: 24px; font-weight: 700; line-height: 1.33; letter-spacing: -0.01em; }
+.intro { margin-top: 12px; font-size: 15px; line-height: 1.55; color: var(--color-text-secondary); }
+
+.points { margin: 28px 0 0; padding: 0; list-style: none; display: grid; gap: 22px; }
+.point { display: grid; grid-template-columns: 24px 1fr; gap: 16px; }
+.point svg { margin-top: 1px; }
+.point h2 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.point p { margin-top: 3px; font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); }
+
+.groupTitle { margin: 36px 0 12px; font-size: 17px; font-weight: 700; }
+.vendors { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--color-text-secondary); }
+.vendors b { font-weight: 600; color: var(--color-text-primary); }
+
+.dock { position: fixed; left: 0; right: 0; bottom: 0; background: #000; border-top: 1px solid #262626; z-index: 5; }
+.dockInner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; }
+
+/* 진한 주황 단색, 누르면 더 진하게. 배경은 page.tsx 의 인라인 style 이 이 변수를 읽는다. */
+.agree { --agree-bg: #E65100; }
+.agree:hover { --agree-bg: #F25C0A; }
+.agree:active { --agree-bg: #B84000; }
+
+.back { justify-self: center; display: inline-flex; align-items: center; gap: 4px; padding: 8px 4px; background: none; border: 0; font-size: 13px; color: var(--color-text-secondary); }
+.back:hover { color: var(--color-text-primary); text-decoration: underline; }
