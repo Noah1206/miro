@@ -5,9 +5,6 @@ import { voiceCallAllowed } from '@miro/config'
 import { requireUser } from '@/lib/auth'
 import { startOutgoingCall, UsageExceededError } from '@/lib/call/service'
 import { msg } from '@/lib/i18n'
-import { turnFromForm, type TurnState } from '@/lib/simulation/turn-action'
-
-export type { TurnState }
 
 /** The reusable balance guard uses a structured result and retains the same request on retry. */
 export async function requestVoiceCall(sessionId: string, requestId: string) {
@@ -22,11 +19,7 @@ export async function requestVoiceCall(sessionId: string, requestId: string) {
   }
 }
 
-/** 문자 한 통. 캐릭터챗과 같은 파이프라인이되 messenger 모드 — 문자로 답하고 문자 페이지에만 남는다. */
-export async function sendMessengerTurn(_prev: TurnState, form: FormData): Promise<TurnState> {
-  const user = await requireUser()
-  return turnFromForm(user.id, form, { mode: 'messenger', path: (id) => `/messages/${id}` })
-}
+// 문자 한 통은 스트리밍 경로(/api/turn, mode=messenger)로 간다(10/9) — 말풍선이 하나씩 도착한다.
 
 /** 문자 페이지 머리의 통화 버튼. 성공이면 통화 화면으로, 실패면 이유를 주소에 실어 돌아온다. */
 export async function placeVoiceCall(form: FormData): Promise<void> {

@@ -15,12 +15,15 @@ const clock = (iso: string | undefined, locale: string) => iso ? new Date(iso).t
 export function MessengerThread({ items: server, characterName, portrait }: { items: MsgItem[]; characterName: string; portrait?: string | null }) {
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
-  const { appended } = useTurns()
+  const { appended, live } = useTurns()
   const known = new Set(server.map((m) => m.id))
   // 방금 보낸 턴은 시각이 없다 — 서버 목록이 갱신되면 그쪽 시각이 붙는다.
-  const items: MsgItem[] = [...server, ...appended.filter((m) => !known.has(m.id)).map((m): MsgItem => ({ ...m }))]
+  // 오고 있는 문자(스트리밍, 10/9)는 맨 뒤에 — 보낸 말과 지금까지 도착한 말풍선. 저장되면 저장본이 그 자리를 채운다.
+  const liveItems: MsgItem[] = live ? [{ id: 'live-user', role: 'user', kind: 'messenger', content: live.input, blocks: [] },
+    ...(live.blocks.some((b) => b.type === 'dialogue') ? [{ id: 'live-reply', role: 'character', kind: 'messenger', content: '', blocks: live.blocks }] : [])] : []
+  const items: MsgItem[] = [...server, ...appended.filter((m) => !known.has(m.id)).map((m): MsgItem => ({ ...m })), ...liveItems]
   const end = useRef<HTMLDivElement>(null)
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [items.length])
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [items.length, live?.blocks.length])
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 문자', { name: characterName })} className={styles.thread}>
       {items.length === 0 && <p className={styles.notice}>{t('{subject} 먼저 문자를 보내면 여기에 와요. 먼저 보내도 돼요.', { subject: subject(characterName), name: characterName })}</p>}

@@ -8,43 +8,14 @@ import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { useTurns, type LiveTurn } from './turns'
+import { useTurns } from './turns'
+import { streamTurn } from './stream-turn'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
-
-/**
- * 한 턴을 /api/turn 으로 보내고 답을 받는 대로 onLive 로 넘긴다(10/9 스트리밍). 끝에 저장된 결과(TurnState)를 돌려준다 — 서버 액션과 같은 모양.
- * 줄이 끝까지 오지 않으면(연결 끊김) 던진다 — 부른 쪽이 같은 requestId 로 다시 보내게 한다.
- */
-async function streamTurn(form: FormData, onLive: (live: LiveTurn | null) => void): Promise<TurnState> {
-  const input = String(form.get('input') ?? '').trim()
-  // 액션 안에서 첫 await 전의 상태 변경은 액션이 끝날 때까지 미뤄진다 — 한 박자 넘겨 보낸 말이 바로 보이게.
-  await Promise.resolve()
-  if (input) onLive({ input, blocks: [] })
-  const res = await fetch('/api/turn', { method: 'POST', body: form })
-  if (!res.ok || !res.body) throw new Error('stream_failed')
-  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
-  let buffer = '', done: TurnState | null = null
-  for (;;) {
-    const { value, done: ended } = await reader.read()
-    if (ended) break
-    buffer += value
-    for (let nl = buffer.indexOf('\n'); nl >= 0; nl = buffer.indexOf('\n')) {
-      const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1)
-      if (!line.trim()) continue
-      const event = JSON.parse(line) as { type: 'blocks'; blocks: LiveTurn['blocks'] } | { type: 'reset' } | { type: 'done'; state: TurnState }
-      if (event.type === 'blocks') onLive({ input, blocks: event.blocks })
-      else if (event.type === 'reset') onLive({ input, blocks: [] })
-      else done = event.state
-    }
-  }
-  if (!done) throw new Error('stream_incomplete')
-  return done
-}
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력창 아래 줄에 둔다. */
 export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
