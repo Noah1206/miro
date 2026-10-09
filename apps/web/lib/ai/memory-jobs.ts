@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { and, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { db, memories, memoryJobs, messages, roleplaySessions, users } from '@miro/db'
 import { POLICY } from '@miro/config'
-import { dedupeCandidates, filterSalient, pruneMemories, tagsOf } from '@miro/domain'
+import { dedupeCandidates, filterSalient, momentHint, pruneMemories, tagsOf } from '@miro/domain'
 import { analyzeMemory, planTasks } from '@miro/engine'
 import type { AITask } from '@miro/providers'
 import type { UsageTransaction } from '@/lib/usage/guard'
@@ -10,6 +10,7 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { conversationContext } from '@/lib/simulation/character-context'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
 import { observe } from '@/lib/observe'
+import { captureMoments } from '@/lib/reality/moments'
 
 type Kind = 'memory_extraction' | 'memory_summary'
 const KINDS: readonly AITask[] = ['memory_extraction', 'memory_summary']
@@ -159,6 +160,12 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
     await tx.update(memoryJobs).set({ status: 'done', leaseToken: null, leaseUntil: null, finishedAt: sql`now()`, errorCode: null })
       .where(and(eq(memoryJobs.id, id), eq(memoryJobs.leaseToken, token)))
   })
+  // 사용자 일정 — 앞날을 말한 듯한 턴이면 같은 싼 모델로 한 번 더 본다. 실패해도 기억 작업은 끝난 것이다(10/9).
+  if (job.kind === 'memory_extraction' && momentHint(source.content)) {
+    await captureMoments(llm, { sessionId: job.sessionId, messageId: job.messageId, input: source.content, timeZone: loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone,
+      now: source.createdAt, recent: recentMessages.map(m => ({ who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 300) })) })
+      .catch(e => observe('moment.capture_failed', { jobId: id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))
+  }
   observe('memory.job_done', { jobId: id, kind: job.kind, stored: candidates.length })
   return 'done'
 }

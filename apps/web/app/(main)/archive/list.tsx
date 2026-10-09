@@ -84,9 +84,18 @@ export function ArchiveList({ initialPage }: {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
-                  <h2 className="t-name" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 16, lineHeight: 1.35 }}>
+                  <h2 className="t-name" style={{ flexShrink: 0, maxWidth: '60%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 16, lineHeight: 1.35 }}>
                     {s.characterName}
                   </h2>
+                  {/* 상태 메시지 — 캐릭터가 자기 하루를 사는 게 목록에서도 보이게. 막 바뀌었으면 주황 점(10/9). */}
+                  {s.characterStatus && s.lastMessage && (
+                    <span className="t-caption" style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--color-text-tertiary)' }}>
+                      {s.characterStatusAt && Date.now() - new Date(s.characterStatusAt).getTime() < 6 * 3_600_000 && (
+                        <span aria-label={t('새 상태 메시지')} style={{ display: 'inline-block', width: 6, height: 6, marginRight: 5, verticalAlign: 1, borderRadius: 3, background: 'var(--color-accent-text)' }} />
+                      )}
+                      {s.characterStatus}
+                    </span>
+                  )}
                 </div>
                 <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : s.characterStatus ?? `${s.location} · ${s.time}`}</p>
               </div>

@@ -1,5 +1,7 @@
 import { features } from '@miro/config'
-import { introDialogue, introScenes, sampleDialogue } from '@/lib/intro-dialogue'
+import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
+import { RichText } from '@/components/scene/rich-text'
+import { IntroPreview, type IntroScene } from './intro-preview'
 import { personalize } from '@/lib/personalize'
 import { getPersona } from '@/lib/persona'
 import { CharacterSettings } from './settings'
@@ -36,6 +38,22 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const me = (text: string | null) => personalize(text ?? '', persona?.name)
   // 시작 상황(도입부)이 둘 이상이면 고른다 — 고른 값은 아래 '대화 시작하기' 폼으로 간다(form 속성).
   const scenes = introScenes(c.sampleDialogue)
+  // 글 속 이름에 색 — 캐릭터는 주황, 나는 관계색. 페르소나가 있으면 서술의 '당신'이 그 이름이 되고, 대사엔 '당신'이 남는다.
+  const names = { character: c.name, user: [...new Set([persona?.name?.trim(), '당신'].filter((n): n is string => !!n))] }
+  const introScenesData: IntroScene[] = (scenes.length ? scenes : ['']).map((scene) => {
+    const opening = sceneOpening(c.sampleDialogue, scene)
+    return {
+      value: scene,
+      label: scene || t('처음부터'),
+      meta: [opening?.time ?? c.startingTime, opening?.location ?? c.worldLocation].filter(Boolean).join(' | '),
+      context: me(opening?.context ?? c.startingContext),
+      lines: introDialogue(c.sampleDialogue, scene).map((d) => ({
+        role: d.role === 'character' ? 'character' as const : 'narrator' as const,
+        text: d.role === 'narrator' ? me(d.text) : d.text,
+        ...(d.image ? { image: d.image } : {}),
+      })),
+    }
+  })
 
   const enter = startRoleplay.bind(null, slug)
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
@@ -93,43 +111,19 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
-            {c.experienceType === 'reality' && <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{me(c.personality)}</p>}
-            {profile.map((line) => (
-              <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>
-            ))}
+            {c.experienceType === 'reality' && <RichText text={me(c.personality)} names={names} />}
+            {profile.map((line) => <RichText key={line} text={line} names={names} />)}
           </div>
         </Rule>}
         {c.experienceType === 'reality' && c.worldSetting && (
           <Rule label={t('세계관')}>
-            <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{me(c.worldSetting)}</p>
+            <div className="detail-prose"><RichText text={me(c.worldSetting)} names={names} /></div>
           </Rule>
         )}
         <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
 
         <Rule label={t('첫 장면')}>
-          <div className="detail-prose">
-            <p className="t-body-lg t-quote">{me(c.startingContext)}</p>
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>
-              {t('{when}부터 시작합니다.', { when: [c.worldLocation, c.startingTime].filter(Boolean).join(' · ') })}
-            </p>
-          </div>
-          {scenes.length > 1 && (
-            <fieldset style={{ border: 0, padding: 0, margin: '18px 0 0', display: 'grid', gap: 8 }}>
-              <legend className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 8 }}>{t('시작 상황')}</legend>
-              {scenes.map((scene, i) => {
-                const first = introDialogue(c.sampleDialogue, scene).find((d) => d.role === 'narrator')?.text ?? ''
-                return (
-                  <label key={scene} className="scene-option">
-                    <input type="radio" name="scene" value={scene} form="start-roleplay" defaultChecked={i === 0} />
-                    <span>
-                      <strong className="t-body">{scene || t('처음부터')}</strong>
-                      <span className="t-caption" style={{ display: 'block', color: 'var(--color-text-tertiary)', marginTop: 2 }}>{me(first).slice(0, 70)}{first.length > 70 ? '…' : ''}</span>
-                    </span>
-                  </label>
-                )
-              })}
-            </fieldset>
-          )}
+          <div className="detail-prose"><IntroPreview scenes={introScenesData} names={names} /></div>
           {sampleDialogue(c.sampleDialogue).length > 0 && (
             <div style={{ marginTop: 18 }}>
               <SampleDialogue name={c.name} portrait={c.images[0] ?? null} turns={sampleDialogue(c.sampleDialogue)} />

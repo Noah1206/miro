@@ -15,6 +15,8 @@ export type ArchiveItem = {
   location: string
   time: string
   characterStatus: string | null
+  /** 상태 메시지가 바뀐 시각 — 목록이 '방금 바뀐' 상태에 점을 찍는다(10/9). */
+  characterStatusAt: Date | null
   lastMessage: string | null
   unread: number
 }
@@ -72,6 +74,7 @@ export async function listSessions(userId: string, options: {
     status: roleplaySessions.status, lastInteractionAt: roleplaySessions.lastInteractionAt,
     location: worldStates.currentLocation, time: worldStates.currentTime,
     characterStatus: roleplaySessions.characterStatus,
+    characterStatusAt: roleplaySessions.characterStatusAt,
     // 전화가 닫혀 있으면(운영 베타, 2026-10-01) 통화 기록은 미리보기에도 쓰지 않는다.
     lastMessage: sql<string | null>`(select left("content", 180) from "messages" where "session_id" = ${roleplaySessions.id} and "hidden_at" is null${feature('voiceCall') || feature('videoCall') ? sql`` : sql` and "kind" <> 'call_record'`} order by "created_at" desc, "id" desc limit 1)`,
     unread: sql<number>`(select count(*)::int from ${realityContacts} rc where rc.session_id = ${roleplaySessions.id} and rc.status = 'sent')`,

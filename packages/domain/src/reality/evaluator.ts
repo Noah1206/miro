@@ -52,14 +52,16 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   }
   // 사용자가 보낸 문자에 대한 답장은 연락이 아니라 대답이다 — 읽지 않은 연락 수·쿨다운으로 막지 않는다.
   const reply = intent.answers === 'user_message'
-  if (!reply && input.pendingContacts.length >= POLICY.reality.maxPending) {
+  // 사용자가 말한 일정을 챙기는 연락(응원·"어땠어?")은 그때를 놓치면 뜻이 없다 — 답장처럼 안 읽은 수·간격·하루 상한으로 막지 않는다(10/9).
+  const timely = reply || !!intent.momentKey
+  if (!timely && input.pendingContacts.length >= POLICY.reality.maxPending) {
     return { send: false, reason: 'max_pending' }
   }
-  if (!reply && inCooldown(input.lastContactAt, now)) {
+  if (!timely && inCooldown(input.lastContactAt, now)) {
     return { send: false, reason: 'cooldown' }
   }
   // 하루 상한은 캐릭터마다 다르다(성격·관계). 넘으면 다음 날로 — 답장은 세지도 막지도 않는다.
-  if (!reply && input.dailyCap !== undefined && (input.contactsToday ?? 0) >= input.dailyCap) {
+  if (!timely && input.dailyCap !== undefined && (input.contactsToday ?? 0) >= input.dailyCap) {
     return { send: false, reason: 'daily_cap' }
   }
   // 침묵 연락은 deriveIntent 가 관계성·성격·친밀도로 이미 정했다 — 같은 관계를 다른 공식으로 다시 막지 않는다. 첫 연락도 성격대로의 시간으로 이미 정했다.
@@ -67,7 +69,7 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   // 사건 규칙도 — 조건(신뢰·거리 등)과 관계 성격표가 이미 정했다. 전엔 여기서 다시 막혀 '잘 들어갔어?' 가 웬만큼 가까운 사이가 아니면 나가지 않았다(10/2 실측).
   // 식사 시간 안부도 침묵 연락과 같은 관계 문턱(readyToReachOut)을 넘어야만 생긴다 — 긴급도 0.4 라 여기서 거의 다 막혔다(10/2 구조 분석).
   const decidedByRelationship = intent.reason === 'silence' || intent.reason.startsWith('checkin:') || intent.reason === FIRST_CONTACT_REASON
-  if (!decidedByRelationship && !intent.answers && !intent.rule && motivation(input) < POLICY.reality.motivationThreshold) {
+  if (!decidedByRelationship && !intent.answers && !intent.rule && !intent.momentKey && motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
   return { send: true, channel: intent.channel, dedupeKey: buildDedupeKey(input) }
@@ -139,6 +141,7 @@ function buildDedupeKey(input: RealityInput): string {
 /** 연락 기회 하나의 정체성. 자율성 경로도 같은 키로 보내고 같은 키로 '이번엔 안 보냄'을 기록한다 — 같은 기회를 두 번 쓰지 않는다. */
 export function contactDedupeKey(intent: RealityIntent, now: Date, timeZone: string): string {
   if (intent.eventKey) return `${intent.channel}:event:${intent.eventKey}:${intent.reason}`
+  if (intent.momentKey) return `${intent.channel}:moment:${intent.momentKey}`
   if (intent.reason === FIRST_CONTACT_REASON) return `${intent.channel}:first_contact`
   const bucket = intent.answers && intent.notBefore ? `at:${intent.notBefore}` : localDay(now, timeZone)
   return `${intent.channel}:${bucket}:${intent.reason}`

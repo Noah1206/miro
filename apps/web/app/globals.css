@@ -285,3 +285,27 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .scene-option { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
 .scene-option:has(input:checked) { border-color: var(--color-text-secondary); background: var(--color-surface-1); }
 .scene-option input { margin-top: 3px; accent-color: var(--color-accent-text); }
+
+/* 캐릭터 소개·인트로 글(10/8) — 본문은 흰색, 캐릭터 이름은 주황, 나(당신·페르소나)는 관계색. [제목] 줄은 굵은 소제목. */
+:root { --color-name-character: var(--color-accent-text); --color-name-user: var(--color-relationship); }
+.rich-text { color: var(--color-text-primary); }
+.rich-text p { margin: 0; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.rich-text .rt-gap { height: 0.9em; }
+.rich-text .rt-heading { font-weight: var(--weight-bold); }
+.rich-text .rt-heading:not(:first-child) { margin-top: 0.9em; }
+.rich-text em { font-style: italic; }
+.rich-text strong { font-weight: var(--weight-bold); }
+.rt-char { color: var(--color-name-character); }
+.rt-user { color: var(--color-name-user); }
+/* 인트로: 시작 상황 칩 → 시각·장소 상자 → 서술과 말풍선. */
+.intro-preview { display: flex; flex-direction: column; gap: 14px; }
+.intro-scenes { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
+.intro-chip { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-button);
+  color: var(--color-text-primary); font-weight: var(--weight-medium); cursor: pointer; }
+.intro-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.intro-chip:has(input:checked) { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-on); font-weight: var(--weight-semibold); }
+.intro-chip:has(input:focus-visible) { outline: 2px solid var(--color-white); outline-offset: 2px; }
+.intro-meta { align-self: flex-start; margin: 0; padding: 8px 12px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); font-size: var(--font-caption); color: var(--color-text-primary); }
+.intro-line { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.intro-bubble { max-width: 85%; padding: 10px 14px; border-radius: var(--radius-md); background: var(--color-surface-2); }
+.intro-photo { display: block; width: min(100%, 360px); aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid rgba(255,255,255,0.08); }

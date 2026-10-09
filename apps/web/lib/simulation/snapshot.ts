@@ -6,8 +6,9 @@ import {
   db, characters, characterVisualIdentities, events, memories, messages, npcs, realityContacts, relationships,
   callSessions, roleplaySessions, scenes, userSettings, worldStates, worlds,
 } from '@miro/db'
-import { DEFAULT_CHARACTER_STATE, describeRoutine, lifeLines, localClock, type CharacterState } from '@miro/domain'
+import { DEFAULT_CHARACTER_STATE, describeRoutine, lifeLines, localClock, momentLines, type CharacterState } from '@miro/domain'
 import { recentLife } from '@/lib/agency/life'
+import { activeMoments } from '@/lib/reality/moments'
 import { characterAvailability } from '@/lib/reality/routine'
 import { memoryLagFor } from '@/lib/ai/memory-jobs'
 import { getPersona } from '@/lib/persona'
@@ -22,6 +23,7 @@ export type LoadedSession = {
   characterName: string
   characterPhoto?: string | null
   characterStatus: string | null
+  characterStatusAt: Date | null
   /** 운영 제한. 새 턴/미디어를 거부한다. */
   restricted: boolean
   /** chat 이면 선연락·사진·통화·Live 가 이 세션에서 열리지 않는다. */
@@ -62,7 +64,7 @@ export async function loadSession(
   const row = rows[0]
   if (!row) return null
 
-  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life, adultOk] = await Promise.all([
+  const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life, adultOk, moments] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
     db.select().from(events)
@@ -100,6 +102,8 @@ export async function loadSession(
     row.character.experienceType === 'reality' ? recentLife(sessionId) : Promise.resolve([]),
     // 성인 모드 대사 지시는 매 턴 다시 판정한다 — 켠 뒤에 캐릭터 나이가 바뀌거나 인증이 사라지면 일반 기준으로 돌아간다(모델은 그대로 전용).
     row.session.adultMode && row.session.adultSince ? adultModeGateFor(userId, row.character.id).then((g) => g.allowed) : Promise.resolve(false),
+    // 사용자가 말한 자기 일정 — 캐릭터가 기억했다가 그날이 다가오거나 지나면 챙긴다(10/9).
+    activeMoments(sessionId),
   ])
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
@@ -134,6 +138,7 @@ export async function loadSession(
     clock: localClock(now, timeZone),
     routine: availability ? describeRoutine(availability.routine, availability) : null,
     life: lifeLines(life, timeZone),
+    userMoments: momentLines(moments, now, timeZone),
     adultMode: adultOk,
     adultLevel: row.session.adultLevel,
     recentCalls: calls.map((c) => {
@@ -154,6 +159,7 @@ export async function loadSession(
     characterName: c.name,
     characterPhoto: c.images[0] ?? null,
     characterStatus: row.session.characterStatus,
+    characterStatusAt: row.session.characterStatusAt,
     restricted: row.session.restrictedAt !== null,
     experienceType: c.experienceType,
     policyVersion: row.session.policyVersion,

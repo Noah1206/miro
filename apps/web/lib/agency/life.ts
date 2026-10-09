@@ -1,7 +1,7 @@
 import { and, desc, eq, gte, inArray, isNull, lte, or } from 'drizzle-orm'
 import { POLICY, characterAgencyMode, feature } from '@miro/config'
 import { db, characterLifeEvents, characterRevisions, characterRuntimeStates, characters, messages, relationships, roleplaySessions, userSettings, worldStates } from '@miro/db'
-import { acceptLifeEvents, describeRelationship, lifeLines, lifeWindow, localClock, localIso, type LifeEvent } from '@miro/domain'
+import { LANGUAGES, acceptLifeEvents, describeRelationship, isLanguage, lifeLines, lifeWindow, localClock, localIso, type LifeEvent } from '@miro/domain'
 import { liveCharacterDay } from '@miro/engine'
 import { createAI } from '@miro/providers'
 import { observe } from '@/lib/observe'
@@ -34,7 +34,7 @@ export type LifeOutcome = { outcome: 'off' | 'not_due' | 'asleep' | 'quiet' | 'l
  */
 export async function advanceCharacterLife(sessionId: string, now = new Date()): Promise<LifeOutcome> {
   if (!feature('characterLife')) return { outcome: 'off' }
-  const [row] = await db.select({ session: roleplaySessions, runtime: characterRuntimeStates, revision: characterRevisions, characterId: characters.id, timeZone: userSettings.timeZone })
+  const [row] = await db.select({ session: roleplaySessions, runtime: characterRuntimeStates, revision: characterRevisions, characterId: characters.id, timeZone: userSettings.timeZone, language: userSettings.language })
     .from(roleplaySessions)
     .innerJoin(characterRuntimeStates, eq(characterRuntimeStates.sessionId, roleplaySessions.id))
     .innerJoin(characterRevisions, eq(characterRevisions.id, characterRuntimeStates.revisionId))
@@ -77,13 +77,19 @@ export async function advanceCharacterLife(sessionId: string, now = new Date()):
     relationship: relationship ? `${relationship.stage} — ${describeRelationship(relationship as never)}` : '',
     lastConversation: last.reverse().map(m => ({ at: localClock(m.createdAt, timeZone).label, who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 200) })),
     affect: row.runtime.state.affect,
+    currentStatus: row.session.characterStatus,
+    statusLanguage: LANGUAGES[isLanguage(row.language) ? row.language : 'ko'],
   })
-  const drafts = acceptLifeEvents(proposed, window, recent.map(e => e.summary), routine, timeZone)
+  const drafts = acceptLifeEvents(proposed.events, window, recent.map(e => e.summary), routine, timeZone)
+  // 상태 메시지 — 바뀌었을 때만(시각이 '방금 바뀐' 표시가 된다). 한 줄로, 넘치면 자른다.
+  const status = proposed.status.replace(/\s+/g, ' ').trim().slice(0, 40)
+  const statusChanged = status.length >= 2 && status !== row.session.characterStatus
   const stored = await db.transaction(async tx => {
     if ((await advance(tx)).length !== 1) return null // 다른 워커가 이 시간을 먼저 살았다.
+    if (statusChanged) await tx.update(roleplaySessions).set({ characterStatus: status, characterStatusAt: now }).where(eq(roleplaySessions.id, sessionId))
     return drafts.length ? (await tx.insert(characterLifeEvents).values(drafts.map(d => ({ sessionId, ...d, occurredAt: new Date(d.occurredAt) }))).returning()).map(toEvent) : []
   })
   if (!stored) return { outcome: 'conflict' }
-  observe('life.advanced', { sessionId, proposed: proposed.length, stored: stored.length, shareable: stored.filter(e => e.shareable).length })
+  observe('life.advanced', { sessionId, statusChanged, proposed: proposed.events.length, stored: stored.length, shareable: stored.filter(e => e.shareable).length })
   return { outcome: stored.length ? 'lived' : 'quiet', events: stored }
 }

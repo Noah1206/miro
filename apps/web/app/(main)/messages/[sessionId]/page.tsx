@@ -15,6 +15,7 @@ import { MessengerComposer } from './composer'
 import { CallButton } from './call-button'
 import { MESSENGER_KINDS, isMessengerMessage } from '@/lib/messenger'
 import { getT } from '@/lib/i18n/server'
+import { characterAvailability } from '@/lib/reality/routine'
 
 /**
  * 문자(카톡형) 페이지 — 미로 캐릭터가 먼저 보낸 연락, 내가 보낸 문자, 통화 기록이 여기 모인다.
@@ -31,12 +32,16 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 문자도 채팅이다 — 페르소나가 없으면 먼저 만든다(저장하면 이 문자방으로 돌아온다).
   await requirePersona(loaded.snapshot.userPersona, `/messages/${sessionId}`)
-  const [rows] = await Promise.all([
+  // 이름 아래 한 줄 — 지금 뭐 하는 중인지(생활 리듬)와 상태 메시지(자기 삶이 바꾼다). "얘도 자기 하루가 있다" 가 보이게(10/9).
+  const [rows, , now] = await Promise.all([
     db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.kind, [...MESSENGER_KINDS]))).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     // 여기서 읽었으니 '읽음'. 선연락 기록은 열어 본 시각을 남긴다.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
+    characterAvailability(loaded.characterId, new Date(), loaded.snapshot.clock?.timeZone).catch(() => null),
   ])
+  const presence = now && (now.label ? t('{label} 중', { label: now.label }) : now.availability === 'free' ? t('활동 중') : null)
+  const freshStatus = !!loaded.characterStatusAt && Date.now() - loaded.characterStatusAt.getTime() < 6 * 3_600_000
 
   const items: MsgItem[] = rows
     // 사진은 문자로 보낸 것만 — 장면 안의 사진은 캐릭터챗의 것이다.
@@ -54,7 +59,17 @@ export default async function MessagesPage({ params, searchParams }: { params: P
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <h1 className={styles.title}>{loaded.characterName}</h1>
+          <div className={styles.titleBox}>
+            <h1 className={styles.title}>{loaded.characterName}</h1>
+            {(presence || loaded.characterStatus) && (
+              <p className={styles.presence}>
+                {presence && <span className={styles.presenceNow} data-availability={now?.availability}>{presence}</span>}
+                {loaded.characterStatus && <span className={styles.status} data-fresh={freshStatus || undefined}>
+                  {freshStatus && <span className="sr-only">{t('새 상태 메시지')}</span>}{loaded.characterStatus}
+                </span>}
+              </p>
+            )}
+          </div>
           {voiceCallAllowed(user.id) && (
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}

@@ -357,6 +357,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   realityCheckedAt: timestamp('reality_checked_at', { withTimezone: true }),
   /** 캐릭터 상태 한 줄 ('status' 채널). Chats 목록과 헤더에 표시. */
   characterStatus: text('character_status'),
+  /** 상태 메시지가 마지막으로 바뀐 시각(자기 삶이 바꾼다, 2026-10-09). */
+  characterStatusAt: timestamp('character_status_at', { withTimezone: true }),
   /** 운영 제한 조치. 설정되면 새 턴/미디어 생성을 거부한다 (명세서 9.2). */
   restrictedAt: timestamp('restricted_at', { withTimezone: true }),
   restrictedReason: text('restricted_reason'),
@@ -1056,6 +1058,28 @@ export const characterLifeEvents = pgTable('character_life_events', {
   shareable: boolean('shareable').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({ session: index('character_life_events_session_idx').on(t.sessionId, t.occurredAt) })).enableRLS()
+
+/**
+ * 사용자가 말한 자기 일정(2026-10-09) — "금요일에 면접" 같은 것. 기억 추출 작업이 뽑고 서버가 거른 것만 남는다.
+ * cheer_at(전에 응원)·ask_at(끝난 뒤 "어땠어?")에 스케줄러가 먼저 연락할 기회로 쓴다. 보냈거나 판단을 마치면 cheered_at/asked_at 이 찍힌다.
+ */
+export const userMoments = pgTable('user_moments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  sourceMessageId: uuid('source_message_id'),
+  about: text('about').notNull(),
+  eventAt: timestamp('event_at', { withTimezone: true }).notNull(),
+  hasTime: boolean('has_time').notNull().default(false),
+  cheerAt: timestamp('cheer_at', { withTimezone: true }),
+  askAt: timestamp('ask_at', { withTimezone: true }).notNull(),
+  cheeredAt: timestamp('cheered_at', { withTimezone: true }),
+  askedAt: timestamp('asked_at', { withTimezone: true }),
+  status: text('status', { enum: ['active', 'cancelled'] }).notNull().default('active'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({
+  uniq: uniqueIndex('user_moments_session_id_about_event_at_key').on(t.sessionId, t.about, t.eventAt),
+  session: index('user_moments_session_idx').on(t.sessionId, t.eventAt).where(sql`${t.status} = 'active'`),
+})).enableRLS()
 
 export const characterDecisions = pgTable('character_decisions', {
   id: uuid('id').primaryKey().defaultRandom(),

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { feature } from '@miro/config'
-import { SEMANTIC_EVENT_TYPES } from '@miro/domain'
+import { SEMANTIC_EVENT_TYPES, momentHint } from '@miro/domain'
 import { prompts, interactionImportance, importanceScore, type LLMProvider, type AITask } from '@miro/providers'
 import { MemoryCandidateProposal, lenientArray } from './proposal.schema'
 import { responseJsonSchema } from './agency/provider'
@@ -103,7 +103,8 @@ export function planTasks(input: string, turn: number, mode: 'planned' | 'always
   if (feature('llmSemanticAnalysis')) tasks.push('semantic_event')
   // 그래프를 채우려면 키워드가 없는 평범한 대화에서도 사실이 나와야 한다.
   // 키워드는 즉시 통과, 그 외에는 중요도 기준으로 통과시킨다.
-  if (feature('memoryExtraction') && (all || /기억|약속|비밀|사실|좋아하|좋아해|정정|바뀌|바꿨|이제|대신/.test(input)
+  // 앞날의 일정을 말한 듯하면 그 턴은 꼭 추출한다 — 기억 작업이 사용자 일정(user_moments)도 함께 뽑는다(10/9).
+  if (feature('memoryExtraction') && (all || momentHint(input) || /기억|약속|비밀|사실|좋아하|좋아해|정정|바뀌|바꿨|이제|대신/.test(input)
     || importanceScore(interactionImportance(input)) >= .3)) tasks.push('memory_extraction')
   if (feature('memorySummaries') && turn > 0 && turn % 12 === 0) tasks.push('memory_summary')
   return [...tasks, 'dialogue']

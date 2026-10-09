@@ -529,38 +529,23 @@ function ControlledArea({ name, label, placeholder, max, rows, value, onChange }
   )
 }
 
-/** 성별·체형 — 낱말이 아니라 사진에서 고른다. 네 장은 같은 옷·배경·거리라 체형만 다르다. */
+/** 성별·체형 — 글자 칩에서 고른다(10/8: 체형 사진 삭제). */
 function BodyPicker({ build, onBuild, gender, onGender }: {
   build: string; onBuild: (b: string) => void; gender: string; onGender: (g: string) => void
 }) {
-  const reduce = useReducedMotion()
   const t = useT()
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
       <legend className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{t('성별 · 체형')}</legend>
       <ChoiceChips name="gender" value={gender} onChange={onGender} columns={2}
         options={GENDER_TYPES.map((g) => ({ value: g, label: t(GENDER_PRESETS[g].label) }))} />
-      <input type="hidden" name="build" value={build} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 'var(--space-4)' }}>
-        {BUILD_TYPES.map((b) => {
-          const on = b === build
-          return (
-            <motion.button key={b} type="button" onClick={() => onBuild(b)} aria-pressed={on}
-              aria-label={`${t(GENDER_PRESETS[gender as keyof typeof GENDER_PRESETS]?.label ?? '')} ${t(BUILD_PRESETS[b].label)}`}
-              whileTap={reduce ? undefined : { scale: 0.97 }}
-              style={{ padding: 3, cursor: 'pointer', borderRadius: 'var(--radius-md)', background: 'none', border: `0.5px solid ${on ? 'var(--color-accent)' : 'transparent'}` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/builds/${gender}-${b}.webp?v=7`} alt="" width={120} height={160} loading="lazy" decoding="async"
-                style={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block', borderRadius: 'var(--radius-sm)', opacity: on ? 1 : 0.5, transition: 'opacity var(--motion-fast) var(--ease-standard)' }} />
-              <span className="t-micro" style={{ display: 'block', textAlign: 'center', textTransform: 'none', letterSpacing: 0, marginTop: 5, color: on ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>{t(BUILD_PRESETS[b].label)}</span>
-            </motion.button>
-          )
-        })}
+      <div style={{ marginTop: 'var(--space-3)' }}>
+        <ChoiceChips name="build" value={build} onChange={onBuild} columns={4}
+          options={BUILD_TYPES.map((b) => ({ value: b, label: t(BUILD_PRESETS[b].label) }))} />
       </div>
     </fieldset>
   )
 }
-
 
 const REACTION_TRAITS = [
   { name: 'jealousy', label: msg('질투'), choices: [msg('적음'), msg('보통'), msg('많음')], summaries: [msg('질투 적음'), msg('질투 보통'), msg('질투 많음')] },

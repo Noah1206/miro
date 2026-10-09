@@ -7,7 +7,7 @@ import {
 } from '@miro/db'
 import {
   DEFAULT_CHARACTER_STATE, contactDedupeKey, dailyContactCap, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, localDay, localMinutes,
-  parseRelationshipProfile, presentContact,
+  momentIntent, parseRelationshipProfile, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
 import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
@@ -22,6 +22,7 @@ import { loadRealityContext } from './context'
 import { shouldChargeRealityContact } from '@miro/domain'
 import { evaluateAgencyReality } from './agency'
 import { characterAvailability } from './routine'
+import { dueMomentFor, settleMoment, type DueMoment } from './moments'
 import { msg } from '@/lib/i18n'
 import { translateTo } from '@/lib/i18n/server'
 
@@ -46,6 +47,14 @@ export async function evaluateSession(
   opts: { inline?: boolean; background?: boolean } = {},
 ): Promise<EvaluateOutcome> {
   if (!feature('realityMessage')) return { outcome: 'skipped', reason: 'feature_disabled' }
+  // 사용자가 말한 일정(응원·"어땠어?")이 챙길 때가 됐으면 이번 판단의 연락 기회가 된다(10/9). 쓰였으면 결과를 남긴다.
+  const moment = { due: opts.inline ? null : await dueMomentFor(sessionId, now), used: false }
+  const outcome = await evaluateWith(sessionId, now, opts, moment)
+  if (moment.due && moment.used) await settleMoment(moment.due, outcome, now).catch(e => observe('moment.settle_failed', { sessionId, error: (e as Error).message }))
+  return outcome
+}
+
+async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boolean; background?: boolean }, moment: { due: DueMoment | null; used: boolean }): Promise<EvaluateOutcome> {
   const rows = await db
     .select({
       session: roleplaySessions, character: characters, world: worldStates,
@@ -150,7 +159,7 @@ export async function evaluateSession(
   const contactsToday = sent.filter((c) => c.sentAt && c.sentAt >= localMidnight && (c.payload as { answers?: string } | null)?.answers !== 'user_message').length
   const contactedEvents = contactedEventKeys(eventContacts.map((c) => c.key))
 
-  const intent = deriveIntent({
+  const derived = deriveIntent({
     relationship: row.relationship as never,
     activeEvents: activeEvents as never,
     contactProfile: profile,
@@ -160,6 +169,10 @@ export async function evaluateSession(
     clock: localClock(now, timeZone), availability: availability.availability, lastContactAt: lastSent?.sentAt ?? null,
     contactedEvents, turnCount: row.session.turnCount, contactedBefore: sent.length > 0 || firstContactDecided.length > 0, initiative: row.character.initiative,
   })
+  // 사용자 일정이 다른 이유보다 먼저다 — 그때를 놓치면 뜻이 없다. 사용자 문자에 대한 답장만 그보다 앞선다(답장은 사라지면 안 된다).
+  // 기다리는 답장(아직 시각 전인 것 포함)이 있으면 일정은 다음 확인으로 — 보내는 쪽이 대기 의도를 비워 답장이 사라지지 않게.
+  const intent = moment.due && !saved?.answers && derived?.answers !== 'user_message' ? momentIntent(moment.due.moment, moment.due.phase, timeZone) : derived
+  moment.used = !!intent?.momentKey
   const dailyCap = dailyContactCap(row.relationship as never, row.character.initiative, profile)
 
   // 자율성 경로가 켜진 세션은 같은 연락 기회를 엔진(계획)에 판단 재료로 넘긴다 — 보낼지·무엇을 말할지는 캐릭터가 정한다(2026-10-02).

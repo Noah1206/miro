@@ -40,6 +40,8 @@ export type SimulationSnapshot = {
   recentCalls?: string[]
   /** 자기 삶 — 대화가 없는 동안 캐릭터가 겪은 일 한 줄씩(언제·어느 때·무슨 일). 캐릭터 본인의 경험이다. */
   life?: string[]
+  /** 사용자가 말한 자기 일정 한 줄씩(언제·무엇·지났는지) — 캐릭터가 기억하는 사실이다(10/9). */
+  userMoments?: string[]
   /** reality 캐릭터의 채팅은 만나서 나누는 장면이다. 메시지·통화는 Reality 기능이 따로 맡는다. */
   experienceType?: 'chat' | 'reality'
   /** 턴마다 변하는 캐릭터 상태. 없으면 기본(neutral). runTurn 이 이번 턴 값을 채워 넣는다. */
@@ -326,6 +328,11 @@ function buildPrompt(
     parts.push('', '## 대화가 없는 동안 캐릭터가 보낸 시간 (캐릭터 본인이 겪은 일 — 사용자는 아직 모른다)')
     for (const line of s.life) parts.push(`- ${line}`)
     parts.push('자연스러울 때만 꺼낸다. 묻지 않은 일을 늘어놓지 않고, 여기 없는 일을 겪었다고 지어내지 않는다.')
+  }
+  if (s.userMoments?.length) {
+    parts.push('', '## 사용자가 말해 준 자기 일정 (캐릭터가 기억하고 있다)')
+    for (const line of s.userMoments) parts.push(`- ${line}`)
+    parts.push('그날이 다가오거나 막 지났으면 사람처럼 먼저 챙긴다(응원·"어땠어?"). 이미 결과를 들었으면 다시 묻지 않고, 매 턴 꺼내지 않는다.')
   }
   if (s.world.worldStatus) parts.push(`상황: ${s.world.worldStatus}`)
   if (s.worldSetting) parts.push(`세계관: ${s.worldSetting}`)
