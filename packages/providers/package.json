@@ -6,9 +6,10 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.132.1",
     "@miro/config": "workspace:*",
-    "zod": "^3.24.1",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/web-push": "^3.6.4"
