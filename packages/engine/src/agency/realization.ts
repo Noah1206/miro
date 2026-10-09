@@ -173,7 +173,10 @@ function asserted(text: string, start: number, end: number): boolean {
     && !/(?:미소|시선|눈빛|눈길|웃음|고개|손짓|입맞춤)\s*(?:를|을)?\s*$/.test(text.slice(Math.max(0, start - 8), start))
     // Conditions, regrets and guesses ("보냈으면", "보냈어야", "긴장 속에 보냈을 테지", "도착했겠지") assert nothing done.
     && !/^(?:으면|다면|더라면|을까|을지|어야|을 ?테|을 ?거|겠)/.test(text.slice(end))
+    // '보냈'은 보낼 것이 앞에 있을 때만 발송이다 — "평소처럼 보냈습니다", "주말 잘 보냈어"는 시간을 보낸 것(10/9 실측: 규칙 검사만 남기자 정상 대사를 두 번 다시 쓰게 했다).
+    && (!/^보냈/.test(text.slice(start, end)) || SENDABLE.test(text.slice(Math.max(0, start - 16), start)))
 }
+const SENDABLE = /문자|메시지|메세지|메일|사진|영상|선물|편지|톡|답장|연락|돈|송금|파일|링크|초대|택배|소포|주소|위치|자료|서류|보고서/
 function assertedCompletions(blocks: AgencyRealizationBlock[]): Array<{ blockIndex: number; start: number; end: number }> {
   return blocks.flatMap((block, blockIndex) => [...block.text.matchAll(COMPLETION)]
     .filter(match => asserted(block.text, match.index!, match.index! + match[0].length))
