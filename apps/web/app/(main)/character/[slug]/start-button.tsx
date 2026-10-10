@@ -6,7 +6,7 @@ export function StartWithLogin({ slug, label }: { slug: string; label: string })
   const askLogin = useLoginSheet()
   return (
     <Button type="button" variant="ghost" data-start-login full
-      style={{ background: 'rgba(184, 166, 255, 0.06)', border: '0.5px solid rgba(184, 166, 255, 0.5)', color: 'var(--color-text-primary)' }}
+      style={{ background: 'var(--color-white)', border: '0.5px solid var(--color-lavender-600)', color: 'var(--color-lavender-600)' }}
       onClick={() => askLogin(`/character/${slug}`)}>
       {label}
     </Button>

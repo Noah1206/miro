@@ -54,7 +54,7 @@
   /* radius — sharp minimal, never pill by default. 한 단씩 줄였다: 입력·칩까지 둥글면 장난감처럼 보인다. */
   --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 10px;
   --radius-button: 6px; --radius-sheet: 12px;
-  --radius-chat: 28px;
+  --radius-chat: 16px;
 
   /* space — 8px grid, generous */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
@@ -329,10 +329,11 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .rich-text--editorial .rt-list-item { padding-left: 12px; text-indent: -12px; }
 .rich-text--editorial .rt-list-item + .rt-list-item { margin-top: 10px; }
 .detail-prose > .rich-text--editorial + .rich-text--editorial { margin-top: 16px; }
-.sample-narration .rich-text { color: var(--color-text-secondary); font-size: 16px; font-style: italic; line-height: 1.6; }
+.sample-narration .rich-text { color: var(--color-text-secondary); font-size: var(--font-body-size); font-style: italic; line-height: 1.65; }
 .sample-narration .rich-text em { font-style: normal; }
 /* 인트로: 시작 상황 칩 → 시각·장소 상자 → 서술과 말풍선. */
 .intro-preview { display: flex; flex-direction: column; gap: 14px; }
+.intro-expand { align-self: flex-start; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--color-accent-text); font: inherit; font-size: var(--font-caption); cursor: pointer; }
 .intro-scenes { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
 .intro-chip { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-button);
   color: var(--color-text-primary); font-weight: var(--weight-medium); cursor: pointer; }

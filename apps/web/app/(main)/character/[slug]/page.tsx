@@ -152,7 +152,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {/* n18 — 문. 고정 하단. 내비 위에 올라앉는다 (2.5.8 / 2.4.11). */}
       {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
           넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
-      <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '10px var(--gutter) calc(10px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--color-border-strong)', background: 'var(--color-bg)' }}>
+      <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '32px var(--gutter) calc(10px + env(safe-area-inset-bottom))', background: 'linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0), rgba(var(--color-bg-rgb), 0.8) 40%, var(--color-bg) 75%)' }}>
         {user
           ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
           : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
