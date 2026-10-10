@@ -3,21 +3,18 @@ import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { ease, tween } from '@/lib/motion/tokens'
 
-/**
- * MIRO 심볼 — 접힌 종이처럼 선 M. 흰 두 조각이 가운데 V 에서 만나고, 접힘의 안쪽 면은 주황과 검정이다(2026-09-28 마크).
- * 원본은 docs/brand/logo-mark-source.png, public/logo-mark.png 는 거기서 바탕을 걷어낸 투명 정사각형이다(같은 스크립트로 층·아이콘도 만든다).
- */
+/** MIRO 03 심볼. 흰색 기본·라벤더 포인트, 원본은 docs/brand/logo-symbol.svg. */
 export function LogoMark({ size = 28, label = 'MIRO' }: { size?: number; label?: string }) {
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src="/logo-mark.png" alt={label} width={size} height={size} style={{ width: size, height: size, display: 'block' }} />
+  return <img src="/logo-mark.svg" alt={label} width={size} height={size} style={{ width: size, height: size, display: 'block' }} />
 }
 
 type Phase = 'hidden' | 'join' | 'open'
 
 /**
- * Launch sequence (DESIGN §22): 검은 화면 → 왼쪽 조각은 왼쪽에서, 오른쪽 조각은 오른쪽에서 → 가운데 V 에서 만나 하나 → 이름이 뜨며 세계가 열림.
+ * Launch sequence (DESIGN §22): 검은 화면 → 왼쪽 조각은 왼쪽에서, 오른쪽 조각은 오른쪽에서 → 가운데에서 만나 하나 → 이름이 뜨며 세계가 열림.
  * 두 단계는 차례로 일어나야 한다 — 한 번에 두 variant 를 주면 마지막 값이 이겨서 '만나는' 순간이 사라진다.
- * 마크는 가운데 골에서 가른 두 층(logo-m · logo-s)이다. reduce-motion 이면 마지막 프레임만.
+ * 마크는 SVG의 좌우 곡면 두 층(logo-m · logo-s)이다. reduce-motion 이면 마지막 프레임만.
  */
 export function LogoIntro({ onDone, size = 156 }: { onDone?: () => void; size?: number }) {
   const reduce = useReducedMotion()

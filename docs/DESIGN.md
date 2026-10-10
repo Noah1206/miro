@@ -67,55 +67,59 @@ MIRO 로고는 다음 원칙을 따른다.
 
 ## 3. Color System
 
-무채색 기반 + 주황 포인트. 색은 콘텐츠(캐릭터 사진)에서 나오고 UI 는 비켜선다 —
-인스타그램처럼 화면 자체는 거의 흑백이고, 주황은 '지금 이것' 을 가리킬 때만 켜진다.
+2026-10-10 확정: 다크 UI + 라벤더 포인트. 기본 로고는 흰색, 앱 아이콘·브랜드 포인트는 Lavender 300 `#B8A6FF`.
+색은 주요 행동·선택·상태에만 쓰고 콘텐츠가 화면의 중심이 된다.
+전체 색상 단계와 역할은 `docs/brand/palette.json`, 실제 웹 토큰은 `apps/web/app/globals.css`를 따른다.
 
-### Core Colors
-
-```css
-:root {
-  --color-bg: #141417;
-  --color-bg-deep: #000000;
-
-  --color-surface-1: #1D1D22;
-  --color-surface-2: #26262C;
-  --color-surface-3: #2F2F36;
-
-  --color-border: #33333A;
-  --color-border-strong: #3E3E46;
-
-  --color-text-primary: #F5F5F7;
-  --color-text-secondary: #A1A1A8;
-  --color-text-tertiary: #8E8E96;
-  --color-text-disabled: #4D4D52;
-
-  --color-white: #FFFFFF;
-  --color-black: #000000;
-
-  --color-danger: #E65A5A;
-  --color-success: #5CBF88;
-}
-```
-
-### Accent (Orange)
+### Core / Accent / Semantic
 
 ```css
 :root {
-  --color-accent: #C2410C;        /* 짙은 주황. 채움 */
-  --color-accent-bright: #D9480F; /* 눌림·호버에서 한 단 밝게 */
-  --color-accent-on: #FFFFFF;     /* 주황 채움 위의 글자 */
-  --color-accent-text: #E8590C;   /* 어두운 바탕 위 주황 글자 — 채움보다 밝게 유지 */
-  --color-accent-soft: rgba(194, 65, 12, 0.09);
+  /* 2026-10-10 확정 팔레트: 보랏빛 중성색 바탕 + 라벤더 포인트. */
+  --color-lavender-50: #F6F3FF; --color-lavender-100: #ECE5FF;
+  --color-lavender-200: #D8CCFF; --color-lavender-300: #B8A6FF;
+  --color-lavender-400: #A087F4; --color-lavender-500: #8460E8;
+  --color-lavender-600: #7046CE; --color-lavender-700: #5935A6;
+  --color-lavender-800: #432A7B; --color-lavender-900: #30204F; --color-lavender-950: #1E162F;
+  --color-bg: #111015;         --color-bg-rgb: 17, 16, 21;  --color-bg-deep: #000000;
+  --color-surface-1: #19171F;  --color-surface-2: #211E29;  --color-surface-3: #2C2737;
+  --color-border: #3C354B;     --color-border-strong: #51485F; --color-border-hover: #625B70;
+  --color-text-primary: #F5F2FA; --color-text-secondary: #AFA8BD;
+  --color-text-tertiary: #968DA5; --color-text-quaternary: #968DA5; --color-text-disabled: #625B70;
+  /* 폼 경계는 3:1 이상이어야 한다 (1.4.11). 장식 테두리(--color-border)와 구분한다. */
+  --color-border-input: #786F8B;
+  --color-white: #FFFFFF; --color-black: #000000;
+  --color-relationship: var(--color-lavender-200);
+  --color-danger: #F18C9C; --color-danger-soft: #321D25;
+  --color-success: #83E0CC; --color-success-soft: #152B26;
+  --color-warning: #E8C57C; --color-warning-soft: #302718;
+  --color-info: #89B4FF; --color-info-soft: #19243A;
+  /**
+   * Accent — 라벤더. 이 색은 '지금 이것' 을 가리킬 때만 켠다:
+   * 선택된 탭, 주요 CTA(화면당 하나), 안 읽은 것, 관계 변화, 리얼리티 연락. 그 밖에는 쓰지 않는다.
+   * (온라인 상태도 이 목록에 들어가지만 아직 그 기능이 없다.)
+   *
+   * 밝은 채움 위 글자는 --color-accent-on (8.64:1). 글자·아이콘도 역할 토큰을 따른다.
+   * 그라데이션·glow·네온 금지 — 평평한 한 색으로만 쓴다.
+   */
+  --color-accent: var(--color-lavender-300);
+  --color-accent-bright: var(--color-lavender-200);
+  --color-accent-pressed: var(--color-lavender-400);
+  --color-accent-on: #171320;
+  --color-accent-text: var(--color-lavender-300);
+  --color-accent-soft: var(--color-lavender-950);
+  --color-accent-selected: var(--color-lavender-900);
+  /* 파괴적 버튼의 채움색. 흰 글자와 5.8:1 (밝은 --color-danger는 어두운 바탕의 텍스트에 쓴다) */
+  --color-danger-strong: #B23A3A;
+
 }
 ```
 
-짙은 주황 위의 글자는 **반드시 흰색**이다. 검정은 3.6:1 이라 본문 기준(4.5:1)에 못 미친다
-(흰색은 5.2:1). `--color-accent-on` 이 그 값을 들고 있으니 버튼마다 다시 고르지 않는다.
-글자로 쓰는 주황(`--color-accent-text`)은 채움색보다 밝다 — 짙은 채움색을 어두운 바탕 위
-글자로 쓰면 4.5:1 아래로 떨어진다.
-
-MIRO 는 **다크 전용**이다. 밝은 모드는 만들지 않는다 — 검은색은 음침함이 아니라
-캐릭터와 장면을 세우는 무대이고, 흰 바탕에서는 그 무대가 사라진다.
+주요 버튼은 라벤더 300 채움 + `#171320` 글자(대비 8.64:1).
+Hover는 Lavender 200, Pressed는 Lavender 400. 선택 배경은 Lavender 950, 강한 강조 배경은 Lavender 900.
+보조 버튼은 Surface 2 + Text primary. 비활성 글자만 Disabled 색을 쓴다.
+상태 색은 성공 민트, 주의 앰버, 오류 로즈, 안내 블루이며 일반 장식에는 쓰지 않는다.
+MIRO는 다크 전용이다. Gradient / Glow / 3D 효과는 브랜드 요소에 사용하지 않는다.
 
 ---
 
@@ -149,11 +153,22 @@ Accent Color는 장식용으로 사용하지 않는다.
 
 ### 기본 원칙
 
+- 공통 서체: Pretendard Variable (미지원 시 시스템 Sans-serif)
+- 상세페이지: 이름 28px/700, 섹션 제목 18px/600, 본문 15px/1.65, 설명·태그 13px, 메타 정보 12px
+- 글자색: 제목·대사는 primary, 소개·태그·서술은 secondary, 날짜·보조 정보는 tertiary, 이름 강조·동작은 lavender
 - 장식적인 폰트보다 읽기 쉬운 Sans-serif
 - 감정 표현은 Typography보다 Layout과 Spacing으로 만든다
 - 작은 글씨를 과도하게 사용하지 않는다
 - 캐릭터 이름은 명확하게 강하게
 - 시스템 정보는 조용하게
+
+### 캐릭터 상세 소개
+
+- 소개·세계관·첫 장면은 공통 editorial 표시를 사용한다. 저장된 설정과 대사는 수정하지 않는다.
+- 긴 문단은 문장 경계에서 최대 두 문장씩 나누며, 인용문·소수점·괄호·작성자의 강조와 줄바꿈을 보존한다.
+- `[프로필]`, `[당신]` 등 소제목에 작은 장식 이모지와 라벤더/민트 색을 사용한다. 본문 전체를 색칠하지 않는다.
+- 목록에는 항목 간 여백을 두고, 주변 인물의 나열은 각각 나누어 읽게 한다.
+- 상세페이지와 제작 미리보기에 같은 표시 규칙을 적용한다.
 
 ### 추천 Size Scale
 
@@ -166,7 +181,7 @@ Accent Color는 장식용으로 사용하지 않는다.
 --font-body-lg: 17px;
 --font-body: 15px;
 --font-caption: 13px;
---font-micro: 11px;
+--font-micro: 12px;
 ```
 
 ### Font Weight
@@ -470,7 +485,7 @@ MIRO만의 맥락 정보가 있어야 한다.
 ### Primary Button
 
 ```css
-background: var(--color-accent);   /* 짙은 주황 */
+background: var(--color-accent);   /* 라벤더 */
 color: var(--color-accent-on);     /* 흰색 */
 border-radius: var(--radius-button); /* 6px */
 font-weight: 600;
@@ -620,12 +635,15 @@ App Launch에서 로고를 활용할 수 있다.
 1. Black Screen
 2. 왼쪽 조각은 왼쪽에서, 오른쪽 조각은 오른쪽에서 등장
 3. 서로 가까워짐
-4. 가운데 V 에서 만나 하나의 Logo 완성
+4. 가운데에서 만나 네 곡면의 심볼 완성
 5. 이름(MIRO)이 뜸
 6. Character World가 Reveal
 
-마크 원본은 `docs/brand/logo-mark-source.png`(2026-09-28, 접힌 M — 흰 두 조각, 안쪽 면은 주황·검정). `apps/web/public` 의
-`logo-mark.png`(투명 정사각형)와 두 층(`logo-m` 왼쪽 조각 · `logo-s` 오른쪽 조각), PWA 아이콘은 모두 `docs/brand/make-logo-assets.py` 로 만든다.
+마크 원본은 `docs/brand/logo-symbol.svg`(2026-10-10, 확정 03번: 둥근 네 곡면과 날카로운 중앙 틈)이다.
+`apps/web/public/logo-mark.svg`는 흰색 기본 로고, `logo-mark-lavender.svg`는 라벤더 버전이다.
+PNG 호환 마크·좌우 조각(`logo-m`, `logo-s`)·PWA 아이콘·파비콘은 `docs/brand/make-logo-assets.mjs`로 생성한다.
+이전 `logo-mark-source.png`는 과거 시안이며 생성 입력으로 사용하지 않는다.
+
 
 이 Motion은 다음 메시지를 가진다.
 
@@ -919,4 +937,4 @@ UI는 조용해야 한다.
 
 ## 2026-09-15 홈 적용
 
-홈은 작은 이어하기(최근 메시지/새 연락), 취향 필터, 상황 소개를 담은 2열 추천, 중복 없는 오리지널로 구성한다. 내가 만든 사람은 홈에서 제외하고 기존 관리 화면을 사용한다. 주황 #E8590C는 선택된 필터, 실제 새 연락 점, 작은 오리지널 표시와 키보드 포커스에만 사용한다. 공개 콘텐츠의 홈 추천은 표지와 소개가 있는 항목을 대상으로 하며 원본 데이터와 발견 화면은 유지한다.
+홈은 작은 이어하기(최근 메시지/새 연락), 취향 필터, 상황 소개를 담은 2열 추천, 중복 없는 오리지널로 구성한다. 내가 만든 사람은 홈에서 제외하고 기존 관리 화면을 사용한다. 라벤더 #B8A6FF는 선택된 필터, 실제 새 연락 점, 작은 오리지널 표시와 키보드 포커스에만 사용한다. 공개 콘텐츠의 홈 추천은 표지와 소개가 있는 항목을 대상으로 하며 원본 데이터와 발견 화면은 유지한다.

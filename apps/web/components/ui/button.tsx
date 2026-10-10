@@ -19,7 +19,7 @@ type Props = PressableProps & {
 }
 
 const VARIANT: Record<ButtonVariant, React.CSSProperties> = {
-  /** 주요 행동만 주황이 채운다. 글자는 흰색(--color-accent-on) — 검정은 짙은 주황 위에서 4.5:1 에 못 미친다. */
+  /** 주요 행동은 라벤더 채움 + 짙은 글자(--color-accent-on), 대비 8.64:1. */
   primary: { background: 'var(--color-accent)', color: 'var(--color-accent-on)', border: '1px solid var(--color-accent)' },
   secondary: { background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' },
   ghost: { background: 'transparent', color: 'var(--color-text-primary)', border: '1px solid transparent' },
@@ -36,7 +36,7 @@ const SIZE = {
   lg: { minHeight: 56, padding: '12px 24px', fontSize: 'var(--font-body-lg)' },
 } as const
 
-/** Primary = 주황 배경 + 흰 글자. Gradient / Glow / Pill 없음. */
+/** Primary = 라벤더 배경 + 짙은 글자. Gradient / Glow / Pill 없음. */
 export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
   { variant = 'secondary', size = 'md', status = 'idle', full, children, style, disabled, ...rest }, ref,
 ) {
@@ -45,6 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(function Button(
     <Pressable
       ref={ref}
       {...rest}
+      data-variant={variant}
       disabled={disabled || busy}
       aria-busy={busy || undefined}
       className={`btn ${rest.className ?? ''}`}
@@ -72,7 +73,7 @@ export function ButtonLink({ href, variant = 'secondary', size = 'md', full, chi
   direction?: 'forward' | 'back'; style?: React.CSSProperties
 } & Omit<React.ComponentPropsWithoutRef<'a'>, 'href' | 'style' | 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart'>) {
   return (
-    <MotionLink href={href} direction={direction} variants={fadeUp} whileTap={{ scale: press.scale }} {...rest} className={`button-link ${rest.className ?? ''}`} style={{
+    <MotionLink href={href} direction={direction} variants={fadeUp} whileTap={{ scale: press.scale }} {...rest} data-variant={variant} className={`button-link ${rest.className ?? ''}`} style={{
       display: full ? 'flex' : 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: full ? '100%' : undefined,
       borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', whiteSpace: 'nowrap', ...SIZE[size], ...VARIANT[variant], ...style,
     }}>

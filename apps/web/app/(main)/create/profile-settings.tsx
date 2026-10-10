@@ -128,7 +128,7 @@ export function ProfileSettings({ profile: initial, status }: { profile: Relatio
               const on = !!profile.grows[dim]
               return <button key={dim} type="button" aria-pressed={on} onClick={() => edit({ grows: on ? without(profile.grows, dim) : { ...profile.grows, [dim]: mine(true as const) } })}
                 style={{ minHeight: 32, padding: '4px 12px', borderRadius: 999, border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)',
-                  background: on ? 'var(--color-accent)' : 'var(--color-surface-2)', color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
+                  background: on ? 'var(--color-accent)' : 'var(--color-surface-2)', color: on ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
                   fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)' }}>{t(GROW[dim])}</button>
             })}
           </div>

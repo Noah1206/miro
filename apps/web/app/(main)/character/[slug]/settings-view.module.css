@@ -1,7 +1,7 @@
 .contactCard { padding: 20px; border-radius: 16px; background: var(--color-surface-1); }
 .summary { margin-bottom: 20px; }
 .summary:last-child { margin-bottom: 0; }
-.summary > strong { font-size: 14px; font-weight: 650; line-height: 1.5; }
+.summary > strong { font-size: var(--font-body-size); font-weight: var(--weight-semibold); line-height: 1.5; }
 .identity { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 10px 0 0; }
 .identity > div { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .identity dt { font-size: 12px; color: var(--color-text-tertiary); flex-shrink: 0; }
@@ -11,7 +11,7 @@
 .label, .value { font-size: 12px; line-height: 1.5; color: var(--color-text-secondary); }
 .value { text-align: right; white-space: nowrap; }
 .track { height: 9px; min-width: 0; }
-.fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #617d20, var(--color-accent)); }
+.fill { display: block; height: 100%; border-radius: 999px; background: var(--color-accent); }
 @media (max-width: 380px) {
   .contactCard { padding: 16px; }
   .meterRow { grid-template-columns: 65px minmax(0, 1fr) 54px; gap: 8px; }

@@ -366,7 +366,7 @@ export function ChoiceChips({ name, options, value, onChange, columns, pill = fa
               fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
               background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
               border: 0,
-              color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
+              color: on ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
             }}>
             {o.label}
           </motion.button>
@@ -590,7 +590,7 @@ export function PresetTags({ name, label = msg('태그'), options, max, maxLengt
     fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
     background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
     border: 0,
-    color: on ? 'var(--color-white)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
+    color: on ? 'var(--color-accent-on)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
   })
   return (
     <div role="group" aria-label={t(label)}>
@@ -666,7 +666,7 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
                 fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
                 background: on ? 'color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-2))' : 'var(--color-surface-2)',
                 border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
-                color: on ? 'var(--color-white)' : 'var(--color-text-secondary)',
+                color: on ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
               }}>
               {t(o.label)}
             </motion.button>

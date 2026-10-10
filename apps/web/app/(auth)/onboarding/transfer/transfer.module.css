@@ -22,10 +22,10 @@
 .dock { position: fixed; left: 0; right: 0; bottom: 0; background: #000; border-top: 1px solid #262626; z-index: 5; }
 .dockInner { max-width: 480px; margin: 0 auto; padding: 14px 20px calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 10px; }
 
-/* 진한 주황 단색, 누르면 더 진하게. 배경은 page.tsx 의 인라인 style 이 이 변수를 읽는다. */
-.agree { --agree-bg: #E65100; }
-.agree:hover { --agree-bg: #F25C0A; }
-.agree:active { --agree-bg: #B84000; }
+/* 라벤더 단색, 상태별 팔레트 토큰. 배경은 page.tsx 의 인라인 style 이 이 변수를 읽는다. */
+.agree { --agree-bg: var(--color-accent); }
+.agree:hover { --agree-bg: var(--color-accent-bright); }
+.agree:active { --agree-bg: var(--color-accent-pressed); }
 
 .back { justify-self: center; display: inline-flex; align-items: center; gap: 4px; padding: 8px 4px; background: none; border: 0; font-size: 13px; color: var(--color-text-secondary); }
 .back:hover { color: var(--color-text-primary); text-decoration: underline; }

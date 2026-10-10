@@ -17,7 +17,7 @@ import { likeCharacter, bookmark, deleteComment, likeComment } from './social-ac
  *
  * 카드로 감싸지 않는다 — 카드를 쌓으면 어느 것이 중요한지 사라진다. 대신 왼쪽에 짧은
  * 규칙선을 세우고 라벨을 작게 얹는다. 선은 무채색이다 — 구역을 나누는 일은 상태가 아니라
- * 구조이고, 주황은 상태에만 쓴다.
+ * 구조이고, 라벤더는 상태에만 쓴다.
  */
 export function Rule({ label, action, children, accent }: { label: string; action?: React.ReactNode; children: React.ReactNode; accent?: string }) {
   const reduce = useReducedMotion()
@@ -89,7 +89,7 @@ export function SampleDialogue({ name, portrait, turns }: {
 /** *별표* 로 감싼 부분은 서술 — 무엇이 강조인지는 채팅 말풍선과 같은 파서(parseEmphasis)가 정하고, 여기서는 서술을 2차 톤으로만 칠한다. */
 export function Line({ text }: { text: string }) {
   return (
-    <p className="t-body" style={{ lineHeight: 1.5, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+    <p className="t-body" style={{ lineHeight: 1.65, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
       {parseEmphasis(text).map((s, i) =>
         s.style === 'italic' ? <em key={i} style={{ color: 'var(--color-text-secondary)' }}>{s.text}</em>
           : s.style === 'bold' ? <strong key={i}>{s.text}</strong> : s.text)}
@@ -166,7 +166,7 @@ export function RealityStrip({ can }: { can: ContactCapabilities }) {
       {items.map((item) => (
         <span key={item.label} style={{
           flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6,
-          fontSize: 12, fontWeight: 500, letterSpacing: '-0.025em', whiteSpace: 'nowrap', color: 'var(--color-text-primary)',
+          fontSize: 12, fontWeight: 'var(--weight-medium)', letterSpacing: '-0.01em', whiteSpace: 'nowrap', color: 'var(--color-text-primary)',
         }}>
           <svg aria-hidden width="18" height="18" style={{ color: 'var(--color-accent)', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">{item.icon}</svg>
           {t(item.label)}
@@ -201,7 +201,7 @@ export function BookmarkButton({ slug, saved, iconOnly = false }: { slug?: strin
           borderRadius: 7, border: 0, cursor: 'pointer', fontSize: 12,
           background: on ? 'var(--color-white)' : 'var(--color-surface-2)',
           color: on ? 'var(--color-black)' : 'var(--color-white)',
-          ...(iconOnly ? { width: 44, height: 44, padding: 0, justifyContent: 'center', borderRadius: 10, background: 'var(--color-accent)', color: 'var(--color-white)' } : {}),
+          ...(iconOnly ? { width: 44, height: 44, padding: 0, justifyContent: 'center', borderRadius: 10, background: 'var(--color-accent)', color: 'var(--color-accent-on)' } : {}),
         }}>
         <svg aria-hidden width={iconOnly ? 24 : 14} height={iconOnly ? 24 : 14} viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'}
           stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">

@@ -11,10 +11,10 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: title, template: title }, manifest: '/manifest.json',
     // 탭 아이콘은 투명 마크, 홈 화면(apple)은 검정 바탕 — iOS 는 투명을 검정으로 채우고 모서리를 깎으므로 바탕이 있어야 한다.
-    icons: { icon: '/favicon.png?v=2', apple: '/icon-180.png?v=2' },   // 2026-09-29 새 마크 — 브라우저가 옛 파비콘을 캐시하므로 주소를 바꾼다
+    icons: { icon: '/favicon.png?v=3', apple: '/icon-180.png?v=3' },   // 2026-10-10 새 마크 — 브라우저가 옛 파비콘을 캐시하므로 주소를 바꾼다
   }
 }
-export const viewport: Viewport = { themeColor: '#141417', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
+export const viewport: Viewport = { themeColor: '#111015', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const language = await getLanguage()
@@ -23,11 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={language === 'zh' ? 'zh-CN' : language}>
       <head>
         {/* 서체는 HTML 에서 바로 잇는다. globals.css 의 @import 였을 때는 CSS 를 받은 뒤에야 요청이 시작됐다. */}
-        <link rel="preconnect" href="https://static.toss.im" />
-        <link rel="preconnect" href="https://static.toss.im" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
-        <link rel="stylesheet" href="https://static.toss.im/tps/main.css" />
-        <link rel="stylesheet" href="https://static.toss.im/tps/others.css" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
       </head>
       <body>

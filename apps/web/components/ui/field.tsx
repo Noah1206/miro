@@ -36,7 +36,7 @@ export function ToggleRow({ name, label, hint, defaultChecked }: { name: string;
     <motion.label className="stack hoverable" variants={fadeUp} style={{ gap: 4, padding: '14px 16px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', cursor: 'pointer' }}>
       <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
         <span className="t-body">{label}</span>
-        <input name={name} type="checkbox" defaultChecked={defaultChecked} style={{ width: 20, height: 20, accentColor: 'var(--color-white)', flexShrink: 0 }} />
+        <input name={name} type="checkbox" defaultChecked={defaultChecked} style={{ width: 20, height: 20, accentColor: 'var(--color-accent)', flexShrink: 0 }} />
       </span>
       {hint && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{hint}</span>}
     </motion.label>
@@ -46,7 +46,7 @@ export function ToggleRow({ name, label, hint, defaultChecked }: { name: string;
 export function Checkbox({ name, label, required }: { name: string; label: ReactNode; required?: boolean }) {
   return (
     <motion.label variants={fadeUp} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 'var(--font-caption)', lineHeight: 1.55, cursor: 'pointer', padding: '12px 0' }}>
-      <input name={name} type="checkbox" required={required} style={{ marginTop: 2, width: 18, height: 18, accentColor: 'var(--color-white)', flexShrink: 0 }} />
+      <input name={name} type="checkbox" required={required} style={{ marginTop: 2, width: 18, height: 18, accentColor: 'var(--color-accent)', flexShrink: 0 }} />
       <span>{label}</span>
     </motion.label>
   )
@@ -55,7 +55,7 @@ export function Checkbox({ name, label, required }: { name: string; label: React
 export function Radio({ name, value, label, defaultChecked }: { name: string; value: string; label: string; defaultChecked?: boolean }) {
   return (
     <motion.label className="hoverable" variants={fadeUp} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '13px 14px', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-button)', cursor: 'pointer', fontSize: 'var(--font-body-size)' }}>
-      <input type="radio" name={name} value={value} required defaultChecked={defaultChecked} style={{ accentColor: 'var(--color-white)', width: 18, height: 18 }} />
+      <input type="radio" name={name} value={value} required defaultChecked={defaultChecked} style={{ accentColor: 'var(--color-accent)', width: 18, height: 18 }} />
       <span>{label}</span>
     </motion.label>
   )

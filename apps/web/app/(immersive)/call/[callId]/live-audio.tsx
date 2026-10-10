@@ -171,7 +171,7 @@ export function LiveAudio({ callId, token, url, model }: { callId: string; token
       </p>
       {muted && status !== 'ended' && status !== 'error' && (
         <button type="button" onClick={unmute} className="t-caption"
-          style={{ marginTop: 10, minHeight: 44, padding: '0 18px', borderRadius: 22, border: 0, background: 'var(--color-accent)', color: 'var(--color-white)', cursor: 'pointer' }}>
+          style={{ marginTop: 10, minHeight: 44, padding: '0 18px', borderRadius: 22, border: 0, background: 'var(--color-accent)', color: 'var(--color-accent-on)', cursor: 'pointer' }}>
           {t('소리 켜기')}
         </button>
       )}

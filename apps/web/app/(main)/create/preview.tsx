@@ -1,4 +1,5 @@
 'use client'
+import { RichText } from '@/components/scene/rich-text'
 import { CharacterSettingsView } from '../character/[slug]/settings-view'
 import { parseCharacterForm } from './parse'
 import { Accordion, Button } from '@/components/ui'
@@ -70,7 +71,7 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
   return (
     <div style={{ marginTop: 'var(--space-4)' }}>
       <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{d.settings.isPublicOn ? t('공개 게시하면 다른 사람에게 이렇게 보여요.') : t('나만 볼 수 있는 캐릭터로 게시돼요.')}</p>
-      <div className="character-detail-theme" aria-label={t('소개 페이지 미리보기')} style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: '#141416' }}>
+      <div className="character-detail-theme" aria-label={t('소개 페이지 미리보기')} style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-bg)' }}>
         {/* 상세와 같은 자리: 왼쪽 위 뒤로, 오른쪽 위 편집(주인에게만 보이는 것) */}
         <span aria-hidden style={{ ...pill, left: 16, padding: '0 10px', background: 'transparent', color: 'var(--color-text-secondary)' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
@@ -80,12 +81,12 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
         <div style={{ position: 'relative' }}><PhotoHero name={name} accent={null} slug="preview" photos={[d.photo, ...d.gallery].filter((src): src is string => Boolean(src))} shared={false} /><div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton overlay /></div></div>
 
         <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
-          <p className="t-hero t-name" style={{ marginBottom: 4, fontWeight: 800, letterSpacing: '-0.045em', color: d.name ? undefined : 'var(--color-text-tertiary)' }}>{name}</p>
-          <p className="t-body-lg t-quote" style={{ color: d.tagline ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)', lineHeight: 1.45, letterSpacing: '-0.025em', marginBottom: 6 }}>
+          <p className="t-hero t-name" style={{ marginBottom: 4, color: d.name ? undefined : 'var(--color-text-tertiary)' }}>{name}</p>
+          <p className="t-body-lg t-quote" style={{ color: d.tagline ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)', marginBottom: 6 }}>
             {d.tagline || t('소개 한 줄이 여기에 걸립니다.')}
           </p>
           {d.keywords.length > 0 && (
-            <p className="t-caption" style={{ color: 'var(--color-white)', letterSpacing: '-0.025em', marginBottom: 10 }}>{d.keywords.map((k) => `#${k.replace(/\s+/g, '')}`).join(' ')}</p>
+            <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>{d.keywords.map((k) => `#${k.replace(/\s+/g, '')}`).join(' ')}</p>
           )}
           {/* 통계 칩 — 대화한 사람 수는 0 이라 상세처럼 숨긴다. 보관하기는 모양만. */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
@@ -97,16 +98,14 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
           {experienceType === 'reality' && <RealityStrip can={can} />}
           {experienceType === 'reality' && d.worldSetting && (
             <Rule label={t('세계관')}>
-              <p className="t-body-lg" style={{ color: 'var(--color-text-secondary)', whiteSpace: 'pre-wrap' }}>{d.worldSetting}</p>
+              <RichText editorial text={d.worldSetting} names={{ character: name, user: ['당신'] }} />
             </Rule>
           )}
           <CharacterSettingsView name={name} visual={d.settings.visual} contact={experienceType === 'reality' ? d.settings.contact : undefined} can={can} />
 
           <Rule label={t('첫 장면')}>
             <div className="detail-prose">
-              <p className="t-body-lg t-quote" style={{ color: d.startingContext ? undefined : 'var(--color-text-tertiary)' }}>
-                {d.startingContext || t('첫 장면을 아직 적지 않았어요.')}
-              </p>
+              <RichText editorial text={d.startingContext || t('첫 장면을 아직 적지 않았어요.')} names={{ character: name, user: ['당신'] }} />
               <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{t('{time}부터 시작합니다.', { time: d.startingTime || t('저녁') })}</p>
             </div>
             {d.dialogue.length > 0 && (
@@ -117,10 +116,8 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
           {(experienceType === 'reality' || profile.length > 0) && <div style={{ marginTop: 'var(--space-7)' }}>
             <Accordion title={t('이 사람에 대해')}>
               <div className="detail-prose">
-                {experienceType === 'reality' && <p className="t-body-lg" style={{ color: d.personality ? 'var(--color-text-secondary)' : 'var(--color-text-tertiary)' }}>
-                  {d.personality || t('성격을 아직 적지 않았어요.')}
-                </p>}
-                {profile.map((line) => <p key={line} className="t-body-lg" style={{ color: 'var(--color-text-secondary)' }}>{line}</p>)}
+                {experienceType === 'reality' && <RichText editorial text={d.personality || t('성격을 아직 적지 않았어요.')} names={{ character: name, user: ['당신'] }} />}
+                {profile.map((line) => <RichText editorial key={line} text={line} names={{ character: name, user: ['당신'] }} />)}
               </div>
             </Accordion>
           </div>}
@@ -137,7 +134,7 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
         </section>
 
         {/* 상세의 고정 하단 문 — 미리보기 안에서는 맨 아래에 */}
-        <div aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--color-border-strong)', padding: '10px var(--gutter)', marginTop: 'var(--space-6)', background: '#141416' }}>
+        <div aria-hidden style={{ display: 'flex', alignItems: 'center', gap: 10, borderTop: '1px solid var(--color-border-strong)', padding: '10px var(--gutter)', marginTop: 'var(--space-6)', background: 'var(--color-bg)' }}>
           <div style={{ flex: 1 }}><Button type="button" variant="primary" full disabled>{t('대화 시작하기')}</Button></div>
         </div>
       </div>

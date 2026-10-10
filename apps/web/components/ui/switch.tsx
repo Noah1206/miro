@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * 스위치 (제타식 토글). 켜짐은 노브만 주황 — 트랙까지 채우면 설정 화면에 주황 덩어리가 줄지어 선다.
+ * 스위치 (제타식 토글). 켜짐은 노브만 라벤더 — 트랙까지 채우면 설정 화면에 라벤더 덩어리가 줄지어 선다.
  * 실제 요소는 checkbox 라 폼 제출에 그대로 실리고, role=switch 로 읽힌다.
  */
 export function Switch({ name, label, hint, checked, onChange }: {
@@ -25,7 +25,7 @@ export function Switch({ name, label, hint, checked, onChange }: {
         }} />
         <span aria-hidden style={{
           position: 'absolute', top: 3, left: 3, width: 20, height: 20, borderRadius: 10, pointerEvents: 'none',
-          background: checked ? 'color-mix(in srgb, var(--color-accent-text), #ffb347 40%)' : 'var(--color-text-secondary)',
+          background: checked ? 'var(--color-accent)' : 'var(--color-text-secondary)',
           transform: checked ? 'translateX(20px)' : 'none',
           transition: 'transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard)',
         }} />

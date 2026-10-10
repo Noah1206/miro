@@ -36,14 +36,14 @@ export function IntroPreview({ scenes, names }: { scenes: IntroScene[]; names: R
         </fieldset>
       )}
       {scene.meta && <p className="intro-meta">{scene.meta}</p>}
-      {scene.context && <RichText text={scene.context} names={names} />}
+      {scene.context && <RichText editorial text={scene.context} names={names} />}
       {scene.lines.map((line, i) => (
         <div key={`${scene.value}-${i}`} className="intro-line">
           {/* eslint-disable-next-line @next/next/no-img-element -- 시드가 올린 공개 장면 사진 한 장 */}
           {line.image && <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />}
           {line.role === 'character'
-            ? <div className="intro-bubble"><RichText text={line.text} names={names} /></div>
-            : <RichText text={line.text} names={names} />}
+            ? <div className="intro-bubble"><RichText editorial text={line.text} names={names} /></div>
+            : <RichText editorial text={line.text} names={names} />}
         </div>
       ))}
     </div>

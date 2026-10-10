@@ -38,7 +38,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const me = (text: string | null) => personalize(text ?? '', persona?.name)
   // 시작 상황(도입부)이 둘 이상이면 고른다 — 고른 값은 아래 '대화 시작하기' 폼으로 간다(form 속성).
   const scenes = introScenes(c.sampleDialogue)
-  // 글 속 이름에 색 — 캐릭터는 주황, 나는 관계색. 페르소나가 있으면 서술의 '당신'이 그 이름이 되고, 대사엔 '당신'이 남는다.
+  // 글 속 이름에 색 — 캐릭터는 라벤더, 나는 관계색. 페르소나가 있으면 서술의 '당신'이 그 이름이 되고, 대사엔 '당신'이 남는다.
   const names = { character: c.name, user: [...new Set([persona?.name?.trim(), '당신'].filter((n): n is string => !!n))] }
   const introScenesData: IntroScene[] = (scenes.length ? scenes : ['']).map((scene) => {
     const opening = sceneOpening(c.sampleDialogue, scene)
@@ -74,7 +74,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   ].filter((line) => line.trim())
 
   return (
-    <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: '#141416' }}>
+    <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: 'var(--color-bg)' }}>
       <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5, padding: '6px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)' }}>
         <Back href="/home" />
       </div>
@@ -92,11 +92,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
 
       <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
-        <h1 className="t-hero t-name" style={{ marginBottom: 4, fontWeight: 800, letterSpacing: '-0.045em' }}>{c.name}</h1>
-        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-primary)', lineHeight: 1.45, letterSpacing: '-0.025em', marginBottom: 6 }}>{c.tagline}</p>}
+        <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{c.name}</h1>
+        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)', marginBottom: 6 }}>{c.tagline}</p>}
 
         {tags.length > 0 && (
-          <p className="t-caption" style={{ color: 'var(--color-white)', letterSpacing: '-0.025em', marginBottom: 10 }}>
+          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>
             {tags.map((t) => `#${t}`).join(' ')}
           </p>
         )}
@@ -111,13 +111,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
-            {c.experienceType === 'reality' && <RichText text={me(c.personality)} names={names} />}
-            {profile.map((line) => <RichText key={line} text={line} names={names} />)}
+            {c.experienceType === 'reality' && <RichText editorial text={me(c.personality)} names={names} />}
+            {profile.map((line) => <RichText editorial key={line} text={line} names={names} />)}
           </div>
         </Rule>}
         {c.experienceType === 'reality' && c.worldSetting && (
           <Rule label={t('세계관')}>
-            <div className="detail-prose"><RichText text={me(c.worldSetting)} names={names} /></div>
+            <div className="detail-prose"><RichText editorial text={me(c.worldSetting)} names={names} /></div>
           </Rule>
         )}
         <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
