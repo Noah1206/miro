@@ -54,6 +54,7 @@
   /* radius — sharp minimal, never pill by default. 한 단씩 줄였다: 입력·칩까지 둥글면 장난감처럼 보인다. */
   --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 10px;
   --radius-button: 6px; --radius-sheet: 12px;
+  --radius-chat: 28px;
 
   /* space — 8px grid, generous */
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px;
@@ -340,5 +341,5 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-chip:has(input:focus-visible) { outline: 2px solid var(--color-white); outline-offset: 2px; }
 .intro-meta { align-self: flex-start; margin: 0; padding: 8px 12px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); font-size: var(--font-caption); color: var(--color-text-primary); }
 .intro-line { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
-.intro-bubble { max-width: 85%; padding: 10px 14px; border-radius: var(--radius-md); background: var(--color-surface-2); }
+.intro-bubble { max-width: 85%; padding: 10px 14px; border-radius: var(--radius-chat); background: var(--color-surface-2); }
 .intro-photo { display: block; width: min(100%, 360px); aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid rgba(255,255,255,0.08); }

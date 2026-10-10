@@ -68,7 +68,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .reportFlag:hover { color: var(--color-accent-text); }
 .characterContent { flex: 1; min-width: 0; max-width: calc(100% - 40px); }
 .speaker { margin: 0 0 5px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.4; }
-.bubble { width: fit-content; max-width: 95%; padding: 12px 14px; border-radius: 4px 20px 20px 20px; background: var(--color-surface-2); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.bubble { width: fit-content; max-width: 95%; padding: 12px 14px; border-radius: var(--radius-chat); background: var(--color-surface-2); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
 .bubble p { margin: 0; white-space: pre-wrap; }
 .bubble p + p { margin-top: 12px; }
 .action { color: var(--color-text-secondary); font-style: italic; }
@@ -79,7 +79,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .thought em { font-style: normal; }
 .bubble strong { font-weight: 600; color: var(--color-white); }
 .userRow { display: flex; justify-content: flex-end; }
-.userBubble { max-width: 84%; padding: 11px 14px; margin: 0; border-radius: 20px 4px 20px 20px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.userBubble { max-width: 84%; padding: 11px 14px; margin: 0; border-radius: var(--radius-chat); background: var(--color-surface-3); color: var(--color-text-primary); font-size: 16px; line-height: 1.6; letter-spacing: -.3px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .composer { flex: 0 0 auto; background: var(--color-bg); border-top: 1px solid var(--color-border); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
 /* 입력창은 한 장의 카드: 위에 글, 아래 줄에 모델 선택과 보내기. 둥글기는 살짝만 (§각지게). */
 .composerForm { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 6px 12px; border: 1px solid var(--color-border); border-radius: 14px; background: var(--color-surface-2); }

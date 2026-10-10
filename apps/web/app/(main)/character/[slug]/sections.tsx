@@ -71,14 +71,14 @@ export function SampleDialogue({ name, portrait, turns, names }: {
                 : <span aria-hidden style={{ width: 34, height: 34, borderRadius: 17, background: 'var(--color-surface-2)', flexShrink: 0 }} />}
               <div style={{ minWidth: 0 }}>
                 <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{name}</p>
-                <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)', padding: '10px 13px', maxWidth: '85%', display: 'inline-block' }}>
+                <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-chat)', padding: '10px 13px', maxWidth: '85%', display: 'inline-block' }}>
                   <Line text={t.text} />
                 </div>
               </div>
             </>
           )}
           {t.role === 'user' && (
-            <div style={{ background: 'var(--color-surface-3)', borderRadius: 'var(--radius-md)', padding: '10px 13px', maxWidth: '78%' }}>
+            <div style={{ background: 'var(--color-surface-3)', borderRadius: 'var(--radius-chat)', padding: '10px 13px', maxWidth: '78%' }}>
               <Line text={t.text} />
             </div>
           )}
