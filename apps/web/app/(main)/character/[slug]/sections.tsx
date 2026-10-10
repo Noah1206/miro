@@ -5,6 +5,7 @@ import { TransitionLink, useToast } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { CharacterPhoto } from '@/components/character-visual'
 import { parseEmphasis } from '@/components/scene/emphasis'
+import { RichText, type RichNames } from '@/components/scene/rich-text'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
 import type { CommentItem } from '@/lib/social'
 import type { ContactCapabilities } from '@/lib/reality/channels'
@@ -41,8 +42,9 @@ export function Rule({ label, action, children, accent }: { label: string; actio
  * 채팅 화면과 같은 문장 규칙을 쓴다: *별표* 안은 서술(기울임·2차 톤), 나머지는 대사.
  * 사용자 말은 오른쪽 버블 — 실제 대화에서 보게 될 모양 그대로여야 한다.
  */
-export function SampleDialogue({ name, portrait, turns }: {
+export function SampleDialogue({ name, portrait, turns, names }: {
   name: string; portrait: string | null
+  names?: RichNames
   turns: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
 }) {
   const reduce = useReducedMotion()
@@ -56,10 +58,10 @@ export function SampleDialogue({ name, portrait, turns }: {
           style={t.role === 'user'
             ? { display: 'flex', justifyContent: 'flex-end' }
             : t.role === 'narrator'
-              ? { display: 'flex', justifyContent: 'center', padding: '0 8%' }
+              ? { display: 'block', padding: '4px 0' }
               : { display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           {t.role === 'narrator' && (
-            <p className="t-caption" style={{ margin: 0, textAlign: 'center', color: 'var(--color-text-secondary)', fontStyle: 'italic', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{t.text}</p>
+            <div className="sample-narration"><RichText editorial text={t.text} names={names ?? { character: name, user: ['당신'] }} /></div>
           )}
           {t.role === 'character' && (
             <>

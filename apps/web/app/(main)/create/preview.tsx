@@ -111,7 +111,7 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
               <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{t('{time}부터 시작합니다.', { time: d.startingTime || t('저녁') })}</p>
             </div>
             {d.dialogue.length > 0 && (
-              <div style={{ marginTop: 18 }}><SampleDialogue name={name} portrait={d.photo} turns={d.dialogue} /></div>
+              <div style={{ marginTop: 18 }}><SampleDialogue name={name} names={names} portrait={d.photo} turns={d.dialogue} /></div>
             )}
           </Rule>
 

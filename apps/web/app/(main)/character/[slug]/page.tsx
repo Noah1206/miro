@@ -2,6 +2,7 @@ import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { RichText } from '@/components/scene/rich-text'
 import { characterEditorial } from '@/components/scene/character-editorial'
+import { sampleWithAtmosphere } from '@/lib/sample-atmosphere'
 import { IntroPreview, type IntroScene } from './intro-preview'
 import { personalize } from '@/lib/personalize'
 import { getPersona } from '@/lib/persona'
@@ -128,7 +129,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <div className="detail-prose"><IntroPreview scenes={introScenesData} names={names} /></div>
           {sampleDialogue(c.sampleDialogue).length > 0 && (
             <div style={{ marginTop: 18 }}>
-              <SampleDialogue name={c.name} portrait={c.images[0] ?? null} turns={sampleDialogue(c.sampleDialogue)} />
+              <SampleDialogue name={c.name} names={names} portrait={c.images[0] ?? null} turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
             </div>
           )}
         </Rule>
