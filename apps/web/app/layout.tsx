@@ -10,8 +10,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('AI 캐릭터챗 MIRO')}`
   return {
     title: { default: title, template: title }, manifest: '/manifest.json',
-    // 탭 아이콘은 투명 마크, 홈 화면(apple)은 검정 바탕 — iOS 는 투명을 검정으로 채우고 모서리를 깎으므로 바탕이 있어야 한다.
-    icons: { icon: '/favicon.png?v=3', apple: '/icon-180.png?v=3' },   // 2026-10-10 새 마크 — 브라우저가 옛 파비콘을 캐시하므로 주소를 바꾼다
+    // 탭은 자수정 타일 + 흰 마크. v4로 기존 브라우저 캐시를 갱신한다.
+    icons: {
+      icon: [
+        { url: '/favicon.ico?v=4', sizes: '16x16 32x32 48x48' },
+        { url: '/favicon-16.png?v=4', sizes: '16x16', type: 'image/png' },
+        { url: '/favicon-32.png?v=4', sizes: '32x32', type: 'image/png' },
+        { url: '/favicon.svg?v=4', sizes: 'any', type: 'image/svg+xml' },
+      ],
+      apple: '/icon-180.png?v=3',
+    },
   }
 }
 export const viewport: Viewport = { themeColor: '#111015', width: 'device-width', initialScale: 1, viewportFit: 'cover' }

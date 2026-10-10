@@ -16,13 +16,14 @@
 ## 로고
 
 [logo-symbol.svg](logo-symbol.svg)가 편집 가능한 원본이다. 승인한 03번 시안의 곡면을 벡터로 정리했다.
-SVG는 평면 단색이며 그림자·그라데이션·Glow·3D를 쓰지 않는다.
+기본 로고 SVG는 평면 단색이다. 파비콘은 자수정 그라데이션 바탕에 흰색 마크를 사용한다.
 
 - public/logo-mark.svg / logo-mark.png: 흰색 기본 로고.
 - public/logo-mark-lavender.svg / logo-mark-lavender.png: 라벤더 포인트 버전.
 - public/logo-m.png / logo-s.png: 인트로·빈 대화 목록에서 만나는 좌우 곡면.
 - public/icon-180.png / icon-192.png / icon-512.png: 검정 바탕·라벤더 심볼, 마크 폭 62%.
-- public/favicon.png: 라벤더 심볼·투명 배경.
+- public/favicon.svg / favicon.png: 자수정 타일·흰색 심볼(마크 폭 76%).
+- public/favicon-16.png / favicon-32.png / favicon.ico: 브라우저 탭용 작은 크기, ICO에는 16·32·48px 포함.
 - logo-mark-source.png: 이전 M 시안의 기록. 현재 자산 생성에는 사용하지 않는다.
 
 ## 자산 생성
