@@ -1,18 +1,24 @@
-import { Fragment } from 'react'
+import { Fragment, type CSSProperties } from 'react'
+import type { EditorialPalette } from './character-editorial'
 import { parseEmphasis } from './emphasis'
 import { editorialHeading, editorialLines } from './editorial-text'
 
-export type RichNames = { character: string; user: string[] }
+export type RichNames = { character: string; user: string[]; palette?: EditorialPalette; motifs?: string[] }
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-/** 캐릭터 이름은 라벤더, 나(당신·페르소나 이름)는 관계색. */
-function Names({ text, names }: { text: string; names: RichNames }) {
-  const all = [names.character, ...names.user].map((n) => n.trim()).filter(Boolean).sort((a, b) => b.length - a.length)
+/** 이름·당신·이야기 핵심어를 구분한다. 상세에서만 캐릭터별 팔레트를 적용한다. */
+function Names({ text, names, editorial }: { text: string; names: RichNames; editorial: boolean }) {
+  const all = [...new Set([names.character, ...names.user, ...(editorial ? names.motifs ?? [] : [])].map((n) => n.trim()).filter(Boolean))].sort((a, b) => b.length - a.length)
   if (!all.length) return <>{text}</>
   const parts = text.split(new RegExp(`(${all.map(escape).join('|')})`, 'g'))
-  return <>{parts.map((p, i) => i % 2 === 0 ? p
-    : <span key={i} className={p === names.character.trim() ? 'rt-char' : 'rt-user'}>{p}</span>)}</>
+  let motifs = 0
+  return <>{parts.map((p, i) => {
+    if (i % 2 === 0) return p
+    const role = p === names.character.trim() ? 'rt-char' : names.user.some(n => n.trim() === p) ? 'rt-user' : 'rt-motif'
+    if (role === 'rt-motif' && ++motifs > 2) return p
+    return <span key={i} className={role}>{p}</span>
+  })}</>
 }
 
 /**
@@ -21,8 +27,10 @@ function Names({ text, names }: { text: string; names: RichNames }) {
  */
 export function RichText({ text, names, className, editorial = false }: { text: string; names: RichNames; className?: string; editorial?: boolean }) {
   const lines = editorial ? editorialLines(text) : text.split('\n')
+  const palette = editorial ? names.palette : undefined
+  const colorStyle = palette ? { '--color-name-character': palette.character, '--color-name-user': palette.user, '--color-editorial-motif': palette.motif } as CSSProperties : undefined
   return (
-    <div className={`rich-text ${editorial ? 'rich-text--editorial' : ''} ${className ?? ''}`}>
+    <div className={`rich-text ${editorial ? 'rich-text--editorial' : ''} ${className ?? ''}`} style={colorStyle}>
       {lines.map((line, i) => {
         const heading = line.trim().match(/^\[(.+)\]$/)
         if (heading) {
@@ -34,9 +42,9 @@ export function RichText({ text, names, className, editorial = false }: { text: 
         if (!line.trim()) return <p key={i} className="rt-gap" aria-hidden />
         return <p key={i} className={editorial && /^\s*[·•-]\s/.test(line) ? 'rt-list-item' : undefined}>{parseEmphasis(line).map((s, k) => (
           <Fragment key={k}>
-            {s.style === 'bold' ? <strong><Names text={s.text} names={names} /></strong>
-              : s.style === 'italic' ? <em><Names text={s.text} names={names} /></em>
-                : <Names text={s.text} names={names} />}
+            {s.style === 'bold' ? <strong><Names text={s.text} names={names} editorial={editorial} /></strong>
+              : s.style === 'italic' ? <em><Names text={s.text} names={names} editorial={editorial} /></em>
+                : <Names text={s.text} names={names} editorial={editorial} />}
           </Fragment>
         ))}</p>
       })}

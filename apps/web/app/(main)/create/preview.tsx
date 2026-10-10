@@ -1,5 +1,6 @@
 'use client'
 import { RichText } from '@/components/scene/rich-text'
+import { characterEditorial } from '@/components/scene/character-editorial'
 import { CharacterSettingsView } from '../character/[slug]/settings-view'
 import { parseCharacterForm } from './parse'
 import { Accordion, Button } from '@/components/ui'
@@ -59,6 +60,7 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
   const language = useLanguage()
   if (!d) return null
   const name = d.name || t('이름')
+  const names = { character: name, user: ['당신'], ...characterEditorial({ name, genre: d.settings.world.genre, occupation: d.occupation }) }
   // 상세와 같은 문장 규칙: '32세 · 한국 · 검사.' / 'MBTI는 INTJ.'
   const profile: string[] = [
     [
@@ -98,14 +100,14 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
           {experienceType === 'reality' && <RealityStrip can={can} />}
           {experienceType === 'reality' && d.worldSetting && (
             <Rule label={t('세계관')}>
-              <RichText editorial text={d.worldSetting} names={{ character: name, user: ['당신'] }} />
+              <RichText editorial text={d.worldSetting} names={names} />
             </Rule>
           )}
           <CharacterSettingsView name={name} visual={d.settings.visual} contact={experienceType === 'reality' ? d.settings.contact : undefined} can={can} />
 
           <Rule label={t('첫 장면')}>
             <div className="detail-prose">
-              <RichText editorial text={d.startingContext || t('첫 장면을 아직 적지 않았어요.')} names={{ character: name, user: ['당신'] }} />
+              <RichText editorial text={d.startingContext || t('첫 장면을 아직 적지 않았어요.')} names={names} />
               <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{t('{time}부터 시작합니다.', { time: d.startingTime || t('저녁') })}</p>
             </div>
             {d.dialogue.length > 0 && (
@@ -116,8 +118,8 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
           {(experienceType === 'reality' || profile.length > 0) && <div style={{ marginTop: 'var(--space-7)' }}>
             <Accordion title={t('이 사람에 대해')}>
               <div className="detail-prose">
-                {experienceType === 'reality' && <RichText editorial text={d.personality || t('성격을 아직 적지 않았어요.')} names={{ character: name, user: ['당신'] }} />}
-                {profile.map((line) => <RichText editorial key={line} text={line} names={{ character: name, user: ['당신'] }} />)}
+                {experienceType === 'reality' && <RichText editorial text={d.personality || t('성격을 아직 적지 않았어요.')} names={names} />}
+                {profile.map((line) => <RichText editorial key={line} text={line} names={names} />)}
               </div>
             </Accordion>
           </div>}

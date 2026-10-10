@@ -1,6 +1,7 @@
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { RichText } from '@/components/scene/rich-text'
+import { characterEditorial } from '@/components/scene/character-editorial'
 import { IntroPreview, type IntroScene } from './intro-preview'
 import { personalize } from '@/lib/personalize'
 import { getPersona } from '@/lib/persona'
@@ -38,8 +39,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const me = (text: string | null) => personalize(text ?? '', persona?.name)
   // 시작 상황(도입부)이 둘 이상이면 고른다 — 고른 값은 아래 '대화 시작하기' 폼으로 간다(form 속성).
   const scenes = introScenes(c.sampleDialogue)
-  // 글 속 이름에 색 — 캐릭터는 라벤더, 나는 관계색. 페르소나가 있으면 서술의 '당신'이 그 이름이 되고, 대사엔 '당신'이 남는다.
-  const names = { character: c.name, user: [...new Set([persona?.name?.trim(), '당신'].filter((n): n is string => !!n))] }
+  // 각 캐릭터의 분위기에 맞는 이름·당신·핵심어 색. 페르소나가 있으면 서술의 '당신'이 그 이름이 된다.
+  const names = { character: c.name, user: [...new Set([persona?.name?.trim(), '당신'].filter((n): n is string => !!n))],
+    ...characterEditorial({ slug: c.slug, name: c.name, genre: c.worldGenre, occupation: c.occupation }) }
   const introScenesData: IntroScene[] = (scenes.length ? scenes : ['']).map((scene) => {
     const opening = sceneOpening(c.sampleDialogue, scene)
     return {
