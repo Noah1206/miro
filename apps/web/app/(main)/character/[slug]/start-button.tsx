@@ -5,7 +5,8 @@ import { Button, useLoginSheet } from '@/components/ui'
 export function StartWithLogin({ slug, label }: { slug: string; label: string }) {
   const askLogin = useLoginSheet()
   return (
-    <Button type="button" variant="primary" data-start-login full
+    <Button type="button" variant="ghost" data-start-login full
+      style={{ background: 'transparent', border: '1px solid var(--color-accent)', color: 'var(--color-text-primary)' }}
       onClick={() => askLogin(`/character/${slug}`)}>
       {label}
     </Button>
