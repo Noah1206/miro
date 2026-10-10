@@ -20,17 +20,17 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
   const rows = await db.execute<WalletEntry>(sql`
     with entries as (
       select 'usage:' || ${usageLedger.id}::text as id, ${usageLedger.createdAt} as at,
-        case ${usageLedger.kind} when 'textRP' then 'ECHO 대화' when 'voiceCallPerMinute' then '음성통화'
+        case ${usageLedger.kind} when 'textRP' then '모델 대화' when 'voiceCallPerMinute' then '음성통화'
           when 'videoCallPerMinute' then '영상통화' when 'photo' then '사진 생성'
           when 'liveScene' then '라이브 장면' else '추가 인터랙션' end as label,
         case when ${usageLedger.status} = 'rolled_back' or ${usageLedger.continuity} then 0 else -${usageLedger.amount} end as amount,
         case when ${usageLedger.continuity} then '대화 이어가기 제공량'
-          else '충전 잔액 ' || ${usageLedger.fromGrants}::text || ' · 월간 제공량 ' || (${usageLedger.amount} - ${usageLedger.fromGrants})::text end as detail,
+          else coalesce((select a.model || ' · ' from ai_usage a where 'turn:' || a.request_id::text = ${usageLedger.idempotencyKey} and a.task = 'dialogue' and a.ok = true order by a.created_at desc limit 1), '') || '충전 토큰 ' || ${usageLedger.fromGrants}::text || ' · 제공 토큰 ' || (${usageLedger.amount} - ${usageLedger.fromGrants})::text end as detail,
         case ${usageLedger.status} when 'committed' then '사용 완료' when 'reserved' then '사용 중' else '차감 취소' end as status
       from ${usageLedger} where ${usageLedger.userId} = ${userId}
       union all
       select 'grant:' || ${rechargeGrants.id}::text, ${rechargeGrants.createdAt},
-        case when ${rechargeGrants.source} = 'purchase' then '미로 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' else '미로 지급' end,
+        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' else '토큰 지급' end,
         ${rechargeGrants.amount} - ${rechargeGrants.refunded},
         case when ${rechargeGrants.refunded} > 0 then '회수 ' || ${rechargeGrants.refunded}::text
           when ${rechargeGrants.expiresAt} is not null then to_char(${rechargeGrants.expiresAt} at time zone 'Asia/Seoul', 'YYYY.MM.DD') || '까지'
@@ -40,7 +40,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       from ${rechargeGrants} where ${rechargeGrants.userId} = ${userId}
       union all
       select 'order:' || ${bankTransferOrders.id}::text, ${bankTransferOrders.createdAt},
-        case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '미로 충전 주문' end,
+        case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '토큰 충전 주문' end,
         null::integer,
         -- 원화는 '9,900원' 으로. 다른 통화는 그대로 표기한다(운영 계좌는 원화만 받는다).
         case when ${bankTransferOrders.currency} = 'KRW' then to_char(${bankTransferOrders.amountMinor}, 'FM999,999,999') || '원'

@@ -5,8 +5,8 @@ import { chatModelOptions, resolveChatModel } from '../chat-models'
 const plan = vi.hoisted(() => vi.fn(async () => 'free'))
 vi.mock('@/lib/usage/guard', () => ({ effectivePlan: plan }))
 const models = [
-  { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768 },
-  { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768 },
+  { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768, inputCost: 0.3, outputCost: 2.5, maxOutputTokens: 8192 },
+  { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768, inputCost: 0.3, outputCost: 2.5, maxOutputTokens: 8192 },
 ]
 beforeEach(() => { plan.mockResolvedValue('free'); vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(models)); vi.stubEnv('MIRO_CHAT_MODEL_ID', '') })
 afterEach(() => vi.unstubAllEnvs())
@@ -21,7 +21,7 @@ describe('chat model choice', () => {
     plan.mockResolvedValue('pro')
     const miro = await resolveChatModel('u', 'miro')
     const echo = await resolveChatModel('u', 'pro')
-    expect(miro.metered).toBe(false)
+    expect(miro.metered).toBe(true)
     expect(echo.metered).toBe(true)
     // ECHO 는 같은 모델에 더 들인다 — 맥락도, 응답 길이도, 보조 분석도.
     expect(echo.tier.contextScale).toBeGreaterThan(miro.tier.contextScale)
@@ -56,9 +56,9 @@ describe('chat model choice', () => {
     for (const forged of ['echo', 'MIRO', 'free', '']) await expect(resolveChatModel('u', forged)).rejects.toThrow('invalid')
   })
   it('both are ready together, and neither without a dialogue model', async () => {
-    expect(await chatModelOptions('u')).toEqual({ freeReady: true, proReady: true })
+    expect(await chatModelOptions('u')).toMatchObject({ freeReady: true, proReady: true })
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ ...models[0], capabilities: ['image_prompt'] }]))
-    expect(await chatModelOptions('u')).toEqual({ freeReady: false, proReady: false })
+    expect(await chatModelOptions('u')).toEqual({ freeReady: false, proReady: false, choices: [] })
   })
   it('routes dialogue to the selected model rather than another tier', async () => {
     const registry = new ModelRegistry(models)

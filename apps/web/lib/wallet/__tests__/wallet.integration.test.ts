@@ -28,6 +28,12 @@ describeDb('Miro Pay uses authoritative wallet and payment records', () => {
     for (const id of admins) await db.delete(adminUsers).where(eq(adminUsers.id, id))
   })
 
+  it('rejects a new pass checkout while keeping token purchases available', async () => {
+    const userId = await user()
+    await expect(createBankOrder({ userId, requestId: randomUUID(), kind: 'pass' })).rejects.toThrow('PASS_SALES_ENDED')
+    expect(await db.select().from(bankTransferOrders).where(eq(bankTransferOrders.userId, userId))).toHaveLength(0)
+  })
+
   it('reuses concurrent purchase requests, including a retry after settlement or catalog removal', async () => {
     const userId = await user(), requestId = randomUUID()
     const input = { userId, requestId, kind: 'recharge' as const, productId: 'small' }

@@ -90,12 +90,14 @@ export async function rechargeBalance(userId: string, now = new Date()): Promise
  * 사용자 단위 advisory lock 으로 동시 첫 요청의 창 중복 생성을 막는다.
  */
 export async function reserve(opts: {
-  userId: string; kind: UsageKind; units?: number; idempotencyKey: string; now?: Date
+  userId: string; kind: UsageKind; units?: number; tokenAmount?: number; idempotencyKey: string; now?: Date
 }): Promise<Reservation> {
   const now = opts.now ?? new Date()
   const units = opts.units ?? 1
   const policy = usagePolicy()
   costOf(opts.kind, units)
+  const quotedCost = opts.tokenAmount ?? costOf(opts.kind, units)
+  if (!Number.isSafeInteger(quotedCost) || quotedCost < 0 || quotedCost > 2_000_000_000) throw new Error('invalid token reservation')
 
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${opts.userId}))`)
@@ -117,11 +119,13 @@ export async function reserve(opts: {
     }
 
     const plan = await effectivePlan(opts.userId, now, tx)
-    const limit = policy.monthly[plan]
+    const limit = Math.max(policy.monthly[plan], win!.limit)
     await tx.update(usageWindows).set({ plan, limit, policyVersion: policy.version }).where(eq(usageWindows.id, win!.id))
     win = { ...win!, plan, limit }
-    const decision = decide(win, opts.kind, units, now)
-    const cost = costOf(opts.kind, units)
+    const cost = quotedCost
+    const decision = opts.tokenAmount === undefined ? decide(win, opts.kind, units, now)
+      : { allowed: win.consumed + cost <= win.limit, plan, resetsAt: win.endsAt }
+
 
     // 월간 제공량을 먼저 쓰고, 모자란 만큼만 충전 잔액에서 가져온다.
     const fromMonthly = Math.max(0, Math.min(cost, limit - win.consumed))
@@ -130,7 +134,7 @@ export async function reserve(opts: {
     const fromGrants = picked.reduce((n, g) => n + g.amount, 0)
     const covered = decision.allowed || fromMonthly + fromGrants === cost
 
-    const continuity = !covered && ['textRP', 'complexEvent', 'majorEvent'].includes(opts.kind) && policy.continuity.enabled && win.continuityConsumed + cost <= policy.continuity.reserve
+    const continuity = opts.tokenAmount === undefined && !covered && ['textRP', 'complexEvent', 'majorEvent'].includes(opts.kind) && policy.continuity.enabled && win.continuityConsumed + cost <= policy.continuity.reserve
     if (!covered && !continuity) {
       observe('usage.limit_reached', { userId: opts.userId, kind: opts.kind, plan: decision.plan })
       void track(opts.userId, 'usage_limit_reached', { kind: opts.kind, plan: decision.plan })
@@ -194,6 +198,9 @@ export async function commit(reservationId: string, actualUnits?: number): Promi
 /** Provider 실패 시 되돌린다. 실패한 생성에 사용량을 물리지 않는다. */
 /** Reuse the caller transaction so request failure and refund commit together. */
 export async function rollbackInTransaction(tx: UsageTransaction, reservationId: string): Promise<void> {
+    const [owner] = await tx.select({ userId: usageLedger.userId }).from(usageLedger).where(eq(usageLedger.id, reservationId))
+    if (!owner) return
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${owner.userId}))`)
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
     if (!l || l.status !== 'reserved') return
     await tx.update(usageLedger).set({ status: 'rolled_back' }).where(eq(usageLedger.id, reservationId))
@@ -250,12 +257,12 @@ export async function usageStatus(userId: string, now = new Date()): Promise<Usa
     .where(and(eq(usageWindows.userId, userId), gt(usageWindows.endsAt, now), eq(usageWindows.period, 'monthly')))
     .orderBy(desc(usageWindows.startedAt)).limit(1)
   const policy = usagePolicy()
-  const limit = policy.monthly[plan]
+  const limit = Math.max(policy.monthly[plan], win?.limit ?? 0)
   if (!win) return { plan, limit, consumed: 0, remaining: limit, resetsAt: openWindow(userId, plan, now).endsAt, period: 'monthly', usedPercent: 0, continuityRemaining: policy.continuity.enabled ? policy.continuity.reserve : 0, rechargeRemaining }
   return {
     plan, limit, consumed: win.consumed,
     remaining: Math.max(0, limit - win.consumed), resetsAt: win.endsAt,
-    period: 'monthly', usedPercent: Math.min(100, Math.round(win.consumed / limit * 100)),
+    period: 'monthly', usedPercent: limit > 0 ? Math.min(100, Math.round(win.consumed / limit * 100)) : 0,
     continuityRemaining: policy.continuity.enabled ? Math.max(0, policy.continuity.reserve - win.continuityConsumed) : 0,
     rechargeRemaining,
   }
@@ -274,11 +281,32 @@ export async function dailyUsage(userId: string, since: Date): Promise<Record<st
  * 서버 액션이 사용자에게 돌려줄 한도 안내.
  * 사용량이 0 이어도 MIRO 기본 대화는 계속 가능하므로 그 길을 함께 알린다 — 모델을 몰래 바꾸지는 않는다.
  */
-export function exceededMessage(e: UsageExceededError): string {
-  const t = e.resetsAt.toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul', month: 'long', day: 'numeric' })
-  const miro = ' MIRO 기본 대화는 계속 이어갈 수 있어요.'
-  if (productionRuntime()) return `이번 달 Reality 사용량을 모두 썼어요. ${t}에 초기화됩니다. 기존 대화와 기억은 유지돼요.${miro}`
-  return `이번 사용량을 모두 썼어요. ${t}에 초기화됩니다.${miro}`
+export function exceededMessage(_e: UsageExceededError): string {
+  return '토큰이 부족해요. 충전한 뒤 대화를 이어갈 수 있어요. 기존 대화와 기억은 그대로 유지돼요.'
+}
+
+/** Exact, downward-only settlement inside the same transaction as the delivered answer. */
+export async function settleTokensInTransaction(tx: UsageTransaction, reservationId: string, userId: string, actualTokens: number): Promise<boolean> {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${userId}))`)
+  const [l] = await tx.select().from(usageLedger).where(and(eq(usageLedger.id, reservationId), eq(usageLedger.userId, userId))).for('update')
+  if (!l || l.status !== 'reserved') return false
+  if (!Number.isSafeInteger(actualTokens) || actualTokens < 0 || actualTokens > l.amount) throw new Error('invalid token settlement')
+  const refund = l.amount - actualTokens
+  let giveBack = Math.min(l.fromGrants, refund)
+  let fromGrants = l.fromGrants
+  const parts = await tx.select().from(rechargeLedger).where(eq(rechargeLedger.ledgerId, reservationId)).orderBy(rechargeLedger.id)
+  for (const part of parts) {
+    const back = Math.min(part.amount, giveBack)
+    if (back <= 0) continue
+    await tx.update(rechargeGrants).set({ consumed: sql`${rechargeGrants.consumed} - ${back}` }).where(eq(rechargeGrants.id, part.grantId))
+    if (back === part.amount) await tx.delete(rechargeLedger).where(eq(rechargeLedger.id, part.id))
+    else await tx.update(rechargeLedger).set({ amount: part.amount - back }).where(eq(rechargeLedger.id, part.id))
+    giveBack -= back; fromGrants -= back
+  }
+  const monthlyRefund = refund - (l.fromGrants - fromGrants)
+  if (monthlyRefund) await tx.update(usageWindows).set({ consumed: sql`${usageWindows.consumed} - ${monthlyRefund}` }).where(eq(usageWindows.id, l.windowId))
+  await tx.update(usageLedger).set({ status: 'committed', amount: actualTokens, fromGrants }).where(eq(usageLedger.id, reservationId))
+  return true
 }
 
 /**

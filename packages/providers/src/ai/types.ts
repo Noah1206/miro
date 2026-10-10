@@ -1,6 +1,7 @@
 import type { ProviderInfo } from '../types'
 import type { AITask } from './tasks'
 import type { ModelDefinition } from './model-registry'
+import type { TurnMeter } from './turn-meter'
 
 /**
  * 통합 AI Provider 계약. Miro 의 다른 코드는 이 인터페이스로만 모델을 부른다 —
@@ -17,6 +18,8 @@ export type GenerationRequest = {
   /** JSON Schema the provider may enforce while decoding (Gemini responseJsonSchema). Others ignore it; the caller still validates. */
   responseSchema?: Record<string, unknown>
   maxTokens?: number
+  /** Server billing ceiling includes reasoning tokens; adapters must not expand it. */
+  hardTokenCap?: boolean
   temperature?: number
   signal?: AbortSignal
   promptVersion?: string
@@ -90,7 +93,7 @@ export type AIUsageRecord = {
   sessionId: string | null
 }
 
-export type AIContext = { dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean; workload?: 'interactive' | 'background'
+export type AIContext = { turnMeter?: TurnMeter; dialogueModelId?: string; userId?: string | null; sessionId?: string | null; traceId?: string; requestId?: string; ip?: string | null; continuity?: boolean; usageUnits?: number; allowEvaluation?: boolean; shadow?: boolean; workload?: 'interactive' | 'background'
   /** 호출이 나온 경로(턴 정책의 origin). ai_usage 에 남아 경로별 원가·지연을 비교한다. */
   origin?: string
   /** 성인 모드를 켠 적 있는 대화방(10/2) — 성인 전용 모델로만 간다(createAI). 메인 모델로 넘기지 않는다. */

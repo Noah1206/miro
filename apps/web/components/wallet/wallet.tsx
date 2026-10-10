@@ -38,21 +38,21 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
   return <div className={styles.stack}>
     {/* 잔액 카드는 안쪽 여백을 한 단계 줄여 라벨·?·버튼이 모서리 가까이 붙는다. */}
     <Card style={{ padding: 'var(--space-4)' }}>
-      <div className={styles.balanceLine}><p className={`t-caption ${styles.muted}`}>{t('충전 잔액')}</p><HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-help" /></div>
-      <motion.p key={value.rechargeRemaining} className={`t-title-1 ${styles.amount}`} data-recharge-balance={value.rechargeRemaining}
+      <div className={styles.balanceLine}><p className={`t-caption ${styles.muted}`}>{t('보유 토큰')}</p><HelpToggle open={help} onToggle={() => setHelp(v => !v)} controls="wallet-help" /></div>
+      <motion.p key={value.available} className={`t-title-1 ${styles.amount}`} data-recharge-balance={value.rechargeRemaining} data-token-balance={value.available}
         initial={{ opacity: 0.6 }} animate={{ opacity: 1 }} transition={tween.fast} aria-live="polite" aria-atomic>
-        {value.rechargeRemaining.toLocaleString(locale)} <span className="t-body">{t('미로')}</span>
+        {value.available.toLocaleString(locale)} <span className="t-body">{t('미로 토큰')}</span>
       </motion.p>
       <Button full variant="primary" onClick={openRecharge} status={busy ? 'loading' : 'idle'} style={{ marginTop: 'var(--space-5)' }}>{t('충전하기')}</Button>
       {help && <div id="wallet-help" className={styles.help} style={{ marginTop: 'var(--space-3)' }}>
-        <p className={`t-caption ${styles.muted}`}>{t('월간 제공량을 먼저 쓰고, 부족한 만큼 충전 잔액에서 사용해요. 충전은 계좌이체로 받고, 입금이 확인되면 지급해요.')}</p>
+        <p className={`t-caption ${styles.muted}`}>{t('남은 제공 토큰을 먼저 쓰고, 부족한 만큼 충전 토큰에서 사용해요. 입금이 확인되면 토큰이 지급돼요.')}</p>
         <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{t(line)}</li>)}</ul>
       </div>}
     </Card>
-    <div className={styles.balanceLine}>
-      <span data-usage-remaining={value.monthlyRemaining}>{t('이번 달 남은 제공량 · {n}', { n: value.monthlyRemaining.toLocaleString(locale) })}</span>
-    </div>
-    {value.monthlyRemaining === 0 && <Notice data-usage-spent>{t('MIRO 기본 대화는 계속 이어갈 수 있어요.')}</Notice>}
+    {value.monthlyRemaining > 0 && <div className={styles.balanceLine}>
+      <span data-usage-remaining={value.monthlyRemaining}>{t('남은 제공 토큰 · {n}', { n: value.monthlyRemaining.toLocaleString(locale) })}</span>
+    </div>}
+    {value.available === 0 && <Notice data-usage-spent>{t('토큰을 충전하면 대화를 이어갈 수 있어요.')}</Notice>}
     {value.order && !value.order.settledAt && ['awaiting', 'approved'].includes(value.order.status) && <Button full onClick={openRecharge}>
       {value.order.status === 'approved' ? t('입금 확인 · 지급 대기') : t('입금 대기 중')} · {t('안내 보기')}
     </Button>}

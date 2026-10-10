@@ -1,13 +1,13 @@
 import { createHash } from 'node:crypto'
 import { eq, inArray, sql } from 'drizzle-orm'
 import { db, aiUsage, aiBudgetCounters } from '@miro/db'
-import { setAIUsageSink, setAIBudgetGuard, setAILeaseGuard, modelCost, type AIUsageRecord, type BudgetGuard } from '@miro/providers'
+import { generationInputCeiling, setAIUsageSink, setAIBudgetGuard, setAILeaseGuard, modelCost, type AIUsageRecord, type BudgetGuard } from '@miro/providers'
 import { databaseAILeaseGuard } from '@/lib/ai/gateway'
 import { effectivePlan } from './guard'
 import { afterResponse } from '@/lib/defer'
 import { observe } from '@/lib/observe'
 
-export type BudgetKind = 'user' | 'user_monthly' | 'ip' | 'global_requests' | 'global_cost' | 'provider' | 'model' | 'plan' | 'unknown_price'
+export type BudgetKind = 'user' | 'user_monthly' | 'ip' | 'global_requests' | 'global_cost' | 'provider' | 'model' | 'plan' | 'unknown_price' | 'turn_tokens'
 export class BudgetExceededError extends Error {
   constructor(public readonly kind: BudgetKind) { super(`ai budget exceeded: ${kind}`) }
 }
@@ -50,7 +50,7 @@ export function ipHash(ip?: string | null): string | null { return ip ? createHa
 export const productionBudgetGuard: BudgetGuard = {
   async authorize(request, model, context, attemptId) {
     // UTF-8 byte count is a conservative input token reservation, not a user-facing usage unit.
-    const estimate = request.costCeilingUSD ?? modelCost(model, Buffer.byteLength(request.system + request.prompt, 'utf8') + 512, request.maxTokens ?? model.maxOutputTokens)
+    const estimate = request.costCeilingUSD ?? modelCost(model, generationInputCeiling(request), request.maxTokens ?? model.maxOutputTokens)
     if (estimate !== null && (!Number.isFinite(estimate) || estimate < 0)) throw new Error('invalid cost ceiling')
     if (estimate === null) return { allowed: false, reason: 'unknown_price' }
     const plan = context.userId ? await effectivePlan(context.userId) : 'free'
@@ -79,7 +79,7 @@ export const productionBudgetGuard: BudgetGuard = {
         const byKey = new Map(counters.map(c => [c.key, c]))
         for (const entry of entries) {
           const counter = byKey.get(entry.key)!
-          const overCost = estimate > 0 && entry.limit.cost !== undefined && Number(counter.cost) > entry.limit.cost + 1e-10
+          const overCost = estimate > 0 && !(context.turnMeter && entry.category === 'user_monthly') && entry.limit.cost !== undefined && Number(counter.cost) > entry.limit.cost + 1e-10
           if ((entry.limit.requests !== undefined && counter.requests > entry.limit.requests) || overCost) {
             throw new BudgetExceededError(entry.category === 'global' ? (overCost ? 'global_cost' : 'global_requests') : entry.category as BudgetKind)
           }

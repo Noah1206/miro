@@ -21,7 +21,7 @@ export type TurnPolicy = {
   engine: TurnEngine
   /** 코호트가 요청한 모드. engine 과 다르면 준비 전 보류 상태다(기존 대화 유지, 새 자율 행동 보류). */
   agencyMode: AgencyRequest
-  /** 사용자 월간 사용량을 차감하는 턴인가. ECHO 만이다. */
+  /** 사용자가 시작한 생성 턴인가. 모든 대화 등급이 토큰을 사용한다. */
   metered: boolean
   generation: { maxOutputTokens: number; contextScale: number; auxiliary: 'planned' | 'always'; replyLength: ReplyStyle }
   /** 세계·장면·사건·NPC 변경. 일반 캐릭터는 어느 등급에서도 없다. */
@@ -56,7 +56,7 @@ export function resolveTurnPolicy(input: TurnPolicyInput): TurnPolicy {
   return {
     version: 'turn-policy:v1', experience: input.experience, tier: input.tier, channel: input.channel, engine, agencyMode: input.agencyMode,
     // ECHO 는 사용량만 더 쓴다. 권한은 경험이 정한다(§3.1: ECHO 는 행동 권한을 늘리지 않는다).
-    metered: input.tier === 'echo' && !input.continuity,
+    metered: input.channel !== 'background' && !input.continuity,
     generation,
     permissions: { worldChange: reality, proactiveContact: reality },
     memory: input.memory ?? 'inline',

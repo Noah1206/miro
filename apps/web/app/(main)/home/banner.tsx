@@ -11,7 +11,7 @@ export async function HomeBanner({ signedIn }: { signedIn: boolean }) {
   return signedIn
     ? <PromoBanner art="banner-contact" eyebrow={t('미로 캐릭터')} title={t('대화가 끝나도 캐릭터가 먼저 연락해요')}
         body={t('미로 캐릭터는 현실에 사는 것처럼 문자로 먼저 찾아와요.')} />
-    : <PromoBanner art="banner-gift" eyebrow={t('신규 가입 혜택')} title={t('가입하면 {n} 미로를 선물로 드려요', { n: WELCOME_GRANT.units })}
-        body={t('가입하고 프로필을 만들면 바로 받아요. 선물 미로로 ECHO의 긴 장면 대화를 {n}일 동안 즐겨 보세요.', { n: WELCOME_GRANT.validDays })}
+    : <PromoBanner art="banner-gift" eyebrow={t('신규 가입 혜택')} title={t('가입하면 {n} 미로 토큰을 선물로 드려요', { n: WELCOME_GRANT.units })}
+        body={t('가입하고 프로필을 만들면 바로 받아요. 선물 토큰으로 모든 모델의 대화를 {n}일 동안 즐겨 보세요.', { n: WELCOME_GRANT.validDays })}
         loginLabel={t('가입하고 선물 받기')} />
 }

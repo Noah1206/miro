@@ -12,6 +12,7 @@ import { useTurns } from './turns'
 import { streamTurn } from './stream-turn'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
+import { useWallet } from '@/components/wallet/provider'
 import { useT } from '@/lib/i18n/client'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
@@ -27,6 +28,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   }, { error: null, notice: null, limit: null } satisfies TurnState)
   const { model, setModel } = useChatModel()
   const router = useRouter()
+  const { sync, wallet } = useWallet()
+  const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
+  const tokenCeiling = choice ? Math.min(choice.maximumTokens, wallet?.available ?? choice.maximumTokens) : undefined
   const previousModel = useRef(model)
   useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
   const [requestId, setRequestId] = useState('')
@@ -40,7 +44,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
       const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
       if (saved && typeof saved.input === 'string' && saved.input.length <= 2000 && typeof saved.requestId === 'string' && /^[0-9a-f-]{36}$/i.test(saved.requestId)) {
         input = saved.input; id = saved.requestId
-        const restoredModel = saved.model === 'pro' ? 'pro' : 'miro'
+        const restoredModel = modelOptions.choices?.some(c => c.id === saved.model) || saved.model === 'pro' ? saved.model : 'miro'
         previousModel.current = restoredModel; setModel(restoredModel)
       }
     } catch { /* Storage may be unavailable in private browsing. */ }
@@ -59,6 +63,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
     setLive(null)
     if (state.succeeded) {
       setDraft(''); setRequestId(crypto.randomUUID())
+      void import('@/app/(main)/recharge/wallet-actions').then(m => m.readWallet()).then(sync).catch(() => {})
       if (state.messages?.length) {
         // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다. 이미 흘려 보여 준 답은 다시 치지 않는다.
         append(state.messages, { quiet: streamed })
@@ -113,6 +118,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
       <form ref={ref} action={action} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
+        {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
         <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}

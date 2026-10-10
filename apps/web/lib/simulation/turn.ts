@@ -1,20 +1,21 @@
 import { resolveChatModel } from '@/lib/ai/chat-models'
 import { eq, and } from 'drizzle-orm'
-import { db, users, conversationRequests, contactProfiles, messages, roleplaySessions } from '@miro/db'
+import { db, conversationRequests, contactProfiles, messages, roleplaySessions } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
-import { AIBudgetDeniedError, importanceScore, interactionImportance } from '@miro/providers'
+import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
-import { characterAgencyMode, feature } from '@miro/config'
-import type { CharacterState, ContactChannel, RealityIntent } from '@miro/domain'
-import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, verifyAgencyRealization, type TurnResult, type TurnStream } from '@miro/engine'
+import { characterAgencyMode, feature, tokensForCost, POLICY } from '@miro/config'
+import { momentHint, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
+import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
 import { runMemoryJobs } from '@/lib/ai/memory-jobs'
 import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
-import { UsageExceededError, reserve, rollback, type Reservation } from '@/lib/usage/guard'
+import { UsageExceededError, reserve, rollback, usageStatus, type Reservation } from '@/lib/usage/guard'
 import { type BudgetKind } from '@/lib/usage/ai-usage'
+import { prepareMoments } from '@/lib/reality/moments'
 import { evaluateSession } from '@/lib/reality/evaluate'
 import { track } from '@/lib/analytics/track'
 import { measured, observe, timed } from '@/lib/observe'
@@ -27,7 +28,8 @@ export type ConversationOutcome =
       ok: true
       requestId: string
       traceId: string
-  chatModel?: string
+      chatModel?: string
+      tokensCharged?: number
       turnIndex: number
       blocks: TurnResult['transition']['blocks']
       responseText: string
@@ -67,6 +69,7 @@ async function executeTurn(opts: {
   requestId: string
   traceId: string
   chatModel?: string
+  tokenCeiling?: number
   /** messenger = 문자 페이지에서 온 턴. 문자로 답하고 messenger kind 로 남는다. 미로 캐릭터에만 있다. */
   mode?: 'chat' | 'messenger'
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
@@ -79,14 +82,11 @@ async function executeTurn(opts: {
   const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
-    // 세션·모델·동의는 서로를 모른다 — 한 번에 읽는다.
-    const [loaded, model, consent] = await Promise.all([
-      measured('chat.snapshot', () => loadSession(sessionId, userId, input)),
-      measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro')).catch(() => null),
-      measured('chat.consent_db', () => db.select({ allowEvaluation: users.allowEvaluation }).from(users).where(eq(users.id, userId)).limit(1)).then(rows => rows[0]),
-    ])
+    // 성인 방은 전용 모델의 가격과 한도를 사용한다.
+    const loaded = await measured('chat.snapshot', () => loadSession(sessionId, userId, input))
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
+    const model = await measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro', loaded.adult.since !== null)).catch(() => null)
     if (!model) return { ok: false, reason: 'model_unavailable' }
     const messenger = opts.mode === 'messenger'
     // 문자는 미로 캐릭터의 것이다 — 일반 캐릭터챗 세션에는 문자 페이지가 없다.
@@ -114,21 +114,29 @@ async function executeTurn(opts: {
     const importance = importanceScore(interactionImportance(input))
     const kind = importance >= .85 ? 'majorEvent' : importance >= .35 ? 'complexEvent' : 'textRP'
     // 정책은 서버가 여기서 한 번 확정한다(§3.1). 등급은 서버가 검증한 선택에서, 경험은 캐릭터에서, 채널은 진입 경로에서 온다.
-    const policyInput = { experience: loaded.experienceType, tier: model.metered ? 'echo' as const : 'miro' as const, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId, loaded.policyVersion), memory: 'deferred' as const }
-    // MIRO basic chat does not draw down the monthly allowance. Everything else the
-    // pipeline enforces — request dedupe, AI cost budget, rate limits, safety — still runs.
+    const policyInput = { experience: loaded.experienceType, tier: model.tierName, channel: messenger ? 'messenger' as const : 'scene' as const, agencyMode: characterAgencyMode(sessionId, loaded.policyVersion), memory: 'inline' as const }
+    // 모든 대화 모델은 같은 토큰 원장으로 예약·정산한다. 중복 요청과 공급자 원가 제한은 별도로 유지한다.
     let reservation: Reservation | null = null
+    const balance = await usageStatus(userId)
+    const availableTokens = balance.remaining + balance.rechargeRemaining
+    if (availableTokens === 0 && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
+    // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
+    if (opts.tokenCeiling !== undefined && (!Number.isSafeInteger(opts.tokenCeiling) || opts.tokenCeiling < 0)) return { ok: false, reason: 'model_unavailable' }
+    const maximumTokens = Math.min(model.quote.maximumTokens, availableTokens, opts.tokenCeiling ?? Infinity)
+    const maximumUSD = Math.min(model.quote.maximumUSD, maximumTokens * model.pricing.revenueKRWPerToken * model.pricing.costShare / model.pricing.fxKRWPerUSD)
     if (resolveTurnPolicy({ ...policyInput, agencyReady: false }).metered) {
-      try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, idempotencyKey: `turn:${opts.requestId}` })) }
+      try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, tokenAmount: maximumTokens, idempotencyKey: `turn:${opts.requestId}` })) }
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
     }
-    const refund = () => reservation ? rollback(reservation.reservationId) : Promise.resolve()
+    const refund = () => { turnMeter.closed = true; return reservation ? rollback(reservation.reservationId) : Promise.resolve() }
     const turnIndex = loaded.snapshot.turnCount + 1
 
+    let moments: Awaited<ReturnType<typeof prepareMoments>> | undefined
     let result: TurnResult
     let agency: LoadedAgency | null = null
     let policy = resolveTurnPolicy({ ...policyInput, agencyReady: false, continuity: reservation?.continuity ?? false })
-    const context = { dialogueModelId, allowEvaluation: consent?.allowEvaluation ?? false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.since !== null }
+    const turnMeter = new TurnMeter(maximumUSD, model.quote.maxInputTokens, model.quote.maxOutputTokens)
+    const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.since !== null }
     // 성인 방인데 전용 모델이 빠져 있으면 여기서 던진다(메인 모델로 보내지 않음) — 잡아 둔 사용량은 돌려준다.
     let llm: ReturnType<typeof resolveRpLLM>
     try { llm = resolveRpLLM(loaded.characterName, context) } catch (e) { await refund(); throw e }
@@ -151,6 +159,12 @@ async function executeTurn(opts: {
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
         () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream: opts.stream,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context) }))
+      if (feature('memoryExtraction') && momentHint(input)) {
+        moments = await prepareMoments(auxiliaryLLM(loaded.characterName, context), {
+          sessionId, input, timeZone: loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone, now: new Date(),
+          recent: loaded.snapshot.recentMessages.map(m => ({ who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 300) })),
+        }).catch(() => undefined)
+      }
 
     } catch (e) {
       await refund()
@@ -171,7 +185,7 @@ async function executeTurn(opts: {
       observe('reality.intent_dropped_chat', { sessionId, turn: turnIndex })
       transition.realityIntent = null
     }
-    if (result.providerMode === 'fallback') {
+    if (result.providerMode === 'fallback' || turnMeter.missingSuccessfulUsage) {
       await refund()
       observe('provider.llm.fallback', { sessionId, turn: turnIndex })
       return replyLater()
@@ -193,16 +207,19 @@ async function executeTurn(opts: {
       && (transition.sceneDelta !== null || (movedTo !== null && movedTo !== loaded.snapshot.world.currentLocation))
       ? sceneAfter : null
 
+    turnMeter.closed = true
+    const actualTokens = tokensForCost(turnMeter.customerCostUSD, model.pricing)
+    if (actualTokens > (reservation?.cost ?? 0)) { await refund(); return { ok: false, reason: 'generation' } }
     const responseText = renderBlocks(transition.blocks)
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
-      ok: true, requestId: opts.requestId, traceId: opts.traceId, turnIndex, blocks: transition.blocks, responseText,
+      ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,
       providerMode: result.providerMode, characterState: result.characterState, firedRules: result.firedRules,
       realityIntent: transition.realityIntent, reality: null, newEventType: transition.newEvent?.candidate.type ?? null,
       sceneChanged: transition.sceneDelta !== null,
     }
     try {
       const committed = await measured('chat.commit', () => commitTurn({
-        reservationId: reservation?.reservationId ?? null, requestId: opts.requestId, requestResult: outcome,
+        reservationId: reservation?.reservationId ?? null, actualTokens, moments, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
         userInput: input, userMessageId, responseText, blocks: transition.blocks, transition, sceneMarker, channel: messenger ? 'messenger' : 'scene',
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),
@@ -247,11 +264,6 @@ async function executeTurn(opts: {
     // 재전송용 결과 갱신과 평가 샘플은 유저가 기다릴 일이 아니다 — 응답을 보낸 뒤에 한다 (요청 밖에서는 그 자리에서).
     await afterResponse(async () => {
       await db.update(conversationRequests).set({ result: completed }).where(eq(conversationRequests.id, opts.requestId)).catch(() => observe('request.cache_update_failed', { requestId: opts.requestId }))
-      // 자율성 턴의 의미 검토는 답을 보낸 뒤에(10/9 속도) — 약속·완료 주장이 결정과 어긋났는지 기록만 한다. 이미 보낸 답은 바꾸지 않는다.
-      const review = result.agency?.review
-      if (review) await verifyAgencyRealization(llm, review)
-        .then(check => observe('agency.review_after', { sessionId, turn: turnIndex, ok: check.ok, risk: result.agency?.verification.deferredReview ?? null, reasons: [...new Set(check.issues.map(i => i.reason))].join(' ') || null }))
-        .catch(() => observe('agency.review_after_failed', { sessionId, turn: turnIndex }))
       // 기억 작업은 바로 시도한다. 여기서 유실돼도 DB 의 작업은 남아 크론이 거둔다.
       await runMemoryJobs(new Date(), { sessionId, limit: 2, inline: true }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
       // 성인 방의 대화는 평가 표본으로 남기지 않는다 — 표본은 나중에 메인 모델 비교에 쓰인다.
@@ -288,11 +300,11 @@ async function deferMessengerReply(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
-  try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.input, opts.requestId)) }
+  try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input, opts.requestId)) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached
   try {

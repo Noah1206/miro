@@ -1,16 +1,17 @@
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   db, events, memories, messages, npcs, relationships, roleplaySessions,
-  scenes, worldStates, usageLedger, conversationRequests,
+  scenes, worldStates, usageLedger, conversationRequests, userMoments,
   characterRuntimeStates, characterDecisions, characters, users, stateTransitions,
 } from '@miro/db'
 import {
   applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
 } from '@miro/domain'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
-import type { Memory, CharacterState, RelationshipState, StateTransitionRecord } from '@miro/domain'
+import type { Memory, CharacterState, RelationshipState, StateTransitionRecord, MomentDraft } from '@miro/domain'
 import type { ValidatedTransition, AgencyPlan, TurnPolicy } from '@miro/engine'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
+import { settleTokensInTransaction } from '@/lib/usage/guard'
 import { enqueueMemoryJobs } from '@/lib/ai/memory-jobs'
 
 /** One INSERT shares one now(). Step rows by a microsecond so every reader ordering by created_at
@@ -33,6 +34,8 @@ export type CommitInput = {
   sessionId: string
   /** null for unmetered MIRO turns — there is no ledger row to commit. */
   reservationId?: string | null
+  actualTokens?: number
+  moments?: { cancel: string[]; drafts: MomentDraft[] }
   requestId?: string
   requestResult?: unknown
   characterId: string
@@ -86,8 +89,12 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       if (!r || r.sessionId !== input.sessionId || r.userId !== session.userId || r.status !== 'pending' || r.leaseUntil <= new Date()) throw new StaleStateError()
     }
     if (input.reservationId) {
-      const [r] = await tx.update(usageLedger).set({ status: 'committed' }).where(and(eq(usageLedger.id, input.reservationId), eq(usageLedger.status, 'reserved'))).returning({ id: usageLedger.id })
-      if (!r) throw new StaleStateError()
+      if (input.actualTokens !== undefined) {
+        if (!await settleTokensInTransaction(tx, input.reservationId, session.userId, input.actualTokens)) throw new StaleStateError()
+      } else {
+        const [r] = await tx.update(usageLedger).set({ status: 'committed' }).where(and(eq(usageLedger.id, input.reservationId), eq(usageLedger.userId, session.userId), eq(usageLedger.status, 'reserved'))).returning({ id: usageLedger.id })
+        if (!r) throw new StaleStateError()
+      }
     }
     const t = input.transition
 
@@ -244,6 +251,14 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
           })
           .where(eq(worldStates.sessionId, input.sessionId))
       }
+    }
+
+    if (input.moments) {
+      if (input.moments.cancel.length) await tx.update(userMoments).set({ status: 'cancelled' })
+        .where(and(eq(userMoments.sessionId, input.sessionId), inArray(userMoments.id, input.moments.cancel)))
+      if (input.moments.drafts.length) await tx.insert(userMoments).values(input.moments.drafts.map(d => ({
+        sessionId: input.sessionId, sourceMessageId: inserted.find(message => message.role === 'user')!.id, ...d,
+      }))).onConflictDoNothing()
     }
 
     /* ---- memories ---- */

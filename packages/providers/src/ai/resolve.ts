@@ -104,7 +104,7 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
  * MIRO_ADULT_MODEL_REGISTRY 는 MIRO_MODEL_REGISTRY 와 같은 모양(JSON 배열, 가격 필수). capabilities·tier 를 비우면 모든 일·standard.
  * 예: [{"id":"adult","provider":"openrouter","providerModelId":"<모델>","inputCost":0.5,"outputCost":2,"maxContextTokens":128000,"maxOutputTokens":4096}]
  */
-function adultRegistry(): ModelRegistry | null {
+export function adultRegistry(): ModelRegistry | null {
   if (!process.env.MIRO_ADULT_MODEL_REGISTRY) return null
   const definitions = (JSON.parse(process.env.MIRO_ADULT_MODEL_REGISTRY) as object[]).map(d => ({ capabilities: [...AI_TASKS], tier: 'standard', ...d }))
   const registry = new ModelRegistry(definitions)
@@ -127,7 +127,9 @@ export function createAI(opts: { mock: (req: GenerationRequest) => unknown; cont
   // 성인 방은 전용 모델로만 — 고른 대화 모델·이어가기 소형 모델·섀도 비교는 메인 쪽이라 쓰지 않는다.
   const adult = opts.context?.adult === true
   const { registry, resolveModel } = adult ? adultModels(opts.mock) : registryFromEnv(opts.mock)
-  const context = adult ? { ...opts.context, dialogueModelId: undefined, continuity: false } : opts.context
+  const context = adult ? { ...opts.context,
+    dialogueModelId: registry.models.some(m => m.enabled && m.id === opts.context?.dialogueModelId && m.capabilities.includes('dialogue')) ? opts.context?.dialogueModelId : undefined,
+    continuity: false } : opts.context
   const enabled = registry.models.filter(m => m.enabled)
   if (!enabled.length) throw new Error('no enabled AI model')
   const shadowModel = !adult && process.env.MIRO_SHADOW_MODEL && opts.context?.allowEvaluation && process.env.MIRO_MODEL_ROLLBACK !== '1' ? registry.get(process.env.MIRO_SHADOW_MODEL) : undefined

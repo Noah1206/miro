@@ -76,7 +76,17 @@ export async function runTurn(opts: {
   opts = { ...opts, ...policy.generation }
   if (policy.engine === 'agency') {
     if (opts.agency?.mode !== 'live') throw new Error('agency_runtime_missing')
-    return runAgencyTurn({ ...opts, agency: opts.agency, policy })
+    // Paid turns settle all memory work with the delivered answer, including the agency path.
+    const memory = opts.auxiliaryLLM && policy.memory === 'inline' ? Promise.all(
+      planTasks(opts.userInput, opts.snapshot.turnCount + 1, policy.generation.auxiliary)
+        .filter((task): task is 'memory_extraction' | 'memory_summary' => task === 'memory_extraction' || task === 'memory_summary')
+        .map(task => analyzeMemory(opts.auxiliaryLLM!, task, opts.userInput, opts.snapshot).then(r => filterSalient(r.memories), () => []))) : Promise.resolve([])
+    try {
+      const result = await runAgencyTurn({ ...opts, agency: opts.agency, policy })
+      result.transition.memories = filterSalient([...result.transition.memories, ...(await memory).flat()])
+      return result
+    } catch (error) { await memory; throw error }
+
   }
   let agencyShadow: TurnResult['agencyShadow']
   if (opts.snapshot.experienceType !== 'chat' && opts.agency?.mode === 'shadow' && opts.llm.info.mode === 'mock') {

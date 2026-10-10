@@ -175,6 +175,7 @@ export * from './features'
 
 export * from './ai-policy'
 export * from './recharge-policy'
+export * from './token-pricing'
 export * from './bank-transfer'
 export * from './runtime'
 export * from './character-agency'

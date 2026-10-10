@@ -25,7 +25,7 @@ async function enter(page: Page, empty = true) {
   if (empty) {
     expect((await page.request.post(`${WEB}/api/dev/usage`)).ok()).toBe(true)
     // 가입 선물(300 미로, 2026-09-30 부터)도 지운다 — '잔액 부족' 흐름은 충전 잔액이 0 이어야 보인다.
-    await db.delete(rechargeGrants).where(eq(rechargeGrants.userId, user!.id))
+    await db.update(rechargeGrants).set({ status: 'revoked' }).where(eq(rechargeGrants.userId, user!.id))
   }
   await page.goto(`${WEB}/messages/${sessionId}`)
   return { sessionId, userId: user!.id }
@@ -48,10 +48,14 @@ async function approve(browser: Browser, code: string) {
   } finally { await context.close() }
 }
 
+// These financial flows do not register a real browser push subscription.
+// Exercise the app's supported no-Web-Push path independently of a locally configured VAPID key.
+test.beforeEach(async ({ page }) => { await page.addInitScript(() => { Reflect.deleteProperty(window, 'PushManager') }) })
+
 test('insufficient balance → recharge → admin approval → settlement → original call once', async ({ page, browser, request }) => {
   const { userId, sessionId } = await enter(page)
   await page.getByRole('button', { name: '통화', exact: true }).click()
-  await expect(page.getByRole('dialog')).toContainText('미로가 부족해요')
+  await expect(page.getByRole('dialog')).toContainText('토큰이 부족해요')
   expect(await db.select().from(callSessions).where(eq(callSessions.sessionId, sessionId))).toHaveLength(0)
   await page.getByRole('button', { name: '충전하고 이어가기' }).click()
   await page.locator('input[value="recharge:e2e_small"]').check()
@@ -83,7 +87,7 @@ test('insufficient balance → recharge → admin approval → settlement → or
   await page.goto(`${WEB}/recharge`)
   await expect(page.locator('[data-recharge-balance="295"]')).toBeVisible()
   await expect(page.locator('[data-wallet-history]')).toContainText('음성통화')
-  await expect(page.locator('[data-wallet-history]')).toContainText('미로 충전')
+  await expect(page.locator('[data-wallet-history]')).toContainText('토큰 충전')
   await page.getByRole('button', { name: '전체 내역' }).click()
   await expect(page.getByRole('dialog', { name: 'Miro Pay 전체 내역' })).toContainText('지급 완료')
 })

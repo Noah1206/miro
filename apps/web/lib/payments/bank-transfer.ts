@@ -40,6 +40,8 @@ export async function createBankOrder(opts: {
   }
   const existing = await previous(db)
   if (existing) return existing
+  // Already-issued pass orders can still be replayed/settled; new checkout purchases tokens only.
+  if (opts.kind === 'pass') throw new BankTransferUnavailableError('PASS_SALES_ENDED')
   const account = bankAccount()
   if (!account) throw new BankTransferUnavailableError('BANK_TRANSFER_UNAVAILABLE')
 

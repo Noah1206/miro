@@ -12,6 +12,7 @@ export type TurnMsg = { id: string; role: string; kind: string; content: string;
 
 export type TurnState = {
   succeeded?: boolean
+  tokensCharged?: number
   retryWithSameId?: boolean
   error: string | null
   notice: string | null
@@ -39,12 +40,12 @@ export async function turnFromForm(userId: string, form: FormData, opts: { mode:
   const input = String(form.get('input') ?? '').trim()
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
-  const r = await runConversationTurn({ userId, sessionId, input, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
+  const r = await runConversationTurn({ userId, sessionId, input, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {
     switch (r.reason) {
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
       case 'model_unavailable': return fail(msg('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.'))
-      case 'budget': return fail(r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
+      case 'budget': return fail(r.kind === 'turn_tokens' ? msg('이번 답변의 생성 한도에 도달했어요. 토큰은 차감되지 않았어요. 입력을 줄이거나 다른 답변 길이를 선택해 주세요.') : r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
       case 'too_long': return fail(COPY.error.tooLong(2000))
       case 'not_found': return fail(COPY.error.sessionNotFound)
       case 'restricted': return fail(COPY.error.restricted)
@@ -64,5 +65,5 @@ export async function turnFromForm(userId: string, form: FormData, opts: { mode:
   const messages: TurnMsg[] = (r.messages ?? []).map((m) => ({ id: m.id, role: m.role, kind: m.kind, content: m.content, blocks: (m.blocks ?? []) as TurnMsg['blocks'] }))
   // 답은 액션이 그대로 들고 간다. 재전송으로 되살린 옛 결과에 메시지가 없을 때만 페이지를 다시 받아 온다.
   if (messages.length === 0) revalidatePath(opts.path(sessionId))
-  return { succeeded: true, messages, error: null, notice: r.providerMode === 'mock' ? COPY.status.mockLLM : null, limit: null, ...(r.delayed ? { delayed: r.delayed } : {}) }
+  return { succeeded: true, tokensCharged: r.tokensCharged, messages, error: null, notice: r.providerMode === 'mock' ? COPY.status.mockLLM : null, limit: null, ...(r.delayed ? { delayed: r.delayed } : {}) }
 }

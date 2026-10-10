@@ -81,7 +81,7 @@ export default async function MyPage() {
       <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
         <MenuSection title={t('설정')}>
           <MenuRow href="/my/language" label={t('언어')} sub={LANGUAGES[language]} />
-          <MenuRow href="/my/subscription" label={t('이용권 관리')} />
+          <MenuRow href="/my/subscription" label={t('토큰 사용 내역')} />
           <MenuRow href="/my/verify" label={t('성인 인증')} />
           <MenuRow href="/my/permissions" label={t('권한 안내')} />
           <form action={logout}>

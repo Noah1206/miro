@@ -182,11 +182,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync: setWallet, openRecharge: () => { void openRecharge() }, requireBalance }}>
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
-    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? t('미로가 부족해요') : undefined}>
+    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? t('토큰이 부족해요') : undefined}>
       <div className={styles.stack} data-pay-state={state}>
         {!insufficient && wallet && <div className={styles.balanceLine}>
           <span>{t('충전 잔액')}</span>
-          <strong data-sheet-balance={wallet.rechargeRemaining}>{t('{n} 미로', { n: wallet.rechargeRemaining.toLocaleString(locale) })}</strong>
+          <strong data-sheet-balance={wallet.available}>{t('{n} 미로 토큰', { n: wallet.available.toLocaleString(locale) })}</strong>
         </div>}
         {error && <Notice tone="danger" role="alert">{t(error)}</Notice>}
         {state === 'failed' && pending.current && <Button onClick={() => void retryAction()}>{t('다시 확인하기')}</Button>}
@@ -194,7 +194,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           {/* 세로 리듬: 아이콘–제목 12, 제목–버튼 24, 버튼–버튼 8, 아래 여백은 시트의 24. */}
           <div className={styles.center}>
             <svg className={styles.dangerIcon} aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
-            <h2 className="t-title-2">{t('미로가 부족해요')}</h2>
+            <h2 className="t-title-2">{t('토큰이 부족해요')}</h2>
           </div>
           <div className={styles.actions}>
             <Button variant="primary" full onClick={() => setStage('catalog')}>{t('충전하고 이어가기')}</Button>
@@ -231,15 +231,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               <legend className="t-title-3">{t('충전할 금액')}</legend>
               {products?.map(p => <label key={p.id} className={styles.option}>
                 <input type="radio" name="wallet-product" value={`recharge:${p.id}`} checked={selected === `recharge:${p.id}`} onChange={() => setSelected(`recharge:${p.id}`)} />
-                <span><strong>{t('{n} 미로', { n: p.units.toLocaleString(locale) })}</strong></span>
+                <span><strong>{t('{n} 미로 토큰', { n: p.units.toLocaleString(locale) })}</strong></span>
                 <b>{krw(p.priceMinor)}</b>
               </label>)}
-              {!wallet.products.length && <p className={`t-caption ${styles.muted}`}>{t('판매 중인 미로 상품이 없어요.')}</p>}
+              {!wallet.products.length && <p className={`t-caption ${styles.muted}`}>{t('판매 중인 토큰 상품이 없어요.')}</p>}
               {(wallet.products.length > 3 && !expanded) && <Button variant="ghost" full onClick={() => setExpanded(true)}>{t('금액 더 보기')}</Button>}
             </fieldset>
             {/* 청약철회 조건은 결제 전에 보인다(전자상거래법 제13조 ②·제17조) — 쓴 미로는 제공이 시작된 디지털콘텐츠라 환불되지 않는다는 사실을 미리 알린다. */}
             <p className={`t-caption ${styles.muted}`} data-refund-notice>
-              {t('충전한 날부터 7일 안에는 쓰지 않은 미로를 환불받을 수 있어요. 이미 쓴 미로는 환불되지 않아요.')}{' '}
+              {t('충전한 날부터 7일 안에는 쓰지 않은 토큰을 환불받을 수 있어요. 이미 쓴 토큰은 환불되지 않아요.')}{' '}
               <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
             </p>
             <div className={`${styles.footer} ${styles.actions}`}>

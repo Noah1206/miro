@@ -1,0 +1,31 @@
+import { PLANNED_RECHARGE_TIERS, rechargeCatalog } from './recharge-policy'
+
+/** Purchase tokens are a wallet unit, not provider processing tokens. USD rates are per million. */
+export type TokenPriceModel = { inputCost?: number; outputCost?: number; maxContextTokens: number; maxOutputTokens: number }
+export type TokenPricing = { fxKRWPerUSD: number; costShare: number; revenueKRWPerToken: number; maxInputTokens: number; turnAllowance: number }
+export function tokenPricing(): TokenPricing {
+  const raw = JSON.parse(process.env.MIRO_TOKEN_PRICING || '{}')
+  const rates = [...PLANNED_RECHARGE_TIERS.map(p => p.priceKRW / p.units),
+    ...rechargeCatalog().products.filter(p => p.currency === 'KRW').map(p => p.priceMinor / p.units)]
+  const p = { fxKRWPerUSD: raw.fxKRWPerUSD ?? 1500, costShare: 0.5,
+    revenueKRWPerToken: Math.min(...rates), maxInputTokens: raw.maxInputTokens ?? 64000, turnAllowance: raw.turnAllowance ?? 2 }
+  if (!Number.isFinite(p.fxKRWPerUSD) || p.fxKRWPerUSD <= 0 || !Number.isFinite(p.revenueKRWPerToken) || p.revenueKRWPerToken <= 0
+    || !Number.isSafeInteger(p.maxInputTokens) || p.maxInputTokens < 1024 || !Number.isFinite(p.turnAllowance) || p.turnAllowance < 1 || p.turnAllowance > 10)
+    throw new Error('invalid token pricing')
+  return p
+}
+export function tokensForCost(usd: number, pricing = tokenPricing()): number {
+  if (!Number.isFinite(usd) || usd < 0) throw new Error('invalid token cost')
+  const tokens = Math.ceil(usd * pricing.fxKRWPerUSD / (pricing.revenueKRWPerToken * pricing.costShare))
+  if (!Number.isSafeInteger(tokens)) throw new Error('invalid token amount')
+  return tokens
+}
+export function tokenQuote(model: TokenPriceModel, output: number, pricing = tokenPricing()) {
+  if (model.inputCost === undefined || model.outputCost === undefined || !Number.isFinite(model.inputCost) || !Number.isFinite(model.outputCost)
+    || model.inputCost < 0 || model.outputCost < 0) throw new Error('unknown token price')
+  const maxOutputTokens = Math.min(output, model.maxOutputTokens)
+  const maxInputTokens = Math.min(pricing.maxInputTokens, model.maxContextTokens - maxOutputTokens)
+  if (!Number.isSafeInteger(maxOutputTokens) || maxOutputTokens <= 0 || maxInputTokens < 1024) throw new Error('invalid token limits')
+  const maximumUSD = (maxInputTokens * model.inputCost + maxOutputTokens * model.outputCost) / 1e6 * pricing.turnAllowance
+  return { maxInputTokens, maxOutputTokens, maximumUSD, maximumTokens: tokensForCost(maximumUSD, pricing) }
+}

@@ -12,6 +12,7 @@ import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
+import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ContextTrigger, type ContextData } from './context'
 import { AdultToggle } from './adult-toggle'
@@ -27,12 +28,13 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const { sessionId } = await params
   // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
   const session = loadSession(sessionId, user.id)
-  const [loaded, all, modelOptions, mature, adult] = await Promise.all([
+  const [loaded, all, modelOptions, mature, adult, wallet] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
-    chatModelOptions(user.id),
+    session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
     session.then((l) => l && matureGateFor(user.id, l.characterId)),
     session.then((l) => l && adultModeGateFor(user.id, l.characterId)),
+    walletSnapshot(user.id),
   ])
   if (!loaded || !mature) notFound()
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
@@ -56,7 +58,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   }))
 
   return (
-    <ChatModelProvider><TurnsProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id}><TurnsProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />

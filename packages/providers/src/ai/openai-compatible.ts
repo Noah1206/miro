@@ -26,7 +26,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     const gpt5 = /^(openai\/)?gpt-5/.test(this.model)
     // GPT-5 는 생각 토큰이 max_completion_tokens 를 같이 먹는다 — medium 생각이면 4096 을 생각만으로 다 써 답이 비었다
     // (10/4 성격표 예비 호출 전부 max_tokens). 생각을 켠 요청은 답 몫의 3배를 준다. ponytail: 모델 상한은 레지스트리가 알지만 여기선 모른다 — 16k 안이면 된다.
-    const completionCap = (req.maxTokens ?? 1024) * (req.thinking ? 3 : 1)
+    const completionCap = (req.maxTokens ?? 1024) * (req.thinking && !req.hardTokenCap ? 3 : 1)
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.apiKey}` },

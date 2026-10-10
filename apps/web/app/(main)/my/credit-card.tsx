@@ -17,11 +17,11 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
   useEffect(() => { sync(initial) }, [initial, sync])
   const value = wallet ?? initial
   return (
-    <section className={styles.credit} aria-label={t('미로')}>
+    <section className={styles.credit} aria-label={t('미로 토큰')}>
       <p className={styles.balance} aria-live="polite">
         {/* 미로 동전(10/1, 힉스필드 — 가입 선물 그림의 점토 동전과 같은 결, 가운데 MIRO 마크). 그림은 3배(96px). */}
         <img src="/miro-coin.png" alt="" aria-hidden width={26} height={26} decoding="async" style={{ display: 'block' }} />
-        {t('{n} 미로', { n: value.rechargeRemaining.toLocaleString(locale) })}
+        {t('{n} 미로 토큰', { n: value.available.toLocaleString(locale) })}
       </p>
       <div className={styles.creditActions}>
         <Button type="button" full style={OUTLINE} onClick={openRecharge} status={busy ? 'loading' : 'idle'}>{t('충전')}</Button>

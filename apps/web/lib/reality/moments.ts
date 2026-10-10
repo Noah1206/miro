@@ -47,6 +47,19 @@ const WEEKDAYS = ['일요일', '월요일', '화요일', '수요일', '목요일
  */
 export async function captureMoments(llm: LLMProvider, job: { sessionId: string; messageId: string; input: string; timeZone: string; now: Date;
   recent: Array<{ who: 'user' | 'character'; text: string }> }): Promise<number> {
+  const { cancel, drafts } = await prepareMoments(llm, job)
+  if (!cancel.length && !drafts.length) return 0
+  await db.transaction(async tx => {
+    if (cancel.length) await tx.update(userMoments).set({ status: 'cancelled' }).where(and(eq(userMoments.sessionId, job.sessionId), inArray(userMoments.id, cancel)))
+    if (drafts.length) await tx.insert(userMoments).values(drafts.map(d => ({ sessionId: job.sessionId, sourceMessageId: job.messageId, ...d }))).onConflictDoNothing()
+  })
+  observe('moment.captured', { sessionId: job.sessionId, added: drafts.length, cancelled: cancel.length })
+  return drafts.length
+}
+
+/** Prepare using the turn's shared meter; persist only with the delivered message transaction. */
+export async function prepareMoments(llm: LLMProvider, job: { sessionId: string; input: string; timeZone: string; now: Date;
+  recent: Array<{ who: 'user' | 'character'; text: string }> }) {
   const existing = await activeMoments(job.sessionId, job.now)
   const proposed = await extractMoments(llm, {
     now: localIso(job.now, job.timeZone), weekday: WEEKDAYS[localClock(job.now, job.timeZone).weekday]!, recent: job.recent.slice(-6), input: job.input,
@@ -55,11 +68,5 @@ export async function captureMoments(llm: LLMProvider, job: { sessionId: string;
   const cancel = proposed.cancel.filter(id => existing.some(m => m.id === id))
   const kept = existing.filter(m => !cancel.includes(m.id))
   const drafts = acceptMoments(proposed.moments, job.now, job.timeZone, kept)
-  if (!cancel.length && !drafts.length) return 0
-  await db.transaction(async tx => {
-    if (cancel.length) await tx.update(userMoments).set({ status: 'cancelled' }).where(and(eq(userMoments.sessionId, job.sessionId), inArray(userMoments.id, cancel)))
-    if (drafts.length) await tx.insert(userMoments).values(drafts.map(d => ({ sessionId: job.sessionId, sourceMessageId: job.messageId, ...d }))).onConflictDoNothing()
-  })
-  observe('moment.captured', { sessionId: job.sessionId, added: drafts.length, cancelled: cancel.length })
-  return drafts.length
+  return { cancel, drafts }
 }

@@ -153,7 +153,7 @@ export class AIOrchestrator implements LLMProvider {
         const attemptId = randomUUID()
         // 다시 보낼 때는 어느 칸이 어떻게 어긋났는지(경로·코드만, 답의 글은 아님)도 알려 준다 — '형식대로' 만으로는 같은 실수를 되풀이했다(10/2 rules:too_big 두 번).
         const failed = retry && last.startsWith('invalid_schema ') ? ` The previous output failed validation at: ${last.slice('invalid_schema '.length)}.` : ''
-        const request = { ...req, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens),
+        const request = { ...req, hardTokenCap: !!this.opts.context?.turnMeter, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity),
           prompt: retry ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt }
         const context = { ...this.opts.context, traceId: this.traceId, requestId: this.requestId }
         const release = acquireProvider(providerKey, context.workload === 'background')
@@ -174,23 +174,27 @@ export class AIOrchestrator implements LLMProvider {
           await lease?.release()
         }
         if (req.signal?.aborted) { await releaseAdmission(); throw new AIUnavailableError(attempts, 'cancelled') }
+        const ticket = context.turnMeter?.reserve(request, model)
+        if (context.turnMeter && !ticket) { await releaseAdmission(); denied = 'turn_tokens'; break }
         if (this.opts.budgetGuard) {
           try {
             const decision = await this.opts.budgetGuard.authorize(request, model, context, attemptId)
-            if (!decision.allowed) { await releaseAdmission(); denied = decision.reason; break }
-          } catch (error) { await releaseAdmission(); throw error }
+            if (!decision.allowed) { ticket?.release(); await releaseAdmission(); denied = decision.reason; break }
+          } catch (error) { ticket?.release(); await releaseAdmission(); throw error }
         }
         if (lease) {
           let valid = false
           try { valid = await lease.heartbeat() } catch {}
           if (!valid) {
+            ticket?.release()
             await releaseAdmission().catch(() => {})
-            await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
+            const usage: AIUsageRecord = { task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
               userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null, origin: context.origin ?? null,
               provider: model.provider, model: model.providerModelId, modelId: model.id, modelVersion: model.version,
               promptVersion: req.promptVersion ?? `${req.task}:v1`, inputTokens: null, outputTokens: null,
               estimatedCost: 0, actualCost: 0, usageUnits: 0, latencyMs: 0, ok: false, error: 'lease_lost_before_call',
-              fallbackUsed: index > 0, shadow: context.shadow ?? false })
+              fallbackUsed: index > 0, shadow: context.shadow ?? false }
+            await this.opts.onUsage?.(usage)
             throw new AIUnavailableError(attempts, 'lease_lost')
           }
         }
@@ -266,13 +270,15 @@ export class AIOrchestrator implements LLMProvider {
           if (last === 'provider_http_429') rateLimitProvider(providerKey, this.rateLimitBackoffMs)
         } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null
-        await this.opts.onUsage?.({ task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
+        const usage: AIUsageRecord = { task: req.task, traceId: this.traceId, requestId: this.requestId, attemptId,
           userId: context.userId ?? null, sessionId: context.sessionId ?? null, ip: context.ip ?? null, origin: context.origin ?? null,
           provider: result?.provider ?? model.provider, model: result?.model ?? model.providerModelId,
           modelId: model.id, modelVersion: model.version, promptVersion: req.promptVersion ?? `${req.task}:v1`,
           inputTokens: input, outputTokens: out, estimatedCost: modelCost(model, input, out), actualCost: null,
           usageUnits: ok ? context.usageUnits ?? 0 : 0, latencyMs: Date.now() - started, ok, error: ok ? null : last, fallbackUsed: index > 0, shadow: context.shadow ?? false,
-        })
+        }
+        ticket?.settle(usage)
+        await this.opts.onUsage?.(usage)
         if (result?.blocked) throw new AIContentBlockedError()
         if (last === 'cancelled' || last === 'lease_lost' || last === 'lease_hold_expired') throw new AIUnavailableError(attempts, last)
         if (ok) {
@@ -293,7 +299,7 @@ export class AIOrchestrator implements LLMProvider {
         if (index < selections.length - 1 && PROVIDER_FAILURE.test(last)) break
       }
     }
-    if (attempts === 0 && denied) throw new AIBudgetDeniedError(denied)
+    if (denied && (attempts === 0 || denied === 'turn_tokens')) throw new AIBudgetDeniedError(denied)
     throw new AIUnavailableError(attempts, last)
   }
 }

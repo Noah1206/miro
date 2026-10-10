@@ -21,7 +21,7 @@ describe('turn policy', () => {
     const miro = resolveTurnPolicy({ experience: 'reality', tier: 'miro', channel: 'scene', agencyMode: 'off', agencyReady: false })
     const echo = resolveTurnPolicy({ experience: 'reality', tier: 'echo', channel: 'scene', agencyMode: 'off', agencyReady: false })
     expect(echo.permissions).toEqual(miro.permissions)
-    expect(miro.metered).toBe(false)
+    expect(miro.metered).toBe(true)
     expect(echo.metered).toBe(true)
     expect(echo.generation).toEqual({ maxOutputTokens: POLICY.chatTier.echo.maxOutputTokens, contextScale: POLICY.chatTier.echo.contextScale, auxiliary: 'always', replyLength: 'long' })
     expect(miro.generation).toEqual({ maxOutputTokens: POLICY.chatTier.miro.maxOutputTokens, contextScale: 1, auxiliary: 'planned', replyLength: 'scene' })

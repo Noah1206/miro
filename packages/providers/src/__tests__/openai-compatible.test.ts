@@ -23,6 +23,12 @@ describe('OpenAI-compatible adapter', () => {
     expect(out).toMatchObject({ text: '{"a":1}', inputTokens: 3, outputTokens: 2, truncated: false, blocked: false })
   })
 
+  it('keeps reasoning inside the prepaid output ceiling', async () => {
+    const spy = respond([{ choices: [{ finish_reason: 'stop', message: { content: 'ok' } }], usage: { prompt_tokens: 3, completion_tokens: 2 } }])
+    await gpt().generate({ task: 'dialogue', system: '', prompt: 'p', maxTokens: 200, thinking: 'medium', hardTokenCap: true })
+    expect(JSON.parse(String(spy.mock.calls[0]![1]!.body)).max_completion_tokens).toBe(200)
+  })
+
   it('keeps the plain OpenAI shape for other models behind the same endpoint', async () => {
     const spy = respond([{ choices: [{ message: { content: '{}' } }] }])
     const out = await new OpenAICompatibleProvider('gateway', 'k', 'anthropic/claude-haiku-4-5', 'https://example.test/v1').generate({ task: 'dialogue', system: '', prompt: '', json: true, maxTokens: 50 })
