@@ -42,10 +42,14 @@ export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: strin
     else apply(v)
   }
   return <>
-    <span style={{ position: 'relative', flex: '0 0 auto' }}>
-      <button type="button" aria-haspopup="menu" aria-expanded={menu} aria-label={t('언베일 (성인 모드)')} disabled={pending} data-on={on || undefined}
-        className={styles.adultToggle} onClick={() => setMenu((m) => !m)}>
-        <span className={styles.adultPill}><span aria-hidden className={styles.adultKnob} /><span className={styles.adultLabel}>{t('언베일')}</span></span>
+    <span className={styles.adultControl} data-on={on || undefined}>
+      <button type="button" role="switch" aria-checked={on} aria-label={t('언베일 (성인 모드)')} disabled={pending}
+        className={styles.adultToggle} onClick={() => choose(on ? 'off' : level)}>
+        <span className={styles.adultPill}><span className={styles.adultLabel}>{t('언베일')}</span><span aria-hidden className={styles.adultTrack}><span className={styles.adultKnob} /></span></span>
+      </button>
+      <button type="button" aria-haspopup="menu" aria-expanded={menu} aria-label={t('언베일 (성인 모드)')} disabled={pending}
+        className={styles.adultMenuToggle} onClick={() => setMenu((m) => !m)}>
+        <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
       </button>
       <Popover open={menu} onClose={() => setMenu(false)} anchor="right" style={{ minWidth: 268 }}>
         <p className={styles.adultMenuHead}>{t('언베일')}</p>
