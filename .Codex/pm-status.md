@@ -1,3 +1,11 @@
+## 2026-10-10 브랜드·상세페이지 운영 배포 완료
+
+- 운영 코드: `0340e75` — 새 03 로고, 라벤더 팔레트, Pretendard, 상세 소개 문단·소제목 색·이모지.
+- 배포: https://miroapp.app / https://miro-rya50dd9o-noah1206s-projects.vercel.app
+- Node 24 공통·웹 타입 검사 통과, en/ja/zh 번역 누락 0, Vercel 운영 빌드 성공. 운영 health: ok=true, db=up, schema=ready, cron=fresh. DB 마이그레이션 없음.
+- 정식 주소 홈·차도겸 상세를 모바일에서 직접 확인. 새 SVG 로고 로딩, #B8A6FF, Pretendard 로딩, favicon v3, 소제목 라벤더/민트·이모지·문단과 가로 넘침 없음 확인.
+- 이번 배포에서는 단위·E2E 테스트를 다시 실행하지 않음(miro-ship 절차). 직전 구현 단계의 관련 테스트 14개 통과 기록 유지.
+
 ## 2026-10-10 전체 캐릭터 상세 소개 문단·강조 정리
 
 - 상세 소개·세계관·첫 장면에 공통 editorial 렌더링을 적용. 제작 미리보기도 같은 규칙 사용.
