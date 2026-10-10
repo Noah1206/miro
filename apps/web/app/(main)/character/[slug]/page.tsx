@@ -96,7 +96,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{c.name}</h1>
-        {c.tagline && <p className="t-body-lg t-quote" style={{ color: 'var(--color-text-secondary)', marginBottom: 6 }}>{c.tagline}</p>}
+        {c.tagline && <blockquote className="detail-lead-quote" style={{ borderColor: names.palette?.character }}>
+          <RichText editorial text={c.tagline.replace(/([.!?。！？])\s+/g, '$1\n')} names={names} />
+        </blockquote>}
 
         {tags.length > 0 && (
           <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>

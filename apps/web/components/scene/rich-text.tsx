@@ -17,7 +17,9 @@ function Names({ text, names, editorial }: { text: string; names: RichNames; edi
     if (i % 2 === 0) return p
     const role = p === names.character.trim() ? 'rt-char' : names.user.some(n => n.trim() === p) ? 'rt-user' : 'rt-motif'
     if (role === 'rt-motif' && ++motifs > 2) return p
-    return <span key={i} className={role}>{p}</span>
+    return editorial && role === 'rt-motif'
+      ? <strong key={i} className={role}>{p}</strong>
+      : <span key={i} className={role}>{p}</span>
   })}</>
 }
 
@@ -29,24 +31,31 @@ export function RichText({ text, names, className, editorial = false }: { text: 
   const lines = editorial ? editorialLines(text) : text.split('\n')
   const palette = editorial ? names.palette : undefined
   const colorStyle = palette ? { '--color-name-character': palette.character, '--color-name-user': palette.user, '--color-editorial-motif': palette.motif } as CSSProperties : undefined
+  let relationshipLead = false
   return (
     <div className={`rich-text ${editorial ? 'rich-text--editorial' : ''} ${className ?? ''}`} style={colorStyle}>
       {lines.map((line, i) => {
         const heading = line.trim().match(/^\[(.+)\]$/)
         if (heading) {
+          relationshipLead = editorial && /^(당신|관계|you|relationship)$/i.test(heading[1]!.trim())
           const decoration = editorialHeading(heading[1]!)
           return <p key={i} className={`rt-heading ${editorial ? `rt-heading--${decoration.tone}` : ''}`}>
             {editorial && <span className="rt-heading-icon" aria-hidden>{decoration.icon}</span>}{heading[1]}
           </p>
         }
         if (!line.trim()) return <p key={i} className="rt-gap" aria-hidden />
-        return <p key={i} className={editorial && /^\s*[·•-]\s/.test(line) ? 'rt-list-item' : undefined}>{parseEmphasis(line).map((s, k) => (
+        const lead = relationshipLead
+        relationshipLead = false
+        const content = parseEmphasis(line).map((s, k) => (
           <Fragment key={k}>
             {s.style === 'bold' ? <strong><Names text={s.text} names={names} editorial={editorial} /></strong>
               : s.style === 'italic' ? <em><Names text={s.text} names={names} editorial={editorial} /></em>
                 : <Names text={s.text} names={names} editorial={editorial} />}
           </Fragment>
-        ))}</p>
+        ))
+        return <p key={i} className={editorial && /^\s*[·•-]\s/.test(line) ? 'rt-list-item' : undefined}>
+          {lead ? <strong>{content}</strong> : content}
+        </p>
       })}
     </div>
   )
