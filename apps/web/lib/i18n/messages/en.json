@@ -1132,5 +1132,10 @@
  "장면을 길게": "Longer scenes",
  "편하게 이어가기": "Keep it flowing",
  "토큰 안내": "About tokens",
- "사용 내역": "Usage history"
+ "사용 내역": "Usage history",
+ "에코": "Echo",
+ "기본 대화": "Standard chat",
+ "묘사를 더해 길게 이어가는 대화": "Longer replies with richer detail",
+ "간결하게 주고받는 대화": "A concise back-and-forth",
+ "내역": "History"
 }
