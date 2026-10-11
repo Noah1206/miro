@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
-import { stageLabel } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
@@ -14,7 +13,6 @@ import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
-import { ContextTrigger, type ContextData } from './context'
 import { AdultToggle } from './adult-toggle'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
@@ -43,14 +41,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const history = sceneMessages(all)
 
   const s = loaded.snapshot
-  const ctx: ContextData = {
-    name: loaded.characterName, location: s.world.currentLocation, time: s.world.currentTime, status: loaded.characterStatus,
-    relationship: stageLabel(s.relationship.stage, s.relationship),
-    scene: s.scene ? { mood: s.scene.mood, weather: s.scene.weather } : null,
-    events: s.activeEvents.map((e) => ({ type: e.type, summary: String((e.continuationState as { summary?: string }).summary ?? e.type) })),
-    npcs: s.activeNpcs.map((n) => n.name),
-    sessionId, turnCount: s.turnCount,
-  }
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
@@ -71,9 +61,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" /></svg>
             </TransitionLink>
           )}
-          {loaded.experienceType === 'reality' && <ContextTrigger d={ctx} className={styles.contextButton}>
-            <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h11M4 18h16" /></svg>
-          </ContextTrigger>}
         </header>
 
         <div className={styles.transcript}>
@@ -85,7 +72,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           {loaded.experienceType === 'reality' && s.activeEvents[0] && (
             <aside style={{ marginBottom: 'var(--space-5)', padding: '14px 16px', borderLeft: '2px solid var(--color-accent)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
               <h2 className="t-micro" style={{ marginBottom: 4 }}>{t('지금 이 세계에서')}</h2>
-              <p className="t-body t-quote">{ctx.events[0]!.summary}</p>
+              <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
           <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} />
