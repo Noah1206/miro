@@ -5,8 +5,8 @@ import { LogoMark } from './logo'
 import { Button } from './button'
 import { useT } from '@/lib/i18n/client'
 
-export type SocialProviderId = 'google' | 'kakao'
-export type LoginProvider = { id: SocialProviderId; label: string }
+import { SocialButton, type LoginProvider } from './social-button'
+export type { SocialProviderId, LoginProvider } from './social-button'
 
 /** next: 로그인 뒤 돌아올 경로. note: 시트에 한 줄 더 보일 문구(이미 번역된 것) — 예: 알림 종의 가입 선물. */
 type Ask = (next?: string, note?: string) => void
@@ -61,34 +61,9 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
             </p>
             {note && <p className="t-caption" style={{ margin: 0, color: 'var(--color-accent-bright)', fontWeight: 'var(--weight-semibold)', textAlign: 'center' }}>{note}</p>}
           </div>
-          {providers.map(p => <SocialButton key={p.id} {...p} next={next} />)}
+          {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(p => <SocialButton key={p.id} {...p} next={next} />)}
         </div>
       </Sheet>
     </Ctx.Provider>
-  )
-}
-
-/** 로그인 화면과 같은 브랜드 규정을 따른다 — Google 흰 바탕, Kakao #FEE500 에 검정 글자. */
-function SocialButton({ id, label, next }: LoginProvider & { next: string | null }) {
-  const t = useT()
-  const style: Record<SocialProviderId, React.CSSProperties> = {
-    google: { background: '#FFFFFF', color: '#111111', border: '1px solid #FFFFFF' },
-    kakao: { background: '#FEE500', color: '#000000', border: '1px solid #FEE500' },
-  }
-  return (
-    <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`} data-login-provider={id}
-      className="button-link" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 52, padding: '12px 20px', borderRadius: 'var(--radius-button)', fontWeight: 'var(--weight-semibold)', fontSize: 'var(--font-body-size)', ...style[id] }}>
-      <Icon id={id} />
-      <span>{t('{label}로 계속하기', { label: t(label) })}</span>
-    </a>
-  )
-}
-
-function Icon({ id }: { id: SocialProviderId }) {
-  if (id === 'kakao') return (
-    <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.9 3 2.8 6.3 2.8 10.3c0 2.6 1.7 4.9 4.3 6.2l-1 3.7c-.1.3.2.6.5.4l4.4-2.9c.3 0 .7.1 1 .1 5.1 0 9.2-3.3 9.2-7.5S17.1 3 12 3z" /></svg>
-  )
-  return (
-    <svg aria-hidden width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.6z" /><path fill="#34A853" d="M12 23.5c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3C3.7 20.9 7.6 23.5 12 23.5z" /><path fill="#FBBC05" d="M5.6 14.2a6.9 6.9 0 0 1 0-4.4v-3H1.8a11.5 11.5 0 0 0 0 10.4l3.8-3z" /><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3C17.7 1.3 15.1.5 12 .5 7.6.5 3.7 3.1 1.8 6.8l3.8 3c.9-2.7 3.4-4.7 6.4-4.7z" /></svg>
   )
 }
