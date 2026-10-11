@@ -6,10 +6,10 @@ export type SocialProviderId = 'google' | 'kakao' | 'twitter'
 export type LoginProvider = { id: SocialProviderId; label: string }
 
 /** Shared social entry for both the login page and login sheet. */
-export function SocialButton({ id, label, next }: LoginProvider & { next?: string | null }) {
+export function SocialButton({ id, label, next, surface }: LoginProvider & { next?: string | null; surface?: 'sheet' }) {
   const t = useT()
   return <a href={`/api/auth/${id}/start${next ? `?next=${encodeURIComponent(next)}` : ''}`}
-    data-login-provider={id} className={`${styles.button} ${styles[id]}`}>
+    data-login-provider={id} className={`${styles.button} ${styles[id]} ${surface === 'sheet' ? styles.sheet : ''}`}>
     <span className={styles.icon}><Icon id={id} /></span>
     <span>{id === 'kakao' ? t('카카오 계정으로 계속하기') : t('{label}로 계속하기', { label: t(label) })}</span>
   </a>

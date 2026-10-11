@@ -19,6 +19,7 @@
 }
 .google, .kakao, .twitter { color: #F5F2FA; background: #19171E; border-color: #3D3648; }
 .kakao { background: #212121; border-color: #3D3D3D; }
+.button.sheet { background: var(--color-surface-2); border-color: var(--color-border); }
 .icon { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 18px; width: 18px; height: 18px; }
 .kakao .icon { flex-basis: 24px; width: 24px; height: 24px; }
 .button:focus-visible { outline: 2px solid var(--color-accent-bright); outline-offset: 4px; }
@@ -26,5 +27,6 @@
 @media (hover: hover) {
   .google:hover, .kakao:hover, .twitter:hover { background: #211D29; border-color: #655572; }
   .kakao:hover { background: #292929; border-color: #555; }
+  .button.sheet:hover { background: var(--color-surface-2); border-color: #655572; }
 }
 @media (prefers-reduced-motion: reduce) { .button { transition: none; } .button:active { transform: none; } }

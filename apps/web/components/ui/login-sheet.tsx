@@ -61,7 +61,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
             </p>
             {note && <p className="t-caption" style={{ margin: 0, color: 'var(--color-accent-bright)', fontWeight: 'var(--weight-semibold)', textAlign: 'center' }}>{note}</p>}
           </div>
-          {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(p => <SocialButton key={p.id} {...p} next={next} />)}
+          {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(p => <SocialButton key={p.id} {...p} next={next} surface="sheet" />)}
         </div>
       </Sheet>
     </Ctx.Provider>
