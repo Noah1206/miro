@@ -1,7 +1,7 @@
 import type { characters, characterVisualIdentities, messages } from '@miro/db'
 import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
-import { sampleDialogue } from '@/lib/intro-dialogue'
+import { officialSamples } from '@/lib/editorial/official-copy'
 
 /** One authored identity projection for reply and proactive paths. No inferred demographic traits. */
 export function characterContext(
@@ -20,7 +20,7 @@ export function characterContext(
     },
     worldRole: {
       socialPosition: c.socialPosition, startingContext: c.startingContext,
-      sampleDialogue: sampleDialogue(c.sampleDialogue), lore: c.lore,
+      sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore,
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,
     ...(visual ? { appearance: {

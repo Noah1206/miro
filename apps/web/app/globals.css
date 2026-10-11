@@ -336,16 +336,49 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .detail-prose > .rich-text--editorial + .rich-text--editorial { margin-top: 16px; }
 .sample-narration .rich-text { color: var(--color-text-secondary); font-size: var(--font-body-size); font-style: italic; line-height: 1.65; }
 .sample-narration .rich-text em { font-style: normal; }
-/* 인트로: 시작 상황 칩 → 시각·장소 상자 → 서술과 말풍선. */
-.intro-preview { display: flex; flex-direction: column; gap: 14px; }
+/* 인트로: 작은 텍스트 탭 → 시각·장소 한 줄 → 서술과 말풍선. */
+.intro-preview { display: flex; flex-direction: column; gap: 12px; font-size: 13px; }
 .intro-expand { align-self: flex-start; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--color-accent-text); font: inherit; font-size: var(--font-caption); cursor: pointer; }
-.intro-scenes { display: flex; flex-wrap: wrap; gap: 8px; border: 0; padding: 0; margin: 0; }
-.intro-chip { position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-button);
-  color: var(--color-text-primary); font-weight: var(--weight-medium); cursor: pointer; }
-.intro-chip input { position: absolute; opacity: 0; pointer-events: none; }
-.intro-chip:has(input:checked) { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-on); font-weight: var(--weight-semibold); }
-.intro-chip:has(input:focus-visible) { outline: 2px solid var(--color-white); outline-offset: 2px; }
-.intro-meta { align-self: flex-start; margin: 0; padding: 8px 12px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); font-size: var(--font-caption); color: var(--color-text-primary); }
-.intro-line { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
-.intro-bubble { max-width: 85%; padding: 10px 14px; border-radius: var(--radius-chat); background: var(--color-surface-2); }
+.intro-scenes { display:flex; flex-wrap:wrap; gap:8px 18px; border:0; padding:0; margin:0; }
+.intro-chip { position:relative; display:inline-flex; align-items:center; min-height:32px; padding:4px 0; border:0; border-radius:0; background:transparent; color:var(--color-text-secondary); font-size:12px; line-height:1.5; font-weight:var(--weight-medium); cursor:pointer; }
+.intro-chip::after { content:''; position:absolute; inset:-6px -4px; }
+.intro-chip input { position:absolute; opacity:0; pointer-events:none; }
+.intro-chip:has(input:checked) { color:var(--color-accent-text); font-weight:var(--weight-semibold); }
+.intro-chip:has(input:checked)::before { content:''; position:absolute; bottom:2px; left:0; right:0; height:1px; background:var(--color-accent-text); }
+.intro-chip:has(input:focus-visible) { outline:2px solid var(--color-accent); outline-offset:4px; }
+.intro-meta { align-self:flex-start; margin:0; padding:0; border:0; border-radius:0; background:transparent; font-size:11px; line-height:1.6; color:var(--color-text-tertiary); word-break:keep-all; }
+.intro-line { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.rich-text.intro-narration { color: var(--color-text-secondary); font-style: italic; }
+.rich-text.intro-narration strong,
+.rich-text.intro-narration .rt-char,
+.rich-text.intro-narration .rt-user,
+.rich-text.intro-narration .rt-motif,
+.rich-text.intro-narration .rt-heading { color: inherit; }
+.rich-text.intro-narration em { color: inherit; font-style: normal; }
+.intro-bubble { max-width: 85%; padding: 8px 11px; border-radius: 12px; background: var(--color-surface-2); }
+.intro-bubble .rich-text p { line-height: 1.55; }
+.detail-sample-dialogue { font-size: 13px; line-height: 1.55; }
+.detail-chat-preview { padding: 18px 14px; border-radius: 14px; background: rgba(255,255,255,0.025); }
 .intro-photo { display: block; width: min(100%, 360px); aspect-ratio: 3 / 4; object-fit: cover; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid rgba(255,255,255,0.08); }
+
+/* Detail sections have a clear boundary; paragraphs within each section stay connected. */
+.character-detail-copy .character-detail-section {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid rgba(184, 166, 255, .18);
+}
+.character-detail-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+.character-detail-copy .character-detail-section-heading .t-title-3 {
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+@media (max-width: 480px) {
+  .character-detail-copy .character-detail-section { margin-top: 34px; padding-top: 24px; }
+  .character-detail-section-heading { margin-bottom: 18px; }
+}

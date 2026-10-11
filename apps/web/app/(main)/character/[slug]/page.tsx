@@ -1,3 +1,4 @@
+import { officialDescription, officialIntro, officialSamples, officialTagline } from '@/lib/editorial/official-copy'
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { RichText } from '@/components/scene/rich-text'
@@ -15,7 +16,7 @@ import { Back, Page, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, SampleDialogue, RealityStrip } from './sections'
+import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, RealityStrip } from './sections'
 import { subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
@@ -26,8 +27,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const t = await getT()
   const user = await currentUser()
   const { slug } = await params
-  const c = await getCharacterByKey(slug, user?.id ?? null)
+  const stored = await getCharacterByKey(slug, user?.id ?? null)
+  const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null
   if (!c) notFound()
+  const editedDescription = officialDescription(c)
+  const tagline = officialTagline(c) ?? c.tagline
 
   const [comments, commentCount, similar, likes, persona] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
@@ -49,7 +53,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       value: scene,
       label: scene || t('처음부터'),
       meta: [opening?.time ?? c.startingTime, opening?.location ?? c.worldLocation].filter(Boolean).join(' | '),
-      context: me(opening?.context ?? c.startingContext),
+      context: editedDescription ? '' : me(opening?.context ?? c.startingContext),
       lines: introDialogue(c.sampleDialogue, scene).map((d) => ({
         role: d.role === 'character' ? 'character' as const : 'narrator' as const,
         text: d.role === 'narrator' ? me(d.text) : d.text,
@@ -96,8 +100,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{c.name}</h1>
-        {c.tagline && <blockquote className="detail-lead-quote" style={{ borderColor: names.palette?.character }}>
-          <RichText editorial text={c.tagline.replace(/([.!?。！？])\s+/g, '$1\n')} names={names} />
+        {tagline && <blockquote className="detail-lead-quote" style={{ borderColor: names.palette?.character }}>
+          <RichText editorial text={tagline.replace(/([.!?。！？])\s+/g, '$1\n')} names={names} />
         </blockquote>}
 
         {tags.length > 0 && (
@@ -116,8 +120,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {c.experienceType === 'reality' && <RealityStrip can={features()} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
-            {c.experienceType === 'reality' && <RichText editorial text={me(c.personality)} names={names} />}
-            {profile.map((line) => <RichText editorial key={line} text={line} names={names} />)}
+            {c.experienceType === 'reality' && <RichText editorial text={me(editedDescription ?? c.personality)} names={names} />}
+            {!editedDescription && profile.map((line) => <RichText editorial key={line} text={line} names={names} />)}
           </div>
         </Rule>}
         {c.experienceType === 'reality' && c.worldSetting && (
@@ -127,14 +131,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         )}
         <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
 
-        <Rule label={t('첫 장면')}>
-          <div className="detail-prose"><IntroPreview scenes={introScenesData} names={names} /></div>
-          {sampleDialogue(c.sampleDialogue).length > 0 && (
-            <div style={{ marginTop: 18 }}>
-              <SampleDialogue name={c.name} names={names} portrait={c.images[0] ?? null} turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
-            </div>
-          )}
-        </Rule>
+        <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null}
+          turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
 
         <Rule label={t('댓글 {n}', { n: commentCount })}
           action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>{t('전체보기')}</TransitionLink>}>

@@ -1,3 +1,4 @@
+import { officialIntro } from '@/lib/editorial/official-copy'
 import { introMessages, sceneOpening } from '@/lib/intro-dialogue'
 import { getPersona } from '@/lib/persona'
 import { and, eq, isNull, or, sql } from 'drizzle-orm'
@@ -62,6 +63,7 @@ export async function createRoleplaySession(
 
     // Recheck access and read the opening under the same row lock as profile edits/capture.
     const [starting] = await tx.select({
+      id: characters.id, slug: characters.slug,
       worldId: worlds.id, worldLocation: worlds.location, startingTime: characters.startingTime,
       initialRelationship: characters.initialRelationship, dialogue: characters.sampleDialogue,
       experienceType: characters.experienceType,
@@ -71,6 +73,7 @@ export async function createRoleplaySession(
       eq(characters.isDraft, false), isNull(characters.deletedAt),
     )).for('update', { of: characters }).limit(1)
     if (!starting) throw new Error('CHARACTER_NOT_FOUND')
+    starting.dialogue = officialIntro(starting, starting.dialogue)
 
     // 세션 정책 버전은 만들 때 한 번 정해진다(§6). 이후는 switchSessionPolicy 가 전환 표시와 함께 바꾼다.
     const policyVersion = defaultSessionPolicy(starting.experienceType)

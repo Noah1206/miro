@@ -33,12 +33,11 @@ for (const px of [180, 192, 512]) {
     .png().toBuffer()
   await save('icon-' + px + '.png', icon)
 }
-// Tab icon: the approved mark on an amethyst tile, readable on light and dark browser chrome.
+// Tab icon: the current white logo on the app charcoal, readable on either browser theme.
 const favicon = source
   .replace('viewBox="200 205 840 840"', 'viewBox="0 0 100 100"')
   .replace('<title>MIRO — four-lobe connection symbol</title>', `<title>MIRO</title>
-  <defs><linearGradient id="amethyst" x1="0" y1="0" x2="1" y2="0.5"><stop stop-color="#59419B"/><stop offset=".52" stop-color="#8C5BDE"/><stop offset="1" stop-color="#BD90F0"/></linearGradient></defs>
-  <rect width="100" height="100" rx="22" fill="url(#amethyst)"/>
+  <rect width="100" height="100" rx="22" fill="#211D29"/>
   <g transform="translate(12 12) scale(.09047619) translate(-200 -205)">`)
   .replace('</svg>', '</g></svg>')
 await save('favicon.svg', favicon)

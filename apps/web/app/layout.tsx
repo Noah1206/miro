@@ -10,13 +10,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('AI 캐릭터챗 MIRO')}`
   return {
     title: { default: title, template: title }, manifest: '/manifest.json',
-    // 탭은 자수정 타일 + 흰 마크. v4로 기존 브라우저 캐시를 갱신한다.
+    // 탭은 현재 로고 + 차콜 타일. v5로 기존 브라우저 캐시를 갱신한다.
     icons: {
       icon: [
-        { url: '/favicon.ico?v=4', sizes: '16x16 32x32 48x48' },
-        { url: '/favicon-16.png?v=4', sizes: '16x16', type: 'image/png' },
-        { url: '/favicon-32.png?v=4', sizes: '32x32', type: 'image/png' },
-        { url: '/favicon.svg?v=4', sizes: 'any', type: 'image/svg+xml' },
+        { url: '/favicon.ico?v=5', sizes: '16x16 32x32 48x48' },
+        { url: '/favicon-16.png?v=5', sizes: '16x16', type: 'image/png' },
+        { url: '/favicon-32.png?v=5', sizes: '32x32', type: 'image/png' },
+        { url: '/favicon.svg?v=5', sizes: 'any', type: 'image/svg+xml' },
       ],
       apple: '/icon-180.png?v=3',
     },

@@ -26,8 +26,8 @@ export function Rule({ label, action, children, accent }: { label: string; actio
     <motion.section
       initial={reduce ? false : { opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
-      style={{ marginTop: 'var(--space-7)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+      className="character-detail-section">
+      <div className="character-detail-section-heading">
         <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: accent ?? 'var(--color-border-strong)', flexShrink: 0 }} />
         <h2 className="t-title-3" style={{ flex: 1 }}>{label}</h2>
         {action}
@@ -49,7 +49,7 @@ export function SampleDialogue({ name, portrait, turns, names }: {
 }) {
   const reduce = useReducedMotion()
   return (
-    <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 14 }}>
+    <ul className="stack detail-sample-dialogue" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 12 }}>
       {turns.map((t, i) => (
         <motion.li key={i}
           initial={reduce ? false : { opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }}
@@ -71,14 +71,14 @@ export function SampleDialogue({ name, portrait, turns, names }: {
                 : <span aria-hidden style={{ width: 34, height: 34, borderRadius: 17, background: 'var(--color-surface-2)', flexShrink: 0 }} />}
               <div style={{ minWidth: 0 }}>
                 <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 4 }}>{name}</p>
-                <div style={{ background: 'var(--color-surface-2)', borderRadius: 'var(--radius-chat)', padding: '10px 13px', maxWidth: '85%', display: 'inline-block' }}>
+                <div style={{ background: 'var(--color-surface-2)', borderRadius: 12, padding: '8px 11px', maxWidth: '85%', display: 'inline-block' }}>
                   <Line text={t.text} />
                 </div>
               </div>
             </>
           )}
           {t.role === 'user' && (
-            <div style={{ background: 'var(--color-surface-3)', borderRadius: 'var(--radius-chat)', padding: '10px 13px', maxWidth: '78%' }}>
+            <div style={{ background: 'var(--color-surface-3)', borderRadius: 12, padding: '8px 11px', maxWidth: '78%' }}>
               <Line text={t.text} />
             </div>
           )}
@@ -91,7 +91,7 @@ export function SampleDialogue({ name, portrait, turns, names }: {
 /** *별표* 로 감싼 부분은 서술 — 무엇이 강조인지는 채팅 말풍선과 같은 파서(parseEmphasis)가 정하고, 여기서는 서술을 2차 톤으로만 칠한다. */
 export function Line({ text }: { text: string }) {
   return (
-    <p className="t-body" style={{ lineHeight: 1.65, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+    <p className="t-body" style={{ fontSize: 'inherit', lineHeight: 1.55, color: 'var(--color-text-primary)', margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
       {parseEmphasis(text).map((s, i) =>
         s.style === 'italic' ? <em key={i} style={{ color: 'var(--color-text-secondary)' }}>{s.text}</em>
           : s.style === 'bold' ? <strong key={i}>{s.text}</strong> : s.text)}

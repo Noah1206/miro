@@ -163,14 +163,15 @@ describe('context builder', () => {
     expect(c.prompt).toMatch(/아는 정보로만 행동/)
   })
 
-  it('writes a full multi-beat scene for every chat reply, even a one-word input', () => {
+  it('allows natural short replies without forcing prose quotas', () => {
     const m = buildContext(snapshot({ userInput: '뭐해' }))
     const n = buildContext(snapshot({ userInput: '*창밖을 오래 바라보다가* 오늘은 왠지 네 생각이 많이 났어. 이유는 모르겠는데, 그냥 그랬어.' }))
     // 9/24 실측: 짧은 입력에 "한 줄씩" 규칙을 주면 답이 3블록·100자 안팎에 머물렀다. 길이는 입력이 아니라 장면이 정한다.
     expect(m.system).not.toMatch(/상황 한 줄, 속마음 한 줄/)
     for (const c of [m, n]) {
-      expect(c.system).toMatch(/한 단어만 보내도 장면을 충분히 펼칩니다/)
-      expect(c.system).toMatch(/블록 5~8개, 전체 500~900자/)
+      expect(c.system).toMatch(/자연스럽게 끝난 답을 글자 수 때문에 늘리지 않습니다/)
+      expect(c.system).not.toMatch(/블록 5~8개, 전체 500~900자/)
+      expect(c.system).toMatch(/사용자 발화에 먼저 반응/)
       // 계약의 예시가 대사 한 블록이면 모델도 한 블록으로 답한다 — 장면의 박자를 보여 준다.
       expect(c.system).toContain('{"type":"narrative","speaker":null,"text":"scene"},{"type":"action","speaker":"토마스"')
     }
@@ -189,7 +190,7 @@ describe('context builder', () => {
     const tense = { userInput: '응', activeEvents: [event()] }
     expect(buildContext(snapshot(tense)).system).toMatch(/전체 1300자까지/)
     expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/전체 2200자까지/)
-    expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/네다섯 번 오가며/)
+    expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/긴 대화는 필요한 행동과 대사를 더 펼치되/)
   })
 
   it('keeps the agency renderer on the measured brief directive', () => {
