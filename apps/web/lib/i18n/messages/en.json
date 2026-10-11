@@ -1125,5 +1125,12 @@
  "토큰 지급": "Tokens credited",
  "토큰 충전 주문": "Token purchase order",
  "이번 답변의 생성 한도에 도달했어요. 토큰은 차감되지 않았어요. 입력을 줄이거나 다른 답변 길이를 선택해 주세요.": "This reply reached its generation limit. No tokens were charged. Shorten your input or choose another reply length.",
- "보유 토큰": "Token balance"
+ "보유 토큰": "Token balance",
+ "대화 방식 선택": "Choose conversation style",
+ "대화 방식": "Conversation style",
+ "긴 대화": "Long chat",
+ "장면을 길게": "Longer scenes",
+ "편하게 이어가기": "Keep it flowing",
+ "토큰 안내": "About tokens",
+ "사용 내역": "Usage history"
 }
