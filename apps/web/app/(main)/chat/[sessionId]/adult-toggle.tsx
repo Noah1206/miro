@@ -22,7 +22,7 @@ const LEVELS: Array<{ value: Level | 'off'; title: string }> = [
   { value: 'explicit', title: msg('언베일') },
 ]
 
-export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: string; on: boolean; everOn: boolean; level: Level }) {
+export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { sessionId: string; on: boolean; everOn: boolean; level: Level; blocked?: string | null }) {
   const t = useT()
   const toast = useToast()
   const [menu, setMenu] = useState(false)
@@ -37,6 +37,7 @@ export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: strin
   const choose = (v: Level | 'off') => {
     setMenu(false)
     if (v === current) return
+    if (v !== 'off' && blocked) { toast(t(blocked)); return }
     // 처음 켜는 방은 동의 시트부터 — 고른 수위는 시트를 마치면 적용한다.
     if (v !== 'off' && !everOn) setAsk(v)
     else apply(v)
@@ -44,6 +45,7 @@ export function AdultToggle({ sessionId, on, everOn, level }: { sessionId: strin
   return <>
     <span className={styles.adultControl} data-on={on || undefined}>
       <button type="button" role="switch" aria-checked={on} aria-label={t('언베일 (성인 모드)')} disabled={pending}
+        title={!on && blocked ? t(blocked) : undefined}
         className={styles.adultToggle} onClick={() => choose(on ? 'off' : level)}>
         <span className={styles.adultPill}><span className={styles.adultLabel}>{t('언베일')}</span><span aria-hidden className={styles.adultTrack}><span className={styles.adultKnob} /></span></span>
       </button>

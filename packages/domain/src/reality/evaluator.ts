@@ -38,8 +38,8 @@ export type RealityDecision =
  * 하나의 관계 수치로 판단하지 않는다 — 싸운 상태 + 자존심 높은 캐릭터는 연락하지
  * 않을 수 있지만, 중요한 사건 + 높은 애착이면 싸운 상태여도 연락할 수 있다.
  *
- * 사용자 쪽 수신 설정(알림 끄기·통화 거절·야간 차단)은 없다 — 앱 밖 연락은 항상 받는다 (2026-09-24 결정).
- * 밤에 오지 않는 이유는 캐릭터의 활동 시간(기본 08~23시)이다.
+ * 명시적인 사용자 연락 경계는 호출 경로가 이 판단 전에 확인하고, 외부 알림 직전에도 다시 확인한다.
+ * 밤의 기본 생활 리듬은 캐릭터의 활동 시간(기본 08~23시)이다.
  */
 export function evaluateRealityContact(input: RealityInput): RealityDecision {
   const { intent, now } = input

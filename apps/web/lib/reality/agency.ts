@@ -5,7 +5,7 @@ import {
   db, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
-import { agencyClock, applyRelationshipDelta, authoredCharacter, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
+import { agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
@@ -36,7 +36,7 @@ async function deliveryContacts(sessionId: string, query: Pick<typeof db, 'selec
   return [...new Map([...last, ...pending].map(contact => [contact.id, contact])).values()]
 }
 
-/** The user's time zone is the only setting read; out-of-app contact cannot be turned off (2026-09-24). */
+/** Notification permissions are enforced by the outbox; character rhythm uses local time. */
 const timeZoneOf = (settings: RealityRow['settings']): string => settings?.timeZone ?? POLICY.reality.defaultTimeZone
 
 /**
@@ -71,6 +71,7 @@ class AgencyRealityConflict extends Error {}
 
 /** null means the legacy path retains control (off/shadow); live never falls back to its policy. */
 export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { inline?: boolean; background?: boolean }, hint?: ContactHint): Promise<EvaluateOutcome | null> {
+  if (contactBoundaryActive(row.session.contactBoundary, now)) return { outcome: 'suppressed', reason: 'user_boundary' }
   const sessionId = row.session.id, userId = row.session.userId
   const requestedMode = characterAgencyMode(sessionId, row.session.policyVersion)
   if (requestedMode === 'off') return null
@@ -131,6 +132,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       location: snapshot.world.currentLocation, world: snapshot.world, relationship: snapshot.relationship,
       input: JSON.stringify({ trigger: 'background_contact_review', supportedDispatch: 'in_app_message_only',
         contactStyle: { frequency: row.profile.contactFrequency, initiative: row.profile.initiativeLevel, replyDelayMinutes: row.profile.replyDelayMinutes },
+        contactBoundary: contactBoundaryDirective(row.session.contactBoundary, now),
         pendingDeliveryHint: row.session.pendingRealityIntent, deliveryBlocked: blocked,
         // user_moment = 사용자가 직접 말한 일정(응원·끝난 뒤 묻기). 사람이라면 기억하고 챙길 때다.
         contactOpportunity: hint?.opportunity ? { kind: hint.opportunity.momentKey ? 'user_moment' : 'routine', reason: hint.opportunity.reason, urgency: hint.opportunity.urgency, answers: hint.opportunity.answers ?? null } : null,
@@ -189,6 +191,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       const [currentSettings] = await tx.select().from(userSettings).where(eq(userSettings.userId, userId)).for('share')
       if (!current || current.userId !== userId || current.characterId !== row.character.id || current.worldId !== row.session.worldId
         || current.deletedAt || current.restrictedAt || current.status !== 'active'
+        || contactBoundaryActive(current.contactBoundary, new Date())
         || current.turnCount !== row.session.turnCount || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
         || !owner || owner.deletedAt || !character || character.deletedAt || character.experienceType !== 'reality'
         // 생활 리듬(routine)은 제작자 설정이 아니라 뒤에서 만들어지는 파생 값이다 — 그게 채워졌다고 판단을 버리지 않는다.

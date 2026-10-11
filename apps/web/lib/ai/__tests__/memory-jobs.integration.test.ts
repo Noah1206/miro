@@ -3,19 +3,25 @@ import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { and, eq } from 'drizzle-orm'
 import { db, users, memories, memoryJobs, messages, roleplaySessions } from '@miro/db'
 import type { analyzeMemory } from '@miro/engine'
+import * as engine from '@miro/engine'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { runMemoryJobs } from '../memory-jobs'
+import { changeStoryDate } from '@/lib/simulation/story-date'
+import * as momentService from '@/lib/reality/moments'
+import { grantRecharge } from '@/lib/usage/guard'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 const made: string[] = []
-afterEach(() => vi.unstubAllEnvs())
+afterEach(() => { vi.unstubAllEnvs(); vi.restoreAllMocks() })
 afterAll(async () => { if (process.env.DATABASE_URL) for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 
 async function session() {
   const [u] = await db.insert(users).values({ email: `memjob-${randomUUID()}@example.test` }).returning()
   made.push(u!.id)
+  // Fund the test turn independently of the signup grant.
+  await grantRecharge({ userId: u!.id, amount: 10000, source: 'grant', provider: 'local_test', externalRef: randomUUID() })
   return { userId: u!.id, ...(await createRoleplaySession(u!.id, 'thomas')) }
 }
 /** 합성 추출기 — 모델 품질이 아니라 작업·순서·저장 계약을 본다. 받은 스냅샷을 기록해 입력 범위를 검사한다. */
@@ -28,8 +34,27 @@ function analyzer(seen: Array<{ kind: string; input: string; messageAts: string[
 const fact = (content: string, extra: Record<string, unknown> = {}) => ({ type: 'user_fact', content, importance: .9, persistence: .9, confidence: 1, tags: [], ...extra })
 
 describeDb('memory jobs (§3.5)', () => {
+  it('keeps a dated scene schedule out of real notifications while still capturing an actual messenger schedule', async () => {
+    const s = await session()
+    const loaded = (await loadSession(s.sessionId, s.userId))!
+    await changeStoryDate(s.sessionId, s.userId, '1850-06-18', null)
+    const capture = vi.spyOn(momentService, 'captureMoments').mockResolvedValue(0)
+    const [scene, messenger] = await db.insert(messages).values([
+      { sessionId: s.sessionId, role: 'user', kind: 'text', content: '내일 면접이 있어.', blocks: [], turnIndex: 1 },
+      { sessionId: s.sessionId, role: 'user', kind: 'messenger', content: '내일 실제 면접이 있어.', blocks: [], turnIndex: 2 },
+    ]).returning()
+    await db.insert(memoryJobs).values([scene!, messenger!].map(source => ({ sessionId: s.sessionId, characterId: loaded.characterId, userId: s.userId,
+      messageId: source.id, throughTurn: source.turnIndex, kind: 'memory_extraction' as const })))
+    const run = await runMemoryJobs(new Date(), { sessionId: s.sessionId, limit: 10, analyze: analyzer([], () => [fact('면접 일정을 들었다.')]) })
+    expect(run.results).toEqual({ done: 2 })
+    expect(capture).toHaveBeenCalledTimes(1)
+    expect(capture.mock.calls[0]![1].messageId).toBe(messenger!.id)
+  })
   it('a turn leaves extraction work in the transaction; the worker stores it and the prompt notes the lag until then', async () => {
     vi.stubEnv('AI_PROVIDER', 'mock'); vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '1')
+    // This is the deferred worker contract. Paid app turns currently choose inline memory.
+    const resolvePolicy = engine.resolveTurnPolicy
+    vi.spyOn(engine, 'resolveTurnPolicy').mockImplementation(input => resolvePolicy({ ...input, memory: 'deferred' }))
     const s = await session()
     const requestId = randomUUID()
     // 응답 뒤 자동 실행이 작업을 먼저 끝내지 않게 — 여기서는 워커를 직접 돌려 계약을 본다.

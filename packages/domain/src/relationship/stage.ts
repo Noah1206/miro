@@ -18,8 +18,8 @@ export function nextRelationshipStage(previous: RelationshipStage, projected: Re
   if (['conflict', 'distrust'].includes(previous)) {
     return happened('apologized') && projected.trust >= FORGIVENESS[profile?.forgiveness?.value ?? 'normal'].exitTrust ? 'acquaintance' : previous
   }
-  // Existing romantic/professional/rival relationships keep their authored meaning.
-  if (['dating', 'lover', 'professional', 'rivalry'].includes(previous)) return previous
+  // Existing romantic/rival relationships keep their authored meaning.
+  if (['dating', 'lover', 'rivalry'].includes(previous)) return previous
   const open = OPENING[profile?.opening?.value ?? 'normal']
   if (previous === 'stranger') return turn >= open.acquaintanceTurn && (projected.trust >= open.acquaintanceTrust
     || projected.trust >= open.acquaintanceTrust - 5 && projected.attachment >= 20) ? 'acquaintance' : previous
@@ -30,6 +30,14 @@ export function nextRelationshipStage(previous: RelationshipStage, projected: Re
       && (!moment || happened(moment, 0)) ? 'friend' : previous
   }
   const pace = profile?.romance?.value ?? 'normal'
+  // Work remains work unless the authored relationship profile explicitly allows romance and
+  // a real confession occurs after the character-specific readiness threshold.
+  if (previous === 'professional') {
+    if (!profile?.romance || pace === 'never') return previous
+    const readiness = ROMANCE[pace]
+    return has('confession') && turn >= readiness.flirtingTurn && projected.attraction >= readiness.ambiguousAttraction
+      && projected.trust >= readiness.ambiguousTrust ? 'ambiguous' : previous
+  }
   if (pace === 'never') return previous
   const romance = ROMANCE[pace]
   if (previous === 'friend' && has('confession') && projected.attraction >= romance.ambiguousAttraction && projected.trust >= romance.ambiguousTrust) return 'ambiguous'

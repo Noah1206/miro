@@ -114,7 +114,9 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
   const open = (goalId: string) => runtime.state.goals.some(g => g.id === goalId && !closed.has(g.status))
   const unfinished = runtime.state.actions.filter(a => a.status !== 'sent' || (a.fulfillsGoalIds ?? []).some(open))
   const refs = [...new Set([...runtime.state.goals.flatMap(g => g.evidenceIds), ...runtime.state.beliefs.flatMap(b => b.evidenceIds),
-    ...unfinished.flatMap(a => a.outcomeEvidenceId ? [a.outcomeEvidenceId] : [])].map(messageIdOf))]
+    ...unfinished.flatMap(a => a.outcomeEvidenceId ? [a.outcomeEvidenceId] : []),
+    // Retrieved long-term memories can influence a choice only through their original, owned source.
+    ...snapshot.memories.flatMap(m => m.sourceMessageId ? [m.sourceMessageId] : [])].map(messageIdOf))]
     .filter(id => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 64)
   const stored = refs.length ? await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.id, refs), isNull(messages.hiddenAt))) : []
   const evidence: AgencyEvidence[] = []

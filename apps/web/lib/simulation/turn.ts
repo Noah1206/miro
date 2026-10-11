@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature, tokensForCost, POLICY } from '@miro/config'
-import { momentHint, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
+import { contactBoundaryActive, contactBoundaryDirective, momentHint, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
 import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
@@ -22,6 +22,7 @@ import { measured, observe, timed } from '@/lib/observe'
 import { type LoadedAgency } from '@/lib/agency/runtime'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 import { characterAvailability } from '@/lib/reality/routine'
+import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 
 export type ConversationOutcome =
   | {
@@ -86,6 +87,10 @@ async function executeTurn(opts: {
     const loaded = await measured('chat.snapshot', () => loadSession(sessionId, userId, input))
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
+    const now = new Date()
+    const boundary = await applyContactBoundaryRequest(sessionId, userId, input, opts.requestId, now,
+      loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) ?? loaded.contactBoundary
+    loaded.snapshot.contactBoundary = boundary
     const model = await measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro', loaded.adult.since !== null)).catch(() => null)
     if (!model) return { ok: false, reason: 'model_unavailable' }
     const messenger = opts.mode === 'messenger'
@@ -98,7 +103,7 @@ async function executeTurn(opts: {
     if (messenger) {
       const now = new Date()
       const [profile] = await db.select({ enabled: contactProfiles.enabled }).from(contactProfiles).where(eq(contactProfiles.characterId, loaded.characterId)).limit(1)
-      contactsEnabled = profile?.enabled ?? false
+      contactsEnabled = (profile?.enabled ?? false) && !contactBoundaryActive(boundary, now)
       const availability = contactsEnabled ? await characterAvailability(loaded.characterId, now, loaded.snapshot.clock?.timeZone) : null
       if (availability && availability.availability !== 'free') {
         const wait = (availability.minutesUntilFree ?? 30) + 3 + (loaded.snapshot.turnCount % 9)
@@ -139,7 +144,16 @@ async function executeTurn(opts: {
     const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.since !== null }
     // 성인 방인데 전용 모델이 빠져 있으면 여기서 던진다(메인 모델로 보내지 않음) — 잡아 둔 사용량은 돌려준다.
     let llm: ReturnType<typeof resolveRpLLM>
-    try { llm = resolveRpLLM(loaded.characterName, context) } catch (e) { await refund(); throw e }
+    try {
+      const provider = resolveRpLLM(loaded.characterName, context)
+      const directive = contactBoundaryDirective(boundary, now)
+      // Keep the provider's usage/provenance getters: a spread would freeze or discard them.
+      llm = directive ? new Proxy(provider, { get(target, key) {
+        if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request, system: request.system + '\n' + directive })
+        const value = Reflect.get(target, key)
+        return typeof value === 'function' ? value.bind(target) : value
+      } }) : provider
+    } catch (e) { await refund(); throw e }
     // 문자에 답을 못 만들었으면 '입력 중'을 끝없이 띄우지 않는다 — 내 문자는 남기고, 답장은 몇 분 뒤 스케줄러가 다시 만들어 보낸다(사람이 늦게 답하듯, 10/2).
     // 장면 채팅과 연락이 꺼진 캐릭터는 예전대로 실패를 알린다.
     const replyLater = async (): Promise<ConversationOutcome> => {
@@ -153,13 +167,17 @@ async function executeTurn(opts: {
     try {
       const prepared = await prepareAgencyTurn(sessionId, userId, messenger ? { ...loaded.snapshot, mode: 'messenger' } : loaded.snapshot, llm, { id: userMessageId, text: input }, new Date(), loaded.policyVersion)
       agency = prepared.runtime
+      policyInput.agencyMode = characterAgencyMode(sessionId, prepared.policyVersion ?? loaded.policyVersion)
       // 개정판이 준비됐는지는 여기서야 안다 — 정책의 engine 은 준비 상태까지 본 결과다(준비 전이면 legacy 로 보류).
       policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false })
       context.origin = policy.origin
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
         () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream: opts.stream,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context) }))
-      if (feature('memoryExtraction') && momentHint(input)) {
+      // The fallback intent format has no clock tag; it cannot attest real contact from a dated scene.
+      if (loaded.snapshot.world.narrativeCalendar && !messenger && !prepared.agency) result.transition.realityIntent = null
+      // Scene dates belong to the story. Do not schedule a real notification for its "tomorrow".
+      if (feature('memoryExtraction') && momentHint(input) && (!loaded.snapshot.world.narrativeCalendar || opts.mode === 'messenger')) {
         moments = await prepareMoments(auxiliaryLLM(loaded.characterName, context), {
           sessionId, input, timeZone: loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone, now: new Date(),
           recent: loaded.snapshot.recentMessages.map(m => ({ who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 300) })),

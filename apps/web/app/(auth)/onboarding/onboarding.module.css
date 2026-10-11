@@ -1,0 +1,91 @@
+.languageList {
+  display: grid;
+  gap: 4px;
+}
+
+.tasteIcon {
+  display: block;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  color: var(--color-text-primary);
+}
+
+.languageOption {
+  position: relative;
+  display: block;
+}
+
+.languageRadio {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.languageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 52px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  transition: background-color 160ms var(--ease-standard);
+}
+
+.languageIndicator {
+  display: grid;
+  place-items: center;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--color-text-tertiary);
+  border-radius: 50%;
+  color: var(--color-accent-on);
+  transition: border-color 160ms var(--ease-standard), background-color 160ms var(--ease-standard);
+}
+
+.languageIndicator svg {
+  opacity: 0;
+  transition: opacity 160ms var(--ease-standard);
+}
+
+.languageRadio:checked + .languageRow {
+  background: rgb(184 166 255 / 8%);
+}
+
+.languageRadio:checked + .languageRow .languageIndicator {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.languageRadio:checked + .languageRow .languageIndicator svg {
+  opacity: 1;
+}
+
+.languageRadio:focus-visible + .languageRow {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .languageRadio:not(:checked):hover + .languageRow {
+    background: rgb(245 242 250 / 3%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .languageRow, .languageIndicator, .languageIndicator svg {
+    transition: none;
+  }
+}

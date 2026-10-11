@@ -50,7 +50,7 @@ export function ModelPicker({ choices = [] }: { freeReady: boolean; proReady: bo
   }
   const icon = (long: boolean) => long ? '/icons/chat/echo-hexagon-3d.png' : '/icons/chat/miro-knot-3d.png'
   return <div ref={root} className={sheet.root}>
-    <motion.button whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" className={sheet.trigger} aria-label={t('대화 방식 선택')} aria-haspopup="dialog" aria-controls={panelId} aria-expanded={open} onClick={() => setOpen(!open)}>
+    <motion.button whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" tabIndex={0} className={sheet.trigger} aria-label={t('대화 방식 선택')} aria-haspopup="dialog" aria-controls={panelId} aria-expanded={open} onClick={() => setOpen(!open)}>
       <img className={sheet.icon} src={icon(selected?.length === 'long')} alt="" aria-hidden width={18} height={18} />
       {selected ? label(selected) : t('미로')}
       <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reduce ? 0 : .24, ease: ease.standard }} aria-hidden width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></motion.svg>

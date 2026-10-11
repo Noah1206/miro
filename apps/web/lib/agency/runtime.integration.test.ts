@@ -245,6 +245,19 @@ describeDb('agency runtime and atomic persistence (local test database)', () => 
     expect(evidence.map(e => e.id)).toEqual([own!.id])
     expect(evidence[0]).toMatchObject({ kind: 'message', epistemic: 'reported', actor: 'user', quote: own!.content })
   })
+  it('grounds retrieved long-term memory in an owned original message outside the recent window', async () => {
+    const f = await fixture(), other = await fixture(), loaded = await runtime(f)
+    const [own, hidden, foreign] = await db.insert(messages).values([
+      { sessionId: f.sessionId, role: 'user' as const, content: '따뜻한 우유를 좋아해.', turnIndex: 1 },
+      { sessionId: f.sessionId, role: 'user' as const, content: '숨겨진 취향', hiddenAt: new Date(), turnIndex: 1 },
+      { sessionId: other.sessionId, role: 'user' as const, content: '다른 사용자의 취향', turnIndex: 1 },
+    ]).returning()
+    const memories = [own!, hidden!, foreign!].map(m => ({ id: randomUUID(), sessionId: f.sessionId, characterId: f.loaded.characterId,
+      type: 'preference' as const, content: '우유를 좋아한다.', importance: .7, persistence: .8, confidence: .9, sourceMessageId: m.id, tags: [], createdAt: new Date() }))
+    const evidence = await loadAgencyEvidence(f.sessionId, { ...f.loaded.snapshot, memories }, loaded)
+    expect(evidence.map(e => e.id)).toEqual([own!.id])
+    expect(evidence[0]!.quote).toBe('따뜻한 우유를 좋아해.')
+  })
 
   it('persists the same real user-message ID in the decision, goal and later evidence retrieval', async () => {
     const f = await fixture(), loaded = await runtime(f)

@@ -62,6 +62,14 @@ export function validateAgencyCandidate(a: AgencyCandidate, c: AgencyDecisionCon
     if (ids.length > 12 || !unique(ids)) out.push(issue(field, 'unbounded_or_duplicate_refs'))
   }
   if (a.action !== 'wait' && !a.evidenceIds.length && !a.ruleIds.length && !a.goalIds.length) out.push(issue('evidenceIds', 'ungrounded_action'))
+  if (a.action === 'contact' && c.clock.trigger === 'background') {
+    const personalContext = (id: string) => {
+      const evidence = agencyEvidence(id, c)
+      return evidence && (evidence.kind === 'message' || evidence.kind === 'event' && evidence.actor === c.actor && evidence.shareable)
+    }
+    if (!a.evidenceIds.some(personalContext) && !a.goalIds.some(id => c.goals.some(goal => goal.id === id
+      && goal.status === 'active' && goal.evidenceIds.some(personalContext)))) out.push(issue('evidenceIds', 'contact_requires_personal_context'))
+  }
   for (const id of a.evidenceIds) if (!agencyEvidence(id, c)) out.push(issue('evidenceIds', `unavailable_evidence:${id}`))
   const rules = new Map(c.compiled.rules.map(r => [r.id, r]))
   const goals = new Map(c.goals.map(g => [g.id, g]))
@@ -76,6 +84,8 @@ export function validateAgencyCandidate(a: AgencyCandidate, c: AgencyDecisionCon
   for (const id of fulfills) {
     const goal = goals.get(id)
     if (goal?.dueAt && goal.clock === 'real_time' && Date.parse(goal.dueAt) > Date.parse(c.clock.now)) out.push(issue('fulfillsGoalIds', `goal_not_due:${id}`))
+    if (goal?.clock === 'narrative' && (c.clock.trigger === 'background' || !c.clock.narrativeNow
+      || goal.dueAt && Date.parse(goal.dueAt) > Date.parse(c.clock.narrativeNow))) out.push(issue('fulfillsGoalIds', `narrative_goal_not_due:${id}`))
   }
   if (!finiteRange(a.uncertainty, 0, 1) || !finiteRange(a.cost, 0, 1)) out.push(issue('score', 'invalid_score'))
   if (a.ruleFit.length > 12 || !unique(a.ruleFit.map(f => f.ruleId)) || a.goalFit.length > 12 || !unique(a.goalFit.map(f => f.goalId))) out.push(issue('fit', 'unbounded_or_duplicate_fit'))

@@ -1,6 +1,6 @@
 import { prompts } from '@miro/providers'
 import { POLICY } from '@miro/config'
-import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, storyCalendarDirective } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
 } from '@miro/domain'
@@ -17,6 +17,7 @@ export type RecentMessage = {
 }
 
 export type SimulationSnapshot = {
+  contactBoundary?: import('@miro/domain').ContactBoundary | null
   character: CharacterCore
   world: WorldState
   worldSetting: string | null
@@ -321,8 +322,10 @@ function buildPrompt(
   parts.push('## 현재 세계')
   parts.push(`장소: ${s.world.currentLocation}`)
   parts.push(`시간: ${s.world.currentTime}`)
-  // 현실 시계 — 세계관의 시대가 달라도 하루의 때와 요일은 사용자의 지금과 같이 흐른다. 밤 11시에 점심을 권하지 않는다.
-  if (s.clock) parts.push(`현실 시각(사용자 기준, ${s.clock.timeZone}): ${s.clock.label} · ${s.clock.period}. 세계의 하루도 이 때를 따릅니다.`)
+  const calendar = !s.mode || s.mode === 'chat' ? storyCalendarDirective(s.world.narrativeCalendar, s.turnCount) : ''
+  if (calendar) parts.push('', '## 유저가 선택한 세계관 날짜', calendar)
+  // A chosen story calendar has authority over scene dates; the wall clock still owns external delivery.
+  if (s.clock) parts.push(`현실 시각(사용자 기준, ${s.clock.timeZone}): ${s.clock.label} · ${s.clock.period}. ${calendar ? '실제 문자·알림의 시각입니다. 장면의 날짜는 위의 세계관 날짜를 따릅니다.' : '세계의 하루도 이 때를 따릅니다.'}`)
   if (s.routine) parts.push(`캐릭터의 생활 리듬: ${s.routine}`)
   if (s.recentCalls?.length) {
     parts.push('', '## 최근 통화 (캐릭터가 아는 사실)')
@@ -334,7 +337,7 @@ function buildPrompt(
     parts.push('자연스러울 때만 꺼낸다. 묻지 않은 일을 늘어놓지 않고, 여기 없는 일을 겪었다고 지어내지 않는다.')
   }
   if (s.userMoments?.length) {
-    parts.push('', '## 사용자가 말해 준 자기 일정 (캐릭터가 기억하고 있다)')
+    parts.push('', calendar ? '## 실제 연락을 위한 사용자 일정 (현실 시간 기준, 세계관 날짜와 별개)' : '## 사용자가 말해 준 자기 일정 (캐릭터가 기억하고 있다)')
     for (const line of s.userMoments) parts.push(`- ${line}`)
     parts.push('그날이 다가오거나 막 지났으면 사람처럼 먼저 챙긴다(응원·"어땠어?"). 이미 결과를 들었으면 다시 묻지 않고, 매 턴 꺼내지 않는다.')
   }

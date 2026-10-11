@@ -14,7 +14,7 @@ export type RealityContact = {
 }
 
 /** daily_cap = 이 캐릭터가 오늘(사용자 현지 날짜) 먼저 보낼 만큼 이미 보냈다 — 상한은 성격·관계로 캐릭터마다 다르다(2026-10-02). */
-export type SuppressReason = 'cooldown' | 'max_pending' | 'no_motivation' | 'outside_active_hours' | 'busy' | 'daily_cap'
+export type SuppressReason = 'cooldown' | 'max_pending' | 'no_motivation' | 'outside_active_hours' | 'busy' | 'daily_cap' | 'user_boundary'
 
 /** AI 가 제안하는 선연락 의도. 실제 발송 여부는 Evaluator 가 결정한다. */
 export type RealityIntent = {

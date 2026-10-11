@@ -9,7 +9,8 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./apps/web', import.meta.url)) },
   },
   test: {
-    env: { DATABASE_URL: database ?? '' },
+    // Legacy fixtures explicitly test the previous policy. Rollout tests opt into the new product default.
+    env: { DATABASE_URL: database ?? '', MIRO_CHARACTER_AGENCY_MODE: 'off', MIRO_AGENCY_DEFAULT_POLICY: 'legacy:v1' },
     include: ['packages/**/*.test.ts', 'apps/web/**/*.test.ts', 'apps/admin/**/*.test.ts', 'tooling/**/*.test.ts'],
     fileParallelism: false,
     environment: 'node',

@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
-import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision } from '@miro/domain'
+import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar } from '@miro/domain'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -81,8 +81,8 @@ export const termsConsents = pgTable('terms_consents', {
 export const userSettings = pgTable('user_settings', {
   userId: uuid('user_id').primaryKey().references(() => users.id, { onDelete: 'cascade' }),
   /**
-   * 아래 여섯 컬럼(알림·통화 수신·야간 차단)은 2026-09-24 부터 읽지 않는다 — 앱 밖 연락은 사용자가 끌 수 없다.
-   * 지우려면 운영 마이그레이션이 필요해 남겨 둔다. 다시 읽기 전에 그 결정부터 확인할 것.
+   * pushEnabled 는 외부 알림 발송 직전에 읽는다. 사용자가 대화에서 요청한 연락 경계는 세션에 별도로 저장한다.
+   * 나머지 통화·야간 설정은 기존 경로에서 아직 사용하지 않는다.
    */
   pushEnabled: boolean('push_enabled').notNull().default(true),
   voiceCallEnabled: boolean('voice_call_enabled').notNull().default(true),
@@ -351,6 +351,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   pendingRealityIntent: jsonb('pending_reality_intent')
     // deferredSince·failures: 막히거나 실패한 예약 의도를 언제 버릴지, rule: 사건 규칙이 만든 의도(2026-10-02). JSON 안이라 열 구조는 그대로다.
     .$type<{ channel: string; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number }>(),
+  /** User-requested space is enforced before generation, persistence and external delivery. */
+  contactBoundary: jsonb('contact_boundary').$type<ContactBoundary>(),
   /** 턴마다 변하는 캐릭터 상태(기분·스트레스·목표·발동한 규칙). 프로필(characters)과 분리한다. */
   characterState: jsonb('character_state').$type<Record<string, unknown>>().notNull().default({}),
   /** 스케줄러가 마지막으로 이 세션의 선연락을 판단한 시각. */
@@ -383,6 +385,8 @@ export const worldStates = pgTable('world_states', {
 
   currentLocation: text('current_location').notNull(),
   currentTime: text('current_time').notNull(),
+  /** Header date picker controls only the story's day, independently of real contact time. */
+  narrativeCalendar: jsonb('narrative_calendar').$type<NarrativeCalendar>(),
   currentSceneId: uuid('current_scene_id'),
   worldStatus: text('world_status'),
   activeEventIds: jsonb('active_event_ids').$type<string[]>().notNull().default([]),

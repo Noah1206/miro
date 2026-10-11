@@ -6,8 +6,16 @@ import { db, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { adultModeGateFor } from '@/lib/ops/safety'
 import { msg } from '@/lib/i18n'
+import { changeStoryDate, type StoryDateResult } from '@/lib/simulation/story-date'
 
 // 캐릭터챗 한 턴은 스트리밍 경로(/api/turn)로 간다(10/9) — 서버 액션은 답을 받는 대로 보낼 수 없다.
+
+export async function setStoryDate(sessionId: string, date: string, expectedDate: string | null): Promise<StoryDateResult> {
+  const user = await requireUser()
+  const result = await changeStoryDate(sessionId, user.id, date, expectedDate)
+  if (result.ok) revalidatePath(`/chat/${sessionId}`)
+  return result
+}
 
 /**
  * 이 대화방의 성인 모드 켜기·끄기(10/2). 켤 때마다 서버가 다시 판정한다(인증·정책 동의·캐릭터 나이·전용 모델).

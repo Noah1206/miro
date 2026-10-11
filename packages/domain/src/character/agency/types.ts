@@ -1,4 +1,5 @@
 import { localClock, localIso } from '../../time/clock'
+import { validStoryDate } from '../../time/narrative-calendar'
 /** Authored text is data, never executable policy or a system instruction. */
 export type AuthoredDocument = { fields: Record<string, string>; explicitFields: string[]; characterId?: string; revisionId?: string }
 export type AgencyRuleDomain = 'identity' | 'value' | 'boundary' | 'motive' | 'expression' | 'world'
@@ -187,6 +188,10 @@ export type AgencyTransition = {
 }
 
 /** 실제 시계 하나 — 대화·먼저 연락 모두 사용자 현지 시각과 오프셋을 같이 준다(약속 시각을 실제 기한으로 바꿀 수 있게, 2026-10-02). */
-export function agencyClock(now: Date, timeZone: string, trigger: AgencyClock['trigger']): AgencyClock {
-  return { now: now.toISOString(), local: localIso(now, timeZone), day: localClock(now, timeZone).label, timeZone, mode: 'real_time', trigger, allowOfflineAdvance: false }
+export function agencyClock(now: Date, timeZone: string, trigger: AgencyClock['trigger'], narrativeDate?: string | null): AgencyClock {
+  const narrative = trigger === 'user' && validStoryDate(narrativeDate)
+  return { now: now.toISOString(), local: localIso(now, timeZone), day: localClock(now, timeZone).label, timeZone,
+    mode: narrative ? 'narrative' : 'real_time',
+    ...(narrative ? { narrativeNow: `${narrativeDate}T00:00:00.000Z` } : {}),
+    trigger, allowOfflineAdvance: false }
 }

@@ -5,7 +5,7 @@ import {
   characterRuntimeStates, characterDecisions, characters, users, stateTransitions,
 } from '@miro/db'
 import {
-  applyRelationshipDelta, buildSceneKey, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
+  applyRelationshipDelta, buildSceneKey, contactBoundaryActive, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
 } from '@miro/domain'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import type { Memory, CharacterState, RelationshipState, StateTransitionRecord, MomentDraft } from '@miro/domain'
@@ -356,7 +356,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       .set({
         turnCount: input.turnIndex,
         lastInteractionAt: new Date(),
-        pendingRealityIntent: t.realityIntent ?? null,
+        pendingRealityIntent: contactBoundaryActive(session.contactBoundary, new Date()) ? null : t.realityIntent ?? null,
         ...(input.characterState ? { characterState: input.characterState } : {}),
       })
       .where(eq(roleplaySessions.id, input.sessionId))

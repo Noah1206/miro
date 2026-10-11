@@ -1,3 +1,5 @@
+import { AGENCY_PLANNER_VERSION } from '../agency/planner'
+import { verifyAgencyRealization } from '../agency/realization'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAgencyState, type AgencyCandidate, type AgencyEvidence, type AgencyGoal, type CompiledCharacter } from '@miro/domain'
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
@@ -39,7 +41,7 @@ function provider(options: StubOptions = {}) {
     info: { mode: 'mock', name: 'recorded-agency-fixture', notice: 'Recorded contract fixture' },
     async generateStructured(request) {
       calls.push({ version: request.promptVersion, system: request.system, prompt: request.prompt })
-      if (request.promptVersion === 'agency-planner:v6') {
+      if (request.promptVersion === AGENCY_PLANNER_VERSION) {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
@@ -78,12 +80,12 @@ describe('runTurn agency integration', () => {
     return llm
   }
   // 10/2 결정: 예비 모델은 강한 일(계획·대사·검사)의 정식 예비다 — 어느 단계가 예비로 답해도 live 이고, 운영에서도 턴을 막지 않는다.
-  it.each(['agency-planner:v6', 'agency-dialogue:v4', 'agency-realization-check:v5'])(
+  it.each([AGENCY_PLANNER_VERSION, 'agency-dialogue:v4', 'agency-realization-check:v5'])(
     'a turn whose %s step was answered by the backup model is still live, also in production', async backupAt => {
       vi.stubEnv('VERCEL_ENV', 'production')
       const result = await runTurn({ llm: backupAtProvider(backupAt), snapshot: snapshot(), userInput: proof.quote, agency: agency() })
       expect(result.providerMode).toBe('live')
-      expect(result.agency?.plan.modelId).toBe(backupAt === 'agency-planner:v6' ? 'gpt-mini' : 'gemini-flash')
+      expect(result.agency?.plan.modelId).toBe(backupAt === AGENCY_PLANNER_VERSION ? 'gpt-mini' : 'gemini-flash')
     },
   )
 
@@ -96,12 +98,12 @@ describe('runTurn agency integration', () => {
     expect(result.providerMode).toBe('mock')
     expect(result.firedRules).toEqual([])
     expect(result.transition.realityIntent).toBeNull()
-    expect(result.semanticEvents).toEqual([])
+    expect(result.semanticEvents).toEqual([expect.objectContaining({ type: 'mentioned_other_romantic_interest' })])
     expect(result.agency?.plan.state.affect.stress).toBe(23)
     expect(input.state.sequence).toBe(0)
     // 대답(respond)은 실행·약속·완료 주장이 없어 의미 검토를 하지 않는다 — 결정적 검사만 한다(10/2).
     expect(result.agency?.verification.reviewed).toBe(false)
-    expect(stub.calls.map(c => c.version)).toEqual(['agency-planner:v6', 'agency-dialogue:v4'])
+    expect(stub.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v4'])
     expect(stub.calls[1]?.system).toContain('Server-authorized character choice')
   })
   it('shadow planning never changes the legacy turn or returns state for persistence', async () => {
@@ -133,18 +135,21 @@ describe('runTurn agency integration', () => {
     expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field).sort()).toEqual(['eventCandidates', 'eventUpdates', 'rp.blocks', 'worldDelta.currentLocation'])
     expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.prompt).not.toContain('왼팔 부상')
     expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentTime', rule: 'world_delta', status: 'applied', decisionId: result.agency!.plan.decision.id }))
-    // 걷힌 변경을 글이 서술했을 수 있다 — 대답이어도 의미 검토를 한다.
-    expect(stub.calls.some(c => c.version === 'agency-realization-check:v5')).toBe(true)
+    // Stripped mutations schedule a semantic review after the reply; no model check blocks rendering.
+    expect(result.agency?.review?.strippedMutations).toBe(4)
+    expect(stub.calls.some(c => c.version === 'agency-realization-check:v5')).toBe(false)
+    expect((await verifyAgencyRealization(stub.llm, result.agency!.review!)).reviewed).toBe(true)
   })
-  it('rewrites once with the rejection codes when verification fails, then gives up with the codes', async () => {
-    const once = provider({ rejectRealization: 1, proposal: reviewed() })
+  it('returns the risky realization for deferred review without silently replacing the already-rendered reply', async () => {
+    const once = provider({ rejectRealization: true, proposal: reviewed() })
     const result = await runTurn({ llm: once.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
     expect(result.agency?.verification.ok).toBe(true)
-    expect(once.calls.map(c => c.version)).toEqual(['agency-planner:v6', 'agency-dialogue:v4', 'agency-realization-check:v5', 'agency-dialogue:v4', 'agency-realization-check:v5'])
-    expect(once.calls[3]?.prompt).toContain('이전 응답이 거부된 이유')
-    const always = provider({ rejectRealization: true, proposal: reviewed() })
-    await expect(runTurn({ llm: always.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow(/^agency_realization_rejected semantic_/)
-    expect(always.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(3) // 처음 + 다시 쓰기 2번(10/3)
+    expect(result.agency?.verification.deferredReview).toBe('action:disclose')
+    expect(once.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v4'])
+    const check = await verifyAgencyRealization(once.llm, result.agency!.review!)
+    expect(check.ok).toBe(false)
+    expect(check.issues.map(i => i.reason)).toContain('contradicts_decision')
+    expect(once.calls.filter(c => c.version === 'agency-dialogue:v4')).toHaveLength(1)
   })
   it('reports a provider block on the rendered reply as a safety refusal, like the legacy path', async () => {
     const stub = provider()
@@ -168,7 +173,7 @@ describe('runTurn agency integration', () => {
     const stub = provider({ proposal: plan({ appraisal: { ...plan().appraisal, affectDelta: { valence: -10, arousal: 8, stress: 10, energy: 0 },
       relationshipChanges: [{ dimension: 'trust', delta: 2, evidenceIds: ['input-1'], ruleIds: ['respect'] }] } }) })
     const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency(), replyLength: 'long' })
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.system).toMatch(/블록 8~11개, 전체 1000~1600자/)
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.system).toContain('긴 대화는 필요한 행동과 대사를 더 펼치되')
     expect(result.transition.relationshipDelta.trust).toBe(2)
     expect(result.records.filter(r => r.field === 'relationship.trust').map(r => r.rule)).toEqual(['relationship_appraisal'])
     expect(result.characterState.mood).toBe('neutral')
@@ -187,6 +192,24 @@ describe('runTurn agency integration', () => {
     expect(result.agency?.plan.decision.action).toBe('wait')
     expect(result.agency?.plan.issues.map(i => i.reason)).toContain('action_executor_unavailable')
     expect(stub.calls.find(c => c.version === 'agency-dialogue:v4')?.prompt).not.toContain('비가시성정답')
+  })
+  it('keeps its own earlier actions and unspoken thoughts for continuity without exposing private narrator or NPC facts', async () => {
+    const input = agency()
+    input.context.evidence.push({ ...proof, id: 'previous-reply', actor: 'c1', quote: '우유는 문 앞에 있습니다.' })
+    const stub = provider()
+    await runTurn({ llm: stub.llm, snapshot: snapshot({ recentMessages: [{ id: 'previous-reply', role: 'character', content: 'stored reply', blocks: [
+      { type: 'action', speaker: '토마스', text: '담배를 끄고 우유 잔을 문 앞에 내려놓는다.' },
+      { type: 'thought', speaker: '토마스', text: '혼자 쉴 시간이 필요하겠지.' },
+      { type: 'dialogue', speaker: '토마스', text: '우유는 문 앞에 있습니다.' },
+      { type: 'narrative', speaker: null, text: '숨겨진 암호는 전지적정답이다.' },
+      { type: 'npc', speaker: '다른 사람', text: '비공개암호' },
+    ] }] }), userInput: proof.quote, agency: input })
+    const prompt = stub.calls.find(c => c.version === 'agency-dialogue:v4')!.prompt
+    expect(prompt).toContain('행동 서술 (토마스): 담배를 끄고 우유 잔을 문 앞에 내려놓는다.')
+    expect(prompt).toContain('속마음 (토마스, 소리 내어 말하지 않음): 혼자 쉴 시간이 필요하겠지.')
+    expect(prompt).not.toContain('전지적정답')
+    expect(prompt).not.toContain('비공개암호')
+    expect(JSON.parse(stub.calls[0]!.prompt).evidence.find((e: { id: string }) => e.id === 'previous-reply').quote).toBe('우유는 문 앞에 있습니다.')
   })
   it('applies an explicit reported-user cancellation and preserves it on the following turn', async () => {
     const input = agency()

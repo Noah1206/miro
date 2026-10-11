@@ -1,5 +1,5 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
-import { applyRelationshipDelta, momentHint, moodFromAffect, nextRelationshipStage } from '@miro/domain'
+import { applyRelationshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
@@ -32,11 +32,15 @@ const NEEDS_PLAN = /약속|연락|부탁|취소|미안|사과|사랑|좋아해|�
  * 세 턴에 한 번과 대화 첫 두 턴은 늘 계획한다 — 그 사이에도 관계·기분이 이번 대화를 따라 움직이게.
  * ponytail: 낱말 목록이라 놓치는 말이 있다 — 놓치면 그 턴은 감정 평가 없이 평소처럼만 대답한다. 잦으면 싼 모델 분류로 바꾼다.
  */
-export function routineTurn(input: string, turnCount: number, state: AgencyState, now: Date): boolean {
+export function routineTurn(input: string, turnCount: number, state: AgencyState, now: Date, narrativeNow?: string): boolean {
   const text = input.trim()
   if (!text || text.length > 40 || turnCount < 2 || (turnCount + 1) % 3 === 0) return false
   if (momentHint(text) || NEEDS_PLAN.test(text)) return false
-  return !state.goals.some(goal => goal.status === 'active' && goal.dueAt && Date.parse(goal.dueAt) - now.getTime() < 2 * 3_600_000)
+  if (requestedContactBoundary(text, now, 'UTC', 'classification')) return false
+  return !state.goals.some(goal => {
+    const clock = goal.clock === 'narrative' ? (narrativeNow ? Date.parse(narrativeNow) : null) : now.getTime()
+    return goal.status === 'active' && goal.dueAt && clock !== null && Date.parse(goal.dueAt) - clock < 2 * 3_600_000
+  })
 }
 
 /**
@@ -50,16 +54,23 @@ export async function runAgencyTurn(opts: {
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
   const actor = snapshot.character.id
-  const routine = routineTurn(opts.userInput, snapshot.turnCount, agency.state, new Date(agency.context.clock.now))
-  const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context, input: opts.userInput }, { routine })
+  const scene = !snapshot.mode || snapshot.mode === 'chat'
+  const calendarChanged = scene && snapshot.world.narrativeCalendar?.changedAtTurn === snapshot.turnCount
+  const routine = !calendarChanged && routineTurn(opts.userInput, snapshot.turnCount, agency.state, new Date(agency.context.clock.now), agency.context.clock.narrativeNow)
+  const calendar = scene ? storyCalendarDirective(snapshot.world.narrativeCalendar, snapshot.turnCount) : ''
+  const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context,
+    input: calendar ? `${opts.userInput}\n\n[Server-confirmed scene calendar]\n${calendar}` : opts.userInput }, { routine })
   if (productionRuntime() && plan.providerMode !== 'live') throw new Error('agency_planner_not_live')
 
   // ── 승인 (표현 전) ──────────────────────────────────────────────────────────────────────────────
-  // 관계·기분·단계는 한 appraisal 에서 파생된다(§3.2). 규칙 경로의 의미 사건은 여기 없다 — 같은 사건을 두 번 반영하지 않는다.
+  // Numeric relationship/mood changes belong to one appraisal. Stage signals use the actual input
+  // without applying the legacy numeric deltas a second time.
   const projected = applyRelationshipDelta(snapshot.relationship, plan.relationshipDelta)
-  // 이 경로에는 의미 사건이 없다 — '친구가 되는 계기' 는 관찰할 수 없으니 빼고 문턱만 본다(빼지 않으면 친구가 될 수 없다).
+  // Stage signals come from the actual new input, not affection scores or an invented appraisal.
+  // Numeric changes remain exclusively owned by the planner; this does not apply them twice.
   const table = snapshot.character.personality.relationshipProfile
-  const stage = nextRelationshipStage(snapshot.relationship.stage, projected, [], snapshot.turnCount + 1, table && { ...table, turningPoint: undefined })
+  const semanticEvents = detectSemanticEvents(opts.userInput)
+  const stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1, table)
   projected.stage = stage
   const mood = moodFromAffect(plan.state.affect, projected)
   const move = plan.decision.action === 'move' ? plan.decision.candidate.destination ?? null : null
@@ -69,7 +80,12 @@ export async function runAgencyTurn(opts: {
   const evidence = new Set(plan.context.evidence.map(e => e.id))
   const evidenceMessages = snapshot.recentMessages.filter(m => m.id && evidence.has(m.id)).map(m => {
     const proof = plan.context.evidence.find(e => e.id === m.id)!
-    return { ...m, content: proof.quote, blocks: undefined }
+    // Keep the character's own earlier gestures/inner voice for scene continuity, separately
+    // labelled by buildContext. They are not message evidence or facts known to the user.
+    const ownBlocks = m.role === 'character' && m.kind !== 'reality_message' ? m.blocks?.filter(b =>
+      b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name)
+      || ['action', 'thought'].includes(b.type) && b.speaker === snapshot.character.identity.name) : undefined
+    return { ...m, content: proof.quote, blocks: ownBlocks?.length ? ownBlocks : undefined }
   })
   // 출처(원문 메시지)가 남아 있는 기억만 기억으로 싣는다. 나머지는 불확실한 과거 기록으로 따로 — 관측 사실로 승격하지 않는다.
   const sourced = snapshot.memories.filter(m => m.sourceMessageId)
@@ -80,6 +96,8 @@ export async function runAgencyTurn(opts: {
       semanticEvents: [], memories, recentMessages: recent, activeNpcs: [], activeEvents: [], recentlyResolvedEvents: [], userInput: opts.userInput,
     }, opts.contextScale, false, policy.generation.replyLength)
     context.system += buildAgencyDecisionDirective(plan.decision)
+    context.system += '\n' + contactBoundaryDirective(snapshot.contactBoundary, new Date(agency.context.clock.now))
+    context.system += '\n장면의 연속성: 최근 자기 행동과 소품 상태를 이어 갑니다. 이미 끈 담배를 다시 끄거나, 놓아 둔 잔을 다시 준비하는 식으로 장면을 초기화하지 않습니다. 새 반응에 필요하지 않은 같은 몸짓·돌봄 제안은 반복하지 않습니다. 과거 속마음은 소리 내어 한 말이 아니며, 내레이터나 다른 인물의 비공개 사실은 자기 지식으로 쓰지 않습니다.'
     context.system += `\n## 승인된 세계 상태(데이터)\n${JSON.stringify({ location: snapshot.world.currentLocation, time: snapshot.world.currentTime, status: snapshot.world.worldStatus,
       moveIntent: move, rule: move ? '이동을 시작하거나 준비하는 것은 쓸 수 있지만, 도착했거나 장소가 바뀌었다고 쓰지 않는다.' : '장소는 바뀌지 않는다. 새 장소·도착·사건 완료를 서술하지 않는다.' })}\n`
     context.prompt += `\n## 검증된 근거와 캐릭터 상태 (데이터)\n${JSON.stringify({ evidence: plan.context.evidence.filter(e => recent.some(m => m.id === e.id) || e.kind !== 'message'),
@@ -163,6 +181,6 @@ export async function runAgencyTurn(opts: {
     currentGoals: plan.state.goals.filter(g => g.status === 'active').map(g => g.description),
     currentThoughts: [], firedRules: snapshot.characterState?.firedRules ?? [] }
   const providerMode = [plan.providerMode, renderer.providerMode, verification!.providerMode].includes('mock') ? 'mock' : 'live'
-  return { transition: approved.transition, context, providerMode, semanticEvents: [], characterState, firedRules: [],
+  return { transition: approved.transition, context, providerMode, semanticEvents, characterState, firedRules: [],
     agency: { plan, verification: verification!, ...(review ? { review } : {}) }, policy, records }
 }

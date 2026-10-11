@@ -110,7 +110,7 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
   // 삭제·제한 뒤에는 결과를 남기지 않는다. 원문이 숨겨졌으면(운영 조치) 그 턴도 기억이 되지 않는다.
   const [state] = await db.select({ deletedAt: roleplaySessions.deletedAt, restrictedAt: roleplaySessions.restrictedAt, status: roleplaySessions.status, userDeleted: users.deletedAt })
     .from(roleplaySessions).innerJoin(users, eq(users.id, roleplaySessions.userId)).where(and(eq(roleplaySessions.id, job.sessionId), eq(roleplaySessions.userId, job.userId))).limit(1)
-  const [source] = await db.select({ content: messages.content, createdAt: messages.createdAt, hiddenAt: messages.hiddenAt }).from(messages)
+  const [source] = await db.select({ content: messages.content, createdAt: messages.createdAt, hiddenAt: messages.hiddenAt, kind: messages.kind, blocks: messages.blocks }).from(messages)
     .where(and(eq(messages.id, job.messageId), eq(messages.sessionId, job.sessionId))).limit(1)
   if (!state || state.deletedAt || state.restrictedAt || state.status !== 'active' || state.userDeleted || !source || source.hiddenAt) { await finish('cancelled', 'session_unavailable'); return 'cancelled' }
   // 더 최신 턴의 요약이 이미 끝났으면 이 요약은 옛 결과다 — 최신을 덮지 않는다.
@@ -161,7 +161,8 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
       .where(and(eq(memoryJobs.id, id), eq(memoryJobs.leaseToken, token)))
   })
   // 사용자 일정 — 앞날을 말한 듯한 턴이면 같은 싼 모델로 한 번 더 본다. 실패해도 기억 작업은 끝난 것이다(10/9).
-  if (job.kind === 'memory_extraction' && momentHint(source.content)) {
+  const realContact = source.kind === 'messenger' || source.blocks.some(b => b.type === 'call_line')
+  if (job.kind === 'memory_extraction' && momentHint(source.content) && (!loaded.snapshot.world.narrativeCalendar || realContact)) {
     await captureMoments(llm, { sessionId: job.sessionId, messageId: job.messageId, input: source.content, timeZone: loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone,
       now: source.createdAt, recent: recentMessages.map(m => ({ who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 300) })) })
       .catch(e => observe('moment.capture_failed', { jobId: id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))

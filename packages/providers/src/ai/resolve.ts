@@ -112,7 +112,7 @@ export function adultRegistry(): ModelRegistry | null {
   return enabled.some(m => m.capabilities.includes('dialogue'))
     && enabled.every(m => m.provider !== 'mock' && m.inputCost !== undefined && m.outputCost !== undefined && providerFromEnv(m.provider, m.providerModelId)) ? registry : null
 }
-/** 성인 전용 모델이 갖춰졌는가 — 아니면 화면에서 성인 모드 토글을 숨긴다. 설정이 깨져 있어도 false. */
+/** 성인 모드를 켤 수 있는 전용 모델이 갖춰졌는가. 설정이 깨져 있어도 false. */
 export function adultModelReady(): boolean { try { return adultRegistry() !== null } catch { return false } }
 function adultModels(mock: (req: GenerationRequest) => unknown): { registry: ModelRegistry; resolveModel: (m: ModelDefinition) => AIProvider } {
   const registry = adultRegistry()

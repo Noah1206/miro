@@ -13,6 +13,7 @@ import { msg } from '@/lib/i18n'
 import { useRouter } from 'next/navigation'
 import { checkNickname, finishOnboarding } from './actions'
 import { markPushAsked, settingsPath, subscribeToPush } from '@/components/push-subscribe'
+import styles from './onboarding.module.css'
 
 const COPY = [
   { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
@@ -195,11 +196,21 @@ export function OnboardingForm() {
           </header>
 
           {step === 1 && (
-            <div role="radiogroup" aria-label={t('언어')} className="stack" style={{ gap: 8 }}>
+            <div role="radiogroup" aria-label={t('언어')} className={styles.languageList}>
               {/* 언어 이름은 번역하지 않는다 — 자기 언어를 그 언어의 글자로 알아본다. */}
               {(Object.keys(LANGUAGES) as Language[]).map((l) => (
-                <Option key={l} role="radio" selected={languagePicked && language === l} dimmed={languagePicked && language !== l} title={LANGUAGES[l]} lang={l} center
-                  onClick={() => pickLanguage(l)} />
+                <label key={l} className={styles.languageOption} lang={l}>
+                  <input className={styles.languageRadio} type="radio" name="onboardingLanguage" value={l}
+                    checked={languagePicked && language === l} onChange={() => pickLanguage(l)} />
+                  <span className={styles.languageRow}>
+                    <span>{LANGUAGES[l]}</span>
+                    <span className={styles.languageIndicator} aria-hidden="true">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m3.5 8 3 3 6-6" />
+                      </svg>
+                    </span>
+                  </span>
+                </label>
               ))}
             </div>
           )}
@@ -423,14 +434,24 @@ function GenderIcon({ kind }: { kind: 'female' | 'male' | 'none' }) {
   return <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 24, height: 24, flexShrink: 0 }}><GenderSymbol kind={kind} /></span>
 }
 
-/** 취향 기호 — 두 성별 기호를 살짝 겹쳐 한 쌍으로(2026-09-30 요청): BL ♂♂ 파랑, HL ♂♀ 파랑·분홍, GL ♀♀ 분홍. */
-const TASTE_PAIR: Record<Taste, ['male' | 'female', 'male' | 'female']> = { bl: ['male', 'male'], hl: ['male', 'female'], gl: ['female', 'female'] }
+/** 취향마다 다른 관계 모티프. 의미는 BL·HL·GL 글자로 읽고, 그림은 같은 흰색 선으로 맞춘다. */
 function TasteIcon({ kind }: { kind: Taste }) {
-  const [a, b] = TASTE_PAIR[kind]
   return (
-    <span aria-hidden style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-      <GenderSymbol kind={a} size={18} />
-      <span style={{ display: 'flex', marginLeft: -4 }}><GenderSymbol kind={b} size={18} /></span>
-    </span>
+    <svg aria-hidden="true" className={styles.tasteIcon} width="28" height="28" viewBox="0 0 32 32" fill="none"
+      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {kind === 'bl' && <>
+        <circle cx="11" cy="16" r="6.5" />
+        <circle cx="21" cy="16" r="6.5" />
+      </>}
+      {kind === 'hl' && <>
+        <path d="m10 22-6.2-6.2C.8 12.8 2.6 8 6.4 8c1.8 0 3.1.9 3.6 2.2C10.5 8.9 11.8 8 13.6 8c3.8 0 5.6 4.8 2.6 7.8L10 22Z" />
+        <path d="m22 22-6.2-6.2c-3-3-1.2-7.8 2.6-7.8 1.8 0 3.1.9 3.6 2.2C22.5 8.9 23.8 8 25.6 8c3.8 0 5.6 4.8 2.6 7.8L22 22Z" />
+      </>}
+      {kind === 'gl' && <>
+        <path d="M16 23C6 24 2 16 5 9c7-1 12 4 11 14Z" />
+        <path d="M16 23c10 1 14-7 11-14-7-1-12 4-11 14Z" />
+        <path d="m10 15 6 8 6-8" />
+      </>}
+    </svg>
   )
 }

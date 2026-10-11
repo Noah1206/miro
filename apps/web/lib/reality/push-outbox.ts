@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { db, realityPushJobs, realityContacts, pushSubscriptions, roleplaySessions, users, contactProfiles, messages, characters, characterRuntimeStates } from '@miro/db'
+import { db, realityPushJobs, realityContacts, pushSubscriptions, roleplaySessions, users, userSettings, contactProfiles, messages, characters, characterRuntimeStates } from '@miro/db'
+import { contactBoundaryActive } from '@miro/domain'
 import { feature, productionRuntime } from '@miro/config'
 import { resolvePush } from '@miro/providers'
 import type { UsageTransaction } from '@/lib/usage/guard'
@@ -49,6 +50,7 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
     if (row.experienceType !== 'reality' || row.characterDeletedAt
       || row.user.deletedAt || row.session.deletedAt || row.session.restrictedAt || row.session.status !== 'active'
       || !row.profile?.enabled || row.message?.hiddenAt
+      || contactBoundaryActive(row.session.contactBoundary, now)
       || row.subscription.userId !== row.user.id || row.subscription.failedAt
       || row.contact.status === 'opened' || row.contact.status === 'suppressed'
       || now.getTime() - row.contact.createdAt.getTime() > 12 * 3600_000) {
@@ -71,14 +73,38 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
     try {
       const provider = resolvePush()
       if (productionRuntime() && provider.info.mode !== 'live') throw new Error('PUSH_NOT_READY')
-      const result = await provider.send(row.subscription, {
-        title: typeof payload.senderLabel === 'string' ? payload.senderLabel : 'MIRO',
-        // 성인 모드를 켠 적 있는 방은 잠금 화면에 내용을 띄우지 않는다.
-        body: typeof payload.text === 'string' && !row.session.adultSince ? payload.text.slice(0, 90) : '새로운 연락이 왔어요.',
-        url: `/messages/${row.session.id}`, tag: `session:${row.session.id}`,
+      // Serialize external-send start with a pause request. Once the pause commits, a new send
+      // cannot begin. An external send already in flight cannot be recalled.
+      const result = await db.transaction(async tx => {
+        const [latest] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, row.session.id)).for('share')
+        const [currentJob] = await tx.select({ id: realityPushJobs.id }).from(realityPushJobs)
+          .where(and(eq(realityPushJobs.id, job.id), eq(realityPushJobs.status, 'sending'), eq(realityPushJobs.leaseToken, token)))
+        const [settings] = await tx.select({ pushEnabled: userSettings.pushEnabled }).from(userSettings).where(eq(userSettings.userId, row.user.id)).for('share')
+        if (!latest || latest.deletedAt || latest.restrictedAt || latest.status !== 'active' || !currentJob
+          || settings?.pushEnabled === false || contactBoundaryActive(latest.contactBoundary, new Date())) return null
+        // Promise cancellation may have committed after the first check. The session lock
+        // also serializes turn commits, so re-read the action and goals before external send.
+        if (typeof payload.decisionId === 'string') {
+          const [runtime] = await tx.select({ state: characterRuntimeStates.state }).from(characterRuntimeStates)
+            .where(eq(characterRuntimeStates.sessionId, row.session.id))
+          const action = runtime?.state.actions.find(a => a.id === payload.decisionId)
+          const carried = [...(action?.fulfillsGoalIds ?? []), ...(action?.type === 'contact' ? action.goalIds : [])]
+          if (action && (action.status === 'cancelled' || action.cancelRequestedAt
+            || carried.some(id => runtime?.state.goals.some(g => g.id === id && g.status === 'cancelled')))) return null
+        }
+        const delivered = await provider.send(row.subscription, {
+          title: typeof payload.senderLabel === 'string' ? payload.senderLabel : 'MIRO',
+          body: typeof payload.text === 'string' && !latest.adultSince ? payload.text.slice(0, 90) : '새로운 연락이 왔어요.',
+          url: `/messages/${row.session.id}`, tag: `session:${row.session.id}`,
+        })
+        // Record a confirmed send before releasing the session lock; a concurrent pause
+        // must not relabel an already-started, successful delivery as cancelled.
+        if (delivered.ok) await tx.update(realityPushJobs).set({ status: 'sent', leaseUntil: null, leaseToken: null })
+          .where(and(eq(realityPushJobs.id, job.id), eq(realityPushJobs.leaseToken, token)))
+        return delivered
       })
-      if (result.ok) await finish('sent')
-      else {
+      if (!result) { await finish('cancelled'); continue }
+      if (!result.ok) {
         if (result.gone) await db.update(pushSubscriptions).set({ failedAt: now }).where(eq(pushSubscriptions.id, row.subscription.id))
         await finish(result.gone || row.job.attempts >= 5 ? 'failed' : 'pending')
       }

@@ -28,7 +28,9 @@ export async function GET(req: Request) {
       and to_regclass('public.ops_heartbeats') is not null
       and to_regclass('public.user_moments') is not null
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'character_status_at')
-      and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'adult_level') as ok`)
+      and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'adult_level')
+      and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'contact_boundary')
+      and exists (select 1 from information_schema.columns where table_name = 'world_states' and column_name = 'narrative_calendar') as ok`)
     schema = (rows[0] as { ok: boolean } | undefined)?.ok ? 'ready' : 'behind'
   } catch { schema = 'unknown' }
   let cron: 'fresh' | 'stale' | 'unknown' = 'unknown'

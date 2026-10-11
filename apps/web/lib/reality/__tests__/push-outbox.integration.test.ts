@@ -79,13 +79,12 @@ describeDb('durable proactive push', () => {
     expect(s.send).not.toHaveBeenCalled()
     expect((await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id)))[0]!.status).toBe('cancelled')
   })
-  // 앱 밖 연락은 끌 수 없다 (2026-09-24) — 예전에 저장된 알림 끄기·야간 차단 값이 있어도 보낸다. 거절은 브라우저 권한으로만 한다.
-  it('delivers even when old stored settings said otherwise', async () => {
+  it('honors the user’s stored notification permission', async () => {
     const s = await queued()
     await db.update(userSettings).set({ pushEnabled: false, quietHoursEnabled: true, quietHoursStart: '00:00', quietHoursEnd: '23:59' }).where(eq(userSettings.userId, s.userId))
     await deliverRealityPush(now)
-    expect(s.send).toHaveBeenCalledTimes(1)
-    expect((await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id)))[0]!.status).toBe('sent')
+    expect(s.send).not.toHaveBeenCalled()
+    expect((await db.select().from(realityPushJobs).where(eq(realityPushJobs.id, s.job.id)))[0]!.status).toBe('cancelled')
   })
   // §5: 약속 취소 뒤 발송 0 — 큐에 든 뒤 결정의 행동이 취소되면 기기로 나가지 않는다.
   it('cancels a queued push whose decision was cancelled after it was queued', async () => {

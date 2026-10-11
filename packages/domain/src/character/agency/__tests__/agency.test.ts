@@ -27,6 +27,12 @@ function receipt(id: string, status: AgencyEvidence['outcomeStatus'], actionId: 
 }
 
 describe('agency provenance and candidate contracts', () => {
+  it('requires a shared exchange, valid promise or own-day event for background outreach', () => {
+    const c = context({ clock: { now, mode: 'real_time', trigger: 'background', allowOfflineAdvance: false } })
+    expect(selectAgencyDecision([candidate({ evidenceIds: [] })], c).action).toBe('wait')
+    expect(validateAgencyCandidate(candidate({ evidenceIds: [] }), c).map(i => i.reason)).toContain('contact_requires_personal_context')
+    expect(selectAgencyDecision([candidate()], c).action).toBe('contact')
+  })
   it('keeps authored source spans exact and refuses inferred identity facts', () => {
     expect(validateCompiledCharacter(compiled, { fields: { personality: field }, explicitFields: ['personality'] }, 'hash')).toEqual([])
     const wrong = { ...compiled, rules: [{ ...compiled.rules[0]!, statement: '절대 사과하지 않는다.' }] }

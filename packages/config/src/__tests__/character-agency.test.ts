@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { characterAgencyCohort, characterAgencyMode, defaultSessionPolicy } from '../character-agency'
 afterEach(() => vi.unstubAllEnvs())
 describe('character agency rollout gate', () => {
-  it('is off by default and for unknown modes', () => {
+  it('defaults to live for the relationship experience and keeps an explicit kill switch', () => {
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', '')
-    expect(characterAgencyMode('s1')).toBe('off')
+    expect(characterAgencyMode()).toBe('live')
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
+    expect(characterAgencyMode()).toBe('off')
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'on')
     expect(characterAgencyMode('s1')).toBe('off')
   })
@@ -43,11 +45,16 @@ describe('character agency rollout gate', () => {
     vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
     expect(characterAgencyMode('s9', 'agency:v1')).toBe('off')
   })
-  it('new sessions default to legacy unless the product default names agency, and standard characters never do', () => {
+  it('new reality sessions use agency by default; ordinary chat and explicit rollback stay legacy', () => {
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'live')
     vi.stubEnv('MIRO_AGENCY_DEFAULT_POLICY', '')
+    expect(defaultSessionPolicy('reality')).toBe('agency:v1')
+    vi.stubEnv('MIRO_AGENCY_DEFAULT_POLICY', 'legacy:v1')
     expect(defaultSessionPolicy('reality')).toBe('legacy:v1')
     vi.stubEnv('MIRO_AGENCY_DEFAULT_POLICY', 'agency:v1')
     expect(defaultSessionPolicy('reality')).toBe('agency:v1')
     expect(defaultSessionPolicy('chat')).toBe('legacy:v1')
+    vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off')
+    expect(defaultSessionPolicy('reality')).toBe('legacy:v1')
   })
 })

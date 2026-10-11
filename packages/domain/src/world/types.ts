@@ -10,6 +10,8 @@ export type WorldState = {
 
   currentLocation: string
   currentTime: string
+  /** User-controlled scene calendar; never a notification clock. Optional for older snapshots. */
+  narrativeCalendar?: import('../time/narrative-calendar').NarrativeCalendar | null
   currentSceneId: string | null
   worldStatus: string | null
   activeEventIds: string[]

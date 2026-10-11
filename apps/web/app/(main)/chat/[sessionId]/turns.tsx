@@ -11,8 +11,10 @@ type Turns = {
   quiet: ReadonlySet<string>
   live: LiveTurn | null
   setLive: (live: LiveTurn | null) => void
+  calendarPending: boolean
+  setCalendarPending: (pending: boolean) => void
 }
-const Ctx = createContext<Turns>({ appended: [], append: () => {}, quiet: new Set(), live: null, setLive: () => {} })
+const Ctx = createContext<Turns>({ appended: [], append: () => {}, quiet: new Set(), live: null, setLive: () => {}, calendarPending: false, setCalendarPending: () => {} })
 
 /**
  * 방금 보낸 턴의 메시지. 서버가 돌려준 것을 바로 그린다 — 답을 보려고 페이지 전체를 다시 받지 않는다.
@@ -22,6 +24,7 @@ export function TurnsProvider({ children }: { children: ReactNode }) {
   const [appended, setAppended] = useState<Msg[]>([])
   const [quiet, setQuiet] = useState<ReadonlySet<string>>(new Set())
   const [live, setLive] = useState<LiveTurn | null>(null)
+  const [calendarPending, setCalendarPending] = useState(false)
   const append = useCallback((items: Msg[], opts: { quiet?: boolean } = {}) => {
     if (opts.quiet) setQuiet(prev => new Set([...prev, ...items.map(m => m.id)]))
     setAppended(prev => {
@@ -29,6 +32,6 @@ export function TurnsProvider({ children }: { children: ReactNode }) {
       return [...prev, ...items.filter(m => !known.has(m.id))]
     })
   }, [])
-  return <Ctx.Provider value={{ appended, append, quiet, live, setLive }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ appended, append, quiet, live, setLive, calendarPending, setCalendarPending }}>{children}</Ctx.Provider>
 }
 export const useTurns = () => useContext(Ctx)

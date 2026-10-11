@@ -1,3 +1,4 @@
+import { AGENCY_PLANNER_VERSION, CHARACTER_LIFE_VERSION } from '@miro/engine'
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { and, eq, sql } from 'drizzle-orm'
@@ -32,7 +33,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
     async generateStructured(request) {
       const version = request.promptVersion ?? ''
       calls.push({ version, prompt: request.prompt, system: request.system })
-      if (version === 'agency-planner:v6') {
+      if (version === AGENCY_PLANNER_VERSION) {
         const context = JSON.parse(request.prompt)
         const evidenceId = context.evidence.find((item: { actor: string }) => item.actor === 'user')?.id
         const refs = evidenceId ? [evidenceId] : []
@@ -53,7 +54,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
           }], newGoals: [], goalChanges: [],
         })
       }
-      if (version === 'character-life:v2') return request.schema.parse({ events: opts.life ?? [] })
+      if (version === CHARACTER_LIFE_VERSION) return request.schema.parse({ events: opts.life ?? [] })
       if (version === 'reality:v3-character-context') {
         await opts.duringRender?.()
         return request.schema.parse({ text: '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
@@ -141,7 +142,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const [runtime] = await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, id))
     expect(runtime!.lifeUntil?.toISOString()).toBe(later.toISOString())
     expect(await evaluateSession(id, later)).toEqual({ outcome: 'no_intent' })
-    const payload = JSON.parse(calls.find(c => c.version === 'agency-planner:v6')!.prompt)
+    const payload = JSON.parse(calls.find(c => c.version === AGENCY_PLANNER_VERSION)!.prompt)
     const own = payload.evidence.find((e: { id: string }) => e.id === `life:${lived.events![0]!.id}`)
     expect(own).toMatchObject({ kind: 'event', epistemic: 'observed', actor: characterId, knownTo: [characterId], shareable: true })
     expect(JSON.parse(payload.input).ownDay).toEqual([own.id])
@@ -162,7 +163,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(calls).toHaveLength(0)
     // 19:00 KST 퇴근 뒤 — 이제 판단한다(이번엔 기다리기로).
     expect(await evaluateSession(id, new Date(NOW.getTime() + 5 * 3_600_000))).toEqual({ outcome: 'no_intent' })
-    expect(calls.map(c => c.version)).toEqual(['agency-planner:v6'])
+    expect(calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION])
   })
 
   // 10/2 실측: 첫 연락을 기다리기로 한 뒤 같은 첫 연락 기회가 매번 다시 나와 '중복'으로 막히고, 다른 이유가 영영 생기지 않았다.
@@ -175,7 +176,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const decisions = await db.select().from(characterDecisions).where(eq(characterDecisions.sessionId, id))
     expect(decisions.map(d => d.triggerKey)).toEqual([expect.stringMatching(/^reality:opportunity:.+:first_contact$/)])
     expect(await evaluateSession(id, new Date(first.getTime() + 24 * 3_600_000))).not.toEqual({ outcome: 'skipped', reason: 'duplicate' })
-    expect(calls.filter(c => c.version === 'agency-planner:v6')).toHaveLength(1)
+    expect(calls.filter(c => c.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
   })
 
   it('wait beats a legacy pending intent and escalated event without sending or inventing progress', async () => {
@@ -467,13 +468,13 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const { calls } = provider()
     const later = new Date(NOW.getTime() + 10 * 3_600_000)   // 토마스의 첫 연락 시각(약 8.8시간)이 지났다
     expect(await evaluateSession(id, later)).toMatchObject({ outcome: 'sent' })
-    const planned = calls.filter(call => call.version === 'agency-planner:v6')
+    const planned = calls.filter(call => call.version === AGENCY_PLANNER_VERSION)
     expect(planned).toHaveLength(1)
     expect(JSON.parse(JSON.parse(planned[0]!.prompt).input).contactOpportunity.reason).toMatch(/처음 만난 뒤 첫 연락/)
     expect((await stored(id)).contacts.map(c => c.dedupeKey)).toEqual(['message:first_contact'])
     // 첫 연락은 한 번 — 다음 확인에는 기회도 새 근거도 없어 계획을 부르지 않는다.
     expect(await evaluateSession(id, new Date(later.getTime() + 2 * 3_600_000))).toEqual({ outcome: 'no_intent' })
-    expect(calls.filter(call => call.version === 'agency-planner:v6')).toHaveLength(1)
+    expect(calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
   })
 
   it('a chance that cannot be delivered (daily cap) does not wake the planner', async () => {
@@ -487,7 +488,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it("keeps the user's waiting text when the character holds its reply, and asks again later", async () => {
+  it("keeps the user's text but ends the pending reply when the character chooses to leave it unanswered", async () => {
     const { id, revisionId } = await fixture()
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '문자에 답장한다', urgency: 0.9, answers: 'user_message',
       notBefore: new Date(NOW.getTime() - 60_000).toISOString() } }).where(eq(roleplaySessions.id, id))
@@ -497,7 +498,8 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(await evaluateSession(id, at)).toEqual({ outcome: 'no_intent' })
     expect(JSON.parse(JSON.parse(calls[0]!.prompt).input).contactOpportunity).toMatchObject({ answers: 'user_message' })
     const [session] = await db.select({ pending: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, id))
-    expect(session!.pending).toMatchObject({ answers: 'user_message', notBefore: new Date(at.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() })
+    expect(session!.pending).toBeNull()
+    expect((await db.select().from(messages).where(eq(messages.sessionId, id))).some(m => m.role === 'user')).toBe(true)
   })
 
   it('holds new autonomy while the revision is not ready, but never drops a reply to the user', async () => {

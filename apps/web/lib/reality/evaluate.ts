@@ -6,7 +6,7 @@ import {
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
-  DEFAULT_CHARACTER_STATE, contactDedupeKey, dailyContactCap, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, localDay, localMinutes,
+  DEFAULT_CHARACTER_STATE, contactBoundaryActive, contactDedupeKey, dailyContactCap, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, localDay, localMinutes,
   momentIntent, parseRelationshipProfile, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
@@ -25,6 +25,7 @@ import { characterAvailability } from './routine'
 import { dueMomentFor, settleMoment, type DueMoment } from './moments'
 import { msg } from '@/lib/i18n'
 import { translateTo } from '@/lib/i18n/server'
+import { adoptRelationshipPolicy } from '@/lib/agency/session-policy'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -47,6 +48,7 @@ export async function evaluateSession(
   opts: { inline?: boolean; background?: boolean } = {},
 ): Promise<EvaluateOutcome> {
   if (!feature('realityMessage')) return { outcome: 'skipped', reason: 'feature_disabled' }
+  await adoptRelationshipPolicy(sessionId)
   // 사용자가 말한 일정(응원·"어땠어?")이 챙길 때가 됐으면 이번 판단의 연락 기회가 된다(10/9). 쓰였으면 결과를 남긴다.
   const moment = { due: opts.inline ? null : await dueMomentFor(sessionId, now), used: false }
   const outcome = await evaluateWith(sessionId, now, opts, moment)
@@ -71,6 +73,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
 
   const row = rows[0]
   if (!row) return { outcome: 'skipped', reason: 'session_not_found' }
+  if (contactBoundaryActive(row.session.contactBoundary, now)) return { outcome: 'suppressed', reason: 'user_boundary' }
   // 스케줄러·inline·큐 어느 쪽으로 왔든 마지막에 한 번 더 본다. 유형이 바뀐 뒤 남은 의도는 여기서 지운다 —
   // 두면 스케줄러가 매 주기 다시 집어 든다.
   if (row.character.experienceType !== 'reality') {
@@ -120,7 +123,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   const characterState: CharacterState = { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) }
   const saved = (row.session.pendingRealityIntent as RealityIntentRow | null) ?? null
   let pending = saved
-  // 앱 밖 연락은 사용자가 끌 수 없다 (2026-09-24 결정). 시간대만 읽어 캐릭터의 활동 시간·하루를 사용자 현지 시각으로 본다.
+  // Character rhythm uses the user's local time. Explicit user boundaries were checked first.
   const timeZone = row.settings?.timeZone ?? POLICY.reality.defaultTimeZone
   const today = localDay(now, timeZone)
 
@@ -315,6 +318,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
       const [character] = await tx.select({ experienceType: characters.experienceType, deletedAt: characters.deletedAt }).from(characters).where(eq(characters.id, row.character.id)).limit(1)
       if (!character || character.experienceType !== 'reality' || character.deletedAt || !current || current.deletedAt || current.restrictedAt || current.status !== 'active' || !owner || owner.deletedAt || !profile?.enabled
         || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
+        || contactBoundaryActive(current.contactBoundary, new Date())
         || current.turnCount !== row.session.turnCount) throw new RealityStateChangedError()
       if (decision.channel === 'status') {
         await tx.update(roleplaySessions).set({ characterStatus: content.text })

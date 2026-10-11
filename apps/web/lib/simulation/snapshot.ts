@@ -6,7 +6,7 @@ import {
   db, characters, characterVisualIdentities, events, memories, messages, npcs, realityContacts, relationships,
   callSessions, roleplaySessions, scenes, userSettings, worldStates, worlds,
 } from '@miro/db'
-import { DEFAULT_CHARACTER_STATE, describeRoutine, lifeLines, localClock, momentLines, type CharacterState } from '@miro/domain'
+import { DEFAULT_CHARACTER_STATE, describeRoutine, lifeLines, localClock, momentLines, type CharacterState, type ContactBoundary } from '@miro/domain'
 import { recentLife } from '@/lib/agency/life'
 import { activeMoments } from '@/lib/reality/moments'
 import { characterAvailability } from '@/lib/reality/routine'
@@ -31,6 +31,7 @@ export type LoadedSession = {
   /** 세션 정책 버전(§6). 자율성 코호트 판정에 세션 id 와 함께 넘긴다. */
   policyVersion: 'legacy:v1' | 'agency:v1'
   lastInteractionAt: Date
+  contactBoundary: ContactBoundary | null
   /** 성인 모드 — on: 지금 켜짐(화면 토글), since: 처음 켠 시각(있으면 이 방의 모든 AI 호출이 성인 전용 모델로 간다). */
   adult: { on: boolean; since: Date | null; level: 'soft' | 'deep' | 'explicit' }
 }
@@ -134,6 +135,7 @@ export async function loadSession(
     userPersona,
     userLanguage: owner[0]?.language ?? null,
     experienceType: c.experienceType,
+    contactBoundary: row.session.contactBoundary,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
     clock: localClock(now, timeZone),
     routine: availability ? describeRoutine(availability.routine, availability) : null,
@@ -163,6 +165,7 @@ export async function loadSession(
     restricted: row.session.restrictedAt !== null,
     experienceType: c.experienceType,
     policyVersion: row.session.policyVersion,
+    contactBoundary: row.session.contactBoundary,
     lastInteractionAt: row.session.lastInteractionAt,
     adult: { on: row.session.adultMode, since: row.session.adultSince, level: row.session.adultLevel },
   }

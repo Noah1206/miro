@@ -1,5 +1,17 @@
 # Character agency evaluation
 
+## Relationship experience (2026-10-11)
+
+`apps/web/lib/agency/relationship-experience.eval.ts` is a separate, opt-in live journey through the real app entry points. It requires `MIRO_RELATIONSHIP_EVAL_CANON` (a local JSON array of published authored character/world/contact-profile rows), `MIRO_RELATIONSHIP_EVAL_OUT`, an explicitly supplied priced model registry/API key, and a guarded local `TEST_DATABASE_URL`. It does not load `.env`. Supply a persistent whole-experiment budget (`MIRO_BUDGET_POLICY` and global cost/request limits); do not reset counters between phases.
+
+It clones authored canon into private synthetic characters, grants only local test credits, flushes deferred work, records actual provider usage, and deletes its synthetic fixtures. Routine availability is temporarily free and push delivery is mocked. Never use production user messages or export raw canon as a public report.
+
+```sh
+pnpm exec vitest run --config ai/evals/agency/vitest.config.ts apps/web/lib/agency/relationship-experience.eval.ts
+```
+
+The default journey covers six turns of preference, a promise, cancellation/hurt, repair/space, ordinary incoming dialogue and explicit recontact. `MIRO_RELATIONSHIP_EVAL_SCRIPT=contact` uses a two-turn promised-contact journey. `MIRO_RELATIONSHIP_EVAL_CHARACTERS` optionally selects comma-separated source slugs. Results include persisted state, background outcomes, rejected realization issues and per-call cost. Read [the implementation record](../../../docs/relationship-experience.md) for measured results and limits. The older harnesses and release gates below retain their own constraints.
+
 This harness runs the real compiler, planner, renderer/verifier orchestration and application persistence contracts with explicitly synthetic provider outputs. Database fixtures are isolated users/characters on a guarded local test database. It never loads the production `.env` or sends real notifications.
 
 ```sh

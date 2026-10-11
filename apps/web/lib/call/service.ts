@@ -2,6 +2,7 @@ import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { POLICY, feature, voiceCallAllowed, voiceCallTesters } from '@miro/config'
 import { db, callSessions, characters, contactProfiles, messages, realityContacts, relationships, roleplaySessions, userSettings, users } from '@miro/db'
+import { contactBoundaryActive } from '@miro/domain'
 import type { CallChannel } from '@miro/domain'
 import { resolveCallMedia } from '@miro/providers'
 import { commit, reserve, rollback, UsageExceededError } from '@/lib/usage/guard'
@@ -97,9 +98,10 @@ export async function startIncomingCall(sessionId: string, channel: CallChannel,
       .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
       .innerJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
       .innerJoin(users, eq(users.id, roleplaySessions.userId))
-      .where(eq(roleplaySessions.id, sessionId)).limit(1)
+      .where(eq(roleplaySessions.id, sessionId)).limit(1).for('update', { of: roleplaySessions })
     if (!row || row.session.deletedAt || row.session.restrictedAt || row.session.status !== 'active'
-      || row.character.deletedAt || row.character.experienceType !== 'reality' || row.user.deletedAt) return null
+      || row.character.deletedAt || row.character.experienceType !== 'reality' || row.user.deletedAt
+      || contactBoundaryActive(row.session.contactBoundary, new Date())) return null
     // Serialize the last check with creator contact edits before opening a ringing call.
     const [profile] = await tx.select().from(contactProfiles).where(eq(contactProfiles.characterId, row.character.id)).limit(1).for('share')
     if (!profile?.enabled) return null

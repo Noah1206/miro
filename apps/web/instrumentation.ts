@@ -14,19 +14,21 @@ export async function register() {
  */
 const recent = new Map<string, number>()
 export const onRequestError: Instrumentation.onRequestError = async (error, request, context) => {
-  if (process.env.NEXT_RUNTIME !== 'nodejs') return
-  const e = error as Error & { digest?: string }
-  const path = request.path.split('?')[0]
-  const key = `${path}|${e.message?.slice(0, 120)}`
-  const now = Date.now()
-  if ((recent.get(key) ?? 0) > now - 10 * 60_000) return
-  recent.set(key, now)
-  if (recent.size > 200) recent.clear()
-  const { postOperatorNote } = await import('./lib/ops/alerts')
-  await postOperatorNote([
-    `**서버 오류** \`${request.method} ${path}\` (${context.routeType} · ${context.routePath})`,
-    `${e.name}: ${e.message?.slice(0, 500)}`,
-    e.digest ? `digest ${e.digest}` : '',
-    '```' + (e.stack ?? '').split('\n').slice(1, 6).join('\n').slice(0, 800) + '```',
-  ].filter(Boolean).join('\n')).catch(() => false)
+  // Keep Node-only notification dependencies out of the Edge instrumentation bundle.
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const e = error as Error & { digest?: string }
+    const path = request.path.split('?')[0]
+    const key = `${path}|${e.message?.slice(0, 120)}`
+    const now = Date.now()
+    if ((recent.get(key) ?? 0) > now - 10 * 60_000) return
+    recent.set(key, now)
+    if (recent.size > 200) recent.clear()
+    const { postOperatorNote } = await import('./lib/ops/alerts')
+    await postOperatorNote([
+      `**서버 오류** \`${request.method} ${path}\` (${context.routeType} · ${context.routePath})`,
+      `${e.name}: ${e.message?.slice(0, 500)}`,
+      e.digest ? `digest ${e.digest}` : '',
+      '```' + (e.stack ?? '').split('\n').slice(1, 6).join('\n').slice(0, 800) + '```',
+    ].filter(Boolean).join('\n')).catch(() => false)
+  }
 }
