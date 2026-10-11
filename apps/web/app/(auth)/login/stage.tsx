@@ -28,7 +28,7 @@ export function LoginStage({ providers, notice, error, next }: { providers: Soci
         <Stagger gap={stagger.normal} delay={0.25} style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {error && <Notice role="alert" tone="danger">{t(error)}</Notice>}
           {notice && <Notice>⚠ {notice}</Notice>}
-          {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map((p) => <StaggerItem key={p.id}><SocialButton {...p} next={next} /></StaggerItem>)}
+          {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map((p) => <StaggerItem key={p.id}><SocialButton {...p} next={next} surface="sheet" /></StaggerItem>)}
         </Stagger>
       )}
     </main>
