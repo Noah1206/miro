@@ -1,5 +1,6 @@
 'use client'
-import { AnimatePresence } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { ease } from '@/lib/motion/tokens'
 import { useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
 import { Popover, MenuItem, TransitionLink } from '@/components/ui'
@@ -23,6 +24,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 }) {
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
   const t = useT()
+  const reduce = useReducedMotion()
   const { appended, quiet, live } = useTurns()
   const known = new Set(server.map((m) => m.id))
   // 오고 있는 답(스트리밍)은 맨 뒤에 — 보낸 말과 지금까지 받은 블록. 저장된 답이 오면 사라지고 그 자리를 저장본이 채운다.
@@ -45,21 +47,25 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
   const follow = () => end.current?.scrollIntoView({ block: 'end' })
-  useEffect(() => { follow() }, [items.length, live?.blocks.length])
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: !reduce && last?.role === 'user' ? 'smooth' : 'auto' }) }, [items.length, live?.blocks.length, reduce])
   useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
 
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}>
       <AnimatePresence initial={false}>
         {settled.map((m) => (
-          <Line key={m.id}>
+          <Line key={m.id} {...(quiet.has(m.id) ? { initial: false } : {})}>
             <Message m={m} characterName={characterName} portrait={portrait}
               typing={m.id === typingId} mood={mood} onGrow={follow} />
           </Line>
         ))}
       </AnimatePresence>
       {/* 오고 있는 답은 사라질 때 애니메이션 없이 — 저장본과 잠깐 겹쳐 두 번 보이지 않게. */}
-      {liveItems.map((m) => <Message key={m.id} m={m} characterName={characterName} portrait={portrait} mood={mood} onGrow={follow} />)}
+      {liveItems.map((m) => <motion.div key={m.id}
+        initial={reduce || m.role !== 'user' ? false : { opacity: 0, y: 18, scale: .98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: reduce ? 0 : .32, ease: ease.enter }} style={{ transformOrigin: 'bottom right' }}>
+        <Message m={m} characterName={characterName} portrait={portrait} mood={mood} onGrow={follow} />
+      </motion.div>)}
       <div ref={end} aria-hidden />
     </div>
   )

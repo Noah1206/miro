@@ -39,7 +39,7 @@
 .adultMenuItem svg { flex: 0 0 auto; color: currentColor; }
 .adultMenuTitle { display: block; font-size: 15px; font-weight: 600; line-height: 1.35; }
 .adultConsent { display: grid; text-align: left; margin-top: calc(-1 * var(--space-3)); }
-.adultBadge { width: 64px; height: 64px; display: grid; place-items: center; border: 3px solid var(--color-accent-text); border-radius: 50%; color: var(--color-accent-text); font-size: 24px; font-weight: 800; letter-spacing: -.5px; }
+.adultBadge { width: 64px; height: 64px; box-sizing: border-box; display: grid; place-items: center; border: 5px solid #ef3038; border-radius: 50%; background: #fff; color: #111; font-size: 31px; line-height: 1; font-weight: 850; letter-spacing: -1.5px; }
 .stylePicker { position: relative; flex-shrink: 0; }
 .styleButton { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 8px 0 10px; border: 0; border-radius: 8px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; }
 .transcript { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 18px 16px 24px; scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
@@ -80,16 +80,22 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .bubble strong { font-weight: 600; color: var(--color-white); }
 .userRow { display: flex; justify-content: flex-end; }
 .userBubble { max-width: 84%; padding: 11px 14px; margin: 0; border-radius: var(--radius-chat); background: var(--color-surface-3); color: var(--color-text-primary); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.composer { flex: 0 0 auto; background: var(--color-bg); border-top: 1px solid var(--color-border); padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); }
+.composer { flex: 0 0 auto; background: var(--color-bg); border-top: 0; padding: 6px 12px calc(10px + env(safe-area-inset-bottom)); }
 /* 입력창은 한 장의 카드: 위에 글, 아래 줄에 모델 선택과 보내기. 둥글기는 살짝만 (§각지게). */
-.composerForm { position:relative; display: flex; flex-direction: column; gap: 2px; padding: 4px 8px 6px 12px; border: 1px solid var(--color-border); border-radius: 19px; background: linear-gradient(120deg,#302a36,#27222e); }
+.composerForm { position:relative; display: flex; flex-direction: column; gap: 2px; padding: 4px 7px 3px; border: 1px solid var(--color-border); border-radius: 19px; background: linear-gradient(120deg,#302a36,#27222e); }
 .composerForm:focus-within { border-color: var(--color-border-input); }
 .composerBar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.input { display: block; width: 100%; min-width: 0; min-height: 32px; max-height: 140px; resize: none; overflow-y: auto; padding: 5px 4px; border: 0; border-radius: 0; background: transparent; color: var(--color-text-primary); font-family: inherit; font-size: 16px; line-height: 22px; letter-spacing: -.3px; }
+.input { display: block; width: 100%; min-width: 0; min-height: 32px; max-height: 140px; resize: none; overflow-y: auto; padding: 5px 7px; border: 0; border-radius: 0; background: transparent; color: var(--color-text-primary); font-family: inherit; font-size: 16px; line-height: 22px; letter-spacing: -.3px; }
 .input::placeholder { color: var(--color-text-tertiary); }
 .input:focus-visible { outline: none; }
 .send { display: grid; place-items: center; width: 34px; height: 34px; flex-shrink: 0; padding: 0; border: 0; border-radius: 999px; background: var(--color-accent); color: var(--color-accent-on); cursor: pointer; }
 .send:disabled { opacity: .45; cursor: default; }
+.contextButton, .adultMenuToggle, .adultMenuItem, .iconButton, .avatar { transition: transform 160ms var(--ease-standard), background-color 160ms var(--ease-standard); }
+.contextButton:active, .adultMenuToggle:active, .adultMenuItem:active, .iconButton:active, .avatar:active { transform: scale(.94); }
+@media (prefers-reduced-motion: reduce) {
+  .contextButton, .adultMenuToggle, .adultMenuItem, .iconButton, .avatar { transition: none; }
+  .contextButton:active, .adultMenuToggle:active, .adultMenuItem:active, .iconButton:active, .avatar:active { transform: none; }
+}
 .styleButton:focus-visible, .contextButton:focus-visible, .send:focus-visible { outline: 2px solid var(--color-white); outline-offset: 2px; }
 @media (max-width: 360px) { .header { gap: 4px; padding-inline: 8px; } .title { font-size: 16px; } .styleButton { padding: 0 8px 0 12px; font-size: 12px; } .transcript { padding-inline: 12px; } }
 
