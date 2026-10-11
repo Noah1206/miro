@@ -39,7 +39,7 @@ pnpm --filter @miro/admin dev    # admin :3100
 
 Provider 연결은 환경변수만 바꾼다 (`.env.example`). 코드 수정은 없다. `/api/health` 가 각 Provider 의 live/mock 을 보여준다.
 
-소셜 로그인을 Supabase Auth로 운영할 때는 `AUTH_PROVIDER=supabase`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`를 설정한다. Google/카카오 키는 Supabase 대시보드에서 관리한다. 소셜 제공자의 callback은 `<Project URL>/auth/v1/callback`, Supabase의 앱 Redirect URL은 `http://localhost:3000/api/auth/**` 및 실제 서비스 도메인의 callback 경로를 허용한다. 인증은 PKCE로 확인한 뒤 기존 Miro 계정·세션에 연결한다. 공개 키를 사용하며 service_role 키는 인증에 사용하지 않는다. 웹 서버는 저장소 루트 `.env`도 읽고, 배포 환경변수가 있으면 그 값을 우선한다.
+소셜 로그인을 Supabase Auth로 운영할 때는 `AUTH_PROVIDER=supabase`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`를 설정한다. Google/카카오/X 키는 Supabase 대시보드에서 관리한다. X는 `Authentication → Sign In / Providers → X / Twitter (OAuth 2.0)`에서 기존 X 앱의 OAuth 2.0 Client ID·Secret을 등록하고 활성화한다(레거시 Twitter OAuth 1.0a 대신 provider `x` 사용). 앱 경로는 `/api/auth/twitter/callback`이며 로컬 4173 포트에서 확인할 때도 이 callback을 Redirect URL 허용 목록에 추가한다. 소셜 제공자의 callback은 `<Project URL>/auth/v1/callback`, Supabase의 앱 Redirect URL은 `http://localhost:3000/api/auth/**` 및 실제 서비스 도메인의 callback 경로를 허용한다. 인증은 PKCE로 확인한 뒤 기존 Miro 계정·세션에 연결한다. 공개 키를 사용하며 service_role 키는 인증에 사용하지 않는다. 웹 서버는 저장소 루트 `.env`도 읽고, 배포 환경변수가 있으면 그 값을 우선한다.
 
 ## 검증
 

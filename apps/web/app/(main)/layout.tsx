@@ -11,7 +11,7 @@ import { WelcomePopup } from '@/components/welcome-popup'
 import { WELCOME_GRANT } from '@miro/config'
 import { getT } from '@/lib/i18n/server'
 
-const IDS: OAuthProviderId[] = ['google', 'kakao']
+const IDS: OAuthProviderId[] = ['google', 'kakao', 'twitter']
 
 /** 모바일: 하단 내비 + 페이지. 데스크톱: 왼쪽 내비 + 메인. 장면 화면(chat/live/call)에서는 내비가 스스로 사라진다. */
 export default async function MainLayout({ children }: { children: React.ReactNode }) {

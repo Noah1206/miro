@@ -27,7 +27,7 @@ export class SupabaseOAuthProvider implements OAuthProvider {
     const callback = new URL(redirectUri)
     callback.searchParams.set('state', state)
     const authorize = new URL(`${this.url}/auth/v1/authorize`)
-    authorize.search = new URLSearchParams({ provider: this.id, redirect_to: callback.toString(),
+    authorize.search = new URLSearchParams({ provider: this.id === 'twitter' ? 'x' : this.id, redirect_to: callback.toString(),
       code_challenge: codeChallenge, code_challenge_method: 's256' }).toString()
     return authorize.toString()
   }
@@ -46,7 +46,7 @@ export class SupabaseOAuthProvider implements OAuthProvider {
     })
     if (!response.ok) throw new Error(`Supabase user verification failed: ${response.status}`)
     const user = User.parse(await response.json())
-    const identity = user.identities.find(i => i.provider === this.id)
+    const identity = user.identities.find(i => i.provider === (this.id === 'twitter' ? 'x' : this.id))
     if (!identity || !String(identity.identity_data.sub)) throw new Error('Supabase provider identity missing')
     return { provider: this.id, providerAccountId: String(identity.identity_data.sub),
       // Existing account linking uses email: only supply an Auth-confirmed address.

@@ -9,6 +9,13 @@ const user = {
   identities: [{ provider: 'google', identity_data: { sub: 'google-account-id' } }], user_metadata: { name: 'Member' },
 }
 describe('Supabase social authentication', () => {
+  it('uses the X OAuth 2.0 provider while retaining the application twitter identity', async () => {
+    const x = new SupabaseOAuthProvider('twitter', 'https://project.supabase.co', 'sb_publishable_test')
+    const url = new URL(x.authorizeUrl({ redirectUri: 'http://localhost/api/auth/twitter/callback', state: 's', codeChallenge: 'c' }))
+    expect(url.searchParams.get('provider')).toBe('x')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(Response.json({ access_token: 'test-token' })).mockResolvedValueOnce(Response.json({ ...user, identities: [{ provider: 'x', identity_data: { sub: 'x-account-id' } }] }))
+    expect(await x.exchange({ code: 'code', codeVerifier: 'verifier', redirectUri: 'http://localhost' })).toMatchObject({ provider: 'twitter', providerAccountId: 'x-account-id' })
+  })
   it('routes through the project with PKCE and a distinct application state', () => {
     const url = new URL(provider().authorizeUrl({ redirectUri: 'http://localhost:3000/api/auth/google/callback', state: 'state-value', codeChallenge: 'challenge' }))
     expect(url.origin).toBe('https://project.supabase.co')

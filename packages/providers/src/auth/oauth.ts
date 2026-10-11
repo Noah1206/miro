@@ -3,6 +3,7 @@ import type { OAuthProfile, OAuthProvider, OAuthProviderId } from './types'
 
 type Endpoints = { authorize: string; token: string; profile: string; scope: string }
 const ENDPOINTS: Record<OAuthProviderId, Endpoints> = {
+  twitter: { authorize: 'https://x.com/i/oauth2/authorize', token: 'https://api.x.com/2/oauth2/token', profile: 'https://api.x.com/2/users/me', scope: 'tweet.read users.read' },
   google: { authorize: 'https://accounts.google.com/o/oauth2/v2/auth', token: 'https://oauth2.googleapis.com/token', profile: 'https://openidconnect.googleapis.com/v1/userinfo', scope: 'openid email profile' },
   kakao: { authorize: 'https://kauth.kakao.com/oauth/authorize', token: 'https://kauth.kakao.com/oauth/token', profile: 'https://kapi.kakao.com/v2/user/me', scope: 'account_email profile_nickname' },
 }
@@ -29,7 +30,13 @@ export class OAuth2Provider implements OAuthProvider {
     const e = ENDPOINTS[this.id]
     const body = new URLSearchParams({ grant_type: 'authorization_code', code, redirect_uri: redirectUri, client_id: this.clientId, client_secret: this.clientSecret })
     if (this.pkce && codeVerifier) body.set('code_verifier', codeVerifier)
-    const tokenRes = await fetch(e.token, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body })
+    const headers: Record<string, string> = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    if (this.id === 'twitter') {
+      if (!codeVerifier) throw new Error('Twitter PKCE verifier missing')
+      body.delete('client_secret')
+      headers.Authorization = `Basic ${Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64')}`
+    }
+    const tokenRes = await fetch(e.token, { method: 'POST', headers, body, signal: AbortSignal.timeout(15_000) })
     if (!tokenRes.ok) throw new Error(`${this.id} token exchange failed: ${tokenRes.status}`)
     const { access_token } = (await tokenRes.json()) as { access_token?: string }
     if (!access_token) throw new Error(`${this.id} token missing`)
@@ -47,6 +54,11 @@ export function parseProfile(id: OAuthProviderId, raw: unknown): OAuthProfile {
   const r = raw as Record<string, unknown>
   if (id === 'google') {
     return { provider: id, providerAccountId: String(r.sub), email: r.email_verified === true ? (r.email as string | undefined) ?? null : null, name: (r.name as string | undefined) ?? null }
+  }
+  if (id === 'twitter') {
+    const data = r.data as Record<string, unknown> | undefined
+    if (!data || typeof data.id !== 'string' || !data.id) throw new Error('Twitter identity missing')
+    return { provider: id, providerAccountId: data.id, email: null, name: typeof data.name === 'string' ? data.name : null }
   }
   const acc = (r.kakao_account ?? {}) as Record<string, unknown>
   const prof = (acc.profile ?? {}) as Record<string, unknown>

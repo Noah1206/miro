@@ -12,7 +12,7 @@ export const EXTRA_KEYS = [
   // domain character/types.ts BUILD_PRESETS·GENDER_PRESETS
   msg('마름'), msg('표준'), msg('근육질'), msg('과체중'), msg('남성'), msg('여성'),
   // providers OAUTH_LABEL
-  msg('카카오'),
+  msg('카카오'), msg('트위터(X)'),
   // providers verify/portone.ts 만료 사유
   msg('본인인증이 만료됐어요. 다시 인증해 주세요.'),
   // lib/wallet/service.ts 내역 줄의 label·status (SQL case)

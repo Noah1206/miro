@@ -31,4 +31,4 @@ export async function takeNext(): Promise<string | null> {
   return v && v.startsWith('/') && !v.startsWith('//') ? v : null
 }
 
-export function isProvider(p: string): p is 'google' | 'kakao' { return p === 'google' || p === 'kakao' }
+export function isProvider(p: string): p is 'google' | 'kakao' | 'twitter' { return p === 'google' || p === 'kakao' || p === 'twitter' }

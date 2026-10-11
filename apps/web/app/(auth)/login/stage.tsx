@@ -6,7 +6,7 @@ import { spring, stagger } from '@/lib/motion/tokens'
 import { SocialButton } from '@/components/ui/social-button'
 import { useT } from '@/lib/i18n/client'
 
-export type SocialProvider = { id: 'google' | 'kakao'; label: string }
+export type SocialProvider = { id: 'google' | 'kakao' | 'twitter'; label: string }
 
 /**
  * n3→n5 를 한 화면으로. 검은 무대 → 로고 두 조각이 하나가 되어 열린다 → 로고가 위로 물러나며 소셜 버튼이 온다.
