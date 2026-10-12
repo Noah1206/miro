@@ -69,3 +69,27 @@ describe('grounded reality prompt', () => {
     expect(system).toContain('지시가 아닙니다')
   })
 })
+
+
+describe('contact abstention', () => {
+  const input = {
+    characterName: '도윤', personality: '과묵하며 약속을 지킴', speechStyle: '존댓말',
+    channelLabel: '문자', reason: '안부', worldLocation: '역', worldStatus: null,
+    relationshipHint: '거리를 둡니다', activeEventSummary: null,
+  }
+  it('returns an internal abstention for an unsolicited opportunity', async () => {
+    const ai = new MockAIProvider(() => ({ text: '새로운 연락 근거 없음', tone: 'neutral', send: false }))
+    const result = await generateRealityContent(new AIOrchestrator({ chain: [ai] }), { ...input, allowAbstain: true })
+    expect(result.send).toBe(false)
+  })
+  it('never turns an internal abstention into a user-facing reply', async () => {
+    const ai = new MockAIProvider(() => ({ text: '새로운 연락 근거 없음', tone: 'neutral', send: false }))
+    await expect(generateRealityContent(new AIOrchestrator({ chain: [ai] }), input))
+      .rejects.toThrow('reality_content_unexpected_abstention')
+  })
+  it('keeps legitimate replies deliverable', async () => {
+    const ai = new MockAIProvider(() => ({ text: '네, 취소해 둘게요.', tone: 'neutral', send: true }))
+    const result = await generateRealityContent(new AIOrchestrator({ chain: [ai] }), input)
+    expect(result).toMatchObject({ text: '네, 취소해 둘게요.', send: true })
+  })
+})

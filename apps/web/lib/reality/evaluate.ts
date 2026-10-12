@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util'
 import { localClock } from '@miro/domain'
 import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm'
 import { POLICY, feature, features } from '@miro/config'
@@ -275,6 +276,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   const grounding = await loadRealityContext(sessionId, row.session.userId, intent.reason)
   if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }
   const contentInput = {
+    allowAbstain: !intent.answers && !intent.momentKey,
     characterName: row.character.name,
     personality: row.character.personality,
     speechStyle: row.character.speechStyle,
@@ -291,6 +293,21 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
     ...grounding,
   }
   const content = await generateRealityContent(llm, contentInput)
+
+  if (content.send === false) {
+    // Persist the declined opportunity so the scheduler does not pay to regenerate it on every tick.
+    const declined = await db.transaction(async tx => {
+      const [current] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).for('update')
+      if (!current || current.deletedAt || current.restrictedAt || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
+        || current.turnCount !== row.session.turnCount
+        || !isDeepStrictEqual(current.pendingRealityIntent, row.session.pendingRealityIntent)) return false
+      await tx.insert(realityContacts).values({ sessionId, channel: decision.channel, dedupeKey: decision.dedupeKey,
+        payload: {}, reason: intent.reason, status: 'suppressed', suppressedReason: 'no_motivation' }).onConflictDoNothing()
+      await tx.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
+      return true
+    })
+    return declined ? { outcome: 'suppressed', reason: 'no_motivation' } : { outcome: 'skipped', reason: 'state_changed' }
+  }
 
   // Network inference finishes before acquiring the persistence transaction.
   let mediaUrl: string | null = null

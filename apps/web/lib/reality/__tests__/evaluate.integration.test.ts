@@ -94,6 +94,35 @@ describeDb('reality activation — real send path', () => {
     expect(await realityMessages(id)).toHaveLength(0)
   })
 
+  it('records an unmotivated opportunity without a message or push and does not regenerate it', async () => {
+    const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
+    const generate = vi.spyOn(providers, 'generateRealityContent').mockResolvedValue({
+      text: '이미 보낸 이야기뿐', tone: 'neutral', send: false,
+    })
+    expect(await evaluateSession(id, DAY)).toEqual({ outcome: 'suppressed', reason: 'no_motivation' })
+    expect(generate.mock.calls[0]![1].allowAbstain).toBe(true)
+    expect(await realityMessages(id)).toHaveLength(0)
+    const records = await contacts(id)
+    expect(records).toHaveLength(1)
+    expect(records[0]).toMatchObject({ status: 'suppressed', suppressedReason: 'no_motivation', messageId: null })
+    expect(await db.select().from(realityPushJobs).where(eq(realityPushJobs.contactId, records[0]!.id))).toHaveLength(0)
+    await evaluateSession(id, DAY)
+    expect(generate).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not erase a new reply intent when an old opportunity abstains', async () => {
+    const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
+    const next = { channel: 'message', reason: '새 질문에 답장', urgency: 0.9, answers: 'user_message' } as const
+    vi.spyOn(providers, 'generateRealityContent').mockImplementation(async () => {
+      await db.update(roleplaySessions).set({ pendingRealityIntent: next }).where(eq(roleplaySessions.id, id))
+      return { text: '새 근거 없음', tone: 'neutral', send: false }
+    })
+    expect(await evaluateSession(id, DAY)).toEqual({ outcome: 'skipped', reason: 'state_changed' })
+    expect(await contacts(id)).toHaveLength(0)
+    const [current] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, id))
+    expect(current!.pendingRealityIntent).toEqual(next)
+  })
+
   it('grounds contact in visible owned history and memory', async () => {
     const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
     const [owner] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, id))

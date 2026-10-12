@@ -30,3 +30,5 @@ export { MiroSLMProvider } from './ai/miro-slm'
 export * from './ai/data'
 export * from './ai/evaluation'
 export * from './ai/readiness'
+
+export { CHARACTER_VOICE_RULES } from './ai/character-voice'
