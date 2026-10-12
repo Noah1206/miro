@@ -16,13 +16,13 @@
 ## 로고
 
 [logo-symbol.svg](logo-symbol.svg)가 편집 가능한 원본이다. 승인한 03번 시안의 곡면을 벡터로 정리했다.
-기본 로고 SVG는 평면 단색이다. 파비콘은 자수정 그라데이션 바탕에 흰색 마크를 사용한다.
+기본 로고 SVG는 평면 단색이다. 홈 화면 앱 아이콘은 검정 바탕에 흰색 마크, 파비콘은 차콜 바탕에 흰색 마크를 사용한다.
 
 - public/logo-mark.svg / logo-mark.png: 흰색 기본 로고.
 - public/logo-mark-lavender.svg / logo-mark-lavender.png: 라벤더 포인트 버전.
 - public/logo-m.png / logo-s.png: 인트로·빈 대화 목록에서 만나는 좌우 곡면.
-- public/icon-180.png / icon-192.png / icon-512.png: 검정 바탕·라벤더 심볼, 마크 폭 62%.
-- public/favicon.svg / favicon.png: 자수정 타일·흰색 심볼(마크 폭 76%).
+- public/icon-180.png / icon-192.png / icon-512.png: 검정 바탕·흰색 심볼, 마크 폭 62%. iPhone·PWA·알림 경로는 v4로 캐시를 갱신한다.
+- public/favicon.svg / favicon.png: 차콜 타일·흰색 심볼(마크 폭 76%).
 - public/favicon-16.png / favicon-32.png / favicon.ico: 브라우저 탭용 작은 크기, ICO에는 16·32·48px 포함.
 - logo-mark-source.png: 이전 M 시안의 기록. 현재 자산 생성에는 사용하지 않는다.
 
@@ -33,6 +33,8 @@ Node.js와 sharp가 필요하다. sharp가 로컬 패키지 경로에 있으면:
 ~~~sh
 node docs/brand/make-logo-assets.mjs
 ~~~
+
+홈 화면 앱 아이콘 세 크기만 만들 때는 `--pwa-only`를 붙인다.
 
 bundled runtime을 사용할 때는 MIRO_ASSET_NODE_MODULES를 sharp가 있는 node_modules 절대 경로로 설정한다.
 기존 Python 실행 경로는 같은 Node 생성기로 연결된다.

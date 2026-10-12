@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
         { url: '/favicon-32.png?v=5', sizes: '32x32', type: 'image/png' },
         { url: '/favicon.svg?v=5', sizes: 'any', type: 'image/svg+xml' },
       ],
-      apple: '/icon-180.png?v=3',
+      apple: '/icon-180.png?v=4',
     },
   }
 }

@@ -7,7 +7,7 @@ self.addEventListener('push', (event) => {
     tag: data.tag,
     renotify: true,
     data: { url: data.url },
-    icon: '/icon-192.png',
+    icon: '/icon-192.png?v=4',
   }))
 })
 
