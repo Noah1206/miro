@@ -1,0 +1,42 @@
+.screen { padding: 0 var(--gutter) calc(var(--nav-h) + 24px); animation: enter .24s ease-out both; }
+.header { display: flex; align-items: center; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 22px; }
+.back { width: 36px; height: 44px; display: grid; place-items: center; flex-shrink: 0; margin-left: -8px; }
+.field { flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; border: 1px solid #ffffff08; background: #1b1a20; border-radius: 10px; color: var(--color-text-secondary); transition: border-color .18s; }
+.field:focus-within { border-color: var(--color-accent-text); }
+.field input { width: 100%; min-width: 0; background: transparent; border: 0; outline: none; color: var(--color-text-primary); font-size: 16px; font-weight: 450; letter-spacing: -.02em; }
+.field input::placeholder { color: var(--color-text-tertiary); font-size: 14px; }
+.field input::-webkit-search-cancel-button { display: none; }
+.field button { border: 0; background: transparent; color: var(--color-text-secondary); font-size: 24px; min-width: 32px; height: 40px; }
+.filters { display: grid; gap: 20px; padding-bottom: 8px; }
+.filterRow { min-width: 0; }
+.groupHeading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.filterRow h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--color-text-primary); letter-spacing: -.02em; }
+.disclosure { display: grid; place-items: center; width: 40px; height: 40px; margin-right: -8px; padding: 0; background: transparent; border: 0; border-radius: 8px; color: #b8a6ff; }
+.disclosure svg { transition: transform .18s ease; }
+.disclosure[aria-expanded="true"] svg { transform: rotate(180deg); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.chips button { padding: 4px 9px; min-height: 28px; border: 0; border-radius: 6px; background: #b8a6ff0b; color: #b8afc9; font-size: 13px; font-weight: 500; line-height: 20px; letter-spacing: -.015em; overflow-wrap: anywhere; transition: background .15s, color .15s; }
+.chips button[aria-pressed="true"] { background: #b8a6ff24; color: #cbbcff; font-weight: 600; }
+@media (hover: hover) { .chips button:not([aria-pressed="true"]):hover { background: #b8a6ff16; } }
+.screen button:focus-visible, .back:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 3px; }
+.resultHeading { display: flex; align-items: center; justify-content: flex-end; min-height: 40px; }
+.resultHeading h2 { font-size: 15px; font-weight: 650; }
+.resultHeading button { border: 0; background: transparent; color: var(--color-text-secondary); font-size: 12px; min-height: 40px; padding: 0 4px; }
+.status { padding: 52px 0; text-align: center; color: var(--color-text-secondary); font-size: 14px; }
+.more { display: flex; justify-content: center; margin-top: 24px; }
+@keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .screen { animation: none; } .screen * { transition: none; } }
+
+.results { padding-top: 18px; }
+.recent { margin: 0 0 20px; }
+.recentHeading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.recentHeading h2 { font-size: 14px; font-weight: 600; letter-spacing: -.02em; color: var(--color-text-primary); }
+.recentHeading > button { border: 0; background: transparent; color: #828187; font-size: 12px; padding: 8px 0 8px 12px; }
+.recentList { display: flex; flex-wrap: wrap; gap: 4px 20px; padding: 0; margin: 0; list-style: none; }
+.recentList li { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+.recentList button { border: 0; background: transparent; color: #aaa9af; min-height: 32px; padding: 4px 0; font-size: 13px; font-weight: 400; letter-spacing: -.01em; text-align: left; }
+.recentList li > button:first-child { min-width: 0; }
+.recentList button span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recentList button + button { flex-shrink: 0; width: 28px; text-align: center; color: #77767d; font-size: 16px; }
+@media (hover: hover) { .recentList button:hover { color: #e3e2e7; } }
+.noRecent { color: var(--color-text-tertiary); font-size: 13px; padding: 9px 0; }

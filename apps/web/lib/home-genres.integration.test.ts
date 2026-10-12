@@ -68,6 +68,11 @@ describeDb('home genre chips', () => {
       await db.insert(worlds).values({ characterId: id, genre: genreA })
       return id
     }))
+    const searchFirst = await homePage(viewer, null, { query: `${prefix} page`, genres: [genreA] })
+    const searchSecond = await homePage(viewer, searchFirst.nextCursor, { query: `${prefix} page`, genres: [genreA] })
+    expect(searchFirst.items).toHaveLength(12)
+    expect(searchFirst.nextCursor).not.toBeNull()
+    expect([...searchFirst.items, ...searchSecond.items].map(c => c.id).sort()).toEqual([...pageIds].sort())
     const first = await homePage(viewer, null, { genres: [genreB, genreA] })
     expect(first.items).toHaveLength(12)
     expect(first.nextCursor).not.toBeNull()
@@ -80,6 +85,21 @@ describeDb('home genre chips', () => {
     expect((await homePage(viewer, null, { genres: [genreB] })).items.map(item => item.id)).toContain(created)
     expect((await homePage(owner, null, { genres: [genreB] })).items.map(item => item.id)).toContain(privateCard)
     await expect(homePage(viewer, null, { genres: ['장르·혼합'] })).rejects.toThrow('INVALID_GENRE')
+  })
+
+  it('searches names and tags literally, combines filters and excludes other users private cards', async () => {
+    const owner = await user()
+    const viewer = await user()
+    const query = `${prefix}needle`
+    const match = await character(owner, query, 'reality', { relationshipKeywords: ['상사'] })
+    const tagMatch = await character(owner, `${prefix}tag`, 'reality', { relationshipKeywords: [query] })
+    const hidden = await character(owner, query, 'reality', { isPublic: false })
+    await db.insert(worlds).values({ characterId: match, genre: '오피스' })
+    expect((await homePage(viewer, null, { query: query.toUpperCase() })).items.map(c => c.id)).toEqual(expect.arrayContaining([match, tagMatch]))
+    expect((await homePage(viewer, null, { query })).items.map(c => c.id)).not.toContain(hidden)
+    expect((await homePage(viewer, null, { query, genres: ['오피스'], relations: ['상사'] })).items.map(c => c.id)).toEqual([match])
+    expect((await homePage(viewer, null, { query: `${query}%_` })).items).toEqual([])
+    expect((await homePage(viewer, null, { query, genres: ['호러'] })).items).toEqual([])
   })
 
   it('filters by chosen relationships, and needs both kinds when genres and relationships are chosen', async () => {

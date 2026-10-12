@@ -57,7 +57,7 @@ function decodeCursor(value: string | null) {
 }
 
 /** 홈 칩(장르·관계)으로 거르기. 한 종류 안에서는 하나라도, 두 종류를 같이 고르면 둘 다 맞아야 한다. */
-export type CardFilter = { genres?: string[]; relations?: string[] }
+export type CardFilter = { genres?: string[]; relations?: string[]; query?: string }
 
 /** 칩 값을 비교할 글자로 — 틀린 값이면 INVALID_GENRE. */
 function chipNeedles(values: string[] = []) {
@@ -103,6 +103,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       )] : [or(eq(characters.isOfficial, true), eq(characters.isPublic, true))]),
       genreMatch(characters.id, filter.genres),
       relationMatch(filter.relations),
+      ...(searchNeedle(filter.query ?? '') ? [containsAny(sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`, [searchNeedle(filter.query ?? '')])] : []),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [or(
         lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),

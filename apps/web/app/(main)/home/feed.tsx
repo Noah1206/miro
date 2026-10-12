@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
-import { MOODS, RELATIONS } from '@/lib/genres'
 import type { CardPage, HomeCard } from '@/lib/home'
 import styles from './home.module.css'
 import { useT } from '@/lib/i18n/client'
@@ -17,7 +16,7 @@ function PhotoDetails({ c }: { c: HomeCard }) {
     {(c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
   </span>
 }
-function StoryCard({ c }: { c: HomeCard }) {
+export function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
   // 해시태그는 카드 밑에 — 장르 → 관계 순으로 10개까지, 넘치면 다음 줄로(2026-09-30, 10/5 5→10개·회색 칩).
   const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 10)
@@ -34,23 +33,8 @@ function StoryCard({ c }: { c: HomeCard }) {
 type Filter = { genres: string[]; relations: string[] }
 const NONE: Filter = { genres: [], relations: [] }
 const listKey = (filter: Filter) => JSON.stringify([filter.genres, filter.relations])
-// 칩 순서대로 모은다 — 같은 묶음이 누른 순서 때문에 다른 목록이 되지 않게.
-const toggled = (options: readonly string[], chosen: string[], value: string) =>
-  options.filter(option => option === value ? !chosen.includes(option) : chosen.includes(option))
-
-/** 장르·관계 칩 섹션 하나(2026-09-30 요청) — 제목 아래 한 줄, 가로로 넘긴다. */
-function ChipSection({ id, title, options, chosen, onToggle }: { id: string; title: string; options: readonly string[]; chosen: string[]; onToggle: (value: string) => void }) {
-  const t = useT()
-  return <section aria-labelledby={id} className={styles.chipSection}>
-    <h2 id={id}>{title}</h2>
-    <div className={styles.chips} role="group" aria-labelledby={id}>
-      {options.map(value => <button key={value} type="button" aria-pressed={chosen.includes(value)} onClick={() => onToggle(value)}>{t(value)}</button>)}
-    </div>
-  </section>
-}
-
 export function HomeFeed({ initial }: { initial: CardPage }) {
-  const [filter, setFilter] = useState<Filter>(NONE)
+  const filter = NONE
   const [lists, setLists] = useState<Record<string, CardPage>>(() => ({ [listKey(NONE)]: initial }))
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState<Record<string, boolean>>({})
@@ -79,19 +63,8 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
     } catch { setFailed(current => ({ ...current, [k]: true })) } finally { setLoading(current => ({ ...current, [k]: false })) }
   }
 
-  function show(next: Filter) {
-    setFilter(next)
-    if (!lists[listKey(next)]) void load(next)
-  }
-
   return <div className={`${styles.feed} ${empty || waiting ? styles.fill : ''}`}>
     <h1 className="sr-only">{t('홈')}</h1>
-    {/* 장르·관계는 각자 섹션(2026-09-30 요청, 전체·인기 버튼은 없앴다). 한 섹션 안에서는 하나라도, 두 섹션을 같이 고르면 둘 다 맞는 이야기. */}
-    <ChipSection id="genre-title" title={t('장르')} options={MOODS} chosen={filter.genres}
-      onToggle={value => show({ ...filter, genres: toggled(MOODS, filter.genres, value) })} />
-    <ChipSection id="relation-title" title={t('관계')} options={RELATIONS} chosen={filter.relations}
-      onToggle={value => show({ ...filter, relations: toggled(RELATIONS, filter.relations, value) })} />
-
     <section aria-labelledby="recommend-title" className={empty || waiting ? styles.fill : undefined}>
       {/* '전체 이야기' 제목은 화면에서 뺐다(2026-09-30 요청) — 화면 읽기용으로만 남긴다. */}
       <h2 id="recommend-title" className="sr-only">{t('전체 이야기')}</h2>

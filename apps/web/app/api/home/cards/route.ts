@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const data = popular
       ? await measured('api.home_popular_data', () => popularHomeCards(genres))
-      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor'), { genres, relations: params.getAll('relation') }))
+      : await measured('api.home_page_data', async () => homePage((await currentUser())?.id ?? null, params.get('cursor'), { genres, relations: params.getAll('relation'), query: params.get('q') ?? '' }))
     const elapsedMs = metric(popular ? 'api.home_popular_total' : 'api.home_page_total', startedAt)
     return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store', 'Server-Timing': `app;dur=${elapsedMs}` } })
   } catch (error) {
