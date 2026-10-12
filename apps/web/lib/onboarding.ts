@@ -6,19 +6,18 @@ import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
 import { getPersona, parsePersona, savePersona } from '@/lib/persona'
 import { grantRecharge } from '@/lib/usage/guard'
-import { REQUIRED_TERMS, TASTES, type Taste } from '@/lib/onboarding-options'
+import { REQUIRED_TERMS } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
 
 /**
- * 첫 로그인 온보딩(2026-09-30 결정): 언어 → 닉네임 → 성별 → 취향 → 생년월일(선택) → 약관. 마지막에 한 번에 저장한다.
- * 닉네임·성별은 페르소나로(캐릭터가 부르는 이름), 취향·생년월일은 사용자에, 언어·선택 동의는 설정에 남긴다.
+ * 첫 로그인 온보딩(2026-09-30 결정): 언어 → 닉네임 → 성별 → 생년월일(필수) → 약관. 취향(BL/HL/GL) 단계는 10/12 뺐다 — 읽는 곳이 없었고 지금은 BL 여성향만 있다(users.tastes 칸은 남겨 둠). 마지막에 한 번에 저장한다.
+ * 닉네임·성별은 페르소나로(캐릭터가 부르는 이름), 생년월일은 사용자에, 언어·선택 동의는 설정에 남긴다.
  * 언어는 고르는 순간 쿠키로 먼저 바뀐다(화면이 바로 그 언어로) — 여기서는 계정 설정에 남긴다.
  */
 export type OnboardingInput = {
   language: Language
   nickname: string
   gender: 'female' | 'male' | null
-  tastes: Taste[]
   birthDate: string | null
   marketing: boolean
   nightMarketing: boolean
@@ -36,19 +35,16 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   const g = form.get('gender')
   if (g !== 'female' && g !== 'male' && g !== 'none') return { ok: false, step: 3, error: msg('성별을 골라 주세요.') }
 
-  const tastes = TASTES.filter((t) => form.getAll('taste').includes(t))
-  if (tastes.length === 0) return { ok: false, step: 4, error: msg('취향을 하나 이상 골라 주세요.') }
-
   const birth = form.get('birthDate')
   const birthDate = typeof birth === 'string' && birth ? birth : null
-  if (birthDate && !validBirthDate(birthDate, today)) return { ok: false, step: 5, error: msg('생년월일을 다시 확인해 주세요.') }
-  // 약관 제4조: 만 18세 이상만 가입(10/3 점검). 생년월일을 적었으면 한국 날짜로 만 나이를 본다.
-  if (birthDate && fullAge(birthDate, today) < 18) return { ok: false, step: 5, error: msg('만 18세 이상만 가입할 수 있어요.') }
+  if (!birthDate || !validBirthDate(birthDate, today)) return { ok: false, step: 4, error: msg('생년월일을 다시 확인해 주세요.') }
+  // 일반 가입은 만 14세 이상. 언베일 인증과는 독립적으로 한국 날짜 기준으로 검사한다.
+  if (birthDate && fullAge(birthDate, today) < 14) return { ok: false, step: 4, error: msg('만 14세 이상만 가입할 수 있어요.') }
 
-  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 6, error: msg('필수 항목에 모두 동의해 주세요.') }
+  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 5, error: msg('필수 항목에 모두 동의해 주세요.') }
 
   return { ok: true, input: {
-    language, nickname: name.persona.name, gender: g === 'none' ? null : g, tastes, birthDate,
+    language, nickname: name.persona.name, gender: g === 'none' ? null : g, birthDate,
     marketing: form.get('marketing') === 'on', nightMarketing: form.get('nightMarketing') === 'on',
   } }
 }
@@ -76,7 +72,7 @@ function validBirthDate(v: string, today: Date): boolean {
  * 저장. 닉네임은 페르소나 이름으로 저장한다 — 길이·빈 값이 틀리면 닉네임 단계로 돌려보낸다.
  * 가입 보상은 계정당 한 번 — (provider 'welcome', 사용자 id) UNIQUE 가 두 번째 지급을 막는다.
  */
-export async function completeOnboarding(userId: string, input: OnboardingInput): Promise<({ ok: true; welcomed: boolean }) | ({ ok: false } & OnboardingError)> {
+export async function completeOnboarding(userId: string, input: OnboardingInput, consentAt?: string): Promise<({ ok: true; welcomed: boolean }) | ({ ok: false } & OnboardingError)> {
   const existing = await getPersona(userId)
   // 닉네임 단계에서 미리 저장해 둔 이름이면(precheckNickname) 성별만 맞춘다.
   const saved = existing?.name === input.nickname
@@ -87,11 +83,11 @@ export async function completeOnboarding(userId: string, input: OnboardingInput)
   const now = new Date()
   await db.transaction(async (tx) => {
     // 국외 이전 동의는 처리방침 버전으로 따로 남긴다(REQUIRED_TERMS 가 체크를 보장한다).
-    await tx.insert(termsConsents).values({ userId, termsVersion: termsVersion(now), privacyVersion: privacyVersion(now), transferVersion: privacyVersion(now) })
+    await tx.insert(termsConsents).values({ userId, termsVersion: termsVersion(now), privacyVersion: privacyVersion(now), transferVersion: privacyVersion(now), ...(consentAt ? { agreedAt: new Date(consentAt) } : {}) })
     const consents = { language: input.language, marketingConsentAt: input.marketing ? now : null, nightMarketingConsentAt: input.nightMarketing ? now : null }
     await tx.insert(userSettings).values({ userId, ...consents })
       .onConflictDoUpdate({ target: userSettings.userId, set: { ...consents, updatedAt: now } })
-    await tx.update(users).set({ birthDate: input.birthDate, tastes: input.tastes, displayName: input.nickname })
+    await tx.update(users).set({ birthDate: input.birthDate, displayName: input.nickname })
       .where(eq(users.id, userId))
   })
 

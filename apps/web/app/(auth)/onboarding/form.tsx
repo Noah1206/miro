@@ -7,8 +7,9 @@ import { Button } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { box } from '@/app/(main)/create/form-parts'
 import { duration, ease, press, spring } from '@/lib/motion/tokens'
-import { ONBOARDING_STEPS, REQUIRED_TERMS, type Taste } from '@/lib/onboarding-options'
+import { ONBOARDING_STEPS, REQUIRED_TERMS } from '@/lib/onboarding-options'
 import { loadMessages, useLanguage, useSwitchLanguage, useT } from '@/lib/i18n/client'
+import type { VisitorConsent } from '@/lib/visitor-consent'
 import { msg } from '@/lib/i18n'
 import { useRouter } from 'next/navigation'
 import { checkNickname, finishOnboarding } from './actions'
@@ -19,19 +20,12 @@ const COPY = [
   { title: msg('언어를 골라 주세요'), lead: msg('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요. 마이페이지 > 설정 > 언어에서 언제든 바꿀 수 있어요.') },
   { title: msg('어떻게 불러 드릴까요?'), lead: msg('캐릭터가 대화에서 부를 닉네임이에요. 마이페이지에서 언제든 바꿀 수 있어요.') },
   { title: msg('성별을 알려 주세요'), lead: msg('캐릭터가 나를 알아보는 데 쓰여요.') },
-  { title: msg('좋아하는 관계를 모두 골라 주세요'), lead: msg('취향에 맞는 캐릭터를 추천할 때 써요.') },
   { title: msg('생년월일을 알려 주세요'), lead: msg('태어난 날을 숫자 8자리로 입력해 주세요. 예) 19980314') },
   { title: msg('시작하기 전에'), lead: msg('MIRO를 이용하려면 필수 항목에 동의해 주세요.') },
 ] as const
 
 const GENDERS = [{ value: 'female', label: msg('여성') }, { value: 'male', label: msg('남성') }, { value: 'none', label: msg('밝히지 않음') }] as const
-const TASTE_OPTIONS: Array<{ value: Taste; label: string; sub: string }> = [
-  { value: 'bl', label: 'BL', sub: msg('남자와 남자의 이야기') },
-  { value: 'hl', label: 'HL', sub: msg('남자와 여자의 이야기') },
-  { value: 'gl', label: 'GL', sub: msg('여자와 여자의 이야기') },
-]
 const TERMS = [
-  { key: 'age', title: msg('[필수] 만 18세 이상입니다') },
   { key: 'terms', title: msg('[필수] 서비스 이용약관'), href: '/terms/service' },
   { key: 'privacy', title: msg('[필수] 개인정보 처리방침'), href: '/terms/privacy' },
   // 국외 이전은 처리방침과 따로 받는 동의다(개인정보 보호법 제28조의8, 10/5) — 묶어서 받지 않는다.
@@ -48,11 +42,11 @@ const TERMS = [
 const NEXT_RADIUS = 16
 
 /**
- * 첫 로그인 온보딩. 한 화면에 한 질문 — 위에 뒤로·진행 막대·n/6, 아래에 다음 버튼 하나.
+ * 첫 로그인 온보딩. 한 화면에 한 질문 — 위에 뒤로·진행 막대·n/5, 아래에 다음 버튼 하나.
  * 첫 질문은 언어다 — 고르는 순간 화면이 그 언어로 바뀌고(쿠키), 나머지 질문은 그 언어로 묻는다.
  * 값은 이 컴포넌트가 들고 있다가 마지막 단계에서 숨은 칸으로 한 번에 보낸다. 서버가 틀린 칸을 알려 주면 그 단계로 돌아간다.
  */
-export function OnboardingForm() {
+export function OnboardingForm({ visitorConsent }: { visitorConsent: VisitorConsent | null }) {
   const reduce = useReducedMotion()
   const t = useT()
   const language = useLanguage()
@@ -62,9 +56,8 @@ export function OnboardingForm() {
   const [step, setStep] = useState(1)
   const [nickname, setNickname] = useState('')
   const [gender, setGender] = useState('')
-  const [tastes, setTastes] = useState<Taste[]>([])
   const [birthDate, setBirthDate] = useState('')
-  const [checked, setChecked] = useState<Record<string, boolean>>({})
+  const [checked, setChecked] = useState<Record<string, boolean>>(visitorConsent ? { terms: true, privacy: true, transfer: true, ai: true, marketing: visitorConsent.marketing, nightMarketing: visitorConsent.nightMarketing } : {})
   const [error, setError] = useState<string | null>(null)
   // 알림이 차단된 기기 — 이 브라우저에서 다시 켜는 길(오류 아래 한 줄).
   const [pushPath, setPushPath] = useState<string | null>(null)
@@ -95,11 +88,11 @@ export function OnboardingForm() {
   useEffect(() => { if (step === ONBOARDING_STEPS) router.prefetch('/home') }, [step, router])
   const nameOk = nickname.trim().length > 0
   // 단계별로 '다음' 을 누를 수 있는가.
-  const ready: Record<number, boolean> = { 1: languagePicked, 2: nameOk, 3: !!gender, 4: tastes.length > 0 }
+  const ready: Record<number, boolean> = { 1: languagePicked, 2: nameOk, 3: !!gender }
   const requiredOk = REQUIRED_TERMS.every((k) => checked[k])
   const allOn = TERMS.every((t) => checked[t.key])
   const agreeAll = (on: boolean) => setChecked(Object.fromEntries(TERMS.map((t) => [t.key, on])))
-  const copy = COPY[step - 1]!
+  const copy = visitorConsent && step === 5 ? { title: msg('캐릭터의 연락을 받아보세요'), lead: msg('약관 동의는 완료됐어요. 이 기기에서 알림을 받을지만 설정해 주세요.') } : COPY[step - 1]!
   const fail = (why: string, path: string | null = null) => { focusHeading.current = true; setError(why); setPushPath(path) }
   /**
    * 브라우저 알림 권한을 묻는다. 허용이면 true. 웹 알림이 없는 브라우저(홈 화면에 추가하지 않은 iPhone, 카톡·인스타 안 브라우저 등)는
@@ -168,7 +161,6 @@ export function OnboardingForm() {
       <input type="hidden" name="language" value={language} />
       <input type="hidden" name="nickname" value={nickname} />
       <input type="hidden" name="gender" value={gender} />
-      {tastes.map((t) => <input key={t} type="hidden" name="taste" value={t} />)}
       <input type="hidden" name="birthDate" value={birthDate} />
       {TERMS.map((t) => checked[t.key] && <input key={t.key} type="hidden" name={t.key} value="on" />)}
 
@@ -225,23 +217,14 @@ export function OnboardingForm() {
             </div>
           )}
 
-          {step === 4 && (
-            <div role="group" aria-label={t('좋아하는 관계')} className="stack" style={{ gap: 8 }}>
-              {TASTE_OPTIONS.map((o) => (
-                <Option key={o.value} role="checkbox" selected={tastes.includes(o.value)} dimmed={tastes.length > 0 && !tastes.includes(o.value)} center title={o.label} sub={t(o.sub)} icon={<TasteIcon kind={o.value} />}
-                  onClick={() => setTastes((cur) => cur.includes(o.value) ? cur.filter((x) => x !== o.value) : [...cur, o.value])} />
-              ))}
-            </div>
-          )}
+          {step === 4 && <BirthDateField value={birthDate} onChange={setBirthDate} onEnter={() => go(5)} invalid={!!error} />}
 
-          {step === 5 && <BirthDateField value={birthDate} onChange={setBirthDate} onEnter={() => go(6)} invalid={!!error} />}
-
-          {step === 6 && (
+          {step === 5 && (
             // 약관은 글자 줄로 — 토스 약관 동의 화면처럼(2026-09-30 요청): 위에 큰 '전체 동의'(동그라미 체크), 아래에 항목 줄(작은 체크 + 글자 + 보기 화살표).
             <div>
-              <TermsCheck all checked={allOn} title={t('전체 동의')} onToggle={() => { agreeAll(!allOn); if (!allOn && !checked.push) turnOnPush() }} />
+              {!visitorConsent && <TermsCheck all checked={allOn} title={t('전체 동의')} onToggle={() => { agreeAll(!allOn); if (!allOn && !checked.push) turnOnPush() }} />}
               <hr style={{ border: 0, borderTop: '1px solid var(--color-border)', margin: '8px 0' }} />
-              {TERMS.map((item) => (
+              {TERMS.filter(item => !visitorConsent || item.key === 'push').map((item) => (
                 <TermsCheck key={item.key} checked={!!checked[item.key]} title={t(item.title)} sub={'sub' in item ? t(item.sub) : undefined}
                   onToggle={() => toggleTerm(item.key)}
                   link={'href' in item ? { href: item.href, label: t('{title} 전문 보기', { title: t(item.title) }) } : undefined} />
@@ -254,12 +237,11 @@ export function OnboardingForm() {
 
           <div className="stack" style={{ gap: 4, marginTop: 'auto', paddingTop: 'var(--space-6)' }}>
             {/* 고르는 단계는 모두 같은 '다음' 하나로 넘어간다 — 고르기만으로는 넘어가지 않는다(2026-09-30 요청). */}
-            {step <= 4 && <Button type="button" variant="primary" full className="btn-next" disabled={!ready[step]} onClick={() => (step === 2 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
-            {step === 5 && <>
-              <Button type="button" variant="primary" full className="btn-next" disabled={!birthDate} onClick={() => go(6)}>{t('다음')}</Button>
-              <Button type="button" variant="ghost" size="sm" full onClick={() => { setBirthDate(''); go(6) }}>{t('건너뛰기')}</Button>
+            {step <= 3 && <Button type="button" variant="primary" full className="btn-next" disabled={!ready[step]} onClick={() => (step === 2 ? leaveNickname() : go(step + 1))}>{t('다음')}</Button>}
+            {step === 4 && <>
+              <Button type="button" variant="primary" full className="btn-next" disabled={!birthDate} onClick={() => go(5)}>{t('다음')}</Button>
             </>}
-            {step === 6 && (
+            {step === 5 && (
               // 버튼 하나(2026-10-01 요청): '알림 허용하기'로 시작해, 알림이 허용되면 토스처럼 주황으로 차오르며 글자가 위로 넘어가 '시작하기'가 된다.
               // 허용 전에는 눌러도 제출하지 않고 권한을 묻는다(알림 줄·전체 동의로 허용해도 똑같이 바뀐다).
               <motion.div initial={false} animate={{ scale: pushGranted && !reduce ? [1, 1.03, 1] : 1 }} transition={{ duration: 0.4, ease: ease.standard }}>
@@ -321,7 +303,7 @@ function BirthDateField({ value, onChange, onEnter, invalid }: { value: string; 
 
   return (
     <label className="stack" style={{ gap: 8 }}>
-      <span className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{t('생년월일')} <span className="t-caption" style={{ fontWeight: 'var(--weight-regular)' }}>{t('선택')}</span></span>
+      <span className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{t('생년월일')}</span>
       <input value={text} onChange={(e) => type(e.target.value)} inputMode="numeric" enterKeyHint="next" autoComplete="bday" autoFocus placeholder="YYYY.MM.DD" maxLength={10}
         aria-invalid={wrong || invalid} onKeyDown={(e) => { if (e.key === 'Enter' && value) onEnter() }}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
@@ -432,26 +414,4 @@ function GenderSymbol({ kind, size = 20 }: { kind: 'female' | 'male' | 'none'; s
 
 function GenderIcon({ kind }: { kind: 'female' | 'male' | 'none' }) {
   return <span aria-hidden style={{ display: 'grid', placeItems: 'center', width: 24, height: 24, flexShrink: 0 }}><GenderSymbol kind={kind} /></span>
-}
-
-/** 취향마다 다른 관계 모티프. 의미는 BL·HL·GL 글자로 읽고, 그림은 같은 흰색 선으로 맞춘다. */
-function TasteIcon({ kind }: { kind: Taste }) {
-  return (
-    <svg aria-hidden="true" className={styles.tasteIcon} width="28" height="28" viewBox="0 0 32 32" fill="none"
-      stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {kind === 'bl' && <>
-        <circle cx="11" cy="16" r="6.5" />
-        <circle cx="21" cy="16" r="6.5" />
-      </>}
-      {kind === 'hl' && <>
-        <path d="m10 22-6.2-6.2C.8 12.8 2.6 8 6.4 8c1.8 0 3.1.9 3.6 2.2C10.5 8.9 11.8 8 13.6 8c3.8 0 5.6 4.8 2.6 7.8L10 22Z" />
-        <path d="m22 22-6.2-6.2c-3-3-1.2-7.8 2.6-7.8 1.8 0 3.1.9 3.6 2.2C22.5 8.9 23.8 8 25.6 8c3.8 0 5.6 4.8 2.6 7.8L22 22Z" />
-      </>}
-      {kind === 'gl' && <>
-        <path d="M16 23C6 24 2 16 5 9c7-1 12 4 11 14Z" />
-        <path d="M16 23c10 1 14-7 11-14-7-1-12 4-11 14Z" />
-        <path d="m10 15 6 8 6-8" />
-      </>}
-    </svg>
-  )
 }

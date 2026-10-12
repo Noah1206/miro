@@ -1,3 +1,6 @@
+import { currentUser } from '@/lib/auth'
+import { visitorConsent } from '@/lib/visitor-consent'
+import { VisitorConsent } from '@/components/visitor-consent'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { Providers } from '@/components/ui/providers'
@@ -25,6 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = { themeColor: '#111015', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const needsConsent = !(await currentUser()) && !(await visitorConsent())
   const language = await getLanguage()
   const t = await getT()
   return (
@@ -36,7 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <LanguageProvider language={language} messages={messagesFor(language)}>
-          <a href="#main" className="skip-link">{t('본문으로 건너뛰기')}</a><Providers>{children}</Providers>
+          <a href="#main" className="skip-link">{t('본문으로 건너뛰기')}</a><Providers>{children}<VisitorConsent needed={needsConsent} /></Providers>
         </LanguageProvider>
       </body>
     </html>

@@ -12,15 +12,15 @@ function form(values: Record<string, string | string[]>): FormData {
   for (const [k, v] of Object.entries(values)) for (const x of [v].flat()) f.append(k, x)
   return f
 }
-const FULL = { language: 'en', nickname: ' 지우 ', gender: 'female', taste: ['hl', 'bl', 'yuri'], birthDate: '2000-02-29', age: 'on', terms: 'on', privacy: 'on', transfer: 'on', ai: 'on', push: 'on', marketing: 'on' }
+const FULL = { language: 'en', nickname: ' 지우 ', gender: 'female', birthDate: '2000-02-29', terms: 'on', privacy: 'on', transfer: 'on', ai: 'on', push: 'on', marketing: 'on' }
 const TODAY = new Date('2026-09-30T00:00:00Z')
 
 describe('온보딩 입력', () => {
   it('reads every step and keeps only known values', () => {
     expect(parseOnboarding(form(FULL), TODAY)).toEqual({ ok: true, input: {
-      language: 'en', nickname: '지우', gender: 'female', tastes: ['bl', 'hl'], birthDate: '2000-02-29', marketing: true, nightMarketing: false,
+      language: 'en', nickname: '지우', gender: 'female', birthDate: '2000-02-29', marketing: true, nightMarketing: false,
     } })
-    expect(parseOnboarding(form({ ...FULL, gender: 'none', birthDate: '' }), TODAY)).toMatchObject({ ok: true, input: { gender: null, birthDate: null } })
+    expect(parseOnboarding(form({ ...FULL, gender: 'none' }), TODAY)).toMatchObject({ ok: true, input: { gender: null } })
   })
 
   it('sends the user back to the step that is wrong', () => {
@@ -29,13 +29,14 @@ describe('온보딩 입력', () => {
     expect(step({ ...FULL, nickname: '  ' })).toBe(2)
     expect(step({ ...FULL, nickname: '가'.repeat(13) })).toBe(2)
     expect(step({ ...FULL, gender: '' })).toBe(3)
-    expect(step({ ...FULL, taste: ['yuri'] })).toBe(4)
-    for (const bad of ['2001-02-29', '2026-10-01', '1899-12-31', '2000/01/01']) expect(step({ ...FULL, birthDate: bad })).toBe(5)
-    expect(step({ ...FULL, ai: '' })).toBe(6)
-    expect(step({ ...FULL, push: '' })).toBe(6) // 캐릭터 알림도 필수(2026-10-01)
-    expect(step({ ...FULL, age: '' })).toBe(6) // 만 18세 확인도 필수(10/3)
-    expect(step({ ...FULL, transfer: '' })).toBe(6) // 국외 이전은 처리방침과 따로 받는 필수 동의(10/5)
-    expect(step({ ...FULL, birthDate: '2015-05-05' })).toBe(5) // 생년월일이 만 18세 미만이면 거절
+    for (const bad of ['2001-02-29', '2026-10-01', '1899-12-31', '2000/01/01']) expect(step({ ...FULL, birthDate: bad })).toBe(4)
+    expect(step({ ...FULL, birthDate: '' })).toBe(4)
+    expect(step({ ...FULL, birthDate: '2012-09-30' })).toBe(0)
+    expect(step({ ...FULL, birthDate: '2012-10-01' })).toBe(4)
+    expect(step({ ...FULL, ai: '' })).toBe(5)
+    expect(step({ ...FULL, push: '' })).toBe(5) // 캐릭터 알림도 필수(2026-10-01)
+    expect(step({ ...FULL, transfer: '' })).toBe(5) // 국외 이전은 처리방침과 따로 받는 필수 동의(10/5)
+    expect(step({ ...FULL, birthDate: '2015-05-05' })).toBe(4) // 생년월일이 만 14세 미만이면 거절
   })
 })
 
@@ -50,7 +51,7 @@ async function user() {
   made.push(u!.id)
   return u!.id
 }
-const INPUT: OnboardingInput = { language: 'ja', nickname: '지우', gender: 'female', tastes: ['hl'], birthDate: '2000-01-02', marketing: true, nightMarketing: false }
+const INPUT: OnboardingInput = { language: 'ja', nickname: '지우', gender: 'female', birthDate: '2000-01-02', marketing: true, nightMarketing: false }
 
 describeDb('온보딩 저장', () => {
   it('saves the profile, consents and a one-time 7-day welcome gift, and the account deletion clears the profile', async () => {
@@ -59,7 +60,7 @@ describeDb('온보딩 저장', () => {
     expect(await completeOnboarding(id, INPUT)).toEqual({ ok: true, welcomed: true })
     expect(await getPersona(id)).toEqual({ name: '지우', gender: 'female', description: null })
     const [u] = await db.select().from(users).where(eq(users.id, id))
-    expect(u).toMatchObject({ displayName: '지우', birthDate: '2000-01-02', tastes: ['hl'] })
+    expect(u).toMatchObject({ displayName: '지우', birthDate: '2000-01-02' })
     expect(await db.select().from(termsConsents).where(eq(termsConsents.userId, id))).toHaveLength(1)
     const [s] = await db.select().from(userSettings).where(eq(userSettings.userId, id))
     expect(s!.language).toBe('ja')

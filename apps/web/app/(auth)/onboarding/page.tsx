@@ -1,3 +1,4 @@
+import { visitorConsent } from '@/lib/visitor-consent'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { consentRedirect } from '@/lib/consent-gate'
@@ -12,7 +13,7 @@ export default async function OnboardingPage() {
   if (pending !== '/onboarding') redirect(pending ?? '/home')
   return (
     <Page style={{ maxWidth: 480, minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-      <OnboardingForm />
+      <OnboardingForm visitorConsent={await visitorConsent()} />
     </Page>
   )
 }
