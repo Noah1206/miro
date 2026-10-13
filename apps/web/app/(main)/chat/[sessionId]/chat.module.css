@@ -353,4 +353,4 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .bubble p + p { margin-top:10px; }
 
 /* 기존 언베일 시트의 흰색 CTA를 실제 본인인증에도 유지한다. */
-.adultVerification button[type='submit'] { background:#fff; color:#17131f; border-color:#fff; }
+.adultVerification button[type='submit'] { background:#fff !important; color:#17131f !important; border-color:#fff !important; }
