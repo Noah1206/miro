@@ -3,7 +3,7 @@ import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-
 import { startTransition, useActionState, useEffect, useRef, useState, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
+import { Pressable, StatusIcon } from '@/components/ui'
 import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
@@ -24,12 +24,16 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   const t = useT()
   const { append, live, setLive, calendarPending } = useTurns()
   const [state, action, pending] = useActionState(async (_previous: TurnState, form: FormData): Promise<TurnState> => {
-    try { return await streamTurn(form, setLive) }
+    try {
+      const result = await streamTurn(form, setLive)
+      if (result.limit) openRecharge()
+      return result
+    }
     catch { return { error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true } }
   }, { error: null, notice: null, limit: null } satisfies TurnState)
   const { model, setModel } = useChatModel()
   const router = useRouter()
-  const { sync, wallet } = useWallet()
+  const { sync, wallet, openRecharge } = useWallet()
   const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   const tokenCeiling = choice ? Math.min(choice.maximumTokens, wallet?.available ?? choice.maximumTokens) : undefined
   const previousModel = useRef(model)
@@ -109,10 +113,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
           </motion.p>
         )}
         {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</motion.p>}
-        {state.error && (
+        {state.error && !state.limit && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
             {t(state.error)}
-            {state.limit && <> <TransitionLink href="/recharge" style={{ textDecoration: 'underline', marginLeft: 6, color: 'var(--color-text-primary)' }}>Miro Pay</TransitionLink></>}
           </motion.p>
         )}
       </AnimatePresence>

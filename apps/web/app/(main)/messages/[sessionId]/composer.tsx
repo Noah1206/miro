@@ -7,14 +7,20 @@ import type { TurnState } from '@/lib/simulation/turn-action'
 import { useTurns } from '../../chat/[sessionId]/turns'
 import { streamTurn } from '../../chat/[sessionId]/stream-turn'
 import { msg } from '@/lib/i18n'
+import { useWallet } from '@/components/wallet/provider'
 import { useT } from '@/lib/i18n/client'
 
 /** 문자 입력. 캐릭터챗 입력과 같은 파이프라인이지만 모델 선택·초안 저장 없이 문자답게 가볍다. */
 export function MessengerComposer({ sessionId, characterName }: { sessionId: string; characterName: string }) {
   const t = useT()
+  const { openRecharge } = useWallet()
   const { append, setLive } = useTurns()
   const [state, action, pending] = useActionState(async (_previous: TurnState, form: FormData): Promise<TurnState> => {
-    try { return await streamTurn(form, setLive) }
+    try {
+      const result = await streamTurn(form, setLive)
+      if (result.limit) openRecharge()
+      return result
+    }
     catch { return { error: msg('연결이 끊겼어요. 다시 보내면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true } }
   }, { error: null, notice: null, limit: null } satisfies TurnState)
   const [requestId, setRequestId] = useState('')
@@ -31,7 +37,7 @@ export function MessengerComposer({ sessionId, characterName }: { sessionId: str
   return (
     <div className={styles.composer}>
       {(pending || state.keepWaiting) && <p role="status" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>{t('{name} 입력 중', { name: characterName })}<span className={styles.typing} aria-hidden><i /><i /><i /></span></p>}
-      {state.error && <p role="alert" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-danger)' }}>{t(state.error)}</p>}
+      {state.error && !state.limit && <p role="alert" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-danger)' }}>{t(state.error)}</p>}
       {state.notice && !pending && <p role="status" className="t-caption" style={{ marginBottom: 6, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</p>}
       {/* 캐릭터가 자거나 바빠도 안내하지 않는다(10/9) — 실제 문자처럼 보낸 말만 남고, 답할지는 캐릭터가 깨어나 성격대로 정한다. */}
       <form action={action} className={styles.form}>
