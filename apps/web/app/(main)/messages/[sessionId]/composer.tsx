@@ -1,4 +1,5 @@
 'use client'
+import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { Pressable, StatusIcon } from '@/components/ui'
 import styles from './messages.module.css'
@@ -37,11 +38,13 @@ export function MessengerComposer({ sessionId, characterName }: { sessionId: str
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="mode" value="messenger" />
+        <ChatInputMore disabled={pending || !requestId} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
         <textarea ref={ta} className={styles.input} name="input" value={draft} disabled={pending || !requestId} rows={1} required maxLength={2000} placeholder={t('문자 보내기')} aria-label={t('문자 입력')}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }} />
-        <Pressable type="submit" disabled={pending || !requestId || !draft.trim()} aria-label={t('보내기')} className={styles.send}>
-          {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
+        <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={pending || !requestId} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+        <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || !requestId || !draft.trim()} aria-label={t('보내기')} className={styles.send}>
+          {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
         </Pressable>
       </form>
     </div>

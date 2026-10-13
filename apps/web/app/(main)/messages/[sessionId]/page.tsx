@@ -1,3 +1,4 @@
+import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { and, asc, eq, inArray } from 'drizzle-orm'
 import { db, messages, realityContacts } from '@miro/db'
@@ -50,16 +51,17 @@ export default async function MessagesPage({ params, searchParams }: { params: P
     }))
 
   return (
-    <TurnsProvider><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
+    <TurnsProvider><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
-          <h1 className={styles.title}>{loaded.characterName}</h1>
+          <ChatHeaderAvatar /><h1 className={styles.title}>{loaded.characterName}</h1>
           {voiceCallAllowed(user.id) && (
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}
           <TransitionLink href={`/chat/${sessionId}`} className={styles.headerLink}>{t('캐릭터챗')}</TransitionLink>
+        <ChatThemePicker />
         </header>
         {call && (
           <Notice tone={call === 'usage' ? 'muted' : 'danger'} style={{ margin: '12px 16px 0' }}>
@@ -71,6 +73,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />
         <MessengerComposer sessionId={sessionId} characterName={loaded.characterName} />
       </section>
-    </main></TurnsProvider>
+    </main></ChatTheme></TurnsProvider>
   )
 }

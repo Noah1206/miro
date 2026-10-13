@@ -13,7 +13,6 @@ const picture = (c: HomeCard) => c.images[0] ?? null
 function PhotoDetails({ c }: { c: HomeCard }) {
   return <span className={styles.photoDetails}>
     <strong>{c.name}</strong>
-    {(c.tagline || c.role) && <span className={styles.photoTagline}>{c.tagline || c.role}</span>}
   </span>
 }
 export function StoryCard({ c }: { c: HomeCard }) {

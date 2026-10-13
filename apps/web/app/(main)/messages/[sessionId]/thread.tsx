@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import styles from './messages.module.css'
+import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { CharacterPhoto } from '@/components/character-visual'
 import { useTurns } from '../../chat/[sessionId]/turns'
 import { subject } from '@/lib/format'
@@ -13,6 +14,7 @@ const clock = (iso: string | undefined, locale: string) => iso ? new Date(iso).t
 
 /** 문자 스레드 — 캐릭터는 왼쪽, 나는 오른쪽, 통화 기록은 가운데 한 줄. 서술·속마음은 여기 없다. */
 export function MessengerThread({ items: server, characterName, portrait }: { items: MsgItem[]; characterName: string; portrait?: string | null }) {
+  const { theme } = useChatTheme()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const { appended, live } = useTurns()
@@ -27,8 +29,10 @@ export function MessengerThread({ items: server, characterName, portrait }: { it
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 문자', { name: characterName })} className={styles.thread}>
       {items.length === 0 && <p className={styles.notice}>{t('{subject} 먼저 문자를 보내면 여기에 와요. 먼저 보내도 돼요.', { subject: subject(characterName), name: characterName })}</p>}
-      {items.map((m) => {
-        if (m.role === 'user') return <div key={m.id} className={styles.userRow}><span className={styles.time} style={{ alignSelf: 'flex-end', marginRight: 6 }}>{clock(m.at, locale)}</span><p className={styles.userBubble}>{m.content}</p></div>
+      {items.map((m, index) => {
+        const hideTime = theme === 'talk' && !!m.at && items[index + 1]?.role === m.role && items[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)
+        const time = hideTime ? '' : clock(m.at, locale)
+        if (m.role === 'user') return <div key={m.id} className={styles.userRow}><span className={styles.time} style={{ alignSelf: 'flex-end', marginRight: 6 }}>{time}</span><p className={styles.userBubble}>{m.content}</p></div>
         if (m.kind === 'call_record') return <p key={m.id} className={styles.meta} data-call-record>☏ {m.content}</p>
         if (m.kind === 'hidden') return <p key={m.id} className={styles.meta} data-hidden-message>{m.content}</p>
         const reality = m.blocks.find((b) => b.type === 'reality') as { channelLabel?: string; caption?: string | null } | undefined
@@ -36,16 +40,17 @@ export function MessengerThread({ items: server, characterName, portrait }: { it
         const texts = lines.length ? lines : m.content.split(/\n\s*\n/).filter(Boolean)
         return (
           <div key={m.id} className={styles.row} data-reality-message>
-            <span className={styles.avatar} aria-hidden>{portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
+            <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
             <div className={styles.group}>
+              {theme === 'talk' && <span className={styles.speaker}>{characterName}</span>}
               {reality?.channelLabel && reality.channelLabel !== '문자' && <p className={styles.tag}>{reality.channelLabel}</p>}
               {m.kind === 'photo' && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} style={{ maxWidth: '100%', borderRadius: 14 }} />
               )}
-              {m.kind === 'photo' && reality?.caption ? <p className={styles.bubble}>{reality.caption}</p> : texts.map((text, i) => <p key={i} className={styles.bubble}>{text}</p>)}
+              {m.kind === 'photo' && reality?.caption ? <p className={styles.bubble}>{reality.caption}</p> : texts.map((text, i) => <div key={i} className={styles.timedBubble}><p className={styles.bubble} data-continuation={i > 0 || undefined}>{text}</p>{i === texts.length - 1 && <span className={styles.time}>{time}</span>}</div>)}
             </div>
-            <span className={styles.time}>{clock(m.at, locale)}</span>
+            {m.kind === 'photo' && <span className={styles.time}>{time}</span>}
           </div>
         )
       })}

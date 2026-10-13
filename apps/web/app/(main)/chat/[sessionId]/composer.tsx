@@ -1,4 +1,5 @@
 'use client'
+import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
 import { startTransition, useActionState, useEffect, useRef, useState, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
@@ -18,7 +19,7 @@ import { useT } from '@/lib/i18n/client'
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
 
-/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력창 아래 줄에 둔다. */
+/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 헤더에서 공유한다. */
 export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
   const t = useT()
   const { append, live, setLive, calendarPending } = useTurns()
@@ -120,14 +121,15 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
+        <ChatInputMore disabled={pending || calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
         <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || calendarPending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
           />
         <div className={styles.composerBar}>
-          <ModelPicker {...modelOptions} />
-          <Pressable type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
-            {pending ? <StatusIcon status="loading" /> : <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>}
+          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={pending || calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+          <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
+            {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
           </Pressable>
         </div>
       </form>

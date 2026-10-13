@@ -1,4 +1,7 @@
 'use client'
+import { useState } from 'react'
+import type { LoginProvider } from './social-button'
+import { DesktopChats } from './desktop-chats'
 import { usePathname } from 'next/navigation'
 import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
@@ -31,13 +34,14 @@ const ITEMS = [
  * 조용한 내비게이션. 아이콘은 늘 꽉 찬 실루엣이고 색만 바뀐다 — 활성 = 주황, 비활성 = 회색.
  * 배경·점 없음. Chat / Live / Call 처럼 장면이 화면을 채우는 곳에서는 사라진다.
  */
-export function Nav({ signedIn = true }: { signedIn?: boolean }) {
+export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; providers?: LoginProvider[] }) {
+  const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
   const t = useT()
   const askLogin = useLoginSheet()
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
   return (
-    <nav aria-label={t('주요')} className="nav">
+    <><DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} /><nav aria-label={t('주요')} className="nav">
       {ITEMS.map((it) => {
         const active = pathname === it.href || pathname.startsWith(it.href + '/')
         // 로그인이 필요한 탭은 비로그인일 때 시트로 묻는다 — 보던 화면을 떠나지 않는다.
@@ -62,6 +66,6 @@ export function Nav({ signedIn = true }: { signedIn?: boolean }) {
           </TransitionLink>
         )
       })}
-    </nav>
+    </nav></>
   )
 }

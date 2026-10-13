@@ -1182,5 +1182,16 @@
  "선택 동의": "Optional",
  "동의합니다": "I agree",
  "동의합니다를 누르면 위 필수 항목에 동의해요. 선택 항목은 선택한 경우에만 동의해요.": "By tapping I agree, you accept the required items above. Optional items apply only when selected.",
- "만 14세 이상만 가입할 수 있어요.": "You must be at least 14 to sign up."
+ "만 14세 이상만 가입할 수 있어요.": "You must be at least 14 to sign up.",
+  "채팅방 테마": "Chat theme",
+  "미로 기본": "MIRO",
+  "DM 스타일": "DM style",
+  "카톡 스타일": "KakaoTalk style",
+  "DM 기본": "DM default",
+  "DM 다크": "DM dark",
+  "이모지": "Emoji",
+  "입력 도구": "Input tools",
+  "붙여넣기": "Paste",
+  "줄바꿈": "New line",
+  "입력창을 길게 눌러 붙여넣어 주세요.": "Touch and hold the input to paste."
 }

@@ -6,7 +6,7 @@ import { listSessions, softDelete, type ArchiveCursor } from '@/lib/ops/archive'
 import { track } from '@/lib/analytics/track'
 
 /** 대화 목록 다음 페이지. 이름 검색 입력칸은 없앴다(2026-09-30 요청). */
-export async function loadArchivePage(cursor: ArchiveCursor) {
+export async function loadArchivePage(cursor?: ArchiveCursor) {
   const user = await requireUser()
   return listSessions(user.id, { cursor })
 }

@@ -1,0 +1,25 @@
+.root { position:relative; flex-shrink:0; color:inherit; }
+.trigger { display:grid; place-items:center; width:36px; height:36px; padding:0; border:0; border-radius:50%; background:transparent; color:inherit; cursor:pointer; }
+.trigger:disabled { opacity:.4; cursor:default; }
+.trigger:focus-visible,.palette button:focus-visible { outline:2px solid #9061df; outline-offset:2px; }
+.palette { position:absolute; bottom:calc(100% + 12px); right:0; z-index:70; width:208px; display:grid; grid-template-columns:repeat(4,1fr); gap:4px; padding:8px; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:16px; box-shadow:0 8px 28px #0002; }
+.palette button { font-size:24px; width:44px; height:44px; padding:0; background:transparent; border:0; cursor:pointer; border-radius:8px; }
+.palette button:hover { background:#8882; }
+:global([data-chat-theme='dm-light']) .palette,:global([data-chat-theme='talk']) .palette { background:#fff; border-color:#ddd; }
+
+.more { display:grid; place-items:center; width:32px; height:32px; border:0; padding:0; border-radius:50%; background:#fff; color:#202020; cursor:pointer; }
+.more:disabled { opacity:.5; cursor:default; }
+.more:focus-visible { outline:2px solid #647e94; outline-offset:2px; }
+.morePanel { position:absolute; bottom:calc(100% + 12px); left:0; z-index:70; width:190px; padding:6px; border:1px solid #ddd; border-radius:14px; background:#fff; color:#222; box-shadow:0 6px 22px #0002; }
+.morePanel button { display:block; width:100%; border:0; background:none; padding:12px; color:inherit; text-align:left; font:inherit; font-size:13px; cursor:pointer; }
+.morePanel p { margin:8px; font-size:12px; line-height:1.5; }
+:global([data-chat-theme='talk']) .trigger { color:#262c30; width:24px; height:32px; }
+:global([data-chat-theme='talk']) .trigger svg { width:24px; height:24px; }
+
+
+:global([data-chat-theme='dm-light']) .more, :global([data-chat-theme='dm']) .more { width:34px; height:34px; color:#7836fa; background:#fff; }
+:global([data-chat-theme='dm-light']) .more svg, :global([data-chat-theme='dm']) .more svg { width:23px; height:23px; }
+.searchInput { width:100%; min-width:0; border:1px solid #ddd; border-radius:8px; padding:9px; background:#f5f5f5; color:#171717; font-size:16px; }
+
+:global([data-chat-theme='miro']) .trigger { width:30px; height:34px; color:#9c95a7; }
+:global([data-chat-theme='miro']) .trigger svg { width:19px; height:19px; }

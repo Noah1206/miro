@@ -1,3 +1,4 @@
+import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
@@ -10,7 +11,7 @@ import { COPY } from '@/lib/copy'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
-import { ChatModelProvider } from './model-picker'
+import { ChatModelProvider, ModelPicker } from './model-picker'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { AdultToggle } from './adult-toggle'
@@ -46,15 +47,15 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
-    blocks: m.blocks as Array<Record<string, unknown>>,
+    blocks: m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
   }))
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id}><TurnsProvider><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id}><TurnsProvider><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <h1 className={styles.title}>{loaded.characterName}</h1>
+          <ChatHeaderAvatar /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1><ModelPicker {...modelOptions} /></div>
           {/* 토글은 늘 표시한다. 사용할 수 없으면 이유를 안내하고, 실제 켜기 판정은 서버가 유지한다. */}
           <AdultToggle sessionId={sessionId} on={loaded.adult.on} everOn={loaded.adult.since !== null} level={loaded.adult.level}
             blocked={adult && !adult.allowed ? adult.next : null} />
@@ -66,6 +67,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           )}
           <StoryDate sessionId={sessionId} date={s.world.narrativeCalendar?.date ?? null}
             today={localIso(new Date(), s.clock?.timeZone ?? 'Asia/Seoul').slice(0, 10)} disabled={loaded.restricted} />
+        <ChatThemePicker />
         </header>
 
         <div className={styles.transcript}>
@@ -88,6 +90,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} />
       </section>
 
-    </main></TurnsProvider></ChatModelProvider>
+    </main></ChatTheme></TurnsProvider></ChatModelProvider>
   )
 }

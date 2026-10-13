@@ -5,10 +5,10 @@
   justify-content: center;
   gap: 9px;
   width: 100%;
-  min-height: 44px;
-  padding: 9px 20px;
+  min-height: 40px;
+  padding: 7px 20px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 15px;
   font-weight: 500;
   line-height: 1.4;

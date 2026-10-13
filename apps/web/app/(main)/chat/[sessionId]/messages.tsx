@@ -1,4 +1,5 @@
 'use client'
+import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ease } from '@/lib/motion/tokens'
 import { useEffect, useRef, useState } from 'react'
@@ -15,7 +16,7 @@ import { useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 
-export type Msg = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
+export type Msg = { at?: string; hideTime?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
 export function MessageList({ items: server, characterName, portrait, mood = 'neutral' }: {
   items: Msg[]; characterName: string; portrait?: string | null
@@ -53,9 +54,9 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}>
       <AnimatePresence initial={false}>
-        {settled.map((m) => (
+        {settled.map((m, index) => (
           <Line key={m.id} {...(quiet.has(m.id) ? { initial: false } : {})}>
-            <Message m={m} characterName={characterName} portrait={portrait}
+            <Message m={{...m, hideTime: !!m.at && settled[index + 1]?.role === m.role && settled[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait}
               typing={m.id === typingId} mood={mood} onGrow={follow} />
           </Line>
         ))}
@@ -78,7 +79,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
   // 인트로의 상황 서술(role narrator)은 블록 없이 글만 저장된다 — 캐릭터 말풍선이 아니라 장면 서술로 그린다(10/5).
   if (m.role === 'narrator' && m.kind === 'text' && !m.blocks.length) m = { ...m, blocks: [{ type: 'narrative', text: m.content }] }
   const reality = m.blocks.find((b) => b.type === 'reality') as { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
-  if (m.role === 'user') return <div className={styles.userRow}><p className={styles.userBubble}><Emphasis text={m.content} /></p></div>
+  if (m.role === 'user') return <div className={styles.userRow}><BubbleTime m={m}/><p className={styles.userBubble}><Emphasis text={m.content} /></p></div>
   if (m.kind === 'hidden') return <p data-hidden-message className="t-caption" style={{ fontStyle: 'italic' }}>{m.content}</p>
   if (m.kind === 'call_record') return <SceneMeta><span data-call-record>☏ {m.content}</span></SceneMeta>
   if (m.kind === 'live_scene' && m.blocks.some(b => b.type === 'story_date')) return <div className={styles.storyDateMarker} data-story-date-marker><span>{m.content}</span></div>
@@ -111,8 +112,9 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
 function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow }: {
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
-  // 장면 서술은 말풍선 밖, 인물의 행동·속마음·대사는 말풍선 안. 서술과 인물이 오가면 말풍선도 번갈아 생긴다.
+  // 장면·행동·속마음은 말풍선 밖, 대사는 말풍선 안. 서술과 인물이 오가면 말풍선도 번갈아 생긴다.
   const t = useT()
+  const { theme } = useChatTheme()
   const segments = segmentReply(m.blocks, m.content, name)
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
@@ -137,7 +139,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
             ? <span className={styles.avatarCol}><button type="button" className={styles.iconButton} {...toggle}><NarrationIcon /></button>{report && <ReportFlag id={m.id} kind="message" />}</span>
             : <NarrationIcon />}
           <div className={styles.narrationText}>
-            {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{line(p)}</p>)}
+            {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}{line(p)}</p>)}
           </div>
         </div>
       )
@@ -145,7 +147,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
       return (
         <div key={i} className={styles.characterRow} hidden={hidden}>
           {(() => {
-            const face = own && portrait
+            const face = theme !== 'miro' ? <DefaultChatAvatar /> : own && portrait
               ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
               : seg.speaker.slice(0, 1)
             return i === anchor
@@ -154,7 +156,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
           })()}
           <div className={styles.characterContent}>
             <p className={styles.speaker}>{seg.speaker}</p>
-            <div className={styles.bubble}>
+            <div className={styles.timedBubble}><div className={styles.bubble}>
               {seg.paragraphs.map((p) => (
                 <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
                   hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
@@ -162,12 +164,18 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
                   {line(p)}
                 </p>
               ))}
-            </div>
+            </div>{i === segments.map(s => s.kind).lastIndexOf('bubble') && <BubbleTime m={m}/>}</div>
           </div>
         </div>
       )
     })}
   </div>
+}
+
+function BubbleTime({ m }: { m: Msg }) {
+  const { theme } = useChatTheme()
+  if (theme !== 'talk' || !m.at || m.hideTime || !Number.isFinite(Date.parse(m.at))) return null
+  return <time className={styles.bubbleTime} dateTime={m.at}>{new Date(m.at).toLocaleTimeString('ko-KR', {timeZone:'Asia/Seoul',hour:'numeric',minute:'2-digit',hour12:true})}</time>
 }
 
 /** 장면 서술 표시 — 글줄 세 개. 말풍선 밖 서술이 캐릭터의 말이 아님을 모양으로 알린다. */

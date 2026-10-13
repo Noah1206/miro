@@ -382,3 +382,17 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .character-detail-copy .character-detail-section { margin-top: 34px; padding-top: 24px; }
   .character-detail-section-heading { margin-bottom: 18px; }
 }
+
+/* Desktop browsing uses the viewport; mobile retains its original shell. */
+@media (min-width: 1024px) {
+  .app-shell:has(.nav) { max-width: none; padding-left: 280px; transition: padding-left 280ms cubic-bezier(.22,1,.36,1); }
+  .app-shell:has(.nav) > aside { left: 0; }
+  .app-shell:has(.nav) .nav { left: 0; right: auto; bottom: 0; width: 280px; max-width: none; margin: 0; padding-inline: 12px; border-radius: 0; box-shadow: none; }
+  .app-shell:has(aside[data-collapsed="true"]) { padding-left: 72px; }
+  .app-shell:has(aside[data-collapsed="true"]) .nav { left: 72px; right: 0; bottom: 20px; width: min(440px, calc(100% - 112px)); margin: 0 auto; border-radius: 18px; background: linear-gradient(135deg, rgba(55, 51, 67, .32), rgba(22, 21, 29, .26)); border: 1px solid rgba(255, 255, 255, .18); backdrop-filter: blur(16px) saturate(125%); -webkit-backdrop-filter: blur(16px) saturate(125%); box-shadow: 0 16px 40px rgba(0, 0, 0, .38), 0 4px 12px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .12); animation: desktop-nav-enter 240ms cubic-bezier(.22,1,.36,1); }
+}
+@keyframes desktop-nav-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .app-shell:has(.nav) { transition: none; }
+  .app-shell:has(aside[data-collapsed="true"]) .nav { animation: none; }
+}

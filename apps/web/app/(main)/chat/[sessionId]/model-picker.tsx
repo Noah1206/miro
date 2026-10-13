@@ -57,8 +57,8 @@ export function ModelPicker({ choices = [] }: { freeReady: boolean; proReady: bo
     </motion.button>
     <AnimatePresence>
     {open && <motion.div ref={panel} id={panelId} role="dialog" aria-label={t('대화 방식 선택')} tabIndex={-1} className={sheet.panel} data-interacted={interacted}
-      initial={reduce ? false : { opacity: 0, y: 12, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: reduce ? 0 : 8, scale: reduce ? 1 : .98 }} transition={{ duration: reduce ? 0 : .24, ease: ease.enter }} style={{ transformOrigin: 'bottom left' }}>
+      initial={reduce ? false : { opacity: 0, y: -8, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: reduce ? 0 : -6, scale: reduce ? 1 : .98 }} transition={{ duration: reduce ? 0 : .24, ease: ease.enter }} style={{ transformOrigin: 'top left' }}>
       <div className={sheet.options}>
         {choices.map(c => <motion.button whileTap={reduce ? undefined : { scale: .98 }} transition={spring.quick} type="button" key={c.id} className={sheet.option} aria-pressed={selected?.id === c.id} onClick={() => { setInteracted(true); setModel(c.id); setOpen(false) }}>
           <span className={sheet.heading}><img className={sheet.icon} src={icon(c.length === 'long')} alt="" aria-hidden width={18} height={18} /><strong>{label(c)}</strong><small>{c.length === 'long' ? t('긴 대화') : t('기본 대화')}</small></span>
