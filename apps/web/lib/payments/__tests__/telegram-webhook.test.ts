@@ -29,4 +29,8 @@ describe('Telegram approval webhook authorization',()=>{
   const res=await POST(new Request(req.url,{method:'POST',headers:req.headers,body:JSON.stringify(body)}))
   expect(res.status).toBe(200);expect(approve).not.toHaveBeenCalled()
  })
+ it('normalizes newlines introduced by environment-variable input',async()=>{
+  for(const key of ['MIRO_TELEGRAM_BOT_TOKEN','MIRO_TELEGRAM_CHAT_ID','MIRO_TELEGRAM_APPROVER_ID','MIRO_TELEGRAM_ADMIN_ID','MIRO_TELEGRAM_WEBHOOK_SECRET'])vi.stubEnv(key,process.env[key]+'\n')
+  expect((await POST(request())).status).toBe(200);expect(approve).toHaveBeenCalledOnce()
+ })
 })
