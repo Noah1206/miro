@@ -358,3 +358,29 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* Keep a little breathing room above the input; the open keyboard owns the bottom inset. */
 .composer, :global([data-chat-theme]) .composer { padding-top: 8px; }
 :global([data-keyboard='true']) .composer { padding-bottom: 0; }
+
+/* Long scene descriptions should be as readable as spoken dialogue. */
+:global([data-chat-theme]) .narrationText,
+:global([data-chat-theme]) .opening {
+  font-size:16px;
+  line-height:1.8;
+  font-style:normal;
+  font-weight:400;
+  letter-spacing:0;
+  word-break:normal;
+  overflow-wrap:break-word;
+  color:#c6c1ce;
+}
+:global([data-chat-theme='dm']) .narrationText,
+:global([data-chat-theme='dm']) .opening { color:#c6c6c6; }
+:global([data-chat-theme='dm-light']) .narrationText,
+:global([data-chat-theme='dm-light']) .opening { color:#595959; }
+:global([data-chat-theme='talk']) .narrationText,
+:global([data-chat-theme='talk']) .opening { color:#354957; }
+.narrationText p + p { margin-top:16px; }
+:global([data-chat-theme='dm']) .bubble,
+:global([data-chat-theme='dm']) .userBubble,
+:global([data-chat-theme='dm-light']) .bubble,
+:global([data-chat-theme='dm-light']) .userBubble,
+:global([data-chat-theme='miro']) .bubble,
+:global([data-chat-theme='miro']) .userBubble { font-size:16px; line-height:1.6; }
