@@ -1,15 +1,22 @@
 .root { min-height: 100dvh; }
+.root[data-keyboard='true'] { position: fixed; top: var(--chat-visible-top, 0px); left: 0; right: 0; width: 100%; max-width: var(--shell-w); height: var(--chat-visible-height); min-height: 0; margin-inline: auto; }
+.root[data-keyboard='true'] :global(.chat-layout) { height: 100%; min-height: 0; }
+.root[data-keyboard='true'] :global(.chat-main) { height: 100%; min-height: 0; }
 .trigger { display:grid; place-items:center; flex-shrink:0; width:36px; height:44px; padding:0; border:0; background:transparent; color:inherit; cursor:pointer; border-radius:8px; }
+.trigger svg { width:20px; height:20px; }
 .trigger:focus-visible, .option:focus-visible { outline:2px solid var(--color-accent); outline-offset:3px; }
-.options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.option { min-width:0; padding:0; border:0; background:none; color:var(--color-text-primary); cursor:pointer; text-align:left; font:inherit; }
-.preview { display:flex; flex-direction:column; gap:12px; height:145px; padding:12px 8px; border:2px solid transparent; border-radius:14px; background:#101016; overflow:hidden; }
-.option[aria-pressed=true] .preview { border-color:var(--color-accent); }
+.options { width:100%; min-width:0; max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.option { display:block; width:100%; min-width:0; max-width:100%; padding:0; border:0; background:none; color:var(--color-text-primary); cursor:pointer; text-align:left; font:inherit; }
+.preview { width:100%; min-width:0; max-width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; height:145px; padding:12px 8px; border:0; border-radius:14px; background:#101016; overflow:hidden; }
+.option[aria-pressed='true'] .preview { box-shadow:inset 0 0 0 2px #b6a0ff; }
 .previewHead { display:flex; align-items:center; gap:5px; margin-bottom:8px; }
-.previewHead svg { width:20px; height:20px; }
+.previewAvatar { display:grid; place-items:center; flex:0 0 20px; width:20px; height:20px; border-radius:50%; overflow:hidden; clip-path:circle(50%); --chat-avatar-bg:#ededed; --chat-avatar-ink:#c7c7c7; }
+.previewAvatar svg { display:block; width:100%; height:100%; overflow:hidden; }
+.preview[data-preview='dm'] .previewAvatar { --chat-avatar-bg:#262626; --chat-avatar-ink:#737373; }
+.preview[data-preview='miro'] .previewAvatar { --chat-avatar-bg:#dbdbdb; --chat-avatar-ink:#a8a8a8; }
 .previewHead i { width:32px; height:4px; border-radius:4px; background:#999; }
-.incoming,.outgoing { font-size:11px; white-space:nowrap; padding:6px 7px; border-radius:9px; background:#282331; width:fit-content; color:#fff; }
-.outgoing { align-self:flex-end; background:#66538e; }
+.incoming,.outgoing { display:block; flex-shrink:0; width:66px; height:26px; font-size:11px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:6px 7px; border-radius:9px; background:#282331; color:#fff; }
+.outgoing { width:52px; align-self:flex-end; background:#66538e; }
 .previewInput { margin-top:auto; height:15px; border-radius:20px; background:#ffffff22; }
 .preview[data-preview=dm] { background:#000; }
 .preview[data-preview=dm] .incoming { background:#262626; border-radius:16px; }
@@ -18,7 +25,7 @@
 .preview[data-preview=talk] .incoming { background:#fff; color:#191919; border-radius:3px 8px 8px; }
 .preview[data-preview=talk] .outgoing { background:#fee500; color:#191919; border-radius:8px 3px 8px 8px; }
 .preview[data-preview=talk] .previewInput { background:#fff; }
-.label { display:flex; justify-content:space-between; gap:4px; margin-top:10px; font-size:13px; }
+.label { min-width:0; flex-wrap:wrap; overflow-wrap:anywhere; display:flex; justify-content:space-between; gap:4px; margin-top:10px; font-size:13px; }
 .label span { color:var(--color-accent-text); }
 @media(max-width:360px) { .options { gap:8px; } .preview { padding-inline:5px; } .label { font-size:12px; } }
 
@@ -49,3 +56,8 @@
 .preview[data-preview='miro'] .incoming { background:#1d1d23; border-radius:3px 9px 9px; color:#eeedf2; }
 .preview[data-preview='miro'] .outgoing { background:#b89aff; border-radius:9px 3px 9px 9px; color:#241337; }
 .preview[data-preview='miro'] .previewInput { background:#1a191f; border:1px solid #ffffff12; border-radius:5px; }
+
+.composerTrigger { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 34px; align-self: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.composerTrigger:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+@media (max-width:420px) { .trigger { width:34px; } }

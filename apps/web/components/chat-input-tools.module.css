@@ -23,3 +23,11 @@
 
 :global([data-chat-theme='miro']) .trigger { width:30px; height:34px; color:#9c95a7; }
 :global([data-chat-theme='miro']) .trigger svg { width:19px; height:19px; }
+.narration { flex-shrink:0; }
+:global([data-chat-theme='dm-light']) .narration { width:30px; height:34px; color:#8b8495; }
+:global([data-chat-theme='dm']) .narration { width:30px; height:34px; color:#a39bac; }
+:global([data-chat-theme='talk']) .narration { width:24px; height:32px; color:#526977; }
+:global([data-chat-theme]) .narration svg { width:19px; height:19px; }
+:global([data-chat-theme='dm-light']) .narration,
+:global([data-chat-theme='dm']) .narration,
+:global([data-chat-theme='talk']) .narration { margin-right:6px; }

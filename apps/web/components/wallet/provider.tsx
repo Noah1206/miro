@@ -6,6 +6,7 @@ import { readWallet, purchaseCredits } from '@/app/(main)/recharge/wallet-action
 import { TransferActions } from '@/app/(main)/recharge/transfer-actions'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
 import styles from './wallet.module.css'
+import { RechargeCatalog } from './recharge-catalog'
 import { msg, INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 
@@ -35,7 +36,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
   const [needed, setNeeded] = useState<{ cost: number; label: string } | null>(null)
   const [selected, setSelected] = useState('')
-  const [expanded, setExpanded] = useState(false)
   const [checking, setChecking] = useState(false)
   const [transferTapped, setTransferTapped] = useState(false)
   const pending = useRef<Pending | null>(null)
@@ -175,16 +175,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const order = wallet?.order
   const waiting = order && !order.settledAt && ['awaiting', 'approved'].includes(order.status)
-  const products = expanded ? wallet?.products : wallet?.products.slice(0, 3)
   const done = !!order?.settledAt && !pending.current
   const insufficient = stage === 'insufficient' && !waiting && state !== 'failed'
   const krw = (n: number) => t('{n}원', { n: n.toLocaleString(locale) })
   return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync: setWallet, openRecharge: () => { void openRecharge() }, requireBalance }}>
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
-    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : 'Miro Pay'} label={insufficient ? t('토큰이 부족해요') : undefined}>
+    <Sheet open={open} onClose={cancel} title={insufficient ? undefined : t('충전')} label={insufficient ? t('토큰이 부족해요') : undefined}>
       <div className={styles.stack} data-pay-state={state}>
-        {!insufficient && wallet && <div className={styles.balanceLine}>
+        {!insufficient && (waiting || done) && wallet && <div className={styles.balanceLine}>
           <span>{t('충전 잔액')}</span>
           <strong data-sheet-balance={wallet.available}>{t('{n} 미로 토큰', { n: wallet.available.toLocaleString(locale) })}</strong>
         </div>}
@@ -226,27 +225,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           <Button full variant="primary" onClick={cancel}>{t('확인')}</Button>
         </> : <>
           {wallet && !wallet.account && <Notice>{t('지금은 충전을 받지 않고 있어요.')}</Notice>}
-          {wallet?.account && <>
-            <fieldset className={styles.options} disabled={state === 'loading'}>
-              <legend className="t-title-3">{t('충전할 금액')}</legend>
-              {products?.map(p => <label key={p.id} className={styles.option}>
-                <input type="radio" name="wallet-product" value={`recharge:${p.id}`} checked={selected === `recharge:${p.id}`} onChange={() => setSelected(`recharge:${p.id}`)} />
-                <span><strong>{t('{n} 미로 토큰', { n: p.units.toLocaleString(locale) })}</strong></span>
-                <b>{krw(p.priceMinor)}</b>
-              </label>)}
-              {!wallet.products.length && <p className={`t-caption ${styles.muted}`}>{t('판매 중인 토큰 상품이 없어요.')}</p>}
-              {(wallet.products.length > 3 && !expanded) && <Button variant="ghost" full onClick={() => setExpanded(true)}>{t('금액 더 보기')}</Button>}
-            </fieldset>
-            {/* 청약철회 조건은 결제 전에 보인다(전자상거래법 제13조 ②·제17조) — 쓴 미로는 제공이 시작된 디지털콘텐츠라 환불되지 않는다는 사실을 미리 알린다. */}
-            <p className={`t-caption ${styles.muted}`} data-refund-notice>
-              {t('충전한 날부터 7일 안에는 쓰지 않은 토큰을 환불받을 수 있어요. 이미 쓴 토큰은 환불되지 않아요.')}{' '}
-              <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
-            </p>
-            <div className={`${styles.footer} ${styles.actions}`}>
-              <Button full variant="primary" onClick={() => void checkout()} status={state === 'loading' ? 'loading' : 'idle'} disabled={!selected}>{t('다음으로')}</Button>
-              <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
-            </div>
-          </>}
+          {wallet?.account && <RechargeCatalog available={wallet.available} products={wallet.products} selected={selected} onSelect={setSelected} onNext={() => void checkout()} onClose={cancel} busy={state === 'loading'} />}
           {!wallet && <Button onClick={() => void refresh()} status={checking ? 'loading' : 'idle'} full>{t('잔액 다시 불러오기')}</Button>}
         </>}
       </div>

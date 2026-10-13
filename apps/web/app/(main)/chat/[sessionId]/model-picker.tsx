@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useEffect, useState, useRef, useId, type ReactNode } from 'react'
+import { MiroModelIcon, EchoModelIcon } from '@/components/chat-icons'
 import { TransitionLink } from '@/components/ui'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import type { WalletSnapshot } from '@/lib/wallet/types'
@@ -48,10 +49,10 @@ export function ModelPicker({ choices = [] }: { freeReady: boolean; proReady: bo
     const name = c.length === 'long' ? t('에코') : t('미로')
     return families.length <= 1 ? name : `${name} ${families.indexOf(c.id.replace(/:(scene|long)$/, '')) + 1}`
   }
-  const icon = (long: boolean) => long ? '/icons/chat/echo-hexagon-3d.png' : '/icons/chat/miro-knot-3d.png'
+  const icon = (long: boolean) => long ? <EchoModelIcon className={sheet.icon} /> : <MiroModelIcon className={sheet.icon} />
   return <div ref={root} className={sheet.root}>
     <motion.button whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" tabIndex={0} className={sheet.trigger} aria-label={t('대화 방식 선택')} aria-haspopup="dialog" aria-controls={panelId} aria-expanded={open} onClick={() => setOpen(!open)}>
-      <img className={sheet.icon} src={icon(selected?.length === 'long')} alt="" aria-hidden width={18} height={18} />
+      {icon(selected?.length === 'long')}
       {selected ? label(selected) : t('미로')}
       <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reduce ? 0 : .24, ease: ease.standard }} aria-hidden width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></motion.svg>
     </motion.button>
@@ -61,7 +62,7 @@ export function ModelPicker({ choices = [] }: { freeReady: boolean; proReady: bo
       exit={{ opacity: 0, y: reduce ? 0 : -6, scale: reduce ? 1 : .98 }} transition={{ duration: reduce ? 0 : .24, ease: ease.enter }} style={{ transformOrigin: 'top left' }}>
       <div className={sheet.options}>
         {choices.map(c => <motion.button whileTap={reduce ? undefined : { scale: .98 }} transition={spring.quick} type="button" key={c.id} className={sheet.option} aria-pressed={selected?.id === c.id} onClick={() => { setInteracted(true); setModel(c.id); setOpen(false) }}>
-          <span className={sheet.heading}><img className={sheet.icon} src={icon(c.length === 'long')} alt="" aria-hidden width={18} height={18} /><strong>{label(c)}</strong><small>{c.length === 'long' ? t('긴 대화') : t('기본 대화')}</small></span>
+          <span className={sheet.heading}>{icon(c.length === 'long')}<strong>{label(c)}</strong><small>{c.length === 'long' ? t('긴 대화') : t('기본 대화')}</small></span>
           <span className={sheet.description}>{c.length === 'long' ? t('묘사를 더해 길게 이어가는 대화') : t('간결하게 주고받는 대화')}</span>
         </motion.button>)}
         {!choices.length && <p className={sheet.description}>{t('준비 중')}</p>}

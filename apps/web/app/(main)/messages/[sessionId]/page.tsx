@@ -1,3 +1,4 @@
+import { ChatRoomIcon } from '@/components/chat-icons'
 import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { and, asc, eq, inArray } from 'drizzle-orm'
@@ -60,8 +61,8 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           {voiceCallAllowed(user.id) && (
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}
-          <TransitionLink href={`/chat/${sessionId}`} className={styles.headerLink}>{t('캐릭터챗')}</TransitionLink>
-        <ChatThemePicker />
+          <TransitionLink href={`/chat/${sessionId}`} className={styles.headerButton} aria-label={t('캐릭터챗')} title={t('캐릭터챗')}><ChatRoomIcon /></TransitionLink>
+          <ChatThemePicker />
         </header>
         {call && (
           <Notice tone={call === 'usage' ? 'muted' : 'danger'} style={{ margin: '12px 16px 0' }}>

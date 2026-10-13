@@ -1,0 +1,23 @@
+.catalog { display:grid; gap:20px; color:var(--color-text-primary); }
+.balance { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0 18px; border-bottom:1px solid #ffffff12; font-size:13px; color:var(--color-text-secondary); }
+.balance strong { display:flex; align-items:center; gap:7px; color:var(--color-text-primary); font-size:20px; font-variant-numeric:tabular-nums; }
+.balance small { font-size:11px; font-weight:400; color:var(--color-text-secondary); }
+.options { display:grid; gap:8px; border:0; margin:0; padding:0; min-width:0; }
+.options legend { padding:0 0 12px; font-size:14px; font-weight:600; }
+.option { position:relative; display:flex; align-items:center; gap:12px; min-height:68px; padding:12px 14px; border:1px solid #ffffff13; border-radius:10px; background:#ffffff03; cursor:pointer; transition:background 160ms,border-color 160ms; }
+.option[data-selected=true] { background:#b8a6ff10; border-color:#b8a6ff; }
+.option input { position:absolute; width:1px; height:1px; opacity:0; }
+.option:has(input:focus-visible) { outline:2px solid #d4c7ff; outline-offset:3px; }
+.check { flex-shrink:0; display:grid; place-items:center; width:20px; height:20px; border:1px solid #ffffff30; border-radius:50%; color:transparent; }
+.option[data-selected=true] .check { background:#b8a6ff; border-color:#b8a6ff; color:#251936; }
+.quantity { display:flex; align-items:baseline; gap:6px; flex:1; min-width:0; }
+.quantity strong { font-size:19px; font-weight:650; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
+.quantity small { font-size:11px; color:var(--color-text-secondary); }
+.option b { font-size:15px; font-weight:500; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.expand { display:grid; place-items:center; width:100%; height:30px; border:0; background:none; color:var(--color-text-secondary); cursor:pointer; }
+.expand svg { transition:transform 180ms; }
+.note { font-size:11px; line-height:1.7; color:var(--color-text-tertiary); margin:0; }
+.note a { color:var(--color-text-secondary); text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
+.footer { display:grid; gap:4px; position:sticky; bottom:calc(-1 * var(--space-5)); padding:10px 0 0; background:var(--color-surface-2); }
+@media(max-width:360px) { .option { padding:11px; gap:9px; } .quantity { gap:4px; } .quantity strong { font-size:17px; } .quantity small { font-size:10px; } }
+@media(prefers-reduced-motion:reduce) { .option,.expand svg { transition:none; } }

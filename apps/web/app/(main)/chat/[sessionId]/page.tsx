@@ -1,3 +1,4 @@
+import { ChatRoomIcon } from '@/components/chat-icons'
 import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
@@ -19,8 +20,6 @@ import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
 import { requirePersona } from '@/lib/persona'
 import { getT } from '@/lib/i18n/server'
-import { localIso } from '@miro/domain'
-import { StoryDate } from './story-date'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const t = await getT()
@@ -55,19 +54,18 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <ChatHeaderAvatar /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1><ModelPicker {...modelOptions} /></div>
+          <ChatHeaderAvatar /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
           {/* 토글은 늘 표시한다. 사용할 수 없으면 이유를 안내하고, 실제 켜기 판정은 서버가 유지한다. */}
           <AdultToggle sessionId={sessionId} on={loaded.adult.on} everOn={loaded.adult.since !== null} level={loaded.adult.level}
             blocked={adult && !adult.allowed ? adult.next : null} />
           {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
           {loaded.experienceType === 'reality' && (
             <TransitionLink href={`/messages/${sessionId}`} aria-label={t('문자')} className={styles.contextButton}>
-              <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5z" /></svg>
+              <ChatRoomIcon />
             </TransitionLink>
           )}
-          <StoryDate sessionId={sessionId} date={s.world.narrativeCalendar?.date ?? null}
-            today={localIso(new Date(), s.clock?.timeZone ?? 'Asia/Seoul').slice(0, 10)} disabled={loaded.restricted} />
-        <ChatThemePicker />
+          <ChatThemePicker />
+          <ModelPicker {...modelOptions} />
         </header>
 
         <div className={styles.transcript}>

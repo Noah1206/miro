@@ -23,8 +23,7 @@ export function ChatEmojiButton({ onSelect, disabled = false, textareaRef, onDra
     document.addEventListener('pointerdown',outside); document.addEventListener('keydown',escape)
     return () => { document.removeEventListener('pointerdown',outside); document.removeEventListener('keydown',escape) }
   },[open])
-  if (theme === 'dm' || theme === 'dm-light') return null
-  if (theme === 'miro' && textareaRef && onDraftChange) return <button type="button" className={styles.trigger} disabled={disabled} aria-label="상황 묘사 넣기" title="상황 묘사 넣기" onPointerDown={event=>event.preventDefault()} onClick={()=>{
+  if (textareaRef && onDraftChange) return <button type="button" className={`${styles.trigger} ${styles.narration}`} disabled={disabled} aria-label="상황 묘사 넣기" title="상황 묘사 넣기" onPointerDown={event=>event.preventDefault()} onClick={()=>{
     const input = textareaRef.current
     if (!input) return
     const {value, selectionStart:start, selectionEnd:end} = input

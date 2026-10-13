@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ease } from '@/lib/motion/tokens'
 import { useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
-import { Popover, MenuItem, TransitionLink } from '@/components/ui'
+import { Popover, MenuItem } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
@@ -50,8 +50,21 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const follow = () => end.current?.scrollIntoView({ block: 'end' })
   useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: !reduce && last?.role === 'user' ? 'smooth' : 'auto' }) }, [items.length, live?.blocks.length, reduce])
   useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
+  useEffect(() => {
+    const transcript = end.current?.parentElement
+    if (!transcript) return
+    let atBottom = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 8
+    const onScroll = () => { atBottom = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 8 }
+    const resize = new ResizeObserver(() => {
+      if (atBottom) transcript.scrollTop = transcript.scrollHeight - transcript.clientHeight
+    })
+    transcript.addEventListener('scroll', onScroll, { passive: true })
+    resize.observe(transcript)
+    return () => { resize.disconnect(); transcript.removeEventListener('scroll', onScroll) }
+  }, [])
 
   return (
+    <>
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}>
       <AnimatePresence initial={false}>
         {settled.map((m, index) => (
@@ -67,8 +80,9 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
         animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: reduce ? 0 : .32, ease: ease.enter }} style={{ transformOrigin: 'bottom right' }}>
         <Message m={m} characterName={characterName} portrait={portrait} mood={mood} onGrow={follow} />
       </motion.div>)}
-      <div ref={end} aria-hidden />
     </div>
+    <div ref={end} aria-hidden />
+    </>
   )
 }
 
@@ -90,7 +104,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       <Reportable id={m.id} kind="photo">
         {reality && <RealityTag sender={reality.senderLabel} channel={reality.channelLabel} />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} style={{ maxWidth: '72%', borderRadius: 'var(--radius-md)' }} />
+        <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} className={styles.photo} onLoad={onGrow} />
         {reality?.caption && <p className="t-caption t-quote">{reality.caption}</p>}
       </Reportable>
     )
@@ -119,25 +133,16 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
-  // 신고는 프로필(또는 서술 아이콘)을 눌러야 그 아래에 나온다 — 메시지마다 신고 글자를 늘어놓지 않는다(10/5).
-  const [report, setReport] = useState(false)
   const pace = replyPace(count)
   const line = (p: Paragraph) => typing && p.index === typed
     ? <TypedText text={p.text} mood={mood} pace={pace} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
     : <Emphasis text={p.text} />
-
-  // 첫 인물 줄의 프로필에 신고를 단다. 인물 줄이 없는 서술뿐인 메시지면 첫 서술 아이콘에 단다.
-  const anchor = Math.max(0, segments.findIndex((s) => s.kind !== 'narration'))
-  const toggle = { 'aria-label': t('신고 메뉴'), 'aria-expanded': report, onClick: () => setReport((v) => !v) }
 
   return <div className={styles.reply}>
     {segments.map((seg, i) => {
       const hidden = typing && seg.paragraphs[0]!.index > typed
       if (seg.kind === 'narration') return (
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
-          {i === anchor
-            ? <span className={styles.avatarCol}><button type="button" className={styles.iconButton} {...toggle}><NarrationIcon /></button>{report && <ReportFlag id={m.id} kind="message" />}</span>
-            : <NarrationIcon />}
           <div className={styles.narrationText}>
             {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}{line(p)}</p>)}
           </div>
@@ -150,9 +155,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
             const face = theme !== 'miro' ? <DefaultChatAvatar /> : own && portrait
               ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
               : seg.speaker.slice(0, 1)
-            return i === anchor
-              ? <span className={styles.avatarCol}><button type="button" className={styles.avatar} {...toggle}>{face}</button>{report && <ReportFlag id={m.id} kind="message" />}</span>
-              : <span className={styles.avatar} aria-hidden>{face}</span>
+            return <span className={styles.avatar} aria-hidden>{face}</span>
           })()}
           <div className={styles.characterContent}>
             <p className={styles.speaker}>{seg.speaker}</p>
@@ -178,45 +181,19 @@ function BubbleTime({ m }: { m: Msg }) {
   return <time className={styles.bubbleTime} dateTime={m.at}>{new Date(m.at).toLocaleTimeString('ko-KR', {timeZone:'Asia/Seoul',hour:'numeric',minute:'2-digit',hour12:true})}</time>
 }
 
-/** 장면 서술 표시 — 글줄 세 개. 말풍선 밖 서술이 캐릭터의 말이 아님을 모양으로 알린다. */
-function NarrationIcon() {
-  return <svg className={styles.narrationIcon} viewBox="0 0 16 16" width="16" height="16" aria-hidden focusable="false">
-    <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-  </svg>
-}
-
 function RealityTag({ sender, channel }: { sender?: string; channel?: string }) {
   return <p className="t-micro" style={{ color: 'var(--color-accent-text)', textTransform: 'none', letterSpacing: '0.04em' }}>{[sender, channel].filter(Boolean).join(' · ')}</p>
 }
 
-/** 프로필·서술 아이콘·사진을 누르면 그 아래에 뜨는 신고 아이콘(깃발). */
-function ReportFlag({ id, kind }: { id: string; kind: 'message' | 'photo' }) {
-  const t = useT()
-  return (
-    <TransitionLink href={`/report?type=${kind}&id=${id}`} aria-label={t('신고')} title={t('신고')} className={styles.reportFlag}>
-      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden focusable="false">
-        <path d="M4 14V2.5M4 3h7.5l-1.6 2.8L11.5 8.5H4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-      </svg>
-    </TransitionLink>
-  )
-}
-
-/**
- * 신고 진입점 (n30). 보이는 진입점은 프로필·서술 아이콘(CharacterBubble)이나 사진(여기서 탭)이고,
- * 꾹 누르면 같은 메뉴가 뜬다 — 제스처만으로 접근되는 기능은 두지 않는다.
- */
+/** 화면에 별도 신고 버튼을 두지 않고 길게 누르면 신고 메뉴를 연다. */
 function Reportable({ id, kind, children }: { id: string; kind: 'message' | 'photo'; children: React.ReactNode }) {
   const t = useT()
   const [menu, setMenu] = useState(false)
-  const [flag, setFlag] = useState(false)
   const { handlers } = usePress({ onLongPress: () => setMenu(true) })
   const href = `/report?type=${kind}&id=${id}`
   return (
     <div {...handlers} className="stack" style={{ gap: 6, position: 'relative', touchAction: 'pan-y' }}>
-      {kind === 'photo'
-        ? <button type="button" className={styles.photoButton} aria-label={t('신고 메뉴')} aria-expanded={flag} onClick={() => setFlag((v) => !v)}>{children}</button>
-        : children}
-      {kind === 'photo' && flag && <ReportFlag id={id} kind={kind} />}
+      {children}
       <Popover open={menu} onClose={() => setMenu(false)}>
         <MenuItem type="button" onClick={() => { setMenu(false); window.location.href = href }}>{t('이 내용 신고')}</MenuItem>
       </Popover>

@@ -1,10 +1,10 @@
 .page { background: var(--color-bg); }
 .main { height: 100dvh; min-height: 0; overflow: hidden; }
-.header { display: flex; align-items: center; flex: 0 0 auto; gap: 8px; min-height: 64px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); }
+.header { display: flex; align-items: center; flex: 0 0 auto; gap: 6px; min-height: 64px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); }
 .header > a:first-child { width: 32px; min-height: 44px; justify-content: center; flex-shrink: 0; color: var(--color-text-primary) !important; position: relative; }
 /* 뒤로가기 폭이 32px 이라 터치 영역만 좌우로 넓힌다 (§6) */
 .header > a:first-child::after { content: ''; position: absolute; inset: 0 -6px; }
-.header > a:first-child svg { width: 22px; height: 22px; }
+.header > a:first-child svg { width: 24px; height: 24px; }
 .title { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.4px; }
 .storyDateButton { display: grid; place-items: center; flex: 0 0 auto; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-text-secondary); cursor: pointer; }
 .storyDateButton svg { width: 20px; height: 20px; }
@@ -22,7 +22,7 @@
 .storyDateMarker { display: flex; align-items: center; gap: 12px; margin: 4px 0; color: var(--color-text-tertiary); font-size: 12px; line-height: 1.5; text-align: center; }
 .storyDateMarker::before, .storyDateMarker::after { content: ''; height: 1px; flex: 1; background: var(--color-border); opacity: .65; }
 .storyDateMarker span { max-width: 75%; }
-.contextButton { width: 44px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
+.contextButton { width: 36px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
 .contextButton svg { width: 20px; height: 20px; }
 /* 언베일 — 클래식 토글과 수위 메뉴, 자수정 그라데이션. */
 .adultControl { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
@@ -58,9 +58,9 @@
 .adultBadge { width: 64px; height: 64px; box-sizing: border-box; display: grid; place-items: center; border: 5px solid #ef3038; border-radius: 50%; background: #fff; color: #111; font-size: 31px; line-height: 1; font-weight: 850; letter-spacing: -1.5px; }
 .stylePicker { position: relative; flex-shrink: 0; }
 .styleButton { display: flex; align-items: center; gap: 5px; min-height: 32px; padding: 0 8px 0 10px; border: 0; border-radius: 8px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; line-height: 1; font-weight: 600; cursor: pointer; }
-.transcript { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 18px 16px 24px; scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
+.transcript { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 18px 16px 0; scrollbar-width: thin; scrollbar-color: var(--color-border-strong) transparent; }
 .opening { margin: 0 0 28px; padding: 0 12px; color: var(--color-text-secondary); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere; }
-.messages { display: flex; flex-direction: column; gap: 22px; }
+.messages { display: flex; flex-direction: column; flex-shrink: 0; gap: 22px; margin-top: auto; }
 .characterRow { display: flex; align-items: flex-start; gap: 8px; }
 /* 한 응답 = 장면 하나. 서술(말풍선 밖)과 인물의 말풍선이 번갈아 쌓인다 (2026-09-26). */
 .reply { display: flex; flex-direction: column; gap: 18px; }
@@ -78,7 +78,7 @@
 button.avatar, .iconButton, .photoButton { border: 0; padding: 0; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .iconButton { display: grid; place-items: center; width: 32px; height: 24px; background: none; color: inherit; }
 .iconButton .narrationIcon { margin-top: 0; }
-.photoButton { display: block; width: 100%; background: none; text-align: left; }
+.photo { display: block; max-width: 72%; height: auto; margin-inline: auto; border-radius: var(--radius-md); }
 button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visible, .reportFlag:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
 .reportFlag { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--color-surface-2); color: var(--color-text-secondary); }
 .reportFlag:hover { color: var(--color-accent-text); }
@@ -96,7 +96,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .bubble strong { font-weight: 600; color: var(--color-white); }
 .userRow { display: flex; justify-content: flex-end; }
 .userBubble { max-width: 84%; padding: 11px 14px; margin: 0; border-radius: var(--radius-chat); background: var(--color-surface-3); color: var(--color-text-primary); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.composer { flex: 0 0 auto; background: var(--color-bg); border-top: 0; padding: 6px 12px calc(10px + env(safe-area-inset-bottom)); }
+.composer { flex: 0 0 auto; background: var(--color-bg); border-top: 0; padding: 4px 12px calc(10px + env(safe-area-inset-bottom)); }
 /* 입력창은 한 장의 카드: 위에 글, 아래 줄에 모델 선택과 보내기. 둥글기는 살짝만 (§각지게). */
 .composerForm { position:relative; display: flex; flex-direction: column; gap: 2px; padding: 4px 7px 3px; border: 1px solid var(--color-border); border-radius: 19px; background: #1b1a20; }
 .composerForm:focus-within { border-color: var(--color-border-input); }
@@ -157,7 +157,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='talk']) .bubble strong { color:inherit; }
 :global([data-chat-theme='dm']) .messages, :global([data-chat-theme='talk']) .messages { gap:16px; }
 :global([data-chat-theme='dm']) .narrationText, :global([data-chat-theme='talk']) .narrationText { font-size:13px; line-height:1.65; }
-@media(max-width:420px) { .header { gap:2px; padding-inline:6px; } .contextButton, .storyDateButton { width:34px; } .adultPill { gap:4px; padding:0; } .adultMenuToggle { width:20px; } }
+@media(max-width:420px) { .header { gap:4px; padding-inline:6px; } .contextButton, .storyDateButton { width:34px; } .adultPill { gap:4px; padding:0; } .adultMenuToggle { width:20px; } }
 
 /* Light DM: compact neutral incoming bubbles and a vivid outgoing gradient. */
 :global([data-chat-theme='dm-light']) .main { background:#fff; color:#171717; color-scheme:light; }
@@ -178,7 +178,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 :global([data-chat-theme='dm-light']) .contextButton, :global([data-chat-theme='dm-light']) .storyDateButton, :global([data-chat-theme='dm-light']) .adultLabel, :global([data-chat-theme='dm-light']) .adultMenuToggle { color:#505050; }
 :global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
-:global([data-chat-theme='dm-light']) .transcript { padding:16px 12px 20px; }
+:global([data-chat-theme='dm-light']) .transcript { padding:16px 12px 0; }
 :global([data-chat-theme='dm-light']) .messages { gap:12px; }
 :global([data-chat-theme='dm-light']) .reply { gap:12px; }
 :global([data-chat-theme='dm-light']) .characterRow { align-items:flex-end; gap:7px; }
@@ -229,7 +229,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 
 /* DM input follows the supplied gray capsule / purple plane reference. */
-:global([data-chat-theme='dm-light']) .composer { padding:8px 8px calc(8px + env(safe-area-inset-bottom)); }
+:global([data-chat-theme='dm-light']) .composer { padding:4px 8px calc(8px + env(safe-area-inset-bottom)); }
 :global([data-chat-theme='dm-light']) .composerForm { display:flex; flex-direction:row; align-items:center; gap:10px; padding:5px; border:0; border-radius:28px; background:#f5f5f5; box-shadow:none; }
 :global([data-chat-theme='dm-light']) .composerForm:focus-within { border:0; box-shadow:none; }
 :global([data-chat-theme='dm-light']) .input { flex:1; min-width:0; min-height:34px; padding:5px 0; color:#0d1114; caret-color:#7836fa; font-size:18px; line-height:24px; font-weight:550; letter-spacing:0; }
@@ -240,7 +240,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm-light']) .composerBar { gap:0; padding:0; }
 
 /* DM input follows the supplied gray capsule / purple plane reference. */
-:global([data-chat-theme='dm']) .composer { padding:8px 8px calc(8px + env(safe-area-inset-bottom)); }
+:global([data-chat-theme='dm']) .composer { padding:4px 8px calc(8px + env(safe-area-inset-bottom)); }
 :global([data-chat-theme='dm']) .composerForm { display:flex; flex-direction:row; align-items:center; gap:10px; padding:5px; border:0; border-radius:28px; background:#242424; box-shadow:none; }
 :global([data-chat-theme='dm']) .composerForm:focus-within { border:0; box-shadow:none; }
 :global([data-chat-theme='dm']) .input { flex:1; min-width:0; min-height:34px; padding:5px 0; color:#fafafa; caret-color:#7836fa; font-size:18px; line-height:24px; font-weight:550; letter-spacing:0; }
@@ -332,7 +332,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .userBubble { background:#b89aff; color:#241337; border-radius:14px 4px 14px 14px; max-width:80%; }
 :global([data-chat-theme='miro']) .avatar { width:30px; height:30px; border-radius:50%; background:#27232f; color:#c8b7e8; overflow:hidden; }
 :global([data-chat-theme='miro']) .speaker { margin:0 0 6px; font-size:11px; font-weight:500; color:#a7a1b1; letter-spacing:.1px; }
-:global([data-chat-theme='miro']) .composer { padding:10px 14px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#11111400,#111114 14px); border:0; }
+:global([data-chat-theme='miro']) .composer { padding:4px 14px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#11111400,#111114 14px); border:0; }
 :global([data-chat-theme='miro']) .composerForm { display:flex; flex-direction:row; align-items:flex-end; gap:6px; padding:2px 8px 2px 12px; border:1px solid #ffffff12; border-radius:22px; background:#1a191f; box-shadow:0 4px 20px #00000012; transition:border-color 180ms ease; }
 :global([data-chat-theme='miro']) .composerForm:focus-within { border-color:#ac91d766; }
 :global([data-chat-theme='miro']) .input { flex:1; min-width:0; min-height:34px; padding:6px 0; font-size:15px; line-height:22px; letter-spacing:-.15px; color:#eeedf2; caret-color:#c6b1ef; }
@@ -343,7 +343,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .send:focus-visible { outline:2px solid #d0baf2; outline-offset:3px; }
 :global([data-chat-theme='miro']) .send:not(:disabled):active { transform:scale(.94); }
 @media(prefers-reduced-motion:reduce) { :global([data-chat-theme='miro']) .send, :global([data-chat-theme='miro']) .composerForm { transition:none; } :global([data-chat-theme='miro']) .send:not(:disabled):active { transform:none; } }
-:global([data-chat-theme='miro']) .transcript { padding:20px 16px 24px; }
+:global([data-chat-theme='miro']) .transcript { padding:20px 16px 0; }
 :global([data-chat-theme='miro']) .messages { gap:20px; }
 :global([data-chat-theme='miro']) .reply { gap:14px; }
 :global([data-chat-theme='miro']) .characterRow { gap:10px; }
@@ -354,3 +354,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* 기존 언베일 시트의 흰색 CTA를 실제 본인인증에도 유지한다. */
 .adultVerification button[type='submit'] { background:#fff !important; color:#17131f !important; border-color:#fff !important; }
+
+/* Keep a little breathing room above the input; the open keyboard owns the bottom inset. */
+.composer, :global([data-chat-theme]) .composer { padding-top: 8px; }
+:global([data-keyboard='true']) .composer { padding-bottom: 0; }

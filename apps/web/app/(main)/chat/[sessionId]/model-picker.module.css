@@ -23,7 +23,7 @@
 :global([data-chat-theme='talk']) .trigger { color:#292929; }
 
 :global([data-chat-theme='dm-light']) .trigger { color:#555; min-height:36px; gap:3px; padding:0 3px; font-size:11px; }
-:global([data-chat-theme='dm-light']) .trigger .icon { filter:brightness(.55); width:16px; height:16px; }
+:global([data-chat-theme='dm-light']) .trigger .icon {  width:16px; height:16px; }
 
 /* Model selection lives below the name; the menu opens into the transcript. */
 .trigger { min-height:24px; padding:0; gap:4px; font-size:11px; }
@@ -35,3 +35,16 @@
 :global([data-chat-theme='dm-light']) .option[aria-pressed=true] { color:#722ee9; background:#f3edff; }
 :global([data-chat-theme='dm-light']) .description, :global([data-chat-theme='dm-light']) .heading small, :global([data-chat-theme='dm-light']) .wallet { color:#737373; }
 :global([data-chat-theme='dm-light']) .wallet strong, :global([data-chat-theme='dm-light']) .actions a, :global([data-chat-theme='dm-light']) .actions button { color:#6030ac; }
+
+/* Model choice sits beside the room button in the header. */
+.trigger, :global([data-chat-theme='dm-light']) .trigger { min-height: 44px; padding: 0; gap: 4px; font-size: 12px; }
+
+.trigger .icon, :global([data-chat-theme='dm-light']) .trigger .icon { width: 24px; height: 24px; }
+
+/* A quiet tint separates the selected model from the adjacent utility icons. */
+.trigger, :global([data-chat-theme='dm-light']) .trigger { min-height: 36px; padding-inline: 7px; border-radius: 10px; background: #b6a0ef18; }
+:global([data-chat-theme='dm-light']) .trigger { background: #f3effa; }
+:global([data-chat-theme='talk']) .trigger { background: #ffffff35; }
+
+/* A selected light-theme option keeps its light fill after the first model change. */
+:global([data-chat-theme='dm-light']) .panel[data-interacted='true'] .option[aria-pressed='true'] { background: #f3edff; color: #6030ac; }
