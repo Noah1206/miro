@@ -360,6 +360,21 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-keyboard='true']) .composer { padding-bottom: 0; }
 
 /* Long scene descriptions should be as readable as spoken dialogue. */
+.sceneIcon { width:20px; height:20px; flex:0 0 20px; margin-top:4px; color:inherit; }
+.bubble .action em, .bubble .thought em { font-style:inherit; }
+.narration { gap:12px; color:#c6c1ce; }
+:global([data-chat-theme='dm']) .narration { color:#c6c6c6; }
+:global([data-chat-theme='dm-light']) .narration { color:#595959; }
+:global([data-chat-theme='talk']) .narration { color:#354957; }
+:global([data-chat-theme]) .bubble .action,
+:global([data-chat-theme]) .bubble .thought { color:#d2cdd9; font-size:inherit; line-height:inherit; font-style:italic; padding-left:0; border-left:0; }
+:global([data-chat-theme='dm']) .bubble .action,
+:global([data-chat-theme='dm']) .bubble .thought { color:#cecece; }
+:global([data-chat-theme='dm-light']) .bubble .action,
+:global([data-chat-theme='dm-light']) .bubble .thought { color:#505050; }
+:global([data-chat-theme='talk']) .bubble .action,
+:global([data-chat-theme='talk']) .bubble .thought { color:#454d55; }
+:global([data-chat-theme]) .bubble p + p { margin-top:6px; }
 :global([data-chat-theme]) .narrationText,
 :global([data-chat-theme]) .opening {
   font-size:16px;
@@ -381,6 +396,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .bubble,
 :global([data-chat-theme='dm']) .userBubble,
 :global([data-chat-theme='dm-light']) .bubble,
-:global([data-chat-theme='dm-light']) .userBubble,
+:global([data-chat-theme='dm-light']) .userBubble { font-size:15px; line-height:20px; }
+:global([data-chat-theme='dm']) .narrationText,
+:global([data-chat-theme='dm']) .opening,
+:global([data-chat-theme='dm-light']) .narrationText,
+:global([data-chat-theme='dm-light']) .opening { font-size:15px; line-height:1.75; }
+:global([data-chat-theme='talk']) .narrationText,
+:global([data-chat-theme='talk']) .opening { font-size:14px; line-height:1.75; }
 :global([data-chat-theme='miro']) .bubble,
 :global([data-chat-theme='miro']) .userBubble { font-size:16px; line-height:1.6; }

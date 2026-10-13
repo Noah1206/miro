@@ -126,7 +126,7 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
 function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow }: {
   m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
 }) {
-  // 장면·행동·속마음은 말풍선 밖, 대사는 말풍선 안. 서술과 인물이 오가면 말풍선도 번갈아 생긴다.
+  // 상황은 말풍선 밖, 행동·속마음은 같은 인물의 말풍선 안에서 대사와 구분한다.
   const t = useT()
   const { theme } = useChatTheme()
   const segments = segmentReply(m.blocks, m.content, name)
@@ -143,6 +143,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
       const hidden = typing && seg.paragraphs[0]!.index > typed
       if (seg.kind === 'narration') return (
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
+          <svg className={styles.sceneIcon} viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
           <div className={styles.narrationText}>
             {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}{line(p)}</p>)}
           </div>

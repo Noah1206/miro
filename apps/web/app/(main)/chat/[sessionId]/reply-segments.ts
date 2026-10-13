@@ -1,6 +1,6 @@
 /**
  * 캐릭터챗 한 응답을 화면의 덩어리로 나눈다 (2026-09-26).
- * 장면 서술(narrative·world)은 말풍선 밖에 한 줄 아이콘과 함께, 행동·속마음도 회색 서술로 두고 대사만 말풍선 안에 둔다.
+ * 장면 서술(narrative·world)은 말풍선 밖에, 행동·속마음은 해당 인물의 대사와 같은 말풍선 안에 둔다.
  * 서술과 인물이 번갈아 오가면 말풍선도 번갈아 생긴다. index 는 응답 전체에서의 문단 순서 — 타이핑이 이 순서로 나타난다.
  */
 import { parseEmphasis } from '@/components/scene/emphasis'
@@ -35,7 +35,7 @@ export function segmentReply(blocks: Array<Record<string, unknown>>, content: st
   source.forEach((item, index) => {
     const paragraph: Paragraph = { text: item.text, kind: item.kind, index }
     const last = segments[segments.length - 1]
-    if (item.kind === 'narration' || item.kind === 'action' || item.kind === 'thought') {
+    if (item.kind === 'narration') {
       if (last?.kind === 'narration') last.paragraphs.push(paragraph)
       else segments.push({ kind: 'narration', paragraphs: [paragraph] })
       return
