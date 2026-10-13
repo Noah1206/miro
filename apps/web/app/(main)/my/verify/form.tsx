@@ -1,11 +1,12 @@
 'use client'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { Button, Checkbox, Field, Input } from '@/components/ui'
 import { verifyAdult, type VerifyState } from './actions'
 import { useT } from '@/lib/i18n/client'
-export function VerifyForm() {
+export function VerifyForm({ onDone }: { onDone?: () => void }) {
   const [state, action, pending] = useActionState(verifyAdult, { error: null, done: false } satisfies VerifyState)
   const t = useT()
+  useEffect(() => { if (state.done) onDone?.() }, [state.done, onDone])
   if (state.done) return <p data-verified className="t-body" style={{ padding: 16, background: 'var(--color-surface-1)', border: '1px solid var(--color-white)', borderRadius: 'var(--radius-md)' }}>{t('인증이 완료되었습니다.')}</p>
   return (
     <form action={action} className="stack" style={{ gap: 14 }}>

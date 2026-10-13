@@ -13,5 +13,8 @@ export async function GET(req: Request) {
   const id = url.searchParams.get('identityVerificationId')
   // code 가 있으면 사용자가 창을 닫았거나 본인확인기관 오류다 — 결과를 받으러 가지 않는다.
   const r = !id || url.searchParams.get('code') ? 'cancelled' : (await confirmAdult(user.id, { identityVerificationId: id })).ok ? 'done' : 'failed'
+  const next = url.searchParams.get('next')
+  // 채팅에서 시작한 인증은 해당 대화로 복귀한다. 외부 주소는 허용하지 않는다.
+  if (next && /^\/chat\/[a-zA-Z0-9-]+$/.test(next)) return NextResponse.redirect(new URL(next, url))
   return NextResponse.redirect(new URL(`/my/verify?r=${r}`, url))
 }

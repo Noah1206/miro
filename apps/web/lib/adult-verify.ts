@@ -9,7 +9,8 @@ const DI_TAKEN = msg('이미 다른 계정에서 본인인증에 쓰인 정보�
 const diHash = (di: string) => 'sha256:' + createHash('sha256').update(di).digest('hex')
 
 /** 본인인증 건 id 는 계정에 묶는다 — 한 사람의 인증 건을 다른 계정이 가져다 쓰지 못하게(브라우저가 이 접두어로 만들고 서버가 확인한다). */
-export const verificationPrefix = (userId: string) => `iv-${userId.replaceAll('-', '')}-`
+// KCP는 영숫자 40자 이하만 허용한다. 계정에 묶인 26자 접두어 + 8자 난수로 요청한다.
+export const verificationPrefix = (userId: string) => `iv${createHash('sha256').update(userId).digest('hex').slice(0, 24)}`
 
 export type AdultVerifyOutcome = { ok: true } | { ok: false; reason: string | null; lockedUntil: Date | null }
 

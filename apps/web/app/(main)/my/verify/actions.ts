@@ -1,4 +1,9 @@
 'use server'
+import { eq } from 'drizzle-orm'
+import { db, users } from '@miro/db'
+import { canRetryVerification, verifyRetryAt } from '@miro/domain'
+import { resolveAdultVerification } from '@miro/providers'
+import { verificationPrefix } from '@/lib/adult-verify'
 import { requireUser } from '@/lib/auth'
 import { confirmAdult, type AdultVerifyOutcome } from '@/lib/adult-verify'
 import { INTL_LOCALE, msg } from '@/lib/i18n'
@@ -28,5 +33,19 @@ async function toState(o: AdultVerifyOutcome): Promise<VerifyState> {
       : o.lockedUntil ? t('인증에 실패했습니다: {reason} 24시간 후 다시 시도할 수 있습니다.', { reason: o.reason })
       : t(o.reason),
     done: false,
+  }
+}
+
+/** 프로필과 채팅이 같은 인증 상태를 사용한다. 비밀 API 키는 반환하지 않는다. */
+export async function adultVerificationState() {
+  const user = await requireUser()
+  const [u] = await db.select({ verified: users.adultVerifiedAt, failed: users.adultVerifyFailedAt }).from(users).where(eq(users.id, user.id)).limit(1)
+  const provider = resolveAdultVerification()
+  const [t, language] = await Promise.all([getT(), getLanguage()])
+  const locked = !canRetryVerification(u?.failed ?? null, new Date())
+  return {
+    verified: !!u?.verified,
+    locked: locked ? t('인증에 실패했습니다. {at} 이후에 다시 시도할 수 있습니다.', { at: verifyRetryAt(u!.failed)!.toLocaleString(INTL_LOCALE[language]) }) : null,
+    client: provider.client ?? null, prefix: verificationPrefix(user.id), notice: provider.info.notice,
   }
 }

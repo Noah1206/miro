@@ -5,6 +5,8 @@ import { Popover } from '@/components/ui/popover'
 import { msg } from '@/lib/i18n'
 import sheet from '@/components/push-subscribe.module.css'
 import { useT } from '@/lib/i18n/client'
+import { adultVerificationState } from '@/app/(main)/my/verify/actions'
+import { AdultVerificationPanel } from '@/components/adult-verification-panel'
 import { setAdultMode } from './actions'
 import styles from './chat.module.css'
 
@@ -27,6 +29,7 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
   const toast = useToast()
   const [menu, setMenu] = useState(false)
   const [ask, setAsk] = useState<Level | null>(null)
+  const [verification, setVerification] = useState<{ state: Awaited<ReturnType<typeof adultVerificationState>>; level: Level } | null>(null)
   const [pending, start] = useTransition()
   const apply = (next: Level | 'off', agreed = false) => start(async () => {
     const { error } = await setAdultMode(sessionId, next !== 'off', agreed, next === 'off' ? undefined : next)
@@ -37,10 +40,16 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
   const choose = (v: Level | 'off') => {
     setMenu(false)
     if (v === current) return
-    if (v !== 'off' && blocked) { toast(t(blocked)); return }
-    // 처음 켜는 방은 동의 시트부터 — 고른 수위는 시트를 마치면 적용한다.
-    if (v !== 'off' && !everOn) setAsk(v)
-    else apply(v)
+    if (v === 'off') { apply(v); return }
+    start(async () => {
+      try {
+        const state = await adultVerificationState()
+        if (!state.verified) { setVerification({ state, level: v }); return }
+        if (blocked) { toast(t(blocked)); return }
+        if (!everOn) setAsk(v)
+        else apply(v)
+      } catch { toast(t('본인인증 결과를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.')) }
+    })
   }
   return <>
     <span className={styles.adultControl} data-on={on || undefined}>
@@ -63,6 +72,16 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
         ))}
       </Popover>
     </span>
+    <Sheet open={verification !== null} onClose={() => setVerification(null)} title={t('성인 인증')}>
+      {verification && <>
+        <p className="t-caption" style={{ marginBottom: 16 }}>{t('성인 표현은 인증과 정책 동의를 마친 경우에만. 실존 인물 기반의 성적 표현은 인증과 무관하게 제한됩니다.')}</p>
+        <AdultVerificationPanel state={verification.state} returnTo={`/chat/${sessionId}`} onDone={() => {
+          const selected = verification.level
+          setVerification(null)
+          apply(selected, true)
+        }} />
+      </>}
+    </Sheet>
     <Sheet open={ask !== null} onClose={() => setAsk(null)} label={t('언베일을 켤까요?')} compact>
       {/* 두 체크는 required — 브라우저가 둘 다 체크해야 제출한다. 서버도 처음 켤 때 agreed 를 다시 본다. */}
       <form className={sheet.stack} onSubmit={(e) => {

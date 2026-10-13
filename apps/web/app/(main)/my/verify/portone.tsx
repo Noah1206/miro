@@ -24,7 +24,7 @@ function portOne(): Promise<PortOneSDK> {
  * PortOne 본인인증(10/2). PC 는 창이 닫히면 서버에 확인을 맡기고, 모바일은 창이 /my/verify/return 으로 돌려보낸다.
  * 인증 건 id 는 계정 접두어(prefix)로 만든다 — 서버가 다른 계정의 건을 받지 않는다.
  */
-export function PortOneVerify({ storeId, channelKey, prefix, notice }: { storeId: string; channelKey: string; prefix: string; notice: string | null }) {
+export function PortOneVerify({ storeId, channelKey, prefix, notice, onDone, returnTo }: { storeId: string; channelKey: string; prefix: string; notice: string | null; onDone?: () => void; returnTo?: string }) {
   const t = useT()
   const [error, setError] = useState(notice)
   const [done, setDone] = useState(false)
@@ -34,12 +34,12 @@ export function PortOneVerify({ storeId, channelKey, prefix, notice }: { storeId
     const identityVerificationId = prefix + crypto.randomUUID().slice(0, 8)
     let res
     try {
-      res = await (await portOne()).requestIdentityVerification({ storeId, channelKey, identityVerificationId, redirectUrl: `${location.origin}/my/verify/return` })
+      res = await (await portOne()).requestIdentityVerification({ storeId, channelKey, identityVerificationId, redirectUrl: `${location.origin}/my/verify/return${returnTo ? `?next=${encodeURIComponent(returnTo)}` : ''}` })
     } catch { setError(msg('본인인증 창을 열지 못했어요. 잠시 후 다시 시도해 주세요.')); return }
     // 창을 닫았거나 본인확인기관 오류 — 기관이 준 문구가 있으면 그대로 보인다.
     if (!res || res.code) { setError(res?.message || msg('본인인증을 마치지 않았어요.')); return }
     const state = await confirmIdentity(identityVerificationId)
-    if (state.done) setDone(true)
+    if (state.done) { setDone(true); onDone?.() }
     else setError(state.error)
   })
   if (done) return <p data-verified className="t-body" style={{ padding: 16, background: 'var(--color-surface-1)', border: '1px solid var(--color-white)', borderRadius: 'var(--radius-md)' }}>{t('인증이 완료되었습니다.')}</p>
