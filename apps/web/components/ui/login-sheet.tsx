@@ -1,5 +1,7 @@
 'use client'
-import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
+import { msg } from '@/lib/i18n'
 import { Sheet } from './sheet'
 import { LogoMark } from './logo'
 import { Button } from './button'
@@ -34,7 +36,24 @@ export function LoginTapArea({ label, className }: { label: string; className?: 
  * 로그인 자체는 외부 OAuth 로 나가야 하므로 여기서도 결국 페이지를 떠나지만, 그 선택을
  * 하기 전까지는 보던 것을 잃지 않는다.
  */
+const LOGIN_ERRORS: Record<string, string> = {
+  deleted: msg('삭제된 계정이에요. 같은 계정으로는 다시 들어올 수 없어요.'),
+  denied: msg('로그인을 취소했어요. 준비되면 다시 시도해 주세요.'),
+  failed: msg('잠시 연결이 끊겼어요. 다시 이어볼까요?'),
+}
+
 export function LoginSheetProvider({ providers, children }: { providers: LoginProvider[]; children: ReactNode }) {
+  const pathname = usePathname()
+  useEffect(() => {
+    const query = new URLSearchParams(location.search)
+    if (query.get('login') !== '1') return
+    const to = query.get('next')
+    setNext(to?.startsWith('/') && !to.startsWith('//') ? to : '/home')
+    setNote(LOGIN_ERRORS[query.get('error') ?? ''] ?? null)
+    setOpen(providers.length > 0)
+    query.delete('login'); query.delete('next'); query.delete('error')
+    history.replaceState(history.state, '', pathname + (query.size ? `?${query}` : '') + location.hash)
+  }, [pathname, providers.length])
   const [next, setNext] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -59,7 +78,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
               {t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}
             </p>
-            {note && <p className="t-caption" style={{ margin: 0, color: 'var(--color-accent-bright)', fontWeight: 'var(--weight-semibold)', textAlign: 'center' }}>{note}</p>}
+            {note && <p className="t-caption" style={{ margin: 0, color: 'var(--color-accent-bright)', fontWeight: 'var(--weight-semibold)', textAlign: 'center' }}>{t(note)}</p>}
           </div>
           {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(p => <SocialButton key={p.id} {...p} next={next} surface="sheet" />)}
         </div>

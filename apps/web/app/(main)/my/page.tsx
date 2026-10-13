@@ -13,7 +13,6 @@ import { SiteFooter } from '@/components/site-footer'
 import { LegalRevisionNotice } from '@/components/legal-revision-notice'
 import { logout } from './actions'
 import { MenuRow, MenuSection } from './menu'
-import homeStyles from '../home/home.module.css'
 import { CharacterPhoto } from '@/components/character-visual'
 import { CreditCard } from './credit-card'
 import { ProfileEditor } from './profile-editor'
@@ -55,10 +54,6 @@ export default async function MyPage() {
   return (
     <Page wide>
       <h1 className="sr-only">{t('마이페이지')}</h1>
-      <header className={styles.top}>
-        <span className={homeStyles.headerItem} style={{ display: 'block' }}><LogoMark size={30} /></span>
-      </header>
-
       <section className={styles.profile}>
         <span className={styles.avatar} aria-hidden>
           {avatarUrl ? <CharacterPhoto src={avatarUrl} alt="" size="avatar" sizes="64px" width={64} height={64} loading="eager" /> : <LogoMark size={28} />}

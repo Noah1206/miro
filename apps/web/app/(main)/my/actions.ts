@@ -35,5 +35,5 @@ export async function saveProfile(_: ProfileResult, form: FormData): Promise<Pro
 /** 로그아웃 — 설정 페이지가 없어져 '나' 화면 아래 메뉴에서 부른다(2026-10-01). */
 export async function logout(): Promise<void> {
   await destroySession()
-  redirect('/login')
+  redirect('/home')
 }
