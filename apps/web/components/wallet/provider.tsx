@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { Button, Notice, Sheet, TransitionLink, useToast } from '@/components/ui'
-import { readWallet, purchaseCredits } from '@/app/(main)/recharge/wallet-actions'
+import { readWallet, purchaseCredits, requestDepositConfirmation } from '@/app/(main)/recharge/wallet-actions'
 import { TransferActions } from '@/app/(main)/recharge/transfer-actions'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
 import styles from './wallet.module.css'
@@ -37,13 +37,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [needed, setNeeded] = useState<{ cost: number; label: string } | null>(null)
   const [selected, setSelected] = useState('')
   const [checking, setChecking] = useState(false)
-  const [transferTapped, setTransferTapped] = useState(false)
   const pending = useRef<Pending | null>(null)
   const epoch = useRef(0)
   const locked = useRef(false)
   const refreshing = useRef(false)
   const executing = useRef(false)
   const purchase = useRef<{ productId: string; requestId: string } | null>(null)
+  const depositRequest=useRef<{orderId:string;requestId:string}|null>(null)
   const settledSeen = useRef<string | null>(null)
 
   const cancel = useCallback(() => {
@@ -56,7 +56,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setOpen(false); setState('idle'); setError(null); setNeeded(null)
   }, [pathname])
   useEffect(() => () => { epoch.current++; pending.current = null }, [])
-  useEffect(() => { setTransferTapped(false) }, [stage, wallet?.order?.id])
 
   async function execute(request: Pending, token: number) {
     if (token !== epoch.current || executing.current) return
@@ -157,6 +156,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     finally { if (token === epoch.current) locked.current = false }
   }
 
+  async function requestDeposit() {
+    const order=wallet?.order
+    if (!order || locked.current) return
+    const token=epoch.current
+    locked.current=true; setChecking(true);setError(null)
+    if (!depositRequest.current || depositRequest.current.orderId!==order.id) depositRequest.current={orderId:order.id,requestId:crypto.randomUUID()}
+    try {
+      const result=await requestDepositConfirmation(order.id,depositRequest.current.requestId)
+      if (token!==epoch.current) return
+      if (result.ok) {
+        if(result.sent) depositRequest.current=null
+        toast(t(result.sent?'입금 확인 요청을 보냈어요. 확인 후 토큰이 지급돼요.':'입금 확인 요청을 접수했어요. 알림 전송을 다시 시도하고 있어요.'))
+        await reflect(result.wallet,token)
+      } else setError(result.error)
+    } catch {if(token===epoch.current)setError(msg('입금 확인 요청을 보내지 못했어요. 다시 시도해 주세요.'))}
+    finally {if(token===epoch.current){locked.current=false;setChecking(false)}}
+  }
+
   async function retryAction() {
     if (locked.current) return
     const request = pending.current
@@ -206,7 +223,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
               <p className={`t-caption ${styles.muted}`}>{t('보낼 금액')}</p>
               <p className={`t-title-1 ${styles.amount}`} style={{ margin: 'var(--space-1) 0 0' }} data-order-amount={order.amountMinor}>{krw(order.amountMinor)}</p>
             </div>
-            <TransferActions bank={wallet.account.bank} accountNumber={wallet.account.number} amount={order.amountMinor} onOpen={() => setTransferTapped(true)} />
+            <div>
+              <p className={`t-caption ${styles.muted}`}>{t('입금자명')}</p>
+              <strong className="t-title-3">{order.depositName}</strong>
+              <p className={`t-caption ${styles.muted}`}>{t('송금할 때 입금자명에 이 코드를 적어 주세요.')}</p>
+            </div>
+            <TransferActions bank={wallet.account.bank} accountNumber={wallet.account.number} amount={order.amountMinor} />
           </>}
           {order.status === 'approved' && <p className="t-body">{t('입금이 확인됐어요. 잔액 반영까지 최대 15분 정도 걸릴 수 있어요.')}</p>}
           {/* 전자상거래법 제13조 ②: 취소·환불 조건을 결제 전에. 입금 전엔 청구가 없고 72시간 뒤 자동 취소(약관 제10조 ③). */}
@@ -214,10 +236,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             {t('입금하지 않으면 72시간 뒤 주문이 자동으로 취소되고, 아무것도 청구되지 않아요.')}{' '}
             <TransitionLink href="/terms/refund" className="hit" style={{ textDecoration: 'underline', color: 'var(--color-text-secondary)' }}>{t('취소·환불 규정')}</TransitionLink>
           </p>}
-          {/* 송금 버튼을 눌러야 열린다 — 그 전엔 비활성(회색)으로 잠겨 있고, 열리면 주황. */}
+          {/* 직접 은행 앱으로 송금한 사용자도 입금 확인을 요청할 수 있다. */}
           <div className={styles.actions}>
-            <Button variant="primary" full data-confirm-deposit onClick={() => void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
-              disabled={order.status === 'awaiting' && !transferTapped}>{t('입금 확인하기')}</Button>
+            <Button variant="primary" full data-confirm-deposit onClick={() => order.status==='awaiting'?void requestDeposit():void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
+              disabled={state==='loading'||checking}>{t(order.status==='awaiting'?'입금 확인 요청':'입금 확인하기')}</Button>
             <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </div>
         </section> : done ? <>

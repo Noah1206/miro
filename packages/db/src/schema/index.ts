@@ -834,6 +834,17 @@ export const bankTransferOrders = pgTable('bank_transfer_orders', {
   userIdx: index('bank_transfer_orders_user_idx').on(t.userId, t.createdAt),
 }))
 
+/** Each intentional deposit request is durable before any Telegram network request. */
+export const bankTelegramRequests = pgTable('bank_telegram_requests', {
+  id: uuid('id').primaryKey(),
+  orderId: uuid('order_id').notNull().references(() => bankTransferOrders.id, { onDelete:'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone:true }).notNull().defaultNow(),
+  sentAt: timestamp('sent_at', { withTimezone:true }),
+  leaseUntil: timestamp('lease_until', { withTimezone:true }),
+  attempts: integer('attempts').notNull().default(0),
+  messageId: integer('message_id'),
+}, t => ({ pendingIdx:index('bank_telegram_requests_pending_idx').on(t.sentAt,t.createdAt) }))
+
 /* ─────────────── Analytics (P12) ─────────────── */
 
 /**

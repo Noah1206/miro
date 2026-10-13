@@ -4,6 +4,7 @@ import { createBankOrder, OrderPendingError } from '@/lib/payments/bank-transfer
 import { walletHistory, walletSnapshot } from '@/lib/wallet/service'
 import { observe } from '@/lib/observe'
 import { msg } from '@/lib/i18n'
+import { requestBankDeposit } from '@/lib/payments/telegram'
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
 
@@ -16,6 +17,14 @@ export async function readWallet(orderId?: string) {
 export async function readWalletHistory(cursor?: string) {
   const user = await requireUser()
   return walletHistory(user.id, cursor)
+}
+
+export async function requestDepositConfirmation(orderId:string, requestId:string) {
+  const user=await requireUser()
+  try {
+    const result=await requestBankDeposit(user.id,orderId,requestId)
+    return {ok:true as const,sent:result.sent,wallet:await walletSnapshot(user.id,orderId)}
+  } catch { return {ok:false as const,error:msg('입금 확인 요청을 보내지 못했어요. 다시 시도해 주세요.')} }
 }
 
 /** Browser supplies identity only. Catalog prices and settlement remain server-owned. */

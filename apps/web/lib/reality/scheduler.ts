@@ -11,6 +11,7 @@ import { purgeExpiredPersonalData } from '@/lib/ops/account'
 import { expireSubscriptions } from '@/lib/payments/service'
 import { notifyExpiringPasses } from '@/lib/payments/expiry-notice'
 import { expireBankOrders, settleApprovedOrders } from '@/lib/payments/bank-transfer'
+import { deliverBankTelegramRequests } from '@/lib/payments/telegram'
 import { observe } from '@/lib/observe'
 import { notifyOperators } from '@/lib/ops/alerts'
 import { runMemoryJobs, type MemoryJobRun } from '@/lib/ai/memory-jobs'
@@ -69,6 +70,7 @@ export async function runRealityMaintenance(wall = new Date()): Promise<Maintena
   // 운영자가 승인한 계좌이체 주문을 지급한다. 승인과 지급을 나눠 지급 경로를 하나로 둔다.
   const settlement = await step(failedSteps, 'bank_settle', () => settleApprovedOrders(wall), { settled: 0, failed: 0 })
   const expiredOrders = await step(failedSteps, 'bank_expire', () => expireBankOrders(wall), 0)
+  await step(failedSteps,'bank_telegram',()=>deliverBankTelegramRequests(),{sent:0})
   const bankOrders = { ...settlement, expired: expiredOrders }
   const passNotices = await step(failedSteps, 'pass_notices', () => notifyExpiringPasses(wall), { soon: 0, ended: 0 })
   const expiredSubscriptions = await step(failedSteps, 'subscriptions', () => expireSubscriptions(wall), 0)
