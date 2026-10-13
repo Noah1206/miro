@@ -4,6 +4,7 @@ import { ChatPaletteIcon } from './chat-icons'
 import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import styles from './chat-theme.module.css'
+import { chatViewportState } from './chat-viewport'
 
 type Theme = 'miro' | 'dm-light' | 'dm' | 'talk'
 const Context = createContext<{ theme: Theme; select: (theme: Theme) => void }>({ theme: 'miro', select: () => {} })
@@ -25,16 +26,21 @@ export function ChatTheme({ sessionId, children }: { sessionId: string; children
   useEffect(() => {
     const viewport = window.visualViewport
     if (!viewport) return
+    let baselineHeight = Math.max(window.innerHeight, viewport.height * viewport.scale)
     // iOS leaves the layout viewport tall when its keyboard covers the screen.
     // Use the visible viewport only while a text field has the keyboard open.
     const update = () => {
       const element = root.current
       if (!element) return
-      const focused = document.activeElement instanceof HTMLTextAreaElement || document.activeElement instanceof HTMLInputElement
-      const keyboard = focused && viewport.scale < 1.05 && window.innerHeight - viewport.height > 120
-      element.dataset.keyboard = String(keyboard)
-      element.style.setProperty('--chat-visible-height', `${viewport.height}px`)
-      element.style.setProperty('--chat-visible-top', `${viewport.offsetTop}px`)
+      const active = document.activeElement
+      const focused = element.contains(active) && (active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)
+      if (!focused) baselineHeight = Math.max(window.innerHeight, viewport.height * viewport.scale)
+      const state = chatViewportState(viewport, baselineHeight, focused)
+      element.dataset.keyboard = String(state.keyboard)
+      element.style.setProperty('--chat-visible-height', `${state.height}px`)
+      element.style.setProperty('--chat-visible-width', `${state.width}px`)
+      element.style.setProperty('--chat-visible-top', `${state.top}px`)
+      element.style.setProperty('--chat-visible-left', `${state.left}px`)
     }
     update()
     viewport.addEventListener('resize', update)

@@ -1,7 +1,13 @@
-.root { min-height: 100dvh; }
-.root[data-keyboard='true'] { position: fixed; top: var(--chat-visible-top, 0px); left: 0; right: 0; width: 100%; max-width: var(--shell-w); height: var(--chat-visible-height); min-height: 0; margin-inline: auto; }
+.root { min-height:100dvh; min-width:0; width:100%; max-width:100%; overflow-x:clip; }
+.root :global(.chat-layout) { min-width:0; max-width:100%; grid-template-columns:minmax(0,1fr); }
+.root :global(.chat-main) { min-width:0; max-width:100%; }
+.root[data-keyboard='true'] { position:fixed; top:var(--chat-visible-top,0px); left:calc(var(--chat-visible-left,0px) + max(0px, (var(--chat-visible-width,100%) - var(--shell-w)) / 2)); right:auto; width:min(var(--chat-visible-width,100%),var(--shell-w)); height:var(--chat-visible-height); min-height:0; margin-inline:0; overflow:hidden; }
 .root[data-keyboard='true'] :global(.chat-layout) { height: 100%; min-height: 0; }
 .root[data-keyboard='true'] :global(.chat-main) { height: 100%; min-height: 0; }
+@media(max-width:767px) {
+  /* Safari zooms small text fields on focus, introducing lateral pan and disabling old keyboard detection. */
+  .root :global(.chat-main) textarea { font-size:16px; }
+}
 .trigger { display:grid; place-items:center; flex-shrink:0; width:36px; height:44px; padding:0; border:0; background:transparent; color:inherit; cursor:pointer; border-radius:8px; }
 .trigger svg { width:20px; height:20px; }
 .trigger:focus-visible, .option:focus-visible { outline:2px solid var(--color-accent); outline-offset:3px; }
