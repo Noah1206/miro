@@ -72,15 +72,20 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
         ))}
       </Popover>
     </span>
-    <Sheet open={verification !== null} onClose={() => setVerification(null)} title={t('성인 인증')}>
-      {verification && <>
-        <p className="t-caption" style={{ marginBottom: 16 }}>{t('성인 표현은 인증과 정책 동의를 마친 경우에만. 실존 인물 기반의 성적 표현은 인증과 무관하게 제한됩니다.')}</p>
+    <Sheet open={verification !== null} onClose={() => setVerification(null)} label={t('언베일을 켤까요?')} compact>
+      {verification && <div className={`${sheet.stack} ${styles.adultVerification}`}>
+        <div className={sheet.center}>
+          <span aria-hidden className={styles.adultBadge}>19</span>
+          <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{t('언베일을 켤까요?')}</h2>
+          <p>{t('이 대화방에서 성인 표현이 나올 수 있어요. 언제든 다시 끌 수 있어요.')}</p>
+        </div>
         <AdultVerificationPanel state={verification.state} returnTo={`/chat/${sessionId}`} onDone={() => {
           const selected = verification.level
           setVerification(null)
           apply(selected, true)
         }} />
-      </>}
+        <Button type="button" variant="ghost" size="sm" full onClick={() => setVerification(null)} style={{ color: 'var(--color-text-primary)' }}>{t('돌아가기')}</Button>
+      </div>}
     </Sheet>
     <Sheet open={ask !== null} onClose={() => setAsk(null)} label={t('언베일을 켤까요?')} compact>
       {/* 두 체크는 required — 브라우저가 둘 다 체크해야 제출한다. 서버도 처음 켤 때 agreed 를 다시 본다. */}

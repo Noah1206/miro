@@ -75,7 +75,7 @@ export function Sheet({ open, onClose, title, label, children, variant = 'defaul
             style={{
               position: 'fixed', bottom: 0, zIndex: 61, maxHeight: `${snap.full * 100}dvh`,
               // 모서리·테두리는 모든 시트가 같다 — choice 는 제목 크기와 손잡이만 다르다.
-              background: 'var(--color-surface-2)', borderTop: '1px solid var(--color-border)',
+              background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', colorScheme: 'dark', borderTop: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0', touchAction: 'none',
               paddingBottom: 'env(safe-area-inset-bottom)', display: 'flex', flexDirection: 'column',
               maxWidth: 720, margin: '0 auto',
