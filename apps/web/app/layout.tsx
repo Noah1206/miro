@@ -3,6 +3,7 @@ import { visitorConsent } from '@/lib/visitor-consent'
 import { VisitorConsent } from '@/components/visitor-consent'
 import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { Providers } from '@/components/ui/providers'
 import { LanguageProvider } from '@/lib/i18n/client'
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LanguageProvider language={language} messages={messagesFor(language)}>
           <a href="#main" className="skip-link">{t('본문으로 건너뛰기')}</a><Providers>{children}<VisitorConsent needed={needsConsent} /></Providers>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   )
