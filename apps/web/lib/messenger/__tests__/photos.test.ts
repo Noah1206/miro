@@ -19,7 +19,8 @@ describe('Messenger photo boundaries', () => {
     const calls: string[] = []
     const llm: LLMProvider = { info: { mode: 'mock', name: 'fixture', notice: null }, async generateStructured(req) {
       calls.push(req.prompt)
-      return req.schema.parse(req.promptVersion === 'messenger-photo-grounding:v1' ? { grounded, reason: 'review' } : {
+      expect(req.responseSchema?.required).toContain('reason')
+      return req.schema.parse(req.promptVersion === 'messenger-photo-grounding:v2' ? { grounded, reason: 'review' } : {
         sendPhoto: true, reason: '공유', subject: 'environment', description: '공방 풍경', sourceId: 'current_environment', ruleIds: ['privacy'], evidenceIds: [], ...over,
       })
     } }
