@@ -26,7 +26,7 @@ function csp() {
   const dev = process.env.NODE_ENV !== 'production'
   return [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' https://cdn.portone.io${dev ? " 'unsafe-eval'" : ''}`,
+    `script-src 'self' 'unsafe-inline' https://cdn.portone.io https://www.googletagmanager.com https://www.googleadservices.com${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline' https://static.toss.im https://cdn.jsdelivr.net",
     "font-src 'self' data: https://static.toss.im https://cdn.jsdelivr.net",
     "img-src 'self' data: blob: https:",

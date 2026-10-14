@@ -2,6 +2,7 @@ import { currentUser } from '@/lib/auth'
 import { visitorConsent } from '@/lib/visitor-consent'
 import { VisitorConsent } from '@/components/visitor-consent'
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import { Providers } from '@/components/ui/providers'
 import { LanguageProvider } from '@/lib/i18n/client'
@@ -34,6 +35,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={language === 'zh' ? 'zh-CN' : language}>
       <head>
+        <Script id="google-ads-init" strategy="beforeInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'AW-18512422714');
+        `}</Script>
+        <Script src="https://www.googletagmanager.com/gtag/js?id=AW-18512422714" strategy="beforeInteractive" />
         {/* 서체는 HTML 에서 바로 잇는다. globals.css 의 @import 였을 때는 CSS 를 받은 뒤에야 요청이 시작됐다. */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
