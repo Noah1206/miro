@@ -232,3 +232,11 @@
 .receipt [data-unread] { color:var(--color-accent-text); }
 .receipt button { padding:2px 4px; border:0; background:transparent; color:var(--color-danger); font-size:11px; cursor:pointer; }
 :global([data-chat-theme='talk']) .receipt [data-unread] { color:#715d00; }
+
+.photoButton { display: block; padding: 0; border: 0; background: transparent; cursor: zoom-in; max-width: 280px; width: 100%; border-radius: 14px; overflow: hidden; }
+.photoButton img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; }
+.photoDialog { border: 0; border-radius: 20px; padding: 16px; max-width: min(90vw, 680px); max-height: 90dvh; background: var(--surface, #fff); color: var(--text, #202020); }
+.photoDialog::backdrop { background: rgb(0 0 0 / .72); }
+.photoDialog img { display: block; max-width: 100%; max-height: 72dvh; object-fit: contain; border-radius: 12px; }
+.photoDialog button { display: block; margin-left: auto; min-width: 44px; min-height: 44px; font-size: 24px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.photoDialog p { margin-top: 12px; white-space: pre-wrap; }

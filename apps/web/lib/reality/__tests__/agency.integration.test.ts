@@ -1,3 +1,7 @@
+import * as auth from '@/lib/auth'
+import * as photoStorage from '@/lib/storage/messenger-images'
+import { GET as getMessengerImage } from '@/app/api/messenger-images/[id]/route'
+import * as photoDelivery from '@/lib/messenger/photos'
 import { ATTENTION_VERSION } from '@/lib/messenger/attention'
 import { receiveMessenger, runMessengerInbox, messengerItems, replyPauseMs } from '@/lib/messenger/inbox'
 import { conversationRequests, messengerInbox } from '@miro/db'
@@ -7,7 +11,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { and, eq, sql } from 'drizzle-orm'
 import {
   db, users, userSettings, characters, contactProfiles, roleplaySessions, worldStates, relationships, events,
-  messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions, stateTransitions, characterLifeEvents,
+  generatedMedia, messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions, stateTransitions, characterLifeEvents,
 } from '@miro/db'
 import { createAgencyState, type AgencyAction, type CompiledCharacter } from '@miro/domain'
 import { hashAuthoredCharacter } from '@miro/engine'
@@ -718,6 +722,54 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '천천히 확인해요.' }, NOW)
     await runMessengerInbox(NOW, { sessionId: f.id })
     expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBeNull()
+  })
+
+  it('delivers an actual stored photo with a caption through the atomic contact path', async () => {
+    const f = await fixture()
+    provider()
+    vi.spyOn(photoDelivery, 'prepareMessengerPhoto').mockResolvedValue({ id: randomUUID(), url: '/api/messenger-images/test-photo', choice: {
+      sendPhoto: true, reason: '공방 풍경을 공유한다.', subject: 'environment', description: '사람 없는 공방의 풍경',
+      sourceId: 'current_environment', ruleIds: ['personality'], evidenceIds: [],
+    } })
+    const outcome = await evaluateSession(f.id, NOW)
+    expect(outcome).toMatchObject({ outcome: 'sent', channel: 'photo' })
+    const [photo] = await db.select().from(messages).where(and(eq(messages.sessionId, f.id), eq(messages.kind, 'photo')))
+    expect(photo!.content).toBe('/api/messenger-images/test-photo')
+    expect(photo!.blocks[0]).toMatchObject({ channel: 'photo', caption: '잠깐 이야기할 수 있을까요?', photoDescription: '사람 없는 공방의 풍경' })
+    const loaded = await loadSession(f.id, f.userId)
+    expect(loaded!.snapshot.recentMessages.find(m => m.id === photo!.id)!.content).toContain('공방의 풍경')
+    expect(loaded!.snapshot.recentMessages.find(m => m.id === photo!.id)!.content).not.toContain('/api/messenger-images/')
+    expect((await stored(f.id)).contacts).toHaveLength(1)
+  })
+
+  it('keeps ordinary message delivery when photo generation fails', async () => {
+    const f = await fixture()
+    const { calls } = provider()
+    vi.spyOn(photoDelivery, 'prepareMessengerPhoto').mockRejectedValue(new Error('image service unavailable'))
+    expect(await evaluateSession(f.id, NOW)).toMatchObject({ outcome: 'sent', channel: 'message' })
+    expect((await stored(f.id)).messages).toHaveLength(1)
+    expect(calls.find(c => c.version === 'reality:v4-motivated-voice')!.system).toContain('NO photo attached')
+  })
+
+  it('only issues private image access to the owning user and revokes it for restricted conversations', async () => {
+    const f = await fixture(), id = randomUUID()
+    await db.insert(generatedMedia).values({ id, sessionId: f.id, characterId: f.characterId, kind: 'photo',
+      url: `/api/messenger-images/${id}`, cacheKey: 'fixture', providerMetadata: { storage: { bucket: 'messenger-images', path: `${f.id}/${id}.jpg` } } })
+    const user = { id: f.userId, email: null, displayName: null, plan: 'free' as const, adultVerifiedAt: null }
+    const current = vi.spyOn(auth, 'currentUser').mockResolvedValue({ ...user, id: randomUUID() })
+    const signer = vi.fn().mockResolvedValue({ error: null, data: { signedUrl: 'https://fixture.supabase.co/signed-image' } })
+    vi.spyOn(photoStorage, 'messengerStorage').mockReturnValue({ storage: { from: () => ({ createSignedUrl: signer }) } } as unknown as ReturnType<typeof photoStorage.messengerStorage>)
+    const request = new Request(`http://localhost/api/messenger-images/${id}`), params = { params: Promise.resolve({ id }) }
+    expect((await getMessengerImage(request, params)).status).toBe(404)
+    expect(signer).not.toHaveBeenCalled()
+    current.mockResolvedValue(user)
+    const response = await getMessengerImage(request, params)
+    expect(response.status).toBe(302); expect(response.headers.get('cache-control')).toBe('private, no-store')
+    expect(signer).toHaveBeenCalledWith(`${f.id}/${id}.jpg`, 60)
+    await db.update(roleplaySessions).set({ restrictedAt: NOW }).where(eq(roleplaySessions.id, f.id))
+    expect((await getMessengerImage(request, params)).status).toBe(404)
+    current.mockResolvedValue(null)
+    expect((await getMessengerImage(request, params)).status).toBe(401)
   })
 
 })

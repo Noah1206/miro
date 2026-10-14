@@ -46,6 +46,7 @@ export type ImageSpec = {
   prompt: string
   sceneKey: string | null
   aspect: '1:1' | '3:4' | '16:9'
+  references?: Array<{ mimeType: string; data: string }>
 }
 
 export type GeneratedImage = {

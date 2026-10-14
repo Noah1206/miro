@@ -2,6 +2,7 @@ import type { characters, characterVisualIdentities, messages } from '@miro/db'
 import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
 import { officialSamples } from '@/lib/editorial/official-copy'
+import { photoMessageText } from '@/lib/messenger/photo-context'
 
 /** One authored identity projection for reply and proactive paths. No inferred demographic traits. */
 export function characterContext(
@@ -41,7 +42,7 @@ export function conversationContext(rows: Array<typeof messages.$inferSelect>, t
     const speaker = blocks.find(b => b.type === 'npc' && typeof b.speaker === 'string')?.speaker
     return {
       id: m.id, role: m.role as RecentMessage['role'], kind: m.kind,
-      content: m.content, at: timeZone ? localIso(m.createdAt, timeZone) : m.createdAt.toISOString(),
+      content: photoMessageText(m), at: timeZone ? localIso(m.createdAt, timeZone) : m.createdAt.toISOString(),
       knowledgeScope: m.role === 'narrator' ? 'omniscient' : 'participant',
       ...(speaker ? { npcName: speaker } : {}),
       ...(blocks.length ? { blocks } : {}),

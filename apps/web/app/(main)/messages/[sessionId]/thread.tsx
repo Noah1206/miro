@@ -7,6 +7,7 @@ import { useMessenger } from './delivery'
 import { subject } from '@/lib/format'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
+import { MessengerPhoto } from './photo'
 
 const clock = (iso: string | undefined, locale: string) => iso ? new Date(iso).toLocaleTimeString(locale, { timeZone: 'Asia/Seoul', hour: 'numeric', minute: '2-digit' }) : ''
 
@@ -37,17 +38,14 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
         if (m.kind === 'hidden') return <p key={m.id} className={styles.meta} data-hidden-message>{m.content}</p>
         const reality = m.blocks.find((b) => b.type === 'reality') as { channelLabel?: string; caption?: string | null } | undefined
         const lines = m.kind === 'photo' ? [] : m.blocks.filter((b) => b.type === 'dialogue' && typeof b.text === 'string').map((b) => String(b.text))
-        const texts = lines.length ? lines : m.content.split(/\n\s*\n/).filter(Boolean)
+        const texts = m.kind === 'photo' ? [] : lines.length ? lines : m.content.split(/\n\s*\n/).filter(Boolean)
         return (
           <div key={m.id} className={styles.row} data-reality-message>
             <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
             <div className={styles.group}>
               {theme === 'talk' && <span className={styles.speaker}>{characterName}</span>}
               {reality?.channelLabel && reality.channelLabel !== '문자' && <p className={styles.tag}>{reality.channelLabel}</p>}
-              {m.kind === 'photo' && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} style={{ maxWidth: '100%', borderRadius: 14 }} />
-              )}
+              {m.kind === 'photo' && <MessengerPhoto src={m.content} caption={reality?.caption} />}
               {m.kind === 'photo' && reality?.caption ? <p className={styles.bubble}>{reality.caption}</p> : texts.map((text, i) => <div key={i} className={styles.timedBubble}><p className={styles.bubble} data-continuation={i > 0 || undefined}>{text}</p>{i === texts.length - 1 && <span className={styles.time}>{time}</span>}</div>)}
             </div>
             {m.kind === 'photo' && <span className={styles.time}>{time}</span>}

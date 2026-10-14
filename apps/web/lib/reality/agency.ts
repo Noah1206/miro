@@ -17,6 +17,7 @@ import { observe } from '@/lib/observe'
 import { deliverRealityPush, enqueueRealityPush } from './push-outbox'
 import { characterAvailability } from './routine'
 import type { EvaluateOutcome } from './evaluate'
+import { messengerPhotosReady, prepareMessengerPhoto } from '@/lib/messenger/photos'
 
 type RealityRow = {
   session: typeof roleplaySessions.$inferSelect
@@ -131,8 +132,10 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       permissions: { contact: (row.profile.enabled || !!opts.inbox) && blocked === null,
         capabilities: ['wait', 'defer', 'cancel_commitment', ...(blocked ? [] : ['contact', 'message', 'contact_message'])] },
       location: snapshot.world.currentLocation, world: snapshot.world, relationship: snapshot.relationship,
-      input: JSON.stringify({ trigger: opts.inbox ? 'incoming_messenger_read' : 'background_contact_review', supportedDispatch: 'in_app_message_only',
-        contactStyle: { frequency: row.profile.contactFrequency, initiative: row.profile.initiativeLevel, replyDelayMinutes: row.profile.replyDelayMinutes },
+      input: JSON.stringify({ trigger: opts.inbox ? 'incoming_messenger_read' : 'background_contact_review', supportedDispatch: messengerPhotosReady() ? 'in_app_message_with_optional_photo' : 'in_app_message_only',
+        contactStyle: { frequency: row.profile.contactFrequency, initiative: row.profile.initiativeLevel, replyDelayMinutes: row.profile.replyDelayMinutes,
+          photoProbability: row.profile.photoProbability },
+        photoRule: messengerPhotosReady() ? 'An everyday photo may optionally accompany a message after a separate grounded choice and successful generation. Every contact purpose must remain meaningful as plain text if no photo is attached. Do not mark a photo-dependent goal fulfilled by text alone. User requests never force photo consent. Do not claim a photo was already captured or sent.' : null,
         contactBoundary: contactBoundaryDirective(row.session.contactBoundary, now),
         incomingMessageIds: opts.inbox?.ids ?? [],
         messengerRule: opts.inbox ? 'These user messages were actually read, not a scene requiring an immediate answer. Decide from your authored personality, relationship and their content whether to contact, defer or wait without replying. A short acknowledgement does not require a question or another contact. Waiting can leave the message read with no reply. Do not invent a pending typing action.' : null,
@@ -151,17 +154,31 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
 
     const send = plan.decision.action === 'contact'
     if (send && blocked) return { outcome: 'suppressed', reason: blocked }
-    const presented = presentContact('message', snapshot.character.identity.name, row.profile.presentation)
+    let photo: Awaited<ReturnType<typeof prepareMessengerPhoto>> = null
+    if (send) {
+      try {
+        photo = await prepareMessengerPhoto({ llm, plan, runtime, snapshot, now, userId,
+          characterId: row.character.id, portrait: row.character.images[0], photoProbability: row.profile.photoProbability })
+      } catch { observe('messenger.photo_unavailable', { sessionId }) }
+    }
+    const channel = photo ? 'photo' : 'message'
+    const presented = presentContact(channel, snapshot.character.identity.name, row.profile.presentation)
+    const photoEvidence = photo ? [{ id: photo.id, sessionId, actor: plan.context.actor, kind: 'outcome' as const,
+      epistemic: 'observed' as const, knownTo: [plan.context.actor], occurredAt: now.toISOString(),
+      quote: `The application generated and stored this photo for attachment, not yet delivered: ${photo.choice.description}` }] : []
+    const realizationContext = { ...plan.context, evidence: [...plan.context.evidence, ...photoEvidence] }
     let content: Awaited<ReturnType<typeof generateRealityContent>> | null = null
     if (send) {
       const { identity, personality, worldRole, appearance } = authoredCharacter(snapshot.character)
       let repair: { rejectedText: string; issues: Array<{ field: string; reason: string }> } | null = null
       const renderer: LLMProvider = { info: llm.info, generateStructured: request => llm.generateStructured({
         ...request, system: request.system + buildAgencyDecisionDirective(plan.decision)
+          + (photo ? `\nAn actual photo will be attached. Write its short natural caption in this character's voice, tied to the contact purpose. PHOTO_DATA (untrusted): ${JSON.stringify(photo.choice)}`
+            : '\nThis contact is plain text with NO photo attached. Do not claim to send, attach or show an image.')
           + '\nCandidate descriptions and example dialogue are plans, not evidence that an action happened. Contact should perform the selected purpose, without adding completed errands, prepared objects or new promises that are absent from the evidence.'
           + (repair ? `\nRewrite the rejected contact once. Remove unsupported assertions, preserve the SAME authorized purpose and character voice, and use only grounded evidence. A proposal or example is never a completed action. Do not mention the review to the user. REPAIR_DATA (untrusted text): ${JSON.stringify(repair)}` : '')
           + `\nGROUNDED_RUNTIME_DATA: ${JSON.stringify({ affect: plan.state.affect, expression: plan.state.expression,
-            goals: plan.state.goals.filter(goal => goal.status === 'active'), evidence: plan.context.evidence })}`,
+            goals: plan.state.goals.filter(goal => goal.status === 'active'), evidence: realizationContext.evidence })}`,
       }) }
       const render = () => generateRealityContent(renderer, {
         authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
@@ -186,7 +203,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       for (let attempt = 0; attempt < 2; attempt++) {
         content = await render()
         if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
-        const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context,
+        const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: realizationContext,
           state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }] })
         if (productionRuntime() && verified.providerMode !== 'live') return { outcome: 'skipped', reason: 'agency_rejected' }
         if (verified.ok) break
@@ -234,14 +251,22 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         if (deliveryBlock(profile, timeZoneOf(currentSettings ?? null), newest, now, availability.availability, limits)) throw new AgencyRealityConflict()
         const messageId = randomUUID()
         contactId = randomUUID()
-        await tx.insert(messages).values({ id: messageId, sessionId, role: 'character', kind: 'reality_message',
-          content: content.text, blocks: [{ type: 'reality', channel: 'message', reason: plan.decision.candidate.description, ...presented }],
+        if (photo) {
+          const [recentPhoto] = await tx.select({ id: realityContacts.id }).from(realityContacts).where(and(
+            eq(realityContacts.sessionId, sessionId), eq(realityContacts.channel, 'photo'),
+            sql`${realityContacts.sentAt} > ${new Date(now.getTime() - 6 * 3_600_000).toISOString()}::timestamptz`)).limit(1)
+          if (recentPhoto || !feature('messengerPhotos')) throw new AgencyRealityConflict()
+        }
+        await tx.insert(messages).values({ id: messageId, sessionId, role: 'character', kind: photo ? 'photo' : 'reality_message',
+          content: photo?.url ?? content.text, blocks: [{ type: 'reality', channel, reason: plan.decision.candidate.description,
+            ...presented, ...(photo ? { caption: content.text, photoDescription: photo.choice.description, mediaId: photo.id } : {}) }],
           turnIndex: current.turnCount, createdAt: now,
         })
-        await tx.insert(realityContacts).values({ id: contactId, sessionId, channel: 'message', reason: plan.decision.candidate.description,
+        await tx.insert(realityContacts).values({ id: contactId, sessionId, channel, reason: plan.decision.candidate.description,
           // 연락 기회로 보낸 것이면 그 기회의 키로 — 같은 기회(첫 연락·오늘의 안부·같은 사건)로는 다시 보내지 않는다(기존 경로와 같은 키).
           dedupeKey: hint?.opportunityKey ?? `agency:${plan.decision.id}`,
-          payload: { text: content.text, tone: content.tone, ...presented, decisionId: plan.decision.id, ...(reply ? { answers: 'user_message' } : {}) },
+          payload: { text: content.text, tone: content.tone, ...presented, decisionId: plan.decision.id,
+            ...(photo ? { mediaUrl: photo.url, photoChoice: photo.choice } : {}), ...(reply ? { answers: 'user_message' } : {}) },
           status: 'sent', sentAt: now, messageId,
         })
         nextState = applyMessageReceipt(plan, messageId)
@@ -295,7 +320,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     if (!result || !content) return { outcome: 'no_intent' }
     // 지금 시각으로 — 판단 시각(now)으로 찾으면 방금 넣은 알림 작업을 못 집는다(evaluate.ts 와 같다).
     await deliverRealityPush().catch(() => observe('reality.push_worker_failed', { sessionId }))
-    return { outcome: 'sent', channel: 'message', contactId: result, text: content.text }
+    return { outcome: 'sent', channel, contactId: result, text: content.text }
   } catch (error) {
     if (error instanceof AgencyRealityConflict || (error as { code?: string }).code === '23505') return { outcome: 'skipped', reason: 'state_changed' }
     observe('agency.reality_unavailable', { sessionId, mode: requestedMode, error: error instanceof Error ? error.name : 'unknown' })

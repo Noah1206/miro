@@ -1,5 +1,6 @@
 export * from './types'
 export { MockImageProvider } from './mock/image'
+export { GeminiImageProvider } from './image/gemini'
 export { CharacterDraft } from './character/draft.schema'
 export { generateCharacterDraft, buildMockDraft } from './character/generate'
 export { resolveLLM, resolveImage, resolvePush, resolveCallMedia, resolveAdultVerification, resolvePayment, resolveOAuth } from './registry'

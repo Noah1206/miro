@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm'
 import { db } from '@miro/db'
 import { currentMode, features, productionRuntime } from '@miro/config'
 import { aiReadiness, resolveAdultVerification, resolveCallMedia, resolveImage, resolveLLM, resolvePush } from '@miro/providers'
+import { messengerPhotosReady } from '@/lib/messenger/photos'
 
 /**
  * 운영 상태. Provider 가 Mock 이면 그대로 드러난다 — 실제 AI 처럼 위장하지 않는다.
@@ -51,6 +52,7 @@ export async function GET(req: Request) {
     version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'dev',
     mode: currentMode(),
     features: features(),
+    messengerPhotos: { ready: messengerPhotosReady(), model: 'gemini-nano-banana-2.1' },
     providers: {
       llm: llm.mode, llmChain: llm.name, image: resolveImage().info.mode, push: resolvePush().info.mode,
       voice: resolveCallMedia('voice').info.mode, video: resolveCallMedia('video').info.mode,

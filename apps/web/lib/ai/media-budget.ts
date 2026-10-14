@@ -7,8 +7,8 @@ export async function budgetedImage<T>(opts: { kind: string; info: ProviderInfo;
   const ceiling = opts.info.mode === 'mock' ? 0 : prices[opts.kind]
   if (ceiling === undefined || !Number.isFinite(ceiling) || ceiling < 0) throw new AIBudgetDeniedError('unknown_price')
   const id = randomUUID(), traceId = randomUUID()
-  const model: ModelDefinition = {id:opts.info.name,provider:opts.info.mode === 'mock' ? 'mock' : 'replicate',providerModelId:opts.info.name,
-    tier:'standard',capabilities:['image_prompt'],enabled:true,version:process.env.MIRO_IMAGE_MODEL ?? 'configured-image',trainingAllowed:false,maxContextTokens:1,maxOutputTokens:1}
+  const model: ModelDefinition = {id:opts.info.name,provider:opts.info.mode === 'mock' ? 'mock' : opts.info.name.startsWith('gemini:') ? 'gemini' : 'replicate',providerModelId:opts.info.name,
+    tier:'standard',capabilities:['image_prompt'],enabled:true,version:opts.info.name.startsWith('gemini:') ? opts.info.name.slice(7) : process.env.MIRO_IMAGE_MODEL ?? 'configured-image',trainingAllowed:false,maxContextTokens:1,maxOutputTokens:1}
   const decision = await productionBudgetGuard.authorize({task:opts.kind,system:'',prompt:'',costCeilingUSD:ceiling},model,{userId:opts.userId,sessionId:opts.sessionId,requestId:id,traceId},id)
   if (!decision.allowed) throw new AIBudgetDeniedError(decision.reason)
   const start=Date.now()

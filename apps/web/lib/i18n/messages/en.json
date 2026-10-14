@@ -1203,5 +1203,7 @@
  "읽음": "Read",
  "읽지 않음": "Unread",
  "전송 중": "Sending",
- "다시 보내기": "Retry"
+ "다시 보내기": "Retry",
+ "사진 크게 보기": "View full photo",
+ "사진을 불러오지 못했어요.": "Couldn't load the photo."
 }

@@ -1,4 +1,5 @@
 import { characterCanSeeMessage } from '@/lib/messenger/inbox'
+import { photoMessageText } from '@/lib/messenger/photo-context'
 import { randomUUID } from 'node:crypto'
 import { and, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, characterRevisions, characterRuntimeStates, characters, messages, roleplaySessions } from '@miro/db'
@@ -127,7 +128,7 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
   for (const message of [...snapshot.recentMessages.slice(-POLICY.context.recentMessageCount), ...stored]) {
     if (!message.id || !['user', 'character'].includes(message.role)) continue
     const blocks = message.blocks ?? []
-    const text = blocks.length && message.kind !== 'reality_message' ? blocks.filter(b => b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name))
+    const text = message.kind === 'photo' ? ('createdAt' in message ? photoMessageText(message) : message.content) : blocks.length && message.kind !== 'reality_message' ? blocks.filter(b => b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name))
       .map(b => b.text).join('\n') : message.content
     if (!text.trim()) continue
     // 기록 시각은 사용자 현지 시각(오프셋 포함) — 대화 기록과 같은 기준이어야 '오늘·어제'를 맞게 말한다.
