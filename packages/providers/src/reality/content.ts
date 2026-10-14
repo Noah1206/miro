@@ -11,6 +11,24 @@ export const RealityContent = z.object({
 })
 export type RealityContent = { text: string; tone: 'warm' | 'neutral' | 'terse' | 'urgent'; send?: boolean }
 
+export const REALITY_CONTENT_VERSION = 'reality:v5-texting-voice'
+// The model chooses an exceptional long message from context. Ordinary texts have a
+// server-checked ceiling; never truncate a sentence or split it into artificial sends.
+const TextingContent = RealityContent.extend({
+  lengthReason: z.enum(['brief', 'requested_detail', 'important_explanation', 'letter']).default('brief'),
+}).superRefine((value, ctx) => {
+  if (value.lengthReason === 'brief' && [...value.text].length > 120) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['text'], message: 'Ordinary messages must fit within 120 characters.' })
+  }
+})
+const TextingResponse = { type: 'object', additionalProperties: false,
+  required: ['text', 'tone', 'send', 'lengthReason'], properties: {
+    text: { type: 'string', minLength: 1, maxLength: 400 },
+    tone: { type: 'string', enum: ['warm', 'neutral', 'terse', 'urgent'] }, send: { type: 'boolean' },
+    lengthReason: { type: 'string', enum: ['brief', 'requested_detail', 'important_explanation', 'letter'] },
+  },
+}
+
 export type RealityContentInput = {
   characterName: string
   /** Only unsolicited legacy opportunities can abstain; replies and authorized agency actions cannot. */
@@ -46,7 +64,7 @@ export type RealityContentInput = {
   memories?: Array<{ type: string; content: string; id?: string; sourceMessageId?: string | null; at?: string }>
 }
 
-const SYSTEM = `당신은 역할극 캐릭터입니다. 사용자가 앱을 닫은 뒤, 캐릭터가 먼저 보내는 짧은 연락을 씁니다.
+const SYSTEM = `당신은 역할극 캐릭터입니다. 승인된 연락 이유에 따라 먼저 보내는 연락 또는 받은 문자에 대한 답장을 씁니다.
 
 규칙:
 - 캐릭터의 말투와 성격을 유지합니다.
@@ -68,7 +86,15 @@ const SYSTEM = `당신은 역할극 캐릭터입니다. 사용자가 앱을 닫�
 - 마지막 연락에서 이미 물은 안부를 다시 묻거나, "밥 먹었어/뭐 해/오늘 어땠어"만으로 대화를 시작하지 않습니다. 과거 이야기를 아무 이유 없이 끌어와 기억력을 과시하지 않습니다.
 - 수신자가 앱을 닫았다는 사실은 캐릭터가 관찰한 사건이 아닙니다. 접속·미접속이나 경과 시간만으로 사용자의 감정·생활을 추정하지 않습니다.
 - 연락 이유를 설명하는 내부 기록과 실제로 사용자에게 하는 말을 구분합니다. 약속이 취소됐다면 실행하거나 다시 압박하지 않습니다.
-- 1~4문장. 반드시 JSON 만 반환합니다.`
+- 문자/DM은 평소 짧은 한두 마디가 기본입니다. 한 단어나 짧은 반응만으로 충분하면 거기서 끝냅니다. 한국어 일상 문자는 보통 10~60자, 최대 120자입니다. 최소 분량을 채우려고 늘리지 않습니다.
+- 말이 많은 성격도 매번 설명문을 쓰지 않습니다. 과묵함·수다스러움·격식은 답의 밀도와 어휘로 드러내고, 사용자의 짧은 말에 불필요한 해석·위로·질문을 덧붙이지 않습니다. 매번 이름을 부르거나 질문으로 끝내지 않습니다.
+- 짧은 답을 채우려고 승인된 연락 이유에 없는 새 약속(나중에 전화/문자하기, 예약하기, 찾아가기)을 덧붙이지 않습니다.
+- 문자 습관은 명시된 말투·대사 예시를 우선하고, 그에 맞는 기존 본인의 문자 기록을 참고합니다. 존댓말/반말, 완결문/짧은 어절, 마침표·물음표, 줄바꿈, 웃음 표현·이모티콘·줄임말의 사용 정도를 일관되게 유지합니다. 사용자의 말투를 그대로 따라 하거나 모든 캐릭터에게 ㅋㅋ·ㅎㅎ·이모티콘·오타를 붙이지 않습니다. 근거 없는 독특한 버릇이나 유행어도 만들지 않습니다.
+- 기존 캐릭터챗의 긴 장면 서술은 문자 습관의 근거가 아닙니다. 이전 문자가 장황했더라도 그 분량을 답습하지 않습니다. 관계·감정은 어휘와 온도에 반영하되 작성된 말투와 호칭 경계를 유지합니다.
+- 문자에는 실제로 입력해 보낼 말만 씁니다. 행동 지문, 별표 속 동작, 속마음, 화자 이름, 서술형 장면 묘사, 서명은 넣지 않습니다. 짧게 만든다는 이유로 실제 발송이나 완료하지 않은 일을 했다고 단정하지 않습니다.
+- 사진이 붙는 경우 이미 보이는 내용을 길게 설명하지 말고, 캐릭터다운 짧은 한마디를 붙입니다. 사진이 없으면 사진을 보냈다고 하지 않습니다.
+- lengthReason은 기본 brief입니다. 사용자가 구체적으로 자세한 설명을 요청하면 requested_detail, 사과·갈등 해소·중요한 사정처럼 생략하면 뜻이 달라지는 설명이 실제로 필요하면 important_explanation, 채널이 편지이면 letter를 선택할 수 있습니다. 그때만 120자를 넘길 수 있고 최대 400자입니다. 단순 안부·일상 반응·사진 설명·따뜻한 말투·수다스러운 성격만으로 예외를 선택하지 않습니다. 예외도 필요한 만큼만 씁니다.
+- 반드시 JSON만 반환합니다. lengthReason은 내부 분량 판단이며 사용자에게 설명하지 않습니다.`
 
 export async function generateRealityContent(
   llm: LLMProvider,
@@ -102,14 +128,15 @@ export async function generateRealityContent(
         knowledgeScope: m.role === 'narrator' ? 'omniscient' : m.knowledgeScope ?? 'participant',
       })), memories: input.memories ?? [] })}`,
     '',
-    '위 상황에서 캐릭터가 먼저 보낼 연락을 JSON 으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent" }',
+    '승인된 연락 이유와 마지막으로 받은 말에 맞는 문자 한 통을 JSON으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent", "lengthReason": "brief"|"requested_detail"|"important_explanation"|"letter" }',
   ].filter(Boolean).join('\n')
 
-  // 400자 이하 한 통이다. dialogue 모델 상한(ECHO 때문에 4096)을 그대로 물려받지 않게 묶는다.
-  const content = await llm.generateStructured({ schema: RealityContent, task: 'dialogue', promptVersion: 'reality:v4-motivated-voice', system: prompts.get('reality').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM, prompt, maxTokens: 1024 })
+  const content = await llm.generateStructured({ schema: TextingContent, responseSchema: TextingResponse,
+    task: 'dialogue', promptVersion: REALITY_CONTENT_VERSION, maxRetries: 1,
+    system: prompts.get('reality', 'v2').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM, prompt, maxTokens: 1024 })
   // A refusal reason is internal text, never a reply. Let the existing retry path retain the request.
   if (!input.allowAbstain && content.send === false) throw new Error('reality_content_unexpected_abstention')
-  return content
+  return { text: content.text, tone: content.tone, send: content.send }
 }
 
 /**

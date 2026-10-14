@@ -2,6 +2,7 @@ import * as auth from '@/lib/auth'
 import * as photoStorage from '@/lib/storage/messenger-images'
 import { GET as getMessengerImage } from '@/app/api/messenger-images/[id]/route'
 import * as photoDelivery from '@/lib/messenger/photos'
+import { REALITY_CONTENT_VERSION } from '@miro/providers'
 import { ATTENTION_VERSION } from '@/lib/messenger/attention'
 import { receiveMessenger, runMessengerInbox, messengerItems, replyPauseMs } from '@/lib/messenger/inbox'
 import { conversationRequests, messengerInbox } from '@miro/db'
@@ -67,7 +68,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?:
         })
       }
       if (version === CHARACTER_LIFE_VERSION) return request.schema.parse({ events: opts.life ?? [] })
-      if (version === 'reality:v4-motivated-voice') {
+      if (version === REALITY_CONTENT_VERSION) {
         await opts.duringRender?.()
         const first = calls.filter(call => call.version === version).length === 1
         return request.schema.parse({ text: opts.rejectFirst && first ? '우유를 데워 뒀습니다.' : '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
@@ -283,7 +284,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     await db.update(characters).set({ name: 'NEW_UNPINNED_NAME', personality: 'NEW_UNPINNED_PERSONALITY' }).where(eq(characters.id, characterId))
     const { calls } = provider()
     expect((await evaluateSession(id, NOW)).outcome).toBe('sent')
-    const rendered = calls.find(call => call.version === 'reality:v4-motivated-voice')!
+    const rendered = calls.find(call => call.version === REALITY_CONTENT_VERSION)!
     expect(rendered.prompt).toContain(snapshot.character.identity.name)
     expect(rendered.prompt).not.toMatch(/SECRET_NARRATOR|UNSOURCED_SECRET_MEMORY|NEW_UNPINNED_/)
     expect(rendered.system).toContain('GROUNDED_RUNTIME_DATA')
@@ -293,7 +294,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const { id } = await fixture()
     const { calls } = provider({ rejectFirst: true })
     expect(await evaluateSession(id, NOW)).toMatchObject({ outcome: 'sent' })
-    const renders = calls.filter(call => call.version === 'reality:v4-motivated-voice')
+    const renders = calls.filter(call => call.version === REALITY_CONTENT_VERSION)
     expect(renders).toHaveLength(2)
     expect(renders[1]!.system).toContain('unsupported_success')
     expect(calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
@@ -324,7 +325,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(state.decisions).toHaveLength(0)
     expect(state.runtime.version).toBe(0)
     expect(state.runtime.state.sequence).toBe(0)
-    expect(calls.filter(call => call.version === 'reality:v4-motivated-voice')).toHaveLength(2)
+    expect(calls.filter(call => call.version === REALITY_CONTENT_VERSION)).toHaveLength(2)
   })
 
   it('rolls back already-inserted message/contact if the receipt transition fails', async () => {
@@ -384,7 +385,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const { calls } = provider()
     expect(await evaluateSession(id, NOW, { inline: true })).toEqual({ outcome: 'no_intent' })
     expect(JSON.parse(calls[0]!.prompt).permissions.contact).toBe(false)
-    expect(calls.filter(call => call.version === 'reality:v4-motivated-voice')).toHaveLength(0)
+    expect(calls.filter(call => call.version === REALITY_CONTENT_VERSION)).toHaveLength(0)
     expect((await stored(id)).messages).toHaveLength(0)
   })
 
@@ -748,7 +749,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     vi.spyOn(photoDelivery, 'prepareMessengerPhoto').mockRejectedValue(new Error('image service unavailable'))
     expect(await evaluateSession(f.id, NOW)).toMatchObject({ outcome: 'sent', channel: 'message' })
     expect((await stored(f.id)).messages).toHaveLength(1)
-    expect(calls.find(c => c.version === 'reality:v4-motivated-voice')!.system).toContain('NO photo attached')
+    expect(calls.find(c => c.version === REALITY_CONTENT_VERSION)!.system).toContain('NO photo attached')
   })
 
   it('only issues private image access to the owning user and revokes it for restricted conversations', async () => {

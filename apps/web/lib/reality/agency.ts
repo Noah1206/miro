@@ -193,6 +193,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         // Renderer sees the same participant evidence as the planner, never legacy unsourced memories or omniscient prose.
         recentMessages: plan.context.evidence.filter(item => item.kind === 'message').map(item => ({
           id: item.id, role: item.actor === 'user' ? 'user' : 'character', content: item.quote, at: item.occurredAt,
+          kind: snapshot.recentMessages.find(message => message.id === item.id)?.kind,
           knowledgeScope: 'participant',
         })), memories: [],
       })

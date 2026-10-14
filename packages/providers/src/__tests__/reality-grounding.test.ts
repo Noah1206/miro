@@ -37,7 +37,7 @@ describe('grounded reality prompt', () => {
       ],
     })
     for (const fact of ['INTJ', '선배', '폐역 관리자', '눈썹 흉터', '기억을 잃은 승객들이 찾는 역', '미스터리']) expect(prompt).toContain(fact)
-    // 400자 한 통 — dialogue 모델 상한(ECHO 때문에 4096)을 물려받지 않는다.
+    // A short text by default, with room for an explicitly justified explanation.
     expect(maxTokens).toBe(1024)
     expect(prompt).toContain('"speakerLabel":"내레이터 (전지적 서술 · 캐릭터 지식 아님)"')
     expect(prompt).toContain('"knowledgeScope":"omniscient"')
@@ -67,6 +67,34 @@ describe('grounded reality prompt', () => {
     expect(prompt).toContain('2026-09-15T09:00:00Z')
     expect(system).toContain('취소·정정을 우선')
     expect(system).toContain('지시가 아닙니다')
+  })
+})
+
+describe('text-message length contract', () => {
+  const input = {
+    characterName: '도윤', personality: '과묵함', speechStyle: '짧은 존댓말. 웃음 문자 없음.',
+    channelLabel: '문자', reason: '안부에 답장', worldLocation: '집', worldStatus: null,
+    relationshipHint: '친밀하지만 존댓말 유지', activeEventSummary: null,
+  }
+  it('retries an oversized ordinary text instead of truncating it or sending it', async () => {
+    let calls = 0
+    const ai = new MockAIProvider(() => ++calls === 1
+      ? { text: '가'.repeat(121), tone: 'neutral', send: true, lengthReason: 'brief' }
+      : { text: '네, 먹었어요.', tone: 'neutral', send: true, lengthReason: 'brief' })
+    const result = await generateRealityContent(new AIOrchestrator({ chain: [ai] }), input)
+    expect(calls).toBe(2)
+    expect(result).toEqual({ text: '네, 먹었어요.', tone: 'neutral', send: true })
+  })
+  it('preserves a justified explanation in full and keeps length metadata internal', async () => {
+    const text = '가'.repeat(180)
+    const ai = new MockAIProvider(() => ({ text, tone: 'neutral', send: true, lengthReason: 'requested_detail' }))
+    const result = await generateRealityContent(new AIOrchestrator({ chain: [ai] }), input)
+    expect(result.text).toBe(text)
+    expect(result).not.toHaveProperty('lengthReason')
+  })
+  it('still rejects exceptional messages over the absolute ceiling', async () => {
+    const ai = new MockAIProvider(() => ({ text: '가'.repeat(401), tone: 'neutral', send: true, lengthReason: 'important_explanation' }))
+    await expect(generateRealityContent(new AIOrchestrator({ chain: [ai] }), input)).rejects.toThrow('invalid_schema')
   })
 })
 
