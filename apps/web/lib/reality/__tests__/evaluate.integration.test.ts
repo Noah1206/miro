@@ -1,3 +1,4 @@
+import { messengerInbox } from '@miro/db'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { and, eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
@@ -539,12 +540,12 @@ describeDb('reality scheduler', () => {
   })
 })
 
-describeDb('messenger reply when generation fails', () => {
+describeDb('messenger reception is independent of generation', () => {
   const made: string[] = []
   afterEach(() => vi.restoreAllMocks())
   afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 
-  it('keeps the user\'s text and answers a few minutes later instead of failing the send', async () => {
+  it('saves an unread message without invoking a failing scene generator', async () => {
     const [u] = await db.insert(users).values({ email: `mf-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
     made.push(u!.id)
     await db.insert(userSettings).values({ userId: u!.id, timeZone: 'Asia/Seoul' })
@@ -556,13 +557,12 @@ describeDb('messenger reply when generation fails', () => {
     expect(r, JSON.stringify(r)).toMatchObject({ ok: true, blocks: [] })
     const mine = await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'messenger')))
     expect(mine.map((m) => m.content)).toEqual(['오늘 뭐 해?'])
-    const pending = (await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)))[0]!.pendingRealityIntent!
-    expect(pending).toMatchObject({ channel: 'message', answers: 'user_message' })
+    const [inbox] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, mine[0]!.id))
+    expect(inbox).toMatchObject({ status: 'unread', readAt: null })
+    expect(engine.runTurn).not.toHaveBeenCalled()
     // 장면 채팅은 예전대로 실패를 알린다
     expect(await runConversationTurn({ userId: u!.id, sessionId, input: '안녕' })).toEqual({ ok: false, reason: 'generation' })
 
-    vi.restoreAllMocks()
-    const sent = await evaluateSession(sessionId, new Date(new Date(pending.notBefore!).getTime() + 60_000))
-    expect(sent, JSON.stringify(sent)).toMatchObject({ outcome: 'sent', channel: 'message' })
+
   })
 })

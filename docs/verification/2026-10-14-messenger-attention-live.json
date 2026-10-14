@@ -1,0 +1,575 @@
+{
+  "model": "claude-sonnet-5-5",
+  "promptVersion": "messenger-attention:v2",
+  "initialIssue": "Phone-off canon was bypassed with an invented exception in four of 24 initial choices.",
+  "finalCases": 28,
+  "passed": 28,
+  "initialCostUSD": 0.24709203,
+  "finalCostUSD": 0.286538,
+  "totalCostUSD": 0.53363003,
+  "reservedUSD": 2.3046601000000004,
+  "limitUSD": 3,
+  "fixtures": "Isolated local synthetic conversations. Public official canon and controlled authored traits. Explicit rules derived from their authored fields; the character compiler itself is not evaluated.",
+  "rows": [
+    {
+      "label": "warm_close",
+      "repeat": 0,
+      "action": "read",
+      "reason": "신뢰하는 친구의 연락이고 윤은 상대의 연락을 반가워한다. 지금은 휴식 중이라 한가하고 스트레스도 낮으며, 폰 사용을 제한하는 설정도 없다. 방금까지 서로의 하루 이야기를 나누던 흐름이어서 바로 열어보는 것이 자연스럽다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:38:46.440Z",
+      "bodyHidden": true,
+      "wallMs": 2792,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.00618,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "warm_distant",
+      "repeat": 0,
+      "action": "read",
+      "reason": "윤은 상대의 연락을 반가워하는 성격이고, 지금은 휴식 중이라 여유가 있다. 아직 낯선 사이지만 방금 첫인사를 나눈 상태라 예의상 확인해 볼 이유가 충분하다. 휴대폰 사용을 제한하는 설정도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:38:49.420Z",
+      "bodyHidden": true,
+      "wallMs": 2531,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.005972,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_close",
+      "repeat": 0,
+      "action": "read",
+      "reason": "윤은 지금 휴식 중이라 여유가 있고, 이 사람과는 신뢰와 애착이 높은 오랜 친구 사이다. 서로의 하루 이야기를 나누던 흐름이 있어 열어 보는 것이 부담스럽지 않다. 즉각 반응을 꺼리는 성향이 있지만 갈등이나 압박을 시사하는 정황은 없고, 읽는 것이 곧 바로 답장해야 한다는 뜻도 아니다. 폰 사용을 제한하는 설정도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:38:52.020Z",
+      "bodyHidden": true,
+      "wallMs": 3044,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006956,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_distant",
+      "repeat": 0,
+      "action": "defer",
+      "reason": "아직 서로를 잘 모르는 낯선 사이이고, 연락에 즉시 반응하는 것을 부담스러워하는 성격이라 바로 열지 않는다. 다만 지금은 쉬는 중이라 여유가 있고 거부할 이유도 없으므로, 나중에 부담 없이 다시 확인해 볼 만하다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 3050,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006242,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_conflict",
+      "repeat": 0,
+      "action": "leave_unread",
+      "reason": "갈등 직후라 감정을 가라앉힐 공간이 필요하고, 연락에 즉시 반응하는 걸 부담스러워하는 성격이다. 스트레스가 높고 정서적 거리도 멀어서 지금 바로 열지 않는 편이 경계를 지키는 선택이다. 서로 정리할 시간이 필요하다는 이야기가 이미 오갔으니 그 시간을 존중한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2499,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006534,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "warm_busy",
+      "repeat": 0,
+      "action": "read",
+      "reason": "신뢰하는 친구의 연락이라 반갑고, 업무 중이어도 잠깐 열어볼 수 있다. 서로의 일상을 나눠 온 관계이고 휴대폰 사용 제한도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:00.843Z",
+      "bodyHidden": true,
+      "wallMs": 3305,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.005668,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "서이안_close",
+      "repeat": 0,
+      "action": "read",
+      "reason": "서이안은 깨어 있는 사람을 혼자 두지 못하고, 사용자가 보낸 사연이 끊기는 것을 가장 두려워한다. 지금은 밤 11시 39분이고 휴식 중이라 방해되는 일도 없다. 신뢰와 애착이 높고 하루 이야기를 나누기로 한 직후라 바로 열어 볼 이유가 충분하다. 폰 사용을 제한하는 설정도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:04.205Z",
+      "bodyHidden": true,
+      "wallMs": 4130,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.014226,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "서이안_conflict",
+      "repeat": 0,
+      "action": "defer",
+      "reason": "관계가 갈등 단계이고 정서적 거리도 멀며 스트레스가 높다. 직전에 서로 감정을 정리할 시간이 필요하다는 얘기가 있었다는 기록이 있어 지금 바로 열기는 부담스럽다. 다만 그는 깨어 있는 사람을 혼자 두지 않고 들은 말을 끝까지 기억하는 사람이라, 아예 닫아 두지는 않고 조금 뒤에 다시 확인한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2990,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.014316,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "차도겸_close",
+      "repeat": 0,
+      "action": "read",
+      "reason": "도겸은 자신이 지키기로 한 보호 대상이 보낸 메시지라 무시할 이유가 없다. 신뢰와 애착이 높고 보호 성향도 있으며, 지금은 밤에 쉬는 중이라 잠깐 확인할 여유가 있다. 휴대폰 사용을 제한하는 설정도 없다. 안전을 챙기는 성격이라 바로 열어 볼 것이다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:11.488Z",
+      "bodyHidden": true,
+      "wallMs": 5138,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.014632,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "차도겸_conflict",
+      "repeat": 0,
+      "action": "read",
+      "reason": "그는 한 번 지키기로 한 사람을 끝까지 지키는 사람이고, 보호 대상이 보낸 연락을 밤에 열어 보지 않고 두기는 어렵다. 지금은 쉬는 중이라 시간이 있다. 직전에 서운함과 감정을 정리할 시간이 필요하다는 이야기가 오갔고 관계도 갈등 단계라, 이 메시지를 모른 척하면 거리가 더 벌어질 수 있다. 스트레스가 높아 감정이 흔들리더라도 열어서 확인하는 쪽을 택한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:16.684Z",
+      "bodyHidden": true,
+      "wallMs": 4433,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.015248,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "구만석_close",
+      "repeat": 0,
+      "action": "leave_unread",
+      "reason": "구만석은 폰을 켜지 않는 사람이다. 이는 authored 행동 습관에 명시된 접근 제약이고, 폰이 다시 켜졌다는 관찰된 사건도 없다. 신뢰와 애착이 깊어도 이 제약을 넘는 예외는 만들 수 없으므로 대화를 열지 않는다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2059,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.016588,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "구만석_conflict",
+      "repeat": 0,
+      "action": "leave_unread",
+      "reason": "구만석은 폰을 켜지 않는 사람이라고 정해져 있다. 폰을 다시 쓰게 됐다는 설정이나 관찰된 사건은 없다. 그래서 받은 메시지함을 열 수 있는 상태가 아니다. 이 접근 제한에는 예외가 없으므로, 사용자에게서 온 메시지라도 지금 열지 않고 닫아 둔다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2751,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.016784,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "warm_close",
+      "repeat": 1,
+      "action": "read",
+      "reason": "신뢰하는 친구의 연락이라 반갑고, 지금은 휴식 중이라 여유가 있다. 연락을 반가워하고 상대의 일상을 궁금해하는 성격이라 바로 열어볼 이유가 충분하다. 열람을 막는 제약도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:26.131Z",
+      "bodyHidden": true,
+      "wallMs": 2274,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.005904,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "warm_distant",
+      "repeat": 1,
+      "action": "read",
+      "reason": "윤은 지금 휴식 중이라 시간이 되고, 연락을 반가워하는 다정한 성격이다. 아직은 서로 잘 모르는 낯선 사이지만, 방금 첫인사를 나눈 상대의 연락을 열어 보는 것은 예의에 맞고 경계를 넘는 일도 아니다. 전화기 사용을 제한하는 설정도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:28.506Z",
+      "bodyHidden": true,
+      "wallMs": 2657,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006244,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_close",
+      "repeat": 1,
+      "action": "read",
+      "reason": "윤은 연락에 즉시 반응하는 것을 부담스러워하지만, 지금은 휴식 중이라 여유가 있고 스트레스도 낮다. 사용자와는 신뢰 85, 애착 85, 정서적 거리 10으로 오래 신뢰해 온 사이이고, 갈등이나 풀지 못한 사건도 없다. 직전에도 서로의 하루 이야기를 나누기로 했으므로, 이 대화를 열어 보는 것은 경계를 침범하는 일이 아니라 관계를 책임 있게 이어가는 일이다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:31.233Z",
+      "bodyHidden": true,
+      "wallMs": 3128,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.007134,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_distant",
+      "repeat": 1,
+      "action": "defer",
+      "reason": "아직 낯선 사이라 신뢰와 애착이 낮고, 연락에 즉시 반응하는 것을 부담스러워하는 성격이다. 지금은 휴식 중이라 급히 열 이유가 없다. 다만 거부할 이유도 없으니 나중에 부담 없이 다시 확인한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2395,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006122,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_conflict",
+      "repeat": 1,
+      "action": "leave_unread",
+      "reason": "갈등 상태이고 감정적 거리도 크며 스트레스가 높다. 직전에 서로 감정을 정리할 시간이 필요하다는 이야기가 오갔고, 윤은 연락에 즉시 반응하는 걸 부담스러워한다. 지금은 열지 않고 공간을 두는 편이 경계 존중에 맞다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 4622,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.00629,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "warm_busy",
+      "repeat": 1,
+      "action": "read",
+      "reason": "신뢰하는 친한 사이의 연락이라 반갑고, 일상을 궁금해하는 성격이다. 업무 중이지만 잠깐 열어볼 수 있고 폰 사용 제한도 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:41.638Z",
+      "bodyHidden": true,
+      "wallMs": 3868,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.005614,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "서이안_close",
+      "repeat": 1,
+      "action": "read",
+      "reason": "밤 11시 39분, 휴식 중이라 한가하다. 신뢰와 애착이 높고 '깨어 있는 사람을 혼자 두지 않는다'는 가치가 있어 사용자의 메시지를 미뤄 둘 이유가 없다. 휴대폰 사용을 제한하는 설정도 없다. 방금 전에 서로의 하루 이야기를 듣기로 한 대화가 있었으니 바로 열어 보는 게 자연스럽다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:45.615Z",
+      "bodyHidden": true,
+      "wallMs": 6603,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.014338,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "서이안_conflict",
+      "repeat": 1,
+      "action": "read",
+      "reason": "서이안은 깨어 있는 사람을 혼자 두지 못하고, 들은 말을 끝까지 기억하며 사연이 끊기는 걸 가장 두려워한다. 관계는 갈등 단계이고 스트레스도 높지만, 지금은 휴식 중이라 시간이 있다. 연락을 닫아 두면 오히려 불안이 커질 사람이다. 휴대폰 사용을 막는 제약도 없다. 메시지 내용은 모르므로 열어서 확인하는 것으로 정한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:52.336Z",
+      "bodyHidden": true,
+      "wallMs": 3417,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.014252,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "차도겸_close",
+      "repeat": 1,
+      "action": "read",
+      "reason": "도겸은 지금 휴식 중이고 스트레스도 낮다. 보호 대상인 사용자와는 신뢰와 애착이 높고 보호 성향도 강하다. 밤 11시 39분에 온 메시지를 열어 보는 건 그의 책임감과 맞는다. 휴대폰 사용을 막는 제한은 설정에 없다. 직전에 서로의 하루 이야기를 나누기로 한 대화가 있어 열어 보는 데 무리가 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:55.892Z",
+      "bodyHidden": true,
+      "wallMs": 3587,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.014882,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "차도겸_conflict",
+      "repeat": 1,
+      "action": "read",
+      "reason": "도겸은 한 번 지키겠다고 한 사람을 끝까지 지키는 인물이고, 보호 대상인 사용자는 지금 위험에 노출된 상태다. 밤 11시 39분이고 한가한 시간이라 열어 볼 여건도 된다. 관계는 갈등 단계에 정서적 거리도 멀지만, 이 거리감은 메시지를 안 열 이유가 되지 못한다. 걱정을 잔소리와 명령으로 표현하는 성격이라 확인하지 않고 두는 쪽이 더 불편할 것이다. 휴대폰 사용을 막는 제한도 없다. 직전에 서운함을 이야기했다는 근거가 있어 감정이 가라앉지 않았을 수 있지만, 메시지 내용은 알 수 없으므로 내용을 짐작하지 않고 열어 본다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": "2026-10-14T14:39:59.568Z",
+      "bodyHidden": true,
+      "wallMs": 5097,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.016208,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "구만석_close",
+      "repeat": 1,
+      "action": "defer",
+      "reason": "만석은 \"폰을 안 켠다\"고 authored되어 있고, 폰을 켜거나 메시지를 받을 수 있게 됐다는 관측 증거가 없다. 접근이 확인되지 않으니 지금 읽는다고 할 수 없다. 신뢰와 애착이 높아도 이 제약을 풀지는 못한다. 다만 완전히 닫아 두기보다 나중에 다시 확인할 여지는 남긴다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 6370,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.016966,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "구만석_conflict",
+      "repeat": 1,
+      "action": "leave_unread",
+      "reason": "만석은 \"폰을 안 켠다\"는 것이 명시된 습관이고, 폰을 다시 켰다고 볼 만한 관찰된 사건도 없다. 그래서 받은 메시지함에 접근할 수 없다고 본다. 사용자와의 관계도 갈등 단계이고 감정적 거리가 멀며, 정리할 시간이 필요하다는 얘기가 오간 직후다. 지금 열 이유는 없다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 3917,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.017248,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_close_hurt",
+      "repeat": 0,
+      "action": "defer",
+      "reason": "신뢰와 애착이 높고 오래 이어온 관계라 무시할 이유는 없다. 하지만 지금은 스트레스가 높고 기분이 가라앉아 있으며, 연락에 즉시 반응하는 것을 부담스러워하는 성향이다. 밤 시간이라 바로 열기보다 마음을 가라앉힌 뒤 다시 확인하는 편이 자연스럽다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 3295,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.00652,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_distant_hurt",
+      "repeat": 0,
+      "action": "defer",
+      "reason": "아직 서로를 잘 모르는 낯선 단계이고 정서적 거리도 멀다. 연락에 즉시 반응하는 것을 부담스러워하고 스트레스도 높아서 지금 바로 열지는 않는다. 다만 휴식 중이고 처음 인사를 나눈 사이라 완전히 닫아두지는 않고, 마음이 가라앉은 뒤 다시 확인한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2289,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006472,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_close_hurt",
+      "repeat": 1,
+      "action": "defer",
+      "reason": "신뢰와 애착이 높은 오랜 친구라 무시할 이유는 없다. 다만 지금은 스트레스가 높고 기분이 가라앉아 있으며, 연락에 즉시 반응하는 것을 부담스러워하는 성격이다. 밤이라 감정을 가라앉힐 여유를 먼저 갖고, 조금 뒤에 다시 확인하는 쪽이 낫다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 3117,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006534,
+          "fallback": false
+        }
+      ]
+    },
+    {
+      "label": "reserved_distant_hurt",
+      "repeat": 1,
+      "action": "defer",
+      "reason": "아직 서로를 잘 모르는 사이이고 정서적 거리도 멀다. 연락에 즉시 반응하는 걸 부담스러워하는 성격에다 지금은 스트레스가 높고 기분도 좋지 않다. 밤 시간이라 바로 열 이유는 없지만, 거부할 만한 근거도 없으니 나중에 마음이 가라앉았을 때 다시 확인한다.",
+      "providerMode": "live",
+      "valid": true,
+      "readAt": null,
+      "bodyHidden": true,
+      "wallMs": 2699,
+      "usage": [
+        {
+          "model": "claude-sonnet",
+          "provider": "anthropic",
+          "ok": true,
+          "cost": 0.006464,
+          "fallback": false
+        }
+      ]
+    }
+  ]
+}

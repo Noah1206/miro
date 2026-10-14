@@ -1,3 +1,6 @@
+import { ATTENTION_VERSION } from '@/lib/messenger/attention'
+import { receiveMessenger, runMessengerInbox, messengerItems, replyPauseMs } from '@/lib/messenger/inbox'
+import { conversationRequests, messengerInbox } from '@miro/db'
 import { AGENCY_PLANNER_VERSION, CHARACTER_LIFE_VERSION } from '@miro/engine'
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -26,13 +29,18 @@ const BEFORE = new Date(NOW.getTime() - 60_000)
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
 /** Synthetic provider outputs exercise the real planner, reducer, verifier and DB boundary. */
-function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[] } = {}) {
+function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[]; attention?: 'read' | 'defer' | 'leave_unread'; duringAttention?: () => Promise<void> } = {}) {
   const calls: Array<{ version: string; prompt: string; system: string }> = []
   const llm: providers.LLMProvider = {
     info: { mode: 'mock', name: 'agency-reality-recorded', notice: 'Synthetic contract validation, not live model evaluation.' },
     async generateStructured(request) {
       const version = request.promptVersion ?? ''
       calls.push({ version, prompt: request.prompt, system: request.system })
+      if (version === ATTENTION_VERSION) {
+        await opts.duringAttention?.()
+        return request.schema.parse({ action: opts.attention ?? 'read', reason: '이 인물의 성향과 이미 쌓인 관계로 연락을 확인할지 선택한다.',
+          recheckMinutes: opts.attention === 'defer' ? 10 : null, ruleIds: ['personality'], evidenceIds: [] })
+      }
       if (version === AGENCY_PLANNER_VERSION) {
         const context = JSON.parse(request.prompt)
         const evidenceId = context.evidence.find((item: { actor: string }) => item.actor === 'user')?.id
@@ -55,14 +63,16 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; relationship?
         })
       }
       if (version === CHARACTER_LIFE_VERSION) return request.schema.parse({ events: opts.life ?? [] })
-      if (version === 'reality:v3-character-context') {
+      if (version === 'reality:v4-motivated-voice') {
         await opts.duringRender?.()
-        return request.schema.parse({ text: '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
+        const first = calls.filter(call => call.version === version).length === 1
+        return request.schema.parse({ text: opts.rejectFirst && first ? '우유를 데워 뒀습니다.' : '잠깐 이야기할 수 있을까요?', tone: 'neutral' })
       }
       if (version === 'agency-realization-check:v5') {
         const context = JSON.parse(request.prompt)
-        return request.schema.parse({ decisionId: context.decision.id, aligned: !opts.reject, claims: [], unsupported: [],
-          violations: opts.reject ? ['contradicts_decision'] : [],
+        const reject = opts.reject || (opts.rejectFirst && calls.filter(call => call.version === version).length === 1)
+        return request.schema.parse({ decisionId: context.decision.id, aligned: !reject, claims: [], unsupported: [],
+          violations: reject ? ['unsupported_success'] : [],
         })
       }
       throw new Error(`Unexpected fixture request: ${version}`)
@@ -269,15 +279,40 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     await db.update(characters).set({ name: 'NEW_UNPINNED_NAME', personality: 'NEW_UNPINNED_PERSONALITY' }).where(eq(characters.id, characterId))
     const { calls } = provider()
     expect((await evaluateSession(id, NOW)).outcome).toBe('sent')
-    const rendered = calls.find(call => call.version === 'reality:v3-character-context')!
+    const rendered = calls.find(call => call.version === 'reality:v4-motivated-voice')!
     expect(rendered.prompt).toContain(snapshot.character.identity.name)
     expect(rendered.prompt).not.toMatch(/SECRET_NARRATOR|UNSOURCED_SECRET_MEMORY|NEW_UNPINNED_/)
     expect(rendered.system).toContain('GROUNDED_RUNTIME_DATA')
   })
 
+  it('repairs an unsupported contact once and persists only the verified message', async () => {
+    const { id } = await fixture()
+    const { calls } = provider({ rejectFirst: true })
+    expect(await evaluateSession(id, NOW)).toMatchObject({ outcome: 'sent' })
+    const renders = calls.filter(call => call.version === 'reality:v4-motivated-voice')
+    expect(renders).toHaveLength(2)
+    expect(renders[1]!.system).toContain('unsupported_success')
+    expect(calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
+    const state = await stored(id)
+    expect(state.contacts).toHaveLength(1)
+    expect(state.messages).toHaveLength(1)
+    expect(state.messages[0]!.content).toBe('잠깐 이야기할 수 있을까요?')
+    expect(state.decisions).toHaveLength(1)
+  })
+
+  it('does not deliver a repaired contact if the session advanced during generation', async () => {
+    const { id } = await fixture()
+    let renders = 0
+    provider({ rejectFirst: true, duringRender: async () => {
+      if (++renders === 2) await db.update(roleplaySessions).set({ turnCount: 1 }).where(eq(roleplaySessions.id, id))
+    } })
+    expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'skipped', reason: 'state_changed' })
+    expect((await stored(id)).contacts).toHaveLength(0)
+  })
+
   it('rejected realization persists no reply, receipt, decision or runtime proposal', async () => {
     const { id } = await fixture()
-    provider({ reject: true })
+    const { calls } = provider({ reject: true })
     expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'skipped', reason: 'agency_rejected' })
     const state = await stored(id)
     expect(state.contacts).toHaveLength(0)
@@ -285,6 +320,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(state.decisions).toHaveLength(0)
     expect(state.runtime.version).toBe(0)
     expect(state.runtime.state.sequence).toBe(0)
+    expect(calls.filter(call => call.version === 'reality:v4-motivated-voice')).toHaveLength(2)
   })
 
   it('rolls back already-inserted message/contact if the receipt transition fails', async () => {
@@ -344,7 +380,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const { calls } = provider()
     expect(await evaluateSession(id, NOW, { inline: true })).toEqual({ outcome: 'no_intent' })
     expect(JSON.parse(calls[0]!.prompt).permissions.contact).toBe(false)
-    expect(calls.filter(call => call.version === 'reality:v3-character-context')).toHaveLength(0)
+    expect(calls.filter(call => call.version === 'reality:v4-motivated-voice')).toHaveLength(0)
     expect((await stored(id)).messages).toHaveLength(0)
   })
 
@@ -513,4 +549,175 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const [session] = await db.select({ pending: roleplaySessions.pendingRealityIntent }).from(roleplaySessions).where(eq(roleplaySessions.id, id))
     expect(session!.pending).toMatchObject({ answers: 'user_message' })
   })
+  it('accepts consecutive texts during an active scene request, replays once, and keeps them unknown until read', async () => {
+    const f = await fixture()
+    const model = provider({ action: 'wait' })
+    await db.insert(conversationRequests).values({ id: randomUUID(), userId: f.userId, sessionId: f.id, inputHash: 'scene-in-progress', leaseUntil: new Date(NOW.getTime() + 60_000) })
+    const first = { userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '우산은 공방에 두고 갈게요.' }
+    const [a, replay] = await Promise.all([receiveMessenger(first, NOW), receiveMessenger(first, NOW)])
+    expect(a.id).toBe(replay.id)
+    const b = await receiveMessenger({ ...first, requestId: randomUUID(), input: '내일 가져가도 돼요?' }, NOW)
+    expect(a.readAt).toBeNull()
+    expect(b.readAt).toBeNull()
+    expect((await messengerItems(f.userId, f.id))!.filter(item => item.kind === 'messenger')).toHaveLength(2)
+    expect(await messengerItems(randomUUID(), f.id)).toBeNull()
+    const loaded = await loadSession(f.id, f.userId)
+    expect(loaded!.snapshot.recentMessages.some(item => item.id === a.id || item.id === b.id)).toBe(false)
+    expect(model.calls).toHaveLength(0)
+    await expect(receiveMessenger({ ...first, input: '다른 내용' }, NOW)).rejects.toThrow('conflict')
+  })
+
+  it('preserves sender order when network requests arrive out of order without trusting arbitrary old timestamps', async () => {
+    const f = await fixture()
+    const common = { userId: f.userId, sessionId: f.id }
+    await receiveMessenger({ ...common, requestId: randomUUID(), input: '두 번째 문자', sentAt: new Date(NOW.getTime() - 1000).toISOString() }, NOW)
+    await receiveMessenger({ ...common, requestId: randomUUID(), input: '첫 번째 문자', sentAt: new Date(NOW.getTime() - 2000).toISOString() }, NOW)
+    const stale = await receiveMessenger({ ...common, requestId: randomUUID(), input: '세 번째 문자', sentAt: '2000-01-01T00:00:00.000Z' }, NOW)
+    expect(stale.at).toBe(NOW.toISOString())
+    expect((await messengerItems(f.userId, f.id))!.filter(item => item.kind === 'messenger').map(item => item.content)).toEqual(['첫 번째 문자', '두 번째 문자', '세 번째 문자'])
+  })
+
+  it('stays unread while asleep, then reads without replying and can leave the message unanswered', async () => {
+    const f = await fixture()
+    const model = provider({ action: 'wait' })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '밥 먹었어요.' }, NOW)
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
+    const readTime = new Date(NOW.getTime() + 1000)
+    await db.update(contactProfiles).set({ routine: { version: 1, source: 'authored', generatedAt: NOW.toISOString(), blocks: [{ days: [], start: '00:00', end: '23:59', label: '수면', availability: 'unreachable' }] } }).where(eq(contactProfiles.characterId, f.characterId))
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBeNull()
+    expect(model.calls).toHaveLength(0)
+    await db.update(contactProfiles).set({ routine: { version: 1, source: 'authored', generatedAt: NOW.toISOString(), blocks: [{ days: [], start: '00:00', end: '23:59', label: '자유 시간', availability: 'free' }] } }).where(eq(contactProfiles.characterId, f.characterId))
+    await db.update(messengerInbox).set({ nextReviewAt: readTime }).where(eq(messengerInbox.messageId, message.id))
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBe(readTime.toISOString())
+    expect(model.calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(1)
+    const replyTime = new Date(readTime.getTime() + replyPauseMs(profile!.replyDelayMinutes) + 1000)
+    await runMessengerInbox(replyTime, { sessionId: f.id })
+    const [inbox] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(inbox).toMatchObject({ status: 'left', contactId: null, leaseToken: null })
+    const calls = model.calls.length
+    await runMessengerInbox(new Date(replyTime.getTime() + 600_000), { sessionId: f.id })
+    expect(model.calls).toHaveLength(calls)
+    expect((await loadSession(f.id, f.userId))!.snapshot.recentMessages.some(item => item.id === message.id)).toBe(true)
+  })
+
+  it('settles a delayed reply and its inbox receipt atomically without overwriting another promise', async () => {
+    const f = await fixture()
+    const model = provider({ action: 'contact' })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '어제 약속한 얘기를 이어갈까요?' }, NOW)
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
+    const readTime = new Date(NOW.getTime() + 1000)
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    const replyTime = new Date(readTime.getTime() + replyPauseMs(profile!.replyDelayMinutes) + 1000)
+    await Promise.all([runMessengerInbox(replyTime, { sessionId: f.id }), runMessengerInbox(replyTime, { sessionId: f.id })])
+    const [inbox] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(inbox!.status).toBe('replied')
+    expect(inbox!.contactId).not.toBeNull()
+    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, f.id))
+    expect(session!.pendingRealityIntent).toMatchObject({ reason: 'legacy should not choose this action' })
+    const contacts = await db.select().from(realityContacts).where(eq(realityContacts.sessionId, f.id))
+    expect(contacts).toHaveLength(1)
+    const calls = model.calls.filter(call => call.version === AGENCY_PLANNER_VERSION)
+    expect(calls).toHaveLength(1)
+    expect(JSON.parse(JSON.parse(calls[0]!.prompt).input).trigger).toBe('incoming_messenger_read')
+  })
+
+  it('can read on the first review, sees personality/relationship/affect, and cannot inspect the unread body', async () => {
+    const f = await fixture()
+    const { calls } = provider({ attention: 'read' })
+    const [runtime] = await db.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, f.id))
+    await db.update(characterRuntimeStates).set({ state: { ...runtime!.state, affect: { ...runtime!.state.affect, valence: -30 } }, version: runtime!.version + 1 }).where(eq(characterRuntimeStates.sessionId, f.id))
+    const secret = '아직읽지않은문자의비밀-잠금코드는8591'
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: secret }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBe(NOW.toISOString())
+    const attention = calls.filter(call => call.version === ATTENTION_VERSION)
+    expect(attention).toHaveLength(1)
+    expect(attention[0]!.prompt).not.toContain(secret)
+    const input = JSON.parse(attention[0]!.prompt)
+    expect(input.rules.some((rule: { id: string }) => rule.id === 'personality')).toBe(true)
+    expect(input.relationship).toHaveProperty('trust')
+    expect(input.affect.valence).toBe(-30)
+    expect(calls.some(call => call.version === AGENCY_PLANNER_VERSION)).toBe(false)
+  })
+
+  it('defers opening and a due review can defer again without reading or creating memory work', async () => {
+    const f = await fixture()
+    const { calls } = provider({ attention: 'defer' })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '지금 열어보지 않아도 돼요.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    let [inbox] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(inbox).toMatchObject({ status: 'unread', readAt: null, attentionState: 'deferred' })
+    expect(inbox!.nextReviewAt.getTime()).toBe(NOW.getTime() + 10 * 60_000)
+    await runMessengerInbox(new Date(NOW.getTime() + 5 * 60_000), { sessionId: f.id })
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(1)
+    await runMessengerInbox(new Date(NOW.getTime() + 10 * 60_000), { sessionId: f.id })
+    ;[inbox] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(inbox!.readAt).toBeNull()
+    expect(inbox!.attentionDecision).toMatchObject({ action: 'defer' })
+    expect((await loadSession(f.id, f.userId))!.snapshot.recentMessages.some(item => item.id === message.id)).toBe(false)
+  })
+
+  it('leaves a conversation unopened indefinitely without repeated model calls, then reconsiders a changed relationship', async () => {
+    const f = await fixture()
+    const options: { attention: 'read' | 'defer' | 'leave_unread' } = { attention: 'leave_unread' }
+    const { calls } = provider(options)
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '답이 없어도 기다릴게요.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    options.attention = 'read'
+    await runMessengerInbox(new Date(NOW.getTime() + 60 * 60_000), { sessionId: f.id })
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(1)
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBeNull()
+    await db.update(relationships).set({ trust: 70, version: sql`${relationships.version} + 1` }).where(eq(relationships.sessionId, f.id))
+    await runMessengerInbox(new Date(NOW.getTime() + 2 * 60 * 60_000), { sessionId: f.id })
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(2)
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).not.toBeNull()
+  })
+
+  it('discards a reading choice when a new message changes the conversation during planning', async () => {
+    const f = await fixture()
+    const { calls } = provider({ attention: 'read', duringAttention: async () => {
+      await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '나중에 읽어도 돼요.' }, new Date(NOW.getTime() + 1000))
+    } })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '안녕.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBeNull()
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(1)
+  })
+
+  it('reconsiders a held unopened thread on a new envelope, with no time requirement', async () => {
+    const f = await fixture()
+    const options: { attention: 'read' | 'leave_unread' } = { attention: 'leave_unread' }
+    const { calls } = provider(options)
+    const common = { userId: f.userId, sessionId: f.id }
+    await receiveMessenger({ ...common, requestId: randomUUID(), input: '첫 연락이에요.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    options.attention = 'read'
+    const later = new Date(NOW.getTime() + 1000)
+    await receiveMessenger({ ...common, requestId: randomUUID(), input: '새 연락이에요.' }, later)
+    await runMessengerInbox(later, { sessionId: f.id })
+    const inbox = await db.select().from(messengerInbox).where(eq(messengerInbox.sessionId, f.id))
+    expect(inbox).toHaveLength(2)
+    expect(inbox.every(item => item.status === 'read' && item.readAt?.getTime() === later.getTime())).toBe(true)
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(2)
+  })
+
+  it('does not turn a failed attention decision into a read receipt', async () => {
+    const f = await fixture()
+    provider({ duringAttention: async () => { throw new Error('provider unavailable') } })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '읽었는지 궁금해요.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    const [inbox] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(inbox).toMatchObject({ status: 'unread', readAt: null, attentionDecision: null, leaseToken: null })
+  })
+
+  it('does not persist a read after autonomy was disabled during the decision', async () => {
+    const f = await fixture()
+    provider({ attention: 'read', duringAttention: async () => { vi.stubEnv('MIRO_CHARACTER_AGENCY_MODE', 'off') } })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '천천히 확인해요.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).toBeNull()
+  })
+
 })

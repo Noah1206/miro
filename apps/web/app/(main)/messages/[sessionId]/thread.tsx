@@ -3,36 +3,36 @@ import { useEffect, useRef } from 'react'
 import styles from './messages.module.css'
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { CharacterPhoto } from '@/components/character-visual'
-import { useTurns } from '../../chat/[sessionId]/turns'
+import { useMessenger } from './delivery'
 import { subject } from '@/lib/format'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 
-export type MsgItem = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>; at?: string }
-
 const clock = (iso: string | undefined, locale: string) => iso ? new Date(iso).toLocaleTimeString(locale, { timeZone: 'Asia/Seoul', hour: 'numeric', minute: '2-digit' }) : ''
 
-/** 문자 스레드 — 캐릭터는 왼쪽, 나는 오른쪽, 통화 기록은 가운데 한 줄. 서술·속마음은 여기 없다. */
-export function MessengerThread({ items: server, characterName, portrait }: { items: MsgItem[]; characterName: string; portrait?: string | null }) {
+/** Delivered messages and actual character read receipts; no live scene turn. */
+export function MessengerThread({ items: sample, characterName, portrait }: { items?: ReturnType<typeof useMessenger>['items']; characterName: string; portrait?: string | null }) {
   const { theme } = useChatTheme()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
-  const { appended, live } = useTurns()
-  const known = new Set(server.map((m) => m.id))
-  // 방금 보낸 턴은 시각이 없다 — 서버 목록이 갱신되면 그쪽 시각이 붙는다.
-  // 오고 있는 문자(스트리밍, 10/9)는 맨 뒤에 — 보낸 말과 지금까지 도착한 말풍선. 저장되면 저장본이 그 자리를 채운다.
-  const liveItems: MsgItem[] = live ? [{ id: 'live-user', role: 'user', kind: 'messenger', content: live.input, blocks: [] },
-    ...(live.blocks.some((b) => b.type === 'dialogue') ? [{ id: 'live-reply', role: 'character', kind: 'messenger', content: '', blocks: live.blocks }] : [])] : []
-  const items: MsgItem[] = [...server, ...appended.filter((m) => !known.has(m.id)).map((m): MsgItem => ({ ...m })), ...liveItems]
+  const { items: delivered, retry } = useMessenger()
+  const items = sample ?? delivered
   const end = useRef<HTMLDivElement>(null)
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [items.length, live?.blocks.length])
+  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [items.length])
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 문자', { name: characterName })} className={styles.thread}>
       {items.length === 0 && <p className={styles.notice}>{t('{subject} 먼저 문자를 보내면 여기에 와요. 먼저 보내도 돼요.', { subject: subject(characterName), name: characterName })}</p>}
       {items.map((m, index) => {
         const hideTime = theme === 'talk' && !!m.at && items[index + 1]?.role === m.role && items[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)
         const time = hideTime ? '' : clock(m.at, locale)
-        if (m.role === 'user') return <div key={m.id} className={styles.userRow}><span className={styles.time} style={{ alignSelf: 'flex-end', marginRight: 6 }}>{time}</span><p className={styles.userBubble}>{m.content}</p></div>
+        if (m.role === 'user') return <div key={m.id} className={styles.userRow} data-delivery={m.delivery ?? 'sent'}>
+          <span className={styles.receipt}>
+            {m.delivery === 'failed' ? <button type="button" onClick={() => retry(m.id)} aria-label={t('다시 보내기')}>{t('다시 보내기')}</button>
+              : m.delivery === 'sending' ? <span>{t('전송 중')}</span>
+              : m.readAt === null ? <span aria-label={t('읽지 않음')} data-unread>1</span>
+              : m.readAt ? <span aria-label={t('읽음')} data-read>{theme === 'talk' ? '' : t('읽음')}</span> : null}
+            <span className={styles.time}>{time}</span>
+          </span><p className={styles.userBubble}>{m.content}</p></div>
         if (m.kind === 'call_record') return <p key={m.id} className={styles.meta} data-call-record>☏ {m.content}</p>
         if (m.kind === 'hidden') return <p key={m.id} className={styles.meta} data-hidden-message>{m.content}</p>
         const reality = m.blocks.find((b) => b.type === 'reality') as { channelLabel?: string; caption?: string | null } | undefined

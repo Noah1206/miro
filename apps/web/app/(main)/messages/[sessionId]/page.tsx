@@ -1,8 +1,8 @@
 import { ChatRoomIcon } from '@/components/chat-icons'
 import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
-import { and, asc, eq, inArray } from 'drizzle-orm'
-import { db, messages, realityContacts } from '@miro/db'
+import { and, eq } from 'drizzle-orm'
+import { db, realityContacts } from '@miro/db'
 import { feature, voiceCallAllowed } from '@miro/config'
 import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
@@ -10,12 +10,12 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { requirePersona } from '@/lib/persona'
 import { Back, Notice, TransitionLink } from '@/components/ui'
 import { PushSubscribe } from '@/components/push-subscribe'
-import { TurnsProvider } from '../../chat/[sessionId]/turns'
+import { MessengerDelivery } from './delivery'
+import { messengerItems } from '@/lib/messenger/inbox'
 import styles from './messages.module.css'
-import { MessengerThread, type MsgItem } from './thread'
+import { MessengerThread } from './thread'
 import { MessengerComposer } from './composer'
 import { CallButton } from './call-button'
-import { MESSENGER_KINDS, isMessengerMessage } from '@/lib/messenger'
 import { getT } from '@/lib/i18n/server'
 
 /**
@@ -31,28 +31,18 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded || loaded.experienceType !== 'reality') notFound()
-  // 문자도 채팅이다 — 페르소나가 없으면 먼저 만든다(저장하면 이 문자방으로 돌아온다).
+  // 두 경험에서 같은 페르소나를 사용한다.
   await requirePersona(loaded.snapshot.userPersona, `/messages/${sessionId}`)
   const [rows] = await Promise.all([
-    db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.kind, [...MESSENGER_KINDS]))).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
-    // 여기서 읽었으니 '읽음'. 선연락 기록은 열어 본 시각을 남긴다.
+    messengerItems(user.id, sessionId),
+    // This is the user reading the character's incoming contacts, not the reverse.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
-
-  const items: MsgItem[] = rows
-    // 사진은 문자로 보낸 것만 — 장면 안의 사진은 캐릭터챗의 것이다.
-    .filter(isMessengerMessage)
-    // 통화 기록 줄은 전화가 닫혀 있으면(운영 베타, 2026-10-01) 지난 것도 보이지 않는다.
-    .filter((m) => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
-    .map((m) => ({
-      id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
-      content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
-      blocks: m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
-    }))
+  const items = (rows ?? []).filter(m => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
 
   return (
-    <TurnsProvider><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
+    <MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
@@ -69,11 +59,11 @@ export default async function MessagesPage({ params, searchParams }: { params: P
             {call === 'usage' ? t('이번 달 통화 제공량을 다 썼어요.') : call === 'off' ? t('지금은 통화를 쓸 수 없어요.') : t('통화를 시작하지 못했어요.')}
           </Notice>
         )}
-        <MessengerThread items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} />
+        <MessengerThread characterName={loaded.characterName} portrait={loaded.characterPhoto} />
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 문자 페이지에서 알림 권한을 묻는다. */}
         <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />
-        <MessengerComposer sessionId={sessionId} characterName={loaded.characterName} />
+        <MessengerComposer />
       </section>
-    </main></ChatTheme></TurnsProvider>
+    </main></ChatTheme></MessengerDelivery>
   )
 }

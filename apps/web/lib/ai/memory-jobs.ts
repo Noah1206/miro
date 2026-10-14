@@ -1,3 +1,4 @@
+import { characterCanSeeMessage } from '@/lib/messenger/inbox'
 import { randomUUID } from 'node:crypto'
 import { and, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import { db, memories, memoryJobs, messages, roleplaySessions, users } from '@miro/db'
@@ -111,7 +112,7 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
   const [state] = await db.select({ deletedAt: roleplaySessions.deletedAt, restrictedAt: roleplaySessions.restrictedAt, status: roleplaySessions.status, userDeleted: users.deletedAt })
     .from(roleplaySessions).innerJoin(users, eq(users.id, roleplaySessions.userId)).where(and(eq(roleplaySessions.id, job.sessionId), eq(roleplaySessions.userId, job.userId))).limit(1)
   const [source] = await db.select({ content: messages.content, createdAt: messages.createdAt, hiddenAt: messages.hiddenAt, kind: messages.kind, blocks: messages.blocks }).from(messages)
-    .where(and(eq(messages.id, job.messageId), eq(messages.sessionId, job.sessionId))).limit(1)
+    .where(and(eq(messages.id, job.messageId), eq(messages.sessionId, job.sessionId), characterCanSeeMessage)).limit(1)
   if (!state || state.deletedAt || state.restrictedAt || state.status !== 'active' || state.userDeleted || !source || source.hiddenAt) { await finish('cancelled', 'session_unavailable'); return 'cancelled' }
   // 더 최신 턴의 요약이 이미 끝났으면 이 요약은 옛 결과다 — 최신을 덮지 않는다.
   if (job.kind === 'memory_summary') {
@@ -124,9 +125,9 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
   if (!loaded) { await finish('cancelled', 'session_unavailable'); return 'cancelled' }
   // 재시도가 미래 메시지를 입력에 섞지 않는다 — 원인 메시지까지의 대화를 따로 읽는다(스냅샷의 최신 24개를 거르면 늦은 작업은 빈 창을 본다).
   const window = await db.select().from(messages)
-    .where(and(eq(messages.sessionId, job.sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc']),
+    .where(and(eq(messages.sessionId, job.sessionId), isNull(messages.hiddenAt), characterCanSeeMessage, inArray(messages.role, ['user', 'character', 'narrator', 'npc']),
       or(sql`${messages.turnIndex} < ${job.throughTurn}`, lte(messages.createdAt, source.createdAt))))
-    .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id)).limit(24)
+    .orderBy(desc(messages.createdAt), desc(messages.turnIndex), desc(messages.id)).limit(24)
   const recentMessages = conversationContext(window.reverse(), loaded.snapshot.clock?.timeZone)
   // 요약은 그 범위의 대화가 있어야 뜻이 있다 — 비어 있으면 옛 요약을 빈 것으로 덮지 않고 나중에 다시 본다.
   if (job.kind === 'memory_summary' && !recentMessages.length) { await retryOrFail('summary_window_empty'); return 'retry' }

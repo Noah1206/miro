@@ -1,3 +1,4 @@
+import { runMessengerInbox } from '@/lib/messenger/inbox'
 import { deliverRealityPush } from './push-outbox'
 import { maintainAI } from '@/lib/ai/maintenance'
 import { reconcileStaleAIReservations } from '@/lib/ai/gateway'
@@ -104,6 +105,7 @@ export function agencyDueCondition(now: Date) {
 }
 
 export async function runRealityEvaluations(now = new Date()): Promise<EvaluationRun> {
+  await runMessengerInbox(now)
   const { idleMinutesBeforeContact, recheckMinutes, batchSize } = POLICY.reality
   const claimLimit = Math.min(batchSize, 10)
 

@@ -1199,5 +1199,9 @@
  "입금 확인 요청을 보냈어요. 확인 후 토큰이 지급돼요.": "Deposit confirmation requested. Tokens will be added after verification.",
  "입금 확인 요청을 접수했어요. 알림 전송을 다시 시도하고 있어요.": "Your request is saved. We are retrying notification delivery.",
  "입금자명": "Depositor name",
- "송금할 때 입금자명에 이 코드를 적어 주세요.": "Use this code as the depositor name when transferring."
+ "송금할 때 입금자명에 이 코드를 적어 주세요.": "Use this code as the depositor name when transferring.",
+ "읽음": "Read",
+ "읽지 않음": "Unread",
+ "전송 중": "Sending",
+ "다시 보내기": "Retry"
 }

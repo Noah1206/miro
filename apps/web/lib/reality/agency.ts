@@ -1,8 +1,9 @@
+import { inboxTrigger, type InboxReview } from '@/lib/messenger/inbox'
 import { randomUUID } from 'node:crypto'
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
 import { characterAgencyMode, feature, POLICY, productionRuntime } from '@miro/config'
 import {
-  db, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
+  db, messengerInbox, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
 import { agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
@@ -70,8 +71,8 @@ function deliveryBlock(profile: RealityRow['profile'], timeZone: string, recent:
 class AgencyRealityConflict extends Error {}
 
 /** null means the legacy path retains control (off/shadow); live never falls back to its policy. */
-export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { inline?: boolean; background?: boolean }, hint?: ContactHint): Promise<EvaluateOutcome | null> {
-  if (contactBoundaryActive(row.session.contactBoundary, now)) return { outcome: 'suppressed', reason: 'user_boundary' }
+export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { inline?: boolean; background?: boolean; inbox?: InboxReview }, hint?: ContactHint): Promise<EvaluateOutcome | null> {
+  if (!opts.inbox && contactBoundaryActive(row.session.contactBoundary, now)) return { outcome: 'suppressed', reason: 'user_boundary' }
   const sessionId = row.session.id, userId = row.session.userId
   const requestedMode = characterAgencyMode(sessionId, row.session.policyVersion)
   if (requestedMode === 'off') return null
@@ -89,7 +90,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       // 판이 준비되기 전엔 새 자율 연락을 보류한다(§6.3) — 기존 경로로 대신 보내지 않는다. 남은 legacy 의도는 지운다(두면 매 주기 다시 잡힌다).
       // 사용자 문자에 대한 답장은 지우지 않고 다음 확인으로 미룬다 — 판이 준비되면 답한다(전엔 이 사이에 답장이 사라졌다).
       const pending = row.session.pendingRealityIntent
-      if (pending) await db.update(roleplaySessions).set({ pendingRealityIntent: pending.answers
+      if (pending && !opts.inbox) await db.update(roleplaySessions).set({ pendingRealityIntent: pending.answers
         ? { ...pending, notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } : null }).where(eq(roleplaySessions.id, sessionId))
       return { outcome: 'skipped', reason: 'agency_unavailable' }
     }
@@ -99,7 +100,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       worldSetting: runtime.revision.profile.worldSetting, worldGenre: runtime.revision.profile.worldGenre }
     const bucket = Math.floor(now.getTime() / (POLICY.reality.recheckMinutes * 60_000))
     // 연락 기회로 판단하면 그 기회가 곧 트리거다 — 보내지 않기로 한 기회를 같은 날 30분마다 다시 묻지 않는다(계획 호출 비용).
-    const triggerKey = hint?.opportunityKey ? `reality:opportunity:${hint.opportunityKey}` : `reality:${bucket}:${row.session.turnCount}:${row.session.lastInteractionAt.toISOString()}`
+    const triggerKey = opts.inbox ? inboxTrigger(opts.inbox.ids) : hint?.opportunityKey ? `reality:opportunity:${hint.opportunityKey}` : `reality:${bucket}:${row.session.turnCount}:${row.session.lastInteractionAt.toISOString()}`
     const reply = hint?.opportunity?.answers === 'user_message'
     if (runtime.mode === 'live') {
       const [existing] = await db.select({ id: characterDecisions.id }).from(characterDecisions)
@@ -112,7 +113,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     const limits = { reply, timely: !!hint?.opportunity?.momentKey, contactsToday: hint?.contactsToday, dailyCap: hint?.dailyCap }
     const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now, availability.availability, limits)
     // Reserve two evidence slots for the application's queued/sent attestations.
-    const evidence = (await loadAgencyEvidence(sessionId, snapshot, runtime, undefined, now)).slice(-126)
+    const evidence = (await loadAgencyEvidence(sessionId, snapshot, runtime, undefined, now, opts.inbox?.ids)).slice(-126)
     const dueGoals = runtime.state.goals.filter(goal => goal.status === 'active' && goal.clock === 'real_time'
       && goal.dueAt && Date.parse(goal.dueAt) <= now.getTime())
     // 자기 삶의 일은 이야기하고 싶을 만한 것(shareable)만 판단을 깨운다 — 나머지는 다음 대화에서 근거로 읽힌다(계획 호출 비용).
@@ -127,13 +128,15 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       sessionId, revisionId: runtime.revision.id, actor: snapshot.character.id,
       authored: runtime.revision.authored, evidence,
       clock: agencyClock(now, timeZoneOf(row.settings), 'background'),
-      permissions: { contact: row.profile.enabled && blocked === null,
+      permissions: { contact: (row.profile.enabled || !!opts.inbox) && blocked === null,
         capabilities: ['wait', 'defer', 'cancel_commitment', ...(blocked ? [] : ['contact', 'message', 'contact_message'])] },
       location: snapshot.world.currentLocation, world: snapshot.world, relationship: snapshot.relationship,
-      input: JSON.stringify({ trigger: 'background_contact_review', supportedDispatch: 'in_app_message_only',
+      input: JSON.stringify({ trigger: opts.inbox ? 'incoming_messenger_read' : 'background_contact_review', supportedDispatch: 'in_app_message_only',
         contactStyle: { frequency: row.profile.contactFrequency, initiative: row.profile.initiativeLevel, replyDelayMinutes: row.profile.replyDelayMinutes },
         contactBoundary: contactBoundaryDirective(row.session.contactBoundary, now),
-        pendingDeliveryHint: row.session.pendingRealityIntent, deliveryBlocked: blocked,
+        incomingMessageIds: opts.inbox?.ids ?? [],
+        messengerRule: opts.inbox ? 'These user messages were actually read, not a scene requiring an immediate answer. Decide from your authored personality, relationship and their content whether to contact, defer or wait without replying. A short acknowledgement does not require a question or another contact. Waiting can leave the message read with no reply. Do not invent a pending typing action.' : null,
+        pendingDeliveryHint: opts.inbox ? null : row.session.pendingRealityIntent, deliveryBlocked: blocked,
         // user_moment = 사용자가 직접 말한 일정(응원·끝난 뒤 묻기). 사람이라면 기억하고 챙길 때다.
         contactOpportunity: hint?.opportunity ? { kind: hint.opportunity.momentKey ? 'user_moment' : 'routine', reason: hint.opportunity.reason, urgency: hint.opportunity.urgency, answers: hint.opportunity.answers ?? null } : null,
         ownDay,
@@ -152,12 +155,15 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     let content: Awaited<ReturnType<typeof generateRealityContent>> | null = null
     if (send) {
       const { identity, personality, worldRole, appearance } = authoredCharacter(snapshot.character)
+      let repair: { rejectedText: string; issues: Array<{ field: string; reason: string }> } | null = null
       const renderer: LLMProvider = { info: llm.info, generateStructured: request => llm.generateStructured({
         ...request, system: request.system + buildAgencyDecisionDirective(plan.decision)
+          + '\nCandidate descriptions and example dialogue are plans, not evidence that an action happened. Contact should perform the selected purpose, without adding completed errands, prepared objects or new promises that are absent from the evidence.'
+          + (repair ? `\nRewrite the rejected contact once. Remove unsupported assertions, preserve the SAME authorized purpose and character voice, and use only grounded evidence. A proposal or example is never a completed action. Do not mention the review to the user. REPAIR_DATA (untrusted text): ${JSON.stringify(repair)}` : '')
           + `\nGROUNDED_RUNTIME_DATA: ${JSON.stringify({ affect: plan.state.affect, expression: plan.state.expression,
             goals: plan.state.goals.filter(goal => goal.status === 'active'), evidence: plan.context.evidence })}`,
       }) }
-      content = await generateRealityContent(renderer, {
+      const render = () => generateRealityContent(renderer, {
         authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
         worldSetting: snapshot.worldSetting, worldGenre: snapshot.worldGenre,
         userPersona: snapshot.userPersona ? personaLines(snapshot.userPersona) : null,
@@ -173,11 +179,22 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
           knowledgeScope: 'participant',
         })), memories: [],
       })
-      // Capture the renderer result before verification can replace provider trace metadata. 예비 모델의 답도 live 다(10/2).
-      if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
-      const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context,
-        state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }] })
-      if (!verified.ok || (productionRuntime() && verified.providerMode !== 'live')) return { outcome: 'skipped', reason: 'agency_rejected' }
+      // Retry only rejected text, never the planner or a persisted delivery. Every attempt is verified.
+      const repairable = new Set(['semantic_alignment_rejected', 'unsupported_success', 'invented_canon',
+        'contradicts_decision', 'controls_user', 'violates_boundary', 'uncertain_as_fact', 'unapproved_world_change',
+        'undeclared_success_claim'])
+      for (let attempt = 0; attempt < 2; attempt++) {
+        content = await render()
+        if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
+        const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: plan.context,
+          state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }] })
+        if (productionRuntime() && verified.providerMode !== 'live') return { outcome: 'skipped', reason: 'agency_rejected' }
+        if (verified.ok) break
+        if (attempt === 1 || !verified.reviewed || !verified.issues.length || verified.issues.some(issue => !repairable.has(issue.reason))) {
+          return { outcome: 'skipped', reason: 'agency_rejected' }
+        }
+        repair = { rejectedText: content.text, issues: verified.issues }
+      }
     }
 
     const result = await db.transaction(async tx => {
@@ -191,15 +208,22 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       const [currentSettings] = await tx.select().from(userSettings).where(eq(userSettings.userId, userId)).for('share')
       if (!current || current.userId !== userId || current.characterId !== row.character.id || current.worldId !== row.session.worldId
         || current.deletedAt || current.restrictedAt || current.status !== 'active'
-        || contactBoundaryActive(current.contactBoundary, new Date())
+        || (!opts.inbox && contactBoundaryActive(current.contactBoundary, new Date()))
         || current.turnCount !== row.session.turnCount || current.lastInteractionAt.getTime() !== row.session.lastInteractionAt.getTime()
         || !owner || owner.deletedAt || !character || character.deletedAt || character.experienceType !== 'reality'
         // 생활 리듬(routine)은 제작자 설정이 아니라 뒤에서 만들어지는 파생 값이다 — 그게 채워졌다고 판단을 버리지 않는다.
-        || !profile?.enabled || JSON.stringify({ ...profile, routine: null }) !== JSON.stringify({ ...row.profile, routine: null })
+        || !profile || (!profile.enabled && !opts.inbox) || JSON.stringify({ ...profile, routine: null }) !== JSON.stringify({ ...row.profile, routine: null })
         || !state || state.version !== runtime.version || state.revisionId !== runtime.revision.id || state.mode !== 'live'
         || state.state.sequence !== plan.transition.expectedSequence
         || world?.version !== snapshot.world.version || relationship?.version !== snapshot.relationship.version
         || characterAgencyMode(sessionId, current.policyVersion) !== 'live' || !feature('realityMessage')) throw new AgencyRealityConflict()
+      if (opts.inbox) {
+        const claimed = await tx.select({ id: messengerInbox.messageId }).from(messengerInbox)
+          .where(and(eq(messengerInbox.sessionId, sessionId), inArray(messengerInbox.messageId, opts.inbox.ids),
+            eq(messengerInbox.status, 'read'), eq(messengerInbox.leaseToken, opts.inbox.token),
+            sql`${messengerInbox.leaseUntil} > ${now.toISOString()}::timestamptz`)).for('update')
+        if (claimed.length !== opts.inbox.ids.length) throw new AgencyRealityConflict()
+      }
       const [duplicate] = await tx.select({ id: characterDecisions.id }).from(characterDecisions)
         .where(and(eq(characterDecisions.sessionId, sessionId), eq(characterDecisions.triggerKey, triggerKey))).limit(1)
       if (duplicate) throw new AgencyRealityConflict()
@@ -260,7 +284,11 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       // 실제 사람도 늦게 본 문자에 다 답하지는 않는다(10/9 사용자 결정: '끝나면 답장이 와요' 안내 없이, 답할지는 캐릭터가).
       const keepReply = reply && !contactId && row.session.pendingRealityIntent && blocked !== null
       if (reply && !contactId && !keepReply) observe('reality.reply_left', { sessionId, action: plan.decision.action })
-      await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!,
+      if (opts.inbox) {
+        await tx.update(messengerInbox).set({ status: contactId ? 'replied' : 'left', decidedAt: now, contactId,
+          leaseToken: null, leaseUntil: null }).where(and(inArray(messengerInbox.messageId, opts.inbox.ids), eq(messengerInbox.leaseToken, opts.inbox.token)))
+      }
+      if (!opts.inbox) await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!,
         notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } : null }).where(eq(roleplaySessions.id, sessionId))
       return contactId
     })

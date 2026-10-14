@@ -1,3 +1,4 @@
+import { characterCanSeeMessage } from '@/lib/messenger/inbox'
 import { sceneOpening } from '@/lib/intro-dialogue'
 import { characterContext, conversationContext } from './character-context'
 import { memoryRetriever } from '@/lib/ai/memory'
@@ -81,8 +82,8 @@ export async function loadSession(
       ? db.select().from(scenes).where(eq(scenes.id, row.world.currentSceneId)).limit(1)
       : Promise.resolve([]),
     db.select().from(messages)
-      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc'])))
-      .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id))
+      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc']), characterCanSeeMessage))
+      .orderBy(desc(messages.createdAt), desc(messages.turnIndex), desc(messages.id))
       .limit(24),
     db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
       .from(realityContacts)

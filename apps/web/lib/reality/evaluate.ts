@@ -1,9 +1,10 @@
+import type { InboxReview } from '@/lib/messenger/inbox'
 import { isDeepStrictEqual } from 'node:util'
 import { localClock } from '@miro/domain'
 import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm'
 import { POLICY, feature, features } from '@miro/config'
 import {
-  db, characterDecisions, characters, contactProfiles, events, messages, pushSubscriptions,
+  db, messengerInbox, characterDecisions, characters, contactProfiles, events, messages, pushSubscriptions,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
@@ -46,18 +47,23 @@ export type EvaluateOutcome =
 export async function evaluateSession(
   sessionId: string, now = new Date(),
   /** inline: 턴 직후 즉시 발송(사건 규칙이 '지금' 이라 정했다). 활동 시간·쿨다운 같은 스케줄 판정은 건너뛴다. */
-  opts: { inline?: boolean; background?: boolean } = {},
+  opts: { inline?: boolean; background?: boolean; inbox?: InboxReview } = {},
 ): Promise<EvaluateOutcome> {
   if (!feature('realityMessage')) return { outcome: 'skipped', reason: 'feature_disabled' }
   await adoptRelationshipPolicy(sessionId)
+  if (!opts.inbox) {
+    const [pendingInbox] = await db.select({ id: messengerInbox.messageId }).from(messengerInbox)
+      .where(and(eq(messengerInbox.sessionId, sessionId), inArray(messengerInbox.status, ['unread', 'read']))).limit(1)
+    if (pendingInbox) return { outcome: 'no_intent' }
+  }
   // 사용자가 말한 일정(응원·"어땠어?")이 챙길 때가 됐으면 이번 판단의 연락 기회가 된다(10/9). 쓰였으면 결과를 남긴다.
-  const moment = { due: opts.inline ? null : await dueMomentFor(sessionId, now), used: false }
+  const moment = { due: opts.inline || opts.inbox ? null : await dueMomentFor(sessionId, now), used: false }
   const outcome = await evaluateWith(sessionId, now, opts, moment)
   if (moment.due && moment.used) await settleMoment(moment.due, outcome, now).catch(e => observe('moment.settle_failed', { sessionId, error: (e as Error).message }))
   return outcome
 }
 
-async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boolean; background?: boolean }, moment: { due: DueMoment | null; used: boolean }): Promise<EvaluateOutcome> {
+async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boolean; background?: boolean; inbox?: InboxReview }, moment: { due: DueMoment | null; used: boolean }): Promise<EvaluateOutcome> {
   const rows = await db
     .select({
       session: roleplaySessions, character: characters, world: worldStates,
@@ -74,12 +80,18 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
 
   const row = rows[0]
   if (!row) return { outcome: 'skipped', reason: 'session_not_found' }
-  if (contactBoundaryActive(row.session.contactBoundary, now)) return { outcome: 'suppressed', reason: 'user_boundary' }
+  if (!opts.inbox && contactBoundaryActive(row.session.contactBoundary, now)) return { outcome: 'suppressed', reason: 'user_boundary' }
   // 스케줄러·inline·큐 어느 쪽으로 왔든 마지막에 한 번 더 본다. 유형이 바뀐 뒤 남은 의도는 여기서 지운다 —
   // 두면 스케줄러가 매 주기 다시 집어 든다.
   if (row.character.experienceType !== 'reality') {
     if (row.session.pendingRealityIntent) await db.update(roleplaySessions).set({ pendingRealityIntent: null }).where(eq(roleplaySessions.id, sessionId))
     return { outcome: 'skipped', reason: 'not_reality' }
+  }
+
+  if (opts.inbox) {
+    const agency = await evaluateAgencyReality(row, now, opts, { opportunity: { channel: 'message', reason: '읽은 사용자 문자에 답할지 판단한다. 답하지 않아도 된다.', urgency: 0.5, answers: 'user_message' },
+      opportunityKey: null, contactsToday: 0, dailyCap: 0 })
+    return agency ?? { outcome: 'skipped', reason: 'agency_unavailable' }
   }
 
   if (!row.profile.enabled) {

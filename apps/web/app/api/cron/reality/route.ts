@@ -1,7 +1,10 @@
+import { runMessengerInbox } from '@/lib/messenger/inbox'
 import { devApiAllowed } from '@miro/config'
 import { NextResponse } from 'next/server'
 import { db, opsHeartbeats } from '@miro/db'
 import { runRealityEvaluations, runRealityMaintenance, runRealityScheduler } from '@/lib/reality/scheduler'
+
+export const maxDuration = 300
 
 /**
  * Vercel Cron 진입점. 앱이 닫혀 있어도 서버에서 돈다.
@@ -19,9 +22,9 @@ export async function GET(req: Request) {
   const override = devApi ? new URL(req.url).searchParams.get('now') : null
   const now = override && !Number.isNaN(Date.parse(override)) ? new Date(override) : new Date()
   const work = new URL(req.url).pathname.endsWith('/maintenance') ? 'maintenance' : new URL(req.url).searchParams.get('work')
-  if (work && work !== 'maintenance' && work !== 'ai') return NextResponse.json({ error: 'invalid_work' }, { status: 400 })
+  if (work && work !== 'maintenance' && work !== 'ai' && work !== 'messenger') return NextResponse.json({ error: 'invalid_work' }, { status: 400 })
 
-  const run = work === 'maintenance' ? await runRealityMaintenance() : work === 'ai' ? await runRealityEvaluations(now) : await runRealityScheduler(now)
+  const run = work === 'messenger' ? await runMessengerInbox(now) : work === 'maintenance' ? await runRealityMaintenance() : work === 'ai' ? await runRealityEvaluations(now) : await runRealityScheduler(now)
   console.info('[reality] scheduler run', JSON.stringify({ at: now.toISOString(), ...run }))
   // 끝난 시각을 남긴다 — /api/health 가 이게 오래되면 실패로 알린다(크론이 멈추면 크론이 보내는 경보도 멈추므로).
   const at = new Date()

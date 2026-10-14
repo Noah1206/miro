@@ -601,6 +601,24 @@ export const realityContacts = pgTable('reality_contacts', {
 }))
 
 
+/** Inbound messages persist before the character reads or decides whether to reply. */
+export const messengerInbox = pgTable('messenger_inbox', {
+  attentionState: text('attention_state', { enum: ['pending', 'deferred', 'left'] }).notNull().default('pending'),
+  attentionContextKey: text('attention_context_key'),
+  attentionDecision: jsonb('attention_decision').$type<Record<string, unknown>>(),
+  messageId: uuid('message_id').primaryKey().references(() => messages.id, { onDelete: 'cascade' }),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['unread', 'read', 'replied', 'left'] }).notNull().default('unread'),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  nextReviewAt: timestamp('next_review_at', { withTimezone: true }).notNull(),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  leaseToken: uuid('lease_token'),
+  contactId: uuid('contact_id').references(() => realityContacts.id, { onDelete: 'set null' }),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ sessionIdx: index('messenger_inbox_session_idx').on(t.sessionId),
+  dueIdx: index('messenger_inbox_due_idx').on(t.nextReviewAt, t.sessionId).where(sql`${t.status} IN ('unread','read')`) }))
+
 /* ─────────────── Usage & entitlement (M3) ─────────────── */
 
 /**

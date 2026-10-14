@@ -49,8 +49,8 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
     // 큐에 든 뒤 캐릭터가 chat 으로 바뀌었거나 지워졌으면 발송하지 않는다 — 발송 시점에 자격을 다시 본다.
     if (row.experienceType !== 'reality' || row.characterDeletedAt
       || row.user.deletedAt || row.session.deletedAt || row.session.restrictedAt || row.session.status !== 'active'
-      || !row.profile?.enabled || row.message?.hiddenAt
-      || contactBoundaryActive(row.session.contactBoundary, now)
+      || (!row.profile?.enabled && row.contact.payload.answers !== 'user_message') || row.message?.hiddenAt
+      || (row.contact.payload.answers !== 'user_message' && contactBoundaryActive(row.session.contactBoundary, now))
       || row.subscription.userId !== row.user.id || row.subscription.failedAt
       || row.contact.status === 'opened' || row.contact.status === 'suppressed'
       || now.getTime() - row.contact.createdAt.getTime() > 12 * 3600_000) {
@@ -81,7 +81,7 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
           .where(and(eq(realityPushJobs.id, job.id), eq(realityPushJobs.status, 'sending'), eq(realityPushJobs.leaseToken, token)))
         const [settings] = await tx.select({ pushEnabled: userSettings.pushEnabled }).from(userSettings).where(eq(userSettings.userId, row.user.id)).for('share')
         if (!latest || latest.deletedAt || latest.restrictedAt || latest.status !== 'active' || !currentJob
-          || settings?.pushEnabled === false || contactBoundaryActive(latest.contactBoundary, new Date())) return null
+          || settings?.pushEnabled === false || (row.contact.payload.answers !== 'user_message' && contactBoundaryActive(latest.contactBoundary, new Date()))) return null
         // Promise cancellation may have committed after the first check. The session lock
         // also serializes turn commits, so re-read the action and goals before external send.
         if (typeof payload.decisionId === 'string') {
