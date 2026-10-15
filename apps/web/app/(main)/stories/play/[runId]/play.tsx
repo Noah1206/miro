@@ -219,7 +219,7 @@ export function StoryPlay(p: Props) {
 
       {!archived && (
         <footer style={{ position: 'sticky', bottom: 0, background: 'var(--color-bg)', borderTop: '1px solid var(--color-border)', padding: 'var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom))' }}>
-          {tab === 'scene' && view.hints.length > 0 && (
+          {tab === 'scene' && openingDone && view.hints.length > 0 && (
             <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 8 }} aria-label={t('행동 예시')}>
               {view.hints.map(h => (
                 <button key={h.id} type="button" className="t-micro" onClick={() => setText(h.text)}
