@@ -32,7 +32,9 @@ export class TurnMeter {
       const cost = record.estimatedCost
       const known = cost !== null && cost !== undefined && Number.isFinite(cost) && cost >= 0
       // Missing usage on failures remains in the service budget, but is never billed as measured customer usage.
-      this.settled += known ? cost : estimate
+      // The service BudgetGuard retains unknown failed-call estimates. They are
+      // not measured customer usage and must not consume the reply's recovery room.
+      this.settled += known ? cost : record.ok ? estimate : 0
       if (known) this.customerCostUSD += cost
       else if (record.ok) this.missingSuccessfulUsage = true
     } }

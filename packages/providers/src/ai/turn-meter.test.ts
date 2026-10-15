@@ -30,6 +30,17 @@ describe('shared turn cost envelope', () => {
     meter.closed = true
     expect(meter.reserve(request, model)).toBeNull()
   })
+  it('allows recovery after unreported provider failures while retaining the measured aggregate ceiling', () => {
+    const meter = new TurnMeter(.003, 10000, 1000)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const ticket = meter.reserve(request, model)
+      expect(ticket).not.toBeNull()
+      ticket!.settle(record(null, false))
+    }
+    meter.reserve(request, model)!.settle(record(.002))
+    expect(meter.customerCostUSD).toBe(.002)
+    expect(meter.reserve(request, model)).toBeNull()
+  })
   it('enforces output and aggregate cost in the actual orchestrator before invoking the provider', async () => {
     const calls: number[] = []
     const provider = { info: { mode: 'live' as const, name: 'test', notice: null }, healthCheck: async () => true,
