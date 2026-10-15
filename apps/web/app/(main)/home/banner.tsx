@@ -20,9 +20,9 @@ export async function HomeBanner({ signedIn }: { signedIn: boolean }) {
     <div className={styles.copy}>
       <p className={styles.eyebrow}>MIRO <span>· {t('첫 만남 선물')}</span></p>
       <p className={styles.title} style={{ fontFamily: display.style.fontFamily }}>
-        <span>{t('첫 대화는,')}</span><span>{t('내가 살게요.')}</span>
+        <span>{t('가입하면')}</span><strong>{t('{n}토큰 무료', { n: tokens })}</strong>
       </p>
-      <p className={styles.offer}>{t('가입하면')} <strong>{t('{n}토큰 무료', { n: tokens })}</strong></p>
+      <p className={styles.offer}>{t('첫 대화는,')} {t('내가 살게요.')}</p>
       <p className={styles.terms}>{t('신규 계정 1회 · 지급 후 {n}일 사용', { n: WELCOME_GRANT.validDays })}</p>
     </div>
     <svg className={styles.spark} aria-hidden viewBox="0 0 28 42" fill="none"><path d="M12 0c0 10-2 13-9 15 7 2 9 5 9 15 0-10 2-13 9-15C14 13 12 10 12 0Z" fill="#c8b7f5"/><path d="M24 27c0 5-1 7-4 8 3 1 4 3 4 7 0-4 1-6 4-7-3-1-4-3-4-8Z" fill="#202025"/></svg>
