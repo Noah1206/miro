@@ -5,6 +5,7 @@ import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import styles from './chat-theme.module.css'
 import { chatViewportState } from './chat-viewport'
+import { CharacterPhoto } from './character-visual'
 
 type Theme = 'miro' | 'dm-light' | 'dm' | 'talk'
 const DEFAULT_THEME: Theme = 'miro'
@@ -67,7 +68,7 @@ export function DefaultChatAvatar({ theme: previewTheme }: { theme?: Theme } = {
   return <svg data-default-avatar aria-hidden viewBox="0 0 40 40" width="32" height="32"><rect width="40" height="40" rx="11" fill="var(--chat-avatar-bg, #dbdbdb)" /><circle cx="20" cy="15" r="7" fill="var(--chat-avatar-ink, #a8a8a8)" /><path d="M6 36c0-9 5-13 14-13s14 4 14 13" fill="var(--chat-avatar-ink, #a8a8a8)" /></svg>
 }
 
-export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigger = false, placement = 'header' }: { open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; placement?: 'header' | 'composer' } = {}) {
+export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigger = false, placement = 'header', portrait }: { open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; placement?: 'header' | 'composer'; portrait?: string | null } = {}) {
   const { theme, select } = useChatTheme()
   const [localOpen, setLocalOpen] = useState(false)
   const open = controlledOpen ?? localOpen
@@ -80,7 +81,7 @@ export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigge
     <Sheet open={open} onClose={() => setOpen(false)} title={t('채팅방 테마')} snap={{ half: 0.72, full: 0.92 }}>
       <div className={styles.options}>
         {(['miro', 'dm-light', 'dm', 'talk'] as const).map(value => <button type="button" key={value} className={styles.option} aria-pressed={theme === value} onClick={() => { select(value); setOpen(false) }}>
-          <span className={styles.preview} data-preview={value} aria-hidden><span className={styles.previewHead}><span className={styles.previewAvatar}><DefaultChatAvatar theme={value} /></span><i /></span><span className={styles.incoming} /><span className={styles.outgoing} /></span>
+          <span className={styles.preview} data-preview={value} aria-hidden><span className={styles.previewHead}><span className={styles.previewAvatar}>{value === 'miro' && portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="20px" width={20} height={20} /> : <DefaultChatAvatar theme={value} />}</span><i /></span><span className={styles.incoming} /><span className={styles.outgoing} /></span>
           <span className={styles.label}>{t(value === 'miro' ? '미로 기본' : value === 'dm-light' ? 'DM 기본' : value === 'dm' ? 'DM 다크' : '카톡 스타일')}<span aria-hidden>{theme === value ? '✓' : ''}</span></span>
         </button>)}
       </div>
@@ -88,7 +89,11 @@ export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigge
   </>
 }
 
-export function ChatHeaderAvatar() {
+export function ChatHeaderAvatar({ portrait }: { portrait?: string | null } = {}) {
   const { theme } = useChatTheme()
-  return theme === 'miro' ? null : <span className={styles.headerAvatar} data-avatar-theme={theme}><DefaultChatAvatar /></span>
+  return <span className={styles.headerAvatar} data-avatar-theme={theme} aria-hidden>
+    {theme === 'miro' && portrait
+      ? <CharacterPhoto key={portrait} src={portrait} alt="" size="avatar" sizes="30px" width={30} height={30} loading="eager" />
+      : <DefaultChatAvatar />}
+  </span>
 }

@@ -18,6 +18,7 @@
 .previewHead { display:flex; align-items:center; gap:5px; margin-bottom:8px; }
 .previewAvatar { display:grid; place-items:center; flex:0 0 20px; width:20px; height:20px; border-radius:50%; overflow:hidden; clip-path:circle(50%); --chat-avatar-bg:#ededed; --chat-avatar-ink:#c7c7c7; }
 .previewAvatar svg { display:block; width:100%; height:100%; overflow:hidden; }
+.previewAvatar img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 25%; }
 .preview[data-preview='dm'] .previewAvatar { --chat-avatar-bg:#262626; --chat-avatar-ink:#737373; }
 .preview[data-preview='miro'] .previewAvatar { --chat-avatar-bg:#dbdbdb; --chat-avatar-ink:#a8a8a8; }
 .previewHead i { width:32px; height:4px; border-radius:4px; background:#999; }
@@ -37,6 +38,7 @@
 
 .headerAvatar { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; overflow:hidden; flex-shrink:0; --chat-avatar-bg:#363636; --chat-avatar-ink:#aaa; }
 .headerAvatar svg { width:30px; height:30px; }
+.headerAvatar img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 25%; }
 .headerAvatar[data-avatar-theme=talk] { border-radius:50%; --chat-avatar-bg:#94acc0; --chat-avatar-ink:#e7eff5; }
 @media(max-width:420px) { .headerAvatar { width:24px; height:24px; } .headerAvatar svg { width:24px; height:24px; } }
 

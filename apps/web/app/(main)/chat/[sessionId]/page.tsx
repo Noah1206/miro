@@ -57,7 +57,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <ChatHeaderAvatar /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
+          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
           {loaded.experienceType === 'reality' && (
@@ -66,7 +66,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
             </TransitionLink>
           )}
           <ConversationPersona sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
-          <ChatThemePicker />
+          <ChatThemePicker portrait={loaded.characterPhoto} />
           <ModelPicker {...modelOptions} />
         </header>
 
