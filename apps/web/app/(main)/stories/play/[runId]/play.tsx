@@ -1,6 +1,9 @@
 'use client'
 import { useT } from '@/lib/i18n/client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { StoryEntry } from '@miro/domain'
+import { StoryBriefing } from '@/components/stories/story-briefing'
+import { StoryPassage } from '@/components/stories/story-passage'
 import { Back, Button, Sheet, Switch, TransitionLink } from '@/components/ui'
 import { ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { MessengerThread } from '../../../messages/[sessionId]/thread'
@@ -12,7 +15,7 @@ import type { RunView } from '@/lib/stories/view'
 import { readStoryThread, setStoryContact, setStoryTimeZone } from '../../actions'
 
 type Props = {
-  messenger?: boolean; runId: string; runNo: number; archived: boolean; slug: string; title: string; opening: string; medium: string
+  entry?: StoryEntry; messenger?: boolean; runId: string; runNo: number; archived: boolean; slug: string; title: string; opening: string; medium: string
   characters: { key: string; name: string; image: string | null }[]; timeZone: string | null; initialMessages: StoryMessageView[]; initialView: RunView; initialTab: string
 }
 type Block = { kind: 'narration' | 'dialogue'; speaker: string | null; text: string }
@@ -31,6 +34,9 @@ export function StoryPlay(p: Props) {
   const [pending, setPending] = useState<{ id: string; text: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [openingDone, setOpeningDone] = useState(p.initialMessages.some(m => m.channel === 'scene'))
+  const initialIds = useRef(new Set(p.initialMessages.map(m => m.id)))
   const [progressOpen, setProgressOpen] = useState(false)
   const [tz, setTz] = useState(p.timeZone)
   const sending = useRef(false)
@@ -39,6 +45,8 @@ export function StoryPlay(p: Props) {
   const names = useMemo(() => new Map(p.characters.map(c => [c.key, c.name])), [p.characters])
   const unread = useMemo(() => new Set(messages.filter(m => m.channel === 'dm' && !m.read).map(m => m.thread)), [messages])
   const shown = messages.filter(m => (tab === 'scene' ? m.channel === 'scene' : m.channel === 'dm' && m.thread === tab))
+
+  const followText = useCallback(() => { bottom.current?.scrollIntoView({ block: 'end', behavior: 'instant' }) }, [])
 
   useEffect(() => { bottom.current?.scrollIntoView({ block: 'end' }) }, [shown.length, tab])
   useEffect(() => {
@@ -73,6 +81,7 @@ export function StoryPlay(p: Props) {
     const body = retry ?? { id: newTurnId(), text: text.trim() }
     if (!body.text || busy) return
     sending.current = true
+    setOpeningDone(true)
     setBusy(true); setError(null); setPending(body)
     try {
       const res = await fetch('/api/stories/turn', { method: 'POST', headers: { 'content-type': 'application/json' },
@@ -97,8 +106,10 @@ export function StoryPlay(p: Props) {
 
   const tabs = [{ key: 'scene', label: t('장면') }, ...p.characters.map(c => ({ key: c.key, label: c.name.split(' ')[0]! }))]
   const settingsSheet = (
+    <>
     <Sheet open={progressOpen} onClose={() => setProgressOpen(false)} title={t('진행')}>
         <div className="stack" style={{ gap: 18, padding: '0 var(--gutter) var(--space-6)' }}>
+          {p.entry && <Button type="button" variant="secondary" full onClick={() => { setProgressOpen(false); setGuideOpen(true) }}>{t('세계관과 내 역할 다시 보기')}</Button>}
           <section className="stack" style={{ gap: 6 }}>
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('지나온 사건')}</p>
             {view.progress.completed.length ? view.progress.completed.map((c, i) => <p key={c.id} className="t-body">{i + 1}. {c.title}</p>) : <p className="t-caption">{t('아직 끝낸 사건이 없어요.')}</p>}
@@ -132,6 +143,10 @@ export function StoryPlay(p: Props) {
           </section>
         </div>
       </Sheet>
+      {p.entry && <Sheet open={guideOpen} onClose={() => setGuideOpen(false)} title={t('세계관과 내 역할')}>
+        <div style={{ padding: '0 var(--gutter) var(--space-6)' }}><StoryBriefing entry={p.entry} /></div>
+      </Sheet>}
+    </>
   )
   if (p.messenger) return (
     <main id="main" tabIndex={-1} className="chat-layout" style={{ outline: 'none', background: 'var(--color-bg)' }}>
@@ -190,12 +205,12 @@ export function StoryPlay(p: Props) {
 
       <section aria-live="polite" style={{ flex: 1, padding: 'var(--space-4) var(--gutter)', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {tab === 'scene'
-          ? <p className="t-body" style={{ whiteSpace: 'pre-line', lineHeight: 1.75 }}>{p.opening}</p>
+          ? <StoryPassage parts={p.opening.split(/\n\n+/).map(text => ({ text }))} animate={!openingDone} onDone={() => setOpeningDone(true)} onGrow={!openingDone ? followText : undefined} />
           : <div className="stack" style={{ alignItems: 'center', gap: 8 }}>
               <div style={{ width: 72 }}><CharacterVisual name={names.get(tab) ?? ''} accent={null} slug={`${p.slug}-${tab}`} photo={images.get(tab) ?? null} ratio="1 / 1" size="avatar" shared={false} scrim={false} style={{ borderRadius: '50%' }} /></div>
               <p className="t-micro" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>{p.title} · {t('{n}회차', { n: p.runNo })} · {p.medium}</p>
             </div>}
-        {shown.map(m => <Message key={m.id} m={m} names={names} avatar={m.channel === 'dm' && m.role === 'character' ? <div style={{ width: 32, flexShrink: 0 }}><CharacterVisual name={names.get(m.thread ?? '') ?? ''} accent={null} slug={`${p.slug}-${m.thread}`} photo={images.get(m.thread ?? '') ?? null} ratio="1 / 1" size="avatar" shared={false} scrim={false} style={{ borderRadius: '50%' }} /></div> : null} />)}
+        {shown.map(m => <Message key={m.id} m={m} names={names} animate={!initialIds.current.has(m.id)} onDone={() => { initialIds.current.add(m.id) }} onGrow={followText} avatar={m.channel === 'dm' && m.role === 'character' ? <div style={{ width: 32, flexShrink: 0 }}><CharacterVisual name={names.get(m.thread ?? '') ?? ''} accent={null} slug={`${p.slug}-${m.thread}`} photo={images.get(m.thread ?? '') ?? null} ratio="1 / 1" size="avatar" shared={false} scrim={false} style={{ borderRadius: '50%' }} /></div> : null} />)}
         {busy && pending && <div style={{ alignSelf: 'flex-end', maxWidth: '82%', opacity: 0.6 }} className="t-body">{pending.text}</div>}
         {busy && <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>…</p>}
         {view.progress.ended && tab === 'scene' && <p className="t-caption" style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-1)' }}>{t('시즌이 끝났어요. 정한 진로와 관계를 바탕으로 일상이 이어져요. 새 사건은 원할 때만 열려요.')}</p>}
@@ -233,7 +248,7 @@ export function StoryPlay(p: Props) {
   )
 }
 
-function Message({ m, names, avatar }: { m: StoryMessageView; names: Map<string, string>; avatar?: React.ReactNode }) {
+function Message({ m, names, avatar, animate, onGrow, onDone }: { m: StoryMessageView; names: Map<string, string>; avatar?: React.ReactNode; animate?: boolean; onGrow?: () => void; onDone?: () => void }) {
   if (m.role === 'user') return <div className="t-body" style={{ alignSelf: 'flex-end', maxWidth: '82%', padding: '10px 12px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)', whiteSpace: 'pre-line' }}>{m.content}</div>
   if (m.channel === 'dm') return (
     <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', alignSelf: 'flex-start', maxWidth: '88%' }}>
@@ -242,11 +257,5 @@ function Message({ m, names, avatar }: { m: StoryMessageView; names: Map<string,
     </div>
   )
   const blocks = (m.blocks as Block[] | null) ?? [{ kind: 'narration', speaker: null, text: m.content }]
-  return (
-    <div className="stack" style={{ gap: 10 }}>
-      {blocks.map((b, i) => b.kind === 'dialogue' && b.speaker
-        ? <p key={i} className="t-body" style={{ lineHeight: 1.7 }}><strong>{names.get(b.speaker) ?? b.speaker}</strong> {b.text}</p>
-        : <p key={i} className="t-body" style={{ lineHeight: 1.75, whiteSpace: 'pre-line', color: 'var(--color-text-secondary)' }}>{b.text}</p>)}
-    </div>
-  )
+  return <StoryPassage parts={blocks.map(b => ({ text: b.text, label: b.kind === 'dialogue' && b.speaker ? names.get(b.speaker) ?? b.speaker : undefined, narration: b.kind !== 'dialogue' }))} animate={animate} onDone={onDone} onGrow={animate ? onGrow : undefined} />
 }

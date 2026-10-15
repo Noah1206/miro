@@ -87,7 +87,7 @@ export const contract: StoryDefinition = {
 
 “오늘 서명하실 필요 없습니다. 결혼 이야기를 여기서 끝내셔도 되고요.”
 
-그는 물잔에서 손을 떼고 기다린다. 결과지의 숫자는 여전히 0이다. 어떤 말이나 질문부터 건네겠는가? 조건을 확인하거나, 우의 목적을 묻거나, 결혼 제안을 거절하는 것 외의 선택도 가능하다.`,
+그는 물잔에서 손을 떼고 기다린다. 결과지의 숫자는 여전히 0이다. 우의 시선이 제안서에서 당신에게로 옮겨 온다. “제 조건보다 먼저, 그쪽에서 꼭 지키고 싶은 생활이 뭔지 듣고 싶습니다.”`,
   vars: {
     mode: { type: 'enum', values: ['undecided', 'marriage', 'business', 'exit'], init: 'undecided', label: '방향' },
     clauses: { type: 'set', values: CLAUSES, label: '합의한 조항' },

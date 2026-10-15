@@ -3,7 +3,7 @@ import { useT } from '@/lib/i18n/client'
 import { useActionState, useState } from 'react'
 import { Button, useLoginSheet } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
-import { CountedInput, LabeledField } from '@/app/(main)/create/form-parts'
+import { CountedInput, CountedTextArea, LabeledField } from '@/app/(main)/create/form-parts'
 import { startStory, type StartState } from '../actions'
 import type { StoryPublic } from '@miro/domain'
 
@@ -13,7 +13,7 @@ export function LoginToStart({ slug }: { slug: string }) {
   return <Button type="button" variant="primary" full size="lg" onClick={() => askLogin(`/stories/${slug}`)}>{t('로그인하고 시작하기')}</Button>
 }
 
-/** 주인공 설정 — 이름·성인 나이·호칭·작품별 세부. 비워 두면 작품 기본값. 성격·감정·과거는 묻지도 채우지도 않는다. */
+/** 주인공 설정 — 이름·성인 나이·호칭·작품별 세부. 비워 두면 작품 기본값. 성격·배경은 유저가 적은 내용만 사용한다. */
 export function StartForm({ slug, protagonist, defaultName, medium, hasRun }: { slug: string; protagonist: StoryPublic['protagonist']; defaultName: string; medium: string; hasRun: boolean }) {
   const t = useT()
   const [state, action] = useActionState<StartState, FormData>(startStory.bind(null, slug), { error: null })
@@ -36,7 +36,9 @@ export function StartForm({ slug, protagonist, defaultName, medium, hasRun }: { 
       </LabeledField>
       {protagonist.fields.filter(f => !['이름', '나이', '호칭'].includes(f)).map(f => (
         <LabeledField key={f} label={t(f)}>
-          <CountedInput name={`detail:${f}`} ariaLabel={t(f)} placeholder={t('비워 둬도 돼요')} max={120} />
+          {f === '내 성격과 배경'
+            ? <CountedTextArea name={`detail:${f}`} ariaLabel={t(f)} placeholder={t('비워 둬도 돼요')} max={500} />
+            : <CountedInput name={`detail:${f}`} ariaLabel={t(f)} placeholder={t('비워 둬도 돼요')} max={120} />}
         </LabeledField>
       ))}
       <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', fontSize: 'var(--font-caption)', lineHeight: 1.55 }}>

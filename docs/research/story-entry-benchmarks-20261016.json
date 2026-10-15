@@ -1,0 +1,228 @@
+{
+  "date": "2026-10-16",
+  "method": "Public detail pages, world guides, start presets, persona forms and prologue previews. No generated paid turns or private implementation inspected.",
+  "samples": [
+    {
+      "platform": "WHIF",
+      "title": "퇴사하고 싶은 A급 가이드",
+      "rank": 1,
+      "url": "https://www.whif.io/universes/18db3917-8931-4fde-8b60-6c0e6192f757",
+      "observed": [
+        "작품 설정에서 유저 역할·발령 계기·관계 전제를 먼저 설명",
+        "작품 안 캐릭터 선택 후 긴 장면과 인물 대사로 진입",
+        "이름·성별·자유 설정 페르소나 작성 후 시작"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "애첩(愛妾)",
+      "rank": 2,
+      "url": "https://www.whif.io/universes/3ce2fafc-96f5-4800-b205-8251d9e7c374",
+      "observed": [
+        "지역·조직·시대·위계와 인물 간 대비를 작품 설정에서 설명",
+        "같은 세계관의 여섯 캐릭터·IF 설정 선택",
+        "댓글·공유 단편은 별도 탭"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 1,
+      "title": "게임 판타지 속 히든 클래스가 되다",
+      "url": "https://crack.wrtn.ai/detail/6aad594a3d1e941464f45bae",
+      "observed": [
+        "세계관·세력·인물 외부 설정집 링크",
+        "대화 프로필과 시작 모드 선택 후 플레이",
+        "프롤로그 미리보기에서 안내 인물이 등장해 닉네임·외형·클래스 선택을 장면으로 안내",
+        "상태창·스킬·퀘스트·관계 슬롯을 첫 장면부터 제공"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "rank": 3,
+      "title": "형제",
+      "url": "https://www.whif.io/universes/794464db-2552-46d3-a466-4709a4132a67",
+      "observed": [
+        "작품 개요는 짧지만 캐릭터별 가족관계·직업·역할·과거 사건을 상세히 구분",
+        "세계관 안에서도 서로 다른 시작 전제의 캐릭터를 고른다"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 2,
+      "title": "국가의 시대",
+      "url": "https://crack.wrtn.ai/detail/667f9121e8ace1413a6b8e16",
+      "observed": [
+        "짧은 작품 설명, 시작 연도·난이도·국가를 유저가 정하는 시뮬레이션",
+        "프로필·시작설정·프롤로그 미리보기가 플레이 전에 노출",
+        "입장 후에도 설정을 고를 입력 예시가 먼저 보인다"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "rank": 4,
+      "title": "일진출신",
+      "url": "https://www.whif.io/universes/3b58825a-f895-4d94-8cb9-9e17badc503b",
+      "observed": [
+        "공통 과거·현재 대학 생활·친구 무리의 일상을 작품 설정에서 연결",
+        "학교/대학/SAFE 등 입장 시점과 인물별 시작 설정이 분리됨"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 3,
+      "title": "루멘시아 아카데미",
+      "url": "https://crack.wrtn.ai/detail/6903fba443bbc16c675a796c",
+      "observed": [
+        "프로필과 입학 시작설정을 플레이 전 선택",
+        "정확한 날짜·시간·장소를 표기한 장면 프롤로그",
+        "귀족/평민·교복·교수·기사단 등 세계 질서를 풍경으로 먼저 전달",
+        "스탯·소속·상태·관계 창을 프롤로그에서 노출"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "볼티팟",
+      "popularity": "14.6M",
+      "url": "https://www.whif.io/universes/58678a96-a2a6-48fc-ad60-e18b124cddb0",
+      "observed": [
+        "세 명의 학과·성격·말투와 함께 공동 생활 장소를 설명",
+        "공통 그룹/개별 캐릭터 진입이 분리되며 시작 장면이 여러 개",
+        "일상 게시판 등 세계 안에서 쓸 수 있는 행동을 안내"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "오메가버스(Omegaverse)",
+      "popularity": "11.2M",
+      "url": "https://www.whif.io/universes/c6bfcae3-3f29-4226-991c-e2acad2a9752",
+      "observed": [
+        "형질·서열·약물·용어 등 세계의 규칙을 먼저 정의",
+        "같은 규칙 아래 직장·대학·연예계 등 다른 진입 전제의 인물 제공",
+        "캐릭터마다 여러 도입부가 있음을 명시"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 4,
+      "title": "탑 등반물의 히든 NPC가 되었다",
+      "url": "https://crack.wrtn.ai/detail/6aaf9207f50fce463d1c2870",
+      "observed": [
+        "세계를 바꾼 사건→탑 규칙→현재 공략 상황→유저가 NPC라는 위치를 순서대로 설명",
+        "능력·이름·직업을 확정하지 않고 첫 입력으로 정하게 함",
+        "세계관 설정집 링크와 장면 상태창 제공"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "안녕, 아저씨!",
+      "popularity": "11.1M",
+      "url": "https://www.whif.io/universes/c5cdaed1-471b-40af-9f36-4eb138bacd94",
+      "observed": [
+        "공통 제목 아래 직업·생활 장소·관계 전제가 다른 인물들을 분리",
+        "여러 도입부와 IF 설정이 있어 누구와 어떤 상황으로 시작할지 선택"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "BAR 'Dante'",
+      "popularity": "8.3M",
+      "url": "https://www.whif.io/universes/3195fd84-a80d-4351-a16e-3ad953242cc6",
+      "observed": [
+        "도시·골목·가게의 배경과 현재 갈등을 여러 문단으로 제공",
+        "인물 간 친분과 역할을 별도로 설명",
+        "영업시간·층별 공간·잠긴 구역까지 생활 가능한 장소 정보 제공"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 5,
+      "title": "외모권력주의 I 서열의 맛",
+      "url": "https://crack.wrtn.ai/detail/69b8135c353e6796e3b48827",
+      "observed": [
+        "설정집과 세계관/인물 안내를 별도 링크로 제공",
+        "상태·사건·일정·SNS 등의 플레이 명령 안내",
+        "시작설정이 프롤로그+이미지 맛보기이며 이미지 중심 미리보기"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "유일대학교",
+      "popularity": "7.7M",
+      "url": "https://www.whif.io/universes/9aa5be0e-bb2d-4c7f-b912-00404dc5f21f",
+      "observed": [
+        "강의·축제·광장·카페·대학로 등 유저가 생활할 장소와 일정을 구체적으로 소개",
+        "총학생회·밴드 등 세계 안 집단과 인물 연결을 먼저 제공",
+        "인물별로 유저와의 과거 관계와 대화 분위기를 설명"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 6,
+      "title": "아스트라 전기 대륙확장편",
+      "url": "https://crack.wrtn.ai/detail/69bd31e7b4411e9b9db028b8",
+      "observed": [
+        "설정집과 인물/세계관 안내",
+        "이세계인 시작설정과 시간·위치가 명확한 프롤로그",
+        "안내 인물의 대사로 세계 이동과 재능 포인트 선택을 연결",
+        "능력·체력·소지품·관계 상태창을 초반부터 제공"
+      ]
+    },
+    {
+      "platform": "WHIF",
+      "title": "비연애주의자들",
+      "popularity": "7.6M",
+      "url": "https://www.whif.io/universes/e2566ef9-0f6f-4408-8738-58e9c7103a37",
+      "observed": [
+        "시대·대학·네 친구의 관계 규칙과 유저 위치를 먼저 설명",
+        "도서관·술집·학생식당·편의점 등 반복 만남 장소를 구체화",
+        "각 인물의 태도와 관계 거리를 서로 다르게 소개"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 7,
+      "title": "조선요괴실록",
+      "url": "https://crack.wrtn.ai/detail/6ac90ad674da5b6194a27c84",
+      "observed": [
+        "세계의 핵심 현상과 조직 부서를 먼저 소개",
+        "신입 어사라는 유저 역할을 시작설정에서 고정",
+        "시간·장소 표기 후 현장 전투와 세 인물의 서로 다른 대사로 시작",
+        "인물이 신입인 유저에게 직접 말을 걸어 다음 행동으로 연결"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 8,
+      "title": "신입 버튜버로 데뷔 해버렸다",
+      "url": "https://crack.wrtn.ai/detail/6ac4a3ea30e907eb4daa7205",
+      "observed": [
+        "기수별 인물과 소속사 세계관을 먼저 소개",
+        "합격한 신입이라는 역할과 현재 장소가 선명함",
+        "대표 인물의 대사로 활동명·컨셉·테마색 작성으로 연결"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 9,
+      "title": "삼국지 클래식",
+      "url": "https://crack.wrtn.ai/detail/6ab2f2221a3dbfdc2c79d612",
+      "observed": [
+        "출신·지위·직책·목표를 정할 자유도를 상세 설명에서 안내",
+        "세계관 인물 도감과 세력/관계/일기 조회 명령 제공",
+        "초기 프롤로그는 특정 상황보다 유저가 어떤 역할로 살지 먼저 묻는 설정형",
+        "소속·임무·능력치는 미정으로 시작"
+      ]
+    },
+    {
+      "platform": "Crack",
+      "rank": 10,
+      "title": "헌터 아카데미",
+      "url": "https://crack.wrtn.ai/detail/6a86cf4a030d75778b27b25d",
+      "observed": [
+        "세계의 대사건과 50년 뒤 현재까지의 변화로 배경을 축적",
+        "특성·스킬·산업·생활 질서를 설명한 뒤 입학식의 유저에게 초점을 이동",
+        "프로필·시작설정·목표·상태창·게시판 등 생활 도구를 제공"
+      ]
+    }
+  ]
+}

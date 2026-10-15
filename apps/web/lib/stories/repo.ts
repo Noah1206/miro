@@ -48,7 +48,7 @@ export function parseProtagonist(pub: StoryPublic, input: { name?: string; age?:
   const age = Number(input.age ?? pub.protagonist.minAge)
   if (!Number.isInteger(age) || age < pub.protagonist.minAge || age > 99) return { error: `나이는 만 ${pub.protagonist.minAge}세 이상으로 정해 주세요.` }
   const details: Record<string, string> = {}
-  for (const f of detailFields(pub)) { const v = input.details?.[f]?.trim().slice(0, 120); if (v) details[f] = v }
+  for (const f of detailFields(pub)) { const v = input.details?.[f]?.trim().slice(0, f === '내 성격과 배경' ? 500 : 120); if (v) details[f] = v }
   return { name, age, honorific: (input.honorific ?? '').trim().slice(0, 12), details }
 }
 

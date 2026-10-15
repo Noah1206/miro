@@ -1,5 +1,5 @@
 import { endingFor } from './engine'
-import type { StoryAudience, StoryDefinition, StoryState } from './types'
+import type { StoryAudience, StoryDefinition, StoryEntry, StoryState } from './types'
 
 /** 화면·공개 API 로 나가는 것은 이것뿐이다. 제작자 진실·지시문·사건 조건·엔딩 조건·연락 규칙은 빠진다. */
 export type StoryPublic = {
@@ -14,6 +14,7 @@ export type StoryPublic = {
   protagonist: { gender: 'female' | 'male'; minAge: number; defaultName: string; role: string; fields: string[] }
   notice: string
   opening: string
+  entry?: StoryEntry
   characters: { key: string; name: string; age: number; look: string; persona: string; relation: string; image: string | null }[]
   chapterCount: number
   medium: string
@@ -22,7 +23,7 @@ export type StoryPublic = {
 export function toPublic(def: StoryDefinition): StoryPublic {
   return {
     slug: def.slug, audience: def.audience, title: def.title, cover: def.cover ?? null, tagline: def.tagline, intro: def.intro, genres: def.genres, tags: def.tags,
-    protagonist: def.protagonist, notice: def.notice, opening: def.opening, chapterCount: def.events.length, medium: def.contactPolicy.medium,
+    entry: def.entry, protagonist: def.protagonist, notice: def.notice, opening: def.opening, chapterCount: def.events.length, medium: def.contactPolicy.medium,
     characters: def.characters.map(c => ({ key: c.key, name: c.name, age: c.age, look: c.look, persona: c.publicPersona, relation: c.startingRelation, image: c.image ?? null })),
   }
 }

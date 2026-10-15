@@ -2,7 +2,7 @@ import { currentEvent, evalCond, eventOf, optionOpen, type StoryCharacter, type 
 import type { Protagonist } from './repo'
 
 export const INTERPRET_VERSION = 'story-interpret:v1'
-export const NARRATE_VERSION = 'story-narrate:v1'
+export const NARRATE_VERSION = 'story-narrate:v2'
 export const DM_VERSION = 'story-dm:v1'
 
 export type LogLine = { channel: 'scene' | 'dm'; thread: string | null; role: string; speaker: string | null; content: string }
@@ -83,6 +83,9 @@ export function narratePrompt(def: StoryDefinition, before: StoryState, after: S
 
 장면 작성 규칙:
 - 장면 하나(400~800자): 서술과 인물의 대사. 유저(주인공)의 대사·행동·감정·결정을 새로 쓰지 않는다. 유저 입력은 이미 일어난 일로 받고 그 결과와 주변 반응만 쓴다.
+- 첫 사건에서는 주변 인물이 자신의 목적에 따라 먼저 구체적인 말이나 행동을 건넨다. 유저의 한마디를 요약하고 동의하는 데서 끝내지 않는다. 질문에는 먼저 답하고, 짧은 입력을 곧바로 사건 해결·시간 점프로 확대하지 않는다.
+- 말투는 인물별 지시와 현재 관계를 따른다. 모든 인물을 상담자처럼 정중하게 만들거나 매번 선택권·동의를 설명하는 안내문을 붙이지 않는다. 경계는 행동으로 지키고, 끝맺음은 그 인물이 그 자리에서 할 법한 말이나 아직 해결되지 않은 구체적 상황으로 한다.
+- 공개 프롤로그에서 이미 시작된 현장에 이어 쓴다. 프롤로그를 다시 재생하거나 새 첫 만남을 만들지 않는다. 유저가 설정한 성격과 배경은 맥락이며, 새로운 유저 대사를 대신 쓰라는 지시가 아니다.
 - 인물은 각자 '알고 있는 사실' 목록 안에서만 말한다. 목록에 없는 비밀(범인·정체·숨은 동기)은 추측으로도 단정하지 않는다. 모르면 모른다고 하거나 확인 방법을 말한다.
 - '서버가 반영하지 않은 행동'은 일어나지 않은 것으로 다룬다(필요하면 왜 안 되는지 장면 안에서 자연스럽게).
 - 확인 질문이 있으면 장면 끝에 짧게 묻는다. 사건이 끝났으면 결과를 보여 주고 다음 상황으로 자연스럽게 잇는다.
@@ -90,6 +93,8 @@ export function narratePrompt(def: StoryDefinition, before: StoryState, after: S
 - 성적 강요, 침묵을 동의로 해석하기, 구조나 친절을 사랑으로 환산하기 금지.
 JSON: {"blocks":[{"kind":"narration"|"dialogue","speaker":인물키|null,"text":"..."}]}`
   const prompt = JSON.stringify({
+    entry: def.entry ? { world: def.entry.world, role: def.entry.role, arrival: def.entry.arrival, rules: def.entry.rules } : undefined,
+    opening: recent.some(l => l.channel === 'scene' && l.role !== 'user') ? undefined : [def.entry?.prelude, def.opening].filter(Boolean).join('\n\n'),
     protagonist: protagonistLines(def, p),
     premise: after.premise === 'refused' ? '유저가 작품 전제를 거부했다 — 진행하지 말고 설정 협의(다른 진입 상황)나 재시작을 제안한다. 강제로 같은 사건을 반복하지 않는다.' : undefined,
     completed: done ? { title: done.title, result: chosen?.result } : undefined,

@@ -69,9 +69,7 @@ export const actor: StoryDefinition = {
 
 서경이 빈 메모지를 가운데 놓는다. “오늘 서명하실 문서는 없습니다. 확인할 순서를 정하셔도 되고, 회의를 끝내셔도 됩니다.”
 
-도윤이 말을 잇는다. “어디부터 듣고 싶으십니까?”
-
-자유롭게 답할 수 있다. 파일의 배포 경위, 결말을 바꾼 이유, 회수 요구, 회의 종료 등 어느 방향도 가능하다.`,
+도윤이 말을 잇는다. “어디부터 듣고 싶으십니까?”`,
   vars: {
     project: { type: 'enum', values: ['undecided', 'negotiating', 'withdrawn', 'licensed', 'held'], init: 'undecided', label: '프로젝트 상태' },
     channel: { type: 'enum', values: ['unset', 'meeting', 'written'], init: 'unset', label: '검토 방식' },

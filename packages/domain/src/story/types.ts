@@ -107,6 +107,17 @@ export type ContactRule = {
 
 export type StoryEnding = { id: string; title: string; when: Cond; summary: string }
 
+/** 공개 입장 안내. 현재의 배경만 담고 사건의 진실·미래 전개는 담지 않는다. */
+export type StoryEntry = {
+  world: { title: string; text: string }[]
+  role: string
+  arrival: string
+  objective: string
+  places: { name: string; text: string }[]
+  rules: { name: string; text: string }[]
+  prelude: string
+}
+
 export type StoryDefinition = {
   slug: string
   version: number
@@ -128,6 +139,7 @@ export type StoryDefinition = {
   facts: Record<string, string>
   characters: StoryCharacter[]
   opening: string
+  entry?: StoryEntry
   vars: Record<string, VarDef>
   relation: { trustMax: number; affinityMax: number; outcomes: string[]; romanceOutcome: string; romanceGate: Cond[]; outcomeVar: string }
   events: StoryEvent[]

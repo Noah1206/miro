@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { Back, ButtonLink, Notice, Page } from '@/components/ui'
+import { StoryBriefing } from '@/components/stories/story-briefing'
 import { CharacterVisual } from '@/components/character-visual'
 import { currentUser } from '@/lib/auth'
 import { getPersona } from '@/lib/persona'
@@ -14,7 +15,7 @@ export default async function StoryDetail({ params }: { params: Promise<{ slug: 
   const [story, user] = await Promise.all([storyBySlug(slug), currentUser()])
   if (!story) notFound()
   const [run, persona] = user ? await Promise.all([liveRun(user.id, story.id), getPersona(user.id)]) : [null, null]
-  const firstParagraph = story.opening.split('\n\n')[0]
+  const prologue = [story.entry?.prelude, story.opening].filter(Boolean).join('\n\n')
 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
@@ -29,8 +30,9 @@ export default async function StoryDetail({ params }: { params: Promise<{ slug: 
           <h1 className="t-title-1">{story.title}</h1>
           <p className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{story.genres.concat(story.tags).map(t => `#${t.replace(/\s+/g, '')}`).join(' ')}</p>
         </div>
-        <Notice>{`당신의 역할: ${story.protagonist.role}. ${story.notice}`}</Notice>
         <p className="t-body" style={{ lineHeight: 1.7, whiteSpace: 'pre-line' }}>{story.intro}</p>
+        {story.entry && <StoryBriefing entry={story.entry} />}
+        <Notice>{`당신의 역할: ${story.protagonist.role}. ${story.notice}`}</Notice>
 
         <section className="stack" style={{ gap: 10 }}>
           <h2 className="t-title-3">등장인물</h2>
@@ -48,7 +50,7 @@ export default async function StoryDetail({ params }: { params: Promise<{ slug: 
 
         <section className="stack" style={{ gap: 8 }}>
           <h2 className="t-title-3">첫 장면</h2>
-          <p className="t-body" style={{ lineHeight: 1.7, color: 'var(--color-text-secondary)' }}>{firstParagraph}</p>
+          <p className="t-body" style={{ whiteSpace: 'pre-line', lineHeight: 1.85, color: 'var(--color-text-secondary)' }}>{prologue}</p>
         </section>
 
         <section className="stack" style={{ gap: 12 }}>
