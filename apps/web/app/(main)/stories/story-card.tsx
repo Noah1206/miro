@@ -1,7 +1,7 @@
 import { Black_Han_Sans, Diphylleia, Nanum_Myeongjo, Song_Myung } from 'next/font/google'
 import type { ReactNode } from 'react'
 import { CharacterVisual } from '@/components/character-visual'
-import { Chip, TransitionLink } from '@/components/ui'
+import { TransitionLink } from '@/components/ui'
 import type { StoryCard as Card } from '@/lib/stories/repo'
 
 /** 역하렘·BL 과 주인공 성별은 들어가기 전에 보이게 — 카드·상세 공통 표시. */
@@ -57,7 +57,7 @@ const DESIGNS: Record<string, () => ReactNode> = { 'original-academy': Academy, 
 /** 흰 배경 표지 — 제목 아래 어두운 그늘을 깔지 않는다. */
 const LIGHT = new Set(['original-contract'])
 export const isLightCover = (slug: string) => LIGHT.has(slug)
-/** 표지에 제목 글자를 얹지 않는 작품(2번 4분할·4번 가로 3단 — 얼굴만, 10/15 사용자 결정) — 카드에서는 표지 아래에 제목을 적는다. */
+/** 표지에 제목 글자를 얹지 않는 작품(2번 4분할·4번 가로 3단 — 얼굴만, 10/15 사용자 결정). 제목은 링크의 접근성 이름에 남긴다. */
 const NO_TITLE = new Set(['original-actor', 'original-beauty'])
 export const coverShowsTitle = (s: { cover: string | null; slug: string }) => !!s.cover && !NO_TITLE.has(s.slug)
 
@@ -110,9 +110,6 @@ export function StoryCard({ s, compact }: { s: Card; compact?: boolean }) {
         {coverShowsTitle(s) && <CoverTitle title={s.title} slug={s.slug} />}
         {!s.published && <span className="t-micro" style={{ position: 'absolute', right: 8, top: 8, padding: '3px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.72)', color: 'var(--color-text-secondary)' }}>미공개</span>}
       </div>
-      {!coverShowsTitle(s) && <p className="t-body" style={{ marginTop: 8, fontWeight: 'var(--weight-semibold)', lineHeight: 1.35 }}>{s.title}</p>}
-      {!compact && <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginTop: coverShowsTitle(s) ? 8 : 2 }}>{s.tagline}</p>}
-      {!compact && <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>{s.genres.slice(0, 3).map(g => <Chip key={g}>#{g.replace(/\s+/g, '')}</Chip>)}</div>}
     </TransitionLink>
   )
 }
