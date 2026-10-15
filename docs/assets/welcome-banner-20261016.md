@@ -5,7 +5,7 @@
 - 조건: 신규 계정당 1회, 가입 설정 완료 시 지급, 지급 후 7일 사용. WELCOME_GRANT를 300→1,000으로 변경했다. 기존 계정의 과거 지급 행을 소급 변경하지 않는다.
 - 제작: 기본 내장 image_gen. 그림은 생성 이미지, 문구는 번역 가능한 HTML로 구성했다.
 - 웹 자산: `apps/web/public/banners/welcome-baek-v1-1080.webp` (33,676 bytes), `welcome-baek-v1-2172.webp` (92,550 bytes). 이미지 형식 최적화만 수행했다.
-- 완성 PNG: 작업 공간의 `output/imagegen/miro-welcome-white-banner-v2.png` (무료 1,000토큰 강조 버전, 실제 운영 배너 캡처, 952×190). 이전 시안은 `miro-welcome-white-banner.png`로 보존한다.
+- 완성 PNG: 작업 공간의 `output/imagegen/miro-welcome-white-banner-v2.png` (무료 1,000토큰 강조 버전, 실제 운영 모바일 배너 캡처, 358×120). 이전 시안은 `miro-welcome-white-banner.png`로 보존한다.
 - 검증: 온보딩 저장·1,000 지급·동일 계정 재지급 방지·7일 만료 검사 4건 통과. 루트·웹 타입 검사 통과, en/ja/zh 번역 누락 0. 운영 390×844 및 1280×800에서 얼굴·텍스트 배치 확인. `/api/health` 정상. DB 마이그레이션 없음.
 
 ## 이미지 생성 최종 프롬프트
