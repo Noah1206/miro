@@ -23,7 +23,7 @@ export function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
-      <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
+      <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="4 / 5" shared={false} scrim={false} style={{ borderRadius: 0 }} />
     </div>
     <CardDetails c={c} />
   </TransitionLink>
