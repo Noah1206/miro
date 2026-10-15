@@ -1,9 +1,10 @@
-.tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-5); }
+.tabs { display: flex; align-items: center; gap: 10px; overflow-x: auto; scrollbar-width: none; margin-bottom: var(--space-5); padding: 4px 0; }
+.tabs::-webkit-scrollbar { display: none; }
 .inset { margin-inline: var(--gutter); }
-.tabs a { position: relative; display: flex; align-items: center; justify-content: center; min-height: 56px; padding: 12px 8px; color: var(--color-text-tertiary); font-size: 18px; font-weight: 750; line-height: 1.4; letter-spacing: -.025em; text-decoration: none; transition: color var(--motion-fast) var(--ease-standard); }
-.tabs a[aria-current='page'] { color: var(--color-text-primary); }
-.tabs a[aria-current='page']::after { content: ''; position: absolute; inset: auto 0 -1px; height: 4px; background: #9256e8; }
-.tabs a:hover { color: var(--color-text-primary); }
-.tabs a:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: -4px; }
-@media (min-width: 1024px) { .tabs a { font-size: 20px; min-height: 64px; } }
+.tabs a { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; min-height: 44px; padding: 9px 20px; border: 1px solid var(--color-border); border-radius: 999px; background: transparent; color: var(--color-text-secondary); font-size: 16px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; white-space: nowrap; text-decoration: none; transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard); }
+.tabs a[aria-current='page'] { color: #fff; background: #db3028; border-color: #db3028; }
+.tabs a:hover { border-color: var(--color-text-secondary); }
+.tabs a[aria-current='page']:hover { background: #c82b24; border-color: #c82b24; }
+.tabs a:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
+@media (min-width: 1024px) { .tabs a { font-size: 17px; padding-inline: 24px; } }
 @media (prefers-reduced-motion: reduce) { .tabs a { transition: none; } }
