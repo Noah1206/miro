@@ -6,13 +6,13 @@
 .adultPill { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 4px; }
 .adultLabel { font-size: var(--font-micro); font-weight: var(--weight-semibold); line-height: 1; letter-spacing: -.01em; white-space: nowrap; color: var(--color-text-secondary);
   transition: color var(--motion-fast) var(--ease-standard); }
-.adultTrack { position: relative; display: block; width: 48px; height: 22px; flex-shrink: 0; border-radius: 999px; background: #514064;
+.adultTrack { position: relative; display: block; width: 44px; height: 22px; flex-shrink: 0; border-radius: 999px; background: #514064;
   transition: background var(--motion-fast) var(--ease-standard); }
 .adultKnob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c9b5e2;
   transition: transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard); }
 .adultControl[data-on] .adultLabel { color: #efe1ff; }
 .adultControl[data-on] .adultTrack { background: linear-gradient(115deg, #7932d8 0%, #a447f5 52%, #cc78ff 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .3), 0 0 14px rgb(173 78 255 / .4); }
-.adultControl[data-on] .adultKnob { transform: translateX(26px); background: linear-gradient(140deg, #fff, #f0e5ff); box-shadow: 0 1px 3px rgb(24 15 44 / .3), inset 0 1px 0 rgb(255 255 255 / .8); }
+.adultControl[data-on] .adultKnob { transform: translateX(22px); background: #fff; box-shadow: 0 1px 3px rgb(24 15 44 / .3), inset 0 1px 0 rgb(255 255 255 / .8); }
 @media (prefers-reduced-motion: reduce) {
   .adultPill, .adultLabel, .adultTrack, .adultKnob { transition: none; }
 }
