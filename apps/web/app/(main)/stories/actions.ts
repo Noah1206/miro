@@ -1,4 +1,5 @@
 'use server'
+import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { detailFields, parseProtagonist, runFor, startRun, storyBySlug } from '@/lib/stories/repo'
@@ -29,10 +30,13 @@ export async function setStoryContact(runId: string, character: string, value: '
   return setContactPermission(user.id, runId, character, value)
 }
 
-export async function readStoryThread(runId: string, thread: string) {
+export async function readStoryThread(runId: string, thread: string, messageIds?: string[]) {
   const user = await currentUser()
   if (!user || !(await runFor(user.id, runId))) return
-  await markThreadRead(runId, thread)
+  await markThreadRead(runId, thread, new Date(), messageIds)
+  revalidatePath('/archive')
+  revalidatePath('/home')
+  return { ok: true as const }
 }
 
 /** 연락 받을 시간대(기기 시간대). 모르면 선톡을 보내지 않는다 — 여기서 정해야 보내기 시작한다. */

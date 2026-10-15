@@ -54,9 +54,9 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
     {signedIn ? <div className={styles.list}>
       {!page && !error && <p role="status" className={styles.empty}>{t('불러오는 중…')}</p>}
       {page?.items.length === 0 && <p className={styles.empty}>{t('아직 대화가 없어요')}</p>}
-      {page?.items.map(s => <TransitionLink key={s.id} href={`/chat/${s.id}`} className={styles.row}>
+      {page?.items.map(s => <TransitionLink key={s.id} href={s.href ?? `/chat/${s.id}`} className={styles.row}>
         <div className={styles.avatar}>{s.characterImage ? <CharacterPhoto src={s.characterImage} alt="" size="avatar" sizes="42px" width={42} height={42} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : s.characterName.slice(0, 1)}</div>
-        <div className={styles.copy}><strong>{s.characterName}</strong><p>{s.lastMessage ? preview(s.lastMessage, s.characterName) : s.characterStatus ?? `${s.location} · ${s.time}`}</p></div>
+        <div className={styles.copy}><strong>{s.characterName}</strong>{s.storyTitle && <small>{s.storyTitle} · {t('{n}회차', { n: s.runNo! })}</small>}<p>{s.lastMessage ? preview(s.lastMessage, s.characterName) : s.characterStatus ?? `${s.location} · ${s.time}`}</p></div>
         <div className={styles.meta}><time dateTime={new Date(s.lastInteractionAt).toISOString()}>{dateLabel(s.lastInteractionAt, undefined, t)}</time>{s.unread > 0 && <span aria-label={t('안 읽은 메시지 {n}개', { n: s.unread })}>{s.unread}</span>}</div>
       </TransitionLink>)}
       {error && <div role="alert" className={styles.empty}>{t('목록을 불러오지 못했어요.')}<button onClick={() => setRetry(n => n + 1)}>{t('다시 시도')}</button></div>}

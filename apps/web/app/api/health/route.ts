@@ -28,6 +28,7 @@ export async function GET(req: Request) {
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'adult_since')
       and to_regclass('public.ops_heartbeats') is not null
       and to_regclass('public.user_moments') is not null
+      and to_regclass('public.story_push_jobs') is not null
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'character_status_at')
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'adult_level')
       and exists (select 1 from information_schema.columns where table_name = 'roleplay_sessions' and column_name = 'contact_boundary')

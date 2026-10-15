@@ -10,7 +10,7 @@ import { StoryPlay } from './play'
 
 export const dynamic = 'force-dynamic'
 
-export default async function PlayPage({ params, searchParams }: { params: Promise<{ runId: string }>; searchParams: Promise<{ tab?: string }> }) {
+export default async function PlayPage({ params, searchParams }: { params: Promise<{ runId: string }>; searchParams: Promise<{ tab?: string; thread?: string }> }) {
   const user = await currentUser()
   const { runId } = await params
   if (!user) redirect('/home')
@@ -18,10 +18,11 @@ export default async function PlayPage({ params, searchParams }: { params: Promi
   if (!run) notFound()
   const [[story], def, messages, [settings]] = await Promise.all([db.select({ slug: stories.slug, public: stories.public }).from(stories).where(eq(stories.id, run.storyId)), definitionOf(run.storyId), messagesOf(run.id), db.select({ tz: userSettings.timeZone }).from(userSettings).where(eq(userSettings.userId, user.id))])
   const pub = story!.public as StoryPublic
-  const tab = (await searchParams).tab
+  const { tab, thread } = await searchParams
+  const selected = pub.characters.some(c => c.key === thread) ? thread! : messages.find(m => m.channel === 'dm' && !m.read)?.thread ?? 'scene'
   return (
     <StoryPlay runId={run.id} runNo={run.runNo} archived={run.status === 'archived'} slug={story!.slug} title={pub.title} opening={pub.opening} medium={pub.medium}
       characters={pub.characters.map(c => ({ key: c.key, name: c.name, image: c.image ?? null }))} initialMessages={messages} initialView={runView(def, run.state as StoryState)}
-      timeZone={settings?.tz ?? null} initialTab={tab === 'dm' ? messages.find(m => m.channel === 'dm' && !m.read)?.thread ?? 'scene' : 'scene'} />
+      timeZone={settings?.tz ?? null} initialTab={tab === 'dm' ? selected : 'scene'} />
   )
 }

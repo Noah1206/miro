@@ -52,3 +52,5 @@
 @media (prefers-reduced-motion: reduce) {
   .expandLogo, .expandIcon { transition: none; }
 }
+
+.copy small { display: block; margin-top: 3px; font-size: 10px; color: var(--color-text-tertiary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

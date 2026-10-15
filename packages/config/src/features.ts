@@ -19,7 +19,7 @@ export type FeatureName =
   /** 미로 캐릭터의 '자기 삶' — 대화가 없는 동안 생활 리듬대로 하루를 살고 그 일을 기억한다(자율성 live 세션만, 비용 발생, 2026-10-02). */
   | 'characterLife'
   | 'messengerPhotos'
-  /** 오리지널 스토리 연락석의 외부 푸시(10/15). 기본 꺼짐 — 앱 안 연락석은 플래그와 무관하게 쌓인다. 실제 푸시는 운영 확인 뒤 켠다. */
+  /** 오리지널 스토리 연락석의 외부 푸시(10/15). 수신 동의·휴식 시간·인물별 허용을 발송 직전 다시 확인한다. */
   | 'storyPush'
 
 export type Mode = 'alpha' | 'production'
@@ -29,14 +29,14 @@ const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
     messengerPhotos: true,
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false, voiceCallAudio: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
-    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: false,
+    inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: true,
   },
   production: {
     messengerPhotos: true,
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true, voiceCallAudio: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     // 2026-09-24: 관계가 표현 규칙에만 걸려 움직이지 않았다 — AI 분류를 매 턴 붙인다(턴 원가 약 +10%).
-    inlineReality: false, llmSemanticAnalysis: true, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: false,
+    inlineReality: false, llmSemanticAnalysis: true, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: true,
   },
 }
 

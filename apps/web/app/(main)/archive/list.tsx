@@ -1,4 +1,5 @@
 'use client'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button, ButtonLink, TransitionLink } from '@/components/ui'
@@ -26,6 +27,13 @@ export function ArchiveList({ initialPage }: {
   const requestId = useRef(0)
   const t = useT()
   const language = useLanguage()
+  const router = useRouter()
+  useEffect(() => {
+    const refresh = () => { if (document.visibilityState === 'visible') router.refresh() }
+    const timer = window.setInterval(refresh, 20_000)
+    window.addEventListener('focus', refresh)
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
+  }, [router])
 
   // 서버가 목록을 새로 주면(삭제 뒤 돌아왔을 때 등) 그 목록으로 바꾼다. 이름 검색 입력칸은 없앴다(2026-09-30 요청).
   useEffect(() => {
@@ -75,7 +83,7 @@ export function ArchiveList({ initialPage }: {
           return (
           <motion.li key={s.id} data-session-row data-status={s.status} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12, transition: tween.exit }} transition={spring.default}
             style={{ position: 'relative', padding: '10px 12px', borderRadius: 'var(--radius-lg)', background: 'rgba(255, 255, 255, 0.035)' }}>
-            <TransitionLink href={`/chat/${s.id}`} style={{ display: 'flex', gap: 12, alignItems: 'center', minHeight: 68 }}>
+            <TransitionLink href={s.href ?? `/chat/${s.id}`} style={{ display: 'flex', gap: 12, alignItems: 'center', minHeight: 68 }}>
               <div aria-hidden style={{ width: 56, height: 56, borderRadius: 18, overflow: 'hidden', flexShrink: 0, background: 'var(--color-surface-2)', display: 'grid', placeItems: 'center' }}>
                 {portrait
                   ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="56px" width={56} height={56}
@@ -88,6 +96,7 @@ export function ArchiveList({ initialPage }: {
                     {s.characterName}
                   </h2>
                 </div>
+                {s.storyTitle && <p className="t-micro" style={{ marginTop: 3, color: 'var(--color-text-tertiary)' }}>{s.storyTitle} · {t('{n}회차', { n: s.runNo! })}</p>}
                 <p className="t-caption" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 4 }}>{s.lastMessage ? preview(s.lastMessage, s.characterName) : s.characterStatus ?? `${s.location} · ${s.time}`}</p>
               </div>
               <div style={{ width: 44, minHeight: 54, flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: 7 }}>
@@ -95,7 +104,7 @@ export function ArchiveList({ initialPage }: {
                 {s.unread > 0 && <span data-unread aria-label={t('안 읽은 메시지 {n}개', { n: s.unread })} className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, minWidth: 21, height: 21, padding: '0 6px', borderRadius: 11, background: 'var(--color-danger)', color: 'var(--color-white)', display: 'grid', placeItems: 'center' }}>{s.unread}</span>}
               </div>
             </TransitionLink>
-            {managing && (
+            {managing && !s.storyTitle && (
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
                 <ButtonLink href={`/archive/delete/${s.id}`} size="sm" variant="danger" aria-label={t('{name}의 역할극 삭제', { name: language === 'ko' ? withParticle(s.characterName, '과', '와', '와') : s.characterName })}>{t('삭제')}</ButtonLink>
               </div>

@@ -1247,6 +1247,7 @@ export const storyRuns = pgTable('story_runs', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({
   runNo: uniqueIndex('story_runs_no_uniq').on(t.userId, t.storyId, t.runNo),
+  user: index('story_runs_user_idx').on(t.userId),
   live: uniqueIndex('story_runs_live_uniq').on(t.userId, t.storyId).where(sql`${t.status} <> 'archived'`),
 })).enableRLS()
 
@@ -1283,7 +1284,10 @@ export const storyMessages = pgTable('story_messages', {
   contactId: uuid('contact_id'),
   readAt: timestamp('read_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-}, t => ({ run: index('story_messages_run_idx').on(t.runId, t.createdAt) })).enableRLS()
+}, t => ({
+  run: index('story_messages_run_idx').on(t.runId, t.createdAt),
+  thread: index('story_messages_thread_idx').on(t.runId, t.thread, t.createdAt.desc(), t.id.desc()).where(sql`${t.channel} = 'dm'`),
+})).enableRLS()
 
 /** 상태 변경 원장 — 모든 변경·거부에 원인 턴·메시지가 붙는다. */
 export const storyChanges = pgTable('story_changes', {
@@ -1315,4 +1319,22 @@ export const storyContacts = pgTable('story_contacts', {
 }, t => ({
   key: uniqueIndex('story_contacts_key_uniq').on(t.runId, t.key),
   due: index('story_contacts_due_idx').on(t.dueAt).where(sql`${t.status} = 'pending'`),
+})).enableRLS()
+
+/** 스토리 외부 알림. 메시지 저장과 같은 트랜잭션에서 구독별로 적재한다. */
+export const storyPushJobs = pgTable('story_push_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contactId: uuid('contact_id').notNull().references(() => storyContacts.id, { onDelete: 'cascade' }),
+  subscriptionId: uuid('subscription_id').notNull().references(() => pushSubscriptions.id, { onDelete: 'cascade' }),
+  status: text('status', { enum: ['pending', 'sending', 'sent', 'cancelled', 'failed'] }).notNull().default('pending'),
+  attempts: integer('attempts').notNull().default(0),
+  nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  leaseToken: uuid('lease_token'),
+  errorCode: text('error_code'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({
+  subscription: index('story_push_jobs_subscription_idx').on(t.subscriptionId),
+  contactSubscription: uniqueIndex('story_push_jobs_contact_subscription_uniq').on(t.contactId, t.subscriptionId),
+  due: index('story_push_jobs_due_idx').on(t.nextAttemptAt).where(sql`${t.status} in ('pending', 'sending')`),
 })).enableRLS()

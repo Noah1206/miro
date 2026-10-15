@@ -1,5 +1,5 @@
-import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm'
-import { db, characters, realityContacts, roleplaySessions, worldStates } from '@miro/db'
+import { and, eq, isNull, lt, sql } from 'drizzle-orm'
+import { db, realityContacts, roleplaySessions } from '@miro/db'
 import { purgeBefore } from '@miro/domain'
 import { feature } from '@miro/config'
 
@@ -17,6 +17,9 @@ export type ArchiveItem = {
   characterStatus: string | null
   lastMessage: string | null
   unread: number
+  href?: string
+  storyTitle?: string
+  runNo?: number
 }
 
 export type ArchiveCursor = {
@@ -34,7 +37,12 @@ export async function unreadContactCount(userId: string): Promise<number> {
   const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(realityContacts)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
     .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent')))
-  return row?.n ?? 0
+  const [story] = await db.execute<{ n: number }>(sql`
+    SELECT count(*)::int AS n FROM story_messages m JOIN story_runs r ON r.id = m.run_id
+    WHERE r.user_id = ${userId}::uuid AND r.status <> 'archived'
+      AND m.channel = 'dm' AND m.role = 'character' AND m.read_at IS NULL
+  `)
+  return (row?.n ?? 0) + (story?.n ?? 0)
 }
 
 /**
@@ -55,41 +63,59 @@ export async function listSessions(userId: string, options: {
   const validCursor = cursor && cursorDate && (cursor.status === 'active' || cursor.status === 'archived')
     && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cursor.id)
   if (cursor && !validCursor) throw new Error('Invalid archive cursor')
-  const cursorCondition = validCursor ? or(
-    ...(cursor.status === 'active' && !options.status ? [eq(roleplaySessions.status, 'archived')] : []),
-    and(
-      eq(roleplaySessions.status, cursor.status),
-      or(
-        sql`${roleplaySessions.lastInteractionAt} < ${cursorDate}::timestamptz`,
-        and(eq(roleplaySessions.lastInteractionAt, sql`${cursorDate}::timestamptz`), lt(roleplaySessions.id, cursor.id)),
-      ),
-    ),
-  ) : undefined
-  const rows = await db.select({
-    id: roleplaySessions.id, characterName: characters.name, characterSlug: characters.slug,
-    characterImage: sql<string | null>`${characters.images}->>0`,
-    role: characters.role, accentA: characters.accentA,
-    status: roleplaySessions.status, lastInteractionAt: roleplaySessions.lastInteractionAt,
-    location: worldStates.currentLocation, time: worldStates.currentTime,
-    characterStatus: roleplaySessions.characterStatus,
-    // 전화가 닫혀 있으면(운영 베타, 2026-10-01) 통화 기록은 미리보기에도 쓰지 않는다.
-    lastMessage: sql<string | null>`(select left("content", 180) from "messages" where "session_id" = ${roleplaySessions.id} and "hidden_at" is null${feature('voiceCall') || feature('videoCall') ? sql`` : sql` and "kind" <> 'call_record'`} order by "created_at" desc, "id" desc limit 1)`,
-    unread: sql<number>`(select count(*)::int from ${realityContacts} rc where rc.session_id = ${roleplaySessions.id} and rc.status = 'sent')`,
-    cursorTime: sql<string>`to_char(${roleplaySessions.lastInteractionAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
-  })
-    .from(roleplaySessions)
-    .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
-    .innerJoin(worldStates, eq(worldStates.sessionId, roleplaySessions.id))
-    .where(and(
-      eq(roleplaySessions.userId, userId),
-      ...(options.status ? [eq(roleplaySessions.status, options.status)] : []),
-      isNull(roleplaySessions.deletedAt),
-      ...(query ? [sql`position(lower(${query}) in lower(${characters.name})) > 0`] : []),
-      ...(cursorCondition ? [cursorCondition] : []),
-    ))
-    // 진행 중이 먼저, 그 안에서 최근 순.
-    .orderBy(sql`case when ${roleplaySessions.status} = 'active' then 0 else 1 end`, desc(roleplaySessions.lastInteractionAt), desc(roleplaySessions.id))
-    .limit(PAGE_SIZE + 1)
+  const after = validCursor ? sql`AND (
+    (${cursor.status} = 'active' AND ${!options.status} AND status = 'archived')
+    OR (status = ${cursor.status} AND (last_at < ${cursorDate}::timestamptz
+      OR (last_at = ${cursorDate}::timestamptz AND id < ${cursor.id}::uuid)))
+  )` : sql``
+  const result = await db.execute<{
+    id: string; character_name: string; character_slug: string | null; character_image: string | null;
+    role: string | null; accent_a: string | null; status: 'active' | 'archived'; last_at: string;
+    location: string; time: string; character_status: string | null; last_message: string | null;
+    unread: number; cursor_time: string; href: string; story_title: string | null; run_no: number | null;
+  }>(sql`
+    WITH inbox AS (
+      SELECT r.id, c.name AS character_name, c.slug AS character_slug, c.images->>0 AS character_image,
+        c.role, c.accent_a, r.status, r.last_interaction_at AS last_at,
+        w.current_location AS location, w.current_time AS time, r.character_status,
+        (SELECT left(m.content, 180) FROM messages m WHERE m.session_id = r.id AND m.hidden_at IS NULL
+          ${feature('voiceCall') || feature('videoCall') ? sql`` : sql`AND m.kind <> 'call_record'`}
+          ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS last_message,
+        (SELECT count(*)::int FROM reality_contacts rc WHERE rc.session_id = r.id AND rc.status = 'sent') AS unread,
+        '/chat/' || r.id AS href, NULL::text AS story_title, NULL::int AS run_no
+      FROM roleplay_sessions r JOIN characters c ON c.id = r.character_id JOIN world_states w ON w.session_id = r.id
+      WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL
+      UNION ALL
+      SELECT latest.id, person->>'name', s.slug || '-' || (person->>'key'), person->>'image',
+        NULL::text, NULL::text, CASE WHEN r.status = 'archived' THEN 'archived' ELSE 'active' END,
+        latest.created_at, '', '', NULL::text, left(latest.content, 180),
+        CASE WHEN r.status = 'archived' THEN 0 ELSE
+          (SELECT count(*)::int FROM story_messages um WHERE um.run_id = r.id AND um.channel = 'dm'
+            AND um.thread = person->>'key' AND um.role = 'character' AND um.read_at IS NULL) END,
+        '/messages/story/' || r.id || '/' || (person->>'key'), s.title, r.run_no
+      FROM story_runs r JOIN stories s ON s.id = r.story_id
+      CROSS JOIN LATERAL jsonb_array_elements(s.public->'characters') person
+      CROSS JOIN LATERAL (
+        SELECT m.id, m.created_at, m.content FROM story_messages m
+        WHERE m.run_id = r.id AND m.channel = 'dm' AND m.thread = person->>'key'
+        ORDER BY m.created_at DESC, m.id DESC LIMIT 1
+      ) latest
+      WHERE r.user_id = ${userId}::uuid
+    )
+    SELECT *, to_char(last_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_time FROM inbox
+    WHERE true ${options.status ? sql`AND status = ${options.status}` : sql``}
+      ${query ? sql`AND (position(lower(${query}) in lower(character_name)) > 0 OR position(lower(${query}) in lower(coalesce(story_title, ''))) > 0)` : sql``}
+      ${after}
+    ORDER BY CASE WHEN status = 'active' THEN 0 ELSE 1 END, last_at DESC, id DESC
+    LIMIT ${PAGE_SIZE + 1}
+  `)
+  const rows = result.map(r => ({
+    id: r.id, characterName: r.character_name, characterSlug: r.character_slug, characterImage: r.character_image,
+    role: r.role, accentA: r.accent_a, status: r.status, lastInteractionAt: new Date(r.last_at),
+    location: r.location, time: r.time, characterStatus: r.character_status, lastMessage: r.last_message,
+    unread: r.unread, cursorTime: r.cursor_time, href: r.href,
+    ...(r.story_title ? { storyTitle: r.story_title, runNo: r.run_no! } : {}),
+  }))
   const items = rows.slice(0, PAGE_SIZE).map(({ cursorTime: _cursorTime, ...item }) => item)
   const last = rows[PAGE_SIZE - 1]
   return {

@@ -1,8 +1,8 @@
 import { and, eq, gte, inArray, isNull, lte, or, sql, desc } from 'drizzle-orm'
-import { db, pushSubscriptions, stories, storyContacts, storyMessages, storyRuns, userSettings } from '@miro/db'
+import { db, storyContacts, storyMessages, storyRuns, userSettings, users } from '@miro/db'
 import { contactGate, dueAt, localParts, rulesToSchedule, shouldCancel, type StoryDefinition, type StoryState } from '@miro/domain'
-import { feature } from '@miro/config'
-import { resolvePush } from '@miro/providers'
+import { observe } from '@/lib/observe'
+import { enqueueStoryPush } from './push-outbox'
 import { definitionOf } from './repo'
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
@@ -40,12 +40,19 @@ export async function deliverDueStoryContacts(now: Date, limit = 20): Promise<De
     return due.map(d => d.id)
   })
   const out: DeliveryResult[] = []
-  for (const id of claimed) out.push(await deliverOne(id, now))
+  for (const id of claimed) {
+    try { out.push(await deliverOne(id, now)) }
+    catch {
+      observe('story.contact_delivery_failed', { contactId: id })
+      await db.update(storyContacts).set({ reason: 'delivery_error', leaseUntil: null, dueAt: new Date(now.getTime() + 15 * 60_000) })
+        .where(and(eq(storyContacts.id, id), eq(storyContacts.status, 'pending')))
+      out.push({ id, outcome: 'held', reason: 'delivery_error' })
+    }
+  }
   return out
 }
 
 export async function deliverOne(contactId: string, now: Date): Promise<DeliveryResult> {
-  let push: { userId: string; title: string; runId: string } | null = null
   const result = await db.transaction(async tx => {
     const [c] = await tx.select().from(storyContacts).where(eq(storyContacts.id, contactId)).for('update')
     if (!c || c.status !== 'pending') return { id: contactId, outcome: 'cancelled' as const, reason: 'not_pending' }
@@ -53,6 +60,11 @@ export async function deliverOne(contactId: string, now: Date): Promise<Delivery
     if (!run || run.status === 'archived') {
       await tx.update(storyContacts).set({ status: 'cancelled', reason: 'run_archived', leaseUntil: null }).where(eq(storyContacts.id, c.id))
       return { id: c.id, outcome: 'cancelled' as const, reason: 'run_archived' }
+    }
+    const [owner] = await tx.select({ deletedAt: users.deletedAt }).from(users).where(eq(users.id, run.userId))
+    if (!owner || owner.deletedAt) {
+      await tx.update(storyContacts).set({ status: 'cancelled', reason: 'user_deleted', leaseUntil: null }).where(eq(storyContacts.id, c.id))
+      return { id: c.id, outcome: 'cancelled' as const, reason: 'user_deleted' }
     }
     const def = await definitionOf(run.storyId)
     const rule = def.contacts.find(r => r.id === c.ruleId)
@@ -80,27 +92,16 @@ export async function deliverOne(contactId: string, now: Date): Promise<Delivery
     }
     const [msg] = await tx.insert(storyMessages).values({ runId: run.id, channel: 'dm', thread: c.speaker, role: 'character', speaker: c.speaker, content: rule.text, contactId: c.id, createdAt: now }).returning({ id: storyMessages.id })
     await tx.update(storyContacts).set({ status: 'sent', sentAt: now, messageId: msg!.id, reason: null, leaseUntil: null }).where(eq(storyContacts.id, c.id))
-    const [st] = await tx.select({ title: stories.title }).from(stories).where(eq(stories.id, run.storyId))
-    push = { userId: run.userId, title: def.characters.find(x => x.key === c.speaker)?.name ?? st?.title ?? '', runId: run.id }
+    await enqueueStoryPush(tx, c.id, run.userId, now)
     return { id: c.id, outcome: 'sent' as const }
   })
-  if (result.outcome === 'sent' && push && feature('storyPush')) await sendPush(push).catch(() => {})
   return result
 }
 
-/** 잠금화면에는 인물 이름과 '새 연락' 안내만. 사건·관계 내용은 싣지 않는다. */
-async function sendPush(p: { userId: string; title: string; runId: string }) {
-  const subs = await db.select().from(pushSubscriptions).where(and(eq(pushSubscriptions.userId, p.userId), isNull(pushSubscriptions.failedAt)))
-  const provider = resolvePush()
-  for (const s of subs) {
-    const r = await provider.send({ endpoint: s.endpoint, p256dh: s.p256dh, auth: s.auth }, { title: p.title, body: '새 연락이 도착했어요.', url: `/stories/play/${p.runId}?tab=dm`, tag: `story:${p.runId}` })
-    if (!r.ok && r.gone) await db.update(pushSubscriptions).set({ failedAt: new Date() }).where(eq(pushSubscriptions.id, s.id))
-  }
-}
-
-export async function markThreadRead(runId: string, thread: string, now = new Date()) {
+export async function markThreadRead(runId: string, thread: string, now = new Date(), messageIds?: string[]) {
+  if (messageIds && !messageIds.length) return
   await db.update(storyMessages).set({ readAt: now })
-    .where(and(eq(storyMessages.runId, runId), eq(storyMessages.channel, 'dm'), eq(storyMessages.thread, thread), eq(storyMessages.role, 'character'), isNull(storyMessages.readAt)))
+    .where(and(eq(storyMessages.runId, runId), eq(storyMessages.channel, 'dm'), eq(storyMessages.thread, thread), eq(storyMessages.role, 'character'), isNull(storyMessages.readAt), messageIds ? inArray(storyMessages.id, messageIds.slice(0, 500)) : undefined))
 }
 
 export async function pendingContacts(runId: string) {
