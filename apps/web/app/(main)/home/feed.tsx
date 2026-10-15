@@ -1,5 +1,5 @@
 'use client'
-import { characterTags, characterStorySummary } from '@/lib/character-card-copy'
+import { characterTags } from '@/lib/character-card-copy'
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
@@ -12,10 +12,9 @@ const unique = (items: HomeCard[]) => [...new Map(items.map(c => [c.id, c])).val
 const picture = (c: HomeCard) => c.images[0] ?? null
 
 /** 카드에 대화한 사람 수(말풍선 숫자)는 띄우지 않는다(2026-09-30 요청). */
-function PhotoDetails({ c }: { c: HomeCard }) {
-  return <span className={styles.photoDetails}>
+function CardDetails({ c }: { c: HomeCard }) {
+  return <span className={styles.cardDetails}>
     <strong>{c.name}</strong>
-    <span className={styles.storySummary}>{characterStorySummary(c)}</span>
     <span className={styles.cardTags}>{characterTags(c).map(tag => <span key={tag}>#{tag}</span>)}</span>
   </span>
 }
@@ -24,8 +23,8 @@ export function StoryCard({ c }: { c: HomeCard }) {
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
-      <PhotoDetails c={c} />
     </div>
+    <CardDetails c={c} />
   </TransitionLink>
 }
 

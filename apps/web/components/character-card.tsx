@@ -2,7 +2,7 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
-import { characterTags, characterStorySummary } from '@/lib/character-card-copy'
+import { characterTags } from '@/lib/character-card-copy'
 import { press, spring } from '@/lib/motion/tokens'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
@@ -29,7 +29,7 @@ export type CardCharacter = {
 
 /**
  * 캐릭터 카드 하나.
- * 포스터 위에는 이름과 해시태그만 얹는다. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청).
+ * 이미지 바깥 아래에 이름과 해시태그를 둔다. 설명과 대화 인원은 띄우지 않는다.
  * 마크업을 한 곳에 두어야 홈과 상세가 어긋나지 않는다 (실제로 어긋났었다).
  */
 export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) {
@@ -40,19 +40,18 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
-        style={{ display: 'block', position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-        <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="10 / 16" />
+        style={{ display: 'block', minWidth: 0 }}>
+        <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="10 / 16" scrim={false} />
+        </div>
 
-        {/* 아래 절반을 덮는 그라디언트 위에 글을 올린다 — 이미지가 밝아도 글이 읽힌다. */}
         <div style={{
-          position: 'absolute', left: 0, right: 0, bottom: 0, padding: '30px 12px 12px',
-          background: 'linear-gradient(to top, rgba(8,8,9,0.94) 28%, rgba(8,8,9,0.72) 60%, rgba(8,8,9,0))',
+          display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 2px 0', color: 'var(--color-text-primary)',
         }}>
-          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 48, lineHeight: 1.05, letterSpacing: '-.055em', overflowWrap: 'anywhere', marginBottom: 8 }}>{c.name}</p>
-          <p style={{ fontSize: 14, lineHeight: 1.5, color: 'rgba(255,255,255,.93)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{characterStorySummary(c)}</p>
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 20, lineHeight: 1.25, letterSpacing: '-.025em', overflowWrap: 'anywhere', margin: 0 }}>{c.name}</p>
           {tags.length > 0 && (
             <p className="t-micro" style={{
-              color: 'rgba(255,255,255,.72)', letterSpacing: 0, textTransform: 'none', fontSize: 10, display: 'flex', flexWrap: 'wrap', gap: '3px 6px',
+              color: 'var(--color-text-secondary)', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 10, display: 'flex', flexWrap: 'wrap', gap: '3px 6px',
             }}>{tags.map(tag => <span key={tag}>#{tag}</span>)}</p>
           )}
         </div>
