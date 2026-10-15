@@ -1,4 +1,5 @@
 'use client'
+import { ChatDesignLibrary } from '@/components/chat-theme'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
@@ -64,7 +65,8 @@ export function ArchiveList({ initialPage }: {
     <>
       <header style={{ marginBottom: 'var(--space-6)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
-          <h1 className="t-title-1">{t('채팅')}</h1>
+          <h1 className="t-title-1" style={{ flex: 1 }}>{t('채팅')}</h1>
+          <ChatDesignLibrary />
         {/* 대화 관리(…) — 누르면 방마다 삭제가 보인다. 지울 방이 없으면 두지 않는다(10/1). */}
         {items.length > 0 && <button type="button" onClick={() => setManaging((value) => !value)} aria-label={t('대화 관리')} aria-pressed={managing} style={{
           width: 40, height: 40, display: 'grid', placeItems: 'center', padding: 0, border: 0, borderRadius: 'var(--radius-sm)',

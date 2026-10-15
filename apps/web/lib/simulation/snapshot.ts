@@ -1,4 +1,5 @@
-import { officialIntro } from '@/lib/editorial/official-copy'
+import type { CharacterEntry } from '@/lib/character-entry'
+import { officialEntry, officialIntro } from '@/lib/editorial/official-copy'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { characterCanSeeMessage } from '@/lib/messenger/inbox'
 import { sceneOpening } from '@/lib/intro-dialogue'
@@ -20,6 +21,7 @@ import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
 export type LoadedSession = {
+  entry?: CharacterEntry | null
   personaConfigured: boolean
   snapshot: SimulationSnapshot
   sessionId: string
@@ -161,6 +163,7 @@ export async function loadSession(
 
   return {
     snapshot,
+    entry: officialEntry(c, c.sampleDialogue, row.session.openingScene),
     personaConfigured: row.session.userPersona !== null,
     sessionId,
     characterId: c.id,

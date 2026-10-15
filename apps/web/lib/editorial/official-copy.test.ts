@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { officialDescription, officialIntro, officialStartingContext } from './official-copy'
+import { officialDescription, officialEntry, officialIntro, officialStartingContext } from './official-copy'
 import original from './seo-ian.fixture.json'
 import copy from './official-copy.json'
 import { introMessages, sceneOpening, type DialogueEntry } from '@/lib/intro-dialogue'
@@ -13,12 +13,12 @@ describe('curated official copy', () => {
     const edited = entries.map(e => e.purpose === 'intro' ? { ...e, text: e.text + ' 직접 편집' } : e)
     expect(officialIntro(original, edited)).toEqual(edited)
   })
-  it('shares short openings while retaining samples, scenes and photos', () => {
+  it('adds world and player context while retaining samples, scenes and photos', () => {
     const revised = officialIntro(original, entries)
     expect(revised.filter(e => !e.purpose)).toEqual(entries.filter(e => !e.purpose))
     expect([...new Set(revised.filter(e => e.purpose).map(e => e.scene))]).toEqual([...new Set(entries.filter(e => e.purpose).map(e => e.scene))])
     for (const first of entries.filter(e => e.image)) expect(revised.some(e => e.image === first.image && e.scene === first.scene)).toBe(true)
-    expect(revised.filter(e => e.purpose === 'intro')).toHaveLength(12)
+    expect(revised.filter(e => e.purpose === 'intro')).toHaveLength(18)
     expect(entries.filter(e => e.purpose === 'intro')).toHaveLength(14)
   })
   it('copies the selected revised scene into a new session without charging a turn', () => {
@@ -54,10 +54,30 @@ describe('유저가 참여하는 도입부 편집', () => {
     }
   })
   it('only replaces the exact authored context, leaving independent edits and private data intact', () => {
-    expect(officialStartingContext({ ...original, startingContext: original.starting_context })).toBe(copy['official-seo-ian'].startingContext)
+    expect(officialStartingContext({ ...original, startingContext: original.starting_context })).toContain(copy['official-seo-ian'].startingContext)
     const c = Object.values(copy).find(c => 'startingContext' in c)!
     const slug = Object.keys(copy).find(slug => copy[slug as keyof typeof copy].id === c.id)!
     expect(officialStartingContext({ id: c.id, slug, startingContext: '직접 고친 시작 상황' })).toBe('직접 고친 시작 상황')
     expect(officialStartingContext({ id: 'other', slug, startingContext: null })).toBeNull()
+  })
+})
+
+
+describe('scene-specific entry briefing', () => {
+  it('keeps the remote scene remote instead of using the default convenience-store meeting', () => {
+    const entry = officialEntry(original, entries, '방송 중 사연')!
+    expect(entry.role).toContain('집에서')
+    const revised = officialIntro(original, entries)
+    const context = sceneOpening(revised, '방송 중 사연')!.context!
+    expect(context).toContain(entry.role)
+    expect(context).not.toContain('지금은 새벽 4시 10분')
+    const history = introMessages('broadcast-session', revised, undefined, { scene: '방송 중 사연' })
+    expect(history.some(m => m.content.includes(entry.before))).toBe(true)
+    expect(history.at(-1)?.role).toBe('character')
+  })
+  it('never layers a curated player premise onto an author-edited opening', () => {
+    const edited = entries.map(e => e.purpose === 'intro' ? { ...e, text: e.text + ' 작가가 변경한 상황' } : e)
+    expect(officialEntry(original, edited)).toBeNull()
+    expect(officialEntry({ ...original, id: 'unrelated' }, entries)).toBeNull()
   })
 })

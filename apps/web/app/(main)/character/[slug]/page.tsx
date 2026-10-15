@@ -1,4 +1,4 @@
-import { officialDescription, officialIntro, officialSamples, officialTagline } from '@/lib/editorial/official-copy'
+import { officialDescription, officialEntry, officialIntro, officialSamples, officialTagline } from '@/lib/editorial/official-copy'
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { RichText } from '@/components/scene/rich-text'
@@ -48,6 +48,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
     const opening = sceneOpening(c.sampleDialogue, scene)
     return {
       value: scene,
+      briefing: officialEntry(stored!, stored!.sampleDialogue, scene),
       label: scene || t('처음부터'),
       meta: [opening?.time ?? c.startingTime, opening?.location ?? c.worldLocation].filter(Boolean).join(' | '),
       context: editedDescription ? '' : me(opening?.context ?? c.startingContext),

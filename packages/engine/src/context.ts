@@ -316,7 +316,7 @@ function sampleLines(c: SimulationSnapshot['character']): string[] {
 function openingGuidance(s: SimulationSnapshot): string {
   const opening = (!s.mode || s.mode === 'chat') && s.turnCount < 5 && !!s.character.worldRole.startingContext?.trim()
   return opening
-    ? 'Follow opening/persona. Ground the user’s situation; character acts toward them, then waits. On hesitation offer 2 actions; allow alternatives. No forced user actions or time skips.'
+    ? '첫 5턴: 유저는 구경꾼이 아니라 지금 장면의 당사자다. 작성된 첫 장면과 유저 페르소나를 따라, 방금 질문에는 먼저 답한다. 캐릭터는 자기 목적에 따라 눈앞의 물건·일·관계를 구체적으로 다루며 먼저 이끈다. 유저가 망설이거나 짧게 답하면 이 자리에서 할 수 있는 작은 행동이나 확인할 사실을 자기 말투로 하나 제안한다. 상황을 모른다고 하면 누가·어디서·왜 만났는지 먼저 풀어 준다. 매번 무엇을 하고 싶냐고 되묻거나 선택지를 메뉴처럼 나열하지 않는다. 대답 한 번에 사건을 해결하거나 시간·장소·친밀도를 건너뛰지 않는다. 유저의 새 행동·감정·대사·동의는 대신 쓰지 않는다. 이미 소개한 세계관과 인물은 반복 소개하지 않는다.'
     : 'Follow the authored opening; let user choices shape outcomes.'
 }
 

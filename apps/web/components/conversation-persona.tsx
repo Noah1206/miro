@@ -1,4 +1,6 @@
 'use client'
+import { CharacterBriefing } from './character-briefing'
+import type { CharacterEntry } from '@/lib/character-entry'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { UserPersona } from '@miro/domain'
@@ -7,8 +9,8 @@ import { PersonaForm } from '@/app/(main)/persona/form'
 import { useT } from '@/lib/i18n/client'
 
 /** All character rooms confirm their own persona before showing the composer. */
-export function ConversationPersona({ sessionId, initial, characterName, context, required = false }: {
-  sessionId: string; initial: UserPersona | null; characterName: string; context?: string | null; required?: boolean
+export function ConversationPersona({ sessionId, initial, characterName, context, entry, required = false }: {
+  sessionId: string; initial: UserPersona | null; characterName: string; context?: string | null; entry?: CharacterEntry | null; required?: boolean
 }) {
   const t = useT(), router = useRouter()
   const [open, setOpen] = useState(false)
@@ -18,7 +20,8 @@ export function ConversationPersona({ sessionId, initial, characterName, context
     <header style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}><Back href="/archive" /><span>{characterName}</span></header>
     <h1 className="t-title-2" style={{ marginBottom: 12 }}>{t('이 이야기 속 나')}</h1>
     <p className="t-body" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>{t('캐릭터를 만나기 전에, 이 대화에서의 내 모습을 정해 주세요. 다른 대화의 설정은 바뀌지 않아요.')}</p>
-    {context && <p className="t-caption" style={{ padding: 16, marginBottom: 24, lineHeight: 1.7, background: 'var(--color-surface-1)', borderRadius: 12 }}>{context.slice(0, 400)}</p>}
+    {entry && <div style={{ marginBottom: 24 }}><CharacterBriefing entry={entry} /></div>}
+    {!entry && context && <p className="t-caption" style={{ padding: 16, marginBottom: 24, lineHeight: 1.7, background: 'var(--color-surface-1)', borderRadius: 12 }}>{context.slice(0, 400)}</p>}
     {form}
   </Page>
   return <>
@@ -28,6 +31,7 @@ export function ConversationPersona({ sessionId, initial, characterName, context
     <Sheet open={open} onClose={() => setOpen(false)} title={t('이 이야기 속 나')}>
       <div style={{ padding: '0 var(--gutter) var(--space-5)' }}>
         <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 20 }}>{t('이 대화의 페르소나만 바뀌어요. 이전 대화 기록은 그대로 남아요.')}</p>
+        {entry && <div style={{ marginBottom: 24 }}><CharacterBriefing entry={entry} /></div>}
         {open && form}
       </div>
     </Sheet>

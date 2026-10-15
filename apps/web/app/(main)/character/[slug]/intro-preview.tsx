@@ -1,4 +1,6 @@
 'use client'
+import { CharacterBriefing } from '@/components/character-briefing'
+import type { CharacterEntry } from '@/lib/character-entry'
 import { useId, useState } from 'react'
 import { RichText, type RichNames } from '@/components/scene/rich-text'
 import { useT } from '@/lib/i18n/client'
@@ -6,6 +8,7 @@ import { Rule, SampleDialogue } from './sections'
 
 export type IntroScene = {
   /** 폼으로 보내는 값(도입부 이름). */
+  briefing?: CharacterEntry | null
   value: string
   label: string
   /** 시각 · 장소 — 작은 보조 텍스트 한 줄. */
@@ -24,15 +27,16 @@ export function IntroPreview({ scenes, names, portrait, turns }: {
 }) {
   const t = useT()
   const [index, setIndex] = useState(0)
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const contentId = useId()
   const scene = scenes[index]
   if (!scene) return null
-  const longIntro = scene.lines.reduce((length, line) => length + line.text.length, 0) > 500
-  const firstNarration = scene.lines.find((line) => line.role === 'narrator')
-  const firstSpeech = scene.lines.find((line) => line.role === 'character')
-  const previewLines = scene.lines.filter((line) => line === firstNarration || line === firstSpeech)
-  const lines = longIntro && !expanded ? previewLines : scene.lines
+  // The briefing already displays the two added narration entries. Keep their scene photo.
+  const sceneLines = scene.briefing ? scene.lines.slice(2).map((line, i) => i === 0 ? { ...line, image: scene.lines[0]?.image ?? line.image } : line) : scene.lines
+  const longIntro = sceneLines.reduce((length, line) => length + line.text.length, 0) > 500
+  const firstNarration = sceneLines.find(line => line.role === 'narrator')
+  const firstSpeech = sceneLines.find(line => line.role === 'character')
+  const lines = longIntro && !expanded ? sceneLines.filter(line => line === firstNarration || line === firstSpeech) : sceneLines
   return (
     <>
     <Rule label={t('첫 장면')}>
@@ -42,15 +46,16 @@ export function IntroPreview({ scenes, names, portrait, turns }: {
           <legend className="sr-only">{t('시작 상황')}</legend>
           {scenes.map((s, i) => (
             <label key={s.value} className="intro-chip">
-              <input type="radio" name="scene" value={s.value} form="start-roleplay" checked={i === index} onChange={() => { setIndex(i); setExpanded(false) }} />
+              <input type="radio" name="scene" value={s.value} form="start-roleplay" checked={i === index} onChange={() => { setIndex(i); setExpanded(true) }} />
               <span>{s.label}</span>
             </label>
           ))}
         </fieldset>
       )}
+      {scene.briefing && <CharacterBriefing entry={scene.briefing} />}
       {scene.meta && <p className="intro-meta">{scene.meta}</p>}
       <div id={contentId} className="intro-preview">
-      {scene.context && (!longIntro || expanded) && <RichText editorial className="intro-narration" text={scene.context} names={names} />}
+      {!scene.briefing && scene.context && (!longIntro || expanded) && <RichText editorial className="intro-narration" text={scene.context} names={names} />}
       {lines.map((line, i) => (
         <div key={`${scene.value}-${i}`} className="intro-line">
           {/* eslint-disable-next-line @next/next/no-img-element -- 시드가 올린 공개 장면 사진 한 장 */}

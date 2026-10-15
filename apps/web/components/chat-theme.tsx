@@ -9,19 +9,28 @@ import { CharacterPhoto } from './character-visual'
 
 type Theme = 'miro' | 'dm-light' | 'dm' | 'talk'
 const DEFAULT_THEME: Theme = 'miro'
+const DEFAULT_THEME_KEY = 'miro:chat-theme:default'
 const Context = createContext<{ theme: Theme; select: (theme: Theme) => void }>({ theme: DEFAULT_THEME, select: () => {} })
 export const useChatTheme = () => useContext(Context)
 const valid = (value: unknown): value is Theme => value === 'dm-light' || value === 'miro' || value === 'dm' || value === 'talk'
 
 /** Visual preference only: shared by this session's scene and messenger on this device. */
-export function ChatTheme({ sessionId, children }: { sessionId: string; children: ReactNode }) {
-  const key = `miro:chat-theme:${sessionId}`
+export function ChatTheme({ sessionId, children }: { sessionId?: string; children: ReactNode }) {
+  const key = sessionId ? `miro:chat-theme:${sessionId}` : DEFAULT_THEME_KEY
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME)
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const read = () => { try { const saved = localStorage.getItem(key); setTheme(valid(saved) ? saved : DEFAULT_THEME) } catch { setTheme(DEFAULT_THEME) } }
+    const read = () => {
+      try {
+        const saved = localStorage.getItem(key), shared = localStorage.getItem(DEFAULT_THEME_KEY)
+        const ownAt = Number(localStorage.getItem(`${key}:at`) ?? 0), sharedAt = Number(localStorage.getItem(`${DEFAULT_THEME_KEY}:at`) ?? 0)
+        // The latest explicit choice wins: a library choice updates existing rooms;
+        // a later choice inside one room only changes that room.
+        setTheme(valid(saved) && ownAt >= sharedAt ? saved : valid(shared) ? shared : DEFAULT_THEME)
+      } catch { setTheme(DEFAULT_THEME) }
+    }
     read()
-    const sync = (event: StorageEvent) => { if (event.key === key || event.key === null) read() }
+    const sync = (event: StorageEvent) => { if (event.key === null || [key, `${key}:at`, DEFAULT_THEME_KEY, `${DEFAULT_THEME_KEY}:at`].includes(event.key)) read() }
     window.addEventListener('storage', sync)
     return () => window.removeEventListener('storage', sync)
   }, [key])
@@ -56,8 +65,8 @@ export function ChatTheme({ sessionId, children }: { sessionId: string; children
       document.removeEventListener('focusout', update)
     }
   }, [])
-  const select = (next: Theme) => { setTheme(next); try { localStorage.setItem(key, next) } catch { /* Private storage can be unavailable; selection still works. */ } }
-  return <Context.Provider value={{ theme, select }}><div ref={root} className={styles.root} data-chat-theme={theme}>{children}</div></Context.Provider>
+  const select = (next: Theme) => { setTheme(next); try { localStorage.setItem(key, next); localStorage.setItem(`${key}:at`, String(Date.now())) } catch { /* Private storage can be unavailable; selection still works. */ } }
+  return <Context.Provider value={{ theme, select }}>{sessionId ? <div ref={root} className={styles.root} data-chat-theme={theme}>{children}</div> : children}</Context.Provider>
 }
 
 export function DefaultChatAvatar({ theme: previewTheme }: { theme?: Theme } = {}) {
@@ -68,21 +77,21 @@ export function DefaultChatAvatar({ theme: previewTheme }: { theme?: Theme } = {
   return <svg data-default-avatar aria-hidden viewBox="0 0 40 40" width="32" height="32"><rect width="40" height="40" rx="11" fill="var(--chat-avatar-bg, #dbdbdb)" /><circle cx="20" cy="15" r="7" fill="var(--chat-avatar-ink, #a8a8a8)" /><path d="M6 36c0-9 5-13 14-13s14 4 14 13" fill="var(--chat-avatar-ink, #a8a8a8)" /></svg>
 }
 
-export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigger = false, placement = 'header', portrait }: { open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; placement?: 'header' | 'composer'; portrait?: string | null } = {}) {
+export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigger = false, placement = 'header', portrait }: { open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; placement?: 'header' | 'composer' | 'library'; portrait?: string | null } = {}) {
   const { theme, select } = useChatTheme()
   const [localOpen, setLocalOpen] = useState(false)
   const open = controlledOpen ?? localOpen
   const setOpen = onOpenChange ?? setLocalOpen
   const t = useT()
   return <>
-    {!hideTrigger && <button className={placement === 'composer' ? styles.composerTrigger : styles.trigger} type="button" aria-label={t('채팅방 테마')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
-      <ChatPaletteIcon />
+    {!hideTrigger && <button className={placement === 'library' ? styles.libraryTrigger : placement === 'composer' ? styles.composerTrigger : styles.trigger} type="button" aria-label={t('채팅방 디자인 라이브러리')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+      <ChatPaletteIcon />{placement === 'library' && <span>{t('디자인 라이브러리')}</span>}
     </button>}
-    <Sheet open={open} onClose={() => setOpen(false)} title={t('채팅방 테마')} snap={{ half: 0.72, full: 0.92 }}>
+    <Sheet open={open} onClose={() => setOpen(false)} title={t('채팅방 디자인 라이브러리')} snap={{ half: 0.72, full: 0.92 }}>
       <div className={styles.options}>
         {(['miro', 'dm-light', 'dm', 'talk'] as const).map(value => <button type="button" key={value} className={styles.option} aria-pressed={theme === value} onClick={() => { select(value); setOpen(false) }}>
           <span className={styles.preview} data-preview={value} aria-hidden><span className={styles.previewHead}><span className={styles.previewAvatar}>{value === 'miro' && portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="20px" width={20} height={20} /> : <DefaultChatAvatar theme={value} />}</span><i /></span><span className={styles.incoming} /><span className={styles.outgoing} /></span>
-          <span className={styles.label}>{t(value === 'miro' ? '미로 기본' : value === 'dm-light' ? 'DM 기본' : value === 'dm' ? 'DM 다크' : '카톡 스타일')}<span aria-hidden>{theme === value ? '✓' : ''}</span></span>
+          <span className={styles.label}>{t(value === 'miro' ? '미로 기본' : value === 'dm-light' ? '인스타 DM' : value === 'dm' ? '인스타 DM 다크' : '카톡 스타일')}<span aria-hidden>{theme === value ? '✓' : ''}</span></span>
         </button>)}
       </div>
     </Sheet>
@@ -96,4 +105,10 @@ export function ChatHeaderAvatar({ portrait }: { portrait?: string | null } = {}
       ? <CharacterPhoto key={portrait} src={portrait} alt="" size="avatar" sizes="30px" width={30} height={30} loading="eager" />
       : <DefaultChatAvatar />}
   </span>
+}
+
+
+/** Navigation > Chats: the selected design becomes the device's default for all rooms. */
+export function ChatDesignLibrary() {
+  return <ChatTheme><ChatThemePicker placement="library" /></ChatTheme>
 }

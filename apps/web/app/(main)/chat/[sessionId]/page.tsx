@@ -37,7 +37,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   ])
   if (!loaded || !mature) notFound()
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
-  if (!loaded.personaConfigured) return <ConversationPersona required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
+  if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 
@@ -65,7 +65,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <ChatRoomIcon />
             </TransitionLink>
           )}
-          <ConversationPersona sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
+          <ConversationPersona entry={loaded.entry} sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
           <ChatThemePicker portrait={loaded.characterPhoto} />
           <ModelPicker {...modelOptions} />
         </header>
