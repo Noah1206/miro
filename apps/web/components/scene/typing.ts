@@ -12,6 +12,8 @@ export const TYPING_MS_PER_CHAR: Record<Mood, number> = {
 
 /** 한 문단을 다 치는 데 걸릴 시간. 너무 긴 대사가 하염없이 흐르지 않게 상한을 둔다. */
 export const MAX_PARAGRAPH_MS = 1500
+/** An authored opening is for reading the situation, so it keeps the natural rhythm even at 500 characters. */
+export const OPENING_PARAGRAPH_MS = 16000
 
 /**
  * 멈칫 — 문장이 끝나는 자리에서 잠깐 쉰다. 사람이 치는 것처럼 보이게 하는 것의 절반은 이 틈이다.
@@ -31,9 +33,9 @@ export function pauseAfter(char: string, next: string, mood: Mood): number {
  * 이 문단을 치는 데 쓸 글자당 시간. 긴 대사는 상한 안에 들도록 자동으로 빨라진다 —
  * 200자짜리 서술을 기분대로 치면 10초가 넘는다.
  */
-export function msPerChar(text: string, mood: Mood, pace = 1): number {
+export function msPerChar(text: string, mood: Mood, pace = 1, maxParagraphMs = MAX_PARAGRAPH_MS): number {
   const base = TYPING_MS_PER_CHAR[mood] * pace
-  const max = MAX_PARAGRAPH_MS * pace
+  const max = maxParagraphMs * pace
   // 상한을 넘기면 글자당 시간이 타이머 최소 간격 아래로 내려갈 수 있다 — 그때는 한 틱에 여러 글자를 보인다(charsPerTick).
   return text.length * base <= max ? base : max / text.length
 }

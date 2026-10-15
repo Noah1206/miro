@@ -13,10 +13,13 @@ import { TYPING_MS_PER_CHAR, charsPerTick, msPerChar, pauseAfter } from './typin
  *
  * 애니메이션을 줄이는 설정(prefers-reduced-motion)이면 통째로 보여준다.
  */
-export function TypedText({ text, mood = 'neutral', onDone, animate = true, pace = 1 }: {
+export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs }: {
   text: string
   mood?: Mood
   onDone?: () => void
+  onGrow?: () => void
+  /** Openings have a more spacious reading rhythm than a newly generated reply. */
+  maxParagraphMs?: number
   /** 1 보다 작으면 글자와 멈칫을 같은 비율로 빨리 친다 — 문단이 많은 응답 (replyPace). */
   pace?: number
   /** 지난 메시지는 이미 다 도착한 것이다 — 다시 칠 이유가 없다. */
@@ -27,13 +30,16 @@ export function TypedText({ text, mood = 'neutral', onDone, animate = true, pace
   const [shown, setShown] = useState(() => (instant ? text.length : 0))
   const done = useRef(onDone)
   done.current = onDone
+  const grow = useRef(onGrow)
+  grow.current = onGrow
+  useEffect(() => { grow.current?.() }, [shown])
 
   useEffect(() => {
     if (instant) { setShown(text.length); done.current?.(); return }
     setShown(0)
     let i = 0
     let timer: ReturnType<typeof setTimeout>
-    const speed = msPerChar(text, mood, pace)
+    const speed = msPerChar(text, mood, pace, maxParagraphMs)
     // 긴 문단이라 글자 속도를 줄였으면 멈칫도 같은 비율로 줄인다 — 멈칫이 상한 밖에서 시간을 늘리지 않게.
     const squeeze = Math.min(1, speed / (TYPING_MS_PER_CHAR[mood] * pace))
     // 글자당 시간이 타이머 최소 간격보다 짧으면 한 틱에 여러 글자 — 긴 문단도 상한 안에 끝난다.
@@ -46,15 +52,15 @@ export function TypedText({ text, mood = 'neutral', onDone, animate = true, pace
     }
     timer = setTimeout(step, speed * chunk)
     return () => clearTimeout(timer)
-  }, [text, mood, instant, pace])
+  }, [text, mood, instant, pace, maxParagraphMs])
 
   // 자르는 위치가 **강조** 한가운데면 별표가 글자로 보인다 — 짝이 맞는 데까지만 넘긴다.
   const visible = instant ? text : trimToPair(text.slice(0, shown))
   return (
     <>
-      <Emphasis text={visible} />
+      <span aria-hidden={!instant || undefined}><Emphasis text={visible} /></span>
       {/* 스크린리더는 완성된 문장을 한 번만 읽는다 — 글자마다 다시 읽지 않는다. */}
-      {!instant && shown < text.length && <span className="sr-only" aria-live="off">{text}</span>}
+      {!instant && <span className="sr-only" aria-live="off">{text}</span>}
     </>
   )
 }

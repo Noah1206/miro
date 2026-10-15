@@ -46,7 +46,11 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
     blocks: m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
+    opening: m.turnIndex <= 0 && !m.hiddenAt && (m.kind === 'text' || m.kind === 'photo') && (m.role === 'character' || m.role === 'narrator'),
   }))
+  if (history.length === 0 && s.character.worldRole.startingContext) items.push({
+    id: `opening:${sessionId}`, role: 'narrator', kind: 'text', content: s.character.worldRole.startingContext, blocks: [], opening: true,
+  })
 
   return (
     <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id}><TurnsProvider><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
@@ -69,16 +73,13 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <div className={styles.transcript}>
           {/* 'AI가 생성한 대화예요' 줄은 뺐다(2026-10-02 사용자: 사람처럼 느껴져야 한다). AI 라는 안내는 가입 때 필수 동의(AI 생성 콘텐츠 안내)로 한다. */}
           {loaded.restricted && <p data-restricted role="status" className="t-caption" style={{ textAlign: 'center', color: 'var(--color-danger)' }}>{t('운영 정책에 따라 이 역할극은 제한되었습니다.')}</p>}
-          {history.length === 0 && s.character.worldRole.startingContext && (
-            <p className={styles.opening}>{s.character.worldRole.startingContext}</p>
-          )}
           {loaded.experienceType === 'reality' && s.activeEvents[0] && (
             <aside style={{ marginBottom: 'var(--space-5)', padding: '14px 16px', borderLeft: '2px solid var(--color-accent)', background: 'var(--color-surface-1)', borderRadius: '0 var(--radius-md) var(--radius-md) 0' }}>
               <h2 className="t-micro" style={{ marginBottom: 4 }}>{t('지금 이 세계에서')}</h2>
               <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
-          <MessageList items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} />
+          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} />
         </div>
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}

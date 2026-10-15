@@ -2,24 +2,26 @@
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ease } from '@/lib/motion/tokens'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
 import { Popover, MenuItem } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
-import { replyPace } from '@/components/scene/typing'
+import { OPENING_PARAGRAPH_MS, replyPace } from '@/components/scene/typing'
 import { CharacterPhoto } from '@/components/character-visual'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
+import { useOpeningPlayback } from './use-opening-playback'
 
-export type Msg = { at?: string; hideTime?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
+export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral' }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false }: {
   items: Msg[]; characterName: string; portrait?: string | null
+  sessionId?: string; hasStarted?: boolean
   /** 캐릭터의 지금 기분 — 타이핑 속도가 여기서 나온다. */
   mood?: Mood
 }) {
@@ -33,7 +35,12 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     ...(live.blocks.length ? [{ id: 'live-reply', role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
   const settled = [...server, ...appended.filter((m) => !known.has(m.id))]
   const items = [...settled, ...liveItems]
+  const opening = useOpeningPlayback(sessionId, items, hasStarted)
+  const displayed = settled.filter(opening.visible)
   const end = useRef<HTMLDivElement>(null)
+  const log = useRef<HTMLDivElement>(null)
+  const following = useRef(true)
+  const wasStreaming = useRef(false)
   // 이미 화면에 있던 메시지는 다시 치지 않는다. 처음 열 때 전부 다시 치면 대화가 재생된다.
   const seen = useRef<Set<string> | null>(null)
   if (seen.current === null) seen.current = new Set(items.map((m) => m.id))
@@ -47,30 +54,36 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const typingId = typing.current
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
-  const follow = () => end.current?.scrollIntoView({ block: 'end' })
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end', behavior: !reduce && last?.role === 'user' ? 'smooth' : 'auto' }) }, [items.length, live?.blocks.length, reduce])
+  const follow = useCallback(() => { if (following.current) end.current?.scrollIntoView({ block: 'end' }) }, [])
+  useEffect(() => {
+    if (last?.role === 'user' || (live && !wasStreaming.current)) following.current = true
+    wasStreaming.current = !!live
+    follow()
+  }, [items.length, displayed.length, !!live, live?.blocks.length, follow])
   useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
   useEffect(() => {
     const transcript = end.current?.parentElement
     if (!transcript) return
-    let atBottom = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 8
-    const onScroll = () => { atBottom = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 8 }
-    const resize = new ResizeObserver(() => {
-      if (atBottom) transcript.scrollTop = transcript.scrollHeight - transcript.clientHeight
-    })
+    const onScroll = () => { following.current = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 }
+    // Observe the growing text itself: the scroll viewport keeps the same height while lines arrive.
+    const resize = new ResizeObserver(follow)
     transcript.addEventListener('scroll', onScroll, { passive: true })
     resize.observe(transcript)
+    if (log.current) resize.observe(log.current)
     return () => { resize.disconnect(); transcript.removeEventListener('scroll', onScroll) }
-  }, [])
+  }, [follow])
 
   return (
     <>
-    <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}>
+    <div ref={log} role="log" aria-live={opening.playing ? 'off' : 'polite'} aria-relevant="additions" aria-label={t('{name} 대화', { name: characterName })} className={styles.messages}
+      data-opening-playing={opening.playing || undefined} onClick={opening.playing ? event => {
+        if (!(event.target as Element).closest('button, a')) opening.finish()
+      } : undefined}>
       <AnimatePresence initial={false}>
-        {settled.map((m, index) => (
+        {displayed.map((m, index) => (
           <Line key={m.id} {...(quiet.has(m.id) ? { initial: false } : {})}>
-            <Message m={{...m, hideTime: !!m.at && settled[index + 1]?.role === m.role && settled[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait}
-              typing={m.id === typingId} mood={mood} onGrow={follow} />
+            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait}
+              typing={m.id === opening.activeId || m.id === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
           </Line>
         ))}
       </AnimatePresence>
@@ -81,15 +94,19 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
         <Message m={m} characterName={characterName} portrait={portrait} mood={mood} onGrow={follow} />
       </motion.div>)}
     </div>
+    {opening.playing && <button type="button" className={styles.openingSkip} onClick={opening.finish}>{t('인트로 전체 보기')}</button>}
     <div ref={end} aria-hidden />
     </>
   )
 }
 
-function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow }: {
-  m: Msg; characterName: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
+function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone }: {
+  m: Msg; characterName: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void
 }) {
   const t = useT()
+  const done = useRef(onDone)
+  done.current = onDone
+  useEffect(() => { if (typing && m.kind !== 'text') done.current?.() }, [typing, m.kind])
   // 인트로의 상황 서술(role narrator)은 블록 없이 글만 저장된다 — 캐릭터 말풍선이 아니라 장면 서술로 그린다(10/5).
   if (m.role === 'narrator' && m.kind === 'text' && !m.blocks.length) m = { ...m, blocks: [{ type: 'narrative', text: m.content }] }
   const reality = m.blocks.find((b) => b.type === 'reality') as { senderLabel?: string; channelLabel?: string; caption?: string | null } | undefined
@@ -120,11 +137,11 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       </Reportable>
     )
   }
-  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} /></Reportable>
+  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} /></Reportable>
 }
 
-function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow }: {
-  m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void
+function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone }: {
+  m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void
 }) {
   // 상황은 말풍선 밖, 행동·속마음은 같은 인물의 말풍선 안에서 대사와 구분한다.
   const t = useT()
@@ -133,9 +150,12 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
-  const pace = replyPace(count)
+  const done = useRef(onDone)
+  done.current = onDone
+  useEffect(() => { if (typing && typed >= count) done.current?.() }, [typing, typed, count])
+  const pace = m.opening ? 1 : replyPace(count)
   const line = (p: Paragraph) => typing && p.index === typed
-    ? <TypedText text={p.text} mood={mood} pace={pace} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
+    ? <TypedText text={p.text} mood={m.opening ? 'neutral' : mood} pace={pace} maxParagraphMs={m.opening ? OPENING_PARAGRAPH_MS : undefined} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
     : <Emphasis text={p.text} />
 
   return <div className={styles.reply}>
