@@ -4,7 +4,7 @@ import { authoredCharacter, languageRule, localIso, personaLines } from '@miro/d
 import { db, characters, characterVisualIdentities, messages, roleplaySessions, users, userSettings, worlds } from '@miro/db'
 import { memoryRetriever } from '@/lib/ai/memory'
 import { characterContext, conversationContext } from '@/lib/simulation/character-context'
-import { getPersona } from '@/lib/persona'
+import { getConversationPersona } from '@/lib/persona'
 
 /** Only visible, owned conversation data may ground a proactive message. */
 export async function loadRealityContext(sessionId: string, userId: string, reason: string) {
@@ -24,7 +24,7 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     db.select().from(characterVisualIdentities)
       .where(and(eq(characterVisualIdentities.characterId, owner.character.id), eq(characterVisualIdentities.isActive, true)))
       .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
-    getPersona(userId),
+    getConversationPersona(userId, sessionId),
   ])
   // 먼저 연락 문장에는 작성자가 쓴 설정만 — 관계 성격표는 규칙이 읽는 파생 값이다.
   const { identity, personality, worldRole, appearance } = authoredCharacter(characterContext(owner.character, visual[0]))

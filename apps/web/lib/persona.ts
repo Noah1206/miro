@@ -1,12 +1,13 @@
 import { redirect } from 'next/navigation'
-import { eq } from 'drizzle-orm'
-import { db, userPersonas } from '@miro/db'
-import { PERSONA_LIMITS, type UserPersona } from '@miro/domain'
+import { and, eq, isNull } from 'drizzle-orm'
+import { db, userPersonas, roleplaySessions, characters, messages } from '@miro/db'
+import { PERSONA_LIMITS, mentionsMinor, type UserPersona } from '@miro/domain'
+import { introMessages } from './intro-dialogue'
+import { officialIntro } from './editorial/official-copy'
 import { msg } from '@/lib/i18n'
 
 /**
- * 사용자 페르소나(domain/user/persona). 채팅·문자 화면은 페르소나가 없으면 먼저 만들게 보낸다(requirePersonaPath).
- * 모든 캐릭터와의 대화가 같은 페르소나를 쓴다.
+ * 공용 페르소나는 새 대화의 기본값이다. 각 대화방에서 확인한 뒤에는 방별 설정을 쓴다.
  */
 export async function getPersona(userId: string): Promise<UserPersona | null> {
   const [row] = await db.select({ name: userPersonas.name, gender: userPersonas.gender, description: userPersonas.description })
@@ -26,7 +27,7 @@ export function parsePersona(raw: { name: unknown; gender: unknown; description:
   return { ok: true, persona: { name, gender, description: description || null } }
 }
 
-/** 저장. 페르소나는 모든 대화의 시스템 프롬프트에 설정(지시 아님)으로 실린다. 따로 돌던 AI 안전 검사는 10/2 에 뺐다. */
+/** 공용 기본값 저장. 방에서 확인한 페르소나는 바꾸지 않는다. 따로 돌던 AI 안전 검사는 10/2 에 뺐다. */
 export async function savePersona(userId: string, raw: { name: unknown; gender: unknown; description: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {
   const parsed = parsePersona(raw)
   if (!parsed.ok) return parsed
@@ -50,4 +51,38 @@ export function requirePersonaPath(back: string): string {
 export async function requirePersona(persona: UserPersona | null | undefined, back: string): Promise<void> {
   if (persona) return
   redirect(requirePersonaPath(back))
+}
+
+/** The conversation override is shared by its scene, messages, calls and proactive contact. */
+export async function getConversationPersona(userId: string, sessionId: string): Promise<UserPersona | null> {
+  const [row] = await db.select({ persona: roleplaySessions.userPersona }).from(roleplaySessions)
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt)))
+  return row ? row.persona ?? await getPersona(userId) : null
+}
+
+export async function saveConversationPersona(userId: string, sessionId: string, raw: { name: unknown; gender: unknown; description: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {
+  const parsed = parsePersona(raw)
+  if (!parsed.ok) return parsed
+  return db.transaction(async tx => {
+    const [room] = await tx.select().from(roleplaySessions).where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))).for('update')
+    if (!room) return { ok: false as const, error: msg('대화를 찾을 수 없습니다.') }
+    const persona = parsed.persona
+    if (room.adultSince && (mentionsMinor(persona.name) || mentionsMinor(persona.description))) return { ok: false as const, error: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
+    // Only untouched, authored opening lines may adopt the chosen name. Never rewrite played dialogue.
+    if (room.turnCount === 0) {
+      const [c] = await tx.select().from(characters).where(eq(characters.id, room.characterId))
+      if (c) {
+        const previous = room.userPersona ?? await getPersona(userId)
+        const entries = officialIntro(c, c.sampleDialogue)
+        const before = introMessages(sessionId, entries, undefined, { scene: room.openingScene ?? undefined, userName: previous?.name })
+        const after = introMessages(sessionId, entries, undefined, { scene: room.openingScene ?? undefined, userName: persona.name })
+        for (const [index, line] of before.entries()) {
+          if (line.role !== 'narrator' || line.kind !== 'text' || !after[index]) continue
+          await tx.update(messages).set({ content: after[index]!.content }).where(and(eq(messages.sessionId, sessionId), eq(messages.turnIndex, line.turnIndex), eq(messages.role, 'narrator'), eq(messages.content, line.content)))
+        }
+      }
+    }
+    await tx.update(roleplaySessions).set({ userPersona: persona }).where(eq(roleplaySessions.id, room.id))
+    return { ok: true as const }
+  })
 }

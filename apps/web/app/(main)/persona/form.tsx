@@ -1,21 +1,23 @@
 'use client'
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { PERSONA_LIMITS, type UserPersona } from '@miro/domain'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { ChoiceChips, CountedInput, CountedTextArea, LabeledField } from '@/app/(main)/create/form-parts'
-import { savePersonaAction } from './actions'
+import { savePersonaAction, saveConversationPersonaAction } from './actions'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
 const GENDERS = [{ value: '', label: msg('밝히지 않음') }, { value: 'female', label: msg('여성') }, { value: 'male', label: msg('남성') }]
 
-export function PersonaForm({ initial, next, submitLabel }: { initial: UserPersona | null; next: string; submitLabel: string }) {
-  const [state, action] = useActionState(savePersonaAction, null)
+export function PersonaForm({ initial, next, submitLabel, sessionId, onDone }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void }) {
+  const [state, action] = useActionState(sessionId ? saveConversationPersonaAction : savePersonaAction, null)
   const [gender, setGender] = useState<string>(initial?.gender ?? '')
   const t = useT()
+  useEffect(() => { if (state?.saved) onDone?.() }, [state, onDone])
   return (
     <form action={action} className="stack" style={{ gap: 20 }}>
       <input type="hidden" name="next" value={next} />
+      {sessionId && <input type="hidden" name="sessionId" value={sessionId} />}
       <LabeledField label={t('이름')} required hint={t('캐릭터가 대화에서 부를 이름이에요.')}>
         <CountedInput name="name" ariaLabel={t('이름')} placeholder={t('예) 지우')} max={PERSONA_LIMITS.name} defaultValue={initial?.name ?? ''} required />
       </LabeledField>

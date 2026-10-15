@@ -13,12 +13,13 @@ import { recentLife } from '@/lib/agency/life'
 import { activeMoments } from '@/lib/reality/moments'
 import { characterAvailability } from '@/lib/reality/routine'
 import { memoryLagFor } from '@/lib/ai/memory-jobs'
-import { getPersona } from '@/lib/persona'
+import { getConversationPersona } from '@/lib/persona'
 import { adultModeGateFor } from '@/lib/ops/safety'
 import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
 export type LoadedSession = {
+  personaConfigured: boolean
   snapshot: SimulationSnapshot
   sessionId: string
   characterId: string
@@ -101,11 +102,11 @@ export async function loadSession(
       .orderBy(desc(callSessions.createdAt)).limit(3),
     memoryLagFor(sessionId),
     // 사용자가 정한 자기 설정 — 캐릭터가 부를 이름과 소개(없으면 '사용자').
-    getPersona(userId),
+    getConversationPersona(userId, sessionId),
     // 자기 삶 — 대화가 없는 동안 캐릭터가 겪은 일(미로 캐릭터의 자율성 세션에만 생긴다).
     row.character.experienceType === 'reality' ? recentLife(sessionId) : Promise.resolve([]),
     // 성인 모드 대사 지시는 매 턴 다시 판정한다 — 켠 뒤에 캐릭터 나이가 바뀌거나 인증이 사라지면 일반 기준으로 돌아간다(모델은 그대로 전용).
-    row.session.adultMode && row.session.adultSince ? adultModeGateFor(userId, row.character.id).then((g) => g.allowed) : Promise.resolve(false),
+    row.session.adultMode && row.session.adultSince ? adultModeGateFor(userId, row.character.id, sessionId).then((g) => g.allowed) : Promise.resolve(false),
     // 사용자가 말한 자기 일정 — 캐릭터가 기억했다가 그날이 다가오거나 지나면 챙긴다(10/9).
     activeMoments(sessionId),
   ])
@@ -159,6 +160,7 @@ export async function loadSession(
 
   return {
     snapshot,
+    personaConfigured: row.session.userPersona !== null,
     sessionId,
     characterId: c.id,
     characterName: c.name,

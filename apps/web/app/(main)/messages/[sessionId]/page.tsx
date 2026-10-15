@@ -7,7 +7,7 @@ import { feature, voiceCallAllowed } from '@miro/config'
 import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
-import { requirePersona } from '@/lib/persona'
+import { ConversationPersona } from '@/components/conversation-persona'
 import { Back, Notice, TransitionLink } from '@/components/ui'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { MessengerDelivery } from './delivery'
@@ -32,7 +32,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 두 경험에서 같은 페르소나를 사용한다.
-  await requirePersona(loaded.snapshot.userPersona, `/messages/${sessionId}`)
+  if (!loaded.personaConfigured) return <ConversationPersona required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
   const [rows] = await Promise.all([
     messengerItems(user.id, sessionId),
     // This is the user reading the character's incoming contacts, not the reverse.
@@ -52,6 +52,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}
           <TransitionLink href={`/chat/${sessionId}`} className={styles.headerButton} aria-label={t('캐릭터챗')} title={t('캐릭터챗')}><ChatRoomIcon /></TransitionLink>
+          <ConversationPersona sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
           <ChatThemePicker />
         </header>
         {call && (

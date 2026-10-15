@@ -17,7 +17,7 @@ import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
-import { requirePersona } from '@/lib/persona'
+import { ConversationPersona } from '@/components/conversation-persona'
 import { getT } from '@/lib/i18n/server'
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -32,12 +32,12 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
     session.then((l) => l && matureGateFor(user.id, l.characterId)),
-    session.then((l) => l && adultModeGateFor(user.id, l.characterId)),
+    session.then((l) => l && adultModeGateFor(user.id, l.characterId, sessionId)),
     walletSnapshot(user.id),
   ])
   if (!loaded || !mature) notFound()
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
-  await requirePersona(loaded.snapshot.userPersona, `/chat/${sessionId}`)
+  if (!loaded.personaConfigured) return <ConversationPersona required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 
@@ -61,6 +61,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <ChatRoomIcon />
             </TransitionLink>
           )}
+          <ConversationPersona sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
           <ChatThemePicker />
           <ModelPicker {...modelOptions} />
         </header>

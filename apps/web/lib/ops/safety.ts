@@ -5,7 +5,7 @@ import { adultCharacter, gateMature, mentionsMinor, type MatureGate } from '@mir
 import { adultModelReady, resolveAdultVerification } from '@miro/providers'
 import { activeVisualIdentity } from '@/lib/simulation/media'
 import { msg } from '@/lib/i18n'
-import { getPersona } from '@/lib/persona'
+import { getPersona, getConversationPersona } from '@/lib/persona'
 
 /**
  * 베타 성인 테스터(10/2 사용자 결정: "베타테스터는 내가 직접 뽑을 거라서") — MIRO_ADULT_TESTERS 의 이메일(쉼표 구분) 계정은
@@ -36,7 +36,7 @@ export async function matureGateFor(userId: string, characterId: string): Promis
  * 이 대화방에서 성인 모드를 켤 수 있는가(10/2) — 성인 전용 모델이 있고, 성인 표현 판정(인증·정책 동의·실존 인물)을 통과하고,
  * 캐릭터가 만 19세 이상으로 적혀 있어야 한다. 켤 때와 매 턴 대사 지시를 고를 때 같은 판정을 쓴다.
  */
-export async function adultModeGateFor(userId: string, characterId: string): Promise<MatureGate> {
+export async function adultModeGateFor(userId: string, characterId: string, sessionId?: string): Promise<MatureGate> {
   if (!adultModelReady()) return { allowed: false, reason: 'adult_model_unavailable', next: msg('현재 일반 등급 콘텐츠만 제공합니다.') }
   const gate = await matureGateFor(userId, characterId)
   if (!gate.allowed) return gate
@@ -44,7 +44,7 @@ export async function adultModeGateFor(userId: string, characterId: string): Pro
     .from(characters).where(eq(characters.id, characterId)).limit(1)
   if (!c || !adultCharacter(c)) return { allowed: false, reason: 'character_not_adult', next: msg('만 19세 이상으로 설정된 캐릭터만 언베일을 켤 수 있어요.') }
   // 내 페르소나가 학생·미성년이면 켜지 않는다(10/3 — 언베일에서 미성년자는 아예 나오지 않게). 매 턴 재판정이라 켠 뒤에 바꿔도 일반 기준으로 돌아간다.
-  const persona = await getPersona(userId)
+  const persona = sessionId ? await getConversationPersona(userId, sessionId) : await getPersona(userId)
   if (mentionsMinor(persona?.name) || mentionsMinor(persona?.description)) return { allowed: false, reason: 'persona_minor', next: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
   return gate
 }

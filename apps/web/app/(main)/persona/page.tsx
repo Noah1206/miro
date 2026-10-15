@@ -19,8 +19,8 @@ export default async function PersonaPage({ searchParams }: { searchParams: Prom
   return (
     <Page style={{ maxWidth: 480 }}>
       <PageHeader back={toChat ? '/home' : '/my'} title={persona ? t('내 페르소나') : t('나를 소개해 주세요')}
-        lead={persona ? t('캐릭터가 대화에서 알게 되는 내 모습이에요. 모든 캐릭터와의 대화에 쓰여요.')
-          : t('대화를 시작하기 전에, 캐릭터가 알게 될 내 모습을 정해 주세요. 마이페이지에서 언제든 바꿀 수 있어요.')} />
+        lead={persona ? t('새 대화에서 기본값으로 불러와요. 대화방마다 따로 바꿀 수 있어요.')
+          : t('새 대화에서 불러올 기본 페르소나를 정해 주세요. 대화방에서 확인하고 시작할 수 있어요.')} />
       <PersonaForm initial={persona} next={next} submitLabel={toChat ? t('저장하고 대화하기') : t('저장')} />
     </Page>
   )

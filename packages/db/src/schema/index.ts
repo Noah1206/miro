@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
-import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar } from '@miro/domain'
+import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -345,6 +345,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   adultLevel: text('adult_level', { enum: ['soft', 'deep', 'explicit'] }).notNull().default('explicit'),
   /** 고른 시작 상황(10/6, 인트로 줄의 scene). NULL = 기본 도입부. AI 의 첫 장면 설명을 그 장면 것으로 바꾼다. */
   openingScene: text('opening_scene'),
+  /** 이 방에서 확인한 사용자 설정. NULL이면 입장 시 공용 페르소나를 기본값으로 제안한다. */
+  userPersona: jsonb('user_persona').$type<UserPersona>(),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),
