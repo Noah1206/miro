@@ -1,4 +1,5 @@
 'use client'
+import { characterTags, characterStorySummary } from '@/lib/character-card-copy'
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
@@ -13,18 +14,17 @@ const picture = (c: HomeCard) => c.images[0] ?? null
 function PhotoDetails({ c }: { c: HomeCard }) {
   return <span className={styles.photoDetails}>
     <strong>{c.name}</strong>
+    <span className={styles.storySummary}>{characterStorySummary(c)}</span>
+    <span className={styles.cardTags}>{characterTags(c).map(tag => <span key={tag}>#{tag}</span>)}</span>
   </span>
 }
 export function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
-  // 해시태그는 카드 밑에 — 장르 → 관계 순으로 10개까지, 넘치면 다음 줄로(2026-09-30, 10/5 5→10개·회색 칩).
-  const tags = [...new Set([...(c.genre ?? '').split('·').map(g => g.trim()), ...c.relationshipKeywords])].filter(Boolean).slice(0, 10)
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="2 / 3" shared={false} scrim={false} style={{ borderRadius: 0 }} />
       <PhotoDetails c={c} />
     </div>
-    {tags.length > 0 && <p className={styles.cardTags}>{tags.map(tag => <span key={tag}>#{tag.replace(/\s+/g, '')}</span>)}</p>}
   </TransitionLink>
 }
 

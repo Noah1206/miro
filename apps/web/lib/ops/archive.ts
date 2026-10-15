@@ -1,4 +1,5 @@
-import { and, eq, isNull, lt, sql } from 'drizzle-orm'
+import { homeUnveilEnabled } from '@/lib/home-mode'
+import { and, eq, isNull, isNotNull, lt, sql } from 'drizzle-orm'
 import { db, realityContacts, roleplaySessions } from '@miro/db'
 import { purgeBefore } from '@miro/domain'
 import { feature } from '@miro/config'
@@ -34,9 +35,11 @@ const PAGE_SIZE = 25
 
 /** 안 읽은 연락 전체 수 — 캐릭터가 보낸 문자·전화 중 아직 안 본 것. 대화 목록의 방별 빨간 숫자(unread)를 모두 더한 값이고, 홈 알림 종에 쓴다. */
 export async function unreadContactCount(userId: string): Promise<number> {
+  const unveil = await homeUnveilEnabled(userId)
   const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(realityContacts)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
-    .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent')))
+    .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent'), unveil ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)))
+  if (unveil) return row?.n ?? 0
   const [story] = await db.execute<{ n: number }>(sql`
     SELECT count(*)::int AS n FROM story_messages m JOIN story_runs r ON r.id = m.run_id
     WHERE r.user_id = ${userId}::uuid AND r.status <> 'archived'
@@ -54,6 +57,7 @@ export async function listSessions(userId: string, options: {
   query?: string
   cursor?: ArchiveCursor | null
 } = {}): Promise<ArchivePage> {
+  const unveil = await homeUnveilEnabled(userId)
   const query = typeof options.query === 'string' ? options.query.trim().slice(0, 100) : ''
   const cursor = options.cursor
   const cursorDate = cursor && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{6}Z$/.test(cursor.lastInteractionAt)
@@ -84,7 +88,7 @@ export async function listSessions(userId: string, options: {
         (SELECT count(*)::int FROM reality_contacts rc WHERE rc.session_id = r.id AND rc.status = 'sent') AS unread,
         '/chat/' || r.id AS href, NULL::text AS story_title, NULL::int AS run_no
       FROM roleplay_sessions r JOIN characters c ON c.id = r.character_id JOIN world_states w ON w.session_id = r.id
-      WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL
+      WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL AND (r.adult_since IS NOT NULL) = ${unveil}
       UNION ALL
       SELECT latest.id, person->>'name', s.slug || '-' || (person->>'key'), person->>'image',
         NULL::text, NULL::text, CASE WHEN r.status = 'archived' THEN 'archived' ELSE 'active' END,
@@ -100,7 +104,7 @@ export async function listSessions(userId: string, options: {
         WHERE m.run_id = r.id AND m.channel = 'dm' AND m.thread = person->>'key'
         ORDER BY m.created_at DESC, m.id DESC LIMIT 1
       ) latest
-      WHERE r.user_id = ${userId}::uuid
+      WHERE r.user_id = ${userId}::uuid AND ${!unveil}
     )
     SELECT *, to_char(last_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_time FROM inbox
     WHERE true ${options.status ? sql`AND status = ${options.status}` : sql``}

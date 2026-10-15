@@ -1,6 +1,6 @@
 'use client'
 import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
-import { startTransition, useActionState, useEffect, useRef, useState, type ComponentProps } from 'react'
+import { startTransition, useEffect, useRef, useState, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon } from '@/components/ui'
@@ -23,14 +23,27 @@ const KEEP_WAITING_MS = 12_000
 export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
   const t = useT()
   const { append, live, setLive, calendarPending } = useTurns()
-  const [state, action, pending] = useActionState(async (_previous: TurnState, form: FormData): Promise<TurnState> => {
+  const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
+  const [pending, setPending] = useState(false)
+  const sending = useRef(false)
+  async function action(form: FormData) {
+    if (sending.current) return
+    sending.current = true
+    setPending(true)
     try {
       const result = await streamTurn(form, setLive)
+      setState(result)
       if (result.limit) openRecharge()
-      return result
+      if (result.succeeded) { setDraft(''); setRequestId(crypto.randomUUID()) }
+    } catch {
+      setState({ error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true })
+      setLive(null)
+    } finally {
+      sending.current = false
+      setPending(false)
+      requestAnimationFrame(() => ta.current?.focus())
     }
-    catch { return { error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true } }
-  }, { error: null, notice: null, limit: null } satisfies TurnState)
+  }
   const { model, setModel } = useChatModel()
   const router = useRouter()
   const { sync, wallet, openRecharge } = useWallet()
@@ -67,7 +80,6 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
     const streamed = !!live?.blocks.length
     setLive(null)
     if (state.succeeded) {
-      setDraft(''); setRequestId(crypto.randomUUID())
       void import('@/app/(main)/recharge/wallet-actions').then(m => m.readWallet()).then(sync).catch(() => {})
       if (state.messages?.length) {
         // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다. 이미 흘려 보여 준 답은 다시 치지 않는다.
@@ -119,7 +131,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
           </motion.p>
         )}
       </AnimatePresence>
-      <form ref={ref} action={action} className={styles.composerForm}>
+      <form ref={ref} onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && draft.trim()) void action(new FormData(event.currentTarget)) }} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}

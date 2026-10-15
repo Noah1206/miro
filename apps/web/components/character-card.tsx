@@ -2,10 +2,13 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
+import { characterTags, characterStorySummary } from '@/lib/character-card-copy'
 import { press, spring } from '@/lib/motion/tokens'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
 export type CardCharacter = {
+  startingContext?: string | null
+  occupation?: string | null
   contactEnabled?: boolean | null
   id: string
   slug: string | null
@@ -29,10 +32,10 @@ export type CardCharacter = {
  * 포스터 위에는 이름과 해시태그만 얹는다. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청).
  * 마크업을 한 곳에 두어야 홈과 상세가 어긋나지 않는다 (실제로 어긋났었다).
  */
-export function CharacterCard({ c, tagsBelow = false }: { c: CardCharacter; tagsBelow?: boolean }) {
+export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) {
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
-  const tags = hashtags(c)
+  const tags = characterTags(c)
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
@@ -45,27 +48,15 @@ export function CharacterCard({ c, tagsBelow = false }: { c: CardCharacter; tags
           position: 'absolute', left: 0, right: 0, bottom: 0, padding: '30px 12px 12px',
           background: 'linear-gradient(to top, rgba(8,8,9,0.94) 28%, rgba(8,8,9,0.72) 60%, rgba(8,8,9,0))',
         }}>
-          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</p>
-          {!tagsBelow && tags.length > 0 && (
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 48, lineHeight: 1.05, letterSpacing: '-.055em', overflowWrap: 'anywhere', marginBottom: 8 }}>{c.name}</p>
+          <p style={{ fontSize: 14, lineHeight: 1.5, color: 'rgba(255,255,255,.93)', marginBottom: 8, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{characterStorySummary(c)}</p>
+          {tags.length > 0 && (
             <p className="t-micro" style={{
-              color: 'var(--color-text-tertiary)', letterSpacing: 0, textTransform: 'none',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>{tags.map((t) => `#${t}`).join(' ')}</p>
+              color: 'rgba(255,255,255,.72)', letterSpacing: 0, textTransform: 'none', fontSize: 10, display: 'flex', flexWrap: 'wrap', gap: '3px 6px',
+            }}>{tags.map(tag => <span key={tag}>#{tag}</span>)}</p>
           )}
         </div>
       </TransitionLink>
-      {/* 태그를 카드 밑에 — 홈 카드와 같은 모양, 넘치면 다음 줄로(2026-09-30 요청, 미로 페이지). */}
-      {tagsBelow && tags.length > 0 && (
-        <p style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 8px', margin: '6px 2px 0', fontSize: 12, lineHeight: 1.45, color: 'var(--color-text-tertiary)' }}>
-          {tags.map((t, i) => <span key={i}>#{t}</span>)}
-        </p>
-      )}
     </motion.div>
   )
-}
-
-/** 해시태그는 장르와 관계 키워드에서 만든다 — 따로 입력받지 않는다. */
-function hashtags(c: CardCharacter): string[] {
-  const fromGenre = (c.genre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')).filter(Boolean)
-  return [...fromGenre, ...c.relationshipKeywords.map((k) => k.replace(/\s+/g, ''))].slice(0, 5)
 }

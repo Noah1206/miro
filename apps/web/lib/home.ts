@@ -1,3 +1,5 @@
+import { homeUnveilEnabled } from './home-mode'
+import { adultCharacter } from '@miro/domain'
 import { and, desc, eq, gt, inArray, isNull, lt, ne, or, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
 import { db, characters, roleplaySessions, contactProfiles } from '@miro/db'
 import { listOfficials, type ExperienceType, type OfficialCard } from './characters'
@@ -88,6 +90,7 @@ function relationMatch(relations?: string[]): SQL | undefined {
 }
 
 async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false): Promise<CardPage> {
+  const unveil = await homeUnveilEnabled(userId)
   const cursor = decodeCursor(cursorValue)
   const rows = await db.select(pageColumns)
     .from(characters)
@@ -112,9 +115,15 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
     ))
     .orderBy(desc(characters.createdAt), desc(characters.id))
     .limit(PAGE_SIZE + 1)
-  const pageRows = rows.slice(0, PAGE_SIZE)
+  let pageRows = rows.slice(0, PAGE_SIZE)
+  if (unveil && pageRows.length) {
+    const eligible = await db.select({ id: characters.id, age: characters.age, role: characters.role, occupation: characters.occupation, socialPosition: characters.socialPosition, tagline: characters.tagline }).from(characters)
+      .where(and(inArray(characters.id, pageRows.map(c => c.id)), sql`not coalesce((select vi.has_real_person_reference from character_visual_identities vi where vi.character_id = ${characters.id} and vi.is_active = true order by vi.version desc limit 1), false)`))
+    const allowed = new Set(eligible.filter(adultCharacter).map(c => c.id))
+    pageRows = pageRows.filter(c => allowed.has(c.id))
+  }
   const plays = await playCounts(pageRows.map(row => row.id))
-  const last = pageRows.at(-1)
+  const last = rows.slice(0, PAGE_SIZE).at(-1)
   return {
     items: pageRows.map(({ createdAtKey: _createdAtKey, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0 })),
     nextCursor: rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify([last.createdAtKey, last.id])).toString('base64url') : null,

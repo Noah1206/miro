@@ -79,9 +79,9 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
         const [latest] = await tx.select().from(roleplaySessions).where(eq(roleplaySessions.id, row.session.id)).for('share')
         const [currentJob] = await tx.select({ id: realityPushJobs.id }).from(realityPushJobs)
           .where(and(eq(realityPushJobs.id, job.id), eq(realityPushJobs.status, 'sending'), eq(realityPushJobs.leaseToken, token)))
-        const [settings] = await tx.select({ pushEnabled: userSettings.pushEnabled }).from(userSettings).where(eq(userSettings.userId, row.user.id)).for('share')
+        const [settings] = await tx.select({ pushEnabled: userSettings.pushEnabled, unveilEnabled: userSettings.unveilEnabled }).from(userSettings).where(eq(userSettings.userId, row.user.id)).for('share')
         if (!latest || latest.deletedAt || latest.restrictedAt || latest.status !== 'active' || !currentJob
-          || settings?.pushEnabled === false || (row.contact.payload.answers !== 'user_message' && contactBoundaryActive(latest.contactBoundary, new Date()))) return null
+          || settings?.pushEnabled === false || (latest.adultSince !== null && !settings?.unveilEnabled) || (row.contact.payload.answers !== 'user_message' && contactBoundaryActive(latest.contactBoundary, new Date()))) return null
         // Promise cancellation may have committed after the first check. The session lock
         // also serializes turn commits, so re-read the action and goals before external send.
         if (typeof payload.decisionId === 'string') {

@@ -222,8 +222,8 @@ describe('context builder', () => {
     expect(buildContext(snapshot()).system).toMatch(/사용자의 행동을 대신 정하지 않습니다/)
   })
 
-  it('forbids following a predetermined plot', () => {
-    expect(buildContext(snapshot()).system).toMatch(/정해진 줄거리를 따라가지 않습니다/)
+  it('lets user choices shape the authored story', () => {
+    expect(buildContext(snapshot()).system).toContain('let user choices shape outcomes')
   })
 
   it('reports an approximate token size', () => {
@@ -303,5 +303,19 @@ describe('real clock', () => {
     const { prompt } = buildContext(snapshot({ clock: { iso: '2026-09-26T14:10:00Z', timeZone: 'Asia/Seoul', label: '2026-09-26 (토) 23:10', weekday: 6, hour: 23, minute: 10, period: '밤' } }))
     expect(prompt).toContain('현실 시각(사용자 기준, Asia/Seoul): 2026-09-26 (토) 23:10 · 밤')
     expect(buildContext(snapshot()).prompt).not.toContain('현실 시각')
+  })
+})
+
+
+describe('초반 스토리 안내', () => {
+  it('uses the authored starting situation and user concept, and stops at a meaningful choice', () => {
+    const s = snapshot({ turnCount: 0, userInput: '안녕' })
+    s.character.worldRole.startingContext = '봉인된 기록실에 함께 남았다.'
+    const { system } = buildContext(s)
+    expect(system).toContain('offer 2 actions')
+    expect(system).toContain('then wait; allow alternatives')
+    expect(system).toContain('Follow opening and persona')
+    expect(buildContext({ ...s, mode: 'messenger' }).system).not.toContain('On greeting/hesitation offer')
+    expect(buildContext({ ...s, turnCount: 5 }).system).not.toContain('On greeting/hesitation offer')
   })
 })

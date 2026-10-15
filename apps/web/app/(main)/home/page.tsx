@@ -1,3 +1,5 @@
+import { HomeUnveilToggle } from './unveil-toggle'
+import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
 import { homePage } from '@/lib/home'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
@@ -16,9 +18,10 @@ import { OriginalStoriesRow } from '../stories/home-row'
 export default async function Home() {
   const user = await currentUser()
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
-  const [page, unread] = await Promise.all([
+  const [page, unread, unveil] = await Promise.all([
     measured('nav.home_data', () => homePage(user?.id ?? null)),
     user ? unreadContactCount(user.id) : 0,
+    homeUnveilEnabled(user?.id ?? null),
   ])
   const t = await getT()
 
@@ -31,6 +34,7 @@ export default async function Home() {
         <span className={`${styles.headerItem} ${styles.headerLogo}`} style={{ display: 'block' }}><LogoMark size={30} /></span>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: -8, marginLeft: 'auto' }}>
+          <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
           <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 34, height: 34 }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
           </TransitionLink>
@@ -44,7 +48,7 @@ export default async function Home() {
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
-      <OriginalStoriesRow />
+      {!unveil && <OriginalStoriesRow />}
       <HomeFeed key={crypto.randomUUID()} initial={page} />
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />

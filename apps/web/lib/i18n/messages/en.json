@@ -1255,5 +1255,13 @@
  "아직 공개된 작품이 없어요.": "No stories have been published yet.",
  "사건을 따라가고, 함께할 사람과 관계의 이름을 직접 정하는 이야기.": "Follow the events and choose who stays by your side and what your relationships become.",
  "전체 보기": "View all",
- "진행": "Progress"
+ "진행": "Progress",
+ "변경하지 못했어요. 다시 시도해 주세요.": "Couldn’t update. Please try again.",
+ "성인 콘텐츠 정책에 동의해 주세요.": "Please agree to the adult content policy.",
+ "언베일을 켜려면 최초 1회 성인 인증이 필요해요.": "Verify your age once to enable Unveil.",
+ "인증을 마치면 언베일로 전환돼요. 다음부터는 토글만으로 켜고 끌 수 있어요.": "After verification, Unveil turns on. Next time, use the switch to turn it on or off.",
+ "일반과 언베일의 대화·기억은 따로 보관돼요.": "Standard and Unveil conversations and memories are kept separately.",
+ "최초 1회 성인 인증": "One-time age verification",
+ "일반 이야기": "Standard stories",
+ "언베일 이야기": "Unveil stories"
 }

@@ -15,7 +15,6 @@ import { MessageList, type Msg } from './messages'
 import { ChatModelProvider, ModelPicker } from './model-picker'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
-import { AdultToggle } from './adult-toggle'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
 import { requirePersona } from '@/lib/persona'
@@ -55,9 +54,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <header className={styles.header}>
           <Back href="/archive" />
           <ChatHeaderAvatar /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
-          {/* 토글은 늘 표시한다. 사용할 수 없으면 이유를 안내하고, 실제 켜기 판정은 서버가 유지한다. */}
-          <AdultToggle sessionId={sessionId} on={loaded.adult.on} everOn={loaded.adult.since !== null} level={loaded.adult.level}
-            blocked={adult && !adult.allowed ? adult.next : null} />
+          {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
           {loaded.experienceType === 'reality' && (
             <TransitionLink href={`/messages/${sessionId}`} aria-label={t('문자')} className={styles.contextButton}>

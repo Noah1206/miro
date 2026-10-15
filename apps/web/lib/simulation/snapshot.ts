@@ -1,3 +1,4 @@
+import { homeUnveilEnabled } from '@/lib/home-mode'
 import { characterCanSeeMessage } from '@/lib/messenger/inbox'
 import { sceneOpening } from '@/lib/intro-dialogue'
 import { characterContext, conversationContext } from './character-context'
@@ -65,6 +66,7 @@ export async function loadSession(
 
   const row = rows[0]
   if (!row) return null
+  if ((row.session.adultSince !== null) !== await homeUnveilEnabled(userId)) return null
 
   const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life, adultOk, moments] = await Promise.all([
     db.select().from(events)

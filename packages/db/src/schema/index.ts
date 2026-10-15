@@ -99,6 +99,8 @@ export const userSettings = pgTable('user_settings', {
   /** 선택 동의(온보딩): 광고성 정보 수신, 야간(21시~다음날 8시) 광고성 알림 수신. null = 동의 안 함. */
   marketingConsentAt: timestamp('marketing_consent_at', { withTimezone: true }),
   nightMarketingConsentAt: timestamp('night_marketing_consent_at', { withTimezone: true }),
+  /** 홈에서 고른 일반/언베일. 인증·정책 동의는 users의 영구 기록을 매번 다시 검사한다. */
+  unveilEnabled: boolean('unveil_enabled').notNull().default(false),
   /** 앱 화면과 캐릭터의 말이 따르는 언어(domain LANGUAGES). */
   language: text('language', { enum: ['ko', 'en', 'ja', 'zh'] }).notNull().default('ko'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -369,6 +371,7 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
 }, (t) => ({
   userIdx: index('sessions_user_idx').on(t.userId, t.status),
+  modeLookup: index('roleplay_sessions_mode_lookup_idx').on(t.userId, t.characterId, t.adultSince).where(sql`${t.deletedAt} is null and ${t.status} = 'active'`),
   lastIdx: index('sessions_last_interaction_idx').on(t.lastInteractionAt),
 }))
 

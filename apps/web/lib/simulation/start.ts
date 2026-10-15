@@ -1,7 +1,9 @@
+import { homeUnveilEnabled } from '@/lib/home-mode'
+import { adultModeGateFor } from '@/lib/ops/safety'
 import { officialIntro } from '@/lib/editorial/official-copy'
 import { introMessages, sceneOpening } from '@/lib/intro-dialogue'
 import { getPersona } from '@/lib/persona'
-import { and, eq, isNull, or, sql } from 'drizzle-orm'
+import { and, eq, isNull, isNotNull, or, sql } from 'drizzle-orm'
 import { db, characters, messages, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { defaultSessionPolicy } from '@miro/config'
@@ -26,7 +28,7 @@ export type StartedSession = { sessionId: string; characterId: string; isOfficia
  */
 export async function createRoleplaySession(
   userId: string, key: string,
-  opts: { opening?: string; scene?: string } = {},
+  opts: { opening?: string; scene?: string; unveil?: boolean } = {},
 ): Promise<StartedSession> {
   const found = await db
     .select({
@@ -44,12 +46,19 @@ export async function createRoleplaySession(
   const character = found[0]
   if (!character) throw new Error('CHARACTER_NOT_FOUND')
 
+  const unveil = opts.unveil ?? await homeUnveilEnabled(userId)
+  if (unveil) {
+    const gate = await adultModeGateFor(userId, character.characterId)
+    if (!gate.allowed) throw new Error(`UNVEIL_UNAVAILABLE:${gate.next}`)
+  }
+  const modeCondition = unveil ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)
   const existing = await db.select({ id: roleplaySessions.id }).from(roleplaySessions)
     .where(and(
       eq(roleplaySessions.userId, userId), eq(roleplaySessions.characterId, character.characterId),
-      eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt),
+      eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
     )).limit(1)
   // 재진입은 저장된 상태 위에서 이어진다. 새 세션을 만들지 않는다.
+  if (existing[0] && unveil) await db.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, existing[0].id))
   if (existing[0]) return { sessionId: existing[0].id, characterId: character.characterId, isOfficial: character.isOfficial, created: false }
 
   const result = await db.transaction(async (tx) => {
@@ -57,9 +66,12 @@ export async function createRoleplaySession(
     await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${userId + ':' + character.characterId}, 0))`)
     const [active] = await tx.select({ id: roleplaySessions.id }).from(roleplaySessions).where(and(
       eq(roleplaySessions.userId, userId), eq(roleplaySessions.characterId, character.characterId),
-      eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt),
+      eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
     )).limit(1)
-    if (active) return { sessionId: active.id, created: false, revisionId: undefined }
+    if (active) {
+      if (unveil) await tx.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, active.id))
+      return { sessionId: active.id, created: false, revisionId: undefined }
+    }
 
     // Recheck access and read the opening under the same row lock as profile edits/capture.
     const [starting] = await tx.select({
@@ -82,6 +94,7 @@ export async function createRoleplaySession(
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: starting.worldId, policyVersion,
       openingScene: scene ? opts.scene : null,
+      ...(unveil ? { adultMode: true, adultSince: new Date(), adultLevel: 'explicit' as const } : {}),
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.

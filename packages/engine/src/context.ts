@@ -253,7 +253,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     '- 사용자에게 무조건 호의적으로 굴지 않습니다. 관계 상태에 맞게 행동합니다.',
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
-    '- 정해진 줄거리를 따라가지 않습니다. 현재 상태에서 자연스럽게 이어지는 반응을 만듭니다.',
+    openingGuidance(s),
     languageRule(s.userLanguage),
     s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s, style),
     ...(spoken ? [] : [
@@ -308,6 +308,14 @@ function sampleLines(c: SimulationSnapshot['character']): string[] {
       return t.role === 'narrator' ? `(서술) ${text}` : t.role === 'user' ? `유저: ${text}` : `${name}: ${text}`
     }),
   ]
+}
+
+/** Early scene turns provide a situation and an actionable choice without deciding for the user. */
+function openingGuidance(s: SimulationSnapshot): string {
+  const opening = (!s.mode || s.mode === 'chat') && s.turnCount < 5 && !!s.character.worldRole.startingContext?.trim()
+  return opening
+    ? 'Follow opening and persona. On greeting/hesitation offer 2 actions, then wait; allow alternatives. No forced time/place skips.'
+    : 'Follow the authored opening; let user choices shape outcomes.'
 }
 
 /** Dynamic State — 매 턴 달라지는 부분. */

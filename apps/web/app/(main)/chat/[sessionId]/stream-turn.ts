@@ -13,7 +13,7 @@ export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null)
   const res = await fetch('/api/turn', { method: 'POST', body: form })
   if (!res.ok || !res.body) throw new Error('stream_failed')
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
-  let buffer = '', done: TurnState | null = null
+  let buffer = ''
   for (;;) {
     const { value, done: ended } = await reader.read()
     if (ended) break
@@ -24,10 +24,13 @@ export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null)
       const event = JSON.parse(line) as { type: 'blocks'; blocks: LiveTurn['blocks'] } | { type: 'reset' } | { type: 'done'; state: TurnState }
       if (event.type === 'blocks') onLive({ input, blocks: event.blocks })
       else if (event.type === 'reset') onLive({ input, blocks: [] })
-      else done = event.state
+      else {
+        // The persisted result completes a turn. A proxy may keep the transport open afterwards.
+        void reader.cancel().catch(() => {})
+        return event.state
+      }
     }
   }
-  if (!done) throw new Error('stream_incomplete')
-  return done
+  throw new Error('stream_incomplete')
 }
 
