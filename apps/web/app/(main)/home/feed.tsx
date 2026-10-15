@@ -1,5 +1,6 @@
 'use client'
 import { characterTags } from '@/lib/character-card-copy'
+import { characterTagFont } from '@/lib/character-tag-font'
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
@@ -15,7 +16,7 @@ const picture = (c: HomeCard) => c.images[0] ?? null
 function CardDetails({ c }: { c: HomeCard }) {
   return <span className={styles.cardDetails}>
     <strong>{c.name}</strong>
-    <span className={styles.cardTags}>{characterTags(c).map(tag => <span key={tag}>#{tag}</span>)}</span>
+    <span className={`${styles.cardTags} ${characterTagFont.className}`}>{characterTags(c).map(tag => <span key={tag}>#{tag}</span>)}</span>
   </span>
 }
 export function StoryCard({ c }: { c: HomeCard }) {

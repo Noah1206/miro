@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
 import { characterTags } from '@/lib/character-card-copy'
+import { characterTagFont } from '@/lib/character-tag-font'
 import { press, spring } from '@/lib/motion/tokens'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
@@ -50,7 +51,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         }}>
           <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 20, lineHeight: 1.25, letterSpacing: '-.025em', overflowWrap: 'anywhere', margin: 0 }}>{c.name}</p>
           {tags.length > 0 && (
-            <p className="t-micro" style={{
+            <p className={`t-micro ${characterTagFont.className}`} style={{
               color: 'var(--color-text-secondary)', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 10, display: 'flex', flexWrap: 'wrap', gap: '3px 6px',
             }}>{tags.map(tag => <span key={tag}>#{tag}</span>)}</p>
           )}
