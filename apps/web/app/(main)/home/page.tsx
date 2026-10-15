@@ -33,7 +33,7 @@ export default async function Home() {
         {/* 마크 하나만 — 글자 없이 마크가 이름을 맡는다. 오른쪽 아이콘 상자(34px)와 눈높이가 맞는 크기. */}
         <span className={`${styles.headerItem} ${styles.headerLogo}`} style={{ display: 'block' }}><LogoMark size={30} /></span>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginRight: -8, marginLeft: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: -8, marginLeft: 'auto' }}>
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
           <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 34, height: 34 }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
