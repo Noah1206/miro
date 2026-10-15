@@ -4,6 +4,7 @@ import { and, asc, desc, eq, isNull, lt, sql } from 'drizzle-orm'
 import { db, storyChanges, storyMessages, storyRuns, storyTurns } from '@miro/db'
 import { applyActions, type StoryAction, type StoryDefinition, type StoryState } from '@miro/domain'
 import { createAI } from '@miro/providers'
+import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { definitionOf, runFor, type Protagonist } from './repo'
 import { DM_VERSION, INTERPRET_VERSION, NARRATE_VERSION, dmPrompt, interpretPrompt, narratePrompt, type LogLine } from './prompts'
 import { storyMock } from './mock'
@@ -84,6 +85,8 @@ export async function runStoryTurn(input: { userId: string; runId: string; clien
     const [fresh] = await db.select().from(storyRuns).where(eq(storyRuns.id, run.id))
     const state = fresh!.state as StoryState
     const protagonist = fresh!.protagonist as Protagonist
+    // Serverless route bundles do not share the instrumentation module instance.
+    if (!deps.llm) installAIUsageSink()
     const llm = deps.llm ?? createAI({ mock: storyMock, context: { userId: input.userId, workload: 'interactive', origin: `story:${input.channel}` } })
     const sceneLog = await loadLog(run.id, 'scene', null, 16)
     const threadLog = thread ? await loadLog(run.id, 'dm', thread, 12) : []
