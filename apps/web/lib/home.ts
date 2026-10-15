@@ -1,3 +1,4 @@
+import { officialStartingContext } from './editorial/official-copy'
 import { homeUnveilEnabled } from './home-mode'
 import { adultCharacter } from '@miro/domain'
 import { and, desc, eq, gt, inArray, isNull, lt, ne, or, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
@@ -21,7 +22,7 @@ const PAGE_SIZE = 12
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
-  ({ ...c, caption: c.role, plays: 0, ...over })
+  ({ ...c, startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
 
 const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`
 

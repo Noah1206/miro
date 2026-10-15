@@ -333,3 +333,15 @@ describe('유저 중심 장면 시점', () => {
     for (const mode of ['messenger', 'voice_call', 'video_call'] as const) expect(buildContext(snapshot({ mode })).system).not.toContain('limited second-person POV')
   })
 })
+
+
+it('preserves remote authored openings instead of teleporting characters into the same room', () => {
+  for (const style of ['scene', 'brief'] as const) {
+    const s = snapshot({ experienceType: 'reality' })
+    s.character.worldRole.startingContext = '당신 방의 라디오에서 캐릭터가 보낸 사연을 읽는다.'
+    const system = buildContext(s, 1, false, style).system
+    expect(system).toContain('고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지')
+    expect(system).toContain('만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다')
+    expect(system).not.toContain('첫 장면이 연락으로 시작했더라도 여기서는 만나서')
+  }
+})

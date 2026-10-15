@@ -3,7 +3,7 @@ import copy from './official-copy.json'
 import type { DialogueEntry } from '@/lib/intro-dialogue'
 
 type Profile = { id: string; slug: string | null; personality: string }
-type Edition = { id: string; tagline: string; sourceTaglineHash: string; description: string; intro: string[]; scenes: Record<string, string[]>; defaultScene: string; samples: Array<{ role: string; text: string }>; sourceSampleHash: string; sourceDescriptionHash: string; sourceIntroHashes: Record<string, string> }
+type Edition = { startingContext?: string; sourceStartingContextHash?: string; id: string; tagline: string; sourceTaglineHash: string; description: string; intro: string[]; scenes: Record<string, string[]>; defaultScene: string; samples: Array<{ role: string; text: string }>; sourceSampleHash: string; sourceDescriptionHash: string; sourceIntroHashes: Record<string, string> }
 const editions: Record<string, Edition> = copy
 const hash = (text: string) => createHash('sha256').update(text).digest('hex')
 const edition = (profile: { id: string; slug: string | null }) => {
@@ -56,4 +56,10 @@ export function officialSamples(profile: { id: string; slug: string | null }, en
 export function officialTagline(profile: { id: string; slug: string | null; tagline: string | null }): string | null {
   const item = edition(profile)
   return item && hash(profile.tagline ?? '') === item.sourceTaglineHash ? item.tagline : null
+}
+
+/** A scene begins where the user is now; later author changes stay authoritative. */
+export function officialStartingContext(profile: { id: string; slug: string | null; startingContext?: string | null }): string | null {
+  const item = edition(profile)
+  return item?.startingContext && hash(profile.startingContext ?? '') === item.sourceStartingContextHash ? item.startingContext : profile.startingContext ?? null
 }

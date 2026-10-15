@@ -111,7 +111,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
     '- 최근 대화에서 이 캐릭터가 이미 쓴 몸짓·버릇·부사·감각 묘사와 문장 틀(narrative, dialogue, thought 모두)을 되풀이하지 않습니다. 같은 감정도 매번 다른 행동과 새 디테일로 보여 줍니다. 평이하고 정확한 한국어로 쓰고, 관용구는 원형대로 씁니다.',
   ].join('\n')
   // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
-  const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
+  const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다. 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
   const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
   if (tense) return base + `\n- 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 주고, 전체 ${tenseMax}까지 늘려도 됩니다.` + (prose ? ' 사용자가 섞어 쓴 묘사도 받아 서술과 묘사를 충분히 이어 갑니다.' : '') + thought
   if (prose) return base + '\n- 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 그 묘사를 받아 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
@@ -124,7 +124,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
  */
 function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, tense: boolean): string {
   const base = USER_VIEWPOINT + '\n- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
-  const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
+  const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다. 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
   const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
   if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 줍니다.' + thought

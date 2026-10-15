@@ -1,7 +1,7 @@
 import type { characters, characterVisualIdentities, messages } from '@miro/db'
 import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
-import { officialSamples } from '@/lib/editorial/official-copy'
+import { officialSamples, officialStartingContext } from '@/lib/editorial/official-copy'
 import { photoMessageText } from '@/lib/messenger/photo-context'
 
 /** One authored identity projection for reply and proactive paths. No inferred demographic traits. */
@@ -20,7 +20,7 @@ export function characterContext(
       relationshipProfile: parseRelationshipProfile(c.relationshipProfile),
     },
     worldRole: {
-      socialPosition: c.socialPosition, startingContext: c.startingContext,
+      socialPosition: c.socialPosition, startingContext: officialStartingContext(c),
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore,
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,

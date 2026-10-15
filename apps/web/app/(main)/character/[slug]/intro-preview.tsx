@@ -33,9 +33,6 @@ export function IntroPreview({ scenes, names, portrait, turns }: {
   const firstSpeech = scene.lines.find((line) => line.role === 'character')
   const previewLines = scene.lines.filter((line) => line === firstNarration || line === firstSpeech)
   const lines = longIntro && !expanded ? previewLines : scene.lines
-  const lastLine = lines[lines.length - 1]
-  const openingSpeech = turns.length > 0 && lastLine === scene.lines[scene.lines.length - 1] && lastLine?.role === 'character' ? lastLine : undefined
-  const storyLines = openingSpeech ? lines.slice(0, -1) : lines
   return (
     <>
     <Rule label={t('첫 장면')}>
@@ -54,7 +51,7 @@ export function IntroPreview({ scenes, names, portrait, turns }: {
       {scene.meta && <p className="intro-meta">{scene.meta}</p>}
       <div id={contentId} className="intro-preview">
       {scene.context && (!longIntro || expanded) && <RichText editorial className="intro-narration" text={scene.context} names={names} />}
-      {storyLines.map((line, i) => (
+      {lines.map((line, i) => (
         <div key={`${scene.value}-${i}`} className="intro-line">
           {/* eslint-disable-next-line @next/next/no-img-element -- 시드가 올린 공개 장면 사진 한 장 */}
           {line.image && <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />}
@@ -72,10 +69,10 @@ export function IntroPreview({ scenes, names, portrait, turns }: {
     </div>
     </Rule>
     {turns.length > 0 && (
-      <Rule label={t('첫 대화 미리보기')}>
+      <Rule label={t('대화 예시')}>
         <div className="detail-chat-preview">
           <SampleDialogue name={names.character} names={names} portrait={portrait}
-            turns={openingSpeech ? [{ role: 'character', text: openingSpeech.text }, ...turns] : turns} />
+            turns={turns} />
         </div>
       </Rule>
     )}

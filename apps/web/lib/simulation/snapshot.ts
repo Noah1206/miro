@@ -1,3 +1,4 @@
+import { officialIntro } from '@/lib/editorial/official-copy'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { characterCanSeeMessage } from '@/lib/messenger/inbox'
 import { sceneOpening } from '@/lib/intro-dialogue'
@@ -118,7 +119,7 @@ export async function loadSession(
   const c = row.character
   const character = characterContext(c, visual[0])
   // 기본이 아닌 시작 상황으로 연 방은 그 장면의 첫 장면 설명을 쓴다(10/6).
-  const opening = sceneOpening(c.sampleDialogue, row.session.openingScene)?.context
+  const opening = sceneOpening(officialIntro(c, c.sampleDialogue), row.session.openingScene)?.context
   if (opening) character.worldRole.startingContext = opening
   const snapshot: SimulationSnapshot = {
     character,

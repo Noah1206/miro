@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { officialDescription, officialIntro } from './official-copy'
+import { officialDescription, officialIntro, officialStartingContext } from './official-copy'
 import original from './seo-ian.fixture.json'
 import copy from './official-copy.json'
 import { introMessages, sceneOpening, type DialogueEntry } from '@/lib/intro-dialogue'
@@ -26,7 +26,9 @@ describe('curated official copy', () => {
     const messages = introMessages('new-session', revised, undefined, { scene: '방송국 옥상', userName: '민재' })
     expect(messages.filter(m => m.kind === 'text').map(m => m.content).join(' ')).toContain('한 곡만 같이 들을래요?')
     expect(messages.every(m => m.turnIndex < 0)).toBe(true)
-    expect(messages.some(m => m.content.includes('민재'))).toBe(true)
+    expect(messages.filter(m => m.kind === 'text').at(-1)?.role).toBe('character')
+    expect(messages.some(m => m.content.includes('당신'))).toBe(true)
+    expect(messages.some(m => m.content.includes('민재'))).toBe(false)
     expect(sceneOpening(revised, '방송국 옥상')?.location).toBe(sceneOpening(entries, '방송국 옥상')?.location)
   })
   it('contains 38 authored openings within editor limits', () => {
@@ -37,5 +39,25 @@ describe('curated official copy', () => {
       expect(lines.reduce((sum, line) => sum + line.length, 0)).toBeLessThanOrEqual(2000)
       expect(lines.every(line => line.trim() && line.length <= 500)).toBe(true)
     }
+  })
+})
+
+
+describe('유저가 참여하는 도입부 편집', () => {
+  it('puts all 38 scene openings in the user situation and ends with a character invitation', () => {
+    for (const edition of Object.values(copy)) for (const lines of [edition.intro, ...Object.values(edition.scenes)]) {
+      expect(lines).toHaveLength(4)
+      expect(lines[0]).toContain('당신')
+      expect(lines[1]!.trim().length).toBeGreaterThan(8)
+      expect(lines[3]!.trim().length).toBeGreaterThan(15)
+      expect(lines.join(' ')).not.toMatch(/당신은 (?:놀랐다|당황했다|두려웠다)|당신의 마음/)
+    }
+  })
+  it('only replaces the exact authored context, leaving independent edits and private data intact', () => {
+    expect(officialStartingContext({ ...original, startingContext: original.starting_context })).toBe(copy['official-seo-ian'].startingContext)
+    const c = Object.values(copy).find(c => 'startingContext' in c)!
+    const slug = Object.keys(copy).find(slug => copy[slug as keyof typeof copy].id === c.id)!
+    expect(officialStartingContext({ id: c.id, slug, startingContext: '직접 고친 시작 상황' })).toBe('직접 고친 시작 상황')
+    expect(officialStartingContext({ id: 'other', slug, startingContext: null })).toBeNull()
   })
 })

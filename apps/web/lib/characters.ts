@@ -1,3 +1,4 @@
+import { officialStartingContext } from './editorial/official-copy'
 import { and, or, eq, isNull, sql } from 'drizzle-orm'
 import { db, characters, worlds, contactProfiles } from '@miro/db'
 
@@ -116,5 +117,5 @@ async function getOne(where: ReturnType<typeof and>) {
     .where(where)
     .limit(1)
 
-  return rows[0] ?? null
+  return rows[0] ? { ...rows[0], startingContext: officialStartingContext(rows[0]) } : null
 }
