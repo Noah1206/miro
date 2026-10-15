@@ -70,8 +70,9 @@ export const BACKUP_MODEL = { id: 'gpt-mini', provider: 'openai', providerModelI
 export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { registry: ModelRegistry; resolveModel: (m: ModelDefinition) => AIProvider } {
   let registry: ModelRegistry
   if (process.env.MIRO_MODEL_REGISTRY) {
-    const definitions = JSON.parse(process.env.MIRO_MODEL_REGISTRY) as Array<{ id?: unknown; provider?: unknown; providerModelId?: unknown; fallback?: unknown }>
-    if (process.env.OPENAI_API_KEY && !definitions.some(d => d.id === BACKUP_MODEL.id)) definitions.push(BACKUP_MODEL)
+    const definitions = JSON.parse(process.env.MIRO_MODEL_REGISTRY) as Array<{ id?: unknown; provider?: unknown; providerModelId?: unknown; fallback?: unknown; enabled?: unknown }>
+    const hasBackup = definitions.some(d => d.fallback === true && d.enabled !== false && providerFromEnv(String(d.provider), String(d.providerModelId)))
+    if (!hasBackup && process.env.OPENAI_API_KEY && !definitions.some(d => d.id === BACKUP_MODEL.id)) definitions.push(BACKUP_MODEL)
     // 키가 없는 예비는 뺀다 — 예비 하나 때문에 모든 호출이 'credentials missing' 으로 멈추지 않게.
     registry = new ModelRegistry(definitions.filter(d => d.fallback !== true || providerFromEnv(String(d.provider), String(d.providerModelId))))
   } else {

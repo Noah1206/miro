@@ -123,7 +123,7 @@ export async function runAgencyTurn(opts: {
   let verification: AgencyRealizationCheck | null = null
   let review: AgencyRealizationInput | undefined
   let transition: ReturnType<typeof validateProposal> | null = null
-  let renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
+  let renderer = agencyProviderTrace(llm, 'agency-dialogue:v5')
   let feedback = ''
   // 다시 쓰기마다 앞에서 보여 준 블록은 지운다(같은 통로 하나 — 새 호출의 첫 시도가 reset 을 보낸다).
   const streaming = opts.stream ? blockStream(snapshot, opts.stream, { dropWorld: true }) : {}
@@ -131,11 +131,11 @@ export async function runAgencyTurn(opts: {
     // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
     // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
     const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
-      promptVersion: 'agency-dialogue:v4', system: context.system, safety: 'relaxed',
+      promptVersion: 'agency-dialogue:v5', system: context.system, safety: 'relaxed',
       prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens, ...streaming })
       .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
     // A later check call must not erase the renderer's provenance.
-    renderer = agencyProviderTrace(llm, 'agency-dialogue:v4')
+    renderer = agencyProviderTrace(llm, 'agency-dialogue:v5')
     if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
     // 승인 범위 밖의 변경은 걷어 낸다(거부로 기록). 렌더러는 말과 장면의 공기만 바꿀 수 있다 — 장소·새 사건·NPC·선연락은 결정이 아니다.
     const rejected: string[] = []

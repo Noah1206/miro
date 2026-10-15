@@ -2,7 +2,7 @@
   {
     "id": "gemini-flash",
     "provider": "gemini",
-    "providerModelId": "gemini-3.8-flash",
+    "providerModelId": "gemini-3.6-flash",
     "tier": "standard",
     "capabilities": ["dialogue", "event_generation", "world_update", "image_prompt", "agency_plan", "agency_verify", "agency_compile", "agency_life"],
     "inputCost": 0.75,

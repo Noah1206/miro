@@ -17,6 +17,7 @@ function displayName(id: string) {
   if (id === 'claude-sonnet-5-5') return 'Claude Sonnet 5.5'
   if (id === 'gpt-5.4-mini') return 'GPT-5.4 mini'
   if (id === 'gemini-3.5-flash-lite') return 'Gemini 3.5 Flash-Lite'
+  if (id === 'gemini-3.6-flash') return 'Gemini 3.6 Flash'
   if (id === 'gemini-3.8-flash') return 'Gemini 3.8 Flash'
   return id
 }
