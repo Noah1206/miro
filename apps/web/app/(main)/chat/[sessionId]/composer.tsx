@@ -1,6 +1,6 @@
 'use client'
 import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
-import { startTransition, useEffect, useRef, useState, type ComponentProps } from 'react'
+import { useEffect, useRef, useState, useTransition, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon } from '@/components/ui'
@@ -25,6 +25,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   const { append, live, setLive, calendarPending } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
+  const [refreshing, startRefresh] = useTransition()
+  const hadRefresh = useRef(false)
   const sending = useRef(false)
   async function action(form: FormData) {
     if (sending.current) return
@@ -41,7 +43,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
     } finally {
       sending.current = false
       setPending(false)
-      requestAnimationFrame(() => ta.current?.focus())
+      requestAnimationFrame(() => ta.current?.focus({ preventScroll: true }))
     }
   }
   const { model, setModel } = useChatModel()
@@ -84,7 +86,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
       if (state.messages?.length) {
         // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다. 이미 흘려 보여 준 답은 다시 치지 않는다.
         append(state.messages, { quiet: streamed })
-        startTransition(() => router.refresh())
+        startRefresh(() => router.refresh())
       }
     }
     else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
@@ -113,6 +115,15 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   const showTyping = (pending && !live?.blocks.length) || waiting
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (refreshing) { hadRefresh.current = true; return }
+    if (!hadRefresh.current || !state.succeeded) return
+    hadRefresh.current = false
+    // Next can focus main after refreshing the saved turn. Keep typing ready without
+    // stealing focus if the user opened another control while that refresh was pending.
+    const active = document.activeElement
+    if (active === document.body || active?.id === 'main') ta.current?.focus({ preventScroll: true })
+  }, [refreshing, state.succeeded])
   useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, 140)}px` } }, [draft])
 
   return (

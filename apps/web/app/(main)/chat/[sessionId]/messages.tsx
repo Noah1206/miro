@@ -64,13 +64,53 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   useEffect(() => {
     const transcript = end.current?.parentElement
     if (!transcript) return
-    const onScroll = () => { following.current = transcript.scrollHeight - transcript.scrollTop - transcript.clientHeight < 48 }
+    let previousTop = transcript.scrollTop
+    let touchY = 0
+    let draggingScrollbar = false
+    const onScroll = () => {
+      const top = transcript.scrollTop
+      const atBottom = transcript.scrollHeight - top - transcript.clientHeight < 8
+      if (atBottom) following.current = true
+      else if (draggingScrollbar && top < previousTop - 1) following.current = false
+      previousTop = top
+    }
+    // Scroll events also come from new text, browser anchoring and a shrinking composer.
+    // Pause only for the user's wheel, swipe, navigation key or scrollbar gesture.
+    const onWheel = (event: WheelEvent) => { if (event.deltaY < 0) following.current = false }
+    const onTouchStart = (event: TouchEvent) => { touchY = event.touches[0]?.clientY ?? 0 }
+    const onTouchMove = (event: TouchEvent) => {
+      const y = event.touches[0]?.clientY ?? touchY
+      if (y > touchY + 1) following.current = false
+      touchY = y
+    }
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (['ArrowUp', 'PageUp', 'Home'].includes(event.key) || (event.key === ' ' && event.shiftKey)) following.current = false
+    }
+    const onPointerDown = (event: PointerEvent) => { draggingScrollbar = event.target === transcript }
+    const onPointerUp = () => { draggingScrollbar = false }
     // Observe the growing text itself: the scroll viewport keeps the same height while lines arrive.
     const resize = new ResizeObserver(follow)
     transcript.addEventListener('scroll', onScroll, { passive: true })
+    transcript.addEventListener('wheel', onWheel, { passive: true })
+    transcript.addEventListener('touchstart', onTouchStart, { passive: true })
+    transcript.addEventListener('touchmove', onTouchMove, { passive: true })
+    transcript.addEventListener('keydown', onKeyDown)
+    transcript.addEventListener('pointerdown', onPointerDown, { passive: true })
+    window.addEventListener('pointerup', onPointerUp, { passive: true })
+    window.addEventListener('pointercancel', onPointerUp, { passive: true })
     resize.observe(transcript)
     if (log.current) resize.observe(log.current)
-    return () => { resize.disconnect(); transcript.removeEventListener('scroll', onScroll) }
+    return () => {
+      resize.disconnect()
+      transcript.removeEventListener('scroll', onScroll)
+      transcript.removeEventListener('wheel', onWheel)
+      transcript.removeEventListener('touchstart', onTouchStart)
+      transcript.removeEventListener('touchmove', onTouchMove)
+      transcript.removeEventListener('keydown', onKeyDown)
+      transcript.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointerup', onPointerUp)
+      window.removeEventListener('pointercancel', onPointerUp)
+    }
   }, [follow])
 
   return (
