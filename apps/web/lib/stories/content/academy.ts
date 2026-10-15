@@ -5,9 +5,10 @@ const ALL = ['C1', 'C2', 'C3', 'C4']
 /** 1. 남자 사관학교의 유일한 여생도가 되었다 — 원고 world_1 기준. 서버 전용(비공개 지시문·제작자 진실 포함). */
 export const academy: StoryDefinition = {
   slug: 'original-academy',
+  cover: '/stories/original-academy/cover.webp',
   version: 1,
   audience: 'reverse_harem',
-  title: '남자 사관학교의 유일한 여생도가 되었다',
+  title: '사관학교 유일한 여생도는 숨지 않는다',
   tagline: '고대 기체를 깨운 첫 여성 생도. 누명은 실력과 증거로 벗는다.',
   intro: '고대 기체를 깨운 당신은 발렌 사관학교의 첫 여성 생도가 되었다. 첫 모의전의 이상 작동으로 누명을 쓴 지금, 네 명의 동료는 서로 다른 방법으로 손을 내민다. 누구의 제안도 따를 의무는 없다. 실력과 증거로 당신의 자리를 만들고, 함께할 사람과 관계의 이름을 직접 정하자. 모든 주요 인물은 성인이며 연애 없이도 완결할 수 있다.',
   genres: ['로맨스 판타지', '군사학교', '역하렘'],

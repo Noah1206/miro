@@ -6,6 +6,7 @@ export type StoryPublic = {
   slug: string
   audience: StoryAudience
   title: string
+  cover: string | null
   tagline: string
   intro: string
   genres: string[]
@@ -20,7 +21,7 @@ export type StoryPublic = {
 
 export function toPublic(def: StoryDefinition): StoryPublic {
   return {
-    slug: def.slug, audience: def.audience, title: def.title, tagline: def.tagline, intro: def.intro, genres: def.genres, tags: def.tags,
+    slug: def.slug, audience: def.audience, title: def.title, cover: def.cover ?? null, tagline: def.tagline, intro: def.intro, genres: def.genres, tags: def.tags,
     protagonist: def.protagonist, notice: def.notice, opening: def.opening, chapterCount: def.events.length, medium: def.contactPolicy.medium,
     characters: def.characters.map(c => ({ key: c.key, name: c.name, age: c.age, look: c.look, persona: c.publicPersona, relation: c.startingRelation, image: c.image ?? null })),
   }

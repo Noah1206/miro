@@ -112,6 +112,8 @@ export type StoryDefinition = {
   version: number
   audience: StoryAudience
   title: string
+  /** 표지 이미지 경로(2:3, 없으면 글자 자리표시) */
+  cover?: string
   tagline: string
   intro: string
   genres: string[]

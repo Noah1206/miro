@@ -4,7 +4,7 @@ import { CharacterVisual } from '@/components/character-visual'
 import { currentUser } from '@/lib/auth'
 import { getPersona } from '@/lib/persona'
 import { liveRun, storyBySlug } from '@/lib/stories/repo'
-import { audienceLabel } from '../story-card'
+import { audienceLabel, CoverTitle } from '../story-card'
 import { LoginToStart, StartForm } from './start-form'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +19,8 @@ export default async function StoryDetail({ params }: { params: Promise<{ slug: 
   return (
     <Page immersive style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-6))' }}>
       <div style={{ position: 'relative' }}>
-        <CharacterVisual name={story.title} accent={null} slug={story.slug} photo={null} ratio="4 / 3" size="detail" loading="eager" shared={false} style={{ borderRadius: 0 }} />
+        <CharacterVisual name={story.title} accent={null} slug={story.slug} photo={story.cover} ratio={story.cover ? "2 / 3" : "4 / 3"} size="detail" loading="eager" shared={false} style={{ borderRadius: 0 }} />
+        {story.cover && <CoverTitle title={story.title} slug={story.slug} size="hero" />}
         <div style={{ position: 'absolute', top: 16, left: 16, padding: '6px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)' }}><Back href="/stories" /></div>
       </div>
       <div className="stack" style={{ padding: '18px var(--gutter) 0', gap: 'var(--space-4)' }}>

@@ -20,6 +20,14 @@ describe.each(STORY_DEFINITIONS.map(d => [d.slug, d] as const))('%s — 공통 �
     expect(def.protagonist.gender).toBe(def.audience === 'reverse_harem' ? 'female' : 'male')
   })
 
+  it('BL 작품의 등장인물은 모두 남성(10/15 사용자 결정)', () => {
+    if (def.audience !== 'bl') return
+    for (const c of def.characters) {
+      expect(c.prompt, c.name).toContain('남성')
+      expect(c.prompt + c.look + c.publicPersona, c.name).not.toMatch(/여성|여자|그녀/)
+    }
+  })
+
   it('공개 정보에는 제작자 진실·비공개 지시·조건·연락 규칙이 없다', () => {
     const pub = JSON.stringify(toPublic(def))
     expect(pub).not.toContain(def.creatorTruth.slice(0, 24))
