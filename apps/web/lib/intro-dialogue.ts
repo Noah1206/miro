@@ -1,4 +1,3 @@
-import { personalize } from './personalize'
 /** Intro entries share the existing JSON storage, with an explicit discriminator.
  * Unmarked legacy samples stay samples; they never become chat history implicitly.
  */
@@ -49,12 +48,12 @@ export function parseIntroDialogue(raw: string): DialogueEntry[] {
     return { role, text: text.trim(), purpose: 'intro', ...(typeof image === 'string' && image.startsWith('https://') ? { image } : {}) }
   })
 }
-/** userName 이 있으면 서술 줄의 "당신"을 그 이름으로(lib/personalize). 캐릭터 대사는 그대로. */
+/** Keep authored second-person narration. Persona names are character forms of address, not a spectator viewpoint. */
 export function introMessages(sessionId: string, entries: readonly DialogueEntry[], opening?: string, opts: { scene?: string; userName?: string | null } = {}) {
   if (opening) return [{ sessionId, role: 'character' as const, kind: 'text' as const, content: opening, blocks: [], turnIndex: 0 }]
   const turns = introDialogue(entries, opts.scene).flatMap((t) => [
     ...(t.image ? [{ role: t.role, kind: 'photo' as const, content: t.image }] : []),
-    { role: t.role, kind: 'text' as const, content: t.role === 'narrator' ? personalize(t.text, opts.userName) : t.text },
+    { role: t.role, kind: 'text' as const, content: t.text },
   ])
   return turns.map((t, index) => ({ sessionId, ...t, blocks: [], turnIndex: index - turns.length }))
 }

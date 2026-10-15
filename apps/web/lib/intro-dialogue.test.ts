@@ -61,3 +61,8 @@ describe('sceneOpening', () => {
     expect(sceneOpening(entries, 'B')).toEqual({ context: '비 오는 밤', time: '밤', location: '옥상' })
   })
 })
+
+it('keeps the user inside the scene even when a persona name is provided', () => {
+  const rows = introMessages('room', [{ role: 'narrator', purpose: 'intro', text: '당신의 손앞으로 봉투가 밀려왔다.' }], undefined, { userName: '서연' })
+  expect(rows[0]!.content).toBe('당신의 손앞으로 봉투가 밀려왔다.')
+})

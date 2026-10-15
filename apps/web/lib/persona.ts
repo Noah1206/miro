@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, eq, isNull, or } from 'drizzle-orm'
 import { db, userPersonas, roleplaySessions, characters, messages } from '@miro/db'
 import { PERSONA_LIMITS, mentionsMinor, type UserPersona } from '@miro/domain'
+import { personalize } from './personalize'
 import { introMessages } from './intro-dialogue'
 import { officialIntro } from './editorial/official-copy'
 import { msg } from '@/lib/i18n'
@@ -68,17 +69,16 @@ export async function saveConversationPersona(userId: string, sessionId: string,
     if (!room) return { ok: false as const, error: msg('대화를 찾을 수 없습니다.') }
     const persona = parsed.persona
     if (room.adultSince && (mentionsMinor(persona.name) || mentionsMinor(persona.description))) return { ok: false as const, error: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
-    // Only untouched, authored opening lines may adopt the chosen name. Never rewrite played dialogue.
+    // Restore second-person wording only in untouched authored openings; preserve played dialogue.
     if (room.turnCount === 0) {
       const [c] = await tx.select().from(characters).where(eq(characters.id, room.characterId))
       if (c) {
         const previous = room.userPersona ?? await getPersona(userId)
         const entries = officialIntro(c, c.sampleDialogue)
         const before = introMessages(sessionId, entries, undefined, { scene: room.openingScene ?? undefined, userName: previous?.name })
-        const after = introMessages(sessionId, entries, undefined, { scene: room.openingScene ?? undefined, userName: persona.name })
-        for (const [index, line] of before.entries()) {
-          if (line.role !== 'narrator' || line.kind !== 'text' || !after[index]) continue
-          await tx.update(messages).set({ content: after[index]!.content }).where(and(eq(messages.sessionId, sessionId), eq(messages.turnIndex, line.turnIndex), eq(messages.role, 'narrator'), eq(messages.content, line.content)))
+        for (const line of before) {
+          if (line.role !== 'narrator' || line.kind !== 'text') continue
+          await tx.update(messages).set({ content: line.content }).where(and(eq(messages.sessionId, sessionId), eq(messages.turnIndex, line.turnIndex), eq(messages.role, 'narrator'), or(eq(messages.content, line.content), eq(messages.content, personalize(line.content, previous?.name)))))
         }
       }
     }

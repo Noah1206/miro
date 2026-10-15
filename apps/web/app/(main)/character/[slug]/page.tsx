@@ -5,8 +5,6 @@ import { RichText } from '@/components/scene/rich-text'
 import { characterEditorial } from '@/components/scene/character-editorial'
 import { sampleWithAtmosphere } from '@/lib/sample-atmosphere'
 import { IntroPreview, type IntroScene } from './intro-preview'
-import { personalize } from '@/lib/personalize'
-import { getPersona } from '@/lib/persona'
 import { CharacterSettings } from './settings'
 import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
@@ -33,19 +31,18 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const editedDescription = officialDescription(c)
   const tagline = officialTagline(c) ?? c.tagline
 
-  const [comments, commentCount, similar, likes, persona] = await Promise.all([
+  const [comments, commentCount, similar, likes] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
-    user ? getPersona(user.id) : null,
   ])
-  // 서술의 "당신"을 내 페르소나 이름으로(10/5, 위프처럼). 로그인 전·페르소나 없으면 그대로.
-  const me = (text: string | null) => personalize(text ?? '', persona?.name)
+  // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
+  const me = (text: string | null) => text ?? ''
   // 시작 상황(도입부)이 둘 이상이면 고른다 — 고른 값은 아래 '대화 시작하기' 폼으로 간다(form 속성).
   const scenes = introScenes(c.sampleDialogue)
-  // 각 캐릭터의 분위기에 맞는 이름·당신·핵심어 색. 페르소나가 있으면 서술의 '당신'이 그 이름이 된다.
-  const names = { character: c.name, user: [...new Set([persona?.name?.trim(), '당신'].filter((n): n is string => !!n))],
+  // 각 캐릭터의 분위기에 맞는 이름·당신·핵심어 색.
+  const names = { character: c.name, user: ['당신'],
     ...characterEditorial({ slug: c.slug, name: c.name, genre: c.worldGenre, occupation: c.occupation }) }
   const introScenesData: IntroScene[] = (scenes.length ? scenes : ['']).map((scene) => {
     const opening = sceneOpening(c.sampleDialogue, scene)

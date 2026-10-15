@@ -2,7 +2,6 @@ import { homeUnveilEnabled } from '@/lib/home-mode'
 import { adultModeGateFor } from '@/lib/ops/safety'
 import { officialIntro } from '@/lib/editorial/official-copy'
 import { introMessages, sceneOpening } from '@/lib/intro-dialogue'
-import { getPersona } from '@/lib/persona'
 import { and, eq, isNull, isNotNull, or, sql } from 'drizzle-orm'
 import { db, characters, messages, relationships, roleplaySessions, worldStates, worlds } from '@miro/db'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
@@ -106,9 +105,8 @@ export async function createRoleplaySession(
     const { bonding: _curve, ...startingRelationship } = starting.initialRelationship
     await tx.insert(relationships).values({ sessionId: id, ...DEFAULT_START, ...startingRelationship })
     // 캐릭터가 먼저 보낸 첫 마디 — 있으면 대화가 이미 시작된 상태로 들어간다.
-    // 고른 도입부로 시작하고, 서술의 "당신"은 페르소나 이름으로(10/5).
-    const persona = await getPersona(userId)
-    const openingMessages = introMessages(id, starting.dialogue, opts.opening, { scene: opts.scene, userName: persona?.name })
+    // 고른 도입부의 2인칭 시점을 유지한다.
+    const openingMessages = introMessages(id, starting.dialogue, opts.opening, { scene: opts.scene })
     if (openingMessages.length) await tx.insert(messages).values(inWrittenOrder(openingMessages))
     const revision = starting.experienceType === 'reality'
       ? await captureAgencyRevision(tx, character.characterId, { sessionId: id, policyVersion }) : null

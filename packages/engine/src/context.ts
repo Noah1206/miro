@@ -79,6 +79,8 @@ export type BuiltContext = {
  * 사용자가 한 단어만 보내도 장면을 펼친다. 이번 턴의 입력 형식과 장면의 긴장은 무게만 바꾼다.
  * 성격·말투·관계·세계관은 이미 프롬프트에 들어 있으므로 모델이 그 맥락에 맞춰 마무리한다.
  */
+const USER_VIEWPOINT = `Use limited second-person POV centered on the user here, not an observer's report. Narration calls the user '당신'; persona names are for direct speech. Ground the authored situation in what reaches the user: sound, distance and visible actions addressed to them. Unfold one change at a time, then leave room to respond. Never invent user actions, thoughts, feelings or bodily reactions; character secrets stay in thought.`
+
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''
   const prose = /\*[^*]+\*/.test(input) || input.includes('\n') || input.length > 120
@@ -96,7 +98,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   // proposal.schema.ts 의 normalizeBlock 이 흡수한다. 측정 원본은 ai/evals/agency/reports/scene-beats-*-2026-09-26.json(9/29 삭제 — git 기록에만 남음).
   const base = [
     `- 응답 구성: 한 응답은 장면 하나입니다. 사용자 발화에 먼저 반응하고, 필요한 만큼 서술과 대사를 이어 갑니다. 대화 횟수와 블록 순서를 채우려고 내용을 만들지 않습니다. 블록 순서는 상황에 맞게 고릅니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.`,
-    `- narrative 블록(speaker null): 3인칭 장면 서술. 한 문단에 한 가지 변화만 쓰고 필요 없는 배경 묘사는 생략합니다. 공간·빛·소리·온도·거리 같은 감각, 캐릭터의 표정과 몸짓, 사용자의 말에 캐릭터와 공간이 보인 반응을 겉으로 드러나는 것으로 구체적으로 씁니다. 사용자의 말을 서술로 다시 옮기지 않고, 장소·빛·날씨로 여는 도입은 장면이 바뀔 때만 씁니다. 숨긴 감정을 해설하거나 겉과 속을 대비해 설명하지 않습니다 — 속마음은 thought 블록이 맡습니다.`,
+    `- narrative 블록(speaker null): ${USER_VIEWPOINT}`,
     `- action 블록(speaker "${name}"): 대사 직전이나 직후의 짧은 행동·표정 1~2문장.`,
     `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 문장 수를 채우지 말고 상대가 실제로 한 말에 답합니다. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
     '- thought 블록: 말과 행동만으로 전달되지 않는 속마음이 필요할 때만 1~2문장. 이미 드러낸 감정을 해설하지 않습니다.',
@@ -121,7 +123,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
  * 기다림·미룸 결정은 짧게 답해야 해서, 근거 없는 감각 서술을 500자 넘게 요구하는 장면 지시와 맞지 않는다.
  */
 function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, tense: boolean): string {
-  const base = '- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
+  const base = USER_VIEWPOINT + '\n- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
   const inPerson = s.experienceType === 'reality' ? '\n- 이 대화는 직접 만나 같은 공간에 있는 장면입니다. 메시지와 전화는 따로 오가므로 이 대화를 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 서술하지 않습니다. 첫 장면이 연락으로 시작했더라도 여기서는 만나서 나누는 말과 행동으로 이어 갑니다.' : ''
   const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
@@ -248,7 +250,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     '## 규칙',
     '- 이 캐릭터의 성격과 말투를 유지합니다. 상황에 따라 감정과 태도는 변하지만 정체성은 변하지 않습니다.',
     '- 국적·MBTI·외형으로 성격, 신념, 능력, 취향을 추정하지 않습니다. 구체적으로 작성된 성격을 우선합니다. 외형은 관련 질문과 장면에서만 사용합니다.',
-    '- 내레이터·narrative·world는 전지적 서술 자료이며 캐릭터의 지식이 아닙니다. 캐릭터가 직접 관찰하거나 전달받은 근거가 없는 비밀·속마음은 캐릭터의 대사와 판단에 사용하지 않습니다.',
+    '- 내레이터·narrative·world는 서술 자료이며 캐릭터의 지식이 아닙니다. 캐릭터가 직접 관찰하거나 전달받은 근거가 없는 비밀·속마음은 캐릭터의 대사와 판단에 사용하지 않습니다.',
     '- NPC 발언은 그 NPC의 말입니다. 캐릭터 자신의 말이나 사실로 바꾸지 않습니다. 상황 예시는 실제로 일어난 사건이 아닙니다.',
     '- 사용자에게 무조건 호의적으로 굴지 않습니다. 관계 상태에 맞게 행동합니다.',
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
@@ -314,7 +316,7 @@ function sampleLines(c: SimulationSnapshot['character']): string[] {
 function openingGuidance(s: SimulationSnapshot): string {
   const opening = (!s.mode || s.mode === 'chat') && s.turnCount < 5 && !!s.character.worldRole.startingContext?.trim()
   return opening
-    ? 'Follow opening and persona. On greeting/hesitation offer 2 actions, then wait; allow alternatives. No forced time/place skips.'
+    ? 'Follow opening/persona. Ground the user’s situation; character acts toward them, then waits. On hesitation offer 2 actions; allow alternatives. No forced user actions or time skips.'
     : 'Follow the authored opening; let user choices shape outcomes.'
 }
 
@@ -426,13 +428,13 @@ function buildPrompt(
     parts.push('', '## 최근 대화')
     for (const m of recent) {
       const label = m.role === 'user' ? '사용자'
-        : m.role === 'narrator' ? '내레이터 (전지적 서술 · 캐릭터 지식 아님)'
+        : m.role === 'narrator' ? '내레이터 (장면 서술 · 캐릭터 지식 아님)'
         : m.role === 'npc' ? `NPC (${m.npcName ?? '이름 미상'})` : s.character.identity.name
       const source = { id: m.id, kind: m.kind, at: m.at, knowledgeScope: m.knowledgeScope }
       if (m.blocks?.length) {
         for (const block of m.blocks) {
           const speaker = block.type === 'narrative' || block.type === 'world'
-            ? '내레이터 (전지적 서술 · 캐릭터 지식 아님)'
+            ? '내레이터 (장면 서술 · 캐릭터 지식 아님)'
             : block.type === 'npc' ? `NPC (${block.speaker ?? m.npcName ?? '이름 미상'})`
             : block.type === 'action' ? `행동 서술 (${block.speaker ?? label})`
             : block.type === 'thought' ? `속마음 (${s.character.identity.name}, 소리 내어 말하지 않음)`

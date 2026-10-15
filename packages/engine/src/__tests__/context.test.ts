@@ -64,14 +64,14 @@ describe('context builder', () => {
         { type: 'narrative', text: 'MIXED_NARRATION' },
       ] },
     ] }))
-    expect(prompt).toContain('내레이터 (전지적 서술 · 캐릭터 지식 아님): 그가 모르는 곳')
+    expect(prompt).toContain('내레이터 (장면 서술 · 캐릭터 지식 아님): 그가 모르는 곳')
     expect(prompt).toContain('NPC (서연): 문은 잠겼어요.')
     expect(prompt).not.toContain('토마스: 그가 모르는 곳')
     expect(prompt).not.toContain('토마스: 문은 잠겼어요.')
     expect(prompt).toContain('narration-1')
     expect(prompt).toContain('2026-09-24T01:00:00Z')
     expect(prompt).toContain('reality_message')
-    expect(prompt).toContain('내레이터 (전지적 서술 · 캐릭터 지식 아님): MIXED_NARRATION')
+    expect(prompt).toContain('내레이터 (장면 서술 · 캐릭터 지식 아님): MIXED_NARRATION')
     expect(prompt).not.toContain('토마스: 안녕. MIXED_NARRATION')
     expect(system).toContain('직접 관찰하거나 전달받은 근거가 없는 비밀')
   })
@@ -313,9 +313,23 @@ describe('초반 스토리 안내', () => {
     s.character.worldRole.startingContext = '봉인된 기록실에 함께 남았다.'
     const { system } = buildContext(s)
     expect(system).toContain('offer 2 actions')
-    expect(system).toContain('then wait; allow alternatives')
-    expect(system).toContain('Follow opening and persona')
-    expect(buildContext({ ...s, mode: 'messenger' }).system).not.toContain('On greeting/hesitation offer')
-    expect(buildContext({ ...s, turnCount: 5 }).system).not.toContain('On greeting/hesitation offer')
+    expect(system).toContain('offer 2 actions; allow alternatives')
+    expect(system).toContain('Follow opening/persona')
+    expect(buildContext({ ...s, mode: 'messenger' }).system).not.toContain('On hesitation offer')
+    expect(buildContext({ ...s, turnCount: 5 }).system).not.toContain('On hesitation offer')
+  })
+})
+
+
+describe('유저 중심 장면 시점', () => {
+  it.each(['scene', 'long', 'brief'] as const)('anchors %s scenes in the user perspective without inventing reactions', style => {
+    const system = buildContext(snapshot({ userInput: '누구세요?' }), 1, false, style).system
+    expect(system).toContain('limited second-person POV centered on the user')
+    expect(system).toContain('sound, distance and visible actions addressed to them')
+    expect(system).toContain('Never invent user actions, thoughts, feelings or bodily reactions')
+    expect(system).not.toContain('3인칭 장면 서술')
+  })
+  it('keeps messages and spoken calls in their own format', () => {
+    for (const mode of ['messenger', 'voice_call', 'video_call'] as const) expect(buildContext(snapshot({ mode })).system).not.toContain('limited second-person POV')
   })
 })
