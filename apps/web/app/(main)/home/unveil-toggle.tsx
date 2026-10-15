@@ -1,7 +1,8 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useId, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Checkbox, Sheet, Switch, useLoginSheet, useToast } from '@/components/ui'
+import { Button, Checkbox, Sheet, useLoginSheet, useToast } from '@/components/ui'
+import { UnveilSwitch } from '@/components/unveil-switch'
 import { AdultVerificationPanel } from '@/components/adult-verification-panel'
 import { adultVerificationState } from '@/app/(main)/my/verify/actions'
 import { setHomeUnveil } from './actions'
@@ -13,6 +14,7 @@ export function HomeUnveilToggle({ enabled, signedIn }: { enabled: boolean; sign
   const [pending, start] = useTransition()
   const [verification, setVerification] = useState<Awaited<ReturnType<typeof adultVerificationState>> | null>(null)
   const [policy, setPolicy] = useState(false)
+  const descriptionId = useId()
   const apply = (next: boolean, agreed = false) => {
     if (!signedIn) { login('/home'); return }
     start(async () => {
@@ -27,8 +29,9 @@ export function HomeUnveilToggle({ enabled, signedIn }: { enabled: boolean; sign
   }
   return <>
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-      <span className="sr-only">{t('일반과 언베일의 대화·기억은 따로 보관돼요.')}</span>
-      <Switch name="home-unveil" label={t('언베일')} checked={on} disabled={pending} onChange={apply} />
+      <span id={descriptionId} className="sr-only">{t('일반과 언베일의 대화·기억은 따로 보관돼요.')}</span>
+      <UnveilSwitch label={t('언베일')} accessibleLabel={t('언베일 (성인 모드)')} describedBy={descriptionId}
+        checked={on} disabled={pending} onChange={next => apply(next)} />
     </span>
     <Sheet open={verification !== null} onClose={() => setVerification(null)} title={t('최초 1회 성인 인증')}>
       <div className="stack" style={{ gap: 16, padding: '0 var(--gutter) var(--space-5)' }}>

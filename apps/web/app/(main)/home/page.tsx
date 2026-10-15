@@ -48,7 +48,7 @@ export default async function Home() {
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
-      {!unveil && <OriginalStoriesRow />}
+      <OriginalStoriesRow />
       <HomeFeed key={crypto.randomUUID()} initial={page} />
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />

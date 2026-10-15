@@ -7,6 +7,7 @@ import sheet from '@/components/push-subscribe.module.css'
 import { useT } from '@/lib/i18n/client'
 import { adultVerificationState } from '@/app/(main)/my/verify/actions'
 import { AdultVerificationPanel } from '@/components/adult-verification-panel'
+import { UnveilSwitch } from '@/components/unveil-switch'
 import { setAdultMode } from './actions'
 import styles from './chat.module.css'
 
@@ -53,11 +54,8 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
   }
   return <>
     <span className={styles.adultControl} data-on={on || undefined}>
-      <button type="button" role="switch" aria-checked={on} aria-label={t('언베일 (성인 모드)')} disabled={pending}
-        title={!on && blocked ? t(blocked) : undefined}
-        className={styles.adultToggle} onClick={() => choose(on ? 'off' : level)}>
-        <span className={styles.adultPill}><span className={styles.adultLabel}>{t('언베일')}</span><span aria-hidden className={styles.adultTrack}><span className={styles.adultKnob} /></span></span>
-      </button>
+      <UnveilSwitch checked={on} disabled={pending} label={t('언베일')} accessibleLabel={t('언베일 (성인 모드)')}
+        title={!on && blocked ? t(blocked) : undefined} onChange={next => choose(next ? level : 'off')} />
       <button type="button" aria-haspopup="menu" aria-expanded={menu} aria-label={t('언베일 (성인 모드)')} disabled={pending}
         className={styles.adultMenuToggle} onClick={() => setMenu((m) => !m)}>
         <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>

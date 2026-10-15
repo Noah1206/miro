@@ -1,0 +1,23 @@
+.adultControl { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
+.adultToggle { min-height: 44px; flex: 0 0 auto; display: flex; align-items: center; padding: 0 2px; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.adultToggle:disabled { opacity: .6; cursor: default; }
+.adultToggle:focus-visible { outline: none; }
+.adultToggle:focus-visible .adultPill { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+.adultPill { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 4px; }
+.adultLabel { font-size: var(--font-micro); font-weight: var(--weight-semibold); line-height: 1; letter-spacing: -.01em; white-space: nowrap; color: var(--color-text-secondary);
+  transition: color var(--motion-fast) var(--ease-standard); }
+.adultTrack { position: relative; display: block; width: 38px; height: 22px; flex-shrink: 0; border-radius: 999px; background: var(--color-border-strong);
+  transition: background var(--motion-fast) var(--ease-standard); }
+.adultKnob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--color-text-secondary);
+  transition: transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard); }
+.adultControl[data-on] .adultLabel { color: #dfcef8; }
+.adultControl[data-on] .adultTrack { background: linear-gradient(115deg, #59419b 0%, #8c5bde 52%, #bd90f0 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 0 12px rgb(157 102 225 / .27); }
+.adultControl[data-on] .adultKnob { transform: translateX(16px); background: linear-gradient(140deg, #fff, #e8def9); box-shadow: 0 1px 3px rgb(24 15 44 / .3), inset 0 1px 0 rgb(255 255 255 / .8); }
+@media (prefers-reduced-motion: reduce) {
+  .adultPill, .adultLabel, .adultTrack, .adultKnob { transition: none; }
+}
+
+:global([data-chat-theme='talk']) .adultLabel { color:#354653; }
+:global([data-chat-theme='dm-light']) .adultLabel { color:#505050; }
+:global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
+@media(max-width:420px) { .adultPill { gap:4px; padding:0; } }

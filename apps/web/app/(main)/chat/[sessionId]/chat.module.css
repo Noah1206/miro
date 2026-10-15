@@ -26,26 +26,9 @@
 .contextButton svg { width: 20px; height: 20px; }
 /* 언베일 — 클래식 토글과 수위 메뉴, 자수정 그라데이션. */
 .adultControl { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
-.adultToggle { min-height: 44px; flex: 0 0 auto; display: flex; align-items: center; padding: 0 2px; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.adultToggle:disabled { opacity: .6; cursor: default; }
-.adultToggle:focus-visible { outline: none; }
-.adultToggle:focus-visible .adultPill { outline: 2px solid var(--color-accent); outline-offset: 3px; }
-.adultPill { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 4px; }
 .adultMenuToggle { width: 24px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; cursor: pointer; }
 .adultMenuToggle:disabled { opacity: .6; cursor: default; }
 .adultMenuToggle:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 6px; }
-.adultLabel { font-size: var(--font-micro); font-weight: var(--weight-semibold); line-height: 1; letter-spacing: -.01em; white-space: nowrap; color: var(--color-text-secondary);
-  transition: color var(--motion-fast) var(--ease-standard); }
-.adultTrack { position: relative; display: block; width: 38px; height: 22px; flex-shrink: 0; border-radius: 999px; background: var(--color-border-strong);
-  transition: background var(--motion-fast) var(--ease-standard); }
-.adultKnob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--color-text-secondary);
-  transition: transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard); }
-.adultControl[data-on] .adultLabel { color: #dfcef8; }
-.adultControl[data-on] .adultTrack { background: linear-gradient(115deg, #59419b 0%, #8c5bde 52%, #bd90f0 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 0 12px rgb(157 102 225 / .27); }
-.adultControl[data-on] .adultKnob { transform: translateX(16px); background: linear-gradient(140deg, #fff, #e8def9); box-shadow: 0 1px 3px rgb(24 15 44 / .3), inset 0 1px 0 rgb(255 255 255 / .8); }
-@media (prefers-reduced-motion: reduce) {
-  .adultPill, .adultLabel, .adultTrack, .adultKnob { transition: none; }
-}
 /* 첫 켜기 시트의 두 동의 체크 — 가운데 정렬 묶음 아래에서 왼쪽 정렬로 읽힌다. */
 /* 언베일 수위 메뉴(10/3) — 모드 고르기 목록처럼: 작은 머리말, 한 단어 항목, 고른 항목에 체크. */
 .adultMenuHead { margin: 4px 10px 6px; font-size: 12px; color: var(--color-text-tertiary); }
@@ -152,14 +135,14 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .composerForm { background:#161616; border:1px solid #333; border-radius:24px; }
 :global([data-chat-theme='talk']) .composerForm { background:#fff; border:1px solid #dedede; border-radius:8px; }
 
-:global([data-chat-theme='talk']) .contextButton, :global([data-chat-theme='talk']) .storyDateButton, :global([data-chat-theme='talk']) .adultLabel, :global([data-chat-theme='talk']) .adultMenuToggle { color:#354653; }
+:global([data-chat-theme='talk']) .contextButton, :global([data-chat-theme='talk']) .storyDateButton, :global([data-chat-theme='talk']) .adultMenuToggle { color:#354653; }
 :global([data-chat-theme='dm']) .speaker, :global([data-chat-theme='dm']) .narrationText, :global([data-chat-theme='dm']) .opening { color:#a8a8a8; }
 :global([data-chat-theme='talk']) .speaker, :global([data-chat-theme='talk']) .narrationText, :global([data-chat-theme='talk']) .opening, :global([data-chat-theme='talk']) .storyDateMarker { color:#485967; }
 :global([data-chat-theme='talk']) .narrationIcon { color:#526573; }
 :global([data-chat-theme='talk']) .bubble strong { color:inherit; }
 :global([data-chat-theme='dm']) .messages, :global([data-chat-theme='talk']) .messages { gap:16px; }
 :global([data-chat-theme='dm']) .narrationText, :global([data-chat-theme='talk']) .narrationText { font-size:13px; line-height:1.65; }
-@media(max-width:420px) { .header { gap:4px; padding-inline:6px; } .contextButton, .storyDateButton { width:34px; } .adultPill { gap:4px; padding:0; } .adultMenuToggle { width:20px; } }
+@media(max-width:420px) { .header { gap:4px; padding-inline:6px; } .contextButton, .storyDateButton { width:34px; } .adultMenuToggle { width:20px; } }
 
 /* Light DM: compact neutral incoming bubbles and a vivid outgoing gradient. */
 :global([data-chat-theme='dm-light']) .main { background:#fff; color:#171717; color-scheme:light; }
@@ -178,8 +161,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm-light']) .composerForm { background:#f1f1f1; border:1px solid transparent; border-radius:24px; padding:2px 6px 2px 12px; }
 :global([data-chat-theme='dm-light']) .composerForm:focus-within { border-color:#c7b4ef; }
 
-:global([data-chat-theme='dm-light']) .contextButton, :global([data-chat-theme='dm-light']) .storyDateButton, :global([data-chat-theme='dm-light']) .adultLabel, :global([data-chat-theme='dm-light']) .adultMenuToggle { color:#505050; }
-:global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
+:global([data-chat-theme='dm-light']) .contextButton, :global([data-chat-theme='dm-light']) .storyDateButton, :global([data-chat-theme='dm-light']) .adultMenuToggle { color:#505050; }
 :global([data-chat-theme='dm-light']) .transcript { padding:16px 12px 0; }
 :global([data-chat-theme='dm-light']) .messages { gap:12px; }
 :global([data-chat-theme='dm-light']) .reply { gap:12px; }
