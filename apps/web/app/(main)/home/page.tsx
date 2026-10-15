@@ -13,6 +13,7 @@ import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
 import { OriginalStoriesRow } from '../stories/home-row'
+import { HomeContentTabs } from './content-tabs'
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
@@ -49,6 +50,7 @@ export default async function Home() {
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
       <OriginalStoriesRow />
+      <HomeContentTabs active="characters" inset />
       <HomeFeed key={crypto.randomUUID()} initial={page} />
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
