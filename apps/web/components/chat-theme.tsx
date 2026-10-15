@@ -7,17 +7,18 @@ import styles from './chat-theme.module.css'
 import { chatViewportState } from './chat-viewport'
 
 type Theme = 'miro' | 'dm-light' | 'dm' | 'talk'
-const Context = createContext<{ theme: Theme; select: (theme: Theme) => void }>({ theme: 'miro', select: () => {} })
+const DEFAULT_THEME: Theme = 'miro'
+const Context = createContext<{ theme: Theme; select: (theme: Theme) => void }>({ theme: DEFAULT_THEME, select: () => {} })
 export const useChatTheme = () => useContext(Context)
 const valid = (value: unknown): value is Theme => value === 'dm-light' || value === 'miro' || value === 'dm' || value === 'talk'
 
 /** Visual preference only: shared by this session's scene and messenger on this device. */
 export function ChatTheme({ sessionId, children }: { sessionId: string; children: ReactNode }) {
   const key = `miro:chat-theme:${sessionId}`
-  const [theme, setTheme] = useState<Theme>('dm-light')
+  const [theme, setTheme] = useState<Theme>(DEFAULT_THEME)
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    const read = () => { try { const saved = localStorage.getItem(key); setTheme(valid(saved) ? saved : 'dm-light') } catch { setTheme('dm-light') } }
+    const read = () => { try { const saved = localStorage.getItem(key); setTheme(valid(saved) ? saved : DEFAULT_THEME) } catch { setTheme(DEFAULT_THEME) } }
     read()
     const sync = (event: StorageEvent) => { if (event.key === key || event.key === null) read() }
     window.addEventListener('storage', sync)
@@ -78,7 +79,7 @@ export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigge
     </button>}
     <Sheet open={open} onClose={() => setOpen(false)} title={t('채팅방 테마')} snap={{ half: 0.72, full: 0.92 }}>
       <div className={styles.options}>
-        {(['dm-light', 'dm', 'talk', 'miro'] as const).map(value => <button type="button" key={value} className={styles.option} aria-pressed={theme === value} onClick={() => { select(value); setOpen(false) }}>
+        {(['miro', 'dm-light', 'dm', 'talk'] as const).map(value => <button type="button" key={value} className={styles.option} aria-pressed={theme === value} onClick={() => { select(value); setOpen(false) }}>
           <span className={styles.preview} data-preview={value} aria-hidden><span className={styles.previewHead}><span className={styles.previewAvatar}><DefaultChatAvatar theme={value} /></span><i /></span><span className={styles.incoming} /><span className={styles.outgoing} /></span>
           <span className={styles.label}>{t(value === 'miro' ? '미로 기본' : value === 'dm-light' ? 'DM 기본' : value === 'dm' ? 'DM 다크' : '카톡 스타일')}<span aria-hidden>{theme === value ? '✓' : ''}</span></span>
         </button>)}
