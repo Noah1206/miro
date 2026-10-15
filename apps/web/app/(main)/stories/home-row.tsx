@@ -9,9 +9,9 @@ export async function OriginalStoriesRow() {
   const list = await listStories().catch(() => [])
   if (!list.length) return null
   return (
-    <section aria-label={t('미로 오리지널')} style={{ padding: '0 var(--gutter)', marginBottom: 'var(--space-5)' }}>
+    <section aria-label={t('미로 오리지널')} style={{ padding: '0 var(--gutter)', marginBottom: 'var(--space-7)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-        <h2 className="t-title-3">{t('미로 오리지널')}</h2>
+        <h2 className="t-title-3"><span aria-hidden="true">✨ </span>{t('미로 오리지널')}</h2>
         <TransitionLink href="/stories" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
       </div>
       <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'clamp(132px, 38vw, 176px)', gap: 'var(--space-3)', overflowX: 'auto', scrollbarWidth: 'none' }}>
