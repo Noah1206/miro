@@ -39,7 +39,7 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   const pathname = usePathname()
   const t = useT()
   const askLogin = useLoginSheet()
-  if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname)) return null
+  if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname) || /^\/stories\/play\//.test(pathname)) return null
   return (
     <><DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} /><nav aria-label={t('주요')} className="nav">
       {ITEMS.map((it) => {

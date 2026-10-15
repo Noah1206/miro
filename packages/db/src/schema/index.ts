@@ -1203,3 +1203,116 @@ export const opsBackupRuns = pgTable('ops_backup_runs', {
   files: integer('files').notNull(),
   fileBytes: bigint('file_bytes', { mode: 'number' }).notNull(),
 }).enableRLS()
+
+/**
+ * 오리지널 스토리(10/15). 여러 인물·사건 6개·분기·연락석이 있는 작품 — 캐릭터 1명 대화방(roleplay_sessions)과 따로 산다.
+ * stories 는 공개 정보만, story_private 는 서버만 읽는 정의(지시문·제작자 진실·조건)다. 공개 조회는 story_private 를 읽지 않는다.
+ * seeded_hash = 시드가 마지막으로 쓴 내용의 해시. 지금 내용의 해시와 다르면 운영자가 직접 고친 것 — 시드가 덮어쓰지 않는다.
+ */
+export const stories = pgTable('stories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  slug: text('slug').notNull().unique(),
+  audience: text('audience', { enum: ['reverse_harem', 'bl'] }).notNull(),
+  title: text('title').notNull(),
+  public: jsonb('public').notNull(),
+  /** 유저 공개 여부. 기본 비공개 — 공개는 운영자 확인 뒤. */
+  isPublished: boolean('is_published').notNull().default(false),
+  sortOrder: integer('sort_order').notNull().default(0),
+  seededHash: text('seeded_hash'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS()
+
+export const storyPrivate = pgTable('story_private', {
+  storyId: uuid('story_id').primaryKey().references(() => stories.id, { onDelete: 'cascade' }),
+  definition: jsonb('definition').notNull(),
+  seededHash: text('seeded_hash'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS()
+
+/** 사용자 × 작품 × 회차. 새 회차를 시작하면 이전 회차는 archived(지우지 않음). 기억·상태는 회차 밖으로 새지 않는다. */
+export const storyRuns = pgTable('story_runs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  storyId: uuid('story_id').notNull().references(() => stories.id, { onDelete: 'cascade' }),
+  runNo: integer('run_no').notNull(),
+  status: text('status', { enum: ['active', 'ended', 'archived'] }).notNull().default('active'),
+  definitionVersion: integer('definition_version').notNull(),
+  protagonist: jsonb('protagonist').notNull(),
+  state: jsonb('state').notNull(),
+  /** 낙관적 잠금 — 상태를 쓸 때마다 +1, 읽은 버전과 다르면 쓰지 않는다. */
+  version: integer('version').notNull().default(0),
+  lastSceneInputAt: timestamp('last_scene_input_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({
+  runNo: uniqueIndex('story_runs_no_uniq').on(t.userId, t.storyId, t.runNo),
+  live: uniqueIndex('story_runs_live_uniq').on(t.userId, t.storyId).where(sql`${t.status} <> 'archived'`),
+})).enableRLS()
+
+/** 턴 = 유저 입력 하나. client_turn_id 로 재시도·새로고침 중복을 막고, 회차당 진행 중 턴은 하나(동시 요청 차단). */
+export const storyTurns = pgTable('story_turns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  runId: uuid('run_id').notNull().references(() => storyRuns.id, { onDelete: 'cascade' }),
+  clientTurnId: text('client_turn_id').notNull(),
+  channel: text('channel', { enum: ['scene', 'dm'] }).notNull(),
+  thread: text('thread'),
+  inputHash: text('input_hash').notNull(),
+  status: text('status', { enum: ['running', 'done', 'failed'] }).notNull().default('running'),
+  baseVersion: integer('base_version').notNull(),
+  result: jsonb('result'),
+  error: text('error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+}, t => ({
+  client: uniqueIndex('story_turns_client_uniq').on(t.runId, t.clientTurnId),
+  running: uniqueIndex('story_turns_running_uniq').on(t.runId).where(sql`${t.status} = 'running'`),
+})).enableRLS()
+
+export const storyMessages = pgTable('story_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  runId: uuid('run_id').notNull().references(() => storyRuns.id, { onDelete: 'cascade' }),
+  turnId: uuid('turn_id').references(() => storyTurns.id, { onDelete: 'set null' }),
+  channel: text('channel', { enum: ['scene', 'dm'] }).notNull(),
+  /** 연락석 대화면 인물 키 */
+  thread: text('thread'),
+  role: text('role', { enum: ['user', 'scene', 'character', 'system'] }).notNull(),
+  speaker: text('speaker'),
+  content: text('content').notNull(),
+  blocks: jsonb('blocks'),
+  contactId: uuid('contact_id'),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ run: index('story_messages_run_idx').on(t.runId, t.createdAt) })).enableRLS()
+
+/** 상태 변경 원장 — 모든 변경·거부에 원인 턴·메시지가 붙는다. */
+export const storyChanges = pgTable('story_changes', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  runId: uuid('run_id').notNull().references(() => storyRuns.id, { onDelete: 'cascade' }),
+  turnId: uuid('turn_id').references(() => storyTurns.id, { onDelete: 'set null' }),
+  messageId: uuid('message_id'),
+  kind: text('kind').notNull(),
+  detail: jsonb('detail').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({ run: index('story_changes_run_idx').on(t.runId, t.id) })).enableRLS()
+
+/** 연락석 예약. (run, key) 고유 — 같은 규칙은 회차에 한 번. 발송 직전에 게이트를 다시 본다. */
+export const storyContacts = pgTable('story_contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  runId: uuid('run_id').notNull().references(() => storyRuns.id, { onDelete: 'cascade' }),
+  ruleId: text('rule_id').notNull(),
+  key: text('key').notNull(),
+  speaker: text('speaker').notNull(),
+  status: text('status', { enum: ['pending', 'sent', 'cancelled'] }).notNull().default('pending'),
+  dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+  scheduledScene: integer('scheduled_scene').notNull(),
+  causeTurnId: uuid('cause_turn_id'),
+  reason: text('reason'),
+  messageId: uuid('message_id'),
+  leaseUntil: timestamp('lease_until', { withTimezone: true }),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, t => ({
+  key: uniqueIndex('story_contacts_key_uniq').on(t.runId, t.key),
+  due: index('story_contacts_due_idx').on(t.dueAt).where(sql`${t.status} = 'pending'`),
+})).enableRLS()
