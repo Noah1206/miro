@@ -20,8 +20,8 @@
 @media (prefers-reduced-motion: reduce) { .poster img { transition: none; } }
 
 .cardDetails { display: flex; flex-direction: column; gap: 6px; padding: 10px 2px 0; color: var(--color-text-primary); text-align: left; }
-.cardDetails strong { font-size: 20px; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; overflow-wrap: anywhere; }
-.cardTags { display: flex; flex-wrap: wrap; gap: 3px 6px; margin: 0; font-size: 10px; line-height: 1.5; color: var(--color-text-secondary); }
+.cardDetails strong { font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.cardTags { display: flex; flex-wrap: wrap; gap: 3px 6px; margin: 0; font-size: 11px; line-height: 1.5; color: color-mix(in srgb, var(--color-text-primary) 60%, var(--color-text-secondary)); }
 .cardTags span { white-space: nowrap; }
 
 

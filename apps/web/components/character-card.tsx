@@ -49,10 +49,10 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         <div style={{
           display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 2px 0', color: 'var(--color-text-primary)',
         }}>
-          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 20, lineHeight: 1.25, letterSpacing: '-.025em', overflowWrap: 'anywhere', margin: 0 }}>{c.name}</p>
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 18, lineHeight: 1.25, letterSpacing: '-.025em', overflowWrap: 'anywhere', margin: 0 }}>{c.name}</p>
           {tags.length > 0 && (
             <p className={`t-micro ${characterTagFont.className}`} style={{
-              color: 'var(--color-text-secondary)', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 10, display: 'flex', flexWrap: 'wrap', gap: '3px 6px',
+              color: 'color-mix(in srgb, var(--color-text-primary) 60%, var(--color-text-secondary))', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 11, lineHeight: 1.5, display: 'flex', flexWrap: 'wrap', gap: '3px 6px',
             }}>{tags.map(tag => <span key={tag}>#{tag}</span>)}</p>
           )}
         </div>
