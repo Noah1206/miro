@@ -1279,5 +1279,8 @@
  "{n}토큰 무료": "{n} free tokens",
  "신규 계정 1회 · 지급 후 {n}일 사용": "New accounts only · Valid for {n} days",
  "무료 {n}토큰 받고 시작하기": "Start with {n} free tokens",
- "작품": "Stories"
+ "작품": "Stories",
+ "랭킹순": "Ranking",
+ "후기순": "Most reviews",
+ "정렬": "Sort"
 }

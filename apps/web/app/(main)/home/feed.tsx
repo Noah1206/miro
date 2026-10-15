@@ -3,7 +3,8 @@ import { characterTags, characterStorySummary } from '@/lib/character-card-copy'
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
-import type { CardPage, HomeCard } from '@/lib/home'
+import type { CardPage, HomeCard, HomeSort } from '@/lib/home'
+import { HomeContentTabs } from './content-tabs'
 import styles from './home.module.css'
 import { useT } from '@/lib/i18n/client'
 
@@ -28,12 +29,12 @@ export function StoryCard({ c }: { c: HomeCard }) {
   </TransitionLink>
 }
 
-/** 고른 장르·관계마다 목록을 따로 둔다 — 칩을 껐다 켜도 받은 목록은 다시 받지 않는다. */
-type Filter = { genres: string[]; relations: string[] }
-const NONE: Filter = { genres: [], relations: [] }
-const listKey = (filter: Filter) => JSON.stringify([filter.genres, filter.relations])
+/** 정렬·조건별로 목록과 커서를 보관해, 정렬을 바꿔도 다른 목록이 섞이지 않는다. */
+type Filter = { genres: string[]; relations: string[]; sort: HomeSort }
+const NONE: Filter = { genres: [], relations: [], sort: 'latest' }
+const listKey = (filter: Filter) => JSON.stringify([filter.genres, filter.relations, filter.sort])
 export function HomeFeed({ initial }: { initial: CardPage }) {
-  const filter = NONE
+  const [filter, setFilter] = useState<Filter>(NONE)
   const [lists, setLists] = useState<Record<string, CardPage>>(() => ({ [listKey(NONE)]: initial }))
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState<Record<string, boolean>>({})
@@ -53,6 +54,7 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
     setLoading(current => ({ ...current, [k]: true })); setFailed(current => ({ ...current, [k]: false }))
     try {
       const params = new URLSearchParams(cursor ? { cursor } : {})
+      params.set('sort', next.sort)
       for (const genre of next.genres) params.append('genre', genre)
       for (const relation of next.relations) params.append('relation', relation)
       const response = await fetch(`/api/home/cards?${params}`, { cache: 'no-store' })
@@ -63,6 +65,11 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
   }
 
   return <div className={`${styles.feed} ${empty || waiting ? styles.fill : ''}`}>
+    <HomeContentTabs active={filter.sort} onChange={sort => {
+      const next = { ...filter, sort }
+      setFilter(next)
+      if (!lists[listKey(next)]) void load(next)
+    }} />
     <h1 className="sr-only">{t('홈')}</h1>
     <section aria-labelledby="recommend-title" className={empty || waiting ? styles.fill : undefined}>
       {/* '전체 이야기' 제목은 화면에서 뺐다(2026-09-30 요청) — 화면 읽기용으로만 남긴다. */}

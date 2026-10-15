@@ -48,19 +48,21 @@ const pageColumns = {
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
 }
 
-function decodeCursor(value: string | null) {
+function decodeCursor(value: string | null, sort: HomeSort) {
   if (!value) return null
   if (value.length > 160) throw new Error('INVALID_CURSOR')
   try {
     const parsed: unknown = JSON.parse(Buffer.from(value, 'base64url').toString('utf8'))
-    if (!Array.isArray(parsed) || parsed.length !== 2 || typeof parsed[0] !== 'string' || typeof parsed[1] !== 'string' || !UUID.test(parsed[1])) throw new Error('INVALID_CURSOR')
+    if (!Array.isArray(parsed) || parsed.length !== (sort === 'latest' ? 2 : 4) || typeof parsed[0] !== 'string' || typeof parsed[1] !== 'string' || !UUID.test(parsed[1])) throw new Error('INVALID_CURSOR')
+    if (sort !== 'latest' && (parsed[2] !== sort || !Number.isSafeInteger(parsed[3]) || parsed[3] < 0)) throw new Error('INVALID_CURSOR')
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(parsed[0]) || Number.isNaN(Date.parse(parsed[0]))) throw new Error('INVALID_CURSOR')
-    return { createdAt: parsed[0], id: parsed[1] }
+    return { createdAt: parsed[0], id: parsed[1], score: sort === 'latest' ? 0 : parsed[3] as number }
   } catch { throw new Error('INVALID_CURSOR') }
 }
 
 /** 홈 칩(장르·관계)으로 거르기. 한 종류 안에서는 하나라도, 두 종류를 같이 고르면 둘 다 맞아야 한다. */
-export type CardFilter = { genres?: string[]; relations?: string[]; query?: string }
+export type HomeSort = 'latest' | 'ranking' | 'reviews'
+export type CardFilter = { genres?: string[]; relations?: string[]; query?: string; sort?: HomeSort }
 
 /** 칩 값을 비교할 글자로 — 틀린 값이면 INVALID_GENRE. */
 function chipNeedles(values: string[] = []) {
@@ -92,8 +94,19 @@ function relationMatch(relations?: string[]): SQL | undefined {
 
 async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false): Promise<CardPage> {
   const unveil = await homeUnveilEnabled(userId)
-  const cursor = decodeCursor(cursorValue)
-  const rows = await db.select(pageColumns)
+  const sort = filter.sort ?? 'latest'
+  const cursor = decodeCursor(cursorValue, sort)
+  // 랭킹은 중복 없는 대화 인원, 후기는 공개된 원글 수(답글·숨김 제외)로 집계한다.
+  const score = sort === 'ranking'
+    ? sql<number>`(select count(distinct s.user_id)::int from roleplay_sessions s where s.character_id = ${characters.id} and s.deleted_at is null)`
+    : sort === 'reviews'
+      ? sql<number>`(select count(*)::int from character_comments cc where cc.character_id = ${characters.id} and cc.parent_id is null and cc.hidden_at is null)`
+      : sql<number>`0`
+  const afterDate = cursor ? or(
+    lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
+    and(eq(characters.createdAt, sql`${cursor.createdAt}::timestamptz`), lt(characters.id, cursor.id)),
+  ) : undefined
+  const rows = await db.select({ ...pageColumns, sortScore: score })
     .from(characters)
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .where(and(
@@ -109,12 +122,9 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       relationMatch(filter.relations),
       ...(searchNeedle(filter.query ?? '') ? [containsAny(sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`, [searchNeedle(filter.query ?? '')])] : []),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
-      ...(cursor ? [or(
-        lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
-        and(eq(characters.createdAt, sql`${cursor.createdAt}::timestamptz`), lt(characters.id, cursor.id)),
-      )] : []),
+      ...(cursor ? [sort === 'latest' ? afterDate : or(lt(score, cursor.score), and(eq(score, cursor.score), afterDate))] : []),
     ))
-    .orderBy(desc(characters.createdAt), desc(characters.id))
+    .orderBy(...(sort === 'latest' ? [] : [desc(score)]), desc(characters.createdAt), desc(characters.id))
     .limit(PAGE_SIZE + 1)
   let pageRows = rows.slice(0, PAGE_SIZE)
   if (unveil && pageRows.length) {
@@ -126,8 +136,8 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   const plays = await playCounts(pageRows.map(row => row.id))
   const last = rows.slice(0, PAGE_SIZE).at(-1)
   return {
-    items: pageRows.map(({ createdAtKey: _createdAtKey, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0 })),
-    nextCursor: rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify([last.createdAtKey, last.id])).toString('base64url') : null,
+    items: pageRows.map(({ createdAtKey: _createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0 })),
+    nextCursor: rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify(sort === 'latest' ? [last.createdAtKey, last.id] : [last.createdAtKey, last.id, sort, last.sortScore])).toString('base64url') : null,
   }
 }
 

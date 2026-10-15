@@ -1,10 +1,9 @@
 .tabs { display: flex; align-items: center; gap: 10px; overflow-x: auto; scrollbar-width: none; margin-bottom: var(--space-5); padding: 4px 0; }
 .tabs::-webkit-scrollbar { display: none; }
-.inset { margin-inline: var(--gutter); }
-.tabs a { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; min-height: 44px; padding: 9px 20px; border: 1px solid var(--color-border); border-radius: 999px; background: transparent; color: var(--color-text-secondary); font-size: 16px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; white-space: nowrap; text-decoration: none; transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard); }
-.tabs a[aria-current='page'] { color: #fff; background: #db3028; border-color: #db3028; }
-.tabs a:hover { border-color: var(--color-text-secondary); }
-.tabs a[aria-current='page']:hover { background: #c82b24; border-color: #c82b24; }
-.tabs a:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
-@media (min-width: 1024px) { .tabs a { font-size: 17px; padding-inline: 24px; } }
-@media (prefers-reduced-motion: reduce) { .tabs a { transition: none; } }
+.tabs button { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; min-height: 44px; padding: 9px 20px; border: 1px solid var(--color-border); border-radius: 999px; background: transparent; color: var(--color-text-secondary); font-size: 16px; font-weight: 650; line-height: 1.4; letter-spacing: -.025em; white-space: nowrap; font-family: inherit; cursor: pointer; transition: color var(--motion-fast) var(--ease-standard), background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard); }
+.tabs button[aria-pressed='true'] { color: var(--color-accent-on); background: var(--color-accent); border-color: var(--color-accent); }
+.tabs button:hover { border-color: var(--color-text-secondary); }
+.tabs button[aria-pressed='true']:hover { background: var(--color-accent-bright); border-color: var(--color-accent-bright); }
+.tabs button:focus-visible { outline: 2px solid var(--color-text-primary); outline-offset: 2px; }
+@media (min-width: 1024px) { .tabs button { font-size: 17px; padding-inline: 24px; } }
+@media (prefers-reduced-motion: reduce) { .tabs button { transition: none; } }

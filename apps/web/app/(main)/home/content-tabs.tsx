@@ -1,13 +1,18 @@
-import { TransitionLink } from '@/components/ui'
-import { getT } from '@/lib/i18n/server'
+'use client'
+import type { HomeSort } from '@/lib/home'
+import { useT } from '@/lib/i18n/client'
 import styles from './content-tabs.module.css'
 
-export async function HomeContentTabs({ active, inset = false }: { active: 'characters' | 'stories'; inset?: boolean }) {
-  const t = await getT()
+export function HomeContentTabs({ active, onChange }: { active: HomeSort; onChange: (sort: HomeSort) => void }) {
+  const t = useT()
+  const options = [
+    { key: 'latest', label: t('최신순') },
+    { key: 'ranking', label: t('랭킹순') },
+    { key: 'reviews', label: t('후기순') },
+  ] as const
   return (
-    <nav aria-label={t('전체 이야기')} className={`${styles.tabs} ${inset ? styles.inset : ''}`}>
-      <TransitionLink href="/home" aria-current={active === 'characters' ? 'page' : undefined}>{t('캐릭터')}</TransitionLink>
-      <TransitionLink href="/stories" aria-current={active === 'stories' ? 'page' : undefined}>{t('작품')}</TransitionLink>
-    </nav>
+    <div role="group" aria-label={t('정렬')} className={styles.tabs}>
+      {options.map(option => <button key={option.key} type="button" aria-pressed={active === option.key} onClick={() => onChange(option.key)}>{option.label}</button>)}
+    </div>
   )
 }
