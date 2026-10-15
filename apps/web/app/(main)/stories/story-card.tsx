@@ -11,8 +11,6 @@ const serif = Nanum_Myeongjo({ weight: '800', subsets: ['latin'], preload: false
 const heavy = Black_Han_Sans({ weight: '400', subsets: ['latin'], preload: false, display: 'swap' })
 const fine = Diphylleia({ weight: '400', subsets: ['latin'], preload: false, display: 'swap' })
 const brush = Song_Myung({ weight: '400', display: 'swap' })
-/** 스텔라체(동서대학교): 개인·기업 무료, 웹·임베딩 가능, BI/CI(로고·상품명) 사용 금지, 수정 재배포·판매 금지 — 공개 저장소에 글꼴 파일을 두지 않고 눈누 배포 CDN 에서 불러온다. */
-const STELLA_FACE = "@font-face{font-family:'Stella';src:url('https://cdn.jsdelivr.net/gh/Project-Noonnu/2608201622@stellar-serif/stellar-serif/Stellar_Serif_Bold_Condensed.woff2') format('woff2');font-display:swap}"
 
 const clip = (bg: string) => ({ backgroundImage: bg, WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent' }) as const
 
@@ -47,29 +45,6 @@ const Salvage = () => {
   </span>
 }
 
-/** 2번: 네 인물 사진을 4분할한 표지 한가운데, 짙은 남색 장식 세리프 두 줄과 아주 얇은 밝은 외곽선, 절제된 왕관·가는 곡선·작은 별빛. */
-const Beauty = () => {
-  const ink = '#18203a', halo = 'rgba(236,240,255,0.85)'
-  const star = (left: string, top: string, size: string) => <span style={{ position: 'absolute', left, top, fontSize: size, color: '#f4f6ff', textShadow: '0 0 6px rgba(220,230,255,0.9)' }}>✦</span>
-  return (
-    <span style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', fontFamily: "'Stella', serif", color: ink, lineHeight: 1.02,
-      WebkitTextStroke: `0.6px ${halo}`, paintOrder: 'stroke fill' }}>
-      <style>{STELLA_FACE}</style>
-      <svg viewBox="0 0 40 24" style={{ width: '2em', height: '1.2em', marginBottom: '-0.1em' }} aria-hidden="true">
-        <path d="M4 20 L7 6 L14 14 L20 3 L26 14 L33 6 L36 20 Z" fill="none" stroke={halo} strokeWidth="2.6" strokeLinejoin="round" />
-        <path d="M4 20 L7 6 L14 14 L20 3 L26 14 L33 6 L36 20 Z" fill="none" stroke={ink} strokeWidth="1.4" strokeLinejoin="round" />
-      </svg>
-      <span style={{ fontSize: '2.6em', letterSpacing: '-0.02em' }}>거울</span>
-      <span style={{ fontSize: '2.6em', letterSpacing: '-0.02em' }}>무도회</span>
-      <svg viewBox="0 0 200 20" style={{ position: 'absolute', left: '8%', width: '84%', top: '30%', height: '2em', overflow: 'visible' }} aria-hidden="true" preserveAspectRatio="none">
-        <path d="M2 14 C 30 2, 50 22, 80 10" fill="none" stroke={halo} strokeWidth="0.8" />
-        <path d="M198 6 C 170 18, 150 -2, 120 10" fill="none" stroke={halo} strokeWidth="0.8" />
-      </svg>
-      {star('12%', '18%', '0.7em')}{star('84%', '12%', '0.5em')}{star('86%', '78%', '0.75em')}{star('10%', '84%', '0.45em')}
-    </span>
-  )
-}
-
 /** 5번: 흰 배경 표지 아래, 먹색 명조 '궁합'과 크게 강조한 빨간 '0%'. */
 const Contract = () => (
   <span style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '0.25em', fontFamily: serif.style.fontFamily, color: '#1c1f26', lineHeight: 1, whiteSpace: 'nowrap' }}>
@@ -78,23 +53,20 @@ const Contract = () => (
   </span>
 )
 
-const DESIGNS: Record<string, () => ReactNode> = { 'original-academy': Academy, 'original-beauty': Beauty, 'original-salvage': Salvage, 'original-contract': Contract }
+const DESIGNS: Record<string, () => ReactNode> = { 'original-academy': Academy, 'original-salvage': Salvage, 'original-contract': Contract }
 /** 흰 배경 표지 — 제목 아래 어두운 그늘을 깔지 않는다. */
 const LIGHT = new Set(['original-contract'])
 export const isLightCover = (slug: string) => LIGHT.has(slug)
-/** 표지에 제목 글자를 얹지 않는 작품(4번: 가로 3단 얼굴만, 10/15 사용자 결정) — 카드에서는 표지 아래에 제목을 적는다. */
-const NO_TITLE = new Set(['original-actor'])
+/** 표지에 제목 글자를 얹지 않는 작품(2번 4분할·4번 가로 3단 — 얼굴만, 10/15 사용자 결정) — 카드에서는 표지 아래에 제목을 적는다. */
+const NO_TITLE = new Set(['original-actor', 'original-beauty'])
 export const coverShowsTitle = (s: { cover: string | null; slug: string }) => !!s.cover && !NO_TITLE.has(s.slug)
 
-/** 제목을 하단이 아니라 표지 한가운데에 두는 작품. */
-const CENTERED = new Set(['original-beauty'])
 const FRAMES: Record<string, () => ReactNode> = { 'original-academy': AcademyFrame }
 
 /** 작품별 제목 레터링. 줄마다 크기(em)·글꼴이 다르고, [글자, true] 는 강조색. 없는 작품은 한 줄 기본형. */
 type Part = string | [string, true]
 type Line = { parts: Part[]; em: number; font?: 'serif' | 'heavy'; spaced?: boolean }
 const LETTERING: Record<string, { font: 'serif' | 'heavy'; accent: string; lines: Line[] }> = {
-  'original-beauty': { font: 'serif', accent: 'linear-gradient(180deg,#ffe1ea,#e69ab0)', lines: [{ parts: [['거울', true], ' 무도회'], em: 2 }] },
   'original-actor': { font: 'heavy', accent: '', lines: [{ parts: ['각본'], em: 2.6 }] },
   'original-contract': { font: 'heavy', accent: 'linear-gradient(180deg,#ffd0d0,#d63a3a)', lines: [{ parts: ['궁합 ', ['0%', true]], em: 2.2 }] },
 }
@@ -109,10 +81,9 @@ export function CoverTitle({ title, slug, size = 'card' }: { title: string; slug
   return (<>
     {Frame && <span style={{ fontSize }}><Frame /></span>}
     <span aria-hidden="true" style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: size === 'hero' ? '96px 20px 30px' : '56px 8px 14px',
-      ...(CENTERED.has(slug) && { top: 0, padding: 0, justifyContent: 'center' }),
       display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', color: '#fff', lineHeight: 1.05,
       fontSize,
-      background: LIGHT.has(slug) ? 'none' : CENTERED.has(slug) ? 'radial-gradient(ellipse 58% 22% at 50% 50%, rgba(255,255,255,0.78) 0%, rgba(255,255,255,0.55) 35%, rgba(255,255,255,0.22) 65%, rgba(255,255,255,0) 100%)' : 'linear-gradient(to top, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0))' }}>
+      background: LIGHT.has(slug) ? 'none' : 'linear-gradient(to top, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0))' }}>
       {Design ? <Design /> : l.lines.map((ln, i) => (
         <span key={i} style={{ fontFamily: fam(ln.font ?? l.font), fontSize: `${ln.em}em`, letterSpacing: ln.spaced ? '0.28em' : '-0.03em', marginTop: i ? '0.12em' : 0,
           display: 'flex', alignItems: 'center', gap: '0.5em', whiteSpace: 'nowrap', opacity: ln.spaced ? 0.92 : 1,
