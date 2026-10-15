@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { currentUser } from '@/lib/auth'
-import { miroPage } from '@/lib/home'
+import { miroCatalog } from '@/lib/home'
 import { measured, metric } from '@/lib/observe'
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const startedAt = performance.now()
   try {
     const user = await measured('api.miro_auth', () => currentUser())
-    const page = await measured('api.miro_data', () => miroPage(user?.id ?? null, request.nextUrl.searchParams.get('cursor')))
+    const page = await measured('api.miro_data', () => miroCatalog(user?.id ?? null))
     const elapsedMs = metric('api.miro_total', startedAt)
     return NextResponse.json(page, { headers: { 'Cache-Control': 'private, no-store', 'Server-Timing': `app;dur=${elapsedMs}` } })
   } catch (error) {

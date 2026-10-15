@@ -1,5 +1,5 @@
 import { currentUser } from '@/lib/auth'
-import { miroPage } from '@/lib/home'
+import { miroCatalog } from '@/lib/home'
 import { LogoMark, Page } from '@/components/ui'
 import { MiroGrid } from './grid'
 import { PromoBanner } from '@/components/promo-banner'
@@ -14,7 +14,7 @@ import { getT } from '@/lib/i18n/server'
 export default async function Miro() {
   const t = await getT()
   const user = await currentUser()
-  const page = await measured('nav.miro_data', () => miroPage(user?.id ?? null))
+  const page = await measured('nav.miro_data', () => miroCatalog(user?.id ?? null))
 
   return (
     <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>

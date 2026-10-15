@@ -1,7 +1,7 @@
 import { HomeUnveilToggle } from './unveil-toggle'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
-import { homePage } from '@/lib/home'
+import { homeCatalog } from '@/lib/home'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { HomeFeed } from './feed'
@@ -19,7 +19,7 @@ export default async function Home() {
   const user = await currentUser()
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [page, unread, unveil] = await Promise.all([
-    measured('nav.home_data', () => homePage(user?.id ?? null)),
+    measured('nav.home_data', () => homeCatalog(user?.id ?? null)),
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
   ])

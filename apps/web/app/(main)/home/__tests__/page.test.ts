@@ -5,7 +5,7 @@ import Home from '../page'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 
 vi.mock('@/lib/auth', () => ({ currentUser: async () => ({ id: 'home-viewer' }) }))
-vi.mock('@/lib/home', () => ({ homePage: async () => ({ items: [], nextCursor: null }) }))
+vi.mock('@/lib/home', () => ({ homeCatalog: async () => ({ items: [], nextCursor: null }) }))
 vi.mock('@/lib/home-mode', () => ({ homeUnveilEnabled: vi.fn() }))
 vi.mock('@/lib/ops/archive', () => ({ unreadContactCount: async () => 0 }))
 vi.mock('@/lib/observe', () => ({ measured: (_: string, task: () => unknown) => task() }))

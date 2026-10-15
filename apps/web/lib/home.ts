@@ -30,7 +30,7 @@ const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w wher
  * 첫 베타는 미로 캐릭터만 보여준다(2026-09-30, E-57). 캐릭터챗은 목록에 나오지 않고 이미 연 대화만 이어진다.
  */
 export async function homeRows(): Promise<HomeRow[]> {
-  const { items } = await homePage(null)
+  const { items } = await homeCatalog(null)
 
   const rows: HomeRow[] = [
     { key: 'shared', title: msg('전체 이야기'), items },
@@ -92,7 +92,7 @@ function relationMatch(relations?: string[]): SQL | undefined {
   return sql`exists (select 1 from jsonb_array_elements_text(${characters.relationshipKeywords}) as keyword(value) where ${containsAny(sql.raw('keyword.value'), needles)})`
 }
 
-async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false): Promise<CardPage> {
+async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false, all = false): Promise<CardPage> {
   const unveil = await homeUnveilEnabled(userId)
   const sort = filter.sort ?? 'latest'
   const cursor = decodeCursor(cursorValue, sort)
@@ -106,7 +106,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
     lt(characters.createdAt, sql`${cursor.createdAt}::timestamptz`),
     and(eq(characters.createdAt, sql`${cursor.createdAt}::timestamptz`), lt(characters.id, cursor.id)),
   ) : undefined
-  const rows = await db.select({ ...pageColumns, sortScore: score })
+  const query = db.select({ ...pageColumns, sortScore: score })
     .from(characters)
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .where(and(
@@ -125,8 +125,9 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       ...(cursor ? [sort === 'latest' ? afterDate : or(lt(score, cursor.score), and(eq(score, cursor.score), afterDate))] : []),
     ))
     .orderBy(...(sort === 'latest' ? [] : [desc(score)]), desc(characters.createdAt), desc(characters.id))
-    .limit(PAGE_SIZE + 1)
-  let pageRows = rows.slice(0, PAGE_SIZE)
+    .$dynamic()
+  const rows = await (all ? query : query.limit(PAGE_SIZE + 1))
+  let pageRows = all ? rows : rows.slice(0, PAGE_SIZE)
   if (unveil && pageRows.length) {
     const eligible = await db.select({ id: characters.id, age: characters.age, role: characters.role, occupation: characters.occupation, socialPosition: characters.socialPosition, tagline: characters.tagline }).from(characters)
       .where(and(inArray(characters.id, pageRows.map(c => c.id)), sql`not coalesce((select vi.has_real_person_reference from character_visual_identities vi where vi.character_id = ${characters.id} and vi.is_active = true order by vi.version desc limit 1), false)`))
@@ -137,14 +138,17 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   const last = rows.slice(0, PAGE_SIZE).at(-1)
   return {
     items: pageRows.map(({ createdAtKey: _createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0 })),
-    nextCursor: rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify(sort === 'latest' ? [last.createdAtKey, last.id] : [last.createdAtKey, last.id, sort, last.sortScore])).toString('base64url') : null,
+    nextCursor: !all && rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify(sort === 'latest' ? [last.createdAtKey, last.id] : [last.createdAtKey, last.id, sort, last.sortScore])).toString('base64url') : null,
   }
 }
 
 /** 홈 = 미로 캐릭터(첫 베타는 캐릭터챗을 싣지 않는다, E-57). 로그인한 사람은 자기가 만든 비공개 캐릭터도 본다(2026-09-29). 장르·관계 칩으로 거른다(2026-09-30). */
 export const homePage = (userId: string | null, cursor: string | null = null, filter: CardFilter = {}) => cardPage('reality', userId, cursor, true, filter)
+/** 홈·검색은 더 보기 없이, 접근 가능한 캐릭터 전체를 현재 정렬 기준으로 보여준다. */
+export const homeCatalog = (userId: string | null, filter: CardFilter = {}) => cardPage('reality', userId, null, true, filter, false, true)
 /** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
 export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, {}, true)
+export const miroCatalog = (userId: string | null) => cardPage('reality', userId, null, true, {}, true, true)
 
 /** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */
 export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[]> {

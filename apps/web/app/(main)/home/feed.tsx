@@ -9,7 +9,6 @@ import { HomeContentTabs } from './content-tabs'
 import styles from './home.module.css'
 import { useT } from '@/lib/i18n/client'
 
-const unique = (items: HomeCard[]) => [...new Map(items.map(c => [c.id, c])).values()]
 const picture = (c: HomeCard) => c.images[0] ?? null
 
 /** 카드에 대화한 사람 수(말풍선 숫자)는 띄우지 않는다(2026-09-30 요청). */
@@ -29,7 +28,7 @@ export function StoryCard({ c }: { c: HomeCard }) {
   </TransitionLink>
 }
 
-/** 정렬·조건별로 목록과 커서를 보관해, 정렬을 바꿔도 다른 목록이 섞이지 않는다. */
+/** 정렬·조건별로 전체 목록을 보관해, 정렬을 바꿔도 다른 목록이 섞이지 않는다. */
 type Filter = { genres: string[]; relations: string[]; sort: HomeSort }
 const NONE: Filter = { genres: [], relations: [], sort: 'latest' }
 const listKey = (filter: Filter) => JSON.stringify([filter.genres, filter.relations, filter.sort])
@@ -48,19 +47,19 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
   /** 처음 여는 목록(장르·관계)은 빈 채로 기다린다 — 글 대신 가운데에서 튕기는 점 세 개(2026-09-30 요청). */
   const waiting = !list && busy
 
-  async function load(next: Filter, cursor: string | null = null) {
+  async function load(next: Filter) {
     const k = listKey(next)
     if (loading[k]) return
     setLoading(current => ({ ...current, [k]: true })); setFailed(current => ({ ...current, [k]: false }))
     try {
-      const params = new URLSearchParams(cursor ? { cursor } : {})
+      const params = new URLSearchParams()
       params.set('sort', next.sort)
       for (const genre of next.genres) params.append('genre', genre)
       for (const relation of next.relations) params.append('relation', relation)
       const response = await fetch(`/api/home/cards?${params}`, { cache: 'no-store' })
       if (!response.ok) throw new Error('LOAD_FAILED')
       const page: CardPage = await response.json()
-      setLists(current => ({ ...current, [k]: cursor && current[k] ? { items: unique([...current[k].items, ...page.items]), nextCursor: page.nextCursor } : page }))
+      setLists(current => ({ ...current, [k]: page }))
     } catch { setFailed(current => ({ ...current, [k]: true })) } finally { setLoading(current => ({ ...current, [k]: false })) }
   }
 
@@ -78,9 +77,8 @@ export function HomeFeed({ initial }: { initial: CardPage }) {
       {waiting
         ? <div role="status" className={`empty-state empty-state--fill ${styles.loadingDots}`}><i aria-hidden /><i aria-hidden /><i aria-hidden /><span className="sr-only">{t('불러오는 중')}</span></div>
         : busy && <p role="status">{t('불러오는 중')}</p>}
-      {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => load(filter, list?.nextCursor ?? null)}>{t('다시 시도')}</Button></p>}
+      {error && <p role="alert">{t('목록을 불러오지 못했어요.')} <Button type="button" size="sm" variant="ghost" onClick={() => load(filter)}>{t('다시 시도')}</Button></p>}
       {empty && <p className="empty-state empty-state--fill">{filter.genres.length || filter.relations.length ? t('고른 조건에 맞는 이야기가 아직 없어요') : t('아직 이야기가 없어요')}</p>}
-      {list?.nextCursor && <div style={{ display: 'flex', justifyContent: 'center', marginTop: 'var(--space-5)' }}><Button type="button" variant="secondary" onClick={() => load(filter, list.nextCursor)} disabled={busy}>{busy ? t('불러오는 중') : t('더 보기')}</Button></div>}
     </section>
 
   </div>

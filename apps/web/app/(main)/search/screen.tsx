@@ -74,21 +74,18 @@ export function SearchScreen() {
     return () => clearTimeout(timer)
   }, [draft, query, key, composing])
 
-  async function load(cursor: string | null = null) {
+  async function load() {
     request.current?.abort()
     const controller = new AbortController()
     request.current = controller
     setBusy(true); setFailed(false)
     try {
       const next = new URLSearchParams(key)
-      if (cursor) next.set('cursor', cursor)
       const response = await fetch(`/api/home/cards?${next}`, { signal: controller.signal, cache: 'no-store' })
       if (!response.ok) throw new Error('LOAD_FAILED')
       const incoming: CardPage = await response.json()
       if (controller.signal.aborted) return
-      setResult(previous => ({ key, page: cursor && previous?.key === key
-        ? { items: [...new Map([...previous.page.items, ...incoming.items].map(c => [c.id, c])).values()], nextCursor: incoming.nextCursor }
-        : incoming }))
+      setResult({ key, page: incoming })
     } catch { if (!controller.signal.aborted) setFailed(true) }
     finally { if (!controller.signal.aborted) setBusy(false) }
   }
@@ -140,9 +137,8 @@ export function SearchScreen() {
       <h2 id="search-results" className="sr-only">{t('검색 결과')}</h2>{active && <div className={styles.resultHeading}><button onClick={() => { setDraft(''); update(new URLSearchParams()) }}>{t('초기화')}</button></div>}
       <div className={cards.grid}>{page?.items.map(c => <StoryCard key={c.id} c={c} />)}</div>
       {busy && <p className={styles.status} role="status">{t('불러오는 중')}</p>}
-      {failed && <div className={styles.status} role="alert"><p>{t('목록을 불러오지 못했어요.')}</p><Button variant="ghost" onClick={() => page?.nextCursor ? load(page.nextCursor) : setRetry(n => n + 1)}>{t('다시 시도')}</Button></div>}
+      {failed && <div className={styles.status} role="alert"><p>{t('목록을 불러오지 못했어요.')}</p><Button variant="ghost" onClick={() => setRetry(n => n + 1)}>{t('다시 시도')}</Button></div>}
       {!busy && !failed && page?.items.length === 0 && <p className={styles.status}>{t('고른 조건에 맞는 이야기가 아직 없어요')}</p>}
-      {page?.nextCursor && !failed && <div className={styles.more}><Button variant="secondary" disabled={busy} onClick={() => load(page.nextCursor)}>{t('더 보기')}</Button></div>}
     </section>}
   </div>
 }
