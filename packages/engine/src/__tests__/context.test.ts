@@ -180,7 +180,7 @@ describe('context builder', () => {
     // A reality character's chat is the in-person scene; its messages and calls live in the Reality layer.
     const met = buildContext(snapshot({ userInput: '뭐해', experienceType: 'reality' }))
     expect(met.system).toMatch(/직접 만나 같은 공간에 있는 장면/)
-    expect(met.promptVersion).toBe('dialogue:v1+scene-beats+in-person')
+    expect(met.promptVersion).toBe('dialogue:v1+scene-beats+in-person+voice-conversation-v2')
     expect(m.system).not.toMatch(/직접 만나 같은 공간/)
     // A call is the reality layer: spoken words only, no narration or inner voice.
     expect(buildContext(snapshot({ userInput: '뭐해', mode: 'voice_call' })).system).not.toMatch(/thought 블록/)
@@ -196,10 +196,11 @@ describe('context builder', () => {
   it('keeps the agency renderer on the measured brief directive', () => {
     // 자율성 엔진의 검증기는 모든 서술에 근거를 요구한다 — 근거 없는 긴 장면 지시를 주지 않는다.
     const c = buildContext(snapshot({ userInput: '뭐해' }), 1, false, 'brief')
-    expect(c.system).toMatch(/상황 한 줄, 속마음 한 줄/)
+    expect(c.system).toContain('속마음과 몸짓을 자리 채우기로 붙이지 않습니다')
+    expect(c.system).not.toMatch(/상황 한 줄, 속마음 한 줄/)
     expect(c.system).not.toMatch(/500~900자/)
     expect(c.system).toContain('{"type":"dialogue","speaker":"character name","text":"response"}')
-    expect(c.promptVersion).toBe('dialogue:v1+scene-thought')
+    expect(c.promptVersion).toBe('dialogue:v1+scene-thought+voice-conversation-v2')
   })
 
   it('puts a character name with $ into the contract literally', () => {

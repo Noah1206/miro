@@ -79,13 +79,13 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   }, [draft, requestId, model, ready, storageKey])
   useEffect(() => {
     // 결과가 오면 오던 답(스트리밍)을 거둔다 — 성공이면 같은 렌더에서 저장본이 그 자리를 채우고, 실패면 저장되지 않은 답은 사라진다.
-    const streamed = !!live?.blocks.length
+    const playbackId = live?.playbackId
     setLive(null)
     if (state.succeeded) {
       void import('@/app/(main)/recharge/wallet-actions').then(m => m.readWallet()).then(sync).catch(() => {})
       if (state.messages?.length) {
-        // 답은 지금 붙이고, 관계·장소·선연락 같은 나머지는 뒤에서 조용히 맞춘다. 이미 흘려 보여 준 답은 다시 치지 않는다.
-        append(state.messages, { quiet: streamed })
+        // Keep the streaming row's identity: its current paragraph continues typing after persistence.
+        append(state.messages, { playbackId })
         startRefresh(() => router.refresh())
       }
     }

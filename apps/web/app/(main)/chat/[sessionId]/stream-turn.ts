@@ -7,9 +7,12 @@ import type { LiveTurn } from './turns'
  */
 export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null) => void): Promise<TurnState> {
   const input = String(form.get('input') ?? '').trim()
+  const requestId = String(form.get('requestId') ?? '') || 'live'
+  let attempt = 0
+  const live = (blocks: LiveTurn['blocks']): LiveTurn => ({ input, blocks, playbackId: `${requestId}:${attempt}` })
   // 액션 안에서 첫 await 전의 상태 변경은 액션이 끝날 때까지 미뤄진다 — 한 박자 넘겨 보낸 말이 바로 보이게.
   await Promise.resolve()
-  if (input) onLive({ input, blocks: [] })
+  if (input) onLive(live([]))
   const res = await fetch('/api/turn', { method: 'POST', body: form })
   if (!res.ok || !res.body) throw new Error('stream_failed')
   const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
@@ -22,8 +25,8 @@ export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null)
       const line = buffer.slice(0, nl); buffer = buffer.slice(nl + 1)
       if (!line.trim()) continue
       const event = JSON.parse(line) as { type: 'blocks'; blocks: LiveTurn['blocks'] } | { type: 'reset' } | { type: 'done'; state: TurnState }
-      if (event.type === 'blocks') onLive({ input, blocks: event.blocks })
-      else if (event.type === 'reset') onLive({ input, blocks: [] })
+      if (event.type === 'blocks') onLive(live(event.blocks))
+      else if (event.type === 'reset') { attempt++; onLive(live([])) }
       else {
         // The persisted result completes a turn. A proxy may keep the transport open afterwards.
         void reader.cancel().catch(() => {})

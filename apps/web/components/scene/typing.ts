@@ -11,7 +11,7 @@ export const TYPING_MS_PER_CHAR: Record<Mood, number> = {
 }
 
 /** 한 문단을 다 치는 데 걸릴 시간. 너무 긴 대사가 하염없이 흐르지 않게 상한을 둔다. */
-export const MAX_PARAGRAPH_MS = 1500
+export const MAX_PARAGRAPH_MS = 3000
 /** An authored opening is for reading the situation, so it keeps the natural rhythm even at 500 characters. */
 export const OPENING_PARAGRAPH_MS = 16000
 
@@ -48,8 +48,8 @@ export function charsPerTick(speed: number): number {
   return Math.max(1, Math.ceil(MIN_TICK_MS / speed))
 }
 
-/** 한 응답 전체를 치는 데 쓸 시간의 대략적 상한. 10/5: 12초 → 4초 — 서버 생성(약 8초) 뒤에 또 기다리게 하지 않는다. */
-export const MAX_REPLY_MS = 4000
+/** Keep incoming scene paragraphs readable while they type; the composer is already available after persistence. */
+export const MAX_REPLY_MS = 10000
 
 /**
  * 응답 전체의 빠르기(1 = 기분 그대로). 캐릭터챗 답은 장면 하나라 문단이 5~8개다 (2026-09-26) —

@@ -1,7 +1,6 @@
 'use client'
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ease } from '@/lib/motion/tokens'
+import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
 import { Popover, MenuItem } from '@/components/ui'
@@ -27,30 +26,30 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 }) {
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
   const t = useT()
-  const reduce = useReducedMotion()
-  const { appended, quiet, live } = useTurns()
+  const { appended, quiet, playbackKeys, live } = useTurns()
   const known = new Set(server.map((m) => m.id))
   // 오고 있는 답(스트리밍)은 맨 뒤에 — 보낸 말과 지금까지 받은 블록. 저장된 답이 오면 사라지고 그 자리를 저장본이 채운다.
-  const liveItems: Msg[] = live ? [{ id: 'live-user', role: 'user', kind: 'text', content: live.input, blocks: [] },
-    ...(live.blocks.length ? [{ id: 'live-reply', role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
+  const liveKey = live?.playbackId ?? 'live'
+  const liveItems: Msg[] = live ? [{ id: `${liveKey}:user`, role: 'user', kind: 'text', content: live.input, blocks: [] },
+    ...(live.blocks.length ? [{ id: `${liveKey}:reply`, role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
   const settled = [...server, ...appended.filter((m) => !known.has(m.id))]
   const items = [...settled, ...liveItems]
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
-  const displayed = settled.filter(opening.visible)
+  const displayed = items.filter(opening.visible)
+  const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
   const end = useRef<HTMLDivElement>(null)
   const log = useRef<HTMLDivElement>(null)
   const following = useRef(true)
   const wasStreaming = useRef(false)
   // 이미 화면에 있던 메시지는 다시 치지 않는다. 처음 열 때 전부 다시 치면 대화가 재생된다.
   const seen = useRef<Set<string> | null>(null)
-  if (seen.current === null) seen.current = new Set(items.map((m) => m.id))
-  // 스트리밍으로 이미 본 답은 저장본으로 바뀌어도 다시 치지 않는다. 오는 중인 답은 블록이 생기는 대로 그대로 보인다.
-  for (const id of [...quiet, 'live-reply']) seen.current.add(id)
+  if (seen.current === null) seen.current = new Set(items.map(keyOf))
+  for (const id of quiet) seen.current.add(playbackKeys.get(id) ?? id)
   const last = items[items.length - 1]
   // 치는 중인 메시지는 한 번 정해지면 다음 메시지가 올 때까지 바뀌지 않는다 — 백그라운드 refresh 로 목록이 갈려도 타이핑이 끊기지 않는다.
   const typing = useRef<string | null>(null)
-  if (last && last.role !== 'user' && !seen.current.has(last.id)) typing.current = last.id
-  else if (!last || typing.current !== last.id) typing.current = null
+  if (last && last.role !== 'user' && !seen.current.has(keyOf(last))) typing.current = keyOf(last)
+  else if (!last || typing.current !== keyOf(last)) typing.current = null
   const typingId = typing.current
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
@@ -60,7 +59,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     wasStreaming.current = !!live
     follow()
   }, [items.length, displayed.length, !!live, live?.blocks.length, follow])
-  useEffect(() => { for (const m of items) seen.current!.add(m.id) }, [items])
+  useEffect(() => { for (const m of items) seen.current!.add(keyOf(m)) }, [items, playbackKeys])
   useEffect(() => {
     const transcript = end.current?.parentElement
     if (!transcript) return
@@ -121,18 +120,12 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       } : undefined}>
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
-          <Line key={m.id} {...(quiet.has(m.id) ? { initial: false } : {})}>
+          <Line key={keyOf(m)} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait}
-              typing={m.id === opening.activeId || m.id === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
+              typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
           </Line>
         ))}
       </AnimatePresence>
-      {/* 오고 있는 답은 사라질 때 애니메이션 없이 — 저장본과 잠깐 겹쳐 두 번 보이지 않게. */}
-      {liveItems.map((m) => <motion.div key={m.id}
-        initial={reduce || m.role !== 'user' ? false : { opacity: 0, y: 18, scale: .98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: reduce ? 0 : .32, ease: ease.enter }} style={{ transformOrigin: 'bottom right' }}>
-        <Message m={m} characterName={characterName} portrait={portrait} mood={mood} onGrow={follow} />
-      </motion.div>)}
     </div>
     {opening.playing && <button type="button" className={styles.openingSkip} onClick={opening.finish}>{t('인트로 전체 보기')}</button>}
     <div ref={end} aria-hidden />

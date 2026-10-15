@@ -27,6 +27,9 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
 }) {
   const reduce = useReducedMotion()
   const instant = !animate || reduce
+  // Newly received blocks can change the reply's pace/mood. Finish the current
+  // paragraph at its original rhythm instead of restarting it at every update.
+  const [rhythm] = useState(() => ({ mood, pace, maxParagraphMs }))
   const [shown, setShown] = useState(() => (instant ? text.length : 0))
   const done = useRef(onDone)
   done.current = onDone
@@ -39,6 +42,7 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
     setShown(0)
     let i = 0
     let timer: ReturnType<typeof setTimeout>
+    const { mood, pace, maxParagraphMs } = rhythm
     const speed = msPerChar(text, mood, pace, maxParagraphMs)
     // 긴 문단이라 글자 속도를 줄였으면 멈칫도 같은 비율로 줄인다 — 멈칫이 상한 밖에서 시간을 늘리지 않게.
     const squeeze = Math.min(1, speed / (TYPING_MS_PER_CHAR[mood] * pace))
@@ -52,7 +56,7 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
     }
     timer = setTimeout(step, speed * chunk)
     return () => clearTimeout(timer)
-  }, [text, mood, instant, pace, maxParagraphMs])
+  }, [text, instant, rhythm])
 
   // 자르는 위치가 **강조** 한가운데면 별표가 글자로 보인다 — 짝이 맞는 데까지만 넘긴다.
   const visible = instant ? text : trimToPair(text.slice(0, shown))

@@ -102,7 +102,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
     `- action 블록(speaker "${name}"): 대사 직전이나 직후의 짧은 행동·표정 1~2문장.`,
     `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 문장 수를 채우지 말고 상대가 실제로 한 말에 답합니다. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
     '- thought 블록: 말과 행동만으로 전달되지 않는 속마음이 필요할 때만 1~2문장. 이미 드러낸 감정을 해설하지 않습니다.',
-    '- 장면 진행: 매 응답에서 캐릭터 쪽 행동 하나가 장면을 앞으로 움직입니다. 앞 턴에 캐릭터가 꺼낸 일은 이어서 마저 합니다. 일상적인 말에는 멈칫하거나 굳지 않고 일상적으로 반응합니다.',
+    '- 장면 진행: 앞 턴에 캐릭터가 꺼낸 일과 하던 행동을 이어 갑니다. 대답을 들었으면 같은 확인을 반복하지 않고 자기 쪽 반응을 실제로 진행합니다. 대사 한마디로 충분히 진전되는 순간에는 행동·상황·속마음을 억지로 추가하지 않습니다. 일상적인 말에는 일상적으로 반응합니다.',
     `- 분량: ${size}. 자연스럽게 끝난 답을 글자 수 때문에 늘리지 않습니다. 사용자가 짧게 답할 때는 짧은 응답도 가능합니다.`,
     '- 문체: 장면을 읽는 사람이 아니라 그 자리에 있는 사람의 대화로 씁니다. 말줄임표·대시로 문장을 계속 끊거나, 같은 뜻의 짧은 문장을 쌓지 않습니다. 추상적인 분위기 해설, 억지 비유, 매번 숨을 멈추거나 눈빛이 달라지는 반응을 피합니다. 이미 아는 설정은 다시 소개하지 않습니다.',
     '- 대사: 인물의 직업·나이·관계에 맞는 말투를 유지합니다. 침묵이나 화제 회피도 구체적인 상황에 근거해야 합니다. 속사정과 비밀을 첫 질문에 모두 설명하지 않습니다. 사용자를 평가하거나 감정의 의미를 정리해 주는 상담식 마무리를 하지 않습니다.',
@@ -119,17 +119,16 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
 }
 
 /**
- * 입력 길이에 맞춘 9/24 지시문. 자율성 엔진(runAgencyTurn)만 쓴다 — 그쪽 검증기는 모든 서술에 근거를 요구하고
- * 기다림·미룸 결정은 짧게 답해야 해서, 근거 없는 감각 서술을 500자 넘게 요구하는 장면 지시와 맞지 않는다.
+ * 자율성의 짧은 응답도 같은 목소리로 말한다. 상황·속마음·대사 세 칸을 매번 채우지 않는다.
  */
 function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, tense: boolean): string {
-  const base = USER_VIEWPOINT + '\n- 응답 구성: 매 응답에 상황과 속마음을 담습니다. 캐릭터의 행동·표정과 장면의 분위기를 action 또는 narrative 블록으로, 말하지 않은 속마음을 thought 블록 한 줄로 쓰고, 대사를 붙입니다. 순서와 분량은 장면, 캐릭터의 성격·말투, 관계의 거리, 세계의 공기에 맞춰 고릅니다.'
+  const base = USER_VIEWPOINT + '\n- 응답 구성: 사용자의 말 중 이 인물에게 중요한 부분에 자기 말투로 반응하고, 앞서 하던 일과 대화를 이어 갑니다. action·narrative·thought는 말만으로 전달되지 않는 새 정보가 있을 때만 씁니다. 상황·속마음·대사의 고정 순서나 개수를 채우지 않습니다. 대사만으로 충분한 순간도 있습니다. 작성된 말끝·호칭·문장 길이를 유지하고, 사용자 문장을 되풀이한 뒤 감사·사과·질문을 붙이는 틀을 피합니다.'
   const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다. 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
   const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
   if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 줍니다.' + thought
   if (input.length > 60) return base + ' 일상 장면은 짧게, 중요한 장면은 길게.' + thought
-  return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 상황 한 줄, 속마음 한 줄, 짧은 대사로 가볍게 씁니다.' + thought
+  return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 장면에 맞는 짧은 반응도 충분합니다. 속마음과 몸짓을 자리 채우기로 붙이지 않습니다.' + thought
 }
 
 /** scene: 캐릭터챗의 장면 하나(기본, MIRO). long: 더 긴 장면(ECHO). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
@@ -174,7 +173,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v2`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
@@ -305,6 +304,7 @@ function sampleLines(c: SimulationSnapshot['character']): string[] {
   return [
     '',
     '## 말투 예시 (이 캐릭터는 이렇게 말한다 — 분위기와 말투만 따르고 문장을 그대로 반복하지 않는다)',
+    '견본은 사건의 사실이 아니라 목소리의 기준입니다. 캐릭터 대사의 말끝·호칭·문장 길이·말을 돌리거나 곧장 말하는 방식을 지금 상대와의 관계에 맞춰 사용합니다. 견본의 단어에 사용자 입력을 끼워 넣어 복사하지 않습니다.',
     ...turns.slice(0, 20).map((t) => {
       const text = t.text.trim().slice(0, 300)
       return t.role === 'narrator' ? `(서술) ${text}` : t.role === 'user' ? `유저: ${text}` : `${name}: ${text}`

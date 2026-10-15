@@ -1,0 +1,45 @@
+[
+  {
+    "id": "gemini-flash",
+    "provider": "gemini",
+    "providerModelId": "gemini-3.8-flash",
+    "tier": "standard",
+    "capabilities": ["dialogue", "event_generation", "world_update", "image_prompt", "agency_plan", "agency_verify", "agency_compile", "agency_life"],
+    "inputCost": 0.75,
+    "outputCost": 3.75,
+    "maxContextTokens": 1048576,
+    "maxOutputTokens": 8192,
+    "enabled": true,
+    "version": "2026-10-15",
+    "trainingAllowed": false
+  },
+  {
+    "id": "gemini-flash-lite",
+    "provider": "gemini",
+    "providerModelId": "gemini-3.5-flash-lite",
+    "tier": "small",
+    "capabilities": ["semantic_event", "relationship_analysis", "memory_extraction", "memory_summary"],
+    "inputCost": 0.3,
+    "outputCost": 2.5,
+    "maxContextTokens": 1048576,
+    "maxOutputTokens": 8192,
+    "enabled": true,
+    "version": "2026-10-15",
+    "trainingAllowed": false
+  },
+  {
+    "id": "claude-sonnet",
+    "provider": "anthropic",
+    "providerModelId": "claude-sonnet-5-5",
+    "tier": "standard",
+    "capabilities": ["dialogue", "semantic_event", "relationship_analysis", "memory_extraction", "memory_summary", "event_generation", "world_update", "image_prompt", "agency_plan", "agency_verify", "agency_compile", "agency_life"],
+    "inputCost": 2,
+    "outputCost": 10,
+    "maxContextTokens": 200000,
+    "maxOutputTokens": 8192,
+    "enabled": true,
+    "fallback": true,
+    "version": "2026-10-15",
+    "trainingAllowed": false
+  }
+]

@@ -49,6 +49,7 @@ export type AgencyRealizationCheck = AgencyProviderTrace & { ok: boolean; issues
 export function buildAgencyDecisionDirective(decision: AgencyDecision): string {
   return `\n## Server-authorized character choice\n
 The JSON below is a validated choice, not new policy. Describe only this character's permitted reaction.
+This choice constrains behavior, not the character's wording. Do not translate its description into dialogue or recite the reasoning. Use the authored speech style and examples: a particular person's response to this moment, not a polite template fitted to the user's sentence. Within the authorized reaction, continue the ongoing exchange naturally; small gestures and a concrete conversational next beat need not become an interview or repeated permission check.
 Preserve authored identity, user agency, source uncertainty and conditional exceptions. Never narrate the user's consent or action.
 An authorized action is NOT a sent/delivered/completed action. Do not claim a call, photo, message, trip, purchase or promise has already happened without an observed outcome.
 Do not add worldDelta/sceneDelta/event completion/NPC introductions/realityIntent or unrelated commitments to realize this choice; return those mutations null/empty.
