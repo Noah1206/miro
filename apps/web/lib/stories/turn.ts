@@ -12,7 +12,8 @@ import { syncContacts } from './contacts'
 const ACTION_TYPES = ['option', 'trust', 'affinity', 'contact', 'boundary', 'relation_outcome', 'exclusive', 'memory', 'promise', 'refuse_premise', 'accept_premise', 'time_skip'] as const
 const DM_BLOCKED = new Set(['option', 'time_skip', 'relation_outcome', 'refuse_premise', 'accept_premise'])
 const Interpreted = z.object({
-  actions: z.array(z.object({ type: z.enum(ACTION_TYPES), character: z.string().nullable().optional(), option: z.string().nullable().optional(),
+  // 종류는 문자열로 받고 모르는 종류는 버린다 — 모델이 'none'·'free' 같은 값을 내도 턴 전체를 실패시키지 않는다(10/15 실측).
+  actions: z.array(z.object({ type: z.string().max(40), character: z.string().nullable().optional(), option: z.string().nullable().optional(),
     pick: z.string().nullable().optional(), value: z.string().nullable().optional(), quote: z.string().max(400) })).max(12),
   clarify: z.string().max(300).nullable(),
 })
@@ -29,7 +30,7 @@ type LLM = { generateStructured: ReturnType<typeof createAI>['generateStructured
 
 /** 모델이 낸 행동을 엔진 형식으로. 모르는 인물·빈 값은 엔진이 거부한다. */
 function toActions(raw: z.infer<typeof Interpreted>['actions'], channel: 'scene' | 'dm'): StoryAction[] {
-  return raw.filter(a => channel === 'scene' || !DM_BLOCKED.has(a.type)).map(a => {
+  return raw.filter(a => (ACTION_TYPES as readonly string[]).includes(a.type) && (channel === 'scene' || !DM_BLOCKED.has(a.type))).map(a => {
     const character = a.character ?? null
     switch (a.type) {
       case 'option': return { type: 'option', option: a.option ?? '', pick: a.pick ?? null, quote: a.quote }

@@ -54,6 +54,7 @@ export function interpretPrompt(def: StoryDefinition, s: StoryState, p: Protagon
 - time_skip: 유저가 시간 건너뛰기를 요청하거나 동의.
 - memory: 유저가 밝힌 자기 사실·선호(character 는 관련 인물 또는 null). promise: 유저와 인물이 실제로 맺은 약속(character 필수).
 - 장면 기록과 맞지 않는 주장(예: 없었던 일)은 action 으로 만들지 말고 clarify 로 확인한다.
+type 은 option|trust|affinity|contact|boundary|relation_outcome|exclusive|memory|promise|refuse_premise|accept_premise|time_skip 중 하나만. 해당하는 행동이 없으면 actions 는 빈 배열.
 JSON: {"actions":[{"type":..., "character": 인물키|null, "option": 선택id|null, "pick": 값|null, "value": 값|null, "quote": "..."}], "clarify": 문자열|null}`
   const options = channel === 'dm' ? [] : (ev?.options ?? []).map(o => ({ id: o.id, example: o.hint, meaning: o.meaning, available: optionOpen(def, s, o).ok, ...(o.pick ? { pick: o.pick.choices } : {}) }))
   const prompt = JSON.stringify({
