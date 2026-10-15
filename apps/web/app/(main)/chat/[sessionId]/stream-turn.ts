@@ -8,8 +8,11 @@ import type { LiveTurn } from './turns'
 export async function streamTurn(form: FormData, onLive: (live: LiveTurn | null) => void): Promise<TurnState> {
   const input = String(form.get('input') ?? '').trim()
   const requestId = String(form.get('requestId') ?? '') || 'live'
+  // Transport recovery reuses requestId for server deduplication, but the new
+  // visual playback must not inherit a failed stream's already-seen rows.
+  const playback = `${requestId}:${crypto.randomUUID()}`
   let attempt = 0
-  const live = (blocks: LiveTurn['blocks']): LiveTurn => ({ input, blocks, playbackId: `${requestId}:${attempt}` })
+  const live = (blocks: LiveTurn['blocks']): LiveTurn => ({ input, blocks, playbackId: `${playback}:${attempt}` })
   // 액션 안에서 첫 await 전의 상태 변경은 액션이 끝날 때까지 미뤄진다 — 한 박자 넘겨 보낸 말이 바로 보이게.
   await Promise.resolve()
   if (input) onLive(live([]))

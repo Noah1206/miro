@@ -26,6 +26,17 @@ it('keeps a playback identity while blocks arrive and replaces it when a generat
   const form = new FormData(); form.set('requestId','request-1'); form.set('input','왔어.')
   const onLive = vi.fn()
   await streamTurn(form,onLive)
-  expect(onLive.mock.calls.map(([live])=>live.playbackId)).toEqual(['request-1:0','request-1:0','request-1:0','request-1:1','request-1:1'])
+  const initial = onLive.mock.calls[0]![0].playbackId
+  expect(initial).toMatch(/^request-1:.+:0$/)
+  expect(onLive.mock.calls.map(([live])=>live.playbackId)).toEqual([initial,initial,initial,initial.replace(/:0$/,':1'),initial.replace(/:0$/,':1')])
   expect(onLive.mock.calls[2]?.[0].blocks).toEqual(second)
+})
+it('starts fresh visual playback when retrying the same idempotent request after a transport failure', async () => {
+  vi.spyOn(globalThis,'fetch').mockImplementation(async () => new Response('{"type":"reset"}\n'))
+  const form = new FormData(); form.set('requestId','same-request'); form.set('input','다시')
+  const first = vi.fn(), retry = vi.fn()
+  await expect(streamTurn(form,first)).rejects.toThrow('stream_incomplete')
+  await expect(streamTurn(form,retry)).rejects.toThrow('stream_incomplete')
+  expect(first.mock.calls[0]![0].playbackId).not.toBe(retry.mock.calls[0]![0].playbackId)
+  expect(form.get('requestId')).toBe('same-request')
 })
