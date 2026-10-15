@@ -12,8 +12,8 @@ export const PLANNED_RECHARGE_TIERS = [
   { priceKRW: 50000, units: 7500 },
 ] as const
 
-/** 가입 보상 — 2026-09-30 사용자 결정: 온보딩을 마치면 300 unit(가장 작은 충전 상품만큼), 7일 뒤 소멸. 계정당 한 번. */
-export const WELCOME_GRANT = { units: 300, validDays: 7 } as const
+/** 가입 보상 — 2026-10-16: 첫 가입 설정을 마치면 1,000토큰, 7일 뒤 소멸. 계정당 한 번. */
+export const WELCOME_GRANT = { units: 1000, validDays: 7 } as const
 
 /**
  * 충전 상품 카탈로그. 가격·제공량·유효기간은 Product Decision 이라 코드에 박지 않는다.

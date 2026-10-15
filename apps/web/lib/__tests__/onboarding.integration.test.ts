@@ -67,7 +67,7 @@ describeDb('온보딩 저장', () => {
     expect(s!.marketingConsentAt).not.toBeNull()
     expect(s!.nightMarketingConsentAt).toBeNull()
     const [g] = await db.select().from(rechargeGrants).where(eq(rechargeGrants.userId, id))
-    expect(g).toMatchObject({ amount: 300, source: 'grant', provider: 'welcome', externalRef: id })
+    expect(g).toMatchObject({ amount: 1000, source: 'grant', provider: 'welcome', externalRef: id })
     const days = (g!.expiresAt!.getTime() - g!.createdAt.getTime()) / 86_400_000
     expect(days).toBeGreaterThan(6.99); expect(days).toBeLessThan(7.01)
 
