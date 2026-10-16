@@ -42,6 +42,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const history = sceneMessages(all)
 
   const s = loaded.snapshot
+  const affinity = Math.max(0, Math.min(100, Math.round(s.relationship.attraction)))
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
@@ -57,7 +58,11 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
+          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1>
+            {/* 호감은 숫자 그대로, 마음을 여는 속도는 막대 색으로만(10/16 사용자 결정 — 속도 글자는 보이지 않는다). */}
+            <p className={styles.affinity} data-pace={s.character.personality.relationshipProfile?.opening?.value ?? 'normal'}>
+              <span>{t('호감 {n}%', { n: affinity })}</span><span className={styles.affinityBar} aria-hidden="true"><i style={{ width: `${affinity}%` }} /></span>
+            </p></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
           {loaded.experienceType === 'reality' && (
