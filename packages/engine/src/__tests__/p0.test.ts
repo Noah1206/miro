@@ -4,7 +4,7 @@ import { runTurn } from '../orchestrator'
 import { UnsafeContentError } from '../safety'
 import { analyzeMemory, memoryResult, planTasks } from '../task-router'
 import { buildMockProposal } from '../mock-rp'
-import { snapshot } from './fixtures'
+import { recordedConversationReview, snapshot } from './fixtures'
 import { buildContext } from '../context'
 
 afterEach(() => vi.unstubAllEnvs())
@@ -17,7 +17,7 @@ describe('P0 safety and memory', () => {
       .rejects.toBeInstanceOf(UnsafeContentError)
     expect(tasks).toEqual(['dialogue'])
     const ok = await runTurn({ llm: live(async o => { tasks.push(o.task); return o.task === 'agency_verify'
-      ? { acceptable: true, blockIndex: 0, reason: 'none' } : buildMockProposal(o.prompt, { characterName: '토마스' }) }), snapshot: snapshot(), userInput: '안녕하세요' })
+      ? recordedConversationReview(o) : buildMockProposal(o.prompt, { characterName: '토마스' }) }), snapshot: snapshot(), userInput: '안녕하세요' })
     expect(ok.providerMode).toBe('live')
     expect(tasks).toEqual(['dialogue', 'dialogue', 'agency_verify'])
   })

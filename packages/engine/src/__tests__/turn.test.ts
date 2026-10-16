@@ -3,10 +3,10 @@ import { AIOrchestrator, MockAIProvider, type GenerationRequest, type LLMProvide
 import { runTurn } from '../orchestrator'
 import { planTasks } from '../task-router'
 import { buildMockProposal } from '../mock-rp'
-import { snapshot, relationship } from './fixtures'
+import { recordedConversationReview, snapshot, relationship } from './fixtures'
 
 const llm = (over: Record<string, unknown> = {}) => new AIOrchestrator({ chain: [
-  new MockAIProvider((req: GenerationRequest) => req.task === 'agency_verify' ? { acceptable: true, blockIndex: 0, reason: 'none' }
+  new MockAIProvider((req: GenerationRequest) => req.task === 'agency_verify' ? recordedConversationReview(req)
     : ({ ...buildMockProposal(req.prompt, { characterName: '토마스' }), ...over })),
 ] })
 
@@ -151,7 +151,7 @@ describe('runTurn — state update pipeline', () => {
     // 통화·Live Scene 은 등급을 넘기지 않는다 — dialogue 모델 상한(ECHO 때문에 4096)을 물려받지 않는다.
     const seen: Array<number | undefined> = []
     const llm = { info: { mode: 'live' as const, name: 'test', notice: null }, generateStructured: async (o: { task?: string; maxTokens?: number; prompt: string }) => {
-      if (o.task === 'agency_verify') return { acceptable: true, blockIndex: 0, reason: 'none' }
+      if (o.task === 'agency_verify') return recordedConversationReview(o)
       seen.push(o.maxTokens); return buildMockProposal(o.prompt, { characterName: '토마스' })
     } }
     await runTurn({ llm: llm as never, snapshot: snapshot(), userInput: '안녕' })
@@ -161,7 +161,7 @@ describe('runTurn — state update pipeline', () => {
   it('writes the longer ECHO scene only when the tier asks for it', async () => {
     const systems: string[] = [], versions: (string | undefined)[] = []
     const capturing = () => new AIOrchestrator({ chain: [
-      new MockAIProvider((req: GenerationRequest) => { if (req.task === 'agency_verify') return { acceptable: true, blockIndex: 0, reason: 'none' }; if (req.task === 'dialogue') { systems.push(req.system); versions.push(req.promptVersion) } return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
+      new MockAIProvider((req: GenerationRequest) => { if (req.task === 'agency_verify') return recordedConversationReview(req); if (req.task === 'dialogue') { systems.push(req.system); versions.push(req.promptVersion) } return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
     ] })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕' })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', replyLength: 'long' })
@@ -173,7 +173,7 @@ describe('runTurn — state update pipeline', () => {
   it('asks for the tier output limit, still bounded by what the model allows', async () => {
     const seen: (number | undefined)[] = []
     const capturing = () => new AIOrchestrator({ chain: [
-      new MockAIProvider((req: GenerationRequest) => { if (req.task === 'agency_verify') return { acceptable: true, blockIndex: 0, reason: 'none' }; seen.push(req.maxTokens); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
+      new MockAIProvider((req: GenerationRequest) => { if (req.task === 'agency_verify') return recordedConversationReview(req); seen.push(req.maxTokens); return buildMockProposal(req.prompt, { characterName: '토마스' }) }),
     ] })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', maxOutputTokens: 512 })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', maxOutputTokens: 4096 })

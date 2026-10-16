@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import { createAgencyState, type AgencyEvidence, type AuthoredDocument } from '@miro/domain'
 import type { LLMProvider } from '@miro/providers'
+import { recordedConversationReview } from '../../__tests__/fixtures'
 import { AgencyCompilerProposalSchema, compileAuthoredCharacter, hashAuthoredCharacter } from '../compiler'
 import { AgencyPlanProposalSchema, type AgencyPlanningContext } from '../planner'
 
@@ -58,6 +59,8 @@ export function recordedProvider(outputs: unknown[], calls: Array<{ task?: strin
       const next = queue.shift()
       if (next instanceof Error) throw next
       if (next === undefined) throw new Error('recorded_output_exhausted')
+      if (opts.promptVersion === 'agency-communication-check:v4' && typeof next === 'object' && next && 'acceptable' in next)
+        return opts.schema.parse(recordedConversationReview(opts, next as { acceptable: boolean; blockIndex?: number; reason?: string }))
       return opts.schema.parse(next)
     },
   }

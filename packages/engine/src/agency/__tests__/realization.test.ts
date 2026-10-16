@@ -26,8 +26,8 @@ describe('authorized decision realization', () => {
       return base.generateStructured(request)
     } }
     expect((await verifyAgencyRealization(llm, input, { review: false })).ok).toBe(true)
-    expect(ceiling).toBeLessThan(12_000)
-    expect(output).toBeLessThanOrEqual(192)
+    expect(ceiling).toBeLessThanOrEqual(24_000)
+    expect(output).toBeLessThanOrEqual(1536)
   })
 
   it('reviews a conversational preference even when the reply has no action or promise', async () => {
@@ -37,7 +37,7 @@ describe('authorized decision realization', () => {
     const checked = await verifyAgencyRealization(recordedProvider([{ acceptable: false, blockIndex: 0 }], calls), input)
     expect(checked).toMatchObject({ ok: false, reviewed: true })
     expect(checked.issues.some(issue => issue.reason === 'violates_boundary')).toBe(true)
-    expect(calls[0]!.promptVersion).toBe('agency-communication-check:v3')
+    expect(calls[0]!.promptVersion).toBe('agency-communication-check:v4')
   })
 
   it('provides an explicit authorized-not-completed contract and decision ID', async () => {

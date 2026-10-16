@@ -6,7 +6,7 @@ import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { UnsafeContentError } from '../safety'
 import { runTurn } from '../orchestrator'
 import type { AgencyTurnInput } from '../agency-turn'
-import { event, snapshot, relationship } from './fixtures'
+import { recordedConversationReview, event, snapshot, relationship } from './fixtures'
 
 const now = '2026-09-24T12:00:00.000Z'
 const statement = '상대를 소유하려 하지 않는다.'
@@ -45,10 +45,10 @@ function provider(options: StubOptions = {}) {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
-      if (request.promptVersion === 'agency-communication-check:v3') {
+      if (request.promptVersion === 'agency-communication-check:v4') {
         const checks = calls.filter(c => c.version === request.promptVersion).length
         const reject = typeof options.rejectRealization === 'number' ? checks <= options.rejectRealization : Boolean(options.rejectRealization)
-        return request.schema.parse({ acceptable: !reject, blockIndex: 0 })
+        return request.schema.parse(recordedConversationReview(request, { acceptable: !reject, blockIndex: 0 }))
       }
       if (request.promptVersion === 'agency-realization-check:v5') {
         const payload = JSON.parse(request.prompt)
@@ -76,10 +76,10 @@ describe('runTurn agency integration', () => {
     let renders = 0, checks = 0
     const good = '할머니가 주신 물건이라면 쉽게 버리기 어렵겠어요.'
     const llm: LLMProvider = { ...stub.llm, async generateStructured(request) {
-      if (request.promptVersion === 'agency-communication-check:v3') {
+      if (request.promptVersion === 'agency-communication-check:v4') {
         checks++
         expect(JSON.parse(request.prompt).groundingEvidence).toContainEqual(expect.objectContaining({ id: 'current-user-input', text: current }))
-        return request.schema.parse({ acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'unsupported_user_history' })
+        return request.schema.parse(recordedConversationReview(request, { acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'unsupported_user_history' }))
       }
       if (request.task === 'dialogue') {
         const draft = { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: ++renders === 1 ? '사연에서 밤마다 책을 읽다 잠든다고 하셨을 때 그 책갈피군요.' : good }] } }
@@ -105,7 +105,7 @@ describe('runTurn agency integration', () => {
     const s = snapshot({ turnCount: 120, recentMessages: Array.from({ length: 12 }, (_, i) => ({ id: `later-${i}`, role: 'user', content: '책이 두껍네.' })) })
     const result = await runTurn({ llm: stub.llm, snapshot: s, userInput: '오늘도 책을 읽자.', agency: input })
     expect(result.agency?.verification.reviewed).toBe(true)
-    const review = stub.calls.find(call => call.version === 'agency-communication-check:v3')!
+    const review = stub.calls.find(call => call.version === 'agency-communication-check:v4')!
     expect(JSON.parse(review.prompt).preferenceEvidence).toContainEqual({ sourceId: old.id, text: old.quote, occurredAt: old.occurredAt, kind: 'user_quote' })
     expect(stub.calls.find(call => call.version === 'agency-dialogue:v6')!.prompt).toContain(old.quote)
   })
@@ -123,7 +123,7 @@ describe('runTurn agency integration', () => {
     const result = await runTurn({ llm, snapshot: snapshot(), userInput: text, agency: input,
       stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { throw new Error('Rejected draft was shown') } } })
     expect(result.agency?.verification).toMatchObject({ ok: true, reviewed: true })
-    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v3')).toHaveLength(2)
+    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v4')).toHaveLength(2)
     const renders = stub.calls.filter(call => call.version === 'agency-dialogue:v6')
     expect(renders).toHaveLength(2)
     expect(renders[1]!.prompt).toContain('원하지 않은 과찬을 다른 과찬으로 바꾸지 말고')
@@ -170,7 +170,7 @@ describe('runTurn agency integration', () => {
     expect(input.state.sequence).toBe(0)
     // Ordinary replies receive the compact user-grounding check, without a full canon audit.
     expect(result.agency?.verification.reviewed).toBe(true)
-    expect(stub.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v6', 'agency-communication-check:v3'])
+    expect(stub.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v6', 'agency-communication-check:v4'])
     expect(stub.calls[1]?.system).toContain('Server-authorized character choice')
   })
   it('shadow planning never changes the legacy turn or returns state for persistence', async () => {
@@ -210,7 +210,7 @@ describe('runTurn agency integration', () => {
   it('returns the risky realization for deferred review without silently replacing the already-rendered reply', async () => {
     const once = provider({ rejectRealization: true, proposal: reviewed() })
     const llm: LLMProvider = { ...once.llm, async generateStructured(request) {
-      if (request.promptVersion === 'agency-communication-check:v3') return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
+      if (request.promptVersion === 'agency-communication-check:v4') return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
       return once.llm.generateStructured(request)
     } }
     const result = await runTurn({ llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })

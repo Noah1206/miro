@@ -1,6 +1,18 @@
 import type { SimulationSnapshot } from '../context'
 import type { CharacterCore, Npc, RelationshipState, SimulationEvent, WorldState } from '@miro/domain'
 
+/** Synthetic review outputs for orchestration contracts; never evidence of model accuracy. */
+export function recordedConversationReview(request: { prompt: string }, verdict: { acceptable: boolean; blockIndex?: number; reason?: string } = { acceptable: true }) {
+  const payload = JSON.parse(request.prompt) as { blocks: Array<{ index: number; text: string }> }
+  return { complete: true, blocks: payload.blocks.map(block => {
+    const rejected = !verdict.acceptable && block.index === (verdict.blockIndex ?? 0)
+    const boundary = rejected && (!verdict.reason || verdict.reason === 'violates_boundary')
+    return { blockIndex: block.index, noUserClaims: !rejected || boundary, boundaryViolation: boundary,
+      claims: rejected && !boundary ? [{ draftQuote: block.text.slice(0, 160), kind: verdict.reason === 'controls_user' ? 'user_action' : verdict.reason === 'unseen_user_observation' ? 'visible_property' : 'user_history',
+        verdict: 'unsupported', supportSourceId: '', sourceQuote: '' }] : [] }
+  }) }
+}
+
 export function character(over: Partial<CharacterCore['personality']> = {}): CharacterCore {
   return {
     id: 'c1', ownerId: null, isOfficial: true,

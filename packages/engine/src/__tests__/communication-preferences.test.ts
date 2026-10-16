@@ -5,7 +5,7 @@ import { agencyCommunicationPreferences, needsCommunicationPreferenceReview, sna
 import { runTurn } from '../orchestrator'
 import { verifyCommunicationPreferences } from '../agency/realization'
 import { evidence, setupCompiled, recordedProvider } from '../agency/__tests__/fixtures'
-import { snapshot } from './fixtures'
+import { recordedConversationReview, snapshot } from './fixtures'
 
 const preference: Memory = { id: 'preference-1', sessionId: 's1', characterId: 'c1', type: 'preference',
   content: '빈말로 완벽하다고 응원하기보다 구체적으로 고칠 부분을 듣고 싶어 한다.', importance: .8, persistence: .9,
@@ -86,7 +86,7 @@ describe('ordinary character chat preference enforcement', () => {
       info: { mode: 'mock', name: 'preference-contract-fixture', notice: 'No live model evaluation' },
       async generateStructured(request) {
         calls.push(request)
-        if (request.task === 'agency_verify') return request.schema.parse({ acceptable: renders > 1, blockIndex: 0 })
+        if (request.task === 'agency_verify') return request.schema.parse(recordedConversationReview(request, { acceptable: renders > 1, blockIndex: 0 }))
         renders++
         const p = { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: renders === 1 ? '완벽하게 잘하셨어요!' : '두 번째 문장이 깁니다. 둘로 나눠 보세요.' }] } }
         request.onText?.(JSON.stringify(p))
@@ -107,7 +107,7 @@ describe('ordinary character chat preference enforcement', () => {
   it('does not deliver a fallback when all attempts ignore a preference', async () => {
     let renders = 0
     const llm: LLMProvider = { info: { mode: 'mock', name: 'rejection-contract', notice: '' }, async generateStructured(request) {
-      if (request.task === 'agency_verify') return request.schema.parse({ acceptable: false, blockIndex: 0, reason: 'violates_boundary' })
+      if (request.task === 'agency_verify') return request.schema.parse(recordedConversationReview(request, { acceptable: false, blockIndex: 0, reason: 'violates_boundary' }))
       renders++
       return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '완벽합니다.' }] } })
     } }

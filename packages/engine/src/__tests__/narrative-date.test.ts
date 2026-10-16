@@ -3,7 +3,7 @@ import { agencyClock, createAgencyState, type AgencyGoal, type CompiledCharacter
 import type { LLMProvider } from '@miro/providers'
 import { runTurn } from '../orchestrator'
 import { planAgencyDecision, AGENCY_PLANNER_VERSION } from '../agency/planner'
-import { snapshot, world } from './fixtures'
+import { recordedConversationReview, snapshot, world } from './fixtures'
 import { buildContext } from '../context'
 
 const now = new Date('2026-10-11T12:00:00Z')
@@ -32,7 +32,7 @@ describe('story date in the actual planner and renderer', () => {
     const requests: Array<{ version?: string; prompt: string }> = []
     const llm: LLMProvider = { info: { mode: 'mock', name: 'calendar-contract', notice: 'Synthetic' }, async generateStructured(request) {
       requests.push({ version: request.promptVersion, prompt: request.prompt })
-      if (request.task === 'agency_verify') return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
+      if (request.task === 'agency_verify') return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
       return request.schema.parse(request.promptVersion === AGENCY_PLANNER_VERSION ? response() : { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '일주일 만이군요.' }] } })
     } }
     const calendar = { version: 1 as const, date: '1850-06-25', previousDate: '1850-06-18', changedAtTurn: 3 }

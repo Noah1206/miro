@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { LLMProvider } from '@miro/providers'
 import { runTurn } from '../orchestrator'
-import { snapshot } from './fixtures'
+import { recordedConversationReview, snapshot } from './fixtures'
 import { needsUserGroundingReview, snapshotUserGrounding } from '../conversation-grounding'
 import { verifyCommunicationPreferences } from '../agency/realization'
 import { responseJsonSchema } from '../agency/provider'
@@ -24,7 +24,7 @@ describe('user history and agency grounding before delivery', () => {
         const data = JSON.parse(request.prompt)
         expect(data.groundingEvidence).toContainEqual(expect.objectContaining({ id: 'current-user-input', kind: 'user_statement', text: input }))
         expect(data.groundingEvidence.some((e: { text: string }) => e.text.includes('밤마다 책을 읽다 잠든다'))).toBe(false)
-        return request.schema.parse({ acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'unsupported_user_history' })
+        return request.schema.parse(recordedConversationReview(request, { acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'unsupported_user_history' }))
       }
       renders++
       const proposal = { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: renders === 1 ? inventedHistory : groundedReply }] } }
@@ -47,7 +47,7 @@ describe('user history and agency grounding before delivery', () => {
       const llm: LLMProvider = { info: { mode: 'mock', name: 'named-user-contract', notice: '' }, async generateStructured(request) {
         if (request.task === 'agency_verify') {
           checks++
-          return request.schema.parse({ acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'controls_user' })
+          return request.schema.parse(recordedConversationReview(request, { acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'controls_user' }))
         }
         renders++
         return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: renders === 1 ? badDraft : goodDraft }] } })
@@ -63,7 +63,7 @@ describe('user history and agency grounding before delivery', () => {
 
   it('never emits or returns fallback success when all drafts invent a user action', async () => {
     const llm: LLMProvider = { info: { mode: 'mock', name: 'grounding-contract', notice: '' }, async generateStructured(request) {
-      if (request.task === 'agency_verify') return request.schema.parse({ acceptable: false, blockIndex: 0, reason: 'controls_user' })
+      if (request.task === 'agency_verify') return request.schema.parse(recordedConversationReview(request, { acceptable: false, blockIndex: 0, reason: 'controls_user' }))
       return request.schema.parse({ rp: { blocks: [{ type: 'narrative', speaker: null, text: inventedAction }] } })
     } }
     const visible: unknown[] = []
@@ -82,8 +82,8 @@ describe('user history and agency grounding before delivery', () => {
       const data = JSON.parse(request.prompt)
       expect(data.groundingEvidence).toContainEqual(expect.objectContaining({ id: 'old-user', kind: 'user_statement', text: s.memories[0]!.sourceText }))
       expect(data.groundingEvidence.find((e: { text: string }) => e.text === inventedHistory).kind).toBe('character_words')
-      expect(request.system).toContain('cannot prove that the user acted')
-      return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
+      expect(request.system).toContain('Character dialogue cannot prove a user biography or action')
+      return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
     } }
     expect((await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [{ text: input }], groundingEvidence: evidence,
       blocks: [{ type: 'dialogue', speaker: '토마스', text: inventedHistory }] })).acceptable).toBe(true)
@@ -98,7 +98,7 @@ describe('user history and agency grounding before delivery', () => {
       const bytes = new TextEncoder().encode(request.system + request.prompt + JSON.stringify(responseJsonSchema(request.schema))).length + 512
       expect(bytes).toBeLessThanOrEqual(24_000)
       expect(JSON.parse(request.prompt).groundingEvidence).toContainEqual(expect.objectContaining({ id: 'current-user-input', text: input }))
-      return request.schema.parse({ acceptable: false, blockIndex: 0, reason: 'unsupported_user_history' })
+      return request.schema.parse(recordedConversationReview(request, { acceptable: false, blockIndex: 0, reason: 'unsupported_user_history' }))
     } }
     expect((await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [], groundingEvidence: evidence,
       blocks: [{ type: 'narrative', speaker: null, text }] })).acceptable).toBe(false)
@@ -114,7 +114,7 @@ describe('user history and agency grounding before delivery', () => {
       expect(data.groundingEvidence[0]).toMatchObject({ id: 'current-user-input', text: '무엇을 기억해?' })
       expect(data.userMessages).toEqual([])
       expect(new TextEncoder().encode(request.system + request.prompt + JSON.stringify(responseJsonSchema(request.schema))).length + 512).toBeLessThanOrEqual(24_000)
-      return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
+      return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
     } }
     expect((await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: unrelated.map(item => ({ text: item.text })),
       groundingEvidence: [old, ...unrelated, { id: 'current-user-input', kind: 'user_statement', text: '무엇을 기억해?' }],
@@ -135,7 +135,7 @@ describe('user history and agency grounding before delivery', () => {
       const bytes = new TextEncoder().encode(request.system + request.prompt + JSON.stringify(responseJsonSchema(request.schema))).length + 512
       expect(bytes).toBeGreaterThan(12_000)
       expect(bytes).toBeLessThanOrEqual(24_000)
-      return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
+      return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
     } }
     expect((await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [], groundingEvidence: evidence,
       blocks: [{ type: 'dialogue', speaker: '토마스', text: draft.slice(0, 1200) }, { type: 'dialogue', speaker: '토마스', text: draft.slice(1200) }] })).acceptable).toBe(true)
@@ -144,7 +144,7 @@ describe('user history and agency grounding before delivery', () => {
   it('fails explicitly instead of generating fallback success when essential text cannot fit the review envelope', async () => {
     let reviews = 0
     const llm: LLMProvider = { info: { mode: 'mock', name: 'oversized-essential-contract', notice: '' }, async generateStructured(request) {
-      if (request.task === 'agency_verify') { reviews++; return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' }) }
+      if (request.task === 'agency_verify') { reviews++; return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' })) }
       return request.schema.parse({ rp: { blocks: Array.from({ length: 6 }, () => ({ type: 'dialogue', speaker: '토마스', text: '가'.repeat(1800) })) } })
     } }
     const visible: unknown[] = []
@@ -165,8 +165,8 @@ describe('user history and agency grounding before delivery', () => {
       expect(data.groundingEvidence.filter((e: { kind: string; text: string }) => e.kind === 'authored_context').some((e: { text: string }) => e.text.includes('의대'))).toBe(false)
       const actualSource = data.groundingEvidence.some((e: { kind: string; text: string }) => e.kind === 'user_statement' && e.text === history)
       expect(actualSource).toBe(disclosed)
-      expect(request.system).toContain('never knowledge of a job, education, past')
-      return request.schema.parse({ acceptable: actualSource, blockIndex: 0, reason: actualSource ? 'none' : 'unsupported_user_history' })
+      expect(request.system).toContain('a job, education, private past or preference is not something this character has heard')
+      return request.schema.parse(recordedConversationReview(request, { acceptable: actualSource, blockIndex: 0, reason: actualSource ? 'none' : 'unsupported_user_history' }))
     } }
     expect((await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [], groundingEvidence: evidence,
       blocks: [{ type: 'dialogue', speaker: '토마스', text: '윤서 씨는 의대 출신이시잖아요.' }] })).acceptable).toBe(disclosed)
