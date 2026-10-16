@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveIntent, FIRST_CONTACT_REASON } from '../reality/intent'
+import { deriveIntent as derive, FIRST_CONTACT_REASON } from '../reality/intent'
 import { firstContactDelayMinutes } from '../relationship/dynamics'
 import { presentContact } from '../reality/present'
 import { localMinutes } from '../reality/evaluator'
@@ -13,6 +13,9 @@ const profile: ContactProfile = {
   photoProbability: 0.2, voiceMessageProbability: 0.2,
   activeHours: { start: '08:00', end: '23:00' }, initiativeLevel: 50,
 }
+/** 첫 연락은 맨 아래 묶음에서만 본다 — 다른 규칙 검사는 이미 한 번 연락한 사이에서. */
+const deriveIntent = (input: Parameters<typeof derive>[0]) => derive({ contactedBefore: true, ...input })
+
 const rel = (over: Partial<RelationshipState> = {}): RelationshipState => ({
   id: 'r', sessionId: 's', version: 1, trust: 50, attraction: 20, jealousy: 0,
   protectiveness: 20, emotionalDistance: 40, attachment: 50, stage: 'friend',
@@ -28,7 +31,7 @@ describe('intent derivation — reasons come from state, never from a schedule',
   it('returns nothing when there is no reason to reach out', () => {
     expect(deriveIntent({
       relationship: rel({ attachment: 10, emotionalDistance: 80 }),
-      activeEvents: [], contactProfile: profile, idleMinutes: 60 * 24 * 10, pending: null,
+      activeEvents: [], contactProfile: profile, idleMinutes: 0, pending: null,
     })).toBeNull()
   })
 
@@ -47,11 +50,12 @@ describe('intent derivation — reasons come from state, never from a schedule',
     expect(b!.urgency).toBeGreaterThan(a!.urgency)
   })
 
-  it('T8: after a fight, silence alone does not produce a "missed you"', () => {
+  // 2026-10-16: 관계 문턱(최소치)은 없다 — 싸운 뒤의 긴 침묵도 기회일 뿐, 연락할지는 캐릭터(계획)가 거리감을 보고 정한다.
+  it('T8: after a fight, a long silence is only an opportunity for the character to judge', () => {
     expect(deriveIntent({
       relationship: rel({ emotionalDistance: 85, attachment: 60 }),
       activeEvents: [], contactProfile: profile, idleMinutes: 60 * 48, pending: null,
-    })).toBeNull()
+    })?.reason).toBe('silence')
   })
 
   it('long silence with a bond produces a low-urgency intent', () => {
@@ -148,12 +152,12 @@ describe('meal-time check-in', () => {
     expect(intent?.reason).toContain('checkin:저녁')
     expect(intent?.channel).toBe('message')
   })
-  it('stays quiet outside meal windows, when busy, when recently in touch, or when the relationship is not there yet', () => {
+  it('stays quiet outside meal windows, when busy or when recently in touch — but not because the relationship is new', () => {
     const reason = (over: object) => deriveIntent({ ...base, ...over })?.reason ?? ''
     expect(reason({ clock: clock(15) })).not.toContain('checkin')
     expect(reason({ clock: clock(19), availability: 'busy' })).not.toContain('checkin')
     expect(reason({ clock: clock(19), lastContactAt: new Date(Date.now() - 2 * 3_600_000) })).not.toContain('checkin')
-    expect(deriveIntent({ ...base, clock: clock(19), relationship: rel({ attachment: 5, trust: 5, emotionalDistance: 80 }) })).toBeNull()
+    expect(reason({ clock: clock(19), relationship: rel({ attachment: 5, trust: 5, emotionalDistance: 80 }) })).toContain('checkin')
   })
 })
 
@@ -175,7 +179,7 @@ describe('reasons beyond a contacted event, and the first contact', () => {
     const delay = firstContactDelayMinutes(50, profile.initiativeLevel)
     expect(at(delay + 1)).toBe(FIRST_CONTACT_REASON)
     expect(at(delay - 1)).toBeUndefined()
-    expect(at(delay + 1, { turnCount: 2 })).toBeUndefined()            // 인사만 하고 떠난 사람에게는 보내지 않는다
+    expect(at(delay + 1, { turnCount: 0 })).toBe(FIRST_CONTACT_REASON) // 대화 턴 최소치는 없다(10/16)
     expect(at(delay + 1, { contactedBefore: true })).toBeUndefined()   // 첫 연락은 한 번
     expect(firstContactDelayMinutes(90, 90)).toBeLessThan(firstContactDelayMinutes(50, 50))
     expect(firstContactDelayMinutes(10, 10)).toBeGreaterThan(firstContactDelayMinutes(50, 50))

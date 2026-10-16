@@ -30,17 +30,6 @@ type RealityRow = {
 }
 type ContactRow = typeof realityContacts.$inferSelect
 
-/** Older unread contacts still count even after newer contacts have been opened. */
-async function deliveryContacts(sessionId: string, query: Pick<typeof db, 'select'> = db): Promise<ContactRow[]> {
-  const [pending, last] = await Promise.all([
-    query.select().from(realityContacts).where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
-      .limit(POLICY.reality.maxPending),
-    query.select().from(realityContacts).where(and(eq(realityContacts.sessionId, sessionId), inArray(realityContacts.status, ['sent', 'opened'])))
-      .orderBy(desc(realityContacts.sentAt)).limit(1),
-  ])
-  return [...new Map([...last, ...pending].map(contact => [contact.id, contact])).values()]
-}
-
 /** Notification permissions are enforced by the outbox; character rhythm uses local time. */
 const timeZoneOf = (settings: RealityRow['settings']): string => settings?.timeZone ?? POLICY.reality.defaultTimeZone
 
@@ -48,27 +37,23 @@ const timeZoneOf = (settings: RealityRow['settings']): string => settings?.timeZ
  * 기존 규칙이 찾은 연락 기회(첫 연락·조용함·식사 안부·헤어진 뒤·사건·답장 대기). 자율성 경로에서는 판단 재료일 뿐 — 보낼지는 캐릭터(계획)가 정한다(2026-10-02).
  * key 는 그 기회의 정체성(contactDedupeKey): 같은 기회로 두 번 보내지 않고, 이번엔 안 보내기로 한 기회를 같은 날 다시 묻지 않는다.
  */
-export type ContactHint = { opportunity: RealityIntent | null; opportunityKey: string | null; contactsToday: number; dailyCap: number }
+export type ContactHint = { opportunity: RealityIntent | null; opportunityKey: string | null }
 
 /**
  * Delivery constraints only. Legacy motivation never overrides a validated agency choice.
  * 생활 리듬(§5 채널 일관성)은 legacy 와 같은 규칙: 자는 중이면 아무것도, 바쁘면 보내지 않는다 — 판단이 아니라 전달 제약이다.
- * 사용자 문자에 대한 답장은 안 읽은 연락 수·간격·하루 상한으로 막지 않는다(legacy 와 같다).
+ * 연락 수·간격·안 읽은 수 같은 숫자 상한은 두지 않는다(10/16) — 얼마나 자주는 캐릭터가 정한다.
  * 사용자가 말한 일정을 챙기는 연락(timely)도 — 때를 놓치면 뜻이 없다. 바쁠 때도 짧은 문자는 된다(legacy 의 긴급 연락과 같다, 10/9).
  */
-function deliveryBlock(profile: RealityRow['profile'], timeZone: string, recent: ContactRow[], now: Date, availability?: 'free' | 'busy' | 'unreachable',
-  limits: { reply?: boolean; timely?: boolean; contactsToday?: number; dailyCap?: number } = {}): SuppressReason | null {
+function deliveryBlock(profile: RealityRow['profile'], timeZone: string, now: Date, availability?: 'free' | 'busy' | 'unreachable',
+  limits: { timely?: boolean } = {}): SuppressReason | null {
   if (availability === 'unreachable') return 'outside_active_hours'
   if (availability === 'busy' && !limits.timely) return 'busy'
   const minute = localMinutes(now, timeZone)
   const toMinute = (value: string) => { const [h = 0, m = 0] = value.split(':').map(Number); return h * 60 + m }
   const start = toMinute(profile.activeHoursStart), end = toMinute(profile.activeHoursEnd)
   if (!(start <= end ? minute >= start && minute < end : minute >= start || minute < end)) return 'outside_active_hours'
-  if (limits.reply || limits.timely) return null
-  if (recent.filter(c => c.status === 'sent').length >= POLICY.reality.maxPending) return 'max_pending'
-  const lastSent = recent.find(c => (c.status === 'sent' || c.status === 'opened') && c.sentAt)
-  if (lastSent?.sentAt && now.getTime() - lastSent.sentAt.getTime() < POLICY.reality.minGapMinutes * 60_000) return 'cooldown'
-  if (limits.dailyCap !== undefined && (limits.contactsToday ?? 0) >= limits.dailyCap) return 'daily_cap'
+  // 몇 통·몇 분 간격·안 읽은 수 같은 숫자 상한은 없다(10/16 사용자 결정) — 연락할지·얼마나 자주는 캐릭터가 성격과 관계로 정한다.
   return null
 }
 
@@ -111,12 +96,11 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         .where(and(eq(characterDecisions.sessionId, sessionId), eq(characterDecisions.triggerKey, triggerKey))).limit(1)
       if (existing) return { outcome: 'skipped', reason: 'duplicate' }
     }
-    const recent = await deliveryContacts(sessionId)
     // 리듬이 없으면 배경에서 만든다. inline(사용자 턴 직후)에서는 기다리지 않는다 — 사용자의 응답에 모델 호출을 얹지 않게.
     const availability = await characterAvailability(row.character.id, now, timeZoneOf(row.settings), { wait: !opts.inline })
     const userSchedule = await activeMoments(sessionId, now)
-    const limits = { reply, timely: !!hint?.opportunity?.momentKey, contactsToday: hint?.contactsToday, dailyCap: hint?.dailyCap }
-    const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now, availability.availability, limits)
+    const limits = { timely: !!hint?.opportunity?.momentKey }
+    const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), now, availability.availability, limits)
     // A delivery restriction is not a personality decision to ignore someone. Keep the
     // read inbox item retryable; do not consume its trigger or mark it permanently left.
     if (opts.inbox && blocked) return { outcome: 'suppressed', reason: blocked }
@@ -276,8 +260,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       let nextState = plan.state
       let contactId: string | null = null
       if (send && content) {
-        const newest = await deliveryContacts(sessionId, tx)
-        if (deliveryBlock(profile, timeZoneOf(currentSettings ?? null), newest, now, availability.availability, limits)) throw new AgencyRealityConflict()
+        if (deliveryBlock(profile, timeZoneOf(currentSettings ?? null), now, availability.availability, limits)) throw new AgencyRealityConflict()
         const messageId = randomUUID()
         contactId = randomUUID()
         if (photo) {

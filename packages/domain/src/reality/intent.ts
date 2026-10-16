@@ -3,7 +3,7 @@ import type { RelationshipState } from '../relationship/types'
 import type { SimulationEvent } from '../event/types'
 import type { RealityIntent } from './types'
 import { pickCallChannel } from '../call/pick'
-import { firstContactDelayMinutes, readyToReachOut, silenceHours } from '../relationship/dynamics'
+import { firstContactDelayMinutes, silenceHours } from '../relationship/dynamics'
 import type { LocalClock } from '../time/clock'
 import type { Availability } from './routine'
 
@@ -31,8 +31,6 @@ export type IntentInput = {
 
 /** 처음 만난 뒤 한 번 먼저 보내는 연락의 이유. evaluator 가 동기 검사를 하지 않고, 세션에 한 번만 나간다. */
 export const FIRST_CONTACT_REASON = '처음 만난 뒤 첫 연락 — 아직 서로 잘 모르는 사이라 가볍고 자연스럽게, 첫 만남이나 그때 나눈 이야기를 짧게 떠올린다'
-/** 첫 연락은 대화를 이 정도는 나눈 뒤에 — 인사만 하고 떠난 사람에게까지 보내지 않는다. */
-const FIRST_CONTACT_MIN_TURNS = 3
 
 /** 하루 세 번의 안부 창. 이 시간에 캐릭터가 비어 있고 관계가 됐으면 "밥 먹었어?" 를 보낼 이유가 생긴다. */
 const MEALS: Array<{ name: string; from: number; to: number; reason: string }> = [
@@ -79,8 +77,7 @@ export function deriveIntent(input: IntentInput): RealityIntent | null {
   }
 
   // 1.2 처음 만난 뒤 첫 연락 — 아직 관계 문턱 전이라도, 첫 대화를 나누고 떠난 사용자에게 성격대로의 시간이 지나면 한 번(2026-10-02).
-  if (!input.contactedBefore && (input.turnCount ?? 0) >= FIRST_CONTACT_MIN_TURNS
-    && idleMinutes >= firstContactDelayMinutes(input.initiative ?? 50, p.initiativeLevel)) {
+  if (!input.contactedBefore && idleMinutes >= firstContactDelayMinutes(input.initiative ?? 50, p.initiativeLevel)) {
     return { channel: preferred(p), reason: FIRST_CONTACT_REASON, urgency: 0.5 }
   }
 
@@ -88,15 +85,15 @@ export function deriveIntent(input: IntentInput): RealityIntent | null {
   const sinceContactMinutes = input.lastContactAt ? ((input.now ?? new Date()).getTime() - input.lastContactAt.getTime()) / 60_000 : Infinity
   const quietMinutes = Math.min(idleMinutes, sinceContactMinutes)
 
-  // 1.5 식사 시간 안부 — 관계가 됐고(readyToReachOut), 캐릭터가 비어 있고, 오늘 몇 시간 조용했을 때. 하루 한 번씩만(evaluator 의 날짜 dedupe).
-  if (input.clock && input.availability === 'free' && readyToReachOut(r, p.initiativeLevel) && idleMinutes >= 180) {
+  // 1.5 식사 시간 안부 — 캐릭터가 비어 있고 오늘 몇 시간 조용했을 때의 기회. 관계 문턱은 없다 — 보낼지는 캐릭터가 관계를 보고 정한다(10/16).
+  if (input.clock && input.availability === 'free' && idleMinutes >= 180) {
     const meal = MEALS.find((m) => input.clock!.hour >= m.from && input.clock!.hour < m.to)
     if (meal && sinceContactMinutes >= 6 * 60) return { channel: preferred(p), reason: meal.reason, urgency: 0.4 }
   }
 
   // 2. 연락이 오래 없을 때 — 관계성(연애·친구·일…)과 연락 주도성, 지금의 친밀도로 문턱과 간격을 매번 다시 정한다.
   //    가까워질수록 문턱을 넘고, 간격도 짧아진다 (relationship/dynamics).
-  if (readyToReachOut(r, p.initiativeLevel) && quietMinutes >= silenceHours(r, p.contactFrequency, p.initiativeLevel) * 60) {
+  if (quietMinutes >= silenceHours(r, p.contactFrequency, p.initiativeLevel) * 60) {
     return {
       channel: preferred(p),
       reason: 'silence',

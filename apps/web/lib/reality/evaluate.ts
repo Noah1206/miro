@@ -8,7 +8,7 @@ import {
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
 } from '@miro/db'
 import {
-  DEFAULT_CHARACTER_STATE, contactBoundaryActive, contactDedupeKey, dailyContactCap, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, localDay, localMinutes,
+  DEFAULT_CHARACTER_STATE, contactBoundaryActive, contactDedupeKey, deriveIntent, describeRelationship, evaluateEventRules, evaluateRealityContact, localDay, localMinutes,
   momentIntent, parseRelationshipProfile, presentContact,
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
@@ -91,7 +91,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
 
   if (opts.inbox) {
     const agency = await evaluateAgencyReality(row, now, opts, { opportunity: { channel: 'message', reason: '읽은 사용자 문자에 답할지 판단한다. 답하지 않아도 된다.', urgency: 0.5, answers: 'user_message' },
-      opportunityKey: null, contactsToday: 0, dailyCap: 0 })
+      opportunityKey: null })
     return agency ?? { outcome: 'skipped', reason: 'agency_unavailable' }
   }
 
@@ -171,9 +171,6 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   const lastSent = sent[0]
   // 사용자가 아직 답하지 않은 연락 = 마지막 상호작용 뒤에 보낸 것. 문자 화면을 열어야만 읽음이 되면, 장면 채팅으로만 답하는 사용자에게는 영영 쌓여 막혔다.
   const unanswered = sent.filter((c) => c.status === 'sent' && c.sentAt && c.sentAt > row.session.lastInteractionAt)
-  // 오늘(사용자 현지 날짜) 먼저 보낸 연락 — 답장은 세지 않는다.
-  const localMidnight = new Date(now.getTime() - localMinutes(now, timeZone) * 60_000 - (now.getUTCSeconds() * 1000 + now.getUTCMilliseconds()))
-  const contactsToday = sent.filter((c) => c.sentAt && c.sentAt >= localMidnight && (c.payload as { answers?: string } | null)?.answers !== 'user_message').length
   const contactedEvents = contactedEventKeys(eventContacts.map((c) => c.key))
 
   const derived = deriveIntent({
@@ -190,13 +187,12 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   // 기다리는 답장(아직 시각 전인 것 포함)이 있으면 일정은 다음 확인으로 — 보내는 쪽이 대기 의도를 비워 답장이 사라지지 않게.
   const intent = moment.due && !saved?.answers && derived?.answers !== 'user_message' ? momentIntent(moment.due.moment, moment.due.phase, timeZone) : derived
   moment.used = !!intent?.momentKey
-  const dailyCap = dailyContactCap(row.relationship as never, row.character.initiative, profile)
 
   // 자율성 경로가 켜진 세션은 같은 연락 기회를 엔진(계획)에 판단 재료로 넘긴다 — 보낼지·무엇을 말할지는 캐릭터가 정한다(2026-10-02).
   // 꺼져 있거나(off) 판이 아직 준비되지 않았으면 null 이고 아래 기존 경로가 그대로 맡는다.
   // 기존 사건(events)은 넘기지 않는다 — 자율성 경로에서 사건은 관측 근거가 없는 옛 기록이라 연락 근거가 되지 않는다(loadAgencyEvidence).
   const opportunity = intent?.eventKey ? null : intent
-  const agency = await evaluateAgencyReality(row, now, opts, { opportunity, opportunityKey: opportunity ? contactDedupeKey(opportunity, now, timeZone) : null, contactsToday, dailyCap })
+  const agency = await evaluateAgencyReality(row, now, opts, { opportunity, opportunityKey: opportunity ? contactDedupeKey(opportunity, now, timeZone) : null })
   if (agency) return agency
   if (!intent) return { outcome: 'no_intent' }
 
@@ -216,8 +212,6 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
     pendingContacts: unanswered as unknown as RealityContact[],
     now,
     availability: availability.availability,
-    contactsToday,
-    dailyCap,
   })
 
   if (!decision.send) {

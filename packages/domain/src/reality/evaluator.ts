@@ -20,9 +20,6 @@ export type RealityInput = {
   now: Date
   /** 생활 리듬이 말하는 지금 상태. 없으면 활동 시간(activeHours)만 본다. */
   availability?: Availability
-  /** 오늘(사용자 현지 날짜) 이 캐릭터가 먼저 보낸 연락 수(답장 제외)와 성격·관계로 정한 하루 상한(dailyContactCap). */
-  contactsToday?: number
-  dailyCap?: number
 }
 
 export type RealityDecision =
@@ -50,25 +47,12 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   if (input.availability === undefined && !inActiveHours(now, input.contactProfile, input.timeZone)) {
     return { send: false, reason: 'outside_active_hours' }
   }
-  // 사용자가 보낸 문자에 대한 답장은 연락이 아니라 대답이다 — 읽지 않은 연락 수·쿨다운으로 막지 않는다.
-  const reply = intent.answers === 'user_message'
-  // 사용자가 말한 일정을 챙기는 연락(응원·"어땠어?")은 그때를 놓치면 뜻이 없다 — 답장처럼 안 읽은 수·간격·하루 상한으로 막지 않는다(10/9).
-  const timely = reply || !!intent.momentKey
-  if (!timely && input.pendingContacts.length >= POLICY.reality.maxPending) {
-    return { send: false, reason: 'max_pending' }
-  }
-  if (!timely && inCooldown(input.lastContactAt, now)) {
-    return { send: false, reason: 'cooldown' }
-  }
-  // 하루 상한은 캐릭터마다 다르다(성격·관계). 넘으면 다음 날로 — 답장은 세지도 막지도 않는다.
-  if (!timely && input.dailyCap !== undefined && (input.contactsToday ?? 0) >= input.dailyCap) {
-    return { send: false, reason: 'daily_cap' }
-  }
+  // 안 읽은 연락 수·연락 간격·하루 몇 통 같은 숫자 상한은 두지 않는다(10/16 사용자 결정) — 얼마나 자주는 성격과 관계가 정한다.
   // 침묵 연락은 deriveIntent 가 관계성·성격·친밀도로 이미 정했다 — 같은 관계를 다른 공식으로 다시 막지 않는다. 첫 연락도 성격대로의 시간으로 이미 정했다.
   // 답장과 전화 후속도 마찬가지(성격으로 이미 걸렀다) — 여기서 막으면 사용자의 문자가 영영 답을 못 받는다.
   // 사건 규칙도 — 조건(신뢰·거리 등)과 관계 성격표가 이미 정했다. 전엔 여기서 다시 막혀 '잘 들어갔어?' 가 웬만큼 가까운 사이가 아니면 나가지 않았다(10/2 실측).
-  // 식사 시간 안부도 침묵 연락과 같은 관계 문턱(readyToReachOut)을 넘어야만 생긴다 — 긴급도 0.4 라 여기서 거의 다 막혔다(10/2 구조 분석).
-  const decidedByRelationship = intent.reason === 'silence' || intent.reason.startsWith('checkin:') || intent.reason === FIRST_CONTACT_REASON
+  // 침묵·식사 안부는 관계 문턱이 없어져(10/16) 이제 기회일 뿐이다 — 판단할 모델이 없는 이 기존 경로에서는 연락 동기(성향·애착·거리감)가 그 판단을 맡는다.
+  const decidedByRelationship = intent.reason === FIRST_CONTACT_REASON
   if (!decidedByRelationship && !intent.answers && !intent.rule && !intent.momentKey && motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
@@ -120,11 +104,6 @@ export function localMinutes(now: Date, timeZone: string): number {
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number)
   return (h ?? 0) * 60 + (m ?? 0)
-}
-
-function inCooldown(last: Date | null, now: Date): boolean {
-  if (last === null) return false
-  return now.getTime() - last.getTime() < POLICY.reality.minGapMinutes * 60_000
 }
 
 /**

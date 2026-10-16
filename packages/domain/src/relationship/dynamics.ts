@@ -103,14 +103,6 @@ export function addDelta(a: RelationshipDelta, b: RelationshipDelta): Relationsh
   return out
 }
 
-/** 오래 연락이 없을 때 먼저 연락할 만큼 가까운가. 관계성마다 문턱이 다르고, 먼저 다가가는 캐릭터일수록 낮다. */
-const READY_AT: Record<RelationshipKind, number> = { romance: 35, friendship: 40, new: 40, work: 45, tension: 55 }
-/** 이보다 마음이 멀면(싸운 뒤) 애착이 커도 그냥 먼저 연락하지 않는다 — 사건이 있어야 연락한다. */
-const TOO_FAR = 70
-export function readyToReachOut(r: Relation, initiativeLevel: number): boolean {
-  return r.emotionalDistance <= TOO_FAR && closeness(r) >= READY_AT[relationshipKind(r.stage)] - (initiativeLevel - 50) / 5
-}
-
 /**
  * 몇 시간 연락이 없으면 먼저 연락하나. 작성자의 연락 빈도(0→72h, 100→6h)에서 출발해
  * 관계성(연애가 가장 짧다)·지금의 친밀도·연락 주도성으로 매번 다시 계산한다.
@@ -118,7 +110,7 @@ export function readyToReachOut(r: Relation, initiativeLevel: number): boolean {
 const KIND_PACE: Record<RelationshipKind, number> = { romance: 0.6, friendship: 0.85, new: 1, work: 1.2, tension: 1.3 }
 export function silenceHours(r: Relation, contactFrequency: number, initiativeLevel: number): number {
   const base = 72 - (contactFrequency / 100) * 66
-  const near = Math.min(1.3, Math.max(0.5, 1.5 - closeness(r) / 80))
+  const near = 1.5 - closeness(r) / 80
   const drive = 1.3 - (initiativeLevel / 100) * 0.6
   return base * KIND_PACE[relationshipKind(r.stage)] * near * drive
 }
@@ -127,7 +119,7 @@ export function silenceHours(r: Relation, contactFrequency: number, initiativeLe
 const driveOf = (initiative: number, initiativeLevel: number) => (initiative + initiativeLevel) / 200
 
 /**
- * 처음 만난 뒤 첫 연락까지(분). 관계 문턱(readyToReachOut)을 넘기 전이라도 첫 대화를 마치고 떠난 사용자에게 한 번은 먼저 연락한다 —
+ * 처음 만난 뒤 첫 연락 기회까지(분). 보낼지는 캐릭터가 정한다 —
  * 연락이 오는 경험이 빨라야 하지만 너무 성급하면 사람 같지 않다(2026-10-02 사용자). 그래서 성격대로: 먼저 다가가는 캐릭터는 1~2시간,
  * 보통은 반나절 안, 조심스러운 캐릭터는 다음 날쯤. 주도성 0 → 13시간, 50 → 약 5시간, 90 → 약 1.4시간.
  */
@@ -136,11 +128,3 @@ export function firstContactDelayMinutes(initiative: number, initiativeLevel: nu
   return Math.round((12 * reserve ** 1.5 + 1) * 60)
 }
 
-/**
- * 이 캐릭터가 하루(사용자 현지 날짜)에 먼저 보내는 연락의 상한. 사람마다 다르다 — 성격(주도성·연락 빈도)과 지금 관계의 가까움으로 1~5통.
- * 조심스러운 캐릭터와 처음 만난 사이는 1통, 보통 성격의 친구는 3통쯤, 먼저 다가가는 연인은 4~5통. 사용자 문자에 대한 답장은 세지 않는다(2026-10-02 사용자).
- */
-export function dailyContactCap(r: Relation, initiative: number, profile: { initiativeLevel: number; contactFrequency: number }): number {
-  const temper = (driveOf(initiative, profile.initiativeLevel) + profile.contactFrequency / 100) / 2
-  return Math.min(5, Math.max(1, 1 + Math.round(temper * 2 + (closeness(r) / 100) * 2 - 0.4)))
-}

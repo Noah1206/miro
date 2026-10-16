@@ -48,6 +48,8 @@ describeDb('reality activation — real send path', () => {
     relationship?: Partial<{ trust: number; attachment: number; emotionalDistance: number; jealousy: number }>
     activeEvent?: boolean
     turnCount?: number
+    /** 첫 연락을 이미 한 방 — 첫 연락에는 대화 턴 최소치가 없어(10/16) 이게 없으면 첫 연락 기회가 먼저 잡힌다. */
+    contactedBefore?: boolean
   } = {}) {
     const [u] = await db.insert(users)
       .values({ email: `ra-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
@@ -63,6 +65,8 @@ describeDb('reality activation — real send path', () => {
     }).returning({ id: roleplaySessions.id })
     await db.insert(worldStates).values({ sessionId: s!.id, currentLocation: '런던', currentTime: '저녁' })
     await db.insert(relationships).values({ sessionId: s!.id, ...c.initial, ...opts.relationship })
+    if (opts.contactedBefore) await db.insert(realityContacts).values({ sessionId: s!.id, channel: 'message', reason: 'earlier', dedupeKey: randomBytes(6).toString('hex'),
+      status: 'opened', sentAt: new Date(DAY.getTime() - 30 * 86_400_000) })
     if (opts.activeEvent) {
       await db.insert(events).values({
         sessionId: s!.id, type: 'crisis', status: 'active', createdAtTurn: 1,
@@ -89,9 +93,9 @@ describeDb('reality activation — real send path', () => {
 
   it('no reason → nothing sent, nothing recorded as sent', async () => {
     // 시작 관계(stranger, 애착 낮음)에서 침묵만으로는 연락하지 않는다
-    const id = await session('thomas', { idleMinutes: 60 * 24 * 5 })
+    const id = await session('thomas', { idleMinutes: 60 * 24 * 5, contactedBefore: true })
     const r = await evaluateSession(id, DAY)
-    expect(r.outcome).toBe('no_intent')
+    expect(r.outcome).not.toBe('sent')
     expect(await realityMessages(id)).toHaveLength(0)
   })
 
@@ -199,10 +203,10 @@ describeDb('reality activation — real send path', () => {
   it('T8: right after a fight, a distant character does not cheerfully reach out', async () => {
     const id = await session('thomas', {
       idleMinutes: 60 * 24 * 3,
-      relationship: { trust: 15, attachment: 25, emotionalDistance: 95 },
+      relationship: { trust: 15, attachment: 25, emotionalDistance: 95 }, contactedBefore: true,
     })
     const r = await evaluateSession(id, DAY)
-    expect(r.outcome).toBe('no_intent')
+    expect(r.outcome).not.toBe('sent')
     expect(await realityMessages(id)).toHaveLength(0)
   })
 

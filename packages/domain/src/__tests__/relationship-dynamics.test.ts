@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
-  addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, dailyContactCap, deriveIntent, evaluateEventRules, evaluateRealityContact,
+  addDelta, applyRelationshipDelta, bondingCurveOf, closeness, companionshipDelta, deriveIntent, evaluateEventRules, evaluateRealityContact,
   DEFAULT_CHARACTER_STATE,
-  readyToReachOut, relationshipKind, scaleCloser, silenceHours,
+  relationshipKind, scaleCloser, silenceHours,
   type BondingCurve, type ContactProfile, type RelationshipStage, type RelationshipState,
 } from '../index'
 
@@ -81,20 +81,6 @@ describe('relationship kind decides what grows and what "close" means', () => {
 })
 
 describe('reaching out after a silence', () => {
-  it('a stranger is not ready at first, and is after enough steady conversation', () => {
-    expect(readyToReachOut(start(), 50)).toBe(false)
-    let r = start()
-    for (let turn = 1; turn <= 18; turn++) r = applyRelationshipDelta(r, companionshipDelta({ curve: 'steady', relationship: r, events: [], turn, userInput: talk }))
-    expect(closeness(r)).toBeGreaterThanOrEqual(40)
-    expect(readyToReachOut(r, 50)).toBe(true)
-  })
-  it('lovers are ready from the start; an eager character needs less; a fight blocks it', () => {
-    expect(readyToReachOut(start({ stage: 'lover', trust: 80, attraction: 80, attachment: 75, emotionalDistance: 15 }), 50)).toBe(true)
-    const near = start({ trust: 40, attachment: 20, emotionalDistance: 55 }) // closeness 35
-    expect(readyToReachOut(near, 50)).toBe(false)
-    expect(readyToReachOut(near, 80)).toBe(true)
-    expect(readyToReachOut(start({ stage: 'friend', trust: 90, attachment: 90, emotionalDistance: 85 }), 80)).toBe(false)
-  })
   it('the silence before reaching out shrinks as they grow closer, and depends on the kind of relationship', () => {
     const friend = start({ stage: 'friend', trust: 60, attachment: 50, emotionalDistance: 40 })
     expect(silenceHours(friend, 50, 50)).toBeLessThan(silenceHours(start(), 50, 50))
@@ -108,11 +94,12 @@ describe('reaching out after a silence', () => {
     callProbability: 0, videoCallProbability: 0, photoProbability: 0, voiceMessageProbability: 0,
     activeHours: { start: '00:00', end: '23:59' }, initiativeLevel: 50,
   }
-  it('the intent follows readiness and the dynamic silence, and the evaluator does not veto it again', () => {
+  // 2026-10-16 사용자: 관계 문턱·하루 상한 같은 최소·최대는 두지 않는다 — 낯선 사이에도 기회는 생기고, 보낼지는 캐릭터가 정한다.
+  it('a long silence is an opportunity at any closeness, and the evaluator does not veto it again', () => {
     const idle = 60 * 60 // 60시간
-    expect(deriveIntent({ relationship: start(), activeEvents: [], contactProfile: profile, idleMinutes: idle, pending: null })).toBeNull()
+    expect(deriveIntent({ relationship: start(), activeEvents: [], contactProfile: profile, idleMinutes: idle, pending: null, contactedBefore: true })?.reason).toBe('silence')
     const grown = start({ stage: 'acquaintance', trust: 50, attachment: 25, emotionalDistance: 45 })
-    const intent = deriveIntent({ relationship: grown, activeEvents: [], contactProfile: profile, idleMinutes: idle, pending: null })
+    const intent = deriveIntent({ relationship: grown, activeEvents: [], contactProfile: profile, idleMinutes: idle, pending: null, contactedBefore: true })
     expect(intent?.reason).toBe('silence')
     expect(evaluateRealityContact({
       intent: intent!, contactProfile: profile, personality: { initiative: 50, emotionalExpression: 50 }, relationship: grown,
@@ -121,22 +108,6 @@ describe('reaching out after a silence', () => {
   })
 })
 
-// 2026-10-02 사용자: 하루에 먼저 보내는 연락 수는 캐릭터마다 다르게 — 성격과 관계대로, 실제 사람처럼.
-describe('daily contact cap depends on who the character is and how close you are', () => {
-  const close = start({ trust: 85, attachment: 85, attraction: 80, emotionalDistance: 10, stage: 'lover' })
-  it('a reserved character with a new acquaintance sends one, an outgoing lover four or five', () => {
-    expect(dailyContactCap(start(), 20, { initiativeLevel: 20, contactFrequency: 20 })).toBe(1)
-    expect(dailyContactCap(close, 90, { initiativeLevel: 90, contactFrequency: 90 })).toBeGreaterThanOrEqual(4)
-  })
-  it('grows with closeness and stays within 1..5', () => {
-    const p = { initiativeLevel: 50, contactFrequency: 50 }
-    expect(dailyContactCap(close, 50, p)).toBeGreaterThan(dailyContactCap(start(), 50, p))
-    for (const r of [start(), close]) for (const v of [0, 50, 100]) {
-      const cap = dailyContactCap(r, v, { initiativeLevel: v, contactFrequency: v })
-      expect(cap).toBeGreaterThanOrEqual(1); expect(cap).toBeLessThanOrEqual(5)
-    }
-  })
-})
 
 describe('a jealous follow-up goes at most once a day', () => {
   it('skips the rule once today is marked, fires again the next day', () => {

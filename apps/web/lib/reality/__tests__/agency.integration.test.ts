@@ -391,16 +391,6 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(state.runtime.version).toBe(1)
   })
 
-  it('the delivery cooldown is enforced even for inline calls and a contact proposal', async () => {
-    const { id } = await fixture()
-    await db.insert(realityContacts).values({ sessionId: id, channel: 'message', reason: 'previous', dedupeKey: randomUUID(), status: 'opened', sentAt: BEFORE })
-    const { calls } = provider()
-    expect(await evaluateSession(id, NOW, { inline: true })).toEqual({ outcome: 'no_intent' })
-    expect(JSON.parse(calls[0]!.prompt).permissions.contact).toBe(false)
-    expect(calls.filter(call => call.version === REALITY_CONTENT_VERSION)).toHaveLength(0)
-    expect((await stored(id)).messages).toHaveLength(0)
-  })
-
   // §5: 생활 리듬은 legacy 와 같은 전달 제약이다 — 바쁜 캐릭터는 결정이 contact 여도 보내지 않는다.
   it('a busy routine blocks dispatch the same way it does on the legacy path', async () => {
     const { id, characterId } = await fixture()
@@ -426,19 +416,6 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(rows.find(r => r.field === 'relationship.trust')).toMatchObject({ rule: 'relationship_appraisal', before: expect.any(Number), after: expect.any(Number) })
     expect(rows.some(r => JSON.stringify([r.before, r.after]).includes('이야기할 수 있어요'))).toBe(false)
     expect(messageId).toBeTruthy()
-  })
-
-  it('counts old unread contacts even behind many newer opened contacts', async () => {
-    const { id } = await fixture()
-    const old = new Date(NOW.getTime() - (POLICY.reality.minGapMinutes + 60) * 60_000)
-    await db.insert(realityContacts).values(Array.from({ length: 14 }, (_, index) => ({ sessionId: id, channel: 'message' as const,
-      reason: 'previous', dedupeKey: randomUUID(), status: index < POLICY.reality.maxPending ? 'sent' as const : 'opened' as const,
-      sentAt: new Date(old.getTime() + index), createdAt: new Date(old.getTime() + index),
-    })))
-    const { calls } = provider()
-    expect(await evaluateSession(id, NOW)).toEqual({ outcome: 'no_intent' })
-    expect(JSON.parse(JSON.parse(calls[0]!.prompt).input).deliveryBlocked).toBe('max_pending')
-    expect((await stored(id)).messages).toHaveLength(0)
   })
 
   it('only fresh user evidence changes relationship, and later ticks do not replay it', async () => {
@@ -530,15 +507,16 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
   })
 
-  it('a chance that cannot be delivered (daily cap) does not wake the planner', async () => {
+  // 2026-10-16 사용자: 하루 몇 통·간격·안 읽은 수 같은 숫자 상한은 없다 — 오늘 이미 여러 번 연락했어도 보낼지는 캐릭터가 정한다.
+  it('no daily cap: after many contacts today the planner still decides and can send', async () => {
     const { id, revisionId } = await fixture()
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '잘 들어갔는지 묻는다', urgency: 0.5, rule: 'after_scene' } }).where(eq(roleplaySessions.id, id))
     await db.insert(realityContacts).values([8, 9, 10, 11, 12].map(h => ({ sessionId: id, channel: 'message' as const, reason: 'earlier',
       dedupeKey: randomUUID(), status: 'opened' as const, sentAt: new Date(Date.parse('2026-09-24T00:00:00+09:00') + h * 3_600_000) })))   // 오늘 08~12시 KST
     await settled(id, revisionId, new Date(NOW.getTime() + 60_000))
     const { calls } = provider()
-    expect(await evaluateSession(id, new Date(NOW.getTime() + 2 * 60_000))).toEqual({ outcome: 'suppressed', reason: 'daily_cap' })
-    expect(calls).toHaveLength(0)
+    expect(await evaluateSession(id, new Date(NOW.getTime() + 2 * 60_000))).toMatchObject({ outcome: 'sent' })
+    expect(calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
   })
 
   it("keeps the user's text but ends the pending reply when the character chooses to leave it unanswered", async () => {

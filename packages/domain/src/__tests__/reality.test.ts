@@ -52,9 +52,9 @@ describe('reality activation', () => {
     expect(evaluateRealityContact(input({ intent: { channel: 'video_call', reason: 'x', urgency: 1 } })).send).toBe(true)
   })
 
-  it('T-Dedupe: cooldown prevents repeat contact spam', () => {
-    const d = evaluateRealityContact(input({ lastContactAt: new Date('2026-09-12T13:30:00+09:00') }))
-    expect(d).toEqual({ send: false, reason: 'cooldown' })
+  // 2026-10-16: 연락 간격·안 읽은 수 같은 숫자 상한은 없다 — 반복은 같은 기회의 중복 방지 키가 막고, 빈도는 캐릭터가 정한다.
+  it('no numeric gap: a recent contact does not by itself block the next one', () => {
+    expect(evaluateRealityContact(input({ lastContactAt: new Date('2026-09-12T13:30:00+09:00') })).send).toBe(true)
   })
 
   it('T8: after a fight, a distant/low-attachment character does not cheerfully reach out', () => {
@@ -94,14 +94,13 @@ describe('reality activation', () => {
     expect(cold.send).toBe(false)
   })
 
-  it('caps pending contacts', () => {
+  it('no unread cap on contacts', () => {
     const pending = [1, 2].map((i) => ({
       id: `p${i}`, sessionId: 's1', channel: 'push' as const, dedupeKey: `k${i}`,
       payload: {}, status: 'pending' as const, suppressedReason: null,
       createdAt: new Date(), sentAt: null,
     }))
-    expect(evaluateRealityContact(input({ pendingContacts: pending })))
-      .toEqual({ send: false, reason: 'max_pending' })
+    expect(evaluateRealityContact(input({ pendingContacts: pending })).send).toBe(true)
   })
 })
 
@@ -130,10 +129,10 @@ describe('replies and call follow-ups are not contacts', () => {
       intent: { channel: 'message', reason: '수업 중에 온 문자에 답장', urgency: 0.9, notBefore: '2026-09-12T13:59:00+09:00', answers: 'user_message' } }))
     expect(r.send).toBe(true)
   })
-  it('a call follow-up skips motivation but still respects cooldown', () => {
+  it('a call follow-up skips motivation and has no gap limit', () => {
     expect(evaluateRealityContact(input({ relationship: cold, intent: { channel: 'message', reason: '못 받은 전화', urgency: 0.6, answers: 'call' } })).send).toBe(true)
     expect(evaluateRealityContact(input({ relationship: cold, lastContactAt: new Date('2026-09-12T13:50:00+09:00'), intent: { channel: 'message', reason: '못 받은 전화', urgency: 0.6, answers: 'call' } })))
-      .toEqual({ send: false, reason: 'cooldown' })
+      .toMatchObject({ send: true })
   })
   it('two scheduled intents with the same reason on one day get different dedupe keys', () => {
     const a = evaluateRealityContact(input({ intent: { channel: 'message', reason: '답장', urgency: 0.9, notBefore: '2026-09-12T10:00:00Z', answers: 'user_message' } }))
@@ -144,11 +143,6 @@ describe('replies and call follow-ups are not contacts', () => {
 
 // 2026-10-02 — 하루 상한은 캐릭터마다(성격·관계), 첫 연락은 동기 검사 없이 세션에 한 번, 중복 방지 키는 사건·상태 / 현지 날짜.
 describe('daily cap, first contact and dedupe keys', () => {
-  it('stops at the character\'s own daily cap, but a reply to the user still goes', () => {
-    expect(evaluateRealityContact(input({ contactsToday: 2, dailyCap: 2 }))).toEqual({ send: false, reason: 'daily_cap' })
-    expect(evaluateRealityContact(input({ contactsToday: 1, dailyCap: 2 })).send).toBe(true)
-    expect(evaluateRealityContact(input({ contactsToday: 5, dailyCap: 2, intent: { channel: 'message', reason: 'reply', urgency: 0.9, answers: 'user_message', notBefore: '2026-09-12T05:00:00.000Z' } })).send).toBe(true)
-  })
   it('the first contact skips the motivation check and is keyed once per session', () => {
     const stranger = { ...rel, trust: 15, attachment: 5, emotionalDistance: 80, stage: 'stranger' as const }
     const d = evaluateRealityContact(input({ relationship: stranger, intent: { channel: 'message', reason: FIRST_CONTACT_REASON, urgency: 0.5 } }))
