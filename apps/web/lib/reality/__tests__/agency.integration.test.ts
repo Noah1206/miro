@@ -642,9 +642,27 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(model.calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
   })
 
-  it('keeps a generic wait pending and prioritizes its read question over a new unread envelope', async () => {
+  it('ends the read question when the character itself chooses silence (읽씹)', async () => {
     const f = await fixture()
-    provider({ action: 'wait' })
+    const model = provider({ action: 'wait' })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '연습은 음악부터 익혀요, 숫자로 세요?' }, NOW)
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
+    const readTime = new Date(NOW.getTime() + 1000)
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    const replyTime = new Date(readTime.getTime() + replyPauseMs(profile!.replyDelayMinutes) + 1000)
+    await runMessengerInbox(replyTime, { sessionId: f.id })
+    const [left] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(left).toMatchObject({ status: 'left', contactId: null, leaseToken: null })
+    expect(left!.attentionDecision).toMatchObject({ replyDisposition: { disposition: 'close', reason: 'character_choice' } })
+    expect(model.calls.filter(call => call.version === REPLY_DISPOSITION_VERSION)).toHaveLength(0)
+    const calls = model.calls.length
+    await runMessengerInbox(new Date(replyTime.getTime() + 3 * 3_600_000), { sessionId: f.id })
+    expect(model.calls).toHaveLength(calls)
+  })
+
+  it('keeps the fallback wait pending when no grounded action can execute, and prioritizes its read question over a new unread envelope', async () => {
+    const f = await fixture()
+    provider({ action: 'respond' })
     const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '연습은 음악부터 익혀요, 숫자로 세요?' }, NOW)
     const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
     const readTime = new Date(NOW.getTime() + 1000)
@@ -666,7 +684,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
 
   it('retains the read question after disposition-provider failure and later sends exactly one answer', async () => {
     const f = await fixture()
-    provider({ action: 'wait', failDisposition: true })
+    provider({ action: 'respond', failDisposition: true })
     const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '아까 연습 얘기를 이어서 해 줄래요?' }, NOW)
     const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
     const readTime = new Date(NOW.getTime() + 1000)

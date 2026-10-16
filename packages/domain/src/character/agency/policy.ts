@@ -15,6 +15,9 @@ function score(a: AgencyCandidate, c: AgencyDecisionContext): number {
   return ruleScore + goalScore - a.uncertainty - .25 * a.cost
 }
 
+/** Chosen when no grounded candidate can be executed — a system fallback, never the character's own decision. */
+export const AGENCY_FALLBACK_WAIT_ID = 'agency-wait'
+
 /** Stable tie breaking supports replay; variation should be evaluated before it is introduced. */
 export function selectAgencyDecision(candidates: AgencyCandidate[], context: AgencyDecisionContext): AgencyDecision {
   const rejected: AgencyDecision['rejected'] = []
@@ -31,7 +34,7 @@ export function selectAgencyDecision(candidates: AgencyCandidate[], context: Age
   valid.sort((a, b) => b.score - a.score || a.candidate.id.localeCompare(b.candidate.id))
   const winner = valid[0]
   const candidate: AgencyCandidate = winner?.candidate ?? {
-    id: 'agency-wait', action: 'wait', description: 'No grounded, permitted action is available.', targetActor: context.actor,
+    id: AGENCY_FALLBACK_WAIT_ID, action: 'wait', description: 'No grounded, permitted action is available.', targetActor: context.actor,
     evidenceIds: [], ruleIds: [], goalIds: [], ruleFit: [], goalFit: [], preconditions: [], uncertainty: 0, cost: 0,
     constraints: ['Do not claim that an action was performed.'],
   }

@@ -6,7 +6,7 @@ import {
   db, messengerInbox, characters, characterDecisions, characterRuntimeStates, contactProfiles, messages,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
-import { agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
+import { AGENCY_FALLBACK_WAIT_ID, agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview, agencyCommunicationPreferences, communicationPreferenceData, COMMUNICATION_PREFERENCE_RULE } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
@@ -161,8 +161,11 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     if (!['contact', 'wait', 'defer', 'cancel_commitment'].includes(plan.decision.action)) return { outcome: 'skipped', reason: 'agency_rejected' }
 
     const send = plan.decision.action === 'contact'
-    // Silence must have a user-message basis. Generic wait/defer remains a durable queue item.
-    const disposition = opts.inbox && !send && plan.decision.action !== 'defer'
+    // A wait the character chose from its own rules is 읽씹 (10/16 사용자 결정) — it ends there. Defer, the system's
+    // fallback wait (no executable grounded candidate), busy delivery and provider failures keep the question queued.
+    const chosenSilence = !!opts.inbox && plan.decision.action === 'wait' && plan.decision.candidate.id !== AGENCY_FALLBACK_WAIT_ID
+    const disposition = chosenSilence ? { disposition: 'close' as const, reason: 'character_choice' as const, sourceId: '', quote: '' }
+      : opts.inbox && !send && plan.decision.action !== 'defer'
       ? await readReplyDisposition(llm, plan.context.evidence.filter(e => opts.inbox!.ids.includes(e.id) && e.actor === 'user')
           .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt)).map(e => ({ id: e.id, text: e.quote }))) : null
     if (send && blocked) return { outcome: 'suppressed', reason: blocked }
