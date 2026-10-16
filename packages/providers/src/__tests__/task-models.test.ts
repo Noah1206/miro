@@ -126,6 +126,31 @@ describe('shared createAI task configuration', () => {
     expect(sonnet).not.toHaveBeenCalled()
   })
 
+  it('keeps the configured continuity small-model route without skipping verification', async () => {
+    configure('claude-sonnet')
+    // Continuity is only available when its registry has a capable small model.
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(definitions.map(model => model.tier !== 'small' ? model
+      : { ...model, capabilities: [...model.capabilities, 'agency_verify'] })))
+    const gemini = vi.spyOn(GeminiProvider.prototype, 'generate').mockResolvedValue({ text: 'ok', provider: 'gemini', model: 'gemini-3.5-flash-lite', inputTokens: 10, outputTokens: 5, latencyMs: 1 })
+    const sonnet = vi.spyOn(AnthropicProvider.prototype, 'generate')
+    const ai = createAI({ mock: () => 'must not be used', context: { continuity: true } })
+    await ai.generateText(request)
+    expect(ai.lastModelId).toBe('gemini-flash-lite')
+    expect(gemini).toHaveBeenCalledTimes(1)
+    expect(gemini).toHaveBeenCalledWith(expect.objectContaining({ task: 'agency_verify', maxTokens: 1536 }))
+    expect(sonnet).not.toHaveBeenCalled()
+  })
+
+  it('does not borrow the main verifier when continuity has no capable small model', async () => {
+    configure('claude-sonnet')
+    const gemini = vi.spyOn(GeminiProvider.prototype, 'generate')
+    const sonnet = vi.spyOn(AnthropicProvider.prototype, 'generate')
+    await expect(createAI({ mock: () => 'must not be used', context: { continuity: true } }).generateText(request))
+      .rejects.toThrow('no capable model fits context')
+    expect(gemini).not.toHaveBeenCalled()
+    expect(sonnet).not.toHaveBeenCalled()
+  })
+
   it('fails a missing configured verifier without falling back when its credentials are absent', async () => {
     configure('claude-sonnet'); vi.stubEnv('ANTHROPIC_API_KEY', ''); vi.stubEnv('OPENAI_API_KEY', '')
     const gemini = vi.spyOn(GeminiProvider.prototype, 'generate')

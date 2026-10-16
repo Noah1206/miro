@@ -137,9 +137,9 @@ export function createAI(opts: { mock: (req: GenerationRequest) => unknown; cont
   return new AIOrchestrator({
     shadow: shadowModel ? { model: shadowModel, provider: resolveModel(shadowModel) } : undefined,
     chain: [resolveModel(enabled[0]!)], registry, resolveModel,
-    // This is operator-owned role configuration, never an API/chat input. Adult rooms keep
-    // their separate registry and cannot send their verification context to a main-lane model.
-    taskModels: !adult && process.env.MIRO_AGENCY_VERIFY_MODEL_ID?.trim()
+    // This is operator-owned main-lane configuration, never an API/chat input. Adult rooms
+    // keep their registry; continuity keeps its small-model route, including verification.
+    taskModels: !adult && !context?.continuity && process.env.MIRO_AGENCY_VERIFY_MODEL_ID?.trim()
       ? { agency_verify: process.env.MIRO_AGENCY_VERIFY_MODEL_ID.trim() } : undefined,
     timeoutMs: opts.timeoutMs ?? (Number(process.env.AI_TIMEOUT_MS) || 20_000), maxRetries: opts.maxRetries,
     onUsage: usageSink ?? undefined, budgetGuard: guard, leaseGuard, context,
