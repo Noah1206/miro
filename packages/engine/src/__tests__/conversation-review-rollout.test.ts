@@ -37,4 +37,10 @@ describe('experimental conversation review rollout', () => {
     vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '1')
     expect(needsUserGroundingReview([{ type: 'dialogue', text: '평범한 대화' }])).toBe(true)
   })
+
+  it('accepts a deployment value saved with a trailing newline', () => {
+    vi.stubEnv('MIRO_MODE', 'production')
+    vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '1\n')
+    expect(feature('strictConversationReview')).toBe(true)
+  })
 })

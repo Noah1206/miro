@@ -51,7 +51,7 @@ export function feature(name: FeatureName): boolean {
   // 2026-10-01 베타: 전화(voiceCall)도 운영에서 닫는다 — 사용자 화면에서 전화·영상통화를 아예 없앴다(사용자 요청, 9/29 문자 통화 공개를 되돌림).
   // 캐릭터가 걸려던 전화는 문자로 간다(deliverableChannel). 다시 열 때는 이 목록에서 'voiceCall' 을 뺀다.
   if (productionRuntime() && ['voiceCall', 'voiceCallAudio', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
-  const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]
+  const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]?.trim()
   if (override === '1') return true
   if (override === '0') return false
   return PRESET[currentMode()][name]
