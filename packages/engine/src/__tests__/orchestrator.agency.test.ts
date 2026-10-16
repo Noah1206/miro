@@ -2,7 +2,7 @@ import { AGENCY_PLANNER_VERSION } from '../agency/planner'
 import { verifyAgencyRealization } from '../agency/realization'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createAgencyState, type AgencyCandidate, type AgencyEvidence, type AgencyGoal, type CompiledCharacter } from '@miro/domain'
-import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { UnsafeContentError } from '../safety'
 import { runTurn } from '../orchestrator'
 import type { AgencyTurnInput } from '../agency-turn'
@@ -108,6 +108,23 @@ describe('runTurn agency integration', () => {
     const review = stub.calls.find(call => call.version === 'agency-communication-check:v7')!
     expect(JSON.parse(review.prompt).preferenceEvidence).toContainEqual({ sourceId: old.id, text: old.quote, occurredAt: old.occurredAt, kind: 'user_quote' })
     expect(stub.calls.find(call => call.version === 'agency-dialogue:v6')!.prompt).toContain(old.quote)
+  })
+
+  // 2026-10-16 운영 실측: 다시 쓴 뒤 턴 한도가 차면 '입력을 줄이라'는 한도 안내가 아니라 거부된 생성으로 끝나야 한다.
+  it('a turn budget hit after a rejected draft is a rejected generation, not a turn-length limit', async () => {
+    const stub = provider({ rejectRealization: true })
+    let dialogues = 0
+    const llm: LLMProvider = { ...stub.llm, async generateStructured(request) {
+      if (request.task === 'dialogue' && ++dialogues === 2) throw new AIBudgetDeniedError('turn_tokens')
+      return stub.llm.generateStructured(request)
+    } }
+    await expect(runTurn({ llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toThrow('agency_realization_rejected turn_budget')
+    const first = provider()
+    const denied: LLMProvider = { ...first.llm, async generateStructured(request) {
+      if (request.task === 'dialogue') throw new AIBudgetDeniedError('turn_tokens')
+      return first.llm.generateStructured(request)
+    } }
+    await expect(runTurn({ llm: denied, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toBeInstanceOf(AIBudgetDeniedError)
   })
 
   it('rewrites before delivery when a reply ignores an explicit communication preference', async () => {

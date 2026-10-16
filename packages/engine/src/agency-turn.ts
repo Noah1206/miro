@@ -1,6 +1,6 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
 import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
-import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
+import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
 import { SimulationProposal } from './proposal.schema'
@@ -134,63 +134,69 @@ export async function runAgencyTurn(opts: {
   let feedback = ''
   // A generated factual claim cannot be classified until its text exists. Buffer every draft;
   // the UI still types the approved blocks, but a rejected history/action never flashes first.
-  for (let attempt = 0; attempt <= REGENERATIONS; attempt++) {
-    // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
-    // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
-    const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
-      promptVersion: 'agency-dialogue:v6', system: context.system, safety: 'relaxed',
-      prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
-      .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
-    // A later check call must not erase the renderer's provenance.
-    renderer = agencyProviderTrace(llm, 'agency-dialogue:v6')
-    if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
-    // 승인 범위 밖의 변경은 걷어 낸다(거부로 기록). 렌더러는 말과 장면의 공기만 바꿀 수 있다 — 장소·새 사건·NPC·선연락은 결정이 아니다.
-    const rejected: string[] = []
-    if (proposal.worldDelta?.currentLocation) { rejected.push('worldDelta.currentLocation'); proposal.worldDelta = { ...proposal.worldDelta, currentLocation: undefined } }
-    if (proposal.worldDelta && !proposal.worldDelta.currentTime && !proposal.worldDelta.worldStatus) proposal.worldDelta = null
-    if (proposal.sceneDelta?.location) { rejected.push('sceneDelta.location'); proposal.sceneDelta = { ...proposal.sceneDelta, location: undefined } }
-    if (proposal.eventCandidates.length) { rejected.push('eventCandidates'); proposal.eventCandidates = [] }
-    if (proposal.eventUpdates.length) { rejected.push('eventUpdates'); proposal.eventUpdates = [] }
-    if (proposal.npcIntroductions.length) { rejected.push('npcIntroductions'); proposal.npcIntroductions = [] }
-    if (proposal.npcActions.length) { rejected.push('npcActions'); proposal.npcActions = [] }
-    if (proposal.realityIntent) { rejected.push('realityIntent'); proposal.realityIntent = null }
-    const spoken = proposal.rp.blocks.filter(b => b.type !== 'npc' && b.type !== 'world')
-    if (spoken.length !== proposal.rp.blocks.length) { rejected.push('rp.blocks'); proposal.rp.blocks = spoken }
-    // 원장에는 채택된 시도의 거부만 남긴다 — 버려진 첫 시도의 제안은 승인 대상이 아니었다.
-    const attemptRecords: StateTransitionRecord[] = rejected.map(field => ({ field, rule: 'unapproved_mutation', status: 'rejected', clock: 'narrative', actor, decisionId: plan.decision.id }))
+  // 다시 쓴 뒤에 턴 한도가 다 차면 사용자의 입력 길이 문제가 아니다 — 거부된 생성으로 돌려 '입력을 줄이라'는 안내가 나가지 않게 한다(10/16 운영 실측).
+  try {
+    for (let attempt = 0; attempt <= REGENERATIONS; attempt++) {
+      // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
+      // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
+      const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
+        promptVersion: 'agency-dialogue:v6', system: context.system, safety: 'relaxed',
+        prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
+        .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
+      // A later check call must not erase the renderer's provenance.
+      renderer = agencyProviderTrace(llm, 'agency-dialogue:v6')
+      if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
+      // 승인 범위 밖의 변경은 걷어 낸다(거부로 기록). 렌더러는 말과 장면의 공기만 바꿀 수 있다 — 장소·새 사건·NPC·선연락은 결정이 아니다.
+      const rejected: string[] = []
+      if (proposal.worldDelta?.currentLocation) { rejected.push('worldDelta.currentLocation'); proposal.worldDelta = { ...proposal.worldDelta, currentLocation: undefined } }
+      if (proposal.worldDelta && !proposal.worldDelta.currentTime && !proposal.worldDelta.worldStatus) proposal.worldDelta = null
+      if (proposal.sceneDelta?.location) { rejected.push('sceneDelta.location'); proposal.sceneDelta = { ...proposal.sceneDelta, location: undefined } }
+      if (proposal.eventCandidates.length) { rejected.push('eventCandidates'); proposal.eventCandidates = [] }
+      if (proposal.eventUpdates.length) { rejected.push('eventUpdates'); proposal.eventUpdates = [] }
+      if (proposal.npcIntroductions.length) { rejected.push('npcIntroductions'); proposal.npcIntroductions = [] }
+      if (proposal.npcActions.length) { rejected.push('npcActions'); proposal.npcActions = [] }
+      if (proposal.realityIntent) { rejected.push('realityIntent'); proposal.realityIntent = null }
+      const spoken = proposal.rp.blocks.filter(b => b.type !== 'npc' && b.type !== 'world')
+      if (spoken.length !== proposal.rp.blocks.length) { rejected.push('rp.blocks'); proposal.rp.blocks = spoken }
+      // 원장에는 채택된 시도의 거부만 남긴다 — 버려진 첫 시도의 제안은 승인 대상이 아니었다.
+      const attemptRecords: StateTransitionRecord[] = rejected.map(field => ({ field, rule: 'unapproved_mutation', status: 'rejected', clock: 'narrative', actor, decisionId: plan.decision.id }))
 
-    const validated = validateProposal(proposal, snapshot)
-    const repeated = repeatedConversationBlock(validated.blocks, snapshot.recentMessages, opts.userInput, snapshot.character.identity.name)
-    if (repeated !== null) {
-      if (attempt === REGENERATIONS) throw new Error('agency_realization_rejected repeated_response')
-      feedback = `\n이전 대사와 반복되는 블록 ${repeated}을 다시 쓰세요. 같은 뜻의 빈말이나 같은 소품 동작으로 바꾸지 말고, 지금 사용자가 한 말에 답하며 장면을 한 걸음 이어가세요. 반복 문장(데이터): ${JSON.stringify(validated.blocks[repeated]?.text)}`
-      continue
+      const validated = validateProposal(proposal, snapshot)
+      const repeated = repeatedConversationBlock(validated.blocks, snapshot.recentMessages, opts.userInput, snapshot.character.identity.name)
+      if (repeated !== null) {
+        if (attempt === REGENERATIONS) throw new Error('agency_realization_rejected repeated_response')
+        feedback = `\n이전 대사와 반복되는 블록 ${repeated}을 다시 쓰세요. 같은 뜻의 빈말이나 같은 소품 동작으로 바꾸지 말고, 지금 사용자가 한 말에 답하며 장면을 한 걸음 이어가세요. 반복 문장(데이터): ${JSON.stringify(validated.blocks[repeated]?.text)}`
+        continue
+      }
+      validated.relationshipDelta = { ...relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
+      validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
+      // Check user facts and boundaries before delivery with a compact request. Return the broader
+      // canon/action audit for background review, avoiding that entire context on the critical path.
+      const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length, communicationPreference,
+        communicationPreferenceSourceIds: communicationPreferences.map(item => item.sourceId),
+        userGroundingEvidence: snapshotUserGrounding(snapshot, opts.userInput) }
+      verification = await verifyAgencyRealization(llm, realization, { review: false })
+      if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
+      if (verification.ok && validated.blocks.length) {
+        transition = validated; records.push(...attemptRecords)
+        // Inline source/preference checks already ran. Deferred canon/action review must not
+        // charge for or reinterpret the same user check a second time.
+        if (verification.deferredReview) review = { ...realization, communicationPreference: false, userGroundingEvidence: undefined }
+        break
+      }
+      // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
+      const reasons = [...new Set(verification.issues.map(i => i.reason))]
+      if (attempt === REGENERATIONS) throw new Error(['agency_realization_rejected', ...reasons].join(' '))
+      // 문제가 된 문장을 그대로 보여 준다 — 사유 코드만 주면 렌더러가 무엇을 고칠지 몰라 같은 말을 되풀이했다.
+      const quotes = [...new Set(verification.issues.flatMap(issue => {
+        const claim = /^claims\.(\d+)$/.exec(issue.field), block = /^blocks\.(\d+)$/.exec(issue.field)
+        return claim ? [verification!.claims[Number(claim[1])]?.quote] : block ? [validated.blocks[Number(block[1])]?.text.slice(0, 120)] : []
+      }).filter((q): q is string => !!q))].slice(0, 4)
+      feedback = `\n\n## 이전 응답이 거부된 이유(코드): ${reasons.join(', ')}\n${quotes.length ? `문제가 된 문장: ${quotes.map(q => `"${q}"`).join(' / ')}\n` : ''}승인된 선택과 세계 상태 안에서만 다시 쓰세요. ${USER_GROUNDING_RULE} 완료되지 않은 행동·확인·도착·발송을 이미 한 일처럼 쓰지 말고, 아직 하지 않은 일은 '할게요·하려고 해요'처럼 앞으로의 일로 쓰세요.${communicationPreference ? ' 사용자가 실제로 정정한 말투·호칭·응원 방식과 요청한 피드백을 존중하세요. 원하지 않은 과찬을 다른 과찬으로 바꾸지 말고, 자기 성격에 맞는 솔직하고 구체적인 반응을 쓰세요.' : ''}`
     }
-    validated.relationshipDelta = { ...relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
-    validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
-    // Check user facts and boundaries before delivery with a compact request. Return the broader
-    // canon/action audit for background review, avoiding that entire context on the critical path.
-    const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length, communicationPreference,
-      communicationPreferenceSourceIds: communicationPreferences.map(item => item.sourceId),
-      userGroundingEvidence: snapshotUserGrounding(snapshot, opts.userInput) }
-    verification = await verifyAgencyRealization(llm, realization, { review: false })
-    if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
-    if (verification.ok && validated.blocks.length) {
-      transition = validated; records.push(...attemptRecords)
-      // Inline source/preference checks already ran. Deferred canon/action review must not
-      // charge for or reinterpret the same user check a second time.
-      if (verification.deferredReview) review = { ...realization, communicationPreference: false, userGroundingEvidence: undefined }
-      break
-    }
-    // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
-    const reasons = [...new Set(verification.issues.map(i => i.reason))]
-    if (attempt === REGENERATIONS) throw new Error(['agency_realization_rejected', ...reasons].join(' '))
-    // 문제가 된 문장을 그대로 보여 준다 — 사유 코드만 주면 렌더러가 무엇을 고칠지 몰라 같은 말을 되풀이했다.
-    const quotes = [...new Set(verification.issues.flatMap(issue => {
-      const claim = /^claims\.(\d+)$/.exec(issue.field), block = /^blocks\.(\d+)$/.exec(issue.field)
-      return claim ? [verification!.claims[Number(claim[1])]?.quote] : block ? [validated.blocks[Number(block[1])]?.text.slice(0, 120)] : []
-    }).filter((q): q is string => !!q))].slice(0, 4)
-    feedback = `\n\n## 이전 응답이 거부된 이유(코드): ${reasons.join(', ')}\n${quotes.length ? `문제가 된 문장: ${quotes.map(q => `"${q}"`).join(' / ')}\n` : ''}승인된 선택과 세계 상태 안에서만 다시 쓰세요. ${USER_GROUNDING_RULE} 완료되지 않은 행동·확인·도착·발송을 이미 한 일처럼 쓰지 말고, 아직 하지 않은 일은 '할게요·하려고 해요'처럼 앞으로의 일로 쓰세요.${communicationPreference ? ' 사용자가 실제로 정정한 말투·호칭·응원 방식과 요청한 피드백을 존중하세요. 원하지 않은 과찬을 다른 과찬으로 바꾸지 말고, 자기 성격에 맞는 솔직하고 구체적인 반응을 쓰세요.' : ''}`
+  } catch (error) {
+    if (feedback && error instanceof AIBudgetDeniedError && error.reason === 'turn_tokens') throw new Error('agency_realization_rejected turn_budget')
+    throw error
   }
   const approved = approveTransition(transition!, snapshot, policy, { relationshipOwner: 'appraisal', decisionId: plan.decision.id })
   // A rejected preference-breaking draft must never flash in the user's chat.
