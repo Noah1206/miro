@@ -13,23 +13,27 @@ import { TYPING_MS_PER_CHAR, charsPerTick, msPerChar, pauseAfter } from './typin
  *
  * 애니메이션을 줄이는 설정(prefers-reduced-motion)이면 통째로 보여준다.
  */
-export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs }: {
+export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs, sentencePausesOnly = false, endPauseMs = 0 }: {
   text: string
   mood?: Mood
   onDone?: () => void
   onGrow?: () => void
   /** Openings have a more spacious reading rhythm than a newly generated reply. */
   maxParagraphMs?: number
-  /** 1 보다 작으면 글자와 멈칫을 같은 비율로 빨리 친다 — 문단이 많은 응답 (replyPace). */
+  /** 1 보다 작으면 글자와 멈칫을 같은 비율로 빨리 친다 — 캐릭터챗 답은 REPLY_TYPING_PACE. */
   pace?: number
   /** 지난 메시지는 이미 다 도착한 것이다 — 다시 칠 이유가 없다. */
   animate?: boolean
+  /** 문장 끝(. ? ! …)에서만 멈칫한다 — 쉼표·줄바꿈에서는 이어 친다. */
+  sentencePausesOnly?: boolean
+  /** 다 친 뒤 onDone 까지 쉬는 시간 — 다음 박스로 넘어가기 전의 틈. */
+  endPauseMs?: number
 }) {
   const reduce = useReducedMotion()
   const instant = !animate || reduce
   // Newly received blocks can change the reply's pace/mood. Finish the current
   // paragraph at its original rhythm instead of restarting it at every update.
-  const [rhythm] = useState(() => ({ mood, pace, maxParagraphMs }))
+  const [rhythm] = useState(() => ({ mood, pace, maxParagraphMs, sentencePausesOnly, endPauseMs }))
   const [shown, setShown] = useState(() => (instant ? text.length : 0))
   const done = useRef(onDone)
   done.current = onDone
@@ -42,7 +46,7 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
     setShown(0)
     let i = 0
     let timer: ReturnType<typeof setTimeout>
-    const { mood, pace, maxParagraphMs } = rhythm
+    const { mood, pace, maxParagraphMs, sentencePausesOnly, endPauseMs } = rhythm
     const speed = msPerChar(text, mood, pace, maxParagraphMs)
     // 긴 문단이라 글자 속도를 줄였으면 멈칫도 같은 비율로 줄인다 — 멈칫이 상한 밖에서 시간을 늘리지 않게.
     const squeeze = Math.min(1, speed / (TYPING_MS_PER_CHAR[mood] * pace))
@@ -51,8 +55,8 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
     const step = () => {
       i = Math.min(text.length, i + chunk)
       setShown(i)
-      if (i >= text.length) { done.current?.(); return }
-      timer = setTimeout(step, speed * chunk + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood) * pace * squeeze)
+      if (i >= text.length) { if (endPauseMs) timer = setTimeout(() => done.current?.(), endPauseMs); else done.current?.(); return }
+      timer = setTimeout(step, speed * chunk + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood, sentencePausesOnly) * pace * squeeze)
     }
     timer = setTimeout(step, speed * chunk)
     return () => clearTimeout(timer)

@@ -7,7 +7,7 @@ import { Popover, MenuItem } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
-import { OPENING_PARAGRAPH_MS, replyPace } from '@/components/scene/typing'
+import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, REPLY_TYPING_PACE } from '@/components/scene/typing'
 import { CharacterPhoto } from '@/components/character-visual'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
@@ -186,9 +186,13 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const done = useRef(onDone)
   done.current = onDone
   useEffect(() => { if (typing && typed >= count) done.current?.() }, [typing, typed, count])
-  const pace = m.opening ? 1 : replyPace(count)
+  // 답은 압축 없이 한 글자씩(10/17 사용자: 뭉텅이 대신 "따다다닥") — 끊는 자리는 문장 끝과 박스 끝뿐. 인트로는 원래 리듬 그대로.
+  const boxEnds = new Set(segments.map(seg => seg.paragraphs.at(-1)!.index))
   const line = (p: Paragraph) => typing && p.index === typed
-    ? <TypedText text={p.text} mood={m.opening ? 'neutral' : mood} pace={pace} maxParagraphMs={m.opening ? OPENING_PARAGRAPH_MS : undefined} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
+    ? (m.opening
+      ? <TypedText text={p.text} mood="neutral" pace={1} maxParagraphMs={OPENING_PARAGRAPH_MS} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
+      : <TypedText text={p.text} mood={mood} pace={REPLY_TYPING_PACE} maxParagraphMs={Infinity} sentencePausesOnly
+          endPauseMs={boxEnds.has(p.index) ? BOX_END_PAUSE_MS : 260} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />)
     : <Emphasis text={p.text} />
 
   return <div className={styles.reply}>

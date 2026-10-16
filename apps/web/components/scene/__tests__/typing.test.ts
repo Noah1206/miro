@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MAX_REPLY_MS, MIN_TICK_MS, charsPerTick, msPerChar, pauseAfter, replyPace } from '../typing'
+import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MIN_TICK_MS, REPLY_TYPING_PACE, charsPerTick, msPerChar, pauseAfter } from '../typing'
 
 describe('typing rhythm', () => {
   it('types slower when the character is hurt than when angry', () => {
@@ -41,13 +41,16 @@ describe('typing rhythm', () => {
     expect(pauseAfter('…', ' ', 'hurt')).toBeGreaterThan(pauseAfter('…', ' ', 'angry'))
   })
 
-  it('speeds up a whole scene so a long reply does not take half a minute', () => {
-    // 짧은 응답은 기분 그대로 친다.
-    expect(replyPace(2)).toBe(1)
-    // 문단 7개짜리 장면은 각 문단 상한을 모두 채워도 전체 상한 안에 든다.
-    const pace = replyPace(7)
-    expect(pace).toBeLessThan(1)
-    const long = '가'.repeat(300)
-    expect(7 * long.length * msPerChar(long, 'neutral', pace)).toBeLessThanOrEqual(MAX_REPLY_MS + 7)
+  // 10/17 사용자: 캐릭터챗 답은 뭉텅이가 아니라 한 글자씩 — 압축 없이 일정한 속도로, 끊는 자리는 문장 끝뿐.
+  it('types a long chat reply one character per tick and pauses only at sentence ends', () => {
+    const long = '가'.repeat(600)
+    const speed = msPerChar(long, 'neutral', REPLY_TYPING_PACE, Infinity)
+    expect(speed).toBe(TYPING_MS_PER_CHAR.neutral * REPLY_TYPING_PACE)
+    expect(charsPerTick(speed)).toBe(1)
+    expect(charsPerTick(msPerChar(long, 'angry', REPLY_TYPING_PACE, Infinity))).toBe(1)
+    expect(pauseAfter(',', ' ', 'neutral', true)).toBe(0)
+    expect(pauseAfter('\n', '가', 'neutral', true)).toBe(0)
+    expect(pauseAfter('.', ' ', 'neutral', true)).toBeGreaterThan(0)
+    expect(pauseAfter('?', ' ', 'neutral', true)).toBeGreaterThan(0)
   })
 })

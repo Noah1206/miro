@@ -19,11 +19,13 @@ export const OPENING_PARAGRAPH_MS = 16000
  * 멈칫 — 문장이 끝나는 자리에서 잠깐 쉰다. 사람이 치는 것처럼 보이게 하는 것의 절반은 이 틈이다.
  * 말줄임표 뒤가 가장 길다: 망설임은 대사가 아니라 침묵으로 드러난다.
  */
-export function pauseAfter(char: string, next: string, mood: Mood): number {
+export function pauseAfter(char: string, next: string, mood: Mood, sentenceOnly = false): number {
   const scale = TYPING_MS_PER_CHAR[mood] / TYPING_MS_PER_CHAR.neutral
   if (char === '…' && next !== '…') return 420 * scale
   if (char === '?' || char === '!') return 300 * scale
   if (char === '.' && next !== '.') return 260 * scale
+  // 캐릭터챗 답은 문장 끝에서만 끊는다(10/17 사용자) — 쉼표·줄바꿈에서는 이어 친다.
+  if (sentenceOnly) return 0
   if (char === ',') return 120 * scale
   if (char === '\n') return 220 * scale
   return 0
@@ -48,13 +50,10 @@ export function charsPerTick(speed: number): number {
   return Math.max(1, Math.ceil(MIN_TICK_MS / speed))
 }
 
-/** Keep incoming scene paragraphs readable while they type; the composer is already available after persistence. */
-export const MAX_REPLY_MS = 10000
-
 /**
- * 응답 전체의 빠르기(1 = 기분 그대로). 캐릭터챗 답은 장면 하나라 문단이 5~8개다 (2026-09-26) —
- * 문단마다 상한까지 치면 30초가 넘게 흐른다. 문단이 많으면 글자 속도와 멈칫을 같은 비율로 줄인다.
+ * 캐릭터챗 답의 타자(10/17 사용자: "따다다닥" — 뭉텅이로 나오지 않게). 장면 전체를 몇 초에 맞추려 압축하지 않고
+ * 한 글자씩 일정하게 친다. 기분의 빠르기는 유지하되 이 비율로 조금 빠르게, 끊는 자리는 문장 끝과 박스 끝뿐.
  */
-export function replyPace(paragraphs: number): number {
-  return Math.min(1, MAX_REPLY_MS / (Math.max(1, paragraphs) * MAX_PARAGRAPH_MS))
-}
+export const REPLY_TYPING_PACE = 0.6
+/** 박스(서술 칸·말풍선) 안의 글을 다 친 뒤 다음 박스로 넘어가기 전의 멈칫. */
+export const BOX_END_PAUSE_MS = 450
