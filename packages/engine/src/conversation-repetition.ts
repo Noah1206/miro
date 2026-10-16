@@ -14,10 +14,11 @@ function similar(a: string, b: string) {
 }
 const REMEMBER = /기억\s*(?:해\s*둘|해둘|할게|하겠)|잊지\s*않(?:을|겠)|i(?:'ll| will) remember/i
 const REQUEST_REPEAT = /다시\s*(?:말|읽|해\s*줘|해줘|들려|설명)|똑같이|그대로\s*(?:말|읽)|repeat|say (?:it|that) again/i
+const STOP_REPEAT = /말하지|반복하지|하지\s*마|말아|don't|do not|stop repeating/i
 
 /** Flag only substantial recycled text, never a short greeting or a stable character dialect. */
 export function repeatedConversationBlock(blocks: readonly Block[], recent: readonly Previous[], input = '', characterName?: string): number | null {
-  if (REQUEST_REPEAT.test(input)) return null
+  if (REQUEST_REPEAT.test(input) && !STOP_REPEAT.test(input)) return null
   const previous = recent.filter(m => m.role === 'character').slice(-3)
     .map(m => m.blocks?.length ? m.blocks.filter(b => !characterName || !b.speaker || b.speaker === characterName) : [{ type: 'dialogue', text: m.content }])
   for (let i = 0; i < blocks.length; i++) {
@@ -33,7 +34,7 @@ export function repeatedConversationBlock(blocks: readonly Block[], recent: read
     if (block.type === 'action' && previous.filter(turn => turn.some(old => old.type === 'action' && similar(block.text, old.text))).length >= 2) return i
     if (block.type === 'dialogue' && REMEMBER.test(block.text)
       && previous.filter(turn => turn.some(old => (old.type ?? 'dialogue') === 'dialogue' && REMEMBER.test(old.text))).length >= 2
-      && !/기억(?:해|하)|잊지\s*마|remember/i.test(input)) return i
+      && !/기억(?:해\s*줘|해줘|해\s*주세요|해주세요|하라고)|잊지\s*마|remember (?:this|that|it)/i.test(input)) return i
   }
   return null
 }

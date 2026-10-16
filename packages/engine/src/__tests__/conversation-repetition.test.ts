@@ -29,4 +29,8 @@ describe('substantial repeated character text', () => {
     expect(repeatedConversationBlock([{ type: 'dialogue', speaker: '토마스', text }], [{ role: 'character', content: text,
       blocks: [{ type: 'dialogue', speaker: '다른 인물', text }] }], '', '토마스')).toBeNull()
   })
+  it('does not confuse a request to stop repeating with permission to repeat', () => {
+    const text = '내일 발표에서 제일 걱정되는 부분이 어떤 건지 말해 줄래?'
+    expect(repeatedConversationBlock([{ type: 'dialogue', text }], [previous(text)], '그 말 다시 말하지 마.')).toBe(0)
+  })
 })
