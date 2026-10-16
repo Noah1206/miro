@@ -46,13 +46,29 @@ export type OrchestratorOptions = {
 }
 
 /** One entry point for every task. No provider data can reach Core before runtime validation. */
-/** 일시 과부하(5xx) 전용 추가 재시도 — 횟수와 첫 대기(ms, 회차마다 늘린다). */
+/** 일시 과부하(5xx) 전용 추가 재시도. 기존 횟수와 예산은 유지한다. */
 const TRANSIENT_RETRIES = 2
-const TRANSIENT_BACKOFF_MS = 600
+const TRANSIENT_BACKOFF_MS = 1000
+const TRANSIENT_BACKOFF_CAP_MS = 4000
 /** 일시 과부하 — 500·502·503(공통), 529(Anthropic 과부하). 어댑터마다 provider_http_<상태> 로 맞춰 던진다. */
 const TRANSIENT = /^provider_http_(50[023]|529)$/
 /** 공급자 쪽 실패 — 같은 모델에 다시 보내도 대개 같다. 형식 오류(invalid_schema·empty_output·max_tokens)는 그 답의 일이라 여기 없다. */
 const PROVIDER_FAILURE = /^(provider_http_|timeout|provider_error)/
+
+/** Backoff owns no provider slot or budget reservation, and cancellation must not wait for its timer. */
+function waitForRetry(ms: number, signal: AbortSignal | undefined, attempts: number): Promise<void> {
+  if (signal?.aborted) return Promise.reject(new AIUnavailableError(attempts, 'cancelled'))
+  return new Promise((resolve, reject) => {
+    const cancel = () => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', cancel)
+      reject(new AIUnavailableError(attempts, 'cancelled'))
+    }
+    const timer = setTimeout(() => { signal?.removeEventListener('abort', cancel); resolve() }, ms)
+    signal?.addEventListener('abort', cancel, { once: true })
+    if (signal?.aborted) cancel()
+  })
+}
 
 export class AIOrchestrator implements LLMProvider {
   readonly info: ProviderInfo
@@ -140,21 +156,29 @@ export class AIOrchestrator implements LLMProvider {
         || (process.env.MIRO_AI_DB_LEASES === '1' && !this.opts.leaseGuard))) {
         throw new AIBudgetDeniedError('production_guard_required')
       }
-      let transientLeft = TRANSIENT_RETRIES
+      let transientLeft = TRANSIENT_RETRIES, transientFailures = 0
       for (let retry = 0; retry <= Math.min(this.maxRetries, overrideRetries ?? this.maxRetries); retry++) {
+        if (transientFailures > 0 && TRANSIENT.test(last)) {
+          // Direct REST guidance: 1s, 2s, 4s plus jitter, capped at 4s for interactive requests.
+          // Includes the existing final regular retry when no fallback is available; no extra calls are added.
+          const delay = Math.min(TRANSIENT_BACKOFF_CAP_MS,
+            TRANSIENT_BACKOFF_MS * 2 ** (transientFailures - 1) + Math.random() * TRANSIENT_BACKOFF_MS)
+          await waitForRetry(delay, req.signal, attempts)
+        }
         // 속도 제한은 곧바로 다시 걸린다 — 재시도 전에 잠깐 기다린다.
         // 스키마 오류처럼 즉시 고쳐지는 실패에는 기다리지 않는다.
         // 타이머는 Date.now() 기준으로 1ms 일찍 깰 수 있다(실측 약 3.5%). 그러면 아래 입장 게이트(retryAfter)에
         // 자기 백오프로 막혀 재시도가 조용히 빠진다 — 게이트를 실제로 지날 때까지 남은 만큼 더 기다린다.
         if (retry > 0 && last === 'provider_http_429') {
           for (let wait = Math.max(this.rateLimitBackoffMs, (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now()); wait > 0;
-            wait = (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now()) await new Promise(r => setTimeout(r, wait))
+            wait = (providerLoad.get(providerKey)?.retryAfter ?? 0) - Date.now()) await waitForRetry(wait, req.signal, attempts)
         }
         const attemptId = randomUUID()
         // 다시 보낼 때는 어느 칸이 어떻게 어긋났는지(경로·코드만, 답의 글은 아님)도 알려 준다 — '형식대로' 만으로는 같은 실수를 되풀이했다(10/2 rules:too_big 두 번).
-        const failed = retry && last.startsWith('invalid_schema ') ? ` The previous output failed validation at: ${last.slice('invalid_schema '.length)}.` : ''
+        const repairSchema = retry > 0 && req.json === true && /^invalid_schema(?: |$)/.test(last)
+        const failed = repairSchema && last.startsWith('invalid_schema ') ? ` The previous output failed validation at: ${last.slice('invalid_schema '.length)}.` : ''
         const request = { ...req, hardTokenCap: !!this.opts.context?.turnMeter, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity),
-          prompt: retry ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt }
+          prompt: repairSchema ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt }
         const context = { ...this.opts.context, traceId: this.traceId, requestId: this.requestId }
         const release = acquireProvider(providerKey, context.workload === 'background')
         if (!release) { last = 'provider_overloaded'; break }
@@ -286,14 +310,15 @@ export class AIOrchestrator implements LLMProvider {
           this.lastModelId = model.id; this.lastPromptVersion = req.promptVersion ?? `${req.task}:v1`; this.lastFallbackUsed = index > 0
           return output as T
         }
-        // 공급자 쪽 일시 과부하(500·502·503)는 1~2초 안에 돌아와 금방 지나간다 — 짧게 쉬고 다시 보낸다(재시도 횟수와 따로, 최대 2번).
-        // 10/2 3.8-flash 부분 장애 때 503 이 절반쯤이라 한 번만 다시 보내면 대화가 자주 실패했다. 시간 초과·형식 오류는 그대로 한 번.
+        if (TRANSIENT.test(last)) transientFailures++
+        // 일시 과부하는 제한된 지수 백오프로 최대 2번 더 시도한다. 장기 장애는 기존 예비 모델 경로로 넘긴다.
         if (TRANSIENT.test(last) && transientLeft > 0) {
-          await new Promise(r => setTimeout(r, TRANSIENT_BACKOFF_MS * (TRANSIENT_RETRIES - transientLeft + 1)))
           transientLeft--
           retry--
           continue
         }
+        // Repeating an unchanged invalid/auth/payment request cannot repair it. A separately configured fallback may still serve it.
+        if (/^provider_http_4\d\d$/.test(last) && !['provider_http_408', 'provider_http_429'].includes(last)) break
         // 그래도 공급자 쪽 실패면(과부하가 이어짐·속도 제한·시간 초과·연결 실패) 같은 모델에 또 보내지 않고 다음 후보(예비)로 간다.
         // 다음 후보가 없을 때만 같은 모델에 한 번 더 — 예전 동작 그대로다.
         if (index < selections.length - 1 && PROVIDER_FAILURE.test(last)) break

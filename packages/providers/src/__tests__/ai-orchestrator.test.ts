@@ -7,7 +7,7 @@ import { AIContentBlockedError, type AIProvider, type AIUsageRecord, type Genera
 import { registryFromEnv, resolveAIChain } from '../ai/resolve'
 
 const saved = { ...process.env }
-afterEach(() => { process.env = { ...saved } })
+afterEach(() => { process.env = { ...saved }; vi.useRealTimers(); vi.restoreAllMocks() })
 
 function fake(name: string, answers: Array<string | Error>): AIProvider {
   let i = 0
@@ -91,25 +91,108 @@ describe('AIOrchestrator', () => {
   })
 
   it('rides out a brief provider overload (5xx) with short extra retries, but gives up after them', async () => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, 'random').mockReturnValue(.25)
     const registry = new ModelRegistry([{ id: 'm', provider: 'gemini', providerModelId: 'm', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32000 }])
     // 503 두 번 뒤 성공 — 일시 과부하는 짧게 쉬고 다시 보내 대화를 살린다.
     const flaky = fake('p', [new Error('provider_http_503'), new Error('provider_http_503'), 'ok'])
     let calls = 0
     const counted: AIProvider = { ...flaky, generate: async req => { calls++; return flaky.generate(req) } }
     const ai = new AIOrchestrator({ chain: [counted], registry, resolveModel: () => counted })
-    expect(await ai.generateText({ task: 'dialogue', system: '', prompt: 'x' })).toBe('ok')
+    const recovered = ai.generateText({ task: 'dialogue', system: '', prompt: 'x' })
+    await vi.runAllTimersAsync()
+    expect(await recovered).toBe('ok')
     expect(calls).toBe(3)
     // 계속 503 이면 추가 재시도 2번 + 기본 재시도 1번 = 4번 시도하고 멈춘다.
     let down = 0
+    const started = Date.now(), calledAt: number[] = [], prompts: string[] = [], usage: AIUsageRecord[] = []
+    const authorize = vi.fn(async () => ({ allowed: true as const, reservationId: 'test', maxUsageUnits: 0 }))
     const outage: AIProvider = { info: { mode: 'live', name: 'p', notice: null }, healthCheck: async () => true,
-      generate: async () => { down++; throw new Error('provider_http_503') } }
-    const failing = new AIOrchestrator({ chain: [outage], registry, resolveModel: () => outage })
-    await expect(failing.generateText({ task: 'dialogue', system: '', prompt: 'x' })).rejects.toThrow('ai unavailable after 4 attempts: provider_http_503')
+      generate: async req => { down++; calledAt.push(Date.now() - started); prompts.push(req.prompt); throw new Error('provider_http_503') } }
+    const failing = new AIOrchestrator({ chain: [outage], registry, resolveModel: () => outage,
+      budgetGuard: { authorize }, onUsage: record => { usage.push(record) } })
+    const failed = expect(failing.generateText({ task: 'dialogue', system: '', prompt: 'x' })).rejects.toThrow('ai unavailable after 4 attempts: provider_http_503')
+    await vi.runAllTimersAsync()
+    await failed
     expect(down).toBe(4)
+    expect(calledAt).toEqual([0, 1250, 3500, 7500]) // Exponential delay + jitter, total per-delay ceiling of 4 seconds.
+    expect(prompts).toEqual(['x', 'x', 'x', 'x'])
+    expect(authorize).toHaveBeenCalledTimes(4)
+    expect(usage).toHaveLength(4)
+    expect(usage.every(record => !record.ok && record.error === 'provider_http_503')).toBe(true)
+  })
+
+  it.each(['provider_http_503', 'provider_http_429'])('cancels %s backoff immediately without admitting or charging another attempt', async error => {
+    vi.useFakeTimers()
+    const controller = new AbortController(), provider = fake(`cancel-during-backoff-${error}`, [new Error(error)])
+    const generate = vi.spyOn(provider, 'generate'), usage: AIUsageRecord[] = []
+    const authorize = vi.fn(async () => ({ allowed: true as const, reservationId: 'test', maxUsageUnits: 0 }))
+    const ai = new AIOrchestrator({ chain: [provider], budgetGuard: { authorize }, onUsage: record => { usage.push(record) } })
+    const cancelled = expect(ai.execute({ schema: Schema, task: 'dialogue', system: '', prompt: 'original', signal: controller.signal }))
+      .rejects.toMatchObject({ attempts: 1, last: 'cancelled' })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(generate).toHaveBeenCalledTimes(1)
+    controller.abort()
+    await cancelled
+    expect(vi.getTimerCount()).toBe(0)
+    expect(authorize).toHaveBeenCalledTimes(1)
+    expect(usage).toMatchObject([{ ok: false, error }])
+  })
+
+  it('keeps a provider outage classified as unavailable when the retry budget is denied', async () => {
+    vi.useFakeTimers()
+    let admissions = 0
+    const provider = fake('outage-before-denied', [new Error('provider_http_503')]), generate = vi.spyOn(provider, 'generate')
+    const ai = new AIOrchestrator({ chain: [provider], budgetGuard: { authorize: async () => ++admissions === 1
+      ? { allowed: true, reservationId: 'first', maxUsageUnits: 0 } : { allowed: false, reason: 'global_cost' } } })
+    const failed = expect(ai.generateText({ system: '', prompt: 'original' })).rejects.toMatchObject({ attempts: 1, last: 'provider_http_503' })
+    await vi.runAllTimersAsync()
+    await failed
+    expect(generate).toHaveBeenCalledTimes(1)
+    expect(admissions).toBe(2)
+  })
+
+  it('adds JSON repair instructions only after invalid structured output', async () => {
+    vi.useFakeTimers()
+    const cases = [
+      { name: 'plain-empty', structured: false, first: '', expectedRepair: false },
+      { name: 'plain-overload', structured: false, first: new Error('provider_http_503'), expectedRepair: false },
+      { name: 'json-rate-limit', structured: true, first: new Error('provider_http_429'), expectedRepair: false },
+      { name: 'json-request-timeout', structured: true, first: new Error('provider_http_408'), expectedRepair: false },
+      { name: 'json-overload', structured: true, first: new Error('provider_http_503'), expectedRepair: false },
+      { name: 'json-invalid', structured: true, first: '{"message":123}', expectedRepair: true },
+    ]
+    for (const c of cases) {
+      const provider = fake(c.name, [c.first, c.structured ? '{"message":"ok"}' : 'ok'])
+      const generate = vi.spyOn(provider, 'generate')
+      const ai = new AIOrchestrator({ chain: [provider], rateLimitBackoffMs: 0 })
+      const result = c.structured ? ai.generateStructured({ schema: Schema, system: '', prompt: 'original' }) : ai.generateText({ system: '', prompt: 'original' })
+      await vi.runAllTimersAsync()
+      await expect(result).resolves.toEqual(c.structured ? { message: 'ok' } : 'ok')
+      expect(generate).toHaveBeenCalledTimes(2)
+      expect(generate.mock.calls[1]![0].prompt).toBe(c.expectedRepair
+        ? 'original\nReturn only valid JSON matching the requested schema. The previous output failed validation at: message:invalid_type.' : 'original')
+    }
+  })
+
+  it.each([400, 401, 402, 403, 404])('does not retry an unchanged HTTP %s request, but permits a configured fallback', async status => {
+    const primary = fake(`permanent-${status}`, [new Error(`provider_http_${status}`)]), first = vi.spyOn(primary, 'generate')
+    const alone = new AIOrchestrator({ chain: [primary] })
+    await expect(alone.generateText({ system: '', prompt: 'original' })).rejects.toMatchObject({ attempts: 1, last: `provider_http_${status}` })
+    expect(first).toHaveBeenCalledTimes(1)
+    const backup = fake(`backup-${status}`, ['ok']), second = vi.spyOn(backup, 'generate')
+    const withFallback = new AIOrchestrator({ chain: [primary, backup] })
+    await expect(withFallback.generateText({ system: '', prompt: 'original' })).resolves.toBe('ok')
+    expect(first).toHaveBeenCalledTimes(2)
+    expect(second).toHaveBeenCalledTimes(1)
+    expect(withFallback.lastFallbackUsed).toBe(true)
   })
 
   // 10/2: 고른 대화 모델이 공급자 장애로 실패하면 예비(GPT-5.4 mini)로 — 형식 오류는 같은 모델에 한 번 더, 공급자 차단은 예비로 피하지 않는다.
   it('moves a pinned dialogue to the backup on a provider failure, never on a schema error or a block', async () => {
+    vi.useFakeTimers()
+    // Other rate-limit tests intentionally leave a short shared-provider cooldown behind.
+    await vi.advanceTimersByTimeAsync(1000)
     const registry = new ModelRegistry([
       { id: 'flash', provider: 'gemini', providerModelId: 'flash', tier: 'standard', capabilities: ['dialogue'], maxContextTokens: 32000 },
       { id: 'backup', provider: 'openai', providerModelId: 'backup', tier: 'standard', capabilities: ['dialogue'], maxContextTokens: 32000, fallback: true },
@@ -119,7 +202,9 @@ describe('AIOrchestrator', () => {
       const providers: Record<string, AIProvider> = { flash: primary, backup: fake('backup', ['{"message":"backup"}']) }
       const counted = (id: string): AIProvider => ({ ...providers[id]!, generate: req => { calls.push(id); return providers[id]!.generate(req) } })
       const ai = new AIOrchestrator({ chain: [primary], registry, resolveModel: m => counted(m.id), rateLimitBackoffMs: 0, context: { dialogueModelId: 'flash' } })
-      const out = await ai.generateStructured({ task: 'dialogue', schema: Schema, system: '', prompt: 'x' }).catch((e: unknown) => e)
+      const pending = ai.generateStructured({ task: 'dialogue', schema: Schema, system: '', prompt: 'x' }).catch((e: unknown) => e)
+      await vi.runAllTimersAsync()
+      const out = await pending
       return { out, calls, backupUsed: ai.lastFallbackUsed }
     }
     for (const failure of ['provider_http_429', 'provider_http_400', 'fetch failed']) {
