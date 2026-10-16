@@ -13,6 +13,7 @@ import type { ValidatedTransition, AgencyPlan, TurnPolicy } from '@miro/engine'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
 import { settleTokensInTransaction } from '@/lib/usage/guard'
 import { enqueueMemoryJobs } from '@/lib/ai/memory-jobs'
+import { groundedMemoryCandidates } from '@/lib/ai/memory-sources'
 
 /** One INSERT shares one now(). Step rows by a microsecond so every reader ordering by created_at
  * (snapshot, reality context, chat page, archive preview) keeps the order they were written in. */
@@ -263,9 +264,11 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
 
     /* ---- memories ---- */
     // 같은 사실을 반복 저장하지 않는다.
-    const replacements = t.memories.filter(m => m.replaces && input.existingMemories.some(old => old.id === m.replaces && old.sessionId === input.sessionId && old.type === m.type))
+    const memorySource = inserted.find(message => message.role === 'user')?.id
+    const grounded = memorySource ? await groundedMemoryCandidates(tx, t.memories, input.sessionId, memorySource) : []
+    const replacements = grounded.filter(m => m.replaces && input.existingMemories.some(old => old.id === m.replaces && old.sessionId === input.sessionId && old.type === m.type))
       .map(m => m.replaces!)
-    const candidates = t.memories.filter(m => !m.replaces || replacements.includes(m.replaces))
+    const candidates = grounded.filter(m => !m.replaces || replacements.includes(m.replaces))
     const fresh = dedupeCandidates(candidates, input.existingMemories.filter(m => !replacements.includes(m.id)) as never)
     if (fresh.length > 0) {
       const accepted = fresh.flatMap(m => m.replaces ? [m.replaces] : [])
@@ -274,7 +277,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,
-        sourceMessageId: inserted.find(message => message.role === 'user')!.id,
+        sourceMessageId: m.sourceMessageId!,
         type: m.type,
         content: m.content,
         importance: Math.round(m.importance * 100),

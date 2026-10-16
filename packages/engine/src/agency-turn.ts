@@ -12,6 +12,7 @@ import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
 import { approveTransition } from './transition'
 import { blockStream, type TurnStream } from './stream-blocks'
+import { agencyCommunicationPreferences } from './communication-preferences'
 
 export type AgencyTurnInput = {
   mode: 'shadow' | 'live'
@@ -53,7 +54,6 @@ export async function runAgencyTurn(opts: {
   maxOutputTokens?: number; contextScale?: number; stream?: TurnStream
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
-  const communicationPreference = needsCommunicationPreferenceReview(opts.userInput, snapshot.recentMessages)
   const actor = snapshot.character.id
   const scene = !snapshot.mode || snapshot.mode === 'chat'
   const calendarChanged = scene && snapshot.world.narrativeCalendar?.changedAtTurn === snapshot.turnCount
@@ -62,6 +62,8 @@ export async function runAgencyTurn(opts: {
   const plan = await planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context,
     input: calendar ? `${opts.userInput}\n\n[Server-confirmed scene calendar]\n${calendar}` : opts.userInput }, { routine })
   if (productionRuntime() && plan.providerMode !== 'live') throw new Error('agency_planner_not_live')
+  const communicationPreferences = agencyCommunicationPreferences(plan.context, plan.state.beliefs, snapshot.memories)
+  const communicationPreference = needsCommunicationPreferenceReview(opts.userInput, snapshot.recentMessages, communicationPreferences)
 
   // ── 승인 (표현 전) ──────────────────────────────────────────────────────────────────────────────
   // Numeric relationship/mood changes belong to one appraisal. Stage signals use the actual input
@@ -94,7 +96,7 @@ export async function runAgencyTurn(opts: {
   const build = (recent: typeof evidenceMessages, memories: typeof sourced, unsure: string[]) => {
     const context = buildContext({ ...snapshot, relationship: projected, characterState: { ...(snapshot.characterState ?? { stress: 20, energy: 70, currentGoals: [], currentThoughts: [], firedRules: [] }), mood },
       // 사건·NPC 는 결정이 아니면 바뀌지 않는다 — 렌더러가 '마무리' 를 제안하지 않게 아예 싣지 않는다(§3.3).
-      semanticEvents: [], memories, recentMessages: recent, activeNpcs: [], activeEvents: [], recentlyResolvedEvents: [], userInput: opts.userInput,
+      semanticEvents: [], memories, recentMessages: recent, activeNpcs: [], activeEvents: [], recentlyResolvedEvents: [], userInput: opts.userInput, communicationPreferences,
     }, opts.contextScale, false, policy.generation.replyLength)
     context.system += buildAgencyDecisionDirective(plan.decision)
     context.system += '\n' + contactBoundaryDirective(snapshot.contactBoundary, new Date(agency.context.clock.now))
@@ -158,7 +160,8 @@ export async function runAgencyTurn(opts: {
     validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
     // 의미 검토(모델 호출)는 응답 뒤로 — 여기서는 규칙 검사만 해 답을 먼저 보낸다(10/9 속도: 검토·다시 쓰기가 턴을 20~44초로 늘렸다).
     // 검토할 거리가 있었으면 그 입력을 돌려줘 호출한 쪽이 응답 뒤에 검토하고 기록한다.
-    const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length, communicationPreference }
+    const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length, communicationPreference,
+      communicationPreferenceSourceIds: communicationPreferences.map(item => item.sourceId) }
     verification = await verifyAgencyRealization(llm, realization, { review: false })
     if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
     if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); if (verification.deferredReview) review = { ...realization, communicationPreference: false }; break }

@@ -45,7 +45,7 @@ function provider(options: StubOptions = {}) {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
-      if (request.promptVersion === 'agency-communication-check:v1') {
+      if (request.promptVersion === 'agency-communication-check:v2') {
         const checks = calls.filter(c => c.version === request.promptVersion).length
         const reject = typeof options.rejectRealization === 'number' ? checks <= options.rejectRealization : Boolean(options.rejectRealization)
         return request.schema.parse({ acceptable: !reject, blockIndex: 0 })
@@ -68,6 +68,19 @@ beforeEach(() => vi.stubEnv('MIRO_MODE', 'alpha'))
 afterEach(() => vi.unstubAllEnvs())
 
 describe('runTurn agency integration', () => {
+  it('checks an old preference outside the recent window at turn 120 using the original user words', async () => {
+    const stub = provider()
+    const input = agency()
+    const old = { ...proof, id: 'old-preference', quote: '나를 공주라고 부르지 마. 그냥 이름으로 불러.', occurredAt: '2026-09-01T00:00:00Z' }
+    input.context.evidence = [old, { ...proof, quote: '오늘도 책을 읽자.' }]
+    const s = snapshot({ turnCount: 120, recentMessages: Array.from({ length: 12 }, (_, i) => ({ id: `later-${i}`, role: 'user', content: '책이 두껍네.' })) })
+    const result = await runTurn({ llm: stub.llm, snapshot: s, userInput: '오늘도 책을 읽자.', agency: input })
+    expect(result.agency?.verification.reviewed).toBe(true)
+    const review = stub.calls.find(call => call.version === 'agency-communication-check:v2')!
+    expect(JSON.parse(review.prompt).preferenceEvidence).toContainEqual({ sourceId: old.id, text: old.quote, occurredAt: old.occurredAt, kind: 'user_quote' })
+    expect(stub.calls.find(call => call.version === 'agency-dialogue:v5')!.prompt).toContain(old.quote)
+  })
+
   it('rewrites before delivery when a reply ignores an explicit communication preference', async () => {
     const stub = provider({ rejectRealization: 1 })
     const input = agency()
@@ -81,7 +94,7 @@ describe('runTurn agency integration', () => {
     const result = await runTurn({ llm, snapshot: snapshot(), userInput: text, agency: input,
       stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { throw new Error('Rejected draft was shown') } } })
     expect(result.agency?.verification).toMatchObject({ ok: true, reviewed: true })
-    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v1')).toHaveLength(2)
+    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v2')).toHaveLength(2)
     const renders = stub.calls.filter(call => call.version === 'agency-dialogue:v5')
     expect(renders).toHaveLength(2)
     expect(renders[1]!.prompt).toContain('원하지 않은 과찬을 다른 과찬으로 바꾸지 말고')

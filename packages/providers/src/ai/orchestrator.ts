@@ -299,7 +299,10 @@ export class AIOrchestrator implements LLMProvider {
         if (index < selections.length - 1 && PROVIDER_FAILURE.test(last)) break
       }
     }
-    if (denied && (attempts === 0 || denied === 'turn_tokens')) throw new AIBudgetDeniedError(denied)
+    // If the primary already failed, an unaffordable backup does not turn that
+    // outage into the user's budget failure. Keep the original failure so the
+    // caller offers a retry, while still enforcing the unchanged envelope.
+    if (denied && attempts === 0) throw new AIBudgetDeniedError(denied)
     throw new AIUnavailableError(attempts, last)
   }
 }

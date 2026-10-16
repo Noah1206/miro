@@ -1,4 +1,5 @@
 import type { Memory, MemoryCandidate } from './types'
+import { isCommunicationPreference } from './layers'
 
 /**
  * 중복·상충 기억 정리.
@@ -12,13 +13,13 @@ export function dedupeCandidates(
   candidates: MemoryCandidate[],
   existing: Memory[],
 ): MemoryCandidate[] {
-  const seen = existing.map((m) => normalize(m.content))
+  const seen = new Set(existing.map((m) => `${m.type}:${normalize(m.content)}`))
   const out: MemoryCandidate[] = []
 
   for (const c of candidates) {
-    const key = normalize(c.content)
-    if (seen.some((e) => isSame(e, key))) continue
-    seen.push(key)
+    const key = `${c.type}:${normalize(c.content)}`
+    if (seen.has(key)) continue
+    seen.add(key)
     out.push(c)
   }
   return out
@@ -37,16 +38,28 @@ export function pruneMemories(memories: Memory[], limit: number): {
   const ranked = [...memories].sort(
     (a, b) => b.importance * b.persistence - a.importance * a.persistence,
   )
-  return { keep: ranked.slice(0, limit), drop: ranked.slice(limit) }
+  // Retention also needs diversity: a hundred strong factual memories must not erase the
+  // reason for a disagreement or every explicit preference. Small caps keep old behavior.
+  const protectedIds = new Set<string>()
+  if (limit >= 12) {
+    for (const type of ['short_term_summary', 'preference', 'promise', 'conflict', 'shared_event', 'relationship_change'] as const) {
+      const quota = type === 'short_term_summary' ? 1 : Math.min(type === 'preference' ? 8 : 4, Math.floor(limit / 12))
+      const candidates = ranked.filter(m => m.type === type)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      const communication = type === 'preference' ? candidates.filter(isCommunicationPreference).slice(0, Math.min(4, quota)) : []
+      for (const m of communication) protectedIds.add(m.id)
+      for (const m of candidates.filter(m => !protectedIds.has(m.id)).slice(0, quota - communication.length)) protectedIds.add(m.id)
+    }
+  }
+  const keep = ranked.filter(m => protectedIds.has(m.id))
+  for (const m of ranked) if (keep.length < limit && !protectedIds.has(m.id)) keep.push(m)
+  const keptIds = new Set(keep.map(m => m.id))
+  return { keep, drop: ranked.filter(m => !keptIds.has(m.id)) }
 }
 
 function normalize(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[.!?…,]/g, '')
 }
 
-/** 완전 일치이거나 한쪽이 다른 쪽을 포함하면 같은 기억으로 본다. */
-function isSame(a: string, b: string): boolean {
-  if (a === b) return true
-  const [short, long] = a.length <= b.length ? [a, b] : [b, a]
-  return short.length >= 6 && long.includes(short)
-}
+// A longer sentence can add the cause, a correction or the resolution of an event.
+// Substring containment is therefore not evidence that it is the same memory.

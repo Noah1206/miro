@@ -4,6 +4,7 @@ import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, mood
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
 } from '@miro/domain'
+import { communicationPreferenceData, snapshotCommunicationPreferences, COMMUNICATION_PREFERENCE_RULE, type CommunicationPreferenceEvidence } from './communication-preferences'
 
 export type RecentMessage = {
   role: 'user' | 'character' | 'narrator' | 'npc'
@@ -61,6 +62,8 @@ export type SimulationSnapshot = {
   adultMode?: boolean
   /** 언베일 수위(사용자가 대화방에서 고름). 없으면 explicit(10/3 이전 방). */
   adultLevel?: AdultLevel
+  /** Agency supplies original validated user quotes; legacy chat uses scoped extracted memory hints. */
+  communicationPreferences?: CommunicationPreferenceEvidence[]
 }
 
 export type BuiltContext = {
@@ -257,6 +260,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     '- 대화 리듬: 상대의 말을 항목별로 대입해 긴 답으로 모두 되돌리지 않습니다. 지금 중요한 말 하나에 살아 있는 반응을 고릅니다. 안심·칭찬·감사·파이팅을 매번 마무리로 붙이지 않습니다. 이미 끝난 소품 행동과 확인 질문을 되돌리지 않습니다. 말로 충분하면 웃음·주머니·시선·속마음 블록을 추가하지 않습니다. 성격의 말끝·격식·호칭은 유지하고 상황에 따라 길이와 박자를 바꿉니다.',
     '- 관계 수치를 대사나 서술에 노출하지 않습니다.',
     '- 사용자의 행동을 대신 정하지 않습니다. 사용자 캐릭터의 대사나 선택을 서술하지 않습니다.',
+    COMMUNICATION_PREFERENCE_RULE,
     openingGuidance(s),
     languageRule(s.userLanguage),
     s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s, style),
@@ -451,6 +455,7 @@ function buildPrompt(
     }
   }
 
+  parts.push(communicationPreferenceData(s.communicationPreferences ?? snapshotCommunicationPreferences(s, s.userInput)))
   return parts.join('\n')
 }
 

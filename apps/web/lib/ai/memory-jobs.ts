@@ -12,6 +12,7 @@ import { conversationContext } from '@/lib/simulation/character-context'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
 import { observe } from '@/lib/observe'
 import { captureMoments } from '@/lib/reality/moments'
+import { groundedMemoryCandidates } from './memory-sources'
 
 type Kind = 'memory_extraction' | 'memory_summary'
 const KINDS: readonly AITask[] = ['memory_extraction', 'memory_summary']
@@ -137,20 +138,23 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
   try { candidates = filterSalient((await analyze(llm, job.kind, source.content, snapshot)).memories) }
   catch (e) { await retryOrFail(e instanceof Error ? e.message.slice(0, 60) : 'analyze_failed'); return 'retry' }
 
+  let stored = 0
   await db.transaction(async tx => {
     // 결과 저장과 작업 완료는 한 트랜잭션 — 둘 중 하나만 남지 않는다. 호출 비용까지 정확히 한 번이라고는 주장하지 않는다.
     const [locked] = await tx.select({ id: memoryJobs.id }).from(memoryJobs).where(and(eq(memoryJobs.id, id), eq(memoryJobs.leaseToken, token))).for('update')
     if (!locked) return
     const existing = await tx.select().from(memories).where(eq(memories.sessionId, job.sessionId))
     const asMemory = existing.map(m => ({ ...m, importance: m.importance / 100, persistence: m.persistence / 100, confidence: m.confidence / 100 }))
-    const replacements = candidates.filter(m => m.replaces && existing.some(old => old.id === m.replaces && old.type === m.type)).map(m => m.replaces!)
-    const fresh = dedupeCandidates(candidates.filter(m => !m.replaces || replacements.includes(m.replaces)), asMemory.filter(m => !replacements.includes(m.id)) as never)
+    const grounded = await groundedMemoryCandidates(tx, candidates, job.sessionId, job.messageId)
+    const replacements = grounded.filter(m => m.replaces && existing.some(old => old.id === m.replaces && old.type === m.type)).map(m => m.replaces!)
+    const fresh = dedupeCandidates(grounded.filter(m => !m.replaces || replacements.includes(m.replaces)), asMemory.filter(m => !replacements.includes(m.id)) as never)
     if (fresh.length) {
+      stored = fresh.length
       const accepted = fresh.flatMap(m => m.replaces ? [m.replaces] : [])
       if (accepted.length) await tx.delete(memories).where(and(eq(memories.sessionId, job.sessionId), inArray(memories.id, accepted)))
       if (fresh.some(m => m.type === 'short_term_summary')) await tx.delete(memories).where(and(eq(memories.sessionId, job.sessionId), eq(memories.type, 'short_term_summary')))
       await tx.insert(memories).values(fresh.map(m => ({
-        sessionId: job.sessionId, characterId: job.characterId, sourceMessageId: job.messageId, type: m.type, content: m.content,
+        sessionId: job.sessionId, characterId: job.characterId, sourceMessageId: m.sourceMessageId!, type: m.type, content: m.content,
         importance: Math.round(m.importance * 100), persistence: Math.round(m.persistence * 100), confidence: Math.round(m.confidence * 100),
         tags: tagsOf({ content: m.content, tags: m.tags ?? [] }),
       })))
@@ -168,6 +172,6 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
       now: source.createdAt, recent: recentMessages.map(m => ({ who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 300) })) })
       .catch(e => observe('moment.capture_failed', { jobId: id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))
   }
-  observe('memory.job_done', { jobId: id, kind: job.kind, stored: candidates.length })
+  observe('memory.job_done', { jobId: id, kind: job.kind, stored })
   return 'done'
 }

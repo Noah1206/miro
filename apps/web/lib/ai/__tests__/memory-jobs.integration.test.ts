@@ -34,6 +34,27 @@ function analyzer(seen: Array<{ kind: string; input: string; messageAts: string[
 const fact = (content: string, extra: Record<string, unknown> = {}) => ({ type: 'user_fact', content, importance: .9, persistence: .9, confidence: 1, tags: [], ...extra })
 
 describeDb('memory jobs (§3.5)', () => {
+  it('stores a delayed extraction against its cited old user message and rejects a fabricated source before replacement', async () => {
+    const s = await session(), other = await session()
+    const loaded = (await loadSession(s.sessionId, s.userId))!
+    const [past, current] = await db.insert(messages).values([
+      { sessionId: s.sessionId, role: 'user', content: '별명보다 이름으로 불러줘', blocks: [], turnIndex: 1, createdAt: new Date(Date.now() - 5000) },
+      { sessionId: s.sessionId, role: 'user', content: '오늘은 걸어갈까', blocks: [], turnIndex: 4 },
+    ]).returning()
+    const [foreign] = await db.insert(messages).values({ sessionId: other.sessionId, role: 'user', content: past!.content, blocks: [], turnIndex: 1 }).returning()
+    const [old] = await db.insert(memories).values({ sessionId: s.sessionId, characterId: loaded.characterId, type: 'preference', content: '유효한 기존 취향', importance: 80, persistence: 90, confidence: 100 }).returning()
+    await db.insert(memoryJobs).values({ sessionId: s.sessionId, characterId: loaded.characterId, userId: s.userId, messageId: current!.id, throughTurn: 4, kind: 'memory_extraction' })
+    const run = await runMemoryJobs(new Date(), { sessionId: s.sessionId, analyze: analyzer([], () => [
+      fact('이름으로 부르기를 원한다', { type: 'preference', sourceMessageId: past!.id, sourceQuote: past!.content }),
+      fact('다른 방의 원문으로 교체하려 함', { type: 'preference', sourceMessageId: foreign!.id, sourceQuote: foreign!.content, replaces: old!.id }),
+      fact('과거 발화로 최신 기억을 교체하려 함', { type: 'preference', sourceMessageId: past!.id, sourceQuote: past!.content, replaces: old!.id }),
+    ]) })
+    expect(run.results).toEqual({ done: 1 })
+    const saved = await db.select().from(memories).where(eq(memories.sessionId, s.sessionId))
+    expect(saved.find(m => m.content === '이름으로 부르기를 원한다')?.sourceMessageId).toBe(past!.id)
+    expect(saved.some(m => m.id === old!.id)).toBe(true)
+    expect(saved.some(m => m.sourceMessageId === current!.id)).toBe(false)
+  })
   it('keeps a dated scene schedule out of real notifications while still capturing an actual messenger schedule', async () => {
     const s = await session()
     const loaded = (await loadSession(s.sessionId, s.userId))!

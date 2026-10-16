@@ -386,14 +386,15 @@ describe('memory extraction result', () => {
     expect(memoryResult('short_term_summary').parse({ memories: [{ id: 'x', type: 'user_fact', content: '옛 기억' }] }).memories).toEqual([])
   })
 
-  /** 실측: 요약이 300자를 넘겨 통째로 떨어졌다. 문장 경계에서 잘라 살린다. */
+  /** 요약은 관계의 원인과 경과를 보존할 별도 900자 한도가 있다. */
   it('clips an over-long summary at a sentence boundary instead of dropping it', async () => {
     const { memoryResult } = await import('../task-router')
-    const long = Array.from({ length: 20 }, (_, i) => `사용자는 ${i}번째 사실을 말했다.`).join(' ')
-    expect(long.length).toBeGreaterThan(300)
+    const long = Array.from({ length: 80 }, (_, i) => `사용자는 ${i}번째 사실을 말했다.`).join(' ')
+    expect(long.length).toBeGreaterThan(900)
     const r = memoryResult('short_term_summary').parse({ memories: [{ type: 'short_term_summary', content: long }] })
     expect(r.memories).toHaveLength(1)
-    expect(r.memories[0]!.content.length).toBeLessThanOrEqual(300)
+    expect(r.memories[0]!.content.length).toBeLessThanOrEqual(900)
+    expect(r.memories[0]!.content.length).toBeGreaterThan(300)
     expect(r.memories[0]!.content.endsWith('.')).toBe(true)
   })
 })

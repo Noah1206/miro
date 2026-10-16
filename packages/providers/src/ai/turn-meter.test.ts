@@ -53,4 +53,21 @@ describe('shared turn cost envelope', () => {
     await expect(ai.generateText({ ...request, maxTokens: 9000 })).rejects.toThrow('turn_tokens')
     expect(calls).toHaveLength(1)
   })
+  it('reports the primary outage when the fallback cannot fit the unchanged turn envelope', async () => {
+    const registry = new ModelRegistry([
+      { ...model, id: 'primary', provider: 'gemini', inputCost: 1, outputCost: 2 },
+      { ...model, id: 'backup', provider: 'anthropic', inputCost: 100, outputCost: 200, fallback: true },
+    ])
+    let primaryCalls = 0, backupCalls = 0
+    const primary = { info: { mode: 'live' as const, name: 'outage', notice: null }, healthCheck: async () => true,
+      generate: async () => { primaryCalls++; throw new Error('provider_http_503') } }
+    const backup = { ...primary, generate: async () => { backupCalls++; throw new Error('must_not_be_called') } }
+    const meter = new TurnMeter(.003, 10000, 1000)
+    const ai = new AIOrchestrator({ chain: [primary], registry, resolveModel: m => m.id === 'primary' ? primary : backup,
+      context: { turnMeter: meter }, maxRetries: 0 })
+    await expect(ai.generateText(request)).rejects.toMatchObject({ attempts: 3, last: 'provider_http_503' })
+    expect(primaryCalls).toBe(3)
+    expect(backupCalls).toBe(0)
+    expect(meter.customerCostUSD).toBe(0)
+  })
 })

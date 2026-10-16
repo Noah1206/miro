@@ -37,7 +37,7 @@ describe('authorized decision realization', () => {
     const checked = await verifyAgencyRealization(recordedProvider([{ acceptable: false, blockIndex: 0 }], calls), input)
     expect(checked).toMatchObject({ ok: false, reviewed: true })
     expect(checked.issues.some(issue => issue.reason === 'violates_boundary')).toBe(true)
-    expect(calls[0]!.promptVersion).toBe('agency-communication-check:v1')
+    expect(calls[0]!.promptVersion).toBe('agency-communication-check:v2')
   })
 
   it('provides an explicit authorized-not-completed contract and decision ID', async () => {

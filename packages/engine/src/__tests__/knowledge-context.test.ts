@@ -46,6 +46,32 @@ describe('participant evidence boundary', () => {
     expect(bytes + 2048).toBeLessThanOrEqual(32768)
   })
 
+  it.each(['memory_extraction', 'memory_summary'] as const)('bounds %s even after the memory pool fills, keeping the current input and rolling summary intact', async task => {
+    let system = '', prompt = ''
+    const summary = '설명 없이 기다리게 한 일이 갈등의 원인이었고 다음에는 미리 알려주기로 했다. '.repeat(16).slice(0, 900)
+    const current = '새로운 사실을 적는다. '.repeat(180).slice(0, 1950) + ' 정정: 남들 앞에서는 지윤이라고 불러줘.'
+    const llm = new AIOrchestrator({ chain: [new MockAIProvider(req => {
+      system = req.system; prompt = req.prompt
+      return { memories: task === 'memory_summary' ? [{ type: 'short_term_summary', content: summary, importance: .8, persistence: .9, confidence: 1 }] : [] }
+    })] })
+    const s = snapshot({ memories: [
+      { id: 'summary', sessionId: 's1', characterId: 'c1', type: 'short_term_summary', content: summary, importance: .8, persistence: .9, confidence: 1, tags: [], sourceMessageId: null, createdAt: new Date() },
+      ...Array.from({ length: 24 }, (_, i) => ({ id: `memory-${i}`, sessionId: 's1', characterId: 'c1', type: 'user_fact' as const,
+        content: '이전에 확인된 사용자에 대한 구체적인 사실이다. '.repeat(20).slice(0, 300), importance: .8, persistence: .9, confidence: 1, tags: [], sourceMessageId: null, createdAt: new Date() })),
+    ], recentMessages: Array.from({ length: 12 }).flatMap((_, i) => [
+      { id: `u-${i}`, role: 'user' as const, content: '길게 쓴 사용자의 실제 대화 문장이다. '.repeat(100).slice(0, 2000) },
+      { id: `c-${i}`, role: 'character' as const, content: '캐릭터의 긴 답변이다. '.repeat(100).slice(0, 1300) },
+    ]) })
+    await analyzeMemory(llm, task, current, s)
+    expect(Buffer.byteLength(system + prompt)).toBeLessThanOrEqual(24000)
+    const payload = JSON.parse(prompt)
+    expect(payload.input).toBe(current)
+    expect(payload.previousMemories.find((m: { id: string }) => m.id === 'summary').content).toBe(summary)
+    expect(payload.recent).toHaveLength(24)
+    expect(prompt).toContain('[중략]')
+    expect(system).toContain('생략된 부분을 추측해')
+  })
+
   it('accepts the bare event array the small model returns when it finds something', () => {
     // 9/26·27 실측 원문: {"events":[]}, 배열만, 배열 안에 {"events":[]} 가 든 모양.
     expect(SemanticResult.parse(JSON.parse('{\n  "events": []\n}'))).toEqual({ events: [] })

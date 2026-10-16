@@ -16,27 +16,73 @@ export function layerOf(type: MemoryType): MemoryLayer {
   return type === 'shared_event' || type === 'relationship_change' || type === 'conflict' ? 'relationship' : 'long_term'
 }
 
-/** 한국어·영어 낱말 조각. 2글자 이상만 — 조사·한 글자는 잡음이다. */
+/** 한국어·영어 낱말 조각. 조사가 붙어 검색에서 탈락하지 않게 하되 원문 자체는 바꾸지 않는다. */
 export function terms(text: string): string[] {
-  return text.toLowerCase().split(/[\s,.!?~·、。'"“”()\[\]]+/).map((t) => t.replace(/(은|는|이|가|을|를|에|의|도|로|와|과|랑|한테|에게)$/, '')).filter((t) => t.length >= 2)
+  return [...new Set(text.toLowerCase().split(/[^\p{L}\p{N}]+/u).flatMap(t => {
+    const stem = t.replace(/(으로는|에서는|에게는|한테는|으로|에서|한테|에게|처럼|보다|까지|부터|하고|이랑|랑|은|는|이|가|을|를|에|의|도|로|와|과)$/, '')
+    return [t, stem].filter(s => s.length >= 2)
+  }))]
+}
+
+type SearchableMemory = Pick<Memory, 'sessionId' | 'importance' | 'persistence' | 'content'>
+  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'confidence'>>
+
+const timeOf = (m: SearchableMemory) => m.createdAt?.getTime() ?? 0
+const durable = (m: SearchableMemory) => m.persistence >= .6 && (m.confidence ?? 1) >= .6
+
+/** Retrieval classification only. The source statement still determines what the user actually requested. */
+export function isCommunicationPreference(m: Pick<Memory, 'type' | 'content'> & Partial<Pick<Memory, 'tags'>>): boolean {
+  return m.type === 'preference' && /대화\s*선호|communication[_ ]preference|호칭|말투|칭찬|응원|위로|피드백|불러|부르|말하지|빈말|완벽|prais|reassur|nickname|feedback|call me/i.test(`${m.content} ${(m.tags ?? []).join(' ')}`)
+}
+
+/** Tags add the extractor's topic wording; character n-grams cover inflection, not semantic equivalence. */
+function relevance(m: SearchableMemory, query: string[]): number {
+  if (!query.length) return 0
+  const hay = `${m.content} ${(m.tags ?? []).join(' ')}`.toLowerCase()
+  const words = terms(hay)
+  return Math.min(3, query.reduce((sum, q) => {
+    if (hay.includes(q)) return sum + .35
+    // A long inflected word can share a 3-character stem. Do not match arbitrary 2-character fragments.
+    const grams = Array.from({ length: Math.min(24, Math.max(0, q.length - 2)) }, (_, i) => q.slice(i, i + 3))
+    if (grams.length && words.some(w => w.length >= 3 && grams.some(part => w.includes(part)))) return sum + .12
+    return sum
+  }, 0))
 }
 
 /**
- * 검색 — 전체 대화가 아니라 지금 말과 관련 있는 기억만 고른다.
- * 점수 = 중요도×지속성 + 지금 말과 겹치는 낱말 수×0.35. 겹치는 게 없어도 중요도 높은 것은 남는다.
+ * Query matches compete with enduring preferences and shared history, not just high-scoring facts.
+ * Reserved slots keep old boundaries/promises available even when the current message uses different words.
+ * This is bounded lexical/tag retrieval; it does not claim embedding-level semantic recall.
  */
-export function retrieveMemories<T extends Pick<Memory, 'sessionId' | 'importance' | 'persistence' | 'content'>>(
+export function retrieveMemories<T extends SearchableMemory>(
   memories: T[], sessionId: string, limit: number, query = '',
 ): T[] {
-  const q = terms(query)
-  const score = (m: T) => {
-    const base = m.importance * m.persistence
-    if (q.length === 0) return base
-    const hay = m.content.toLowerCase()
-    const overlap = q.filter((t) => hay.includes(t)).length
-    return base + overlap * 0.35
+  if (limit <= 0) return []
+  const q = terms(query).slice(0, 64)
+  const scored = memories.filter(m => m.sessionId === sessionId).map(m => ({ m, score: m.importance * m.persistence + relevance(m, q) }))
+    .sort((a, b) => b.score - a.score || timeOf(b.m) - timeOf(a.m))
+  const selected = new Set<T>()
+  const reserve = (type: MemoryType, count: number, latest = false) => {
+    const candidates = scored.filter(({ m }) => m.type === type && durable(m))
+    if (latest) candidates.sort((a, b) => timeOf(b.m) - timeOf(a.m) || b.score - a.score)
+    for (const { m } of candidates.slice(0, count)) if (selected.size < limit) selected.add(m)
   }
-  return memories.filter((m) => m.sessionId === sessionId).sort((a, b) => score(b) - score(a)).slice(0, limit)
+  if (limit >= 4) {
+    const preferenceQuota = Math.min(4, Math.max(1, Math.floor(limit / 3)))
+    const communication = scored.filter(({ m }) => m.type && durable(m) && isCommunicationPreference({ ...m, type: m.type }))
+      .sort((a, b) => timeOf(b.m) - timeOf(a.m) || b.score - a.score)
+    for (const { m } of communication.slice(0, Math.min(2, preferenceQuota))) selected.add(m)
+    const preferences = scored.filter(({ m }) => m.type === 'preference' && durable(m) && !selected.has(m))
+      .sort((a, b) => timeOf(b.m) - timeOf(a.m) || b.score - a.score)
+    for (const { m } of preferences.slice(0, preferenceQuota - selected.size)) selected.add(m)
+    reserve('promise', limit >= 16 ? 2 : 1)
+    reserve('conflict', 1)
+    if (limit >= 7) reserve('shared_event', 1)
+    if (limit >= 12) reserve('relationship_change', 1)
+  }
+  for (const { m } of scored) if (selected.size < limit) selected.add(m)
+  // Preserve ranking for callers; slots decide membership, not the order of the prompt.
+  return scored.filter(({ m }) => selected.has(m)).map(({ m }) => m)
 }
 
 /** 프롬프트에 계층별로 나눠 싣는다 — 어떤 기억이 어떤 종류인지 모델이 구분한다. */

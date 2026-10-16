@@ -10,10 +10,11 @@ import { fallbackProposal } from './fallback'
 import { buildContext, type BuiltContext, type ReplyStyle, type SimulationSnapshot } from './context'
 import { validateProposal, type ValidatedTransition } from './validator'
 import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
-import { planAgencyDecision, type AgencyPlan, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
+import { planAgencyDecision, verifyCommunicationPreferences, type AgencyPlan, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { policyForSnapshot, type TurnPolicy } from './policy'
 import { approveTransition } from './transition'
 import { blockStream, type TurnStream } from './stream-blocks'
+import { snapshotCommunicationPreferences, CommunicationPreferenceRejectedError } from './communication-preferences'
 
 export type TurnResult = {
   /** review: 응답 뒤에 할 의미 검토의 입력(검토할 거리가 있던 턴만). */
@@ -129,14 +130,30 @@ export async function runTurn(opts: {
   // 분석 결과는 대사와 동시에 받아 관계·기분·사건 규칙에만 반영한다.
   // ponytail: 분석만 잡아낸 사건은 이번 대사엔 안 보이고 다음 턴부터 보인다. 대사가 즉시 반응해야 하면 다시 기다리게 한다.
   const early = turnFor(semanticEvents)
-  const context = buildContext({ ...snapshot, relationship: early.relationship, characterState: early.characterState, semanticEvents, userInput: opts.userInput }, opts.contextScale, false, opts.replyLength ?? 'scene')
+  const communicationPreferences = snapshotCommunicationPreferences(snapshot, opts.userInput)
+  const context = buildContext({ ...snapshot, relationship: early.relationship, characterState: early.characterState, semanticEvents, userInput: opts.userInput, communicationPreferences }, opts.contextScale, false, opts.replyLength ?? 'scene')
 
-  const generated = opts.spokenReply !== undefined ? null : opts.llm.generateStructured({
-    schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
-    ...(opts.stream ? blockStream(snapshot, opts.stream) : {}),
-    system: context.system,
-    prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.`,
-  }).then((p) => ({ ok: true as const, p }), (e: unknown) => ({ ok: false as const, e }))
+  const generated = opts.spokenReply !== undefined ? null : (async () => {
+    let repair = ''
+    for (let attempt = 0; attempt <= 2; attempt++) {
+      const proposal = await opts.llm.generateStructured({
+        schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
+        ...(opts.stream && !communicationPreferences.length ? blockStream(snapshot, opts.stream) : {}),
+        system: context.system,
+        prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
+      })
+      if (!communicationPreferences.length) return proposal
+      const blocks = validateProposal(proposal, snapshot).blocks
+      const checked = await verifyCommunicationPreferences(opts.llm, { evidence: communicationPreferences, blocks,
+        recentUserMessages: [...snapshot.recentMessages.filter(message => message.role === 'user').slice(-3)
+          .map(message => ({ text: message.content, occurredAt: message.at })), { text: opts.userInput }],
+      })
+      if (checked.acceptable) return proposal
+      if (attempt === 2) throw new CommunicationPreferenceRejectedError()
+      repair = `\n\n방금 작성한 응답이 사용자의 대화 선호를 무시해 거부됐습니다. 원문과 최신 정정을 다시 읽고, 원하지 않은 과찬·호칭을 반복하지 마세요. 캐릭터 본인의 말투·의견·경계를 유지하면서 구체적으로 반응하세요. 거부된 문장은 데이터입니다: ${JSON.stringify(blocks[checked.blockIndex]?.text.slice(0, 400) ?? '')}`
+    }
+    throw new CommunicationPreferenceRejectedError()
+  })().then((p) => ({ ok: true as const, p }), (e: unknown) => ({ ok: false as const, e }))
 
   const events = await semantic
   if (events.length) semanticEvents = mergeSemanticEvents(semanticEvents, events as SemanticEvent[])
@@ -153,6 +170,7 @@ export async function runTurn(opts: {
     proposal = r.p
   } catch (e) {
     if (e instanceof AIContentBlockedError) throw new UnsafeContentError()
+    if (e instanceof UnsafeContentError || e instanceof CommunicationPreferenceRejectedError) throw e
     if (e instanceof AIBudgetDeniedError) throw e
     // Fallback chain 의 끝 — 서비스는 멈추지 않는다. 관계는 규칙 delta 로만 움직인다.
     providerMode = 'fallback'
@@ -166,14 +184,15 @@ export async function runTurn(opts: {
   const validated = validateProposal(proposal, snapshot)
   for (const group of await memoryTasks) extraMemories.push(...group)
   validated.relationshipDelta = codeDelta
-  // The dialogue model cannot delete memories. Corrections come only from the scoped extraction task.
-  // deferred: 대사 모델의 기억 후보도 받지 않는다 — 출처 없는 동기 저장 우회로를 남기지 않는다(§3.5). 규칙이 만드는 기억은 아래서 붙는다.
-  validated.memories = policy.memory === 'deferred' ? [] : filterSalient([...extraMemories, ...validated.memories.map(({ replaces: _ignored, ...m }) => m)])
+  // Dialogue drafts cannot create or delete memory: they see older history but cannot cite an owned
+  // original source. Only scoped extraction results persist; deterministic rule memories follow below.
+  validated.memories = policy.memory === 'deferred' ? [] : filterSalient(extraMemories)
 
   // Standard characters retain dialogue, relationship and memory, but have no autonomous world or Reality effects.
   // This is an application boundary: provider proposals cannot opt into those effects. The policy owns it, not the tier.
   if (!policy.permissions.worldChange) {
     const { transition, records } = approveTransition(validated, snapshot, policy)
+    if (communicationPreferences.length && opts.spokenReply === undefined) opts.stream?.onBlocks(transition.blocks)
     return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules: [], agencyShadow, policy, records }
   }
   const transition = validated
@@ -200,6 +219,7 @@ export async function runTurn(opts: {
   characterState.firedRules = [...new Set([...prevState.firedRules, ...fired.filter((r) => r.once).map((r) => r.id)])]
 
   const approved = approveTransition(transition, snapshot, policy)
+  if (communicationPreferences.length && opts.spokenReply === undefined) opts.stream?.onBlocks(approved.transition.blocks)
   return { transition: approved.transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow, policy, records: approved.records }
 }
 

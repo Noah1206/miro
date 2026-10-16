@@ -11,6 +11,7 @@ import { observe } from '@/lib/observe'
 import { recentLife } from './life'
 import { agencyReceiptId } from './receipts'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from './revisions'
+import { agencyEvidenceMessageRefs } from './evidence-refs'
 
 export type LoadedAgency = {
   mode: 'live' | 'shadow'
@@ -109,17 +110,10 @@ export async function loadAgencyRuntime(sessionId: string, userId: string, snaps
 
 /** Goals retain actual message IDs even after those messages leave the recent window. */
 export async function loadAgencyEvidence(sessionId: string, snapshot: SimulationSnapshot, runtime: LoadedAgency, input?: { id: string; text: string }, now = new Date(), readMessageIds: string[] = []): Promise<AgencyEvidence[]> {
-  const messageIdOf = (id: string) => id.replace(/:(?:queued|sent)$/, '')
-  // Re-read old receipts only while their work is open. Following every retained receipt pulled up to
-  // 48 old messages, each with its receipt, into every prompt and overran the context budget.
-  const closed = new Set(['completed', 'abandoned', 'cancelled', 'expired'])
-  const open = (goalId: string) => runtime.state.goals.some(g => g.id === goalId && !closed.has(g.status))
-  const unfinished = runtime.state.actions.filter(a => a.status !== 'sent' || (a.fulfillsGoalIds ?? []).some(open))
-  const refs = [...new Set([...readMessageIds, ...runtime.state.goals.flatMap(g => g.evidenceIds), ...runtime.state.beliefs.flatMap(b => b.evidenceIds),
-    ...unfinished.flatMap(a => a.outcomeEvidenceId ? [a.outcomeEvidenceId] : []),
-    // Retrieved long-term memories can influence a choice only through their original, owned source.
-    ...snapshot.memories.flatMap(m => m.sourceMessageId ? [m.sourceMessageId] : [])].map(messageIdOf))]
-    .filter(id => /^[0-9a-f-]{36}$/i.test(id)).slice(0, 64)
+  // Only open work retains historic sources. Reserve communication preferences before the cap so
+  // old closed goals or receipts cannot erase the original words behind a remembered correction.
+  const refs = agencyEvidenceMessageRefs({ sessionId, characterId: snapshot.character.id,
+    memories: snapshot.memories, state: runtime.state, readMessageIds })
   const stored = refs.length ? await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.id, refs), isNull(messages.hiddenAt), characterCanSeeMessage)) : []
   const evidence: AgencyEvidence[] = []
   const actor = snapshot.character.id

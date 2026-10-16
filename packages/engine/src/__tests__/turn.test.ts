@@ -11,6 +11,19 @@ const llm = (over: Record<string, unknown> = {}) => new AIOrchestrator({ chain: 
 
 afterEach(() => vi.unstubAllEnvs())
 describe('runTurn — state update pipeline', () => {
+  it('stores scoped extracted memory but never memories invented by an ordinary dialogue draft', async () => {
+    vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '1')
+    vi.stubEnv('MIRO_FEATURE_LLM_SEMANTIC_ANALYSIS', '0')
+    const input = '기억해 줘. 나는 커피보다 차를 좋아해.'
+    const attributed = { type: 'preference', content: '커피보다 차를 좋아한다.', importance: .8, persistence: .9, confidence: .9, sourceQuote: '커피보다 차를 좋아해' }
+    const auxiliaryLLM: LLMProvider = { info: { mode: 'mock', name: 'sourced-memory-fixture', notice: '' },
+      async generateStructured(request) { return request.schema.parse({ memories: [attributed] }) } }
+    const result = await runTurn({ llm: llm({ memories: [{ type: 'user_fact', content: '사용자는 파리에 살며 어제 이사했다.',
+      importance: 1, persistence: 1, confidence: 1 }] }), snapshot: snapshot({ experienceType: 'chat' }), userInput: input, auxiliaryLLM })
+    expect(result.transition.memories).toEqual([expect.objectContaining(attributed)])
+    expect(result.transition.memories.some(memory => memory.content.includes('파리'))).toBe(false)
+  })
+
   it('keeps a standard chat in dialogue even when the provider proposes Reality effects', async () => {
     const proposed = llm({
       worldDelta: { currentLocation: '다른 도시' },

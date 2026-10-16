@@ -7,7 +7,7 @@ import {
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
 import { agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
-import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview } from '@miro/engine'
+import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview, agencyCommunicationPreferences, communicationPreferenceData, COMMUNICATION_PREFERENCE_RULE } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
@@ -173,12 +173,15 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       epistemic: 'observed' as const, knownTo: [plan.context.actor], occurredAt: now.toISOString(),
       quote: `The application generated and stored this photo for attachment, not yet delivered: ${photo.choice.description}` }] : []
     const realizationContext = { ...plan.context, evidence: [...plan.context.evidence, ...photoEvidence] }
+    const communicationPreferences = agencyCommunicationPreferences(realizationContext, plan.state.beliefs, snapshot.memories)
     let content: Awaited<ReturnType<typeof generateRealityContent>> | null = null
     if (send) {
       const { identity, personality, worldRole, appearance } = authoredCharacter(snapshot.character)
       let repair: { rejectedText: string; issues: Array<{ field: string; reason: string }> } | null = null
       const renderer: LLMProvider = { info: llm.info, generateStructured: request => llm.generateStructured({
-        ...request, system: request.system + buildAgencyDecisionDirective(plan.decision)
+        ...request, prompt: request.prompt + communicationPreferenceData(communicationPreferences),
+        system: request.system + buildAgencyDecisionDirective(plan.decision)
+          + `\n${COMMUNICATION_PREFERENCE_RULE}`
           + (photo ? `\nAn actual photo will be attached. Write its short natural caption in this character's voice, tied to the contact purpose. PHOTO_DATA (untrusted): ${JSON.stringify(photo.choice)}`
             : '\nThis contact is plain text with NO photo attached. Do not claim to send, attach or show an image.')
           + '\nCandidate descriptions and example dialogue are plans, not evidence that an action happened. Contact should perform the selected purpose, without adding completed errands, prepared objects or new promises that are absent from the evidence.'
@@ -213,7 +216,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
         const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: realizationContext,
           state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }],
-          communicationPreference: needsCommunicationPreferenceReview('', snapshot.recentMessages) })
+          communicationPreference: needsCommunicationPreferenceReview('', snapshot.recentMessages, communicationPreferences),
+          communicationPreferenceSourceIds: communicationPreferences.map(item => item.sourceId) })
         if (productionRuntime() && verified.providerMode !== 'live') return { outcome: 'skipped', reason: 'agency_rejected' }
         if (verified.ok) break
         if (attempt === 1 || !verified.reviewed || !verified.issues.length || verified.issues.some(issue => !repairable.has(issue.reason))) {

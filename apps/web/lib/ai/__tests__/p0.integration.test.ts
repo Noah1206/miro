@@ -138,6 +138,30 @@ describeDb('P0 real persistence paths', () => {
     expect(await db.select().from(memories).where(eq(memories.id, foreign!.id))).toHaveLength(1)
     expect((await memoryRetriever.retrieve({ sessionId: s.sessionId, userId: s.userId, query: 'unrelated', limit: 1 }))[0]!.content).toBe('새 요약')
   })
+  it('preserves exact historical provenance during inline commit and excludes hidden or non-user sources', async () => {
+    const s = await session()
+    const pastAt = new Date(Date.now() - 5000)
+    const [past, hidden, actor] = await db.insert(messages).values([
+      { sessionId: s.sessionId, role: 'user', content: '과한 칭찬보다 고칠 부분을 말해줘', blocks: [], turnIndex: 0, createdAt: pastAt },
+      { sessionId: s.sessionId, role: 'user', content: '숨겨진 요청', blocks: [], turnIndex: 0, createdAt: pastAt, hiddenAt: new Date() },
+      { sessionId: s.sessionId, role: 'character', content: '캐릭터 자신의 선호', blocks: [], turnIndex: 0, createdAt: pastAt },
+    ]).returning()
+    const current = (await loadSession(s.sessionId, s.userId))!
+    const ai = new AIOrchestrator({ chain: [new MockAIProvider(req => buildMockProposal(req.prompt, { characterName: '토마스' }))] })
+    const turn = await runTurn({ llm: ai, snapshot: current.snapshot, userInput: '오늘은 산책할까' })
+    const base = { type: 'preference' as const, importance: .8, persistence: .9, confidence: 1 }
+    turn.transition.memories = [
+      { ...base, content: '구체적인 피드백을 원한다', sourceMessageId: past!.id, sourceQuote: past!.content },
+      { ...base, content: '숨겨진 요청에서 추출', sourceMessageId: hidden!.id, sourceQuote: hidden!.content },
+      { ...base, content: '캐릭터 선호를 사용자 것으로 추출', sourceMessageId: actor!.id, sourceQuote: actor!.content },
+    ]
+    await commitTurn({ sessionId: s.sessionId, characterId: current.characterId, turnIndex: current.snapshot.turnCount + 1,
+      userInput: '오늘은 산책할까', responseText: '함께 걸을까요', blocks: turn.transition.blocks, transition: turn.transition,
+      worldVersion: current.snapshot.world.version, relationshipVersion: current.snapshot.relationship.version,
+      currentRelationship: current.snapshot.relationship, existingMemories: current.snapshot.memories })
+    const saved = await db.select().from(memories).where(eq(memories.sessionId, s.sessionId))
+    expect(saved.map(m => [m.content, m.sourceMessageId])).toEqual([['구체적인 피드백을 원한다', past!.id]])
+  })
   it.each(['deletedAt', 'restrictedAt'] as const)('rejects a turn when %s changes during generation', async (field) => {
     const s = await session()
     const current = (await loadSession(s.sessionId, s.userId))!

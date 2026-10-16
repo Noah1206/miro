@@ -23,6 +23,9 @@ export type Memory = {
 export type MemoryCandidate = {
   /** Only accepted from scoped, explicit memory corrections. */
   replaces?: string
+  /** Extraction-only provenance; persistence rechecks ownership, visibility and the verbatim quote. */
+  sourceMessageId?: string
+  sourceQuote?: string
   type: MemoryType
   content: string
   importance: number
