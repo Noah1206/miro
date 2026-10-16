@@ -102,7 +102,7 @@ export async function runAgencyTurn(opts: {
     }, opts.contextScale, false, policy.generation.replyLength)
     context.system += buildAgencyDecisionDirective(plan.decision)
     context.system += '\n' + USER_GROUNDING_RULE
-    context.system += conversationVariationDirective(snapshot.recentMessages)
+    context.system += conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name)
     context.system += '\n' + contactBoundaryDirective(snapshot.contactBoundary, new Date(agency.context.clock.now))
     context.system += '\n장면의 연속성: 최근 자기 행동과 소품 상태를 이어 갑니다. 이미 끈 담배를 다시 끄거나, 놓아 둔 잔을 다시 준비하는 식으로 장면을 초기화하지 않습니다. 새 반응에 필요하지 않은 같은 몸짓·돌봄 제안은 반복하지 않습니다. 과거 속마음은 소리 내어 한 말이 아니며, 내레이터나 다른 인물의 비공개 사실은 자기 지식으로 쓰지 않습니다.'
     context.system += `\n## 승인된 세계 상태(데이터)\n${JSON.stringify({ location: snapshot.world.currentLocation, time: snapshot.world.currentTime, status: snapshot.world.worldStatus,
@@ -160,7 +160,7 @@ export async function runAgencyTurn(opts: {
     const attemptRecords: StateTransitionRecord[] = rejected.map(field => ({ field, rule: 'unapproved_mutation', status: 'rejected', clock: 'narrative', actor, decisionId: plan.decision.id }))
 
     const validated = validateProposal(proposal, snapshot)
-    const repeated = repeatedConversationBlock(validated.blocks, snapshot.recentMessages, opts.userInput)
+    const repeated = repeatedConversationBlock(validated.blocks, snapshot.recentMessages, opts.userInput, snapshot.character.identity.name)
     if (repeated !== null) {
       if (attempt === REGENERATIONS) throw new Error('agency_realization_rejected repeated_response')
       feedback = `\n이전 대사와 반복되는 블록 ${repeated}을 다시 쓰세요. 같은 뜻의 빈말이나 같은 소품 동작으로 바꾸지 말고, 지금 사용자가 한 말에 답하며 장면을 한 걸음 이어가세요. 반복 문장(데이터): ${JSON.stringify(validated.blocks[repeated]?.text)}`

@@ -55,7 +55,7 @@ COMMIT;
 subprocess.run(['psql','-X','-v','ON_ERROR_STOP=1'],input=sql,text=True,env=env,check=True)
 PY
     ;;
-  *)
+  --help|-h)
     cat <<'HELP'
 미로 후속 확인 (장기 실험·AI 호출·문자 재발송·운영 DB 쓰기 없음)
 
@@ -66,5 +66,9 @@ bash scripts/verify-conversation-fixes.sh --audit-messenger
 
 후속 작업 지시서: docs/verification/conversation-fixes-next-steps.md
 HELP
+    ;;
+  *)
+    printf '%s\n' '지원하지 않는 옵션입니다. --help를 확인하세요.' >&2
+    exit 2
     ;;
 esac

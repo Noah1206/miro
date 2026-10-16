@@ -309,10 +309,10 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   let correction = ''
   for (let attempt = 0; attempt < 2; attempt++) {
     const renderer = { info: llm.info, generateStructured: ((request: Parameters<typeof llm.generateStructured>[0]) =>
-      llm.generateStructured({ ...request, system: request.system + conversationVariationDirective(grounding.recentMessages) + correction })) as typeof llm.generateStructured }
+      llm.generateStructured({ ...request, system: request.system + conversationVariationDirective(grounding.recentMessages, row.character.name) + correction })) as typeof llm.generateStructured }
     const draft = await generateRealityContent(renderer, contentInput)
     const blocks = [{ type: 'dialogue', speaker: row.character.name, text: draft.text }]
-    const duplicate = draft.send !== false && repeatedConversationBlock(blocks, grounding.recentMessages) !== null
+    const duplicate = draft.send !== false && repeatedConversationBlock(blocks, grounding.recentMessages, '', row.character.name) !== null
     const checked = draft.send !== false && feature('strictConversationReview')
       ? await verifyCommunicationPreferences(llm, { evidence: grounding.groundingEvidence.filter(e => e.kind === 'user_statement')
           .sort((a, b) => (Date.parse(a.occurredAt ?? '') || 0) - (Date.parse(b.occurredAt ?? '') || 0))

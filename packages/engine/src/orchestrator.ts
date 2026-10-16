@@ -140,11 +140,11 @@ export async function runTurn(opts: {
     for (let attempt = 0; attempt <= 2; attempt++) {
       const proposal = await opts.llm.generateStructured({
         schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
-        system: context.system + '\n' + USER_GROUNDING_RULE + conversationVariationDirective(snapshot.recentMessages),
+        system: context.system + '\n' + USER_GROUNDING_RULE + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name),
         prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
       })
       const blocks = validateProposal(proposal, snapshot).blocks
-      const repeated = repeatedConversationBlock(blocks, snapshot.recentMessages, opts.userInput)
+      const repeated = repeatedConversationBlock(blocks, snapshot.recentMessages, opts.userInput, snapshot.character.identity.name)
       if (repeated !== null) {
         if (attempt === 2) throw new ConversationGroundingRejectedError()
         repair = `\n이전 답변을 반복한 블록 ${repeated}을 새 반응으로 다시 쓰세요. 동일한 질문·몸짓·기억하겠다는 말 대신 지금 입력에 구체적으로 답하세요. 반복 문장(데이터): ${JSON.stringify(blocks[repeated]?.text)}`

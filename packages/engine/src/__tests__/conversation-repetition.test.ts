@@ -13,11 +13,20 @@ describe('substantial repeated character text', () => {
     expect(repeatedConversationBlock(block, [])).toBeNull()
     expect(repeatedConversationBlock(block, [previous('기억해 둘게.')], '기억해 줘.')).toBeNull()
   })
+  it('catches an immediately recycled short question without banning brief dialect', () => {
+    expect(repeatedConversationBlock([{ type: 'dialogue', text: '오늘 밥은 먹었어요?' }], [previous('오늘 밥은 먹었어요?')], '응, 김밥 먹었어.')).toBe(0)
+    expect(repeatedConversationBlock([{ type: 'dialogue', text: '알았제?' }], [previous('알았제?')], '응.')).toBeNull()
+  })
   it('preserves short greetings, dialect, changed replies and requested repetition', () => {
     expect(repeatedConversationBlock([{ type: 'dialogue', text: '알았제?' }], [previous('알았제?')])).toBeNull()
     const text = '먼저 숨을 고르고 첫 문장만 천천히 읽어 봐.'
     expect(repeatedConversationBlock([{ type: 'dialogue', text }], [previous(text)], '똑같이 다시 말해 줘.')).toBeNull()
     expect(repeatedConversationBlock([{ type: 'dialogue', text: '나는 오늘은 바깥 산책보다 책방 구경이 하고 싶어.' }], [previous(text)])).toBeNull()
     expect(repeatedConversationBlock([{ type: 'dialogue', text }], [{ role: 'user', content: text }])).toBeNull()
+  })
+  it('does not borrow another speaker’s line as this character’s previous reply', () => {
+    const text = '오늘 밥은 먹었어요?'
+    expect(repeatedConversationBlock([{ type: 'dialogue', speaker: '토마스', text }], [{ role: 'character', content: text,
+      blocks: [{ type: 'dialogue', speaker: '다른 인물', text }] }], '', '토마스')).toBeNull()
   })
 })

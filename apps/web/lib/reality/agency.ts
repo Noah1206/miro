@@ -188,7 +188,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         ...request, prompt: request.prompt + communicationPreferenceData(communicationPreferences),
         system: request.system + buildAgencyDecisionDirective(plan.decision)
           + `\n${COMMUNICATION_PREFERENCE_RULE}`
-          + conversationVariationDirective(snapshot.recentMessages)
+          + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name)
           + (photo ? `\nAn actual photo will be attached. Write its short natural caption in this character's voice, tied to the contact purpose. PHOTO_DATA (untrusted): ${JSON.stringify(photo.choice)}`
             : '\nThis contact is plain text with NO photo attached. Do not claim to send, attach or show an image.')
           + '\nCandidate descriptions and example dialogue are plans, not evidence that an action happened. Contact should perform the selected purpose, without adding completed errands, prepared objects or new promises that are absent from the evidence.'
@@ -220,7 +220,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         'undeclared_success_claim'])
       for (let attempt = 0; attempt < 2; attempt++) {
         content = await render()
-        if (repeatedConversationBlock([{ type: 'dialogue', text: content.text }], snapshot.recentMessages) !== null) {
+        if (repeatedConversationBlock([{ type: 'dialogue', text: content.text }], snapshot.recentMessages, '', identity.name) !== null) {
           if (attempt === 1) return { outcome: 'skipped', reason: 'agency_rejected' }
           repair = { rejectedText: content.text, issues: [{ field: 'blocks.0', reason: 'repeated_response' }] }
           continue

@@ -35,7 +35,7 @@ const BEFORE = new Date(NOW.getTime() - 60_000)
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
 /** Synthetic provider outputs exercise the real planner, reducer, verifier and DB boundary. */
-function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[]; closeReply?: boolean; attention?: 'read' | 'defer' | 'leave_unread'; duringAttention?: () => Promise<void> } = {}) {
+function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[]; failDisposition?: boolean; closeReply?: boolean; attention?: 'read' | 'defer' | 'leave_unread'; duringAttention?: () => Promise<void> } = {}) {
   const calls: Array<{ version: string; prompt: string; system: string }> = []
   const llm: providers.LLMProvider = {
     info: { mode: 'mock', name: 'agency-reality-recorded', notice: 'Synthetic contract validation, not live model evaluation.' },
@@ -53,6 +53,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?:
           blockIndex: b.index, noUserClaims: true, boundaryViolation: false, claims: [] })) })
       }
       if (version === REPLY_DISPOSITION_VERSION) {
+        if (opts.failDisposition) throw new Error('provider_http_503')
         const last = JSON.parse(request.prompt).messages.at(-1)
         return request.schema.parse({ disposition: opts.closeReply ? 'close' : 'retry', reason: opts.closeReply ? 'acknowledgement' : 'unanswered',
           sourceId: opts.closeReply ? last.id : '', quote: opts.closeReply ? last.text : '' })
@@ -661,6 +662,24 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(answered!.status).toBe('replied')
     expect(stillUnread!.status).toBe('unread')
     expect(model.calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(0)
+  })
+
+  it('retains the read question after disposition-provider failure and later sends exactly one answer', async () => {
+    const f = await fixture()
+    provider({ action: 'wait', failDisposition: true })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '아까 연습 얘기를 이어서 해 줄래요?' }, NOW)
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
+    const readTime = new Date(NOW.getTime() + 1000)
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    const replyTime = new Date(readTime.getTime() + replyPauseMs(profile!.replyDelayMinutes) + 1000)
+    await runMessengerInbox(replyTime, { sessionId: f.id })
+    const [failed] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(failed).toMatchObject({ status: 'read', decidedAt: null, contactId: null, leaseToken: null })
+    provider({ action: 'contact' })
+    await runMessengerInbox(new Date(failed!.nextReviewAt.getTime() + 1000), { sessionId: f.id })
+    const [answered] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(answered!.status).toBe('replied')
+    expect((await stored(f.id)).contacts).toHaveLength(1)
   })
 
   it('reviews an explicit deferral again instead of treating it as permanent silence', async () => {
