@@ -90,7 +90,7 @@ export const characterCanSeeMessage = sql`NOT EXISTS (SELECT 1 FROM messenger_in
 /** A durable queue, also swept by cron. No timer or open browser is needed to retain work. */
 export async function runMessengerInbox(now = new Date(), options: { sessionId?: string; limit?: number } = {}) {
   if (!feature('realityMessage')) return { checked: 0 }
-  const due = await db.selectDistinct({ sessionId: messengerInbox.sessionId }).from(messengerInbox)
+  const due = await db.select({ sessionId: messengerInbox.sessionId }).from(messengerInbox)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, messengerInbox.sessionId))
     .innerJoin(users, eq(users.id, roleplaySessions.userId))
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
@@ -98,6 +98,7 @@ export async function runMessengerInbox(now = new Date(), options: { sessionId?:
       isNull(users.deletedAt), isNull(characters.deletedAt), eq(characters.experienceType, 'reality'),
       inArray(messengerInbox.status, ['unread', 'read']), sql`${messengerInbox.nextReviewAt} <= ${now.toISOString()}::timestamptz`,
       options.sessionId ? eq(messengerInbox.sessionId, options.sessionId) : undefined))
+    .groupBy(messengerInbox.sessionId).orderBy(sql`min(${messengerInbox.nextReviewAt})`)
     .limit(Math.min(10, options.limit ?? 5))
   for (const row of due) {
     try { await reviewInbox(row.sessionId, now) }
@@ -128,8 +129,15 @@ async function reviewInbox(sessionId: string, now: Date) {
       sql`${messengerInbox.leaseUntil} > ${now.toISOString()}::timestamptz`)).limit(1)
     if (busy) return null
     const batch = await tx.select().from(messengerInbox).where(and(eq(messengerInbox.sessionId, sessionId), inArray(messengerInbox.status, ['unread', 'read']),
-      sql`${messengerInbox.nextReviewAt} <= ${now.toISOString()}::timestamptz`)).orderBy(asc(messengerInbox.createdAt), asc(messengerInbox.messageId)).limit(8)
+      sql`${messengerInbox.nextReviewAt} <= ${now.toISOString()}::timestamptz`))
+      .orderBy(sql`CASE WHEN ${messengerInbox.status} = 'read' THEN 0 ELSE 1 END`, asc(messengerInbox.createdAt), asc(messengerInbox.messageId)).limit(8)
     if (!batch.length) return null
+    const alreadyRead = batch.filter(item => item.status === 'read')
+    if (alreadyRead.length) {
+      const ids = alreadyRead.map(item => item.messageId)
+      await tx.update(messengerInbox).set({ leaseToken: token, leaseUntil: new Date(now.getTime() + 5 * 60_000) }).where(inArray(messengerInbox.messageId, ids))
+      return { kind: 'reply' as const, ids, token }
+    }
     const unread = batch.filter(item => item.status === 'unread')
     if (unread.length) {
       const ids = unread.map(item => item.messageId)

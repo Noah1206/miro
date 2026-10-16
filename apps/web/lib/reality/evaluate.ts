@@ -13,6 +13,7 @@ import {
 } from '@miro/domain'
 import type { CharacterState, ContactChannel, RealityContact, RealityDecision, SuppressReason } from '@miro/domain'
 import { buildMockRealityContent, createAI, generateRealityContent, resolvePush } from '@miro/providers'
+import { conversationVariationDirective, repeatedConversationBlock, verifyCommunicationPreferences } from '@miro/engine'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { getOrGenerate } from '@/lib/simulation/media'
 import { startIncomingCall } from '@/lib/call/service'
@@ -304,7 +305,24 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
     currentTime: `${localClock(now, timeZone).label} (${localClock(now, timeZone).period})`,
     ...grounding,
   }
-  const content = await generateRealityContent(llm, contentInput)
+  let content: Awaited<ReturnType<typeof generateRealityContent>> | null = null
+  let correction = ''
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const renderer = { info: llm.info, generateStructured: ((request: Parameters<typeof llm.generateStructured>[0]) =>
+      llm.generateStructured({ ...request, system: request.system + conversationVariationDirective(grounding.recentMessages) + correction })) as typeof llm.generateStructured }
+    const draft = await generateRealityContent(renderer, contentInput)
+    const blocks = [{ type: 'dialogue', speaker: row.character.name, text: draft.text }]
+    const duplicate = draft.send !== false && repeatedConversationBlock(blocks, grounding.recentMessages) !== null
+    const checked = draft.send !== false && feature('strictConversationReview')
+      ? await verifyCommunicationPreferences(llm, { evidence: grounding.groundingEvidence.filter(e => e.kind === 'user_statement')
+          .sort((a, b) => (Date.parse(a.occurredAt ?? '') || 0) - (Date.parse(b.occurredAt ?? '') || 0))
+          .slice(-8).map(e => ({ sourceId: e.id, text: e.text, occurredAt: e.occurredAt ?? null, kind: 'user_quote' as const })),
+          recentUserMessages: grounding.recentMessages.filter(m => m.role === 'user').map(m => ({ text: m.content, occurredAt: m.at })),
+          groundingEvidence: grounding.groundingEvidence, blocks }) : { acceptable: true }
+    if (!duplicate && checked.acceptable) { content = draft; break }
+    correction = `\nRewrite without the repeated sentence or unsupported user history; preserve the authorized purpose and this character's voice. REJECTED_TEXT_DATA: ${JSON.stringify(draft.text)}`
+  }
+  if (!content) return { outcome: 'skipped', reason: 'agency_rejected' }
 
   if (content.send === false) {
     // Persist the declined opportunity so the scheduler does not pay to regenerate it on every tick.

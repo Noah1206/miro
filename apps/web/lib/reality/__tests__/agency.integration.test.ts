@@ -3,6 +3,7 @@ import * as photoStorage from '@/lib/storage/messenger-images'
 import { GET as getMessengerImage } from '@/app/api/messenger-images/[id]/route'
 import * as photoDelivery from '@/lib/messenger/photos'
 import { REALITY_CONTENT_VERSION } from '@miro/providers'
+import { REPLY_DISPOSITION_VERSION } from '@/lib/messenger/reply-disposition'
 import { ATTENTION_VERSION } from '@/lib/messenger/attention'
 import { receiveMessenger, runMessengerInbox, messengerItems, replyPauseMs } from '@/lib/messenger/inbox'
 import { conversationRequests, messengerInbox } from '@miro/db'
@@ -34,7 +35,7 @@ const BEFORE = new Date(NOW.getTime() - 60_000)
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
 /** Synthetic provider outputs exercise the real planner, reducer, verifier and DB boundary. */
-function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[]; attention?: 'read' | 'defer' | 'leave_unread'; duringAttention?: () => Promise<void> } = {}) {
+function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?: boolean; relationship?: boolean; goalIds?: string[]; duringRender?: () => Promise<void>; life?: unknown[]; closeReply?: boolean; attention?: 'read' | 'defer' | 'leave_unread'; duringAttention?: () => Promise<void> } = {}) {
   const calls: Array<{ version: string; prompt: string; system: string }> = []
   const llm: providers.LLMProvider = {
     info: { mode: 'mock', name: 'agency-reality-recorded', notice: 'Synthetic contract validation, not live model evaluation.' },
@@ -45,6 +46,16 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?:
         await opts.duringAttention?.()
         return request.schema.parse({ action: opts.attention ?? 'read', reason: '이 인물의 성향과 이미 쌓인 관계로 연락을 확인할지 선택한다.',
           recheckMinutes: opts.attention === 'defer' ? 10 : null, ruleIds: ['personality'], evidenceIds: [] })
+      }
+      if (version === 'agency-communication-check:v7') {
+        const payload = JSON.parse(request.prompt)
+        return request.schema.parse({ complete: true, blocks: payload.blocks.map((b: { index: number }) => ({
+          blockIndex: b.index, noUserClaims: true, boundaryViolation: false, claims: [] })) })
+      }
+      if (version === REPLY_DISPOSITION_VERSION) {
+        const last = JSON.parse(request.prompt).messages.at(-1)
+        return request.schema.parse({ disposition: opts.closeReply ? 'close' : 'retry', reason: opts.closeReply ? 'acknowledgement' : 'unanswered',
+          sourceId: opts.closeReply ? last.id : '', quote: opts.closeReply ? last.text : '' })
       }
       if (version === AGENCY_PLANNER_VERSION) {
         const context = JSON.parse(request.prompt)
@@ -584,7 +595,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
 
   it('stays unread while asleep, then reads without replying and can leave the message unanswered', async () => {
     const f = await fixture()
-    const model = provider({ action: 'wait' })
+    const model = provider({ action: 'wait', closeReply: true })
     const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '밥 먹었어요.' }, NOW)
     const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
     const readTime = new Date(NOW.getTime() + 1000)
@@ -628,6 +639,28 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect(answered!.status).toBe('replied')
     expect(answered!.contactId).not.toBeNull()
     expect(model.calls.filter(call => call.version === AGENCY_PLANNER_VERSION)).toHaveLength(1)
+  })
+
+  it('keeps a generic wait pending and prioritizes its read question over a new unread envelope', async () => {
+    const f = await fixture()
+    provider({ action: 'wait' })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '연습은 음악부터 익혀요, 숫자로 세요?' }, NOW)
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
+    const readTime = new Date(NOW.getTime() + 1000)
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    const replyTime = new Date(readTime.getTime() + replyPauseMs(profile!.replyDelayMinutes) + 1000)
+    await runMessengerInbox(replyTime, { sessionId: f.id })
+    const [waiting] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(waiting).toMatchObject({ status: 'read', decidedAt: null, contactId: null, leaseToken: null })
+    const later = new Date(waiting!.nextReviewAt.getTime() + 1000)
+    const unread = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '그 부분이 궁금했어요.' }, new Date(later.getTime() - 1000))
+    const model = provider({ action: 'contact', attention: 'leave_unread' })
+    await runMessengerInbox(later, { sessionId: f.id })
+    const [answered] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    const [stillUnread] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, unread.id))
+    expect(answered!.status).toBe('replied')
+    expect(stillUnread!.status).toBe('unread')
+    expect(model.calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(0)
   })
 
   it('reviews an explicit deferral again instead of treating it as permanent silence', async () => {
@@ -706,7 +739,7 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     expect((await loadSession(f.id, f.userId))!.snapshot.recentMessages.some(item => item.id === message.id)).toBe(false)
   })
 
-  it('leaves a conversation unopened indefinitely without repeated model calls, then reconsiders a changed relationship', async () => {
+  it('keeps the same-period attention decision cached, then reconsiders a changed relationship', async () => {
     const f = await fixture()
     const options: { attention: 'read' | 'defer' | 'leave_unread' } = { attention: 'leave_unread' }
     const { calls } = provider(options)
@@ -720,6 +753,19 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     await runMessengerInbox(new Date(NOW.getTime() + 2 * 60 * 60_000), { sessionId: f.id })
     expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(2)
     expect((await messengerItems(f.userId, f.id))!.find(item => item.id === message.id)?.readAt).not.toBeNull()
+  })
+
+  it('reconsiders a held unread message in a new local period without forcing a read', async () => {
+    const f = await fixture()
+    const { calls } = provider({ attention: 'leave_unread' })
+    const message = await receiveMessenger({ userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '나중에 얘기해요.' }, NOW)
+    await runMessengerInbox(NOW, { sessionId: f.id })
+    await runMessengerInbox(new Date(NOW.getTime() + 60 * 60_000), { sessionId: f.id })
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(1)
+    await runMessengerInbox(new Date(NOW.getTime() + 4 * 60 * 60_000), { sessionId: f.id })
+    expect(calls.filter(call => call.version === ATTENTION_VERSION)).toHaveLength(2)
+    const [held] = await db.select().from(messengerInbox).where(eq(messengerInbox.messageId, message.id))
+    expect(held!.readAt).toBeNull()
   })
 
   it('discards a reading choice when a new message changes the conversation during planning', async () => {

@@ -8,7 +8,7 @@ export function recordedConversationReview(request: { prompt: string }, verdict:
     const rejected = !verdict.acceptable && block.index === (verdict.blockIndex ?? 0)
     const boundary = rejected && (!verdict.reason || verdict.reason === 'violates_boundary')
     return { blockIndex: block.index, noUserClaims: !rejected || boundary, boundaryViolation: boundary,
-      claims: rejected && !boundary ? [{ draftQuote: block.text.slice(0, 160), kind: verdict.reason === 'controls_user' ? 'user_action' : verdict.reason === 'unseen_user_observation' ? 'visible_property' : 'user_history',
+      claims: rejected && !boundary ? [{ mode: 'asserted', draftQuote: block.text.slice(0, 160), kind: verdict.reason === 'controls_user' ? 'user_action' : verdict.reason === 'unseen_user_observation' ? 'visible_property' : 'user_history',
         verdict: 'unsupported', supportSourceId: '', sourceQuote: '' }] : [] }
   }) }
 }

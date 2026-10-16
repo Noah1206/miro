@@ -8,7 +8,7 @@ import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
 import { adoptRelationshipPolicy } from '@/lib/agency/session-policy'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 
-export const ATTENTION_VERSION = 'messenger-attention:v2'
+export const ATTENTION_VERSION = 'messenger-attention:v3'
 const Choice = z.object({
   action: z.enum(['read', 'defer', 'leave_unread']),
   reason: z.string().min(1).max(600),
@@ -43,7 +43,11 @@ export async function chooseAttention(sessionId: string, userId: string, now: Da
   const unreadIds = new Set(envelopes.map(item => item.messageId))
   // Defense in depth: no prior summary or retained reference can reintroduce a queued body.
   const evidence = known.filter(item => !unreadIds.has(item.id.replace(/:(queued|sent)$/, '')))
+  const clock = localClock(now, loaded.snapshot.clock?.timeZone ?? 'Asia/Seoul')
   const basis = { revisionId: runtime.revision.id, runtimeVersion: runtime.version,
+    // A decision during class is not an eternal refusal. Reconsider a new local day/period,
+    // without repeated model calls on every cron tick or forcing a read.
+    attentionPeriod: `${clock.label.slice(0, 10)}:${clock.period}`,
     relationshipVersion: loaded.snapshot.relationship.version, worldVersion: loaded.snapshot.world.version,
     characterState: loaded.snapshot.characterState, affect: runtime.state.affect, situation,
     lastInteractionAt: loaded.lastInteractionAt.toISOString(), evidenceIds: evidence.map(item => item.id),
@@ -56,7 +60,7 @@ export async function chooseAttention(sessionId: string, userId: string, now: Da
       relationship: loaded.snapshot.relationship, characterState: loaded.snapshot.characterState, affect: runtime.state.affect,
       expression: runtime.state.expression, goals: runtime.state.goals.filter(goal => goal.status === 'active'),
       situation, world: { location: loaded.snapshot.world.currentLocation, status: loaded.snapshot.world.worldStatus },
-      clock: localClock(now, loaded.snapshot.clock?.timeZone ?? 'Asia/Seoul'), sender: 'user', envelopes: basis.envelopes, evidence }),
+      clock, sender: 'user', envelopes: basis.envelopes, evidence }),
   }))
   if (productionRuntime() && llm.info.mode !== 'live') return null
   if ((choice.action === 'defer') !== (choice.recheckMinutes !== null)

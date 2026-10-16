@@ -19,6 +19,8 @@ import { characterAvailability } from './routine'
 import { activeMoments } from './moments'
 import type { EvaluateOutcome } from './evaluate'
 import { messengerPhotosReady, prepareMessengerPhoto } from '@/lib/messenger/photos'
+import { REPLY_DISPOSITION_VERSION, nextReplyReview, readReplyDisposition } from '@/lib/messenger/reply-disposition'
+import { conversationVariationDirective, repeatedConversationBlock, snapshotUserGrounding } from '@miro/engine'
 
 type RealityRow = {
   session: typeof roleplaySessions.$inferSelect
@@ -126,7 +128,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     const isNew = (item: typeof evidence[number]) => Date.parse(item.occurredAt) > Date.parse(runtime.state.updatedAt)
     const ownDay = evidence.filter(item => item.kind === 'event' && item.shareable && isNew(item)).map(item => item.id)
     const freshOther = evidence.some(item => item.kind !== 'event' && isNew(item))
-    if (runtime.mode === 'live' && runtime.state.sequence > 0 && dueGoals.length === 0 && !hint?.opportunity && !freshOther && !ownDay.length) return { outcome: 'no_intent' }
+    if (!opts.inbox && runtime.mode === 'live' && runtime.state.sequence > 0 && dueGoals.length === 0 && !hint?.opportunity && !freshOther && !ownDay.length) return { outcome: 'no_intent' }
     // 연락 기회나 자기 일만으로 깨어났는데 지금은 보낼 수 없으면(자는 중·바쁨·간격·상한) 계획을 부르지 않는다 — 막힌 동안 매번 묻는 건 비용이고,
     // 부르지 않으면 자기 일은 새것으로 남아 보낼 수 있을 때 다시 판단된다(불렀다면 '기다림'으로 소비됐다).
     if (runtime.mode === 'live' && blocked && dueGoals.length === 0 && !freshOther && (hint?.opportunity || ownDay.length)) return { outcome: 'suppressed', reason: blocked }
@@ -159,6 +161,10 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     if (!['contact', 'wait', 'defer', 'cancel_commitment'].includes(plan.decision.action)) return { outcome: 'skipped', reason: 'agency_rejected' }
 
     const send = plan.decision.action === 'contact'
+    // Silence must have a user-message basis. Generic wait/defer remains a durable queue item.
+    const disposition = opts.inbox && !send && plan.decision.action !== 'defer'
+      ? await readReplyDisposition(llm, plan.context.evidence.filter(e => opts.inbox!.ids.includes(e.id) && e.actor === 'user')
+          .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt)).map(e => ({ id: e.id, text: e.quote }))) : null
     if (send && blocked) return { outcome: 'suppressed', reason: blocked }
     let photo: Awaited<ReturnType<typeof prepareMessengerPhoto>> = null
     if (send) {
@@ -182,6 +188,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         ...request, prompt: request.prompt + communicationPreferenceData(communicationPreferences),
         system: request.system + buildAgencyDecisionDirective(plan.decision)
           + `\n${COMMUNICATION_PREFERENCE_RULE}`
+          + conversationVariationDirective(snapshot.recentMessages)
           + (photo ? `\nAn actual photo will be attached. Write its short natural caption in this character's voice, tied to the contact purpose. PHOTO_DATA (untrusted): ${JSON.stringify(photo.choice)}`
             : '\nThis contact is plain text with NO photo attached. Do not claim to send, attach or show an image.')
           + '\nCandidate descriptions and example dialogue are plans, not evidence that an action happened. Contact should perform the selected purpose, without adding completed errands, prepared objects or new promises that are absent from the evidence.'
@@ -213,10 +220,16 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         'undeclared_success_claim'])
       for (let attempt = 0; attempt < 2; attempt++) {
         content = await render()
+        if (repeatedConversationBlock([{ type: 'dialogue', text: content.text }], snapshot.recentMessages) !== null) {
+          if (attempt === 1) return { outcome: 'skipped', reason: 'agency_rejected' }
+          repair = { rejectedText: content.text, issues: [{ field: 'blocks.0', reason: 'repeated_response' }] }
+          continue
+        }
         if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
         const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: realizationContext,
           state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }],
           communicationPreference: needsCommunicationPreferenceReview('', snapshot.recentMessages, communicationPreferences),
+          userGroundingEvidence: snapshotUserGrounding(snapshot, ''),
           communicationPreferenceSourceIds: communicationPreferences.map(item => item.sourceId) })
         if (productionRuntime() && verified.providerMode !== 'live') return { outcome: 'skipped', reason: 'agency_rejected' }
         if (verified.ok) break
@@ -321,12 +334,18 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       // 답장을 못 보낸 이유가 전달 제약(자는 중·바쁨)이면 남겨 다음에 다시 본다. 캐릭터가 성격대로 답하지 않기로 했으면 그 문자는 거기서 끝 —
       // 실제 사람도 늦게 본 문자에 다 답하지는 않는다(10/9 사용자 결정: '끝나면 답장이 와요' 안내 없이, 답할지는 캐릭터가).
       const keepReply = reply && !contactId && row.session.pendingRealityIntent && blocked !== null
-      if (reply && !contactId && !keepReply && plan.decision.action !== 'defer') observe('reality.reply_left', { sessionId, action: plan.decision.action })
+      if (reply && !contactId && !keepReply && (opts.inbox ? disposition?.disposition === 'close' : plan.decision.action !== 'defer')) observe('reality.reply_left', { sessionId, action: plan.decision.action })
       if (opts.inbox) {
-        const deferred = !contactId && plan.decision.action === 'defer'
-        await tx.update(messengerInbox).set({ status: contactId ? 'replied' : deferred ? 'read' : 'left', decidedAt: deferred ? null : now, contactId,
-          ...(deferred ? { nextReviewAt: new Date(now.getTime() + 15 * 60_000) } : {}),
-          leaseToken: null, leaseUntil: null }).where(and(inArray(messengerInbox.messageId, opts.inbox.ids), eq(messengerInbox.leaseToken, opts.inbox.token)))
+        const deferred = !contactId && disposition?.disposition !== 'close'
+        const items = await tx.select().from(messengerInbox).where(and(inArray(messengerInbox.messageId, opts.inbox.ids), eq(messengerInbox.leaseToken, opts.inbox.token)))
+        for (const item of items) {
+          const retry = nextReplyReview(item.attentionDecision, now)
+          await tx.update(messengerInbox).set({ status: contactId ? 'replied' : deferred ? 'read' : 'left', decidedAt: deferred ? null : now, contactId,
+            ...(deferred ? { nextReviewAt: retry.nextReviewAt } : {}),
+            attentionDecision: { ...(item.attentionDecision ?? {}), replyReviews: retry.replyReviews,
+              replyDisposition: { ...(disposition ?? { disposition: contactId ? 'answered' : 'retry' }), at: now.toISOString(), version: REPLY_DISPOSITION_VERSION } },
+            leaseToken: null, leaseUntil: null }).where(and(eq(messengerInbox.messageId, item.messageId), eq(messengerInbox.leaseToken, opts.inbox.token)))
+        }
       }
       if (!opts.inbox) await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!,
         notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } : null }).where(eq(roleplaySessions.id, sessionId))

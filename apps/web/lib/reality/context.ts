@@ -5,6 +5,8 @@ import { db, characters, characterVisualIdentities, messages, roleplaySessions, 
 import { memoryRetriever } from '@/lib/ai/memory'
 import { characterContext, conversationContext } from '@/lib/simulation/character-context'
 import { getConversationPersona } from '@/lib/persona'
+import { characterCanSeeMessage } from '@/lib/messenger/inbox'
+import type { UserGroundingEvidence } from '@miro/engine'
 
 /** Only visible, owned conversation data may ground a proactive message. */
 export async function loadRealityContext(sessionId: string, userId: string, reason: string) {
@@ -18,7 +20,7 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
   if (!owner) return null
   const [recent, memories, visual, persona] = await Promise.all([
     db.select().from(messages)
-      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc'])))
+      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), characterCanSeeMessage, inArray(messages.role, ['user', 'character', 'narrator', 'npc'])))
       .orderBy(desc(messages.turnIndex), desc(messages.createdAt), desc(messages.id)).limit(12),
     memoryRetriever.retrieve({ sessionId, userId, query: reason, limit: 8 }),
     db.select().from(characterVisualIdentities)
@@ -38,6 +40,11 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     userPersona: persona ? personaLines(persona) : null,
     // 사용자가 고른 언어로 쓴다(한국어면 줄이 없다).
     languageRule: languageRule(owner.language),
+    groundingEvidence: [
+      ...memories.filter(m => m.sourceMessageId && m.sourceText).map(m => ({ id: m.sourceMessageId!, kind: 'user_statement' as const, text: m.sourceText!, occurredAt: m.sourceOccurredAt?.toISOString() })),
+      ...recent.filter(m => m.role === 'user').map(m => ({ id: m.id, kind: 'user_statement' as const, text: m.content, occurredAt: m.createdAt.toISOString() })),
+      ...(worldRole.startingContext ? [{ id: 'authored:starting-context', kind: 'authored_context' as const, text: worldRole.startingContext }] : []),
+    ] satisfies UserGroundingEvidence[],
     recentMessages: conversationContext(recent.reverse(), timeZone).map(m => ({ ...m, content: m.content.slice(0, 1000),
       blocks: m.blocks?.map(b => ({ ...b, text: b.text.slice(0, 1000) })) })),
     memories: memories.map(m => ({ id: m.id, type: m.type, content: m.content.slice(0, 600), sourceMessageId: m.sourceMessageId, at: localIso(m.createdAt, timeZone) })),

@@ -7,12 +7,18 @@ import type { UserGroundingEvidence } from '../../conversation-grounding'
 const blocks = [{ text: '할머니가 주신 파란 책갈피를 계속 쓰고 있군요.' }, { text: '저는 종이를 반으로 접었어요. 같이 읽을까요?' }]
 const source: UserGroundingEvidence = { id: 'old-user', kind: 'user_statement', text: '할머니가 주신 파란 책갈피를 계속 쓰고 있어.' }
 const supported = (): ConversationReviewAssessment => ({ complete: true, blocks: [
-  { blockIndex: 0, noUserClaims: false, boundaryViolation: false, claims: [{ draftQuote: '할머니가 주신 파란 책갈피를 계속 쓰고',
+  { blockIndex: 0, noUserClaims: false, boundaryViolation: false, claims: [{ mode: 'asserted', draftQuote: '할머니가 주신 파란 책갈피를 계속 쓰고',
     kind: 'user_history', verdict: 'supported', supportSourceId: source.id, sourceQuote: source.text }] },
   { blockIndex: 1, noUserClaims: true, boundaryViolation: false, claims: [] },
 ] })
 
 describe('server-checked conversation evidence ledger', () => {
+  it.each(['hypothetical', 'proposal', 'interpretation', 'character_self'] as const)('does not require a user history source for %s', mode => {
+    const text = '색이 바랬더라도 소중하겠지. 잘 간직했으면 좋겠어.'
+    const ledger: ConversationReviewAssessment = { complete: true, blocks: [{ blockIndex: 0, noUserClaims: false, boundaryViolation: false,
+      claims: [{ mode, draftQuote: text, kind: 'visible_property', verdict: 'unsupported', supportSourceId: '', sourceQuote: '' }] }] }
+    expect(assessConversationReview(ledger, [{ text }], []).acceptable).toBe(true)
+  })
   it('accepts exact original user support while allowing own actions and an invitation', () => {
     expect(assessConversationReview(supported(), blocks, [source])).toMatchObject({ acceptable: true, claimsChecked: 1, blocksChecked: 2 })
   })
@@ -38,7 +44,7 @@ describe('server-checked conversation evidence ledger', () => {
   it('permits an actually visible persona property while keeping private history separate', () => {
     const appearance: UserGroundingEvidence = { id: 'persona', kind: 'persona_background', text: '검은 안경을 쓰고 있다. 의대 출신이다.' }
     const ledger: ConversationReviewAssessment = { complete: true, blocks: [{ blockIndex: 0, noUserClaims: false, boundaryViolation: false,
-      claims: [{ draftQuote: '검은 안경', kind: 'visible_property', verdict: 'supported', supportSourceId: appearance.id, sourceQuote: '검은 안경을 쓰고 있다.' }] }] }
+      claims: [{ mode: 'asserted', draftQuote: '검은 안경', kind: 'visible_property', verdict: 'supported', supportSourceId: appearance.id, sourceQuote: '검은 안경을 쓰고 있다.' }] }] }
     expect(assessConversationReview(ledger, [{ text: '검은 안경이 눈에 띄네요.' }], [appearance]).acceptable).toBe(true)
   })
 
@@ -46,8 +52,8 @@ describe('server-checked conversation evidence ledger', () => {
     const draft = [{ text: '노란 손수건을 가지고 다니는구나. 깨끗하게 잘 썼네.' }]
     const actual = { id: 'current-user-input', kind: 'user_statement' as const, text: '노란 손수건을 늘 가지고 다녀.' }
     const ledger: ConversationReviewAssessment = { complete: true, blocks: [{ blockIndex: 0, noUserClaims: false, boundaryViolation: false, claims: [
-      { draftQuote: '노란 손수건을 가지고 다니는구나', kind: 'user_history', verdict: 'supported', supportSourceId: actual.id, sourceQuote: actual.text },
-      { draftQuote: '깨끗하게 잘 썼네', kind: 'visible_property', verdict: 'unsupported', supportSourceId: '', sourceQuote: '' },
+      { mode: 'asserted', draftQuote: '노란 손수건을 가지고 다니는구나', kind: 'user_history', verdict: 'supported', supportSourceId: actual.id, sourceQuote: actual.text },
+      { mode: 'asserted', draftQuote: '깨끗하게 잘 썼네', kind: 'visible_property', verdict: 'unsupported', supportSourceId: '', sourceQuote: '' },
     ] }] }
     expect(assessConversationReview(ledger, draft, [actual])).toMatchObject({ acceptable: false, reason: 'unseen_user_observation', claimsChecked: 2 })
   })
@@ -56,7 +62,7 @@ describe('server-checked conversation evidence ledger', () => {
     const actual = { id: 'disclosed', kind: 'user_statement' as const, text: '밤마다 책을 읽다 잠들 때 그 파란 책갈피를 꽂아 둬.' }
     const draft = [{ text: '밤마다 책을 읽다 잠들 때 꽂아두던 그 책갈피군요.' }]
     const ledger: ConversationReviewAssessment = { complete: true, blocks: [{ blockIndex: 0, noUserClaims: false, boundaryViolation: false, claims: [
-      { draftQuote: '밤마다 책을 읽다 잠들 때 꽂아두던 그 책갈피', kind: 'user_history', verdict: 'supported', supportSourceId: actual.id, sourceQuote: actual.text },
+      { mode: 'asserted', draftQuote: '밤마다 책을 읽다 잠들 때 꽂아두던 그 책갈피', kind: 'user_history', verdict: 'supported', supportSourceId: actual.id, sourceQuote: actual.text },
     ] }] }
     expect(assessConversationReview(ledger, draft, [actual]).acceptable).toBe(true)
     expect(assessConversationReview(ledger, draft, [])).toMatchObject({ acceptable: false, issue: 'source_unavailable' })
@@ -77,7 +83,7 @@ describe('server-checked conversation evidence ledger', () => {
     const llm: LLMProvider = { info: { mode: 'mock', name: 'proof-contract', notice: 'Synthetic contract only' }, async generateStructured(request) {
       expect(request.maxTokens).toBe(1536)
       expect(request.thinking).toBe('medium')
-      expect(request.promptVersion).toBe('agency-communication-check:v6')
+      expect(request.promptVersion).toBe('agency-communication-check:v7')
       return request.schema.parse(supported())
     } }
     const result = await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [], groundingEvidence: [],

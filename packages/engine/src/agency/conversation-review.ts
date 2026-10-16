@@ -4,6 +4,8 @@ import type { UserGroundingEvidence } from '../conversation-grounding'
 const Claim = z.object({
   draftQuote: z.string().min(1).max(160),
   kind: z.enum(['user_statement', 'user_history', 'shared_milestone', 'user_action', 'visible_property']),
+  /** Classify the whole clause before asking for evidence; a wish is not an occurrence. */
+  mode: z.enum(['asserted', 'hypothetical', 'proposal', 'interpretation', 'character_self']),
   verdict: z.enum(['supported', 'unsupported']),
   supportSourceId: z.string().max(128),
   sourceQuote: z.string().max(160),
@@ -46,6 +48,7 @@ export function assessConversationReview(assessment: ConversationReviewAssessmen
       result.claimsChecked++
       const reason = claim.kind === 'user_action' ? 'controls_user' : claim.kind === 'visible_property' ? 'unseen_user_observation' : 'unsupported_user_history'
       if (!blocks[block.blockIndex]!.text.includes(claim.draftQuote)) return reject('draft_quote_mismatch', block.blockIndex, reason)
+      if (claim.mode !== 'asserted') continue
       if (claim.verdict === 'unsupported') return reject('unsupported_claim', block.blockIndex, reason)
       const source = sources.find(item => item.id === claim.supportSourceId)
       if (!source) return reject('source_unavailable', block.blockIndex, reason)

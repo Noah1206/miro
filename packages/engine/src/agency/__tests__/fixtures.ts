@@ -59,7 +59,7 @@ export function recordedProvider(outputs: unknown[], calls: Array<{ task?: strin
       const next = queue.shift()
       if (next instanceof Error) throw next
       if (next === undefined) throw new Error('recorded_output_exhausted')
-      if (opts.promptVersion === 'agency-communication-check:v6' && typeof next === 'object' && next && 'acceptable' in next)
+      if (opts.promptVersion === 'agency-communication-check:v7' && typeof next === 'object' && next && 'acceptable' in next)
         return opts.schema.parse(recordedConversationReview(opts, next as { acceptable: boolean; blockIndex?: number; reason?: string }))
       return opts.schema.parse(next)
     },
