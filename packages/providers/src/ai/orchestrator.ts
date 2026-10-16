@@ -4,8 +4,9 @@ import type { ZodType, ZodTypeDef } from 'zod'
 import type { LLMProvider, ProviderInfo } from '../types'
 import type { AIContext, AILeaseGuard, AIProvider, AIUsageRecord, BudgetGuard, GenerationRequest, GenerationResult } from './types'
 import { AIContentBlockedError } from './types'
-import { AI_TASKS, taskOf } from './tasks'
+import { AI_TASKS, taskOf, type AITask } from './tasks'
 import { ModelRegistry, modelCost, routeModels, serves, type ModelDefinition, type RolloutPolicy } from './model-registry'
+import { generationInputCeiling } from './turn-meter'
 
 export class AIUnavailableError extends Error {
   constructor(public readonly attempts: number, public readonly last: string) { super(`ai unavailable after ${attempts} attempts: ${last}`) }
@@ -41,6 +42,8 @@ export type OrchestratorOptions = {
   timeoutMs?: number; maxRetries?: number; rateLimitBackoffMs?: number; onUsage?: (r: AIUsageRecord) => void | Promise<void>
   leaseHeartbeatMs?: number; maxLeaseHoldMs?: number
   explicitModel?: ModelDefinition
+  /** Trusted server configuration only. A pinned task never silently falls back to another model. */
+  taskModels?: Partial<Record<AITask, string>>
   shadow?: { model: ModelDefinition; provider: AIProvider }
   context?: AIContext; budgetGuard?: BudgetGuard; leaseGuard?: AILeaseGuard; rollout?: RolloutPolicy
 }
@@ -127,6 +130,16 @@ export class AIOrchestrator implements LLMProvider {
     })
   }
   private selections(req: GenerationRequest): Array<{ model: ModelDefinition; provider: AIProvider }> {
+    const pinned = this.opts.taskModels?.[taskOf(req.task)]
+    if (pinned !== undefined) {
+      if (!this.opts.registry || !this.opts.resolveModel) throw new Error('task model requires a registry and resolver')
+      const model = this.opts.registry.get(pinned)
+      const output = Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity)
+      if (!serves(model, taskOf(req.task))) throw new Error('configured task model cannot serve ' + req.task)
+      if (this.opts.context?.continuity && model.tier !== 'small') throw new Error('configured task model cannot serve continuity')
+      if (generationInputCeiling(req) + output > model.maxContextTokens) throw new Error('configured task model cannot fit context')
+      return [{ model, provider: this.opts.resolveModel(model) }]
+    }
     if (this.opts.explicitModel) return [{ model: this.opts.explicitModel, provider: this.opts.chain[0]! }]
     if (this.opts.registry && this.opts.resolveModel) {
       const registry = this.opts.registry, tokens = Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8'))
@@ -177,7 +190,9 @@ export class AIOrchestrator implements LLMProvider {
         // 다시 보낼 때는 어느 칸이 어떻게 어긋났는지(경로·코드만, 답의 글은 아님)도 알려 준다 — '형식대로' 만으로는 같은 실수를 되풀이했다(10/2 rules:too_big 두 번).
         const repairSchema = retry > 0 && req.json === true && /^invalid_schema(?: |$)/.test(last)
         const failed = repairSchema && last.startsWith('invalid_schema ') ? ` The previous output failed validation at: ${last.slice('invalid_schema '.length)}.` : ''
-        const request = { ...req, hardTokenCap: !!this.opts.context?.turnMeter, maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity),
+        const request = { ...req, hardTokenCap: !!this.opts.context?.turnMeter,
+          disableProviderFallback: this.opts.taskModels?.[taskOf(req.task)] !== undefined || req.disableProviderFallback,
+          maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity),
           prompt: repairSchema ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt }
         const context = { ...this.opts.context, traceId: this.traceId, requestId: this.requestId }
         const release = acquireProvider(providerKey, context.workload === 'background')

@@ -20,6 +20,8 @@ export type GenerationRequest = {
   maxTokens?: number
   /** Server billing ceiling includes reasoning tokens; adapters must not expand it. */
   hardTokenCap?: boolean
+  /** Trusted orchestrator role pin: disable provider-side model substitution as well as local fallback. */
+  disableProviderFallback?: boolean
   temperature?: number
   signal?: AbortSignal
   promptVersion?: string

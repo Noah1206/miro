@@ -51,8 +51,7 @@ export class AnthropicProvider implements AIProvider {
         messages: [{ role: 'user', content: req.prompt }],
         output_config: { effort: req.thinking ?? 'low' },
         ...(schema ? { tools: [{ name: 'submit', description: 'Submit the complete result.', input_schema: schema }], tool_choice: { type: 'auto' as const } } : {}),
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
+        ...(req.disableProviderFallback ? {} : { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }),
       }
       // 받는 대로 넘겨 달라는 글 답(대사)은 스트리밍으로 — 도구로 받는 답은 끝에 한 번에(10/9).
       if (req.onText && !schema) {

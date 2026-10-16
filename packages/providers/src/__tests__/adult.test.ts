@@ -21,13 +21,15 @@ describe('adult-only model routing', () => {
 
   it('sends every task of an adult room to OpenRouter with data collection denied, ignoring the picked chat model', async () => {
     vi.stubEnv('MIRO_MODEL_REGISTRY', MAIN); vi.stubEnv('GEMINI_API_KEY', 'g')
+    vi.stubEnv('MIRO_AGENCY_VERIFY_MODEL_ID', 'main-verifier-must-not-receive-adult-data')
     vi.stubEnv('MIRO_ADULT_MODEL_REGISTRY', ADULT); vi.stubEnv('OPENROUTER_API_KEY', 'k')
     const spy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () =>
       new Response(JSON.stringify({ choices: [{ finish_reason: 'stop', message: { content: 'hi' } }] })))
     const ai = createAI({ mock: () => ({}), context: { adult: true, dialogueModelId: 'main', continuity: true } })
     await ai.generateText({ system: 's', prompt: 'p', task: 'dialogue' })
     await ai.generateText({ system: 's', prompt: 'p', task: 'memory_extraction' })
-    expect(spy).toHaveBeenCalledTimes(2)
+    await ai.generateText({ system: 's', prompt: 'p', task: 'agency_verify' })
+    expect(spy).toHaveBeenCalledTimes(3)
     for (const [url, init] of spy.mock.calls) {
       expect(String(url)).toBe('https://openrouter.ai/api/v1/chat/completions')
       expect(JSON.parse(String(init!.body))).toMatchObject({ model: 'vendor/model', provider: { data_collection: 'deny', require_parameters: true, sort: 'throughput' }, reasoning: { effort: 'none', exclude: true } })
