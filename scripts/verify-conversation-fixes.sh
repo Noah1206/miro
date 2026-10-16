@@ -31,7 +31,7 @@ PY
   --audit-messenger)
     # Only aggregates; no message bodies, account identifiers, mutations or scheduler calls.
     python3 - <<'PY'
-import os,pathlib,subprocess
+import os,pathlib,subprocess,urllib.parse
 env=os.environ.copy()
 if not env.get('DIRECT_DATABASE_URL'):
     for line in pathlib.Path('.env').read_text().splitlines():
@@ -39,7 +39,20 @@ if not env.get('DIRECT_DATABASE_URL'):
             env['DIRECT_DATABASE_URL']=line.split('=',1)[1].strip().strip('"').strip("'")
 if not env.get('DIRECT_DATABASE_URL'):
     raise SystemExit('DIRECT_DATABASE_URL을 배포 환경 또는 로컬 .env에 설정하세요. 키를 채팅에 보내지 마세요.')
-env['PGDATABASE']=env['DIRECT_DATABASE_URL']
+url=urllib.parse.urlparse(env['DIRECT_DATABASE_URL'])
+if url.scheme not in ('postgres','postgresql') or not url.hostname:
+    raise SystemExit('DIRECT_DATABASE_URL에는 PostgreSQL URL이 필요합니다.')
+# libpq treats PGDATABASE as a literal database name, not a connection URI.
+# Keep credentials in child environment parameters rather than process arguments.
+env['PGHOST']=url.hostname
+env['PGPORT']=str(url.port or 5432)
+env['PGDATABASE']=urllib.parse.unquote(url.path.lstrip('/')) or 'postgres'
+if url.username is not None: env['PGUSER']=urllib.parse.unquote(url.username)
+if url.password is not None: env['PGPASSWORD']=urllib.parse.unquote(url.password)
+query=urllib.parse.parse_qs(url.query)
+for key,target in [('sslmode','PGSSLMODE'),('sslrootcert','PGSSLROOTCERT'),('sslcert','PGSSLCERT'),('sslkey','PGSSLKEY')]:
+    if key in query: env[target]=query[key][-1]
+env['PGCONNECT_TIMEOUT']='15'
 sql="""
 BEGIN READ ONLY;
 SELECT i.status, count(*) AS items,
