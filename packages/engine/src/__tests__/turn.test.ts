@@ -150,8 +150,8 @@ describe('runTurn — state update pipeline', () => {
     ] })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕' })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', replyLength: 'long' })
-    expect(systems[0]).toMatch(/블록 5~8개, 전체 500~900자/)
-    expect(systems[1]).toMatch(/블록 8~11개, 전체 1000~1600자/)
+    expect(systems[0]).toContain('기본 대화는 지금 반응에 필요한 대사와 행동만')
+    expect(systems[1]).toContain('긴 대화는 필요한 행동과 대사를 더 펼치되')
     expect(versions).toEqual(['dialogue:v1+scene-beats', 'dialogue:v1+scene-long'])
   })
 

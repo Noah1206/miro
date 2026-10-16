@@ -224,7 +224,7 @@ describe('context builder', () => {
   })
 
   it('lets user choices shape the authored story', () => {
-    expect(buildContext(snapshot()).system).toContain('let user choices shape outcomes')
+    expect(buildContext(snapshot()).system).toContain('사용자의 선택이 결과를 바꾸게')
   })
 
   it('reports an approximate token size', () => {
@@ -313,11 +313,11 @@ describe('초반 스토리 안내', () => {
     const s = snapshot({ turnCount: 0, userInput: '안녕' })
     s.character.worldRole.startingContext = '봉인된 기록실에 함께 남았다.'
     const { system } = buildContext(s)
-    expect(system).toContain('offer 2 actions')
-    expect(system).toContain('offer 2 actions; allow alternatives')
-    expect(system).toContain('Follow opening/persona')
-    expect(buildContext({ ...s, mode: 'messenger' }).system).not.toContain('On hesitation offer')
-    expect(buildContext({ ...s, turnCount: 5 }).system).not.toContain('On hesitation offer')
+    expect(system).toContain('작성된 첫 장면과 유저 페르소나를 따라')
+    expect(system).toContain('작은 행동이나 확인할 사실을 자기 말투로 하나 제안')
+    expect(system).toContain('선택지를 메뉴처럼 나열하지 않는다')
+    expect(buildContext({ ...s, mode: 'messenger' }).system).not.toContain('첫 5턴:')
+    expect(buildContext({ ...s, turnCount: 5 }).system).not.toContain('첫 5턴:')
   })
 })
 

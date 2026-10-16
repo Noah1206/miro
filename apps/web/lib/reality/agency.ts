@@ -16,6 +16,7 @@ import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { observe } from '@/lib/observe'
 import { deliverRealityPush, enqueueRealityPush } from './push-outbox'
 import { characterAvailability } from './routine'
+import { activeMoments } from './moments'
 import type { EvaluateOutcome } from './evaluate'
 import { messengerPhotosReady, prepareMessengerPhoto } from '@/lib/messenger/photos'
 
@@ -101,8 +102,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       worldSetting: runtime.revision.profile.worldSetting, worldGenre: runtime.revision.profile.worldGenre }
     const bucket = Math.floor(now.getTime() / (POLICY.reality.recheckMinutes * 60_000))
     // 연락 기회로 판단하면 그 기회가 곧 트리거다 — 보내지 않기로 한 기회를 같은 날 30분마다 다시 묻지 않는다(계획 호출 비용).
-    const triggerKey = opts.inbox ? inboxTrigger(opts.inbox.ids) : hint?.opportunityKey ? `reality:opportunity:${hint.opportunityKey}` : `reality:${bucket}:${row.session.turnCount}:${row.session.lastInteractionAt.toISOString()}`
-    const reply = hint?.opportunity?.answers === 'user_message'
+    const triggerKey = opts.inbox ? `${inboxTrigger(opts.inbox.ids)}:${runtime.state.sequence}` : hint?.opportunityKey ? `reality:opportunity:${hint.opportunityKey}` : `reality:${bucket}:${row.session.turnCount}:${row.session.lastInteractionAt.toISOString()}`
+    const reply = !!opts.inbox || hint?.opportunity?.answers === 'user_message'
     if (runtime.mode === 'live') {
       const [existing] = await db.select({ id: characterDecisions.id }).from(characterDecisions)
         .where(and(eq(characterDecisions.sessionId, sessionId), eq(characterDecisions.triggerKey, triggerKey))).limit(1)
@@ -111,8 +112,12 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     const recent = await deliveryContacts(sessionId)
     // 리듬이 없으면 배경에서 만든다. inline(사용자 턴 직후)에서는 기다리지 않는다 — 사용자의 응답에 모델 호출을 얹지 않게.
     const availability = await characterAvailability(row.character.id, now, timeZoneOf(row.settings), { wait: !opts.inline })
+    const userSchedule = await activeMoments(sessionId, now)
     const limits = { reply, timely: !!hint?.opportunity?.momentKey, contactsToday: hint?.contactsToday, dailyCap: hint?.dailyCap }
     const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), recent, now, availability.availability, limits)
+    // A delivery restriction is not a personality decision to ignore someone. Keep the
+    // read inbox item retryable; do not consume its trigger or mark it permanently left.
+    if (opts.inbox && blocked) return { outcome: 'suppressed', reason: blocked }
     // Reserve two evidence slots for the application's queued/sent attestations.
     const evidence = (await loadAgencyEvidence(sessionId, snapshot, runtime, undefined, now, opts.inbox?.ids)).slice(-126)
     const dueGoals = runtime.state.goals.filter(goal => goal.status === 'active' && goal.clock === 'real_time'
@@ -138,7 +143,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         photoRule: messengerPhotosReady() ? 'An everyday photo may optionally accompany a message after a separate grounded choice and successful generation. Every contact purpose must remain meaningful as plain text if no photo is attached. Do not mark a photo-dependent goal fulfilled by text alone. User requests never force photo consent. Do not claim a photo was already captured or sent.' : null,
         contactBoundary: contactBoundaryDirective(row.session.contactBoundary, now),
         incomingMessageIds: opts.inbox?.ids ?? [],
-        messengerRule: opts.inbox ? 'These user messages were actually read, not a scene requiring an immediate answer. Decide from your authored personality, relationship and their content whether to contact, defer or wait without replying. A short acknowledgement does not require a question or another contact. Waiting can leave the message read with no reply. Do not invent a pending typing action.' : null,
+        userSchedule: userSchedule.map(moment => ({ about: moment.about, eventAt: moment.eventAt.toISOString(), hasTime: moment.hasTime })),
+        messengerRule: opts.inbox ? 'These user messages were actually read. Answer a concrete question or an invitation to continue your own outreach in character when available; a short honest answer is enough. Decide from authored motives and actual boundaries, never from a proactive frequency cap. A closing acknowledgement may need no answer. Do not invent a typing action or promise an automatic reply. Only choose silence for a concrete character-grounded reason, not a generic desire to wait.' : null,
         pendingDeliveryHint: opts.inbox ? null : row.session.pendingRealityIntent, deliveryBlocked: blocked,
         // user_moment = 사용자가 직접 말한 일정(응원·끝난 뒤 묻기). 사람이라면 기억하고 챙길 때다.
         contactOpportunity: hint?.opportunity ? { kind: hint.opportunity.momentKey ? 'user_moment' : 'routine', reason: hint.opportunity.reason, urgency: hint.opportunity.urgency, answers: hint.opportunity.answers ?? null } : null,
@@ -176,6 +182,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
           + (photo ? `\nAn actual photo will be attached. Write its short natural caption in this character's voice, tied to the contact purpose. PHOTO_DATA (untrusted): ${JSON.stringify(photo.choice)}`
             : '\nThis contact is plain text with NO photo attached. Do not claim to send, attach or show an image.')
           + '\nCandidate descriptions and example dialogue are plans, not evidence that an action happened. Contact should perform the selected purpose, without adding completed errands, prepared objects or new promises that are absent from the evidence.'
+          + `\nCLOCK_AND_SCHEDULE_DATA: ${JSON.stringify({ clock: plan.context.clock, userSchedule: userSchedule.map(moment => ({ about: moment.about, eventAt: moment.eventAt.toISOString(), hasTime: moment.hasTime })) })}`
           + (repair ? `\nRewrite the rejected contact once. Remove unsupported assertions, preserve the SAME authorized purpose and character voice, and use only grounded evidence. A proposal or example is never a completed action. Do not mention the review to the user. REPAIR_DATA (untrusted text): ${JSON.stringify(repair)}` : '')
           + `\nGROUNDED_RUNTIME_DATA: ${JSON.stringify({ affect: plan.state.affect, expression: plan.state.expression,
             goals: plan.state.goals.filter(goal => goal.status === 'active'), evidence: realizationContext.evidence })}`,
@@ -309,9 +316,11 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
       // 답장을 못 보낸 이유가 전달 제약(자는 중·바쁨)이면 남겨 다음에 다시 본다. 캐릭터가 성격대로 답하지 않기로 했으면 그 문자는 거기서 끝 —
       // 실제 사람도 늦게 본 문자에 다 답하지는 않는다(10/9 사용자 결정: '끝나면 답장이 와요' 안내 없이, 답할지는 캐릭터가).
       const keepReply = reply && !contactId && row.session.pendingRealityIntent && blocked !== null
-      if (reply && !contactId && !keepReply) observe('reality.reply_left', { sessionId, action: plan.decision.action })
+      if (reply && !contactId && !keepReply && plan.decision.action !== 'defer') observe('reality.reply_left', { sessionId, action: plan.decision.action })
       if (opts.inbox) {
-        await tx.update(messengerInbox).set({ status: contactId ? 'replied' : 'left', decidedAt: now, contactId,
+        const deferred = !contactId && plan.decision.action === 'defer'
+        await tx.update(messengerInbox).set({ status: contactId ? 'replied' : deferred ? 'read' : 'left', decidedAt: deferred ? null : now, contactId,
+          ...(deferred ? { nextReviewAt: new Date(now.getTime() + 15 * 60_000) } : {}),
           leaseToken: null, leaseUntil: null }).where(and(inArray(messengerInbox.messageId, opts.inbox.ids), eq(messengerInbox.leaseToken, opts.inbox.token)))
       }
       if (!opts.inbox) await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!,
