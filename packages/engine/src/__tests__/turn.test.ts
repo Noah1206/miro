@@ -83,9 +83,12 @@ describe('runTurn — state update pipeline', () => {
     const input = '오늘 공방에 온 이유를 천천히 말씀드릴게요'
     const moved = await runTurn({ llm: llm(), snapshot: snapshot({ turnCount: 5 }), userInput: input })
     expect(moved.transition.relationshipDelta).toMatchObject({ trust: 1, attachment: 1, emotionalDistance: -1 })
-    const still = await runTurn({ llm: llm(), snapshot: snapshot({ turnCount: 6 }), userInput: input })
+    // 처음 10턴은 매 턴 가까워진다(10/16) — 그 뒤엔 곡선대로 3턴에 한 번.
+    const early = await runTurn({ llm: llm(), snapshot: snapshot({ turnCount: 6 }), userInput: input })
+    expect(early.transition.relationshipDelta.attachment).toBe(1)
+    const still = await runTurn({ llm: llm(), snapshot: snapshot({ turnCount: 10 }), userInput: input })
     expect(still.transition.relationshipDelta.attachment ?? 0).toBe(0)
-    const steady = snapshot({ turnCount: 6 })
+    const steady = snapshot({ turnCount: 10 })
     steady.character = { ...steady.character, personality: { ...steady.character.personality, bonding: 'steady' } }
     expect((await runTurn({ llm: llm(), snapshot: steady, userInput: input })).transition.relationshipDelta.attachment).toBe(1)
   })

@@ -51,6 +51,8 @@ const NEGATIVE: readonly SemanticEventType[] = ['rejection', 'hostility', 'ignor
 /** 계단형이 한 단계 오르는 순간. */
 const KEY_MOMENTS: readonly SemanticEventType[] = ['confession', 'expressed_longing', 'shared_secret', 'made_promise', 'apologized', 'compliment']
 const STEP = 5, STEP_EVERY = 8, SLOW_EVERY = 3
+/** 처음 이만큼은 좋은 대화마다 적어도 한 걸음 — 계단형·아주 느림도 첫 만남부터 가까워지는 게 보인다(10/16 사용자: 초반 보상). */
+const EARLY_TURNS = 10
 
 /** 곡선별 이번 턴의 한 걸음. 가속형은 가까울수록 커지고, 계단형은 특별한 순간이나 8턴마다 한 번에 오른다. */
 function stride(curve: BondingCurve, near: number, turn: number, events: SemanticEvent[]): number {
@@ -62,9 +64,10 @@ function stride(curve: BondingCurve, near: number, turn: number, events: Semanti
   }
 }
 
-/** 관계성마다 함께한 시간으로 자라는 차원. 거리는 모두 좁혀진다 — 긴장 관계는 거리만 조금씩 풀린다. */
+/** 관계성마다 함께한 시간으로 자라는 차원. 거리는 모두 좁혀진다 — 긴장 관계는 거리만 조금씩 풀린다.
+ * 호감은 처음 만난 사이·친구 사이에서도 자란다(10/16 — 사용자에게 보이는 호감 %가 대화로 움직이게). 연애를 하지 않는 캐릭터는 빼 준다. */
 const GROWS: Record<RelationshipKind, readonly RelationshipDimension[]> = {
-  new: ['trust', 'attachment'], friendship: ['trust', 'attachment'], romance: ['attachment', 'attraction'], work: ['trust'], tension: [],
+  new: ['trust', 'attachment', 'attraction'], friendship: ['trust', 'attachment', 'attraction'], romance: ['attachment', 'attraction'], work: ['trust'], tension: [],
 }
 
 /**
@@ -77,12 +80,13 @@ export function companionshipDelta(input: {
 }): RelationshipDelta {
   const felt = feltEvents(input.events, input.profile)
   if (input.userInput.replace(/\s/g, '').length < 6 || felt.some(e => NEGATIVE.includes(e.type))) return {}
-  const g = stride(input.curve, closeness(input.relationship), input.turn, felt)
+  const g = Math.max(stride(input.curve, closeness(input.relationship), input.turn, felt), input.turn <= EARLY_TURNS ? 1 : 0)
   if (!g) return {}
   const kind = relationshipKind(input.relationship.stage)
   const out: RelationshipDelta = { emotionalDistance: -g }
   const own = kind === 'tension' ? [] : GROWABLE.filter(dim => input.profile?.grows[dim])
-  for (const dim of new Set([...GROWS[kind], ...own])) out[dim] = g
+  const noRomance = input.profile?.romance?.value === 'never'
+  for (const dim of new Set([...GROWS[kind], ...own])) if (!(noRomance && dim === 'attraction')) out[dim] = g
   return out
 }
 

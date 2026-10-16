@@ -245,7 +245,7 @@ describe('runTurn agency integration', () => {
       relationshipChanges: [{ dimension: 'trust', delta: 2, evidenceIds: ['input-1'], ruleIds: ['respect'] }] } }) })
     const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency(), replyLength: 'long' })
     expect(stub.calls.find(c => c.version === 'agency-dialogue:v6')?.system).toContain('긴 대화는 필요한 행동과 대사를 더 펼치되')
-    expect(result.transition.relationshipDelta.trust).toBe(2)
+    expect(result.transition.relationshipDelta.trust).toBe(3)   // 평가 +2, 처음 10턴의 함께한 시간 +1
     expect(result.records.filter(r => r.field === 'relationship.trust').map(r => r.rule)).toEqual(['relationship_appraisal'])
     expect(result.characterState.mood).toBe('neutral')
     expect(result.firedRules).toEqual([])

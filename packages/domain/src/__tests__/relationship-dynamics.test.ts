@@ -29,8 +29,12 @@ describe('bonding curves — how fast a character warms up depends on who they a
   it('steady grows the same every turn', () => {
     expect(steps(chat('steady', 12)).every(s => s === 1)).toBe(true)
   })
-  it('slow moves once every three turns', () => {
-    expect(chat('slow', 12).at(-1)).toBe(5 + 4)
+  // 2026-10-16: 처음 10턴은 좋은 대화마다 적어도 한 걸음 — 곡선의 모양은 그 뒤부터.
+  it('every curve moves on each of the first ten good turns', () => {
+    for (const curve of ['slow', 'stepwise', 'steady', 'accelerating'] as const) expect(steps(chat(curve, 10)).every(s => s >= 1)).toBe(true)
+  })
+  it('slow moves once every three turns after the first ten', () => {
+    expect(steps(chat('slow', 15)).slice(10)).toEqual([0, 1, 0, 0, 1])
   })
   it('accelerating starts like steady, then each turn counts for more', () => {
     const s = steps(chat('accelerating', 24))
@@ -38,11 +42,11 @@ describe('bonding curves — how fast a character warms up depends on who they a
     expect(s.at(-1)!).toBeGreaterThan(1)
     expect(chat('accelerating', 24).at(-1)!).toBeGreaterThan(chat('steady', 24).at(-1)!)
   })
-  it('stepwise stays flat, then jumps', () => {
-    const a = chat('stepwise', 16)
-    expect(a.slice(0, 8).every(x => x === 5)).toBe(true)
-    expect(a[8]).toBe(10)
-    expect(a[16]).toBe(15)
+  it('stepwise stays flat after the first ten turns, then jumps', () => {
+    const s = steps(chat('stepwise', 16))
+    expect(s[7]).toBe(5)                              // 8턴째 계단
+    expect(s.slice(10, 15).every(x => x === 0)).toBe(true)
+    expect(s[15]).toBe(5)                             // 16턴째 계단
   })
   it('stepwise also jumps on a key moment', () => {
     const d = companionshipDelta({ curve: 'stepwise', relationship: start(), events: [{ type: 'shared_secret', confidence: 0.9 }], turn: 3, userInput: talk })
@@ -101,10 +105,12 @@ describe('reaching out after a silence', () => {
     const grown = start({ stage: 'acquaintance', trust: 50, attachment: 25, emotionalDistance: 45 })
     const intent = deriveIntent({ relationship: grown, activeEvents: [], contactProfile: profile, idleMinutes: idle, pending: null, contactedBefore: true })
     expect(intent?.reason).toBe('silence')
-    expect(evaluateRealityContact({
-      intent: intent!, contactProfile: profile, personality: { initiative: 50, emotionalExpression: 50 }, relationship: grown,
+    // 문턱이 없어진 침묵은 다른 이유와 똑같이 연락 동기로 판정된다(모델 없는 기존 경로) — 따로 통과시키지 않는다.
+    const judge = (reason: string) => evaluateRealityContact({
+      intent: { ...intent!, reason }, contactProfile: profile, personality: { initiative: 50, emotionalExpression: 50 }, relationship: grown,
       activeEvents: [], timeZone: 'Asia/Seoul', lastContactAt: null, pendingContacts: [], now: new Date('2026-09-24T05:00:00Z'),
-    }).send).toBe(true)
+    })
+    expect(judge('silence').send).toBe(judge('그냥 생각나서').send)
   })
 })
 

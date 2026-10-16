@@ -148,10 +148,11 @@ describe('daily cap, first contact and dedupe keys', () => {
     const d = evaluateRealityContact(input({ relationship: stranger, intent: { channel: 'message', reason: FIRST_CONTACT_REASON, urgency: 0.5 } }))
     expect(d).toEqual({ send: true, channel: 'message', dedupeKey: 'message:first_contact' })
   })
-  it('a meal-time check-in is not re-judged by the motivation formula — like silence, the relationship threshold already decided', () => {
+  // 2026-10-16: 관계 문턱이 없어져 식사 안부도 기회일 뿐 — 모델이 없는 이 경로에서는 다른 이유와 똑같이 연락 동기로 판정된다.
+  it('a meal-time check-in is judged by the motivation formula like any other reason', () => {
     const settled = { ...rel, trust: 40, attachment: 40, emotionalDistance: 55 }
     const meal = { channel: 'message' as const, reason: 'checkin:저녁 — 저녁 먹었는지 묻는다', urgency: 0.4 }
-    expect(evaluateRealityContact(input({ relationship: settled, intent: meal })).send).toBe(true)
+    expect(evaluateRealityContact(input({ relationship: settled, intent: meal }))).toEqual({ send: false, reason: 'no_motivation' })
     expect(evaluateRealityContact(input({ relationship: settled, intent: { ...meal, reason: '그냥 생각나서' } }))).toEqual({ send: false, reason: 'no_motivation' })
   })
   it('an event-rule intent is not re-judged by the motivation formula — the rule and the character\'s profile already decided', () => {

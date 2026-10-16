@@ -1,5 +1,5 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
-import { applyRelationshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
+import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
@@ -68,13 +68,13 @@ export async function runAgencyTurn(opts: {
   const communicationPreference = needsCommunicationPreferenceReview(opts.userInput, snapshot.recentMessages, communicationPreferences)
 
   // ── 승인 (표현 전) ──────────────────────────────────────────────────────────────────────────────
-  // Numeric relationship/mood changes belong to one appraisal. Stage signals use the actual input
-  // without applying the legacy numeric deltas a second time.
-  const projected = applyRelationshipDelta(snapshot.relationship, plan.relationshipDelta)
-  // Stage signals come from the actual new input, not affection scores or an invented appraisal.
-  // Numeric changes remain exclusively owned by the planner; this does not apply them twice.
+  // 사건에 대한 수치 변화는 계획(평가)이 정하고, 함께 보낸 시간만큼의 성장은 성격의 곡선이 더한다(10/16 — 빠져 있어 새 방의 관계가 멈춰 있었다).
   const table = snapshot.character.personality.relationshipProfile
   const semanticEvents = detectSemanticEvents(opts.userInput)
+  const relationshipDelta = addDelta(plan.relationshipDelta, companionshipDelta({
+    curve: snapshot.character.personality.bonding ?? bondingCurveOf(snapshot.character.personality), relationship: snapshot.relationship,
+    events: semanticEvents, turn: snapshot.turnCount + 1, userInput: opts.userInput, profile: table }))
+  const projected = applyRelationshipDelta(snapshot.relationship, relationshipDelta)
   const stage = nextRelationshipStage(snapshot.relationship.stage, projected, semanticEvents, snapshot.turnCount + 1, table)
   projected.stage = stage
   const mood = moodFromAffect(plan.state.affect, projected)
@@ -166,7 +166,7 @@ export async function runAgencyTurn(opts: {
       feedback = `\n이전 대사와 반복되는 블록 ${repeated}을 다시 쓰세요. 같은 뜻의 빈말이나 같은 소품 동작으로 바꾸지 말고, 지금 사용자가 한 말에 답하며 장면을 한 걸음 이어가세요. 반복 문장(데이터): ${JSON.stringify(validated.blocks[repeated]?.text)}`
       continue
     }
-    validated.relationshipDelta = { ...plan.relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
+    validated.relationshipDelta = { ...relationshipDelta, ...(stage !== snapshot.relationship.stage ? { stage } : {}) }
     validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
     // Check user facts and boundaries before delivery with a compact request. Return the broader
     // canon/action audit for background review, avoiding that entire context on the critical path.
