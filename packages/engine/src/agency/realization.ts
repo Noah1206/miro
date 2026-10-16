@@ -10,7 +10,7 @@ export { needsCommunicationPreferenceReview } from '../communication-preferences
 
 export const AGENCY_REALIZATION_VERSION = 'agency-realization-check:v5'
 export type AgencyRealizationBlock = { type: string; speaker: string | null; text: string }
-export const COMMUNICATION_REVIEW_VERSION = 'agency-communication-check:v4'
+export const COMMUNICATION_REVIEW_VERSION = 'agency-communication-check:v5'
 /** The same compact check serves ordinary chat and the agency/reality renderer. */
 export async function verifyCommunicationPreferences(llm: LLMProvider, input: {
   evidence: readonly CommunicationPreferenceEvidence[]
@@ -48,7 +48,7 @@ Return every input blockIndex exactly once, noUserClaims=true ONLY when that blo
   while (!fits() && payload.preferenceEvidence.length > 1) payload.preferenceEvidence.shift()
   if (!fits()) throw new ConversationReviewContextBudgetError()
   const assessment = await generateAgencyStructured(llm, {
-    task: 'agency_verify', promptVersion: COMMUNICATION_REVIEW_VERSION, maxTokens: 1536,
+    task: 'agency_verify', promptVersion: COMMUNICATION_REVIEW_VERSION, maxTokens: 1536, thinking: 'medium',
     schema, system, prompt: JSON.stringify(payload),
   })
   return assessConversationReview(assessment, input.blocks, payload.groundingEvidence, input.groundingEvidence ?? [])

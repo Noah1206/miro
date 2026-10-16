@@ -76,7 +76,8 @@ describe('server-checked conversation evidence ledger', () => {
   it('computes the common verifier result from supplied sources rather than the model claiming support', async () => {
     const llm: LLMProvider = { info: { mode: 'mock', name: 'proof-contract', notice: 'Synthetic contract only' }, async generateStructured(request) {
       expect(request.maxTokens).toBe(1536)
-      expect(request.promptVersion).toBe('agency-communication-check:v4')
+      expect(request.thinking).toBe('medium')
+      expect(request.promptVersion).toBe('agency-communication-check:v5')
       return request.schema.parse(supported())
     } }
     const result = await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [], groundingEvidence: [],
