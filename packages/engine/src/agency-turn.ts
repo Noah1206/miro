@@ -6,7 +6,7 @@ import { buildContext, estimateTokens, type SimulationSnapshot } from './context
 import { SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
-import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, type AgencyPlanningContext, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
+import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview, type AgencyPlanningContext, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
@@ -53,6 +53,7 @@ export async function runAgencyTurn(opts: {
   maxOutputTokens?: number; contextScale?: number; stream?: TurnStream
 }): Promise<TurnResult> {
   const { llm, agency, snapshot, policy } = opts
+  const communicationPreference = needsCommunicationPreferenceReview(opts.userInput, snapshot.recentMessages)
   const actor = snapshot.character.id
   const scene = !snapshot.mode || snapshot.mode === 'chat'
   const calendarChanged = scene && snapshot.world.narrativeCalendar?.changedAtTurn === snapshot.turnCount
@@ -126,7 +127,7 @@ export async function runAgencyTurn(opts: {
   let renderer = agencyProviderTrace(llm, 'agency-dialogue:v5')
   let feedback = ''
   // 다시 쓰기마다 앞에서 보여 준 블록은 지운다(같은 통로 하나 — 새 호출의 첫 시도가 reset 을 보낸다).
-  const streaming = opts.stream ? blockStream(snapshot, opts.stream, { dropWorld: true }) : {}
+  const streaming = opts.stream && !communicationPreference ? blockStream(snapshot, opts.stream, { dropWorld: true }) : {}
   for (let attempt = 0; attempt <= REGENERATIONS; attempt++) {
     // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
     // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
@@ -157,8 +158,8 @@ export async function runAgencyTurn(opts: {
     validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
     // 의미 검토(모델 호출)는 응답 뒤로 — 여기서는 규칙 검사만 해 답을 먼저 보낸다(10/9 속도: 검토·다시 쓰기가 턴을 20~44초로 늘렸다).
     // 검토할 거리가 있었으면 그 입력을 돌려줘 호출한 쪽이 응답 뒤에 검토하고 기록한다.
-    const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length }
-    verification = await verifyAgencyRealization(llm, realization, { review: false })
+    const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length, communicationPreference }
+    verification = await verifyAgencyRealization(llm, realization, { review: communicationPreference })
     if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
     if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); if (verification.deferredReview) review = realization; break }
     // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
@@ -169,9 +170,11 @@ export async function runAgencyTurn(opts: {
       const claim = /^claims\.(\d+)$/.exec(issue.field), block = /^blocks\.(\d+)$/.exec(issue.field)
       return claim ? [verification!.claims[Number(claim[1])]?.quote] : block ? [validated.blocks[Number(block[1])]?.text.slice(0, 120)] : []
     }).filter((q): q is string => !!q))].slice(0, 4)
-    feedback = `\n\n## 이전 응답이 거부된 이유(코드): ${reasons.join(', ')}\n${quotes.length ? `문제가 된 문장: ${quotes.map(q => `"${q}"`).join(' / ')}\n` : ''}승인된 선택과 세계 상태 안에서만 다시 쓰세요. 완료되지 않은 행동·확인·도착·발송을 이미 한 일처럼 쓰지 말고, 아직 하지 않은 일은 '할게요·하려고 해요'처럼 앞으로의 일로 쓰세요.`
+    feedback = `\n\n## 이전 응답이 거부된 이유(코드): ${reasons.join(', ')}\n${quotes.length ? `문제가 된 문장: ${quotes.map(q => `"${q}"`).join(' / ')}\n` : ''}승인된 선택과 세계 상태 안에서만 다시 쓰세요. 완료되지 않은 행동·확인·도착·발송을 이미 한 일처럼 쓰지 말고, 아직 하지 않은 일은 '할게요·하려고 해요'처럼 앞으로의 일로 쓰세요.${communicationPreference ? ' 사용자가 실제로 정정한 말투·호칭·응원 방식과 요청한 피드백을 존중하세요. 원하지 않은 과찬을 다른 과찬으로 바꾸지 말고, 자기 성격에 맞는 솔직하고 구체적인 반응을 쓰세요.' : ''}`
   }
   const approved = approveTransition(transition!, snapshot, policy, { relationshipOwner: 'appraisal', decisionId: plan.decision.id })
+  // A rejected preference-breaking draft must never flash in the user's chat.
+  if (communicationPreference) opts.stream?.onBlocks(approved.transition.blocks)
   records.push(...approved.records)
   if (plan.transition.affectDelta) records.push({ field: 'agency.affect', before: agency.state.affect, after: plan.state.affect, rule: 'affect_appraisal', status: 'applied', clock: 'real', actor, decisionId: plan.decision.id })
   if (mood !== (snapshot.characterState?.mood ?? 'neutral')) records.push({ field: 'character.mood', before: snapshot.characterState?.mood ?? 'neutral', after: mood, rule: 'mood_derived', status: 'applied', clock: 'real', actor, decisionId: plan.decision.id })

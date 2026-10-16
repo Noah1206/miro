@@ -63,6 +63,26 @@ beforeEach(() => vi.stubEnv('MIRO_MODE', 'alpha'))
 afterEach(() => vi.unstubAllEnvs())
 
 describe('runTurn agency integration', () => {
+  it('rewrites before delivery when a reply ignores an explicit communication preference', async () => {
+    const stub = provider({ rejectRealization: 1 })
+    const input = agency()
+    const text = '완벽하다는 칭찬은 부담돼. 빈말 대신 어색한 부분 하나만 말해줘.'
+    input.context.evidence = [{ ...proof, quote: text }]
+    const visible: string[][] = []
+    const llm: LLMProvider = { ...stub.llm, async generateStructured(request) {
+      if (request.task === 'dialogue') request.onText?.(JSON.stringify({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }] } }))
+      return stub.llm.generateStructured(request)
+    } }
+    const result = await runTurn({ llm, snapshot: snapshot(), userInput: text, agency: input,
+      stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { throw new Error('Rejected draft was shown') } } })
+    expect(result.agency?.verification).toMatchObject({ ok: true, reviewed: true })
+    expect(stub.calls.filter(call => call.version === 'agency-realization-check:v5')).toHaveLength(2)
+    const renders = stub.calls.filter(call => call.version === 'agency-dialogue:v5')
+    expect(renders).toHaveLength(2)
+    expect(renders[1]!.prompt).toContain('원하지 않은 과찬을 다른 과찬으로 바꾸지 말고')
+    expect(visible).toEqual([[response]])
+  })
+
   /** 의미 검토가 도는 결정(disclose) — 검토 단계의 출처·실패를 보려면 검토가 있어야 한다(대답·질문은 검토하지 않는다). */
   const reviewed = () => plan({ candidates: [selected({ id: 'disclose', action: 'disclose', description: '자기 이야기를 조금 꺼낸다.' })] })
   /** 한 단계만 예비 모델(gpt-mini)이 답한 것처럼 — 오케스트레이터가 남기는 표식(lastFallbackUsed·lastModelId)을 흉내 낸다. */

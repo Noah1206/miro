@@ -7,7 +7,7 @@ import {
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, users, worldStates,
 } from '@miro/db'
 import { agencyClock, applyRelationshipDelta, authoredCharacter, contactBoundaryActive, contactBoundaryDirective, describeRelationship, languageRule, localClock, localMinutes, personaLines, presentContact, RELATIONSHIP_DIMENSIONS, withRelationshipProfile, type RealityIntent, type SuppressReason } from '@miro/domain'
-import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization } from '@miro/engine'
+import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview } from '@miro/engine'
 import { buildMockRealityContent, createAI, generateRealityContent, type LLMProvider } from '@miro/providers'
 import { loadAgencyEvidence, loadAgencyRuntime } from '@/lib/agency/runtime'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
@@ -212,7 +212,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         content = await render()
         if (productionRuntime() && llm.info.mode !== 'live') return { outcome: 'skipped', reason: 'agency_unavailable' }
         const verified = await verifyAgencyRealization(llm, { decision: plan.decision, context: realizationContext,
-          state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }] })
+          state: runtime.state, blocks: [{ type: 'dialogue', speaker: identity.name, text: content.text }],
+          communicationPreference: needsCommunicationPreferenceReview('', snapshot.recentMessages) })
         if (productionRuntime() && verified.providerMode !== 'live') return { outcome: 'skipped', reason: 'agency_rejected' }
         if (verified.ok) break
         if (attempt === 1 || !verified.reviewed || !verified.issues.length || verified.issues.some(issue => !repairable.has(issue.reason))) {

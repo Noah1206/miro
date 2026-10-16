@@ -15,6 +15,16 @@ function assessment(input: AgencyRealizationInput) {
 }
 
 describe('authorized decision realization', () => {
+  it('reviews a conversational preference even when the reply has no action or promise', async () => {
+    const input = await realization('완벽하게 해낼 거예요!', false)
+    input.communicationPreference = true
+    const calls: Array<{ task?: string; promptVersion?: string; prompt: string }> = []
+    const checked = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), aligned: false, violations: ['violates_boundary'] }], calls), input)
+    expect(checked).toMatchObject({ ok: false, reviewed: true })
+    expect(checked.issues.some(issue => issue.reason === 'violates_boundary')).toBe(true)
+    expect(JSON.parse(calls[0]!.prompt).communicationPreference).toBe(true)
+  })
+
   it('provides an explicit authorized-not-completed contract and decision ID', async () => {
     const input = await realization()
     const directive = buildAgencyDecisionDirective(input.decision)
