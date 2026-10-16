@@ -16,7 +16,7 @@ describe('authored character compilation', () => {
     expect(calls).toHaveLength(2)
     const repair = JSON.parse(calls[1]!.prompt)
     expect(repair.document).toEqual(DOCUMENT)
-    expect(repair.repair.issues).toContainEqual({ field: 'rules.value-promise.source', reason: 'source_span_mismatch' })
+    expect(repair.repair.issues).toContainEqual({ field: 'rules.value-promise.source', reason: 'source_quote_not_found' })
   })
 
   it('propagates a budget failure during repair and never accepts partial rules', async () => {
@@ -34,7 +34,7 @@ describe('authored character compilation', () => {
     expect(result.document).not.toBe(DOCUMENT)
     expect(result.compiled.rules[0]?.source).toEqual({ field: 'personality.personality', start: 0, end: DOCUMENT.fields['personality.personality']!.length })
     expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ task: 'agency_compile', promptVersion: 'agency-compiler:v2' })
+    expect(calls[0]).toMatchObject({ task: 'agency_compile', promptVersion: 'agency-compiler:v3' })
     result.document.fields['identity.name'] = '수정'
     expect(DOCUMENT.fields['identity.name']).toBe('도윤')
   })
@@ -59,12 +59,27 @@ describe('authored character compilation', () => {
     expect(calls).toHaveLength(0)
   })
 
-  it('rejects fabricated source spans and does not silently compile the remaining rules', async () => {
+  it('anchors a unique exact quote even when model offsets are wrong, without another model call', async () => {
+    const quote = '약속을 지킨다.'
+    const document = { fields: { personality: `🙂 서문\n${quote}\n끝.` }, explicitFields: ['personality'] }
+    const proposal = { rules: [{ id: 'promise', domain: 'value', origin: 'explicit', statement: quote,
+      source: { field: 'personality', quote, start: 5, end: 12 }, confidence: 1 }], unresolved: [] }
+    const calls: Array<{ prompt: string }> = []
+    const result = await compileAuthoredCharacter(recordedProvider([proposal], calls), document, hashAuthoredCharacter(document))
+    const start = document.fields.personality.indexOf(quote)
+    expect(result.compiled.rules[0]!.source).toEqual({ field: 'personality', start, end: start + quote.length })
+    expect(result.compiled.rules[0]!.statement).toBe(quote)
+    expect(result.document).toEqual(document)
+    expect(calls).toHaveLength(1)
+  })
+
+  it('rejects an absent quote despite plausible offsets and never compiles just the remaining rules', async () => {
     const proposal = compileProposal()
+    proposal.rules[0]!.source.quote = '존재하지 않는 원문'
     proposal.rules[0]!.source.start = 1
     proposal.rules[0]!.source.end = 3
     await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT)))
-      .rejects.toMatchObject({ issues: expect.arrayContaining([{ field: 'rules.value-promise.source', reason: 'source_span_mismatch' }]) })
+      .rejects.toMatchObject({ issues: expect.arrayContaining([{ field: 'rules.value-promise.source', reason: 'source_quote_not_found' }]) })
   })
 
   // 10/2: 작성자가 쓴 규칙의 문장은 모델 문장이 아니라 검증된 원문으로 바뀐다 — 원문과 다른 해석은 원문으로 돌아간다(전엔 정리 전체를 거부했다).
@@ -105,6 +120,17 @@ describe('authored character compilation', () => {
     const document = { fields: { personality: '약속 약속' }, explicitFields: ['personality'] }
     const proposal = { rules: [{ id: 'promise', domain: 'value', origin: 'explicit', statement: '약속', source: { field: 'personality', quote: '약속' }, confidence: 1 }], unresolved: [] }
     await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), document, hashAuthoredCharacter(document))).rejects.toBeInstanceOf(AgencyCompilationError)
+  })
+
+  it('accepts only exact disambiguating offsets for a repeated quote', async () => {
+    const document = { fields: { personality: '약속 약속' }, explicitFields: ['personality'] }
+    const proposal = { rules: [{ id: 'promise', domain: 'value', origin: 'explicit', statement: '약속',
+      source: { field: 'personality', quote: '약속', start: 1, end: 3 }, confidence: 1 }], unresolved: [] }
+    await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), document, hashAuthoredCharacter(document)))
+      .rejects.toMatchObject({ issues: [{ field: 'rules.promise.source', reason: 'source_offset_mismatch' }, { field: 'rules', reason: 'no_grounded_rules' }] })
+    proposal.rules[0]!.source.start = 3; proposal.rules[0]!.source.end = 5
+    const result = await compileAuthoredCharacter(recordedProvider([proposal]), document, hashAuthoredCharacter(document))
+    expect(result.compiled.rules[0]!.source).toEqual({ field: 'personality', start: 3, end: 5 })
   })
 
   it('propagates budget and safety failures instead of creating a successful mock spec', async () => {
