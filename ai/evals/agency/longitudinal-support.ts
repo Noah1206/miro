@@ -10,6 +10,26 @@ export function writeJson(path: string, value: unknown) {
 }
 export function readJson<T>(path: string): T { return JSON.parse(readFileSync(path, 'utf8')) as T }
 
+/** Pass the app's model settings unchanged; freeze non-secret execution choices alongside the registry. */
+export function longitudinalModelEnvironment(env: Record<string, string>) {
+  const providerKeys = ['MIRO_MODEL_REGISTRY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'OPENROUTER_API_KEY',
+    'AI_GATEWAY_API_KEY', 'MIRO_SLM_URL', 'MIRO_SLM_API_KEY', 'MIRO_SLM_MODEL', 'OPENAI_BASE_URL', 'AI_TIMEOUT_MS',
+    'MIRO_CHARACTER_AGENCY_MODE', 'MIRO_AGENCY_DEFAULT_POLICY', 'MIRO_CHAT_MODEL_ID', 'MIRO_AGENCY_VERIFY_MODEL_ID', 'MIRO_MODE']
+  const providerEnv = Object.fromEntries(providerKeys.filter(key => env[key] !== undefined).map(key => [key, env[key]!]))
+  return { providerEnv, configuration: {
+    // null means the operator did not set this option; keep that distinct from a supplied default.
+    verifierModel: { configured: env.MIRO_AGENCY_VERIFY_MODEL_ID ?? null, effective: env.MIRO_AGENCY_VERIFY_MODEL_ID?.trim() || null,
+      default: 'registry task routing' },
+    timeout: { configured: env.AI_TIMEOUT_MS ?? null, effectiveMs: Number(env.AI_TIMEOUT_MS) || 20_000 },
+    // Custom endpoints can carry credentials. Hash their complete values rather than writing them into the manifest.
+    openaiBaseUrl: { configured: env.OPENAI_BASE_URL !== undefined, effectiveSHA256: sha256(env.OPENAI_BASE_URL || 'https://api.openai.com/v1') },
+    slmUrlSHA256: env.MIRO_SLM_URL === undefined ? null : sha256(env.MIRO_SLM_URL), slmModel: env.MIRO_SLM_MODEL ?? null,
+    mode: { configured: env.MIRO_MODE ?? null, effective: env.MIRO_MODE === 'alpha' ? 'alpha' : 'production' },
+    // The worker deliberately opts out of the unit-test default and into the live app policy.
+    agencyMode: 'live', agencyDefaultPolicy: 'agency:v1',
+  } }
+}
+
 export type LedgerAttempt = {
   id: string; at: string; task: string; promptVersion?: string; provider: string; model: string
   requestId?: string; sessionId?: string; reservedUSD: number; chargedUSD: number

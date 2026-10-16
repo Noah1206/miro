@@ -3,7 +3,7 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync,
 import { resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 import { testDatabaseUrl } from '../../../tooling/test-database'
-import { frozenPlan, readJson, sha256, validateCarriedLedger, writeJson } from './longitudinal-support'
+import { frozenPlan, longitudinalModelEnvironment, readJson, sha256, validateCarriedLedger, writeJson } from './longitudinal-support'
 
 const option = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined }
 async function main() {
@@ -23,6 +23,7 @@ async function main() {
   if (characters.length !== 3 || new Set(characters).size !== 3) throw new Error('Select exactly three different published characters')
   const env: Record<string, string> = option('--env-json')
     ? JSON.parse(readFileSync(option('--env-json')!, 'utf8')) : parseEnv(readFileSync(option('--env-file') ?? '.env', 'utf8'))
+  const modelEnvironment = longitudinalModelEnvironment(env)
   const registry = JSON.parse(env.MIRO_MODEL_REGISTRY ?? 'null') as Array<Record<string, unknown>> | null
   if (!registry?.length || registry.some(m => m.enabled !== false && (m.provider === 'mock' || typeof m.inputCost !== 'number' || typeof m.outputCost !== 'number'))) throw new Error('A fully priced live production registry is required')
   const keyByProvider: Record<string, string> = { gemini: 'GEMINI_API_KEY', anthropic: 'ANTHROPIC_API_KEY', openai: 'OPENAI_API_KEY', openrouter: 'OPENROUTER_API_KEY', 'miro-slm': 'MIRO_SLM_URL', gateway: 'AI_GATEWAY_API_KEY' }
@@ -58,6 +59,7 @@ async function main() {
       turns, characters, canonHash: sha256(readFileSync(canon, 'utf8')), registryHash: sha256(JSON.stringify(registry)),
       planHash: sha256(JSON.stringify(frozenPlan())), chatModel: option('--chat-model') ?? 'miro',
       chatModelId: env.MIRO_CHAT_MODEL_ID ?? null,
+      modelExecution: modelEnvironment.configuration,
       // The app auto-adds/removes fallback models based on credential presence. Freeze presence, never secret values.
       credentialPresence: Object.fromEntries(['GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'OPENROUTER_API_KEY',
         'AI_GATEWAY_API_KEY', 'MIRO_SLM_URL', 'MIRO_SLM_API_KEY'].map(key => [key, !!env[key]])),
@@ -76,9 +78,7 @@ async function main() {
       writeJson(`${out}/frozen-plan.json`, frozenPlan())
     }
     // Explicit allowlist: production DB URLs, auth tokens, push credentials and user data never enter the worker.
-    const providerEnv = Object.fromEntries(['MIRO_MODEL_REGISTRY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'OPENROUTER_API_KEY',
-      'AI_GATEWAY_API_KEY', 'MIRO_SLM_URL', 'MIRO_SLM_API_KEY', 'MIRO_SLM_MODEL', 'OPENAI_BASE_URL', 'AI_TIMEOUT_MS',
-      'MIRO_CHARACTER_AGENCY_MODE', 'MIRO_AGENCY_DEFAULT_POLICY', 'MIRO_CHAT_MODEL_ID', 'MIRO_MODE'].filter(k => env[k] !== undefined).map(k => [k, env[k]]))
+    const providerEnv = modelEnvironment.providerEnv
     const featureEnv = Object.fromEntries(Object.entries(env).filter(([k]) => k.startsWith('MIRO_FEATURE_')))
     const child = spawn('pnpm', ['exec', 'vitest', 'run', '--config', 'ai/evals/agency/vitest.config.ts', 'apps/web/lib/agency/longitudinal-live.eval.ts'], {
       stdio: 'inherit', env: { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: process.env.TMPDIR, ...providerEnv, ...featureEnv,

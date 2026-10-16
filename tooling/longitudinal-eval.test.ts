@@ -1,8 +1,39 @@
 import { describe, expect, it } from 'vitest'
-import { canReserve, frozenInput, frozenPlan, HORIZON_CHECKPOINTS, ledgerTotals, requestRecovery, validateCarriedLedger, type ExperimentLedger } from '../ai/evals/agency/longitudinal-support'
+import { canReserve, frozenInput, frozenPlan, HORIZON_CHECKPOINTS, ledgerTotals, longitudinalModelEnvironment, requestRecovery, validateCarriedLedger, type ExperimentLedger } from '../ai/evals/agency/longitudinal-support'
 
 const ledger = (): ExperimentLedger => ({ version: 1, limitUSD: 20, limitRequests: 5000, attempts: [] })
 describe('live longitudinal evaluation guardrails', () => {
+  it('passes the verifier role and timeout to the real worker without forwarding production data credentials', () => {
+    const configured = longitudinalModelEnvironment({ MIRO_AGENCY_VERIFY_MODEL_ID: 'claude-sonnet', AI_TIMEOUT_MS: '30000',
+      MIRO_CHAT_MODEL_ID: 'gemini-flash', GEMINI_API_KEY: 'private-provider-key', DATABASE_URL: 'private-production-db', PUSH_SECRET: 'private-push-secret' })
+    expect(configured.providerEnv).toMatchObject({ MIRO_AGENCY_VERIFY_MODEL_ID: 'claude-sonnet', AI_TIMEOUT_MS: '30000',
+      MIRO_CHAT_MODEL_ID: 'gemini-flash', GEMINI_API_KEY: 'private-provider-key' })
+    expect(configured.providerEnv).not.toHaveProperty('DATABASE_URL')
+    expect(configured.providerEnv).not.toHaveProperty('PUSH_SECRET')
+    expect(configured.configuration.verifierModel.effective).toBe('claude-sonnet')
+    expect(configured.configuration.timeout.effectiveMs).toBe(30000)
+    expect(JSON.stringify(configured.configuration)).not.toContain('private-')
+  })
+  it('records absent model options and their app defaults without injecting an override', () => {
+    const defaults = longitudinalModelEnvironment({})
+    expect(defaults.providerEnv).not.toHaveProperty('MIRO_AGENCY_VERIFY_MODEL_ID')
+    expect(defaults.providerEnv).not.toHaveProperty('AI_TIMEOUT_MS')
+    expect(defaults.configuration.verifierModel).toEqual({ configured: null, effective: null, default: 'registry task routing' })
+    expect(defaults.configuration.timeout).toEqual({ configured: null, effectiveMs: 20000 })
+    expect(defaults.configuration.mode).toEqual({ configured: null, effective: 'production' })
+    expect(defaults.configuration.agencyMode).toBe('live')
+  })
+  it('changes the immutable configuration for role, timeout, endpoint and mode changes without leaking endpoint secrets', () => {
+    const original = JSON.stringify(longitudinalModelEnvironment({}).configuration)
+    const overrides: Record<string, string>[] = [{ MIRO_AGENCY_VERIFY_MODEL_ID: 'claude-sonnet' }, { AI_TIMEOUT_MS: '30000' },
+      { OPENAI_BASE_URL: 'https://private-user:private-password@example.invalid/v1' }, { MIRO_SLM_URL: 'https://private-slm.invalid' },
+      { MIRO_SLM_MODEL: 'new-model' }, { MIRO_MODE: 'alpha' }]
+    for (const override of overrides) {
+      const changed = JSON.stringify(longitudinalModelEnvironment(override).configuration)
+      expect(changed).not.toBe(original)
+      expect(changed).not.toContain('private-')
+    }
+  })
   it('recovers interruption before admission with the same key and never replaces an active request', () => {
     const now = new Date('2026-10-16T10:00:00Z')
     expect(requestRecovery(undefined, now)).toBe('reuse')
