@@ -5,7 +5,8 @@ const Claim = z.object({
   draftQuote: z.string().min(1).max(160),
   kind: z.enum(['user_statement', 'user_history', 'shared_milestone', 'user_action', 'visible_property']),
   /** Classify the whole clause before asking for evidence; a wish is not an occurrence. */
-  mode: z.enum(['asserted', 'hypothetical', 'proposal', 'interpretation', 'character_self']),
+  /** canon_elaboration: the character recalls, with its own detail, a past the authored setting says they shared (10/16 사용자 결정). */
+  mode: z.enum(['asserted', 'hypothetical', 'proposal', 'interpretation', 'character_self', 'canon_elaboration']),
   verdict: z.enum(['supported', 'unsupported']),
   supportSourceId: z.string().max(128),
   sourceQuote: z.string().max(160),
@@ -48,6 +49,17 @@ export function assessConversationReview(assessment: ConversationReviewAssessmen
       result.claimsChecked++
       const reason = claim.kind === 'user_action' ? 'controls_user' : claim.kind === 'visible_property' ? 'unseen_user_observation' : 'unsupported_user_history'
       if (!blocks[block.blockIndex]!.text.includes(claim.draftQuote)) return reject('draft_quote_mismatch', block.blockIndex, reason)
+      if (claim.mode === 'canon_elaboration') {
+        // Anchored to the authored shared event or the character's own earlier telling; any contradiction with what
+        // the user (or the character before) said is unsupported. It never grounds a user fact outside that event.
+        if (claim.verdict === 'unsupported') return reject('unsupported_claim', block.blockIndex, reason)
+        const anchor = sources.find(item => item.id === claim.supportSourceId)
+        if (!anchor) return reject('source_unavailable', block.blockIndex, reason)
+        const original = originals.find(item => item.id === anchor.id)
+        if (!claim.sourceQuote.trim() || !anchor.text.includes(claim.sourceQuote) || !original?.text.includes(claim.sourceQuote)) return reject('source_quote_mismatch', block.blockIndex, reason)
+        if (anchor.kind !== 'authored_context' && anchor.kind !== 'character_words') return reject('source_scope', block.blockIndex, reason)
+        continue
+      }
       if (claim.mode !== 'asserted') continue
       if (claim.verdict === 'unsupported') return reject('unsupported_claim', block.blockIndex, reason)
       const source = sources.find(item => item.id === claim.supportSourceId)

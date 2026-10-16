@@ -65,6 +65,17 @@ describe('P0 safety and memory', () => {
     }), 'memory_summary', correction, s)
   })
 
+  // 2026-10-16: 캐릭터가 자기 기억으로 확정한 공유 과거는 캐릭터 원문을 출처로 남긴다 — 다른 종류는 캐릭터 말로 남지 않는다.
+  it('keeps a character-told shared past as a shared_event sourced to the character’s words, and nothing else from character words', async () => {
+    const told = '그날 손님은 우산이 없었죠.'
+    const s = snapshot({ recentMessages: [{ id: 'char-1', role: 'character', content: told }, { id: 'user-1', role: 'user', content: '맞아, 그래서 다 젖었지.' }] as never })
+    const result = await analyzeMemory(live(async () => ({ memories: [
+      { type: 'shared_event', content: '그날 비가 왔고 사용자는 우산이 없었다', importance: .7, persistence: .9, confidence: .9, sourceQuote: '우산이 없었죠', sourceMessageId: 'char-1' },
+      { type: 'user_fact', content: '사용자는 우산을 안 쓴다', importance: .7, persistence: .9, confidence: .9, sourceQuote: '우산이 없었죠', sourceMessageId: 'char-1' },
+    ] })), 'memory_extraction', '그날 얘기 더 해 줘', s)
+    expect(result.memories.map(m => m.type)).toEqual(['shared_event'])
+  })
+
   it('captures uncomfortable praise and plain preferences before they fall outside the recent conversation window', () => {
     vi.stubEnv('MIRO_FEATURE_MEMORY_EXTRACTION', '1')
     expect(planTasks('완벽하다는 말은 부담스러워', 1)).toContain('memory_extraction')

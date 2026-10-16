@@ -47,7 +47,7 @@ function provider(opts: { action?: AgencyAction; reject?: boolean; rejectFirst?:
         return request.schema.parse({ action: opts.attention ?? 'read', reason: '이 인물의 성향과 이미 쌓인 관계로 연락을 확인할지 선택한다.',
           recheckMinutes: opts.attention === 'defer' ? 10 : null, ruleIds: ['personality'], evidenceIds: [] })
       }
-      if (version === 'agency-communication-check:v7') {
+      if (version === 'agency-communication-check:v8') {
         const payload = JSON.parse(request.prompt)
         return request.schema.parse({ complete: true, blocks: payload.blocks.map((b: { index: number }) => ({
           blockIndex: b.index, noUserClaims: true, boundaryViolation: false, claims: [] })) })

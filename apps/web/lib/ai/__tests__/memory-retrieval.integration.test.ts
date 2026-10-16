@@ -57,4 +57,18 @@ describeDb('long conversation memory retrieval', () => {
     expect(got.find(m => m.sourceMessageId === sources[0]!.id)?.sourceText).toBe(sources[0]!.content)
     for (const source of sources.slice(1)) expect(got.find(m => m.sourceMessageId === source.id)?.sourceText).toBeNull()
   })
+
+  // 2026-10-16: 캐릭터가 확정한 공유 과거(shared_event)만 캐릭터 원문을 출처로 보인다 — 사용자 말로는 절대 보이지 않는다.
+  it('exposes a character-told shared event as the character’s words, never a user fact from character words', async () => {
+    const [user] = await db.insert(users).values({ email: `memory-shared-${randomUUID()}@example.test` }).returning()
+    made.push(user!.id)
+    const s = await createRoleplaySession(user!.id, 'thomas')
+    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, s.sessionId))
+    const [told] = await db.insert(messages).values({ sessionId: s.sessionId, role: 'character', kind: 'text', content: '그날 손님은 우산이 없었죠.', blocks: [], turnIndex: 1 }).returning()
+    await db.insert(memories).values(['shared_event', 'user_fact'].map(type => ({ sessionId: s.sessionId, characterId: session!.characterId, type: type as 'shared_event',
+      content: `공유 과거 ${type}`, sourceMessageId: told!.id, importance: 90, persistence: 90, confidence: 90, tags: [] })))
+    const got = await memoryRetriever.retrieve({ userId: user!.id, sessionId: s.sessionId, query: '공유 과거', limit: 24 })
+    expect(got.find(m => m.type === 'shared_event')).toMatchObject({ sourceText: told!.content, sourceRole: 'character' })
+    expect(got.find(m => m.type === 'user_fact')?.sourceText).toBeNull()
+  })
 })

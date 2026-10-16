@@ -37,6 +37,25 @@ describe('server-checked conversation evidence ledger', () => {
     expect(assessConversationReview(ledger, blocks, [source])).toMatchObject({ acceptable: false, issue })
   })
 
+  // 2026-10-16 사용자: 설정이 정한 함께한 과거는 캐릭터의 기억으로 디테일을 붙여 말할 수 있다 — 다만 이미 나온 말과 어긋나면 안 된다.
+  describe('canon elaboration of an authored shared past', () => {
+    const authored: UserGroundingEvidence = { id: 'authored:0', kind: 'authored_context', text: '3년 전 비 오는 밤, 당신은 골목에서 다친 그를 구했다.' }
+    const told: UserGroundingEvidence = { id: 'char-1', kind: 'character_words', text: '그날 손님은 우산이 없었죠.' }
+    const recall = (over: Partial<ConversationReviewAssessment['blocks'][number]['claims'][number]>, text = '그날 손님은 우산 없이 젖은 채로 제 곁에 앉아 계셨죠.'): [ConversationReviewAssessment, { text: string }[]] => [{ complete: true, blocks: [
+      { blockIndex: 0, noUserClaims: false, boundaryViolation: false, claims: [{ mode: 'canon_elaboration', draftQuote: '우산 없이 젖은 채로', kind: 'shared_milestone',
+        verdict: 'supported', supportSourceId: authored.id, sourceQuote: '3년 전 비 오는 밤', ...over }] }] }, [{ text }]]
+    it('accepts a detail anchored to the authored event or to the character’s own earlier telling', () => {
+      expect(assessConversationReview(...recall({}), [authored, told]).acceptable).toBe(true)
+      expect(assessConversationReview(...recall({ supportSourceId: told.id, sourceQuote: '우산이 없었죠' }), [authored, told]).acceptable).toBe(true)
+    })
+    it('rejects a contradiction, an unanchored detail, or a user statement used as its anchor', () => {
+      expect(assessConversationReview(...recall({ verdict: 'unsupported', supportSourceId: '', sourceQuote: '' }), [authored, told])).toMatchObject({ acceptable: false, issue: 'unsupported_claim' })
+      expect(assessConversationReview(...recall({ sourceQuote: '비가 그친 오후' }), [authored, told])).toMatchObject({ acceptable: false, issue: 'source_quote_mismatch' })
+      const said: UserGroundingEvidence = { id: 'u-1', kind: 'user_statement', text: '그날 나 우산 있었어' }
+      expect(assessConversationReview(...recall({ supportSourceId: said.id, sourceQuote: '우산 있었어' }), [authored, said])).toMatchObject({ acceptable: false, issue: 'source_scope' })
+    })
+  })
+
   it.each(['character_words', 'persona_background'] as const)('does not turn %s into heard user history', kind => {
     expect(assessConversationReview(supported(), blocks, [{ ...source, kind }])).toMatchObject({ acceptable: false, issue: 'source_scope' })
   })
@@ -83,7 +102,7 @@ describe('server-checked conversation evidence ledger', () => {
     const llm: LLMProvider = { info: { mode: 'mock', name: 'proof-contract', notice: 'Synthetic contract only' }, async generateStructured(request) {
       expect(request.maxTokens).toBe(1536)
       expect(request.thinking).toBe('medium')
-      expect(request.promptVersion).toBe('agency-communication-check:v7')
+      expect(request.promptVersion).toBe('agency-communication-check:v8')
       return request.schema.parse(supported())
     } }
     const result = await verifyCommunicationPreferences(llm, { evidence: [], recentUserMessages: [], groundingEvidence: [],

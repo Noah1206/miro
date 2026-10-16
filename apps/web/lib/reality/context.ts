@@ -41,10 +41,10 @@ export async function loadRealityContext(sessionId: string, userId: string, reas
     // 사용자가 고른 언어로 쓴다(한국어면 줄이 없다).
     languageRule: languageRule(owner.language),
     groundingEvidence: [
-      ...memories.filter(m => m.sourceMessageId && m.sourceText).map(m => ({ id: m.sourceMessageId!, kind: 'user_statement' as const, text: m.sourceText!, occurredAt: m.sourceOccurredAt?.toISOString() })),
+      ...memories.filter(m => m.sourceMessageId && m.sourceText).map(m => ({ id: m.sourceMessageId!, kind: m.sourceRole === 'character' ? 'character_words' as const : 'user_statement' as const, text: m.sourceText!, occurredAt: m.sourceOccurredAt?.toISOString() })),
       ...recent.filter(m => m.role === 'user').map(m => ({ id: m.id, kind: 'user_statement' as const, text: m.content, occurredAt: m.createdAt.toISOString() })),
       ...(worldRole.startingContext ? [{ id: 'authored:starting-context', kind: 'authored_context' as const, text: worldRole.startingContext }] : []),
-    ] satisfies UserGroundingEvidence[],
+    ] as UserGroundingEvidence[],
     recentMessages: conversationContext(recent.reverse(), timeZone).map(m => ({ ...m, content: m.content.slice(0, 1000),
       blocks: m.blocks?.map(b => ({ ...b, text: b.text.slice(0, 1000) })) })),
     memories: memories.map(m => ({ id: m.id, type: m.type, content: m.content.slice(0, 600), sourceMessageId: m.sourceMessageId, at: localIso(m.createdAt, timeZone) })),

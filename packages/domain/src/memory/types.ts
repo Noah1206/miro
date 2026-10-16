@@ -19,6 +19,8 @@ export type Memory = {
   sourceOccurredAt?: Date | null
   /** Retrieval-only owned visible user words; never a model-authored memory summary. */
   sourceText?: string | null
+  /** Who said the source words. A character's own established telling of an authored shared past is kept, but never as the user's words. */
+  sourceRole?: 'user' | 'character' | null
   /** 기억 그래프의 엣지. 태그를 공유하는 기억끼리 이어진다. */
   tags: string[]
   createdAt: Date

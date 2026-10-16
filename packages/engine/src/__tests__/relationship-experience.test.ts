@@ -11,7 +11,7 @@ const compiled: CompiledCharacter = { version: 1, sourceHash: 'fixture', rules: 
   statement: '상대의 선택을 존중한다.', source: { field: 'personality', start: 0, end: 14 }, origin: 'explicit', confidence: 1 }] }
 async function turn(input: string, previous: Parameters<typeof relationship>[0]) {
   const llm: LLMProvider = { info: { mode: 'mock', name: 'recorded-choice', notice: 'Contract fixture' }, async generateStructured(request) {
-    if (request.promptVersion === 'agency-communication-check:v7') return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
+    if (request.promptVersion === 'agency-communication-check:v8') return request.schema.parse(recordedConversationReview(request, { acceptable: true, blockIndex: 0, reason: 'none' }))
     if (request.promptVersion === AGENCY_PLANNER_VERSION) return request.schema.parse({
       appraisal: { interpretation: '사용자의 의사를 들었다.', evidenceIds: ['input'], ruleIds: ['respect'], goalCongruence: 0, valueConflict: 0,
         responsibility: 'uncertain', affectDelta: { valence: 0, arousal: 0, stress: 0, energy: 0 }, expression: { openness: 30, directness: 50 }, beliefs: [],

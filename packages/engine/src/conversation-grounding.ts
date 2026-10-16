@@ -17,7 +17,7 @@ export class ConversationReviewContextBudgetError extends Error {
   constructor() { super('conversation_review_context_budget_exceeded') }
 }
 
-export const USER_GROUNDING_RULE = 'Do not invent a previous user statement, personal history, shared milestone, consent, choice, physical action or observed property of the user/their belongings. Possessing or mentioning an object does not mean showing it, holding it or establishing its appearance. A setting that the user sent letters does not establish what those letters said. Respond warmly to the actual detail without manufacturing a past connection. Preserve the character’s own gestures, tastes, motives, ordinary initiative, questions and clearly tentative interpretations; no generic uncertainty disclaimer is needed. Let a new preference change this character’s concrete next response instead of routinely announcing “기억해 둘게”; avoid repeating the same prop gesture from the preceding turn when it adds nothing.'
+export const USER_GROUNDING_RULE = 'Do not invent a previous user statement, personal history, shared milestone, consent, choice, physical action or observed property of the user/their belongings. Possessing or mentioning an object does not mean showing it, holding it or establishing its appearance. A setting that the user sent letters does not establish what those letters said. A past the authored setting says you shared may be recalled from your own memory with detail, but every detail must match what the user and you already said about it in this conversation or in remembered facts — the user’s own account wins. Respond warmly to the actual detail without manufacturing a past connection. Preserve the character’s own gestures, tastes, motives, ordinary initiative, questions and clearly tentative interpretations; no generic uncertainty disclaimer is needed. Let a new preference change this character’s concrete next response instead of routinely announcing “기억해 둘게”; avoid repeating the same prop gesture from the preceding turn when it adds nothing.'
 
 /** Names and indirect claims cannot be reliably detected by keyword: review every visible draft. */
 export function needsUserGroundingReview(blocks: ReadonlyArray<{ type: string; text: string }>): boolean {
@@ -28,7 +28,7 @@ export function snapshotUserGrounding(snapshot: SimulationSnapshot, input: strin
   const user = snapshot.recentMessages.filter(m => m.role === 'user' && m.knowledgeScope !== 'omniscient')
     .map((m, i) => ({ id: m.id ?? `recent-user:${i}`, kind: 'user_statement' as const, text: m.content, occurredAt: m.at }))
   const recalled = snapshot.memories.filter(m => m.sessionId === snapshot.relationship.sessionId && m.characterId === snapshot.character.id && m.sourceMessageId && m.sourceText)
-    .map(m => ({ id: m.sourceMessageId!, kind: 'user_statement' as const, text: m.sourceText!, occurredAt: m.sourceOccurredAt?.toISOString() }))
+    .map(m => ({ id: m.sourceMessageId!, kind: m.sourceRole === 'character' ? 'character_words' as const : 'user_statement' as const, text: m.sourceText!, occurredAt: m.sourceOccurredAt?.toISOString() }))
   const own = snapshot.recentMessages.filter(m => m.role === 'character').slice(-3).map((m, i) => ({ id: m.id ?? `recent-character:${i}`,
     kind: 'character_words' as const, text: (m.blocks?.length ? m.blocks.filter(b => b.type === 'dialogue').map(b => b.text).join('\n') : m.content), occurredAt: m.at }))
   const authored = [snapshot.character.personality.personality, snapshot.character.worldRole.startingContext, snapshot.worldSetting,
