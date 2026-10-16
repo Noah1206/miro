@@ -45,6 +45,11 @@ function provider(options: StubOptions = {}) {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
+      if (request.promptVersion === 'agency-communication-check:v1') {
+        const checks = calls.filter(c => c.version === request.promptVersion).length
+        const reject = typeof options.rejectRealization === 'number' ? checks <= options.rejectRealization : Boolean(options.rejectRealization)
+        return request.schema.parse({ acceptable: !reject, blockIndex: 0 })
+      }
       if (request.promptVersion === 'agency-realization-check:v5') {
         const payload = JSON.parse(request.prompt)
         // number = 처음 n 번만 거부(재생성 계약을 본다). true = 항상 거부.
@@ -76,7 +81,7 @@ describe('runTurn agency integration', () => {
     const result = await runTurn({ llm, snapshot: snapshot(), userInput: text, agency: input,
       stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { throw new Error('Rejected draft was shown') } } })
     expect(result.agency?.verification).toMatchObject({ ok: true, reviewed: true })
-    expect(stub.calls.filter(call => call.version === 'agency-realization-check:v5')).toHaveLength(2)
+    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v1')).toHaveLength(2)
     const renders = stub.calls.filter(call => call.version === 'agency-dialogue:v5')
     expect(renders).toHaveLength(2)
     expect(renders[1]!.prompt).toContain('원하지 않은 과찬을 다른 과찬으로 바꾸지 말고')

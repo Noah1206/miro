@@ -159,9 +159,9 @@ export async function runAgencyTurn(opts: {
     // 의미 검토(모델 호출)는 응답 뒤로 — 여기서는 규칙 검사만 해 답을 먼저 보낸다(10/9 속도: 검토·다시 쓰기가 턴을 20~44초로 늘렸다).
     // 검토할 거리가 있었으면 그 입력을 돌려줘 호출한 쪽이 응답 뒤에 검토하고 기록한다.
     const realization: AgencyRealizationInput = { decision: plan.decision, context: plan.context, state: plan.state, blocks: validated.blocks, commitmentChanges, strippedMutations: rejected.length, communicationPreference }
-    verification = await verifyAgencyRealization(llm, realization, { review: communicationPreference })
+    verification = await verifyAgencyRealization(llm, realization, { review: false })
     if (productionRuntime() && verification.providerMode !== 'live') throw new Error('agency_verifier_not_live')
-    if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); if (verification.deferredReview) review = realization; break }
+    if (verification.ok && validated.blocks.length) { transition = validated; records.push(...attemptRecords); if (verification.deferredReview) review = { ...realization, communicationPreference: false }; break }
     // Issue reasons are fixed codes (never text), so the turn log can say which check rejected the reply.
     const reasons = [...new Set(verification.issues.map(i => i.reason))]
     if (attempt === REGENERATIONS) throw new Error(['agency_realization_rejected', ...reasons].join(' '))

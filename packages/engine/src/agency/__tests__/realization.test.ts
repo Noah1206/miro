@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AIBudgetDeniedError } from '@miro/providers'
+import { AIBudgetDeniedError, generationInputCeiling, type LLMProvider } from '@miro/providers'
 import { planAgencyDecision } from '../planner'
 import { buildAgencyDecisionDirective, verifyAgencyRealization, type AgencyRealizationInput } from '../realization'
 import { evidence, planProposal, recordedProvider, setupCompiled } from './fixtures'
@@ -15,14 +15,29 @@ function assessment(input: AgencyRealizationInput) {
 }
 
 describe('authorized decision realization', () => {
+  it('bounds the inline preference review even with a long conversation history', async () => {
+    const input = await realization('문장을 조금 줄여보면 어때?', false)
+    input.communicationPreference = true
+    input.context.evidence.push(...Array.from({ length: 12 }, (_, i) => evidence({ id: `long-${i}`, actor: 'user', quote: '가'.repeat(20_000) })))
+    const base = recordedProvider([{ acceptable: true, blockIndex: 0 }])
+    let ceiling = 0, output = 0
+    const llm: LLMProvider = { ...base, async generateStructured(request) {
+      ceiling = generationInputCeiling({ ...request, task: request.task ?? 'agency_verify' }); output = request.maxTokens ?? 0
+      return base.generateStructured(request)
+    } }
+    expect((await verifyAgencyRealization(llm, input, { review: false })).ok).toBe(true)
+    expect(ceiling).toBeLessThan(12_000)
+    expect(output).toBeLessThanOrEqual(192)
+  })
+
   it('reviews a conversational preference even when the reply has no action or promise', async () => {
     const input = await realization('완벽하게 해낼 거예요!', false)
     input.communicationPreference = true
     const calls: Array<{ task?: string; promptVersion?: string; prompt: string }> = []
-    const checked = await verifyAgencyRealization(recordedProvider([{ ...assessment(input), aligned: false, violations: ['violates_boundary'] }], calls), input)
+    const checked = await verifyAgencyRealization(recordedProvider([{ acceptable: false, blockIndex: 0 }], calls), input)
     expect(checked).toMatchObject({ ok: false, reviewed: true })
     expect(checked.issues.some(issue => issue.reason === 'violates_boundary')).toBe(true)
-    expect(JSON.parse(calls[0]!.prompt).communicationPreference).toBe(true)
+    expect(calls[0]!.promptVersion).toBe('agency-communication-check:v1')
   })
 
   it('provides an explicit authorized-not-completed contract and decision ID', async () => {
