@@ -1,4 +1,5 @@
 import { agencyEvidence, agencyUserUtterance, terms, type AgencyDecisionContext } from '@miro/domain'
+import { feature } from '@miro/config'
 import type { AgencyGroundedContext } from './agency/planner'
 import type { SimulationSnapshot } from './context'
 
@@ -20,7 +21,7 @@ export const USER_GROUNDING_RULE = 'Do not invent a previous user statement, per
 
 /** Names and indirect claims cannot be reliably detected by keyword: review every visible draft. */
 export function needsUserGroundingReview(blocks: ReadonlyArray<{ type: string; text: string }>): boolean {
-  return blocks.some(block => block.text.trim().length > 0)
+  return feature('strictConversationReview') && blocks.some(block => block.text.trim().length > 0)
 }
 
 export function snapshotUserGrounding(snapshot: SimulationSnapshot, input: string): UserGroundingEvidence[] {

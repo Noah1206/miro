@@ -21,18 +21,20 @@ export type FeatureName =
   | 'messengerPhotos'
   /** 오리지널 스토리 연락석의 외부 푸시(10/15). 수신 동의·휴식 시간·인물별 허용을 발송 직전 다시 확인한다. */
   | 'storyPush'
+  /** Experimental inline source ledger. Kept off until false rejections are resolved. */
+  | 'strictConversationReview'
 
 export type Mode = 'alpha' | 'production'
 
 const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
-    messengerPhotos: true,
+    messengerPhotos: true, strictConversationReview: false,
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false, voiceCallAudio: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: true,
   },
   production: {
-    messengerPhotos: true,
+    messengerPhotos: true, strictConversationReview: false,
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true, voiceCallAudio: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     // 2026-09-24: 관계가 표현 규칙에만 걸려 움직이지 않았다 — AI 분류를 매 턴 붙인다(턴 원가 약 +10%).

@@ -10,7 +10,8 @@ export default defineConfig({
   },
   test: {
     // Legacy fixtures explicitly test the previous policy. Rollout tests opt into the new product default.
-    env: { DATABASE_URL: database ?? '', MIRO_CHARACTER_AGENCY_MODE: 'off', MIRO_AGENCY_DEFAULT_POLICY: 'legacy:v1' },
+    env: { DATABASE_URL: database ?? '', MIRO_CHARACTER_AGENCY_MODE: 'off', MIRO_AGENCY_DEFAULT_POLICY: 'legacy:v1',
+      MIRO_FEATURE_STRICT_CONVERSATION_REVIEW: '1' },
     include: ['packages/**/*.test.ts', 'apps/web/**/*.test.ts', 'apps/admin/**/*.test.ts', 'tooling/**/*.test.ts'],
     fileParallelism: false,
     environment: 'node',
