@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canReserve, frozenInput, frozenPlan, HORIZON_CHECKPOINTS, ledgerTotals, requestRecovery, type ExperimentLedger } from '../ai/evals/agency/longitudinal-support'
+import { canReserve, frozenInput, frozenPlan, HORIZON_CHECKPOINTS, ledgerTotals, requestRecovery, validateCarriedLedger, type ExperimentLedger } from '../ai/evals/agency/longitudinal-support'
 
 const ledger = (): ExperimentLedger => ({ version: 1, limitUSD: 20, limitRequests: 5000, attempts: [] })
 describe('live longitudinal evaluation guardrails', () => {
@@ -20,6 +20,36 @@ describe('live longitudinal evaluation guardrails', () => {
     expect(ledgerTotals(resumed)).toEqual({ chargedUSD: 19.99, requests: 1, unresolved: 1 })
     expect(canReserve(resumed, .02)).toBe(false)
     expect(canReserve(resumed, .01)).toBe(true)
+  })
+  it('carries all prior attempts including unresolved reservations without changing their status or source', () => {
+    const previous = ledger()
+    previous.attempts.push(
+      { id: 'timeout', at: '', task: 'agency_compile', provider: 'gemini', model: 'live', reservedUSD: 19, chargedUSD: 19, status: 'reserved' },
+      { id: 'settled', at: '', task: 'agency_compile', provider: 'anthropic', model: 'live', reservedUSD: .5, chargedUSD: .2, status: 'completed', ok: true },
+      { id: 'denied', at: '', task: 'dialogue', provider: 'gemini', model: 'live', reservedUSD: 1, chargedUSD: 0, status: 'denied' },
+    )
+    const carried = validateCarriedLedger(previous, 20, 5000)
+    expect(carried).toEqual(previous)
+    expect(ledgerTotals(carried)).toEqual({ chargedUSD: 19.2, requests: 2, unresolved: 1 })
+    expect(canReserve(carried, 1)).toBe(false)
+    carried.attempts[0]!.chargedUSD = 0
+    expect(previous.attempts[0]!.chargedUSD).toBe(19)
+  })
+  it('rejects changed caps, corrupted costs, duplicate attempts, and discounted unresolved carry budgets', () => {
+    const previous = ledger()
+    previous.attempts.push({ id: 'one', at: '', task: 'dialogue', provider: 'gemini', model: 'live', reservedUSD: .1, chargedUSD: .1, status: 'reserved' })
+    expect(() => validateCarriedLedger(previous, 21, 5000)).toThrow(/same/)
+    expect(() => validateCarriedLedger(previous, 20, 5001)).toThrow(/same/)
+    expect(() => validateCarriedLedger({ ...previous, version: 2 }, 20, 5000)).toThrow()
+    expect(() => validateCarriedLedger(null, 20, 5000)).toThrow()
+    expect(() => validateCarriedLedger({ ...previous, attempts: [...previous.attempts, ...previous.attempts] }, 20, 5000)).toThrow(/duplicated/)
+    for (const chargedUSD of [-1, NaN, Infinity, .09]) {
+      expect(() => validateCarriedLedger({ ...previous, attempts: [{ ...previous.attempts[0], chargedUSD }] }, 20, 5000)).toThrow()
+    }
+    expect(() => validateCarriedLedger({ ...previous, attempts: [{ ...previous.attempts[0], status: 'denied' }] }, 20, 5000)).toThrow()
+    expect(() => validateCarriedLedger({ ...previous, attempts: [{ ...previous.attempts[0], reservedUSD: 21, chargedUSD: 21 }] }, 20, 5000)).toThrow(/exceeded/)
+    const capped = { ...previous, limitRequests: 1, attempts: [...previous.attempts, { ...previous.attempts[0]!, id: 'two' }] }
+    expect(() => validateCarriedLedger(capped, 20, 1)).toThrow(/exceeded/)
   })
   it('counts failed actual calls and simulator/judge/compiler equally toward a shared limit', () => {
     const cumulative = ledger(); cumulative.limitRequests = 4

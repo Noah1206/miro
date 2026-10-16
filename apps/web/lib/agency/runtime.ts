@@ -5,7 +5,7 @@ import { and, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, characterRevisions, characterRuntimeStates, characters, messages, roleplaySessions } from '@miro/db'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import { createAgencyState, lifeEvidence, localIso, type AgencyEvidence, type AgencyState } from '@miro/domain'
-import { compileAuthoredCharacter, type SimulationSnapshot } from '@miro/engine'
+import { AgencyCompilationError, compileAuthoredCharacter, type SimulationSnapshot } from '@miro/engine'
 import { AIUnavailableError, type LLMProvider } from '@miro/providers'
 import { observe } from '@/lib/observe'
 import { recentLife } from './life'
@@ -47,7 +47,8 @@ export async function compileAgencyRevision(revisionId: string, llm: LLMProvider
       leaseUntil: new Date(Date.now() + Math.max(1, job.attempts) * 5 * 60_000) })
       .where(and(eq(characterRevisions.id, job.id), eq(characterRevisions.leaseToken, token)))
     // A routing failure (no model serves the task) happens before any ai_usage row, so this is its only trace.
-    observe('agency.compilation_failed', { revisionId: job.id, error: (error as Error).message })
+    observe('agency.compilation_failed', { revisionId: job.id, error: (error as Error).message,
+      ...(error instanceof AgencyCompilationError ? { issues: JSON.stringify(error.issues.slice(0, 24).map(issue => ({ field: issue.field, reason: issue.reason }))) } : {}) })
     return false
   }
 }

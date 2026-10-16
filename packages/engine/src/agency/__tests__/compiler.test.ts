@@ -7,6 +7,25 @@ import { DOCUMENT, compileProposal, recordedProvider } from './fixtures'
 afterEach(() => vi.unstubAllEnvs())
 
 describe('authored character compilation', () => {
+  it('repairs invalid source grounding once against the original document', async () => {
+    const invalid = compileProposal()
+    invalid.rules[0]!.source.quote = '없는 원문'
+    const calls: Array<{ prompt: string }> = []
+    const result = await compileAuthoredCharacter(recordedProvider([invalid, compileProposal()], calls), DOCUMENT, hashAuthoredCharacter(DOCUMENT))
+    expect(result.compiled.rules).toHaveLength(2)
+    expect(calls).toHaveLength(2)
+    const repair = JSON.parse(calls[1]!.prompt)
+    expect(repair.document).toEqual(DOCUMENT)
+    expect(repair.repair.issues).toContainEqual({ field: 'rules.value-promise.source', reason: 'source_span_mismatch' })
+  })
+
+  it('propagates a budget failure during repair and never accepts partial rules', async () => {
+    const invalid = compileProposal()
+    invalid.rules[0]!.source.quote = '없는 원문'
+    const denied = new AIBudgetDeniedError('repair_limit')
+    await expect(compileAuthoredCharacter(recordedProvider([invalid, denied]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))).rejects.toBe(denied)
+  })
+
   it('preserves exact raw fields and attaches server-computed spans, never labels replay as live', async () => {
     const calls: Array<{ task?: string; promptVersion?: string; prompt: string }> = []
     const result = await compileAuthoredCharacter(recordedProvider([compileProposal()], calls), DOCUMENT, hashAuthoredCharacter(DOCUMENT))
@@ -15,7 +34,7 @@ describe('authored character compilation', () => {
     expect(result.document).not.toBe(DOCUMENT)
     expect(result.compiled.rules[0]?.source).toEqual({ field: 'personality.personality', start: 0, end: DOCUMENT.fields['personality.personality']!.length })
     expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ task: 'agency_compile', promptVersion: 'agency-compiler:v1' })
+    expect(calls[0]).toMatchObject({ task: 'agency_compile', promptVersion: 'agency-compiler:v2' })
     result.document.fields['identity.name'] = '수정'
     expect(DOCUMENT.fields['identity.name']).toBe('도윤')
   })
@@ -44,7 +63,7 @@ describe('authored character compilation', () => {
     const proposal = compileProposal()
     proposal.rules[0]!.source.start = 1
     proposal.rules[0]!.source.end = 3
-    await expect(compileAuthoredCharacter(recordedProvider([proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT)))
+    await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT)))
       .rejects.toMatchObject({ issues: expect.arrayContaining([{ field: 'rules.value-promise.source', reason: 'source_span_mismatch' }]) })
   })
 
@@ -53,7 +72,7 @@ describe('authored character compilation', () => {
     const proposal = compileProposal()
     proposal.rules[0]!.statement = '약속은 상황에 따라 무시한다.'
     proposal.rules[1]!.statement = '이름은 도윤이다.'
-    const { compiled } = await compileAuthoredCharacter(recordedProvider([proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))
+    const { compiled } = await compileAuthoredCharacter(recordedProvider([proposal, proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))
     expect(compiled.rules.map(rule => rule.statement)).toEqual([DOCUMENT.fields['personality.personality'], '도윤'])
   })
 
@@ -63,7 +82,7 @@ describe('authored character compilation', () => {
       (p: ReturnType<typeof compileProposal>) => { p.rules[0]!.source = { field: 'identity.nationality', quote: '한국' }; p.rules[0]!.statement = '한국'; p.rules[0]!.exceptions = [] },
     ]) {
       const proposal = compileProposal(); modify(proposal)
-      await expect(compileAuthoredCharacter(recordedProvider([proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))).rejects.toBeInstanceOf(AgencyCompilationError)
+      await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))).rejects.toBeInstanceOf(AgencyCompilationError)
     }
   })
 
@@ -71,13 +90,13 @@ describe('authored character compilation', () => {
     for (const domain of ['identity', 'boundary', 'world'] as const) {
       const proposal = compileProposal()
       proposal.rules[0]!.origin = 'inferred'; proposal.rules[0]!.domain = domain; proposal.rules[0]!.statement = '추정한 새로운 사실'
-      await expect(compileAuthoredCharacter(recordedProvider([proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))).rejects.toBeInstanceOf(AgencyCompilationError)
+      await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), DOCUMENT, hashAuthoredCharacter(DOCUMENT))).rejects.toBeInstanceOf(AgencyCompilationError)
     }
   })
 
   it('does not reinterpret an unmarked legacy field as an explicit author choice', async () => {
     const legacy = { ...DOCUMENT, explicitFields: ['identity.name'] }
-    await expect(compileAuthoredCharacter(recordedProvider([compileProposal()]), legacy, hashAuthoredCharacter(legacy))).rejects.toMatchObject({
+    await expect(compileAuthoredCharacter(recordedProvider([compileProposal(), compileProposal()]), legacy, hashAuthoredCharacter(legacy))).rejects.toMatchObject({
       issues: expect.arrayContaining([{ field: 'rules.value-promise.origin', reason: 'unmarked_author_intent' }]),
     })
   })
@@ -85,7 +104,7 @@ describe('authored character compilation', () => {
   it('requires an explicit offset for repeated source quotations', async () => {
     const document = { fields: { personality: '약속 약속' }, explicitFields: ['personality'] }
     const proposal = { rules: [{ id: 'promise', domain: 'value', origin: 'explicit', statement: '약속', source: { field: 'personality', quote: '약속' }, confidence: 1 }], unresolved: [] }
-    await expect(compileAuthoredCharacter(recordedProvider([proposal]), document, hashAuthoredCharacter(document))).rejects.toBeInstanceOf(AgencyCompilationError)
+    await expect(compileAuthoredCharacter(recordedProvider([proposal, proposal]), document, hashAuthoredCharacter(document))).rejects.toBeInstanceOf(AgencyCompilationError)
   })
 
   it('propagates budget and safety failures instead of creating a successful mock spec', async () => {

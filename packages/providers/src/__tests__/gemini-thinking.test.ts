@@ -41,3 +41,38 @@ describe('gemini structured output', () => {
     expect(bodies[1]!.generationConfig).not.toHaveProperty('responseJsonSchema')
   })
 })
+
+describe('gemini sampling request compatibility', () => {
+  afterEach(() => vi.restoreAllMocks())
+  it.each(['gemini-3-flash', 'gemini-3.1-pro-preview', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.8-flash', 'gemini-4', 'gemini-4.0-pro'])
+    ('omits sampling overrides for %s, including the provider default', async model => {
+      const bodies: Array<{ generationConfig: Record<string, unknown> }> = []
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+        bodies.push(JSON.parse(String(init?.body)))
+        return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'hello' }] } }] }))
+      })
+      const gemini = new GeminiProvider('key', model)
+      await gemini.generate({ task: 'dialogue', system: 'system', prompt: 'hello', maxTokens: 256 })
+      await gemini.generate({ task: 'dialogue', system: 'system', prompt: 'hello', maxTokens: 256, temperature: 0.2 })
+      for (const body of bodies) {
+        expect(body.generationConfig).toMatchObject({ maxOutputTokens: 256, ...thinkingConfig(model) })
+        for (const parameter of ['temperature', 'topP', 'topK', 'top_p', 'top_k']) {
+          expect(body.generationConfig).not.toHaveProperty(parameter)
+        }
+      }
+    })
+
+  it.each(['gemini-2.0-flash', 'gemini-2.5-flash'])
+    ('preserves the default and an explicit zero temperature for %s', async model => {
+      const bodies: Array<{ generationConfig: Record<string, unknown> }> = []
+      vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+        bodies.push(JSON.parse(String(init?.body)))
+        return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'hello' }] } }] }))
+      })
+      const gemini = new GeminiProvider('key', model)
+      await gemini.generate({ task: 'dialogue', system: '', prompt: '' })
+      await gemini.generate({ task: 'dialogue', system: '', prompt: '', temperature: 0 })
+      expect(bodies[0]!.generationConfig.temperature).toBe(0.9)
+      expect(bodies[1]!.generationConfig.temperature).toBe(0)
+    })
+})

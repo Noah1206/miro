@@ -1,9 +1,9 @@
 import { execFileSync, spawn } from 'node:child_process'
-import { closeSync, existsSync, mkdirSync, openSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parseEnv } from 'node:util'
 import { testDatabaseUrl } from '../../../tooling/test-database'
-import { frozenPlan, readJson, sha256, writeJson } from './longitudinal-support'
+import { frozenPlan, readJson, sha256, validateCarriedLedger, writeJson } from './longitudinal-support'
 
 const option = (name: string) => { const i = process.argv.indexOf(name); return i >= 0 ? process.argv[i + 1] : undefined }
 async function main() {
@@ -43,8 +43,18 @@ async function main() {
   const lock = openSync(lockPath, 'wx', 0o600)
   writeFileSync(lock, JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() })); closeSync(lock)
   try {
+    const carrySource = option('--carry-budget') ? realpathSync(resolve(option('--carry-budget')!)) : undefined
+    if (process.argv.includes('--carry-budget') && !carrySource) throw new Error('--carry-budget requires a previous budget.json path')
+    const budgetPath = `${out}/budget.json`
+    if (carrySource && carrySource === (existsSync(budgetPath) ? realpathSync(budgetPath) : resolve(budgetPath))) {
+      throw new Error('Carried budget must come from a different experiment directory')
+    }
+    // Read once: the copied attempts and immutable hash must refer to the exact same previous ledger.
+    const carryRaw = carrySource ? readFileSync(carrySource, 'utf8') : undefined
+    const carried = carryRaw === undefined ? undefined : validateCarriedLedger(JSON.parse(carryRaw), limitUSD, limitRequests)
     const source = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim()
     const configuration = { version: 1, source, database: `${new URL(database).hostname}${new URL(database).pathname}`, limitUSD, limitRequests,
+      ...(carrySource ? { carryBudget: { source: carrySource, sha256: sha256(carryRaw!) } } : {}),
       turns, characters, canonHash: sha256(readFileSync(canon, 'utf8')), registryHash: sha256(JSON.stringify(registry)),
       planHash: sha256(JSON.stringify(frozenPlan())), chatModel: option('--chat-model') ?? 'miro',
       chatModelId: env.MIRO_CHAT_MODEL_ID ?? null,
@@ -56,11 +66,14 @@ async function main() {
     if (existsSync(manifestPath)) {
       const old = readJson<{ configuration: unknown }>(manifestPath)
       if (JSON.stringify(old.configuration) !== JSON.stringify(configuration)) throw new Error('Immutable experiment settings differ. Do not reset counters or change providers/budgets on resume.')
+      if (!existsSync(budgetPath)) throw new Error('Experiment budget is missing. Recover the existing ledger; never recreate it on resume.')
     } else {
+      if (existsSync(budgetPath)) throw new Error('A budget already exists without its manifest. Recover the manifest; never overwrite accumulated costs.')
+      // Write the budget first. A crash can leave a recoverable orphan, never a manifest with silently reset costs.
+      writeJson(budgetPath, carried ?? { version: 1, limitUSD, limitRequests, attempts: [] })
       writeJson(manifestPath, { startedAt: new Date().toISOString(), configuration, source,
         modelRegistry: registry, localDatabase: true, deploymentNetworkMeasured: false, syntheticUser: true, humanReview: false })
       writeJson(`${out}/frozen-plan.json`, frozenPlan())
-      writeJson(`${out}/budget.json`, { version: 1, limitUSD, limitRequests, attempts: [] })
     }
     // Explicit allowlist: production DB URLs, auth tokens, push credentials and user data never enter the worker.
     const providerEnv = Object.fromEntries(['MIRO_MODEL_REGISTRY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY', 'OPENAI_API_KEY', 'OPENROUTER_API_KEY',

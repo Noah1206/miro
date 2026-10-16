@@ -13,6 +13,13 @@ export function thinkingConfig(model: string, level?: 'low' | 'medium' | 'high')
   return {}
 }
 
+function samplingConfig(model: string, temperature?: number): { temperature?: number } {
+  // Gemini 3 uses its sampling defaults; 3.6+ / 4 ignore overrides and will reject them.
+  // https://ai.google.dev/gemini-api/docs/troubleshooting (2026-10-13)
+  const major = Number(model.match(/^gemini-(\d+)(?:[.-]|$)/)?.[1])
+  return major >= 3 ? {} : { temperature: temperature ?? 0.9 }
+}
+
 /** Google Gemini (Generative Language API). 무료 등급이 있어 초기 기본 Provider. 키는 서버 env 에서만. */
 export class GeminiProvider implements AIProvider {
   readonly info: ProviderInfo
@@ -34,7 +41,8 @@ export class GeminiProvider implements AIProvider {
         safetySettings: ['HARM_CATEGORY_HATE_SPEECH', 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'HARM_CATEGORY_DANGEROUS_CONTENT', 'HARM_CATEGORY_HARASSMENT']
           .map(category => ({ category, threshold: req.safety === 'relaxed' ? 'BLOCK_ONLY_HIGH' : 'BLOCK_MEDIUM_AND_ABOVE' })),
         generationConfig: {
-          maxOutputTokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9,
+          maxOutputTokens: req.maxTokens ?? 1024,
+          ...samplingConfig(this.model, req.temperature),
           ...(req.json ? { responseMimeType: 'application/json', ...(req.responseSchema ? { responseJsonSchema: req.responseSchema } : {}) } : {}),
           // 생각 토큰은 출력 단가로 과금되고 maxOutputTokens 를 같이 먹는다 — 대사 생성에는 최소로.
           // 모델마다 받는 값이 다르다 (2026-09 실측): 3.5-flash-lite 는 minimal 만, 3.5-flash 는 budget 0 만,

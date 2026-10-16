@@ -22,6 +22,34 @@ export const ledgerTotals = (ledger: ExperimentLedger) => ({
   requests: ledger.attempts.filter(a => a.status !== 'denied').length,
   unresolved: ledger.attempts.filter(a => a.status === 'reserved').length,
 })
+/** Carry actual calls and unresolved reservations across a source-version change without resetting the experiment cap. */
+export function validateCarriedLedger(value: unknown, limitUSD: number, limitRequests: number): ExperimentLedger {
+  const source = value as Partial<ExperimentLedger> | null
+  if (!source || typeof source !== 'object' || source.version !== 1 || !Array.isArray(source.attempts)
+    || !Number.isFinite(limitUSD) || limitUSD <= 0 || !Number.isSafeInteger(limitRequests) || limitRequests <= 0
+    || source.limitUSD !== limitUSD || source.limitRequests !== limitRequests) {
+    throw new Error('Carried budget must use version 1 and exactly the same finite experiment limits')
+  }
+  const ids = new Set<string>()
+  for (const attempt of source.attempts) {
+    if (!attempt || typeof attempt !== 'object' || typeof attempt.id !== 'string' || !attempt.id || ids.has(attempt.id)
+      || !['reserved', 'completed', 'denied'].includes(attempt.status)
+      || !['at', 'task', 'provider', 'model'].every(key => typeof attempt[key as keyof LedgerAttempt] === 'string')
+      || typeof attempt.reservedUSD !== 'number' || !Number.isFinite(attempt.reservedUSD) || attempt.reservedUSD < 0
+      || typeof attempt.chargedUSD !== 'number' || !Number.isFinite(attempt.chargedUSD) || attempt.chargedUSD < 0
+      || (attempt.status === 'reserved' && attempt.chargedUSD < attempt.reservedUSD)
+      || (attempt.status === 'denied' && attempt.chargedUSD !== 0)) {
+      throw new Error('Carried budget contains invalid, duplicated, or discounted unresolved attempts')
+    }
+    ids.add(attempt.id)
+  }
+  const ledger = source as ExperimentLedger
+  const totals = ledgerTotals(ledger)
+  if (!Number.isFinite(totals.chargedUSD) || totals.chargedUSD > limitUSD + 1e-10 || totals.requests > limitRequests) {
+    throw new Error('Carried budget has already exceeded the shared experiment limits')
+  }
+  return structuredClone(ledger)
+}
 export function canReserve(ledger: ExperimentLedger, amount: number) {
   const total = ledgerTotals(ledger)
   return Number.isFinite(amount) && amount >= 0 && total.requests + 1 <= ledger.limitRequests
