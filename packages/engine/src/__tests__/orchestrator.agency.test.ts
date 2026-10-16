@@ -127,6 +127,26 @@ describe('runTurn agency integration', () => {
     await expect(runTurn({ llm: denied, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toBeInstanceOf(AIBudgetDeniedError)
   })
 
+  // 10/17 사용자: 답이 너무 늦게 보인다 — 검토가 없는 턴은 대사를 만드는 대로 보여 주고, 검토가 있으면 지금처럼 모았다가 보낸다.
+  it('streams the draft while it is written when nothing needs review, and holds it when the strict review is on', async () => {
+    const run = async () => {
+      const stub = provider()
+      const seen: string[] = []
+      const llm: LLMProvider = { ...stub.llm, async generateStructured(request) {
+        if (request.task === 'dialogue') { request.onText?.(JSON.stringify({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }] } })); seen.push(stub.calls.length ? 'draft' : '') }
+        return stub.llm.generateStructured(request)
+      } }
+      const order: string[] = []
+      await runTurn({ llm, snapshot: snapshot(), userInput: '오늘 공방은 어땠어요?', agency: agency(),
+        stream: { onBlocks: () => order.push(seen.length ? 'shown' : 'early'), onReset: () => order.push('reset') } })
+      return order
+    }
+    vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0')
+    expect((await run()).length).toBe(2)                 // 쓰는 중에 한 번, 저장본으로 한 번
+    vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '1')
+    expect((await run()).length).toBe(1)                 // 검토가 끝난 뒤에만
+  })
+
   it('rewrites before delivery when a reply ignores an explicit communication preference', async () => {
     const stub = provider({ rejectRealization: 1 })
     const input = agency()

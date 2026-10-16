@@ -1,7 +1,7 @@
 import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@miro/domain'
 import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
-import { POLICY, productionRuntime } from '@miro/config'
+import { POLICY, feature, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
 import { SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
@@ -11,7 +11,7 @@ import { agencyProviderTrace } from './agency/provider'
 import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
 import { approveTransition } from './transition'
-import type { TurnStream } from './stream-blocks'
+import { blockStream, type TurnStream } from './stream-blocks'
 import { agencyCommunicationPreferences } from './communication-preferences'
 import { snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
 import { conversationVariationDirective, repeatedConversationBlock } from './conversation-repetition'
@@ -132,6 +132,9 @@ export async function runAgencyTurn(opts: {
   let transition: ReturnType<typeof validateProposal> | null = null
   let renderer = agencyProviderTrace(llm, 'agency-dialogue:v6')
   let feedback = ''
+  // 검토할 것이 없는 턴은 초안을 만드는 대로 보낸다 — 대사 전체를 기다리던 몇 초가 첫 글자까지의 시간이었다(10/17 사용자: 너무 느리다).
+  // 검토가 있는 턴은 거부된 초안이 잠깐이라도 보이지 않게 그대로 모아 둔다. 다시 쓰게 되면 보여 준 블록은 지운다.
+  const draftStream = opts.stream && !communicationPreference && !feature('strictConversationReview') ? blockStream(snapshot, opts.stream, { dropWorld: true }) : undefined
   // A generated factual claim cannot be classified until its text exists. Buffer every draft;
   // the UI still types the approved blocks, but a rejected history/action never flashes first.
   // 다시 쓴 뒤에 턴 한도가 다 차면 사용자의 입력 길이 문제가 아니다 — 거부된 생성으로 돌려 '입력을 줄이라'는 안내가 나가지 않게 한다(10/16 운영 실측).
@@ -141,7 +144,7 @@ export async function runAgencyTurn(opts: {
       // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
       const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
         promptVersion: 'agency-dialogue:v6', system: context.system, safety: 'relaxed',
-        prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens })
+        prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens, ...draftStream })
         .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
       // A later check call must not erase the renderer's provenance.
       renderer = agencyProviderTrace(llm, 'agency-dialogue:v6')
