@@ -79,6 +79,16 @@ describe('bounded agency planning', () => {
     expect(result.issues.filter(i => i.reason === 'invisible_evidence_excluded')).toHaveLength(2)
   })
 
+  it('offers a messenger reply only the actions that path can execute', async () => {
+    const { compiled, state, context } = await setupCompiled()
+    const seen: unknown[] = []
+    const inner = recordedProvider([planProposal()])
+    const llm: typeof inner = { ...inner, generateStructured: opts => { seen.push(opts.responseSchema); return inner.generateStructured(opts) } }
+    await planAgencyDecision(llm, compiled, state, { ...context, permissions: { contact: true, capabilities: ['wait', 'defer', 'cancel_commitment', 'contact', 'message', 'contact_message'] } })
+    const action = (seen[0] as any).properties.candidates.items.properties.action
+    expect(action.enum).toEqual(['defer', 'contact', 'cancel_commitment', 'wait'])
+  })
+
   it('rejects unavailable action permissions even if the model strongly prefers contacting', async () => {
     const { compiled, state, context } = await setupCompiled()
     const proposal = planProposal()

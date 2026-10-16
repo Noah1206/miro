@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import {
   AGENCY_ACTIONS, AGENCY_COMMITTING_ACTIONS, agencyEvidence, agencyGoalId, agencyUserUtterance, reduceAgencyState, selectAgencyDecision,
-  type AgencyBelief, type AgencyDecision, type AgencyDecisionContext, type AgencyEvidence, type AgencyGoal, type AgencyGoalChange,
+  type AgencyAction, type AgencyBelief, type AgencyDecision, type AgencyDecisionContext, type AgencyEvidence, type AgencyGoal, type AgencyGoalChange,
   type AgencyIssue, type AgencyState, type AgencyTransition, type AuthoredDocument, type CompiledCharacter, type RelationshipDelta, type RelationshipState,
 } from '@miro/domain'
 import { generationInputCeiling, type LLMProvider } from '@miro/providers'
@@ -9,7 +9,7 @@ import { agencyProviderTrace, generateAgencyStructured, responseJsonSchema, type
 import { hashAuthoredCharacter } from './compiler'
 import { agencyCommunicationPreferences } from '../communication-preferences'
 
-export const AGENCY_PLANNER_VERSION = 'agency-planner:v12'
+export const AGENCY_PLANNER_VERSION = 'agency-planner:v13'
 const Id = z.string().min(1).max(128)
 const Refs = z.array(Id).max(12)
 const Time = z.string().datetime({ offset: true })
@@ -67,6 +67,15 @@ export const AgencyPlanProposalSchema = z.object({
   newGoals: z.array(ProposedGoal).max(3),
   goalChanges: z.array(z.object({ kind: z.enum(['activate', 'suspend', 'cancel', 'abandon', 'expire']), goalId: Id, evidenceIds: Refs }).strict()).max(3),
 }).strict()
+
+/** Offer the model only actions this path can execute. Otherwise a messenger reply proposed as an in-person
+ * 'respond' is rejected as action_executor_unavailable and silently becomes the fallback wait. */
+export function plannerResponseSchema(capabilities: readonly string[]) {
+  const allowed = AGENCY_ACTIONS.filter(action => capabilities.includes(action))
+  if (!allowed.length) return responseJsonSchema(AgencyPlanProposalSchema)
+  return responseJsonSchema(AgencyPlanProposalSchema.extend({
+    candidates: z.array(AgencyCandidateSchema.extend({ action: z.enum(allowed as [AgencyAction, ...AgencyAction[]]) })).min(1).max(5) }))
+}
 
 export type AgencyAppraisal = z.infer<typeof AgencyPlanProposalSchema>['appraisal']
 export type AgencyGroundedContext = {
@@ -248,7 +257,7 @@ export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCha
   const routine = opts.routine ? routineProposal(context, state) : null
   if (routine && selectAgencyDecision(routine.candidates, context).action !== 'respond') return planAgencyDecision(llm, compiled, state, input)
   const proposal = routine ?? await generateAgencyStructured(llm, {
-    task: 'agency_plan', schema: AgencyPlanProposalSchema, system: PLANNER_SYSTEM, prompt, promptVersion: AGENCY_PLANNER_VERSION, maxTokens: 4096,
+    task: 'agency_plan', schema: AgencyPlanProposalSchema, responseSchema: plannerResponseSchema(input.permissions.capabilities), system: PLANNER_SYSTEM, prompt, promptVersion: AGENCY_PLANNER_VERSION, maxTokens: 4096,
   })
   const trace = agencyProviderTrace(llm, routine ? `${AGENCY_PLANNER_VERSION}+routine` : AGENCY_PLANNER_VERSION)
   const availableRules = new Set(compiled.rules.map(rule => rule.id))

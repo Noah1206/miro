@@ -76,10 +76,12 @@ export async function generateAgencyStructured<T>(llm: LLMProvider, opts: {
   maxTokens: number
   /** 생각 수준(없으면 모델의 최소). 원문을 글자 그대로 옮겨야 하는 일회성 정리처럼 정확도가 지연보다 중요할 때만. */
   thinking?: 'low' | 'medium' | 'high'
+  /** 공급자에게 보낼 더 좁은 출력 형식. 검증은 여전히 schema 로 한다. */
+  responseSchema?: Record<string, unknown>
 }): Promise<T> {
   try {
     // 계획·검사·컴파일은 사용자 글을 자료로 읽고 출력은 보이지 않는다 — 공급자 필터는 높은 위험만 막는다.
-    const result = await llm.generateStructured({ ...opts, maxRetries: 1, responseSchema: responseJsonSchema(opts.schema), safety: 'relaxed' })
+    const result = await llm.generateStructured({ ...opts, maxRetries: 1, responseSchema: opts.responseSchema ?? responseJsonSchema(opts.schema), safety: 'relaxed' })
     // The boundary is validated even for injected providers used by replay/integration adapters.
     return opts.schema.parse(result)
   } catch (error) {
