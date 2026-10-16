@@ -16,9 +16,10 @@ describe('P0 safety and memory', () => {
     await expect(runTurn({ llm: live(async o => { tasks.push(o.task); throw new AIContentBlockedError() }), snapshot: snapshot(), userInput: 'unsafe' }))
       .rejects.toBeInstanceOf(UnsafeContentError)
     expect(tasks).toEqual(['dialogue'])
-    const ok = await runTurn({ llm: live(async o => { tasks.push(o.task); return buildMockProposal(o.prompt, { characterName: '토마스' }) }), snapshot: snapshot(), userInput: '안녕하세요' })
+    const ok = await runTurn({ llm: live(async o => { tasks.push(o.task); return o.task === 'agency_verify'
+      ? { acceptable: true, blockIndex: 0, reason: 'none' } : buildMockProposal(o.prompt, { characterName: '토마스' }) }), snapshot: snapshot(), userInput: '안녕하세요' })
     expect(ok.providerMode).toBe('live')
-    expect(tasks).toEqual(['dialogue', 'dialogue'])
+    expect(tasks).toEqual(['dialogue', 'dialogue', 'agency_verify'])
   })
   it('includes the prior summary and 24 messages in incremental summarization', async () => {
     const s = snapshot({ memories: [{ id: '11111111-1111-4111-8111-111111111111', sessionId: 's1', characterId: 'c1', type: 'short_term_summary', content: '루나라는 고양이', importance: .1, persistence: .1, confidence: 1, tags: [], sourceMessageId: null, createdAt: new Date() }],

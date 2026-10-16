@@ -45,7 +45,7 @@ function provider(options: StubOptions = {}) {
         if (options.failPlanner) throw new Error('recorded_provider_failure')
         return request.schema.parse(options.proposal ?? plan())
       }
-      if (request.promptVersion === 'agency-communication-check:v2') {
+      if (request.promptVersion === 'agency-communication-check:v3') {
         const checks = calls.filter(c => c.version === request.promptVersion).length
         const reject = typeof options.rejectRealization === 'number' ? checks <= options.rejectRealization : Boolean(options.rejectRealization)
         return request.schema.parse({ acceptable: !reject, blockIndex: 0 })
@@ -68,6 +68,35 @@ beforeEach(() => vi.stubEnv('MIRO_MODE', 'alpha'))
 afterEach(() => vi.unstubAllEnvs())
 
 describe('runTurn agency integration', () => {
+  it('checks invented user history before streaming even without any communication preference', async () => {
+    const stub = provider()
+    const current = '할머니가 주신 파란 책갈피를 가지고 다녀.'
+    const input = agency()
+    input.context.evidence = [{ ...proof, quote: current }]
+    let renders = 0, checks = 0
+    const good = '할머니가 주신 물건이라면 쉽게 버리기 어렵겠어요.'
+    const llm: LLMProvider = { ...stub.llm, async generateStructured(request) {
+      if (request.promptVersion === 'agency-communication-check:v3') {
+        checks++
+        expect(JSON.parse(request.prompt).groundingEvidence).toContainEqual(expect.objectContaining({ id: 'current-user-input', text: current }))
+        return request.schema.parse({ acceptable: renders > 1, blockIndex: 0, reason: renders > 1 ? 'none' : 'unsupported_user_history' })
+      }
+      if (request.task === 'dialogue') {
+        const draft = { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: ++renders === 1 ? '사연에서 밤마다 책을 읽다 잠든다고 하셨을 때 그 책갈피군요.' : good }] } }
+        request.onText?.(JSON.stringify(draft))
+        return request.schema.parse(draft)
+      }
+      return stub.llm.generateStructured(request)
+    } }
+    const visible: string[][] = []
+    const result = await runTurn({ llm, snapshot: snapshot(), agency: input, userInput: current,
+      stream: { onBlocks: blocks => visible.push(blocks.map(b => b.text)), onReset: () => { throw new Error('Unverified draft exposed') } } })
+    expect(renders).toBe(2)
+    expect(checks).toBe(2)
+    expect(result.transition.blocks[0]?.text).toBe(good)
+    expect(visible).toEqual([[good]])
+  })
+
   it('checks an old preference outside the recent window at turn 120 using the original user words', async () => {
     const stub = provider()
     const input = agency()
@@ -76,9 +105,9 @@ describe('runTurn agency integration', () => {
     const s = snapshot({ turnCount: 120, recentMessages: Array.from({ length: 12 }, (_, i) => ({ id: `later-${i}`, role: 'user', content: '책이 두껍네.' })) })
     const result = await runTurn({ llm: stub.llm, snapshot: s, userInput: '오늘도 책을 읽자.', agency: input })
     expect(result.agency?.verification.reviewed).toBe(true)
-    const review = stub.calls.find(call => call.version === 'agency-communication-check:v2')!
+    const review = stub.calls.find(call => call.version === 'agency-communication-check:v3')!
     expect(JSON.parse(review.prompt).preferenceEvidence).toContainEqual({ sourceId: old.id, text: old.quote, occurredAt: old.occurredAt, kind: 'user_quote' })
-    expect(stub.calls.find(call => call.version === 'agency-dialogue:v5')!.prompt).toContain(old.quote)
+    expect(stub.calls.find(call => call.version === 'agency-dialogue:v6')!.prompt).toContain(old.quote)
   })
 
   it('rewrites before delivery when a reply ignores an explicit communication preference', async () => {
@@ -94,8 +123,8 @@ describe('runTurn agency integration', () => {
     const result = await runTurn({ llm, snapshot: snapshot(), userInput: text, agency: input,
       stream: { onBlocks: blocks => visible.push(blocks.map(block => block.text)), onReset: () => { throw new Error('Rejected draft was shown') } } })
     expect(result.agency?.verification).toMatchObject({ ok: true, reviewed: true })
-    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v2')).toHaveLength(2)
-    const renders = stub.calls.filter(call => call.version === 'agency-dialogue:v5')
+    expect(stub.calls.filter(call => call.version === 'agency-communication-check:v3')).toHaveLength(2)
+    const renders = stub.calls.filter(call => call.version === 'agency-dialogue:v6')
     expect(renders).toHaveLength(2)
     expect(renders[1]!.prompt).toContain('원하지 않은 과찬을 다른 과찬으로 바꾸지 말고')
     expect(visible).toEqual([[response]])
@@ -118,7 +147,7 @@ describe('runTurn agency integration', () => {
     return llm
   }
   // 10/2 결정: 예비 모델은 강한 일(계획·대사·검사)의 정식 예비다 — 어느 단계가 예비로 답해도 live 이고, 운영에서도 턴을 막지 않는다.
-  it.each([AGENCY_PLANNER_VERSION, 'agency-dialogue:v5', 'agency-realization-check:v5'])(
+  it.each([AGENCY_PLANNER_VERSION, 'agency-dialogue:v6', 'agency-realization-check:v5'])(
     'a turn whose %s step was answered by the backup model is still live, also in production', async backupAt => {
       vi.stubEnv('VERCEL_ENV', 'production')
       const result = await runTurn({ llm: backupAtProvider(backupAt), snapshot: snapshot(), userInput: proof.quote, agency: agency() })
@@ -139,9 +168,9 @@ describe('runTurn agency integration', () => {
     expect(result.semanticEvents).toEqual([expect.objectContaining({ type: 'mentioned_other_romantic_interest' })])
     expect(result.agency?.plan.state.affect.stress).toBe(23)
     expect(input.state.sequence).toBe(0)
-    // 대답(respond)은 실행·약속·완료 주장이 없어 의미 검토를 하지 않는다 — 결정적 검사만 한다(10/2).
-    expect(result.agency?.verification.reviewed).toBe(false)
-    expect(stub.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v5'])
+    // Ordinary replies receive the compact user-grounding check, without a full canon audit.
+    expect(result.agency?.verification.reviewed).toBe(true)
+    expect(stub.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v6', 'agency-communication-check:v3'])
     expect(stub.calls[1]?.system).toContain('Server-authorized character choice')
   })
   it('shadow planning never changes the legacy turn or returns state for persistence', async () => {
@@ -171,28 +200,32 @@ describe('runTurn agency integration', () => {
     expect(result.transition.eventUpdates).toEqual([])
     expect(result.transition.blocks.map(b => b.type)).toEqual(['dialogue'])
     expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field).sort()).toEqual(['eventCandidates', 'eventUpdates', 'rp.blocks', 'worldDelta.currentLocation'])
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v5')?.prompt).not.toContain('왼팔 부상')
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v6')?.prompt).not.toContain('왼팔 부상')
     expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentTime', rule: 'world_delta', status: 'applied', decisionId: result.agency!.plan.decision.id }))
-    // Stripped mutations schedule a semantic review after the reply; no model check blocks rendering.
+    // Stripped mutations schedule the full semantic review after the inline user-grounding check.
     expect(result.agency?.review?.strippedMutations).toBe(4)
     expect(stub.calls.some(c => c.version === 'agency-realization-check:v5')).toBe(false)
     expect((await verifyAgencyRealization(stub.llm, result.agency!.review!)).reviewed).toBe(true)
   })
   it('returns the risky realization for deferred review without silently replacing the already-rendered reply', async () => {
     const once = provider({ rejectRealization: true, proposal: reviewed() })
-    const result = await runTurn({ llm: once.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
+    const llm: LLMProvider = { ...once.llm, async generateStructured(request) {
+      if (request.promptVersion === 'agency-communication-check:v3') return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
+      return once.llm.generateStructured(request)
+    } }
+    const result = await runTurn({ llm, snapshot: snapshot(), userInput: proof.quote, agency: agency() })
     expect(result.agency?.verification.ok).toBe(true)
     expect(result.agency?.verification.deferredReview).toBe('action:disclose')
-    expect(once.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v5'])
+    expect(once.calls.map(c => c.version)).toEqual([AGENCY_PLANNER_VERSION, 'agency-dialogue:v6'])
     const check = await verifyAgencyRealization(once.llm, result.agency!.review!)
     expect(check.ok).toBe(false)
     expect(check.issues.map(i => i.reason)).toContain('contradicts_decision')
-    expect(once.calls.filter(c => c.version === 'agency-dialogue:v5')).toHaveLength(1)
+    expect(once.calls.filter(c => c.version === 'agency-dialogue:v6')).toHaveLength(1)
   })
   it('reports a provider block on the rendered reply as a safety refusal, like the legacy path', async () => {
     const stub = provider()
     const blocking: LLMProvider = { info: stub.llm.info, async generateStructured(request) {
-      if (request.promptVersion === 'agency-dialogue:v5') throw new AIContentBlockedError()
+      if (request.promptVersion === 'agency-dialogue:v6') throw new AIContentBlockedError()
       return stub.llm.generateStructured(request)
     } }
     await expect(runTurn({ llm: blocking, snapshot: snapshot(), userInput: proof.quote, agency: agency() })).rejects.toBeInstanceOf(UnsafeContentError)
@@ -205,13 +238,13 @@ describe('runTurn agency integration', () => {
     expect(result.agency?.plan.decision.action).toBe('move')
     expect(result.transition.worldDelta).toBeNull()
     expect(result.records).toContainEqual(expect.objectContaining({ field: 'world.currentLocation', before: '런던 구시가지', after: '역 앞 카페', rule: 'move_intent_held', status: 'held' }))
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v5')?.system).toContain('도착했거나 장소가 바뀌었다고 쓰지 않는다')
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v6')?.system).toContain('도착했거나 장소가 바뀌었다고 쓰지 않는다')
   })
   it('renders the same scene length as the policy asks and derives mood and stage from the appraisal', async () => {
     const stub = provider({ proposal: plan({ appraisal: { ...plan().appraisal, affectDelta: { valence: -10, arousal: 8, stress: 10, energy: 0 },
       relationshipChanges: [{ dimension: 'trust', delta: 2, evidenceIds: ['input-1'], ruleIds: ['respect'] }] } }) })
     const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: proof.quote, agency: agency(), replyLength: 'long' })
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v5')?.system).toContain('긴 대화는 필요한 행동과 대사를 더 펼치되')
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v6')?.system).toContain('긴 대화는 필요한 행동과 대사를 더 펼치되')
     expect(result.transition.relationshipDelta.trust).toBe(2)
     expect(result.records.filter(r => r.field === 'relationship.trust').map(r => r.rule)).toEqual(['relationship_appraisal'])
     expect(result.characterState.mood).toBe('neutral')
@@ -229,7 +262,7 @@ describe('runTurn agency integration', () => {
     ] }), userInput: proof.quote, agency: agency() })
     expect(result.agency?.plan.decision.action).toBe('wait')
     expect(result.agency?.plan.issues.map(i => i.reason)).toContain('action_executor_unavailable')
-    expect(stub.calls.find(c => c.version === 'agency-dialogue:v5')?.prompt).not.toContain('비가시성정답')
+    expect(stub.calls.find(c => c.version === 'agency-dialogue:v6')?.prompt).not.toContain('비가시성정답')
   })
   it('keeps its own earlier actions and unspoken thoughts for continuity without exposing private narrator or NPC facts', async () => {
     const input = agency()
@@ -242,7 +275,7 @@ describe('runTurn agency integration', () => {
       { type: 'narrative', speaker: null, text: '숨겨진 암호는 전지적정답이다.' },
       { type: 'npc', speaker: '다른 사람', text: '비공개암호' },
     ] }] }), userInput: proof.quote, agency: input })
-    const prompt = stub.calls.find(c => c.version === 'agency-dialogue:v5')!.prompt
+    const prompt = stub.calls.find(c => c.version === 'agency-dialogue:v6')!.prompt
     expect(prompt).toContain('행동 서술 (토마스): 담배를 끄고 우유 잔을 문 앞에 내려놓는다.')
     expect(prompt).toContain('속마음 (토마스, 소리 내어 말하지 않음): 혼자 쉴 시간이 필요하겠지.')
     expect(prompt).not.toContain('전지적정답')

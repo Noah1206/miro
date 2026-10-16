@@ -107,7 +107,7 @@ describe('ordinary character chat preference enforcement', () => {
   it('does not deliver a fallback when all attempts ignore a preference', async () => {
     let renders = 0
     const llm: LLMProvider = { info: { mode: 'mock', name: 'rejection-contract', notice: '' }, async generateStructured(request) {
-      if (request.task === 'agency_verify') return request.schema.parse({ acceptable: false, blockIndex: 0 })
+      if (request.task === 'agency_verify') return request.schema.parse({ acceptable: false, blockIndex: 0, reason: 'violates_boundary' })
       renders++
       return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '완벽합니다.' }] } })
     } }

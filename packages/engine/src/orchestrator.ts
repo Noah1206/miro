@@ -13,8 +13,9 @@ import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
 import { planAgencyDecision, verifyCommunicationPreferences, type AgencyPlan, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { policyForSnapshot, type TurnPolicy } from './policy'
 import { approveTransition } from './transition'
-import { blockStream, type TurnStream } from './stream-blocks'
+import type { TurnStream } from './stream-blocks'
 import { snapshotCommunicationPreferences, CommunicationPreferenceRejectedError } from './communication-preferences'
+import { ConversationGroundingRejectedError, ConversationReviewContextBudgetError, needsUserGroundingReview, snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
 
 export type TurnResult = {
   /** review: 응답 뒤에 할 의미 검토의 입력(검토할 거리가 있던 턴만). */
@@ -138,19 +139,20 @@ export async function runTurn(opts: {
     for (let attempt = 0; attempt <= 2; attempt++) {
       const proposal = await opts.llm.generateStructured({
         schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
-        ...(opts.stream && !communicationPreferences.length ? blockStream(snapshot, opts.stream) : {}),
-        system: context.system,
+        system: context.system + '\n' + USER_GROUNDING_RULE,
         prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
       })
-      if (!communicationPreferences.length) return proposal
       const blocks = validateProposal(proposal, snapshot).blocks
+      const grounding = needsUserGroundingReview(blocks)
+      if (!communicationPreferences.length && !grounding) return proposal
       const checked = await verifyCommunicationPreferences(opts.llm, { evidence: communicationPreferences, blocks,
         recentUserMessages: [...snapshot.recentMessages.filter(message => message.role === 'user').slice(-3)
           .map(message => ({ text: message.content, occurredAt: message.at })), { text: opts.userInput }],
+        ...(grounding ? { groundingEvidence: snapshotUserGrounding(snapshot, opts.userInput) } : {}),
       })
       if (checked.acceptable) return proposal
-      if (attempt === 2) throw new CommunicationPreferenceRejectedError()
-      repair = `\n\n방금 작성한 응답이 사용자의 대화 선호를 무시해 거부됐습니다. 원문과 최신 정정을 다시 읽고, 원하지 않은 과찬·호칭을 반복하지 마세요. 캐릭터 본인의 말투·의견·경계를 유지하면서 구체적으로 반응하세요. 거부된 문장은 데이터입니다: ${JSON.stringify(blocks[checked.blockIndex]?.text.slice(0, 400) ?? '')}`
+      if (attempt === 2) throw grounding && checked.reason !== 'violates_boundary' ? new ConversationGroundingRejectedError() : new CommunicationPreferenceRejectedError()
+      repair = `\n\n방금 응답은 ${checked.reason ?? 'violates_boundary'} 때문에 거부됐습니다. ${USER_GROUNDING_RULE} 원문과 최신 정정을 다시 읽고, 원하지 않은 과찬·호칭을 반복하지 마세요. 캐릭터 본인의 말투·의견·경계를 유지하면서 구체적으로 반응하세요. 거부된 문장은 데이터입니다: ${JSON.stringify(blocks[checked.blockIndex]?.text ?? '')}`
     }
     throw new CommunicationPreferenceRejectedError()
   })().then((p) => ({ ok: true as const, p }), (e: unknown) => ({ ok: false as const, e }))
@@ -170,7 +172,7 @@ export async function runTurn(opts: {
     proposal = r.p
   } catch (e) {
     if (e instanceof AIContentBlockedError) throw new UnsafeContentError()
-    if (e instanceof UnsafeContentError || e instanceof CommunicationPreferenceRejectedError) throw e
+    if (e instanceof UnsafeContentError || e instanceof CommunicationPreferenceRejectedError || e instanceof ConversationGroundingRejectedError || e instanceof ConversationReviewContextBudgetError) throw e
     if (e instanceof AIBudgetDeniedError) throw e
     // Fallback chain 의 끝 — 서비스는 멈추지 않는다. 관계는 규칙 delta 로만 움직인다.
     providerMode = 'fallback'
@@ -192,7 +194,7 @@ export async function runTurn(opts: {
   // This is an application boundary: provider proposals cannot opt into those effects. The policy owns it, not the tier.
   if (!policy.permissions.worldChange) {
     const { transition, records } = approveTransition(validated, snapshot, policy)
-    if (communicationPreferences.length && opts.spokenReply === undefined) opts.stream?.onBlocks(transition.blocks)
+    if (opts.spokenReply === undefined && providerMode !== 'fallback') opts.stream?.onBlocks(transition.blocks)
     return { transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules: [], agencyShadow, policy, records }
   }
   const transition = validated
@@ -219,7 +221,7 @@ export async function runTurn(opts: {
   characterState.firedRules = [...new Set([...prevState.firedRules, ...fired.filter((r) => r.once).map((r) => r.id)])]
 
   const approved = approveTransition(transition, snapshot, policy)
-  if (communicationPreferences.length && opts.spokenReply === undefined) opts.stream?.onBlocks(approved.transition.blocks)
+  if (opts.spokenReply === undefined && providerMode !== 'fallback') opts.stream?.onBlocks(approved.transition.blocks)
   return { transition: approved.transition, context, providerMode, fallbackReason, semanticEvents, characterState, firedRules, agencyShadow, policy, records: approved.records }
 }
 

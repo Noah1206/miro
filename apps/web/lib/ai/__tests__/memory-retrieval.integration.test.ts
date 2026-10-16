@@ -28,6 +28,7 @@ describeDb('long conversation memory retrieval', () => {
     expect(got).toHaveLength(24)
     expect(got.some(m => m.type === 'preference' && m.sourceMessageId === source!.id)).toBe(true)
     expect(got.find(m => m.sourceMessageId === source!.id)?.sourceOccurredAt).toEqual(source!.createdAt)
+    expect(got.find(m => m.sourceMessageId === source!.id)?.sourceText).toEqual(source!.content)
     expect(got.find(m => m.sourceMessageId === source!.id)?.sourceOccurredAt).not.toEqual(base.createdAt)
     expect(got.some(m => m.type === 'shared_event' && m.tags.includes('피드백'))).toBe(true)
     expect(got[0]!.type).toBe('short_term_summary')
@@ -35,5 +36,25 @@ describeDb('long conversation memory retrieval', () => {
     expect(await memoryRetriever.retrieve({ ...query, userId: stranger!.id })).toEqual([])
     await db.update(roleplaySessions).set({ restrictedAt: new Date() }).where(eq(roleplaySessions.id, s.sessionId))
     expect(await memoryRetriever.retrieve(query)).toEqual([])
+  })
+
+  it('exposes only visible user source words from the memory-owning session', async () => {
+    const [user, otherUser] = await db.insert(users).values([0, 1].map(n => ({ email: `memory-source-scope-${n}-${randomUUID()}@example.test` }))).returning()
+    made.push(user!.id, otherUser!.id)
+    const s = await createRoleplaySession(user!.id, 'thomas')
+    const other = await createRoleplaySession(otherUser!.id, 'thomas')
+    const [session] = await db.select().from(roleplaySessions).where(eq(roleplaySessions.id, s.sessionId))
+    const sources = await db.insert(messages).values([
+      { sessionId: s.sessionId, role: 'user', kind: 'text', content: '내 책갈피는 파란색이야.', blocks: [], turnIndex: 1 },
+      { sessionId: s.sessionId, role: 'character', kind: 'text', content: '예전에 네가 의대 출신이라고 했지.', blocks: [], turnIndex: 1 },
+      { sessionId: s.sessionId, role: 'user', kind: 'text', content: '숨김 원문', blocks: [], turnIndex: 1, hiddenAt: new Date() },
+      { sessionId: other.sessionId, role: 'user', kind: 'text', content: '다른 방 원문', blocks: [], turnIndex: 1 },
+    ]).returning()
+    await db.insert(memories).values(sources.map((source, i) => ({ sessionId: s.sessionId, characterId: session!.characterId,
+      type: 'user_fact' as const, content: `출처 검토 ${i}`, sourceMessageId: source.id, importance: 90, persistence: 90, confidence: 90, tags: [] })))
+    const got = await memoryRetriever.retrieve({ userId: user!.id, sessionId: s.sessionId, query: '출처 검토', limit: 24 })
+    expect(got).toHaveLength(4)
+    expect(got.find(m => m.sourceMessageId === sources[0]!.id)?.sourceText).toBe(sources[0]!.content)
+    for (const source of sources.slice(1)) expect(got.find(m => m.sourceMessageId === source.id)?.sourceText).toBeNull()
   })
 })

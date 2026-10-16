@@ -32,6 +32,7 @@ describe('story date in the actual planner and renderer', () => {
     const requests: Array<{ version?: string; prompt: string }> = []
     const llm: LLMProvider = { info: { mode: 'mock', name: 'calendar-contract', notice: 'Synthetic' }, async generateStructured(request) {
       requests.push({ version: request.promptVersion, prompt: request.prompt })
+      if (request.task === 'agency_verify') return request.schema.parse({ acceptable: true, blockIndex: 0, reason: 'none' })
       return request.schema.parse(request.promptVersion === AGENCY_PLANNER_VERSION ? response() : { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '일주일 만이군요.' }] } })
     } }
     const calendar = { version: 1 as const, date: '1850-06-25', previousDate: '1850-06-18', changedAtTurn: 3 }

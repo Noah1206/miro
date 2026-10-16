@@ -176,7 +176,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v2`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
