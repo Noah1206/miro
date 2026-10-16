@@ -152,7 +152,9 @@ ${task === 'memory_summary' ? `memories는 정확히 1개입니다. 이전 요�
     return source !== undefined && source.includes(m.sourceQuote)
   }).map(m => ({ ...m,
     ...(task === 'memory_summary' ? { sourceMessageId: undefined, sourceQuote: undefined } : {}),
-    replaces: !m.sourceMessageId && /아니|정정|바뀌|바꿨|이제|대신|실은|사실은|actually|instead|no longer|correction/i.test(input) && previous.some(old => old.id === m.replaces && old.type === m.type)
+    replaces: !m.sourceMessageId && (/아니|정정|바뀌|바꿨|이제|대신|실은|사실은|actually|instead|no longer|correction/i.test(input)
+      || m.type === 'promise' && /취소|철회|\bcancel(?:led|ed|ing)?\b|\bwithdraw\b/i.test(m.sourceQuote ?? ''))
+      && previous.some(old => old.id === m.replaces && old.type === m.type)
       ? m.replaces : undefined,
   })) }
 }

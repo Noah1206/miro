@@ -77,4 +77,12 @@ describe('memory', () => {
     expect(retrieveMemories([address, ...foods], 's1', 24, '다음 이야기를 해 볼까')).toContain(address)
     expect(retrieveMemories([address, ...foods], 's1', 8, '다음 이야기를 해 볼까')).toContain(address)
   })
+
+  it('reserves the latest spoken correction even if older preferences were extracted later', () => {
+    const recalled = Array.from({ length: 10 }, (_, i): Memory => ({ ...mem('s1', `old-${i}`, .99), type: 'preference',
+      content: `옛 호칭 선호 ${i}`, createdAt: new Date('2026-03-01'), sourceOccurredAt: new Date('2026-01-01') }))
+    const correction: Memory = { ...mem('s1', 'correction', .65), type: 'preference', content: '별명 대신 지윤이라고 불러 달라.',
+      createdAt: new Date('2026-02-01'), sourceOccurredAt: new Date('2026-02-01'), sourceMessageId: 'newest-words' }
+    expect(retrieveMemories([...recalled, correction], 's1', 4, '산책하자')).toContain(correction)
+  })
 })

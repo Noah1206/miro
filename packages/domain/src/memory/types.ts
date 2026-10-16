@@ -15,6 +15,8 @@ export type Memory = {
   persistence: number
   confidence: number
   sourceMessageId: string | null
+  /** Loaded from the owned source message, not the time a delayed extractor stored this memory. */
+  sourceOccurredAt?: Date | null
   /** 기억 그래프의 엣지. 태그를 공유하는 기억끼리 이어진다. */
   tags: string[]
   createdAt: Date

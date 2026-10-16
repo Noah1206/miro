@@ -27,6 +27,18 @@ describe('persistent communication preference evidence', () => {
     expect(snapshotCommunicationPreferences(snapshot({ memories }))).toEqual([])
   })
 
+  it('does not make a late extraction of an old nickname newer than its correction', () => {
+    const old = { ...preference, sourceMessageId: 'older-name', content: '별명으로 불러 달라고 했다.',
+      sourceOccurredAt: new Date('2026-09-01T00:00:00Z'), createdAt: new Date('2026-09-03T00:00:00Z') }
+    const correction = { ...preference, sourceMessageId: 'newer-name', content: '이제 별명 말고 지윤이라고 불러 달라고 했다.',
+      sourceOccurredAt: new Date('2026-09-02T00:00:00Z'), createdAt: new Date('2026-09-02T00:01:00Z') }
+    const unknown = { ...preference, sourceMessageId: 'unknown-time', createdAt: new Date('2026-09-04T00:00:00Z') }
+    const result = snapshotCommunicationPreferences(snapshot({ memories: [correction, old, unknown], recentMessages: [] }), '오늘은 지윤 씨라고 불러 줘.')
+    expect(result.map(item => item.sourceId)).toEqual(['unknown-time', 'older-name', 'newer-name', 'current-user-input'])
+    expect(result[1]!.occurredAt).toBe(old.sourceOccurredAt.toISOString())
+    expect(result[0]!.occurredAt).toBeNull()
+  })
+
   it('uses active beliefs to retrieve direct user words, never the belief inference as instructions', async () => {
     const setup = await setupCompiled()
     const words = '그건 부담스러워. 다음부터는 고칠 부분을 하나만 짚어 줘.'

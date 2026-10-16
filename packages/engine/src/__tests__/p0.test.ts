@@ -74,6 +74,20 @@ describe('P0 safety and memory', () => {
     expect(planTasks('싫어', 4, 'always')).not.toContain('memory_extraction')
   })
 
+  it('replaces an explicitly cancelled promise without letting a recalled cancellation delete current memory', async () => {
+    const id = '11111111-1111-4111-8111-111111111111', past = '22222222-2222-4222-8222-222222222222'
+    const quote = '토요일 약속 취소할게.'
+    const old = { id, sessionId: 's1', characterId: 'c1', type: 'promise' as const, content: '토요일에 만나기로 약속했다.',
+      importance: .9, persistence: .9, confidence: 1, tags: ['약속'], sourceMessageId: 'source', createdAt: new Date() }
+    const candidate = { type: 'promise', content: '토요일 약속은 사용자가 취소했다.', importance: .9, persistence: .9, confidence: 1, replaces: id, sourceQuote: quote }
+    const extract = (value: object, input: string, s = snapshot({ memories: [old] })) => analyzeMemory(live(async () => ({ memories: [value] })), 'memory_extraction', input, s)
+    expect((await extract(candidate, quote)).memories[0]?.replaces).toBe(id)
+    expect((await extract({ ...candidate, sourceMessageId: past }, '책 이야기를 하자.', snapshot({ memories: [old], recentMessages: [{ id: past, role: 'user', content: quote }] }))).memories[0]?.replaces).toBeUndefined()
+    expect((await extract({ ...candidate, sourceQuote: '없는 취소 문구' }, quote)).memories).toEqual([])
+    expect((await extract({ ...candidate, type: 'user_fact' }, quote)).memories[0]?.replaces).toBeUndefined()
+    expect((await extract({ ...candidate, replaces: '33333333-3333-4333-8333-333333333333' }, quote)).memories[0]?.replaces).toBeUndefined()
+  })
+
   it('attributes historical extractions only to an actual visible user quote, never silently to the current input', async () => {
     const past = '11111111-1111-4111-8111-111111111111', actor = '22222222-2222-4222-8222-222222222222'
     const foreign = '33333333-3333-4333-8333-333333333333'

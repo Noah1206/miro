@@ -25,9 +25,9 @@ export function terms(text: string): string[] {
 }
 
 type SearchableMemory = Pick<Memory, 'sessionId' | 'importance' | 'persistence' | 'content'>
-  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'confidence'>>
+  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'sourceOccurredAt' | 'confidence'>>
 
-const timeOf = (m: SearchableMemory) => m.createdAt?.getTime() ?? 0
+const timeOf = (m: SearchableMemory) => (m.sourceOccurredAt ?? m.createdAt)?.getTime() ?? 0
 const durable = (m: SearchableMemory) => m.persistence >= .6 && (m.confidence ?? 1) >= .6
 
 /** Retrieval classification only. The source statement still determines what the user actually requested. */

@@ -27,6 +27,8 @@ describeDb('long conversation memory retrieval', () => {
     const got = await memoryRetriever.retrieve(query)
     expect(got).toHaveLength(24)
     expect(got.some(m => m.type === 'preference' && m.sourceMessageId === source!.id)).toBe(true)
+    expect(got.find(m => m.sourceMessageId === source!.id)?.sourceOccurredAt).toEqual(source!.createdAt)
+    expect(got.find(m => m.sourceMessageId === source!.id)?.sourceOccurredAt).not.toEqual(base.createdAt)
     expect(got.some(m => m.type === 'shared_event' && m.tags.includes('피드백'))).toBe(true)
     expect(got[0]!.type).toBe('short_term_summary')
     expect(got.every(m => m.importance <= 1 && m.persistence <= 1 && m.confidence <= 1)).toBe(true)
