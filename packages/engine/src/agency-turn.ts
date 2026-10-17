@@ -3,7 +3,7 @@ import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, c
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, feature, productionRuntime } from '@miro/config'
 import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
-import { SimulationProposal } from './proposal.schema'
+import { AGENCY_DIALOGUE_RESPONSE_SCHEMA, SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
 import { buildAgencyDecisionDirective, planAgencyDecision, verifyAgencyRealization, needsCommunicationPreferenceReview, type AgencyPlanningContext, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
@@ -163,7 +163,7 @@ export async function runAgencyTurn(opts: {
       // 공급자 필터는 높은 위험만(relaxed) — 같은 입력이 기존 경로에선 통과하는데 이 경로의 근거·상태 자료 때문에 대사가 막혔다(9/29 실측 3건).
       // 그래도 막히면 기존 경로처럼 안전 거부로 돌려준다 — 이름 없는 생성 실패('other')로 숨기지 않는다.
       const proposal = await llm.generateStructured({ schema: SimulationProposal, task: 'dialogue',
-        promptVersion: 'agency-dialogue:v8', system: context.system, safety: 'relaxed',
+        promptVersion: 'agency-dialogue:v8', system: context.system, safety: 'relaxed', responseSchema: AGENCY_DIALOGUE_RESPONSE_SCHEMA,
         prompt: `${context.prompt}${feedback}\n\n사용자 입력: ${opts.userInput}`, maxTokens: opts.maxOutputTokens, ...draftStream })
         .catch((e: unknown) => { throw e instanceof AIContentBlockedError ? new UnsafeContentError() : e })
       // A later check call must not erase the renderer's provenance.

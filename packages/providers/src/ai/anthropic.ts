@@ -41,7 +41,8 @@ export class AnthropicProvider implements AIProvider {
 
   async generate(req: GenerationRequest): Promise<GenerationResult> {
     const start = Date.now()
-    const schema = req.responseSchema ? claudeSchema(req.responseSchema) as Anthropic.Beta.BetaTool.InputSchema : null
+    // 받는 대로 보는 대사는 형식 강제(도구)보다 스트리밍이 먼저다 — 도구로 받으면 끝에 한 번에 와 예비로 넘어간 턴의 첫 글자가 늦는다(10/17).
+    const schema = req.responseSchema && !req.onText ? claudeSchema(req.responseSchema) as Anthropic.Beta.BetaTool.InputSchema : null
     let response: Anthropic.Beta.BetaMessage
     try {
       const params: Anthropic.Beta.MessageCreateParamsNonStreaming = {
