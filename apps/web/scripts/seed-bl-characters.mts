@@ -125,7 +125,9 @@ function keepSceneImages(next: Seed['sampleDialogue'], prev: Array<{ purpose?: s
 
 const inserted: Array<{ id: string; name: string; revisionId: string | null }> = []
 for (const s of SEEDS) {
-  const [exists] = await db.select({ id: characters.id, dialogue: characters.sampleDialogue }).from(characters).where(eq(characters.slug, s.slug)).limit(1)
+  const [exists] = await db.select({ id: characters.id, dialogue: characters.sampleDialogue, deletedAt: characters.deletedAt }).from(characters).where(eq(characters.slug, s.slug)).limit(1)
+  // 운영에서 지운 캐릭터는 되살리지 않는다(10/18, 도윤재·강무진).
+  if (exists?.deletedAt) { console.log('skip (삭제됨)', s.name, exists.id); continue }
   if (exists && !args.has('--update')) { console.log('skip (있음)', s.name, exists.id); continue }
   const routine = parseRoutine(s.contact.routine, 'authored', new Date().toISOString())
   if (!routine) throw new Error(`routine invalid: ${s.name}`)
