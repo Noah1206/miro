@@ -48,3 +48,8 @@
 
 /* A selected light-theme option keeps its light fill after the first model change. */
 :global([data-chat-theme='dm-light']) .panel[data-interacted='true'] .option[aria-pressed='true'] { background: #f3edff; color: #6030ac; }
+
+/* 입력창 안 아래 줄(10/17): 작게, 메뉴는 위로 연다. */
+.root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { min-height: 30px; padding-inline: 6px; gap: 3px; font-size: 11px; border-radius: 8px; }
+.root[data-place='up'] .trigger .icon, :global([data-chat-theme]) .root[data-place='up'] .trigger .icon { width: 16px; height: 16px; }
+.root[data-place='up'] .panel { top: auto; bottom: calc(100% + 6px); left: 0; right: 0; }

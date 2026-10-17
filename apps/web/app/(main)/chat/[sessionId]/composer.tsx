@@ -1,9 +1,10 @@
 'use client'
 import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
+import { ChatRoomIcon } from '@/components/chat-icons'
 import { useEffect, useRef, useState, useTransition, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon } from '@/components/ui'
+import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
@@ -22,7 +23,7 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 헤더에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
+export function ChatComposer({ sessionId, characterName, modelOptions, roomHref }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; roomHref?: string }) {
   const t = useT()
   const { append, live, setLive, calendarPending } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
@@ -168,16 +169,23 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
-        <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
         <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={calendarPending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
           />
+        {/* 입력창 안 아래 줄(10/17 요청): 왼쪽에 더하기·문자·대화 방식, 오른쪽에 이모지·보내기 — 작게, 같은 줄에. */}
+        <div className={styles.composerRow}>
+          <div className={styles.composerTools}>
+            <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+            {roomHref && <TransitionLink href={roomHref} aria-label={t('문자')} className={styles.toolButton}><ChatRoomIcon /></TransitionLink>}
+            <ModelPicker {...modelOptions} place="up" />
+          </div>
         <div className={styles.composerBar}>
           <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
           <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
             {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
           </Pressable>
+        </div>
         </div>
       </form>
     </div>

@@ -20,7 +20,7 @@ export function ChatModelProvider({ children, initialWallet, initialModel = 'mir
   return <Selection.Provider value={{ model, setModel }}>{children}</Selection.Provider>
 }
 export const useChatModel = () => useContext(Selection)
-export function ModelPicker({ choices = [] }: { freeReady: boolean; proReady: boolean; choices?: ChatModelChoice[] }) {
+export function ModelPicker({ choices = [], place }: { freeReady: boolean; proReady: boolean; choices?: ChatModelChoice[]; place?: 'up' }) {
   const t = useT()
   const reduce = useReducedMotion()
   const locale = INTL_LOCALE[useLanguage()]
@@ -50,7 +50,7 @@ export function ModelPicker({ choices = [] }: { freeReady: boolean; proReady: bo
     return families.length <= 1 ? name : `${name} ${families.indexOf(c.id.replace(/:(scene|long)$/, '')) + 1}`
   }
   const icon = (long: boolean) => long ? <EchoModelIcon className={sheet.icon} /> : <MiroModelIcon className={sheet.icon} />
-  return <div ref={root} className={sheet.root}>
+  return <div ref={root} className={sheet.root} data-place={place}>
     <motion.button whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" tabIndex={0} className={sheet.trigger} aria-label={t('대화 방식 선택')} aria-haspopup="dialog" aria-controls={panelId} aria-expanded={open} onClick={() => setOpen(!open)}>
       {icon(selected?.length === 'long')}
       {selected ? label(selected) : t('미로')}

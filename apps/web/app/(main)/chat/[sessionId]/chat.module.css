@@ -398,3 +398,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='talk']) .opening { font-size:14px; line-height:1.75; }
 :global([data-chat-theme='miro']) .bubble,
 :global([data-chat-theme='miro']) .userBubble { font-size:16px; line-height:1.6; }
+
+/* 입력창(10/17 요청): 높이를 두 배로, 그 안 아래 줄에 도구와 보내기를 작게 같은 줄로. 테마별 가로 배치 규칙보다 뒤에 둔다. */
+.composerForm, :global([data-chat-theme]) .composerForm { flex-direction: column; align-items: stretch; gap: 0; padding: 6px 6px 4px 12px; }
+.input, :global([data-chat-theme]) .input { flex: none; width: 100%; min-height: 44px; padding: 6px 2px; }
+.composerRow { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.composerTools { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.toolButton { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; }
+.toolButton svg { width: 18px; height: 18px; }
+.toolButton:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }

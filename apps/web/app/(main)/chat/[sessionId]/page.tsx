@@ -1,4 +1,3 @@
-import { ChatRoomIcon } from '@/components/chat-icons'
 import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
@@ -12,7 +11,7 @@ import { COPY } from '@/lib/copy'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
-import { ChatModelProvider, ModelPicker } from './model-picker'
+import { ChatModelProvider } from './model-picker'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
@@ -64,15 +63,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <span>{t('호감 {n}%', { n: affinity })}</span><span className={styles.affinityBar} aria-hidden="true"><i style={{ width: `${affinity}%` }} /></span>
             </p></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
-          {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 만나서 나누는 장면과 폰으로 주고받는 문자를 섞지 않는다. */}
-          {loaded.experienceType === 'reality' && (
-            <TransitionLink href={`/messages/${sessionId}`} aria-label={t('문자')} className={styles.contextButton}>
-              <ChatRoomIcon />
-            </TransitionLink>
-          )}
           <ConversationPersona entry={loaded.entry} sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
           <ChatThemePicker portrait={loaded.characterPhoto} />
-          <ModelPicker {...modelOptions} />
         </header>
 
         <div className={styles.transcript}>
@@ -89,7 +81,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
-        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} />
+        {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 문자·대화 방식 버튼은 입력창 안 아래 줄에(10/17). */}
+        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} roomHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} />
       </section>
 
     </main></ChatTheme></TurnsProvider></ChatModelProvider>
