@@ -64,6 +64,16 @@ describe('AIOrchestrator', () => {
     const ai = new AIOrchestrator({ chain: [hang], maxRetries: 0, timeoutMs: 30 })
     await expect(ai.generateText({ system: 's', prompt: 'p' })).rejects.toThrow(/timeout 30ms/)
   })
+  it('keeps a streaming call alive while text arrives, but still cuts a silent one', async () => {
+    const streaming = (gapMs: number, chunks: number): AIProvider => ({ healthCheck: async () => true, info: { mode: 'live', name: 'stream', notice: null },
+      generate: async (req) => {
+        for (let i = 0; i < chunks; i++) { await new Promise(r => setTimeout(r, gapMs)); if (req.signal?.aborted) throw new Error('aborted'); req.onText?.('x'.repeat(i + 1)) }
+        return { text: '{"v":"done"}', provider: 'stream', model: 'test', inputTokens: 1, outputTokens: 1, latencyMs: 1 }
+      } })
+    // 조각 사이 15ms, 총 75ms — 전체 시간으로 쟀다면 40ms 한도에 끊겼다.
+    await expect(new AIOrchestrator({ chain: [streaming(15, 5)], maxRetries: 0, timeoutMs: 40 }).generateStructured({ schema: z.object({ v: z.string() }), system: 's', prompt: 'p', onText: () => {} })).resolves.toEqual({ v: 'done' })
+    await expect(new AIOrchestrator({ chain: [streaming(80, 2)], maxRetries: 0, timeoutMs: 40 }).generateStructured({ schema: z.object({ v: z.string() }), system: 's', prompt: 'p', onText: () => {} })).rejects.toThrow(/timeout 40ms/)
+  })
   it('resolves the chain from env and falls back to mock when nothing is configured', () => {
     delete process.env.AI_PROVIDER; delete process.env.AI_FALLBACK_PROVIDER
     expect(resolveAIChain(() => 'x').map((p) => p.info.mode)).toEqual(['mock'])

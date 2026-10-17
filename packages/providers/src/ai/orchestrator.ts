@@ -278,7 +278,18 @@ export class AIOrchestrator implements LLMProvider {
         try {
           // 시도마다 처음부터 — 받는 대로 보던 쪽은 앞 시도의 글을 버린다(재시도·다시 묻기·예비 모델).
           onAttempt?.()
-          const generation = Promise.resolve().then(() => provider.generate({ ...request, signal: controller.signal }))
+          // 받는 대로 보는 호출은 글이 들어오는 동안 시간 한도를 다시 잰다 — 전체 시간에 걸면 길게 쓰는 답이 쓰는 도중에 끊겨
+          // 예비 모델로 다시 썼다(10/17 운영: 20초에 끊김 3/6턴). 조용한 시간이 한도를 넘거나 전체가 한도의 3배를 넘으면 끊는다.
+          let rejectTimeout!: (reason: Error) => void
+          const timedOut = new Promise<never>((_, reject) => { rejectTimeout = reject })
+          const deadline = started + this.timeoutMs * (request.onText ? 3 : 1)
+          const arm = () => {
+            clearTimeout(timer)
+            timer = setTimeout(() => { controller.abort(); rejectTimeout(new Error(`timeout ${this.timeoutMs}ms`)) }, Math.max(1, Math.min(this.timeoutMs, deadline - Date.now())))
+          }
+          arm()
+          const onText = request.onText
+          const generation = Promise.resolve().then(() => provider.generate({ ...request, signal: controller.signal, ...(onText ? { onText: (text: string) => { arm(); onText(text) } } : {}) }))
           const finish = () => {
             settled = true
             clearInterval(heartbeatTimer); clearTimeout(heartbeatTimeout); clearTimeout(maxHoldTimer)
@@ -295,7 +306,7 @@ export class AIOrchestrator implements LLMProvider {
             cancelled,
             leaseFailure,
             holdFailure,
-            new Promise<never>((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error(`timeout ${this.timeoutMs}ms`)) }, this.timeoutMs) }),
+            timedOut,
           ])
           if (leaseLost) throw new Error('lease_lost')
           if (holdExpired) throw new Error('lease_hold_expired')
