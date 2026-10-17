@@ -94,14 +94,14 @@ describe('gemini streaming', () => {
       { candidates: [{ content: { parts: [{ text: '{"type":"dialogue"}]}}' }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, thoughtsTokenCount: 2 } },
     ]))
     const seen: string[] = []
-    const out = await new GeminiProvider('key', 'gemini-3.6-flash').generate({ system: 's', prompt: 'p', json: true, onText: text => seen.push(text) })
+    const out = await new GeminiProvider('key', 'gemini-3.6-flash').generate({ task: 'dialogue', system: 's', prompt: 'p', json: true, onText: text => { seen.push(text) } })
     expect(String(fetchMock.mock.calls[0]![0])).toContain(':streamGenerateContent?alt=sse')
     expect(seen).toEqual(['{"rp":{"blocks":[', '{"rp":{"blocks":[{"type":"dialogue"}]}}'])
     expect(out).toMatchObject({ text: '{"rp":{"blocks":[{"type":"dialogue"}]}}', inputTokens: 10, outputTokens: 7, truncated: false, blocked: false })
   })
   it('keeps the single call when nothing is shown while it is written', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{}' }] }, finishReason: 'STOP' }] }), { status: 200 }))
-    await new GeminiProvider('key', 'gemini-3.6-flash').generate({ system: 's', prompt: 'p', json: true })
+    await new GeminiProvider('key', 'gemini-3.6-flash').generate({ task: 'dialogue', system: 's', prompt: 'p', json: true })
     expect(String(fetchMock.mock.calls[0]![0])).toContain(':generateContent')
   })
 })
