@@ -76,3 +76,32 @@ describe('gemini sampling request compatibility', () => {
       expect(bodies[1]!.generationConfig.temperature).toBe(0)
     })
 })
+
+// 2026-10-17: 대사가 다 만들어질 때까지 아무것도 안 보였다 — 화면에 보낼 곳이 있으면 SSE 로 받아 조각마다 이어 붙인 전체를 넘긴다.
+describe('gemini streaming', () => {
+  afterEach(() => vi.restoreAllMocks())
+  const sse = (events: unknown[]) => new Response(new ReadableStream({ start(c) {
+    const enc = new TextEncoder()
+    // 조각 경계가 줄 중간에 걸려도 이어 붙여 읽는지 본다
+    const raw = events.map(e => `data: ${JSON.stringify(e)}\r\n\r\n`).join('')
+    for (let i = 0; i < raw.length; i += 7) c.enqueue(enc.encode(raw.slice(i, i + 7)))
+    c.close()
+  } }), { status: 200 })
+  it('reports the accumulated text as it arrives and returns the same result as a single call', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sse([
+      { candidates: [{ content: { parts: [{ text: '생각', thought: true }] } }] },
+      { candidates: [{ content: { parts: [{ text: '{"rp":{"blocks":[' }] } }] },
+      { candidates: [{ content: { parts: [{ text: '{"type":"dialogue"}]}}' }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, thoughtsTokenCount: 2 } },
+    ]))
+    const seen: string[] = []
+    const out = await new GeminiProvider('key', 'gemini-3.6-flash').generate({ system: 's', prompt: 'p', json: true, onText: text => seen.push(text) })
+    expect(String(fetchMock.mock.calls[0]![0])).toContain(':streamGenerateContent?alt=sse')
+    expect(seen).toEqual(['{"rp":{"blocks":[', '{"rp":{"blocks":[{"type":"dialogue"}]}}'])
+    expect(out).toMatchObject({ text: '{"rp":{"blocks":[{"type":"dialogue"}]}}', inputTokens: 10, outputTokens: 7, truncated: false, blocked: false })
+  })
+  it('keeps the single call when nothing is shown while it is written', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{}' }] }, finishReason: 'STOP' }] }), { status: 200 }))
+    await new GeminiProvider('key', 'gemini-3.6-flash').generate({ system: 's', prompt: 'p', json: true })
+    expect(String(fetchMock.mock.calls[0]![0])).toContain(':generateContent')
+  })
+})

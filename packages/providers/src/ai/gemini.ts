@@ -31,7 +31,9 @@ export class GeminiProvider implements AIProvider {
 
   async generate(req: GenerationRequest): Promise<GenerationResult> {
     const t0 = Date.now()
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`, {
+    // 화면에 보낼 곳이 있으면 만드는 대로 받는다(10/17 — 대사 전체를 기다리던 몇 초가 첫 글자까지의 시간이었다). 나머지는 한 번에.
+    const streaming = !!req.onText
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.model}:${streaming ? 'streamGenerateContent?alt=sse' : 'generateContent'}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': this.apiKey },
       signal: req.signal,
@@ -52,20 +54,46 @@ export class GeminiProvider implements AIProvider {
       }),
     })
     if (!res.ok) { await res.body?.cancel(); throw new Error(`provider_http_${res.status}`) }
-    const body = (await res.json()) as {
-      candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>
-      promptFeedback?: { blockReason?: string }
-      usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number }
+    const chunks: GeminiResponse[] = streaming ? [] : [(await res.json()) as GeminiResponse]
+    if (streaming) {
+      // SSE: 줄마다 "data: {...}" 하나가 응답 조각이다. 글은 조각마다 이어 붙인 전체를 넘긴다(onText 계약).
+      const reader = res.body!.pipeThrough(new TextDecoderStream()).getReader()
+      let buffer = '', text = ''
+      for (;;) {
+        const { value, done } = await reader.read()
+        if (value) buffer += value
+        const lines = buffer.split('\n')
+        buffer = done ? '' : lines.pop()!
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue
+          const chunk = JSON.parse(line.slice(5)) as GeminiResponse
+          chunks.push(chunk)
+          const delta = visibleText(chunk)
+          if (delta) { text += delta; req.onText!(text) }
+        }
+        if (done) break
+      }
     }
+    const last = chunks.at(-1)
+    const finishReason = [...chunks].reverse().find(c => c.candidates?.[0]?.finishReason)?.candidates?.[0]?.finishReason ?? ''
+    const blockReason = chunks.find(c => c.promptFeedback?.blockReason)?.promptFeedback?.blockReason
+    const usage = [...chunks].reverse().find(c => c.usageMetadata)?.usageMetadata
     return {
-      blocked: !!body.promptFeedback?.blockReason && body.promptFeedback.blockReason !== 'BLOCK_REASON_UNSPECIFIED'
-        || ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'RECITATION', 'IMAGE_SAFETY'].includes(body.candidates?.[0]?.finishReason ?? ''),
-      text: (body.candidates?.[0]?.content?.parts ?? []).filter(p => !p.thought).map((p) => p.text ?? '').join('').trim(),
+      blocked: !!blockReason && blockReason !== 'BLOCK_REASON_UNSPECIFIED'
+        || ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'RECITATION', 'IMAGE_SAFETY'].includes(finishReason),
+      text: chunks.map(visibleText).join('').trim(),
       provider: 'gemini', model: this.model,
-      inputTokens: body.usageMetadata?.promptTokenCount ?? null,
-      outputTokens: body.usageMetadata?.candidatesTokenCount == null ? null : body.usageMetadata.candidatesTokenCount + (body.usageMetadata.thoughtsTokenCount ?? 0),
+      inputTokens: usage?.promptTokenCount ?? null,
+      outputTokens: usage?.candidatesTokenCount == null ? null : usage.candidatesTokenCount + (usage.thoughtsTokenCount ?? 0),
       latencyMs: Date.now() - t0,
-      truncated: body.candidates?.[0]?.finishReason === 'MAX_TOKENS',
+      truncated: finishReason === 'MAX_TOKENS' || (!!last && !finishReason && streaming),
     }
   }
 }
+
+type GeminiResponse = {
+  candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>
+  promptFeedback?: { blockReason?: string }
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number }
+}
+const visibleText = (r: GeminiResponse) => (r.candidates?.[0]?.content?.parts ?? []).filter(p => !p.thought).map(p => p.text ?? '').join('')
