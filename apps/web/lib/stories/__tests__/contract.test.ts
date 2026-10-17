@@ -39,7 +39,7 @@ describe('5. 계약 결혼 — 정의', () => {
   })
 
   it('연락 규칙 6건(6번은 결말별 문안 3개)과 정책', () => {
-    expect(def.contacts.map(r => r.key)).toEqual(['w5_dm1', 'w5_dm2', 'w5_dm3', 'w5_dm4', 'w5_dm5', 'w5_dm6_a', 'w5_dm6_b', 'w5_dm6_c'])
+    expect(def.contacts.map(r => r.key)).toEqual(['w5_dm1', 'w5_dm2', 'w5_dm3', 'w5_dm4', 'w5_dm5', 'w5_dm6_a', 'w5_dm6_b', 'w5_dm6_c', 'w5_after_a', 'w5_after_b'])
     expect(def.contactPolicy).toMatchObject({ dailyCap: 2, speakerGapHours: 8, unreadPerSpeaker: 1, quiet: { start: '22:00', end: '09:00' } })
     expect(def.qa).toHaveLength(8)
   })

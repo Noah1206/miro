@@ -174,7 +174,7 @@ describe('4. 국민 배우 — 원고 QA', () => {
   })
 
   it('연락 규칙 6개와 정책', () => {
-    expect(def.contacts.map(c => c.key)).toEqual(['w4_dm1', 'w4_dm2', 'w4_dm3', 'w4_dm4', 'w4_dm5', 'w4_dm6'])
+    expect(def.contacts.map(c => c.key)).toEqual(['w4_dm1', 'w4_dm2', 'w4_dm3', 'w4_dm4', 'w4_dm5', 'w4_dm6', 'w4_after_romance', 'w4_after_open', 'w4_after_haejun'])
     expect(def.contactPolicy).toEqual({ dailyCap: 2, speakerGapHours: 8, unreadPerSpeaker: 1, quiet: { start: '22:00', end: '09:00' }, medium: '메시지' })
     // 허락 전에는 보류(취소 아님)
     const s = play(def, ['E1:A']).state
