@@ -90,7 +90,9 @@ export async function precompileAgencyRevisions(limit = 2): Promise<number> {
     .innerJoin(characters, eq(characters.id, characterRevisions.characterId))
     .where(and(isNull(characters.deletedAt), or(eq(characterRevisions.status, 'pending'),
       and(inArray(characterRevisions.status, ['compiling', 'failed']), lt(characterRevisions.attempts, 3), lt(characterRevisions.leaseUntil, new Date())))))
-    .orderBy(desc(characterRevisions.createdAt)).limit(limit)
+    // 공개 캐릭터 여럿이 한 번에 바뀌면(10/17: 7명) 한 번에 2개씩으로는 정리가 몇 시간 밀렸다 — 4개까지(같은 정리 함수의 300초 안에서 다른 단계 몫을 남긴다). 배경 호출은 서버마다
+    // 한 번에 하나만 허용되므로(acquireProvider) 차례로 한다(하나 약 17초).
+    .orderBy(desc(characterRevisions.createdAt)).limit(Math.max(limit, 4))
   const { compileAgencyRevision } = await import('./runtime')
   let compiled = 0
   for (const revision of pending) {
