@@ -176,7 +176,7 @@ describe('context builder', () => {
       expect(c.system).toContain('{"type":"narrative","speaker":null,"text":"scene"},{"type":"action","speaker":"토마스"')
     }
     expect(n.system).toMatch(/서술과 묘사를 충분히/)
-    for (const c of [m, n]) expect(c.system).toMatch(/thought 블록은 이 캐릭터 자신의 말하지 않은 속마음/)
+    for (const c of [m, n]) expect(c.system).toMatch(/thought 블록은 이 캐릭터가 속으로 삼킨 혼잣말/)
     // A reality character's chat is the in-person scene; its messages and calls live in the Reality layer.
     const met = buildContext(snapshot({ userInput: '뭐해', experienceType: 'reality' }))
     expect(met.system).toMatch(/직접 만나 같은 공간에 있는 장면/)

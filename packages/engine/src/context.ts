@@ -115,11 +115,17 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   ].join('\n')
   // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
   const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다. 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
-  const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
+  const thought = inPerson + THOUGHT_RULE
   if (tense) return base + `\n- 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 주고, 전체 ${tenseMax}까지 늘려도 됩니다.` + (prose ? ' 사용자가 섞어 쓴 묘사도 받아 서술과 묘사를 충분히 이어 갑니다.' : '') + thought
   if (prose) return base + '\n- 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 그 묘사를 받아 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
   return base + thought
 }
+
+/**
+ * 속마음은 혼잣말이다(10/17 사용자: "어투가 어색해, AI 같아"). 실측 예 — "처음이라니. 당신에게는 정작 나를 처음 알게 되었던
+ * 그날 밤의 일까지 이 안에 묶여 있으니 당연한지도 모르겠지." 상대에게 사정을 풀어 설명하는 번역투 문장이었다.
+ */
+const THOUGHT_RULE = '\n- thought 블록은 이 캐릭터가 속으로 삼킨 혼잣말입니다. 사용자 캐릭터는 듣지 못합니다. 실제 사람이 속으로 하는 말처럼 짧은 구어 한두 마디로, 끊기거나 말끝을 흐려도 됩니다. 이 인물의 평소 말투·말버릇을 그대로 씁니다. 속으로 상대를 "당신"이라 부르며 사정을 풀어 설명하지 않고, 독자를 위해 상황을 해설하지 않습니다. 접속사로 긴 이유를 잇거나 "~인지도 모르겠지", "~까지 ~있으니" 같은 번역투·문어체를 쓰지 않습니다. 겉으로 숨긴 감정이 여기서 드러날 수 있지만, 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동은 단정하지 않습니다.'
 
 /**
  * 자율성의 짧은 응답도 같은 목소리로 말한다. 상황·속마음·대사 세 칸을 매번 채우지 않는다.
@@ -127,7 +133,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
 function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, tense: boolean): string {
   const base = USER_VIEWPOINT + '\n- 응답 구성: 사용자의 말 중 이 인물에게 중요한 부분에 자기 말투로 반응하고, 앞서 하던 일과 대화를 이어 갑니다. action·narrative·thought는 말만으로 전달되지 않는 새 정보가 있을 때만 씁니다. 상황·속마음·대사의 고정 순서나 개수를 채우지 않습니다. 대사만으로 충분한 순간도 있습니다. 작성된 말끝·호칭·문장 길이를 유지하고, 사용자 문장을 되풀이한 뒤 감사·사과·질문을 붙이는 틀을 피합니다.'
   const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다. 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
-  const thought = inPerson + '\n- thought 블록은 이 캐릭터 자신의 말하지 않은 속마음입니다. 캐릭터의 목소리로 짧게 씁니다. 겉으로 숨기는 감정은 여기서 드러날 수 있습니다. 새로운 사실, 캐릭터가 모르는 정보, 사용자의 마음이나 행동을 단정하지 않습니다. 사용자 캐릭터는 이 속마음을 듣지 못합니다.'
+  const thought = inPerson + THOUGHT_RULE
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 서술과 묘사를 충분히, 장면의 공기와 감각을 함께 전달합니다.' + thought
   if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다 — 행동과 환경 반응에 무게를 줍니다.' + thought
   if (input.length > 60) return base + ' 일상 장면은 짧게, 중요한 장면은 길게.' + thought
