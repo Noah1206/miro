@@ -384,6 +384,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='talk']) .narrationText,
 :global([data-chat-theme='talk']) .opening { color:#354957; }
 .narrationText p + p { margin-top:16px; }
+/* 상황 서술은 기울임·좁은 자간(10/17 요청 예시) — 위의 테마 공통 규칙(normal·0)보다 뒤에 둔다. 크기·줄 간격·색은 그대로. */
+:global([data-chat-theme]) .narrationText { font-style:italic; letter-spacing:-.4px; }
 :global([data-chat-theme='dm']) .bubble,
 :global([data-chat-theme='dm']) .userBubble,
 :global([data-chat-theme='dm-light']) .bubble,
