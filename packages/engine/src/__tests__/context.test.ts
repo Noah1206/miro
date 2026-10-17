@@ -169,7 +169,7 @@ describe('context builder', () => {
     // 9/24 실측: 짧은 입력에 "한 줄씩" 규칙을 주면 답이 3블록·100자 안팎에 머물렀다. 길이는 입력이 아니라 장면이 정한다.
     expect(m.system).not.toMatch(/상황 한 줄, 속마음 한 줄/)
     for (const c of [m, n]) {
-      expect(c.system).toMatch(/자연스럽게 끝난 답을 글자 수 때문에 늘리지 않습니다/)
+      expect(c.system).toMatch(/같은 감정이나 문장을 되풀이해서 채우지 않고/)
       expect(c.system).not.toMatch(/블록 5~8개, 전체 500~900자/)
       expect(c.system).toMatch(/사용자 발화에 먼저 반응/)
       // 계약의 예시가 대사 한 블록이면 모델도 한 블록으로 답한다 — 장면의 박자를 보여 준다.
@@ -190,7 +190,7 @@ describe('context builder', () => {
     const tense = { userInput: '응', activeEvents: [event()] }
     expect(buildContext(snapshot(tense)).system).toMatch(/전체 1300자까지/)
     expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/전체 2200자까지/)
-    expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/긴 대화는 필요한 행동과 대사를 더 펼치되/)
+    expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/긴 대화는 장면 하나를 900~1600자로/)
   })
 
   it('keeps the agency renderer on the measured brief directive', () => {
