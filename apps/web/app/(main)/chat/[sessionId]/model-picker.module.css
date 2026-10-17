@@ -9,7 +9,8 @@
 .options { display:grid; gap:3px; }
 .option { display:flex; flex-direction:column; align-items:flex-start; gap:5px; width:100%; min-height:70px; padding:13px 15px; border:0; border-radius:8px; background:transparent; color:#c6bacf; text-align:left; cursor:pointer; }
 .option[aria-pressed=true] { color:#f5f3f8; }
-.option[aria-pressed=true] { background:#ffffff0f; }
+/* 선택된 항목은 처음 열 때부터 표시한다(10/17) — 색은 원래 값. */
+.option[aria-pressed=true] { background:#211a2ac9; }
 .heading { display:flex; align-items:center; gap:8px; }
 .heading strong { font-size:15px; font-weight:500; }
 .heading small { color:#b4a5c2; font-size:11px; font-weight:400; }
@@ -56,8 +57,3 @@
 
 /* MIRO·ECHO 영문 이름 — 대문자 상표 글자처럼 살짝 벌린다. */
 .brand { letter-spacing: .08em; font-weight: 600; }
-
-/* 메뉴 배경(10/17 요청: 탁한 보라 회색이 별로) — 입력창과 같은 결의 어두운 단색. 선택된 항목은 처음 열 때부터 밝은 바탕. */
-.panel { background:#121215f7; border-color:#ffffff12; box-shadow:0 18px 45px #0008,inset 0 1px 0 #ffffff08; }
-/* 선택된 항목은 메뉴 바탕보다 더 어둡게(10/17 요청). */
-.option[aria-pressed=true] { background:#050506; }
