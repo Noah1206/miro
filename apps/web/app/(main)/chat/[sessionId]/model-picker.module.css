@@ -62,3 +62,5 @@
 .panel { background: linear-gradient(120deg, #2e2e31dc, #141416e6); border-color: #ffffff1a; }
 /* 입력창 안 MIRO 버튼의 위아래 바탕 여백 줄이기(10/17 요청) — 높이 30 → 24px. */
 .root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { min-height: 24px; padding-block: 0; }
+/* MIRO 버튼 왼쪽 안쪽 여백 6 → 10px(10/17 요청). */
+.root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { padding-left: 10px; }
