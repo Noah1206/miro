@@ -16,6 +16,8 @@ type Status = 'checking' | 'unsupported' | 'ios_install' | 'unconfigured' | 'pro
  */
 /** 한 브라우저 세션에 한 번만 먼저 묻는다 — '나중에' 를 누른 사람에게 화면마다 다시 묻지 않는다. */
 const ASKED_KEY = 'miro:push-asked'
+/** 들어온 뒤 이 시간 안에 권한 확인이 끝났을 때만 먼저 묻는다. */
+const ENTRY_WINDOW_MS = 5000
 function askedThisSession(): boolean {
   try { return sessionStorage.getItem(ASKED_KEY) === '1' } catch { return false }
 }
@@ -50,6 +52,10 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   const [welcome, setWelcome] = useState(false)
   useEffect(() => { setWelcome(new URLSearchParams(window.location.search).has(WELCOME_PARAM)) }, [])
   const shown = useRef(false)
+  // 들어온 순간에만 묻는다 — 확인이 늦게 끝나면 대화 도중에 시트가 올라와 입력창을 가렸다(10/17 운영 실측). 늦으면 이번엔 묻지 않고
+  // (물었다고 기록하지 않으므로) 다음에 들어올 때 묻는다.
+  const mountedAt = useRef(0)
+  useEffect(() => { mountedAt.current = Date.now() }, [])
   useEffect(() => {
     if (!autoPrompt || status === 'working') return
     // 확인이 오래 걸리면(서비스 워커가 안 뜨는 등) 뒤의 팝업을 붙잡아 두지 않는다.
@@ -59,6 +65,7 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     const asks = status === 'prompt' || status === 'ios_install' || status === 'denied' || (welcome && status === 'subscribed')
     if (!asks || askedThisSession()) { markPushPromptDone(); return }
     // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
+    if (Date.now() - mountedAt.current > ENTRY_WINDOW_MS) { markPushPromptDone(); return }
     const timer = setTimeout(() => { shown.current = true; markPushAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
     return () => clearTimeout(timer)
   }, [autoPrompt, status, welcome])

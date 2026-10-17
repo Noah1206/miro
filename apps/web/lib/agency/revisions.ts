@@ -80,6 +80,12 @@ export async function precompileAgencyRevisions(limit = 2): Promise<number> {
     .leftJoin(characterRevisions, eq(characterRevisions.characterId, characters.id))
     .where(and(eq(characters.experienceType, 'reality'), isNull(characters.deletedAt), isNull(characterRevisions.id))).limit(limit)
   for (const { id } of missing) await db.transaction(tx => captureAgencyRevision(tx, id))
+  // 공개 캐릭터는 설정이 바뀌었는지 매번 본다 — 시드·공식 문구 수정·판 형식 변경은 편집기를 거치지 않아, 새 판이 첫 대화 때에야
+  // 생겨 그 첫 턴이 옛 경로로 돌았다(10/17 운영 서이안). 바뀐 게 없으면 기존 판을 돌려줄 뿐이다(DB 만, 모델 호출 없음).
+  // ponytail: 공개 캐릭터 전부를 매번 훑는다(10/17 12명). 수백 명이 되면 설정 갱신 시각 컬럼으로 바뀐 것만.
+  const listed = await db.select({ id: characters.id }).from(characters)
+    .where(and(eq(characters.experienceType, 'reality'), eq(characters.isPublic, true), isNull(characters.deletedAt)))
+  for (const { id } of listed) await db.transaction(tx => captureAgencyRevision(tx, id))
   const pending = await db.select({ id: characterRevisions.id, ownerId: characters.ownerId }).from(characterRevisions)
     .innerJoin(characters, eq(characters.id, characterRevisions.characterId))
     .where(and(isNull(characters.deletedAt), or(eq(characterRevisions.status, 'pending'),
