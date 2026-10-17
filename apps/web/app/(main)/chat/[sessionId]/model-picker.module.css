@@ -53,3 +53,6 @@
 .root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { min-height: 30px; padding-inline: 6px; gap: 3px; font-size: 11px; border-radius: 8px; }
 .root[data-place='up'] .trigger .icon, :global([data-chat-theme]) .root[data-place='up'] .trigger .icon { width: 16px; height: 16px; }
 .root[data-place='up'] .panel { top: auto; bottom: calc(100% + 6px); left: 0; right: 0; }
+
+/* MIRO·ECHO 영문 이름 — 대문자 상표 글자처럼 살짝 벌린다. */
+.brand { letter-spacing: .08em; font-weight: 600; }
