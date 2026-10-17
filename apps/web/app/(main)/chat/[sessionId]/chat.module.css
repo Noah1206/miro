@@ -416,3 +416,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* 입력창 바탕(10/17 요청): 대화 방식 메뉴처럼 보라를 뺀 검정 회색. */
 :global([data-chat-theme='miro']) .composerForm { background: #18181a; }
+/* 입력창 양옆 여백(10/17 요청) 14px → 22px. */
+:global([data-chat-theme='miro']) .composer { padding-inline: 22px; }
