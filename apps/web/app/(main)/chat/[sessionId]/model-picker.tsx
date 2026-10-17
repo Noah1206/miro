@@ -1,6 +1,5 @@
 'use client'
 import { createContext, useContext, useEffect, useState, useRef, useId, type ReactNode } from 'react'
-import { TransitionLink } from '@/components/ui'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 import { useWallet } from '@/components/wallet/provider'
@@ -31,7 +30,6 @@ export function ModelPicker({ choices = [], place }: { freeReady: boolean; proRe
   const { wallet, openRecharge } = useWallet()
   const [open, setOpen] = useState(false)
   const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
-  const [interacted, setInteracted] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const panel = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -58,11 +56,11 @@ export function ModelPicker({ choices = [], place }: { freeReady: boolean; proRe
       <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reduce ? 0 : .24, ease: ease.standard }} aria-hidden width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></motion.svg>
     </motion.button>
     <AnimatePresence>
-    {open && <motion.div ref={panel} id={panelId} role="dialog" aria-label={t('대화 방식 선택')} tabIndex={-1} className={sheet.panel} data-interacted={interacted}
+    {open && <motion.div ref={panel} id={panelId} role="dialog" aria-label={t('대화 방식 선택')} tabIndex={-1} className={sheet.panel}
       initial={reduce ? false : { opacity: 0, y: -8, scale: .97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: reduce ? 0 : -6, scale: reduce ? 1 : .98 }} transition={{ duration: reduce ? 0 : .24, ease: ease.enter }} style={{ transformOrigin: 'top left' }}>
       <div className={sheet.options}>
-        {choices.map(c => <motion.button whileTap={reduce ? undefined : { scale: .98 }} transition={spring.quick} type="button" key={c.id} className={sheet.option} aria-pressed={selected?.id === c.id} onClick={() => { setInteracted(true); setModel(c.id); setOpen(false) }}>
+        {choices.map(c => <motion.button whileTap={reduce ? undefined : { scale: .98 }} transition={spring.quick} type="button" key={c.id} className={sheet.option} aria-pressed={selected?.id === c.id} onClick={() => { setModel(c.id); setOpen(false) }}>
           <span className={sheet.heading}><strong className={`${brand.className} ${sheet.brand}`}>{label(c)}</strong><small>{c.length === 'long' ? t('긴 대화') : t('기본 대화')}</small></span>
           <span className={sheet.description}>{c.length === 'long' ? t('묘사를 더해 길게 이어가는 대화') : t('간결하게 주고받는 대화')}</span>
         </motion.button>)}
@@ -71,7 +69,6 @@ export function ModelPicker({ choices = [], place }: { freeReady: boolean; proRe
       <div className={sheet.wallet}>
         <span>{t('남은 토큰')} <strong>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong></span>
         <div className={sheet.actions}>
-          <TransitionLink href="/my/subscription" onClick={() => setOpen(false)}>{t('내역')}</TransitionLink>
           <button type="button" onClick={() => { setOpen(false); openRecharge() }}>{t('충전')} <span aria-hidden>＋</span></button>
         </div>
       </div>
