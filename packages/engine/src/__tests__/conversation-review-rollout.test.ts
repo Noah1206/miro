@@ -19,7 +19,7 @@ describe('experimental conversation review rollout', () => {
   it('retains the deployed small explicit-preference check while the ledger is off', async () => {
     vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0')
     const llm: LLMProvider = { info: { mode: 'mock', name: 'rollout-contract', notice: '' }, async generateStructured(request) {
-      expect(request.promptVersion).toBe('agency-communication-check:v2')
+      expect(request.promptVersion).toBe('agency-communication-check:v3')
       expect(request.maxTokens).toBe(192)
       const data = JSON.parse(request.prompt)
       expect(data.preferenceEvidence[0].text).toBe('과한 별명 대신 민이라고 불러 줘.')
