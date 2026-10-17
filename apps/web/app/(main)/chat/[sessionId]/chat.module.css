@@ -52,7 +52,8 @@
 .reply > [hidden] { display: none; }
 .narration { display: flex; align-items: flex-start; gap: 8px; }
 .narrationIcon { width: 32px; height: 16px; flex-shrink: 0; margin-top: 4px; color: var(--color-text-tertiary); }
-.narrationText { flex: 1; min-width: 0; color: var(--color-text-secondary); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; font-style: italic; overflow-wrap: anywhere; }
+/* 상황 서술은 가운데 정렬 — 왼쪽 아이콘 폭(20px+간격 8px)만큼 오른쪽도 비워 화면 가운데에 맞춘다(10/17 요청). */
+.narrationText { flex: 1; min-width: 0; text-align: center; padding-right: 28px; color: var(--color-text-secondary); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; font-style: italic; overflow-wrap: anywhere; }
 .narrationText p { margin: 0; white-space: pre-wrap; }
 .narrationText p + p { margin-top: 12px; }
 .narrationText em { font-style: normal; }
