@@ -58,4 +58,6 @@
 .brand { letter-spacing: .08em; font-weight: 600; }
 
 /* 메뉴 배경(10/17 요청: 탁한 보라 회색이 별로) — 입력창과 같은 결의 어두운 단색. 선택된 항목은 처음 열 때부터 밝은 바탕. */
-.panel { background:#1c1b22f2; border-color:#ffffff14; box-shadow:0 18px 45px #0006,inset 0 1px 0 #ffffff0a; }
+.panel { background:#121215f7; border-color:#ffffff12; box-shadow:0 18px 45px #0008,inset 0 1px 0 #ffffff08; }
+/* 선택된 항목은 메뉴 바탕보다 더 어둡게(10/17 요청). */
+.option[aria-pressed=true] { background:#050506; }
