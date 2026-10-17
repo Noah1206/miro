@@ -57,3 +57,6 @@
 
 /* MIRO·ECHO 영문 이름 — 대문자 상표 글자처럼 살짝 벌린다. */
 .brand { letter-spacing: .08em; font-weight: 600; }
+
+/* 메뉴 바탕: 원래 그라데이션 구조에서 보라를 빼고 검정 쪽으로(10/17 요청). */
+.panel { background: linear-gradient(120deg, #2e2e31dc, #141416e6); border-color: #ffffff1a; }
