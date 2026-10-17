@@ -188,7 +188,7 @@ describe('context builder', () => {
 
   it('lets a tense scene run longer, more so for ECHO', () => {
     const tense = { userInput: '응', activeEvents: [event()] }
-    expect(buildContext(snapshot(tense)).system).toMatch(/전체 1300자까지/)
+    expect(buildContext(snapshot(tense)).system).toMatch(/전체 1400자까지/)
     expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/전체 2200자까지/)
     expect(buildContext(snapshot(tense), 1, false, 'long').system).toMatch(/긴 대화는 장면 하나를 900~1600자로/)
   })

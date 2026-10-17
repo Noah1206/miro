@@ -23,18 +23,20 @@ export type FeatureName =
   | 'storyPush'
   /** Experimental inline source ledger. Kept off until false rejections are resolved. */
   | 'strictConversationReview'
+  /** 대화 화면 턴에서 계획을 기다리지 않고 대사를 먼저 시작한다(10/17 속도). 기준표 통과 전까지 끔. */
+  | 'speakFirst'
 
 export type Mode = 'alpha' | 'production'
 
 const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
-    messengerPhotos: true, strictConversationReview: false,
+    messengerPhotos: true, strictConversationReview: false, speakFirst: false,
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false, voiceCallAudio: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: true,
   },
   production: {
-    messengerPhotos: true, strictConversationReview: false,
+    messengerPhotos: true, strictConversationReview: false, speakFirst: false,
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true, voiceCallAudio: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     // 2026-09-24: 관계가 표현 규칙에만 걸려 움직이지 않았다 — AI 분류를 매 턴 붙인다(턴 원가 약 +10%).

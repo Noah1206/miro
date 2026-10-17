@@ -168,7 +168,7 @@ describe('runTurn — state update pipeline', () => {
     ] })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕' })
     await runTurn({ llm: capturing(), snapshot: snapshot(), userInput: '안녕', replyLength: 'long' })
-    expect(systems[0]).toContain('기본 대화는 장면 하나를 6~9개 블록')
+    expect(systems[0]).toContain('기본 대화는 장면 하나를 최소 650자')
     expect(systems[1]).toContain('긴 대화는 장면 하나를 900~1600자로')
     expect(versions).toEqual(['dialogue:v1+scene-beats+voice-conversation-v3', 'dialogue:v1+scene-long+voice-conversation-v3'])
   })
