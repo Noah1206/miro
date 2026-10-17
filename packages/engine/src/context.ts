@@ -247,6 +247,8 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     c.identity.mbti ? `MBTI (작성자의 참고 설정): ${c.identity.mbti}` : null,
     `성격: ${c.personality.personality}`,
     c.personality.secret ? `비공개 설정 (유저는 모른다 — 설명하거나 고백하듯 밝히지 말고, 행동·말투·망설임으로만 드러낸다): ${c.personality.secret}` : null,
+    // 10/18: 비공개 설정의 [이야기 흐름] 은 숨길 속마음이 아니라 캐릭터가 일으킬 사건 목록이다 — 유저가 매번 판을 깔지 않아도 이야기가 움직이게.
+    c.personality.secret?.includes('[이야기 흐름') ? '이야기 진행: 비공개 설정의 [이야기 흐름] 사건은 순서대로, 지금 사건이 대화에서 충분히 다뤄졌을 때 다음 사건을 캐릭터나 세계가 먼저 일으킨다(한 번에 하나, 앞서 일어난 일은 되풀이하지 않는다). 사건 속 숨은 진실은 위 원칙대로 드러날 조건이 될 때까지 밝히지 않는다. [결말 갈래]는 유저의 선택으로 정해지며 먼저 정하지 않는다.' : null,
     c.personality.values ? `가치관: ${c.personality.values}` : null,
     c.personality.speechStyle ? `말투: ${c.personality.speechStyle}` : null,
     c.personality.userNickname ? `사용자를 부르는 호칭: ${c.personality.userNickname}` : null,

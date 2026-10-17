@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
 import { SEEDS as SEEDS_1, type Seed } from './bl-characters.data.mts'
 import { SEEDS_2 } from './bl-characters-2.data.mts'
+import { SEEDS_3 } from './bl-characters-3.data.mts'
 import { SCENE_OPENINGS } from './scene-openings.data.mts'
 
 // 기본이 아닌 도입부의 첫 인트로 줄에 그 장면의 첫 장면 설명·시각·장소를 붙인다(10/6, lib/intro-dialogue sceneOpening).
@@ -26,8 +27,8 @@ function withSceneOpenings(s: Seed): Seed {
   }) }
 }
 
-// 1차 11명(10/4) + 2차 3명(10/5). slug 로 중복을 막으니 다시 돌려도 새 것만 들어간다.
-const SEEDS: Seed[] = [...SEEDS_1, ...SEEDS_2].map(withSceneOpenings)
+// 1차 11명(10/4) + 2차 3명(10/5) + 3차 6명(10/18). slug 로 중복을 막으니 다시 돌려도 새 것만 들어간다.
+const SEEDS: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3].map(withSceneOpenings)
 
 const OWNER = 'f5a0dfcb-0e4c-443e-be17-c982234926c1' // 운영자(ab40905045@gmail.com) — 권재혁 소유자와 같다
 const DOC = new URL('../../../docs/bl-characters-2026-10-04.md', import.meta.url)
