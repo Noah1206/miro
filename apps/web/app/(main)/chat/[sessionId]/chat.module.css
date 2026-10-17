@@ -407,3 +407,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .toolButton { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; }
 .toolButton svg { width: 18px; height: 18px; }
 .toolButton:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* 글자 크기(10/17 요청: 전체적으로 너무 크다) — 기본 테마의 서술·말풍선 16px → 15px. dm·talk 테마는 이미 14~15px. */
+:global([data-chat-theme='miro']) .narrationText,
+:global([data-chat-theme='miro']) .opening,
+:global([data-chat-theme='miro']) .bubble,
+:global([data-chat-theme='miro']) .userBubble { font-size: 15px; }
