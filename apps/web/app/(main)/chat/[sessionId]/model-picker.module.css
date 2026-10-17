@@ -9,8 +9,8 @@
 .options { display:grid; gap:3px; }
 .option { display:flex; flex-direction:column; align-items:flex-start; gap:5px; width:100%; min-height:70px; padding:13px 15px; border:0; border-radius:8px; background:transparent; color:#c6bacf; text-align:left; cursor:pointer; }
 .option[aria-pressed=true] { color:#f5f3f8; }
-/* 선택된 항목은 처음 열 때부터 표시한다(10/17) — 색은 원래 값. */
-.option[aria-pressed=true] { background:#211a2ac9; }
+/* 선택된 항목은 처음 열 때부터 표시한다(10/17). 색은 반투명 검정 — 보라보다 검정이 낫다(10/17 요청), 바탕 그라데이션은 원래대로. */
+.option[aria-pressed=true] { background:#000000a6; }
 .heading { display:flex; align-items:center; gap:8px; }
 .heading strong { font-size:15px; font-weight:500; }
 .heading small { color:#b4a5c2; font-size:11px; font-weight:400; }
