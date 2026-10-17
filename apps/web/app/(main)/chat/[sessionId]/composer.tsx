@@ -18,6 +18,8 @@ import { useT } from '@/lib/i18n/client'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
+/** 첫 글자가 이만큼 안 오면 멈춘 게 아니라고 조용히 알린다(10/17 — 공급자 재시도로 20초까지 늘어지는 턴). */
+const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 헤더에서 공유한다. */
 export function ChatComposer({ sessionId, characterName, modelOptions }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker> }) {
@@ -32,14 +34,24 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
     if (sending.current) return
     sending.current = true
     setPending(true)
+    // 보낸 글은 바로 비운다 — 답을 기다리는 동안 다음 말을 쓸 수 있게(10/17 사용자). 실패하면 다시 보낼 수 있게 되돌리되,
+    // 그 사이 새로 쓴 글은 덮어쓰지 않는다.
+    const sent = { input: String(form.get('input') ?? ''), requestId: String(form.get('requestId') ?? '') }
+    setDraft('')
+    const restore = (sameId: boolean) => {
+      if (draftNow.current.trim()) return
+      setDraft(sent.input); setRequestId(sameId ? sent.requestId : crypto.randomUUID())
+    }
     try {
       const result = await streamTurn(form, setLive)
       setState(result)
       if (result.limit) openRecharge()
-      if (result.succeeded) { setDraft(''); setRequestId(crypto.randomUUID()) }
+      if (result.succeeded) { if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
+      else if (!result.keepWaiting) restore(!!result.retryWithSameId)
     } catch {
       setState({ error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true })
       setLive(null)
+      restore(true)
     } finally {
       sending.current = false
       setPending(false)
@@ -55,6 +67,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
   const [requestId, setRequestId] = useState('')
   const [draft, setDraft] = useState('')
+  const draftNow = useRef(draft)
+  draftNow.current = draft
   const [ready, setReady] = useState(false)
   const hasText = !!draft.trim()
   const storageKey = `miro:chat-draft:${sessionId}`
@@ -89,7 +103,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
         startRefresh(() => router.refresh())
       }
     }
-    else if (state.error && !state.retryWithSameId) setRequestId(crypto.randomUUID())
+    else if (state.error && !state.retryWithSameId && !draftNow.current.trim()) setRequestId(crypto.randomUUID())
     // live 는 결과가 올 때의 값만 본다 — 블록이 올 때마다 이 효과를 다시 돌리지 않는다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, append, router, setLive])
@@ -104,8 +118,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   useEffect(() => {
     if (!state.keepWaiting) return
     setWaiting(true)
-    setDraft('')
-    setRequestId(crypto.randomUUID())
+    if (!draftNow.current.trim()) setRequestId(crypto.randomUUID())
     const timer = setTimeout(() => setWaiting(false), KEEP_WAITING_MS)
     return () => clearTimeout(timer)
   }, [state])
@@ -113,6 +126,13 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
   useEffect(() => { if (draft) setWaiting(false) }, [draft])
   // 첫 블록이 오면 점 대신 답이 보인다.
   const showTyping = (pending && !live?.blocks.length) || waiting
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    setSlow(false)
+    if (!pending || live?.blocks.length) return
+    const timer = setTimeout(() => setSlow(true), SLOW_NOTICE_MS)
+    return () => clearTimeout(timer)
+  }, [pending, !!live?.blocks.length])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
@@ -133,6 +153,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
           <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>
             {t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}
             <span className={styles.typingDots} aria-hidden><i /><i /><i /></span>
+            {slow && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)' }}>{t('조금 오래 걸리고 있어요')}</span>}
           </motion.p>
         )}
         {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</motion.p>}
@@ -147,13 +168,13 @@ export function ChatComposer({ sessionId, characterName, modelOptions }: { sessi
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
-        <ChatInputMore disabled={pending || calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={pending || calendarPending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
+        <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={calendarPending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
           />
         <div className={styles.composerBar}>
-          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={pending || calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
           <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
             {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
           </Pressable>
