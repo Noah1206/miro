@@ -55,6 +55,21 @@ describe('1. 사관학교 — 원고 QA', () => {
     expect(wrong.vars.truth).toBe(false)
   })
 
+  it('함정과 오지목: 원장만 있어도 E4 T 함정이면 그랑 지목이 서고, 부학장 지목은 반박당한다', () => {
+    const trap = play(def, ['E1:A', 'E2:C', 'E3:C', 'E4:T', 'E4:B', 'E5:H'])
+    expect(trap.log.flatMap(l => l.rejected)).toEqual([])
+    expect(trap.state.vars.evidence).toEqual(['seal'])
+    expect(trap.state.known.player).toContain('trap_caught')
+    expect(trap.state.vars.truth).toBe(true)
+    expect(trap.state.known.player).toContain('full')
+    const noBait = play(def, ['E1:A', 'E2:A', 'E3:B', 'E4:T'])
+    expect(noBait.log.at(-1)!.rejected[0]).toContain('원장 뒷장')
+    const brant = play(def, ['E1:A', 'E2:A', 'E3:A', 'E4:S', 'E4:B', 'E5:W']).state
+    expect(brant.known.player).toContain('brant_wrong')
+    expect(brant.vars.truth).toBe(false)
+    expect(brant.known.player).not.toContain('kael_decoy')
+  })
+
   it('증거 미달 A/B 진로는 실패 결말 대신 재선택 대기', () => {
     const { state, log } = play(def, ['E1:R', 'E2:D', 'E3:C', 'E4:B', 'E5:C', 'E6:A', 'E6:B'])
     expect(log.slice(-2).map(l => l.rejected[0])).toEqual([expect.stringContaining('실험부대'), expect.stringContaining('공공 시험단')])

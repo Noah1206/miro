@@ -14,7 +14,7 @@ const allowAll = { say: '모두 메시지 받을게요', actions: ['C1', 'C2', '
 const known = (s: StoryState, who: string) => s.known[who] ?? []
 
 // 연애 경로: 신뢰 E2·E4·E5 각 +1 = 3
-const ROMANCE_TO_E6 = ['E1:A', 'E2:CLAUSE:c2', 'E2:CLAUSE:c3', 'E2:A', 'E3:A', 'E4:B', 'E5:CLAUSE:c9', 'E5:HEART_YES', 'E5:FEEL_YES', 'E5:A']
+const ROMANCE_TO_E6 = ['E1:A', 'E2:CLAUSE:c2', 'E2:CLAUSE:c3', 'E2:A', 'E3:A', 'E4:WORD', 'E4:B', 'E5:CLAUSE:c9', 'E5:HEART_YES', 'E5:FEEL_YES', 'E5:A']
 
 describe('5. 계약 결혼 — 정의', () => {
   it('정의가 무결하다', () => { expect(validateDefinition(def)).toEqual([]) })
@@ -24,7 +24,7 @@ describe('5. 계약 결혼 — 정의', () => {
     const pub = [def.title, def.tagline, def.intro, def.notice, def.opening, def.worldPrompt, ...def.genres, ...def.tags,
       ...def.characters.flatMap(c => [c.look, c.publicPersona, c.startingRelation, c.prompt])].join('\n')
     for (const secret of ['유출자', '관리자 권한', '거짓 제목을 붙', '보관본', '서명 대조', '직무 정지된']) expect(pub).not.toContain(secret)
-    expect(def.creatorTruth).toContain('채문진')
+    expect(def.creatorTruth).toContain('채진')
   })
 
   it('진의 범행은 처음엔 누구의 지식에도 없고 E4 에서만 공개된다', () => {
@@ -74,7 +74,7 @@ describe('5. 계약 결혼 — 결말 도달', () => {
   })
 
   it('QA5 E5 사업 전환 → 혼인안 종료, 신뢰 유지, 약혼 발표 없이 C', () => {
-    const before = play(def, ['E1:A', 'E2:CLAUSE:c3', 'E2:A', 'E3:A', 'E4:B']).state
+    const before = play(def, ['E1:A', 'E2:CLAUSE:c3', 'E2:A', 'E3:A', 'E4:WORD', 'E4:B']).state
     expect(before.rel.C1!.trust).toBe(2)
     const { state } = play(def, ['E5:B', rels('colleague'), 'E6:C'], before)
     expect(state.vars).toMatchObject({ mode: 'business', terms: 'ended', joint_correction: true })
@@ -91,7 +91,7 @@ describe('5. 계약 결혼 — 결말 도달', () => {
     const e2 = play(def, ['E1:A', 'E2:A'])
     expect(e2.log[1]!.rejected[0]).toContain('③')
     expect(e2.state.current).toBe('E2')
-    const e6 = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:A', 'E5:B', 'E6:A', 'E6:B'])
+    const e6 = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:WORD', 'E4:A', 'E5:B', 'E6:A', 'E6:B'])
     expect(e6.log.slice(-2).map(l => l.rejected[0])).toEqual([expect.stringContaining('연애 결말'), expect.stringContaining('계약 유지')])
     expect(e6.state.current).toBe('E6')
     expect(e6.state.vars.route).toBe('unset')
@@ -99,7 +99,7 @@ describe('5. 계약 결혼 — 결말 도달', () => {
   })
 
   it('답변 유보는 E6 대기, 진로·관계가 모두 정해져야 끝난다', () => {
-    const { state } = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:A', 'E5:B', 'E6:WAIT', 'E6:C'])
+    const { state } = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:WORD', 'E4:A', 'E5:B', 'E6:WAIT', 'E6:C'])
     expect(state.current).toBe('E6')
     expect(play(def, [rels('colleague')], state).state.ending).toBe('own_names')
   })
@@ -161,7 +161,7 @@ describe('5. 계약 결혼 — 원고 QA', () => {
     const e1 = play(def, [{ say: '형이 유출자지?', actions: [{ type: 'memory', character: null, value: '형이 유출자라는 가설' }] }, 'E1:A', 'E2:B', 'E3:A']).state
     for (const who of ['player', 'C1', 'C2', 'C3']) expect(known(e1, who)).not.toContain('jin_culprit')
     expect(known(e1, 'player')).toContain('leak_title')
-    const e4 = play(def, ['E4:A'], e1).state
+    const e4 = play(def, ['E4:WORD', 'E4:A'], e1).state
     for (const who of ['player', 'C1', 'C3']) expect(known(e4, who)).toContain('jin_culprit')
   })
 
@@ -187,17 +187,24 @@ describe('5. 계약 결혼 — 원고 QA', () => {
   it('연락 규칙: 상태가 바뀌면 예약이 취소된다(재현 검토 → 수정본 승인)', () => {
     const s = play(def, [allowAll, 'E1:A', 'E2:CLAUSE:c3', 'E2:B']).state
     const p2 = rulesToSchedule(def, s, new Set()).find(r => r.key === 'w5_dm2')!
-    const later = play(def, ['E3:A', 'E4:B', 'E5:A'], s).state
+    const later = play(def, ['E3:A', 'E4:WORD', 'E4:B', 'E5:A'], s).state
     expect(shouldCancel(def, later, p2)).toBe('cancel_condition')
   })
 
   it('E5 책임 조치와 만찬은 앞 선택으로 갈린다', () => {
-    const met = play(def, ['E1:A', 'E2:CLAUSE:c3', 'E2:HAND', 'E2:A', 'E3:A', 'E4:A', 'E5:B']).state
+    const met = play(def, ['E1:A', 'E2:CLAUSE:c3', 'E2:HAND', 'E2:A', 'E3:A', 'E4:WORD', 'E4:A', 'E5:B']).state
     expect(known(met, 'player')).toEqual(expect.arrayContaining(['accountability_done', 'jin_apology', 'gala_held']))
     const far = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:D', 'E5:B']).state
     expect(known(far, 'player')).toEqual(expect.arrayContaining(['accountability_partial', 'gala_slip']))
     expect(known(far, 'player')).not.toContain('accountability_done')
     expect(far.vars.accountability).toBe(true)
+  })
+
+  it('E4 대조는 "결격"을 먼저 쓴 순간을 짚어야 시작된다', () => {
+    const r = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:A'])
+    expect(r.log[3]!.rejected[0]).toContain('그 단어')
+    expect(r.state.current).toBe('E4')
+    expect(known(r.state, 'player')).not.toContain('jin_culprit')
   })
 
   it('결말 판정은 정의된 엔딩 하나', () => {

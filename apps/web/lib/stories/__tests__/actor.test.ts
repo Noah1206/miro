@@ -84,21 +84,23 @@ describe('4. 국민 배우 — 원고 QA', () => {
     expect(end.ending).toBe('own_door')
   })
 
-  it('QA4 E1 조기 질문 → 도윤 인정·actor_approved 기록, 사건은 E1 에 머묾, 해준은 모른다', () => {
+  it('QA4 E1 조기 질문 → 은찬은 "제작 쪽 판단"으로 피하고, 승인 사실은 E3 에서만 드러난다', () => {
     const r = play(def, [{ say: '투자사에 먼저 보내라고 네가 지시했어?', actions: [{ type: 'option', option: 'Q' }] }])
     expect(r.state.current).toBe('E1')
-    expect(r.state.known.player).toContain('actor_approved')
-    expect(r.state.known.C1).toContain('actor_approved')
-    expect(r.state.known.C3).not.toContain('actor_approved')
+    expect(r.state.vars.asked_early).toBe(true)
+    expect(r.state.known.player).not.toContain('actor_approved')
+    expect(r.state.notes.some(n => n.includes('제작 쪽 판단'))).toBe(true)
     const later = play(def, ['E1:A', 'E2:A', 'E3:A'], r.state).state
     expect(later.current).toBe('E4')
-    expect(later.notes.some(n => n.includes('증빙 검토'))).toBe(true)
+    expect(later.known.player).toContain('actor_approved')
+    expect(later.known.C3).not.toContain('actor_approved')
   })
 
   it('QA5 E4 철회 → E5 도윤을 더 알고 싶음: 원작 미사용 유지, open 가능, 영화 재참여는 자동 아님', () => {
     let s = play(def, [allowAll, 'E1:A', 'E2:A', 'E3:A', 'E4:B']).state
     expect(rulesToSchedule(def, s, new Set(['w4_dm1', 'w4_dm2', 'w4_dm3'])).map(r => r.id)).toEqual(['P4'])
     const r = play(def, ['E5:A', { say: '도윤을 더 알고 싶어', actions: [{ type: 'option', option: 'IO' }] }, 'E5:R'], s)
+    expect(play(def, ['E5:IR'], s).log[0]!.rejected[0]).toContain('독회실 장면이 없다')
     expect(r.log[0]!.rejected[0]).toContain('철회한 프로젝트')
     s = r.state
     expect(s.vars).toMatchObject({ project: 'withdrawn', relation_intent: 'open', work_route: 'reading' })
@@ -173,9 +175,12 @@ describe('4. 국민 배우 — 원고 QA', () => {
     expect(endingFor(def, stopped)?.id).toBe('own_door')
   })
 
-  it('기사의 운명은 앞 선택으로 갈린다: 출처를 잡으면 묻히고, 못 잡으면 부인 인터뷰(신뢰 -1) 또는 추측 기사', () => {
-    expect(play(def, ['E1:A', 'E2:A', 'E3:A', 'E4:A']).state.vars.article).toBe('buried')
-    expect(play(def, ['E1:A', 'E2:C', 'E3:B', 'E4:A']).state.vars.article).toBe('buried')
+  it('기사의 운명은 선택으로 갈린다: 출처를 직접 잡으면 묻히고, 못 잡으면 부인 인터뷰(신뢰 -1) 또는 추측 기사', () => {
+    expect(play(def, ['E1:A', 'E2:A', 'E3:T', 'E3:A', 'E4:A']).state.vars.article).toBe('buried')
+    expect(play(def, ['E1:A', 'E2:C', 'E3:T', 'E3:B', 'E4:A']).state.vars.article).toBe('buried')
+    // 끈을 쥐고도 직접 당기지 않으면 출처는 저절로 드러나지 않는다
+    expect(play(def, ['E1:A', 'E2:A', 'E3:A', 'E4:A']).state.vars.article).toBe('denial')
+    expect(play(def, ['E1:A', 'E2:B', 'E3:T']).log[2]!.rejected[0]).toContain('끈이 없다')
     const denial = play(def, ['E1:A', 'E2:B', 'E3:A', trust('믿을 여지'), 'E4:A']).state
     expect(denial.vars.article).toBe('denial')
     expect(denial.known.player).not.toContain('nickname_leak')

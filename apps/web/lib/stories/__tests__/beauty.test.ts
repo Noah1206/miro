@@ -74,7 +74,7 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
     const { state } = play(def, [...PLAIN_PREFIX.slice(0, -1), 'E5:RETURN', 'E5:B', 'E6:FREE', e6Talk('C3')])
     expect(state.rel.C3!.trust).toBe(2)
   })
-  it('노엘: E4 출처 보호 + E6 대화 → 신뢰 2', () => {
+  it('자크: E4 출처 보호 + E6 대화 → 신뢰 2', () => {
     const { state } = play(def, ['E1:B', 'E2:HOLD', 'E3:HOLD', 'E4:SEALED', 'E5:B', 'E6:FREE', e6Talk('C4')])
     expect(state.rel.C4!.trust).toBe(2)
   })
@@ -111,6 +111,13 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
     expect(one.known.player).toContain('remedy_partial')
     const wit = play(def, ['E1:B', 'E2:HOLD', 'E3:HOLD', 'E4:SEALED', 'E5:B']).state
     expect(wit.known.player).toContain('garrett_part')
+  })
+  it('E1·E4 선택이 E5 판결로 돌아온다: 공개 항의→발언권, 루시안 반환→체불 임금, 가렛 역공은 E4 에서 공개', () => {
+    const { state } = play(def, ['E1:A', 'E2:DIRECT', 'E2:RELEASE', 'E3:HOLD', 'E4:REFUSE', 'E5:RETURN', 'E5:B'])
+    expect(state.known.player).toContain('garrett_accuses')
+    expect(state.known.player).toContain('hearing_voice')
+    expect(state.known.player).toContain('barc_returned')
+    expect(state.known.player).not.toContain('quiet_route')
   })
 })
 
@@ -161,7 +168,7 @@ describe('2. 예뻐졌더니 — 원고 QA 8건', () => {
     expect(s.rel.C1!.outcome).toBe('partner')
   })
 
-  it('QA5 E1 "범인은 하이델이지?" → 아무도 증거를 모르고, 노엘은 추적 정황만 안다', () => {
+  it('QA5 E1 "범인은 하이델이지?" → 아무도 증거를 모르고, 자크는 추적 정황만 안다', () => {
     const s = initialState(def)
     expect(s.known.player).toEqual([])
     expect(s.known.C4).toEqual(['sion_face', 'sion_errand'])
@@ -169,12 +176,12 @@ describe('2. 예뻐졌더니 — 원고 QA 8건', () => {
     for (const c of def.characters) for (const w of ['횡령했', '서명이 남', '덧씌웠']) expect(c.prompt).not.toContain(w)
   })
 
-  it('QA6 루시안 탐색 중 노엘 호감: 비독점이면 허용, 독점이면 연인 게이트가 막고 루시안 상태는 그대로', () => {
+  it('QA6 루시안 탐색 중 자크 호감: 비독점이면 허용, 독점이면 연인 게이트가 막고 루시안 상태는 그대로', () => {
     const base = play(def, ['E1:B', 'E2:AUDIT', 'E2:RELEASE', 'E3:HOLD', 'E4:SEALED', 'E5:RETURN', 'E5:B', 'E6:FREE', e6Talk('C3'), e6Talk('C4'),
-      say('루시안과 천천히 알아가고 싶어', [{ type: 'affinity', character: 'C3' }]), say('노엘, 당신이 좋아요', [{ type: 'affinity', character: 'C4' }])]).state
-    const ok = play(def, [say('노엘과 연인', [{ type: 'relation_outcome', character: 'C4', value: 'partner' }])], base)
+      say('루시안과 천천히 알아가고 싶어', [{ type: 'affinity', character: 'C3' }]), say('자크, 당신이 좋아요', [{ type: 'affinity', character: 'C4' }])]).state
+    const ok = play(def, [say('자크와 연인', [{ type: 'relation_outcome', character: 'C4', value: 'partner' }])], base)
     expect(ok.state.rel.C4!.outcome).toBe('partner')
-    const excl = play(def, [say('루시안이랑만 만나기로 약속할게', [{ type: 'exclusive', character: 'C3' }]), say('노엘과 연인', [{ type: 'relation_outcome', character: 'C4', value: 'partner' }])], base)
+    const excl = play(def, [say('루시안이랑만 만나기로 약속할게', [{ type: 'exclusive', character: 'C3' }]), say('자크와 연인', [{ type: 'relation_outcome', character: 'C4', value: 'partner' }])], base)
     expect(excl.log[1]!.rejected).toEqual(['relation_outcome:romance_gate_unmet'])
     expect(excl.state.rel.C3).toEqual(base.rel.C3)
   })
