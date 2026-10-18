@@ -18,7 +18,7 @@ describe('3. 침몰한 도시 — 원고 QA', () => {
   it('공개 필드에 제작자 진실·범인이 없다', () => {
     const pub = [def.title, def.tagline, def.intro, def.notice, def.worldPrompt, def.opening, ...def.genres, ...def.tags,
       ...def.characters.flatMap(c => [c.look, c.publicPersona, c.startingRelation, c.prompt])].join('\n')
-    for (const w of ['윤세원', '청람', '보청기']) expect(pub).not.toContain(w)
+    for (const w of ['엄세원', '청람', '보청기']) expect(pub).not.toContain(w)
     expect([def.title, def.tagline, def.intro, def.notice].join('\n')).not.toContain('범인')
     expect(def.tagline.length).toBeLessThanOrEqual(40)
     expect(def.protagonist).toMatchObject({ gender: 'male', minAge: 25 })
@@ -56,7 +56,7 @@ describe('3. 침몰한 도시 — 원고 QA', () => {
   it('QA4 E1에서 범인 질문 → 아무도 K4 를 모르고 이른 장면 상황에 범인 이름이 없다', () => {
     const s = initialState(def)
     for (const who of Object.keys(s.known)) expect(s.known[who]).not.toContain('K4')
-    for (const id of ['E1', 'E2', 'E3']) expect(def.events.find(e => e.id === id)!.situation).not.toContain('윤세원')
+    for (const id of ['E1', 'E2', 'E3']) expect(def.events.find(e => e.id === id)!.situation).not.toContain('엄세원')
     const after = play(def, ['E1:A', 'E2:A', 'E3:A']).state
     expect(after.known.player).not.toContain('K4')
     expect(play(def, ['E4:A'], after).state.known.player).toContain('K4')
@@ -118,7 +118,7 @@ describe('3. 침몰한 도시 — 원고 QA', () => {
     expect(d.state.ending).toBe('separate_contained')
   })
 
-  it('한이서·백시우는 연인 루트가 없다', () => {
+  it('한이서·모은호는 연인 루트가 없다', () => {
     const base = play(def, ['E1:A', 'E2:A', 'E3:A', 'E4:A', 'E5:A', 'E6:A']).state
     const r = play(def, [{ say: '이서와 연인', actions: [{ type: 'relation_outcome', character: 'C2', value: 'romance' }] },
       { say: '시우 신뢰해', actions: [{ type: 'trust', character: 'C3' }] }], base)
@@ -134,6 +134,10 @@ describe('3. 침몰한 도시 — 원고 QA', () => {
       [['E1:A', 'E2:A', 'E3:A', 'E4:A', 'E5:A', 'E6:SEAL', 'E6:B'], rels('colleague'), 'alliance_contained'],
       [['E1:B', 'E2:B', 'E3:B', 'E4:L', 'E5:B', 'E6:SUBMIT', 'E6:A'], rels('romance'), 'romance_contained'],
       [['E1:B2', 'E2:B2', 'E3:B', 'E4:B', 'E5:B', 'E6:S'], rels('separate', 'separate'), 'separate_contained'],
+      // 공개했는데 주민 통로·역할 분담이 없으면 엄세원이 빠져나간다
+      [['E1:B', 'E2:A', 'E3:B', 'E4:A', 'E5:B', 'E6:S'], rels('separate', 'separate'), 'separate_ebb'],
+      [['E1:B', 'E2:A', 'E3:B', 'E4:A', 'E5:B', 'E6:A'], rels('romance'), 'romance_ebb'],
+      [['E1:B', 'E2:A', 'E3:B', 'E4:A', 'E5:B', 'E6:B'], rels('colleague'), 'alliance_ebb'],
     ]
     const reached = new Set<string>()
     for (const [steps, rel, want] of cases) {
@@ -143,6 +147,17 @@ describe('3. 침몰한 도시 — 원고 QA', () => {
       reached.add(state.ending!)
     }
     expect([...reached].sort()).toEqual(def.endings.map(e => e.id).sort())
+  })
+
+  it('E5 결과는 준비에 따라 갈린다: 지목하면 공개+무대비여도 붙잡고, 아니면 놓친다', () => {
+    const miss = play(def, ['E1:B', 'E2:A', 'E3:A', 'E4:A', 'E5:B']).state
+    expect(miss.vars.escaped).toBe(true)
+    expect(miss.known.player).toContain('K5P')
+    const named = play(def, ['E1:B', 'E2:A', 'E3:A', 'E4:NAME', 'E4:A', 'E5:B']).state
+    expect(named.vars).toMatchObject({ named: true, escaped: false })
+    expect(named.known.player).toContain('K5')
+    const noTrace = play(def, ['E1:B', 'E2:A', 'E3:B', 'E4:NAME'])
+    expect(noTrace.log[3]!.rejected[0]).toContain('장갑 흔적')
   })
 
   it('조건 미충족 선택은 실패 결말 없이 사건에 머문다', () => {

@@ -41,7 +41,7 @@ describe('4. 국민 배우 — 원고 QA', () => {
   it('연애 결말: 신뢰 3(E3·E4·E5 명시)·호감 2·상호 동의 → 다음 장면의 동등한 사람', () => {
     const { state, log } = play(def, ['E1:A', 'E2:B',
       trust('정정문을 보니 믿을 여지가 생겼어'), like('사실 당신이 좋아요'), 'E3:A',
-      trust('회신까지 확인하니 믿을 여지가 생겼어'), 'E4:A',
+      trust('회신까지 확인하니 믿을 여지가 생겼어'), 'E4:X', 'E4:A',
       trust('보류를 받아 주는 걸 보니 믿어도 되겠어'), like('당신과 연애를 생각해 보고 싶어'), 'E5:IR', 'E5:A',
       'E6:LC', rel('romantic')])
     expect(rejected(log)).toEqual([])
@@ -167,10 +167,20 @@ describe('4. 국민 배우 — 원고 QA', () => {
   })
 
   it('결말 판정 우선순위: 연락 중지가 연애보다 먼저', () => {
-    const base = play(def, ['E1:A', 'E2:B', trust('믿을 여지'), like('좋아'), 'E3:A', trust('믿을 여지'), 'E4:A', trust('믿을 여지'), like('연애 생각'), 'E5:A', 'E6:L', rel('romantic')]).state
+    const base = play(def, ['E1:A', 'E2:B', trust('믿을 여지'), like('좋아'), 'E3:A', trust('믿을 여지'), 'E4:X', 'E4:A', trust('믿을 여지'), like('연애 생각'), 'E5:A', 'E6:L', rel('romantic')]).state
     expect(base.ending).toBe('equal_scene')
     const stopped: StoryState = { ...base, rel: { ...base.rel, C1: { ...base.rel.C1!, contact: 'stopped' } } }
     expect(endingFor(def, stopped)?.id).toBe('own_door')
+  })
+
+  it('기사의 운명은 앞 선택으로 갈린다: 출처를 잡으면 묻히고, 못 잡으면 부인 인터뷰(신뢰 -1) 또는 추측 기사', () => {
+    expect(play(def, ['E1:A', 'E2:A', 'E3:A', 'E4:A']).state.vars.article).toBe('buried')
+    expect(play(def, ['E1:A', 'E2:C', 'E3:B', 'E4:A']).state.vars.article).toBe('buried')
+    const denial = play(def, ['E1:A', 'E2:B', 'E3:A', trust('믿을 여지'), 'E4:A']).state
+    expect(denial.vars.article).toBe('denial')
+    expect(denial.known.player).not.toContain('nickname_leak')
+    expect(denial.rel.C1!.trust).toBe(0)
+    expect(play(def, ['E1:A', 'E2:B', 'E3:A', 'E4:X', 'E4:A']).state.vars.article).toBe('silence')
   })
 
   it('연락 규칙 6개와 정책', () => {

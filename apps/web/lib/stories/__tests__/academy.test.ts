@@ -34,12 +34,25 @@ describe('1. 사관학교 — 원고 QA', () => {
     expect(state.ending).toBe('independent')
   })
 
-  it('재건: E1R→E2D→E3C→E4B→E5C→E6C → evidence 0, unit 2', () => {
+  it('재건: E1R→E2D→E3C→E4B→E5C→E6C → evidence 0, unit 2, 무혐의 대신 조건부 유예', () => {
     const { state } = play(def, ['E1:R', 'E2:D', 'E3:C', 'E4:B', 'E5:C', 'E6:C', all(def, 'space')])
     expect(state.vars.evidence).toEqual([])
     expect(state.vars.unit).toBe(2)
-    expect(state.vars.cleared).toBe(true)
+    expect(state.vars.cleared).toBe(false)
+    expect(state.known.player).toContain('probation')
+    expect(state.known.player).toContain('kael_decoy')
     expect(state.ending).toBe('rebuild')
+  })
+
+  it('E5 갈림: 모의전 궤적 재현이면 증거 없이도 무혐의, 카엘 오지목은 신뢰 하락', () => {
+    const sim = play(def, ['E1:R', 'E2:D', 'E3:C', 'E4:M:cannon', 'E5:B']).state
+    expect(sim.vars.charge).toBe(2)
+    expect(sim.vars.cleared).toBe(true)
+    const wrong = play(def, ['E1:A', 'E2:A', 'E3:A', 'E4:S', 'E4:B', 'E5:K']).state
+    expect(wrong.known.player).toContain('stamp_safe')
+    expect(wrong.rel.C1!.trust).toBe(0)
+    expect(wrong.known.player).toContain('kael_wrong')
+    expect(wrong.vars.truth).toBe(false)
   })
 
   it('증거 미달 A/B 진로는 실패 결말 대신 재선택 대기', () => {

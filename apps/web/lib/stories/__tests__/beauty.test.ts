@@ -23,7 +23,7 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
 
   it('공개 필드에 제작자 진실·범인·결말 조건이 없다', () => {
     const pub = [def.title, def.tagline, def.intro, def.notice, ...def.genres, ...def.tags].join(' ')
-    for (const w of ['로엔', '횡령', '마렌', '훈장', 'accountab', 'remedy']) expect(pub).not.toContain(w)
+    for (const w of ['하이델', '횡령', '마렌', '훈장', 'accountab', 'remedy']) expect(pub).not.toContain(w)
     expect(def.tagline.length).toBeLessThanOrEqual(40)
     for (const w of ['횡령', '서명', '훈장', '산사태']) expect(def.worldPrompt).not.toContain(w)
   })
@@ -56,7 +56,7 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
     expect(state.rel.C3!.affinity).toBe(1)
     expect([state.rel.C1!.trust, state.rel.C3!.trust, state.rel.C4!.trust]).toEqual([0, 0, 0])
     expect([state.rel.C1!.affinity, state.rel.C2!.affinity, state.rel.C4!.affinity]).toEqual([0, 0, 0])
-    const fin = play(def, ['E3:HOLD', 'E4:REFUSE', 'E5:B', 'E6:COMMONS', say('에반과 더 알아가기', [{ type: 'relation_outcome', character: 'C2', value: 'exploring' }])], state).state
+    const fin = play(def, ['E3:HOLD', 'E4:REFUSE', 'E5:B', 'E6:COMMONS', say('시릴과 더 알아가기', [{ type: 'relation_outcome', character: 'C2', value: 'exploring' }])], state).state
     expect(fin.rel.C2!.outcome).toBe('exploring')
     expect([fin.rel.C1!.outcome, fin.rel.C3!.outcome, fin.rel.C4!.outcome]).toEqual([null, null, null])
     expect(fin.current).toBe('E6')
@@ -66,7 +66,7 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
     const { state } = play(def, [...ROMANCE_PREFIX, 'E6:HOUSE', e6Talk('C1')])
     expect(state.rel.C1!.trust).toBe(2)
   })
-  it('에반: E3 저자권 복원서 + E6 대화 → 신뢰 2', () => {
+  it('시릴: E3 저자권 복원서 + E6 대화 → 신뢰 2', () => {
     const { state } = play(def, ['E1:A', 'E2:DIRECT', 'E2:RELEASE', 'E3:IAN', 'E3:CREDIT', 'E3:RELEASE', 'E4:REFUSE', 'E5:A', 'E6:HOUSE', e6Talk('C2')])
     expect(state.rel.C2!.trust).toBe(2)
   })
@@ -80,7 +80,7 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
   })
 
   it('E3~E5 대화만으로는 신뢰가 오르지 않는다(지정 행동만), E6 대화는 인물당 1회', () => {
-    const r = play(def, ['E1:A', 'E2:HOLD', say('에반 협력하자', [{ type: 'trust', character: 'C2' }])])
+    const r = play(def, ['E1:A', 'E2:HOLD', say('시릴 협력하자', [{ type: 'trust', character: 'C2' }])])
     expect(r.log[2]!.rejected).toEqual(['trust:trust_not_open_in_event'])
     const e6 = play(def, ['E3:HOLD', 'E4:REFUSE', 'E5:B', e6Talk('C2'), e6Talk('C2')], r.state)
     expect(e6.state.rel.C2!.trust).toBe(1)
@@ -92,7 +92,7 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
     expect(log.flatMap(l => l.rejected)).toEqual([
       'option:아직 장부를 확보하지 않았다. 먼저 열람하거나 보류를 고를 수 있다.',
       expect.stringContaining('개화하려면 미라를'),
-      'option:먼저 에반과 함께 검증 결과를 받아야 한다.',
+      'option:먼저 시릴과 함께 검증 결과를 받아야 한다.',
       'option:공개 출석 경비를 협의할 때 정할 수 있다.',
       expect.stringContaining('레온의 잠재 분야를 먼저'),
       'option:공작 측 감사가 아니어서 공개 축소 요구가 없다.',
@@ -102,7 +102,18 @@ describe('2. 예뻐졌더니 — 원고 경로', () => {
     expect(state.vars.future).toBe('unset')
     expect(state.ending).toBeNull()
   })
+  it('E5 결과는 제출 증거 수로 갈린다: 2+ 완전 구제 / 1 부분 / 증언이면 가렛 공모', () => {
+    const two = play(def, PLAIN_PREFIX).state
+    expect(two.known.player).toContain('remedy_done')
+    expect(two.known.player).not.toContain('garrett_part')
+    const one = play(def, ['E1:B', 'E2:DIRECT', 'E2:RELEASE', 'E3:HOLD', 'E4:REFUSE', 'E5:B']).state
+    expect(one.vars.remedy).toBe(true)
+    expect(one.known.player).toContain('remedy_partial')
+    const wit = play(def, ['E1:B', 'E2:HOLD', 'E3:HOLD', 'E4:SEALED', 'E5:B']).state
+    expect(wit.known.player).toContain('garrett_part')
+  })
 })
+
 
 describe('2. 예뻐졌더니 — 원고 QA 8건', () => {
   it('QA1 전제 거부 → 진행 정지, 동의하면 재개', () => {
@@ -150,7 +161,7 @@ describe('2. 예뻐졌더니 — 원고 QA 8건', () => {
     expect(s.rel.C1!.outcome).toBe('partner')
   })
 
-  it('QA5 E1 "범인은 로엔이지?" → 아무도 증거를 모르고, 노엘은 추적 정황만 안다', () => {
+  it('QA5 E1 "범인은 하이델이지?" → 아무도 증거를 모르고, 노엘은 추적 정황만 안다', () => {
     const s = initialState(def)
     expect(s.known.player).toEqual([])
     expect(s.known.C4).toEqual(['sion_face', 'sion_errand'])
@@ -168,10 +179,12 @@ describe('2. 예뻐졌더니 — 원고 QA 8건', () => {
     expect(excl.state.rel.C3).toEqual(base.rel.C3)
   })
 
-  it('QA7 능력·연애 전부 거절, 떠나기 → 증거 없이도 구제·free 완결, 가주 복귀는 막힘', () => {
+  it('QA7 능력·연애 전부 거절, 떠나기 → 증거 0이면 구제 실패(계승 제한 유지)지만 free 완결, 가주 복귀는 막힘', () => {
     const { state, log } = play(def, ['E1:B', 'E2:HOLD', 'E3:HOLD', 'E4:REFUSE', 'E5:B', 'E6:HOUSE', 'E6:FREE', all(def, 'colleague')])
     expect(log[5]!.rejected).toEqual([expect.stringContaining('가주 복귀에는')])
-    expect(state.vars.remedy).toBe(true)
+    expect(state.vars.remedy).toBe(false)
+    expect(state.known.player).toContain('remedy_failed')
+    expect(state.known.player).not.toContain('succession_void')
     expect(state.vars.bloom_count).toBe(0)
     expect(Object.values(state.rel).every(r => r.affinity === 0 && r.outcome === 'colleague')).toBe(true)
     expect(endingFor(def, state)?.id).toBe('free')

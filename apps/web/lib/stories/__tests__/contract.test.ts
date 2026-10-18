@@ -24,7 +24,7 @@ describe('5. 계약 결혼 — 정의', () => {
     const pub = [def.title, def.tagline, def.intro, def.notice, def.opening, def.worldPrompt, ...def.genres, ...def.tags,
       ...def.characters.flatMap(c => [c.look, c.publicPersona, c.startingRelation, c.prompt])].join('\n')
     for (const secret of ['유출자', '관리자 권한', '거짓 제목을 붙', '보관본', '서명 대조', '직무 정지된']) expect(pub).not.toContain(secret)
-    expect(def.creatorTruth).toContain('서문진')
+    expect(def.creatorTruth).toContain('채문진')
   })
 
   it('진의 범행은 처음엔 누구의 지식에도 없고 E4 에서만 공개된다', () => {
@@ -189,6 +189,15 @@ describe('5. 계약 결혼 — 원고 QA', () => {
     const p2 = rulesToSchedule(def, s, new Set()).find(r => r.key === 'w5_dm2')!
     const later = play(def, ['E3:A', 'E4:B', 'E5:A'], s).state
     expect(shouldCancel(def, later, p2)).toBe('cancel_condition')
+  })
+
+  it('E5 책임 조치와 만찬은 앞 선택으로 갈린다', () => {
+    const met = play(def, ['E1:A', 'E2:CLAUSE:c3', 'E2:HAND', 'E2:A', 'E3:A', 'E4:A', 'E5:B']).state
+    expect(known(met, 'player')).toEqual(expect.arrayContaining(['accountability_done', 'jin_apology', 'gala_held']))
+    const far = play(def, ['E1:B', 'E2:C', 'E3:B', 'E4:D', 'E5:B']).state
+    expect(known(far, 'player')).toEqual(expect.arrayContaining(['accountability_partial', 'gala_slip']))
+    expect(known(far, 'player')).not.toContain('accountability_done')
+    expect(far.vars.accountability).toBe(true)
   })
 
   it('결말 판정은 정의된 엔딩 하나', () => {
