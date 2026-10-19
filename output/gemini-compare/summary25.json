@@ -1,0 +1,269 @@
+{
+ "spent": 0.023139,
+ "rows": [
+  {
+   "r": 0,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 521,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 0,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 3180,
+   "total": 4449,
+   "finish": "STOP",
+   "outTok": 319,
+   "thoughtTok": null,
+   "cost": 0.00137
+  },
+  {
+   "r": 0,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1899,
+   "total": 2382,
+   "finish": "",
+   "outTok": 82,
+   "thoughtTok": null,
+   "cost": 0.00049
+  },
+  {
+   "r": 1,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 253,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 1,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 4623,
+   "total": 4627,
+   "finish": "STOP",
+   "outTok": 314,
+   "thoughtTok": null,
+   "cost": 0.00136
+  },
+  {
+   "r": 1,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1524,
+   "total": 3849,
+   "finish": "STOP",
+   "outTok": 378,
+   "thoughtTok": null,
+   "cost": 0.0016
+  },
+  {
+   "r": 2,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 343,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 2,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 3020,
+   "total": 4860,
+   "finish": "STOP",
+   "outTok": 377,
+   "thoughtTok": null,
+   "cost": 0.00159
+  },
+  {
+   "r": 2,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1368,
+   "total": 4081,
+   "finish": "STOP",
+   "outTok": 403,
+   "thoughtTok": null,
+   "cost": 0.00169
+  },
+  {
+   "r": 3,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 373,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 3,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 1976,
+   "total": 4462,
+   "finish": "STOP",
+   "outTok": 316,
+   "thoughtTok": null,
+   "cost": 0.00136
+  },
+  {
+   "r": 3,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1330,
+   "total": 3877,
+   "finish": "STOP",
+   "outTok": 419,
+   "thoughtTok": null,
+   "cost": 0.00175
+  },
+  {
+   "r": 4,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 318,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 4,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 4180,
+   "total": 8204,
+   "finish": "STOP",
+   "outTok": 381,
+   "thoughtTok": null,
+   "cost": 0.00161
+  },
+  {
+   "r": 4,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1240,
+   "total": 3157,
+   "finish": "STOP",
+   "outTok": 363,
+   "thoughtTok": null,
+   "cost": 0.00154
+  },
+  {
+   "r": 5,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 360,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 5,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 8579,
+   "total": 11715,
+   "finish": "STOP",
+   "outTok": 362,
+   "thoughtTok": 103,
+   "cost": 0.00192
+  },
+  {
+   "r": 5,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1160,
+   "total": 3642,
+   "finish": "STOP",
+   "outTok": 412,
+   "thoughtTok": null,
+   "cost": 0.00172
+  },
+  {
+   "r": 6,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 297,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 6,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 3134,
+   "total": 4543,
+   "finish": "STOP",
+   "outTok": 375,
+   "thoughtTok": null,
+   "cost": 0.00158
+  },
+  {
+   "r": 6,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1550,
+   "total": 2509,
+   "finish": "",
+   "outTok": 108,
+   "thoughtTok": null,
+   "cost": 0.00058
+  },
+  {
+   "r": 7,
+   "model": "gemini-2.5-flash",
+   "status": 404,
+   "ttft": null,
+   "total": 290,
+   "finish": "",
+   "outTok": null,
+   "thoughtTok": null,
+   "cost": 0
+  },
+  {
+   "r": 7,
+   "model": "gemini-3.8-flash",
+   "status": 200,
+   "ttft": 3564,
+   "total": 6083,
+   "finish": "STOP",
+   "outTok": 315,
+   "thoughtTok": null,
+   "cost": 0.00136
+  },
+  {
+   "r": 7,
+   "model": "gemini-3.6-flash",
+   "status": 200,
+   "ttft": 1323,
+   "total": 3910,
+   "finish": "STOP",
+   "outTok": 385,
+   "thoughtTok": null,
+   "cost": 0.00162
+  }
+ ]
+}

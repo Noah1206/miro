@@ -1,0 +1,3293 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 9,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 8 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 4 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 3 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 26 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "composition_file_too_large",
+        "severity": "warning",
+        "message": "This HTML composition file has 361 lines. Smaller sub-compositions are easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Split coherent scenes or layers into separate .html files under compositions/, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"s1\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#s1",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"s1\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"s2\"> is a timeline element that contains nested <div id=\"s2-fade\">. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#s2",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"s2\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"s3\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#s3",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"s3\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"s4\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#s4",
+        "dataAttributes": {},
+        "sourceFile": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"s4\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 8,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-30\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-33\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-36\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-39\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-42\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-45\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-48\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      },
+      {
+        "code": "clip_media_fit",
+        "severity": "warning",
+        "message": "Audio \"sfx-51\" is 0.72s but its slot (data-duration) is 1.20s — the slot is shortened to the media length when rendered. Set data-duration to ~0.72s if that isn't intended.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-composition-id": "main",
+          "data-start": "0",
+          "data-duration": "30",
+          "data-width": "1080",
+          "data-height": "1920"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1080,
+          "height": 1920
+        },
+        "time": 0
+      }
+    ]
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 68,
+    "findings": [
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 15,
+        "selector": "div.status > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 132.67,
+          "top": -261.57,
+          "right": 207.52,
+          "bottom": -213.5,
+          "width": 74.85,
+          "height": 48.07
+        },
+        "containerSelector": "#root",
+        "text": "SKT",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "top": 261.57
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 132.67,
+          "y": -261.57,
+          "width": 74.85,
+          "height": 48.07
+        },
+        "firstSeen": 15,
+        "lastSeen": 21.667,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          15,
+          18.333,
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 15,
+        "selector": "div.date",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 379.7,
+          "top": -88.26,
+          "right": 700.3,
+          "bottom": -33.87,
+          "width": 320.6,
+          "height": 54.39
+        },
+        "containerSelector": "#root",
+        "text": "10월 14일 화요일",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "top": 88.26
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 379.7,
+          "y": -88.26,
+          "width": 320.6,
+          "height": 54.39
+        },
+        "firstSeen": 15,
+        "lastSeen": 18.333,
+        "occurrences": 2,
+        "heldMs": 0,
+        "times": [
+          15,
+          18.333
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 15,
+        "selector": "div.clock",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 175.23,
+          "top": -56.64,
+          "right": 904.77,
+          "bottom": 288.71,
+          "width": 729.54,
+          "height": 345.35
+        },
+        "containerSelector": "#root",
+        "text": "19:42",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "top": 56.64
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 175.23,
+          "y": -56.64,
+          "width": 729.54,
+          "height": 345.35
+        },
+        "firstSeen": 15,
+        "lastSeen": 18.333,
+        "occurrences": 2,
+        "heldMs": 0,
+        "times": [
+          15,
+          18.333
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 15,
+        "selector": "#cam",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -143.1,
+          "top": -407.04,
+          "right": 1223.1,
+          "bottom": 2021.76,
+          "width": 1366.2,
+          "height": 2428.8
+        },
+        "containerSelector": "#s3",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "left": 143.1,
+          "right": 143.1,
+          "top": 407.04,
+          "bottom": 101.76
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": -143.1,
+          "y": -407.04,
+          "width": 1366.2,
+          "height": 2428.8
+        },
+        "firstSeen": 15,
+        "lastSeen": 21.667,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          15,
+          18.333,
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 15,
+        "selector": "#shake > div:nth-of-type(4)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1068.77,
+          "top": 250.76,
+          "right": 1078.89,
+          "bottom": 503.76,
+          "width": 10.12,
+          "height": 253
+        },
+        "containerSelector": "#shake",
+        "text": "",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 8.7,
+          "top": -343.79,
+          "right": 1071.3,
+          "bottom": 1958.51,
+          "width": 1062.6,
+          "height": 2302.3
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1068.77,
+          "y": 250.76,
+          "width": 10.12,
+          "height": 253
+        },
+        "firstSeen": 15,
+        "lastSeen": 15,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          15
+        ]
+      },
+      {
+        "code": "content_overlap",
+        "severity": "info",
+        "time": 19.625,
+        "selector": "div.clock",
+        "message": "Two text blocks overlap and may render unreadable.",
+        "rect": {
+          "left": 162.77,
+          "top": 57.43,
+          "right": 837.93,
+          "bottom": 394.58,
+          "width": 675.16,
+          "height": 337.15
+        },
+        "containerSelector": "#notif-8 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "text": "19:42",
+        "fixHint": "Give each block its own zone, or mark intentional layering with data-layout-allow-overlap.",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 162.77,
+          "y": 57.43,
+          "width": 675.16,
+          "height": 337.15
+        },
+        "firstSeen": 19.625,
+        "lastSeen": 19.625,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          19.625
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-0 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 362.72,
+          "top": 3899.07,
+          "right": 452.84,
+          "bottom": 3943.59,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "강세헌",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 2023.59
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 362.72,
+          "y": 3899.07,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-0 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 983.92,
+          "top": 3879.16,
+          "right": 1034.76,
+          "bottom": 3914.28,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1994.28
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 983.92,
+          "y": 3879.16,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-0 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 364.6,
+          "top": 3935.45,
+          "right": 603.13,
+          "bottom": 3986.45,
+          "width": 238.53,
+          "height": 51
+        },
+        "containerSelector": "#root",
+        "text": "뭐해 저녁 먹었어?",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 2066.45
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 364.6,
+          "y": 3935.45,
+          "width": 238.53,
+          "height": 51
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-1 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 356.01,
+          "top": 3745.22,
+          "right": 446.13,
+          "bottom": 3789.74,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "강세헌",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1869.74
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 356.01,
+          "y": 3745.22,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-1 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 977.21,
+          "top": 3725.3,
+          "right": 1028.05,
+          "bottom": 3760.43,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1840.43
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 977.21,
+          "y": 3725.3,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-1 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 357.88,
+          "top": 3784.9,
+          "right": 520.86,
+          "bottom": 3832.6,
+          "width": 162.98,
+          "height": 47.7
+        },
+        "containerSelector": "#root",
+        "text": "왜 답이 없어",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1912.6
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 357.88,
+          "y": 3784.9,
+          "width": 162.98,
+          "height": 47.7
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-2 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 349.29,
+          "top": 3591.36,
+          "right": 439.41,
+          "bottom": 3635.88,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "도윤재",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1715.88
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 349.29,
+          "y": 3591.36,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-2 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 970.49,
+          "top": 3571.45,
+          "right": 1021.33,
+          "bottom": 3606.58,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1686.58
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 970.49,
+          "y": 3571.45,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-2 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 351.16,
+          "top": 3627.74,
+          "right": 589.69,
+          "bottom": 3678.74,
+          "width": 238.53,
+          "height": 51
+        },
+        "containerSelector": "#root",
+        "text": "오늘 하루 어땠어?",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1758.74
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 351.16,
+          "y": 3627.74,
+          "width": 238.53,
+          "height": 51
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-3 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 342.57,
+          "top": 3437.51,
+          "right": 432.69,
+          "bottom": 3482.03,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "서이안",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1562.03
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 342.57,
+          "y": 3437.51,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-3 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 963.77,
+          "top": 3417.6,
+          "right": 1014.61,
+          "bottom": 3452.72,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1532.72
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 963.77,
+          "y": 3417.6,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-3 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 344.44,
+          "top": 3482.21,
+          "right": 392.34,
+          "bottom": 3524.89,
+          "width": 47.9,
+          "height": 42.68
+        },
+        "containerSelector": "#root",
+        "text": "자?",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1604.89
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 344.44,
+          "y": 3482.21,
+          "width": 47.9,
+          "height": 42.68
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-4 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 335.86,
+          "top": 3283.66,
+          "right": 425.98,
+          "bottom": 3328.18,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "하진혁",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1408.18
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 335.86,
+          "y": 3283.66,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-4 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 957.06,
+          "top": 3263.74,
+          "right": 1007.9,
+          "bottom": 3298.87,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1378.87
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 957.06,
+          "y": 3263.74,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-4 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 337.73,
+          "top": 3324.93,
+          "right": 464.27,
+          "bottom": 3371.03,
+          "width": 126.54,
+          "height": 46.1
+        },
+        "containerSelector": "#root",
+        "text": "보고 싶다",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1451.03
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 337.73,
+          "y": 3324.93,
+          "width": 126.54,
+          "height": 46.1
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-5 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 329.14,
+          "top": 3129.8,
+          "right": 419.26,
+          "bottom": 3174.32,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "강세헌",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1254.32
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 329.14,
+          "y": 3129.8,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-5 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 950.34,
+          "top": 3109.89,
+          "right": 1001.18,
+          "bottom": 3145.01,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1225.01
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 950.34,
+          "y": 3109.89,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-5 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 331.01,
+          "top": 3162.45,
+          "right": 655.17,
+          "bottom": 3217.18,
+          "width": 324.16,
+          "height": 54.73
+        },
+        "containerSelector": "#root",
+        "text": "읽었으면서 왜 답장 안 해",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1297.18
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 331.01,
+          "y": 3162.45,
+          "width": 324.16,
+          "height": 54.73
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-6 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 322.42,
+          "top": 2975.95,
+          "right": 412.54,
+          "bottom": 3020.47,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "류하람",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1100.47
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 322.42,
+          "y": 2975.95,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-6 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 943.62,
+          "top": 2956.04,
+          "right": 994.46,
+          "bottom": 2991.16,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1071.16
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 943.62,
+          "y": 2956.04,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-6 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 324.29,
+          "top": 3009.88,
+          "right": 619.01,
+          "bottom": 3063.33,
+          "width": 294.72,
+          "height": 53.45
+        },
+        "containerSelector": "#root",
+        "text": "나 지금 너네 집 앞이야",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 1143.33
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 324.29,
+          "y": 3009.88,
+          "width": 294.72,
+          "height": 53.45
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-7 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 315.71,
+          "top": 2822.1,
+          "right": 405.83,
+          "bottom": 2866.62,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "백도현",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 946.62
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 315.71,
+          "y": 2822.1,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-7 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 936.91,
+          "top": 2802.18,
+          "right": 987.75,
+          "bottom": 2837.31,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 917.31
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 936.91,
+          "y": 2802.18,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-7 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 317.58,
+          "top": 2862.08,
+          "right": 473.57,
+          "bottom": 2909.47,
+          "width": 155.99,
+          "height": 47.39
+        },
+        "containerSelector": "#root",
+        "text": "부재중 전화",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 989.47
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 317.58,
+          "y": 2862.08,
+          "width": 155.99,
+          "height": 47.39
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-8 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 308.99,
+          "top": 2668.24,
+          "right": 399.11,
+          "bottom": 2712.76,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "정시우",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 792.76
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 308.99,
+          "y": 2668.24,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-8 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 930.19,
+          "top": 2648.33,
+          "right": 981.03,
+          "bottom": 2683.45,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 763.45
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 930.19,
+          "y": 2648.33,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-8 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 310.86,
+          "top": 2705.05,
+          "right": 539.71,
+          "bottom": 2755.62,
+          "width": 228.85,
+          "height": 50.57
+        },
+        "containerSelector": "#root",
+        "text": "밥은 꼭 챙겨 먹어",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 835.62
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 310.86,
+          "y": 2705.05,
+          "width": 228.85,
+          "height": 50.57
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-9 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 302.27,
+          "top": 2514.39,
+          "right": 392.39,
+          "bottom": 2558.91,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "이태오",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 638.91
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 302.27,
+          "y": 2514.39,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-9 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 923.47,
+          "top": 2494.48,
+          "right": 974.31,
+          "bottom": 2529.6,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 609.6
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 923.47,
+          "y": 2494.48,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-9 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 304.14,
+          "top": 2544.77,
+          "right": 680.2,
+          "bottom": 2601.77,
+          "width": 376.06,
+          "height": 57
+        },
+        "containerSelector": "#root",
+        "text": "오늘 나랑 놀아주기로 했잖아",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 681.77
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 304.14,
+          "y": 2544.77,
+          "width": 376.06,
+          "height": 57
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-10 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 295.56,
+          "top": 2360.54,
+          "right": 385.68,
+          "bottom": 2405.05,
+          "width": 90.12,
+          "height": 44.51
+        },
+        "containerSelector": "#root",
+        "text": "차도겸",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 485.05
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 295.56,
+          "y": 2360.54,
+          "width": 90.12,
+          "height": 44.51
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-10 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 916.76,
+          "top": 2340.62,
+          "right": 967.6,
+          "bottom": 2375.75,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 455.75
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 916.76,
+          "y": 2340.62,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-10 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 297.43,
+          "top": 2400.22,
+          "right": 460.4,
+          "bottom": 2447.91,
+          "width": 162.97,
+          "height": 47.69
+        },
+        "containerSelector": "#root",
+        "text": "연락 좀 받아",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 527.91
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 297.43,
+          "y": 2400.22,
+          "width": 162.97,
+          "height": 47.69
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-11 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 288.84,
+          "top": 2206.68,
+          "right": 378.96,
+          "bottom": 2251.2,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "오준서",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 331.2
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 288.84,
+          "y": 2206.68,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-11 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 910.04,
+          "top": 2186.77,
+          "right": 960.88,
+          "bottom": 2221.89,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 301.89
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 910.04,
+          "y": 2186.77,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-11 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 290.71,
+          "top": 2241.47,
+          "right": 565.66,
+          "bottom": 2294.06,
+          "width": 274.95,
+          "height": 52.59
+        },
+        "containerSelector": "#root",
+        "text": "비 온다 우산 챙겼어?",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 374.06
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 290.71,
+          "y": 2241.47,
+          "width": 274.95,
+          "height": 52.59
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-12 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 282.12,
+          "top": 2052.83,
+          "right": 372.24,
+          "bottom": 2097.35,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "#root",
+        "text": "박도하",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 177.35
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 282.12,
+          "y": 2052.83,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-12 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 903.32,
+          "top": 2032.92,
+          "right": 954.16,
+          "bottom": 2068.04,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "containerSelector": "#root",
+        "text": "지금",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 148.04
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 903.32,
+          "y": 2032.92,
+          "width": 50.84,
+          "height": 35.12
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-12 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 283.99,
+          "top": 2091.78,
+          "right": 463.63,
+          "bottom": 2140.21,
+          "width": 179.64,
+          "height": 48.43
+        },
+        "containerSelector": "#root",
+        "text": "내 생각 했어?",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 220.21
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 283.99,
+          "y": 2091.78,
+          "width": 179.64,
+          "height": 48.43
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-13 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 275.41,
+          "top": 1898.98,
+          "right": 365.53,
+          "bottom": 1943.49,
+          "width": 90.12,
+          "height": 44.51
+        },
+        "containerSelector": "#root",
+        "text": "한지섭",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 23.49
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 275.41,
+          "y": 1898.98,
+          "width": 90.12,
+          "height": 44.51
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "canvas_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-13 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text extends outside the composition canvas.",
+        "rect": {
+          "left": 277.28,
+          "top": 1939.82,
+          "right": 413.5,
+          "bottom": 1986.35,
+          "width": 136.22,
+          "height": 46.53
+        },
+        "containerSelector": "#root",
+        "text": "퇴근했어?",
+        "fixHint": "Move the text inward, reduce its size, or mark intentional off-canvas animation with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1080,
+          "bottom": 1920,
+          "width": 1080,
+          "height": 1920
+        },
+        "overflow": {
+          "bottom": 66.35
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 277.28,
+          "y": 1939.82,
+          "width": 136.22,
+          "height": 46.53
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-14 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 268.69,
+          "top": 1745.12,
+          "right": 358.81,
+          "bottom": 1789.64,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "img.wall",
+        "text": "강무진",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 268.69,
+          "y": 1745.12,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-14 > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 889.89,
+          "top": 1725.21,
+          "right": 940.73,
+          "bottom": 1760.33,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "containerSelector": "img.wall",
+        "text": "지금",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 889.89,
+          "y": 1725.21,
+          "width": 50.84,
+          "height": 35.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-14 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 270.56,
+          "top": 1787.98,
+          "right": 360.68,
+          "bottom": 1832.5,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "containerSelector": "img.wall",
+        "text": "어디야",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 1,
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 270.56,
+          "y": 1787.98,
+          "width": 90.12,
+          "height": 44.52
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "text_occluded",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-15 > div:nth-of-type(2) > div:nth-of-type(2)",
+        "message": "Text is hidden beneath an opaque element.",
+        "rect": {
+          "left": 263.84,
+          "top": 1628.38,
+          "right": 485.7,
+          "bottom": 1678.65,
+          "width": 221.86,
+          "height": 50.27
+        },
+        "containerSelector": "img.wall",
+        "text": "목소리 듣고 싶어",
+        "fixHint": "Give the text its own zone, raise its stacking order above the covering element, or mark intentional layering with data-layout-allow-occlusion.",
+        "coveredFraction": 0.81,
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 263.84,
+          "y": 1628.38,
+          "width": 221.86,
+          "height": 50.27
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#list",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "containerSelector": "#listclip",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 35.83,
+          "top": -92.11,
+          "right": 985.16,
+          "bottom": 1653.85,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "overflow": {
+          "right": 103.85,
+          "bottom": 2378.88
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 139.69,
+          "y": 2286.76,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#list",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "containerSelector": "#listclip",
+        "text": "강세헌 지금 뭐해 저녁 먹었어? 강세헌 지금 왜 답이 없어 도윤재 지금 오늘 하루 어땠어? 서이안 지금 자? 하진혁 지금 보고 싶다 강세헌 지금 읽었으면서 왜 답장 안 해 류하람 지금 나 지금 너네 집 앞이야 백도현 지금 부재중 전화 정시우 지금 밥은 꼭 챙겨 먹어 이태오 지금 오늘 나랑 놀아주기로 했잖아 차도겸 지금 연락 좀 받아 오준서 지금 비 온다 우산 챙겼어? 박도하 지금 내 생각 했어? 한지섭 지금 퇴근했어? 강무진 지금 어디야 구만석 지금 목소리 듣고 싶어 강세헌 지금 전화 받아 하진혁 지금 잘 자라고 말해줘 서이안 지금 나만 기다려? 도윤재 지금 답장 기다릴게 류하람 지금 문 열어줘 정시우 지금 사진 차도겸 지금 부재중 전화 백도현 지금 보고 싶어서 연락했어 이태오 지금 지금 볼 수 있어? 강세헌 지금 대답해",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 35.83,
+          "top": -92.11,
+          "right": 985.16,
+          "bottom": 1653.85,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 139.69,
+          "y": 2286.76,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-11",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 153.52,
+          "top": 2151.36,
+          "right": 994.86,
+          "bottom": 2328.49,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "오준서 지금 비 온다 우산 챙겼어?",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 153.52,
+          "y": 2151.36,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-12",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 146.8,
+          "top": 1997.5,
+          "right": 988.15,
+          "bottom": 2174.63,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "박도하 지금 내 생각 했어?",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 146.8,
+          "y": 1997.5,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-13",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 140.09,
+          "top": 1843.65,
+          "right": 981.43,
+          "bottom": 2020.78,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "한지섭 지금 퇴근했어?",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 140.09,
+          "y": 1843.65,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-14",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 133.37,
+          "top": 1689.8,
+          "right": 974.71,
+          "bottom": 1866.93,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "강무진 지금 어디야",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 133.37,
+          "y": 1689.8,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-15",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 126.65,
+          "top": 1535.94,
+          "right": 968,
+          "bottom": 1713.07,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "구만석 지금 목소리 듣고 싶어",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 126.65,
+          "y": 1535.94,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-16",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 119.93,
+          "top": 1382.09,
+          "right": 961.28,
+          "bottom": 1559.22,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "강세헌 지금 전화 받아",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 119.93,
+          "y": 1382.09,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-17",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 113.22,
+          "top": 1228.24,
+          "right": 954.56,
+          "bottom": 1405.37,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "하진혁 지금 잘 자라고 말해줘",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 113.22,
+          "y": 1228.24,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-18",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 106.5,
+          "top": 1074.38,
+          "right": 947.85,
+          "bottom": 1251.51,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "서이안 지금 나만 기다려?",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 106.5,
+          "y": 1074.38,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-19",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 99.78,
+          "top": 920.53,
+          "right": 941.13,
+          "bottom": 1097.66,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "도윤재 지금 답장 기다릴게",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 99.78,
+          "y": 920.53,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-20",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 93.07,
+          "top": 766.68,
+          "right": 934.41,
+          "bottom": 943.81,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "류하람 지금 문 열어줘",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 93.07,
+          "y": 766.68,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-21",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 86.35,
+          "top": 612.82,
+          "right": 927.7,
+          "bottom": 789.95,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "정시우 지금 사진",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 86.35,
+          "y": 612.82,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-22",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 79.63,
+          "top": 458.97,
+          "right": 920.98,
+          "bottom": 636.1,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "차도겸 지금 부재중 전화",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 79.63,
+          "y": 458.97,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-23",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 72.92,
+          "top": 305.12,
+          "right": 914.26,
+          "bottom": 482.25,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "containerSelector": "#list",
+        "text": "백도현 지금 보고 싶어서 연락했어",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 72.92,
+          "y": 305.12,
+          "width": 841.35,
+          "height": 177.13
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-24",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 63.79,
+          "top": 146.73,
+          "right": 909.6,
+          "bottom": 324.79,
+          "width": 845.8,
+          "height": 178.07
+        },
+        "containerSelector": "#list",
+        "text": "이태오 지금 지금 볼 수 있어?",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 63.79,
+          "y": 146.73,
+          "width": 845.8,
+          "height": 178.07
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 21.667,
+        "selector": "#notif-25",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 87.28,
+          "top": 49.89,
+          "right": 877.14,
+          "bottom": 216.18,
+          "width": 789.86,
+          "height": 166.29
+        },
+        "containerSelector": "#list",
+        "text": "강세헌 지금 대답해",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 139.69,
+          "top": 2286.76,
+          "right": 1089.01,
+          "bottom": 4032.73,
+          "width": 949.32,
+          "height": 1745.96
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 87.28,
+          "y": 49.89,
+          "width": 789.86,
+          "height": 166.29
+        },
+        "firstSeen": 21.667,
+        "lastSeen": 21.667,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          21.667
+        ]
+      }
+    ],
+    "duration": 30,
+    "samples": [
+      1.667,
+      5,
+      8.333,
+      11.667,
+      15,
+      18.333,
+      21.667,
+      25,
+      28.333
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 68,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      1.667,
+      8.333,
+      15,
+      21.667,
+      28.333
+    ],
+    "checked": 46,
+    "passed": 46
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

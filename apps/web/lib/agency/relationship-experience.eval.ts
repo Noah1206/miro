@@ -13,6 +13,7 @@ import { officialIntro, officialSamples } from '@/lib/editorial/official-copy'
 import type { DialogueEntry } from '@/lib/intro-dialogue'
 import * as push from '@/lib/reality/push-outbox'
 import * as agencyEngine from '../../../../packages/engine/src/agency'
+import * as engine from '@miro/engine'
 import { testDatabaseUrl } from '../../../../tooling/test-database'
 
 /** Opt-in live app journey. Public canon is copied read-only; every mutation uses a guarded LOCAL test DB. */
@@ -30,7 +31,7 @@ const SCRIPT = scriptName === 'calendar' ? [
   '오랜만이에요.',
 ] : scriptName === 'contact' ? [
   '커피 대신 따뜻한 우유를 좋아해. 오늘 면접 결과 기다리는데 좀 떨려.',
-  '10분 뒤에 면접 결과가 나와. 그때 먼저 연락해서 물어봐 줄래?',
+  '10분 뒤에 면접 결과가 나와. 그때 직접 찾아오거나 말로 묻지 말고, 문자로 먼저 결과를 물어봐 줄래?',
 ] : [
   '커피 대신 따뜻한 우유를 좋아해. 오늘 면접 결과 기다리는데 좀 떨려.',
   '내일 저녁 8시에 면접 결과가 나오면 먼저 연락해서 물어봐 줄래?',
@@ -51,6 +52,15 @@ describe.skipIf(!OUT || !CANON)('relationship experience — live authored chara
     vi.stubEnv('MIRO_AGENCY_DEFAULT_POLICY', 'agency:v1')
     vi.spyOn(push, 'deliverRealityPush').mockResolvedValue(0) // No real person/device is contacted.
     const checks: Array<Record<string, unknown>> = []
+    const compilationFailures: unknown[] = []
+    const compile = engine.compileAuthoredCharacter
+    vi.spyOn(engine, 'compileAuthoredCharacter').mockImplementation(async (...args) => {
+      try { return await compile(...args) }
+      catch (error) {
+        compilationFailures.push(error instanceof engine.AgencyCompilationError ? error.issues : String(error))
+        throw error
+      }
+    })
     const verify = agencyEngine.verifyAgencyRealization
     vi.spyOn(agencyEngine, 'verifyAgencyRealization').mockImplementation(async (llm, input, options) => {
       const result = await verify(llm, input, options)
@@ -100,6 +110,7 @@ describe.skipIf(!OUT || !CANON)('relationship experience — live authored chara
         }
         const units: Array<Record<string, unknown>> = []
         runs.push({ character: source.character.name, slug: source.character.slug, revision: revision?.status, units })
+        expect(revision?.status, `Character preparation failed: ${source.character.slug}`).toBe('ready')
         for (const [index, input] of SCRIPT.entries()) {
           const started = performance.now()
           const result = await runConversationTurn({ userId: owner!.id, sessionId, input, requestId: randomUUID(), mode: 'chat' })
@@ -122,13 +133,15 @@ describe.skipIf(!OUT || !CANON)('relationship experience — live authored chara
             expect(checked).toEqual({ outcome: 'suppressed', reason: 'user_boundary' })
             expect(usageAfter).toBe(usageBefore)
           }
-          if (!result.ok) { stopped = result.reason; break }
+          if (!result.ok) stopped = result.reason
+          expect(result.ok, `Conversation failed: ${stopped}`).toBe(true)
         }
         if (stopped) break
         if (scriptName === 'calendar') continue
         const checked = await evaluateSession(sessionId, new Date(Date.now() + (SCRIPT.length === 2 ? 20 / 60 : 16) * 3_600_000), { background: true })
         await flush()
         units.push({ kind: 'resumed_background', result: checked, state: await state() })
+        if (process.env.MIRO_RELATIONSHIP_EVAL_EXPECT_CONTACT === '1') expect(checked).toMatchObject({ outcome: 'sent' })
       }
     } finally {
       await flush()
@@ -137,7 +150,7 @@ describe.skipIf(!OUT || !CANON)('relationship experience — live authored chara
         .map(c => ({ task: c.task, version: c.promptVersion, model: c.model, status: c.status, ok: c.ok, error: c.error,
           input: c.inputTokens, output: c.outputTokens, costUSD: Number(c.actualCost ?? c.estimatedCost ?? c.reservedCost ?? 0) }))
       await writeFile(OUT!, JSON.stringify({ at: new Date().toISOString(), localDatabase: true, provider: 'live',
-        routine: 'temporarily free for evaluation only', stopped, errors: deferred.errors, checks, runs, calls,
+        routine: 'temporarily free for evaluation only', stopped, errors: deferred.errors, compilationFailures, checks, runs, calls,
         costUSD: calls.reduce((n, c) => n + c.costUSD, 0) }, null, 2))
       for (const item of created) { await db.delete(users).where(eq(users.id, item.userId)); await db.delete(characters).where(eq(characters.id, item.characterId)) }
     }

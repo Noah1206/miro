@@ -1,0 +1,102 @@
+{
+ "label": "dump",
+ "at": "2026-10-17T07:45:34.585Z",
+ "spentUSD": 0.03351075,
+ "results": [
+  {
+   "id": "comfort",
+   "title": "힘든 날 위로",
+   "character": "구만석",
+   "look": [
+    "뻔한 위로 문장 대신 이 캐릭터만 할 수 있는 반응인가",
+    "조언을 늘어놓지 않나",
+    "말없이 행동으로 챙기는 순간이 있나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "*소파에 기대 옆구리를 짚는다* 오늘은 늦었네."
+    }
+   ],
+   "input": "알바에서 손님한테 욕먹었어요. 별것도 아닌데 계속 생각나요.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 15966,
+   "wallMs": 16012,
+   "chars": 241,
+   "blocks": [
+    {
+     "text": "옆구리를 감싸 쥔 손에 힘을 빼며 상체를 천천히 일으킨다.",
+     "type": "action",
+     "speaker": "구만석"
+    },
+    {
+     "text": "네 잘못 아니야.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    },
+    {
+     "text": "그는 소리 나지 않게 싱크대 쪽으로 걸어가 찬장에서 유리컵을 꺼낸다. 정수기에서 물을 받아와 당신 앞 탁자에 조심스레 내려놓는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "남한테 싫은 소리 한마디 못 할 사람이… 혼자 속 끓이고 있었네.",
+     "type": "thought",
+     "speaker": "구만석"
+    },
+    {
+     "text": "물 좀 마시고 앉아 있어. 별것도 아닌 사람 말에 네가 왜 종일 묶여 있어.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    },
+    {
+     "text": "당신과 적당한 거리를 두고 바닥에 내려앉으며 시선을 맞춘다.",
+     "type": "action",
+     "speaker": "구만석"
+    },
+    {
+     "text": "…무슨 일 있었는데. 말해 봐.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    }
+   ],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 6969,
+     "input": 8743,
+     "output": 806,
+     "usd": "0.00957975",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7123,
+     "input": 9359,
+     "output": 358,
+     "usd": "0.00836175",
+     "fallback": false
+    },
+    {
+     "task": "agency_verify",
+     "model": "claude-sonnet-5-5",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1683,
+     "input": 1532,
+     "output": 74,
+     "usd": "0.00380400",
+     "fallback": false
+    }
+   ]
+  }
+ ]
+}

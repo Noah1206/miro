@@ -1,0 +1,12 @@
+{
+ "afterSend": {
+  "value": "",
+  "disabled": false
+ },
+ "sendDisabledWhileWaiting": true,
+ "afterReply": {
+  "value": "다음에 같이 산책해요",
+  "sendDisabled": false
+ },
+ "sec": 22.087
+}

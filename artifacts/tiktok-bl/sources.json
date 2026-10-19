@@ -1,0 +1,29 @@
+{
+  "checked": "2026-10-11",
+  "source": "https://miroapp.app/api/home/cards",
+  "characters": [
+    {
+      "name": "차도겸",
+      "slug": "official-cha-dogyeom",
+      "image": "https://rmuirlqxuxzpqoqeceej.supabase.co/storage/v1/object/public/character-images/f5a0dfcb-0e4c-443e-be17-c982234926c1/official/official-cha-dogyeom/01.jpg?v=1791260241210"
+    },
+    {
+      "name": "한지섭",
+      "slug": "official-han-jiseob",
+      "image": "https://rmuirlqxuxzpqoqeceej.supabase.co/storage/v1/object/public/character-images/f5a0dfcb-0e4c-443e-be17-c982234926c1/official/official-han-jiseob/01.jpg?v=1791260246939"
+    },
+    {
+      "name": "하진혁",
+      "slug": "official-ha-jinhyuk",
+      "image": "https://rmuirlqxuxzpqoqeceej.supabase.co/storage/v1/object/public/character-images/f5a0dfcb-0e4c-443e-be17-c982234926c1/official/official-ha-jinhyuk/01.jpg?v=1791260245783"
+    },
+    {
+      "name": "강세헌",
+      "slug": "official-kang-seheon",
+      "image": "https://rmuirlqxuxzpqoqeceej.supabase.co/storage/v1/object/public/character-images/f5a0dfcb-0e4c-443e-be17-c982234926c1/official/official-kang-seheon/01.jpg?v=1791260250631"
+    }
+  ],
+  "format": "1080x1920",
+  "slides": 7,
+  "dialogue": "marketing illustration, not actual received messages"
+}

@@ -1,0 +1,61 @@
+{
+ "label": "smoke",
+ "at": "2026-10-17T06:43:39.476Z",
+ "spentUSD": 0.02503975,
+ "results": [
+  {
+   "id": "first-meeting",
+   "title": "첫 만남 첫마디",
+   "character": "백도현",
+   "look": [
+    "작성된 설정의 분위기·말버릇이 첫마디부터 살아 있나",
+    "비밀을 쉽게 다 털어놓지 않는가",
+    "다음 대화로 끌어당기는 갈고리가 있나"
+   ],
+   "history": [],
+   "input": "처음 뵙겠습니다. 이 병, 제 거라고 들었는데요.",
+   "ok": false,
+   "failure": "generation",
+   "revision": "ready",
+   "firstBlockMs": 10978,
+   "wallMs": 13110,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": "invalid_schema $:invalid_type",
+     "latencyMs": 5123,
+     "input": 8075,
+     "output": 292,
+     "usd": "0.00715125",
+     "fallback": false
+    },
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1352,
+     "input": 1175,
+     "output": 145,
+     "usd": "0.00071500",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7729,
+     "input": 7497,
+     "output": 948,
+     "usd": "0.00917775",
+     "fallback": false
+    }
+   ]
+  }
+ ]
+}

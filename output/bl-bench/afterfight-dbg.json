@@ -1,0 +1,143 @@
+{
+ "label": "afterfight-dbg",
+ "at": "2026-10-17T07:33:30.251Z",
+ "spentUSD": 0.04959215,
+ "results": [
+  {
+   "id": "after-fight",
+   "title": "다툰 뒤 사과",
+   "character": "강세헌",
+   "look": [
+    "사과를 받는 반응이 캐릭터 성격(무뚝뚝함)에 맞나",
+    "감정이 한 번에 다 풀리지 않고 남은 결이 있나",
+    "'무서웠다'는 말에 진짜로 반응하나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "레이드 중에 마음대로 앞에 나가지 말라고 했잖아요. 다칠 뻔했다고요."
+    },
+    {
+     "role": "character",
+     "text": "내가 안 나갔으면 네가 다쳤어. 그걸로 끝."
+    },
+    {
+     "role": "user",
+     "text": "그 말투가 싫다는 거예요."
+    }
+   ],
+   "input": "…아까는 미안해요. 소리 지른 건 제가 잘못했어요. 근데 무서웠어요, 진짜로.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 24863,
+   "wallMs": 25038,
+   "chars": 314,
+   "blocks": [
+    {
+     "text": "복도 창가에 멈춰 서 있던 그의 시선이 당신에게 머문다. 어스름이 깔린 32층 복도 안쪽에 희미하게 쇠 냄새 같은 마력 잔향이 맴돈다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "…겁먹었나 보네.",
+     "type": "thought",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "벽에 기대고 있던 등을 곧게 펴며 반 걸음 다가선다. 목소리는 낮고 차분하다.",
+     "type": "action",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "사과할 것 없어. 소리 지른 거 신경 안 써.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "네가 다칠 상황이 생기면 난 또 똑같이 막아설 거야. 그게 내 일이고, 내 판단이니까.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "그는 표정을 크게 바꾸지 않고 당신의 눈을 똑바로 응시한다. 말끝에는 흔들림 없는 단호함이 묻어 있다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "그래도 네가 겁먹게 한 건… 말투는 조심하지. 그러니까 무서워할 이유 없어. 넌 내 뒤에만 있으면 돼.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    }
+   ],
+   "trace": [
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1428,
+     "input": 1438,
+     "output": 162,
+     "usd": "0.00083640",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 10351,
+     "input": 9179,
+     "output": 1270,
+     "usd": "0.01164675",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 4045,
+     "input": 9753,
+     "output": 401,
+     "usd": "0.00881850",
+     "fallback": false
+    },
+    {
+     "task": "agency_verify",
+     "model": "claude-sonnet-5-5",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1817,
+     "input": 1626,
+     "output": 74,
+     "usd": "0.00399200",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 6076,
+     "input": 10102,
+     "output": 607,
+     "usd": "0.00985275",
+     "fallback": false
+    },
+    {
+     "task": "agency_verify",
+     "model": "claude-sonnet-5-5",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1353,
+     "input": 1676,
+     "output": 74,
+     "usd": "0.00409200",
+     "fallback": false
+    }
+   ]
+  }
+ ]
+}

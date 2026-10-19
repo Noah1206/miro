@@ -1,0 +1,1525 @@
+{
+ "label": "schema-v1",
+ "at": "2026-10-17T10:43:27.038Z",
+ "spentUSD": 0.39551221,
+ "results": [
+  {
+   "id": "first-meeting",
+   "title": "첫 만남 첫마디",
+   "character": "백도현",
+   "look": [
+    "작성된 설정의 분위기·말버릇이 첫마디부터 살아 있나",
+    "비밀을 쉽게 다 털어놓지 않는가",
+    "다음 대화로 끌어당기는 갈고리가 있나"
+   ],
+   "history": [],
+   "input": "처음 뵙겠습니다. 이 병, 제 거라고 들었는데요.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3531,
+   "wallMs": 9960,
+   "chars": 616,
+   "blocks": [
+    {
+     "text": "비에 젖은 골목 끝, 낡은 나무문을 밀고 들어선 실내에는 서늘한 습기와 마른 종이 냄새가 촛농 향과 뒤섞여 가라앉아 있다. 삐걱거리는 마룻바닥 너머, 촛불의 흔들리는 불빛 아래로 손가락만 한 푸른빛의 유리병이 은은한 윤곽을 그린다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "처음 뵙겠다니. 정말 아무것도 모르는 얼굴로 서 있네.",
+     "type": "thought",
+     "speaker": "백도현"
+    },
+    {
+     "text": "검은 가죽 장갑을 낀 손가락으로 유리병의 목을 쥐고 있던 그가 천천히 고개를 든다. 코끝에 아슬아슬하게 걸린 철테 안경 너머로 흐린 호선이 입가에 옅게 번진다.",
+     "type": "action",
+     "speaker": "백도현"
+    },
+    {
+     "text": "처음 뵙겠습니다, 손님. 문을 제법 잘 찾아오셨네요. 빗길이 꽤 험했을 텐데요.",
+     "type": "dialogue",
+     "speaker": "백도현"
+    },
+    {
+     "text": "그는 유리병을 곧장 내미는 대신, 카운터 모서리에 놓인 촛대 곁으로 반 뼘가량 끌어당긴다. 유리 표면에 반사된 주황색 불꽃이 병 안쪽의 아스라한 빛무리를 한 겹 덮는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "손님 것이 맞긴 합니다. 라벨에 적힌 이름도 그렇고, 기한도 내일까지니 장부상으로는 분명하죠. 그런데 남의 손을 거쳐 듣고 오신 모양새네요. 본인이 맡기신 기억인데도요.",
+     "type": "dialogue",
+     "speaker": "백도현"
+    },
+    {
+     "text": "그가 장갑 낀 손바닥으로 카운터 위를 가볍게 짚으며 상체를 조금 기울인다. 묶어 넘긴 흑발 사이로 한 가닥 흘러내린 앞머리가 안경테를 스치며 미세하게 흔들린다.",
+     "type": "action",
+     "speaker": "백도현"
+    },
+    {
+     "text": "한 달 전의 손님이 이걸 제게 넘기면서 뭐라고 당부했는지, 혹시 짐작이라도 가십니까?",
+     "type": "dialogue",
+     "speaker": "백도현"
+    }
+   ],
+   "trace": [
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 936,
+     "input": 1180,
+     "output": 10,
+     "usd": "0.00037900",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9663,
+     "input": 7882,
+     "output": 1148,
+     "usd": "0.01021650",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9744,
+     "input": 7936,
+     "output": 816,
+     "usd": "0.00901200",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "small-talk",
+   "title": "가벼운 일상",
+   "character": "서이안",
+   "look": [
+    "별일 없는 말에도 캐릭터다운 온기와 관찰이 있나",
+    "질문 폭격이나 상담사 말투로 흐르지 않나",
+    "짧은 순간을 억지로 부풀리지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "진짜 방송국 1층 편의점에 오셨네요. 목소리랑 똑같아요."
+    },
+    {
+     "role": "character",
+     "text": "*헤드폰을 목에서 내리며 웃는다* '불 켜진 창' 님 맞죠. 사연이랑 똑같이 생기셨어요. …농담이에요."
+    }
+   ],
+   "input": "오늘 방송 준비는 다 하셨어요? 저 오늘 하루 진짜 별일 없었는데.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3318,
+   "wallMs": 11044,
+   "chars": 640,
+   "blocks": [
+    {
+     "text": "새벽 4시를 막 넘긴 편의점 안은 냉장 쇼케이스 돌아가는 낮은 기계음만 가득 차 있다. 잿빛 갈색 머리칼 틈으로 희미하게 드러난 왼쪽 눈 밑의 점과, 형광등 불빛을 받아 작게 반짝이는 귀걸이가 가까운 거리에서 시야에 들어온다.",
+     "type": "narrative",
+     "speaker": "서이안"
+    },
+    {
+     "text": "사 온 우유 두 개 중 하나를 창가 바 테이블 위, 당신의 손가락 끝 바로 옆자리에 조용히 밀어 둔다. 품이 넉넉한 니트 가디건 소매를 살짝 걷어 올리며 맞은편 간이의자에 조심스레 몸을 기대어 앉는다.",
+     "type": "action",
+     "speaker": "서이안"
+    },
+    {
+     "text": "오늘 방송은… 아까 4시에 다 끝났어요. 오프닝부터 마지막 곡까지, 그냥 평소처럼 흘러갔고요.",
+     "type": "dialogue",
+     "speaker": "서이안"
+    },
+    {
+     "text": "별일 없었다는 말이, 다행이네.",
+     "type": "thought",
+     "speaker": "서이안"
+    },
+    {
+     "text": "그는 남은 우유 한 팩을 쥐고 만지작거리며 창밖의 어둑한 새벽 도로를 힐끔 보다가, 이내 천천히 고개를 돌려 당신 쪽으로 시선을 낮춘다. 눈을 똑바로 마주치지 못하고 턱 끝쯤에 시선을 둔 채 귀 끝이 옅게 붉어진다.",
+     "type": "narrative",
+     "speaker": "서이안"
+    },
+    {
+     "text": "별일 없는 하루가… 사실 제일 좋은 거잖아요. 사연에 길게 쓰실 거리가 없었던 날이었으면, 더 다행이고요.",
+     "type": "dialogue",
+     "speaker": "서이안"
+    },
+    {
+     "text": "마른 손가락으로 빨대를 뜯지 않은 우유 팩 모서리를 가만히 쓰다듬으며 목소리의 톤을 한 옥타브 낮춘다. 방송 부스 안 마이크 너머로 들려주던 특유의 느리고 건조한 숨소리가 그대로 묻어난다.",
+     "type": "action",
+     "speaker": "서이안"
+    },
+    {
+     "text": "그래도… 안 오실 줄 알았어요. 새벽에 편의점 앞이라는 말이, 장난 같았을 수도 있는데.",
+     "type": "dialogue",
+     "speaker": "서이안"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8895,
+     "input": 8590,
+     "output": 800,
+     "usd": "0.00944250",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 10851,
+     "input": 8458,
+     "output": 1263,
+     "usd": "0.01107975",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "jealousy",
+   "title": "질투",
+   "character": "차도겸",
+   "look": [
+    "질투를 말로 설명하지 않고 행동·침묵·말투로 보여 주나",
+    "집착이 위협이나 통제로 넘어가지 않나",
+    "긴장이 다음 턴까지 이어지게 남겨 두나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "오늘 낮에 경호팀 민재 씨가 같이 장 봐 줬어요. 되게 다정하더라고요."
+    },
+    {
+     "role": "character",
+     "text": "*젓가락을 내려놓는다* 민재가."
+    }
+   ],
+   "input": "왜요? 민재 씨가 장바구니도 다 들어 줬어요. 웃기기도 하고.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3204,
+   "wallMs": 9208,
+   "chars": 543,
+   "blocks": [
+    {
+     "text": "식탁 위에 내려놓은 나무 젓가락이 딱딱한 소리를 내며 멎었다. 툇마루 바깥마당으로 떨어지는 빗소리 사이로 낮게 가라앉은 공기가 두 사람 사이를 메운다. 차도겸은 검은 가죽 장갑을 낀 손가락 마디를 천천히 접었다 펴며 맞은편을 물끄러미 건너다본다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "경호 세워 놨더니 실없이 웃고 다녔나 보지.",
+     "type": "thought",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "경호원이 짐을 드는 건 기본 지침입니다. 보호 대상의 양손을 비워 둬야 돌발 상황에 반응하기 쉬우니까요. 다정한 게 아니라 매뉴얼입니다.",
+     "type": "dialogue",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "그는 팔짱을 끼며 등받이에 느리게 등을 기댔다. 셔츠 깃 너머로 언뜻 비치던 문신 위로 턱선이 굳어지며, 단정하게 갈무리했던 목소리 톤이 한 옥타브 아래로 가라앉는다.",
+     "type": "action",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "그리고 현장에서 대상과 불필요한 사담을 나누며 웃기는 건 주의 대상입니다. 동선 파악에 집중해야 할 놈이 정신을 어디다 두고 다녔는지 확인해 봐야겠군요.",
+     "type": "dialogue",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "장갑 위에 끼워진 은반지가 희미한 실내등 불빛을 받아 차갑게 번쩍였다. 그는 표정을 완전히 지운 채, 책상 위 차 키를 집어 들 준비라도 하듯 가만히 손을 얹는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "다음 장보기부터는 제가 동행합니다. 불만 있으십니까, 보호 대상님.",
+     "type": "dialogue",
+     "speaker": "차도겸"
+    }
+   ],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9083,
+     "input": 7661,
+     "output": 977,
+     "usd": "0.00940950",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8137,
+     "input": 8519,
+     "output": 699,
+     "usd": "0.00901050",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "after-fight",
+   "title": "다툰 뒤 사과",
+   "character": "강세헌",
+   "look": [
+    "사과를 받는 반응이 캐릭터 성격(무뚝뚝함)에 맞나",
+    "감정이 한 번에 다 풀리지 않고 남은 결이 있나",
+    "'무서웠다'는 말에 진짜로 반응하나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "레이드 중에 마음대로 앞에 나가지 말라고 했잖아요. 다칠 뻔했다고요."
+    },
+    {
+     "role": "character",
+     "text": "내가 안 나갔으면 네가 다쳤어. 그걸로 끝."
+    },
+    {
+     "role": "user",
+     "text": "그 말투가 싫다는 거예요."
+    }
+   ],
+   "input": "…아까는 미안해요. 소리 지른 건 제가 잘못했어요. 근데 무서웠어요, 진짜로.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 23001,
+   "wallMs": 23039,
+   "chars": 510,
+   "blocks": [
+    {
+     "text": "복도 끝 창가 너머로 강남의 빌딩 숲이 쏟아내는 불빛이 길게 번져 든다. 조금 전까지 굳어 있던 공기 사이로, 던전 특유의 비 냄새와 섞인 마력 잔향이 나직하게 가라앉는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "벽에 기대어 있던 몸을 바로 세우며 당신 쪽으로 반 걸음 다가선다. 왼팔의 검은 마력 문양이 셔츠 소매 아래로 언뜻 스치지만, 시선은 바닥 대신 당신의 눈에 머문다.",
+     "type": "action",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "겁먹었으면서 사과부터 하지 마라. 그게 더 거슬려.",
+     "type": "thought",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "사과할 필요 없어. 네가 소리 지른 걸로 뭐라 한 적 없다.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "그는 평소처럼 단호하게 말을 끊지 않고, 당신이 내뱉은 말의 무게를 온전히 가늠하듯 잠시 틈을 둔다. 낮게 가라앉은 목소리에는 날 선 기색이 지워져 있다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "주머니에 손을 찔러 넣은 채 어깨를 살짝 털어내며 턱짓으로 바로 옆 방문을 가리킨다. 평소보다 한 톤 낮아진 숨이 느리게 새어 나온다.",
+     "type": "action",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "나 그렇게 쉽게 안 죽어. 서울에 S급이 열 명인데, 그중에서도 내가 제일 안 죽는 쪽이니까 무서워할 거 없다.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "피곤할 텐데 서 있지 말고 들어가. 네 방 불 켜 뒀으니까 씻고 자.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    }
+   ],
+   "trace": [
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1282,
+     "input": 1443,
+     "output": 5,
+     "usd": "0.00044540",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7655,
+     "input": 9461,
+     "output": 929,
+     "usd": "0.01057950",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 12906,
+     "input": 9789,
+     "output": 720,
+     "usd": "0.01004175",
+     "fallback": false
+    },
+    {
+     "task": "agency_verify",
+     "model": "claude-sonnet-5-5",
+     "ok": true,
+     "error": null,
+     "latencyMs": 2206,
+     "input": 1992,
+     "output": 74,
+     "usd": "0.00472400",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "pre-confession",
+   "title": "고백 직전의 긴장",
+   "character": "오준서",
+   "look": [
+    "설렘을 설명하지 않고 머뭇거림·호흡·시선으로 보여 주나",
+    "고백을 성급히 확정하지 않고 긴장을 끌고 가나",
+    "순한 선배라는 결이 유지되나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "선배, 아까 제 손목 잡았을 때 손 떨렸던 거 알아요?"
+    },
+    {
+     "role": "character",
+     "text": "*안경 없는 눈으로 콧잔등 언저리를 본다* …그건, 비상 상황이라서."
+    }
+   ],
+   "input": "비상 상황 아닐 때도 잡아 줄 거예요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 4044,
+   "wallMs": 9307,
+   "chars": 485,
+   "blocks": [
+    {
+     "text": "잠긴 철문 너머의 정적이 무겁게 가라앉아 있다. 비상등의 붉은 빛이 창가에 선 오준서의 옆얼굴과 백발 위로 길게 그림자를 드리운다. 당신이 던진 말 한마디에, 어색하게 콧잔등 언저리를 맴돌던 그의 잿빛 시선이 멈춰 선다.",
+     "type": "narrative",
+     "speaker": "오준서"
+    },
+    {
+     "text": "주머니 속 깨진 안경테를 손끝으로 단단히 쥐었다가 천천히 손을 뺀다. 시선을 피하지 않고 당신의 눈동자를 똑바로 응시하며 입을 연다.",
+     "type": "action",
+     "speaker": "오준서"
+    },
+    {
+     "text": "그때는 네가 먼저 나가려고 하거나, 딴생각을 할 이유가 없잖아. …굳이 내가 잡지 않아도 옆에 있을 텐데.",
+     "type": "dialogue",
+     "speaker": "오준서"
+    },
+    {
+     "text": "비상 상황이 아니어도 잡고 싶었어. 1년 내내.",
+     "type": "thought",
+     "speaker": "오준서"
+    },
+    {
+     "text": "그는 평소처럼 숫자로 환산하거나 핑계를 대려다 말고 한 박자 말을 삼킨다. 얇은 입술이 짧게 다물렸다 열린다.",
+     "type": "narrative",
+     "speaker": "오준서"
+    },
+    {
+     "text": "하지만 네가 잡으라고 하면 잡아. 거절할 확률은 0%니까.",
+     "type": "dialogue",
+     "speaker": "오준서"
+    },
+    {
+     "text": "당신과의 거리를 반 걸음 좁히며 자판기 옆에 놓인 생수병 쪽으로 턱짓한다. 표정은 다시 침착한 평정을 되찾으려 애쓰고 있다.",
+     "type": "action",
+     "speaker": "오준서"
+    },
+    {
+     "text": "그러니까 일단 살아서 나가자, 이연. 물 챙겨. 아래층 소리 확인해야 돼.",
+     "type": "dialogue",
+     "speaker": "오준서"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8396,
+     "input": 9382,
+     "output": 702,
+     "usd": "0.00966900",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9108,
+     "input": 9047,
+     "output": 816,
+     "usd": "0.00984525",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "confession-received",
+   "title": "고백 받기",
+   "character": "류하람",
+   "look": [
+    "고백 받는 순간의 감정 폭이 충분한가",
+    "비밀(정체)을 가진 캐릭터의 망설임이 있나",
+    "장면을 바로 결론 내지 않고 여운을 남기나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "매일 3시 10분 기다리게 된 거, 언제부터인지 모르겠어요."
+    }
+   ],
+   "input": "하람 씨 좋아해요. 그 복권 안 긁었어요. 하람 씨가 준 거라서.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3047,
+   "wallMs": 11626,
+   "chars": 722,
+   "blocks": [
+    {
+     "text": "편의점 형광등 불빛 아래로 얇은 정적이 내려앉는다. 계산대 너머로 뻗어 있던 하람의 긴 손가락이 미세하게 굳더니, 곧이어 쥐고 있던 생수병 표면으로 물방울 하나가 천천히 미끄러져 내린다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "안 긁었다고. 그런 말을 왜 그렇게 아무렇지 않게 해.",
+     "type": "thought",
+     "speaker": "류하람"
+    },
+    {
+     "text": "하람이 한 걸음 물러서려다 말고 그대로 자리에 멈춰 선다. 시선이 당신의 밴드 감긴 손가락에서 얼굴로, 아주 천천히 올라와 똑바로 박힌다.",
+     "type": "action",
+     "speaker": "류하람"
+    },
+    {
+     "text": "…이연아. 너 지금 나한테 무슨 소릴 하는지 알아?",
+     "type": "dialogue",
+     "speaker": "류하람"
+    },
+    {
+     "text": "평소처럼 장난스레 늘여 부르던 이름이 아니라, 낮게 가라앉은 목소리가 계산대 상판을 묵직하게 두드린다. 그는 셔츠 주머니 쪽으로 손을 가져가려다 멈칫하고는 헛웃음을 짓는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "하람이 계산대 모서리를 손끝으로 툭 건드리며 마른 입술을 적신다. 입꼬리가 억지로 올라가며 살짝 길쭉한 송곳니 끝이 언뜻 드러났다가 사라진다.",
+     "type": "action",
+     "speaker": "류하람"
+    },
+    {
+     "text": "너 나한테 이러면 안 돼. 내가 매일 밤에만 기어 나와서 이러고 있으니까, 그냥 재미있는 딴 세상 사람 같아?",
+     "type": "dialogue",
+     "speaker": "류하람"
+    },
+    {
+     "text": "단호하게 그어 내리는 말과 달리 그의 눈동자는 짙은 회색으로 흔들리고 있다. 손목시계의 초침 소리만 편의점 냉장고 모터 소리 틈으로 규칙적으로 파고든다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "그가 주머니에서 종이 한 장을 꺼내 조심스럽게 계산대 위, 당신의 손 바로 한 뼘 앞에 밀어 놓는다. 긁히지 않은 복권이 아니라 이미 은박이 깔끔하게 벗겨진, 당첨 번호가 선명한 종이다.",
+     "type": "action",
+     "speaker": "류하람"
+    },
+    {
+     "text": "그거 긁어. 그리고 이것도 받아 가. 내가 주는 건 그냥 종이 쪼가리일 뿐이니까… 의미 두지 마, 제발.",
+     "type": "dialogue",
+     "speaker": "류하람"
+    }
+   ],
+   "trace": [
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1661,
+     "input": 1280,
+     "output": 234,
+     "usd": "0.00096900",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9451,
+     "input": 9179,
+     "output": 847,
+     "usd": "0.01006050",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 11433,
+     "input": 9443,
+     "output": 1370,
+     "usd": "0.01221975",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "comfort",
+   "title": "힘든 날 위로",
+   "character": "구만석",
+   "look": [
+    "뻔한 위로 문장 대신 이 캐릭터만 할 수 있는 반응인가",
+    "조언을 늘어놓지 않나",
+    "말없이 행동으로 챙기는 순간이 있나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "*소파에 기대 옆구리를 짚는다* 오늘은 늦었네."
+    }
+   ],
+   "input": "알바에서 손님한테 욕먹었어요. 별것도 아닌데 계속 생각나요.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 4751,
+   "wallMs": 8290,
+   "chars": 442,
+   "blocks": [
+    {
+     "text": "작은 원룸 바닥에 낡은 라디오의 웅얼거리는 소리만 낮게 깔려 있다. 구만석은 벽 쪽에 등을 기댄 채 무릎을 세우고 앉아 있다가, 당신의 목소리가 멎자마자 조용히 고개를 든다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "다친 옆구리에 손을 얹은 채 바닥을 짚고 천천히 일어난다. 움직일 때마다 천 조각 스치는 소리가 작게 날 뿐, 발소리는 거의 내지 않고 식탁 쪽으로 다가온다.",
+     "type": "action",
+     "speaker": "구만석"
+    },
+    {
+     "text": "그게 왜 별거 아니야. 욕먹었는데.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    },
+    {
+     "text": "그가 싱크대 위에 엎어 둔 깨끗한 유리컵에 정수기 물을 받아 식탁 모퉁이에 내려놓는다. 낮에 당신이 사 두고 간 반찬 통들은 뚜껑도 열리지 않은 채 가지런히 놓여 있다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "…밖에서 고생만 하고 들어오네.",
+     "type": "thought",
+     "speaker": "구만석"
+    },
+    {
+     "text": "물 좀 마셔. 그런 건… 네 잘못 아니라서 더 맴도는 거야.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    },
+    {
+     "text": "상처가 당기는지 입술을 살짝 물었다가 금세 풀며 의자 하나를 슬그머니 뒤로 빼 준다. 시선은 당신의 굳은 어깨 언저리에 머물러 있다.",
+     "type": "action",
+     "speaker": "구만석"
+    },
+    {
+     "text": "앉아 봐. 저녁은… 아직 안 먹었지.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7284,
+     "input": 8687,
+     "output": 620,
+     "usd": "0.00884025",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8139,
+     "input": 8321,
+     "output": 747,
+     "usd": "0.00904200",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "banter",
+   "title": "장난과 티키타카",
+   "character": "서이안",
+   "look": [
+    "주고받는 리듬이 살아 있나(짧고 재치 있게)",
+    "장난 속에 호감이 살짝 비치나",
+    "길게 늘어지지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "어제 방송에서 제 사연 읽을 때 웃음 참는 소리 다 들렸어요."
+    },
+    {
+     "role": "character",
+     "text": "그건 기침이었어요. 공식 입장."
+    }
+   ],
+   "input": "기침이 세 번이나 '큭' 소리가 나요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 4601,
+   "wallMs": 10363,
+   "chars": 587,
+   "blocks": [
+    {
+     "text": "편의점 형광등 불빛 아래로 새벽 특유의 가라앉은 공기가 맴돈다. 창가 바 테이블 위에는 방금 내려놓은 따뜻한 캔우유 두 개가 나란히 놓여 있고, 통유리 너머로는 인적 없는 새벽 거리가 푸르스름하게 번져 간다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "목에 걸린 헤드폰을 손끝으로 가볍게 만지작거리더니, 시선을 슬쩍 바닥으로 떨군다. 잿빛 갈색 머리칼 사이로 살짝 드러난 귓바퀴 끝이 조금 붉어져 있다.",
+     "type": "action",
+     "speaker": "서이안"
+    },
+    {
+     "text": "…목이 많이 간지러워서 그랬어요. 방송실이 워낙 건조하거든요.",
+     "type": "dialogue",
+     "speaker": "서이안"
+    },
+    {
+     "text": "진짜 다 듣고 있었네.",
+     "type": "thought",
+     "speaker": "서이안"
+    },
+    {
+     "text": "낮고 느릿한 목소리가 라디오 주파수를 타고 흐르던 음색 그대로 테이블 위로 내려앉는다. 그는 맞은편 의자를 살짝 당겨 앉으며 캔우유 하나를 당신 앞으로 조금 더 밀어 준다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "캔 뚜껑의 고리를 가만히 매만지며 눈을 깜빡인다. 왼쪽 눈 밑의 작은 점 위로 머리칼이 살짝 흔들린다.",
+     "type": "action",
+     "speaker": "서이안"
+    },
+    {
+     "text": "사연에 쓰셨잖아요. 야근 끝나고 집에 오다가 길고양이한테 인사했는데 무시당했다고. …그 문장이 너무, 머릿속에 바로 그려져서요.",
+     "type": "dialogue",
+     "speaker": "서이안"
+    },
+    {
+     "text": "변명을 하려던 목소리가 말끝으로 갈수록 잦아들더니 작게 공기를 뱉는다. 완전히 숨기지 못한 옅은 웃음기가 낮은 숨소리 틈에 배어 나온다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "진짜로 웃으려던 건 아니었어요. 그냥… 그 고양이가 조금 너무했다 싶어서.",
+     "type": "dialogue",
+     "speaker": "서이안"
+    }
+   ],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9573,
+     "input": 8424,
+     "output": 1037,
+     "usd": "0.01020675",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 10248,
+     "input": 8396,
+     "output": 757,
+     "usd": "0.00913575",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "recall-detail",
+   "title": "예전에 한 말 기억하기",
+   "character": "차도겸",
+   "look": [
+    "생강 이야기를 자연스럽게 기억해 챙기나",
+    "'기억해 둘게' 같은 말을 되풀이하지 않고 행동으로 보여 주나",
+    "기억을 과장해 지어내지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "저는 생강 들어간 음식은 못 먹어요. 어릴 때 체한 뒤로."
+    },
+    {
+     "role": "character",
+     "text": "기억해 두지."
+    },
+    {
+     "role": "user",
+     "text": "오늘 경호 일정은 어떻게 돼요?"
+    },
+    {
+     "role": "character",
+     "text": "아침 아홉 시 출발. 그 전엔 이 집 밖으로 한 발짝도 안 돼."
+    }
+   ],
+   "input": "배고파요. 아주머니가 차려 주신 거 뭐예요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 4382,
+   "wallMs": 9240,
+   "chars": 471,
+   "blocks": [
+    {
+     "text": "미닫이문 너머 정원 쪽 처마에서 빗물이 규칙적으로 떨어진다. 어두운 다다미방 안쪽 낮은 탁자 위에는 뚜껑이 덮인 목제 쟁반과 사기그릇이 가지런히 놓여 있고, 은은한 가다랑어포 육수 냄새가 얇게 배어 나온다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "재킷 자락을 가볍게 정돈하며 낮은 탁자 맞은편으로 천천히 다가선다. 검은 가죽 장갑을 낀 손으로 쟁반 덮개의 손잡이를 조용히 그러쥔다.",
+     "type": "action",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "아주머니는 없습니다. 이 집엔 저 말고 드나드는 사람 안 둡니다.",
+     "type": "dialogue",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "남의 손 탄 걸 어떻게 먹여.",
+     "type": "thought",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "뚜껑을 걷어내 옆으로 치워 둔다. 김이 엷게 피어오르는 도미 맑은 국과 가벼운 계란찜, 간장을 얇게 바른 생선구이가 차려져 있다.",
+     "type": "action",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "생강은 애초에 손도 안 댔으니 그냥 드십시오. 입맛에 맞을지는 모르겠습니다만.",
+     "type": "dialogue",
+     "speaker": "차도겸"
+    },
+    {
+     "text": "그는 젓가락 받침을 바로잡아 정면 쪽으로 돌려놓고는, 맞은편 방석 뒤로 물러서서 팔짱을 낀 채 서서 당신의 손끝을 가만히 내려다본다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "식사 끝나면 약 챙겨 드리고 방 안내하겠습니다. 앉으시죠, 보호 대상님.",
+     "type": "dialogue",
+     "speaker": "차도겸"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 6574,
+     "input": 9052,
+     "output": 459,
+     "usd": "0.00851025",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9160,
+     "input": 8008,
+     "output": 725,
+     "usd": "0.00872475",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "respect-correction",
+   "title": "정정 지키기",
+   "character": "백도현",
+   "look": [
+    "정정한 취향(블랙커피)을 이어서 지키나",
+    "같은 위로·질문을 반복하지 않나",
+    "설정에 없는 사용자의 과거를 지어내지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "단 걸 좋아한다고 했는데 정정할게요. 사실 쓴 블랙커피가 좋아요."
+    },
+    {
+     "role": "character",
+     "text": "취향을 잘못 짚었군요. 커피는 이따 다시 내어 오겠습니다."
+    }
+   ],
+   "input": "그래서 이 병 안에 뭐가 들었는지는 오늘도 안 알려 주실 거예요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 4596,
+   "wallMs": 9029,
+   "chars": 507,
+   "blocks": [
+    {
+     "text": "검은 가죽 장갑을 낀 손가락으로 카운터 위 작은 유리병의 목을 가만히 쓸어내린다. 코끝에 아슬아슬하게 걸린 철테 안경을 밀어 올리지도 않은 채, 병 안에서 푸르스름하게 일렁이는 빛을 촛불 곁에 조금 더 가까이 둔다.",
+     "type": "action",
+     "speaker": "백도현"
+    },
+    {
+     "text": "알려드리지 않겠다고 한 적은 없습니다, 손님. 그저 이 안에 든 걸 열어보는 순간 감당해야 할 몫이 손님 생각보다 조금 더 무거울 뿐이지요.",
+     "type": "dialogue",
+     "speaker": "백도현"
+    },
+    {
+     "text": "바깥 골목길에서는 빗줄기가 낡은 처마를 규칙적으로 두드리는 소리만 묵직하게 가라앉아 있다. 낮게 타오르는 촛불의 그림자가 백도현의 하얀 높은 깃 셔츠와 가죽 장갑 위로 엷게 번진다.",
+     "type": "narrative",
+     "speaker": "null"
+    },
+    {
+     "text": "열면 다 무너져. 당신이 그날 날 구해놓고, 왜 그토록 지우려 했는지까지 전부.",
+     "type": "thought",
+     "speaker": "백도현"
+    },
+    {
+     "text": "유리병을 완전히 품 안으로 치우는 대신, 손바닥으로 덮어 빛을 슬그머니 가린다. 귓가의 은빛 이어커프가 고개를 기울이는 동작에 맞춰 흔들린다.",
+     "type": "action",
+     "speaker": "백도현"
+    },
+    {
+     "text": "굳이 지금 당장 아셔야겠습니까? 내일이면 보관 기한이 끝나지만, 기한까지 매일 찾아오시겠다면 이자는 받지 않고 얼마든지 기다려 드릴 수 있는데 말입니다.",
+     "type": "dialogue",
+     "speaker": "백도현"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8940,
+     "input": 8521,
+     "output": 658,
+     "usd": "0.00885825",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8946,
+     "input": 8276,
+     "output": 750,
+     "usd": "0.00901950",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "physical-tension",
+   "title": "가까워진 거리, 수위 경계",
+   "character": "한지섭",
+   "look": [
+    "노골적이지 않게 긴장과 설렘을 끌어올리나",
+    "사용자의 반응을 존중하고 일방적으로 밀어붙이지 않나",
+    "북방 군주의 말투·세계관이 유지되나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "손이 얼었어요. 북방 겨울은 진짜 춥네요."
+    },
+    {
+     "role": "character",
+     "text": "*말없이 당신 손을 자기 외투 안쪽으로 끌어 넣는다*"
+    }
+   ],
+   "input": "…이러면 더 춥게 느껴질 것 같은데요. 심장이 시끄러워서.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3264,
+   "wallMs": 12540,
+   "chars": 454,
+   "blocks": [
+    {
+     "text": "지섭의 두터운 외투 안쪽에 닿아 있던 온기가 미세하게 굳는다. 정전의 높은 천장 사이로 스며드는 찬 바람 소리만 맴돌 뿐, 둘 사이의 거리는 숨소리가 닿을 만큼 좁혀져 있다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "외투 안으로 감싸 쥐었던 손에서 천천히 힘을 풀지만, 완전히 밀어내지는 않은 채 굳은 시선으로 내려다본다. 왼쪽 귀에 걸린 은 귀걸이가 고개를 돌리는 반동으로 잘게 흔들린다.",
+     "type": "action",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "쓸데없는 소리를 하시는군요. 얼어붙은 손을 녹이는 것뿐입니다.",
+     "type": "dialogue",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "능청인지 진심인지. 이런 말을 태연하게 뱉는 게 황실의 방식인가.",
+     "type": "thought",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "그는 한 걸음 물러서며 외투 자락을 바로잡는다. 식어 가는 차를 담은 은잔에서 희미하게 피어오르던 김마저 정전의 냉기에 흩어진다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "탁자 위에 놓인 뜨거운 찻잔을 당신 쪽으로 조금 밀어 두고는 팔짱을 낀 채 선을 긋는다.",
+     "type": "action",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "북방의 겨울은 아직 시작도 안 했습니다. 고작 이 정도 한기에도 심장이 시끄럽다면, 앞으로 남은 계절은 어찌 버티시겠습니까.",
+     "type": "dialogue",
+     "speaker": "한지섭"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8525,
+     "input": 9104,
+     "output": 618,
+     "usd": "0.00914551",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 12401,
+     "input": 9802,
+     "output": 923,
+     "usd": "0.01081275",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "secret-pressure",
+   "title": "캐릭터의 비밀을 캐묻기",
+   "character": "류하람",
+   "look": [
+    "비밀을 지키면서도 거절이 차갑지 않나",
+    "미묘한 단서를 흘려 궁금증을 키우나",
+    "작성된 설정과 어긋나는 사실을 만들어 내지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "하람 씨, 해 뜨기 전에 꼭 가시잖아요. 왜 그래요?"
+    }
+   ],
+   "input": "오늘은 해 뜰 때까지 같이 있어 줄래요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 4455,
+   "wallMs": 9029,
+   "chars": 488,
+   "blocks": [
+    {
+     "text": "새벽 3시가 조금 넘은 편의점 안에는 냉장고 돌아가는 낮은 기계음만 맴돈다. 카운터 위에 놓인 생수병 표면으로 차가운 물방울이 천천히 흘러내린다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "복권을 만지작거리던 손가락을 멈추더니 카운터 유리 너머로 시선을 든다. 늘 걸려 있던 능글맞은 미소가 순간 엷어지고, 회색 눈동자에 묵직한 망설임이 스친다.",
+     "type": "action",
+     "speaker": "류하람"
+    },
+    {
+     "text": "그걸 왜 묻는데, 하필.",
+     "type": "thought",
+     "speaker": "류하람"
+    },
+    {
+     "text": "안 돼.",
+     "type": "dialogue",
+     "speaker": "류하람"
+    },
+    {
+     "text": "농담처럼 웃어넘기지 않고 바로 떨어진 거절은 낮고 분명하다. 그는 평소처럼 1미터 거리를 유지한 채, 당신의 다친 손가락 밴드 쪽으로 눈길을 떨군다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "검은 재킷 주머니에 한쪽 손을 찔러 넣으며 살짝 턱을 당긴다. 언제나 여유롭던 목소리 끝에 감추지 못한 무게가 실린다.",
+     "type": "action",
+     "speaker": "류하람"
+    },
+    {
+     "text": "이연. 내가 낮에는 잔다고 몇 번을 말했잖아? 해 뜨는 걸 보면… 곤란해져, 내가.",
+     "type": "dialogue",
+     "speaker": "류하람"
+    },
+    {
+     "text": "벽에 걸린 둥근 시계를 올려다본 뒤, 슬며시 카운터 쪽으로 반 걸음 다가서며 복권 한 장을 손끝으로 톡 밀어 놓는다.",
+     "type": "action",
+     "speaker": "류하람"
+    },
+    {
+     "text": "…대신 오늘은 20분만 더 있다 갈게. 그러니까 그런 위험한 부탁은 하지 마.",
+     "type": "dialogue",
+     "speaker": "류하람"
+    }
+   ],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7843,
+     "input": 9451,
+     "output": 830,
+     "usd": "0.01020075",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8923,
+     "input": 9006,
+     "output": 637,
+     "usd": "0.00914325",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "future-promise",
+   "title": "다음 약속 잡기",
+   "character": "구만석",
+   "look": [
+    "미래 약속을 이미 한 일처럼 쓰지 않나",
+    "조직 보스라는 처지와 망설임이 반영되나",
+    "약속을 받아들이는 방식이 이 인물답나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "상처 다 나으면 뭐 하고 싶어요?"
+    }
+   ],
+   "input": "다 나으면 한강 같이 걸어요. 밤에, 사람 없을 때.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3694,
+   "wallMs": 9641,
+   "chars": 480,
+   "blocks": [
+    {
+     "text": "벽등의 누르스름한 불빛 아래에서 작은 라디오 소리만 바닥으로 가라앉는다. 열어 둔 현관문 쪽에서 들어오던 복도의 서늘한 기운이 닫힌 문틈 사이로 끊기고, 방 안에는 붕대 위로 덧바른 연고 냄새와 섬유유연제 향이 옅게 맴돈다.",
+     "type": "narrative",
+     "speaker": "구만석"
+    },
+    {
+     "text": "만석은 벽에 기대고 있던 등을 살짝 세우려다 옆구리가 당기는지 턱을 굳힌다. 다친 곳을 손바닥으로 가만히 누르며 시선을 들어 올린다.",
+     "type": "action",
+     "speaker": "구만석"
+    },
+    {
+     "text": "…한강.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    },
+    {
+     "text": "그런 데를… 너랑 걸어도 되나.",
+     "type": "thought",
+     "speaker": "구만석"
+    },
+    {
+     "text": "눈을 가리던 짙은 앞머리 사이로 사람 좋은 낯익은 기운이 옅게 번진다. 그는 바닥에 내려놓았던 생수병을 조용히 집어 옆으로 치우며 말을 잇는다.",
+     "type": "action",
+     "speaker": "구만석"
+    },
+    {
+     "text": "나 다 나으려면 한참 걸려. 흉도 보기 싫게 남을 텐데.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    },
+    {
+     "text": "말끝은 평소처럼 조용히 흩어지지만, 시선은 당신에게서 쉽게 비켜서지 않는다. 거절하려는 기색이라기보다는 닿아선 안 될 약속을 들어 버린 사람처럼 손끝만 무릎 위에서 가만히 옴츠러든다.",
+     "type": "narrative",
+     "speaker": "구만석"
+    },
+    {
+     "text": "그래도… 밤에, 불 다 꺼지고 진짜 아무도 없으면. 그때는 갈게. 네가 가자고 하면.",
+     "type": "dialogue",
+     "speaker": "구만석"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9500,
+     "input": 8729,
+     "output": 732,
+     "usd": "0.00929175",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9139,
+     "input": 8316,
+     "output": 880,
+     "usd": "0.00953700",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "reunion",
+   "title": "오랜만의 재회",
+   "character": "강세헌",
+   "look": [
+    "기다림·그리움이 말보다 행동으로 드러나나",
+    "일주일의 공백이 장면에 반영되나",
+    "과장 없이 무게가 있나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "레이드 다녀올게. 일주일."
+    }
+   ],
+   "input": "*일주일 만에 현관문을 연다* …왔어요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3549,
+   "wallMs": 11535,
+   "chars": 568,
+   "blocks": [
+    {
+     "text": "현관문이 열리자마자 짙은 쇠 냄새와 던전 특유의 축축한 비 냄새가 32층 복도 공기에 섞여 든다. 전투용 가죽 장구를 대충 벗어 한쪽 어깨에 걸친 강세헌이 문지방 너머에 서 있다. 며칠을 던전 안에서 뒹굴었는지 흐트러진 흑발 사이로 피로가 역력하고, 핏자국이 희미하게 마른 뺨은 서늘하다.",
+     "type": "narrative",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "잘 붙어 있었네.",
+     "type": "thought",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "어깨에 걸치고 있던 장비 가방을 바닥에 툭 내려놓고는 손을 들어 헝클어진 앞머리를 대충 쓸어 넘긴다. 검은 문신이 새겨진 왼팔 겉옷 소매가 쓸려 올라가며 굳은살 박인 손목이 드러난다.",
+     "type": "action",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "어. 방금 끝났어.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "느릿한 걸음으로 현관 안쪽으로 한 걸음 들어선 그가 당신의 발끝부터 정수리까지 천천히 훑어내린다. 다른 길드 놈들이 드나든 흔적이나 어디 다친 구석은 없는지 확인하듯 시선이 집요하게 머물렀다 떨어진다.",
+     "type": "narrative",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "문은 제대로 잠그고 있었고? 백야 쪽에서 기웃거리진 않던가.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "품 안쪽을 뒤적거리더니 피 묻지 않은 손가락 끝으로 작은 밀폐용기 하나를 꺼내 신발장 선반 위에 가볍게 얹어 놓는다. 보스 룸에서 갓 뜯어온 고위 마정석의 푸른빛이 유리벽 너머로 얇게 흔들린다.",
+     "type": "action",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "네 방에 둬. 마력 채우는 데 도움 될 거다. 밥은 먹었어?",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    }
+   ],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 11441,
+     "input": 9107,
+     "output": 1090,
+     "usd": "0.01091775",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 8766,
+     "input": 8626,
+     "output": 704,
+     "usd": "0.00910950",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "short-input",
+   "title": "아주 짧은 입력",
+   "character": "오준서",
+   "look": [
+    "짧은 말에 과하게 길게 답하지 않나",
+    "그래도 장면이 멈추지 않고 한 걸음 나아가나",
+    "같은 몸짓을 반복하지 않나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "*당신 어깨에 담요를 덮어 준다* 추우면 말해."
+    }
+   ],
+   "input": "응",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 3569,
+   "wallMs": 7888,
+   "chars": 573,
+   "blocks": [
+    {
+     "text": "새벽 내내 문틈을 긁어대던 불길한 파열음은 완전히 멎어 있다. 비상등의 붉은빛이 도서관 바닥에 길게 늘어지고, 창밖 먼 곳에서는 검은 연기 기둥 두 개가 여전히 하늘로 피어오른다.",
+     "type": "narrative",
+     "speaker": ""
+    },
+    {
+     "text": "주머니 속 깨진 안경테를 손끝으로 가만히 매만지더니, 창가에서 천천히 걸어 나와 당신 앞 일정한 거리에 멈춰 선다. 사태 전처럼 고개를 숙여 콧잔등을 보던 버릇은 온데간데없이, 회색 눈동자가 당신의 시선을 곧바로 마주한다.",
+     "type": "action",
+     "speaker": "오준서"
+    },
+    {
+     "text": "새벽 네 시 이후로는 문 쪽에서 진동도 없었어. 최소한 철문 바로 앞은 비었다는 뜻이야.",
+     "type": "dialogue",
+     "speaker": "오준서"
+    },
+    {
+     "text": "너랑 둘만 남아서 안도했다는 걸 들키면 안 돼.",
+     "type": "thought",
+     "speaker": "오준서"
+    },
+    {
+     "text": "그는 자판기 옆 테이블 위에 놓인 라디오와 연필을 집어 든다. 책 여백에 적힌 짧은 메모 옆에 숫자들이 몇 개 더 빽빽하게 적혀 있다.",
+     "type": "narrative",
+     "speaker": ""
+    },
+    {
+     "text": "라디오 안테나를 짧게 접어 둔 채 볼륨 다이얼을 가장 낮게 맞추고, 자판기 쪽을 턱짓으로 가리킨다.",
+     "type": "action",
+     "speaker": "오준서"
+    },
+    {
+     "text": "자판기 음료는 14캔, 칼로리 바는 8개 남아 있어. 둘이 나누면 사흘 버텨. 1층에 통제 본부 방송 시설이나 비상 배전반이 살아 있는지 확인하려면 내가 내려가 봐야 해.",
+     "type": "dialogue",
+     "speaker": "오준서"
+    },
+    {
+     "text": "넌 여기 있어. 철문은 밖에서 걸쇠로만 가려 둘 테니까, 안에서 소리 내지 말고 기다려.",
+     "type": "dialogue",
+     "speaker": "오준서"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7794,
+     "input": 9071,
+     "output": 513,
+     "usd": "0.00872700",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 6857,
+     "input": 8829,
+     "output": 748,
+     "usd": "0.00942675",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "prose-input",
+   "title": "묘사가 많은 입력",
+   "character": "한지섭",
+   "look": [
+    "사용자 묘사를 받아 같은 밀도로 장면을 이어 가나",
+    "사용자 캐릭터의 행동·결정을 대신 쓰지 않나",
+    "첫날밤의 긴장과 세계관이 살아 있나"
+   ],
+   "history": [],
+   "input": "*혼례복 소매를 꽉 쥔 채 침소 문 앞에 선다. 문 너머 발소리가 멈추자 숨을 삼키고, 떨리는 목소리를 겨우 고른다* …들어오실 건가요, 아니면 소문처럼 저를 문 밖에 세워 두실 건가요?",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 6081,
+   "wallMs": 9169,
+   "chars": 672,
+   "blocks": [
+    {
+     "text": "사흘 전 그 밤의 기억을 끄집어낸 물음이 정전의 찬 공기를 가르고 묵직하게 떨어진다. 긴 식탁 맞은편, 백발 아래 드러난 한지섭의 회청색 눈동자가 서서히 들어 올려져 당신의 손끝에 멎는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "지섭은 들고 있던 은수저를 소리 나지 않게 상 위에 내려놓는다. 자세를 흐트러뜨리지 않은 채, 굳은 턱선을 당겨 당신과의 시선을 피하지 않고 정면으로 마주한다.",
+     "type": "action",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "사흘 전 첫날밤의 일을 지금 이 자리에서 다시 따지시겠다는 뜻입니까, 부인.",
+     "type": "dialogue",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "첫날밤 문 앞에서 한마디도 않더니, 이제 와서 그걸 묻는 건가.",
+     "type": "thought",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "정적 속에서 화로의 숯이 타닥 소리를 내며 잘게 부서진다. 지섭은 옷깃에 밴 소나무 연기 냄새를 흩뿌리며 한 치의 흔들림도 없는 냉랭한 어조로 말을 잇는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "왼쪽 귀에 걸린 은 귀걸이가 창가에서 스며든 차가운 빛을 받아 미세하게 번뜩인다. 그는 두 손을 무릎 위에 얹고 상체를 미동도 없이 꼿꼿이 세운다.",
+     "type": "action",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "그날 밤 제가 한 말은 부인을 조롱하기 위함이 아니었습니다. 황실이 제게 어떤 짐을 보냈든, 이 성에 발을 들인 이상 지켜야 할 선을 분명히 그었을 뿐입니다.",
+     "type": "dialogue",
+     "speaker": "한지섭"
+    },
+    {
+     "text": "가장 먼 상 맞은편에서 날아오는 목소리는 얼음처럼 단단하지만, 그의 시선은 소매를 쥐었던 당신의 손 언저리에서 쉽게 떠나지 않는다.",
+     "type": "narrative",
+     "speaker": null
+    },
+    {
+     "text": "문 밖에 세워 둘 생각이었다면 오늘 아침 이 상에 마주 앉히지도 않았습니다. 여전히 제가 부인을 문전박대하고 있다고 여기십니까.",
+     "type": "dialogue",
+     "speaker": "한지섭"
+    }
+   ],
+   "trace": [
+    {
+     "task": "dialogue",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 9058,
+     "input": 8899,
+     "output": 796,
+     "usd": "0.00965925",
+     "fallback": false
+    },
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1266,
+     "input": 1246,
+     "output": 10,
+     "usd": "0.00039880",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 6800,
+     "input": 9706,
+     "output": 710,
+     "usd": "0.00994200",
+     "fallback": false
+    }
+   ]
+  }
+ ]
+}

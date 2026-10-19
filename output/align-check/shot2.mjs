@@ -1,0 +1,27 @@
+import { chromium } from '@playwright/test'
+import { readFileSync } from 'node:fs'
+const DIR = '/Users/johyeon-ung/Desktop/Miro/output/align-check'
+const token = readFileSync(`${DIR}/.token`, 'utf8').trim()
+const browser = await chromium.launch()
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 })
+await ctx.addCookies([{ name: 'miro_session', value: token, domain: 'miroapp.app', path: '/', httpOnly: true, secure: true, sameSite: 'Lax' }])
+const page = await ctx.newPage()
+await page.goto('https://miroapp.app/character/official-han-jiseob', { waitUntil: 'domcontentloaded' })
+await page.locator('#start-roleplay button[type=submit]').click()
+await page.waitForURL(/\/chat\//, { timeout: 120_000 })
+const later = page.getByRole('button', { name: '나중에' })
+if (await later.first().isVisible({ timeout: 6000 }).catch(() => false)) await later.first().click()
+const nameField = page.locator('input[name=name]')
+if (await nameField.isVisible({ timeout: 4000 }).catch(() => false)) { await nameField.fill('지우'); await page.locator('form:has(input[name=name]) button[type=submit]').click(); await page.waitForTimeout(3000) }
+if (await later.first().isVisible({ timeout: 3000 }).catch(() => false)) await later.first().click()
+const skip = page.getByRole('button', { name: '인트로 전체 보기' })
+if (await skip.isVisible({ timeout: 8000 }).catch(() => false)) await skip.click()
+await page.waitForTimeout(2500)
+const n = page.locator('[data-narration]').last()
+console.log('narrations', await page.locator('[data-narration]').count(), 'align', await n.locator('div').first().evaluate(e => getComputedStyle(e).textAlign).catch(() => 'none'))
+await n.scrollIntoViewIfNeeded().catch(() => {})
+await page.waitForTimeout(6000); if (await later.first().isVisible({ timeout: 500 }).catch(() => false)) await later.first().click()
+await page.screenshot({ path: `${DIR}/composer.png` })
+await page.getByRole('button', { name: '대화 방식 선택' }).click(); await page.waitForTimeout(800)
+await page.screenshot({ path: `${DIR}/composer-menu.png` })
+await browser.close()

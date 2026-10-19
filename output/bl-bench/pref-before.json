@@ -1,0 +1,41 @@
+{
+ "spentUSD": 0.18445,
+ "rows": [
+  {
+   "id": "fight-front",
+   "expect": "pass",
+   "rejected": 2,
+   "runs": 5
+  },
+  {
+   "id": "fight-again",
+   "expect": "pass",
+   "rejected": 0,
+   "runs": 5
+  },
+  {
+   "id": "fight-behind",
+   "expect": "pass",
+   "rejected": 1,
+   "runs": 5
+  },
+  {
+   "id": "nickname",
+   "expect": "reject",
+   "rejected": 5,
+   "runs": 5
+  },
+  {
+   "id": "no-comfort",
+   "expect": "reject",
+   "rejected": 3,
+   "runs": 3
+  },
+  {
+   "id": "tone",
+   "expect": "reject",
+   "rejected": 0,
+   "runs": 0
+  }
+ ]
+}

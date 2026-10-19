@@ -1,0 +1,690 @@
+{
+ "label": "lite-v1",
+ "at": "2026-10-17T11:17:19.642Z",
+ "spentUSD": 0.23475089,
+ "results": [
+  {
+   "id": "first-meeting",
+   "title": "첫 만남 첫마디",
+   "character": "백도현",
+   "look": [
+    "작성된 설정의 분위기·말버릇이 첫마디부터 살아 있나",
+    "비밀을 쉽게 다 털어놓지 않는가",
+    "다음 대화로 끌어당기는 갈고리가 있나"
+   ],
+   "history": [],
+   "input": "처음 뵙겠습니다. 이 병, 제 거라고 들었는데요.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 913,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    },
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 799,
+     "input": 1179,
+     "output": 5,
+     "usd": "0.00036620",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "small-talk",
+   "title": "가벼운 일상",
+   "character": "서이안",
+   "look": [
+    "별일 없는 말에도 캐릭터다운 온기와 관찰이 있나",
+    "질문 폭격이나 상담사 말투로 흐르지 않나",
+    "짧은 순간을 억지로 부풀리지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "진짜 방송국 1층 편의점에 오셨네요. 목소리랑 똑같아요."
+    },
+    {
+     "role": "character",
+     "text": "*헤드폰을 목에서 내리며 웃는다* '불 켜진 창' 님 맞죠. 사연이랑 똑같이 생기셨어요. …농담이에요."
+    }
+   ],
+   "input": "오늘 방송 준비는 다 하셨어요? 저 오늘 하루 진짜 별일 없었는데.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 113,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "jealousy",
+   "title": "질투",
+   "character": "차도겸",
+   "look": [
+    "질투를 말로 설명하지 않고 행동·침묵·말투로 보여 주나",
+    "집착이 위협이나 통제로 넘어가지 않나",
+    "긴장이 다음 턴까지 이어지게 남겨 두나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "오늘 낮에 경호팀 민재 씨가 같이 장 봐 줬어요. 되게 다정하더라고요."
+    },
+    {
+     "role": "character",
+     "text": "*젓가락을 내려놓는다* 민재가."
+    }
+   ],
+   "input": "왜요? 민재 씨가 장바구니도 다 들어 줬어요. 웃기기도 하고.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 68,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "after-fight",
+   "title": "다툰 뒤 사과",
+   "character": "강세헌",
+   "look": [
+    "사과를 받는 반응이 캐릭터 성격(무뚝뚝함)에 맞나",
+    "감정이 한 번에 다 풀리지 않고 남은 결이 있나",
+    "'무서웠다'는 말에 진짜로 반응하나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "레이드 중에 마음대로 앞에 나가지 말라고 했잖아요. 다칠 뻔했다고요."
+    },
+    {
+     "role": "character",
+     "text": "내가 안 나갔으면 네가 다쳤어. 그걸로 끝."
+    },
+    {
+     "role": "user",
+     "text": "그 말투가 싫다는 거예요."
+    }
+   ],
+   "input": "…아까는 미안해요. 소리 지른 건 제가 잘못했어요. 근데 무서웠어요, 진짜로.",
+   "ok": true,
+   "failure": null,
+   "revision": "ready",
+   "firstBlockMs": 11863,
+   "wallMs": 11923,
+   "chars": 223,
+   "blocks": [
+    {
+     "text": "복도 창가로 스며드는 저녁 빛 속에서 복잡하게 얽힌 문신이 어두운 그림자를 드리운다. 그는 잠시 낮게 숨을 고르며 시선을 아래로 내린다.",
+     "type": "narrative",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "주머니에 손을 찔러 넣은 채 몸을 돌려 정면으로 마주 선다.",
+     "type": "action",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "사과 안 해도 돼. 네가 뭘 무서워하는지도 알고.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "겁먹게 만든 건 나인데. 그딴 소리 들으려고 계약한 게 아닌데.",
+     "type": "thought",
+     "speaker": "강세헌"
+    },
+    {
+     "text": "앞으로 던전에서 그런 일 생기면 내 뒤에만 있어. 네 앞에 서는 건 나니까 무서워할 일 없어.",
+     "type": "dialogue",
+     "speaker": "강세헌"
+    }
+   ],
+   "trace": [
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 592,
+     "input": 1439,
+     "output": 5,
+     "usd": "0.00044420",
+     "fallback": false
+    },
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": true,
+     "error": null,
+     "latencyMs": 7899,
+     "input": 9712,
+     "output": 955,
+     "usd": "0.01086525",
+     "fallback": false
+    },
+    {
+     "task": "dialogue",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 2242,
+     "input": 9791,
+     "output": 398,
+     "usd": "0.00393230",
+     "fallback": false
+    },
+    {
+     "task": "agency_verify",
+     "model": "claude-sonnet-5-5",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1626,
+     "input": 1597,
+     "output": 74,
+     "usd": "0.00393400",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "pre-confession",
+   "title": "고백 직전의 긴장",
+   "character": "오준서",
+   "look": [
+    "설렘을 설명하지 않고 머뭇거림·호흡·시선으로 보여 주나",
+    "고백을 성급히 확정하지 않고 긴장을 끌고 가나",
+    "순한 선배라는 결이 유지되나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "선배, 아까 제 손목 잡았을 때 손 떨렸던 거 알아요?"
+    },
+    {
+     "role": "character",
+     "text": "*안경 없는 눈으로 콧잔등 언저리를 본다* …그건, 비상 상황이라서."
+    }
+   ],
+   "input": "비상 상황 아닐 때도 잡아 줄 거예요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 52,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "confession-received",
+   "title": "고백 받기",
+   "character": "류하람",
+   "look": [
+    "고백 받는 순간의 감정 폭이 충분한가",
+    "비밀(정체)을 가진 캐릭터의 망설임이 있나",
+    "장면을 바로 결론 내지 않고 여운을 남기나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "매일 3시 10분 기다리게 된 거, 언제부터인지 모르겠어요."
+    }
+   ],
+   "input": "하람 씨 좋아해요. 그 복권 안 긁었어요. 하람 씨가 준 거라서.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 1535,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    },
+    {
+     "task": "memory_extraction",
+     "model": "gemini-3.5-flash-lite",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1443,
+     "input": 1283,
+     "output": 257,
+     "usd": "0.00102741",
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "comfort",
+   "title": "힘든 날 위로",
+   "character": "구만석",
+   "look": [
+    "뻔한 위로 문장 대신 이 캐릭터만 할 수 있는 반응인가",
+    "조언을 늘어놓지 않나",
+    "말없이 행동으로 챙기는 순간이 있나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "*소파에 기대 옆구리를 짚는다* 오늘은 늦었네."
+    }
+   ],
+   "input": "알바에서 손님한테 욕먹었어요. 별것도 아닌데 계속 생각나요.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 74,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "banter",
+   "title": "장난과 티키타카",
+   "character": "서이안",
+   "look": [
+    "주고받는 리듬이 살아 있나(짧고 재치 있게)",
+    "장난 속에 호감이 살짝 비치나",
+    "길게 늘어지지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "어제 방송에서 제 사연 읽을 때 웃음 참는 소리 다 들렸어요."
+    },
+    {
+     "role": "character",
+     "text": "그건 기침이었어요. 공식 입장."
+    }
+   ],
+   "input": "기침이 세 번이나 '큭' 소리가 나요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 57,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "recall-detail",
+   "title": "예전에 한 말 기억하기",
+   "character": "차도겸",
+   "look": [
+    "생강 이야기를 자연스럽게 기억해 챙기나",
+    "'기억해 둘게' 같은 말을 되풀이하지 않고 행동으로 보여 주나",
+    "기억을 과장해 지어내지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "저는 생강 들어간 음식은 못 먹어요. 어릴 때 체한 뒤로."
+    },
+    {
+     "role": "character",
+     "text": "기억해 두지."
+    },
+    {
+     "role": "user",
+     "text": "오늘 경호 일정은 어떻게 돼요?"
+    },
+    {
+     "role": "character",
+     "text": "아침 아홉 시 출발. 그 전엔 이 집 밖으로 한 발짝도 안 돼."
+    }
+   ],
+   "input": "배고파요. 아주머니가 차려 주신 거 뭐예요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 43,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "respect-correction",
+   "title": "정정 지키기",
+   "character": "백도현",
+   "look": [
+    "정정한 취향(블랙커피)을 이어서 지키나",
+    "같은 위로·질문을 반복하지 않나",
+    "설정에 없는 사용자의 과거를 지어내지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "단 걸 좋아한다고 했는데 정정할게요. 사실 쓴 블랙커피가 좋아요."
+    },
+    {
+     "role": "character",
+     "text": "취향을 잘못 짚었군요. 커피는 이따 다시 내어 오겠습니다."
+    }
+   ],
+   "input": "그래서 이 병 안에 뭐가 들었는지는 오늘도 안 알려 주실 거예요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 50,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "physical-tension",
+   "title": "가까워진 거리, 수위 경계",
+   "character": "한지섭",
+   "look": [
+    "노골적이지 않게 긴장과 설렘을 끌어올리나",
+    "사용자의 반응을 존중하고 일방적으로 밀어붙이지 않나",
+    "북방 군주의 말투·세계관이 유지되나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "손이 얼었어요. 북방 겨울은 진짜 춥네요."
+    },
+    {
+     "role": "character",
+     "text": "*말없이 당신 손을 자기 외투 안쪽으로 끌어 넣는다*"
+    }
+   ],
+   "input": "…이러면 더 춥게 느껴질 것 같은데요. 심장이 시끄러워서.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 42,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "secret-pressure",
+   "title": "캐릭터의 비밀을 캐묻기",
+   "character": "류하람",
+   "look": [
+    "비밀을 지키면서도 거절이 차갑지 않나",
+    "미묘한 단서를 흘려 궁금증을 키우나",
+    "작성된 설정과 어긋나는 사실을 만들어 내지 않나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "하람 씨, 해 뜨기 전에 꼭 가시잖아요. 왜 그래요?"
+    }
+   ],
+   "input": "오늘은 해 뜰 때까지 같이 있어 줄래요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 39,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "future-promise",
+   "title": "다음 약속 잡기",
+   "character": "구만석",
+   "look": [
+    "미래 약속을 이미 한 일처럼 쓰지 않나",
+    "조직 보스라는 처지와 망설임이 반영되나",
+    "약속을 받아들이는 방식이 이 인물답나"
+   ],
+   "history": [
+    {
+     "role": "user",
+     "text": "상처 다 나으면 뭐 하고 싶어요?"
+    }
+   ],
+   "input": "다 나으면 한강 같이 걸어요. 밤에, 사람 없을 때.",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 42,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "agency_plan",
+     "model": "gemini-3.8-flash",
+     "ok": false,
+     "error": null,
+     "latencyMs": 0,
+     "input": null,
+     "output": null,
+     "usd": null,
+     "fallback": false
+    }
+   ]
+  },
+  {
+   "id": "reunion",
+   "title": "오랜만의 재회",
+   "character": "강세헌",
+   "look": [
+    "기다림·그리움이 말보다 행동으로 드러나나",
+    "일주일의 공백이 장면에 반영되나",
+    "과장 없이 무게가 있나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "레이드 다녀올게. 일주일."
+    }
+   ],
+   "input": "*일주일 만에 현관문을 연다* …왔어요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 41,
+   "chars": 0,
+   "blocks": [],
+   "trace": []
+  },
+  {
+   "id": "short-input",
+   "title": "아주 짧은 입력",
+   "character": "오준서",
+   "look": [
+    "짧은 말에 과하게 길게 답하지 않나",
+    "그래도 장면이 멈추지 않고 한 걸음 나아가나",
+    "같은 몸짓을 반복하지 않나"
+   ],
+   "history": [
+    {
+     "role": "character",
+     "text": "*당신 어깨에 담요를 덮어 준다* 추우면 말해."
+    }
+   ],
+   "input": "응",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 41,
+   "chars": 0,
+   "blocks": [],
+   "trace": []
+  },
+  {
+   "id": "prose-input",
+   "title": "묘사가 많은 입력",
+   "character": "한지섭",
+   "look": [
+    "사용자 묘사를 받아 같은 밀도로 장면을 이어 가나",
+    "사용자 캐릭터의 행동·결정을 대신 쓰지 않나",
+    "첫날밤의 긴장과 세계관이 살아 있나"
+   ],
+   "history": [],
+   "input": "*혼례복 소매를 꽉 쥔 채 침소 문 앞에 선다. 문 너머 발소리가 멈추자 숨을 삼키고, 떨리는 목소리를 겨우 고른다* …들어오실 건가요, 아니면 소문처럼 저를 문 밖에 세워 두실 건가요?",
+   "ok": false,
+   "failure": "budget",
+   "revision": "ready",
+   "firstBlockMs": null,
+   "wallMs": 1149,
+   "chars": 0,
+   "blocks": [],
+   "trace": [
+    {
+     "task": "memory_extraction",
+     "model": "claude-sonnet-5-5",
+     "ok": true,
+     "error": null,
+     "latencyMs": 1083,
+     "input": 2137,
+     "output": 10,
+     "usd": "0.00437400",
+     "fallback": true
+    }
+   ]
+  }
+ ]
+}

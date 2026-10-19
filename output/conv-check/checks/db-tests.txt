@@ -1,0 +1,36 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Users/johyeon-ung/Desktop/Miro
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > lives the quiet hours, keeps only awake in-window events, and hands them to the next background review as its own day
+{"t":"2026-10-16T13:13:14.463Z","event":"life.advanced","sessionId":"5f311b2c-5a10-45da-8172-a8131d1f5341","statusChanged":false,"proposed":2,"stored":1,"shareable":1}
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > rolls back already-inserted message/contact if the receipt transition fails
+{"t":"2026-10-16T13:13:15.713Z","event":"agency.reality_unavailable","sessionId":"242e7bb9-f8a8-4611-aef6-cf44dd0243ec","mode":"live","error":"Error"}
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > shadow and off paths cannot persist agency decisions, runtime changes or contact output
+{"t":"2026-10-16T13:13:16.480Z","event":"agency.reality_shadow","sessionId":"8d6c4eb6-f98e-477f-b536-3d7632101f3e","action":"contact","providerMode":"mock"}
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > keeps the user's text but ends the pending reply when the character chooses to leave it unanswered
+{"t":"2026-10-16T13:13:16.697Z","event":"reality.reply_left","sessionId":"d68a0d43-fd1c-46b4-81b4-913af698fc76","action":"wait"}
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > stays unread while asleep, then reads without replying and can leave the message unanswered
+{"t":"2026-10-16T13:13:16.984Z","event":"reality.reply_left","sessionId":"44f293e1-a7dc-4026-8ec1-8f404cb378e6","action":"wait"}
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > retains the read question after disposition-provider failure and later sends exactly one answer
+{"t":"2026-10-16T13:13:17.295Z","event":"agency.reality_unavailable","sessionId":"8d44b4b8-73d6-449b-b021-1d9e9d44327c","mode":"live","error":"Error"}
+
+stderr | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > does not turn a failed attention decision into a read receipt
+{"t":"2026-10-16T13:13:18.296Z","event":"messenger.review_failed","sessionId":"dae4fd52-f2eb-49a0-bfd4-dbc23d9a347a"}
+
+stdout | apps/web/lib/reality/__tests__/agency.integration.test.ts > Reality agency — shared decision and atomic delivery > keeps ordinary message delivery when photo generation fails
+{"t":"2026-10-16T13:13:18.527Z","event":"messenger.photo_unavailable","sessionId":"f822947f-6e27-44f2-8ce8-7dca10977548"}
+
+ ✓ apps/web/lib/reality/__tests__/agency.integration.test.ts (48 tests) 4870ms
+   ✓ Reality agency — shared decision and atomic delivery > lives the quiet hours, keeps only awake in-window events, and hands them to the next background review as its own day 565ms
+
+ Test Files  1 passed (1)
+      Tests  48 passed (48)
+   Start at  22:13:12
+   Duration  6.01s (transform 499ms, setup 0ms, collect 993ms, tests 4.87s, environment 0ms, prepare 27ms)
+

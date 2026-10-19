@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { shiftStoryDate, storyDaysBetween, validStoryDate } from '@miro/domain'
 import { Button, Sheet, useToast } from '@/components/ui'
@@ -9,14 +9,17 @@ import { useTurns } from './turns'
 import { setStoryDate } from './actions'
 import styles from './chat.module.css'
 
-export function StoryDate({ sessionId, date: initialDate, today, disabled = false }: { sessionId: string; date: string | null; today: string; disabled?: boolean }) {
+export function StoryDate({ sessionId, date: initialDate, today, disabled = false, open: controlledOpen, onOpenChange, hideTrigger = false }: { open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; sessionId: string; date: string | null; today: string; disabled?: boolean }) {
   const t = useT()
   const toast = useToast()
   const router = useRouter()
   const { append, live, calendarPending, setCalendarPending } = useTurns()
-  const [open, setOpen] = useState(false)
+  const [localOpen, setLocalOpen] = useState(false)
+  const open = controlledOpen ?? localOpen
+  const setOpen = onOpenChange ?? setLocalOpen
   const [draft, setDraft] = useState(initialDate ?? today)
   const [pending, start] = useTransition()
+  useEffect(() => { if (open) setDraft(initialDate ?? today) }, [open, initialDate, today])
   const valid = validStoryDate(draft)
   const days = initialDate && valid ? storyDaysBetween(initialDate, draft) : null
   const canSave = valid && draft !== initialDate && !pending && !live && !calendarPending
@@ -46,11 +49,11 @@ export function StoryDate({ sessionId, date: initialDate, today, disabled = fals
   }
 
   return <>
-    <button type="button" className={styles.storyDateButton} aria-label={t('세계관 날짜 선택 — {date}', { date: label })} title={label}
+    {!hideTrigger && <button type="button" className={styles.storyDateButton} aria-label={t('세계관 날짜 선택 — {date}', { date: label })} title={label}
       aria-haspopup="dialog" aria-expanded={open} disabled={disabled || pending || !!live || calendarPending}
       onClick={() => { setDraft(initialDate ?? today); setOpen(true) }}>
       <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M16 3v4M8 3v4M3 11h18" /></svg>
-    </button>
+    </button>}
     <Sheet open={open} onClose={() => { if (!pending) setOpen(false) }} title={t('세계관 날짜')}>
       <form className={styles.storyDateForm} onSubmit={e => { e.preventDefault(); apply() }}>
         <label htmlFor="story-date-input" className={styles.storyDateLabel}>{t('이야기 속 날짜를 선택해요.')}</label>

@@ -1,0 +1,700 @@
+{
+  "version": 1,
+  "historyId": "e67b7760-f34e-4eba-99e7-85838ad27b81",
+  "currentRevision": "cef3a522-3946-4820-ba63-33396395f29a",
+  "pendingChanges": false,
+  "files": {
+    "AGENTS.md": {
+      "hash": "1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1d/1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5"
+    },
+    "CLAUDE.md": {
+      "hash": "1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1d/1d4f0c8ca2507b94fd7c9df709fff01416adbd51a0f922b9d6ed2f40129147d5"
+    },
+    "assets/chars/baek-dohyun-b.jpg": {
+      "hash": "49bd6107247c3f80a9ba138fb5d7adc27c16771aab642844a14cdd4f5a6ba4a7",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/49/49bd6107247c3f80a9ba138fb5d7adc27c16771aab642844a14cdd4f5a6ba4a7"
+    },
+    "assets/chars/baek-dohyun.jpg": {
+      "hash": "1d289d36476e71fb5ccd042a30c2ccf84c27bb25293bbc743fd2464e88d19b57",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1d/1d289d36476e71fb5ccd042a30c2ccf84c27bb25293bbc743fd2464e88d19b57"
+    },
+    "assets/chars/cha-dogyeom-b.jpg": {
+      "hash": "6287cea881442e8dd177e2a7ea853dac014fbe4b54f0b27768facc2437445421",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/62/6287cea881442e8dd177e2a7ea853dac014fbe4b54f0b27768facc2437445421"
+    },
+    "assets/chars/cha-dogyeom.jpg": {
+      "hash": "00d58d3c8bae6eebed8161f3c638ebfc16c8b132d119ce6f46b0867b89e9b790",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/00/00d58d3c8bae6eebed8161f3c638ebfc16c8b132d119ce6f46b0867b89e9b790"
+    },
+    "assets/chars/gu-manseok-b.jpg": {
+      "hash": "69319288665361ae4a05c4c911c340483d44baefe7351d7cfd725d76d82f06a4",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/69/69319288665361ae4a05c4c911c340483d44baefe7351d7cfd725d76d82f06a4"
+    },
+    "assets/chars/gu-manseok.jpg": {
+      "hash": "af074f454806dd0939bbae5e4766cada248564761016cce2043cf1397b6b01df",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/af/af074f454806dd0939bbae5e4766cada248564761016cce2043cf1397b6b01df"
+    },
+    "assets/chars/ha-jinhyuk-b.jpg": {
+      "hash": "fdf3febcbb3074a17791a2efac4c5911fc9e50a2500fb195b4de1a08a7c4b5b4",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/fd/fdf3febcbb3074a17791a2efac4c5911fc9e50a2500fb195b4de1a08a7c4b5b4"
+    },
+    "assets/chars/ha-jinhyuk.jpg": {
+      "hash": "861626bfd78b684dfa88d472365042b1aeb62b620f9c7ce102c841c259066c84",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/86/861626bfd78b684dfa88d472365042b1aeb62b620f9c7ce102c841c259066c84"
+    },
+    "assets/chars/han-jiseob-b.jpg": {
+      "hash": "7ba8331676d32f93ddc8a4d012d2fcdfa17b012de86ad5b6532d8efa175552ca",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/7b/7ba8331676d32f93ddc8a4d012d2fcdfa17b012de86ad5b6532d8efa175552ca"
+    },
+    "assets/chars/han-jiseob.jpg": {
+      "hash": "6913e1cb3f6288e0587960e2f23dd7b140be995fdf7b993337372eb929a2c539",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/69/6913e1cb3f6288e0587960e2f23dd7b140be995fdf7b993337372eb929a2c539"
+    },
+    "assets/chars/jung-siwoo-b.jpg": {
+      "hash": "ff10d7fd3cb590aedaf7e768646401e59a2ca217de4dd5fee7347a0e171ccc64",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/ff/ff10d7fd3cb590aedaf7e768646401e59a2ca217de4dd5fee7347a0e171ccc64"
+    },
+    "assets/chars/jung-siwoo.jpg": {
+      "hash": "5a5fb7a64ecd43913a6bd2d72420a8291828c842fc1dc1042c2be8b8210a6934",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/5a/5a5fb7a64ecd43913a6bd2d72420a8291828c842fc1dc1042c2be8b8210a6934"
+    },
+    "assets/chars/kang-seheon-b.jpg": {
+      "hash": "64c7870b332684a0db0b212d9eda66a7fe9f466674ca28cdd6d266f26f17535c",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/64/64c7870b332684a0db0b212d9eda66a7fe9f466674ca28cdd6d266f26f17535c"
+    },
+    "assets/chars/kang-seheon.jpg": {
+      "hash": "950506ba61ffabfe13948b5680ea7ad943ad3337fa6070562b3027df6cbda39d",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/95/950506ba61ffabfe13948b5680ea7ad943ad3337fa6070562b3027df6cbda39d"
+    },
+    "assets/chars/lee-taeo-b.jpg": {
+      "hash": "7e213e5e34a42a87ddf14ea04d47b6d59a9b16f31e204293af5c736d500e4d2e",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/7e/7e213e5e34a42a87ddf14ea04d47b6d59a9b16f31e204293af5c736d500e4d2e"
+    },
+    "assets/chars/lee-taeo.jpg": {
+      "hash": "f06c117ee4ba431fd235f2763f69b67e3d6cf2a07f8aa2cd728f2b31f48fee6c",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/f0/f06c117ee4ba431fd235f2763f69b67e3d6cf2a07f8aa2cd728f2b31f48fee6c"
+    },
+    "assets/chars/oh-junseo-b.jpg": {
+      "hash": "d837a873271c93b2edc02401365d006a9301743f261f0fa0f688038cdd5cc7b1",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/d8/d837a873271c93b2edc02401365d006a9301743f261f0fa0f688038cdd5cc7b1"
+    },
+    "assets/chars/oh-junseo.jpg": {
+      "hash": "df21a4a60dcfa5d9790cb20069b0a12c27913d7c61c1aebb824f61e23b222a7e",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/df/df21a4a60dcfa5d9790cb20069b0a12c27913d7c61c1aebb824f61e23b222a7e"
+    },
+    "assets/chars/park-doha-b.jpg": {
+      "hash": "4d76c3ae66b2546a35e0a83655b248b2ac94047e135d320ce27a4aa4a5fcf49d",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/4d/4d76c3ae66b2546a35e0a83655b248b2ac94047e135d320ce27a4aa4a5fcf49d"
+    },
+    "assets/chars/park-doha.jpg": {
+      "hash": "3cbe38196500eb77122e492b4c6bddc4f2de4940f2f71231d677aa62823109b2",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/3c/3cbe38196500eb77122e492b4c6bddc4f2de4940f2f71231d677aa62823109b2"
+    },
+    "assets/chars/ryu-haram-b.jpg": {
+      "hash": "11be622e2d72a9ac4680db905fdb47883f4c04778853e98d083089528b9a043a",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/11/11be622e2d72a9ac4680db905fdb47883f4c04778853e98d083089528b9a043a"
+    },
+    "assets/chars/ryu-haram.jpg": {
+      "hash": "2da006655003db158cfbb9d41370f61382d925c1dea9077b43a4c157a0201f0f",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/2d/2da006655003db158cfbb9d41370f61382d925c1dea9077b43a4c157a0201f0f"
+    },
+    "assets/chars/seo-ian-b.jpg": {
+      "hash": "29169d747808c5f6c270108ca816cc86fdf918132f6cd185e36ad70bf35a2bf5",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/29/29169d747808c5f6c270108ca816cc86fdf918132f6cd185e36ad70bf35a2bf5"
+    },
+    "assets/chars/seo-ian.jpg": {
+      "hash": "7f06114def9c7b3376c13867505caabc4d3dd54834ba692a42a9cb30879f07cb",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/7f/7f06114def9c7b3376c13867505caabc4d3dd54834ba692a42a9cb30879f07cb"
+    },
+    "assets/icon-512.png": {
+      "hash": "ad071c54ecdb12cc64fc99711a868d34cfa756d02fea298ac84f2b0febeacaba",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/ad/ad071c54ecdb12cc64fc99711a868d34cfa756d02fea298ac84f2b0febeacaba"
+    },
+    "assets/logo-m.png": {
+      "hash": "2928e8379e0c751d4080cea09377cda9961f4d5b84c02d1cf54c19e4d6d2bdd9",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/29/2928e8379e0c751d4080cea09377cda9961f4d5b84c02d1cf54c19e4d6d2bdd9"
+    },
+    "assets/logo-mark-lavender.png": {
+      "hash": "5f550a908066ce3c0772d24f1180c4620ca1d1fae776dfe25907269c54277408",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/5f/5f550a908066ce3c0772d24f1180c4620ca1d1fae776dfe25907269c54277408"
+    },
+    "assets/logo-mark.png": {
+      "hash": "c76cba94c306a6cc7bf3c0264242a8966df3fb722646afd78689c42c5d0098f6",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c7/c76cba94c306a6cc7bf3c0264242a8966df3fb722646afd78689c42c5d0098f6"
+    },
+    "assets/logo-s.png": {
+      "hash": "7d515d86ee1b7e167ecff3175f8d38f554a65e4023f77855318403f7feedd080",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/7d/7d515d86ee1b7e167ecff3175f8d38f554a65e4023f77855318403f7feedd080"
+    },
+    "assets/sfx/buzz.wav": {
+      "hash": "d4917e89ad7e370ef59ecf76b6ad7af764b65a967b5e4914f49ba4723f662184",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/d4/d4917e89ad7e370ef59ecf76b6ad7af764b65a967b5e4914f49ba4723f662184"
+    },
+    "assets/sfx/chime.mp3": {
+      "hash": "74823b1b27703c56e0652db838f503c150ce9c2442d47d27430af3d5121d6d12",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/74/74823b1b27703c56e0652db838f503c150ce9c2442d47d27430af3d5121d6d12"
+    },
+    "assets/sfx/click-soft.mp3": {
+      "hash": "075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/07/075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d"
+    },
+    "assets/sfx/impact-bass-1.mp3": {
+      "hash": "634d5eda5eb7b501aca98393a64f3815eccf24157cd1d95df55aaec1b5000bd7",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/63/634d5eda5eb7b501aca98393a64f3815eccf24157cd1d95df55aaec1b5000bd7"
+    },
+    "assets/sfx/notification.mp3": {
+      "hash": "b1559967dedb7994a82371f10cec9f7f3992e6b147b4cd88d62112bcdc3f9ba3",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/b1/b1559967dedb7994a82371f10cec9f7f3992e6b147b4cd88d62112bcdc3f9ba3"
+    },
+    "assets/sfx/ping.mp3": {
+      "hash": "c54d088fa2709e6b3c9ce87594a9187d0d5338d3a8c683271f9c4353a8ee8c91",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c5/c54d088fa2709e6b3c9ce87594a9187d0d5338d3a8c683271f9c4353a8ee8c91"
+    },
+    "assets/sfx/pop.mp3": {
+      "hash": "19ab7193f626ff57fdeef60b45543bac416fcbcec803cfb417abe4b271c1b352",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/19/19ab7193f626ff57fdeef60b45543bac416fcbcec803cfb417abe4b271c1b352"
+    },
+    "assets/sfx/riser.mp3": {
+      "hash": "d2f29d49f27dee7d3b25af22ffe5bebc39390cc5d5fb3b3e1c433499c77f3d1d",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/d2/d2f29d49f27dee7d3b25af22ffe5bebc39390cc5d5fb3b3e1c433499c77f3d1d"
+    },
+    "assets/sfx/sparkle.mp3": {
+      "hash": "a66b2829a307bcb5b1f6551d7cdc72fe45bbe9a91abfb994d28db8d5e4e42ea8",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/a6/a66b2829a307bcb5b1f6551d7cdc72fe45bbe9a91abfb994d28db8d5e4e42ea8"
+    },
+    "assets/sfx/whoosh-cinematic.mp3": {
+      "hash": "0a0f3505856fdfa84ac6b86b3c55ccd0ef1eb4ff0907d7b6934002218a73404e",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/0a/0a0f3505856fdfa84ac6b86b3c55ccd0ef1eb4ff0907d7b6934002218a73404e"
+    },
+    "assets/sfx/whoosh-short.mp3": {
+      "hash": "c2efd9d902a59bf9ec5019035d7deadd17762136896b6e3cb6dd99ea50997a30",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c2/c2efd9d902a59bf9ec5019035d7deadd17762136896b6e3cb6dd99ea50997a30"
+    },
+    "assets/wallpaper.jpg": {
+      "hash": "dd9f1e01eae9c0ab16648e4e53c91272c7f490f4533f7432faf7c80234f3ac04",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/dd/dd9f1e01eae9c0ab16648e4e53c91272c7f490f4533f7432faf7c80234f3ac04"
+    },
+    "build.mjs": {
+      "hash": "1582bed98c19418f4fec36fbf51a2b038e18647645e0c523e894048a47b52b61",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/15/1582bed98c19418f4fec36fbf51a2b038e18647645e0c523e894048a47b52b61"
+    },
+    "hyperframes.json": {
+      "hash": "ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/ad/ad5dadeef78a520800a9e5cdd27a92ff5ac37f11b6a07f611b6b52b9f8c79a17"
+    },
+    "index.html": {
+      "hash": "1c04e6731bea2114a7da9e9f2c478c1aa9475c2ae3807c99c41d584dec894ab1",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1c/1c04e6731bea2114a7da9e9f2c478c1aa9475c2ae3807c99c41d584dec894ab1"
+    },
+    "meta.json": {
+      "hash": "2038bf1c1cebe1c4f01befbd9fcfcaa39be92def3a3d1d19b0e89f22c8d3f8a1",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/20/2038bf1c1cebe1c4f01befbd9fcfcaa39be92def3a3d1d19b0e89f22c8d3f8a1"
+    },
+    "package.json": {
+      "hash": "9687f834803837f11017e3218f8aee265ddc422c6e55ae5975155e8ad9482526",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/96/9687f834803837f11017e3218f8aee265ddc422c6e55ae5975155e8ad9482526"
+    },
+    "assets/fonts/PretendardVariable.woff2": {
+      "hash": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/95/9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+    },
+    "assets/fonts/SFNS.ttf": {
+      "hash": "2bfd40dc72e6759e248f82a52a40d551338979fffc9b5c070e685b4b7ad19e66",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/2b/2bfd40dc72e6759e248f82a52a40d551338979fffc9b5c070e685b4b7ad19e66"
+    },
+    "sheet.jpg": {
+      "hash": "bb6e62ef061022850c670d685c7180228958dbcbd17e1e301bc96f837c4d8588",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/bb/bb6e62ef061022850c670d685c7180228958dbcbd17e1e301bc96f837c4d8588"
+    },
+    "assets/chars/baek-dohyun-c.jpg": {
+      "hash": "811e623444f510bd50f1473da113f19383a280256c81d022ef1a16e55dd55998",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/81/811e623444f510bd50f1473da113f19383a280256c81d022ef1a16e55dd55998"
+    },
+    "assets/chars/cha-dogyeom-c.jpg": {
+      "hash": "57ddeb6db4ff1b60d4440881d3b3ae5c6ff0e9761d717e00118cbc0a27d7f29c",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/57/57ddeb6db4ff1b60d4440881d3b3ae5c6ff0e9761d717e00118cbc0a27d7f29c"
+    },
+    "assets/chars/gu-manseok-c.jpg": {
+      "hash": "ac6b08550639b352529c4b53e10999260fba56b1b2241bed46aec2236d20b478",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/ac/ac6b08550639b352529c4b53e10999260fba56b1b2241bed46aec2236d20b478"
+    },
+    "assets/chars/ha-jinhyuk-c.jpg": {
+      "hash": "47e7c281b6e3daeaedbd39268a173eb8a9350d628e2d30640199158c2376b440",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/47/47e7c281b6e3daeaedbd39268a173eb8a9350d628e2d30640199158c2376b440"
+    },
+    "assets/chars/han-jiseob-c.jpg": {
+      "hash": "1ad2fc0f3740de54bc5eb68757732abdfc244e4d3a600ede1005e212631965d2",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1a/1ad2fc0f3740de54bc5eb68757732abdfc244e4d3a600ede1005e212631965d2"
+    },
+    "assets/chars/jung-siwoo-c.jpg": {
+      "hash": "c4fb22f502eadeeb5b5c55e16ec2550341be05ea8eecd4d393c84c10e5098531",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c4/c4fb22f502eadeeb5b5c55e16ec2550341be05ea8eecd4d393c84c10e5098531"
+    },
+    "assets/chars/kang-seheon-c.jpg": {
+      "hash": "59f1a4acc591f81c7698a167f70ea64ff30fc00bfef434e4e0520bc461503eb4",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/59/59f1a4acc591f81c7698a167f70ea64ff30fc00bfef434e4e0520bc461503eb4"
+    },
+    "assets/chars/lee-taeo-c.jpg": {
+      "hash": "8848e23d0b69a174247b8092206989f6c8301545df0d0810df1f44646783c82a",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/88/8848e23d0b69a174247b8092206989f6c8301545df0d0810df1f44646783c82a"
+    },
+    "assets/chars/oh-junseo-c.jpg": {
+      "hash": "2373d535c92d86b54a252b9b968bf7d3316eb582131de16ed231f2acb589d762",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/23/2373d535c92d86b54a252b9b968bf7d3316eb582131de16ed231f2acb589d762"
+    },
+    "assets/chars/park-doha-c.jpg": {
+      "hash": "23bdcf29943e9e8c04560048aaf15704d1fb9cb236e7892e022807a5001f86c4",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/23/23bdcf29943e9e8c04560048aaf15704d1fb9cb236e7892e022807a5001f86c4"
+    },
+    "assets/chars/ryu-haram-c.jpg": {
+      "hash": "73fb6832a60a8ced23d3f1cebc5df55a3f0932b6ffe706c56b3ad828a34e7e24",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/73/73fb6832a60a8ced23d3f1cebc5df55a3f0932b6ffe706c56b3ad828a34e7e24"
+    },
+    "assets/chars/seo-ian-c.jpg": {
+      "hash": "2a853c7ca6dbe9d0ac784a2bf08bb4e24e990e84dd966806c65ada683fc7ff5e",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/2a/2a853c7ca6dbe9d0ac784a2bf08bb4e24e990e84dd966806c65ada683fc7ff5e"
+    },
+    "snaps/frame-00-at-1s.png": {
+      "hash": "0bf3d1ebd1735bff46877b0b2059e31125fbe156e8008c10b6556cf0693d7381",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/0b/0bf3d1ebd1735bff46877b0b2059e31125fbe156e8008c10b6556cf0693d7381"
+    },
+    "snaps/frame-01-at-5s.png": {
+      "hash": "8d0d80153dc9b23dcd21983d3d5c98771aa86e4d9d3cd7197f75ffdaca0353e3",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/8d/8d0d80153dc9b23dcd21983d3d5c98771aa86e4d9d3cd7197f75ffdaca0353e3"
+    },
+    "snaps/frame-02-at-7.3s.png": {
+      "hash": "6c0477a90483fc21e1ec022962a348e7ddf1f7a9c154dc0ab3193d1f80ce0a53",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/6c/6c0477a90483fc21e1ec022962a348e7ddf1f7a9c154dc0ab3193d1f80ce0a53"
+    },
+    "snaps/frame-03-at-13.5s.png": {
+      "hash": "014644b8524780d806693ae1b32eea72532408d23aa383727961ab1f3ad6c81d",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/01/014644b8524780d806693ae1b32eea72532408d23aa383727961ab1f3ad6c81d"
+    },
+    "snaps/frame-04-at-19s.png": {
+      "hash": "c0892839154331879655c98e35bfe44906add953d98035f9ad860e8979d0c3f7",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c0/c0892839154331879655c98e35bfe44906add953d98035f9ad860e8979d0c3f7"
+    },
+    "snaps/contact-sheet.jpg": {
+      "hash": "352c378e16b12faf3e0279075b168f0289a55ce2ef1730bd6fdd79b0930784a9",
+      "content": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/35/352c378e16b12faf3e0279075b168f0289a55ce2ef1730bd6fdd79b0930784a9"
+    }
+  },
+  "revisions": {
+    "5f55b018-ebee-45d1-8e9e-70ad5217fc9e": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791910119434,
+      "endedAt": 1791910119444,
+      "files": {
+        "build.mjs": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/2f/2fe4b99e834deb1b740804123400435f5a1c8d1042d04a5a383ff12293119cfa",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/15/152575cbb2fdcabfeb79f87c77e8893e91f80c48ee98bfefccb04fb69ce6c499"
+        },
+        "index.html": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/a2/a21f90d0a00321f7d0f1116d0a2c4bed5697355e8aa2ac397a2ea1db67db665f",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/b6/b66b3df1bfbdd17251fe80d7c25af0cdbe424f8b1ff9bfd408c1fd8c3328f23b"
+        },
+        "sheet.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/37/37c9fc904122375a5f50aabcefc5707645c36eb814c4e45aab1a8ac2af9236e1"
+        }
+      }
+    },
+    "43ef7e3f-09de-4d67-9258-7ad827a4bf9d": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791910135277,
+      "endedAt": 1791910135332,
+      "files": {
+        "sheet.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/37/37c9fc904122375a5f50aabcefc5707645c36eb814c4e45aab1a8ac2af9236e1",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/93/93d0adb059c167f02a5b118e784c12c7b0d3c39e0d5cfa2f0ff63fa54b9ba986"
+        },
+        "snaps/contact-sheet.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/6f/6fa35779aff6473928810a81c35cd0be4c9d2b155a53e652cfa1b28f90ebca40"
+        },
+        "snaps/frame-00-at-14.5s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/4d/4d09e6f9f4577d696edeaf820415575db327b9cb57ebac4692bef7e6327ee151"
+        },
+        "snaps/frame-01-at-17s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c3/c3e3cb118fe777c1cd55fcc94a622bce4422bce3415190cbc8a3d611f7df0abb"
+        },
+        "snaps/frame-02-at-19s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/92/92c6487cb9e1f29883c44ec013fc4f51c9dc8e4f92e9e36e0d9fc39c21cfdee8"
+        },
+        "snaps/frame-03-at-21s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/b5/b5c2bcf49b9d7e44723b75794f9184b2ac72e05eef73565e560add51d81e6738"
+        },
+        "snaps/frame-04-at-21.9s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/9b/9b7bed12568c9ad004c9c15ffb07642d6afabcbeac9ba949896934b5e6a210ca"
+        }
+      }
+    },
+    "41279c0a-1069-4458-86f9-5e44bd593093": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791910497252,
+      "endedAt": 1791910497346,
+      "files": {
+        "assets/chars/baek-dohyun-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/81/811e623444f510bd50f1473da113f19383a280256c81d022ef1a16e55dd55998"
+        },
+        "assets/chars/cha-dogyeom-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/57/57ddeb6db4ff1b60d4440881d3b3ae5c6ff0e9761d717e00118cbc0a27d7f29c"
+        },
+        "assets/chars/do-yunjae-b.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/92/92140b41eacc772f512b517698ca6771e68a80b40b468ecb1237ffa51fad4253",
+          "after": null
+        },
+        "assets/chars/do-yunjae.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/10/10a43a8ddef2e2bf536d4d49cfcc7048dfbb65f73e604151af4055b5f9ba1d1a",
+          "after": null
+        },
+        "assets/chars/gu-manseok-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/ac/ac6b08550639b352529c4b53e10999260fba56b1b2241bed46aec2236d20b478"
+        },
+        "assets/chars/ha-jinhyuk-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/47/47e7c281b6e3daeaedbd39268a173eb8a9350d628e2d30640199158c2376b440"
+        },
+        "assets/chars/han-jiseob-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1a/1ad2fc0f3740de54bc5eb68757732abdfc244e4d3a600ede1005e212631965d2"
+        },
+        "assets/chars/jung-siwoo-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c4/c4fb22f502eadeeb5b5c55e16ec2550341be05ea8eecd4d393c84c10e5098531"
+        },
+        "assets/chars/kang-mujin-b.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/29/2905264d4df0ff52e1adbe177f2ab8988d38475dd487dd0f7f26b47a8ab57063",
+          "after": null
+        },
+        "assets/chars/kang-mujin.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/49/4972286abffbbc436a9f2061d40edb6ee148ac0d1875b3e116c770410188acb3",
+          "after": null
+        },
+        "assets/chars/kang-seheon-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/59/59f1a4acc591f81c7698a167f70ea64ff30fc00bfef434e4e0520bc461503eb4"
+        },
+        "assets/chars/lee-taeo-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/88/8848e23d0b69a174247b8092206989f6c8301545df0d0810df1f44646783c82a"
+        },
+        "assets/chars/oh-junseo-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/23/2373d535c92d86b54a252b9b968bf7d3316eb582131de16ed231f2acb589d762"
+        },
+        "assets/chars/park-doha-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/23/23bdcf29943e9e8c04560048aaf15704d1fb9cb236e7892e022807a5001f86c4"
+        },
+        "assets/chars/ryu-haram-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/73/73fb6832a60a8ced23d3f1cebc5df55a3f0932b6ffe706c56b3ad828a34e7e24"
+        },
+        "assets/chars/seo-ian-c.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/2a/2a853c7ca6dbe9d0ac784a2bf08bb4e24e990e84dd966806c65ada683fc7ff5e"
+        },
+        "assets/wallpaper.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/7b/7bbe66bc062101ff8b06d68af740cc76bd32f4c456574413bcc4c5603359c0f8",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/dd/dd9f1e01eae9c0ab16648e4e53c91272c7f490f4533f7432faf7c80234f3ac04"
+        },
+        "build.mjs": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/15/152575cbb2fdcabfeb79f87c77e8893e91f80c48ee98bfefccb04fb69ce6c499",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/15/1582bed98c19418f4fec36fbf51a2b038e18647645e0c523e894048a47b52b61"
+        },
+        "index.html": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/b6/b66b3df1bfbdd17251fe80d7c25af0cdbe424f8b1ff9bfd408c1fd8c3328f23b",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/1c/1c04e6731bea2114a7da9e9f2c478c1aa9475c2ae3807c99c41d584dec894ab1"
+        }
+      }
+    },
+    "09233ef7-eed6-41b7-b18b-c48c1bf7bb0a": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791910517767,
+      "endedAt": 1791910517774,
+      "files": {
+        "snaps/contact-sheet.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/6f/6fa35779aff6473928810a81c35cd0be4c9d2b155a53e652cfa1b28f90ebca40",
+          "after": null
+        },
+        "snaps/frame-00-at-14.5s.png": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/4d/4d09e6f9f4577d696edeaf820415575db327b9cb57ebac4692bef7e6327ee151",
+          "after": null
+        },
+        "snaps/frame-01-at-17s.png": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c3/c3e3cb118fe777c1cd55fcc94a622bce4422bce3415190cbc8a3d611f7df0abb",
+          "after": null
+        },
+        "snaps/frame-02-at-19s.png": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/92/92c6487cb9e1f29883c44ec013fc4f51c9dc8e4f92e9e36e0d9fc39c21cfdee8",
+          "after": null
+        },
+        "snaps/frame-03-at-21s.png": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/b5/b5c2bcf49b9d7e44723b75794f9184b2ac72e05eef73565e560add51d81e6738",
+          "after": null
+        },
+        "snaps/frame-04-at-21.9s.png": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/9b/9b7bed12568c9ad004c9c15ffb07642d6afabcbeac9ba949896934b5e6a210ca",
+          "after": null
+        }
+      }
+    },
+    "cef3a522-3946-4820-ba63-33396395f29a": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1791910531370,
+      "endedAt": 1791910531408,
+      "files": {
+        "sheet.jpg": {
+          "before": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/93/93d0adb059c167f02a5b118e784c12c7b0d3c39e0d5cfa2f0ff63fa54b9ba986",
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/bb/bb6e62ef061022850c670d685c7180228958dbcbd17e1e301bc96f837c4d8588"
+        },
+        "snaps/contact-sheet.jpg": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/35/352c378e16b12faf3e0279075b168f0289a55ce2ef1730bd6fdd79b0930784a9"
+        },
+        "snaps/frame-00-at-1s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/0b/0bf3d1ebd1735bff46877b0b2059e31125fbe156e8008c10b6556cf0693d7381"
+        },
+        "snaps/frame-01-at-5s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/8d/8d0d80153dc9b23dcd21983d3d5c98771aa86e4d9d3cd7197f75ffdaca0353e3"
+        },
+        "snaps/frame-02-at-7.3s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/6c/6c0477a90483fc21e1ec022962a348e7ddf1f7a9c154dc0ab3193d1f80ce0a53"
+        },
+        "snaps/frame-03-at-13.5s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/01/014644b8524780d806693ae1b32eea72532408d23aa383727961ab1f3ad6c81d"
+        },
+        "snaps/frame-04-at-19s.png": {
+          "before": null,
+          "after": "/Users/johyeon-ung/.cache/hyperframes/history/e67b7760-f34e-4eba-99e7-85838ad27b81/blobs/c0/c0892839154331879655c98e35bfe44906add953d98035f9ad860e8979d0c3f7"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "43ef7e3f-09de-4d67-9258-7ad827a4bf9d",
+      "id": "3f511653-0f7f-4bd9-a7a7-25d1165708ec"
+    },
+    "revisions": {
+      "43ef7e3f-09de-4d67-9258-7ad827a4bf9d": [
+        {
+          "id": "3f511653-0f7f-4bd9-a7a7-25d1165708ec",
+          "scope": "project",
+          "report": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/.hyperframes/artifacts/checks/3f511653-0f7f-4bd9-a7a7-25d1165708ec.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1791910150360,
+          "contentHash": "a634c3400781b38282b33fa3ba7a7b949f7343c21ed76cd40ee24336a22c5606",
+          "revision": "43ef7e3f-09de-4d67-9258-7ad827a4bf9d",
+          "inputFingerprint": "086162bbb76607a52aabb08eed66f4310604bc9e4d17f9318c933c40143fed6f",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "41279c0a-1069-4458-86f9-5e44bd593093": [
+        {
+          "id": "1b5ec65c-a969-4b38-ab6c-ad57bc091f54",
+          "scope": "project",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 3000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1791910512537,
+          "contentHash": "8485a114d691f0cf3f8eac5f16fc2ce2dd0ee29f6828772c3a2644f2d1d2397d",
+          "revision": "41279c0a-1069-4458-86f9-5e44bd593093",
+          "inputFingerprint": "0f8b936940319fbd7ec44fcbfaa636827f5d32dcf2a4a80e4ef03bfd2aeed8eb",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "8f70d6b8-67f6-4c89-be86-3cab0e7b6aa5"
+        }
+      ]
+    },
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": {
+      "revision": null,
+      "id": "7e3fc273-46de-49ad-853e-c49cdf34e7c9-4"
+    },
+    "revisions": {},
+    "unversioned": [
+      {
+        "scope": "full",
+        "id": "7e3fc273-46de-49ad-853e-c49cdf34e7c9-0",
+        "image": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/snaps/frame-00-at-1s.png",
+        "time": 1,
+        "metadata": {
+          "width": 1080,
+          "height": 1920,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1791910523769,
+        "contentHash": "0bf3d1ebd1735bff46877b0b2059e31125fbe156e8008c10b6556cf0693d7381",
+        "revision": null,
+        "inputFingerprint": "eb3b8fc90c435ffd2828030afd9d3bf12a49e56b736c44751a91766305ac3c5c",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "7e3fc273-46de-49ad-853e-c49cdf34e7c9-1",
+        "image": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/snaps/frame-01-at-5s.png",
+        "time": 5,
+        "metadata": {
+          "width": 1080,
+          "height": 1920,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1791910523769,
+        "contentHash": "8d0d80153dc9b23dcd21983d3d5c98771aa86e4d9d3cd7197f75ffdaca0353e3",
+        "revision": null,
+        "inputFingerprint": "eb3b8fc90c435ffd2828030afd9d3bf12a49e56b736c44751a91766305ac3c5c",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "7e3fc273-46de-49ad-853e-c49cdf34e7c9-2",
+        "image": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/snaps/frame-02-at-7.3s.png",
+        "time": 7.3,
+        "metadata": {
+          "width": 1080,
+          "height": 1920,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1791910523769,
+        "contentHash": "6c0477a90483fc21e1ec022962a348e7ddf1f7a9c154dc0ab3193d1f80ce0a53",
+        "revision": null,
+        "inputFingerprint": "eb3b8fc90c435ffd2828030afd9d3bf12a49e56b736c44751a91766305ac3c5c",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "7e3fc273-46de-49ad-853e-c49cdf34e7c9-3",
+        "image": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/snaps/frame-03-at-13.5s.png",
+        "time": 13.5,
+        "metadata": {
+          "width": 1080,
+          "height": 1920,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1791910523769,
+        "contentHash": "014644b8524780d806693ae1b32eea72532408d23aa383727961ab1f3ad6c81d",
+        "revision": null,
+        "inputFingerprint": "eb3b8fc90c435ffd2828030afd9d3bf12a49e56b736c44751a91766305ac3c5c",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "7e3fc273-46de-49ad-853e-c49cdf34e7c9-4",
+        "image": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/snaps/frame-04-at-19s.png",
+        "time": 19,
+        "metadata": {
+          "width": 1080,
+          "height": 1920,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1791910523769,
+        "contentHash": "c0892839154331879655c98e35bfe44906add953d98035f9ad860e8979d0c3f7",
+        "revision": null,
+        "inputFingerprint": "eb3b8fc90c435ffd2828030afd9d3bf12a49e56b736c44751a91766305ac3c5c",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      }
+    ]
+  },
+  "renders": {
+    "latest": {
+      "id": "8f70d6b8-67f6-4c89-be86-3cab0e7b6aa5",
+      "completedAt": 1791910592026,
+      "output": "/Users/johyeon-ung/Desktop/Miro/artifacts/miro-opening/renders/miro-opening.mp4",
+      "status": "completed",
+      "revision": "cef3a522-3946-4820-ba63-33396395f29a"
+    },
+    "retainedRevisions": [
+      "cef3a522-3946-4820-ba63-33396395f29a",
+      "43ef7e3f-09de-4d67-9258-7ad827a4bf9d"
+    ]
+  },
+  "pendingArtifactCleanup": []
+}

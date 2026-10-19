@@ -1,0 +1,9 @@
+BEGIN
+ status  | items | overdue_read | expired_leases | legacy_left_without_disposition 
+---------+-------+--------------+----------------+---------------------------------
+ left    |     1 |            0 |              0 |                               1
+ replied |     2 |            0 |              0 |                               0
+ unread  |     1 |            0 |              0 |                               0
+(3 rows)
+
+COMMIT
