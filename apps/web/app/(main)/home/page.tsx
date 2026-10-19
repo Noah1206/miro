@@ -14,6 +14,18 @@ import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
 import { OriginalStoriesRow } from '../stories/home-row'
 
+/** 섹션 제목은 이모지 하나 + 문장(베베챗식, 10/19). 목록에 없는 장르는 기본 문장. */
+const GENRE_TITLES: Record<string, string> = {
+  '현대': '🌆 오늘 밤, 도시에서 마주친 남자',
+  '현대 판타지': '🌙 평범한 하루에 끼어든 비밀',
+  '동양 무협': '⚔️ 칼끝 위에서 피어난 인연',
+  '가이드버스': '🔮 당신만이 그를 진정시킬 수 있어',
+  '마교': '🩸 피의 교단, 그 안의 다정함',
+  '수인': '🐾 귀와 꼬리를 숨긴 남자들',
+  '오메가버스': '💫 운명의 향이 이끄는 관계',
+  '시한': '⏳ 남은 시간이 얼마 없어',
+}
+
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
   const user = await currentUser()
@@ -54,8 +66,8 @@ export default async function Home() {
       <OriginalStoriesRow />
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
-      {sections.ranking.length > 0 && <Row index={0} ranked row={{ key: 'ranking', title: t('지금 뜨는 · 인기 순위'), items: sections.ranking }} href="/explore" />}
-      {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={row} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
+      {sections.ranking.length > 0 && <Row index={0} ranked row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), items: sections.ranking }} href="/explore" />}
+      {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }) }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>
