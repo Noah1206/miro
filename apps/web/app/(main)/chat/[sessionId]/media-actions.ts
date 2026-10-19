@@ -2,12 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { eq } from 'drizzle-orm'
-import { db, messages, roleplaySessions } from '@miro/db'
+import { db, characters, messages, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
-import { matureGateFor } from '@/lib/ops/safety'
+import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
+import { unsafeRequest } from '@/lib/ai/local-image'
 import { feature } from '@miro/config'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
@@ -43,6 +44,19 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
     context.outfit = 'mature'
   }
 
+  // 언베일 사진(10/19): 이 대화방에서 언베일이 켜져 있고 서버 판정(성인 인증·19세 이상 캐릭터·페르소나)을 다시 통과할 때만 자체 오픈 모델로.
+  const request = String(form.get('request') ?? '').trim().slice(0, 300) || undefined
+  let unveil: { level: 'soft' | 'deep' | 'explicit'; characterAge: number; request?: string } | null = null
+  if (loaded.snapshot.adultMode && loaded.adult.on) {
+    const gate = await adultModeGateFor(user.id, loaded.characterId, sessionId)
+    const [c] = await db.select({ age: characters.age }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
+    const age = Number.parseInt(String(c?.age ?? ''), 10)
+    if (gate.allowed && Number.isFinite(age) && age >= 19) unveil = { level: loaded.adult.level, characterAge: age, request }
+  }
+  const unsafe = unsafeRequest(request)
+  if (unsafe === 'minor') return { error: msg('미성년자로 보이는 요청은 그릴 수 없어요.'), notice: null }
+  if (unsafe === 'real_person') return { error: msg('실존 인물이나 실제 사진을 바탕으로 한 요청은 그릴 수 없어요.'), notice: null }
+
   try {
     const media = await getOrGenerate({
       sessionId,
@@ -51,6 +65,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
       kind: 'photo',
       context,
       usage: { userId: user.id },
+      unveil,
     })
 
     await db.insert(messages).values({

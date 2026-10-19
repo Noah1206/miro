@@ -1,4 +1,6 @@
 {
+ "미성년자로 보이는 요청은 그릴 수 없어요.": "We can't draw requests that look like they involve minors.",
+ "실존 인물이나 실제 사진을 바탕으로 한 요청은 그릴 수 없어요.": "We can't draw requests based on real people or real photos.",
  "(만료)": "(Expired)",
  "*서술*": "*narration*",
  "+ 추가 {count}/{max}": "+ Add {count}/{max}",

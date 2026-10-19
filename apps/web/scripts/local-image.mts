@@ -3,8 +3,15 @@
 import assert from 'node:assert'
 import { execFileSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
-import { buildPrompt, generateLocalImage, type BaseModel } from '../lib/ai/local-image.ts'
+import { buildPrompt, cappedLevel, generateLocalImage, unsafeRequest, type BaseModel } from '../lib/ai/local-image.ts'
 
+// 언베일 안전장치: 미성년·실존 인물 요청 거절, 수위 상한
+assert.equal(unsafeRequest('교복 입은 고등학생'), 'minor')
+assert.equal(unsafeRequest('a cute teen boy'), 'minor')
+assert.equal(unsafeRequest('이 사진처럼 그려줘'), 'real_person')
+assert.equal(unsafeRequest('침대 위에서 셔츠를 풀고'), null)
+process.env.MIRO_UNVEIL_IMAGE_MAX_LEVEL = 'soft'; assert.equal(cappedLevel('explicit'), 'soft'); delete process.env.MIRO_UNVEIL_IMAGE_MAX_LEVEL
+assert.match(buildPrompt({ model: 'illustrious', prompt: 'x', characterAge: 30, mature: true, level: 'soft' }).negative, /nude/)
 // 학생·나이 모름 차단, 그림체-모델 짝 확인
 assert.throws(() => buildPrompt({ model: 'pony', prompt: 'x', characterAge: 17, mature: false }))
 assert.throws(() => buildPrompt({ model: 'pony', prompt: 'x', characterAge: null, mature: false }))
