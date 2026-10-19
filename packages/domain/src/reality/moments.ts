@@ -38,7 +38,7 @@ const SAME_EVENT_HOURS = 36
 export const MOMENT_ASK_WINDOW_HOURS = 14
 
 /** 사용자 현지 날짜의 하루 기준 몇 분 — 기준 날짜(base)의 현지 날짜에서 dayShift 만큼 옮긴 날. 오프셋은 그날의 것을 쓴다. */
-function atLocal(base: Date, timeZone: string, dayShift: number, minutes: number): Date {
+export function atLocal(base: Date, timeZone: string, dayShift: number, minutes: number): Date {
   return fromLocal(localIso(base, timeZone).slice(0, 10), dayShift, minutes, timeZone, base)
 }
 function fromLocal(date: string, dayShift: number, minutes: number, timeZone: string, ref: Date): Date {

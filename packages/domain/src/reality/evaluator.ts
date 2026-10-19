@@ -53,7 +53,7 @@ export function evaluateRealityContact(input: RealityInput): RealityDecision {
   // 사건 규칙도 — 조건(신뢰·거리 등)과 관계 성격표가 이미 정했다. 전엔 여기서 다시 막혀 '잘 들어갔어?' 가 웬만큼 가까운 사이가 아니면 나가지 않았다(10/2 실측).
   // 침묵·식사 안부는 관계 문턱이 없어져(10/16) 이제 기회일 뿐이다 — 판단할 모델이 없는 이 기존 경로에서는 연락 동기(성향·애착·거리감)가 그 판단을 맡는다.
   const decidedByRelationship = intent.reason === FIRST_CONTACT_REASON
-  if (!decidedByRelationship && !intent.answers && !intent.rule && !intent.momentKey && motivation(input) < POLICY.reality.motivationThreshold) {
+  if (!decidedByRelationship && !intent.answers && !intent.rule && !intent.momentKey && !intent.promise && motivation(input) < POLICY.reality.motivationThreshold) {
     return { send: false, reason: 'no_motivation' }
   }
   return { send: true, channel: intent.channel, dedupeKey: buildDedupeKey(input) }
@@ -121,6 +121,7 @@ function buildDedupeKey(input: RealityInput): string {
 export function contactDedupeKey(intent: RealityIntent, now: Date, timeZone: string): string {
   if (intent.eventKey) return `${intent.channel}:event:${intent.eventKey}:${intent.reason}`
   if (intent.momentKey) return `${intent.channel}:moment:${intent.momentKey}`
+  if (intent.promise) return `${intent.channel}:promise:${intent.notBefore ?? localDay(now, timeZone)}`
   if (intent.reason === FIRST_CONTACT_REASON) return `${intent.channel}:first_contact`
   const bucket = intent.answers && intent.notBefore ? `at:${intent.notBefore}` : localDay(now, timeZone)
   return `${intent.channel}:${bucket}:${intent.reason}`

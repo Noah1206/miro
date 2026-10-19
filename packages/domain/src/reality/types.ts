@@ -34,6 +34,8 @@ export type RealityIntent = {
   rule?: string
   /** 사용자가 말한 일정을 챙기는 연락이면 `일정id:before|after`(reality/moments). 일정마다 때마다 한 번 — 동기·간격·하루 상한으로 막지 않는다. */
   momentKey?: string
+  /** 대화 중 캐릭터가 "이따 문자할게" 라고 한 약속을 지키는 연락(10/19). 때를 맞추는 연락이라 바쁠 때도 짧은 문자는 나가고, 약속마다 한 번. */
+  promise?: boolean
   /** 예약된 의도가 처음 막힌 시각(ISO). 답장이 아니면 오래 막힌 의도는 버린다 — 다른 연락을 가로막지 않게. */
   deferredSince?: string
   /** 이 의도로 발송을 시도하다 연속으로 실패한 횟수. 스케줄러가 간격을 늘리고, 답장이 아니면 끝내 버린다. */

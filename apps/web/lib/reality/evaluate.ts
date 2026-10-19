@@ -418,7 +418,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
 
 class RealityStateChangedError extends Error {}
 
-type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number }
+type RealityIntentRow = { channel: ContactChannel; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number; promise?: boolean }
 
 /** 답장이 아닌 예약 의도를 이 시간 넘게 막히면 버린다. */
 const STALE_INTENT_HOURS = 12

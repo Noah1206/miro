@@ -4,7 +4,8 @@ import type { SimulationEvent } from '../event/types'
 import type { RealityIntent } from './types'
 import { pickCallChannel } from '../call/pick'
 import { firstContactDelayMinutes, silenceHours } from '../relationship/dynamics'
-import type { LocalClock } from '../time/clock'
+import { localClock, localIso, type LocalClock } from '../time/clock'
+import { atLocal } from './moments'
 import type { Availability } from './routine'
 
 export type IntentInput = {
@@ -31,6 +32,38 @@ export type IntentInput = {
 
 /** 처음 만난 뒤 한 번 먼저 보내는 연락의 이유. evaluator 가 동기 검사를 하지 않고, 세션에 한 번만 나간다. */
 export const FIRST_CONTACT_REASON = '처음 만난 뒤 첫 연락 — 아직 서로 잘 모르는 사이라 가볍고 자연스럽게, 첫 만남이나 그때 나눈 이야기를 짧게 떠올린다'
+
+/**
+ * 첫 대화 끝의 약속(10/19) — "이따 저녁에 문자할게" 를 말하게 하고, 그 시각에 실제로 연락이 가게 한다.
+ * 두 시간쯤 뒤, 그때가 밤 10시~아침 9시면 다음 날 아침 9시 반. when 은 대사에 그대로 쓰는 때(한국어 — 대사는 사용자 언어로 옮겨 쓴다).
+ */
+export function firstPromiseAt(now: Date, timeZone: string): { at: Date; when: string } {
+  const later = new Date(now.getTime() + 2 * 3_600_000)
+  const hour = localClock(later, timeZone).hour
+  const sameDay = localIso(later, timeZone).slice(0, 10) === localIso(now, timeZone).slice(0, 10)
+  if (hour >= 22 || hour < 9 || !sameDay) {
+    const nextMorning = atLocal(now, timeZone, localClock(now, timeZone).hour < 9 ? 0 : 1, 9 * 60 + 30)
+    return { at: nextMorning, when: localClock(now, timeZone).hour < 9 ? '이따 아침에' : '내일 아침에' }
+  }
+  return { at: later, when: hour < 12 ? '이따 점심쯤' : hour < 17 ? '이따 오후에' : hour < 20 ? '이따 저녁에' : '이따 밤에' }
+}
+
+/** 약속을 지키는 연락의 이유 — 캐릭터(계획)가 읽는다. */
+export const PROMISE_REASON = '약속 지키기: 첫 대화에서 이 시간쯤 먼저 문자하겠다고 사용자에게 직접 약속했다. 그 약속을 기억하고 지키는 연락 — 그 대화를 이어 가볍게, 약속했던 걸 생색내지 않게.'
+
+/** 첫 대화의 대사 지시 — 일정 하나를 묻고, 끝에 연락을 약속한다. 대사(dialogue) 생성에만 붙인다. */
+export function firstMeetingDirective(when: string): string {
+  return `## 첫 대화(서버 지시, 이번 답에만)
+이번이 사용자와 나누는 첫 대화다. 이번 대사 안에서 아래 두 가지를 이 캐릭터의 성격·말투와 지금 장면에 맞게 자연스럽게 한다. 안내·홍보처럼 들리면 안 된다.
+1. 사용자의 가까운 일정 하나를 가볍게 묻는다 — 오늘 이따, 내일, 이번 주에 뭐 하는지(시험·약속·일·면접 같은 것). 사용자가 이미 말했다면 다시 묻지 말고 그 얘기에 반응한다.
+2. 대사 끝 무렵, "${when}" 먼저 문자(메시지)하겠다고 짧게 약속한다(예: "${when} 문자할게"). 때는 이것으로 고정한다 — 다른 시각을 말하지 않는다. 연락처를 주고받는 장면을 새로 만들지 않는다. 세계관상 '문자'가 어색하면 그 세계의 말(서신·전갈 등)로 바꿔 말한다.`
+}
+
+/** 대사가 실제로 나중 연락을 약속했는가(네 언어). 약속하지 않았으면 약속 연락을 잡지 않는다 — 기존 첫 연락이 맡는다. */
+const PROMISE = /(연락|문자|톡|카톡|메시지|메세지|서신|전갈|전화)\s*(을|를)?\s*(할게|할께|줄게|보낼게|드릴게|하마|할 테니|할테니|해 줄게|해줄게|넣을게|남길게|보내마|띄울게)|\b(text|message|call|ping|write to|write) you\b|(連絡|メッセージ|メール|LINE)(する|します|送る)|(发消息|联系你|给你发|打给你|发信息)/i
+export function promisedContact(text: string): boolean {
+  return PROMISE.test(text)
+}
 
 /** 하루 세 번의 안부 창. 이 시간에 캐릭터가 비어 있고 관계가 됐으면 "밥 먹었어?" 를 보낼 이유가 생긴다. */
 const MEALS: Array<{ name: string; from: number; to: number; reason: string }> = [

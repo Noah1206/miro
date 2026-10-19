@@ -99,7 +99,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     // 리듬이 없으면 배경에서 만든다. inline(사용자 턴 직후)에서는 기다리지 않는다 — 사용자의 응답에 모델 호출을 얹지 않게.
     const availability = await characterAvailability(row.character.id, now, timeZoneOf(row.settings), { wait: !opts.inline })
     const userSchedule = await activeMoments(sessionId, now)
-    const limits = { timely: !!hint?.opportunity?.momentKey }
+    const limits = { timely: !!hint?.opportunity?.momentKey || !!hint?.opportunity?.promise }
     const blocked = deliveryBlock(row.profile, timeZoneOf(row.settings), now, availability.availability, limits)
     // A delivery restriction is not a personality decision to ignore someone. Keep the
     // read inbox item retryable; do not consume its trigger or mark it permanently left.
@@ -132,8 +132,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         userSchedule: userSchedule.map(moment => ({ about: moment.about, eventAt: moment.eventAt.toISOString(), hasTime: moment.hasTime })),
         messengerRule: opts.inbox ? 'These user messages were actually read. Answer a concrete question or an invitation to continue your own outreach in character when available; a short honest answer is enough. Decide from authored motives and actual boundaries, never from a proactive frequency cap. A closing acknowledgement may need no answer. Do not invent a typing action or promise an automatic reply. Only choose silence for a concrete character-grounded reason, not a generic desire to wait.' : null,
         pendingDeliveryHint: opts.inbox ? null : row.session.pendingRealityIntent, deliveryBlocked: blocked,
-        // user_moment = 사용자가 직접 말한 일정(응원·끝난 뒤 묻기). 사람이라면 기억하고 챙길 때다.
-        contactOpportunity: hint?.opportunity ? { kind: hint.opportunity.momentKey ? 'user_moment' : 'routine', reason: hint.opportunity.reason, urgency: hint.opportunity.urgency, answers: hint.opportunity.answers ?? null } : null,
+        // user_moment = 사용자가 직접 말한 일정(응원·끝난 뒤 묻기). 사람이라면 기억하고 챙길 때다. promise_to_keep = 대화에서 직접 한 '이따 문자할게' 약속(10/19).
+        contactOpportunity: hint?.opportunity ? { kind: hint.opportunity.momentKey ? 'user_moment' : hint.opportunity.promise ? 'promise_to_keep' : 'routine', reason: hint.opportunity.reason, urgency: hint.opportunity.urgency, answers: hint.opportunity.answers ?? null } : null,
         ownDay,
       }),
     })

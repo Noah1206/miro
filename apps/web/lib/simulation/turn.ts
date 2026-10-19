@@ -8,7 +8,7 @@ import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature, tokensForCost, POLICY } from '@miro/config'
-import { contactBoundaryActive, contactBoundaryDirective, momentHint, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
+import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
 import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
@@ -121,14 +121,20 @@ async function executeTurn(opts: {
     let policy = resolveTurnPolicy({ ...policyInput, agencyReady: false, continuity: reservation?.continuity ?? false })
     const turnMeter = new TurnMeter(maximumUSD, model.quote.maxInputTokens, model.quote.maxOutputTokens)
     const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.since !== null }
+    // 첫 대화(10/19): 가까운 일정 하나를 묻고 끝에 "이따 ~에 문자할게" 를 약속하게 한다 — 약속했으면 그 시각에 실제로 연락이 간다(아래).
+    // 대부분 첫 답 하나만 보고 떠나서(7일 45턴/45방), 먼저 연락하는 캐릭터라는 걸 첫 답에서 보여야 한다.
+    const firstPromise = loaded.snapshot.turnCount === 0 && loaded.experienceType === 'reality' && !loaded.snapshot.world.narrativeCalendar && !contactBoundaryActive(boundary, now)
+      ? firstPromiseAt(now, loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) : null
     // 성인 방인데 전용 모델이 빠져 있으면 여기서 던진다(메인 모델로 보내지 않음) — 잡아 둔 사용량은 돌려준다.
     let llm: ReturnType<typeof resolveRpLLM>
     try {
       const provider = resolveRpLLM(loaded.characterName, context)
       const directive = contactBoundaryDirective(boundary, now)
+      const firstMeeting = firstPromise ? firstMeetingDirective(firstPromise.when) : ''
       // Keep the provider's usage/provenance getters: a spread would freeze or discard them.
-      llm = directive ? new Proxy(provider, { get(target, key) {
-        if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request, system: request.system + '\n' + directive })
+      llm = directive || firstMeeting ? new Proxy(provider, { get(target, key) {
+        if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request,
+          system: request.system + (directive ? '\n' + directive : '') + (firstMeeting && request.task === 'dialogue' ? '\n' + firstMeeting : '') })
         const value = Reflect.get(target, key)
         return typeof value === 'function' ? value.bind(target) : value
       } }) : provider
@@ -171,6 +177,9 @@ async function executeTurn(opts: {
     if (!policy.permissions.proactiveContact && transition.realityIntent) {
       observe('reality.intent_dropped_chat', { sessionId, turn: turnIndex })
       transition.realityIntent = null
+    }
+    if (firstPromise && !transition.realityIntent && promisedContact(renderBlocks(transition.blocks))) {
+      transition.realityIntent = { channel: 'message', reason: PROMISE_REASON, urgency: 0.9, notBefore: firstPromise.at.toISOString(), promise: true }
     }
     if (result.providerMode === 'fallback' || turnMeter.missingSuccessfulUsage) {
       await refund()

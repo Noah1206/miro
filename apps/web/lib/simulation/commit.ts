@@ -5,7 +5,7 @@ import {
   characterRuntimeStates, characterDecisions, characters, users, stateTransitions,
 } from '@miro/db'
 import {
-  applyRelationshipDelta, buildSceneKey, contactBoundaryActive, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf,
+  applyRelationshipDelta, buildSceneKey, contactBoundaryActive, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf, type RealityIntent,
 } from '@miro/domain'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import type { Memory, CharacterState, RelationshipState, StateTransitionRecord, MomentDraft } from '@miro/domain'
@@ -359,7 +359,9 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       .set({
         turnCount: input.turnIndex,
         lastInteractionAt: new Date(),
-        pendingRealityIntent: contactBoundaryActive(session.contactBoundary, new Date()) ? null : t.realityIntent ?? null,
+        // 지키지 않은 약속(첫 대화의 "이따 문자할게")은 대화가 이어져도 남긴다 — 새 의도가 없을 때만.
+        pendingRealityIntent: contactBoundaryActive(session.contactBoundary, new Date()) ? null
+          : t.realityIntent ?? ((session.pendingRealityIntent as RealityIntent | null)?.promise ? session.pendingRealityIntent : null),
         ...(input.characterState ? { characterState: input.characterState } : {}),
       })
       .where(eq(roleplaySessions.id, input.sessionId))
