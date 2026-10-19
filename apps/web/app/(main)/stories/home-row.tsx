@@ -14,7 +14,8 @@ export async function OriginalStoriesRow() {
         <h2 className="t-title-3"><span aria-hidden="true">✨ </span>{t('미로 오리지널')}</h2>
         <TransitionLink href="/stories" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
       </div>
-      <div style={{ display: 'grid', gridAutoFlow: 'column', gridAutoColumns: 'clamp(132px, 38vw, 176px)', gap: 'var(--space-3)', overflowX: 'auto', scrollbarWidth: 'none' }}>
+      {/* 카드 크기는 홈의 다른 섹션 줄(.row-scroll--flush, 폭 150px)과 같게(10/19). */}
+      <div className="row-scroll row-scroll--flush" style={{ margin: '0 calc(-1 * var(--gutter))' }}>
         {list.map(s => <StoryCard key={s.slug} s={s} compact />)}
       </div>
     </section>
