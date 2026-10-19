@@ -6,6 +6,8 @@ import { detailFields, parseProtagonist, runFor, startRun, storyBySlug } from '@
 import { markThreadRead } from '@/lib/stories/contacts'
 import { setContactPermission } from '@/lib/stories/view'
 import { db, userSettings } from '@miro/db'
+import { storyUnveilAllowed } from '@/lib/home-mode'
+import { msg } from '@/lib/i18n'
 
 export type StartState = { error: string | null }
 
@@ -20,7 +22,10 @@ export async function startStory(slug: string, _prev: StartState, form: FormData
   const p = parseProtagonist(story, { name: String(form.get('name') ?? ''), age: String(form.get('age') ?? ''), honorific: String(form.get('honorific') ?? ''), details })
   if ('error' in p) return { error: p.error }
   if (form.get('adult') !== 'on') return { error: '모든 등장인물과 주인공이 성인인 작품이에요. 확인란을 체크해 주세요.' }
-  const run = await startRun(user.id, story.id, p, { fresh: form.get('mode') === 'new', contactOptIn: form.get('contact') === 'on' })
+  // 성인용 시작(10/19) — 클라이언트 버튼 값을 믿지 않고 홈 언베일·자격을 서버에서 다시 본다.
+  const adult = form.get('unveil') === 'on'
+  if (adult && !(await storyUnveilAllowed(user.id, story, p, { home: true }))) return { error: msg('성인용 채팅은 홈에서 언베일을 켜고 성인 인증을 마친 뒤 시작할 수 있어요.') }
+  const run = await startRun(user.id, story.id, p, { fresh: form.get(adult ? 'adultMode' : 'mode') === 'new', contactOptIn: form.get('contact') === 'on', adult })
   redirect(`/stories/play/${run.id}`)
 }
 

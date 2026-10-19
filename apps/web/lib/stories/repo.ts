@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { and, asc, desc, eq, ne, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, isNotNull, isNull, ne, sql } from 'drizzle-orm'
 import { db, stories, storyPrivate, storyRuns } from '@miro/db'
 import { devApiAllowed } from '@miro/config'
 import { initialState, toPublic, validateDefinition, type StoryDefinition, type StoryPublic, type StoryState } from '@miro/domain'
@@ -52,8 +52,11 @@ export function parseProtagonist(pub: StoryPublic, input: { name?: string; age?:
   return { name, age, honorific: (input.honorific ?? '').trim().slice(0, 12), details }
 }
 
-export async function liveRun(userId: string, storyId: string) {
-  const [r] = await db.select().from(storyRuns).where(and(eq(storyRuns.userId, userId), eq(storyRuns.storyId, storyId), ne(storyRuns.status, 'archived'))).limit(1)
+/** 일반 회차와 성인용(언베일) 회차는 작품마다 따로 하나씩 살아 있다(10/19). */
+const modeIs = (adult: boolean) => adult ? isNotNull(storyRuns.adultSince) : isNull(storyRuns.adultSince)
+
+export async function liveRun(userId: string, storyId: string, adult = false) {
+  const [r] = await db.select().from(storyRuns).where(and(eq(storyRuns.userId, userId), eq(storyRuns.storyId, storyId), ne(storyRuns.status, 'archived'), modeIs(adult))).limit(1)
   return r ?? null
 }
 
@@ -69,13 +72,13 @@ export async function runsOf(userId: string) {
 
 /**
  * 회차 시작. fresh=false 면 살아 있는 회차를 그대로 돌려준다(이어하기). fresh=true 면 이전 회차를 archived 로 두고 새 회차를 만든다.
- * 동시에 두 번 눌러도 회차는 하나 — (user, story) 살아 있는 회차 고유 색인과 사용자·작품 잠금.
+ * 동시에 두 번 눌러도 회차는 하나 — (user, story, 성인 여부) 살아 있는 회차 고유 색인과 사용자·작품 잠금. 이전 회차 보관은 같은 모드만.
  */
-export async function startRun(userId: string, storyId: string, protagonist: Protagonist, opts: { fresh: boolean; contactOptIn: boolean }) {
+export async function startRun(userId: string, storyId: string, protagonist: Protagonist, opts: { fresh: boolean; contactOptIn: boolean; adult?: boolean }) {
   const def = await definitionOf(storyId)
   return db.transaction(async tx => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`story-run:${userId}:${storyId}`}))`)
-    const [live] = await tx.select().from(storyRuns).where(and(eq(storyRuns.userId, userId), eq(storyRuns.storyId, storyId), ne(storyRuns.status, 'archived'))).limit(1)
+    const [live] = await tx.select().from(storyRuns).where(and(eq(storyRuns.userId, userId), eq(storyRuns.storyId, storyId), ne(storyRuns.status, 'archived'), modeIs(!!opts.adult))).limit(1)
     if (live && !opts.fresh) return live
     if (live) await tx.update(storyRuns).set({ status: 'archived', updatedAt: new Date() }).where(eq(storyRuns.id, live.id))
     const [row] = await tx.select({ next: sql<number>`coalesce(max(${storyRuns.runNo}), 0) + 1` }).from(storyRuns)
@@ -85,7 +88,7 @@ export async function startRun(userId: string, storyId: string, protagonist: Pro
       state.contactOptIn = true
       for (const k of Object.keys(state.rel)) state.rel[k]!.contact = 'allowed'
     }
-    const [run] = await tx.insert(storyRuns).values({ userId, storyId, runNo: Number(row?.next ?? 1), definitionVersion: def.version, protagonist, state }).returning()
+    const [run] = await tx.insert(storyRuns).values({ userId, storyId, runNo: Number(row?.next ?? 1), definitionVersion: def.version, protagonist, state, ...(opts.adult ? { adultSince: new Date() } : {}) }).returning()
     return run!
   })
 }

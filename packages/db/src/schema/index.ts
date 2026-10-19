@@ -1248,12 +1248,14 @@ export const storyRuns = pgTable('story_runs', {
   /** 낙관적 잠금 — 상태를 쓸 때마다 +1, 읽은 버전과 다르면 쓰지 않는다. */
   version: integer('version').notNull().default(0),
   lastSceneInputAt: timestamp('last_scene_input_at', { withTimezone: true }),
+  /** 언베일이 이 회차에서 처음 켜진 시각 — 한 번 켜진 회차는 꺼도 성인 전용 모델로 이어진다. */
+  adultSince: timestamp('adult_since', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, t => ({
   runNo: uniqueIndex('story_runs_no_uniq').on(t.userId, t.storyId, t.runNo),
   user: index('story_runs_user_idx').on(t.userId),
-  live: uniqueIndex('story_runs_live_uniq').on(t.userId, t.storyId).where(sql`${t.status} <> 'archived'`),
+  live: uniqueIndex('story_runs_live_uniq').on(t.userId, t.storyId, sql`(${t.adultSince} is not null)`).where(sql`${t.status} <> 'archived'`),
 })).enableRLS()
 
 /** 턴 = 유저 입력 하나. client_turn_id 로 재시도·새로고침 중복을 막고, 회차당 진행 중 턴은 하나(동시 요청 차단). */

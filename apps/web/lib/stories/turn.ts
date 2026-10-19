@@ -9,6 +9,7 @@ import { definitionOf, runFor, type Protagonist } from './repo'
 import { DM_VERSION, INTERPRET_VERSION, NARRATE_VERSION, dmPrompt, interpretPrompt, narratePrompt, type LogLine } from './prompts'
 import { storyMock } from './mock'
 import { syncContacts } from './contacts'
+import { storyUnveilAllowed } from '@/lib/home-mode'
 
 const ACTION_TYPES = ['option', 'trust', 'affinity', 'contact', 'boundary', 'relation_outcome', 'exclusive', 'memory', 'promise', 'refuse_premise', 'accept_premise', 'time_skip'] as const
 const DM_BLOCKED = new Set(['option', 'time_skip', 'relation_outcome', 'refuse_premise', 'accept_premise'])
@@ -87,7 +88,10 @@ export async function runStoryTurn(input: { userId: string; runId: string; clien
     const protagonist = fresh!.protagonist as Protagonist
     // Serverless route bundles do not share the instrumentation module instance.
     if (!deps.llm) installAIUsageSink()
-    const llm = deps.llm ?? createAI({ mock: storyMock, context: { userId: input.userId, workload: 'interactive', origin: `story:${input.channel}` } })
+    // 성인용으로 시작한 회차(10/19)는 성인 전용 모델로만. 성인 지시는 매 턴 자격을 다시 봐서 통과할 때만(대화방 언베일과 같은 규칙).
+    const adultRun = !!fresh!.adultSince
+    const unveil = adultRun && await storyUnveilAllowed(input.userId, def, protagonist, { home: false })
+    const llm = deps.llm ?? createAI({ mock: storyMock, context: { userId: input.userId, workload: 'interactive', origin: `story:${input.channel}`, adult: adultRun } })
     const sceneLog = await loadLog(run.id, 'scene', null, 16)
     const threadLog = thread ? await loadLog(run.id, 'dm', thread, 12) : []
 
@@ -98,13 +102,13 @@ export async function runStoryTurn(input: { userId: string; runId: string; clien
 
     let reply: { role: 'scene' | 'character'; speaker: string | null; content: string; blocks: unknown }
     if (input.channel === 'scene') {
-      const np = narratePrompt(def, state, result.state, protagonist, text, sceneLog, result.applied, result.rejected, interpreted.clarify, result.completed)
+      const np = narratePrompt(def, state, result.state, protagonist, text, sceneLog, result.applied, result.rejected, interpreted.clarify, result.completed, unveil)
       const scene = Scene.parse(await llm.generateStructured({ task: 'dialogue', schema: Scene, system: np.system, prompt: np.prompt, promptVersion: NARRATE_VERSION, maxTokens: 2400 }))
       const names = new Map(def.characters.map(c => [c.key, c.name]))
       const blocks = scene.blocks.map(b => ({ ...b, speaker: b.speaker && names.has(b.speaker) ? b.speaker : null }))
       reply = { role: 'scene', speaker: null, blocks, content: blocks.map(b => (b.speaker ? `${names.get(b.speaker)}: ${b.text}` : b.text)).join('\n\n') }
     } else {
-      const dp = dmPrompt(def, result.state, protagonist, thread!, text, threadLog, sceneLog, result.rejected)
+      const dp = dmPrompt(def, result.state, protagonist, thread!, text, threadLog, sceneLog, result.rejected, unveil)
       const dm = Dm.parse(await llm.generateStructured({ task: 'dialogue', schema: Dm, system: dp.system, prompt: dp.prompt, promptVersion: DM_VERSION, maxTokens: 600 }))
       reply = { role: 'character', speaker: thread, content: dm.text, blocks: null }
     }

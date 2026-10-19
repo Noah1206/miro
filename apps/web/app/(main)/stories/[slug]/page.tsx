@@ -5,6 +5,7 @@ import { CharacterVisual } from '@/components/character-visual'
 import { currentUser } from '@/lib/auth'
 import { getPersona } from '@/lib/persona'
 import { liveRun, storyBySlug } from '@/lib/stories/repo'
+import { storyUnveilAllowed } from '@/lib/home-mode'
 import { audienceLabel, CoverTitle, coverShowsTitle, isLightCover } from '../story-card'
 import { LoginToStart, StartForm } from './start-form'
 
@@ -14,7 +15,7 @@ export default async function StoryDetail({ params }: { params: Promise<{ slug: 
   const { slug } = await params
   const [story, user] = await Promise.all([storyBySlug(slug), currentUser()])
   if (!story) notFound()
-  const [run, persona] = user ? await Promise.all([liveRun(user.id, story.id), getPersona(user.id)]) : [null, null]
+  const [run, adultRun, persona, unveil] = user ? await Promise.all([liveRun(user.id, story.id), liveRun(user.id, story.id, true), getPersona(user.id), storyUnveilAllowed(user.id, story, null, { home: true })]) : [null, null, null, false]
   const prologue = [story.entry?.prelude, story.opening].filter(Boolean).join('\n\n')
 
   return (
@@ -55,8 +56,9 @@ export default async function StoryDetail({ params }: { params: Promise<{ slug: 
 
         <section className="stack" style={{ gap: 12 }}>
           {run && <ButtonLink href={`/stories/play/${run.id}`} variant="primary" full size="lg">{run.status === 'ended' ? `${run.runNo}회차 이어 보기(시즌 종료)` : `${run.runNo}회차 이어하기`}</ButtonLink>}
+          {adultRun && unveil && <ButtonLink href={`/stories/play/${adultRun.id}`} variant="primary" full size="lg">{adultRun.status === 'ended' ? `성인용 ${adultRun.runNo}회차 이어 보기(시즌 종료)` : `성인용 ${adultRun.runNo}회차 이어하기`}</ButtonLink>}
           {user
-            ? <StartForm slug={story.slug} protagonist={story.protagonist} defaultName={persona?.name ?? ''} medium={story.medium} hasRun={!!run} />
+            ? <StartForm slug={story.slug} protagonist={story.protagonist} defaultName={persona?.name ?? ''} medium={story.medium} hasRun={!!run} hasAdultRun={!!adultRun} unveil={unveil} />
             : <LoginToStart slug={story.slug} />}
         </section>
       </div>

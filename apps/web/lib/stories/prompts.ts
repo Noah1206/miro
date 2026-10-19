@@ -1,4 +1,5 @@
 import { currentEvent, evalCond, eventOf, optionOpen, type StoryCharacter, type AppliedChange, type Rejected, type StoryDefinition, type StoryState } from '@miro/domain'
+import { adultRule } from '@miro/engine'
 import type { Protagonist } from './repo'
 
 export const INTERPRET_VERSION = 'story-interpret:v1'
@@ -70,7 +71,7 @@ JSON: {"actions":[{"type":..., "character": 인물키|null, "option": 선택id|n
 }
 
 export function narratePrompt(def: StoryDefinition, before: StoryState, after: StoryState, p: Protagonist, input: string, recent: LogLine[],
-  applied: AppliedChange[], rejected: Rejected[], clarify: string | null, completed: string | null) {
+  applied: AppliedChange[], rejected: Rejected[], clarify: string | null, completed: string | null, unveil = false) {
   const ev = currentEvent(def, after)
   const done = completed ? eventOf(def, completed) : undefined
   const chosen = done ? done.options.find(o => o.id === after.choices[done.id]) : undefined
@@ -90,7 +91,7 @@ export function narratePrompt(def: StoryDefinition, before: StoryState, after: S
 - '서버가 반영하지 않은 행동'은 일어나지 않은 것으로 다룬다(필요하면 왜 안 되는지 장면 안에서 자연스럽게).
 - 확인 질문이 있으면 장면 끝에 짧게 묻는다. 사건이 끝났으면 결과를 보여 주고 다음 상황으로 자연스럽게 잇는다.
 - 다음 선택을 버튼처럼 나열하지 말고 열린 상황으로 끝낸다. 시간은 유저가 동의한 만큼만 흐른다.
-- 성적 강요, 침묵을 동의로 해석하기, 구조나 친절을 사랑으로 환산하기 금지.
+- 성적 강요, 침묵을 동의로 해석하기, 구조나 친절을 사랑으로 환산하기 금지.${unveil ? `\n\n${adultRule('explicit')}` : ''}
 JSON: {"blocks":[{"kind":"narration"|"dialogue","speaker":인물키|null,"text":"..."}]}`
   const prompt = JSON.stringify({
     entry: def.entry ? { world: def.entry.world, role: def.entry.role, arrival: def.entry.arrival, rules: def.entry.rules } : undefined,
@@ -121,11 +122,11 @@ function describeVars(def: StoryDefinition, s: StoryState): Record<string, unkno
   return out
 }
 
-export function dmPrompt(def: StoryDefinition, s: StoryState, p: Protagonist, speaker: string, input: string, thread: LogLine[], scene: LogLine[], rejected: Rejected[]) {
+export function dmPrompt(def: StoryDefinition, s: StoryState, p: Protagonist, speaker: string, input: string, thread: LogLine[], scene: LogLine[], rejected: Rejected[], unveil = false) {
   const c = def.characters.find(x => x.key === speaker)!
   const system = `너는 ${c.name}(${c.age}세)이다. ${c.prompt}
 지금은 작품 속 매체 '${def.contactPolicy.medium}'로 주고받는 문자 대화다(실제 메신저 연동이 아니다). 서술·속마음 없이 ${c.name}의 문자만 1~3문장으로 쓴다.
-알고 있는 사실 목록 밖의 비밀은 말하지 않는다. 유저가 하지 않은 약속·만남·대화를 기억한다고 말하지 않는다 — 기록에 있는 것만. 유저가 연락 중지를 요청했으면 짧게 받아들이고 더 붙잡지 않는다.
+알고 있는 사실 목록 밖의 비밀은 말하지 않는다. 유저가 하지 않은 약속·만남·대화를 기억한다고 말하지 않는다 — 기록에 있는 것만. 유저가 연락 중지를 요청했으면 짧게 받아들이고 더 붙잡지 않는다.${unveil ? `\n\n${adultRule('explicit')}` : ''}
 JSON: {"text":"..."}`
   const prompt = JSON.stringify({
     protagonist: protagonistLines(def, p),
