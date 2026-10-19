@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
-import { POLICY, feature, voiceCallAllowed, voiceCallTesters } from '@miro/config'
+import { POLICY, callAllowedFor, type CharacterMedia } from '@miro/config'
 import { db, callSessions, characters, contactProfiles, messages, realityContacts, relationships, roleplaySessions, userSettings, users } from '@miro/db'
 import { contactBoundaryActive } from '@miro/domain'
 import type { CallChannel } from '@miro/domain'
@@ -19,15 +19,23 @@ const usageKind = (c: CallChannel): 'voiceCallPerMinute' | 'videoCallPerMinute' 
  * 사용자가 거는 통화. 캐릭터가 지금 받을 수 있으면(생활 리듬이 free) 바로 연결하고 1분을 먼저 예약한다.
  * 근무·수면 중이면 받지 않는다 — 기록만 남고 사용량은 없다. 성격에 따라 나중에 "못 받아서 미안" 문자가 예약된다.
  */
+/** 이 방의 캐릭터 유형(대화만/음성/음성+영상). 통화 문을 여닫는 기준(10/19). 모르는 방이면 text. */
+export async function sessionMedia(sessionId: string, userId: string): Promise<CharacterMedia> {
+  const [row] = await db.select({ presentation: contactProfiles.presentation })
+    .from(roleplaySessions).innerJoin(contactProfiles, eq(contactProfiles.characterId, roleplaySessions.characterId))
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId))).limit(1)
+  return row?.presentation.media ?? 'text'
+}
+
 export async function startOutgoingCall(userId: string, sessionId: string, channel: CallChannel, now = new Date(), requestId: string = randomUUID()) {
-  if (!(channel === 'voice' ? voiceCallAllowed(userId) : feature('videoCall'))) throw new Error('CALL_NOT_AVAILABLE')
-  const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType, character: characters, timeZone: userSettings.timeZone, pendingIntent: roleplaySessions.pendingRealityIntent, turnCount: roleplaySessions.turnCount })
+  const [session] = await db.select({ id: roleplaySessions.id, experienceType: characters.experienceType, character: characters, timeZone: userSettings.timeZone, pendingIntent: roleplaySessions.pendingRealityIntent, turnCount: roleplaySessions.turnCount, presentation: contactProfiles.presentation })
     .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+    .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
     .leftJoin(userSettings, eq(userSettings.userId, roleplaySessions.userId)).where(and(
     eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt))).limit(1)
   if (!session) throw new Error('SESSION_NOT_FOUND')
-  // 통화는 미로 캐릭터와만 한다. 사용량 예약보다 먼저 거절해 차감이 생기지 않게 한다.
-  if (session.experienceType !== 'reality') throw new Error('CALL_NOT_AVAILABLE')
+  // 통화는 미로 캐릭터와, 그리고 음성·영상 유형(또는 플래그가 연 환경)에서만 한다. 사용량 예약보다 먼저 거절해 차감이 생기지 않게 한다.
+  if (session.experienceType !== 'reality' || !callAllowedFor(userId, session.presentation?.media, channel)) throw new Error('CALL_NOT_AVAILABLE')
   const previous = await owned(userId, requestId)
   if (previous) {
     if (previous.sessionId !== sessionId || previous.channel !== channel || previous.direction !== 'outgoing') throw new Error('CALL_REQUEST_MISMATCH')
@@ -91,7 +99,6 @@ export async function startOutgoingCall(userId: string, sessionId: string, chann
  * 세션당 ringing 하나 (partial UNIQUE) — 이미 울리는 중이면 null.
  */
 export async function startIncomingCall(sessionId: string, channel: CallChannel, reason: string) {
-  if (!feature(channel === 'voice' ? 'voiceCall' : 'videoCall')) return null
   return db.transaction(async tx => {
     const [row] = await tx.select({ session: roleplaySessions, character: characters, profile: contactProfiles, user: users })
       .from(roleplaySessions)
@@ -104,7 +111,8 @@ export async function startIncomingCall(sessionId: string, channel: CallChannel,
       || contactBoundaryActive(row.session.contactBoundary, new Date())) return null
     // Serialize the last check with creator contact edits before opening a ringing call.
     const [profile] = await tx.select().from(contactProfiles).where(eq(contactProfiles.characterId, row.character.id)).limit(1).for('share')
-    if (!profile?.enabled) return null
+    // 통화 문은 캐릭터 유형(음성·영상)이 연다(10/19) — 대화만인 캐릭터는 전역 플래그가 열린 환경에서만 전화를 건다.
+    if (!profile?.enabled || !callAllowedFor(row.session.userId, profile.presentation.media, channel)) return null
     const [call] = await tx.insert(callSessions).values({ sessionId, channel, direction: 'incoming', status: 'ringing', reason })
       .onConflictDoNothing().returning({ id: callSessions.id })
     return call?.id ?? null
@@ -115,7 +123,7 @@ export async function startIncomingCall(sessionId: string, channel: CallChannel,
 export async function acceptCall(userId: string, callId: string) {
   const call = await owned(userId, callId)
   if (!call || call.status !== 'ringing') return null
-  if (!feature(call.channel === 'voice' ? 'voiceCall' : 'videoCall')) return null
+  if (!callAllowedFor(userId, await sessionMedia(call.sessionId, userId), call.channel)) return null
   const r = await reserve({
     userId, kind: usageKind(call.channel), units: 1, idempotencyKey: `call:accept:${callId}`,
   })
@@ -203,7 +211,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
 
 /** 연결이 끊긴 통화(active 가 너무 오래) 와 받지 않은 통화(ringing 만료)를 정리한다. Cron 에서 호출. */
 export async function expireCalls(now = new Date()) {
-  if (!feature('voiceCall') && !feature('videoCall') && voiceCallTesters().length === 0) return { missed: 0, timedOut: 0 }
+  // 10/19: 전역 플래그가 닫혀도 음성·영상 유형 캐릭터는 전화를 걸 수 있으므로 늘 정리한다.
   const ringingBefore = new Date(now.getTime() - POLICY.call.ringingTimeoutMinutes * 60_000)
   const missed = await db.select().from(callSessions)
     .where(and(eq(callSessions.status, 'ringing'), lt(callSessions.createdAt, ringingBefore)))
@@ -238,7 +246,6 @@ export async function expireCalls(now = new Date()) {
 
 /** 사용자의 세션에서 지금 울리고 있는 통화. 수신 화면 표시용. */
 export async function ringingFor(userId: string) {
-  if (!feature('voiceCall') && !feature('videoCall')) return null
   const rows = await db.select({
     id: callSessions.id, channel: callSessions.channel, sessionId: callSessions.sessionId,
     reason: callSessions.reason, createdAt: callSessions.createdAt, characterName: characters.name,

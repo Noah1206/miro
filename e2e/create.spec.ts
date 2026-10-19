@@ -20,12 +20,13 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   await expect(page.getByRole('button', { name: '임시저장', exact: true })).toBeEnabled()
   await expect(publish).toBeDisabled()
 
-  // 첫 장면은 인트로 탭의 전체 화면 편집기에 있다. 확인으로 닫아야 게시 버튼이 드러난다.
+  // 비어 있는 필수 칸은 머리의 안내가 이름으로 알려 준다(10/19).
+  await expect(page.getByText('아직 필요: 첫 장면', { exact: true })).toBeVisible()
+  // 첫 장면은 인트로 탭에 다른 칸과 같은 모양으로 있다(10/19 — 전체 화면 편집기였다).
   await page.getByRole('tab', { name: '인트로', exact: true }).click()
   await page.locator('textarea[name="startingContext"]').fill('검찰청 복도에서 처음 마주쳤다.')
   // 첫 장면의 장소는 선택이다. 적으면 세계가 거기서 시작한다.
   await page.locator('input[name="worldLocation"]').fill('검찰청 복도')
-  await page.getByRole('button', { name: '인트로 확인' }).click()
 
   // 다 채우면 버튼 옆 안내가 공개 여부로 바뀐다. 공개 스위치는 기본으로 켜져 있다.
   await expect(page.getByText('공개 게시', { exact: true })).toBeVisible()
@@ -54,7 +55,6 @@ test('/create 는 미로 캐릭터로 바로 열고, 비공개 초안을 재개�
   await page.getByRole('switch', { name: /다른 사람에게 공개/ }).uncheck({ force: true })
   await page.getByRole('tab', { name: '인트로', exact: true }).click()
   await page.locator('textarea[name="startingContext"]').fill('비 오는 저녁의 서점에서 만났다.')
-  await page.getByRole('button', { name: '인트로 확인' }).click()
   await page.getByRole('button', { name: '임시저장', exact: true }).click()
   await expect(page).toHaveURL(/\/my\/characters\/[0-9a-f-]+\/edit$/)
   await page.reload()

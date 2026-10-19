@@ -16,8 +16,7 @@ const STEPS: Array<{ tab: CreateTab; lines: string[] }> = [
   { tab: 'profile', lines: [msg('이름과 소개를 적으면 카드가 돼요.'), msg('사진을 넣으면 카드 얼굴이 돼요.')] },
   { tab: 'personality', lines: [msg('캐릭터가 살아가는 시대와 장소를 적어 주세요.'), msg('이야기에 어울리는 장르를 골라 주세요.')] },
   { tab: 'appearance', lines: [msg('성별과 체형을 고르면 사진이 돼요.'), msg('얼굴과 머리를 적으면 더 닮아져요.')] },
-  { tab: 'relationship', lines: [msg('단계를 고르면 첫 만남의 거리가 돼요.'), msg('세부 감정은 필요할 때 조정해요.')] },
-  { tab: 'contact', lines: [msg('켜 두면 앱 밖에서 먼저 연락이 와요.'), msg('관계와 상황에 따라 연락해요.')] },
+  { tab: 'relationship', lines: [msg('단계를 고르면 첫 만남의 거리가 돼요.'), msg('켜 두면 앱 밖에서 먼저 연락이 와요.')] },
   { tab: 'intro', lines: [msg('인트로에서 첫 대화를 작성해요.'), msg('첫 장면을 적으면 게시할 수 있어요.')] },
 ]
 
@@ -74,8 +73,7 @@ export function CreateTour({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTa
     if (step >= STEPS.length - 1) return dismiss()
     const s = STEPS[step + 1]!
     setStep(step + 1)
-    // 상황은 전체 화면이라 말풍선을 덮는다 — 가리키기만 한다.
-    if (s.tab !== 'intro') onTab(s.tab)
+    onTab(s.tab)
   }
   const last = step >= STEPS.length - 1
 

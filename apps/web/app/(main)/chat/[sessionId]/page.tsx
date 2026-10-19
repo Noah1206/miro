@@ -93,7 +93,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
         {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 문자·대화 방식 버튼은 입력창 안 아래 줄에(10/17). */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
-        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} roomHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} />
+        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} roomHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands} />
       </section>
 
     </main></ChatTheme></TurnsProvider></ChatModelProvider>

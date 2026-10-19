@@ -3,7 +3,8 @@ import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
 import { db, realityContacts } from '@miro/db'
-import { feature, voiceCallAllowed } from '@miro/config'
+import { callAllowedFor } from '@miro/config'
+import { sessionMedia } from '@/lib/call/service'
 import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
@@ -39,7 +40,9 @@ export default async function MessagesPage({ params, searchParams }: { params: P
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
-  const items = (rows ?? []).filter(m => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
+  // 통화 기록은 있으면 보인다(10/19) — 음성·영상 유형 캐릭터는 전역 플래그가 닫혀도 전화를 건다.
+  const items = rows ?? []
+  const canCall = callAllowedFor(user.id, await sessionMedia(sessionId, user.id), 'voice')
 
   return (
     <MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
@@ -48,7 +51,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
           <ChatHeaderAvatar portrait={loaded.characterPhoto} /><h1 className={styles.title}>{loaded.characterName}</h1>
-          {voiceCallAllowed(user.id) && (
+          {canCall && (
             <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
           )}
           <TransitionLink href={`/chat/${sessionId}`} className={styles.headerButton} aria-label={t('캐릭터챗')} title={t('캐릭터챗')}><ChatRoomIcon /></TransitionLink>

@@ -57,6 +57,7 @@ export function responseJsonSchema(schema: ZodTypeAny): Record<string, unknown> 
     case 'ZodEnum': return { type: 'string', enum: def.values }
     case 'ZodLiteral': return { type: typeof def.value, enum: [def.value] }
     case 'ZodOptional': return responseJsonSchema(def.innerType)
+    case 'ZodNullable': return { anyOf: [responseJsonSchema(def.innerType), { type: 'null' }] }
     // 전처리·검사 래퍼는 받는 모양이 안쪽 스키마와 같다.
     case 'ZodEffects': return responseJsonSchema(def.schema)
     case 'ZodDiscriminatedUnion': return { anyOf: def.options.map((option: ZodTypeAny) => responseJsonSchema(option)) }

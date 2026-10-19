@@ -2,7 +2,6 @@ import { homeUnveilEnabled } from '@/lib/home-mode'
 import { and, eq, isNull, isNotNull, lt, sql } from 'drizzle-orm'
 import { db, realityContacts, roleplaySessions } from '@miro/db'
 import { purgeBefore } from '@miro/domain'
-import { feature } from '@miro/config'
 
 export type ArchiveItem = {
   id: string
@@ -83,7 +82,6 @@ export async function listSessions(userId: string, options: {
         c.role, c.accent_a, r.status, r.last_interaction_at AS last_at,
         w.current_location AS location, w.current_time AS time, r.character_status,
         (SELECT left(m.content, 180) FROM messages m WHERE m.session_id = r.id AND m.hidden_at IS NULL
-          ${feature('voiceCall') || feature('videoCall') ? sql`` : sql`AND m.kind <> 'call_record'`}
           ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS last_message,
         (SELECT count(*)::int FROM reality_contacts rc WHERE rc.session_id = r.id AND rc.status = 'sent') AS unread,
         '/chat/' || r.id AS href, NULL::text AS story_title, NULL::int AS run_no

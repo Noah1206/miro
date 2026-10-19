@@ -1,9 +1,9 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { voiceCallAllowed } from '@miro/config'
+import { callAllowedFor } from '@miro/config'
 import { requireUser } from '@/lib/auth'
-import { startOutgoingCall, UsageExceededError } from '@/lib/call/service'
+import { sessionMedia, startOutgoingCall, UsageExceededError } from '@/lib/call/service'
 import { msg } from '@/lib/i18n'
 
 /** The reusable balance guard uses a structured result and retains the same request on retry. */
@@ -25,7 +25,7 @@ export async function requestVoiceCall(sessionId: string, requestId: string) {
 export async function placeVoiceCall(form: FormData): Promise<void> {
   const user = await requireUser()
   const sessionId = String(form.get('sessionId') ?? '')
-  if (!voiceCallAllowed(user.id)) redirect(`/messages/${sessionId}?call=off`)
+  if (!callAllowedFor(user.id, await sessionMedia(sessionId, user.id), 'voice')) redirect(`/messages/${sessionId}?call=off`)
   let callId: string
   try { callId = await startOutgoingCall(user.id, sessionId, 'voice') }
   catch (e) { redirect(`/messages/${sessionId}?call=${e instanceof UsageExceededError ? 'usage' : 'failed'}`) }

@@ -1,4 +1,5 @@
-import { feature, characterAgencyMode, voiceCallAllowed } from '@miro/config'
+import { feature, characterAgencyMode, callAllowedFor } from '@miro/config'
+import { sessionMedia } from '@/lib/call/service'
 import { notFound, redirect } from 'next/navigation'
 import { and, desc, eq } from 'drizzle-orm'
 import { db, messages } from '@miro/db'
@@ -25,7 +26,7 @@ export default async function CallPage({ params }: { params: Promise<{ callId: s
   if (!user) redirect('/login')
   const { callId } = await params
   const call = await owned(user.id, callId)
-  if (!call || !(call.channel === 'voice' ? voiceCallAllowed(user.id) : feature('videoCall'))) notFound()
+  if (!call || !callAllowedFor(user.id, await sessionMedia(call.sessionId, user.id), call.channel)) notFound()
   if (call.status !== 'active' && call.status !== 'unanswered') redirect(`/messages/${call.sessionId}`)
 
   const loaded = await loadSession(call.sessionId, user.id)

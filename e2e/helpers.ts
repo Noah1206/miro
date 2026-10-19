@@ -89,7 +89,7 @@ export function daytime(): string {
 
 /**
  * 만들기 화면에서 필수 네 칸(이름·소개·성격 설명·첫 장면)을 채워 게시한다. 끝나면 새 대화(/chat/…)에 있다.
- * 첫 장면은 인트로 탭의 전체 화면 편집기 안에 있다 — '인트로 확인'으로 닫아야 머리의 게시 버튼이 드러난다.
+ * 첫 장면은 인트로 탭에 다른 칸과 같은 모양으로 있다(10/19 — 전에는 전체 화면 편집기였다).
  * 공개 스위치는 기본으로 켜져 있다.
  */
 /** 만들기는 미로 캐릭터 편집기로 바로 연다(2026-09-29: 유형 선택 없음). */
@@ -107,7 +107,6 @@ export async function publishCharacter(page: Page, base: string, c: { name: stri
   if (c.isPublic === false) await page.getByRole('switch', { name: /다른 사람에게 공개/ }).uncheck({ force: true })
   await page.getByRole('tab', { name: '인트로', exact: true }).click()
   await page.locator('textarea[name="startingContext"]').fill(c.startingContext)
-  await page.getByRole('button', { name: '인트로 확인' }).click()
   await page.getByRole('button', { name: '게시', exact: true }).click()
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
 }

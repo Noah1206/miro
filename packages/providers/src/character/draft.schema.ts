@@ -11,6 +11,8 @@ const score = z.number().int().min(0).max(100)
 export const CharacterDraft = z.object({
   identity: z.object({
     name: z.string().min(1).max(40),
+    /** 카드의 한 줄 소개 — 캐릭터가 직접 하는 말투의 한 문장(만들기 '소개' 칸, 40자). */
+    tagline: z.string().min(1).max(40),
     age: z.number().int().min(18).max(99).nullable(),
     nationality: z.string().max(40).nullable(),
     occupation: z.string().max(60).nullable(),
@@ -72,6 +74,8 @@ export const CharacterDraft = z.object({
 
   startingContext: z.string().min(10).max(600),
   startingTime: z.string().max(20),
+  /** 첫 장면에서 캐릭터가 사용자에게 처음 건네는 말 — 새 채팅의 첫 메시지(인트로)가 된다. */
+  firstLine: z.string().min(1).max(300),
   socialPosition: z.string().max(80).nullable(),
 
   /** 시작 관계. Validator 가 상한을 다시 강제한다. */

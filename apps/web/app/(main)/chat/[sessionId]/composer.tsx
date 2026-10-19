@@ -23,11 +23,17 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 헤더에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions, roomHref }: { sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; roomHref?: string }) {
+export function ChatComposer({ sessionId, characterName, modelOptions, roomHref, commands = [] }: {
+  sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; roomHref?: string
+  /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
+  commands?: Array<{ name: string; hint: string }>
+}) {
   const t = useT()
   const { append, live, setLive, calendarPending } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
+  const [command, setCommand] = useState<string | null>(null)
+  const [commandOpen, setCommandOpen] = useState(false)
   const [refreshing, startRefresh] = useTransition()
   const hadRefresh = useRef(false)
   const sending = useRef(false)
@@ -47,7 +53,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref 
       const result = await streamTurn(form, setLive)
       setState(result)
       if (result.limit) openRecharge()
-      if (result.succeeded) { if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
+      if (result.succeeded) { setCommand(null); if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
       else if (!result.keepWaiting) restore(!!result.retryWithSameId)
     } catch {
       setState({ error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true })
@@ -71,7 +77,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref 
   const draftNow = useRef(draft)
   draftNow.current = draft
   const [ready, setReady] = useState(false)
-  const hasText = !!draft.trim()
+  const hasText = !!draft.trim() || !!command
   const storageKey = `miro:chat-draft:${sessionId}`
   useEffect(() => {
     let input = '', id = crypto.randomUUID()
@@ -164,19 +170,41 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref 
           </motion.p>
         )}
       </AnimatePresence>
-      <form ref={ref} onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && draft.trim()) void action(new FormData(event.currentTarget)) }} className={styles.composerForm}>
+      <form ref={ref} onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
-        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={calendarPending || !ready} rows={1} required maxLength={2000} placeholder={t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
+        <input type="hidden" name="command" value={command ?? ''} />
+        {/* 고른 명령어(10/19) — 이번 턴만 이 지시대로. 글을 덧붙이지 않아도 보낼 수 있다. */}
+        {command && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+          <span className="t-caption" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, background: 'var(--color-accent)', color: 'var(--color-accent-on)', fontWeight: 'var(--weight-semibold)' }}>
+            /{command}
+            <button type="button" onClick={() => { setCommand(null); setRequestId(crypto.randomUUID()) }} aria-label={t('명령어 빼기')} style={{ display: 'grid', placeItems: 'center', width: 18, height: 18, padding: 0, border: 0, borderRadius: 9, background: 'rgba(0,0,0,.18)', color: 'inherit', cursor: 'pointer' }}>
+              <svg aria-hidden width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </button>
+          </span>
+        </div>}
+        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
+          placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && e.currentTarget.value.trim()) e.currentTarget.form?.requestSubmit() } }}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
           />
         {/* 입력창 안 아래 줄(10/17 요청): 왼쪽에 더하기·문자·대화 방식, 오른쪽에 이모지·보내기 — 작게, 같은 줄에. */}
         <div className={styles.composerRow}>
           <div className={styles.composerTools}>
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+            {commands.length > 0 && <div style={{ position: 'relative' }}>
+              <button type="button" className={styles.toolButton} aria-label={t('명령어')} aria-expanded={commandOpen} disabled={calendarPending || !ready} onClick={() => setCommandOpen(v => !v)}
+                style={{ fontSize: 16, fontWeight: 'var(--weight-semibold)' }}>/</button>
+              {commandOpen && <div role="menu" aria-label={t('명령어')} style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, zIndex: 30, minWidth: 240, maxWidth: 320, maxHeight: 260, overflowY: 'auto', padding: 6, borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
+                {commands.map(cmd => <button key={cmd.name} type="button" role="menuitem" onClick={() => { setCommand(cmd.name); setCommandOpen(false); setRequestId(crypto.randomUUID()); ta.current?.focus() }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', border: 0, borderRadius: 'var(--radius-sm)', background: command === cmd.name ? 'var(--color-surface-3)' : 'transparent', color: 'var(--color-text-primary)', cursor: 'pointer' }}>
+                  <span className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>/{cmd.name}</span>
+                  {cmd.hint && <span className="t-caption" style={{ display: 'block', color: 'var(--color-text-secondary)' }}>{cmd.hint}</span>}
+                </button>)}
+              </div>}
+            </div>}
             {roomHref && <TransitionLink href={roomHref} aria-label={t('문자')} className={styles.toolButton}><ChatRoomIcon /></TransitionLink>}
             <ModelPicker {...modelOptions} place="up" />
           </div>

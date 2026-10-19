@@ -2,7 +2,7 @@ import type { InboxReview } from '@/lib/messenger/inbox'
 import { isDeepStrictEqual } from 'node:util'
 import { localClock } from '@miro/domain'
 import { and, desc, eq, inArray, isNull, like } from 'drizzle-orm'
-import { POLICY, feature, features } from '@miro/config'
+import { POLICY, callAllowedFor, feature, features } from '@miro/config'
 import {
   db, messengerInbox, characterDecisions, characters, contactProfiles, events, messages, pushSubscriptions,
   realityContacts, relationships, roleplaySessions, stateTransitions, userSettings, worldStates, users,
@@ -234,8 +234,10 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
     }
     return { outcome: 'suppressed', reason: decision.reason }
   }
-  // 기능 플래그 — 알파에서는 사진·통화가 꺼져 있다. 채널만 낮추고 연락 자체는 보낸다.
-  decision = { ...decision, channel: deliverableChannel(decision.channel, features()) }
+  // 기능 플래그 — 알파에서는 사진·통화가 꺼져 있다. 채널만 낮추고 연락 자체는 보낸다. 통화는 캐릭터 유형(음성·영상)이 열어 준다(10/19).
+  const media = row.profile.presentation.media
+  decision = { ...decision, channel: deliverableChannel(decision.channel, { ...features(),
+    voiceCall: callAllowedFor(row.session.userId, media, 'voice'), videoCall: callAllowedFor(row.session.userId, media, 'video') }) }
 
   // 같은 사유가 이미 나갔으면 통화를 울리거나 본문을 만들기 전에 멈춘다 — 모델을 부른 뒤 중복 키로 버리는 일(비용)을 없앤다.
   // 예약된 의도가 중복이면 지운다 — 남겨 두면 스케줄러가 매 주기 다시 집어 든다.

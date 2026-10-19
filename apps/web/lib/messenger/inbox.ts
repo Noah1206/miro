@@ -79,8 +79,8 @@ export async function messengerItems(userId: string, sessionId: string): Promise
     .leftJoin(messengerInbox, eq(messengerInbox.messageId, messages.id))
     .where(and(eq(messages.sessionId, sessionId), inArray(messages.kind, ['messenger', 'reality_message', 'photo', 'call_record'])))
     .orderBy(asc(messages.createdAt), asc(messages.id))
-  return rows.filter(row => (row.message.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
-    && (row.message.kind !== 'photo' || row.message.blocks.some(b => b.type === 'reality'))).map(row => serialize(row.message, row.inboxId ? row.readAt : undefined))
+  // 통화 기록은 있으면 보인다(10/19) — 음성·영상 유형 캐릭터는 전역 플래그가 닫혀도 전화를 건다.
+  return rows.filter(row => row.message.kind !== 'photo' || row.message.blocks.some(b => b.type === 'reality')).map(row => serialize(row.message, row.inboxId ? row.readAt : undefined))
 }
 
 /** Unread delivery is private to the inbox until the character actually opens it. */

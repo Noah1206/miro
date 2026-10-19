@@ -557,6 +557,44 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
 }
 type Turn = { role: 'character' | 'user' | 'narrator'; text: string }
 const MAX_TURNS = 20
+
+type IntroTurn = { role: 'character' | 'narrator'; text: string; purpose?: 'intro'; image?: string }
+/** 들어오는 줄 — 저장 형식(DialogueEntry)은 role 에 user 도 있다. 인트로에선 캐릭터 말로 본다. */
+type IntroInput = { role: 'character' | 'narrator' | 'user'; text: string; image?: string }
+/** 인트로 글 ↔ 줄 목록. 빈 줄이 말풍선 경계, `*…*` 로 감싼 문단은 서술(내레이터). 시드가 붙인 장면 사진은 같은 자리의 줄에 남긴다. */
+export function introToText(turns: readonly IntroInput[]): string {
+  return turns.map(t => t.role === 'narrator' ? `*${t.text}*` : t.text).join('\n\n')
+}
+export function textToIntro(text: string, previous: readonly IntroInput[] = []): IntroTurn[] {
+  return text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).slice(0, MAX_TURNS).map((p, i) => {
+    const narration = /^\*[^*]+\*$/.test(p)
+    const image = previous[i]?.image
+    // 한 줄은 500자까지(parseIntroDialogue) — 넘치면 자른다.
+    return { role: narration ? 'narrator' as const : 'character' as const, text: (narration ? p.slice(1, -1).trim() : p).slice(0, 500), purpose: 'intro' as const, ...(image ? { image } : {}) }
+  })
+}
+
+/** 인트로 — 글 한 칸(10/19). 전에는 화자를 고르고 한 마디씩 올리는 편집기였다. 저장 모양(줄 목록 JSON)은 그대로다. */
+export function IntroText({ name, characterName, defaultValue = [] }: { name: string; characterName: string; defaultValue?: IntroInput[] }) {
+  const [text, setText] = useState(() => introToText(defaultValue))
+  const [focused, setFocused] = useState(false)
+  const t = useT()
+  const turns = textToIntro(text, defaultValue)
+  const length = turns.reduce((sum, turn) => sum + turn.text.length, 0)
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <input type="hidden" name={name} value={JSON.stringify(turns)} />
+      <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
+        <textarea aria-label={t('인트로 대화')} value={text} onChange={e => setText(e.target.value)} rows={5} maxLength={2200}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          placeholder={t('{name}이(가) 먼저 건네는 말을 적어 주세요. 빈 줄로 나누면 말풍선이 나뉘어요.', { name: characterName || t('캐릭터') })}
+          style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}><Counter length={length} max={2000} /></div>
+      </div>
+      <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t('*별표*로 감싼 문단은 옅은 서술로 보여요. 예) *비가 내리는 저녁, 문이 열린다.*')}</span>
+    </div>
+  )
+}
 const roundBtn: React.CSSProperties = {
   width: 28, height: 28, borderRadius: 14, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer',
   background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)',

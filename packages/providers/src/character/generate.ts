@@ -11,6 +11,9 @@ const SYSTEM = `당신은 롤플레이 캐릭터 설계자입니다.
 - 성격은 장단점을 모두 가진 입체적인 인물이어야 합니다. 완벽하거나 무조건 다정한 인물은 만들지 않습니다.
 - 실존 인물, 배우, 특정 작품의 캐릭터를 그대로 재현하지 않습니다.
 - startingContext 는 사용자와 캐릭터가 처음 마주치는 장면이며, 아직 친밀하지 않은 상태여야 합니다.
+- identity.tagline 은 카드에 걸리는 한 줄 소개로, 캐릭터가 직접 하는 말투의 짧은 한 문장입니다(40자 이내).
+- firstLine 은 startingContext 안에서 캐릭터가 사용자에게 처음 건네는 말 한두 문장입니다. 성격과 말투 그대로 씁니다.
+- 설명에 이미 적힌 이름·나이·직업·성별·성격은 그대로 두고, 적히지 않은 것만 채웁니다.
 - contactStyle 은 성격과 일관되어야 합니다. 과묵한 인물이 연락 빈도가 높으면 안 됩니다.
 - appearance 는 이미지 생성에 그대로 쓰입니다. 눈·코·턱·피부·머리를 구체적으로 쓰고,
   distinctive 에는 그 사람을 알아보게 하는 특징 하나를 넣습니다(흉터, 점, 문신 등).
@@ -23,10 +26,12 @@ const SYSTEM = `당신은 롤플레이 캐릭터 설계자입니다.
 export async function generateCharacterDraft(
   llm: LLMProvider,
   oneLiner: string,
+  /** 공급자에게 보낼 출력 형식(JSON Schema). 없으면 글로 받아 파싱한다 — 10/19 실측: 글로 받으면 Sonnet 이 제 구조를 지어내 네 번 다 스키마에 어긋났다. */
+  opts: { responseSchema?: Record<string, unknown> } = {},
 ): Promise<CharacterDraft> {
   return llm.generateStructured({
     // world_update 를 맡는 dialogue 모델 상한이 ECHO 때문에 4096 이 되어도 전과 같은 2048 에 묶는다.
-    schema: CharacterDraft, task: 'world_update', promptVersion: 'character-draft:v1', maxTokens: 2048,
+    schema: CharacterDraft, task: 'world_update', promptVersion: 'character-draft:v2', maxTokens: 2048, ...opts,
     system: SYSTEM,
     prompt: `다음 설명에 맞는 캐릭터 초안을 만들어 주세요.\n\n설명: ${oneLiner}`,
   })
@@ -44,6 +49,7 @@ export function buildMockDraft(prompt: string): CharacterDraft {
   return {
     identity: {
       name: `[초안] ${seed.slice(0, 12)}`,
+      tagline: pick(['…용건만 말해.', '늦었네. 기다렸어.', '당신, 재미있는 사람이군.'] as const, 31),
       age: 24 + (n % 16),
       nationality: pick(['한국', '일본', '영국'] as const),
       occupation: pick(['검사', '의사', '작곡가', '형사'] as const, 3),
@@ -98,6 +104,7 @@ export function buildMockDraft(prompt: string): CharacterDraft {
     startingContext:
       '우연히 같은 자리에 있게 되었다. 그는 당신을 알아봤지만 먼저 말을 걸지는 않았다.',
     startingTime: '저녁',
+    firstLine: pick(['…여기서 뭐 하는 거지.', '앉아. 서 있으면 눈에 띄니까.', '처음 보는 얼굴이네.'] as const, 37),
     socialPosition: null,
     initialRelationship: {
       trust: 10 + (n % 15),

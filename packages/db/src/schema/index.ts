@@ -193,6 +193,8 @@ export const characters = pgTable('characters', {
   sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string; context?: string; time?: string; location?: string }>>().notNull().default([]),
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
+  /** 명령어(10/19) — 채팅에서 `/이름` 으로 부르는 한 턴 지시의 복사본. 라이브러리(command_book)에서 골랐거나 제작자가 적은 것. */
+  commands: jsonb('commands').$type<Array<{ name: string; hint: string; prompt: string; sourceId?: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),
   /** 대표 사진(첫 번째)과 추가 사진. Supabase Storage 의 공개 URL. */
   images: jsonb('images').$type<string[]>().notNull().default([]),
@@ -303,8 +305,31 @@ export const contactProfiles = pgTable('contact_profiles', {
   presentation: jsonb('presentation').$type<{
     senderLabel?: string
     channelLabels?: Record<string, string>
+    /** 캐릭터 유형(10/19) — 없으면 text(대화만). voice·video 인 방에서만 통화가 열린다(config callAllowedFor). */
+    media?: 'text' | 'voice' | 'video'
   }>().notNull().default({}),
 })
+
+/**
+ * 명령어 북(10/19) — 채팅에서 `/이름` 으로 부르는 한 턴짜리 지시(크랙의 단축어). 누구나 공개할 수 있고, 제작자는 만들 때 골라 캐릭터에 붙인다.
+ * 캐릭터에는 복사본(characters.commands)이 붙는다 — 원본이 지워지거나 바뀌어도 캐릭터는 그대로다.
+ */
+export const commandBook = pgTable('command_book', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  hint: text('hint').notNull().default(''),
+  prompt: text('prompt').notNull(),
+  isPublic: boolean('is_public').notNull().default(false),
+  /** 캐릭터에 붙인 횟수 — 라이브러리 정렬용. */
+  uses: integer('uses').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+}, (t) => ({
+  publicIdx: index('command_book_public_idx').on(t.isPublic, t.uses.desc()).where(sql`${t.deletedAt} IS NULL`),
+  ownerIdx: index('command_book_owner_idx').on(t.ownerId),
+}))
+export type CharacterCommand = { name: string; hint: string; prompt: string; sourceId?: string }
 
 export const worlds = pgTable('worlds', {
   id: uuid('id').primaryKey().defaultRandom(),

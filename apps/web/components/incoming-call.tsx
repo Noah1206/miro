@@ -1,4 +1,3 @@
-import { feature } from '@miro/config'
 import { ringingFor } from '@/lib/call/service'
 import { RingWatcher } from './ring-watcher'
 
@@ -7,8 +6,7 @@ import { RingWatcher } from './ring-watcher'
  * 첫 화면은 서버가 지금 울리는 통화를 넘기고, 그 뒤로는 RingWatcher 가 몇 초마다 물어 새 벨을 바로 그린다.
  */
 export async function IncomingCall({ userId, characterName }: { userId: string; characterName?: string }) {
-  // 전화가 울릴 수 없는 환경(통화 기능이 꺼진 배포)에서는 묻지도, 8초마다 폴링하지도 않는다. 운영은 2026-09-29 부터 문자 통화가 열려 폴링이 돈다.
-  if (!feature('voiceCall') && !feature('videoCall')) return null
+  // 10/19: 음성·영상 유형 캐릭터가 전역 플래그와 무관하게 전화를 걸 수 있어 늘 듣는다(폴링은 RingWatcher 가 몇 초마다).
   const call = await ringingFor(userId)
   return <RingWatcher initial={call ? { id: call.id, channel: call.channel, reason: call.reason, characterName: characterName ?? call.characterName } : null} />
 }

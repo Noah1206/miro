@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import { stageLabel } from '@miro/domain'
-import { S } from '@/lib/character-options'
 import { STAGES } from './parse'
 import { ChoiceChips, CountedInput, LabeledField, Stepped, Switch } from './form-parts'
 import type { FormInitial } from './character-form'
 import type { ContactCapabilities } from '@/lib/reality/channels'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
-import { Button } from '@/components/ui'
 
 const PRESETS = [
   { stage: 'stranger', label: msg('낯선 사이'), hint: msg('서로를 알아가며 조심스럽게 대화를 시작해요.'), values: [30, 10, 60, 10, 20, 0] },
@@ -32,65 +30,34 @@ const BONDING = [
   { value: 'steady', label: msg('꾸준히'), hint: msg('대화할수록 조금씩 꾸준히 가까워져요.') },
   { value: 'slow', label: msg('아주 천천히'), hint: msg('마음을 여는 데 오래 걸려요.') },
 ] as const
-const FIELDS = [
-  ['trust', msg('신뢰')], ['attraction', msg('호감')], ['emotionalDistance', msg('정서적 거리')],
-  ['attachment', msg('애착')], ['protectiveness', msg('보호 성향')], ['relJealousy', msg('질투')],
-] as const
-const RELATIONSHIP_OPTIONS = {
-  trust: S.trust,
-  attraction: S.attraction,
-  emotionalDistance: [S.emotionalDistance[0], S.emotionalDistance[1], S.emotionalDistance[3]],
-  attachment: [S.attachment[0], S.attachment[2], S.attachment[3]],
-  protectiveness: [S.protectiveness[0], S.protectiveness[2], S.protectiveness[3]],
-  relJealousy: [S.relJealousy[0], S.relJealousy[2]],
-}
+/** 프리셋 values 의 순서와 같다. */
+const FIELDS = [['trust'], ['attraction'], ['emotionalDistance'], ['attachment'], ['protectiveness'], ['relJealousy']] as const
 
 const caption = { color: 'var(--color-text-secondary)', marginTop: 10, lineHeight: 1.6 }
+/**
+ * 시작 관계 — 단계 칩과 가까워지는 속도만 고른다(10/19: 세부 감정 6개 삭제). 세부값은 고른 단계의 추천값을 hidden 으로 보낸다.
+ * 편집 화면에서 저장된 값이 추천값과 다르면 단계를 다시 고르기 전까지 그 값을 그대로 둔다.
+ */
 export function RelationshipSettings({ initial }: { initial: FormInitial }) {
   const [stage, setStage] = useState(initial.stage)
   const [bonding, setBonding] = useState(BONDING.some(b => b.value === initial.bonding) ? initial.bonding : '')
   const [values, setValues] = useState(() => FIELDS.map(([key]) => initial[key]))
-  const [edited, setEdited] = useState(false)
-  const [pending, setPending] = useState<(typeof PRESETS)[number] | null>(null)
   const t = useT()
   const matched = PRESETS.find(p => p.stage === stage && p.values.every((v, n) => v === values[n]))
-  function apply(p: (typeof PRESETS)[number]) { setStage(p.stage); setValues([...p.values]); setEdited(false); setPending(null) }
   function choose(value: string) {
     const p = PRESETS.find(p => p.stage === value)!
-    if (edited || !matched) setPending(p)
-    else apply(p)
+    setStage(p.stage); setValues([...p.values])
   }
   return <div>
+    {FIELDS.map(([key], n) => <input key={key} type="hidden" name={key} value={values[n]!} />)}
     <ChoiceChips name="stage" pill value={stage} onChange={choose}
       options={PRESETS.map(p => ({ value: p.stage, label: t(p.label) }))} />
     <p className="t-caption" style={caption}>{matched ? t(matched.hint) : t('{stage} · 직접 설정한 관계로 시작해요.', { stage: t(stageLabel(STAGES.find(s => s === stage) ?? 'stranger')) })}</p>
-    {pending && <div role="group" aria-label={t('관계 변경 방법')} style={{ marginTop: 16 }}>
-      <p className="t-caption" style={caption}>{t('세부값을 유지할까요, {stage} 추천값으로 바꿀까요?', { stage: t(pending.label) })}</p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-        <Button type="button" size="sm" onClick={() => { setStage(pending.stage); setEdited(true); setPending(null) }}>{t('세부값 유지')}</Button>
-        <Button type="button" size="sm" onClick={() => apply(pending)}>{t('추천값 적용')}</Button>
-        <Button type="button" size="sm" onClick={() => setPending(null)}>{t('취소')}</Button>
-      </div>
-    </div>}
     <section aria-label={t('가까워지는 속도')} style={{ marginTop: 24 }}>
       <h3 className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>{t('가까워지는 속도')}</h3>
       <ChoiceChips name="bonding" pill value={bonding} onChange={setBonding} options={BONDING.map(b => ({ value: b.value, label: t(b.label) }))} />
       <p className="t-caption" style={caption}>{t(BONDING.find(b => b.value === bonding)!.hint)} {t('가까워질수록 먼저 연락하는 간격도 짧아져요.')}</p>
     </section>
-    <div id="relationship-details" className="stack" style={{ gap: 20, marginTop: 24 }}>
-      {[
-        { title: msg('신뢰와 거리'), indices: [0, 2] },
-        { title: msg('호감과 유대'), indices: [1, 3] },
-        { title: msg('상대를 향한 감정'), indices: [4, 5] },
-      ].map(group => <section key={group.title} aria-label={t(group.title)} style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: '14px 16px' }}>
-        <h3 className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>{t(group.title)}</h3>
-        <div className="stack" style={{ gap: 20 }}>{group.indices.map(n => {
-          const [key, label] = FIELDS[n]!
-          return <Stepped key={key} name={key} label={label} defaultValue={initial[key]} value={values[n]!} options={RELATIONSHIP_OPTIONS[key]}
-            onChange={value => { setValues(old => old.map((v, index) => index === n ? value : v)); setEdited(true) }} />
-        })}</div>
-      </section>)}
-    </div>
   </div>
 }
 

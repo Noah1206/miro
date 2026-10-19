@@ -1,5 +1,7 @@
 import { officialDescription, officialEntry, officialIntro, officialSamples, officialTagline } from '@/lib/editorial/official-copy'
-import { features } from '@miro/config'
+import { callAllowedFor, features } from '@miro/config'
+import { eq } from 'drizzle-orm'
+import { db, contactProfiles } from '@miro/db'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { RichText } from '@/components/scene/rich-text'
 import { characterEditorial } from '@/components/scene/character-editorial'
@@ -28,6 +30,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const stored = await getCharacterByKey(slug, user?.id ?? null)
   const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null
   if (!c) notFound()
+  // 통화 아이콘은 캐릭터 유형(음성·영상)이 켠다(10/19). 전역 플래그가 닫힌 운영에서도 그 캐릭터의 방에서는 통화가 열린다.
+  const [contact] = c.experienceType === 'reality'
+    ? await db.select({ presentation: contactProfiles.presentation }).from(contactProfiles).where(eq(contactProfiles.characterId, c.id)).limit(1) : []
+  const can = { ...features(), voiceCall: callAllowedFor(user?.id, contact?.presentation.media, 'voice'), videoCall: callAllowedFor(user?.id, contact?.presentation.media, 'video') }
   const editedDescription = officialDescription(c)
   const tagline = officialTagline(c) ?? c.tagline
 
@@ -115,7 +121,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </div>
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
-        {c.experienceType === 'reality' && <RealityStrip can={features()} />}
+        {c.experienceType === 'reality' && <RealityStrip can={can} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
             {c.experienceType === 'reality' && <RichText editorial text={me(editedDescription ?? c.personality)} names={names} />}

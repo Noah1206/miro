@@ -1,8 +1,32 @@
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
+import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
 import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
+import type { CharacterCommand } from '@miro/db'
 import { searchNeedle } from '@/lib/search-params'
 export { MOODS } from '@/lib/genres'
 
+/** 등록 전 테스트 채팅의 턴 수 — 한 초안에서 사용자가 보낼 수 있는 메시지 수(assist.ts·test-chat.tsx). */
+export const TEST_CHAT_LIMIT = 10
+/** 명령어 한도(10/19) — 캐릭터당 개수, 이름·설명·지시 글자 수. 라이브러리(commands.ts)도 같은 값을 쓴다. */
+export const COMMAND_LIMITS = { count: 20, name: 12, hint: 40, prompt: 400 } as const
+/** 명령어 목록 JSON 을 한도 안으로 읽는다. 모양이 이상하면 빈 목록. */
+export function parseCommands(raw: string): CharacterCommand[] {
+  let items: unknown
+  try { items = JSON.parse(raw || '[]') } catch { return [] }
+  if (!Array.isArray(items)) return []
+  const seen = new Set<string>()
+  return items.flatMap((item): CharacterCommand[] => {
+    if (!item || typeof item !== 'object') return []
+    const { name, hint, prompt, sourceId } = item as Record<string, unknown>
+    if (typeof name !== 'string' || typeof prompt !== 'string') return []
+    const cleanName = name.trim().replace(/^\//, '').replace(/\s+/g, '').slice(0, COMMAND_LIMITS.name)
+    const cleanPrompt = prompt.trim().slice(0, COMMAND_LIMITS.prompt)
+    if (!cleanName || !cleanPrompt || seen.has(cleanName)) return []
+    seen.add(cleanName)
+    return [{ name: cleanName, hint: typeof hint === 'string' ? hint.trim().slice(0, COMMAND_LIMITS.hint) : '', prompt: cleanPrompt,
+      ...(typeof sourceId === 'string' && /^[0-9a-f-]{36}$/i.test(sourceId) ? { sourceId } : {}) }]
+  }).slice(0, COMMAND_LIMITS.count)
+}
 export const STAGES = ['stranger', 'acquaintance', 'professional', 'friend', 'ambiguous', 'flirting', 'rivalry', 'distrust', 'conflict', 'dating', 'lover'] as const
 export const CHANNELS = ['message', 'photo', 'voice_message', 'voice_call'] as const
 export type ParsedCharacter = ReturnType<typeof parseCharacterForm>
@@ -106,6 +130,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     ...(startingTime ? { startingTime } : {}),
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
     lore,
+    commands: parseCommands(s('commands')),
     initialRelationship,
     ...(relationshipProfile ? { relationshipProfile } : {}),
   }
@@ -121,19 +146,21 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.
   const delayN = Number(s('replyDelayMinutes'))
+  // 캐릭터 유형(10/19): 음성·영상이면 캐릭터가 실제로 전화를 고를 수 있게 확률을 선택 문턱(50) 위로 올린다(domain/call/pick).
+  const media: CharacterMedia = oneOf('media', CHARACTER_MEDIA, 'text')
   const contact = {
     enabled: experienceType === 'reality' && form.get('contactEnabled') === 'on',
     contactFrequency: clamp('contactFrequency', 50),
     initiativeLevel: clamp('initiativeLevel', 50),
     replyDelayMinutes: Number.isInteger(delayN) && delayN >= 0 && delayN <= 1440 ? delayN : 5,
     preferredChannel: oneOf('preferredChannel', CHANNELS, 'message'),
-    callProbability: clamp('callProbability', 30),
-    videoCallProbability: clamp('videoCallProbability', 10),
+    callProbability: media === 'text' ? clamp('callProbability', 30) : Math.max(60, clamp('callProbability', 30)),
+    videoCallProbability: media === 'video' ? Math.max(60, clamp('videoCallProbability', 10)) : clamp('videoCallProbability', 10),
     photoProbability: clamp('photoProbability', 20),
     voiceMessageProbability: clamp('voiceMessageProbability', 20),
     activeHoursStart: /^\d{2}:\d{2}$/.test(s('activeHoursStart')) ? s('activeHoursStart') : '08:00',
     activeHoursEnd: /^\d{2}:\d{2}$/.test(s('activeHoursEnd')) ? s('activeHoursEnd') : '23:00',
-    presentation: orNull(s('senderLabel')) ? { senderLabel: s('senderLabel').slice(0, 30) } : {},
+    presentation: { ...(orNull(s('senderLabel')) ? { senderLabel: s('senderLabel').slice(0, 30) } : {}), media },
   }
 
   // 외형. 사진이 이 값으로 같은 사람을 그린다.

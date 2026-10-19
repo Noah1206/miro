@@ -40,6 +40,8 @@ export type LoadedSession = {
   contactBoundary: ContactBoundary | null
   /** 성인 모드 — on: 지금 켜짐(화면 토글), since: 처음 켠 시각(있으면 이 방의 모든 AI 호출이 성인 전용 모델로 간다). */
   adult: { on: boolean; since: Date | null; level: 'soft' | 'deep' | 'explicit' }
+  /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시. 제작자가 캐릭터에 붙인 복사본. */
+  commands: Array<{ name: string; hint: string; prompt: string }>
 }
 
 const RECENT_RESOLVED_EVENT_LIMIT = 24
@@ -177,6 +179,7 @@ export async function loadSession(
     contactBoundary: row.session.contactBoundary,
     lastInteractionAt: row.session.lastInteractionAt,
     adult: { on: row.session.adultMode, since: row.session.adultSince, level: row.session.adultLevel },
+    commands: c.commands,
   }
 }
 

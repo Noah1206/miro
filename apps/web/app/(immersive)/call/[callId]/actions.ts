@@ -1,6 +1,7 @@
 'use server'
 
-import { characterAgencyMode, feature, voiceCallAllowed } from '@miro/config'
+import { characterAgencyMode, callAllowedFor } from '@miro/config'
+import { sessionMedia } from '@/lib/call/service'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
 
@@ -26,13 +27,14 @@ export type CallTurnState = { error: string | null }
  */
 export async function callTurn(_prev: CallTurnState, form: FormData): Promise<CallTurnState> {
   const user = await requireUser()
-  if (!voiceCallAllowed(user.id) && !feature('videoCall')) return { error: COPY.error.featureOff }
   const callId = String(form.get('callId') ?? '')
   const input = String(form.get('input') ?? '').trim()
   if (!input) return { error: null }
   if (input.length > 500) return { error: msg('500자 이내로 입력해 주세요.') }
 
   const call = await owned(user.id, callId)
+  // 통화 문은 캐릭터 유형이 연다(10/19) — 음성·영상 유형이 아니면 플래그가 열린 환경에서만.
+  if (call && !callAllowedFor(user.id, await sessionMedia(call.sessionId, user.id), call.channel)) return { error: COPY.error.featureOff }
   if (!call || call.status !== 'active') return { error: msg('통화가 진행 중이 아닙니다.') }
   const userMessageId = randomUUID()
 
@@ -97,7 +99,7 @@ export async function placeCallAction(_prev: PlaceCallState, form: FormData): Pr
   const user = await requireUser()
   const sessionId = String(form.get('sessionId') ?? '')
   const channel = form.get('channel') === 'video' ? 'video' : 'voice'
-  if (channel === 'video' ? !feature('videoCall') : !voiceCallAllowed(user.id)) return { error: COPY.error.featureOff }
+  if (!callAllowedFor(user.id, await sessionMedia(sessionId, user.id), channel)) return { error: COPY.error.featureOff }
   let callId: string
   try {
     callId = await startOutgoingCall(user.id, sessionId, channel)

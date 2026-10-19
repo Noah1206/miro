@@ -68,6 +68,17 @@ export function voiceCallAllowed(userId: string | null | undefined): boolean {
   if (productionRuntime()) return false
   return !!userId && voiceCallTesters().includes(userId)
 }
+/**
+ * 캐릭터 유형(10/19): text=대화만, voice=음성통화까지, video=음성+영상통화. contact_profiles.presentation.media 에 저장한다.
+ * 운영의 전역 통화 플래그는 닫힌 채로 두고, 제작자가 음성·영상 유형으로 만든 캐릭터의 방에서만 통화가 열린다.
+ * 실시간 음성(voiceCallAudio)은 여전히 플래그를 따른다 — 운영에서는 문자 통화로 진행된다.
+ */
+export type CharacterMedia = 'text' | 'voice' | 'video'
+export const CHARACTER_MEDIA: readonly CharacterMedia[] = ['text', 'voice', 'video']
+export function callAllowedFor(userId: string | null | undefined, media: CharacterMedia | null | undefined, channel: 'voice' | 'video'): boolean {
+  if (channel === 'video' ? feature('videoCall') : voiceCallAllowed(userId)) return true
+  return channel === 'video' ? media === 'video' : media === 'voice' || media === 'video'
+}
 export function voiceCallTesters(): string[] {
   return (process.env.MIRO_VOICE_CALL_USERS ?? '').split(',').map((id) => id.trim()).filter(Boolean)
 }

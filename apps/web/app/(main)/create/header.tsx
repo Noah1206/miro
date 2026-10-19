@@ -5,14 +5,14 @@ import { spring } from '@/lib/motion/tokens'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
-export type CreateTab = 'profile' | 'personality' | 'appearance' | 'relationship' | 'contact' | 'intro' | 'preview'
+/** 일상·연락 탭은 관계 탭에 합쳤다(10/19). */
+export type CreateTab = 'profile' | 'personality' | 'appearance' | 'relationship' | 'intro' | 'preview'
 
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: msg('프로필') },
   { key: 'personality', label: msg('세계관') },
   { key: 'appearance', label: msg('외형') },
   { key: 'relationship', label: msg('관계') },
-  { key: 'contact', label: msg('일상·연락') },
   { key: 'intro', label: msg('인트로') },
   { key: 'preview', label: msg('미리보기') },
 ]
@@ -54,10 +54,10 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
       </div>
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
-      {/* 입력 탭 여섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
+      {/* 입력 탭 다섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
       <div role="tablist" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-          {TABS.filter((x) => x.key !== 'preview' && (experienceType === 'reality' || x.key !== 'contact')).map((x) => {
+          {TABS.filter((x) => x.key !== 'preview').map((x) => {
             const active = x.key === tab
             return (
               <button key={x.key} type="button" role="tab" aria-selected={active} aria-controls={`panel-${x.key}`} onClick={() => onTab(x.key)}

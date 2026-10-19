@@ -74,6 +74,8 @@ async function executeTurn(opts: {
   tokenCeiling?: number
   /** Only scene turns execute here; messenger reception returns before this pipeline. */
   mode?: 'chat'
+  /** 명령어 이름(10/19) — 캐릭터에 붙은 명령어면 그 지시가 이번 턴의 대사 프롬프트에 한 번 실린다. */
+  command?: string
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
   stream?: TurnStream
 }): Promise<ConversationOutcome> {
@@ -131,10 +133,13 @@ async function executeTurn(opts: {
       const provider = resolveRpLLM(loaded.characterName, context)
       const directive = contactBoundaryDirective(boundary, now)
       const firstMeeting = firstPromise ? firstMeetingDirective(firstPromise.when) : ''
+      // 명령어(10/19) — 제작자가 붙인 한 턴 지시. 이번 대사 한 번만 따른다(기억·관계 규칙은 평소대로).
+      const commandRule = opts.command ? loaded.commands.find(c => c.name === opts.command) : undefined
+      const commandDirective = commandRule ? `사용자가 명령어 /${commandRule.name} 을 썼습니다. 이번 응답 한 번은 다음 지시대로 씁니다(성격·말투·상황은 그대로): ${commandRule.prompt}` : ''
       // Keep the provider's usage/provenance getters: a spread would freeze or discard them.
-      llm = directive || firstMeeting ? new Proxy(provider, { get(target, key) {
+      llm = directive || firstMeeting || commandDirective ? new Proxy(provider, { get(target, key) {
         if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request,
-          system: request.system + (directive ? '\n' + directive : '') + (firstMeeting && request.task === 'dialogue' ? '\n' + firstMeeting : '') })
+          system: request.system + (directive ? '\n' + directive : '') + (firstMeeting && request.task === 'dialogue' ? '\n' + firstMeeting : '') + (commandDirective && request.task === 'dialogue' ? '\n' + commandDirective : '') })
         const value = Reflect.get(target, key)
         return typeof value === 'function' ? value.bind(target) : value
       } }) : provider
@@ -272,7 +277,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (opts.mode === 'messenger') {
     const requestId = opts.requestId ?? randomUUID()
     try {
@@ -287,7 +292,9 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
-  try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input, opts.requestId)) }
+  // 같은 글이라도 모델·명령어가 다르면 다른 요청이다(멱등 키).
+  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '')
+  try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, keyed, opts.requestId)) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached
   try {

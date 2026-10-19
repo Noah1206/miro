@@ -48,6 +48,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     callProbability: contact?.callProbability ?? 30, videoCallProbability: contact?.videoCallProbability ?? 10,
     senderLabel: contact?.presentation?.senderLabel ?? '',
     startingContext: c.startingContext ?? '', startingTime: c.startingTime, sampleDialogue: c.sampleDialogue, lore: c.lore,
+    commands: c.commands, media: contact?.presentation?.media ?? 'text',
     isPublic: c.isPublic,
     images: c.images,
   }
