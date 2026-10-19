@@ -11,7 +11,7 @@ import { GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, IntroText, LabeledField, PresetTags, Switch, TagInput, box, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, IntroText, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { MOODS } from './parse'
 import { quickFill, type QuickFill } from './assist'
 import { TestChat } from './test-chat'
@@ -257,7 +257,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
   return (
     // Page 는 transform 을 걸어 sticky 를 깨뜨리므로 쓰지 않는다.
-    <main id="main" tabIndex={-1} className="page" style={{ maxWidth: 560, paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
+    <main id="main" tabIndex={-1} className="page create-page" style={{ maxWidth: 560, paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
       <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
         <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending}
@@ -276,10 +276,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           {/* 자동 채우기(10/19) — 한두 문장이면 빈 칸을 AI 가 채운다. 적은 칸은 건드리지 않는다. */}
           <Section title={t('AI로 채우기')} subtitle={t('어떤 캐릭터인지 한두 문장만 적으면 비어 있는 칸을 채워 드려요. 이미 적은 칸은 그대로 둬요.')}>
             <Card>
-              <div style={{ padding: '6px 10px 3px', ...box(false) }}>
+              <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(false) }}>
                 <textarea value={fillText} onChange={e => setFillText(e.target.value)} rows={2} maxLength={300} aria-label={t('AI로 채우기')}
                   placeholder={t('예) 다른 사람한텐 싸가지 없는데 나한테만 잘해주는 30살 검사')}
-                  style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
+                  style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
               </div>
               {fillError && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 8 }}>{t(fillError)}</p>}
               <button type="button" onClick={() => void fill()} disabled={filling}
@@ -530,9 +530,9 @@ function Card({ children }: { children: React.ReactNode }) {
   return <div>{children}</div>
 }
 
-/** 이름·소개·설명만 따로 묶는 판 — 카드의 핵심 정보라 다른 필드와 시각적으로 구분한다. */
+/** 이름·소개·설명만 따로 묶는 판 — 카드의 핵심 정보라 다른 필드와 시각적으로 구분한다. 만들기 화면에선 바탕색에 테두리만(베이비챗 식 층). */
 function IdentityCard({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>{children}</div>
+  return <div style={{ background: 'var(--color-surface-1)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-4)' }}>{children}</div>
 }
 
 /** '고급 설정' 접기 버튼 — 카드 아래 전체 너비. 열리면 화살표가 뒤집힌다. 접힌 내용은 hidden 으로만 감춰 제출에 포함된다. */
@@ -566,10 +566,10 @@ function Controlled({ name, label, placeholder, max, value, onChange, big }: {
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(focused) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: fieldPad, ...box(focused) }}>
       <input name={name} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} placeholder={placeholder} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont }} />
       {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
     </div>
   )
@@ -580,10 +580,10 @@ function ControlledArea({ name, label, placeholder, max, rows, value, onChange }
 }) {
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
+    <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(focused) }}>
       <textarea name={name} aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-        style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
+        style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
         {value.length >= max * 0.8 && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: value.length >= max ? 'var(--color-danger)' : 'var(--color-text-tertiary)' }}>{value.length}/{max}</span>}
       </div>

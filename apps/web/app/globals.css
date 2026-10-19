@@ -133,6 +133,29 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .t-name    { font-family: var(--font-display); font-weight: var(--weight-bold); letter-spacing: -0.02em; }
 .t-quote   { font-family: var(--font-display); font-weight: var(--weight-regular); letter-spacing: -0.005em; }
 
+/*
+ * 만들기 화면(10/19, 베이비챗 제작 화면 기준) — 보라 기운 없는 중립 회색을 층으로 쌓는다:
+ * 바탕 #1c1c1c → 카드는 같은 바탕에 1px #363636 테두리 → 입력칸은 한 단 밝은 #262727 → 칩·보조 버튼은 #363636 → 고른 칩은 거의 흰 #f4f4f4.
+ * 글자는 기본 16px, 라벨 16/500(자간 -0.015em), 안내 14px #828282, 칩·탭 16/600. 토큰만 바꾸므로 다른 화면은 그대로다.
+ */
+.create-page {
+  background: var(--color-bg);
+  --color-bg: #1c1c1c; --color-bg-rgb: 28, 28, 28;
+  --color-surface-1: #1c1c1c; --color-surface-2: #262727; --color-surface-3: #363636;
+  --color-border: #363636; --color-border-strong: #363636; --color-border-hover: #5a5a5a;
+  --color-text-primary: #ffffff; --color-text-secondary: #b3b3b3; --color-text-tertiary: #828282; --color-text-disabled: #545454;
+  --font-body-size: 16px; --font-caption: 14px; --font-title-3: 16px;
+  --field-pad-y: 12px; --field-pad-x: 12px; --field-pad-b: 8px; --field-font: 16px; --field-border-w: 1px; --field-radius: 8px;
+  --label-weight: var(--weight-medium); --label-tracking: -0.015em;
+  --chip-bg: #363636; --chip-fg: #ffffff; --chip-on-bg: #f4f4f4; --chip-on-fg: #1c1c1c; --chip-on-border: #f4f4f4;
+  --chip-font: 16px; --chip-weight: var(--weight-semibold); --chip-radius: 8px;
+  --tab-font: 16px; --tab-weight: var(--weight-semibold); --tab-inactive: #545454;
+}
+.create-page .t-title-3 { font-size: 16px; font-weight: var(--weight-medium); letter-spacing: -0.015em; }
+.create-page .t-micro { color: var(--color-text-tertiary); }
+.create-page .field-hint { font-size: 14px; line-height: 1.5; }
+.create-page ::placeholder { color: #828282; }
+
 /* Character profile density follows the compact hierarchy used by content-first profile pages. */
 .character-detail-theme {
   --color-surface-1: #211E29;

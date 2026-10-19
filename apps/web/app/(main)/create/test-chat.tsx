@@ -4,7 +4,7 @@ import { Line } from '../character/[slug]/sections'
 import { useT } from '@/lib/i18n/client'
 import { testTurn, type TestBlock, type TestTurnMessage } from './assist'
 import { serializableDraft } from './draft-storage'
-import { box } from './form-parts'
+import { box, fieldFont, fieldPad } from './form-parts'
 import { TEST_CHAT_LIMIT } from './parse'
 
 type Shown = { role: 'user' | 'narrator' | 'character'; blocks: TestBlock[] }
@@ -70,7 +70,7 @@ export function TestChat({ form, name, intro }: {
         <textarea ref={inputRef} value={draft} onChange={e => setDraft(e.target.value)} rows={2} maxLength={500} disabled={pending || left <= 0}
           aria-label={t('테스트 메시지')} placeholder={left <= 0 ? t('테스트 대화는 10번까지예요. 게시하면 계속 이야기할 수 있어요.') : t('메시지를 입력하세요')}
           onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && !e.nativeEvent.isComposing) { e.preventDefault(); void send() } }}
-          style={{ flex: 1, minWidth: 0, padding: '8px 10px', outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
+          style={{ flex: 1, minWidth: 0, padding: fieldPad, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit', ...box(false) }} />
         <button type="button" onClick={() => void send()} disabled={!draft.trim() || pending || left <= 0} aria-label={t('보내기')}
           style={{ width: 44, height: 44, borderRadius: 22, border: 0, flexShrink: 0, display: 'grid', placeItems: 'center', cursor: draft.trim() && !pending && left > 0 ? 'pointer' : 'default',
             background: draft.trim() && !pending && left > 0 ? 'var(--color-accent)' : 'var(--color-surface-2)', color: draft.trim() && !pending && left > 0 ? 'var(--color-accent-on)' : 'var(--color-text-disabled)' }}>

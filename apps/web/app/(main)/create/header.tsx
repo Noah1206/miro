@@ -64,8 +64,8 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
                 style={{
                   position: 'relative', flexShrink: 0, padding: '12px 6px', background: 'transparent', border: 0, cursor: 'pointer',
                   display: 'inline-flex', alignItems: 'center', gap: 4,
-                  fontSize: 'var(--font-body-size)', fontWeight: active ? 'var(--weight-medium)' : 'var(--weight-regular)',
-                  color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                  fontSize: 'var(--tab-font, var(--font-body-size))', fontWeight: active ? 'var(--tab-weight, var(--weight-medium))' : 'var(--tab-weight, var(--weight-regular))',
+                  color: active ? 'var(--color-text-primary)' : 'var(--tab-inactive, var(--color-text-secondary))',
                 }}>
                 {t(x.label)}
                 {active && <motion.span layoutId="create-tab-underline" transition={spring.default}

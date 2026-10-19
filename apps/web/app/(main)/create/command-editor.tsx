@@ -4,7 +4,7 @@ import type { CharacterCommand } from '@miro/db'
 import { Sheet, Switch } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import { markCommandUsed, removeCommand, saveCommand, searchCommands, type LibraryCommand } from './commands'
-import { box } from './form-parts'
+import { box, fieldFont } from './form-parts'
 import { COMMAND_LIMITS } from './parse'
 
 /**
@@ -52,7 +52,7 @@ export function CommandEditor({ name, defaultValue = [] }: { name: string; defau
   )
 }
 
-const field: React.CSSProperties = { width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }
+const field: React.CSSProperties = { width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }
 /** 이 편집기는 캐릭터 폼 안에 있다 — 한 줄 입력에서 Enter 가 캐릭터를 게시해 버리지 않게. */
 const noSubmit = (e: React.KeyboardEvent) => { if (e.key === 'Enter') e.preventDefault() }
 

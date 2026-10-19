@@ -31,12 +31,12 @@ export function LabeledField({ label, required, hint, error, children }: {
 }) {
   return (
     <div className="stack" style={{ gap: 4 }}>
-      <span className="t-body" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)', marginBottom: 4 }}>
+      <span className="t-body" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--label-weight, var(--weight-semibold))', letterSpacing: 'var(--label-tracking, 0)', marginBottom: 4 }}>
         {label}{required && <Star />}
       </span>
       {children}
       {/* 힌트는 카드(surface-1) 위에 놓인다 — quaternary 는 3.6:1 이라 tertiary 로 (axe). */}
-      {hint && !error && <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{hint}</span>}
+      {hint && !error && <span className="t-micro field-hint" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{hint}</span>}
       {error && (
         <span role="alert" className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-danger)' }}>
           {error}
@@ -49,11 +49,18 @@ export function LabeledField({ label, required, hint, error, children }: {
 /** 입력 상자 (레퍼런스): 얇은 테두리의 둥근 네모. 초점은 한 단 밝은 회색, 오류는 빨강. 채움은 카드보다 한 단 진하게. */
 export function box(focused: boolean, invalid?: boolean): React.CSSProperties {
   return {
-    background: 'var(--color-surface-2)', borderRadius: 'var(--radius-md)',
-    border: `0.5px solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-border-hover)' : 'var(--color-border-strong)'}`,
+    background: 'var(--color-surface-2)', borderRadius: 'var(--field-radius, var(--radius-md))',
+    border: `var(--field-border-w, 0.5px) solid ${invalid ? 'var(--color-danger)' : focused ? 'var(--color-border-hover)' : 'var(--color-border-strong)'}`,
     transition: 'border-color var(--motion-fast) var(--ease-standard)',
   }
 }
+/** 칸 안쪽 여백·글자 크기 — 만들기 화면(.create-page)이 토큰으로 키운다(10/19 베이비챗 기준 12px·16px). 다른 화면은 예전 값. */
+export const fieldPad = 'var(--field-pad-y, 6px) var(--field-pad-x, 10px)'
+export const fieldFont = 'var(--field-font, 14px)'
+/** 칩(고르기) 색 — 만들기 화면은 회색 → 고르면 더 흰 회색(10/19). 다른 화면은 예전 주황 선택색. */
+const chipOn = 'var(--chip-on-bg, var(--color-accent))', chipOnFg = 'var(--chip-on-fg, var(--color-accent-on))'
+const chipOff = 'var(--chip-bg, var(--color-surface-2))', chipOffFg = 'var(--chip-fg, var(--color-text-secondary))'
+const chipFont = 'var(--chip-font, var(--font-caption))', chipWeightOff = 'var(--chip-weight, var(--weight-regular))'
 
 /** 한도의 80% 를 넘겨야 보인다 — 그 전에는 셀 이유가 없다. */
 function Counter({ length, max }: { length: number; max: number }) {
@@ -75,11 +82,11 @@ export function CountedInput({ name, placeholder, max, defaultValue = '', requir
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(focused, invalid) }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: fieldPad, ...box(focused, invalid) }}>
       <input name={name} aria-label={ariaLabel ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         placeholder={placeholder} required={required} autoComplete="off"
-        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
+        style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont }} />
       <Counter length={value.length} max={max} />
     </div>
   )
@@ -92,12 +99,12 @@ export function CountedTextArea({ name, placeholder, max, rows = 3, defaultValue
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
   return (
-    <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
+    <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(focused) }}>
       <textarea name={name} aria-label={ariaLabel ?? placeholder} value={value} onChange={(e) => setValue(e.target.value)} maxLength={max} rows={rows} placeholder={placeholder}
         onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
         style={{
           width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none',
-          color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit',
+          color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit',
         }} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}>
         <Counter length={value.length} max={max} />
@@ -331,10 +338,10 @@ export function TagInput({ name, placeholder, max, maxLength = 20, defaultValue 
         </div>
       )}
       {!full && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(false) }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: fieldPad, ...box(false) }}>
           <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={placeholder} maxLength={maxLength} autoComplete="off"
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); commit() } }}
-            style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)' }} />
+            style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont }} />
           <button type="button" onClick={commit} className="t-caption hit"
             style={{ background: 'none', border: 0, padding: '2px 4px', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
             {t('+ 추가 {count}/{max}', { count: tags.length, max })}
@@ -362,11 +369,11 @@ export function ChoiceChips({ name, options, value, onChange, columns, pill = fa
           <motion.button key={o.value} type="button" onClick={() => onChange(o.value)} aria-pressed={on}
             whileTap={reduce ? undefined : { scale: 0.97 }}
             style={{
-              minHeight: pill ? 32 : 44, padding: pill ? '4px 12px' : '6px 12px', cursor: 'pointer', borderRadius: pill ? 999 : 'var(--radius-button)',
-              fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-              background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
+              minHeight: pill ? 32 : 44, padding: pill ? '4px 12px' : '6px 12px', cursor: 'pointer', borderRadius: pill ? 999 : 'var(--chip-radius, var(--radius-button))',
+              fontSize: chipFont, fontWeight: on ? 'var(--weight-semibold)' : chipWeightOff,
+              background: on ? chipOn : chipOff,
               border: 0,
-              color: on ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
+              color: on ? chipOnFg : chipOffFg,
             }}>
             {o.label}
           </motion.button>
@@ -584,11 +591,11 @@ export function IntroText({ name, characterName, defaultValue = [] }: { name: st
   return (
     <div className="stack" style={{ gap: 6 }}>
       <input type="hidden" name={name} value={JSON.stringify(turns)} />
-      <div style={{ padding: '6px 10px 3px', ...box(focused) }}>
+      <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(focused) }}>
         <textarea aria-label={t('인트로 대화')} value={text} onChange={e => setText(e.target.value)} rows={5} maxLength={2200}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           placeholder={t('{name}이(가) 먼저 건네는 말을 적어 주세요. 빈 줄로 나누면 말풍선이 나뉘어요.', { name: characterName || t('캐릭터') })}
-          style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
+          style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
         <div style={{ display: 'flex', justifyContent: 'flex-end', minHeight: 14 }}><Counter length={length} max={2000} /></div>
       </div>
       <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t('*별표*로 감싼 문단은 옅은 서술로 보여요. 예) *비가 내리는 저녁, 문이 열린다.*')}</span>
@@ -624,11 +631,11 @@ export function PresetTags({ name, label = msg('태그'), options, max, maxLengt
     setPicked(next); setText('')
   }
   const chip = (on: boolean, off: boolean): React.CSSProperties => ({
-    minHeight: 44, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--radius-button)',
-    fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-    background: on ? 'var(--color-accent)' : 'var(--color-surface-2)',
+    minHeight: 44, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--chip-radius, var(--radius-button))',
+    fontSize: chipFont, fontWeight: on ? 'var(--weight-semibold)' : chipWeightOff,
+    background: on ? chipOn : chipOff,
     border: 0,
-    color: on ? 'var(--color-accent-on)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
+    color: on ? chipOnFg : off ? 'var(--color-text-disabled)' : chipOffFg,
   })
   return (
     <div role="group" aria-label={t(label)}>
@@ -700,11 +707,11 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
             <motion.button key={o.value} type="button" onClick={() => { setValue(o.value); onChange?.(o.value) }} aria-pressed={on}
               whileTap={reduce ? undefined : { scale: 0.97 }}
               style={{
-                minHeight: pill ? 32 : 40, padding: pill ? '4px 12px' : '8px 6px', cursor: 'pointer', borderRadius: pill ? 999 : 'var(--radius-button)',
-                fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                background: on ? 'color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-2))' : 'var(--color-surface-2)',
-                border: `1px solid ${on ? 'var(--color-accent)' : 'transparent'}`,
-                color: on ? 'var(--color-accent-on)' : 'var(--color-text-secondary)',
+                minHeight: pill ? 32 : 40, padding: pill ? '4px 12px' : '8px 6px', cursor: 'pointer', borderRadius: pill ? 999 : 'var(--chip-radius, var(--radius-button))',
+                fontSize: chipFont, fontWeight: on ? 'var(--weight-semibold)' : chipWeightOff,
+                background: on ? `var(--chip-on-bg, color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-2)))` : chipOff,
+                border: `1px solid ${on ? 'var(--chip-on-border, var(--color-accent))' : 'transparent'}`,
+                color: on ? chipOnFg : chipOffFg,
               }}>
               {t(o.label)}
             </motion.button>
