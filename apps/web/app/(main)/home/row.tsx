@@ -20,7 +20,7 @@ export function Row({ row, index, href }: { row: HomeRow; index: number; href?: 
       transition={{ duration: duration.slow, ease: ease.enter, delay: 0.08 * index }}
       style={{ marginBottom: 'var(--space-7)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0 var(--gutter)', marginBottom: 14 }}>
-        <h2 id={`row-${row.key}`} className="t-title-2">{row.title}</h2>
+        <h2 id={`row-${row.key}`} className="t-title-3">{row.title}</h2>
         {href && <TransitionLink href={href} className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>}
       </div>
       <div className="row-scroll row-scroll--flush">
