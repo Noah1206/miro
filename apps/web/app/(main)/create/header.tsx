@@ -5,13 +5,13 @@ import { spring } from '@/lib/motion/tokens'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
-/** 일상·연락 탭은 관계 탭에 합쳤다(10/19). */
-export type CreateTab = 'profile' | 'personality' | 'appearance' | 'relationship' | 'intro' | 'preview'
+/** 일상·연락 탭은 관계 탭에 합쳤고, 외형도 관계 탭으로 옮기고 그 자리에 명령어 탭을 뒀다(10/19). */
+export type CreateTab = 'profile' | 'personality' | 'commands' | 'relationship' | 'intro' | 'preview'
 
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: msg('프로필') },
   { key: 'personality', label: msg('세계관') },
-  { key: 'appearance', label: msg('외형') },
+  { key: 'commands', label: msg('명령어') },
   { key: 'relationship', label: msg('관계') },
   { key: 'intro', label: msg('인트로') },
   { key: 'preview', label: msg('미리보기') },

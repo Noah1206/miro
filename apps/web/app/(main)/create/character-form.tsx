@@ -127,8 +127,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
   // 필수 판정에 쓰는 값만 통제한다. 나머지는 uncontrolled — 제출 때 FormData 가 모은다.
   const [name, setName] = useState(i.name)
-  const [title, setTitle] = useState(i.title)
-  const [personality, setPersonality] = useState(i.personality)
+  // 캐릭터 소개 한 칸(10/19) — 저장은 그대로 둘(tagline·personality)로 나뉜다: 첫 줄이 40자 이내이고 아래에 글이 더 있으면 첫 줄이 카드의 한 줄 소개.
+  const [intro, setIntro] = useState(() => joinIntro(i.title, i.personality))
+  const { title, personality } = splitIntro(intro)
   const [startingContext, setStartingContext] = useState(i.startingContext)
   const [sampleCharacterCount, setSampleCharacterCount] = useState(() => sampleDialogue(i.sampleDialogue).reduce((sum, turn) => sum + turn.text.length, 0))
   const [sampleOpen, setSampleOpen] = useState(false)
@@ -141,8 +142,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(i.isPublic)
   const [media, setMedia] = useState<CharacterMedia>(i.media)
-  // 소개 미리보기의 통화 아이콘은 고른 유형을 따른다 — 운영 플래그가 닫혀 있어도 음성·영상 유형이면 그 캐릭터의 방에서는 열린다(10/19).
-  const can = { ...capabilities, voiceCall: capabilities.voiceCall || media !== 'text', videoCall: capabilities.videoCall || media === 'video' }
+  const can = capabilities
   const [hobbies, setHobbies] = useState(i.hobbies)
   const [dislikes, setDislikes] = useState(i.dislikes)
   // 자동 채우기(10/19)가 넣은 값. uncontrolled 칸은 key 를 바꿔 다시 그리며 defaultValue 로 받는다 — 빈 칸에만 넣으므로 적은 값을 덮지 않는다.
@@ -169,8 +169,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
       d = await quickFill(fillText, { name: cur('name'), title: cur('title'), personality: cur('personality'), age: cur('age'), nationality: cur('nationality'), occupation: cur('occupation'), worldSetting: cur('worldSetting'), startingContext: cur('startingContext') })
     } catch { setFillError(msg('지금은 채우지 못했어요. 잠시 뒤 다시 눌러 주세요.')); setFilling(false); return }
     if (!cur('name')) setName(d.name)
-    if (!cur('title')) setTitle(d.title)
-    if (!cur('personality')) setPersonality(d.personality)
+    if (!intro.trim()) setIntro(joinIntro(d.title, d.personality))
     if (!cur('startingContext')) setStartingContext(d.startingContext)
     if (!cur('mbti')) setMbti(d.mbti)
     setGender(d.gender); setBuild(d.build)
@@ -215,8 +214,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
   // 게시가 잠긴 이유를 이름으로 보여 준다(10/19) — 어느 칸이 비었는지 탭을 뒤지지 않게.
   const missing = useMemo(() => [
-    [!name.trim(), msg('이름')], [!title.trim(), msg('소개')], [!personality.trim(), msg('성격')], [!startingContext.trim(), msg('첫 장면')],
-  ].filter(([empty]) => empty).map(([, label]) => label as string), [name, title, personality, startingContext])
+    [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [!startingContext.trim(), msg('첫 장면')],
+  ].filter(([empty]) => empty).map(([, label]) => label as string), [name, personality, startingContext])
   const canSubmit = missing.length === 0
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -289,11 +288,11 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </button>
             </Card>
           </Section>
-          {/* 유형(10/19): 대화만 / 음성통화 / 음성+영상통화. 통화는 이 값이 연다(config callAllowedFor). */}
-          {experienceType === 'reality' && <Section title={t('유형')} subtitle={t('음성이나 영상을 고르면 이 캐릭터의 방에서 통화가 열리고, 캐릭터도 상황에 따라 전화를 걸어요.')}>
+          {/* 유형(10/19): 대화만 / 몰입 모드(음성) / 몰입 모드(음성+영상). 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생 경로는 아직 준비 중. */}
+          {experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 지금은 유형만 저장되고, 몰입 모드 재생은 준비 중이에요.')}>
             <Card>
               <ChoiceChips name="media" value={media} onChange={v => setMedia(v as CharacterMedia)} columns={3}
-                options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('대화 + 음성통화') }, { value: 'video', label: t('대화 + 음성·영상통화') }]} />
+                options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('몰입 모드 · 음성') }, { value: 'video', label: t('몰입 모드 · 음성+영상') }]} />
             </Card>
           </Section>}
           <Section title={t('공개')}>
@@ -313,13 +312,12 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                     <LabeledField label={t('이름')} required error={name === '' ? null : undefined}>
                       <Controlled name="name" label={t('이름')} placeholder={t('짧은 이름이 부르기 편해요. 예) 수현')} max={10} value={name} onChange={setName} big />
                     </LabeledField>
-                    <LabeledField label={t('소개')} required hint={t('카드와 소개 페이지에서 이름 아래에 걸리는 한 줄. 캐릭터가 직접 하는 말이면 좋습니다.')}>
-                      <Controlled name="title" label={t('소개')} placeholder={t('예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다.')} max={40} value={title} onChange={setTitle} big />
-                    </LabeledField>
-                    <LabeledField label={experienceType === 'chat' ? t('성격·말투 설정') : t('성격 설명')} required
-                      hint={experienceType === 'chat' ? t('대화에 반영되며 공개 소개에는 표시되지 않아요.') : t('캐릭터의 성격, 가치관, 말투를 적어 주세요.')}>
-                      <ControlledArea name="personality" label={experienceType === 'chat' ? t('성격·말투 설정') : t('성격 설명')} value={personality} onChange={setPersonality} max={1000} rows={4}
-                        placeholder={t('예) 침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다.')} />
+                    {/* 소개(한 줄)와 성격 설명을 한 칸으로(10/19). 서버 칸 이름은 그대로 — 첫 줄이 title, 나머지가 personality. */}
+                    <input type="hidden" name="title" value={title} />
+                    <input type="hidden" name="personality" value={personality} />
+                    <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 성격·가치관·말투를 적어 주세요.')}>
+                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={1040} rows={6}
+                        placeholder={t('예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다.\n침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다.')} />
                     </LabeledField>
                     {experienceType === 'reality' && <ReactionTraits initial={i} />}
                   </div>
@@ -389,17 +387,20 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               <PresetTags name="mood" label={msg('장르')} options={MOODS} max={5} defaultValue={i.mood} />
             </Card>
           </Section>
-          {/* 명령어 북(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시. 라이브러리에서 골라 붙이거나 직접 만들어 공개한다. */}
+
+        </Panel>
+
+        {/* ── 명령어(10/19, 외형 자리) — 채팅에서 /이름 으로 부르는 한 턴 지시. 라이브러리에서 골라 붙이거나 직접 만들어 공개한다. ── */}
+        <Panel id="commands" show={tab === 'commands'}>
           <Section title={t('명령어')} subtitle={t('대화 중 /이름 으로 불러 쓰는 한 턴 지시예요. 다른 사람이 공개한 것을 그대로 붙이거나, 직접 만들어 공개할 수 있어요.')}>
             <Card>
               <CommandEditor name="commands" defaultValue={i.commands} />
             </Card>
           </Section>
-
         </Panel>
 
-        {/* ── 외형 ── */}
-        <Panel id="appearance" show={tab === 'appearance'}>
+        {/* ── 외형 — 관계 탭 안에 함께 보인다(10/19). DOM 은 앞이지만 order 로 관계 내용 아래에 놓는다. ── */}
+        <Panel id="relationship-visual" show={tab === 'relationship'} order={1}>
           <Section title={t('몸')}>
             <Card>
               {/* 체형 선택은 10/19 화면에서 뺐다 — 값은 기본(표준) 또는 자동 채우기가 정한 것을 그대로 보낸다. */}
@@ -509,9 +510,23 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   )
 }
 
-/** 탭 패널. 감춰도 DOM 에 남긴다 — 값이 살아 있어야 한 번에 제출된다. */
-function Panel({ id, show, children }: { id: string; show: boolean; children: React.ReactNode }) {
-  return <div id={`panel-${id}`} role="tabpanel" hidden={!show} inert={!show}>{children}</div>
+/** 캐릭터 소개 한 칸 ↔ 저장 칸 둘(tagline 40자 + personality). 둘 다 있고 다르면 줄바꿈으로 잇는다. */
+function joinIntro(title: string, personality: string): string {
+  return title && personality && personality !== title ? `${title}\n${personality}` : personality || title
+}
+/** 첫 줄이 40자 이내이고 아래에 글이 더 있으면 첫 줄이 한 줄 소개, 나머지가 성격. 아니면 글 전체가 성격이고 소개는 첫 줄 앞 40자. */
+function splitIntro(text: string): { title: string; personality: string } {
+  const whole = text.trim()
+  const nl = whole.indexOf('\n')
+  const first = (nl === -1 ? whole : whole.slice(0, nl)).trim()
+  const rest = nl === -1 ? '' : whole.slice(nl + 1).trim()
+  if (first.length <= 40 && rest) return { title: first, personality: rest.slice(0, 1000) }
+  return { title: first.slice(0, 40), personality: whole.slice(0, 1000) }
+}
+
+/** 탭 패널. 감춰도 DOM 에 남긴다 — 값이 살아 있어야 한 번에 제출된다. order 로 같은 탭의 두 패널 순서를 정한다. */
+function Panel({ id, show, order, children }: { id: string; show: boolean; order?: number; children: React.ReactNode }) {
+  return <div id={`panel-${id}`} role="tabpanel" hidden={!show} inert={!show} style={order === undefined ? undefined : { order }}>{children}</div>
 }
 
 /** 섹션 — 제목은 카드 바깥. */

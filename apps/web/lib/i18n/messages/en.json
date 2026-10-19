@@ -1377,5 +1377,14 @@
  "붙이기": "Attach",
  "내리기": "Unpublish",
  "명령어 빼기": "Remove command",
- "덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.": "Add a note if you like. You can send without one."
+ "덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.": "Add a note if you like. You can send without one.",
+ "캐릭터 소개": "Character intro",
+ "첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 성격·가치관·말투를 적어 주세요.": "The first line becomes the one-line intro on the card (40 chars). Below it, describe personality, values and way of speaking.",
+ "예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다.\n침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다.": "e.g. Don’t touch that. …It isn’t yours yet.\nCalm and observant. Values trust and promises; speaks in a low, clipped voice.",
+ "몰입 모드 · 음성": "Immersive · voice",
+ "몰입 모드 · 음성+영상": "Immersive · voice + video",
+ "몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 지금은 유형만 저장되고, 몰입 모드 재생은 준비 중이에요.": "Immersive mode lets you hear this character’s chat in voice and continue by speaking. For now only the type is saved; playback is coming.",
+ "채팅에서 /이름 으로 부르는 지시예요.": "Instructions you call with /name in chat.",
+ "남이 공개한 걸 그대로 붙일 수 있어요.": "Attach ones others published as they are.",
+ "성별과 외형을 적으면 사진이 돼요.": "Gender and looks become the photo."
 }

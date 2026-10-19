@@ -102,8 +102,7 @@ export async function enterCharacterCreate(page: Page, base: string) {
 export async function publishCharacter(page: Page, base: string, c: { name: string; personality: string; startingContext: string; isPublic?: boolean }) {
   await enterCharacterCreate(page, base)
   await page.locator('input[name="name"]').fill(c.name)
-  await page.locator('input[name="title"]').fill('한 줄 소개')
-  await page.locator('textarea[name="personality"]').fill(c.personality)
+  await page.locator('textarea[name="characterIntro"]').fill(`한 줄 소개\n${c.personality}`)
   if (c.isPublic === false) await page.getByRole('switch', { name: /다른 사람에게 공개/ }).uncheck({ force: true })
   await page.getByRole('tab', { name: '인트로', exact: true }).click()
   await page.locator('textarea[name="startingContext"]').fill(c.startingContext)

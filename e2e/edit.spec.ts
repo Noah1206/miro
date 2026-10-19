@@ -27,13 +27,13 @@ test('편집은 만들기와 같은 폼이고, 저장하면 소개 페이지로 
   await expect(page.locator('input[name="name"]')).toHaveValue('한도윤')
 
   // 성격 설명은 첫 탭(프로필)에 있다. 게시한 캐릭터의 편집 버튼은 저장 하나다.
-  await page.locator('textarea[name="personality"]').fill('말수가 적고 환자 앞에서만 부드러워진다.')
+  await page.locator('textarea[name="characterIntro"]').fill('말수가 적고 환자 앞에서만 부드러워진다.')
   await page.getByRole('button', { name: '저장' }).click()
   await expect(page).toHaveURL(new RegExp(`/character/${characterId}`))
 
   // 다시 열면 고친 값이 남아 있고, 안 건드린 이름은 그대로
   await page.goto(`${BASE}/my/characters/${characterId}/edit`)
-  await expect(page.locator('textarea[name="personality"]')).toHaveValue('말수가 적고 환자 앞에서만 부드러워진다.')
+  await expect(page.locator('textarea[name="characterIntro"]')).toHaveValue('말수가 적고 환자 앞에서만 부드러워진다.')
   await expect(page.locator('input[name="name"]')).toHaveValue('한도윤')
 })
 

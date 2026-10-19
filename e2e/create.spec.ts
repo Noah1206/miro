@@ -13,10 +13,10 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   await expect(publish).toBeDisabled()
   await expect(page.getByRole('button', { name: '임시저장', exact: true })).toBeDisabled()
 
-  // 이름·소개·성격 설명은 첫 탭(프로필)에 함께 있다.
+  // 이름과 캐릭터 소개는 첫 탭(프로필)에 함께 있다.
   await page.locator('input[name="name"]').fill('윤지훈')
-  await page.locator('input[name="title"]').fill('한 줄 소개')
-  await page.locator('textarea[name="personality"]').fill('다른 사람한텐 싸가지 없는데 나한테만 잘해준다.')
+  // 소개와 성격은 '캐릭터 소개' 한 칸이다(10/19) — 첫 줄이 카드의 한 줄 소개, 아래가 성격.
+  await page.locator('textarea[name="characterIntro"]').fill('한 줄 소개\n다른 사람한텐 싸가지 없는데 나한테만 잘해준다.')
   await expect(page.getByRole('button', { name: '임시저장', exact: true })).toBeEnabled()
   await expect(publish).toBeDisabled()
 
@@ -50,8 +50,7 @@ test('/create 는 미로 캐릭터로 바로 열고, 비공개 초안을 재개�
   await expect(page).toHaveURL(/\/create\?type=reality&draft=/)
   await expect(page.getByRole('heading', { name: '미로 캐릭터', exact: true })).toBeVisible()
   await page.locator('input[name="name"]').fill('비공개서점')
-  await page.locator('input[name="title"]').fill('따뜻한 차를 건네는 서점 주인')
-  await page.locator('textarea[name="personality"]').fill('차분하고 다정한 존댓말을 쓴다.')
+  await page.locator('textarea[name="characterIntro"]').fill('따뜻한 차를 건네는 서점 주인\n차분하고 다정한 존댓말을 쓴다.')
   await page.getByRole('switch', { name: /다른 사람에게 공개/ }).uncheck({ force: true })
   await page.getByRole('tab', { name: '인트로', exact: true }).click()
   await page.locator('textarea[name="startingContext"]').fill('비 오는 저녁의 서점에서 만났다.')

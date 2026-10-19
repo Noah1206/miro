@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
-import { POLICY, callAllowedFor, type CharacterMedia } from '@miro/config'
+import { POLICY, callAllowedFor, feature, voiceCallTesters, type CharacterMedia } from '@miro/config'
 import { db, callSessions, characters, contactProfiles, messages, realityContacts, relationships, roleplaySessions, userSettings, users } from '@miro/db'
 import { contactBoundaryActive } from '@miro/domain'
 import type { CallChannel } from '@miro/domain'
@@ -211,7 +211,7 @@ export async function endCall(userId: string, callId: string, result = 'complete
 
 /** 연결이 끊긴 통화(active 가 너무 오래) 와 받지 않은 통화(ringing 만료)를 정리한다. Cron 에서 호출. */
 export async function expireCalls(now = new Date()) {
-  // 10/19: 전역 플래그가 닫혀도 음성·영상 유형 캐릭터는 전화를 걸 수 있으므로 늘 정리한다.
+  if (!feature('voiceCall') && !feature('videoCall') && voiceCallTesters().length === 0) return { missed: 0, timedOut: 0 }
   const ringingBefore = new Date(now.getTime() - POLICY.call.ringingTimeoutMinutes * 60_000)
   const missed = await db.select().from(callSessions)
     .where(and(eq(callSessions.status, 'ringing'), lt(callSessions.createdAt, ringingBefore)))
@@ -246,6 +246,7 @@ export async function expireCalls(now = new Date()) {
 
 /** 사용자의 세션에서 지금 울리고 있는 통화. 수신 화면 표시용. */
 export async function ringingFor(userId: string) {
+  if (!feature('voiceCall') && !feature('videoCall')) return null
   const rows = await db.select({
     id: callSessions.id, channel: callSessions.channel, sessionId: callSessions.sessionId,
     reason: callSessions.reason, createdAt: callSessions.createdAt, characterName: characters.name,

@@ -69,15 +69,14 @@ export function voiceCallAllowed(userId: string | null | undefined): boolean {
   return !!userId && voiceCallTesters().includes(userId)
 }
 /**
- * 캐릭터 유형(10/19): text=대화만, voice=음성통화까지, video=음성+영상통화. contact_profiles.presentation.media 에 저장한다.
- * 운영의 전역 통화 플래그는 닫힌 채로 두고, 제작자가 음성·영상 유형으로 만든 캐릭터의 방에서만 통화가 열린다.
- * 실시간 음성(voiceCallAudio)은 여전히 플래그를 따른다 — 운영에서는 문자 통화로 진행된다.
+ * 캐릭터 유형(10/19): text=대화만, voice=몰입 모드(음성), video=몰입 모드(음성+영상). contact_profiles.presentation.media 에 저장한다.
+ * 몰입 모드는 채팅방을 목소리로 듣고 말로 이어 가는 모드다 — 전화·영상통화가 아니다(10/19 저녁 정정). 통화 문은 여전히 전역 플래그만 연다.
  */
 export type CharacterMedia = 'text' | 'voice' | 'video'
 export const CHARACTER_MEDIA: readonly CharacterMedia[] = ['text', 'voice', 'video']
-export function callAllowedFor(userId: string | null | undefined, media: CharacterMedia | null | undefined, channel: 'voice' | 'video'): boolean {
-  if (channel === 'video' ? feature('videoCall') : voiceCallAllowed(userId)) return true
-  return channel === 'video' ? media === 'video' : media === 'voice' || media === 'video'
+/** 통화 허용 — 플래그 그대로다. media 는 몰입 모드 등급이라 통화를 열지 않는다(한때 열었던 것을 되돌림, 10/19). */
+export function callAllowedFor(userId: string | null | undefined, _media: CharacterMedia | null | undefined, channel: 'voice' | 'video'): boolean {
+  return channel === 'video' ? feature('videoCall') : voiceCallAllowed(userId)
 }
 export function voiceCallTesters(): string[] {
   return (process.env.MIRO_VOICE_CALL_USERS ?? '').split(',').map((id) => id.trim()).filter(Boolean)

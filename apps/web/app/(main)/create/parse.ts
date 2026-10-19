@@ -146,7 +146,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.
   const delayN = Number(s('replyDelayMinutes'))
-  // 캐릭터 유형(10/19): 음성·영상이면 캐릭터가 실제로 전화를 고를 수 있게 확률을 선택 문턱(50) 위로 올린다(domain/call/pick).
+  // 캐릭터 유형(10/19): 대화만 / 몰입 모드(음성) / 몰입 모드(음성+영상). 통화 확률과는 무관하다(전화가 아니다).
   const media: CharacterMedia = oneOf('media', CHARACTER_MEDIA, 'text')
   const contact = {
     enabled: experienceType === 'reality' && form.get('contactEnabled') === 'on',
@@ -154,8 +154,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     initiativeLevel: clamp('initiativeLevel', 50),
     replyDelayMinutes: Number.isInteger(delayN) && delayN >= 0 && delayN <= 1440 ? delayN : 5,
     preferredChannel: oneOf('preferredChannel', CHANNELS, 'message'),
-    callProbability: media === 'text' ? clamp('callProbability', 30) : Math.max(60, clamp('callProbability', 30)),
-    videoCallProbability: media === 'video' ? Math.max(60, clamp('videoCallProbability', 10)) : clamp('videoCallProbability', 10),
+    callProbability: clamp('callProbability', 30),
+    videoCallProbability: clamp('videoCallProbability', 10),
     photoProbability: clamp('photoProbability', 20),
     voiceMessageProbability: clamp('voiceMessageProbability', 20),
     activeHoursStart: /^\d{2}:\d{2}$/.test(s('activeHoursStart')) ? s('activeHoursStart') : '08:00',

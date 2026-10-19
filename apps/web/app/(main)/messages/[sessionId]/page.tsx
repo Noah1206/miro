@@ -3,7 +3,7 @@ import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
 import { db, realityContacts } from '@miro/db'
-import { callAllowedFor } from '@miro/config'
+import { callAllowedFor, feature } from '@miro/config'
 import { sessionMedia } from '@/lib/call/service'
 import { costOf } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
@@ -40,8 +40,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
-  // 통화 기록은 있으면 보인다(10/19) — 음성·영상 유형 캐릭터는 전역 플래그가 닫혀도 전화를 건다.
-  const items = rows ?? []
+  const items = (rows ?? []).filter(m => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
   const canCall = callAllowedFor(user.id, await sessionMedia(sessionId, user.id), 'voice')
 
   return (
