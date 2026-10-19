@@ -57,3 +57,8 @@
 .chips button { flex-shrink: 0; white-space: nowrap; padding: 6px 10px; border: 0; border-radius: 16px;
   background: color-mix(in srgb, var(--color-surface-2) 15%, transparent); color: color-mix(in srgb, var(--color-text-tertiary) 90%, transparent); }
 .chips button[aria-pressed="true"] { background: var(--color-accent-soft); color: var(--color-accent-text); }
+
+/* 홈 검색 입력창 모양(10/19) — search.module.css 의 .field 와 같은 모양, 누르면 /search. */
+.searchBar { display: flex; align-items: center; gap: 10px; height: 44px; margin: 0 var(--gutter) var(--space-5); padding: 0 12px; border: 1px solid #ffffff08; background: #1b1a20; border-radius: 10px; color: var(--color-text-secondary); }
+.searchBar span { color: var(--color-text-tertiary); font-size: 14px; letter-spacing: -.02em; }
+.searchBar:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }

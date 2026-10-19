@@ -57,12 +57,11 @@ export default async function Home() {
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
-      {/* 검색 — 헤더에서 배너 아래로 옮김(2026-10-19 요청). 오른쪽 끝, 헤더 아이콘과 같은 상자 크기. */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', margin: 'calc(-1 * var(--space-3)) var(--gutter) var(--space-3)' }}>
-        <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 34, height: 34 }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
-        </TransitionLink>
-      </div>
+      {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
+      <TransitionLink href="/search" aria-label={t('검색')} className={styles.searchBar}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
+        <span>{t('이름이나 키워드로 검색')}</span>
+      </TransitionLink>
       <OriginalStoriesRow />
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
