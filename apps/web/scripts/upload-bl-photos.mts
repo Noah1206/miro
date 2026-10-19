@@ -19,10 +19,11 @@ const apply = process.argv.includes('--apply')
 const plan = readdirSync(ROOT).filter((d) => d.startsWith('official-')).sort().map((slug) => {
   const files = readdirSync(join(ROOT, slug))
   const gallery = files.filter((f) => /^0[1-5]\.jpg$/.test(f)).sort()
-  if (!files.includes('intro.jpg') || gallery.length === 0) throw new Error(`missing photos: ${slug}`)
-  return { slug, gallery, intro: 'intro.jpg' }
+  if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
+  // 인트로 장면 사진은 없을 수 있다(10/19 작품 메인공 6명 — 대표 사진 01만).
+  return { slug, gallery, intro: files.includes('intro.jpg') ? 'intro.jpg' : null }
 })
-for (const p of plan) console.log(p.slug, 'gallery', p.gallery.join(','), '+ intro')
+for (const p of plan) console.log(p.slug, 'gallery', p.gallery.join(','), p.intro ? '+ intro' : '(no intro)')
 if (!apply) { console.log('(dry run — --apply 로 올린다)'); process.exit(0) }
 
 const url = process.env.SUPABASE_URL
@@ -46,6 +47,11 @@ for (const p of plan) {
   if (!row) { console.log('skip (DB에 없음)', p.slug); continue }
   const images: string[] = []
   for (const f of p.gallery) images.push(await put(p.slug, f))
+  if (!p.intro) {
+    await db.update(characters).set({ images }).where(eq(characters.id, row.id))
+    console.log('done', p.slug, images.length, 'photos')
+    continue
+  }
   const introUrl = await put(p.slug, p.intro)
   // 장면 사진은 첫 인트로 줄에만 — 나머지 줄의 옛 image 는 지운다.
   let first = true
