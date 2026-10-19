@@ -153,16 +153,26 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
 
 /**
  * 홈 섹션(10/19, 위프·베이비챗형): 인기 순위 + 장르별 줄. 목록은 homeCatalog(랭킹순 — 대화 인원, 같으면 최신) 한 번만 읽고 나눈다.
- * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 고르는 규칙은 탐색의 장르 필터(포함 검사)와 같다.
+ * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 섹션끼리 캐릭터가 겹치지 않는다(10/19).
  */
 export async function homeSections(userId: string | null): Promise<{ ranking: HomeCard[]; genres: HomeRow[] }> {
   // 10/19: 최근에 만든 캐릭터가 앞에 오게(사용자 요청) — 대화 수가 쌓이기 전까지 최신순.
   const { items } = await homeCatalog(userId, { sort: 'latest' })
+  // 10/19: 한 캐릭터는 한 섹션에만(사용자 요청). 인기 줄이 먼저 10명을 가져가고, 나머지는 자기 장르 중 가장 좁은(캐릭터가 적은) 장르 줄 하나에만 들어간다.
+  const ranking = items.slice(0, 10)
+  const rest = items.slice(10)
   const counts = new Map<string, number>()
-  for (const c of items) for (const g of new Set(genreValues(c.genre))) counts.set(g, (counts.get(g) ?? 0) + 1)
-  const genres = [...counts].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 6)
-    .map(([g]) => ({ key: g, title: g, items: items.filter(c => (c.genre ?? '').includes(g)) }))
-  return { ranking: items.slice(0, 10), genres }
+  for (const c of rest) for (const g of new Set(genreValues(c.genre))) counts.set(g, (counts.get(g) ?? 0) + 1)
+  const buckets = new Map<string, HomeCard[]>()
+  for (const c of rest) {
+    const gs = [...new Set(genreValues(c.genre))].filter(g => (counts.get(g) ?? 0) >= 3)
+    if (!gs.length) continue
+    const g = gs.sort((a, b) => (counts.get(a)! - counts.get(b)!) || a.localeCompare(b))[0]!
+    buckets.set(g, [...(buckets.get(g) ?? []), c])
+  }
+  const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 6)
+    .map(([g, cs]) => ({ key: g, title: g, items: cs }))
+  return { ranking, genres }
 }
 
 /** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */

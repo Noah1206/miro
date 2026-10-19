@@ -43,18 +43,20 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
         style={{ display: 'block', minWidth: 0 }}>
         <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="4 / 5" scrim={false} />
+          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="15 / 16" scrim={false} />
         </div>
-        {/* 10/19: 이름·한 줄·태그는 사진 아래. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '8px 2px 0', color: 'var(--color-text-primary)' }}>
+        {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>
           <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 16, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.name}</p>
           {c.tagline && (
-            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>“{c.tagline}”</p>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.4, color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>“{c.tagline}”</p>
           )}
           {tags.length > 0 && (
-            <p className={`t-micro ${characterTagFont.className}`} style={{
-              color: 'color-mix(in srgb, var(--color-text-primary) 60%, var(--color-text-secondary))', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 11, lineHeight: 1.5, overflow: 'hidden', whiteSpace: 'nowrap',
-            }}>{tags.map(tag => <span key={tag} style={{ marginRight: 6 }}>#{tag}</span>)}</p>
+            <div className={characterTagFont.className} style={{ display: 'flex', gap: 4, overflow: 'hidden', flexWrap: 'nowrap' }}>
+              {tags.slice(0, 3).map(tag => (
+                <span key={tag} style={{ flexShrink: 0, padding: '3px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', fontSize: 11, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
+              ))}
+            </div>
           )}
         </div>
       </TransitionLink>
