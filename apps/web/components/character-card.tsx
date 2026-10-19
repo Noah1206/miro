@@ -47,7 +47,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
           <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="4 / 5" scrim={false} />
           <div style={{
             position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 4, padding: '12px 12px 12px',
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(0,0,0,0.55) 68%, rgba(0,0,0,0.9) 100%)', color: '#fff',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 25%, rgba(0,0,0,.25) 45%, rgba(0,0,0,.6) 68%, rgba(0,0,0,.85) 85%, rgba(0,0,0,.97) 100%)', color: '#fff',
           }}>
             <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 18, lineHeight: 1.25, letterSpacing: '-.025em', overflowWrap: 'anywhere', margin: 0 }}>{c.name}</p>
             {c.tagline && (
