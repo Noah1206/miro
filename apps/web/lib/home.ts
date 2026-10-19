@@ -7,6 +7,7 @@ import { listOfficials, type ExperienceType, type OfficialCard } from './charact
 import { indexedDiscoveryEnabled, rankedPopularIds } from './search-index'
 import { searchGenres, searchNeedle } from './search-params'
 import { msg } from '@/lib/i18n'
+import { genreValues } from './genres'
 
 export type HomeCard = OfficialCard & {
   /** 실제로 이 캐릭터와 대화한 사람 수. 초기에는 0 이며 그때는 표시하지 않는다. */
@@ -149,6 +150,19 @@ export const homeCatalog = (userId: string | null, filter: CardFilter = {}) => c
 /** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
 export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, {}, true)
 export const miroCatalog = (userId: string | null) => cardPage('reality', userId, null, true, {}, true, true)
+
+/**
+ * 홈 섹션(10/19, 위프·베이비챗형): 인기 순위 + 장르별 줄. 목록은 homeCatalog(랭킹순 — 대화 인원, 같으면 최신) 한 번만 읽고 나눈다.
+ * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 고르는 규칙은 탐색의 장르 필터(포함 검사)와 같다.
+ */
+export async function homeSections(userId: string | null): Promise<{ ranking: HomeCard[]; genres: HomeRow[] }> {
+  const { items } = await homeCatalog(userId, { sort: 'ranking' })
+  const counts = new Map<string, number>()
+  for (const c of items) for (const g of new Set(genreValues(c.genre))) counts.set(g, (counts.get(g) ?? 0) + 1)
+  const genres = [...counts].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    .map(([g]) => ({ key: g, title: g, items: items.filter(c => (c.genre ?? '').includes(g)) }))
+  return { ranking: items.slice(0, 10), genres }
+}
 
 /** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */
 export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[]> {

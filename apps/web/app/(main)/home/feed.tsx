@@ -32,9 +32,11 @@ export function StoryCard({ c }: { c: HomeCard }) {
 type Filter = { genres: string[]; relations: string[]; sort: HomeSort }
 const NONE: Filter = { genres: [], relations: [], sort: 'latest' }
 const listKey = (filter: Filter) => JSON.stringify([filter.genres, filter.relations, filter.sort])
-export function HomeFeed({ initial }: { initial: CardPage }) {
-  const [filter, setFilter] = useState<Filter>(NONE)
-  const [lists, setLists] = useState<Record<string, CardPage>>(() => ({ [listKey(NONE)]: initial }))
+/** genres = 탐색 탭 주소의 장르(홈 장르 줄의 '전체 보기', 10/19). initial 은 그 조건으로 읽은 목록이다. */
+export function HomeFeed({ initial, genres = [] }: { initial: CardPage; genres?: string[] }) {
+  const start: Filter = { ...NONE, genres }
+  const [filter, setFilter] = useState<Filter>(start)
+  const [lists, setLists] = useState<Record<string, CardPage>>(() => ({ [listKey(start)]: initial }))
   const [loading, setLoading] = useState<Record<string, boolean>>({})
   const [failed, setFailed] = useState<Record<string, boolean>>({})
   const t = useT()

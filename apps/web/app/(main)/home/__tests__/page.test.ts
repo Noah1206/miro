@@ -5,7 +5,7 @@ import Home from '../page'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 
 vi.mock('@/lib/auth', () => ({ currentUser: async () => ({ id: 'home-viewer' }) }))
-vi.mock('@/lib/home', () => ({ homeCatalog: async () => ({ items: [], nextCursor: null }) }))
+vi.mock('@/lib/home', () => ({ homeSections: async () => ({ ranking: [], genres: [] }) }))
 vi.mock('@/lib/home-mode', () => ({ homeUnveilEnabled: vi.fn() }))
 vi.mock('@/lib/ops/archive', () => ({ unreadContactCount: async () => 0 }))
 vi.mock('@/lib/observe', () => ({ measured: (_: string, task: () => unknown) => task() }))
@@ -17,7 +17,7 @@ vi.mock('@/components/ui', () => ({
 }))
 vi.mock('@/components/site-footer', () => ({ SiteFooter: () => null }))
 vi.mock('@/components/legal-revision-notice', () => ({ LegalRevisionNotice: () => null }))
-vi.mock('../feed', () => ({ HomeFeed: () => null }))
+vi.mock('../row', () => ({ Row: () => null }))
 vi.mock('../banner', () => ({ HomeBanner: () => null }))
 vi.mock('../bell', () => ({ NotificationBell: () => null }))
 vi.mock('../unveil-toggle', () => ({ HomeUnveilToggle: ({ enabled }: { enabled: boolean }) => React.createElement('button', { role: 'switch', 'aria-checked': enabled }) }))

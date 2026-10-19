@@ -1,10 +1,10 @@
 import { HomeUnveilToggle } from './unveil-toggle'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { currentUser } from '@/lib/auth'
-import { homeCatalog } from '@/lib/home'
+import { homeSections } from '@/lib/home'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
-import { HomeFeed } from './feed'
+import { Row } from './row'
 import { HomeBanner } from './banner'
 import { NotificationBell } from './bell'
 import { SiteFooter } from '@/components/site-footer'
@@ -18,8 +18,8 @@ import { OriginalStoriesRow } from '../stories/home-row'
 export default async function Home() {
   const user = await currentUser()
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
-  const [page, unread, unveil] = await Promise.all([
-    measured('nav.home_data', () => homeCatalog(user?.id ?? null)),
+  const [sections, unread, unveil] = await Promise.all([
+    measured('nav.home_data', () => homeSections(user?.id ?? null)),
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
   ])
@@ -35,9 +35,6 @@ export default async function Home() {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: -8, marginLeft: 'auto' }}>
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
-          <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerItem} ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 34, height: 34 }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
-          </TransitionLink>
           {/* 알림 종 — 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). 로그인 전에는 누르면 로그인 시트가 뜬다. */}
           <NotificationBell unread={unread} signedIn={!!user} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}
@@ -48,8 +45,17 @@ export default async function Home() {
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
+      {/* 검색 — 헤더에서 배너 아래로 옮김(2026-10-19 요청). 오른쪽 끝, 헤더 아이콘과 같은 상자 크기. */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', margin: 'calc(-1 * var(--space-3)) var(--gutter) var(--space-3)' }}>
+        <TransitionLink href="/search" aria-label={t('검색')} className={`hit ${styles.headerAction}`} style={{ display: 'grid', placeItems: 'center', width: 34, height: 34 }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
+        </TransitionLink>
+      </div>
       <OriginalStoriesRow />
-      <HomeFeed key={crypto.randomUUID()} initial={page} />
+      {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
+      <h1 className="sr-only">{t('홈')}</h1>
+      {sections.ranking.length > 0 && <Row index={0} ranked row={{ key: 'ranking', title: t('지금 뜨는 · 인기 순위'), items: sections.ranking }} href="/explore" />}
+      {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={row} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>
