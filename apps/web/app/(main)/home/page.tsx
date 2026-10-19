@@ -66,7 +66,7 @@ export default async function Home() {
       <OriginalStoriesRow />
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
-      {sections.ranking.length > 0 && <Row index={0} ranked row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), items: sections.ranking }} href="/explore" />}
+      {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), items: sections.ranking }} href="/explore" />}
       {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }) }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />

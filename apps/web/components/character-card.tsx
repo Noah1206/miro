@@ -30,7 +30,7 @@ export type CardCharacter = {
 
 /**
  * 캐릭터 카드 하나.
- * 이미지 안쪽 아래에 이름·한 줄·해시태그를 둔다(10/19). 대화 인원은 띄우지 않는다.
+ * 이미지 아래에 이름·한 줄·해시태그를 둔다(10/19). 대화 인원은 띄우지 않는다.
  * 마크업을 한 곳에 두어야 홈과 상세가 어긋나지 않는다 (실제로 어긋났었다).
  */
 export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) {
@@ -42,23 +42,20 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
       <TransitionLink href={c.href ?? `/character/${slug}`}
         aria-label={`${c.name}${c.caption ? `, ${c.caption}` : ''}`}
         style={{ display: 'block', minWidth: 0 }}>
-        {/* 10/19: 이름·한 줄·태그를 사진 안쪽 아래에 — 아래로 갈수록 어두워지는 그늘 위에 흰 글씨. */}
-        <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+        <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="4 / 5" scrim={false} />
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 4, padding: '12px 12px 12px',
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 25%, rgba(0,0,0,.25) 45%, rgba(0,0,0,.6) 68%, rgba(0,0,0,.85) 85%, rgba(0,0,0,.97) 100%)', color: '#fff',
-          }}>
-            <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 18, lineHeight: 1.25, letterSpacing: '-.025em', overflowWrap: 'anywhere', margin: 0 }}>{c.name}</p>
-            {c.tagline && (
-              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>“{c.tagline}”</p>
-            )}
-            {tags.length > 0 && (
-              <p className={`t-micro ${characterTagFont.className}`} style={{
-                color: 'rgba(255,255,255,0.6)', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 11, lineHeight: 1.5, overflow: 'hidden', whiteSpace: 'nowrap',
-              }}>{tags.map(tag => <span key={tag} style={{ marginRight: 6 }}>#{tag}</span>)}</p>
-            )}
-          </div>
+        </div>
+        {/* 10/19: 이름·한 줄·태그는 사진 아래. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, padding: '8px 2px 0', color: 'var(--color-text-primary)' }}>
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 16, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.name}</p>
+          {c.tagline && (
+            <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>“{c.tagline}”</p>
+          )}
+          {tags.length > 0 && (
+            <p className={`t-micro ${characterTagFont.className}`} style={{
+              color: 'color-mix(in srgb, var(--color-text-primary) 60%, var(--color-text-secondary))', margin: 0, letterSpacing: 0, textTransform: 'none', fontSize: 11, lineHeight: 1.5, overflow: 'hidden', whiteSpace: 'nowrap',
+            }}>{tags.map(tag => <span key={tag} style={{ marginRight: 6 }}>#{tag}</span>)}</p>
+          )}
         </div>
       </TransitionLink>
     </motion.div>

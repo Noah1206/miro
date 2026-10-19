@@ -156,7 +156,8 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 고르는 규칙은 탐색의 장르 필터(포함 검사)와 같다.
  */
 export async function homeSections(userId: string | null): Promise<{ ranking: HomeCard[]; genres: HomeRow[] }> {
-  const { items } = await homeCatalog(userId, { sort: 'ranking' })
+  // 10/19: 최근에 만든 캐릭터가 앞에 오게(사용자 요청) — 대화 수가 쌓이기 전까지 최신순.
+  const { items } = await homeCatalog(userId, { sort: 'latest' })
   const counts = new Map<string, number>()
   for (const c of items) for (const g of new Set(genreValues(c.genre))) counts.set(g, (counts.get(g) ?? 0) + 1)
   const genres = [...counts].filter(([, n]) => n >= 3).sort((a, b) => b[1] - a[1]).slice(0, 6)

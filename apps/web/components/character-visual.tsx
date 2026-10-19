@@ -72,7 +72,7 @@ export function CharacterVisual({ name, accent, slug, photo, ratio = '4 / 5', si
         <CharacterPhoto key={photo} src={photo} alt="" size={size} loading={loading}
           sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}
           width={880} height={1168}
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }} />
+          style={{ position: 'absolute', inset: -1, width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', objectFit: 'cover', objectPosition: 'center 25%' }} />
       ) : (
         <span className="t-name" style={{ position: 'absolute', right: -6, bottom: -22, fontSize: 'clamp(120px, 42vw, 240px)', lineHeight: 1, color: accent ?? 'var(--color-surface-3)', opacity: 0.16, letterSpacing: '-0.06em', userSelect: 'none' }}>
           {name.slice(0, 1)}
