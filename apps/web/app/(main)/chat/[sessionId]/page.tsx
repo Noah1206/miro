@@ -18,6 +18,16 @@ import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { getT } from '@/lib/i18n/server'
+import { msg } from '@/lib/i18n'
+import { CoachMarks, type CoachStep } from '@/components/coach-marks'
+
+/** 처음 들어온 대화 화면에서 짚어 주는 기능(10/19). 화면에 없는 버튼(테마에 따라 다름)은 건너뛴다. */
+const CHAT_COACH: CoachStep[] = [
+  { target: 'narration', title: msg('행동이나 상황을 표현하고 싶을 때 내용 앞뒤로 *를 붙여보세요.'), example: msg('예시) *수줍게 그를 바라보며* 보고싶었어…') },
+  { target: 'model', title: msg('대화 방식을 바꿀 수 있어요.'), example: msg('기본 대화와 더 긴 대화 중에서 골라 보세요.') },
+  { target: 'persona', title: msg('이 대화에서 내가 누구인지 정할 수 있어요.'), example: msg('이름과 소개를 적으면 캐릭터가 그렇게 대해요.') },
+  { target: 'theme', title: msg('채팅방 모양을 바꿀 수 있어요.'), example: msg('미로 기본, DM, 카톡 스타일 중에서 골라 보세요.') },
+]
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
   const t = await getT()
@@ -82,6 +92,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
         {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 문자·대화 방식 버튼은 입력창 안 아래 줄에(10/17). */}
+        <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} roomHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} />
       </section>
 

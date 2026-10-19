@@ -84,7 +84,7 @@ export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigge
   const setOpen = onOpenChange ?? setLocalOpen
   const t = useT()
   return <>
-    {!hideTrigger && <button className={placement === 'library' ? styles.libraryTrigger : placement === 'composer' ? styles.composerTrigger : styles.trigger} type="button" aria-label={t('채팅방 디자인 라이브러리')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+    {!hideTrigger && <button data-coach={placement === 'header' ? 'theme' : undefined} className={placement === 'library' ? styles.libraryTrigger : placement === 'composer' ? styles.composerTrigger : styles.trigger} type="button" aria-label={t('채팅방 디자인 라이브러리')} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
       <ChatPaletteIcon />{placement === 'library' && <span>{t('디자인 라이브러리')}</span>}
     </button>}
     <Sheet open={open} onClose={() => setOpen(false)} title={t('채팅방 디자인 라이브러리')} snap={{ half: 0.72, full: 0.92 }}>
