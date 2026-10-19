@@ -283,7 +283,7 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
   const grounding = await loadRealityContext(sessionId, row.session.userId, intent.reason)
   if (!grounding) return { outcome: 'skipped', reason: 'session_not_found' }
   const contentInput = {
-    allowAbstain: !intent.answers && !intent.momentKey,
+    allowAbstain: !intent.answers && !intent.momentKey && !intent.promise,
     characterName: row.character.name,
     personality: row.character.personality,
     speechStyle: row.character.speechStyle,

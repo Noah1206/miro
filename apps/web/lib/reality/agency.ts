@@ -135,6 +135,8 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         // user_moment = 사용자가 직접 말한 일정(응원·끝난 뒤 묻기). 사람이라면 기억하고 챙길 때다. promise_to_keep = 대화에서 직접 한 '이따 문자할게' 약속(10/19).
         contactOpportunity: hint?.opportunity ? { kind: hint.opportunity.momentKey ? 'user_moment' : hint.opportunity.promise ? 'promise_to_keep' : 'routine', reason: hint.opportunity.reason, urgency: hint.opportunity.urgency, answers: hint.opportunity.answers ?? null } : null,
         ownDay,
+        // 자기 입으로 한 약속(10/19 실측: 그냥 두면 '보내지 않음'을 골랐다) — 설정상 불가능한 게 아니면 지킨다.
+        promiseRule: hint?.opportunity?.promise ? 'promise_to_keep is this character\'s own explicit promise in the conversation evidence to message the user around now. A person who promised keeps it: choose contact unless an authored constraint or a real delivery block makes it impossible. Keep it light and natural, continuing that conversation.' : null,
       }),
     })
     if (runtime.mode === 'shadow') {
@@ -333,8 +335,13 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
             leaseToken: null, leaseUntil: null }).where(and(eq(messengerInbox.messageId, item.messageId), eq(messengerInbox.leaseToken, opts.inbox.token)))
         }
       }
-      if (!opts.inbox) await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!,
-        notBefore: new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString() } : null }).where(eq(roleplaySessions.id, sessionId))
+      // 약속은 '아직 때가 아니다(기다림·미룸)'로 끝나지 않는다 — 다음 확인에 다시 본다. 취소를 고르거나 반나절 넘게 못 지키면 버린다(10/19 실측: 미룬 뒤 지워져 아침이 와도 다시 판단하지 않았다).
+      const promised = row.session.pendingRealityIntent?.promise ? row.session.pendingRealityIntent : null
+      const promiseSince = promised?.deferredSince ? Date.parse(promised.deferredSince) : now.getTime()
+      const keepPromise = !!promised && !contactId && plan.decision.action !== 'cancel_commitment' && now.getTime() - promiseSince < 12 * 3_600_000
+      const recheck = new Date(now.getTime() + POLICY.reality.recheckMinutes * 60_000).toISOString()
+      if (!opts.inbox) await tx.update(roleplaySessions).set({ pendingRealityIntent: keepReply ? { ...row.session.pendingRealityIntent!, notBefore: recheck }
+        : keepPromise ? { ...promised!, deferredSince: new Date(promiseSince).toISOString(), notBefore: recheck } : null }).where(eq(roleplaySessions.id, sessionId))
       return contactId
     })
     if (!result || !content) return { outcome: 'no_intent' }

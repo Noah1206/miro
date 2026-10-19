@@ -353,8 +353,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
 
   /** RP 턴에서 AI 가 제안한 "나중에 연락하고 싶은 이유". 스케줄러가 우선 참고한다. */
   pendingRealityIntent: jsonb('pending_reality_intent')
-    // deferredSince·failures: 막히거나 실패한 예약 의도를 언제 버릴지, rule: 사건 규칙이 만든 의도(2026-10-02). JSON 안이라 열 구조는 그대로다.
-    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number }>(),
+    // deferredSince·failures: 막히거나 실패한 예약 의도를 언제 버릴지, rule: 사건 규칙이 만든 의도(2026-10-02), promise: 첫 대화의 '이따 문자할게' 약속(10-19). JSON 안이라 열 구조는 그대로다.
+    .$type<{ channel: string; reason: string; urgency: number; notBefore?: string; answers?: 'user_message' | 'call'; rule?: string; deferredSince?: string; failures?: number; promise?: boolean }>(),
   /** User-requested space is enforced before generation, persistence and external delivery. */
   contactBoundary: jsonb('contact_boundary').$type<ContactBoundary>(),
   /** 턴마다 변하는 캐릭터 상태(기분·스트레스·목표·발동한 규칙). 프로필(characters)과 분리한다. */

@@ -60,7 +60,7 @@ export function firstMeetingDirective(when: string): string {
 }
 
 /** 대사가 실제로 나중 연락을 약속했는가(네 언어). 약속하지 않았으면 약속 연락을 잡지 않는다 — 기존 첫 연락이 맡는다. */
-const PROMISE = /(연락|문자|톡|카톡|메시지|메세지|서신|전갈|전화)\s*(을|를)?\s*(할게|할께|줄게|보낼게|드릴게|하마|할 테니|할테니|해 줄게|해줄게|넣을게|남길게|보내마|띄울게)|\b(text|message|call|ping|write to|write) you\b|(連絡|メッセージ|メール|LINE)(する|します|送る)|(发消息|联系你|给你发|打给你|发信息)/i
+const PROMISE = /(연락|문자|톡|카톡|메시지|메세지|서신|전갈|전화)\s*(을|를)?\s*(할게|할께|할\s?테니|하겠|하마|하도록|드릴게|드리겠|드리도록|줄게|주겠|보낼게|보내겠|보내마|보내도록|넣을게|넣겠|남길게|남기겠|띄울게|띄우겠|해\s?줄게|해\s?드릴게)|\b(text|message|call|ping|write to|write) you\b|(連絡|メッセージ|メール|LINE)(する|します|送る)|(发消息|联系你|给你发|打给你|发信息)/i
 export function promisedContact(text: string): boolean {
   return PROMISE.test(text)
 }
