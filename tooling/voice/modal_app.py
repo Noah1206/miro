@@ -1,5 +1,5 @@
 """
-몰입 모드 음성 합성 서버를 Modal(서버리스 GPU)에 올린다 — gsv_server.py 를 그대로 T4 컨테이너 안에서 돌린다.
+몰입 모드 음성 합성 서버를 Modal(서버리스)에 올린다 — gsv_server.py 를 그대로 컨테이너 안에서 돌린다(GPU 는 MIRO_TTS_GPU=T4, 기본은 CPU).
 
   배포:   cd ~/Desktop/Miro && ~/GPT-SoVITS/venv/bin/modal deploy tooling/voice/modal_app.py
   목소리: ~/GPT-SoVITS/venv/bin/modal volume put miro-voices ~/.miro/voices/gsv/voices/<해시> /<해시>
@@ -40,8 +40,15 @@ voices = modal.Volume.from_name("miro-voices", create_if_missing=True)
 app = modal.App("miro-tts", image=image)
 
 
+# GPU 는 Modal 에 결제 수단이 있어야 쓸 수 있다(10/20 "Please add a payment method to use T4 GPU functions").
+# 카드 등록 전엔 CPU 8코어로 돌린다(문장당 몇 초). 카드 넣은 뒤: MIRO_TTS_GPU=T4 modal deploy tooling/voice/modal_app.py
+GPU = os.environ.get("MIRO_TTS_GPU") or None
+
+
 @app.function(
-    gpu="T4",
+    gpu=GPU,
+    cpu=8.0 if GPU is None else 2.0,
+    memory=16384,
     volumes={"/voices": voices},
     secrets=[modal.Secret.from_name("miro-tts")],
     scaledown_window=600,  # 마지막 요청 뒤 10분은 깨어 있어 대화 중엔 콜드 스타트가 없다
