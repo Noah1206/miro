@@ -171,8 +171,15 @@ export async function homeSections(userId: string | null): Promise<{ ranking: Ho
     buckets.set(g, [...(buckets.get(g) ?? []), c])
   }
   const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 6)
-    .map(([g, cs]) => ({ key: g, title: g, items: cs }))
-  return { ranking, genres }
+    .map(([g, cs]) => ({ key: g, title: g, items: shuffle(cs) }))
+  // 10/20: 줄 안의 순서는 들어올 때마다 섞는다(사용자 요청) — 어느 줄에 들어가는지는 그대로.
+  return { ranking: shuffle(ranking), genres }
+}
+
+function shuffle<T>(xs: T[]): T[] {
+  const a = [...xs]
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j]!, a[i]!] }
+  return a
 }
 
 /** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */
