@@ -60,7 +60,7 @@
 
 /* 홈 검색 입력창 모양(10/19) — search.module.css 의 .field 와 같은 모양, 누르면 /search. */
 /* 10/20: 왼쪽에 남성향/여성향/전체, 둥근 알약 모양, 위아래 여백 넓힘. */
-.searchRow { display: flex; gap: 8px; margin: var(--space-5) var(--gutter) 0; } /* 아래 공백 없음(10/20) */
+.searchRow { display: flex; gap: 8px; margin: var(--space-5) var(--gutter) var(--space-3); } /* 아래 공백 조금(10/20) */
 /* 10/20: 안쪽 옅은 회색, 테두리 없음, 검색 아이콘은 오른쪽 안. */
 .searchBar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 18px; border: 0; background: #2c2b33; border-radius: 999px; color: var(--color-text-secondary); }
 .audience { flex-shrink: 0; height: 44px; padding: 0 30px 0 16px; border: 1px solid #ffffff08; border-radius: 999px; color: var(--color-text-primary); font-size: 14px; letter-spacing: -.02em;
