@@ -227,8 +227,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .row-scroll { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
   -webkit-overflow-scrolling: touch; padding: 0 var(--gutter); scroll-padding: 0 var(--gutter); }
 .row-scroll::-webkit-scrollbar { display: none; }
-/* 카드 폭: 한 화면에 2장 + 다음 장이 걸쳐 보이게. 상한을 두지 않는다 — 앱 폭이 이미 고정이다. */
-.row-scroll > * { scroll-snap-align: start; flex: 0 0 58%; }
+/* 카드 폭(10/20): 홈 줄과 같은 150px — 58% 는 너무 컸다. */
+.row-scroll > * { scroll-snap-align: start; flex: 0 0 150px; }
 /* 홈 섹션 줄(10/19): 양옆 여백 없이, 카드 폭 150px(레퍼런스 카드 크기). */
 .row-scroll--flush { padding: 0 8px; scroll-padding: 0 8px; gap: 8px; }
 .row-scroll--flush > * { flex: 0 0 150px; }
@@ -253,7 +253,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .comment-scroll > * { scroll-snap-align: start; flex: 0 0 88%; }
 
 /* 발견 — 2열 그리드. 카드는 행과 같은 것을 쓴다. */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+/* 10/20: 2열은 카드가 너무 커서 폰에서 3열(홈 줄 카드 150px 와 비슷한 크기). */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: var(--space-3); }
 
 .pager { display: flex; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 var(--gutter); scroll-padding: 0 var(--gutter); touch-action: pan-x pan-y; }
 .pager::-webkit-scrollbar { display: none; }
@@ -283,7 +284,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 @media (min-width: 1024px) {
   .app-shell:has(.page--wide) { --shell-w: var(--app-w-wide); }
   .page--wide { --gutter: 24px; max-width: none; }
-  .page--wide .grid-2 { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .page--wide .grid-2 { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
 
 /* fields */
