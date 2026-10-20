@@ -9,9 +9,21 @@ const COOKIE = 'miro_admin'
 
 export type Admin = { id: string; email: string; role: AdminRole }
 
+/**
+ * 운영자 콘솔 접근은 Vercel Authentication(배포 보호 'all', 10/20)이 막는다 — Vercel 팀 계정으로 로그인된 브라우저만 여기까지 온다.
+ * 그래서 ADMIN_TRUST_VERCEL_AUTH=1 이면 콘솔 안에서 이메일·비밀번호를 다시 묻지 않고 운영자(superadmin) 로 본다.
+ * 이 플래그는 배포 보호가 켜진 프로젝트에서만 켜야 한다. 꺼져 있으면 예전처럼 쿠키 세션이 필요하다.
+ */
+async function trustedOperator(): Promise<Admin | null> {
+  if (process.env.ADMIN_TRUST_VERCEL_AUTH !== '1') return null
+  const rows = await db.select({ id: adminUsers.id, email: adminUsers.email, role: adminUsers.role })
+    .from(adminUsers).where(and(eq(adminUsers.role, 'superadmin'), isNull(adminUsers.disabledAt))).orderBy(adminUsers.createdAt).limit(1)
+  return rows[0] ?? null
+}
+
 export async function currentAdmin(): Promise<Admin | null> {
   const token = (await cookies()).get(COOKIE)?.value
-  if (!token) return null
+  if (!token) return trustedOperator()
   const rows = await db.select({ id: adminUsers.id, email: adminUsers.email, role: adminUsers.role })
     .from(adminSessions).innerJoin(adminUsers, eq(adminUsers.id, adminSessions.adminId))
     .where(and(eq(adminSessions.token, token), gt(adminSessions.expiresAt, new Date()), isNull(adminUsers.disabledAt)))
