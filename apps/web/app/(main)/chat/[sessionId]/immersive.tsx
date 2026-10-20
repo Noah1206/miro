@@ -23,7 +23,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children }: { se
   const key = `miro:immersive:${sessionId}`
   const [on, setOn] = useState(false)
   const audio = useRef<HTMLAudioElement | null>(null)
-  useEffect(() => { try { setOn(media !== 'text' && localStorage.getItem(key) === '1') } catch { /* 저장소가 없으면 꺼진 채로 */ } }, [key, media])
+  // 음성·영상 캐릭터는 처음부터 켜져 있고(10/20), 사용자가 끈 방('0')만 꺼진 채로 연다.
+  useEffect(() => { try { setOn(media !== 'text' && localStorage.getItem(key) !== '0') } catch { setOn(media !== 'text') } }, [key, media])
   const toggle = () => {
     const next = !on
     setOn(next)

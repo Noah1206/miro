@@ -2,7 +2,7 @@
  * GPT-SoVITS 목소리를 공식 보이스 라이브러리(official_voices)에 올린다 — 운영자 전용. 프로덕션 코드는 이 파일을 import 하지 않는다.
  *
  *   pnpm voice:gsv register --dir ~/.miro/voices/gsv/voices/<폴더> --id yoon-seoha --label 윤서하 \
- *     --basis own_voice|written_consent|license --holder "목소리 주인" --evidence "동의 근거" --by <운영자 이메일> --db-host <DATABASE_URL 호스트>
+ *     --basis own_voice|written_consent|license|unverified --holder "목소리 주인" --evidence "동의 근거" --by <운영자 이메일> --db-host <DATABASE_URL 호스트>
  *   pnpm voice:gsv list   --db-host <host>
  *   pnpm voice:gsv retire --id yoon-seoha --db-host <host>
  *
@@ -15,7 +15,8 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { library, probe, sha256File } from './import'
 
-const BASES = ['own_voice', 'written_consent', 'license'] as const
+// unverified(10/20): 권리 근거를 아직 확보하지 못한 목소리 — 거짓 근거 대신 사실대로 남긴다. 공개 전에 바꿔야 한다.
+const BASES = ['own_voice', 'written_consent', 'license', 'unverified'] as const
 
 async function main() {
   const { positionals, values: a } = parseArgs({ allowPositionals: true, options: {

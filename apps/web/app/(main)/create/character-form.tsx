@@ -452,8 +452,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           {/* 목소리 칸이 없을 때(전화가 닫힌 운영 베타)도 이미 고른 목소리는 그대로 보낸다 — 고치기 저장이 지우지 않게. */}
           {voices.length === 0 && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
-          {voices.length > 0 && (
-            <Section title={t('목소리')} subtitle={t('운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.')}>
+          {/* 목소리(10/20): 유형이 몰입 모드(음성·음성+영상)일 때만 고른다 — 대화만인 캐릭터는 읽어 줄 일이 없다. */}
+          {voices.length > 0 && media !== 'text' && (
+            <Section title={t('목소리')} subtitle={t('몰입 모드에서 이 캐릭터의 대사를 읽어 줄 목소리예요. 운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.')}>
               <Card>
                 <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
                   options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
