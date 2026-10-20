@@ -25,6 +25,10 @@ async function main() {
   const dbHost = new URL(process.env.DATABASE_URL).hostname
   const { db, voiceJobs, and, asc, eq, sql } = await import('../../packages/db/src/index')
   console.log(`voice worker: db=${dbHost} gsv=${GSV} voices=${VOICES}`)
+  // 워커가 죽었다 다시 뜨면 'running' 으로 남은 작업은 처음부터 다시(워커는 하나뿐이라는 전제)
+  await db.update(voiceJobs).set({ status: 'queued', stage: '', error: null }).where(eq(voiceJobs.status, 'running'))
+  const TRAINER = process.env.MIRO_TRAINER ?? 'local'  // local = 맥 CPU(1~2시간) | colab = 데이터셋만 만들고 jobs/<id>/weights/ 에 가중치가 올 때까지 기다림
+  console.log(`trainer=${TRAINER}`)
 
   const log = async (id: string, line: string) => {
     console.log(`[${id.slice(0, 8)}] ${line}`)
@@ -61,13 +65,28 @@ async function main() {
     writeFileSync(list, lines.join('\n') + '\n')
     await log(job.id, `조각 ${lines.length}개로 학습`)
 
-    await stage(job.id, '2/4 파인튜닝(CPU, 1~2시간)')
-    await run(job.id, PY, ['-u', join(GSV, 'train_miro.py')], { cwd: GSV, keep: /^(STEP|DATA|WEIGHTS|ALL)|====> Epoch|Traceback|Error/,
-      env: { GSV_ROOT: GSV, GSV_EXP: exp, GSV_LIST: list, GSV_WAVS: wavs, GSV_GPU: process.env.GSV_GPU ?? '0', NLTK_ALLOW_PROXIED_URLOPEN: '1' } })
+    let sov: string | undefined, gpt: string | undefined
+    if (TRAINER === 'colab') {
+      // 데이터셋 zip 을 만들어 두고(운영자가 Colab 으로 학습), weights/ 에 sovits.pth·gpt.ckpt 가 들어오면 이어간다
+      spawnSync('zip', ['-q', '-r', `${jobDir}.zip`, 'Miro_Dataset_Output', 'raw_manhwa_voice.list'], { cwd: jobDir })
+      await stage(job.id, `2/4 학습 대기 — Colab 에서 가중치를 넣어 주면 이어짐 (${jobDir}.zip)`)
+      const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
+      const until = Date.now() + 12 * 3600_000
+      while (!(existsSync(join(w, 'sovits.pth')) && existsSync(join(w, 'gpt.ckpt')))) {
+        if (Date.now() > until) throw new Error('12시간 안에 가중치가 오지 않았습니다')
+        await new Promise((r) => setTimeout(r, 30_000))
+      }
+      await new Promise((r) => setTimeout(r, 5_000))  // 복사가 끝나길
+      sov = join(w, 'sovits.pth'); gpt = join(w, 'gpt.ckpt')
+    } else {
+      await stage(job.id, '2/4 파인튜닝(CPU, 1~2시간)')
+      await run(job.id, PY, ['-u', join(GSV, 'train_miro.py')], { cwd: GSV, keep: /^(STEP|DATA|WEIGHTS|ALL)|====> Epoch|Traceback|Error/,
+        env: { GSV_ROOT: GSV, GSV_EXP: exp, GSV_LIST: list, GSV_WAVS: wavs, GSV_GPU: process.env.GSV_GPU ?? '0', NLTK_ALLOW_PROXIED_URLOPEN: '1' } })
+      sov = newest(join(GSV, 'SoVITS_weights_v2'), new RegExp(`^${exp}_e\\d+_s\\d+\\.pth$`))
+      gpt = newest(join(GSV, 'GPT_weights_v2'), new RegExp(`^${exp}-e\\d+\\.ckpt$`))
+    }
 
     await stage(job.id, '3/4 설치(목소리 폴더)')
-    const sov = newest(join(GSV, 'SoVITS_weights_v2'), new RegExp(`^${exp}_e\\d+_s\\d+\\.pth$`))
-    const gpt = newest(join(GSV, 'GPT_weights_v2'), new RegExp(`^${exp}-e\\d+\\.ckpt$`))
     if (!sov || !gpt) throw new Error('학습 결과 가중치를 찾지 못했습니다')
     const dir = join(VOICES, exp); mkdirSync(dir, { recursive: true })
     copyFileSync(sov, join(dir, 'sovits.pth')); copyFileSync(gpt, join(dir, 'gpt.ckpt'))
