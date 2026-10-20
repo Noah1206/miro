@@ -421,3 +421,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .composerForm { border-radius: 20px 20px 0 0; border-inline: 0; border-bottom: 0; padding-inline: 16px 10px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
 /* 키보드가 올라오면 홈 바 여백이 필요 없다. */
 :global([data-keyboard='true']) .composerForm { padding-bottom: 8px; }
+
+/* 몰입 모드 · 음성+영상(10/19): 캐릭터 사진이 화면 전체에, 머리·입력창은 반투명으로 그 위에. */
+.backdrop { position: fixed; inset: 0; z-index: 0; background-size: cover; background-position: center 20%; }
+.backdrop::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.3), rgba(0,0,0,.72)); }
+:global([data-immersive='video']) .page { background: transparent; }
+:global([data-immersive='video']) .main { position: relative; z-index: 1; }
+:global([data-immersive='video']) .header, :global([data-immersive='video']) .composer { background: rgba(10,10,14,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }

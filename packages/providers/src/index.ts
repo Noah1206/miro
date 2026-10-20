@@ -33,3 +33,4 @@ export * from './ai/evaluation'
 export * from './ai/readiness'
 
 export { CHARACTER_VOICE_RULES } from './ai/character-voice'
+export { resolveTts, type TtsProvider, type TtsRequest } from './tts'

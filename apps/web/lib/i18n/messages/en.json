@@ -1386,5 +1386,9 @@
  "몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 지금은 유형만 저장되고, 몰입 모드 재생은 준비 중이에요.": "Immersive mode lets you hear this character’s chat in voice and continue by speaking. For now only the type is saved; playback is coming.",
  "채팅에서 /이름 으로 부르는 지시예요.": "Instructions you call with /name in chat.",
  "남이 공개한 걸 그대로 붙일 수 있어요.": "Attach ones others published as they are.",
- "성별과 외형을 적으면 사진이 돼요.": "Gender and looks become the photo."
+ "성별과 외형을 적으면 사진이 돼요.": "Gender and looks become the photo.",
+ "듣는 중, 누르면 멈춰요": "Listening, tap to stop",
+ "말로 쓰기": "Speak to type",
+ "몰입 모드": "Immersive mode",
+ "몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.": "Immersive mode lets you hear this character’s replies in their voice and continue by speaking. Voice + video also fills the screen with the character’s photo."
 }

@@ -12,6 +12,7 @@ import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
 import { useTurns } from './turns'
 import { streamTurn } from './stream-turn'
+import { MicButton } from './immersive'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
@@ -205,6 +206,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
                 </button>)}
               </div>}
             </div>}
+            {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
+            <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}
+              onSubmit={value => { setDraft(value); setRequestId(crypto.randomUUID()); setTimeout(() => ref.current?.requestSubmit(), 0) }} />
             {roomHref && <TransitionLink href={roomHref} aria-label={t('문자')} className={styles.toolButton}><ChatRoomIcon /></TransitionLink>}
             <ModelPicker {...modelOptions} place="up" />
           </div>
