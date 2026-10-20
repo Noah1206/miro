@@ -15,7 +15,7 @@ export async function OriginalStoriesRow() {
         <TransitionLink href="/stories" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
       </div>
       {/* 카드 크기는 홈의 다른 섹션 줄(.row-scroll--flush, 폭 150px)과 같게(10/19). */}
-      <div className="row-scroll row-scroll--flush" style={{ margin: '0 calc(-1 * var(--gutter))' }}>
+      <div className="row-scroll row-scroll--flush row-scroll--stories" style={{ margin: '0 calc(-1 * var(--gutter))' }}>
         {list.map(s => <StoryCard key={s.slug} s={s} compact />)}
       </div>
     </section>
