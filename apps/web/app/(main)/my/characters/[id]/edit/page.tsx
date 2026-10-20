@@ -21,7 +21,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   const table = profileStatus(c)
 
   const initial: Partial<FormInitial> = {
-    experienceType: c.experienceType,
+    experienceType: c.experienceType, audience: c.audience,
     name: c.name, title: c.tagline ?? '', worldSetting: world?.worldSetting ?? '', worldLocation: world?.location ?? '',
     age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,

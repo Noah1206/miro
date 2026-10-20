@@ -51,6 +51,8 @@ export type FormInitial = {
   commands: CharacterCommand[]
   /** 캐릭터 유형(10/19): 대화만 / 음성통화 / 음성+영상통화. */
   media: CharacterMedia
+  /** 홈 남성향/여성향(10/20). */
+  audience: 'female' | 'male'
   experienceType?: 'chat' | 'reality'
   isPublic: boolean
   /** 이미 저장된 사진 URL (편집 화면). 대표가 첫 번째. */
@@ -70,7 +72,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], commands: [], media: 'text',
+  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], commands: [], media: 'text', audience: 'female',
   isPublic: true,
   images: [],
 }
@@ -142,6 +144,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(i.isPublic)
   const [media, setMedia] = useState<CharacterMedia>(i.media)
+  const [audience, setAudience] = useState(i.audience)
   const can = capabilities
   const [hobbies, setHobbies] = useState(i.hobbies)
   const [dislikes, setDislikes] = useState(i.dislikes)
@@ -295,6 +298,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                 options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('몰입 모드 · 음성') }, { value: 'video', label: t('몰입 모드 · 음성+영상') }]} />
             </Card>
           </Section>}
+          {/* 대상(10/20): 홈 위 남성향/여성향 고르기가 이 값으로 거른다. */}
+          <Section title={t('대상')} subtitle={t('홈에서 고른 취향에 맞춰 이 캐릭터가 보여요.')}>
+            <Card>
+              <ChoiceChips name="audience" value={audience} onChange={v => setAudience(v as 'female' | 'male')} columns={2}
+                options={[{ value: 'female', label: t('여성향') }, { value: 'male', label: t('남성향') }]} />
+            </Card>
+          </Section>
           <Section title={t('공개')}>
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
