@@ -17,7 +17,8 @@
     "ai:eval": "tsx ai/evals/run.ts",
     "ai:cost": "tsx ai/evals/chat-cost.ts",
     "voice": "tsx tooling/voice/import.ts",
-    "voice:gsv": "tsx tooling/voice/register-gsv.ts"
+    "voice:gsv": "tsx tooling/voice/register-gsv.ts",
+    "voice:worker": "tsx tooling/voice/worker.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10",

@@ -142,6 +142,24 @@ export const officialVoices = pgTable('official_voices', {
   retiredAt: timestamp('retired_at', { withTimezone: true }),
 }).enableRLS()
 
+/** 유튜브 링크 → 데이터셋 → 파인튜닝 → official_voices 등록을 맥북 워커(tooling/voice/worker.ts)가 돌리는 작업(10/20). 관리자 콘솔 /voices 가 만든다. */
+export const voiceJobs = pgTable('voice_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  /** 끝나면 official_voices.id 가 되는 값(소문자·숫자·하이픈). */
+  voiceId: text('voice_id').notNull().unique(),
+  label: text('label').notNull(),
+  sourceUrls: jsonb('source_urls').$type<string[]>().notNull(),
+  rights: jsonb('rights').$type<{ basis: string; holder: string; evidence: string }>().notNull().default({ basis: 'unverified', holder: '', evidence: '' }),
+  requestedBy: text('requested_by').notNull(),
+  status: text('status', { enum: ['queued', 'running', 'done', 'failed'] }).notNull().default('queued'),
+  stage: text('stage').notNull().default(''),
+  log: text('log').notNull().default(''),
+  error: text('error'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  startedAt: timestamp('started_at', { withTimezone: true }),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+}).enableRLS()
+
 /**
  * Character Core — 안정적으로 유지되는 정체성.
  * Dynamic State(감정/관계/세계 위치)는 여기 저장하지 않는다.
