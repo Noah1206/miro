@@ -1390,5 +1390,12 @@
  "듣는 중, 누르면 멈춰요": "Listening, tap to stop",
  "말로 쓰기": "Speak to type",
  "몰입 모드": "Immersive mode",
- "몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.": "Immersive mode lets you hear this character’s replies in their voice and continue by speaking. Voice + video also fills the screen with the character’s photo."
+ "몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.": "Immersive mode lets you hear this character’s replies in their voice and continue by speaking. Voice + video also fills the screen with the character’s photo.",
+ "남성향": "For men",
+ "여성향": "For women",
+ "아직 남성향 캐릭터가 없어요": "No characters for men yet",
+ "취향이 어떻게 되세요?": "What are you into?",
+ "여자 캐릭터와 로맨스": "Romance with female characters",
+ "남자 캐릭터와 로맨스": "Romance with male characters",
+ "모두 보기": "Show everything"
 }

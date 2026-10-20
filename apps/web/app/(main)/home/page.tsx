@@ -13,6 +13,8 @@ import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
 import { OriginalStoriesRow } from '../stories/home-row'
+import { cookies } from 'next/headers'
+import { AudienceSelect } from './audience-select'
 
 /** 섹션 제목은 이모지 하나 + 문장(베베챗식, 10/19). 목록에 없는 장르는 기본 문장. */
 const GENRE_TITLES: Record<string, string> = {
@@ -29,13 +31,20 @@ const GENRE_TITLES: Record<string, string> = {
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
   const user = await currentUser()
+  const saved = (await cookies()).get('miro_home_audience')?.value
+  const audience = saved === 'female' || saved === 'male' ? saved : 'all'
+  // 처음 방문이면 취향 시트를 띄운다 — 방문자 동의 시트가 먼저라, 동의를 마친 뒤(또는 로그인)에만.
+  const firstVisit = !saved && (!!user || (await cookies()).has('miro_visitor_consent'))
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [sections, unread, unveil] = await Promise.all([
-    measured('nav.home_data', () => homeSections(user?.id ?? null)),
+    measured('nav.home_data', () => homeSections(user?.id ?? null, audience === 'all' ? undefined : audience)),
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
   ])
   const t = await getT()
+  // 취향 시트의 여성향·전체 칸 사진 — 남성향을 골라 목록이 비어 있으면 전체에서 가져온다.
+  const pool = audience === 'male' ? await homeSections(user?.id ?? null) : sections
+  const photos = [...pool.ranking, ...pool.genres.flatMap(r => r.items)].flatMap(c => c.images.slice(0, 1)).slice(0, 3)
 
   return (
     <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
@@ -58,13 +67,18 @@ export default async function Home() {
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
-      <TransitionLink href="/search" aria-label={t('검색')} className={styles.searchBar}>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
-        <span>{t('이름이나 키워드로 검색')}</span>
-      </TransitionLink>
-      <OriginalStoriesRow />
+      <div className={styles.searchRow}>
+        <AudienceSelect value={audience} autoOpen={firstVisit} photos={photos} />
+        <TransitionLink href="/search" aria-label={t('검색')} className={styles.searchBar}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
+          <span>{t('이름이나 키워드로 검색')}</span>
+        </TransitionLink>
+      </div>
+      {/* 오리지널 작품은 모두 여성향(BL·역하렘) — 남성향을 고르면 숨긴다. */}
+      {audience !== 'male' && <OriginalStoriesRow />}
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
+      {sections.ranking.length === 0 && audience === 'male' && <p className="empty-state">{t('아직 남성향 캐릭터가 없어요')}</p>}
       {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), items: sections.ranking }} href="/explore" />}
       {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }) }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}

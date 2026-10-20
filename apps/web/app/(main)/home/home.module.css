@@ -59,6 +59,35 @@
 .chips button[aria-pressed="true"] { background: var(--color-accent-soft); color: var(--color-accent-text); }
 
 /* 홈 검색 입력창 모양(10/19) — search.module.css 의 .field 와 같은 모양, 누르면 /search. */
-.searchBar { display: flex; align-items: center; gap: 10px; height: 44px; margin: 0 var(--gutter) var(--space-5); padding: 0 12px; border: 1px solid #ffffff08; background: #1b1a20; border-radius: 10px; color: var(--color-text-secondary); }
-.searchBar span { color: var(--color-text-tertiary); font-size: 14px; letter-spacing: -.02em; }
+/* 10/20: 왼쪽에 남성향/여성향/전체, 둥근 알약 모양, 위아래 여백 넓힘. */
+.searchRow { display: flex; gap: 8px; margin: var(--space-5) var(--gutter) var(--space-7); }
+.searchBar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; border: 1px solid #ffffff08; background: #1b1a20; border-radius: 999px; color: var(--color-text-secondary); }
+.audience { flex-shrink: 0; height: 44px; padding: 0 30px 0 16px; border: 1px solid #ffffff08; border-radius: 999px; color: var(--color-text-primary); font-size: 14px; letter-spacing: -.02em;
+  appearance: none; -webkit-appearance: none; background: #1b1a20 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a09fa8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; }
+.audTile { position: relative; display: block; padding: 0; border: 0; border-radius: 0; overflow: hidden; background: var(--color-surface-1, #1b1a20); color: #fff; text-align: center; }
+.audTile[aria-pressed="false"] { filter: brightness(.4); } /* 고르지 않은 칸은 어둡게, 테두리 없음(10/20) */
+.audTile { transition: filter .25s, transform .15s; }
+/* 누를 때 살짝 눌리고, 고르면 한 번 튕긴다(10/20). */
+.audTile:active { transform: scale(.985); }
+.audTile[aria-pressed="true"] { animation: audPop .35s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes audPop { 0% { transform: scale(.98); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .audTile { transition: filter .25s; } .audTile:active, .audTile[aria-pressed="true"] { transform: none; animation: none; } }
+/* 가운데 팝업(10/20) — 짙은 라벤더 버튼·흰 글자. */
+.audDialog { width: min(520px, calc(100vw - 24px)); padding: 0 16px 16px; border: 1px solid #ffffff14; border-radius: 24px; background: #23222a; color: #fff; overflow: hidden; }
+/* 팝업 전체도 가로2:세로3(10/20) — 남는 높이는 세 칸이 나눠 가진다. */
+.audDialog[open] { display: flex; flex-direction: column; aspect-ratio: 5 / 7; max-height: calc(100dvh - 24px); }
+.audDialog::backdrop { background: rgba(0,0,0,.6); }
+.audDialog h2 { margin: 0 -16px; padding: 24px 20px; background: #3a3941; /* 위쪽 제목 띠 배경(10/20) */ font-size: 18px; font-weight: 400; letter-spacing: -.03em; }
+.audStart { width: 100%; height: 44px; margin-top: 12px; border: 0; border-radius: 999px; background: var(--color-lavender-600); color: #fff; font-size: 15px; font-weight: 500; }
+.audStart { transition: background-color .15s; }
+.audStart:active { background: var(--color-lavender-800); } /* 누르면 더 짙게(10/20) */
+.audStart:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.audImages { position: absolute; inset: 0; display: flex; }
+.audImages img, .audImages i { flex: 1; min-width: 0; height: 100%; object-fit: cover; object-position: center 15%; }
+.audText { position: absolute; inset: auto 0 0; display: grid; gap: 2px; padding: 40px 8px 14px; background: linear-gradient(to top, rgba(0,0,0,.75), transparent); }
+.audText b { font-size: 18px; font-weight: 800; letter-spacing: -.03em; }
+.audText small { font-size: 11px; opacity: .85; }
+.audGrid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 0 -16px; } /* 사진은 팝업 양끝까지, 칸 사이 틈 없이(10/20) */
+.audience:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
+.searchBar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-tertiary); font-size: 14px; letter-spacing: -.02em; }
 .searchBar:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }

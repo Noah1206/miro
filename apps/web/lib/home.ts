@@ -63,7 +63,9 @@ function decodeCursor(value: string | null, sort: HomeSort) {
 
 /** 홈 칩(장르·관계)으로 거르기. 한 종류 안에서는 하나라도, 두 종류를 같이 고르면 둘 다 맞아야 한다. */
 export type HomeSort = 'latest' | 'ranking' | 'reviews'
-export type CardFilter = { genres?: string[]; relations?: string[]; query?: string; sort?: HomeSort }
+export type CardFilter = { genres?: string[]; relations?: string[]; query?: string; sort?: HomeSort; audience?: Audience }
+/** 홈 위 고르기(10/20). 없으면 전체. */
+export type Audience = 'female' | 'male'
 
 /** 칩 값을 비교할 글자로 — 틀린 값이면 INVALID_GENRE. */
 function chipNeedles(values: string[] = []) {
@@ -121,6 +123,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       )] : [or(eq(characters.isOfficial, true), eq(characters.isPublic, true))]),
       genreMatch(characters.id, filter.genres),
       relationMatch(filter.relations),
+      ...(filter.audience ? [eq(characters.audience, filter.audience)] : []),
       ...(searchNeedle(filter.query ?? '') ? [containsAny(sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`, [searchNeedle(filter.query ?? '')])] : []),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [sort === 'latest' ? afterDate : or(lt(score, cursor.score), and(eq(score, cursor.score), afterDate))] : []),
@@ -155,9 +158,9 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * 홈 섹션(10/19, 위프·베이비챗형): 인기 순위 + 장르별 줄. 목록은 homeCatalog(랭킹순 — 대화 인원, 같으면 최신) 한 번만 읽고 나눈다.
  * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 섹션끼리 캐릭터가 겹치지 않는다(10/19).
  */
-export async function homeSections(userId: string | null): Promise<{ ranking: HomeCard[]; genres: HomeRow[] }> {
+export async function homeSections(userId: string | null, audience?: Audience): Promise<{ ranking: HomeCard[]; genres: HomeRow[] }> {
   // 10/19: 최근에 만든 캐릭터가 앞에 오게(사용자 요청) — 대화 수가 쌓이기 전까지 최신순.
-  const { items } = await homeCatalog(userId, { sort: 'latest' })
+  const { items } = await homeCatalog(userId, { sort: 'latest', audience })
   // 10/19: 한 캐릭터는 한 섹션에만(사용자 요청). 인기 줄이 먼저 10명을 가져가고, 나머지는 자기 장르 중 가장 좁은(캐릭터가 적은) 장르 줄 하나에만 들어간다.
   const ranking = items.slice(0, 10)
   const rest = items.slice(10)

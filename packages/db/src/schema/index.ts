@@ -232,6 +232,8 @@ export const characters = pgTable('characters', {
    */
   /** 앱은 미로(reality) 캐릭터만 만든다(2026-09-29). chat 은 옛 캐릭터용으로만 남는다. */
   experienceType: text('experience_type', { enum: ['chat', 'reality'] }).notNull().default('reality'),
+  /** 홈 남성향/여성향 고르기(10/20). 기본 여성향(BL). */
+  audience: text('audience', { enum: ['female', 'male'] }).notNull().default('female'),
 
   /** 공식 보이스(미로 내부 ID). null 이면 기본 목소리. 제작자는 공식 보이스 중에서만 고른다. */
   voiceId: text('voice_id').references(() => officialVoices.id, { onDelete: 'set null' }),

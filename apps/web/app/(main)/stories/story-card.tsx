@@ -104,9 +104,10 @@ export function StoryCard({ s, compact }: { s: Card; compact?: boolean }) {
     <TransitionLink href={`/stories/${s.slug}`} aria-label={`${s.title}, ${audienceLabel(s.audience)}`} style={{ display: 'block', color: 'inherit' }}>
       <div style={{ position: 'relative' }}>
         <CharacterVisual name={s.title} accent={null} slug={s.slug} photo={s.cover} ratio="2 / 3" shared={false} scrim={false} />
-        <span className="t-micro" style={{ position: 'absolute', left: 8, top: 8, padding: '3px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.72)', color: 'var(--color-text-primary)' }}>
-          {compact ? (s.audience === 'reverse_harem' ? '역하렘' : 'BL') : audienceLabel(s.audience)}
-        </span>
+        {/* 10/20: 카드 위 BL 표시는 지운다(사용자 요청) — 역하렘만 보인다. */}
+        {s.audience === 'reverse_harem' && <span className="t-micro" style={{ position: 'absolute', left: 8, top: 8, padding: '3px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.72)', color: 'var(--color-text-primary)' }}>
+          {compact ? '역하렘' : audienceLabel(s.audience)}
+        </span>}
         {coverShowsTitle(s) && <CoverTitle title={s.title} slug={s.slug} />}
         {!s.published && <span className="t-micro" style={{ position: 'absolute', right: 8, top: 8, padding: '3px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.72)', color: 'var(--color-text-secondary)' }}>미공개</span>}
       </div>
