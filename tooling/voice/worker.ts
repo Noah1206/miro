@@ -26,7 +26,7 @@ async function main() {
   const { db, voiceJobs, and, asc, eq, sql } = await import('../../packages/db/src/index')
   console.log(`voice worker: db=${dbHost} gsv=${GSV} voices=${VOICES}`)
   // 워커가 죽었다 다시 뜨면 'running' 으로 남은 작업은 처음부터 다시(워커는 하나뿐이라는 전제)
-  await db.update(voiceJobs).set({ status: 'queued', stage: '', error: null }).where(eq(voiceJobs.status, 'running'))
+  await db.update(voiceJobs).set({ status: 'queued', stage: '', error: null }).where(and(eq(voiceJobs.status, 'running'), sql`${voiceJobs.stage} not like '2/4 학습 대기%'`))
   const TRAINER = process.env.MIRO_TRAINER ?? 'local'  // local = 맥 CPU(1~2시간) | colab = 데이터셋만 만들고 jobs/<id>/weights/ 에 가중치가 올 때까지 기다림
   console.log(`trainer=${TRAINER}`)
 
@@ -51,42 +51,44 @@ async function main() {
   const dur = (wav: string) => parseFloat(spawnSync(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', wav], { encoding: 'utf8' }).stdout) || 0
   const newest = (dir: string, re: RegExp) => readdirSync(dir).filter((f) => re.test(f)).map((f) => join(dir, f)).sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs)[0]
 
-  async function work(job: Job) {
-    const exp = job.voiceId.replace(/-/g, '_')
-    const jobDir = join(GSV, 'jobs', job.voiceId); mkdirSync(jobDir, { recursive: true })
-    const list = join(jobDir, 'raw_manhwa_voice.list'), wavs = join(jobDir, 'Miro_Dataset_Output')
+  const paths = (job: Job) => {
+    const exp = job.voiceId.replace(/-/g, '_'), jobDir = join(GSV, 'jobs', job.voiceId)
+    return { exp, jobDir, list: join(jobDir, 'raw_manhwa_voice.list'), wavs: join(jobDir, 'Miro_Dataset_Output'), weights: join(jobDir, 'weights') }
+  }
+  const readLines = (list: string) => readFileSync(list, 'utf8').split('\n').filter((l) => l.split('|').length === 4 && /[가-힣]{2,}/.test(l.split('|')[3] ?? ''))
 
+  /** 1단계: 유튜브 → 데이터셋. colab 모드면 zip 만 두고 '학습 대기'로 돌려보낸다(다음 작업을 막지 않게). local 모드면 학습까지. */
+  async function prepare(job: Job): Promise<'waiting' | 'trained'> {
+    const { exp, jobDir, list, wavs } = paths(job); mkdirSync(jobDir, { recursive: true })
     await stage(job.id, '1/4 유튜브 다운로드 · 슬라이스 · 전사')
     await run(job.id, PY, ['-u', join(GSV, 'miro_pipeline_master.py')], { cwd: jobDir, keep: /^(📥|🎙️|✂️|✨|❌|⚠️)|완료|오류/,
       env: { MIRO_YOUTUBE_URLS: job.sourceUrls.join(','), MIRO_VOICE_NAME: exp, MIRO_WHISPER: process.env.MIRO_WHISPER ?? 'small' } })
     // 전사 정리: 칸이 4개가 아니거나(글자에 | 가 섞임) 한글이 없는 줄(Whisper 환각)은 뺀다
-    const lines = readFileSync(list, 'utf8').split('\n').filter((l) => l.split('|').length === 4 && /[가-힣]{2,}/.test(l.split('|')[3] ?? ''))
+    const lines = readLines(list)
     // 10개 미만이면 학습 자체가 안 되고, 10~40개는 되긴 하지만 음색이 흔들린다(10/20 겨우디 13개) — 막지 않고 경고만 남긴다
     if (lines.length < 10) throw new Error(`쓸 수 있는 조각이 ${lines.length}개뿐입니다(최소 10). 배경음이 적고 말이 많은 영상으로 다시.`)
     writeFileSync(list, lines.join('\n') + '\n')
     await log(job.id, `조각 ${lines.length}개로 학습${lines.length < 40 ? ' — 40개 미만이라 품질이 낮을 수 있음(영상을 더 넣으면 좋아짐)' : ''}`)
-
-    let sov: string | undefined, gpt: string | undefined
     if (TRAINER === 'colab') {
-      // 데이터셋 zip 을 만들어 두고(운영자가 Colab 으로 학습), weights/ 에 sovits.pth·gpt.ckpt 가 들어오면 이어간다
       spawnSync('zip', ['-q', '-r', `${jobDir}.zip`, 'Miro_Dataset_Output', 'raw_manhwa_voice.list'], { cwd: jobDir })
       await stage(job.id, `2/4 학습 대기 — Colab 에서 가중치를 넣어 주면 이어짐 (${jobDir}.zip)`)
-      const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
-      const until = Date.now() + 12 * 3600_000
-      while (!(existsSync(join(w, 'sovits.pth')) && existsSync(join(w, 'gpt.ckpt')))) {
-        if (Date.now() > until) throw new Error('12시간 안에 가중치가 오지 않았습니다')
-        await new Promise((r) => setTimeout(r, 30_000))
-      }
-      await new Promise((r) => setTimeout(r, 5_000))  // 복사가 끝나길
-      sov = join(w, 'sovits.pth'); gpt = join(w, 'gpt.ckpt')
-    } else {
-      await stage(job.id, '2/4 파인튜닝(CPU, 1~2시간)')
-      await run(job.id, PY, ['-u', join(GSV, 'train_miro.py')], { cwd: GSV, keep: /^(STEP|DATA|WEIGHTS|ALL)|====> Epoch|Traceback|Error/,
-        env: { GSV_ROOT: GSV, GSV_EXP: exp, GSV_LIST: list, GSV_WAVS: wavs, GSV_GPU: process.env.GSV_GPU ?? '0', NLTK_ALLOW_PROXIED_URLOPEN: '1' } })
-      sov = newest(join(GSV, 'SoVITS_weights_v2'), new RegExp(`^${exp}_e\\d+_s\\d+\\.pth$`))
-      gpt = newest(join(GSV, 'GPT_weights_v2'), new RegExp(`^${exp}-e\\d+\\.ckpt$`))
+      return 'waiting'
     }
+    await stage(job.id, '2/4 파인튜닝(CPU, 1~2시간)')
+    await run(job.id, PY, ['-u', join(GSV, 'train_miro.py')], { cwd: GSV, keep: /^(STEP|DATA|WEIGHTS|ALL)|====> Epoch|Traceback|Error/,
+      env: { GSV_ROOT: GSV, GSV_EXP: exp, GSV_LIST: list, GSV_WAVS: wavs, GSV_GPU: process.env.GSV_GPU ?? '0', NLTK_ALLOW_PROXIED_URLOPEN: '1' } })
+    return 'trained'
+  }
 
+  /** 3·4단계: 가중치 → 목소리 폴더 → 라이브러리 등록. 가중치는 jobs/<id>/weights/ 또는 로컬 학습 산출물. */
+  async function finish(job: Job) {
+    const { exp, list, weights } = paths(job)
+    const lines = readLines(list)
+    let sov = join(weights, 'sovits.pth'), gpt = join(weights, 'gpt.ckpt')
+    if (!existsSync(sov) || !existsSync(gpt)) {
+      sov = newest(join(GSV, 'SoVITS_weights_v2'), new RegExp(`^${exp}_e\\d+_s\\d+\\.pth$`)) ?? ''
+      gpt = newest(join(GSV, 'GPT_weights_v2'), new RegExp(`^${exp}-e\\d+\\.ckpt$`)) ?? ''
+    }
     await stage(job.id, '3/4 설치(목소리 폴더)')
     if (!sov || !gpt) throw new Error('학습 결과 가중치를 찾지 못했습니다')
     const dir = join(VOICES, exp); mkdirSync(dir, { recursive: true })
@@ -105,22 +107,34 @@ async function main() {
       '--holder', holder, '--evidence', evidence, '--by', job.requestedBy, '--db-host', dbHost], { cwd: REPO, encoding: 'utf8', env: process.env })
     if (r.status !== 0) throw new Error(`등록 실패: ${(r.stderr || r.stdout).trim().slice(-300)}`)
     await log(job.id, r.stdout.trim().split('\n')[0] ?? '')
+    await db.update(voiceJobs).set({ status: 'done', stage: '끝 — 제작기 목소리 목록에 보임', finishedAt: new Date() }).where(eq(voiceJobs.id, job.id))
+  }
+
+  const failJob = async (id: string, e: unknown) => {
+    const msg = e instanceof Error ? e.message : String(e)
+    await log(id, `실패: ${msg}`)
+    await db.update(voiceJobs).set({ status: 'failed', error: msg.slice(0, 500), finishedAt: new Date() }).where(eq(voiceJobs.id, id))
   }
 
   for (;;) {
+    // (a) 학습 대기 중인 작업에 가중치가 들어왔으면 마무리한다 — 다른 작업과 상관없이
+    const waiting = await db.select().from(voiceJobs).where(and(eq(voiceJobs.status, 'running'), sql`${voiceJobs.stage} like '2/4 학습 대기%'`))
+    for (const w of waiting as Job[]) {
+      const { weights } = paths(w)
+      if (!(existsSync(join(weights, 'sovits.pth')) && existsSync(join(weights, 'gpt.ckpt')))) continue
+      await new Promise((r) => setTimeout(r, 5_000))  // 복사가 끝나길
+      try { await finish(w) } catch (e) { await failJob(w.id, e) }
+    }
+    // (b) 새 작업 하나
     const [job] = await db.select().from(voiceJobs).where(eq(voiceJobs.status, 'queued')).orderBy(asc(voiceJobs.createdAt)).limit(1)
     if (!job) { await new Promise((r) => setTimeout(r, POLL_MS)); continue }
     // 조건부 UPDATE 로 집는다 — 워커가 둘 떠도 같은 작업을 두 번 돌리지 않게
     const took = await db.update(voiceJobs).set({ status: 'running', startedAt: new Date() }).where(and(eq(voiceJobs.id, job.id), eq(voiceJobs.status, 'queued'))).returning({ id: voiceJobs.id })
     if (!took.length) continue
     try {
-      await work(job as Job)
-      await db.update(voiceJobs).set({ status: 'done', stage: '끝 — 제작기 목소리 목록에 보임', finishedAt: new Date() }).where(eq(voiceJobs.id, job.id))
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      await log(job.id, `실패: ${msg}`)
-      await db.update(voiceJobs).set({ status: 'failed', error: msg.slice(0, 500), finishedAt: new Date() }).where(eq(voiceJobs.id, job.id))
-    }
+      const r = await prepare(job as Job)
+      if (r === 'trained') await finish(job as Job)
+    } catch (e) { await failJob(job.id, e) }
   }
 }
 
