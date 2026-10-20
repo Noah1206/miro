@@ -63,7 +63,7 @@ export function ArchiveList({ initialPage }: {
   }
   return (
     <>
-      <header style={{ marginBottom: 'var(--space-6)' }}>
+      <header className="sticky-head" style={{ marginBottom: 'var(--space-6)', paddingBlock: 'var(--space-2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
           <h1 className="t-title-1" style={{ flex: 1 }}>{t('채팅')}</h1>
           <ChatDesignLibrary />

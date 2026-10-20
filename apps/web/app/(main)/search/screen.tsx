@@ -107,7 +107,7 @@ export function SearchScreen() {
     update(next)
   }
   return <div className={styles.screen}>
-    <header className={styles.header}>
+    <header className={`sticky-head ${styles.header}`}>
       <TransitionLink href="/home" direction="back" aria-label={t('홈')} className={styles.back}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7" /></svg></TransitionLink>
       <form role="search" className={styles.field} onSubmit={e => { e.preventDefault(); if (!composing) search(draft) }}>
         <input autoFocus type="search" maxLength={40} aria-label={t('검색')} placeholder={t('이름이나 키워드로 검색')} value={draft} onBlur={() => { if (!composing) remember(draft) }} onChange={e => setDraft(e.target.value)} onCompositionStart={() => setComposing(true)} onCompositionEnd={() => setComposing(false)} />

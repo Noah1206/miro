@@ -455,7 +455,7 @@ export function DialogueEditor({ name, characterName, defaultValue = [], fill = 
   return (
     <div className="stack" style={{ gap: 12, ...(fill ? { height: '100%' } : {}) }}>
       <input type="hidden" name={name} value={JSON.stringify(turns)} />
-      <div style={fill ? { flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 8 } : undefined}>
+      <div style={fill ? { flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehaviorY: 'contain', paddingBottom: 8 } : undefined}>
       {header}
 
       {turns.length === 0 && (
