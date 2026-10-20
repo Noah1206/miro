@@ -85,13 +85,11 @@
 *::-webkit-scrollbar { display: none !important; width: 0; height: 0; }
 html { -webkit-text-size-adjust: 100%; scroll-padding-bottom: calc(var(--nav-h) + 12px); scroll-padding-top: 72px; }
 html, body { margin: 0; padding: 0; min-height: 100%; background: var(--color-bg); color: var(--color-text-primary); }
-html:has([data-chat-theme]), body:has([data-chat-theme]) { overflow-x:clip; overscroll-behavior-x:none; }
-/* 만들기 화면은 끌어내려도 새로고침되지 않게(10/20) — 쓰던 내용이 날아간다. 휴대폰 브라우저는 html 에 걸어야 듣는다. */
-html:has(.create-page) { overscroll-behavior-y: none; }
+/* 스크롤은 콘텐츠 범위 안에서만(10/20): 가로로 페이지 전체가 밀리거나, 끝에서 고무줄처럼 튕기거나 끌어내려 새로고침되지 않게. 휴대폰 브라우저는 html 에 걸어야 듣는다. */
+html, body { overflow-x: clip; overscroll-behavior: none; }
 body {
   font-family: var(--font-body); font-size: var(--font-body-size); line-height: 1.6;
   font-weight: var(--weight-regular); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
-  overscroll-behavior-y: none;
   /* 한국어는 낱말 중간에서 끊지 않는다 — '사/진은' 이 되면 안 된다. 긴 영문·URL 만 어디서든 접는다. */
   word-break: keep-all; overflow-wrap: anywhere;
 }
