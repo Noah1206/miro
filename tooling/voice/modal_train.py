@@ -20,14 +20,15 @@ image = base_image.add_local_python_source("modal_app")  # 컨테이너 안에�
 app = modal.App("miro-tts-train", image=image)
 
 
-@app.function(gpu=GPU, cpu=2.0 if GPU else 16.0, memory=32768, volumes={"/voices": voices}, timeout=24 * 3600)
+# 10/20 실측: 16코어·32GB 는 무료 등급에서 20분 만에 회수되고 "CPU 워커 대기"로 멈췄다 → 8코어·16GB 가 잡힌다(속도 절반).
+@app.function(gpu=GPU, cpu=2.0 if GPU else 8.0, memory=16384, volumes={"/voices": voices}, timeout=24 * 3600)
 def train(name: str) -> str:
     import glob, shutil, subprocess, zipfile
     voices.reload()
     ds = f"/tmp/ds"; os.makedirs(ds, exist_ok=True)
     zipfile.ZipFile(f"/voices/_datasets/{name}.zip").extractall(ds)
     env = dict(os.environ, GSV_ROOT="/gsv", GSV_EXP=name, GSV_LIST=f"{ds}/{name}/raw.list", GSV_WAVS=f"{ds}/{name}/Miro_Dataset_Output",
-               GSV_GPU="1" if GPU else "0", OMP_NUM_THREADS=str(16 if not GPU else 2), NLTK_ALLOW_PROXIED_URLOPEN="1")
+               GSV_GPU="1" if GPU else "0", OMP_NUM_THREADS=str(8 if not GPU else 2), NLTK_ALLOW_PROXIED_URLOPEN="1")
     os.makedirs(f"/voices/_train/{name}", exist_ok=True)
     # 단계·에폭 줄은 바로 Modal 로그로(진행 확인용), 전체는 Volume 의 .log 로(실패 원인 확인용)
     p = subprocess.Popen(["python", "-u", "/voices/_datasets/train_miro.py"], cwd="/gsv", env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
