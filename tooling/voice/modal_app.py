@@ -24,6 +24,8 @@ image = (
     .pip_install("torch==2.7.0", "torchaudio==2.7.0", index_url="https://download.pytorch.org/whl/cu126")
     # gradio 4.44.1/gradio_client 1.3.0 고정: 더 새 gradio_client 는 serializing 모듈이 없어 전처리·추론 import 가 죽는다(10/20 Colab 실측)
     .run_commands("cd /gsv && pip install -q -r requirements.txt 'starlette<1.0' huggingface_hub 'gradio==4.44.1' 'gradio_client==1.3.0'")
+    # resampy: requirements.txt 에 없지만 TTS_infer_pack 이 참조 음성 리샘플에 import 한다(없으면 /speak 가 500)
+    .pip_install("resampy")
     .run_commands(
         "cd /gsv && python -c \"from huggingface_hub import snapshot_download as s; "
         f"s('lj1995/GPT-SoVITS', allow_patterns={PRETRAINED!r}, local_dir='GPT_SoVITS/pretrained_models')\"",
