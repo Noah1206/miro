@@ -386,7 +386,7 @@ export async function review(opts: { id: string; decision: 'approved' | 'rejecte
 /* ─────────────── 공식 라이브러리 (DB) ─────────────── */
 
 /** DATABASE_URL 이 운영자가 말한 호스트일 때만 쓴다 — 로컬 .env 가 운영 DB 를 가리킬 수 있다. */
-async function library(dbHost: string) {
+export async function library(dbHost: string) {
   const url = process.env.DATABASE_URL
   if (!url) throw new Error('DATABASE_URL 이 없습니다')
   const host = new URL(url).hostname

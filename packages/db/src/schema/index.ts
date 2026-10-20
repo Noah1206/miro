@@ -127,8 +127,8 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
 export const officialVoices = pgTable('official_voices', {
   id: text('id').primaryKey(),
   label: text('label').notNull(),
-  provider: text('provider', { enum: ['chatterbox'] }).notNull(),
-  /** 엔진이 만든 목소리 파일(Chatterbox Conditionals)의 sha256. 대사를 읽을 때 이 파일만 쓰고 녹음은 다시 읽지 않는다. */
+  provider: text('provider', { enum: ['chatterbox', 'gpt-sovits'] }).notNull(),
+  /** 엔진이 만든 목소리 파일의 sha256 — chatterbox 는 Conditionals, gpt-sovits 는 sovits.pth(없으면 ref.wav)이자 음성 서버의 목소리 폴더 이름. 대사를 읽을 때 이 파일만 쓰고 녹음은 다시 읽지 않는다. */
   providerVoiceId: text('provider_voice_id').notNull().unique(),
   /** retired 는 더 고를 수 없고, 이미 고른 캐릭터도 목소리 없이 글로만 보인다. */
   status: text('status', { enum: ['active', 'retired'] }).notNull(),

@@ -105,6 +105,7 @@ def main() -> None:
                     return self._send(400, b'empty text', 'text/plain')
                 with lock:
                     wav = synth(text, req.get('voice'), lang)
+                print(f"speak voice={os.path.basename(voice_dir(req.get('voice')))} chars={len(text)}", flush=True)
                 self._send(200, wav, 'audio/wav')
             except Exception as e:  # noqa: BLE001 — 한 요청의 실패가 서버를 죽이지 않게
                 import traceback; traceback.print_exc()
