@@ -1,4 +1,4 @@
-.screen { padding: 0 var(--gutter) calc(var(--nav-h) + 24px); animation: enter .24s ease-out both; }
+.screen { padding: 0 var(--gutter) calc(env(safe-area-inset-bottom) + 24px); animation: enter .24s ease-out both; }
 .header { display: flex; align-items: center; gap: 8px; padding: calc(12px + env(safe-area-inset-top)) 0 22px; }
 .back { width: 36px; height: 44px; display: grid; place-items: center; flex-shrink: 0; margin-left: -8px; }
 .field { flex: 1; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 12px; border: 1px solid #ffffff08; background: #1b1a20; border-radius: 10px; color: var(--color-text-secondary); transition: border-color .18s; }

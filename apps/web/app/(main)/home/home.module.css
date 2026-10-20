@@ -60,7 +60,7 @@
 
 /* 홈 검색 입력창 모양(10/19) — search.module.css 의 .field 와 같은 모양, 누르면 /search. */
 /* 10/20: 왼쪽에 남성향/여성향/전체, 둥근 알약 모양, 위아래 여백 넓힘. */
-.searchRow { display: flex; gap: 8px; margin: var(--space-5) var(--gutter) var(--space-7); }
+.searchRow { display: flex; gap: 8px; margin: var(--space-5) var(--gutter) 0; } /* 아래 공백 없음(10/20) */
 /* 10/20: 안쪽 옅은 회색, 테두리 없음, 검색 아이콘은 오른쪽 안. */
 .searchBar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 18px; border: 0; background: #2c2b33; border-radius: 999px; color: var(--color-text-secondary); }
 .audience { flex-shrink: 0; height: 44px; padding: 0 30px 0 16px; border: 1px solid #ffffff08; border-radius: 999px; color: var(--color-text-primary); font-size: 14px; letter-spacing: -.02em;
@@ -94,6 +94,10 @@
 .audTile[data-audience="female"] .audText b { color: #ffb3d1; }
 .audText small { font-size: 11px; opacity: .85; }
 .audGrid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 0 -16px; } /* 사진은 팝업 양끝까지, 칸 사이 틈 없이(10/20) */
+/* 누르면 살짝 눌린다(10/20). */
+.audience { transition: transform .12s, background-color .12s; }
+.audience:active { transform: scale(.95); background-color: #26252c; }
+@media (prefers-reduced-motion: reduce) { .audience:active { transform: none; } }
 .audience:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
 .searchBar > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #7c7a85; opacity: .7; font-size: 14px; letter-spacing: -.02em; }
 .searchIcon { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--color-text-secondary); }

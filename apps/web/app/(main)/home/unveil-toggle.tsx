@@ -31,7 +31,7 @@ export function HomeUnveilToggle({ enabled, signedIn }: { enabled: boolean; sign
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
       <span id={descriptionId} className="sr-only">{t('일반과 언베일의 대화·기억은 따로 보관돼요.')}</span>
       <UnveilSwitch label={t('언베일')} accessibleLabel={t('언베일 (성인 모드)')} describedBy={descriptionId}
-        checked={on} disabled={pending} onChange={next => apply(next)} />
+        checked={on} disabled={pending} onChange={next => apply(next)} intense />
     </span>
     <Sheet open={verification !== null} onClose={() => setVerification(null)} title={t('최초 1회 성인 인증')}>
       <div className="stack" style={{ gap: 16, padding: '0 var(--gutter) var(--space-5)' }}>
