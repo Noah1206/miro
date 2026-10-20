@@ -16,7 +16,7 @@ export type HomeCard = OfficialCard & {
   caption: string | null
 }
 
-export type HomeRow = { key: string; title: string; items: HomeCard[] }
+export type HomeRow = { key: string; title: string; items: HomeCard[]; /** 제목 아래 짧은 글(10/20). */ subtitle?: string }
 export type CardPage = { items: HomeCard[]; nextCursor: string | null }
 
 const PAGE_SIZE = 12

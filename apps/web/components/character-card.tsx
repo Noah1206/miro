@@ -3,7 +3,6 @@ import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
 import { characterTags } from '@/lib/character-card-copy'
-import { characterTagFont } from '@/lib/character-tag-font'
 import { press, spring } from '@/lib/motion/tokens'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
@@ -47,12 +46,13 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>
-          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 16, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.name}</p>
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-medium)', fontSize: 18, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{c.name}</p>
           {/* 카드 크기를 일정하게: 소개는 늘 2줄 높이, 태그 줄도 늘 한 줄 높이를 차지한다(내용이 없어도). */}
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.tagline ? `“${c.tagline}”` : ''}</p>
-          <div className={characterTagFont.className} style={{ display: 'flex', gap: 4, overflow: 'hidden', flexWrap: 'nowrap', height: 22 }}>
+          {/* 10/20: 둥근 주아체(굵어 보임) 대신 본문 글꼴 보통 굵기. */}
+          <div style={{ display: 'flex', gap: 4, overflow: 'hidden', flexWrap: 'nowrap', height: 22 }}>
             {tags.slice(0, 3).map(tag => (
-              <span key={tag} style={{ flexShrink: 0, padding: '3px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', fontSize: 11, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
+              <span key={tag} style={{ flexShrink: 0, padding: '3px 8px', borderRadius: 8, background: 'var(--color-surface-2)', color: 'var(--color-text-secondary)', fontSize: 11, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
             ))}
           </div>
         </div>

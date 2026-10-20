@@ -61,7 +61,8 @@
 /* 홈 검색 입력창 모양(10/19) — search.module.css 의 .field 와 같은 모양, 누르면 /search. */
 /* 10/20: 왼쪽에 남성향/여성향/전체, 둥근 알약 모양, 위아래 여백 넓힘. */
 .searchRow { display: flex; gap: 8px; margin: var(--space-5) var(--gutter) var(--space-7); }
-.searchBar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 16px; border: 1px solid #ffffff08; background: #1b1a20; border-radius: 999px; color: var(--color-text-secondary); }
+/* 10/20: 안쪽 옅은 회색, 테두리 없음, 검색 아이콘은 오른쪽 안. */
+.searchBar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 6px 0 18px; border: 0; background: #2c2b33; border-radius: 999px; color: var(--color-text-secondary); }
 .audience { flex-shrink: 0; height: 44px; padding: 0 30px 0 16px; border: 1px solid #ffffff08; border-radius: 999px; color: var(--color-text-primary); font-size: 14px; letter-spacing: -.02em;
   appearance: none; -webkit-appearance: none; background: #1b1a20 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a09fa8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; }
 .audTile { position: relative; display: block; padding: 0; border: 0; border-radius: 0; overflow: hidden; background: var(--color-surface-1, #1b1a20); color: #fff; text-align: center; }
@@ -73,9 +74,10 @@
 @keyframes audPop { 0% { transform: scale(.98); } 100% { transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .audTile { transition: filter .25s; } .audTile:active, .audTile[aria-pressed="true"] { transform: none; animation: none; } }
 /* 가운데 팝업(10/20) — 짙은 라벤더 버튼·흰 글자. */
-.audDialog { width: min(520px, calc(100vw - 24px)); padding: 0 16px 16px; border: 1px solid #ffffff14; border-radius: 24px; background: #23222a; color: #fff; overflow: hidden; }
+.audDialog { box-sizing: border-box; width: min(520px, calc(100vw - 24px)); max-width: none; padding: 0 16px 16px; border: 1px solid #ffffff14; border-radius: 24px; background: #23222a; color: #fff; overflow: hidden; }
 /* 팝업 전체도 가로2:세로3(10/20) — 남는 높이는 세 칸이 나눠 가진다. */
-.audDialog[open] { display: flex; flex-direction: column; aspect-ratio: 5 / 7; max-height: calc(100dvh - 24px); }
+/* 높이를 직접 정한다 — 브라우저 기본 dialog 높이(fit-content)는 aspect-ratio 를 무시해서 사진 칸이 0 으로 접혔다(10/20 운영). 가로5:세로7. */
+.audDialog[open] { display: flex; flex-direction: column; height: min(calc(min(520px, 100vw - 24px) * 1.4), calc(100dvh - 24px)); max-height: none; }
 .audDialog::backdrop { background: rgba(0,0,0,.6); }
 .audDialog h2 { margin: 0 -16px; padding: 24px 20px; background: #3a3941; /* 위쪽 제목 띠 배경(10/20) */ font-size: 18px; font-weight: 400; letter-spacing: -.03em; }
 .audStart { width: 100%; height: 44px; margin-top: 12px; border: 0; border-radius: 999px; background: var(--color-lavender-600); color: #fff; font-size: 15px; font-weight: 500; }
@@ -86,8 +88,13 @@
 .audImages img, .audImages i { flex: 1; min-width: 0; height: 100%; object-fit: cover; object-position: center 15%; }
 .audText { position: absolute; inset: auto 0 0; display: grid; gap: 2px; padding: 40px 8px 14px; background: linear-gradient(to top, rgba(0,0,0,.75), transparent); }
 .audText b { font-size: 18px; font-weight: 800; letter-spacing: -.03em; }
+/* 성향별 이름 색(10/20): 전체 라벤더, 남성향 하늘, 여성향 분홍. */
+.audTile[data-audience="all"] .audText b { color: #c9b8ff; }
+.audTile[data-audience="male"] .audText b { color: #9fd2ff; }
+.audTile[data-audience="female"] .audText b { color: #ffb3d1; }
 .audText small { font-size: 11px; opacity: .85; }
 .audGrid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin: 0 -16px; } /* 사진은 팝업 양끝까지, 칸 사이 틈 없이(10/20) */
 .audience:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
-.searchBar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--color-text-tertiary); font-size: 14px; letter-spacing: -.02em; }
+.searchBar > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #7c7a85; opacity: .7; font-size: 14px; letter-spacing: -.02em; }
+.searchIcon { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--color-text-secondary); }
 .searchBar:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }

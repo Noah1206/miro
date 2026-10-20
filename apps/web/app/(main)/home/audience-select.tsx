@@ -28,7 +28,7 @@ export function AudienceSelect({ value, autoOpen, photos }: { value: Audience; a
     router.refresh()
   }
   const tile = (v: Audience, sub: string, src: string | undefined) => (
-    <button type="button" aria-pressed={pick === v} onClick={() => setPick(v)} className={styles.audTile}>
+    <button type="button" aria-pressed={pick === v} onClick={() => setPick(v)} className={styles.audTile} data-audience={v}>
       <span className={styles.audImages}>{src ? <img src={src} alt="" /> : <i />}</span>
       <span className={styles.audText}><b>{label[v]}</b><small>{sub}</small></span>
     </button>
@@ -37,7 +37,8 @@ export function AudienceSelect({ value, autoOpen, photos }: { value: Audience; a
     <button type="button" className={styles.audience} aria-haspopup="dialog" onClick={() => { setPick(value); setOpen(true) }}>{label[value]}</button>
     <dialog ref={ref} className={styles.audDialog} aria-labelledby="aud-title"
       onCancel={e => { e.preventDefault(); dismiss() }} onClick={e => { if (e.target === e.currentTarget) dismiss() }}>
-      <h2 id="aud-title">{t('취향이 어떻게 되세요?')}</h2>
+      {/* 열릴 때 첫 초점은 제목 — 첫 칸에 초점 링이 뜨지 않게. */}
+      <h2 id="aud-title" tabIndex={-1} autoFocus style={{ outline: 'none' }}>{t('취향이 어떻게 되세요?')}</h2>
       <div className={styles.audGrid}>
         {/* 세 갈래 나란히(10/20). */}
         {tile('all', t('모두 보기'), img(photos[1]))}

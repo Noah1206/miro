@@ -11,7 +11,10 @@ export async function OriginalStoriesRow() {
   return (
     <section aria-label={t('미로 오리지널')} style={{ padding: '0 var(--gutter)', marginBottom: 'var(--space-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-        <h2 className="t-title-3"><span aria-hidden="true">✨ </span>{t('미로 오리지널')}</h2>
+        <div style={{ minWidth: 0 }}>
+          <h2 className="t-title-3"><span aria-hidden="true">✨ </span>{t('미로 오리지널')}</h2>
+          <p className="t-caption" style={{ margin: '4px 0 0', color: 'var(--color-text-tertiary)' }}>{t('미로가 직접 쓴 이야기 속으로')}</p>
+        </div>
         <TransitionLink href="/stories" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
       </div>
       {/* 카드 크기는 홈의 다른 섹션 줄(.row-scroll--flush, 폭 150px)과 같게(10/19). */}

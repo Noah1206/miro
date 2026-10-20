@@ -19,8 +19,11 @@ export function Row({ row, index, href }: { row: HomeRow; index: number; href?: 
       initial={reduce ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
       transition={{ duration: duration.slow, ease: ease.enter, delay: 0.08 * index }}
       style={{ marginBottom: 'var(--space-7)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '0 var(--gutter)', marginBottom: 14 }}>
-        <h2 id={`row-${row.key}`} className="t-title-3">{row.title}</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, padding: '0 var(--gutter)', marginBottom: 14 }}>
+        <div style={{ minWidth: 0 }}>
+          <h2 id={`row-${row.key}`} className="t-title-3">{row.title}</h2>
+          {row.subtitle && <p className="t-caption" style={{ margin: '4px 0 0', color: 'var(--color-text-tertiary)' }}>{row.subtitle}</p>}
+        </div>
         {href && <TransitionLink href={href} className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>}
       </div>
       <div className="row-scroll row-scroll--flush">

@@ -28,6 +28,18 @@ const GENRE_TITLES: Record<string, string> = {
   '시한': '⏳ 남은 시간이 얼마 없어',
 }
 
+/** 섹션 제목 아래 짧은 글(10/20). 목록에 없는 장르는 없음. */
+const GENRE_SUBTITLES: Record<string, string> = {
+  '현대': '퇴근길, 우연히 다시 마주친 그 사람',
+  '현대 판타지': '익숙한 일상 뒤에 숨은 다른 얼굴',
+  '동양 무협': '강호를 떠도는 사내들의 이야기',
+  '가이드버스': '폭주 직전의 그를 붙잡을 사람은 당신뿐',
+  '마교': '모두가 두려워하는 곳, 당신에게만 다른 얼굴',
+  '수인': '사람의 모습 뒤에 숨긴 본능',
+  '오메가버스': '향으로 시작되는 거부할 수 없는 끌림',
+  '시한': '끝이 정해진 사랑, 그래서 더 간절한',
+}
+
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
   const user = await currentUser()
@@ -70,8 +82,8 @@ export default async function Home() {
       <div className={styles.searchRow}>
         <AudienceSelect value={audience} autoOpen={firstVisit} photos={photos} />
         <TransitionLink href="/search" aria-label={t('검색')} className={styles.searchBar}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg>
           <span>{t('이름이나 키워드로 검색')}</span>
+          <span className={styles.searchIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg></span>
         </TransitionLink>
       </div>
       {/* 오리지널 작품은 모두 여성향(BL·역하렘) — 남성향을 고르면 숨긴다. */}
@@ -79,8 +91,8 @@ export default async function Home() {
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
       {sections.ranking.length === 0 && audience === 'male' && <p className="empty-state">{t('아직 남성향 캐릭터가 없어요')}</p>}
-      {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), items: sections.ranking }} href="/explore" />}
-      {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }) }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
+      {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), subtitle: t('요즘 가장 많은 사람이 말을 건 캐릭터'), items: sections.ranking }} href="/explore" />}
+      {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }), subtitle: GENRE_SUBTITLES[row.key] ? t(GENRE_SUBTITLES[row.key]!) : undefined }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>
