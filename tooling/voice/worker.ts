@@ -131,6 +131,11 @@ async function main() {
     // 조건부 UPDATE 로 집는다 — 워커가 둘 떠도 같은 작업을 두 번 돌리지 않게
     const took = await db.update(voiceJobs).set({ status: 'running', startedAt: new Date() }).where(and(eq(voiceJobs.id, job.id), eq(voiceJobs.status, 'queued'))).returning({ id: voiceJobs.id })
     if (!took.length) continue
+    // 맥 CPU 로컬 학습이 도는 동안은 전사(Whisper)를 겹치지 않게 — 둘이 겹치면 8GB 맥이 스왑으로 10배 느려진다(10/21 실측)
+    while (spawnSync('pgrep', ['-f', 'GPT_SoVITS/s[12]_train.py']).status === 0) {
+      await db.update(voiceJobs).set({ stage: '0/4 로컬 학습이 끝나길 기다리는 중' }).where(eq(voiceJobs.id, job.id))
+      await new Promise((r) => setTimeout(r, 60_000))
+    }
     try {
       const r = await prepare(job as Job)
       if (r === 'trained') await finish(job as Job)
