@@ -116,8 +116,8 @@ async function main() {
     await db.update(voiceJobs).set({ status: 'failed', error: msg.slice(0, 500), finishedAt: new Date() }).where(eq(voiceJobs.id, id))
   }
 
-  for (;;) {
-    // (a) 학습 대기 중인 작업에 가중치가 들어왔으면 마무리한다 — 다른 작업과 상관없이
+  /** 학습 대기 중인 작업에 가중치가 들어왔으면 마무리한다 — 다른 작업과 상관없이 */
+  async function finishWaiting() {
     const waiting = await db.select().from(voiceJobs).where(and(eq(voiceJobs.status, 'running'), sql`${voiceJobs.stage} like '2/4 학습 대기%'`))
     for (const w of waiting as Job[]) {
       const { weights } = paths(w)
@@ -125,6 +125,10 @@ async function main() {
       await new Promise((r) => setTimeout(r, 5_000))  // 복사가 끝나길
       try { await finish(w) } catch (e) { await failJob(w.id, e) }
     }
+  }
+
+  for (;;) {
+    await finishWaiting()
     // (b) 새 작업 하나
     const [job] = await db.select().from(voiceJobs).where(eq(voiceJobs.status, 'queued')).orderBy(asc(voiceJobs.createdAt)).limit(1)
     if (!job) { await new Promise((r) => setTimeout(r, POLL_MS)); continue }
@@ -135,6 +139,7 @@ async function main() {
     while (spawnSync('pgrep', ['-f', 'GPT_SoVITS/s[12]_train.py']).status === 0) {
       await db.update(voiceJobs).set({ stage: '0/4 로컬 학습이 끝나길 기다리는 중' }).where(eq(voiceJobs.id, job.id))
       await new Promise((r) => setTimeout(r, 60_000))
+      await finishWaiting()  // 기다리는 동안에도 끝난 학습은 등록한다
     }
     try {
       const r = await prepare(job as Job)
