@@ -17,7 +17,7 @@ export type StoryCard = StoryPublic & { id: string; published: boolean }
 /** 공개 목록 — story_private 는 읽지 않는다. 개발 환경에서만 미공개 작품도 보여 준다(배지로 구분). */
 export async function listStories(): Promise<StoryCard[]> {
   const rows = await db.select({ id: stories.id, public: stories.public, published: stories.isPublished }).from(stories)
-    .where(devApiAllowed() ? undefined : eq(stories.isPublished, true)).orderBy(asc(stories.sortOrder), asc(stories.createdAt))
+    .where(devApiAllowed() ? undefined : eq(stories.isPublished, true)).orderBy(desc(stories.sortOrder), desc(stories.createdAt)) // 10/20: 순서 반대로(사용자 요청)
   return rows.map(r => ({ ...(r.public as StoryPublic), id: r.id, published: r.published }))
 }
 
