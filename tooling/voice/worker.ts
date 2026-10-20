@@ -61,9 +61,10 @@ async function main() {
       env: { MIRO_YOUTUBE_URLS: job.sourceUrls.join(','), MIRO_VOICE_NAME: exp, MIRO_WHISPER: process.env.MIRO_WHISPER ?? 'small' } })
     // 전사 정리: 칸이 4개가 아니거나(글자에 | 가 섞임) 한글이 없는 줄(Whisper 환각)은 뺀다
     const lines = readFileSync(list, 'utf8').split('\n').filter((l) => l.split('|').length === 4 && /[가-힣]{2,}/.test(l.split('|')[3] ?? ''))
-    if (lines.length < 20) throw new Error(`쓸 수 있는 조각이 ${lines.length}개뿐입니다(최소 20). 배경음이 적고 말이 많은 영상으로 다시.`)
+    // 10개 미만이면 학습 자체가 안 되고, 10~40개는 되긴 하지만 음색이 흔들린다(10/20 겨우디 13개) — 막지 않고 경고만 남긴다
+    if (lines.length < 10) throw new Error(`쓸 수 있는 조각이 ${lines.length}개뿐입니다(최소 10). 배경음이 적고 말이 많은 영상으로 다시.`)
     writeFileSync(list, lines.join('\n') + '\n')
-    await log(job.id, `조각 ${lines.length}개로 학습`)
+    await log(job.id, `조각 ${lines.length}개로 학습${lines.length < 40 ? ' — 40개 미만이라 품질이 낮을 수 있음(영상을 더 넣으면 좋아짐)' : ''}`)
 
     let sov: string | undefined, gpt: string | undefined
     if (TRAINER === 'colab') {
