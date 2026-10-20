@@ -296,13 +296,33 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <Card>
               <ChoiceChips name="media" value={media} onChange={v => setMedia(v as CharacterMedia)} columns={3}
                 options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('몰입 모드 · 음성') }, { value: 'video', label: t('몰입 모드 · 음성+영상') }]} />
+              {/* 목소리(10/20): 몰입 모드를 고르면 같은 칸 안에서 바로 고른다(따로 있던 목소리 섹션은 지움). 대화만이면 읽어 줄 일이 없다. */}
+              {media !== 'text' && (
+                <div style={{ marginTop: 'var(--space-4)' }}>
+                  <p className="t-caption" style={{ margin: '0 0 8px', color: 'var(--color-text-secondary)' }}>{t('목소리')}</p>
+                  {voices.length > 0
+                    ? <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
+                        options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
+                    : <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('아직 고를 수 있는 목소리가 없어요. 기본 목소리로 읽어 줘요.')}</p>}
+                </div>
+              )}
             </Card>
           </Section>}
           {/* 대상(10/20): 홈 위 남성향/여성향 고르기가 이 값으로 거른다. */}
           <Section title={t('대상')} subtitle={t('홈에서 고른 취향에 맞춰 이 캐릭터가 보여요.')}>
             <Card>
-              <ChoiceChips name="audience" value={audience} onChange={v => setAudience(v as 'female' | 'male')} columns={2}
-                options={[{ value: 'female', label: t('여성향') }, { value: 'male', label: t('남성향') }]} />
+              {/* 사진 배경 칸 두 개(가로가 긴 3:2), 고르지 않은 칸은 어둡게 — 홈 취향 팝업과 같은 그림(10/20). */}
+              <input type="hidden" name="audience" value={audience} />
+              <div role="radiogroup" aria-label={t('대상')} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                {([['female', t('여성향'), '/audience/female.jpg', '#ffb3d1'], ['male', t('남성향'), '/audience/male.jpg', '#9fd2ff']] as const).map(([v, label, src, color]) => (
+                  <button key={v} type="button" role="radio" aria-checked={audience === v} onClick={() => setAudience(v)}
+                    style={{ position: 'relative', aspectRatio: '3 / 2', padding: 0, border: 0, borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
+                      background: `#1b1a20 url(${src}) center 20% / cover no-repeat`, filter: audience === v ? 'none' : 'brightness(.4)', transition: 'filter .25s' }}>
+                    <span style={{ position: 'absolute', inset: 'auto 0 0', padding: '24px 10px 10px', background: 'linear-gradient(to top, rgba(0,0,0,.75), transparent)',
+                      color, fontSize: 16, fontWeight: 700, textAlign: 'left' }}>{label}</span>
+                  </button>
+                ))}
+              </div>
             </Card>
           </Section>
           <Section title={t('공개')}>
@@ -452,15 +472,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           {/* 목소리 칸이 없을 때(전화가 닫힌 운영 베타)도 이미 고른 목소리는 그대로 보낸다 — 고치기 저장이 지우지 않게. */}
           {voices.length === 0 && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
-          {/* 목소리(10/20): 유형이 몰입 모드(음성·음성+영상)일 때만 고른다 — 대화만인 캐릭터는 읽어 줄 일이 없다. */}
-          {voices.length > 0 && media !== 'text' && (
-            <Section title={t('목소리')} subtitle={t('몰입 모드에서 이 캐릭터의 대사를 읽어 줄 목소리예요. 운영팀이 준비한 공식 목소리 중에서 고를 수 있어요.')}>
-              <Card>
-                <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
-                  options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
-              </Card>
-            </Section>
-          )}
         </Panel>
 
         {/* ── 관계 ── */}
