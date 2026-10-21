@@ -7,7 +7,7 @@
   출력: <출력 폴더>/Miro_Dataset_Output/<이름>_NNN.wav(32k 모노 16bit, -20 LUFS), raw_manhwa_voice.list, report.json(남긴 수·버린 이유별 수)
 
 단계와 버리는 기준:
-  1 demucs htdemucs 로 보컬만(배경음악·효과음 제거)
+  1 demucs htdemucs 로 보컬만(배경음악·효과음 제거) — 반주가 보컬보다 20dB 이상 작으면(음악 없음) 원본 사용: 분리 흔적이 11kHz 삐 소리로 남음
   2 GPT-SoVITS 슬라이서(RMS -40dB, 4~10초, 앞뒤 무음 0.5초까지) — 10초 넘는 덩어리는 더 잘게, 그래도 12초 넘으면 버림
   3 음량 -20 LUFS 정규화(피크 제한), 32kHz 모노
   4 faster-whisper 전사(한국어 고정, beam 5) — 말 아님(no_speech>0.5)·낮은 확신(avg_logprob<-1.0)·반복(compression>2.4)·한글 2자 미만·말속도 이상(초당 1.5~12자 밖)은 버림
@@ -48,7 +48,13 @@ def separate_vocals(src, work):
     hits = glob.glob(os.path.join(out, "htdemucs", "*", "vocals.wav"))
     if r.returncode != 0 or not hits:
         step(f"demucs 실패 → 원본 사용: {r.stderr.strip()[-200:]}"); return src
-    return hits[0]
+    # 음악 없는 영상(ASMR·낭독)에 분리를 쓰면 11kHz 근처에 삐 소리 흔적이 남는다(10/21 남자 6 실측) → 걷어낸 반주가 보컬보다 20dB 이상 작으면 원본을 쓴다
+    v, _ = sf.read(hits[0]); n, _ = sf.read(hits[0].replace("vocals.wav", "no_vocals.wav"))
+    ratio_db = 10 * np.log10((np.mean(n ** 2) + 1e-12) / (np.mean(v ** 2) + 1e-12))
+    report["accompaniment_db"] = round(float(ratio_db), 1)
+    if ratio_db < -20:
+        step(f"반주 {ratio_db:.0f}dB — 음악 없음, 보컬 분리 안 함(원본 사용)"); return src
+    step(f"반주 {ratio_db:.0f}dB — 음악 있음, 보컬 분리 사용"); return hits[0]
 
 
 def load_mono(path):
