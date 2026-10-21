@@ -109,28 +109,31 @@ def eval_gsv(voice: str) -> dict:
     return out
 
 
-@app.function(image=qwen_image, gpu="L4", volumes={"/voices": voices}, timeout=3600)
-def eval_qwen(voice: str) -> dict:
+# 1.7B 전체 파인튜닝은 L4(22GB)에서 OOM(10/21) → A100 40GB
+@app.function(image=qwen_image, gpu="A100-40GB", volumes={"/voices": voices}, timeout=3600)
+def eval_qwen(voice: str, skip_zeroshot: bool = False) -> dict:
     import subprocess
     import soundfile as sf
     import torch
     voices.reload()
     d, rows, ref, evals = _dataset(voice)
     from qwen_tts import Qwen3TTSModel
-    sc = Scorer("cuda"); out = {}
+    out = {}; sc = None
 
     def run(name, gen):
+        nonlocal sc
+        sc = sc or Scorer("cuda")  # 채점 모델(large-v3)은 파인튜닝이 끝난 뒤에 올린다 — GPU 메모리
         od = f"/voices/_eval/{voice}/{name}"; os.makedirs(od, exist_ok=True); pairs = []
         for i, (w, t) in enumerate(evals):
             wavs, sr = gen(t); p = f"{od}/{i:02d}.wav"; sf.write(p, wavs[0], sr); pairs.append((w, t, p))
         out[name] = sc.score(pairs); print(name, out[name], flush=True)
 
     base = "Qwen/Qwen3-TTS-12Hz-1.7B-Base"
-    m = Qwen3TTSModel.from_pretrained(base, device_map="cuda:0", dtype=torch.bfloat16)
-    prompt = m.create_voice_clone_prompt(ref_audio=ref[0], ref_text=ref[1])
-    if not os.environ.get("SKIP_ZEROSHOT"):
+    if not skip_zeroshot:
+        m = Qwen3TTSModel.from_pretrained(base, device_map="cuda:0", dtype=torch.bfloat16)
+        prompt = m.create_voice_clone_prompt(ref_audio=ref[0], ref_text=ref[1])
         run("C1_qwen_zeroshot", lambda t: m.generate_voice_clone(text=t, language="Korean", voice_clone_prompt=prompt))
-    del m; torch.cuda.empty_cache()
+        del m; sc = None; torch.cuda.empty_cache()
 
     # 파인튜닝: 같은 정제 데이터 전부(평가 문장 포함 — GPT-SoVITS 도 전부로 학습했으니 같은 조건), 참조는 하나로 고정(공식 권장)
     ft = f"/tmp/qwen_ft/{voice}"; os.makedirs(ft, exist_ok=True)
@@ -147,8 +150,10 @@ def eval_qwen(voice: str) -> dict:
     subprocess.run(["sed", "-i", "s/flash_attention_2/sdpa/g", "sft_12hz.py", "prepare_data.py"], cwd=cwd, check=False)
     subprocess.run(["python", "prepare_data.py", "--device", "cuda:0", "--tokenizer_model_path", "Qwen/Qwen3-TTS-Tokenizer-12Hz",
                     "--input_jsonl", f"{ft}/raw.jsonl", "--output_jsonl", f"{ft}/codes.jsonl"], cwd=cwd, check=True)
-    subprocess.run(["python", "sft_12hz.py", "--init_model_path", base, "--output_model_path", f"{ft}/out", "--train_jsonl", f"{ft}/codes.jsonl",
-                    "--batch_size", "2", "--lr", "2e-5", "--num_epochs", "3", "--speaker_name", "miro"], cwd=cwd, check=True)
+    from huggingface_hub import snapshot_download
+    base_local = snapshot_download(base)  # sft 스크립트가 저장할 때 설정 파일을 init 경로에서 복사한다 — 로컬 폴더여야 함(10/21)
+    subprocess.run(["python", "sft_12hz.py", "--init_model_path", base_local, "--output_model_path", f"{ft}/out", "--train_jsonl", f"{ft}/codes.jsonl",
+                    "--batch_size", "1", "--lr", "2e-5", "--num_epochs", "3", "--speaker_name", "miro"], cwd=cwd, check=True)
     ck = sorted((c for c in os.listdir(f"{ft}/out") if c.startswith("checkpoint-epoch-")), key=lambda c: int(c.rsplit("-", 1)[1]))[-1]
     m = Qwen3TTSModel.from_pretrained(f"{ft}/out/{ck}", device_map="cuda:0", dtype=torch.bfloat16)
     run("C2_qwen_finetuned", lambda t: m.generate_custom_voice(text=t, speaker="miro"))
@@ -159,6 +164,6 @@ def eval_qwen(voice: str) -> dict:
 @app.local_entrypoint()
 def main(voice: str = "woman-1", only: str = ""):
     a = eval_gsv.spawn(voice) if only in ("", "gsv") else None
-    c = eval_qwen.spawn(voice) if only in ("", "qwen") else None
+    c = eval_qwen.spawn(voice, only == "qwen") if only in ("", "qwen") else None
     res = {"gsv": a.get() if a else None, "qwen": c.get() if c else None}
     print(json.dumps(res, ensure_ascii=False, indent=1))

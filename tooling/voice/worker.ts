@@ -33,8 +33,10 @@ async function main() {
 
   const log = async (id: string, line: string) => {
     console.log(`[${id.slice(0, 8)}] ${line}`)
-    await db.update(voiceJobs).set({ log: sql`right(${voiceJobs.log} || ${line + '\n'}, 60000)` }).where(eq(voiceJobs.id, id))
+    // 로그 한 줄 저장 실패(DB 연결 타임아웃)로 워커가 죽지 않게 — 10/22 새벽 CONNECT_TIMEOUT 으로 죽어 woman-2 가 running 에 멈춤
+    await db.update(voiceJobs).set({ log: sql`right(${voiceJobs.log} || ${line + '\n'}, 60000)` }).where(eq(voiceJobs.id, id)).catch((e) => console.error(`log 저장 실패: ${e instanceof Error ? e.message : e}`))
   }
+  process.on('unhandledRejection', (e) => console.error(`unhandledRejection: ${e instanceof Error ? e.message : String(e)}`))
   const stage = async (id: string, s: string) => { await db.update(voiceJobs).set({ stage: s }).where(eq(voiceJobs.id, id)); await log(id, `── ${s}`) }
 
   /** 긴 명령을 돌리며 고른 줄만 로그로. 실패하면 마지막 줄을 담아 throw. */
