@@ -27,7 +27,7 @@ async function main() {
   console.log(`voice worker: db=${dbHost} gsv=${GSV} voices=${VOICES}`)
   // 워커가 죽었다 다시 뜨면 'running' 으로 남은 작업은 처음부터 다시(워커는 하나뿐이라는 전제)
   await db.update(voiceJobs).set({ status: 'queued', stage: '', error: null }).where(and(eq(voiceJobs.status, 'running'), sql`${voiceJobs.stage} not like '2/4 학습 대기%'`))
-  const TRAINER = process.env.MIRO_TRAINER ?? 'local'  // local = 맥 CPU(1~2시간) | colab = 데이터셋만 만들고 jobs/<id>/weights/ 대기 | gcp = Cloud Run Job(L4) 자동
+  const TRAINER = process.env.MIRO_TRAINER ?? 'local'  // local = 맥 CPU(1~2시간) | colab = zip 만 두고 jobs/<id>/weights/ 대기 | gcp = Cloud Run Job(L4, 쿼터 대기 중) | modal = Modal T4(카드 필요, 목소리당 몇백 원)
   const GCP_PROJECT = process.env.MIRO_GCP_PROJECT ?? 'miro-508504', GCP_REGION = process.env.MIRO_GCP_REGION ?? 'us-central1', GCP_BUCKET = process.env.MIRO_GCP_BUCKET ?? `miro-tts-voices-${GCP_PROJECT}`
   console.log(`trainer=${TRAINER}`)
 
@@ -89,6 +89,23 @@ async function main() {
       const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
       gc(['gsutil', '-q', 'cp', `gs://${GCP_BUCKET}/weights/${job.voiceId}/sovits.pth`, `gs://${GCP_BUCKET}/weights/${job.voiceId}/gpt.ckpt`, w], '가중치 내려받기')
       await log(job.id, 'GCP 학습 완료 — 가중치 받음')
+      return 'trained'
+    }
+    if (TRAINER === 'modal') {
+      // Modal GPU(T4, tooling/voice/modal_train.py): zip 을 Volume 에 → 학습 함수 실행(끝날 때까지 대기) → 가중치 내려받기. 목소리당 5~10분·몇백 원. 10/21
+      const MODAL = join(GSV, 'venv', 'bin', 'modal'), VOICE_DIR = join(process.cwd(), 'tooling', 'voice')
+      const md = (args: string[], label: string) => {
+        const r = spawnSync(MODAL, args, { encoding: 'utf8', cwd: VOICE_DIR, env: { ...process.env, MIRO_TTS_GPU: process.env.MIRO_TTS_GPU ?? 'T4' } })
+        if (r.status !== 0) throw new Error(`${label} 실패: ${(r.stderr || r.stdout).trim().slice(-400)}`)
+        return r.stdout
+      }
+      spawnSync('zip', ['-q', '-r', `${jobDir}.zip`, 'Miro_Dataset_Output', 'raw_manhwa_voice.list'], { cwd: jobDir })
+      await stage(job.id, '2/4 Modal GPU 학습(T4, 5~10분)')
+      md(['volume', 'put', '--force', 'miro-voices', `${jobDir}.zip`, `/_datasets/${job.voiceId}.zip`], '데이터셋 업로드')
+      md(['run', 'modal_train.py', '--names', job.voiceId], 'GPU 학습')
+      const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
+      for (const f of ['sovits.pth', 'gpt.ckpt']) md(['volume', 'get', '--force', 'miro-voices', `/_train/${job.voiceId}/${f}`, join(w, f)], '가중치 내려받기')
+      await log(job.id, 'Modal 학습 완료 — 가중치 받음')
       return 'trained'
     }
     await stage(job.id, '2/4 파인튜닝(CPU, 1~2시간)')
