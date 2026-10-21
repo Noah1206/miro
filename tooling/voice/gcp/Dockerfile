@@ -19,7 +19,11 @@ RUN python -c "from huggingface_hub import snapshot_download as s; s('lj1995/GPT
  && wget -q -O GPT_SoVITS/pretrained_models/fast_langdetect/lid.176.bin https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin \
  && python -c "import nltk; [nltk.download(r, quiet=True) for r in ['cmudict','averaged_perceptron_tagger','averaged_perceptron_tagger_eng']]"
 
+RUN pip install google-cloud-storage
 COPY gsv_server.py /gsv/gsv_server.py
+# 학습 작업(Cloud Run Job): train_miro.py + train_job.py — 같은 이미지로 합성(기본 CMD)과 학습(--command python train_job.py) 둘 다 한다
+COPY train_miro.py /gsv/train_miro.py
+COPY train_job.py /gsv/train_job.py
 # 목소리 폴더는 /voices 에 Cloud Storage 버킷을 마운트한다(deploy.sh) — 새 목소리는 버킷에 올리기만 하면 되고 이미지 재빌드가 없다.
 ENV PORT=8787
 CMD ["sh", "-c", "python /gsv/gsv_server.py --gsv-root /gsv --voices-dir /voices --default-voice ${MIRO_TTS_DEFAULT_VOICE:-default} --port ${PORT}"]

@@ -27,7 +27,8 @@ async function main() {
   console.log(`voice worker: db=${dbHost} gsv=${GSV} voices=${VOICES}`)
   // 워커가 죽었다 다시 뜨면 'running' 으로 남은 작업은 처음부터 다시(워커는 하나뿐이라는 전제)
   await db.update(voiceJobs).set({ status: 'queued', stage: '', error: null }).where(and(eq(voiceJobs.status, 'running'), sql`${voiceJobs.stage} not like '2/4 학습 대기%'`))
-  const TRAINER = process.env.MIRO_TRAINER ?? 'local'  // local = 맥 CPU(1~2시간) | colab = 데이터셋만 만들고 jobs/<id>/weights/ 에 가중치가 올 때까지 기다림
+  const TRAINER = process.env.MIRO_TRAINER ?? 'local'  // local = 맥 CPU(1~2시간) | colab = 데이터셋만 만들고 jobs/<id>/weights/ 대기 | gcp = Cloud Run Job(L4) 자동
+  const GCP_PROJECT = process.env.MIRO_GCP_PROJECT ?? 'miro-508504', GCP_REGION = process.env.MIRO_GCP_REGION ?? 'us-central1', GCP_BUCKET = process.env.MIRO_GCP_BUCKET ?? `miro-tts-voices-${GCP_PROJECT}`
   console.log(`trainer=${TRAINER}`)
 
   const log = async (id: string, line: string) => {
@@ -73,6 +74,22 @@ async function main() {
       spawnSync('zip', ['-q', '-r', `${jobDir}.zip`, 'Miro_Dataset_Output', 'raw_manhwa_voice.list'], { cwd: jobDir })
       await stage(job.id, `2/4 학습 대기 — Colab 에서 가중치를 넣어 주면 이어짐 (${jobDir}.zip)`)
       return 'waiting'
+    }
+    if (TRAINER === 'gcp') {
+      // GCP Cloud Run Job(L4, tooling/voice/gcp/train_job.py): zip 올리기 → 작업 실행(끝날 때까지 대기) → 가중치 내려받기. 목소리당 GPU 3~6분.
+      const gc = (args: string[], label: string) => {
+        const r = spawnSync(args[0]!, args.slice(1), { encoding: 'utf8', env: { ...process.env, PATH: `/opt/homebrew/share/google-cloud-sdk/bin:${process.env.PATH ?? ''}` } })
+        if (r.status !== 0) throw new Error(`${label} 실패: ${(r.stderr || r.stdout).trim().slice(-400)}`)
+        return r.stdout
+      }
+      spawnSync('zip', ['-q', '-r', `${jobDir}.zip`, 'Miro_Dataset_Output', 'raw_manhwa_voice.list'], { cwd: jobDir })
+      await stage(job.id, '2/4 GCP GPU 학습(L4, 5~10분)')
+      gc(['gsutil', '-q', 'cp', `${jobDir}.zip`, `gs://${GCP_BUCKET}/datasets/${job.voiceId}.zip`], '데이터셋 업로드')
+      gc(['gcloud', 'run', 'jobs', 'execute', 'miro-train', '--args', job.voiceId, '--region', GCP_REGION, '--project', GCP_PROJECT, '--wait', '--quiet'], 'GPU 학습 작업')
+      const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
+      gc(['gsutil', '-q', 'cp', `gs://${GCP_BUCKET}/weights/${job.voiceId}/sovits.pth`, `gs://${GCP_BUCKET}/weights/${job.voiceId}/gpt.ckpt`, w], '가중치 내려받기')
+      await log(job.id, 'GCP 학습 완료 — 가중치 받음')
+      return 'trained'
     }
     await stage(job.id, '2/4 파인튜닝(CPU, 1~2시간)')
     await run(job.id, PY, ['-u', join(GSV, 'train_miro.py')], { cwd: GSV, keep: /^(STEP|DATA|WEIGHTS|ALL)|====> Epoch|Traceback|Error/,
