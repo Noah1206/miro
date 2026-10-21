@@ -23,7 +23,7 @@ type Job = { id: string; voiceId: string; label: string; sourceUrls: string[]; r
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL 이 없습니다')
   const dbHost = new URL(process.env.DATABASE_URL).hostname
-  const { db, voiceJobs, and, asc, eq, sql } = await import('../../packages/db/src/index')
+  const { db, voiceJobs, officialVoices, and, asc, eq, sql } = await import('../../packages/db/src/index')
   console.log(`voice worker: db=${dbHost} gsv=${GSV} voices=${VOICES}`)
   // 워커가 죽었다 다시 뜨면 'running' 으로 남은 작업은 처음부터 다시(워커는 하나뿐이라는 전제)
   await db.update(voiceJobs).set({ status: 'queued', stage: '', error: null }).where(and(eq(voiceJobs.status, 'running'), sql`${voiceJobs.stage} not like '2/4 학습 대기%'`))
@@ -191,6 +191,12 @@ async function main() {
       '--holder', holder, '--evidence', evidence, '--by', job.requestedBy, '--db-host', dbHost], { cwd: REPO, encoding: 'utf8', env: process.env })
     if (r.status !== 0) throw new Error(`등록 실패: ${(r.stderr || r.stdout).trim().slice(-300)}`)
     await log(job.id, r.stdout.trim().split('\n')[0] ?? '')
+    // 말투별 참조(기본=속삭임, 보통 대화용 ref_normal, 보조 참조 aux_*) — 등록으로 폴더가 해시 이름이 된 뒤에 깐다
+    if (existsSync(refsFile)) {
+      const [v] = await db.select({ pid: officialVoices.providerVoiceId }).from(officialVoices).where(eq(officialVoices.id, job.voiceId)).limit(1)
+      const ir = v?.pid ? spawnSync('python3', [join(REPO, 'tooling', 'voice', 'install_refs.py'), join(VOICES, v.pid), paths(job).jobDir, refsFile], { encoding: 'utf8' }) : null
+      await log(job.id, ir ? (ir.stdout || ir.stderr).trim().slice(0, 300) : '말투 참조: 목소리 폴더를 못 찾음')
+    }
     await db.update(voiceJobs).set({ status: 'done', stage: '끝 — 제작기 목소리 목록에 보임', finishedAt: new Date() }).where(eq(voiceJobs.id, job.id))
   }
 

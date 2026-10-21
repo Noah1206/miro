@@ -2,7 +2,7 @@
 몰입 모드 음성 합성 서버 — GPT-SoVITS v2 판(참고 구현 server.py 와 같은 계약, 엔진만 다르다).
 앱(apps/web/app/api/tts)은 MIRO_TTS_URL 로 이 계약만 안다:
 
-  POST /speak   {"text": "...", "voice": "<id>|null", "language": "ko"}  → audio/wav
+  POST /speak   {"text": "...", "voice": "<id>|null", "language": "ko", "style": "normal"|"whisper"|null}  → audio/wav
   GET  /health  → {"ok": true, "voices": [...]}
 
 목소리 = --voices-dir 안의 폴더 하나:  <id>/ref.wav(3~10초 참조) + <id>/ref.txt(그 참조의 대사)
@@ -67,12 +67,20 @@ def main() -> None:
         if want['sovits'] != loaded['sovits']:
             tts.init_vits_weights(want['sovits']); loaded['sovits'] = want['sovits']
 
-    def synth(text, name, lang):
+    def synth(text, name, lang, style=None):
+        """style: None|'whisper' = 기본 참조(ref.wav, 지금 목소리들은 속삭임), 'normal' = 보통 말 참조(ref_normal.wav)가 있으면 그걸로.
+        같은 말투 보조 참조(aux_default/ 또는 aux_normal/ 의 wav 최대 4개)를 섞는다 — 10/21 실험: 화자 유사도 0.754 → 0.793."""
         d = voice_dir(name)
-        with open(os.path.join(d, 'ref.txt'), encoding='utf-8') as f:
+        use_normal = style == 'normal' and os.path.isfile(os.path.join(d, 'ref_normal.wav'))
+        ref = 'ref_normal' if use_normal else 'ref'
+        with open(os.path.join(d, f'{ref}.txt'), encoding='utf-8') as f:
             prompt = f.read().strip()
+        aux_dir = os.path.join(d, 'aux_normal' if use_normal else 'aux_default')
+        aux = sorted(os.path.join(aux_dir, f) for f in os.listdir(aux_dir) if f.endswith('.wav'))[:4] if os.path.isdir(aux_dir) else []
         use_weights(d)
-        req = {'text': text, 'text_lang': lang, 'ref_audio_path': os.path.join(d, 'ref.wav'), 'prompt_text': prompt, 'prompt_lang': 'ko',
+        # 샘플링(10/21 실험): 반복 억제 1.35 → 1.1 이 숨·늘어지는 끝음을 덜 끊는다(오류율 6.7% → 4.2%), 온도 0.7
+        req = {'text': text, 'text_lang': lang, 'ref_audio_path': os.path.join(d, f'{ref}.wav'), 'prompt_text': prompt, 'prompt_lang': 'ko',
+               'aux_ref_audio_paths': aux, 'top_k': 15, 'temperature': 0.7, 'repetition_penalty': 1.1,
                'text_split_method': 'cut5', 'batch_size': 1, 'speed_factor': 1.0, 'streaming_mode': False, 'parallel_infer': True, 'return_fragment': False}
         sr, parts = 32000, []
         for sr, chunk in tts.run(req):
@@ -104,8 +112,8 @@ def main() -> None:
                 if not text:
                     return self._send(400, b'empty text', 'text/plain')
                 with lock:
-                    wav = synth(text, req.get('voice'), lang)
-                print(f"speak voice={os.path.basename(voice_dir(req.get('voice')))} chars={len(text)}", flush=True)
+                    wav = synth(text, req.get('voice'), lang, req.get('style') if req.get('style') in ('normal', 'whisper') else None)
+                print(f"speak voice={os.path.basename(voice_dir(req.get('voice')))} style={req.get('style')} chars={len(text)}", flush=True)
                 self._send(200, wav, 'audio/wav')
             except Exception as e:  # noqa: BLE001 — 한 요청의 실패가 서버를 죽이지 않게
                 import traceback; traceback.print_exc()

@@ -183,13 +183,28 @@ def cap_by_style(items):
     return items
 
 
-def pick_refs(items):
-    """말투별 참조 후보: 3~10초, 한글 8자 이상, 점수 높은 것."""
-    refs = {}
+def pick_refs(items, dur=None):
+    """말투별 참조 후보: 3~10초, 한글 8자 이상. 가장 좋은 것 하나(참조) + 다음 4개(보조 참조, 같은 말투끼리 섞는다)."""
+    dur = dur or (lambda p: sf.info(p).duration)
+    refs = {"aux": {}}
     for style in ("normal", "whisper"):
-        c = [(p, v) for p, v in items.items() if v["style"] == style and 3 <= sf.info(p).duration <= 10 and len(re.findall(r"[가-힣]", v["text"])) >= 8]
+        c = [(p, v) for p, v in items.items() if v["style"] == style and 3 <= dur(p) <= 10 and len(re.findall(r"[가-힣]", v["text"])) >= 8]
+        c.sort(key=lambda kv: -kv[1]["score"])
         if c:
-            p, v = max(c, key=lambda kv: kv[1]["score"]); refs[style] = {"file": os.path.basename(p), "text": v["text"]}
+            refs[style] = {"file": os.path.basename(c[0][0]), "text": c[0][1]["text"]}
+            refs["aux"][style] = [os.path.basename(p) for p, _ in c[1:5]]
+    return refs
+
+
+def restyle(ds_dir):
+    """이미 만든 데이터셋(list + wav)에 말투를 다시 매겨 refs.json 을 만든다(옛 정제로 만든 목소리용). 점수는 글자 수로 대신."""
+    rows = [l.split("|") for l in open(os.path.join(ds_dir, "raw_manhwa_voice.list"), encoding="utf8").read().splitlines() if l.count("|") == 3]
+    paths = [os.path.join(ds_dir, "Miro_Dataset_Output", os.path.basename(w)) for w, *_ in rows]
+    tags = classify(paths)
+    items = {p: {"text": t, "style": tags[p][2] if tags[p][2] != "breath" else "breath", "score": len(t)} for p, (*_, t) in zip(paths, rows)}
+    refs = pick_refs(items)
+    with open(os.path.join(ds_dir, "refs.json"), "w", encoding="utf8") as fh: json.dump(refs, fh, ensure_ascii=False, indent=1)
+    print(f"PREP RESTYLE styles={ {s: sum(v['style'] == s for v in items.values()) for s in ('normal', 'whisper', 'breath')} } refs={list(refs)}", flush=True)
     return refs
 
 
@@ -233,4 +248,4 @@ def main(raw_dir, out_dir, name):
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:4])
+    restyle(sys.argv[2]) if sys.argv[1] == "--restyle" else main(*sys.argv[1:4])

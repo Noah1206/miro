@@ -90,7 +90,22 @@ def train(name: str, from_zip: bool = False) -> str:
     return f"{name}: ok → {out} ({os.path.basename(sov)}, {os.path.basename(gpt)})"
 
 
+@app.function(gpu=GPU, cpu=2.0, memory=8192, volumes={"/voices": voices}, timeout=1200)
+def restyle(name: str) -> dict:
+    """옛 정제로 만든 목소리에 말투(속삭임/보통) 참조·보조 참조 목록(refs.json)을 다시 만든다 — 재학습 없이."""
+    import json, shutil, subprocess, zipfile
+    voices.reload()
+    ds = f"/tmp/rs/{name}"; os.makedirs(ds, exist_ok=True)
+    zipfile.ZipFile(f"/voices/_train/{name}/dataset.zip").extractall(ds)
+    subprocess.run(["python", "-u", "/gsv/prepare_dataset.py", "--restyle", ds], cwd="/gsv", check=True, env=dict(os.environ, GSV_ROOT="/gsv", MIRO_DEVICE="cuda" if GPU else "cpu"))
+    shutil.copy(f"{ds}/refs.json", f"/voices/_train/{name}/refs.json"); voices.commit()
+    return json.load(open(f"{ds}/refs.json", encoding="utf8"))
+
+
 @app.local_entrypoint()
-def main(names: str, from_zip: bool = False):
+def main(names: str, from_zip: bool = False, restyle_only: bool = False):
+    if restyle_only:
+        for n, r in zip(names.split(","), restyle.map(names.split(","))): print(n, r)
+        return
     calls = [train.spawn(n, from_zip) for n in names.split(",")]
     for c in calls: print(c.get())

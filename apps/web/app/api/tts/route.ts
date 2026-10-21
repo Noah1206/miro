@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { characters, contactProfiles, db, messages, officialVoices, roleplaySessions, userSettings } from '@miro/db'
 import { resolveTts } from '@miro/providers'
 import { currentUser } from '@/lib/auth'
-import { spokenText } from '@/lib/voice-text'
+import { spokenStyle, spokenText } from '@/lib/voice-text'
 
 export const runtime = 'nodejs'
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   if (!text || !tts) return new Response(null, { status: 204 })
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   try {
-    const out = await tts.speak({ text, voice: row.voiceStatus === 'active' ? row.voice : null, language: settings?.language ?? 'ko' }, AbortSignal.timeout(30_000))
+    const out = await tts.speak({ text, voice: row.voiceStatus === 'active' ? row.voice : null, language: settings?.language ?? 'ko', style: spokenStyle(row.blocks) }, AbortSignal.timeout(30_000))
     return new Response(out.audio, { headers: { 'content-type': out.contentType, 'cache-control': 'private, max-age=3600' } })
   } catch (error) {
     console.warn('[tts]', error instanceof Error ? error.message : error)
