@@ -3,6 +3,11 @@
 #   nohup ./tooling/voice/gcp/wait-quota.sh > ~/.miro/gcp-wait.log 2>&1 &     (한 시간마다 시도, 성공하면 끝난다)
 export PATH=/opt/homebrew/share/google-cloud-sdk/bin:$HOME/.nvm/versions/node/v24.18.0/bin:/opt/homebrew/bin:$PATH
 cd "$(dirname "$0")/../../.."
+# 10/21 18:02 거부 메일: "새 프로젝트는 48시간 뒤 재요청" → 10/23 18:10 이후 gcloud 로 한 번 더 요청하고, 그 뒤 매시간 Job 생성을 시도
+RETRY_AT=$(date -j -f '%Y-%m-%d %H:%M' '2026-10-23 18:10' +%s)
+while [ "$(date +%s)" -lt "$RETRY_AT" ]; do sleep 1800; done
+echo "$(date '+%m/%d %H:%M') 쿼터 재요청"
+gcloud quotas preferences create --service=run.googleapis.com --quota-id=NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion --preferred-value=1 --dimensions=region=us-central1 --project=miro-508504 --email=ab40905045@gmail.com --justification="Resubmitting after the 48h waiting period (case 5afb0e13-e7f2-49ba-b919-56c242ba7276). GPT-SoVITS voice fine-tuning as a Cloud Run Job: 1x L4, ~10 min per voice, a few runs per day, no concurrency." --format='value(quotaConfig.grantedValue,quotaConfig.stateDetail)' 2>&1 | tail -n 2
 until SKIP_BUILD=1 ./tooling/voice/gcp/deploy-train-job.sh 2>&1 | tail -n 2 | grep -q '준비됨'; do date '+%m/%d %H:%M 아직 쿼터 없음'; sleep 3600; done
 echo "$(date '+%m/%d %H:%M') Job 생성됨 — male-1 로 시험 학습"
 gsutil -q cp ~/GPT-SoVITS/jobs/male-1.zip gs://miro-tts-voices-miro-508504/datasets/male-1.zip
