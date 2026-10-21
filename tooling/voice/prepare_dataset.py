@@ -107,8 +107,10 @@ def classify(paths):
     from panns_inference import AudioTagging, labels
     at = AudioTagging(checkpoint_path=None, device=DEVICE)
     idx_voice = [i for i, l in enumerate(labels) if l in VOICE]
+    missing = sorted(VOICE - set(labels))
+    if missing: step(f"AudioSet 에 없는 라벨(무시): {missing}")
     other = np.ones(len(labels), bool); other[idx_voice] = False
-    i_wh = labels.index("Whispering"); i_br = [labels.index(l) for l in BREATHY]; i_sp = labels.index("Speech")
+    i_wh = labels.index("Whispering"); i_br = [labels.index(l) for l in BREATHY if l in labels]; i_sp = labels.index("Speech")
     out = {}
     for p in paths:
         y, _ = librosa.load(p, sr=32000, mono=True)
