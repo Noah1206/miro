@@ -1,12 +1,11 @@
 #!/bin/zsh
 # 준비(train11.sh) 끝나면: Modal T4 병렬 학습 → 가중치 받기(손상 검사) → 등록 → 말투 참조 설치(10/22)
 export PATH=$HOME/GPT-SoVITS/venv/bin:$HOME/.nvm/versions/node/v24.18.0/bin:/opt/homebrew/bin:$PATH
-until grep -q PREP_DONE ~/.miro/aihub/train11.log; do sleep 30; done
 cd ~/Desktop/Miro; export $(grep -E '^DATABASE_URL=' .env); DBH=$(echo $DATABASE_URL | sed -E 's|.*@([^:/]+).*|\1|')
 IDS=$(ls -d ~/GPT-SoVITS/jobs/aihub-f*/ 2>/dev/null | xargs -n1 basename | while read i; do [ -f ~/GPT-SoVITS/jobs/$i/$i.zip ] && echo $i; done | paste -sd, -)
 echo "학습: $IDS"
-(cd tooling/voice && modal run modal_train.py --names "$IDS" --from-zip 2>&1 | grep -E "ok →|실패|Error" | cut -c1-200)
-for id in ${IDS//,/ }; do
+[ -z "$SKIP_TRAIN" ] && (cd tooling/voice && modal run modal_train.py --names "$IDS" --from-zip 2>&1 | grep -E "ok →|실패|Error" | cut -c1-200)
+for id in ${(s:,:)IDS}; do   # zsh: 쉼표로 나눠야 한다(${IDS//,/ } 는 한 단어로 남아 12명이 한 번에 실패했음)
   spk=${id#aihub-f}; J=~/GPT-SoVITS/jobs/$id; V=~/.miro/voices/gsv/voices/${id//-/_}; rm -rf $V; mkdir -p $V
   ok=1; for f in sovits.pth gpt.ckpt; do for t in 1 2 3; do (cd tooling/voice && modal volume get --force miro-voices /_train/$id/$f $V/$f >/dev/null 2>&1); python -c "import torch,sys;torch.load(sys.argv[1],map_location='cpu',weights_only=False)" $V/$f 2>/dev/null && break; [ $t = 3 ] && ok=0; done; done
   [ $ok = 0 ] && { echo "$id 가중치 손상/없음"; continue; }
