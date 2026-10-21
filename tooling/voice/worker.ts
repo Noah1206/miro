@@ -176,12 +176,13 @@ async function main() {
     const refsFile = join(weights, 'refs.json'), { wavs } = paths(job)
     const picked = existsSync(refsFile) ? JSON.parse(readFileSync(refsFile, 'utf8')) as Record<string, { file: string; text: string }> : {}
     const at = (k: string) => picked[k] && existsSync(join(wavs, picked[k].file)) ? { wav: join(wavs, picked[k].file), text: picked[k].text, d: dur(join(wavs, picked[k].file)) } : undefined
-    ref = at('normal') ?? ref ?? at('whisper')
+    // 기본 참조는 속삭임(10/21 사용자 청취: "속삭임이 훨씬 사람같네"), 없으면 보통 말. 다른 쪽은 보조 참조로 남긴다
+    ref = at('whisper') ?? at('normal') ?? ref
     if (!ref) throw new Error('3~10초 참조 조각이 없습니다')
     copyFileSync(ref.wav, join(dir, 'ref.wav')); writeFileSync(join(dir, 'ref.txt'), ref.text)
     await log(job.id, `참조 ${ref.d.toFixed(1)}초: ${ref.text}`)
-    const wh = at('whisper')
-    if (wh) { copyFileSync(wh.wav, join(dir, 'ref_whisper.wav')); writeFileSync(join(dir, 'ref_whisper.txt'), wh.text); await log(job.id, `속삭임 참조 ${wh.d.toFixed(1)}초: ${wh.text}`) }
+    const alt = ref.wav === at('whisper')?.wav ? ['normal', at('normal')] as const : ['whisper', at('whisper')] as const
+    if (alt[1]) { copyFileSync(alt[1].wav, join(dir, `ref_${alt[0]}.wav`)); writeFileSync(join(dir, `ref_${alt[0]}.txt`), alt[1].text); await log(job.id, `보조 참조(${alt[0]}) ${alt[1].d.toFixed(1)}초: ${alt[1].text}`) }
 
     await stage(job.id, '4/4 라이브러리 등록')
     const holder = job.rights.holder || `유튜브 ${job.sourceUrls.join(' ')}`
