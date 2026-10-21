@@ -6,7 +6,7 @@
  *
  * ponytail: 한 번에 한 작업, 재시도 없음, 학습은 로컬 CPU(목소리당 1~2시간). GPU 호스트가 생기면 train 단계만 바꾼다.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, readdirSync, statSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { spawn, spawnSync } from 'node:child_process'
 
@@ -76,9 +76,19 @@ async function main() {
     files.forEach((f, i) => md(['volume', 'put', '--force', 'miro-voices', join(raw, f), `/_raw/${job.voiceId}/src${i}${f.slice(f.lastIndexOf('.'))}`], '원본 업로드'))
     md(['run', 'modal_train.py', '--names', job.voiceId], 'Modal 정제·학습')
     const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
-    for (const f of ['sovits.pth', 'gpt.ckpt', 'report.json']) md(['volume', 'get', '--force', 'miro-voices', `/_train/${job.voiceId}/${f}`, join(w, f)], '결과 내려받기')
-    const rep = JSON.parse(readFileSync(join(w, 'report.json'), 'utf8')) as { kept: number; total_sec: number; dropped: Record<string, number> }
-    await log(job.id, `정제: 조각 ${rep.kept}개(${Math.round(rep.total_sec / 60)}분) 남김, 버림 ${JSON.stringify(rep.dropped)}`)
+    // modal volume get 이 가끔 큰 파일을 깨뜨린다(10/21 man-1·man-3 gpt.ckpt) — 받은 가중치를 torch 로 열어 보고 깨졌으면 다시(최대 3번)
+    const loads = (f: string) => spawnSync(PY, ['-c', `import torch,sys; torch.load(sys.argv[1], map_location='cpu', weights_only=False)`, f], { encoding: 'utf8' }).status === 0
+    for (const f of ['sovits.pth', 'gpt.ckpt', 'report.json', 'refs.json']) {
+      for (let i = 1; ; i++) {
+        md(['volume', 'get', '--force', 'miro-voices', `/_train/${job.voiceId}/${f}`, join(w, f)], '결과 내려받기')
+        if (f.endsWith('.json') || loads(join(w, f))) break
+        if (i >= 3) throw new Error(`${f} 가 3번 받아도 깨져 있습니다`)
+        await log(job.id, `${f} 손상 — 다시 받기(${i}/3)`)
+      }
+    }
+    rmSync(raw, { recursive: true, force: true })  // 원본은 Modal 에 올렸으니 맥에선 지운다(긴 영상 wav 가 수백 MB — 10/21 디스크 4.8GB 까지 참)
+    const rep = JSON.parse(readFileSync(join(w, 'report.json'), 'utf8')) as { kept: number; total_sec: number; dropped: Record<string, number>; styles?: Record<string, number> }
+    await log(job.id, `정제: 조각 ${rep.kept}개(${Math.round(rep.total_sec / 60)}분) 남김, 말투 ${JSON.stringify(rep.styles ?? {})}, 버림 ${JSON.stringify(rep.dropped)}`)
     // finish() 가 참조 조각을 고를 수 있게 데이터셋도 받는다
     md(['volume', 'get', '--force', 'miro-voices', `/_train/${job.voiceId}/dataset.zip`, `${jobDir}.zip`], '데이터셋 내려받기')
     spawnSync('unzip', ['-q', '-o', `${jobDir}.zip`, '-d', jobDir])
@@ -161,10 +171,17 @@ async function main() {
     // 숨소리·"..." 조각("..., 하아...")을 참조로 집으면 합성이 흐트러진다(10/21 남성 1·5) → 한글 8자 이상인 말 조각만
     const refs = lines.map((l) => ({ wav: l.split('|')[0] ?? '', text: l.split('|')[3] ?? '' }))
       .filter((r) => (r.text.match(/[가-힣]/g)?.length ?? 0) >= 8 && !/\.\.\./.test(r.text)).map((r) => ({ ...r, d: dur(r.wav) }))
-    const ref = refs.find((r) => r.d >= 5 && r.d <= 8) ?? refs.find((r) => r.d >= 3 && r.d <= 10)
+    let ref = refs.find((r) => r.d >= 5 && r.d <= 8) ?? refs.find((r) => r.d >= 3 && r.d <= 10)
+    // Modal 정제가 고른 말투별 참조(refs.json)가 있으면 그걸 쓴다 — 보통 말 = ref.wav(기본), 속삭임 = ref_whisper.wav(ASMR 대사용, 10/21)
+    const refsFile = join(weights, 'refs.json'), { wavs } = paths(job)
+    const picked = existsSync(refsFile) ? JSON.parse(readFileSync(refsFile, 'utf8')) as Record<string, { file: string; text: string }> : {}
+    const at = (k: string) => picked[k] && existsSync(join(wavs, picked[k].file)) ? { wav: join(wavs, picked[k].file), text: picked[k].text, d: dur(join(wavs, picked[k].file)) } : undefined
+    ref = at('normal') ?? ref ?? at('whisper')
     if (!ref) throw new Error('3~10초 참조 조각이 없습니다')
     copyFileSync(ref.wav, join(dir, 'ref.wav')); writeFileSync(join(dir, 'ref.txt'), ref.text)
     await log(job.id, `참조 ${ref.d.toFixed(1)}초: ${ref.text}`)
+    const wh = at('whisper')
+    if (wh) { copyFileSync(wh.wav, join(dir, 'ref_whisper.wav')); writeFileSync(join(dir, 'ref_whisper.txt'), wh.text); await log(job.id, `속삭임 참조 ${wh.d.toFixed(1)}초: ${wh.text}`) }
 
     await stage(job.id, '4/4 라이브러리 등록')
     const holder = job.rights.holder || `유튜브 ${job.sourceUrls.join(' ')}`

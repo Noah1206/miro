@@ -20,11 +20,13 @@ HERE = os.path.dirname(__file__)
 image = (
     base_image
     # 정제 도구: demucs(보컬 분리)·faster-whisper(전사)·resemblyzer(화자 임베딩)·pyloudnorm(음량). 모델은 이미지에 미리 받아 둔다(컨테이너마다 3GB 다시 받지 않게)
-    .pip_install("demucs", "faster-whisper", "resemblyzer", "pyloudnorm")
+    .pip_install("demucs", "faster-whisper", "resemblyzer", "pyloudnorm", "panns-inference")
     .run_commands(
         "python -c \"from demucs.pretrained import get_model; get_model('htdemucs')\"",
         "python -c \"from faster_whisper import WhisperModel; WhisperModel('large-v3', device='cpu', compute_type='int8')\"",
         "python -c \"from resemblyzer import VoiceEncoder; VoiceEncoder(device='cpu', verbose=False)\"",
+        # PANNs(AudioSet 527종 소리 판별) 가중치·라벨 — 효과음이 겹친 조각을 거른다
+        "python -c \"from panns_inference import AudioTagging; AudioTagging(checkpoint_path=None, device='cpu')\"",
     )
     # faster-whisper(ctranslate2)는 libcublas.so.12·cudnn 을 시스템 경로에서 찾는다 — torch cu126 이 pip 으로 깔아 둔 것을 가리킨다(10/21 libcublas not found)
     .env({"LD_LIBRARY_PATH": "/usr/local/lib/python3.10/site-packages/nvidia/cublas/lib:/usr/local/lib/python3.10/site-packages/nvidia/cudnn/lib"})
@@ -63,7 +65,8 @@ def train(name: str, from_zip: bool = False) -> str:
         raw = f"/voices/_raw/{name}"
         if not os.path.isdir(raw) or not os.listdir(raw): raise RuntimeError(f"{name}: /_raw/{name}/ 에 원본 오디오가 없습니다")
         rc = _run(["python", "-u", "/gsv/prepare_dataset.py", raw, ds, exp], log, name, ("PREP",))
-        shutil.copy(f"{ds}/report.json", f"{out}/report.json") if os.path.exists(f"{ds}/report.json") else None
+        for f in ("report.json", "refs.json"):
+            if os.path.exists(f"{ds}/{f}"): shutil.copy(f"{ds}/{f}", f"{out}/{f}")
         voices.commit()
         if rc != 0: raise RuntimeError(f"{name}: 데이터 정제 실패 rc={rc} (log: /_train/{name}/train.log)")
     wavs = f"{ds}/Miro_Dataset_Output"
