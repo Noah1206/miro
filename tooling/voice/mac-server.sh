@@ -16,7 +16,7 @@ else nohup ngrok http 8787 --log=stdout --log-format=json > ~/.miro/ngrok.log 2>
 nohup caffeinate -is > /dev/null 2>&1 &
 # 목소리 만들기 워커(관리자 콘솔 /voices 의 작업을 집어 간다) — 저장소 루트에서, 운영 DB 로
 pkill -f 'tooling/voice/worker.ts' 2>/dev/null || true
-(cd ~/Desktop/Miro && export $(grep -E '^DATABASE_URL=' .env) && PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH nohup pnpm -s voice:worker > ~/.miro/voice-worker.log 2>&1 &)
+(cd ~/Desktop/Miro && export $(grep -E '^DATABASE_URL=' .env) && export MIRO_TRAINER=${MIRO_TRAINER:-modal} && PATH=$HOME/.nvm/versions/node/v24.18.0/bin:$PATH nohup pnpm -s voice:worker > ~/.miro/voice-worker.log 2>&1 &)
 for i in $(seq 1 40); do curl -s -m 3 http://127.0.0.1:8787/health | grep -q '"ok"' && break; sleep 5; done
 URL=$(curl -s http://127.0.0.1:4040/api/tunnels | python3 -c "import json,sys; print(json.load(sys.stdin)['tunnels'][0]['public_url'])")
 echo "공개 주소: $URL"; curl -s -m 60 "$URL/health"; echo
