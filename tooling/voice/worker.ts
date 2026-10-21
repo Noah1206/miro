@@ -111,7 +111,9 @@ async function main() {
     const dir = join(VOICES, exp); mkdirSync(dir, { recursive: true })
     copyFileSync(sov, join(dir, 'sovits.pth')); copyFileSync(gpt, join(dir, 'gpt.ckpt'))
     // 참조 3~10초: 5~8초 조각을 먼저, 없으면 3~10초 아무거나
-    const refs = lines.map((l) => ({ wav: l.split('|')[0] ?? '', text: l.split('|')[3] ?? '' })).map((r) => ({ ...r, d: dur(r.wav) }))
+    // 숨소리·"..." 조각("..., 하아...")을 참조로 집으면 합성이 흐트러진다(10/21 남성 1·5) → 한글 8자 이상인 말 조각만
+    const refs = lines.map((l) => ({ wav: l.split('|')[0] ?? '', text: l.split('|')[3] ?? '' }))
+      .filter((r) => (r.text.match(/[가-힣]/g)?.length ?? 0) >= 8 && !/\.\.\./.test(r.text)).map((r) => ({ ...r, d: dur(r.wav) }))
     const ref = refs.find((r) => r.d >= 5 && r.d <= 8) ?? refs.find((r) => r.d >= 3 && r.d <= 10)
     if (!ref) throw new Error('3~10초 참조 조각이 없습니다')
     copyFileSync(ref.wav, join(dir, 'ref.wav')); writeFileSync(join(dir, 'ref.txt'), ref.text)
