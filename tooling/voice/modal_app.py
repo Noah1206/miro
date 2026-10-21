@@ -35,7 +35,7 @@ image = (
         # 영어 단어 g2p 가 쓰는 NLTK 자료 — 없으면 한국어 문장도 LookupError 로 전부 실패한다
         "python -c \"import nltk; [nltk.download(r, quiet=True) for r in ['cmudict', 'averaged_perceptron_tagger', 'averaged_perceptron_tagger_eng']]\"",
     )
-    .add_local_file(os.path.join(os.path.dirname(__file__), "gsv_server.py"), "/gsv/gsv_server.py")
+    .add_local_file(os.path.join(os.path.dirname(__file__), "gsv_server.py"), "/gsv/gsv_server.py", copy=True)  # copy=True: 학습 이미지(modal_train.py)가 이 위에 설치 단계를 더 얹는다
 )
 
 voices = modal.Volume.from_name("miro-voices", create_if_missing=True)

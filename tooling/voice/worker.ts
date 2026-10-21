@@ -58,9 +58,39 @@ async function main() {
   }
   const readLines = (list: string) => readFileSync(list, 'utf8').split('\n').filter((l) => l.split('|').length === 4 && /[가-힣]{2,}/.test(l.split('|')[3] ?? ''))
 
+  /** modal 모드(10/21): 맥은 유튜브 내려받기·길이 자르기만, 정제(보컬 분리·슬라이스·large-v3 전사·화자 필터)와 학습은 Modal T4(modal_train.py → prepare_dataset.py). */
+  async function prepareOnModal(job: Job): Promise<'trained'> {
+    const { jobDir } = paths(job); mkdirSync(jobDir, { recursive: true })
+    const MODAL = join(GSV, 'venv', 'bin', 'modal'), VOICE_DIR = join(process.cwd(), 'tooling', 'voice')
+    const md = (args: string[], label: string) => {
+      const r = spawnSync(MODAL, args, { encoding: 'utf8', cwd: VOICE_DIR, maxBuffer: 64 << 20, env: { ...process.env, MIRO_TTS_GPU: process.env.MIRO_TTS_GPU ?? 'T4' } })
+      if (r.status !== 0) throw new Error(`${label} 실패: ${(r.stderr || r.stdout).trim().slice(-400)}`)
+      return r.stdout
+    }
+    await stage(job.id, '1/4 유튜브 다운로드(맥)')
+    await run(job.id, PY, ['-u', join(GSV, 'miro_pipeline_master.py')], { cwd: jobDir, keep: /^(📥|✂️|❌|⚠️)|완료|오류/,
+      env: { MIRO_YOUTUBE_URLS: job.sourceUrls.join(','), MIRO_DOWNLOAD_ONLY: '1' } })
+    const raw = join(jobDir, 'Miro_Raw_Audio'), files = readdirSync(raw).filter((f) => /\.(wav|m4a|mp3|webm|opus|flac)$/i.test(f))
+    if (!files.length) throw new Error('내려받은 오디오가 없습니다')
+    await stage(job.id, '2/4 Modal: 정제(보컬 분리·전사·화자 필터) + GPU 학습(T4, 10~15분)')
+    files.forEach((f, i) => md(['volume', 'put', '--force', 'miro-voices', join(raw, f), `/_raw/${job.voiceId}/src${i}${f.slice(f.lastIndexOf('.'))}`], '원본 업로드'))
+    md(['run', 'modal_train.py', '--names', job.voiceId], 'Modal 정제·학습')
+    const w = join(jobDir, 'weights'); mkdirSync(w, { recursive: true })
+    for (const f of ['sovits.pth', 'gpt.ckpt', 'report.json']) md(['volume', 'get', '--force', 'miro-voices', `/_train/${job.voiceId}/${f}`, join(w, f)], '결과 내려받기')
+    const rep = JSON.parse(readFileSync(join(w, 'report.json'), 'utf8')) as { kept: number; total_sec: number; dropped: Record<string, number> }
+    await log(job.id, `정제: 조각 ${rep.kept}개(${Math.round(rep.total_sec / 60)}분) 남김, 버림 ${JSON.stringify(rep.dropped)}`)
+    // finish() 가 참조 조각을 고를 수 있게 데이터셋도 받는다
+    md(['volume', 'get', '--force', 'miro-voices', `/_train/${job.voiceId}/dataset.zip`, `${jobDir}.zip`], '데이터셋 내려받기')
+    spawnSync('unzip', ['-q', '-o', `${jobDir}.zip`, '-d', jobDir])
+    const { list, wavs } = paths(job)
+    writeFileSync(list, readFileSync(list, 'utf8').split('\n').filter(Boolean).map((l) => join(wavs, l.split('|')[0] ?? '') + '|' + l.split('|').slice(1).join('|')).join('\n') + '\n')
+    return 'trained'
+  }
+
   /** 1단계: 유튜브 → 데이터셋. colab 모드면 zip 만 두고 '학습 대기'로 돌려보낸다(다음 작업을 막지 않게). local 모드면 학습까지. */
   async function prepare(job: Job): Promise<'waiting' | 'trained'> {
     const { exp, jobDir, list, wavs } = paths(job); mkdirSync(jobDir, { recursive: true })
+    if (TRAINER === 'modal') return await prepareOnModal(job)
     await stage(job.id, '1/4 유튜브 다운로드 · 슬라이스 · 전사')
     await run(job.id, PY, ['-u', join(GSV, 'miro_pipeline_master.py')], { cwd: jobDir, keep: /^(📥|🎙️|✂️|✨|❌|⚠️)|완료|오류/,
       env: { MIRO_YOUTUBE_URLS: job.sourceUrls.join(','), MIRO_VOICE_NAME: exp, MIRO_WHISPER: process.env.MIRO_WHISPER ?? 'small' } })
