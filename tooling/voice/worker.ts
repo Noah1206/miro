@@ -128,13 +128,20 @@ async function main() {
   }
 
   for (;;) {
+    try { await tick() } catch (e) {
+      // DB 연결 타임아웃 같은 일시 오류로 워커가 죽지 않게(10/21 새벽 CONNECT_TIMEOUT 으로 죽어 7시간 멈춤)
+      console.error(`tick error: ${e instanceof Error ? e.message : String(e)} — 30초 뒤 재시도`); await new Promise((r) => setTimeout(r, 30_000))
+    }
+  }
+
+  async function tick() {
     await finishWaiting()
     // (b) 새 작업 하나
     const [job] = await db.select().from(voiceJobs).where(eq(voiceJobs.status, 'queued')).orderBy(asc(voiceJobs.createdAt)).limit(1)
-    if (!job) { await new Promise((r) => setTimeout(r, POLL_MS)); continue }
+    if (!job) { await new Promise((r) => setTimeout(r, POLL_MS)); return }
     // 조건부 UPDATE 로 집는다 — 워커가 둘 떠도 같은 작업을 두 번 돌리지 않게
     const took = await db.update(voiceJobs).set({ status: 'running', startedAt: new Date() }).where(and(eq(voiceJobs.id, job.id), eq(voiceJobs.status, 'queued'))).returning({ id: voiceJobs.id })
-    if (!took.length) continue
+    if (!took.length) return
     // 맥 CPU 로컬 학습이 도는 동안은 전사(Whisper)를 겹치지 않게 — 둘이 겹치면 8GB 맥이 스왑으로 10배 느려진다(10/21 실측)
     while (spawnSync('pgrep', ['-f', 'GPT_SoVITS/s[12]_train.py']).status === 0) {
       await db.update(voiceJobs).set({ stage: '0/4 로컬 학습이 끝나길 기다리는 중' }).where(eq(voiceJobs.id, job.id))
