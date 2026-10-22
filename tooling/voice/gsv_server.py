@@ -67,7 +67,7 @@ def main() -> None:
         if want['sovits'] != loaded['sovits']:
             tts.init_vits_weights(want['sovits']); loaded['sovits'] = want['sovits']
 
-    def synth(text, name, lang, style=None):
+    def synth(text, name, lang, style=None, sampling=None):
         """style: None|'whisper' = 기본 참조(ref.wav, 지금 목소리들은 속삭임), 'normal' = 보통 말 참조(ref_normal.wav)가 있으면 그걸로.
         같은 말투 보조 참조(aux_default/ 또는 aux_normal/ 의 wav 최대 4개)를 섞는다 — 10/21 실험: 화자 유사도 0.754 → 0.793."""
         d = voice_dir(name)
@@ -82,6 +82,7 @@ def main() -> None:
         req = {'text': text, 'text_lang': lang, 'ref_audio_path': os.path.join(d, f'{ref}.wav'), 'prompt_text': prompt, 'prompt_lang': 'ko',
                'aux_ref_audio_paths': aux, 'top_k': 15, 'temperature': 0.7, 'repetition_penalty': 1.1,
                'text_split_method': 'cut5', 'batch_size': 1, 'speed_factor': 1.0, 'streaming_mode': False, 'parallel_infer': True, 'return_fragment': False}
+        req.update(sampling or {})  # 실험용 덮어쓰기(prosody_compare) — 앱은 보내지 않는다
         sr, parts = 32000, []
         for sr, chunk in tts.run(req):
             parts.append(chunk)
@@ -112,7 +113,8 @@ def main() -> None:
                 if not text:
                     return self._send(400, b'empty text', 'text/plain')
                 with lock:
-                    wav = synth(text, req.get('voice'), lang, req.get('style') if req.get('style') in ('normal', 'whisper') else None)
+                    smp = {k: float(v) if k != 'top_k' else int(v) for k, v in (req.get('sampling') or {}).items() if k in ('top_k', 'top_p', 'temperature', 'repetition_penalty')}
+                    wav = synth(text, req.get('voice'), lang, req.get('style') if req.get('style') in ('normal', 'whisper') else None, smp)
                 print(f"speak voice={os.path.basename(voice_dir(req.get('voice')))} style={req.get('style')} chars={len(text)}", flush=True)
                 self._send(200, wav, 'audio/wav')
             except Exception as e:  # noqa: BLE001 — 한 요청의 실패가 서버를 죽이지 않게
