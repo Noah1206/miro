@@ -155,7 +155,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
   useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, 140)}px` } }, [draft])
 
   return (
-    <div className={styles.composer}>
+    <div className={styles.composer} data-chat-composer>
       <AnimatePresence initial={false}>
         {showTyping && (
           <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>
@@ -171,7 +171,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
           </motion.p>
         )}
       </AnimatePresence>
-      <form ref={ref} onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={styles.composerForm}>
+      <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={styles.composerForm}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
@@ -186,7 +186,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
             </button>
           </span>
         </div>}
-        <textarea className={styles.input} ref={ta} name="input" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
+        <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
           placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}

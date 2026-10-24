@@ -19,7 +19,37 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
   const { items: delivered, retry } = useMessenger()
   const items = sample ?? delivered
   const end = useRef<HTMLDivElement>(null)
-  useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [items.length])
+  const following = useRef(true)
+  useEffect(() => {
+    const thread = end.current?.parentElement
+    if (items.at(-1)?.role === 'user') following.current = true
+    if (thread && following.current) thread.scrollTop = thread.scrollHeight
+  }, [items.length])
+  useEffect(() => {
+    const thread = end.current?.parentElement
+    if (!thread) return
+    let touchY = 0
+    const scroll = () => { if (thread.scrollHeight - thread.scrollTop - thread.clientHeight < 8) following.current = true }
+    const wheel = (event: WheelEvent) => { if (event.deltaY < 0) following.current = false }
+    const touchStart = (event: TouchEvent) => { touchY = event.touches[0]?.clientY ?? 0 }
+    const touchMove = (event: TouchEvent) => { const y = event.touches[0]?.clientY ?? touchY; if (y > touchY + 1) following.current = false; touchY = y }
+    const keyDown = (event: KeyboardEvent) => { if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) following.current = false }
+    const resize = new ResizeObserver(() => { if (following.current) thread.scrollTop = thread.scrollHeight })
+    resize.observe(thread)
+    thread.addEventListener('scroll', scroll, { passive: true })
+    thread.addEventListener('wheel', wheel, { passive: true })
+    thread.addEventListener('touchstart', touchStart, { passive: true })
+    thread.addEventListener('touchmove', touchMove, { passive: true })
+    thread.addEventListener('keydown', keyDown)
+    return () => {
+      resize.disconnect()
+      thread.removeEventListener('scroll', scroll)
+      thread.removeEventListener('wheel', wheel)
+      thread.removeEventListener('touchstart', touchStart)
+      thread.removeEventListener('touchmove', touchMove)
+      thread.removeEventListener('keydown', keyDown)
+    }
+  }, [])
   return (
     <div role="log" aria-live="polite" aria-relevant="additions" aria-label={t('{name} 문자', { name: characterName })} className={styles.thread}>
       {items.length === 0 && <p className={styles.notice}>{t('{subject} 먼저 문자를 보내면 여기에 와요. 먼저 보내도 돼요.', { subject: subject(characterName), name: characterName })}</p>}

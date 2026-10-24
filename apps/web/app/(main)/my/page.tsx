@@ -16,6 +16,7 @@ import { MenuRow, MenuSection } from './menu'
 import { CharacterPhoto } from '@/components/character-visual'
 import { CreditCard } from './credit-card'
 import { ProfileEditor } from './profile-editor'
+import { InstallAppButton } from '@/components/pwa-install'
 import styles from './my.module.css'
 
 /**
@@ -75,6 +76,7 @@ export default async function MyPage() {
           계정 삭제는 일반 항목과 떨어뜨려 맨 아래 문서 줄에 둔다(패턴 문서 §9.6) — 삭제 화면이 영향과 확인을 다시 묻는다. */}
       <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
         <MenuSection title={t('설정')}>
+          <InstallAppButton className={styles.row} />
           <MenuRow href="/my/language" label={t('언어')} sub={LANGUAGES[language]} />
           <MenuRow href="/my/subscription" label={t('토큰 사용 내역')} />
           <MenuRow href="/my/verify" label={t('성인 인증')} />

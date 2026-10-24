@@ -1,5 +1,26 @@
-/** 소리 내어 읽을 글(몰입 모드). 대사만 — 속마음은 "소리 내어 말하지 않음", 서술·행동은 화면으로 본다. 블록이 없으면 본문. */
+import { voiceDelivery, type VoiceDelivery } from '@miro/config'
+
+/** 소리 내어 읽을 글. 서술·속마음·NPC는 읽지 않는다. */
 export const SPOKEN_MAX = 1200
+export type SpokenSegment = { text: string; delivery: VoiceDelivery }
+export function spokenSegments(blocks: Array<Record<string, unknown>>, content: string, characterName?: string): SpokenSegment[] {
+  if (!blocks.length) return content.trim() ? [{ text: content.trim().slice(0, SPOKEN_MAX), delivery: voiceDelivery(null) }] : []
+  const result: SpokenSegment[] = []
+  let remaining = SPOKEN_MAX, whisper = false
+  for (const block of blocks) {
+    if (block.type === 'action' || block.type === 'narrative') {
+      whisper = typeof block.text === 'string' && WHISPER_CUES.test(block.text)
+      continue
+    }
+    if (block.type !== 'dialogue' || typeof block.text !== 'string') continue
+    if (characterName && block.speaker && block.speaker !== characterName) continue
+    const text = block.text.trim().slice(0, remaining)
+    if (text) { result.push({ text, delivery: voiceDelivery(block.delivery, whisper) }); remaining -= text.length }
+    whisper = false
+    if (!remaining) break
+  }
+  return result
+}
 export function spokenText(blocks: Array<Record<string, unknown>>, content: string): string {
   const lines = blocks.filter((b) => b.type === 'dialogue' && typeof b.text === 'string').map((b) => String(b.text).trim()).filter(Boolean)
   return (lines.length ? lines.join(' ') : blocks.length ? '' : content).replace(/\s+/g, ' ').trim().slice(0, SPOKEN_MAX)

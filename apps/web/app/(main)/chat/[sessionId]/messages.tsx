@@ -53,7 +53,10 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const typingId = typing.current
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
-  const follow = useCallback(() => { if (following.current) end.current?.scrollIntoView({ block: 'end' }) }, [])
+  const follow = useCallback(() => {
+    const transcript = end.current?.parentElement
+    if (following.current && transcript) transcript.scrollTop = transcript.scrollHeight
+  }, [])
   useEffect(() => {
     if (last?.role === 'user' || (live && !wasStreaming.current)) following.current = true
     wasStreaming.current = !!live
@@ -89,6 +92,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     const onPointerUp = () => { draggingScrollbar = false }
     // Observe the growing text itself: the scroll viewport keeps the same height while lines arrive.
     const resize = new ResizeObserver(follow)
+    resize.observe(transcript)
     transcript.addEventListener('scroll', onScroll, { passive: true })
     transcript.addEventListener('wheel', onWheel, { passive: true })
     transcript.addEventListener('touchstart', onTouchStart, { passive: true })

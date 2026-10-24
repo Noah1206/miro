@@ -18,7 +18,8 @@
     "ai:cost": "tsx ai/evals/chat-cost.ts",
     "voice": "tsx tooling/voice/import.ts",
     "voice:gsv": "tsx tooling/voice/register-gsv.ts",
-    "voice:worker": "tsx tooling/voice/worker.ts"
+    "voice:worker": "tsx tooling/voice/worker.ts",
+    "speech:worker": "tsx --tsconfig apps/web/tsconfig.json tooling/voice/speech-worker.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10",

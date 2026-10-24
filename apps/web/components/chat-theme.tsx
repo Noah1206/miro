@@ -4,7 +4,7 @@ import { ChatPaletteIcon } from './chat-icons'
 import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import styles from './chat-theme.module.css'
-import { chatViewportState } from './chat-viewport'
+import { bindChatViewport } from './chat-viewport'
 import { CharacterPhoto } from './character-visual'
 
 type Theme = 'miro' | 'dm-light' | 'dm' | 'talk'
@@ -35,35 +35,7 @@ export function ChatTheme({ sessionId, children }: { sessionId?: string; childre
     return () => window.removeEventListener('storage', sync)
   }, [key])
   useEffect(() => {
-    const viewport = window.visualViewport
-    if (!viewport) return
-    let baselineHeight = Math.max(window.innerHeight, viewport.height * viewport.scale)
-    // iOS leaves the layout viewport tall when its keyboard covers the screen.
-    // Use the visible viewport only while a text field has the keyboard open.
-    const update = () => {
-      const element = root.current
-      if (!element) return
-      const active = document.activeElement
-      const focused = element.contains(active) && (active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)
-      if (!focused) baselineHeight = Math.max(window.innerHeight, viewport.height * viewport.scale)
-      const state = chatViewportState(viewport, baselineHeight, focused)
-      element.dataset.keyboard = String(state.keyboard)
-      element.style.setProperty('--chat-visible-height', `${state.height}px`)
-      element.style.setProperty('--chat-visible-width', `${state.width}px`)
-      element.style.setProperty('--chat-visible-top', `${state.top}px`)
-      element.style.setProperty('--chat-visible-left', `${state.left}px`)
-    }
-    update()
-    viewport.addEventListener('resize', update)
-    viewport.addEventListener('scroll', update)
-    document.addEventListener('focusin', update)
-    document.addEventListener('focusout', update)
-    return () => {
-      viewport.removeEventListener('resize', update)
-      viewport.removeEventListener('scroll', update)
-      document.removeEventListener('focusin', update)
-      document.removeEventListener('focusout', update)
-    }
+    if (root.current) return bindChatViewport(root.current)
   }, [])
   const select = (next: Theme) => { setTheme(next); try { localStorage.setItem(key, next); localStorage.setItem(`${key}:at`, String(Date.now())) } catch { /* Private storage can be unavailable; selection still works. */ } }
   return <Context.Provider value={{ theme, select }}>{sessionId ? <div ref={root} className={styles.root} data-chat-theme={theme}>{children}</div> : children}</Context.Provider>
@@ -78,7 +50,6 @@ export function DefaultChatAvatar({ theme: previewTheme }: { theme?: Theme } = {
 }
 
 export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigger = false, placement = 'header', portrait }: { open?: boolean; onOpenChange?: (open: boolean) => void; hideTrigger?: boolean; placement?: 'header' | 'composer' | 'library'; portrait?: string | null } = {}) {
-  const { theme, select } = useChatTheme()
   const [localOpen, setLocalOpen] = useState(false)
   const open = controlledOpen ?? localOpen
   const setOpen = onOpenChange ?? setLocalOpen
@@ -88,14 +59,21 @@ export function ChatThemePicker({ open: controlledOpen, onOpenChange, hideTrigge
       <ChatPaletteIcon />{placement === 'library' && <span>{t('디자인 라이브러리')}</span>}
     </button>}
     <Sheet open={open} onClose={() => setOpen(false)} title={t('채팅방 디자인 라이브러리')} snap={{ half: 0.72, full: 0.92 }}>
-      <div className={styles.options}>
-        {(['miro', 'dm-light', 'dm', 'talk'] as const).map(value => <button type="button" key={value} className={styles.option} aria-pressed={theme === value} onClick={() => { select(value); setOpen(false) }}>
+      <ChatThemeOptions portrait={portrait} onSelect={() => setOpen(false)} />
+    </Sheet>
+  </>
+}
+
+/** The same live previews can be used directly inside the room drawer. */
+export function ChatThemeOptions({ portrait, compact = false, onSelect }: { portrait?: string | null; compact?: boolean; onSelect?: () => void }) {
+  const { theme, select } = useChatTheme()
+  const t = useT()
+  return <div className={styles.options} data-compact={compact || undefined} role="group" aria-label={t('채팅방 디자인 라이브러리')}>
+        {(['miro', 'dm-light', 'dm', 'talk'] as const).map(value => <button type="button" key={value} className={styles.option} aria-pressed={theme === value} onClick={() => { select(value); onSelect?.() }}>
           <span className={styles.preview} data-preview={value} aria-hidden><span className={styles.previewHead}><span className={styles.previewAvatar}>{value === 'miro' && portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="20px" width={20} height={20} /> : <DefaultChatAvatar theme={value} />}</span><i /></span><span className={styles.incoming} /><span className={styles.outgoing} /></span>
           <span className={styles.label}>{t(value === 'miro' ? '미로 기본' : value === 'dm-light' ? '인스타 DM' : value === 'dm' ? '인스타 DM 다크' : '카톡 스타일')}<span aria-hidden>{theme === value ? '✓' : ''}</span></span>
         </button>)}
       </div>
-    </Sheet>
-  </>
 }
 
 export function ChatHeaderAvatar({ portrait }: { portrait?: string | null } = {}) {

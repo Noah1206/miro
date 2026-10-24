@@ -15,6 +15,7 @@ import { getT } from '@/lib/i18n/server'
 import { OriginalStoriesRow } from '../stories/home-row'
 import { cookies } from 'next/headers'
 import { AudienceSelect } from './audience-select'
+import { InstallAppHint } from '@/components/pwa-install'
 
 /** 섹션 제목은 이모지 하나 + 문장(베베챗식, 10/19). 목록에 없는 장르는 기본 문장. */
 const GENRE_TITLES: Record<string, string> = {
@@ -73,6 +74,8 @@ export default async function Home() {
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}
         </div>
       </header>
+
+      <InstallAppHint />
 
       {/* 약관·처리방침 개정이 공지 중이면 초기화면에서 알린다(약관 제3조 ③). 평소엔 아무것도 그리지 않는다. */}
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />

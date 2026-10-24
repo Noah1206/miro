@@ -1,4 +1,11 @@
 import { z } from 'zod'
+import { VOICE_EMOTIONS, VOICE_TONES, VOICE_PACES, VOICE_INTENSITIES, voiceDelivery } from '@miro/config'
+
+export const VoiceDeliverySchema = z.object({
+  emotion: z.enum(VOICE_EMOTIONS).optional(), tone: z.enum(VOICE_TONES).optional(),
+  pace: z.enum(VOICE_PACES).optional(), intensity: z.enum(VOICE_INTENSITIES).optional(),
+  pauseAfterMs: z.number().int().min(0).max(1500).optional(),
+}).transform(value => voiceDelivery(value))
 
 /**
  * 한 번의 Structured Generation 으로 받는 전체 제안.
@@ -19,7 +26,7 @@ function normalizeBlock(v: unknown): unknown {
   const keys = RP_BLOCK_TYPES.filter((t) => t in o)
   if (keys.length !== 1) return v
   const speaker = o[keys[0]!]
-  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text }
+  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text, delivery: o.delivery }
 }
 
 export const RpBlock = z.preprocess(normalizeBlock, z.object({
@@ -27,6 +34,11 @@ export const RpBlock = z.preprocess(normalizeBlock, z.object({
   /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. 모델은 null 대신 생략을 잘 한다 — 검증기가 처리한다. */
   speaker: z.string().max(40).nullable().default(null),
   text: z.string().min(1).max(2000).refine(text => !/(?:질투|신뢰|호감도|애착)\s*(?:수치|점수)\s*(?:가|는|:)?\s*\d|토큰\s*\d/i.test(text), 'internal state disclosure'),
+  delivery: VoiceDeliverySchema.optional().catch(undefined),
+}).transform(block => {
+  // A malformed optional direction must never discard an otherwise valid reply.
+  if (block.type !== 'dialogue') delete block.delivery
+  return block
 }))
 
 /** 관계는 절대값이 아니라 delta 로만 제안할 수 있다 — AI 가 상태를 덮어쓰지 못하게. */
@@ -190,7 +202,12 @@ const text = (description?: string) => ({ type: 'string', ...(description ? { de
 export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 'object', properties: {
   rp: { type: 'object', properties: { blocks: { type: 'array', description: '6 to 12 items. The whole scene is at least 650 Korean characters.', items: { type: 'object', properties: {
     type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('character name for dialogue/action/thought; omit for narrative'),
-    text: text('narrative/action: 2-3 sentences, at least 80 characters. dialogue: 1-3 sentences. thought: one or two short colloquial lines.') },
+    text: text('narrative/action: 2-3 sentences, at least 80 characters. dialogue: 1-3 sentences. thought: one or two short colloquial lines.'),
+    delivery: { type: 'object', description: 'Hidden delivery for dialogue only; never include in text.', properties: {
+      emotion: { type: 'string', enum: [...VOICE_EMOTIONS] }, tone: { type: 'string', enum: [...VOICE_TONES] },
+      pace: { type: 'string', enum: [...VOICE_PACES] }, intensity: { type: 'string', enum: [...VOICE_INTENSITIES] },
+      pauseAfterMs: { type: 'integer', minimum: 0, maximum: 1500 },
+    } } },
     required: ['type', 'text'] } } }, required: ['blocks'] },
   emotion: { type: 'string', enum: ['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious'] },
   intent: text('at most 80 characters'),

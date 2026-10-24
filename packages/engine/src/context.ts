@@ -1,5 +1,5 @@
 import { prompts, CHARACTER_VOICE_RULES } from '@miro/providers'
-import { POLICY } from '@miro/config'
+import { POLICY, VOICE_DELIVERY_PROMPT } from '@miro/config'
 import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, storyCalendarDirective } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
@@ -156,7 +156,7 @@ export type ReplyStyle = 'scene' | 'long' | 'brief'
 export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = false, style: ReplyStyle = 'scene'): BuiltContext {
   const template = prompts.select('dialogue', s.relationship.sessionId)
   // spoken: 실시간 음성 통화. 소리로 나가므로 JSON 계약·상태 변화 제안을 싣지 않는다.
-  const system = template.system + CHARACTER_VOICE_RULES + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
+  const system = template.system + CHARACTER_VOICE_RULES + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : VOICE_DELIVERY_PROMPT + '\n' + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
   const systemTokens = estimateTokens(system)
 
   // ECHO 는 같은 모델에 맥락을 더 넣는다. 늘어난 양도 아래 예산 검사를 똑같이 통과해야 한다.

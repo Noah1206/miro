@@ -15,4 +15,12 @@ describe('chat keyboard viewport', () => {
   it('releases keyboard layout when focus leaves the chat', () => {
     expect(chatViewportState({...full,height:450},800,false).keyboard).toBe(false)
   })
+  it('waits for the visible viewport to recover after blur', () => {
+    expect(chatViewportState({...full,height:450},800,false,true).keyboard).toBe(true)
+    expect(chatViewportState(full,800,false,true).keyboard).toBe(false)
+  })
+  it('uses the new orientation baseline rather than the previous portrait height', () => {
+    expect(chatViewportState({...full,height:390,width:800},390,true).keyboard).toBe(false)
+    expect(chatViewportState({...full,height:220,width:800},390,true).keyboard).toBe(true)
+  })
 })

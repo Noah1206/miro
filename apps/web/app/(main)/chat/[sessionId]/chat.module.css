@@ -24,6 +24,22 @@
 .storyDateMarker span { max-width: 75%; }
 .contextButton { width: 36px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
 .contextButton svg { width: 20px; height: 20px; }
+.roomMenuButton { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; font-size:23px; line-height:1; cursor:pointer; }
+.roomMenuButton:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+.roomMenuItems { display:grid; gap:12px; }
+.roomMenuGroup { min-width:0; padding:14px 12px; border:0; border-radius:14px; background:#303030; }
+.roomMenuLabel { margin:0 4px 12px; color:#c8c8c8; font-size:12px; font-weight:600; line-height:1.5; }
+.roomMenuModes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.roomMenuItem { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:10px 12px; border:0; border-radius:10px; background:transparent; color:var(--color-text-primary); font:inherit; font-size:15px; text-decoration:none; text-align:left; cursor:pointer; }
+.roomMenuItem:hover { background:#3b3b3b; }
+.roomMenuItem:focus-visible { outline:2px solid #c8c8c8; outline-offset:-2px; }
+.roomMenuItem[aria-pressed='true'] { background:#484848; color:#fff; }
+.roomMenuModes .roomMenuItem { min-height:44px; padding:10px; font-size:13px; }
+.roomMenuPersona { --field-border-w:0px; --field-font:16px; --field-pad-y:10px; --chip-bg:#3c3c3c; --chip-on-bg:#5a5a5a; --chip-on-fg:#fff; --chip-font:12px; }
+.roomMenuPersona :global(form.stack) { gap:14px !important; }
+.roomMenuPersona :global(.btn) { border:0; background:#525252; color:#fff; }
+.voiceStatus { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 12px; flex: 0 0 auto; color: var(--color-text-secondary); font-size: 12px; }
+.voiceStatus button { border: 0; background: none; color: var(--color-accent-text); font: inherit; min-height: 36px; cursor: pointer; }
 /* 언베일 — 클래식 토글과 수위 메뉴, 자수정 그라데이션. */
 .adultControl { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; }
 .adultMenuToggle { width: 24px; min-height: 44px; padding: 0; border: 0; background: transparent; color: var(--color-text-secondary); display: grid; place-items: center; cursor: pointer; }
@@ -346,9 +362,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 기존 언베일 시트의 흰색 CTA를 실제 본인인증에도 유지한다. */
 .adultVerification button[type='submit'] { background:#fff !important; color:#17131f !important; border-color:#fff !important; }
 
-/* Keep a little breathing room above the input; the open keyboard owns the bottom inset. */
-.composer, :global([data-chat-theme]) .composer { padding-top: 8px; }
-:global([data-keyboard='true']) .composer { padding-bottom: 0; }
+/* Compact separation from the final bubble, including while the keyboard is open. */
+.composer, :global([data-chat-theme]) .composer { padding-top: 4px; }
 
 /* Long scene descriptions should be as readable as spoken dialogue. */
 .sceneIcon { width:20px; height:20px; flex:0 0 20px; margin-top:4px; color:inherit; }
@@ -416,11 +431,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* 입력창 바탕(10/17 요청): 대화 방식 메뉴처럼 보라를 뺀 검정 회색. */
 :global([data-chat-theme='miro']) .composerForm { background: #18181a; }
-/* 입력창을 화면 전체 너비로(10/17 요청) — 양옆·아래 여백 없이 붙이고, 위 모서리만 둥글게. 홈 바 여백은 입력창 안쪽에. */
-:global([data-chat-theme='miro']) .composer { padding-inline: 0; padding-bottom: 0; }
-:global([data-chat-theme='miro']) .composerForm { border-radius: 20px 20px 0 0; border-inline: 0; border-bottom: 0; padding-inline: 16px 10px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-/* 키보드가 올라오면 홈 바 여백이 필요 없다. */
-:global([data-keyboard='true']) .composerForm { padding-bottom: 8px; }
+/* A narrow gutter reveals the whole input border; the home indicator stays outside it. */
+.composer, :global([data-chat-theme]) .composer { padding:4px 8px max(6px, env(safe-area-inset-bottom, 0px)); }
+:global([data-chat-theme='miro']) .composerForm { border:1px solid #ffffff24; border-radius:18px; padding:6px 10px 6px 12px; }
+:global([data-chat-theme='miro']) .composerForm:focus-within { border-color:#ac91d766; }
+/* The visible viewport already ends above the keyboard and its browser accessory bar. */
+:global([data-keyboard='true']) .composer { padding-bottom:6px; }
 
 /* 몰입 모드 · 음성+영상(10/19): 캐릭터 사진이 화면 전체에, 머리·입력창은 반투명으로 그 위에. */
 .backdrop { position: fixed; inset: 0; z-index: 0; background-size: cover; background-position: center 20%; }

@@ -4,6 +4,10 @@
 .root[data-keyboard='true'] { position:fixed; top:var(--chat-visible-top,0px); left:calc(var(--chat-visible-left,0px) + max(0px, (var(--chat-visible-width,100%) - var(--shell-w)) / 2)); right:auto; width:min(var(--chat-visible-width,100%),var(--shell-w)); height:var(--chat-visible-height); min-height:0; margin-inline:0; overflow:hidden; }
 .root[data-keyboard='true'] :global(.chat-layout) { height: 100%; min-height: 0; }
 .root[data-keyboard='true'] :global(.chat-main) { height: 100%; min-height: 0; }
+/* The OS status bar is outside the room's scrolling transcript. */
+.root :global(.chat-main) > header { padding-top:calc(8px + env(safe-area-inset-top, 0px)); }
+.root[data-input-focused='true'] :global([data-push-prompt]),
+.root[data-keyboard='true'] :global([data-push-prompt]) { display:none; }
 @media(max-width:767px) {
   /* Safari zooms small text fields on focus, introducing lateral pan and disabling old keyboard detection. */
   .root :global(.chat-main) textarea { font-size:16px; }
@@ -34,6 +38,15 @@
 .preview[data-preview=talk] .previewInput { background:#fff; }
 .label { min-width:0; flex-wrap:wrap; overflow-wrap:anywhere; display:flex; justify-content:space-between; gap:4px; margin-top:10px; font-size:13px; }
 .label span { color:var(--color-accent-text); }
+.options[data-compact] { gap:8px; }
+.options[data-compact] .option { padding:6px; border-radius:10px; }
+.options[data-compact] .option[aria-pressed='true'] { background:#454545; }
+.options[data-compact] .preview { height:88px; padding:8px; gap:6px; border-radius:7px; }
+.options[data-compact] .previewHead { margin-bottom:0; }
+.options[data-compact] .incoming, .options[data-compact] .outgoing { height:16px; padding:0; }
+.options[data-compact] .option[aria-pressed='true'] .preview { box-shadow:none; }
+.options[data-compact] .label { margin-top:7px; font-size:12px; line-height:1.4; }
+.options[data-compact] .label span { color:inherit; }
 @media(max-width:360px) { .options { gap:8px; } .preview { padding-inline:5px; } .label { font-size:12px; } }
 
 .headerAvatar { display:grid; place-items:center; width:30px; height:30px; border-radius:50%; overflow:hidden; flex-shrink:0; --chat-avatar-bg:#363636; --chat-avatar-ink:#aaa; }

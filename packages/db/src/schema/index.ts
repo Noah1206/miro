@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
+  customType, bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
 
@@ -1390,3 +1390,28 @@ export const storyPushJobs = pgTable('story_push_jobs', {
   contactSubscription: uniqueIndex('story_push_jobs_contact_subscription_uniq').on(t.contactId, t.subscriptionId),
   due: index('story_push_jobs_due_idx').on(t.nextAttemptAt).where(sql`${t.status} in ('pending', 'sending')`),
 })).enableRLS()
+
+/** Private short-utterance queue/cache. Only backend DB access; no Data API grants. */
+const speechBytes = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' })
+export const speechSynthesisJobs = pgTable('speech_synthesis_jobs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id,{onDelete:'cascade'}),
+  sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id,{onDelete:'cascade'}),
+  messageId: uuid('message_id').notNull().references(() => messages.id,{onDelete:'cascade'}),
+  cacheKey: text('cache_key').notNull().unique(), part: integer('part').notNull(),
+  modelVersion:text('model_version').notNull(), referenceVersion:text('reference_version').notNull(),
+  payload:jsonb('payload').notNull(), state:text('state',{enum:['queued','running','done','failed','uncertain']}).notNull().default('queued'),
+  reservationMicroUsd:bigint('reservation_micro_usd',{mode:'number'}).notNull(),
+  leaseToken:uuid('lease_token'),leaseUntil:timestamp('lease_until',{withTimezone:true}),
+  audio:speechBytes('audio'),contentType:text('content_type'),errorCode:text('error_code'),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),finishedAt:timestamp('finished_at',{withTimezone:true}),
+},t=>({due:index('speech_jobs_due_idx').on(t.createdAt).where(sql`${t.state}='queued'`),usage:index('speech_jobs_usage_idx').on(t.userId,t.createdAt),daily:index('speech_jobs_daily_idx').on(t.createdAt),session:index('speech_jobs_session_idx').on(t.sessionId),message:index('speech_jobs_message_idx').on(t.messageId)})).enableRLS()
+
+/** No cascading FK: content deletion cannot clear spend or an in-flight GPU lease. */
+export const speechSynthesisUsage = pgTable('speech_synthesis_usage', {
+  jobId:uuid('job_id').primaryKey(),userKey:text('user_key').notNull(),
+  reservationMicroUsd:bigint('reservation_micro_usd',{mode:'number'}).notNull(),
+  state:text('state',{enum:['queued','running','uncertain','finished']}).notNull().default('queued'),
+  leaseToken:uuid('lease_token'),leaseUntil:timestamp('lease_until',{withTimezone:true}),
+  createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
+},t=>({user:index('speech_usage_user_idx').on(t.userKey,t.createdAt),daily:index('speech_usage_daily_idx').on(t.createdAt),active:index('speech_usage_active_idx').on(t.state).where(sql`${t.state} in ('running','uncertain')`)})).enableRLS()

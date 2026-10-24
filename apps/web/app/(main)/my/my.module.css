@@ -33,3 +33,4 @@
 .menu { margin-bottom: var(--space-5); }
 .menuTitle { margin: 0 0 4px; font-size: var(--font-caption); font-weight: var(--weight-semibold); color: var(--color-text-tertiary); }
 .row { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; color: var(--color-text-primary); }
+.menu > button.row { width:100%; border:0; background:none; font:inherit; text-align:left; cursor:pointer; }

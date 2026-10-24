@@ -19,6 +19,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL('https://miroapp.app'),
     title: { default: title, template: title }, manifest: '/manifest.json',
+    applicationName: 'MIRO',
+    appleWebApp: { capable: true, title: 'MIRO', statusBarStyle: 'black-translucent' },
     openGraph: {
       type: 'website', siteName: 'MIRO', title, images: [shareImage],
     },

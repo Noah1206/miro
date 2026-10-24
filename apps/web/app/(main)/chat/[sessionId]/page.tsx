@@ -1,4 +1,4 @@
-import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
+import { ChatTheme, ChatHeaderAvatar } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
 import { contactProfiles, db, messages } from '@miro/db'
@@ -20,14 +20,13 @@ import { ConversationPersona } from '@/components/conversation-persona'
 import { getT } from '@/lib/i18n/server'
 import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
-import { ImmersiveProvider, ImmersiveToggle } from './immersive'
+import { ImmersiveProvider, VoiceStatus } from './immersive'
+import { RoomMenu } from './room-menu'
 
 /** 처음 들어온 대화 화면에서 짚어 주는 기능(10/19). 화면에 없는 버튼(테마에 따라 다름)은 건너뛴다. */
 const CHAT_COACH: CoachStep[] = [
   { target: 'narration', title: msg('행동이나 상황을 표현하고 싶을 때 내용 앞뒤로 *를 붙여보세요.'), example: msg('예시) *수줍게 그를 바라보며* 보고싶었어…') },
   { target: 'model', title: msg('대화 방식을 바꿀 수 있어요.'), example: msg('기본 대화와 더 긴 대화 중에서 골라 보세요.') },
-  { target: 'persona', title: msg('이 대화에서 내가 누구인지 정할 수 있어요.'), example: msg('이름과 소개를 적으면 캐릭터가 그렇게 대해요.') },
-  { target: 'theme', title: msg('채팅방 모양을 바꿀 수 있어요.'), example: msg('미로 기본, DM, 카톡 스타일 중에서 골라 보세요.') },
 ]
 
 export default async function ChatPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -77,10 +76,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <span>{t('호감 {n}%', { n: affinity })}</span><span className={styles.affinityBar} aria-hidden="true"><i style={{ width: `${affinity}%` }} /></span>
             </p></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
-          <ConversationPersona entry={loaded.entry} sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
-          <ImmersiveToggle />
-          <ChatThemePicker portrait={loaded.characterPhoto} />
+          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} />
         </header>
+        <VoiceStatus />
 
         <div className={styles.transcript}>
           {/* 'AI가 생성한 대화예요' 줄은 뺐다(2026-10-02 사용자: 사람처럼 느껴져야 한다). AI 라는 안내는 가입 때 필수 동의(AI 생성 콘텐츠 안내)로 한다. */}

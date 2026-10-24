@@ -1,6 +1,10 @@
 {
   "name": "MIRO",
   "short_name": "MIRO",
+  "id": "/",
+  "scope": "/",
+  "lang": "ko",
+  "description": "최애 캐릭터와 이어가는 나만의 대화",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111015",
