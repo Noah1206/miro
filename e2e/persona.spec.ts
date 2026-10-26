@@ -3,37 +3,38 @@ import { signUp } from './helpers'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
-/** 채팅을 처음 진행하면 페르소나부터 만든다 — 저장하면 그 대화로 돌아가고, 마이페이지에서 고친다(2026-09-29 결정). */
-test('the first chat asks for a persona, returns to the chat, and My page edits it', async ({ page }) => {
+test('each room confirms its own persona and keeps it when the shared profile changes', async ({ page }) => {
   await signUp(page, BASE, undefined, { persona: false })
   await page.goto(`${BASE}/character/thomas`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
-  await expect(page).toHaveURL(/\/persona\?next=%2Fchat%2F[0-9a-f-]{36}$/)
-  await expect(page.getByRole('heading', { name: '나를 소개해 주세요' })).toBeVisible()
-
-  await page.getByRole('textbox', { name: '이름' }).fill('지우')
+  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/)
+  const chat = page.url()
+  await expect(page.getByRole('heading', { name: '이 이야기 속 나' })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveCount(0)
+  await page.getByRole('textbox', { name: '이름', exact: true }).fill('지우')
   await page.getByRole('button', { name: '여성', exact: true }).click()
   await page.getByRole('textbox', { name: '나에 대해' }).fill('스물여섯, 출판사 편집자.')
-  await page.getByRole('button', { name: '저장하고 대화하기' }).click()
-  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/)
-  await expect(page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…')).toBeVisible()
-
-  // 한 번 만들면 다시 묻지 않는다.
+  await page.getByRole('button', { name: '이 설정으로 시작하기', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toBeVisible()
   await page.reload()
-  await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}$/)
+  await expect(page.getByRole('textbox', { name: '역할극 입력' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '이 이야기 속 나' })).toHaveCount(0)
 
-  // 마이페이지에서 보이고, 연필(프로필 편집 시트)에서 닉네임을 고친다(2026-09-30). 성별·소개는 시트의 링크로 내 페르소나 화면에서.
+  // A room override does not rename the account. Edit the shared nickname separately.
   await page.goto(`${BASE}/my`)
-  await expect(page.getByText('지우', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '프로필 편집' }).click()
-  await expect(page.getByRole('textbox', { name: '닉네임' })).toHaveValue('지우')
-  await page.getByRole('textbox', { name: '닉네임' }).fill('지우 선배')
-  await page.getByRole('button', { name: '저장', exact: true }).click()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.getByText('지우 선배', { exact: true })).toBeVisible()
-  await page.getByRole('button', { name: '프로필 편집' }).click()
-  await page.getByRole('link', { name: '성별·소개 바꾸기' }).click()
+  const profile = page.getByRole('dialog', { name: '프로필 편집' })
+  await profile.getByRole('textbox', { name: '닉네임' }).fill('지우 선배')
+  await profile.getByRole('button', { name: '저장', exact: true }).click()
+  await expect(profile).toBeHidden()
+  await expect(page.locator('main').getByText('지우 선배', { exact: true })).toBeVisible()
+  await page.goto(`${BASE}/persona?next=/my`)
   await expect(page.getByRole('heading', { name: '내 페르소나' })).toBeVisible()
-  await expect(page.getByRole('textbox', { name: '이름' })).toHaveValue('지우 선배')
-  await expect(page.getByRole('button', { name: '여성', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('textbox', { name: '이름', exact: true })).toHaveValue('지우 선배')
+
+  await page.goto(chat)
+  await page.getByRole('button', { name: '대화 메뉴', exact: true }).click()
+  const room = page.getByRole('dialog', { name: '대화 메뉴' })
+  await expect(room.getByRole('textbox', { name: '이름', exact: true })).toHaveValue('지우')
+  await expect(room.getByRole('button', { name: '여성', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })

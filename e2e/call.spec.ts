@@ -1,4 +1,4 @@
-import { realityCharacter, signUp, daytime } from './helpers'
+import { confirmConversationPersona, realityCharacter, signUp, daytime } from './helpers'
 import { WELCOME_GRANT } from '../packages/config/src'
 import { expect, test, type Page } from '@playwright/test'
 
@@ -12,6 +12,7 @@ async function enterRoleplay(page: Page) {
   await page.goto(`${BASE}/character/${id}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   return page.url().split('/chat/')[1]!
 }
 
@@ -50,8 +51,8 @@ test('incoming video call: the user sees it is video before accepting, talks, ha
   await expect(page.locator('[data-incoming-call]')).toHaveCount(0)
 
   await page.goto(`${BASE}/my/subscription`)
-  await expect(page.locator('[data-token-balance]')).toBeVisible()
-  expect(Number(await page.locator('[data-token-balance]').getAttribute('data-token-balance'))).toBeLessThan(WELCOME_GRANT.units)
+  await expect(page.locator('main [data-token-balance]')).toBeVisible()
+  expect(Number(await page.locator('main [data-token-balance]').getAttribute('data-token-balance'))).toBeLessThan(WELCOME_GRANT.units)
 })
 
 test('declining leaves a record and no call screen', async ({ page, request }) => {

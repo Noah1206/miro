@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
-import { signUp } from './helpers'
+import { confirmConversationPersona, signUp } from './helpers'
 import { WELCOME_GRANT } from '../packages/config/src'
 
 // These financial flows do not register a real browser push subscription.
@@ -12,6 +12,7 @@ test('model choices use token balances and reply length, and open a token-only r
   await page.goto('/character/thomas')
   await page.getByRole('button', { name: '대화 시작하기', exact: true }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   await page.getByRole('button', { name: '대화 방식 선택' }).click()
   const dialog = page.getByRole('dialog')
   await expect(dialog).toContainText('남은 토큰')

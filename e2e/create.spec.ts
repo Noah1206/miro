@@ -1,4 +1,4 @@
-import { enterCharacterCreate, signUp } from './helpers'
+import { confirmConversationPersona, enterCharacterCreate, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -34,6 +34,7 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   await publish.click()
 
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
+  await confirmConversationPersona(page)
   await expect(page.getByText('윤지훈').first()).toBeVisible()
   // 세계는 적은 장소에서 시작한다 — '어딘가' 가 아니다.
   await page.getByRole('button', { name: '윤지훈 — 관계와 세계 보기' }).click()
@@ -61,6 +62,7 @@ test('/create 는 미로 캐릭터로 바로 열고, 비공개 초안을 재개�
   await expect(page.locator('input[name="name"]')).toHaveValue('비공개서점')
   await page.getByRole('button', { name: '게시', exact: true }).click()
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]+$/)
+  await confirmConversationPersona(page)
   await page.goto(`${BASE}/my/characters?filter=private`)
   await expect(page.getByRole('link', { name: /비공개서점, 비공개/ })).toBeVisible()
   await page.goto(`${BASE}/create`)

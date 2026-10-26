@@ -1,4 +1,4 @@
-import { realityCharacter, signUp, daytime } from './helpers'
+import { confirmConversationPersona, realityCharacter, signUp, daytime } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -13,6 +13,7 @@ async function enterRoleplay(page: Page, slug = 'thomas') {
   await page.goto(`${BASE}/character/${id}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   return page.url().split('/chat/')[1]!
 }
 

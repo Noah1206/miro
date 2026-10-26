@@ -1,4 +1,4 @@
-import { signUp } from './helpers'
+import { confirmConversationPersona, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -6,6 +6,7 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 async function signupAndPlay(page: Page) {
   await signUp(page, BASE)
   await page.goto(`${BASE}/character/thomas`); await page.getByRole('button', { name: '대화 시작하기' }).click(); await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('안녕하세요.'); await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByText('안녕하세요.')).toBeVisible()
   return page.url()

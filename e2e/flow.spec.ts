@@ -1,4 +1,4 @@
-import { closeWelcome, dismissVisitorConsent, passOnboardingProfile, signUp } from './helpers'
+import { confirmConversationPersona, closeWelcome, dismissVisitorConsent, passOnboardingProfile, signUp } from './helpers'
 import { WELCOME_GRANT } from '../packages/config/src'
 import { expect, test } from '@playwright/test'
 
@@ -54,10 +54,10 @@ test('a visitor can browse before signing in, and lands back where they were', a
   await expect(page).toHaveURL(/\/character\/thomas/)
   // 로그인은 화면을 떠나지 않고 시트로 묻는다 — 보던 캐릭터가 뒤에 그대로 남는다.
   await page.getByRole('button', { name: '로그인하고 시작하기' }).click()
-  await expect(page.locator('[data-login-sheet]')).toBeVisible()
+  await expect(page.locator('[data-login-sheet]:visible')).toBeVisible()
   await expect(page).toHaveURL(/\/character\/thomas/)
   // 시트의 제공자 버튼이 보던 곳으로 돌아올 next 를 들고 있다.
-  await expect(page.locator('[data-login-provider="google"]'))
+  await expect(page.locator('[data-login-sheet]:visible [data-login-provider="google"]'))
     .toHaveAttribute('href', /next=%2Fcharacter%2Fthomas/)
 
   // signUp 이 로그인 화면부터 진행하므로 시트를 닫고 평소 경로로 들어간다.
@@ -77,9 +77,9 @@ test('signup through entering a roleplay', async ({ page }) => {
   await expect(page.getByText('토마스').first()).toBeVisible()
   // 헤더의 알림 종도 화면을 떠나지 않고 로그인 시트로 묻는다 — 홈이 뒤에 그대로 남고, 돌아올 곳은 홈이다.
   await page.getByRole('button', { name: '알림, 가입 선물이 기다리고 있어요' }).click()
-  await expect(page.locator('[data-login-sheet]')).toBeVisible()
+  await expect(page.locator('[data-login-sheet]:visible')).toBeVisible()
   await expect(page).toHaveURL(/\/home/)
-  await expect(page.locator('[data-login-provider="google"]')).toHaveAttribute('href', /next=%2Fhome/)
+  await expect(page.locator('[data-login-sheet]:visible [data-login-provider="google"]')).toHaveAttribute('href', /next=%2Fhome/)
 
   // signUp 이 로그인 화면부터 진행하므로 시트를 닫고 평소 경로로 들어간다. 로그인 화면은 직접 열면 그대로 있다.
   await page.keyboard.press('Escape')
@@ -103,6 +103,7 @@ test('signup through entering a roleplay', async ({ page }) => {
 
   // 세션이 생성되고 저장된 세계 상태가 복구되어야 한다
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
+  await confirmConversationPersona(page)
   await expect(page.getByRole('heading', { name: '토마스', exact: true })).toBeVisible()
 })
 
@@ -114,6 +115,7 @@ test('re-entering the same character continues the existing session', async ({ p
   await page.goto(`${BASE}/character/hisashi`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   const first = page.url()
 
   // 다시 들어가도 새 세션을 만들지 않는다

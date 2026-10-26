@@ -1,4 +1,4 @@
-import { realityCharacter, signUp } from './helpers'
+import { confirmConversationPersona, realityCharacter, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -10,6 +10,7 @@ async function enterRoleplay(page: Page) {
   await page.goto(`${BASE}/character/${id}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
 }
 
 // 9/26 사용자 요청으로 채팅 입력란 위의 Reality 버튼(사진·Live·통화)을 없앴다 — 사진 요청 진입점이 새로 정해지면 다시 켠다.

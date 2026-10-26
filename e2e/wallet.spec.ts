@@ -4,7 +4,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { db, bankTransferOrders, callSessions, contactProfiles, rechargeGrants, users } from '../packages/db/src'
 import { testDatabaseUrl } from '../tooling/test-database'
-import { realityCharacter, signUp } from './helpers'
+import { confirmConversationPersona, realityCharacter, signUp } from './helpers'
 
 if (!testDatabaseUrl(process.env.DATABASE_URL)) throw new Error('Wallet E2E needs an explicit local test DATABASE_URL')
 // The db workspace owns the existing Drizzle dependency.
@@ -21,6 +21,7 @@ async function enter(page: Page, empty = true) {
   await page.goto(`${WEB}/character/${id}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   const sessionId = page.url().split('/chat/')[1]!
   if (empty) {
     expect((await page.request.post(`${WEB}/api/dev/usage`)).ok()).toBe(true)

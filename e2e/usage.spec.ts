@@ -1,4 +1,4 @@
-import { signUp } from './helpers'
+import { confirmConversationPersona, signUp } from './helpers'
 import { WELCOME_GRANT } from '../packages/config/src'
 import { db, rechargeGrants, users, eq } from '../packages/db/src'
 import { expect, test, type Page } from '@playwright/test'
@@ -10,6 +10,7 @@ async function enterRoleplay(page: Page) {
   await page.goto(`${BASE}/character/taeyun`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   return email
 }
 
@@ -27,7 +28,7 @@ test('exhausting a monthly window preserves the signup wallet and existing conve
   // The mock provider costs zero. Monthly exhaustion must not debit the signup grant.
   expect(usage.tokensRemaining).toBe(WELCOME_GRANT.units)
   await page.goto(`${BASE}/my/subscription`)
-  await expect(page.locator('[data-token-balance]')).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
+  await expect(page.locator('main [data-token-balance]')).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
   await page.goto(chat)
   await expect(page.getByText('첫 출근입니다.')).toBeVisible()
 })
@@ -36,7 +37,7 @@ test('token history shows the actual wallet without an obsolete subscription met
   await signUp(page, BASE)
   await page.goto(`${BASE}/my/subscription`)
   await expect(page.getByRole('heading', { name: '토큰 사용 내역' })).toBeVisible()
-  await expect(page.locator('[data-token-balance]')).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
+  await expect(page.locator('main [data-token-balance]')).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
   await expect(page.getByRole('heading', { name: '최근 내역' })).toBeVisible()
   await expect(page.getByRole('meter')).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText(/호감도|신뢰 \d+/)
@@ -45,7 +46,7 @@ test('token history shows the actual wallet without an obsolete subscription met
 test('recharge shows refund terms and an empty wallet asks for tokens', async ({ page }) => {
   const email = await signUp(page, BASE)
   await page.goto(`${BASE}/recharge`)
-  await expect(page.locator(`[data-recharge-balance="${WELCOME_GRANT.units}"]`)).toBeVisible()
+  await expect(page.locator(`main [data-recharge-balance="${WELCOME_GRANT.units}"]`)).toBeVisible()
   await page.getByRole('button', { name: '충전하기', exact: true }).click()
   await expect(page.getByRole('dialog', { name: '충전', exact: true })).toContainText('충전할 금액')
   await page.getByRole('button', { name: '닫기', exact: true }).click()
@@ -61,5 +62,5 @@ test('recharge shows refund terms and an empty wallet asks for tokens', async ({
 
 test('the recharge page requires a login', async ({ page }) => {
   await page.goto(`${BASE}/recharge`)
-  await expect(page).toHaveURL(/\/login/)
+  await expect(page).toHaveURL(/\/home\?.*login=1/)
 })

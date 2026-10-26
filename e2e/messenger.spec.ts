@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { and, asc, eq } from 'drizzle-orm'
 import { db, authSessions, characters, messages, messengerInbox, users, userPersonas, userSettings } from '@miro/db'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { realityCharacter } from './helpers'
+import { confirmConversationPersona, realityCharacter } from './helpers'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3200'
 let ownerId: string | undefined, fixtureCharacter: string | undefined
@@ -28,6 +28,7 @@ test('messenger sends independently, keeps the draft editable, and only shows a 
   await page.goto(`${BASE}/character/${characterId}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   const sessionId = page.url().split('/chat/')[1]!
   await page.goto(`${BASE}/messages/${sessionId}`)
   const input = page.getByRole('textbox', { name: '문자 입력' })

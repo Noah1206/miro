@@ -50,6 +50,8 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   /** 흔들림은 재시도로 덮지 않고 드러내되, 한 번은 봐준다 (네트워크는 실제로 튄다). */
   retries: 1,
+  /** A broken shared fixture should fail CI promptly; a passing run still executes the full suite. */
+  maxFailures: process.env.CI ? 5 : undefined,
   /** 워커가 늘수록 DB 왕복이 겹친다. 코어 수가 아니라 DB 가 한계다. */
   workers: process.env.CI ? 2 : 3,
   // reducedMotion: Motion/CSS 가 즉시 최종 상태로 가므로 타이밍이 테스트를 흔들지 않는다.
@@ -57,7 +59,7 @@ export default defineConfig({
   use: { trace: 'retain-on-failure', screenshot: 'only-on-failure', headless: true, baseURL: `http://localhost:${WEB}`, actionTimeout: 15_000, navigationTimeout: 30_000, reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
     // 화면 언어는 쿠키가 없으면 브라우저 언어를 따른다 — 테스트는 한국어 화면을 기준으로 쓴다.
     locale: 'ko-KR' },
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env.CI ? [['line'], ['html', { open: 'never' }]] : 'list',
   webServer: [
     { command: `pnpm --filter @miro/web exec next start -p ${WEB}`, port: WEB, reuseExistingServer: false, env, timeout: 60_000 },
     { command: `pnpm --filter @miro/admin exec next start -p ${ADMIN}`, port: ADMIN, reuseExistingServer: false, env, timeout: 60_000 },

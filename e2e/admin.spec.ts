@@ -1,4 +1,4 @@
-import { signUp } from './helpers'
+import { confirmConversationPersona, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 const WEB = process.env.E2E_BASE ?? 'http://localhost:3000'
 const ADMIN = process.env.E2E_ADMIN ?? 'http://localhost:3100'
@@ -8,6 +8,7 @@ async function userReports(page: Page) {
   await page.goto(`${WEB}/character/thomas`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)   // 리다이렉트 완료 후에 URL 을 잡는다
+  await confirmConversationPersona(page)
   const chat = page.url()
   await page.getByPlaceholder('대사, 행동, 묘사를 자유롭게…').fill('신고할 내용입니다.')
   await page.getByRole('button', { name: '전송' }).click()

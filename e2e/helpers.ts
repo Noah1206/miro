@@ -17,7 +17,7 @@ export async function dismissVisitorConsent(page: Page) {
  */
 export async function signUp(page: Page, base: string, email = `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`, opts: { persona?: boolean } = {}): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
-  if (!/\/login/.test(page.url())) await page.goto(`${base}/login`)
+  if (!isLoginEntry(page.url())) await page.goto(`${base}/login`)
   await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await expect(page).toHaveURL(/\/auth\/mock\/google/)
@@ -36,6 +36,25 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
     expect(ok).toBe(true)
   }
   return email
+}
+
+function isLoginEntry(value: string): boolean {
+  const url = new URL(value)
+  return url.pathname === '/login' || (url.pathname === '/home' && url.searchParams.get('login') === '1')
+}
+
+/** Confirm this room's persona through the real form; global defaults do not configure a new room. */
+export async function confirmConversationPersona(page: Page) {
+  const start = page.getByRole('button', { name: '이 설정으로 시작하기', exact: true })
+  const composer = page.getByRole('textbox', { name: '역할극 입력' })
+  await expect(start.or(composer)).toBeVisible()
+  if (await start.isVisible()) {
+    const name = page.getByRole('textbox', { name: '이름', exact: true })
+    if (!(await name.inputValue())) await name.fill('테스터')
+    await start.click()
+    await expect(start).toBeHidden()
+  }
+  await expect(composer).toBeVisible()
 }
 
 /** 현재 가입 흐름: 취향 단계 없이 필수 생년월일을 입력하고 약관 단계 앞에서 멈춘다. */
@@ -82,7 +101,7 @@ export async function realityCharacter(page: Page, slug = 'thomas'): Promise<str
 /** 기존 계정으로 다시 로그인 시도. 결과 URL 을 돌려준다 (삭제된 계정이면 /login?error=deleted). */
 export async function signInAgain(page: Page, base: string, email: string): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
-  if (!/\/login/.test(page.url())) await page.goto(`${base}/login`)
+  if (!isLoginEntry(page.url())) await page.goto(`${base}/login`)
   await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await page.getByPlaceholder('이메일').fill(email)
@@ -119,4 +138,5 @@ export async function publishCharacter(page: Page, base: string, c: { name: stri
   await page.locator('textarea[name="startingContext"]').fill(c.startingContext)
   await page.getByRole('button', { name: '게시', exact: true }).click()
   await expect(page).toHaveURL(/\/chat\/[0-9a-f-]{36}/)
+  await confirmConversationPersona(page)
 }

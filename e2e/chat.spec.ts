@@ -1,4 +1,4 @@
-import { signUp } from './helpers'
+import { confirmConversationPersona, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -8,6 +8,7 @@ async function enterRoleplay(page: Page, slug = 'thomas') {
   await page.goto(`${BASE}/character/${slug}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
 }
 
 test('a free-form turn persists and the world header reflects state', async ({ page }) => {

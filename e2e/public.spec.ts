@@ -1,4 +1,4 @@
-import { dismissVisitorConsent, publishCharacter, signUp } from './helpers'
+import { confirmConversationPersona, dismissVisitorConsent, publishCharacter, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -29,6 +29,7 @@ test('공개한 캐릭터는 다른 사람이 발견해서 대화를 시작할 �
   await expect(b.getByRole('heading', { name })).toBeVisible()
   await b.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(b).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(b)
 })
 
 test('공개하지 않은 캐릭터는 다른 사람에게 보이지 않는다', async ({ browser }) => {

@@ -37,7 +37,7 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   await expect(awaiting.locator('[data-confirm-deposit]')).toBeEnabled()
 
   await page.goto(`${WEB}/my/subscription`)
-  await expect(page.locator('[data-token-balance]')).toBeVisible()   // 주문은 지급이 아니다
+  await expect(page.locator('main [data-token-balance]')).toBeVisible()   // 주문은 지급이 아니다
 
   // 2) 운영자가 통장에서 확인하고 승인한다.
   // 운영 콘솔은 데스크톱 도구다. 전역 설정의 모바일·터치 에뮬레이션을 물려받으면
@@ -76,7 +76,7 @@ test('bank transfer: an order pays out only after an admin confirms the deposit'
   await expect(page.locator('[data-recharge-balance="300"]')).toBeVisible()
   await expect(page.locator('[data-wallet-history]')).toContainText('지급 완료')
   await page.goto(`${WEB}/my/subscription`)
-  await expect(page.locator('[data-token-balance]')).toBeVisible()
+  await expect(page.locator('main [data-token-balance]')).toBeVisible()
 })
 
 test('bank transfer: one waiting order at a time', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { signInAgain, signUp } from './helpers'
+import { confirmConversationPersona, signInAgain, signUp } from './helpers'
 import { expect, test, type Page } from '@playwright/test'
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
@@ -9,6 +9,7 @@ async function roleplay(page: Page, slug = 'thomas') {
   await page.goto(`${BASE}/character/${slug}`)
   await page.getByRole('button', { name: '대화 시작하기' }).click()
   await expect(page).toHaveURL(/\/chat\//)
+  await confirmConversationPersona(page)
   return page.url().split('/chat/')[1]!
 }
 
@@ -72,7 +73,7 @@ test('adult verification: failure locks for 24h; success marks the account verif
   await expect(page.getByText(/성인 인증 Provider 미구성/)).toBeVisible()
   await page.getByLabel('생년월일').fill('2015-01-01')
   await page.getByLabel(/사용 정책에 동의/).check()
-  await page.getByRole('button', { name: '인증하기' }).click()
+  await page.getByRole('button', { name: '인증하기', exact: true }).click()
   await expect(page.getByRole('alert').filter({ hasText: '인증에 실패' }).first()).toBeVisible()
   await page.reload()
   await expect(page.getByRole('dialog', { name: '성인 인증' }).getByRole('alert')).toContainText('이후에 다시 시도')   // 24시간 잠금
@@ -83,7 +84,7 @@ test('adult verification: failure locks for 24h; success marks the account verif
   await page.goto(`${BASE}/my/verify`)
   await page.getByLabel('생년월일').fill('1990-05-05')
   await page.getByLabel(/사용 정책에 동의/).check()
-  await page.getByRole('button', { name: '인증하기' }).click()
+  await page.getByRole('button', { name: '인증하기', exact: true }).click()
   await expect(page.locator('[data-verified]')).toBeVisible()
   // 9/26 '성인' 토글은 채팅의 사진 요청 버튼과 함께 없어졌다 — 사진 요청 진입점이 새로 정해지면 토글 검증을 되살린다.
 })
@@ -100,6 +101,7 @@ test('account delete: impact shown, then login is refused', async ({ page }) => 
   await page.getByRole('button', { name: '계정 삭제 확정' }).click()
   await expect(page.locator('[data-account-deleted]')).toBeVisible()
   const back = await signInAgain(page, BASE, email)
-  expect(back).toMatch(/\/login\?error=deleted/)
+  expect(new URL(back).pathname).toBe('/home')
+  expect(new URL(back).searchParams.get('error')).toBe('deleted')
   await expect(page.getByRole('alert').filter({ hasText: '삭제된 계정' })).toBeVisible()
 })
