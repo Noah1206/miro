@@ -1,4 +1,5 @@
 import { realityCharacter, signUp, daytime } from './helpers'
+import { WELCOME_GRANT } from '../packages/config/src'
 import { expect, test, type Page } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -49,7 +50,8 @@ test('incoming video call: the user sees it is video before accepting, talks, ha
   await expect(page.locator('[data-incoming-call]')).toHaveCount(0)
 
   await page.goto(`${BASE}/my/subscription`)
-  await expect(page.locator('[data-usage-remaining]')).not.toHaveAttribute('data-usage-remaining', '100')  // 통화 시간이 차감됐다
+  await expect(page.locator('[data-token-balance]')).toBeVisible()
+  expect(Number(await page.locator('[data-token-balance]').getAttribute('data-token-balance'))).toBeLessThan(WELCOME_GRANT.units)
 })
 
 test('declining leaves a record and no call screen', async ({ page, request }) => {

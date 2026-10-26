@@ -23,7 +23,7 @@ test('공개한 캐릭터는 다른 사람이 발견해서 대화를 시작할 �
   // B: 홈 전체 목록(최신순) 앞쪽에서 찾아 들어가 대화 시작 — 검색 페이지는 없어졌다(2026-09-30).
   const b = await (await browser.newContext()).newPage()
   await signUp(b, BASE)
-  await b.goto(`${BASE}/home`)
+  await b.goto(`${BASE}/search/results?q=${encodeURIComponent(name)}`)
   await b.getByRole('link', { name: new RegExp(name) }).first().click()
   await expect(b).toHaveURL(/\/character\//)
   await expect(b.getByRole('heading', { name })).toBeVisible()
@@ -41,7 +41,7 @@ test('공개하지 않은 캐릭터는 다른 사람에게 보이지 않는다',
   const b = await (await browser.newContext()).newPage()
   await signUp(b, BASE)
   await b.goto(`${BASE}/home`)
-  await expect(b.getByRole('heading', { name: '장르' })).toBeVisible()
+  await expect(b.getByRole('link', { name: '탐색', exact: true })).toBeVisible()
   await expect(b.getByRole('link', { name: new RegExp(name) })).toHaveCount(0)
 })
 

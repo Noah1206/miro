@@ -43,7 +43,7 @@ test('chat list: delete with confirmation and empty state', async ({ page }) => 
 test('settings: no switch turns off character contact', async ({ page }) => {
   await signup(page)
   await page.goto(`${BASE}/my`)
-  await expect(page.getByRole('link', { name: '이용권 관리' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '사용 내역' })).toBeVisible()
   await expect(page.getByLabel(/먼저 연락 알림|야간 연락 차단|통화 수신/)).toHaveCount(0)
 })
 
@@ -75,7 +75,7 @@ test('adult verification: failure locks for 24h; success marks the account verif
   await page.getByRole('button', { name: '인증하기' }).click()
   await expect(page.getByRole('alert').filter({ hasText: '인증에 실패' }).first()).toBeVisible()
   await page.reload()
-  await expect(page.locator('[data-verify-locked]')).toBeVisible()   // 24시간 잠금
+  await expect(page.getByRole('dialog', { name: '성인 인증' }).getByRole('alert')).toContainText('이후에 다시 시도')   // 24시간 잠금
 
   // 다른 사용자로 성공 경로
   await page.context().clearCookies()

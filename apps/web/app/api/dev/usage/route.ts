@@ -13,8 +13,8 @@ export async function POST() {
   const user = await currentUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  // 창이 없으면 1단위 예약으로 연다 — 창 시작 = 첫 요청 시각 규칙을 그대로 탄다.
-  await reserve({ userId: user.id, kind: 'textRP', idempotencyKey: `dev:${user.id}:${Date.now()}` })
+  // Open the monthly window with zero units; exhausting it must never debit signup/purchased tokens.
+  await reserve({ userId: user.id, kind: 'textRP', units: 0, idempotencyKey: `dev:${user.id}:${Date.now()}` })
   const [win] = await db.select().from(usageWindows)
     .where(and(eq(usageWindows.userId, user.id), gt(usageWindows.endsAt, new Date())))
     .orderBy(desc(usageWindows.startedAt)).limit(1)

@@ -1,4 +1,5 @@
 import { closeWelcome, passOnboardingProfile, signUp } from './helpers'
+import { WELCOME_GRANT } from '../packages/config/src'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -36,7 +37,7 @@ test('onboarding cannot finish without the required terms, and ends with the wel
   await expect(submit).toBeEnabled()
   await submit.click()
   await expect(page).toHaveURL(/\/home\?welcome=1/)
-  await expect(page.locator('[data-welcome-popup]')).toContainText('300')
+  await expect(page.locator('[data-welcome-popup]')).toContainText(WELCOME_GRANT.units.toLocaleString('ko-KR'))
   await closeWelcome(page)
   await expect(page).toHaveURL(/\/home$/)
 })
