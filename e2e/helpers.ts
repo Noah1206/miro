@@ -55,6 +55,12 @@ export async function confirmConversationPersona(page: Page) {
     await expect(start).toBeHidden()
   }
   await expect(composer).toBeVisible()
+  const tour = page.getByRole('dialog', { name: '안내', exact: true })
+  await tour.waitFor({ state: 'visible', timeout: 2000 }).catch(() => undefined)
+  if (await tour.isVisible()) {
+    await page.keyboard.press('Escape')
+    await expect(tour).toBeHidden()
+  }
 }
 
 /** 현재 가입 흐름: 취향 단계 없이 필수 생년월일을 입력하고 약관 단계 앞에서 멈춘다. */
