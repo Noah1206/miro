@@ -6,7 +6,7 @@ test('monthly usage and independently revocable AI consent',async({page})=>{
   await signUp(page,BASE)
   await page.goto(`${BASE}/my/subscription`)
   await expect(page.getByRole('heading',{name:'토큰 사용 내역'})).toBeVisible()
-  await expect(page.locator('main [data-token-balance]')).toHaveAttribute('data-token-balance',String(WELCOME_GRANT.units))
+  await expect(page.locator('main [data-token-balance]:visible').last()).toHaveAttribute('data-token-balance',String(WELCOME_GRANT.units))
   const usage=await page.request.get(`${BASE}/api/usage`)
   const body=await usage.json()
   expect(body.period).toBe('monthly');expect(body.usedPercent).toBe(0)

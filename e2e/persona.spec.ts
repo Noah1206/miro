@@ -15,6 +15,7 @@ test('each room confirms its own persona and keeps it when the shared profile ch
   await page.getByRole('button', { name: '여성', exact: true }).click()
   await page.getByRole('textbox', { name: '나에 대해' }).fill('스물여섯, 출판사 편집자.')
   await page.getByRole('button', { name: '이 설정으로 시작하기', exact: true }).click()
+  await expect(page.getByRole('button', { name: '이 설정으로 시작하기', exact: true })).toBeHidden()
   await confirmConversationPersona(page)
   await page.reload()
   await expect(page.getByRole('textbox', { name: '역할극 입력' })).toBeVisible()

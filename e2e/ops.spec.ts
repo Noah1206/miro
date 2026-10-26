@@ -102,6 +102,5 @@ test('account delete: impact shown, then login is refused', async ({ page }) => 
   await expect(page.locator('[data-account-deleted]')).toBeVisible()
   const back = await signInAgain(page, BASE, email)
   expect(new URL(back).pathname).toBe('/home')
-  expect(new URL(back).searchParams.get('error')).toBe('deleted')
-  await expect(page.getByRole('alert').filter({ hasText: '삭제된 계정' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'MIRO 로그인', exact: true }).getByText(/삭제된 계정/)).toBeVisible()
 })

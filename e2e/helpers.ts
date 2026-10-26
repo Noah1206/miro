@@ -17,7 +17,7 @@ export async function dismissVisitorConsent(page: Page) {
  */
 export async function signUp(page: Page, base: string, email = `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`, opts: { persona?: boolean } = {}): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
-  if (!isLoginEntry(page.url())) await page.goto(`${base}/login`)
+  await ensureLoginEntry(page, base)
   await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await expect(page).toHaveURL(/\/auth\/mock\/google/)
@@ -41,6 +41,13 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
 function isLoginEntry(value: string): boolean {
   const url = new URL(value)
   return url.pathname === '/login' || (url.pathname === '/home' && url.searchParams.get('login') === '1')
+}
+
+async function ensureLoginEntry(page: Page, base: string) {
+  const sheet = page.getByRole('dialog', { name: 'MIRO 로그인', exact: true })
+  // The provider consumes ?login=1 with history.replaceState after opening the sheet.
+  if (new URL(page.url()).pathname === '/home') await sheet.waitFor({ state: 'visible', timeout: 1500 }).catch(() => undefined)
+  if (!isLoginEntry(page.url()) && !(await sheet.isVisible())) await page.goto(`${base}/login`)
 }
 
 /** Confirm this room's persona through the real form; global defaults do not configure a new room. */
@@ -107,7 +114,7 @@ export async function realityCharacter(page: Page, slug = 'thomas'): Promise<str
 /** 기존 계정으로 다시 로그인 시도. 결과 URL 을 돌려준다 (삭제된 계정이면 /login?error=deleted). */
 export async function signInAgain(page: Page, base: string, email: string): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
-  if (!isLoginEntry(page.url())) await page.goto(`${base}/login`)
+  await ensureLoginEntry(page, base)
   await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await page.getByPlaceholder('이메일').fill(email)

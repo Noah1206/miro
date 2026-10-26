@@ -51,8 +51,8 @@ test('incoming video call: the user sees it is video before accepting, talks, ha
   await expect(page.locator('[data-incoming-call]')).toHaveCount(0)
 
   await page.goto(`${BASE}/my/subscription`)
-  await expect(page.locator('main [data-token-balance]')).toBeVisible()
-  expect(Number(await page.locator('main [data-token-balance]').getAttribute('data-token-balance'))).toBeLessThan(WELCOME_GRANT.units)
+  await expect(page.locator('main [data-token-balance]:visible').last()).toBeVisible()
+  expect(Number(await page.locator('main [data-token-balance]:visible').last().getAttribute('data-token-balance'))).toBeLessThan(WELCOME_GRANT.units)
 })
 
 test('declining leaves a record and no call screen', async ({ page, request }) => {

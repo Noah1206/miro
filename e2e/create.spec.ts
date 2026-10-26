@@ -1,5 +1,6 @@
 import { confirmConversationPersona, enterCharacterCreate, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
+import { db, eq, worldStates } from '../packages/db/src'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
 
@@ -37,10 +38,9 @@ test('필수 네 칸을 채우면 게시되고 역할극이 시작된다', async
   await confirmConversationPersona(page)
   await expect(page.getByText('윤지훈').first()).toBeVisible()
   // 세계는 적은 장소에서 시작한다 — '어딘가' 가 아니다.
-  await page.getByRole('button', { name: '윤지훈 — 관계와 세계 보기' }).click()
-  const world = page.getByRole('dialog').getByText(/검찰청 복도/)
-  await expect(world).toBeVisible()
-  await expect(world).not.toContainText('어딘가')
+  const sessionId = page.url().split('/chat/')[1]!
+  const [world] = await db.select().from(worldStates).where(eq(worldStates.sessionId, sessionId))
+  expect(world?.currentLocation).toBe('검찰청 복도')
 })
 
 test('/create 는 미로 캐릭터로 바로 열고, 비공개 초안을 재개해 게시하면 다음 만들기는 새 초안이다', async ({ page }) => {

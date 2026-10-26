@@ -87,14 +87,14 @@ test('unsent draft survives reload and a failed transport preserves it', async (
   await composer.fill('이 내용은 실패해도 남아야 해요.')
   await page.reload()
   await expect(composer).toHaveValue('이 내용은 실패해도 남아야 해요.')
-  await page.route('**/chat/**', async route => {
+  await page.route('**/api/turn', async route => {
     if (route.request().method() === 'POST') await route.abort('failed')
     else await route.continue()
   })
   await page.getByRole('button', { name: '전송', exact: true }).click()
   await expect(page.getByRole('alert').filter({ hasText: '연결이 끊겼어요' })).toBeVisible()
   await expect(composer).toHaveValue('이 내용은 실패해도 남아야 해요.')
-  await page.unroute('**/chat/**')
+  await page.unroute('**/api/turn')
   await page.getByRole('button', { name: '전송', exact: true }).click()
   await expect(composer).toHaveValue('')
   await expect(page.getByText('이 내용은 실패해도 남아야 해요.', { exact: true })).toHaveCount(1)

@@ -28,7 +28,7 @@ test('exhausting a monthly window preserves the signup wallet and existing conve
   // The mock provider costs zero. Monthly exhaustion must not debit the signup grant.
   expect(usage.tokensRemaining).toBe(WELCOME_GRANT.units)
   await page.goto(`${BASE}/my/subscription`)
-  await expect(page.locator('main [data-token-balance]')).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
+  await expect(page.locator('main [data-token-balance]:visible').last()).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
   await page.goto(chat)
   await expect(page.getByText('첫 출근입니다.')).toBeVisible()
 })
@@ -37,7 +37,7 @@ test('token history shows the actual wallet without an obsolete subscription met
   await signUp(page, BASE)
   await page.goto(`${BASE}/my/subscription`)
   await expect(page.getByRole('heading', { name: '토큰 사용 내역' })).toBeVisible()
-  await expect(page.locator('main [data-token-balance]')).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
+  await expect(page.locator('main [data-token-balance]:visible').last()).toHaveAttribute('data-token-balance', String(WELCOME_GRANT.units))
   await expect(page.getByRole('heading', { name: '최근 내역' })).toBeVisible()
   await expect(page.getByRole('meter')).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText(/호감도|신뢰 \d+/)

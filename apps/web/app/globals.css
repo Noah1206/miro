@@ -148,7 +148,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
   --label-weight: var(--weight-medium); --label-tracking: -0.015em;
   --chip-bg: #363636; --chip-fg: #ffffff; --chip-on-bg: #f4f4f4; --chip-on-fg: #1c1c1c; --chip-on-border: #f4f4f4;
   --chip-font: 16px; --chip-weight: var(--weight-semibold); --chip-radius: 8px;
-  --tab-font: 16px; --tab-weight: var(--weight-semibold); --tab-inactive: #545454;
+  --tab-font: 16px; --tab-weight: var(--weight-semibold); --tab-inactive: #999999;
 }
 .create-page .t-title-3 { font-size: 16px; font-weight: var(--weight-medium); letter-spacing: -0.015em; }
 .create-page .t-micro { color: var(--color-text-tertiary); }
