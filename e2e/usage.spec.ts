@@ -1,4 +1,4 @@
-import { confirmConversationPersona, signUp } from './helpers'
+import { confirmConversationPersona, dismissVisitorConsent, signUp } from './helpers'
 import { WELCOME_GRANT } from '../packages/config/src'
 import { db, rechargeGrants, users, eq } from '../packages/db/src'
 import { expect, test, type Page } from '@playwright/test'
@@ -62,5 +62,7 @@ test('recharge shows refund terms and an empty wallet asks for tokens', async ({
 
 test('the recharge page requires a login', async ({ page }) => {
   await page.goto(`${BASE}/recharge`)
-  await expect(page).toHaveURL(/\/home\?.*login=1/)
+  await dismissVisitorConsent(page)
+  await expect(page).toHaveURL(/\/home(?:\?|$)/)
+  await expect(page.getByRole('dialog', { name: 'MIRO 로그인', exact: true })).toBeVisible()
 })
