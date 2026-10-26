@@ -17,6 +17,9 @@ const env = {
   /** E2E 는 실제 구글·카카오 계정으로 로그인할 수 없다 — 소셜 로그인만 시뮬레이션으로 돌린다. */
   MIRO_MOCK_OAUTH: '1',
   AI_PROVIDER: 'mock', AI_FALLBACK_PROVIDER: '', MIRO_MODEL_REGISTRY: '',
+  // These deterministic browser fixtures exercise wallet/UI and legacy contact flows.
+  // Agency compilation has its own integration tests; it requires a structured live provider.
+  MIRO_CHARACTER_AGENCY_MODE: 'off', MIRO_AGENCY_DEFAULT_POLICY: 'legacy:v1',
   REPLICATE_API_TOKEN: '', LIVEKIT_API_KEY: '', STRIPE_SECRET_KEY: '',
   AI_DAILY_BUDGET: '0', AI_DAILY_REQUEST_LIMIT: '10000',
   AUTH_BASE_URL: `http://localhost:${WEB}`,

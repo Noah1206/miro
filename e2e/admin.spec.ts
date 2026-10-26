@@ -13,8 +13,8 @@ async function userReports(page: Page) {
   await page.getByRole('button', { name: '전송' }).click()
   await expect(page.getByText('신고할 내용입니다.')).toBeVisible()
   // 신고 깃발은 캐릭터 프로필(신고 메뉴)을 눌러야 그 아래에 뜬다(10/5, 543df3d).
-  await page.getByRole('button', { name: '신고 메뉴' }).first().click()
-  await page.getByRole('link', { name: '신고' }).first().click()
+  await page.locator('[data-thought]').last().click({ delay: 650 })
+  await page.getByRole('menuitem', { name: '이 내용 신고', exact: true }).click()
   await page.getByLabel('안전 정책 위반').check()
   await page.getByRole('button', { name: '신고 제출' }).click()
   await expect(page.locator('[data-report-done]')).toBeVisible()

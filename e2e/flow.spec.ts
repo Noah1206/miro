@@ -1,4 +1,4 @@
-import { closeWelcome, passOnboardingProfile, signUp } from './helpers'
+import { closeWelcome, dismissVisitorConsent, passOnboardingProfile, signUp } from './helpers'
 import { WELCOME_GRANT } from '../packages/config/src'
 import { expect, test } from '@playwright/test'
 
@@ -10,6 +10,7 @@ const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
  */
 test('onboarding cannot finish without the required terms, and ends with the welcome gift', async ({ page }) => {
   await page.goto(`${BASE}/login`)
+  await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await page.getByPlaceholder('이메일').fill(`gate-${Date.now()}@miro.dev`)
   await page.getByRole('button', { name: '계속' }).click()
@@ -44,6 +45,7 @@ test('onboarding cannot finish without the required terms, and ends with the wel
 
 test('a visitor can browse before signing in, and lands back where they were', async ({ page }) => {
   await page.goto(`${BASE}/home`)
+  await dismissVisitorConsent(page)
   // 로그인 전 헤더에는 로그인 버튼 대신 알림 종(가입 선물 안내)이 있다 — 헤더 로그인 버튼은 뺐다(ff0009a).
   await expect(page.getByRole('button', { name: '알림, 가입 선물이 기다리고 있어요' })).toBeVisible()
 
@@ -71,6 +73,7 @@ test('signup through entering a roleplay', async ({ page }) => {
   // 로그인 전에도 홈이 먼저다 — 무엇이 있는지 보여주고 나서 묻는다.
   await page.goto(`${BASE}/`)
   await expect(page).toHaveURL(/\/home/)
+  await dismissVisitorConsent(page)
   await expect(page.getByText('토마스').first()).toBeVisible()
   // 헤더의 알림 종도 화면을 떠나지 않고 로그인 시트로 묻는다 — 홈이 뒤에 그대로 남고, 돌아올 곳은 홈이다.
   await page.getByRole('button', { name: '알림, 가입 선물이 기다리고 있어요' }).click()

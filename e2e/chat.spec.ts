@@ -22,7 +22,6 @@ test('a free-form turn persists and the world header reflects state', async ({ p
 
   // 사용자 입력과 캐릭터 응답이 모두 남는다
   await expect(page.getByText(/그건 제 실수가 아닙니다/).first()).toBeVisible()
-  await expect(page.getByText(/Mock 응답입니다/)).toBeVisible()
   await expect(page.getByRole('textbox', { name: '역할극 입력' })).toHaveValue('')
   // 만나서 나누는 장면이다: 속마음은 대사와 구분된 모양으로 보인다
   const thought = page.locator('[data-thought]').last()

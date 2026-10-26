@@ -1,4 +1,4 @@
-import { publishCharacter, signUp } from './helpers'
+import { dismissVisitorConsent, publishCharacter, signUp } from './helpers'
 import { expect, test } from '@playwright/test'
 
 const BASE = process.env.E2E_BASE ?? 'http://localhost:3000'
@@ -54,6 +54,7 @@ test('예전 /discover·/home/search 링크는 홈으로 간다', async ({ page 
 
 test('하단 첫 탭은 미로(홈)이고, 공식 미로 캐릭터가 실린다', async ({ page }) => {
   await page.goto(`${BASE}/home`)
+  await dismissVisitorConsent(page)
   // 2026-09-30: 홈 탭 이름이 '미로' 이고 따로 있던 미로 탭(/miro)은 내비에서 빠졌다.
   await expect(page.locator('nav a[href="/home"]')).toHaveText(/미로/)
   await expect(page.locator('nav a[href="/miro"]')).toHaveCount(0)

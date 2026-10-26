@@ -1,5 +1,15 @@
 import { expect, type Page } from '@playwright/test'
 
+/** Dismiss the optional first-visit sheet; account onboarding tests verify their own required consent. */
+export async function dismissVisitorConsent(page: Page) {
+  const sheet = page.getByRole('dialog', { name: 'MIRO를 시작하기 전에', exact: true })
+  await sheet.waitFor({ state: 'visible', timeout: 1500 }).catch(() => undefined)
+  if (await sheet.isVisible()) {
+    await sheet.getByRole('button', { name: '닫기', exact: true }).click()
+    await expect(sheet).toBeHidden()
+  }
+}
+
 /**
  * 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 온보딩(언어·닉네임·성별·취향·생년월일·약관)까지 통과한다. 사용한 이메일을 돌려준다.
  * 온보딩이 닉네임으로 페르소나를 만들고, 끝나면 가입 선물 시트가 뜬다 — 닫고 돌려준다.
@@ -8,6 +18,7 @@ import { expect, type Page } from '@playwright/test'
 export async function signUp(page: Page, base: string, email = `u-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@miro.dev`, opts: { persona?: boolean } = {}): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
   if (!/\/login/.test(page.url())) await page.goto(`${base}/login`)
+  await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await expect(page).toHaveURL(/\/auth\/mock\/google/)
   await page.getByPlaceholder('이메일').fill(email)
@@ -73,6 +84,7 @@ export async function realityCharacter(page: Page, slug = 'thomas'): Promise<str
 export async function signInAgain(page: Page, base: string, email: string): Promise<string> {
   // 이미 로그인 화면이면 그대로 진행한다 — 다시 이동하면 ?next= 가 날아간다.
   if (!/\/login/.test(page.url())) await page.goto(`${base}/login`)
+  await dismissVisitorConsent(page)
   await page.getByRole('link', { name: 'Google로 계속하기' }).click()
   await page.getByPlaceholder('이메일').fill(email)
   await page.getByRole('button', { name: '계속' }).click()

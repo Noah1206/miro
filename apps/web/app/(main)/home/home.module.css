@@ -99,6 +99,6 @@
 .audience:active { transform: scale(.95); background-color: #282828; }
 @media (prefers-reduced-motion: reduce) { .audience:active { transform: none; } }
 .audience:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
-.searchBar > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #7e7e7e; opacity: .7; font-size: 14px; letter-spacing: -.02em; }
+.searchBar > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ababab; opacity: 1; font-size: 14px; letter-spacing: -.02em; }
 .searchIcon { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--color-text-secondary); }
 .searchBar:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
