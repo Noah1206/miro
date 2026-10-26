@@ -1,0 +1,206 @@
+{
+  "document": "docs/MIRO_VOICE_TRAINING_HISTORY_20261027.md",
+  "document_sha256": "4bec5d708d8c2b1ce71df447b97cfabf0db389ad52fe774fd964236b28c6b2ae",
+  "version": "1.0",
+  "created_date_kst": "2026-10-27",
+  "repository_head": "07fc57cbafe68dbf12adbeda411fde31a142b85c",
+  "local_evidence_only": true,
+  "cloud_read_or_paid_execution_during_documentation": false,
+  "files": [
+    {
+      "path": "tooling/voice/drama3_fullft/README.md",
+      "bytes": 23620,
+      "sha256": "17dcf60813258272e02cc716129711911c38df7edf9c90cca6f74275ab8fa7bf"
+    },
+    {
+      "path": "output/voice-character-launch-20261026/MODEL_VALIDATION_STATUS.json",
+      "bytes": 738,
+      "sha256": "7c7f1416e85caa09befb2d7dbda54cba03236fd55ecec37e7251501a866a96bf"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/breath-aware-v2/cloud-metadata/CHECKPOINT_HANDOFF.json",
+      "bytes": 385,
+      "sha256": "d383281fc624be880d9af6863d0402a7bde9c547594deda3f7617c04399390d0"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/breath-aware-v2/COST_RECEIPT.json",
+      "bytes": 1660,
+      "sha256": "d0c5848d3f38add998380266c4053e87754360fb9d6fd59451a4f928b02e47a5"
+    },
+    {
+      "path": "output/voice-compare/handoff-2026-10-22.md",
+      "bytes": 3435,
+      "sha256": "2ba97e339ce44ef386df5b27ad94d96833ec0b9b4efdaff3b9616851d5f107d2"
+    },
+    {
+      "path": "output/voice-planning/miro-ko-base-20261024/data_inventory.json",
+      "bytes": 14318,
+      "sha256": "0d101e13b734d8ac496605ff2e236e9a076f1d435b318eecb464505281e1e1d5"
+    },
+    {
+      "path": "output/voice-compare/drama3-fullsize-ko-007-20261024-step23-preview/analysis/data_and_schedule_audit.json",
+      "bytes": 1456,
+      "sha256": "d12240e4ba0bb69d35e26ce95156da135ada3b465d0e724c59a1ec3f0f59aae3"
+    },
+    {
+      "path": "output/voice-planning/miro-ko-base-20261024/male_source_availability.json",
+      "bytes": 154,
+      "sha256": "fdf38032a1417aca7da9419b03a2e2a7e04993cba620a122c6c18018fa736f61"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/core.py",
+      "bytes": 12236,
+      "sha256": "9e485232be6a5a58f3995402e21b00675d75b99ed16e104cf63a641970c6dde9"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/korean_teacher.py",
+      "bytes": 4325,
+      "sha256": "04a7029ad334ee8ba6f31501fb68181bbcaf28840264ee6822691e4543ef8af1"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/codec_contract.py",
+      "bytes": 4115,
+      "sha256": "3022902e33b2e4d8fe82cdb56750974e6b8a4373749544807309437750ff3707"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/resumable_fullsize.py",
+      "bytes": 14124,
+      "sha256": "9eb88e2ea556b83529be29b193c91822f11663bae754db90c4dfa3270adb38e5"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/single_voice_plan.py",
+      "bytes": 6261,
+      "sha256": "ed17c071db246b5cb9bdf4acefdbf263222bf730fe3ff4466c0b6670da3a0f81"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/breath-aware-v2/stage/plan.json",
+      "bytes": 64202,
+      "sha256": "55ee35f5046b849d94a32eab90aae21ca4facad57af40cd4d0e084e01f86d1d1"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/paid-stage-v1/NEW_CHECKPOINT_CLOUD_VERIFICATION.json",
+      "bytes": 453,
+      "sha256": "b38b86a05e0160f6208465f9ffcc0a6a6bf7a8b11999428d2ae0cfa6ec3c7bdc"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/SOURCE_AUDIT.json",
+      "bytes": 6282,
+      "sha256": "32b85e4a8d0819f3f5feb55bf85f3ad7f4d5570603ab5c0f25b7cc63f5c07687"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/CANDIDATE_SUMMARY.json",
+      "bytes": 901,
+      "sha256": "e6ea6feb04a9a7a1c5756dca53fd75972ccb6eba2eac1db98da9ca071a82331c"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/DATASET_READINESS.json",
+      "bytes": 2444,
+      "sha256": "48c425bef6464a4b247f0a6fd4ba7c6872a26a944fa9b8f4af9fd543c9b6ef2d"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/remaining-data-plan/DATA_COVERAGE.json",
+      "bytes": 2177,
+      "sha256": "1cb8b61fd72abcc68609416e0b14c06fdaa3e3ba4444af349774afae92987216"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/breath-aware-v2/SUMMARY.json",
+      "bytes": 793,
+      "sha256": "7fdc960f1d0cad9b0acf06b02bcd6062c9075679c43606ce2ecb1897779ed99b"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/breath_data.py",
+      "bytes": 5871,
+      "sha256": "7dc44a26a50520a85425024b02b1b254de908a71eafe6324825f91979e580504"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/breath-aware-v2/cloud-metadata/NEW_STAGE_METADATA.json",
+      "bytes": 2171,
+      "sha256": "05cf84009f45ca4c55ebf438b8489698c4e2d5c1c1bf0afbac90f819fc83ca40"
+    },
+    {
+      "path": "output/voice-compare/drama3-fullsize-ko-007-20261024-budget44-resumable/status.json",
+      "bytes": 1042,
+      "sha256": "4f96f2a579a6fb87cc4e67da33fbf21106bce86853af84e2b870b5a81b462c66"
+    },
+    {
+      "path": "output/voice-maintenance/cleanup-20261024/recovery-and-budget/remaining-model-state-inspection.json",
+      "bytes": 12333,
+      "sha256": "327347b822dbeb466f20f0215f4c70967648b4099225a074d83f2a54e75e43bf"
+    },
+    {
+      "path": "output/voice-compare/drama3-fullsize-ko-007-20261024-stage20/CANONICAL_RESUME.json",
+      "bytes": 1589,
+      "sha256": "257d287f5dad2e31fdde542edb0e13398fc177fab0527c11ac1e4d9db92d61d6"
+    },
+    {
+      "path": "output/voice-compare/drama3-fullsize-ko-007-20261024-stage20/FINAL_BUDGET_SNAPSHOT.json",
+      "bytes": 1188,
+      "sha256": "c7f1fc6eec3c18a9eb117b641454c7d5894cc9d9d0b85c2d966efbd361449001"
+    },
+    {
+      "path": "output/voice-compare/drama3-fullsize-ko-007-20261024-cost-optimized/training_result.json",
+      "bytes": 622,
+      "sha256": "77e86c280f3b0f35a484ab0022fdf15c2cc88ee2d3377ed945ae623382db005e"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/breath-aware-v2/PREEMPTION_RECOVERY_AUDIT.json",
+      "bytes": 688,
+      "sha256": "01bce3d2e2a4240feb69a42b60ea43cd32d14f7825da9c5fbcf26a0a00edd20a"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/diagnosis-local/REPORT.json",
+      "bytes": 6664,
+      "sha256": "aff52a6366c6162e2ced15ce06c49c5e6fc65864a4d6e62cdc64fc8edd71caf6"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/remaining-data-plan/INFERENCE_FINDING.json",
+      "bytes": 1126,
+      "sha256": "a191f20850a5b37022942041990138f9e657808f9e2395fbe4d735684426fa92"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/new-script-compare-v1/audit.json",
+      "bytes": 7119,
+      "sha256": "97b7f2962eb96d6eef26c57d13c9ecf6495d5926c27ef7892974c46806352090"
+    },
+    {
+      "path": "output/voice-compare/drama3-fullsize-ko-007-20261024-step23-preview/analysis/findings.json",
+      "bytes": 10057,
+      "sha256": "8d1e989c40058cf05ac4c6cebd35ca2cb08a02fa7be0e0b9e6a9b4d5f2c3839b"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/paid-stage-v1/actual-pricing-rates.json",
+      "bytes": 2500,
+      "sha256": "90e7a8e15d62d7223187e50a7e4f9c1eedd84c8529ceac44a38db352a07e5cd9"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/continuous_budget.py",
+      "bytes": 1339,
+      "sha256": "7ef81a7d0888eaf4f3d321563612b647eddf08fe821424d75744f5104dd45bf9"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/paid-stage-v1/FINAL_COST.json",
+      "bytes": 1283,
+      "sha256": "195b9df593c436e7367e2ab0539bf2b6ff656e99bb569e6707a4e4af0b9f15a3"
+    },
+    {
+      "path": "output/voice-upload/male-asmr-01-20261026/new-script-compare-v1/COST_RECEIPT.json",
+      "bytes": 585,
+      "sha256": "ef0473d8e3071e44fd45390a040be403c68be7c9f1cbebd557a83ae5fec556bb"
+    },
+    {
+      "path": "tooling/voice/modal_drama3_breath_stage.py",
+      "bytes": 26348,
+      "sha256": "c778797765739a81a7e3f761739d0c64edc22c4a500b6c631e528bb56d024eb8"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/export.py",
+      "bytes": 3659,
+      "sha256": "74953d82ee3b409457aab11c065ccd472e48742c39f4f2d3d60b66d82e830096"
+    },
+    {
+      "path": "tooling/voice/drama3_fullft/training_state.py",
+      "bytes": 11900,
+      "sha256": "b08396c72a365a4a14a589784ca24c155bdb72ec4be4525151930573e0a78c3d"
+    }
+  ]
+}
