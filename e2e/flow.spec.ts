@@ -22,13 +22,13 @@ test('onboarding cannot finish without the required terms, and ends with the wel
 
   const submit = page.getByRole('button', { name: '시작하기', exact: true })
   await expect(submit).toBeDisabled()
-  // 필수 6개: 만 18세(10/3)·약관·처리방침·국외 이전(처리방침과 따로 받는 동의, 10/5)·AI 안내·캐릭터 알림(10/1).
-  const required = ['만 18세 이상', '서비스 이용약관', '개인정보 처리방침', '개인정보 국외 이전 동의', 'AI 생성 콘텐츠 안내', '캐릭터 알림 받기'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
+  // 나이는 앞 단계 생년월일로 확인한다. 언베일 인증과 별개인 일반 가입 약관 5개를 검증한다.
+  const required = ['서비스 이용약관', '개인정보 처리방침', '개인정보 국외 이전 동의', 'AI 생성 콘텐츠 안내', '캐릭터 알림 받기'].map((t) => page.getByRole('checkbox', { name: new RegExp(t) }))
   await required[0]!.click()
   await expect(submit).toBeDisabled()            // 하나만으로는 열리지 않는다
-  for (const box of required.slice(1, 5)) await box.click()
+  for (const box of required.slice(1, 4)) await box.click()
   await expect(submit).toBeDisabled()            // 캐릭터 알림도 필수다(2026-10-01) — 테스트 환경은 알림 키가 없어 권한은 묻지 않는다
-  await required[5]!.click()
+  await required[4]!.click()
   await expect(submit).toBeEnabled()             // 필수를 모두 체크해야 열린다 (선택 항목은 없어도 된다)
   await required[3]!.click()
   await expect(submit).toBeDisabled()

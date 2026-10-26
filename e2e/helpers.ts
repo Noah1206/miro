@@ -11,7 +11,7 @@ export async function dismissVisitorConsent(page: Page) {
 }
 
 /**
- * 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 온보딩(언어·닉네임·성별·취향·생년월일·약관)까지 통과한다. 사용한 이메일을 돌려준다.
+ * 소셜 로그인(개발 시뮬레이션)으로 새 계정을 만들고 온보딩(언어·닉네임·성별·생년월일·약관)까지 통과한다. 사용한 이메일을 돌려준다.
  * 온보딩이 닉네임으로 페르소나를 만들고, 끝나면 가입 선물 시트가 뜬다 — 닫고 돌려준다.
  * 페르소나 관문을 시험하는 테스트는 { persona: false } — 온보딩이 만든 페르소나를 개발 API 로 지운다.
  */
@@ -38,7 +38,7 @@ export async function signUp(page: Page, base: string, email = `u-${Date.now()}-
   return email
 }
 
-/** 온보딩 1~5단계(언어 → 닉네임 → 성별 → 취향 → 생년월일 건너뛰기). 약관 단계 앞에서 멈춘다. */
+/** 현재 가입 흐름: 취향 단계 없이 필수 생년월일을 입력하고 약관 단계 앞에서 멈춘다. */
 export async function passOnboardingProfile(page: Page, nickname = '테스터') {
   await page.getByRole('radio', { name: '한국어' }).click()
   await page.getByRole('button', { name: '다음' }).click()
@@ -46,9 +46,8 @@ export async function passOnboardingProfile(page: Page, nickname = '테스터') 
   await page.getByRole('button', { name: '다음' }).click()
   await page.getByRole('radio', { name: '밝히지 않음' }).click()
   await page.getByRole('button', { name: '다음' }).click()
-  await page.getByRole('checkbox', { name: /HL/ }).click()
+  await page.getByLabel('생년월일').fill('1990.01.01')
   await page.getByRole('button', { name: '다음' }).click()
-  await page.getByRole('button', { name: '건너뛰기' }).click()
   await expect(page.getByRole('heading', { name: '시작하기 전에' })).toBeVisible()
 }
 
