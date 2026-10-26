@@ -47,14 +47,14 @@ suite('voice seconds and wallet integration',()=>{
  it('grants a separate one-time trial under concurrent balance reads',async()=>{
   const all=await Promise.all(Array.from({length:10},()=>speechBalance(id.u)))
   expect(all.every(b=>b.remainingSeconds===15)).toBe(true)
-  const [count]=await db.execute<{n:number}>(sql`SELECT count(*)::int n FROM speech_credit_grants WHERE user_id=${id.u}`);expect(count.n).toBe(1)
+  const [count]=await db.execute<{n:number}>(sql`SELECT count(*)::int n FROM speech_credit_grants WHERE user_id=${id.u}`);expect(count).toMatchObject({n:1})
  })
  it('does not issue trials or sell voice seconds while character voice is deferred',async()=>{
   vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','0')
   expect(await speechBalance(id.u)).toMatchObject({enabled:false,remainingSeconds:0,products:[]})
   await expect(purchaseSpeech(id.u,'minute',randomUUID())).rejects.toMatchObject({code:'voice_not_ready'})
   const [row]=await db.execute<{n:number}>(sql`SELECT count(*)::int n FROM speech_credit_grants WHERE user_id=${id.u}`)
-  expect(row.n).toBe(0)
+  expect(row).toMatchObject({n:0})
  })
  it('purchases exactly once using paid wallet funds and never uses signup grants',async()=>{
   await db.insert(rechargeGrants).values({userId:id.u,amount:1000,source:'grant'})
@@ -78,7 +78,7 @@ suite('voice seconds and wallet integration',()=>{
  })
  it('rejects extended generation when seconds are insufficient and leaves no queued job',async()=>{
   await speechBalance(id.u);await expect(speechStore().enqueue(await spec('extended'),speechPolicy())).rejects.toMatchObject({code:'speech_balance_low'})
-  const [row]=await db.execute<{n:number}>(sql`SELECT count(*)::int n FROM speech_synthesis_jobs WHERE user_id=${id.u}`);expect(row.n).toBe(0)
+  const [row]=await db.execute<{n:number}>(sql`SELECT count(*)::int n FROM speech_synthesis_jobs WHERE user_id=${id.u}`);expect(row).toMatchObject({n:0})
  })
  it('does not silently charge when a free replay expires between quote and listen',async()=>{
   await speechBalance(id.u);const store=speechStore(),s=await spec(),policy=speechPolicy()

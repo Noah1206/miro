@@ -8,6 +8,7 @@ import { indexedDiscoveryEnabled, rankedPopularIds } from './search-index'
 import { searchGenres, searchNeedle } from './search-params'
 import { msg } from '@/lib/i18n'
 import { genreValues } from './genres'
+import { availableDiscoveryGroups, discoveryTagGroups, discoveryTagNeedle, type DiscoveryGroup } from './discovery-filters'
 
 export type HomeCard = OfficialCard & {
   /** 실제로 이 캐릭터와 대화한 사람 수. 초기에는 0 이며 그때는 표시하지 않는다. */
@@ -63,7 +64,7 @@ function decodeCursor(value: string | null, sort: HomeSort) {
 
 /** 홈 칩(장르·관계)으로 거르기. 한 종류 안에서는 하나라도, 두 종류를 같이 고르면 둘 다 맞아야 한다. */
 export type HomeSort = 'latest' | 'ranking' | 'reviews'
-export type CardFilter = { genres?: string[]; relations?: string[]; query?: string; sort?: HomeSort; audience?: Audience }
+export type CardFilter = { genres?: string[]; relations?: string[]; tags?: string[]; query?: string; sort?: HomeSort; audience?: Audience }
 /** 홈 위 고르기(10/20). 없으면 전체. */
 export type Audience = 'female' | 'male'
 
@@ -95,6 +96,12 @@ function relationMatch(relations?: string[]): SQL | undefined {
   return sql`exists (select 1 from jsonb_array_elements_text(${characters.relationshipKeywords}) as keyword(value) where ${containsAny(sql.raw('keyword.value'), needles)})`
 }
 
+function discoveryMatch(tags: string[] = []): SQL | undefined {
+  const groups = discoveryTagGroups(tags)
+  const catalogText = sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.occupation}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`
+  return and(...groups.map(group => sql`(${containsAny(catalogText, [...new Set(group.flatMap(tag => discoveryTagNeedle(tag).split('/').map(searchNeedle)))])})`))
+}
+
 async function cardPage(type: ExperienceType | null, userId: string | null, cursorValue: string | null, includeOwned = false, filter: CardFilter = {}, contactOnly = false, all = false): Promise<CardPage> {
   const unveil = await homeUnveilEnabled(userId)
   const sort = filter.sort ?? 'latest'
@@ -123,6 +130,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       )] : [or(eq(characters.isOfficial, true), eq(characters.isPublic, true))]),
       genreMatch(characters.id, filter.genres),
       relationMatch(filter.relations),
+      discoveryMatch(filter.tags),
       ...(filter.audience ? [eq(characters.audience, filter.audience)] : []),
       ...(searchNeedle(filter.query ?? '') ? [containsAny(sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`, [searchNeedle(filter.query ?? '')])] : []),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
@@ -158,7 +166,7 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * 홈 섹션(10/19, 위프·베이비챗형): 인기 순위 + 장르별 줄. 목록은 homeCatalog(랭킹순 — 대화 인원, 같으면 최신) 한 번만 읽고 나눈다.
  * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 섹션끼리 캐릭터가 겹치지 않는다(10/19).
  */
-export async function homeSections(userId: string | null, audience?: Audience): Promise<{ ranking: HomeCard[]; genres: HomeRow[] }> {
+export async function homeSections(userId: string | null, audience?: Audience): Promise<{ ranking: HomeCard[]; genres: HomeRow[]; filters: DiscoveryGroup[] }> {
   // 10/19: 최근에 만든 캐릭터가 앞에 오게(사용자 요청) — 대화 수가 쌓이기 전까지 최신순.
   const { items } = await homeCatalog(userId, { sort: 'latest', audience })
   // 10/19: 한 캐릭터는 한 섹션에만(사용자 요청). 인기 줄이 먼저 10명을 가져가고, 나머지는 자기 장르 중 가장 좁은(캐릭터가 적은) 장르 줄 하나에만 들어간다.
@@ -176,7 +184,7 @@ export async function homeSections(userId: string | null, audience?: Audience): 
   const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 6)
     .map(([g, cs]) => ({ key: g, title: g, items: shuffle(cs) }))
   // 10/20: 줄 안의 순서는 들어올 때마다 섞는다(사용자 요청) — 어느 줄에 들어가는지는 그대로.
-  return { ranking: shuffle(ranking), genres }
+  return { ranking: shuffle(ranking), genres, filters: availableDiscoveryGroups(items) }
 }
 
 function shuffle<T>(xs: T[]): T[] {

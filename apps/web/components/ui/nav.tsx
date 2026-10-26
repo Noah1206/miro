@@ -7,10 +7,10 @@ import { TransitionLink } from './transition-link'
 import { useLoginSheet } from './login-sheet'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
+import glass from './nav-glass.module.css'
 
 /**
- * 탭은 미로 · 만들기 · 대화 · 나 넷이다(10/20 탐색 대신 만들기. 10/19 탐색 추가. 2026-09-30: 첫 베타는 미로 캐릭터만 — 홈 탭 이름을 '미로' 로 바꾸고 따로 있던 미로 탭은 뺐다.
- * 만들기도 뺐다 — 만들고 싶은 사람이 말하면 그때 연다. 만들기 화면(/create)은 남아 있다).
+ * 탭은 미로 · 탐색 · 만들기 · 대화 · 프로필 순서다.
  *
  * 아이콘은 선이 아니라 꽉 찬 실루엣이다. 속(플러스·말풍선 점)은 같은 path 안의
  * 하위 도형으로 두고 fill-rule=evenodd 로 뚫는다 — 배경색으로 덮으면 내비의 반투명 블러와
@@ -23,13 +23,15 @@ const ITEMS = [
    */
   { href: '/home', label: msg('미로'),
     icon: <path d="M10.8 2.6h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4h-7.2a3.4 3.4 0 0 1-3.4-3.4V6a3.4 3.4 0 0 1 3.4-3.4ZM6 7.4h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4H6a3.4 3.4 0 0 1-3.4-3.4v-7.2A3.4 3.4 0 0 1 6 7.4Z" /> },
-  /** 만들기(10/20, 탐색 탭 자리) — 둥근 사각형에 evenodd 로 뚫린 플러스. 전체 목록(/explore)은 '전체 보기' 로 남는다. */
+  { href: '/explore', label: msg('탐색'),
+    icon: <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 5.4-2.8 6.4-6.4 2.8 2.8-6.4 6.4-2.8ZM12 10.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z" /> },
+  /** 만들기 — 둥근 사각형에 evenodd 로 뚫린 플러스. */
   { href: '/create', label: msg('만들기'), auth: true,
     icon: <path d="M7 2.6h10A4.4 4.4 0 0 1 21.4 7v10a4.4 4.4 0 0 1-4.4 4.4H7A4.4 4.4 0 0 1 2.6 17V7A4.4 4.4 0 0 1 7 2.6Zm4 4.9v3.5H7.5v2H11v3.5h2V13h3.5v-2H13V7.5h-2Z" /> },
   { href: '/archive', label: msg('대화'), auth: true,
     icon: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5zM7.6 11.5a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0z" /> },
   // 머리가 크고 어깨에 바로 붙는다 (레퍼런스). 둘이 겹치므로 여기만 nonzero — evenodd 면 겹친 자리가 뚫린다.
-  { href: '/my', label: msg('나'), auth: true,
+  { href: '/my', label: msg('프로필'), auth: true,
     icon: <g fillRule="nonzero"><circle cx="12" cy="8.9" r="6.4" /><path d="M12 14.8c-5.2 0-9.4 2.9-9.4 6.1 0 .3.2.5.5.5h17.8c.3 0 .5-.2.5-.5 0-3.2-4.2-6.1-9.4-6.1z" /></g> },
 ]
 
@@ -42,11 +44,14 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   const pathname = usePathname()
   const t = useT()
   const askLogin = useLoginSheet()
-  if (/^\/(create|search)(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname) || /^\/stories\/play\//.test(pathname)) return null
+  const activePath = /^\/search(?:\/|$)/.test(pathname) ? '/explore' : pathname
+  const activeIndex = ITEMS.findIndex(item => activePath === item.href || activePath.startsWith(item.href + '/'))
+  if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname) || /^\/stories\/play\//.test(pathname)) return null
   return (
-    <><DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} /><nav aria-label={t('주요')} className="nav">
+    <><DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} /><nav aria-label={t('주요')} className={`nav ${glass.bar}`}>
+      {activeIndex >= 0 && <span aria-hidden="true" className={glass.indicator} style={{ transform: `translateX(${activeIndex * 100}%)` }} />}
       {ITEMS.map((it) => {
-        const active = pathname === it.href || pathname.startsWith(it.href + '/')
+        const active = activePath === it.href || activePath.startsWith(it.href + '/')
         // 로그인이 필요한 탭은 비로그인일 때 시트로 묻는다 — 보던 화면을 떠나지 않는다.
         const gated = !signedIn && it.auth
         const inner = (

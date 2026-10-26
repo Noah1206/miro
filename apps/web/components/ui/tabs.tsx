@@ -3,28 +3,27 @@ import { motion } from 'motion/react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { spring } from '@/lib/motion/tokens'
+import section from './section-tabs.module.css'
 
 type Tab = { key: string; label: string; href?: string }
 
 /**
- * 활성 표시는 dot 교체가 아니라 하나의 밑줄이 이동한다 (shared layout, layoutId).
- * Active = white, inactive = gray. Accent 금지.
+ * Full-width sections share the same underline and text states as route navigation.
+ * Equal-width sections with white active text and a lavender underline.
  */
 export function Tabs({ tabs, active, onChange, id = 'tabs' }: { tabs: Tab[]; active: string; onChange?: (k: string) => void; id?: string }) {
   return (
-    <div role="tablist" style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--color-border)' }}>
+    <div id={id} role="tablist" className={section.bar}>
       {tabs.map((t) => {
         const isActive = t.key === active
         const inner = (
           <>
-            <span style={{ color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', transition: 'color var(--motion-fast) var(--ease-standard)' }}>{t.label}</span>
-            {isActive && <motion.span layoutId={`${id}-underline`} transition={spring.default} style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--color-accent)' }} />}
+            <span>{t.label}</span>
           </>
         )
-        const style: React.CSSProperties = { position: 'relative', padding: '10px 14px', minHeight: 44, background: 'transparent', border: 0, fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-medium)' }
         return t.href
-          ? <Link key={t.key} href={t.href} role="tab" aria-selected={isActive} style={style}>{inner}</Link>
-          : <button key={t.key} type="button" role="tab" aria-selected={isActive} onClick={() => onChange?.(t.key)} style={style}>{inner}</button>
+          ? <Link key={t.key} href={t.href} role="tab" aria-selected={isActive} className={section.item}>{inner}</Link>
+          : <button key={t.key} type="button" role="tab" aria-selected={isActive} onClick={() => onChange?.(t.key)} className={section.item}>{inner}</button>
       })}
     </div>
   )

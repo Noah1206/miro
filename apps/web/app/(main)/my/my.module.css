@@ -1,14 +1,68 @@
-/* 프로필 줄 → 숫자 카드 → 크레딧 카드. */
-.profile { display: flex; align-items: center; gap: 14px; margin-bottom: var(--space-5); }
-.avatar { width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; overflow: hidden;
-  background: var(--color-surface-2); color: var(--color-text-tertiary); }
+/* Profile uses a neutral surface hierarchy with one primary wallet action. */
+:global(body):has(.page) { --color-bg: #1c1c1c; --color-bg-rgb: 28, 28, 28; }
+.page { --profile-bg: #1c1c1c; --profile-surface: #262626; --profile-control: #303030; --profile-text: #f7f7f7; --profile-muted: #aaa; --profile-divider: #ffffff0e; background: var(--profile-bg); color: var(--profile-text); padding-top: calc(20px + env(safe-area-inset-top)); padding-bottom: calc(var(--nav-h) + 32px); }
+.content { width: 100%; max-width: 600px; margin-inline: auto; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; margin-bottom: 24px; }
+.header h1 { margin: 0; font-size: 28px; font-weight: 700; line-height: 1.2; letter-spacing: -.04em; }
+.settingsButton { display: grid; place-items: center; width: 44px; height: 44px; margin-right: -6px; border-radius: 8px; color: #ddd; transition: background 160ms; }
+.identity { margin-bottom: 24px; }
+.profile { display: flex; align-items: center; gap: 14px; }
+.avatar { width: 64px; height: 64px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; overflow: hidden; background: var(--profile-control); color: var(--profile-text); }
 .avatar img, .photoPick img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .who { flex: 1; min-width: 0; }
-.name { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.email { margin-top: 2px; font-size: 14px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* 연필 — 작게, 바탕 없이(9/30 요청). 누르는 자리는 hit 가 44px 로 넓힌다. */
-.edit { position: relative; width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; padding: 0; border: 0;
-  background: none; color: var(--color-text-primary); cursor: pointer; }
+.name { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.3; letter-spacing: -.025em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.email { margin-top: 5px; font-size: 13px; line-height: 1.5; color: var(--profile-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.edit { position: relative; min-width: 62px; min-height: 44px; flex-shrink: 0; display: grid; place-items: center; padding: 0 14px; border: 0; border-radius: 8px; background: var(--profile-control); color: var(--profile-text); font: inherit; font-size: 14px; font-weight: 550; cursor: pointer; transition: background 160ms, transform 160ms; }
+
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 20px 0 0; padding: 18px 0 0; border-top: 1px solid var(--profile-divider); text-align: center; }
+.stats > div { display: flex; flex-direction: column-reverse; gap: 5px; min-width: 0; padding-inline: 8px; }
+.stats > div + div { border-left: 1px solid var(--profile-divider); }
+.stats dt { font-size: 12px; line-height: 1.5; color: var(--profile-muted); }
+.stats dd { margin: 0; font-size: 20px; line-height: 1.25; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--profile-text); overflow-wrap: anywhere; }
+
+.credit { padding: 12px 20px 18px; border-radius: 12px; background: var(--profile-surface); }
+.creditHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.creditHeader h2 { margin: 0; font-size: 14px; font-weight: 550; color: #c4c4c4; }
+.historyLink { display: inline-flex; align-items: center; gap: 3px; min-height: 44px; margin-right: -4px; padding: 0 4px; color: var(--profile-muted); font-size: 12px; white-space: nowrap; }
+.creditMain { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 18px; }
+.balance { display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%; margin: 0; font-size: clamp(30px, 8vw, 34px); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.3; letter-spacing: -.035em; }
+.balance img { display: block; flex-shrink: 0; }
+.balance > span:not(:global(.sr-only)) { overflow-wrap: anywhere; }
+.chargeButton { min-width: 96px; flex-shrink: 0; }
+.balanceDetails { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; padding-top: 15px; border-top: 1px solid var(--profile-divider); }
+.balanceDetails > div { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
+.balanceDetails > div + div { border-left: 1px solid var(--profile-divider); padding-left: 16px; }
+.balanceDetails dt { color: var(--profile-muted); font-size: 12px; }
+.balanceDetails dd { margin: 0; max-width: 100%; font-size: 14px; font-weight: 550; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.sections { display: flex; flex-direction: column; gap: 26px; margin-top: 28px; }
+.menu { scroll-margin-top: 24px; }
+.menuTitle { margin: 0 0 10px 4px; color: var(--profile-muted); font-size: 13px; line-height: 1.5; font-weight: 500; }
+.menuItems { padding: 0 16px; border-radius: 12px; background: var(--profile-surface); }
+.row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 13px 0; border: 0; background: transparent; color: var(--profile-text); font: inherit; text-align: left; cursor: pointer; transition: opacity 160ms; }
+.row + .row { border-top: 1px solid var(--profile-divider); }
+.rowIcon { display: grid; place-items: center; width: 24px; flex-shrink: 0; color: #bdbdbd; }
+.rowCopy { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.rowLabel { font-size: 16px; font-weight: 450; line-height: 1.5; }
+.rowSub { color: var(--profile-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+.rowEnd { flex-shrink: 0; max-width: 45%; color: var(--profile-muted); font-size: 13px; line-height: 1.5; text-align: right; overflow-wrap: anywhere; }
+.chevron { display: flex; flex-shrink: 0; color: #909090; }
+.accountActions { display: flex; align-items: center; gap: 14px; margin: 16px 4px 8px; color: var(--profile-muted); font-size: 13px; }
+.accountActions > a { display: inline-flex; align-items: center; min-height: 44px; }
+.accountActions > span { color: #777; }
+.legal { padding: 4px 4px 0; }
+.legalLinks { display: flex; flex-wrap: wrap; gap: 0 16px; color: var(--profile-muted); font-size: 12px; }
+.legalLinks a { display: inline-flex; align-items: center; min-height: 44px; }
+.businessDetails { margin-top: 4px; color: var(--profile-muted); font-size: 12px; }
+.businessDetails > summary { display: flex; align-items: center; gap: 5px; width: fit-content; min-height: 44px; list-style: none; cursor: pointer; }
+.businessDetails > summary::-webkit-details-marker { display: none; }
+.businessDetails > summary svg { transition: transform 160ms; }
+.businessDetails[open] > summary svg { transform: rotate(90deg); }
+.page :is(a, button, summary):focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 4px; border-radius: 8px; }
+.edit:active { transform: scale(.97); }
+@media (hover: hover) { .settingsButton:hover, .edit:hover { background: #373737; } .row:hover { opacity: .72; } .historyLink:hover { color: var(--profile-text); } }
+@media (min-width: 900px) { .page { padding-top: 32px; } .header { margin-bottom: 32px; } }
+@media (prefers-reduced-motion: reduce) { .page *, .page *::before, .page *::after { transition: none !important; } }
 
 /* 프로필 편집 시트 — 가운데 사진(누르면 고르기) → 닉네임 → 저장 → 성별·소개 링크. */
 .editForm { display: flex; flex-direction: column; gap: 20px; outline: none; }
@@ -18,19 +72,3 @@
 .camera { position: absolute; right: -2px; bottom: -2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
   background: var(--color-white); color: var(--color-black); border: 2px solid var(--color-surface-2); }
 .personaLink { position: relative; align-self: center; font-size: 13px; color: var(--color-text-tertiary); text-decoration: underline; text-underline-offset: 3px; }
-
-.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 var(--space-4); padding: 18px 0;
-  border-radius: 16px; background: var(--color-surface-1); text-align: center; }
-.stats > div + div { border-left: 1px solid var(--color-border); }
-.stats dt { font-size: 14px; color: var(--color-text-secondary); }
-.stats dd { margin: 6px 0 0; font-size: 22px; font-weight: 700; color: var(--color-text-primary); }
-
-.credit { padding: 22px 16px 16px; border-radius: 16px; background: var(--color-surface-1); }
-.balance { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 22px; font-weight: 700; letter-spacing: -.01em; }
-.creditActions { display: grid; margin-top: 18px; }
-
-/* 아래 메뉴(설정 페이지를 옮겨 옴, 10/1) — 묶음 제목은 작은 회색, 줄은 상자·화살표 없이 글자만(누르는 높이 48px 이상). */
-.menu { margin-bottom: var(--space-5); }
-.menuTitle { margin: 0 0 4px; font-size: var(--font-caption); font-weight: var(--weight-semibold); color: var(--color-text-tertiary); }
-.row { display: flex; flex-direction: column; gap: 2px; padding: 12px 0; color: var(--color-text-primary); }
-.menu > button.row { width:100%; border:0; background:none; font:inherit; text-align:left; cursor:pointer; }

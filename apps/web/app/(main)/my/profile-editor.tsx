@@ -12,16 +12,14 @@ import { shrinkImage } from '@/lib/shrink-image'
 
 const MAX_BYTES = 5 * 1024 * 1024
 
-/** '나' 화면 연필(2026-09-30 요청) — 누르면 닉네임·프로필 사진을 고치는 시트. 사진은 저장을 누를 때 올라간다. */
+/** Profile edit trigger; photos are uploaded only after the existing save action is submitted. */
 export function ProfileEditor({ nickname, avatarUrl }: { nickname: string; avatarUrl: string | null }) {
   const t = useT()
   const [open, setOpen] = useState(false)
   return (
     <>
-      <button type="button" className={`hit ${styles.edit}`} aria-label={t('프로필 편집')} onClick={() => setOpen(true)}>
-        <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /><path d="M17.6 3.6a2 2 0 0 1 2.8 2.8L12 14.8l-3.6.8.8-3.6z" />
-        </svg>
+      <button type="button" className={styles.edit} aria-label={t('프로필 편집')} aria-haspopup="dialog" onClick={() => setOpen(true)}>
+        {t('편집')}
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} title={t('프로필 편집')}>
         {/* 시트가 닫히면 폼이 사라진다 — 다시 열면 지난 오류·고른 사진 없이 새로 시작한다. */}

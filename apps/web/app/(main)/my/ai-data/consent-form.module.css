@@ -1,0 +1,7 @@
+.form { display: flex; flex-direction: column; gap: 20px; }
+.group { padding: 12px 16px; border-radius: 8px; background: var(--color-surface-2); }
+.group label { font-size: 15px; font-weight: 450; line-height: 1.5; }
+.group input { flex-shrink: 0; }
+.details { color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; }
+.details summary { display: list-item; width: fit-content; padding: 8px 0; cursor: pointer; }
+.details p { padding: 4px 0 8px; }

@@ -1,14 +1,1 @@
-.tabs { display: flex; align-items: center; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-bottom: var(--space-2); padding: 0; }
-.tabs::-webkit-scrollbar { display: none; }
-/* 배경은 32px로 가볍게 보이되, 누를 수 있는 높이는 44px를 유지한다. */
-.tabs button { position: relative; isolation: isolate; display: flex; flex: 0 0 auto; align-items: center; justify-content: center; min-height: 44px; padding: 10px 13px; border: 0; background: transparent; color: var(--color-text-secondary); font-size: 13px; font-weight: 550; line-height: 1.4; letter-spacing: -.02em; white-space: nowrap; font-family: inherit; cursor: pointer; transition: color var(--motion-fast) var(--ease-standard); }
-.tabs button::before { content: ''; position: absolute; z-index: -1; inset: 6px 0; border-radius: 999px; background: transparent; transition: background-color var(--motion-fast) var(--ease-standard); }
-.tabs button[aria-pressed='true'] { color: var(--color-white); font-weight: 750; }
-.tabs button[aria-pressed='true']::before { background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
-@media (hover: hover) {
-  .tabs button:hover { color: var(--color-text-primary); }
-  .tabs button[aria-pressed='true']:hover { color: var(--color-white); }
-  .tabs button[aria-pressed='true']:hover::before { background: color-mix(in srgb, var(--color-accent) 20%, transparent); }
-}
-.tabs button:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: -2px; border-radius: 999px; }
-@media (prefers-reduced-motion: reduce) { .tabs button, .tabs button::before { transition: none; } }
+.tabs { margin-bottom: 16px; }

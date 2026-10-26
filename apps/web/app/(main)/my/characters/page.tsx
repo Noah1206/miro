@@ -2,10 +2,12 @@ import { redirect } from 'next/navigation'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { characters, db, worlds } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { Page, PageHeader, TransitionLink } from '@/components/ui'
+import { Back, Page, TransitionLink } from '@/components/ui'
 import { CharacterCard, type CardCharacter } from '@/components/character-card'
 import { msg } from '@/lib/i18n'
 import { getT } from '@/lib/i18n/server'
+import { SectionLinks } from '@/components/ui/section-links'
+import styles from './characters.module.css'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
 const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -19,7 +21,6 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
   const { filter: rawFilter } = await searchParams
   const t = await getT()
   const filter: Filter = (FILTERS.some((f) => f.key === rawFilter) ? rawFilter : 'all') as Filter
-  const name = user.displayName ?? user.email?.split('@')[0] ?? 'me'
 
   const mine = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name, tagline: characters.tagline,
@@ -40,28 +41,27 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
   }))
 
   return (
-    <Page wide>
-      <PageHeader back="/my" title={t('내가 만든 캐릭터')} />
-      <div style={{ display: 'flex', gap: 6, marginBottom: 'var(--space-4)' }}>
-        {FILTERS.map((f) => {
-          const on = f.key === filter
-          return (
-            <TransitionLink key={f.key} href={f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}`} aria-current={on ? 'true' : undefined}
-              style={{
-                display: 'inline-flex', alignItems: 'center', minHeight: 44,
-                padding: '8px 14px', borderRadius: 'var(--radius-button)', fontSize: 'var(--font-caption)', fontWeight: on ? 'var(--weight-semibold)' : 'var(--weight-regular)',
-                background: on ? 'var(--color-white)' : 'var(--color-surface-1)', color: on ? 'var(--color-black)' : 'var(--color-text-secondary)',
-              }}>{t(f.label)}</TransitionLink>
-          )
-        })}
-      </div>
-      {/* 칩이 이미 무엇인지 말한다 — 제목은 개수만 작고 옅게. */}
-      <h2 className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)', marginBottom: 10 }}>{t('{n}개', { n: shown.length })}</h2>
+    <Page wide className={styles.page}>
+      <div className={styles.frame}>
+      <header className={styles.header}><Back href="/my" /><h1>{t('내 캐릭터')}</h1></header>
+      <SectionLinks fullBleed label={t('내가 만든 캐릭터')} active={filter}
+        items={FILTERS.map(f => ({ key: f.key, label: t(f.label), href: f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}` }))} />
       {cards.length === 0 ? (
-        <p className="empty-state">{filter === 'all' ? t('{name}님이 만든 캐릭터가 아직 없어요', { name }) : t('{name}님이 만든 캐릭터가 여기엔 없어요', { name })}</p>
+        <section className={styles.empty} aria-label={t('캐릭터 목록')}>
+          <h2>{mine.length === 0 ? t('나만의 캐릭터를\n직접 만들어 볼까요?') : filter === 'draft' ? t('작성 중인 캐릭터가 없어요') : filter === 'private' ? t('비공개 캐릭터가 없어요') : t('공개한 캐릭터가 없어요')}</h2>
+          {mine.length > 0 && <p>{t('다른 분류에서 캐릭터를 확인해 보세요.')}</p>}
+          <TransitionLink href={mine.length === 0 ? '/create' : '/my/characters'} className={styles.createLink}>
+            {mine.length === 0 && <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>}
+            {mine.length === 0 ? t('캐릭터 만들기') : t('전체 보기')}
+          </TransitionLink>
+        </section>
       ) : (
-        <div className="grid-2">{cards.map((c) => <CharacterCard key={c.id} c={c} />)}</div>
+        <>
+          <div className={styles.summary}><span>{t('{n}개', { n: shown.length })}</span><TransitionLink href="/create">+ {t('새로 만들기')}</TransitionLink></div>
+          <div className="grid-2">{cards.map((c) => <CharacterCard key={c.id} c={c} />)}</div>
+        </>
       )}
+      </div>
     </Page>
   )
 }

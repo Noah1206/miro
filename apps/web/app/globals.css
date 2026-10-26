@@ -5,19 +5,19 @@
 :root {
   color-scheme: dark;
 
-  /* 2026-10-10 확정 팔레트: 보랏빛 중성색 바탕 + 라벤더 포인트. */
+  /* 2026-10-10 확정 팔레트: 무채색 바탕·흰색 텍스트 + 라벤더 포인트. */
   --color-lavender-50: #F6F3FF; --color-lavender-100: #ECE5FF;
   --color-lavender-200: #D8CCFF; --color-lavender-300: #B8A6FF;
   --color-lavender-400: #A087F4; --color-lavender-500: #8460E8;
   --color-lavender-600: #7046CE; --color-lavender-700: #5935A6;
   --color-lavender-800: #432A7B; --color-lavender-900: #30204F; --color-lavender-950: #1E162F;
-  --color-bg: #111015;         --color-bg-rgb: 17, 16, 21;  --color-bg-deep: #000000;
-  --color-surface-1: #19171F;  --color-surface-2: #211E29;  --color-surface-3: #2C2737;
-  --color-border: #3C354B;     --color-border-strong: #51485F; --color-border-hover: #625B70;
-  --color-text-primary: #F5F2FA; --color-text-secondary: #AFA8BD;
-  --color-text-tertiary: #968DA5; --color-text-quaternary: #968DA5; --color-text-disabled: #625B70;
+  --color-bg: #111111;         --color-bg-rgb: 17, 17, 17;  --color-bg-deep: #000000;
+  --color-surface-1: #191919;  --color-surface-2: #222222;  --color-surface-3: #2c2c2c;
+  --color-border: #3c3c3c;     --color-border-strong: #515151; --color-border-hover: #626262;
+  --color-text-primary: #ffffff; --color-text-secondary: #b3b3b3;
+  --color-text-tertiary: #969696; --color-text-quaternary: #969696; --color-text-disabled: #626262;
   /* 폼 경계는 3:1 이상이어야 한다 (1.4.11). 장식 테두리(--color-border)와 구분한다. */
-  --color-border-input: #786F8B;
+  --color-border-input: #787878;
   --color-white: #FFFFFF; --color-black: #000000;
   --color-relationship: var(--color-lavender-200);
   --color-danger: #F18C9C; --color-danger-soft: #321D25;
@@ -35,7 +35,7 @@
   --color-accent: var(--color-lavender-300);
   --color-accent-bright: var(--color-lavender-200);
   --color-accent-pressed: var(--color-lavender-400);
-  --color-accent-on: #171320;
+  --color-accent-on: #191919;
   --color-accent-text: var(--color-lavender-300);
   --color-accent-soft: var(--color-lavender-950);
   --color-accent-selected: var(--color-lavender-900);
@@ -68,10 +68,9 @@
 
   --shadow-soft: 0 8px 30px rgba(0, 0, 0, 0.24);
   /* 넓은 화면에서의 앱 폭. 제타가 480 — 430 은 옆에 두고 보면 좁았다. 폰에서는 화면 폭이 이긴다. */
-  /* 하단 내비 높이 = 칸 56 + 홈 바 여백. 여백을 56 안에서 빼면 아이폰(홈 화면 앱)에서 칸이 22px 로 눌려 아이콘이 바탕 위로 삐져나왔다(10/1).
-     본문 아래 여백·토스트·스크롤 위치도 이 값을 따라가 홈 바만큼 함께 올라간다. */
-  --nav-h: calc(56px + env(safe-area-inset-bottom, 0px)); --app-w: 480px;
-  /* 하단 내비 칸이 퍼지는 폭 = 휴대폰 가로 폭(가장 넓은 기종 430, 9/26 사용자 요청). 바탕은 본문 폭까지 채운다(9/30). */
+  /* 떠 있는 내비의 칸 높이와 화면 아래 여백을 분리한다. 본문·토스트는 전체 점유 높이를 따른다. */
+  --nav-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  --nav-h: calc(56px + var(--nav-bottom)); --app-w: 480px;
   --nav-w: 430px;
   /* 컴퓨터에서 하단 탭 화면이 펼쳐지는 폭(9/30 요청). 넓어지는 것은 셸(--shell-w)뿐 — 시트·토스트는 --app-w 그대로 폰 폭이다. */
   --app-w-wide: 1200px; --shell-w: var(--app-w);
@@ -158,9 +157,9 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 
 /* Character profile density follows the compact hierarchy used by content-first profile pages. */
 .character-detail-theme {
-  --color-surface-1: #211E29;
-  --color-surface-2: #2C2737;
-  --color-surface-3: #3C354B;
+  --color-surface-1: #222222;
+  --color-surface-2: #2c2c2c;
+  --color-surface-3: #3c3c3c;
 }
 /* Shared by the published profile and creation preview. */
 .character-detail-copy > .t-hero { font-size: var(--font-title-1); font-weight: var(--weight-bold); line-height: 1.25; letter-spacing: -0.02em; }
@@ -300,12 +299,16 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .field:disabled { color: var(--color-text-disabled); }
 
 /* nav */
-/* 바탕은 셸 폭(--shell-w)까지 채우고 — 양옆이 비어 보였다(9/30 요청) — 칸은 안쪽 여백으로 --nav-w 안에 모은다(9/26 요청). */
-.nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-width: var(--shell-w); margin: 0 auto; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around;
-  padding-inline: max(0px, calc((min(100%, var(--shell-w)) - var(--nav-w)) / 2));
-  background: rgba(var(--color-bg-rgb), 0.9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding-bottom: env(safe-area-inset-bottom); }
+/* 화면 가장자리에서 띄운 글래스 바. 홈 바 여백은 바깥에 두어 탭 높이를 유지한다. */
+.nav { position: fixed; left: 16px; right: 16px; bottom: var(--nav-bottom); z-index: 30;
+  width: calc(100% - 32px); max-width: min(var(--nav-w), calc(var(--shell-w) - 32px)); margin: 0 auto; height: 56px;
+  display: flex; align-items: center; justify-content: space-around; padding-inline: 8px;
+  border-radius: 18px; border: 1px solid rgba(255, 255, 255, .18);
+  background: linear-gradient(135deg, rgba(55, 55, 55, .48), rgba(22, 22, 22, .4));
+  backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .12); }
 /* 링크와 버튼이 섞여 있다 — 로그인이 필요한 탭은 button 이라 브라우저 기본 배경·테두리가 붙는다. */
-/* 여백은 바 높이(--nav-h, 2026-09-29 76→56)가 만든다 — 칸마다 따로 주지 않는다. min-height 는 터치 규칙(44px)을 지킨다. */
+/* 56px 바 안에서 각 탭의 터치 영역은 48px을 유지한다. */
 .nav__item { flex: 1; display: flex; justify-content: center; align-items: center; min-height: 48px;
   background: none; border: 0; padding: 0; font: inherit; -webkit-tap-highlight-color: transparent; }
 .nav__inner { display: flex; flex-direction: column; align-items: center; gap: 2px; position: relative; }
@@ -402,7 +405,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .character-detail-copy .character-detail-section {
   margin-top: 40px;
   padding-top: 28px;
-  border-top: 1px solid rgba(184, 166, 255, .18);
+  border-top: 1px solid rgba(255, 255, 255, .18);
 }
 .character-detail-section-heading {
   display: flex;
@@ -424,9 +427,9 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 @media (min-width: 1024px) {
   .app-shell:has(.nav) { max-width: none; padding-left: 280px; transition: padding-left 280ms cubic-bezier(.22,1,.36,1); }
   .app-shell:has(.nav) > aside { left: 0; }
-  .app-shell:has(.nav) .nav { left: 0; right: auto; bottom: 0; width: 280px; max-width: none; margin: 0; padding-inline: 12px; border-radius: 0; box-shadow: none; }
+  .app-shell:has(.nav) .nav { left: 12px; right: auto; width: 256px; max-width: none; margin: 0; }
   .app-shell:has(aside[data-collapsed="true"]) { padding-left: 72px; }
-  .app-shell:has(aside[data-collapsed="true"]) .nav { left: 72px; right: 0; bottom: 20px; width: min(440px, calc(100% - 112px)); margin: 0 auto; border-radius: 18px; background: linear-gradient(135deg, rgba(55, 51, 67, .32), rgba(22, 21, 29, .26)); border: 1px solid rgba(255, 255, 255, .18); backdrop-filter: blur(16px) saturate(125%); -webkit-backdrop-filter: blur(16px) saturate(125%); box-shadow: 0 16px 40px rgba(0, 0, 0, .38), 0 4px 12px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .12); animation: desktop-nav-enter 240ms cubic-bezier(.22,1,.36,1); }
+  .app-shell:has(aside[data-collapsed="true"]) .nav { left: 72px; right: 0; bottom: 20px; width: min(440px, calc(100% - 112px)); margin: 0 auto; animation: desktop-nav-enter 240ms cubic-bezier(.22,1,.36,1); }
 }
 @keyframes desktop-nav-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {

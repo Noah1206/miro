@@ -9,7 +9,7 @@
 .option input { position:absolute; width:1px; height:1px; opacity:0; }
 .option:has(input:focus-visible) { outline:2px solid #d4c7ff; outline-offset:3px; }
 .check { flex-shrink:0; display:grid; place-items:center; width:20px; height:20px; border:1px solid #ffffff30; border-radius:50%; color:transparent; }
-.option[data-selected=true] .check { background:#b8a6ff; border-color:#b8a6ff; color:#251936; }
+.option[data-selected=true] .check { background:#b8a6ff; border-color:#b8a6ff; color:#272727; }
 .quantity { display:flex; align-items:baseline; gap:6px; flex:1; min-width:0; }
 .quantity strong { font-size:19px; font-weight:650; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
 .quantity small { font-size:11px; color:var(--color-text-secondary); }

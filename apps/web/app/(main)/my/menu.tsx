@@ -1,18 +1,25 @@
 import type { ReactNode } from 'react'
 import { TransitionLink } from '@/components/ui'
 import styles from './my.module.css'
+import { ProfileIcon, type ProfileIconName } from './profile-icon'
 
-/** '나' 화면 아래 메뉴 묶음 — 작은 회색 제목 + 글자만 있는 줄(설정 페이지를 옮겨 왔다, 2026-10-01). */
-export function MenuSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className={styles.menu}><h2 className={styles.menuTitle}>{title}</h2>{children}</section>
+/** One named group of related profile destinations. */
+export function MenuSection({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
+  return <section className={styles.menu} id={id} aria-label={title}><h2 className={styles.menuTitle}>{title}</h2><div className={styles.menuItems}>{children}</div></section>
 }
 
-/** 글자 줄 하나. 메일 주소는 그냥 a 로 연다. */
-export function MenuRow({ href, label, sub }: { href: string; label: string; sub?: string }) {
-  const inner = <>
-    <span className="t-body">{label}</span>
-    {sub && <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{sub}</span>}
+export function MenuItemContent({ label, sub, end, icon }: { label: string; sub?: string; end?: string; icon?: ProfileIconName }) {
+  return <>
+    {icon && <span className={styles.rowIcon}><ProfileIcon name={icon} /></span>}
+    <span className={styles.rowCopy}><span className={styles.rowLabel}>{label}</span>{sub && <span className={styles.rowSub}>{sub}</span>}</span>
+    {end && <span className={styles.rowEnd}>{end}</span>}
+    <span className={styles.chevron}><ProfileIcon name="chevron" size={16} /></span>
   </>
+}
+
+/** Shared grouped navigation row; email links keep their native action. */
+export function MenuRow({ href, label, sub, end, icon }: { href: string; label: string; sub?: string; end?: string; icon?: ProfileIconName }) {
+  const inner = <MenuItemContent label={label} sub={sub} end={end} icon={icon} />
   if (href.startsWith('mailto:')) return <a href={href} className={styles.row}>{inner}</a>
   return <TransitionLink href={href} className={styles.row}>{inner}</TransitionLink>
 }

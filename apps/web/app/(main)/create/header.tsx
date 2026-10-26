@@ -57,7 +57,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
       </div>
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
-      {/* 입력 탭 다섯 개는 고르게 펼치고, 미리보기는 입력이 아니라 오른쪽 끝에 아이콘 칩으로 따로 둔다. */}
+      {/* 입력 탭은 고르게 펼치고, 미리보기도 배경 없는 밑줄 탭으로 구분한다. */}
       <div role="tablist" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
           {TABS.filter((x) => x.key !== 'preview').map((x) => {
@@ -72,19 +72,20 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
                 }}>
                 {t(x.label)}
                 {active && <motion.span layoutId="create-tab-underline" transition={spring.default}
-                  style={{ position: 'absolute', left: 4, right: 4, bottom: 0, height: 1, background: 'var(--color-accent)' }} />}
+                  style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
               </button>
             )
           })}
         </div>
         <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
-            flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 4, minHeight: 32, padding: '2px 10px', marginLeft: 20, borderRadius: 'var(--radius-sm)',
+            position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 44, padding: '12px 10px', marginLeft: 12, borderRadius: 0,
             border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',
-            background: tab === 'preview' ? 'var(--color-white)' : 'var(--color-surface-2)',
-            color: tab === 'preview' ? 'var(--color-black)' : 'var(--color-text-primary)',
+            background: 'transparent',
+            color: tab === 'preview' ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
             transition: 'background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard)',
           }}>
+          {tab === 'preview' && <motion.span layoutId="create-tab-underline" transition={spring.default} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, background: 'var(--color-accent)' }} />}
           <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" />
           </svg>

@@ -21,11 +21,11 @@
 :global([data-chat-theme='dm-light']) .more svg, :global([data-chat-theme='dm']) .more svg { width:23px; height:23px; }
 .searchInput { width:100%; min-width:0; border:1px solid #ddd; border-radius:8px; padding:9px; background:#f5f5f5; color:#171717; font-size:16px; }
 
-:global([data-chat-theme='miro']) .trigger { width:30px; height:34px; color:#9c95a7; }
+:global([data-chat-theme='miro']) .trigger { width:30px; height:34px; color:#9d9d9d; }
 :global([data-chat-theme='miro']) .trigger svg { width:19px; height:19px; }
 .narration { flex-shrink:0; }
-:global([data-chat-theme='dm-light']) .narration { width:30px; height:34px; color:#8b8495; }
-:global([data-chat-theme='dm']) .narration { width:30px; height:34px; color:#a39bac; }
+:global([data-chat-theme='dm-light']) .narration { width:30px; height:34px; color:#8c8c8c; }
+:global([data-chat-theme='dm']) .narration { width:30px; height:34px; color:#a3a3a3; }
 :global([data-chat-theme='talk']) .narration { width:24px; height:32px; color:#526977; }
 :global([data-chat-theme]) .narration svg { width:19px; height:19px; }
 :global([data-chat-theme='dm-light']) .narration,

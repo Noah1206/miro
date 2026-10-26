@@ -11,6 +11,7 @@ const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 
 describeDb('archive / reports / account', () => {
   const made: string[] = []
+  const madeCharacters:string[]=[]
   async function user() {
     const [u] = await db.insert(users).values({ email: `op-${randomBytes(5).toString('hex')}@miro.dev` }).returning()
     made.push(u!.id); return u!.id
@@ -23,7 +24,50 @@ describeDb('archive / reports / account', () => {
     const [m] = await db.insert(messages).values({ sessionId: s!.id, role: 'character', content: '…', turnIndex: 1 }).returning({ id: messages.id })
     return { sessionId: s!.id, messageId: m!.id }
   }
-  afterAll(async () => { for (const id of made) await db.delete(users).where(eq(users.id, id)) })
+  afterAll(async () => {
+    for (const id of made) await db.delete(users).where(eq(users.id, id))
+    for(const id of madeCharacters){await db.delete(worlds).where(eq(worlds.characterId,id));await db.delete(characters).where(eq(characters.id,id))}
+  })
+
+  it('separates scene and DM previews and destinations for the same character without leaking another owner',async()=>{
+    const owner=await user(),outsider=await user()
+    const own=await session(owner);await session(outsider)
+    await db.update(messages).set({content:'장면 대사',createdAt:new Date('2026-01-01T00:00:00Z')}).where(eq(messages.id,own.messageId))
+    await db.insert(messages).values({sessionId:own.sessionId,role:'user',kind:'messenger',content:'문자로 보낸 대사',turnIndex:2,createdAt:new Date('2026-01-02T00:00:00Z')})
+    const chat=await listSessions(owner,{channel:'chat'}),dm=await listSessions(owner,{channel:'dm'})
+    expect(chat.items).toHaveLength(1);expect(dm.items).toHaveLength(1)
+    expect(chat.items[0]).toMatchObject({id:own.sessionId,href:`/chat/${own.sessionId}`,lastMessage:'장면 대사',unread:0})
+    expect(dm.items[0]).toMatchObject({id:own.sessionId,href:`/messages/${own.sessionId}`,lastMessage:'문자로 보낸 대사'})
+    expect(chat.items[0]!.lastInteractionAt.toISOString()).toBe('2026-01-01T00:00:00.000Z')
+    expect(dm.items[0]!.lastInteractionAt.toISOString()).toBe('2026-01-02T00:00:00.000Z')
+    await db.insert(messages).values([
+      {sessionId:own.sessionId,role:'character',kind:'photo',content:'https://example.test/scene.png',blocks:[],turnIndex:3,createdAt:new Date('2026-01-03T00:00:00Z')},
+      {sessionId:own.sessionId,role:'character',kind:'photo',content:'https://example.test/dm.png',blocks:[{type:'reality'}],turnIndex:4,createdAt:new Date('2026-01-04T00:00:00Z')},
+    ])
+    const scenePhoto=(await listSessions(owner,{channel:'chat'})).items[0]!
+    const dmPhoto=(await listSessions(owner,{channel:'dm'})).items[0]!
+    expect(scenePhoto.lastMessage).toBe('사진');expect(dmPhoto.lastMessage).toBe('사진')
+    expect(scenePhoto.lastInteractionAt.toISOString()).toBe('2026-01-03T00:00:00.000Z')
+    expect(dmPhoto.lastInteractionAt.toISOString()).toBe('2026-01-04T00:00:00.000Z')
+  })
+
+  it('filters DM-capable rooms before pagination even when newer chat-only rooms fill a page',async()=>{
+    const owner=await user(),first=await session(owner)
+    const [source]=await db.select().from(roleplaySessions).where(eq(roleplaySessions.id,first.sessionId))
+    const extra=await db.insert(roleplaySessions).values(Array.from({length:25},()=>({userId:owner,characterId:source!.characterId,worldId:source!.worldId,lastInteractionAt:new Date('2026-01-01T00:00:00Z')}))).returning({id:roleplaySessions.id})
+    const [chatCharacter]=await db.insert(characters).values({ownerId:owner,name:'캐릭터챗 전용',personality:'test',experienceType:'chat'}).returning({id:characters.id})
+    madeCharacters.push(chatCharacter!.id)
+    const [chatWorld]=await db.insert(worlds).values({characterId:chatCharacter!.id}).returning({id:worlds.id})
+    const newer=await db.insert(roleplaySessions).values(Array.from({length:27},()=>({userId:owner,characterId:chatCharacter!.id,worldId:chatWorld!.id,lastInteractionAt:new Date('2026-02-01T00:00:00Z')}))).returning({id:roleplaySessions.id})
+    await db.insert(worldStates).values([...extra,...newer].map(s=>({sessionId:s.id,currentLocation:'서울',currentTime:'저녁'})))
+    const page=await listSessions(owner,{channel:'dm'})
+    expect(page.items).toHaveLength(25);expect(page.nextCursor).not.toBeNull()
+    const last=await listSessions(owner,{channel:'dm',cursor:page.nextCursor})
+    expect(last.items).toHaveLength(1);expect(last.nextCursor).toBeNull()
+    const seen=[...page.items,...last.items]
+    expect(new Set(seen.map(s=>s.id))).toEqual(new Set([first.sessionId,...extra.map(s=>s.id)]))
+    expect(seen.every(s=>s.href===`/messages/${s.id}`)).toBe(true)
+  })
 
   it('the archive list never carries relationship numbers', async () => {
     const u = await user(); await session(u)

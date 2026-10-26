@@ -1,14 +1,14 @@
 .banner { position: relative; isolation: isolate; aspect-ratio: 3 / 1; display: flex; align-items: center;
-  margin: 0 var(--gutter) var(--space-5); padding: 10px 14px; overflow: hidden; border-radius: 12px; background: #fff; color: #111115; }
+  margin: 0 var(--gutter) var(--space-5); padding: 10px 14px; overflow: hidden; border-radius: 12px; background: #fff; color: #121212; }
 .art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
 .copy { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; width: 56%; gap: 3px; }
-.eyebrow { margin: 0; color: #3e3b44; font-size: 8px; font-weight: 800; line-height: 1.2; letter-spacing: .04em; }
+.eyebrow { margin: 0; color: #3f3f3f; font-size: 8px; font-weight: 800; line-height: 1.2; letter-spacing: .04em; }
 .eyebrow span { font-weight: 600; letter-spacing: -.02em; }
-.title { margin: 0; color: #111115; font-size: clamp(18px, 5.4vw, 27px); font-weight: 400; line-height: 1.04; letter-spacing: -.055em; }
+.title { margin: 0; color: #121212; font-size: clamp(18px, 5.4vw, 27px); font-weight: 400; line-height: 1.04; letter-spacing: -.055em; }
 .title span { display: block; }
 .title strong { display: block; color: #7144ce; font-size: 1.05em; font-weight: 400; white-space: nowrap; }
-.offer { margin: 2px 0 0; color: #49414f; font-size: clamp(9px, 2.5vw, 12px); font-weight: 600; line-height: 1.25; letter-spacing: -.035em; }
-.terms { margin: 0; color: #635d6c; font-size: 7px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; }
+.offer { margin: 2px 0 0; color: #484848; font-size: clamp(9px, 2.5vw, 12px); font-weight: 600; line-height: 1.25; letter-spacing: -.035em; }
+.terms { margin: 0; color: #646464; font-size: 7px; font-weight: 500; line-height: 1.3; letter-spacing: -.015em; }
 .spark { position: absolute; z-index: 1; left: 49%; top: 11%; width: 14px; height: 24px; pointer-events: none; }
 .tap { position: absolute; inset: 0; z-index: 2; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .tap:focus-visible { outline: 2px solid #7144ce; outline-offset: -4px; border-radius: inherit; }

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { LANGUAGES, type Language } from '@miro/domain'
 import { currentUser } from '@/lib/auth'
-import { Page, PageHeader } from '@/components/ui'
+import { SettingsPage } from '@/components/ui/settings-page'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { setLanguage } from '@/lib/i18n/actions'
 import { getLanguage, getT } from '@/lib/i18n/server'
@@ -12,8 +12,7 @@ export default async function LanguagePage() {
   if (!user) redirect('/login')
   const [current, t] = await Promise.all([getLanguage(), getT()])
   return (
-    <Page style={{ maxWidth: 520 }}>
-      <PageHeader back="/my" title={t('언어')} lead={t('메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요.')} />
+    <SettingsPage title={t('언어')}>
       <div className="stack" style={{ gap: 8 }}>
         {(Object.keys(LANGUAGES) as Language[]).map((l) => (
           // 옅게는 폼에 — 버튼(Pressable)이 제 불투명도를 스스로 다룬다.
@@ -29,6 +28,6 @@ export default async function LanguagePage() {
           </form>
         ))}
       </div>
-    </Page>
+    </SettingsPage>
   )
 }

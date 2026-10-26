@@ -6,26 +6,28 @@
 .adultPill { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 4px; }
 .adultLabel { font-size: var(--font-micro); font-weight: var(--weight-semibold); line-height: 1; letter-spacing: -.01em; white-space: nowrap; color: var(--color-text-secondary);
   transition: color var(--motion-fast) var(--ease-standard); }
-.adultTrack { position: relative; display: block; width: 44px; height: 22px; flex-shrink: 0; border-radius: 999px; background: #514064;
+.adultTrack { position: relative; display: block; width: 44px; height: 22px; flex-shrink: 0; border-radius: 999px; background: #525252;
   transition: background var(--motion-fast) var(--ease-standard); }
-.adultKnob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #c9b5e2;
+.adultKnob { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #ffffff;
   transition: transform var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard); }
 .adultControl[data-on] .adultLabel { color: #efe1ff; }
 .adultControl[data-on] .adultTrack { background: linear-gradient(115deg, #7932d8 0%, #a447f5 52%, #cc78ff 100%); box-shadow: inset 0 1px 0 rgb(255 255 255 / .3), 0 0 14px rgb(173 78 255 / .4); }
 .adultControl[data-on] .adultKnob { transform: translateX(22px); background: #fff; box-shadow: 0 1px 3px rgb(24 15 44 / .3), inset 0 1px 0 rgb(255 255 255 / .8); }
 /* 홈 머리의 강한 모양(10/20): 꺼지면 색 없이 회색, 켜지면 빨강·자홍·보라 그라데이션과 숨쉬는 빛. 글자는 '걷히는 베일' 마크. */
 .unveilMark { display: block; width: 66px; height: 22px; overflow: visible; }
-.unveilText { fill: #8d8a96; transition: fill var(--motion-fast) var(--ease-standard); }
-.unveilVeil polygon { fill: #121117; opacity: .72; }
-.unveilVeil line { stroke: #6d6a75; stroke-width: 2; }
+.unveilText { fill: #8f8f8f; transition: fill var(--motion-fast) var(--ease-standard); }
+.unveilVeil polygon { fill: #131313; opacity: .72; }
+.unveilVeil line { stroke: #6f6f6f; stroke-width: 2; }
 .unveilVeil { transition: transform .45s cubic-bezier(.2, .8, .2, 1), opacity .45s; }
 .adultControl[data-on] .unveilText { fill: url(#unveil-mark-g); }
 .adultControl[data-on] .unveilVeil { transform: translateX(-80px); opacity: 0; }
-.adultControl[data-intense] .adultTrack { width: 48px; height: 26px; background: #3a3940; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12); }
-.adultControl[data-intense] .adultKnob { width: 20px; height: 20px; background: #8d8a96; }
+.adultControl[data-intense] .adultPill { height: 24px; }
+.adultControl[data-intense] .unveilMark { width: 60px; height: 20px; }
+.adultControl[data-intense] .adultTrack { width: 40px; height: 20px; background: #3c3c3c; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12); }
+.adultControl[data-intense] .adultKnob { width: 14px; height: 14px; background: #8f8f8f; }
 .adultControl[data-intense][data-on] .adultTrack { background: linear-gradient(115deg, #ff1f5a 0%, #e0119d 55%, #9b1cff 100%);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), 0 0 0 1px rgb(255 61 127 / .6), 0 0 18px rgb(255 31 90 / .65); animation: unveilGlow 1.8s ease-in-out infinite; }
-.adultControl[data-intense][data-on] .adultKnob { transform: translateX(22px); background: #fff; }
+.adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); background: #fff; }
 @keyframes unveilGlow { 50% { box-shadow: inset 0 1px 0 rgb(255 255 255 / .35), 0 0 0 1px rgb(255 61 127 / .8), 0 0 26px rgb(255 31 90 / .9); } }
 @media (prefers-reduced-motion: reduce) {
   .adultPill, .adultLabel, .adultTrack, .adultKnob { transition: none; }

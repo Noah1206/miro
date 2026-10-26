@@ -12,22 +12,21 @@ import { SubmitButton } from '@/components/ui/submit-button'
 import { SiteFooter } from '@/components/site-footer'
 import { LegalRevisionNotice } from '@/components/legal-revision-notice'
 import { logout } from './actions'
-import { MenuRow, MenuSection } from './menu'
+import { MenuItemContent, MenuRow, MenuSection } from './menu'
 import { CharacterPhoto } from '@/components/character-visual'
 import { CreditCard } from './credit-card'
 import { ProfileEditor } from './profile-editor'
 import { InstallAppButton } from '@/components/pwa-install'
+import { ProfileIcon } from './profile-icon'
+import { VerificationSheet } from './verify/verification-sheet'
 import styles from './my.module.css'
 
-/**
- * '나' 화면(2026-09-30, WHIF 프로필 모양): 로고(알림 종·설정 톱니는 10/1 뺐다) → 프로필 줄(연필 = 닉네임·프로필 사진 시트) → 숫자 카드 → 크레딧 카드 → 푸터.
- * Miro 에 없는 것(팔로워·팔로잉, 친구 초대, 구독 배너, 테마 상점, 세이프)은 넣지 않는다. 활동 목록(만들기·내가 만든 캐릭터·이용권·설정)은
- * 같은 날 뺐다 — 설정만 머리의 톱니로 남긴다(언어·계정 삭제로 가는 유일한 길). 내가 만든 캐릭터 목록은 /my/characters 에 있다.
- */
-export default async function MyPage() {
+/** Account overview: identity, real wallet balance, activity, settings and support. */
+export default async function MyPage({ searchParams }: { searchParams: Promise<{ verify?: string; r?: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
   const [t, language] = await Promise.all([getT(), getLanguage()])
+  const { verify, r } = await searchParams
 
   const [[sessions], [talk], persona, wallet, [profile]] = await Promise.all([
     // 만난 캐릭터 = 대화방을 연 캐릭터 수, 대화 중 = 이어지는 대화방 수(지운 방 제외).
@@ -53,9 +52,14 @@ export default async function MyPage() {
   ]
 
   return (
-    <Page wide>
-      <h1 className="sr-only">{t('마이페이지')}</h1>
-      <section className={styles.profile}>
+    <Page wide className={styles.page}>
+      <div className={styles.content}>
+      <header className={styles.header}>
+        <h1>{t('프로필')}</h1>
+        <a href="#profile-settings" className={styles.settingsButton} aria-label={t('설정으로 이동')}><ProfileIcon name="settings" size={24} /></a>
+      </header>
+      <section className={styles.identity} aria-label={t('내 프로필')}>
+      <div className={styles.profile}>
         <span className={styles.avatar} aria-hidden>
           {avatarUrl ? <CharacterPhoto src={avatarUrl} alt="" size="avatar" sizes="64px" width={64} height={64} loading="eager" /> : <LogoMark size={28} />}
         </span>
@@ -64,42 +68,48 @@ export default async function MyPage() {
           {user.email && <p className={styles.email}>{user.email}</p>}
         </div>
         <ProfileEditor nickname={name} avatarUrl={avatarUrl} />
-      </section>
+      </div>
 
       <dl className={styles.stats}>
         {stats.map((s) => <div key={s.label}><dt>{s.label}</dt><dd>{s.value.toLocaleString()}</dd></div>)}
       </dl>
+      </section>
 
       <CreditCard initial={wallet} />
 
-      {/* 아래 메뉴 — 설정 페이지를 여기로 옮겼다(2026-10-01). 고객센터는 운영자 정보(lib/legal/operator.ts)의 문의 이메일로 연다.
-          계정 삭제는 일반 항목과 떨어뜨려 맨 아래 문서 줄에 둔다(패턴 문서 §9.6) — 삭제 화면이 영향과 확인을 다시 묻는다. */}
-      <footer style={{ marginTop: 'var(--space-8)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
-        <MenuSection title={t('설정')}>
-          <InstallAppButton className={styles.row} />
-          <MenuRow href="/my/language" label={t('언어')} sub={LANGUAGES[language]} />
-          <MenuRow href="/my/subscription" label={t('토큰 사용 내역')} />
-          <MenuRow href="/my/verify" label={t('성인 인증')} />
-          <MenuRow href="/my/permissions" label={t('권한 안내')} />
-          <form action={logout}>
-            <SubmitButton full variant="ghost" style={{ justifyContent: 'flex-start', minHeight: 0, padding: '12px 0', border: 0, borderRadius: 0, fontSize: 'var(--font-body-size)', lineHeight: 1.6, fontWeight: 'var(--weight-regular)' }}>
-              {t('로그아웃')}
-            </SubmitButton>
-          </form>
+      <div className={styles.sections}>
+        <MenuSection title={t('내 활동')}>
+          <MenuRow href="/my/characters" label={t('내가 만든 캐릭터')} icon="characters" />
+          <MenuRow href="/persona?next=/my" label={t('대화 페르소나')} sub={t('새 대화에 적용되는 기본 설정')} icon="persona" />
+        </MenuSection>
+        <MenuSection title={t('앱 설정')} id="profile-settings">
+          <InstallAppButton className={styles.row}><MenuItemContent label={t('홈 화면에 추가')} icon="download" /></InstallAppButton>
+          <MenuRow href="/my/language" label={t('언어')} end={LANGUAGES[language]} icon="globe" />
+          <VerificationSheet initiallyVerified={!!user.adultVerifiedAt} autoOpen={verify === '1'} result={r} />
+          <MenuRow href="/my/permissions" label={t('알림·접근 권한')} icon="bell" />
         </MenuSection>
         <MenuSection title={t('고객지원')}>
-          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} sub={OPERATOR.email} />
+          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} sub={OPERATOR.email} icon="help" />
+          <MenuRow href="/my/ai-data" label={t('AI 개선 참여')} icon="data" />
         </MenuSection>
-        <p className="t-name" style={{ fontSize: 'var(--font-title-3)', color: 'var(--color-text-tertiary)', margin: 'var(--space-6) 0 12px' }}>MIRO</p>
-        <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
-          <TransitionLink href="/my/ai-data" className="hit">{t('AI 개선 참여')}</TransitionLink>
-          <span aria-hidden>|</span>
-          <TransitionLink href="/my/delete" className="hit">{t('계정 삭제')}</TransitionLink>
-        </p>
-        {/* 약관·처리방침·환불 규정 링크와 사업자 정보는 사이트 공통 바닥글이 맡는다(10/5). */}
-        <LegalRevisionNotice style={{ marginTop: 'var(--space-5)', borderRadius: 'var(--radius-sm)' }} />
-        <SiteFooter style={{ marginTop: 'var(--space-4)', padding: 'var(--space-5) 0 0' }} />
+      </div>
+      <div className={styles.accountActions}>
+        <form action={logout}><SubmitButton variant="ghost" size="sm" style={{ color: 'var(--profile-muted)', fontSize: 13, fontWeight: 450, padding: '8px 0' }}>{t('로그아웃')}</SubmitButton></form>
+        <span aria-hidden="true">·</span><TransitionLink href="/my/delete">{t('계정 삭제')}</TransitionLink>
+      </div>
+      <footer className={styles.legal}>
+        <div className={styles.legalLinks}>
+          <TransitionLink href="/terms/service">{t('이용약관')}</TransitionLink>
+          <TransitionLink href="/terms/privacy">{t('개인정보 처리방침')}</TransitionLink>
+          <TransitionLink href="/terms/refund">{t('취소·환불 규정')}</TransitionLink>
+        </div>
+        <LegalRevisionNotice style={{ marginTop: 12, borderRadius: 8 }} />
+        <details className={styles.businessDetails}>
+          <summary>{t('MIRO 사업자 정보')}<ProfileIcon name="chevron" size={14} /></summary>
+          <SiteFooter style={{ marginTop: 8, padding: '16px 0 0', borderTop: '1px solid var(--profile-divider)' }} />
+        </details>
       </footer>
+      </div>
     </Page>
   )
 }

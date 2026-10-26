@@ -1,0 +1,7 @@
+.bar.bar { isolation: isolate; border-color: #ffffff26; background: linear-gradient(115deg, #64646466, #30303080 48%, #1d1d1d88); backdrop-filter: blur(28px) saturate(150%); -webkit-backdrop-filter: blur(28px) saturate(150%); box-shadow: 0 8px 32px #0004, inset 0 1px 0 #ffffff30, inset 0 -1px 0 #ffffff0a; view-transition-name: primary-navigation; }
+.bar::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(130deg, #ffffff0e, transparent 42%, #ffffff05); pointer-events: none; }
+.indicator { position: absolute; top: 5px; bottom: 5px; left: 8px; width: calc((100% - 16px) / 5); pointer-events: none; transition: transform 300ms cubic-bezier(.22, 1, .36, 1); }
+.indicator::before { content: ''; position: absolute; inset: 0 4px; border-radius: 13px; background: linear-gradient(140deg, #ffffff24, #ffffff09 65%); box-shadow: inset 0 1px 0 #ffffff38, inset 0 -1px 0 #ffffff0a, 0 2px 8px #0002; }
+.bar :global(.nav__item) { position: relative; z-index: 1; transition: color 180ms; }
+@media (prefers-reduced-motion: reduce) { .indicator, .bar :global(.nav__item) { transition: none; } }
+@media (prefers-reduced-transparency: reduce) { .bar.bar { background: #303030; backdrop-filter: none; -webkit-backdrop-filter: none; } }

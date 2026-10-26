@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
   }
 }
-export const viewport: Viewport = { themeColor: '#111015', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
+export const viewport: Viewport = { themeColor: '#111111', width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const needsConsent = !(await currentUser()) && !(await visitorConsent())

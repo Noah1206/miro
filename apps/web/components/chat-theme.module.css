@@ -17,7 +17,7 @@
 .trigger:focus-visible, .option:focus-visible { outline:2px solid var(--color-accent); outline-offset:3px; }
 .options { width:100%; min-width:0; max-width:100%; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .option { display:block; width:100%; min-width:0; max-width:100%; padding:0; border:0; background:none; color:var(--color-text-primary); cursor:pointer; text-align:left; font:inherit; }
-.preview { width:100%; min-width:0; max-width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; height:145px; padding:12px 8px; border:0; border-radius:14px; background:#101016; overflow:hidden; }
+.preview { width:100%; min-width:0; max-width:100%; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; height:145px; padding:12px 8px; border:0; border-radius:14px; background:#121212; overflow:hidden; }
 .option[aria-pressed='true'] .preview { box-shadow:inset 0 0 0 2px #b6a0ff; }
 .previewHead { display:flex; align-items:center; gap:5px; margin-bottom:8px; }
 .previewAvatar { display:grid; place-items:center; flex:0 0 20px; width:20px; height:20px; border-radius:50%; overflow:hidden; clip-path:circle(50%); --chat-avatar-bg:#ededed; --chat-avatar-ink:#c7c7c7; }
@@ -26,7 +26,7 @@
 .preview[data-preview='dm'] .previewAvatar { --chat-avatar-bg:#262626; --chat-avatar-ink:#737373; }
 .preview[data-preview='miro'] .previewAvatar { --chat-avatar-bg:#dbdbdb; --chat-avatar-ink:#a8a8a8; }
 .previewHead i { width:32px; height:4px; border-radius:4px; background:#999; }
-.incoming,.outgoing { display:block; flex-shrink:0; width:66px; height:26px; font-size:11px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:6px 7px; border-radius:9px; background:#282331; color:#fff; }
+.incoming,.outgoing { display:block; flex-shrink:0; width:66px; height:26px; font-size:11px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding:6px 7px; border-radius:9px; background:#292929; color:#fff; }
 .outgoing { width:52px; align-self:flex-end; background:#66538e; }
 .previewInput { margin-top:auto; height:15px; border-radius:20px; background:#ffffff22; }
 .preview[data-preview=dm] { background:#000; }
@@ -73,10 +73,10 @@
 .headerAvatar[data-avatar-theme='dm-light'] { --chat-avatar-bg:#f0f0f0; --chat-avatar-ink:#c7c7c7; }
 .headerAvatar[data-avatar-theme='dm'] { --chat-avatar-bg:#262626; --chat-avatar-ink:#737373; }
 
-.preview[data-preview='miro'] { background:#111114; }
-.preview[data-preview='miro'] .incoming { background:#1d1d23; border-radius:3px 9px 9px; color:#eeedf2; }
+.preview[data-preview='miro'] { background:#121212; }
+.preview[data-preview='miro'] .incoming { background:#383838; border-radius:3px 9px 9px; color:#ffffff; }
 .preview[data-preview='miro'] .outgoing { background:#b89aff; border-radius:9px 3px 9px 9px; color:#241337; }
-.preview[data-preview='miro'] .previewInput { background:#1a191f; border:1px solid #ffffff12; border-radius:5px; }
+.preview[data-preview='miro'] .previewInput { background:#1b1b1b; border:1px solid #ffffff12; border-radius:5px; }
 
 .composerTrigger { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 34px; align-self: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .composerTrigger:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }

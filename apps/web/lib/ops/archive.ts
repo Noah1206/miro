@@ -30,6 +30,7 @@ export type ArchiveCursor = {
 }
 
 export type ArchivePage = { items: ArchiveItem[]; nextCursor: ArchiveCursor | null }
+export type ArchiveChannel = 'chat' | 'dm'
 
 const PAGE_SIZE = 25
 
@@ -56,7 +57,9 @@ export async function listSessions(userId: string, options: {
   status?: 'active' | 'archived'
   query?: string
   cursor?: ArchiveCursor | null
+  channel?: ArchiveChannel
 } = {}): Promise<ArchivePage> {
+  if(options.channel!==undefined&&!['chat','dm'].includes(options.channel))throw new Error('Invalid archive channel')
   const unveil = await homeUnveilEnabled(userId)
   const query = typeof options.query === 'string' ? options.query.trim().slice(0, 100) : ''
   const cursor = options.cursor
@@ -72,6 +75,10 @@ export async function listSessions(userId: string, options: {
     OR (status = ${cursor.status} AND (last_at < ${cursorDate}::timestamptz
       OR (last_at = ${cursorDate}::timestamptz AND id < ${cursor.id}::uuid)))
   )` : sql``
+  const dmMessage=sql`(m.kind IN ('messenger','reality_message','call_record') OR (m.kind='photo' AND m.blocks @> '[{"type":"reality"}]'::jsonb))`
+  const channelMessage=options.channel==='dm'?sql`AND ${dmMessage}`:options.channel==='chat'?sql`AND NOT ${dmMessage}
+    AND NOT (m.kind='text' AND EXISTS (SELECT 1 FROM messages cm WHERE cm.session_id=m.session_id
+      AND cm.turn_index=m.turn_index AND cm.blocks @> '[{"type":"call_line"}]'::jsonb))`:sql``
   const result = await db.execute<{
     id: string; character_name: string; character_slug: string | null; character_image: string | null;
     role: string | null; accent_a: string | null; status: 'active' | 'archived'; last_at: string;
@@ -80,15 +87,20 @@ export async function listSessions(userId: string, options: {
   }>(sql`
     WITH inbox AS (
       SELECT r.id, c.name AS character_name, c.slug AS character_slug, c.images->>0 AS character_image,
-        c.role, c.accent_a, r.status, r.last_interaction_at AS last_at,
+        c.role, c.accent_a, r.status, ${options.channel?sql`COALESCE(latest.created_at,r.last_interaction_at)`:sql`r.last_interaction_at`} AS last_at,
         w.current_location AS location, w.current_time AS time, r.character_status,
-        (SELECT left(m.content, 180) FROM messages m WHERE m.session_id = r.id AND m.hidden_at IS NULL
-          ${feature('voiceCall') || feature('videoCall') ? sql`` : sql`AND m.kind <> 'call_record'`}
-          ORDER BY m.created_at DESC, m.id DESC LIMIT 1) AS last_message,
-        (SELECT count(*)::int FROM reality_contacts rc WHERE rc.session_id = r.id AND rc.status = 'sent') AS unread,
-        '/chat/' || r.id AS href, NULL::text AS story_title, NULL::int AS run_no
+        latest.content AS last_message,
+        ${options.channel==='chat'?sql`0::int`:sql`(SELECT count(*)::int FROM reality_contacts rc WHERE rc.session_id = r.id AND rc.status = 'sent')`} AS unread,
+        ${options.channel==='dm'?'/messages/':'/chat/'} || r.id AS href, NULL::text AS story_title, NULL::int AS run_no
       FROM roleplay_sessions r JOIN characters c ON c.id = r.character_id JOIN world_states w ON w.session_id = r.id
+      LEFT JOIN LATERAL (
+        SELECT CASE WHEN m.kind='photo' THEN '사진' ELSE left(m.content,180) END AS content,m.created_at FROM messages m WHERE m.session_id=r.id AND m.hidden_at IS NULL
+          ${feature('voiceCall') || feature('videoCall') ? sql`` : sql`AND m.kind <> 'call_record'`}
+          ${channelMessage}
+        ORDER BY m.created_at DESC,m.id DESC LIMIT 1
+      ) latest ON true
       WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL AND (r.adult_since IS NOT NULL) = ${unveil}
+        ${options.channel==='dm'?sql`AND c.experience_type='reality'`:sql``}
       UNION ALL
       SELECT latest.id, person->>'name', s.slug || '-' || (person->>'key'), person->>'image',
         NULL::text, NULL::text, CASE WHEN r.status = 'archived' THEN 'archived' ELSE 'active' END,
@@ -104,7 +116,7 @@ export async function listSessions(userId: string, options: {
         WHERE m.run_id = r.id AND m.channel = 'dm' AND m.thread = person->>'key'
         ORDER BY m.created_at DESC, m.id DESC LIMIT 1
       ) latest
-      WHERE r.user_id = ${userId}::uuid AND ${!unveil}
+      WHERE r.user_id = ${userId}::uuid AND ${!unveil&&options.channel!=='chat'}
     )
     SELECT *, to_char(last_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_time FROM inbox
     WHERE true ${options.status ? sql`AND status = ${options.status}` : sql``}

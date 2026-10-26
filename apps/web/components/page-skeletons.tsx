@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { msg } from '@/lib/i18n'
 import { MOODS, RELATIONS } from '@/lib/genres'
 import { useT } from '@/lib/i18n/client'
+import profile from '@/app/(main)/my/my.module.css'
 
 function Block({ width = '100%', height, style }: { width?: number | string; height?: number | string; style?: CSSProperties }) {
   return <div className="skeleton" style={{ width, height, ...style }} />
@@ -74,17 +75,17 @@ export function CreatePageSkeleton() {
 }
 
 export function MyPageSkeleton() {
-  // '나' 화면(2026-09-30) — 로고 → 프로필 줄 → 숫자 카드 → 크레딧 카드. 머리 위 여백은 홈 머리와 같게(10/1).
-  return <Status label={msg('내 정보 불러오는 중')} className="page page--wide">
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 40, margin: 'calc(var(--space-2) + env(safe-area-inset-top) - var(--space-5)) 0 var(--space-5)' }}>
-      <Block width={30} height={30} style={{ borderRadius: 10 }} />
-    </div>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 'var(--space-5)' }}>
+  return <Status label={msg('내 정보 불러오는 중')} className={`page page--wide ${profile.page}`}>
+    <div className={profile.content}>
+    <div className={profile.header}><Block width={88} height={34} /><Block width={24} height={24} /></div>
+    <div className={profile.profile}>
       <Block width={64} height={64} style={{ flexShrink: 0, borderRadius: 32 }} />
-      <div style={{ flex: 1 }}><Block width="45%" height={24} style={{ marginBottom: 8 }} /><Block width="60%" height={16} /></div>
-      <Block width={32} height={32} style={{ flexShrink: 0, borderRadius: 16 }} />
+      <div style={{ flex: 1 }}><Block width="60%" height={24} style={{ marginBottom: 8 }} /><Block width="85%" height={14} /></div>
+      <Block width={62} height={44} style={{ flexShrink: 0, borderRadius: 8 }} />
     </div>
-    <Block height={92} style={{ marginBottom: 'var(--space-4)', borderRadius: 16 }} />
-    <Block height={140} style={{ borderRadius: 16 }} />
+    <div className={profile.stats} style={{ marginBottom: 24 }}>{[0, 1, 2].map(index => <div key={index} style={{ alignItems: 'center' }}><Block width={48} height={14} /><Block width={24} height={25} /></div>)}</div>
+    <Block height={178} style={{ borderRadius: 12 }} />
+    <div className={profile.sections}>{[0, 1].map(index => <div key={index}><Block width={64} height={20} style={{ margin: '0 4px 10px' }} /><Block height={index ? 232 : 129} style={{ borderRadius: 12 }} /></div>)}</div>
+    </div>
   </Status>
 }

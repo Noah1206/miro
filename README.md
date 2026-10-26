@@ -1,6 +1,8 @@
 # MIRO
 
-AI 캐릭터 관계 시뮬레이션. 캐릭터·세계·관계·사건·NPC·기억이 하나의 지속되는 상태를 공유하고, 앱을 닫아도 캐릭터가 먼저 연락한다.
+음성 캐릭터챗. 캐릭터·세계·관계·사건·NPC·기억이 하나의 지속되는 상태를 공유하고, 앱을 닫아도 캐릭터가 먼저 연락한다.
+
+2026-10-26 최신 출시 범위: 음성 기능은 보류하고 기존 리얼리티 인터랙션·문자·상황 이미지 중심으로 진행한다. 음성 모드·구매·합성은 기본 차단하며, 모델·가중치·구현은 후속 재개용으로 보존한다. 향후 음성 출시의 검증과 재개 기준은 [음성 캐릭터챗 출시 계획](docs/VOICE_CHARACTER_CHAT_RELEASE_PLAN.md)을 따른다. 계획은 기능의 운영 활성화나 새 지출 승인을 뜻하지 않는다.
 
 운영 주소: https://miroapp.app (예전 `miro-web-ashen.vercel.app` 은 `/api/cron` 을 빼고 여기로 308 이동, `apps/web/next.config.ts`). 남은 출시 조건은 [출시 게이트](docs/PRODUCTION_RELEASE_GATES.md)·[출시 검증](docs/MIRO_LAUNCH_READINESS.md), AI 구조·모델 배치는 [AI Platform 보고서](docs/MIRO_AI_PLATFORM.md)를 본다. 9/15 P0 기록은 [P0 검증 결과](docs/P0_PROGRESS_2026-09-15.md).
 

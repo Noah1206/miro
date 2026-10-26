@@ -88,6 +88,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
 
   revalidatePath(`/character/${characterId}`)
   revalidatePath('/my')
+  revalidatePath('/my/characters')
   revalidatePath('/home')
   revalidatePath('/miro')
   revalidatePath('/archive')
@@ -96,5 +97,5 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     void track(user.id, 'rp_started', { sessionId, official: false })
     return `/chat/${sessionId}`
   }
-  return stillDraft ? '/my?filter=draft' : `/character/${characterId}`
+  return stillDraft ? '/my/characters?filter=draft' : `/character/${characterId}`
 }

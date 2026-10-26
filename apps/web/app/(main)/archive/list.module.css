@@ -1,0 +1,10 @@
+:global(body):has(.page) {
+  --color-bg: #1c1c1c;
+  --color-bg-rgb: 28, 28, 28;
+}
+
+.page {
+  background: var(--color-bg);
+}
+
+.channels { margin: 16px calc(var(--gutter) * -1) 16px; }

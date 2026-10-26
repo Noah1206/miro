@@ -1,0 +1,40 @@
+.groups { border-top: 1px solid #3b3b3b; }
+.group { display: grid; grid-template-columns: 106px minmax(0, 1fr); border-bottom: 1px solid #3b3b3b; }
+.heading { display: flex; align-items: center; margin: 0; padding: 20px 16px; background: #303030; font-size: 14px; font-weight: 550; line-height: 1.4; }
+.options { min-width: 0; padding: 16px; background: #222; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.tags button { position: relative; isolation: isolate; flex-shrink: 0; white-space: nowrap; min-height: 36px; padding: 7px 12px; border: 0; border-radius: 11px; background: #343434; color: #ddd; font-size: 13px; line-height: 1.4; transition: color 100ms; }
+.tags button::before { content: ''; position: absolute; inset: 0; z-index: 0; border-radius: inherit; background: #f2f2f2; transform: scale(0); transform-origin: center; transition: transform 160ms cubic-bezier(.2, .8, .2, 1); pointer-events: none; }
+.tagLabel { position: relative; z-index: 1; }
+.singleRow { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 9px 4px; margin: -9px -4px; }
+.singleRow::-webkit-scrollbar { display: none; }
+.options[data-collapsed='true'] { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.options[data-collapsed='true'] .disclosure { margin-top: 0; white-space: nowrap; }
+.popularBadge { position: absolute; top: -9px; right: -6px; z-index: 1; display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid #ff9b633d; border-radius: 7px; background: #4a2e25; font-size: 13px; line-height: 1; transform: rotate(-28deg); pointer-events: none; box-shadow: 0 2px 5px #0003; }
+.tags button[aria-pressed='true'] { color: #202020; }
+.tags button[aria-pressed='true']::before { transform: scale(1); }
+.tags button:disabled { opacity: .4; }
+.disclosure { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 0; margin-top: 10px; border: 0; background: transparent; color: #aaa; font-size: 12px; }
+.tags button:focus-visible, .disclosure:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.groups[data-appearance='search'] { display: grid; gap: 12px; border: 0; }
+.groups[data-appearance='search'] .group { grid-template-columns: 76px minmax(0, 1fr); align-items: start; column-gap: 10px; border: 0; }
+.groups[data-appearance='search'] .group + .group { padding-top: 12px; border-top: 1px solid #ffffff0a; }
+.groups[data-appearance='search'] .heading { display: flex; min-height: 40px; padding: 0; background: transparent; color: #d1d1d1; font-size: 12px; font-weight: 550; letter-spacing: -.02em; }
+.groups[data-appearance='search'] .options { padding: 0; background: transparent; }
+.groups[data-appearance='search'] .options[data-collapsed='true'] { gap: 8px; }
+.groups[data-appearance='search'] .tags { gap: 7px; padding-top: 3px; padding-bottom: 3px; }
+.groups[data-appearance='search'] .singleRow { padding-top: 9px; padding-bottom: 9px; margin-top: -6px; margin-bottom: -6px; }
+.groups[data-appearance='search'] .tags button { min-height: 36px; padding: 8px 11px; border-radius: 11px; background: #333333; color: #d0d0d0; font-size: 12px; }
+.groups[data-appearance='search'] .tags button[data-empty='true']:not([aria-pressed='true']) { color: #929292; background: #2b2b2b; }
+.groups[data-appearance='search'] .tags button[aria-pressed='true'] { color: #202020; }
+.groups[data-appearance='search'] .disclosure { min-height: 40px; color: #aaa; font-size: 11px; gap: 3px; }
+.groups[data-appearance='search'] .popularBadge { width: 16px; height: 16px; top: -7px; right: -4px; font-size: 11px; border-radius: 6px; }
+@media (max-width: 540px) {
+  .group { grid-template-columns: 1fr; }
+  .heading { padding: 14px 16px 0; background: #222; }
+  .options { padding-top: 12px; }
+  .groups[data-appearance='search'] .group:has(.options[data-collapsed='false']) { row-gap: 8px; }
+  .groups[data-appearance='search'] .group:has(.options[data-collapsed='false']) .heading { min-height: 24px; }
+  .groups[data-appearance='search'] .options[data-collapsed='false'] { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { .tags button, .tags button::before { transition: none; } }

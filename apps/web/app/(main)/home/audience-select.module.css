@@ -1,0 +1,18 @@
+.trigger { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: #292929; color: #eee; font-size: 14px; }
+.trigger svg { color: #aaa; }
+:global(body):has(.dialog[open]) { overflow: hidden; }
+.dialog { width: min(960px, calc(100vw - 32px)); max-width: none; max-height: min(90dvh, 920px); padding: 0; border: 1px solid #ffffff16; border-radius: 22px; background: #222; color: #fff; overflow: hidden; }
+.dialog[open] { display: flex; flex-direction: column; }
+.dialog::backdrop { background: #0008; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.header { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 24px; }
+.header h2 { margin: 0; outline: none; font-size: 20px; font-weight: 600; letter-spacing: -.03em; }
+.header h2:focus-visible { outline: none; box-shadow: none; }
+.header p { margin: 7px 0 0; color: #aaa; font-size: 13px; }
+.close { display: grid; place-items: center; flex-shrink: 0; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: #373737; color: #ccc; font-size: 25px; font-weight: 300; }
+.scroll { min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.empty { padding: 24px; color: #aaa; font-size: 14px; }
+.footer { flex-shrink: 0; display: flex; align-items: center; gap: 12px; padding: 16px 24px max(16px, env(safe-area-inset-bottom)); background: #282828; }
+.reset { min-height: 44px; margin-left: -12px; padding: 0 12px; border: 0; background: transparent; color: #b3b3b3; font-size: 13px; }
+.apply { flex: 1; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: #eee; color: #202020; font-size: 14px; font-weight: 600; }
+.trigger:focus-visible, .close:focus-visible, .reset:focus-visible, .apply:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (max-width: 540px) { .dialog { width: calc(100vw - 20px); max-height: 90dvh; border-radius: 20px; } .header { padding: 20px 16px; } .footer { padding-inline: 16px; } }

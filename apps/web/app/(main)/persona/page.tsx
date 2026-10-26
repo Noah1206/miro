@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
-import { Page, PageHeader } from '@/components/ui'
+import { SettingsPage } from '@/components/ui/settings-page'
 import { getPersona, personaNext } from '@/lib/persona'
 import { PersonaForm } from './form'
 import { getT } from '@/lib/i18n/server'
@@ -17,11 +17,8 @@ export default async function PersonaPage({ searchParams }: { searchParams: Prom
   const toChat = next !== '/my'
   const t = await getT()
   return (
-    <Page style={{ maxWidth: 480 }}>
-      <PageHeader back={toChat ? '/home' : '/my'} title={persona ? t('내 페르소나') : t('나를 소개해 주세요')}
-        lead={persona ? t('새 대화에서 기본값으로 불러와요. 대화방마다 따로 바꿀 수 있어요.')
-          : t('새 대화에서 불러올 기본 페르소나를 정해 주세요. 대화방에서 확인하고 시작할 수 있어요.')} />
+    <SettingsPage back={toChat ? '/home' : '/my'} title={persona ? t('내 페르소나') : t('나를 소개해 주세요')}>
       <PersonaForm initial={persona} next={next} submitLabel={toChat ? t('저장하고 대화하기') : t('저장')} />
-    </Page>
+    </SettingsPage>
   )
 }
