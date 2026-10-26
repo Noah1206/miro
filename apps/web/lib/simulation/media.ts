@@ -5,12 +5,13 @@ import { saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
 import { and, desc, eq } from 'drizzle-orm'
 import {
-  db, characterVisualIdentities, generatedMedia, roleplaySessions, worldStates,
+  db, characters, characterVisualIdentities, generatedMedia, roleplaySessions, worldStates,
 } from '@miro/db'
 import { buildMediaKey, buildVisualPrompt, type MediaKind, type PhotoContext } from '@miro/domain'
 import { resolveImage } from '@miro/providers'
 import { guarded } from '@/lib/usage/guard'
 import { hasAppearance, inferAppearance } from './appearance'
+import { matchSceneAsset } from './scene-assets'
 
 export type MediaResult = {
   id: string
@@ -84,19 +85,31 @@ export async function getOrGenerate(opts: {
   usage: { userId: string } | null
   /**
    * 언베일 사진(10/19) — 호출자가 adultModeGateFor 를 통과한 대화방에서만 넘긴다. 자체 오픈 모델로 그리고,
-   * 결과는 그 대화방 주인만 열 수 있는 비공개 버킷에만 둔다. 공급자가 없으면 무시하고 기존 경로로 간다.
+   * 결과는 그 대화방 주인만 열 수 있는 비공개 버킷에만 둔다. 공급자가 없으면 요청을 거절한다.
    */
   unveil?: { level: UnveilLevel; characterAge: number; request?: string } | null
 }): Promise<MediaResult> {
   const identity = await activeVisualIdentity(opts.characterId)
   const context = { ...opts.context, visualVersion: identity.version }
-  if (opts.unveil && opts.kind === 'photo' && openImageReady()) return unveilPhoto({ ...opts, unveil: opts.unveil }, identity, context)
+  if(opts.kind==='photo') {
+    const [character]=await db.select({images:characters.images,dialogue:characters.sampleDialogue}).from(characters).where(eq(characters.id,opts.characterId)).limit(1)
+    const authored=(character?.dialogue??[]).filter(d=>d.image&&d.location).map(d=>({characterId:opts.characterId,mode:'normal',url:d.image,location:d.location,...(d.time?{time:d.time}:{})}))
+    const configured:unknown=JSON.parse(process.env.MIRO_SCENE_ASSETS||'[]')
+    const asset=matchSceneAsset([...authored,...(Array.isArray(configured)?configured:[])],{characterId:opts.characterId,sessionId:opts.sessionId,
+      mode:opts.unveil?'unveil':'normal',context,publicUrls:[...(character?.images??[]),...(character?.dialogue.flatMap(d=>d.image?[d.image]:[])??[])]})
+    if(asset) return {id:randomUUID(),url:asset.url,cached:true,providerNotice:null}
+  }
+  if (opts.unveil && opts.kind === 'photo') {
+    if(!openImageReady()) throw new Error('unveil_image_unavailable')
+    return unveilPhoto({ ...opts, unveil: opts.unveil }, identity, context)
+  }
   const cacheKey = buildMediaKey(opts.kind, context)
 
   const hit = await db.select({ id: generatedMedia.id, url: generatedMedia.url })
     .from(generatedMedia)
     .where(and(
       eq(generatedMedia.characterId, opts.characterId),
+      eq(generatedMedia.sessionId, opts.sessionId),
       eq(generatedMedia.kind, opts.kind),
       eq(generatedMedia.cacheKey, cacheKey),
     ))
@@ -137,7 +150,7 @@ export async function getOrGenerate(opts: {
   // Persist the asset before committing the user's usage. A storage failure refunds their reservation.
   const saved = opts.usage
     ? await guarded(
-        { userId: opts.usage.userId, kind: usageKind, idempotencyKey: `media:${opts.usage.userId}:${cacheKey}:${Date.now()}` },
+        { userId: opts.usage.userId, kind: usageKind, idempotencyKey: `media:${opts.usage.userId}:${opts.sessionId}:${cacheKey}` },
         generateAndSave,
       )
     : await generateAndSave()
@@ -176,7 +189,7 @@ async function unveilPhoto(
     return saved!
   }
   const saved = opts.usage
-    ? await guarded({ userId: opts.usage.userId, kind: 'photo', idempotencyKey: `media:${opts.usage.userId}:${cacheKey}:${Date.now()}` }, generateAndSave)
+    ? await guarded({ userId: opts.usage.userId, kind: 'photo', idempotencyKey: `media:${opts.usage.userId}:${cacheKey}` }, generateAndSave)
     : await generateAndSave()
   return { ...saved, cached: false, providerNotice: null }
 }

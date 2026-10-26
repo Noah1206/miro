@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { db, sql, type Db } from '@miro/db'
 import type { TtsRequest } from '@miro/providers'
 import { MAX_SPEECH_BYTES, SpeechError, speechKey, speechUserKey, type SpeechPolicy, type SpeechSpec } from './policy'
+import { reserveSpeechSeconds, settleSpeechSeconds } from './credits'
 
 export type SpeechJob = { id: string; user_id: string; session_id: string; message_id: string; part: number; cache_key: string; model_version: string; reference_version: string;
   payload: TtsRequest; state: 'queued'|'running'|'done'|'failed'|'uncertain'; lease_token: string|null; lease_until: Date|null; created_at: Date; audio: Buffer|null; content_type: string|null; error_code: string|null }
@@ -9,7 +10,7 @@ const gate = sql`SELECT pg_advisory_xact_lock(hashtext('miro:speech:gate'))`
 
 export function speechStore(database: Db = db) {
   return {
-    async enqueue(spec: SpeechSpec, policy: SpeechPolicy) {
+    async enqueue(spec: SpeechSpec, policy: SpeechPolicy, reuseOnly=false) {
       return database.transaction(async tx => {
         await tx.execute(gate)
         await tx.execute(sql`DELETE FROM speech_synthesis_jobs WHERE state='done' AND created_at < now()-interval '24 hours'`)
@@ -18,6 +19,7 @@ export function speechStore(database: Db = db) {
         const key = speechKey(spec)
         const [old] = await tx.execute<SpeechJob>(sql`SELECT * FROM speech_synthesis_jobs WHERE cache_key=${key}`)
         if (old) return old
+        if(reuseOnly) throw new SpeechError('speech_cache_expired',409)
         const [paused] = await tx.execute(sql`SELECT job_id FROM speech_synthesis_usage WHERE state='uncertain' LIMIT 1`)
         if (paused) throw new SpeechError('speech_provider_paused')
         const [cost] = await tx.execute<{ global_cost: string; user_cost: string }>(sql`
@@ -34,6 +36,7 @@ export function speechStore(database: Db = db) {
         const [job] = await tx.execute<SpeechJob>(sql`INSERT INTO speech_synthesis_jobs(user_id,session_id,message_id,part,cache_key,model_version,reference_version,payload,reservation_micro_usd)
           VALUES(${spec.userId},${spec.sessionId},${spec.messageId},${spec.part},${key},${spec.modelVersion},${spec.referenceVersion},${JSON.stringify(spec.payload)}::jsonb,${policy.maxJobMicroUsd}) RETURNING *`)
         await tx.execute(sql`INSERT INTO speech_synthesis_usage(job_id,user_key,reservation_micro_usd) VALUES(${job!.id},${speechUserKey(spec.userId)},${policy.maxJobMicroUsd})`)
+        if(spec.payload.maxAudioSeconds) await reserveSpeechSeconds(tx,spec.userId,job!.id,spec.payload.maxAudioSeconds)
         return job!
       })
     },
@@ -46,14 +49,16 @@ export function speechStore(database: Db = db) {
         await tx.execute(gate)
         // Only an undispatched job can release its reservation.
         const [removed]=await tx.execute(sql`DELETE FROM speech_synthesis_jobs WHERE id=${id} AND user_id=${userId} AND state='queued' RETURNING id`)
-        if(removed) await tx.execute(sql`DELETE FROM speech_synthesis_usage WHERE job_id=${id} AND state='queued'`)
+        if(removed) { await settleSpeechSeconds(tx,id,null);await tx.execute(sql`DELETE FROM speech_synthesis_usage WHERE job_id=${id} AND state='queued'`) }
       })
     },
     async claim(policy: SpeechPolicy) {
       return database.transaction(async tx => {
         await tx.execute(gate)
-        await tx.execute(sql`UPDATE speech_synthesis_jobs SET state='failed',error_code='expired_before_dispatch',finished_at=now() WHERE state='queued' AND created_at < now()-interval '1 hour'`)
-        await tx.execute(sql`UPDATE speech_synthesis_usage SET state='uncertain' WHERE state='running' AND lease_until < now()`)
+        const expired=await tx.execute<{id:string}>(sql`UPDATE speech_synthesis_jobs SET state='failed',error_code='expired_before_dispatch',finished_at=now() WHERE state='queued' AND created_at < now()-interval '1 hour' RETURNING id`)
+        for(const row of expired) { await settleSpeechSeconds(tx,row.id,null);await tx.execute(sql`DELETE FROM speech_synthesis_usage WHERE job_id=${row.id} AND state='queued'`) }
+        const interrupted=await tx.execute<{job_id:string}>(sql`UPDATE speech_synthesis_usage SET state='uncertain' WHERE state='running' AND lease_until < now() RETURNING job_id`)
+        for(const row of interrupted) await settleSpeechSeconds(tx,row.job_id,null)
         await tx.execute(sql`UPDATE speech_synthesis_jobs SET state='uncertain',error_code='worker_interrupted' WHERE state='running' AND id IN (SELECT job_id FROM speech_synthesis_usage WHERE state='uncertain')`)
         const [active] = await tx.execute(sql`SELECT job_id FROM speech_synthesis_usage WHERE state IN ('running','uncertain') LIMIT 1`)
         if (active) return null
@@ -66,9 +71,17 @@ export function speechStore(database: Db = db) {
         return job ?? null
       })
     },
-    async finish(job: SpeechJob, audio: ArrayBuffer, type: string) {
+    async finish(job: SpeechJob, audio: ArrayBuffer, type: string, actualSeconds?:number) {
       if (!audio.byteLength || audio.byteLength>MAX_SPEECH_BYTES || !/^audio\/(wav|x-wav|mpeg|ogg|mp4)(;|$)/i.test(type)) throw new SpeechError('invalid_speech_audio')
       await database.transaction(async tx=>{
+        await tx.execute(gate)
+        if(job.payload.maxAudioSeconds) {
+          if(actualSeconds===undefined || actualSeconds>job.payload.maxAudioSeconds) throw new SpeechError('speech_duration_exceeded')
+          // A refunded/uncertain request must never be charged again by a late worker.
+          const [live]=await tx.execute<{state:string}>(sql`SELECT state FROM speech_synthesis_usage WHERE job_id=${job.id} AND lease_token=${job.lease_token}`)
+          if(live?.state!=='running') throw new SpeechError('speech_lease_lost')
+          await settleSpeechSeconds(tx,job.id,actualSeconds)
+        }
         const [saved]=await tx.execute(sql`UPDATE speech_synthesis_usage SET state='finished' WHERE job_id=${job.id} AND lease_token=${job.lease_token} AND state IN ('running','uncertain') RETURNING job_id`)
         if(!saved) throw new SpeechError('speech_lease_lost')
         await tx.execute(sql`UPDATE speech_synthesis_jobs SET state='done',audio=${Buffer.from(audio)},content_type=${type},finished_at=now(),error_code=NULL
@@ -77,6 +90,8 @@ export function speechStore(database: Db = db) {
     },
     async fail(job: SpeechJob, uncertain: boolean, code: string) {
       await database.transaction(async tx=>{
+        await tx.execute(gate)
+        await settleSpeechSeconds(tx,job.id,null)
         await tx.execute(sql`UPDATE speech_synthesis_usage SET state=${uncertain?'uncertain':'finished'} WHERE job_id=${job.id} AND lease_token=${job.lease_token} AND state IN ('running','uncertain')`)
         await tx.execute(sql`UPDATE speech_synthesis_jobs SET state=${uncertain?'uncertain':'failed'},error_code=${code},finished_at=now()
           WHERE id=${job.id} AND lease_token=${job.lease_token} AND state IN ('running','uncertain')`)
@@ -86,6 +101,7 @@ export function speechStore(database: Db = db) {
     async acknowledgeStopped(id: string) {
       await database.transaction(async tx=>{
         await tx.execute(gate)
+        await settleSpeechSeconds(tx,id,null)
         await tx.execute(sql`UPDATE speech_synthesis_usage SET state='finished' WHERE job_id=${id} AND state='uncertain'`)
         await tx.execute(sql`UPDATE speech_synthesis_jobs SET state='failed',error_code='operator_confirmed_stopped',finished_at=now() WHERE id=${id} AND state='uncertain'`)
       })

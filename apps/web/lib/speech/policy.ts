@@ -22,5 +22,5 @@ export const speechUserKey = (userId: string) => createHash('sha256').update(`mi
 export function speechKey(spec: SpeechSpec): string {
   const p = spec.payload, d = p.delivery
   return createHash('sha256').update(JSON.stringify([spec.userId,spec.sessionId,spec.messageId,spec.part,spec.modelVersion,spec.referenceVersion,
-    p.text,p.voice,p.language,p.style ?? 'normal',d ? [d.emotion,d.tone,d.pace,d.intensity,d.pauseAfterMs] : null])).digest('hex')
+    p.text,p.voice,p.language,p.style ?? 'normal',d ? [d.emotion,d.tone,d.pace,d.intensity,d.pauseAfterMs] : null,p.maxAudioSeconds ?? null])).digest('hex')
 }

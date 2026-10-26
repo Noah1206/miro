@@ -8,10 +8,10 @@
 .root :global(.chat-main) > header { padding-top:calc(8px + env(safe-area-inset-top, 0px)); }
 .root[data-input-focused='true'] :global([data-push-prompt]),
 .root[data-keyboard='true'] :global([data-push-prompt]) { display:none; }
-@media(max-width:767px) {
-  /* Safari zooms small text fields on focus, introducing lateral pan and disabling old keyboard detection. */
-  .root :global(.chat-main) textarea { font-size:16px; }
-}
+/* The room's typed text and placeholder share the existing theme hint size. */
+.root { --chat-input-size:13px; }
+.root[data-chat-theme='dm'], .root[data-chat-theme='dm-light'] { --chat-input-size:14px; }
+.root :global(.chat-main) textarea { font-size:var(--chat-input-size); }
 .trigger { display:grid; place-items:center; flex-shrink:0; width:36px; height:44px; padding:0; border:0; background:transparent; color:inherit; cursor:pointer; border-radius:8px; }
 .trigger svg { width:20px; height:20px; }
 .trigger:focus-visible, .option:focus-visible { outline:2px solid var(--color-accent); outline-offset:3px; }

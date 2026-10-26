@@ -87,7 +87,7 @@ type CharacterFormProps = {
   experienceType: 'chat' | 'reality'
   creationId?: string
   userId?: string
-  capabilities: ContactCapabilities
+  capabilities: ContactCapabilities & {characterVoice?:boolean}
   /** 운영자가 승인한 공식 목소리. 없으면 목소리 칸 자체를 보이지 않는다. */
   voices?: Array<{ id: string; label: string }>
   draft?: boolean
@@ -292,7 +292,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           {/* 유형(10/19): 대화만 / 몰입 모드(음성) / 몰입 모드(음성+영상). 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx. */}
-          {experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.')}>
+          {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.')}>
             <Card>
               <ChoiceChips name="media" value={media} onChange={v => setMedia(v as CharacterMedia)} columns={3}
                 options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('몰입 모드 · 음성') }, { value: 'video', label: t('몰입 모드 · 음성+영상') }]} />
@@ -471,7 +471,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           {/* 목소리 칸이 없을 때(전화가 닫힌 운영 베타)도 이미 고른 목소리는 그대로 보낸다 — 고치기 저장이 지우지 않게. */}
-          {voices.length === 0 && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
+          {(!can.characterVoice||voices.length === 0) && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
+          {!can.characterVoice&&<input type="hidden" name="media" value={media}/>}
         </Panel>
 
         {/* ── 관계 ── */}

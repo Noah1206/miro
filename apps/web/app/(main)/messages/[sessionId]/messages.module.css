@@ -240,3 +240,9 @@
 .photoDialog img { display: block; max-width: 100%; max-height: 72dvh; object-fit: contain; border-radius: 12px; }
 .photoDialog button { display: block; margin-left: auto; min-width: 44px; min-height: 44px; font-size: 24px; border: 0; background: transparent; color: inherit; cursor: pointer; }
 .photoDialog p { margin-top: 12px; white-space: pre-wrap; }
+
+/* Typed text follows the existing placeholder size in every room theme. */
+.input, :global([data-chat-theme]) .input { font-size:13px; line-height:20px; }
+:global([data-chat-theme='dm']) .input,
+:global([data-chat-theme='dm-light']) .input { font-size:14px; }
+.input::placeholder, :global([data-chat-theme]) .input::placeholder { font-size:inherit; }

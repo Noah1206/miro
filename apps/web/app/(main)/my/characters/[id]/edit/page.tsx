@@ -1,4 +1,4 @@
-import { features } from '@miro/config'
+import { feature, features } from '@miro/config'
 import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
@@ -54,7 +54,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={await voiceOptions()} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions():[]} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my?filter=draft' : `/character/${id}`} />
   )
 }

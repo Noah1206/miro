@@ -1,6 +1,6 @@
 export type UsagePolicy = {
   version: string; monthly: { free: number; pro: number }
-  weights: Record<'textRP'|'complexEvent'|'majorEvent'|'characterDraft'|'photo'|'faceCast'|'background'|'liveScene'|'voiceCallPerMinute'|'videoCallPerMinute'|'semantic_event'|'relationship_analysis'|'memory_extraction'|'memory_summary'|'event_generation'|'world_update'|'image_prompt', number>
+  weights: Record<'textRP'|'complexEvent'|'majorEvent'|'characterDraft'|'photo'|'faceCast'|'background'|'liveScene'|'voiceCallPerMinute'|'videoCallPerMinute'|'voicePack'|'semantic_event'|'relationship_analysis'|'memory_extraction'|'memory_summary'|'event_generation'|'world_update'|'image_prompt', number>
   continuity: { enabled: boolean; reserve: number; maxOutputTokens: number }
 }
 /** Provider-priced dialogue uses an exact tokenAmount reservation; weights remain for other interactions.
@@ -8,7 +8,7 @@ export type UsagePolicy = {
  * Existing active monthly windows retain their already-issued limit until expiry. */
 const defaults: UsagePolicy = {
   version: 'token-v1', monthly: { free: 0, pro: 1000 },
-  weights: { textRP: 3, complexEvent: 4, majorEvent: 5, characterDraft: 3, photo: 10, faceCast: 15, background: 8, liveScene: 12, voiceCallPerMinute: 5, videoCallPerMinute: 20,
+  weights: { textRP: 3, complexEvent: 4, majorEvent: 5, characterDraft: 3, photo: 10, faceCast: 15, background: 8, liveScene: 12, voiceCallPerMinute: 5, videoCallPerMinute: 20, voicePack: 0,
     semantic_event: 1, relationship_analysis: 1, memory_extraction: 1, memory_summary: 1, event_generation: 3, world_update: 1, image_prompt: 1 },
   continuity: { enabled: false, reserve: 5, maxOutputTokens: 128 },
 }

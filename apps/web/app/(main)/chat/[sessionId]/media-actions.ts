@@ -31,7 +31,6 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded || loaded.restricted) return { error: msg('대화를 찾을 수 없습니다.'), notice: null }
   // 사진은 미로 캐릭터의 것이다. 버튼을 숨기는 것과 별개로 서버가 거절한다.
-  if (loaded.experienceType !== 'reality') return { error: COPY.error.featureOff, notice: null }
 
   const context = await contextFromWorld(sessionId)
   if (!context) return { error: msg('현재 상태를 불러오지 못했습니다.'), notice: null }
@@ -51,7 +50,8 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
     const gate = await adultModeGateFor(user.id, loaded.characterId, sessionId)
     const [c] = await db.select({ age: characters.age }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
     const age = Number.parseInt(String(c?.age ?? ''), 10)
-    if (gate.allowed && Number.isFinite(age) && age >= 19) unveil = { level: loaded.adult.level, characterAge: age, request }
+    if (!gate.allowed || !Number.isFinite(age) || age < 19) return {error:msg('현재 언베일 이미지를 이용할 수 없어요.'),notice:null}
+    unveil = { level: loaded.adult.level, characterAge: age, request }
   }
   const unsafe = unsafeRequest(request)
   if (unsafe === 'minor') return { error: msg('미성년자로 보이는 요청은 그릴 수 없어요.'), notice: null }
@@ -81,7 +81,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
       .where(eq(roleplaySessions.id, sessionId))
 
     revalidatePath(`/chat/${sessionId}`)
-    return { error: null, notice: media.providerNotice }
+    return { error: null, notice: media.providerNotice ?? msg(media.cached?'기존 이미지를 보여드렸어요. 추가 차감은 없어요.':'이미지가 도착했어요.') }
   } catch (e) {
     if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
     // 이미지 생성 실패 시 텍스트 역할극은 그대로 유지한다 (명세서 5.3 예외).

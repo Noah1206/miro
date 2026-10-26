@@ -5,6 +5,15 @@ afterEach(() => vi.unstubAllEnvs())
 
 // 2026-10-01 베타: 운영에서는 전화를 아예 닫는다(덮어쓰기·테스터 목록 포함). 운영 밖에서는 플래그와 테스터 목록이 그대로 동작한다.
 describe('voice call: closed in the production beta, tester list only outside production', () => {
+  it('defers character voice by default without disabling reality messages or memory',()=>{
+    vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','')
+    expect(feature('characterVoice')).toBe(false)
+    expect(feature('realityMessage')).toBe(true)
+    expect(feature('relationshipEngine')).toBe(true)
+    expect(feature('memoryEngine')).toBe(true)
+    vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','1')
+    expect(feature('characterVoice')).toBe(true)
+  })
   it('in production nobody may call, even with an override or the tester list', () => {
     vi.stubEnv('VERCEL_ENV', 'production')
     vi.stubEnv('MIRO_FEATURE_VOICE_CALL', '1')

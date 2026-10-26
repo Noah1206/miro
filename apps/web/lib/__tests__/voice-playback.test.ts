@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { playVoiceMessage, voicePause } from '../voice-playback'
+import { playVoiceMessage, playVoiceSelection, voicePause } from '../voice-playback'
 class FakeAudio extends EventTarget {
   src = ''
   paused = false
@@ -13,6 +13,15 @@ beforeEach(() => {
 })
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.restoreAllMocks() })
 const wav = () => new Response(new Uint8Array([1, 2]), { headers: { 'content-type': 'audio/wav' } })
+it('explicit selection requests one confirmed part and amount without sending client dialogue or planning more parts',async()=>{
+  const fetcher=vi.fn(async(_url:string,_options:RequestInit)=>wav());vi.stubGlobal('fetch',fetcher)
+  const audio=new FakeAudio(),status=vi.fn()
+  const work=playVoiceSelection('session','message',2,'extended',audio as unknown as HTMLAudioElement,new AbortController().signal,status)
+  await vi.advanceTimersByTimeAsync(20);await work
+  expect(fetcher).toHaveBeenCalledOnce()
+  expect(JSON.parse(fetcher.mock.calls[0]![1]!.body as string)).toEqual({sessionId:'session',messageId:'message',part:2,amount:'extended',confirmed:true,reuseOnly:false})
+  expect(audio.play).toHaveBeenCalledOnce();expect(status).toHaveBeenLastCalledWith('idle')
+})
 it('plays utterances in order with the declared pause and sends only owner message identifiers', async () => {
   const requests: any[] = []
   vi.stubGlobal('fetch', vi.fn(async (_url, options) => {

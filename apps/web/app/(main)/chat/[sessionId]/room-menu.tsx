@@ -17,7 +17,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, entry, port
   entry?: CharacterEntry | null; portrait?: string | null; messengerHref?: string
 }) {
   const t = useT()
-  const { on, toggle } = useImmersive()
+  const { available, on, toggle } = useImmersive()
   const menuId = useId()
   const [open, setOpen] = useState(false)
   const chooseMode = (voice: boolean) => { if (voice !== on) toggle() }
@@ -27,13 +27,13 @@ export function RoomMenu({ sessionId, initialPersona, characterName, entry, port
     </button>
     <Drawer id={menuId} open={open} onClose={() => setOpen(false)} title={t('대화 메뉴')}>
       <div className={styles.roomMenuItems}>
-        <section className={styles.roomMenuGroup} aria-label={t('대화 모드')}>
+        {available&&<section className={styles.roomMenuGroup} aria-label={t('대화 모드')}>
           <h3 className={styles.roomMenuLabel}>{t('대화 모드')}</h3>
           <div className={styles.roomMenuModes} role="group" aria-label={t('대화 모드')}>
           <button type="button" className={styles.roomMenuItem} aria-pressed={!on} onClick={() => chooseMode(false)}><span>{t('채팅 모드')}</span><span aria-hidden="true">{!on ? '✓' : ''}</span></button>
           <button type="button" className={styles.roomMenuItem} aria-pressed={on} onClick={() => chooseMode(true)}><span>{t('음성 모드')}</span><span aria-hidden="true">{on ? '✓' : ''}</span></button>
           </div>
-        </section>
+        </section>}
         <section className={styles.roomMenuGroup} aria-label={t('채팅방 디자인 라이브러리')}>
           <h3 className={styles.roomMenuLabel}>{t('채팅방 디자인 라이브러리')}</h3>
           <ChatThemeOptions compact portrait={portrait} />

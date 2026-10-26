@@ -3,9 +3,7 @@ import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
 import { db, realityContacts } from '@miro/db'
-import { callAllowedFor, feature } from '@miro/config'
-import { sessionMedia } from '@/lib/call/service'
-import { costOf } from '@miro/domain'
+import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ConversationPersona } from '@/components/conversation-persona'
@@ -16,7 +14,6 @@ import { messengerItems } from '@/lib/messenger/inbox'
 import styles from './messages.module.css'
 import { MessengerThread } from './thread'
 import { MessengerComposer } from './composer'
-import { CallButton } from './call-button'
 import { getT } from '@/lib/i18n/server'
 
 /**
@@ -41,7 +38,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
   const items = (rows ?? []).filter(m => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
-  const canCall = callAllowedFor(user.id, await sessionMedia(sessionId, user.id), 'voice')
 
   return (
     <MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
@@ -50,9 +46,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
           <ChatHeaderAvatar portrait={loaded.characterPhoto} /><h1 className={styles.title}>{loaded.characterName}</h1>
-          {canCall && (
-            <CallButton sessionId={sessionId} cost={costOf('voiceCallPerMinute')} />
-          )}
           <TransitionLink href={`/chat/${sessionId}`} className={styles.headerButton} aria-label={t('캐릭터챗')} title={t('캐릭터챗')}><ChatRoomIcon /></TransitionLink>
           <ConversationPersona entry={loaded.entry} sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
           <ChatThemePicker portrait={loaded.characterPhoto} />

@@ -46,11 +46,12 @@ export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[
  * 호출부가 이미 사용자 advisory lock 을 쥐고 있고, 이 잠금이 그 안에서 한 번 더 막는다.
  * 확보한 총량이 need 에 못 미치면 부분 목록을 그대로 돌려준다 — 판단은 호출부가 한다.
  */
-async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date): Promise<{ grantId: string; amount: number }[]> {
+async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date, paidOnly = false): Promise<{ grantId: string; amount: number }[]> {
   const rows = await tx.select().from(rechargeGrants)
     .where(and(
       eq(rechargeGrants.userId, userId),
       eq(rechargeGrants.status, 'active'),
+      paidOnly ? eq(rechargeGrants.source, 'purchase') : undefined,
       or(isNull(rechargeGrants.expiresAt), gt(rechargeGrants.expiresAt, now)),
       sql`${rechargeGrants.amount} - ${rechargeGrants.consumed} - ${rechargeGrants.refunded} > 0`,
     ))
@@ -90,8 +91,8 @@ export async function rechargeBalance(userId: string, now = new Date()): Promise
  * 사용자 단위 advisory lock 으로 동시 첫 요청의 창 중복 생성을 막는다.
  */
 export async function reserve(opts: {
-  userId: string; kind: UsageKind; units?: number; tokenAmount?: number; idempotencyKey: string; now?: Date
-}): Promise<Reservation> {
+  userId: string; kind: UsageKind; units?: number; tokenAmount?: number; idempotencyKey: string; now?: Date; paidOnly?: boolean
+}, existingTx?: UsageTransaction): Promise<Reservation> {
   const now = opts.now ?? new Date()
   const units = opts.units ?? 1
   const policy = usagePolicy()
@@ -99,7 +100,7 @@ export async function reserve(opts: {
   const quotedCost = opts.tokenAmount ?? costOf(opts.kind, units)
   if (!Number.isSafeInteger(quotedCost) || quotedCost < 0 || quotedCost > 2_000_000_000) throw new Error('invalid token reservation')
 
-  return db.transaction(async (tx) => {
+  const work = async (tx: UsageTransaction): Promise<Reservation> => {
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${opts.userId}))`)
 
     const [existing] = await tx.select().from(usageLedger)
@@ -128,17 +129,17 @@ export async function reserve(opts: {
 
 
     // 월간 제공량을 먼저 쓰고, 모자란 만큼만 충전 잔액에서 가져온다.
-    const fromMonthly = Math.max(0, Math.min(cost, limit - win.consumed))
+    const fromMonthly = opts.paidOnly ? 0 : Math.max(0, Math.min(cost, limit - win.consumed))
     const shortfall = cost - fromMonthly
-    const picked = shortfall > 0 ? await takeFromGrants(tx, opts.userId, shortfall, now) : []
+    const picked = shortfall > 0 ? await takeFromGrants(tx, opts.userId, shortfall, now, opts.paidOnly) : []
     const fromGrants = picked.reduce((n, g) => n + g.amount, 0)
-    const covered = decision.allowed || fromMonthly + fromGrants === cost
+    const covered = opts.paidOnly ? fromGrants === cost : decision.allowed || fromMonthly + fromGrants === cost
 
     const continuity = opts.tokenAmount === undefined && !covered && ['textRP', 'complexEvent', 'majorEvent'].includes(opts.kind) && policy.continuity.enabled && win.continuityConsumed + cost <= policy.continuity.reserve
     if (!covered && !continuity) {
-      observe('usage.limit_reached', { userId: opts.userId, kind: opts.kind, plan: decision.plan })
-      void track(opts.userId, 'usage_limit_reached', { kind: opts.kind, plan: decision.plan })
-      throw new UsageExceededError(decision.plan, decision.resetsAt)
+      observe('usage.limit_reached', { userId: opts.userId, kind: opts.kind, plan })
+      void track(opts.userId, 'usage_limit_reached', { kind: opts.kind, plan })
+      throw new UsageExceededError(plan, win.endsAt)
     }
     // continuity 여유분으로 나가는 턴은 두 잔액 어느 쪽도 쓰지 않는다.
     const grantSplit = continuity ? [] : picked
@@ -162,12 +163,13 @@ export async function reserve(opts: {
       : { consumed: sql`${usageWindows.consumed} + ${monthlyAmount}` }).where(eq(usageWindows.id, win.id))
     return { reservationId: ledger!.id, cost, windowId: win.id, reused: false, continuity, fromGrants: grantAmount }
 
-  })
+  }
+  return existingTx ? work(existingTx) : db.transaction(work)
 }
 
 /** Provider 성공 후 확정. 통화처럼 실제 사용량이 나중에 정해지면 actualUnits 로 보정한다. */
-export async function commit(reservationId: string, actualUnits?: number): Promise<void> {
-  await db.transaction(async (tx) => {
+export async function commit(reservationId: string, actualUnits?: number, existingTx?: UsageTransaction): Promise<void> {
+  const work = async (tx: UsageTransaction) => {
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
     if (!l || l.status !== 'reserved') return
     let amount = l.amount
@@ -192,7 +194,9 @@ export async function commit(reservationId: string, actualUnits?: number): Promi
     }
     await tx.update(usageLedger).set({ status: 'committed', units: actualUnits ?? l.units, amount, fromGrants })
       .where(eq(usageLedger.id, reservationId))
-  })
+  }
+  if (existingTx) await work(existingTx)
+  else await db.transaction(work)
 }
 
 /** Provider 실패 시 되돌린다. 실패한 생성에 사용량을 물리지 않는다. */

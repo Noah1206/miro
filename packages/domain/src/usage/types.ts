@@ -3,7 +3,7 @@ import type { Plan } from '@miro/config'
 export type UsageKind =
   | 'semantic_event' | 'relationship_analysis' | 'memory_extraction' | 'memory_summary' | 'event_generation' | 'world_update' | 'image_prompt'
   | 'textRP' | 'complexEvent' | 'majorEvent' | 'characterDraft' | 'photo' | 'faceCast'
-  | 'background' | 'liveScene' | 'voiceCallPerMinute' | 'videoCallPerMinute'
+  | 'background' | 'liveScene' | 'voiceCallPerMinute' | 'videoCallPerMinute' | 'voicePack'
 
 export type UsageWindow = {
   id: string

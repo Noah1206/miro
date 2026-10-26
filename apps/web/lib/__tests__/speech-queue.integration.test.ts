@@ -33,6 +33,7 @@ suite('durable speech: validated dialogue → DB → API → worker → private 
   await db.insert(messages).values([{id:ids.message,sessionId:ids.session,role:'character',content:'generated fixture',blocks,turnIndex:1},{id:ids.otherMessage,sessionId:ids.otherSession,role:'character',content:'generated fixture',blocks,turnIndex:1}])
  })
  beforeEach(async()=>{
+  vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','1')
   await db.execute(sql`DELETE FROM speech_synthesis_jobs WHERE user_id IN (${ids.owner},${ids.other})`)
   await db.execute(sql`DELETE FROM speech_synthesis_usage WHERE user_key IN (${speechUserKey(ids.owner)},${speechUserKey(ids.other)})`)
   await db.update(messages).set({hiddenAt:null,blocks}).where(eq(messages.id,ids.message))
@@ -66,6 +67,17 @@ suite('durable speech: validated dialogue → DB → API → worker → private 
   await POST(request(0));await POST(request(1))
   const claimed=await Promise.all(Array.from({length:10},()=>speechStore().claim(policy)))
   expect(claimed.filter(Boolean)).toHaveLength(1)
+ })
+ it('hides the voice API and stops dispatch while retaining queued cancellation when voice is deferred',async()=>{
+  const queued=await(await POST(request())).json()
+  vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','0')
+  expect((await POST(request())).status).toBe(404)
+  expect(await processSpeechJob(policy,{speak:h.speak})).toBe(false)
+  expect((await speechStore().owned(queued.jobId,ids.owner))?.state).toBe('queued')
+  expect((await GET(new Request('http://localhost'),params(queued.jobId))).status).toBe(404)
+  expect((await DELETE(new Request('http://localhost'),params(queued.jobId))).status).toBe(204)
+  expect(await speechStore().owned(queued.jobId,ids.owner)).toBeNull()
+  expect(h.speak).not.toHaveBeenCalled()
  })
  it('quarantines interrupted paid work without automatic resubmission or freeing its reservation',async()=>{
   const first=await (await POST(request())).json();const job=await speechStore().claim(policy);expect(job).not.toBeNull()

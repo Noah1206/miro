@@ -3,7 +3,9 @@
   "compilerOptions": {
     "composite": false,
     "declaration": false,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "preserve",
+    "paths": { "@/*": ["./apps/web/*"] }
   },
   "include": [
     "packages/*/src/**/*.ts",

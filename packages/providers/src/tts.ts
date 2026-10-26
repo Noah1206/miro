@@ -5,7 +5,7 @@
  */
 import type { VoiceDelivery } from '@miro/config'
 /** delivery is per utterance. style remains for older speech servers. */
-export type TtsRequest = { text: string; voice: string | null; language: string; style?: 'normal' | 'whisper'; delivery?: VoiceDelivery }
+export type TtsRequest = { text: string; voice: string | null; language: string; style?: 'normal' | 'whisper'; delivery?: VoiceDelivery; maxAudioSeconds?: number }
 export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promise<{ audio: ArrayBuffer; contentType: string }> }
 
 export function resolveTts(): TtsProvider | null {

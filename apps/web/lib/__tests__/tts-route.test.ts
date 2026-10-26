@@ -18,6 +18,7 @@ import { POST } from '../../app/api/tts/route'
 const sessionId = '12345678-1234-1234-1234-123456789012', messageId = '12345678-1234-1234-1234-123456789013'
 const req = (extra: object = {}) => new Request('http://localhost/api/tts', { method: 'POST', body: JSON.stringify({ sessionId, messageId, ...extra }) })
 beforeEach(() => {
+  vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','1')
   vi.stubEnv('MIRO_TTS_QUEUE_ENABLED','0')
   h.user = { id: 'owner-only' }; h.queries = []; h.selectCalls = 0; h.ready = true
   h.speak.mockReset().mockResolvedValue({ audio: new ArrayBuffer(2), contentType: 'audio/wav' })
@@ -29,6 +30,12 @@ beforeEach(() => {
 })
 afterEach(()=>vi.unstubAllEnvs())
 describe('authenticated committed dialogue to TTS', () => {
+  it('blocks even legacy synchronous requests before database or provider work when voice is deferred',async()=>{
+    vi.stubEnv('MIRO_FEATURE_CHARACTER_VOICE','0')
+    expect((await POST(req({part:0}))).status).toBe(404)
+    expect(h.selectCalls).toBe(0)
+    expect(h.speak).not.toHaveBeenCalled()
+  })
   it('returns only a playback plan, without paid synthesis', async () => {
     const res = await POST(req({ plan: true }))
     expect(await res.json()).toEqual({ segments: [{ part: 0, pauseAfterMs: 450 }, { part: 1, pauseAfterMs: 100 }] })

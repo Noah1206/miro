@@ -7,6 +7,8 @@ import { productionRuntime } from './runtime'
 
 export type FeatureName =
   | 'imageGeneration' | 'voiceCall' | 'videoCall' | 'liveScene'
+  /** 캐릭터 TTS는 학습·실음성 검증 후 다시 연다. 리얼리티 문자 기능과 별개다. */
+  | 'characterVoice'
   /** 통화의 실시간 음성 전송(Gemini Live). 꺼져 있으면 통화는 문자 통화로 진행된다 — 2026-09-29 운영은 문자 통화만 연다. */
   | 'voiceCallAudio'
   | 'relationshipEngine' | 'memoryEngine' | 'eventEngine' | 'realityMessage'
@@ -30,12 +32,14 @@ export type Mode = 'alpha' | 'production'
 
 const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   alpha: {
+    characterVoice: false,
     messengerPhotos: true, strictConversationReview: false, speakFirst: false,
     imageGeneration: false, voiceCall: false, videoCall: false, liveScene: false, voiceCallAudio: false,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
     inlineReality: true, llmSemanticAnalysis: false, memorySummaries: true, memoryExtraction: true, characterLife: true, storyPush: true,
   },
   production: {
+    characterVoice: false,
     messengerPhotos: true, strictConversationReview: false, speakFirst: false,
     imageGeneration: true, voiceCall: true, videoCall: true, liveScene: true, voiceCallAudio: true,
     relationshipEngine: true, memoryEngine: true, eventEngine: true, realityMessage: true,
@@ -52,7 +56,8 @@ export function feature(name: FeatureName): boolean {
   // Media transports are not production-verified yet. A production env override must not expose them.
   // 2026-10-01 베타: 전화(voiceCall)도 운영에서 닫는다 — 사용자 화면에서 전화·영상통화를 아예 없앴다(사용자 요청, 9/29 문자 통화 공개를 되돌림).
   // 캐릭터가 걸려던 전화는 문자로 간다(deliverableChannel). 다시 열 때는 이 목록에서 'voiceCall' 을 뺀다.
-  if (productionRuntime() && ['voiceCall', 'voiceCallAudio', 'videoCall', 'liveScene', 'imageGeneration'].includes(name)) return false
+  if (productionRuntime() && ['voiceCall', 'voiceCallAudio', 'videoCall', 'liveScene'].includes(name)) return false
+  if (productionRuntime() && name==='imageGeneration' && process.env.MIRO_SCENE_IMAGES_ENABLED!=='1') return false
   const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]?.trim()
   if (override === '1') return true
   if (override === '0') return false

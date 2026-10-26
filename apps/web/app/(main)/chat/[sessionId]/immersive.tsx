@@ -3,9 +3,11 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { flushSync } from 'react-dom'
 import type { CharacterMedia } from '@miro/config'
 import { useT } from '@/lib/i18n/client'
-import { spokenText } from '@/lib/voice-text'
-import { playVoiceMessage, type VoicePlaybackStatus } from '@/lib/voice-playback'
+import { spokenSegments } from '@/lib/voice-text'
+import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { useTurns } from './turns'
+import type { Msg } from './messages'
+import { SpeechPanel } from './speech-panel'
 import styles from './chat.module.css'
 
 /**
@@ -13,83 +15,59 @@ import styles from './chat.module.css'
  * '음성+영상' 유형은 켜면 캐릭터 사진이 화면 전체에 깔린다(립싱크 아님). 켜짐은 이 기기의 방별 기억.
  * 통화가 아니다 — 턴은 그대로 채팅 턴이고, 소리는 저장된 답을 읽는다.
  */
-type Immersive = { media: CharacterMedia; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void }
-const Ctx = createContext<Immersive>({ media: 'text', on: false, toggle: () => {}, status: 'idle', retry: () => {} })
+export type SpeechChoice={messageId:string;part:number;text:string}
+type Immersive = { media: CharacterMedia; available:boolean; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
+  choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string }
+const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'' })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
 const SILENT = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
-export function ImmersiveProvider({ sessionId, media, portrait, children }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode }) {
+export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, enabled=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string;enabled?:boolean }) {
   const key = `miro:immersive:${sessionId}`
-  const [on, setOn] = useState(false)
+  const [preferredOn, setOn] = useState(false)
+  const on=enabled&&preferredOn
   const audio = useRef<HTMLAudioElement | null>(null)
   const [status, setStatus] = useState<VoicePlaybackStatus>('idle')
-  const retry = useRef<(() => void) | null>(null)
+  const {appended}=useTurns()
+  const controller=useRef<AbortController|null>(null)
+  useEffect(()=>{if(!enabled){controller.current?.abort();audio.current?.pause();setStatus('idle')}},[enabled])
+  const known=new Set(initialMessages.map(m=>m.id))
+  const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&m.blocks.length&&/^[0-9a-f-]{36}$/i.test(m.id))
+    .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
+  const stop=()=>{controller.current?.abort();audio.current?.pause();setStatus('idle')}
+  useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // Voice is opt-in for every character, including those originally created as text.
   useEffect(() => { try { setOn(localStorage.getItem(key) === '1') } catch { setOn(false) } }, [key])
   const unlock = () => { audio.current ??= new Audio(); audio.current.src = SILENT; audio.current.play().catch(() => {}) }
   const toggle = () => {
+    if(!enabled)return
     const next = !on
     setOn(next)
     try { localStorage.setItem(key, next ? '1' : '0') } catch { /* 이번엔 켜진다 */ }
     if (next) unlock()
-    else { audio.current?.pause(); setStatus('idle') }
+    else stop()
+  }
+  const listen=async(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly=false)=>{
+    if(!enabled)return false
+    stop();unlock();const active=new AbortController();controller.current=active
+    try { await playVoiceSelection(sessionId,choice.messageId,choice.part,amount,audio.current!,active.signal,
+      value=>{if(controller.current===active)setStatus(value)},reuseOnly);return true }
+    catch {if(!active.signal.aborted)setStatus('error');return false}
   }
   return (
-    <Ctx.Provider value={{ media, on, toggle, status, retry: () => { unlock(); retry.current?.() } }}>
+    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
-        {on && <Speaker sessionId={sessionId} audio={audio} status={setStatus} retry={retry} />}
         {children}
       </div>
     </Ctx.Provider>
   )
 }
 
-/** 방금 저장된 캐릭터 답을 차례로 읽는다. 열 때 이미 있던 글은 읽지 않는다. */
-function Speaker({ sessionId, audio, status, retry }: { sessionId: string; audio: React.MutableRefObject<HTMLAudioElement | null>;
-  status: (s: VoicePlaybackStatus) => void; retry: React.MutableRefObject<(() => void) | null> }) {
-  const { appended } = useTurns()
-  const spoken = useRef(new Set(appended.map(m => m.id)))
-  const queue = useRef(Promise.resolve())
-  const controller = useRef<AbortController | null>(null)
-  useEffect(() => {
-    const active = new AbortController(); controller.current = active
-    return () => { active.abort(); audio.current?.pause(); retry.current = null }
-  }, [audio, retry])
-  useEffect(() => {
-    const active = controller.current
-    if (!active) return
-    const enqueue = (id: string) => {
-      queue.current = queue.current.then(async () => {
-        if (active.signal.aborted) return
-        audio.current ??= new Audio()
-        await playVoiceMessage(sessionId, id, audio.current, active.signal, status)
-        retry.current = null
-      }).catch(() => {
-        if (active.signal.aborted) return
-        retry.current = () => { retry.current = null; enqueue(id) }
-        status('error')
-      })
-    }
-    for (const m of appended) {
-      if (m.role !== 'character' || spoken.current.has(m.id)) continue
-      spoken.current.add(m.id)
-      if (spokenText(m.blocks, m.content)) enqueue(m.id)
-    }
-  }, [appended, sessionId, audio, status, retry])
-  return null
-}
-
 export function VoiceStatus() {
-  const t = useT()
-  const { on, status, retry } = useImmersive()
-  if (!on || status === 'idle') return null
-  return <div className={styles.voiceStatus} role="status" aria-live="polite">
-    <span>{t(status === 'error' ? '음성을 재생하지 못했어요.' : status === 'preparing' ? '음성을 준비하고 있어요…' : '목소리를 듣고 있어요')}</span>
-    {status === 'error' && <button type="button" onClick={retry}>{t('다시 듣기')}</button>}
-  </div>
+  return <SpeechPanel/>
 }
 
 const speechLang = () => ({ ko: 'ko-KR', en: 'en-US', ja: 'ja-JP' } as Record<string, string>)[document.documentElement.lang] ?? document.documentElement.lang ?? 'ko-KR'
