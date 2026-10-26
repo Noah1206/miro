@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import { sampleDialogue, type DialogueEntry } from '../intro-dialogue'
-import { sampleWithAtmosphere } from '../sample-atmosphere'
+import { SAMPLE_ATMOSPHERE, sampleWithAtmosphere } from '../sample-atmosphere'
 import { SEEDS } from '../../scripts/bl-characters.data.mjs'
 import { SEEDS_2 } from '../../scripts/bl-characters-2.data.mjs'
 
 describe('sample dialogue atmosphere', () => {
-  it('adds two character-specific narrative beats while preserving all 14 characters’ original exchanges', () => {
+  it('adds only still-matching narrative beats while preserving the authored exchanges', () => {
     for (const seed of [...SEEDS, ...SEEDS_2]) {
       const original = sampleDialogue(seed.sampleDialogue)
       const snapshot = JSON.stringify(seed.sampleDialogue)
       const result = sampleWithAtmosphere(seed.slug, original)
-      expect(result.filter(t => t.role === 'narrator'), seed.slug).toHaveLength(2)
+      const matches = SAMPLE_ATMOSPHERE[seed.slug]!.filter(beat => original.some(t => t.role === 'user' && t.text === beat.question))
+      expect(result.filter(t => t.role === 'narrator'), seed.slug).toHaveLength(matches.length)
+      for (const beat of matches) expect(result.some(t => t.role === 'narrator' && t.text === beat.text)).toBe(true)
       expect(result.filter(t => t.role !== 'narrator'), seed.slug).toEqual(original)
       expect(JSON.stringify(seed.sampleDialogue)).toBe(snapshot)
     }

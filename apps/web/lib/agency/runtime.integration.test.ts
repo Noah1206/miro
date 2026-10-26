@@ -30,6 +30,8 @@ const deferred = vi.hoisted(() => ({ tasks: [] as Array<() => Promise<unknown>> 
 vi.mock('@/lib/defer', () => ({ afterResponse: async (task: () => Promise<unknown>) => { deferred.tasks.push(task) } }))
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
+// This fixture tests persistence with the deployed review mode, not the experimental evidence ledger.
+beforeEach(() => vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0'))
 const createdUsers: string[] = []
 const value = '상대의 선택을 존중하고 약속을 지킨다.'
 const reply = '알겠어요. 말씀하신 내용을 기억할게요.'
@@ -94,7 +96,8 @@ async function planned(f: Fixture, loaded: LoadedAgency, options: PlanOptions = 
   const evidence = await loadAgencyEvidence(f.sessionId, f.loaded.snapshot, loaded, input, now)
   const ids = [input.id]
   const llm: LLMProvider = { info: { name: 'recorded-db-contract', mode: 'mock', notice: 'Recorded contract, not model quality' }, async generateStructured(request) {
-    if (request.task === 'dialogue') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: reply }] } })
+    if (request.promptVersion === 'agency-communication-check:v3') return request.schema.parse({ acceptable: true, blockIndex: 0 })
+    if (request.task === 'dialogue') return request.schema.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '지안', text: fullTurn ? `기록 ${input.id}` : reply }] } })
     if (request.promptVersion === 'agency-realization-check:v5') return request.schema.parse({
       decisionId: JSON.parse(request.prompt).decision.id, aligned: true, claims: [], unsupported: [], violations: [],
     })
@@ -139,7 +142,7 @@ function commitInput(f: Fixture, loaded: LoadedAgency, p: { input: { id: string;
     realityIntent: null, emotion: undefined, intent: undefined, issues: [],
   }
   return { sessionId: f.sessionId, characterId: f.loaded.characterId, userInput: p.input.text, userMessageId: p.input.id,
-    responseText: reply, turnIndex: s.turnCount + 1, blocks: transition.blocks, transition,
+    responseText: transition.blocks.map(block => block.text).join('\n'), turnIndex: s.turnCount + 1, blocks: transition.blocks, transition,
     worldVersion: s.world.version, relationshipVersion: s.relationship.version,
     currentRelationship: s.relationship, existingMemories: s.memories, agency: { version: loaded.version, plan: p.plan },
   }

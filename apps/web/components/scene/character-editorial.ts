@@ -8,7 +8,7 @@ export const CHARACTER_EDITORIAL: Record<string, EditorialTheme> = {
   'official-baek-dohyun': theme('#C5ABEF', '#E8B9D0', '#A3D9D1', ['기억 전당포', '기억 하나', '유리병', '기한 하루 전', '30일']),
   'official-seo-ian': theme('#A7B8EF', '#DDB5D5', '#E5C89E', ['새벽 두 시', '불 켜진 창', '사연', '새벽 4시', '헤드폰']),
   'official-oh-junseo': theme('#ACC9D5', '#C8B4E8', '#D9BE8B', ['도서관 3층', '철문', '비상등', '사흘', '사이렌']),
-  'official-ryu-haram': theme('#D9A7CA', '#BBAFEF', '#A5CCD7', ['새벽 3시 10분', '뮤지션', '복권', '햇빛', '홍대']),
+  'official-ryu-haram': theme('#D9A7CA', '#BBAFEF', '#A5CCD7', ['밤의 군주', '뱀파이어', '피아노', '붉은 봉랍', '정동']),
   'official-park-doha': theme('#EAAF95', '#D4B1EF', '#A8D7BC', ['부산', '전학', '사투리', '매니저', '여기 앉아']),
   'official-jung-siwoo': theme('#9DC8D5', '#BDB2EC', '#DAC59A', ['청운고', '학생회', '전교 1등', '구관', '실종']),
   'official-lee-taeo': theme('#A8DCD2', '#D1B6EE', '#E5C599', ['제로', '감정 봉인구', '한빛 특수고', '옆자리', '폭주']),

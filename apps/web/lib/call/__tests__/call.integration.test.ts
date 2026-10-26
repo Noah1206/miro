@@ -107,8 +107,8 @@ describeDb('calls', () => {
 
   it('an outgoing call is refused when usage is exhausted, with state untouched', async () => {
     const { userId, sessionId } = await session('free')
-    await startOutgoingCall(userId, sessionId, 'voice')   // opens window
-    await db.update(usageWindows).set({ consumed: POLICY.usage.limits.free }).where(eq(usageWindows.userId, userId))
+    // Launch policy starts new free accounts with zero monthly allowance.
+    await expect(startOutgoingCall(userId, sessionId, 'voice')).rejects.toThrow('usage limit')
     await expect(startOutgoingCall(userId, sessionId, 'video')).rejects.toThrow('usage limit')
     const [rel] = await db.select().from(relationships).where(eq(relationships.sessionId, sessionId))
     expect(rel!.version).toBe(1)

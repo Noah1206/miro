@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { and, eq } from 'drizzle-orm'
 import { db, users, userSettings, characters, roleplaySessions, messages, memories, relationships, stateTransitions, realityContacts,
   realityPushJobs, pushSubscriptions } from '@miro/db'
@@ -16,6 +16,8 @@ import { deliverRealityPush, enqueueRealityPush } from '../push-outbox'
 import { cloneAsReality, dropRealityClones } from './fixtures'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
+// This fixture tests persistence with the deployed review mode, not the experimental evidence ledger.
+beforeEach(() => vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0'))
 const made: string[] = []
 async function fixture(experienceType: 'chat' | 'reality' = 'reality') {
   const [u] = await db.insert(users).values({ email: `boundary-${randomUUID()}@example.test` }).returning()

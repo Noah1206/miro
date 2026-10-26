@@ -17,7 +17,7 @@ describeDb('payments', () => {
 
   it('Scenario 3 tail: a purchase grants Pro and lifts the current window so the user continues at once', async () => {
     const u = await user()
-    await reserve({ userId: u, kind: 'textRP', idempotencyKey: `k:${u}` })
+    await reserve({ userId: u, kind: 'textRP', units: 0, idempotencyKey: `k:${u}` })
     await db.update(usageWindows).set({ consumed: POLICY.usage.limits.free }).where(eq(usageWindows.userId, u))
     await expect(reserve({ userId: u, kind: 'textRP', idempotencyKey: `k2:${u}` })).rejects.toThrow('usage limit')
 

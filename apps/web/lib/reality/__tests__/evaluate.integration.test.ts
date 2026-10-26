@@ -1,5 +1,5 @@
 import { messengerInbox } from '@miro/db'
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { and, eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import {
@@ -31,6 +31,8 @@ const reality = (slug: string) => {
 }
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
+// This fixture tests persistence with the deployed review mode, not the experimental evidence ledger.
+beforeEach(() => vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0'))
 
 /** 낮 시간(Quiet Hours 밖, 세 캐릭터 모두 활동 시간 안)의 고정 시각. 14:00 KST. */
 const DAY = new Date('2026-09-12T14:00:00+09:00')
@@ -249,7 +251,7 @@ describeDb('reality activation — real send path', () => {
     expect(await realityMessages(id)).toHaveLength(2)
   })
 
-  it('suppressed rows never push the last real contact out of view (cooldown holds)', async () => {
+  it('suppressed rows do not block a distinct motivated opportunity', async () => {
     const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
     expect((await evaluateSession(id, DAY)).outcome).toBe('sent')
     // 밤새 막힌 기록이 열 줄 넘게 쌓였다 — 전엔 이것들이 최근 10줄을 채워 방금 보낸 연락이 안 보였다.
@@ -257,7 +259,7 @@ describeDb('reality activation — real send path', () => {
       sessionId: id, channel: 'message' as const, reason: 'x', dedupeKey: `test-suppressed-${i}`, status: 'suppressed' as const, suppressedReason: 'busy',
     })))
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: 'another', urgency: 0.9 } }).where(eq(roleplaySessions.id, id))
-    expect(await evaluateSession(id, new Date(DAY.getTime() + 10 * 60_000))).toEqual({ outcome: 'suppressed', reason: 'cooldown' })
+    expect(await evaluateSession(id, new Date(DAY.getTime() + 10 * 60_000))).toMatchObject({ outcome: 'sent' })
   })
 
   it('the same suppression is recorded once a day, not every check', async () => {
@@ -301,7 +303,7 @@ describeDb('reality activation — real send path', () => {
     const early = await session('thomas', { idleMinutes: delay - 30, turnCount: 4 })
     expect(await evaluateSession(early, DAY)).toEqual({ outcome: 'no_intent' })   // 아직 이르다
     const hello = await session('thomas', { idleMinutes: 30 * 60, turnCount: 1 })
-    expect(await evaluateSession(hello, DAY)).toEqual({ outcome: 'no_intent' })   // 인사만 하고 떠났다
+    expect(await evaluateSession(hello, DAY)).toMatchObject({ outcome: 'sent' })   // A real first turn is sufficient; no artificial turn-count gate.
 
     const id = await session('thomas', { idleMinutes: delay + 5, turnCount: 4 })   // 낯선 사이 그대로
     const r = await evaluateSession(id, DAY)
@@ -313,15 +315,15 @@ describeDb('reality activation — real send path', () => {
     expect(await evaluateSession(id, new Date(DAY.getTime() + 24 * 3_600_000))).toEqual({ outcome: 'no_intent' })
   })
 
-  it('daily cap: after a full day of contacts the character waits for tomorrow — but still answers the user', async () => {
-    const id = await session('thomas', { idleMinutes: 90, relationship: ESTABLISHED })   // 마지막 대화 12:30
-    // 오늘 아침부터 정오까지 다섯 번 보냈다(상한은 최대 5). 마지막 대화 전이라 '안 읽은 연락'은 아니다.
+  it('prior contact count alone does not block a motivated opportunity or a user reply', async () => {
+    const id = await session('thomas', { idleMinutes: 90, relationship: ESTABLISHED, activeEvent: true })   // 마지막 대화 12:30
+    // Five earlier contacts do not impose a numeric quota. These were opened before the last user interaction.
     await db.insert(realityContacts).values([8, 9, 10, 11, 12].map((h) => ({
       sessionId: id, channel: 'message' as const, reason: 'earlier', dedupeKey: `test-today-${h}`, status: 'opened' as const,
       sentAt: new Date(`2026-09-12T${String(h).padStart(2, '0')}:00:00+09:00`),
     })))
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '한 번 더', urgency: 0.9 } }).where(eq(roleplaySessions.id, id))
-    expect(await evaluateSession(id, DAY)).toEqual({ outcome: 'suppressed', reason: 'daily_cap' })
+    expect(await evaluateSession(id, DAY)).toMatchObject({ outcome: 'sent' })
 
     await db.update(roleplaySessions).set({ pendingRealityIntent: { channel: 'message', reason: '문자에 답장', urgency: 0.9, answers: 'user_message', notBefore: new Date(DAY.getTime() - 60_000).toISOString() } }).where(eq(roleplaySessions.id, id))
     const r = await evaluateSession(id, DAY)
@@ -360,7 +362,7 @@ describeDb('reality activation — real send path', () => {
     expect(send).toHaveBeenCalledTimes(1)
   })
 
-  it('cooldown: a fresh reason still waits for the minimum gap', async () => {
+  it('a distinct motivated reason is not blocked by a fixed minimum gap', async () => {
     const id = await session('thomas', { activeEvent: true, relationship: ESTABLISHED })
     expect((await evaluateSession(id, DAY)).outcome).toBe('sent')
 
@@ -368,7 +370,7 @@ describeDb('reality activation — real send path', () => {
       .set({ pendingRealityIntent: { channel: 'message', reason: 'another', urgency: 0.9 } })
       .where(eq(roleplaySessions.id, id))
     const soon = new Date(DAY.getTime() + 10 * 60_000)
-    expect(await evaluateSession(id, soon)).toEqual({ outcome: 'suppressed', reason: 'cooldown' })
+    expect(await evaluateSession(id, soon)).toMatchObject({ outcome: 'sent' })
   })
 
   it('the pending intent from a turn is consumed by the send', async () => {

@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { randomBytes } from 'node:crypto'
 import { db, rechargeGrants, rechargeLedger, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
@@ -9,6 +9,9 @@ const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 const T0 = new Date('2026-09-12T13:20:00+09:00')
 
 describeDb('usage guard', () => {
+  // Exercise configured monthly allowances; new-account defaults are covered by token tests.
+  beforeEach(() => vi.stubEnv('MIRO_USAGE_POLICY', JSON.stringify({ monthly: { free: 200 } })))
+  afterEach(() => vi.unstubAllEnvs())
   const made: string[] = []
   async function user(plan: 'free' | 'pro' = 'free') {
     const [u] = await db.insert(users)
@@ -132,7 +135,7 @@ describeDb('usage guard', () => {
 
   /** 4단계 — 충전 원장과 통합 차감. */
   describe('recharge grants', () => {
-    const FREE = POLICY.usage.limits.free
+    const FREE = 200 // The configured historical allowance above, evaluated before beforeEach runs.
     const PHOTO = POLICY.usage.weights.photo
     /** 월간 제공량을 정확히 소진시킨다. */
     const drain = (id: string) => reserve({ userId: id, kind: 'photo', units: FREE / PHOTO, idempotencyKey: `drain:${id}`, now: T0 })

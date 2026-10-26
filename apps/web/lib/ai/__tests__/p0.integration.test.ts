@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { db, users, messages, memories, roleplaySessions, usageLedger } from '@miro/db'
 import { AIOrchestrator, MockAIProvider } from '@miro/providers'
@@ -18,8 +18,8 @@ import { COPY } from '@/lib/copy'
 
 /** A premium model must exist for ECHO to resolve at all. */
 const ECHO_REGISTRY = [
-  { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768 },
-  { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768 },
+  { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768, inputCost: 0, outputCost: 0 },
+  { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768, inputCost: 0, outputCost: 0 },
 ]
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
@@ -29,6 +29,8 @@ async function session() {
   made.push(u!.id)
   return { userId: u!.id, ...(await createRoleplaySession(u!.id, 'thomas')) }
 }
+// These legacy accounting fixtures explicitly configure their historical monthly allowance.
+beforeEach(() => { vi.stubEnv('MIRO_USAGE_POLICY', JSON.stringify({ monthly: { free: 200 } })); vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0') })
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs() })
 afterAll(async () => { if (process.env.DATABASE_URL) for (const id of made) await db.delete(users).where(eq(users.id, id)) })
 describeDb('P0 real persistence paths', () => {
@@ -50,7 +52,7 @@ describeDb('P0 real persistence paths', () => {
     expect(ledger!.status).toBe('rolled_back')
   })
 
-  it('MIRO basic chat is never charged, even with the monthly allowance spent', async () => {
+  it('a zero-cost mock creates no customer charge even with the configured monthly allowance spent', async () => {
     vi.stubEnv('AI_PROVIDER', 'mock'); vi.stubEnv('MIRO_MODEL_REGISTRY', '')
     const s = await session()
     // Spend the whole monthly allowance, then keep talking on MIRO.
@@ -60,13 +62,14 @@ describeDb('P0 real persistence paths', () => {
 
     const r = await runConversationTurn({ ...s, requestId: randomUUID(), input: '오늘 뭐 했어?' })
     expect(r.ok).toBe(true)
-    // No user allowance was drawn, and no ledger row was written for the turn.
+    // A zero-value turn is still recorded idempotently, without consuming the wallet.
     expect((await usageStatus(s.userId)).consumed).toBe(spent)
     const rows = await db.select().from(usageLedger).where(eq(usageLedger.userId, s.userId))
-    expect(rows.map(r => r.kind)).toEqual(['photo'])
+    expect(rows.filter(r => r.amount > 0).map(r => r.kind)).toEqual(['photo'])
+    expect(rows.filter(r => r.idempotencyKey.startsWith('turn:'))).toHaveLength(1)
   })
 
-  it('replaying an ECHO turn charges the allowance once', async () => {
+  it('replaying a zero-cost ECHO turn commits one reservation', async () => {
     vi.stubEnv('AI_PROVIDER', 'mock')
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(ECHO_REGISTRY))
     const s = await session(), requestId = randomUUID()
@@ -74,7 +77,7 @@ describeDb('P0 real persistence paths', () => {
     const first = await runConversationTurn({ ...s, requestId, input: '잘 지냈어?', chatModel: 'pro' })
     expect(first.ok).toBe(true)
     const charged = (await usageStatus(s.userId)).consumed
-    expect(charged).toBeGreaterThan(0)
+    expect(charged).toBe(0) // This fixture's provider has zero cost; nonzero billing is covered by token-turn.
     expect(await runConversationTurn({ ...s, requestId, input: '잘 지냈어?', chatModel: 'pro' })).toEqual(first)
     expect((await usageStatus(s.userId)).consumed).toBe(charged)
     const rows = await db.select().from(usageLedger).where(eq(usageLedger.idempotencyKey, `turn:${requestId}`))
@@ -82,9 +85,9 @@ describeDb('P0 real persistence paths', () => {
     expect(rows[0]!.status).toBe('committed')
   })
 
-  it('ECHO is still blocked once the allowance is spent', async () => {
+  it('a priced ECHO model is blocked once the allowance is spent', async () => {
     vi.stubEnv('AI_PROVIDER', 'mock')
-    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(ECHO_REGISTRY))
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(ECHO_REGISTRY.map(m => ({ ...m, inputCost: 1, outputCost: 2 }))))
     const s = await session()
     await db.update(users).set({ plan: 'pro' }).where(eq(users.id, s.userId))
     await reserve({ userId: s.userId, kind: 'photo', units: POLICY.usage.limits.pro / POLICY.usage.weights.photo, idempotencyKey: `drain-pro:${s.userId}` })

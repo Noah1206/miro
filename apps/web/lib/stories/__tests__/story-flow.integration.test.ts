@@ -114,7 +114,7 @@ describeDb('오리지널 스토리 — 1번 사관학교 실제 흐름(테스트
     r = await stateOf(run.id)
     expect((r.state as StoryState).promises.map(p => p.who)).toContain('C2')
     const next = await turn(u, run.id, '로웬과 생도 청원을 낸다 [B]', { now: at(60) })
-    const narrate = next.calls.find(c => c.promptVersion === 'story-narrate:v1')!
+    const narrate = next.calls.find(c => c.promptVersion === 'story-narrate:v2')!
     expect(narrate.prompt).toContain('내일 아침 같이 기록 확인하기로 약속해')
     expect((await stateOf(run.id)).state).toMatchObject({ current: 'E3' })
   })

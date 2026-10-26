@@ -7,7 +7,7 @@ import { createRoleplaySession } from '@/lib/simulation/start'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { grantRecharge, rechargeBalance } from '../guard'
 const fake = vi.hoisted(() => ({ calls: 0, fail: false }))
-const definition = { id: 'priced', provider: 'openai', providerModelId: 'test-priced', tier: 'standard', capabilities: ['dialogue', 'memory_extraction', 'memory_summary', 'semantic_event'], inputCost: 1, outputCost: 2, maxContextTokens: 100000, maxOutputTokens: 4096 }
+const definition = { id: 'priced', provider: 'openai', providerModelId: 'test-priced', tier: 'standard', capabilities: ['dialogue', 'memory_extraction', 'memory_summary', 'semantic_event'], inputCost: 0.1, outputCost: 0.2, maxContextTokens: 100000, maxOutputTokens: 4096 }
 vi.mock('@/lib/simulation/mock-llm', () => {
   const llm = (name: string, context: AIContext) => {
     const model = new ModelRegistry([definition]).models[0]!
@@ -15,7 +15,7 @@ vi.mock('@/lib/simulation/mock-llm', () => {
       generate: async (req: GenerationRequest) => {
         fake.calls++
         if (fake.fail) throw new Error('provider_http_400')
-        const value = req.task.startsWith('memory_') ? { memories: [] } : req.task === 'semantic_event' ? { events: [] }
+        const value = req.task === 'agency_verify' ? { complete: true, blocks: JSON.parse(req.prompt).blocks.map((block: { index: number }) => ({ blockIndex: block.index, noUserClaims: true, boundaryViolation: false, claims: [] })) } : req.task.startsWith('memory_') ? { memories: [] } : req.task === 'semantic_event' ? { events: [] }
           : { rp: { blocks: [{ type: 'dialogue', speaker: name, text: '안녕. 오늘 하루는 어땠어?' }] } }
         return { text: JSON.stringify(value), provider: 'openai', model: 'test-priced', inputTokens: 100, outputTokens: 100, latencyMs: 1 }
       } }] })

@@ -17,6 +17,7 @@ vi.mock('@/components/ui', () => ({
 }))
 vi.mock('@/components/site-footer', () => ({ SiteFooter: () => null }))
 vi.mock('@/components/legal-revision-notice', () => ({ LegalRevisionNotice: () => null }))
+vi.mock('../audience-select', () => ({ AudienceSelect: () => React.createElement('button', null, '전체') }))
 vi.mock('../row', () => ({ Row: () => null }))
 vi.mock('../banner', () => ({ HomeBanner: () => null }))
 vi.mock('../bell', () => ({ NotificationBell: () => null }))

@@ -23,6 +23,12 @@ async function markApproved(orderId: string, note = '') {
     .set({ status: 'approved', decidedBy: decider!.id, decidedAt: new Date(), note })
     .where(and(eq(bankTransferOrders.id, orderId), eq(bankTransferOrders.status, 'awaiting')))
 }
+/** Issued before pass sales ended: settlement/replay must remain supported. */
+async function historicalPass(userId: string) {
+  const [row] = await db.insert(bankTransferOrders).values({ userId, kind: 'pass', amountMinor: 9900, currency: 'KRW',
+    depositorName: '홍길동', referenceCode: Array.from(randomBytes(6), b => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[b % 32]).join(''), expiresAt: new Date(Date.now() + 86_400_000) }).returning()
+  return row!
+}
 const deciders: string[] = []
 import { effectivePlan, rechargeBalance } from '@/lib/usage/guard'
 
@@ -44,15 +50,21 @@ describeDb('bank transfer orders', () => {
     for (const id of deciders) await db.execute(sql`DELETE FROM admin_users WHERE id = ${id}`)
   })
 
+  it('refuses new pass sales without creating an order', async () => {
+    const u = await user()
+    await expect(createBankOrder({ userId: u, kind: 'pass' })).rejects.toThrow('PASS_SALES_ENDED')
+    expect(await pendingBankOrder(u)).toBeNull()
+  })
+
   it('does not take an order when no account is configured', async () => {
     const u = await user(); vi.stubEnv('MIRO_BANK_ACCOUNT', '')
-    await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' }))
+    await expect(createBankOrder({ userId: u, kind: 'recharge', productId: 'pack_m', depositorName: '홍길동' }))
       .rejects.toBeInstanceOf(BankTransferUnavailableError)
   })
 
-  it('creating an order grants nothing until an admin approves it', async () => {
+  it('a historical pass grants nothing until an admin approves it', async () => {
     const u = await user()
-    const order = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
+    const order = await historicalPass(u)
     expect(order.amountMinor).toBe(9900)
     expect(order.referenceCode).toMatch(/^[A-Z2-9]{6}$/)
     // 주문만으로는 아무것도 주지 않는다.
@@ -86,15 +98,15 @@ describeDb('bank transfer orders', () => {
     expect(await rechargeBalance(u)).toBe(800)
   })
 
-  it('a second pass extends the same subscription instead of colliding on its ref', async () => {
+  it('a second historical pass extends the same subscription instead of colliding on its ref', async () => {
     // pass 의 externalRef 는 사용자당 고정이다 (구독 행이 하나뿐이라서). 두 번째 구매가
     // UNIQUE 에 걸려 조용히 실패하지 않는지 — 중복 판정은 orderId 기반 eventId 가 맡는다.
     const u = await user()
-    const first = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
+    const first = await historicalPass(u)
     await markApproved(first.id); await settleApprovedOrders()
     const [before] = await db.select().from(subscriptions).where(eq(subscriptions.userId, u))
 
-    const second = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
+    const second = await historicalPass(u)
     await markApproved(second.id)
     expect(await settleApprovedOrders()).toEqual({ settled: 1, failed: 0 })
     const [after] = await db.select().from(subscriptions).where(eq(subscriptions.userId, u))
@@ -114,28 +126,28 @@ describeDb('bank transfer orders', () => {
     expect(await rechargeBalance(u)).toBe(800)
   })
 
-  it('refuses an unknown product and an empty depositor name', async () => {
+  it('refuses an unknown product and an overlong depositor name', async () => {
     const u = await user()
     await expect(createBankOrder({ userId: u, kind: 'recharge', productId: 'nope', depositorName: '홍길동' })).rejects.toThrow()
-    await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: 'x'.repeat(41) })).rejects.toThrow('INVALID_DEPOSITOR_NAME')
+    await expect(createBankOrder({ userId: u, kind: 'recharge', productId: 'pack_m', depositorName: 'x'.repeat(41) })).rejects.toThrow('INVALID_DEPOSITOR_NAME')
   })
 
   it('allows only one waiting order per user, and frees it once expired', async () => {
     const u = await user()
-    const first = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
-    await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' }))
+    const first = await createBankOrder({ userId: u, kind: 'recharge', productId: 'pack_m', depositorName: '홍길동' })
+    await expect(createBankOrder({ userId: u, kind: 'recharge', productId: 'pack_m', depositorName: '홍길동' }))
       .rejects.toBeInstanceOf(OrderPendingError)
     // 기한이 지나면 만료되고 다시 주문할 수 있다.
     // 반드시 이 사용자로 범위를 좁힌다 — 인자 없이 부르면 DB 안의 모든 대기 주문이
     // 만료돼 같은 테스트 DB 를 쓰는 다른 스위트(E2E 포함)의 주문까지 쓸어버린다.
     const later = new Date(first.expiresAt.getTime() + 1000)
     expect(await expireBankOrders(later, u)).toBe(1)
-    await expect(createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동', now: later })).resolves.toBeTruthy()
+    await expect(createBankOrder({ userId: u, kind: 'recharge', productId: 'pack_m', depositorName: '홍길동', now: later })).resolves.toBeTruthy()
   })
 
   it('an expired order is never settled', async () => {
     const u = await user()
-    const order = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
+    const order = await historicalPass(u)
     await expireBankOrders(new Date(order.expiresAt.getTime() + 1000), u)
     await markApproved(order.id)   // 만료된 주문은 승인 상태로 넘어가지 않는다
     await settleApprovedOrders()
@@ -144,7 +156,7 @@ describeDb('bank transfer orders', () => {
 
   it('records the settlement and attributes the payment to the bank provider', async () => {
     const u = await user()
-    const order = await createBankOrder({ userId: u, kind: 'pass', depositorName: '홍길동' })
+    const order = await historicalPass(u)
     await markApproved(order.id, '9/16 입금 확인')
     await settleApprovedOrders()
     const [row] = await db.select().from(bankTransferOrders).where(eq(bankTransferOrders.id, order.id))

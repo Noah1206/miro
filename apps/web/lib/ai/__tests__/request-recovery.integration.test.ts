@@ -1,6 +1,6 @@
 import { POLICY } from '@miro/config'
 import { randomUUID } from 'node:crypto'
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { db, users, conversationRequests, usageLedger, roleplaySessions } from '@miro/db'
 import { createRoleplaySession } from '@/lib/simulation/start'
@@ -9,6 +9,9 @@ import { beginRequest, failRequest } from '../gateway'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { maintainAI } from '../maintenance'
 
+// Recovery must also preserve previously issued monthly windows.
+beforeEach(() => vi.stubEnv('MIRO_USAGE_POLICY', JSON.stringify({ monthly: { free: 200 } })))
+afterEach(() => vi.unstubAllEnvs())
 const made: string[] = []
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
 async function pending() {

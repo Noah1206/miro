@@ -20,7 +20,7 @@ afterAll(async()=>{if(process.env.DATABASE_URL)for(const id of made)await db.del
 describeDb('production AI accounting',()=>{
   it('accepts the blank optional JSON values supplied in the environment example',()=>{
     for(const name of ['MIRO_USAGE_POLICY','MIRO_BUDGET_POLICY','MIRO_PROMPT_EXPERIMENTS']) vi.stubEnv(name,'')
-    expect(usagePolicy().monthly.free).toBe(200)
+    expect(usagePolicy().monthly.free).toBe(0)
     expect(budgetPolicy().global).toBeDefined()
     expect(prompts.select('dialogue','test').version).toBe('v1')
   })
@@ -92,6 +92,7 @@ describeDb('production AI accounting',()=>{
     expect((await db.select().from(aiUsage).where(eq(aiUsage.attemptId,attemptId)))[0]).toMatchObject({error:'interrupted_unknown_usage',estimatedCost:'0.02000000'})
   })
   it('refund/retry and simultaneous commit never double debit',async()=>{
+    vi.stubEnv('MIRO_USAGE_POLICY', JSON.stringify({ monthly: { free: 200 } }))
     const id=await user(),opts={userId:id,kind:'photo' as const,idempotencyKey:randomUUID()}
     const first=await reserve(opts);await Promise.all([rollback(first.reservationId),rollback(first.reservationId)])
     const retry=await reserve(opts);expect(retry.reused).toBe(false)
@@ -107,14 +108,15 @@ describeDb('production AI accounting',()=>{
     expect((await usageStatus(id)).usedPercent).toBe(100)
   })
   it('replays an identical conversation request without another state update or charge',async()=>{
-    vi.stubEnv('AI_PROVIDER','mock');vi.stubEnv('AI_FALLBACK_PROVIDER','');vi.stubEnv('MIRO_MODEL_REGISTRY','');vi.stubEnv('MIRO_MODE','production')
+    vi.stubEnv('AI_PROVIDER','mock');vi.stubEnv('AI_FALLBACK_PROVIDER','');vi.stubEnv('MIRO_MODEL_REGISTRY','');vi.stubEnv('MIRO_MODE','production');vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW','0')
     const id=await user(),{sessionId}=await createRoleplaySession(id,'thomas'),requestId=randomUUID()
     const request={userId:id,sessionId,requestId,input:'안녕'}
     const first=await runConversationTurn(request);expect(first.ok).toBe(true)
     const second=await runConversationTurn(request);expect(second).toEqual(first)
     const logs=await db.select().from(messages).where(eq(messages.sessionId,sessionId));expect(logs).toHaveLength(2)
-    // MIRO basic chat is unmetered: the replay is deduped by the request record, not by a ledger row.
-    const ledger=await db.select().from(usageLedger).where(eq(usageLedger.userId,id));expect(ledger).toHaveLength(0)
+    // A zero-cost mock still has one committed reservation; replay never creates another.
+    const ledger=await db.select().from(usageLedger).where(eq(usageLedger.userId,id));expect(ledger).toHaveLength(1)
+    expect(ledger[0]).toMatchObject({ status: 'committed', amount: 0 })
     const conflict=await runConversationTurn({...request,input:'다른 입력'});expect(conflict.ok).toBe(false)
   })
   it('rejects cross-user access and a second in-flight request for a session',async()=>{

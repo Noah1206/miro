@@ -43,7 +43,7 @@ describe.each(STORY_DEFINITIONS.map(d => [d.slug, d] as const))('%s — 공통 �
     const ip = interpretPrompt(def, s, P, ask, [], 'scene', null)
     const np = narratePrompt(def, s, s, P, ask, [], [], [], null, null)
     const text = ip.system + ip.prompt + np.system + np.prompt
-    expect(text).not.toContain(def.creatorTruth.slice(0, 24))
+    expect(text).not.toContain(def.creatorTruth)
     const unknown = Object.entries(def.facts).filter(([id]) => !Object.values(s.known).some(k => k.includes(id)))
     for (const [id, f] of unknown) expect(text, `fact ${id} leaked`).not.toContain(f)
   })

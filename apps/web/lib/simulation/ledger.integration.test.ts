@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { afterAll, afterEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { db, users, roleplaySessions, stateTransitions } from '@miro/db'
 import { createRoleplaySession } from '@/lib/simulation/start'
@@ -7,6 +7,8 @@ import { runConversationTurn } from '@/lib/simulation/turn'
 import { explainSession, switchSessionPolicy } from '@/lib/ops/transitions'
 
 const describeDb = process.env.DATABASE_URL ? describe : describe.skip
+// This fixture tests persistence with the deployed review mode, not the experimental evidence ledger.
+beforeEach(() => vi.stubEnv('MIRO_FEATURE_STRICT_CONVERSATION_REVIEW', '0'))
 const made: string[] = []
 afterEach(() => vi.unstubAllEnvs())
 afterAll(async () => { if (process.env.DATABASE_URL) for (const id of made) await db.delete(users).where(eq(users.id, id)) })
