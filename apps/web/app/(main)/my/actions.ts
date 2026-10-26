@@ -1,5 +1,4 @@
 'use server'
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { db, users } from '@miro/db'
@@ -28,7 +27,8 @@ export async function saveProfile(_: ProfileResult, form: FormData): Promise<Pro
     if (!uploaded.ok) return { ok: false, error: uploaded.error }
     await db.update(users).set({ avatarUrl: uploaded.url }).where(eq(users.id, user.id))
   }
-  revalidatePath('/my')
+  // Refresh after the client receives success. Revalidating this open sheet's
+  // route inside the action can leave its pending transition waiting on itself.
   return { ok: true }
 }
 

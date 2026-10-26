@@ -35,7 +35,9 @@ jobs:
       - run: pnpm test
       - run: pnpm ai:eval
       - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium
+      # E2E runs headless; avoid downloading the unused full Chromium build too.
+      - run: pnpm exec playwright install --with-deps --only-shell chromium
+        timeout-minutes: 6
       - run: pnpm e2e
       - uses: actions/upload-artifact@v4
         if: failure() || cancelled()

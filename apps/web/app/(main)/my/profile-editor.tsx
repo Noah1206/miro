@@ -1,5 +1,6 @@
 'use client'
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { PERSONA_LIMITS } from '@miro/domain'
 import { LogoMark, Sheet, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
@@ -31,10 +32,17 @@ export function ProfileEditor({ nickname, avatarUrl }: { nickname: string; avata
 
 function ProfileForm({ nickname, avatarUrl, onDone }: { nickname: string; avatarUrl: string | null; onDone: () => void }) {
   const t = useT()
+  const router = useRouter()
+  const completed = useRef(false)
   const [state, action] = useActionState(saveProfile, null)
   const [preview, setPreview] = useState<string | null>(null)
   const [tooBig, setTooBig] = useState(false)
-  useEffect(() => { if (state?.ok) onDone() }, [state, onDone])
+  useEffect(() => {
+    if (!state?.ok || completed.current) return
+    completed.current = true
+    onDone()
+    router.refresh()
+  }, [state, onDone, router])
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
   const photo = preview ?? avatarUrl
   const error = tooBig ? '5MB 이하 사진만 올릴 수 있어요.' : state && !state.ok ? state.error : null

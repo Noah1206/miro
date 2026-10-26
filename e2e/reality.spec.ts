@@ -66,7 +66,7 @@ test('the cron endpoint refuses calls without the secret', async ({ request }) =
   expect((await request.get(`${BASE}/api/cron/reality`, { headers: { Authorization: 'Bearer wrong' } })).status()).toBe(401)
 })
 
-test('a fresh stranger with nothing going on is left alone', async ({ page, request }) => {
+test('a fresh stranger receives the one-time first contact without duplicate outreach', async ({ page, request }) => {
   const sessionId = await enterRoleplay(page, 'taeyun')
   await page.evaluate(async ([id]) => {
     await fetch(`/api/dev/session/${id}/state`, {
@@ -77,7 +77,12 @@ test('a fresh stranger with nothing going on is left alone', async ({ page, requ
   await request.get(`${BASE}${CRON}`, { headers: { Authorization: `Bearer ${CRON_SECRET}` } })
 
   await page.goto(`${BASE}/messages/${sessionId}`)
-  await expect(page.locator('[data-reality-message]')).toHaveCount(0)
+  await expect(page.locator('[data-reality-message]')).toHaveCount(1)
+  // Current policy sends a first contact even before the first turn, exactly once.
+  const repeated = await request.get(`${BASE}${CRON}`, { headers: { Authorization: `Bearer ${CRON_SECRET}` } })
+  expect(repeated.ok()).toBe(true)
+  await page.reload()
+  await expect(page.locator('[data-reality-message]')).toHaveCount(1)
 })
 
 /**
