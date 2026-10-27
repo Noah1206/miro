@@ -237,6 +237,8 @@ async function executeTurn(opts: {
         reservationId: reservation?.reservationId ?? null, actualTokens, moments, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
         userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: transition.blocks, transition, sceneMarker, channel: 'scene',
+        // 리롤(10/27) — 이 턴은 다시 받을 수 있다. 다시 보낼 때 같은 명령어를 붙인다.
+        undo: { command: opts.command ?? null, commandId: opts.commandId ?? null },
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),
         worldVersion: loaded.snapshot.world.version,
         relationshipVersion: loaded.snapshot.relationship.version,

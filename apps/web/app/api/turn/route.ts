@@ -23,7 +23,9 @@ export async function POST(req: Request): Promise<Response> {
         // 문자방(10/9)도 같은 경로 — 문자 모드는 대사 블록만 오므로 말풍선이 하나씩 도착한다.
         const mode = form.get('mode') === 'messenger' ? 'messenger' as const : 'chat' as const
         state = await turnFromForm(user.id, form, { mode, path: (id) => mode === 'messenger' ? `/messages/${id}` : `/chat/${id}`,
-          stream: { onBlocks: (blocks) => send({ type: 'blocks', blocks }), onReset: () => send({ type: 'reset' }) } })
+          stream: { onBlocks: (blocks) => send({ type: 'blocks', blocks }), onReset: () => send({ type: 'reset' }) },
+          // 리롤: 옛 턴을 되돌린 순간 알린다 — 화면이 옛 답을 지우고 새 답을 기다린다.
+          onUndone: (ids) => send({ type: 'undone', ids }) })
       } catch {
         state = { error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true }
       }

@@ -12,7 +12,7 @@ import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, REPLY_TYPING_PACE } from '@/com
 import { CharacterPhoto } from '@/components/character-visual'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
-import { useTurns } from './turns'
+import { REROLL, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
@@ -27,13 +27,13 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
 }) {
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
   const t = useT()
-  const { appended, quiet, playbackKeys, live } = useTurns()
+  const { appended, quiet, playbackKeys, live, removed } = useTurns()
   const known = new Set(server.map((m) => m.id))
   // 오고 있는 답(스트리밍)은 맨 뒤에 — 보낸 말과 지금까지 받은 블록. 저장된 답이 오면 사라지고 그 자리를 저장본이 채운다.
   const liveKey = live?.playbackId ?? 'live'
   const liveItems: Msg[] = live ? [{ id: `${liveKey}:user`, role: 'user', kind: 'text', content: live.input, blocks: [] },
     ...(live.blocks.length ? [{ id: `${liveKey}:reply`, role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
-  const settled = [...server, ...appended.filter((m) => !known.has(m.id))]
+  const settled = [...server, ...appended.filter((m) => !known.has(m.id))].filter((m) => !removed.has(m.id))
   const items = [...settled, ...liveItems]
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
   const displayed = items.filter(opening.visible)
@@ -52,6 +52,10 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   if (last && last.role !== 'user' && !seen.current.has(keyOf(last))) typing.current = keyOf(last)
   else if (!last || typing.current !== keyOf(last)) typing.current = null
   const typingId = typing.current
+  // 리롤(10/27): 다 친 마지막 장면 답 하나만 다시 받을 수 있다. 그 답이 아직 마지막인지는 서버가 다시 본다.
+  const lastSettled = settled[settled.length - 1]
+  const rerollInput = !live && hasStarted && !opening.playing && lastSettled?.role === 'character' && lastSettled.kind === 'text' && !lastSettled.opening
+    && keyOf(lastSettled) !== typingId ? [...settled].reverse().find((m) => m.role === 'user')?.content : undefined
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.
   const follow = useCallback(() => {
@@ -135,6 +139,11 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       </AnimatePresence>
     </div>
     {opening.playing && <button type="button" className={styles.openingSkip} onClick={opening.finish}>{t('인트로 전체 보기')}</button>}
+    {rerollInput !== undefined && lastSettled && <button type="button" className={styles.reroll}
+      onClick={() => window.dispatchEvent(new CustomEvent(REROLL, { detail: { replyId: lastSettled.id, input: rerollInput } }))}>
+      <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 2.6-6.4L3 8" /><path d="M3 3v5h5" /></svg>
+      {t('다시 받기')}
+    </button>}
     <div ref={end} aria-hidden />
     </>
   )

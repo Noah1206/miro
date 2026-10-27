@@ -501,6 +501,32 @@ export const messages = pgTable('messages', {
     .where(sql`${t.hiddenAt} IS NULL`),
 }))
 
+/** 리롤(10/27): 마지막 장면 턴이 바꾸기 전 값과 그 턴이 만든 것. 되돌릴 때 앞의 것으로 덮고 뒤의 것은 지운다. */
+export type TurnUndoBefore = {
+  /** 이 턴 직후의 버전. 되돌릴 때 그대로여야 한다 — 그 사이 다른 변경(선연락·이야기 날짜 등)이 있었으면 되돌리지 않는다. */
+  versions: { world: number; relationship: number; runtime: number | null }
+  world: { currentLocation: string; currentTime: string; worldStatus: string | null; activeEventIds: string[]; activeNpcIds: string[]; currentSceneId: string | null }
+  relationship: Pick<typeof relationships.$inferSelect, 'trust' | 'attraction' | 'jealousy' | 'protectiveness' | 'emotionalDistance' | 'attachment' | 'stage'>
+  session: { turnCount: number; lastInteractionAt: string; pendingRealityIntent: unknown; characterState: Record<string, unknown> }
+  runtime: { state: AgencyState; nextWakeAt: string | null } | null
+  /** 다시 보낼 때 같은 명령어를 붙인다. */
+  command: { name: string | null; sourceId: string | null }
+  events: { created: string[]; updated: Array<Pick<typeof events.$inferSelect, 'id' | 'status' | 'continuationState' | 'consequences' | 'cooldownUntilTurn' | 'resolvedAtTurn'>> }
+  npcs: string[]
+  /** 이 턴이 취소한 사용자 일정 — 되돌리면 다시 active. 이 턴이 만든 일정은 출처 메시지로 찾는다. */
+  moments: string[]
+  memories: { inserted: string[]; deleted: Array<Omit<typeof memories.$inferSelect, 'createdAt'> & { createdAt: string }> }
+}
+
+export const turnUndos = pgTable('turn_undos', {
+  sessionId: uuid('session_id').primaryKey().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  turnIndex: integer('turn_index').notNull(),
+  messageIds: uuid('message_ids').array().notNull(),
+  input: text('input').notNull(),
+  before: jsonb('before').$type<TurnUndoBefore>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS()
+
 
 /* ─────────────── Simulation state (M2) ─────────────── */
 

@@ -11,7 +11,7 @@ import { ModelPicker, useChatModel } from './model-picker'
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { useTurns } from './turns'
+import { REROLL, useTurns } from './turns'
 import { streamTurn } from './stream-turn'
 import { MicButton } from './immersive'
 import { subject } from '@/lib/format'
@@ -32,37 +32,42 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   commands?: Array<{ name: string; hint: string }>
 }) {
   const t = useT()
-  const { append, live, setLive, calendarPending } = useTurns()
+  const { append, live, setLive, calendarPending, remove } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
   const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
   const hadRefresh = useRef(false)
   const sending = useRef(false)
-  async function action(form: FormData) {
+  /** reroll: 마지막 답을 다시 받는 전송 — 쓰던 글·고른 명령어는 건드리지 않고, 옛 턴이 지워진 뒤 실패하면 그 말을 입력창에 돌려놓는다. */
+  async function action(form: FormData, reroll = false) {
     if (sending.current) return
     sending.current = true
     setPending(true)
     // 보낸 글은 바로 비운다 — 답을 기다리는 동안 다음 말을 쓸 수 있게(10/17 사용자). 실패하면 다시 보낼 수 있게 되돌리되,
     // 그 사이 새로 쓴 글은 덮어쓰지 않는다.
     const sent = { input: String(form.get('input') ?? ''), requestId: String(form.get('requestId') ?? '') }
-    setDraft('')
+    if (!reroll) setDraft('')
     const restore = (sameId: boolean) => {
       if (draftNow.current.trim()) return
       setDraft(sent.input); setRequestId(sameId ? sent.requestId : crypto.randomUUID())
     }
+    let undone = false
     try {
-      const result = await streamTurn(form, setLive)
+      const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) })
+      if (result.undone?.length) { undone = true; remove(result.undone) }
       setState(result)
       if (result.limit) openRecharge()
-      if (result.succeeded) { setCommand(null); if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
+      if (reroll) { if (!result.succeeded && undone) restore(false) }
+      else if (result.succeeded) { setCommand(null); if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
       else if (!result.keepWaiting) restore(!!result.retryWithSameId)
       // 일반 방에서 거절됐고 언베일로 이어갈 수 있으면 머리의 언베일 토글이 안내 시트를 연다(전환은 사용자가 고른다).
       if (result.unveil) window.dispatchEvent(new CustomEvent(UNVEIL_OFFER, { detail: { text: sent.input, state: result.unveil } }))
     } catch {
       setState({ error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true })
       setLive(null)
-      restore(true)
+      if (!reroll) restore(true)
+      else if (undone) restore(false)
     } finally {
       sending.current = false
       setPending(false)
@@ -155,6 +160,21 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }, [pending, !!live?.blocks.length])
   const ref = useRef<HTMLFormElement>(null)
   const ta = useRef<HTMLTextAreaElement>(null)
+  // 리롤(10/27): 마지막 답 아래 '다시 받기' — 지금 고른 모델로 같은 말을 다시 보낸다. 보낼 말·명령어는 서버가 되돌리기 기록에서 꺼낸다.
+  const latest = useRef({ action, ready, calendarPending })
+  latest.current = { action, ready, calendarPending }
+  useEffect(() => {
+    const onReroll = (event: Event) => {
+      const { replyId, input } = (event as CustomEvent<{ replyId: string; input: string }>).detail
+      const { action: send, ready: canSend, calendarPending: busy } = latest.current
+      if (sending.current || !canSend || busy || !ref.current) return
+      const form = new FormData(ref.current)
+      form.set('input', input); form.set('requestId', crypto.randomUUID()); form.set('reroll', replyId)
+      void send(form, true)
+    }
+    window.addEventListener(REROLL, onReroll)
+    return () => window.removeEventListener(REROLL, onReroll)
+  }, [])
   useEffect(() => {
     if (refreshing) { hadRefresh.current = true; return }
     if (!hadRefresh.current || !state.succeeded) return

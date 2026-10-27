@@ -47,6 +47,10 @@
 .opening { margin: 0 0 28px; padding: 0 12px; color: var(--color-text-secondary); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; font-style: italic; white-space: pre-wrap; overflow-wrap: anywhere; }
 .openingSkip { align-self:flex-end; flex-shrink:0; border:0; background:none; color:var(--color-text-secondary); font:inherit; font-size:12px; padding:12px 4px; min-height:44px; cursor:pointer; }
 .openingSkip:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; border-radius:4px; }
+/* 리롤(10/27): 마지막 답 아래, 말풍선 줄(아바타 32 + 간격 8)에 맞춘 작은 글자 버튼. */
+.reroll { align-self:flex-start; flex-shrink:0; display:inline-flex; align-items:center; gap:4px; margin:2px 0 0 40px; border:0; background:none; color:var(--color-text-tertiary); font:inherit; font-size:12px; padding:12px 4px; min-height:44px; cursor:pointer; }
+.reroll:hover { color:var(--color-text-secondary); }
+.reroll:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; border-radius:4px; }
 .messages { display: flex; flex-direction: column; flex-shrink: 0; gap: 22px; margin-top: auto; }
 .characterRow { display: flex; align-items: flex-start; gap: 8px; }
 /* 한 응답 = 장면 하나. 서술(말풍선 밖)과 인물의 말풍선이 번갈아 쌓인다 (2026-09-26). */

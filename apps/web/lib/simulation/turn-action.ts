@@ -3,8 +3,9 @@ import { and, eq } from 'drizzle-orm'
 import { db, conversationRequests } from '@miro/db'
 import type { TurnStream } from '@miro/engine'
 import { runConversationTurn } from '@/lib/simulation/turn'
+import { undoLastTurn } from '@/lib/simulation/reroll'
 import { clientIp } from '@/lib/alpha/session'
-import { exceededMessage } from '@/lib/usage/guard'
+import { UsageExceededError, exceededMessage, usageStatus } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
 
@@ -29,27 +30,48 @@ export type TurnState = {
   delayed?: { until: string; label: string }
   /** 일반 방 거절 뒤 언베일 권유(캐릭터챗만). ready=바로 켤 수 있음, verify=본인인증·동의가 남음. */
   unveil?: 'ready' | 'verify'
+  /** 리롤로 되돌린 옛 턴의 메시지 — 화면이 지운다. 있으면 새 답을 못 받았어도 옛 턴은 이미 없다. */
+  undone?: string[]
 }
 
 const fail = (error: string): TurnState => ({ error, notice: null, limit: null })
+const exceeded = (e: UsageExceededError): TurnState => ({ error: exceededMessage(e), notice: null, limit: { plan: e.plan, resetsAt: e.resetsAt.toISOString() } })
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+type TurnOpts = { mode: 'chat' | 'messenger'; path: (sessionId: string) => string; stream?: TurnStream }
 
 /**
  * 캐릭터챗(/chat)과 문자(/messages)가 같이 쓰는 턴 액션 본체. 폼을 읽고 파이프라인(lib/simulation/turn)을 부른 뒤
  * 결과를 화면 상태로 옮긴다. 두 페이지의 차이는 mode 와 되살릴 경로뿐이다.
+ * 리롤(10/27, 캐릭터챗만): 폼에 reroll(마지막 답 id)이 있으면 그 턴을 되돌리고 같은 말을 다시 보낸다 — 보낼 말·명령어는 되돌리기 기록의 것을 쓴다.
  */
-export async function turnFromForm(userId: string, form: FormData, opts: { mode: 'chat' | 'messenger'; path: (sessionId: string) => string; stream?: TurnStream }): Promise<TurnState> {
+export async function turnFromForm(userId: string, form: FormData, opts: TurnOpts & { onUndone?: (ids: string[]) => void }): Promise<TurnState> {
+  const reroll = opts.mode === 'chat' ? String(form.get('reroll') ?? '') : ''
+  if (!reroll) return turnState(userId, form, opts)
+  if (!UUID.test(reroll)) return fail(msg('이 답은 지금 다시 받을 수 없어요.'))
+  // 잔액이 없으면 되돌리지 않는다 — 옛 답만 사라지고 새 답은 못 받는다.
+  const balance = await usageStatus(userId)
+  if (balance.remaining + balance.rechargeRemaining <= 0) return exceeded(new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()))
+  const undone = await undoLastTurn(userId, String(form.get('sessionId') ?? ''), reroll)
+  if (!undone.ok) return fail(msg('이 답은 지금 다시 받을 수 없어요.'))
+  opts.onUndone?.(undone.messageIds)
+  const state = await turnState(userId, form, opts, { input: undone.input, command: undone.command ?? undefined, commandId: undone.commandId ?? undefined })
+  return { ...state, undone: undone.messageIds }
+}
+
+async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?: { input: string; command?: string; commandId?: string }): Promise<TurnState> {
   const sessionId = String(form.get('sessionId') ?? '')
   // 글 없이 명령어만 보내면 `/이름`이 말풍선이 된다. 지시는 서버가 캐릭터 또는 접근 가능한 라이브러리에서 찾는다.
-  const command = opts.mode === 'chat' ? String(form.get('command') ?? '').trim().replace(/^\//, '').slice(0, 12) || undefined : undefined
-  const commandId = opts.mode === 'chat' ? String(form.get('commandId') ?? '').trim() || undefined : undefined
-  const input = String(form.get('input') ?? '').trim() || (command ? `/${command}` : '')
+  const command = resend ? resend.command : opts.mode === 'chat' ? String(form.get('command') ?? '').trim().replace(/^\//, '').slice(0, 12) || undefined : undefined
+  const commandId = resend ? resend.commandId : opts.mode === 'chat' ? String(form.get('commandId') ?? '').trim() || undefined : undefined
+  const input = resend ? resend.input : String(form.get('input') ?? '').trim() || (command ? `/${command}` : '')
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
   const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {
     switch (r.reason) {
       case 'command_unavailable': return fail(msg('명령어를 사용할 수 없어요. 다시 선택해 주세요.'))
-      case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
+      case 'usage': return exceeded(r.error)
       case 'model_unavailable': return fail(msg('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.'))
       case 'budget': return fail(r.kind === 'turn_tokens' ? msg('이번 답변의 생성 한도에 도달했어요. 토큰은 차감되지 않았어요. 입력을 줄이거나 다른 답변 길이를 선택해 주세요.') : r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
       case 'too_long': return fail(COPY.error.tooLong(2000))

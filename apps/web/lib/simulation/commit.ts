@@ -1,8 +1,8 @@
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, inArray, or, sql } from 'drizzle-orm'
 import {
   db, events, memories, messages, npcs, relationships, roleplaySessions,
   scenes, worldStates, usageLedger, conversationRequests, userMoments,
-  characterRuntimeStates, characterDecisions, characters, users, stateTransitions,
+  characterRuntimeStates, characterDecisions, characters, users, stateTransitions, turnUndos, type TurnUndoBefore,
 } from '@miro/db'
 import {
   applyRelationshipDelta, buildSceneKey, contactBoundaryActive, dedupeCandidates, nextCooldownTurn, pruneMemories, tagsOf, type RealityIntent,
@@ -27,6 +27,9 @@ export class StaleStateError extends Error {
     this.name = 'StaleStateError'
   }
 }
+
+/** 되돌리기 기록의 기억 한 줄 — jsonb 에 담기므로 시각은 문자열로. */
+const undoMemory = (m: typeof memories.$inferSelect) => ({ ...m, createdAt: m.createdAt.toISOString() })
 
 /** 이번 턴에 저장된 메시지 행. 액션이 그대로 화면에 붙인다 — 페이지를 다시 받아 오지 않는다. */
 export type CommittedMessage = { id: string; role: string; kind: string; content: string; blocks: unknown; turnIndex: number }
@@ -68,6 +71,8 @@ export type CommitInput = {
   ledger?: { policy: TurnPolicy; records: StateTransitionRecord[]; triggerKey?: string }
   /** 기억 후처리(§3.5): 정책이 deferred 면 추출·요약 작업을 메시지와 같은 트랜잭션에 남긴다. */
   memoryJobs?: { userId: string; auxiliary: 'planned' | 'always' }
+  /** 리롤(10/27): 다시 받을 수 있는 장면 턴이면 되돌리기 기록을 남긴다(다시 보낼 때 붙일 명령어와 함께). 없으면 옛 기록을 지운다. */
+  undo?: { command: string | null; commandId: string | null }
 }
 
 /**
@@ -100,6 +105,11 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       }
     }
     const t = input.transition
+    // 되돌리기 기록 — 이 턴이 덮어쓰기 전 값. 아래 단계들이 자기가 바꾸는 것의 이전 값을 채운다.
+    const [worldBefore] = input.undo ? await tx.select().from(worldStates).where(eq(worldStates.sessionId, input.sessionId)).limit(1) : []
+    const undo: Omit<TurnUndoBefore, 'versions' | 'world' | 'relationship' | 'session' | 'command'> = {
+      runtime: null, events: { created: [], updated: [] }, npcs: [], moments: [], memories: { inserted: [], deleted: [] },
+    }
 
     /* ---- world ---- */
     const worldPatch: Record<string, unknown> = {}
@@ -163,6 +173,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       const [runtime] = await tx.select().from(characterRuntimeStates).where(eq(characterRuntimeStates.sessionId, input.sessionId)).for('update')
       if (!runtime || runtime.mode !== 'live' || runtime.version !== version || runtime.revisionId !== plan.decision.revisionId
         || runtime.state.sequence !== plan.transition.expectedSequence) throw new StaleStateError()
+      undo.runtime = { state: runtime.state, nextWakeAt: runtime.nextWakeAt?.toISOString() ?? null }
       const reply = inserted.find(m => m.role === 'character')!
       const nextState = applyMessageReceipt(plan, reply.id)
       const due = nextState.goals.filter(g => g.status === 'active' && g.clock === 'real_time' && g.dueAt)
@@ -196,6 +207,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       }).returning({ id: events.id })
 
       if (created) {
+        undo.events.created.push(created.id)
         await tx.update(worldStates)
           .set({
             activeEventIds: sql`${worldStates.activeEventIds} || ${JSON.stringify([created.id])}::jsonb`,
@@ -205,6 +217,9 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
     }
 
     /* ---- event updates ---- */
+    if (input.undo && t.eventUpdates.length) undo.events.updated = await tx.select({ id: events.id, status: events.status, continuationState: events.continuationState,
+      consequences: events.consequences, cooldownUntilTurn: events.cooldownUntilTurn, resolvedAtTurn: events.resolvedAtTurn }).from(events)
+      .where(and(eq(events.sessionId, input.sessionId), inArray(events.id, t.eventUpdates.map(u => u.eventId))))
     for (const u of t.eventUpdates) {
       const patch: Record<string, unknown> = { status: u.status }
       if (u.continuationState) patch.continuationState = u.continuationState
@@ -248,6 +263,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       }).returning({ id: npcs.id })
 
       if (created) {
+        undo.npcs.push(created.id)
         await tx.update(worldStates)
           .set({
             activeNpcIds: sql`${worldStates.activeNpcIds} || ${JSON.stringify([created.id])}::jsonb`,
@@ -257,8 +273,9 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
     }
 
     if (input.moments) {
-      if (input.moments.cancel.length) await tx.update(userMoments).set({ status: 'cancelled' })
-        .where(and(eq(userMoments.sessionId, input.sessionId), inArray(userMoments.id, input.moments.cancel)))
+      if (input.moments.cancel.length) undo.moments = (await tx.update(userMoments).set({ status: 'cancelled' })
+        .where(and(eq(userMoments.sessionId, input.sessionId), inArray(userMoments.id, input.moments.cancel), eq(userMoments.status, 'active')))
+        .returning({ id: userMoments.id })).map(m => m.id)
       if (input.moments.drafts.length) await tx.insert(userMoments).values(input.moments.drafts.map(d => ({
         sessionId: input.sessionId, sourceMessageId: inserted.find(message => message.role === 'user')!.id, ...d,
       }))).onConflictDoNothing()
@@ -274,9 +291,12 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
     const fresh = dedupeCandidates(candidates, input.existingMemories.filter(m => !replacements.includes(m.id)) as never)
     if (fresh.length > 0) {
       const accepted = fresh.flatMap(m => m.replaces ? [m.replaces] : [])
+      const summary = fresh.some(m => m.type === 'short_term_summary')
+      if (input.undo && (accepted.length || summary)) undo.memories.deleted.push(...(await tx.select().from(memories).where(and(eq(memories.sessionId, input.sessionId),
+        or(accepted.length ? inArray(memories.id, accepted) : undefined, summary ? eq(memories.type, 'short_term_summary') : undefined)))).map(undoMemory))
       if (accepted.length) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), inArray(memories.id, accepted)))
-      if (fresh.some(m => m.type === 'short_term_summary')) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), eq(memories.type, 'short_term_summary')))
-      await tx.insert(memories).values(fresh.map((m) => ({
+      if (summary) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), eq(memories.type, 'short_term_summary')))
+      undo.memories.inserted = (await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,
         sourceMessageId: m.sourceMessageId!,
@@ -286,12 +306,14 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         persistence: Math.round(m.persistence * 100),
         confidence: Math.round(m.confidence * 100),
         tags: tagsOf({ content: m.content, tags: m.tags ?? [] }),
-      })))
+      }))).returning({ id: memories.id })).map(m => m.id)
 
       // 한도를 넘으면 중요도가 낮은 것부터 정리한다.
       const all = await tx.select().from(memories)
         .where(eq(memories.sessionId, input.sessionId))
       const { drop } = pruneMemories(all as never, POLICY.memory.maxPerSession)
+      const dropped = new Set(drop.map(m => m.id))
+      if (input.undo) undo.memories.deleted.push(...all.filter(m => dropped.has(m.id) && !undo.memories.inserted.includes(m.id)).map(undoMemory))
       for (const m of drop) {
         await tx.delete(memories).where(eq(memories.id, m.id))
       }
@@ -367,6 +389,25 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         ...(input.characterState ? { characterState: input.characterState } : {}),
       })
       .where(eq(roleplaySessions.id, input.sessionId))
+
+    /* ---- undo (리롤) ---- */
+    // 마지막 장면 턴 하나만 되돌릴 수 있다. 다른 경로(문자·통화)의 턴은 옛 기록을 지운다 — 그 뒤로는 되돌릴 턴이 없다.
+    if (input.undo && worldBefore) {
+      const r = input.currentRelationship
+      const before: TurnUndoBefore = {
+        versions: { world: input.worldVersion + 1, relationship: input.relationshipVersion + 1, runtime: input.agency ? input.agency.version + 1 : null },
+        world: { currentLocation: worldBefore.currentLocation, currentTime: worldBefore.currentTime, worldStatus: worldBefore.worldStatus,
+          activeEventIds: worldBefore.activeEventIds, activeNpcIds: worldBefore.activeNpcIds, currentSceneId: worldBefore.currentSceneId },
+        relationship: { trust: r.trust, attraction: r.attraction, jealousy: r.jealousy, protectiveness: r.protectiveness,
+          emotionalDistance: r.emotionalDistance, attachment: r.attachment, stage: r.stage },
+        session: { turnCount: session.turnCount, lastInteractionAt: session.lastInteractionAt.toISOString(),
+          pendingRealityIntent: session.pendingRealityIntent, characterState: session.characterState },
+        command: { name: input.undo.command, sourceId: input.undo.commandId },
+        ...undo,
+      }
+      const record = { turnIndex: input.turnIndex, messageIds: inserted.map(m => m.id), input: input.userInput, before, createdAt: new Date() }
+      await tx.insert(turnUndos).values({ sessionId: input.sessionId, ...record }).onConflictDoUpdate({ target: turnUndos.sessionId, set: record })
+    } else await tx.delete(turnUndos).where(eq(turnUndos.sessionId, input.sessionId))
     return { messages: inserted }
   })
 }
