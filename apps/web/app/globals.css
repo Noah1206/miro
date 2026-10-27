@@ -70,7 +70,7 @@
   /* 넓은 화면에서의 앱 폭. 제타가 480 — 430 은 옆에 두고 보면 좁았다. 폰에서는 화면 폭이 이긴다. */
   /* 떠 있는 내비의 칸 높이와 화면 아래 여백을 분리한다. 본문·토스트는 전체 점유 높이를 따른다. */
   --nav-bottom: max(12px, env(safe-area-inset-bottom, 0px));
-  --nav-h: calc(56px + var(--nav-bottom)); --app-w: 480px;
+  --nav-h: calc(64px + var(--nav-bottom)); --app-w: 480px;
   --nav-w: 430px;
   /* 컴퓨터에서 하단 탭 화면이 펼쳐지는 폭(9/30 요청). 넓어지는 것은 셸(--shell-w)뿐 — 시트·토스트는 --app-w 그대로 폰 폭이다. */
   --app-w-wide: 1200px; --shell-w: var(--app-w);

@@ -61,15 +61,16 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
               <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" clipRule="evenodd">
                 {it.icon}
               </svg>
-              <span style={{ fontSize: 'var(--font-micro)', lineHeight: 1.2, letterSpacing: 0 }}>{t(it.label)}</span>
+              {/* 10/28 스크린샷 요청: 아이콘만 보이는 알약 바 — 이름은 화면 읽기용으로만 남긴다. */}
+              <span className="sr-only">{t(it.label)}</span>
             </span>
         )
-        const style = { color: active ? 'var(--color-text-primary)' : 'var(--color-text-tertiary)' }
+        const style = { color: 'var(--color-text-primary)' }
         return gated ? (
-          <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style}
+          <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style} data-create={it.href === '/create' || undefined}
             onClick={() => askLogin(it.href)}>{inner}</button>
         ) : (
-          <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style}>
+          <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style} data-create={it.href === '/create' || undefined}>
             {inner}
           </TransitionLink>
         )
