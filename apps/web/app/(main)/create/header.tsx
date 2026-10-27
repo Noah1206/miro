@@ -77,7 +77,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
             )
           })}
         </div>
-        <button type="button" role="tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
+        <button type="button" role="tab" className="create-preview-tab" aria-selected={tab === 'preview'} aria-controls="panel-preview" onClick={() => onTab('preview')}
           style={{
             position: 'relative', flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, minHeight: 44, padding: '12px 10px', marginLeft: 12, borderRadius: 0,
             border: 0, cursor: 'pointer', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-medium)',

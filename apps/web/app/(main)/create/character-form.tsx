@@ -210,10 +210,30 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   }, [storageKey])
   const [previewMode, setPreviewMode] = useState('detail')
   const [snap, setSnap] = useState<Snapshot | null>(null)
+  const refreshSnap = () => { if (formRef.current) setSnap((prev) => { if (prev) [prev.photo, ...prev.gallery].forEach(url => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url) }); return snapshot(formRef.current!) }) }
   const openTab = (next: CreateTab) => {
-    if (next === 'preview' && formRef.current) setSnap((prev) => { if (prev) [prev.photo, ...prev.gallery].forEach(url => { if (url?.startsWith('blob:')) URL.revokeObjectURL(url) }); return snapshot(formRef.current!) })
+    if (next === 'preview') refreshSnap()
     setTab(next)
   }
+  // 데스크톱(10/28, 위프·베이비챗식): 왼쪽 폼 + 오른쪽 고정 미리보기. 미리보기는 탭이 아니라 늘 보이고, 고칠 때마다(0.6초 뒤) 새로 그린다.
+  const [desktop, setDesktop] = useState(false)
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)')
+    const on = () => setDesktop(media.matches)
+    on(); media.addEventListener('change', on)
+    return () => media.removeEventListener('change', on)
+  }, [])
+  useEffect(() => {
+    const form = formRef.current
+    if (!desktop || !form) return
+    if (tab === 'preview') setTab('profile')
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const later = () => { clearTimeout(timer); timer = setTimeout(refreshSnap, 600) }
+    refreshSnap()
+    form.addEventListener('input', later); form.addEventListener('change', later)
+    return () => { clearTimeout(timer); form.removeEventListener('input', later); form.removeEventListener('change', later) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desktop])
 
   // 게시가 잠긴 이유를 이름으로 보여 준다(10/19) — 어느 칸이 비었는지 탭을 뒤지지 않게.
   const missing = useMemo(() => [
@@ -520,7 +540,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 소개 페이지 ── */}
-        <Panel id="preview" show={tab === 'preview'}>
+        <Panel id="preview" show={tab === 'preview' || desktop}>
           <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: t('소개 페이지') }, { value: 'chat', label: t('테스트 채팅') }]} /></div>
           {/* 테스트 채팅(10/19) — 미리보기를 연 시점의 인트로를 깔고, 보낼 때마다 폼을 다시 읽어 지금 설정으로 답한다. */}
           {previewMode === 'detail' ? <DetailPreview d={snap} can={can} experienceType={experienceType} />
