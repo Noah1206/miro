@@ -158,6 +158,15 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
 export const homePage = (userId: string | null, cursor: string | null = null, filter: CardFilter = {}) => cardPage('reality', userId, cursor, true, filter)
 /** 홈·검색은 더 보기 없이, 접근 가능한 캐릭터 전체를 현재 정렬 기준으로 보여준다. */
 export const homeCatalog = (userId: string | null, filter: CardFilter = {}) => cardPage('reality', userId, null, true, filter, false, true)
+/** 탐색·검색 결과의 첫 목록 — 서버에서 한 번 섞어 넘긴다(10/27). 화면에서 섞으면 서버 HTML 과 순서가 달라 그릴 때 어긋난다. */
+export function shuffledCards<T>(items: readonly T[]): T[] {
+  const out = [...items]
+  for (let index = out.length - 1; index > 0; index--) {
+    const other = Math.floor(Math.random() * (index + 1))
+    ;[out[index], out[other]] = [out[other]!, out[index]!]
+  }
+  return out
+}
 /** 미로 = 앱 밖 연락(문자·전화)이 실제로 켜진 미로 캐릭터만(2026-09-30 요청, 예전 홈 R 스위치와 같은 기준). */
 export const miroPage = (userId: string | null, cursor: string | null = null) => cardPage('reality', userId, cursor, true, {}, true)
 export const miroCatalog = (userId: string | null) => cardPage('reality', userId, null, true, {}, true, true)

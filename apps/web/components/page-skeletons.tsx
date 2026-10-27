@@ -89,3 +89,52 @@ export function MyPageSkeleton() {
     </div>
   </Status>
 }
+
+/* 10/27 — 탭 밖 화면도 누르자마자 뼈대가 뜬다(그전엔 서버 렌더가 끝날 때까지 이전 화면이 멈춰 있었다). 라벨은 있는 번역 '불러오는 중'. */
+
+/** 대화방·문자방 — 머리, 서술·말풍선이 번갈아 쌓인 대화, 입력창. */
+export function RoomPageSkeleton() {
+  return <Status label={msg('불러오는 중')}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100dvh - 2 * var(--space-5))' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 48, marginBottom: 'var(--space-5)' }}>
+        <Block width={32} height={32} style={{ borderRadius: 16 }} /><Block width={96} height={20} />
+      </div>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 22 }}>
+        {[64, 96, 64].map((height, index) => <div key={index} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Block width={32} height={32} style={{ flexShrink: 0, borderRadius: 16 }} />
+            <Block width="62%" height={height} style={{ borderRadius: 'var(--radius-chat)' }} />
+          </div>
+          <Block width="44%" height={44} style={{ alignSelf: 'flex-end', borderRadius: 'var(--radius-chat)' }} />
+        </div>)}
+      </div>
+      <Block height={52} style={{ marginTop: 'var(--space-5)', borderRadius: 'var(--radius-lg)' }} />
+    </div>
+  </Status>
+}
+
+/** 캐릭터 소개 — 큰 사진, 이름·한 줄 소개, 본문. */
+export function CharacterPageSkeleton() {
+  return <Status label={msg('불러오는 중')} className="page page--immersive character-detail-theme">
+    <Block style={{ aspectRatio: '4 / 5', maxHeight: '70dvh', borderRadius: 0 }} />
+    <div style={{ padding: '18px var(--gutter) 0' }}>
+      <Block width={140} height={34} style={{ marginBottom: 12 }} />
+      <Block width="80%" height={18} style={{ marginBottom: 8 }} />
+      <Block width="55%" height={14} style={{ marginBottom: 24 }} />
+      {[100, 92, 96, 70].map((width, index) => <Block key={index} width={`${width}%`} height={14} style={{ marginBottom: 10 }} />)}
+    </div>
+  </Status>
+}
+
+/** 탐색·검색 결과 — 검색창, 칩 한 줄, 카드 격자. */
+export function ExplorePageSkeleton() {
+  return <Status label={msg('불러오는 중')} className="page page--immersive page--wide" style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
+    <div style={{ padding: 'calc(var(--space-2) + env(safe-area-inset-top)) var(--gutter) var(--space-4)' }}>
+      <Block height={44} style={{ marginBottom: 14, borderRadius: 22 }} />
+      <div style={{ display: 'flex', gap: 6, overflow: 'hidden' }}>
+        {[72, 64, 80, 56, 68].map((width, index) => <Block key={index} width={width} height={34} style={{ flexShrink: 0, borderRadius: 16 }} />)}
+      </div>
+    </div>
+    <CardGridSkeleton ratio="2 / 3" />
+  </Status>
+}

@@ -54,7 +54,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           gtag('js', new Date());
           gtag('config', 'AW-18512422714');
         `}</Script>
-        <Script src="https://www.googletagmanager.com/gtag/js?id=AW-18512422714" strategy="beforeInteractive" />
+        {/* 스크립트 본체는 화면이 반응하기 시작한 뒤에(10/27) — beforeInteractive 면 첫 화면이 이 외부 스크립트를 기다렸다. 위 초기화가 그 사이 기록을 줄 세운다. */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=AW-18512422714" strategy="afterInteractive" />
         {/* 서체는 HTML 에서 바로 잇는다. globals.css 의 @import 였을 때는 CSS 를 받은 뒤에야 요청이 시작됐다. */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />

@@ -76,7 +76,7 @@ export default async function Home() {
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       <div className={styles.searchRow}>
         <AudienceSelect groups={sections.filters} />
-        <TransitionLink href="/search" aria-label={t('검색')} className={styles.searchBar}>
+        <TransitionLink href="/search" prefetch={true} aria-label={t('검색')} className={styles.searchBar}>
           <span>{t('이름이나 키워드로 검색')}</span>
           <span className={styles.searchIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg></span>
         </TransitionLink>

@@ -1,5 +1,4 @@
 'use client'
-import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Button, ButtonLink, TransitionLink } from '@/components/ui'
@@ -29,13 +28,24 @@ export function ArchiveList({ initialPage, channel='chat' }: {
   const requestId = useRef(0)
   const t = useT()
   const language = useLanguage()
-  const router = useRouter()
+  // 20초마다·포커스 때 목록 데이터만 다시 받는다(10/27) — router.refresh() 는 화면 전체를 다시 그리고 미리 받아 둔 이동을 지웠다.
+  // 예전처럼 첫 페이지로 바꾼다(더 불러온 쪽도 첫 페이지로 돌아간다).
   useEffect(() => {
-    const refresh = () => { if (document.visibilityState === 'visible') router.refresh() }
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return
+      const currentRequest = ++requestId.current
+      fetch(`/api/archive?channel=${channel}`, { cache: 'no-store' }).then(res => res.ok ? res.json() as Promise<ArchivePage> : null).then(page => {
+        if (!page || currentRequest !== requestId.current) return
+        setItems(page.items.map(item => ({ ...item, lastInteractionAt: new Date(item.lastInteractionAt) })))
+        setNextCursor(page.nextCursor)
+        setLoading(false)
+        setError(false)
+      }).catch(() => { /* 다음 주기에 다시 받는다 — 보이는 목록은 그대로 둔다. */ })
+    }
     const timer = window.setInterval(refresh, 20_000)
     window.addEventListener('focus', refresh)
     return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
-  }, [router])
+  }, [channel])
 
   // 서버가 목록을 새로 주면(삭제 뒤 돌아왔을 때 등) 그 목록으로 바꾼다. 이름 검색 입력칸은 없앴다(2026-09-30 요청).
   useEffect(() => {

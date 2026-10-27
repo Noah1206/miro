@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef } from 'react'
 import styles from './messages.module.css'
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { CharacterPhoto } from '@/components/character-visual'
@@ -21,7 +21,8 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
   const items = sample ?? delivered
   const end = useRef<HTMLDivElement>(null)
   const following = useRef(true)
-  useEffect(() => {
+  // 그리기 전에 맨 아래로(10/27) — useEffect 였을 때는 오래된 메시지가 한 번 보였다가 내려갔다.
+  useLayoutEffect(() => {
     const thread = end.current?.parentElement
     if (items.at(-1)?.role === 'user') following.current = true
     if (thread && following.current) thread.scrollTop = thread.scrollHeight

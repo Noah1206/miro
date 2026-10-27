@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { DiscoveryFilters } from '@/components/discovery-filters'
 import type { DiscoveryGroup } from '@/lib/discovery-filters'
 import { useT } from '@/lib/i18n/client'
+import { startNavigation } from '@/lib/motion/view-transition'
 import styles from './audience-select.module.css'
 
 /** BL catalog picker with broad genres, careers and species; no audience preferences. */
@@ -19,11 +20,11 @@ export function AudienceSelect({ groups }: { groups: DiscoveryGroup[] }) {
   const close = () => setOpen(false)
   const apply = () => {
     setOpen(false)
-    if (tags.length) {
-      const params = new URLSearchParams()
-      tags.forEach(tag => params.append('tag', tag))
-      router.push(`/search/results?${params}`)
-    } else router.push('/search/results')
+    const params = new URLSearchParams()
+    tags.forEach(tag => params.append('tag', tag))
+    // 이동 신호를 함께 보낸다 — 결과 화면이 그려지는 동안 뼈대가 뜬다(10/27).
+    const url = tags.length ? `/search/results?${params}` : '/search/results'
+    startNavigation('forward', () => router.push(url), url)
   }
   return (<>
     <button ref={trigger} type="button" className={styles.trigger} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpenCount(value => value + 1); setOpen(true) }}>

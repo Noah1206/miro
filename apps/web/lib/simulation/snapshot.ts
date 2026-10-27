@@ -58,7 +58,10 @@ export async function loadSession(
   sessionId: string,
   userId: string,
   input = '',
+  /** view: 화면을 그리기만 할 때(대화방·문자방 페이지, 10/27). AI 턴에만 쓰는 조회(기억 검색·NPC·지난 사건·장면·선연락·외형·통화·기억 지연·자기 삶·일정·생활 리듬)를 건너뛴다. 소유 확인과 언베일 판정·최근 대화·마스킹은 그대로 돈다. AI 호출에는 쓰지 말 것. */
+  opts: { view?: boolean } = {},
 ): Promise<LoadedSession | null> {
+  const ai = <T>(work: () => Promise<T>, empty: T): Promise<T> => opts.view ? Promise.resolve(empty) : work()
   const rows = await db
     .select({ session: roleplaySessions, character: characters, world: worldStates,
               relationship: relationships, worldSetting: worlds.worldSetting, worldGenre: worlds.genre })
@@ -84,43 +87,43 @@ export async function loadSession(
   const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life, adultOk, moments] = await Promise.all([
     db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), inArray(events.status, ['active', 'escalated']))),
-    db.select().from(events)
+    ai(() => db.select().from(events)
       .where(and(eq(events.sessionId, sessionId), eq(events.status, 'resolved')))
       .orderBy(sql`${events.resolvedAtTurn} DESC NULLS LAST`, desc(events.id))
-      .limit(RECENT_RESOLVED_EVENT_LIMIT),
-    db.selectDistinctOn([events.type]).from(events)
+      .limit(RECENT_RESOLVED_EVENT_LIMIT), []),
+    ai(() => db.selectDistinctOn([events.type]).from(events)
       .where(and(eq(events.sessionId, sessionId), eq(events.status, 'resolved'), gt(events.cooldownUntilTurn, row.session.turnCount)))
-      .orderBy(events.type, desc(events.cooldownUntilTurn), desc(events.id)),
-    db.select().from(npcs).where(and(eq(npcs.sessionId, sessionId), eq(npcs.isActive, true))),
-    memoryRetriever.retrieve({ sessionId, userId, query: input, limit: 24 }),
-    row.world.currentSceneId
+      .orderBy(events.type, desc(events.cooldownUntilTurn), desc(events.id)), []),
+    ai(() => db.select().from(npcs).where(and(eq(npcs.sessionId, sessionId), eq(npcs.isActive, true))), []),
+    ai(() => memoryRetriever.retrieve({ sessionId, userId, query: input, limit: 24 }), []),
+    row.world.currentSceneId && !opts.view
       ? db.select().from(scenes).where(eq(scenes.id, row.world.currentSceneId)).limit(1)
       : Promise.resolve([]),
     db.select().from(messages)
       .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc']), characterCanSeeMessage))
       .orderBy(desc(messages.createdAt), desc(messages.turnIndex), desc(messages.id))
       .limit(24),
-    db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
+    ai(() => db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
       .from(realityContacts)
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
-      .orderBy(desc(realityContacts.sentAt)).limit(3),
-    db.select().from(characterVisualIdentities)
+      .orderBy(desc(realityContacts.sentAt)).limit(3), []),
+    ai(() => db.select().from(characterVisualIdentities)
       .where(and(eq(characterVisualIdentities.characterId, row.character.id), eq(characterVisualIdentities.isActive, true)))
-      .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1),
+      .orderBy(desc(characterVisualIdentities.version), desc(characterVisualIdentities.createdAt), desc(characterVisualIdentities.id)).limit(1), []),
     // 현실 시계는 사용자 시간대로 — 캐릭터가 "지금 몇 시인지" 알아야 하루의 때에 맞게 말한다.
     db.select({ timeZone: userSettings.timeZone, language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1),
     // 최근 통화 — 못 받은 전화, 끊은 전화를 캐릭터가 안다. 울리는 중인 것은 아직 사실이 아니다.
-    db.select().from(callSessions).where(and(eq(callSessions.sessionId, sessionId), inArray(callSessions.status, ['ended', 'missed', 'declined', 'unanswered'])))
-      .orderBy(desc(callSessions.createdAt)).limit(3),
-    memoryLagFor(sessionId),
+    ai(() => db.select().from(callSessions).where(and(eq(callSessions.sessionId, sessionId), inArray(callSessions.status, ['ended', 'missed', 'declined', 'unanswered'])))
+      .orderBy(desc(callSessions.createdAt)).limit(3), []),
+    ai(() => memoryLagFor(sessionId), false),
     // 사용자가 정한 자기 설정 — 캐릭터가 부를 이름과 소개(없으면 '사용자').
     getConversationPersona(userId, sessionId),
     // 자기 삶 — 대화가 없는 동안 캐릭터가 겪은 일(미로 캐릭터의 자율성 세션에만 생긴다).
-    row.character.experienceType === 'reality' ? recentLife(sessionId) : Promise.resolve([]),
+    row.character.experienceType === 'reality' && !opts.view ? recentLife(sessionId) : Promise.resolve([]),
     // 성인 모드 대사 지시는 매 턴 다시 판정한다 — 켠 뒤에 캐릭터 나이가 바뀌거나 인증이 사라지면 일반 기준으로 돌아간다(모델은 그대로 전용).
     row.session.adultMode && row.session.adultSince ? adultModeGateFor(userId, row.character.id, sessionId).then((g) => g.allowed) : Promise.resolve(false),
     // 사용자가 말한 자기 일정 — 캐릭터가 기억했다가 그날이 다가오거나 지나면 챙긴다(10/9).
-    activeMoments(sessionId),
+    ai(() => activeMoments(sessionId), []),
   ])
   // 이번 턴 모델 — 언베일 방은 늘 전용 모델, 인라인 일반 방은 게이트를 통과하고 성인 맥락일 때만(입력 감지만으로는 안 넘어간다).
   const inlineGate = inline && unveilOn ? await adultModeGateFor(userId, row.character.id, sessionId) : null
@@ -133,7 +136,7 @@ export async function loadSession(
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
   // 생활 리듬은 미로 캐릭터의 것이다(연락 프로필이 있어야 한다).
-  const availability = row.character.experienceType === 'reality' ? await characterAvailability(row.character.id, now, timeZone) : null
+  const availability = row.character.experienceType === 'reality' && !opts.view ? await characterAvailability(row.character.id, now, timeZone) : null
 
   const c = row.character
   const character = characterContext(c, visual[0])

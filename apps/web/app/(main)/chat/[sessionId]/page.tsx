@@ -1,11 +1,12 @@
 import { ChatTheme } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
-import { contactProfiles, db, messages } from '@miro/db'
+import { db, messages } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
+import { sessionMedia } from '@/lib/call/service'
 import { Back, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
@@ -13,7 +14,6 @@ import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
-import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
@@ -38,20 +38,20 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   if (!user) redirect('/login')
   const { sessionId } = await params
   // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
-  const session = loadSession(sessionId, user.id)
-  const [loaded, all, modelOptions, mature, adult, wallet, contact, profile] = await Promise.all([
+  // 10/27: 화면용 로더(view)로 AI 턴 전용 조회를 건너뛰고(언베일 판정은 그대로), 지갑 조회를 뺐다
+  // (지갑은 레이아웃이 처음·포커스·실시간·턴 뒤에 읽는다). 몰입 모드 유형은 방 주인 조건으로 같은 바퀴에 읽는다.
+  const session = loadSession(sessionId, user.id, '', { view: true })
+  const [loaded, all, modelOptions, mature, adult, media, profile] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
     session.then((l) => l && matureGateFor(user.id, l.characterId)),
     session.then((l) => l && adultModeGateFor(user.id, l.characterId, sessionId)),
-    walletSnapshot(user.id),
     // 유형(10/19) — 몰입 모드(음성/음성+영상)로 만든 캐릭터만 방 머리에 몰입 모드 단추가 있다.
-    session.then((l) => l && db.select({ presentation: contactProfiles.presentation }).from(contactProfiles).where(eq(contactProfiles.characterId, l.characterId)).limit(1)),
+    sessionMedia(sessionId, user.id),
     accountProfile(user),
   ])
   if (!loaded || !mature) notFound()
-  const media = (contact && contact[0]?.presentation?.media) ?? 'text'
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
   if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
@@ -69,7 +69,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id} storageKey={`miro:chat-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={modelOptions.choices[0]?.id} storageKey={`miro:chat-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />

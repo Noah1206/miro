@@ -9,10 +9,15 @@ import { discoveryOptionCounts, discoveryTagLabel, discoveryTags, type Discovery
 import { DiscoveryFilters } from '@/components/discovery-filters'
 import type { CardPage } from '@/lib/home'
 import { StoryCard } from '../home/feed'
+import { startNavigation } from '@/lib/motion/view-transition'
 import cards from '../home/home.module.css'
 import styles from './search.module.css'
 
-export function SearchScreen({ groups = [], filterCatalog, isResults = false, resultsPath = '/search/results' }: { groups?: DiscoveryGroup[]; filterCatalog?: DiscoveryCard[]; isResults?: boolean; resultsPath?: '/search/results' | '/explore' }) {
+export function SearchScreen({ groups = [], filterCatalog, initialPage, isResults = false, resultsPath = '/search/results' }: {
+  groups?: DiscoveryGroup[]; filterCatalog?: DiscoveryCard[]; isResults?: boolean; resultsPath?: '/search/results' | '/explore'
+  /** 필터·검색어 없는 첫 목록(서버가 섞어 넘긴다, 10/27) — 있으면 화면이 같은 목록을 다시 받지 않는다. */
+  initialPage?: CardPage
+}) {
   const t = useT()
   const router = useRouter()
   const reducedMotion = useReducedMotion()
@@ -56,10 +61,11 @@ export function SearchScreen({ groups = [], filterCatalog, isResults = false, re
     const next = new URLSearchParams(isResults ? key : '')
     if (word) next.set('q', word); else next.delete('q')
     if (isResults) update(next)
-    else router.push(`/search/results${next.size ? `?${next}` : ''}`)
+    // 이동 신호를 함께 보낸다 — 결과 화면이 그려지는 동안 뼈대가 뜬다(10/27).
+    else { const url = `/search/results${next.size ? `?${next}` : ''}`; startNavigation('forward', () => router.push(url), url) }
   }
   const [composing, setComposing] = useState(false)
-  const [result, setResult] = useState<{ key: string; page: CardPage } | null>(null)
+  const [result, setResult] = useState<{ key: string; page: CardPage } | null>(() => initialPage ? { key: '', page: initialPage } : null)
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState(false)
   const [retry, setRetry] = useState(0)
@@ -97,6 +103,12 @@ export function SearchScreen({ groups = [], filterCatalog, isResults = false, re
     if (!isResults) {
       request.current?.abort()
       setResult(null); setBusy(false); setFailed(false)
+      return
+    }
+    // 필터·검색어가 없으면 서버가 넘긴 첫 목록을 쓴다 — 같은 목록을 다시 받지 않는다(10/27). '다시 시도'는 예전처럼 받는다.
+    if (!key && !retry && initialPage) {
+      request.current?.abort()
+      setResult({ key: '', page: initialPage }); setBusy(false); setFailed(false)
       return
     }
     void load()

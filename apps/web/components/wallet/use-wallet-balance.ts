@@ -1,6 +1,5 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { usePathname } from 'next/navigation'
 import { readWallet, openWalletChannel } from '@/app/(main)/recharge/wallet-actions'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 
@@ -8,7 +7,6 @@ const amounts = (value: WalletSnapshot) => `${value.available}:${value.rechargeR
 
 /** Shared display only. Every debit and payment is still authorized by the server ledger. */
 export function useWalletBalance(userId: string | null) {
-  const pathname = usePathname()
   const [wallet, setWallet] = useState<WalletSnapshot | null>(null)
   const current = useRef<WalletSnapshot | null>(null)
   const revision = useRef(0)
@@ -51,7 +49,9 @@ export function useWalletBalance(userId: string | null) {
     return request
   }, [apply, userId])
 
-  useEffect(() => { void refreshBalance() }, [pathname, refreshBalance])
+  // 페이지를 옮길 때마다 읽지 않는다(10/27) — 서버 액션이 라우터 대기열에 끼어 이동을 늦추고 미리 받은 탭을 지웠다.
+  // 처음 한 번 + 실시간 알림·포커스·복귀·탭 간 신호·턴 뒤 강제 갱신으로 충분하다.
+  useEffect(() => { void refreshBalance() }, [refreshBalance])
   useEffect(() => {
     if (!userId) { setLive('unavailable'); return }
     let disposed = false

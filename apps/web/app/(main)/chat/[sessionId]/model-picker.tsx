@@ -18,9 +18,10 @@ import { chatModelFamily, modelPresentation, selectedChatChoice } from '@/lib/ai
 const brand = Outfit({ subsets: ['latin'], weight: ['500'], display: 'swap' })
 
 const Selection = createContext({ model: 'miro', setModel: (_model: string) => {} })
-export function ChatModelProvider({ children, initialWallet, initialModel = 'miro', storageKey, modelChoices }: { children: ReactNode; initialWallet: WalletSnapshot; initialModel?: string; storageKey?: string; modelChoices?: string[] }) {
+/** initialWallet 은 선택 — 대화방·문자방은 렌더를 늦추지 않으려 넘기지 않고 레이아웃이 읽은 잔액을 쓴다(10/27). */
+export function ChatModelProvider({ children, initialWallet, initialModel = 'miro', storageKey, modelChoices }: { children: ReactNode; initialWallet?: WalletSnapshot; initialModel?: string; storageKey?: string; modelChoices?: string[] }) {
   const { seed } = useWallet()
-  useEffect(() => { seed(initialWallet) }, [initialWallet, seed])
+  useEffect(() => { if (initialWallet) seed(initialWallet) }, [initialWallet, seed])
   const [model, setModel] = useState(initialModel)
   useEffect(() => {
     if (!storageKey) return

@@ -1,6 +1,5 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
 import type { AccountProfile } from '@/lib/account-profile'
 import { readAccountProfile } from '@/app/(main)/my/profile-actions'
 
@@ -13,7 +12,6 @@ const Context = createContext<ProfileContext | null>(null)
 
 /** Only an invalidation marker crosses tabs; identity always comes from the signed-in server session. */
 export function AccountProfileProvider({ userId, children }: { userId: string | null; children: ReactNode }) {
-  const pathname = usePathname()
   const [profile, setProfile] = useState<AccountProfile | null>(null)
   const revision = useRef(0)
   const pending = useRef<Promise<void> | null>(null)
@@ -38,9 +36,10 @@ export function AccountProfileProvider({ userId, children }: { userId: string | 
     try { if (marker) localStorage.setItem(marker, crypto.randomUUID()) } catch { /* Storage may be disabled. */ }
   }, [marker, userId])
 
+  // 페이지를 옮길 때마다 읽지 않는다(10/27) — 라우터 대기열에 끼어 이동을 늦췄다. 처음 한 번 + 포커스·복귀·탭 간 신호로 충분하다.
   useEffect(() => {
     void refresh()
-  }, [pathname, refresh])
+  }, [refresh])
   useEffect(() => {
     const visible = () => { if (document.visibilityState === 'visible') void refresh() }
     const changed = (event: StorageEvent) => {

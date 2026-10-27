@@ -31,7 +31,8 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
     desktop.addEventListener('change', refresh)
     window.addEventListener('focus', refresh)
     return () => { disposed = true; desktop.removeEventListener('change', refresh); window.removeEventListener('focus', refresh) }
-  }, [signedIn, pathname, retry])
+    // 페이지를 옮길 때마다 읽지 않는다(10/27) — 대화방·캐릭터 화면에서는 내비와 함께 사라졌다가 돌아올 때 다시 그려지며 읽는다.
+  }, [signedIn, retry])
   async function more() {
     if (!page?.nextCursor || loadingMore) return
     setLoadingMore(true)

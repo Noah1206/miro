@@ -9,7 +9,6 @@ import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { Back, Notice } from '@/components/ui'
-import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ChatModelProvider, CurrentChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { PushSubscribe } from '@/components/push-subscribe'
@@ -30,16 +29,15 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   if (!user) redirect('/login')
   const { sessionId } = await params
   const { call } = await searchParams
-  // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
-  const loaded = await loadSession(sessionId, user.id)
+  // 읽기는 한 바퀴에 — 화면용 로더(view, AI 턴 전용 조회 생략)와 문자 목록·프로필을 같이 읽는다. 문자 목록은 스스로 방 주인을 확인한다(10/27).
+  // 지갑은 렌더에서 뺐다 — 레이아웃이 처음·포커스·실시간·턴 뒤에 읽는다.
+  const [loaded, rows, profile] = await Promise.all([loadSession(sessionId, user.id, '', { view: true }), messengerItems(user.id, sessionId), accountProfile(user)])
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 두 경험에서 같은 페르소나를 사용한다.
   if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
-  const [rows, wallet, modelOptions, profile] = await Promise.all([
-    messengerItems(user.id, sessionId),
-    walletSnapshot(user.id),
+  // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
+  const [modelOptions] = await Promise.all([
     chatModelOptions(user.id, loaded.adult.since !== null),
-    accountProfile(user),
     // This is the user reading the character's incoming contacts, not the reverse.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
@@ -49,7 +47,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const initialModel = modelOptions.choices.find(choice => choice.id === lastChoice)?.id ?? modelOptions.choices[0]?.id
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={initialModel} storageKey={`miro:dm-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={initialModel} storageKey={`miro:dm-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
