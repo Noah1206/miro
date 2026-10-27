@@ -24,8 +24,6 @@
 .storyDateMarker span { max-width: 75%; }
 .contextButton { width: 36px; height: 44px; flex: 0 0 auto; display: grid; place-items: center; padding: 0; border: 0; background: transparent; color: var(--color-text-primary); border-radius: 50%; cursor: pointer; }
 .contextButton svg { width: 20px; height: 20px; }
-.roomMenuButton { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; font-size:23px; line-height:1; cursor:pointer; }
-.roomMenuButton:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
 .voiceStatus { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 12px; flex: 0 0 auto; color: var(--color-text-secondary); font-size: 12px; }
 .voiceStatus button { border: 0; background: none; color: var(--color-accent-text); font: inherit; min-height: 36px; cursor: pointer; }
 /* 언베일 — 클래식 토글과 수위 메뉴, 자수정 그라데이션. */

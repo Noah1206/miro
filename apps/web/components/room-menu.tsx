@@ -1,8 +1,9 @@
 'use client'
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import type { UserPersona } from '@miro/domain'
 import type { CharacterEntry } from '@/lib/character-entry'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
+import type { WalletSnapshot } from '@/lib/wallet/types'
 import { ChatThemeOptions, DefaultChatAvatar } from '@/components/chat-theme'
 import { CharacterPhoto } from '@/components/character-visual'
 import { ConversationPersona } from '@/components/conversation-persona'
@@ -12,13 +13,13 @@ import { TransitionLink } from '@/components/ui/transition-link'
 import { useWallet } from '@/components/wallet/provider'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
-import { useChatModel } from './model-picker'
-import { MemoryGraphView } from './memory-graph'
-import { useImmersive } from './immersive'
-import chat from './chat.module.css'
+import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
+import { MemoryGraphView } from '@/app/(main)/chat/[sessionId]/memory-graph'
+import { useImmersive } from '@/app/(main)/chat/[sessionId]/immersive'
 import styles from './room-menu.module.css'
 
 type Panel = 'persona' | 'theme' | 'model' | 'memory'
+type Tile = Panel | 'chat'
 type IconName = Panel | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
 function MenuIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -38,15 +39,17 @@ function MenuIcon({ name }: { name: IconName }) {
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
 /** Existing room controls share one drawer; detail panels expand in place. */
-export function RoomMenu({ sessionId, initialPersona, characterName, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0 }: {
+export function RoomMenu({ sessionId, initialPersona, characterName, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0, messenger = false, initialWallet }: {
   sessionId: string; initialPersona: UserPersona | null; characterName: string
   entry?: CharacterEntry | null; portrait?: string | null; messengerHref?: string; characterHref?: string
-  choices?: ChatModelChoice[]; turnCount?: number
+  choices?: ChatModelChoice[]; turnCount?: number; messenger?: boolean; initialWallet?: WalletSnapshot
 }) {
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const { available, on, toggle } = useImmersive()
-  const { wallet, openRecharge } = useWallet()
+  const { wallet: sharedWallet, sync, openRecharge } = useWallet()
+  useEffect(() => { if (initialWallet) sync(initialWallet) }, [initialWallet, sync])
+  const wallet = sharedWallet ?? initialWallet
   const { model, setModel } = useChatModel()
   const menuId = useId()
   const [open, setOpen] = useState(false)
@@ -55,14 +58,16 @@ export function RoomMenu({ sessionId, initialPersona, characterName, entry, port
   const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   const families = [...new Set(choices.map(c => c.id.replace(/:(scene|long)$/, '')))]
   const modelLabel = (c: ChatModelChoice) => `${c.length === 'long' ? 'ECHO' : 'MIRO'}${families.length > 1 ? ` ${families.indexOf(c.id.replace(/:(scene|long)$/, '')) + 1}` : ''}`
-  const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('대화 방식'), theme: t('채팅방 테마'), memory: t('대화 기억') }
-  const tiles: Panel[] = ['persona', 'model', 'theme', 'memory']
+  const titles: Record<Tile, string> = { persona: t('페르소나'), model: t('대화 방식'), theme: t('채팅방 테마'), memory: t('대화 기억'), chat: t('캐릭터챗') }
+  // DM replies use the delivery queue, so keep its real scene shortcut instead of an unused model selector.
+  const tiles: Tile[] = messenger ? ['persona', 'chat', 'theme', 'memory'] : ['persona', 'model', 'theme', 'memory']
+  const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   return <>
-    <button type="button" className={chat.roomMenuButton} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true) }}>
+    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true) }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-    <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row('/archive', 'exit', t('대화방 나가기'))}>
+    <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       <section className={styles.account} aria-label={characterName}>
         <div className={styles.identity}><span className={styles.avatar}>{portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <DefaultChatAvatar/>}</span><span className={styles.identityText}><strong>{characterName}</strong></span></div>
         <div className={styles.wallet} aria-label={t('보유 토큰')}>
@@ -72,7 +77,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, entry, port
       </section>
       <section className={styles.section} aria-label={t('내 설정')}>
         <h3>{t('내 설정')}</h3>
-        <div className={styles.grid}>{tiles.map(id => <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
+        <div className={styles.grid}>{tiles.map(id => id === 'chat' ? <TransitionLink key={id} href={`/chat/${sessionId}`} className={styles.tile} onClick={close}><MenuIcon name="message"/><span>{titles.chat}</span></TransitionLink> : <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
         </button>)}</div>
         {panel && <div id={`${menuId}-detail`} role="region" aria-labelledby={`${menuId}-${panel}`} className={styles.detail}>
@@ -87,7 +92,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, entry, port
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
         {characterHref && row(characterHref, 'character', t('캐릭터 정보'))}
-        {row('/archive', 'archive', t('이전 대화 보기'))}
+        {row(archiveHref, 'archive', t('이전 대화 보기'))}
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>
         {row('/my/permissions', 'settings', t('알림·접근 권한'))}

@@ -1,5 +1,5 @@
-import { ChatRoomIcon } from '@/components/chat-icons'
-import { ChatTheme, ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
+import { ChatTheme, ChatHeaderAvatar } from '@/components/chat-theme'
+import { RoomMenu } from '@/components/room-menu'
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
 import { db, realityContacts } from '@miro/db'
@@ -7,7 +7,8 @@ import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ConversationPersona } from '@/components/conversation-persona'
-import { Back, Notice, TransitionLink } from '@/components/ui'
+import { Back, Notice } from '@/components/ui'
+import { walletSnapshot } from '@/lib/wallet/service'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { MessengerDelivery } from './delivery'
 import { messengerItems } from '@/lib/messenger/inbox'
@@ -31,8 +32,9 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 두 경험에서 같은 페르소나를 사용한다.
   if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
-  const [rows] = await Promise.all([
+  const [rows, wallet] = await Promise.all([
     messengerItems(user.id, sessionId),
+    walletSnapshot(user.id),
     // This is the user reading the character's incoming contacts, not the reverse.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
@@ -46,9 +48,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
           <ChatHeaderAvatar portrait={loaded.characterPhoto} /><h1 className={styles.title}>{loaded.characterName}</h1>
-          <TransitionLink href={`/chat/${sessionId}`} className={styles.headerButton} aria-label={t('캐릭터챗')} title={t('캐릭터챗')}><ChatRoomIcon /></TransitionLink>
-          <ConversationPersona entry={loaded.entry} sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} />
-          <ChatThemePicker portrait={loaded.characterPhoto} />
+          <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} initialWallet={wallet} />
         </header>
         {call && (
           <Notice tone={call === 'usage' ? 'muted' : 'danger'} style={{ margin: '12px 16px 0' }}>

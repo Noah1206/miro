@@ -21,7 +21,7 @@ import { getT } from '@/lib/i18n/server'
 import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
 import { ImmersiveProvider, VoiceStatus } from './immersive'
-import { RoomMenu } from './room-menu'
+import { RoomMenu } from '@/components/room-menu'
 import { SceneImage } from './scene-image'
 import { feature, usageWeight } from '@miro/config'
 
