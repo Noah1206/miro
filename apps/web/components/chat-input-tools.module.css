@@ -23,11 +23,5 @@
 
 :global([data-chat-theme='miro']) .trigger { width:30px; height:34px; color:#9d9d9d; }
 :global([data-chat-theme='miro']) .trigger svg { width:19px; height:19px; }
-.narration { flex-shrink:0; }
-:global([data-chat-theme='dm-light']) .narration { width:30px; height:34px; color:#8c8c8c; }
-:global([data-chat-theme='dm']) .narration { width:30px; height:34px; color:#a3a3a3; }
-:global([data-chat-theme='talk']) .narration { width:24px; height:32px; color:#526977; }
+.trigger.narration { flex:0 0 32px; width:32px; height:32px; border:1px solid var(--color-border); border-radius:50%; background:var(--color-surface-2); color:var(--color-text-secondary); }
 :global([data-chat-theme]) .narration svg { width:19px; height:19px; }
-:global([data-chat-theme='dm-light']) .narration,
-:global([data-chat-theme='dm']) .narration,
-:global([data-chat-theme='talk']) .narration { margin-right:6px; }
