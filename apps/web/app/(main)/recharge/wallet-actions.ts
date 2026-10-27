@@ -5,8 +5,15 @@ import { walletHistory, walletSnapshot } from '@/lib/wallet/service'
 import { observe } from '@/lib/observe'
 import { msg } from '@/lib/i18n'
 import { requestBankDeposit } from '@/lib/payments/telegram'
+import { walletRealtimeChannel } from '@/lib/wallet/realtime'
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
+
+/** The caller cannot choose a different user's topic. Cookie auth is mandatory. */
+export async function openWalletChannel() {
+  const user = await requireUser()
+  return walletRealtimeChannel(user.id)
+}
 
 export async function readWallet(orderId?: string) {
   const user = await requireUser()

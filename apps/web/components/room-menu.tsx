@@ -12,7 +12,7 @@ import { ConversationPersona } from '@/components/conversation-persona'
 import { InstallAppButton } from '@/components/pwa-install'
 import { Drawer } from '@/components/ui/drawer'
 import { TransitionLink } from '@/components/ui/transition-link'
-import { useWallet, useWalletWatch } from '@/components/wallet/provider'
+import { useWallet } from '@/components/wallet/provider'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
@@ -50,11 +50,10 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const { profile, refresh: refreshProfile } = useAccountProfile(initialProfile)
   const locale = INTL_LOCALE[useLanguage()]
   const { available, on, toggle } = useImmersive()
-  const { wallet, openRecharge } = useWallet()
+  const { wallet, openRecharge, refreshBalance, live } = useWallet()
   const { model, setModel } = useChatModel()
   const menuId = useId()
   const [open, setOpen] = useState(false)
-  useWalletWatch(open)
   const [panel, setPanel] = useState<Panel | null>(null)
   const close = () => setOpen(false)
   const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
@@ -65,14 +64,14 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   return <>
-    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile() }}>
+    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
     <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       <section className={styles.account} aria-label={t('내 프로필')}>
         <TransitionLink href="/my" className={styles.identity} aria-label={t('내 프로필')} onClick={close}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <LogoMark size={20}/>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></TransitionLink>
         <div className={styles.wallet} aria-label={t('보유 토큰')}>
-          <p className={styles.balance} aria-live="polite"><img src="/miro-token.svg" alt="" aria-hidden="true" width={24} height={24} decoding="async"/><strong data-room-balance={wallet?.available}>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong><span className="sr-only">{t('미로 토큰')}</span></p>
+          <p className={styles.balance} aria-live="polite"><img src="/miro-token.svg" alt="" aria-hidden="true" width={24} height={24} decoding="async"/><strong data-room-balance={wallet?.available} data-wallet-live={live} data-wallet-observed-at={wallet?.observedAt}>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong><span className="sr-only">{t('미로 토큰')}</span></p>
           <button type="button" onClick={() => { close(); openRecharge() }}>{t('충전하기')}</button>
         </div>
       </section>

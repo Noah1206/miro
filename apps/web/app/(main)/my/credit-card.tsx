@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
-import { useWallet, useWalletWatch } from '@/components/wallet/provider'
+import { useWallet } from '@/components/wallet/provider'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
@@ -10,8 +10,7 @@ import { ProfileIcon } from './profile-icon'
 
 /** Real wallet overview; recharge opens the shared sheet and history uses the existing wallet route. */
 export function CreditCard({ initial }: { initial: WalletSnapshot }) {
-  const { wallet, seed, openRecharge, busy } = useWallet()
-  useWalletWatch()
+  const { wallet, seed, openRecharge, busy, live } = useWallet()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   useEffect(() => { seed(initial) }, [initial, seed])
@@ -26,7 +25,7 @@ export function CreditCard({ initial }: { initial: WalletSnapshot }) {
       <p className={styles.balance} aria-live="polite">
         {/* MIRO 로고 형태를 유지한 라벤더 토큰 심볼. */}
         <img src="/miro-token.svg" alt="" aria-hidden width={30} height={30} decoding="async" />
-        <span data-profile-balance={value.available}>{value.available.toLocaleString(locale)}</span><span className="sr-only">{t('미로 토큰')}</span>
+        <span data-profile-balance={value.available} data-wallet-live={live} data-wallet-observed-at={value.observedAt}>{value.available.toLocaleString(locale)}</span><span className="sr-only">{t('미로 토큰')}</span>
       </p>
       <Button type="button" variant="primary" size="sm" className={styles.chargeButton} style={{ borderRadius: 8, fontSize: 15 }} onClick={openRecharge} status={busy ? 'loading' : 'idle'}>{t('충전하기')}</Button>
       </div>

@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { readWallet } from '@/app/(main)/recharge/wallet-actions'
+import { readWallet, openWalletChannel } from '@/app/(main)/recharge/wallet-actions'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 
 const amounts = (value: WalletSnapshot) => `${value.available}:${value.rechargeRemaining}:${value.monthlyRemaining}`
@@ -13,6 +13,7 @@ export function useWalletBalance(userId: string | null) {
   const current = useRef<WalletSnapshot | null>(null)
   const revision = useRef(0)
   const pending = useRef<Promise<WalletSnapshot | null> | null>(null)
+  const [live, setLive] = useState<'connecting' | 'connected' | 'unavailable'>('connecting')
   const marker = userId ? `miro:wallet-changed:${userId}` : null
   const apply = useCallback((next: WalletSnapshot, notify: boolean) => {
     if (userId && next.userId !== userId) return
@@ -52,6 +53,37 @@ export function useWalletBalance(userId: string | null) {
 
   useEffect(() => { void refreshBalance() }, [pathname, refreshBalance])
   useEffect(() => {
+    if (!userId) { setLive('unavailable'); return }
+    let disposed = false
+    let cleanup: (() => void) | undefined
+    let queued: ReturnType<typeof setTimeout> | undefined
+    setLive('connecting')
+    void (async () => {
+      const config = await openWalletChannel()
+      if (disposed) return
+      if (!config || config.userId !== userId) { setLive('unavailable'); return }
+      const { createClient } = await import('@supabase/supabase-js')
+      if (disposed) return
+      const client = createClient(config.url, config.key, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      })
+      const channel = client.channel(config.topic, { config: { private: false } })
+        .on('broadcast', { event: 'wallet_changed' }, () => {
+          // A transaction can change several wallet rows. Read once per burst.
+          if (queued) clearTimeout(queued)
+          queued = setTimeout(() => { queued = undefined; if (!disposed) void refreshBalance(true) }, 30)
+        })
+        .subscribe(status => {
+          if (disposed) return
+          setLive(status === 'SUBSCRIBED' ? 'connected' : 'connecting')
+          // Includes reconnect: catch changes missed while offline, with no poll.
+          if (status === 'SUBSCRIBED') void refreshBalance(true)
+        })
+      cleanup = () => { void client.removeChannel(channel) }
+    })().catch(() => { if (!disposed) setLive('unavailable') })
+    return () => { disposed = true; if (queued) clearTimeout(queued); cleanup?.() }
+  }, [userId, refreshBalance])
+  useEffect(() => {
     const visible = () => { if (document.visibilityState === 'visible') void refreshBalance() }
     const changed = (event: StorageEvent) => {
       if (event.key !== marker || !event.newValue) return
@@ -60,6 +92,7 @@ export function useWalletBalance(userId: string | null) {
     window.addEventListener('storage', changed)
     window.addEventListener('focus', visible)
     window.addEventListener('pageshow', visible)
+    window.addEventListener('online', visible)
     document.addEventListener('visibilitychange', visible)
     return () => {
       revision.current++
@@ -67,8 +100,9 @@ export function useWalletBalance(userId: string | null) {
       window.removeEventListener('storage', changed)
       window.removeEventListener('focus', visible)
       window.removeEventListener('pageshow', visible)
+      window.removeEventListener('online', visible)
       document.removeEventListener('visibilitychange', visible)
     }
   }, [marker, refreshBalance])
-  return { wallet, seed, sync, refreshBalance }
+  return { wallet, seed, sync, refreshBalance, live }
 }

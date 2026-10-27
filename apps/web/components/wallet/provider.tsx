@@ -14,6 +14,7 @@ import { useWalletBalance } from './use-wallet-balance'
 type Pending = { cost: number; label: string; action: () => Promise<BalanceActionResult> }
 type WalletContext = {
   wallet: WalletSnapshot | null; state: PayState; busy: boolean
+  live: 'connecting' | 'connected' | 'unavailable'
   sync: (wallet: WalletSnapshot) => void; seed: (wallet: WalletSnapshot) => void
   refreshBalance: (force?: boolean) => Promise<WalletSnapshot | null>; openRecharge: () => void
   requireBalance: (cost: number, action: Pending['action'], label?: string) => Promise<void>
@@ -25,25 +26,13 @@ export function useWallet() {
   return context
 }
 
-/** Watch server-side settlement only while a balance is actually visible. */
-export function useWalletWatch(active = true) {
-  const { refreshBalance } = useWallet()
-  useEffect(() => {
-    if (!active) return
-    const check = () => { if (document.visibilityState === 'visible') void refreshBalance() }
-    check()
-    const timer = setInterval(check, 5000)
-    return () => clearInterval(timer)
-  }, [active, refreshBalance])
-}
-
 /** A quote improves UX; only the existing server reservation can authorize spending. */
 export function WalletProvider({ children, userId = null }: { children: ReactNode; userId?: string | null }) {
   const toast = useToast()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const pathname = usePathname()
-  const { wallet, seed, sync, refreshBalance } = useWalletBalance(userId)
+  const { wallet, seed, sync, refreshBalance, live } = useWalletBalance(userId)
   const [state, setState] = useState<PayState>('idle')
   const [open, setOpen] = useState(false)
   const [stage, setStage] = useState<'insufficient' | 'catalog'>('catalog')
@@ -157,14 +146,6 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
     if (wallet?.order?.settledAt || (wallet?.order && ['expired', 'rejected'].includes(wallet.order.status))) void reflect(wallet, epoch.current)
   }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt])
 
-  useEffect(() => {
-    if (!wallet?.order || wallet.order.settledAt || !['awaiting', 'approved'].includes(wallet.order.status)) return
-    const check = () => { if (document.visibilityState === 'visible') void refresh() }
-    const timer = setInterval(check, 5000)
-    window.addEventListener('focus', check); document.addEventListener('visibilitychange', check)
-    return () => { clearInterval(timer); window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check) }
-  }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt, refresh])
-
   async function checkout() {
     if (locked.current || !selected) return
     const token = epoch.current
@@ -219,7 +200,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   const done = !!order?.settledAt && !pending.current
   const insufficient = stage === 'insufficient' && !waiting && state !== 'failed'
   const krw = (n: number) => t('{n}원', { n: n.toLocaleString(locale) })
-  return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync, seed, refreshBalance, openRecharge: () => { void openRecharge() }, requireBalance }}>
+  return <Context.Provider value={{ wallet, state, live, busy: state === 'loading', sync, seed, refreshBalance, openRecharge: () => { void openRecharge() }, requireBalance }}>
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
     <Sheet open={open} onClose={cancel} title={insufficient ? undefined : t('충전')} label={insufficient ? t('토큰이 부족해요') : undefined}>
