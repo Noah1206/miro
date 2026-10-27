@@ -48,7 +48,8 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   const activeIndex = ITEMS.findIndex(item => activePath === item.href || activePath.startsWith(item.href + '/'))
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname) || /^\/stories\/play\//.test(pathname)) return null
   return (
-    <><DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} /><nav aria-label={t('주요')} className={`nav ${glass.bar}`}>
+    // 대화 탭은 목록이 곧 사이드바 내용이라 데스크톱 사이드바를 두지 않는다(10/28).
+    <>{!/^\/archive(?:\/|$)/.test(pathname) && <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />}<nav aria-label={t('주요')} className={`nav ${glass.bar}`}>
       {activeIndex >= 0 && <span aria-hidden="true" className={glass.indicator} style={{ transform: `translateX(${activeIndex * 100}%)` }} />}
       {ITEMS.map((it) => {
         const active = activePath === it.href || activePath.startsWith(it.href + '/')

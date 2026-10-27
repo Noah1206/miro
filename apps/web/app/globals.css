@@ -425,7 +425,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* Desktop browsing uses the viewport; mobile retains its original shell. */
 @media (min-width: 1024px) {
-  .app-shell:has(.nav) { max-width: none; padding-left: 280px; transition: padding-left 280ms cubic-bezier(.22,1,.36,1); }
+  .app-shell:has(.nav) { max-width: none; padding-left: 0; }
+  .app-shell:has(.nav):has(> aside) { padding-left: 280px; transition: padding-left 280ms cubic-bezier(.22,1,.36,1); }
   .app-shell:has(.nav) > aside { left: 0; }
   /* 10/28 요청: 내비는 사이드바 안이 아니라 화면 가운데 아래에 — 사이드바를 열든 접든 같은 자리. */
   .app-shell:has(.nav) .nav { left: 0; right: 0; bottom: 20px; width: min(440px, calc(100% - 32px)); max-width: none; margin: 0 auto; }
