@@ -1,5 +1,5 @@
 .account { display:grid; gap:20px; padding:14px; background:#323234; border-radius:12px; }
-.identity { display:flex; align-items:center; gap:10px; min-width:0; }
+.identity { display:flex; align-items:center; gap:10px; min-width:0; border-radius:8px; color:inherit; text-decoration:none; }
 .avatar { display:grid; place-items:center; flex:0 0 38px; width:38px; height:38px; border-radius:50%; overflow:hidden; background:#3b3b3e; }
 .avatar img { width:100%; height:100%; object-fit:cover; }
 .identityText { flex:1; min-width:0; display:grid; gap:3px; }

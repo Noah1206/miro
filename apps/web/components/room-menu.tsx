@@ -67,7 +67,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile, en
     </button>
     <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       <section className={styles.account} aria-label={t('내 프로필')}>
-        <div className={styles.identity}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <LogoMark size={20}/>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></div>
+        <TransitionLink href="/my" className={styles.identity} aria-label={t('내 프로필')} onClick={close}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <LogoMark size={20}/>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></TransitionLink>
         <div className={styles.wallet} aria-label={t('보유 토큰')}>
           <p className={styles.balance} aria-live="polite"><img src="/miro-token.svg" alt="" aria-hidden="true" width={24} height={24} decoding="async"/><strong data-room-balance={wallet?.available}>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong><span className="sr-only">{t('미로 토큰')}</span></p>
           <button type="button" onClick={() => { close(); openRecharge() }}>{t('충전하기')}</button>
