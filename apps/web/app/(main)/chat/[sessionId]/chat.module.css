@@ -436,3 +436,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .input,
 :global([data-chat-theme='dm-light']) .input { font-size:14px; }
 .input::placeholder, :global([data-chat-theme]) .input::placeholder { font-size:inherit; }
+
+/* Keep speaker changes distinct, including while a streamed reply grows. */
+.messageLine { min-width:0; }
+.messageLine[data-message-role='user'] + .messageLine:not([data-message-role='user']),
+.messageLine:not([data-message-role='user']) + .messageLine[data-message-role='user'] { padding-top:8px; }

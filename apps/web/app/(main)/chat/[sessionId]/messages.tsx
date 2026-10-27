@@ -124,7 +124,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       } : undefined}>
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
-          <Line key={keyOf(m)} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
+          <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
           </Line>
