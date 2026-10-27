@@ -4,14 +4,12 @@ import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 import { tween } from '@/lib/motion/tokens'
-import { useT } from '@/lib/i18n/client'
 import styles from './drawer.module.css'
 
 /** A room-sized right drawer, portaled above the chat header and keyboard layout. */
 export function Drawer({ open, onClose, title, children, id, footer }: {
   open: boolean; onClose: () => void; title: string; children: ReactNode; id?: string; footer?: ReactNode
 }) {
-  const t = useT()
   const reduce = useReducedMotion()
   const titleId = useId()
   const ref = useRef<HTMLDivElement>(null)
@@ -41,9 +39,6 @@ export function Drawer({ open, onClose, title, children, id, footer }: {
           drag={reduce ? false : 'x'} dragControls={drag} dragListener={false} dragConstraints={{ left: 0, right: 0 }} dragElastic={{ left: 0, right: .45 }} onDragEnd={release}>
           <header className={styles.header} onPointerDown={event => { if (!reduce) drag.start(event) }}>
             <h2 id={titleId} className={styles.title} tabIndex={-1} data-initial-focus>{title}</h2>
-            <button type="button" className={styles.close} aria-label={t('닫기')} onPointerDown={event => event.stopPropagation()} onClick={onClose}>
-              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m6 6 12 12M18 6 6 18" /></svg>
-            </button>
           </header>
           <div className={styles.content}>{children}</div>
           {footer && <footer className={styles.footer}>{footer}</footer>}

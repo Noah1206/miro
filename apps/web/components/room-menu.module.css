@@ -11,6 +11,7 @@
 .balance strong { min-width:0; overflow-wrap:anywhere; }
 .wallet button { flex-shrink:0; min-height:30px; padding:5px 8px; border:0; border-radius:6px; background:#7353b8; color:white; font:inherit; font-size:11px; cursor:pointer; }
 .section { margin-top:8px; }
+.account + .section { margin-top:24px; }
 .section h3 { margin:0 2px 8px; color:#b5b5bc; font-size:12px; line-height:1.5; font-weight:500; }
 .actions { display:grid; gap:0; margin-top:0; }
 .management { margin-top:24px; }
