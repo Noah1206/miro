@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import styles from './messages.module.css'
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
 import { CharacterPhoto } from '@/components/character-visual'
+import { bindChatComposerFollow } from '@/components/chat-viewport'
 import { useMessenger } from './delivery'
 import { subject } from '@/lib/format'
 import { INTL_LOCALE } from '@/lib/i18n'
@@ -34,6 +35,7 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
     const touchStart = (event: TouchEvent) => { touchY = event.touches[0]?.clientY ?? 0 }
     const touchMove = (event: TouchEvent) => { const y = event.touches[0]?.clientY ?? touchY; if (y > touchY + 1) following.current = false; touchY = y }
     const keyDown = (event: KeyboardEvent) => { if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) following.current = false }
+    const stopComposerFollow = bindChatComposerFollow(thread, () => { following.current = true; thread.scrollTop = thread.scrollHeight })
     const resize = new ResizeObserver(() => { if (following.current) thread.scrollTop = thread.scrollHeight })
     resize.observe(thread)
     thread.addEventListener('scroll', scroll, { passive: true })
@@ -42,6 +44,7 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
     thread.addEventListener('touchmove', touchMove, { passive: true })
     thread.addEventListener('keydown', keyDown)
     return () => {
+      stopComposerFollow()
       resize.disconnect()
       thread.removeEventListener('scroll', scroll)
       thread.removeEventListener('wheel', wheel)

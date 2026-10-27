@@ -1,5 +1,6 @@
 'use client'
 import { useChatTheme, DefaultChatAvatar } from '@/components/chat-theme'
+import { bindChatComposerFollow } from '@/components/chat-viewport'
 import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
@@ -91,6 +92,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     const onPointerDown = (event: PointerEvent) => { draggingScrollbar = event.target === transcript }
     const onPointerUp = () => { draggingScrollbar = false }
     // Observe the growing text itself: the scroll viewport keeps the same height while lines arrive.
+    const stopComposerFollow = bindChatComposerFollow(transcript, () => { following.current = true; follow() })
     const resize = new ResizeObserver(follow)
     resize.observe(transcript)
     transcript.addEventListener('scroll', onScroll, { passive: true })
@@ -104,6 +106,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     resize.observe(transcript)
     if (log.current) resize.observe(log.current)
     return () => {
+      stopComposerFollow()
       resize.disconnect()
       transcript.removeEventListener('scroll', onScroll)
       transcript.removeEventListener('wheel', onWheel)

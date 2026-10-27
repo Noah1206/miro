@@ -61,3 +61,24 @@ export function bindChatViewport(element: HTMLElement) {
     document.removeEventListener('visibilitychange', schedule)
   }
 }
+
+/** Resume the latest reply when typing begins, then align again after focus layout settles.
+ * ResizeObserver in each transcript keeps this anchor through the keyboard animation.
+ * Opening menus and browsing older messages must not move the transcript.
+ */
+export function bindChatComposerFollow(transcript: HTMLElement, resume: () => void) {
+  const composer = transcript.closest('[data-chat-theme]')?.querySelector('[data-chat-composer]')
+  if (!composer) return () => {}
+  let frame = 0
+  const focus = (event: Event) => {
+    if (!(event.target as Element | null)?.matches?.('textarea, input')) return
+    resume()
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(() => { frame = 0; resume() })
+  }
+  composer.addEventListener('focusin', focus)
+  return () => {
+    cancelAnimationFrame(frame)
+    composer.removeEventListener('focusin', focus)
+  }
+}
