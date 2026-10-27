@@ -259,7 +259,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
   return (
     // Page 는 transform 을 걸어 sticky 를 깨뜨리므로 쓰지 않는다.
-    <main id="main" tabIndex={-1} className="page create-page" style={{ maxWidth: 560, paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
+    <main id="main" tabIndex={-1} className="page create-page" style={{ paddingTop: 0, ...(mode === 'create' ? { paddingBottom: 'calc(var(--space-6) + env(safe-area-inset-bottom))' } : {}), outline: 'none' }}>
       <form ref={formRef} onSubmit={submit} className="stack" style={{ gap: 0 }}>
 
         <CreateHeader tab={tab} onTab={openTab} experienceType={experienceType} canSubmit={canSubmit} canDraft={!!name.trim()} pending={pending}
