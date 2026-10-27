@@ -16,8 +16,8 @@ const brand = Outfit({ subsets: ['latin'], weight: ['600'], display: 'swap' })
 
 const Selection = createContext({ model: 'miro', setModel: (_model: string) => {} })
 export function ChatModelProvider({ children, initialWallet, initialModel = 'miro', storageKey, modelChoices }: { children: ReactNode; initialWallet: WalletSnapshot; initialModel?: string; storageKey?: string; modelChoices?: string[] }) {
-  const { sync } = useWallet()
-  useEffect(() => { sync(initialWallet) }, [initialWallet, sync])
+  const { seed } = useWallet()
+  useEffect(() => { seed(initialWallet) }, [initialWallet, seed])
   const [model, setModel] = useState(initialModel)
   useEffect(() => {
     if (!storageKey) return

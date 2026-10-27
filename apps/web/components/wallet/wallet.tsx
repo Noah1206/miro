@@ -6,13 +6,14 @@ import { readWalletHistory } from '@/app/(main)/recharge/wallet-actions'
 import { tween } from '@/lib/motion/tokens'
 import { COPY } from '@/lib/copy'
 import type { WalletEntry, WalletSnapshot } from '@/lib/wallet/types'
-import { HelpToggle, useWallet } from './provider'
+import { HelpToggle, useWallet, useWalletWatch } from './provider'
 import styles from './wallet.module.css'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 
 export function Wallet({ initial, children, showOrder = false }: { initial: WalletSnapshot; children?: ReactNode; showOrder?: boolean }) {
-  const { wallet, sync, openRecharge, busy } = useWallet()
+  const { wallet, seed, openRecharge, busy } = useWallet()
+  useWalletWatch()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const [historyOpen, setHistoryOpen] = useState(false)
@@ -21,7 +22,7 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
   const [help, setHelp] = useState(false)
-  useEffect(() => { sync(initial) }, [initial, sync])
+  useEffect(() => { seed(initial) }, [initial, seed])
   // Legacy server actions can still return to /recharge?order=created.
   useEffect(() => { if (showOrder) openRecharge() }, [])
   const value = wallet ?? initial

@@ -3,10 +3,15 @@ import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useT } from '@/lib/i18n/client'
 import { requestPhoto, type MediaState } from './media-actions'
+import { useWallet } from '@/components/wallet/provider'
 export function SceneImage({sessionId,unveil,cost}:{sessionId:string;unveil:boolean;cost:number}) {
   const t=useT(),router=useRouter()
+  const {refreshBalance}=useWallet()
   const [state,action,pending]=useActionState(requestPhoto,{error:null,notice:null} satisfies MediaState)
-  useEffect(()=>{if(state.notice)router.refresh()},[state.notice,router])
+  useEffect(()=>{
+    if(state.notice||state.error)void refreshBalance(true)
+    if(state.notice)router.refresh()
+  },[state,router,refreshBalance])
   return <form action={action} aria-label={t('상황 이미지')} style={{padding:'6px 16px',fontSize:12,display:'flex',gap:8,alignItems:'center',flexWrap:'wrap'}}>
     <input type="hidden" name="sessionId" value={sessionId}/>
     <button type="submit" disabled={pending} style={{border:0,borderRadius:8,padding:'8px 12px',background:'var(--color-surface-2)',color:'var(--color-text-primary)',cursor:'pointer'}}>

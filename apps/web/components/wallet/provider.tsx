@@ -9,11 +9,13 @@ import styles from './wallet.module.css'
 import { RechargeCatalog } from './recharge-catalog'
 import { msg, INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
+import { useWalletBalance } from './use-wallet-balance'
 
 type Pending = { cost: number; label: string; action: () => Promise<BalanceActionResult> }
 type WalletContext = {
   wallet: WalletSnapshot | null; state: PayState; busy: boolean
-  sync: (wallet: WalletSnapshot) => void; openRecharge: () => void
+  sync: (wallet: WalletSnapshot) => void; seed: (wallet: WalletSnapshot) => void
+  refreshBalance: (force?: boolean) => Promise<WalletSnapshot | null>; openRecharge: () => void
   requireBalance: (cost: number, action: Pending['action'], label?: string) => Promise<void>
 }
 const Context = createContext<WalletContext | null>(null)
@@ -23,13 +25,25 @@ export function useWallet() {
   return context
 }
 
+/** Watch server-side settlement only while a balance is actually visible. */
+export function useWalletWatch(active = true) {
+  const { refreshBalance } = useWallet()
+  useEffect(() => {
+    if (!active) return
+    const check = () => { if (document.visibilityState === 'visible') void refreshBalance() }
+    check()
+    const timer = setInterval(check, 5000)
+    return () => clearInterval(timer)
+  }, [active, refreshBalance])
+}
+
 /** A quote improves UX; only the existing server reservation can authorize spending. */
-export function WalletProvider({ children }: { children: ReactNode }) {
+export function WalletProvider({ children, userId = null }: { children: ReactNode; userId?: string | null }) {
   const toast = useToast()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
   const pathname = usePathname()
-  const [wallet, setWallet] = useState<WalletSnapshot | null>(null)
+  const { wallet, seed, sync, refreshBalance } = useWalletBalance(userId)
   const [state, setState] = useState<PayState>('idle')
   const [open, setOpen] = useState(false)
   const [stage, setStage] = useState<'insufficient' | 'catalog'>('catalog')
@@ -67,7 +81,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         // Another tab may have used the quote. Preserve the action and refresh before asking again.
         const fresh = await readWallet()
         if (token !== epoch.current) return
-        setWallet(fresh); pending.current = request; setNeeded(request)
+        sync(fresh); pending.current = request; setNeeded(request)
         setStage('insufficient'); setState('idle'); setOpen(true)
       } else if (result.status === 'failed') {
         pending.current = request; setNeeded(request); setError(result.error); setState('failed'); setOpen(true)
@@ -78,7 +92,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (token === epoch.current) {
         pending.current = request; setNeeded(request); setError(msg('연결을 확인하지 못했어요. 다시 시도해 주세요.')); setState('failed'); setOpen(true)
       }
-    } finally { executing.current = false; if (token === epoch.current) locked.current = false }
+    } finally {
+      executing.current = false; if (token === epoch.current) locked.current = false
+      // Includes failed actions: the server may have released a reservation.
+      void refreshBalance(true)
+    }
   }
 
   async function requireBalance(cost: number, action: Pending['action'], label = msg('이용하기')) {
@@ -90,7 +108,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const fresh = await readWallet()
       if (token !== epoch.current) return
-      setWallet(fresh)
+      sync(fresh)
       if (fresh.available >= cost) await execute(request, token)
       else { setStage('insufficient'); setOpen(true); setState('idle') }
     } catch {
@@ -102,14 +120,14 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (locked.current || open) return
     const token = ++epoch.current
     pending.current = null; setNeeded(null); setStage('catalog'); setOpen(true); setError(null); setState('loading'); locked.current = true
-    try { const fresh = await readWallet(); if (token === epoch.current) { setWallet(fresh); setState('idle') } }
+    try { const fresh = await readWallet(); if (token === epoch.current) { sync(fresh); setState('idle') } }
     catch { if (token === epoch.current) { setError(msg('잔액을 불러오지 못했어요. 다시 확인해 주세요.')); setState('failed') } }
     finally { if (token === epoch.current) locked.current = false }
   }
 
   async function reflect(fresh: WalletSnapshot, token: number) {
     if (token !== epoch.current) return
-    setWallet(fresh); setError(null)
+    sync(fresh); setError(null)
     const order = fresh.order
     if (order?.settledAt && settledSeen.current !== order.id) {
       settledSeen.current = order.id; purchase.current = null
@@ -123,23 +141,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }
 
   const refresh = useCallback(async () => {
-    if (refreshing.current || locked.current || !open) return
+    if (refreshing.current || locked.current) return
     refreshing.current = true; setChecking(true)
     const token = epoch.current
     try {
-      const fresh = await readWallet(wallet?.order?.id)
+      const fresh = await refreshBalance()
+      if (!fresh) throw new Error('balance_unavailable')
       await reflect(fresh, token)
     } catch { if (token === epoch.current) setError(msg('반영 상태를 확인하지 못했어요. 잔액은 바뀌지 않았어요. 다시 확인해 주세요.')) }
     finally { refreshing.current = false; setChecking(false) }
-  }, [open, wallet?.order?.id, toast, t])
+  }, [refreshBalance, toast, t, sync])
+
+  // A balance display in another part of the app may see settlement first.
+  useEffect(() => {
+    if (wallet?.order?.settledAt || (wallet?.order && ['expired', 'rejected'].includes(wallet.order.status))) void reflect(wallet, epoch.current)
+  }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt])
 
   useEffect(() => {
-    if (!open || !wallet?.order || wallet.order.settledAt || !['awaiting', 'approved'].includes(wallet.order.status)) return
+    if (!wallet?.order || wallet.order.settledAt || !['awaiting', 'approved'].includes(wallet.order.status)) return
     const check = () => { if (document.visibilityState === 'visible') void refresh() }
-    const timer = setInterval(check, 15_000)
+    const timer = setInterval(check, 5000)
     window.addEventListener('focus', check); document.addEventListener('visibilitychange', check)
     return () => { clearInterval(timer); window.removeEventListener('focus', check); document.removeEventListener('visibilitychange', check) }
-  }, [open, wallet?.order, refresh])
+  }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt, refresh])
 
   async function checkout() {
     if (locked.current || !selected) return
@@ -183,7 +207,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const fresh = await readWallet()
       if (token !== epoch.current) return
-      setWallet(fresh); setError(null)
+      sync(fresh); setError(null)
       if (fresh.available >= request.cost) await execute(request, token)
       else { setStage('insufficient'); setState('idle') }
     } catch { if (token === epoch.current) { setError(msg('잔액을 확인하지 못했어요. 다시 시도해 주세요.')); setState('failed') } }
@@ -195,7 +219,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const done = !!order?.settledAt && !pending.current
   const insufficient = stage === 'insufficient' && !waiting && state !== 'failed'
   const krw = (n: number) => t('{n}원', { n: n.toLocaleString(locale) })
-  return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync: setWallet, openRecharge: () => { void openRecharge() }, requireBalance }}>
+  return <Context.Provider value={{ wallet, state, busy: state === 'loading', sync, seed, refreshBalance, openRecharge: () => { void openRecharge() }, requireBalance }}>
     {children}
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
     <Sheet open={open} onClose={cancel} title={insufficient ? undefined : t('충전')} label={insufficient ? t('토큰이 부족해요') : undefined}>

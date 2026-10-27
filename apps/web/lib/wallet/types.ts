@@ -10,6 +10,8 @@ export type WalletEntry = {
 }
 export type WalletHistory = { entries: WalletEntry[]; cursor: string | null }
 export type WalletSnapshot = {
+  /** Server read identity/time keep cached route props from replacing a newer balance. */
+  userId: string; observedAt: number
   rechargeRemaining: number; monthlyRemaining: number; available: number
   plan: 'free' | 'pro'; resetsAt: string | null
   account: BankAccount | null; products: RechargeProduct[]

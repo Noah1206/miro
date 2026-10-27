@@ -22,7 +22,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   const providers = user ? [] : IDS.filter(id => resolveOAuth(id)).map(id => ({ id, label: OAUTH_LABEL[id] }))
   return (
     <LoginSheetProvider providers={providers}>
-      <AccountProfileProvider key={user?.id ?? 'guest'} userId={user?.id ?? null}><WalletProvider><div className="app-shell">
+      <AccountProfileProvider key={user?.id ?? 'guest'} userId={user?.id ?? null}><WalletProvider userId={user?.id ?? null}><div className="app-shell">
         {/* 캐릭터가 거는 전화는 어느 화면에서든 울린다. */}
         {user && <IncomingCall userId={user.id} />}
         {/* 온보딩을 마치고 가입 보상을 받은 직후 한 번 — 알림 시트가 먼저 끝난 뒤에 가운데 팝업으로 뜬다. */}

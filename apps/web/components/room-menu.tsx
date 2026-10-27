@@ -12,7 +12,7 @@ import { ConversationPersona } from '@/components/conversation-persona'
 import { InstallAppButton } from '@/components/pwa-install'
 import { Drawer } from '@/components/ui/drawer'
 import { TransitionLink } from '@/components/ui/transition-link'
-import { useWallet } from '@/components/wallet/provider'
+import { useWallet, useWalletWatch } from '@/components/wallet/provider'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
@@ -54,6 +54,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const { model, setModel } = useChatModel()
   const menuId = useId()
   const [open, setOpen] = useState(false)
+  useWalletWatch(open)
   const [panel, setPanel] = useState<Panel | null>(null)
   const close = () => setOpen(false)
   const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))

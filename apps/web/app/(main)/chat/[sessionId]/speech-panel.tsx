@@ -4,10 +4,12 @@ import { useRouter } from 'next/navigation'
 import { useT } from '@/lib/i18n/client'
 import { useImmersive, type SpeechChoice } from './immersive'
 import styles from './speech-panel.module.css'
+import { useWallet } from '@/components/wallet/provider'
 type Balance={enabled:boolean;remainingSeconds:number;reservedSeconds:number;products:Array<{id:string;seconds:number;units:number}>}
 type Quote=Balance&{maximumSeconds:number;cached:boolean;canGenerate:boolean;existingState:string|null}
 export function SpeechPanel() {
   const t=useT(),voice=useImmersive(),router=useRouter()
+  const {refreshBalance}=useWallet()
   const [balance,setBalance]=useState<Balance|null>(null),[amount,setAmount]=useState<'standard'|'extended'>('standard')
   const [selected,setSelected]=useState<SpeechChoice|null>(null),[quote,setQuote]=useState<Quote|null>(null)
   const [notice,setNotice]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('')
@@ -70,7 +72,7 @@ export function SpeechPanel() {
       setBalance(await res.json());purchase.current=null;try{sessionStorage.removeItem(pendingKey)}catch{}
       setNotice('음성 분량을 충전했어요.');setQuote(null);router.refresh()
     }catch{setError('구매를 확인하지 못했어요. 충전 잔액을 확인해 주세요.')}
-    finally{setBusy(false)}
+    finally{setBusy(false);void refreshBalance(true)}
   }
   return <section className={styles.panel} aria-label={t('음성 대사 선택')} data-speech-panel>
     <div className={styles.top}><span data-speech-balance>{balance?.enabled?t('남은 음성 {n}초',{n:balance.remainingSeconds}):t(balance?'음성 준비 중':'음성 분량 확인 중…')}</span>

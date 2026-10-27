@@ -1,7 +1,7 @@
 'use client'
 import { useEffect } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
-import { useWallet } from '@/components/wallet/provider'
+import { useWallet, useWalletWatch } from '@/components/wallet/provider'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
@@ -10,10 +10,11 @@ import { ProfileIcon } from './profile-icon'
 
 /** Real wallet overview; recharge opens the shared sheet and history uses the existing wallet route. */
 export function CreditCard({ initial }: { initial: WalletSnapshot }) {
-  const { wallet, sync, openRecharge, busy } = useWallet()
+  const { wallet, seed, openRecharge, busy } = useWallet()
+  useWalletWatch()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
-  useEffect(() => { sync(initial) }, [initial, sync])
+  useEffect(() => { seed(initial) }, [initial, seed])
   const value = wallet ?? initial
   return (
     <section className={styles.credit} aria-label={t('미로 토큰')}>

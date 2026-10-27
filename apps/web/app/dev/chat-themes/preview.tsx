@@ -24,7 +24,7 @@ const texts = [
   {id:'text-2',role:'user',kind:'user_message',content:'응. 우산 덕분에 안 젖었어.',blocks:[],at:'2026-10-12T11:22:00Z'},
   {id:'text-3',role:'character',kind:'reality_message',content:'다행이다.\n우산은 다음에 줘요.',blocks:[],at:'2026-10-12T11:23:00Z'},
 ]
-const wallet: WalletSnapshot = {rechargeRemaining:0,monthlyRemaining:0,available:0,plan:'free',resetsAt:null,account:null,products:[],order:null,history:{entries:[],cursor:null}}
+const wallet: WalletSnapshot = {userId:'preview',observedAt:0,rechargeRemaining:0,monthlyRemaining:0,available:0,plan:'free',resetsAt:null,account:null,products:[],order:null,history:{entries:[],cursor:null}}
 const choices: ChatModelChoice[] = [{id:'preview:scene',name:'미로',length:'scene',maximumTokens:0,maxOutputTokens:0},{id:'preview:long',name:'에코',length:'long',maximumTokens:0,maxOutputTokens:0}]
 export function ThemePreview() {
   const ta = useRef<HTMLTextAreaElement>(null)

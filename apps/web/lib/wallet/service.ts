@@ -63,6 +63,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
 }
 
 export async function walletSnapshot(userId: string, orderId?: string): Promise<WalletSnapshot> {
+  const observedAt = Date.now()
   const [usage, history, orders] = await Promise.all([
     usageStatus(userId), walletHistory(userId, undefined, 5),
     db.select().from(bankTransferOrders).where(and(eq(bankTransferOrders.userId, userId), orderId
@@ -84,7 +85,7 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
     depositName: o.depositorName === o.referenceCode ? o.referenceCode : `${o.depositorName} ${o.referenceCode}`,
     expiresAt: o.expiresAt.toISOString(), settledAt: o.settledAt?.toISOString() ?? null,
   } : null
-  return { rechargeRemaining: usage.rechargeRemaining, monthlyRemaining: usage.remaining,
+  return { userId, observedAt, rechargeRemaining: usage.rechargeRemaining, monthlyRemaining: usage.remaining,
     available: usage.remaining + usage.rechargeRemaining, resetsAt: usage.resetsAt?.toISOString() ?? null,
     plan: usage.plan, account, products, order, history }
 }

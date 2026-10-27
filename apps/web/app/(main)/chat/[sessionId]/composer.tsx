@@ -68,7 +68,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
   }
   const { model, setModel } = useChatModel()
   const router = useRouter()
-  const { sync, wallet, openRecharge } = useWallet()
+  const { refreshBalance, wallet, openRecharge } = useWallet()
   const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   const tokenCeiling = choice ? Math.min(choice.maximumTokens, wallet?.available ?? choice.maximumTokens) : undefined
   const previousModel = useRef(model)
@@ -104,14 +104,17 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
     const playbackId = live?.playbackId
     setLive(null)
     if (state.succeeded) {
-      void import('@/app/(main)/recharge/wallet-actions').then(m => m.readWallet()).then(sync).catch(() => {})
+      void refreshBalance(true)
       if (state.messages?.length) {
         // Keep the streaming row's identity: its current paragraph continues typing after persistence.
         append(state.messages, { playbackId })
         startRefresh(() => router.refresh())
       }
     }
-    else if (state.error && !state.retryWithSameId && !draftNow.current.trim()) setRequestId(crypto.randomUUID())
+    else if (state.error) {
+      void refreshBalance(true)
+      if (!state.retryWithSameId && !draftNow.current.trim()) setRequestId(crypto.randomUUID())
+    }
     // live 는 결과가 올 때의 값만 본다 — 블록이 올 때마다 이 효과를 다시 돌리지 않는다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, append, router, setLive])

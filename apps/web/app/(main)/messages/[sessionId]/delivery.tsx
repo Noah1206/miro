@@ -2,6 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MessengerItem } from '@/lib/messenger/inbox'
 import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
+import { useWallet } from '@/components/wallet/provider'
 
 type DeliveryItem = MessengerItem & { delivery?: 'sending' | 'failed' }
 type Delivery = { items: DeliveryItem[]; send: (text: string) => void; retry: (id: string) => void }
@@ -10,6 +11,8 @@ export const useMessenger = () => useContext(Context)
 
 export function MessengerDelivery({ sessionId, initial, children }: { sessionId: string; initial: MessengerItem[]; children: ReactNode }) {
   const { model } = useChatModel()
+  const { refreshBalance } = useWallet()
+  const walletItems = useRef('')
   const [items, setItems] = useState<DeliveryItem[]>(initial)
   const inflight = useRef(new Set<string>())
   const mounted = useRef(true)
@@ -27,8 +30,8 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
       if (mounted.current) setItems(previous => previous.map(value => value.id === item.id ? result.message : value))
     } catch {
       if (mounted.current) setItems(previous => previous.map(value => value.id === item.id ? { ...value, delivery: 'failed' } : value))
-    } finally { clearTimeout(timeout); inflight.current.delete(item.id) }
-  }, [sessionId])
+    } finally { clearTimeout(timeout); inflight.current.delete(item.id); void refreshBalance(true) }
+  }, [sessionId, refreshBalance])
   const send = useCallback((text: string) => {
     const item: DeliveryItem = { id: crypto.randomUUID(), role: 'user', kind: 'messenger', content: text.trim(), blocks: [], at: new Date().toISOString(), readAt: null, chatModel: model, delivery: 'sending' }
     setItems(previous => [...previous, item])
@@ -46,6 +49,11 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
         const response = await fetch(`/api/messages?sessionId=${encodeURIComponent(sessionId)}`, { cache: 'no-store', signal: controller.signal })
         if (!response.ok) return
         const result = await response.json() as { items: MessengerItem[] }
+        const signature = result.items.map(item => `${item.id}:${item.readAt ?? ''}`).join('|')
+        if (!disposed && signature !== walletItems.current) {
+          walletItems.current = signature
+          void refreshBalance(true)
+        }
         if (!disposed) setItems(previous => {
           const known = new Set(result.items.map(item => item.id))
           return [...result.items, ...previous.filter(item => !known.has(item.id))]
@@ -59,6 +67,6 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
     window.addEventListener('focus', visible)
     document.addEventListener('visibilitychange', visible)
     return () => { disposed = true; mounted.current = false; controller.abort(); clearInterval(timer); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible) }
-  }, [sessionId])
+  }, [sessionId, refreshBalance])
   return <Context.Provider value={{ items, send, retry }}>{children}</Context.Provider>
 }
