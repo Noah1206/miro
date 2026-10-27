@@ -27,6 +27,13 @@ describe('context builder', () => {
     expect(noAppearance.system).not.toContain('외형 설정 (관련 장면에서만 참고)')
   })
 
+  // 10/27 경쟁 앱 이용자 불만에서 가져온 규칙: 제3자 난입·이유 없는 적대·초성/음슴체·호칭 혼동을 막는다.
+  it('guards against third-party takeovers, unprovoked hostility, chat shorthand and wrong address terms', () => {
+    const { system } = buildContext(snapshot())
+    for (const rule of ['제3의 인물(NPC·지나가는 사람)은 장면에 꼭 필요할 때만', '이유 없는 적대는 하지 않습니다',
+      '동갑에게 형·누나라고 하지 않는', '초성(ㅋㅋ·ㅇㅇ)·음슴체']) expect(system).toContain(rule)
+  })
+
   // 10/2 자기 삶: 대화가 없던 동안 겪은 일은 캐릭터 본인의 경험으로 실린다 — 꺼낼지는 캐릭터가 정한다.
   it('carries what the character lived through while away, as its own experience', () => {
     const { prompt } = buildContext(snapshot({ life: ['2026-10-02 (목) 15:30 · 근무 · 오후 점검에서 사각지대를 찾았다.'] }))
