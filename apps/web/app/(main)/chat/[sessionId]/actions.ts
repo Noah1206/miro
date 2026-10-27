@@ -9,6 +9,9 @@ import { db, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { msg } from '@/lib/i18n'
 import { changeStoryDate, type StoryDateResult } from '@/lib/simulation/story-date'
+import { bridgeUnveilToNormal } from '@/lib/simulation/unveil-bridge'
+import { afterResponse } from '@/lib/defer'
+import { observe } from '@/lib/observe'
 
 // 캐릭터챗 한 턴은 스트리밍 경로(/api/turn)로 간다(10/9) — 서버 액션은 답을 받는 대로 보낼 수 없다.
 
@@ -33,6 +36,9 @@ export async function setAdultMode(sessionId: string, on: boolean, agreed = fals
   if (!preference.ok) return { error: preference.error }
   try {
     const target = await createRoleplaySession(user.id, s.characterId, { unveil: on })
+    // 언베일 방을 끄고 일반 방으로 갈 때 — 노골적 표현을 뺀 줄거리만 일반 방 기억으로 넘긴다(응답 뒤, 실패해도 이동은 그대로).
+    if (!on && s.adultSince && target.sessionId !== sessionId) await afterResponse(() => bridgeUnveilToNormal(user.id, sessionId, target.sessionId)
+      .catch(e => observe('unveil.bridge_failed', { sessionId: target.sessionId, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' })))
     redirect(`/chat/${target.sessionId}`)
   } catch (error) {
     if (error instanceof Error && error.message.startsWith('UNVEIL_UNAVAILABLE:')) return { error: error.message.slice('UNVEIL_UNAVAILABLE:'.length) }
