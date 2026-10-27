@@ -1,5 +1,6 @@
 'use client'
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
+import { useRoomControls } from '@/components/room-controls'
 import type { UserPersona } from '@miro/domain'
 import type { CharacterEntry } from '@/lib/character-entry'
 import type { AccountProfile } from '@/lib/account-profile'
@@ -55,6 +56,12 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const menuId = useId()
   const [open, setOpen] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
+  const { request } = useRoomControls()
+  useEffect(() => {
+    if (!request) return
+    setPanel(request.panel); setOpen(true)
+    void refreshProfile(); void refreshBalance()
+  }, [request, refreshProfile, refreshBalance])
   const close = () => setOpen(false)
   const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   const families = [...new Set(choices.map(c => c.id.replace(/:(scene|long)$/, '')))]

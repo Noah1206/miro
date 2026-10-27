@@ -1,13 +1,13 @@
 'use client'
 import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-input-tools'
-import { ChatRoomIcon } from '@/components/chat-icons'
 import { useEffect, useRef, useState, useTransition, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
+import { Pressable, StatusIcon } from '@/components/ui'
 import styles from './chat.module.css'
 import { tween } from '@/lib/motion/tokens'
-import { ModelPicker, useChatModel } from './model-picker'
+import { type ModelPicker, useChatModel } from './model-picker'
+import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
 import { useTurns } from './turns'
@@ -24,8 +24,8 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 헤더에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions, roomHref, commands = [] }: {
-  sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; roomHref?: string
+export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [] }: {
+  sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; messengerHref?: string
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
 }) {
@@ -33,8 +33,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
   const { append, live, setLive, calendarPending } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
-  const [command, setCommand] = useState<string | null>(null)
-  const [commandOpen, setCommandOpen] = useState(false)
+  const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
   const hadRefresh = useRef(false)
   const sending = useRef(false)
@@ -86,6 +85,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
       const saved = JSON.parse(sessionStorage.getItem(storageKey) ?? 'null')
       if (saved && typeof saved.input === 'string' && saved.input.length <= 2000 && typeof saved.requestId === 'string' && /^[0-9a-f-]{36}$/i.test(saved.requestId)) {
         input = saved.input; id = saved.requestId
+        if (saved.command && typeof saved.command.name === 'string' && saved.command.name.length > 0 && saved.command.name.length <= 12
+          && (!saved.command.sourceId || typeof saved.command.sourceId === 'string' && /^[0-9a-f-]{36}$/i.test(saved.command.sourceId))) setCommand(saved.command)
         const restoredModel = modelOptions.choices?.some(c => c.id === saved.model) || saved.model === 'pro' ? saved.model : 'miro'
         previousModel.current = restoredModel; setModel(restoredModel)
       }
@@ -95,10 +96,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
   useEffect(() => {
     if (!ready) return
     try {
-      if (draft) sessionStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId, model }))
+      if (draft || command) sessionStorage.setItem(storageKey, JSON.stringify({ input: draft, requestId, model, command }))
       else sessionStorage.removeItem(storageKey)
     } catch { /* Draft persistence must not prevent sending. */ }
-  }, [draft, requestId, model, ready, storageKey])
+  }, [draft, command, requestId, model, ready, storageKey])
   useEffect(() => {
     // 결과가 오면 오던 답(스트리밍)을 거둔다 — 성공이면 같은 렌더에서 저장본이 그 자리를 채우고, 실패면 저장되지 않은 답은 사라진다.
     const playbackId = live?.playbackId
@@ -179,11 +180,12 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
-        <input type="hidden" name="command" value={command ?? ''} />
+        <input type="hidden" name="command" value={command?.name ?? ''} />
+        <input type="hidden" name="commandId" value={command?.sourceId ?? ''} />
         {/* 고른 명령어(10/19) — 이번 턴만 이 지시대로. 글을 덧붙이지 않아도 보낼 수 있다. */}
         {command && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
           <span className="t-caption" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, background: 'var(--color-accent)', color: 'var(--color-accent-on)', fontWeight: 'var(--weight-semibold)' }}>
-            /{command}
+            /{command.name}
             <button type="button" onClick={() => { setCommand(null); setRequestId(crypto.randomUUID()) }} aria-label={t('명령어 빼기')} style={{ display: 'grid', placeItems: 'center', width: 18, height: 18, padding: 0, border: 0, borderRadius: 9, background: 'rgba(0,0,0,.18)', color: 'inherit', cursor: 'pointer' }}>
               <svg aria-hidden width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
             </button>
@@ -194,29 +196,18 @@ export function ChatComposer({ sessionId, characterName, modelOptions, roomHref,
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
           />
-        {/* 입력창 안 아래 줄(10/17 요청): 왼쪽에 더하기·문자·대화 방식, 오른쪽에 이모지·보내기 — 작게, 같은 줄에. */}
+        {/* Model choice is in the header; room controls are in the slash palette. */}
         <div className={styles.composerRow}>
           <div className={styles.composerTools}>
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-            {commands.length > 0 && <div style={{ position: 'relative' }}>
-              <button type="button" className={styles.toolButton} aria-label={t('명령어')} aria-expanded={commandOpen} disabled={calendarPending || !ready} onClick={() => setCommandOpen(v => !v)}
-                style={{ fontSize: 16, fontWeight: 'var(--weight-semibold)' }}>/</button>
-              {commandOpen && <div role="menu" aria-label={t('명령어')} style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, zIndex: 30, minWidth: 240, maxWidth: 320, maxHeight: 260, overflowY: 'auto', padding: 6, borderRadius: 'var(--radius-md)', background: 'var(--color-surface-2)', boxShadow: '0 8px 24px rgba(0,0,0,.35)' }}>
-                {commands.map(cmd => <button key={cmd.name} type="button" role="menuitem" onClick={() => { setCommand(cmd.name); setCommandOpen(false); setRequestId(crypto.randomUUID()); ta.current?.focus() }}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', border: 0, borderRadius: 'var(--radius-sm)', background: command === cmd.name ? 'var(--color-surface-3)' : 'transparent', color: 'var(--color-text-primary)', cursor: 'pointer' }}>
-                  <span className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>/{cmd.name}</span>
-                  {cmd.hint && <span className="t-caption" style={{ display: 'block', color: 'var(--color-text-secondary)' }}>{cmd.hint}</span>}
-                </button>)}
-              </div>}
-            </div>}
             {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
             <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}
               onSubmit={value => { setDraft(value); setRequestId(crypto.randomUUID()); setTimeout(() => ref.current?.requestSubmit(), 0) }} />
-            {roomHref && <TransitionLink href={roomHref} aria-label={t('문자')} className={styles.toolButton}><ChatRoomIcon /></TransitionLink>}
-            <ModelPicker {...modelOptions} place="up" />
           </div>
         <div className={styles.composerBar}>
           <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+          <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready}
+            onPick={value => { setCommand(value); setRequestId(crypto.randomUUID()) }} />
           <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
             {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
           </Pressable>

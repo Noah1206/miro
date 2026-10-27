@@ -24,6 +24,7 @@ import { measured, observe, timed } from '@/lib/observe'
 import { type LoadedAgency } from '@/lib/agency/runtime'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
+import { resolveChatCommand } from './chat-command'
 
 export type ConversationOutcome =
   | {
@@ -48,7 +49,7 @@ export type ConversationOutcome =
       /** 문자: 캐릭터가 지금 바빠서 답장을 나중으로 미뤘다. until 은 ISO, label 은 뭘 하는 중인지. */
       delayed?: { until: string; label: string }
     }
-  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' | 'model_unavailable' }
+  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'safety' | 'model_unavailable' | 'command_unavailable' }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
   | { ok: false; reason: 'budget'; kind: BudgetKind }
 
@@ -74,8 +75,9 @@ async function executeTurn(opts: {
   tokenCeiling?: number
   /** Only scene turns execute here; messenger reception returns before this pipeline. */
   mode?: 'chat'
-  /** 명령어 이름(10/19) — 캐릭터에 붙은 명령어면 그 지시가 이번 턴의 대사 프롬프트에 한 번 실린다. */
+  /** 캐릭터 명령어 이름 또는 접근 가능한 라이브러리 ID — 이번 턴의 대사에만 적용한다. */
   command?: string
+  commandId?: string
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
   stream?: TurnStream
 }): Promise<ConversationOutcome> {
@@ -90,6 +92,8 @@ async function executeTurn(opts: {
     const loaded = await measured('chat.snapshot', () => loadSession(sessionId, userId, input))
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
+    const commandRule = opts.command || opts.commandId ? await resolveChatCommand(userId, loaded.commands, { name: opts.command, sourceId: opts.commandId }) : null
+    if ((opts.command || opts.commandId) && !commandRule) return { ok: false, reason: 'command_unavailable' }
     const now = new Date()
     const boundary = await applyContactBoundaryRequest(sessionId, userId, input, opts.requestId, now,
       loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) ?? loaded.contactBoundary
@@ -133,8 +137,7 @@ async function executeTurn(opts: {
       const provider = resolveRpLLM(loaded.characterName, context)
       const directive = contactBoundaryDirective(boundary, now)
       const firstMeeting = firstPromise ? firstMeetingDirective(firstPromise.when) : ''
-      // 명령어(10/19) — 제작자가 붙인 한 턴 지시. 이번 대사 한 번만 따른다(기억·관계 규칙은 평소대로).
-      const commandRule = opts.command ? loaded.commands.find(c => c.name === opts.command) : undefined
+      // 서버에서 확인한 한 턴 지시. 이번 대사 한 번만 따른다(기억·관계 규칙은 평소대로).
       const commandDirective = commandRule ? `사용자가 명령어 /${commandRule.name} 을 썼습니다. 이번 응답 한 번은 다음 지시대로 씁니다(성격·말투·상황은 그대로): ${commandRule.prompt}` : ''
       // Keep the provider's usage/provenance getters: a spread would freeze or discard them.
       llm = directive || firstMeeting || commandDirective ? new Proxy(provider, { get(target, key) {
@@ -277,7 +280,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (opts.mode === 'messenger') {
     const requestId = opts.requestId ?? randomUUID()
     try {
@@ -293,7 +296,7 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
   // 같은 글이라도 모델·명령어가 다르면 다른 요청이다(멱등 키).
-  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '')
+  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '') + (opts.commandId ? '\0book:' + opts.commandId : '')
   try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, keyed, opts.requestId)) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached

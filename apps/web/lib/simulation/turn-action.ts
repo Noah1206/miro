@@ -37,14 +37,16 @@ const fail = (error: string): TurnState => ({ error, notice: null, limit: null }
  */
 export async function turnFromForm(userId: string, form: FormData, opts: { mode: 'chat' | 'messenger'; path: (sessionId: string) => string; stream?: TurnStream }): Promise<TurnState> {
   const sessionId = String(form.get('sessionId') ?? '')
-  // 명령어(10/19): 글 없이 명령어만 보내면 `/이름` 이 사용자 말풍선이 되고, 지시는 서버가 캐릭터의 명령어 목록에서 찾는다.
+  // 글 없이 명령어만 보내면 `/이름`이 말풍선이 된다. 지시는 서버가 캐릭터 또는 접근 가능한 라이브러리에서 찾는다.
   const command = opts.mode === 'chat' ? String(form.get('command') ?? '').trim().replace(/^\//, '').slice(0, 12) || undefined : undefined
+  const commandId = opts.mode === 'chat' ? String(form.get('commandId') ?? '').trim() || undefined : undefined
   const input = String(form.get('input') ?? '').trim() || (command ? `/${command}` : '')
   if (input.length === 0) return { error: null, notice: null, limit: null }
 
-  const r = await runConversationTurn({ userId, sessionId, input, command, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
+  const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {
     switch (r.reason) {
+      case 'command_unavailable': return fail(msg('명령어를 사용할 수 없어요. 다시 선택해 주세요.'))
       case 'usage': return { error: exceededMessage(r.error), notice: null, limit: { plan: r.error.plan, resetsAt: r.error.resetsAt.toISOString() } }
       case 'model_unavailable': return fail(msg('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.'))
       case 'budget': return fail(r.kind === 'turn_tokens' ? msg('이번 답변의 생성 한도에 도달했어요. 토큰은 차감되지 않았어요. 입력을 줄이거나 다른 답변 길이를 선택해 주세요.') : r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)

@@ -1501,5 +1501,17 @@
  "채팅방 설정": "Chat settings",
  "캐릭터 정보": "Character details",
  "함께하는 대화": "Your conversation",
- "환경": "Preferences"
+ "환경": "Preferences",
+ "답변 길이와 대화 방식 선택": "Choose reply length and chat style",
+ "대화 기능": "Chat tools",
+ "대화에서 사용할 내 정보": "Your identity in this conversation",
+ "라이브러리": "Library",
+ "명령어가 없어요.": "No commands found.",
+ "명령어를 사용할 수 없어요. 다시 선택해 주세요.": "This command is unavailable. Please choose again.",
+ "명령어를 찾아 대화에 적용": "Find a command to use in this chat",
+ "문자방": "Messages",
+ "보유 토큰 확인 및 충전": "Check your balance and top up",
+ "이 대화의 기억 확인": "View memories from this chat",
+ "채팅방 화면과 색상 변경": "Change chat appearance and colors",
+ "캐릭터와 문자로 대화": "Message this character"
 }

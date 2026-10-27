@@ -10,6 +10,7 @@ import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ease, spring } from '@/lib/motion/tokens'
 import { Outfit } from 'next/font/google'
+import { RoomControlsProvider, useRoomControls } from '@/components/room-controls'
 
 /** 대화 방식 이름은 영문 상표 글자(10/17 요청: MIRO·ECHO, 제대로 된 무료 서체) — 이 두 단어에만 쓴다. */
 const brand = Outfit({ subsets: ['latin'], weight: ['600'], display: 'swap' })
@@ -28,7 +29,7 @@ export function ChatModelProvider({ children, initialWallet, initialModel = 'mir
     setModel(value)
     if (storageKey) try { localStorage.setItem(storageKey, value) } catch { /* Keep the in-memory choice. */ }
   }
-  return <Selection.Provider value={{ model, setModel: select }}>{children}</Selection.Provider>
+  return <RoomControlsProvider><Selection.Provider value={{ model, setModel: select }}>{children}</Selection.Provider></RoomControlsProvider>
 }
 export const useChatModel = () => useContext(Selection)
 /** Read-only header label follows the same selection as the composer and room menu. */
@@ -46,7 +47,7 @@ export function ModelPicker({ choices = [], place }: { freeReady: boolean; proRe
   const locale = INTL_LOCALE[useLanguage()]
   const { model, setModel } = useChatModel()
   const { wallet, openRecharge } = useWallet()
-  const [open, setOpen] = useState(false)
+  const { pickerOpen: open, setPickerOpen: setOpen } = useRoomControls()
   const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   const root = useRef<HTMLDivElement>(null)
   const panel = useRef<HTMLDivElement>(null)

@@ -12,7 +12,7 @@ import { COPY } from '@/lib/copy'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
-import { ChatModelProvider } from './model-picker'
+import { ChatModelProvider, ModelPicker } from './model-picker'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
@@ -58,7 +58,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const history = sceneMessages(all)
 
   const s = loaded.snapshot
-  const affinity = Math.max(0, Math.min(100, Math.round(s.relationship.attraction)))
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
@@ -74,12 +73,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1>
-            {/* Keep relationship progression and its bar; omit the numeric label. */}
-            <p className={styles.affinity} aria-hidden="true" data-pace={s.character.personality.relationshipProfile?.opening?.value ?? 'normal'}>
-              <span className={styles.affinityBar}><i style={{ width: `${affinity}%` }} /></span>
-            </p></div>
+          <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
+          <ModelPicker {...modelOptions} />
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
         </header>
         <VoiceStatus />
@@ -99,9 +95,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
-        {/* 미로 캐릭터는 문자 페이지가 따로 있다 — 문자·대화 방식 버튼은 입력창 안 아래 줄에(10/17). */}
+        {/* The room menu keeps the DM link; the model picker lives in the header. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
-        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} roomHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands} />
+        <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands} />
       </section>
 
     </main></ChatTheme></ImmersiveProvider></TurnsProvider></ChatModelProvider>
