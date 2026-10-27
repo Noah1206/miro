@@ -5,7 +5,7 @@ import type { TurnStream } from '@miro/engine'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { undoLastTurn } from '@/lib/simulation/reroll'
 import { clientIp } from '@/lib/alpha/session'
-import { UsageExceededError, exceededMessage, usageStatus } from '@/lib/usage/guard'
+import { type UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
 
@@ -49,9 +49,7 @@ export async function turnFromForm(userId: string, form: FormData, opts: TurnOpt
   const reroll = opts.mode === 'chat' ? String(form.get('reroll') ?? '') : ''
   if (!reroll) return turnState(userId, form, opts)
   if (!UUID.test(reroll)) return fail(msg('이 답은 지금 다시 받을 수 없어요.'))
-  // 잔액이 없으면 되돌리지 않는다 — 옛 답만 사라지고 새 답은 못 받는다.
-  const balance = await usageStatus(userId)
-  if (balance.remaining + balance.rechargeRemaining <= 0) return exceeded(new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()))
+  // 리롤은 무료 — 되돌리면서 옛 턴의 차감을 돌려주므로 잔액이 0이어도 다시 받을 수 있다.
   const undone = await undoLastTurn(userId, String(form.get('sessionId') ?? ''), reroll)
   if (!undone.ok) return fail(msg('이 답은 지금 다시 받을 수 없어요.'))
   opts.onUndone?.(undone.messageIds)

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { eq, inArray } from 'drizzle-orm'
-import { db, users, roleplaySessions, relationships, messages, turnUndos } from '@miro/db'
+import { db, users, roleplaySessions, relationships, messages, turnUndos, usageLedger } from '@miro/db'
 import { createRoleplaySession } from '@/lib/simulation/start'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { undoLastTurn } from '@/lib/simulation/reroll'
@@ -18,16 +18,20 @@ async function playedTurn(input: string) {
   made.push(u!.id)
   const { sessionId } = await createRoleplaySession(u!.id, 'thomas')
   const before = (await db.select().from(relationships).where(eq(relationships.sessionId, sessionId)))[0]!
-  const turn = await runConversationTurn({ userId: u!.id, sessionId, requestId: randomUUID(), input })
+  const requestId = randomUUID()
+  const turn = await runConversationTurn({ userId: u!.id, sessionId, requestId, input })
   if (!turn.ok) throw new Error('turn failed')
-  return { userId: u!.id, sessionId, before, reply: turn.messages!.find(m => m.role === 'character')! }
+  return { userId: u!.id, sessionId, requestId, before, reply: turn.messages!.find(m => m.role === 'character')! }
 }
 
 /** 리롤(10/27): 마지막 장면 턴을 그 턴 전으로 되돌린다. 마지막이 아니거나 남의 대화면 건드리지 않는다. */
 describeDb('reroll undo', () => {
-  it('restores the state from before the last turn, removes its messages, and only once', async () => {
-    const { userId, sessionId, before, reply } = await playedTurn('오늘 소개팅 나갔다 왔어')
+  it('restores the state from before the last turn, removes its messages, refunds its charge, and only once', async () => {
+    const { userId, sessionId, requestId, before, reply } = await playedTurn('오늘 소개팅 나갔다 왔어')
+    const charge = (await db.select().from(usageLedger).where(eq(usageLedger.idempotencyKey, `turn:${requestId}`)))[0]!
+    expect(charge.status).toBe('committed')
     const [undo] = await db.select().from(turnUndos).where(eq(turnUndos.sessionId, sessionId))
+    expect(undo!.before.ledgerId).toBe(charge.id)
     expect(undo).toMatchObject({ turnIndex: 1, input: '오늘 소개팅 나갔다 왔어' })
     expect(undo!.messageIds).toContain(reply.id)
 
@@ -40,6 +44,8 @@ describeDb('reroll undo', () => {
     expect((await db.select({ n: roleplaySessions.turnCount }).from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)))[0]!.n).toBe(0)
     expect(await db.select().from(messages).where(inArray(messages.id, undo!.messageIds))).toEqual([])
     expect(await db.select().from(turnUndos).where(eq(turnUndos.sessionId, sessionId))).toEqual([])
+    // 리롤은 무료 — 되돌린 턴의 차감은 돌려준다.
+    expect((await db.select({ status: usageLedger.status }).from(usageLedger).where(eq(usageLedger.id, charge.id)))[0]!.status).toBe('rolled_back')
     expect(await undoLastTurn(userId, sessionId, reply.id)).toEqual({ ok: false, reason: 'stale' })
   })
 

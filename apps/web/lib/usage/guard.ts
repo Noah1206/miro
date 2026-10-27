@@ -201,12 +201,13 @@ export async function commit(reservationId: string, actualUnits?: number, existi
 
 /** Provider 실패 시 되돌린다. 실패한 생성에 사용량을 물리지 않는다. */
 /** Reuse the caller transaction so request failure and refund commit together. */
-export async function rollbackInTransaction(tx: UsageTransaction, reservationId: string): Promise<void> {
+/** committed: 이미 확정된 차감도 돌려준다 — 리롤(10/27)은 무료라 되돌린 턴의 차감을 같은 출처로 돌려준다. */
+export async function rollbackInTransaction(tx: UsageTransaction, reservationId: string, opts: { committed?: boolean } = {}): Promise<void> {
     const [owner] = await tx.select({ userId: usageLedger.userId }).from(usageLedger).where(eq(usageLedger.id, reservationId))
     if (!owner) return
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${owner.userId}))`)
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
-    if (!l || l.status !== 'reserved') return
+    if (!l || (l.status !== 'reserved' && !(opts.committed && l.status === 'committed'))) return
     await tx.update(usageLedger).set({ status: 'rolled_back' }).where(eq(usageLedger.id, reservationId))
     // 각 출처로 정확히 되돌린다 — 충전에서 쓴 만큼은 그 잔액으로, 나머지는 월간 창으로.
     for (const part of await tx.select().from(rechargeLedger).where(eq(rechargeLedger.ledgerId, reservationId))) {

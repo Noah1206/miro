@@ -3,6 +3,7 @@ import {
   db, characterRuntimeStates, conversationRequests, events, memories, memoryJobs, messages, npcs, relationships, reports,
   roleplaySessions, turnUndos, userMoments, worldStates,
 } from '@miro/db'
+import { rollbackInTransaction } from '@/lib/usage/guard'
 
 export type UndoResult =
   | { ok: true; messageIds: string[]; input: string; command: string | null; commandId: string | null }
@@ -12,7 +13,8 @@ export type UndoResult =
  * 리롤(10/27) — 마지막 장면 턴을 그 턴 전으로 되돌린다. 같은 말을 다시 보내는 건 부른 쪽(턴 파이프라인)이 한다.
  * commitTurn 이 남긴 되돌리기 기록(turn_undos)으로 세계·관계·대화방·자율성 상태를 이전 값으로 덮고, 이 턴이 만든 메시지·사건·NPC·일정·기억을 지운다.
  * 그 답이 아직 마지막일 때만 — 턴 수와 버전이 그 턴 직후 그대로이고, 뒤에 온 메시지·진행 중인 요청이 없고, 숨겨지거나 신고된 답이 아닐 때.
- * 이미 만든 답이라 차감된 사용량은 돌려주지 않는다.
+ * 리롤은 무료다(10/27 사용자 결정 — 리롤은 답이 제대로 안 나왔을 때 쓰는 것). 되돌린 턴의 차감을 같은 출처(월간·충전)로 돌려주므로,
+ * 몇 번을 다시 받든 마지막에 남긴 답 하나만 차감된다. 공급자 원가는 사용자별 월 AI 예산과 분당 요청 한도가 막는다.
  * ponytail: 응답 뒤 기억 작업이 이 턴 때문에 바꾼 옛 기억(교체·요약 덮어쓰기)은 되살리지 않는다 — 다음 요약 작업이 다시 만든다.
  */
 export async function undoLastTurn(userId: string, sessionId: string, replyId: string): Promise<UndoResult> {
@@ -48,6 +50,9 @@ export async function undoLastTurn(userId: string, sessionId: string, replyId: s
     const [busy] = await tx.select({ id: conversationRequests.id }).from(conversationRequests)
       .where(and(eq(conversationRequests.sessionId, sessionId), eq(conversationRequests.status, 'pending'), gt(conversationRequests.leaseUntil, new Date()))).limit(1)
     if (busy) return { ok: false, reason: 'busy' }
+
+    /* ---- 이 턴의 차감을 돌려준다(리롤은 무료) ---- */
+    if (b.ledgerId) await rollbackInTransaction(tx, b.ledgerId, { committed: true })
 
     /* ---- 이 턴이 만든 것 ---- */
     if (b.events.created.length) await tx.delete(events).where(and(eq(events.sessionId, sessionId), inArray(events.id, b.events.created)))

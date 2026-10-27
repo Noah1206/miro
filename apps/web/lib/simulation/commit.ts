@@ -403,6 +403,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         session: { turnCount: session.turnCount, lastInteractionAt: session.lastInteractionAt.toISOString(),
           pendingRealityIntent: session.pendingRealityIntent, characterState: session.characterState },
         command: { name: input.undo.command, sourceId: input.undo.commandId },
+        ledgerId: input.reservationId ?? null,
         ...undo,
       }
       const record = { turnIndex: input.turnIndex, messageIds: inserted.map(m => m.id), input: input.userInput, before, createdAt: new Date() }
