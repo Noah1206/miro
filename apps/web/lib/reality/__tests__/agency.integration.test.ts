@@ -10,7 +10,7 @@ import { conversationRequests, messengerInbox } from '@miro/db'
 import { AGENCY_PLANNER_VERSION, CHARACTER_LIFE_VERSION } from '@miro/engine'
 import { randomUUID } from 'node:crypto'
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import {
   db, users, userSettings, characters, contactProfiles, roleplaySessions, worldStates, relationships, events,
   generatedMedia, messages, memories, realityContacts, characterRevisions, characterRuntimeStates, characterDecisions, stateTransitions, characterLifeEvents,
@@ -570,6 +570,32 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
     const stale = await receiveMessenger({ ...common, requestId: randomUUID(), input: '세 번째 문자', sentAt: '2000-01-01T00:00:00.000Z' }, NOW)
     expect(stale.at).toBe(NOW.toISOString())
     expect((await messengerItems(f.userId, f.id))!.filter(item => item.kind === 'messenger').map(item => item.content)).toEqual(['첫 번째 문자', '두 번째 문자', '세 번째 문자'])
+  })
+
+  it('preserves selected DM models across replay, reading and delayed batched replies', async () => {
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ id: 'dm-choice', provider: 'mock', providerModelId: 'dm-choice',
+      tier: 'standard', capabilities: ['dialogue'], maxContextTokens: 32768, maxOutputTokens: 8192, inputCost: 0.1, outputCost: 0.2 }]))
+    vi.stubEnv('MIRO_CHAT_MODEL_ID', '')
+    const f = await fixture()
+    const model = provider({ action: 'contact' })
+    const first = { userId: f.userId, sessionId: f.id, requestId: randomUUID(), input: '지금 이야기해도 될까요?', chatModel: 'model:dm-choice:scene' }
+    const a = await receiveMessenger(first, NOW)
+    expect((await receiveMessenger(first, NOW)).id).toBe(a.id)
+    await expect(receiveMessenger({ ...first, chatModel: 'model:dm-choice:long' }, NOW)).rejects.toThrow('conflict')
+    await expect(receiveMessenger({ ...first, requestId: randomUUID(), chatModel: 'forged-model' }, NOW)).rejects.toThrow('invalid_model')
+    const b = await receiveMessenger({ ...first, requestId: randomUUID(), input: '조금 더 자세히 듣고 싶어요.', chatModel: 'model:dm-choice:long' }, new Date(NOW.getTime() + 1))
+    expect(model.calls).toHaveLength(0)
+    expect((await messengerItems(f.userId, f.id))!.filter(item => item.kind === 'messenger').map(item => item.chatModel))
+      .toEqual(['model:dm-choice:scene', 'model:dm-choice:long'])
+    const [profile] = await db.select().from(contactProfiles).where(eq(contactProfiles.characterId, f.characterId))
+    const readTime = new Date(NOW.getTime() + 1000)
+    await runMessengerInbox(readTime, { sessionId: f.id })
+    await runMessengerInbox(new Date(readTime.getTime() + replyPauseMs(profile!.replyDelayMinutes) + 1000), { sessionId: f.id })
+    expect(vi.mocked(providers.createAI).mock.calls.some(([opts]) => opts.context?.dialogueModelId === 'dm-choice')).toBe(true)
+    expect(model.calls.find(call => call.version === REALITY_CONTENT_VERSION)?.system).toContain('ECHO(긴 대화)')
+    const inbox = await db.select().from(messengerInbox).where(inArray(messengerInbox.messageId, [a.id, b.id]))
+    expect(inbox.every(item => item.status === 'replied')).toBe(true)
+    expect(inbox.map(item => item.chatModel).sort()).toEqual(['model:dm-choice:long', 'model:dm-choice:scene'])
   })
 
   it('stays unread while asleep, then reads without replying and can leave the message unanswered', async () => {

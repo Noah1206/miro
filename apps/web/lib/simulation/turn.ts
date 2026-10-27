@@ -286,7 +286,7 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
         characterState: DEFAULT_CHARACTER_STATE, firedRules: [], realityIntent: null, reality: null, newEventType: null, sceneChanged: false,
         messages: [{ ...message, turnIndex: 0 }] }
     } catch (error) {
-      return { ok: false, reason: error instanceof MessengerError && error.reason !== 'rate_limit' ? error.reason : 'conflict' }
+      return { ok: false, reason: error instanceof MessengerError && error.reason !== 'rate_limit' && error.reason !== 'invalid_model' ? error.reason : 'conflict' }
     }
   }
   if (!opts.input.trim()) return { ok: false, reason: 'empty' }

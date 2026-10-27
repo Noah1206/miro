@@ -12,8 +12,9 @@ export async function POST(req: Request) {
   if (!user) return Response.json({ error: 'unauthorized' }, { status: 401, headers })
   const body = await req.json().catch(() => null)
   if (!body || !['sessionId', 'requestId', 'input'].every(key => typeof body[key] === 'string')) return Response.json({ error: 'invalid' }, { status: 400, headers })
+  if (body.chatModel !== undefined && (typeof body.chatModel !== 'string' || body.chatModel.length > 200)) return Response.json({ error: 'invalid_model' }, { status: 400, headers })
   try {
-    const message = await receiveMessenger({ userId: user.id, sessionId: body.sessionId, requestId: body.requestId, input: body.input, sentAt: typeof body.sentAt === 'string' ? body.sentAt : undefined })
+    const message = await receiveMessenger({ userId: user.id, sessionId: body.sessionId, requestId: body.requestId, input: body.input, sentAt: typeof body.sentAt === 'string' ? body.sentAt : undefined, chatModel: body.chatModel })
     return Response.json({ message }, { headers })
   } catch (error) {
     const reason = error instanceof MessengerError ? error.reason : 'unavailable'

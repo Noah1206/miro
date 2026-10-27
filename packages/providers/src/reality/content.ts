@@ -14,10 +14,10 @@ export type RealityContent = { text: string; tone: 'warm' | 'neutral' | 'terse' 
 export const REALITY_CONTENT_VERSION = 'reality:v6-grounded-relationship'
 // The model chooses an exceptional long message from context. Ordinary texts have a
 // server-checked ceiling; never truncate a sentence or split it into artificial sends.
-const TextingContent = RealityContent.extend({
+const textingContent = (extended: boolean) => RealityContent.extend({
   lengthReason: z.enum(['brief', 'requested_detail', 'important_explanation', 'letter']).default('brief'),
 }).superRefine((value, ctx) => {
-  if (value.lengthReason === 'brief' && [...value.text].length > 120) {
+  if (!extended && value.lengthReason === 'brief' && [...value.text].length > 120) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['text'], message: 'Ordinary messages must fit within 120 characters.' })
   }
 })
@@ -31,6 +31,8 @@ const TextingResponse = { type: 'object', additionalProperties: false,
 
 export type RealityContentInput = {
   characterName: string
+  /** Captured user setting for an inbound DM reply; unsolicited contacts keep the default. */
+  replyLength?: 'scene' | 'long'
   /** Only unsolicited legacy opportunities can abstain; replies and authorized agency actions cannot. */
   allowAbstain?: boolean
   personality: string
@@ -134,9 +136,11 @@ export async function generateRealityContent(
     '승인된 연락 이유와 마지막으로 받은 말에 맞는 문자 한 통을 JSON으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent", "lengthReason": "brief"|"requested_detail"|"important_explanation"|"letter" }',
   ].filter(Boolean).join('\n')
 
-  const content = await llm.generateStructured({ schema: TextingContent, responseSchema: TextingResponse,
+  const extended = input.replyLength === 'long'
+  const content = await llm.generateStructured({ schema: textingContent(extended), responseSchema: TextingResponse,
     task: 'dialogue', promptVersion: REALITY_CONTENT_VERSION, maxRetries: 1,
-    system: prompts.get('reality', 'v2').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM, prompt, maxTokens: 1024 })
+    system: prompts.get('reality', 'v2').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM
+      + (extended ? '\n앱에서 사용자가 ECHO(긴 대화)를 선택했습니다. 이 답장에는 위의 평소 120자 제한 대신 최대 400자 안에서 맥락과 감정을 더 충분히 풀어도 됩니다. 짧은 답으로 충분하면 늘리지 마세요. 문자 형식과 캐릭터 말투는 유지하며 행동 지문·내레이션은 넣지 마세요.' : ''), prompt, maxTokens: 1024 })
   // A refusal reason is internal text, never a reply. Let the existing retry path retain the request.
   if (!input.allowAbstain && content.send === false) throw new Error('reality_content_unexpected_abstention')
   return { text: content.text, tone: content.tone, send: content.send }

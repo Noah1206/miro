@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { MessengerItem } from '@/lib/messenger/inbox'
+import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
 
 type DeliveryItem = MessengerItem & { delivery?: 'sending' | 'failed' }
 type Delivery = { items: DeliveryItem[]; send: (text: string) => void; retry: (id: string) => void }
@@ -8,6 +9,7 @@ const Context = createContext<Delivery>({ items: [], send: () => {}, retry: () =
 export const useMessenger = () => useContext(Context)
 
 export function MessengerDelivery({ sessionId, initial, children }: { sessionId: string; initial: MessengerItem[]; children: ReactNode }) {
+  const { model } = useChatModel()
   const [items, setItems] = useState<DeliveryItem[]>(initial)
   const inflight = useRef(new Set<string>())
   const mounted = useRef(true)
@@ -19,7 +21,7 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
     const timeout = setTimeout(() => controller.abort(), 20_000)
     try {
       const response = await fetch('/api/messages', { method: 'POST', signal: controller.signal, headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ sessionId, requestId: item.id, input: item.content, sentAt: item.at }) })
+        body: JSON.stringify({ sessionId, requestId: item.id, input: item.content, sentAt: item.at, chatModel: item.chatModel ?? undefined }) })
       const result = await response.json()
       if (!response.ok || !result.message) throw new Error('send_failed')
       if (mounted.current) setItems(previous => previous.map(value => value.id === item.id ? result.message : value))
@@ -28,10 +30,10 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
     } finally { clearTimeout(timeout); inflight.current.delete(item.id) }
   }, [sessionId])
   const send = useCallback((text: string) => {
-    const item: DeliveryItem = { id: crypto.randomUUID(), role: 'user', kind: 'messenger', content: text.trim(), blocks: [], at: new Date().toISOString(), readAt: null, delivery: 'sending' }
+    const item: DeliveryItem = { id: crypto.randomUUID(), role: 'user', kind: 'messenger', content: text.trim(), blocks: [], at: new Date().toISOString(), readAt: null, chatModel: model, delivery: 'sending' }
     setItems(previous => [...previous, item])
     void post(item)
-  }, [post])
+  }, [post, model])
   const retry = useCallback((id: string) => { const item = items.find(value => value.id === id); if (item) void post(item) }, [items, post])
   useEffect(() => {
     mounted.current = true

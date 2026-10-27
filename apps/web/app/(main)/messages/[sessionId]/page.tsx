@@ -9,6 +9,8 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { Back, Notice } from '@/components/ui'
 import { walletSnapshot } from '@/lib/wallet/service'
+import { chatModelOptions } from '@/lib/ai/chat-models'
+import { ChatModelProvider } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { MessengerDelivery } from './delivery'
 import { messengerItems } from '@/lib/messenger/inbox'
@@ -32,23 +34,26 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 두 경험에서 같은 페르소나를 사용한다.
   if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
-  const [rows, wallet] = await Promise.all([
+  const [rows, wallet, modelOptions] = await Promise.all([
     messengerItems(user.id, sessionId),
     walletSnapshot(user.id),
+    chatModelOptions(user.id, loaded.adult.since !== null),
     // This is the user reading the character's incoming contacts, not the reverse.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
   ])
   const items = (rows ?? []).filter(m => m.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
+  const lastChoice = [...items].reverse().find(item => item.role === 'user' && item.kind === 'messenger')?.chatModel
+  const initialModel = modelOptions.choices.find(choice => choice.id === lastChoice)?.id ?? modelOptions.choices[0]?.id
 
   return (
-    <MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={initialModel} storageKey={`miro:dm-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
           <ChatHeaderAvatar portrait={loaded.characterPhoto} /><h1 className={styles.title}>{loaded.characterName}</h1>
-          <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} initialWallet={wallet} />
+          <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} choices={modelOptions.choices} />
         </header>
         {call && (
           <Notice tone={call === 'usage' ? 'muted' : 'danger'} style={{ margin: '12px 16px 0' }}>
@@ -60,6 +65,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />
         <MessengerComposer />
       </section>
-    </main></ChatTheme></MessengerDelivery>
+    </main></ChatTheme></MessengerDelivery></ChatModelProvider>
   )
 }

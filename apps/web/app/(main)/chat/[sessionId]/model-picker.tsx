@@ -15,11 +15,20 @@ import { Outfit } from 'next/font/google'
 const brand = Outfit({ subsets: ['latin'], weight: ['600'], display: 'swap' })
 
 const Selection = createContext({ model: 'miro', setModel: (_model: string) => {} })
-export function ChatModelProvider({ children, initialWallet, initialModel = 'miro' }: { children: ReactNode; initialWallet: WalletSnapshot; initialModel?: string }) {
+export function ChatModelProvider({ children, initialWallet, initialModel = 'miro', storageKey, modelChoices }: { children: ReactNode; initialWallet: WalletSnapshot; initialModel?: string; storageKey?: string; modelChoices?: string[] }) {
   const { sync } = useWallet()
   useEffect(() => { sync(initialWallet) }, [initialWallet, sync])
   const [model, setModel] = useState(initialModel)
-  return <Selection.Provider value={{ model, setModel }}>{children}</Selection.Provider>
+  useEffect(() => {
+    if (!storageKey) return
+    try { const saved = localStorage.getItem(storageKey); if (saved && modelChoices?.includes(saved)) setModel(saved) }
+    catch { /* The current selection still works if device storage is unavailable. */ }
+  }, [storageKey, modelChoices])
+  const select = (value: string) => {
+    setModel(value)
+    if (storageKey) try { localStorage.setItem(storageKey, value) } catch { /* Keep the in-memory choice. */ }
+  }
+  return <Selection.Provider value={{ model, setModel: select }}>{children}</Selection.Provider>
 }
 export const useChatModel = () => useContext(Selection)
 export function ModelPicker({ choices = [], place }: { freeReady: boolean; proReady: boolean; choices?: ChatModelChoice[]; place?: 'up' }) {

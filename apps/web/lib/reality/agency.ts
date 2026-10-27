@@ -21,6 +21,7 @@ import type { EvaluateOutcome } from './evaluate'
 import { messengerPhotosReady, prepareMessengerPhoto } from '@/lib/messenger/photos'
 import { REPLY_DISPOSITION_VERSION, nextReplyReview, readReplyDisposition } from '@/lib/messenger/reply-disposition'
 import { conversationVariationDirective, repeatedConversationBlock, snapshotUserGrounding } from '@miro/engine'
+import { resolveChatModel } from '@/lib/ai/chat-models'
 
 type RealityRow = {
   session: typeof roleplaySessions.$inferSelect
@@ -65,10 +66,12 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
   const sessionId = row.session.id, userId = row.session.userId
   const requestedMode = characterAgencyMode(sessionId, row.session.policyVersion)
   if (requestedMode === 'off') return null
+  const replyModel = opts.inbox?.chatModel ? await resolveChatModel(userId, opts.inbox.chatModel, row.session.adultSince !== null) : undefined
   installAIUsageSink()
   const llm = createAI({ mock: req => buildMockRealityContent(req.prompt), context: {
     userId, sessionId, workload: opts.background ? 'background' : 'interactive', shadow: requestedMode === 'shadow',
     origin: 'reality:agency:reality:miro:background', adult: row.session.adultSince !== null,
+    dialogueModelId: replyModel?.modelId,
   } })
   try {
     const loaded = await loadSession(sessionId, userId)
@@ -187,6 +190,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
             goals: plan.state.goals.filter(goal => goal.status === 'active'), evidence: realizationContext.evidence })}`,
       }) }
       const render = () => generateRealityContent(renderer, {
+        replyLength: replyModel?.tier.replyLength,
         authoredCharacter: { identity, personality, worldRole, ...(appearance ? { appearance } : {}) },
         worldSetting: snapshot.worldSetting, worldGenre: snapshot.worldGenre,
         userPersona: snapshot.userPersona ? personaLines(snapshot.userPersona) : null,

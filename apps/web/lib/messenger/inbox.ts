@@ -6,16 +6,17 @@ import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { chooseAttention } from './attention'
 import { observe } from '@/lib/observe'
 import { characterAvailability } from '@/lib/reality/routine'
+import { resolveChatModel } from '@/lib/ai/chat-models'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 export class MessengerError extends Error {
-  constructor(readonly reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'conflict' | 'rate_limit') { super(reason) }
+  constructor(readonly reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'conflict' | 'rate_limit' | 'invalid_model') { super(reason) }
 }
-export type InboxReview = { ids: string[]; token: string }
-export type MessengerItem = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>; at: string; readAt?: string | null }
+export type InboxReview = { ids: string[]; token: string; chatModel?: string }
+export type MessengerItem = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>; at: string; readAt?: string | null; chatModel?: string | null }
 
-/** No model, wallet reservation, scene gateway or reply generation belongs to reception. */
-export async function receiveMessenger(opts: { userId: string; sessionId: string; input: string; requestId: string; sentAt?: string }, now = new Date()): Promise<MessengerItem> {
+/** Reception validates configuration, but never calls AI or reserves a reply. */
+export async function receiveMessenger(opts: { userId: string; sessionId: string; input: string; requestId: string; sentAt?: string; chatModel?: string }, now = new Date()): Promise<MessengerItem> {
   const input = opts.input.trim()
   if (!input) throw new MessengerError('empty')
   if (input.length > 2000) throw new MessengerError('too_long')
@@ -34,11 +35,17 @@ export async function receiveMessenger(opts: { userId: string; sessionId: string
     if (session.restrictedAt) throw new MessengerError('restricted')
     const [character] = await tx.select().from(characters).where(and(eq(characters.id, session.characterId), isNull(characters.deletedAt)))
     if (character?.experienceType !== 'reality') throw new MessengerError('not_found')
-    const [previous] = await tx.select({ message: messages, inbox: messengerInbox }).from(messages)
+    const [previous] = await tx.select({ message: messages, inboxId: messengerInbox.messageId, readAt: messengerInbox.readAt, chatModel: messengerInbox.chatModel }).from(messages)
       .leftJoin(messengerInbox, eq(messengerInbox.messageId, messages.id)).where(eq(messages.id, opts.requestId))
     if (previous) {
-      if (previous.message.sessionId !== opts.sessionId || previous.message.role !== 'user' || previous.message.kind !== 'messenger' || previous.message.content !== input || !previous.inbox) throw new MessengerError('conflict')
-      return serialize(previous.message, previous.inbox.readAt)
+      if (previous.message.sessionId !== opts.sessionId || previous.message.role !== 'user' || previous.message.kind !== 'messenger' || previous.message.content !== input || !previous.inboxId
+        || previous.chatModel !== (opts.chatModel ?? null)) throw new MessengerError('conflict')
+      return serialize(previous.message, previous.readAt, previous.chatModel)
+    }
+    if (opts.chatModel !== undefined) {
+      // Configuration-only lookup; no network or model work inside the persistence lock.
+      try { await resolveChatModel(opts.userId, opts.chatModel, session.adultSince !== null) }
+      catch { throw new MessengerError('invalid_model') }
     }
     const [rate] = await tx.execute<{ n: number }>(sql`SELECT count(*)::int AS n FROM messenger_inbox i
       JOIN roleplay_sessions s ON s.id=i.session_id WHERE s.user_id=${opts.userId}::uuid
@@ -46,11 +53,11 @@ export async function receiveMessenger(opts: { userId: string; sessionId: string
     if ((rate?.n ?? 0) >= 60) throw new MessengerError('rate_limit')
     const [message] = await tx.insert(messages).values({ id: opts.requestId, sessionId: opts.sessionId, role: 'user', kind: 'messenger', content: input, blocks: [], turnIndex: session.turnCount, createdAt: submittedAt }).returning()
     await tx.insert(messengerInbox).values({ messageId: opts.requestId, sessionId: opts.sessionId,
-      nextReviewAt: now, createdAt: now })
+      chatModel: opts.chatModel ?? null, nextReviewAt: now, createdAt: now })
     await tx.update(messengerInbox).set({ attentionState: 'pending', attentionContextKey: null, nextReviewAt: now })
       .where(and(eq(messengerInbox.sessionId, opts.sessionId), eq(messengerInbox.status, 'unread'), eq(messengerInbox.attentionState, 'left')))
     await tx.update(roleplaySessions).set({ lastInteractionAt: now }).where(eq(roleplaySessions.id, opts.sessionId))
-    return serialize(message!, null)
+    return serialize(message!, null, opts.chatModel ?? null)
   })
   // Explicit requests for space remain authoritative even though reception is independent.
   const [settings] = await db.select({ timeZone: userSettings.timeZone }).from(userSettings).where(eq(userSettings.userId, opts.userId))
@@ -61,11 +68,11 @@ export async function receiveMessenger(opts: { userId: string; sessionId: string
 export const replyPauseMs = (minutes: number) => Math.max(20_000, Math.min(5 * 60_000, Math.max(0, minutes) * 15_000))
 export const inboxTrigger = (ids: string[]) => `messenger:read:${[...ids].sort().join(':')}`
 
-function serialize(row: typeof messages.$inferSelect, readAt?: Date | null): MessengerItem {
+function serialize(row: typeof messages.$inferSelect, readAt?: Date | null, chatModel?: string | null): MessengerItem {
   return { id: row.id, role: row.role, kind: row.hiddenAt ? 'hidden' : row.kind,
     content: row.hiddenAt ? '운영 정책에 따라 숨김 처리된 메시지입니다.' : row.content,
     blocks: row.hiddenAt ? [] : row.blocks as Array<Record<string, unknown>>, at: row.createdAt.toISOString(),
-    ...(readAt !== undefined && row.role === 'user' && row.kind === 'messenger' ? { readAt: readAt?.toISOString() ?? null } : {}) }
+    ...(readAt !== undefined && row.role === 'user' && row.kind === 'messenger' ? { readAt: readAt?.toISOString() ?? null, chatModel: chatModel ?? null } : {}) }
 }
 
 export async function messengerItems(userId: string, sessionId: string): Promise<MessengerItem[] | null> {
@@ -75,12 +82,12 @@ export async function messengerItems(userId: string, sessionId: string): Promise
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(users.deletedAt), isNull(characters.deletedAt),
       isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt), eq(characters.experienceType, 'reality')))
   if (!owned) return null
-  const rows = await db.select({ message: messages, inboxId: messengerInbox.messageId, readAt: messengerInbox.readAt }).from(messages)
+  const rows = await db.select({ message: messages, inboxId: messengerInbox.messageId, readAt: messengerInbox.readAt, chatModel: messengerInbox.chatModel }).from(messages)
     .leftJoin(messengerInbox, eq(messengerInbox.messageId, messages.id))
     .where(and(eq(messages.sessionId, sessionId), inArray(messages.kind, ['messenger', 'reality_message', 'photo', 'call_record'])))
     .orderBy(asc(messages.createdAt), asc(messages.id))
   return rows.filter(row => (row.message.kind !== 'call_record' || feature('voiceCall') || feature('videoCall'))
-    && (row.message.kind !== 'photo' || row.message.blocks.some(b => b.type === 'reality'))).map(row => serialize(row.message, row.inboxId ? row.readAt : undefined))
+    && (row.message.kind !== 'photo' || row.message.blocks.some(b => b.type === 'reality'))).map(row => serialize(row.message, row.inboxId ? row.readAt : undefined, row.chatModel))
 }
 
 /** Unread delivery is private to the inbox until the character actually opens it. */
@@ -136,7 +143,8 @@ async function reviewInbox(sessionId: string, now: Date) {
     if (alreadyRead.length) {
       const ids = alreadyRead.map(item => item.messageId)
       await tx.update(messengerInbox).set({ leaseToken: token, leaseUntil: new Date(now.getTime() + 5 * 60_000) }).where(inArray(messengerInbox.messageId, ids))
-      return { kind: 'reply' as const, ids, token }
+      // A batched reply follows the latest received message's captured choice.
+      return { kind: 'reply' as const, ids, token, chatModel: alreadyRead.at(-1)?.chatModel ?? undefined }
     }
     const unread = batch.filter(item => item.status === 'unread')
     if (unread.length) {

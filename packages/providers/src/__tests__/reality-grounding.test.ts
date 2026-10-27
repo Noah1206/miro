@@ -96,6 +96,19 @@ describe('text-message length contract', () => {
     const ai = new MockAIProvider(() => ({ text: '가'.repeat(401), tone: 'neutral', send: true, lengthReason: 'important_explanation' }))
     await expect(generateRealityContent(new AIOrchestrator({ chain: [ai] }), input)).rejects.toThrow('invalid_schema')
   })
+  it('allows a fuller DM only when the user explicitly selected ECHO', async () => {
+    let system = ''
+    const text = '가'.repeat(180)
+    const ai = new MockAIProvider(req => { system = req.system; return { text, tone: 'neutral', lengthReason: 'brief' } })
+    expect((await generateRealityContent(new AIOrchestrator({ chain: [ai] }), { ...input, replyLength: 'long' })).text).toBe(text)
+    expect(system).toContain('ECHO(긴 대화)')
+    expect(system).toContain('행동 지문·내레이션은 넣지')
+    await expect(generateRealityContent(new AIOrchestrator({ chain: [ai] }), { ...input, replyLength: 'scene' })).rejects.toThrow('invalid_schema')
+  })
+  it('keeps the absolute DM ceiling even with ECHO selected', async () => {
+    const ai = new MockAIProvider(() => ({ text: '가'.repeat(401), tone: 'neutral', lengthReason: 'brief' }))
+    await expect(generateRealityContent(new AIOrchestrator({ chain: [ai] }), { ...input, replyLength: 'long' })).rejects.toThrow('invalid_schema')
+  })
 })
 
 

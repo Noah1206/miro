@@ -657,6 +657,8 @@ export const messengerInbox = pgTable('messenger_inbox', {
   attentionContextKey: text('attention_context_key'),
   attentionDecision: jsonb('attention_decision').$type<Record<string, unknown>>(),
   messageId: uuid('message_id').primaryKey().references(() => messages.id, { onDelete: 'cascade' }),
+  /** Validated user-selected reply model/tier; retained through delayed delivery and retries. */
+  chatModel: text('chat_model'),
   sessionId: uuid('session_id').notNull().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
   status: text('status', { enum: ['unread', 'read', 'replied', 'left'] }).notNull().default('unread'),
   readAt: timestamp('read_at', { withTimezone: true }),
