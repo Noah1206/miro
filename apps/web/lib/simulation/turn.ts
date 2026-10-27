@@ -9,7 +9,7 @@ import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance 
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature, tokensForCost, POLICY } from '@miro/config'
 import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
-import { renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
+import { looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -169,7 +169,7 @@ async function executeTurn(opts: {
 
     } catch (e) {
       await refund()
-      if (e instanceof UnsafeContentError) return { ok: false, reason: 'safety' }
+      if (e instanceof UnsafeContentError) { observe('turn.refused', { sessionId, turn: turnIndex, model: dialogueModelId, by: 'provider' }); return { ok: false, reason: 'safety' } }
       if (e instanceof AIBudgetDeniedError) return { ok: false, reason: 'budget', kind: e.reason as BudgetKind }
       if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }
       // Only our own stage codes: a DB error message can carry query parameters, i.e. user text.
@@ -188,6 +188,12 @@ async function executeTurn(opts: {
     }
     if (firstPromise && !transition.realityIntent && promisedContact(renderBlocks(transition.blocks))) {
       transition.realityIntent = { channel: 'message', reason: PROMISE_REASON, urgency: 0.9, notBefore: firstPromise.at.toISOString(), promise: true }
+    }
+    // 필터는 통과했지만 캐릭터를 벗어난 거절문 — 대사로 저장하지 않고 공급자 거절과 같이 처리한다(차감 취소, 턴 미저장).
+    if (looksLikeRefusal(renderBlocks(transition.blocks))) {
+      await refund()
+      observe('turn.refused', { sessionId, turn: turnIndex, model: dialogueModelId, by: 'text' })
+      return { ok: false, reason: 'safety' }
     }
     if (result.providerMode === 'fallback' || turnMeter.missingSuccessfulUsage) {
       await refund()
