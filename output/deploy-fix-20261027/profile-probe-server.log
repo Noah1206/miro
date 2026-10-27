@@ -1,0 +1,16 @@
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8820
+   - Network:      http://172.17.145.169:8820
+
+ ✓ Starting...
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/johyeon-ung/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/johyeon-ung/Desktop/Miro/pnpm-lock.yaml
+
+ ✓ Ready in 612ms
+{"t":"2026-10-26T18:03:20.247Z","event":"perf.metric","name":"nav.home_data","elapsedMs":26.3,"ok":true}
+{"t":"2026-10-26T18:03:38.620Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":4.4,"ok":true}
+{"t":"2026-10-26T18:04:21.345Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":2.7,"ok":true}

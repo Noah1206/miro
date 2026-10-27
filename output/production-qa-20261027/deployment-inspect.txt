@@ -1,0 +1,33 @@
+Vercel CLI 46.0.2
+Fetching deployment "miro-1ezz0ym7u-noah1206s-projects.vercel.app" in noah1206s-projects
+> Fetched deployment "miro-1ezz0ym7u-noah1206s-projects.vercel.app" in noah1206s-projects [469ms]
+
+  General
+
+    id		dpl_7DKyksHrsgLqCSxZPqhcy3vbFsHC
+    name	miro-web
+    target	production
+    status	● Ready
+    url		https://miro-1ezz0ym7u-noah1206s-projects.vercel.app
+    created	Sun Oct 25 2026 01:01:44 GMT+0900 (Korean Standard Time) [2d ago]
+
+
+  Aliases
+
+    ╶ https://miroapp.app
+    ╶ https://miro-web-ashen.vercel.app
+    ╶ https://www.miroapp.app
+    ╶ https://miro-web-noah1206s-projects.vercel.app
+    
+
+  Builds
+
+    ┌ .        [0ms]
+    ├── λ index (3.56MB) [icn1]
+    ├── λ _not-found (3.56MB) [icn1]
+    ├── λ _not-found.rsc (3.56MB) [icn1]
+    ├── λ alpha (3.56MB) [icn1]
+    ├── λ alpha.rsc (3.56MB) [icn1]
+    └── 160 output items hidden
+    
+

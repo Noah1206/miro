@@ -1,0 +1,1594 @@
+{
+  "additional_cost_usd": 0,
+  "cloud_calls": 0,
+  "threshold_notes": [
+    "RMS gates are acoustic activity proxies, not speech/breath VAD.",
+    "F0/pYIN on whisper can invent pitch; no naturalness score is inferred."
+  ],
+  "items": [
+    {
+      "arm": "original",
+      "id": "comfort",
+      "seed": 1234,
+      "file": "original/comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.622312925170068,
+      "sample_rate": 44100,
+      "peak": 0.234375,
+      "active_rms_median_dbfs": -26.288366317749023,
+      "relative_pause_ratio": 0.4530386740331491,
+      "energy_p90_p10_db": 20.983518981933592,
+      "audio_sha256": "0dec144ba696df03e8dfe255bb3734be4051e386a496e315affa414b8e59b12f",
+      "peak_dbfs": -12.601774294858139,
+      "rms_dbfs": -27.557576686402214,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -53.88734817504883,
+      "active_seconds": 2.0,
+      "active_span_seconds": [
+        0.0,
+        3.52
+      ],
+      "tail_after_activity_seconds": 0.10231292517006807,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.7,
+          2.22
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.5200000000000002,
+      "last5_seconds_rms_dbfs": -27.557576686402214,
+      "seconds_below_minus60dbfs": 1.56,
+      "per_second_rms_dbfs": [
+        -25.10101184168938,
+        -67.44024450159226,
+        -25.51582288483838,
+        -31.32421969272141
+      ],
+      "f0_median_hz": 171.36749606265175,
+      "f0_span_semitones": 6.585122827191244,
+      "voiced_fraction_of_acoustic_activity": 0.803921568627451,
+      "voicing_probability_median_active": 0.9654045927959509
+    },
+    {
+      "arm": "step5",
+      "id": "comfort",
+      "seed": 1234,
+      "file": "step5/comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 4.133151927437642,
+      "sample_rate": 44100,
+      "peak": 0.251953125,
+      "active_rms_median_dbfs": -23.738954544067383,
+      "relative_pause_ratio": 0.558252427184466,
+      "energy_p90_p10_db": 20.1893310546875,
+      "audio_sha256": "d1205dd28f46def6832d4a77d36d5ac59fdeca4bb2028d2e4014cd7b9cb96daf",
+      "peak_dbfs": -11.973605010084212,
+      "rms_dbfs": -26.794687837690894,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -52.78651809692383,
+      "active_seconds": 1.84,
+      "active_span_seconds": [
+        0.02,
+        3.74
+      ],
+      "tail_after_activity_seconds": 0.3931519274376418,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.84,
+          2.72
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.8800000000000003,
+      "last5_seconds_rms_dbfs": -26.794687837690894,
+      "seconds_below_minus60dbfs": 2.22,
+      "per_second_rms_dbfs": [
+        -23.56323923571091,
+        -64.75315110475952,
+        -26.211600939281986,
+        -27.326231073159967,
+        -65.18475551036357
+      ],
+      "f0_median_hz": 170.38333427667635,
+      "f0_span_semitones": 4.399999999999999,
+      "voiced_fraction_of_acoustic_activity": 0.8,
+      "voicing_probability_median_active": 0.9459302094659092
+    },
+    {
+      "arm": "step23",
+      "id": "comfort",
+      "seed": 1234,
+      "file": "step23/comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.9257142857142857,
+      "sample_rate": 44100,
+      "peak": 0.4609375,
+      "active_rms_median_dbfs": -20.29007339477539,
+      "relative_pause_ratio": 0.4178082191780822,
+      "energy_p90_p10_db": 17.586789321899417,
+      "audio_sha256": "93f70f574d0f359f1caaf79b9d6be3f1490d5bd4f1e66f6eac715a6b6de5209c",
+      "peak_dbfs": -6.727159158230087,
+      "rms_dbfs": -21.647459694528187,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -49.14771842956543,
+      "active_seconds": 1.7,
+      "active_span_seconds": [
+        0.0,
+        2.8
+      ],
+      "tail_after_activity_seconds": 0.1257142857142859,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.68,
+          1.78
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.1,
+      "last5_seconds_rms_dbfs": -21.647459694528187,
+      "seconds_below_minus60dbfs": 1.1400000000000001,
+      "per_second_rms_dbfs": [
+        -20.63036725630267,
+        -23.40589557727587,
+        -21.334971905899938
+      ],
+      "f0_median_hz": 175.3730214073779,
+      "f0_span_semitones": 7.145071494469537,
+      "voiced_fraction_of_acoustic_activity": 0.8275862068965517,
+      "voicing_probability_median_active": 0.8266685594724996
+    },
+    {
+      "arm": "original",
+      "id": "comfort",
+      "seed": 4321,
+      "file": "original/comfort_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.8080725623582765,
+      "sample_rate": 44100,
+      "peak": 0.37890625,
+      "active_rms_median_dbfs": -21.068035125732422,
+      "relative_pause_ratio": 0.5,
+      "energy_p90_p10_db": 18.29126319885254,
+      "audio_sha256": "3912ef49bebed63876118a830b607c1c0516ff5668c6e9c30e7b977379eba5d9",
+      "peak_dbfs": -8.429364618619736,
+      "rms_dbfs": -23.696394948173634,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -50.40251350402832,
+      "active_seconds": 1.96,
+      "active_span_seconds": [
+        0.0,
+        3.7
+      ],
+      "tail_after_activity_seconds": 0.10807256235827634,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.76,
+          2.06
+        ],
+        [
+          2.4,
+          2.84
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.3,
+      "last5_seconds_rms_dbfs": -23.696394948173634,
+      "seconds_below_minus60dbfs": 1.68,
+      "per_second_rms_dbfs": [
+        -21.651287585424456,
+        -67.58134846261723,
+        -22.238371348275923,
+        -23.698715837765878
+      ],
+      "f0_median_hz": 189.0489924635466,
+      "f0_span_semitones": 7.685040942070635,
+      "voiced_fraction_of_acoustic_activity": 0.7961165048543689,
+      "voicing_probability_median_active": 0.8911444948731203
+    },
+    {
+      "arm": "step5",
+      "id": "comfort",
+      "seed": 4321,
+      "file": "step5/comfort_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.297233560090703,
+      "sample_rate": 44100,
+      "peak": 0.328125,
+      "active_rms_median_dbfs": -23.774492263793945,
+      "relative_pause_ratio": 0.41463414634146345,
+      "energy_p90_p10_db": 16.08302593231201,
+      "audio_sha256": "4b35bbd72d3e1d8bfcd96e0e8cbf8fe6fc99be974af7ed19fd10790af87d2606",
+      "peak_dbfs": -9.67921358235223,
+      "rms_dbfs": -24.849443175652382,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -51.43107223510742,
+      "active_seconds": 1.96,
+      "active_span_seconds": [
+        0.0,
+        3.18
+      ],
+      "tail_after_activity_seconds": 0.11723356009070285,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.74,
+          1.74
+        ],
+        [
+          2.14,
+          2.36
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.0,
+      "last5_seconds_rms_dbfs": -24.849443175652382,
+      "seconds_below_minus60dbfs": 1.18,
+      "per_second_rms_dbfs": [
+        -22.3292478869584,
+        -27.983237879030973,
+        -25.248524484669993,
+        -29.06968912492179
+      ],
+      "f0_median_hz": 176.38894698528225,
+      "f0_span_semitones": 6.275340008888636,
+      "voiced_fraction_of_acoustic_activity": 0.8118811881188119,
+      "voicing_probability_median_active": 0.8911444948731203
+    },
+    {
+      "arm": "step23",
+      "id": "comfort",
+      "seed": 4321,
+      "file": "step23/comfort_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.2043537414965986,
+      "sample_rate": 44100,
+      "peak": 0.279296875,
+      "active_rms_median_dbfs": -24.576929092407227,
+      "relative_pause_ratio": 0.45625000000000004,
+      "energy_p90_p10_db": 19.0835693359375,
+      "audio_sha256": "6396b1a27ece43d67f4e1693e898720a3e821919791b50d81bb98e2ae8978080",
+      "peak_dbfs": -11.078678467105465,
+      "rms_dbfs": -25.847559977625036,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -52.301767349243164,
+      "active_seconds": 1.74,
+      "active_span_seconds": [
+        0.0,
+        3.08
+      ],
+      "tail_after_activity_seconds": 0.1243537414965985,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.76,
+          2.1
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.34,
+      "last5_seconds_rms_dbfs": -25.847559977625036,
+      "seconds_below_minus60dbfs": 1.36,
+      "per_second_rms_dbfs": [
+        -22.872178599776717,
+        -66.0733730097808,
+        -25.06788224768535,
+        -35.218069820905654
+      ],
+      "f0_median_hz": 161.7493775621182,
+      "f0_span_semitones": 6.58649920783056,
+      "voiced_fraction_of_acoustic_activity": 0.7777777777777778,
+      "voicing_probability_median_active": 0.9459302094659092
+    },
+    {
+      "arm": "original",
+      "id": "contained_anger",
+      "seed": 1234,
+      "file": "original/contained_anger_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.972154195011338,
+      "sample_rate": 44100,
+      "peak": 0.53125,
+      "active_rms_median_dbfs": -19.59971809387207,
+      "relative_pause_ratio": 0.44594594594594594,
+      "energy_p90_p10_db": 17.936945533752443,
+      "audio_sha256": "f7c8ef774332a2512a4ce18f0f25d58ea9528b75381ff705f68cf4c06d9e1b52",
+      "peak_dbfs": -5.49402113719765,
+      "rms_dbfs": -20.654580071140277,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -47.32005500793457,
+      "active_seconds": 1.7,
+      "active_span_seconds": [
+        0.0,
+        2.86
+      ],
+      "tail_after_activity_seconds": 0.11215419501133805,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.64,
+          1.8
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.1600000000000001,
+      "last5_seconds_rms_dbfs": -20.654580071140277,
+      "seconds_below_minus60dbfs": 1.1400000000000001,
+      "per_second_rms_dbfs": [
+        -20.11391118107693,
+        -21.093625068276456,
+        -20.82042048357205
+      ],
+      "f0_median_hz": 182.60928976717898,
+      "f0_span_semitones": 5.950216606988292,
+      "voiced_fraction_of_acoustic_activity": 0.8068181818181818,
+      "voicing_probability_median_active": 0.7571601330199094
+    },
+    {
+      "arm": "step5",
+      "id": "contained_anger",
+      "seed": 1234,
+      "file": "step5/contained_anger_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.786394557823129,
+      "sample_rate": 44100,
+      "peak": 0.357421875,
+      "active_rms_median_dbfs": -23.71248435974121,
+      "relative_pause_ratio": 0.48920863309352514,
+      "energy_p90_p10_db": 25.031736373901367,
+      "audio_sha256": "6080737027f53b1ba152f24991bdcebcf8e8cb85b8f84a987984af9f8f52eab0",
+      "peak_dbfs": -8.936377422477875,
+      "rms_dbfs": -24.904558897171118,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -51.44241523742676,
+      "active_seconds": 1.46,
+      "active_span_seconds": [
+        0.0,
+        2.64
+      ],
+      "tail_after_activity_seconds": 0.14639455782312893,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.6,
+          1.78
+        ],
+        [
+          2.64,
+          2.78
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.1800000000000002,
+      "last5_seconds_rms_dbfs": -24.904558897171118,
+      "seconds_below_minus60dbfs": 1.1,
+      "per_second_rms_dbfs": [
+        -24.101062749656386,
+        -24.91702868402473,
+        -26.181773868848346
+      ],
+      "f0_median_hz": 175.88685244521196,
+      "f0_span_semitones": 5.640526693919501,
+      "voiced_fraction_of_acoustic_activity": 0.7105263157894737,
+      "voicing_probability_median_active": 0.37469919371696125
+    },
+    {
+      "arm": "step23",
+      "id": "contained_anger",
+      "seed": 1234,
+      "file": "step23/contained_anger_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.8328344671201813,
+      "sample_rate": 44100,
+      "peak": 0.455078125,
+      "active_rms_median_dbfs": -19.24542236328125,
+      "relative_pause_ratio": 0.42553191489361697,
+      "energy_p90_p10_db": 17.8929500579834,
+      "audio_sha256": "008c0f65657f6d5b1822ff20867d7d8fd5e0170d0d3ae2a68a87ec6236aad365",
+      "peak_dbfs": -6.838280797087577,
+      "rms_dbfs": -21.16004468853205,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -48.36394119262695,
+      "active_seconds": 1.6600000000000001,
+      "active_span_seconds": [
+        0.02,
+        2.7
+      ],
+      "tail_after_activity_seconds": 0.1328344671201811,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.76,
+          1.78
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.02,
+      "last5_seconds_rms_dbfs": -21.16004468853205,
+      "seconds_below_minus60dbfs": 1.04,
+      "per_second_rms_dbfs": [
+        -19.277596734351114,
+        -23.273120657936364,
+        -22.06922677478947
+      ],
+      "f0_median_hz": 178.4414646145454,
+      "f0_span_semitones": 7.066639692914095,
+      "voiced_fraction_of_acoustic_activity": 0.7441860465116279,
+      "voicing_probability_median_active": 0.7571601330199093
+    },
+    {
+      "arm": "original",
+      "id": "contained_anger",
+      "seed": 4321,
+      "file": "original/contained_anger_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.7151927437641725,
+      "sample_rate": 44100,
+      "peak": 0.2294921875,
+      "active_rms_median_dbfs": -25.929872512817383,
+      "relative_pause_ratio": 0.4864864864864865,
+      "energy_p90_p10_db": 24.4638973236084,
+      "audio_sha256": "b264d23322087f705aebdc73bdddf65dd8c609e172492d785773e2915fa508e7",
+      "peak_dbfs": -12.784641883576684,
+      "rms_dbfs": -26.525375401098074,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -52.239776611328125,
+      "active_seconds": 1.92,
+      "active_span_seconds": [
+        0.0,
+        3.62
+      ],
+      "tail_after_activity_seconds": 0.09519274376417242,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.76,
+          2.46
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.7,
+      "last5_seconds_rms_dbfs": -26.525375401098074,
+      "seconds_below_minus60dbfs": 1.6400000000000001,
+      "per_second_rms_dbfs": [
+        -25.011478288314105,
+        -68.53859090623536,
+        -24.25251170958278,
+        -27.2134648802622
+      ],
+      "f0_median_hz": 166.48899610038094,
+      "f0_span_semitones": 4.740138149062881,
+      "voiced_fraction_of_acoustic_activity": 0.6632653061224489,
+      "voicing_probability_median_active": 0.6159498854580681
+    },
+    {
+      "arm": "step5",
+      "id": "contained_anger",
+      "seed": 4321,
+      "file": "step5/contained_anger_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.4829931972789114,
+      "sample_rate": 44100,
+      "peak": 0.1708984375,
+      "active_rms_median_dbfs": -26.834922790527344,
+      "relative_pause_ratio": 0.5172413793103448,
+      "energy_p90_p10_db": 20.279527282714845,
+      "audio_sha256": "547eb37c7f0865599958040c03aa8a7d51ce4fa5ebc82bea3f048fa9ee7b42d6",
+      "peak_dbfs": -15.345238153987864,
+      "rms_dbfs": -28.986819791246802,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -55.78294372558594,
+      "active_seconds": 1.72,
+      "active_span_seconds": [
+        0.02,
+        3.34
+      ],
+      "tail_after_activity_seconds": 0.14299319727891158,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.82,
+          2.42
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.6,
+      "last5_seconds_rms_dbfs": -28.986819791246802,
+      "seconds_below_minus60dbfs": 1.6,
+      "per_second_rms_dbfs": [
+        -25.624712862282443,
+        -65.17161212404297,
+        -28.42777226053706,
+        -33.355864086178705
+      ],
+      "f0_median_hz": 172.3602178682883,
+      "f0_span_semitones": 5.760524568635661,
+      "voiced_fraction_of_acoustic_activity": 0.7472527472527473,
+      "voicing_probability_median_active": 0.7571601330199094
+    },
+    {
+      "arm": "step23",
+      "id": "contained_anger",
+      "seed": 4321,
+      "file": "step23/contained_anger_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.1579138321995464,
+      "sample_rate": 44100,
+      "peak": 0.408203125,
+      "active_rms_median_dbfs": -22.62706756591797,
+      "relative_pause_ratio": 0.5159235668789809,
+      "energy_p90_p10_db": 18.398552894592285,
+      "audio_sha256": "589fbb9400617a73f6b38353cfd7a5e0d6786ff72862dab1d2a286e6c31d4e98",
+      "peak_dbfs": -7.7824734951677,
+      "rms_dbfs": -23.150879344529947,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -49.51161003112793,
+      "active_seconds": 1.56,
+      "active_span_seconds": [
+        0.0,
+        3.04
+      ],
+      "tail_after_activity_seconds": 0.11791383219954632,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.64,
+          2.12
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.48,
+      "last5_seconds_rms_dbfs": -23.150879344529947,
+      "seconds_below_minus60dbfs": 1.44,
+      "per_second_rms_dbfs": [
+        -22.332772128306836,
+        -65.54492533955619,
+        -20.251298620135785,
+        -45.5328948220136
+      ],
+      "f0_median_hz": 162.68638217409753,
+      "f0_span_semitones": 6.299999999999997,
+      "voiced_fraction_of_acoustic_activity": 0.7625,
+      "voicing_probability_median_active": 0.6159498854580681
+    },
+    {
+      "arm": "original",
+      "id": "relief",
+      "seed": 1234,
+      "file": "original/relief_s1234.wav",
+      "truncated": true,
+      "finish_reason": "length",
+      "seconds": 11.888616780045352,
+      "sample_rate": 44100,
+      "peak": 0.365234375,
+      "active_rms_median_dbfs": -59.963966369628906,
+      "relative_pause_ratio": 0.7693602693602694,
+      "energy_p90_p10_db": 43.205285644531244,
+      "audio_sha256": "4ae8137369e5481ffd17f6b0fd0267215ac4eae7232a74a84c1f52db37cc1450",
+      "peak_dbfs": -8.748567086408466,
+      "rms_dbfs": -32.867654532304144,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -51.57676887512207,
+      "active_seconds": 0.78,
+      "active_span_seconds": [
+        0.02,
+        0.8
+      ],
+      "tail_after_activity_seconds": 11.088616780045351,
+      "internal_pauses_at_least_120ms": [],
+      "longest_low_energy_run_seconds": 11.08,
+      "last5_seconds_rms_dbfs": -63.42199967053422,
+      "seconds_below_minus60dbfs": 10.5,
+      "per_second_rms_dbfs": [
+        -22.118575729159137,
+        -69.33583690084,
+        -68.14362476449301,
+        -68.39398180318769,
+        -68.35974769119437,
+        -67.89344313795839,
+        -67.4083669862089,
+        -68.29339832347647,
+        -68.141535294404,
+        -64.016642819507,
+        -62.30570121537909,
+        -59.62679285486246
+      ],
+      "f0_median_hz": 197.9898987322333,
+      "f0_span_semitones": 6.340069341325009,
+      "voiced_fraction_of_acoustic_activity": 0.8048780487804879,
+      "voicing_probability_median_active": 0.9459302094659093
+    },
+    {
+      "arm": "step5",
+      "id": "relief",
+      "seed": 1234,
+      "file": "step5/relief_s1234.wav",
+      "truncated": true,
+      "finish_reason": "length",
+      "seconds": 11.888616780045352,
+      "sample_rate": 44100,
+      "peak": 0.3828125,
+      "active_rms_median_dbfs": -63.19108963012695,
+      "relative_pause_ratio": 0.3855218855218855,
+      "energy_p90_p10_db": 22.611563110351568,
+      "audio_sha256": "898fcb887b650e775bab6a79192507eba0ea6baa643490263c459f1e18e7d6b3",
+      "peak_dbfs": -8.340277790118126,
+      "rms_dbfs": -31.745488940529277,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -50.25683403015137,
+      "active_seconds": 0.8200000000000001,
+      "active_span_seconds": [
+        0.02,
+        0.84
+      ],
+      "tail_after_activity_seconds": 11.048616780045352,
+      "internal_pauses_at_least_120ms": [],
+      "longest_low_energy_run_seconds": 11.040000000000001,
+      "last5_seconds_rms_dbfs": -63.67611158157584,
+      "seconds_below_minus60dbfs": 10.8,
+      "per_second_rms_dbfs": [
+        -20.996412714182938,
+        -65.19535756766162,
+        -65.51136280023921,
+        -61.22542187334495,
+        -67.32622286942848,
+        -66.41449118923838,
+        -66.44561054718983,
+        -64.98431339702952,
+        -64.00989840866427,
+        -63.48196497855065,
+        -63.02131178699032,
+        -62.901348805736
+      ],
+      "f0_median_hz": 222.23614727554795,
+      "f0_span_semitones": 4.200345633887342,
+      "voiced_fraction_of_acoustic_activity": 0.6744186046511628,
+      "voicing_probability_median_active": 0.9459302094659093
+    },
+    {
+      "arm": "step23",
+      "id": "relief",
+      "seed": 1234,
+      "file": "step23/relief_s1234.wav",
+      "truncated": true,
+      "finish_reason": "length",
+      "seconds": 11.888616780045352,
+      "sample_rate": 44100,
+      "peak": 0.255859375,
+      "active_rms_median_dbfs": -68.87922668457031,
+      "relative_pause_ratio": 0.7508417508417509,
+      "energy_p90_p10_db": 44.627069091796876,
+      "audio_sha256": "4445c9deb687986b6ec19b2e126ce17b86e160cbc8104f816dbe0342ab9678c4",
+      "peak_dbfs": -11.83997330300654,
+      "rms_dbfs": -35.70786934319858,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -52.98684883117676,
+      "active_seconds": 0.76,
+      "active_span_seconds": [
+        0.02,
+        0.78
+      ],
+      "tail_after_activity_seconds": 11.108616780045352,
+      "internal_pauses_at_least_120ms": [],
+      "longest_low_energy_run_seconds": 11.100000000000001,
+      "last5_seconds_rms_dbfs": -69.82752472367584,
+      "seconds_below_minus60dbfs": 11.08,
+      "per_second_rms_dbfs": [
+        -24.95809601324948,
+        -70.95227819440048,
+        -69.61440186863518,
+        -69.65707981261286,
+        -69.68444837736322,
+        -69.66073381623593,
+        -69.59219009312969,
+        -69.91888335637087,
+        -70.09113233049406,
+        -69.88661358333889,
+        -69.61471386714175,
+        -69.6327056072277
+      ],
+      "f0_median_hz": 177.4107577601887,
+      "f0_span_semitones": 5.509817629130294,
+      "voiced_fraction_of_acoustic_activity": 0.675,
+      "voicing_probability_median_active": 0.7886136529016499
+    },
+    {
+      "arm": "original",
+      "id": "relief",
+      "seed": 4321,
+      "file": "original/relief_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.7151927437641725,
+      "sample_rate": 44100,
+      "peak": 0.2890625,
+      "active_rms_median_dbfs": -23.978708267211914,
+      "relative_pause_ratio": 0.3783783783783784,
+      "energy_p90_p10_db": 18.65360298156738,
+      "audio_sha256": "166b1634a2f4e856d335f312fa0de6e28aa83962723dd877f0fe5ac9d16da995",
+      "peak_dbfs": -10.780164908612619,
+      "rms_dbfs": -25.013310116198326,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -52.73208999633789,
+      "active_seconds": 2.3000000000000003,
+      "active_span_seconds": [
+        0.06,
+        3.6
+      ],
+      "tail_after_activity_seconds": 0.11519274376417243,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.92,
+          1.78
+        ],
+        [
+          2.32,
+          2.7
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.86,
+      "last5_seconds_rms_dbfs": -25.013310116198326,
+      "seconds_below_minus60dbfs": 0.3,
+      "per_second_rms_dbfs": [
+        -23.254895922662158,
+        -28.53526380285761,
+        -25.240316423523666,
+        -24.405908849505895
+      ],
+      "f0_median_hz": 179.47217146890208,
+      "f0_span_semitones": 4.475329846853989,
+      "voiced_fraction_of_acoustic_activity": 0.7899159663865546,
+      "voicing_probability_median_active": 0.9848789761259922
+    },
+    {
+      "arm": "step5",
+      "id": "relief",
+      "seed": 4321,
+      "file": "step5/relief_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.250793650793651,
+      "sample_rate": 44100,
+      "peak": 0.48046875,
+      "active_rms_median_dbfs": -19.05704116821289,
+      "relative_pause_ratio": 0.4814814814814815,
+      "energy_p90_p10_db": 18.746209621429443,
+      "audio_sha256": "e28f6f2166b025a487025c2724524f98c0e2cc3dbaa81714494fd6a0d7dcc18d",
+      "peak_dbfs": -6.3666970756412375,
+      "rms_dbfs": -21.29017836938013,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -46.24211406707764,
+      "active_seconds": 1.7,
+      "active_span_seconds": [
+        0.0,
+        3.12
+      ],
+      "tail_after_activity_seconds": 0.13079365079365068,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.7,
+          2.08
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.3800000000000001,
+      "last5_seconds_rms_dbfs": -21.29017836938013,
+      "seconds_below_minus60dbfs": 1.3,
+      "per_second_rms_dbfs": [
+        -18.235437699687132,
+        -66.60389308101622,
+        -20.549948390020067,
+        -28.8132134114603
+      ],
+      "f0_median_hz": 200.29043054093617,
+      "f0_span_semitones": 6.212132841764832,
+      "voiced_fraction_of_acoustic_activity": 0.8333333333333334,
+      "voicing_probability_median_active": 0.9459302094659092
+    },
+    {
+      "arm": "step23",
+      "id": "relief",
+      "seed": 4321,
+      "file": "step23/relief_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.575873015873016,
+      "sample_rate": 44100,
+      "peak": 0.486328125,
+      "active_rms_median_dbfs": -19.483259201049805,
+      "relative_pause_ratio": 0.4887640449438202,
+      "energy_p90_p10_db": 18.175382614135742,
+      "audio_sha256": "00749ebc5990fe1730a2da018d847dce9edc1cbdc017e2b00262340d1ef10a9c",
+      "peak_dbfs": -6.261412275815874,
+      "rms_dbfs": -21.419501905764342,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -46.74617671966553,
+      "active_seconds": 1.8800000000000001,
+      "active_span_seconds": [
+        0.0,
+        3.46
+      ],
+      "tail_after_activity_seconds": 0.1158730158730159,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.78,
+          2.36
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.5799999999999998,
+      "last5_seconds_rms_dbfs": -21.419501905764342,
+      "seconds_below_minus60dbfs": 1.5,
+      "per_second_rms_dbfs": [
+        -18.072346381889602,
+        -69.40593764221654,
+        -20.486519630706624,
+        -26.594697363655342
+      ],
+      "f0_median_hz": 189.0489924635466,
+      "f0_span_semitones": 7.4702631208551935,
+      "voiced_fraction_of_acoustic_activity": 0.7628865979381443,
+      "voicing_probability_median_active": 0.8911444948731204
+    },
+    {
+      "arm": "original",
+      "id": "long_comfort",
+      "seed": 1234,
+      "file": "original/long_comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 41.88879818594104,
+      "sample_rate": 44100,
+      "peak": 0.609375,
+      "active_rms_median_dbfs": -20.948238372802734,
+      "relative_pause_ratio": 0.8056351480420249,
+      "energy_p90_p10_db": 19.57343292236328,
+      "audio_sha256": "85ecd940d21effd50c1f70f1e11268e471208c301746f1eeb85edfee397b7c7c",
+      "peak_dbfs": -4.302307337722382,
+      "rms_dbfs": -26.087600602666214,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -46.62293529510498,
+      "active_seconds": 8.120000000000001,
+      "active_span_seconds": [
+        0.0,
+        16.84
+      ],
+      "tail_after_activity_seconds": 25.048798185941042,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.76,
+          1.76
+        ],
+        [
+          2.4,
+          2.8
+        ],
+        [
+          3.86,
+          6.58
+        ],
+        [
+          8.3,
+          8.92
+        ],
+        [
+          10.82,
+          13.68
+        ],
+        [
+          14.2,
+          14.98
+        ]
+      ],
+      "longest_low_energy_run_seconds": 25.040000000000003,
+      "last5_seconds_rms_dbfs": -55.542109751915845,
+      "seconds_below_minus60dbfs": 17.94,
+      "per_second_rms_dbfs": [
+        -21.134998954278537,
+        -27.260765102541914,
+        -18.572731888544766,
+        -20.021332777913635,
+        -64.51532206611843,
+        -63.975303794700984,
+        -22.800500137331877,
+        -17.11133455529004,
+        -25.419821232364548,
+        -19.857544870683682,
+        -23.68655069375375,
+        -63.531750740888086,
+        -63.34460338855574,
+        -25.37626618575743,
+        -26.07509790708031,
+        -18.395387707081845,
+        -21.168899452869425,
+        -62.5346489877532,
+        -61.994138875761315,
+        -61.81863487986051,
+        -62.19319715176705,
+        -61.52093480173157,
+        -60.97602305667177,
+        -61.22344323124389,
+        -60.73804531375767,
+        -60.452398059349605,
+        -60.27248127387941,
+        -59.60119448648388,
+        -59.27242174144531,
+        -58.84790562024969,
+        -58.12831569391096,
+        -58.02563669590385,
+        -56.91549229487265,
+        -57.498752749157156,
+        -55.89642161612539,
+        -56.69358438003725,
+        -55.597109473850914,
+        -55.3480687056351,
+        -56.18937234718522,
+        -54.79797005819256,
+        -55.97687249222051,
+        -55.63923976244125
+      ],
+      "f0_median_hz": 187.9601503892369,
+      "f0_span_semitones": 8.18004615643359,
+      "voiced_fraction_of_acoustic_activity": 0.8608490566037735,
+      "voicing_probability_median_active": 0.8266685594724995
+    },
+    {
+      "arm": "step5",
+      "id": "long_comfort",
+      "seed": 1234,
+      "file": "step5/long_comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 35.75873015873016,
+      "sample_rate": 44100,
+      "peak": 0.39453125,
+      "active_rms_median_dbfs": -21.980037689208984,
+      "relative_pause_ratio": 0.757694459988808,
+      "energy_p90_p10_db": 19.849103546142576,
+      "audio_sha256": "ac1e7fb7b7c843bff602079563fb35b73a431f163410dfc597691d27b5cb04b6",
+      "peak_dbfs": -8.078371828382569,
+      "rms_dbfs": -26.77568826711553,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -48.76453876495361,
+      "active_seconds": 8.66,
+      "active_span_seconds": [
+        0.0,
+        18.14
+      ],
+      "tail_after_activity_seconds": 17.61873015873016,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.7,
+          1.66
+        ],
+        [
+          2.22,
+          2.78
+        ],
+        [
+          3.9,
+          5.62
+        ],
+        [
+          7.38,
+          8.18
+        ],
+        [
+          10.18,
+          12.28
+        ],
+        [
+          12.74,
+          13.74
+        ],
+        [
+          15.6,
+          17.46
+        ]
+      ],
+      "longest_low_energy_run_seconds": 17.6,
+      "last5_seconds_rms_dbfs": -67.18280710618595,
+      "seconds_below_minus60dbfs": 26.080000000000002,
+      "per_second_rms_dbfs": [
+        -22.471779338182625,
+        -23.53052675762717,
+        -22.317314684141927,
+        -20.114016092454218,
+        -69.09261664907643,
+        -24.744970177826882,
+        -18.927400664222585,
+        -27.235517381781463,
+        -22.381059341817704,
+        -22.927184907182706,
+        -35.49271685042341,
+        -69.14465500389232,
+        -24.880319296525503,
+        -24.354599341577433,
+        -21.963838658791378,
+        -24.575475737668846,
+        -68.47179778445724,
+        -24.991061052665074,
+        -35.46515818242197,
+        -68.2358551567951,
+        -68.34287133814686,
+        -68.04328853941497,
+        -67.91806157280939,
+        -68.30208887425067,
+        -68.03511182933285,
+        -67.86837953228273,
+        -68.21256795519369,
+        -67.79803457783717,
+        -67.53646045413093,
+        -67.30981401720001,
+        -67.17317654201723,
+        -67.26149347745991,
+        -67.29675290368665,
+        -67.04008959426031,
+        -67.16004012468025,
+        -67.05073881393893
+      ],
+      "f0_median_hz": 178.43848782469672,
+      "f0_span_semitones": 7.33506574246215,
+      "voiced_fraction_of_acoustic_activity": 0.862144420131291,
+      "voicing_probability_median_active": 0.8911444948731203
+    },
+    {
+      "arm": "step23",
+      "id": "long_comfort",
+      "seed": 1234,
+      "file": "step23/long_comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 27.30666666666667,
+      "sample_rate": 44100,
+      "peak": 0.5625,
+      "active_rms_median_dbfs": -22.40154457092285,
+      "relative_pause_ratio": 0.482051282051282,
+      "energy_p90_p10_db": 18.562107086181637,
+      "audio_sha256": "ae375449beb3ed17854c294f23eca053582686e10461e363ab99620c77f8eac9",
+      "peak_dbfs": -4.997549462787839,
+      "rms_dbfs": -23.423945916499722,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -46.27848148345947,
+      "active_seconds": 14.08,
+      "active_span_seconds": [
+        0.0,
+        27.16
+      ],
+      "tail_after_activity_seconds": 0.14666666666666828,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.84,
+          1.82
+        ],
+        [
+          3.4,
+          5.3
+        ],
+        [
+          7.04,
+          7.42
+        ],
+        [
+          9.3,
+          11.0
+        ],
+        [
+          11.56,
+          12.08
+        ],
+        [
+          13.88,
+          14.76
+        ],
+        [
+          15.44,
+          17.4
+        ],
+        [
+          18.94,
+          20.48
+        ],
+        [
+          21.58,
+          21.78
+        ],
+        [
+          22.58,
+          24.14
+        ],
+        [
+          25.38,
+          26.06
+        ],
+        [
+          26.86,
+          26.98
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.959999999999999,
+      "last5_seconds_rms_dbfs": -25.33399276325248,
+      "seconds_below_minus60dbfs": 11.700000000000001,
+      "per_second_rms_dbfs": [
+        -21.631255241280627,
+        -29.455927449938905,
+        -17.002382680595133,
+        -30.631817380204637,
+        -64.98305705829141,
+        -18.701542665958858,
+        -19.569086854787276,
+        -24.704981616523284,
+        -21.41403292065558,
+        -33.88042343703967,
+        -63.92354574335768,
+        -23.696548466316333,
+        -20.91412917779858,
+        -24.61696201287824,
+        -28.949921671258778,
+        -28.426320045099594,
+        -63.1593599806994,
+        -25.56485027926523,
+        -22.851135128434592,
+        -62.37993035054721,
+        -21.263253587409302,
+        -20.42019468078054,
+        -26.006416135731403,
+        -63.395048148825026,
+        -20.285115311733723,
+        -28.49457127557097,
+        -24.96820377737307,
+        -30.8715169392203
+      ],
+      "f0_median_hz": 181.55753765114136,
+      "f0_span_semitones": 10.300000000000004,
+      "voiced_fraction_of_acoustic_activity": 0.8754966887417218,
+      "voicing_probability_median_active": 0.8266685594724994
+    },
+    {
+      "arm": "original",
+      "id": "whisper",
+      "seed": 4321,
+      "file": "original/whisper_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 9.148662131519274,
+      "sample_rate": 44100,
+      "peak": 0.435546875,
+      "active_rms_median_dbfs": -20.620155334472656,
+      "relative_pause_ratio": 0.636761487964989,
+      "energy_p90_p10_db": 18.7613525390625,
+      "audio_sha256": "0ab2e0fd467416d606b227c2d5348494ab296584a6dc1f1c664afc7854d04bfa",
+      "peak_dbfs": -7.219301956559152,
+      "rms_dbfs": -23.827843152329766,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -48.40902137756348,
+      "active_seconds": 3.4,
+      "active_span_seconds": [
+        0.04,
+        8.44
+      ],
+      "tail_after_activity_seconds": 0.708662131519274,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.76,
+          2.04
+        ],
+        [
+          2.6,
+          3.4
+        ],
+        [
+          4.46,
+          5.98
+        ],
+        [
+          6.34,
+          7.74
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.5200000000000005,
+      "last5_seconds_rms_dbfs": -27.434560475491068,
+      "seconds_below_minus60dbfs": 0.8200000000000001,
+      "per_second_rms_dbfs": [
+        -22.1784221089625,
+        -57.80133487827786,
+        -21.244826665597728,
+        -18.806116575761795,
+        -25.179620799441317,
+        -41.716686920187215,
+        -23.868004359063093,
+        -26.019177449001614,
+        -28.362579550700033,
+        -52.218429626890234
+      ],
+      "f0_median_hz": 178.95532964679938,
+      "f0_span_semitones": 6.040293199843582,
+      "voiced_fraction_of_acoustic_activity": 0.8044692737430168,
+      "voicing_probability_median_active": 0.8911444948731203
+    },
+    {
+      "arm": "step5",
+      "id": "whisper",
+      "seed": 4321,
+      "file": "step5/whisper_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 5.2477097505668935,
+      "sample_rate": 44100,
+      "peak": 0.5859375,
+      "active_rms_median_dbfs": -18.32303237915039,
+      "relative_pause_ratio": 0.46183206106870234,
+      "energy_p90_p10_db": 19.657605171203613,
+      "audio_sha256": "74c0fc9f20e5522605b7960b9703bd06d7ba7cdd57c7f6dac5f554ed3a5f1bbb",
+      "peak_dbfs": -4.6429741236409745,
+      "rms_dbfs": -19.642014172737852,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -46.5031681060791,
+      "active_seconds": 2.88,
+      "active_span_seconds": [
+        0.04,
+        5.12
+      ],
+      "tail_after_activity_seconds": 0.12770975056689338,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.66,
+          1.7
+        ],
+        [
+          3.16,
+          4.26
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.0999999999999996,
+      "last5_seconds_rms_dbfs": -19.772691538459267,
+      "seconds_below_minus60dbfs": 2.14,
+      "per_second_rms_dbfs": [
+        -19.435710052214752,
+        -21.834482295468103,
+        -15.562422915706682,
+        -29.74313298102504,
+        -20.228246615407595,
+        -25.406994799302893
+      ],
+      "f0_median_hz": 195.15217078149496,
+      "f0_span_semitones": 5.88503677383794,
+      "voiced_fraction_of_acoustic_activity": 0.8211920529801324,
+      "voicing_probability_median_active": 0.8266685594724997
+    },
+    {
+      "arm": "step23",
+      "id": "whisper",
+      "seed": 4321,
+      "file": "step23/whisper_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 8.219863945578231,
+      "sample_rate": 44100,
+      "peak": 0.1904296875,
+      "active_rms_median_dbfs": -29.089887619018555,
+      "relative_pause_ratio": 0.5829268292682928,
+      "energy_p90_p10_db": 19.01024627685547,
+      "audio_sha256": "348a4f35647027ea9d1965fa5c0de67a2792328eda7f94bd0ba4efc1f66bde19",
+      "peak_dbfs": -14.405306900984673,
+      "rms_dbfs": -31.220964660296847,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -55.969961166381836,
+      "active_seconds": 3.46,
+      "active_span_seconds": [
+        0.0,
+        8.08
+      ],
+      "tail_after_activity_seconds": 0.1398639455782309,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.74,
+          2.02
+        ],
+        [
+          3.62,
+          5.42
+        ],
+        [
+          5.78,
+          7.26
+        ]
+      ],
+      "longest_low_energy_run_seconds": 1.7999999999999998,
+      "last5_seconds_rms_dbfs": -36.93511813733921,
+      "seconds_below_minus60dbfs": 4.659999999999999,
+      "per_second_rms_dbfs": [
+        -28.070975242024776,
+        -65.49043665862965,
+        -24.95833079749705,
+        -32.120336548551634,
+        -70.53431364355032,
+        -33.89744643603948,
+        -70.42829788854841,
+        -33.7306298160754,
+        -44.37312272476933
+      ],
+      "f0_median_hz": 178.43848782469672,
+      "f0_span_semitones": 4.434785682902173,
+      "voiced_fraction_of_acoustic_activity": 0.7213114754098361,
+      "voicing_probability_median_active": 0.5485250542599845
+    }
+  ],
+  "real_recordings": [
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step23-preview/reference.wav",
+      "audio_sha256": "74ce2889f741c557ae621a5889bb00df9f183c129df60f037c387567a2836c81",
+      "seconds": 5.48,
+      "peak_dbfs": -3.743445809662451,
+      "rms_dbfs": -18.175207627964582,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -46.4531307220459,
+      "active_seconds": 4.58,
+      "active_span_seconds": [
+        0.24,
+        5.22
+      ],
+      "tail_after_activity_seconds": 0.2600000000000007,
+      "internal_pauses_at_least_120ms": [
+        [
+          2.66,
+          3.0
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.33999999999999986,
+      "last5_seconds_rms_dbfs": -18.016651001608235,
+      "seconds_below_minus60dbfs": 0.5,
+      "per_second_rms_dbfs": [
+        -17.27315307229663,
+        -17.10081426420134,
+        -21.376816719384998,
+        -17.305649553372387,
+        -17.51545270441243,
+        -24.80543988208915
+      ],
+      "f0_median_hz": 213.42958325580668,
+      "f0_span_semitones": 10.220000080075494,
+      "voiced_fraction_of_acoustic_activity": 0.7617021276595745,
+      "voicing_probability_median_active": 0.6860828109301793
+    },
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step5-preview/real_recordings/D-A3-A-007-0244.wav",
+      "audio_sha256": "00d60c83dd5cbde8507611de936064412e2933f90d4aa4d1152ac55159bcf0c2",
+      "seconds": 5.539977324263038,
+      "peak_dbfs": -1.4722692118626748,
+      "rms_dbfs": -23.07319829010636,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -43.07913017272949,
+      "active_seconds": 3.24,
+      "active_span_seconds": [
+        0.24,
+        5.26
+      ],
+      "tail_after_activity_seconds": 0.27997732426303834,
+      "internal_pauses_at_least_120ms": [
+        [
+          1.2,
+          1.96
+        ],
+        [
+          3.1,
+          3.7
+        ],
+        [
+          5.26,
+          5.52
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.76,
+      "last5_seconds_rms_dbfs": -22.653690303919454,
+      "seconds_below_minus60dbfs": 1.44,
+      "per_second_rms_dbfs": [
+        -29.7670366314577,
+        -33.596463538339655,
+        -22.021196214597932,
+        -23.658364565081087,
+        -18.40189605199782,
+        -28.426270532333852
+      ],
+      "f0_median_hz": 246.58644460692156,
+      "f0_span_semitones": 11.604409688902184,
+      "voiced_fraction_of_acoustic_activity": 0.6589595375722543,
+      "voicing_probability_median_active": 0.12793708630129036
+    },
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step5-preview/real_recordings/D-A3-A-007-0840.wav",
+      "audio_sha256": "c3712ce42fb0fc46c4bdf49c79a99e8e086d3aa5e20542013355a5b85ec20dc0",
+      "seconds": 5.540045351473923,
+      "peak_dbfs": -1.2002236688687877,
+      "rms_dbfs": -21.780656770898386,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -43.04502296447754,
+      "active_seconds": 3.34,
+      "active_span_seconds": [
+        0.22,
+        5.26
+      ],
+      "tail_after_activity_seconds": 0.2800453514739232,
+      "internal_pauses_at_least_120ms": [
+        [
+          1.6,
+          2.44
+        ],
+        [
+          3.26,
+          3.86
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.8399999999999999,
+      "last5_seconds_rms_dbfs": -21.458689077154634,
+      "seconds_below_minus60dbfs": 1.6400000000000001,
+      "per_second_rms_dbfs": [
+        -23.030743686685355,
+        -24.209582993162524,
+        -22.275548440605224,
+        -23.7677706329481,
+        -18.53972647192095,
+        -21.438347084549886
+      ],
+      "f0_median_hz": 264.2848075508742,
+      "f0_span_semitones": 14.323172978332945,
+      "voiced_fraction_of_acoustic_activity": 0.6685393258426966,
+      "voicing_probability_median_active": 0.10030867077046299
+    },
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step5-preview/real_recordings/D-H3-A-007-0341.wav",
+      "audio_sha256": "a2ed234cff2c758f51b3487ca7d9f77932e6a5bf863caa993f561538466fa1df",
+      "seconds": 5.5200226757369615,
+      "peak_dbfs": -1.4999483331696182,
+      "rms_dbfs": -18.653961923849096,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -43.100348472595215,
+      "active_seconds": 4.0200000000000005,
+      "active_span_seconds": [
+        0.24,
+        5.24
+      ],
+      "tail_after_activity_seconds": 0.28002267573696127,
+      "internal_pauses_at_least_120ms": [
+        [
+          0.72,
+          1.28
+        ],
+        [
+          5.24,
+          5.52
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.56,
+      "last5_seconds_rms_dbfs": -19.246466667189644,
+      "seconds_below_minus60dbfs": 1.02,
+      "per_second_rms_dbfs": [
+        -16.804722103629203,
+        -19.30328360681339,
+        -18.89677131650565,
+        -18.744056898457597,
+        -18.516354911295206,
+        -23.48959926722987
+      ],
+      "f0_median_hz": 273.6047911615889,
+      "f0_span_semitones": 10.644889975976913,
+      "voiced_fraction_of_acoustic_activity": 0.827906976744186,
+      "voicing_probability_median_active": 0.6159498854580678
+    },
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step5-preview/real_recordings/D-H3-A-007-0787.wav",
+      "audio_sha256": "e2603716fecc4d1e319cb8754d492662324c6f4d120ff1b001399f6bdad4cb8a",
+      "seconds": 5.53,
+      "peak_dbfs": -1.4999483331696182,
+      "rms_dbfs": -16.359541834658124,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -43.22312927246094,
+      "active_seconds": 3.98,
+      "active_span_seconds": [
+        0.26,
+        5.3
+      ],
+      "tail_after_activity_seconds": 0.23000000000000043,
+      "internal_pauses_at_least_120ms": [
+        [
+          1.66,
+          2.38
+        ],
+        [
+          3.64,
+          3.86
+        ],
+        [
+          5.3,
+          5.52
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.72,
+      "last5_seconds_rms_dbfs": -16.501062770081585,
+      "seconds_below_minus60dbfs": 1.1,
+      "per_second_rms_dbfs": [
+        -14.663761096129331,
+        -21.449153260308854,
+        -15.773198966957478,
+        -16.361492913866048,
+        -15.281157965659693,
+        -18.5971175392474
+      ],
+      "f0_median_hz": 284.8943137887522,
+      "f0_span_semitones": 11.925815665553019,
+      "voiced_fraction_of_acoustic_activity": 0.9423076923076923,
+      "voicing_probability_median_active": 0.5485250542599844
+    },
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step5-preview/real_recordings/D-S3-A-007-0683.wav",
+      "audio_sha256": "70d2e5c7dcc5bf11e3197d9c2560c4ecd75139870f03678adf1776444d9bb0db",
+      "seconds": 5.5,
+      "peak_dbfs": -2.0789615353064055,
+      "rms_dbfs": -20.099954845342086,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -43.069281578063965,
+      "active_seconds": 4.5600000000000005,
+      "active_span_seconds": [
+        0.2,
+        5.22
+      ],
+      "tail_after_activity_seconds": 0.28000000000000025,
+      "internal_pauses_at_least_120ms": [
+        [
+          2.3,
+          2.44
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.28000000000000025,
+      "last5_seconds_rms_dbfs": -19.732481169474983,
+      "seconds_below_minus60dbfs": 0.4,
+      "per_second_rms_dbfs": [
+        -23.75625239521782,
+        -21.447110358620677,
+        -18.727670358665566,
+        -17.828391208458925,
+        -19.21406315611717,
+        -30.034522223654044
+      ],
+      "f0_median_hz": 238.1868050662396,
+      "f0_span_semitones": 12.080000053383502,
+      "voiced_fraction_of_acoustic_activity": 0.6348547717842323,
+      "voicing_probability_median_active": 0.06608151270920701
+    },
+    {
+      "file": "/Users/johyeon-ung/Desktop/Miro/output/voice-compare/drama3-fullsize-ko-007-20261024-step5-preview/real_recordings/D-S3-A-007-0796.wav",
+      "audio_sha256": "56d35660f3cad889b6716f6de52680cbdef3f1f6f0ff16da28579f868e9f3991",
+      "seconds": 5.52,
+      "peak_dbfs": -1.4999483331696182,
+      "rms_dbfs": -17.209687415346277,
+      "clipped_fraction": 0.0,
+      "active_gate_dbfs": -41.9850435256958,
+      "active_seconds": 4.26,
+      "active_span_seconds": [
+        0.24,
+        5.26
+      ],
+      "tail_after_activity_seconds": 0.2599999999999998,
+      "internal_pauses_at_least_120ms": [
+        [
+          2.16,
+          2.36
+        ],
+        [
+          3.1,
+          3.48
+        ],
+        [
+          5.26,
+          5.52
+        ]
+      ],
+      "longest_low_energy_run_seconds": 0.3799999999999999,
+      "last5_seconds_rms_dbfs": -17.10227532359903,
+      "seconds_below_minus60dbfs": 0.62,
+      "per_second_rms_dbfs": [
+        -17.35020861201063,
+        -16.107150754469103,
+        -19.563293238988724,
+        -18.797797579907233,
+        -14.91302371806376,
+        -19.737536697123144
+      ],
+      "f0_median_hz": 296.64966642060267,
+      "f0_span_semitones": 8.999999999999998,
+      "voiced_fraction_of_acoustic_activity": 0.7903930131004366,
+      "voicing_probability_median_active": 0.3721358982558249
+    }
+  ],
+  "complete": true
+}

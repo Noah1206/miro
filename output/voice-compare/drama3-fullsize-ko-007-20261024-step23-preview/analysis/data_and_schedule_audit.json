@@ -1,0 +1,65 @@
+{
+  "available_waveforms": 600,
+  "metadata_matches": 600,
+  "available_coverage": {
+    "n": 600,
+    "emotion_counts": {
+      "무감정": 250,
+      "기쁨": 150,
+      "분노": 100,
+      "슬픔": 100
+    },
+    "style_counts": {
+      "대화체": 600
+    },
+    "sub_style_counts": {
+      "A": 244,
+      "B": 356
+    },
+    "intensity_counts": {
+      "0": 250,
+      "2": 150,
+      "3": 200
+    },
+    "parallel_texts_multiple_emotions": 0,
+    "phrase_boundary_ptr_count": 530,
+    "duration_minutes": 43.69311758427476
+  },
+  "presented_by_step23": {
+    "n": 368,
+    "emotion_counts": {
+      "분노": 61,
+      "무감정": 146,
+      "슬픔": 65,
+      "기쁨": 96
+    },
+    "style_counts": {
+      "대화체": 368
+    },
+    "sub_style_counts": {
+      "B": 210,
+      "A": 158
+    },
+    "intensity_counts": {
+      "3": 126,
+      "0": 146,
+      "2": 96
+    },
+    "parallel_texts_multiple_emotions": 0,
+    "phrase_boundary_ptr_count": 323,
+    "duration_minutes": 26.485614352824197
+  },
+  "unique_presented": 368,
+  "training_clips": 531,
+  "fraction_training_clips_presented": 0.6930320150659134,
+  "update_not_epoch": true,
+  "full_corpus_labels_acting_verified_by_listening": false,
+  "trained_directions": [
+    "happy",
+    "sad",
+    "angry",
+    "neutral_without_tag"
+  ],
+  "phrase_local_timing_or_loudness_labels_used_by_current_trainer": false,
+  "prior_conclusion_all007_data_is_neutral_reading_incorrect": true
+}

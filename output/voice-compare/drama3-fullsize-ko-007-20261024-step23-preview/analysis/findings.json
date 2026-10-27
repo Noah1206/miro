@@ -1,0 +1,301 @@
+{
+  "additional_cost_usd": 0,
+  "cloud_compute_or_api_called": false,
+  "model_table": [
+    {
+      "arm": "original",
+      "long_seconds": 41.88879818594104,
+      "long_asr_cer": 0.4367816091954023,
+      "long_tail_low_energy_seconds": 25.048798185941042,
+      "whisper_rms_dbfs": -23.827843152329766,
+      "whisper_voiced_fraction_active": 0.8044692737430168,
+      "identity_reference_median_valid7": 0.7830361723899841,
+      "identity_centroid_median_valid7": 0.6651170253753662
+    },
+    {
+      "arm": "step5",
+      "long_seconds": 35.75873015873016,
+      "long_asr_cer": 0.39080459770114945,
+      "long_tail_low_energy_seconds": 17.61873015873016,
+      "whisper_rms_dbfs": -19.642014172737852,
+      "whisper_voiced_fraction_active": 0.8211920529801324,
+      "identity_reference_median_valid7": 0.7780401706695557,
+      "identity_centroid_median_valid7": 0.6271125078201294
+    },
+    {
+      "arm": "step23",
+      "long_seconds": 27.30666666666667,
+      "long_asr_cer": 0.011494252873563218,
+      "long_tail_low_energy_seconds": 0.14666666666666828,
+      "whisper_rms_dbfs": -31.220964660296847,
+      "whisper_voiced_fraction_active": 0.7213114754098361,
+      "identity_reference_median_valid7": 0.805866003036499,
+      "identity_centroid_median_valid7": 0.6514591574668884
+    }
+  ],
+  "context_vs_seed": [
+    {
+      "arm": "original",
+      "seconds": {
+        "mean_context_difference": 0.3715192743764171,
+        "mean_seed_difference": 0.4643990929705215,
+        "two_matched_context_differences": [
+          0.6501587301587302,
+          0.09287981859410399
+        ]
+      },
+      "f0_median_hz": {
+        "mean_context_difference": 16.90089503384644,
+        "mean_seed_difference": 16.90089503384644,
+        "two_matched_context_differences": [
+          11.241793704527225,
+          22.559996363165652
+        ]
+      },
+      "active_rms_median_dbfs": {
+        "mean_context_difference": 5.775242805480957,
+        "mean_seed_difference": 5.775242805480957,
+        "two_matched_context_differences": [
+          6.688648223876953,
+          4.861837387084961
+        ]
+      },
+      "f0_span_semitones": {
+        "mean_context_difference": 1.7899045066053527,
+        "mean_seed_difference": 1.1549982864024009,
+        "two_matched_context_differences": [
+          0.6349062202029518,
+          2.9449027930077536
+        ]
+      }
+    },
+    {
+      "arm": "step5",
+      "seconds": {
+        "mean_context_difference": 0.7662585034013607,
+        "mean_seed_difference": 0.7662585034013607,
+        "two_matched_context_differences": [
+          1.346757369614513,
+          0.18575963718820843
+        ]
+      },
+      "f0_median_hz": {
+        "mean_context_difference": 4.766123642764782,
+        "mean_seed_difference": 4.766123642764782,
+        "two_matched_context_differences": [
+          5.5035181685356065,
+          4.028729116993958
+        ]
+      },
+      "active_rms_median_dbfs": {
+        "mean_context_difference": 1.5434503555297852,
+        "mean_seed_difference": 1.5789880752563477,
+        "two_matched_context_differences": [
+          0.026470184326171875,
+          3.0604305267333984
+        ]
+      },
+      "f0_span_semitones": {
+        "mean_context_difference": 0.8776710670862387,
+        "mean_seed_difference": 0.9976689418023992,
+        "two_matched_context_differences": [
+          1.2405266939195023,
+          0.514815440252975
+        ]
+      }
+    },
+    {
+      "arm": "step23",
+      "seconds": {
+        "mean_context_difference": 0.06965986394557833,
+        "mean_seed_difference": 0.30185941043083897,
+        "two_matched_context_differences": [
+          0.09287981859410444,
+          0.04643990929705222
+        ]
+      },
+      "f0_median_hz": {
+        "mean_context_difference": 2.0027239095734046,
+        "mean_seed_difference": 14.689363142853779,
+        "two_matched_context_differences": [
+          3.0684432071674905,
+          0.9370046119793187
+        ]
+      },
+      "active_rms_median_dbfs": {
+        "mean_context_difference": 1.4972562789916992,
+        "mean_seed_difference": 3.8342504501342773,
+        "two_matched_context_differences": [
+          1.0446510314941406,
+          1.9498615264892578
+        ]
+      },
+      "f0_span_semitones": {
+        "mean_context_difference": 0.18246550469300216,
+        "mean_seed_difference": 0.6626059897765377,
+        "two_matched_context_differences": [
+          0.07843180155544172,
+          0.2864992078305626
+        ]
+      }
+    }
+  ],
+  "training": {
+    "updates_completed": 23,
+    "global_examples_per_update": 16,
+    "clip_presentations": 368,
+    "training_examples": 531,
+    "epochs_in_presentations": 0.6930320150659134,
+    "frames_loss_not_perceptual_score": true,
+    "logged_updates": [
+      {
+        "step": 6,
+        "speech_loss": 4.53198117017746,
+        "teacher_loss": 0.75261639803648,
+        "global_gradient_norm": 6.475153923034668,
+        "seconds": 421.025658572
+      },
+      {
+        "step": 7,
+        "speech_loss": 4.7253954112529755,
+        "teacher_loss": 0.7058771178126335,
+        "global_gradient_norm": 14.378012657165527,
+        "seconds": 506.807600046
+      },
+      {
+        "step": 8,
+        "speech_loss": 4.59881916642189,
+        "teacher_loss": 0.6877409070730209,
+        "global_gradient_norm": 7.711334228515625,
+        "seconds": 587.5292082100001
+      },
+      {
+        "step": 9,
+        "speech_loss": 4.510261654853821,
+        "teacher_loss": 0.6648745313286781,
+        "global_gradient_norm": 16.736051559448242,
+        "seconds": 668.9897850980001
+      },
+      {
+        "step": 10,
+        "speech_loss": 4.6033331751823425,
+        "teacher_loss": 0.6437959745526314,
+        "global_gradient_norm": 10.01307201385498,
+        "seconds": 750.7675319330001
+      },
+      {
+        "step": 11,
+        "speech_loss": 4.884211301803589,
+        "teacher_loss": 0.6391943395137787,
+        "global_gradient_norm": 18.992544174194336,
+        "seconds": 831.174152129
+      },
+      {
+        "step": 12,
+        "speech_loss": 4.493810832500458,
+        "teacher_loss": 0.6234043091535568,
+        "global_gradient_norm": 3.0844764709472656,
+        "seconds": 914.630807104
+      },
+      {
+        "step": 13,
+        "speech_loss": 4.756910115480423,
+        "teacher_loss": 0.6168450340628624,
+        "global_gradient_norm": 12.554729461669922,
+        "seconds": 997.383983036
+      },
+      {
+        "step": 14,
+        "speech_loss": 4.562503755092621,
+        "teacher_loss": 0.5916194543242455,
+        "global_gradient_norm": 8.495421409606934,
+        "seconds": 1081.3080442169999
+      },
+      {
+        "step": 15,
+        "speech_loss": 4.4518274664878845,
+        "teacher_loss": 0.5955846235156059,
+        "global_gradient_norm": 5.414732933044434,
+        "seconds": 1161.9572004509998
+      },
+      {
+        "step": 16,
+        "speech_loss": 4.635090887546539,
+        "teacher_loss": 0.5670341029763222,
+        "global_gradient_norm": 12.02381420135498,
+        "seconds": 1242.657554802
+      },
+      {
+        "step": 17,
+        "speech_loss": 4.589701056480408,
+        "teacher_loss": 0.5542566627264023,
+        "global_gradient_norm": 7.929056167602539,
+        "seconds": 1325.088050533
+      },
+      {
+        "step": 18,
+        "speech_loss": 4.77912500500679,
+        "teacher_loss": 0.5481211766600609,
+        "global_gradient_norm": 15.941790580749512,
+        "seconds": 1406.670370241
+      },
+      {
+        "step": 19,
+        "speech_loss": 4.541899770498276,
+        "teacher_loss": 0.5524409413337708,
+        "global_gradient_norm": 3.7311339378356934,
+        "seconds": 1487.41180947
+      },
+      {
+        "step": 20,
+        "speech_loss": 4.5489881336688995,
+        "teacher_loss": 0.5426424965262413,
+        "global_gradient_norm": 8.174101829528809,
+        "seconds": 1566.205930933
+      },
+      {
+        "step": 21,
+        "speech_loss": 4.470889151096344,
+        "teacher_loss": 0.5333336070179939,
+        "global_gradient_norm": 1.8216427564620972,
+        "seconds": 1647.745607047
+      },
+      {
+        "step": 22,
+        "speech_loss": 4.619825154542923,
+        "teacher_loss": 0.5227690078318119,
+        "global_gradient_norm": 6.377730369567871,
+        "seconds": 1728.4323939189999
+      },
+      {
+        "step": 23,
+        "speech_loss": 4.533384680747986,
+        "teacher_loss": 0.5313897877931595,
+        "global_gradient_norm": 2.571331262588501,
+        "seconds": 1810.521045132
+      }
+    ],
+    "first4_speech_loss_mean": 4.591614350676537,
+    "last4_speech_loss_mean": 4.543271780014038,
+    "first4_teacher_loss_mean": 0.7027772385627031,
+    "last4_teacher_loss_mean": 0.5325337247923017,
+    "independent_step23_validation_available_locally": false,
+    "training_loss_compares_different_batches": true
+  },
+  "strongest_supported_improvement": "The single predeclared long utterance is almost fully transcribed and has no long low-energy tail in step23, unlike both controls.",
+  "acting_quality_superiority_confirmed": false,
+  "full_voice_clone_superiority_confirmed": false,
+  "whisper_mode_success_confirmed": false,
+  "notable_remaining_failure": "All models say only the first word on relief1234 then produce about11s low-energy tail until token limit.",
+  "codec_retrained_or_teacher_replaced": false,
+  "teacher_is_auxiliary_loss_on_tts_not_codec": true,
+  "source_audio_checksums_verified_against_original_reports": true,
+  "limitations": [
+    "Only8 paired settings; six short emotion takes share the same eight-syllable sentence.",
+    "Only two seeds for emotion, one long/whisper take; no formal significance or production pass claim.",
+    "No matched teacher-free Full FT control; no teacher-only attribution.",
+    "F0 on real007 recordings is not compared as matched-text fidelity because generated texts differ.",
+    "Speaker cosine uses gain/VAD normalization in features only; listening WAVs unchanged.",
+    "No human blind listening preference collected."
+  ]
+}

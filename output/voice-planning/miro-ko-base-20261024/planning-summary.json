@@ -1,0 +1,153 @@
+{
+  "male_candidates": [
+    {
+      "speaker_id": "aihub001",
+      "age_group": {
+        "20": 54
+      },
+      "gender": "MALE",
+      "planned_role": "train",
+      "selected_clips": 600,
+      "original_audio_confirmed": false
+    },
+    {
+      "speaker_id": "aihub011",
+      "age_group": {
+        "30": 60
+      },
+      "gender": "MALE",
+      "planned_role": "train",
+      "selected_clips": 600,
+      "original_audio_confirmed": false
+    }
+  ],
+  "candidate_splits": {
+    "train": 1074,
+    "validation": 105
+  },
+  "cost": {
+    "currency": "USD",
+    "official_prices_source": "https://modal.com/pricing",
+    "historical_measured_update_seconds": 81.73502273882353,
+    "quoted_step_seconds_assumption": [
+      70,
+      110
+    ],
+    "rates": {
+      "H100_gpu_hour": 3.9492000000000003,
+      "physical_cpu_core_hour": 0.04716,
+      "GiB_RAM_hour": 0.007991999999999999,
+      "volume_GiB_month": 0.09,
+      "volume_free_GiB": 1024
+    },
+    "training_hour_low_high": [
+      37.46304,
+      39.508992
+    ],
+    "reuse_gate_before_training": {
+      "estimated_usd": [
+        2,
+        5
+      ],
+      "new_training_updates": 0,
+      "models": [
+        "original_Drama3",
+        "saved_step23"
+      ],
+      "heldout_voices": 2,
+      "takes_per_model": 8,
+      "includes": "CPU23 export, original checkpoint CPU fetch allowance, one GPU load per model, new listening WAVs",
+      "decision": "Before new training, test23 on both candidate male voices. After new training, these males are seen speakers. Do not subtract23 old007 updates from the new task.",
+      "paid_execution_authorized": false
+    },
+    "scenarios": {
+      "transfer_feasibility_only_32_updates": {
+        "updates": 32,
+        "global_clip_presentations": 512,
+        "durable_full_saves": 1,
+        "estimated_resource_usd_low": 36.496415999999996,
+        "estimated_resource_usd_high": 68.9855104,
+        "central_scenario_usd": 46.42099727010424,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      },
+      "two_male_only_one_coverage_pass": {
+        "updates": 68,
+        "global_clip_presentations": 1088,
+        "durable_full_saves": 2,
+        "estimated_resource_usd_low": 67.923744,
+        "estimated_resource_usd_high": 120.67644159999999,
+        "central_scenario_usd": 83.3297367989715,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      },
+      "two_male_only_three_coverage_passes": {
+        "updates": 204,
+        "global_clip_presentations": 3264,
+        "durable_full_saves": 4,
+        "estimated_resource_usd_low": 177.39907200000002,
+        "estimated_resource_usd_high": 301.3203328,
+        "central_scenario_usd": 213.06997839691445,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      }
+    },
+    "snapshot_storage": {
+      "existing_GiB": 995.2804049784318,
+      "one_new_full_checkpoint_GiB": 401.23696430027485,
+      "incremental_excess_GiB_if_retained": 372.5173692787066,
+      "incremental_monthly_usd": 33.52656323508359,
+      "approx_daily_usd": 1.1175521078361197,
+      "new_native_export_GiB": 68.63065293058753,
+      "old_artifacts_not_deleted": true
+    },
+    "quality_target_minimum_cost": "Unknown until heldout learning curves; one pass is a scope estimate, not a production-quality promise.",
+    "unbenchmarked_cheaper_hardware": "4H100/A100/optimizer changes are hypotheses; no savings claimed without a bounded memory/throughput test. RTX2070 cannot host the actual35.9B fullFT.",
+    "no_new_paid_job_started": true
+  }
+}

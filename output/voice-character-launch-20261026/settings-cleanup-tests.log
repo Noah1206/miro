@@ -1,0 +1,19 @@
+
+> miro@ test /Users/johyeon-ung/Desktop/Miro
+> vitest run "apps/web/lib/__tests__/adult-verify.integration.test.ts" "apps/web/lib/__tests__/persona.integration.test.ts"
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Users/johyeon-ung/Desktop/Miro
+
+stdout | apps/web/lib/__tests__/persona.integration.test.ts > 페르소나 저장과 쓰임 > reaches the conversation snapshot and the proactive message grounding, and is removed with the account
+{"t":"2026-10-26T15:09:17.646Z","event":"account.deletion_note_unsent","userId":"f2ed74f5-a02c-4dfe-875a-cae75fe6b613"}
+
+ ✓ apps/web/lib/__tests__/persona.integration.test.ts (8 tests) 759ms
+ ✓ apps/web/lib/__tests__/adult-verify.integration.test.ts (3 tests) 85ms
+
+ Test Files  2 passed (2)
+      Tests  11 passed (11)
+   Start at  00:09:15
+   Duration  2.73s (transform 531ms, setup 0ms, collect 1.39s, tests 844ms, environment 0ms, prepare 94ms)
+

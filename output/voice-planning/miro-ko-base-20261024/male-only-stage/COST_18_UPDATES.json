@@ -1,0 +1,97 @@
+{
+  "as_of": "2026-10-24 Asia/Seoul",
+  "paid_execution_enabled": false,
+  "training_started": false,
+  "basis": "Same18 additional optimizer updates as previous5-to23 run, across both males together, not18 per male",
+  "source_weights_step": 23,
+  "new_stage_optimizer_starts_at": 0,
+  "additional_updates": 18,
+  "historical_plus_new_updates_for_provenance_only": 41,
+  "new_stage_has_changed_data_and_optimizer": true,
+  "global_batch_examples": 16,
+  "male_speakers": 2,
+  "female_speakers": 0,
+  "examples_per_male_per_update": 8,
+  "total_target_presentations": 288,
+  "target_presentations_per_male": 144,
+  "unique_training_targets": 288,
+  "unique_targets_and_reference_recordings_for_cache": 474,
+  "full_1074_clip_pass_not_required": true,
+  "historical_same_update_run": {
+    "updates": 18,
+    "resource_cost_usd": 24.814072609999997,
+    "seconds": 2341.755454861,
+    "final_checkpoint_save_seconds": 157.39199462400006,
+    "volume_commit_seconds": 347.53376547000016
+  },
+  "current_prices_source": "https://modal.com/pricing",
+  "recommended_expected_usd_rounded": [
+    34,
+    42
+  ],
+  "recommended_savings_goal_not_spend_authorization": [
+    35,
+    45
+  ],
+  "expected_usd_unrounded": {
+    "one_final_full_save": [
+      27.904639189999997,
+      35.15463919
+    ],
+    "midpoint9_and_final18_full_save": [
+      33.159098619842204,
+      40.69605802781882
+    ]
+  },
+  "extra_midpoint_save_usd": [
+    5.254459429842204,
+    5.541418837818826
+  ],
+  "cpu_export_each_measured_usd": 0.42028329000000003,
+  "two_CPU_exports_needed": "Rebuild existing23 native weights for initialization and export newly trained weights; do both after GPU jobs exit.",
+  "precompute_allowance_usd": [
+    1,
+    5
+  ],
+  "listening_allowance_usd": [
+    1.25,
+    2.5
+  ],
+  "new_stage_load_extra_allowance_usd": [
+    0,
+    2
+  ],
+  "conservative_slow_case_scenario_usd": 60.315481600000005,
+  "slow_case_is_not_a_guaranteed_maximum": true,
+  "min_cost_choices": [
+    "One shared model for both males; one GPU training load",
+    "18 total updates; equal male exposure, existing BF16 precision and FullFT objective",
+    "Encode only schedule-required recordings plus validation and reserved references",
+    "Compare saved23 against new18-stage checkpoint only; no unrelated model comparisons",
+    "Midpoint9 and final18 commits, with remote verification before publishing completion",
+    "CPU exports; one GPU load per checkpoint for both voices during listening",
+    "No automatically retried paid job; no new independent GPU reload verification unless budgeted",
+    "Preserve old5 and23; remove only newly created temporary exports or intermediate checkpoint after verified final save under a future retention plan"
+  ],
+  "excludes": [
+    "actor recording or special use licence",
+    "continued checkpoint storage",
+    "tax, FX, card fees",
+    "unapproved retry or independent resume tests"
+  ],
+  "storage_after_final_if_old_protected_and_one_new_full_retained": {
+    "existing_GiB": 995.2804049784318,
+    "one_new_full_checkpoint_GiB": 401.23696430027485,
+    "incremental_excess_GiB_if_retained": 372.5173692787066,
+    "incremental_monthly_usd": 33.52656323508359,
+    "approx_daily_usd": 1.1175521078361197,
+    "new_native_export_GiB": 68.63065293058753,
+    "old_artifacts_not_deleted": true
+  },
+  "quality_claim": "18 updates are a transfer probe, not evidence of production-quality convergence. Male duration/throughput unmeasured.",
+  "blockers": [
+    "Original male WAVs not available; official API returned502",
+    "Safe runner integration for new male schedule and step23 initialization is unfinished",
+    "New paid spending is not approved"
+  ]
+}

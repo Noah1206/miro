@@ -1,0 +1,1 @@
+{"remaining_seconds" : 73, "reserved_seconds" : 0, "purchased_miro_used" : 150, "jobs" : [{"state" : "done", "part" : 0, "cap" : "10"}, {"state" : "done", "part" : 2, "cap" : "20"}, {"state" : "failed", "part" : 1, "cap" : "10"}]}

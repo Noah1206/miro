@@ -1,0 +1,47 @@
+{
+  "client_date": "2026-10-25",
+  "commit": "3b6fa88a5b22ed1366b8a92ce212262a7f5f27fe",
+  "production_url": "https://miroapp.app",
+  "deployment_url": "https://miro-1ezz0ym7u-noah1206s-projects.vercel.app",
+  "health": {
+    "http": 200,
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh",
+    "version": ""
+  },
+  "public_assets": [
+    {
+      "path": "/sw.js",
+      "http": 200,
+      "matches_committed_file": true
+    },
+    {
+      "path": "/manifest.json",
+      "http": 200,
+      "matches_committed_file": true
+    },
+    {
+      "path": "/offline.html",
+      "http": 200,
+      "matches_committed_file": true
+    }
+  ],
+  "new_migration_applied": "20261024135239_speech_synthesis_queue.sql",
+  "new_tables_rls": true,
+  "new_tables_anon_authenticated_access": false,
+  "origin_pushed": true,
+  "push_range": "179c00e..3b6fa88",
+  "typechecks": "root/web passed on Node24",
+  "missing_translations": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "tests_run_during_shipping": false,
+  "production_authenticated_chat_ui_inspected": false,
+  "paid_synthesis_queue_enabled": false,
+  "gpu_training_started": false,
+  "training_readiness": "TRAINING_READINESS.json"
+}

@@ -1,0 +1,22 @@
+{
+  "target": "https://miroapp.app",
+  "date_kst": "2026-10-27",
+  "latest_deployment_created_kst": "2026-10-25 01:01:44",
+  "latest_ui_commit": "07fc57cb",
+  "latest_repository_commit": "433f5fb3",
+  "latest_ui_present": false,
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh",
+    "version": ""
+  },
+  "new_results_route": "404 reproduced",
+  "paid_generation_or_payment_executed": false,
+  "deployment_executed": false,
+  "full_functionality_approved": false,
+  "observations": 18,
+  "screenshots": 23,
+  "report": "REPORT.md"
+}

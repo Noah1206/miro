@@ -1,0 +1,8 @@
+{
+  "original_male_audio_candidates_found": 0,
+  "paths_sample": [],
+  "paid_compute": false,
+  "official_api_status": 502,
+  "official_api_error": "HTTPError",
+  "identity_match": "Exact source filename speaker field001/011; utterance indices do not count as speakers."
+}

@@ -1,0 +1,19 @@
+{
+  "user_authorized": false,
+  "additional_total_cash_ceiling_usd": 70,
+  "increment_usd": 20,
+  "decision": {
+    "admitted": true,
+    "remaining_usd": 27.62,
+    "bounded_new_job_usd": 27.2184,
+    "measured_projection_usd": 24.8451,
+    "shortfall_to_bounded_job_usd": 0,
+    "checkpoint_step": 5,
+    "target_step": 25,
+    "remaining_updates": 20,
+    "one_load_one_save": true,
+    "extra_fresh_gpu_verification_jobs": 0,
+    "native_inference_export_in_gpu_job": false,
+    "cost_optimized_does_not_guarantee_voice_quality": true
+  }
+}

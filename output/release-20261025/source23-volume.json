@@ -1,0 +1,206 @@
+[
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/VOLUME_COMMITTED.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:37:27+09:00",
+    "size": 87
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-07.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14725
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-06.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14725
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-05.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14725
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-04.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14661
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-03.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14725
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-02.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14725
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-01.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14661
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rng-rank-00.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 14725
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-07.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-06.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-05.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-04.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-03.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-02.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-01.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/rank-00.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 465
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_7_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_6_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_5_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_4_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:38+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_3_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_2_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_1_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:39+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:38+09:00",
+    "size": 53852619245
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/COMPLETE.json",
+    "type": "file",
+    "created_modified": "2026-10-24 16:31:40+09:00",
+    "size": 6453
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_7_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_6_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_5_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_4_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_3_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_2_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_1_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  },
+  {
+    "filename": "_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023/zero_pp_rank_0_mp_rank_00_model_states.pt",
+    "type": "file",
+    "created_modified": "2026-10-24 16:29:02+09:00",
+    "size": 479319
+  }
+]

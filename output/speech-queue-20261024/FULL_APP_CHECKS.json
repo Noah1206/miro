@@ -1,0 +1,45 @@
+{
+  "actualNextApp": true,
+  "actualLocalPostgres": true,
+  "signupAndPersona": true,
+  "realChatTurnStored": true,
+  "queued202": true,
+  "jobPolled": true,
+  "audioReturned": true,
+  "actualPlaybackEnded": true,
+  "modeTurnedOff": true,
+  "repeatedGetCached": true,
+  "sessionUrl": "http://localhost:8812/chat/36e1a63f-decf-4e9c-90fc-7b10cb34638f",
+  "requests": [
+    {
+      "method": "POST",
+      "url": "/api/tts",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "/api/tts",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "url": "/api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd",
+      "status": 202
+    },
+    {
+      "method": "GET",
+      "url": "/api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd",
+      "status": 200
+    },
+    {
+      "method": "POST",
+      "url": "/api/tts",
+      "status": 202
+    }
+  ],
+  "pageErrors": [],
+  "allGenerationLocalMocks": true,
+  "audioIsSilentFixture": true,
+  "paidCalls": 0,
+  "productionDeployed": false
+}

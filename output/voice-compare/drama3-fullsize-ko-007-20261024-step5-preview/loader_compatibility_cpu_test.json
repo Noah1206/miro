@@ -1,0 +1,14 @@
+{
+  "native_backbone_aliases": true,
+  "stored_weights_modified": false,
+  "actual_pinned_official_iterator_and_tower_loader_used": true,
+  "unpatched_failure_reproduced": true,
+  "tower_values_bitwise_equal": true,
+  "backbone_tensor_stream_unchanged": true,
+  "loader_restored_after_context": true,
+  "source_hashes": {
+    "model.py": "a9bf89cc277e0cb7505dd197f0a63367e9f6006d7307a39453dc05e685519b27",
+    "tower.py": "71f47e85bcc51c1b644fd29d863598bf87208dbd86d479791d699629b7b92d8c"
+  },
+  "training_updates": 0
+}

@@ -1,0 +1,9 @@
+{
+  "billed_before_generation_usd": 98.08,
+  "remaining_usd": 1.92,
+  "generation_timeout_bound_usd": 0.98144,
+  "startup_and_pending_billing_reserve_usd": 0.4,
+  "within_remaining_budget": true,
+  "native_23_complete_externally_verified": true,
+  "time": "2026-10-24T08:13:43.424994+00:00"
+}

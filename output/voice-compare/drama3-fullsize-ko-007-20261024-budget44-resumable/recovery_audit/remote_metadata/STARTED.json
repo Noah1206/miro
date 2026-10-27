@@ -1,0 +1,5 @@
+{
+  "unix_time": 1792772561.2430108,
+  "scope": "Continue saved step1; full ZeRO optimizer checkpoints and controlled reload",
+  "target_step": 25
+}

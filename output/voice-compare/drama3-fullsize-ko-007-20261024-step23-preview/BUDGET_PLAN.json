@@ -1,0 +1,14 @@
+{
+  "starting_billed_usd": 97.61,
+  "request_cap_usd": 2.39,
+  "workspace_net_cap_usd": 100,
+  "cpu_timeout_seconds": 900,
+  "gpu_timeout_seconds": 360,
+  "cpu_max_rate_per_hour": 2.7492,
+  "gpu_max_rate_per_hour": 9.8144,
+  "timeout_compute_bound_usd": 1.6687400000000001,
+  "startup_storage_billing_reserve_usd": 0.72,
+  "training_updates_authorized": 0,
+  "automatic_paid_retries": false,
+  "selected_takes": 8
+}

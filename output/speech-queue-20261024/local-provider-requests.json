@@ -1,0 +1,41 @@
+[
+  {
+    "text": "지금은 무엇을 하고 계십니까.",
+    "voice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "language": "ko",
+    "style": "normal",
+    "delivery": {
+      "emotion": "neutral",
+      "tone": "normal",
+      "pace": "normal",
+      "intensity": "normal",
+      "pauseAfterMs": 0
+    }
+  },
+  {
+    "text": "할 말 있으면 해요.",
+    "voice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "language": "ko",
+    "style": "normal",
+    "delivery": {
+      "emotion": "neutral",
+      "tone": "normal",
+      "pace": "normal",
+      "intensity": "normal",
+      "pauseAfterMs": 0
+    }
+  },
+  {
+    "text": "지금은 무엇을 하고 계십니까.",
+    "voice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "language": "ko",
+    "style": "normal",
+    "delivery": {
+      "emotion": "neutral",
+      "tone": "normal",
+      "pace": "normal",
+      "intensity": "normal",
+      "pauseAfterMs": 0
+    }
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "commit": "47c0b824",
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-jnwwpv9mv-noah1206s-projects.vercel.app",
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  },
+  "focusedTestsPassed": 50,
+  "liveAPIRequests": 5,
+  "liveAPICostUSD": 0.0063615,
+  "uiVerification": "localhost:8825 synthetic delayed transport, removed before commit",
+  "productionBrowserVerified": [
+    "character chat loaded",
+    "DM loaded",
+    "no DM console errors"
+  ],
+  "databaseMigration": false,
+  "productionTestMessagesSent": false
+}

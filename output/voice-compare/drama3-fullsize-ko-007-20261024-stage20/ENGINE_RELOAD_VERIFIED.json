@@ -1,0 +1,69 @@
+{
+  "ranks": [
+    {
+      "rank": 0,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 1,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 2,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 3,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 4,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 5,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 6,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    },
+    {
+      "rank": 7,
+      "step": 5,
+      "next_micro_batch": 10,
+      "optimizer_samples_match": true,
+      "random_state_match": true,
+      "pristine_engine_reload": true
+    }
+  ],
+  "verified": true
+}

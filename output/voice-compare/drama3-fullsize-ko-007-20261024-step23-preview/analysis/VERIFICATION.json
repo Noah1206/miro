@@ -1,0 +1,21 @@
+{
+  "time": "2026-10-24T08:41:06.058812+00:00",
+  "additional_spend_usd": 0,
+  "cloud_compute_started": false,
+  "paid_api_calls": 0,
+  "new_tts_training_updates": 0,
+  "new_generated_takes": 0,
+  "asr_takes": 24,
+  "acoustic_takes": 24,
+  "speaker_takes": 24,
+  "human_listening_preference_evaluated": false,
+  "target": "Reusable multi-speaker Korean base plus later speaker adaptation",
+  "current_model_scope": "single-speaker007 adaptation pilot",
+  "files_sha256": {
+    "local_asr.json": "4991c344f609ed16d2a0ea74e1a8d1735d535ccef4200a1e2e14c809e1195fba",
+    "acoustics.json": "7a1ef35b5014d0da2ae2ef51cb370a1051297637a79b3f1031d870bdb10cd87c",
+    "speaker_identity.json": "c11a078463973febc862356e96935f259ed6d233d063bc798bb49b6f004b8b69",
+    "findings.json": "8d1e989c40058cf05ac4c6cebd35ca2cb08a02fa7be0e0b9e6a9b4d5f2c3839b",
+    "index.html": "77d448e24232330d2b7122c4a870076e06314cfea3f626a9c2815571ad226524"
+  }
+}

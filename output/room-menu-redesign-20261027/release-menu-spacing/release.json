@@ -1,0 +1,23 @@
+{
+  "commit": "c92449e4",
+  "push_range": "f29a886a..c92449e4",
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-5euttwrqx-noah1206s-projects.vercel.app",
+  "root_typecheck": "passed",
+  "web_typecheck": "passed",
+  "translations_missing": 0,
+  "automated_tests": "not run",
+  "migrations": "none",
+  "manual_checks": [
+    "Character chat and DM drawer top close buttons removed",
+    "Account-to-settings gap 24px, previously 8px; lower content shifts down 16px",
+    "Header remains 68px high",
+    "Local Escape dismisses drawer and returns focus"
+  ],
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  }
+}

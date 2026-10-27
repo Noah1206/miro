@@ -1,0 +1,26 @@
+/Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/webrtcvad.py:1: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+SPEAKER original comfort 1234 0.578
+SPEAKER step5 comfort 1234 0.587
+SPEAKER step23 comfort 1234 0.664
+SPEAKER original comfort 4321 0.644
+SPEAKER step5 comfort 4321 0.627
+SPEAKER step23 comfort 4321 0.595
+SPEAKER original contained_anger 1234 0.695
+SPEAKER step5 contained_anger 1234 0.631
+SPEAKER step23 contained_anger 1234 0.695
+SPEAKER original contained_anger 4321 0.592
+SPEAKER step5 contained_anger 4321 0.621
+SPEAKER step23 contained_anger 4321 0.64
+SPEAKER original relief 1234 0.648
+SPEAKER step5 relief 1234 0.648
+SPEAKER step23 relief 1234 0.634
+SPEAKER original relief 4321 0.665
+SPEAKER step5 relief 4321 0.59
+SPEAKER step23 relief 4321 0.6
+SPEAKER original long_comfort 1234 0.728
+SPEAKER step5 long_comfort 1234 0.67
+SPEAKER step23 long_comfort 1234 0.7
+SPEAKER original whisper 4321 0.675
+SPEAKER step5 whisper 4321 0.712
+SPEAKER step23 whisper 4321 0.651

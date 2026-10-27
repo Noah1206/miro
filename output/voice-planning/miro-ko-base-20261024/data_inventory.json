@@ -1,0 +1,771 @@
+{
+  "audit_scope": "Local original WAV headers and AIHub reciter metadata; no gender inferred from pitch/voice.",
+  "additional_spend_usd": 0,
+  "selected_speakers": [
+    {
+      "job": "aihub-f007",
+      "speaker_id": "007",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 48.651693499622034,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 530
+    },
+    {
+      "job": "aihub-f008",
+      "speaker_id": "008",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 47.7729172335601,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 541
+    },
+    {
+      "job": "aihub-f009",
+      "speaker_id": "009",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 46.92350264550263,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 532
+    },
+    {
+      "job": "aihub-f010",
+      "speaker_id": "010",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 53.25716742252451,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 596
+    },
+    {
+      "job": "aihub-f016",
+      "speaker_id": "016",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 46.42149508692363,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 514
+    },
+    {
+      "job": "aihub-f017",
+      "speaker_id": "017",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 47.07667535903246,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 490
+    },
+    {
+      "job": "aihub-f020",
+      "speaker_id": "020",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 46.70131254724105,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 521
+    },
+    {
+      "job": "aihub-f051",
+      "speaker_id": "051",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 44.71760090702943,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 467
+    },
+    {
+      "job": "aihub-f055",
+      "speaker_id": "055",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 47.78301058201061,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 491
+    },
+    {
+      "job": "aihub-f059",
+      "speaker_id": "059",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 47.84222146636432,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 568
+    },
+    {
+      "job": "aihub-f064",
+      "speaker_id": "064",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 48.45824263038546,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 517
+    },
+    {
+      "job": "aihub-f065",
+      "speaker_id": "065",
+      "gender_metadata": {
+        "FEMALE": 600
+      },
+      "clips": 600,
+      "matched_labels": 600,
+      "unmatched_labels": [],
+      "minutes": 47.230267951625095,
+      "sample_rates": {
+        "44100": 600
+      },
+      "emotions": {
+        "분노": 100,
+        "기쁨": 150,
+        "무감정": 250,
+        "슬픔": 100
+      },
+      "phrase_boundary_marked": 502
+    }
+  ],
+  "selected_total_clips": 7200,
+  "selected_total_hours": 9.547268455530354,
+  "selected_gender_counts_by_speaker": {
+    "FEMALE": 12
+  },
+  "label_only_speakers": {
+    "001": {
+      "speaker_id": "001",
+      "genders": {
+        "MALE": 54
+      },
+      "ages": {
+        "20": 54
+      },
+      "label_sentences": 2602
+    },
+    "002": {
+      "speaker_id": "002",
+      "genders": {
+        "MALE": 54
+      },
+      "ages": {
+        "20": 54
+      },
+      "label_sentences": 2602
+    },
+    "003": {
+      "speaker_id": "003",
+      "genders": {
+        "MALE": 54
+      },
+      "ages": {
+        "20": 54
+      },
+      "label_sentences": 2603
+    },
+    "005": {
+      "speaker_id": "005",
+      "genders": {
+        "MALE": 112
+      },
+      "ages": {
+        "20": 112
+      },
+      "label_sentences": 5380
+    },
+    "007": {
+      "speaker_id": "007",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "20": 60
+      },
+      "label_sentences": 2870
+    },
+    "008": {
+      "speaker_id": "008",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "20": 60
+      },
+      "label_sentences": 2870
+    },
+    "009": {
+      "speaker_id": "009",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "20": 60
+      },
+      "label_sentences": 2870
+    },
+    "010": {
+      "speaker_id": "010",
+      "genders": {
+        "FEMALE": 118
+      },
+      "ages": {
+        "20": 118
+      },
+      "label_sentences": 5648
+    },
+    "011": {
+      "speaker_id": "011",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2870
+    },
+    "013": {
+      "speaker_id": "013",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2870
+    },
+    "014": {
+      "speaker_id": "014",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2870
+    },
+    "016": {
+      "speaker_id": "016",
+      "genders": {
+        "FEMALE": 54
+      },
+      "ages": {
+        "30": 54
+      },
+      "label_sentences": 2603
+    },
+    "017": {
+      "speaker_id": "017",
+      "genders": {
+        "FEMALE": 53
+      },
+      "ages": {
+        "30": 53
+      },
+      "label_sentences": 2533
+    },
+    "020": {
+      "speaker_id": "020",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2870
+    },
+    "021": {
+      "speaker_id": "021",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "40": 60
+      },
+      "label_sentences": 2870
+    },
+    "022": {
+      "speaker_id": "022",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "40": 60
+      },
+      "label_sentences": 2869
+    },
+    "023": {
+      "speaker_id": "023",
+      "genders": {
+        "MALE": 54
+      },
+      "ages": {
+        "40": 54
+      },
+      "label_sentences": 2601
+    },
+    "024": {
+      "speaker_id": "024",
+      "genders": {
+        "MALE": 53
+      },
+      "ages": {
+        "40": 53
+      },
+      "label_sentences": 2533
+    },
+    "025": {
+      "speaker_id": "025",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "40": 49
+      },
+      "label_sentences": 2328
+    },
+    "026": {
+      "speaker_id": "026",
+      "genders": {
+        "FEMALE": 54
+      },
+      "ages": {
+        "40": 54
+      },
+      "label_sentences": 2565
+    },
+    "027": {
+      "speaker_id": "027",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "40": 49
+      },
+      "label_sentences": 2328
+    },
+    "029": {
+      "speaker_id": "029",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "40": 60
+      },
+      "label_sentences": 2870
+    },
+    "031": {
+      "speaker_id": "031",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "50": 49
+      },
+      "label_sentences": 2328
+    },
+    "032": {
+      "speaker_id": "032",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "50": 49
+      },
+      "label_sentences": 2328
+    },
+    "033": {
+      "speaker_id": "033",
+      "genders": {
+        "MALE": 48
+      },
+      "ages": {
+        "50": 48
+      },
+      "label_sentences": 2278
+    },
+    "034": {
+      "speaker_id": "034",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "50": 49
+      },
+      "label_sentences": 2328
+    },
+    "039": {
+      "speaker_id": "039",
+      "genders": {
+        "FEMALE": 53
+      },
+      "ages": {
+        "50": 53
+      },
+      "label_sentences": 2532
+    },
+    "040": {
+      "speaker_id": "040",
+      "genders": {
+        "FEMALE": 53
+      },
+      "ages": {
+        "50": 53
+      },
+      "label_sentences": 2533
+    },
+    "041": {
+      "speaker_id": "041",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "60": 49
+      },
+      "label_sentences": 2327
+    },
+    "042": {
+      "speaker_id": "042",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "60": 49
+      },
+      "label_sentences": 2325
+    },
+    "043": {
+      "speaker_id": "043",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "60": 49
+      },
+      "label_sentences": 2328
+    },
+    "046": {
+      "speaker_id": "046",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "60": 49
+      },
+      "label_sentences": 2326
+    },
+    "048": {
+      "speaker_id": "048",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "60": 49
+      },
+      "label_sentences": 2328
+    },
+    "049": {
+      "speaker_id": "049",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "60": 49
+      },
+      "label_sentences": 2328
+    },
+    "051": {
+      "speaker_id": "051",
+      "genders": {
+        "FEMALE": 54
+      },
+      "ages": {
+        "30": 54
+      },
+      "label_sentences": 2603
+    },
+    "052": {
+      "speaker_id": "052",
+      "genders": {
+        "FEMALE": 53
+      },
+      "ages": {
+        "40": 53
+      },
+      "label_sentences": 2533
+    },
+    "053": {
+      "speaker_id": "053",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2869
+    },
+    "054": {
+      "speaker_id": "054",
+      "genders": {
+        "MALE": 53
+      },
+      "ages": {
+        "20": 53
+      },
+      "label_sentences": 2533
+    },
+    "055": {
+      "speaker_id": "055",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "20": 60
+      },
+      "label_sentences": 2870
+    },
+    "056": {
+      "speaker_id": "056",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "20": 49
+      },
+      "label_sentences": 2328
+    },
+    "059": {
+      "speaker_id": "059",
+      "genders": {
+        "FEMALE": 53
+      },
+      "ages": {
+        "20": 53
+      },
+      "label_sentences": 2532
+    },
+    "062": {
+      "speaker_id": "062",
+      "genders": {
+        "MALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2870
+    },
+    "063": {
+      "speaker_id": "063",
+      "genders": {
+        "MALE": 96
+      },
+      "ages": {
+        "30": 96
+      },
+      "label_sentences": 4624
+    },
+    "064": {
+      "speaker_id": "064",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "30": 60
+      },
+      "label_sentences": 2870
+    },
+    "065": {
+      "speaker_id": "065",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "30": 49
+      },
+      "label_sentences": 2328
+    },
+    "067": {
+      "speaker_id": "067",
+      "genders": {
+        "MALE": 49
+      },
+      "ages": {
+        "40": 49
+      },
+      "label_sentences": 2327
+    },
+    "068": {
+      "speaker_id": "068",
+      "genders": {
+        "FEMALE": 60
+      },
+      "ages": {
+        "40": 60
+      },
+      "label_sentences": 2870
+    },
+    "069": {
+      "speaker_id": "069",
+      "genders": {
+        "FEMALE": 53
+      },
+      "ages": {
+        "40": 53
+      },
+      "label_sentences": 2533
+    },
+    "070": {
+      "speaker_id": "070",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "50": 49
+      },
+      "label_sentences": 2326
+    },
+    "071": {
+      "speaker_id": "071",
+      "genders": {
+        "FEMALE": 49
+      },
+      "ages": {
+        "50": 49
+      },
+      "label_sentences": 2328
+    }
+  },
+  "labels_gender_counts_by_speaker": {
+    "MALE": 25,
+    "FEMALE": 25
+  },
+  "male_selected_original_audio_confirmed": false,
+  "no_adult_training_allowed_from_these_records": true
+}

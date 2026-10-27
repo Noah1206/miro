@@ -1,0 +1,342 @@
+{
+  "as_of": "2026-10-24 Asia/Seoul",
+  "paid_compute_started": false,
+  "new_paid_compute_this_work_usd": 0,
+  "product_scope": {
+    "launch_male_voices": 2,
+    "male_training_speakers": 2,
+    "primary_product": "Unveil dialogue and cloud images; voices supplementary",
+    "female_base_training_speakers": 0,
+    "female_recordings_preserved_but_excluded": true,
+    "male_ids_are_provisional_until_audio_audition": true
+  },
+  "image": {
+    "provider": "RunPod Serverless Flex RTX4090",
+    "usd_per_hour": 1.1,
+    "assumed_billed_seconds_per_image": [
+      20,
+      80
+    ],
+    "seconds_are_not_measured": true,
+    "billed_phases": [
+      "model initialization",
+      "generation",
+      "worker idle timeout"
+    ],
+    "usd_per_image": [
+      0.006111111111111111,
+      0.024444444444444446
+    ],
+    "network_volume_GB_assumption": [
+      50,
+      100
+    ],
+    "network_volume_usd_per_GB_month": 0.07,
+    "source": "https://www.runpod.io/product/serverless",
+    "billing_source": "https://docs.runpod.io/serverless/pricing",
+    "excludes": [
+      "image prompt LLM calls",
+      "output object storage and downloads",
+      "retries",
+      "tax and FX"
+    ]
+  },
+  "chat": {
+    "pricing_source": "https://openrouter.ai/api/v1/models",
+    "example_model": "deepseek/deepseek-v3.2",
+    "input_USD_per_million": 0.28,
+    "output_USD_per_million": 0.42,
+    "input_tokens_per_call_assumption": 6000,
+    "output_tokens_per_call_assumption": 800,
+    "llm_calls_per_app_turn_assumption": [
+      1,
+      4
+    ],
+    "model_not_selected_or_tested": true,
+    "unrestricted_output_not_guaranteed": true,
+    "lower_cost_example": {
+      "id": "qwen/qwen3-32b",
+      "input_USD_per_million": 0.08,
+      "output_USD_per_million": 0.28
+    },
+    "usd_per_1000_turns_range": [
+      2.016,
+      8.064
+    ]
+  },
+  "voice": {
+    "current_profile": "2H100 +8physicalCPU +128GiB RAM minimum",
+    "resource_USD_per_second_minimum": 0.00258296,
+    "measured_load_seconds": 97.246461092,
+    "measured_short_generation_seconds": [
+      5.727534096999989,
+      7.958266448000003
+    ],
+    "output_seconds_range": [
+      2.8328344671201813,
+      3.575873015873016
+    ],
+    "warm_short_1000_compute_usd": [
+      14.793991471187091,
+      20.55588390452609
+    ],
+    "isolated_cold_1000_compute_usd": [
+      271.1436306133794,
+      276.90552304671843
+    ],
+    "limitations": [
+      "minimum requested RAM; actual usage may cost more",
+      "excludes codec load, queue, storage and retry",
+      "current implementation generates whole WAV before returning; not proven real-time streaming",
+      "two voices share one TTS model and reference caches; two servers not required"
+    ]
+  },
+  "monthly_scenarios_without_audio": [
+    {
+      "app_turns": 1000,
+      "new_images": 100,
+      "voice_outputs": 0,
+      "chat_compute_usd": [
+        2.016,
+        8.064
+      ],
+      "image_compute_usd": [
+        0.6111111111111112,
+        2.4444444444444446
+      ],
+      "example_model_storage_usd": [
+        3.5,
+        7.0
+      ],
+      "sum_selected_resources_usd": [
+        6.127111111111111,
+        17.508444444444443
+      ],
+      "not_complete_app_bill": true
+    },
+    {
+      "app_turns": 10000,
+      "new_images": 1000,
+      "voice_outputs": 0,
+      "chat_compute_usd": [
+        20.16,
+        80.64
+      ],
+      "image_compute_usd": [
+        6.111111111111112,
+        24.444444444444446
+      ],
+      "example_model_storage_usd": [
+        3.5,
+        7.0
+      ],
+      "sum_selected_resources_usd": [
+        29.77111111111111,
+        112.08444444444444
+      ],
+      "not_complete_app_bill": true
+    },
+    {
+      "app_turns": 100000,
+      "new_images": 10000,
+      "voice_outputs": 0,
+      "chat_compute_usd": [
+        201.6,
+        806.4
+      ],
+      "image_compute_usd": [
+        61.111111111111114,
+        244.44444444444446
+      ],
+      "example_model_storage_usd": [
+        3.5,
+        7.0
+      ],
+      "sum_selected_resources_usd": [
+        266.2111111111111,
+        1057.8444444444444
+      ],
+      "not_complete_app_bill": true
+    }
+  ],
+  "training": {
+    "currency": "USD",
+    "official_prices_source": "https://modal.com/pricing",
+    "historical_measured_update_seconds": 81.73502273882353,
+    "quoted_step_seconds_assumption": [
+      70,
+      110
+    ],
+    "rates": {
+      "H100_gpu_hour": 3.9492000000000003,
+      "physical_cpu_core_hour": 0.04716,
+      "GiB_RAM_hour": 0.007991999999999999,
+      "volume_GiB_month": 0.09,
+      "volume_free_GiB": 1024
+    },
+    "training_hour_low_high": [
+      37.46304,
+      39.508992
+    ],
+    "reuse_gate_before_training": {
+      "estimated_usd": [
+        2,
+        5
+      ],
+      "new_training_updates": 0,
+      "models": [
+        "original_Drama3",
+        "saved_step23"
+      ],
+      "heldout_voices": 2,
+      "takes_per_model": 8,
+      "includes": "CPU23 export, original checkpoint CPU fetch allowance, one GPU load per model, new listening WAVs",
+      "decision": "Before new training, test23 on both candidate male voices. After new training, these males are seen speakers. Do not subtract23 old007 updates from the new task.",
+      "paid_execution_authorized": false
+    },
+    "scenarios": {
+      "transfer_feasibility_only_32_updates": {
+        "updates": 32,
+        "global_clip_presentations": 512,
+        "durable_full_saves": 1,
+        "estimated_resource_usd_low": 36.496415999999996,
+        "estimated_resource_usd_high": 68.9855104,
+        "central_scenario_usd": 46.42099727010424,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      },
+      "two_male_only_one_coverage_pass": {
+        "updates": 68,
+        "global_clip_presentations": 1088,
+        "durable_full_saves": 2,
+        "estimated_resource_usd_low": 67.923744,
+        "estimated_resource_usd_high": 120.67644159999999,
+        "central_scenario_usd": 83.3297367989715,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      },
+      "two_male_only_three_coverage_passes": {
+        "updates": 204,
+        "global_clip_presentations": 3264,
+        "durable_full_saves": 4,
+        "estimated_resource_usd_low": 177.39907200000002,
+        "estimated_resource_usd_high": 301.3203328,
+        "central_scenario_usd": 213.06997839691445,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      }
+    },
+    "snapshot_storage": {
+      "existing_GiB": 995.2804049784318,
+      "one_new_full_checkpoint_GiB": 401.23696430027485,
+      "incremental_excess_GiB_if_retained": 372.5173692787066,
+      "incremental_monthly_usd": 33.52656323508359,
+      "approx_daily_usd": 1.1175521078361197,
+      "new_native_export_GiB": 68.63065293058753,
+      "old_artifacts_not_deleted": true
+    },
+    "quality_target_minimum_cost": "Unknown until heldout learning curves; one pass is a scope estimate, not a production-quality promise.",
+    "unbenchmarked_cheaper_hardware": "4H100/A100/optimizer changes are hypotheses; no savings claimed without a bounded memory/throughput test. RTX2070 cannot host the actual35.9B fullFT.",
+    "no_new_paid_job_started": true
+  },
+  "actors": [
+    {
+      "name": "성우호랭",
+      "url": "https://kmong.com/gig/330857",
+      "basis": "Own listing in male voice-actor category; character acting and ASMR portfolio",
+      "AI_training_and_adult_use_fee": "unknown; ordinary recording rate is not the training licence quote",
+      "contacted": false
+    },
+    {
+      "name": "서문하",
+      "url": "https://kmong.com/gig/784085",
+      "basis": "Own male voice listing; character, game, animation and audiobook acting",
+      "AI_training_and_adult_use_fee": "unknown; ordinary recording rate is not the training licence quote",
+      "contacted": false
+    }
+  ],
+  "zero_cash_conditions": {
+    "small_trial_possible": true,
+    "production_permanently_free_promised": false,
+    "Modal_monthly_compute_credit_USD": 30,
+    "current_month_credit_already_consumed": true,
+    "RunPod_credit_interchangeable_with_Modal": false,
+    "local_GPU_additional_cloud_compute_zero_but_electricity_nonzero": true,
+    "existing_35_9B_fullFT_fit_on_RTX2070": false,
+    "Modal_startup_grant_not_assumed": "Current program targets new customers with qualifying VC funding; Miro eligibility not established.",
+    "free_model_adult_response_compatibility": "unverified; zero listed token prices do not establish suitability for Unveil."
+  },
+  "code_audit": {
+    "local_RunPod_env_configured": false,
+    "production_deployment_env_inspected": false,
+    "route_exists": "/Users/johyeon-ung/Desktop/Miro/apps/web/lib/ai/local-image.ts",
+    "image_shape": [
+      832,
+      1216
+    ],
+    "diffusion_steps": 28,
+    "image_cost_accounting": "Configured ceiling; not provider actual cost. Local MIRO_MEDIA_COSTS defines messenger_photo but unveilPhoto asks kind=photo; verify actual deployed config before generation.",
+    "cache": "Within session and exact cache key; no cross-user cache reuse assumed."
+  },
+  "other_costs_not_in_monthly_scenarios": [
+    "app hosting/database current plan",
+    "private image output storage and download",
+    "age verification/payment provider fees",
+    "actor AI/adult-use licence",
+    "training checkpoint storage",
+    "taxes, FX and payment top-up fees"
+  ],
+  "sources": [
+    "https://modal.com/pricing",
+    "https://modal.com/startups",
+    "https://docs.runpod.io/serverless/pricing",
+    "https://www.runpod.io/product/serverless",
+    "https://openrouter.ai/api/v1/models",
+    "https://openrouter.ai/docs/api_reference/limits"
+  ]
+}

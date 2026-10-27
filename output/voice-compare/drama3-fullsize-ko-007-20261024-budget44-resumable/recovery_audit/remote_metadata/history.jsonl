@@ -1,0 +1,4 @@
+{"step": 2, "speech_loss": 4.66613095998764, "teacher_loss": 1.0017309114336967, "global_gradient_norm": 12.717577934265137, "seconds": 294.567912815}
+{"step": 3, "speech_loss": 4.56164476275444, "teacher_loss": 0.9296149015426636, "global_gradient_norm": 8.025812149047852, "seconds": 379.846776736}
+{"step": 4, "speech_loss": 4.612976938486099, "teacher_loss": 0.8725339621305466, "global_gradient_norm": 5.095487594604492, "seconds": 462.190152683}
+{"step": 5, "speech_loss": 4.572039902210236, "teacher_loss": 0.8088674992322922, "global_gradient_norm": 8.394335746765137, "seconds": 546.296827621}

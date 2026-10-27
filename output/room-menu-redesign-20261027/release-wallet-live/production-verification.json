@@ -1,0 +1,51 @@
+{
+  "before": {
+    "profile": {
+      "at": "1793088340047",
+      "balance": "0",
+      "live": "connected"
+    },
+    "dm": {
+      "at": "1793088340906",
+      "balance": "0",
+      "live": "connected"
+    },
+    "characterChat": {
+      "at": "1793088341265",
+      "balance": "0",
+      "live": "connected"
+    }
+  },
+  "idle": {
+    "profile": "1793088340047",
+    "dm": "1793088340906",
+    "characterChat": "1793088341265"
+  },
+  "after": {
+    "profile": {
+      "at": "1793088388142",
+      "balance": "0",
+      "live": "connected"
+    },
+    "dm": {
+      "at": "1793088388147",
+      "balance": "0",
+      "live": "connected"
+    },
+    "characterChat": {
+      "at": "1793088388101",
+      "balance": "0",
+      "live": "connected"
+    }
+  },
+  "signalAtMs": 1793088387214,
+  "noFiveSecondPolling": true,
+  "allThreeRefreshed": true,
+  "serverReadStartAfterSignalMs": {
+    "profile": 928,
+    "dm": 933,
+    "characterChat": 887
+  },
+  "productionBalanceMutated": false,
+  "paymentProcessed": false
+}

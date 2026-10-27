@@ -1,0 +1,11 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Users/johyeon-ung/Desktop/Miro
+
+ ✓ apps/web/lib/i18n/i18n.test.ts (3 tests) 4ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  23:31:53
+   Duration  1.01s (transform 404ms, setup 0ms, collect 537ms, tests 4ms, environment 0ms, prepare 108ms)
+

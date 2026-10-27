@@ -1,0 +1,4 @@
+
+> miro@ typecheck /private/var/folders/cz/_8r2yvsd3jb1p247z9p1zk740000gn/T/miro-push-20261026-5je5wv08
+> tsc -b --pretty false && tsc -p tsconfig.tests.json --pretty false
+

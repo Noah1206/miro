@@ -1,0 +1,90 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-oXt5DFtGBxFJ7WprhvaFa5
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_budget_stage.py
+├── ✓ Uploaded PythonPackage:drama3_fullft, PythonPackage:modal_drama3_compare
+└── ✓ Created Function train_stage.
+WARM_LOAD_SAVED_STEP1 0 backbone.model.embed_tokens.weight
+WARM_LOAD_SAVED_STEP1 100 backbone.model.layers.5.mlp.shared_expert.gate_proj.weight
+WARM_LOAD_SAVED_STEP1 200 backbone.model.layers.11.mlp.experts.w13_weight
+WARM_LOAD_SAVED_STEP1 300 backbone.model.layers.17.linear_attn.in_proj_a.weight
+WARM_LOAD_SAVED_STEP1 400 backbone.model.layers.23.self_attn.q_proj.weight
+WARM_LOAD_SAVED_STEP1 500 backbone.model.layers.28.input_layernorm.weight
+WARM_LOAD_SAVED_STEP1 600 backbone.model.layers.34.mlp.experts.w2_weight
+WARM_LOAD_SAVED_STEP1 700 audio_decoder.shared_layers.0.transformer_layer.attention.q_norm.weight
+WARM_LOAD_SAVED_STEP1 800 audio_decoder.residual_layers.3.transformer_layer.attention_norm.weight
+AB_BOOTSTRAP_READY /voices/_drama3/fullsize-ko-007-20261024-stage20-v3/arms/korean_teacher/bootstrap
+AB_VALIDATION korean_teacher 1 4.537903994321823
+AB_STEP korean_teacher {"step": 2, "speech_loss": 4.66613095998764, "teacher_loss": 1.0017309114336967, "global_gradient_norm": 12.718159675598145, "seconds": 302.523486002}
+AB_STEP korean_teacher {"step": 3, "speech_loss": 4.560928612947464, "teacher_loss": 0.9296079576015472, "global_gradient_norm": 7.939362049102783, "seconds": 379.483974499}
+AB_STEP korean_teacher {"step": 4, "speech_loss": 4.64812695980072, "teacher_loss": 0.872516430914402, "global_gradient_norm": 7.020231246948242, "seconds": 457.10429010800004}
+AB_STEP korean_teacher {"step": 5, "speech_loss": 4.566041320562363, "teacher_loss": 0.8083890005946159, "global_gradient_norm": 8.177742004394531, "seconds": 536.966517354}
+AB_RESUME_CHECKPOINT {"tag": "step-000005", "path": "/voices/_drama3/fullsize-ko-007-20261024-stage20-v3/arms/korean_teacher/training_checkpoints/step-000005", "client": {"step": 5, "next_micro_batch": 10, "engine_micro_steps": 10, "plan_sha256": "07da64d8a1c0016689c6fa74be64c8dc954d9a81e4420c7bd36adb60db82ec02", "world_size": 8, "source_commit": "541566932abbaebcb0a40e562a1f846738383f38", "model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd", "codec_frozen": true, "next_action": "train", "warm_start_optimizer_reset_once": true}, "ranks": [{"rank": 0, "optimizer": {"file": "bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "304b5644d861109c7f0242f1ade63a6136a01c39be337f2139509081d6616bd8", "optimizer_samples": {"sample_sha256": "1d6f1e6de4ab8e76f8b487e1b03fc4c70a2d8b0e1f5e26dcf817dc72bbf4194e", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 1, "optimizer": {"file": "bf16_zero_pp_rank_1_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "0886fb0e1edb6815768b8fd7467ba9ab549d886af8bde48e9a21ba9ab8423a4b", "optimizer_samples": {"sample_sha256": "19db86d2bcf9b877dc6cabb443d204a91b6489356d5c017daef22ec632e6223c", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 2, "optimizer": {"file": "bf16_zero_pp_rank_2_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "86360b16654b38578906d9cb99541719bbe4f185b6acfabe6d473d06f7c9272c", "optimizer_samples": {"sample_sha256": "21936d7feb87ae01bba662d54819a4b15419e43ba0ae8b53a5861ce8e128db76", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 3, "optimizer": {"file": "bf16_zero_pp_rank_3_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "44457546051f28c6070b2d97d1425ad15fc18ba2edf10161562de8b372625dcd", "optimizer_samples": {"sample_sha256": "5a6eb533ec38c0070225fc014100f6a6adb1548f47458b15f0499a7c52e971a4", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 4, "optimizer": {"file": "bf16_zero_pp_rank_4_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "5574670b41ac196922ea71e87215b2f673d81084514335a76f3b6bc55ec716b7", "optimizer_samples": {"sample_sha256": "6254c04ead541d682ad4ce7ebb47fcb8708df6893578795a86cc792eaaa94b47", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 5, "optimizer": {"file": "bf16_zero_pp_rank_5_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "39b9b3b3fa92fc1db98b5608614692871e6de0e0dff0f5167c8f1a61480186af", "optimizer_samples": {"sample_sha256": "66cba6e1029b7ab1a49f8511e91945f9a6a301db3e57222ad85e1a9021f1e5b5", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 6, "optimizer": {"file": "bf16_zero_pp_rank_6_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "77ce1d9be07280487380b1e2515d9d2bb47287ed2462339e89cb1f4dbff74530", "optimizer_samples": {"sample_sha256": "4f822fb9b778152c73f5b26b8be4abcbabed68986983f2fdca32c67781e26995", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 7, "optimizer": {"file": "bf16_zero_pp_rank_7_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "9262cc1a6828f52f4ac8474e9ebfc9a4b7206064834c98550c86beb0a1194212", "optimizer_samples": {"sample_sha256": "abcd390a68751c9b07c1207c47e7a02ab823e9975096777d2d306b87bc01b4c2", "sampled_tensors": 18, "full_payload_checksum": false}}], "files": {"bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_1_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_2_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_3_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_4_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_5_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_6_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_7_mp_rank_00_optim_states.pt": 53852619245, "rank-00.json": 465, "rank-01.json": 465, "rank-02.json": 465, "rank-03.json": 465, "rank-04.json": 465, "rank-05.json": 465, "rank-06.json": 465, "rank-07.json": 465, "rng-rank-00.pt": 14725, "rng-rank-01.pt": 14661, "rng-rank-02.pt": 14725, "rng-rank-03.pt": 14725, "rng-rank-04.pt": 14661, "rng-rank-05.pt": 14725, "rng-rank-06.pt": 14725, "rng-rank-07.pt": 14725, "zero_pp_rank_0_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_1_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_2_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_3_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_4_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_5_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_6_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_7_mp_rank_00_model_states.pt": 479319}, "optimizer_state_saved": true, "rng_state_saved": true, "data_position_saved": true, "all_rank_files_parsed": true, "independent_engine_reload_verified": false, "save_seconds": 91.56513938100011}
+DURABLE_TRAINING_CHECKPOINT 5
+Runner was terminated after thrashing at its memory limit.
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 987, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 189, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 266, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/modal_drama3_budget_stage.py", line 31, in train_stage
+    if out.exists():raise FileExistsError('This stage is single-use; never overwrite existing results')
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileExistsError: This stage is single-use; never overwrite existing results
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_budget_stage.py:1 │
+│ 21 in main                                                                   │
+│                                                                              │
+│   120 │   with (out/'GPU_STAGE_STARTED.json').open('x') as f:f.write(json.du │
+│ ❱ 121 │   result=train_stage.remote(settings,authorization,proof)            │
+│   122 │   (out/'training_stage_result.json').write_text(json.dumps(result,en │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_objec │
+│ t.py:49 in wrapped                                                           │
+│                                                                              │
+│    48 │   │   await self.hydrate()                                           │
+│ ❱  49 │   │   return await method(self, *args, **kwargs)                     │
+│    50                                                                        │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2081 in remote                                                       │
+│                                                                              │
+│   2080 │   │                                                                 │
+│ ❱ 2081 │   │   return await self._call_function(args, kwargs)                │
+│   2082                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2018 in _call_function                                               │
+│                                                                              │
+│   2017 │   │                                                                 │
+│ ❱ 2018 │   │   return await invocation.run_function()                        │
+│   2019                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:517 in run_function                                                  │
+│                                                                              │
+│    516 │   │   │   # No more retries left.                                   │
+│ ❱  517 │   │   │   return await _process_result(                             │
+│    518 │   │   │   │   await_response.output.result, await_response.output.d │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_utils │
+│ /function_utils.py:572 in _process_result                                    │
+│                                                                              │
+│   571 │   │   │                                                              │
+│ ❱ 572 │   │   │   raise exc_with_hints(exc)                                  │
+│   573                                                                        │
+│                                                                              │
+│     ...Remote call to Modal Function (ta-01M5P5D9SCMKAN0EA7KAMQ7TNR)...      │
+│                                                                              │
+│ /root/modal_drama3_budget_stage.py:31 in train_stage                         │
+│                                                                              │
+│ ❱ 31 if out.exists():raise FileExistsError('This stage is single-use; never  │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+FileExistsError: This stage is single-use; never overwrite existing results

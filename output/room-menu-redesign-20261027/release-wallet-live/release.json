@@ -1,0 +1,50 @@
+{
+  "commit": "f29a886a",
+  "push_range": "23232006..f29a886a",
+  "main_pushed": true,
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-pyha322th-noah1206s-projects.vercel.app",
+  "root_typecheck": "passed",
+  "web_typecheck": "passed",
+  "translations_missing": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "migration": "20261027075454_wallet_realtime_invalidation.sql applied locally and in production before deployment",
+  "migration_checks": {
+    "triggers": 4,
+    "rls_enabled": true,
+    "anon_schema_usage": false,
+    "anon_table_select": false,
+    "authenticated_table_select": false,
+    "security_definer": false,
+    "empty_search_path": true
+  },
+  "security_advisors": {
+    "local_baseline_findings": 10,
+    "production_baseline_findings": 11,
+    "new_wallet_objects_findings": 0
+  },
+  "automated_test_suites": "not run",
+  "local_database_probe": {
+    "after_credit": 1,
+    "after_rollback": 1,
+    "after_debit": 2,
+    "after_refund": 3,
+    "rolled_back_write_published": false,
+    "fixture_removed": true
+  },
+  "production_verification": "All 3 browser views connected; unchanged timestamps over >6.5 seconds idle; a single harmless database invalidation advanced all 3 snapshots. Server read start 887/928/933ms after signal probe started. See production-verification.json.",
+  "wallet_polling_interval_removed": true,
+  "production_funds_mutated": false,
+  "real_payment_processed": false,
+  "paid_AI_called": false,
+  "transport": "Supabase public Broadcast over random per-account channel capabilities, payload only changed:true. Cookie-auth server still owns every balance read/debit. No service key exposed.",
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  }
+}

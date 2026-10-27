@@ -1,0 +1,155 @@
+
+> miro@ build /private/var/folders/cz/_8r2yvsd3jb1p247z9p1zk740000gn/T/miro-push-20261026-5je5wv08
+> pnpm --filter @miro/web build && pnpm --filter @miro/admin build
+
+
+> @miro/web@0.0.0 build /private/var/folders/cz/_8r2yvsd3jb1p247z9p1zk740000gn/T/miro-push-20261026-5je5wv08/apps/web
+> next build
+
+   ▲ Next.js 15.5.25
+   - Experiments (use with caution):
+     · serverActions
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 22.0s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/58) ...
+   Generating static pages (14/58) 
+   Generating static pages (28/58) 
+   Generating static pages (43/58) 
+ ✓ Generating static pages (58/58)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      252 B         103 kB
+├ ƒ /_not-found                             1 kB         104 kB
+├ ƒ /alpha                                 506 B         158 kB
+├ ƒ /alpha/chat                          4.53 kB         183 kB
+├ ƒ /alpha/waitlist                      1.65 kB         180 kB
+├ ƒ /api/ai/consent                        252 B         103 kB
+├ ƒ /api/ai/feedback                       252 B         103 kB
+├ ƒ /api/alpha/stats                       252 B         103 kB
+├ ƒ /api/alpha/track                       252 B         103 kB
+├ ƒ /api/auth/[provider]/callback          252 B         103 kB
+├ ƒ /api/auth/[provider]/start             252 B         103 kB
+├ ƒ /api/calls/[callId]/end                252 B         103 kB
+├ ƒ /api/calls/[callId]/turns              252 B         103 kB
+├ ƒ /api/calls/ringing                     252 B         103 kB
+├ ƒ /api/chat                              252 B         103 kB
+├ ƒ /api/cron/reality                      252 B         103 kB
+├ ƒ /api/cron/reality/maintenance          252 B         103 kB
+├ ƒ /api/dev/character-type                252 B         103 kB
+├ ƒ /api/dev/persona                       252 B         103 kB
+├ ƒ /api/dev/plan                          252 B         103 kB
+├ ƒ /api/dev/reality-character             252 B         103 kB
+├ ƒ /api/dev/session/[id]                  252 B         103 kB
+├ ƒ /api/dev/session/[id]/state            252 B         103 kB
+├ ƒ /api/dev/usage                         252 B         103 kB
+├ ƒ /api/health                            252 B         103 kB
+├ ƒ /api/home/cards                        252 B         103 kB
+├ ƒ /api/memory-graph/[sessionId]          252 B         103 kB
+├ ƒ /api/messages                          252 B         103 kB
+├ ƒ /api/messenger-images/[id]             252 B         103 kB
+├ ƒ /api/miro/cards                        252 B         103 kB
+├ ƒ /api/payments/webhook                  252 B         103 kB
+├ ƒ /api/push                              252 B         103 kB
+├ ƒ /api/stories/messages                  252 B         103 kB
+├ ƒ /api/stories/turn                      252 B         103 kB
+├ ƒ /api/telegram/payments                 252 B         103 kB
+├ ƒ /api/tts                               252 B         103 kB
+├ ƒ /api/tts/credits                       252 B         103 kB
+├ ƒ /api/tts/jobs/[jobId]                  252 B         103 kB
+├ ƒ /api/turn                              252 B         103 kB
+├ ƒ /api/usage                             252 B         103 kB
+├ ƒ /archive                             3.11 kB         185 kB
+├ ƒ /archive/delete/[id]                   461 B         179 kB
+├ ƒ /auth/mock/[provider]                  271 B         179 kB
+├ ƒ /call/[callId]                       4.01 kB         182 kB
+├ ƒ /character/[slug]                    1.88 kB         191 kB
+├ ƒ /character/[slug]/comments           3.13 kB         182 kB
+├ ƒ /chat/[sessionId]                    16.4 kB         230 kB
+├ ƒ /create                              1.69 kB         222 kB
+├ ƒ /deleted                               271 B         179 kB
+├ ƒ /dev/chat-themes                     3.18 kB         204 kB
+├ ƒ /dev/recharge                        2.79 kB         181 kB
+├ ƒ /explore                             2.99 kB         181 kB
+├ ƒ /home                                7.12 kB         186 kB
+├ ƒ /live/[sessionId]                    3.39 kB         182 kB
+├ ƒ /login                                 252 B         103 kB
+├ ƒ /messages                              252 B         103 kB
+├ ƒ /messages/[sessionId]                3.48 kB         208 kB
+├ ƒ /messages/story/[runId]/[thread]       203 B         195 kB
+├ ƒ /miro                                2.08 kB         180 kB
+├ ƒ /mock-media/[seed]                     252 B         103 kB
+├ ƒ /my                                  2.62 kB         201 kB
+├ ƒ /my/ai-data                          1.18 kB         180 kB
+├ ƒ /my/characters                        1.7 kB         180 kB
+├ ƒ /my/characters/[id]/edit               197 B         221 kB
+├ ƒ /my/delete                             461 B         179 kB
+├ ƒ /my/language                           461 B         179 kB
+├ ƒ /my/permissions                      1.21 kB         183 kB
+├ ƒ /my/subscription                       151 B         188 kB
+├ ƒ /my/verify                           2.17 kB         181 kB
+├ ƒ /my/verify/return                      252 B         103 kB
+├ ƒ /onboarding                          6.63 kB         203 kB
+├ ƒ /onboarding/transfer                   759 B         179 kB
+├ ƒ /persona                             1.53 kB         194 kB
+├ ƒ /recharge                              152 B         188 kB
+├ ƒ /report                              1.49 kB         180 kB
+├ ƒ /report/done                           271 B         179 kB
+├ ƒ /search                              5.55 kB         184 kB
+├ ƒ /stories                               496 B         179 kB
+├ ƒ /stories/[slug]                      2.83 kB         196 kB
+├ ƒ /stories/play/[runId]                  195 B         195 kB
+├ ƒ /terms                                 252 B         103 kB
+├ ƒ /terms/[doc]                           588 B         179 kB
+└ ƒ /terms/revisions                       588 B         179 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/5787-82288e2f36cd8030.js      46.4 kB
+  ├ chunks/db32cddd-0b357f52692d97af.js  54.2 kB
+  └ other shared chunks (total)          2.13 kB
+
+
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> @miro/admin@0.0.0 build /private/var/folders/cz/_8r2yvsd3jb1p247z9p1zk740000gn/T/miro-push-20261026-5je5wv08/apps/admin
+> next build
+
+   ▲ Next.js 15.5.25
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 3.9s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/13) ...
+   Generating static pages (3/13) 
+   Generating static pages (6/13) 
+   Generating static pages (9/13) 
+ ✓ Generating static pages (13/13)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      137 B         103 kB
+├ ƒ /_not-found                            995 B         103 kB
+├ ƒ /ai                                    137 B         103 kB
+├ ƒ /api/ai/stats                          137 B         103 kB
+├ ƒ /api/voices/preview                    137 B         103 kB
+├ ƒ /audit                                 164 B         106 kB
+├ ƒ /characters                            988 B         107 kB
+├ ƒ /login                                 137 B         103 kB
+├ ƒ /payments                            1.02 kB         107 kB
+├ ƒ /reports                               164 B         106 kB
+├ ƒ /reports/[id]                        1.15 kB         104 kB
+└ ƒ /voices                              1.31 kB         104 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/787-9b4edd6004e499de.js       46.3 kB
+  ├ chunks/db32cddd-4ae84d93693fef8c.js  54.2 kB
+  └ other shared chunks (total)          1.89 kB
+
+
+ƒ  (Dynamic)  server-rendered on demand
+

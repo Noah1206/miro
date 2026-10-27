@@ -1,0 +1,75 @@
+{
+  "results": [
+    {
+      "width": 390,
+      "appearance": {
+        "background": "rgb(37, 37, 37)",
+        "borders": [
+          "0px",
+          "0px"
+        ],
+        "scrollWidth": 335,
+        "width": 335,
+        "groupBackground": "rgb(48, 48, 48)"
+      },
+      "inlineDesignChoices": 4,
+      "inlinePersona": true,
+      "modeKeepsDrawerOpen": true,
+      "themeAppliesInPlace": true,
+      "personaSaveUsesExistingAction": true,
+      "previewDoesNotPersist": true,
+      "navigation": true,
+      "installGuide": true,
+      "escapeRestoresFocus": true,
+      "errors": []
+    },
+    {
+      "width": 320,
+      "appearance": {
+        "background": "rgb(37, 37, 37)",
+        "borders": [
+          "0px",
+          "0px"
+        ],
+        "scrollWidth": 275,
+        "width": 275,
+        "groupBackground": "rgb(48, 48, 48)"
+      },
+      "inlineDesignChoices": 4,
+      "inlinePersona": true,
+      "modeKeepsDrawerOpen": true,
+      "themeAppliesInPlace": true,
+      "personaSaveUsesExistingAction": true,
+      "previewDoesNotPersist": true,
+      "navigation": true,
+      "installGuide": true,
+      "escapeRestoresFocus": true,
+      "errors": []
+    },
+    {
+      "width": 1200,
+      "appearance": {
+        "background": "rgb(37, 37, 37)",
+        "borders": [
+          "0px",
+          "0px"
+        ],
+        "scrollWidth": 340,
+        "width": 340,
+        "groupBackground": "rgb(48, 48, 48)"
+      },
+      "inlineDesignChoices": 4,
+      "inlinePersona": true,
+      "modeKeepsDrawerOpen": true,
+      "themeAppliesInPlace": true,
+      "personaSaveUsesExistingAction": true,
+      "previewDoesNotPersist": true,
+      "navigation": true,
+      "installGuide": true,
+      "escapeRestoresFocus": true,
+      "errors": []
+    }
+  ],
+  "paidCalls": 0,
+  "productionDeployed": false
+}

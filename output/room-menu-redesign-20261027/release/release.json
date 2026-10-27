@@ -1,0 +1,25 @@
+{
+  "commit": "10df1c429a055926bb81f2b8739b3f1e0fb4df2e",
+  "previous_main": "bf547c125895bdc24f6cf06324463a9e440c5afb",
+  "main_pushed": true,
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-cc8y2vx5r-noah1206s-projects.vercel.app",
+  "typechecks": {
+    "root": "passed",
+    "web": "passed"
+  },
+  "translations": {
+    "en_missing": 0,
+    "ja_missing": 0,
+    "zh_missing": 0
+  },
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  },
+  "migrations": "none",
+  "automated_tests": "not run per miro-ship instructions",
+  "production_screen": "verified through browser; see production-verification.json and production-menu.png"
+}

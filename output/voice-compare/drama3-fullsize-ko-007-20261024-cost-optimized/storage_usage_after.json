@@ -1,0 +1,9 @@
+{
+  "volume": "miro-voices",
+  "listed_bytes": 1068674197433,
+  "listed_gib": 995.2804049784318,
+  "one_tib_free_tier_bytes": 1099511627776,
+  "exceeds_one_tib": false,
+  "entries": 2307,
+  "other_empty_cache_volumes_not_included": true
+}

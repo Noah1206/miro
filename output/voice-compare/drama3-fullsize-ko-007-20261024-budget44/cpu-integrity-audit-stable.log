@@ -1,0 +1,17 @@
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-1jwwYYXHg3U852oikbgPIu
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_checkpoint_audit.
+│   py
+├── ✓ Uploaded tooling/voice/drama3_fullft/core.py
+├── ✓ Uploaded tooling/voice/drama3_fullft/live_export.py
+├── ✓ Uploaded tooling/voice/drama3_fullft/__init__.py
+├── ✓ Uploaded PythonPackage:modal_drama3_compare
+└── ✓ Created Function audit.
+CPU_SAVED_WEIGHT_AUDIT_STARTED /voices/_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/snapshots/step-000001
+CPU_SAVED_WEIGHT_AUDIT_COMPLETE {"sha256_verified_shards": 43, "verified_tensors": 885, "verified_parameter_bytes": 71799286016, "verified": true, "seconds": 587.9584977869999, "gpu_allocated": false, "verifies_native_file_integrity_only": true, "inference_reload_verified": false}
+Stopping app - local entrypoint completed.
+Runner terminated.
+✓ App completed. View run at 
+https://modal.com/apps/ab40905045/main/ap-1jwwYYXHg3U852oikbgPIu

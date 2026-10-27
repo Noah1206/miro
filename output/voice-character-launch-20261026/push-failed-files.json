@@ -1,0 +1,23 @@
+[
+  "apps/web/lib/__tests__/sample-atmosphere.test.ts",
+  "apps/web/lib/__tests__/tts-route.test.ts",
+  "apps/web/lib/agency/runtime.integration.test.ts",
+  "apps/web/lib/simulation/ledger.integration.test.ts",
+  "apps/web/lib/ai/__tests__/memory-jobs.integration.test.ts",
+  "apps/web/lib/ai/__tests__/p0.integration.test.ts",
+  "apps/web/lib/ai/__tests__/platform.integration.test.ts",
+  "apps/web/lib/ai/__tests__/request-recovery.integration.test.ts",
+  "apps/web/lib/call/__tests__/call.integration.test.ts",
+  "apps/web/lib/payments/__tests__/bank-transfer.integration.test.ts",
+  "apps/web/lib/payments/__tests__/payments.integration.test.ts",
+  "apps/web/lib/reality/__tests__/boundary.integration.test.ts",
+  "apps/web/lib/reality/__tests__/evaluate.integration.test.ts",
+  "apps/web/lib/stories/__tests__/all-stories.test.ts",
+  "apps/web/lib/stories/__tests__/salvage.test.ts",
+  "apps/web/lib/stories/__tests__/story-flow.integration.test.ts",
+  "apps/web/lib/usage/__tests__/guard.integration.test.ts",
+  "apps/web/lib/usage/__tests__/token-turn.integration.test.ts",
+  "apps/web/lib/usage/__tests__/tokens.integration.test.ts",
+  "apps/web/components/scene/__tests__/character-editorial.test.ts",
+  "apps/web/app/(main)/home/__tests__/page.test.ts"
+]

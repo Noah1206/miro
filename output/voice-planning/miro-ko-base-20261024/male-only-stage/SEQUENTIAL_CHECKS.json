@@ -1,0 +1,10 @@
+{
+  "two_phases_each_10_updates": true,
+  "global_batch16_per_single_male_update": true,
+  "same_male_disjoint_reference": true,
+  "no_duplicate_targets_within_first_160_per_male": true,
+  "one_shared_model_sequential_not_independent_clones": true,
+  "deterministic": true,
+  "female_targets": 0,
+  "paid_training_started": false
+}

@@ -1,0 +1,4 @@
+BEGIN
+speech_credit_allocations|t
+speech_credit_grants|t
+COMMIT

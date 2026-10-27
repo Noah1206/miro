@@ -1,0 +1,44 @@
+[
+  {
+    "text": "오늘 하루는 어땠어? 네 이야기를 듣고 싶어.",
+    "voice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "language": "ko",
+    "style": "normal",
+    "delivery": {
+      "emotion": "neutral",
+      "tone": "normal",
+      "pace": "normal",
+      "intensity": "normal",
+      "pauseAfterMs": 0
+    },
+    "maxAudioSeconds": 10
+  },
+  {
+    "text": "오늘은 서두르지 않아도 돼. 잠깐 쉬었다가 네가 편해졌을 때 천천히 이야기해 줘. 나는 여기서 기다리고 있을게.",
+    "voice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "language": "ko",
+    "style": "normal",
+    "delivery": {
+      "emotion": "neutral",
+      "tone": "normal",
+      "pace": "normal",
+      "intensity": "normal",
+      "pauseAfterMs": 0
+    },
+    "maxAudioSeconds": 20
+  },
+  {
+    "text": "잠깐만, 가까이 와 봐. 조용히 말해 줄게.",
+    "voice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "language": "ko",
+    "style": "whisper",
+    "delivery": {
+      "emotion": "neutral",
+      "tone": "whisper",
+      "pace": "slow",
+      "intensity": "soft",
+      "pauseAfterMs": 300
+    },
+    "maxAudioSeconds": 10
+  }
+]

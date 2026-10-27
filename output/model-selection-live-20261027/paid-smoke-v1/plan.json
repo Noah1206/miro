@@ -1,0 +1,45 @@
+{
+  "requestHash": "627e8857d40af26af7efda09c1deea6bbf0a41411a936b0690fb644e7f7c7bd1",
+  "input": "오늘 발표를 망친 것 같아서 아직 손이 떨려요. 집에 가면 혼자 계속 곱씹을 것 같고요. 그냥 잘했다고 위로하지 말고, 여기서 잠깐 같이 있어 주실래요?",
+  "inputByteCeiling": 21214,
+  "outputCap": 2048,
+  "totalCeilingUSD": 0.7548961000000001,
+  "limitUSD": 0.8,
+  "plan": [
+    {
+      "id": "claude-haiku",
+      "model": "claude-haiku-5-5",
+      "ceilingUSD": 0.00393176
+    },
+    {
+      "id": "claude-sonnet",
+      "model": "claude-sonnet-5-5",
+      "ceilingUSD": 0.07863502
+    },
+    {
+      "id": "claude-opus",
+      "model": "claude-opus-5-5",
+      "ceilingUSD": 0.15727002
+    },
+    {
+      "id": "gpt-luna",
+      "model": "gpt-6-luna",
+      "ceilingUSD": 0.00393176
+    },
+    {
+      "id": "gpt-terra",
+      "model": "gpt-6.1-terra",
+      "ceilingUSD": 0.03931752
+    },
+    {
+      "id": "gpt-sol",
+      "model": "gpt-6.1-sol",
+      "ceilingUSD": 0.07863502
+    },
+    {
+      "id": "gpt-astra",
+      "model": "gpt-6-astra",
+      "ceilingUSD": 0.393175
+    }
+  ]
+}

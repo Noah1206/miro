@@ -1,0 +1,26 @@
+{
+  "recorded_at_utc": "2026-10-24T07:43:14.269150+00:00",
+  "net_billed_at_dispatch_usd": 72.38,
+  "net_billed_latest_snapshot_usd": 97.61,
+  "account_delta_since_dispatch_snapshot_usd": 25.23,
+  "job_resource_cost_snapshot_usd": 24.814072609999997,
+  "job_resource_cost_source": "billing-resource-report-final.json",
+  "additional_total_cash_ceiling_usd": 70,
+  "previously_paid_cash_usd": 30,
+  "additional_cash_used_snapshot_usd": 67.61,
+  "additional_cash_remaining_snapshot_usd": 2.39,
+  "within_ceiling_latest_snapshot": true,
+  "interim_provisional_net_billed_high_water_usd": 100.08,
+  "billing_can_lag_and_adjust": true,
+  "no_further_paid_jobs_started": true,
+  "running_containers": [],
+  "saved_step": 23,
+  "next_update": 24,
+  "original_25_update_goal_complete": false,
+  "job_resource_breakdown_usd": {
+    "Memory": 3.6357224599999998,
+    "Network Egress": 1.8e-07,
+    "H100": 20.683004049999997,
+    "CPU": 0.49534592
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "commit": "bf547c125895bdc24f6cf06324463a9e440c5afb",
+  "localTests": {
+    "passed": 1538,
+    "failed": 0,
+    "pending": 2
+  },
+  "typecheck": "passed",
+  "webTypecheck": "passed",
+  "translations": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "referenceEvaluation": "20/20; synthetic, not live AI quality",
+  "build": "passed; web and admin",
+  "databaseMigration": "20261026094906_speech_credit_accounts.sql applied and RLS verified; no public/anon/authenticated grants",
+  "deployment": "healthy; production version bf547c1; DB up/schema ready/cron fresh",
+  "uiVerification": "14 recorded checks plus persona label/subtitle verification and unchanged profile save in production passed",
+  "productionCommit": "bf547c125895bdc24f6cf06324463a9e440c5afb",
+  "ci": "https://github.com/Noah1206/miro/actions/runs/40374800367",
+  "ciStatus": "success",
+  "e2e": {
+    "passed": 56,
+    "failed": 0,
+    "flaky": 0,
+    "preExistingSkipped": 2
+  }
+}

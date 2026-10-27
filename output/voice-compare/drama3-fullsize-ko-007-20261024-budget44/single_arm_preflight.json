@@ -1,0 +1,8 @@
+{
+  "status": "ready",
+  "gpu_allocated": false,
+  "model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd",
+  "cached_codec_files": 600,
+  "cached_teacher_files": 601,
+  "scope": "One Korean-teacher25step Full FT; reuse original control audio"
+}

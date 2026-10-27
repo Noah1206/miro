@@ -1,0 +1,27 @@
+{
+  "commit": "b5fd9647",
+  "previous_main": "ee958e65",
+  "main_pushed": true,
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-iix9jlzj4-noah1206s-projects.vercel.app",
+  "root_typecheck": "passed",
+  "web_typecheck": "passed",
+  "translations_missing": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "migrations": "none",
+  "automated_tests": "not rerun for this UI-only change",
+  "manual_checks": [
+    "local DM mode change immediately updates header",
+    "production DM header shows current mode at 10px",
+    "production DM and scene drawer identities match profile page"
+  ],
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  }
+}

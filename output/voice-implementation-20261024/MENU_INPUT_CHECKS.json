@@ -1,0 +1,34 @@
+[
+  {
+    "engine": "chromium",
+    "modeSelection": true,
+    "modePersistence": true,
+    "themeSelection": true,
+    "personaOpens": true,
+    "escapeRestoresFocus": true,
+    "messengerLink": true,
+    "inputAutocompleteOff": true,
+    "metrics": {
+      "borderBottom": "1px",
+      "borderRadius": "18px",
+      "bottomGap": 6,
+      "topGap": 4,
+      "viewportBottom": 6,
+      "width": 390,
+      "viewportWidth": 390,
+      "fontSize": "16px"
+    },
+    "keyboard": {
+      "bottom": 444,
+      "gap": 6,
+      "padding": "6px"
+    },
+    "mobile320": true,
+    "errors": [],
+    "paidCalls": 0
+  },
+  {
+    "engine": "webkit",
+    "unavailable": true
+  }
+]

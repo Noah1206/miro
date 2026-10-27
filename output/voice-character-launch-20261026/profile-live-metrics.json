@@ -1,0 +1,21 @@
+{
+  "avatar": [
+    {
+      "height": 63.99857711791992,
+      "width": 63.99857711791992
+    }
+  ],
+  "balance": "1,850",
+  "bodyBackground": "rgb(28, 28, 28)",
+  "headerFont": "28px",
+  "horizontalOverflow": false,
+  "rowHeights": [
+    57.99715805053711,
+    57.99715805053711,
+    57.99715805053711
+  ],
+  "viewport": {
+    "height": 818,
+    "width": 404
+  }
+}

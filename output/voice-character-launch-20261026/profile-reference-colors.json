@@ -1,0 +1,154 @@
+[
+  {
+    "file": "KakaoTalk_Photo_2026-10-26-23-22-06 001.png",
+    "pixels": [
+      1125,
+      2436
+    ],
+    "normalized_width_375_scale": 3.0,
+    "dominant_colors": [
+      {
+        "hex": "#ffffff",
+        "share": 0.496
+      },
+      {
+        "hex": "#f8f8fa",
+        "share": 0.284
+      },
+      {
+        "hex": "#fdfdfe",
+        "share": 0.041
+      },
+      {
+        "hex": "#f0f0f2",
+        "share": 0.027
+      },
+      {
+        "hex": "#58c1b0",
+        "share": 0.026
+      },
+      {
+        "hex": "#ebebec",
+        "share": 0.014
+      },
+      {
+        "hex": "#fefefe",
+        "share": 0.009
+      }
+    ]
+  },
+  {
+    "file": "KakaoTalk_Photo_2026-10-26-23-22-06 002.png",
+    "pixels": [
+      1125,
+      2436
+    ],
+    "normalized_width_375_scale": 3.0,
+    "dominant_colors": [
+      {
+        "hex": "#141414",
+        "share": 0.412
+      },
+      {
+        "hex": "#1c1c1f",
+        "share": 0.398
+      },
+      {
+        "hex": "#222222",
+        "share": 0.091
+      },
+      {
+        "hex": "#33251f",
+        "share": 0.013
+      },
+      {
+        "hex": "#ff5c45",
+        "share": 0.01
+      },
+      {
+        "hex": "#ffffff",
+        "share": 0.008
+      },
+      {
+        "hex": "#1b1b1e",
+        "share": 0.008
+      }
+    ]
+  },
+  {
+    "file": "KakaoTalk_Photo_2026-10-26-23-22-07 003.png",
+    "pixels": [
+      1125,
+      2436
+    ],
+    "normalized_width_375_scale": 3.0,
+    "dominant_colors": [
+      {
+        "hex": "#ffffff",
+        "share": 0.58
+      },
+      {
+        "hex": "#f7f7f5",
+        "share": 0.141
+      },
+      {
+        "hex": "#fdf4e2",
+        "share": 0.067
+      },
+      {
+        "hex": "#fefefe",
+        "share": 0.054
+      },
+      {
+        "hex": "#e8f2fe",
+        "share": 0.043
+      },
+      {
+        "hex": "#ececec",
+        "share": 0.014
+      },
+      {
+        "hex": "#fdfdfd",
+        "share": 0.009
+      }
+    ]
+  },
+  {
+    "file": "KakaoTalk_Photo_2026-10-26-23-22-07 004.png",
+    "pixels": [
+      1125,
+      2436
+    ],
+    "normalized_width_375_scale": 3.0,
+    "dominant_colors": [
+      {
+        "hex": "#ffffff",
+        "share": 0.405
+      },
+      {
+        "hex": "#f7f7f7",
+        "share": 0.329
+      },
+      {
+        "hex": "#fdfdfd",
+        "share": 0.033
+      },
+      {
+        "hex": "#f6f6f6",
+        "share": 0.027
+      },
+      {
+        "hex": "#fcfcfc",
+        "share": 0.016
+      },
+      {
+        "hex": "#ebebeb",
+        "share": 0.013
+      },
+      {
+        "hex": "#eeeeee",
+        "share": 0.013
+      }
+    ]
+  }
+]

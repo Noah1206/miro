@@ -1,0 +1,10 @@
+{
+  "Anthropic": {
+    "url": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/claude.svg",
+    "sha256": "365a70a7eb3956d9b9a96086058ebe04e1dbd8e291a756ad964e8a283fbd6d38"
+  },
+  "OpenAI": {
+    "url": "https://unpkg.com/@lobehub/icons-static-svg@latest/icons/openai.svg",
+    "sha256": "a595df6b423920c67a7f8f73c063e4bfb72d415948097b6cac063a2366bb5186"
+  }
+}

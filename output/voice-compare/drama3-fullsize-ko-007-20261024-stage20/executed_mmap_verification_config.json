@@ -1,0 +1,12 @@
+{
+  "started": {
+    "training_updates_executed": 0,
+    "checkpoint": "/voices/_drama3/fullsize-ko-007-20261024-stage20-v3/arms/korean_teacher/training_checkpoints/step-000005",
+    "same_weights_optimizer_rng_and_data": true,
+    "loader": "MAP_PRIVATE mmap; discard fresh Adam moments before restore"
+  },
+  "running_loader_source_matches_local": {
+    "training_state.py": true,
+    "resumable_fullsize.py": true
+  }
+}

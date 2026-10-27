@@ -1,0 +1,13 @@
+{
+  "link": {
+    "containsName": true,
+    "containsPhoto": true,
+    "href": "/my",
+    "rechargeIsSeparate": true
+  },
+  "result": {
+    "heading": "프로필",
+    "menuClosed": true,
+    "path": "/my"
+  }
+}

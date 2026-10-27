@@ -1,0 +1,100 @@
+{
+  "user_requested": "Clean unused previous training artifacts and caches",
+  "protected_while_clarification_pending": [
+    "/_datasets",
+    "/_aihub",
+    "/_drama3/korean-teacher-007-20261023",
+    "/_drama3/fullsize-ko-007-20261024-budget44-v1",
+    "/_drama3/fullsize-ko-007-20261024-budget44-resumable-v2"
+  ],
+  "targets": [
+    {
+      "volume": "miro-voices",
+      "path": "/_coqui_blog"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_eval"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen_bottleneck"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen_conditioned"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen_context"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen_ft"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen_phrase"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_qwen_problem_search"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_three_tts"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_voxcpm2"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_train"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/007-20261023-v1"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/007-long-whisper-20261023-v1"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/codec-audit-007-20261023-v1"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/fullft-readiness-20261023"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/fullft-readiness-20261023-offload"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/fullft-readiness-20261023-offload-variable"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/fullft-readiness-20261023-offload-variable-live"
+    },
+    {
+      "volume": "miro-voices",
+      "path": "/_drama3/fullsize-ab-007-20261023-v1"
+    },
+    {
+      "volume": "miro-voxcpm2-cache",
+      "path": "/asr"
+    },
+    {
+      "volume": "miro-voxcpm2-cache",
+      "path": "/huggingface"
+    }
+  ]
+}

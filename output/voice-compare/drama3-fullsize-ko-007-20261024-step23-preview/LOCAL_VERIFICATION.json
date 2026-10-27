@@ -1,0 +1,13 @@
+{
+  "export_tests_passed": 3,
+  "syntax_checks_passed": true,
+  "cached_control_wavs_hash_verified": 16,
+  "predeclared_generation_takes": 8,
+  "source_sha256": {
+    "tooling/voice/drama3_fullft/checkpoint_preview.py": "7baf88d906f717ceecf270be2a082517f7a4395323bc44e9c697253ef6d4c9ce",
+    "tooling/voice/modal_drama3_step23_preview.py": "4397d961e2232f64394866906cc5df5d7d9242dd26835c0fd8661eea2f8090a0",
+    "tooling/voice/modal_drama3_fullsize_listen.py": "50e80021e3dbbcd35d53fc0bba2c5361a911c03d4f70c64581900f4c7aff4c70",
+    "tooling/voice/package_drama3_step23_preview.py": "b68a38526bbaa48d8732d23a017737967b6bf0af782155b00b8c35e39962e4c9"
+  },
+  "time": "2026-10-24T08:08:24.264208+00:00"
+}

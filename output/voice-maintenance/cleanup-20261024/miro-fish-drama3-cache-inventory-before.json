@@ -1,0 +1,847 @@
+[
+  {
+    "path": "huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h",
+    "size": 7,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/staging",
+    "size": 0,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/trees",
+    "size": 45,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/c4",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/55",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/80",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/2d",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/19",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/3b",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/d0",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3",
+    "size": 19,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd",
+    "size": 411,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs",
+    "size": 960,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/d6",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/be",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/7c",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3",
+    "size": 1050,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/trees",
+    "size": 45,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/refs",
+    "size": 4,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo",
+    "size": 23,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/.locks",
+    "size": 53,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo",
+    "size": 249,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr",
+    "size": 76,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf",
+    "size": 73,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs",
+    "size": 224,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/blobs",
+    "size": 27,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/blobs/b5",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub",
+    "size": 88,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks",
+    "size": 65,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean",
+    "size": 23,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/snapshots/62054d17ebf51437336a371a2cdd80d5da2b44ac",
+    "size": 52,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/blobs",
+    "size": 144,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/.no_exist",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/.no_exist/62054d17ebf51437336a371a2cdd80d5da2b44ac",
+    "size": 21,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs",
+    "size": 47,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/e9",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--team-lucid--hubert-large-korean",
+    "size": 159,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface",
+    "size": 27,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet",
+    "size": 37,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet/logs",
+    "size": 99,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261023T091502902+0000_2.log",
+    "size": 78124,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/snapshots/62054d17ebf51437336a371a2cdd80d5da2b44ac/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/snapshots/62054d17ebf51437336a371a2cdd80d5da2b44ac/model.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/blobs/8ad80e2bc82023595cde1d13979733ba2dca60cc",
+    "size": 214,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/blobs/149e2d83966c357ae3d98e2b7b34c98bec39c56dc39d45cc6a0ca183824f8660",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/.no_exist/62054d17ebf51437336a371a2cdd80d5da2b44ac/processor_config.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/e9/e904a69ae8b04ae548caf54d8b43c57ac6316ed0bee2860de896fd3ffc87c95f.refs",
+    "size": 111,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/e9/e904a69ae8b04ae548caf54d8b43c57ac6316ed0bee2860de896fd3ffc87c95f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/e9/e904a69ae8b04ae548caf54d8b43c57ac6316ed0bee2860de896fd3ffc87c95f",
+    "size": 1261803472,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--team-lucid--hubert-large-korean/8ad80e2bc82023595cde1d13979733ba2dca60cc.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--team-lucid--hubert-large-korean/149e2d83966c357ae3d98e2b7b34c98bec39c56dc39d45cc6a0ca183824f8660.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/snapshots/62054d17ebf51437336a371a2cdd80d5da2b44ac/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--team-lucid--hubert-large-korean/blobs/e9ed795374f148ffbb2640b4c3ea98fc056f6e51",
+    "size": 1545,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--team-lucid--hubert-large-korean/e9ed795374f148ffbb2640b4c3ea98fc056f6e51.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261023T065314650+0000_2.log",
+    "size": 392720,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/model.bin",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/blobs/b5/b5de55e781fd93b7d472c8ca3f7d40d870a3be764f8bb1a9c4a0511c55f9ca5b.refs",
+    "size": 125,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/blobs/b5/b5de55e781fd93b7d472c8ca3f7d40d870a3be764f8bb1a9c4a0511c55f9ca5b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/blobs/b5/b5de55e781fd93b7d472c8ca3f7d40d870a3be764f8bb1a9c4a0511c55f9ca5b",
+    "size": 1617884929,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/blobs/.huggingface-shared-blobs",
+    "size": 2,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/trees/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf.json",
+    "size": 950,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/vocabulary.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/tokenizer.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/refs/main",
+    "size": 40,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/931c77a740890c46365c7ae0c9d350ba3cca908f",
+    "size": 340,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/17456db595adc78a973f97d69d8cb50bc87c0b1c",
+    "size": 2710337,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/0adcd01e7c237205d593b707e66dd5d7bc785d2d",
+    "size": 1068114,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/0351d1d6870005e865747b781b5d7c23ea0459cd",
+    "size": 2263,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/CACHEDIR.TAG",
+    "size": 191,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/931c77a740890c46365c7ae0c9d350ba3cca908f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/17456db595adc78a973f97d69d8cb50bc87c0b1c.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/0adcd01e7c237205d593b707e66dd5d7bc785d2d.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/0351d1d6870005e865747b781b5d7c23ea0459cd.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261023T064316673+0000_2.log",
+    "size": 2274308,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/tokenizer_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/tokenizer.json",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model.safetensors.index.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00008-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00007-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/f6d3655491f93602f82a61a6ad6fa0658d737f63",
+    "size": 103580,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/c5b065cce3b3b851369dfdb5a3b60f6abf2699121071c2b1a9dfd84acb7b8f7d",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/8e282a0cd1e03bdfb85f37c34484cea4b2d99b17",
+    "size": 6880197,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/51e7d473f8a270bf79b2896a6ea4f19162eeec5b1ea1c5a2ba7dc7750511dbda",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/0e9b9db76b2f0389b04b6ef057a2ac3b89100b7e96f2dd7034d19580a09654d6",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/d6/d64bb2fc7a459da188bb893c719166a218dd1c78fc95dd72afe0a15466517c70.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/d6/d64bb2fc7a459da188bb893c719166a218dd1c78fc95dd72afe0a15466517c70.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/d6/d64bb2fc7a459da188bb893c719166a218dd1c78fc95dd72afe0a15466517c70",
+    "size": 4638423240,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/be/be5e8de8f6fa5c4dae5c896489163378744cecfe14c9bfa353da30e621d36323.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/be/be5e8de8f6fa5c4dae5c896489163378744cecfe14c9bfa353da30e621d36323.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/be/be5e8de8f6fa5c4dae5c896489163378744cecfe14c9bfa353da30e621d36323",
+    "size": 4977946704,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/7c/7cd2fc50235c6f5dba6677bc44f72782165506497d36d29db5a78934e33336ef.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/7c/7cd2fc50235c6f5dba6677bc44f72782165506497d36d29db5a78934e33336ef.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/7c/7cd2fc50235c6f5dba6677bc44f72782165506497d36d29db5a78934e33336ef",
+    "size": 20791070,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/f6d3655491f93602f82a61a6ad6fa0658d737f63.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/c5b065cce3b3b851369dfdb5a3b60f6abf2699121071c2b1a9dfd84acb7b8f7d.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/8e282a0cd1e03bdfb85f37c34484cea4b2d99b17.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/51e7d473f8a270bf79b2896a6ea4f19162eeec5b1ea1c5a2ba7dc7750511dbda.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/0e9b9db76b2f0389b04b6ef057a2ac3b89100b7e96f2dd7034d19580a09654d6.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/special_tokens_map.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00006-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/aaac48f459bc88b562c2079a64d5b13aa23d2685",
+    "size": 102779,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/8867c0e3d600ebf28cf4734fc433dc98061fb990940e07b192ec0356ba1ff223",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/d0/d07dfac68a4619212e674c1f61b2ba84923ce3fa6796ee2a0287909efa09c2af.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/d0/d07dfac68a4619212e674c1f61b2ba84923ce3fa6796ee2a0287909efa09c2af.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/d0/d07dfac68a4619212e674c1f61b2ba84923ce3fa6796ee2a0287909efa09c2af",
+    "size": 4984792768,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/aaac48f459bc88b562c2079a64d5b13aa23d2685.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/8867c0e3d600ebf28cf4734fc433dc98061fb990940e07b192ec0356ba1ff223.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00005-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/a49ed8717c47e12b354a711c71ecde8be153bad704ca0a25d4805534f4405971",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/3b/3b32c0abf409a2cacccc83dcb31871106133639cbbb5ca3bea6d363ca993143e.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/3b/3b32c0abf409a2cacccc83dcb31871106133639cbbb5ca3bea6d363ca993143e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/3b/3b32c0abf409a2cacccc83dcb31871106133639cbbb5ca3bea6d363ca993143e",
+    "size": 5000227096,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/a49ed8717c47e12b354a711c71ecde8be153bad704ca0a25d4805534f4405971.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00004-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/fa2960bddf128f51c3d4d74a1a942e34f61cc7ea294d10aec27f79dc10455c9f",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/19/19168527cce6b7ece9699fb6ac40f6eb3fb1f91ba7e9a896fd44942743961562.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/19/19168527cce6b7ece9699fb6ac40f6eb3fb1f91ba7e9a896fd44942743961562.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/19/19168527cce6b7ece9699fb6ac40f6eb3fb1f91ba7e9a896fd44942743961562",
+    "size": 5000496392,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/fa2960bddf128f51c3d4d74a1a942e34f61cc7ea294d10aec27f79dc10455c9f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00003-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/acfdeb67b8c4cb4784d887339e85bddbc5d7b9be3bbee82e40fa10ffe305d965",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/2d/2dc2a4c7daeb46e40e3e28ca9242f9695a53cd26eab1df1951e1340a9e72f6a6.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/2d/2dc2a4c7daeb46e40e3e28ca9242f9695a53cd26eab1df1951e1340a9e72f6a6.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/2d/2dc2a4c7daeb46e40e3e28ca9242f9695a53cd26eab1df1951e1340a9e72f6a6",
+    "size": 5000988520,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/acfdeb67b8c4cb4784d887339e85bddbc5d7b9be3bbee82e40fa10ffe305d965.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00001-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/e486b4f438d0b2df28846e41e599bd2077a64a825893ed0371b332a40dc4b49b",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/80/80e5c9d9c425774991f682b0e29ffaee28c07d087b16cf8e7c49c27458807bc5.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/80/80e5c9d9c425774991f682b0e29ffaee28c07d087b16cf8e7c49c27458807bc5.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/80/80e5c9d9c425774991f682b0e29ffaee28c07d087b16cf8e7c49c27458807bc5",
+    "size": 5000202800,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/e486b4f438d0b2df28846e41e599bd2077a64a825893ed0371b332a40dc4b49b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/model-00002-of-00008.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/a67b726fe950ad57ebc15696009bde4a7dbbdc3645b42fa7d77e3a5fa1d70262",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/55/55bdb1756d5c7ce5bd0cf339f1fddf487513d07fb2fd13eb00581bcb753c6a6e.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/55/55bdb1756d5c7ce5bd0cf339f1fddf487513d07fb2fd13eb00581bcb753c6a6e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/55/55bdb1756d5c7ce5bd0cf339f1fddf487513d07fb2fd13eb00581bcb753c6a6e",
+    "size": 5000496824,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/a67b726fe950ad57ebc15696009bde4a7dbbdc3645b42fa7d77e3a5fa1d70262.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/codec.pth",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/74fc41c5a7151c6f350af8bd7e5d6e3accfcc7f3dfbfac23afd35af07052bb2f",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/c4/c4b342c0f006a5714f52b5a8474de93b7c784a379424d1ea97caa77a77a63810.refs",
+    "size": 98,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/c4/c4b342c0f006a5714f52b5a8474de93b7c784a379424d1ea97caa77a77a63810.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/c4/c4b342c0f006a5714f52b5a8474de93b7c784a379424d1ea97caa77a77a63810",
+    "size": 1871099728,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/.huggingface-shared-blobs",
+    "size": 2,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/74fc41c5a7151c6f350af8bd7e5d6e3accfcc7f3dfbfac23afd35af07052bb2f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/trees/b2b5ee998034b2975720906c815e7fb0e9f007bd.json",
+    "size": 4030,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/chat_template.jinja",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/README.md",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/LICENSE",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/snapshots/b2b5ee998034b2975720906c815e7fb0e9f007bd/.gitattributes",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/adcc9ce0dcc643e1beb983ac050598b64c2552c0",
+    "size": 7996,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/a585dec894e63da457d9440ec6aa7caa16d20860",
+    "size": 7756,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/7d55fb1de30150d0353349b9e1779cbfaa1e836c",
+    "size": 5535,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/52373fe24473b1aa44333d318f578ae6bf04b49b",
+    "size": 1570,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--fishaudio--drama-3/blobs/3109ed8be76ee63f8b79e8752deef2bce2886675",
+    "size": 19685,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/CACHEDIR.TAG",
+    "size": 191,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/adcc9ce0dcc643e1beb983ac050598b64c2552c0.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/a585dec894e63da457d9440ec6aa7caa16d20860.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/7d55fb1de30150d0353349b9e1779cbfaa1e836c.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/52373fe24473b1aa44333d318f578ae6bf04b49b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--fishaudio--drama-3/3109ed8be76ee63f8b79e8752deef2bce2886675.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/.agent_harnesses.json",
+    "size": 5778,
+    "type": "FileEntryType.FILE"
+  }
+]

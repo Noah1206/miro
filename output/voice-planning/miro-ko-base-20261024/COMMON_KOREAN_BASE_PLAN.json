@@ -1,0 +1,268 @@
+{
+  "status": "DESIGN_ONLY_NO_PAID_EXECUTION",
+  "paid_execution_enabled": false,
+  "goal": "One reusable Korean multi-speaker full-FT base; later voice onboarding without repeating common Korean adaptation.",
+  "not_production_claim": true,
+  "initialization": {
+    "preferred_candidate": "preserved_step23_TTS_weights only after heldout male/female reuse gate; otherwise original Drama3",
+    "exact_old_007_resume": false,
+    "reason": "New dataset/sampler/reference pool/teacher statistics and evaluation task. Preserve original complete checkpoint.",
+    "safe_stage_boundary": "CPU BF16 native export from existing23 FP32 masters, new run ID, fresh optimizer and teacher head explicitly recorded for new task; no source checkpoint mutation.",
+    "teacher_normalization": "Recompute mean/std only on new multi-speaker training split. Existing raw007 codec and HuBERT features may be reused if source/profile hashes match; old007 normalization stats are not reused.",
+    "source23_weight_hashes_must_be_retained": true,
+    "original_Drama3_comparator": "Must fetch true original weights for new heldout voices; trained step1 is not a valid original comparator.",
+    "cross_speaker_transfer_unverified": true
+  },
+  "architecture": {
+    "tts_parameters": 35899643008,
+    "all_tts_parameters_trainable": true,
+    "lora": false,
+    "codec_frozen": true,
+    "teacher": "team-lucid/hubert-large-korean pinned revision; training-only auxiliary supervision",
+    "teacher_does_not_replace_codec_teacher": true,
+    "speaker_slots": "Local role0..15, not persistent identity. Same-speaker disjoint references, shuffled slots; serve voices with reference cache.",
+    "context": "A director maps real dialogue context to delivery plan. It is a distinct input path, not report-only scene metadata.",
+    "acting_supervision": "Preserve source emotion/intensity/boundary labels; derive phrase timing/syllables-per-second/relative energy from actual aligned human audio with confidence masks, not fabricated text-only emotion captions.",
+    "nonverbal_whisper": "Only verified real recordings; absent capability labels remain unknown rather than invented."
+  },
+  "data": {
+    "current_female_original_speakers": 12,
+    "current_original_clips": 7200,
+    "current_wav_hours": 9.547268455530354,
+    "minimum_train_female_ids": [],
+    "minimum_train_male_ids_pending": [
+      "001",
+      "011"
+    ],
+    "heldout_female_ids": [],
+    "heldout_male_ids_pending": [],
+    "seen_007_is_not_heldout": true,
+    "male_candidates": [
+      {
+        "speaker_id": "aihub001",
+        "age_group": {
+          "20": 54
+        },
+        "gender": "MALE",
+        "planned_role": "train",
+        "selected_clips": 600,
+        "original_audio_confirmed": false
+      },
+      {
+        "speaker_id": "aihub011",
+        "age_group": {
+          "30": 60
+        },
+        "gender": "MALE",
+        "planned_role": "train",
+        "selected_clips": 600,
+        "original_audio_confirmed": false
+      }
+    ],
+    "train_validation_candidate_counts": {
+      "train": 1074,
+      "validation": 105
+    },
+    "per_speaker_candidates": {
+      "aihub001": 589,
+      "aihub011": 590
+    },
+    "heldout_test_clips": 16,
+    "heldout_prompt_clips": 4,
+    "eval_texts_excluded_from_all_training_speakers": true,
+    "eval_texts_exclude_prior007_presented_texts": true,
+    "training_counts_by_speaker": {
+      "aihub001": 531,
+      "aihub011": 543
+    },
+    "coverage_pass_updates": 68,
+    "sampling": "Eight samples per male training speaker per global16-example update, shuffled decks without replacement until each speaker exhausts its own deck; roles randomized.",
+    "gender_balanced_batches": false,
+    "speaker_and_emotion_balancing": "Balanced across speakers and observed emotion labels; no synthetic gender or pitch conversion.",
+    "remaining_existing_female_speakers": "Retained for expansion/secondary heldout tests, not discarded.",
+    "all12_female_expansion": "Out of current minimum-cost scope. All existing female recordings remain preserved.",
+    "rights": "User-confirmed rights accepted; source registration limits adult use. General Korean-base training only, no adult source labels inferred.",
+    "male_voice_gender_verification": "Original reciter.gender metadata plus matching downloaded filenames; pitch is not used to infer gender.",
+    "heldout_male_generalization_verified": false,
+    "evaluation_male_ids_seen_in_new_training": [
+      "001",
+      "011"
+    ]
+  },
+  "evaluation": {
+    "primary": "Globally text-held-out evaluation for both trained male voices. No new female recordings or unseen-male generalization claim.",
+    "per_heldout_speaker": "For each of two male voices: two reserved reference clips and eight text-held-out evaluation clips. These speakers become seen after the new stage; no third male is added.",
+    "costed_generation_optimization": "Load each checkpoint once for all heldout speakers, caching each original reference codec. Do not reload the35.9B model for every speaker.",
+    "comparators": [
+      "original_Drama3",
+      "step23_before_new_training",
+      "new_common_base"
+    ],
+    "existing007_baselines": "Reuse only for007 same prompts; cannot reuse007 WAVs as male/other speaker baseline.",
+    "gates": [
+      "No catastrophic word omissions or long low-energy tail; EOS compliance",
+      "Report each of the two trained male voices separately on heldout texts. Unseen-male transfer remains untested.",
+      "Speaker identity across emotions remains stable; cosine is a proxy",
+      "Blind listening of naturalness and intended emotion; ASR gain alone is insufficient",
+      "Explicit voiced/unvoiced whisper verification before ASMR claim",
+      "No teacher-specific causal claim without matched teacher-free control"
+    ],
+    "small_probe_does_not_certify_production": true,
+    "male_generalization_limitation": "Exactly two male training voices. Neither is a heldout male after this new training, so the design cannot prove transfer to a third male voice. No extra male speaker is added automatically."
+  },
+  "checkpointing": {
+    "old5_and23_preserved": true,
+    "write_then_remote_commit_then_publish": true,
+    "full_state_saves_include": [
+      "FP32 masters",
+      "Adam",
+      "teacher head",
+      "RNG",
+      "data cursor",
+      "new manifest and schedule hashes"
+    ],
+    "interval": "64 new updates or time-budget boundary, plus final. Save/resume pilot must pass before long run.",
+    "retention": "At most latest2 NEW-run full checkpoints; remove previous NEW-run checkpoint only after newer one is externally verified; no deletion executed now.",
+    "export": "CPU-only streaming after GPU exit; reference/codec contracts maintained."
+  },
+  "cost": {
+    "currency": "USD",
+    "official_prices_source": "https://modal.com/pricing",
+    "historical_measured_update_seconds": 81.73502273882353,
+    "quoted_step_seconds_assumption": [
+      70,
+      110
+    ],
+    "rates": {
+      "H100_gpu_hour": 3.9492000000000003,
+      "physical_cpu_core_hour": 0.04716,
+      "GiB_RAM_hour": 0.007991999999999999,
+      "volume_GiB_month": 0.09,
+      "volume_free_GiB": 1024
+    },
+    "training_hour_low_high": [
+      37.46304,
+      39.508992
+    ],
+    "reuse_gate_before_training": {
+      "estimated_usd": [
+        2,
+        5
+      ],
+      "new_training_updates": 0,
+      "models": [
+        "original_Drama3",
+        "saved_step23"
+      ],
+      "heldout_voices": 2,
+      "takes_per_model": 8,
+      "includes": "CPU23 export, original checkpoint CPU fetch allowance, one GPU load per model, new listening WAVs",
+      "decision": "Before new training, test23 on both candidate male voices. After new training, these males are seen speakers. Do not subtract23 old007 updates from the new task.",
+      "paid_execution_authorized": false
+    },
+    "scenarios": {
+      "transfer_feasibility_only_32_updates": {
+        "updates": 32,
+        "global_clip_presentations": 512,
+        "durable_full_saves": 1,
+        "estimated_resource_usd_low": 36.496415999999996,
+        "estimated_resource_usd_high": 68.9855104,
+        "central_scenario_usd": 46.42099727010424,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      },
+      "two_male_only_one_coverage_pass": {
+        "updates": 68,
+        "global_clip_presentations": 1088,
+        "durable_full_saves": 2,
+        "estimated_resource_usd_low": 67.923744,
+        "estimated_resource_usd_high": 120.67644159999999,
+        "central_scenario_usd": 83.3297367989715,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      },
+      "two_male_only_three_coverage_passes": {
+        "updates": 204,
+        "global_clip_presentations": 3264,
+        "durable_full_saves": 4,
+        "estimated_resource_usd_low": 177.39907200000002,
+        "estimated_resource_usd_high": 301.3203328,
+        "central_scenario_usd": 213.06997839691445,
+        "quality_guaranteed": false,
+        "includes": [
+          "data codec/teacher precompute allowance",
+          "full TTS training",
+          "load",
+          "save and remote commit",
+          "validation",
+          "two CPU native exports: source23 and new checkpoint",
+          "new heldout listening generation allowance"
+        ],
+        "excludes": [
+          "actor recording/AI training licence fees",
+          "long-term storage",
+          "unapproved failures or architecture changes",
+          "taxes/FX/card charges"
+        ],
+        "not_a_hard_spending_authorization": true
+      }
+    },
+    "snapshot_storage": {
+      "existing_GiB": 995.2804049784318,
+      "one_new_full_checkpoint_GiB": 401.23696430027485,
+      "incremental_excess_GiB_if_retained": 372.5173692787066,
+      "incremental_monthly_usd": 33.52656323508359,
+      "approx_daily_usd": 1.1175521078361197,
+      "new_native_export_GiB": 68.63065293058753,
+      "old_artifacts_not_deleted": true
+    },
+    "quality_target_minimum_cost": "Unknown until heldout learning curves; one pass is a scope estimate, not a production-quality promise.",
+    "unbenchmarked_cheaper_hardware": "4H100/A100/optimizer changes are hypotheses; no savings claimed without a bounded memory/throughput test. RTX2070 cannot host the actual35.9B fullFT.",
+    "no_new_paid_job_started": true
+  },
+  "launch_blockers": [
+    "Male source WAVs not downloaded/verified: official API returned502",
+    "Training and context-conditioning code must be generalized beyond the old007-specific plan",
+    "User has not authorized any new paid run",
+    "Need explicit cost ceiling and storage retention choice before a future run",
+    "The two male voices are provisional metadata candidates; actual source recordings and audition remain missing."
+  ],
+  "product_scope": {
+    "launch_male_voices": 2,
+    "male_training_speakers": 2,
+    "primary_product": "Unveil dialogue and cloud images; voices supplementary",
+    "female_base_training_speakers": 0,
+    "female_recordings_preserved_but_excluded": true,
+    "male_ids_are_provisional_until_audio_audition": true
+  }
+}

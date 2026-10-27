@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "db": "up",
+  "schema": "ready",
+  "cron": "fresh",
+  "version": ""
+}

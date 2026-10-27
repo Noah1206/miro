@@ -1,0 +1,160 @@
+[
+  {
+    "route": "/home",
+    "nav": [
+      "미로",
+      "탐색",
+      "만들기",
+      "대화",
+      "프로필"
+    ],
+    "audiencePicker": "BL keyword groups; no gender chooser"
+  },
+  {
+    "route": "/explore",
+    "allResults": 37,
+    "filteredFantasyResults": 17,
+    "resetInitiallyDisabled": true
+  },
+  {
+    "overflow": false,
+    "queryChip": true,
+    "resultSummary": [
+      "불러오는 중…",
+      "결과 1개"
+    ],
+    "route": "/search/results",
+    "searchInputs": 0
+  },
+  {
+    "activityLinks": [
+      "/my/characters",
+      "/persona?next=/my"
+    ],
+    "historyLink": false,
+    "overflow": false,
+    "route": "/my"
+  },
+  {
+    "route": "/my",
+    "verificationHeading": true,
+    "verificationSheet": true
+  },
+  {
+    "cta": {
+      "background": "rgb(112, 70, 206)",
+      "color": "rgb(255, 255, 255)",
+      "height": 44,
+      "plus": true
+    },
+    "heading": {
+      "fontSize": "18px",
+      "fontWeight": "450"
+    },
+    "overflow": false,
+    "route": "/my/characters"
+  },
+  {
+    "h1": [
+      {
+        "size": "18px",
+        "text": "내 페르소나",
+        "weight": "450"
+      }
+    ],
+    "mainParagraphs": 0,
+    "overflow": false,
+    "route": "/persona"
+  },
+  {
+    "h1": [
+      {
+        "size": "18px",
+        "text": "권한",
+        "weight": "450"
+      }
+    ],
+    "mainParagraphs": 2,
+    "overflow": false,
+    "route": "/my/permissions"
+  },
+  {
+    "h1": [
+      {
+        "size": "18px",
+        "text": "AI 개선 참여",
+        "weight": "450"
+      }
+    ],
+    "mainParagraphs": 3,
+    "overflow": false,
+    "route": "/my/ai-data"
+  },
+  {
+    "designLibrary": false,
+    "overflow": false,
+    "route": "/archive",
+    "rows": [
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "height": 68
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "height": 68
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "height": 68
+      },
+      {
+        "background": "rgba(0, 0, 0, 0)",
+        "height": 68
+      }
+    ],
+    "times": 0,
+    "title": "대화"
+  },
+  {
+    "composerFont": "13px",
+    "menu": {
+      "hasDesigns": true,
+      "hasPersona": true,
+      "open": true,
+      "voiceMode": false
+    },
+    "overflow": false,
+    "placeholderFont": "13px",
+    "route": "/chat"
+  },
+  {
+    "composer": {
+      "font": "13px",
+      "placeholder": "13px"
+    },
+    "overflow": false,
+    "phoneButtons": 0,
+    "route": "/messages"
+  },
+  {
+    "overflow": false,
+    "publishDisabled": true,
+    "route": "/create",
+    "saveDisabled": true,
+    "selectedTab": [
+      "세계관"
+    ]
+  },
+  {
+    "nav": [
+      "미로",
+      "탐색",
+      "만들기",
+      "대화",
+      "프로필"
+    ],
+    "overflow": false,
+    "route": "/explore",
+    "viewport": 1280
+  }
+]

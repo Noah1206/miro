@@ -1,0 +1,10 @@
+{
+  "sha256_verified_shards": 43,
+  "verified_tensors": 885,
+  "verified_parameter_bytes": 71799286016,
+  "verified": true,
+  "seconds": 587.9584977869999,
+  "gpu_allocated": false,
+  "verifies_native_file_integrity_only": true,
+  "inference_reload_verified": false
+}

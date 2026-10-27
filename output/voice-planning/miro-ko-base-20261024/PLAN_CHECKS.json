@@ -1,0 +1,14 @@
+{
+  "paid_execution_disabled": true,
+  "exactly_two_male_training_speakers": true,
+  "female_training_rows": 0,
+  "same_male_reference_for_every_training_item": true,
+  "different_recording_and_text_reference": true,
+  "no_target_reuse_before_own_deck_exhaustion": true,
+  "eight_examples_per_male_per_global_batch": true,
+  "deterministic_schedule": true,
+  "rejects_female_input": true,
+  "rejects_global_train_validation_leakage": true,
+  "missing_original_audio_blocks_execution": true,
+  "training_started": false
+}

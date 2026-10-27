@@ -1,0 +1,16 @@
+{
+  "additional_total_cash_ceiling_usd": 70,
+  "user_authorized_additional_total_cash_ceiling_usd": 70,
+  "increment_explicitly_approved_usd": 20,
+  "previously_paid_cash_usd": 30,
+  "workspace_net_spend_limit_ui_verified_usd": 100,
+  "workspace_net_spend_limit_proof": "spend-limit-100.png",
+  "net_billed_at_dispatch": 72.23,
+  "resume_checkpoint": "/voices/_drama3/fullsize-ko-007-20261024-stage20-v3/arms/korean_teacher/training_checkpoints/step-000005",
+  "training_target_step": 25,
+  "same_full_model_precision_optimizer_teacher_and_data": true,
+  "native_inference_export_authorized": false,
+  "additional_audio_generation_authorized": false,
+  "automatic_retry": false,
+  "recorded_at_utc": "2026-10-24T06:57:37.624241+00:00"
+}

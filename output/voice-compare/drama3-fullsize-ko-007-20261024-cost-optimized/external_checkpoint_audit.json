@@ -1,0 +1,22 @@
+{
+  "recorded_at_utc": "2026-10-24T07:38:05.765847+00:00",
+  "saved_step": 23,
+  "next_update": 24,
+  "next_micro_batch": 46,
+  "new_updates": 18,
+  "goal_step": 25,
+  "goal_reached": false,
+  "all_checkpoint_file_sizes_match_external_volume_listing": true,
+  "optimizer_shards": 8,
+  "model_state_shards": 8,
+  "rng_files": 8,
+  "checkpoint_file_count": 32,
+  "checkpoint_file_bytes": 430824909904,
+  "original_step5_preserved": true,
+  "worker_result_available": true,
+  "new_checkpoint_independent_engine_reload_verified": false,
+  "optimizer_full_payload_sha256_performed": false,
+  "native_inference_export_generated": false,
+  "quality_improvement_confirmed": false,
+  "resume_checkpoint": "/voices/_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023"
+}

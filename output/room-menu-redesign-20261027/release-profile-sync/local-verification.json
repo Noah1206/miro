@@ -1,0 +1,12 @@
+{
+  "dm": {
+    "name": "사진이름 동기화",
+    "photo": "/miro-coin.png"
+  },
+  "characterChat": {
+    "name": "사진이름 동기화",
+    "photo": "/miro-coin.png"
+  },
+  "upload": "Local storage not configured. Photo URL seeded only in local test account; normal save response then synchronized both open menus.",
+  "uploadFailure": "Verified nickname stays unchanged when photo upload fails."
+}

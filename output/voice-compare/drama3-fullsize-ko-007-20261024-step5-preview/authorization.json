@@ -1,0 +1,17 @@
+{
+  "additional_total_budget_usd": 50,
+  "previously_paid_cash_usd": 30,
+  "net_billed_start_usd": 71.36,
+  "remaining_additional_budget_snapshot_usd": 8.64,
+  "existing_workspace_net_spend_limit_usd": 75.93,
+  "preview_resource_bound_with_startup_and_reserve_usd": 3.04,
+  "cpu_export_bound_usd": 1.00804,
+  "gpu_generation_bound_usd": 1.6357333333333333,
+  "all_in_reserve_usd": 0.4,
+  "training_updates_authorized": 0,
+  "weights_step": 5,
+  "planned_training_steps": 25,
+  "original_audio_reused": true,
+  "automatic_paid_retry": false,
+  "billing_can_lag": true
+}

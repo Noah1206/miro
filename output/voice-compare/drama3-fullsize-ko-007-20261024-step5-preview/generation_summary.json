@@ -1,0 +1,106 @@
+{
+  "count": 16,
+  "model_load_seconds": 53.140508889,
+  "total_generation_seconds": 251.85875487599995,
+  "truncated_original": 1,
+  "truncated_step5": 3,
+  "waveform_hash_identical_pairs": 0,
+  "items": [
+    {
+      "id": "heldout_D-A3-A-007-0244",
+      "seed": 1234,
+      "seconds": 5.851428571428571,
+      "truncated": false
+    },
+    {
+      "id": "heldout_D-A3-A-007-0840",
+      "seed": 1234,
+      "seconds": 6.130068027210885,
+      "truncated": false
+    },
+    {
+      "id": "heldout_D-H3-A-007-0341",
+      "seed": 1234,
+      "seconds": 5.015510204081632,
+      "truncated": false
+    },
+    {
+      "id": "heldout_D-H3-A-007-0787",
+      "seed": 1234,
+      "seconds": 5.294149659863946,
+      "truncated": false
+    },
+    {
+      "id": "heldout_D-S3-A-007-0683",
+      "seed": 1234,
+      "seconds": 6.455147392290249,
+      "truncated": false
+    },
+    {
+      "id": "heldout_D-S3-A-007-0796",
+      "seed": 1234,
+      "seconds": 17.832925170068027,
+      "truncated": true
+    },
+    {
+      "id": "neutral",
+      "seed": 1234,
+      "seconds": 2.3219954648526078,
+      "truncated": false
+    },
+    {
+      "id": "comfort",
+      "seed": 1234,
+      "seconds": 4.133151927437642,
+      "truncated": false
+    },
+    {
+      "id": "comfort",
+      "seed": 4321,
+      "seconds": 3.297233560090703,
+      "truncated": false
+    },
+    {
+      "id": "contained_anger",
+      "seed": 1234,
+      "seconds": 2.786394557823129,
+      "truncated": false
+    },
+    {
+      "id": "contained_anger",
+      "seed": 4321,
+      "seconds": 3.4829931972789114,
+      "truncated": false
+    },
+    {
+      "id": "relief",
+      "seed": 1234,
+      "seconds": 11.888616780045352,
+      "truncated": true
+    },
+    {
+      "id": "relief",
+      "seed": 4321,
+      "seconds": 3.250793650793651,
+      "truncated": false
+    },
+    {
+      "id": "long_comfort",
+      "seed": 1234,
+      "seconds": 35.75873015873016,
+      "truncated": false
+    },
+    {
+      "id": "whisper",
+      "seed": 1234,
+      "seconds": 17.832925170068027,
+      "truncated": true
+    },
+    {
+      "id": "whisper",
+      "seed": 4321,
+      "seconds": 5.2477097505668935,
+      "truncated": false
+    }
+  ]
+}

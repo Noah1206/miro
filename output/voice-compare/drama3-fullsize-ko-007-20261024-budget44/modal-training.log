@@ -1,0 +1,139 @@
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-BsHjFcfhtKQ4eXKKl6zFd2
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_fullsize_train.py
+├── ✓ Uploaded PythonPackage:drama3_fullft, PythonPackage:modal_drama3_compare
+├── ✓ Created Function preflight.
+├── ✓ Created Function verify_first_snapshot.
+├── ✓ Created Function train_arm.
+└── ✓ Created Function collect.
+AB_LOAD korean_teacher 0 backbone.model.embed_tokens.weight
+AB_LOAD korean_teacher 100 backbone.model.layers.5.mlp.shared_expert.gate_proj.weight
+AB_LOAD korean_teacher 200 backbone.model.layers.11.mlp.experts.w13_weight
+AB_LOAD korean_teacher 300 backbone.model.layers.17.linear_attn.in_proj_a.weight
+AB_LOAD korean_teacher 400 backbone.model.layers.23.self_attn.q_proj.weight
+AB_LOAD korean_teacher 500 backbone.model.layers.28.input_layernorm.weight
+AB_LOAD korean_teacher 600 backbone.model.layers.34.mlp.experts.w2_weight
+AB_LOAD korean_teacher 700 audio_decoder.shared_layers.0.transformer_layer.attention.q_norm.weight
+AB_LOAD korean_teacher 800 audio_decoder.residual_layers.3.transformer_layer.attention_norm.weight
+AB_VALIDATION korean_teacher 0 4.540434002876282
+AB_STEP korean_teacher {"step": 1, "speech_loss": 4.717665821313858, "teacher_loss": 1.0029328614473343, "global_gradient_norm": 22.125905990600586, "seconds": 408.268435672}
+NATIVE_EXPORT 0 backbone.model.embed_tokens.weight
+NATIVE_EXPORT 100 backbone.model.layers.5.mlp.shared_expert.gate_proj.weight
+NATIVE_EXPORT 200 backbone.model.layers.11.mlp.experts.w13_weight
+NATIVE_EXPORT 300 backbone.model.layers.17.linear_attn.in_proj_a.weight
+NATIVE_EXPORT 400 backbone.model.layers.23.self_attn.q_proj.weight
+NATIVE_EXPORT 500 backbone.model.layers.28.input_layernorm.weight
+NATIVE_EXPORT 600 backbone.model.layers.34.mlp.experts.w2_weight
+NATIVE_EXPORT 700 audio_decoder.shared_layers.0.transformer_layer.attention.q_norm.weight
+NATIVE_EXPORT 800 audio_decoder.residual_layers.3.transformer_layer.attention_norm.weight
+AB_NATIVE_SNAPSHOT korean_teacher {"step": 1, "path": "/voices/_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/snapshots/step-000001", "inference_weights_complete": true, "optimizer_state_saved": false, "exact_optimizer_resume_available": false, "quality_approved": false, "native_export": {"bytes": 71799286016, "tensors": 885, "shards": 43, "teacher_required_at_inference": false, "export_seconds": 170.35820449600004, "checksums_file": "SHA256SUMS.json"}}
+Task's current input(s) ["in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0"] cancelled because: Task's current input in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0 hit its timeout of 240s
+[modal-client] 2026-10-23T15:40:15+0000 Received a cancellation signal while processing input ('in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0',)
+[modal-client] 2026-10-23T15:40:15+0000 Successfully canceled input ('in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0',)
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 987, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 189, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 266, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/modal_drama3_fullsize_train.py", line 121, in train_arm
+    verified=verify_first_snapshot.remote(run_root,manifest)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_object.py", line 49, in wrapped
+    return await method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_functions.py", line 2081, in remote
+    return await self._call_function(args, kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_functions.py", line 2018, in _call_function
+    return await invocation.run_function()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_functions.py", line 517, in run_function
+    return await _process_result(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_utils/function_utils.py", line 534, in _process_result
+    raise FunctionTimeoutError(result.exception)
+modal.exception.FunctionTimeoutError: Task's current input in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0 hit its timeout of 240s
+Stopping app - uncaught exception raised locally: FunctionTimeoutError("Task's current input in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0 hit its timeout of 240s").
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_fullsize_train.py │
+│ :182 in main                                                                 │
+│                                                                              │
+│   181 │   for name in (['baseline','korean_teacher'] if arm=='both' else [ar │
+│ ❱ 182 │   │   result=train_arm.remote(name,settings,restart_interrupted,run_ │
+│   183 │   if arm=='both':                                                    │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_objec │
+│ t.py:49 in wrapped                                                           │
+│                                                                              │
+│    48 │   │   await self.hydrate()                                           │
+│ ❱  49 │   │   return await method(self, *args, **kwargs)                     │
+│    50                                                                        │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2081 in remote                                                       │
+│                                                                              │
+│   2080 │   │                                                                 │
+│ ❱ 2081 │   │   return await self._call_function(args, kwargs)                │
+│   2082                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2018 in _call_function                                               │
+│                                                                              │
+│   2017 │   │                                                                 │
+│ ❱ 2018 │   │   return await invocation.run_function()                        │
+│   2019                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:517 in run_function                                                  │
+│                                                                              │
+│    516 │   │   │   # No more retries left.                                   │
+│ ❱  517 │   │   │   return await _process_result(                             │
+│    518 │   │   │   │   await_response.output.result, await_response.output.d │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_utils │
+│ /function_utils.py:572 in _process_result                                    │
+│                                                                              │
+│   571 │   │   │                                                              │
+│ ❱ 572 │   │   │   raise exc_with_hints(exc)                                  │
+│   573                                                                        │
+│                                                                              │
+│     ...Remote call to Modal Function (ta-01M5MNVCJ71QTZ63RNQR6J4RVR)...      │
+│                                                                              │
+│ /root/modal_drama3_fullsize_train.py:121 in train_arm                        │
+│                                                                              │
+│ ❱ 121 verified=verify_first_snapshot.remote(run_root,manifest)               │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/_object.py:49 in wrapped                                          │
+│                                                                              │
+│ ❱ 49 return await method(self, *args, **kwargs)                              │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/_functions.py:2081 in remote                                      │
+│                                                                              │
+│ ❱ 2081 return await self._call_function(args, kwargs)                        │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/_functions.py:2018 in _call_function                              │
+│                                                                              │
+│ ❱ 2018 return await invocation.run_function()                                │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/_functions.py:517 in run_function                                 │
+│                                                                              │
+│ ❱ 517 return await _process_result(                                          │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/_utils/function_utils.py:534 in _process_result                   │
+│                                                                              │
+│ ❱ 534 raise FunctionTimeoutError(result.exception)                           │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+FunctionTimeoutError: Task's current input 
+in-01M5MPF52QANBP87SS15V0NBCR:1792769758295-0 hit its timeout of 240s

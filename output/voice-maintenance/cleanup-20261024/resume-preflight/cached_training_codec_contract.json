@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "source_revision": "541566932abbaebcb0a40e562a1f846738383f38",
+  "initial_model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd",
+  "codec_file_sha256": "74fc41c5a7151c6f350af8bd7e5d6e3accfcc7f3dfbfac23afd35af07052bb2f",
+  "precision": "bfloat16",
+  "torch_version": "2.8.0+cu128",
+  "sample_rate": 44100,
+  "frame_length": 2048,
+  "codebook_vocabularies": [
+    4096,
+    1024,
+    1024,
+    1024,
+    1024,
+    1024,
+    1024,
+    1024,
+    1024,
+    1024
+  ],
+  "frozen_codec": true,
+  "resampling": "official torchaudio path",
+  "normalization_applied": false,
+  "silence_trimmed": false,
+  "codec_profile_id": "533bcca607c5b4b11d31c4c1b8aa08a3b0de09b5bad2b2421305b8a62c2d70f0"
+}

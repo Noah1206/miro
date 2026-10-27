@@ -1,0 +1,36 @@
+Scope: all 8 workspace projects
+(node:11460) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +130
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+   ╭───────────────────────────────────────────────────────────────────╮
+   │                                                                   │
+   │                Update available! 9.0.0 → 12.15.0.                 │
+   │   Changelog: https://github.com/pnpm/pnpm/releases/tag/v12.15.0   │
+   │     Run "corepack prepare pnpm@12.15.0 --activate" to update.     │
+   │                                                                   │
+   │      Follow @pnpmjs for updates: https://twitter.com/pnpmjs       │
+   │                                                                   │
+   ╰───────────────────────────────────────────────────────────────────╯
+
+Progress: resolved 130, reused 0, downloaded 67, added 65
+Progress: resolved 130, reused 0, downloaded 112, added 111
+Progress: resolved 130, reused 0, downloaded 126, added 126
+Progress: resolved 130, reused 0, downloaded 128, added 128
+Progress: resolved 130, reused 0, downloaded 129, added 128
+Progress: resolved 130, reused 0, downloaded 129, added 129
+Progress: resolved 130, reused 0, downloaded 130, added 129
+Progress: resolved 130, reused 0, downloaded 130, added 130, done
+
+devDependencies:
++ @axe-core/playwright 4.10.2
++ @playwright/test 1.49.1
++ @types/node 22.20.2
++ tsx 4.23.13
++ typescript 5.9.3
++ vitest 2.1.9
+
+Done in 10.9s

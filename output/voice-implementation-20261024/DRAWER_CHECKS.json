@@ -1,0 +1,63 @@
+{
+  "results": [
+    {
+      "width": 390,
+      "box": {
+        "x": 54.609375,
+        "y": 0,
+        "width": 335.390625,
+        "height": 844
+      },
+      "rightAligned": true,
+      "fullHeight": true,
+      "focusTrap": true,
+      "closeButton": true,
+      "backdrop": true,
+      "escape": true,
+      "swipeRight": true,
+      "featuresWork": true,
+      "consoleErrors": []
+    },
+    {
+      "width": 320,
+      "box": {
+        "x": 44.8125,
+        "y": 0,
+        "width": 275.1875,
+        "height": 844
+      },
+      "rightAligned": true,
+      "fullHeight": true,
+      "focusTrap": true,
+      "closeButton": true,
+      "backdrop": true,
+      "escape": true,
+      "swipeRight": true,
+      "featuresWork": true,
+      "consoleErrors": []
+    },
+    {
+      "width": 1200,
+      "box": {
+        "x": 500,
+        "y": 0,
+        "width": 340,
+        "height": 844
+      },
+      "rightAligned": true,
+      "fullHeight": true,
+      "focusTrap": true,
+      "closeButton": true,
+      "backdrop": true,
+      "escape": true,
+      "swipeRight": true,
+      "featuresWork": true,
+      "consoleErrors": []
+    },
+    {
+      "reducedMotion": true
+    }
+  ],
+  "paidCalls": 0,
+  "productionDeployed": false
+}

@@ -1,0 +1,1872 @@
+[
+  {
+    "path": "huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h",
+    "size": 7,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet/https___cas_serv-tGqkUaZf_CBPHQ6h/staging",
+    "size": 0,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2",
+    "size": 453,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2",
+    "size": 14,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915",
+    "size": 144,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs",
+    "size": 408,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/trees",
+    "size": 45,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/f3",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/c2",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/55",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/snapshots/84e5a410d9cead4de2f847e7c9369a6440bdfaca",
+    "size": 22,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--SWivid--F5-TTS",
+    "size": 159,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz",
+    "size": 14,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/snapshots/0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21",
+    "size": 51,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/blobs",
+    "size": 184,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS",
+    "size": 14,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/snapshots/84e5a410d9cead4de2f847e7c9369a6440bdfaca/F5TTS_v1_Base",
+    "size": 34,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/blobs",
+    "size": 144,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--charactr--vocos-mel-24khz",
+    "size": 204,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox",
+    "size": 366,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs",
+    "size": 336,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs",
+    "size": 33,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/blobs/dc",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/speech_tokenizer",
+    "size": 70,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox",
+    "size": 19,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18",
+    "size": 146,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox",
+    "size": 18,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18",
+    "size": 16,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/refs",
+    "size": 4,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/blobs",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/.locks",
+    "size": 30,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/.locks/models--ResembleAI--chatterbox",
+    "size": 45,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base",
+    "size": 633,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base",
+    "size": 14,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3",
+    "size": 154,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs",
+    "size": 568,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/speech_tokenizer",
+    "size": 70,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice",
+    "size": 633,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice",
+    "size": 14,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe",
+    "size": 154,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs",
+    "size": 568,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/trees",
+    "size": 45,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/.locks",
+    "size": 53,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo",
+    "size": 249,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf",
+    "size": 73,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs",
+    "size": 224,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/blobs",
+    "size": 27,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/blobs/b5",
+    "size": 202,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/refs",
+    "size": 4,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/.no_exist",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/.no_exist/7dd38ad4e9bad454aae9cd937d0cd577604fe229",
+    "size": 21,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-Tokenizer-12Hz",
+    "size": 159,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz",
+    "size": 27,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/snapshots/7dd38ad4e9bad454aae9cd937d0cd577604fe229",
+    "size": 52,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/blobs",
+    "size": 144,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/refs",
+    "size": 4,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--kresnik--wav2vec2-large-xlsr-korean",
+    "size": 249,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots/629c9a3501c10ba128bf3fa1eebb12af3be03f61",
+    "size": 83,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/blobs",
+    "size": 224,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean",
+    "size": 27,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61",
+    "size": 139,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554",
+    "size": 212,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs",
+    "size": 496,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507",
+    "size": 546,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507",
+    "size": 23,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554",
+    "size": 91,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554/custom_generate",
+    "size": 11,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr",
+    "size": 76,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo",
+    "size": 23,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/refs",
+    "size": 4,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet",
+    "size": 37,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/xet/logs",
+    "size": 298,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots",
+    "size": 40,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks",
+    "size": 331,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--coqui--XTTS-v2",
+    "size": 273,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots/6c2b0d75eae4b7047358e3b6bd9325f857d43f77",
+    "size": 58,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface",
+    "size": 27,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub",
+    "size": 381,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2",
+    "size": 14,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/blobs",
+    "size": 248,
+    "type": "FileEntryType.DIRECTORY"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/blobs/c7ea20001c6a0a841c77e252d8409f6a74fb423e79b3206a0771ba5989776187",
+    "size": 1867929383,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261023T071632425+0000_2.log",
+    "size": 128736,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots/6c2b0d75eae4b7047358e3b6bd9325f857d43f77/model.pth",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--coqui--XTTS-v2/c7ea20001c6a0a841c77e252d8409f6a74fb423e79b3206a0771ba5989776187.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots/6c2b0d75eae4b7047358e3b6bd9325f857d43f77/vocab.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots/6c2b0d75eae4b7047358e3b6bd9325f857d43f77/speakers_xtts.pth",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots/6c2b0d75eae4b7047358e3b6bd9325f857d43f77/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/snapshots/6c2b0d75eae4b7047358e3b6bd9325f857d43f77/LICENSE.txt",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/blobs/f0f6137c19a4eab0cbbe4c99b5babacf68b1746e50da90807708c10e645b943b",
+    "size": 7754818,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/blobs/e41830fcc6069d335d201e63eb30f487aada1093",
+    "size": 4014,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/blobs/77b4748525aad284e548729ef7af162b929b0fff",
+    "size": 361219,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--coqui--XTTS-v2/blobs/3224e97bddc5facc012f8c7668b47c8f2dc30065",
+    "size": 4368,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--coqui--XTTS-v2/f0f6137c19a4eab0cbbe4c99b5babacf68b1746e50da90807708c10e645b943b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--coqui--XTTS-v2/e41830fcc6069d335d201e63eb30f487aada1093.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--coqui--XTTS-v2/77b4748525aad284e548729ef7af162b929b0fff.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--coqui--XTTS-v2/3224e97bddc5facc012f8c7668b47c8f2dc30065.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/refs/main",
+    "size": 40,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554/custom_generate/generate.py",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261023T054309891+0000_2.log",
+    "size": 236822,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/vocab.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/tokenizer_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/tokenizer.json",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/model-00002-of-00003.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/merges.txt",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/generation_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "size": 11422654,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/51c1be0d9192e7f6e6596de71d0f07d58fbc32ac",
+    "size": 9377,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/4783fe10ac3adce15ac8f358ef5462739852c569",
+    "size": 2776833,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/432531a002c181a19de338313d2375e9d7494d7e",
+    "size": 238,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+    "size": 1671839,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/0b48adbb1f60e901153d91907ba11ce63bd4b8b584482e730f48808d055dfba1",
+    "size": 3987450520,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554/special_tokens_map.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554/chat_template.jinja",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554/added_tokens.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/51c1be0d9192e7f6e6596de71d0f07d58fbc32ac.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/4783fe10ac3adce15ac8f358ef5462739852c569.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/432531a002c181a19de338313d2375e9d7494d7e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/0b48adbb1f60e901153d91907ba11ce63bd4b8b584482e730f48808d055dfba1.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/model-00001-of-00003.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/75311d91bb08cf0b882913da464a1e722a31fb44db35208663487efb7a3d8ed6",
+    "size": 3957900840,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/75311d91bb08cf0b882913da464a1e722a31fb44db35208663487efb7a3d8ed6.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/model.safetensors.index.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/model-00003-of-00003.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/snapshots/cdbee75f17c01a7cc42f958dc650907174af0554/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/7dd39ccca5e4de123c74c14af44c9bf2eb75df33b4614382af0134528e060d5d",
+    "size": 99630640,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/6988f134db143052042f2bd6e0c897bc6a605189",
+    "size": 727,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/blobs/4747b0297d3109f14db49886972e3369c9a00b2a",
+    "size": 32819,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-4B-Instruct-2507/.no_exist/cdbee75f17c01a7cc42f958dc650907174af0554/model.safetensors",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/7dd39ccca5e4de123c74c14af44c9bf2eb75df33b4614382af0134528e060d5d.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/6988f134db143052042f2bd6e0c897bc6a605189.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-4B-Instruct-2507/4747b0297d3109f14db49886972e3369c9a00b2a.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/processor_config.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/chat_template.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/chat_template.jinja",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/audio_tokenizer_config.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261023T045317294+0000_2.log",
+    "size": 71791,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots/629c9a3501c10ba128bf3fa1eebb12af3be03f61/model.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/blobs/29be111b9247cfc2c72f125c1b1f50021ecfded8f0d947bbfb7e31dc7f0ddd07",
+    "size": 1266747952,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--kresnik--wav2vec2-large-xlsr-korean/29be111b9247cfc2c72f125c1b1f50021ecfded8f0d947bbfb7e31dc7f0ddd07.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots/629c9a3501c10ba128bf3fa1eebb12af3be03f61/vocab.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots/629c9a3501c10ba128bf3fa1eebb12af3be03f61/tokenizer_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots/629c9a3501c10ba128bf3fa1eebb12af3be03f61/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/snapshots/629c9a3501c10ba128bf3fa1eebb12af3be03f61/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/refs/main",
+    "size": 40,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/blobs/f4d2a33e4cfff1c92bca9bbc4f0c5a4df1b459c8",
+    "size": 18163,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/blobs/ec5c17ae213d6892cdfe6b97422f86b517efa3a6",
+    "size": 161,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/blobs/e3f64a39d0d0c11e6bf6e98fa20a30392e7af823",
+    "size": 2313,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/blobs/73caa151574001d3d495fae897e1d38968249712",
+    "size": 214,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/tokenizer.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/special_tokens_map.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--kresnik--wav2vec2-large-xlsr-korean/.no_exist/629c9a3501c10ba128bf3fa1eebb12af3be03f61/added_tokens.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--kresnik--wav2vec2-large-xlsr-korean/f4d2a33e4cfff1c92bca9bbc4f0c5a4df1b459c8.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--kresnik--wav2vec2-large-xlsr-korean/ec5c17ae213d6892cdfe6b97422f86b517efa3a6.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--kresnik--wav2vec2-large-xlsr-korean/e3f64a39d0d0c11e6bf6e98fa20a30392e7af823.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--kresnik--wav2vec2-large-xlsr-korean/73caa151574001d3d495fae897e1d38968249712.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261022T160541355+0000_14.log",
+    "size": 53611,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/snapshots/7dd38ad4e9bad454aae9cd937d0cd577604fe229/model.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/blobs/836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258",
+    "size": 682293092,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/snapshots/7dd38ad4e9bad454aae9cd937d0cd577604fe229/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/snapshots/7dd38ad4e9bad454aae9cd937d0cd577604fe229/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/refs/main",
+    "size": 40,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/blobs/ba40914f4f49ab98a8ca545d4892ef7291a39592",
+    "size": 234,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/blobs/06cc8dc4c5ec8a1929086b71b98c313020d9268b",
+    "size": 2336,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/.no_exist/7dd38ad4e9bad454aae9cd937d0cd577604fe229/processor_config.json",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/ba40914f4f49ab98a8ca545d4892ef7291a39592.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-Tokenizer-12Hz/06cc8dc4c5ec8a1929086b71b98c313020d9268b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261022T134832998+0000_2.log",
+    "size": 393108,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/model.bin",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/blobs/b5/b5de55e781fd93b7d472c8ca3f7d40d870a3be764f8bb1a9c4a0511c55f9ca5b.refs",
+    "size": 125,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/blobs/b5/b5de55e781fd93b7d472c8ca3f7d40d870a3be764f8bb1a9c4a0511c55f9ca5b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/blobs/b5/b5de55e781fd93b7d472c8ca3f7d40d870a3be764f8bb1a9c4a0511c55f9ca5b",
+    "size": 1617884929,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/blobs/.huggingface-shared-blobs",
+    "size": 2,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/e76620f83d5f5b69efd3d87e3dc180c1bd21df9fbebacfd4335e5e1efcc018da.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/trees/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf.json",
+    "size": 950,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/vocabulary.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/tokenizer.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/snapshots/0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/931c77a740890c46365c7ae0c9d350ba3cca908f",
+    "size": 340,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/17456db595adc78a973f97d69d8cb50bc87c0b1c",
+    "size": 2710337,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/0adcd01e7c237205d593b707e66dd5d7bc785d2d",
+    "size": 1068114,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/blobs/0351d1d6870005e865747b781b5d7c23ea0459cd",
+    "size": 2263,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/CACHEDIR.TAG",
+    "size": 191,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/931c77a740890c46365c7ae0c9d350ba3cca908f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/17456db595adc78a973f97d69d8cb50bc87c0b1c.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/0adcd01e7c237205d593b707e66dd5d7bc785d2d.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "asr/.locks/models--mobiuslabsgmbh--faster-whisper-large-v3-turbo/0351d1d6870005e865747b781b5d7c23ea0459cd.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261022T134412591+0000_2.log",
+    "size": 280456,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/model.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/38b1d5971bdbd982b561cccec982669a53b0537c3cf5e9bd4778ed07bb2f5137",
+    "size": 3833402552,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/38b1d5971bdbd982b561cccec982669a53b0537c3cf5e9bd4778ed07bb2f5137.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/speech_tokenizer/model.safetensors",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258",
+    "size": 682293092,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/vocab.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/tokenizer_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/speech_tokenizer/preprocessor_config.json",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/speech_tokenizer/configuration.json",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/speech_tokenizer/config.json",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/merges.txt",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/generation_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/README.md",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/snapshots/0c0e3051f131929182e2c023b9537f8b1c68adfe/.gitattributes",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/ba40914f4f49ab98a8ca545d4892ef7291a39592",
+    "size": 234,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/ab58e2eaf53cd14a1a2a7527d9261ceea93a24cd",
+    "size": 76,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/a6344aac8c09253b3b630fb776ae94478aa0275b",
+    "size": 1519,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/95d74b20b7485f5dfa09d05988d6c606ec226811",
+    "size": 4908,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/7fbce7d50243a423bf0af98fe5b1b11453dbf38e",
+    "size": 57846,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/6ff9fd60cc623bb54bbd603cbd418c97a11528d7",
+    "size": 7344,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/4783fe10ac3adce15ac8f358ef5462739852c569",
+    "size": 2776833,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+    "size": 1671839,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/1872b16d4535564abf2db5d6debe6cddd82b7f2e",
+    "size": 245,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/06cc8dc4c5ec8a1929086b71b98c313020d9268b",
+    "size": 2336,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/blobs/0525dd953bb9241912f7147666f0d535165d5d4f",
+    "size": 127,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/ba40914f4f49ab98a8ca545d4892ef7291a39592.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/ab58e2eaf53cd14a1a2a7527d9261ceea93a24cd.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/a6344aac8c09253b3b630fb776ae94478aa0275b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/95d74b20b7485f5dfa09d05988d6c606ec226811.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/7fbce7d50243a423bf0af98fe5b1b11453dbf38e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/6ff9fd60cc623bb54bbd603cbd418c97a11528d7.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/4783fe10ac3adce15ac8f358ef5462739852c569.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/1872b16d4535564abf2db5d6debe6cddd82b7f2e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/06cc8dc4c5ec8a1929086b71b98c313020d9268b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-CustomVoice/0525dd953bb9241912f7147666f0d535165d5d4f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/model.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/38fc7fc51c5e776e840414b6fd443962e9411b9654888fd7913e4da643cb857c",
+    "size": 3857413744,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/38fc7fc51c5e776e840414b6fd443962e9411b9654888fd7913e4da643cb857c.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/Cangjie5_TC.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/refs/main",
+    "size": 40,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/models--ResembleAI--chatterbox/blobs/d77891f84ca1db0d6f7058a4ee081d4bb0bfe88e",
+    "size": 1920163,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/CACHEDIR.TAG",
+    "size": 191,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/.locks/models--ResembleAI--chatterbox/d77891f84ca1db0d6f7058a4ee081d4bb0bfe88e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/speech_tokenizer/model.safetensors",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258",
+    "size": 682293092,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/836b7b357f5ea43e889936a3709af68dfe3751881acefe4ecf0dbd30ba571258.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261022T134409066+0000_2.log",
+    "size": 159544,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/t3_mtl23ls_v3.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs/5abca8321ede76f8e61f1cc0d19aea6c946b28871017ce8726f8a69203f05953",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/dc/dcf1bc111ebd06124f5162a7ad8ed07d19756a8aff4f5c8df6a7f13e1c293fa9.refs",
+    "size": 102,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/dc/dcf1bc111ebd06124f5162a7ad8ed07d19756a8aff4f5c8df6a7f13e1c293fa9.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/dc/dcf1bc111ebd06124f5162a7ad8ed07d19756a8aff4f5c8df6a7f13e1c293fa9",
+    "size": 2143989928,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox/5abca8321ede76f8e61f1cc0d19aea6c946b28871017ce8726f8a69203f05953.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261022T134412221+0000_2.log",
+    "size": 87438,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/snapshots/0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21/pytorch_model.bin",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/snapshots/0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21/config.yaml",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/snapshots/0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21/README.md",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/snapshots/0feb3fdd929bcd6649e0e7c5a688cf7dd012ef21/.gitattributes",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/blobs/c7d9f3332a950355d5a77d85000f05e6f45435ea",
+    "size": 1477,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/blobs/97ec976ad1fd67a33ab2682d29c0ac7df85234fae875aefcc5fb215681a91b2a",
+    "size": 54365991,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/blobs/538262138a8b43863802f279909f26ec31c766b3",
+    "size": 461,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--charactr--vocos-mel-24khz/blobs/226bd9452b8561a28a5633a4e1576e883984cc5f",
+    "size": 1830,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/snapshots/84e5a410d9cead4de2f847e7c9369a6440bdfaca/F5TTS_v1_Base/model_1250000.safetensors",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/blobs/670900fd14e6c458b95da6e9ed317cdb20dbaf7a1c02ac06a05475a9d32b6a38",
+    "size": 1348435761,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--charactr--vocos-mel-24khz/c7d9f3332a950355d5a77d85000f05e6f45435ea.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--charactr--vocos-mel-24khz/97ec976ad1fd67a33ab2682d29c0ac7df85234fae875aefcc5fb215681a91b2a.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--charactr--vocos-mel-24khz/538262138a8b43863802f279909f26ec31c766b3.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--charactr--vocos-mel-24khz/226bd9452b8561a28a5633a4e1576e883984cc5f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--SWivid--F5-TTS/670900fd14e6c458b95da6e9ed317cdb20dbaf7a1c02ac06a05475a9d32b6a38.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/s3gen.pt",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs/9b9ff07e60b20c136e2b1b3d7563a24604e8d2c4c267888d1ee929dd0151d2a3",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/55/551a4733e47ff4f1456bc1b705923c7472aa0680e2b393c8860f1abb778375e0.refs",
+    "size": 102,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/55/551a4733e47ff4f1456bc1b705923c7472aa0680e2b393c8860f1abb778375e0.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/55/551a4733e47ff4f1456bc1b705923c7472aa0680e2b393c8860f1abb778375e0",
+    "size": 1057165844,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox/9b9ff07e60b20c136e2b1b3d7563a24604e8d2c4c267888d1ee929dd0151d2a3.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/vocab.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/tokenizer_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/speech_tokenizer/preprocessor_config.json",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/speech_tokenizer/configuration.json",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/speech_tokenizer/config.json",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/preprocessor_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/merges.txt",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/generation_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/README.md",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/snapshots/fd4b254389122332181a7c3db7f27e918eec64e3/.gitattributes",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/ec53071d0e37736a91918b25b201080ba7776be4",
+    "size": 57817,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/ba40914f4f49ab98a8ca545d4892ef7291a39592",
+    "size": 234,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/ab58e2eaf53cd14a1a2a7527d9261ceea93a24cd",
+    "size": 76,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/a6344aac8c09253b3b630fb776ae94478aa0275b",
+    "size": 1519,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/81b57e8e790c07e8fa7f82d8bdfd7574d485c396",
+    "size": 4494,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/6ff9fd60cc623bb54bbd603cbd418c97a11528d7",
+    "size": 7344,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/4783fe10ac3adce15ac8f358ef5462739852c569",
+    "size": 2776833,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0",
+    "size": 1671839,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/1872b16d4535564abf2db5d6debe6cddd82b7f2e",
+    "size": 245,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/06cc8dc4c5ec8a1929086b71b98c313020d9268b",
+    "size": 2336,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/blobs/0525dd953bb9241912f7147666f0d535165d5d4f",
+    "size": 127,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/ec53071d0e37736a91918b25b201080ba7776be4.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/ba40914f4f49ab98a8ca545d4892ef7291a39592.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/ab58e2eaf53cd14a1a2a7527d9261ceea93a24cd.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/a6344aac8c09253b3b630fb776ae94478aa0275b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/81b57e8e790c07e8fa7f82d8bdfd7574d485c396.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/6ff9fd60cc623bb54bbd603cbd418c97a11528d7.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/4783fe10ac3adce15ac8f358ef5462739852c569.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/20024bfe7c83998e9aeaf98a0cd6a2ce6306c2f0.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/1872b16d4535564abf2db5d6debe6cddd82b7f2e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/06cc8dc4c5ec8a1929086b71b98c313020d9268b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--Qwen--Qwen3-TTS-12Hz-1.7B-Base/0525dd953bb9241912f7147666f0d535165d5d4f.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/snapshots/84e5a410d9cead4de2f847e7c9369a6440bdfaca/README.md",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/snapshots/84e5a410d9cead4de2f847e7c9369a6440bdfaca/F5TTS_v1_Base/vocab.txt",
+    "size": 55,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/blobs/cd934390e8f4b3ce98eb319ae618c084d01504b5",
+    "size": 13800,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--SWivid--F5-TTS/blobs/ab52c656ddb4f42f47a60f7ee4d747237a4803fe",
+    "size": 630,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--SWivid--F5-TTS/cd934390e8f4b3ce98eb319ae618c084d01504b5.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--SWivid--F5-TTS/ab52c656ddb4f42f47a60f7ee4d747237a4803fe.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/version_diffusers_cache.txt",
+    "size": 1,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/trees/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18.json",
+    "size": 4292,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/ve.pt",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/grapheme_mtl_merged_expanded_v1.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/conds.pt",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/snapshots/5bb1f6ee58e50c3b8d408bc82a6d3740c2db6e18/Cangjie5_TC.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs/d77891f84ca1db0d6f7058a4ee081d4bb0bfe88e",
+    "size": 1920163,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs/d27fb3f2fd38ca39b7bbfbf83a13b3c617e551df",
+    "size": 69989,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs/6552d70568833628ba019c6b03459e77fe71ca197d5c560cef9411bee9d87f4e",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--ResembleAI--chatterbox/blobs/4b16d836bc598509860f6fa068165a8bb5e9ac84f05582dfcf278a5a372879f1",
+    "size": 79,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/blobs/f3/f3671d13fefc57b8361ae771bdf603d992c239855916d511f7799245810df3cc.refs",
+    "size": 102,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/f3/f3671d13fefc57b8361ae771bdf603d992c239855916d511f7799245810df3cc.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/f3/f3671d13fefc57b8361ae771bdf603d992c239855916d511f7799245810df3cc",
+    "size": 107374,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/c2/c2191264313a0c9411d8a001dac2f58b7fae8d22f11420fef84e6c44fddbad67.refs",
+    "size": 102,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/c2/c2191264313a0c9411d8a001dac2f58b7fae8d22f11420fef84e6c44fddbad67.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/c2/c2191264313a0c9411d8a001dac2f58b7fae8d22f11420fef84e6c44fddbad67",
+    "size": 5698626,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/blobs/.huggingface-shared-blobs",
+    "size": 2,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/CACHEDIR.TAG",
+    "size": 191,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox/d77891f84ca1db0d6f7058a4ee081d4bb0bfe88e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox/d27fb3f2fd38ca39b7bbfbf83a13b3c617e551df.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox/6552d70568833628ba019c6b03459e77fe71ca197d5c560cef9411bee9d87f4e.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--ResembleAI--chatterbox/4b16d836bc598509860f6fa068165a8bb5e9ac84f05582dfcf278a5a372879f1.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/.agent_harnesses.json",
+    "size": 5778,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/xet/logs/xet_20261022T132512558+0000_2.log",
+    "size": 192978,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/model.safetensors",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/f7f964cfa9da23653baec6e6f7750719977ad944ed9f95fe52fe3a620506891d",
+    "size": 4580080592,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/f7f964cfa9da23653baec6e6f7750719977ad944ed9f95fe52fe3a620506891d.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/audiovae.pth",
+    "size": 76,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/94b5d51e107e0507d4acc976cfdadb64edd6fd06d1f751dadbf2fd1594274bf1",
+    "size": 376951122,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/94b5d51e107e0507d4acc976cfdadb64edd6fd06d1f751dadbf2fd1594274bf1.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/tokenizer_config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/tokenizer.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/tokenization_voxcpm2.py",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/special_tokens_map.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/config.json",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/README.md",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/snapshots/32279effe8c19989596f05d353d1447f51d9e915/.gitattributes",
+    "size": 52,
+    "type": "FileEntryType.SYMLINK"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/fecf4cdae73b57053cac2ad34c67febbe4e4f08b",
+    "size": 5059,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/e7d768677298d058fa6ef8b160e3ca4430997fad",
+    "size": 2895,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/a6344aac8c09253b3b630fb776ae94478aa0275b",
+    "size": 1519,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/8619dda6f3eb6d60d0a1bb274820054e46f41699",
+    "size": 1632,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/792f1c223ed607f9e508c0a0deb15dd9532483be",
+    "size": 4336,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/41a5c2a8dba4058dd1ad73fb898abf5e4f64f0f9",
+    "size": 3676772,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/models--openbmb--VoxCPM2/blobs/14573f986536306e3d9d65f988a3fc4b863b895c",
+    "size": 7939,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/fecf4cdae73b57053cac2ad34c67febbe4e4f08b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/e7d768677298d058fa6ef8b160e3ca4430997fad.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/a6344aac8c09253b3b630fb776ae94478aa0275b.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/8619dda6f3eb6d60d0a1bb274820054e46f41699.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/792f1c223ed607f9e508c0a0deb15dd9532483be.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/41a5c2a8dba4058dd1ad73fb898abf5e4f64f0f9.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  },
+  {
+    "path": "huggingface/hub/.locks/models--openbmb--VoxCPM2/14573f986536306e3d9d65f988a3fc4b863b895c.lock",
+    "size": 0,
+    "type": "FileEntryType.FILE"
+  }
+]

@@ -1,0 +1,64 @@
+{
+  "status": "DESIGN_AND_OFFLINE_CONTRACT_ONLY",
+  "production_code_changed": false,
+  "gpu_serving_started": false,
+  "training_request": "maleA10 -> persist + preview -> maleB10 -> test both -> one shared model",
+  "current_app": {
+    "frontend": "apps/web/app/(main)/chat/[sessionId]/immersive.tsx",
+    "server_route": "apps/web/app/api/tts/route.ts",
+    "provider": "packages/providers/src/tts.ts",
+    "speech_text_and_style": "apps/web/lib/voice-text.ts",
+    "client_request": "POST /api/tts {sessionId,messageId}",
+    "provider_request": "POST MIRO_TTS_URL/speak {text,voice,language,style}",
+    "provider_key": "MIRO_TTS_API_KEY",
+    "voice_lookup": "characters.voiceId -> active officialVoices.providerVoiceId",
+    "timeout_ms": 30000,
+    "timeout_fallback": "204 then browser SpeechSynthesis",
+    "existing_delivery_fields": [
+      "normal",
+      "whisper"
+    ],
+    "persistent_output_cache_present_in_TTS_route": false,
+    "TTS_budget_guard_present_in_route": false
+  },
+  "proposed_serving": {
+    "model_copies_per_worker": 1,
+    "voices_per_model": 2,
+    "inference_profile_validated_for_previous007_preview": "2H100 BF16; male serving not yet benchmarked",
+    "serve_artifact": "native BF16 TTS tensors + frozen codec + tokenizer/config; optimizer and Korean HuBERT absent",
+    "checkpoint_and_reference_mapping": "One model version; two explicit registered reference IDs; same request speaker0 can represent either registered identity",
+    "compatibility": "Miro /speak JSON -> server-side allowlisted reference mapping -> Fish /v1/tts JSON/MsgPack -> WAV",
+    "compatibility_pure_function": "tooling/voice/drama3_fullft/miro_contract.py",
+    "native_loader_fix": "Apply native_checkpoint_routing during fullFT native model initialization and keep FP8 experts disabled, as verified for prior preview. Existing serve.sh alone not yet validated.",
+    "initial_worker_concurrency": 1,
+    "autoscale_min_containers": 0,
+    "autoscale_max_containers": 1,
+    "one_model_load_for_both_voices": true,
+    "model_load_seconds_measured": 97.246461092,
+    "warm_short_speech_generation_seconds_measured": [
+      5.727534096999989,
+      7.958266448000003
+    ],
+    "latency_measurements_from_old007_not_new_male": true
+  },
+  "required_app_changes_before_production": [
+    "Async submit/status/result path: cache200 or queued202; browser handles202 without switching voice",
+    "Durable job state and owner/session checks on every poll/result; no long GPU wait in web handler",
+    "Private idempotent output cache keyed by user/session,message content,model version,voice/reference version,style and synthesis settings",
+    "Per-user and total speech spend/concurrency limits; no paid automatic retries after ambiguous timeout",
+    "Replace implicit browser voice fallback for pending/error with preparation/retry state",
+    "Additional context-to-delivery input schema if emotion,speed,intensity are required; current binary whisper/normal is insufficient"
+  ],
+  "async_contract_proposal": {
+    "POST_api_tts": "200 cached audio OR202 {jobId,state:queued|running}; authorize stored dialogue first",
+    "GET_api_tts_jobs_id": "Owner-checked queued/running/complete/failed metadata, no model secrets",
+    "GET_api_tts_jobs_id_audio": "Owner-checked private audio when complete; proposed paths not implemented"
+  },
+  "rollback": "Accept shared final checkpoint only if both males retain identity and delivery. Keep first-male10 checkpoint and source23; do not silently retrain or spend to fix regression.",
+  "cost_tradeoff": "Zero idle GPU charge comes with cold start; async UI prevents timeout but does not eliminate97s wait. Keeping2H100 warm continuously adds substantial billed idle time.",
+  "sources": [
+    "https://raw.githubusercontent.com/fishaudio/fish-speech/541566932abbaebcb0a40e562a1f846738383f38/tools/server/model_manager.py",
+    "https://raw.githubusercontent.com/fishaudio/fish-speech/541566932abbaebcb0a40e562a1f846738383f38/fish_speech/utils/schema.py",
+    "https://modal.com/docs/guide/cold-start"
+  ]
+}

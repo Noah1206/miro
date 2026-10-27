@@ -1,0 +1,33 @@
+{
+  "recorded_at_utc": "2026-10-23T16:45:23.478059+00:00",
+  "app_id": "ap-HJ47byrXlzowojxDD65Gwl",
+  "status": "failed_checkpoint_commit",
+  "gpu_containers_running": 0,
+  "goal_steps_unchanged": 25,
+  "observed_optimizer_steps": 5,
+  "durable_full_resume_step": null,
+  "durable_native_weights_step": 1,
+  "missing_step5_files": 23,
+  "available_step5_files": 9,
+  "additional_budget_hard_limit_usd": 44,
+  "additional_operating_limit_usd": 36,
+  "billed_cycle_snapshot_usd": 55.93,
+  "previously_paid_usd": 30,
+  "additional_cash_snapshot_usd": 25.93,
+  "billing_is_postpaid_and_can_lag": true,
+  "automatic_paid_retry": false,
+  "prepared_fixes": {
+    "ephemeral_disk_mib": 2097152,
+    "root_disk_preflight_required_free_bytes": 999030385664,
+    "refuse_native_warmstart_when_partial_checkpoint_present": true,
+    "worker_commit_wait_timeout_seconds": 3600
+  },
+  "fixes_executed_in_cloud": false,
+  "tests": "Four training-state tests passed; modified Python sources compile; actual 35.9B checkpoint reload unverified",
+  "failure_source": "Modal VolumeCommit InternalError: not enough local disk space to stage volume data for commit",
+  "references": [
+    "https://modal.com/docs/guide/resources",
+    "https://modal.com/docs/guide/volumes"
+  ],
+  "next_run_must_not_claim_step5_resume_or_silently_start_from_step1": true
+}

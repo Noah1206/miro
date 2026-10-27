@@ -1,0 +1,10 @@
+{
+  "header": {
+    "fontSize": "10px",
+    "label": "MIRO"
+  },
+  "dmNameMatchesProfile": true,
+  "dmAvatarMatchesProfile": true,
+  "sceneNameMatchesProfile": true,
+  "sceneAvatarMatchesProfile": true
+}

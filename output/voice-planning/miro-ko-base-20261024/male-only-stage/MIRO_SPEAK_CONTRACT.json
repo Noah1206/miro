@@ -1,0 +1,49 @@
+{
+  "status": "OFFLINE_CONTRACT_ONLY",
+  "app_contract": "POST /speak {text, voice, language, style} -> audio/wav",
+  "native_contract": "POST /v1/tts JSON or MsgPack -> audio/wav",
+  "registry_examples_not_registered": {
+    "miro-male-a": "miro_male_a_normal_v1",
+    "miro-male-b": "miro_male_b_normal_v1"
+  },
+  "example_native_requests": [
+    {
+      "text": "괜찮아. 나 여기 있어.",
+      "reference_id": "miro_male_a_normal_v1",
+      "format": "wav",
+      "streaming": false,
+      "single_chunk": false,
+      "use_memory_cache": "on",
+      "max_new_tokens": 0,
+      "temperature": 0.7,
+      "top_p": 0.7
+    },
+    {
+      "text": "[whispering] 괜찮아. 나 여기 있어.",
+      "reference_id": "miro_male_b_normal_v1",
+      "format": "wav",
+      "streaming": false,
+      "single_chunk": false,
+      "use_memory_cache": "on",
+      "max_new_tokens": 0,
+      "temperature": 0.7,
+      "top_p": 0.7
+    }
+  ],
+  "checks_passed": [
+    "explicit voice->reference mapping",
+    "whisper request tag",
+    "unknown voice rejected",
+    "control tokens rejected",
+    "unsupported language rejected",
+    "missing voice needs explicit configured default"
+  ],
+  "gpu_model_loaded": false,
+  "server_started": false,
+  "production_modified": false,
+  "limits": [
+    "Style request does not prove whisper quality",
+    "Adapter translation alone does not implement queue/cache or fix30s timeout",
+    "Native trained-weight routing must remain active during official model initialization; existing standalone serve.sh has not been validated for this checkpoint"
+  ]
+}

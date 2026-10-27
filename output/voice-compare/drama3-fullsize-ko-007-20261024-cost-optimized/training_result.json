@@ -1,0 +1,16 @@
+{
+  "checkpoint": "/voices/_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023",
+  "steps_completed": 23,
+  "goal_steps": 25,
+  "original_25_update_goal_complete": false,
+  "updates_this_run": 18,
+  "optimizer_rng_and_data_saved": true,
+  "previous_step5_preserved": true,
+  "initial_full_state_resume_witnesses_checked": true,
+  "new_checkpoint_independent_engine_reload_tested": false,
+  "additional_fresh_gpu_verification_jobs": 0,
+  "native_export_generated": false,
+  "seconds": 2341.755454861,
+  "quality_improvement_confirmed": false,
+  "production_approved": false
+}

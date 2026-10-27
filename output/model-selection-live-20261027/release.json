@@ -1,0 +1,27 @@
+{
+  "commit": "79f4b670e857a85dc4161f492b998317de688d7e",
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-1vrpfpuy1-noah1206s-projects.vercel.app",
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  },
+  "paidGeneration": false,
+  "verification": {
+    "focusedTestsPassed": 65,
+    "productionChoices": 14,
+    "models": 7,
+    "geminiSelectable": false,
+    "chatGPTSelectionPersists": true,
+    "dmOpusHeader": true,
+    "longReplyQuotes": true
+  },
+  "temporaryDeploymentIncident": {
+    "wrongParentPath": true,
+    "uploadStopped": true,
+    "temporaryProjectDeleted": true,
+    "existingAppUnchangedDuringIncident": true
+  }
+}

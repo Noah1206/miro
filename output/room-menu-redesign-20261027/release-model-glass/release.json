@@ -1,0 +1,29 @@
+{
+  "commit": "1a07c34d2eca9d457cfc1216b03dc1a1b8500bb2",
+  "push": "9b21d978..1a07c34d",
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-3t0qpo3h2-noah1206s-projects.vercel.app",
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  },
+  "migrations": [],
+  "checks": [
+    "Root and web typechecks passed",
+    "en/ja/zh missing translations: 0",
+    "Production config read-only readiness and pricing probes passed",
+    "Non-Gemini fallback promoted only when no eligible primary remains",
+    "Production actual Sonnet 5.5 options and 134/153 turn ceilings verified",
+    "Scene composer has white brand icon and 18px blur glass surface",
+    "Scene and DM have model selection in composer; prices only in selection options",
+    "Production DM page rendered successfully"
+  ],
+  "incident": "Initial production verification detected an empty model list: non-Gemini Claude was configured as fallback. Previous deployment restored, production-config probe added, compatibility correction deployed and promoted, then production UI reverified before main push.",
+  "limits": [
+    "Automated unit/e2e suite not run",
+    "No paid AI generations, training, payments or DB mutations performed",
+    "Physical iPhone keyboard not tested in this release"
+  ]
+}

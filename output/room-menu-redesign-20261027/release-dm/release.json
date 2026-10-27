@@ -1,0 +1,28 @@
+{
+  "commit": "16cc09d1",
+  "previous_main": "10df1c42",
+  "main_pushed": true,
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-jbrq5f5y6-noah1206s-projects.vercel.app",
+  "root_typecheck": "passed",
+  "web_typecheck": "passed",
+  "translation_missing": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  },
+  "migrations": "none",
+  "automated_tests": "not run per miro-ship instructions",
+  "manual_verification": [
+    "local DM persona panel",
+    "local DM to scene navigation",
+    "local scene menu retained",
+    "production DM drawer and layout"
+  ]
+}

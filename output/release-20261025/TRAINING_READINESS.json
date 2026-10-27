@@ -1,0 +1,50 @@
+{
+  "source_checkpoint_step": 23,
+  "source_checkpoint_audit": {
+    "checkpoint": "step-000023",
+    "step": 23,
+    "expected_files": 32,
+    "all_files_present_and_sizes_match": true,
+    "mismatches": [],
+    "committed_marker_present": true,
+    "paid_compute_started": false,
+    "content_hashes_not_recomputed": true
+  },
+  "plan": "one shared model, first male10 new optimizer updates; save and preview gate; second male10 only after first evaluation",
+  "candidate_males": [
+    "aihub001",
+    "aihub011"
+  ],
+  "original_audio_available": false,
+  "api_access": {
+    "local_download_key_available": true,
+    "paid_compute": false,
+    "download_started": false,
+    "url": "https://api.aihub.or.kr/info/71349.do",
+    "status": 502
+  },
+  "training_started": false,
+  "new_paid_compute_started": false,
+  "budget": {
+    "workspace_net_cap_from_prior_authorization_usd": 100,
+    "current_billed_usd": 98.07,
+    "remaining_within_prior_cap_usd": 1.93,
+    "first_male_previous_estimate_usd": [
+      22,
+      30
+    ],
+    "both_previous_estimate_usd": [
+      40,
+      50
+    ],
+    "these_estimates_are_not_spending_authorization": true,
+    "current_resources_upper_rate_usd_per_hour": 39.50899,
+    "rates_source": "https://modal.com/pricing",
+    "rates_checked_client_date": "2026-10-25"
+  },
+  "blockers": [
+    "Original male WAVs unavailable; labels alone cannot train",
+    "No new numeric paid budget authorized above remaining1.93",
+    "New-stage safe-runner integration and train-only teacher preparation depend on the audited male audio"
+  ]
+}

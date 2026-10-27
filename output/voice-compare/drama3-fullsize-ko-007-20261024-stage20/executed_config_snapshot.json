@@ -1,0 +1,25 @@
+{
+  "started": {
+    "target_steps": 25,
+    "fixed_every_five_saves": false,
+    "save_reserve_seconds": 691.902831851,
+    "verification_reserve_seconds": 300.0,
+    "original_weights_restart_allowed": false
+  },
+  "gradient_accumulation_steps": 2,
+  "lossless_optimizer_checkpoint_serialization": true,
+  "disk_preflight": {
+    "requested_ephemeral_disk_mib": 2097152,
+    "statfs_free_bytes": 9223372036850470912,
+    "statfs_is_placeholder": true,
+    "required_free_bytes": 999030385664,
+    "full_size_cpu_commit_verified": true,
+    "same_gpu_worker_storage_capacity_tested": false
+  },
+  "uploaded_training_sources_match_local": {
+    "resumable_fullsize.py": true,
+    "training_state.py": true
+  },
+  "native_assets_from_preserved_step1": true,
+  "no_original_public_weight_download": true
+}

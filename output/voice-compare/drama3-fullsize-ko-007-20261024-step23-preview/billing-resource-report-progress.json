@@ -1,0 +1,58 @@
+[
+  {
+    "object_id": "ap-8IZjTFwqkjtmBdMME1taI3",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "Memory",
+    "cost": "0.00113759"
+  },
+  {
+    "object_id": "ap-8IZjTFwqkjtmBdMME1taI3",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "CPU",
+    "cost": "0.00010509"
+  },
+  {
+    "object_id": "ap-DEkQpQP7uJnXnBe1eZo1kL",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "Memory",
+    "cost": "0.38473993"
+  },
+  {
+    "object_id": "ap-DEkQpQP7uJnXnBe1eZo1kL",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "CPU",
+    "cost": "0.03554336"
+  },
+  {
+    "object_id": "ap-cUhLGnj2d8LvX3NI6EsSax",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "Memory",
+    "cost": "0.02958217"
+  },
+  {
+    "object_id": "ap-cUhLGnj2d8LvX3NI6EsSax",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "H100",
+    "cost": "0.22822182"
+  },
+  {
+    "object_id": "ap-cUhLGnj2d8LvX3NI6EsSax",
+    "description": "miro-drama3-step23-preview-no-training",
+    "environment": "main",
+    "interval_start": "2026-10-24T08:00:00",
+    "resource": "CPU",
+    "cost": "0.01093154"
+  }
+]

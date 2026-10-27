@@ -1,0 +1,55 @@
+{
+  "actions": [
+    {
+      "height": 44,
+      "text": "메시지 창으로 이동"
+    },
+    {
+      "height": 44,
+      "text": "캐릭터 정보"
+    },
+    {
+      "height": 44,
+      "text": "이전 대화 보기"
+    },
+    {
+      "height": 44,
+      "text": "알림·접근 권한"
+    },
+    {
+      "height": 44,
+      "text": "홈 화면에 추가"
+    }
+  ],
+  "deleteLink": false,
+  "dialog": true,
+  "headings": [
+    "내 설정"
+  ],
+  "horizontalOverflow": false,
+  "settings": [
+    {
+      "alignment": "center",
+      "icon": 18,
+      "text": "페르소나"
+    },
+    {
+      "alignment": "center",
+      "icon": 18,
+      "text": "대화 방식"
+    },
+    {
+      "alignment": "center",
+      "icon": 18,
+      "text": "채팅방 테마"
+    },
+    {
+      "alignment": "center",
+      "icon": 18,
+      "text": "대화 기억"
+    }
+  ],
+  "tokenFont": "16px",
+  "tokenIcon": "/miro-token.svg",
+  "url": "https://miroapp.app/chat/d82c9ec1-4493-41cf-afc7-232a9920ae1f"
+}

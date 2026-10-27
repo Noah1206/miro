@@ -1,0 +1,740 @@
+{
+  "rows": [
+    {
+      "rank": 0,
+      "kind": "master",
+      "tensor_bytes": 4042466464,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 2161711,
+          "compression_seconds": 0.017532638999998795
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3573795,
+          "compression_seconds": 0.007613811000000581
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3498134,
+          "compression_seconds": 0.006993625999999864
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "master",
+      "tensor_bytes": 4072832256,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3615121,
+          "compression_seconds": 0.00687740699999928
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3503160,
+          "compression_seconds": 0.0054047710000002525
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3556942,
+          "compression_seconds": 0.00498946400000122
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "master",
+      "tensor_bytes": 4203822496,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3512871,
+          "compression_seconds": 0.005177702999999312
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3554440,
+          "compression_seconds": 0.005184712000000147
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3469112,
+          "compression_seconds": 0.004971874000000653
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "master",
+      "tensor_bytes": 4207049984,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3541928,
+          "compression_seconds": 0.004787975999999361
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3556409,
+          "compression_seconds": 0.005319769999999835
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3527551,
+          "compression_seconds": 0.006084603000001465
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "master",
+      "tensor_bytes": 1423650304,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 1571861,
+          "compression_seconds": 0.01831146899999858
+        },
+        {
+          "raw": 4194304,
+          "compressed": 2074793,
+          "compression_seconds": 0.015241617000000929
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3733224,
+          "compression_seconds": 0.006268051999999358
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "master",
+      "tensor_bytes": 1048576,
+      "samples": [
+        {
+          "raw": 1048576,
+          "compressed": 960525,
+          "compression_seconds": 0.0024874670000016863
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg",
+      "tensor_bytes": 4042466464,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 264838,
+          "compression_seconds": 0.0020035410000005527
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3908274,
+          "compression_seconds": 0.005433049000000523
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3911816,
+          "compression_seconds": 0.006493608999999623
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4042466464,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 262186,
+          "compression_seconds": 0.0015319349999991516
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3836420,
+          "compression_seconds": 0.007330830999999094
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3834491,
+          "compression_seconds": 0.00631788100000108
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg",
+      "tensor_bytes": 4072832256,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3912328,
+          "compression_seconds": 0.007230922000001527
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3939626,
+          "compression_seconds": 0.00557248800000032
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3903743,
+          "compression_seconds": 0.007047188999999676
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4072832256,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3845923,
+          "compression_seconds": 0.008499510000000043
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3892951,
+          "compression_seconds": 0.00736535099999891
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3827795,
+          "compression_seconds": 0.006968794999998806
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg",
+      "tensor_bytes": 4203822496,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3906044,
+          "compression_seconds": 0.007942060999999612
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3910789,
+          "compression_seconds": 0.007499298999999127
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3908107,
+          "compression_seconds": 0.007014954000000628
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4203822496,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3849508,
+          "compression_seconds": 0.007154236999999952
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3843395,
+          "compression_seconds": 0.007426419999998046
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3843059,
+          "compression_seconds": 0.006213591000001628
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg",
+      "tensor_bytes": 4207049984,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3922864,
+          "compression_seconds": 0.0075665190000009375
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3917032,
+          "compression_seconds": 0.005910494999998406
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3905300,
+          "compression_seconds": 0.008867991999998992
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4207049984,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3869149,
+          "compression_seconds": 0.007114123000000916
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3847822,
+          "compression_seconds": 0.006468069000000298
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3840988,
+          "compression_seconds": 0.005390369000000561
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg",
+      "tensor_bytes": 1423650304,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 151,
+          "compression_seconds": 0.000854452000002226
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3936834,
+          "compression_seconds": 0.005287700000000228
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3894491,
+          "compression_seconds": 0.006824156000000414
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 1423650304,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 151,
+          "compression_seconds": 0.0011936490000010735
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3912491,
+          "compression_seconds": 0.0067430870000002585
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3814492,
+          "compression_seconds": 0.005304900000002277
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg",
+      "tensor_bytes": 1048576,
+      "samples": [
+        {
+          "raw": 1048576,
+          "compressed": 973629,
+          "compression_seconds": 0.001223269000000471
+        }
+      ]
+    },
+    {
+      "rank": 0,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 1048576,
+      "samples": [
+        {
+          "raw": 1048576,
+          "compressed": 956022,
+          "compression_seconds": 0.0024841860000002214
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "master",
+      "tensor_bytes": 4042466464,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 2010610,
+          "compression_seconds": 0.016380292000000907
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3562177,
+          "compression_seconds": 0.007272104999998419
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3542052,
+          "compression_seconds": 0.004795857000001291
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "master",
+      "tensor_bytes": 4072832256,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3606302,
+          "compression_seconds": 0.004744037000001811
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3506877,
+          "compression_seconds": 0.00529087199999978
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3570207,
+          "compression_seconds": 0.005659909999998547
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "master",
+      "tensor_bytes": 4203822496,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3510613,
+          "compression_seconds": 0.007515587000000323
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3543681,
+          "compression_seconds": 0.00566428899999849
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3542404,
+          "compression_seconds": 0.006736779000000581
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "master",
+      "tensor_bytes": 4207049984,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3516783,
+          "compression_seconds": 0.005656249999997698
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3468583,
+          "compression_seconds": 0.006835078000001715
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3424482,
+          "compression_seconds": 0.005718539000000078
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "master",
+      "tensor_bytes": 1423650304,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3427933,
+          "compression_seconds": 0.006759324999997318
+        },
+        {
+          "raw": 4194304,
+          "compressed": 2031835,
+          "compression_seconds": 0.01611976499999912
+        },
+        {
+          "raw": 4194304,
+          "compressed": 2037867,
+          "compression_seconds": 0.01734052399999797
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "master",
+      "tensor_bytes": 1048576,
+      "samples": [
+        {
+          "raw": 1048576,
+          "compressed": 960333,
+          "compression_seconds": 0.00232753899999949
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg",
+      "tensor_bytes": 4042466464,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 151,
+          "compression_seconds": 0.0010750000000001592
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3906540,
+          "compression_seconds": 0.005802998000000059
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3903457,
+          "compression_seconds": 0.00562492900000322
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4042466464,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 151,
+          "compression_seconds": 0.0008332629999969754
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3832648,
+          "compression_seconds": 0.007261553999999393
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3841502,
+          "compression_seconds": 0.006134185000000514
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg",
+      "tensor_bytes": 4072832256,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3914209,
+          "compression_seconds": 0.00785356900000167
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3912828,
+          "compression_seconds": 0.005769698000001711
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3915049,
+          "compression_seconds": 0.007983767999999003
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4072832256,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3849130,
+          "compression_seconds": 0.008695231999997333
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3840329,
+          "compression_seconds": 0.007130955999997468
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3859506,
+          "compression_seconds": 0.006130069999997545
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg",
+      "tensor_bytes": 4203822496,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3908953,
+          "compression_seconds": 0.007146816000002332
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3926086,
+          "compression_seconds": 0.006219293999997433
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3898211,
+          "compression_seconds": 0.007504463000000072
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4203822496,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3828157,
+          "compression_seconds": 0.007788505000000612
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3875800,
+          "compression_seconds": 0.00783376500000088
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3803554,
+          "compression_seconds": 0.005950366000000429
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg",
+      "tensor_bytes": 4207049984,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3911128,
+          "compression_seconds": 0.007049776999998869
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3903492,
+          "compression_seconds": 0.0072944349999986
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3906484,
+          "compression_seconds": 0.008091187000001554
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 4207049984,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3853243,
+          "compression_seconds": 0.006394392000000693
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3829734,
+          "compression_seconds": 0.007432832999999306
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3823821,
+          "compression_seconds": 0.00649489200000275
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg",
+      "tensor_bytes": 1423650304,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3900396,
+          "compression_seconds": 0.008630773000000147
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3898652,
+          "compression_seconds": 0.008750335999998526
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3880365,
+          "compression_seconds": 0.007365923999998358
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 1423650304,
+      "samples": [
+        {
+          "raw": 4194304,
+          "compressed": 3793746,
+          "compression_seconds": 0.0063460130000017045
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3865029,
+          "compression_seconds": 0.007174524999999932
+        },
+        {
+          "raw": 4194304,
+          "compressed": 3839359,
+          "compression_seconds": 0.005670138999999352
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg",
+      "tensor_bytes": 1048576,
+      "samples": [
+        {
+          "raw": 1048576,
+          "compressed": 973701,
+          "compression_seconds": 0.0018543830000012917
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "kind": "exp_avg_sq",
+      "tensor_bytes": 1048576,
+      "samples": [
+        {
+          "raw": 1048576,
+          "compressed": 955903,
+          "compression_seconds": 0.00237424800000241
+        }
+      ]
+    }
+  ],
+  "seconds": 16.986739355,
+  "sample_only_not_full_size_throughput_proof": true,
+  "training_updates": 0,
+  "source_modified": false
+}

@@ -1,0 +1,213 @@
+{
+  "status": "IMPLEMENTED_LOCALLY_NOT_DEPLOYED",
+  "new_paid_model_calls": 0,
+  "training_started": false,
+  "production_deployed": false,
+  "database_migration": false,
+  "tests": {
+    "typescript_regressions": 279,
+    "python_gateway_http": 2,
+    "root_typecheck": "passed",
+    "web_typecheck": "passed",
+    "browser_ui": {
+      "mobile390": true,
+      "mobile320": true,
+      "headerMenuVisibleForTextCharacter": true,
+      "modePersists": true,
+      "chatModeNoSpeechRequests": true,
+      "utterancesRequestedInOrder": [
+        "plan",
+        0,
+        1
+      ],
+      "offCancelsQueue": true,
+      "errorAndManualRetry": true,
+      "consoleErrors": [],
+      "allAudioMocked": true,
+      "paidCalls": 0
+    },
+    "menu_input": [
+      {
+        "engine": "chromium",
+        "modeSelection": true,
+        "modePersistence": true,
+        "themeSelection": true,
+        "personaOpens": true,
+        "escapeRestoresFocus": true,
+        "messengerLink": true,
+        "inputAutocompleteOff": true,
+        "metrics": {
+          "borderBottom": "1px",
+          "borderRadius": "18px",
+          "bottomGap": 6,
+          "topGap": 4,
+          "viewportBottom": 6,
+          "width": 390,
+          "viewportWidth": 390,
+          "fontSize": "16px"
+        },
+        "keyboard": {
+          "bottom": 444,
+          "gap": 6,
+          "padding": "6px"
+        },
+        "mobile320": true,
+        "errors": [],
+        "paidCalls": 0
+      },
+      {
+        "engine": "webkit",
+        "unavailable": true
+      }
+    ],
+    "pwa_unit_tests": 13,
+    "pwa_browser": {
+      "dismissalPersists": true,
+      "iosManualGuide": true,
+      "singleModalAndFocusRestored": true,
+      "manifestAndIcons": true,
+      "keyboardOpen": {
+        "inputBottom": 444,
+        "headerTop": 0,
+        "documentScroll": 0,
+        "height": 450,
+        "font": "16px"
+      },
+      "latestMessageFollowsResize": true,
+      "blurWaitsForKeyboardClose": true,
+      "historyPositionPreserved": true,
+      "multilineAboveKeyboard": true,
+      "rotationBaseline": true,
+      "androidPromptSingleUseAndInstalledEvent": true,
+      "installedModeHidesPromotion": true,
+      "embeddedBrowserGuidance": true,
+      "mobile320": true,
+      "messengerKeyboardAndReadingPosition": true,
+      "actualOsInstallTested": false,
+      "realIphoneKeyboardTested": false,
+      "allBrowserInstallPromptsSimulated": true,
+      "paidCalls": 0
+    },
+    "offline_browser": {
+      "actualServiceWorkerNavigationFallback": true,
+      "networkFailureInducedOnLocalTestServer": true,
+      "retryAfterReconnect": true,
+      "cachedPublicPagesOnly": [
+        {
+          "key": "miro-offline-v1",
+          "paths": [
+            "/offline.html"
+          ]
+        }
+      ],
+      "paidCalls": 0
+    },
+    "drawer_browser": {
+      "results": [
+        {
+          "width": 390,
+          "box": {
+            "x": 54.609375,
+            "y": 0,
+            "width": 335.390625,
+            "height": 844
+          },
+          "rightAligned": true,
+          "fullHeight": true,
+          "focusTrap": true,
+          "closeButton": true,
+          "backdrop": true,
+          "escape": true,
+          "swipeRight": true,
+          "featuresWork": true,
+          "consoleErrors": []
+        },
+        {
+          "width": 320,
+          "box": {
+            "x": 44.8125,
+            "y": 0,
+            "width": 275.1875,
+            "height": 844
+          },
+          "rightAligned": true,
+          "fullHeight": true,
+          "focusTrap": true,
+          "closeButton": true,
+          "backdrop": true,
+          "escape": true,
+          "swipeRight": true,
+          "featuresWork": true,
+          "consoleErrors": []
+        },
+        {
+          "width": 1200,
+          "box": {
+            "x": 500,
+            "y": 0,
+            "width": 340,
+            "height": 844
+          },
+          "rightAligned": true,
+          "fullHeight": true,
+          "focusTrap": true,
+          "closeButton": true,
+          "backdrop": true,
+          "escape": true,
+          "swipeRight": true,
+          "featuresWork": true,
+          "consoleErrors": []
+        },
+        {
+          "reducedMotion": true
+        }
+      ],
+      "paidCalls": 0,
+      "productionDeployed": false
+    }
+  },
+  "implemented": [
+    "per-dialogue delivery prompt/schema and stored JSON preservation",
+    "server-owned per-utterance TTS plan and synthesis request",
+    "emotion/tone/pace/intensity translation to native model tags",
+    "exact inter-utterance pause in playback",
+    "header hamburger menu: chat/voice modes, design library, persona and eligible messenger link",
+    "abort pending fetch, playback and pauses when off",
+    "failure/manual retry without browser voice replacement",
+    "private CPU native-TTS gateway and BF16 native-loader launch wrapper",
+    "chat and messenger composer autocomplete suppression hints",
+    "compact composer gutters and restored bottom border, including keyboard viewport",
+    "shared PWA install guide available from home, room menu and My settings",
+    "iOS/iPad/Android/desktop and embedded-browser installation guidance",
+    "one-use browser installation prompt handling and installed-mode promotion suppression",
+    "keyboard viewport frame scheduling, blur-close latch, orientation baseline reset and status-bar safe area",
+    "local scroll following on keyboard/composer resize with older-history reading position preserved",
+    "public offline navigation fallback without caching private app data",
+    "right-side room drawer with full-height layout, backdrop/Escape/close/header-swipe dismissal and focus restoration"
+  ],
+  "not_executed": [
+    "actual GPU model inference",
+    "male voice training",
+    "voice registration",
+    "production database writes",
+    "deployment"
+  ],
+  "remaining_limits": [
+    "actual trained-model delivery quality not measured",
+    "server persistent job queue and long-term audio cache not added",
+    "standalone GPU API startup not tested on real model",
+    "real iPhone autoplay not tested",
+    "iOS browser-owned AutoFill accessory bar cannot be guaranteed hidden by HTML; physical device not checked"
+  ],
+  "preview_url": "http://127.0.0.1:8810/",
+  "preview_has_fake_audio_only": true,
+  "existing_production_pwa_audit": {
+    "origin": "https://miroapp.app",
+    "read_only": true,
+    "manifest_http": 200,
+    "service_worker_http": 200,
+    "icon_192_http": 200,
+    "icon_512_http": 200,
+    "standalone_already_configured": true
+  }
+}

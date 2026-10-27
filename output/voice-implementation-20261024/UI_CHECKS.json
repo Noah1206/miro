@@ -1,0 +1,17 @@
+{
+  "mobile390": true,
+  "mobile320": true,
+  "headerMenuVisibleForTextCharacter": true,
+  "modePersists": true,
+  "chatModeNoSpeechRequests": true,
+  "utterancesRequestedInOrder": [
+    "plan",
+    0,
+    1
+  ],
+  "offCancelsQueue": true,
+  "errorAndManualRetry": true,
+  "consoleErrors": [],
+  "allAudioMocked": true,
+  "paidCalls": 0
+}

@@ -1,0 +1,73 @@
+{
+  "arm": "korean_teacher",
+  "source_commit": "541566932abbaebcb0a40e562a1f846738383f38",
+  "model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd",
+  "data": {
+    "clips": 600,
+    "speakers": 1,
+    "counts": {
+      "aihub007/train": 531,
+      "aihub007/validation": 59,
+      "aihub007/reference": 4,
+      "aihub007/test": 6
+    },
+    "multi_speaker_data_ready": false,
+    "same_recording_or_text_split_leakage": false,
+    "manifest_sha256": "eafb56eebccd609bd7fea8d867644262a9fc30af41d3d87abebdc463a4deaeb1"
+  },
+  "codec_contract": {
+    "version": 1,
+    "source_revision": "541566932abbaebcb0a40e562a1f846738383f38",
+    "initial_model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd",
+    "codec_file_sha256": "74fc41c5a7151c6f350af8bd7e5d6e3accfcc7f3dfbfac23afd35af07052bb2f",
+    "precision": "bfloat16",
+    "torch_version": "2.8.0+cu128",
+    "sample_rate": 44100,
+    "frame_length": 2048,
+    "codebook_vocabularies": [
+      4096,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024,
+      1024
+    ],
+    "frozen_codec": true,
+    "resampling": "official torchaudio path",
+    "normalization_applied": false,
+    "silence_trimmed": false,
+    "codec_profile_id": "533bcca607c5b4b11d31c4c1b8aa08a3b0de09b5bad2b2421305b8a62c2d70f0"
+  },
+  "method": "full_parameter_finetuning",
+  "lora": false,
+  "trainable_tts_parameters": 35899643008,
+  "all_tts_parameters_trainable": true,
+  "target_language": "ko",
+  "codec_frozen": true,
+  "plan_sha256": "07da64d8a1c0016689c6fa74be64c8dc954d9a81e4420c7bd36adb60db82ec02",
+  "steps_planned": 25,
+  "teacher": {
+    "id": "team-lucid/hubert-large-korean",
+    "revision": "62054d17ebf51437336a371a2cdd80d5da2b44ac",
+    "loss_weight": 0.1,
+    "training_only": true
+  },
+  "same_random_head_constructed_in_both_arms": true,
+  "head_learning_rate": 0.0005,
+  "tts_learning_rate": 1e-06,
+  "optimizer_checkpoint_saved": false,
+  "native_snapshot_interval": 10,
+  "quality_approved": false,
+  "steps_completed": 1,
+  "snapshot_kind": "intermediate_native_weights",
+  "exact_optimizer_resume_available": false,
+  "parameter_bytes": 71799286016,
+  "native_parameter_tensors": 885,
+  "training_only_teacher_head_exported": false,
+  "optimizer_exported": false,
+  "production_approved": false
+}

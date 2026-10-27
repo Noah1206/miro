@@ -1,0 +1,15 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-emVbtMfCHfrMvosWvSZPW8
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_verify_mmap.py
+├── ✓ Uploaded PythonPackage:drama3_fullft, PythonPackage:modal_drama3_compare
+└── ✓ Created Function verify.
+AB_EXACT_RESUME_VERIFIED {"step": 5, "next_micro_batch": 10, "path": "/voices/_drama3/fullsize-ko-007-20261024-stage20-v3/arms/korean_teacher/training_checkpoints/step-000005"}
+AB_VALIDATION korean_teacher 5 4.534240156412125
+AB_PAUSED_AT_CHECKPOINT 5 Independent full-state reload verified; no further updates in this verification process
+MMAP_FULL_STATE_VERIFIED {"step": 5, "next_update": 6, "seconds": 290.235104941}
+Runner terminated.
+✓ App completed. View run at 
+https://modal.com/apps/ab40905045/main/ap-emVbtMfCHfrMvosWvSZPW8

@@ -1,0 +1,92 @@
+{
+  "status": "IMPLEMENTED_AND_VERIFIED_LOCALLY_NOT_DEPLOYED",
+  "paid_model_calls": 0,
+  "paid_training_started": false,
+  "production_database_writes": false,
+  "production_deployment": false,
+  "verification": {
+    "related_tests_passed": 29,
+    "test_files": 5,
+    "root_typecheck": "passed",
+    "web_typecheck": "passed",
+    "fresh_all_migrations": "passed",
+    "actual_app": {
+      "actualNextApp": true,
+      "actualLocalPostgres": true,
+      "signupAndPersona": true,
+      "realChatTurnStored": true,
+      "queued202": true,
+      "jobPolled": true,
+      "audioReturned": true,
+      "actualPlaybackEnded": true,
+      "modeTurnedOff": true,
+      "repeatedGetCached": true,
+      "sessionUrl": "http://localhost:8812/chat/36e1a63f-decf-4e9c-90fc-7b10cb34638f",
+      "requests": [
+        {
+          "method": "POST",
+          "url": "/api/tts",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "url": "/api/tts",
+          "status": 202
+        },
+        {
+          "method": "GET",
+          "url": "/api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd",
+          "status": 202
+        },
+        {
+          "method": "GET",
+          "url": "/api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "url": "/api/tts",
+          "status": 202
+        }
+      ],
+      "pageErrors": [],
+      "allGenerationLocalMocks": true,
+      "audioIsSilentFixture": true,
+      "paidCalls": 0,
+      "productionDeployed": false
+    }
+  },
+  "implemented": [
+    "durable short-utterance queue and separate synthesis worker",
+    "private24h audio cache keyed by ownership, utterance, delivery and model/reference versions",
+    "atomic deduplication and single global dispatch",
+    "conservative per-job cost reservation and user/global rolling24h limits",
+    "independent cost/dispatch ledger surviving audio/chat/account deletion",
+    "unknown provider outcomes quarantine without automatic retry",
+    "queued-only cancellation; running compute never assumed stopped",
+    "source authorization and fingerprint rechecks before/after synthesis and every audio read",
+    "bounded audio response and storage, server-only RLS tables"
+  ],
+  "male_sources": {
+    "original_male_audio_candidates_found": 0,
+    "paths_sample": [],
+    "paid_compute": false,
+    "official_api_status": 502,
+    "official_api_error": "HTTPError",
+    "identity_match": "Exact source filename speaker field001/011; utterance indices do not count as speakers."
+  },
+  "remaining": [
+    "male001/011 originals and actual rights scope/recording quality review",
+    "real model/male voice/acting quality and actual per-utterance costs",
+    "real iPhone/Android installed PWA, keyboard and autoplay",
+    "operator-configured conservative costs, native worker availability and cloud billing limits before activation"
+  ],
+  "limits": [
+    "local silent fixture verifies plumbing and browser playback, not voice quality",
+    "reservation limits are not actual Modal billing or idle GPU limits",
+    "small beta cache64MiB,4MiB per result; not long-term storage",
+    "queue flag remains disabled by default; no production migration or activation"
+  ],
+  "local_demo_workers_stopped": true,
+  "local_generated_next_cache_removed": true
+}

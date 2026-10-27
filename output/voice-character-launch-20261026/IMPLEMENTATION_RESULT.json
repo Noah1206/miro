@@ -1,0 +1,31 @@
+{
+  "status": "implemented_and_locally_verified; production/model gates remain",
+  "steps": {
+    "1_ui": "local_verified",
+    "2_latest_13_model": "blocked_modal_paused; no new audio/cost result",
+    "3_usage_and_billing": "local_verified; production migration and products not enabled",
+    "4_images": "asset flow local_verified; actual normal/unveil generation pending",
+    "5_server_mobile": "local full app verified; actual GPU/cloud cost ceiling/physical phones pending"
+  },
+  "tests": {
+    "focused_typescript": 32,
+    "python": 5,
+    "whole_typecheck": "passed",
+    "diff_check": "passed",
+    "legacy_usage_suite_failures": 12,
+    "legacy_failures_reproduced_with_original_guard": true
+  },
+  "defaults": {
+    "production_speech_credits": false,
+    "production_scene_images": false,
+    "voice_products": []
+  },
+  "new_training": false,
+  "new_paid_calls": false,
+  "new_servers": false,
+  "production_db_migration": false,
+  "production_deploy": false,
+  "model_gate": "Modal workspace paused; actual step13 reload/export/listening and measured cost remain",
+  "content_validation_limit": "WAV validity/energy/duration are checked; runtime ASR dialogue completeness is not yet implemented",
+  "review_doc": "docs/VOICE_CHARACTER_CHAT_RELEASE_PLAN.md"
+}

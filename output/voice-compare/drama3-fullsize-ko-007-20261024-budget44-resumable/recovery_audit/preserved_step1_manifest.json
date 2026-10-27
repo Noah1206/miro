@@ -1,0 +1,8 @@
+{
+  "bytes": 71799286016,
+  "tensors": 885,
+  "shards": 43,
+  "teacher_required_at_inference": false,
+  "export_seconds": 170.35820449600004,
+  "checksums_file": "SHA256SUMS.json"
+}

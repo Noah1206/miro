@@ -1,0 +1,95 @@
+{
+  "run_root": "_drama3/fullsize-ab-007-20261023-v1",
+  "reference_clip_id": "D-NX-A-007-0501",
+  "reference_sha256": "74ce2889f741c557ae621a5889bb00df9f183c129df60f037c387567a2836c81",
+  "reference_text": "다시 이름이 세상에 거론되는 것이 서로에게 무슨 좋은 일이겠습니까.",
+  "settings": {
+    "temperature": 0.7,
+    "top_p": 0.7,
+    "top_k": 30
+  },
+  "requests": [
+    {
+      "id": "comfort",
+      "label": "위로",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[gentle and reassuring, speaking softly and slightly slowly] 괜찮아. [warm and comforting] 나 여기 있어.",
+      "scene": "연인이 자책하는 상대를 안심시키려 한다.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "comfort",
+      "label": "위로",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[gentle and reassuring, speaking softly and slightly slowly] 괜찮아. [warm and comforting] 나 여기 있어.",
+      "scene": "연인이 자책하는 상대를 안심시키려 한다.",
+      "seed": 4321,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "contained_anger",
+      "label": "억눌린 분노",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[restrained anger, quiet and tense, holding back frustration without shouting] 괜찮아. [controlled and firm, emphasizing the final phrase] 나 여기 있어.",
+      "scene": "실망과 분노를 참으며 괜찮은 척하지만, 끝 구절에서 마음을 드러낸다.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "contained_anger",
+      "label": "억눌린 분노",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[restrained anger, quiet and tense, holding back frustration without shouting] 괜찮아. [controlled and firm, emphasizing the final phrase] 나 여기 있어.",
+      "scene": "실망과 분노를 참으며 괜찮은 척하지만, 끝 구절에서 마음을 드러낸다.",
+      "seed": 4321,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "relief",
+      "label": "안도",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[relieved, tension easing, voice relaxing] 괜찮아. [soft and relaxed, gently reassuring] 나 여기 있어.",
+      "scene": "걱정하던 인물이 안도하며 상대를 다독인다.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "relief",
+      "label": "안도",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[relieved, tension easing, voice relaxing] 괜찮아. [soft and relaxed, gently reassuring] 나 여기 있어.",
+      "scene": "걱정하던 인물이 안도하며 상대를 다독인다.",
+      "seed": 4321,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "long_comfort",
+      "label": "위로",
+      "text": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. 나는 어디 안 가고, 여기서 기다릴게.",
+      "tagged_text": "[gentle and reassuring, warm conversational delivery, slightly slow] 괜찮아. 지금은 아무 말 안 해도 돼. [empathetic and sincere, not reciting] 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. [gently inviting, speaking to one person nearby] 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. [patient and calming, natural phrase pauses] 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. [quietly firm reassurance, warm ending] 나는 어디 안 가고, 여기서 기다릴게.",
+      "scene": "실패를 자책하는 가까운 사람을 재촉하지 않고 안심시킨다.",
+      "seed": 1234,
+      "max_new_tokens": 1200,
+      "group": "long"
+    },
+    {
+      "id": "whisper",
+      "label": "속삭임",
+      "text": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "tagged_text": "[whispering, breathy unvoiced whisper, close to the microphone] 괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "seed": 4321,
+      "max_new_tokens": 384,
+      "group": "whisper"
+    }
+  ],
+  "all_voices": "007",
+  "training_plan": "25steps x accumulation2 x8GPUs;400unique training clips;identical split/reference/ordering/LR",
+  "protocol": "Actual originalBF16,baselineFullFT,teacherFullFT; only teacher weight0 versus0.1; all declared takes published; no waveform postprocessing; no production deployment"
+}

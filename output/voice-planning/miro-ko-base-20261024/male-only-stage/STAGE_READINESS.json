@@ -1,0 +1,36 @@
+{
+  "status": "BLOCKED_MISSING_AUDIO",
+  "paid_execution_enabled": false,
+  "training_started": false,
+  "source_checkpoint_step": 23,
+  "new_stage_update_starts_at": 0,
+  "exact_old007_optimizer_resume": false,
+  "new_task_optimizer_and_teacher_stats": "Reinitialize explicitly; preserve original23 full state.",
+  "candidate_manifest_sha256": "af761cf5326c666619f4360a97da69bc8f7bb635292052d926cae9cdef9d65ae",
+  "male_training_speakers": [
+    "aihub001",
+    "aihub011"
+  ],
+  "female_training_speakers": 0,
+  "candidate_counts": {
+    "train": 1074,
+    "validation": 105
+  },
+  "missing_audio_count": 1179,
+  "updates_one_coverage_pass": 68,
+  "schedule_items": 1088,
+  "schedule_properties": [
+    "same-male disjoint references",
+    "8examples per male per global16",
+    "no target reuse until own deck exhaustion",
+    "random local role slot"
+  ],
+  "not_production_quality_certification": true,
+  "trainer_connected_to_this_schedule": false,
+  "launch_blockers": [
+    "Missing source WAVs or full source hash audit",
+    "Connect new stage schedule and23 initialization to safe resumable runner",
+    "Recompute train-only Korean teacher normalization",
+    "Approve paid budget and storage retention before dispatch"
+  ]
+}

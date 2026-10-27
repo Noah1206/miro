@@ -1,0 +1,26 @@
+{
+  "phase": "stopped",
+  "teacher_steps_completed": 1,
+  "listening_arms": [
+    "original",
+    "korean_teacher"
+  ],
+  "new_paid_compute_authorized": true,
+  "budget_hold": false,
+  "cash_ceiling_usd": 44,
+  "new_compute_ceiling_usd": 40.43,
+  "trained_checkpoints_exported": false,
+  "trained_model_audio_generated": false,
+  "intermediate_tts_weights_available": false,
+  "request_complete": false,
+  "first_save_independent_reload_verified": false,
+  "started_at": "2026-10-24T00:15:50.326396+09:00",
+  "modal_app_id": "ap-BsHjFcfhtKQ4eXKKl6zFd2",
+  "modal_app_url": "https://modal.com/apps/ab40905045/main/ap-BsHjFcfhtKQ4eXKKl6zFd2",
+  "remote_run_root": "/voices/_drama3/fullsize-ko-007-20261024-budget44-v1",
+  "stage": "loading_pretrained_weights",
+  "gpu_container_running": true,
+  "last_verified_at": "2026-10-24T00:28:31.574136+09:00",
+  "executed_snapshot_code_verified": true,
+  "automatic_retry": false
+}

@@ -1,0 +1,25 @@
+ACOUSTICS original comfort 1234 2.7
+ACOUSTICS step5 comfort 1234 0.3
+ACOUSTICS step23 comfort 1234 0.2
+ACOUSTICS original comfort 4321 0.3
+ACOUSTICS step5 comfort 4321 0.2
+ACOUSTICS step23 comfort 4321 0.2
+ACOUSTICS original contained_anger 1234 0.3
+ACOUSTICS step5 contained_anger 1234 0.4
+ACOUSTICS step23 contained_anger 1234 0.2
+ACOUSTICS original contained_anger 4321 0.2
+ACOUSTICS step5 contained_anger 4321 0.2
+ACOUSTICS step23 contained_anger 4321 0.2
+ACOUSTICS original relief 1234 0.6
+ACOUSTICS step5 relief 1234 0.6
+ACOUSTICS step23 relief 1234 0.6
+ACOUSTICS original relief 4321 0.2
+ACOUSTICS step5 relief 4321 0.2
+ACOUSTICS step23 relief 4321 0.2
+ACOUSTICS original long_comfort 1234 1.9
+ACOUSTICS step5 long_comfort 1234 1.7
+ACOUSTICS step23 long_comfort 1234 1.3
+ACOUSTICS original whisper 4321 0.4
+ACOUSTICS step5 whisper 4321 0.3
+ACOUSTICS step23 whisper 4321 0.4
+ACOUSTICS_COMPLETE

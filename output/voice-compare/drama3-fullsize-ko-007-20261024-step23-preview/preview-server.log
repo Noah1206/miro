@@ -1,0 +1,957 @@
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /compare.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/comfort_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59266)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/comfort_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59267)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/comfort_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59268)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/comfort_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/comfort_s4321.wav HTTP/1.1" 200 -
+Exception occurred during processing of request from ('127.0.0.1', 59269)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/comfort_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59270)
+Traceback (most recent call last):
+----------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/contained_anger_s1234.wav HTTP/1.1" 200 -
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59271)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+----------------------------------------
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+BrokenPipeError: [Errno 32] Broken pipe
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+----------------------------------------
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+Exception occurred during processing of request from ('127.0.0.1', 59272)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/contained_anger_s1234.wav HTTP/1.1" 200 -
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59273)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/contained_anger_s1234.wav HTTP/1.1" 200 -
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59274)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/contained_anger_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59275)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/contained_anger_s4321.wav HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59276)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/contained_anger_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59277)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/relief_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59278)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/relief_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59279)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/relief_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/relief_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59280)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59281)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/relief_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59282)
+Traceback (most recent call last):
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/relief_s4321.wav HTTP/1.1" 200 -
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59283)
+Traceback (most recent call last):
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/long_comfort_s1234.wav HTTP/1.1" 200 -
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/long_comfort_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59284)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59285)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/long_comfort_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59286)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /original/whisper_s4321.wav HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step5/whisper_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59287)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59288)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+127.0.0.1 - - [24/Oct/2026 17:19:05] "GET /step23/whisper_s4321.wav HTTP/1.1" 200 -
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59289)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:06] "GET /compare.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /reference.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /original/whisper_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step5/whisper_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /step23/whisper_s4321.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59313)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59314)
+Traceback (most recent call last):
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59315)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:19:07] code 404, message File not found
+127.0.0.1 - - [24/Oct/2026 17:19:07] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /compare.html HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/comfort_s1234.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/comfort_s4321.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/contained_anger_s1234.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/contained_anger_s4321.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/relief_s1234.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/relief_s4321.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /original/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step5/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:19:16] "GET /step23/whisper_s4321.wav HTTP/1.1" 304 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59349)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+----------------------------------------
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59350)
+Exception occurred during processing of request from ('127.0.0.1', 59351)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /compare.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/comfort_s1234.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/comfort_s4321.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/contained_anger_s1234.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/relief_s1234.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/contained_anger_s4321.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /original/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step5/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/relief_s4321.wav HTTP/1.1" 304 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:20:19] "GET /step23/whisper_s4321.wav HTTP/1.1" 304 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59370)
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59372)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+----------------------------------------
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59373)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:22:23] "GET /RESULTS.txt HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:41:28] "GET /analysis/index.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:41:28] "GET /analysis/long_delivery_diagnostic.png HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59550)
+Traceback (most recent call last):
+127.0.0.1 - - [24/Oct/2026 17:41:28] "GET /analysis/findings.json HTTP/1.1" 200 -
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+ConnectionResetError: [Errno 54] Connection reset by peer
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:41:28] "GET /analysis/local_asr.json HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59552)
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 17:41:29] "GET /analysis/index.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 17:41:30] "GET /analysis/long_delivery_diagnostic.png HTTP/1.1" 200 -

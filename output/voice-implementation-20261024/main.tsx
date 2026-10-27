@@ -1,0 +1,27 @@
+import React from 'react'
+import {createRoot} from 'react-dom/client'
+import {ImmersiveProvider,VoiceStatus,useImmersive} from '../../apps/web/app/(main)/chat/[sessionId]/immersive'
+import {TurnsProvider,useTurns} from '../../apps/web/app/(main)/chat/[sessionId]/turns'
+import {RoomMenu} from '../../apps/web/app/(main)/chat/[sessionId]/room-menu'
+import {ChatTheme} from '../../apps/web/components/chat-theme'
+import {ChatComposer} from '../../apps/web/app/(main)/chat/[sessionId]/composer'
+import {MessageList} from '../../apps/web/app/(main)/chat/[sessionId]/messages'
+import {PwaInstallProvider,InstallAppHint} from '../../apps/web/components/pwa-install'
+import {MessengerThread} from '../../apps/web/app/(main)/messages/[sessionId]/thread'
+import {MessengerComposer} from '../../apps/web/app/(main)/messages/[sessionId]/composer'
+import messageStyles from '../../apps/web/app/(main)/messages/[sessionId]/messages.module.css'
+import styles from '../../apps/web/app/(main)/chat/[sessionId]/chat.module.css'
+import '../../apps/web/app/globals.css'
+const qa=new URLSearchParams(location.search).has('qa');
+const requests:any[]=[];(window as any).voiceRequests=requests
+function wav(){const a=new ArrayBuffer(44+6400);const d=new DataView(a);const str=(at:number,s:string)=>[...s].forEach((c,i)=>d.setUint8(at+i,c.charCodeAt(0)));str(0,'RIFF');d.setUint32(4,a.byteLength-8,true);str(8,'WAVE');str(12,'fmt ');d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,16000,true);d.setUint32(28,32000,true);d.setUint16(32,2,true);d.setUint16(34,16,true);str(36,'data');d.setUint32(40,6400,true);return a}
+window.fetch=async(input,options)=>{if(input!='/api/tts')throw new Error('Preview allows local fake TTS only');const b=JSON.parse(options!.body as string);requests.push(b);await new Promise<void>((done,fail)=>{const timer=setTimeout(done,b.plan?40:500);options?.signal?.addEventListener('abort',()=>{clearTimeout(timer);fail(new DOMException('Cancelled','AbortError'))},{once:true})});if(!b.plan && (window as any).voiceFailNext){(window as any).voiceFailNext=false;return new Response(null,{status:502})}return b.plan?Response.json({segments:[{part:0,pauseAfterMs:450},{part:1,pauseAfterMs:0}]}):new Response(wav(),{headers:{'content-type':'audio/wav'}})}
+const sampleMessages = new URLSearchParams(location.search).has('long') ? Array.from({length:40},(_,i)=>({id:'sample-'+i,role:i%2?'character':'user',kind:'text',content:'대화 '+(i+1)+' · 오늘도 곁에 있어 줘서 고마워. 함께 천천히 이야기하자.',blocks:[]})) : [
+{id:'sample-1',role:'user',kind:'text',content:'오늘 너무 힘들었어.',blocks:[]},
+{id:'sample-2',role:'narrator',kind:'text',content:'그는 하던 말을 멈추고 목소리를 낮춘다.',blocks:[]},
+{id:'sample-3',role:'character',kind:'text',content:'많이 힘들었지. 나 여기 있어.',blocks:[]},
+{id:'sample-4',role:'narrator',kind:'text',content:'잠시 곁에 머무른 뒤, 작게 웃는다.',blocks:[]},
+{id:'sample-5',role:'character',kind:'text',content:'일단 잠깐 쉬자.',blocks:[]}]
+function Room(){const {on,status}=useImmersive();const {append,appended}=useTurns();return <main className={`chat-main ${styles.main}`} style={{maxWidth:480,margin:'0 auto',display:'flex',flexDirection:'column',borderInline:'1px solid var(--color-border)'}}><header className={styles.header}><a href="#" aria-label="뒤로" style={{display:'grid',placeItems:'center'}}>‹</a><div style={{width:32,height:32,borderRadius:20,background:'#71638b',display:'grid',placeItems:'center'}}>서</div><div className={styles.headerIdentity}><h1 className={styles.title}>서도윤</h1><p className={styles.affinity}>호감 12%</p></div><RoomMenu sessionId="local-preview" initialPersona={null} characterName="서도윤" messengerHref="/messages/local-preview"/></header><VoiceStatus/>{new URLSearchParams(location.search).has('install') && <InstallAppHint/>}<section className={styles.transcript} ><MessageList items={sampleMessages} characterName="서도윤" sessionId="local-preview" hasStarted/>{qa && <><p data-testid="mode" style={{fontSize:12,marginTop:28}}>현재: {on?'음성':'채팅'} · {status}</p><button type="button" style={{marginTop:16,padding:12,borderRadius:12}} onClick={()=>append([{id:'local-'+(appended.length+1),role:'character',kind:'text',content:'',at:new Date().toISOString(),blocks:[{type:'dialogue',speaker:'서도윤',text:'많이 힘들었지. 나 여기 있어.',delivery:{emotion:'hurt',tone:'soft',pace:'slow',intensity:'soft',pauseAfterMs:450}},{type:'dialogue',speaker:'서도윤',text:'일단 잠깐 쉬자.',delivery:{emotion:'happy',tone:'normal',pace:'normal',intensity:'normal',pauseAfterMs:0}}]}])}>검증용 답변 추가 · 무음 오디오</button><p style={{fontSize:12,color:'var(--color-text-secondary)'}}>음성 모드를 켜고 답변을 추가하면 준비·재생·쉼 순서를 확인할 수 있어요. 테스트 오디오는 무음입니다.</p></>}</section><ChatComposer sessionId="local-preview" characterName="서도윤" modelOptions={{freeReady:true,proReady:false}} roomHref="/messages/local-preview"/></main>}
+function MessengerRoom(){return <main className={`chat-main ${messageStyles.main}`} style={{maxWidth:480,margin:'0 auto'}}><header className={messageStyles.header}><h1 className={messageStyles.title}>서도윤 · 문자</h1></header><MessengerThread characterName="서도윤"/><MessengerComposer/></main>}
+createRoot(document.getElementById('root')!).render(<PwaInstallProvider><TurnsProvider><ImmersiveProvider sessionId="local-preview" media="text"><ChatTheme sessionId="local-preview">{new URLSearchParams(location.search).has('messenger') ? <MessengerRoom/> : <Room/>}</ChatTheme></ImmersiveProvider></TurnsProvider></PwaInstallProvider>)

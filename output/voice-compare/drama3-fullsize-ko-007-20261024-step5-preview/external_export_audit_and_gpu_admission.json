@@ -1,0 +1,11 @@
+{
+  "step": 5,
+  "parameter_bytes": 71799286016,
+  "all43_native_shards_visible_in_external_volume_listing": true,
+  "native_tensors": 885,
+  "serialized_shard_file_bytes": 71799393280,
+  "gpu_admission_net_billed_snapshot_usd": 71.81,
+  "conservative_combined_net_bound_usd": 74.40377333333333,
+  "training_updates": 0,
+  "native_directory": "/_drama3/fullsize-ko-007-20261024-step5-preview/native-step-000005"
+}

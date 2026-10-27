@@ -1,0 +1,130 @@
+127.0.0.1 - - [24/Oct/2026 15:20:22] "GET /compare.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:23] "GET /reference.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/neutral_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/neutral_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/whisper_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/whisper_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/whisper_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/whisper_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/heldout_D-A3-A-007-0244_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/heldout_D-A3-A-007-0244_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /real_recordings/D-A3-A-007-0244.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/heldout_D-A3-A-007-0840_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/heldout_D-A3-A-007-0840_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /real_recordings/D-A3-A-007-0840.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/heldout_D-H3-A-007-0341_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/heldout_D-H3-A-007-0341_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /real_recordings/D-H3-A-007-0341.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/heldout_D-H3-A-007-0787_s1234.wav HTTP/1.1" 200 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 58048)
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 58049)
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/heldout_D-H3-A-007-0787_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /real_recordings/D-H3-A-007-0787.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/heldout_D-S3-A-007-0683_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/heldout_D-S3-A-007-0683_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /real_recordings/D-S3-A-007-0683.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /original/heldout_D-S3-A-007-0796_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /korean_teacher/heldout_D-S3-A-007-0796_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:24] "GET /real_recordings/D-S3-A-007-0796.wav HTTP/1.1" 200 -
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 683, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 1319, in finish_request
+    self.RequestHandlerClass(request, client_address, self,
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 672, in __init__
+    super().__init__(*args, **kwargs)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 747, in __init__
+    self.handle()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 437, in handle
+    self.handle_one_request()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 425, in handle_one_request
+    method()
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 679, in do_GET
+    self.copyfile(f, self.wfile)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/http/server.py", line 879, in copyfile
+    shutil.copyfileobj(source, outputfile)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/shutil.py", line 198, in copyfileobj
+    fdst_write(buf)
+  File "/opt/homebrew/Cellar/python@3.10/3.10.22/Frameworks/Python.framework/Versions/3.10/lib/python3.10/socketserver.py", line 826, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+127.0.0.1 - - [24/Oct/2026 15:20:44] "GET /compare.html HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /reference.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/neutral_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/neutral_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/comfort_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/contained_anger_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/contained_anger_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/relief_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/relief_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/whisper_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/whisper_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/whisper_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/whisper_s4321.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/long_comfort_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/heldout_D-A3-A-007-0244_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/heldout_D-A3-A-007-0244_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /real_recordings/D-A3-A-007-0244.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/heldout_D-A3-A-007-0840_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/heldout_D-A3-A-007-0840_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /real_recordings/D-A3-A-007-0840.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/heldout_D-H3-A-007-0341_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/heldout_D-H3-A-007-0341_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /real_recordings/D-H3-A-007-0341.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/heldout_D-H3-A-007-0787_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/heldout_D-H3-A-007-0787_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /real_recordings/D-H3-A-007-0787.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/heldout_D-S3-A-007-0683_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/heldout_D-S3-A-007-0683_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /real_recordings/D-S3-A-007-0683.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /original/heldout_D-S3-A-007-0796_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /korean_teacher/heldout_D-S3-A-007-0796_s1234.wav HTTP/1.1" 200 -
+127.0.0.1 - - [24/Oct/2026 15:20:44] "HEAD /real_recordings/D-S3-A-007-0796.wav HTTP/1.1" 200 -

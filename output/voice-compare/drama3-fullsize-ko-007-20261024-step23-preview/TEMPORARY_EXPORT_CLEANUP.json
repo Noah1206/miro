@@ -1,0 +1,12 @@
+{
+  "time": "2026-10-24T08:20:09.605384+00:00",
+  "removed_only_regenerable_native_export": "/_drama3/fullsize-ko-007-20261024-step23-preview/native-step-000023",
+  "temporary_export_bytes_removed": 73691602460,
+  "step23_training_checkpoint_preserved": "/_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023",
+  "step23_all32_file_sizes_match_before_and_after": true,
+  "step23_checkpoint_bytes_preserved": 430824909904,
+  "step5_training_checkpoint_preserved": true,
+  "generated_audio_preserved_locally_and_in_cloud": true,
+  "additional_training_updates": 0,
+  "reason": "Keep storage under free1TiB allowance; native BF16 export can be regenerated from preserved FP32 masters without retraining."
+}

@@ -1,0 +1,118 @@
+{
+  "checkedAt": "2026-10-27T10:36:12.521Z",
+  "paidGeneration": false,
+  "choices": [
+    {
+      "id": "model:claude-sonnet:scene",
+      "name": "Claude Sonnet 5.5",
+      "provider": "anthropic",
+      "length": "scene",
+      "maximumTokens": 134,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:claude-sonnet:long",
+      "name": "Claude Sonnet 5.5",
+      "provider": "anthropic",
+      "length": "long",
+      "maximumTokens": 153,
+      "maxOutputTokens": 4096
+    },
+    {
+      "id": "model:claude-haiku:scene",
+      "name": "Claude Haiku 5.5",
+      "provider": "anthropic",
+      "length": "scene",
+      "maximumTokens": 71,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:claude-haiku:long",
+      "name": "Claude Haiku 5.5",
+      "provider": "anthropic",
+      "length": "long",
+      "maximumTokens": 80,
+      "maxOutputTokens": 4096
+    },
+    {
+      "id": "model:claude-opus:scene",
+      "name": "Claude Opus 5.5",
+      "provider": "anthropic",
+      "length": "scene",
+      "maximumTokens": 268,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:claude-opus:long",
+      "name": "Claude Opus 5.5",
+      "provider": "anthropic",
+      "length": "long",
+      "maximumTokens": 305,
+      "maxOutputTokens": 4096
+    },
+    {
+      "id": "model:gpt-luna:scene",
+      "name": "GPT 6 Luna",
+      "provider": "openai",
+      "length": "scene",
+      "maximumTokens": 71,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:gpt-luna:long",
+      "name": "GPT 6 Luna",
+      "provider": "openai",
+      "length": "long",
+      "maximumTokens": 80,
+      "maxOutputTokens": 4096
+    },
+    {
+      "id": "model:gpt-terra:scene",
+      "name": "GPT 6.1 Terra",
+      "provider": "openai",
+      "length": "scene",
+      "maximumTokens": 101,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:gpt-terra:long",
+      "name": "GPT 6.1 Terra",
+      "provider": "openai",
+      "length": "long",
+      "maximumTokens": 115,
+      "maxOutputTokens": 4096
+    },
+    {
+      "id": "model:gpt-sol:scene",
+      "name": "GPT 6.1 Sol",
+      "provider": "openai",
+      "length": "scene",
+      "maximumTokens": 134,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:gpt-sol:long",
+      "name": "GPT 6.1 Sol",
+      "provider": "openai",
+      "length": "long",
+      "maximumTokens": 153,
+      "maxOutputTokens": 4096
+    },
+    {
+      "id": "model:gpt-astra:scene",
+      "name": "GPT 6 Astra",
+      "provider": "openai",
+      "length": "scene",
+      "maximumTokens": 669,
+      "maxOutputTokens": 2048
+    },
+    {
+      "id": "model:gpt-astra:long",
+      "name": "GPT 6 Astra",
+      "provider": "openai",
+      "length": "long",
+      "maximumTokens": 761,
+      "maxOutputTokens": 4096
+    }
+  ]
+}

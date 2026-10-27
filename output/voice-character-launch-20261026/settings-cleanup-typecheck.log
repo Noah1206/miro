@@ -1,0 +1,4 @@
+
+> miro@ typecheck /Users/johyeon-ung/Desktop/Miro
+> tsc -b --pretty false && tsc -p tsconfig.tests.json --pretty false
+

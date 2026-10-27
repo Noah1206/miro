@@ -1,0 +1,54 @@
+{
+  "executed": false,
+  "requests": [
+    {
+      "amount": "standard",
+      "context": "normal",
+      "text": "오늘 하루는 어땠어? 네 이야기를 듣고 싶어.",
+      "seed": 4321,
+      "model_step": 13,
+      "narration_spoken": false
+    },
+    {
+      "amount": "standard",
+      "context": "whisper",
+      "text": "오늘 하루는 어땠어? 네 이야기를 듣고 싶어.",
+      "seed": 4321,
+      "model_step": 13,
+      "narration_spoken": false
+    },
+    {
+      "amount": "standard",
+      "context": "unveil_non_graphic_delivery",
+      "text": "오늘 하루는 어땠어? 네 이야기를 듣고 싶어.",
+      "seed": 4321,
+      "model_step": 13,
+      "narration_spoken": false
+    },
+    {
+      "amount": "extended",
+      "context": "normal",
+      "text": "오늘은 서두르지 않아도 돼. 잠깐 쉬었다가 네가 편해졌을 때 천천히 이야기해 줘. 나는 여기서 기다리고 있을게.",
+      "seed": 4321,
+      "model_step": 13,
+      "narration_spoken": false
+    },
+    {
+      "amount": "extended",
+      "context": "whisper",
+      "text": "오늘은 서두르지 않아도 돼. 잠깐 쉬었다가 네가 편해졌을 때 천천히 이야기해 줘. 나는 여기서 기다리고 있을게.",
+      "seed": 4321,
+      "model_step": 13,
+      "narration_spoken": false
+    },
+    {
+      "amount": "extended",
+      "context": "unveil_non_graphic_delivery",
+      "text": "오늘은 서두르지 않아도 돼. 잠깐 쉬었다가 네가 편해졌을 때 천천히 이야기해 줘. 나는 여기서 기다리고 있을게.",
+      "seed": 4321,
+      "model_step": 13,
+      "narration_spoken": false
+    }
+  ],
+  "note": "Unveil delivery routing and non-graphic whisper samples; does not establish explicit vocal-expression quality."
+}

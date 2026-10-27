@@ -1,0 +1,25 @@
+
+> miro@ db:migrate:sql /Users/johyeon-ung/Desktop/Miro
+> set -e; for f in packages/db/migrations/*.sql; do psql -X -v ON_ERROR_STOP=1 --single-transaction -q "$DATABASE_URL" -f "$f"; done
+
+psql:packages/db/migrations/0004_media.sql:31: NOTICE:  identifier "generated_media_visual_identity_id_character_visual_identities_id_fk" will be truncated to "generated_media_visual_identity_id_character_visual_identities_"
+psql:packages/db/migrations/0004_media.sql:31: NOTICE:  identifier "generated_media_visual_identity_id_character_visual_identities_id_fk" will be truncated to "generated_media_visual_identity_id_character_visual_identities_"
+LINE 2:  ALTER TABLE "generated_media" ADD CONSTRAINT "generated_med...
+         ^
+psql:packages/db/migrations/0004_media.sql:31: NOTICE:  identifier "generated_media_visual_identity_id_character_visual_identities_id_fk" will be truncated to "generated_media_visual_identity_id_character_visual_identities_"
+psql:packages/db/migrations/20260916020000_pass_expiry_notice.sql:6: NOTICE:  constraint "subscriptions_expiry_notice_check" of relation "subscriptions" does not exist, skipping
+psql:packages/db/migrations/20260916040000_bank_transfer_orders.sql:57: NOTICE:  constraint "admin_actions_action_check" of relation "admin_actions" does not exist, skipping
+psql:packages/db/migrations/20260916060000_character_experience_type.sql:5: NOTICE:  constraint "characters_experience_type_check" of relation "characters" does not exist, skipping
+psql:packages/db/migrations/20260919160000_reality_cron.sql:53: WARNING:  reality cron: ops_cron_config 미설정 — 잡을 만들지 않는다
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:36: NOTICE:  constraint "character_search_docs_pkey" of relation "character_search_docs" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:37: NOTICE:  column "world_id" of relation "character_search_docs" already exists, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:38: NOTICE:  column "short_grams" of relation "character_search_docs" already exists, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:92: NOTICE:  trigger "character_search_character_changed" for relation "public.characters" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:112: NOTICE:  trigger "character_search_world_changed" for relation "public.worlds" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:162: NOTICE:  constraint "character_play_users_character_fk" of relation "character_play_users" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:165: NOTICE:  constraint "character_play_counts_character_fk" of relation "character_play_counts" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:231: NOTICE:  trigger "roleplay_session_play_changed" for relation "public.roleplay_sessions" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:247: NOTICE:  trigger "cleanup_character_play" for relation "public.characters" does not exist, skipping
+psql:packages/db/migrations/20260923110000_search_and_popular_indexes.sql:260: NOTICE:  trigger "refresh_character_play_order" for relation "public.characters" does not exist, skipping
+psql:packages/db/migrations/20260923180000_reality_workload_isolation.sql:22: WARNING:  reality workload cron: ops_cron_config missing
+psql:packages/db/migrations/20261020150000_character_audience.sql:3: NOTICE:  constraint "characters_audience_check" of relation "characters" does not exist, skipping

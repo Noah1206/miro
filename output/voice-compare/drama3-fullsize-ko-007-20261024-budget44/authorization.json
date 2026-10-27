@@ -1,0 +1,19 @@
+{
+  "date_local": "2026-10-24T00:07:38.784014+09:00",
+  "user_authorization": "달러 진행해줘.44달러 결제",
+  "additional_total_cash_ceiling_usd": 44,
+  "previously_paid_cash_usd": 30,
+  "existing_unbilled_usage_usd": 3.57,
+  "new_compute_ceiling_usd": 40.43,
+  "net_cycle_spend_ceiling_usd": 74,
+  "scope": "One actual35.9B Korean-teacher Full FT25updates, first-save reload gate, native checkpoints,16same-script takes; no image work, no baseline retraining",
+  "payment_mode": "Usage based incremental/monthly; no fabricatedUSD44prepayment",
+  "automatic_retry": false,
+  "new_remote_root": "/voices/_drama3/fullsize-ko-007-20261024-budget44-v1",
+  "first_save_gate_required": true,
+  "native_weights_not_exact_optimizer_resume": true,
+  "workspace_spend_limit_set_and_ui_verified": 74,
+  "hard_resource_cost_bound_usd": 38.51,
+  "reserve_for_startup_cpu_storage_and_metering_usd": 1.92,
+  "automatic_retries": 0
+}

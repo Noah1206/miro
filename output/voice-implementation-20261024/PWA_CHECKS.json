@@ -1,0 +1,27 @@
+{
+  "dismissalPersists": true,
+  "iosManualGuide": true,
+  "singleModalAndFocusRestored": true,
+  "manifestAndIcons": true,
+  "keyboardOpen": {
+    "inputBottom": 444,
+    "headerTop": 0,
+    "documentScroll": 0,
+    "height": 450,
+    "font": "16px"
+  },
+  "latestMessageFollowsResize": true,
+  "blurWaitsForKeyboardClose": true,
+  "historyPositionPreserved": true,
+  "multilineAboveKeyboard": true,
+  "rotationBaseline": true,
+  "androidPromptSingleUseAndInstalledEvent": true,
+  "installedModeHidesPromotion": true,
+  "embeddedBrowserGuidance": true,
+  "mobile320": true,
+  "messengerKeyboardAndReadingPosition": true,
+  "actualOsInstallTested": false,
+  "realIphoneKeyboardTested": false,
+  "allBrowserInstallPromptsSimulated": true,
+  "paidCalls": 0
+}

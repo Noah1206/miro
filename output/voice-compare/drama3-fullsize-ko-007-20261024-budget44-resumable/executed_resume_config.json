@@ -1,0 +1,11 @@
+{
+  "started": {
+    "unix_time": 1792772561.2430108,
+    "scope": "Continue saved step1; full ZeRO optimizer checkpoints and controlled reload",
+    "target_step": 25
+  },
+  "gradient_accumulation": 2,
+  "zip_checkpoint_enabled": true,
+  "fp32_master_resume_enabled": true,
+  "actual_uploaded_resume_code_matches_local": true
+}

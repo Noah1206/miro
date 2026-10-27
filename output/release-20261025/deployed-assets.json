@@ -1,0 +1,17 @@
+[
+  {
+    "path": "/sw.js",
+    "http": 200,
+    "matches_committed_file": true
+  },
+  {
+    "path": "/manifest.json",
+    "http": 200,
+    "matches_committed_file": true
+  },
+  {
+    "path": "/offline.html",
+    "http": 200,
+    "matches_committed_file": true
+  }
+]

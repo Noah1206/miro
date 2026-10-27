@@ -1,0 +1,9 @@
+{
+  "native_weights": "/voices/_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/snapshots/step-000001",
+  "step": 1,
+  "next_micro_batch": 2,
+  "optimizer_is_fresh": true,
+  "old_run_optimizer_not_recovered": true,
+  "world_size": 8,
+  "plan_sha256": "07da64d8a1c0016689c6fa74be64c8dc954d9a81e4420c7bd36adb60db82ec02"
+}

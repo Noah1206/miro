@@ -1,0 +1,53 @@
+{
+  "status": "BLOCKED_MISSING_MALE_AUDIO",
+  "training_started": false,
+  "paid_compute_started": false,
+  "scope": "Existing23 fullFT TTS weights, one shared model, first male10 new updates, saved preview gate, second male10 new updates only after first gate",
+  "male_ids_provisional": [
+    "aihub001",
+    "aihub011"
+  ],
+  "female_training_speakers": 0,
+  "new_updates_total": 20,
+  "updates_per_male": 10,
+  "targets_per_male": 160,
+  "global_batch": 16,
+  "phase1_only_initial_dispatch": true,
+  "source23_preserved": true,
+  "midpoint_and_final_full_state_commit": true,
+  "second_phase_requires_first_checkpoint_and_preview": true,
+  "second_phase_starts_from_first_phase_model": true,
+  "second_phase_must_test_first_male_retention": true,
+  "automatic_extra_retraining_or_replay": false,
+  "normalize_teacher_stats": "Freeze one train-only Korean-teacher normalization profile for planned two-male stage; never normalize on validation/evaluation.",
+  "new_stage_optimizer": "Fresh only at transition from old007 task; preserve new-stage optimizer/RNG/data cursor on phase1-to2 continuation",
+  "elapsed_training_provenance_updates_if_both_completed": 43,
+  "cost_estimates_not_authorization": {
+    "first_male10_with_save_export_and_preview_usd": [
+      22,
+      30
+    ],
+    "both_sequential10_each_with_one_preview_gate_usd": [
+      40,
+      50
+    ],
+    "basis_extra_vs_prior18_midpoint_plan": {
+      "two_more_updates": 1.7475863293810114,
+      "one_more_GPU_training_model_load": 3.7416959999999997,
+      "one_more_CPU_export": 0.42028329000000003,
+      "extra_preview_allowance_usd": [
+        0.5,
+        1.5
+      ]
+    },
+    "slow_case_can_exceed_expected_range": true,
+    "ongoing_checkpoint_storage_excluded": true
+  },
+  "budget_interpretation": "User requested staged10+10 training. Do not infer permission for unlimited new spend or increase previous numeric ceiling. Need a concrete dispatch cap before any paid job.",
+  "blockers": [
+    "Male originals absent; official API returns502",
+    "New-stage safe runner integration and actual audio contract audit unfinished",
+    "Per-dispatch numeric cap and current available account budget must be resolved before paid execution"
+  ],
+  "serving": "one exported shared model plus two explicit reference identities; do not store full model per voice"
+}

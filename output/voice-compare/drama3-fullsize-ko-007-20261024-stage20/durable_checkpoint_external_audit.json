@@ -1,0 +1,10 @@
+{
+  "step": 5,
+  "all_32_checkpoint_files_visible_and_size_match": true,
+  "optimizer_shards": 8,
+  "rng_files": 8,
+  "all_shards_parsed_before_commit": true,
+  "commit_seconds": 318.18567271200004,
+  "independent_engine_reload_verified": false,
+  "external_volume_check": true
+}

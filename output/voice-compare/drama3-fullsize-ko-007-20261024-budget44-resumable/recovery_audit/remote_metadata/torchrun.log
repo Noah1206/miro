@@ -1,0 +1,10 @@
+WARM_LOAD_SAVED_STEP1 0 backbone.model.embed_tokens.weight
+WARM_LOAD_SAVED_STEP1 100 backbone.model.layers.5.mlp.shared_expert.gate_proj.weight
+WARM_LOAD_SAVED_STEP1 200 backbone.model.layers.11.mlp.experts.w13_weight
+WARM_LOAD_SAVED_STEP1 300 backbone.model.layers.17.linear_attn.in_proj_a.weight
+WARM_LOAD_SAVED_STEP1 400 backbone.model.layers.23.self_attn.q_proj.weight
+WARM_LOAD_SAVED_STEP1 500 backbone.model.layers.28.input_layernorm.weight
+WARM_LOAD_SAVED_STEP1 600 backbone.model.layers.34.mlp.experts.w2_weight
+WARM_LOAD_SAVED_STEP1 700 audio_decoder.shared_layers.0.transformer_layer.attention.q_norm.weight
+WARM_LOAD_SAVED_STEP1 800 audio_decoder.residual_layers.3.transformer_layer.attention_norm.weight
+AB_BOOTSTRAP_READY /voices/_drama3/fullsize-ko-007-20261024-budget44-resumable-v2/arms/korean_teacher/bootstrap

@@ -1,0 +1,48 @@
+{
+  "hash": "1087896603775e8eb643975d2faf0421b3786b324dc9d23a4ecdadd8d4ffea6d",
+  "limitUSD": 0.5,
+  "ceilingUSD": 0.3624928375,
+  "scope": "non-explicit synthetic continuation only",
+  "plan": [
+    {
+      "id": "gemini-argon",
+      "case": "everyday",
+      "ceilingUSD": 0.015765
+    },
+    {
+      "id": "gemini-argon",
+      "case": "romance-boundary",
+      "ceilingUSD": 0.0161025
+    },
+    {
+      "id": "gemini-flash",
+      "case": "everyday",
+      "ceilingUSD": 0.0059118750000000005
+    },
+    {
+      "id": "gemini-flash",
+      "case": "romance-boundary",
+      "ceilingUSD": 0.0060384375
+    },
+    {
+      "id": "claude-fable",
+      "case": "everyday",
+      "ceilingUSD": 0.0788250125
+    },
+    {
+      "id": "claude-fable",
+      "case": "romance-boundary",
+      "ceilingUSD": 0.08051249999999999
+    },
+    {
+      "id": "claude-fable-51",
+      "case": "everyday",
+      "ceilingUSD": 0.0788250125
+    },
+    {
+      "id": "claude-fable-51",
+      "case": "romance-boundary",
+      "ceilingUSD": 0.08051249999999999
+    }
+  ]
+}

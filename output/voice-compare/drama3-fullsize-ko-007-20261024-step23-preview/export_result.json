@@ -1,0 +1,13 @@
+{
+  "bytes": 71799286016,
+  "tensors": 885,
+  "shards": 43,
+  "step": 23,
+  "independent_engine_reload_verified": false,
+  "checkpoint": "/voices/_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023",
+  "export_seconds": 620.141882998,
+  "checksums_file": "SHA256SUMS.json",
+  "teacher_required_at_inference": false,
+  "training_updates_executed": 0,
+  "hashes_computed_on_serialized_bytes": true
+}

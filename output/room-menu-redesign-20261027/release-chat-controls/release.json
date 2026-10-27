@@ -1,0 +1,26 @@
+{
+  "commit": "bcc3ddb3631b174db648ad71fc88cfd14822d3d3",
+  "main_push_range": "c92449e4..bcc3ddb3",
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-9wfd64k9p-noah1206s-projects.vercel.app",
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  },
+  "migrations": [],
+  "verification": [
+    "Root and web typechecks passed",
+    "en/ja/zh missing translations: 0",
+    "Local manual library authorization probes: 8 passed; fixtures removed",
+    "Local UI library selection and persona/theme/model controls verified",
+    "Production slash menu and header verified",
+    "Production DM header and composer verified"
+  ],
+  "limits": [
+    "No paid generation or payment run",
+    "Automated unit/e2e suite not run",
+    "Library server authorization checked with local test data; no production AI message submitted"
+  ]
+}

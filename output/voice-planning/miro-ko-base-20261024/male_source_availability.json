@@ -1,0 +1,7 @@
+{
+  "endpoint": "https://api.aihub.or.kr/info/71349.do",
+  "paid_compute": false,
+  "download_started": false,
+  "read_only": true,
+  "http_status": 502
+}

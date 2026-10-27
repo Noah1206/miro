@@ -1,0 +1,7 @@
+Tool: ChatGPT built-in image_gen
+Background: transparent (alpha preserved)
+Project asset: apps/web/public/images/ui/recent-search-empty-x-3d-v1.png
+Display: 64 × 64 CSS pixels, Next.js Image optimization
+
+Final prompt:
+Use case: stylized-concept. Asset type: a single small 3D empty-state icon for a refined dark-mode chat application's recent-searches section. Primary request: one simple gray X symbol with convincing but restrained 3D volume. Subject: two equal short rounded rectangular bars crossing diagonally into a balanced X, softly beveled edges, modest solid extrusion visible toward the lower right. Nearly front-facing orthographic view so the X remains instantly legible at 48 pixels. Material: satin neutral medium-gray ceramic with gentle light-gray highlights and graphite side faces, no bright chrome. Soft upper-left studio lighting, subtle contact shading only within the object. Composition: square, centered, the X occupies about 80% of the canvas, generous transparent padding, no cropping. Background: genuinely transparent alpha, suitable for placement directly on #121212. Constraints: exactly one X icon; no circle, tile, card, ground plane, backdrop, cast ground shadow, words, logos, watermark, decorations, or additional objects. Quiet, premium, minimal.

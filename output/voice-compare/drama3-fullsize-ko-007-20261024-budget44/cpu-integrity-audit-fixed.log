@@ -1,0 +1,7 @@
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-cJ39ciHX1iulNsCpDRNwLm
+Stopping app - uncaught exception raised locally: ExecutionError('/Users/johyeon-ung/Desktop/Miro/tooling/voice/drama3_fullft/test_training_state.py was modified during build process.').
+╭─ Error ──────────────────────────────────────────────────────────────────────╮
+│ /Users/johyeon-ung/Desktop/Miro/tooling/voice/drama3_fullft/test_training_st │
+│ ate.py was modified during build process.                                    │
+╰──────────────────────────────────────────────────────────────────────────────╯

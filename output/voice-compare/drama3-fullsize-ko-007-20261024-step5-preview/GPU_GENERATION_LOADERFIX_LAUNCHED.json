@@ -1,0 +1,12 @@
+{
+  "prior_attempt_failed_before_any_audio": true,
+  "actual_official_loader_cpu_test_passed": true,
+  "weights_unchanged": true,
+  "corrected_read_only_routing": true,
+  "net_billed_before_corrected_inference": 72.1,
+  "conservative_preview_all_in_net_bound": 74.35573333333333,
+  "conservative_preview_delta_bound": 2.995733333333334,
+  "new_remote_output": "/_drama3/fullsize-ko-007-20261024-step5-preview-loaderfix",
+  "automatic_retry": false,
+  "training_updates": 0
+}

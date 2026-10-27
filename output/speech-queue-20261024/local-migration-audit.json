@@ -1,0 +1,10 @@
+{
+  "database": "miro_speech_migration_test",
+  "all_repository_migrations_applied": true,
+  "new_tables": [
+    "speech_synthesis_jobs",
+    "speech_synthesis_usage"
+  ],
+  "failed_migrations": [],
+  "production_writes": false
+}

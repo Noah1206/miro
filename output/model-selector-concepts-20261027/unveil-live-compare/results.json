@@ -1,0 +1,35 @@
+{
+  "budget_usd": 0.5,
+  "records": [
+    {
+      "route": "mistral/zdr",
+      "case": "everyday_recall",
+      "rep": 0,
+      "model": "mistralai/mistral-small-2603",
+      "input_hash": "f0656c742e8859b21314cc271314f6cc48732e44afa5abebe409dedfb5eb222e",
+      "reserved_usd": 0.00071385,
+      "status": "http_error",
+      "cost_usd": null,
+      "http_status": 429,
+      "error": "{\"error\": {\"message\": \"Provider returned error\", \"code\": 429, \"metadata\": {\"raw\": \"mistralai/mistral-small-2603 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\", \"provider_name\": \"Mistral\", \"is_byok\": false, \"limit_source\": \"upstream_provider_shared_pool\", \"remedy_hint\": \"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\"}}}",
+      "total_s": 0.4130838330020197
+    }
+  ],
+  "venice_status": "awaiting_api_access",
+  "scope": "가상의 성인 연인. 일반 대화와 비노골적인 친밀·동의 경계 장면. 노골적인 성적 묘사 출력은 검증하지 않음.",
+  "openrouter_usage_before": 0.356192542,
+  "failed_attempts": [
+    {
+      "case": "everyday_recall",
+      "rep": 0,
+      "model": "mistralai/mistral-small-2603",
+      "input_hash": "f0656c742e8859b21314cc271314f6cc48732e44afa5abebe409dedfb5eb222e",
+      "reserved_usd": 0.00071325,
+      "status": "http_error",
+      "cost_usd": null,
+      "http_status": 429,
+      "error": "{\"error\": {\"message\": \"Provider returned error\", \"code\": 429, \"metadata\": {\"raw\": \"mistralai/mistral-small-2603 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations\", \"provider_name\": \"Mistral\", \"is_byok\": false, \"limit_source\": \"upstream_provider_shared_pool\", \"remedy_hint\": \"Retry shortly, add your own provider key (https://openrouter.ai/settings/integrations), or route to another provider with provider routing: https://openrouter.ai/docs/features/provider-routing\"}}}",
+      "total_s": 0.3884098330017878
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "environment": "isolated local Next app + dedicated PostgreSQL test DB + local mock TTS only",
+  "audio": "non-silent 0.2 second 220Hz test tone; NOT the actual trained model",
+  "image": "existing harmless test asset; no paid image generation",
+  "browser": "CUA, actual Miro application in in-app browser",
+  "passed": [
+    "3 dialogue choices",
+    "selection and quote do not synthesize",
+    "red notice can be dismissed without generation",
+    "explicit generation and playback",
+    "cached replay without new compute/debit",
+    "test-wallet purchase with purchased funds only",
+    "extended amount delivered with 20 second native allowance",
+    "failed generation refunded",
+    "reload preserves mode and balance",
+    "chat mode hides voice balance",
+    "existing scene asset stored in conversation for free",
+    "queued cancel removed job and returned 20 seconds",
+    "narration/atmosphere excluded from provider requests",
+    "narrow and short viewport keeps input visible without horizontal overflow"
+  ],
+  "cancellation": {
+    "during": {
+      "pending": 1,
+      "balance": 53
+    },
+    "after": {
+      "pending": 0,
+      "balance": 73
+    },
+    "local_worker_resumed": true
+  },
+  "provider_calls": 3,
+  "narration_leaked": false,
+  "final_test_receipt": {
+    "remaining_seconds": 73,
+    "reserved_seconds": 0,
+    "purchased_miro_used": 150,
+    "jobs": [
+      {
+        "state": "done",
+        "part": 0,
+        "cap": "10"
+      },
+      {
+        "state": "done",
+        "part": 2,
+        "cap": "20"
+      },
+      {
+        "state": "failed",
+        "part": 1,
+        "cap": "10"
+      }
+    ]
+  },
+  "viewport_requested": [
+    {
+      "width": 320,
+      "height": 640
+    },
+    {
+      "width": 390,
+      "height": 420
+    }
+  ],
+  "viewport_override_reset": true,
+  "real_mobile_keyboard_or_device_tested": false,
+  "actual_model_quality_tested": false,
+  "new_paid_execution": false,
+  "production_deployed": false,
+  "screenshots": [
+    "voice-final.png",
+    "voice-failure-refund.png",
+    "voice-short-viewport.png"
+  ]
+}

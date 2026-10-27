@@ -1,0 +1,10 @@
+{
+  "checkpoint": "step-000023",
+  "step": 23,
+  "expected_files": 32,
+  "all_files_present_and_sizes_match": true,
+  "mismatches": [],
+  "committed_marker_present": true,
+  "paid_compute_started": false,
+  "content_hashes_not_recomputed": true
+}

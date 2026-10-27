@@ -1,0 +1,24 @@
+{"arm": "original", "id": "long_comfort", "seed": 1234, "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아.", "cer": 0.4367816091954023, "asr_seconds": 10.67815679195337}
+{"arm": "step23", "id": "long_comfort", "seed": 1234, "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 순부터 천천히 고르자. 네가 준비되면 그때 말해줘. 나는 어디 안 가고, 여기서 기다릴게.", "cer": 0.011494252873563218, "asr_seconds": 15.236781958024949}
+{"arm": "step5", "id": "long_comfort", "seed": 1234, "transcript": "괜찮아, 지금은 아무 말 안 해도 돼 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게 다만 혼자 견디게 두고 싶지는 않아 여기 앉아", "cer": 0.39080459770114945, "asr_seconds": 9.561941458145157}
+{"arm": "original", "id": "whisper", "seed": 4321, "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.", "cer": 0.0, "asr_seconds": 3.254861749941483}
+{"arm": "step23", "id": "whisper", "seed": 4321, "transcript": "괜찮아, 지금은 아무 말 안 해도 돼, 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.9807099169120193}
+{"arm": "step5", "id": "whisper", "seed": 4321, "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.", "cer": 0.0, "asr_seconds": 3.5820607501082122}
+{"arm": "original", "id": "comfort", "seed": 1234, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.811319208936766}
+{"arm": "step23", "id": "comfort", "seed": 1234, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.7214360830839723}
+{"arm": "step5", "id": "comfort", "seed": 1234, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.6857880000025034}
+{"arm": "original", "id": "comfort", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.915726790903136}
+{"arm": "step23", "id": "comfort", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 3.400701083941385}
+{"arm": "step5", "id": "comfort", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 3.581303833052516}
+{"arm": "original", "id": "contained_anger", "seed": 1234, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.786542583955452}
+{"arm": "step23", "id": "contained_anger", "seed": 1234, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 3.0476714589167386}
+{"arm": "step5", "id": "contained_anger", "seed": 1234, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.29438883299008}
+{"arm": "original", "id": "contained_anger", "seed": 4321, "transcript": "괜찮아 나 여기 있어", "cer": 0.0, "asr_seconds": 2.300746959168464}
+{"arm": "step23", "id": "contained_anger", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.3116799171548337}
+{"arm": "step5", "id": "contained_anger", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 2.9532894159201533}
+{"arm": "original", "id": "relief", "seed": 1234, "transcript": "괜찮아", "cer": 0.625, "asr_seconds": 2.334950582822785}
+{"arm": "step23", "id": "relief", "seed": 1234, "transcript": "괜찮아", "cer": 0.625, "asr_seconds": 2.0045147500932217}
+{"arm": "step5", "id": "relief", "seed": 1234, "transcript": "괜찮아", "cer": 0.625, "asr_seconds": 1.9437274998053908}
+{"arm": "original", "id": "relief", "seed": 4321, "transcript": "괜찮아 나 여기 있어", "cer": 0.0, "asr_seconds": 2.385168957989663}
+{"arm": "step23", "id": "relief", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 3.9011400828603655}
+{"arm": "step5", "id": "relief", "seed": 4321, "transcript": "괜찮아. 나 여기 있어.", "cer": 0.0, "asr_seconds": 4.3222387079149485}

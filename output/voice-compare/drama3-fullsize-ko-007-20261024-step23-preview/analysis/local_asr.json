@@ -1,0 +1,2524 @@
+{
+  "engine": "openai-whisper",
+  "model": "small",
+  "device": "cpu",
+  "language": "ko",
+  "fp16": false,
+  "beam_size": 5,
+  "temperature": 0,
+  "condition_on_previous_text": false,
+  "expected_text_prompted": false,
+  "cloud_calls": 0,
+  "additional_cost_usd": 0,
+  "limitations": [
+    "ASR transcript/CER is an automatic recognizer proxy, not human listening or pronunciation truth.",
+    "Whisper may hallucinate over silence and struggle on whisper."
+  ],
+  "items": [
+    {
+      "arm": "original",
+      "id": "long_comfort",
+      "seed": 1234,
+      "file": "original/long_comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 41.88879818594104,
+      "sample_rate": 44100,
+      "peak": 0.609375,
+      "active_rms_median_dbfs": -20.948238372802734,
+      "relative_pause_ratio": 0.8056351480420249,
+      "energy_p90_p10_db": 19.57343292236328,
+      "audio_sha256": "85ecd940d21effd50c1f70f1e11268e471208c301746f1eeb85edfee397b7c7c",
+      "expected_text": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. 나는 어디 안 가고, 여기서 기다릴게.",
+      "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.98,
+          "text": " 괜찮아. 지금은 아무 말 안 해도 돼.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            46516,
+            30702,
+            7058,
+            4811,
+            35776,
+            11080,
+            13,
+            50691
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.27867802153242394,
+          "compression_ratio": 1.1944444444444444,
+          "no_speech_prob": 0.02158040553331375,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.5,
+              "probability": 0.733008623123169
+            },
+            {
+              "word": " 지금은",
+              "start": 1.54,
+              "end": 2.12,
+              "probability": 0.9928959012031555
+            },
+            {
+              "word": " 아무",
+              "start": 2.12,
+              "end": 2.98,
+              "probability": 0.963726818561554
+            },
+            {
+              "word": " 말",
+              "start": 2.98,
+              "end": 3.2,
+              "probability": 0.99765944480896
+            },
+            {
+              "word": " 안",
+              "start": 3.2,
+              "end": 3.38,
+              "probability": 0.9987805485725403
+            },
+            {
+              "word": " 해도",
+              "start": 3.38,
+              "end": 3.52,
+              "probability": 0.8947522044181824
+            },
+            {
+              "word": " 돼.",
+              "start": 3.52,
+              "end": 3.98,
+              "probability": 0.9838031530380249
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 6.54,
+          "end": 10.74,
+          "text": " 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게.",
+          "tokens": [
+            50691,
+            41714,
+            22712,
+            7682,
+            1638,
+            2525,
+            103,
+            5642,
+            32087,
+            10474,
+            4279,
+            4811,
+            7726,
+            7058,
+            2240,
+            8097,
+            32112,
+            1810,
+            13,
+            51046
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.27867802153242394,
+          "compression_ratio": 1.1944444444444444,
+          "no_speech_prob": 0.02158040553331375,
+          "words": [
+            {
+              "word": " 네가",
+              "start": 6.31,
+              "end": 6.8,
+              "probability": 0.8284928202629089
+            },
+            {
+              "word": " 무슨",
+              "start": 6.8,
+              "end": 7.1,
+              "probability": 0.9920715689659119
+            },
+            {
+              "word": " 일을",
+              "start": 7.1,
+              "end": 7.48,
+              "probability": 0.9849534630775452
+            },
+            {
+              "word": " 겪었는지",
+              "start": 7.48,
+              "end": 8.16,
+              "probability": 0.9914582371711731
+            },
+            {
+              "word": " 내가",
+              "start": 8.16,
+              "end": 9.06,
+              "probability": 0.9109331965446472
+            },
+            {
+              "word": " 다",
+              "start": 9.06,
+              "end": 9.36,
+              "probability": 0.9925548434257507
+            },
+            {
+              "word": " 안다고",
+              "start": 9.36,
+              "end": 9.78,
+              "probability": 0.9105934202671051
+            },
+            {
+              "word": " 말하진",
+              "start": 9.78,
+              "end": 10.26,
+              "probability": 0.8396788438161215
+            },
+            {
+              "word": " 않을게.",
+              "start": 10.26,
+              "end": 10.74,
+              "probability": 0.9692432582378387
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 13.219999999999999,
+          "end": 16.68,
+          "text": " 다만 혼자 견디게 두고 싶지는 않아.",
+          "tokens": [
+            51046,
+            9586,
+            6478,
+            36028,
+            2525,
+            1698,
+            9520,
+            1810,
+            11915,
+            1313,
+            10785,
+            20508,
+            39860,
+            13,
+            51296
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.27867802153242394,
+          "compression_ratio": 1.1944444444444444,
+          "no_speech_prob": 0.02158040553331375,
+          "words": [
+            {
+              "word": " 다만",
+              "start": 13.219999999999999,
+              "end": 14.2,
+              "probability": 0.9909765422344208
+            },
+            {
+              "word": " 혼자",
+              "start": 14.2,
+              "end": 15.18,
+              "probability": 0.8005995154380798
+            },
+            {
+              "word": " 견디게",
+              "start": 15.18,
+              "end": 15.74,
+              "probability": 0.9607740342617035
+            },
+            {
+              "word": " 두고",
+              "start": 15.74,
+              "end": 16.02,
+              "probability": 0.9911644458770752
+            },
+            {
+              "word": " 싶지는",
+              "start": 16.02,
+              "end": 16.4,
+              "probability": 0.9868725836277008
+            },
+            {
+              "word": " 않아.",
+              "start": 16.4,
+              "end": 16.68,
+              "probability": 0.9898080229759216
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 10.67815679195337,
+      "reference_characters": 87,
+      "edit_distance": 38,
+      "cer": 0.4367816091954023
+    },
+    {
+      "arm": "step23",
+      "id": "long_comfort",
+      "seed": 1234,
+      "file": "step23/long_comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 27.30666666666667,
+      "sample_rate": 44100,
+      "peak": 0.5625,
+      "active_rms_median_dbfs": -22.40154457092285,
+      "relative_pause_ratio": 0.482051282051282,
+      "energy_p90_p10_db": 18.562107086181637,
+      "audio_sha256": "ae375449beb3ed17854c294f23eca053582686e10461e363ab99620c77f8eac9",
+      "expected_text": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. 나는 어디 안 가고, 여기서 기다릴게.",
+      "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 순부터 천천히 고르자. 네가 준비되면 그때 말해줘. 나는 어디 안 가고, 여기서 기다릴게.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.32,
+          "text": " 괜찮아. 지금은 아무 말 안 해도 돼.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            46516,
+            30702,
+            7058,
+            4811,
+            35776,
+            11080,
+            13,
+            50626
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.2176121798428622,
+          "compression_ratio": 1.3473684210526315,
+          "no_speech_prob": 0.005525136366486549,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.52,
+              "probability": 0.8165830969810486
+            },
+            {
+              "word": " 지금은",
+              "start": 1.56,
+              "end": 2.14,
+              "probability": 0.991316556930542
+            },
+            {
+              "word": " 아무",
+              "start": 2.14,
+              "end": 2.42,
+              "probability": 0.9872673153877258
+            },
+            {
+              "word": " 말",
+              "start": 2.42,
+              "end": 2.62,
+              "probability": 0.9972238540649414
+            },
+            {
+              "word": " 안",
+              "start": 2.62,
+              "end": 2.82,
+              "probability": 0.997729480266571
+            },
+            {
+              "word": " 해도",
+              "start": 2.82,
+              "end": 2.96,
+              "probability": 0.8930977582931519
+            },
+            {
+              "word": " 돼.",
+              "start": 2.96,
+              "end": 3.32,
+              "probability": 0.9763951301574707
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 4.82,
+          "end": 9.2,
+          "text": " 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게.",
+          "tokens": [
+            50626,
+            41714,
+            22712,
+            7682,
+            1638,
+            2525,
+            103,
+            5642,
+            32087,
+            10474,
+            4279,
+            4811,
+            7726,
+            7058,
+            2240,
+            8097,
+            32112,
+            1810,
+            13,
+            50912
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.2176121798428622,
+          "compression_ratio": 1.3473684210526315,
+          "no_speech_prob": 0.005525136366486549,
+          "words": [
+            {
+              "word": " 네가",
+              "start": 4.82,
+              "end": 5.48,
+              "probability": 0.7868495583534241
+            },
+            {
+              "word": " 무슨",
+              "start": 5.48,
+              "end": 5.72,
+              "probability": 0.9929323196411133
+            },
+            {
+              "word": " 일을",
+              "start": 5.72,
+              "end": 6.08,
+              "probability": 0.982050359249115
+            },
+            {
+              "word": " 겪었는지",
+              "start": 6.08,
+              "end": 6.74,
+              "probability": 0.9911296963691711
+            },
+            {
+              "word": " 내가",
+              "start": 6.74,
+              "end": 7.56,
+              "probability": 0.9061098098754883
+            },
+            {
+              "word": " 다",
+              "start": 7.56,
+              "end": 7.84,
+              "probability": 0.9915921688079834
+            },
+            {
+              "word": " 안다고",
+              "start": 7.84,
+              "end": 8.22,
+              "probability": 0.8871335685253143
+            },
+            {
+              "word": " 말하진",
+              "start": 8.22,
+              "end": 8.68,
+              "probability": 0.8764711221059164
+            },
+            {
+              "word": " 않을게.",
+              "start": 8.68,
+              "end": 9.2,
+              "probability": 0.9623838663101196
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 10.96,
+          "end": 15.6,
+          "text": " 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아.",
+          "tokens": [
+            50912,
+            9586,
+            6478,
+            36028,
+            2525,
+            1698,
+            9520,
+            1810,
+            11915,
+            1313,
+            10785,
+            20508,
+            39860,
+            13,
+            7543,
+            37426,
+            2230,
+            13,
+            51232
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.2176121798428622,
+          "compression_ratio": 1.3473684210526315,
+          "no_speech_prob": 0.005525136366486549,
+          "words": [
+            {
+              "word": " 다만",
+              "start": 10.94,
+              "end": 11.46,
+              "probability": 0.993409276008606
+            },
+            {
+              "word": " 혼자",
+              "start": 11.46,
+              "end": 12.28,
+              "probability": 0.7648775577545166
+            },
+            {
+              "word": " 견디게",
+              "start": 12.28,
+              "end": 12.8,
+              "probability": 0.9771556556224823
+            },
+            {
+              "word": " 두고",
+              "start": 12.8,
+              "end": 13.06,
+              "probability": 0.969882607460022
+            },
+            {
+              "word": " 싶지는",
+              "start": 13.06,
+              "end": 13.42,
+              "probability": 0.9802750647068024
+            },
+            {
+              "word": " 않아.",
+              "start": 13.42,
+              "end": 13.72,
+              "probability": 0.9895473718643188
+            },
+            {
+              "word": " 여기",
+              "start": 14.72,
+              "end": 14.96,
+              "probability": 0.9833515286445618
+            },
+            {
+              "word": " 앉아.",
+              "start": 14.96,
+              "end": 15.6,
+              "probability": 0.9943521320819855
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "seek": 0,
+          "start": 17.32,
+          "end": 18.88,
+          "text": " 순부터 천천히 고르자.",
+          "tokens": [
+            51232,
+            3471,
+            2163,
+            12130,
+            31076,
+            18906,
+            5905,
+            18556,
+            41390,
+            15876,
+            13,
+            51386
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.2176121798428622,
+          "compression_ratio": 1.3473684210526315,
+          "no_speech_prob": 0.005525136366486549,
+          "words": [
+            {
+              "word": " 순부터",
+              "start": 17.32,
+              "end": 17.8,
+              "probability": 0.7189327081044515
+            },
+            {
+              "word": " 천천히",
+              "start": 17.8,
+              "end": 18.4,
+              "probability": 0.996488352616628
+            },
+            {
+              "word": " 고르자.",
+              "start": 18.4,
+              "end": 18.88,
+              "probability": 0.9767717719078064
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "seek": 0,
+          "start": 20.36,
+          "end": 22.54,
+          "text": " 네가 준비되면 그때 말해줘.",
+          "tokens": [
+            51386,
+            41714,
+            18647,
+            49116,
+            238,
+            1894,
+            2708,
+            26788,
+            7058,
+            44487,
+            246,
+            13,
+            51570
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.2176121798428622,
+          "compression_ratio": 1.3473684210526315,
+          "no_speech_prob": 0.005525136366486549,
+          "words": [
+            {
+              "word": " 네가",
+              "start": 20.36,
+              "end": 20.64,
+              "probability": 0.9045108556747437
+            },
+            {
+              "word": " 준비되면",
+              "start": 20.64,
+              "end": 21.38,
+              "probability": 0.9813342332839966
+            },
+            {
+              "word": " 그때",
+              "start": 21.38,
+              "end": 21.94,
+              "probability": 0.8885051608085632
+            },
+            {
+              "word": " 말해줘.",
+              "start": 21.94,
+              "end": 22.54,
+              "probability": 0.9779435197512308
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "seek": 2254,
+          "start": 23.5,
+          "end": 27.06,
+          "text": " 나는 어디 안 가고, 여기서 기다릴게.",
+          "tokens": [
+            50364,
+            17955,
+            20879,
+            4811,
+            4147,
+            1313,
+            11,
+            25404,
+            31431,
+            15389,
+            1810,
+            13,
+            50614
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.43845840862819124,
+          "compression_ratio": 0.8448275862068966,
+          "no_speech_prob": 0.25678619742393494,
+          "words": [
+            {
+              "word": " 나는",
+              "start": 23.5,
+              "end": 24.32,
+              "probability": 0.6765275001525879
+            },
+            {
+              "word": " 어디",
+              "start": 24.32,
+              "end": 24.62,
+              "probability": 0.9753628373146057
+            },
+            {
+              "word": " 안",
+              "start": 24.62,
+              "end": 24.88,
+              "probability": 0.9838801026344299
+            },
+            {
+              "word": " 가고,",
+              "start": 24.88,
+              "end": 25.48,
+              "probability": 0.750449001789093
+            },
+            {
+              "word": " 여기서",
+              "start": 25.84,
+              "end": 26.3,
+              "probability": 0.9694038033485413
+            },
+            {
+              "word": " 기다릴게.",
+              "start": 26.3,
+              "end": 27.06,
+              "probability": 0.9913013180096945
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 15.236781958024949,
+      "reference_characters": 87,
+      "edit_distance": 1,
+      "cer": 0.011494252873563218
+    },
+    {
+      "arm": "step5",
+      "id": "long_comfort",
+      "seed": 1234,
+      "file": "step5/long_comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 35.75873015873016,
+      "sample_rate": 44100,
+      "peak": 0.39453125,
+      "active_rms_median_dbfs": -21.980037689208984,
+      "relative_pause_ratio": 0.757694459988808,
+      "energy_p90_p10_db": 19.849103546142576,
+      "audio_sha256": "ac1e7fb7b7c843bff602079563fb35b73a431f163410dfc597691d27b5cb04b6",
+      "expected_text": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. 나는 어디 안 가고, 여기서 기다릴게.",
+      "transcript": "괜찮아, 지금은 아무 말 안 해도 돼 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게 다만 혼자 견디게 두고 싶지는 않아 여기 앉아",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.94,
+          "text": " 괜찮아, 지금은 아무 말 안 해도 돼",
+          "tokens": [
+            50364,
+            45058,
+            11,
+            46516,
+            30702,
+            7058,
+            4811,
+            35776,
+            11080,
+            50646
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.26098860526571466,
+          "compression_ratio": 1.2364864864864864,
+          "no_speech_prob": 0.029987221583724022,
+          "words": [
+            {
+              "word": " 괜찮아,",
+              "start": 0.0,
+              "end": 0.52,
+              "probability": 0.833057701587677
+            },
+            {
+              "word": " 지금은",
+              "start": 1.54,
+              "end": 2.02,
+              "probability": 0.9965345859527588
+            },
+            {
+              "word": " 아무",
+              "start": 2.02,
+              "end": 3.0,
+              "probability": 0.9407088160514832
+            },
+            {
+              "word": " 말",
+              "start": 3.0,
+              "end": 3.24,
+              "probability": 0.997724711894989
+            },
+            {
+              "word": " 안",
+              "start": 3.24,
+              "end": 3.44,
+              "probability": 0.9964932799339294
+            },
+            {
+              "word": " 해도",
+              "start": 3.44,
+              "end": 3.58,
+              "probability": 0.8843606114387512
+            },
+            {
+              "word": " 돼",
+              "start": 3.58,
+              "end": 3.94,
+              "probability": 0.9758435487747192
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 5.64,
+          "end": 10.12,
+          "text": " 네가 무슨 일을 겪었는지 내가 다 안다고 말하진 않을게",
+          "tokens": [
+            50646,
+            41714,
+            22712,
+            7682,
+            1638,
+            2525,
+            103,
+            5642,
+            32087,
+            10474,
+            4279,
+            4811,
+            7726,
+            7058,
+            2240,
+            8097,
+            32112,
+            1810,
+            50977
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.26098860526571466,
+          "compression_ratio": 1.2364864864864864,
+          "no_speech_prob": 0.029987221583724022,
+          "words": [
+            {
+              "word": " 네가",
+              "start": 5.359999999999999,
+              "end": 5.84,
+              "probability": 0.2543729245662689
+            },
+            {
+              "word": " 무슨",
+              "start": 5.84,
+              "end": 6.14,
+              "probability": 0.9932669401168823
+            },
+            {
+              "word": " 일을",
+              "start": 6.14,
+              "end": 6.54,
+              "probability": 0.9844818711280823
+            },
+            {
+              "word": " 겪었는지",
+              "start": 6.54,
+              "end": 7.24,
+              "probability": 0.9925310909748077
+            },
+            {
+              "word": " 내가",
+              "start": 7.24,
+              "end": 8.32,
+              "probability": 0.9270074367523193
+            },
+            {
+              "word": " 다",
+              "start": 8.32,
+              "end": 8.64,
+              "probability": 0.9935296177864075
+            },
+            {
+              "word": " 안다고",
+              "start": 8.64,
+              "end": 9.1,
+              "probability": 0.9403862357139587
+            },
+            {
+              "word": " 말하진",
+              "start": 9.1,
+              "end": 9.58,
+              "probability": 0.8661318222681681
+            },
+            {
+              "word": " 않을게",
+              "start": 9.58,
+              "end": 10.12,
+              "probability": 0.9735718667507172
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 12.02,
+          "end": 15.52,
+          "text": " 다만 혼자 견디게 두고 싶지는 않아",
+          "tokens": [
+            50977,
+            9586,
+            6478,
+            36028,
+            2525,
+            1698,
+            9520,
+            1810,
+            11915,
+            1313,
+            10785,
+            20508,
+            39860,
+            51236
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.26098860526571466,
+          "compression_ratio": 1.2364864864864864,
+          "no_speech_prob": 0.029987221583724022,
+          "words": [
+            {
+              "word": " 다만",
+              "start": 12.02,
+              "end": 12.98,
+              "probability": 0.9365425109863281
+            },
+            {
+              "word": " 혼자",
+              "start": 12.98,
+              "end": 13.94,
+              "probability": 0.7332046627998352
+            },
+            {
+              "word": " 견디게",
+              "start": 13.94,
+              "end": 14.54,
+              "probability": 0.973402127623558
+            },
+            {
+              "word": " 두고",
+              "start": 14.54,
+              "end": 14.8,
+              "probability": 0.9723993241786957
+            },
+            {
+              "word": " 싶지는",
+              "start": 14.8,
+              "end": 15.18,
+              "probability": 0.985226958990097
+            },
+            {
+              "word": " 않아",
+              "start": 15.18,
+              "end": 15.52,
+              "probability": 0.9948087930679321
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "seek": 0,
+          "start": 17.44,
+          "end": 18.14,
+          "text": " 여기 앉아",
+          "tokens": [
+            51236,
+            7543,
+            37426,
+            2230,
+            51286
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.26098860526571466,
+          "compression_ratio": 1.2364864864864864,
+          "no_speech_prob": 0.029987221583724022,
+          "words": [
+            {
+              "word": " 여기",
+              "start": 17.2,
+              "end": 17.68,
+              "probability": 0.825147271156311
+            },
+            {
+              "word": " 앉아",
+              "start": 17.68,
+              "end": 18.14,
+              "probability": 0.9934202432632446
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 9.561941458145157,
+      "reference_characters": 87,
+      "edit_distance": 34,
+      "cer": 0.39080459770114945
+    },
+    {
+      "arm": "original",
+      "id": "whisper",
+      "seed": 4321,
+      "file": "original/whisper_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 9.148662131519274,
+      "sample_rate": 44100,
+      "peak": 0.435546875,
+      "active_rms_median_dbfs": -20.620155334472656,
+      "relative_pause_ratio": 0.636761487964989,
+      "energy_p90_p10_db": 18.7613525390625,
+      "audio_sha256": "0ab2e0fd467416d606b227c2d5348494ab296584a6dc1f1c664afc7854d04bfa",
+      "expected_text": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 8.38,
+          "text": " 괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            46516,
+            30702,
+            7058,
+            4811,
+            35776,
+            11080,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50820
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.372791588306427,
+          "compression_ratio": 0.8571428571428571,
+          "no_speech_prob": 0.012011311016976833,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.56,
+              "probability": 0.8870912194252014
+            },
+            {
+              "word": " 지금은",
+              "start": 2.02,
+              "end": 2.4,
+              "probability": 0.9942712783813477
+            },
+            {
+              "word": " 아무",
+              "start": 2.4,
+              "end": 3.6,
+              "probability": 0.9484803676605225
+            },
+            {
+              "word": " 말",
+              "start": 3.6,
+              "end": 3.84,
+              "probability": 0.9950129389762878
+            },
+            {
+              "word": " 안",
+              "start": 3.84,
+              "end": 4.04,
+              "probability": 0.998783528804779
+            },
+            {
+              "word": " 해도",
+              "start": 4.04,
+              "end": 4.16,
+              "probability": 0.9205437898635864
+            },
+            {
+              "word": " 돼.",
+              "start": 4.16,
+              "end": 4.48,
+              "probability": 0.9730604290962219
+            },
+            {
+              "word": " 나",
+              "start": 5.92,
+              "end": 6.26,
+              "probability": 0.9776952862739563
+            },
+            {
+              "word": " 여기",
+              "start": 6.26,
+              "end": 7.98,
+              "probability": 0.7135685086250305
+            },
+            {
+              "word": " 있어.",
+              "start": 7.98,
+              "end": 8.38,
+              "probability": 0.9408959746360779
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 3.254861749941483,
+      "reference_characters": 18,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step23",
+      "id": "whisper",
+      "seed": 4321,
+      "file": "step23/whisper_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 8.219863945578231,
+      "sample_rate": 44100,
+      "peak": 0.1904296875,
+      "active_rms_median_dbfs": -29.089887619018555,
+      "relative_pause_ratio": 0.5829268292682928,
+      "energy_p90_p10_db": 19.01024627685547,
+      "audio_sha256": "348a4f35647027ea9d1965fa5c0de67a2792328eda7f94bd0ba4efc1f66bde19",
+      "expected_text": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "transcript": "괜찮아, 지금은 아무 말 안 해도 돼, 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 7.94,
+          "text": " 괜찮아, 지금은 아무 말 안 해도 돼, 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            11,
+            46516,
+            30702,
+            7058,
+            4811,
+            35776,
+            11080,
+            11,
+            3948,
+            7543,
+            17300,
+            13,
+            50774
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5143373608589172,
+          "compression_ratio": 0.8571428571428571,
+          "no_speech_prob": 0.05438549444079399,
+          "words": [
+            {
+              "word": " 괜찮아,",
+              "start": 0.0,
+              "end": 0.5,
+              "probability": 0.9346983432769775
+            },
+            {
+              "word": " 지금은",
+              "start": 2.06,
+              "end": 2.38,
+              "probability": 0.9931852221488953
+            },
+            {
+              "word": " 아무",
+              "start": 2.38,
+              "end": 2.68,
+              "probability": 0.972262978553772
+            },
+            {
+              "word": " 말",
+              "start": 2.68,
+              "end": 2.88,
+              "probability": 0.9934027791023254
+            },
+            {
+              "word": " 안",
+              "start": 2.88,
+              "end": 3.08,
+              "probability": 0.9969595670700073
+            },
+            {
+              "word": " 해도",
+              "start": 3.08,
+              "end": 3.24,
+              "probability": 0.9227734804153442
+            },
+            {
+              "word": " 돼,",
+              "start": 3.24,
+              "end": 3.58,
+              "probability": 0.9812321662902832
+            },
+            {
+              "word": " 나",
+              "start": 4.2,
+              "end": 5.66,
+              "probability": 0.9847503900527954
+            },
+            {
+              "word": " 여기",
+              "start": 5.66,
+              "end": 7.48,
+              "probability": 0.7939264178276062
+            },
+            {
+              "word": " 있어.",
+              "start": 7.48,
+              "end": 7.94,
+              "probability": 0.9512081742286682
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.9807099169120193,
+      "reference_characters": 18,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step5",
+      "id": "whisper",
+      "seed": 4321,
+      "file": "step5/whisper_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 5.2477097505668935,
+      "sample_rate": 44100,
+      "peak": 0.5859375,
+      "active_rms_median_dbfs": -18.32303237915039,
+      "relative_pause_ratio": 0.46183206106870234,
+      "energy_p90_p10_db": 19.657605171203613,
+      "audio_sha256": "74c0fc9f20e5522605b7960b9703bd06d7ba7cdd57c7f6dac5f554ed3a5f1bbb",
+      "expected_text": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "transcript": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 0.52,
+          "text": " 괜찮아.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            50444
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.40870227813720705,
+          "compression_ratio": 0.8571428571428571,
+          "no_speech_prob": 0.008290683850646019,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.52,
+              "probability": 0.9280516505241394
+            }
+          ]
+        },
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 1.48,
+          "end": 3.1,
+          "text": " 지금은 아무 말 안 해도 돼.",
+          "tokens": [
+            50444,
+            46516,
+            30702,
+            7058,
+            4811,
+            35776,
+            11080,
+            13,
+            50574
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.40870227813720705,
+          "compression_ratio": 0.8571428571428571,
+          "no_speech_prob": 0.008290683850646019,
+          "words": [
+            {
+              "word": " 지금은",
+              "start": 1.48,
+              "end": 2.04,
+              "probability": 0.9868360757827759
+            },
+            {
+              "word": " 아무",
+              "start": 2.04,
+              "end": 2.34,
+              "probability": 0.9735418558120728
+            },
+            {
+              "word": " 말",
+              "start": 2.34,
+              "end": 2.54,
+              "probability": 0.9968493580818176
+            },
+            {
+              "word": " 안",
+              "start": 2.54,
+              "end": 2.7,
+              "probability": 0.9972690939903259
+            },
+            {
+              "word": " 해도",
+              "start": 2.7,
+              "end": 2.82,
+              "probability": 0.9222339987754822
+            },
+            {
+              "word": " 돼.",
+              "start": 2.82,
+              "end": 3.1,
+              "probability": 0.978793203830719
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 4.12,
+          "end": 4.98,
+          "text": " 나 여기 있어.",
+          "tokens": [
+            50574,
+            3948,
+            7543,
+            17300,
+            13,
+            50624
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.40870227813720705,
+          "compression_ratio": 0.8571428571428571,
+          "no_speech_prob": 0.008290683850646019,
+          "words": [
+            {
+              "word": " 나",
+              "start": 4.12,
+              "end": 4.38,
+              "probability": 0.9902170896530151
+            },
+            {
+              "word": " 여기",
+              "start": 4.38,
+              "end": 4.64,
+              "probability": 0.9932253956794739
+            },
+            {
+              "word": " 있어.",
+              "start": 4.64,
+              "end": 4.98,
+              "probability": 0.981061577796936
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 3.5820607501082122,
+      "reference_characters": 18,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "original",
+      "id": "comfort",
+      "seed": 1234,
+      "file": "original/comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.622312925170068,
+      "sample_rate": 44100,
+      "peak": 0.234375,
+      "active_rms_median_dbfs": -26.288366317749023,
+      "relative_pause_ratio": 0.4530386740331491,
+      "energy_p90_p10_db": 20.983518981933592,
+      "audio_sha256": "0dec144ba696df03e8dfe255bb3734be4051e386a496e315affa414b8e59b12f",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.32,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50544
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5504614512125651,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.03218274563550949,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.48,
+              "probability": 0.8818613290786743
+            },
+            {
+              "word": " 나",
+              "start": 1.7,
+              "end": 2.44,
+              "probability": 0.9878630638122559
+            },
+            {
+              "word": " 여기",
+              "start": 2.44,
+              "end": 2.88,
+              "probability": 0.9669790267944336
+            },
+            {
+              "word": " 있어.",
+              "start": 2.88,
+              "end": 3.32,
+              "probability": 0.9418912529945374
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.811319208936766,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step23",
+      "id": "comfort",
+      "seed": 1234,
+      "file": "step23/comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.9257142857142857,
+      "sample_rate": 44100,
+      "peak": 0.4609375,
+      "active_rms_median_dbfs": -20.29007339477539,
+      "relative_pause_ratio": 0.4178082191780822,
+      "energy_p90_p10_db": 17.586789321899417,
+      "audio_sha256": "93f70f574d0f359f1caaf79b9d6be3f1490d5bd4f1e66f6eac715a6b6de5209c",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.6,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50514
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.49903032514784074,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.028036579489707947,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.44,
+              "probability": 0.9089968204498291
+            },
+            {
+              "word": " 나",
+              "start": 1.52,
+              "end": 1.96,
+              "probability": 0.9895303249359131
+            },
+            {
+              "word": " 여기",
+              "start": 1.96,
+              "end": 2.24,
+              "probability": 0.9929714798927307
+            },
+            {
+              "word": " 있어.",
+              "start": 2.24,
+              "end": 2.6,
+              "probability": 0.9616745114326477
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.7214360830839723,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step5",
+      "id": "comfort",
+      "seed": 1234,
+      "file": "step5/comfort_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 4.133151927437642,
+      "sample_rate": 44100,
+      "peak": 0.251953125,
+      "active_rms_median_dbfs": -23.738954544067383,
+      "relative_pause_ratio": 0.558252427184466,
+      "energy_p90_p10_db": 20.1893310546875,
+      "audio_sha256": "d1205dd28f46def6832d4a77d36d5ac59fdeca4bb2028d2e4014cd7b9cb96daf",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.5,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50564
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5982352362738715,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.008999667130410671,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.5,
+              "probability": 0.8520684838294983
+            },
+            {
+              "word": " 나",
+              "start": 2.02,
+              "end": 2.88,
+              "probability": 0.9902361035346985
+            },
+            {
+              "word": " 여기",
+              "start": 2.88,
+              "end": 3.14,
+              "probability": 0.9927322268486023
+            },
+            {
+              "word": " 있어.",
+              "start": 3.14,
+              "end": 3.5,
+              "probability": 0.9650989174842834
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.6857880000025034,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "original",
+      "id": "comfort",
+      "seed": 4321,
+      "file": "original/comfort_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.8080725623582765,
+      "sample_rate": 44100,
+      "peak": 0.37890625,
+      "active_rms_median_dbfs": -21.068035125732422,
+      "relative_pause_ratio": 0.5,
+      "energy_p90_p10_db": 18.29126319885254,
+      "audio_sha256": "3912ef49bebed63876118a830b607c1c0516ff5668c6e9c30e7b977379eba5d9",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.48,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50554
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5982525613572862,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.017961163073778152,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.54,
+              "probability": 0.8173896074295044
+            },
+            {
+              "word": " 나",
+              "start": 1.66,
+              "end": 2.26,
+              "probability": 0.983055591583252
+            },
+            {
+              "word": " 여기",
+              "start": 2.26,
+              "end": 3.08,
+              "probability": 0.8838469982147217
+            },
+            {
+              "word": " 있어.",
+              "start": 3.08,
+              "end": 3.48,
+              "probability": 0.9446231722831726
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.915726790903136,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step23",
+      "id": "comfort",
+      "seed": 4321,
+      "file": "step23/comfort_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.2043537414965986,
+      "sample_rate": 44100,
+      "peak": 0.279296875,
+      "active_rms_median_dbfs": -24.576929092407227,
+      "relative_pause_ratio": 0.45625000000000004,
+      "energy_p90_p10_db": 19.0835693359375,
+      "audio_sha256": "6396b1a27ece43d67f4e1693e898720a3e821919791b50d81bb98e2ae8978080",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.92,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50524
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.512586858537462,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.005997891072183847,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.52,
+              "probability": 0.9317444562911987
+            },
+            {
+              "word": " 나",
+              "start": 1.36,
+              "end": 2.26,
+              "probability": 0.9886935353279114
+            },
+            {
+              "word": " 여기",
+              "start": 2.26,
+              "end": 2.54,
+              "probability": 0.9929722547531128
+            },
+            {
+              "word": " 있어.",
+              "start": 2.54,
+              "end": 2.92,
+              "probability": 0.9491142630577087
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 3.400701083941385,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step5",
+      "id": "comfort",
+      "seed": 4321,
+      "file": "step5/comfort_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.297233560090703,
+      "sample_rate": 44100,
+      "peak": 0.328125,
+      "active_rms_median_dbfs": -23.774492263793945,
+      "relative_pause_ratio": 0.41463414634146345,
+      "energy_p90_p10_db": 16.08302593231201,
+      "audio_sha256": "4b35bbd72d3e1d8bfcd96e0e8cbf8fe6fc99be974af7ed19fd10790af87d2606",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.02,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50528
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5456687609354655,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.009013359434902668,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.5,
+              "probability": 0.8926384449005127
+            },
+            {
+              "word": " 나",
+              "start": 1.3,
+              "end": 1.98,
+              "probability": 0.9902355074882507
+            },
+            {
+              "word": " 여기",
+              "start": 1.98,
+              "end": 2.62,
+              "probability": 0.9245184659957886
+            },
+            {
+              "word": " 있어.",
+              "start": 2.62,
+              "end": 3.02,
+              "probability": 0.922818124294281
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 3.581303833052516,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "original",
+      "id": "contained_anger",
+      "seed": 1234,
+      "file": "original/contained_anger_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.972154195011338,
+      "sample_rate": 44100,
+      "peak": 0.53125,
+      "active_rms_median_dbfs": -19.59971809387207,
+      "relative_pause_ratio": 0.44594594594594594,
+      "energy_p90_p10_db": 17.936945533752443,
+      "audio_sha256": "f7c8ef774332a2512a4ce18f0f25d58ea9528b75381ff705f68cf4c06d9e1b52",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.72,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50514
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5225164095560709,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.0069837854243814945,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.52,
+              "probability": 0.9162073731422424
+            },
+            {
+              "word": " 나",
+              "start": 1.32,
+              "end": 2.0,
+              "probability": 0.9901360869407654
+            },
+            {
+              "word": " 여기",
+              "start": 2.0,
+              "end": 2.34,
+              "probability": 0.984468400478363
+            },
+            {
+              "word": " 있어.",
+              "start": 2.34,
+              "end": 2.72,
+              "probability": 0.9095731973648071
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.786542583955452,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step23",
+      "id": "contained_anger",
+      "seed": 1234,
+      "file": "step23/contained_anger_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.8328344671201813,
+      "sample_rate": 44100,
+      "peak": 0.455078125,
+      "active_rms_median_dbfs": -19.24542236328125,
+      "relative_pause_ratio": 0.42553191489361697,
+      "energy_p90_p10_db": 17.8929500579834,
+      "audio_sha256": "008c0f65657f6d5b1822ff20867d7d8fd5e0170d0d3ae2a68a87ec6236aad365",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.56,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50504
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.4902882046169705,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.0011879897210747004,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.56,
+              "probability": 0.8902848362922668
+            },
+            {
+              "word": " 나",
+              "start": 1.3,
+              "end": 1.92,
+              "probability": 0.9872554540634155
+            },
+            {
+              "word": " 여기",
+              "start": 1.92,
+              "end": 2.2,
+              "probability": 0.9859853982925415
+            },
+            {
+              "word": " 있어.",
+              "start": 2.2,
+              "end": 2.56,
+              "probability": 0.9440405964851379
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 3.0476714589167386,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step5",
+      "id": "contained_anger",
+      "seed": 1234,
+      "file": "step5/contained_anger_s1234.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 2.786394557823129,
+      "sample_rate": 44100,
+      "peak": 0.357421875,
+      "active_rms_median_dbfs": -23.71248435974121,
+      "relative_pause_ratio": 0.48920863309352514,
+      "energy_p90_p10_db": 25.031736373901367,
+      "audio_sha256": "6080737027f53b1ba152f24991bdcebcf8e8cb85b8f84a987984af9f8f52eab0",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.48,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50502
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5562692218356662,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.004496886860579252,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.44,
+              "probability": 0.9262451529502869
+            },
+            {
+              "word": " 나",
+              "start": 1.16,
+              "end": 1.9,
+              "probability": 0.9903614521026611
+            },
+            {
+              "word": " 여기",
+              "start": 1.9,
+              "end": 2.14,
+              "probability": 0.9919747710227966
+            },
+            {
+              "word": " 있어.",
+              "start": 2.14,
+              "end": 2.48,
+              "probability": 0.9483258724212646
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.29438883299008,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "original",
+      "id": "contained_anger",
+      "seed": 4321,
+      "file": "original/contained_anger_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.7151927437641725,
+      "sample_rate": 44100,
+      "peak": 0.2294921875,
+      "active_rms_median_dbfs": -25.929872512817383,
+      "relative_pause_ratio": 0.4864864864864865,
+      "energy_p90_p10_db": 24.4638973236084,
+      "audio_sha256": "b264d23322087f705aebdc73bdddf65dd8c609e172492d785773e2915fa508e7",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아 나 여기 있어",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.48,
+          "text": " 괜찮아 나 여기 있어",
+          "tokens": [
+            50364,
+            45058,
+            3948,
+            7543,
+            17300,
+            50552
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.6578760147094727,
+          "compression_ratio": 0.7105263157894737,
+          "no_speech_prob": 0.002337561920285225,
+          "words": [
+            {
+              "word": " 괜찮아",
+              "start": 0.0,
+              "end": 0.56,
+              "probability": 0.9241938591003418
+            },
+            {
+              "word": " 나",
+              "start": 0.56,
+              "end": 2.7,
+              "probability": 0.6563910245895386
+            },
+            {
+              "word": " 여기",
+              "start": 2.7,
+              "end": 3.04,
+              "probability": 0.9924677014350891
+            },
+            {
+              "word": " 있어",
+              "start": 3.04,
+              "end": 3.48,
+              "probability": 0.9214982986450195
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.300746959168464,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step23",
+      "id": "contained_anger",
+      "seed": 4321,
+      "file": "step23/contained_anger_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.1579138321995464,
+      "sample_rate": 44100,
+      "peak": 0.408203125,
+      "active_rms_median_dbfs": -22.62706756591797,
+      "relative_pause_ratio": 0.5159235668789809,
+      "energy_p90_p10_db": 18.398552894592285,
+      "audio_sha256": "589fbb9400617a73f6b38353cfd7a5e0d6786ff72862dab1d2a286e6c31d4e98",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.9,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50522
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5378741158379449,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.005207224749028683,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.44,
+              "probability": 0.8853517770767212
+            },
+            {
+              "word": " 나",
+              "start": 1.48,
+              "end": 2.28,
+              "probability": 0.9885883331298828
+            },
+            {
+              "word": " 여기",
+              "start": 2.28,
+              "end": 2.54,
+              "probability": 0.9764417409896851
+            },
+            {
+              "word": " 있어.",
+              "start": 2.54,
+              "end": 2.9,
+              "probability": 0.8829687833786011
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.3116799171548337,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step5",
+      "id": "contained_anger",
+      "seed": 4321,
+      "file": "step5/contained_anger_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.4829931972789114,
+      "sample_rate": 44100,
+      "peak": 0.1708984375,
+      "active_rms_median_dbfs": -26.834922790527344,
+      "relative_pause_ratio": 0.5172413793103448,
+      "energy_p90_p10_db": 20.279527282714845,
+      "audio_sha256": "547eb37c7f0865599958040c03aa8a7d51ce4fa5ebc82bea3f048fa9ee7b42d6",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.16,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50539
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.571749316321479,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.0037238425575196743,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.54,
+              "probability": 0.9324073791503906
+            },
+            {
+              "word": " 나",
+              "start": 1.66,
+              "end": 2.56,
+              "probability": 0.9869086146354675
+            },
+            {
+              "word": " 여기",
+              "start": 2.56,
+              "end": 2.8,
+              "probability": 0.9914507269859314
+            },
+            {
+              "word": " 있어.",
+              "start": 2.8,
+              "end": 3.16,
+              "probability": 0.9536160826683044
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.9532894159201533,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "original",
+      "id": "relief",
+      "seed": 1234,
+      "file": "original/relief_s1234.wav",
+      "truncated": true,
+      "finish_reason": "length",
+      "seconds": 11.888616780045352,
+      "sample_rate": 44100,
+      "peak": 0.365234375,
+      "active_rms_median_dbfs": -59.963966369628906,
+      "relative_pause_ratio": 0.7693602693602694,
+      "energy_p90_p10_db": 43.205285644531244,
+      "audio_sha256": "4ae8137369e5481ffd17f6b0fd0267215ac4eae7232a74a84c1f52db37cc1450",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 0.54,
+          "text": " 괜찮아",
+          "tokens": [
+            50364,
+            45058,
+            50464
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5695444345474243,
+          "compression_ratio": 0.5,
+          "no_speech_prob": 0.02526240050792694,
+          "words": [
+            {
+              "word": " 괜찮아",
+              "start": 0.0,
+              "end": 0.54,
+              "probability": 0.917712390422821
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.334950582822785,
+      "reference_characters": 8,
+      "edit_distance": 5,
+      "cer": 0.625
+    },
+    {
+      "arm": "step23",
+      "id": "relief",
+      "seed": 1234,
+      "file": "step23/relief_s1234.wav",
+      "truncated": true,
+      "finish_reason": "length",
+      "seconds": 11.888616780045352,
+      "sample_rate": 44100,
+      "peak": 0.255859375,
+      "active_rms_median_dbfs": -68.87922668457031,
+      "relative_pause_ratio": 0.7508417508417509,
+      "energy_p90_p10_db": 44.627069091796876,
+      "audio_sha256": "4445c9deb687986b6ec19b2e126ce17b86e160cbc8104f816dbe0342ab9678c4",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 0.54,
+          "text": " 괜찮아",
+          "tokens": [
+            50364,
+            45058,
+            50464
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.7121090292930603,
+          "compression_ratio": 0.5,
+          "no_speech_prob": 0.0368461012840271,
+          "words": [
+            {
+              "word": " 괜찮아",
+              "start": 0.0,
+              "end": 0.54,
+              "probability": 0.9397549629211426
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.0045147500932217,
+      "reference_characters": 8,
+      "edit_distance": 5,
+      "cer": 0.625
+    },
+    {
+      "arm": "step5",
+      "id": "relief",
+      "seed": 1234,
+      "file": "step5/relief_s1234.wav",
+      "truncated": true,
+      "finish_reason": "length",
+      "seconds": 11.888616780045352,
+      "sample_rate": 44100,
+      "peak": 0.3828125,
+      "active_rms_median_dbfs": -63.19108963012695,
+      "relative_pause_ratio": 0.3855218855218855,
+      "energy_p90_p10_db": 22.611563110351568,
+      "audio_sha256": "898fcb887b650e775bab6a79192507eba0ea6baa643490263c459f1e18e7d6b3",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 0.58,
+          "text": " 괜찮아",
+          "tokens": [
+            50364,
+            45058,
+            50464
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.7026222944259644,
+          "compression_ratio": 0.5,
+          "no_speech_prob": 0.01395058911293745,
+          "words": [
+            {
+              "word": " 괜찮아",
+              "start": 0.0,
+              "end": 0.58,
+              "probability": 0.9283879399299622
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 1.9437274998053908,
+      "reference_characters": 8,
+      "edit_distance": 5,
+      "cer": 0.625
+    },
+    {
+      "arm": "original",
+      "id": "relief",
+      "seed": 4321,
+      "file": "original/relief_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.7151927437641725,
+      "sample_rate": 44100,
+      "peak": 0.2890625,
+      "active_rms_median_dbfs": -23.978708267211914,
+      "relative_pause_ratio": 0.3783783783783784,
+      "energy_p90_p10_db": 18.65360298156738,
+      "audio_sha256": "166b1634a2f4e856d335f312fa0de6e28aa83962723dd877f0fe5ac9d16da995",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아 나 여기 있어",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.4,
+          "text": " 괜찮아 나 여기 있어",
+          "tokens": [
+            50364,
+            45058,
+            3948,
+            7543,
+            17300,
+            50548
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.6198986598423549,
+          "compression_ratio": 0.7105263157894737,
+          "no_speech_prob": 0.008994183503091335,
+          "words": [
+            {
+              "word": " 괜찮아",
+              "start": 0.0,
+              "end": 0.66,
+              "probability": 0.8609223365783691
+            },
+            {
+              "word": " 나",
+              "start": 0.66,
+              "end": 2.04,
+              "probability": 0.47059667110443115
+            },
+            {
+              "word": " 여기",
+              "start": 2.04,
+              "end": 2.96,
+              "probability": 0.9709683060646057
+            },
+            {
+              "word": " 있어",
+              "start": 2.96,
+              "end": 3.4,
+              "probability": 0.8889572024345398
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 2.385168957989663,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step23",
+      "id": "relief",
+      "seed": 4321,
+      "file": "step23/relief_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.575873015873016,
+      "sample_rate": 44100,
+      "peak": 0.486328125,
+      "active_rms_median_dbfs": -19.483259201049805,
+      "relative_pause_ratio": 0.4887640449438202,
+      "energy_p90_p10_db": 18.175382614135742,
+      "audio_sha256": "00749ebc5990fe1730a2da018d847dce9edc1cbdc017e2b00262340d1ef10a9c",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.24,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50544
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5656269391377767,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.008850594982504845,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.48,
+              "probability": 0.9203528165817261
+            },
+            {
+              "word": " 나",
+              "start": 1.66,
+              "end": 2.54,
+              "probability": 0.9906831979751587
+            },
+            {
+              "word": " 여기",
+              "start": 2.54,
+              "end": 2.82,
+              "probability": 0.9859647750854492
+            },
+            {
+              "word": " 있어.",
+              "start": 2.82,
+              "end": 3.24,
+              "probability": 0.9036865830421448
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 3.9011400828603655,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    },
+    {
+      "arm": "step5",
+      "id": "relief",
+      "seed": 4321,
+      "file": "step5/relief_s4321.wav",
+      "truncated": false,
+      "finish_reason": "eos",
+      "seconds": 3.250793650793651,
+      "sample_rate": 44100,
+      "peak": 0.48046875,
+      "active_rms_median_dbfs": -19.05704116821289,
+      "relative_pause_ratio": 0.4814814814814815,
+      "energy_p90_p10_db": 18.746209621429443,
+      "audio_sha256": "e28f6f2166b025a487025c2724524f98c0e2cc3dbaa81714494fd6a0d7dcc18d",
+      "expected_text": "괜찮아. 나 여기 있어.",
+      "transcript": "괜찮아. 나 여기 있어.",
+      "segments": [
+        {
+          "id": 0,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.9,
+          "text": " 괜찮아. 나 여기 있어.",
+          "tokens": [
+            50364,
+            45058,
+            13,
+            3948,
+            7543,
+            17300,
+            13,
+            50526
+          ],
+          "temperature": 0,
+          "avg_logprob": -0.5732840432061089,
+          "compression_ratio": 0.725,
+          "no_speech_prob": 0.005226108245551586,
+          "words": [
+            {
+              "word": " 괜찮아.",
+              "start": 0.0,
+              "end": 0.48,
+              "probability": 0.9172406792640686
+            },
+            {
+              "word": " 나",
+              "start": 1.72,
+              "end": 2.24,
+              "probability": 0.991374671459198
+            },
+            {
+              "word": " 여기",
+              "start": 2.24,
+              "end": 2.52,
+              "probability": 0.9923332929611206
+            },
+            {
+              "word": " 있어.",
+              "start": 2.52,
+              "end": 2.9,
+              "probability": 0.9519534111022949
+            }
+          ]
+        }
+      ],
+      "asr_seconds": 4.3222387079149485,
+      "reference_characters": 8,
+      "edit_distance": 0,
+      "cer": 0.0
+    }
+  ],
+  "complete": true
+}

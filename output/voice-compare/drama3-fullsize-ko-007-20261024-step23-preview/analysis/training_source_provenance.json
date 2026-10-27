@@ -1,0 +1,27 @@
+{
+  "data.py": {
+    "old_archived_hash": "c144aa030a935dd85ab08f32d83f5f4346f3a2b098f6f07d6f943870f7fef2c5",
+    "current_hash": "c144aa030a935dd85ab08f32d83f5f4346f3a2b098f6f07d6f943870f7fef2c5",
+    "same_as_archived_training_code": true
+  },
+  "core.py": {
+    "old_archived_hash": "9e485232be6a5a58f3995402e21b00675d75b99ed16e104cf63a641970c6dde9",
+    "current_hash": "9e485232be6a5a58f3995402e21b00675d75b99ed16e104cf63a641970c6dde9",
+    "same_as_archived_training_code": true
+  },
+  "korean_teacher.py": {
+    "old_archived_hash": "fad65c0400f7e5a0873515c80aaebd53e48afb9f32f2e324b7cb84deac958e79",
+    "current_hash": "fad65c0400f7e5a0873515c80aaebd53e48afb9f32f2e324b7cb84deac958e79",
+    "same_as_archived_training_code": true
+  },
+  "prepare_007.py": {
+    "old_archived_hash": "411a0f08d7af50cfb34a6ca404506d941591486d3daac2f1c2b33b24f083223e",
+    "current_hash": "411a0f08d7af50cfb34a6ca404506d941591486d3daac2f1c2b33b24f083223e",
+    "same_as_archived_training_code": true
+  },
+  "matched_fullsize.py": {
+    "old_archived_hash": "ce19483818cc2028b5d3b56069a71a56bf8feb37eb5f2e8acbb875e5867466de",
+    "current_hash": "ce19483818cc2028b5d3b56069a71a56bf8feb37eb5f2e8acbb875e5867466de",
+    "same_as_archived_training_code": true
+  }
+}

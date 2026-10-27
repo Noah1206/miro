@@ -1,0 +1,154 @@
+[
+  {
+    "page": "language",
+    "dialogs": 0,
+    "headingSize": "28px",
+    "headingWeight": "600",
+    "mainText": "언어\n\n메뉴·버튼 같은 앱 화면과 캐릭터가 보내는 대화·문자가 모두 이 언어로 바뀌어요. 캐릭터 이름과 작성자가 쓴 소개글은 원래 언어 그대로 보여요.\n\n한국어\nEnglish\n日本語\n中文",
+    "overflow": false,
+    "title": "언어",
+    "url": "/my/language",
+    "console": []
+  },
+  {
+    "page": "persona",
+    "dialogs": 0,
+    "headingSize": "28px",
+    "headingWeight": "600",
+    "mainText": "내 페르소나\n\n새 대화에서 기본값으로 불러와요. 대화방마다 따로 바꿀 수 있어요.\n\n이름*\n캐릭터가 대화에서 부를 이름이에요.\n성별\n밝히지 않음\n여성\n남성\n나에 대해\n나이·외모·성격·직업처럼 캐릭터가 알았으면 하는 것을 적어 주세요. 비워 둬도 돼요.\n저장",
+    "overflow": false,
+    "title": "내 페르소나",
+    "url": "/persona",
+    "console": []
+  },
+  {
+    "page": "permissions",
+    "dialogs": 0,
+    "headingSize": "28px",
+    "headingWeight": "600",
+    "mainText": "",
+    "overflow": false,
+    "title": "권한",
+    "url": "/my/permissions",
+    "console": []
+  },
+  {
+    "page": "ai-data",
+    "dialogs": 0,
+    "headingSize": "28px",
+    "headingWeight": "600",
+    "mainText": "AI 개선 참여\n\n참여하지 않아도 같은 기능과 품질을 이용할 수 있어요.\n\n대화 품질 평가에 참여하기\n\n일부 대화를 개인정보 가림 처리 후 품질 검토에 사용해요. 수집된 자료는 최대 30일 보관하고, 참여를 끄면 그동안 모인 자료를 삭제해요.\n\n모델 학습을 위한 데이터 제공에 동의하기\n\n동의한 대화와 피드백 중 개인정보·민감정보 검토와 품질 검사를 통과한 자료만 별도로 선정해요. 대화 원본을 자동으로 학습하지 않아요. 언제든 참여를 중단할 수 있고, 중단하면 제공된 피드백을 삭제해요.\n\n저장하기",
+    "overflow": false,
+    "title": "AI 개선 참여",
+    "url": "/my/ai-data",
+    "console": []
+  },
+  {
+    "page": "permissions-recheck",
+    "mainText": "권한\n\n각 권한은 아래 용도로만 쓰이며, 동의 전에는 사용하지 않습니다.\n\n알림\n\n캐릭터가 문자로 먼저 연락할 때 씁니다. 앱을 닫아도 받으려면 기기마다 한 번 켜 주세요.\n\n알림을 켠 기기 · 3대\n\n테스트 알림 보내기\n\n이미지 업로드\n\nFace Cast 참고 이미지로만 사용하며, 실존 인물 기반 성적 표현에는 사용하지 않습니다.\n\n동의",
+    "overflow": false,
+    "title": "권한",
+    "url": "/my/permissions",
+    "console": []
+  },
+  {
+    "page": "characters",
+    "mainText": "내가 만든 캐릭터\n전체\n공개\n비공개\n임시저장\n0개\n\n오호님이 만든 캐릭터가 아직 없어요",
+    "overflow": false,
+    "title": "내가 만든 캐릭터",
+    "url": "/my/characters",
+    "console": []
+  },
+  {
+    "page": "explore",
+    "mainText": "탐색\n최신순\n랭킹순\n후기순\n홈\n전체 이야기\n지로한\n#현대판타지\n#가이드버스\n#전담제안\n#앙숙\n#에스퍼\n감재오\n#현대판타지\n#가이드버스\n#동청연구\n#비밀테이프\n#연구원\n육채원\n#현대판타지\n#가이드버스\n#선후배\n#수습평가\n#가이드\n봉도원\n#현대\n#오피스판타지\n#욕망일기\n#전주인\n#오피스\n원선우\n#현대\n#오피스판타지\n#욕망일기\n#스카우트\n#오피스\n모용결\n#동양무협\n#마교\n#호위\n#과묵\n#무협\n사마진\n#동양무협\n#마교\n#참모\n#계략\n#무협\n당기연\n#동양무협\n#당문\n#라이벌\n#거래\n#무협\n남궁현\n#동양무협\n#정파\n#재회\n#보은\n#무협\n단소령\n#동양무협\n#마교\n#제자\n#다정\n#무협\n석하원\n#현대\n#연예계\n#오피스\n#계약\n#법무팀장\n표지안\n#현대\n#연예계\n#예능\n#러브라인\n#아이돌\n이재경\n#현대\n#고향재회\n#소꿉친구\n#늦은고백\n#고향\n피도원\n#현대\n#오메가버스\n#생존자\n#부두\n#노동자\n소이현\n#현대\n#오메가버스\n#법정\n#유족\n#변호사\n우채하\n#현대\n#오메가버스\n#비서\n#비밀\n#베타\n응소휘\n#현대판타지\n#수인\n#정보상\n#능글계략\n#매\n낭은규\n#현대판타지\n#수인\n#집행관\n#금욕원칙\n#늑대\n탁세린\n#현대판타지\n#수인\n#누명\n#까칠순정\n#흑호\n윤재하\n#현대\n#오피스판타지\n#욕망일기\n#7년짝사랑\n#오피스\n연이도\n#현대판타지\n#가이드버스\n#동청\n#시범평가\n#에스퍼\n천세진\n#동양무협\n#마교\n#시한부\n#의원\n#무협\n윤시온\n#현대\n#연예계\n#첫사랑재회\n#생방송고백\n#재회\n진태경\n#현대\n#오메가버스\n#계약약혼\n#시한\n#우성알파\n탁무원\n#현대판타지\n#수인\n#길줍\n#다정집착\n#흑호\n차도겸\n#현대\n#야쿠자느와르\n#경호\n#야쿠자\n#느와르\n백도현\n#현대판타지\n#기억미스터리\n#거래\n#기억\n#전당포\n서이안\n#현대\n#심야미스터리\n#잔잔한집착\n#라디오\n#DJ\n오준서\n#아포칼립스\n#좀비생존\n#시한\n#선배\n#고립\n류하람\n#현대판타지\n#고딕\n#뱀파이어\n#시한\n#드라큘라\n박도하\n#학원\n#비밀\n#청춘로맨스\n#친구\n#아이돌\n정시우\n#학원미스터리\n#실종\n#공범\n#학원\n#미스터리\n이태오\n#학원판타지\n#감정능력\n#순애\n#학원\n#능력자\n한지섭\n#동양판타지\n#정략혼\n#암살\n#혐관\n#인질\n하진혁\n#판타지\n#아카데미\n#혐관\n#파트너\n#능력자\n구만석\n#현대\n#느와르\n#숨겨주기\n#동거\n#조폭\n강세헌\n#현대판타지\n#헌터물\n#계약\n#집착\n#게이트",
+    "overflow": false,
+    "title": "탐색",
+    "url": "/explore",
+    "console": []
+  },
+  {
+    "page": "search",
+    "mainText": "검색\n최근 검색어\n\n최근 검색어가 없어요\n\n장르\n로맨스\n일상\n판타지\n드라마\n미스터리\n느와르\n관계\n친구\n연인\n짝사랑\n썸\n동료\n라이벌",
+    "overflow": false,
+    "title": "검색",
+    "url": "/search",
+    "console": []
+  },
+  {
+    "page": "search-submit",
+    "mainText": "×\n검색\n최근 검색어\n전체 삭제\n백도현\n×\n장르\n로맨스\n일상\n판타지\n드라마\n미스터리\n느와르\n관계\n친구\n연인\n짝사랑\n썸\n동료\n라이벌\n검색 결과\n초기화\n백도현\n#현대판타지\n#기억미스터리\n#거래\n#기억\n#전당포",
+    "overflow": false,
+    "url": "/search?q=%EB%B0%B1%EB%8F%84%ED%98%84",
+    "console": []
+  },
+  {
+    "page": "new-results-route",
+    "url": "/search/results",
+    "result": "404"
+  },
+  {
+    "page": "archive",
+    "designLibrary": true,
+    "heading": "채팅",
+    "tabs": null,
+    "url": "/archive",
+    "console": []
+  },
+  {
+    "page": "my-characters-draft",
+    "headingSize": "28px",
+    "mainText": "내가 만든 캐릭터\n전체\n공개\n비공개\n임시저장\n0개\n\n오호님이 만든 캐릭터가 여기엔 없어요",
+    "url": "/my/characters?filter=draft",
+    "console": []
+  },
+  {
+    "page": "create",
+    "url": "/create",
+    "result": "Form loads; required fields missing; Save/Publish disabled; no values entered or submitted",
+    "console": []
+  },
+  {
+    "page": "chat-menu",
+    "url": "/chat/[existing-room]",
+    "result": "Existing messages and inline side panel load; voice mode still exposed; persona fields show room-specific existing values; no changes saved",
+    "console": []
+  },
+  {
+    "page": "messages",
+    "buttons": [
+      "페르소나 설정",
+      "채팅방 디자인 라이브러리",
+      "상황 묘사 넣기",
+      "보내기"
+    ],
+    "inputs": [
+      {
+        "fontSize": "16px",
+        "label": "문자 입력",
+        "placeholderFontSize": "13px"
+      }
+    ],
+    "overflow": false,
+    "url": "/messages/[existing-room]",
+    "console": []
+  },
+  {
+    "page": "pwa-guide",
+    "result": "Home-screen installation guide opens; actual installation and native keyboard untested",
+    "console": []
+  },
+  {
+    "page": "my-characters-draft-recheck",
+    "result": "Draft filter route loads and remains0items after visiting create without saving",
+    "url": "/my/characters?filter=draft"
+  },
+  {
+    "page": "character-detail",
+    "brokenLoadedImages": 0,
+    "heading": "백도현",
+    "overflow": false,
+    "url": "/character/official-baek-dohyun",
+    "console": []
+  }
+]

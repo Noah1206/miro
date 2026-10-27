@@ -1,0 +1,4 @@
+{
+  "reason": "Incomplete step5 checkpoint; public storage cannot reconstruct full state. Disk fix and a feasible cost plan must be established before any relaunch.",
+  "gpu_launch_performed": false
+}

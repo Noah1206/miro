@@ -1,0 +1,168 @@
+{
+  "verified": true,
+  "step": 5,
+  "next_update": 6,
+  "next_micro_batch": 10,
+  "training_updates_executed": 0,
+  "all_rank_proof": {
+    "ranks": [
+      {
+        "rank": 0,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 1,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 2,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 3,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 4,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 5,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 6,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      },
+      {
+        "rank": 7,
+        "step": 5,
+        "next_micro_batch": 10,
+        "optimizer_samples_match": true,
+        "random_state_match": true,
+        "pristine_engine_reload": true
+      }
+    ],
+    "verified": true
+  },
+  "validation": {
+    "step": 5,
+    "items": [
+      {
+        "clip_id": "D-A3-A-007-0230",
+        "speech_loss": 4.488694667816162,
+        "teacher_loss": 0.7668367624282837
+      },
+      {
+        "clip_id": "D-A3-A-007-0310",
+        "speech_loss": 4.6085333824157715,
+        "teacher_loss": 0.7544317841529846
+      },
+      {
+        "clip_id": "D-A3-A-007-0410",
+        "speech_loss": 4.5516862869262695,
+        "teacher_loss": 0.7641352415084839
+      },
+      {
+        "clip_id": "D-A3-A-007-0856",
+        "speech_loss": 4.429317474365234,
+        "teacher_loss": 0.7619965672492981
+      },
+      {
+        "clip_id": "D-H3-A-007-0483",
+        "speech_loss": 4.949064254760742,
+        "teacher_loss": 0.7537098526954651
+      },
+      {
+        "clip_id": "D-H3-A-007-0616",
+        "speech_loss": 4.529740333557129,
+        "teacher_loss": 0.7624805569648743
+      },
+      {
+        "clip_id": "D-H3-A-007-0646",
+        "speech_loss": 4.530826091766357,
+        "teacher_loss": 0.7553786039352417
+      },
+      {
+        "clip_id": "D-H3-A-007-0794",
+        "speech_loss": 4.471861839294434,
+        "teacher_loss": 0.7739713191986084
+      },
+      {
+        "clip_id": "D-NX-A-007-0170",
+        "speech_loss": 4.411258697509766,
+        "teacher_loss": 0.725007176399231
+      },
+      {
+        "clip_id": "D-NX-A-007-0325",
+        "speech_loss": 4.368713855743408,
+        "teacher_loss": 0.7624178528785706
+      },
+      {
+        "clip_id": "D-NX-A-007-0407",
+        "speech_loss": 4.211257457733154,
+        "teacher_loss": 0.7189012765884399
+      },
+      {
+        "clip_id": "D-NX-A-007-0535",
+        "speech_loss": 4.24766731262207,
+        "teacher_loss": 0.7400399446487427
+      },
+      {
+        "clip_id": "D-S3-A-007-0151",
+        "speech_loss": 4.692934989929199,
+        "teacher_loss": 0.7729271650314331
+      },
+      {
+        "clip_id": "D-S3-A-007-0625",
+        "speech_loss": 4.758120536804199,
+        "teacher_loss": 0.7903563976287842
+      },
+      {
+        "clip_id": "D-S3-A-007-0627",
+        "speech_loss": 4.638481616973877,
+        "teacher_loss": 0.7971799969673157
+      },
+      {
+        "clip_id": "D-S3-A-007-0690",
+        "speech_loss": 4.659683704376221,
+        "teacher_loss": 0.7725210189819336
+      }
+    ],
+    "speech_loss_mean": 4.534240156412125,
+    "teacher_loss_mean": 0.7607682198286057
+  },
+  "seconds": 290.235104941,
+  "no_precision_or_optimizer_value_conversion": true,
+  "checkpoint_weights_modified": false,
+  "full_payload_checksum": false,
+  "loader": "private mmap with fresh Adam-state release"
+}

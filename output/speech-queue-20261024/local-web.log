@@ -1,0 +1,119 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/johyeon-ung/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/johyeon-ung/Desktop/Miro/pnpm-lock.yaml
+
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8812
+   - Network:      http://192.168.219.106:8812
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 862ms (594 modules)
+ ✓ Ready in 3s
+ ○ Compiling /api/calls/ringing ...
+ ✓ Compiled /api/calls/ringing in 3.4s (3359 modules)
+ GET /login 307 in 4256ms
+ GET /api/calls/ringing 200 in 4422ms
+ ○ Compiling /home ...
+ ✓ Compiled /home in 1507ms (3540 modules)
+ GET /home?login=1 200 in 2376ms
+{"t":"2026-10-24T14:29:03.552Z","event":"perf.metric","name":"auth.session_db","elapsedMs":8.3,"ok":true}
+ GET /api/calls/ringing 200 in 94ms
+{"t":"2026-10-24T14:29:04.521Z","event":"perf.metric","name":"nav.home_data","elapsedMs":13.3,"ok":true}
+ POST /home?login=1 200 in 296ms
+ ○ Compiling /api/auth/[provider]/start ...
+ ✓ Compiled /api/auth/[provider]/start in 1607ms (3543 modules)
+ GET /api/auth/google/start?next=%2Fhome 302 in 2502ms
+ ○ Compiling /auth/mock/[provider] ...
+ ✓ Compiled /auth/mock/[provider] in 1664ms (3548 modules)
+ GET /auth/mock/google?state=c7fcf4043349d7a5a2d3923d2a6f4ab3&redirect_uri=http%3A%2F%2Flocalhost%3A8812%2Fapi%2Fauth%2Fgoogle%2Fcallback 200 in 2863ms
+ GET /api/calls/ringing 200 in 53ms
+ ○ Compiling /api/auth/[provider]/callback ...
+ ✓ Compiled /api/auth/[provider]/callback in 648ms (3551 modules)
+ GET /api/auth/google/callback?state=c7fcf4043349d7a5a2d3923d2a6f4ab3&code=eyJlbWFpbCI6InNwZWVjaC0xNzkyODUyMTUxNjA0QG1pcm8uZGV2In0 302 in 1380ms
+ ○ Compiling /onboarding ...
+ ✓ Compiled /onboarding in 1126ms (3589 modules)
+ GET /onboarding 200 in 1429ms
+ POST /onboarding 200 in 518ms
+ GET /home?welcome=1 200 in 225ms
+ POST /onboarding 303 in 360ms
+ GET /home?welcome=1 200 in 390ms
+ ○ Compiling /character/[slug] ...
+ ✓ Compiled /character/[slug] in 3.2s (3737 modules)
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ GET /character/thomas 200 in 5047ms
+ ○ Compiling /chat/[sessionId] ...
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ ✓ Compiled /chat/[sessionId] in 2.4s (3826 modules)
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ GET /chat/87010f4b-a1fc-4cf9-af54-2f1e8065007b 200 in 4956ms
+ POST /character/thomas 303 in 5075ms
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ GET /api/calls/ringing 200 in 132ms
+ POST /chat/87010f4b-a1fc-4cf9-af54-2f1e8065007b 200 in 2658ms
+ ○ Compiling /api/turn ...
+ ✓ Compiled /api/turn in 3.9s (3843 modules)
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+{"t":"2026-10-24T14:29:37.266Z","event":"perf.metric","name":"chat.usage_reserve","elapsedMs":20.2,"ok":true}
+{"t":"2026-10-24T14:29:37.302Z","event":"provider.llm.turn","sessionId":"87010f4b-a1fc-4cf9-af54-2f1e8065007b","mode":"mock","engine":"legacy","latencyMs":33,"ok":true}
+ POST /api/turn 200 in 5494ms
+ GET /chat/87010f4b-a1fc-4cf9-af54-2f1e8065007b 200 in 485ms
+ ○ Compiling /api/tts ...
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ ✓ Compiled /api/tts in 1730ms (3850 modules)
+ GET /api/calls/ringing 200 in 1131ms
+ POST /api/tts 200 in 2428ms
+ POST /chat/87010f4b-a1fc-4cf9-af54-2f1e8065007b 200 in 2174ms
+ POST /api/tts 202 in 186ms
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ ○ Compiling /api/tts/jobs/[jobId] ...
+ ✓ Compiled /api/tts/jobs/[jobId] in 1383ms (3852 modules)
+ GET /api/tts/jobs/622f3231-d4c2-41bd-963c-3b305cb57ab2 202 in 1924ms
+ GET /api/tts/jobs/622f3231-d4c2-41bd-963c-3b305cb57ab2 200 in 116ms
+ POST /api/tts 202 in 135ms
+ GET /api/tts/jobs/622f3231-d4c2-41bd-963c-3b305cb57ab2 200 in 25ms
+ GET /login 307 in 534ms
+ GET /home?login=1 200 in 404ms
+ POST /home?login=1 200 in 257ms
+ GET /api/auth/google/start?next=%2Fhome 302 in 51ms
+ GET /auth/mock/google?state=01665376d3f03170f14ec264bc026a1e&redirect_uri=http%3A%2F%2Flocalhost%3A8812%2Fapi%2Fauth%2Fgoogle%2Fcallback 200 in 161ms
+ GET /api/auth/google/callback?state=01665376d3f03170f14ec264bc026a1e&code=eyJlbWFpbCI6InNwZWVjaC0xNzkyODUyMjMwODAwQG1pcm8uZGV2In0 302 in 1052ms
+ GET /onboarding 200 in 1088ms
+ POST /onboarding 200 in 222ms
+ GET /home?welcome=1 200 in 212ms
+ POST /onboarding 303 in 390ms
+ GET /home?welcome=1 200 in 100ms
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ GET /character/thomas 200 in 946ms
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ GET /chat/36e1a63f-decf-4e9c-90fc-7b10cb34638f 200 in 318ms
+ POST /character/thomas 303 in 1429ms
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ POST /chat/36e1a63f-decf-4e9c-90fc-7b10cb34638f 200 in 186ms
+{"t":"2026-10-24T14:30:40.093Z","event":"perf.metric","name":"chat.snapshot","elapsedMs":12.5,"ok":true}
+{"t":"2026-10-24T14:30:40.253Z","event":"provider.llm.turn","sessionId":"36e1a63f-decf-4e9c-90fc-7b10cb34638f","mode":"mock","engine":"legacy","latencyMs":118,"ok":true}
+ POST /api/turn 200 in 344ms
+{"t":"2026-10-24T14:30:40.421Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":22,"ok":true}
+ POST /api/tts 200 in 91ms
+ GET /chat/36e1a63f-decf-4e9c-90fc-7b10cb34638f 200 in 135ms
+{"t":"2026-10-24T14:30:40.484Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1,"ok":true}
+ POST /chat/36e1a63f-decf-4e9c-90fc-7b10cb34638f 200 in 71ms
+ POST /api/tts 202 in 113ms
+⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715
+ GET /api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd 202 in 51ms
+ GET /api/calls/ringing 200 in 977ms
+ GET /api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd 200 in 2141ms
+{"t":"2026-10-24T14:30:47.296Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.5,"ok":true}
+ POST /api/tts 202 in 243ms
+ GET /api/tts/jobs/a2e9f5e0-9470-47c5-b809-61bd870f35fd 200 in 45ms
+ DELETE /api/tts/jobs/2284be40-41ed-47f2-a6d1-9d3724db2980 200 in 118ms
+[?25h
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  [?25h

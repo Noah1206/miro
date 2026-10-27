@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>남성향 그림체 시험 비교</title>
+<style>
+body{margin:0;padding:24px;background:#111;color:#eee;font-family:-apple-system,system-ui,sans-serif}
+h1{font-size:18px;margin:0 0 16px}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card img{width:100%;border-radius:12px;display:block}
+.card p{margin:8px 0 0;font-size:13px;color:#bbb}
+.refs{margin-top:28px}.refs img{height:160px;border-radius:8px;margin-right:8px}
+</style></head><body>
+<h1>같은 프롬프트(은발 안경 사무실) · 레퍼런스 유무 비교</h1>
+<div class="row">
+<div class="card"><img src="test-noref.png"><p>A. 레퍼런스 없음 (문장만)</p></div>
+<div class="card"><img src="test-ref2.png"><p>B. 얼굴 크롭 2장 참조</p></div>
+<div class="card"><img src="test-ref3.png"><p>C. 얼굴 크롭 3장 참조</p></div>
+</div>
+<div class="refs"><p>참조로 쓴 크롭 (원본 전체는 필터에 걸려 얼굴 부분만):</p>
+<img src="style-02.png"><img src="style-04.png"><img src="style-05.png"></div>
+</body></html>

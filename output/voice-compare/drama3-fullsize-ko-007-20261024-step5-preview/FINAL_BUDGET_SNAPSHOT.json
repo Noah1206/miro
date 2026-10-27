@@ -1,0 +1,15 @@
+{
+  "recorded_at_utc": "2026-10-24T06:19:52.402369+00:00",
+  "net_billed_at_start_usd": 71.36,
+  "net_billed_latest_usd": 73.01,
+  "preview_billed_delta_snapshot_usd": 1.65,
+  "preview_bound_including_reserves_usd": 3.04,
+  "additional_total_budget_usd": 50,
+  "previously_paid_cash_usd": 30,
+  "additional_budget_used_snapshot_usd": 43.01,
+  "additional_budget_remaining_snapshot_usd": 6.99,
+  "billing_can_lag_or_adjust": true,
+  "running_containers": [],
+  "training_updates_executed": 0,
+  "includes_cpu_export_failed_loader_attempt_and_corrected_inference": true
+}

@@ -1,0 +1,13 @@
+{
+  "phase": "finished_saved",
+  "last_completed_update": 23,
+  "target_update": 25,
+  "new_updates_completed": 18,
+  "durable_checkpoint_step_confirmed_in_worker": 23,
+  "last_update_seconds": 82.09,
+  "steady_update_mean_seconds": 81.74,
+  "source_step5_preserved": true,
+  "additional_total_cash_ceiling_usd": 70,
+  "updated_at_utc": "2026-10-24T07:44:18.638360+00:00",
+  "automatic_paid_retry": false
+}

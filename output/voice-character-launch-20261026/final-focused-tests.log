@@ -1,0 +1,18 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Users/johyeon-ung/Desktop/Miro
+
+ ✓ apps/web/lib/__tests__/speech-queue.integration.test.ts (9 tests) 581ms
+stdout | apps/web/lib/__tests__/speech-credits.integration.test.ts > voice seconds and wallet integration > purchases exactly once using paid wallet funds and never uses signup grants
+{"t":"2026-10-26T10:33:59.508Z","event":"usage.limit_reached","userId":"fdd57011-e09f-4e06-8202-f298f2b21b29","kind":"voicePack","plan":"free"}
+
+ ✓ apps/web/lib/__tests__/speech-credits.integration.test.ts (10 tests) 313ms
+ ✓ apps/web/lib/__tests__/voice-playback.test.ts (9 tests) 13ms
+ ✓ apps/web/lib/__tests__/speech-credits.test.ts (2 tests) 8ms
+ ✓ apps/web/lib/__tests__/scene-assets.test.ts (2 tests) 1ms
+
+ Test Files  5 passed (5)
+      Tests  32 passed (32)
+   Start at  19:33:57
+   Duration  3.13s (transform 411ms, setup 0ms, collect 1.32s, tests 916ms, environment 0ms, prepare 162ms)
+

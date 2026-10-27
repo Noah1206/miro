@@ -1,0 +1,16 @@
+{
+  "local": {
+    "gap": 23.998580932617188,
+    "headerHeight": 67.99715423583984,
+    "topCloseButtons": 0
+  },
+  "dm": {
+    "closeButtons": 0,
+    "gap": 24
+  },
+  "characterChat": {
+    "closeButtons": 0,
+    "gap": 24
+  },
+  "localEscapeDismissed": true
+}

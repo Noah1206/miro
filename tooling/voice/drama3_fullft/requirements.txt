@@ -1,0 +1,9 @@
+# Install the pinned Fish Speech source first; use CUDA development headers for CPUAdam.
+torch==2.8.0
+torchaudio==2.8.0
+deepspeed==0.19.8
+tokenizers==0.23.2
+safetensors
+msgpack
+soundfile
+ninja

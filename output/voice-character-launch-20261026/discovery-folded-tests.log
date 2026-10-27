@@ -1,0 +1,12 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Users/johyeon-ung/Desktop/Miro
+
+ ✓ apps/web/lib/__tests__/discovery-filters.integration.test.ts (4 tests) 199ms
+ ✓ apps/web/lib/__tests__/home-unveil.integration.test.ts (5 tests) 173ms
+
+ Test Files  2 passed (2)
+      Tests  9 passed (9)
+   Start at  21:12:12
+   Duration  2.41s (transform 582ms, setup 0ms, collect 1.54s, tests 372ms, environment 0ms, prepare 116ms)
+

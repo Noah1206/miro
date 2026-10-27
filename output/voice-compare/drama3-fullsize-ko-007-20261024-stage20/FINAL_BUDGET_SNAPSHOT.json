@@ -1,0 +1,29 @@
+{
+  "latest_cycle_billed_snapshot_usd": 71.84,
+  "baseline_before_this_stage_usd": 55.93,
+  "new_stage_snapshot_usd": 15.91,
+  "new_stage_ceiling_usd": 20,
+  "new_stage_unused_snapshot_usd": 4.09,
+  "additional_total_ceiling_usd": 50,
+  "previously_paid_cash_usd": 30,
+  "additional_total_used_snapshot_usd": 41.84,
+  "additional_total_remaining_snapshot_usd": 8.16,
+  "billing_can_lag_and_adjust": true,
+  "future_same_configuration_5_to_25_projection": {
+    "updates_remaining": 20,
+    "measured_update_mean_seconds": 78.14767711733332,
+    "measured_checkpoint_write_and_commit_seconds": 409.75081209300015,
+    "measured_fresh_load_and_forward_seconds": 290.235104941,
+    "subtotal_seconds": 2262.9394593806664,
+    "low_usd": 23.557702647588155,
+    "upper_resource_usd": 24.845063762258043,
+    "excludes": [
+      "startup",
+      "native inference export",
+      "comparison synthesis"
+    ],
+    "not_a_guarantee": true
+  },
+  "why_no_more_training_started": "Remaining7.24 does not fund the measured remaining20updates plus load/save. Do not fill the remaining budget with an unfinished repeat or exceed50.",
+  "snapshot_recorded_at_utc": "2026-10-24T05:35:47.122600+00:00"
+}

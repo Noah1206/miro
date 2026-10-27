@@ -1,0 +1,17 @@
+{
+  "time": "2026-10-24T08:21:56.435786+00:00",
+  "workspace_net_billed_usd": "98.67000000",
+  "request_start_billed_usd": "97.61",
+  "workspace_change_since_request_usd": "1.06000000",
+  "this_request_app_resource_cost_usd": "1.03187648",
+  "request_cap_usd": "2.39",
+  "remaining_overall_budget_usd": "1.33000000",
+  "workspace_net_cap_usd": "100",
+  "billing_provisional_and_can_adjust": true,
+  "running_containers": [],
+  "additional_training_updates": 0,
+  "generated_step23_takes": 8,
+  "reused_control_takes": 16,
+  "training_checkpoint_step23_preserved": true,
+  "temporary_native_export_removed_after_verified_audio_download": true
+}

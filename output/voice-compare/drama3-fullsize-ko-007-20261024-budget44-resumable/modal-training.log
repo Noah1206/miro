@@ -1,0 +1,105 @@
+Note that running a local entrypoint in detached mode only keeps the last triggered Modal function alive after the parent process has been killed or disconnected.
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-HJ47byrXlzowojxDD65Gwl
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_resumable_train.p
+│   y
+├── ✓ Uploaded PythonPackage:drama3_fullft, PythonPackage:modal_drama3_compare
+└── ✓ Created Function train.
+WARM_LOAD_SAVED_STEP1 0 backbone.model.embed_tokens.weight
+WARM_LOAD_SAVED_STEP1 100 backbone.model.layers.5.mlp.shared_expert.gate_proj.weight
+WARM_LOAD_SAVED_STEP1 200 backbone.model.layers.11.mlp.experts.w13_weight
+WARM_LOAD_SAVED_STEP1 300 backbone.model.layers.17.linear_attn.in_proj_a.weight
+WARM_LOAD_SAVED_STEP1 400 backbone.model.layers.23.self_attn.q_proj.weight
+WARM_LOAD_SAVED_STEP1 500 backbone.model.layers.28.input_layernorm.weight
+WARM_LOAD_SAVED_STEP1 600 backbone.model.layers.34.mlp.experts.w2_weight
+WARM_LOAD_SAVED_STEP1 700 audio_decoder.shared_layers.0.transformer_layer.attention.q_norm.weight
+WARM_LOAD_SAVED_STEP1 800 audio_decoder.residual_layers.3.transformer_layer.attention_norm.weight
+AB_BOOTSTRAP_READY /voices/_drama3/fullsize-ko-007-20261024-budget44-resumable-v2/arms/korean_teacher/bootstrap
+AB_VALIDATION korean_teacher 1 4.537903994321823
+AB_STEP korean_teacher {"step": 2, "speech_loss": 4.66613095998764, "teacher_loss": 1.0017309114336967, "global_gradient_norm": 12.717577934265137, "seconds": 294.567912815}
+AB_STEP korean_teacher {"step": 3, "speech_loss": 4.56164476275444, "teacher_loss": 0.9296149015426636, "global_gradient_norm": 8.025812149047852, "seconds": 379.846776736}
+AB_STEP korean_teacher {"step": 4, "speech_loss": 4.612976938486099, "teacher_loss": 0.8725339621305466, "global_gradient_norm": 5.095487594604492, "seconds": 462.190152683}
+AB_STEP korean_teacher {"step": 5, "speech_loss": 4.572039902210236, "teacher_loss": 0.8088674992322922, "global_gradient_norm": 8.394335746765137, "seconds": 546.296827621}
+AB_RESUME_CHECKPOINT {"tag": "step-000005", "path": "/voices/_drama3/fullsize-ko-007-20261024-budget44-resumable-v2/arms/korean_teacher/training_checkpoints/step-000005", "client": {"step": 5, "next_micro_batch": 10, "engine_micro_steps": 10, "plan_sha256": "07da64d8a1c0016689c6fa74be64c8dc954d9a81e4420c7bd36adb60db82ec02", "world_size": 8, "source_commit": "541566932abbaebcb0a40e562a1f846738383f38", "model_revision": "b2b5ee998034b2975720906c815e7fb0e9f007bd", "codec_frozen": true, "next_action": "train", "warm_start_optimizer_reset_once": true}, "ranks": [{"rank": 0, "optimizer": {"file": "bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "304b5644d861109c7f0242f1ade63a6136a01c39be337f2139509081d6616bd8", "optimizer_samples": {"sample_sha256": "2f5e635aa552761b869e14ae57fdef66ab82bb1b838f214babb8bc589950b773", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 1, "optimizer": {"file": "bf16_zero_pp_rank_1_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "0886fb0e1edb6815768b8fd7467ba9ab549d886af8bde48e9a21ba9ab8423a4b", "optimizer_samples": {"sample_sha256": "befacdfe499e10f1e21ad909f7317095cab4c895a0982d75f3b9c60959d7c7a9", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 2, "optimizer": {"file": "bf16_zero_pp_rank_2_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "86360b16654b38578906d9cb99541719bbe4f185b6acfabe6d473d06f7c9272c", "optimizer_samples": {"sample_sha256": "8976ab2d2c4cd697bd67dabe21fc49e3967b20e7f94025c21e4e73efbe2d272c", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 3, "optimizer": {"file": "bf16_zero_pp_rank_3_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "44457546051f28c6070b2d97d1425ad15fc18ba2edf10161562de8b372625dcd", "optimizer_samples": {"sample_sha256": "4f55e3f04e93d79b32a800fbb848f02773bc7addd92a676530bf176e515c5015", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 4, "optimizer": {"file": "bf16_zero_pp_rank_4_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "5574670b41ac196922ea71e87215b2f673d81084514335a76f3b6bc55ec716b7", "optimizer_samples": {"sample_sha256": "db2e516e1a05034ee41fba9b45b3ccb7060cf287bfc0a4af8c308cc6aaeb93bb", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 5, "optimizer": {"file": "bf16_zero_pp_rank_5_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "39b9b3b3fa92fc1db98b5608614692871e6de0e0dff0f5167c8f1a61480186af", "optimizer_samples": {"sample_sha256": "8e71efe5a456377d963a5a53e3932a659de1e54d3e5453aedeee29fe145177e9", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 6, "optimizer": {"file": "bf16_zero_pp_rank_6_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "77ce1d9be07280487380b1e2515d9d2bb47287ed2462339e89cb1f4dbff74530", "optimizer_samples": {"sample_sha256": "ada5f04b5062c54eeaa6871e46acbf7a614135c3e655b779329a61a0e81bfff6", "sampled_tensors": 18, "full_payload_checksum": false}}, {"rank": 7, "optimizer": {"file": "bf16_zero_pp_rank_7_mp_rank_00_optim_states.pt", "bytes": 53852619245, "fp32_partition_elements": 4487717520, "adam_parameter_states": 6}, "rng_sha256": "9262cc1a6828f52f4ac8474e9ebfc9a4b7206064834c98550c86beb0a1194212", "optimizer_samples": {"sample_sha256": "1c19cdd21404c56c1ee2adefff330789fe04474eeff72c8ee9d9073031c87d30", "sampled_tensors": 18, "full_payload_checksum": false}}], "files": {"bf16_zero_pp_rank_0_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_1_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_2_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_3_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_4_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_5_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_6_mp_rank_00_optim_states.pt": 53852619245, "bf16_zero_pp_rank_7_mp_rank_00_optim_states.pt": 53852619245, "rank-00.json": 465, "rank-01.json": 465, "rank-02.json": 465, "rank-03.json": 465, "rank-04.json": 465, "rank-05.json": 465, "rank-06.json": 465, "rank-07.json": 465, "rng-rank-00.pt": 14725, "rng-rank-01.pt": 14661, "rng-rank-02.pt": 14725, "rng-rank-03.pt": 14725, "rng-rank-04.pt": 14661, "rng-rank-05.pt": 14725, "rng-rank-06.pt": 14725, "rng-rank-07.pt": 14725, "zero_pp_rank_0_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_1_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_2_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_3_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_4_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_5_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_6_mp_rank_00_model_states.pt": 479319, "zero_pp_rank_7_mp_rank_00_model_states.pt": 479319}, "optimizer_state_saved": true, "rng_state_saved": true, "data_position_saved": true, "all_rank_files_parsed": true, "independent_engine_reload_verified": false, "save_seconds": 175.031686326}
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 987, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 189, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 266, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/modal_drama3_resumable_train.py", line 136, in train
+    voices.commit()
+  File "/pkg/modal/_object.py", line 49, in wrapped
+    return await method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/volume.py", line 901, in commit
+    resp = await self.client._stub.VolumeCommit(req, retry=Retry(max_retries=90))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+modal.exception.InternalError: internal runtime error: not enough local disk space to stage volume data for commit
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_resumable_train.p │
+│ y:146 in main                                                                │
+│                                                                              │
+│   145 │   settings=json.loads(Path('tooling/voice/drama3_fullft/zero3.json') │
+│ ❱ 146 │   result=train.remote(settings,authorization)                        │
+│   147 │   (out/'korean_teacher_training.json').write_text(json.dumps(result, │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_objec │
+│ t.py:49 in wrapped                                                           │
+│                                                                              │
+│    48 │   │   await self.hydrate()                                           │
+│ ❱  49 │   │   return await method(self, *args, **kwargs)                     │
+│    50                                                                        │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2081 in remote                                                       │
+│                                                                              │
+│   2080 │   │                                                                 │
+│ ❱ 2081 │   │   return await self._call_function(args, kwargs)                │
+│   2082                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2018 in _call_function                                               │
+│                                                                              │
+│   2017 │   │                                                                 │
+│ ❱ 2018 │   │   return await invocation.run_function()                        │
+│   2019                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:517 in run_function                                                  │
+│                                                                              │
+│    516 │   │   │   # No more retries left.                                   │
+│ ❱  517 │   │   │   return await _process_result(                             │
+│    518 │   │   │   │   await_response.output.result, await_response.output.d │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_utils │
+│ /function_utils.py:572 in _process_result                                    │
+│                                                                              │
+│   571 │   │   │                                                              │
+│ ❱ 572 │   │   │   raise exc_with_hints(exc)                                  │
+│   573                                                                        │
+│                                                                              │
+│     ...Remote call to Modal Function (ta-01M5MS4DQKP96WFXQ7P64598KR)...      │
+│                                                                              │
+│ /root/modal_drama3_resumable_train.py:136 in train                           │
+│                                                                              │
+│ ❱ 136 voices.commit()                                                        │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/_object.py:49 in wrapped                                          │
+│                                                                              │
+│ ❱ 49 return await method(self, *args, **kwargs)                              │
+│                                                                              │
+│                                                                              │
+│ /pkg/modal/volume.py:901 in commit                                           │
+│                                                                              │
+│ ❱ 901 resp = await self.client._stub.VolumeCommit(req, retry=Retry(max_retri │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+InternalError: internal runtime error: not enough local disk space to stage 
+volume data for commit

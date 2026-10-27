@@ -1,0 +1,75 @@
+{
+  "checked_at_utc": "2026-10-24T02:36:26.406400+00:00",
+  "new_paid_execution_started": false,
+  "account_arithmetic": {
+    "net_cycle_billed_snapshot_usd": 55.93,
+    "already_paid_usd": 30,
+    "additional_spent_snapshot_usd": 25.93,
+    "additional_authorized_total_usd": 44,
+    "hard_remaining_usd": 18.07,
+    "self_imposed_operating_total_usd": 36,
+    "operating_remaining_usd": 10.07,
+    "billing_can_lag": true,
+    "deleting_storage_refunds_previous_compute": false
+  },
+  "measured_inputs": {
+    "model_tts_parameters": 35899643008,
+    "gpu_count": 8,
+    "gpu_model": "H100",
+    "gpu_hour_usd_each": 3.95,
+    "cpu_request_and_limit": 16,
+    "memory_request_gib": 640,
+    "memory_limit_gib": 896,
+    "steady_update_seconds_samples": [
+      85.27886392099998,
+      82.34337594700003,
+      84.10667493800003
+    ],
+    "steady_update_mean_seconds": 83.90963826866668,
+    "observed_checkpoint_local_write_seconds": 175.031686326,
+    "successful_commit_time_measured": false,
+    "initial_load_validation_overhead_inferred_seconds": 210.6582745463333
+  },
+  "same_configuration_projection": {
+    "training_only_24_updates_from_preserved_step1": {
+      "low_usd": 20.96,
+      "upper_resource_usd": 22.11,
+      "seconds": 2013.83
+    },
+    "five_local_checkpoint_writes_excluding_cloud_commit": {
+      "low_usd": 9.11,
+      "upper_resource_usd": 9.61,
+      "seconds": 875.16
+    },
+    "initialization_inferred": {
+      "low_usd": 2.19,
+      "upper_resource_usd": 2.31,
+      "seconds": 210.66
+    },
+    "subtotal_training_initialization_local_checkpoint_writes": {
+      "low_usd": 32.27,
+      "upper_resource_usd": 34.03,
+      "seconds": 3099.65
+    },
+    "hypothetical_training_only_20_updates_if_step5_recovered": {
+      "low_usd": 17.47,
+      "upper_resource_usd": 18.43,
+      "seconds": 1678.19
+    },
+    "excludes": [
+      "successful remote commit time, not yet measured",
+      "independent full optimizer reload, not yet measured",
+      "final native export",
+      "final comparison synthesis and verification",
+      "queue and startup overhead not captured in these events"
+    ]
+  },
+  "conclusion": "Remaining $18.07 does not fund the same-scope measured projection. Pure 24-update training alone projects above the remaining budget. Future exact/minimum cost cannot be certified without successful save timings; no paid benchmark or retry was launched.",
+  "projection_is_not_a_guaranteed_future_bill_or_proof_all_other_hardware_is_impossible": true,
+  "evidence_sources": [
+    "Modal billing summary and rates API snapshots",
+    "actual AB_STEP timestamps",
+    "actual AB_RESUME_CHECKPOINT save_seconds",
+    "https://modal.com/docs/guide/resources"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "sessionId": "d6bc079f-ae70-40c3-9e35-cb2cd13e8c04",
+  "userId": "4b8b85d4-6aec-41f3-9937-f947292e47a0",
+  "characterId": "5c21ffbd-9992-4cad-960b-90afdb738af8",
+  "messageId": "272daf00-b208-407b-a79a-83aaf50a8305",
+  "sceneAssets": [
+    {
+      "characterId": "5c21ffbd-9992-4cad-960b-90afdb738af8",
+      "mode": "normal",
+      "url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==",
+      "location": "런던 구시가지"
+    }
+  ],
+  "allAudioIsToneFixture": true,
+  "allImagesAreFixture": true
+}

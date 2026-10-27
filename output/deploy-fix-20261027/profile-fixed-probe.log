@@ -1,0 +1,50 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/johyeon-ung/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/johyeon-ung/Desktop/Miro/pnpm-lock.yaml
+
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8821
+   - Network:      http://172.17.145.169:8821
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+
+   We detected TypeScript in your project and reconfigured your tsconfig.json file for you. Strict-mode is set to false by default.
+   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+   	- include was updated to add '.next-profile-probe/types/**/*.ts'
+
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 1127ms (594 modules)
+ ✓ Ready in 2.7s
+ ○ Compiling /my ...
+ ✓ Compiled /my in 5.5s (3683 modules)
+ GET /my 200 in 6591ms
+ POST /my 200 in 552ms
+ POST /my 200 in 109ms
+{"t":"2026-10-26T18:05:30.249Z","event":"perf.metric","name":"auth.session_db","elapsedMs":6.9,"ok":true}
+ GET /my 200 in 174ms
+ ○ Compiling /api/calls/ringing ...
+ ✓ Compiled /api/calls/ringing in 909ms (3584 modules)
+ GET /api/calls/ringing 200 in 1342ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 30ms
+{"t":"2026-10-26T18:07:14.448Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.3,"ok":true}
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 41ms

@@ -1,0 +1,13 @@
+{
+  "url": "http://127.0.0.1:8806/index.html",
+  "http_status": 200,
+  "paid_compute_started": false,
+  "training_scope_male_speakers": 2,
+  "report_bytes": 10179,
+  "Modal_billing_readonly_snapshot": {
+    "metered_cost": 128.17058826,
+    "net_billed": 98.07,
+    "monthly_credit_used": 30,
+    "new_paid_compute_this_work": 0
+  }
+}

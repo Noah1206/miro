@@ -1,0 +1,23 @@
+{
+  "commit": "7d4b9fe4c891c7813122f399c434e21adde39519",
+  "branch": "codex/reality-launch-voice-deferred",
+  "remote_matches": true,
+  "production_deployed": false,
+  "main_merged": false,
+  "new_paid_execution": false,
+  "tests": {
+    "status": "no_new_test_failures",
+    "baseline_failed_assertions": 60,
+    "current_failed_assertions": 60,
+    "passed": 1467,
+    "skipped": 2,
+    "new_failures": [],
+    "legacy_suite_cleanup_error": "recharge_ledger FK failure also reproduced on base",
+    "focused_tests_passed": 43,
+    "typecheck": "passed in exact staged checkout",
+    "web_admin_build": "passed in exact staged checkout",
+    "review": "no confirmed blockers",
+    "private_artifacts_excluded": true
+  },
+  "excluded": "raw recordings, trained weights, private billing/planning records, unrelated existing user style edits"
+}

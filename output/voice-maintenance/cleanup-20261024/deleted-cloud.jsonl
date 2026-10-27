@@ -1,0 +1,24 @@
+{"volume": "miro-voices", "path": "/_coqui_blog", "inventory_bytes": 20182084, "deleted_at_utc": "2026-10-24T02:31:27.996552+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_eval", "inventory_bytes": 54129198, "deleted_at_utc": "2026-10-24T02:31:29.276968+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen", "inventory_bytes": 5176815, "deleted_at_utc": "2026-10-24T02:31:30.405276+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen_bottleneck", "inventory_bytes": 43878221, "deleted_at_utc": "2026-10-24T02:31:31.868431+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen_conditioned", "inventory_bytes": 27271862916, "deleted_at_utc": "2026-10-24T02:31:32.879404+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen_context", "inventory_bytes": 13670577350, "deleted_at_utc": "2026-10-24T02:31:33.925723+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen_ft", "inventory_bytes": 4666681644, "deleted_at_utc": "2026-10-24T02:31:35.087883+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen_phrase", "inventory_bytes": 23492170719, "deleted_at_utc": "2026-10-24T02:31:36.654598+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_qwen_problem_search", "inventory_bytes": 35988812, "deleted_at_utc": "2026-10-24T02:31:38.005653+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_three_tts", "inventory_bytes": 7018823, "deleted_at_utc": "2026-10-24T02:31:38.844076+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_voxcpm2", "inventory_bytes": 6213569, "deleted_at_utc": "2026-10-24T02:31:40.236586+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_train", "inventory_bytes": 5153761964, "deleted_at_utc": "2026-10-24T02:31:41.309214+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/007-20261023-v1", "inventory_bytes": 8297480, "deleted_at_utc": "2026-10-24T02:31:42.384132+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/007-long-whisper-20261023-v1", "inventory_bytes": 80333060, "deleted_at_utc": "2026-10-24T02:31:43.603080+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/codec-audit-007-20261023-v1", "inventory_bytes": 48018174, "deleted_at_utc": "2026-10-24T02:31:44.514984+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/fullft-readiness-20261023", "inventory_bytes": 3671549, "deleted_at_utc": "2026-10-24T02:31:45.992132+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/fullft-readiness-20261023-offload", "inventory_bytes": 3671643, "deleted_at_utc": "2026-10-24T02:31:47.076171+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/fullft-readiness-20261023-offload-variable", "inventory_bytes": 4065898, "deleted_at_utc": "2026-10-24T02:31:48.886853+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/fullft-readiness-20261023-offload-variable-live", "inventory_bytes": 4588331, "deleted_at_utc": "2026-10-24T02:31:49.920866+00:00", "gpu_used": false}
+{"volume": "miro-voices", "path": "/_drama3/fullsize-ab-007-20261023-v1", "inventory_bytes": 23394821, "deleted_at_utc": "2026-10-24T02:31:50.872998+00:00", "gpu_used": false}
+{"volume": "miro-voxcpm2-cache", "path": "/asr", "inventory_bytes": 1621668670, "deleted_at_utc": "2026-10-24T02:31:51.882906+00:00", "gpu_used": false}
+{"volume": "miro-voxcpm2-cache", "path": "/huggingface", "inventory_bytes": 30526518720, "deleted_at_utc": "2026-10-24T02:31:53.137901+00:00", "gpu_used": false}
+{"volume": "miro-fish-drama3-cache", "path": "/asr", "inventory_bytes": 1621668670, "deleted_at_utc": "2026-10-24T02:33:37.900516+00:00", "gpu_used": false, "public_cache_downloadable_again": true}
+{"volume": "miro-fish-drama3-cache", "path": "/huggingface", "inventory_bytes": 42767163536, "deleted_at_utc": "2026-10-24T02:33:38.919892+00:00", "gpu_used": false, "public_cache_downloadable_again": true}

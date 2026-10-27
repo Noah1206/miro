@@ -1,0 +1,160 @@
+{
+  "checked_at": "2026-10-24T00:27:07.385254+09:00",
+  "files": [
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code",
+      "size": 301
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/memory_observation.json",
+      "size": 153
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/zero3.json",
+      "size": 838
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/plan.json",
+      "size": 10034
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/train.py",
+      "size": 8448
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/test_snapshots.py",
+      "size": 2371
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/test_live_export.py",
+      "size": 2710
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/test_codec_contract.py",
+      "size": 3146
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/teacher_smoke.py",
+      "size": 3311
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/teacher_experiment.py",
+      "size": 8533
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/stage.py",
+      "size": 1157
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/source_hashes.json",
+      "size": 1839
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/snapshots.py",
+      "size": 1946
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/smoke.py",
+      "size": 4831
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/prepare_007.py",
+      "size": 2352
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/matched_fullsize.py",
+      "size": 10011
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/live_export.py",
+      "size": 5468
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/korean_teacher.py",
+      "size": 4190
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/export.py",
+      "size": 3659
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/distributed_smoke.py",
+      "size": 4786
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/data.py",
+      "size": 4718
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/core.py",
+      "size": 12236
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/codec_contract.py",
+      "size": 4115
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/codec.py",
+      "size": 2346
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/client.py",
+      "size": 1793
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/code/__init__.py",
+      "size": 81
+    },
+    {
+      "path": "_drama3/fullsize-ko-007-20261024-budget44-v1/arms/korean_teacher/STARTED.json",
+      "size": 189
+    }
+  ],
+  "metadata": {
+    "STARTED.json": {
+      "arm": "korean_teacher",
+      "unix_time": 1792769121.2424092,
+      "plan_sha256": "07da64d8a1c0016689c6fa74be64c8dc954d9a81e4420c7bd36adb60db82ec02",
+      "scope": "Real35B pretrained Full FT, no LoRA"
+    },
+    "progress.json": null,
+    "FIRST_SAVE_VERIFIED.json": null,
+    "LATEST_NATIVE_SNAPSHOT.json": null,
+    "result.json": null,
+    "FAILED.json": null,
+    "memory_observation.json": {
+      "limit_gib": 896.0,
+      "peak_observed_used_gib": 29.13785171508789,
+      "method": "MemTotal minus MemAvailable,1s sampling; approximate container use"
+    },
+    "run_metadata.json": null,
+    "code/source_hashes.json": {
+      "codec_contract.py": "3022902e33b2e4d8fe82cdb56750974e6b8a4373749544807309437750ff3707",
+      "stage.py": "df3503564e2dc8c1d60f1882307ca09d90a4e357dadeb46db7029fb8a58b9d07",
+      "test_snapshots.py": "8da89eb48a516c84819f8b2626f45108293d63fdd11d0d16edb332e64b9ba83e",
+      "snapshots.py": "e2f8450a845703df4feb62e2ef5d062a1cee8354552dda44878931c0fe08b81f",
+      "data.py": "c144aa030a935dd85ab08f32d83f5f4346f3a2b098f6f07d6f943870f7fef2c5",
+      "smoke.py": "dc892b1bfa6bfac5d9140bb27fba584ee73303e8fa90c25249001494ecfb798b",
+      "distributed_smoke.py": "b72c12f89108b0bf4731a6b690acda994887a35f84ec7923fb6cc0aba602f23a",
+      "teacher_experiment.py": "22ede603914e51a44fd14362d7682b3be3dcda1cc724b4730e56f641df3d0bb7",
+      "matched_fullsize.py": "ce19483818cc2028b5d3b56069a71a56bf8feb37eb5f2e8acbb875e5867466de",
+      "korean_teacher.py": "fad65c0400f7e5a0873515c80aaebd53e48afb9f32f2e324b7cb84deac958e79",
+      "codec.py": "7e84557bee3049c00ec85037103be6cc05c776571eed7015e1f042246f42fee0",
+      "prepare_007.py": "411a0f08d7af50cfb34a6ca404506d941591486d3daac2f1c2b33b24f083223e",
+      "client.py": "9321832164fdd2707b302d0913dbf297588e33f5ccbcb69ca03777bd596b3e77",
+      "test_codec_contract.py": "25940911d052bc0022f90c53e758fe764339d947ede72a372c47786da82accf1",
+      "train.py": "e684ea210acf038b331c88064ccfb8f13391ea7f347577db43279ab0fe9edcbd",
+      "export.py": "74953d82ee3b409457aab11c065ccd472e48742c39f4f2d3d60b66d82e830096",
+      "live_export.py": "01d5b9a2616305d6207dce501cbe508b0617513f1580f9dc85d666b29cef0546",
+      "__init__.py": "e1c3b6808e0cb9524a923140bac8f190a4eb289677bbfb5023d33c1a18207c51",
+      "teacher_smoke.py": "82bc424e8dd48fa4143fbdcb74a3a3c68d09ba56ff90f2b78dca1f1e9dac49af",
+      "test_live_export.py": "fdd70ec2bb9a3cabfc0d899cdbaf82c3fcadf8ef29ce3ee9c76410094f3cbe1f",
+      "core.py": "9e485232be6a5a58f3995402e21b00675d75b99ed16e104cf63a641970c6dde9"
+    }
+  },
+  "executed_code_matches_local": {
+    "matched_fullsize.py": true,
+    "snapshots.py": true,
+    "live_export.py": true
+  }
+}

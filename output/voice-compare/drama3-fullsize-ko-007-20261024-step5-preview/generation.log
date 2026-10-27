@@ -1,0 +1,113 @@
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-BMBNmRCwhunAaFcLU2ZAwt
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_fullsize_listen.p
+│   y
+├── ✓ Uploaded PythonPackage:drama3_fullft, PythonPackage:modal_drama3_compare
+├── ✓ Created Function generate.
+└── ✓ Created Function audit_and_package.
+2026-10-24 06:06:16.519 | INFO     | fish_speech.models.text2semantic.inference:init_model:433 - Using FishOmniModel (Drama 3): backbone on ['cuda:0'], tower on cuda:1, torch.bfloat16
+2026-10-24 06:06:16.520 | INFO     | fish_speech.models.text2semantic.fish_omni.model:from_pretrained:95 - FishOmni experts: dequantized to torch.bfloat16
+2026-10-24 06:06:16.815 | INFO     | fish_speech.models.text2semantic.fish_omni.backbone:materialize:151 - FishOmni backbone placement: cuda:0: layers 0-39; embed on cuda:0, lm_head on cuda:0
+2026-10-24 06:07:49.646 | INFO     | fish_speech.models.text2semantic.fish_omni.backbone:load_backbone_weights:397 - FishOmni backbone: loaded 31333 parameter slots
+REAL35B_LISTEN korean_teacher failed 0
+Traceback (most recent call last):
+  File "/pkg/modal/_runtime/container_io_manager.py", line 987, in handle_input_exception
+    yield
+  File "/pkg/modal/_container_entrypoint.py", line 189, in run_input_sync
+    values = io_context.call_function_sync()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/pkg/modal/_runtime/container_io_manager.py", line 266, in call_function_sync
+    expected_value_or_values = self.finalized_function.callable(*args, **kwargs)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/modal_drama3_fullsize_listen.py", line 50, in generate
+    begin=time.monotonic();model,_=init_model(weights,'cuda:0,cuda:1',torch.bfloat16,compile=False);model.eval()
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/fish-speech/fish_speech/models/text2semantic/inference.py", line 437, in init_model
+    model = FishOmniModel.from_pretrained(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/fish-speech/fish_speech/models/text2semantic/fish_omni/model.py", line 113, in from_pretrained
+    load_audio_decoder_weights(
+  File "/usr/local/lib/python3.12/site-packages/torch/utils/_contextlib.py", line 120, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/fish-speech/fish_speech/models/text2semantic/fish_omni/tower.py", line 408, in load_audio_decoder_weights
+    raise ValueError(f"unknown tower weight {key}")
+ValueError: unknown tower weight model.embed_tokens.weight
+Stopping app - uncaught exception raised locally: ValueError('unknown tower weight model.embed_tokens.weight').
+Runner terminated.
+╭───────────────────── Traceback (most recent call last) ──────────────────────╮
+│ /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_fullsize_listen.p │
+│ y:142 in main                                                                │
+│                                                                              │
+│   141 │   for name in arms:                                                  │
+│ ❱ 142 │   │   report=generate.remote(name,manifest,run_root,weights_override │
+│   143                                                                        │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_objec │
+│ t.py:49 in wrapped                                                           │
+│                                                                              │
+│    48 │   │   await self.hydrate()                                           │
+│ ❱  49 │   │   return await method(self, *args, **kwargs)                     │
+│    50                                                                        │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2081 in remote                                                       │
+│                                                                              │
+│   2080 │   │                                                                 │
+│ ❱ 2081 │   │   return await self._call_function(args, kwargs)                │
+│   2082                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:2018 in _call_function                                               │
+│                                                                              │
+│   2017 │   │                                                                 │
+│ ❱ 2018 │   │   return await invocation.run_function()                        │
+│   2019                                                                       │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_funct │
+│ ions.py:517 in run_function                                                  │
+│                                                                              │
+│    516 │   │   │   # No more retries left.                                   │
+│ ❱  517 │   │   │   return await _process_result(                             │
+│    518 │   │   │   │   await_response.output.result, await_response.output.d │
+│                                                                              │
+│ /Users/johyeon-ung/GPT-SoVITS/venv/lib/python3.10/site-packages/modal/_utils │
+│ /function_utils.py:572 in _process_result                                    │
+│                                                                              │
+│   571 │   │   │                                                              │
+│ ❱ 572 │   │   │   raise exc_with_hints(exc)                                  │
+│   573                                                                        │
+│                                                                              │
+│     ...Remote call to Modal Function (ta-01M5P88AGBEVSRB063F8J91EPR)...      │
+│                                                                              │
+│ /root/modal_drama3_fullsize_listen.py:50 in generate                         │
+│                                                                              │
+│ ❱ 50 begin=time.monotonic();model,_=init_model(weights,'cuda:0,cuda:1',torch │
+│                                                                              │
+│                                                                              │
+│ /fish-speech/fish_speech/models/text2semantic/inference.py:437 in init_model │
+│                                                                              │
+│ ❱ 437 model = FishOmniModel.from_pretrained(                                 │
+│                                                                              │
+│                                                                              │
+│ /fish-speech/fish_speech/models/text2semantic/fish_omni/model.py:113 in      │
+│ from_pretrained                                                              │
+│                                                                              │
+│ ❱ 113 load_audio_decoder_weights(                                            │
+│                                                                              │
+│                                                                              │
+│ /usr/local/lib/python3.12/site-packages/torch/utils/_contextlib.py:120 in    │
+│ decorate_context                                                             │
+│                                                                              │
+│ ❱ 120 return func(*args, **kwargs)                                           │
+│                                                                              │
+│                                                                              │
+│ /fish-speech/fish_speech/models/text2semantic/fish_omni/tower.py:408 in      │
+│ load_audio_decoder_weights                                                   │
+│                                                                              │
+│ ❱ 408 raise ValueError(f"unknown tower weight {key}")                        │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+ValueError: unknown tower weight model.embed_tokens.weight

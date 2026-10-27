@@ -1,0 +1,3624 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/johyeon-ung/package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * /Users/johyeon-ung/Desktop/Miro/pnpm-lock.yaml
+
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8812
+   - Network:      http://172.17.216.204:8812
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 512ms (594 modules)
+ ✓ Ready in 2.2s
+ ○ Compiling /api/calls/ringing ...
+ ✓ Compiled /api/calls/ringing in 1381ms (1367 modules)
+ GET /api/calls/ringing 200 in 1637ms
+ ✓ Compiled /api/health in 389ms (1415 modules)
+ GET /api/health 200 in 632ms
+ GET /api/calls/ringing 200 in 40ms
+ ○ Compiling /chat/[sessionId] ...
+ ✓ Compiled /chat/[sessionId] in 2.5s (3790 modules)
+ GET /api/calls/ringing 200 in 66ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 4686ms
+ GET /api/calls/ringing 200 in 168ms
+ ○ Compiling /api/tts/credits ...
+ ✓ Compiled /api/tts/credits in 766ms (3799 modules)
+ GET /api/tts/credits 200 in 1306ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 28ms
+{"t":"2026-10-26T10:17:52.074Z","event":"perf.metric","name":"auth.session_db","elapsedMs":6.1,"ok":true}
+ GET /api/calls/ringing 200 in 80ms
+ GET /api/calls/ringing 200 in 31ms
+ ○ Compiling /api/tts ...
+ ✓ Compiled /api/tts in 715ms (3801 modules)
+ POST /api/tts 200 in 981ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 69ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 30ms
+ POST /api/tts 202 in 108ms
+ ○ Compiling /api/tts/jobs/[jobId] ...
+ ✓ Compiled /api/tts/jobs/[jobId] in 512ms (3799 modules)
+ GET /api/tts/jobs/f401e553-59fa-443d-be58-1a8160ef2a31 202 in 1595ms
+ GET /api/tts/jobs/f401e553-59fa-443d-be58-1a8160ef2a31 200 in 100ms
+ ✓ Compiled /api/tts/credits in 328ms (2979 modules)
+ GET /api/tts/credits 200 in 555ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 28ms
+{"t":"2026-10-26T10:19:36.019Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/calls/ringing 200 in 23ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 2.4s (3797 modules)
+ GET /api/calls/ringing 200 in 2769ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1760ms
+ GET /api/tts/credits 200 in 53ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 39ms
+ ✓ Compiled /api/tts in 436ms (2977 modules)
+ POST /api/tts 200 in 746ms
+ GET /api/calls/ringing 200 in 49ms
+{"t":"2026-10-26T10:20:20.263Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 25ms
+ POST /api/tts 200 in 130ms
+ GET /api/tts/credits 200 in 69ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 43ms
+ POST /api/tts/credits 200 in 87ms
+{"t":"2026-10-26T10:21:32.265Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.3,"ok":true}
+ GET /api/calls/ringing 200 in 34ms
+ POST /api/tts 200 in 54ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 42ms
+ POST /api/tts 202 in 129ms
+ ○ Compiling /api/tts/jobs/[jobId] ...
+ ✓ Compiled /api/tts/jobs/[jobId] in 1267ms (2979 modules)
+ GET /api/tts/jobs/258cdeb3-6602-4483-9bdd-54cf5b83b449 200 in 1653ms
+ GET /api/tts/credits 200 in 53ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 21ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 38ms
+{"t":"2026-10-26T10:23:08.242Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1,"ok":true}
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ ✓ Compiled in 1263ms (3788 modules)
+ ✓ Compiled /api/tts/credits in 400ms (2975 modules)
+ GET /api/tts/credits 200 in 640ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 41ms
+{"t":"2026-10-26T10:24:36.604Z","event":"perf.metric","name":"auth.session_db","elapsedMs":6.8,"ok":true}
+ POST /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1008ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 212ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 39ms
+ ○ Compiling /api/tts ...
+ ✓ Compiled /api/tts in 645ms (2977 modules)
+ POST /api/tts 200 in 1137ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 70ms
+ POST /api/tts 202 in 100ms
+ ✓ Compiled /api/tts/jobs/[jobId] in 417ms (2977 modules)
+ GET /api/tts/jobs/e7c252b5-9ac8-4b20-b2b2-dc80fd55cb32 202 in 656ms
+ GET /api/tts/jobs/e7c252b5-9ac8-4b20-b2b2-dc80fd55cb32 502 in 26ms
+ ✓ Compiled /api/tts/credits in 288ms (2979 modules)
+ GET /api/tts/credits 200 in 527ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 33ms
+ ✓ Compiled in 1116ms (3788 modules)
+ GET /api/calls/ringing 200 in 208ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 95ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 101ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 26ms
+{"t":"2026-10-26T10:30:04.169Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.1,"ok":true}
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 51ms
+ ○ Compiling /api/tts ...
+ ✓ Compiled /api/tts in 725ms (2975 modules)
+ GET /api/calls/ringing 200 in 34ms
+ POST /api/tts 200 in 1077ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 648ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1097ms
+ ✓ Compiled /api/tts/credits in 465ms (2977 modules)
+ GET /api/tts/credits 200 in 740ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 41ms
+ POST /api/tts 200 in 78ms
+ GET /api/calls/ringing 200 in 36ms
+ POST /api/tts 200 in 109ms
+ GET /api/tts/credits 200 in 38ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 42ms
+ ✓ Compiled in 860ms (3799 modules)
+ GET /api/calls/ringing 200 in 235ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 33ms
+{"t":"2026-10-26T10:32:40.092Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.3,"ok":true}
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 36ms
+ ✓ Compiled in 1442ms (3788 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1081ms
+ ○ Compiling /api/tts/credits ...
+ ✓ Compiled /api/tts/credits in 670ms (2975 modules)
+ GET /api/tts/credits 200 in 1118ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 437ms
+ GET /api/calls/ringing 200 in 68ms
+ ✓ Compiled in 681ms (3797 modules)
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 516ms
+ GET /api/calls/ringing 200 in 76ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/tts/credits 200 in 70ms
+ GET /api/calls/ringing 200 in 20ms
+ ○ Compiling /api/tts ...
+ ✓ Compiled /api/tts in 700ms (2977 modules)
+{"t":"2026-10-26T10:34:23.041Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.7,"ok":true}
+ POST /api/tts 200 in 1081ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 343ms
+ POST /api/tts 503 in 120ms
+ POST /api/tts 200 in 41ms
+ GET /api/tts/credits 200 in 34ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 29ms
+ POST /api/tts 202 in 62ms
+ ○ Compiling /api/tts/jobs/[jobId] ...
+ ✓ Compiled /api/tts/jobs/[jobId] in 707ms (2979 modules)
+ GET /api/tts/jobs/6afa0c4b-bf55-4199-8383-b09bc082d72c 202 in 1046ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 334ms
+ GET /api/tts/jobs/6afa0c4b-bf55-4199-8383-b09bc082d72c 202 in 42ms
+ GET /api/tts/jobs/6afa0c4b-bf55-4199-8383-b09bc082d72c 202 in 28ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/tts/jobs/6afa0c4b-bf55-4199-8383-b09bc082d72c 202 in 49ms
+ GET /api/tts/jobs/6afa0c4b-bf55-4199-8383-b09bc082d72c 202 in 30ms
+ DELETE /api/tts/jobs/6afa0c4b-bf55-4199-8383-b09bc082d72c 204 in 76ms
+ POST /api/tts 200 in 77ms
+ GET /api/tts/credits 200 in 34ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 28ms
+ ✓ Compiled in 911ms (3800 modules)
+ GET /api/calls/ringing 200 in 139ms
+ GET /api/calls/ringing 200 in 35ms
+ ✓ Compiled /api/tts in 495ms (2975 modules)
+ POST /api/tts 200 in 691ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T10:41:57.476Z","event":"perf.metric","name":"auth.session_db","elapsedMs":7.1,"ok":true}
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 52ms
+{"t":"2026-10-26T10:42:13.431Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.9,"ok":true}
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 104ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 33ms
+{"t":"2026-10-26T10:43:33.442Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.5,"ok":true}
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 70ms
+{"t":"2026-10-26T10:45:17.450Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.7,"ok":true}
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 147ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 3.1s (3788 modules)
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1182ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 3027ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 88ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 22ms
+{"t":"2026-10-26T10:47:08.986Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 146ms
+ ○ Compiling /messages/[sessionId] ...
+ ✓ Compiled /messages/[sessionId] in 2.7s (3826 modules)
+ GET /messages/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 4232ms
+ ○ Compiling /api/messages ...
+ ✓ Compiled /api/messages in 613ms (3818 modules)
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 837ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ ○ Compiling /api/tts ...
+ ✓ Compiled /api/tts in 1613ms (2996 modules)
+ POST /api/tts 404 in 1866ms
+ GET /api/calls/ringing 200 in 115ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 65ms
+ GET /messages/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 690ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 42ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 50ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 23ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 127ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 30ms
+ POST /api/messages 200 in 119ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 72ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 48ms
+ GET /api/calls/ringing 200 in 127ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 126ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 60ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+{"t":"2026-10-26T10:49:16.180Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 2.4s (3830 modules)
+ ✓ Compiled in 1ms (2987 modules)
+ ✓ Compiled in 1ms (2987 modules)
+ ✓ Compiled in 0ms (2987 modules)
+{"t":"2026-10-26T10:49:34.701Z","event":"perf.metric","name":"auth.session_db","elapsedMs":14.8,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 3681ms
+ GET /api/calls/ringing 200 in 1997ms
+ GET /messages/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 2779ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 171ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 113ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 196ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 103ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 30ms
+{"t":"2026-10-26T10:51:20.663Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 5.3s (3829 modules)
+ ✓ Compiled in 0ms (2981 modules)
+ ✓ Compiled in 0ms (2981 modules)
+ ✓ Compiled in 0ms (2981 modules)
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 2516ms
+ GET /api/calls/ringing 200 in 2564ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 3811ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 27ms
+ ✓ Compiled in 788ms (3820 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 778ms
+ GET /chat/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 715ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /messages/d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 222ms
+ ○ Compiling /api/messages ...
+ ✓ Compiled /api/messages in 1559ms (2983 modules)
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1754ms
+ GET /api/calls/ringing 200 in 91ms
+{"t":"2026-10-26T10:52:56.319Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 30ms
+{"t":"2026-10-26T10:53:19.735Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.8,"ok":true}
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 82ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 23ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 23ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 30ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 78ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T10:54:26.329Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.4,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 47ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+ GET /api/calls/ringing 200 in 121ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 64ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+ GET /api/calls/ringing 200 in 76ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 40ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 52ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 45ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/calls/ringing 200 in 89ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 46ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+{"t":"2026-10-26T10:56:15.738Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 72ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ GET /api/calls/ringing 200 in 29ms
+{"t":"2026-10-26T10:56:36.318Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 31ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 95ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 24ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 30ms
+ GET /api/calls/ringing 200 in 33ms
+{"t":"2026-10-26T10:57:21.310Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 28ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 149ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 26ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 24ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 26ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 28ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 27ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 24ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 28ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 26ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 26ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 24ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 15ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 18ms
+ GET /api/calls/ringing 200 in 135ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 65ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+{"t":"2026-10-26T10:59:59.725Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.6,"ok":true}
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 263ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 269ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 713ms
+ GET /api/calls/ringing 200 in 1219ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 234ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 45ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 80ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 59ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 26ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 23ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 24ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 30ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 939ms
+ GET /api/calls/ringing 200 in 1621ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 546ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 121ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 202ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 171ms
+ GET /api/calls/ringing 200 in 194ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 1068ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 95ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 69ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 48ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 70ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+{"t":"2026-10-26T11:02:31.742Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.3,"ok":true}
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 42ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 75ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 44ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 27ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 54ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 50ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 48ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 109ms
+ GET /api/calls/ringing 200 in 129ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 82ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 26ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 57ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 46ms
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 80ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 42ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 114ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 76ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 24ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 18ms
+{"t":"2026-10-26T11:04:21.327Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.3,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 40ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+ GET /api/calls/ringing 200 in 14ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 17ms
+{"t":"2026-10-26T11:04:41.302Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.3,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 15ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 61ms
+{"t":"2026-10-26T11:05:11.304Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.5,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 21ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 31ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 28ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 55ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 18ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/calls/ringing 200 in 21ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+{"t":"2026-10-26T11:06:21.304Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+{"t":"2026-10-26T11:06:23.727Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 31ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 23ms
+ GET /api/calls/ringing 200 in 65ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 25ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 15ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 15ms
+ GET /api/calls/ringing 200 in 14ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 37ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T11:08:41.324Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.1,"ok":true}
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 39ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 36ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 28ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 33ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 14ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 20ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 38ms
+ GET /api/calls/ringing 200 in 21ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 19ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 15ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 22ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 16ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 34ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 35ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 27ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 17ms
+ GET /api/messages?sessionId=d6bc079f-ae70-40c3-9e35-cb2cd13e8c04 200 in 110ms
+ ○ Compiling /archive ...
+ ✓ Compiled /archive in 2.2s (3836 modules)
+ GET /archive 200 in 2759ms
+ GET /api/calls/ringing 200 in 162ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T11:11:04.426Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":13.2,"ok":true}
+ GET /archive 200 in 79ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /archive 200 in 72ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive 200 in 113ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 33ms
+ ✓ Compiled in 948ms (3826 modules)
+ GET /api/calls/ringing 200 in 166ms
+ GET /archive 200 in 230ms
+ GET /archive 200 in 69ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /archive 200 in 69ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /archive 200 in 74ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /archive 200 in 319ms
+ GET /archive 200 in 43ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /archive 200 in 76ms
+ GET /api/calls/ringing 200 in 97ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /archive 200 in 86ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 77ms
+ GET /archive 200 in 157ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 931ms
+ GET /api/calls/ringing 200 in 83ms
+ GET /archive 200 in 540ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 26ms
+{"t":"2026-10-26T11:14:04.441Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":17.5,"ok":true}
+ GET /archive 200 in 116ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /archive 200 in 73ms
+ GET /api/calls/ringing 200 in 30ms
+ ✓ Compiled in 1780ms (3824 modules)
+ GET /archive 200 in 397ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /archive 200 in 49ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 98ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /archive 200 in 67ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /archive 200 in 98ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive 200 in 52ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+{"t":"2026-10-26T11:16:04.441Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.5,"ok":true}
+ GET /archive 200 in 76ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive 200 in 161ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /archive 200 in 68ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /archive 200 in 101ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /archive 200 in 73ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /archive 200 in 87ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /archive 200 in 121ms
+ ✓ Compiled in 1482ms (3824 modules)
+ GET /api/calls/ringing 200 in 134ms
+ GET /archive 200 in 278ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /archive 200 in 70ms
+ ✓ Compiled in 827ms (3824 modules)
+ GET /api/calls/ringing 200 in 176ms
+ GET /api/calls/ringing 200 in 26ms
+{"t":"2026-10-26T11:18:44.542Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":10,"ok":true}
+ GET /archive 200 in 167ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /archive 200 in 62ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /archive 200 in 75ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /archive 200 in 112ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive 200 in 126ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /archive 200 in 115ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /archive 200 in 58ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /archive 200 in 62ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive 200 in 120ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /archive 200 in 63ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 33ms
+{"t":"2026-10-26T11:22:04.427Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":7.6,"ok":true}
+ GET /archive 200 in 56ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /archive 200 in 68ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive 200 in 59ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T11:23:03.727Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive 200 in 61ms
+ ✓ Compiled in 4.7s (3824 modules)
+ GET /api/calls/ringing 200 in 3806ms
+ GET /archive 200 in 362ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /archive 200 in 49ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 38ms
+{"t":"2026-10-26T11:23:55.813Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.3,"ok":true}
+ GET /archive 200 in 62ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 196ms
+{"t":"2026-10-26T11:24:21.958Z","event":"perf.metric","name":"auth.session_db","elapsedMs":22.9,"ok":true}
+ GET /archive 200 in 1113ms
+ GET /api/calls/ringing 200 in 178ms
+ GET /archive 200 in 195ms
+ GET /api/calls/ringing 200 in 127ms
+ GET /archive 200 in 343ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /archive 200 in 74ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /archive 200 in 74ms
+ GET /api/calls/ringing 200 in 38ms
+ ✓ Compiled in 1348ms (2991 modules)
+ GET /archive 200 in 300ms
+ GET /api/calls/ringing 200 in 203ms
+ GET /archive?channel=dm 200 in 42ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /archive?channel=dm 200 in 56ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /archive?channel=dm 200 in 56ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /archive?channel=dm 200 in 81ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /archive?channel=dm 200 in 62ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 81ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /archive?channel=dm 200 in 68ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 56ms
+ GET /api/calls/ringing 200 in 98ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 68ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 66ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 111ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 34ms
+{"t":"2026-10-26T11:29:11.726Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/calls/ringing 200 in 39ms
+ GET /archive?channel=dm 200 in 60ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 58ms
+ GET /api/calls/ringing 200 in 80ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 38ms
+{"t":"2026-10-26T11:29:54.970Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":11.5,"ok":true}
+ GET /archive?channel=dm 200 in 78ms
+{"t":"2026-10-26T11:29:59.732Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /archive?channel=dm 200 in 65ms
+{"t":"2026-10-26T11:30:15.726Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.9,"ok":true}
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T11:30:31.745Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 56ms
+ GET /archive?channel=dm 200 in 59ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T11:30:54.947Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":7.1,"ok":true}
+ GET /archive?channel=dm 200 in 61ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /archive?channel=dm 200 in 84ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /archive?channel=dm 200 in 62ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /archive?channel=dm 200 in 75ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /archive?channel=dm 200 in 63ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 30ms
+{"t":"2026-10-26T11:32:34.933Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":12.9,"ok":true}
+ GET /archive?channel=dm 200 in 61ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /archive?channel=dm 200 in 96ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 48ms
+{"t":"2026-10-26T11:33:14.956Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":7.7,"ok":true}
+ GET /archive?channel=dm 200 in 72ms
+ GET /api/calls/ringing 200 in 39ms
+{"t":"2026-10-26T11:33:24.661Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":18.5,"ok":true}
+ GET /archive?channel=dm 200 in 57ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /archive?channel=dm 200 in 147ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 44ms
+{"t":"2026-10-26T11:33:54.936Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":16.2,"ok":true}
+ GET /archive?channel=dm 200 in 72ms
+{"t":"2026-10-26T11:33:59.706Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.2,"ok":true}
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T11:34:14.945Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":9,"ok":true}
+ GET /archive?channel=dm 200 in 60ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 72ms
+{"t":"2026-10-26T11:34:31.910Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.5,"ok":true}
+ GET /api/calls/ringing 200 in 58ms
+{"t":"2026-10-26T11:34:35.135Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":10.5,"ok":true}
+ GET /archive?channel=dm 200 in 85ms
+ GET /api/calls/ringing 200 in 363ms
+ GET /api/calls/ringing 200 in 47ms
+{"t":"2026-10-26T11:34:55.111Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":19,"ok":true}
+ GET /archive?channel=dm 200 in 75ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive?channel=dm 200 in 54ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive?channel=dm 200 in 70ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive?channel=dm 200 in 75ms
+ ✓ Compiled in 1509ms (3837 modules)
+ GET /archive?channel=dm 200 in 332ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 305ms
+ GET /archive?channel=dm 200 in 448ms
+ GET /archive 200 in 41ms
+ GET /api/calls/ringing 200 in 114ms
+ GET /archive?channel=dm 200 in 44ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /archive?channel=dm 200 in 92ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /archive?channel=dm 200 in 73ms
+ GET /archive 200 in 73ms
+ GET /archive?channel=dm 200 in 34ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /archive?channel=dm 200 in 140ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 55ms
+ ✓ Compiled in 2.5s (3837 modules)
+ GET /archive?channel=dm 200 in 263ms
+{"t":"2026-10-26T11:37:36.994Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":7,"ok":true}
+ GET /archive?channel=dm 200 in 47ms
+ GET /archive?channel=dm 200 in 93ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /archive?channel=dm 200 in 58ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /archive?channel=dm 200 in 154ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /archive?channel=dm 200 in 66ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /archive?channel=dm 200 in 107ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /archive?channel=dm 200 in 63ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /archive?channel=dm 200 in 74ms
+ GET /archive 200 in 34ms
+ GET /archive?channel=dm 200 in 40ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /archive?channel=dm 200 in 89ms
+ GET /api/calls/ringing 200 in 89ms
+ GET /api/calls/ringing 200 in 44ms
+ ✓ Compiled in 1520ms (3837 modules)
+ GET /archive?channel=dm 200 in 483ms
+ GET /archive?channel=dm 200 in 86ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /archive?channel=dm 200 in 57ms
+ GET /api/calls/ringing 200 in 105ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /archive?channel=dm 200 in 68ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /archive?channel=dm 200 in 75ms
+ ✓ Compiled in 761ms (3837 modules)
+{"t":"2026-10-26T11:40:50.400Z","event":"perf.metric","name":"auth.session_db","elapsedMs":17.4,"ok":true}
+ GET /archive?channel=dm 200 in 206ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /archive?channel=dm 200 in 87ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /archive?channel=dm 200 in 49ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+{"t":"2026-10-26T11:41:24.569Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":10.8,"ok":true}
+ GET /archive?channel=dm 200 in 111ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /archive?channel=dm 200 in 72ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 146ms
+ ✓ Compiled in 8.9s (3838 modules)
+ GET /api/calls/ringing 200 in 7750ms
+ GET /archive?channel=dm 200 in 5792ms
+ GET /archive?channel=dm 200 in 132ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /archive?channel=dm 200 in 731ms
+{"t":"2026-10-26T11:42:17.034Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":187.1,"ok":true}
+ GET /archive?channel=dm 200 in 293ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /archive?channel=dm 200 in 93ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /archive?channel=dm 200 in 74ms
+{"t":"2026-10-26T11:43:05.659Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2,"ok":true}
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /archive?channel=dm 200 in 106ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 82ms
+{"t":"2026-10-26T11:43:37.703Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":14.4,"ok":true}
+ GET /archive?channel=dm 200 in 73ms
+ GET /archive?channel=dm 200 in 44ms
+ ○ Compiling /home ...
+ ✓ Compiled /home in 4.5s (3903 modules)
+{"t":"2026-10-26T11:43:48.055Z","event":"perf.metric","name":"auth.session_db","elapsedMs":6.1,"ok":true}
+ GET /api/calls/ringing 200 in 2188ms
+ GET /home 200 in 5063ms
+ ○ Compiling /create ...
+ ✓ Compiled /create in 3s (3979 modules)
+ GET /create 200 in 3470ms
+ GET /api/calls/ringing 200 in 175ms
+ GET /create?type=reality 200 in 137ms
+ GET /create?type=reality 200 in 25ms
+ GET /create?type=reality&draft=752fba65-8ec4-437b-8a6a-fef704f51eb2 200 in 61ms
+{"t":"2026-10-26T11:43:54.312Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.3,"ok":true}
+ GET /create?type=reality&draft=752fba65-8ec4-437b-8a6a-fef704f51eb2 200 in 42ms
+ GET /home 200 in 123ms
+ GET /archive 200 in 138ms
+ ○ Compiling /my ...
+ ✓ Compiled /my in 1071ms (4017 modules)
+ GET /api/calls/ringing 200 in 139ms
+ GET /my 200 in 1467ms
+ GET /api/calls/ringing 200 in 459ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /home 200 in 160ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 2318ms
+ GET /api/calls/ringing 200 in 120ms
+ GET /api/calls/ringing 200 in 206ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 115ms
+ GET /api/calls/ringing 200 in 146ms
+ GET /api/calls/ringing 200 in 80ms
+ GET /api/calls/ringing 200 in 124ms
+ GET /api/calls/ringing 200 in 214ms
+ GET /api/calls/ringing 200 in 118ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 2105ms
+ GET /api/calls/ringing 200 in 1252ms
+ GET /api/calls/ringing 200 in 163ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 277ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 139ms
+ GET /api/calls/ringing 200 in 203ms
+ GET /api/calls/ringing 200 in 162ms
+ GET /api/calls/ringing 200 in 154ms
+ GET /api/calls/ringing 200 in 176ms
+ GET /api/calls/ringing 200 in 103ms
+ GET /api/calls/ringing 200 in 120ms
+ GET /api/calls/ringing 200 in 105ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 120ms
+ GET /api/calls/ringing 200 in 93ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 94ms
+ GET /api/calls/ringing 200 in 524ms
+ GET /api/calls/ringing 200 in 97ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 52ms
+ ✓ Compiled in 11.4s (4008 modules)
+{"t":"2026-10-26T11:50:08.112Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1648.8,"ok":true}
+ GET /api/calls/ringing 200 in 6646ms
+ GET /api/calls/ringing 200 in 13234ms
+ GET /home 200 in 2086ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 39ms
+ ✓ Compiled in 3.8s (3079 modules)
+ ✓ Compiled in 1ms (3079 modules)
+ ✓ Compiled in 0ms (3079 modules)
+ ✓ Compiled in 0ms (3079 modules)
+ GET /api/calls/ringing 200 in 3989ms
+ GET /home 200 in 3692ms
+ GET /api/calls/ringing 200 in 103ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /home 200 in 1428ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 84ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 2066ms
+ ○ Compiling /search ...
+ ✓ Compiled /search in 10.4s (4032 modules)
+ GET /search?audience=female&tag=%EB%A1%9C%EB%A7%A8%EC%8A%A4 200 in 10996ms
+ GET /api/calls/ringing 200 in 6582ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 837ms (4006 modules)
+ GET /api/calls/ringing 200 in 93ms
+ GET /api/home/cards?audience=female&tag=%EB%A1%9C%EB%A7%A8%EC%8A%A4 200 in 1141ms
+ ✓ Compiled in 5.5s (3093 modules)
+ ✓ Compiled in 1ms (3093 modules)
+ ✓ Compiled in 1ms (3093 modules)
+ ✓ Compiled in 0ms (3093 modules)
+ GET /api/calls/ringing 200 in 3318ms
+ GET /search?audience=female&tag=%EB%A1%9C%EB%A7%A8%EC%8A%A4 200 in 4539ms
+{"t":"2026-10-26T11:52:05.983Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.6,"ok":true}
+ GET /api/calls/ringing 200 in 81ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 35ms
+ ✓ Compiled in 1414ms (3871 modules)
+ GET /search?audience=female&tag=%EB%A1%9C%EB%A7%A8%EC%8A%A4 200 in 540ms
+ GET /api/calls/ringing 200 in 143ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /home 200 in 253ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /archive 200 in 129ms
+ GET /home 200 in 66ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /home 200 in 71ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 458ms
+{"t":"2026-10-26T11:53:36.568Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":150,"ok":true}
+ GET /home 200 in 574ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 99ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 105ms
+ ✓ Compiled in 7.8s (3869 modules)
+ GET /api/calls/ringing 200 in 4878ms
+ GET /home 200 in 593ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 774ms
+ GET /api/calls/ringing 200 in 160ms
+ GET /api/calls/ringing 200 in 517ms
+ ✓ Compiled in 6s (3869 modules)
+ GET /api/calls/ringing 200 in 5869ms
+ GET /home 200 in 801ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 634ms
+ GET /api/calls/ringing 200 in 118ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 120ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 82ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 3887ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ ./app/(main)/home/audience-select.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/home/audience-select.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'discoveryAudience' is not exported from '@/lib/discovery-filters' (imported as 'discoveryAudience').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/home/audience-select.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/home/audience-select.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'discoveryAudience' is not exported from '@/lib/discovery-filters' (imported as 'discoveryAudience').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+ ⚠ ./app/(main)/home/audience-select.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/home/audience-select.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'discoveryAudience' is not exported from '@/lib/discovery-filters' (imported as 'discoveryAudience').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/home/audience-select.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/home/audience-select.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'discoveryAudience' is not exported from '@/lib/discovery-filters' (imported as 'discoveryAudience').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+ ⚠ ./app/(main)/home/audience-select.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/home/audience-select.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'discoveryAudience' is not exported from '@/lib/discovery-filters' (imported as 'discoveryAudience').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/home/audience-select.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/home/audience-select.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'discoveryAudience' is not exported from '@/lib/discovery-filters' (imported as 'discoveryAudience').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+
+./app/(main)/search/screen.tsx
+Attempted import error: 'AudienceOptions' is not exported from '@/components/discovery-filters' (imported as 'AudienceOptions').
+
+Import trace for requested module:
+./app/(main)/search/screen.tsx
+ ⨯ [Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.] {
+  digest: '4084661491'
+}
+ GET /home 500 in 11351ms
+ ⚠ Server is approaching the used memory threshold, restarting...
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8812
+   - Network:      http://172.17.216.204:8812
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+
+   We detected TypeScript in your project and reconfigured your tsconfig.json file for you. Strict-mode is set to false by default.
+   The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+   	- include was updated to add '.next-launch-local/types/**/*.ts'
+
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 591ms (594 modules)
+ ✓ Ready in 2.9s
+ ○ Compiling /home ...
+ ✓ Compiled /home in 4.9s (3565 modules)
+ GET /home 200 in 8346ms
+ ○ Compiling /api/calls/ringing ...
+ ✓ Compiled /api/calls/ringing in 944ms (3551 modules)
+ GET /api/calls/ringing 200 in 1401ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 34ms
+ ○ Compiling /search ...
+ ✓ Compiled /search in 1113ms (3575 modules)
+ GET /search?tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC&tag=character%3A%EA%B3%A0%EC%84%9C+%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 1542ms
+ ✓ Compiled /api/home/cards in 459ms (3577 modules)
+{"t":"2026-10-26T12:01:10.678Z","event":"perf.metric","name":"api.home_page_total","elapsedMs":13.6,"ok":true}
+ GET /api/home/cards?tag=character%3A%EA%B3%A0%EC%84%9C+%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC 200 in 675ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /home 200 in 232ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 87ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 1444ms
+ ✓ Compiled in 1091ms (3585 modules)
+ GET /api/calls/ringing 200 in 41ms
+ GET /home 200 in 564ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 39ms
+{"t":"2026-10-26T12:03:46.381Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.8,"ok":true}
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 76ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 99ms
+ GET /api/calls/ringing 200 in 116ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T12:06:34.390Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2,"ok":true}
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ ✓ Compiled in 5.9s (3575 modules)
+ GET /api/calls/ringing 200 in 4991ms
+ GET /home 200 in 1561ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /home 200 in 1083ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /search?tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 497ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 678ms (2761 modules)
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC 200 in 1065ms
+ GET /search?tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 350ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /home 200 in 130ms
+ GET /api/calls/ringing 200 in 17ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 85ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 38ms
+{"t":"2026-10-26T12:11:20.902Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.1,"ok":true}
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 34ms
+ ✓ Compiled in 2s (3585 modules)
+ GET /home 200 in 647ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 36ms
+ ✓ Compiled in 1019ms (3575 modules)
+ GET /home 200 in 473ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /home 200 in 502ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 38ms
+{"t":"2026-10-26T12:13:14.728Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.2,"ok":true}
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 28ms
+{"t":"2026-10-26T12:13:30.729Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.6,"ok":true}
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 28ms
+ ○ Compiling /explore ...
+ ✓ Compiled /explore in 1590ms (3581 modules)
+ GET /explore 200 in 2097ms
+ GET /search 200 in 87ms
+{"t":"2026-10-26T12:14:09.670Z","event":"perf.metric","name":"auth.session_db","elapsedMs":17.8,"ok":true}
+ GET /home 200 in 209ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /search 200 in 36ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 92ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T12:15:38.718Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T12:15:46.727Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 44ms
+ ✓ Compiled in 2.7s (3576 modules)
+ GET /api/calls/ringing 200 in 315ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /search 200 in 564ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 54ms
+ ✓ Compiled in 1157ms (3576 modules)
+ GET /api/calls/ringing 200 in 261ms
+ GET /search 200 in 466ms
+{"t":"2026-10-26T12:17:53.704Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.1,"ok":true}
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 1042ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 745ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 22ms
+{"t":"2026-10-26T12:20:09.686Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 25ms
+ ✓ Compiled in 3.5s (3596 modules)
+ GET /api/calls/ringing 200 in 1484ms
+ GET /search 200 in 453ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /search 200 in 404ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 29ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 1622ms (3596 modules)
+ GET /api/calls/ringing 200 in 1230ms
+ GET /search 200 in 1041ms
+ GET /search 200 in 1300ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 122ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 21ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 33ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 1737ms (3587 modules)
+{"t":"2026-10-26T12:25:14.558Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":70.1,"ok":true}
+ GET /search 200 in 1013ms
+ GET /search 200 in 1789ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 29ms
+{"t":"2026-10-26T12:26:11.432Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.9,"ok":true}
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T12:29:15.424Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3,"ok":true}
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 55ms
+ ✓ Compiled in 1136ms (3587 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 660ms
+ GET /search 200 in 357ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 25ms
+ ✓ Compiled in 765ms (3587 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 580ms
+ GET /api/calls/ringing 200 in 193ms
+ GET /search 200 in 588ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 22ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 1036ms (3587 modules)
+ GET /api/calls/ringing 200 in 1641ms
+ GET /search 200 in 843ms
+ GET /search 200 in 1173ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 34ms
+{"t":"2026-10-26T12:35:08.438Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.4,"ok":true}
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T12:37:24.432Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 137ms
+ GET /api/calls/ringing 200 in 36ms
+{"t":"2026-10-26T12:41:48.513Z","event":"perf.metric","name":"auth.session_db","elapsedMs":25.1,"ok":true}
+ GET /api/calls/ringing 200 in 85ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 43ms
+{"t":"2026-10-26T12:45:48.456Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.5,"ok":true}
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 29ms
+{"t":"2026-10-26T12:46:52.449Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.5,"ok":true}
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+{"t":"2026-10-26T12:49:00.448Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T12:51:08.450Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 96ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 41ms
+ ✓ Compiled in 1404ms (3587 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 1579ms
+ GET /search 200 in 1385ms
+ GET /api/calls/ringing 200 in 1078ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T12:56:10.768Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.3,"ok":true}
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 31ms
+ ✓ Compiled in 4s (3619 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 1773ms
+ GET /search 200 in 409ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 65ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 21ms
+ GET /api/calls/ringing 200 in 20ms
+{"t":"2026-10-26T12:58:27.736Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.3,"ok":true}
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 29ms
+ ✓ Compiled in 1317ms (3619 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 875ms
+ GET /search 200 in 437ms
+{"t":"2026-10-26T12:59:52.852Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.5,"ok":true}
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 20ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 106ms
+ GET /api/calls/ringing 200 in 42ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 2.2s (3587 modules)
+ GET /api/calls/ringing 200 in 2133ms
+ GET /search 200 in 1304ms
+ GET /search 200 in 1630ms
+ GET /api/calls/ringing 200 in 92ms
+{"t":"2026-10-26T13:01:47.835Z","event":"perf.metric","name":"auth.session_db","elapsedMs":11.5,"ok":true}
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 50ms
+{"t":"2026-10-26T13:02:11.811Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.5,"ok":true}
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 122ms
+ GET /api/calls/ringing 200 in 77ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 100ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 1207ms
+ ✓ Compiled in 1555ms (3577 modules)
+ GET /api/calls/ringing 200 in 244ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 123ms
+ GET /api/calls/ringing 200 in 223ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 1476ms
+ ✓ Compiled in 1417ms (3587 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 867ms
+ GET /search 200 in 702ms
+ GET /api/calls/ringing 200 in 56ms
+ ✓ Compiled in 674ms (3587 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 433ms
+ GET /search 200 in 489ms
+ GET /api/calls/ringing 200 in 104ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 73ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T13:07:57.812Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 48ms
+{"t":"2026-10-26T13:08:21.833Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.9,"ok":true}
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 66ms
+{"t":"2026-10-26T13:08:45.829Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.9,"ok":true}
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 43ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 13.5s (3587 modules)
+ GET /api/calls/ringing 200 in 13752ms
+ GET /api/calls/ringing 200 in 5494ms
+ GET /search 200 in 1211ms
+ GET /search 200 in 5533ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 38ms
+{"t":"2026-10-26T13:10:30.448Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.7,"ok":true}
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 84ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T13:12:14.461Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.9,"ok":true}
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 27ms
+ ✓ Compiled in 2.2s (3596 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search 200 in 500ms
+ GET /search 200 in 401ms
+ GET /api/calls/ringing 200 in 61ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 1372ms (2762 modules)
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 909ms
+ GET /search?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 232ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 341ms
+{"t":"2026-10-26T13:16:56.787Z","event":"perf.metric","name":"api.home_page_data","elapsedMs":23.1,"ok":true}
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 86ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 95ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 2149ms
+ GET /api/calls/ringing 200 in 1973ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 50ms
+ ✓ Compiled in 1783ms (3587 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /search?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 898ms
+ GET /search?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 347ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 503ms (2762 modules)
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 705ms
+ GET /api/calls/ringing 200 in 150ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 36ms
+{"t":"2026-10-26T13:20:07.161Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2,"ok":true}
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 77ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 53ms
+{"t":"2026-10-26T13:23:27.172Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.5,"ok":true}
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 48ms
+{"t":"2026-10-26T13:23:43.177Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.2,"ok":true}
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 88ms
+{"t":"2026-10-26T13:23:59.189Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.2,"ok":true}
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 16ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 25ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 9.6s (3599 modules)
+ GET /search?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 10037ms
+ GET /api/calls/ringing 200 in 5480ms
+ GET /search?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 307 in 1486ms
+ ○ Compiling /search/results ...
+ ✓ Compiled /search/results in 896ms (3579 modules)
+ GET /search/results?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 1647ms
+ GET /api/calls/ringing 200 in 140ms
+ ✓ Compiled /api/home/cards in 481ms (2764 modules)
+{"t":"2026-10-26T13:27:29.531Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.2,"ok":true}
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 713ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 65ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /search 200 in 502ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 188ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 59ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 52ms
+{"t":"2026-10-26T13:29:44.940Z","event":"perf.metric","name":"auth.session_db","elapsedMs":13.2,"ok":true}
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 143ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 29ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/home/cards? 200 in 40ms
+ GET /search 200 in 139ms
+ GET /api/calls/ringing 200 in 65ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 112ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 111ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 66ms
+{"t":"2026-10-26T13:30:42.928Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.9,"ok":true}
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 133ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 69ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T13:34:10.912Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.9,"ok":true}
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 389ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 105ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 66ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 5.3s (3589 modules)
+ GET /api/calls/ringing 200 in 4166ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 1635ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 2169ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 759ms (2764 modules)
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4 200 in 1407ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 52ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 187ms
+ GET /api/calls/ringing 200 in 65ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 112ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/calls/ringing 200 in 215ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 36ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 4.7s (3589 modules)
+ GET /api/calls/ringing 200 in 5945ms
+{"t":"2026-10-26T13:40:46.721Z","event":"perf.metric","name":"auth.session_db","elapsedMs":32.9,"ok":true}
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 1744ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 2406ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 701ms (2764 modules)
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 910ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 49ms
+{"t":"2026-10-26T13:41:20.365Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 159ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 39ms
+{"t":"2026-10-26T13:42:56.374Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 37ms
+{"t":"2026-10-26T13:43:12.370Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.2,"ok":true}
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 88ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 31ms
+{"t":"2026-10-26T13:50:00.364Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.5,"ok":true}
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+{"t":"2026-10-26T13:51:12.363Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 39ms
+{"t":"2026-10-26T13:52:16.352Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.6,"ok":true}
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EA%B5%90%EC%88%98&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 39ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EA%B5%90%EC%88%98&tag=character%3A%EC%84%A0%EC%83%9D%EB%8B%98&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 25ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EA%B5%90%EC%88%98&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=character%3A%EC%84%A0%EC%83%9D%EB%8B%98&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 28ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EA%B5%90%EC%88%98&tag=character%3A%EC%84%A0%EC%83%9D%EB%8B%98&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 25ms
+{"t":"2026-10-26T13:52:19.232Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.2,"ok":true}
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EA%B5%90%EC%88%98&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 24ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 38ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 26ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88&tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC 200 in 59ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC&tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC 200 in 186ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88&tag=mood%3A%EB%AF%B8%EC%8A%A4%ED%84%B0%EB%A6%AC 200 in 28ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 22ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 26ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 948ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 28ms
+ ✓ Compiled in 12.2s (3591 modules)
+ GET /api/calls/ringing 200 in 5753ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 1194ms
+ GET /api/calls/ringing 200 in 32ms
+{"t":"2026-10-26T13:53:25.956Z","event":"perf.metric","name":"auth.session_db","elapsedMs":94.5,"ok":true}
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 252ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 77ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 128ms
+ GET /api/calls/ringing 200 in 1133ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 100ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 9.9s (3591 modules)
+ GET /api/calls/ringing 200 in 6142ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 1715ms
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 2152ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 161ms
+{"t":"2026-10-26T13:54:39.110Z","event":"perf.metric","name":"auth.session_db","elapsedMs":9.2,"ok":true}
+ GET /search/results?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 191ms
+ GET /api/home/cards?q=%ED%86%A0%EB%A7%88%EC%8A%A4&tag=character%3A%EC%9D%98%EC%82%AC 200 in 58ms
+ GET /api/home/cards? 200 in 52ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/home/cards? 200 in 44ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 4057ms
+ GET /api/home/cards? 200 in 658ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /api/calls/ringing 200 in 744ms
+ GET /api/calls/ringing 200 in 862ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 85ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 122ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 10.4s (3589 modules)
+ GET /api/calls/ringing 200 in 6437ms
+ GET /search/results 200 in 1679ms
+ GET /search/results 200 in 2502ms
+ GET /search/results 200 in 272ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 531ms (2764 modules)
+ GET /api/home/cards? 200 in 809ms
+ GET /api/home/cards?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 60ms
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 24ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 61ms
+{"t":"2026-10-26T13:58:03.117Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.9,"ok":true}
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 80ms
+ ✓ Compiled in 16.9s (3591 modules)
+ GET /api/calls/ringing 200 in 10979ms
+ GET /api/calls/ringing 200 in 2763ms
+ GET /search/results?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 1513ms
+ GET /search/results?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88&tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 11327ms
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80&tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 230ms
+{"t":"2026-10-26T13:58:41.990Z","event":"perf.metric","name":"auth.session_db","elapsedMs":5.6,"ok":true}
+ GET /api/home/cards?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 59ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/home/cards? 200 in 66ms
+ ○ Compiling /explore ...
+ ✓ Compiled /explore in 3.1s (3582 modules)
+ GET /api/calls/ringing 200 in 2138ms
+ GET /explore 200 in 3546ms
+ GET /explore 200 in 46ms
+ GET /api/home/cards? 200 in 44ms
+{"t":"2026-10-26T13:58:53.737Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.1,"ok":true}
+ GET /api/home/cards? 200 in 73ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/home/cards?tag=character%3A%EB%B3%B5%EC%9B%90%EA%B0%80 200 in 73ms
+{"t":"2026-10-26T13:59:14.449Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.2,"ok":true}
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/home/cards? 200 in 34ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 44ms
+{"t":"2026-10-26T13:59:46.457Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.3,"ok":true}
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 1763ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 39ms
+{"t":"2026-10-26T14:04:34.465Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.8,"ok":true}
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 34ms
+{"t":"2026-10-26T14:06:02.470Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.2,"ok":true}
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 33ms
+{"t":"2026-10-26T14:08:02.510Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.8,"ok":true}
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 104ms
+ GET /api/calls/ringing 200 in 353ms
+ GET /api/calls/ringing 200 in 87ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 92ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /api/calls/ringing 200 in 44ms
+{"t":"2026-10-26T14:11:38.467Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.2,"ok":true}
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 27ms
+ ○ Compiling /api/home/cards ...
+ ✓ Compiled /api/home/cards in 5.5s (3580 modules)
+ ✓ Compiled in 0ms (2766 modules)
+ GET /api/calls/ringing 200 in 1380ms
+ GET /api/home/cards? 200 in 5280ms
+ GET /explore 200 in 1443ms
+ GET /explore 200 in 68ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 24ms
+ ✓ Compiled in 1811ms (3601 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /api/calls/ringing 200 in 2742ms
+ GET /explore 200 in 3553ms
+ GET /explore 200 in 2727ms
+ GET /explore 200 in 293ms
+ GET /api/home/cards? 200 in 74ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/home/cards?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 38ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 38ms
+ ✓ Compiled in 892ms (3592 modules)
+ GET /explore?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 243ms
+ GET /api/calls/ringing 200 in 40ms
+{"t":"2026-10-26T14:15:45.501Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.1,"ok":true}
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/home/cards? 200 in 46ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 18ms
+ GET /api/calls/ringing 200 in 353ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/home/cards?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 38ms
+ GET /api/home/cards? 200 in 191ms
+ GET /api/home/cards?tag=mood%3ASF 200 in 28ms
+ GET /api/home/cards? 200 in 37ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 120ms
+ GET /api/home/cards? 200 in 30ms
+ GET /api/home/cards? 200 in 34ms
+{"t":"2026-10-26T14:17:15.025Z","event":"perf.metric","name":"api.home_page_total","elapsedMs":7.1,"ok":true}
+ GET /api/home/cards? 200 in 28ms
+ GET /api/home/cards? 200 in 25ms
+ GET /api/home/cards? 200 in 27ms
+ GET /api/home/cards? 200 in 25ms
+ GET /api/home/cards? 200 in 23ms
+ GET /api/home/cards? 200 in 24ms
+ GET /api/home/cards? 200 in 21ms
+ GET /api/home/cards? 200 in 26ms
+ GET /api/home/cards? 200 in 76ms
+ GET /api/home/cards? 200 in 23ms
+ GET /api/home/cards? 200 in 23ms
+ GET /api/home/cards? 200 in 20ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 37ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 12.1s (3592 modules)
+ GET /api/calls/ringing 200 in 2035ms
+ GET /api/calls/ringing 200 in 9560ms
+{"t":"2026-10-26T14:17:47.695Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":130.4,"ok":true}
+ GET /explore 200 in 1435ms
+ GET /explore 200 in 1929ms
+ GET /api/home/cards? 200 in 108ms
+ GET /explore 200 in 152ms
+ GET /api/home/cards? 200 in 31ms
+ GET /api/home/cards?tag=mood%3A%EB%93%9C%EB%9D%BC%EB%A7%88 200 in 70ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/home/cards? 200 in 40ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /home 200 in 898ms
+ GET /home 200 in 971ms
+ ○ Compiling /create ...
+ ✓ Compiled /archive in 28.2s (3820 modules)
+ GET /create 200 in 28807ms
+ GET /api/calls/ringing 200 in 10783ms
+ GET /api/calls/ringing 200 in 18504ms
+ GET /api/calls/ringing 200 in 26998ms
+ GET /api/calls/ringing 200 in 2387ms
+ GET /archive 200 in 26498ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /archive 200 in 97ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 80ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /archive 200 in 75ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 330ms
+ GET /api/calls/ringing 200 in 1225ms
+ GET /archive 200 in 3374ms
+ GET /api/calls/ringing 200 in 51ms
+{"t":"2026-10-26T14:20:03.028Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":40.3,"ok":true}
+ GET /archive 200 in 151ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 35ms
+{"t":"2026-10-26T14:20:22.974Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":15.6,"ok":true}
+ GET /archive 200 in 89ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /archive 200 in 63ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /archive 200 in 103ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 69ms
+ GET /archive 200 in 83ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 83ms
+{"t":"2026-10-26T14:21:42.964Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":17.9,"ok":true}
+ GET /archive 200 in 85ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /archive 200 in 90ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 427ms
+ GET /archive 200 in 513ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 91ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /archive 200 in 458ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 69ms
+{"t":"2026-10-26T14:23:02.965Z","event":"perf.metric","name":"nav.archive_data","elapsedMs":15.7,"ok":true}
+ GET /archive 200 in 80ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 101ms
+ ○ Compiling /my ...
+ GET /archive 200 in 3420ms
+ ✓ Compiled /my in 21.7s (3726 modules)
+ GET /api/calls/ringing 200 in 13687ms
+ GET /api/calls/ringing 200 in 5705ms
+ GET /archive 200 in 11043ms
+ GET /my 200 in 23439ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 184ms
+ GET /api/calls/ringing 200 in 12452ms
+ GET /api/calls/ringing 200 in 734ms
+ GET /api/calls/ringing 200 in 8258ms
+ GET /api/calls/ringing 200 in 158ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 87ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 80ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 49ms
+ ✓ Compiled in 7.8s (3688 modules)
+ GET /api/calls/ringing 200 in 5728ms
+ GET /my 200 in 1208ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 62ms
+ ✓ Compiled in 814ms (2826 modules)
+ GET /my 200 in 477ms
+{"t":"2026-10-26T14:26:40.285Z","event":"perf.metric","name":"auth.session_db","elapsedMs":5,"ok":true}
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 2716ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 61ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 13.2s (3698 modules)
+ GET /api/calls/ringing 200 in 8635ms
+ GET /api/calls/ringing 200 in 1873ms
+ GET /my 200 in 1242ms
+ GET /my 200 in 8496ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 37ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 5.3s (3698 modules)
+ ✓ Compiled in 0ms (2826 modules)
+ ✓ Compiled in 0ms (2826 modules)
+ ✓ Compiled in 0ms (2826 modules)
+ GET /api/calls/ringing 200 in 2152ms
+ GET /my 200 in 2151ms
+ ⚠ Server is approaching the used memory threshold, restarting...
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8812
+   - Network:      http://172.17.216.204:8812
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 569ms (594 modules)
+ ✓ Ready in 3.3s
+ ○ Compiling /my ...
+ ✓ Compiled /my in 4.6s (3576 modules)
+ HEAD /my 200 in 5382ms
+ GET /my 200 in 357ms
+ ○ Compiling /api/calls/ringing ...
+ ✓ Compiled /api/calls/ringing in 731ms (3571 modules)
+{"t":"2026-10-26T14:31:47.195Z","event":"perf.metric","name":"auth.session_db","elapsedMs":7,"ok":true}
+ GET /api/calls/ringing 200 in 1093ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 911ms (3571 modules)
+ GET /api/calls/ringing 200 in 87ms
+ GET /my 200 in 2030ms
+ GET /my 200 in 2662ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 27ms
+{"t":"2026-10-26T14:32:51.514Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.9,"ok":true}
+ GET /api/calls/ringing 200 in 29ms
+{"t":"2026-10-26T14:32:59.519Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.2,"ok":true}
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /my 200 in 248ms
+ GET /api/calls/ringing 200 in 36ms
+ POST /my 200 in 282ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 68ms
+ ✓ Compiled in 2.2s (3571 modules)
+ GET /api/calls/ringing 200 in 50ms
+ GET /my 200 in 433ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /my 200 in 351ms
+ GET /api/calls/ringing 200 in 23ms
+ POST /my 200 in 251ms
+ GET /api/calls/ringing 200 in 51ms
+{"t":"2026-10-26T14:35:08.412Z","event":"perf.metric","name":"auth.session_db","elapsedMs":6.9,"ok":true}
+ GET /api/calls/ringing 200 in 111ms
+ GET /api/calls/ringing 200 in 76ms
+ ○ Compiling /my/subscription ...
+ ✓ Compiled /my/subscription in 2.1s (3584 modules)
+ GET /my/subscription 200 in 2828ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 46ms
+{"t":"2026-10-26T14:35:46.541Z","event":"perf.metric","name":"auth.session_db","elapsedMs":5.5,"ok":true}
+ GET /my 200 in 631ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 51ms
+ ○ Compiling /archive ...
+ ✓ Compiled /archive in 2.5s (3602 modules)
+ GET /archive 200 in 5046ms
+ GET /api/calls/ringing 200 in 109ms
+{"t":"2026-10-26T14:37:03.914Z","event":"perf.metric","name":"nav.layout_auth","elapsedMs":27.2,"ok":true}
+ GET /archive 200 in 455ms
+ GET /my 200 in 447ms
+ GET /api/calls/ringing 200 in 33ms
+ ○ Compiling /my/characters ...
+ ✓ Compiled /my/characters in 1062ms (3608 modules)
+ GET /my/characters 200 in 1332ms
+ GET /my 200 in 220ms
+ ○ Compiling /persona ...
+ ✓ Compiled /persona in 1154ms (3620 modules)
+ GET /persona?next=%2Fmy 200 in 1377ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /my 200 in 323ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /archive 200 in 114ms
+ GET /my 200 in 83ms
+ GET /api/calls/ringing 200 in 40ms
+{"t":"2026-10-26T14:37:39.585Z","event":"perf.metric","name":"auth.session_db","elapsedMs":10.1,"ok":true}
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 90ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 41ms
+{"t":"2026-10-26T14:38:59.532Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 40ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 4.1s (3630 modules)
+ GET /api/calls/ringing 200 in 3689ms
+ GET /my 200 in 1061ms
+ GET /my 200 in 2394ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 25ms
+ GET /my 200 in 197ms
+{"t":"2026-10-26T14:40:27.954Z","event":"perf.metric","name":"auth.session_db","elapsedMs":7.5,"ok":true}
+ GET /my/characters 200 in 120ms
+ GET /api/calls/ringing 200 in 21ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /my 200 in 110ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /persona?next=%2Fmy 200 in 116ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /my 200 in 88ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 19ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 25ms
+{"t":"2026-10-26T14:43:27.195Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.4,"ok":true}
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 30ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /my/characters 200 in 61ms
+ GET /my/characters?filter=private 200 in 52ms
+{"t":"2026-10-26T14:45:31.019Z","event":"perf.metric","name":"auth.session_db","elapsedMs":6.5,"ok":true}
+ GET /my/characters?filter=draft 200 in 37ms
+ GET /my/characters 200 in 31ms
+ GET /my/characters 200 in 48ms
+ GET /my/characters?filter=public 200 in 158ms
+ GET /my/characters?filter=private 200 in 188ms
+ GET /my/characters?filter=draft 200 in 29ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 96ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 89ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 150ms
+ GET /api/calls/ringing 200 in 73ms
+ GET /api/calls/ringing 200 in 1304ms
+ GET /api/calls/ringing 200 in 1228ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 83ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 47ms
+{"t":"2026-10-26T14:48:07.201Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.1,"ok":true}
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 38ms
+ ✓ Compiled in 4.3s (3637 modules)
+ GET /api/calls/ringing 200 in 3136ms
+ GET /my/characters?filter=draft 200 in 365ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 32ms
+ ✓ Compiled in 3.2s (3637 modules)
+ GET /api/calls/ringing 200 in 3149ms
+ GET /my/characters?filter=draft 200 in 433ms
+ GET /api/calls/ringing 200 in 94ms
+ GET /api/calls/ringing 200 in 224ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 89ms
+ GET /api/calls/ringing 200 in 986ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 113ms
+ GET /api/calls/ringing 200 in 85ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 40ms
+ ✓ Compiled in 2.3s (3649 modules)
+ GET /my/characters?filter=draft 200 in 344ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 31ms
+ ✓ Compiled in 2.3s (3630 modules)
+ GET /api/calls/ringing 200 in 554ms
+ GET /my/characters?filter=draft 200 in 687ms
+ GET /my/characters?filter=draft 200 in 452ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 27ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 126ms
+ ✓ Compiled in 687ms (3640 modules)
+ GET /my/characters?filter=draft 200 in 171ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /my/characters 200 in 27ms
+ GET /api/calls/ringing 200 in 23ms
+ GET /archive 200 in 187ms
+ GET /api/calls/ringing 200 in 24ms
+ GET /api/calls/ringing 200 in 94ms
+ GET /archive?channel=dm 200 in 105ms
+{"t":"2026-10-26T14:53:58.046Z","event":"perf.metric","name":"auth.session_db","elapsedMs":15.9,"ok":true}
+ GET /api/calls/ringing 200 in 261ms
+ GET /api/calls/ringing 200 in 91ms
+ GET /archive?channel=dm 200 in 79ms
+ ○ Compiling /create ...
+ ✓ Compiled /create in 9.3s (3778 modules)
+ GET /create 200 in 9998ms
+ GET /api/calls/ringing 200 in 8563ms
+ GET /api/calls/ringing 200 in 688ms
+ GET /create?type=reality 200 in 123ms
+ GET /create?type=reality 200 in 33ms
+ GET /create?type=reality&draft=9fa77ac7-7cab-4e17-bfb0-45442a0ae1a0 200 in 51ms
+ GET /create?type=reality&draft=9fa77ac7-7cab-4e17-bfb0-45442a0ae1a0 200 in 43ms
+ GET /api/calls/ringing 200 in 492ms
+ GET /api/calls/ringing 200 in 116ms
+ GET /my/characters?filter=draft 200 in 472ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 95ms
+ GET /api/calls/ringing 200 in 256ms
+ GET /api/calls/ringing 200 in 1742ms
+ GET /api/calls/ringing 200 in 9672ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 95ms
+ GET /api/calls/ringing 200 in 74ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 146ms
+ GET /api/calls/ringing 200 in 47ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 12.6s (3767 modules)
+ GET /api/calls/ringing 200 in 1013ms
+ GET /api/calls/ringing 200 in 9140ms
+ GET /my/characters?filter=draft 200 in 917ms
+ GET /my/characters?filter=draft 200 in 3030ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 98ms
+ GET /api/calls/ringing 200 in 47ms
+ ✓ Compiled in 784ms (2929 modules)
+ GET /my/characters?filter=draft 200 in 345ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /my/characters?filter=draft 200 in 318ms
+ GET /api/calls/ringing 200 in 113ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 218ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 28ms
+ ✓ Compiled in 2s (3767 modules)
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /my/characters?filter=draft 200 in 517ms
+ GET /my/characters?filter=draft 200 in 281ms
+ GET /my/characters?filter=draft 200 in 143ms
+ GET /api/calls/ringing 200 in 103ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 327ms
+ GET /api/calls/ringing 200 in 107ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /archive 200 in 212ms
+ ○ Compiling /my ...
+ ✓ Compiled /my in 6.5s (2950 modules)
+ GET /api/calls/ringing 200 in 74ms
+ GET /my 200 in 7191ms
+ GET /my 200 in 174ms
+ GET /persona?next=%2Fmy 200 in 116ms
+ GET /api/calls/ringing 200 in 85ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /my 200 in 142ms
+ ○ Compiling /my/language ...
+ ✓ Compiled /my/language in 5.6s (3778 modules)
+ GET /my/language 200 in 5992ms
+ GET /api/calls/ringing 200 in 4072ms
+ GET /api/calls/ringing 200 in 83ms
+ GET /my 200 in 211ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 97ms
+ ○ Compiling /my/verify ...
+ ✓ Compiled /my/verify in 2.1s (3799 modules)
+ GET /my/verify 200 in 2819ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 73ms
+ ○ Compiling /my/permissions ...
+ ✓ Compiled /my/permissions in 2.1s (3801 modules)
+ GET /my/permissions 200 in 2294ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /my 200 in 210ms
+ GET /api/calls/ringing 200 in 42ms
+ ○ Compiling /my/ai-data ...
+ ✓ Compiled /my/ai-data in 1812ms (3802 modules)
+ GET /my/ai-data 200 in 4983ms
+ GET /api/calls/ringing 200 in 147ms
+ GET /my 200 in 361ms
+ GET /api/calls/ringing 200 in 50ms
+{"t":"2026-10-26T15:02:37.435Z","event":"perf.metric","name":"auth.session_db","elapsedMs":258.1,"ok":true}
+ GET /api/calls/ringing 200 in 411ms
+ GET /api/calls/ringing 200 in 113ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /create 200 in 265ms
+ GET /create?type=reality 200 in 62ms
+ GET /create?type=reality 200 in 31ms
+ GET /create?type=reality&draft=fe65c2d1-f186-4c36-b5ce-70e62eb3e3cf 200 in 288ms
+ GET /create?type=reality&draft=fe65c2d1-f186-4c36-b5ce-70e62eb3e3cf 200 in 330ms
+ GET /api/calls/ringing 200 in 85ms
+ ○ Compiling /home ...
+ ✓ Compiled /home in 8.3s (3858 modules)
+ GET /api/calls/ringing 200 in 2179ms
+ GET /home 200 in 8834ms
+ GET /my 200 in 304ms
+ ○ Compiling /my/characters ...
+ ✓ Compiled /my/characters in 3.9s (2996 modules)
+ GET /api/calls/ringing 200 in 723ms
+ GET /my/characters 200 in 4624ms
+ GET /api/calls/ringing 200 in 58ms
+{"t":"2026-10-26T15:03:34.679Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1177.8,"ok":true}
+ GET /api/calls/ringing 200 in 1694ms
+ GET /api/calls/ringing 200 in 72ms
+ GET /api/calls/ringing 200 in 424ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 489ms
+ GET /api/calls/ringing 200 in 6413ms
+ GET /api/calls/ringing 200 in 131ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 66ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 83ms
+{"t":"2026-10-26T15:05:08.995Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2,"ok":true}
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 39ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 160ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 122ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 80ms
+ GET /api/calls/ringing 200 in 44ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 43ms
+ ✓ Compiled in 13.8s (3700 modules)
+ GET /api/calls/ringing 200 in 9210ms
+ GET /api/calls/ringing 200 in 1668ms
+ GET /my/characters 200 in 275ms
+ GET /api/calls/ringing 200 in 35ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 37ms
+ ✓ Compiled in 20.1s (3711 modules)
+ GET /api/calls/ringing 200 in 9749ms
+ GET /api/calls/ringing 200 in 1618ms
+ GET /api/calls/ringing 200 in 17686ms
+ GET /my/characters 200 in 620ms
+ GET /my/language 200 in 9970ms
+ GET /api/calls/ringing 200 in 166ms
+ ○ Compiling /persona ...
+ ✓ Compiled /persona in 7.7s (3720 modules)
+ GET /api/calls/ringing 200 in 2532ms
+ GET /my/language 200 in 654ms
+ GET /persona?next=/my 200 in 8429ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /my/permissions 200 in 481ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /my/ai-data 200 in 424ms
+ GET /api/calls/ringing 200 in 83ms
+ ○ Compiling /my/verify ...
+ ✓ Compiled /my/verify in 3.3s (3647 modules)
+ GET /my/verify 200 in 4068ms
+ ○ Compiling /my ...
+ ✓ Compiled /my in 765ms (2846 modules)
+ GET /my?verify=1 200 in 1828ms
+ POST /my?verify=1 200 in 2962ms
+ GET /api/calls/ringing 200 in 97ms
+ GET /api/calls/ringing 200 in 125ms
+{"t":"2026-10-26T15:10:25.242Z","event":"perf.metric","name":"auth.session_db","elapsedMs":27,"ok":true}
+ GET /my 200 in 264ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 39ms
+ POST /my 200 in 65ms
+ GET /api/calls/ringing 200 in 162ms
+{"t":"2026-10-26T15:10:54.072Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.6,"ok":true}
+ GET /api/calls/ringing 200 in 37ms
+ GET /api/calls/ringing 200 in 40ms
+ POST /my 200 in 534ms
+ GET /api/calls/ringing 200 in 3800ms
+ GET /api/calls/ringing 200 in 10348ms
+ GET /api/calls/ringing 200 in 109ms
+ GET /api/calls/ringing 200 in 213ms
+ GET /api/calls/ringing 200 in 336ms
+ GET /api/calls/ringing 200 in 262ms
+ GET /api/calls/ringing 200 in 225ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 138ms
+ GET /api/calls/ringing 200 in 77ms
+ GET /api/calls/ringing 200 in 447ms
+ GET /api/calls/ringing 200 in 267ms
+ GET /api/calls/ringing 200 in 297ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 211ms
+ GET /api/calls/ringing 200 in 84ms
+ GET /api/calls/ringing 200 in 49ms
+{"t":"2026-10-26T15:13:26.097Z","event":"perf.metric","name":"auth.session_db","elapsedMs":4.2,"ok":true}
+ GET /api/calls/ringing 200 in 66ms
+ ✓ Compiled in 10.8s (3713 modules)
+ GET /api/calls/ringing 200 in 9955ms
+ GET /api/calls/ringing 200 in 1588ms
+ GET /my 200 in 723ms
+ GET /api/calls/ringing 200 in 64ms
+ GET /api/calls/ringing 200 in 87ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 77ms
+ GET /api/calls/ringing 200 in 105ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 45ms
+ GET /api/calls/ringing 200 in 905ms
+ GET /api/calls/ringing 200 in 12237ms
+ GET /api/calls/ringing 200 in 3946ms
+ GET /api/calls/ringing 200 in 129ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 82ms
+ GET /api/calls/ringing 200 in 156ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 138ms
+ GET /api/calls/ringing 200 in 58ms
+ GET /api/calls/ringing 200 in 360ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 53ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 52ms
+ GET /api/calls/ringing 200 in 311ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 71ms
+ GET /api/calls/ringing 200 in 61ms
+ GET /api/calls/ringing 200 in 83ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 22ms
+ GET /api/calls/ringing 200 in 69ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 2784ms
+ GET /api/calls/ringing 200 in 1300ms
+ GET /api/calls/ringing 200 in 78ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 1203ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 39ms
+{"t":"2026-10-26T15:19:50.069Z","event":"perf.metric","name":"auth.session_db","elapsedMs":2.7,"ok":true}
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 28ms
+ GET /api/calls/ringing 200 in 62ms
+ GET /api/calls/ringing 200 in 86ms
+{"t":"2026-10-26T15:20:22.099Z","event":"perf.metric","name":"auth.session_db","elapsedMs":3.2,"ok":true}
+ GET /api/calls/ringing 200 in 73ms
+ GET /api/calls/ringing 200 in 75ms
+ GET /api/calls/ringing 200 in 33ms
+ GET /api/calls/ringing 200 in 90ms
+ GET /api/calls/ringing 200 in 186ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 609ms
+ GET /api/calls/ringing 200 in 31ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 103ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 26ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 63ms
+ GET /api/calls/ringing 200 in 122ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 48ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 68ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 70ms
+ GET /api/calls/ringing 200 in 73ms
+ GET /api/calls/ringing 200 in 54ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 40ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 29ms
+ GET /api/calls/ringing 200 in 32ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 154ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 49ms
+ GET /api/calls/ringing 200 in 46ms
+ GET /api/calls/ringing 200 in 56ms
+ GET /api/calls/ringing 200 in 69ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 42ms
+ GET /api/calls/ringing 200 in 55ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 93ms
+{"t":"2026-10-26T15:26:22.089Z","event":"perf.metric","name":"auth.session_db","elapsedMs":1.7,"ok":true}
+ GET /api/calls/ringing 200 in 76ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 36ms
+ GET /api/calls/ringing 200 in 47ms
+ GET /api/calls/ringing 200 in 77ms
+ GET /api/calls/ringing 200 in 50ms
+ GET /api/calls/ringing 200 in 67ms
+ GET /api/calls/ringing 200 in 57ms
+ GET /api/calls/ringing 200 in 51ms
+ GET /api/calls/ringing 200 in 60ms
+ GET /api/calls/ringing 200 in 38ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 59ms
+ GET /api/calls/ringing 200 in 83ms
+ GET /api/calls/ringing 200 in 146ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 79ms
+ GET /api/calls/ringing 200 in 34ms
+ GET /api/calls/ringing 200 in 123ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 43ms
+ GET /api/calls/ringing 200 in 41ms
+ GET /api/calls/ringing 200 in 86ms
+ GET /api/calls/ringing 200 in 492ms
+ GET /api/calls/ringing 200 in 417ms
+ GET /api/calls/ringing 200 in 396ms
+ GET /api/calls/ringing 200 in 115ms
+ ⚠ Server is approaching the used memory threshold, restarting...
+   ▲ Next.js 15.5.25
+   - Local:        http://localhost:8812
+   - Network:      http://172.17.145.169:8812
+   - Experiments (use with caution):
+     · serverActions
+
+ ✓ Starting...
+ ○ Compiling /instrumentation ...
+ ✓ Compiled /instrumentation in 542ms (594 modules)
+ ✓ Ready in 2.9s
+ ✓ Compiled in 654ms (594 modules)
+ ○ Compiling /my ...
+ ✓ Compiled /my in 8.4s (3602 modules)
+ GET /my 200 in 10482ms
+ ○ Compiling /login ...
+ ✓ Compiled /login in 1640ms (3582 modules)
+ GET /login 307 in 2090ms
+ ✓ Compiled in 4.7s (1376 modules)
+ ✓ Compiled in 3.5s (582 modules)
+ ✓ Compiled in 3s (796 modules)
+ ⚠ ./app/(main)/my/credit-card.tsx
+Attempted import error: 'useWalletWatch' is not exported from '@/components/wallet/provider' (imported as 'useWalletWatch').
+
+Import trace for requested module:
+./app/(main)/my/credit-card.tsx
+
+./app/(main)/my/credit-card.tsx
+Attempted import error: 'useWalletWatch' is not exported from '@/components/wallet/provider' (imported as 'useWalletWatch').
+
+Import trace for requested module:
+./app/(main)/my/credit-card.tsx
+ ✓ Compiled in 540ms (797 modules)
+ ✓ Compiled in 4s (841 modules)
+ ✓ Compiled in 4.3s (841 modules)
+ ✓ Compiled in 6.6s (841 modules)
+ ✓ Compiled in 5.5s (1423 modules)
+ ✓ Compiled in 2.2s (582 modules)
+ ✓ Compiled in 2.9s (1423 modules)
+ ✓ Compiled in 281ms (1435 modules)
+ ✓ Compiled in 388ms (841 modules)
+ ✓ Compiled in 734ms (582 modules)
+ ✓ Compiled in 2.5s (582 modules)
+ ✓ Compiled in 567ms (841 modules)
+ ✓ Compiled in 2.9s (582 modules)
+ ✓ Compiled in 361ms (582 modules)
+ ✓ Compiled in 835ms (841 modules)
+ ✓ Compiled in 222ms (841 modules)
+ ✓ Compiled in 238ms (841 modules)
+ ✓ Compiled in 478ms (841 modules)
+ ✓ Compiled in 406ms (841 modules)
+ ✓ Compiled in 267ms (841 modules)
+ ✓ Compiled in 606ms (841 modules)
+ ✓ Compiled in 588ms (1435 modules)
+ ✓ Compiled in 516ms (841 modules)
+ ✓ Compiled in 323ms (841 modules)
+ ✓ Compiled in 140ms (841 modules)
+ ✓ Compiled in 165ms (841 modules)
+ ✓ Compiled in 308ms (841 modules)

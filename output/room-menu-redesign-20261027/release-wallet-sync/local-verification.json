@@ -1,0 +1,19 @@
+{
+  "credit": {
+    "profile": "100",
+    "dm": "100",
+    "characterChat": "100"
+  },
+  "used": {
+    "profile": "73",
+    "dm": "73",
+    "characterChat": "73"
+  },
+  "returned": {
+    "profile": "80",
+    "dm": "80",
+    "characterChat": "80"
+  },
+  "method": "Local test-only recharge grant inserted, consumed and partially restored to exercise authoritative balance reads. No payment, production balance mutation or AI request.",
+  "backNavigation": true
+}

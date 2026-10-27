@@ -1,0 +1,14 @@
+{
+  "actualServiceWorkerNavigationFallback": true,
+  "networkFailureInducedOnLocalTestServer": true,
+  "retryAfterReconnect": true,
+  "cachedPublicPagesOnly": [
+    {
+      "key": "miro-offline-v1",
+      "paths": [
+        "/offline.html"
+      ]
+    }
+  ],
+  "paidCalls": 0
+}

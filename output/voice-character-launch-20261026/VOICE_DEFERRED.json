@@ -1,0 +1,22 @@
+{
+  "active_scope": "reality interactions and existing non-voice features; voice deferred by user",
+  "voice_flag_default": false,
+  "UI_hidden": [
+    "voice mode",
+    "voice balance",
+    "voice purchases",
+    "voice microphone",
+    "creator voice selection"
+  ],
+  "server_synthesis_blocked": true,
+  "trial_and_purchase_blocked": true,
+  "queued_cancellation_retained": true,
+  "local_test_speech_worker_stopped": true,
+  "reality_text_send_locally_verified": true,
+  "weights_and_code_preserved": true,
+  "new_paid_execution": false,
+  "production_deployed": false,
+  "focused_tests_passed": 35,
+  "typecheck": "passed",
+  "reopen_requires": "explicit MIRO_FEATURE_CHARACTER_VOICE=1 after model validation"
+}

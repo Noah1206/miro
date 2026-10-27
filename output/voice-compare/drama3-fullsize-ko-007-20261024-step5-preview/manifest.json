@@ -1,0 +1,173 @@
+{
+  "run_root": "_drama3/fullsize-ab-007-20261023-v1",
+  "reference_clip_id": "D-NX-A-007-0501",
+  "reference_sha256": "74ce2889f741c557ae621a5889bb00df9f183c129df60f037c387567a2836c81",
+  "reference_text": "다시 이름이 세상에 거론되는 것이 서로에게 무슨 좋은 일이겠습니까.",
+  "settings": {
+    "temperature": 0.7,
+    "top_p": 0.7,
+    "top_k": 30
+  },
+  "requests": [
+    {
+      "id": "heldout_D-A3-A-007-0244",
+      "label": "학습 제외 · angry",
+      "source_clip_id": "D-A3-A-007-0244",
+      "text": "개 같은 여자, 나를 너무 때렸어, 너무 때려서 도망 나왔어.",
+      "tagged_text": "[angry] 개 같은 여자, 나를 너무 때렸어, 너무 때려서 도망 나왔어.",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "heldout"
+    },
+    {
+      "id": "heldout_D-A3-A-007-0840",
+      "label": "학습 제외 · angry",
+      "source_clip_id": "D-A3-A-007-0840",
+      "text": "지금 농담하는 거지, 아니면, 설마, 지금 질투하는 거요?",
+      "tagged_text": "[angry] 지금 농담하는 거지, 아니면, 설마, 지금 질투하는 거요?",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "heldout"
+    },
+    {
+      "id": "heldout_D-H3-A-007-0341",
+      "label": "학습 제외 · happy",
+      "source_clip_id": "D-H3-A-007-0341",
+      "text": "그래요, 신문에 조선 최초의 부부 동반 구미만유라고 났습디다.",
+      "tagged_text": "[happy] 그래요, 신문에 조선 최초의 부부 동반 구미만유라고 났습디다.",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "heldout"
+    },
+    {
+      "id": "heldout_D-H3-A-007-0787",
+      "label": "학습 제외 · happy",
+      "source_clip_id": "D-H3-A-007-0787",
+      "text": "날 알아보지 못하니, 넌 여기 있는 자들 중 아무도 알아보지 못하지?",
+      "tagged_text": "[happy] 날 알아보지 못하니, 넌 여기 있는 자들 중 아무도 알아보지 못하지?",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "heldout"
+    },
+    {
+      "id": "heldout_D-S3-A-007-0683",
+      "label": "학습 제외 · sad",
+      "source_clip_id": "D-S3-A-007-0683",
+      "text": "세상에 제일 불쌍한 것이 외롭게 살다 혼자 늙어 죽는 것인데.",
+      "tagged_text": "[sad] 세상에 제일 불쌍한 것이 외롭게 살다 혼자 늙어 죽는 것인데.",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "heldout"
+    },
+    {
+      "id": "heldout_D-S3-A-007-0796",
+      "label": "학습 제외 · sad",
+      "source_clip_id": "D-S3-A-007-0796",
+      "text": "여성이 그 사람을 사랑한다는 게 정말, 진실로 가능하단 말입니까?",
+      "tagged_text": "[sad] 여성이 그 사람을 사랑한다는 게 정말, 진실로 가능하단 말입니까?",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "heldout"
+    },
+    {
+      "id": "neutral",
+      "label": "기본 대화",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "괜찮아. 나 여기 있어.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "comfort",
+      "label": "위로",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[gentle and reassuring, speaking softly and slightly slowly] 괜찮아. [warm and comforting] 나 여기 있어.",
+      "scene": "연인이 자책하는 상대를 안심시키려 한다.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "comfort",
+      "label": "위로",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[gentle and reassuring, speaking softly and slightly slowly] 괜찮아. [warm and comforting] 나 여기 있어.",
+      "scene": "연인이 자책하는 상대를 안심시키려 한다.",
+      "seed": 4321,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "contained_anger",
+      "label": "억눌린 분노",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[restrained anger, quiet and tense, holding back frustration without shouting] 괜찮아. [controlled and firm, emphasizing the final phrase] 나 여기 있어.",
+      "scene": "실망과 분노를 참으며 괜찮은 척하지만, 끝 구절에서 마음을 드러낸다.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "contained_anger",
+      "label": "억눌린 분노",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[restrained anger, quiet and tense, holding back frustration without shouting] 괜찮아. [controlled and firm, emphasizing the final phrase] 나 여기 있어.",
+      "scene": "실망과 분노를 참으며 괜찮은 척하지만, 끝 구절에서 마음을 드러낸다.",
+      "seed": 4321,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "relief",
+      "label": "안도",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[relieved, tension easing, voice relaxing] 괜찮아. [soft and relaxed, gently reassuring] 나 여기 있어.",
+      "scene": "걱정하던 인물이 안도하며 상대를 다독인다.",
+      "seed": 1234,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "relief",
+      "label": "안도",
+      "text": "괜찮아. 나 여기 있어.",
+      "tagged_text": "[relieved, tension easing, voice relaxing] 괜찮아. [soft and relaxed, gently reassuring] 나 여기 있어.",
+      "scene": "걱정하던 인물이 안도하며 상대를 다독인다.",
+      "seed": 4321,
+      "max_new_tokens": 256,
+      "group": "acting"
+    },
+    {
+      "id": "long_comfort",
+      "label": "위로",
+      "text": "괜찮아. 지금은 아무 말 안 해도 돼. 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. 나는 어디 안 가고, 여기서 기다릴게.",
+      "tagged_text": "[gentle and reassuring, warm conversational delivery, slightly slow] 괜찮아. 지금은 아무 말 안 해도 돼. [empathetic and sincere, not reciting] 네가 무슨 일을 겪었는지, 내가 다 안다고 말하진 않을게. [gently inviting, speaking to one person nearby] 다만 혼자 견디게 두고 싶지는 않아. 여기 앉아. [patient and calming, natural phrase pauses] 숨부터 천천히 고르자. 네가 준비되면 그때 말해 줘. [quietly firm reassurance, warm ending] 나는 어디 안 가고, 여기서 기다릴게.",
+      "scene": "실패를 자책하는 가까운 사람을 재촉하지 않고 안심시킨다.",
+      "seed": 1234,
+      "max_new_tokens": 1200,
+      "group": "long"
+    },
+    {
+      "id": "whisper",
+      "label": "속삭임",
+      "text": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "tagged_text": "[whispering, breathy unvoiced whisper, close to the microphone] 괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "seed": 1234,
+      "max_new_tokens": 384,
+      "group": "whisper"
+    },
+    {
+      "id": "whisper",
+      "label": "속삭임",
+      "text": "괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "tagged_text": "[whispering, breathy unvoiced whisper, close to the microphone] 괜찮아. 지금은 아무 말 안 해도 돼. 나 여기 있어.",
+      "seed": 4321,
+      "max_new_tokens": 384,
+      "group": "whisper"
+    }
+  ],
+  "all_voices": "007",
+  "training_plan": "25steps x accumulation2 x8GPUs;400unique training clips;identical split/reference/ordering/LR",
+  "protocol": "Actual originalBF16,baselineFullFT,teacherFullFT; only teacher weight0 versus0.1; all declared takes published; no waveform postprocessing; no production deployment"
+}

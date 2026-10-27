@@ -1,0 +1,31 @@
+{
+  "phase": "training_stopped_checkpoint_commit_failed",
+  "teacher_steps_completed": 5,
+  "planned_target_step": 25,
+  "original_goal_steps": 25,
+  "listening_arms": [
+    "original",
+    "korean_teacher"
+  ],
+  "exact_training_resume_verified": false,
+  "original_weights_restart_allowed": false,
+  "cash_ceiling_usd": 44,
+  "operating_cash_ceiling_usd": 36,
+  "request_complete": false,
+  "stage": "continuing_saved_step1",
+  "current_billed_cost": 55.93,
+  "automatic_paid_retry": false,
+  "checkpoint_interval": 5,
+  "original_25_update_goal_complete": false,
+  "durable_native_step": 1,
+  "durable_full_training_checkpoint_step": null,
+  "step5_full_resume_available": false,
+  "failure": "Modal VolumeCommit: not enough local disk space to stage volume data for commit",
+  "previously_paid_cash_usd": 30.0,
+  "additional_cash_used_usd_snapshot": 25.93,
+  "billing_may_lag": true,
+  "gpu_containers_running": 0,
+  "no_paid_retry_launched": true,
+  "five_update_checkpoint_policy_implemented": true,
+  "disk_fix_cloud_verified": false
+}

@@ -1,0 +1,37 @@
+✓ Initialized. View run at 
+https://modal.com/apps/ab40905045/main/ap-vvfOYcCbElmaB8wB8dGrVO
+Building image im-mqVfrTxofuQAIuQ8ztKiOy
+
+=> Step 0: FROM base
+
+=> Step 1: RUN python -m pip install zstandard==0.25.0
+Looking in indexes: http://pypi-mirror.modal.local:5555/simple
+Collecting zstandard==0.25.0
+  Downloading http://pypi-mirror.modal.local:5555/simple/zstandard/zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+Downloading http://pypi-mirror.modal.local:5555/simple/zstandard/zstandard-0.25.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.5/5.5 MB 962.8 MB/s eta 0:00:00
+Installing collected packages: zstandard
+Successfully installed zstandard-0.25.0
+
+[notice] A new release of pip is available: 25.1.1 -> 26.2.2
+[notice] To update, run: pip install --upgrade pip
+Saving image...
+Image saved, took 891.25ms
+
+Built image im-mqVfrTxofuQAIuQ8ztKiOy in 3.23s
+
+
+✓ Created objects.
+├── ✓ Uploaded 
+│   /Users/johyeon-ung/Desktop/Miro/tooling/voice/modal_drama3_checkpoint_cost_p
+│   robe.py
+├── ✓ Uploaded PythonPackage:drama3_fullft, PythonPackage:modal_drama3_compare
+└── ✓ Created Function probe.
+[2026-10-24 06:46:01,276] [WARNING] [real_accelerator.py:213:get_accelerator] Setting accelerator to CPU. If you have GPU or other accelerator, we were unable to detect it.
+LOSSLESS_COST_SAMPLE {"seconds": 16.986739355, "samples": 36}
+SAMPLE_RATIO master 0.7713373840832319
+SAMPLE_RATIO exp_avg 0.8424818945712731
+SAMPLE_RATIO exp_avg_sq 0.8283556875635366
+Stopping app - local entrypoint completed.
+✓ App completed. View run at 
+https://modal.com/apps/ab40905045/main/ap-vvfOYcCbElmaB8wB8dGrVO

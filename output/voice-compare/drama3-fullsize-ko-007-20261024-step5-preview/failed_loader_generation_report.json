@@ -1,0 +1,17 @@
+{
+  "status": "failed",
+  "arm": "korean_teacher",
+  "model_path": "/voices/_drama3/fullsize-ko-007-20261024-step5-preview/native-step-000005",
+  "manifest_sha256": "7e9a3836b12811d0a58b3baa8518dead845e509effaaa7600ed4724b92b0affe",
+  "items": [],
+  "errors": [
+    "Traceback (most recent call last):\n  File \"/root/modal_drama3_fullsize_listen.py\", line 50, in generate\n    begin=time.monotonic();model,_=init_model(weights,'cuda:0,cuda:1',torch.bfloat16,compile=False);model.eval()\n                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fish-speech/fish_speech/models/text2semantic/inference.py\", line 437, in init_model\n    model = FishOmniModel.from_pretrained(\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/fish-speech/fish_speech/models/text2semantic/fish_omni/model.py\", line 113, in from_pretrained\n    load_audio_decoder_weights(\n  File \"/usr/local/lib/python3.12/site-packages/torch/utils/_contextlib.py\", line 120, in decorate_context\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"/fish-speech/fish_speech/models/text2semantic/fish_omni/tower.py\", line 408, in load_audio_decoder_weights\n    raise ValueError(f\"unknown tower weight {key}\")\nValueError: unknown tower weight model.embed_tokens.weight\n"
+  ],
+  "real35b_checkpoint": true,
+  "precision": "bfloat16",
+  "fp8_experts": false,
+  "reference_id": "D-NX-A-007-0501",
+  "same_reference_tokens_all_models": true,
+  "waveform_postprocessing": false,
+  "production_changed": false
+}

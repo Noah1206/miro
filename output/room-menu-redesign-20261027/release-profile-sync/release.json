@@ -1,0 +1,33 @@
+{
+  "commit": "d933b27d958a20527e3a9c1830113e3e2eab1650",
+  "push_range": "c363bbe9..d933b27d",
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-fpj5oxnmk-noah1206s-projects.vercel.app",
+  "main_pushed": true,
+  "root_typecheck": "passed",
+  "web_typecheck": "passed",
+  "translations_missing": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "migrations": "none",
+  "automated_tests": "not run",
+  "manual_checks": [
+    "Local save immediately updates own profile",
+    "Both already open local DM and scene menus update after another tab saves",
+    "Saved photo URL and nickname synchronize together",
+    "Back navigation retains latest identity",
+    "Upload failure preserves original nickname",
+    "Production profile and both room menu identities match"
+  ],
+  "photo_upload_limit": "Local upload storage is unconfigured. Photo URL was seeded only in the named local test account to verify propagation; no successful upload was claimed.",
+  "production_profile_mutated": false,
+  "local_fixture_restored": true,
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  }
+}

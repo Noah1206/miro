@@ -24,3 +24,16 @@ __pycache__/
 
 # Local voice launch QA build cache
 .next-launch-local/
+
+# 음성 학습 데이터·실행환경·모델·녹음 — 공개 저장소에 올리지 않는다(10/28). GitHub 100MB 한도를 넘고, AI Hub 데이터는 재배포 금지다.
+output/voice-upload/
+output/**/*.wav
+output/**/*.flac
+output/**/*.mp3
+output/**/*.pt
+output/**/*.bin
+output/**/*.zip
+output/**/*.zip.part*
+output/**/*.safetensors
+# 운영 DB 접속 주소(비밀번호 포함)가 찍힌 로그
+output/deploy-fix-20261027/db-error.log

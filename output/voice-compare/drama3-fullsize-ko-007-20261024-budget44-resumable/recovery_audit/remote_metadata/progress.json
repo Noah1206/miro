@@ -1,0 +1,7 @@
+{
+  "step": 5,
+  "speech_loss": 4.572039902210236,
+  "teacher_loss": 0.8088674992322922,
+  "global_gradient_norm": 8.394335746765137,
+  "seconds": 546.296827621
+}

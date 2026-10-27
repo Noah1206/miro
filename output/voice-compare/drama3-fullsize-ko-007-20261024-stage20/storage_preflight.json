@@ -1,0 +1,27 @@
+{
+  "verified_commit_returned": true,
+  "gpu_allocated": false,
+  "files": {
+    "probe-00.bin": 53852619245,
+    "probe-01.bin": 53852619245,
+    "probe-02.bin": 53852619245,
+    "probe-03.bin": 53852619245,
+    "probe-04.bin": 53852619245,
+    "probe-05.bin": 53852619245,
+    "probe-06.bin": 53852619245,
+    "probe-07.bin": 53852619245
+  },
+  "bytes": 430820953960,
+  "write_seconds": 490.756705391,
+  "commit_seconds": 413.027831851,
+  "seconds": 903.786870845,
+  "root_free_bytes_before": 9223372036849516544,
+  "root_required_bytes": 999080861392,
+  "probe_root": "/voices/_storage_probe/drama3-stage20-20261024",
+  "requested_ephemeral_disk_mib": 2097152,
+  "same_gpu_worker_proven": false,
+  "proves_storage_staging_not_model_quality_or_engine_reload": true,
+  "external_volume_file_sizes_verified": true,
+  "root_statfs_is_placeholder": true,
+  "disposable_probe_files_removed": true
+}

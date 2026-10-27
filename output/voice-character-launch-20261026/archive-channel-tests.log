@@ -1,0 +1,16 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+ RUN  v2.1.9 /Users/johyeon-ung/Desktop/Miro
+
+stdout | apps/web/lib/ops/__tests__/ops.integration.test.ts > archive / reports / account > account deletion shows impact, then blocks login and hides everything
+{"t":"2026-10-26T11:25:48.470Z","event":"account.deletion_note_unsent","userId":"0012039d-5dfe-4134-90fe-855dfa64caec"}
+
+ ✓ apps/web/lib/ops/__tests__/ops.integration.test.ts (14 tests) 1021ms
+   ✓ archive / reports / account > separates scene and DM previews and destinations for the same character without leaking another owner 578ms
+ ✓ apps/web/lib/__tests__/home-unveil.integration.test.ts (5 tests) 185ms
+
+ Test Files  2 passed (2)
+      Tests  19 passed (19)
+   Start at  20:25:46
+   Duration  3.10s (transform 501ms, setup 0ms, collect 1.44s, tests 1.21s, environment 0ms, prepare 95ms)
+

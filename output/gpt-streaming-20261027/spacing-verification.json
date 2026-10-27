@@ -1,0 +1,15 @@
+{
+  "commit": "74b03923",
+  "theme": "miro",
+  "baseRowGapPx": 20,
+  "speakerChangePaddingPx": 8,
+  "bubbleGapPx": 28,
+  "rowTransforms": "none",
+  "uiData": "temporary local synthetic messages, removed after capture",
+  "typechecks": [
+    "root passed",
+    "web passed"
+  ],
+  "automatedTestsRun": false,
+  "migration": false
+}

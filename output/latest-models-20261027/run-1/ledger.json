@@ -1,0 +1,95 @@
+{
+  "hash": "1087896603775e8eb643975d2faf0421b3786b324dc9d23a4ecdadd8d4ffea6d",
+  "limitUSD": 0.5,
+  "reservedUSD": 0.3624928375,
+  "rows": [
+    {
+      "id": "gemini-argon",
+      "case": "everyday",
+      "requestedModel": "gemini-4-argon",
+      "ceilingUSD": 0.015765,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 5367,
+      "reason": "provider_error",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "gemini-argon",
+      "case": "romance-boundary",
+      "requestedModel": "gemini-4-argon",
+      "ceilingUSD": 0.0161025,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 4328,
+      "reason": "provider_error",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "gemini-flash",
+      "case": "everyday",
+      "requestedModel": "gemini-3.8-flash",
+      "ceilingUSD": 0.0059118750000000005,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 45014,
+      "reason": "timeout",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "gemini-flash",
+      "case": "romance-boundary",
+      "requestedModel": "gemini-3.8-flash",
+      "ceilingUSD": 0.0060384375,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 6441,
+      "reason": "provider_http_503",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "claude-fable",
+      "case": "everyday",
+      "requestedModel": "claude-fable-5",
+      "ceilingUSD": 0.0788250125,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 3613,
+      "reason": "provider_error",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "claude-fable",
+      "case": "romance-boundary",
+      "requestedModel": "claude-fable-5",
+      "ceilingUSD": 0.08051249999999999,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 5509,
+      "reason": "provider_error",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "claude-fable-51",
+      "case": "everyday",
+      "requestedModel": "claude-fable-5-1",
+      "ceilingUSD": 0.0788250125,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 2335,
+      "reason": "provider_error",
+      "measuredCostUSD": null
+    },
+    {
+      "id": "claude-fable-51",
+      "case": "romance-boundary",
+      "requestedModel": "claude-fable-5-1",
+      "ceilingUSD": 0.08051249999999999,
+      "status": "failed",
+      "pass": false,
+      "elapsedMs": 2351,
+      "reason": "provider_error",
+      "measuredCostUSD": null
+    }
+  ]
+}

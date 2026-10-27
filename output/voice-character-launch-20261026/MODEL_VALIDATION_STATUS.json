@@ -1,0 +1,21 @@
+{
+  "model": "saved male breath-aware FullFT step13",
+  "actual_model_generated_this_pass": false,
+  "blocked_reason": "Modal workspace paused; observed Usage page with 139.94 USD net usage and frozen limit163.07",
+  "new_training": false,
+  "new_paid_execution": false,
+  "checkpoint_preserved": true,
+  "standard": {
+    "max_audio_seconds": 10,
+    "max_characters": 40
+  },
+  "extended": {
+    "max_audio_seconds": 20,
+    "max_characters": 80
+  },
+  "same_model_quality_for_both_amounts": true,
+  "narration_and_atmosphere_not_spoken": true,
+  "native_reload_export_and_new_audio_pending": true,
+  "evaluation_requires_complete_dialogue_and_human_voice_approval": true,
+  "cost_includes_cold_load_idle_and_failed_generations": true
+}

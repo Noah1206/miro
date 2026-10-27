@@ -1,0 +1,15 @@
+{
+  "before": {
+    "databaseSave": "completed",
+    "clientSheet": "remained pending after save",
+    "confirmation": "CI production-mode trace and isolated local browser reproduction"
+  },
+  "after": {
+    "databaseSave": "completed",
+    "clientSheet": "closed",
+    "profileName": "updated without reload",
+    "confirmation": "isolated browser at localhost:8821 with test-only PostgreSQL"
+  },
+  "fix": "Return action success before refreshing route; close sheet and refresh once on the client.",
+  "productionUserDataChanged": false
+}

@@ -1,0 +1,36 @@
+{
+  "checked_at_utc": "2026-10-24T02:34:13.249807+00:00",
+  "volumes": {
+    "miro-voices": {
+      "entries": 2067,
+      "bytes": 133303069097,
+      "deleted_targets_absent": true
+    },
+    "miro-voxcpm2-cache": {
+      "entries": 0,
+      "bytes": 0,
+      "deleted_targets_absent": true
+    },
+    "miro-fish-drama3-cache": {
+      "entries": 0,
+      "bytes": 0,
+      "deleted_targets_absent": true
+    }
+  },
+  "protected_paths_unchanged": true,
+  "protected_paths_changed": [],
+  "deleted_cloud_inventory_bytes": 151140702667,
+  "deleted_local_logical_bytes": 1473903012,
+  "local_targets_absent": true,
+  "gpu_runs_started": 0,
+  "current_recovery_checkpoints_preserved_pending_scope_answer": false,
+  "production_voice_health_ok": true,
+  "comparison_servers_stopped": [
+    14951,
+    85921,
+    88774
+  ],
+  "production_voice_server_preserved": true,
+  "current_recovery_checkpoints_preservation_user_confirmed": true,
+  "protected_paths_unchanged_last_recheck": true
+}

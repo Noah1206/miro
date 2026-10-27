@@ -1,0 +1,31 @@
+{
+  "archiveLinks": [
+    "/archive?channel=dm",
+    "/archive?channel=dm"
+  ],
+  "dialog": true,
+  "headings": [
+    "내 설정"
+  ],
+  "horizontalOverflow": false,
+  "tiles": [
+    {
+      "alignment": "center",
+      "text": "페르소나"
+    },
+    {
+      "alignment": "center",
+      "text": "캐릭터챗"
+    },
+    {
+      "alignment": "center",
+      "text": "채팅방 테마"
+    },
+    {
+      "alignment": "center",
+      "text": "대화 기억"
+    }
+  ],
+  "tokenIcon": "/miro-token.svg",
+  "url": "https://miroapp.app/messages/d82c9ec1-4493-41cf-afc7-232a9920ae1f"
+}

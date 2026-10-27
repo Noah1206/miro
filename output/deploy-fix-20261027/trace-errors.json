@@ -1,0 +1,150 @@
+[
+  {
+    "test": "ops-report-a-character-mes-86411-pted-duplicates-are-refused",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "call-incoming-video-call-t-395e0-nd-the-record-lands-in-chat-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toContainText(expected)\n\nLocator: locator('[data-call-record]')\nExpected string: \"영상통화\"\nReceived: <element(s) not found>\nCall log:\n  - expect.toContainText with timeout 10000ms\n  - waiting for locator('[data-call-record]')\n"
+  },
+  {
+    "test": "persona-the-first-chat-ask-3cdf2-e-chat-and-My-page-edits-it",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toHaveURL(expected)\n\nLocator: locator(':root')\nExpected pattern: /\\/persona\\?next=%2Fchat%2F[0-9a-f-]{36}$/\nReceived string:  \"http://localhost:3200/chat/03198516-d1b1-4a44-927c-c505dd9c1634\"\nCall log:\n  - expect.toHaveURL with timeout 10000ms\n  - waiting for locator(':root')\n    2 × locator resolved to <html lang=\"ko\">…</html>\n      - unexpected value \"http://localhost:3200/character/thomas\"\n    11 × locator resolved to <html lang=\"ko\">…</html>\n       - unexpected value \"http://localhost:3200/chat/03198516-d1b1-4a44-927c-c505dd9c1634\"\n"
+  },
+  {
+    "test": "chat-state-survives-leaving-and-re-entering-the-chat",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "ops-adult-verification-fai-7b964--marks-the-account-verified-retry1",
+    "error": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: '인증하기' }) resolved to 2 elements:\n    1) <button type=\"button\" class=\"my_row__8C_DK\" aria-haspopup=\"dialog\">…</button> aka getByRole('button', { name: '성인 인증 인증하기' })\n    2) <button class=\"btn \" type=\"submit\" data-variant=\"primary\">…</button> aka getByRole('button', { name: '인증하기', exact: true })\n\nCall log:\n  - waiting for getByRole('button', { name: '인증하기' })\n"
+  },
+  {
+    "test": "chat-conversation-picker-d-fd196-hoose-the-longer-ECHO-reply",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toHaveText(expected)\n\nLocator: getByRole('button', { name: '대화 방식 선택' })\nExpected string: \"MIRO\"\nReceived: <element(s) not found>\nCall log:\n  - expect.toHaveText with timeout 10000ms\n  - waiting for getByRole('button', { name: '대화 방식 선택' })\n"
+  },
+  {
+    "test": "create-필수-네-칸을-채우면-게시되고-역할극이-시작된다",
+    "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: '윤지훈 — 관계와 세계 보기' })\n"
+  },
+  {
+    "test": "flow-a-visitor-can-browse--975a9--lands-back-where-they-were-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toHaveURL(expected)\n\nLocator: locator(':root')\nExpected pattern: /\\/character\\/thomas/\nReceived string:  \"http://localhost:3200/home\"\nCall log:\n  - expect.toHaveURL with timeout 10000ms\n  - waiting for locator(':root')\n    14 × locator resolved to <html lang=\"ko\">…</html>\n       - unexpected value \"http://localhost:3200/home\"\n"
+  },
+  {
+    "test": "create-필수-네-칸을-채우면-게시되고-역할극이-시작된다-retry1",
+    "error": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: '윤지훈 — 관계와 세계 보기' })\n"
+  },
+  {
+    "test": "keep-waiting-a-generation--f5de3-instead-of-showing-an-error-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: '역할극 입력' })\n"
+  },
+  {
+    "test": "call-declining-leaves-a-record-and-no-call-screen-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toContainText(expected)\n\nLocator: locator('[data-call-record]')\nExpected string: \"음성통화 거절\"\nReceived: <element(s) not found>\nCall log:\n  - expect.toContainText with timeout 10000ms\n  - waiting for locator('[data-call-record]')\n"
+  },
+  {
+    "test": "chat-a-free-form-turn-pers-80d4e-world-header-reflects-state",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading', { name: '토마스', exact: true })\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n  - expect.toBeVisible with timeout 10000ms\n  - waiting for getByRole('heading', { name: '토마스', exact: true })\n"
+  },
+  {
+    "test": "admin-admin-flow-login-→-r-4f627-t-user-sees-the-restriction",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "chat-unsent-draft-survives-e727d-iled-transport-preserves-it-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: '역할극 입력' })\n"
+  },
+  {
+    "test": "admin-admin-flow-login-→-r-4f627-t-user-sees-the-restriction-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "chat-unsent-draft-survives-e727d-iled-transport-preserves-it",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: '역할극 입력' })\n"
+  },
+  {
+    "test": "keep-waiting-a-generation--f5de3-instead-of-showing-an-error",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: '역할극 입력' })\n"
+  },
+  {
+    "test": "chat-relationship-numbers-are-never-shown-to-the-user-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "chat-relationship-numbers-are-never-shown-to-the-user",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "media-live-scene-continues-b31c9-ulation-and-returns-to-chat",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByText('창가로 걸어가 커튼을 걷는다.')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n  - expect.toBeVisible with timeout 10000ms\n  - waiting for getByText('창가로 걸어가 커튼을 걷는다.')\n"
+  },
+  {
+    "test": "media-live-scene-continues-b31c9-ulation-and-returns-to-chat-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByText('창가로 걸어가 커튼을 걷는다.')\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n  - expect.toBeVisible with timeout 10000ms\n  - waiting for getByText('창가로 걸어가 커튼을 걷는다.')\n"
+  },
+  {
+    "test": "chat-state-survives-leaving-and-re-entering-the-chat-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "messenger-messenger-sends--ea5ac-ws-a-persisted-read-receipt",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: '문자 입력' })\n"
+  },
+  {
+    "test": "ops-report-a-character-mes-86411-pted-duplicates-are-refused-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "persona-the-first-chat-ask-3cdf2-e-chat-and-My-page-edits-it-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toHaveURL(expected)\n\nLocator: locator(':root')\nExpected pattern: /\\/persona\\?next=%2Fchat%2F[0-9a-f-]{36}$/\nReceived string:  \"http://localhost:3200/chat/afa4aa16-e566-44b4-9b2a-0867e3204801\"\nCall log:\n  - expect.toHaveURL with timeout 10000ms\n  - waiting for locator(':root')\n    2 × locator resolved to <html lang=\"ko\">…</html>\n      - unexpected value \"http://localhost:3200/character/thomas\"\n    11 × locator resolved to <html lang=\"ko\">…</html>\n       - unexpected value \"http://localhost:3200/chat/afa4aa16-e566-44b4-9b2a-0867e3204801\"\n"
+  },
+  {
+    "test": "flow-signup-through-entering-a-roleplay",
+    "error": "Error: expect.toHaveAttribute: Error: strict mode violation: locator('[data-login-provider=\"google\"]') resolved to 2 elements:\n    1) <a data-login-provider=\"google\" href=\"/api/auth/google/start?next=%2Fhome\" class=\"social-button_button__19_Iv social-button_google__n6MMR social-button_sheet__acBjn\">…</a> aka getByLabel('대화', { exact: true }).locator('a').filter({ hasText: 'Google로 계속하기' })\n    2) <a data-login-provider=\"google\" href=\"/api/auth/google/start?next=%2Fhome\" class=\"social-button_button__19_Iv social-button_google__n6MMR social-button_sheet__acBjn\">…</a> aka getByRole('link', { name: 'Google로 계속하기' })\n\nCall log:\n  - expect.toHaveAttribute with timeout 10000ms\n  - waiting for locator('[data-login-provider=\"google\"]')\n"
+  },
+  {
+    "test": "ops-adult-verification-fai-7b964--marks-the-account-verified",
+    "error": "Error: locator.click: Error: strict mode violation: getByRole('button', { name: '인증하기' }) resolved to 2 elements:\n    1) <button type=\"button\" class=\"my_row__8C_DK\" aria-haspopup=\"dialog\">…</button> aka getByRole('button', { name: '성인 인증 인증하기' })\n    2) <button class=\"btn \" type=\"submit\" data-variant=\"primary\">…</button> aka getByRole('button', { name: '인증하기', exact: true })\n\nCall log:\n  - waiting for getByRole('button', { name: '인증하기' })\n"
+  },
+  {
+    "test": "chat-a-free-form-turn-pers-80d4e-world-header-reflects-state-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toBeVisible()\n\nLocator: getByRole('heading', { name: '토마스', exact: true })\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n  - expect.toBeVisible with timeout 10000ms\n  - waiting for getByRole('heading', { name: '토마스', exact: true })\n"
+  },
+  {
+    "test": "ai-platform-monthly-usage--cb1e5-dently-revocable-AI-consent",
+    "error": "Error: expect.toHaveAttribute: Error: strict mode violation: locator('[data-token-balance]') resolved to 2 elements:\n    1) <p aria-live=\"polite\" aria-atomic=\"true\" data-token-balance=\"1000\" data-recharge-balance=\"1000\" class=\"t-title-1 wallet_amount__D_9mz\">…</p> aka getByRole('main').getByText('1,000 미로 토큰')\n    2) <p aria-live=\"polite\" aria-atomic=\"true\" data-token-balance=\"1000\" data-recharge-balance=\"1000\" class=\"t-title-1 wallet_amount__D_9mz\">…</p> aka getByText('1,000 미로 토큰').nth(1)\n\nCall log:\n  - expect.toHaveAttribute with timeout 10000ms\n  - waiting for locator('[data-token-balance]')\n"
+  },
+  {
+    "test": "flow-a-visitor-can-browse--975a9--lands-back-where-they-were",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toHaveURL(expected)\n\nLocator: locator(':root')\nExpected pattern: /\\/character\\/thomas/\nReceived string:  \"http://localhost:3200/home\"\nCall log:\n  - expect.toHaveURL with timeout 10000ms\n  - waiting for locator(':root')\n    14 × locator resolved to <html lang=\"ko\">…</html>\n       - unexpected value \"http://localhost:3200/home\"\n"
+  },
+  {
+    "test": "a11y-signed-in-screens",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "messenger-messenger-sends--ea5ac-ws-a-persisted-read-receipt-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByRole('textbox', { name: '문자 입력' })\n"
+  },
+  {
+    "test": "call-declining-leaves-a-record-and-no-call-screen",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toContainText(expected)\n\nLocator: locator('[data-call-record]')\nExpected string: \"음성통화 거절\"\nReceived: <element(s) not found>\nCall log:\n  - expect.toContainText with timeout 10000ms\n  - waiting for locator('[data-call-record]')\n"
+  },
+  {
+    "test": "flow-signup-through-entering-a-roleplay-retry1",
+    "error": "Error: expect.toHaveAttribute: Error: strict mode violation: locator('[data-login-provider=\"google\"]') resolved to 2 elements:\n    1) <a data-login-provider=\"google\" href=\"/api/auth/google/start?next=%2Fhome\" class=\"social-button_button__19_Iv social-button_google__n6MMR social-button_sheet__acBjn\">…</a> aka getByLabel('대화', { exact: true }).locator('a').filter({ hasText: 'Google로 계속하기' })\n    2) <a data-login-provider=\"google\" href=\"/api/auth/google/start?next=%2Fhome\" class=\"social-button_button__19_Iv social-button_google__n6MMR social-button_sheet__acBjn\">…</a> aka getByRole('link', { name: 'Google로 계속하기' })\n\nCall log:\n  - expect.toHaveAttribute with timeout 10000ms\n  - waiting for locator('[data-login-provider=\"google\"]')\n"
+  },
+  {
+    "test": "call-incoming-video-call-t-395e0-nd-the-record-lands-in-chat",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toContainText(expected)\n\nLocator: locator('[data-call-record]')\nExpected string: \"영상통화\"\nReceived: <element(s) not found>\nCall log:\n  - expect.toContainText with timeout 10000ms\n  - waiting for locator('[data-call-record]')\n"
+  },
+  {
+    "test": "a11y-signed-in-screens-retry1",
+    "error": "TimeoutError: locator.fill: Timeout 15000ms exceeded.\nCall log:\n  - waiting for getByPlaceholder('대사, 행동, 묘사를 자유롭게…')\n"
+  },
+  {
+    "test": "chat-conversation-picker-d-fd196-hoose-the-longer-ECHO-reply-retry1",
+    "error": "Error: Timed out 10000ms waiting for expect(locator).toHaveText(expected)\n\nLocator: getByRole('button', { name: '대화 방식 선택' })\nExpected string: \"MIRO\"\nReceived: <element(s) not found>\nCall log:\n  - expect.toHaveText with timeout 10000ms\n  - waiting for getByRole('button', { name: '대화 방식 선택' })\n"
+  }
+]

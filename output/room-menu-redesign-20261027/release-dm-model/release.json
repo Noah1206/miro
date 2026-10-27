@@ -1,0 +1,43 @@
+{
+  "commit": "ee958e65",
+  "previous_main": "16cc09d1",
+  "main_pushed": true,
+  "production": "https://miroapp.app",
+  "deployment": "https://miro-nftfk2kpd-noah1206s-projects.vercel.app",
+  "typechecks": {
+    "root": "passed",
+    "web": "passed"
+  },
+  "translations_missing": {
+    "en": 0,
+    "ja": 0,
+    "zh": 0
+  },
+  "migration": {
+    "file": "20261027070000_messenger_chat_model.sql",
+    "production": "applied and verified",
+    "column": "messenger_inbox.chat_model",
+    "type": "nullable text"
+  },
+  "targeted_tests": {
+    "passed": 59,
+    "failed": 0,
+    "files": [
+      "reality-grounding.test.ts",
+      "agency.integration.test.ts"
+    ],
+    "providers": "synthetic; no paid AI calls"
+  },
+  "browser_checks": [
+    "local ECHO selection",
+    "local send persists model:mock:long",
+    "reload retains ECHO selection",
+    "production DM shows MIRO/ECHO options"
+  ],
+  "health": {
+    "ok": true,
+    "db": "up",
+    "schema": "ready",
+    "cron": "fresh"
+  }
+}

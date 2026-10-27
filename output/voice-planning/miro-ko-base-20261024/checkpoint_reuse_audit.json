@@ -1,0 +1,16 @@
+{
+  "verified_at": "2026-10-24T10:33:13.325459+00:00",
+  "read_only_control_plane_calls": true,
+  "paid_compute_started": false,
+  "checkpoint": "/_drama3/fullsize-ko-007-20261024-continuous-v4/arms/korean_teacher/training_checkpoints/step-000023",
+  "step": 23,
+  "file_count": 32,
+  "all_sizes_match": true,
+  "bytes": 430824909904,
+  "model_tts_weights_reusable": true,
+  "teacher_head_and_optimizer_preserved_in_source": true,
+  "codec_frozen_and_contract_compatible": true,
+  "current_plan_sha256": "07da64d8a1c0016689c6fa74be64c8dc954d9a81e4420c7bd36adb60db82ec02",
+  "cross_speaker_transfer_validated": false,
+  "new_training_plan_requires_explicit_stage_transition_not_old_exact_resume": true
+}

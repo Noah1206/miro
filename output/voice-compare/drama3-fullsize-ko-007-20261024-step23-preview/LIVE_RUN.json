@@ -1,0 +1,15 @@
+{
+  "phase": "complete",
+  "training_updates": 0,
+  "app_id": "ap-DEkQpQP7uJnXnBe1eZo1kL",
+  "initial_import_error_app_stopped": "ap-8IZjTFwqkjtmBdMME1taI3",
+  "time": "2026-10-24T08:21:56.435786+00:00",
+  "automatic_paid_retry": false,
+  "generation_app_id": "ap-cUhLGnj2d8LvX3NI6EsSax",
+  "cpu_export_completed": true,
+  "native_step": 23,
+  "running": false,
+  "additional_training_updates": 0,
+  "all_audio_downloaded_verified": true,
+  "containers": []
+}
