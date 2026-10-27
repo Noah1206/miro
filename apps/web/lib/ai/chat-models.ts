@@ -6,9 +6,13 @@ export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo
 export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: 'scene' | 'long'; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
-  const models = registry?.models.filter(m => m.enabled && !m.fallback && m.provider !== 'gemini' && !/gemini/i.test(m.providerModelId) && m.capabilities.includes('dialogue')
+  const candidates = registry?.models.filter(m => m.enabled && m.provider !== 'gemini' && !/gemini/i.test(m.providerModelId) && m.capabilities.includes('dialogue')
     && m.inputCost !== undefined && m.outputCost !== undefined
     && (!productionRuntime() || !!providerFromEnv(m.provider, m.providerModelId))) ?? []
+  // A ready non-Gemini backup remains selectable when excluding Gemini leaves no primary.
+  // Otherwise backups keep their existing role and never displace a primary model.
+  const regular = candidates.filter(model => !model.fallback)
+  const models = regular.length ? regular : candidates
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
   return pinned ? models.sort((a, b) => Number(b.id === pinned) - Number(a.id === pinned)) : models
 }
@@ -37,7 +41,7 @@ export async function chatModelOptions(_userId: string, adult = false) {
 export async function resolveChatModel(_userId: string, choice: string, adult = false) {
   const models = availableModels(adult)
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
-  const first = pinned ? models.find(m => m.id === pinned) : models[0]
+  const first = (pinned ? models.find(m => m.id === pinned) : undefined) ?? models[0]
   let model = first, long = choice === 'pro'
   if (choice !== 'miro' && choice !== 'pro') {
     const match = models.flatMap(m => [false, true].map(l => ({ m, l, id: choiceId(m.id, l) }))).find(c => c.id === choice)
