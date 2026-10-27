@@ -3,6 +3,7 @@ import { useId, useState, type ReactNode } from 'react'
 import type { UserPersona } from '@miro/domain'
 import type { CharacterEntry } from '@/lib/character-entry'
 import type { AccountProfile } from '@/lib/account-profile'
+import { useAccountProfile } from '@/components/account-profile-provider'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import { ChatThemeOptions } from '@/components/chat-theme'
 import { LogoMark } from '@/components/ui'
@@ -39,13 +40,14 @@ function MenuIcon({ name }: { name: IconName }) {
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
 /** Existing room controls share one drawer; detail panels expand in place. */
-export function RoomMenu({ sessionId, initialPersona, characterName, profile, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0, messenger = false }: {
+export function RoomMenu({ sessionId, initialPersona, characterName, profile: initialProfile, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0, messenger = false }: {
   sessionId: string; initialPersona: UserPersona | null; characterName: string
   profile: AccountProfile
   entry?: CharacterEntry | null; portrait?: string | null; messengerHref?: string; characterHref?: string
   choices?: ChatModelChoice[]; turnCount?: number; messenger?: boolean
 }) {
   const t = useT()
+  const { profile, refresh: refreshProfile } = useAccountProfile(initialProfile)
   const locale = INTL_LOCALE[useLanguage()]
   const { available, on, toggle } = useImmersive()
   const { wallet, openRecharge } = useWallet()
@@ -62,12 +64,12 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile, en
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   return <>
-    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true) }}>
+    <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
     <Drawer id={menuId} open={open} onClose={close} title={t('채팅방 설정')} footer={row(archiveHref, 'exit', t('대화방 나가기'))}>
       <section className={styles.account} aria-label={t('내 프로필')}>
-        <TransitionLink href="/my" className={styles.identity} aria-label={t('내 프로필')} onClick={close}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <LogoMark size={20}/>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></TransitionLink>
+        <TransitionLink href="/my" className={styles.identity} aria-label={t('내 프로필')} onClick={close}><span className={styles.avatar} aria-hidden="true">{profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" width={38} height={38} sizes="38px"/> : <LogoMark size={20}/>}</span><span className={styles.identityText}><strong>{profile.name}</strong></span></TransitionLink>
         <div className={styles.wallet} aria-label={t('보유 토큰')}>
           <p className={styles.balance} aria-live="polite"><img src="/miro-token.svg" alt="" aria-hidden="true" width={24} height={24} decoding="async"/><strong data-room-balance={wallet?.available}>{wallet ? wallet.available.toLocaleString(locale) : '—'}</strong><span className="sr-only">{t('미로 토큰')}</span></p>
           <button type="button" onClick={() => { close(); openRecharge() }}>{t('충전하기')}</button>

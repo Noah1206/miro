@@ -10,8 +10,24 @@ import { useT } from '@/lib/i18n/client'
 import { saveProfile } from './actions'
 import styles from './my.module.css'
 import { shrinkImage } from '@/lib/shrink-image'
+import { useAccountProfile, useProfileSync } from '@/components/account-profile-provider'
+import type { AccountProfile } from '@/lib/account-profile'
 
 const MAX_BYTES = 5 * 1024 * 1024
+
+export function ProfileIdentity({ initial, email }: { initial: AccountProfile; email: string | null }) {
+  const { profile } = useAccountProfile(initial)
+  return <div className={styles.profile}>
+    <span className={styles.avatar} aria-hidden>
+      {profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" sizes="64px" width={64} height={64} loading="eager" /> : <LogoMark size={28} />}
+    </span>
+    <div className={styles.who}>
+      <p className={styles.name}>{profile.name}</p>
+      {email && <p className={styles.email}>{email}</p>}
+    </div>
+    <ProfileEditor nickname={profile.name} avatarUrl={profile.avatarUrl} />
+  </div>
+}
 
 /** Profile edit trigger; photos are uploaded only after the existing save action is submitted. */
 export function ProfileEditor({ nickname, avatarUrl }: { nickname: string; avatarUrl: string | null }) {
@@ -33,6 +49,7 @@ export function ProfileEditor({ nickname, avatarUrl }: { nickname: string; avata
 function ProfileForm({ nickname, avatarUrl, onDone }: { nickname: string; avatarUrl: string | null; onDone: () => void }) {
   const t = useT()
   const router = useRouter()
+  const syncProfile = useProfileSync()
   const completed = useRef(false)
   const [state, action] = useActionState(saveProfile, null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -40,9 +57,10 @@ function ProfileForm({ nickname, avatarUrl, onDone }: { nickname: string; avatar
   useEffect(() => {
     if (!state?.ok || completed.current) return
     completed.current = true
+    syncProfile(state.profile)
     onDone()
     router.refresh()
-  }, [state, onDone, router])
+  }, [state, onDone, router, syncProfile])
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
   const photo = preview ?? avatarUrl
   const error = tooBig ? '5MB 이하 사진만 올릴 수 있어요.' : state && !state.ok ? state.error : null

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db, messages, roleplaySessions } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { LogoMark, Page, TransitionLink } from '@/components/ui'
+import { Page, TransitionLink } from '@/components/ui'
 import { accountProfile } from '@/lib/account-profile'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { LANGUAGES } from '@miro/domain'
@@ -13,9 +13,8 @@ import { SiteFooter } from '@/components/site-footer'
 import { LegalRevisionNotice } from '@/components/legal-revision-notice'
 import { logout } from './actions'
 import { MenuItemContent, MenuRow, MenuSection } from './menu'
-import { CharacterPhoto } from '@/components/character-visual'
 import { CreditCard } from './credit-card'
-import { ProfileEditor } from './profile-editor'
+import { ProfileIdentity } from './profile-editor'
 import { InstallAppButton } from '@/components/pwa-install'
 import { ProfileIcon } from './profile-icon'
 import { VerificationSheet } from './verify/verification-sheet'
@@ -42,7 +41,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
     walletSnapshot(user.id),
   ])
   // 닉네임 = 온보딩에서 받은 이름(내 페르소나 이름, 캐릭터가 나를 부르는 이름). 없던 예전 계정은 계정 이름.
-  const { name, avatarUrl } = profile
   const stats = [
     { label: t('만난 캐릭터'), value: sessions?.met ?? 0 },
     { label: t('대화 중'), value: sessions?.active ?? 0 },
@@ -57,16 +55,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
         <a href="#profile-settings" className={styles.settingsButton} aria-label={t('설정으로 이동')}><ProfileIcon name="settings" size={24} /></a>
       </header>
       <section className={styles.identity} aria-label={t('내 프로필')}>
-      <div className={styles.profile}>
-        <span className={styles.avatar} aria-hidden>
-          {avatarUrl ? <CharacterPhoto src={avatarUrl} alt="" size="avatar" sizes="64px" width={64} height={64} loading="eager" /> : <LogoMark size={28} />}
-        </span>
-        <div className={styles.who}>
-          <p className={styles.name}>{name}</p>
-          {user.email && <p className={styles.email}>{user.email}</p>}
-        </div>
-        <ProfileEditor nickname={name} avatarUrl={avatarUrl} />
-      </div>
+      <ProfileIdentity initial={profile} email={user.email} />
 
       <dl className={styles.stats}>
         {stats.map((s) => <div key={s.label}><dt>{s.label}</dt><dd>{s.value.toLocaleString()}</dd></div>)}
