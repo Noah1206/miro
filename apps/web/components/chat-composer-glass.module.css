@@ -22,12 +22,10 @@
 :global([data-chat-theme='talk']) .surface.surface:focus-within { border-color:#ffffffed; }
 @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
   :global([data-chat-theme]) .surface.surface {
-    background:radial-gradient(ellipse at 10% 0%,#ffffff14,transparent 64%),linear-gradient(135deg,#39393d91,#202024a6);
+    background:transparent;
     backdrop-filter:blur(28px) saturate(135%);
     -webkit-backdrop-filter:blur(28px) saturate(135%);
   }
-  :global([data-chat-theme='dm-light']) .surface.surface,
-  :global([data-chat-theme='talk']) .surface.surface { background:linear-gradient(135deg,#ffffffb8,#f3f3f59e); }
 }
 @media(prefers-reduced-transparency:reduce) {
   :global([data-chat-theme]) .surface.surface { background:#28282c; backdrop-filter:none; -webkit-backdrop-filter:none; }
