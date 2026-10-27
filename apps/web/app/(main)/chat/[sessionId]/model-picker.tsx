@@ -40,7 +40,7 @@ export function CurrentChatModel({ choices, className }: { choices: ChatModelCho
   const { model } = useChatModel()
   const selected = selectedChatChoice(choices, model)
   const presentation = selected ? modelPresentation(selected) : null
-  return <span className={`${brand.className} ${sheet.current} ${className ?? ''}`} aria-label={`${t('AI 모델')}: ${presentation?.label ?? t('준비 중')}`} aria-live="polite" aria-atomic="true" data-current-chat-model={selected?.id}>
+  return <span className={`${brand.className} ${sheet.current} ${className ?? ''}`} aria-label={`${t('AI 모델')}: ${presentation?.label ?? t('준비 중')}`} aria-live="polite" aria-atomic="true" data-current-chat-model={selected?.id} data-model-brand={presentation?.icon ?? 'other'}>
     {presentation && <ModelBrandIcon brand={presentation.icon} className={sheet.icon}/>}{presentation?.label ?? t('준비 중')}
   </span>
 }
@@ -67,7 +67,7 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
       {rows.filter(c => modelPresentation(c).provider === provider).map(choice => {
         const presentation = modelPresentation(choice)
         return <button type="button" key={choice.id} className={sheet.option} aria-pressed={selected?.id === choice.id} onClick={() => { setModel(choice.id); onSelect?.() }}>
-          <span className={sheet.copy}><span className={sheet.heading}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong></span><span className={sheet.description}>{t(presentation.description)}</span></span>
+          <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong></span><span className={sheet.description}>{t(presentation.description)}</span></span>
           <span className={sheet.cost}>{t('최대 {count} 토큰/턴', { count: choice.maximumTokens.toLocaleString(locale) })}<span className={sheet.check} aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></span>
         </button>
       })}
@@ -99,7 +99,7 @@ export function ModelPicker({ choices = [], place, disabled = false }: { freeRea
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
   }, [open, setPickerOpen])
   return <div ref={root} className={sheet.root} data-place={place} data-coach="model">
-    <motion.button ref={trigger} whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" className={sheet.trigger} disabled={disabled} title={selected?.name} aria-label={`${t('AI 모델 선택')}${selected ? `: ${selected.name}` : ''}`} aria-haspopup="dialog" aria-controls={open ? panelId : undefined} aria-expanded={open} onClick={() => setPickerOpen(!open)}>
+    <motion.button ref={trigger} whileTap={reduce ? undefined : { scale: .95 }} transition={spring.quick} type="button" className={sheet.trigger} data-model-brand={presentation?.icon ?? 'other'} disabled={disabled} title={selected?.name} aria-label={`${t('AI 모델 선택')}${selected ? `: ${selected.name}` : ''}`} aria-haspopup="dialog" aria-controls={open ? panelId : undefined} aria-expanded={open} onClick={() => setPickerOpen(!open)}>
       {presentation && <ModelBrandIcon brand={presentation.icon} className={sheet.icon}/>}<span className={`${brand.className} ${sheet.brand}`}>{presentation?.label ?? t('준비 중')}</span>
       <motion.svg animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reduce ? 0 : .18, ease: ease.standard }} aria-hidden width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></motion.svg>
     </motion.button>
