@@ -1,4 +1,4 @@
-import { ChatTheme, ChatHeaderAvatar } from '@/components/chat-theme'
+import { ChatTheme } from '@/components/chat-theme'
 import { RoomMenu } from '@/components/room-menu'
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
@@ -54,7 +54,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         <header className={styles.header}>
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
-          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1><CurrentChatModel choices={modelOptions.choices} className={styles.currentModel}/></div>
+          <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1><CurrentChatModel choices={modelOptions.choices} className={styles.currentModel}/></div>
           <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} choices={modelOptions.choices} />
         </header>
         {call && (

@@ -1,4 +1,4 @@
-import { ChatTheme, ChatHeaderAvatar } from '@/components/chat-theme'
+import { ChatTheme } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
 import { contactProfiles, db, messages } from '@miro/db'
@@ -74,10 +74,10 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1>
-            {/* 호감은 숫자 그대로, 마음을 여는 속도는 막대 색으로만(10/16 사용자 결정 — 속도 글자는 보이지 않는다). */}
-            <p className={styles.affinity} data-pace={s.character.personality.relationshipProfile?.opening?.value ?? 'normal'}>
-              <span>{t('호감 {n}%', { n: affinity })}</span><span className={styles.affinityBar} aria-hidden="true"><i style={{ width: `${affinity}%` }} /></span>
+          <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1>
+            {/* Keep relationship progression and its bar; omit the numeric label. */}
+            <p className={styles.affinity} aria-hidden="true" data-pace={s.character.personality.relationshipProfile?.opening?.value ?? 'normal'}>
+              <span className={styles.affinityBar}><i style={{ width: `${affinity}%` }} /></span>
             </p></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
