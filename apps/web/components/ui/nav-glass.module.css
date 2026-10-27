@@ -7,7 +7,6 @@
 .bar.bar { height: 64px; border-radius: 999px; }
 .indicator { top: 6px; bottom: 6px; }
 .indicator::before { border-radius: 999px; }
-.bar :global(.nav__item) svg { width: 26px; height: 26px; }
-.bar :global(.nav__item[data-create]:not([aria-current])) :global(.nav__inner) { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: #ffffff14; box-shadow: inset 0 1px 0 #ffffff26; }
+.bar :global(.nav__item) svg { width: 22px; height: 22px; }
 @media (prefers-reduced-motion: reduce) { .indicator, .bar :global(.nav__item) { transition: none; } }
 @media (prefers-reduced-transparency: reduce) { .bar.bar { background: #303030; backdrop-filter: none; -webkit-backdrop-filter: none; } }

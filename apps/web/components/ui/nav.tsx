@@ -62,8 +62,8 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
               <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="currentColor" fillRule="evenodd" clipRule="evenodd">
                 {it.icon}
               </svg>
-              {/* 10/28 스크린샷 요청: 아이콘만 보이는 알약 바 — 이름은 화면 읽기용으로만 남긴다. */}
-              <span className="sr-only">{t(it.label)}</span>
+              {/* 10/28: 아이콘 아래 탭 이름(다시 보이게). */}
+              <span style={{ fontSize: 'var(--font-micro)', lineHeight: 1.2, letterSpacing: 0 }}>{t(it.label)}</span>
             </span>
         )
         const style = { color: 'var(--color-text-primary)' }
