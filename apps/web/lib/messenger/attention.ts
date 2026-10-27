@@ -35,7 +35,7 @@ export async function chooseAttention(sessionId: string, userId: string, now: Da
   const loaded = await loadSession(sessionId, userId)
   if (!loaded || loaded.restricted) return null
   const llm = createAI({ mock: () => { throw new Error('attention_mock_requires_recorded_choice') }, context: {
-    userId, sessionId, workload: 'background', origin: 'messenger:attention', adult: loaded.adult.since !== null,
+    userId, sessionId, workload: 'background', origin: 'messenger:attention', adult: loaded.adult.turn,
   } })
   const runtime = await loadAgencyRuntime(sessionId, userId, loaded.snapshot, llm, now, policy ?? loaded.policyVersion)
   if (!runtime || runtime.mode !== 'live') return null

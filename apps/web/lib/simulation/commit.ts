@@ -43,6 +43,8 @@ export type CommitInput = {
   turnIndex: number
   userInput: string
   userMessageId?: string
+  /** 언베일 모델이 쓴 턴 — 이 턴의 모든 메시지에 is_explicit 를 단다(상용 모델로 가는 기록에서 요약으로 바뀐다). */
+  explicit?: boolean
   agency?: { version: number; plan: AgencyPlan }
   responseText: string
   blocks: ValidatedTransition['blocks']
@@ -139,17 +141,17 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       ...(input.userInput ? [{
         ...(input.userMessageId ? { id: input.userMessageId } : {}),
         sessionId: input.sessionId, role: 'user' as const, kind: input.channel === 'messenger' ? 'messenger' as const : 'text' as const,
-        content: input.userInput, blocks: [], turnIndex: input.turnIndex,
+        content: input.userInput, blocks: [], turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
       }] : []),
       // 장면 표시는 답장보다 먼저 — 장소가 바뀌고, 그 안에서 대사가 이어진다.
       ...(input.sceneMarker ? [{
         sessionId: input.sessionId, role: 'narrator' as const, kind: 'live_scene' as const,
-        content: input.sceneMarker, blocks: [], turnIndex: input.turnIndex,
+        content: input.sceneMarker, blocks: [], turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
       }] : []),
       {
         sessionId: input.sessionId, role: 'character', kind: input.channel === 'messenger' ? 'reality_message' : 'text',
         content: input.responseText,
-        blocks: input.blocks as never, turnIndex: input.turnIndex,
+        blocks: input.blocks as never, turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
       },
     ]
     const inserted = (await tx.insert(messages).values(inWrittenOrder(rows)).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))

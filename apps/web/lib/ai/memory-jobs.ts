@@ -11,6 +11,9 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { conversationContext } from '@/lib/simulation/character-context'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
 import { observe } from '@/lib/observe'
+import { z } from 'zod'
+import { bridgeSummarizer, maskExplicitHistory } from '@/lib/simulation/inline-mirror'
+import { sanitizeBridge } from '@/lib/simulation/unveil-bridge'
 import { captureMoments } from '@/lib/reality/moments'
 import { groundedMemoryCandidates } from './memory-sources'
 
@@ -112,7 +115,7 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
   // 삭제·제한 뒤에는 결과를 남기지 않는다. 원문이 숨겨졌으면(운영 조치) 그 턴도 기억이 되지 않는다.
   const [state] = await db.select({ deletedAt: roleplaySessions.deletedAt, restrictedAt: roleplaySessions.restrictedAt, status: roleplaySessions.status, userDeleted: users.deletedAt })
     .from(roleplaySessions).innerJoin(users, eq(users.id, roleplaySessions.userId)).where(and(eq(roleplaySessions.id, job.sessionId), eq(roleplaySessions.userId, job.userId))).limit(1)
-  const [source] = await db.select({ content: messages.content, createdAt: messages.createdAt, hiddenAt: messages.hiddenAt, kind: messages.kind, blocks: messages.blocks }).from(messages)
+  const [source] = await db.select({ content: messages.content, createdAt: messages.createdAt, hiddenAt: messages.hiddenAt, kind: messages.kind, blocks: messages.blocks, isExplicit: messages.isExplicit }).from(messages)
     .where(and(eq(messages.id, job.messageId), eq(messages.sessionId, job.sessionId), characterCanSeeMessage)).limit(1)
   if (!state || state.deletedAt || state.restrictedAt || state.status !== 'active' || state.userDeleted || !source || source.hiddenAt) { await finish('cancelled', 'session_unavailable'); return 'cancelled' }
   // 더 최신 턴의 요약이 이미 끝났으면 이 요약은 옛 결과다 — 최신을 덮지 않는다.
@@ -129,13 +132,21 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
     .where(and(eq(messages.sessionId, job.sessionId), isNull(messages.hiddenAt), characterCanSeeMessage, inArray(messages.role, ['user', 'character', 'narrator', 'npc']),
       or(sql`${messages.turnIndex} < ${job.throughTurn}`, lte(messages.createdAt, source.createdAt))))
     .orderBy(desc(messages.createdAt), desc(messages.turnIndex), desc(messages.id)).limit(24)
-  const recentMessages = conversationContext(window.reverse(), loaded.snapshot.clock?.timeZone)
+  // 언베일 모델이 쓴 턴(또는 언베일 방)의 기억은 언베일 전용 모델이 뽑는다. 상용 모델이 뽑는 기억은 창의 원문을 줄거리로 바꿔서 본다.
+  const adultJob = loaded.adult.turn || source.isExplicit
+  const ordered = window.reverse()
+  const masked = adultJob ? ordered : await maskExplicitHistory(ordered, bridgeSummarizer(
+    () => auxiliaryLLM(loaded.characterName, { userId: job.userId, sessionId: job.sessionId, requestId: randomUUID(), workload: 'background', origin: 'inline:mirror', adult: true }),
+    z.object({ summary: z.string() }), loaded.characterName))
+  const recentMessages = conversationContext(masked, loaded.snapshot.clock?.timeZone)
   // 요약은 그 범위의 대화가 있어야 뜻이 있다 — 비어 있으면 옛 요약을 빈 것으로 덮지 않고 나중에 다시 본다.
   if (job.kind === 'memory_summary' && !recentMessages.length) { await retryOrFail('summary_window_empty'); return 'retry' }
   const snapshot = { ...loaded.snapshot, recentMessages, turnCount: job.throughTurn }
-  const llm = auxiliaryLLM(loaded.characterName, { userId: job.userId, sessionId: job.sessionId, requestId: job.requestId ?? job.id, workload: 'background', origin: `memory:${job.kind}`, adult: loaded.adult.since !== null })
+  const llm = auxiliaryLLM(loaded.characterName, { userId: job.userId, sessionId: job.sessionId, requestId: job.requestId ?? job.id, workload: 'background', origin: `memory:${job.kind}`, adult: adultJob })
   let candidates
-  try { candidates = filterSalient((await analyze(llm, job.kind, source.content, snapshot)).memories) }
+  // 일반 방에서 언베일 턴으로 만든 기억은 상용 모델의 프롬프트에 실린다 — 단어 검사를 못 넘는 기억은 버린다.
+  const mirrored = source.isExplicit && loaded.adult.since === null
+  try { candidates = filterSalient((await analyze(llm, job.kind, source.content, snapshot)).memories).filter(m => !mirrored || sanitizeBridge(m.content) !== null) }
   catch (e) { await retryOrFail(e instanceof Error ? e.message.slice(0, 60) : 'analyze_failed'); return 'retry' }
 
   let stored = 0

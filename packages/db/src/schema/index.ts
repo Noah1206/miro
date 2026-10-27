@@ -489,6 +489,8 @@ export const messages = pgTable('messages', {
   turnIndex: integer('turn_index').notNull(),
   /** 운영 조치로 숨김. 원문은 검토용으로 남고 사용자에게는 표시하지 않는다. */
   hiddenAt: timestamp('hidden_at', { withTimezone: true }),
+  /** 언베일 모델이 쓴 원문. 화면에는 그대로, 상용 모델로 가는 기록에서는 요약으로 치환(inline-mirror.ts). */
+  isExplicit: boolean('is_explicit').notNull().default(false),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({

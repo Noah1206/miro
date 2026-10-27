@@ -17,6 +17,10 @@ import { characterAvailability } from '@/lib/reality/routine'
 import { memoryLagFor } from '@/lib/ai/memory-jobs'
 import { getConversationPersona } from '@/lib/persona'
 import { adultModeGateFor } from '@/lib/ops/safety'
+import { randomUUID } from 'node:crypto'
+import { z } from 'zod'
+import { auxiliaryLLM } from './mock-llm'
+import { bridgeSummarizer, decideAdultTurn, inlineMirrorEnabled, maskExplicitHistory } from './inline-mirror'
 import { POLICY } from '@miro/config'
 import type { SimulationSnapshot } from '@miro/engine'
 
@@ -39,7 +43,7 @@ export type LoadedSession = {
   lastInteractionAt: Date
   contactBoundary: ContactBoundary | null
   /** 성인 모드 — on: 지금 켜짐(화면 토글), since: 처음 켠 시각(있으면 이 방의 모든 AI 호출이 성인 전용 모델로 간다). */
-  adult: { on: boolean; since: Date | null; level: 'soft' | 'deep' | 'explicit' }
+  adult: { on: boolean; since: Date | null; level: 'soft' | 'deep' | 'explicit'; turn: boolean }
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시. 제작자가 캐릭터에 붙인 복사본. */
   commands: Array<{ name: string; hint: string; prompt: string }>
 }
@@ -72,7 +76,10 @@ export async function loadSession(
 
   const row = rows[0]
   if (!row) return null
-  if ((row.session.adultSince !== null) !== await homeUnveilEnabled(userId)) return null
+  // 인라인 미러링이 켜져 있으면 일반 방은 언베일 스위치와 무관하게 열린다(턴마다 아래에서 모델을 정한다). 언베일 방은 스위치가 켜져 있어야 한다.
+  const unveilOn = await homeUnveilEnabled(userId)
+  const inline = inlineMirrorEnabled() && row.session.adultSince === null
+  if (row.session.adultSince !== null ? !unveilOn : !inline && unveilOn) return null
 
   const [activeEvents, recentlyResolvedEvents, coolingEvents, sessionNpcs, sessionMemories, currentScene, recent, recentContacts, visual, owner, calls, memoryLag, userPersona, life, adultOk, moments] = await Promise.all([
     db.select().from(events)
@@ -115,6 +122,14 @@ export async function loadSession(
     // 사용자가 말한 자기 일정 — 캐릭터가 기억했다가 그날이 다가오거나 지나면 챙긴다(10/9).
     activeMoments(sessionId),
   ])
+  // 이번 턴 모델 — 언베일 방은 늘 전용 모델, 인라인 일반 방은 게이트를 통과하고 성인 맥락일 때만(입력 감지만으로는 안 넘어간다).
+  const inlineGate = inline && unveilOn ? await adultModeGateFor(userId, row.character.id, sessionId) : null
+  const inlineAdult = !!inlineGate && decideAdultTurn({ gateAllowed: inlineGate.allowed, input, lastExplicit: recent.find(m => m.role === 'character')?.isExplicit === true })
+  const adultTurn = row.session.adultSince !== null || inlineAdult
+  // 상용 모델로 가는 턴이면 이력의 언베일 원문을 줄거리로 바꾼다(요약은 언베일 전용 모델, 구간별 캐시).
+  const history = adultTurn ? recent.reverse() : await maskExplicitHistory(recent.reverse(), bridgeSummarizer(
+    () => auxiliaryLLM(row.character.name, { userId, sessionId, requestId: randomUUID(), workload: 'background', origin: 'inline:mirror', adult: true }),
+    z.object({ summary: z.string() }), row.character.name))
   const timeZone = owner[0]?.timeZone ?? POLICY.reality.defaultTimeZone
   const now = new Date()
   // 생활 리듬은 미로 캐릭터의 것이다(연락 프로필이 있어야 한다).
@@ -133,7 +148,7 @@ export async function loadSession(
     relationship: row.relationship as never,
     scene: (currentScene[0] ?? null) as never,
     memories: sessionMemories,
-    recentMessages: conversationContext(recent.reverse(), timeZone),
+    recentMessages: conversationContext(history, timeZone),
     activeEvents: activeEvents as never,
     recentlyResolvedEvents: [...new Map([...recentlyResolvedEvents, ...coolingEvents].map((event) => [event.id, event])).values()] as never,
     activeNpcs: sessionNpcs as never,
@@ -150,8 +165,8 @@ export async function loadSession(
     routine: availability ? describeRoutine(availability.routine, availability) : null,
     life: lifeLines(life, timeZone),
     userMoments: momentLines(moments, now, timeZone),
-    adultMode: adultOk,
-    adultLevel: row.session.adultLevel,
+    adultMode: adultOk || inlineAdult,
+    adultLevel: inlineAdult ? 'explicit' : row.session.adultLevel,
     recentCalls: calls.map((c) => {
       const when = localClock(c.endedAt ?? c.createdAt, timeZone).label
       const kind = c.channel === 'voice' ? '음성통화' : '영상통화'
@@ -178,7 +193,7 @@ export async function loadSession(
     policyVersion: row.session.policyVersion,
     contactBoundary: row.session.contactBoundary,
     lastInteractionAt: row.session.lastInteractionAt,
-    adult: { on: row.session.adultMode, since: row.session.adultSince, level: row.session.adultLevel },
+    adult: { on: row.session.adultMode, since: row.session.adultSince, level: row.session.adultLevel, turn: adultTurn },
     commands: c.commands,
   }
 }

@@ -26,7 +26,7 @@ export const BRIDGE_SYSTEM = `당신은 연재 소설의 편집자입니다. 아
 반드시 {"summary":"..."} JSON 하나만 반환하세요.`
 
 /** 일반 모델에 넘기기 전 마지막 관문. 모델이 규칙을 어겨도 여기서 막힌다 — 걸리면 요약을 버린다. */
-const EXPLICIT = /섹스|성관계|성행위|삽입|애무|자위|신음|오르가즘|절정에|정액|사정했|사정하|발기|성기|음경|음부|질\s*안|가슴을\s*(?:만|움켜|빨)|젖꼭지|유두|알몸|나체|벗기|벗겨|속옷을|허벅지\s*사이|야한|음란|19금|\bsex\b|nude|naked|orgasm|cum\b|penis|vagina|nipple/i
+export const EXPLICIT = /섹스|성관계|성행위|삽입|애무|자위|신음|오르가즘|절정에|정액|사정했|사정하|발기|성기|음경|음부|질\s*안|가슴을\s*(?:만|움켜|빨)|젖꼭지|유두|알몸|나체|벗기|벗겨|속옷을|허벅지\s*사이|야한|음란|19금|\bsex\b|nude|naked|orgasm|cum\b|penis|vagina|nipple/i
 
 export function sanitizeBridge(text: string): string | null {
   const t = text.replace(/\s+/g, ' ').trim()

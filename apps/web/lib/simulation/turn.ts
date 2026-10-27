@@ -101,7 +101,7 @@ async function executeTurn(opts: {
     const boundary = await applyContactBoundaryRequest(sessionId, userId, input, opts.requestId, now,
       loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) ?? loaded.contactBoundary
     loaded.snapshot.contactBoundary = boundary
-    const model = await measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro', loaded.adult.since !== null)).catch(() => null)
+    const model = await measured('chat.model', () => resolveChatModel(userId, loaded.adult.turn && loaded.adult.since === null && opts.chatModel !== 'pro' ? 'miro' : opts.chatModel ?? 'miro', loaded.adult.turn)).catch(() => null)
     if (!model) return { ok: false, reason: 'model_unavailable' }
     const dialogueModelId = model.modelId
     // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
@@ -131,7 +131,7 @@ async function executeTurn(opts: {
     let agency: LoadedAgency | null = null
     let policy = resolveTurnPolicy({ ...policyInput, agencyReady: false, continuity: reservation?.continuity ?? false })
     const turnMeter = new TurnMeter(maximumUSD, model.quote.maxInputTokens, model.quote.maxOutputTokens)
-    const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.since !== null }
+    const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.turn }
     // 첫 대화(10/19): 가까운 일정 하나를 묻고 끝에 "이따 ~에 문자할게" 를 약속하게 한다 — 약속했으면 그 시각에 실제로 연락이 간다(아래).
     // 대부분 첫 답 하나만 보고 떠나서(7일 45턴/45방), 먼저 연락하는 캐릭터라는 걸 첫 답에서 보여야 한다.
     const firstPromise = loaded.snapshot.turnCount === 0 && loaded.experienceType === 'reality' && !loaded.snapshot.world.narrativeCalendar && !contactBoundaryActive(boundary, now)
@@ -236,7 +236,7 @@ async function executeTurn(opts: {
       const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, actualTokens, moments, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, userMessageId, responseText, blocks: transition.blocks, transition, sceneMarker, channel: 'scene',
+        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: transition.blocks, transition, sceneMarker, channel: 'scene',
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),
         worldVersion: loaded.snapshot.world.version,
         relationshipVersion: loaded.snapshot.relationship.version,
@@ -282,7 +282,7 @@ async function executeTurn(opts: {
       // 기억 작업은 바로 시도한다. 여기서 유실돼도 DB 의 작업은 남아 크론이 거둔다.
       await runMemoryJobs(new Date(), { sessionId, limit: 2, inline: true }).catch(() => observe('memory.jobs_after_response_failed', { sessionId }))
       // 성인 방의 대화는 평가 표본으로 남기지 않는다 — 표본은 나중에 메인 모델 비교에 쓰인다.
-      if (!loaded.adult.since) await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
+      if (!loaded.adult.turn) await captureEvaluation(userId, opts.requestId, { input, response: responseText, context: result.context.system + '\n' + result.context.prompt, promptVersion: result.context.promptVersion, modelId: llm.lastModelId, shadow: llm.shadowOutput }).catch(() => observe('ai.evaluation_capture_failed', { requestId: opts.requestId }))
     })
     return completed
 
