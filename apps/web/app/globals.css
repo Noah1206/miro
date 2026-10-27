@@ -433,6 +433,9 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   /* 10/28 요청: 내비는 사이드바 안이 아니라 화면 가운데 아래에 — 사이드바를 열든 접든 같은 자리. */
   .app-shell:has(.nav) .nav { left: 0; right: 0; bottom: 20px; width: min(912px, calc(100% - 32px)); max-width: none; margin: 0 auto; }
   .app-shell:has(aside[data-collapsed="true"]) { padding-left: 72px; }
+  /* 10/28: 내비 가운데 = 본문 가운데 — 사이드바 폭만큼 왼쪽을 비워 본문(검색줄)과 같은 축에 둔다. */
+  .app-shell:has(> aside) .nav { left: 280px; width: min(912px, calc(100% - 312px)); }
+  .app-shell:has(aside[data-collapsed="true"]) .nav { left: 72px; width: min(912px, calc(100% - 104px)); }
 }
 @keyframes desktop-nav-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
