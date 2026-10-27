@@ -1,66 +1,32 @@
-
-.root { flex-shrink: 0; }
-.option,.actions a,.actions button { transition: background-color 180ms ease, color 180ms ease, transform 180ms ease; }
-.actions a:active,.actions button:active { transform:scale(.95); }
-@media(prefers-reduced-motion:reduce) { .option,.actions a,.actions button { transition:none; } .actions a:active,.actions button:active { transform:none; } }
-.trigger { display:flex; align-items:center; gap:7px; min-height:44px; padding:0 5px; border:0; border-radius:8px; background:transparent; color:var(--color-text-primary); font-size:12px; font-weight:500; cursor:pointer; }
-.icon { display:block; width:18px; height:18px; object-fit:contain; flex-shrink:0; }
-.panel { position:absolute; top:calc(100% + 4px); left:12px; right:12px; z-index:60; max-height:min(60dvh,420px); overflow-y:auto; padding:8px 8px 0; border:1px solid #dfc7fb24; border-radius:21px; background:linear-gradient(120deg,#474747dc,#2e2e2ed9); box-shadow:0 18px 45px #0004,inset 0 1px 0 #ffffff08; backdrop-filter:blur(30px); color:#ffffff; }
-.options { display:grid; gap:3px; }
-.option { display:flex; flex-direction:column; align-items:flex-start; gap:5px; width:100%; min-height:70px; padding:13px 15px; border:0; border-radius:8px; background:transparent; color:#c5c5c5; text-align:left; cursor:pointer; }
-.option[aria-pressed=true] { color:#ffffff; }
-/* 선택된 항목은 처음 열 때부터 표시한다(10/17). 색은 반투명 검정 — 보라보다 검정이 낫다(10/17 요청), 바탕 그라데이션은 원래대로. */
-.option[aria-pressed=true] { background:#000000a6; }
-.heading { display:flex; align-items:center; gap:8px; }
-.heading strong { font-size:15px; font-weight:500; }
-.heading small { color:#b3b3b3; font-size:11px; font-weight:400; }
-.description { margin:0; color:#b3b3b3; font-size:12px; line-height:1.65; word-break:keep-all; }
-.wallet { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:52px; padding:0 12px; border-top:1px solid #ffffff06; color:#b3b3b3; font-size:11px; }
-.wallet strong { margin-left:4px; color:#ffffff; font-size:13px; font-weight:550; font-variant-numeric:tabular-nums; }
-.actions { display:flex; gap:4px; align-items:center; }
-.actions a,.actions button { display:flex; align-items:center; justify-content:center; min-height:44px; padding:0 8px; border:0; background:transparent; color:#cccccc; font-size:11px; text-decoration:none; cursor:pointer; }
-.trigger:focus-visible,.option:focus-visible,.actions a:focus-visible,.actions button:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
-
-:global([data-chat-theme='talk']) .trigger { color:#292929; }
-
-:global([data-chat-theme='dm-light']) .trigger { color:#555; min-height:36px; gap:3px; padding:0 3px; font-size:11px; }
-:global([data-chat-theme='dm-light']) .trigger .icon {  width:16px; height:16px; }
-
-/* Model selection lives below the name; the menu opens into the transcript. */
-.trigger { min-height:24px; padding:0; gap:4px; font-size:11px; }
-.trigger .icon { width:14px; height:14px; }
-:global([data-chat-theme='dm-light']) .trigger { min-height:24px; padding:0; }
-:global([data-chat-theme='dm-light']) .trigger .icon { width:14px; height:14px; }
-:global([data-chat-theme='dm-light']) .panel { background:#fff; border:1px solid #e6e6e6; box-shadow:0 12px 32px #0002; color:#202020; backdrop-filter:none; }
-:global([data-chat-theme='dm-light']) .option { color:#333; }
-:global([data-chat-theme='dm-light']) .option[aria-pressed=true] { color:#722ee9; background:#f3edff; }
-:global([data-chat-theme='dm-light']) .description, :global([data-chat-theme='dm-light']) .heading small, :global([data-chat-theme='dm-light']) .wallet { color:#737373; }
-:global([data-chat-theme='dm-light']) .wallet strong, :global([data-chat-theme='dm-light']) .actions a, :global([data-chat-theme='dm-light']) .actions button { color:#6030ac; }
-
-/* Model choice sits beside the room button in the header. */
-.trigger, :global([data-chat-theme='dm-light']) .trigger { min-height: 44px; padding: 0; gap: 4px; font-size: 12px; }
-
-.trigger .icon, :global([data-chat-theme='dm-light']) .trigger .icon { width: 24px; height: 24px; }
-
-/* A quiet tint separates the selected model from the adjacent utility icons. */
-.trigger, :global([data-chat-theme='dm-light']) .trigger { min-height: 36px; padding-inline: 7px; border-radius: 10px; background: #ffffff18; }
-:global([data-chat-theme='dm-light']) .trigger { background: #f3f3f3; }
-:global([data-chat-theme='talk']) .trigger { background: #ffffff35; }
-
-/* A selected light-theme option keeps its light fill after the first model change. */
-:global([data-chat-theme='dm-light']) .option[aria-pressed='true'] { background: #f3edff; color: #6030ac; }
-
-/* 입력창 안 아래 줄(10/17): 작게, 메뉴는 위로 연다. */
-.root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { min-height: 30px; padding-inline: 6px; gap: 3px; font-size: 11px; border-radius: 8px; }
-.root[data-place='up'] .trigger .icon, :global([data-chat-theme]) .root[data-place='up'] .trigger .icon { width: 16px; height: 16px; }
-.root[data-place='up'] .panel { top: auto; bottom: calc(100% + 6px); left: 0; right: 0; }
-
-/* MIRO·ECHO 영문 이름 — 대문자 상표 글자처럼 살짝 벌린다. */
-.brand { letter-spacing: .08em; font-weight: 600; }
-
-/* 메뉴 바탕: 원래 그라데이션 구조에서 보라를 빼고 검정 쪽으로(10/17 요청). */
-.panel { background: linear-gradient(120deg, #2f2f2fdc, #141416e6); border-color: #ffffff1a; }
-/* 입력창 안 MIRO 버튼의 위아래 바탕 여백 줄이기(10/17 요청) — 높이 30 → 24px. */
-.root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { min-height: 24px; padding-block: 0; }
-/* MIRO 버튼 왼쪽 안쪽 여백 6 → 10px(10/17 요청). */
-.root[data-place='up'] .trigger, :global([data-chat-theme]) .root[data-place='up'] .trigger { padding-left: 10px; }
+.root { flex:0 1 auto; min-width:0; }
+.trigger { display:flex; align-items:center; gap:6px; height:29px; max-width:180px; padding:0 10px; border:1px solid #45454c; border-radius:999px; background:transparent; color:#eeeef1; font:inherit; cursor:pointer; }
+.trigger:disabled { opacity:.45; cursor:default; }
+.brand { font-size:12px; font-weight:500; letter-spacing:.005em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.icon { display:inline-block; flex-shrink:0; width:15px!important; height:15px!important; color:#fff; font-size:15px; }
+.current { display:inline-flex; align-items:center; gap:5px; }
+.panel { position:absolute; top:calc(100% + 7px); left:8px; right:8px; z-index:60; max-height:min(440px,calc(var(--chat-visible-height,100dvh) - 160px)); overflow-y:auto; overscroll-behavior:contain; border:1px solid #ffffff1a; border-radius:16px; background:#29292bf5; box-shadow:0 12px 35px #0005; color:#e8e8ec; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); }
+.root[data-place='up'] .panel { top:auto; bottom:calc(100% + 8px); transform-origin:20% 100%; }
+.panelHead { position:sticky; top:0; z-index:1; padding:13px 15px; background:#29292b; border-bottom:1px solid #ffffff0b; font-size:13px; font-weight:500; }
+.options { padding:6px; }
+.lengths { display:flex; gap:3px; margin:3px 5px 7px; padding:3px; border-radius:9px; background:#ffffff07; }
+.lengths button { flex:1; min-height:32px; border:0; border-radius:7px; background:transparent; color:#99959f; font:inherit; font-size:11px; cursor:pointer; }
+.lengths button[aria-pressed='true'] { color:#f2f0f5; background:#ffffff0d; }
+.lengths button:disabled { opacity:.4; cursor:default; }
+.group h3 { margin:0; padding:10px 9px 5px; color:#89858f; font-size:10px; font-weight:400; }
+.option { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; width:100%; min-height:65px; padding:12px 9px; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; cursor:pointer; text-align:left; }
+.option:hover,.option[aria-pressed='true'] { background:#ffffff08; }
+.copy { min-width:0; flex:1; }
+.heading { display:flex; align-items:center; gap:7px; }
+.heading strong { font-size:13px; font-weight:500; line-height:1.5; overflow-wrap:anywhere; }
+.description { display:block; margin-top:5px; color:#99959f; font-size:11px; line-height:1.7; }
+.cost { flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:8px; color:#bfb9c9; font-size:10px; line-height:1.8; white-space:nowrap; }
+.check { height:12px; color:#eeeaf4; font-size:11px; }
+.priceNote { padding:5px 9px; margin:3px 0; color:#85818c; font-size:10px; line-height:1.7; }
+.wallet { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 15px; min-height:45px; border-top:1px solid #ffffff0b; color:#99959f; font-size:11px; }
+.wallet strong { color:#dedbe4; font-weight:500; }
+.wallet button { padding:10px 0 10px 10px; border:0; background:none; color:#d4cfdc; font:inherit; font-size:11px; cursor:pointer; }
+.trigger:focus-visible,.option:focus-visible,.lengths button:focus-visible,.wallet button:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+:global([data-chat-theme='dm-light']) .trigger,:global([data-chat-theme='talk']) .trigger { color:#292929; border-color:#00000030; }
+:global([data-chat-theme='dm-light']) .trigger .icon,:global([data-chat-theme='talk']) .trigger .icon { color:#292929; }
+@media(max-width:360px) { .trigger { max-width:155px; gap:5px; padding-inline:8px; } .brand { font-size:11px; } .option { gap:5px; padding-inline:7px; } .heading { gap:5px; } .heading strong { font-size:12px; } .cost { font-size:9px; } }
+@media(prefers-reduced-transparency:reduce) { .panel { background:#29292b; backdrop-filter:none; -webkit-backdrop-filter:none; } }

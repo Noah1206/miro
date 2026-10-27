@@ -1513,5 +1513,15 @@
  "보유 토큰 확인 및 충전": "Check your balance and top up",
  "이 대화의 기억 확인": "View memories from this chat",
  "채팅방 화면과 색상 변경": "Change chat appearance and colors",
- "캐릭터와 문자로 대화": "Message this character"
+ "캐릭터와 문자로 대화": "Message this character",
+ "AI 모델": "AI model",
+ "다양한 대화와 문장 생성을 위한 모델": "For varied conversation and text generation",
+ "답변 길이": "Reply length",
+ "대화용 AI 모델": "AI model for conversation",
+ "복잡한 작업과 깊이 있는 추론에 집중": "Focused on complex tasks and deeper reasoning",
+ "빠른 응답을 위한 경량 모델": "Lightweight model for fast replies",
+ "속도와 지능을 균형 있게 제공하는 모델": "A balance of speed and intelligence",
+ "실제 사용량만큼 차감돼요.": "Only actual usage is charged.",
+ "최대 {count} 토큰/턴": "Up to {count} tokens/turn",
+ "사용할 모델과 답변 길이 선택": "Choose a model and reply length"
 }

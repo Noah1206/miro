@@ -87,7 +87,7 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick }: {
       </> : <>
         {row(icons.library, t('라이브러리'), t('명령어를 찾아 대화에 적용'), () => { setLibrary(true); setOpen(true) })}
         {row(icons.persona, t('페르소나'), t('대화에서 사용할 내 정보'), () => openRoomPanel('persona'))}
-        {row(icons.model, t('대화 방식'), t('답변 길이와 대화 방식 선택'), () => setPickerOpen(true))}
+        {row(icons.model, t('AI 모델'), t('사용할 모델과 답변 길이 선택'), () => setPickerOpen(true))}
         {row(icons.theme, t('채팅방 테마'), t('채팅방 화면과 색상 변경'), () => openRoomPanel('theme'))}
         {row(icons.memory, t('대화 기억'), t('이 대화의 기억 확인'), () => openRoomPanel('memory'))}
         {messengerHref && <TransitionLink href={messengerHref} role="menuitem" className={styles.row} onClick={() => setOpen(false)}>{icons.message}<span className={styles.name}>{t('문자방')}</span><span className={styles.description}>{t('캐릭터와 문자로 대화')}</span></TransitionLink>}

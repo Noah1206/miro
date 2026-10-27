@@ -16,7 +16,7 @@ import { TransitionLink } from '@/components/ui/transition-link'
 import { useWallet } from '@/components/wallet/provider'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
-import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
+import { ChatModelOptions } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { MemoryGraphView } from '@/app/(main)/chat/[sessionId]/memory-graph'
 import { useImmersive } from '@/app/(main)/chat/[sessionId]/immersive'
 import styles from './room-menu.module.css'
@@ -52,7 +52,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const locale = INTL_LOCALE[useLanguage()]
   const { available, on, toggle } = useImmersive()
   const { wallet, openRecharge, refreshBalance, live } = useWallet()
-  const { model, setModel } = useChatModel()
   const menuId = useId()
   const [open, setOpen] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
@@ -63,10 +62,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     void refreshProfile(); void refreshBalance()
   }, [request, refreshProfile, refreshBalance])
   const close = () => setOpen(false)
-  const selected = choices.find(c => c.id === model) ?? choices.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
-  const families = [...new Set(choices.map(c => c.id.replace(/:(scene|long)$/, '')))]
-  const modelLabel = (c: ChatModelChoice) => `${c.length === 'long' ? 'ECHO' : 'MIRO'}${families.length > 1 ? ` ${families.indexOf(c.id.replace(/:(scene|long)$/, '')) + 1}` : ''}`
-  const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('대화 방식'), theme: t('채팅방 테마'), memory: t('대화 기억') }
+  const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('AI 모델'), theme: t('채팅방 테마'), memory: t('대화 기억') }
   const tiles: Panel[] = ['persona', 'model', 'theme', 'memory']
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
@@ -92,7 +88,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
           {panel === 'persona' && <ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/>}
           {panel === 'theme' && <ChatThemeOptions compact portrait={portrait}/>}
           {panel === 'memory' && <MemoryGraphView sessionId={sessionId} refreshKey={turnCount}/>}
-          {panel === 'model' && <div className={styles.modelOptions}>{choices.map(choice => <button type="button" key={choice.id} aria-pressed={selected?.id === choice.id} onClick={() => setModel(choice.id)}><strong>{modelLabel(choice)}</strong><span aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></button>)}{!choices.length && <p>{t('준비 중')}</p>}</div>}
+          {panel === 'model' && <ChatModelOptions choices={choices}/>}
         </div>}
       </section>
       {available && <section className={styles.section} aria-label={t('대화 모드')}><h3>{t('대화 모드')}</h3><div className={styles.modes}>{[false, true].map(voice => <button key={String(voice)} type="button" aria-pressed={on === voice} onClick={() => { if (on !== voice) toggle() }}>{voice ? t('음성 모드') : t('채팅 모드')}</button>)}</div></section>}

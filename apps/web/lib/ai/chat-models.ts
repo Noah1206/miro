@@ -3,10 +3,10 @@ import { POLICY, tokenPricing, tokenQuote, productionRuntime } from '@miro/confi
 
 export type ChatModel = string
 export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo
-export type ChatModelChoice = { id: string; name: string; length: 'scene' | 'long'; maximumTokens: number; maxOutputTokens: number }
+export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: 'scene' | 'long'; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
-  const models = registry?.models.filter(m => m.enabled && !m.fallback && m.capabilities.includes('dialogue')
+  const models = registry?.models.filter(m => m.enabled && !m.fallback && m.provider !== 'gemini' && !/gemini/i.test(m.providerModelId) && m.capabilities.includes('dialogue')
     && m.inputCost !== undefined && m.outputCost !== undefined
     && (!productionRuntime() || !!providerFromEnv(m.provider, m.providerModelId))) ?? []
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
@@ -27,7 +27,7 @@ export async function chatModelOptions(_userId: string, adult = false) {
     const choices: ChatModelChoice[] = availableModels(adult).flatMap(model => [false, true].map(long => {
       const tier = long ? POLICY.chatTier.echo : POLICY.chatTier.miro
       const quote = tokenQuote(model, tier.maxOutputTokens, pricing)
-      return { id: choiceId(model.id, long), name: displayName(model.providerModelId), length: tier.replyLength,
+      return { id: choiceId(model.id, long), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
         maximumTokens: quote.maximumTokens, maxOutputTokens: quote.maxOutputTokens }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }

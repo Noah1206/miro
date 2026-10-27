@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon } from '@/components/ui'
 import styles from './chat.module.css'
+import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
-import { type ModelPicker, useChatModel } from './model-picker'
+import { ModelPicker, useChatModel } from './model-picker'
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
@@ -23,7 +24,7 @@ const KEEP_WAITING_MS = 12_000
 /** 첫 글자가 이만큼 안 오면 멈춘 게 아니라고 조용히 알린다(10/17 — 공급자 재시도로 20초까지 늘어지는 턴). */
 const SLOW_NOTICE_MS = 12_000
 
-/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 헤더에서 공유한다. */
+/** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력란과 설정 메뉴에서 공유한다. */
 export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [] }: {
   sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; messengerHref?: string
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
@@ -175,7 +176,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </motion.p>
         )}
       </AnimatePresence>
-      <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={styles.composerForm}>
+      <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
@@ -196,9 +197,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
           />
-        {/* Model choice is in the header; room controls are in the slash palette. */}
+        {/* Selected model stays beside the input tools; prices appear only in the selector. */}
         <div className={styles.composerRow}>
           <div className={styles.composerTools}>
+            <ModelPicker {...modelOptions} place="up" disabled={pending || calendarPending || !ready}/>
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
             <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}

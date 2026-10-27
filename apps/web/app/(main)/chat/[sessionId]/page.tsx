@@ -12,7 +12,7 @@ import { COPY } from '@/lib/copy'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
-import { ChatModelProvider, ModelPicker } from './model-picker'
+import { ChatModelProvider } from './model-picker'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
@@ -69,13 +69,12 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialWallet={wallet} initialModel={modelOptions.choices[0]?.id} storageKey={`miro:chat-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
           <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
-          <ModelPicker {...modelOptions} />
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
         </header>
         <VoiceStatus />
@@ -95,7 +94,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
-        {/* The room menu keeps the DM link; the model picker lives in the header. */}
+        {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands} />
       </section>
