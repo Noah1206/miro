@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
 import { contactProfiles, db, messages } from '@miro/db'
 import { currentUser } from '@/lib/auth'
+import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
 import { Back, TransitionLink } from '@/components/ui'
@@ -38,7 +39,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const { sessionId } = await params
   // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
   const session = loadSession(sessionId, user.id)
-  const [loaded, all, modelOptions, mature, adult, wallet, contact] = await Promise.all([
+  const [loaded, all, modelOptions, mature, adult, wallet, contact, profile] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
@@ -47,6 +48,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     walletSnapshot(user.id),
     // 유형(10/19) — 몰입 모드(음성/음성+영상)로 만든 캐릭터만 방 머리에 몰입 모드 단추가 있다.
     session.then((l) => l && db.select({ presentation: contactProfiles.presentation }).from(contactProfiles).where(eq(contactProfiles.characterId, l.characterId)).limit(1)),
+    accountProfile(user),
   ])
   if (!loaded || !mature) notFound()
   const media = (contact && contact[0]?.presentation?.media) ?? 'text'
@@ -78,7 +80,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <span>{t('호감 {n}%', { n: affinity })}</span><span className={styles.affinityBar} aria-hidden="true"><i style={{ width: `${affinity}%` }} /></span>
             </p></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
-          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
+          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
         </header>
         <VoiceStatus />
         {feature('imageGeneration')&&!loaded.restricted&&<SceneImage sessionId={sessionId} unveil={loaded.adult.on} cost={usageWeight('photo')}/>}

@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { and, eq, isNull, sql } from 'drizzle-orm'
-import { db, messages, roleplaySessions, users } from '@miro/db'
+import { db, messages, roleplaySessions } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
-import { getPersona } from '@/lib/persona'
+import { accountProfile } from '@/lib/account-profile'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { LANGUAGES } from '@miro/domain'
 import { getLanguage, getT } from '@/lib/i18n/server'
@@ -28,7 +28,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
   const [t, language] = await Promise.all([getT(), getLanguage()])
   const { verify, r } = await searchParams
 
-  const [[sessions], [talk], persona, wallet, [profile]] = await Promise.all([
+  const [[sessions], [talk], profile, wallet] = await Promise.all([
     // 만난 캐릭터 = 대화방을 연 캐릭터 수, 대화 중 = 이어지는 대화방 수(지운 방 제외).
     db.select({
       met: sql<number>`count(distinct ${roleplaySessions.characterId})::int`,
@@ -38,13 +38,11 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
     db.select({ n: sql<number>`count(*)::int` }).from(messages)
       .innerJoin(roleplaySessions, eq(roleplaySessions.id, messages.sessionId))
       .where(and(eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), eq(messages.role, 'user'))),
-    getPersona(user.id),
+    accountProfile(user),
     walletSnapshot(user.id),
-    db.select({ avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, user.id)).limit(1),
   ])
   // 닉네임 = 온보딩에서 받은 이름(내 페르소나 이름, 캐릭터가 나를 부르는 이름). 없던 예전 계정은 계정 이름.
-  const name = persona?.name ?? user.displayName ?? user.email?.split('@')[0] ?? 'me'
-  const avatarUrl = profile?.avatarUrl ?? null
+  const { name, avatarUrl } = profile
   const stats = [
     { label: t('만난 캐릭터'), value: sessions?.met ?? 0 },
     { label: t('대화 중'), value: sessions?.active ?? 0 },

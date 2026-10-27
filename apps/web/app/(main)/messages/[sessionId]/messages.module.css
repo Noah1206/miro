@@ -2,6 +2,12 @@
 .header { display: flex; align-items: center; flex: 0 0 auto; gap: 8px; min-height: 64px; padding: 8px 12px; border-bottom: 1px solid var(--color-border); }
 .header > a:first-child { width: 32px; min-height: 44px; justify-content: center; flex-shrink: 0; color: var(--color-text-primary) !important; }
 .title { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 17px; font-weight: 650; line-height: 1.35; letter-spacing: -.4px; }
+.headerIdentity { display:flex; align-items:center; gap:6px; flex:1; min-width:0; }
+.headerIdentity .title { flex:0 1 auto; }
+.currentModel { flex-shrink:0; padding:3px 6px; border-radius:5px; background:var(--color-surface-3); color:var(--color-text-secondary); font-size:10px; font-weight:600; line-height:1.4; letter-spacing:.04em; white-space:nowrap; }
+:global([data-chat-theme='dm-light']) .currentModel { background:#f0f0f0; color:#696969; }
+:global([data-chat-theme='dm']) .currentModel { background:#262626; color:#bababa; }
+:global([data-chat-theme='talk']) .currentModel { background:#ffffff60; color:#42515c; }
 .headerButton { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--color-text-primary); cursor: pointer; }
 .headerButton svg { width: 20px; height: 20px; }
 .headerLink { display: inline-flex; align-items: center; min-height: 32px; padding: 0 10px; border-radius: 8px; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; font-weight: 600; }

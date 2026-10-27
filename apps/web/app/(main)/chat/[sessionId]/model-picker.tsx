@@ -31,6 +31,15 @@ export function ChatModelProvider({ children, initialWallet, initialModel = 'mir
   return <Selection.Provider value={{ model, setModel: select }}>{children}</Selection.Provider>
 }
 export const useChatModel = () => useContext(Selection)
+/** Read-only header label follows the same selection as the composer and room menu. */
+export function CurrentChatModel({ choices, className }: { choices: ChatModelChoice[]; className?: string }) {
+  const t = useT()
+  const { model } = useChatModel()
+  const selected = choices.find(choice => choice.id === model) ?? choices.find(choice => choice.length === (model === 'pro' ? 'long' : 'scene'))
+  const families = [...new Set(choices.map(choice => choice.id.replace(/:(scene|long)$/, '')))]
+  const label = selected ? `${selected.length === 'long' ? 'ECHO' : 'MIRO'}${families.length > 1 ? ` ${families.indexOf(selected.id.replace(/:(scene|long)$/, '')) + 1}` : ''}` : t('준비 중')
+  return <span className={`${brand.className} ${className ?? ''}`} aria-label={`${t('대화 방식')}: ${label}`} aria-live="polite" aria-atomic="true" data-current-chat-model={selected?.id}>{label}</span>
+}
 export function ModelPicker({ choices = [], place }: { freeReady: boolean; proReady: boolean; choices?: ChatModelChoice[]; place?: 'up' }) {
   const t = useT()
   const reduce = useReducedMotion()

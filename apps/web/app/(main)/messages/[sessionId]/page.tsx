@@ -5,12 +5,13 @@ import { and, eq } from 'drizzle-orm'
 import { db, realityContacts } from '@miro/db'
 import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
+import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { Back, Notice } from '@/components/ui'
 import { walletSnapshot } from '@/lib/wallet/service'
 import { chatModelOptions } from '@/lib/ai/chat-models'
-import { ChatModelProvider } from '@/app/(main)/chat/[sessionId]/model-picker'
+import { ChatModelProvider, CurrentChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { MessengerDelivery } from './delivery'
 import { messengerItems } from '@/lib/messenger/inbox'
@@ -34,10 +35,11 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 두 경험에서 같은 페르소나를 사용한다.
   if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
-  const [rows, wallet, modelOptions] = await Promise.all([
+  const [rows, wallet, modelOptions, profile] = await Promise.all([
     messengerItems(user.id, sessionId),
     walletSnapshot(user.id),
     chatModelOptions(user.id, loaded.adult.since !== null),
+    accountProfile(user),
     // This is the user reading the character's incoming contacts, not the reverse.
     db.update(realityContacts).set({ status: 'opened', openedAt: new Date() })
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent'))),
@@ -52,8 +54,8 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         <header className={styles.header}>
           <Back href="/archive" />
           {/* 이름만 — 지금 하는 일·상태 메시지는 문자방에 두지 않는다(10/9, 사람 사이 문자엔 없다). 상태 메시지는 채팅 목록에만. */}
-          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><h1 className={styles.title}>{loaded.characterName}</h1>
-          <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} choices={modelOptions.choices} />
+          <ChatHeaderAvatar portrait={loaded.characterPhoto} /><div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1><CurrentChatModel choices={modelOptions.choices} className={styles.currentModel}/></div>
+          <RoomMenu messenger sessionId={sessionId} initialPersona={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} characterHref={`/character/${loaded.characterId}`} turnCount={loaded.snapshot.turnCount} choices={modelOptions.choices} />
         </header>
         {call && (
           <Notice tone={call === 'usage' ? 'muted' : 'danger'} style={{ margin: '12px 16px 0' }}>
