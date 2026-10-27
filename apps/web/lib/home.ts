@@ -175,12 +175,29 @@ export const miroCatalog = (userId: string | null) => cardPage('reality', userId
  * 홈 섹션(10/19, 위프·베이비챗형): 인기 순위 + 장르별 줄. 목록은 homeCatalog(랭킹순 — 대화 인원, 같으면 최신) 한 번만 읽고 나눈다.
  * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 섹션끼리 캐릭터가 겹치지 않는다(10/19).
  */
-export async function homeSections(userId: string | null, audience?: Audience): Promise<{ ranking: HomeCard[]; genres: HomeRow[]; filters: DiscoveryGroup[] }> {
+export async function homeSections(userId: string | null, audience?: Audience): Promise<{ ranking: HomeCard[]; forYou: HomeCard[]; recommended: HomeCard[]; genres: HomeRow[]; others: HomeCard[]; filters: DiscoveryGroup[] }> {
   // 10/19: 최근에 만든 캐릭터가 앞에 오게(사용자 요청) — 대화 수가 쌓이기 전까지 최신순.
-  const { items } = await homeCatalog(userId, { sort: 'latest', audience })
-  // 10/19: 한 캐릭터는 한 섹션에만(사용자 요청). 인기 줄이 먼저 10명을 가져가고, 나머지는 자기 장르 중 가장 좁은(캐릭터가 적은) 장르 줄 하나에만 들어간다.
+  const [{ items }, chattedRows] = await Promise.all([
+    homeCatalog(userId, { sort: 'latest', audience }),
+    userId ? db.selectDistinct({ id: roleplaySessions.characterId }).from(roleplaySessions)
+      .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))) : Promise.resolve([]),
+  ])
+  // 10/19: 한 캐릭터는 한 섹션에만(사용자 요청). 10/28 순서: 인기 → 나에게 맞춘 → 미로 추천 → 장르 한 줄 → 나머지 전체.
   const ranking = items.slice(0, 10)
-  const rest = items.slice(10)
+  let pool = items.slice(10)
+  const take = (pick: (c: HomeCard) => boolean) => {
+    const got = shuffle(pool.filter(pick)).slice(0, 10)
+    const ids = new Set(got.map(c => c.id))
+    pool = pool.filter(c => !ids.has(c.id))
+    return got
+  }
+  // 나에게 맞춘: 대화해 본 캐릭터들과 장르가 겹치는, 아직 대화하지 않은 캐릭터. 대화가 없으면 아무 캐릭터.
+  const chatted = new Set(chattedRows.map(r => r.id))
+  const liked = new Set(items.filter(c => chatted.has(c.id)).flatMap(c => genreValues(c.genre)))
+  let forYou = take(c => !chatted.has(c.id) && genreValues(c.genre).some(g => liked.has(g)))
+  if (forYou.length < 3) forYou = [...forYou, ...take(c => !chatted.has(c.id))].slice(0, 10)
+  const recommended = take(c => c.slug.startsWith('official-'))
+  const rest = pool
   const counts = new Map<string, number>()
   for (const c of rest) for (const g of new Set(genreValues(c.genre))) counts.set(g, (counts.get(g) ?? 0) + 1)
   const buckets = new Map<string, HomeCard[]>()
@@ -190,10 +207,13 @@ export async function homeSections(userId: string | null, audience?: Audience): 
     const g = gs.sort((a, b) => (counts.get(a)! - counts.get(b)!) || a.localeCompare(b))[0]!
     buckets.set(g, [...(buckets.get(g) ?? []), c])
   }
-  const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 6)
+  const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 1)
     .map(([g, cs]) => ({ key: g, title: g, items: shuffle(cs) }))
+  // 10/28: 섹션은 4개만 — 나머지 캐릭터는 아래 '전체' 격자로.
+  const shown = new Set(genres.flatMap(r => r.items).map(c => c.id))
+  const others = shuffle(rest.filter(c => !shown.has(c.id)))
   // 10/20: 줄 안의 순서는 들어올 때마다 섞는다(사용자 요청) — 어느 줄에 들어가는지는 그대로.
-  return { ranking: shuffle(ranking), genres, filters: availableDiscoveryGroups(items) }
+  return { ranking: shuffle(ranking), forYou, recommended, genres, others, filters: availableDiscoveryGroups(items) }
 }
 
 function shuffle<T>(xs: T[]): T[] {

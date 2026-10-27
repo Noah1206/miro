@@ -5,6 +5,7 @@ import { homeSections } from '@/lib/home'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { Row } from './row'
+import { StoryCard } from './feed'
 import { HomeBanner } from './banner'
 import { NotificationBell } from './bell'
 import { SiteFooter } from '@/components/site-footer'
@@ -85,7 +86,14 @@ export default async function Home() {
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
       {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), subtitle: t('요즘 가장 많은 사람이 말을 건 캐릭터'), items: sections.ranking }} href="/explore" />}
-      {sections.genres.map((row, i) => <Row key={row.key} index={i + 1} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }), subtitle: GENRE_SUBTITLES[row.key] ? t(GENRE_SUBTITLES[row.key]!) : undefined }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
+      {sections.forYou.length > 0 && <Row index={1} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
+      {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
+      {sections.genres.map((row, i) => <Row key={row.key} index={i + 3} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }), subtitle: GENRE_SUBTITLES[row.key] ? t(GENRE_SUBTITLES[row.key]!) : undefined }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
+      {/* 10/28: 섹션 4개 밖의 캐릭터는 전부 여기 격자로. */}
+      {sections.others.length > 0 && <section aria-labelledby="home-all">
+        <h2 id="home-all" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>{t('🗂️ 전체 캐릭터')}</h2>
+        <div className={styles.grid}>{sections.others.map(c => <StoryCard key={c.id} c={c} />)}</div>
+      </section>}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>

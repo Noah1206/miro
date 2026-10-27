@@ -1529,5 +1529,9 @@
  "언베일에서 이어가기": "Continue in Unveil",
  "여기서 계속하기": "Stay here",
  "다시 받기": "Regenerate",
- "이 답은 지금 다시 받을 수 없어요.": "This reply can't be regenerated right now."
+ "이 답은 지금 다시 받을 수 없어요.": "This reply can't be regenerated right now.",
+ "💘 {name}님에게 맞춘 캐릭터": "💘 Picked for {name}",
+ "💘 당신에게 맞춘 캐릭터": "💘 Picked for you",
+ "⭐ 미로 추천 캐릭터": "⭐ MIRO picks",
+ "🗂️ 전체 캐릭터": "🗂️ All characters"
 }
