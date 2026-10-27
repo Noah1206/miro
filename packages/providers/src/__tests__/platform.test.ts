@@ -28,6 +28,7 @@ describe('model routing and governance',()=>{
     const m = {...registry.get('small'),provider:'openai' as const}
     expect(modelCost(m,10,10)).toBeNull()
     expect(modelCost({...m,inputCost:1,outputCost:2},1000,1000)).toBe(.003)
+    expect(modelCost({...m,inputCost:1,outputCost:2,cachedInputCost:.1},1000,1000,800)).toBe(.00228)
   })
   it('requires rollout approval and supports immediate SLM rollback',()=>{
     const r=new ModelRegistry([model('old','small'),{...model('slm','small'),provider:'miro-slm'}])

@@ -51,6 +51,8 @@ export type GenerationResult = {
   model: string
   /** 모델이 알려주지 않으면 null — 추정하지 않는다. */
   inputTokens: number | null
+  /** Subset of input tokens served from provider cache; absent means no measured discount. */
+  cachedInputTokens?: number
   outputTokens: number | null
   latencyMs: number
   /** 출력 상한에 걸려 잘렸다. 잘린 JSON 은 스키마 오류로만 보이므로 원인을 따로 남긴다. */

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { tokenRates } from '@miro/config'
 import { AI_TASKS, STRONG_TASKS, type AITask } from './tasks'
 
 const isTask = (task: string): task is AITask => (AI_TASKS as readonly string[]).includes(task)
@@ -8,10 +9,14 @@ export const ModelDefinitionSchema = z.object({
   /** 없어진 작업 이름(10/2 moderation)은 버린다 — env 의 레지스트리를 고치기 전에 배포돼도 AI 전체가 멈추지 않게. */
   capabilities: z.array(z.string()).min(1).transform(list => list.filter(isTask)),
   inputCost: z.number().nonnegative().optional(), outputCost: z.number().nonnegative().optional(),
+  cachedInputCost: z.number().nonnegative().optional(),
+  priceTiers: z.array(z.object({ aboveInputTokens: z.number().int().nonnegative(), inputCost: z.number().nonnegative(), outputCost: z.number().nonnegative(), cachedInputCost: z.number().nonnegative().optional() })).optional(),
+  /** User selection is independent of automatic failover. */
+  chatSelectable: z.boolean().optional(),
   maxContextTokens: z.number().int().positive(), maxOutputTokens: z.number().int().positive().default(1024),
   enabled: z.boolean().default(true), version: z.string().default('unversioned'),
   trainingAllowed: z.boolean().default(false),
-  /** 예비 — 기본 모델이 공급자 장애로 실패할 때만 쓴다. 사용자가 고르는 대화 모델이 되지 않는다. */
+  /** 예비 — 기본 모델이 공급자 장애로 실패할 때만 쓴다. 직접 선택은 chatSelectable 로 별도 설정한다. */
   fallback: z.boolean().optional(),
 })
 export type ModelDefinition = z.infer<typeof ModelDefinitionSchema>
@@ -56,8 +61,10 @@ export function routeModels(registry: ModelRegistry, task: AITask, tokens: numbe
   return regular.slice(0, 3)
 }
 /** USD per million tokens. Unknown prices stay unknown, never silently free. */
-export function modelCost(m: ModelDefinition, input: number | null, output: number | null): number | null {
+export function modelCost(m: ModelDefinition, input: number | null, output: number | null, cachedInput = 0): number | null {
   if (m.provider === 'mock') return 0
   if (m.inputCost === undefined || m.outputCost === undefined || input === null || output === null) return null
-  return Math.ceil((input * m.inputCost + output * m.outputCost) / 1_000_000 * 1e8) / 1e8
+  const rates = tokenRates(m, input)
+  const cached = Math.min(input, Math.max(0, cachedInput))
+  return Math.ceil(((input - cached) * rates.inputCost + cached * rates.cachedInputCost + output * rates.outputCost) / 1_000_000 * 1e8) / 1e8
 }

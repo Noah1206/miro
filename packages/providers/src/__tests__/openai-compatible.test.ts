@@ -29,6 +29,16 @@ describe('OpenAI-compatible adapter', () => {
     expect(JSON.parse(String(spy.mock.calls[0]![1]!.body)).max_completion_tokens).toBe(200)
   })
 
+  it.each(['gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.1-sol', 'gpt-6-astra'])('uses GPT-6 limits and supported reasoning for %s', async model => {
+    const spy = respond([{ model, choices: [{ finish_reason: 'stop', message: { content: 'ok' } }], usage: { prompt_tokens: 1000, completion_tokens: 100, prompt_tokens_details: { cached_tokens: 800 } } }])
+    const out = await new OpenAICompatibleProvider('openai', 'k', model, 'https://example.test/v1').generate({ task: 'dialogue', system: '', prompt: 'p', maxTokens: 2048, hardTokenCap: true })
+    const body = JSON.parse(String(spy.mock.calls[0]![1]!.body))
+    expect(body.max_completion_tokens).toBe(2048)
+    expect(body.reasoning_effort).toBe(/sol|astra/.test(model) ? 'low' : 'none')
+    expect(body).not.toHaveProperty('max_tokens')
+    expect(body).not.toHaveProperty('temperature')
+    expect(out.cachedInputTokens).toBe(800)
+  })
   it('keeps the plain OpenAI shape for other models behind the same endpoint', async () => {
     const spy = respond([{ choices: [{ message: { content: '{}' } }] }])
     const out = await new OpenAICompatibleProvider('gateway', 'k', 'anthropic/claude-haiku-4-5', 'https://example.test/v1').generate({ task: 'dialogue', system: '', prompt: '', json: true, maxTokens: 50 })

@@ -8,7 +8,7 @@ const models = [
   { id: 'basic', provider: 'mock', providerModelId: 'basic', tier: 'small', capabilities: ['dialogue'], maxContextTokens: 32768, inputCost: 0.3, outputCost: 2.5, maxOutputTokens: 8192 },
   { id: 'advanced', provider: 'mock', providerModelId: 'advanced', tier: 'premium', capabilities: ['dialogue'], maxContextTokens: 32768, inputCost: 0.3, outputCost: 2.5, maxOutputTokens: 8192 },
 ]
-beforeEach(() => { plan.mockResolvedValue('free'); vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(models)); vi.stubEnv('MIRO_CHAT_MODEL_ID', '') })
+beforeEach(() => { plan.mockResolvedValue('free'); vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify(models)); vi.stubEnv('MIRO_CHAT_MODEL_ID', ''); vi.stubEnv('MIRO_AGENCY_VERIFY_MODEL_ID', '') })
 afterEach(() => vi.unstubAllEnvs())
 describe('chat model choice', () => {
   it('serves MIRO and ECHO from the same model', async () => {
@@ -36,6 +36,30 @@ describe('chat model choice', () => {
     vi.stubEnv('OPENAI_API_KEY', 'k')
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ ...models[0], id: 'backup', provider: 'openai', providerModelId: 'gpt-x', fallback: true }, ...models]))
     expect((await resolveChatModel('u', 'miro')).modelId).toBe('basic')
+  })
+  it('allows an explicitly selectable fallback alongside primary models, excluding Gemini', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'k')
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([
+      ...models,
+      { ...models[0], id: 'claude', provider: 'anthropic', providerModelId: 'claude-sonnet-5-5', fallback: true, chatSelectable: true },
+      { ...models[0], id: 'gemini', provider: 'gemini', providerModelId: 'gemini-x' },
+      { ...models[0], id: 'hidden', chatSelectable: false },
+    ]))
+    const choices = (await chatModelOptions('u')).choices
+    expect(choices.some(c => c.name === 'Claude Sonnet 5.5')).toBe(true)
+    expect(choices.some(c => /gemini|hidden/.test(c.name))).toBe(false)
+    expect((await resolveChatModel('u', 'model:claude:scene')).modelId).toBe('claude')
+  })
+  it('includes a more expensive pinned verifier in the same displayed and enforced ceiling', async () => {
+    vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([
+      { ...models[0], inputCost: .1, outputCost: .5 },
+      { ...models[1], inputCost: 2, outputCost: 10 },
+    ]))
+    const previous = await resolveChatModel('u', 'model:basic:scene')
+    vi.stubEnv('MIRO_AGENCY_VERIFY_MODEL_ID', 'advanced')
+    const selected = await resolveChatModel('u', 'model:basic:scene')
+    expect(selected.quote.maximumTokens).toBeGreaterThan(previous.quote.maximumTokens)
+    expect((await chatModelOptions('u')).choices.find(c => c.id === 'model:basic:scene')!.maximumTokens).toBe(selected.quote.maximumTokens)
   })
   it('honours a pinned model id for both', async () => {
     plan.mockResolvedValue('pro')

@@ -1,0 +1,168 @@
+[
+  {
+    "id": "claude-haiku",
+    "provider": "anthropic",
+    "providerModelId": "claude-haiku-5-5",
+    "tier": "small",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 0.1,
+    "outputCost": 0.5,
+    "cachedInputCost": 0.01,
+    "maxContextTokens": 1000000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false,
+    "priceTiers": [
+      {
+        "aboveInputTokens": 100000,
+        "inputCost": 0.5,
+        "outputCost": 2.5,
+        "cachedInputCost": 0.05
+      }
+    ]
+  },
+  {
+    "id": "claude-sonnet",
+    "provider": "anthropic",
+    "providerModelId": "claude-sonnet-5-5",
+    "tier": "standard",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 2,
+    "outputCost": 10,
+    "cachedInputCost": 0.1,
+    "maxContextTokens": 1000000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false
+  },
+  {
+    "id": "claude-opus",
+    "provider": "anthropic",
+    "providerModelId": "claude-opus-5-5",
+    "tier": "premium",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 4,
+    "outputCost": 20,
+    "cachedInputCost": 0.2,
+    "maxContextTokens": 1000000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false
+  },
+  {
+    "id": "gpt-luna",
+    "provider": "openai",
+    "providerModelId": "gpt-6-luna",
+    "tier": "small",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 0.1,
+    "outputCost": 0.5,
+    "cachedInputCost": 0.01,
+    "maxContextTokens": 1050000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false,
+    "priceTiers": [
+      {
+        "aboveInputTokens": 272000,
+        "inputCost": 0.2,
+        "outputCost": 0.75,
+        "cachedInputCost": 0.02
+      }
+    ]
+  },
+  {
+    "id": "gpt-terra",
+    "provider": "openai",
+    "providerModelId": "gpt-6.1-terra",
+    "tier": "standard",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 1,
+    "outputCost": 5,
+    "cachedInputCost": 0.05,
+    "maxContextTokens": 1050000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false,
+    "priceTiers": [
+      {
+        "aboveInputTokens": 272000,
+        "inputCost": 2,
+        "outputCost": 7.5,
+        "cachedInputCost": 0.1
+      }
+    ]
+  },
+  {
+    "id": "gpt-sol",
+    "provider": "openai",
+    "providerModelId": "gpt-6.1-sol",
+    "tier": "standard",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 2,
+    "outputCost": 10,
+    "cachedInputCost": 0.1,
+    "maxContextTokens": 1050000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false,
+    "priceTiers": [
+      {
+        "aboveInputTokens": 272000,
+        "inputCost": 4,
+        "outputCost": 15.0,
+        "cachedInputCost": 0.2
+      }
+    ]
+  },
+  {
+    "id": "gpt-astra",
+    "provider": "openai",
+    "providerModelId": "gpt-6-astra",
+    "tier": "premium",
+    "capabilities": [
+      "dialogue"
+    ],
+    "inputCost": 10,
+    "outputCost": 50,
+    "cachedInputCost": 1,
+    "maxContextTokens": 1050000,
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false,
+    "priceTiers": [
+      {
+        "aboveInputTokens": 272000,
+        "inputCost": 20,
+        "outputCost": 75.0,
+        "cachedInputCost": 2
+      }
+    ]
+  }
+]
