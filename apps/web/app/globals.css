@@ -428,14 +428,13 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 /* Desktop browsing uses the viewport; mobile retains its original shell. */
 @media (min-width: 1024px) {
   .app-shell:has(.nav) { max-width: none; padding-left: 0; }
-  .app-shell:has(.nav):has(> aside) { padding-left: 280px; transition: padding-left 280ms cubic-bezier(.22,1,.36,1); }
   .app-shell:has(.nav) > aside { left: 0; }
-  /* 10/28 요청: 내비는 사이드바 안이 아니라 화면 가운데 아래에 — 사이드바를 열든 접든 같은 자리. */
+  /* 10/28: 본문(960)과 내비(912)는 화면 가운데. 화면이 좁아 사이드바(펼침 280·접힘 72)에 닿으면 그 오른쪽으로 밀린다 — 둘은 늘 같은 축. */
   .app-shell:has(.nav) .nav { left: 0; right: 0; bottom: 20px; width: min(912px, calc(100% - 32px)); max-width: none; margin: 0 auto; }
-  .app-shell:has(aside[data-collapsed="true"]) { padding-left: 72px; }
-  /* 10/28: 내비 가운데 = 본문 가운데 — 사이드바 폭만큼 왼쪽을 비워 본문(검색줄)과 같은 축에 둔다. */
-  .app-shell:has(> aside) .nav { left: 280px; width: min(912px, calc(100% - 312px)); }
-  .app-shell:has(aside[data-collapsed="true"]) .nav { left: 72px; width: min(912px, calc(100% - 104px)); }
+  .app-shell:has(> aside) > div:last-child { --side: 280px; margin-left: max(calc((100% - 960px) / 2), var(--side)); margin-right: auto; }
+  .app-shell:has(aside[data-collapsed="true"]) > div:last-child { --side: 72px; }
+  .app-shell:has(> aside) .nav { left: max(calc((100% - 912px) / 2), 304px); right: auto; width: min(912px, calc(100% - 328px)); margin: 0; }
+  .app-shell:has(aside[data-collapsed="true"]) .nav { left: max(calc((100% - 912px) / 2), 96px); width: min(912px, calc(100% - 120px)); }
 }
 @keyframes desktop-nav-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {
