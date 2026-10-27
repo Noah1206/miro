@@ -34,4 +34,13 @@ describe('purchase token pricing', () => {
     vi.stubEnv('MIRO_TOKEN_PRICING', '{"fxKRWPerUSD":0}')
     expect(() => tokenPricing()).toThrow()
   })
+  it('uses announced post-promotion rates at the exact effective time for quotes and costs', () => {
+    const model = { inputCost: 2, outputCost: 10, cachedInputCost: .1, maxContextTokens: 1048576, maxOutputTokens: 4096,
+      priceChanges: [{ effectiveAt: '2026-12-01T00:00:00Z', inputCost: 4, outputCost: 20, cachedInputCost: .2 }] }
+    expect(tokenRates(model, 64000, Date.parse('2026-11-30T23:59:59Z')).inputCost).toBe(2)
+    expect(tokenRates(model, 64000, Date.parse('2026-12-01T00:00:00Z'))).toEqual({ inputCost: 4, outputCost: 20, cachedInputCost: .2 })
+    vi.useFakeTimers(); vi.setSystemTime(new Date('2026-12-01T00:00:00Z'))
+    try { expect(tokenQuote(model, 2048).maximumUSD).toBeCloseTo((64000 * 4 + 2048 * 20) / 1e6 * 2) }
+    finally { vi.useRealTimers() }
+  })
 })

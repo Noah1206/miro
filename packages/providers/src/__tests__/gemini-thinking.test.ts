@@ -14,6 +14,8 @@ describe('gemini thinking config', () => {
     expect(thinkingConfig('gemini-3.8-flash')).toEqual({ thinkingConfig: { thinkingLevel: 'low' } })
     expect(thinkingConfig('gemini-3.1-pro-preview')).toEqual({ thinkingConfig: { thinkingLevel: 'low' } })
     expect(thinkingConfig('gemini-2.5-flash')).toEqual({ thinkingConfig: { thinkingBudget: 0 } })
+    expect(thinkingConfig('gemini-4-argon')).toEqual({ thinkingConfig: { thinkingLevel: 'low' } })
+    expect(thinkingConfig('gemini-4-argon', 'medium')).toEqual({ thinkingConfig: { thinkingLevel: 'medium' } })
   })
   it('sends nothing for a model it has not measured', () => {
     expect(thinkingConfig('gemini-4.0-something')).toEqual({})
@@ -91,13 +93,13 @@ describe('gemini streaming', () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(sse([
       { candidates: [{ content: { parts: [{ text: '생각', thought: true }] } }] },
       { candidates: [{ content: { parts: [{ text: '{"rp":{"blocks":[' }] } }] },
-      { candidates: [{ content: { parts: [{ text: '{"type":"dialogue"}]}}' }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5, thoughtsTokenCount: 2 } },
+      { candidates: [{ content: { parts: [{ text: '{"type":"dialogue"}]}}' }] }, finishReason: 'STOP' }], modelVersion: 'gemini-3.6-flash-20261001', usageMetadata: { promptTokenCount: 10, cachedContentTokenCount: 4, candidatesTokenCount: 5, thoughtsTokenCount: 2 } },
     ]))
     const seen: string[] = []
     const out = await new GeminiProvider('key', 'gemini-3.6-flash').generate({ task: 'dialogue', system: 's', prompt: 'p', json: true, onText: text => { seen.push(text) } })
     expect(String(fetchMock.mock.calls[0]![0])).toContain(':streamGenerateContent?alt=sse')
     expect(seen).toEqual(['{"rp":{"blocks":[', '{"rp":{"blocks":[{"type":"dialogue"}]}}'])
-    expect(out).toMatchObject({ text: '{"rp":{"blocks":[{"type":"dialogue"}]}}', inputTokens: 10, outputTokens: 7, truncated: false, blocked: false })
+    expect(out).toMatchObject({ text: '{"rp":{"blocks":[{"type":"dialogue"}]}}', model: 'gemini-3.6-flash-20261001', inputTokens: 10, cachedInputTokens: 4, outputTokens: 7, truncated: false, blocked: false })
   })
   it('keeps the single call when nothing is shown while it is written', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{}' }] }, finishReason: 'STOP' }] }), { status: 200 }))

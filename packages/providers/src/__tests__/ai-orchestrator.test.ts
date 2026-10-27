@@ -64,6 +64,19 @@ describe('AIOrchestrator', () => {
     const ai = new AIOrchestrator({ chain: [hang], maxRetries: 0, timeoutMs: 30 })
     await expect(ai.generateText({ system: 's', prompt: 'p' })).rejects.toThrow(/timeout 30ms/)
   })
+  it('allows a bounded registry timeout for a slower selected model without changing the default', async () => {
+    vi.useFakeTimers()
+    const registry = new ModelRegistry([{ id: 'argon', provider: 'gemini', providerModelId: 'gemini-4-argon', tier: 'premium', capabilities: ['dialogue'],
+      inputCost: 2, outputCost: 10, maxContextTokens: 1000000, timeoutMs: 45000 }])
+    const slow: AIProvider = { healthCheck: async () => true, info: { mode: 'live', name: 'argon', notice: null }, generate: async () => {
+      await new Promise(r => setTimeout(r, 25000))
+      return { text: '안녕', model: 'gemini-4-argon', provider: 'gemini', inputTokens: 10, outputTokens: 2, latencyMs: 25000 }
+    } }
+    const response = new AIOrchestrator({ chain: [slow], registry, resolveModel: () => slow, timeoutMs: 20000, maxRetries: 0, context: { dialogueModelId: 'argon' } }).generateText({ task: 'dialogue', system: '', prompt: '' })
+    const assertion = expect(response).resolves.toBe('안녕')
+    await vi.advanceTimersByTimeAsync(25001)
+    await assertion
+  })
   it('keeps a streaming call alive while text arrives, but still cuts a silent one', async () => {
     const streaming = (gapMs: number, chunks: number): AIProvider => ({ healthCheck: async () => true, info: { mode: 'live', name: 'stream', notice: null },
       generate: async (req) => {

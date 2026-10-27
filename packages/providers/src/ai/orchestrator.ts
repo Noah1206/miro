@@ -275,6 +275,7 @@ export class AIOrchestrator implements LLMProvider {
           rejectHoldExpiry?.(new Error('lease_hold_expired'))
         }, this.maxLeaseHoldMs)
         let result: GenerationResult | undefined, output: T | undefined, ok = false
+        const timeoutMs = model.timeoutMs ?? this.timeoutMs
         try {
           // 시도마다 처음부터 — 받는 대로 보던 쪽은 앞 시도의 글을 버린다(재시도·다시 묻기·예비 모델).
           onAttempt?.()
@@ -282,10 +283,10 @@ export class AIOrchestrator implements LLMProvider {
           // 예비 모델로 다시 썼다(10/17 운영: 20초에 끊김 3/6턴). 조용한 시간이 한도를 넘거나 전체가 한도의 3배를 넘으면 끊는다.
           let rejectTimeout!: (reason: Error) => void
           const timedOut = new Promise<never>((_, reject) => { rejectTimeout = reject })
-          const deadline = started + this.timeoutMs * (request.onText ? 3 : 1)
+          const deadline = started + timeoutMs * (request.onText ? 3 : 1)
           const arm = () => {
             clearTimeout(timer)
-            timer = setTimeout(() => { controller.abort(); rejectTimeout(new Error(`timeout ${this.timeoutMs}ms`)) }, Math.max(1, Math.min(this.timeoutMs, deadline - Date.now())))
+            timer = setTimeout(() => { controller.abort(); rejectTimeout(new Error(`timeout ${timeoutMs}ms`)) }, Math.max(1, Math.min(timeoutMs, deadline - Date.now())))
           }
           arm()
           const onText = request.onText
@@ -316,7 +317,7 @@ export class AIOrchestrator implements LLMProvider {
         } catch (e) {
           // Never log provider response bodies, keys, prompts or private reasoning.
           const message = e instanceof Error ? e.message : ''
-          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${this.timeoutMs}ms` : result?.truncated && message.startsWith('invalid_schema') ? 'max_tokens' : message.startsWith('invalid_schema') || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
+          last = e instanceof AIContentBlockedError ? 'content_blocked' : req.signal?.aborted ? 'cancelled' : leaseLost ? 'lease_lost' : holdExpired ? 'lease_hold_expired' : controller.signal.aborted ? `timeout ${timeoutMs}ms` : result?.truncated && message.startsWith('invalid_schema') ? 'max_tokens' : message.startsWith('invalid_schema') || message === 'empty_output' || /^provider_http_[45]\d\d$/.test(message) ? message : 'provider_error'
           if (last === 'provider_http_429') rateLimitProvider(providerKey, this.rateLimitBackoffMs)
         } finally { clearTimeout(timer); if (cancel) req.signal?.removeEventListener('abort', cancel) }
         const input = result?.inputTokens ?? null, out = result?.outputTokens ?? null

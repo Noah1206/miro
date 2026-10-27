@@ -11,9 +11,12 @@ export const ModelDefinitionSchema = z.object({
   inputCost: z.number().nonnegative().optional(), outputCost: z.number().nonnegative().optional(),
   cachedInputCost: z.number().nonnegative().optional(),
   priceTiers: z.array(z.object({ aboveInputTokens: z.number().int().nonnegative(), inputCost: z.number().nonnegative(), outputCost: z.number().nonnegative(), cachedInputCost: z.number().nonnegative().optional() })).optional(),
+  priceChanges: z.array(z.object({ effectiveAt: z.string().datetime(), inputCost: z.number().nonnegative(), outputCost: z.number().nonnegative(), cachedInputCost: z.number().nonnegative().optional(),
+    priceTiers: z.array(z.object({ aboveInputTokens: z.number().int().nonnegative(), inputCost: z.number().nonnegative(), outputCost: z.number().nonnegative(), cachedInputCost: z.number().nonnegative().optional() })).optional() })).optional(),
   /** User selection is independent of automatic failover. */
   chatSelectable: z.boolean().optional(),
   maxContextTokens: z.number().int().positive(), maxOutputTokens: z.number().int().positive().default(1024),
+  timeoutMs: z.number().int().min(1).max(60_000).optional(),
   enabled: z.boolean().default(true), version: z.string().default('unversioned'),
   trainingAllowed: z.boolean().default(false),
   /** 예비 — 기본 모델이 공급자 장애로 실패할 때만 쓴다. 직접 선택은 chatSelectable 로 별도 설정한다. */

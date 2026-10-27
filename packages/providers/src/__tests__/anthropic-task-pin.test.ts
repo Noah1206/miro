@@ -26,4 +26,10 @@ describe('Anthropic server-side fallback for a pinned review task', () => {
     await new AnthropicProvider('fixture-key', 'configured-sonnet').generate({ task: 'dialogue', system: '', prompt: '', maxTokens: 2048 })
     expect(create.mock.calls[0]![0]).toMatchObject({ max_tokens: 2048, fallbacks: 'default', betas: ['server-side-fallback-2026-07-01'], output_config: { effort: 'low' } })
   })
+  it('accounts for Fable cache reads as discounted input and returns the actual model identity', async () => {
+    create.mockResolvedValueOnce({ model: 'claude-fable-5-1', content: [{ type: 'text', text: '{}' }], stop_reason: 'end_turn',
+      usage: { input_tokens: 20, cache_read_input_tokens: 80, cache_creation_input_tokens: 0, output_tokens: 15 } })
+    const result = await new AnthropicProvider('fixture-key', 'claude-fable-5-1').generate({ task: 'dialogue', system: '', prompt: '', disableProviderFallback: true })
+    expect(result).toMatchObject({ model: 'claude-fable-5-1', inputTokens: 100, cachedInputTokens: 80, outputTokens: 15 })
+  })
 })

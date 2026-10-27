@@ -164,5 +164,94 @@
         "cachedInputCost": 2
       }
     ]
+  },
+  {
+    "id": "gemini-argon",
+    "provider": "gemini",
+    "providerModelId": "gemini-4-argon",
+    "tier": "premium",
+    "inputCost": 2,
+    "outputCost": 10,
+    "cachedInputCost": 0.1,
+    "maxContextTokens": 1048576,
+    "priceChanges": [
+      {
+        "effectiveAt": "2026-12-01T00:00:00Z",
+        "inputCost": 4,
+        "outputCost": 20,
+        "cachedInputCost": 0.2
+      }
+    ],
+    "capabilities": [
+      "dialogue"
+    ],
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false,
+    "timeoutMs": 45000
+  },
+  {
+    "id": "gemini-flash",
+    "provider": "gemini",
+    "providerModelId": "gemini-3.8-flash",
+    "tier": "small",
+    "inputCost": 0.75,
+    "outputCost": 3.75,
+    "cachedInputCost": 0.075,
+    "maxContextTokens": 1048576,
+    "priceChanges": [
+      {
+        "effectiveAt": "2027-01-01T00:00:00Z",
+        "inputCost": 1.5,
+        "outputCost": 7.5,
+        "cachedInputCost": 0.15
+      }
+    ],
+    "capabilities": [
+      "dialogue"
+    ],
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": false,
+    "version": "2026-10-27",
+    "trainingAllowed": false
+  },
+  {
+    "id": "claude-fable",
+    "provider": "anthropic",
+    "providerModelId": "claude-fable-5",
+    "tier": "premium",
+    "inputCost": 10,
+    "outputCost": 50,
+    "cachedInputCost": 1,
+    "maxContextTokens": 1000000,
+    "capabilities": [
+      "dialogue"
+    ],
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false
+  },
+  {
+    "id": "claude-fable-51",
+    "provider": "anthropic",
+    "providerModelId": "claude-fable-5-1",
+    "tier": "premium",
+    "inputCost": 10,
+    "outputCost": 50,
+    "cachedInputCost": 0.25,
+    "maxContextTokens": 1000000,
+    "capabilities": [
+      "dialogue"
+    ],
+    "maxOutputTokens": 4096,
+    "enabled": true,
+    "chatSelectable": true,
+    "version": "2026-10-27",
+    "trainingAllowed": false
   }
 ]

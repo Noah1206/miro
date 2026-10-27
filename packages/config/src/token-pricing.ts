@@ -2,11 +2,14 @@ import { PLANNED_RECHARGE_TIERS, rechargeCatalog } from './recharge-policy'
 
 /** Purchase tokens are a wallet unit, not provider processing tokens. USD rates are per million. */
 export type TokenPriceTier = { aboveInputTokens: number; inputCost: number; outputCost: number; cachedInputCost?: number }
-export type TokenPriceModel = { inputCost?: number; outputCost?: number; cachedInputCost?: number; priceTiers?: TokenPriceTier[]; maxContextTokens: number; maxOutputTokens: number }
+export type TokenPriceChange = { effectiveAt: string; inputCost: number; outputCost: number; cachedInputCost?: number; priceTiers?: TokenPriceTier[] }
+export type TokenPriceModel = { inputCost?: number; outputCost?: number; cachedInputCost?: number; priceTiers?: TokenPriceTier[]; priceChanges?: TokenPriceChange[]; maxContextTokens: number; maxOutputTokens: number }
 /** Thresholds apply to the whole request, not just the excess input. */
-export function tokenRates(model: TokenPriceModel, input: number) {
-  const tier = model.priceTiers?.filter(t => input > t.aboveInputTokens).sort((a, b) => b.aboveInputTokens - a.aboveInputTokens)[0]
-  const rates = tier ?? model
+export function tokenRates(model: TokenPriceModel, input: number, now = Date.now()) {
+  const scheduled = model.priceChanges?.filter(p => Date.parse(p.effectiveAt) <= now).sort((a, b) => Date.parse(b.effectiveAt) - Date.parse(a.effectiveAt))[0]
+  const current = scheduled ?? model
+  const tier = current.priceTiers?.filter(t => input > t.aboveInputTokens).sort((a, b) => b.aboveInputTokens - a.aboveInputTokens)[0]
+  const rates = tier ?? current
   if (rates.inputCost === undefined || rates.outputCost === undefined || !Number.isFinite(rates.inputCost) || !Number.isFinite(rates.outputCost)
     || rates.inputCost < 0 || rates.outputCost < 0) throw new Error('unknown token price')
   return { inputCost: rates.inputCost, outputCost: rates.outputCost, cachedInputCost: rates.cachedInputCost ?? rates.inputCost }

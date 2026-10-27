@@ -6,6 +6,7 @@ import type { ProviderInfo } from '../types'
  * level 은 생각 수준을 받는 모델(3.8-flash·3.1-pro 등)에만 적용한다 — 실측(2026-09-29): 3.8-flash 는 low·medium·high 를 받고 low 는 생각 0.
  */
 export function thinkingConfig(model: string, level?: 'low' | 'medium' | 'high'): { thinkingConfig?: Record<string, unknown> } {
+  if (model === 'gemini-4-argon') return { thinkingConfig: { thinkingLevel: level ?? 'low' } }
   if (model.startsWith('gemini-2.5')) return { thinkingConfig: { thinkingBudget: 0 } }
   if (model === 'gemini-3.5-flash-lite') return { thinkingConfig: { thinkingLevel: 'minimal' } }
   if (model === 'gemini-3.5-flash') return { thinkingConfig: { thinkingBudget: 0 } }
@@ -82,8 +83,9 @@ export class GeminiProvider implements AIProvider {
       blocked: !!blockReason && blockReason !== 'BLOCK_REASON_UNSPECIFIED'
         || ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'RECITATION', 'IMAGE_SAFETY'].includes(finishReason),
       text: chunks.map(visibleText).join('').trim(),
-      provider: 'gemini', model: this.model,
+      provider: 'gemini', model: [...chunks].reverse().find(c => c.modelVersion)?.modelVersion ?? this.model,
       inputTokens: usage?.promptTokenCount ?? null,
+      cachedInputTokens: usage?.cachedContentTokenCount,
       outputTokens: usage?.candidatesTokenCount == null ? null : usage.candidatesTokenCount + (usage.thoughtsTokenCount ?? 0),
       latencyMs: Date.now() - t0,
       truncated: finishReason === 'MAX_TOKENS' || (!!last && !finishReason && streaming),
@@ -92,8 +94,9 @@ export class GeminiProvider implements AIProvider {
 }
 
 type GeminiResponse = {
+  modelVersion?: string
   candidates?: Array<{ finishReason?: string; content?: { parts?: Array<{ text?: string; thought?: boolean }> } }>
   promptFeedback?: { blockReason?: string }
-  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number }
+  usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; cachedContentTokenCount?: number }
 }
 const visibleText = (r: GeminiResponse) => (r.candidates?.[0]?.content?.parts ?? []).filter(p => !p.thought).map(p => p.text ?? '').join('')

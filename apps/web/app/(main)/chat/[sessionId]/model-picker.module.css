@@ -35,6 +35,7 @@
 .trigger[data-model-brand],.current.current[data-model-brand],.heading[data-model-brand] { color:var(--model-brand-ink,#eeeef1); }
 .trigger[data-model-brand='claude'],.current[data-model-brand='claude'],.heading[data-model-brand='claude'] { --model-brand-ink:#e6a089; --model-brand-logo:#d97757; }
 .trigger[data-model-brand='deepseek'],.current[data-model-brand='deepseek'],.heading[data-model-brand='deepseek'] { --model-brand-ink:#7895ff; --model-brand-logo:#4d6bfe; }
+.trigger[data-model-brand='gemini'],.current[data-model-brand='gemini'],.heading[data-model-brand='gemini'] { --model-brand-ink:#a5beff; --model-brand-logo:#8eafff; }
 .trigger[data-model-brand] .icon,.current[data-model-brand] .icon,.heading[data-model-brand] .icon { color:var(--model-brand-logo,currentColor); }
 .trigger > svg { color:#a6a6af; }
 /* OpenAI's logo remains in its official monochrome treatment. The menu stays dark in every theme. */
@@ -44,3 +45,5 @@
 :global([data-chat-theme='dm-light']) .current[data-model-brand='claude'],:global([data-chat-theme='talk']) .current[data-model-brand='claude'] { --model-brand-ink:#97482e; }
 :global([data-chat-theme='dm-light']) .trigger[data-model-brand='deepseek'],:global([data-chat-theme='talk']) .trigger[data-model-brand='deepseek'],
 :global([data-chat-theme='dm-light']) .current[data-model-brand='deepseek'],:global([data-chat-theme='talk']) .current[data-model-brand='deepseek'] { --model-brand-ink:#3556d5; }
+:global([data-chat-theme='dm-light']) .trigger[data-model-brand='gemini'],:global([data-chat-theme='talk']) .trigger[data-model-brand='gemini'],
+:global([data-chat-theme='dm-light']) .current[data-model-brand='gemini'],:global([data-chat-theme='talk']) .current[data-model-brand='gemini'] { --model-brand-ink:#315fbb; --model-brand-logo:#416ecc; }

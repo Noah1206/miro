@@ -16,6 +16,12 @@ export function modelPresentation(choice: ChatModelChoice) {
       description: /haiku/i.test(name) ? msg('빠른 응답을 위한 경량 모델') : /sonnet/i.test(name) ? msg('속도와 지능을 균형 있게 제공하는 모델') : msg('복잡한 작업과 깊이 있는 추론에 집중') }
   }
   if (/deepseek/i.test(name)) return { provider: 'DeepSeek', icon: 'deepseek', label: name, description: msg('대화용 AI 모델') }
+  if (/gemini/i.test(name) || choice.provider === 'gemini') {
+    const version = /\d+(?:\.\d+)*/.exec(name)?.[0] ?? ''
+    const family = /argon|flash-lite|flash|pro/i.exec(name)?.[0] ?? ''
+    return { provider: 'Google', icon: 'gemini', label: `${family.charAt(0).toUpperCase()}${family.slice(1)} ${version}`.trim(),
+      description: /flash/i.test(name) ? msg('빠른 응답을 위한 경량 모델') : msg('복잡한 작업과 깊이 있는 추론에 집중') }
+  }
   if (/gpt|openai|o[134]-/i.test(name) || choice.provider === 'openai') {
     const family = /astra|sol|terra|luna/i.exec(name)?.[0]
     const version = /\d+(?:\.\d+)*/.exec(name)?.[0] ?? ''

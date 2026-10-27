@@ -37,18 +37,22 @@ describe('chat model choice', () => {
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([{ ...models[0], id: 'backup', provider: 'openai', providerModelId: 'gpt-x', fallback: true }, ...models]))
     expect((await resolveChatModel('u', 'miro')).modelId).toBe('basic')
   })
-  it('allows an explicitly selectable fallback alongside primary models, excluding Gemini', async () => {
+  it('allows registered Gemini and explicitly selectable fallback models alongside primary models', async () => {
     vi.stubEnv('ANTHROPIC_API_KEY', 'k')
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([
       ...models,
       { ...models[0], id: 'claude', provider: 'anthropic', providerModelId: 'claude-sonnet-5-5', fallback: true, chatSelectable: true },
-      { ...models[0], id: 'gemini', provider: 'gemini', providerModelId: 'gemini-x' },
+      { ...models[0], id: 'gemini', provider: 'gemini', providerModelId: 'gemini-4-argon', chatSelectable: true },
+      { ...models[0], id: 'fable', provider: 'anthropic', providerModelId: 'claude-fable-5' },
       { ...models[0], id: 'hidden', chatSelectable: false },
     ]))
     const choices = (await chatModelOptions('u')).choices
     expect(choices.some(c => c.name === 'Claude Sonnet 5.5')).toBe(true)
-    expect(choices.some(c => /gemini|hidden/.test(c.name))).toBe(false)
+    expect(choices.some(c => c.name === 'Gemini 4 Argon')).toBe(true)
+    expect(choices.some(c => c.name === 'Claude Fable 5')).toBe(true)
+    expect(choices.some(c => c.name === 'hidden')).toBe(false)
     expect((await resolveChatModel('u', 'model:claude:scene')).modelId).toBe('claude')
+    expect((await resolveChatModel('u', 'model:gemini:long')).modelId).toBe('gemini')
   })
   it('includes a more expensive pinned verifier in the same displayed and enforced ceiling', async () => {
     vi.stubEnv('MIRO_MODEL_REGISTRY', JSON.stringify([

@@ -6,10 +6,10 @@ export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo
 export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: 'scene' | 'long'; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
-  const candidates = registry?.models.filter(m => m.enabled && m.chatSelectable !== false && m.provider !== 'gemini' && !/gemini/i.test(m.providerModelId) && m.capabilities.includes('dialogue')
+  const candidates = registry?.models.filter(m => m.enabled && m.chatSelectable !== false && m.capabilities.includes('dialogue')
     && m.inputCost !== undefined && m.outputCost !== undefined
     && (!productionRuntime() || !!providerFromEnv(m.provider, m.providerModelId))) ?? []
-  // A ready non-Gemini backup remains selectable when excluding Gemini leaves no primary.
+  // A ready backup remains selectable when no primary is available.
   // Otherwise backups keep their existing role and never displace a primary model.
   const regular = candidates.filter(model => !model.fallback || model.chatSelectable === true)
   const models = regular.length ? regular : candidates
@@ -20,6 +20,9 @@ function choiceId(id: string, long: boolean) { return `model:${encodeURIComponen
 function displayName(id: string) {
   const claude = /^claude-(haiku|sonnet|opus)-5-5$/.exec(id)
   if (claude) return `Claude ${claude[1]![0]!.toUpperCase()}${claude[1]!.slice(1)} 5.5`
+  if (id === 'claude-fable-5') return 'Claude Fable 5'
+  if (id === 'claude-fable-5-1') return 'Claude Fable 5.1'
+  if (id === 'gemini-4-argon') return 'Gemini 4 Argon'
   const gpt = /^gpt-(6(?:\.1)?)-(luna|terra|sol|astra)$/.exec(id)
   if (gpt) return `GPT ${gpt[1]} ${gpt[2]![0]!.toUpperCase()}${gpt[2]!.slice(1)}`
   if (id === 'gpt-5.4-mini') return 'GPT-5.4 mini'
