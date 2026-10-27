@@ -1,12 +1,13 @@
 'use client'
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { readMessengerStream } from '@/lib/messenger/stream'
 import type { MessengerItem } from '@/lib/messenger/inbox'
 import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { useWallet } from '@/components/wallet/provider'
 
 type DeliveryItem = MessengerItem & { delivery?: 'sending' | 'failed' }
-type Delivery = { items: DeliveryItem[]; send: (text: string) => void; retry: (id: string) => void }
-const Context = createContext<Delivery>({ items: [], send: () => {}, retry: () => {} })
+type Delivery = { items: DeliveryItem[]; draft: { id: string; text: string } | null; send: (text: string) => void; retry: (id: string) => void }
+const Context = createContext<Delivery>({ items: [], draft: null, send: () => {}, retry: () => {} })
 export const useMessenger = () => useContext(Context)
 
 export function MessengerDelivery({ sessionId, initial, children }: { sessionId: string; initial: MessengerItem[]; children: ReactNode }) {
@@ -14,6 +15,8 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
   const { refreshBalance } = useWallet()
   const walletItems = useRef('')
   const [items, setItems] = useState<DeliveryItem[]>(initial)
+  const [draft, setDraft] = useState<{ id: string; text: string } | null>(null)
+  const refreshNow = useRef<(() => Promise<void>) | null>(null)
   const inflight = useRef(new Set<string>())
   const mounted = useRef(true)
   const post = useCallback(async (item: DeliveryItem) => {
@@ -30,7 +33,7 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
       if (mounted.current) setItems(previous => previous.map(value => value.id === item.id ? result.message : value))
     } catch {
       if (mounted.current) setItems(previous => previous.map(value => value.id === item.id ? { ...value, delivery: 'failed' } : value))
-    } finally { clearTimeout(timeout); inflight.current.delete(item.id); void refreshBalance(true) }
+    } finally { clearTimeout(timeout); inflight.current.delete(item.id); void refreshBalance(true); void refreshNow.current?.() }
   }, [sessionId, refreshBalance])
   const send = useCallback((text: string) => {
     const item: DeliveryItem = { id: crypto.randomUUID(), role: 'user', kind: 'messenger', content: text.trim(), blocks: [], at: new Date().toISOString(), readAt: null, chatModel: model, delivery: 'sending' }
@@ -46,27 +49,29 @@ export function MessengerDelivery({ sessionId, initial, children }: { sessionId:
       if (disposed || checking || document.visibilityState !== 'visible') return
       checking = true
       try {
-        const response = await fetch(`/api/messages?sessionId=${encodeURIComponent(sessionId)}`, { cache: 'no-store', signal: controller.signal })
-        if (!response.ok) return
-        const result = await response.json() as { items: MessengerItem[] }
-        const signature = result.items.map(item => `${item.id}:${item.readAt ?? ''}`).join('|')
-        if (!disposed && signature !== walletItems.current) {
-          walletItems.current = signature
-          void refreshBalance(true)
-        }
-        if (!disposed) setItems(previous => {
-          const known = new Set(result.items.map(item => item.id))
-          return [...result.items, ...previous.filter(item => !known.has(item.id))]
+        const response = await fetch(`/api/messages?sessionId=${encodeURIComponent(sessionId)}&stream=1`, { cache: 'no-store', signal: controller.signal })
+        await readMessengerStream(response, event => {
+          if (disposed) return
+          if (event.type === 'draft') { setDraft({ id: event.id, text: event.text }); return }
+          if (event.type === 'reset') { setDraft(value => value?.id === event.id ? null : value); return }
+          if (event.type === 'done') { setDraft(null); return }
+          const signature = event.items.map(item => `${item.id}:${item.readAt ?? ''}`).join('|')
+          if (signature !== walletItems.current) { walletItems.current = signature; void refreshBalance(true) }
+          setItems(previous => {
+            const known = new Set(event.items.map(item => item.id))
+            return [...event.items, ...previous.filter(item => !known.has(item.id))]
+          })
         })
-      } catch { /* A poll failure does not alter message delivery or the draft. */ }
-      finally { checking = false }
+      } catch { /* A failed preview does not alter persisted messages or resend a user message. */ }
+      finally { checking = false; if (!disposed) setDraft(null) }
     }
+    refreshNow.current = refresh
     void refresh()
     const timer = setInterval(() => void refresh(), 5000)
     const visible = () => { void refresh() }
     window.addEventListener('focus', visible)
     document.addEventListener('visibilitychange', visible)
-    return () => { disposed = true; mounted.current = false; controller.abort(); clearInterval(timer); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible) }
+    return () => { disposed = true; refreshNow.current = null; mounted.current = false; controller.abort(); clearInterval(timer); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible) }
   }, [sessionId, refreshBalance])
-  return <Context.Provider value={{ items, send, retry }}>{children}</Context.Provider>
+  return <Context.Provider value={{ items, draft, send, retry }}>{children}</Context.Provider>
 }

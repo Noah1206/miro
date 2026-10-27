@@ -1,3 +1,4 @@
+import { feature } from '@miro/config'
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { analyzeMemory, analyzeSemantic, planTasks } from './task-router'
 import {
@@ -13,7 +14,7 @@ import { runAgencyTurn, type AgencyTurnInput } from './agency-turn'
 import { planAgencyDecision, verifyCommunicationPreferences, type AgencyPlan, type AgencyRealizationCheck, type AgencyRealizationInput } from './agency'
 import { policyForSnapshot, type TurnPolicy } from './policy'
 import { approveTransition } from './transition'
-import type { TurnStream } from './stream-blocks'
+import { blockStream, type TurnStream } from './stream-blocks'
 import { snapshotCommunicationPreferences, CommunicationPreferenceRejectedError } from './communication-preferences'
 import { ConversationGroundingRejectedError, ConversationReviewContextBudgetError, needsUserGroundingReview, snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
 import { conversationVariationDirective, repeatedConversationBlock } from './conversation-repetition'
@@ -135,11 +136,12 @@ export async function runTurn(opts: {
   const communicationPreferences = snapshotCommunicationPreferences(snapshot, opts.userInput)
   const context = buildContext({ ...snapshot, relationship: early.relationship, characterState: early.characterState, semanticEvents, userInput: opts.userInput, communicationPreferences }, opts.contextScale, false, opts.replyLength ?? 'scene')
 
+  const draftStream = opts.stream && !communicationPreferences.length && !feature('strictConversationReview') ? blockStream(snapshot, opts.stream) : undefined
   const generated = opts.spokenReply !== undefined ? null : (async () => {
     let repair = ''
     for (let attempt = 0; attempt <= 2; attempt++) {
       const proposal = await opts.llm.generateStructured({
-        schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens,
+        schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens, ...draftStream,
         system: context.system + '\n' + USER_GROUNDING_RULE + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name),
         prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
       })
@@ -178,6 +180,7 @@ export async function runTurn(opts: {
     if (!r.ok) throw r.e
     proposal = r.p
   } catch (e) {
+    opts.stream?.onReset()
     if (e instanceof AIContentBlockedError) throw new UnsafeContentError()
     if (e instanceof UnsafeContentError || e instanceof CommunicationPreferenceRejectedError || e instanceof ConversationGroundingRejectedError || e instanceof ConversationReviewContextBudgetError) throw e
     if (e instanceof AIBudgetDeniedError) throw e

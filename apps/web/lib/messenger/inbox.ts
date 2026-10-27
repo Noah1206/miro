@@ -6,13 +6,14 @@ import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { chooseAttention } from './attention'
 import { observe } from '@/lib/observe'
 import { characterAvailability } from '@/lib/reality/routine'
+import type { MessengerDraftStream, MessengerDraftEvents } from './stream'
 import { resolveChatModel } from '@/lib/ai/chat-models'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 export class MessengerError extends Error {
   constructor(readonly reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'conflict' | 'rate_limit' | 'invalid_model') { super(reason) }
 }
-export type InboxReview = { ids: string[]; token: string; chatModel?: string }
+export type InboxReview = { ids: string[]; token: string; chatModel?: string; stream?: MessengerDraftStream }
 export type MessengerItem = { id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>>; at: string; readAt?: string | null; chatModel?: string | null }
 
 /** Reception validates configuration, but never calls AI or reserves a reply. */
@@ -95,7 +96,7 @@ export const characterCanSeeMessage = sql`NOT EXISTS (SELECT 1 FROM messenger_in
   WHERE unread_delivery.message_id = ${messages.id} AND unread_delivery.read_at IS NULL)`
 
 /** A durable queue, also swept by cron. No timer or open browser is needed to retain work. */
-export async function runMessengerInbox(now = new Date(), options: { sessionId?: string; limit?: number } = {}) {
+export async function runMessengerInbox(now = new Date(), options: { sessionId?: string; limit?: number; stream?: MessengerDraftEvents } = {}) {
   if (!feature('realityMessage')) return { checked: 0 }
   const due = await db.select({ sessionId: messengerInbox.sessionId }).from(messengerInbox)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, messengerInbox.sessionId))
@@ -108,13 +109,13 @@ export async function runMessengerInbox(now = new Date(), options: { sessionId?:
     .groupBy(messengerInbox.sessionId).orderBy(sql`min(${messengerInbox.nextReviewAt})`)
     .limit(Math.min(10, options.limit ?? 5))
   for (const row of due) {
-    try { await reviewInbox(row.sessionId, now) }
+    try { await reviewInbox(row.sessionId, now, options.stream) }
     catch { observe('messenger.review_failed', { sessionId: row.sessionId }) }
   }
   return { checked: due.length }
 }
 
-async function reviewInbox(sessionId: string, now: Date) {
+async function reviewInbox(sessionId: string, now: Date, stream?: MessengerDraftEvents) {
   const [row] = await db.select({ session: roleplaySessions, profile: contactProfiles, timeZone: userSettings.timeZone }).from(roleplaySessions)
     .innerJoin(users, eq(users.id, roleplaySessions.userId)).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .innerJoin(contactProfiles, eq(contactProfiles.characterId, characters.id)).leftJoin(userSettings, eq(userSettings.userId, users.id))
@@ -161,7 +162,7 @@ async function reviewInbox(sessionId: string, now: Date) {
   try {
     if (review.kind === 'reply') {
       const { evaluateSession } = await import('@/lib/reality/evaluate')
-      await evaluateSession(sessionId, now, { background: true, inbox: review })
+      await evaluateSession(sessionId, now, { background: true, inbox: { ...review, ...(stream ? { stream: { onText: (text: string) => stream.onDraft(review.token, text), onReset: () => stream.onReset(review.token) } } : {}) } })
     } else {
       const result = await chooseAttention(sessionId, row.session.userId, now, review.envelopes,
         { availability: availability.availability, label: availability.label }, review.previousKey)
@@ -206,6 +207,7 @@ async function reviewInbox(sessionId: string, now: Date) {
     }
   }
   finally {
+    stream?.onReset(token)
     // The agency transaction settles successful choices. Failures retain read state and retry.
     await db.update(messengerInbox).set({ leaseToken: null, leaseUntil: null, nextReviewAt: new Date(now.getTime() + 60_000) })
       .where(and(inArray(messengerInbox.messageId, review.ids), eq(messengerInbox.leaseToken, token)))

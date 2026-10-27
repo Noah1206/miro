@@ -28,6 +28,22 @@ export async function GET(req: Request) {
   const sessionId = new URL(req.url).searchParams.get('sessionId') ?? ''
   const items = await messengerItems(user.id, sessionId)
   if (!items) return Response.json({ error: 'not_found' }, { status: 404, headers })
+  if (new URL(req.url).searchParams.get('stream') === '1') {
+    const encoder = new TextEncoder()
+    const body = new ReadableStream<Uint8Array>({ async start(controller) {
+      const send = (event: unknown) => { try { controller.enqueue(encoder.encode(JSON.stringify(event) + '\n')) } catch { /* Delivery continues in the leased queue after disconnect. */ } }
+      send({ type: 'items', items })
+      try {
+        await runMessengerInbox(new Date(), { sessionId, limit: 1, stream: {
+          onDraft: (id, text) => send({ type: 'draft', id, text }), onReset: id => send({ type: 'reset', id }),
+        } })
+        const saved = await messengerItems(user.id, sessionId)
+        if (saved) send({ type: 'items', items: saved })
+      } catch { /* Keep the durable queue for the next worker; no partial message is committed. */ }
+      finally { send({ type: 'done' }); try { controller.close() } catch {} }
+    } })
+    return new Response(body, { headers: { 'content-type': 'application/x-ndjson; charset=utf-8', 'cache-control': 'no-store, no-transform', 'x-accel-buffering': 'no' } })
+  }
   await afterResponse(() => runMessengerInbox(new Date(), { sessionId, limit: 1 }).catch(() => observe('messenger.review_failed', { sessionId })))
   return Response.json({ items }, { headers })
 }

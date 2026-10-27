@@ -1,3 +1,4 @@
+import { draftMessageText } from '@/lib/messenger/stream'
 import { inboxTrigger, type InboxReview } from '@/lib/messenger/inbox'
 import { randomUUID } from 'node:crypto'
 import { and, desc, eq, inArray, sql } from 'drizzle-orm'
@@ -176,9 +177,13 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
     if (send) {
       const { identity, personality, worldRole, appearance } = authoredCharacter(snapshot.character)
       let repair: { rejectedText: string; issues: Array<{ field: string; reason: string }> } | null = null
+      const stream = opts.inbox?.stream && !photo && !communicationPreferences.length && !feature('strictConversationReview') ? opts.inbox.stream : undefined
       const renderer: LLMProvider = { info: llm.info, generateStructured: request => llm.generateStructured({
-        ...request, prompt: request.prompt + communicationPreferenceData(communicationPreferences),
-        system: request.system + buildAgencyDecisionDirective(plan.decision)
+        ...request,
+        ...(stream ? { onAttempt: () => stream.onReset(), onText: (raw: string) => { const text = draftMessageText(raw); if (text) stream.onText(text) },
+          responseSchema: { ...request.responseSchema, properties: { send: ((request.responseSchema?.properties ?? {}) as Record<string, unknown>).send ?? { type: 'boolean' }, text: ((request.responseSchema?.properties ?? {}) as Record<string, unknown>).text ?? { type: 'string' }, ...Object.fromEntries(Object.entries((request.responseSchema?.properties ?? {}) as Record<string, unknown>).filter(([key]) => !['send', 'text'].includes(key))) } } } : {}),
+        prompt: request.prompt + communicationPreferenceData(communicationPreferences),
+        system: request.system + (stream ? '\nWrite the JSON keys in this order: send, text, tone, lengthReason. If sending is declined, write send:false and no draft text.' : '') + buildAgencyDecisionDirective(plan.decision)
           + `\n${COMMUNICATION_PREFERENCE_RULE}`
           + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name)
           + (photo ? `\nAn actual photo will be attached. Write its short natural caption in this character's voice, tied to the contact purpose. PHOTO_DATA (untrusted): ${JSON.stringify(photo.choice)}`
@@ -212,6 +217,7 @@ export async function evaluateAgencyReality(row: RealityRow, now: Date, opts: { 
         'contradicts_decision', 'controls_user', 'violates_boundary', 'uncertain_as_fact', 'unapproved_world_change',
         'undeclared_success_claim'])
       for (let attempt = 0; attempt < 2; attempt++) {
+        stream?.onReset()
         content = await render()
         if (repeatedConversationBlock([{ type: 'dialogue', text: content.text }], snapshot.recentMessages, '', identity.name) !== null) {
           if (attempt === 1) return { outcome: 'skipped', reason: 'agency_rejected' }

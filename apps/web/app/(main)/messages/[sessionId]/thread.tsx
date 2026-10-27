@@ -16,7 +16,7 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
   const { theme } = useChatTheme()
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
-  const { items: delivered, retry } = useMessenger()
+  const { items: delivered, draft, retry } = useMessenger()
   const items = sample ?? delivered
   const end = useRef<HTMLDivElement>(null)
   const following = useRef(true)
@@ -24,7 +24,7 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
     const thread = end.current?.parentElement
     if (items.at(-1)?.role === 'user') following.current = true
     if (thread && following.current) thread.scrollTop = thread.scrollHeight
-  }, [items.length])
+  }, [items.length, draft?.text])
   useEffect(() => {
     const thread = end.current?.parentElement
     if (!thread) return
@@ -82,6 +82,10 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
           </div>
         )
       })}
+      {!sample && draft?.text && <div className={styles.row} data-messenger-draft aria-busy="true">
+        <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
+        <div className={styles.group}>{theme === 'talk' && <span className={styles.speaker}>{characterName}</span>}<p className={styles.bubble}>{draft.text}</p></div>
+      </div>}
       <div ref={end} aria-hidden />
     </div>
   )

@@ -1,6 +1,48 @@
 import type { AIProvider, GenerationRequest, GenerationResult } from './types'
 import type { ProviderInfo } from '../types'
 
+type Usage = { prompt_tokens?: number; completion_tokens?: number; prompt_tokens_details?: { cached_tokens?: number } }
+type CompletionChunk = { model?: string; usage?: Usage; error?: unknown;
+  choices?: Array<{ index?: number; finish_reason?: string | null; delta?: { content?: string | null; refusal?: string | null } }> }
+/** SSE framing is independent of TCP chunks, UTF-8 boundaries and empty usage-only events. */
+async function streamCompletion(response: Response, req: GenerationRequest, provider: string, requestedModel: string, start: number): Promise<GenerationResult> {
+  if (!response.body) throw new Error('provider_stream_incomplete')
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
+  let buffer = '', data: string[] = [], text = '', model = requestedModel, finish: string | null = null, blocked = false, ended = false
+  let usage: Usage | undefined
+  const dispatch = () => {
+    if (!data.length) return
+    const event = data.join('\n'); data = []
+    if (event.trim() === '[DONE]') { ended = true; return }
+    const chunk = JSON.parse(event) as CompletionChunk
+    if (chunk.error) throw new Error('provider_stream_error')
+    if (chunk.model) model = chunk.model
+    if (chunk.usage) usage = chunk.usage
+    const choice = chunk.choices?.find(c => c.index === undefined || c.index === 0)
+    if (choice?.finish_reason) finish = choice.finish_reason
+    if (choice?.delta?.refusal || finish === 'content_filter') blocked = true
+    const delta = choice?.delta?.content
+    if (delta && !blocked) { text += delta; req.onText!(text) }
+  }
+  try {
+    while (!ended) {
+      const { value, done } = await reader.read()
+      buffer += value ?? ''
+      let newline: number
+      while ((newline = buffer.indexOf('\n')) >= 0 && !ended) {
+        const line = buffer.slice(0, newline).replace(/\r$/, ''); buffer = buffer.slice(newline + 1)
+        if (!line) dispatch()
+        else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, ''))
+      }
+      if (done) { if (buffer.startsWith('data:')) data.push(buffer.slice(5).trim()); dispatch(); break }
+    }
+    // Never accept a proxy disconnect as a finished answer, even if the partial JSON happens to parse.
+    if (!ended || !finish) throw new Error('provider_stream_incomplete')
+    return { text: text.trim(), provider, model, inputTokens: usage?.prompt_tokens ?? null, outputTokens: usage?.completion_tokens ?? null,
+      cachedInputTokens: usage?.prompt_tokens_details?.cached_tokens ?? 0, latencyMs: Date.now() - start, blocked, truncated: finish === 'length' }
+  } finally { await reader.cancel().catch(() => {}); reader.releaseLock() }
+}
+
 /**
  * OpenAI 호환 chat/completions — OpenAI(강한 일의 예비 GPT-5.4 mini), Vercel AI Gateway(모델은 "provider/model"), 로컬 서버(Ollama 등).
  * 실패는 Gemini 와 같은 모양(provider_http_<상태>)으로 던진다 — 오케스트레이터의 재시도·429 대기·예비 전환이 공급자와 무관하게 돈다(10/2).
@@ -27,6 +69,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     const requiresReasoning = /^(openai\/)?gpt-(6-astra|6\.1-sol)(?:-|$)/.test(this.model)
     // GPT-5 는 생각 토큰이 max_completion_tokens 를 같이 먹는다 — medium 생각이면 4096 을 생각만으로 다 써 답이 비었다
     // (10/4 성격표 예비 호출 전부 max_tokens). 생각을 켠 요청은 답 몫의 3배를 준다. ponytail: 모델 상한은 레지스트리가 알지만 여기선 모른다 — 16k 안이면 된다.
+    const streaming = this.name === 'openai' && !!req.onText
     const completionCap = (req.maxTokens ?? 1024) * (req.thinking && !req.hardTokenCap ? 3 : 1)
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
@@ -47,9 +90,11 @@ export class OpenAICompatibleProvider implements AIProvider {
           ? { type: 'json_schema', json_schema: { name: 'output', schema: req.responseSchema, strict: false } }
           : { type: 'json_object' } } : {}),
         ...this.extra,
+        ...(streaming ? { stream: true, stream_options: { include_usage: true } } : {}),
       }),
     })
     if (!res.ok) { await res.body?.cancel(); throw new Error(`provider_http_${res.status}`) }
+    if (streaming) return streamCompletion(res, req, this.name, this.model, t0)
     const body = (await res.json()) as {
       model?: string
       choices?: Array<{ finish_reason?: string; message?: { content?: string | null; refusal?: string | null } }>
