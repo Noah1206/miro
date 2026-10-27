@@ -78,7 +78,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <span>{t('호감 {n}%', { n: affinity })}</span><span className={styles.affinityBar} aria-hidden="true"><i style={{ width: `${affinity}%` }} /></span>
             </p></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
-          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} />
+          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
         </header>
         <VoiceStatus />
         {feature('imageGeneration')&&!loaded.restricted&&<SceneImage sessionId={sessionId} unveil={loaded.adult.on} cost={usageWeight('photo')}/>}

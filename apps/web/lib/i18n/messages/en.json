@@ -1489,5 +1489,17 @@
  "차감 안내 닫기": "Dismiss charge notice",
  "취향으로 찾기": "Find by preference",
  "캐릭터의 대사가 도착하면 골라 들을 수 있어요.": "Choose a line to hear once the character replies.",
- "현재 언베일 이미지를 이용할 수 없어요.": "Unveil images are currently unavailable."
+ "현재 언베일 이미지를 이용할 수 없어요.": "Unveil images are currently unavailable.",
+ "기억 보기": "View memories",
+ "내 설정": "My settings",
+ "대화 기억": "Conversation memories",
+ "대화 삭제": "Delete conversation",
+ "대화방 나가기": "Leave chat",
+ "상세 설정 닫기": "Close details",
+ "설정하기": "Set up",
+ "이전 대화 보기": "Previous conversations",
+ "채팅방 설정": "Chat settings",
+ "캐릭터 정보": "Character details",
+ "함께하는 대화": "Your conversation",
+ "환경": "Preferences"
 }

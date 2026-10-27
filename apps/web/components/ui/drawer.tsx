@@ -8,8 +8,8 @@ import { useT } from '@/lib/i18n/client'
 import styles from './drawer.module.css'
 
 /** A room-sized right drawer, portaled above the chat header and keyboard layout. */
-export function Drawer({ open, onClose, title, children, id }: {
-  open: boolean; onClose: () => void; title: string; children: ReactNode; id?: string
+export function Drawer({ open, onClose, title, children, id, footer }: {
+  open: boolean; onClose: () => void; title: string; children: ReactNode; id?: string; footer?: ReactNode
 }) {
   const t = useT()
   const reduce = useReducedMotion()
@@ -46,6 +46,7 @@ export function Drawer({ open, onClose, title, children, id }: {
             </button>
           </header>
           <div className={styles.content}>{children}</div>
+          {footer && <footer className={styles.footer}>{footer}</footer>}
         </motion.div>
       </div>
     </>}

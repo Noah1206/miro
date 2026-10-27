@@ -35,7 +35,8 @@ test('each room confirms its own persona and keeps it when the shared profile ch
 
   await page.goto(chat)
   await page.getByRole('button', { name: '대화 메뉴', exact: true }).click()
-  const room = page.getByRole('dialog', { name: '대화 메뉴' })
+  const room = page.getByRole('dialog', { name: '채팅방 설정' })
+  await room.getByRole('button', { name: '페르소나', exact: true }).click()
   await expect(room.getByRole('textbox', { name: '이름', exact: true })).toHaveValue('지우')
   await expect(room.getByRole('button', { name: '여성', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })

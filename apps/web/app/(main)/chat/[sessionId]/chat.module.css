@@ -26,18 +26,6 @@
 .contextButton svg { width: 20px; height: 20px; }
 .roomMenuButton { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; font-size:23px; line-height:1; cursor:pointer; }
 .roomMenuButton:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
-.roomMenuItems { display:grid; gap:12px; }
-.roomMenuGroup { min-width:0; padding:14px 12px; border:0; border-radius:14px; background:#303030; }
-.roomMenuLabel { margin:0 4px 12px; color:#c8c8c8; font-size:12px; font-weight:600; line-height:1.5; }
-.roomMenuModes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
-.roomMenuItem { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:48px; padding:10px 12px; border:0; border-radius:10px; background:transparent; color:var(--color-text-primary); font:inherit; font-size:15px; text-decoration:none; text-align:left; cursor:pointer; }
-.roomMenuItem:hover { background:#3b3b3b; }
-.roomMenuItem:focus-visible { outline:2px solid #c8c8c8; outline-offset:-2px; }
-.roomMenuItem[aria-pressed='true'] { background:#484848; color:#fff; }
-.roomMenuModes .roomMenuItem { min-height:44px; padding:10px; font-size:13px; }
-.roomMenuPersona { --field-border-w:0px; --field-font:16px; --field-pad-y:10px; --chip-bg:#3c3c3c; --chip-on-bg:#5a5a5a; --chip-on-fg:#fff; --chip-font:12px; }
-.roomMenuPersona :global(form.stack) { gap:14px !important; }
-.roomMenuPersona :global(.btn) { border:0; background:#525252; color:#fff; }
 .voiceStatus { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 5px 12px; flex: 0 0 auto; color: var(--color-text-secondary); font-size: 12px; }
 .voiceStatus button { border: 0; background: none; color: var(--color-accent-text); font: inherit; min-height: 36px; cursor: pointer; }
 /* 언베일 — 클래식 토글과 수위 메뉴, 자수정 그라데이션. */

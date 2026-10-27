@@ -1,9 +1,10 @@
 .backdrop { position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.48); }
 .frame { position:fixed; inset:0; z-index:61; display:flex; justify-content:flex-end; width:100%; max-width:var(--app-w,480px); margin-inline:auto; overflow:hidden; pointer-events:none; }
-.panel { --color-text-primary:#f5f5f5; --color-text-secondary:#d0d0d0; --color-text-tertiary:#b5b5b5; --color-surface-1:#303030; --color-surface-2:#3c3c3c; --color-surface-3:#484848; display:flex; flex-direction:column; flex:0 0 auto; width:min(86%,340px); height:100%; min-height:0; background:#252525; color:var(--color-text-primary); border:0; pointer-events:auto; touch-action:pan-y; outline:none; color-scheme:dark; }
+.panel { --color-text-primary:#f5f5f5; --color-text-secondary:#d0d0d0; --color-text-tertiary:#b5b5b5; --color-surface-1:#303032; --color-surface-2:#3c3c3f; --color-surface-3:#48484b; display:flex; flex-direction:column; flex:0 0 auto; width:min(88%,360px); height:100%; min-height:0; background:#272729; color:var(--color-text-primary); border:0; border-radius:18px 0 0 18px; pointer-events:auto; touch-action:pan-y; outline:none; color-scheme:dark; }
 .header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex:0 0 auto; padding:calc(12px + env(safe-area-inset-top,0px)) 12px 12px 20px; border:0; touch-action:pan-y; }
-.title { margin:0; font-size:17px; font-weight:650; line-height:1.4; outline:none; }
+.title { margin:0; font-size:17px; font-weight:550; line-height:1.4; outline:none; }
 .close { display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; padding:0; border:0; border-radius:10px; background:transparent; color:inherit; cursor:pointer; }
 .close:hover { background:var(--color-surface-2); }
 .close:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
-.content { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 12px max(20px,env(safe-area-inset-bottom,0px)); }
+.content { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 18px 24px; }
+.footer { flex:0 0 auto; padding:6px 18px max(10px,env(safe-area-inset-bottom,0px)); background:#2e2e31; }
