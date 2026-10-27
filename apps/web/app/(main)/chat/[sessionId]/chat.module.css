@@ -441,3 +441,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .messageLine { min-width:0; }
 .messageLine[data-message-role='user'] + .messageLine:not([data-message-role='user']),
 .messageLine:not([data-message-role='user']) + .messageLine[data-message-role='user'] { padding-top:8px; }
+
+/* Leave a clear gutter above the writing area, including with the keyboard open. */
+.composer, :global([data-chat-theme]) .composer { padding-top:12px; }

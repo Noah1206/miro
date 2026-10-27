@@ -259,3 +259,14 @@
 .modelRow { display:flex; align-items:center; justify-content:space-between; gap:6px; }
 .modelTools,.sendTools { display:flex; align-items:center; gap:4px; min-width:0; }
 .sendTools { flex-shrink:0; }
+
+/* Match chat speaker changes while retaining compact same-speaker groups. */
+.thread { --dm-row-gap:14px; }
+:global([data-chat-theme='dm']) .thread,
+:global([data-chat-theme='dm-light']) .thread { --dm-row-gap:12px; }
+:global([data-chat-theme='miro']) .thread { --dm-row-gap:18px; }
+.thread, :global([data-chat-theme]) .thread { row-gap:var(--dm-row-gap); padding-bottom:0; }
+.thread > [data-dm-role] { flex-shrink:0; }
+.thread > [data-dm-role='user'] + [data-dm-role='character'],
+.thread > [data-dm-role='character'] + [data-dm-role='user'] { margin-top:calc(28px - var(--dm-row-gap)); }
+.composer, :global([data-chat-theme]) .composer { padding-top:12px; }

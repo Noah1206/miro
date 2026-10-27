@@ -56,7 +56,7 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
       {items.map((m, index) => {
         const hideTime = theme === 'talk' && !!m.at && items[index + 1]?.role === m.role && items[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)
         const time = hideTime ? '' : clock(m.at, locale)
-        if (m.role === 'user') return <div key={m.id} className={styles.userRow} data-delivery={m.delivery ?? 'sent'}>
+        if (m.role === 'user') return <div key={m.id} className={styles.userRow} data-dm-role="user" data-delivery={m.delivery ?? 'sent'}>
           <span className={styles.receipt}>
             {m.delivery === 'failed' ? <button type="button" onClick={() => retry(m.id)} aria-label={t('다시 보내기')}>{t('다시 보내기')}</button>
               : m.delivery === 'sending' ? <span>{t('전송 중')}</span>
@@ -70,7 +70,7 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
         const lines = m.kind === 'photo' ? [] : m.blocks.filter((b) => b.type === 'dialogue' && typeof b.text === 'string').map((b) => String(b.text))
         const texts = m.kind === 'photo' ? [] : lines.length ? lines : m.content.split(/\n\s*\n/).filter(Boolean)
         return (
-          <div key={m.id} className={styles.row} data-reality-message>
+          <div key={m.id} className={styles.row} data-dm-role="character" data-reality-message>
             <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
             <div className={styles.group}>
               {theme === 'talk' && <span className={styles.speaker}>{characterName}</span>}
@@ -82,11 +82,11 @@ export function MessengerThread({ items: sample, characterName, portrait }: { it
           </div>
         )
       })}
-      {!sample && draft?.text && <div className={styles.row} data-messenger-draft aria-busy="true">
+      {!sample && draft?.text && <div className={styles.row} data-dm-role="character" data-messenger-draft aria-busy="true">
         <span className={styles.avatar} aria-hidden>{theme !== 'miro' ? <DefaultChatAvatar /> : portrait ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} /> : characterName.slice(0, 1)}</span>
         <div className={styles.group}>{theme === 'talk' && <span className={styles.speaker}>{characterName}</span>}<p className={styles.bubble}>{draft.text}</p></div>
       </div>}
-      <div ref={end} aria-hidden />
+      <div ref={end} aria-hidden hidden />
     </div>
   )
 }
