@@ -48,3 +48,22 @@ export async function adultModeGateFor(userId: string, characterId: string, sess
   if (mentionsMinor(persona?.name) || mentionsMinor(persona?.description)) return { allowed: false, reason: 'persona_minor', next: msg('페르소나가 학생·미성년자로 되어 있으면 언베일을 켤 수 없어요.') }
   return gate
 }
+
+/**
+ * 일반 방에서 모델이 거절한 뒤 언베일을 권해도 되는가(10/27). 사용자가 직접 풀 수 있는 이유(인증·동의)만 'verify' 로 권하고,
+ * 캐릭터 나이·미성년 페르소나·실존 인물·모델 없음은 권하지 않는다(null). 권하는 것뿐 — 전환은 사용자가 토글 시트에서 한다.
+ */
+export async function unveilOfferFor(userId: string, characterId: string, sessionId: string): Promise<'ready' | 'verify' | null> {
+  if (!adultModelReady()) return null
+  const [c] = await db.select({ age: characters.age, occupation: characters.occupation, socialPosition: characters.socialPosition, role: characters.role, tagline: characters.tagline })
+    .from(characters).where(eq(characters.id, characterId)).limit(1)
+  if (!c || !adultCharacter(c)) return null
+  const persona = await getConversationPersona(userId, sessionId)
+  if (mentionsMinor(persona?.name) || mentionsMinor(persona?.description)) return null
+  const gate = await matureGateFor(userId, characterId)
+  if (gate.allowed) return 'ready'
+  if (gate.reason === 'policy_not_agreed') return 'verify'
+  // 운영에서 실제 본인인증이 아직 안 붙었으면 인증 시트를 띄워도 끝낼 수 없다 — 권하지 않는다.
+  if (gate.reason === 'not_verified' && (!productionRuntime() || resolveAdultVerification().info.mode === 'live')) return 'verify'
+  return null
+}

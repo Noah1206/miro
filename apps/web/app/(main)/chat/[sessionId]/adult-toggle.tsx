@@ -1,5 +1,5 @@
 'use client'
-import { useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { Button, Checkbox, Sheet, useToast } from '@/components/ui'
 import { Popover } from '@/components/ui/popover'
 import { msg } from '@/lib/i18n'
@@ -16,6 +16,9 @@ import styles from './chat.module.css'
  * 처음 켤 때만 한 번 묻는다 — 나이 확인·성인 콘텐츠 정책 동의 두 체크가 있어야 켜진다(본인인증과 함께 쓰는 동의 절차, 10/2). 한 번 켠 방은 꺼도 성인 전용 모델이 이어 맡는다(화면엔 AI 를 말하지 않는다 — 10/2 결정). 판정은 서버가 한다.
  */
 type Level = 'soft' | 'deep' | 'explicit'
+/** 일반 방에서 거절된 턴(10/27): 입력창이 이 이벤트를 보내면 안내 시트를 연다. 고르면 문장을 UNVEIL_CARRY 로 언베일 방 입력창에 옮긴다. */
+export const UNVEIL_OFFER = 'miro:unveil-offer'
+export const UNVEIL_CARRY = 'miro:unveil-carry'
 /** 언베일 수위 메뉴(10/3 사용자 요청: 모드 고르기 목록처럼). 수위는 한도이고, 속도는 여전히 사용자가 이끈다(engine adultRule). */
 const LEVELS: Array<{ value: Level | 'off'; title: string }> = [
   // 단계는 한 단어(10/3 사용자 결정, 설명 줄은 뺐다). 뜻: 설렘=키스·스킨십까지, 몰입=노골적 세부 없이, 언베일=노골적.
@@ -32,7 +35,17 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
   const [ask, setAsk] = useState<Level | null>(null)
   const [verification, setVerification] = useState<{ state: Awaited<ReturnType<typeof adultVerificationState>>; level: Level } | null>(null)
   const [pending, start] = useTransition()
+  const [offer, setOffer] = useState<{ text: string } | null>(null)
+  const carry = useRef<string | null>(null)
+  useEffect(() => {
+    const open = (e: Event) => { const d = (e as CustomEvent<{ text?: string }>).detail; setOffer({ text: typeof d?.text === 'string' ? d.text.slice(0, 2000) : '' }) }
+    window.addEventListener(UNVEIL_OFFER, open)
+    return () => window.removeEventListener(UNVEIL_OFFER, open)
+  }, [])
   const apply = (next: Level | 'off', agreed = false) => start(async () => {
+    // 실제로 켤 때만 문장을 옮긴다 — 시트를 닫거나 인증을 그만두면 아무것도 남기지 않는다.
+    if (next !== 'off' && carry.current) { try { sessionStorage.setItem(UNVEIL_CARRY, JSON.stringify({ text: carry.current, at: Date.now() })) } catch { /* 옮기지 못해도 전환은 된다 */ } }
+    carry.current = null
     const { error } = await setAdultMode(sessionId, next !== 'off', agreed, next === 'off' ? undefined : next)
     setAsk(null)
     if (error) toast(t(error))
@@ -70,7 +83,20 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
         ))}
       </Popover>
     </span>
-    <Sheet open={verification !== null} onClose={() => setVerification(null)} label={t('언베일을 켤까요?')} compact>
+    <Sheet open={offer !== null} onClose={() => setOffer(null)} label={t('이 장면은 이어가지 못했어요')} compact>
+      {offer && <div className={sheet.stack}>
+        <div className={sheet.center}>
+          <span aria-hidden className={styles.adultBadge}>19</span>
+          <h2 className="t-title-2" tabIndex={-1} data-initial-focus>{t('이 장면은 이어가지 못했어요')}</h2>
+          <p>{t('지금 대화방의 모델이 이 장면을 쓰지 않았어요. 언베일(19+) 대화방에서 이어갈 수 있어요. 보낸 문장은 그 대화방 입력창에 옮겨 둘게요.')}</p>
+        </div>
+        <div className={sheet.actions}>
+          <Button type="button" variant="primary" full disabled={pending} onClick={() => { carry.current = offer.text; setOffer(null); choose(level) }}>{t('언베일에서 이어가기')}</Button>
+          <Button type="button" variant="ghost" size="sm" full onClick={() => setOffer(null)} style={{ color: 'var(--color-text-primary)' }}>{t('여기서 계속하기')}</Button>
+        </div>
+      </div>}
+    </Sheet>
+    <Sheet open={verification !== null} onClose={() => { carry.current = null; setVerification(null) }} label={t('언베일을 켤까요?')} compact>
       {verification && <div className={`${sheet.stack} ${styles.adultVerification}`}>
         <div className={sheet.center}>
           <span aria-hidden className={styles.adultBadge}>19</span>
@@ -85,7 +111,7 @@ export function AdultToggle({ sessionId, on, everOn, level, blocked = null }: { 
         <Button type="button" variant="ghost" size="sm" full onClick={() => setVerification(null)} style={{ color: 'var(--color-text-primary)' }}>{t('돌아가기')}</Button>
       </div>}
     </Sheet>
-    <Sheet open={ask !== null} onClose={() => setAsk(null)} label={t('언베일을 켤까요?')} compact>
+    <Sheet open={ask !== null} onClose={() => { carry.current = null; setAsk(null) }} label={t('언베일을 켤까요?')} compact>
       {/* 두 체크는 required — 브라우저가 둘 다 체크해야 제출한다. 서버도 처음 켤 때 agreed 를 다시 본다. */}
       <form className={sheet.stack} onSubmit={(e) => {
         e.preventDefault()

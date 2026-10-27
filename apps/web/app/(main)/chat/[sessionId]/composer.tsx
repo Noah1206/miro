@@ -18,6 +18,7 @@ import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
 import { useT } from '@/lib/i18n/client'
+import { UNVEIL_CARRY, UNVEIL_OFFER } from './adult-toggle'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
@@ -56,6 +57,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       if (result.limit) openRecharge()
       if (result.succeeded) { setCommand(null); if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
       else if (!result.keepWaiting) restore(!!result.retryWithSameId)
+      // 일반 방에서 거절됐고 언베일로 이어갈 수 있으면 머리의 언베일 토글이 안내 시트를 연다(전환은 사용자가 고른다).
+      if (result.unveil) window.dispatchEvent(new CustomEvent(UNVEIL_OFFER, { detail: { text: sent.input, state: result.unveil } }))
     } catch {
       setState({ error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true })
       setLive(null)
@@ -91,6 +94,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         const restoredModel = modelOptions.choices?.some(c => c.id === saved.model) || saved.model === 'pro' ? saved.model : 'miro'
         previousModel.current = restoredModel; setModel(restoredModel)
       }
+      // 일반 방에서 거절된 문장을 언베일 방으로 옮겨 왔다(10분 안) — 입력창에 채워 두기만 한다. 보내는 건 사용자.
+      const carried = JSON.parse(sessionStorage.getItem(UNVEIL_CARRY) ?? 'null')
+      sessionStorage.removeItem(UNVEIL_CARRY)
+      if (!input && carried && typeof carried.text === 'string' && carried.text.length <= 2000 && Date.now() - Number(carried.at) < 600_000) input = carried.text
     } catch { /* Storage may be unavailable in private browsing. */ }
     setDraft(input); setRequestId(id); setReady(true)
   }, [storageKey])

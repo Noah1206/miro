@@ -1523,5 +1523,9 @@
  "속도와 지능을 균형 있게 제공하는 모델": "A balance of speed and intelligence",
  "실제 사용량만큼 차감돼요.": "Only actual usage is charged.",
  "최대 {count} 토큰/턴": "Up to {count} tokens/turn",
- "사용할 모델과 답변 길이 선택": "Choose a model and reply length"
+ "사용할 모델과 답변 길이 선택": "Choose a model and reply length",
+ "이 장면은 이어가지 못했어요": "This scene couldn't continue",
+ "지금 대화방의 모델이 이 장면을 쓰지 않았어요. 언베일(19+) 대화방에서 이어갈 수 있어요. 보낸 문장은 그 대화방 입력창에 옮겨 둘게요.": "The model in this chat didn't write this scene. You can continue it in an Unveil (19+) chat. We'll move your message to that chat's input box.",
+ "언베일에서 이어가기": "Continue in Unveil",
+ "여기서 계속하기": "Stay here"
 }
