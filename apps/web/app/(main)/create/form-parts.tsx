@@ -192,12 +192,12 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {items.map((it) => <input key={it.url} type="hidden" name="imageOrder" value={it.kind} />)}
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
-      <div {...(main ? dragHandlers(0) : {})} style={{ width: 200, margin: '0 auto', cursor: main ? 'grab' : undefined }}>
+      <div {...(main ? dragHandlers(0) : {})} style={{ width: 280, margin: '0 auto', cursor: main ? 'grab' : undefined }}>
         <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: 200, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'pointer', background: 'var(--color-surface-2)',
+            width: 280, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'pointer', background: 'var(--color-surface-2)',
             borderWidth: 1.5,
             borderColor: overIndex === 0 && dragIndex !== null && dragIndex !== 0 ? 'var(--color-border-hover)' : main ? 'transparent' : 'var(--color-border-strong)',
             borderStyle: main ? 'solid' : 'dashed',

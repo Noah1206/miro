@@ -11,7 +11,7 @@ import { GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, ImagePicker, IntroText, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { MOODS } from './parse'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
@@ -287,7 +287,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('캐릭터')}>
             <Card>
               <ImagePicker label={t('캐릭터 이미지')} maxCount={5} existing={i.images} />
-              {mode === 'create' && <p className="t-caption" style={{ marginTop: 8, color: 'var(--color-text-tertiary)' }}>{t('선택한 이미지는 임시저장해야 다음에도 유지됩니다.')}</p>}
               <div style={{ marginTop: 'var(--space-5)' }}>
                 <IdentityCard>
                   <div className="stack" style={{ gap: 18 }}>
@@ -437,16 +436,19 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
             </Card>
           </Section>
+          <input type="hidden" name="startingTime" value={gen.startingTime ?? i.startingTime} />
+        </Panel>
+        {/* 인트로 대화(10/28) — 화자를 고르고 한 마디씩 쌓는 채팅식 편집기. 데스크톱에선 인트로 탭일 때 미리보기 자리(오른쪽)에 뜬다. */}
+        <Panel id="intro-dialogue" show={tab === 'intro'}>
           <Section title={t('인트로 대화')} subtitle={t('새 채팅이 열릴 때 캐릭터가 먼저 건네는 말이에요. 비워 두면 사용자가 먼저 말을 걸어요.')}>
-            <Card>
-              <IntroText key={`intro:${genIntro?.[0]?.text ?? ''}`} name="introDialogue" characterName={name} defaultValue={genIntro ?? introDialogue(i.sampleDialogue)} />
-              <input type="hidden" name="startingTime" value={gen.startingTime ?? i.startingTime} />
-            </Card>
+            <div className="create-intro-editor">
+              <DialogueEditor intro fill name="introDialogue" characterName={name} defaultValue={genIntro ?? introDialogue(i.sampleDialogue)} />
+            </div>
           </Section>
         </Panel>
 
         {/* ── 소개 페이지 ── */}
-        <Panel id="preview" show={tab === 'preview' || desktop}>
+        <Panel id="preview" show={tab === 'preview' || (desktop && tab !== 'intro')}>
           <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: t('소개 페이지') }, { value: 'chat', label: t('테스트 채팅') }]} /></div>
           {/* 테스트 채팅(10/19) — 미리보기를 연 시점의 인트로를 깔고, 보낼 때마다 폼을 다시 읽어 지금 설정으로 답한다. */}
           {previewMode === 'detail' ? <DetailPreview d={snap} can={can} experienceType={experienceType} />
