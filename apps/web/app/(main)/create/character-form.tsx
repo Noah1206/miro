@@ -11,7 +11,7 @@ import { GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, IntroText, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, ImagePicker, IntroText, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { MOODS } from './parse'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
@@ -132,9 +132,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [intro, setIntro] = useState(() => joinIntro(i.title, i.personality))
   const { title, personality } = splitIntro(intro)
   const [startingContext, setStartingContext] = useState(i.startingContext)
-  const [sampleCharacterCount, setSampleCharacterCount] = useState(() => sampleDialogue(i.sampleDialogue).reduce((sum, turn) => sum + turn.text.length, 0))
-  const [sampleOpen, setSampleOpen] = useState(false)
-  const reduceMotion = useReducedMotion()
   const [mbti, setMbti] = useState<string>(i.mbti)
   const [gender, setGender] = useState<string>(i.gender)
   const [build] = useState<string>(i.build)
@@ -326,34 +323,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
 
-          <Section title={t('상황 예시 · 선택')}>
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>
-              {t('상황 예시로 캐릭터의 성격과 말투를 표현해 주세요. 상세페이지에 표시됩니다.')}<br />
-              {t('{n}자', { n: sampleCharacterCount.toLocaleString() })}
-            </p>
-            <motion.button type="button" aria-expanded={sampleOpen} aria-controls="sample-dialogue-editor" onClick={() => setSampleOpen((open) => !open)}
-              whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, marginTop: 20, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-              {t('상황 예시 추가')}
-            </motion.button>
-            <div id="sample-dialogue-editor" hidden={!sampleOpen} inert={!sampleOpen}>
-              <motion.div initial={false} animate={{ y: reduceMotion || sampleOpen ? 0 : '100%' }} transition={{ duration: reduceMotion ? 0 : 0.28, ease: [0.22, 1, 0.36, 1] }} style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', flexDirection: 'column', background: 'var(--color-bg)', margin: '0 auto', maxWidth: 'var(--app-w)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', minHeight: 56, padding: '0 var(--gutter)', flexShrink: 0 }}>
-                  <button type="button" onClick={() => setSampleOpen(false)} aria-label={t('상황 예시 닫기')}
-                    style={{ display: 'grid', placeItems: 'center', width: 44, height: 44, marginLeft: -10, background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-text-primary)' }}>
-                    <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-                  </button>
-                  <h2 className="t-title-3" style={{ flex: 1, textAlign: 'center' }}>{t('상황 예시')}</h2>
-                  <button type="button" onClick={() => setSampleOpen(false)}
-                    style={{ padding: '8px 4px', background: 'none', border: 0, cursor: 'pointer', color: 'var(--color-white)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>{t('확인')}</button>
-                </div>
-                <div style={{ flex: 1, minHeight: 0, padding: '0 var(--gutter)' }}>
-                  <DialogueEditor name="sampleDialogue" characterName={name} defaultValue={sampleDialogue(i.sampleDialogue)} onCharacterCountChange={setSampleCharacterCount} fill />
-                </div>
-              </motion.div>
-            </div>
-          </Section>
+          {/* 상황 예시(10/28): 칸은 지웠다(사용자 요청). 이미 적힌 예시는 지우지 않게 그대로 보낸다. */}
+          <input type="hidden" name="sampleDialogue" value={JSON.stringify(sampleDialogue(i.sampleDialogue))} />
         </Panel>
 
         {/* ── 세계관 ── */}
