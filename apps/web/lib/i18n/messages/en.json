@@ -1547,5 +1547,6 @@
  "JPG, PNG, WEBP, HEIC 이미지만 올릴 수 있어요": "Only JPG, PNG, WEBP and HEIC images",
  "1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요": "1:1 ratio recommended, up to 5MB each",
  "첫 번째 사진이 대표 사진이 되고, 최대 {n}장까지 넣을 수 있어요": "The first photo is the cover; up to {n} photos",
- "부적절한 이미지는 제한될 수 있어요": "Inappropriate images may be restricted"
+ "부적절한 이미지는 제한될 수 있어요": "Inappropriate images may be restricted",
+ "클릭하여": "Click to"
 }

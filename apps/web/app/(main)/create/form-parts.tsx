@@ -131,6 +131,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const pickerRef = useRef<HTMLInputElement>(null)
   const inputId = useId()
   const reduce = useReducedMotion()
   const t = useT()
@@ -192,10 +193,9 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {items.map((it) => <input key={it.url} type="hidden" name="imageOrder" value={it.kind} />)}
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
-      {/* 10/28: 대표 사진 옆(모바일은 아래)에 흰 업로드 버튼 — 누르면 바로 파일을 고른다. */}
       <div className="create-photo-row">
       <div {...(main ? dragHandlers(0) : {})} style={{ width: 280, cursor: main ? 'grab' : undefined }}>
-        <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
+        <motion.button type="button" onClick={() => full ? setOpen(true) : pickerRef.current?.click()} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -226,29 +226,12 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
                   <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
                 </svg>
                 <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
-                  {label}{required && <Star />}
-                </span>
-                {/* quaternary 는 surface-2 위에서 3.3:1 이라 못 쓴다 (axe). */}
-                <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
-                  {t('최대 {n}장', { n: maxCount })}
+                  {t('클릭하여')}<br />{t('이미지 업로드')}{required && <Star />}
                 </span>
               </motion.span>
             )}
           </AnimatePresence>
         </motion.button>
-      </div>
-      {/* 업로드 버튼 + 안내(10/28, 레퍼런스식) — 버튼만 덩그러니 있지 않게. */}
-      <div className="stack" style={{ gap: 12 }}>
-        {!full && <label htmlFor={inputId} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLLabelElement).click() } }}
-          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 120, minHeight: 48, padding: '12px 28px', borderRadius: 'var(--radius-button)', background: 'var(--color-white)', color: 'var(--color-bg)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)', cursor: 'pointer' }}>
-          {t('업로드')}
-        </label>}
-        <ul className="t-caption" style={{ margin: 0, paddingLeft: 18, color: 'var(--color-text-tertiary)', lineHeight: 1.7 }}>
-          <li>{t('JPG, PNG, WEBP, HEIC 이미지만 올릴 수 있어요')}</li>
-          <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
-          <li>{t('첫 번째 사진이 대표 사진이 되고, 최대 {n}장까지 넣을 수 있어요', { n: maxCount })}</li>
-          <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
-        </ul>
       </div>
       </div>
 
@@ -285,6 +268,20 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         </ul>
       )}
 
+      {/* 고르기 input 은 시트 밖에 둔다 — 대표 사진 칸을 누르면 시트 없이 바로 연다(10/28). */}
+      <input ref={pickerRef} id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
+        onChange={async (e) => {
+          const picked = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
+          e.target.value = ''
+          setOpen(false)
+          // 보내기 전에 줄인다 — 서버 액션 본문 한도(4MB) 안에 5장이 들어가게(lib/shrink-image).
+          const files = await Promise.all(picked.map(shrinkImage))
+          if (files.length > 0) {
+            const added = files.map(file => ({ url: URL.createObjectURL(file), file }))
+            setPreviews(xs => [...xs, ...added])
+            setImageOrder(xs => [...xs, ...added.map(p => p.url)])
+          }
+        }} />
       <Sheet open={open} onClose={() => setOpen(false)} title={`${label} ${items.length}/${maxCount}`}>
         <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
           {t('한 장당 5MB 이하 (jpg, jpeg, png, webp, heic, heif)')}
@@ -297,19 +294,6 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             </svg>
             <span className="t-body" style={{ color: 'var(--color-text-primary)' }}>{t('기기에서 가져오기')}</span>
           </label>
-          <input id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
-            onChange={async (e) => {
-              const picked = Array.from(e.target.files ?? []).slice(0, Math.max(0, maxCount - items.length))
-              e.target.value = ''
-              setOpen(false)
-              // 보내기 전에 줄인다 — 서버 액션 본문 한도(4MB) 안에 5장이 들어가게(lib/shrink-image).
-              const files = await Promise.all(picked.map(shrinkImage))
-              if (files.length > 0) {
-                const added = files.map(file => ({ url: URL.createObjectURL(file), file }))
-                setPreviews(xs => [...xs, ...added])
-                setImageOrder(xs => [...xs, ...added.map(p => p.url)])
-              }
-            }} />
         </div>
         <p className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 18, padding: '0 4px' }}>
           {t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요!')}<br />
