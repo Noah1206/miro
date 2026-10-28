@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { Sheet, Rows, Switch } from '@/components/ui'
+import { LogoMark, Sheet, Rows, Switch } from '@/components/ui'
 export { Rows, Switch }
 import { duration, ease } from '@/lib/motion/tokens'
 import { Line } from '../character/[slug]/sections'
@@ -193,13 +193,14 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {items.map((it) => <input key={it.url} type="hidden" name="imageOrder" value={it.kind} />)}
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
-      <div className="create-photo-row">
-      <div {...(main ? dragHandlers(0) : {})} style={{ width: 280, cursor: main ? 'grab' : undefined }}>
-        <motion.button type="button" onClick={() => full ? setOpen(true) : pickerRef.current?.click()} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
+      {/* 10/28: 대표 사진 옆에 추가 사진·'+' 를 둔다. 빈 칸은 작게. */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+      <div {...(main ? dragHandlers(0) : {})} style={{ width: main ? 280 : 180, cursor: main ? 'grab' : undefined }}>
+        <motion.button type="button" onClick={() => { if (main) setOpen(true) }} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: 280, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'pointer', background: 'var(--color-surface-2)',
+            width: main ? 280 : 180, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'default', background: 'var(--color-surface-2)',
             borderWidth: 1.5,
             borderColor: overIndex === 0 && dragIndex !== null && dragIndex !== 0 ? 'var(--color-border-hover)' : main ? 'transparent' : 'var(--color-border-strong)',
             borderStyle: main ? 'solid' : 'dashed',
@@ -222,22 +223,17 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             {!main && (
               <motion.span key="empty" exit={{ opacity: 0, transition: { duration: duration.fast } }}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <svg aria-hidden width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="6" width="18" height="14" rx="2" /><circle cx="12" cy="13" r="3.5" /><path d="M8 6l1.5-2h5L16 6" />
-                </svg>
-                <span className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center', lineHeight: 1.3 }}>
-                  {t('클릭하여')}<br />{t('이미지 업로드')}{required && <Star />}
-                </span>
+                {/* 10/28: 빈 칸엔 미로 로고만 — 사진은 아래 '+' 로 넣는다(사용자 요청). */}
+                <span style={{ opacity: 0.35 }}><LogoMark size={72} /></span>
               </motion.span>
             )}
           </AnimatePresence>
         </motion.button>
       </div>
-      </div>
 
-      {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. 드래그로 순서를 바꿀 수 있다. */}
-      {main && (
-        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: '12px auto 0', padding: 0, width: 200, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+      {/* 나머지 사진 줄 — 10/28 부터 처음에도 보인다: 사진은 모두 '+' 로 넣는다. 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
+      {(
+        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(2, 56px)', gap: 6 }}>
           <AnimatePresence initial={false}>
             {items.slice(1).map((it, i) => (
               // 드래그(li, 네이티브)와 애니메이션(motion.div)을 분리한다 — 대표 사진 칸과 같은 이유.
@@ -267,6 +263,14 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           )}
         </ul>
       )}
+      </div>
+      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다(사용자 스크린샷). */}
+      <ul className="t-caption" style={{ margin: '12px 0 0', paddingLeft: 18, color: 'var(--color-text-tertiary)', lineHeight: 1.7 }}>
+        <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
+        <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
+        <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
+        <li>{t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요')}</li>
+      </ul>
 
       {/* 고르기 input 은 시트 밖에 둔다 — 대표 사진 칸을 누르면 시트 없이 바로 연다(10/28). */}
       <input ref={pickerRef} id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden

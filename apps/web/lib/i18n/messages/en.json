@@ -1599,5 +1599,7 @@
  "깊게": "Deep",
  "최대": "Max",
  "아주 긴 장면": "Very long scene",
- "아주 긴 대화": "Very long"
+ "아주 긴 대화": "Very long",
+ "PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요": "Only PNG, JPG, WebP and HEIC images can be uploaded",
+ "내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요": "If it isn't your own art or photo, get permission first"
 }
