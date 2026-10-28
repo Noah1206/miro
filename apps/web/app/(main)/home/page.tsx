@@ -17,30 +17,6 @@ import { OriginalStoriesRow } from '../stories/home-row'
 import { AudienceSelect } from './audience-select'
 import { InstallAppHint } from '@/components/pwa-install'
 
-/** 섹션 제목은 이모지 하나 + 문장(베베챗식, 10/19). 목록에 없는 장르는 기본 문장. */
-const GENRE_TITLES: Record<string, string> = {
-  '현대': '🌆 오늘 밤, 도시에서 마주친 남자',
-  '현대 판타지': '🌙 평범한 하루에 끼어든 비밀',
-  '동양 무협': '⚔️ 칼끝 위에서 피어난 인연',
-  '가이드버스': '🔮 당신만이 그를 진정시킬 수 있어',
-  '마교': '🩸 피의 교단, 그 안의 다정함',
-  '수인': '🐾 귀와 꼬리를 숨긴 남자들',
-  '오메가버스': '💫 운명의 향이 이끄는 관계',
-  '시한': '⏳ 남은 시간이 얼마 없어',
-}
-
-/** 섹션 제목 아래 짧은 글(10/20). 목록에 없는 장르는 없음. */
-const GENRE_SUBTITLES: Record<string, string> = {
-  '현대': '퇴근길, 우연히 다시 마주친 그 사람',
-  '현대 판타지': '익숙한 일상 뒤에 숨은 다른 얼굴',
-  '동양 무협': '강호를 떠도는 사내들의 이야기',
-  '가이드버스': '폭주 직전의 그를 붙잡을 사람은 당신뿐',
-  '마교': '모두가 두려워하는 곳, 당신에게만 다른 얼굴',
-  '수인': '사람의 모습 뒤에 숨긴 본능',
-  '오메가버스': '향으로 시작되는 거부할 수 없는 끌림',
-  '시한': '끝이 정해진 사랑, 그래서 더 간절한',
-}
-
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home() {
   const user = await currentUser()
@@ -88,7 +64,6 @@ export default async function Home() {
       {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), subtitle: t('요즘 가장 많은 사람이 말을 건 캐릭터'), items: sections.ranking }} href="/explore" />}
       {sections.forYou.length > 0 && <Row index={1} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
       {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
-      {sections.genres.map((row, i) => <Row key={row.key} index={i + 3} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }), subtitle: GENRE_SUBTITLES[row.key] ? t(GENRE_SUBTITLES[row.key]!) : undefined }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.others.length > 0 && <section aria-labelledby="home-all">
         <h2 id="home-all" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>{t('🗂️ 전체 캐릭터')}</h2>

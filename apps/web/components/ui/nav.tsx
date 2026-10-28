@@ -25,8 +25,8 @@ const ITEMS = [
     icon: <path d="M10.8 2.6h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4h-7.2a3.4 3.4 0 0 1-3.4-3.4V6a3.4 3.4 0 0 1 3.4-3.4ZM6 7.4h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4H6a3.4 3.4 0 0 1-3.4-3.4v-7.2A3.4 3.4 0 0 1 6 7.4Z" /> },
   { href: '/explore', label: msg('탐색'),
     icon: <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 5.4-2.8 6.4-6.4 2.8 2.8-6.4 6.4-2.8ZM12 10.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z" /> },
-  /** 만들기 — 둥근 사각형에 evenodd 로 뚫린 플러스. */
-  { href: '/create', label: msg('만들기'), auth: true,
+  /** 만들기 — 둥근 사각형에 evenodd 로 뚫린 플러스. 10/28: '내가 만든 캐릭터' 화면으로 간다(사용자 요청). */
+  { href: '/my/characters', label: msg('만들기'), auth: true,
     icon: <path d="M7 2.6h10A4.4 4.4 0 0 1 21.4 7v10a4.4 4.4 0 0 1-4.4 4.4H7A4.4 4.4 0 0 1 2.6 17V7A4.4 4.4 0 0 1 7 2.6Zm4 4.9v3.5H7.5v2H11v3.5h2V13h3.5v-2H13V7.5h-2Z" /> },
   { href: '/archive', label: msg('대화'), auth: true,
     icon: <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.6-.7L4 21l1.3-3.9A8.5 8.5 0 0 1 12.5 3 8.5 8.5 0 0 1 21 11.5zM7.6 11.5a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0zm3.8 0a1.1 1.1 0 1 0 2.2 0 1.1 1.1 0 0 0-2.2 0z" /> },
@@ -52,7 +52,7 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
     <>{!/^\/archive(?:\/|$)/.test(pathname) && <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />}<nav aria-label={t('주요')} className={`nav ${glass.bar}`}>
       {activeIndex >= 0 && <span aria-hidden="true" className={glass.indicator} style={{ transform: `translateX(${activeIndex * 100}%)` }} />}
       {ITEMS.map((it) => {
-        const active = activePath === it.href || activePath.startsWith(it.href + '/')
+        const active = ITEMS[activeIndex] === it  // /my/characters 에서 프로필(/my)까지 켜지지 않게 한 칸만.
         // 로그인이 필요한 탭은 비로그인일 때 시트로 묻는다 — 보던 화면을 떠나지 않는다.
         const gated = !signedIn && it.auth
         const inner = (
@@ -68,10 +68,10 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
         )
         const style = { color: 'var(--color-text-primary)' }
         return gated ? (
-          <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style} data-create={it.href === '/create' || undefined}
+          <button key={it.href} type="button" className="nav__item" data-auth-gate={it.href} style={style} data-create={it.href === '/my/characters' || undefined}
             onClick={() => askLogin(it.href)}>{inner}</button>
         ) : (
-          <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style} data-create={it.href === '/create' || undefined}>
+          <TransitionLink key={it.href} href={it.href} prefetch={true} aria-current={active ? 'page' : undefined} className="nav__item" style={style} data-create={it.href === '/my/characters' || undefined}>
             {inner}
           </TransitionLink>
         )
