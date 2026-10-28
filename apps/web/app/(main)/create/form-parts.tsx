@@ -237,10 +237,19 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
           </AnimatePresence>
         </motion.button>
       </div>
-      {!full && <label htmlFor={inputId} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLLabelElement).click() } }}
-        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 120, minHeight: 48, padding: '12px 28px', borderRadius: 'var(--radius-button)', background: 'var(--color-white)', color: 'var(--color-bg)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)', cursor: 'pointer' }}>
-        {t('업로드')}
-      </label>}
+      {/* 업로드 버튼 + 안내(10/28, 레퍼런스식) — 버튼만 덩그러니 있지 않게. */}
+      <div className="stack" style={{ gap: 12 }}>
+        {!full && <label htmlFor={inputId} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLLabelElement).click() } }}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 120, minHeight: 48, padding: '12px 28px', borderRadius: 'var(--radius-button)', background: 'var(--color-white)', color: 'var(--color-bg)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)', cursor: 'pointer' }}>
+          {t('업로드')}
+        </label>}
+        <ul className="t-caption" style={{ margin: 0, paddingLeft: 18, color: 'var(--color-text-tertiary)', lineHeight: 1.7 }}>
+          <li>{t('JPG, PNG, WEBP, HEIC 이미지만 올릴 수 있어요')}</li>
+          <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
+          <li>{t('첫 번째 사진이 대표 사진이 되고, 최대 {n}장까지 넣을 수 있어요', { n: maxCount })}</li>
+          <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
+        </ul>
+      </div>
       </div>
 
       {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. 드래그로 순서를 바꿀 수 있다. */}

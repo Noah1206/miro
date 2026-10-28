@@ -1543,5 +1543,9 @@
  "상황 키워드 (쉼표로) 예) 비, 우산": "Keywords (comma-separated) e.g. rain, umbrella",
  "상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.": "Pair keywords with a photo, and the photo appears in chat when that situation comes up.",
  "상황별 사진 · 선택": "Situation photos · Optional",
- "올리는 중…": "Uploading…"
+ "올리는 중…": "Uploading…",
+ "JPG, PNG, WEBP, HEIC 이미지만 올릴 수 있어요": "Only JPG, PNG, WEBP and HEIC images",
+ "1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요": "1:1 ratio recommended, up to 5MB each",
+ "첫 번째 사진이 대표 사진이 되고, 최대 {n}장까지 넣을 수 있어요": "The first photo is the cover; up to {n} photos",
+ "부적절한 이미지는 제한될 수 있어요": "Inappropriate images may be restricted"
 }

@@ -2,7 +2,7 @@ import { selectLore } from '@miro/domain'
 
 /** 상황별 사진(10/28) — 키워드가 대화에 나오면 그 사진을 채팅에 한 번 띄운다. 매칭은 로어북과 같은 규칙(조사 붙어도 찾음). */
 export type SituationImage = { keywords: string[]; image: string }
-export const SITUATION_LIMITS = { entries: 10, keywords: 5, keywordLength: 20 } as const
+export const SITUATION_LIMITS = { entries: 100, keywords: 5, keywordLength: 20 } as const
 
 /** 폼 JSON → 저장할 목록. 키워드 없는 줄·https 가 아닌 사진은 버린다. */
 export function normalizeSituationImages(input: unknown): SituationImage[] {
