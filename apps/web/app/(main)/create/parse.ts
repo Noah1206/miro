@@ -5,6 +5,7 @@ import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelation
 import type { CharacterCommand } from '@miro/db'
 import { searchNeedle } from '@/lib/search-params'
 export { MOODS } from '@/lib/genres'
+import { RELATIONS } from '@/lib/genres'
 
 /** 등록 전 테스트 채팅의 턴 수 — 한 초안에서 사용자가 보낼 수 있는 메시지 수(assist.ts·test-chat.tsx). */
 export const TEST_CHAT_LIMIT = 10
@@ -93,6 +94,13 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   let lore: ReturnType<typeof normalizeLore> = []
   try { lore = normalizeLore(JSON.parse(s('lore') || '[]')) } catch { /* 빈 배열 */ }
 
+  // 분류·설정 탭(10/28) — 카테고리 하나 + 해시태그(최대 10). 해시태그 중 관계 태그 목록에 있는 것은 관계 태그 칸으로,
+  // 나머지(장르·직접 입력)는 카테고리 뒤에 붙여 장르 칸으로 — 홈 장르·관계 필터와 카드 해시태그가 예전 칸을 그대로 읽는다.
+  const hashtags = tags('hashtags', 10, 20)
+  const relationSet = new Set<string>(RELATIONS)
+  const relationshipKeywords = hashtags.filter(h => relationSet.has(h))
+  const moodSource = [s('category').slice(0, 20), ...hashtags.filter(h => !relationSet.has(h))].filter(Boolean).join(',')
+
   let situationImages: ReturnType<typeof normalizeSituationImages> = []
   try { situationImages = normalizeSituationImages(JSON.parse(s('situationImages') || '[]')) } catch { /* 빈 배열 */ }
 
@@ -129,12 +137,18 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     jealousy: clamp('jealousy', 50),
     initiative: clamp('initiative', 50),
     emotionalExpression: clamp('emotionalExpression', 50),
-    relationshipKeywords: tags('relationshipKeywords', 4, 20),
+    relationshipKeywords,
     startingContext: orNull(s('startingContext')),
     ...(startingTime ? { startingTime } : {}),
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
     lore,
     situationImages,
+    // 권장 대화 설정(10/28) — 모델을 비우면 저장하지 않는다(서버 기본).
+    // 생각(10/28) — 낮음은 지금 기본과 같아서 싣지 않는다. 모델을 비워도 생각만 고를 수 있다.
+    recommendedChat: s('recommendedModel') || ['medium', 'high'].includes(s('recommendedThinking')) ? {
+      model: s('recommendedModel').slice(0, 120), length: (s('recommendedLength') === 'long' ? 'long' : 'scene') as 'scene' | 'long',
+      ...(['medium', 'high'].includes(s('recommendedThinking')) ? { thinking: s('recommendedThinking') as 'medium' | 'high' } : {}),
+    } : null,
     commands: parseCommands(s('commands')),
     // 홈 남성향/여성향(10/20). 기본 여성향.
     audience: (s('audience') === 'male' ? 'male' : 'female') as 'male' | 'female',
@@ -143,10 +157,10 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   }
 
   const moodByNeedle = new Map<string, string>()
-  for (const value of s('mood').split(/[,·]/).map(value => value.trim().slice(0, 20)).filter(Boolean)) {
+  for (const value of moodSource.split(/[,·]/).map(value => value.trim().slice(0, 20)).filter(Boolean)) {
     const needle = searchNeedle(value)
     if (!moodByNeedle.has(needle)) moodByNeedle.set(needle, value)
-    if (moodByNeedle.size === 5) break
+    if (moodByNeedle.size === 11) break
   }
   const mood = [...moodByNeedle.values()]
   const world = { era: null, location: orNull(s('worldLocation').slice(0, 60)), genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }

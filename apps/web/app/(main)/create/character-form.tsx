@@ -18,7 +18,7 @@ import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
-import { RELATIONS } from '@/lib/genres'
+import { CATEGORIES, RELATIONS } from '@/lib/genres'
 import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from './draft-storage'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
@@ -48,6 +48,7 @@ export type FormInitial = {
   startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
   situationImages: Array<{ keywords: string[]; image: string }>
+  recommendedModel: string; recommendedLength: 'scene' | 'long'; recommendedThinking: 'low' | 'medium' | 'high'
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
   /** 캐릭터 유형(10/19): 대화만 / 음성통화 / 음성+영상통화. */
@@ -73,7 +74,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], situationImages: [], commands: [], media: 'text', audience: 'female',
+  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], situationImages: [], recommendedModel: '', recommendedLength: 'scene', recommendedThinking: 'low', commands: [], media: 'text', audience: 'female',
   isPublic: true,
   images: [],
 }
@@ -91,6 +92,8 @@ type CharacterFormProps = {
   capabilities: ContactCapabilities & {characterVoice?:boolean}
   /** 운영자가 승인한 공식 목소리. 없으면 목소리 칸 자체를 보이지 않는다. */
   voices?: Array<{ id: string; label: string }>
+  /** 권장 모델 후보(10/28) — 채팅에서 고를 수 있는 모델. */
+  models?: Array<{ id: string; name: string }>
   draft?: boolean
   initial?: Partial<FormInitial>
   action: (form: FormData) => Promise<string>
@@ -114,7 +117,7 @@ export function CharacterForm(props: CharacterFormProps) {
   return <CharacterFormBody {...props} initial={mode === 'create' ? restored ?? {} : props.initial} storageKey={key} />
 }
 
-function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [] }: CharacterFormProps & { storageKey: string | null }) {
+function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [], models = [] }: CharacterFormProps & { storageKey: string | null }) {
   const router = useRouter()
   const t = useT()
   const i: FormInitial = { ...EMPTY, ...initial }
@@ -201,9 +204,18 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   }, [desktop])
 
   // 게시가 잠긴 이유를 이름으로 보여 준다(10/19) — 어느 칸이 비었는지 탭을 뒤지지 않게.
+  // 분류·설정 탭(10/28) — 장르 칸의 첫 값이 카테고리 목록에 있으면 카테고리, 나머지 장르와 관계 태그는 해시태그.
+  const [category, setCategory] = useState<string>(() => (CATEGORIES as readonly string[]).includes(i.mood[0] ?? '') ? i.mood[0]! : '')
+  const initialHashtags = useMemo(() => [...i.mood.filter(m => m !== category), ...(genTags.relationshipKeywords ?? i.relationshipKeywords)].slice(0, 10),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [])
+  const [hashtagCount, setHashtagCount] = useState(initialHashtags.length)
+  const [recModel, setRecModel] = useState(i.recommendedModel ?? '')
+  const [recLength, setRecLength] = useState<'scene' | 'long'>(i.recommendedLength ?? 'scene')
+  const [recThinking, setRecThinking] = useState<string>(i.recommendedThinking ?? 'low')
   const missing = useMemo(() => [
-    [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [!startingContext.trim(), msg('첫 장면')],
-  ].filter(([empty]) => empty).map(([, label]) => label as string), [name, personality, startingContext])
+    [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [!startingContext.trim(), msg('첫 장면')], [hashtagCount === 0, msg('해시태그')],
+  ].filter(([empty]) => empty).map(([, label]) => label as string), [name, personality, startingContext, hashtagCount])
   const canSubmit = missing.length === 0
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -339,11 +351,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           <input type="hidden" name="lore" value={JSON.stringify(i.lore)} />
-          <Section title={t('장르')} subtitle={t('여러 개를 고를 수 있어요. 최대 5개까지 선택하거나 직접 입력하면 홈 장르 필터와 카드 해시태그에 반영됩니다.')}>
-            <Card>
-              <PresetTags name="mood" label={msg('장르')} options={MOODS} max={5} defaultValue={i.mood} />
-            </Card>
-          </Section>
 
         </Panel>
 
@@ -405,12 +412,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* ── 관계 ── */}
         {/* 관계 탭 — 관계 태그는 캐릭터챗도 고른다(2026-09-30). 시작 관계·관계 성격은 미로 캐릭터만. */}
         <Panel id="relationship" show={tab === 'relationship'}>
-          {/* 관계 태그(2026-09-30 요청) — 홈 관계 섹션이 이 값으로 거른다. 친밀도(시작 관계)와는 따로다. */}
-          <Section title={t('관계 태그')} subtitle={t('어떤 사이인지 골라 주세요. 최대 4개까지 선택하거나 직접 입력하면 홈 관계 필터와 카드 해시태그에 반영됩니다.')}>
-            <Card>
-              <PresetTags name="relationshipKeywords" label={msg('관계 태그')} options={RELATIONS} max={4} {...gt('relationshipKeywords')} />
-            </Card>
-          </Section>
           {/* 관계 성격표 편집(ProfileSettings)과 세부 감정 6개는 10/19 화면에서 뺐다 — 저장 때 AI 가 만든 표와 프리셋 값이 그대로 쓰인다. 일상·연락도 이 탭으로 합쳤다. */}
           {experienceType === 'reality' && <>
           <Section title={t('시작 관계')} subtitle={t('처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.')}>
@@ -454,6 +455,31 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           {/* 상황별 사진(10/28, 위프·베이비챗식) — 대화 중 키워드가 나오면 그 사진이 채팅에 뜬다. */}
           <Section title={t('상황별 사진 · 선택')} subtitle={t('상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.')}>
             <SituationImagesEditor defaultValue={i.situationImages ?? []} />
+          </Section>
+        </Panel>
+
+        {/* ── 분류·설정(10/28) — 카테고리 하나 + 해시태그(장르·관계를 한곳에서). 저장 때 parse 가 예전 장르·관계 태그 칸으로 나눈다. ── */}
+        <Panel id="settings" show={tab === 'settings'}>
+          <Section title={t('카테고리')} subtitle={t('캐릭터와 잘 어울리는 카테고리를 하나 골라 주세요.')}>
+            <ChoiceChips name="category" value={category} onChange={setCategory} options={CATEGORIES.map(c => ({ value: c, label: t(c) }))} />
+          </Section>
+          <Section title={t('해시태그')} subtitle={t('최소 1개, 최대 10개까지 고르거나 직접 입력해 주세요. 홈 필터와 카드 해시태그에 반영돼요.')}>
+            <Card>
+              <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={v => setHashtagCount(v.length)}
+                groups={[{ label: msg('장르'), options: MOODS }, { label: msg('관계'), options: RELATIONS }]} />
+            </Card>
+          </Section>
+          <Section title={t('권장 모델')} subtitle={t('새 채팅을 열 때 처음 골라져 있는 모델이에요. 사용자는 채팅방에서 바꿀 수 있어요.')}>
+            <ChoiceChips name="recommendedModel" value={recModel} onChange={setRecModel} options={[{ value: '', label: t('기본') }, ...models.map(m => ({ value: m.id, label: m.name }))]} />
+          </Section>
+          <Section title={t('권장 출력량')} subtitle={t('새 채팅의 기본 답 길이예요.')}>
+            <ChoiceChips name="recommendedLength" value={recLength} onChange={v => setRecLength(v as 'scene' | 'long')} columns={2}
+              options={[{ value: 'scene', label: t('보통 장면') }, { value: 'long', label: t('긴 장면') }]} />
+          </Section>
+          <Section title={t('생각 · BETA')} subtitle={t('생각을 높이면 AI가 답하기 전에 더 깊이 고민해요. 대신 답이 늦어지고 한 턴에 쓰는 미로가 늘어요(보통 최대 2배, 높음 최대 3배).')}>
+            <ChoiceChips name="recommendedThinking" value={recThinking} onChange={setRecThinking} columns={3}
+              options={[{ value: 'low', label: t('낮음 (기본)') }, { value: 'medium', label: t('보통') }, { value: 'high', label: t('높음') }]} />
+            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{t('Gemini 2.5·3.5 Flash 모델은 생각을 지원하지 않아, 조절해도 적용되지 않아요.')}</p>
           </Section>
         </Panel>
 

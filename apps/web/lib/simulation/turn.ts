@@ -105,6 +105,10 @@ async function executeTurn(opts: {
     const model = await measured('chat.model', () => resolveChatModel(userId, loaded.adult.turn && loaded.adult.since === null && opts.chatModel !== 'pro' ? 'miro' : opts.chatModel ?? 'miro', loaded.adult.turn)).catch(() => null)
     if (!model) return { ok: false, reason: 'model_unavailable' }
     const dialogueModelId = model.modelId
+    // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
+    const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
+    const thinking = charSettings?.rec?.thinking
+    const thinkScale = thinking === 'high' ? 3 : thinking === 'medium' ? 2 : 1
     // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
     const offerUnveil = () => loaded.adult.since === null ? unveilOfferFor(userId, loaded.characterId, sessionId).catch(() => null) : Promise.resolve(null)
     const importance = importanceScore(interactionImportance(input))
@@ -118,8 +122,8 @@ async function executeTurn(opts: {
     if (availableTokens === 0 && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
     // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
     if (opts.tokenCeiling !== undefined && (!Number.isSafeInteger(opts.tokenCeiling) || opts.tokenCeiling < 0)) return { ok: false, reason: 'model_unavailable' }
-    const maximumTokens = Math.min(model.quote.maximumTokens, availableTokens, opts.tokenCeiling ?? Infinity)
-    const maximumUSD = Math.min(model.quote.maximumUSD, maximumTokens * model.pricing.revenueKRWPerToken * model.pricing.costShare / model.pricing.fxKRWPerUSD)
+    const maximumTokens = Math.min(model.quote.maximumTokens * thinkScale, availableTokens, opts.tokenCeiling ?? Infinity)
+    const maximumUSD = Math.min(model.quote.maximumUSD * thinkScale, maximumTokens * model.pricing.revenueKRWPerToken * model.pricing.costShare / model.pricing.fxKRWPerUSD)
     if (resolveTurnPolicy({ ...policyInput, agencyReady: false }).metered) {
       try { reservation = await measured('chat.usage_reserve', () => reserve({ userId, kind, tokenAmount: maximumTokens, idempotencyKey: `turn:${opts.requestId}` })) }
       catch (e) { if (e instanceof UsageExceededError) return { ok: false, reason: 'usage', error: e }; throw e }
@@ -131,7 +135,7 @@ async function executeTurn(opts: {
     let result: TurnResult
     let agency: LoadedAgency | null = null
     let policy = resolveTurnPolicy({ ...policyInput, agencyReady: false, continuity: reservation?.continuity ?? false })
-    const turnMeter = new TurnMeter(maximumUSD, model.quote.maxInputTokens, model.quote.maxOutputTokens)
+    const turnMeter = new TurnMeter(maximumUSD, model.quote.maxInputTokens, model.quote.maxOutputTokens * thinkScale)
     const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.turn }
     // 첫 대화(10/19): 가까운 일정 하나를 묻고 끝에 "이따 ~에 문자할게" 를 약속하게 한다 — 약속했으면 그 시각에 실제로 연락이 간다(아래).
     // 대부분 첫 답 하나만 보고 떠나서(7일 45턴/45방), 먼저 연락하는 캐릭터라는 걸 첫 답에서 보여야 한다.
@@ -146,8 +150,9 @@ async function executeTurn(opts: {
       // 서버에서 확인한 한 턴 지시. 이번 대사 한 번만 따른다(기억·관계 규칙은 평소대로).
       const commandDirective = commandRule ? `사용자가 명령어 /${commandRule.name} 을 썼습니다. 이번 응답 한 번은 다음 지시대로 씁니다(성격·말투·상황은 그대로): ${commandRule.prompt}` : ''
       // Keep the provider's usage/provenance getters: a spread would freeze or discard them.
-      llm = directive || firstMeeting || commandDirective ? new Proxy(provider, { get(target, key) {
+      llm = directive || firstMeeting || commandDirective || thinking ? new Proxy(provider, { get(target, key) {
         if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request,
+          ...(thinking && (request.task === 'dialogue' || request.task === 'agency_plan') ? { thinking: request.thinking ?? thinking, ...(request.maxTokens ? { maxTokens: request.maxTokens * thinkScale } : {}) } : {}),
           system: request.system + (directive ? '\n' + directive : '') + (firstMeeting && request.task === 'dialogue' ? '\n' + firstMeeting : '') + (commandDirective && request.task === 'dialogue' ? '\n' + commandDirective : '') })
         const value = Reflect.get(target, key)
         return typeof value === 'function' ? value.bind(target) : value
@@ -228,7 +233,7 @@ async function executeTurn(opts: {
     if (actualTokens > (reservation?.cost ?? 0)) { await refund(); return { ok: false, reason: 'generation' } }
     const responseText = renderBlocks(transition.blocks)
     // 상황별 사진(10/28) — 사용자 말이나 이번 답에 키워드가 나오면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
-    const [{ situationImages = [] } = {}] = await db.select({ situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
+    const situationImages = charSettings?.situationImages ?? []
     const situationImage = situationImages.length === 0 ? null : pickSituationImage(situationImages, `${input ?? ''}\n${responseText}`,
       new Set((await db.select({ content: messages.content }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'photo')))).map(m => m.content)))
     const outcome: Extract<ConversationOutcome, { ok: true }> = {

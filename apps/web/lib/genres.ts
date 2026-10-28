@@ -11,6 +11,9 @@ export const MOODS = [msg('로맨스'), msg('얀데레'), msg('츤데레'), msg(
 /** 관계 태그(2026-09-30 요청) — 만들기의 관계 탭에서 고르고(relationship_keywords) 홈 관계 섹션이 거른다. 소꿉친구는 장르(MOODS)에 있다. */
 export const RELATIONS = [msg('친구'), msg('연인'), msg('짝사랑'), msg('썸'), msg('동료'), msg('상사'), msg('부하'), msg('선배'), msg('후배'), msg('라이벌'), msg('주인'), msg('노예'), msg('가족'), msg('계약')] as const
 
+/** 카테고리(10/28, 분류·설정 탭) — 캐릭터의 대표 장르 하나. 장르 칸(worlds.genre)의 첫 값으로 저장돼 홈 장르 줄이 읽는다. */
+export const CATEGORIES = [msg('현대'), msg('현대 판타지'), msg('판타지'), msg('동양 무협'), msg('학원'), msg('오피스'), msg('시뮬레이션'), msg('가이드버스'), msg('오메가버스'), msg('수인')] as const
+
 export const genreValues = (genre: string | null): string[] =>
   (genre ?? '').split('·').map(value => value.trim()).filter(Boolean)
 

@@ -1,7 +1,7 @@
 import { ChatTheme } from '@/components/chat-theme'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
-import { db, messages } from '@miro/db'
+import { db, messages, characters } from '@miro/db'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
@@ -14,7 +14,7 @@ import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
-import { chatModelOptions } from '@/lib/ai/chat-models'
+import { chatModelOptions, recommendedChoice } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
 import { ConversationPersona } from '@/components/conversation-persona'
@@ -41,7 +41,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 10/27: 화면용 로더(view)로 AI 턴 전용 조회를 건너뛰고(언베일 판정은 그대로), 지갑 조회를 뺐다
   // (지갑은 레이아웃이 처음·포커스·실시간·턴 뒤에 읽는다). 몰입 모드 유형은 방 주인 조건으로 같은 바퀴에 읽는다.
   const session = loadSession(sessionId, user.id, '', { view: true })
-  const [loaded, all, modelOptions, mature, adult, media, profile] = await Promise.all([
+  const [loaded, all, modelOptions, mature, adult, media, profile, rec] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
@@ -50,6 +50,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     // 유형(10/19) — 몰입 모드(음성/음성+영상)로 만든 캐릭터만 방 머리에 몰입 모드 단추가 있다.
     sessionMedia(sessionId, user.id),
     accountProfile(user),
+    // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
+    session.then(l => l ? db.select({ rec: characters.recommendedChat }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0]?.rec ?? null) : null),
   ])
   if (!loaded || !mature) notFound()
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
@@ -69,7 +71,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={modelOptions.choices[0]?.id} storageKey={`miro:chat-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />

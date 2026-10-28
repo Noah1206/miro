@@ -611,10 +611,15 @@ const roundBtn: React.CSSProperties = {
  * 미리 적어 둔 태그를 눌러서 고르고, 없는 건 + 로 직접 적는다 (분위기).
  * 저장은 CSV 한 칸 — TagInput 과 같은 모양이라 읽는 쪽이 같다.
  */
-export function PresetTags({ name, label = msg('태그'), options, max, maxLength = 20, defaultValue = [] }: {
-  name: string; label?: string; options: readonly string[]; max: number; maxLength?: number; defaultValue?: string[]
+export function PresetTags({ name, label = msg('태그'), options: flat = [], groups, max, maxLength = 20, defaultValue = [], onChange }: {
+  name: string; label?: string; options?: readonly string[]; max: number; maxLength?: number; defaultValue?: string[]
+  /** 묶음별로 칩을 나눠 보여 준다(10/28 해시태그: 장르·관계). 주면 options 대신 쓴다. */
+  groups?: Array<{ label: string; options: readonly string[] }>
+  onChange?: (picked: string[]) => void
 }) {
-  const [picked, setPicked] = useState<string[]>(defaultValue)
+  const options = groups ? groups.flatMap(g => g.options) : flat
+  const [picked, setPickedState] = useState<string[]>(defaultValue)
+  const setPicked = (next: string[]) => { setPickedState(next); onChange?.(next) }
   const [adding, setAdding] = useState(false)
   const [text, setText] = useState('')
   const reduce = useReducedMotion()
@@ -637,19 +642,26 @@ export function PresetTags({ name, label = msg('태그'), options, max, maxLengt
     border: 0,
     color: on ? chipOnFg : off ? 'var(--color-text-disabled)' : chipOffFg,
   })
+  const presetChip = (o: string) => {
+    const on = picked.includes(o), off = !on && full
+    return (
+      <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed={on} disabled={off}
+        whileTap={reduce || off ? undefined : { scale: 0.97 }} style={chip(on, off)}>
+        {o}
+      </motion.button>
+    )
+  }
   return (
     <div role="group" aria-label={t(label)}>
       <input type="hidden" name={name} value={picked.join(',')} />
+      {groups?.map(g => (
+        <div key={g.label} style={{ marginBottom: 14 }}>
+          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 8 }}>{t(g.label)}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{g.options.map(o => presetChip(o))}</div>
+        </div>
+      ))}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {options.map((o) => {
-          const on = picked.includes(o), off = !on && full
-          return (
-            <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed={on} disabled={off}
-              whileTap={reduce || off ? undefined : { scale: 0.97 }} style={chip(on, off)}>
-              {o}
-            </motion.button>
-          )
-        })}
+        {!groups && options.map(o => presetChip(o))}
         {/* 직접 적은 태그 — 누르면 빠진다 */}
         {custom.map((o) => (
           <motion.button key={o} type="button" onClick={() => toggle(o)} aria-pressed aria-label={t('{tag} 빼기', { tag: o })}

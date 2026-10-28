@@ -71,3 +71,16 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
   return { modelId: model.id, metered: true, tier, tierName, pricing, quote }
 }
+
+/** 만들기의 권장 모델 후보(10/28) — 채팅에서 고를 수 있는 모델 하나씩. */
+export async function recommendableModels(userId: string): Promise<Array<{ id: string; name: string }>> {
+  const { choices } = await chatModelOptions(userId)
+  return choices.filter(c => c.id.endsWith(':scene')).map(c => ({ id: decodeURIComponent(c.id.split(':')[1] ?? ''), name: c.name }))
+}
+
+/** 캐릭터의 권장 설정을 채팅 첫 선택값으로(10/28). 후보에 없으면 null — 서버 기본(첫 모델)을 쓴다. */
+export function recommendedChoice(choices: ChatModelChoice[], rec: { model: string; length: 'scene' | 'long' } | null | undefined): string | null {
+  if (!rec) return null
+  const id = choiceId(rec.model, rec.length === 'long')
+  return choices.some(c => c.id === id) ? id : null
+}

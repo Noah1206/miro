@@ -213,6 +213,8 @@ export const characters = pgTable('characters', {
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
   /** 상황별 사진(10/28) — 대화 중 키워드가 나오면 그 사진을 채팅에 한 번 띄운다. */
   situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string }>>().notNull().default([]),
+  /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
+  recommendedChat: jsonb('recommended_chat').$type<{ model: string; length: 'scene' | 'long'; thinking?: 'low' | 'medium' | 'high' }>(),
   /** 명령어(10/19) — 채팅에서 `/이름` 으로 부르는 한 턴 지시의 복사본. 라이브러리(command_book)에서 골랐거나 제작자가 적은 것. */
   commands: jsonb('commands').$type<Array<{ name: string; hint: string; prompt: string; sourceId?: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),

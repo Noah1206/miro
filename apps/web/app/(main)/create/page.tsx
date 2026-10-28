@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { recommendableModels } from '@/lib/ai/chat-models'
 import { feature, features } from '@miro/config'
 import { voiceOptions } from '@/lib/voice'
 import { notFound, redirect } from 'next/navigation'
@@ -36,5 +37,5 @@ export default async function CreatePage({ searchParams }: {
   }
 
   return <CharacterForm key={`${user.id}:${params.type}:${params.draft}`} mode="create" experienceType={params.type} creationId={params.draft}
-    userId={user.id} action={saveCharacter} closeHref="/home" capabilities={features()} voices={feature('characterVoice')?await voiceOptions():[]} />
+    userId={user.id} action={saveCharacter} closeHref="/home" capabilities={features()} voices={feature('characterVoice')?await voiceOptions():[]} models={await recommendableModels(user.id)} />
 }

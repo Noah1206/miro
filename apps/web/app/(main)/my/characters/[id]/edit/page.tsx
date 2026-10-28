@@ -1,4 +1,5 @@
 import { feature, features } from '@miro/config'
+import { recommendableModels } from '@/lib/ai/chat-models'
 import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getOwnedCharacter } from '@/lib/owned'
@@ -47,14 +48,14 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     photoProbability: contact?.photoProbability ?? 20, voiceMessageProbability: contact?.voiceMessageProbability ?? 20,
     callProbability: contact?.callProbability ?? 30, videoCallProbability: contact?.videoCallProbability ?? 10,
     senderLabel: contact?.presentation?.senderLabel ?? '',
-    startingContext: c.startingContext ?? '', startingTime: c.startingTime, sampleDialogue: c.sampleDialogue, lore: c.lore, situationImages: c.situationImages,
+    startingContext: c.startingContext ?? '', startingTime: c.startingTime, sampleDialogue: c.sampleDialogue, lore: c.lore, situationImages: c.situationImages, recommendedModel: c.recommendedChat?.model ?? '', recommendedLength: c.recommendedChat?.length ?? 'scene', recommendedThinking: c.recommendedChat?.thinking ?? 'low',
     commands: c.commands, media: contact?.presentation?.media ?? 'text',
     isPublic: c.isPublic,
     images: c.images,
   }
 
   return (
-    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions():[]} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions():[]} models={await recommendableModels(user.id)} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my/characters?filter=draft' : `/character/${id}`} />
   )
 }
