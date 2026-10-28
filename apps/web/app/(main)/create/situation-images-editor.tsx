@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import { shrinkImage } from '@/lib/shrink-image'
 import { SITUATION_LIMITS, type SituationImage } from '@/lib/situation-images'
 import { box, fieldFont } from './form-parts'
 import { uploadSituationImage } from './actions'
+
+const iconBtn: React.CSSProperties = { width: 36, height: 36, borderRadius: 18, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'rgba(var(--color-bg-rgb),0.75)', color: 'var(--color-white)' }
 
 type Row = { id: number; image: string; keywords: string; uploading?: boolean; error?: string }
 
@@ -14,9 +16,12 @@ type Row = { id: number; image: string; keywords: string; uploading?: boolean; e
  */
 export function SituationImagesEditor({ defaultValue }: { defaultValue: SituationImage[] }) {
   const t = useT()
+  const uid = useId()
   const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', ') })))
   const [nextId, setNextId] = useState(defaultValue.length)
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
+  // 앞 칸에 사진을 다 올려야 다음 칸을 연다(10/28) — 빈 칸만 쌓이지 않게.
+  const canAdd = rows.every(r => r.image && !r.uploading)
   const value = rows.filter(r => r.image).map(r => ({ image: r.image, keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean) }))
 
   const pick = async (id: number, file: File | undefined) => {
@@ -36,18 +41,26 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
         {rows.map(r => (
           <div key={r.id} className="stack" style={{ gap: 8 }}>
-            <label style={{ position: 'relative', display: 'grid', placeItems: 'center', aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', cursor: 'pointer',
-              background: 'var(--color-surface-2)', border: r.image ? 0 : '1.5px dashed var(--color-border-strong)', color: 'var(--color-text-tertiary)' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                : <span className="t-caption">{r.uploading ? t('올리는 중…') : t('사진 고르기')}</span>}
-              <input type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+            {/* 사진 칸(label)과 버튼을 형제로 둔다 — label 안의 버튼은 파일 고르기를 열지 못한다. */}
+            <div style={{ position: 'relative' }}>
+              <label htmlFor={`${uid}-${r.id}`} style={{ position: 'relative', display: 'grid', placeItems: 'center', aspectRatio: '1 / 1', borderRadius: 'var(--radius-md)', overflow: 'hidden', cursor: 'pointer',
+                background: 'var(--color-surface-2)', border: r.image ? 0 : '1.5px dashed var(--color-border-strong)', color: 'var(--color-text-tertiary)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <span className="t-caption">{r.uploading ? t('올리는 중…') : t('사진 고르기')}</span>}
+              </label>
+              <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                 onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(r.id, f) }} />
-              <button type="button" aria-label={t('상황 사진 빼기')} onClick={e => { e.preventDefault(); setRows(rs => rs.filter(x => x.id !== r.id)) }}
-                style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, borderRadius: 12, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'rgba(var(--color-bg-rgb),0.75)', color: 'var(--color-white)' }}>
-                <svg aria-hidden width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-              </button>
-            </label>
+              <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6 }}>
+                <label htmlFor={`${uid}-${r.id}`} role="button" tabIndex={0} aria-label={t('상황 사진 바꾸기')} style={iconBtn}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click() } }}>
+                  <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" /></svg>
+                </label>
+                <button type="button" aria-label={t('상황 사진 빼기')} onClick={() => setRows(rs => rs.filter(x => x.id !== r.id))} style={iconBtn}>
+                  <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3" /></svg>
+                </button>
+              </div>
+            </div>
             <input value={r.keywords} onChange={e => patch(r.id, { keywords: e.target.value })} aria-label={t('상황 키워드')} maxLength={110}
               placeholder={t('상황 키워드 (쉼표로) 예) 비, 우산')}
               style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%' }} />
@@ -56,8 +69,8 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
         ))}
       </div>
       {rows.length < SITUATION_LIMITS.entries && (
-        <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, image: '', keywords: '' }]); setNextId(n => n + 1) }}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-primary)', fontSize: 'var(--font-body-size)', cursor: 'pointer' }}>
+        <button type="button" disabled={!canAdd} onClick={() => { setRows(rs => [...rs, { id: nextId, image: '', keywords: '' }]); setNextId(n => n + 1) }}
+          style={{ opacity: canAdd ? 1 : 0.45, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-white)', color: 'var(--color-lavender-700)', fontSize: 'var(--font-body-size)', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
           <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           {t('상황 사진 추가 ({n}/{max})', { n: rows.length, max: SITUATION_LIMITS.entries })}
         </button>

@@ -326,10 +326,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
           {/* 상황 예시(10/28): 칸은 지웠다(사용자 요청). 이미 적힌 예시는 지우지 않게 그대로 보낸다. */}
           <input type="hidden" name="sampleDialogue" value={JSON.stringify(sampleDialogue(i.sampleDialogue))} />
-          {/* 상황별 사진(10/28, 위프·베이비챗식) — 대화 중 키워드가 나오면 그 사진이 채팅에 뜬다. */}
-          <Section title={t('상황별 사진 · 선택')} subtitle={t('상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.')}>
-            <SituationImagesEditor defaultValue={i.situationImages ?? []} />
-          </Section>
         </Panel>
 
         {/* ── 세계관 ── */}
@@ -450,6 +446,14 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <div className="create-intro-editor">
               <DialogueEditor intro fill name="introDialogue" characterName={name} defaultValue={genIntro ?? introDialogue(i.sampleDialogue)} />
             </div>
+          </Section>
+        </Panel>
+
+        {/* ── 상황별 사진(10/28) — 인트로 옆 탭 ── */}
+        <Panel id="situations" show={tab === 'situations'}>
+          {/* 상황별 사진(10/28, 위프·베이비챗식) — 대화 중 키워드가 나오면 그 사진이 채팅에 뜬다. */}
+          <Section title={t('상황별 사진 · 선택')} subtitle={t('상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.')}>
+            <SituationImagesEditor defaultValue={i.situationImages ?? []} />
           </Section>
         </Panel>
 
