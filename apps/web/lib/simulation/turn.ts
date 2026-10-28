@@ -108,7 +108,7 @@ async function executeTurn(opts: {
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
     const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
     const thinking = charSettings?.rec?.thinking
-    const thinkScale = thinking === 'high' ? 3 : thinking === 'medium' ? 2 : 1
+    const thinkScale = thinking ? { medium: 2, high: 3, xhigh: 4, max: 5 }[thinking] : 1
     // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
     const offerUnveil = () => loaded.adult.since === null ? unveilOfferFor(userId, loaded.characterId, sessionId).catch(() => null) : Promise.resolve(null)
     const importance = importanceScore(interactionImportance(input))

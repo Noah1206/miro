@@ -164,6 +164,16 @@ export const POLICY = {
       /** 기억·관계 보조 분석을 매 턴 돌린다. */
       auxiliary: 'always' as const,
     },
+    /**
+     * 아주 긴 대화(10/28) — 장면 하나를 1600~2600자로. 상한 8192 는 레지스트리 모델 상한(지금 4096)에 한 번 더 잘린다 —
+     * 4096 안에서도 JSON 까지 들어가게 분량을 잡았다. 더 길게 하려면 MIRO_MODEL_REGISTRY 의 maxOutputTokens 를 올린다.
+     */
+    saga: {
+      contextScale: DEV_DEFAULT(2),
+      maxOutputTokens: DEV_DEFAULT(8192),
+      replyLength: 'saga' as const,
+      auxiliary: 'always' as const,
+    },
   },
 
   generation: {

@@ -32,7 +32,7 @@ const TextingResponse = { type: 'object', additionalProperties: false,
 export type RealityContentInput = {
   characterName: string
   /** Captured user setting for an inbound DM reply; unsolicited contacts keep the default. */
-  replyLength?: 'scene' | 'long'
+  replyLength?: 'scene' | 'long' | 'saga'
   /** Only unsolicited legacy opportunities can abstain; replies and authorized agency actions cannot. */
   allowAbstain?: boolean
   personality: string
@@ -136,7 +136,7 @@ export async function generateRealityContent(
     '승인된 연락 이유와 마지막으로 받은 말에 맞는 문자 한 통을 JSON으로 작성하세요: { "text": string, "send": boolean, "tone": "warm"|"neutral"|"terse"|"urgent", "lengthReason": "brief"|"requested_detail"|"important_explanation"|"letter" }',
   ].filter(Boolean).join('\n')
 
-  const extended = input.replyLength === 'long'
+  const extended = input.replyLength === 'long' || input.replyLength === 'saga'
   const content = await llm.generateStructured({ schema: textingContent(extended), responseSchema: TextingResponse,
     task: 'dialogue', promptVersion: REALITY_CONTENT_VERSION, maxRetries: 1,
     system: prompts.get('reality', 'v2').system + CHARACTER_VOICE_RULES + '\n' + SYSTEM

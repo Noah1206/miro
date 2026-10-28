@@ -31,7 +31,7 @@ export interface LLMProvider {
     temperature?: number
     promptVersion?: string
     /** 생각 수준(ai/types GenerationRequest.thinking). 없으면 모델의 최소값. */
-    thinking?: 'low' | 'medium' | 'high'
+    thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
     /** 공급자 안전 필터 수준(ai/types GenerationRequest.safety). */
     safety?: 'relaxed'
     /** 받는 대로의 글(시도마다 처음부터 다시) — ai/types GenerationRequest.onText. */

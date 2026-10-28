@@ -2,8 +2,12 @@ import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition }
 import { POLICY, tokenPricing, tokenQuote, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
-export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo
-export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: 'scene' | 'long'; maximumTokens: number; maxOutputTokens: number }
+export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo | typeof POLICY.chatTier.saga
+export type ChatLength = 'scene' | 'long' | 'saga'
+/** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
+const TIER_OF = { scene: 'miro', long: 'echo', saga: 'saga' } as const
+const LENGTHS = ['scene', 'long', 'saga'] as const
+export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
   const candidates = registry?.models.filter(m => m.enabled && m.chatSelectable !== false && m.capabilities.includes('dialogue')
@@ -16,7 +20,7 @@ function availableModels(adult: boolean) {
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
   return pinned ? models.sort((a, b) => Number(b.id === pinned) - Number(a.id === pinned)) : models
 }
-function choiceId(id: string, long: boolean) { return `model:${encodeURIComponent(id)}:${long ? 'long' : 'scene'}` }
+function choiceId(id: string, length: ChatLength) { return `model:${encodeURIComponent(id)}:${length}` }
 function displayName(id: string) {
   const claude = /^claude-(haiku|sonnet|opus)-5-5$/.exec(id)
   if (claude) return `Claude ${claude[1]![0]!.toUpperCase()}${claude[1]!.slice(1)} 5.5`
@@ -44,10 +48,10 @@ function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<t
 export async function chatModelOptions(_userId: string, adult = false) {
   try {
     const pricing = tokenPricing()
-    const choices: ChatModelChoice[] = availableModels(adult).flatMap(model => [false, true].map(long => {
-      const tier = long ? POLICY.chatTier.echo : POLICY.chatTier.miro
+    const choices: ChatModelChoice[] = availableModels(adult).flatMap(model => LENGTHS.map(length => {
+      const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
-      return { id: choiceId(model.id, long), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
+      return { id: choiceId(model.id, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
         maximumTokens: quote.maximumTokens, maxOutputTokens: quote.maxOutputTokens }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
@@ -58,14 +62,14 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   const models = availableModels(adult)
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
   const first = (pinned ? models.find(m => m.id === pinned) : undefined) ?? models[0]
-  let model = first, long = choice === 'pro'
+  let model = first, length: ChatLength = choice === 'pro' ? 'long' : 'scene'
   if (choice !== 'miro' && choice !== 'pro') {
-    const match = models.flatMap(m => [false, true].map(l => ({ m, l, id: choiceId(m.id, l) }))).find(c => c.id === choice)
+    const match = models.flatMap(m => LENGTHS.map(l => ({ m, l, id: choiceId(m.id, l) }))).find(c => c.id === choice)
     if (!match) throw new Error('invalid chat model')
-    model = match.m; long = match.l
+    model = match.m; length = match.l
   }
   if (!model) throw new Error('chat model unavailable')
-  const tierName = long ? 'echo' as const : 'miro' as const
+  const tierName = TIER_OF[length]
   const tier = POLICY.chatTier[tierName]
   const pricing = tokenPricing()
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
@@ -79,8 +83,8 @@ export async function recommendableModels(userId: string): Promise<Array<{ id: s
 }
 
 /** 캐릭터의 권장 설정을 채팅 첫 선택값으로(10/28). 후보에 없으면 null — 서버 기본(첫 모델)을 쓴다. */
-export function recommendedChoice(choices: ChatModelChoice[], rec: { model: string; length: 'scene' | 'long' } | null | undefined): string | null {
+export function recommendedChoice(choices: ChatModelChoice[], rec: { model: string; length: ChatLength } | null | undefined): string | null {
   if (!rec) return null
-  const id = choiceId(rec.model, rec.length === 'long')
+  const id = choiceId(rec.model, rec.length)
   return choices.some(c => c.id === id) ? id : null
 }

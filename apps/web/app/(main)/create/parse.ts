@@ -6,6 +6,8 @@ import type { CharacterCommand } from '@miro/db'
 import { searchNeedle } from '@/lib/search-params'
 export { MOODS } from '@/lib/genres'
 import { RELATIONS } from '@/lib/genres'
+/** 생각 5단계(10/28) 중 기본(low)보다 깊은 것만 저장한다. */
+const THINK = ['medium', 'high', 'xhigh', 'max']
 
 /** 등록 전 테스트 채팅의 턴 수 — 한 초안에서 사용자가 보낼 수 있는 메시지 수(assist.ts·test-chat.tsx). */
 export const TEST_CHAT_LIMIT = 10
@@ -143,11 +145,12 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
     lore,
     situationImages,
+    adultOnly: s('adultOnly') === '1',
     // 권장 대화 설정(10/28) — 모델을 비우면 저장하지 않는다(서버 기본).
     // 생각(10/28) — 낮음은 지금 기본과 같아서 싣지 않는다. 모델을 비워도 생각만 고를 수 있다.
-    recommendedChat: s('recommendedModel') || ['medium', 'high'].includes(s('recommendedThinking')) ? {
-      model: s('recommendedModel').slice(0, 120), length: (s('recommendedLength') === 'long' ? 'long' : 'scene') as 'scene' | 'long',
-      ...(['medium', 'high'].includes(s('recommendedThinking')) ? { thinking: s('recommendedThinking') as 'medium' | 'high' } : {}),
+    recommendedChat: s('recommendedModel') || THINK.includes(s('recommendedThinking')) ? {
+      model: s('recommendedModel').slice(0, 120), length: (['long', 'saga'].includes(s('recommendedLength')) ? s('recommendedLength') : 'scene') as 'scene' | 'long' | 'saga',
+      ...(THINK.includes(s('recommendedThinking')) ? { thinking: s('recommendedThinking') as 'medium' | 'high' | 'xhigh' | 'max' } : {}),
     } : null,
     commands: parseCommands(s('commands')),
     // 홈 남성향/여성향(10/20). 기본 여성향.

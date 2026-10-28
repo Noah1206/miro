@@ -58,9 +58,9 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
   const providers = [...new Set(rows.map(c => modelPresentation(c).provider))]
   return <div className={sheet.options}>
     {selected && <div className={sheet.lengths} role="group" aria-label={t('답변 길이')}>
-      {(['scene', 'long'] as const).map(value => {
+      {(['scene', 'long', 'saga'] as const).map(value => {
         const choice = choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value)
-        return <button key={value} type="button" disabled={!choice} aria-pressed={length === value} onClick={() => { if (choice) setModel(choice.id) }}>{value === 'scene' ? t('기본 대화') : t('긴 대화')}</button>
+        return <button key={value} type="button" disabled={!choice} aria-pressed={length === value} onClick={() => { if (choice) setModel(choice.id) }}>{value === 'scene' ? t('기본 대화') : value === 'long' ? t('긴 대화') : t('아주 긴 대화')}</button>
       })}
     </div>}
     {providers.map(provider => <section key={provider} className={sheet.group} aria-label={provider}>

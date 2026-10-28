@@ -132,6 +132,8 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       relationMatch(filter.relations),
       discoveryMatch(filter.tags),
       ...(filter.audience ? [eq(characters.audience, filter.audience)] : []),
+      // 이용 대상(10/28): 성인(언베일)만 캐릭터는 언베일을 켠 사람에게만.
+      ...(unveil ? [] : [eq(characters.adultOnly, false)]),
       ...(searchNeedle(filter.query ?? '') ? [containsAny(sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`, [searchNeedle(filter.query ?? '')])] : []),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [sort === 'latest' ? afterDate : or(lt(score, cursor.score), and(eq(score, cursor.score), afterDate))] : []),

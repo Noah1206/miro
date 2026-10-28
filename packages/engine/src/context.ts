@@ -92,11 +92,11 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const name = s.character.identity.name
   // ECHO(long)는 같은 장면을 더 길게 — 박자를 더 두고 서술·대사를 깊게 한다. 모델은 글자 수보다 문장·블록 수를 따른다
   // (9/26 실측: 900~1500자를 주자 중앙값 668자, MIRO 581자와 15% 차이). 그래서 문장 수와 오가는 횟수를 올린다.
-  const long = style === 'long'
+  const long = style === 'long' || style === 'saga'
   // 10/17 기준표: 모델은 글자 수보다 블록·문장 수를 따른다(9/26 측정과 같다). '필요한 것만' 지시 아래 3.8 Flash 답이 중앙값 230자(16장면 중 13개가 300자 미만)로 장면이 얇았다(사용자: 퀄리티가 확 달라야 한다).
   // 10/17 사용자: "내용이 너무 짧다, 최소 이 정도는 돼야 한다"(약 460자 예시 — 서술 2문장 단락과 대사가 세 박자로 오감). 하한을 박자 구조로 준다. 모델은 지시한 숫자보다 25~40% 짧게 쓴다(500~900→중앙값 301, 최소 450→388) — 그래서 숫자를 올려 둔다.
-  const size = long ? '긴 대화는 장면 하나를 900~1600자로, 감정이 걸린 순간은 2200자까지 펼치되 이미 전달한 감정을 다시 설명하지 않습니다' : '기본 대화는 장면 하나를 최소 650자, 보통 700~1000자로 씁니다. 장면은 3개의 박자로 짭니다 — 박자마다 행동·서술(narrative나 action 블록, 각각 2~3문장·80자 이상)과 그에 이어지는 대사(1~3문장). 감정이나 관계가 걸린 순간(고백·질투·다툼·사과·재회·위로·가까워지는 순간)은 3~4박자, 1000~1400자까지 촘촘하게 씁니다. 사용자가 "응" 한마디로 답해도 650자 아래로 줄이지 않고, 그 대답을 받아 캐릭터가 장면을 한 걸음 진전시키는 행동과 말로 채웁니다'
-  const tenseMax = long ? '2200자' : '1400자'
+  const size = style === 'saga' ? '아주 긴 대화는 장면 하나를 1600~2600자로, 박자 5~6개(박자마다 서술 2~4문장과 대사)로 펼치되 이미 전달한 감정을 다시 설명하지 않습니다' : long ? '긴 대화는 장면 하나를 900~1600자로, 감정이 걸린 순간은 2200자까지 펼치되 이미 전달한 감정을 다시 설명하지 않습니다' : '기본 대화는 장면 하나를 최소 650자, 보통 700~1000자로 씁니다. 장면은 3개의 박자로 짭니다 — 박자마다 행동·서술(narrative나 action 블록, 각각 2~3문장·80자 이상)과 그에 이어지는 대사(1~3문장). 감정이나 관계가 걸린 순간(고백·질투·다툼·사과·재회·위로·가까워지는 순간)은 3~4박자, 1000~1400자까지 촘촘하게 씁니다. 사용자가 "응" 한마디로 답해도 650자 아래로 줄이지 않고, 그 대답을 받아 캐릭터가 장면을 한 걸음 진전시키는 행동과 말로 채웁니다'
+  const tenseMax = style === 'saga' ? '3000자' : long ? '2200자' : '1400자'
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
   // 그대로 따랐고 같은 몸짓·문장 틀이 되풀이됐다. 이 지시(3차)는 순서·표현을 매번 바꾸게 한다. 형식 실패의 한 원인(종류를 키로 쓴 블록)은
@@ -144,8 +144,8 @@ function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, te
   return base + ' 지금 사용자는 짧게 쓰고 있습니다 — 장면에 맞는 짧은 반응도 충분합니다. 속마음과 몸짓을 자리 채우기로 붙이지 않습니다.' + thought
 }
 
-/** scene: 캐릭터챗의 장면 하나(기본, MIRO). long: 더 긴 장면(ECHO). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
-export type ReplyStyle = 'scene' | 'long' | 'brief'
+/** scene: 캐릭터챗의 장면 하나(기본, MIRO). long: 더 긴 장면(ECHO). saga: 아주 긴 장면(10/28). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
+export type ReplyStyle = 'scene' | 'long' | 'saga' | 'brief'
 
 /**
  * Context 조립.
@@ -186,7 +186,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }

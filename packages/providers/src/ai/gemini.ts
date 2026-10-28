@@ -5,7 +5,9 @@ import type { ProviderInfo } from '../types'
  * 모델별 생각 설정. 기본은 허용되는 최소값이고, 잘못 주면 400 이라 이름으로 가른다.
  * level 은 생각 수준을 받는 모델(3.8-flash·3.1-pro 등)에만 적용한다 — 실측(2026-09-29): 3.8-flash 는 low·medium·high 를 받고 low 는 생각 0.
  */
-export function thinkingConfig(model: string, level?: 'low' | 'medium' | 'high'): { thinkingConfig?: Record<string, unknown> } {
+export function thinkingConfig(model: string, thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'): { thinkingConfig?: Record<string, unknown> } {
+  // Gemini 는 high 가 끝이다 — xhigh·max 는 high 로(10/28 생각 5단계).
+  const level = thinking === 'xhigh' || thinking === 'max' ? 'high' : thinking
   if (model === 'gemini-4-argon') return { thinkingConfig: { thinkingLevel: level ?? 'low' } }
   if (model.startsWith('gemini-2.5')) return { thinkingConfig: { thinkingBudget: 0 } }
   if (model === 'gemini-3.5-flash-lite') return { thinkingConfig: { thinkingLevel: 'minimal' } }

@@ -13,6 +13,7 @@ import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
+import { Disclosure, Segmented, SelectField, StepSlider } from './settings-controls'
 import { MOODS } from './parse'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
@@ -48,7 +49,7 @@ export type FormInitial = {
   startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
   situationImages: Array<{ keywords: string[]; image: string }>
-  recommendedModel: string; recommendedLength: 'scene' | 'long'; recommendedThinking: 'low' | 'medium' | 'high'
+  recommendedModel: string; recommendedLength: 'scene' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
   /** 캐릭터 유형(10/19): 대화만 / 음성통화 / 음성+영상통화. */
@@ -209,9 +210,11 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const initialHashtags = useMemo(() => [...i.mood.filter(m => m !== category), ...(genTags.relationshipKeywords ?? i.relationshipKeywords)].slice(0, 10),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [])
-  const [hashtagCount, setHashtagCount] = useState(initialHashtags.length)
+  const [hashtags, setHashtags] = useState<string[]>(initialHashtags)
+  const hashtagCount = hashtags.length
+  const [adultOnly, setAdultOnly] = useState<'0' | '1'>(i.adultOnly ? '1' : '0')
   const [recModel, setRecModel] = useState(i.recommendedModel ?? '')
-  const [recLength, setRecLength] = useState<'scene' | 'long'>(i.recommendedLength ?? 'scene')
+  const [recLength, setRecLength] = useState<'scene' | 'long' | 'saga'>(i.recommendedLength ?? 'scene')
   const [recThinking, setRecThinking] = useState<string>(i.recommendedThinking ?? 'low')
   const missing = useMemo(() => [
     [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [!startingContext.trim(), msg('첫 장면')], [hashtagCount === 0, msg('해시태그')],
@@ -460,26 +463,38 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 분류·설정(10/28) — 카테고리 하나 + 해시태그(장르·관계를 한곳에서). 저장 때 parse 가 예전 장르·관계 태그 칸으로 나눈다. ── */}
         <Panel id="settings" show={tab === 'settings'}>
-          <Section title={t('카테고리')} subtitle={t('캐릭터와 잘 어울리는 카테고리를 하나 골라 주세요.')}>
-            <ChoiceChips name="category" value={category} onChange={setCategory} options={CATEGORIES.map(c => ({ value: c, label: t(c) }))} />
+          <Section title={t('카테고리')}>
+            <SelectField name="category" value={category} onChange={setCategory} placeholder={t('카테고리 선택')} options={CATEGORIES.map(c => ({ value: c, label: t(c) }))} />
           </Section>
-          <Section title={t('해시태그')} subtitle={t('최소 1개, 최대 10개까지 고르거나 직접 입력해 주세요. 홈 필터와 카드 해시태그에 반영돼요.')}>
-            <Card>
-              <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={v => setHashtagCount(v.length)}
+          <Section title={t('해시태그')}>
+            <Disclosure summary={hashtags} placeholder={t('눌러서 해시태그 고르기')}>
+              <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={setHashtags}
                 groups={[{ label: msg('장르'), options: MOODS }, { label: msg('관계'), options: RELATIONS }]} />
-            </Card>
+            </Disclosure>
           </Section>
-          <Section title={t('권장 모델')} subtitle={t('새 채팅을 열 때 처음 골라져 있는 모델이에요. 사용자는 채팅방에서 바꿀 수 있어요.')}>
-            <ChoiceChips name="recommendedModel" value={recModel} onChange={setRecModel} options={[{ value: '', label: t('기본') }, ...models.map(m => ({ value: m.id, label: m.name }))]} />
+          {/* 이용 대상(10/28) — 언베일 전용이면 언베일을 켠 사람의 홈·탐색에만 나온다. */}
+          <Section title={t('이용 대상')}>
+            <Segmented name="adultOnly" value={adultOnly} onChange={setAdultOnly} options={[{ value: '0', label: t('모두') }, { value: '1', label: t('언베일 전용') }]} />
           </Section>
-          <Section title={t('권장 출력량')} subtitle={t('새 채팅의 기본 답 길이예요.')}>
-            <ChoiceChips name="recommendedLength" value={recLength} onChange={v => setRecLength(v as 'scene' | 'long')} columns={2}
-              options={[{ value: 'scene', label: t('보통 장면') }, { value: 'long', label: t('긴 장면') }]} />
-          </Section>
-          <Section title={t('생각 · BETA')} subtitle={t('생각을 높이면 AI가 답하기 전에 더 깊이 고민해요. 대신 답이 늦어지고 한 턴에 쓰는 미로가 늘어요(보통 최대 2배, 높음 최대 3배).')}>
-            <ChoiceChips name="recommendedThinking" value={recThinking} onChange={setRecThinking} columns={3}
-              options={[{ value: 'low', label: t('낮음 (기본)') }, { value: 'medium', label: t('보통') }, { value: 'high', label: t('높음') }]} />
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 8 }}>{t('Gemini 2.5·3.5 Flash 모델은 생각을 지원하지 않아, 조절해도 적용되지 않아요.')}</p>
+          <Section title={t('대화 기본값')}>
+            <div style={{ display: 'grid', gap: 24, padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', background: 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' }}>
+              <div>
+                <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 8 }}>{t('권장 모델')}</p>
+                <SelectField name="recommendedModel" value={recModel} onChange={setRecModel} options={[{ value: '', label: t('기본 (서버 추천)') }, ...models.map(m => ({ value: m.id, label: m.name }))]} />
+              </div>
+              <div>
+                <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4 }}>{t('출력량')}</p>
+                <StepSlider name="recommendedLength" label={t('출력량')} value={recLength} onChange={v => setRecLength(v as 'scene' | 'long' | 'saga')}
+                  steps={[{ value: 'scene', label: t('보통 장면') }, { value: 'long', label: t('긴 장면') }, { value: 'saga', label: t('아주 긴 장면') }]} />
+              </div>
+              <div>
+                <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {t('생각')}<span className="t-micro" style={{ padding: '2px 8px', borderRadius: 999, background: 'color-mix(in srgb, var(--color-lavender-300) 18%, transparent)', color: 'var(--color-lavender-200)', letterSpacing: 0 }}>BETA</span>
+                </p>
+                <StepSlider name="recommendedThinking" label={t('생각')} value={recThinking} onChange={setRecThinking}
+                  steps={[{ value: 'low', label: t('빠름') }, { value: 'medium', label: t('가볍게') }, { value: 'high', label: t('보통') }, { value: 'xhigh', label: t('깊게') }, { value: 'max', label: t('최대') }]} />
+              </div>
+            </div>
           </Section>
         </Panel>
 

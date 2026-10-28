@@ -7,7 +7,7 @@ import type { ReplyStyle, SimulationSnapshot } from './context'
  * 범용 워크플로 엔진이 아니다. 값은 브라우저가 보낸 플래그가 아니라 서버가 검증한 입력에서만 나온다.
  */
 export type TurnExperience = 'chat' | 'reality'
-export type TurnTier = 'miro' | 'echo'
+export type TurnTier = 'miro' | 'echo' | 'saga'
 export type TurnChannel = 'scene' | 'messenger' | 'voice_call' | 'video_call' | 'background'
 export type TurnEngine = 'legacy' | 'agency'
 export type AgencyRequest = 'off' | 'shadow' | 'live'
