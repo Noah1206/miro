@@ -368,6 +368,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 외형 — 관계 탭 안에 함께 보인다(10/19). DOM 은 앞이지만 order 로 관계 내용 아래에 놓는다. ── */}
         <Panel id="relationship-visual" show={tab === 'relationship'} order={1}>
+          {/* 10/28: 외형 칸 전체를 화면에서 숨겼다(사용자 요청) — 칸은 DOM 에 남아 저장값·자동 채우기 값이 그대로 제출된다. */}
+          <div hidden>
           <Section title={t('외형')}>
             <Card>
               {/* 10/28: 몸(성별·키·체형 설명) 칸을 화면에서 뺐다(사용자 요청) — 저장값·자동 채우기 값은 그대로 보낸다. */}
@@ -405,6 +407,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
             </Card>
           </Section>
+          </div>
           {/* 목소리 칸이 없을 때(전화가 닫힌 운영 베타)도 이미 고른 목소리는 그대로 보낸다 — 고치기 저장이 지우지 않게. */}
           {(!can.characterVoice||voices.length === 0) && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
           {!can.characterVoice&&<input type="hidden" name="media" value={media}/>}
