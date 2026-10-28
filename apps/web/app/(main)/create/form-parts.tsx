@@ -194,7 +194,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
       {/* 10/28: 대표 사진 옆에 추가 사진·'+' 를 둔다. 빈 칸은 작게. */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
       <div {...(main ? dragHandlers(0) : {})} style={{ width: main ? 280 : 180, cursor: main ? 'grab' : undefined }}>
         <motion.button type="button" onClick={() => { if (main) setOpen(true) }} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
@@ -231,6 +231,14 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         </motion.button>
       </div>
 
+      <div style={{ flex: '1 1 200px', minHeight: main ? 280 : 180, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위(사용자 스크린샷). */}
+      <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--color-text-tertiary)', fontSize: 11, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
+        <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
+        <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
+        <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
+        <li>{t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요')}</li>
+      </ul>
       {/* 나머지 사진 줄 — 10/28 부터 처음에도 보인다: 사진은 모두 '+' 로 넣는다. 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
       {(
         <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(2, 56px)', gap: 6 }}>
@@ -264,13 +272,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         </ul>
       )}
       </div>
-      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다(사용자 스크린샷). */}
-      <ul className="t-caption" style={{ margin: '12px 0 0', paddingLeft: 18, color: 'var(--color-text-tertiary)', lineHeight: 1.7 }}>
-        <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
-        <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
-        <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
-        <li>{t('내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요')}</li>
-      </ul>
+      </div>
 
       {/* 고르기 input 은 시트 밖에 둔다 — 대표 사진 칸을 누르면 시트 없이 바로 연다(10/28). */}
       <input ref={pickerRef} id={inputId} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" hidden
