@@ -89,7 +89,7 @@ export default async function Home() {
       {sections.forYou.length > 0 && <Row index={1} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
       {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
       {sections.genres.map((row, i) => <Row key={row.key} index={i + 3} row={{ ...row, title: GENRE_TITLES[row.key] ? t(GENRE_TITLES[row.key]!) : t('✨ {genre} 이야기 모아 보기', { genre: row.title }), subtitle: GENRE_SUBTITLES[row.key] ? t(GENRE_SUBTITLES[row.key]!) : undefined }} href={`/explore?genre=${encodeURIComponent(row.key)}`} />)}
-      {/* 10/28: 섹션 4개 밖의 캐릭터는 전부 여기 격자로. */}
+      {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.others.length > 0 && <section aria-labelledby="home-all">
         <h2 id="home-all" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>{t('🗂️ 전체 캐릭터')}</h2>
         <div className={styles.grid}>{sections.others.map(c => <StoryCard key={c.id} c={c} />)}</div>

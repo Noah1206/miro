@@ -209,9 +209,8 @@ export async function homeSections(userId: string | null, audience?: Audience): 
   }
   const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 1)
     .map(([g, cs]) => ({ key: g, title: g, items: shuffle(cs) }))
-  // 10/28: 섹션은 4개만 — 나머지 캐릭터는 아래 '전체' 격자로.
-  const shown = new Set(genres.flatMap(r => r.items).map(c => c.id))
-  const others = shuffle(rest.filter(c => !shown.has(c.id)))
+  // 10/28: 아래 '전체 캐릭터' 격자는 섹션에 나온 캐릭터까지 전부 보여 준다(사용자 요청).
+  const others = shuffle(items)
   // 10/20: 줄 안의 순서는 들어올 때마다 섞는다(사용자 요청) — 어느 줄에 들어가는지는 그대로.
   return { ranking: shuffle(ranking), forYou, recommended, genres, others, filters: availableDiscoveryGroups(items) }
 }
