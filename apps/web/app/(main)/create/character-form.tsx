@@ -13,13 +13,12 @@ import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
-import { Disclosure, Segmented, SelectField, StepSlider } from './settings-controls'
-import { MOODS } from './parse'
+import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
-import { CATEGORIES, RELATIONS } from '@/lib/genres'
+import { CATEGORIES, HASHTAG_GROUPS } from '@/lib/genres'
 import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from './draft-storage'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
@@ -206,7 +205,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
   // 게시가 잠긴 이유를 이름으로 보여 준다(10/19) — 어느 칸이 비었는지 탭을 뒤지지 않게.
   // 분류·설정 탭(10/28) — 장르 칸의 첫 값이 카테고리 목록에 있으면 카테고리, 나머지 장르와 관계 태그는 해시태그.
-  const [category, setCategory] = useState<string>(() => (CATEGORIES as readonly string[]).includes(i.mood[0] ?? '') ? i.mood[0]! : '')
+  const category = (CATEGORIES as readonly string[]).includes(i.mood[0] ?? '') ? i.mood[0]! : ''
   const initialHashtags = useMemo(() => [...i.mood.filter(m => m !== category), ...(genTags.relationshipKeywords ?? i.relationshipKeywords)].slice(0, 10),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [])
@@ -308,14 +307,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                 <IdentityCard>
                   <div className="stack" style={{ gap: 18 }}>
                     <LabeledField label={t('이름')} required error={name === '' ? null : undefined}>
-                      <Controlled name="name" label={t('이름')} placeholder={t('짧은 이름이 부르기 편해요. 예) 수현')} max={10} value={name} onChange={setName} big />
+                      <Controlled name="name" label={t('이름')} max={10} value={name} onChange={setName} big />
                     </LabeledField>
                     {/* 소개(한 줄)와 성격 설명을 한 칸으로(10/19). 서버 칸 이름은 그대로 — 첫 줄이 title, 나머지가 personality. */}
                     <input type="hidden" name="title" value={title} />
                     <input type="hidden" name="personality" value={personality} />
                     <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 성격·가치관·말투를 적어 주세요.')}>
-                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={1040} rows={6}
-                        placeholder={t('예) 만지지 마십시오. …그건, 아직 당신 것이 아닙니다.\n침착하고 관찰력이 좋다. 신뢰와 약속을 중시하며, 낮고 짧은 말투로 이야기한다.')} />
+                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={1040} rows={6} />
                     </LabeledField>
                     {experienceType === 'reality' && <ReactionTraits initial={i} />}
                   </div>
@@ -325,14 +323,14 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               <AdvancedToggle open={profileAdvanced} onToggle={() => setProfileAdvanced((v) => !v)} controls="profile-advanced" />
               <div id="profile-advanced" hidden={!profileAdvanced}>
                 <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                  <LabeledField label={t('나이')}><CountedInput name="age" placeholder={t('예) 32, 1000, 추정불가')} max={10} {...g('age')} /></LabeledField>
+                  <LabeledField label={t('나이')}><CountedInput name="age" max={10} {...g('age')} /></LabeledField>
                   <LabeledField label="MBTI">
                     <ChoiceChips name="mbti" value={mbti} onChange={setMbti} columns={4}
                       options={[{ value: '', label: t('선택 안 함') }, ...MBTI_TYPES.map((m) => ({ value: m, label: m }))]} />
                   </LabeledField>
                   <Two>
-                    <LabeledField label={t('국적')}><CountedInput name="nationality" placeholder={t('예) 영국')} max={40} {...g('nationality')} /></LabeledField>
-                    <LabeledField label={t('직업')}><CountedInput name="occupation" placeholder={t('예) 고서 복원가')} max={60} {...g('occupation')} /></LabeledField>
+                    <LabeledField label={t('국적')}><CountedInput name="nationality" max={40} {...g('nationality')} /></LabeledField>
+                    <LabeledField label={t('직업')}><CountedInput name="occupation" max={60} {...g('occupation')} /></LabeledField>
                   </Two>
                 </div>
               </div>
@@ -347,7 +345,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="personality" show={tab === 'personality'}>
           <Section title={t('세계관')}>
             <Card>
-              <LabeledField label={t('세계관 설명')} hint={experienceType === 'chat' ? t('대화에 반영되며 공개 소개에는 표시되지 않아요.') : t('캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.')}>
+              <LabeledField label="" hint={experienceType === 'chat' ? t('대화에 반영되며 공개 소개에는 표시되지 않아요.') : t('캐릭터가 살아가는 시대, 장소, 배경을 적어 주세요.')}>
                 <CountedTextArea name="worldSetting" ariaLabel={t('세계관 설명')} max={600} rows={4} {...g('worldSetting')}
                   placeholder={t('예) 현대 서울. 도심의 경호업체를 중심으로 다양한 사건이 벌어진다.')} />
               </LabeledField>
@@ -418,12 +416,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="relationship" show={tab === 'relationship'}>
           {/* 관계 성격표 편집(ProfileSettings)과 세부 감정 6개는 10/19 화면에서 뺐다 — 저장 때 AI 가 만든 표와 프리셋 값이 그대로 쓰인다. 일상·연락도 이 탭으로 합쳤다. */}
           {experienceType === 'reality' && <>
-          <Section title={t('시작 관계')} subtitle={t('처음 어떤 사이인지 골라 주세요. 관계는 대화하며 달라져요.')}>
+          <Section title={t('시작 관계')}>
             <RelationshipSettings initial={i} />
           </Section>
-          <Section title={t('일상·연락')}>
+          {/* 10/28: '일상·연락' 제목은 지웠다(사용자 요청). */}
+          <section aria-label={t('일상·연락')} style={{ marginTop: 'var(--space-6)' }}>
             <ContactSettings initial={i} mode={mode} capabilities={capabilities} />
-          </Section>
+          </section>
           </>}
         </Panel>
 
@@ -464,14 +463,12 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 분류·설정(10/28) — 카테고리 하나 + 해시태그(장르·관계를 한곳에서). 저장 때 parse 가 예전 장르·관계 태그 칸으로 나눈다. ── */}
         <Panel id="settings" show={tab === 'settings'}>
-          <Section title={t('카테고리')}>
-            <SelectField name="category" value={category} onChange={setCategory} placeholder={t('카테고리 선택')} options={CATEGORIES.map(c => ({ value: c, label: t(c) }))} />
-          </Section>
+          {/* 10/28: 카테고리 칸은 화면에서 지웠다(사용자 요청) — 저장값은 그대로 보낸다. */}
+          <input type="hidden" name="category" value={category} />
           <Section title={t('해시태그')}>
-            <Disclosure summary={hashtags} placeholder={t('눌러서 해시태그 고르기')}>
-              <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={setHashtags}
-                groups={[{ label: msg('장르'), options: MOODS }, { label: msg('관계'), options: RELATIONS }]} />
-            </Disclosure>
+            {/* 10/28: 접는 버튼 없이 바로 펼쳐 둔다(사용자 요청). */}
+            <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={setHashtags}
+              groups={HASHTAG_GROUPS} />
           </Section>
           {/* 이용 대상(10/28) — 언베일 전용이면 언베일을 켠 사람의 홈·탐색에만 나온다. */}
           <Section title={t('이용 대상')}>
@@ -580,7 +577,7 @@ function Two({ children }: { children: React.ReactNode }) {
 
 /** 값을 바깥이 들고 있는 한 줄 입력 (필수 판정용). 밑줄만, 상자 없음. */
 function Controlled({ name, label, placeholder, max, value, onChange, big }: {
-  name: string; label: string; placeholder: string; max: number; value: string; onChange: (v: string) => void; big?: boolean
+  name: string; label: string; placeholder?: string; max: number; value: string; onChange: (v: string) => void; big?: boolean
 }) {
   const [focused, setFocused] = useState(false)
   return (
@@ -594,7 +591,7 @@ function Controlled({ name, label, placeholder, max, value, onChange, big }: {
 }
 
 function ControlledArea({ name, label, placeholder, max, rows, value, onChange }: {
-  name: string; label: string; placeholder: string; max: number; rows: number; value: string; onChange: (v: string) => void
+  name: string; label: string; placeholder?: string; max: number; rows: number; value: string; onChange: (v: string) => void
 }) {
   const [focused, setFocused] = useState(false)
   return (

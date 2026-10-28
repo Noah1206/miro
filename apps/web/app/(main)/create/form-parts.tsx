@@ -31,9 +31,9 @@ export function LabeledField({ label, required, hint, error, children }: {
 }) {
   return (
     <div className="stack" style={{ gap: 4 }}>
-      <span className="t-body" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--label-weight, var(--weight-semibold))', letterSpacing: 'var(--label-tracking, 0)', marginBottom: 4 }}>
+      {label && <span className="t-body" style={{ color: error ? 'var(--color-danger)' : 'var(--color-text-primary)', fontWeight: 'var(--label-weight, var(--weight-semibold))', letterSpacing: 'var(--label-tracking, 0)', marginBottom: 4 }}>
         {label}{required && <Star />}
-      </span>
+      </span>}
       {children}
       {/* 힌트는 카드(surface-1) 위에 놓인다 — quaternary 는 3.6:1 이라 tertiary 로 (axe). */}
       {hint && !error && <span className="t-micro field-hint" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{hint}</span>}
@@ -77,7 +77,7 @@ function Counter({ length, max }: { length: number; max: number }) {
 
 /** 한 줄 입력. */
 export function CountedInput({ name, placeholder, max, defaultValue = '', required, invalid, ariaLabel }: {
-  name: string; placeholder: string; max: number; defaultValue?: string; required?: boolean; invalid?: boolean; ariaLabel?: string
+  name: string; placeholder?: string; max: number; defaultValue?: string; required?: boolean; invalid?: boolean; ariaLabel?: string
 }) {
   const [value, setValue] = useState(defaultValue)
   const [focused, setFocused] = useState(false)
@@ -141,6 +141,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
     ...previews.map((p) => ({ url: p.url, kind: 'new' as const })),
   ].sort((a, b) => imageOrder.indexOf(a.url) - imageOrder.indexOf(b.url))
   const main = items[0]?.url ?? null
+  const side = main ? 'min(280px, 50cqw)' : 'min(180px, 32.3cqw)'
   const full = items.length >= maxCount
 
   // 폼 제출용 실제 파일 input — 순서가 바뀔 때마다 DataTransfer 로 다시 채운다.
@@ -194,13 +195,14 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
       {/* 10/28: 대표 사진 옆에 추가 사진·'+' 를 둔다. 빈 칸은 작게. */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-      <div {...(main ? dragHandlers(0) : {})} style={{ width: main ? 280 : 180, cursor: main ? 'grab' : undefined }}>
+      {/* 폰에서도 같은 모양 — 칸·'+'·글씨를 줄 폭(cqw)에 비례해 줄인다(넓으면 180px·56px·16px 에서 멈춤). */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, containerType: 'inline-size' }}>
+      <div {...(main ? dragHandlers(0) : {})} style={{ width: side, flex: 'none', cursor: main ? 'grab' : undefined }}>
         <motion.button type="button" onClick={() => { if (main) setOpen(true) }} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
             position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: main ? 280 : 180, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'default', background: 'var(--color-surface-2)',
+            width: side, aspectRatio: '1 / 1', cursor: main ? 'grab' : 'default', background: 'var(--color-surface-2)',
             borderWidth: 1.5,
             borderColor: overIndex === 0 && dragIndex !== null && dragIndex !== 0 ? 'var(--color-border-hover)' : main ? 'transparent' : 'var(--color-border-strong)',
             borderStyle: main ? 'solid' : 'dashed',
@@ -231,9 +233,9 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
         </motion.button>
       </div>
 
-      <div style={{ flex: '1 1 200px', minHeight: main ? 280 : 180, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
-      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위(사용자 스크린샷). */}
-      <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--color-text-tertiary)', fontSize: 11, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
+      <div style={{ flex: 1, minWidth: 0, minHeight: side, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 12 }}>
+      {/* 10/28: 넣기 전에 어떤 사진이 되는지 알린다 — 사진 옆 빈 자리 위쪽, '+' 위. 항목마다 한 줄. 글씨 16px(4줄이 '+' 바로 위까지), 폭이 모자라면 한 줄에 맞는 크기까지만. */}
+      <ul style={{ margin: 0, paddingLeft: 16, color: 'var(--color-text-tertiary)', fontSize: `min(16px, calc((100cqw - ${side} - 28px) * 0.0455))`, lineHeight: 1.7, whiteSpace: 'nowrap' }}>
         <li>{t('PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요')}</li>
         <li>{t('1:1 비율을 권장하며, 한 장당 5MB 이하만 가능해요')}</li>
         <li>{t('부적절한 이미지는 제한될 수 있어요')}</li>
@@ -241,7 +243,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       </ul>
       {/* 나머지 사진 줄 — 10/28 부터 처음에도 보인다: 사진은 모두 '+' 로 넣는다. 썸네일은 누르면 빠지고, 드래그로 순서를 바꿀 수 있다. */}
       {(
-        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(2, 56px)', gap: 6 }}>
+        <ul aria-label={t('추가 사진')} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'repeat(2, min(56px, 10cqw))', gap: 6 }}>
           <AnimatePresence initial={false}>
             {items.slice(1).map((it, i) => (
               // 드래그(li, 네이티브)와 애니메이션(motion.div)을 분리한다 — 대표 사진 칸과 같은 이유.
@@ -264,7 +266,7 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             <li>
               <button type="button" onClick={() => setOpen(true)} aria-label={t('사진 추가 ({count}/{max})', { count: items.length, max: maxCount })}
                 style={{ width: '100%', aspectRatio: '1 / 1', display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'var(--color-surface-2)',
-                  border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-secondary)' }}>
+                  border: '1.5px dashed var(--color-border-strong)', borderRadius: 'var(--radius-sm)', color: 'var(--color-white)' }}>
                 <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
               </button>
             </li>
@@ -626,8 +628,8 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
   const options = groups ? groups.flatMap(g => g.options) : flat
   const [picked, setPickedState] = useState<string[]>(defaultValue)
   const setPicked = (next: string[]) => { setPickedState(next); onChange?.(next) }
-  const [adding, setAdding] = useState(false)
   const [text, setText] = useState('')
+  const [openGroups, setOpenGroups] = useState<string[]>(() => groups?.[0] ? [groups[0].label] : [])
   const reduce = useReducedMotion()
   const t = useT()
   const full = picked.length >= max
@@ -641,12 +643,13 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
     }
     setPicked(next); setText('')
   }
+  // 10/28: 태그는 가볍게 — 작은 글씨·보통 굵기·얇은 테두리, 고른 것만 라벤더.
   const chip = (on: boolean, off: boolean): React.CSSProperties => ({
-    minHeight: 44, padding: '6px 12px', cursor: off ? 'default' : 'pointer', borderRadius: 'var(--chip-radius, var(--radius-button))',
-    fontSize: chipFont, fontWeight: on ? 'var(--weight-semibold)' : chipWeightOff,
-    background: on ? chipOn : chipOff,
-    border: 0,
-    color: on ? chipOnFg : off ? 'var(--color-text-disabled)' : chipOffFg,
+    minHeight: 30, padding: '3px 10px', cursor: off ? 'default' : 'pointer', borderRadius: 999,
+    fontSize: 13, fontWeight: on ? 'var(--weight-medium)' : 400,
+    background: on ? 'color-mix(in srgb, var(--color-lavender-300) 16%, transparent)' : 'transparent',
+    border: `1px solid ${on ? 'var(--color-lavender-300)' : 'var(--color-border)'}`,
+    color: on ? 'var(--color-lavender-200)' : off ? 'var(--color-text-disabled)' : 'var(--color-text-secondary)',
   })
   const presetChip = (o: string) => {
     const on = picked.includes(o), off = !on && full
@@ -660,12 +663,27 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
   return (
     <div role="group" aria-label={t(label)}>
       <input type="hidden" name={name} value={picked.join(',')} />
-      {groups?.map(g => (
-        <div key={g.label} style={{ marginBottom: 14 }}>
-          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 8 }}>{t(g.label)}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{g.options.map(o => presetChip(o))}</div>
-        </div>
-      ))}
+      {/* 10/28: 묶음마다 접는 카드 — 처음엔 첫 묶음만 펼치고, 접힌 제목 옆엔 고른 개수. */}
+      {/* 위계: 바깥 판 하나 안에 묶음 줄(구분선) → 그 안에 태그. 묶음 제목은 작은 글씨, 펼친 줄만 밝게. */}
+      {groups && <div style={{ borderRadius: 14, border: '1px solid var(--color-border)', overflow: 'hidden' }}>
+        {groups.map(g => {
+          const open = openGroups.includes(g.label)
+          const count = g.options.filter(o => picked.includes(o)).length
+          return (
+            <div key={g.label} style={{ borderTop: g === groups[0] ? 0 : '1px solid var(--color-border)', background: open ? 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' : undefined }}>
+              <button type="button" aria-expanded={open} onClick={() => setOpenGroups(open ? openGroups.filter(l => l !== g.label) : [...openGroups, g.label])}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', minHeight: 44, padding: '0 14px', background: 'none', border: 0, cursor: 'pointer', color: open ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', textAlign: 'left' }}>
+                <span style={{ fontSize: 14, fontWeight: 'var(--weight-medium)' }}>{t(g.label)}</span>
+                {count > 0 && <span className="t-caption" style={{ color: 'var(--color-lavender-200)' }}>· {count}</span>}
+                <span style={{ flex: 1 }} />
+                <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ color: 'var(--color-text-secondary)', transition: 'transform 200ms', transform: open ? 'rotate(180deg)' : undefined }}><path d="m6 9 6 6 6-6" /></svg>
+              </button>
+              {open && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '2px 14px 14px' }}>{g.options.map(o => presetChip(o))}</div>}
+            </div>
+          )
+        })}
+      </div>}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {!groups && options.map(o => presetChip(o))}
         {/* 직접 적은 태그 — 누르면 빠진다 */}
@@ -676,15 +694,11 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
             <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </motion.button>
         ))}
-        <button type="button" onClick={() => setAdding((v) => !v)} disabled={full && !adding} aria-expanded={adding} aria-label={t('직접 입력')}
-          style={{ ...chip(false, full && !adding), display: 'inline-flex', alignItems: 'center', gap: 4, borderStyle: 'dashed', borderColor: 'var(--color-border-strong)' }}>
-          <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-          {t('직접 입력')}
-        </button>
       </div>
-      {adding && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, padding: '6px 10px', ...box(true) }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength * max} placeholder={t('예) 재벌가, 첫사랑')} autoFocus disabled={full}
+      {/* 10/28: 직접 입력은 늘 보이는 칸 — 단어를 적고 엔터. */}
+      <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', margin: '20px 0 8px' }}>{t('직접 입력')}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', ...box(true) }}>
+          <input value={text} onChange={(e) => setText(e.target.value)} maxLength={maxLength * max} placeholder={t('단어를 입력 후 엔터')} disabled={full}
             aria-label={t('{label} 직접 입력', { label: t(label) })}
             onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) { e.preventDefault(); addCustom() } }}
             style={{ flex: 1, minWidth: 0, background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14 }} />
@@ -693,7 +707,6 @@ export function PresetTags({ name, label = msg('태그'), options: flat = [], gr
             {t('추가')}
           </button>
         </div>
-      )}
       <p className="t-micro" style={{ textAlign: 'right', marginTop: 8, textTransform: 'none', letterSpacing: 0, color: full ? 'var(--color-danger)' : 'var(--color-text-secondary)' }}>{picked.length}/{max}</p>
     </div>
   )

@@ -1601,5 +1601,21 @@
  "아주 긴 장면": "Very long scene",
  "아주 긴 대화": "Very long",
  "PNG, JPG, WebP, HEIC 이미지 파일만 올릴 수 있어요": "Only PNG, JPG, WebP and HEIC images can be uploaded",
- "내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요": "If it isn't your own art or photo, get permission first"
+ "내 그림이나 사진이 아니라면 꼭 허락받고 쓰세요": "If it isn't your own art or photo, get permission first",
+ "처음 만남": "New",
+ "가까운 사이": "Close",
+ "엇갈린 사이": "At odds",
+ "아주 드물게": "Very rarely",
+ "아주 자주": "Very often",
+ "공": "Top",
+ "공포/추리": "Horror/Mystery",
+ "단어를 입력 후 엔터": "Type a word and press Enter",
+ "무협/사극": "Martial arts/Historical",
+ "분야/분위기": "Genre/Mood",
+ "소재/관계": "Theme/Relationship",
+ "수": "Bottom",
+ "스포츠/학원": "Sports/School",
+ "액션": "Action",
+ "코믹/일상": "Comedy/Slice of life",
+ "판타지/SF": "Fantasy/SF"
 }

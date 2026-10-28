@@ -1,5 +1,4 @@
 'use client'
-import { useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import { box, fieldFont } from './form-parts'
 
@@ -61,7 +60,7 @@ export function StepSlider({ name, label, steps, value, onChange }: {
       <input type="hidden" name={name} value={steps[index]!.value} />
       <div style={{ position: 'relative', height: 40, display: 'flex', alignItems: 'center' }}>
         <div aria-hidden style={{ position: 'absolute', left: 0, right: 0, height: 16, borderRadius: 8, background: 'var(--color-surface-3)' }} />
-        <div aria-hidden style={{ position: 'absolute', left: 0, width: `calc(${at(index)} + 9px)`, height: 16, borderRadius: 8, background: 'var(--color-lavender-400)', transition: 'width 200ms' }} />
+        <div aria-hidden style={{ position: 'absolute', left: 0, width: `calc(${at(index)} + 9px)`, height: 16, borderRadius: 8, background: 'linear-gradient(90deg, var(--color-lavender-500), var(--color-lavender-300))', transition: 'width 200ms' }} />
         {steps.map((_, k) => <span key={k} aria-hidden style={{ position: 'absolute', left: `calc(${at(k)} - 3px)`, width: 6, height: 6, borderRadius: 3, background: k <= index ? '#fff8' : 'var(--color-text-disabled)' }} />)}
         <span aria-hidden style={{ position: 'absolute', left: `calc(${at(index)} - 9px)`, width: 18, height: 18, borderRadius: 9, background: 'var(--color-white)', transition: 'left 200ms' }} />
         <input type="range" min={0} max={last} step={1} value={index} onChange={e => onChange(steps[Number(e.target.value)]!.value)} aria-label={label} aria-valuetext={steps[index]!.label}
@@ -72,24 +71,6 @@ export function StepSlider({ name, label, steps, value, onChange }: {
           style={{ position: 'absolute', left: at(k), transform: k === 0 ? 'translateX(-8px)' : k === last ? 'translateX(calc(-100% + 8px))' : 'translateX(-50%)', whiteSpace: 'nowrap',
             background: 'none', border: 0, padding: 0, cursor: 'pointer', color: k === index ? 'var(--color-lavender-200)' : 'var(--color-text-tertiary)', fontWeight: k === index ? 'var(--weight-semibold)' : 400 }}>{s.label}</button>)}
       </div>
-    </div>
-  )
-}
-
-/** 접었다 펴는 칸 — 닫혀 있을 땐 고른 값 요약, 펴면 아래에 고르는 칸. 안의 입력은 닫혀도 남아 제출된다. */
-export function Disclosure({ summary, placeholder, children }: { summary: string[]; placeholder: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <div>
-      <button type="button" aria-expanded={open} onClick={() => setOpen(v => !v)}
-        style={{ ...box(open), display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 52, padding: '10px 16px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', color: 'var(--color-text-secondary)' }}>
-        <span style={{ flex: 1, minWidth: 0, display: 'flex', flexWrap: 'wrap', gap: '4px 8px', fontSize: fieldFont }}>
-          {summary.length ? summary.map(s => <span key={s} style={{ color: 'var(--color-lavender-200)' }}>#{s}</span>)
-            : <span style={{ color: 'var(--color-text-tertiary)' }}>{placeholder}</span>}
-        </span>
-        {chevron(open)}
-      </button>
-      <div hidden={!open} style={{ marginTop: 12 }}>{children}</div>
     </div>
   )
 }

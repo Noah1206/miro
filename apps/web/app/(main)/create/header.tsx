@@ -60,7 +60,7 @@ export function CreateHeader({ tab, onTab, experienceType, canSubmit, canDraft, 
 
       {/* 탭 사이 간격을 고르게 벌려 양쪽 여백이 같다. 첫·끝 탭의 글자가 페이지 여백선에 맞도록 탭 안쪽 여백(6px)만큼 뺀다. */}
       {/* 입력 탭은 고르게 펼치고, 미리보기도 배경 없는 밑줄 탭으로 구분한다. */}
-      <div role="tablist" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
+      <div role="tablist" className="create-tabs" aria-label={t('만들기 항목')} style={{ display: 'flex', alignItems: 'center', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 var(--gutter) 0 calc(var(--gutter) - 6px)' }}>
         <div style={{ flex: '1 0 auto', display: 'flex', justifyContent: 'space-between', gap: 2 }}>
           {TABS.filter((x) => x.key !== 'preview').map((x) => {
             const active = x.key === tab

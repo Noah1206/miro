@@ -23,6 +23,12 @@ const PRESETS = [
   { stage: 'dating', label: msg('특별한 사이'), hint: msg('서로에게 특별하지만 관계를 정해 두지는 않았어요.'), values: [65, 70, 25, 60, 50, 20] },
   { stage: 'lover', label: msg('연인'), hint: msg('서로를 믿고 애정과 일상을 나눠요.'), values: [80, 80, 15, 75, 65, 25] },
 ]
+/** 10/28 밀러의 법칙: 11개를 한 줄로 늘어놓지 않고 이름 붙인 세 덩어리(3~5개씩)로 끊어 보인다. */
+const GROUPS = [
+  { key: 'new', label: msg('처음 만남'), stages: ['stranger', 'acquaintance', 'professional'] },
+  { key: 'close', label: msg('가까운 사이'), stages: ['friend', 'ambiguous', 'flirting', 'dating', 'lover'] },
+  { key: 'tense', label: msg('엇갈린 사이'), stages: ['rivalry', 'distrust', 'conflict'] },
+] as const
 /** 친해지는 곡선 (relationship/dynamics). 대화할수록 가까워지는 모양과 먼저 연락하는 시점이 달라진다. */
 const BONDING = [
   { value: '', label: msg('자동'), hint: msg('다가가는 방식과 감정 표현에 맞춰 정해요.') },
@@ -31,6 +37,7 @@ const BONDING = [
   { value: 'steady', label: msg('꾸준히'), hint: msg('대화할수록 조금씩 꾸준히 가까워져요.') },
   { value: 'slow', label: msg('아주 천천히'), hint: msg('마음을 여는 데 오래 걸려요.') },
 ] as const
+const BONDING_BAR = ['', 'slow', 'steady', 'stepwise', 'accelerating'] as const
 /** 프리셋 values 의 순서와 같다. */
 const FIELDS = [['trust'], ['attraction'], ['emotionalDistance'], ['attachment'], ['protectiveness'], ['relJealousy']] as const
 
@@ -51,14 +58,23 @@ export function RelationshipSettings({ initial }: { initial: FormInitial }) {
   }
   return <div>
     {FIELDS.map(([key], n) => <input key={key} type="hidden" name={key} value={values[n]!} />)}
-    <ChoiceChips name="stage" pill value={stage} onChange={choose}
-      options={PRESETS.map(p => ({ value: p.stage, label: t(p.label) }))} />
-    <p className="t-caption" style={caption}>{matched ? t(matched.hint) : t('{stage} · 직접 설정한 관계로 시작해요.', { stage: t(stageLabel(STAGES.find(s => s === stage) ?? 'stranger')) })}</p>
-    <section aria-label={t('가까워지는 속도')} style={{ marginTop: 24 }}>
-      <h3 className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>{t('가까워지는 속도')}</h3>
-      <ChoiceChips name="bonding" pill value={bonding} onChange={setBonding} options={BONDING.map(b => ({ value: b.value, label: t(b.label) }))} />
-      <p className="t-caption" style={caption}>{t(BONDING.find(b => b.value === bonding)!.hint)} {t('가까워질수록 먼저 연락하는 간격도 짧아져요.')}</p>
-    </section>
+    <input type="hidden" name="stage" value={stage} />
+    {/* 10/28: 시작 관계 세 덩어리 + 가까워지는 속도를 카드 하나로 묶는다(연락 카드와 같은 꼴). */}
+    <div style={{ display: 'grid', gap: 20, padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', background: 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' }}>
+      {GROUPS.map(g => (
+        <div key={g.key}>
+          <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginBottom: 8 }}>{t(g.label)}</p>
+          <ChoiceChips pill value={stage} onChange={choose}
+            options={PRESETS.filter(p => (g.stages as readonly string[]).includes(p.stage)).map(p => ({ value: p.stage, label: t(p.label) }))} />
+        </div>
+      ))}
+      <section aria-label={t('가까워지는 속도')} style={{ paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
+        <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4 }}>{t('가까워지는 속도')}</p>
+        {/* 칩 대신 단계 막대 — 자동 다음 느린 쪽부터 빠른 쪽으로. */}
+        <StepSlider name="bonding" label={t('가까워지는 속도')} value={bonding} onChange={v => setBonding(v as typeof bonding)}
+          steps={BONDING_BAR.map(v => ({ value: v, label: t(BONDING.find(b => b.value === v)!.label) }))} />
+      </section>
+    </div>
   </div>
 }
 
@@ -67,19 +83,22 @@ const INITIATIVE = [
   { value: 50, label: msg('보통'), hint: msg('안부가 궁금하거나 나눌 이야기가 생기면 먼저 연락하는 편이에요.') },
   { value: 80, label: msg('적극적'), hint: msg('상대의 연락을 기다리기보다 먼저 말을 걸고 대화를 시작하는 편이에요.') },
 ]
+/** 10/28: 5단계로 세분. */
 const FREQUENCY = [
-  { value: 20, label: msg('드물게'), hint: msg('특별히 할 이야기가 생기면 먼저 연락해요.') },
-  { value: 50, label: msg('가끔'), hint: msg('관계와 상황에 따라 안부를 건네요.') },
-  { value: 80, label: msg('자주'), hint: msg('일상의 작은 일도 나누려는 편이에요.') },
+  { value: 10, label: msg('아주 드물게') },
+  { value: 30, label: msg('드물게') },
+  { value: 50, label: msg('가끔') },
+  { value: 70, label: msg('자주') },
+  { value: 90, label: msg('아주 자주') },
 ]
 export function ContactSettings({ initial: i, mode, capabilities }: { initial: FormInitial; mode: 'create' | 'edit'; capabilities: ContactCapabilities }) {
   const legacyChat = mode === 'edit' && i.experienceType === 'chat'
   const [enabled, setEnabled] = useState(!legacyChat && i.contactEnabled)
   const [changed, setChanged] = useState(false)
   // 가장 가까운 단계로 맞춘다(옛 저장값이 20·50·80 이 아닐 수 있다).
-  const snap = (v: number) => String([20, 50, 80].reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a))
-  const [frequency, setFrequency] = useState(snap(i.contactFrequency))
-  const [initiative, setInitiative] = useState(snap(i.initiativeLevel))
+  const snap = (v: number, steps: ReadonlyArray<{ value: number }>) => String(steps.map(o => o.value).reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a))
+  const [frequency, setFrequency] = useState(snap(i.contactFrequency, FREQUENCY))
+  const [initiative, setInitiative] = useState(snap(i.initiativeLevel, INITIATIVE))
   const t = useT()
   return <div>
     {/* 연락 방식은 작성자가 지정하지 않는다. 기존 캐릭터의 저장값은 편집 시 보존한다. */}
@@ -107,10 +126,9 @@ export function ContactSettings({ initial: i, mode, capabilities }: { initial: F
           <div key={name}>
             <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4 }}>{t(label)}</p>
             <StepSlider name={name} label={t(label)} value={value} onChange={set} steps={steps.map(o => ({ value: String(o.value), label: t(o.label) }))} />
-            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 10 }}>{t(steps.find(o => String(o.value) === value)?.hint ?? '')}</p>
           </div>
         ))}
-        <LabeledField label={t('연락할 때 표시할 이름')} hint={t('캐릭터가 연락할 때 보이는 발신자 이름이에요. 비워 두면 캐릭터 이름을 사용해요.')}><CountedInput name="senderLabel" max={30} defaultValue={i.senderLabel} placeholder={t('예) 알 수 없는 번호, 경호실')} /></LabeledField>
+        <LabeledField label={t('연락할 때 표시할 이름')} hint={t('캐릭터가 연락할 때 보이는 발신자 이름이에요. 비워 두면 캐릭터 이름을 사용해요.')}><CountedInput name="senderLabel" max={30} defaultValue={i.senderLabel} ariaLabel={t('연락할 때 표시할 이름')} /></LabeledField>
       </div>
     </div>
   </div>
