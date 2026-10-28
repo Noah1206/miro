@@ -36,6 +36,8 @@ export type CommittedMessage = { id: string; role: string; kind: string; content
 
 export type CommitInput = {
   sessionId: string
+  /** 상황별 사진 URL(10/28) — 키워드가 맞은 턴에만. */
+  situationImage?: string | null
   /** null for unmetered MIRO turns — there is no ledger row to commit. */
   reservationId?: string | null
   actualTokens?: number
@@ -163,6 +165,11 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         content: input.responseText,
         blocks: input.blocks as never, turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
       },
+      // 상황별 사진(10/28) — 답 바로 뒤에 사진 한 장.
+      ...(input.situationImage ? [{
+        sessionId: input.sessionId, role: 'character' as const, kind: 'photo' as const,
+        content: input.situationImage, blocks: [], turnIndex: input.turnIndex, isExplicit: input.explicit ?? false,
+      }] : []),
     ]
     const inserted = (await tx.insert(messages).values(inWrittenOrder(rows)).returning({ id: messages.id, role: messages.role, kind: messages.kind, content: messages.content, blocks: messages.blocks, turnIndex: messages.turnIndex }))
       .sort((a, b) => (ORDER[a.role] ?? 9) - (ORDER[b.role] ?? 9))

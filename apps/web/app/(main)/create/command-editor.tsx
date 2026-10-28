@@ -82,7 +82,7 @@ function NewCommand({ onDone }: { onDone: (cmd: CharacterCommand) => void }) {
     </div>
     <div style={{ padding: '6px 10px 3px', ...box(false) }}>
       <textarea value={prompt} onChange={e => setPrompt(e.target.value)} rows={3} maxLength={COMMAND_LIMITS.prompt} aria-label={t('명령어 지시')}
-        placeholder={t('이 명령어를 쓰면 캐릭터가 할 일 — 예) 주인공이 그날 하루를 일기 형식으로 돌아보는 장면을 쓴다.')} style={{ ...field, resize: 'none' }} />
+        placeholder={t('프롬프팅')} style={{ ...field, resize: 'none' }} />
     </div>
     <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} hint={t('켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.')} />
     {error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{error}</p>}

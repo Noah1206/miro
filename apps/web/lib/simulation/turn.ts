@@ -2,7 +2,7 @@ import { DEFAULT_CHARACTER_STATE } from '@miro/domain'
 import { receiveMessenger, MessengerError } from '@/lib/messenger/inbox'
 import { resolveChatModel } from '@/lib/ai/chat-models'
 import { eq, and } from 'drizzle-orm'
-import { db, conversationRequests } from '@miro/db'
+import { db, conversationRequests, characters, messages } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
@@ -26,6 +26,7 @@ import { type LoadedAgency } from '@/lib/agency/runtime'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { resolveChatCommand } from './chat-command'
+import { pickSituationImage } from '@/lib/situation-images'
 
 export type ConversationOutcome =
   | {
@@ -226,6 +227,10 @@ async function executeTurn(opts: {
     const actualTokens = tokensForCost(turnMeter.customerCostUSD, model.pricing)
     if (actualTokens > (reservation?.cost ?? 0)) { await refund(); return { ok: false, reason: 'generation' } }
     const responseText = renderBlocks(transition.blocks)
+    // 상황별 사진(10/28) — 사용자 말이나 이번 답에 키워드가 나오면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
+    const [{ situationImages = [] } = {}] = await db.select({ situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
+    const situationImage = situationImages.length === 0 ? null : pickSituationImage(situationImages, `${input ?? ''}\n${responseText}`,
+      new Set((await db.select({ content: messages.content }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'photo')))).map(m => m.content)))
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,
       providerMode: result.providerMode, characterState: result.characterState, firedRules: result.firedRules,
@@ -236,7 +241,7 @@ async function executeTurn(opts: {
       const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, actualTokens, moments, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: transition.blocks, transition, sceneMarker, channel: 'scene',
+        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: transition.blocks, transition, sceneMarker, channel: 'scene', situationImage,
         // 리롤(10/27) — 이 턴은 다시 받을 수 있다. 다시 보낼 때 같은 명령어를 붙인다.
         undo: { command: opts.command ?? null, commandId: opts.commandId ?? null },
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),

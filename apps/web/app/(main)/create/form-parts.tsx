@@ -192,7 +192,9 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
       {items.map((it) => <input key={it.url} type="hidden" name="imageOrder" value={it.kind} />)}
       {/* 대표 사진 — 가운데 정사각형 한 칸. 눌러서 시트를 연다. 고른 사진은 살짝 커진 채로 나타나 제자리에 앉는다.
           다른 사진을 이 위로 드래그해 놓으면 그 사진이 대표가 된다. 드래그(div)와 클릭(button)을 분리한다 — framer motion 의 pan 이벤트가 네이티브 onDragStart 와 충돌한다. */}
-      <div {...(main ? dragHandlers(0) : {})} style={{ width: 280, margin: '0 auto', cursor: main ? 'grab' : undefined }}>
+      {/* 10/28: 대표 사진 옆(모바일은 아래)에 흰 업로드 버튼 — 누르면 바로 파일을 고른다. */}
+      <div className="create-photo-row">
+      <div {...(main ? dragHandlers(0) : {})} style={{ width: 280, cursor: main ? 'grab' : undefined }}>
         <motion.button type="button" onClick={() => setOpen(true)} aria-label={main ? t('{label} 대표 사진 바꾸기 (드래그로 순서 변경 가능)', { label }) : label}
           whileTap={reduce ? undefined : { scale: 0.98 }}
           style={{
@@ -234,6 +236,11 @@ export function ImagePicker({ label, maxCount = 5, required, existing = [] }: {
             )}
           </AnimatePresence>
         </motion.button>
+      </div>
+      {!full && <label htmlFor={inputId} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLLabelElement).click() } }}
+        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 120, minHeight: 48, padding: '12px 28px', borderRadius: 'var(--radius-button)', background: 'var(--color-white)', color: 'var(--color-bg)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)', cursor: 'pointer' }}>
+        {t('업로드')}
+      </label>}
       </div>
 
       {/* 나머지 사진 줄 — 대표를 넣은 뒤에만. 썸네일은 누르면 빠지고, '+' 로 더 넣는다. 드래그로 순서를 바꿀 수 있다. */}

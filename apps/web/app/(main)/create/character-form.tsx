@@ -12,6 +12,7 @@ import { CreateHeader, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
+import { SituationImagesEditor } from './situation-images-editor'
 import { MOODS } from './parse'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
@@ -46,6 +47,7 @@ export type FormInitial = {
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
   startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
+  situationImages: Array<{ keywords: string[]; image: string }>
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
   /** 캐릭터 유형(10/19): 대화만 / 음성통화 / 음성+영상통화. */
@@ -71,7 +73,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], commands: [], media: 'text', audience: 'female',
+  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], situationImages: [], commands: [], media: 'text', audience: 'female',
   isPublic: true,
   images: [],
 }
@@ -324,6 +326,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
           {/* 상황 예시(10/28): 칸은 지웠다(사용자 요청). 이미 적힌 예시는 지우지 않게 그대로 보낸다. */}
           <input type="hidden" name="sampleDialogue" value={JSON.stringify(sampleDialogue(i.sampleDialogue))} />
+          {/* 상황별 사진(10/28, 위프·베이비챗식) — 대화 중 키워드가 나오면 그 사진이 채팅에 뜬다. */}
+          <Section title={t('상황별 사진 · 선택')} subtitle={t('상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.')}>
+            <SituationImagesEditor defaultValue={i.situationImages ?? []} />
+          </Section>
         </Panel>
 
         {/* ── 세계관 ── */}

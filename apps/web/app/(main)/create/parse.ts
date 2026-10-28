@@ -1,4 +1,5 @@
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
+import { normalizeSituationImages } from '@/lib/situation-images'
 import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
 import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
 import type { CharacterCommand } from '@miro/db'
@@ -92,6 +93,9 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   let lore: ReturnType<typeof normalizeLore> = []
   try { lore = normalizeLore(JSON.parse(s('lore') || '[]')) } catch { /* 빈 배열 */ }
 
+  let situationImages: ReturnType<typeof normalizeSituationImages> = []
+  try { situationImages = normalizeSituationImages(JSON.parse(s('situationImages') || '[]')) } catch { /* 빈 배열 */ }
+
   const startingTime = orNull(s('startingTime'))
   const initialRelationship = {
     stage: oneOf('stage', STAGES, 'stranger'),
@@ -130,6 +134,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     ...(startingTime ? { startingTime } : {}),
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
     lore,
+    situationImages,
     commands: parseCommands(s('commands')),
     // 홈 남성향/여성향(10/20). 기본 여성향.
     audience: (s('audience') === 'male' ? 'male' : 'female') as 'male' | 'female',

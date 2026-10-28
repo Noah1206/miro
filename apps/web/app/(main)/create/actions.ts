@@ -7,8 +7,9 @@ import { and, eq, asc } from 'drizzle-orm'
 import {
   db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
+import { msg } from '@/lib/i18n'
 import { track } from '@/lib/analytics/track'
-import { resolveCharacterImages } from '@/lib/storage/images'
+import { resolveCharacterImages, uploadCharacterImage } from '@/lib/storage/images'
 import { parseCharacterForm } from './parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
@@ -101,4 +102,13 @@ export async function saveCharacter(form: FormData): Promise<string> {
     void track(user.id, 'rp_started', { sessionId: result.sessionId, official: false })
   }
   return `/chat/${result.sessionId}`
+}
+
+/** 상황별 사진 한 장(10/28) — 고르자마자 올리고 URL 만 폼에 남긴다. 저장 한 번에 실으면 서버 액션 본문 한도(4MB)를 넘는다. */
+export async function uploadSituationImage(form: FormData): Promise<{ url: string } | { error: string }> {
+  const user = await requireUser()
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size === 0) return { error: msg('사진을 고르지 못했어요.') }
+  const r = await uploadCharacterImage(file, user.id)
+  return r.ok ? { url: r.url } : { error: r.error }
 }

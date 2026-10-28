@@ -959,6 +959,7 @@
  "최근": "Recent",
  "최근 내역": "Recent history",
  "최대 {n}장": "Up to {n} photos",
+ "업로드": "Upload",
  "최신순": "Newest",
  "최애 캐릭터를 현실에서 만나봐": "Meet your favorite character in real life",
  "추가": "Add",
@@ -1364,7 +1365,7 @@
  "한 줄 설명 — 예) 오늘 하루를 일기로 돌아본다": "One-line description, e.g. looks back on the day as a diary",
  "명령어 설명": "Command description",
  "명령어 지시": "Command instruction",
- "이 명령어를 쓰면 캐릭터가 할 일 — 예) 주인공이 그날 하루를 일기 형식으로 돌아보는 장면을 쓴다.": "What the character does when this command is used, e.g. writes a scene where the protagonist looks back on the day in diary form.",
+ "프롬프팅": "Prompting",
  "라이브러리에 공개": "Publish to library",
  "켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.": "When on, other creators can attach this command to their characters.",
  "명령어 라이브러리": "Command library",
@@ -1533,5 +1534,14 @@
  "💘 {name}님에게 맞춘 캐릭터": "💘 Picked for {name}",
  "💘 당신에게 맞춘 캐릭터": "💘 Picked for you",
  "⭐ 미로 추천 캐릭터": "⭐ MIRO picks",
- "🗂️ 전체 캐릭터": "🗂️ All characters"
+ "🗂️ 전체 캐릭터": "🗂️ All characters",
+ "사진 고르기": "Choose photo",
+ "사진을 고르지 못했어요.": "Couldn't pick that photo.",
+ "상황 사진 빼기": "Remove situation photo",
+ "상황 사진 추가 ({n}/{max})": "Add situation photo ({n}/{max})",
+ "상황 키워드": "Situation keywords",
+ "상황 키워드 (쉼표로) 예) 비, 우산": "Keywords (comma-separated) e.g. rain, umbrella",
+ "상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.": "Pair keywords with a photo, and the photo appears in chat when that situation comes up.",
+ "상황별 사진 · 선택": "Situation photos · Optional",
+ "올리는 중…": "Uploading…"
 }

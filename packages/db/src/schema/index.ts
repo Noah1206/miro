@@ -211,6 +211,8 @@ export const characters = pgTable('characters', {
   sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string; context?: string; time?: string; location?: string }>>().notNull().default([]),
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
+  /** 상황별 사진(10/28) — 대화 중 키워드가 나오면 그 사진을 채팅에 한 번 띄운다. */
+  situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string }>>().notNull().default([]),
   /** 명령어(10/19) — 채팅에서 `/이름` 으로 부르는 한 턴 지시의 복사본. 라이브러리(command_book)에서 골랐거나 제작자가 적은 것. */
   commands: jsonb('commands').$type<Array<{ name: string; hint: string; prompt: string; sourceId?: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),

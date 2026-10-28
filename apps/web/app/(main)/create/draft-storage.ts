@@ -28,7 +28,7 @@ export function restoreDraft(entries: Array<[string, string]>, type: 'chat' | 'r
     hobbies: c.hobbies, dislikes: c.dislikes, mood: p.world.genre?.split(' · ') ?? [],
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
     relationshipKeywords: c.relationshipKeywords, startingContext: c.startingContext ?? '', startingTime: p.startingTime ?? '',
-    worldSetting: p.world.worldSetting ?? '', worldLocation: p.world.location ?? '', sampleDialogue: c.sampleDialogue, lore: c.lore,
+    worldSetting: p.world.worldSetting ?? '', worldLocation: p.world.location ?? '', sampleDialogue: c.sampleDialogue, lore: c.lore, situationImages: c.situationImages,
     commands: c.commands, media: contact.presentation.media ?? 'text',
     stage: r.stage, trust: r.trust, attraction: r.attraction, relJealousy: r.jealousy,
     protectiveness: r.protectiveness, emotionalDistance: r.emotionalDistance, attachment: r.attachment,
