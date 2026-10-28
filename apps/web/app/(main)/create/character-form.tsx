@@ -368,15 +368,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 외형 — 관계 탭 안에 함께 보인다(10/19). DOM 은 앞이지만 order 로 관계 내용 아래에 놓는다. ── */}
         <Panel id="relationship-visual" show={tab === 'relationship'} order={1}>
-          <Section title={t('몸')}>
+          <Section title={t('외형')}>
             <Card>
-              {/* 체형 선택은 10/19 화면에서 뺐다 — 값은 기본(표준) 또는 자동 채우기가 정한 것을 그대로 보낸다. */}
+              {/* 10/28: 몸(성별·키·체형 설명) 칸을 화면에서 뺐다(사용자 요청) — 저장값·자동 채우기 값은 그대로 보낸다. */}
               <input type="hidden" name="build" value={build} />
-              <BodyPicker gender={gender} onGender={setGender} />
-              <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                <LabeledField label={t('키')}><CountedInput name="height" placeholder={t('예) 186cm')} max={20} {...g('height')} /></LabeledField>
-                <LabeledField label={t('체형 설명')}><CountedInput name="detail" placeholder={t('예) 어깨가 넓다')} max={120} {...g('detail')} /></LabeledField>
-              </div>
+              <input type="hidden" name="gender" value={gender} />
+              <input type="hidden" name="height" value={gen.height ?? String(i.height ?? '')} />
+              <input type="hidden" name="detail" value={gen.detail ?? String(i.detail ?? '')} />
 
               {/* 얼굴·머리는 고급 — 몸만 정해도 사진은 나온다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
               <AdvancedToggle open={advanced} onToggle={() => setAdvanced((v) => !v)} controls="appearance-advanced" />

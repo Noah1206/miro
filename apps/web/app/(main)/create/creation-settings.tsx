@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { stageLabel } from '@miro/domain'
 import { STAGES } from './parse'
 import { ChoiceChips, CountedInput, LabeledField, Stepped, Switch } from './form-parts'
+import { StepSlider } from './settings-controls'
 import type { FormInitial } from './character-form'
 import type { ContactCapabilities } from '@/lib/reality/channels'
 import { msg } from '@/lib/i18n'
@@ -61,6 +62,11 @@ export function RelationshipSettings({ initial }: { initial: FormInitial }) {
   </div>
 }
 
+const INITIATIVE = [
+  { value: 20, label: msg('기다림'), hint: msg('먼저 다가가기보다 상대가 연락해 오기를 기다리는 편이에요.') },
+  { value: 50, label: msg('보통'), hint: msg('안부가 궁금하거나 나눌 이야기가 생기면 먼저 연락하는 편이에요.') },
+  { value: 80, label: msg('적극적'), hint: msg('상대의 연락을 기다리기보다 먼저 말을 걸고 대화를 시작하는 편이에요.') },
+]
 const FREQUENCY = [
   { value: 20, label: msg('드물게'), hint: msg('특별히 할 이야기가 생기면 먼저 연락해요.') },
   { value: 50, label: msg('가끔'), hint: msg('관계와 상황에 따라 안부를 건네요.') },
@@ -70,7 +76,10 @@ export function ContactSettings({ initial: i, mode, capabilities }: { initial: F
   const legacyChat = mode === 'edit' && i.experienceType === 'chat'
   const [enabled, setEnabled] = useState(!legacyChat && i.contactEnabled)
   const [changed, setChanged] = useState(false)
-  const [frequency, setFrequency] = useState(i.contactFrequency)
+  // 가장 가까운 단계로 맞춘다(옛 저장값이 20·50·80 이 아닐 수 있다).
+  const snap = (v: number) => String([20, 50, 80].reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a))
+  const [frequency, setFrequency] = useState(snap(i.contactFrequency))
+  const [initiative, setInitiative] = useState(snap(i.initiativeLevel))
   const t = useT()
   return <div>
     {/* 연락 방식은 작성자가 지정하지 않는다. 기존 캐릭터의 저장값은 편집 시 보존한다. */}
@@ -88,16 +97,19 @@ export function ContactSettings({ initial: i, mode, capabilities }: { initial: F
       hint={t('대화하지 않는 동안에도 성격과 상황에 맞춰 먼저 연락해요.')} />
     {!capabilities.realityMessage && <p className="t-caption" style={caption}>{t('먼저 연락하기는 현재 준비 중이에요. 설정은 저장됩니다.')}</p>}
     {legacyChat && !changed && <p className="t-caption" style={caption}>{t('켜면 이 캐릭터도 리얼리티로 사용할 수 있어요.')}</p>}
-    <div hidden={!enabled} style={{ marginTop: 24 }}>
-      <Stepped name="contactFrequency" label={msg('연락 빈도')} defaultValue={i.contactFrequency} value={frequency} onChange={setFrequency} options={FREQUENCY} />
-    </div>
+    {/* 10/28: 칸 버튼 대신 단계 막대, 한 카드에 모은다(분류·설정 탭과 같은 꼴). */}
     <div id="contact-details" hidden={!enabled} style={{ marginTop: 20 }}>
-      <div className="stack" style={{ gap: 24, background: 'var(--color-surface-1)', borderRadius: 'var(--radius-lg)', padding: '16px' }}>
-        <Stepped name="initiativeLevel" label={msg('연락 주도성')} defaultValue={i.initiativeLevel} options={[
-          { value: 20, label: msg('기다림'), hint: msg('먼저 다가가기보다 상대가 연락해 오기를 기다리는 편이에요.') },
-          { value: 50, label: msg('보통'), hint: msg('안부가 궁금하거나 나눌 이야기가 생기면 먼저 연락하는 편이에요.') },
-          { value: 80, label: msg('적극적'), hint: msg('상대의 연락을 기다리기보다 먼저 말을 걸고 대화를 시작하는 편이에요.') },
-        ]} />
+      <div style={{ display: 'grid', gap: 24, padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', background: 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' }}>
+        {([
+          ['contactFrequency', msg('연락 빈도'), frequency, setFrequency, FREQUENCY],
+          ['initiativeLevel', msg('연락 주도성'), initiative, setInitiative, INITIATIVE],
+        ] as const).map(([name, label, value, set, steps]) => (
+          <div key={name}>
+            <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4 }}>{t(label)}</p>
+            <StepSlider name={name} label={t(label)} value={value} onChange={set} steps={steps.map(o => ({ value: String(o.value), label: t(o.label) }))} />
+            <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', marginTop: 10 }}>{t(steps.find(o => String(o.value) === value)?.hint ?? '')}</p>
+          </div>
+        ))}
         <LabeledField label={t('연락할 때 표시할 이름')} hint={t('캐릭터가 연락할 때 보이는 발신자 이름이에요. 비워 두면 캐릭터 이름을 사용해요.')}><CountedInput name="senderLabel" max={30} defaultValue={i.senderLabel} placeholder={t('예) 알 수 없는 번호, 경호실')} /></LabeledField>
       </div>
     </div>
