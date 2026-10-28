@@ -13,7 +13,6 @@ import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, IntroText, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { MOODS } from './parse'
-import { quickFill, type QuickFill } from './assist'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
@@ -138,7 +137,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const reduceMotion = useReducedMotion()
   const [mbti, setMbti] = useState<string>(i.mbti)
   const [gender, setGender] = useState<string>(i.gender)
-  const [build, setBuild] = useState<string>(i.build)
+  const [build] = useState<string>(i.build)
   const [voiceId, setVoiceId] = useState<string>(i.voiceId)
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
@@ -149,46 +148,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [hobbies, setHobbies] = useState(i.hobbies)
   const [dislikes, setDislikes] = useState(i.dislikes)
   // 자동 채우기(10/19)가 넣은 값. uncontrolled 칸은 key 를 바꿔 다시 그리며 defaultValue 로 받는다 — 빈 칸에만 넣으므로 적은 값을 덮지 않는다.
-  const [gen, setGen] = useState<Partial<Record<string, string>>>({})
-  const [genTags, setGenTags] = useState<Partial<Record<'styleTags' | 'relationshipKeywords', string[]>>>({})
-  const [genIntro, setGenIntro] = useState<Array<{ role: 'character'; text: string; purpose: 'intro' }> | null>(null)
+  const [gen] = useState<Partial<Record<string, string>>>({})
+  const [genTags] = useState<Partial<Record<'styleTags' | 'relationshipKeywords', string[]>>>({})
+  const [genIntro] = useState<Array<{ role: 'character'; text: string; purpose: 'intro' }> | null>(null)
   const g = (k: keyof FormInitial & string) => ({ key: `${k}:${gen[k] ?? ''}`, defaultValue: gen[k] ?? String(i[k] ?? '') })
   const gt = (k: 'styleTags' | 'relationshipKeywords') => ({ key: `${k}:${(genTags[k] ?? []).join(',')}`, defaultValue: genTags[k] ?? i[k] })
   // 소개 페이지 미리보기 — 탭을 열 때 폼을 한 번 읽는다. 칸을 전부 controlled 로 바꾸지 않는다.
   const formRef = useRef<HTMLFormElement>(null)
-  const [fillText, setFillText] = useState('')
-  const [filling, setFilling] = useState(false)
-  const [fillError, setFillError] = useState('')
-  /** 설명(또는 이미 적은 칸)으로 초안을 받아 비어 있는 칸에만 넣는다. 성별·체형은 초안을 따른다 — 사진이 설명과 같은 사람이게. */
-  const fill = async () => {
-    const form = formRef.current
-    if (!form || filling) return
-    const fd = new FormData(form)
-    const cur = (k: string) => String(fd.get(k) ?? '').trim()
-    if (!fillText.trim() && !cur('name') && !cur('personality')) { setFillError(msg('어떤 캐릭터인지 한두 문장만 적어 주세요.')); return }
-    setFilling(true); setFillError('')
-    let d: QuickFill
-    try {
-      d = await quickFill(fillText, { name: cur('name'), title: cur('title'), personality: cur('personality'), age: cur('age'), nationality: cur('nationality'), occupation: cur('occupation'), worldSetting: cur('worldSetting'), startingContext: cur('startingContext') })
-    } catch { setFillError(msg('지금은 채우지 못했어요. 잠시 뒤 다시 눌러 주세요.')); setFilling(false); return }
-    if (!cur('name')) setName(d.name)
-    if (!intro.trim()) setIntro(joinIntro(d.title, d.personality))
-    if (!cur('startingContext')) setStartingContext(d.startingContext)
-    if (!cur('mbti')) setMbti(d.mbti)
-    setGender(d.gender); setBuild(d.build)
-    if (!hobbies.length) setHobbies(d.hobbies)
-    if (!dislikes.length) setDislikes(d.dislikes)
-    const next: Record<string, string> = {}
-    for (const k of ['age', 'nationality', 'occupation', 'worldSetting', 'worldLocation', 'startingTime', 'height', 'detail', 'eyes', 'nose', 'jaw', 'skin', 'distinctive', 'hairColor', 'hairLength', 'hairStyle', 'expression'] as const) {
-      if (!cur(k) && d[k]) next[k] = d[k]
-    }
-    setGen(prev => ({ ...prev, ...next }))
-    setGenTags(prev => ({ ...prev,
-      ...(!cur('styleTags') && d.styleTags.length ? { styleTags: d.styleTags } : {}),
-      ...(!cur('relationshipKeywords') && d.relationshipKeywords.length ? { relationshipKeywords: d.relationshipKeywords } : {}) }))
-    if (introDialogue(JSON.parse(cur('introDialogue') || '[]')).length === 0 && d.firstLine) setGenIntro([{ role: 'character', text: d.firstLine, purpose: 'intro' }])
-    setFilling(false)
-  }
   useEffect(() => {
     if (!storageKey) return
     const form = formRef.current
@@ -295,22 +261,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <input type="hidden" name="dislikes" value={dislikes.join(',')} />
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
-          {/* 자동 채우기(10/19) — 한두 문장이면 빈 칸을 AI 가 채운다. 적은 칸은 건드리지 않는다. */}
-          <Section title={t('AI로 채우기')} subtitle={t('어떤 캐릭터인지 한두 문장만 적으면 비어 있는 칸을 채워 드려요. 이미 적은 칸은 그대로 둬요.')}>
-            <Card>
-              <div style={{ padding: fieldPad, paddingBottom: 'var(--field-pad-b, 3px)', ...box(false) }}>
-                <textarea value={fillText} onChange={e => setFillText(e.target.value)} rows={2} maxLength={300} aria-label={t('AI로 채우기')}
-                  placeholder={t('예) 다른 사람한텐 싸가지 없는데 나한테만 잘해주는 30살 검사')}
-                  style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: fieldFont, lineHeight: 1.5, fontFamily: 'inherit' }} />
-              </div>
-              {fillError && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)', marginTop: 8 }}>{t(fillError)}</p>}
-              <button type="button" onClick={() => void fill()} disabled={filling}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, marginTop: 10, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, cursor: filling ? 'default' : 'pointer',
-                  background: filling ? 'var(--color-surface-3)' : 'var(--color-accent)', color: filling ? 'var(--color-text-secondary)' : 'var(--color-accent-on)', fontSize: 'var(--font-body-size)', fontWeight: 'var(--weight-semibold)' }}>
-                {filling ? t('채우는 중…') : t('빈 칸 채우기')}
-              </button>
-            </Card>
-          </Section>
           {/* 유형(10/19): 대화만 / 몰입 모드(음성) / 몰입 모드(음성+영상). 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx. */}
           {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.')}>
             <Card>
