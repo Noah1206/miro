@@ -5,7 +5,7 @@ import { homeSections } from '@/lib/home'
 import { LogoMark, Page, TransitionLink } from '@/components/ui'
 import { measured } from '@/lib/observe'
 import { Row } from './row'
-import { StoryCard } from './feed'
+import { AllCharacters } from './all-characters'
 import { HomeBanner } from './banner'
 import { NotificationBell } from './bell'
 import { SiteFooter } from '@/components/site-footer'
@@ -29,7 +29,7 @@ export default async function Home() {
   const t = await getT()
 
   return (
-    <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))' }}>
+    <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))', '--font-title-3': '16px' } as React.CSSProperties}>
       {/* 위 4px·아래 8px — 홈 화면에 추가한 앱의 상태 표시줄 여백은 유지한다. */}
       {/* 내용 높이 40 = 홈·미로 공통 — 탭을 옮겨도 마크가 같은 자리에 있다. */}
       <header className="sticky-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 40, boxSizing: 'content-box', padding: 'calc(var(--space-1) + env(safe-area-inset-top)) var(--gutter) var(--space-2)' }}>
@@ -65,10 +65,7 @@ export default async function Home() {
       {sections.forYou.length > 0 && <Row index={1} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
       {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
-      {sections.others.length > 0 && <section aria-labelledby="home-all">
-        <h2 id="home-all" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>{t('🗂️ 전체 캐릭터')}</h2>
-        <div className={styles.grid}>{sections.others.map(c => <StoryCard key={c.id} c={c} />)}</div>
-      </section>}
+      {sections.others.length > 0 && <AllCharacters items={sections.others} />}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>

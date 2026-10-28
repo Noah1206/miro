@@ -1573,5 +1573,6 @@
  "낮음 (기본)": "Low (default)",
  "높음": "High",
  "생각 · BETA": "Thinking · BETA",
- "생각을 높이면 AI가 답하기 전에 더 깊이 고민해요. 대신 답이 늦어지고 한 턴에 쓰는 미로가 늘어요(보통 최대 2배, 높음 최대 3배).": "Higher thinking makes the AI reflect more before replying, but replies get slower and each turn can use more Miro (up to 2× on medium, 3× on high)."
+ "생각을 높이면 AI가 답하기 전에 더 깊이 고민해요. 대신 답이 늦어지고 한 턴에 쓰는 미로가 늘어요(보통 최대 2배, 높음 최대 3배).": "Higher thinking makes the AI reflect more before replying, but replies get slower and each turn can use more Miro (up to 2× on medium, 3× on high).",
+ "대화량순": "Most chatted"
 }
