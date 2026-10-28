@@ -144,7 +144,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(i.isPublic)
   const [media, setMedia] = useState<CharacterMedia>(i.media)
-  const [audience, setAudience] = useState(i.audience)
+  const audience = i.audience
   const can = capabilities
   const [hobbies, setHobbies] = useState(i.hobbies)
   const [dislikes, setDislikes] = useState(i.dislikes)
@@ -328,23 +328,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               )}
             </Card>
           </Section>}
-          {/* 대상(10/20): 홈 위 남성향/여성향 고르기가 이 값으로 거른다. */}
-          <Section title={t('대상')} subtitle={t('홈에서 고른 취향에 맞춰 이 캐릭터가 보여요.')}>
-            <Card>
-              {/* 사진 배경 칸 두 개(가로가 긴 3:2), 고르지 않은 칸은 어둡게 — 홈 취향 팝업과 같은 그림(10/20). */}
-              <input type="hidden" name="audience" value={audience} />
-              <div role="radiogroup" aria-label={t('대상')} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                {([['female', t('여성향'), '/audience/female.jpg', '#ffb3d1'], ['male', t('남성향'), '/audience/male.jpg', '#9fd2ff']] as const).map(([v, label, src, color]) => (
-                  <button key={v} type="button" role="radio" aria-checked={audience === v} onClick={() => setAudience(v)}
-                    style={{ position: 'relative', aspectRatio: '3 / 2', padding: 0, border: 0, borderRadius: 12, overflow: 'hidden', cursor: 'pointer',
-                      background: `#1b1a20 url(${src}) center 20% / cover no-repeat`, filter: audience === v ? 'none' : 'brightness(.4)', transition: 'filter .25s' }}>
-                    <span style={{ position: 'absolute', inset: 'auto 0 0', padding: '24px 10px 10px', background: 'linear-gradient(to top, rgba(0,0,0,.75), transparent)',
-                      color, fontSize: 16, fontWeight: 700, textAlign: 'left' }}>{label}</span>
-                  </button>
-                ))}
-              </div>
-            </Card>
-          </Section>
+          {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
+          <input type="hidden" name="audience" value={audience} />
           <Section title={t('공개')}>
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
