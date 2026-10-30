@@ -32,5 +32,5 @@ export async function createJob(_p: JobState, form: FormData): Promise<JobState>
 export async function retireVoice(id: string) {
   await requireAdmin('characters.manage')
   await retireMemberVoice(id)
-  revalidatePath('/voices')
+  revalidatePath('/voices'); revalidatePath('/reports/[id]', 'page')
 }

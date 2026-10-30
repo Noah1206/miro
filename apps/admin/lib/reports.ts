@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, lte } from 'drizzle-orm'
-import { db, adminActions, adminUsers, characters, messages, reports, roleplaySessions, users } from '@miro/db'
+import { db, adminActions, adminUsers, characters, messages, officialVoices, reports, roleplaySessions, users } from '@miro/db'
 import { nextStatus, requiresNote, type ReportAction, type ReportStatus } from '@miro/domain'
 
 export async function listReports(status: ReportStatus | 'all') {
@@ -29,7 +29,11 @@ export async function reportDetail(id: string) {
     .from(adminActions).innerJoin(adminUsers, eq(adminUsers.id, adminActions.adminId))
     .where(eq(adminActions.reportId, id)).orderBy(asc(adminActions.createdAt))
 
-  return { ...r, context, sessionRestricted: !!session?.restrictedAt, history }
+  // 캐릭터가 지금 쓰는 목소리 — 회원 목소리면 신고 화면에서 바로 내릴 수 있게(10/31)
+  const [voice] = r.report.characterId ? await db.select({ id: officialVoices.id, label: officialVoices.label, status: officialVoices.status, ownerId: officialVoices.ownerId, shared: officialVoices.shared })
+    .from(characters).innerJoin(officialVoices, eq(officialVoices.id, characters.voiceId)).where(eq(characters.id, r.report.characterId)).limit(1) : []
+
+  return { ...r, context, sessionRestricted: !!session?.restrictedAt, history, voice: voice ?? null }
 }
 
 export type ActResult = 'ok' | 'stale' | 'invalid_transition' | 'note_required' | 'not_found'

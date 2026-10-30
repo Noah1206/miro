@@ -3,6 +3,7 @@ import { currentAdmin } from '@/lib/auth'
 import { reportDetail } from '@/lib/reports'
 import { can } from '@miro/domain'
 import { ActionPanel } from './panel'
+import { retireVoice } from '../../voices/actions'
 
 /** n75/n76 — 신고 상세: 대상 스냅샷, 맥락, 처리 이력. 관계 수치는 보여주지 않는다. */
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +21,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
         <h1 style={{ fontSize: 16, margin: '0 0 10px' }}>신고 <span className="tag" data-report-status>{r.status}</span> <span className="tag">v{r.version}</span></h1>
         <p style={{ color: 'var(--muted)', fontSize: 12.5, margin: '0 0 12px' }}>{r.targetType} · {r.reason} · {r.createdAt.toLocaleString('ko-KR')} · 캐릭터 {d.characterName ?? '-'}{d.sessionRestricted && <> · <b style={{ color: '#E05A7A' }}>역할극 제한 중</b></>}</p>
         {r.detail && <p style={{ margin: '0 0 14px' }}>{r.detail}</p>}
+        {d.voice && <p data-report-voice style={{ fontSize: 12.5, margin: '0 0 12px' }}>목소리 {d.voice.label} <span className="tag">{d.voice.ownerId ? (d.voice.shared ? '회원·공개' : '회원·비공개') : '공식'}</span> <span className="tag">{d.voice.status}</span>
+          {d.voice.ownerId && d.voice.status !== 'retired' && <form action={retireVoice.bind(null, d.voice.id)} style={{ display: 'inline', marginLeft: 6 }}><button type="submit">목소리 내리기</button></form>}</p>}
         <h2 style={{ fontSize: 12, letterSpacing: '.1em', color: 'var(--muted)', margin: '0 0 6px' }}>신고 당시 대상</h2>
         <blockquote data-report-snapshot style={{ margin: '0 0 16px', padding: 12, background: 'var(--elevated)', borderRadius: 8, whiteSpace: 'pre-wrap' }}>{String(snap.content ?? `${snap.location ?? ''} · ${snap.time ?? ''}`)}</blockquote>
         <h2 style={{ fontSize: 12, letterSpacing: '.1em', color: 'var(--muted)', margin: '0 0 6px' }}>맥락 (앞뒤 턴)</h2>

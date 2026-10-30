@@ -119,7 +119,7 @@ class Speaker:
             body = await request.json()
             text = str(body.get('text', '')).strip()[:600]
             if not text: return Response(b'empty text', status_code=400)
-            try: return Response(self.speak(text, body.get('voice')), media_type='audio/wav')
+            try: return Response(self.speak(delivery_text(text, body), body.get('voice')), media_type='audio/wav')
             except Exception: return Response(b'generation failed', status_code=500)   # 글 내용은 로그에 남기지 않는다
         return api
 
@@ -127,6 +127,17 @@ class Speaker:
 # 회원 녹음 받기(10/31) — 앱 서버(Vercel)만 부른다. 브라우저 녹음(webm·mp4)을 44.1kHz 모노 wav 로 바꾸고 품질을 본 뒤
 # 받아쓰기(faster-whisper small, CPU)로 화면 문장을 읽었는지 대조하고 /user-voices/<sha256>/{ref.wav,ref.txt} 로 둔다.
 # 저장하자마자 GPU 가 미리 듣기를 만들기 시작한다(Speaker.preview). 이 함수는 GPU 를 쓰지 않는다.
+def delivery_text(text, body):
+    """앱이 대사마다 붙인 감정·말투·빠르기·세기(delivery)를 맨 앞 괄호 지시로 — [sad, gentle, slow speech] 대사.
+    예전 Fish 게이트웨이(drama3_fullft/miro_contract.py)와 같은 표. 10/30 서버가 이걸 빠뜨려 delivery 가 버려지고 있었다(10/31 수정).
+    대사 사이 쉼(pauseAfterMs)은 앱 재생기가 직접 둔다."""
+    from drama3_fullft.miro_contract import DELIVERY_TAGS
+    d = body.get('delivery') if isinstance(body.get('delivery'), dict) else {}
+    if body.get('style') == 'whisper' and 'tone' not in d: d = {**d, 'tone': 'whisper'}
+    tags = [DELIVERY_TAGS[f].get(d.get(f), '') for f in DELIVERY_TAGS]
+    tags = [t for t in tags if t]
+    return ('[' + ', '.join(tags) + '] ' if tags else '') + text
+
 def _whisper():
     from faster_whisper import WhisperModel
     return WhisperModel('small', device='cpu', compute_type='int8', cpu_threads=4)
