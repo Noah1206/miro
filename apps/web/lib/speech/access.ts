@@ -5,11 +5,12 @@ import { SpeechError, type SpeechPolicy, type SpeechSpec } from './policy'
 import { speechAllowance, speechCreditsEnabled, type SpeechAmount } from './credits-policy'
 import { adultModeGateFor } from '../ops/safety'
 import { feature } from '@miro/config'
+import { voiceColumns, voiceUsable } from '../voice'
 
 export async function speechSource(userId: string, sessionId: string, messageId: string) {
   if(!feature('characterVoice'))throw new SpeechError('voice_not_ready',404)
   const [row] = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, name: characters.name,
-    voice: officialVoices.providerVoiceId, voiceStatus: officialVoices.status,characterId:characters.id,adultSince:roleplaySessions.adultSince })
+    voice: officialVoices.providerVoiceId, ...voiceColumns,characterId:characters.id,characterOwnerId:characters.ownerId,adultSince:roleplaySessions.adultSince })
     .from(messages)
     .innerJoin(roleplaySessions, and(eq(roleplaySessions.id,messages.sessionId),eq(roleplaySessions.userId,userId)))
     .innerJoin(characters,eq(characters.id,roleplaySessions.characterId))
@@ -23,7 +24,8 @@ export async function speechSource(userId: string, sessionId: string, messageId:
 }
 export async function speechSpec(userId: string, sessionId: string, messageId: string, part: number, policy: SpeechPolicy, amount: SpeechAmount='standard'): Promise<SpeechSpec> {
   const {row,segments}=await speechSource(userId,sessionId,messageId)
-  if (row.voiceStatus!=='active' || !row.voice) throw new SpeechError('voice_not_ready')
+  // 회원 목소리는 만든 사람이 공개·언베일 사용을 끄면 그때부터 읽지 않는다(lib/voice.ts)
+  if (!row.voice || !voiceUsable(row,row.characterOwnerId,!!row.adultSince)) throw new SpeechError('voice_not_ready')
   const selected=part===-1?null:segments[part]
   const allowance=speechAllowance(amount)
   if(speechCreditsEnabled() && (part<0 || !row.blocks.some(b=>(b as Record<string,unknown>).type==='dialogue')

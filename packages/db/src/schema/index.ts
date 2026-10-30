@@ -122,16 +122,22 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
  * 공식 보이스 라이브러리. 운영자가 녹음을 등록하고 미리 듣기로 승인한 목소리만 들어온다
  * (등록·미리 듣기는 tooling/voice — 운영자 PC 에서 로컬 Chatterbox 로 하고, 여기엔 승인된 결과만 온다).
  * 캐릭터는 id(미로 내부 ID)만 참조한다. 엔진 쪽 목소리 파일은 저장소·화면 어디에도 올리지 않는다 — 화면에는 이름만 간다.
- * 제작자가 자기 녹음을 올리는 경로는 없다.
+ * 10/31부터 회원도 직접 읽은 녹음으로 목소리를 만든다(ownerId, apps/web/lib/voice.ts). ownerId 가 null 이면 공식 목소리.
  */
 export const officialVoices = pgTable('official_voices', {
   id: text('id').primaryKey(),
   label: text('label').notNull(),
-  provider: text('provider', { enum: ['chatterbox', 'gpt-sovits'] }).notNull(),
+  provider: text('provider', { enum: ['chatterbox', 'gpt-sovits', 'drama3'] }).notNull(),
+  /** 만든 회원. null = 운영자가 등록한 공식 목소리(모두가 고를 수 있다). */
+  ownerId: uuid('owner_id').references(() => users.id, { onDelete: 'cascade' }),
+  /** 회원 목소리를 다른 회원도 캐릭터에 고를 수 있는지(만든 사람의 선택 동의). */
+  shared: boolean('shared').notNull().default(false),
+  /** 언베일 대화방에서도 이 목소리로 읽는지(만든 사람의 선택 동의). 공식 목소리는 true. */
+  adultAllowed: boolean('adult_allowed').notNull().default(true),
   /** 엔진이 만든 목소리 파일의 sha256 — chatterbox 는 Conditionals, gpt-sovits 는 sovits.pth(없으면 ref.wav)이자 음성 서버의 목소리 폴더 이름. 대사를 읽을 때 이 파일만 쓰고 녹음은 다시 읽지 않는다. */
   providerVoiceId: text('provider_voice_id').notNull().unique(),
-  /** retired 는 더 고를 수 없고, 이미 고른 캐릭터도 목소리 없이 글로만 보인다. */
-  status: text('status', { enum: ['active', 'retired'] }).notNull(),
+  /** pending 은 녹음만 올리고 미리 듣기·등록 전. retired 는 더 고를 수 없고, 이미 고른 캐릭터도 목소리 없이 글로만 보인다. */
+  status: text('status', { enum: ['pending', 'active', 'retired'] }).notNull(),
   /** 등록에 쓴 원본 녹음 — 운영자 PC 의 경로와 해시. 파일 자체는 저장소·화면 어디에도 올리지 않는다. */
   samples: jsonb('samples').$type<Array<{ path: string; sha256: string; durationSec: number }>>().notNull(),
   /** 복제·서비스 사용 권한 확인 기록. */

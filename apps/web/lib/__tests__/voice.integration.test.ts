@@ -44,13 +44,13 @@ describeDb('official voices in Miro', () => {
       { id: active, label: '맑은 소년', providerVoiceId: artifact(active), status: 'active', ...record },
       { id: retired, label: '내린 목소리', providerVoiceId: artifact(retired), status: 'retired', retiredAt: new Date(), ...record },
     ])
-    const options = await voiceOptions()
+    const options = await voiceOptions(randomUUID())
     expect(options).toContainEqual({ id: active, label: '맑은 소년' })
     expect(options.map(o => o.id)).not.toContain(retired)
     // 화면에는 이름만 간다 — 엔진 쪽 목소리 ID 는 싣지 않는다.
     expect(Object.keys(options[0]!).sort()).toEqual(['id', 'label'])
-    expect(await selectableVoice(retired)).toBeNull()
-    expect(await selectableVoice('nope')).toBeNull()
+    expect(await selectableVoice(retired, randomUUID())).toBeNull()
+    expect(await selectableVoice('nope', randomUUID())).toBeNull()
 
     for (const type of ['chat', 'reality'] as const) {
       const { c, fd } = await creator(active, type)

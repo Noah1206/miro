@@ -1,7 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth'
-import { createVoiceJob } from '@/lib/voices'
+import { createVoiceJob, retireMemberVoice } from '@/lib/voices'
 
 export type JobState = { message: string | null; ok: boolean }
 const BASES = ['own_voice', 'written_consent', 'license', 'unverified'] as const
@@ -26,4 +26,11 @@ export async function createJob(_p: JobState, form: FormData): Promise<JobState>
   }
   revalidatePath('/voices')
   return { ok: true, message: `작업을 걸었습니다. 맥북 워커가 집어 가면 상태가 바뀝니다(다운로드·전사 10분, CPU 학습 1~2시간).` }
+}
+
+/** 회원 목소리 내리기 — 신고가 들어왔거나 다른 사람 목소리로 보일 때. */
+export async function retireVoice(id: string) {
+  await requireAdmin('characters.manage')
+  await retireMemberVoice(id)
+  revalidatePath('/voices')
 }

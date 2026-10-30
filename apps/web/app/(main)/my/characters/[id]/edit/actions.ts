@@ -38,7 +38,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
 
   // 사진 — 만들기(actions.ts)와 같은 규칙.
   const images = await resolveCharacterImages(form, user.id)
-  const voiceId = await selectableVoice(p.voiceId)
+  const voiceId = await selectableVoice(p.voiceId, user.id)
 
   const result = await db.transaction(async (tx) => {
     await tx.update(characters).set({

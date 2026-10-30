@@ -6,6 +6,7 @@ import {
 } from '@miro/db'
 import { postOperatorNote } from '@/lib/ops/alerts'
 import { observe } from '@/lib/observe'
+import { purgeAbandonedVoices, retireUserVoices } from '@/lib/voice'
 
 export type DeletionImpact = {
   sessions: number
@@ -72,6 +73,8 @@ export async function deleteAccount(userId: string): Promise<'completed' | 'alre
   })
   // 삭제는 DB 안의 표시라, 그보다 앞선 백업에서 복구하면 계정이 되살아난다. 운영자 채널(DB 밖)에 남겨
   // 복구 뒤 다시 지울 목록으로 쓴다(miro-backups README). 이메일은 보내지 않는다. 실패해도 삭제는 끝난 것이다.
+  // 직접 만든 목소리의 녹음 파일도 지운다(Modal). 실패하면 기록만 — 정리 크론이 같은 일을 하지 않으니 운영자가 다시 지운다.
+  await retireUserVoices(userId).catch((e) => observe('account.voice_delete_failed', { userId, error: e instanceof Error ? e.message : String(e) }))
   const noted = await postOperatorNote(`계정 삭제 기록 · ${userId} · ${now.toISOString()}\n백업에서 복구하면 이 계정을 다시 삭제해야 해요.`).catch(() => false)
   if (!noted) observe('account.deletion_note_unsent', { userId })
   return 'completed'
@@ -94,5 +97,6 @@ export async function purgeExpiredPersonalData(now = new Date()): Promise<{ acco
   const monthAgo = new Date(now.getTime() - 30 * 86_400_000)
   const chars = await db.delete(characters).where(and(lt(characters.deletedAt, monthAgo),
     sql`not exists (select 1 from roleplay_sessions s where s.character_id = ${characters.id})`)).returning({ id: characters.id })
+  await purgeAbandonedVoices(now)   // 등록하지 않은 녹음은 하루 뒤 파기
   return { accounts: gone.length, logs: events.length + usage.length, characters: chars.length }
 }

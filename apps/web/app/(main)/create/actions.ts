@@ -46,7 +46,7 @@ export async function saveCharacter(form: FormData): Promise<string> {
   }
 
   const images = await resolveCharacterImages(form, user.id)
-  const voiceId = await selectableVoice(p.voiceId)
+  const voiceId = await selectableVoice(p.voiceId, user.id)
 
   const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({

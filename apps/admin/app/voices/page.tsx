@@ -3,6 +3,7 @@ import { currentAdmin } from '@/lib/auth'
 import { listVoiceJobs, listVoices } from '@/lib/voices'
 import { can } from '@miro/domain'
 import { JobForm } from './form'
+import { retireVoice } from './actions'
 
 /**
  * 목소리(10/20): 유튜브 링크 → 맥북 워커가 데이터셋·파인튜닝·등록까지 → 제작기 목소리 목록에 뜬다.
@@ -37,12 +38,13 @@ export default async function Voices() {
       </tbody></table>
 
       <h3 style={{ fontSize: 14, margin: '0 0 8px' }}>라이브러리</h3>
-      <table><thead><tr><th>ID</th><th>이름</th><th>상태</th><th>권리</th><th>미리 듣기</th></tr></thead><tbody>
+      <table><thead><tr><th>ID</th><th>이름</th><th>상태</th><th>권리</th><th>미리 듣기</th><th>회원 목소리</th></tr></thead><tbody>
         {voices.map((v) => (
           <tr key={v.id} data-voice-row>
             <td>{v.id}</td><td>{v.label}</td><td><span className="tag">{v.status}</span></td>
             <td style={{ fontSize: 12, color: 'var(--muted)' }}>{String((v.rights as { basis?: string })?.basis ?? '-')}</td>
             <td>{v.status === 'active' ? <audio controls preload="none" src={`/api/voices/preview?voice=${encodeURIComponent(v.providerVoiceId)}`} style={{ height: 32, width: 240 }} /> : '-'}</td>
+            <td>{v.ownerId ? <>{v.shared ? '공개 ' : '비공개 '}{v.status !== 'retired' && <form action={retireVoice.bind(null, v.id)} style={{ display: 'inline' }}><button type="submit">내리기</button></form>}</> : '-'}</td>
           </tr>
         ))}
       </tbody></table>

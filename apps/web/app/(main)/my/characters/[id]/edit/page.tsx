@@ -55,7 +55,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions():[]} models={await recommendableModels(user.id)} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
+    <CharacterForm mode="edit" experienceType={c.experienceType} creationId={id} userId={user.id} capabilities={features()} voices={feature('characterVoice')?await voiceOptions(user.id):[]} models={await recommendableModels(user.id)} draft={c.isDraft} initial={initial} action={updateCharacter.bind(null, id)}
       closeHref={c.isDraft ? '/my/characters?filter=draft' : `/character/${id}`} />
   )
 }
