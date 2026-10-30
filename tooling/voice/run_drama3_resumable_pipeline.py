@@ -11,8 +11,8 @@ ROOT=Path('/Users/johyeon-ung/Desktop/Miro')
 OUT=ROOT/'output/voice-compare/drama3-fullsize-ko-007-20261024-budget44-resumable'
 PREVIOUS=ROOT/'output/voice-compare/drama3-fullsize-ko-007-20261024-budget44'
 REMOTE='/voices/_drama3/fullsize-ko-007-20261024-budget44-resumable-v2'
-PYTHON='/Users/johyeon-ung/GPT-SoVITS/venv/bin/python'
-MODAL='/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal'
+PYTHON='/Users/johyeon-ung/.miro/voice-venv/bin/python'
+MODAL='/Users/johyeon-ung/.miro/voice-venv/bin/modal'
 
 
 def read(path):return json.loads(Path(path).read_text())

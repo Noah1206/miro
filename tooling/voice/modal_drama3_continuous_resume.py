@@ -77,7 +77,7 @@ def main(folder:str):
     out=Path(folder);authorization=json.loads((out/'authorization.json').read_text())
     if authorization.get('user_authorized_additional_total_cash_ceiling_usd')!=authorization['additional_total_cash_ceiling_usd']:
         raise ValueError('No user authorization for this exact spending ceiling')
-    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal','billing','summary','--json'],text=True))
+    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/.miro/voice-venv/bin/modal','billing','summary','--json'],text=True))
     authorization['net_billed_at_dispatch']=float(bill['billed_cost'])
     decision=admit(authorization['net_billed_at_dispatch'],30,authorization['additional_total_cash_ceiling_usd'])
     (out/'admission.json').write_text(json.dumps(decision,indent=2))

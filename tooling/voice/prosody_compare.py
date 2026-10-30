@@ -1,6 +1,6 @@
 """
 억양 분리 실험(10/22) — 같은 문장의 원본 녹음 vs 생성본을 피치·길이·에너지로 비교해 "무엇이 사라졌는지"를 숫자로 본다.
-  ~/GPT-SoVITS/venv/bin/python prosody_compare.py <폴더>   폴더 안: <id>_orig.wav, <id>_gsv.wav, <id>_qwen.wav ...
+  ~/.miro/voice-venv/bin/python prosody_compare.py <폴더>   폴더 안: <id>_orig.wav, <id>_gsv.wav, <id>_qwen.wav ...
 지표(원본에 가까울수록 좋음):
   f0_range  피치 폭(반음, 유성 구간 5~95%)       — 높낮이가 평평해졌는지
   f0_std    피치 흔들림(반음 표준편차)

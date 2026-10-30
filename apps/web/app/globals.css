@@ -315,7 +315,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .create-page > form > #panel-preview, .create-page > form > #panel-intro-dialogue { grid-column: 2; grid-row: 2 / span 40; position: sticky; top: 72px; max-height: calc(100dvh - 88px); overflow-y: auto; padding-left: 40px; border-left: 1px solid var(--color-border, #ffffff14); }
   .create-preview-tab { display: none !important; }
   /* 10/28: 탭은 왼쪽 폼 위에만(미리보기 위로 걸치지 않게), 왼쪽부터 붙여 놓는다. 미리보기는 탭 높이만큼 올려 탭과 위를 맞춘다. */
-  .create-tabs { width: calc(100% - 440px); padding-right: 40px !important; border-bottom: 1px solid var(--color-border, #ffffff14); }
+  /* 10/28: 탭 밑줄은 미리보기 왼쪽 선과 십자로 겹쳐 지웠다. */
+  .create-tabs { width: calc(100% - 440px); padding-right: 40px !important; }
   .create-tabs > div { flex: 0 1 auto !important; justify-content: flex-start !important; gap: 8px !important; }
   .create-page > form > #panel-preview, .create-page > form > #panel-intro-dialogue { margin-top: -51px; top: 56px; z-index: 21; max-height: calc(100dvh - 72px); }
   .create-intro-editor { height: calc(100dvh - 200px); }

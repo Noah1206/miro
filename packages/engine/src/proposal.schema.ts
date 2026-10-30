@@ -26,7 +26,7 @@ function normalizeBlock(v: unknown): unknown {
   const keys = RP_BLOCK_TYPES.filter((t) => t in o)
   if (keys.length !== 1) return v
   const speaker = o[keys[0]!]
-  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text, delivery: o.delivery }
+  return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text, delivery: o.delivery, speech: o.speech }
 }
 
 export const RpBlock = z.preprocess(normalizeBlock, z.object({
@@ -35,9 +35,11 @@ export const RpBlock = z.preprocess(normalizeBlock, z.object({
   speaker: z.string().max(40).nullable().default(null),
   text: z.string().min(1).max(2000).refine(text => !/(?:질투|신뢰|호감도|애착)\s*(?:수치|점수)\s*(?:가|는|:)?\s*\d|토큰\s*\d/i.test(text), 'internal state disclosure'),
   delivery: VoiceDeliverySchema.optional().catch(undefined),
+  /** 언베일 대사의 음성용 글(신음 태그 포함). 화면엔 text 만 — 태그만 더한 같은 대사인지는 읽을 때 taggedSpeech 가 확인한다. */
+  speech: z.string().max(2400).optional().catch(undefined),
 }).transform(block => {
   // A malformed optional direction must never discard an otherwise valid reply.
-  if (block.type !== 'dialogue') delete block.delivery
+  if (block.type !== 'dialogue') { delete block.delivery; delete block.speech }
   return block
 }))
 
@@ -207,7 +209,8 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
       emotion: { type: 'string', enum: [...VOICE_EMOTIONS] }, tone: { type: 'string', enum: [...VOICE_TONES] },
       pace: { type: 'string', enum: [...VOICE_PACES] }, intensity: { type: 'string', enum: [...VOICE_INTENSITIES] },
       pauseAfterMs: { type: 'integer', minimum: 0, maximum: 1500 },
-    } } },
+    } },
+    speech: text('Adult scenes only, dialogue only: same text with vocal tags inserted; omit otherwise. Never shown.') },
     required: ['type', 'text'] } } }, required: ['blocks'] },
   emotion: { type: 'string', enum: ['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious'] },
   intent: text('at most 80 characters'),

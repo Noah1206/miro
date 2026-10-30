@@ -40,14 +40,16 @@ def export_native(auth,which):
     marker=root/('EXPORT_'+which+'_STARTED.json')
     with marker.open('x') as f:json.dump({'authorization':auth,'time':time.time(),'automatic_retry':False},f)
     voices.commit();torch.set_num_threads(4)
-    result=export_checkpoint(checkpoint,ASSETS,destination,expected_step=step,require_independent_reload=(which=='trained'))
+    # 10/29 user decision: inference-only export skips the 8xH100 resume check; recorded as unverified below.
+    result=export_checkpoint(checkpoint,ASSETS,destination,expected_step=step,require_independent_reload=False)
     dest=Path(destination)
     if which=='trained':
         metadata=json.loads((dest/'MIRO_TRAINING.json').read_text())
         new=json.loads((root/'stage/NEW_STAGE_METADATA.json').read_text())
         metadata.update(new,steps_completed=step,steps_planned=13,source_checkpoint_updates=23,
             new_stage_steps_completed=step,historical_plus_new_updates_for_provenance_only=23+step,
-            previous_007_data_is_current_training_data=False,checkpoint=checkpoint,inference_export_only=True)
+            previous_007_data_is_current_training_data=False,checkpoint=checkpoint,inference_export_only=True,
+            independent_engine_reload_verified=False)
         record_json(dest/'MIRO_TRAINING.json',metadata)
     if which=='source23':
         proof=verify_native_files(dest)
@@ -229,7 +231,7 @@ def verify_fresh_engine(auth):
 
 @app.function(image=image,gpu='H100:2',cpu=(8,8),memory=(131072,196608),timeout=600,retries=0,
               max_containers=1,scaledown_window=2,volumes={'/voices':voices})
-def listen(auth,manifest):
+def listen(auth,manifest,out_name='listening'):
     import gc,hashlib,time,random,os,torch,numpy as np,soundfile as sf
     from fish_speech.models.text2semantic.inference import init_model,load_codec_model,decode_to_audio
     from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt,generate_drama3
@@ -240,7 +242,7 @@ def listen(auth,manifest):
     from drama3_fullft.sampling_profiles import request_sampling
     # Traces must execute on each draw; no CUDA graph Python hooks or extra forwards.
     os.environ['FISH_DRAMA3_CUDA_GRAPH']='0'
-    require_auth(auth);voices.reload();root=Path(ROOT);out=root/'listening';out.mkdir(exist_ok=True)
+    require_auth(auth);voices.reload();root=Path(ROOT);out=root/out_name;out.mkdir(exist_ok=True)
     for request in manifest['requests']:request_sampling(manifest,request)
     with (out/'STARTED.json').open('x') as f:json.dump({'time':time.time(),'automatic_retry':False},f)
     record_json(out/'manifest.json',manifest);voices.commit()
@@ -293,18 +295,18 @@ def main(folder:str,phase:str):
     root=Path(folder);auth=json.loads((root/'authorization.json').read_text());require_auth(auth)
     rates={'export23':(4*.0473+320*.008)/3600,'export_new':(4*.0473+320*.008)/3600,
         'features':(.8+4*.0473+24*.008)/3600,'train':(8*3.95+16*.0473+896*.008)/3600,
-        'train_checked_recovery':(8*3.95+16*.0473+896*.008)/3600,'verify_after_billing':(8*3.95+16*.0473+896*.008)/3600,'listen':(2*3.95+8*.0473+192*.008)/3600}
-    seconds={'export23':1092,'features':692,'train':2492,'train_checked_recovery':2452,'verify_after_billing':572,'export_new':1092,'listen':692}
+        'train_checked_recovery':(8*3.95+16*.0473+896*.008)/3600,'verify_after_billing':(8*3.95+16*.0473+896*.008)/3600,'listen':(2*3.95+8*.0473+192*.008)/3600,'listen_moan':(2*3.95+8*.0473+192*.008)/3600}
+    seconds={'export23':1092,'features':692,'train':2492,'train_checked_recovery':2452,'verify_after_billing':572,'export_new':1092,'listen':692,'listen_moan':550}
     bounds={k:rates[k]*v for k,v in seconds.items()}
     if phase not in bounds:raise ValueError('Unknown paid phase')
     if phase in ['train','train_checked_recovery']:
         proof=json.loads(b''.join(voices.read_file(NATIVE23.removeprefix('/voices')+'/CPU_NATIVE_VERIFICATION.json')))
         if proof['checksums_file_sha256']!='5fb4a8ad719b01654b192e21650093c10c246f188c252334d40c5bdd922ee476':raise ValueError('Export differs from the preserved source23 identity; GPU not started')
-    dependencies={'train':['features','export23'],'train_checked_recovery':['features','export23'],'verify_after_billing':['train_checked_recovery'],'export_new':['verify_after_billing'],'listen':['export_new']}
+    dependencies={'train':['features','export23'],'train_checked_recovery':['features','export23'],'verify_after_billing':['train_checked_recovery'],'export_new':['train_checked_recovery'],'listen':['export_new'],'listen_moan':['export_new']}
     for dep in dependencies.get(phase,[]):
         if not (root/(dep+'_result.json')).is_file():raise ValueError('Missing prerequisite '+dep)
     if not (root/'SPEND_LIMIT_VERIFIED.json').is_file():raise ValueError('Platform spend limit must be verified')
-    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal','billing','summary','--json'],text=True))
+    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/.miro/voice-venv/bin/modal','billing','summary','--json'],text=True))
     (root/('billing-before-'+phase+'.json')).write_text(json.dumps(bill,indent=2))
     old=json.loads((root.parent/'paid-stage-v1/paid_ledger.json').read_text())
     previous=sum(x['upper_bound_usd'] for x in old['phases'].values())
@@ -330,6 +332,7 @@ def main(folder:str,phase:str):
         elif phase=='verify_after_billing':
             result=verify_fresh_engine.remote(auth)
             (root/'verify_result.json').write_text(json.dumps(result,indent=2))
+        elif phase=='listen_moan':result=listen.remote(auth,json.loads((root/'listening_moan_manifest.json').read_text()),'listening-moan')
         else:result=listen.remote(auth,json.loads((root/'listening_manifest.json').read_text()))
         (root/(phase+'_result.json')).write_text(json.dumps(result,ensure_ascii=False,indent=2))
         state['status']='completed';state['upper_bound_usd']=min(bounds[phase],(time.time()-state['at']+10)*rates[phase])

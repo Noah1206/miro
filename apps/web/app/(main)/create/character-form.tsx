@@ -14,6 +14,7 @@ import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
+import { TransitionLink } from '@/components/ui'
 import { TestChat } from './test-chat'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
@@ -279,16 +280,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             <Card>
               <ChoiceChips name="media" value={media} onChange={v => setMedia(v as CharacterMedia)} columns={3}
                 options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('몰입 모드 · 음성') }, { value: 'video', label: t('몰입 모드 · 음성+영상') }]} />
-              {/* 목소리(10/20): 몰입 모드를 고르면 같은 칸 안에서 바로 고른다(따로 있던 목소리 섹션은 지움). 대화만이면 읽어 줄 일이 없다. */}
-              {media !== 'text' && (
-                <div style={{ marginTop: 'var(--space-4)' }}>
-                  <p className="t-caption" style={{ margin: '0 0 8px', color: 'var(--color-text-secondary)' }}>{t('목소리')}</p>
-                  {voices.length > 0
-                    ? <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
-                        options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
-                    : <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('아직 고를 수 있는 목소리가 없어요. 기본 목소리로 읽어 줘요.')}</p>}
-                </div>
-              )}
             </Card>
           </Section>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
@@ -406,8 +397,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
           </div>
-          {/* 목소리 칸이 없을 때(전화가 닫힌 운영 베타)도 이미 고른 목소리는 그대로 보낸다 — 고치기 저장이 지우지 않게. */}
-          {(!can.characterVoice||voices.length === 0) && voiceId && <input type="hidden" name="voiceId" value={voiceId} />}
           {!can.characterVoice&&<input type="hidden" name="media" value={media}/>}
         </Panel>
 
@@ -454,6 +443,19 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 상황별 사진(10/28) — 인트로 옆 탭 ── */}
+        {/* 10/28: 목소리는 캐릭터와 따로 — 만들어 둔 음성(내 음성·공식) 중에서 고른다. 음성은 '나 → 내 캐릭터 → 음성' 에서 만든다. */}
+        <Panel id="voice" show={tab === 'voice'}>
+          <Section title={t('목소리')}>
+            {voices.length > 0
+              ? <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
+                  options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
+              : <>
+                  <input type="hidden" name="voiceId" value={voiceId} />
+                  <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('아직 고를 수 있는 목소리가 없어요. 기본 목소리로 읽어 줘요.')}</p>
+                </>}
+            <TransitionLink href="/my/voices" className="t-caption" style={{ display: 'inline-block', marginTop: 16, color: 'var(--color-lavender-200)' }}>{t('내 음성 만들기')} →</TransitionLink>
+          </Section>
+        </Panel>
         <Panel id="situations" show={tab === 'situations'}>
           {/* 상황별 사진(10/28, 위프·베이비챗식) — 대화 중 키워드가 나오면 그 사진이 채팅에 뜬다. */}
           <Section title={t('상황별 사진 · 선택')} subtitle={t('상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.')}>

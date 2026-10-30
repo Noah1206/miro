@@ -1,9 +1,9 @@
 """
 몰입 모드 음성 합성 서버를 Modal(서버리스)에 올린다 — gsv_server.py 를 그대로 컨테이너 안에서 돌린다(GPU 는 MIRO_TTS_GPU=T4, 기본은 CPU).
 
-  배포:   cd ~/Desktop/Miro && ~/GPT-SoVITS/venv/bin/modal deploy tooling/voice/modal_app.py
-  목소리: ~/GPT-SoVITS/venv/bin/modal volume put miro-voices ~/.miro/voices/gsv/voices/<해시> /<해시>
-  비밀값: ~/GPT-SoVITS/venv/bin/modal secret create miro-tts MIRO_TTS_API_KEY=<키> MIRO_TTS_DEFAULT_VOICE=<해시>
+  배포:   cd ~/Desktop/Miro && ~/.miro/voice-venv/bin/modal deploy tooling/voice/modal_app.py
+  목소리: ~/.miro/voice-venv/bin/modal volume put miro-voices ~/.miro/voices/gsv/voices/<해시> /<해시>
+  비밀값: ~/.miro/voice-venv/bin/modal secret create miro-tts MIRO_TTS_API_KEY=<키> MIRO_TTS_DEFAULT_VOICE=<해시>
   앱 연결: Vercel env MIRO_TTS_URL=<배포 URL>  MIRO_TTS_API_KEY=<같은 키>
 
 요청이 없으면 컨테이너가 내려가 비용 0 이고(무료 크레딧 안), 식은 뒤 첫 요청은 모델 로드 때문에 20~30초 걸린다.

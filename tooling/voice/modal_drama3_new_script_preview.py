@@ -114,7 +114,7 @@ def main(folder:str,phase:str):
         raise ValueError('Do not expand the existing authorization')
     ledger=json.loads((root.parent/'paid-stage-v1/paid_ledger.json').read_text())
     previous_reserved=sum(x['upper_bound_usd'] for k,x in ledger['phases'].items() if k!='new_script_compare_v1')
-    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal','billing','summary','--json'],text=True))
+    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/.miro/voice-venv/bin/modal','billing','summary','--json'],text=True))
     if max(float(bill['billed_cost'])-98.07,previous_reserved)+4+.25>30:
         raise ValueError('Not enough existing budget; no new spending authorized')
     (root/('billing-before-'+phase+'.json')).write_text(json.dumps(bill,indent=2))

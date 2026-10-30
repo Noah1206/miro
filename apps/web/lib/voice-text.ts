@@ -1,8 +1,8 @@
-import { voiceDelivery, type VoiceDelivery } from '@miro/config'
+import { taggedSpeech, voiceDelivery, type VoiceDelivery } from '@miro/config'
 
-/** 소리 내어 읽을 글. 서술·속마음·NPC는 읽지 않는다. */
+/** 소리 내어 읽을 글. 서술·속마음·NPC는 읽지 않는다. speech = 신음 태그가 든 음성용 대사(언베일, 화면엔 text). */
 export const SPOKEN_MAX = 1200
-export type SpokenSegment = { text: string; delivery: VoiceDelivery }
+export type SpokenSegment = { text: string; delivery: VoiceDelivery; speech?: string }
 export function spokenSegments(blocks: Array<Record<string, unknown>>, content: string, characterName?: string): SpokenSegment[] {
   if (!blocks.length) return content.trim() ? [{ text: content.trim().slice(0, SPOKEN_MAX), delivery: voiceDelivery(null) }] : []
   const result: SpokenSegment[] = []
@@ -15,7 +15,8 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
     if (block.type !== 'dialogue' || typeof block.text !== 'string') continue
     if (characterName && block.speaker && block.speaker !== characterName) continue
     const text = block.text.trim().slice(0, remaining)
-    if (text) { result.push({ text, delivery: voiceDelivery(block.delivery, whisper) }); remaining -= text.length }
+    const speech = text === block.text.trim() ? taggedSpeech(text, block.speech) : null
+    if (text) { result.push({ text, delivery: voiceDelivery(block.delivery, whisper), ...(speech ? { speech } : {}) }); remaining -= text.length }
     whisper = false
     if (!remaining) break
   }

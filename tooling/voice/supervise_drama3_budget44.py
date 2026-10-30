@@ -14,7 +14,7 @@ import time
 ROOT=Path('/Users/johyeon-ung/Desktop/Miro')
 OUTPUT=ROOT/'output/voice-compare/drama3-fullsize-ko-007-20261024-budget44'
 REMOTE='/voices/_drama3/fullsize-ko-007-20261024-budget44-v1'
-PYTHON=Path('/Users/johyeon-ung/GPT-SoVITS/venv/bin/python')
+PYTHON=Path('/Users/johyeon-ung/.miro/voice-venv/bin/python')
 MODAL=PYTHON.parent/'modal'
 
 

@@ -8,6 +8,7 @@ import { msg } from '@/lib/i18n'
 import { getT } from '@/lib/i18n/server'
 import { SectionLinks } from '@/components/ui/section-links'
 import styles from './characters.module.css'
+import { MakeTabs } from './make-tabs'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
 const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -43,7 +44,7 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
   return (
     <Page wide className={styles.page}>
       <div className={styles.frame}>
-      <header className={styles.header}><Back href="/my" /><h1>{t('내 캐릭터')}</h1></header>
+      <header className={styles.header}><Back href="/my" /><h1 className="sr-only">{t('내 캐릭터')}</h1><MakeTabs active="characters" /></header>
       <SectionLinks fullBleed label={t('내가 만든 캐릭터')} active={filter}
         items={FILTERS.map(f => ({ key: f.key, label: t(f.label), href: f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}` }))} />
       {cards.length === 0 ? (

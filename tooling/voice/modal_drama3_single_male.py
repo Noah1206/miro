@@ -305,7 +305,7 @@ def main(folder:str,phase:str):
         return value
     ledger=read_ledger()
     if phase in ledger['phases']:raise ValueError('Already dispatched or unknown outcome; no automatic paid retry')
-    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal','billing','summary','--json'],text=True))
+    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/.miro/voice-venv/bin/modal','billing','summary','--json'],text=True))
     spent=float(bill['billed_cost'])-auth['net_billed_at_authorization']
     reserved=sum(v['upper_bound_usd'] for v in ledger['phases'].values())
     if max(spent,reserved)+bounds[phase]+.25>auth['new_job_cap_usd']:raise ValueError('Insufficient remaining budget; GPU not started')

@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT=Path('/Users/johyeon-ung/Desktop/Miro')
 OUT=ROOT/'output/voice-compare/drama3-fullsize-ko-007-20261024-stage20'
-MODAL='/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal'
+MODAL='/Users/johyeon-ung/.miro/voice-venv/bin/modal'
 REMOTE='/_drama3/fullsize-ko-007-20261024-stage20-v3'
 
 

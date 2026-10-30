@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   const selected = body?.part === undefined ? null : segments[Number(body.part)]
   if (body?.part !== undefined && !selected) return new Response(null, { status: 400 })
   // Preserve the original whole-reply contract for older clients. New clients select each part.
-  const text = selected?.text ?? segments.map(s => s.text).join(' ')
+  const text = selected ? (selected.speech ?? selected.text) : segments.map(s => s.speech ?? s.text).join(' ')
   const delivery = selected?.delivery ?? (segments.length === 1 ? segments[0]!.delivery : undefined)
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   try {

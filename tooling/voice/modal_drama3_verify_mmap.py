@@ -59,7 +59,7 @@ def verify():
 def main(folder:str):
     import subprocess
     out=Path(folder);authorization=json.loads((out/'authorization.json').read_text())
-    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/GPT-SoVITS/venv/bin/modal','billing','summary','--json'],text=True))
+    bill=json.loads(subprocess.check_output(['/Users/johyeon-ung/.miro/voice-venv/bin/modal','billing','summary','--json'],text=True))
     maximum=360*(8*3.95+16*.0473+896*.008)/3600+.75
     if float(bill['billed_cost'])+maximum>authorization['workspace_net_spend_limit_ui_verified_usd']:
         raise ValueError('Remaining20dollar stage budget does not cover bounded verification; no GPU allocated')

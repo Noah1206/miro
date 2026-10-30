@@ -32,6 +32,6 @@ export async function speechSpec(userId: string, sessionId: string, messageId: s
   const delivery=selected?.delivery ?? (segments.length===1?segments[0]!.delivery:undefined)
   const [settings]=await db.select({language:userSettings.language}).from(userSettings).where(eq(userSettings.userId,userId)).limit(1)
   return { userId,sessionId,messageId,part,modelVersion:policy.modelVersion,referenceVersion:policy.referenceVersion,
-    payload:{text:selected?.text ?? segments.map(s=>s.text).join(' '),voice:row.voice,language:settings?.language ?? 'ko',style:delivery?.tone==='whisper'?'whisper':'normal',delivery,
+    payload:{text:selected?(selected.speech??selected.text):segments.map(s=>s.speech??s.text).join(' '),voice:row.voice,language:settings?.language ?? 'ko',style:delivery?.tone==='whisper'?'whisper':'normal',delivery,
       ...(speechCreditsEnabled()?{maxAudioSeconds:allowance.seconds}:{})} }
 }
