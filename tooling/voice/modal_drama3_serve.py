@@ -17,7 +17,9 @@ WEIGHTS = '/voices/_drama3/miro-moan-20261029-v2/native-moan-v2'
 VOICES = '/voices/_drama3/serving-voices'
 DEFAULT_VOICE = 'asmr01'
 SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
-image = (base_image.env({'FISH_DRAMA3_FP8_EXPERTS': '0', 'FISH_DRAMA3_CUDA_GRAPH': '0'})
+# CUDA 그래프는 켠다(fish-speech 기본값) — 10/30 판은 학습·청취 스크립트에서 FISH_DRAMA3_CUDA_GRAPH=0 을 그대로 가져와
+# 한 칸마다 작은 커널 수천 개를 따로 띄우는 느린 경로(원본 주석: "eager decode is bound by kernel launches")로 돌고 있었다(10/31).
+image = (base_image.env({'FISH_DRAMA3_FP8_EXPERTS': '0'})
          .pip_install('fastapi[standard]')
          .add_local_python_source('drama3_fullft', 'modal_drama3_compare'))
 app = modal.App('miro-drama3-tts')
@@ -47,6 +49,21 @@ class Speaker:
         self.model.eval()
         self.codec = load_codec_model(weights / 'codec.pth', str(self.model.device), torch.bfloat16).eval()
         self.refs = {}
+
+    @modal.enter()
+    def capture_graphs(self):
+        """상태 저장에서 되살아난 뒤 CUDA 그래프를 한 번 잡는다(상태 저장 안에 그래프를 넣는 건 알파 기능과 맞는지 몰라 피함).
+        녹음을 시작할 때 앱이 GPU 를 깨우므로(warm) 이 시간도 녹음하는 동안 지나간다. 실패하면 예전 느린 경로로."""
+        import os, time
+        from fish_speech.models.text2semantic.fish_omni.generate import Drama3DecodeGraphs
+        started = time.time()
+        import torch
+        try:
+            with torch.inference_mode(): Drama3DecodeGraphs.for_model(self.model, 1)   # 추론 모드 밖에서 잡으면 RuntimeError(10/31 A/B)
+        except Exception as e:
+            os.environ['FISH_DRAMA3_CUDA_GRAPH'] = '0'; self.model.decode_graphs = None
+            print('cuda graph capture failed, eager decode:', type(e).__name__, flush=True)
+        print(f'cuda graphs ready in {time.time() - started:.1f}s', flush=True)
 
     def reference(self, name):
         import os, torch
@@ -100,7 +117,10 @@ class Speaker:
         folder = f'{USER_VOICES}/{vid}'
         if not os.path.isfile(f'{folder}/ref.wav'): user_voices.reload()
         if not os.path.isfile(f'{folder}/ref.wav'): return False
-        open(f'{folder}/preview.wav', 'wb').write(self.speak(PREVIEW_TEXT, vid))
+        audio = self.speak(PREVIEW_TEXT, vid)
+        user_voices.reload()   # 그사이 받아쓰기에서 거절돼 지워졌으면 쓰지 않는다
+        if not os.path.isfile(f'{folder}/ref.wav'): return False
+        open(f'{folder}/preview.wav', 'wb').write(audio)
         user_voices.commit()
         return True
 
@@ -134,6 +154,8 @@ def delivery_text(text, body):
     from drama3_fullft.miro_contract import DELIVERY_TAGS
     d = body.get('delivery') if isinstance(body.get('delivery'), dict) else {}
     if body.get('style') == 'whisper' and 'tone' not in d: d = {**d, 'tone': 'whisper'}
+    # 신음이 있는 줄은 흥분한 상태라 말이 빨라진다(10/31 사용자) — AI 가 일부러 느리게(slow) 고른 줄만 그대로 둔다
+    if '[moaning' in text and d.get('pace', 'normal') == 'normal': d = {**d, 'pace': 'fast'}
     tags = [DELIVERY_TAGS[f].get(d.get(f), '') for f in DELIVERY_TAGS]
     tags = [t for t in tags if t]
     return ('[' + ', '.join(tags) + '] ' if tags else '') + text
@@ -195,16 +217,19 @@ class Voices:
                 rms, clipped = float(np.sqrt(np.mean(wave ** 2))), float(np.mean(np.abs(wave) > 0.99))
                 if rms < 0.01: return {'error': 'quiet'}
                 if clipped > 0.01: return {'error': 'clipped'}
-                segments, _ = self.asr.transcribe(f'{d}/ref.wav', language='ko', beam_size=1, vad_filter=True)
-                score = cer(''.join(s.text for s in segments), text)
-                if score > MAX_CER: return {'error': 'mismatch', 'cer': round(score, 2)}
                 data = open(f'{d}/ref.wav', 'rb').read()
                 vid = hashlib.sha256(data).hexdigest()
                 os.makedirs(f'{USER_VOICES}/{vid}', exist_ok=True)
                 open(f'{USER_VOICES}/{vid}/ref.wav', 'wb').write(data)
                 open(f'{USER_VOICES}/{vid}/ref.txt', 'w', encoding='utf-8').write(text)
-            user_voices.commit()
-            Speaker().preview.spawn(vid)
+                user_voices.commit()
+                # 미리 듣기를 받아쓰기보다 먼저 시작한다 — 받아쓰기 시간이 기다림에서 빠진다. 문장이 다르면 파일을 지우고 거절(그 미리 듣기는 버림).
+                Speaker().preview.spawn(vid)
+                segments, _ = self.asr.transcribe(f'{d}/ref.wav', language='ko', beam_size=1, vad_filter=True)
+                score = cer(''.join(s.text for s in segments), text)
+            if score > MAX_CER:
+                shutil.rmtree(f'{USER_VOICES}/{vid}', ignore_errors=True); user_voices.commit()
+                return {'error': 'mismatch', 'cer': round(score, 2)}
             return {'id': vid, 'seconds': round(seconds, 1), 'cer': round(score, 2)}
 
         @api.get('/voices/{vid}/preview')

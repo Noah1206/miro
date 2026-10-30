@@ -6,7 +6,7 @@ export const runtime = 'nodejs'
 
 /**
  * 내 목소리 미리 듣기 — 만든 사람만. 올릴 때 GPU 가 한 번 만들어 둔 파일을 돌려준다(다시 들어도 GPU 를 쓰지 않는다).
- * 아직 만드는 중이면 202 — 화면이 2초마다 다시 묻는다.
+ * 아직 만드는 중이면 202 — 화면이 1초마다 다시 묻는다.
  */
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!feature('characterVoice')) return new Response(null, { status: 404 })

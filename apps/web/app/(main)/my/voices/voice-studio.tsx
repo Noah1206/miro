@@ -107,12 +107,12 @@ function VoiceRow({ voice }: { voice: MyVoice }) {
   const [failed, setFailed] = useState(false)
   const url = useClipUrl(preview)
 
-  /** 올릴 때 GPU 가 만들기 시작한 미리 듣기를 기다린다(2초마다, 최대 3분). */
+  /** 올릴 때 GPU 가 만들기 시작한 미리 듣기를 기다린다(1초마다, 최대 3분). */
   async function listen() {
     setLoading(true); setFailed(false)
-    for (let i = 0; i < 90; i++) {
+    for (let i = 0; i < 180; i++) {
       const res = await fetch(`/api/voices/${voice.id}/preview`).catch(() => null)
-      if (res?.status === 202) { await new Promise((r) => setTimeout(r, 2000)); continue }
+      if (res?.status === 202) { await new Promise((r) => setTimeout(r, 1000)); continue }
       setLoading(false)
       if (res?.ok) setPreview(await res.blob()); else setFailed(true)
       return
