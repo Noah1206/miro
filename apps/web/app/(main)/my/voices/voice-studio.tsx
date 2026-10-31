@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Notice, Switch, TransitionLink, useToast } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
@@ -238,7 +239,8 @@ function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }
               {pending ? t('만드는 중…') : t('만들기')}
             </button>
           </div>
-          <button type="button" className={css.back} onClick={() => { setError(null); setStep(1) }} disabled={pending}>{t('이전으로')}</button>
+          {/* 나타남 애니메이션(transform)이 fixed 기준을 바꾸므로 body 에 그린다 — 아래 메뉴 바로 위 */}
+          {createPortal(<button type="button" className={css.back} onClick={() => { setError(null); setStep(1) }} disabled={pending}>{t('이전으로')}</button>, document.body)}
         </div>
       )}
 
