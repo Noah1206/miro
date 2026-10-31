@@ -1685,5 +1685,9 @@
  "몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.": "Immersive mode lets you hear this character's chat in voice and keep talking out loud. The character's photo fills the screen.",
  "이전으로": "Back",
  "사진·이름과 필수 동의를 확인해 주세요.": "Please check the photo, name and required consents.",
- "채팅 내역 없음": "No chats yet"
+ "채팅 내역 없음": "No chats yet",
+ "사진마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 AI가 알아서 채팅에 띄워요.": "Describe the situation for each photo, and the AI will show it in chat when the conversation reaches that moment.",
+ "상황 설명": "Situation",
+ "어떤 상황에 띄울까요? 예) 비 맞고 돌아와 젖은 셔츠 차림일 때": "When should it appear? e.g. Back from the rain in a soaked shirt",
+ "키워드 (선택, 쉼표로) 예) 비, 우산": "Keywords (optional, comma-separated) e.g. rain, umbrella"
 }

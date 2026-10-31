@@ -8,21 +8,21 @@ import { uploadSituationImage } from './actions'
 
 const iconBtn: React.CSSProperties = { width: 36, height: 36, borderRadius: 18, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'rgba(var(--color-bg-rgb),0.75)', color: 'var(--color-white)' }
 
-type Row = { id: number; image: string; keywords: string; uploading?: boolean; error?: string }
+type Row = { id: number; image: string; keywords: string; situation: string; uploading?: boolean; error?: string }
 
 /**
- * 상황별 사진(10/28, 위프·베이비챗식) — 사진 한 장 + 상황 키워드. 대화 중 키워드가 나오면 그 사진이 채팅에 한 번 뜬다.
+ * 상황별 사진(10/28, 위프·베이비챗식) — 사진 한 장 + 상황 설명(+ 선택 키워드). 대화가 그 상황이 되면 AI 가 골라 채팅에 한 번 띄운다(10/31).
  * 사진은 고르자마자 올리고(uploadSituationImage) 폼에는 URL 만 JSON 으로 싣는다.
  */
 export function SituationImagesEditor({ defaultValue }: { defaultValue: SituationImage[] }) {
   const t = useT()
   const uid = useId()
-  const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', ') })))
+  const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', '), situation: e.situation ?? '' })))
   const [nextId, setNextId] = useState(defaultValue.length)
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
   // 앞 칸에 사진을 다 올려야 다음 칸을 연다(10/28) — 빈 칸만 쌓이지 않게.
   const canAdd = rows.every(r => r.image && !r.uploading)
-  const value = rows.filter(r => r.image).map(r => ({ image: r.image, keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean) }))
+  const value = rows.filter(r => r.image).map(r => ({ image: r.image, situation: r.situation.trim(), keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean) }))
 
   const pick = async (id: number, file: File | undefined) => {
     if (!file) return
@@ -61,15 +61,18 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
                 </button>
               </div>
             </div>
+            <textarea value={r.situation} onChange={e => patch(r.id, { situation: e.target.value })} aria-label={t('상황 설명')} maxLength={SITUATION_LIMITS.situationLength} rows={2}
+              placeholder={t('어떤 상황에 띄울까요? 예) 비 맞고 돌아와 젖은 셔츠 차림일 때')}
+              style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
             <input value={r.keywords} onChange={e => patch(r.id, { keywords: e.target.value })} aria-label={t('상황 키워드')} maxLength={110}
-              placeholder={t('상황 키워드 (쉼표로) 예) 비, 우산')}
+              placeholder={t('키워드 (선택, 쉼표로) 예) 비, 우산')}
               style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%' }} />
             {r.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(r.error)}</p>}
           </div>
         ))}
       </div>
       {rows.length < SITUATION_LIMITS.entries && (
-        <button type="button" disabled={!canAdd} onClick={() => { setRows(rs => [...rs, { id: nextId, image: '', keywords: '' }]); setNextId(n => n + 1) }}
+        <button type="button" disabled={!canAdd} onClick={() => { setRows(rs => [...rs, { id: nextId, image: '', keywords: '', situation: '' }]); setNextId(n => n + 1) }}
           style={{ opacity: canAdd ? 1 : 0.45, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', minHeight: 48, padding: '12px 16px', borderRadius: 'var(--radius-button)', border: 0, background: 'var(--color-white)', color: 'var(--color-lavender-700)', fontSize: 'var(--font-body-size)', cursor: canAdd ? 'pointer' : 'not-allowed' }}>
           <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
           {t('상황 사진 추가 ({n}/{max})', { n: rows.length, max: SITUATION_LIMITS.entries })}

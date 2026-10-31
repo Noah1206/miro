@@ -26,7 +26,7 @@ import { type LoadedAgency } from '@/lib/agency/runtime'
 import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { resolveChatCommand } from './chat-command'
-import { pickSituationImage } from '@/lib/situation-images'
+import { chooseSituationImage } from '@/lib/situation-images'
 
 export type ConversationOutcome =
   | {
@@ -232,9 +232,12 @@ async function executeTurn(opts: {
     const actualTokens = tokensForCost(turnMeter.customerCostUSD, model.pricing)
     if (actualTokens > (reservation?.cost ?? 0)) { await refund(); return { ok: false, reason: 'generation' } }
     const responseText = renderBlocks(transition.blocks)
-    // 상황별 사진(10/28) — 사용자 말이나 이번 답에 키워드가 나오면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
+    // 상황별 사진(10/28) — 만든 사람이 적은 상황이 지금 장면이 됐으면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
+    // 10/31: 싼 분류 모델이 상황 설명을 보고 고른다(실패하면 키워드). 이번 턴 차감 계량기는 이미 닫혔으므로 서비스 예산으로 부른다.
     const situationImages = charSettings?.situationImages ?? []
-    const situationImage = situationImages.length === 0 ? null : pickSituationImage(situationImages, `${input ?? ''}\n${responseText}`,
+    const situationImage = situationImages.length === 0 ? null : await chooseSituationImage(
+      auxiliaryLLM(loaded.characterName, { ...context, turnMeter: undefined, usageUnits: 0 }), situationImages,
+      { userInput: input ?? '', responseText },
       new Set((await db.select({ content: messages.content }).from(messages).where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'photo')))).map(m => m.content)))
     const outcome: Extract<ConversationOutcome, { ok: true }> = {
       ok: true, requestId: opts.requestId, traceId: opts.traceId, tokensCharged: actualTokens, turnIndex, blocks: transition.blocks, responseText,

@@ -37,11 +37,12 @@ def segments(y):
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('files', nargs='*'); ap.add_argument('-o', required=True)
     ap.add_argument('--whisper', default='small')
+    ap.add_argument('--kinds', choices=['moan', 'emotion'], default='moan', help='확인 페이지에서 고르는 종류 — emotion = 마지막 학습의 감정 폴더(10/31)')
     ap.add_argument('--stage', choices=['prep', 'asr', 'finish'], default='prep')
     ap.add_argument('--shard', default='0/1', help='asr 단계에서 i/n — 여러 프로세스로 나눠 돌림')
     a = ap.parse_args(); root = Path(a.o); (root / 'wavs').mkdir(parents=True, exist_ok=True)
     if a.stage == 'asr': return asr(root, a.whisper, *map(int, a.shard.split('/')))
-    if a.stage == 'finish': return finish(root)
+    if a.stage == 'finish': return finish(root, a.kinds)
 
     clips = []
     for fi, path in enumerate(a.files):
@@ -85,31 +86,34 @@ def asr(root, model_name, shard, shards):
     print('asr_done', shard, flush=True)
 
 
-def finish(root):
+def finish(root, kinds='moan'):
     done = {c['clip_id']: c for p in root.glob('asr_*.json') for c in json.loads(p.read_text())}
     clips = json.loads((root / 'clips.json').read_text())
     missing = [c['clip_id'] for c in clips if c['clip_id'] not in done]
     if missing: raise SystemExit(f'받아쓰기 안 된 클립 {len(missing)}개: {missing[:5]}')
     clips = [done[c['clip_id']] for c in clips]
     (root / 'clips.json').write_text(json.dumps(clips, ensure_ascii=False, indent=1))
-    write_label_page(root, clips)
+    write_label_page(root, clips, kinds)
     total = sum(c['duration'] for c in clips) / 60
     print(f"done {len(clips)} clips, {total:.1f} min, speech_draft={sum(c['speech_draft'] for c in clips)}")
 
 
 KINDS = ['moan_low', 'moan_mid', 'moan_high', 'breath', 'mixed', 'speech', 'discard']
+# output/final-training-data 의 폴더 이름과 같다
+EMOTIONS = ['neutral', 'happy', 'sad', 'curious', 'hurt', 'jealous', 'angry', 'anxious', 'whisper', 'playful', 'firm', 'fast-aroused', 'moan-intense', 'discard']
 
 
-def write_label_page(root, clips):
+def write_label_page(root, clips, kinds='moan'):
     rows = []
     for c in clips:
-        opts = ''.join(f'<option{" selected" if k == ("mixed" if c["speech_draft"] else "moan_mid") else ""}>{k}</option>' for k in KINDS)
+        choices, default = (EMOTIONS, 'neutral' if c['speech_draft'] else 'discard') if kinds == 'emotion' else (KINDS, 'mixed' if c['speech_draft'] else 'moan_mid')
+        opts = ''.join(f'<option{" selected" if k == default else ""}>{k}</option>' for k in choices)
         rows.append(f'''<tr data-id="{c['clip_id']}"><td>{c['clip_id']}<br><small>{c['duration']}s · margin {c['speaker_margin']}</small></td>
 <td><audio controls preload="none" src="{c['audio']}"></audio></td>
 <td><select class=spk><option{" selected" if c['speaker_draft']=='A' else ""}>A</option><option{" selected" if c['speaker_draft']=='B' else ""}>B</option></select></td>
 <td><select class=kind>{opts}</select></td>
 <td><input class=text value="{html.escape(c['asr_text'] if c['speech_draft'] else '')}" placeholder="대사가 있으면 들리는 그대로, 신음 자리는 [moan]"></td></tr>''')
-    (root / 'label.html').write_text(f'''<!doctype html><meta charset=utf-8><title>신음 라벨</title>
+    (root / 'label.html').write_text(f'''<!doctype html><meta charset=utf-8><title>{'감정 라벨' if kinds == 'emotion' else '신음 라벨'}</title>
 <style>body{{font:14px sans-serif;margin:16px}}td{{padding:4px;border-bottom:1px solid #ddd}}input{{width:360px}}tr.done{{background:#eef8ee}}</style>
 <p>화자(A/B)·종류·대사를 듣고 고친 뒤 <button onclick=save()>labels.json 저장</button> — 파일을 이 폴더에 넣어 주세요. 체크한 행만 확정으로 저장됩니다.</p>
 <table>{''.join(rows)}</table>

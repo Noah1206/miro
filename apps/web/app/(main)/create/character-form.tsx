@@ -455,8 +455,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
         </Panel>
         <Panel id="situations" show={tab === 'situations'}>
-          {/* 상황별 사진(10/28, 위프·베이비챗식) — 대화 중 키워드가 나오면 그 사진이 채팅에 뜬다. */}
-          <Section title={t('상황별 사진 · 선택')} subtitle={t('상황 키워드와 사진을 짝지어 두면, 대화에 그 상황이 나올 때 사진이 채팅에 떠요.')}>
+          {/* 상황별 사진(10/28, 위프·베이비챗식) — 사진마다 상황을 적어 두면 대화가 그 상황이 됐을 때 AI 가 골라 채팅에 띄운다(10/31). */}
+          <Section title={t('상황별 사진 · 선택')} subtitle={t('사진마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 AI가 알아서 채팅에 띄워요.')}>
             <SituationImagesEditor defaultValue={i.situationImages ?? []} />
           </Section>
         </Panel>
