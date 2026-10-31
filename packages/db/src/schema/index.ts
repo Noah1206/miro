@@ -134,6 +134,8 @@ export const officialVoices = pgTable('official_voices', {
   shared: boolean('shared').notNull().default(false),
   /** 언베일 대화방에서도 이 목소리로 읽는지(만든 사람의 선택 동의). 공식 목소리는 true. */
   adultAllowed: boolean('adult_allowed').notNull().default(true),
+  /** 목소리 프로필 사진(공개 URL). 없으면 화면이 이름 첫 글자 + 색으로 그린다. */
+  imageUrl: text('image_url'),
   /** 엔진이 만든 목소리 파일의 sha256 — chatterbox 는 Conditionals, gpt-sovits 는 sovits.pth(없으면 ref.wav)이자 음성 서버의 목소리 폴더 이름. 대사를 읽을 때 이 파일만 쓰고 녹음은 다시 읽지 않는다. */
   providerVoiceId: text('provider_voice_id').notNull().unique(),
   /** pending 은 녹음만 올리고 미리 듣기·등록 전. retired 는 더 고를 수 없고, 이미 고른 캐릭터도 목소리 없이 글로만 보인다. */

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useT } from '@/lib/i18n/client'
 import css from './voice-list.module.css'
 
-export type VoiceOption = { id: string; label: string; mine?: boolean }
+export type VoiceOption = { id: string; label: string; mine?: boolean; image?: string | null }
 type Filter = 'all' | 'female' | 'male' | 'mine'
 const DEFAULT_VOICE_NAME = '지환'
 
@@ -44,7 +44,7 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
               style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: '12px 16px', border: 0, cursor: 'pointer', textAlign: 'left',
                 background: 'transparent', color: 'var(--color-text-primary)', font: 'inherit' }}>
               <span aria-hidden style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 700,
-                background: avatar(v.id), color: 'var(--color-white)' }}>{(title ?? '').replace(/^(성우|템플릿)\s*/, '').trim().slice(0, 1) || '♪'}</span>
+                background: v.image ? `center / cover url(${v.image})` : avatar(v.id), color: 'var(--color-white)' }}>{v.image ? null : (title ?? '').replace(/^(성우|템플릿)\s*/, '').trim().slice(0, 1) || '♪'}</span>
               <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
                 {top && <span style={{ fontSize: 12, color: '#7a7a7a' }}>{top}</span>}
                 <span className={playing ? css.flow : undefined} style={{ fontSize: 16, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
@@ -114,7 +114,8 @@ function Selected({ id, row }: { id: string; row: (playing: boolean) => ReactNod
   )
 }
 
-function avatar(id: string) {
+/** 목소리마다 고정된 색 동그라미 — 사진이 없는 목소리를 한눈에 구분하게. 내 음성 화면도 같은 색을 쓴다. */
+export function avatar(id: string) {
   let h = 0
   for (const c of id || 'default') h = (h * 31 + c.charCodeAt(0)) % 360
   return id ? `linear-gradient(135deg, hsl(${h} 45% 42%), hsl(${(h + 40) % 360} 50% 28%))` : 'var(--color-surface-3)'

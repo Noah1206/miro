@@ -1,0 +1,86 @@
+/* 내 음성 만들기(10/31) — 사용자와 HTML 로 맞춘 모양. 레퍼런스: Apple 개인 음성(문장 하나·큰 녹음 버튼), ElevenLabs(녹음 뒤 이름·동의) */
+.steps { display: flex; gap: 6px; margin-bottom: 28px; }
+.steps i { flex: 1; height: 3px; border-radius: 2px; background: var(--color-surface-3); transition: background .3s; }
+.steps i.on { background: var(--color-accent); }
+
+.top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+.eyebrow { margin: 0; font-size: 13px; color: var(--color-text-tertiary); }
+.swap { border: 0; background: transparent; color: var(--color-text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 0;
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.swap svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.swap:disabled { opacity: .3; cursor: default; }
+
+.phrase { margin: 0; font-size: 24px; line-height: 1.55; font-weight: 600; letter-spacing: -.01em; transition: color .2s; }
+.phrase span { display: block; }
+.recording { color: var(--color-text-tertiary); }
+/* 자막: 실제로 들린 말 */
+.caption { min-height: 68px; margin: 20px 0 0; font-size: 22px; line-height: 1.5; font-weight: 600; color: var(--color-accent); }
+.typing::after { content: ''; display: inline-block; width: 2px; height: 1.05em; margin-left: 3px; vertical-align: -.15em; background: var(--color-accent);
+  animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+.stage { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 28px; }
+.wave { height: 44px; display: flex; align-items: center; gap: 3px; }
+.wave b { width: 3px; border-radius: 2px; background: var(--color-surface-3); height: 6px; transition: height .08s; }
+.live .wave b { background: #F05A6E; }
+.timer { font-size: 14px; color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.recbtn { width: 76px; height: 76px; border-radius: 50%; border: 4px solid #fff; background: transparent; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.recbtn span { width: 58px; height: 58px; border-radius: 50%; background: #F05A6E; transition: all .2s; }
+.live .recbtn span { width: 28px; height: 28px; border-radius: 7px; }
+.hint { margin: 0; font-size: 13px; color: var(--color-text-tertiary); }
+
+.row { display: flex; gap: 10px; width: 100%; }
+.btn { flex: 1; min-height: 52px; border-radius: 14px; border: 0; font-size: 16px; font-weight: 700; cursor: pointer; }
+.primary { background: var(--color-accent); color: var(--color-accent-on); }
+.ghost { background: var(--color-surface-2); color: var(--color-text-primary); }
+.btn:disabled { opacity: .4; cursor: default; }
+
+.take { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--color-surface-2); margin-bottom: 14px; }
+.play { width: 32px; height: 32px; border-radius: 50%; border: 0; background: #fff; color: #111; display: grid; place-items: center; cursor: pointer; padding: 0; flex-shrink: 0; }
+
+.ident { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.pic { position: relative; width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0; cursor: pointer; display: grid; place-items: center;
+  font-size: 24px; font-weight: 700; color: #fff; background-size: cover; background-position: center; }
+.pic input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.cam { position: absolute; right: -2px; bottom: -2px; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: #111; display: grid; place-items: center;
+  box-shadow: 0 0 0 3px var(--color-bg); }
+.cam svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.field { flex: 1; min-width: 0; height: 52px; border-radius: 14px; border: 1px solid #2e2f2f; background: var(--color-surface-2); color: var(--color-text-primary);
+  font-size: 16px; padding: 0 16px; outline: none; transition: border-color .15s; }
+.field:focus { border-color: #4a4a4a; }
+.field::placeholder { color: var(--color-text-tertiary); }
+
+/* 동의(토스·카카오식): 모두 동의 카드 + 체크 표시만 있는 항목 */
+.consent { margin-bottom: 24px; }
+.consent input { position: absolute; opacity: 0; pointer-events: none; }
+.consent label { display: flex; align-items: center; gap: 12px; cursor: pointer; position: relative; }
+.all { padding: 16px; border-radius: 14px; background: var(--color-surface-2); font-size: 17px; font-weight: 700; }
+.dot { width: 26px; height: 26px; border-radius: 50%; background: var(--color-surface-3); display: grid; place-items: center; flex-shrink: 0; transition: background .15s; }
+.dot svg { width: 16px; height: 16px; stroke: #777; }
+.all input:checked + .dot { background: var(--color-accent); }
+.all input:checked + .dot svg { stroke: var(--color-accent-on); }
+.all input:focus-visible + .dot, .items input:focus-visible + .tick { outline: 2px solid var(--color-accent); outline-offset: 2px; border-radius: 50%; }
+.items { display: flex; flex-direction: column; gap: 2px; padding: 12px 16px 0; }
+.items label { min-height: 40px; font-size: 14px; color: var(--color-text-secondary); }
+.tick { width: 26px; display: grid; place-items: center; flex-shrink: 0; }
+.tick svg { width: 18px; height: 18px; stroke: #555; transition: stroke .15s; }
+.items input:checked + .tick svg { stroke: var(--color-accent); }
+.tag { color: var(--color-text-tertiary); margin-right: 4px; }
+.req { color: var(--color-accent); }
+.more { margin-left: auto; color: #666; font-size: 18px; line-height: 1; }
+
+.center { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 40px 0 32px; }
+.orb { width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, var(--color-lavender-200), var(--color-lavender-500) 70%) center / cover;
+  box-shadow: 0 0 60px rgba(132, 96, 232, .45); animation: breathe 2.4s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.06); box-shadow: 0 0 90px rgba(132, 96, 232, .6); } }
+
+/* 나타날 때 살짝 위로 떠오르며, 자식은 차례로 */
+.appear { animation: appear .32s cubic-bezier(.2, .8, .2, 1) both; }
+.appear > * { animation: appear .32s cubic-bezier(.2, .8, .2, 1) both; }
+.appear > *:nth-child(2) { animation-delay: .06s; }
+.appear > *:nth-child(3) { animation-delay: .12s; }
+@keyframes appear { from { opacity: 0; transform: translateY(10px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .appear, .appear > *, .orb, .typing::after { animation: none; }
+}

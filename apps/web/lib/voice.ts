@@ -13,10 +13,10 @@ import { db, officialVoices } from '@miro/db'
 const selectable = (userId: string) => and(eq(officialVoices.status, 'active'),
   or(isNull(officialVoices.ownerId), eq(officialVoices.ownerId, userId), eq(officialVoices.shared, true)))
 
-export async function voiceOptions(userId: string): Promise<Array<{ id: string; label: string; mine: boolean }>> {
-  const rows = await db.select({ id: officialVoices.id, label: officialVoices.label, ownerId: officialVoices.ownerId }).from(officialVoices)
+export async function voiceOptions(userId: string): Promise<Array<{ id: string; label: string; mine: boolean; image: string | null }>> {
+  const rows = await db.select({ id: officialVoices.id, label: officialVoices.label, ownerId: officialVoices.ownerId, image: officialVoices.imageUrl }).from(officialVoices)
     .where(selectable(userId)).orderBy(asc(officialVoices.activatedAt))
-  return rows.map((r) => ({ id: r.id, label: r.label, mine: r.ownerId === userId }))
+  return rows.map((r) => ({ id: r.id, label: r.label, mine: r.ownerId === userId, image: r.image }))
 }
 
 /** 폼이 보낸 목소리가 지금 이 회원이 고를 수 있는 것이면 그 ID, 아니면 null(기본 목소리). 저장할 때마다 서버가 다시 본다. */
@@ -73,9 +73,9 @@ export function readVoicePrompt(userId: string, token: string, now = Date.now())
 /** 회원당 목소리 수 상한. 미리 듣기는 올릴 때 한 번만 GPU 로 만들고, 다시 들을 때는 저장된 파일이라 GPU 를 쓰지 않는다. */
 export const MAX_USER_VOICES = 5
 
-export type MyVoice = { id: string; label: string; status: 'pending' | 'active'; shared: boolean; adultAllowed: boolean }
+export type MyVoice = { id: string; label: string; status: 'pending' | 'active'; shared: boolean; adultAllowed: boolean; imageUrl: string | null }
 export async function myVoices(userId: string): Promise<MyVoice[]> {
-  const rows = await db.select({ id: officialVoices.id, label: officialVoices.label, status: officialVoices.status, shared: officialVoices.shared, adultAllowed: officialVoices.adultAllowed })
+  const rows = await db.select({ id: officialVoices.id, label: officialVoices.label, status: officialVoices.status, shared: officialVoices.shared, adultAllowed: officialVoices.adultAllowed, imageUrl: officialVoices.imageUrl })
     .from(officialVoices).where(and(eq(officialVoices.ownerId, userId), ne(officialVoices.status, 'retired'))).orderBy(asc(officialVoices.activatedAt))
   return rows as MyVoice[]
 }
@@ -86,12 +86,12 @@ function uploadBase() {
   return { url, headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` } }
 }
 
-export type VoiceUploadError = 'invalid' | 'unreadable' | 'length' | 'quiet' | 'clipped' | 'mismatch' | 'limit' | 'unavailable'
+export type VoiceUploadError = 'invalid' | 'unreadable' | 'length' | 'quiet' | 'clipped' | 'mismatch' | 'limit' | 'unavailable' | 'image'
 /**
  * 녹음을 올리고 pending 으로 적는다. 동의 기록(rights)에 무엇에 언제 동의했는지 남긴다.
  * 본인 목소리 확인·복제와 서비스 사용 동의는 필수라 화면에서 체크해야 여기까지 온다(서버도 다시 본다).
  */
-export async function createUserVoice(input: { userId: string; label: string; audio: Uint8Array; prompt: number; shared: boolean; adult: boolean; ownVoice: boolean; cloneConsent: boolean; termsVersion: string; privacyVersion: string }): Promise<{ id: string } | { error: VoiceUploadError }> {
+export async function createUserVoice(input: { userId: string; label: string; audio: Uint8Array; prompt: number; shared: boolean; adult: boolean; ownVoice: boolean; cloneConsent: boolean; termsVersion: string; privacyVersion: string; imageUrl?: string | null }): Promise<{ id: string } | { error: VoiceUploadError }> {
   const text = VOICE_PROMPTS[input.prompt]
   const label = input.label.trim().slice(0, 30)
   if (!text || !label || !input.ownVoice || !input.cloneConsent || !input.audio.byteLength || input.audio.byteLength > 2_000_000) return { error: 'invalid' }
@@ -106,7 +106,7 @@ export async function createUserVoice(input: { userId: string; label: string; au
   const id = `u-${randomBytes(8).toString('hex')}`, now = new Date().toISOString()
   await db.insert(officialVoices).values({
     id, label, provider: 'drama3', providerVoiceId: out.id, status: 'pending', ownerId: input.userId,
-    shared: input.shared, adultAllowed: input.adult,
+    shared: input.shared, adultAllowed: input.adult, imageUrl: input.imageUrl ?? null,
     samples: [{ path: `modal:miro-user-voices/${out.id}/ref.wav`, sha256: out.id, durationSec: out.seconds ?? 0 }],
     rights: { basis: 'self-recorded', ownVoice: true, cloneAndService: true, shared: input.shared, adult: input.adult, prompt: text,
       termsVersion: input.termsVersion, privacyVersion: input.privacyVersion, consentedAt: now },
