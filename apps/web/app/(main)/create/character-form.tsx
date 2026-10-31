@@ -447,12 +447,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* 10/28: 목소리는 캐릭터와 따로 — 만들어 둔 음성(내 음성·공식) 중에서 고른다. 음성은 '나 → 내 캐릭터 → 음성' 에서 만든다. */}
         <Panel id="voice" show={tab === 'voice'}>
           <Section title={t('목소리')}>
-            {voices.length > 0
-              ? <VoiceList voices={voices} value={voiceId} onChange={setVoiceId} />
-              : <>
-                  <input type="hidden" name="voiceId" value={voiceId} />
-                  <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('아직 고를 수 있는 목소리가 없어요. 기본 목소리로 읽어 줘요.')}</p>
-                </>}
+            {/* 기본 목소리(지환)는 늘 있으니 목록은 늘 보인다 */}
+            <VoiceList voices={voices} value={voiceId} onChange={setVoiceId} />
             <TransitionLink href="/my/voices" className="t-caption" style={{ display: 'inline-block', marginTop: 16, color: 'var(--color-lavender-200)' }}>{t('내 음성 만들기')} →</TransitionLink>
           </Section>
         </Panel>

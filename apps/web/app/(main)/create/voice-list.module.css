@@ -1,9 +1,9 @@
-/* 목소리 고르기 재생바(10/31, 사용자와 HTML 로 맞춘 모양) */
-.player { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .28s cubic-bezier(.2, .8, .2, 1); }
-.open { grid-template-rows: 1fr; }
-.player > div { overflow: hidden; }
-.seek { -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; height: 4px; border-radius: 2px; margin: 0; outline: none; cursor: pointer;
-  background: linear-gradient(var(--color-accent), var(--color-accent)) 0 / var(--p, 0%) 100% no-repeat, #4a4a4a; }
-.seek::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
-.seek::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: #fff; }
-@media (prefers-reduced-motion: reduce) { .player { transition: none; } }
+/* 재생하는 동안 이름이 라벤더색으로 음악처럼 흐른다(10/31, 재생바 대신) */
+.flow {
+  background: linear-gradient(90deg, var(--color-lavender-200), var(--color-lavender-500), var(--color-lavender-200), var(--color-lavender-500), var(--color-lavender-200));
+  background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: flow 2.4s linear infinite;
+}
+@keyframes flow { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .flow { animation: none; color: var(--color-lavender-200); background: none; } }

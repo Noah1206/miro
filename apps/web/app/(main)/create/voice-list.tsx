@@ -23,7 +23,7 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
   return (
     <div className="stack" style={{ gap: 16 }}>
       <input type="hidden" name="voiceId" value={value} />
-      <div role="group" aria-label={t('목소리 거르기')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      {voices.length > 0 && <div role="group" aria-label={t('목소리 거르기')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {pills.map(([k, label]) => (
           <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}
             style={{ minHeight: 36, padding: '0 16px', borderRadius: 999, border: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600,
@@ -31,7 +31,7 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
             {label}
           </button>
         ))}
-      </div>
+      </div>}
       <div role="radiogroup" aria-label={t('목소리')} className="stack" style={{ gap: 4 }}>
         {rows.map((v) => {
           const [title, sub] = v.label.split(' · ')
@@ -39,7 +39,7 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
           const g = v.id === '' ? 'male' : gender(v.label)
           const age = (sub ?? '').replace(/^(여성|남성)\s*/, '').replace(/\S*\s*톤$/, '').trim()
           const top = [g === 'female' ? t('여성') : g === 'male' ? t('남성') : null, age || null, v.mine ? t('내 음성') : null].filter(Boolean).join(' · ')
-          const row = (
+          const row = (playing: boolean) => (
             <button type="button" role="radio" aria-checked={value === v.id} onClick={() => onChange(v.id)}
               style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: '12px 16px', border: 0, cursor: 'pointer', textAlign: 'left',
                 background: 'transparent', color: 'var(--color-text-primary)', font: 'inherit' }}>
@@ -47,13 +47,13 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
                 background: avatar(v.id), color: 'var(--color-white)' }}>{(title ?? '').replace(/^(성우|템플릿)\s*/, '').trim().slice(0, 1) || '♪'}</span>
               <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
                 {top && <span style={{ fontSize: 12, color: '#7a7a7a' }}>{top}</span>}
-                <span style={{ fontSize: 16, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+                <span className={playing ? css.flow : undefined} style={{ fontSize: 16, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
               </span>
             </button>
           )
           return value === v.id
             ? <Selected key={v.id || 'default'} id={v.id} row={row} />
-            : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: 14 }}>{row}</div>
+            : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: 14 }}>{row(false)}</div>
         })}
         {rows.length === 0 && <p className="t-caption" style={{ margin: '8px 0', color: 'var(--color-text-tertiary)' }}>{t('해당하는 목소리가 없어요.')}</p>}
       </div>
@@ -61,64 +61,55 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
   )
 }
 
-/** 고른 목소리 — 밝은 카드, 이름 줄 오른쪽 끝 흰 재생 버튼, 아래로 펼쳐지는 재생바. 처음 누를 때 견본을 받는다(공식 목소리는 처음 한 번 GPU 가 만든다). */
-function Selected({ id, row }: { id: string; row: ReactNode }) {
+/**
+ * 고른 목소리 — 밝은 카드, 이름 줄 오른쪽 끝 흰 재생 버튼. 재생하는 동안 이름이 라벤더색으로 음악처럼 흐른다(10/31, 재생바 대신).
+ * 처음 누를 때 견본을 받는다(공식 목소리는 처음 한 번 GPU 가 만든다).
+ */
+function Selected({ id, row }: { id: string; row: (playing: boolean) => ReactNode }) {
   const t = useT()
   const audio = useRef<HTMLAudioElement>(null)
   const [src, setSrc] = useState<string | null>(null)
-  const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'failed'>('idle')
-  const [time, setTime] = useState({ cur: 0, len: 0 })
-  const [open, setOpen] = useState(false)
-  useEffect(() => { const f = requestAnimationFrame(() => setOpen(true)); return () => cancelAnimationFrame(f) }, [])
+  // 누르는 순간 바로 바뀐다 — 오디오 이벤트를 기다리지 않는다. 견본을 받는 중에 다시 누르면 받기를 그만둔다.
+  const [playing, setPlaying] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const run = useRef(0)
   useEffect(() => () => { if (src) URL.revokeObjectURL(src) }, [src])
 
   async function toggle() {
     const el = audio.current
     if (!el) return
-    if (state === 'playing') { el.pause(); return }
-    if (src) { void el.play(); return }
-    setState('loading')
-    for (let i = 0; i < 180; i++) {
+    if (playing) { run.current++; el.pause(); setPlaying(false); return }
+    setPlaying(true); setFailed(false)
+    if (src) { el.currentTime = el.ended ? 0 : el.currentTime; void el.play(); return }
+    const mine = ++run.current
+    for (let i = 0; i < 180 && run.current === mine; i++) {
       const res = await fetch(`/api/voices/${id || 'default'}/sample`).catch(() => null)
+      if (run.current !== mine) return
       if (res?.status === 202) { await new Promise((r) => setTimeout(r, 1000)); continue }
       if (!res?.ok) break
       const url = URL.createObjectURL(await res.blob())
+      if (run.current !== mine) { URL.revokeObjectURL(url); return }
       setSrc(url); el.src = url; void el.play()
       return
     }
-    setState('failed')
+    if (run.current === mine) { setPlaying(false); setFailed(true) }
   }
-  const fmt = (x: number) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, '0')}`
-  const timeStyle = { fontSize: 12, color: 'var(--color-text-tertiary)', fontVariantNumeric: 'tabular-nums' } as const
 
   return (
     <div style={{ borderRadius: 14, overflow: 'hidden', background: 'var(--color-surface-2)' }}>
       <div style={{ display: 'flex', alignItems: 'center', paddingRight: 18 }}>
-        {row}
-        <button type="button" onClick={toggle} disabled={state === 'loading'} aria-label={state === 'playing' ? t('멈추기') : t('미리 듣기')}
+        {row(playing)}
+        <button type="button" onClick={toggle} aria-label={playing ? t('멈추기') : t('미리 듣기')}
           style={{ width: 32, height: 32, borderRadius: '50%', border: 0, flexShrink: 0, padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
-            background: '#fff', color: '#111', opacity: state === 'loading' ? 0.6 : 1 }}>
-          {state === 'playing'
+            background: '#fff', color: '#111' }}>
+          {playing
             ? <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><rect x="6.5" y="6" width="4" height="12" rx="2" /><rect x="13.5" y="6" width="4" height="12" rx="2" /></svg>
             // 둥글둥글한 ▶ — 같은 색 굵은 둥근 테두리로 모서리를 깎는다(살짝 오른쪽이 눈으로 보기에 가운데)
             : <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><path d="M9.5 7.5v9l7-4.5z" stroke="currentColor" strokeWidth="3.6" strokeLinejoin="round" /></svg>}
         </button>
       </div>
-      <div className={`${css.player} ${open ? css.open : ''}`}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px 16px 16px' }}>
-            <span style={timeStyle}>{fmt(time.cur)}</span>
-            <input className={css.seek} type="range" min={0} max={time.len || 1} step={0.05} value={time.cur} aria-label={t('재생 위치')} disabled={!src}
-              style={{ ['--p' as string]: `${time.len ? (time.cur / time.len) * 100 : 0}%` }}
-              onChange={(e) => { const x = Number(e.target.value); if (audio.current) audio.current.currentTime = x; setTime((p) => ({ ...p, cur: x })) }} />
-            <span style={timeStyle}>{fmt(time.len)}</span>
-          </div>
-          {state === 'failed' && <p className="t-caption" role="alert" style={{ margin: '-8px 16px 12px', color: 'var(--color-danger)' }}>{t('미리 듣기 실패. 다시 눌러 주세요.')}</p>}
-        </div>
-      </div>
-      <audio ref={audio} preload="none" onPlay={() => setState('playing')} onPause={() => setState('paused')} onEnded={() => setState('paused')}
-        onLoadedMetadata={(e) => setTime({ cur: 0, len: e.currentTarget.duration || 0 })}
-        onTimeUpdate={(e) => setTime({ cur: e.currentTarget.currentTime, len: e.currentTarget.duration || 0 })} />
+      {failed && <p className="t-caption" role="alert" style={{ margin: '0 16px 12px', color: 'var(--color-danger)' }}>{t('미리 듣기 실패. 다시 눌러 주세요.')}</p>}
+      <audio ref={audio} preload="none" onEnded={() => setPlaying(false)} />
     </div>
   )
 }
