@@ -28,7 +28,7 @@ export function VoiceStudio({ voices, max, prompt: first }: { voices: MyVoice[];
   // 목록이 기본, '새 음성 만들기'를 누르면 3단계 만들기 화면(10/31 사용자)
   const [making, setMaking] = useState(false)
   if (making) return (
-    <Studio first={first} onBack={() => setMaking(false)} onFinished={() => { setMaking(false); router.refresh() }} />
+    <Studio first={first} onFinished={() => { setMaking(false); router.refresh() }} />
   )
   return <VoiceList voices={voices} canMake={voices.length < max} max={max} onNew={() => setMaking(true)} />
 }
@@ -69,7 +69,7 @@ const CHECK = <svg viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap
 const PLAY = <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><path d="M9.5 7.5v9l7-4.5z" stroke="currentColor" strokeWidth="3.6" strokeLinejoin="round" /></svg>
 const PAUSE = <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><rect x="6.5" y="6" width="4" height="12" rx="2" /><rect x="13.5" y="6" width="4" height="12" rx="2" /></svg>
 
-function Studio({ first, onBack, onFinished }: { first: Prompt; onBack: () => void; onFinished: () => void }) {
+function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }) {
   const t = useT()
   const toast = useToast()
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -200,7 +200,6 @@ function Studio({ first, onBack, onFinished }: { first: Prompt; onBack: () => vo
             </div>
           )}
           {error && <Notice tone="danger" role="alert" style={{ marginTop: 16 }}>{error}</Notice>}
-          {!live && <button type="button" className={css.back} onClick={onBack}>{t('이전으로')}</button>}
         </div>
       )}
 

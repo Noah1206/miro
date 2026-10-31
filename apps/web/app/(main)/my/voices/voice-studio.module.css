@@ -86,7 +86,7 @@
 }
 
 
-/* 이전으로 — 주 버튼 밑 가운데 작은 회색 글자(10/31) */
-.back { display: block; margin: 14px auto 0; min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: var(--color-text-tertiary);
-  font-size: 14px; font-family: inherit; cursor: pointer; }
+/* 이전으로 — 아래 메뉴(네비게이션 바) 바로 위 가운데에 떠 있는 작은 회색 글자(10/31). 메뉴와 같은 가운데 기준 */
+.back { position: fixed; left: 0; right: 0; bottom: calc(var(--nav-h) + 6px); width: fit-content; margin: 0 auto; z-index: 5;
+  min-height: 44px; padding: 0 16px; border: 0; background: transparent; color: var(--color-text-tertiary); font-size: 14px; font-family: inherit; cursor: pointer; }
 .back:disabled { opacity: .4; cursor: default; }
