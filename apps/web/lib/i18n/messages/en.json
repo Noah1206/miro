@@ -1679,5 +1679,7 @@
  "제 목소리입니다": "This is my own voice",
  "프로필 사진": "Profile photo",
  "목록": "List",
- "아직 만든 음성이 없어요.": "You haven't made a voice yet."
+ "아직 만든 음성이 없어요.": "You haven't made a voice yet.",
+ "나만의 목소리를\n직접 만들어 볼까요?": "Want to make\nyour own voice?",
+ "문장 하나를 읽으면 그 목소리로 캐릭터가 말해요.": "Read one sentence and your characters will speak in that voice."
 }

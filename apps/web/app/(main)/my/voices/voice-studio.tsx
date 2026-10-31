@@ -7,6 +7,7 @@ import type { MyVoice, VoiceUploadError } from '@/lib/voice'
 import { DEFAULT_VOICE_BG, VoiceLogo } from '../../create/voice-list'
 import flowCss from '../../create/voice-list.module.css'
 import css from './voice-studio.module.css'
+import page from '../characters/characters.module.css'
 import { activateVoice, createVoice, deleteVoice, newVoicePrompt, setVoiceOption, warmVoice } from './actions'
 
 const MAX_SECONDS = 30
@@ -41,15 +42,26 @@ export function VoiceStudio({ voices, max, prompt: first }: { voices: MyVoice[];
 function VoiceList({ voices, canMake, max, onNew }: { voices: MyVoice[]; canMake: boolean; max: number; onNew: () => void }) {
   const t = useT()
   const [open, setOpen] = useState<string | null>(null)
+  // 내 캐릭터 화면과 같은 모양 — 비었으면 가운데 안내 + 라벤더 버튼, 있으면 'n개 · + 새로 만들기' 줄 아래 목록
+  const plus = <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+  if (voices.length === 0) return (
+    <section className={page.empty} aria-label={t('내 음성')}>
+      <h2>{t('나만의 목소리를\n직접 만들어 볼까요?')}</h2>
+      <p>{t('문장 하나를 읽으면 그 목소리로 캐릭터가 말해요.')}</p>
+      <button type="button" onClick={onNew} className={page.createLink} style={{ border: 0, cursor: 'pointer' }}>{plus}{t('새 음성 만들기')}</button>
+    </section>
+  )
   return (
-    <section className="stack" style={{ gap: 4 }} aria-label={t('내 음성')}>
-      {voices.length === 0 && <p className={css.hint} style={{ padding: '8px 4px 12px' }}>{t('아직 만든 음성이 없어요.')}</p>}
-      {voices.map((v) => <VoiceRow key={v.id} voice={v} open={open === v.id} onOpen={() => setOpen(open === v.id ? null : v.id)} />)}
-      {canMake
-        ? <button type="button" onClick={onNew} className={css.newRow}>
-            <span className={css.plus} aria-hidden>+</span><span style={{ fontSize: 16, fontWeight: 600 }}>{t('새 음성 만들기')}</span>
-          </button>
-        : <p className={css.hint} style={{ padding: '12px 4px' }}>{t('음성은 {n}개까지 만들 수 있어요.', { n: max })}</p>}
+    <section aria-label={t('내 음성')}>
+      <div className={page.summary}>
+        <span>{t('{n}개', { n: voices.length })}</span>
+        {canMake
+          ? <button type="button" onClick={onNew} style={{ border: 0, background: 'transparent', cursor: 'pointer', padding: 0, minHeight: 44, fontSize: 13, color: 'var(--color-text-secondary)', fontFamily: 'inherit' }}>+ {t('새로 만들기')}</button>
+          : <span>{t('음성은 {n}개까지 만들 수 있어요.', { n: max })}</span>}
+      </div>
+      <div className="stack" style={{ gap: 4 }}>
+        {voices.map((v) => <VoiceRow key={v.id} voice={v} open={open === v.id} onOpen={() => setOpen(open === v.id ? null : v.id)} />)}
+      </div>
     </section>
   )
 }
