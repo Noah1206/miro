@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useRef, useState, useTransition, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Notice, Switch, TransitionLink, useToast } from '@/components/ui'
@@ -73,6 +73,7 @@ const PAUSE = <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor
 function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }) {
   const t = useT()
   const toast = useToast()
+  const anchor = useRef<HTMLElement>(null)
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [prompt, setPrompt] = useState(first)
   const [live, setLive] = useState(false)
@@ -94,7 +95,7 @@ function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }
   const [made, setMade] = useState<string | null>(null)
 
   const errors: Record<VoiceUploadError | 'mic', string> = {
-    invalid: t('이름과 필수 동의를 확인해 주세요.'),
+    invalid: t('사진·이름과 필수 동의를 확인해 주세요.'),
     unreadable: t('녹음을 읽지 못했어요. 다시 녹음해 주세요.'),
     length: t('5~30초로 녹음해 주세요.'),
     quiet: t('소리가 작아요. 마이크에 가까이 대 주세요.'),
@@ -169,7 +170,7 @@ function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }
   }
 
   return (
-    <section aria-label={t('새 음성 만들기')}>
+    <section ref={anchor} aria-label={t('새 음성 만들기')}>
       <div className={css.steps} aria-hidden>{[1, 2, 3].map((n) => <i key={n} className={n <= step ? css.on : undefined} />)}</div>
 
       {step === 1 && (
@@ -194,10 +195,12 @@ function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }
           ) : (
             <div key="done" className={css.appear} style={{ paddingTop: 28 }}>
               <Take clip={clip} seconds={seconds} />
-              <div className={css.row}>
-                <button type="button" className={`${css.btn} ${css.ghost}`} onClick={retake}>{t('다시 하기')}</button>
-                <button type="button" className={`${css.btn} ${css.primary}`} onClick={() => { setError(null); setStep(2) }}>{t('다음')}</button>
-              </div>
+              <BottomBar anchor={anchor}>
+                <div className={css.row}>
+                  <button type="button" className={`${css.btn} ${css.ghost}`} onClick={retake}>{t('다시 하기')}</button>
+                  <button type="button" className={`${css.btn} ${css.primary}`} onClick={() => { setError(null); setStep(2) }}>{t('다음')}</button>
+                </div>
+              </BottomBar>
             </div>
           )}
           {error && <Notice tone="danger" role="alert" style={{ marginTop: 16 }}>{error}</Notice>}
@@ -234,22 +237,42 @@ function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }
             </div>
           </div>
           {error && <Notice tone="danger" role="alert" style={{ marginBottom: 16 }}>{error}</Notice>}
-          <div className={css.row}>
-            <button type="button" className={`${css.btn} ${css.primary}`} onClick={make} disabled={pending || !name.trim() || !agree.own || !agree.clone}>
+          <BottomBar anchor={anchor}>
+            {/* 프로필 사진·이름·필수 동의가 다 있어야(10/31) */}
+            <button type="button" className={`${css.btn} ${css.primary}`} onClick={make} disabled={pending || !image || !name.trim() || !agree.own || !agree.clone}>
               {pending ? t('만드는 중…') : t('만들기')}
             </button>
-          </div>
-          {/* 나타남 애니메이션(transform)이 fixed 기준을 바꾸므로 body 에 그린다 — 아래 메뉴 바로 위 */}
-          {createPortal(<button type="button" className={css.back} onClick={() => { setError(null); setStep(1) }} disabled={pending}>{t('이전으로')}</button>, document.body)}
+            <button type="button" className={css.back} onClick={() => { setError(null); setStep(1) }} disabled={pending}>{t('이전으로')}</button>
+          </BottomBar>
         </div>
       )}
 
       {step === 3 && made && (
-        <Finish key={made} id={made} name={name} imageUrl={imageUrl}
+        <Finish key={made} id={made} name={name} imageUrl={imageUrl} anchor={anchor}
           onDone={onFinished} />
       )}
+      {/* 아래 고정 버튼 막대에 내용이 가리지 않게 */}
+      {(step !== 1 || clip) && <div aria-hidden style={{ height: 120 }} />}
     </section>
   )
+}
+
+/**
+ * 주 버튼 막대 — 아래 메뉴(네비게이션 바) 바로 위에 붙는다(10/31). 가로 위치·폭은 만들기 화면(anchor)과 같게 재서 맞춘다.
+ * body 에 그린다 — 나타남 애니메이션(transform)이 fixed 기준을 바꾸기 때문.
+ */
+function BottomBar({ anchor, children }: { anchor: RefObject<HTMLElement | null>; children: ReactNode }) {
+  const [box, setBox] = useState<{ left: number; width: number } | null>(null)
+  useEffect(() => {
+    const el = anchor.current
+    if (!el) return
+    const measure = () => { const r = el.getBoundingClientRect(); setBox({ left: r.left, width: r.width }) }
+    measure()
+    const ro = new ResizeObserver(measure); ro.observe(el); window.addEventListener('resize', measure)
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
+  }, [anchor])
+  if (!box) return null
+  return createPortal(<div className={css.bar} style={{ left: box.left, width: box.width }}>{children}</div>, document.body)
 }
 
 /** 방금 녹음 듣기 — 흰 재생 버튼 + 파형 모양 + 길이. */
@@ -274,7 +297,7 @@ function Take({ clip, seconds }: { clip: Blob; seconds: number }) {
 }
 
 /** 3단계 — 미리 듣기가 준비될 때까지 구슬, 준비되면 견본 문장이 라벤더로 흐르며 재생, 등록. */
-function Finish({ id, name, imageUrl, onDone }: { id: string; name: string; imageUrl: string | null; onDone: () => void }) {
+function Finish({ id, name, imageUrl, anchor, onDone }: { id: string; name: string; imageUrl: string | null; anchor: RefObject<HTMLElement | null>; onDone: () => void }) {
   const t = useT()
   const audio = useRef<HTMLAudioElement>(null)
   const [src, setSrc] = useState<string | null>(null)
@@ -316,12 +339,12 @@ function Finish({ id, name, imageUrl, onDone }: { id: string; name: string; imag
             </button>}
       </div>
       {src && <audio ref={audio} src={src} onEnded={() => setPlaying(false)} />}
-      <div className={css.row}>
+      <BottomBar anchor={anchor}>
         {done
           ? <button type="button" className={`${css.btn} ${css.primary}`} onClick={onDone}>{t('완료')}</button>
           : <button type="button" className={`${css.btn} ${css.primary}`} disabled={!src || busy}
               onClick={() => start(async () => { if (await activateVoice(id)) setDone(true); else setFailed(true) })}>{t('등록')}</button>}
-      </div>
+      </BottomBar>
     </div>
   )
 }

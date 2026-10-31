@@ -19,14 +19,12 @@ export async function createVoice(form: FormData): Promise<{ id: string } | { er
   const audio = form.get('audio')
   if (!(audio instanceof File)) return { error: 'invalid' }
   const prompt = readVoicePrompt(user.id, String(form.get('promptToken') ?? ''))
-  // 목소리 프로필 사진(선택) — 캐릭터 사진과 같은 저장소·같은 형식·5MB 제한
+  // 목소리 프로필 사진(필수, 10/31) — 캐릭터 사진과 같은 저장소·같은 형식·5MB 제한
   const image = form.get('image')
-  let imageUrl: string | null = null
-  if (image instanceof File && image.size > 0) {
-    const up = await uploadCharacterImage(image, user.id)
-    if (!up.ok) return { error: 'image' }
-    imageUrl = up.url
-  }
+  if (!(image instanceof File) || image.size === 0) return { error: 'invalid' }
+  const up = await uploadCharacterImage(image, user.id)
+  if (!up.ok) return { error: 'image' }
+  const imageUrl = up.url
   const out = await createUserVoice({ userId: user.id, label: String(form.get('label') ?? ''), audio: new Uint8Array(await audio.arrayBuffer()),
     prompt, ownVoice: form.get('ownVoice') === 'on', cloneConsent: form.get('cloneConsent') === 'on',
     shared: form.get('shared') === 'on', adult: form.get('adult') === 'on', termsVersion: termsVersion(), privacyVersion: privacyVersion(), imageUrl })
