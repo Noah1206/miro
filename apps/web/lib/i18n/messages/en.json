@@ -1677,5 +1677,7 @@
  "아래 문장을 평소 말투로 읽어 주세요": "Read the sentence below in your usual tone",
  "음성을 더 만들 수 없어요.": "You can't create more voices.",
  "제 목소리입니다": "This is my own voice",
- "프로필 사진": "Profile photo"
+ "프로필 사진": "Profile photo",
+ "목록": "List",
+ "아직 만든 음성이 없어요.": "You haven't made a voice yet."
 }

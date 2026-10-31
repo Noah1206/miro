@@ -23,17 +23,34 @@ type Prompt = { text: string; token: string }
  */
 export function VoiceStudio({ voices, max, prompt: first }: { voices: MyVoice[]; max: number; prompt: Prompt }) {
   const t = useT()
-  return (
-    <div className="stack" style={{ gap: 32 }}>
-      {voices.length > 0 && (
-        <section className="stack" style={{ gap: 12 }} aria-label={t('내 음성')}>
-          {voices.map((v) => <VoiceRow key={v.id} voice={v} />)}
-        </section>
-      )}
-      {voices.length < max
-        ? <Studio first={first} />
-        : <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('음성은 {n}개까지 만들 수 있어요.', { n: max })}</p>}
+  const router = useRouter()
+  // 목록이 기본, '새 음성 만들기'를 누르면 3단계 만들기 화면(10/31 사용자)
+  const [making, setMaking] = useState(false)
+  if (making) return (
+    <div>
+      <button type="button" onClick={() => setMaking(false)} className={css.swap} style={{ marginBottom: 12 }}>
+        <svg viewBox="0 0 24 24" aria-hidden><path d="M15 5l-7 7 7 7" /></svg>{t('목록')}
+      </button>
+      <Studio first={first} onFinished={() => { setMaking(false); router.refresh() }} />
     </div>
+  )
+  return <VoiceList voices={voices} canMake={voices.length < max} max={max} onNew={() => setMaking(true)} />
+}
+
+/** 내 음성 목록 — 만들기 화면의 목소리 목록과 같은 줄 모양. 줄을 누르면 카드가 되어 재생 버튼과 설정(공개·언베일·지우기)이 펼쳐진다. 맨 아래 '새 음성 만들기' 줄. */
+function VoiceList({ voices, canMake, max, onNew }: { voices: MyVoice[]; canMake: boolean; max: number; onNew: () => void }) {
+  const t = useT()
+  const [open, setOpen] = useState<string | null>(null)
+  return (
+    <section className="stack" style={{ gap: 4 }} aria-label={t('내 음성')}>
+      {voices.length === 0 && <p className={css.hint} style={{ padding: '8px 4px 12px' }}>{t('아직 만든 음성이 없어요.')}</p>}
+      {voices.map((v) => <VoiceRow key={v.id} voice={v} open={open === v.id} onOpen={() => setOpen(open === v.id ? null : v.id)} />)}
+      {canMake
+        ? <button type="button" onClick={onNew} className={css.newRow}>
+            <span className={css.plus} aria-hidden>+</span><span style={{ fontSize: 16, fontWeight: 600 }}>{t('새 음성 만들기')}</span>
+          </button>
+        : <p className={css.hint} style={{ padding: '12px 4px' }}>{t('음성은 {n}개까지 만들 수 있어요.', { n: max })}</p>}
+    </section>
   )
 }
 
@@ -45,9 +62,8 @@ const CHECK = <svg viewBox="0 0 24 24" fill="none" strokeWidth="3" strokeLinecap
 const PLAY = <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><path d="M9.5 7.5v9l7-4.5z" stroke="currentColor" strokeWidth="3.6" strokeLinejoin="round" /></svg>
 const PAUSE = <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><rect x="6.5" y="6" width="4" height="12" rx="2" /><rect x="13.5" y="6" width="4" height="12" rx="2" /></svg>
 
-function Studio({ first }: { first: Prompt }) {
+function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }) {
   const t = useT()
-  const router = useRouter()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [prompt, setPrompt] = useState(first)
   const [live, setLive] = useState(false)
@@ -219,7 +235,7 @@ function Studio({ first }: { first: Prompt }) {
 
       {step === 3 && made && (
         <Finish key={made} id={made} name={name} imageUrl={imageUrl}
-          onDone={() => { router.refresh(); setStep(1); setMade(null); setName(''); setImage(null); setAgree({ own: false, clone: false, shared: false, adult: false }); retake(); void swap() }} />
+          onDone={onFinished} />
       )}
     </section>
   )
@@ -291,7 +307,7 @@ function Finish({ id, name, imageUrl, onDone }: { id: string; name: string; imag
       {src && <audio ref={audio} src={src} onEnded={() => setPlaying(false)} />}
       <div className={css.row}>
         {done
-          ? <button type="button" className={`${css.btn} ${css.primary}`} onClick={onDone}>{t('새 음성 만들기')}</button>
+          ? <button type="button" className={`${css.btn} ${css.primary}`} onClick={onDone}>{t('완료')}</button>
           : <button type="button" className={`${css.btn} ${css.primary}`} disabled={!src || busy}
               onClick={() => start(async () => { if (await activateVoice(id)) setDone(true); else setFailed(true) })}>{t('등록')}</button>}
       </div>
@@ -347,48 +363,69 @@ function useBlobUrl(blob: Blob | null) {
   return url
 }
 
-/** 이미 만든 음성 — 사진·이름, 미리 듣기, 공개·언베일 스위치, 지우기. 등록 전(중간에 나간 것)은 여기서 등록. */
-function VoiceRow({ voice }: { voice: MyVoice }) {
+/** 내 음성 한 줄 — 위 줄 상태(등록됨/등록 전·공개), 아래 줄 이름. 열리면 카드 + 흰 재생 버튼(재생 중 이름이 흐름) + 설정. */
+function VoiceRow({ voice, open, onOpen }: { voice: MyVoice; open: boolean; onOpen: () => void }) {
   const t = useT()
   const [busy, start] = useTransition()
-  const [loading, setLoading] = useState(false)
-  const [preview, setPreview] = useState<Blob | null>(null)
+  const audio = useRef<HTMLAudioElement>(null)
+  const [src, setSrc] = useState<string | null>(null)
+  const [playing, setPlaying] = useState(false)
   const [failed, setFailed] = useState(false)
-  const url = useBlobUrl(preview)
+  const run = useRef(0)
+  useEffect(() => () => { if (src) URL.revokeObjectURL(src) }, [src])
+  useEffect(() => { if (!open) { run.current++; audio.current?.pause(); setPlaying(false) } }, [open])
 
-  async function listen() {
-    setLoading(true); setFailed(false)
-    for (let i = 0; i < 180; i++) {
+  async function toggle() {
+    const el = audio.current
+    if (!el) return
+    if (playing) { run.current++; el.pause(); setPlaying(false); return }
+    setPlaying(true); setFailed(false)
+    if (src) { void el.play(); return }
+    const mine = ++run.current
+    for (let i = 0; i < 180 && run.current === mine; i++) {
       const res = await fetch(`/api/voices/${voice.id}/preview`).catch(() => null)
+      if (run.current !== mine) return
       if (res?.status === 202) { await new Promise((r) => setTimeout(r, 1000)); continue }
-      setLoading(false)
-      if (res?.ok) setPreview(await res.blob()); else setFailed(true)
+      if (!res?.ok) break
+      const url = URL.createObjectURL(await res.blob())
+      if (run.current !== mine) { URL.revokeObjectURL(url); return }
+      setSrc(url); el.src = url; void el.play()
       return
     }
-    setLoading(false); setFailed(true)
+    if (run.current === mine) { setPlaying(false); setFailed(true) }
   }
 
+  const top = [voice.status === 'active' ? t('등록됨') : t('등록 전'), voice.shared ? t('공개') : null].filter(Boolean).join(' · ')
   return (
-    <article className="stack" style={{ gap: 8, padding: '14px 16px', borderRadius: 14, background: 'var(--color-surface-2)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span aria-hidden style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 700, color: '#fff',
-          background: voice.imageUrl ? `center / cover url(${voice.imageUrl})` : DEFAULT_VOICE_BG }}>{voice.imageUrl ? null : <VoiceLogo size={20} />}</span>
-        <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 12, color: '#7a7a7a' }}>{voice.status === 'active' ? t('등록됨') : t('등록 전')}</span>
-          <strong style={{ fontSize: 16 }}>{voice.label}</strong>
-        </span>
+    <div style={{ borderRadius: 14, overflow: 'hidden', background: open ? 'var(--color-surface-2)' : 'transparent' }}>
+      <div style={{ display: 'flex', alignItems: 'center', paddingRight: 18 }}>
+        <button type="button" onClick={onOpen} aria-expanded={open}
+          style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: '12px 16px', border: 0, cursor: 'pointer', textAlign: 'left', background: 'transparent', color: 'var(--color-text-primary)', font: 'inherit' }}>
+          <span aria-hidden style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center',
+            background: voice.imageUrl ? `center / cover url(${voice.imageUrl})` : DEFAULT_VOICE_BG }}>{voice.imageUrl ? null : <VoiceLogo size={20} />}</span>
+          <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 12, color: '#7a7a7a' }}>{top}</span>
+            <span className={playing ? flowCss.flow : undefined} style={{ fontSize: 16, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{voice.label}</span>
+          </span>
+        </button>
+        {open && <button type="button" className={css.play} onClick={toggle} aria-label={playing ? t('멈추기') : t('미리 듣기')}>{playing ? PAUSE : PLAY}</button>}
       </div>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Button type="button" size="sm" variant="secondary" onClick={listen} disabled={loading} status={loading ? 'loading' : undefined}>{t('미리 듣기')}</Button>
-        {voice.status === 'pending' && <Button type="button" size="sm" variant="primary" disabled={!preview || busy} onClick={() => start(async () => { await activateVoice(voice.id) })}>{t('등록')}</Button>}
-        <Button type="button" size="sm" variant="danger" disabled={busy} onClick={() => start(() => deleteVoice(voice.id))}>{t('지우기')}</Button>
-      </div>
-      {failed && <Notice tone="danger" role="alert">{t('미리 듣기 실패. 다시 눌러 주세요.')}</Notice>}
-      {url && <audio src={url} controls autoPlay style={{ height: 40, maxWidth: '100%' }} />}
-      <Switch name={`shared-${voice.id}`} label={t('공개')} checked={voice.shared} disabled={busy}
-        onChange={(v) => start(() => setVoiceOption(voice.id, { shared: v }))} />
-      <Switch name={`adult-${voice.id}`} label={t('언베일에서도 사용')} checked={voice.adultAllowed} disabled={busy}
-        onChange={(v) => start(() => setVoiceOption(voice.id, { adultAllowed: v }))} />
-    </article>
+      {open && (
+        <div className={`stack ${css.appear}`} style={{ gap: 0, padding: '0 16px 12px' }}>
+          {failed && <p className="t-caption" role="alert" style={{ margin: '0 0 6px', color: 'var(--color-danger)' }}>{t('미리 듣기 실패. 다시 눌러 주세요.')}</p>}
+          {voice.status === 'pending' && (
+            <button type="button" className={`${css.btn} ${css.primary}`} disabled={busy} style={{ margin: '4px 0 8px', minHeight: 44 }}
+              onClick={() => start(async () => { if (!(await activateVoice(voice.id))) setFailed(true) })}>{t('등록')}</button>
+          )}
+          <Switch name={`shared-${voice.id}`} label={t('다른 사용자에게 공개')} checked={voice.shared} disabled={busy}
+            onChange={(v) => start(() => setVoiceOption(voice.id, { shared: v }))} />
+          <Switch name={`adult-${voice.id}`} label={t('언베일에서도 사용')} checked={voice.adultAllowed} disabled={busy}
+            onChange={(v) => start(() => setVoiceOption(voice.id, { adultAllowed: v }))} />
+          <button type="button" disabled={busy} onClick={() => start(() => deleteVoice(voice.id))}
+            style={{ alignSelf: 'flex-start', marginTop: 4, padding: '8px 0', border: 0, background: 'transparent', color: 'var(--color-danger)', fontSize: 14, cursor: 'pointer' }}>{t('지우기')}</button>
+        </div>
+      )}
+      <audio ref={audio} preload="none" onEnded={() => setPlaying(false)} />
+    </div>
   )
 }
