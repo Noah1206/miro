@@ -190,7 +190,9 @@ assert cer('안녕, 하세요!', '안녕하세요') == 0 and abs(cer('안녕하'
 
 @app.cls(image=modal.Image.debian_slim(python_version='3.12').apt_install('ffmpeg').pip_install('fastapi[standard]', 'numpy', 'soundfile', 'faster-whisper')
          # 모델을 이미지에 미리 받아 둔다(run_function 은 이 파일을 통째로 불러 Drama 3 모듈이 없어 실패)
-         .run_commands("python -c \"from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')\""),
+         .run_commands("python -c \"from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')\"")
+         # 이 파일이 맨 위에서 modal_drama3_compare 를 불러서, 컨테이너에도 같이 넣어야 켜진다(10/31: 빠져 있어 켜질 때마다 죽었다)
+         .add_local_python_source('drama3_fullft', 'modal_drama3_compare'),
          cpu=4, memory=4096, volumes={USER_VOICES: user_voices, '/voices': voices}, secrets=[modal.Secret.from_name('miro-drama3-tts')],
          timeout=120, max_containers=2, scaledown_window=120, enable_memory_snapshot=True)
 class Voices:
