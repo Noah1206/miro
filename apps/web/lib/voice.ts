@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto'
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import { and, asc, eq, inArray, isNotNull, isNull, lt, ne, or, sql } from 'drizzle-orm'
 import { db, officialVoices } from '@miro/db'
 
@@ -13,9 +13,10 @@ import { db, officialVoices } from '@miro/db'
 const selectable = (userId: string) => and(eq(officialVoices.status, 'active'),
   or(isNull(officialVoices.ownerId), eq(officialVoices.ownerId, userId), eq(officialVoices.shared, true)))
 
-export async function voiceOptions(userId: string): Promise<Array<{ id: string; label: string }>> {
-  return db.select({ id: officialVoices.id, label: officialVoices.label }).from(officialVoices)
+export async function voiceOptions(userId: string): Promise<Array<{ id: string; label: string; mine: boolean }>> {
+  const rows = await db.select({ id: officialVoices.id, label: officialVoices.label, ownerId: officialVoices.ownerId }).from(officialVoices)
     .where(selectable(userId)).orderBy(asc(officialVoices.activatedAt))
+  return rows.map((r) => ({ id: r.id, label: r.label, mine: r.ownerId === userId }))
 }
 
 /** 폼이 보낸 목소리가 지금 이 회원이 고를 수 있는 것이면 그 ID, 아니면 null(기본 목소리). 저장할 때마다 서버가 다시 본다. */
@@ -53,6 +54,22 @@ export const VOICE_PROMPTS = [
   '요즘은 밤에 산책하는 게 제일 좋아요. 조용한 길을 걷다 보면 하루 동안 쌓인 생각이 정리되거든요.',
   '고양이가 창가에 앉아서 햇볕을 쬐고 있었어요. 너무 평화로워 보여서 한참을 그냥 바라봤어요.',
 ]
+/**
+ * 읽을 문장 표 — 페이지가 문장을 고르며 서명한 1시간짜리 값. 브라우저는 문장을 바꿀 수 없고, 페이지가 바로 문장을 그린다
+ * (10/31 운영 확인: 쿠키를 서버 액션으로 받느라 문장이 몇 초 늦게 떴다).
+ */
+const sign = (body: string) => createHmac('sha256', process.env.MIRO_TTS_API_KEY ?? 'dev').update(`voice-prompt:${body}`).digest('base64url')
+export function issueVoicePrompt(userId: string, now = Date.now()): { text: string; token: string } {
+  const i = randomInt(VOICE_PROMPTS.length), body = `${userId}.${i}.${now + 3_600_000}`
+  return { text: VOICE_PROMPTS[i]!, token: `${body}.${sign(body)}` }
+}
+export function readVoicePrompt(userId: string, token: string, now = Date.now()): number {
+  const [u, i, exp, mac] = token.split('.'), body = `${u}.${i}.${exp}`
+  const want = Buffer.from(sign(body)), got = Buffer.from(mac ?? '')
+  if (u !== userId || Number(exp) < now || want.length !== got.length || !timingSafeEqual(want, got)) return -1
+  return Number(i)
+}
+
 /** 회원당 목소리 수 상한. 미리 듣기는 올릴 때 한 번만 GPU 로 만들고, 다시 들을 때는 저장된 파일이라 GPU 를 쓰지 않는다. */
 export const MAX_USER_VOICES = 5
 

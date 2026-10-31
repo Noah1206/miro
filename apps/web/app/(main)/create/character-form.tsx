@@ -16,6 +16,7 @@ import { SituationImagesEditor } from './situation-images-editor'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink } from '@/components/ui'
 import { TestChat } from './test-chat'
+import { VoiceList, type VoiceOption } from './voice-list'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
@@ -92,7 +93,7 @@ type CharacterFormProps = {
   userId?: string
   capabilities: ContactCapabilities & {characterVoice?:boolean}
   /** 운영자가 승인한 공식 목소리. 없으면 목소리 칸 자체를 보이지 않는다. */
-  voices?: Array<{ id: string; label: string }>
+  voices?: VoiceOption[]
   /** 권장 모델 후보(10/28) — 채팅에서 고를 수 있는 모델. */
   models?: Array<{ id: string; name: string }>
   draft?: boolean
@@ -447,8 +448,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="voice" show={tab === 'voice'}>
           <Section title={t('목소리')}>
             {voices.length > 0
-              ? <ChoiceChips name="voiceId" value={voiceId} onChange={setVoiceId} columns={2}
-                  options={[{ value: '', label: t('기본') }, ...voices.map((v) => ({ value: v.id, label: v.label }))]} />
+              ? <VoiceList voices={voices} value={voiceId} onChange={setVoiceId} />
               : <>
                   <input type="hidden" name="voiceId" value={voiceId} />
                   <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-tertiary)' }}>{t('아직 고를 수 있는 목소리가 없어요. 기본 목소리로 읽어 줘요.')}</p>

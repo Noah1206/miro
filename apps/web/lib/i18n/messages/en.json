@@ -1649,5 +1649,7 @@
  "언베일에서도 사용": "Also use in Unveil",
  "이 문장을 읽어 녹음하세요": "Read this sentence aloud and record",
  "지금은 만들 수 없어요. 잠시 뒤 다시 해 주세요.": "Can't create right now. Please try again shortly.",
- "문장과 다르게 들려요. 문장 그대로 다시 읽어 주세요.": "That didn't match the sentence. Please read it exactly as shown."
+ "문장과 다르게 들려요. 문장 그대로 다시 읽어 주세요.": "That didn't match the sentence. Please read it exactly as shown.",
+ "목소리 거르기": "Filter voices",
+ "해당하는 목소리가 없어요.": "No voices match."
 }

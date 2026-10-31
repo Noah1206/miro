@@ -3,7 +3,7 @@ import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { Back, Page } from '@/components/ui'
 import { getT } from '@/lib/i18n/server'
-import { MAX_USER_VOICES, myVoices } from '@/lib/voice'
+import { MAX_USER_VOICES, issueVoicePrompt, myVoices } from '@/lib/voice'
 import styles from '../characters/characters.module.css'
 import { MakeTabs } from '../characters/make-tabs'
 import { VoiceStudio } from './voice-studio'
@@ -28,7 +28,7 @@ export default async function MyVoices() {
             <p>{t('곧 내 캐릭터에 어울리는 목소리를 직접 만들 수 있어요.\n만든 음성은 캐릭터 만들기의 음성 탭에서 고를 수 있어요.')}</p>
           </section>
         ) : (
-          <VoiceStudio voices={voices} max={MAX_USER_VOICES} />
+          <VoiceStudio voices={voices} max={MAX_USER_VOICES} prompt={issueVoicePrompt(user.id)} />
         )}
       </div>
     </Page>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Button, Checkbox, Input, Notice, Switch, TransitionLink } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import type { MyVoice, VoiceUploadError } from '@/lib/voice'
-import { activateVoice, beginVoicePrompt, createVoice, deleteVoice, setVoiceOption, warmVoice } from './actions'
+import { activateVoice, createVoice, deleteVoice, setVoiceOption, warmVoice } from './actions'
 
 const MAX_SECONDS = 30
 
@@ -12,7 +12,7 @@ const MAX_SECONDS = 30
  * 녹음 → 동의 → 만들기 → (자동) 미리 듣기 → 등록. 빠르게: 녹음을 시작할 때 GPU 를 깨우고, 올리자마자 GPU 가 미리 듣기를 만든다.
  * 등록한 목소리는 공개·언베일 사용을 바꾸거나 지울 수 있다.
  */
-export function VoiceStudio({ voices, max }: { voices: MyVoice[]; max: number }) {
+export function VoiceStudio({ voices, max, prompt }: { voices: MyVoice[]; max: number; prompt: { text: string; token: string } }) {
   const t = useT()
   const router = useRouter()
   const [recording, setRecording] = useState(false)
@@ -22,8 +22,7 @@ export function VoiceStudio({ voices, max }: { voices: MyVoice[]; max: number })
   const [pending, start] = useTransition()
   const recorder = useRef<MediaRecorder | null>(null)
   const clipUrl = useClipUrl(clip)
-  const [promptText, setPromptText] = useState('')
-  useEffect(() => { beginVoicePrompt().then(setPromptText).catch(() => setPromptText('')) }, [])
+  const promptText = prompt.text
 
   const errors: Record<VoiceUploadError | 'mic', string> = {
     invalid: t('이름과 필수 동의를 확인해 주세요.'),
@@ -59,6 +58,7 @@ export function VoiceStudio({ voices, max }: { voices: MyVoice[]; max: number })
   function submit(form: FormData) {
     if (!clip) return
     form.set('audio', new File([clip], 'voice', { type: clip.type }))
+    form.set('promptToken', prompt.token)
     start(async () => {
       const out = await createVoice(form)
       if ('error' in out) { setError(errors[out.error]); return }
@@ -79,7 +79,7 @@ export function VoiceStudio({ voices, max }: { voices: MyVoice[]; max: number })
           <h2 className="t-title">{t('이 문장을 읽어 녹음하세요')}</h2>
           <blockquote lang="ko" style={{ margin: 0, padding: '16px 18px', borderRadius: 12, background: 'var(--color-surface-2)', fontSize: 17, lineHeight: 1.6, minHeight: 88 }}>{promptText}</blockquote>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button type="button" variant={recording ? 'destructive' : 'secondary'} onClick={toggleRecord} disabled={pending || !promptText}>
+            <Button type="button" variant={recording ? 'destructive' : 'secondary'} onClick={toggleRecord} disabled={pending}>
               {recording ? t('녹음 멈추기 ({n}초)', { n: seconds }) : clip ? t('다시 녹음') : t('녹음 시작')}
             </Button>
             {clipUrl && !recording && <audio src={clipUrl} controls style={{ height: 40, maxWidth: '100%' }} />}
