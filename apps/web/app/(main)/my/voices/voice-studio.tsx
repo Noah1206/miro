@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Button, Notice, Switch, TransitionLink } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import type { MyVoice, VoiceUploadError } from '@/lib/voice'
-import { avatar } from '../../create/voice-list'
+import { DEFAULT_VOICE_BG, VoiceLogo } from '../../create/voice-list'
 import flowCss from '../../create/voice-list.module.css'
 import css from './voice-studio.module.css'
 import { activateVoice, createVoice, deleteVoice, newVoicePrompt, setVoiceOption, warmVoice } from './actions'
@@ -181,15 +181,16 @@ function Studio({ first }: { first: Prompt }) {
 
       {step === 2 && (
         <div key="s2" className={css.appear}>
+          {/* 프로필 사진을 맨 위 가운데에, 그 아래 이름 — 사진이 없으면 회색 미로 로고 */}
           <div className={css.ident}>
             <label className={css.pic} aria-label={t('프로필 사진')}
-              style={{ background: imageUrl ? `center / cover url(${imageUrl})` : avatar(name || 'voice') }}>
-              {!imageUrl && (name.trim().slice(0, 1) || '♪')}
+              style={{ background: imageUrl ? `center / cover url(${imageUrl})` : DEFAULT_VOICE_BG }}>
+              {!imageUrl && <VoiceLogo size={40} />}
               <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
               <span className={css.cam}><svg viewBox="0 0 24 24" aria-hidden><path d="M4 8h3l2-3h6l2 3h3v11H4z" /><circle cx="12" cy="13" r="3.5" /></svg></span>
             </label>
-            <input className={css.field} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('이름')} aria-label={t('이름')} maxLength={30} />
           </div>
+          <input className={css.field} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('이름')} aria-label={t('이름')} maxLength={30} style={{ width: '100%', marginBottom: 20 }} />
           <div className={css.consent}>
             <label className={css.all}>
               <input type="checkbox" checked={all} onChange={(e) => setAgree({ own: e.target.checked, clone: e.target.checked, shared: e.target.checked, adult: e.target.checked })} />
@@ -371,7 +372,7 @@ function VoiceRow({ voice }: { voice: MyVoice }) {
     <article className="stack" style={{ gap: 8, padding: '14px 16px', borderRadius: 14, background: 'var(--color-surface-2)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <span aria-hidden style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 700, color: '#fff',
-          background: voice.imageUrl ? `center / cover url(${voice.imageUrl})` : avatar(voice.id) }}>{voice.imageUrl ? null : voice.label.slice(0, 1)}</span>
+          background: voice.imageUrl ? `center / cover url(${voice.imageUrl})` : DEFAULT_VOICE_BG }}>{voice.imageUrl ? null : <VoiceLogo size={20} />}</span>
         <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 12, color: '#7a7a7a' }}>{voice.status === 'active' ? t('등록됨') : t('등록 전')}</span>
           <strong style={{ fontSize: 16 }}>{voice.label}</strong>
