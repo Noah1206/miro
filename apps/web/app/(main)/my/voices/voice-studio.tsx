@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, Notice, Switch, TransitionLink } from '@/components/ui'
+import { Notice, Switch, TransitionLink, useToast } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import type { MyVoice, VoiceUploadError } from '@/lib/voice'
 import { DEFAULT_VOICE_BG, VoiceLogo } from '../../create/voice-list'
@@ -76,6 +76,7 @@ const PAUSE = <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor
 
 function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }) {
   const t = useT()
+  const toast = useToast()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [prompt, setPrompt] = useState(first)
   const [live, setLive] = useState(false)
@@ -113,7 +114,7 @@ function Studio({ first, onFinished }: { first: Prompt; onFinished: () => void }
     if (live) { recorder.current?.stop(); return }
     setError(null); setClip(null); caption.reset()
     const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: true } }).catch(() => null)
-    if (!stream) { setError(errors.mic); return }
+    if (!stream) { toast(errors.mic); return }   // 마이크 허용 안내는 토스트로(10/31)
     void warmVoice().catch(() => {})   // 녹음하는 동안 음성 서버가 켜진다
     // 파형 — 마이크 소리 크기를 막대로
     const ctx = new AudioContext(), analyser = ctx.createAnalyser(); analyser.fftSize = 512
