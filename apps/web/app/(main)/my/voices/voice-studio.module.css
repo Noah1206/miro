@@ -87,7 +87,7 @@
 
 
 /* 주 버튼 막대 — 아래 메뉴 바로 위(10/31) */
-.bar { position: fixed; bottom: calc(var(--nav-h) + 4px); z-index: 5; display: flex; flex-direction: column; align-items: stretch;
+.bar { position: fixed; bottom: calc(var(--nav-h) + 12px); z-index: 5; display: flex; flex-direction: column; align-items: stretch;
   animation: appear .32s cubic-bezier(.2, .8, .2, 1) both; }
 /* 이전으로 — 주 버튼 밑 작은 회색 글자 */
 .back { align-self: center; min-height: 36px; margin-top: 2px; padding: 0 16px; border: 0; background: transparent; color: var(--color-text-tertiary);
