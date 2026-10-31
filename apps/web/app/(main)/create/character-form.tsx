@@ -276,11 +276,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <input type="hidden" name="dislikes" value={dislikes.join(',')} />
         {/* ── 프로필 ── */}
         <Panel id="profile" show={tab === 'profile'}>
-          {/* 유형(10/19): 대화만 / 몰입 모드(음성) / 몰입 모드(음성+영상). 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx. */}
-          {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 음성+영상은 캐릭터 사진이 화면 전체에 깔려요.')}>
+          {/* 유형(10/19): 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx.
+              10/31 사용자: 음성 / 음성+영상 두 갈래를 '몰입 모드' 하나로 — 고르면 'video'(사진이 화면 전체). 예전에 'voice'로 저장된 캐릭터도 몰입 모드로 보이고, 고쳐 저장할 때까지 값은 그대로. */}
+          {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.')}>
             <Card>
-              <ChoiceChips name="media" value={media} onChange={v => setMedia(v as CharacterMedia)} columns={3}
-                options={[{ value: 'text', label: t('대화') }, { value: 'voice', label: t('몰입 모드 · 음성') }, { value: 'video', label: t('몰입 모드 · 음성+영상') }]} />
+              <input type="hidden" name="media" value={media} />
+              <ChoiceChips value={media === 'text' ? 'text' : 'video'} onChange={v => setMedia(v === 'text' ? 'text' : media === 'text' ? 'video' : media)} columns={2}
+                options={[{ value: 'text', label: t('대화') }, { value: 'video', label: t('몰입 모드') }]} />
             </Card>
           </Section>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
