@@ -68,16 +68,18 @@ class Speaker:
     def reference(self, name):
         import os, torch
         from fish_speech.models.text2semantic.inference import encode_audio
-        ok = isinstance(name, str) and name and all(c.isalnum() or c in '-_' for c in name)
-        name = name if ok else DEFAULT_VOICE
+        if name is None or name == '': name = DEFAULT_VOICE
+        ok = isinstance(name, str) and all(c.isalnum() or c in '-_' for c in name)
+        if not ok: raise ValueError('invalid voice')
         if name not in self.refs:
             folder = f'{VOICES}/{name}' if ok and os.path.isfile(f'{VOICES}/{name}/ref.wav') else None
             if ok and not folder:
                 # 회원 녹음은 이 컨테이너가 켜진 뒤에 들어왔을 수 있다 — 한 번 다시 읽는다
                 if not os.path.isfile(f'{USER_VOICES}/{name}/ref.wav'): user_voices.reload()
                 if os.path.isfile(f'{USER_VOICES}/{name}/ref.wav'): folder = f'{USER_VOICES}/{name}'
-            if not folder: name, folder = DEFAULT_VOICE, f'{VOICES}/{DEFAULT_VOICE}'
-            if name in self.refs: return self.refs[name]
+            # 없는 목소리를 기본 목소리로 몰래 바꿔 읽지 않는다(10/31 사용자: 실제로 있는 음성만) — 실패로 돌려 앱이 알게 한다.
+            # 기본 목소리는 voice 를 비워 보낼 때만 쓴다.
+            if not folder: raise ValueError('voice not found')
             text = open(f'{folder}/ref.txt', encoding='utf-8').read().strip()
             with torch.inference_mode(): codes = encode_audio(f'{folder}/ref.wav', self.codec, str(self.model.device)).cpu().long()
             self.refs[name] = (text, codes)
@@ -189,7 +191,7 @@ assert cer('안녕, 하세요!', '안녕하세요') == 0 and abs(cer('안녕하'
 @app.cls(image=modal.Image.debian_slim(python_version='3.12').apt_install('ffmpeg').pip_install('fastapi[standard]', 'numpy', 'soundfile', 'faster-whisper')
          # 모델을 이미지에 미리 받아 둔다(run_function 은 이 파일을 통째로 불러 Drama 3 모듈이 없어 실패)
          .run_commands("python -c \"from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')\""),
-         cpu=4, memory=4096, volumes={USER_VOICES: user_voices}, secrets=[modal.Secret.from_name('miro-drama3-tts')],
+         cpu=4, memory=4096, volumes={USER_VOICES: user_voices, '/voices': voices}, secrets=[modal.Secret.from_name('miro-drama3-tts')],
          timeout=120, max_containers=2, scaledown_window=120, enable_memory_snapshot=True)
 class Voices:
     @modal.enter(snap=True)
@@ -267,6 +269,9 @@ class Voices:
             if not authed(request): return Response(status_code=401)
             if not named(name): return Response(status_code=400)
             # ponytail: 같은 목소리를 여러 명이 동시에 처음 누르면 두 번 만들 수 있다 — 한 번 만들면 끝이라 둔다
+            # 실제로 있는 공식 목소리만 견본을 만든다(없는 이름으로 기본 목소리 견본이 저장되지 않게)
+            voices.reload()
+            if not os.path.isfile(f'{VOICES}/{name}/ref.wav'): return Response(status_code=404)
             if not os.path.isfile(f'{USER_VOICES}/_samples/{name}.wav'): Speaker().sample.spawn(name)
             return {'ok': True}
 

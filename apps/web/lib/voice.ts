@@ -150,7 +150,10 @@ export async function voiceSample(userId: string, id: string): Promise<ArrayBuff
   const up = uploadBase()
   const res = await fetch(`${up.url}${path}`, { headers: up.headers, signal: AbortSignal.timeout(20_000) })
   if (res.status === 202) {
-    if (path.startsWith('/samples/')) await fetch(`${up.url}${path}`, { method: 'POST', headers: up.headers, signal: AbortSignal.timeout(10_000) }).catch(() => null)
+    if (path.startsWith('/samples/')) {
+      const made = await fetch(`${up.url}${path}`, { method: 'POST', headers: up.headers, signal: AbortSignal.timeout(10_000) }).catch(() => null)
+      if (made?.status === 404) return null   // 음성 서버에 실제 파일이 없는 목소리
+    }
     return 'pending'
   }
   return res.ok ? res.arrayBuffer() : null
@@ -158,6 +161,8 @@ export async function voiceSample(userId: string, id: string): Promise<ArrayBuff
 
 /** 미리 듣기 뒤 '등록' — 이때부터 캐릭터에 고를 수 있다. */
 export async function activateUserVoice(userId: string, id: string): Promise<boolean> {
+  // 실제로 있는 음성만 등록한다 — 미리 듣기가 만들어졌다 = 음성 서버에 녹음이 있고 그 목소리로 읽힌다(10/31 사용자)
+  if (!(await voicePreview(userId, id).catch(() => null) instanceof ArrayBuffer)) return false
   const done = await db.update(officialVoices).set({ status: 'active', activatedAt: new Date(), approval: { by: 'owner', previewedAt: new Date().toISOString() } })
     .where(and(eq(officialVoices.id, id), eq(officialVoices.ownerId, userId), eq(officialVoices.status, 'pending'))).returning({ id: officialVoices.id })
   return done.length > 0
