@@ -5,6 +5,7 @@ import css from './voice-list.module.css'
 
 export type VoiceOption = { id: string; label: string; mine?: boolean }
 type Filter = 'all' | 'female' | 'male' | 'mine'
+const DEFAULT_VOICE_NAME = '지환'
 
 /**
  * 목소리 고르기(10/31, 플링 순위 목록 모양을 사용자와 HTML 로 맞춤) — 위에 알약 거르기, 아래에 동그란 아이콘 + 성별(옅게)·이름 두 줄 목록.
@@ -17,7 +18,8 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
   const gender = (l: string) => /여성|성우 여/.test(l) ? 'female' : /남성|성우 남/.test(l) ? 'male' : null
   const shown = voices.filter((v) => filter === 'all' || (filter === 'mine' ? v.mine : gender(v.label) === filter))
   const pills: Array<[Filter, string]> = [['all', t('전체')], ['female', t('여성')], ['male', t('남성')], ...(voices.some((v) => v.mine) ? [['mine', t('내 음성')] as [Filter, string]] : [])]
-  const rows: VoiceOption[] = [...(filter === 'all' ? [{ id: '', label: t('기본') }] : []), ...shown]
+  // 기본 목소리(음성 서버 DEFAULT_VOICE, 남성)는 사람 이름으로 보인다(10/31 사용자) — 이름이라 번역하지 않는다
+  const rows: VoiceOption[] = [...(filter === 'all' || filter === 'male' ? [{ id: '', label: DEFAULT_VOICE_NAME }] : []), ...shown]
   return (
     <div className="stack" style={{ gap: 16 }}>
       <input type="hidden" name="voiceId" value={value} />
