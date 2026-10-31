@@ -124,6 +124,15 @@ class Speaker:
         user_voices.commit()
         return True
 
+    @modal.method()
+    def sample(self, name):
+        """공식 목소리 미리 듣기(10/31) — 만들기 화면에서 처음 고를 때 한 번 만들어 /user-voices/_samples/<name>.wav 에 둔다."""
+        import os
+        os.makedirs(f'{USER_VOICES}/_samples', exist_ok=True)
+        open(f'{USER_VOICES}/_samples/{name}.wav', 'wb').write(self.speak(PREVIEW_TEXT, name))
+        user_voices.commit()
+        return True
+
     @modal.asgi_app()
     def web(self):
         import hmac, os
@@ -240,6 +249,26 @@ class Voices:
             if not os.path.isfile(path): user_voices.reload()
             if not os.path.isfile(path): return Response(status_code=202)
             return Response(open(path, 'rb').read(), media_type='audio/wav')
+
+        named = lambda n: 0 < len(n) <= 64 and all(c.isalnum() or c in '-_' for c in n)
+
+        @api.get('/samples/{name}')
+        def sample(name: str, request: Request):
+            """공식 목소리 미리 듣기 파일. 없으면 202 — 앱이 POST 로 한 번 만들게 한 뒤 다시 묻는다."""
+            if not authed(request): return Response(status_code=401)
+            if not named(name): return Response(status_code=400)
+            path = f'{USER_VOICES}/_samples/{name}.wav'
+            if not os.path.isfile(path): user_voices.reload()
+            if not os.path.isfile(path): return Response(status_code=202)
+            return Response(open(path, 'rb').read(), media_type='audio/wav')
+
+        @api.post('/samples/{name}')
+        def make_sample(name: str, request: Request):
+            if not authed(request): return Response(status_code=401)
+            if not named(name): return Response(status_code=400)
+            # ponytail: 같은 목소리를 여러 명이 동시에 처음 누르면 두 번 만들 수 있다 — 한 번 만들면 끝이라 둔다
+            if not os.path.isfile(f'{USER_VOICES}/_samples/{name}.wav'): Speaker().sample.spawn(name)
+            return {'ok': True}
 
         @api.delete('/voices/{vid}')
         def remove(vid: str, request: Request):

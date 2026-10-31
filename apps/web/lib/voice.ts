@@ -134,6 +134,28 @@ export async function voicePreview(userId: string, id: string): Promise<ArrayBuf
   return res.ok ? res.arrayBuffer() : null
 }
 
+/**
+ * 만들기 화면의 미리 듣기 막대(10/31) — 이 회원이 고를 수 있는 목소리의 짧은 견본. id '' = 기본 목소리(음성 서버 DEFAULT_VOICE asmr01).
+ * 회원 목소리는 올릴 때 만든 미리 듣기, 공식 목소리는 처음 누를 때 GPU 가 한 번 만들어 둔 파일. 없으면 만들게 하고 'pending'.
+ */
+export async function voiceSample(userId: string, id: string): Promise<ArrayBuffer | 'pending' | null> {
+  let path: string
+  if (!id) path = '/samples/asmr01'
+  else {
+    const [row] = await db.select({ file: officialVoices.providerVoiceId, ownerId: officialVoices.ownerId }).from(officialVoices)
+      .where(and(eq(officialVoices.id, id), selectable(userId))).limit(1)
+    if (!row) return null
+    path = row.ownerId ? `/voices/${row.file}/preview` : `/samples/${row.file}`
+  }
+  const up = uploadBase()
+  const res = await fetch(`${up.url}${path}`, { headers: up.headers, signal: AbortSignal.timeout(20_000) })
+  if (res.status === 202) {
+    if (path.startsWith('/samples/')) await fetch(`${up.url}${path}`, { method: 'POST', headers: up.headers, signal: AbortSignal.timeout(10_000) }).catch(() => null)
+    return 'pending'
+  }
+  return res.ok ? res.arrayBuffer() : null
+}
+
 /** 미리 듣기 뒤 '등록' — 이때부터 캐릭터에 고를 수 있다. */
 export async function activateUserVoice(userId: string, id: string): Promise<boolean> {
   const done = await db.update(officialVoices).set({ status: 'active', activatedAt: new Date(), approval: { by: 'owner', previewedAt: new Date().toISOString() } })

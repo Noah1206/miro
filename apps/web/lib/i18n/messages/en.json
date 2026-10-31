@@ -1651,5 +1651,9 @@
  "지금은 만들 수 없어요. 잠시 뒤 다시 해 주세요.": "Can't create right now. Please try again shortly.",
  "문장과 다르게 들려요. 문장 그대로 다시 읽어 주세요.": "That didn't match the sentence. Please read it exactly as shown.",
  "목소리 거르기": "Filter voices",
- "해당하는 목소리가 없어요.": "No voices match."
+ "해당하는 목소리가 없어요.": "No voices match.",
+ "미리 듣기 준비 중": "Preparing preview",
+ "일시정지": "Pause",
+ "재생 위치": "Playback position",
+ "멈추기": "Pause"
 }
