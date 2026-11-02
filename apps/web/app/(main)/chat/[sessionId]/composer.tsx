@@ -19,6 +19,7 @@ import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
 import { useT } from '@/lib/i18n/client'
 import { UNVEIL_CARRY, UNVEIL_OFFER } from './adult-toggle'
+import { PhotoButton } from './photo-button'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
@@ -26,10 +27,12 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력란과 설정 메뉴에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [] }: {
+export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo }: {
   sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; messengerHref?: string
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
+  /** 사진 버튼(11/2) — 사진 생성이 켜진 방에서만 넘긴다. */
+  photo?: { unveil: boolean; cost: number }
 }) {
   const t = useT()
   const { append, live, setLive, calendarPending, remove } = useTurns()
@@ -232,6 +235,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
             <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}
               onSubmit={value => { setDraft(value); setRequestId(crypto.randomUUID()); setTimeout(() => ref.current?.requestSubmit(), 0) }} />
+            {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} cost={photo.cost} disabled={pending || calendarPending || !ready} />}
           </div>
         <div className={styles.composerBar}>
           <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />

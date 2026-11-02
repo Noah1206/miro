@@ -8,7 +8,7 @@ import { uploadSituationImage } from './actions'
 
 const iconBtn: React.CSSProperties = { width: 36, height: 36, borderRadius: 18, border: 0, display: 'grid', placeItems: 'center', cursor: 'pointer', background: 'rgba(var(--color-bg-rgb),0.75)', color: 'var(--color-white)' }
 
-type Row = { id: number; image: string; keywords: string; situation: string; uploading?: boolean; error?: string }
+type Row = { id: number; image: string; keywords: string; situation: string; adult?: true; uploading?: boolean; error?: string }
 
 /**
  * 상황별 사진(10/28, 위프·베이비챗식) — 사진 한 장 + 상황 설명(+ 선택 키워드). 대화가 그 상황이 되면 AI 가 골라 채팅에 한 번 띄운다(10/31).
@@ -17,12 +17,12 @@ type Row = { id: number; image: string; keywords: string; situation: string; upl
 export function SituationImagesEditor({ defaultValue }: { defaultValue: SituationImage[] }) {
   const t = useT()
   const uid = useId()
-  const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', '), situation: e.situation ?? '' })))
+  const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, image: e.image, keywords: e.keywords.join(', '), situation: e.situation ?? '', adult: e.adult })))
   const [nextId, setNextId] = useState(defaultValue.length)
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
   // 앞 칸에 사진을 다 올려야 다음 칸을 연다(10/28) — 빈 칸만 쌓이지 않게.
   const canAdd = rows.every(r => r.image && !r.uploading)
-  const value = rows.filter(r => r.image).map(r => ({ image: r.image, situation: r.situation.trim(), keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean) }))
+  const value = rows.filter(r => r.image).map(r => ({ image: r.image, situation: r.situation.trim(), keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean), ...(r.adult ? { adult: true as const } : {}) }))   // 언베일 전용 표시는 편집해도 유지
 
   const pick = async (id: number, file: File | undefined) => {
     if (!file) return

@@ -220,7 +220,7 @@ export const characters = pgTable('characters', {
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
   /** 상황별 사진(10/28) — 대화 중 키워드가 나오면 그 사진을 채팅에 한 번 띄운다. */
-  situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string }>>().notNull().default([]),
+  situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string; situation?: string; adult?: true }>>().notNull().default([]),
   /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
   /** 이용 대상(10/28) — true 면 언베일(성인 인증·켬)을 연 사람에게만 보인다. */
   adultOnly: boolean('adult_only').notNull().default(false),

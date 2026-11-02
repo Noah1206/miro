@@ -234,7 +234,8 @@ async function executeTurn(opts: {
     const responseText = renderBlocks(transition.blocks)
     // 상황별 사진(10/28) — 만든 사람이 적은 상황이 지금 장면이 됐으면, 이 대화방에서 아직 안 띄운 사진 하나를 답 뒤에 붙인다.
     // 10/31: 싼 분류 모델이 상황 설명을 보고 고른다(실패하면 키워드). 이번 턴 차감 계량기는 이미 닫혔으므로 서비스 예산으로 부른다.
-    const situationImages = charSettings?.situationImages ?? []
+    // 11/2: 언베일 전용(adult) 사진은 언베일이 켜진 턴에만 후보로 둔다.
+    const situationImages = (charSettings?.situationImages ?? []).filter(e => loaded.adult.turn || !e.adult)
     const situationImage = situationImages.length === 0 ? null : await chooseSituationImage(
       auxiliaryLLM(loaded.characterName, { ...context, turnMeter: undefined, usageUnits: 0 }), situationImages,
       { userInput: input ?? '', responseText },

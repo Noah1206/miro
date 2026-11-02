@@ -402,7 +402,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .composerForm, :global([data-chat-theme]) .composerForm { flex-direction: column; align-items: stretch; gap: 0; padding: 6px 6px 4px 12px; }
 .input, :global([data-chat-theme]) .input { flex: none; width: 100%; min-height: 44px; padding: 6px 2px; }
 .composerRow { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.composerTools { display: flex; align-items: center; gap: 2px; min-width: 0; }
+/* 11/2: 왼쪽(모델·도구)만 줄어들고 오른쪽 버튼 묶음은 크기를 지킨다 — 모델 알약이 * 버튼 밑으로 파고들지 않게. */
+.composerTools { display: flex; align-items: center; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.composerRow > .composerBar { flex-shrink: 0; }
 .toolButton { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 auto; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; }
 .toolButton svg { width: 18px; height: 18px; }
 .toolButton:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }

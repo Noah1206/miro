@@ -53,7 +53,9 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
     if (!gate.allowed || !Number.isFinite(age) || age < 19) return {error:msg('현재 언베일 이미지를 이용할 수 없어요.'),notice:null}
     unveil = { level: loaded.adult.level, characterAge: age, request }
   }
-  const unsafe = unsafeRequest(request)
+  // 고정 세부사항(11/2) — 머리·옷·속옷 색처럼 사진마다 같아야 하는 것. 사용자가 적은 글이라 요청과 같은 안전 검사를 거친다.
+  const details = String(form.get('details') ?? '').replace(/\s+/g, ' ').trim().slice(0, 300) || undefined
+  const unsafe = unsafeRequest(request) ?? unsafeRequest(details)
   if (unsafe === 'minor') return { error: msg('미성년자로 보이는 요청은 그릴 수 없어요.'), notice: null }
   if (unsafe === 'real_person') return { error: msg('실존 인물이나 실제 사진을 바탕으로 한 요청은 그릴 수 없어요.'), notice: null }
 
@@ -66,6 +68,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
       context,
       usage: { userId: user.id },
       unveil,
+      details,
     })
 
     await db.insert(messages).values({

@@ -20,6 +20,7 @@ import { SEEDS_4_SION } from './bl-characters-4-sion.data.mts'
 import { SEEDS_4_MU } from './bl-characters-4-mu.data.mts'
 import { SEEDS_4_HANGYEOL } from './bl-characters-4-hangyeol.data.mts'
 import { SEEDS_4_IDO } from './bl-characters-4-ido.data.mts'
+import { SEEDS_MALE } from './male-characters.data.mts'
 import { SCENE_OPENINGS } from './scene-openings.data.mts'
 
 // 기본이 아닌 도입부의 첫 인트로 줄에 그 장면의 첫 장면 설명·시각·장소를 붙인다(10/6, lib/intro-dialogue sceneOpening).
@@ -35,7 +36,11 @@ function withSceneOpenings(s: Seed): Seed {
 
 // 1차 11명(10/4) + 2차 3명(10/5) + 3차 6명(10/18). slug 로 중복을 막으니 다시 돌려도 새 것만 들어간다.
 // 4차(10/19): 작품 6개의 서브공 19명 — 작품 세계를 이어받은 1:1 캐릭터.
-const SEEDS: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO].map(withSceneOpenings)
+// --only=<slug> 이면 그 캐릭터 하나만 다룬다(11/1, 다른 미반영 slug 가 같이 들어가지 않게).
+const ONLY = process.argv.find(a => a.startsWith('--only='))?.slice(7)
+const ALL: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO, ...SEEDS_MALE].map(withSceneOpenings)
+const SEEDS = ONLY ? ALL.filter(s => s.slug === ONLY) : ALL
+if (ONLY && !SEEDS.length) throw new Error(`no seed ${ONLY}`)
 
 const OWNER = 'f5a0dfcb-0e4c-443e-be17-c982234926c1' // 운영자(ab40905045@gmail.com) — 권재혁 소유자와 같다
 const DOC = new URL('../../../docs/bl-characters-2026-10-04.md', import.meta.url)
@@ -156,7 +161,7 @@ for (const s of SEEDS) {
       await tx.update(contactProfiles).set({ routine, ...contact }).where(eq(contactProfiles.characterId, id))
       await tx.update(characterVisualIdentities).set({ ...s.visual }).where(eq(characterVisualIdentities.characterId, id))
     } else {
-      await tx.insert(characters).values({ id, ownerId: OWNER, isOfficial: false, slug: s.slug, isDraft: false, isPublic: true, experienceType: 'reality', images: [], ...row })
+      await tx.insert(characters).values({ id, ownerId: OWNER, isOfficial: false, slug: s.slug, isDraft: false, isPublic: !s.private, audience: s.audience ?? 'female', experienceType: 'reality', images: [], ...row })
       await tx.insert(worlds).values({ characterId: id, era: s.world.era ?? null, location: s.world.location, genre: s.world.genre, worldSetting: s.world.worldSetting })
       await tx.insert(contactProfiles).values({ characterId: id, enabled: true, preferredChannel: 'message', videoCallProbability: 0, routine, ...contact })
       await tx.insert(characterVisualIdentities).values({ characterId: id, ...s.visual, referenceSource: 'text' })

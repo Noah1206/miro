@@ -1,5 +1,5 @@
 .root { flex:0 1 auto; min-width:0; }
-.trigger { display:flex; align-items:center; gap:6px; height:29px; max-width:180px; padding:0 10px; border:1px solid #45454c; border-radius:999px; background:transparent; color:#eeeef1; font:inherit; cursor:pointer; }
+.trigger { display:flex; align-items:center; gap:6px; height:29px; max-width:min(180px,100%); min-width:0; padding:0 10px; border:1px solid #45454c; border-radius:999px; background:transparent; color:#eeeef1; font:inherit; cursor:pointer; }
 .trigger:disabled { opacity:.45; cursor:default; }
 .brand { font-size:12px; font-weight:500; letter-spacing:.005em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .icon { display:inline-block; flex-shrink:0; width:15px!important; height:15px!important; color:#fff; font-size:15px; }

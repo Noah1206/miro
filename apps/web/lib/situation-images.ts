@@ -7,20 +7,21 @@ import type { LLMProvider } from '@miro/providers'
  * 10/31 사용자 고정 요구: 키워드 일치만이 아니라 AI 가 만든 사람이 적은 상황(situation)을 보고 고른다.
  * 키워드는 남겨 둔다 — AI 호출이 실패하거나 상황 설명이 없는 옛 사진은 키워드로 찾는다(로어북과 같은 규칙, 조사 붙어도 찾음).
  */
-export type SituationImage = { keywords: string[]; image: string; situation?: string }
+/** adult: 언베일(성인 모드)이 켜진 턴에만 후보가 된다(11/2) — 일반 대화에는 뜨지 않는다. */
+export type SituationImage = { keywords: string[]; image: string; situation?: string; adult?: true }
 export const SITUATION_LIMITS = { entries: 100, keywords: 5, keywordLength: 20, situationLength: 120 } as const
 
 /** 폼 JSON → 저장할 목록. 상황 설명도 키워드도 없는 줄·https 가 아닌 사진은 버린다. */
 export function normalizeSituationImages(input: unknown): SituationImage[] {
   if (!Array.isArray(input)) return []
   return input.flatMap((raw) => {
-    const o = (raw ?? {}) as { keywords?: unknown; image?: unknown; situation?: unknown }
+    const o = (raw ?? {}) as { keywords?: unknown; image?: unknown; situation?: unknown; adult?: unknown }
     const image = typeof o.image === 'string' && o.image.startsWith('https://') ? o.image : ''
     const keywords = Array.isArray(o.keywords)
       ? [...new Set(o.keywords.filter((k): k is string => typeof k === 'string').map(k => k.trim().slice(0, SITUATION_LIMITS.keywordLength)).filter(Boolean))].slice(0, SITUATION_LIMITS.keywords)
       : []
     const situation = typeof o.situation === 'string' ? o.situation.replace(/\s+/g, ' ').trim().slice(0, SITUATION_LIMITS.situationLength) : ''
-    return image && (keywords.length || situation) ? [{ keywords, image, ...(situation ? { situation } : {}) }] : []
+    return image && (keywords.length || situation) ? [{ keywords, image, ...(situation ? { situation } : {}), ...(o.adult === true ? { adult: true as const } : {}) }] : []
   }).slice(0, SITUATION_LIMITS.entries)
 }
 

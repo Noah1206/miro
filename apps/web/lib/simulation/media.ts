@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { budgetedImage } from '@/lib/ai/media-budget'
-import { generateLocalImage, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
+import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
+import { generateModalImage, modalImageReady, styleFor, toImageTags } from '@/lib/ai/modal-image'
 import { saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
 import { and, desc, eq } from 'drizzle-orm'
@@ -88,10 +89,13 @@ export async function getOrGenerate(opts: {
    * 결과는 그 대화방 주인만 열 수 있는 비공개 버킷에만 둔다. 공급자가 없으면 요청을 거절한다.
    */
   unveil?: { level: UnveilLevel; characterAge: number; request?: string } | null
+  /** 사용자가 고정해 둔 세부사항(11/2, 머리·옷·속옷 색 등) — 프롬프트와 캐시 키에 같이 들어간다. 호출자가 안전 검사를 마친 값. */
+  details?: string
 }): Promise<MediaResult> {
   const identity = await activeVisualIdentity(opts.characterId)
   const context = { ...opts.context, visualVersion: identity.version }
-  if(opts.kind==='photo') {
+  // 세부사항이 있으면 제작자 장면 사진(그 세부사항을 모르는 그림)으로 대신하지 않는다.
+  if(opts.kind==='photo' && !opts.details) {
     const [character]=await db.select({images:characters.images,dialogue:characters.sampleDialogue}).from(characters).where(eq(characters.id,opts.characterId)).limit(1)
     const authored=(character?.dialogue??[]).filter(d=>d.image&&d.location).map(d=>({characterId:opts.characterId,mode:'normal',url:d.image,location:d.location,...(d.time?{time:d.time}:{})}))
     const configured:unknown=JSON.parse(process.env.MIRO_SCENE_ASSETS||'[]')
@@ -99,11 +103,19 @@ export async function getOrGenerate(opts: {
       mode:opts.unveil?'unveil':'normal',context,publicUrls:[...(character?.images??[]),...(character?.dialogue.flatMap(d=>d.image?[d.image]:[])??[])]})
     if(asset) return {id:randomUUID(),url:asset.url,cached:true,providerNotice:null}
   }
+  // 11/2: 학습한 LoRA 가 있는 Modal 로 일반·언베일 사진 모두. 성인(19+) 캐릭터만 — 그림체가 성인 데이터로 학습돼서
+  // 학생 캐릭터의 일반 사진은 아래 기존 경로로 둔다(언베일은 원래 19+ 만 허용).
+  if (opts.kind === 'photo' && modalImageReady()) {
+    const [c] = await db.select({ audience: characters.audience, age: characters.age }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
+    const age = Number.parseInt(String(c?.age ?? ''), 10)
+    if (c && Number.isFinite(age) && age >= 19) return modalPhoto(opts, identity, context, c.audience)
+    if (opts.unveil) throw new Error('unveil_image_unavailable')
+  }
   if (opts.unveil && opts.kind === 'photo') {
     if(!openImageReady()) throw new Error('unveil_image_unavailable')
     return unveilPhoto({ ...opts, unveil: opts.unveil }, identity, context)
   }
-  const cacheKey = buildMediaKey(opts.kind, context)
+  const cacheKey = buildMediaKey(opts.kind, context) + (opts.details ? `:d:${opts.details}` : '')
 
   const hit = await db.select({ id: generatedMedia.id, url: generatedMedia.url })
     .from(generatedMedia)
@@ -117,12 +129,12 @@ export async function getOrGenerate(opts: {
 
   if (hit[0]) return { ...hit[0], cached: true, providerNotice: notice() }
 
-  const prompt = buildVisualPrompt({
+  const prompt = [buildVisualPrompt({
     identity: identity as never,
     characterName: opts.characterName,
     context,
     kind: opts.kind,
-  })
+  }), opts.details].filter(Boolean).join(', ')
 
   const usageKind = opts.kind === 'background' ? 'background'
     : opts.kind === 'face_cast' ? 'faceCast'
@@ -166,11 +178,11 @@ async function unveilPhoto(
   // 안전장치: 실존 인물 레퍼런스가 걸린 캐릭터, 미성년·실존 인물 신호가 있는 요청은 그리지 않는다.
   if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
   if (unsafeRequest(opts.unveil.request)) throw new Error(`unveil_request_${unsafeRequest(opts.unveil.request)}`)
-  const cacheKey = `unveil:${opts.sessionId}:${opts.unveil.level}:${buildMediaKey(opts.kind, context)}:${opts.unveil.request ?? ''}`
+  const cacheKey = `unveil:${opts.sessionId}:${opts.unveil.level}:${buildMediaKey(opts.kind, context)}:${opts.unveil.request ?? ''}${opts.details ? `:d:${opts.details}` : ''}`
   const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
   if (hit) return { ...hit, cached: true, providerNotice: null }
-  const prompt = [buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }), opts.unveil.request]
+  const prompt = [buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }), opts.details, opts.unveil.request]
     .filter(Boolean).join(', ')
   const [session] = await db.select({ userId: roleplaySessions.userId }).from(roleplaySessions).where(eq(roleplaySessions.id, opts.sessionId)).limit(1)
   const model = (process.env.MIRO_UNVEIL_IMAGE_MODEL === 'pony' ? 'pony' : 'illustrious') as BaseModel
@@ -185,6 +197,43 @@ async function unveilPhoto(
       id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt,
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,
       providerMetadata: { provider: `open-model:${model}`, unveilLevel: opts.unveil.level, storage },
+    }).returning({ id: generatedMedia.id, url: generatedMedia.url })
+    return saved!
+  }
+  const saved = opts.usage
+    ? await guarded({ userId: opts.usage.userId, kind: 'photo', idempotencyKey: `media:${opts.usage.userId}:${cacheKey}` }, generateAndSave)
+    : await generateAndSave()
+  return { ...saved, cached: false, providerNotice: null }
+}
+
+/** Modal 사진(11/2) — 외형·장면·고정 세부사항을 영어 태그로 바꿔 학습한 그림체로. 대화방마다 비공개 저장, 사진 사용량 규칙 그대로. */
+async function modalPhoto(
+  opts: Parameters<typeof getOrGenerate>[0], identity: Awaited<ReturnType<typeof activeVisualIdentity>>, context: PhotoContext, audience: 'male' | 'female',
+): Promise<MediaResult> {
+  if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
+  const request = opts.unveil?.request
+  if (unsafeRequest(request) || unsafeRequest(opts.details)) throw new Error('unsafe_request')
+  const level = opts.unveil ? cappedLevel(opts.unveil.level) : null
+  const style = styleFor(audience)
+  const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}`
+  const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
+    .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
+  if (hit) return { ...hit, cached: true, providerNotice: null }
+  const source = [buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }),
+    opts.details && `fixed details (keep exactly): ${opts.details}`, request].filter(Boolean).join('\n')
+  const [session] = await db.select({ userId: roleplaySessions.userId }).from(roleplaySessions).where(eq(roleplaySessions.id, opts.sessionId)).limit(1)
+  const generateAndSave = async () => {
+    const tag = level ? levelTags(level) : null
+    const tags = [tag?.positive, await toImageTags(source)].filter(Boolean).join(', ')
+    const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
+      sessionId: opts.sessionId, usageUnits: opts.usage ? usageWeight('photo') : 0 },
+      () => generateModalImage({ style, tags, unveil: !!tag?.mature, extraNeg: tag?.negative }))
+    const id = randomUUID()
+    const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
+    const [saved] = await db.insert(generatedMedia).values({
+      id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt: tags,
+      visualIdentityId: identity.id, visualIdentityVersion: identity.version,
+      providerMetadata: { provider: `modal:${style}`, unveilLevel: level, storage },
     }).returning({ id: generatedMedia.id, url: generatedMedia.url })
     return saved!
   }

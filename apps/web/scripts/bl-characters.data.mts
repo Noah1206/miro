@@ -11,6 +11,10 @@ export type Seed = {
   slug: string
   /** 일반 수위 전용(고등학생). 언베일은 직업의 '고등학생' 단어로 자동 차단된다. */
   general?: true
+  /** 기본 'female'(여성향). 남성향 캐릭터만 'male'. */
+  audience?: 'male'
+  /** 운영자 계정 비공개로 넣는다(기본 공개). */
+  private?: true
   name: string
   age: string
   /** 기본 '한국'. 판타지 세계면 그 세계의 소속으로. */
@@ -46,7 +50,7 @@ export type Seed = {
   visual: {
     baseFace: { eyes: string; nose: string; jaw: string; skin: string; distinctive: string }
     hair: { color: string; length: string; style: string }
-    bodyProfile: { build: 'slim' | 'average' | 'athletic' | 'muscular'; gender: 'male'; height: string; detail: string }
+    bodyProfile: { build: 'slim' | 'average' | 'athletic' | 'muscular'; gender: 'male' | 'female'; height: string; detail: string }
     styleTags: string[]
     expressionTendency: string
   }

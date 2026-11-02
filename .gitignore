@@ -1,4 +1,5 @@
 node_modules/
+tooling/image/.venv/
 .next/
 dist/
 .env

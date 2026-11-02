@@ -16,7 +16,9 @@ const BUCKET = 'character-images'
 const ROOT = join(homedir(), 'Desktop/miro-characters/_upload')
 const apply = process.argv.includes('--apply')
 
-const plan = readdirSync(ROOT).filter((d) => d.startsWith('official-')).sort().map((slug) => {
+// --only=<slug> 이면 그 캐릭터만(11/1, 비공개 private-* 캐릭터 포함).
+const only = process.argv.find((a) => a.startsWith('--only='))?.slice(7)
+const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('official-')).sort().map((slug) => {
   const files = readdirSync(join(ROOT, slug))
   const gallery = files.filter((f) => /^0[1-5]\.jpg$/.test(f)).sort()
   if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
@@ -45,6 +47,18 @@ async function put(slug: string, file: string) {
 for (const p of plan) {
   const [row] = await db.select({ id: characters.id, dialogue: characters.sampleDialogue }).from(characters).where(eq(characters.slug, p.slug)).limit(1)
   if (!row) { console.log('skip (DB에 없음)', p.slug); continue }
+  // 상황별 사진(11/2) — situations.json 이 있으면 s-<id>.jpg 를 올리고 characters.situation_images 를 통째로 바꾼다(adult = 언베일 턴에만).
+  const sitFile = join(ROOT, p.slug, 'situations.json')
+  if (readdirSync(join(ROOT, p.slug)).includes('situations.json')) {
+    const list = JSON.parse(readFileSync(sitFile, 'utf8')) as Array<{ id: string; keywords: string[]; situation: string; adult: boolean }>
+    const situationImages = []
+    for (const s of list) {
+      if (!readdirSync(join(ROOT, p.slug)).includes(`s-${s.id}.jpg`)) continue
+      situationImages.push({ keywords: s.keywords, situation: s.situation, image: await put(p.slug, `s-${s.id}.jpg`), ...(s.adult ? { adult: true as const } : {}) })
+    }
+    await db.update(characters).set({ situationImages }).where(eq(characters.id, row.id))
+    console.log('situations', p.slug, situationImages.length, `(adult ${situationImages.filter(s => s.adult).length})`)
+  }
   const images: string[] = []
   for (const f of p.gallery) images.push(await put(p.slug, f))
   if (!p.intro) {
