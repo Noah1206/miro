@@ -1,4 +1,4 @@
-"""몰입 모드 음성 서버 — Drama 3 신음 v2(native-moan-v2) on H200 1장 + GPU 상태 저장. 앱 계약은 packages/providers/src/tts.ts 그대로.
+"""몰입 모드 음성 서버 — Drama 3 감정 v1(native-emotion-v1, 신음 v2 에서 이어 학습) on H200 1장 + GPU 상태 저장. 앱 계약은 packages/providers/src/tts.ts 그대로.
 
   POST /speak  {"text": "...", "voice": "<provider_voice_id>|null", "language": "ko"}  → audio/wav
   GET  /health → {"ok": true}
@@ -13,7 +13,7 @@
 import modal
 from modal_drama3_compare import image as base_image, voices
 
-WEIGHTS = '/voices/_drama3/miro-moan-20261029-v2/native-moan-v2'
+WEIGHTS = '/voices/_drama3/miro-emotion-20261031-v1/native-emotion-v1'   # 11/1 감정 단계로 교체(사용자 청취 "괜찮네"), 되돌리기: miro-moan-20261029-v2/native-moan-v2
 VOICES = '/voices/_drama3/serving-voices'
 DEFAULT_VOICE = 'asmr01'
 SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정

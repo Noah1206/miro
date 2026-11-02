@@ -32,7 +32,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
   /** 사진 버튼(11/2) — 사진 생성이 켜진 방에서만 넘긴다. */
-  photo?: { unveil: boolean; cost: number }
+  photo?: { unveil: boolean; bundle: boolean }
 }) {
   const t = useT()
   const { append, live, setLive, calendarPending, remove } = useTurns()
@@ -235,7 +235,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
             <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}
               onSubmit={value => { setDraft(value); setRequestId(crypto.randomUUID()); setTimeout(() => ref.current?.requestSubmit(), 0) }} />
-            {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} cost={photo.cost} disabled={pending || calendarPending || !ready} />}
+            {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} disabled={pending || calendarPending || !ready} />}
           </div>
         <div className={styles.composerBar}>
           <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />

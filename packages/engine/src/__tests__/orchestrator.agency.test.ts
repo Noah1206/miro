@@ -261,6 +261,13 @@ describe('runTurn agency integration', () => {
     expect(stub.calls.some(c => c.version === 'agency-realization-check:v5')).toBe(false)
     expect((await verifyAgencyRealization(stub.llm, result.agency!.review!)).reviewed).toBe(true)
   })
+  // 11/3 맥락 실측: 사용자가 이끈 이동은 따른다(장소 이름이 이번 입력에 있을 때만).
+  it('keeps a location the user moved to in this input', async () => {
+    const stub = provider({ dialogue: { rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: response }] }, worldDelta: { currentLocation: '경찰서 가는 차 안' } } })
+    const result = await runTurn({ llm: stub.llm, snapshot: snapshot(), userInput: `${proof.quote} 지금 경찰서 가는 길이잖아요.`, agency: agency() })
+    expect(result.transition.worldDelta).toEqual({ currentLocation: '경찰서 가는 차 안' })
+    expect(result.records.filter(r => r.rule === 'unapproved_mutation').map(r => r.field)).not.toContain('worldDelta.currentLocation')
+  })
   it('returns the risky realization for deferred review without silently replacing the already-rendered reply', async () => {
     const once = provider({ rejectRealization: true, proposal: reviewed() })
     const llm: LLMProvider = { ...once.llm, async generateStructured(request) {

@@ -1,4 +1,6 @@
-type Block = { type?: string; text: string; speaker?: string | null }
+import { terms } from '@miro/domain'
+
+type Block ={ type?: string; text: string; speaker?: string | null }
 type Previous = { role: string; content: string; blocks?: readonly Block[] }
 
 const normalize = (text: string) => text.normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '')
@@ -37,6 +39,29 @@ export function repeatedConversationBlock(blocks: readonly Block[], recent: read
       && !/기억(?:해\s*줘|해줘|해\s*주세요|해주세요|하라고)|잊지\s*마|remember (?:this|that|it)/i.test(input)) return i
   }
   return null
+}
+
+/**
+ * 말만 바꾼 같은 마무리 — 11/3 맥락 실측: 8턴 중 6턴이 "내려요. 우산 펴고 오른쪽에 붙어서. 열두 걸음"으로 끝났다(문장 비교로는 안 잡힌다).
+ * 마지막 대사가 최근 3턴 중 2턴의 마지막 대사와 핵심 낱말을 절반 이상 공유하면 그 블록 번호. 다시 쓰게만 하고 턴을 실패시키지는 않는다(호출부).
+ */
+export function repeatedEnding(blocks: readonly Block[], recent: readonly Previous[], characterName?: string): number | null {
+  const lastLine = (bs: readonly Block[]) => {
+    for (let i = bs.length - 1; i >= 0; i--) if ((bs[i]!.type ?? 'dialogue') === 'dialogue' && (!characterName || !bs[i]!.speaker || bs[i]!.speaker === characterName)) return i
+    return -1
+  }
+  const at = lastLine(blocks)
+  if (at < 0) return null
+  const mine = new Set(terms(blocks[at]!.text))
+  const hits = recent.filter(m => m.role === 'character').slice(-3).filter(m => {
+    const bs = m.blocks?.length ? m.blocks : [{ type: 'dialogue', text: m.content }]
+    const j = lastLine(bs)
+    if (j < 0) return false
+    const old = new Set(terms(bs[j]!.text))
+    const shared = [...mine].filter(t => old.has(t)).length
+    return shared >= 3 && shared / Math.min(mine.size, old.size) >= .5
+  }).length
+  return hits >= 2 ? at : null
 }
 
 export function conversationVariationDirective(recent: readonly Previous[], characterName?: string): string {

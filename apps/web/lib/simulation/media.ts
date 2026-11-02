@@ -83,7 +83,7 @@ export async function getOrGenerate(opts: {
    * 사용량 차감 주체. null 이면 차감하지 않는다 — 선연락 사진처럼 정책상 무차감인 경로.
    * 캐시 적중은 어느 경우든 차감하지 않는다.
    */
-  usage: { userId: string } | null
+  usage: { userId: string; units?: number } | null
   /**
    * 언베일 사진(10/19) — 호출자가 adultModeGateFor 를 통과한 대화방에서만 넘긴다. 자체 오픈 모델로 그리고,
    * 결과는 그 대화방 주인만 열 수 있는 비공개 버킷에만 둔다. 공급자가 없으면 요청을 거절한다.
@@ -91,11 +91,16 @@ export async function getOrGenerate(opts: {
   unveil?: { level: UnveilLevel; characterAge: number; request?: string } | null
   /** 사용자가 고정해 둔 세부사항(11/2, 머리·옷·속옷 색 등) — 프롬프트와 캐시 키에 같이 들어간다. 호출자가 안전 검사를 마친 값. */
   details?: string
+  /** 사진 시트에서 고른 장면·구도(11/2, 영어 태그) — Modal 경로에서만 쓴다. couple 이면 상대 인물도 그린다. */
+  scene?: { tags: string; couple: boolean }
+  /** 같은 장면의 몇 번째 버전인지(4장 묶음) — Modal 경로에서만. */
+  seed?: number
 }): Promise<MediaResult> {
   const identity = await activeVisualIdentity(opts.characterId)
   const context = { ...opts.context, visualVersion: identity.version }
   // 세부사항이 있으면 제작자 장면 사진(그 세부사항을 모르는 그림)으로 대신하지 않는다.
-  if(opts.kind==='photo' && !opts.details) {
+  // 11/2: Modal 이 켜져 있으면 제작자 사진으로 대신하지 않는다 — 누를 때마다 새로 그린다(같은 사진을 무료로 반복하지 않게).
+  if(opts.kind==='photo' && !opts.details && !modalImageReady()) {
     const [character]=await db.select({images:characters.images,dialogue:characters.sampleDialogue}).from(characters).where(eq(characters.id,opts.characterId)).limit(1)
     const authored=(character?.dialogue??[]).filter(d=>d.image&&d.location).map(d=>({characterId:opts.characterId,mode:'normal',url:d.image,location:d.location,...(d.time?{time:d.time}:{})}))
     const configured:unknown=JSON.parse(process.env.MIRO_SCENE_ASSETS||'[]')
@@ -106,9 +111,9 @@ export async function getOrGenerate(opts: {
   // 11/2: 학습한 LoRA 가 있는 Modal 로 일반·언베일 사진 모두. 성인(19+) 캐릭터만 — 그림체가 성인 데이터로 학습돼서
   // 학생 캐릭터의 일반 사진은 아래 기존 경로로 둔다(언베일은 원래 19+ 만 허용).
   if (opts.kind === 'photo' && modalImageReady()) {
-    const [c] = await db.select({ audience: characters.audience, age: characters.age }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
+    const [c] = await db.select({ audience: characters.audience, age: characters.age, images: characters.images }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
     const age = Number.parseInt(String(c?.age ?? ''), 10)
-    if (c && Number.isFinite(age) && age >= 19) return modalPhoto(opts, identity, context, c.audience)
+    if (c && Number.isFinite(age) && age >= 19) return modalPhoto(opts, identity, context, c.audience, c.images?.[0])
     if (opts.unveil) throw new Error('unveil_image_unavailable')
   }
   if (opts.unveil && opts.kind === 'photo') {
@@ -209,13 +214,16 @@ async function unveilPhoto(
 /** Modal 사진(11/2) — 외형·장면·고정 세부사항을 영어 태그로 바꿔 학습한 그림체로. 대화방마다 비공개 저장, 사진 사용량 규칙 그대로. */
 async function modalPhoto(
   opts: Parameters<typeof getOrGenerate>[0], identity: Awaited<ReturnType<typeof activeVisualIdentity>>, context: PhotoContext, audience: 'male' | 'female',
+  refUrl?: string,
 ): Promise<MediaResult> {
   if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
   const request = opts.unveil?.request
   if (unsafeRequest(request) || unsafeRequest(opts.details)) throw new Error('unsafe_request')
   const level = opts.unveil ? cappedLevel(opts.unveil.level) : null
   const style = styleFor(audience)
-  const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}`
+  const seed = opts.seed ?? 11
+  const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:s${seed}`
+  const units = opts.usage?.units ?? usageWeight('photo')
   const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
   if (hit) return { ...hit, cached: true, providerNotice: null }
@@ -224,21 +232,24 @@ async function modalPhoto(
   const [session] = await db.select({ userId: roleplaySessions.userId }).from(roleplaySessions).where(eq(roleplaySessions.id, opts.sessionId)).limit(1)
   const generateAndSave = async () => {
     const tag = level ? levelTags(level) : null
-    const tags = [tag?.positive, await toImageTags(source)].filter(Boolean).join(', ')
+    // 고른 장면 태그는 LLM 을 거치지 않고 그대로(바뀌지 않게), 외형·장소·세부사항만 영어 태그로 바꾼다.
+    // 외형·장소·세부사항(look)은 주인공 바로 뒤로, 고른 장면·수위(tags)는 뒤로 — 외형이 상대 인물에게 섞이지 않게.
+    const look = await toImageTags(source)
+    const tags = [tag?.positive, opts.scene?.tags].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
-      sessionId: opts.sessionId, usageUnits: opts.usage ? usageWeight('photo') : 0 },
-      () => generateModalImage({ style, tags, unveil: !!tag?.mature, extraNeg: tag?.negative }))
+      sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
+      () => generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple, extraNeg: tag?.negative, seed, refUrl }))
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
     const [saved] = await db.insert(generatedMedia).values({
-      id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt: tags,
+      id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt: [look, tags].filter(Boolean).join(' | '),
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,
       providerMetadata: { provider: `modal:${style}`, unveilLevel: level, storage },
     }).returning({ id: generatedMedia.id, url: generatedMedia.url })
     return saved!
   }
   const saved = opts.usage
-    ? await guarded({ userId: opts.usage.userId, kind: 'photo', idempotencyKey: `media:${opts.usage.userId}:${cacheKey}` }, generateAndSave)
+    ? await guarded({ userId: opts.usage.userId, kind: 'photo', units, idempotencyKey: `media:${opts.usage.userId}:${cacheKey}` }, generateAndSave)
     : await generateAndSave()
   return { ...saved, cached: false, providerNotice: null }
 }

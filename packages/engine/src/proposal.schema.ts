@@ -214,6 +214,6 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
     required: ['type', 'text'] } } }, required: ['blocks'] },
   emotion: { type: 'string', enum: ['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious'] },
   intent: text('at most 80 characters'),
-  worldDelta: { type: 'object', properties: { currentTime: text(), worldStatus: text() } },
-  sceneDelta: { type: 'object', properties: { time: text(), mood: text(), weather: text() } },
+  worldDelta: { type: 'object', properties: { currentLocation: text('only a place the user moved to in this input'), currentTime: text(), worldStatus: text() } },
+  sceneDelta: { type: 'object', properties: { location: text('only a place the user moved to in this input'), time: text(), mood: text(), weather: text() } },
 }, required: ['rp'] }

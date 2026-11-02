@@ -14,11 +14,13 @@ export function modalImageReady() {
 export const styleFor = (audience: 'male' | 'female') => (audience === 'male' ? 'gda' : 'whif')
 
 const Tags = z.object({ tags: z.string().max(1200) })
-const SYSTEM = `You convert a character photo description into English Danbooru-style tags for an anime illustration model.
+// 그림 모델은 프롬프트 앞 약 77토큰만 읽는다(11/2 확인: 길면 뒤의 장면이 잘린다) — 외형은 핵심 10개 안팎으로.
+const SYSTEM = `You convert a character description into English Danbooru-style tags for an anime illustration model.
 Rules:
-- Output only comma-separated tags in English (no sentences), about 20-40 tags.
-- Keep every fixed detail exactly: hair color/length/style, eye color, outfit, underwear color, accessories, marks. Do not change colors.
-- Include place, time of day, mood and pose if given.
+- Output only comma-separated tags in English (no sentences), at most 12 tags, most important first.
+- Priority: hair color, hair length, hair style, eye color, skin, one distinctive mark (tattoo, scar, piercing, glasses), outfit.
+- Keep every fixed detail exactly (hair, eyes, outfit, underwear color, accessories, marks). Do not change colors.
+- Do not add place, time, mood, pose, framing or camera tags (the scene is given separately).
 - The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.).
 - Do not add quality tags or style names.`
 
@@ -33,10 +35,13 @@ export async function toImageTags(text: string): Promise<string> {
 }
 
 /** PNG 바이트. 첫 장은 GPU 준비로 1~2분 걸릴 수 있다. */
-export async function generateModalImage(req: { style: string; tags: string; unveil: boolean; extraNeg?: string; seed?: number }): Promise<Buffer> {
+/** look = 캐릭터 외형 태그(주인공 바로 뒤에 붙는다 — 상대 인물에게 섞이지 않게), tags = 장면·수위. */
+/** refUrl = 캐릭터 대표 사진(공개 버킷) — 얼굴·머리·그림체를 그 사진에 맞춘다(11/2). */
+export async function generateModalImage(req: { style: string; look?: string; tags: string; unveil: boolean; couple?: boolean; extraNeg?: string; seed?: number; refUrl?: string }): Promise<Buffer> {
   const res = await fetch(process.env.MIRO_IMAGE_URL!, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, style: req.style, tags: req.tags, unveil: req.unveil, extra_neg: req.extraNeg ?? '', seed: req.seed }),
+    body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, style: req.style, look: req.look ?? '', tags: req.tags, unveil: req.unveil, couple: !!req.couple,
+      extra_neg: req.extraNeg ?? '', seed: req.seed, ref_url: req.refUrl ?? '' }),
     signal: AbortSignal.timeout(5 * 60_000),
   })
   if (!res.ok) throw new Error(`modal image ${res.status}: ${(await res.text()).slice(0, 200)}`)

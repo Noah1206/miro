@@ -23,7 +23,8 @@ import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
 import { ImmersiveProvider, VoiceStatus } from './immersive'
 import { RoomMenu } from '@/components/room-menu'
-import { feature, usageWeight } from '@miro/config'
+import { feature } from '@miro/config'
+import { modalImageReady } from '@/lib/ai/modal-image'
 
 /** 처음 들어온 대화 화면에서 짚어 주는 기능(10/19). 화면에 없는 버튼(테마에 따라 다름)은 건너뛴다. */
 const CHAT_COACH: CoachStep[] = [
@@ -97,7 +98,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
-          photo={feature('imageGeneration') && !loaded.restricted ? { unveil: loaded.adult.on, cost: usageWeight('photo') } : undefined} />
+          photo={feature('imageGeneration') && !loaded.restricted ? { unveil: loaded.adult.on, bundle: modalImageReady() } : undefined} />
       </section>
 
     </main></ChatTheme></ImmersiveProvider></TurnsProvider></ChatModelProvider>

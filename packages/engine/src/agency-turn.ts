@@ -12,14 +12,15 @@ import type { TurnResult } from './orchestrator'
 import type { TurnPolicy } from './policy'
 import { approveTransition } from './transition'
 import { blockStream, type TurnStream } from './stream-blocks'
+import { terms } from '@miro/domain'
 import { agencyCommunicationPreferences } from './communication-preferences'
 import { snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
-import { conversationVariationDirective, repeatedConversationBlock } from './conversation-repetition'
+import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding } from './conversation-repetition'
 
 /** 먼저 말하는 턴의 대사 지시 — 계획의 결정이 아직 없다. 이 인물이 스스로 고르되, 확정되지 않은 일을 일어난 일로 쓰지 않는다. */
 const OWN_CHOICE_DIRECTIVE = `\n## 이번 턴의 선택\n이 인물이 작성된 설정·경계·지금 감정 안에서 스스로 고릅니다: 대답, 질문, 거절, 미루기, 화제 돌리기 중 이 사람다운 반응. 내부 판단을 대사로 설명하지 않습니다.
 약속·연락·이동·구매 같은 일을 이미 한 일처럼 쓰지 않습니다(하려는 마음이나 제안으로만). 사용자의 동의나 행동을 대신 쓰지 않습니다. 속마음은 말하지 않은 반응이지 약속이나 새 사실이 아닙니다.
-worldDelta/sceneDelta/사건 완료/NPC 등장/realityIntent 는 null 이나 빈 값으로 둡니다.\n`
+worldDelta/sceneDelta 에는 사용자가 이번 입력에서 옮긴 장소·시간만 적고, 사건 완료/NPC 등장/realityIntent 는 null 이나 빈 값으로 둡니다.\n`
 
 export type AgencyTurnInput = {
   mode: 'shadow' | 'live'
@@ -171,11 +172,15 @@ export async function runAgencyTurn(opts: {
       if (productionRuntime() && renderer.providerMode !== 'live') throw new Error('agency_renderer_not_live')
       // 먼저 말한 턴: 여기서 계획을 받아 검증·관계에 쓴다. 다시 쓰게 되면 그때는 계획의 결정을 넣은 맥락으로 쓴다.
       if (!plan) { plan = await planning; settled = settle(plan); context = fit() }
-      // 승인 범위 밖의 변경은 걷어 낸다(거부로 기록). 렌더러는 말과 장면의 공기만 바꿀 수 있다 — 장소·새 사건·NPC·선연락은 결정이 아니다.
+      // 승인 범위 밖의 변경은 걷어 낸다(거부로 기록). 렌더러는 말과 장면의 공기만 바꿀 수 있다 — 새 사건·NPC·선연락은 결정이 아니다.
+      // 장소는 사용자가 이번 입력에서 옮긴 곳만 받는다(11/3 실측: 전부 거부하니 사용자가 이끈 이동도 "그런 적 없다"가 됐다).
+      // ponytail: 낱말 겹침 판정 — "거기로 가요"처럼 장소 이름 없는 이동은 놓친다. 잦으면 계획 단계에서 이동을 판단하게.
       const rejected: string[] = []
-      if (proposal.worldDelta?.currentLocation) { rejected.push('worldDelta.currentLocation'); proposal.worldDelta = { ...proposal.worldDelta, currentLocation: undefined } }
+      const userTerms = new Set(terms(opts.userInput))
+      const fromUser = (place?: string) => !!place && terms(place).some(t => userTerms.has(t))
+      if (proposal.worldDelta?.currentLocation && !fromUser(proposal.worldDelta.currentLocation)) { rejected.push('worldDelta.currentLocation'); proposal.worldDelta = { ...proposal.worldDelta, currentLocation: undefined } }
       if (proposal.worldDelta && !proposal.worldDelta.currentTime && !proposal.worldDelta.worldStatus) proposal.worldDelta = null
-      if (proposal.sceneDelta?.location) { rejected.push('sceneDelta.location'); proposal.sceneDelta = { ...proposal.sceneDelta, location: undefined } }
+      if (proposal.sceneDelta?.location && !fromUser(proposal.sceneDelta.location)) { rejected.push('sceneDelta.location'); proposal.sceneDelta = { ...proposal.sceneDelta, location: undefined } }
       if (proposal.eventCandidates.length) { rejected.push('eventCandidates'); proposal.eventCandidates = [] }
       if (proposal.eventUpdates.length) { rejected.push('eventUpdates'); proposal.eventUpdates = [] }
       if (proposal.npcIntroductions.length) { rejected.push('npcIntroductions'); proposal.npcIntroductions = [] }
@@ -193,7 +198,12 @@ export async function runAgencyTurn(opts: {
         feedback = `\n이전 대사와 반복되는 블록 ${repeated}을 다시 쓰세요. 같은 뜻의 빈말이나 같은 소품 동작으로 바꾸지 말고, 지금 사용자가 한 말에 답하며 장면을 한 걸음 이어가세요. 반복 문장(데이터): ${JSON.stringify(validated.blocks[repeated]?.text)}`
         continue
       }
-      validated.relationshipDelta = { ...settled.relationshipDelta, ...(settled.stage !== snapshot.relationship.stage ? { stage: settled.stage } : {}) }
+      const ending = attempt < REGENERATIONS ? repeatedEnding(validated.blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
+      if (ending !== null) {
+        feedback = `\n마지막 대사(블록 ${ending})가 최근 답변들의 마무리와 같은 당부입니다. 같은 당부·작별로 끝내지 말고 이번 입력에 맞는 다른 행동이나 말로 끝내세요. 반복 마무리(데이터): ${JSON.stringify(validated.blocks[ending]?.text)}`
+        continue
+      }
+      validated.relationshipDelta ={ ...settled.relationshipDelta, ...(settled.stage !== snapshot.relationship.stage ? { stage: settled.stage } : {}) }
       validated.memories = [] // Beliefs/goals carry exact evidence, not unsourced model memories.
       // Check user facts and boundaries before delivery with a compact request. Return the broader
       // canon/action audit for background review, avoiding that entire context on the critical path.

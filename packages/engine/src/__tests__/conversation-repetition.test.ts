@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { repeatedConversationBlock } from '../conversation-repetition'
+import { repeatedConversationBlock, repeatedEnding } from '../conversation-repetition'
 
 const previous = (text: string, type = 'dialogue') => ({ role: 'character', content: text, blocks: [{ type, text }] })
 describe('substantial repeated character text', () => {
@@ -32,5 +32,17 @@ describe('substantial repeated character text', () => {
   it('does not confuse a request to stop repeating with permission to repeat', () => {
     const text = '내일 발표에서 제일 걱정되는 부분이 어떤 건지 말해 줄래?'
     expect(repeatedConversationBlock([{ type: 'dialogue', text }], [previous(text)], '그 말 다시 말하지 마.')).toBe(0)
+  })
+})
+
+// 11/3 맥락 실측의 실제 마무리들.
+describe('reworded repeated ending', () => {
+  const last = [previous('자, 이제 내려요. 우산 펴고 오른쪽에 붙어서. 열두 걸음입니다.'), previous('우산 펴고 내려요. 오른쪽에 붙어서. 열두 걸음, 내가 앞에서 속도 맞춥니다.')]
+  it('flags the same instruction reworded across turns', () => {
+    expect(repeatedEnding([{ type: 'narrative', text: '빗소리.' }, { type: 'dialogue', text: '우산 펴고 내려요. 열두 걸음, 내 오른쪽 한 발 뒤.' }], last)).toBe(1)
+  })
+  it('allows a new ending and a one-off echo', () => {
+    expect(repeatedEnding([{ type: 'dialogue', text: '진술 끝나면 저녁은 내가 사죠. 짜지 않은 걸로.' }], last)).toBeNull()
+    expect(repeatedEnding([{ type: 'dialogue', text: '우산 펴고 내려요. 열두 걸음, 내 오른쪽 한 발 뒤.' }], last.slice(0, 1))).toBeNull()
   })
 })

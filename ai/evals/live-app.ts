@@ -19,9 +19,10 @@ import { testDatabaseUrl } from '../../tooling/test-database'
  *     --adult-model deepseek/deepseek-v4.1-flash --timeout-ms 60000 --out /tmp/adult-deepseek.json
  */
 const option = (name: string) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined }
-const EVALS: Record<string, string> = { reality: 'apps/web/lib/reality/reality-live.eval.ts', compare: 'apps/web/lib/simulation/model-compare.eval.ts', adult: 'apps/web/lib/simulation/adult-compare.eval.ts' }
+const EVALS: Record<string, string> = { reality: 'apps/web/lib/reality/reality-live.eval.ts', compare: 'apps/web/lib/simulation/model-compare.eval.ts', adult: 'apps/web/lib/simulation/adult-compare.eval.ts',
+  context: 'apps/web/lib/simulation/context-drift.eval.ts' }
 /** 100만 토큰당 USD(입력, 출력). 예산 판정에 가격이 없으면 앱이 호출을 막는다. */
-const PRICES: Record<string, [number, number]> = { 'gemini-3.8-flash': [0.75, 3.75], 'gemini-3.1-pro-preview': [2, 12],
+const PRICES: Record<string, [number, number]> = { 'gemini-3.8-flash': [0.75, 3.75], 'gemini-3.1-pro-preview': [2, 12], 'claude-sonnet-5-5': [2, 10],
   // 성인 모드 후보(OpenRouter 목록 가격, 2026-10-02).
   'deepseek/deepseek-v4.1-flash': [0.3, 1.2], 'z-ai/glm-5.3': [1.4, 4.4], 'x-ai/grok-4.3': [1.25, 2.5], 'moonshotai/kimi-k2.6': [0.434, 1.828], 'bytedance-seed/seed-2-1-turbo': [0.5, 2.5] }
 
@@ -52,6 +53,16 @@ if (live && dialogue) {
   Object.assign(chat, { providerModelId: dialogue, inputCost: price[0], outputCost: price[1] }, maxOutput ? { maxOutputTokens: maxOutput } : {})
   registry = JSON.stringify(models)
 }
+// --all-model: 모든 작업을 Gemini 모델 하나로(11/3 맥락 실측 — 루트 .env 레지스트리가 Anthropic 인데 실행기는 GEMINI 키만 넘긴다).
+const allModel = option('--all-model')
+if (live && allModel) {
+  const price = PRICES[allModel]
+  if (!price) throw new Error(`no price for ${allModel}`)
+  const provider = allModel.startsWith('claude') ? 'anthropic' : 'gemini'
+  registry = JSON.stringify((JSON.parse(registry) as Array<Record<string, unknown>>).map(m => ({ ...m, provider, providerModelId: allModel, inputCost: price[0], outputCost: price[1] })))
+}
+// 로컬 Gemini 키는 프로젝트 차단(403, 10/9~) — Claude 로 돌릴 때만 Anthropic 키를 넘긴다.
+const anthropicKey = live && allModel?.startsWith('claude') ? env.ANTHROPIC_API_KEY ?? '' : ''
 
 // 운영 /api/health 의 2026-10-02 기능 값으로 고정한다.
 const features = { IMAGE_GENERATION: '0', VOICE_CALL: '0', VOICE_CALL_AUDIO: '0', VIDEO_CALL: '0', LIVE_SCENE: '0', RELATIONSHIP_ENGINE: '1', MEMORY_ENGINE: '1',
@@ -60,8 +71,8 @@ const status = spawnSync('pnpm', ['exec', 'vitest', 'run', '--config', 'ai/evals
   ...process.env, AI_PROVIDER: '', AI_FALLBACK_PROVIDER: '', MIRO_SHADOW_MODEL: '', MIRO_CANARY_MODEL: '', VERCEL_ENV: '', MIRO_MODE: '',
   // 성인 비교는 메인을 mock 으로 막는다 — 자율성 경로(--agency)만 판 컴파일에 메인(Gemini)을 쓴다(캐릭터 설정만, 운영과 같음).
   MIRO_MODEL_REGISTRY: live && (!adult || process.argv.includes('--agency')) ? registry : '', GEMINI_API_KEY: live && (!adult || process.argv.includes('--agency')) ? env.GEMINI_API_KEY : '',
-  MIRO_ADULT_MODEL_REGISTRY: adultRegistry, OPENROUTER_API_KEY: live && adult ? env.OPENROUTER_API_KEY : '', MIRO_ADULT_OUT: adult ? out : '',
-  TEST_DATABASE_URL: database, MIRO_CHARACTER_AGENCY_MODE: adult && process.argv.includes('--agency') ? 'live' : 'off', MIRO_ADULT_AGENCY: process.argv.includes('--agency') ? '1' : '', AI_TIMEOUT_MS: option('--timeout-ms') ?? '',
+  ANTHROPIC_API_KEY: anthropicKey, MIRO_ADULT_MODEL_REGISTRY: adultRegistry, OPENROUTER_API_KEY: live && adult ? env.OPENROUTER_API_KEY : '', MIRO_ADULT_OUT: adult ? out : '',
+  TEST_DATABASE_URL: database, MIRO_CHARACTER_AGENCY_MODE: (adult && process.argv.includes('--agency')) || file === EVALS.context ? 'live' : 'off',  // 맥락 실측은 운영과 같은 자율성 경로로(11/3 1차는 꺼진 경로였다) MIRO_ADULT_AGENCY: process.argv.includes('--agency') ? '1' : '', AI_TIMEOUT_MS: option('--timeout-ms') ?? '',
   ...Object.fromEntries(Object.entries(features).map(([name, on]) => [`MIRO_FEATURE_${name}`, on])),
   // 전용 DB 라 하루 전체 원가 카운터도 이 실측만 센다 — 두 카운터 모두 상한이다.
   AI_DAILY_BUDGET: live ? String(limitUSD) : '0', MIRO_BUDGET_POLICY: JSON.stringify({ user_monthly: { cost: limitUSD, requests: 100_000 } }),

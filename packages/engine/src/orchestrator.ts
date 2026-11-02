@@ -17,7 +17,7 @@ import { approveTransition } from './transition'
 import { blockStream, type TurnStream } from './stream-blocks'
 import { snapshotCommunicationPreferences, CommunicationPreferenceRejectedError } from './communication-preferences'
 import { ConversationGroundingRejectedError, ConversationReviewContextBudgetError, needsUserGroundingReview, snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
-import { conversationVariationDirective, repeatedConversationBlock } from './conversation-repetition'
+import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding } from './conversation-repetition'
 
 export type TurnResult = {
   /** review: 응답 뒤에 할 의미 검토의 입력(검토할 거리가 있던 턴만). */
@@ -150,6 +150,11 @@ export async function runTurn(opts: {
       if (repeated !== null) {
         if (attempt === 2) throw new ConversationGroundingRejectedError()
         repair = `\n이전 답변을 반복한 블록 ${repeated}을 새 반응으로 다시 쓰세요. 동일한 질문·몸짓·기억하겠다는 말 대신 지금 입력에 구체적으로 답하세요. 반복 문장(데이터): ${JSON.stringify(blocks[repeated]?.text)}`
+        continue
+      }
+      const ending = attempt < 2 ? repeatedEnding(blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
+      if (ending !== null) {
+        repair = `\n마지막 대사(블록 ${ending})가 최근 답변들의 마무리와 같은 당부입니다. 같은 당부·작별로 끝내지 말고 이번 입력에 맞는 다른 행동이나 말로 끝내세요. 반복 마무리(데이터): ${JSON.stringify(blocks[ending]?.text)}`
         continue
       }
       const grounding = needsUserGroundingReview(blocks)
