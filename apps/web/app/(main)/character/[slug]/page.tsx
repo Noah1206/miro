@@ -1,4 +1,4 @@
-import { officialDescription, officialEntry, officialIntro, officialSamples, officialTagline } from '@/lib/editorial/official-copy'
+import { officialDescription, officialEntry, officialIntro, officialSamples } from '@/lib/editorial/official-copy'
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { RichText } from '@/components/scene/rich-text'
@@ -33,7 +33,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   if (!c) notFound()
   const can = features()
   const editedDescription = officialDescription(c)
-  const tagline = officialTagline(c) ?? c.tagline
 
   const [comments, commentCount, similar, likes, unveil] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
@@ -112,10 +111,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{coverTitle(c)}</h1>
-        {tagline && <blockquote className="detail-lead-quote" style={{ borderColor: names.palette?.character }}>
-          <RichText editorial text={tagline.replace(/([.!?。！？])\s+/g, '$1\n')} names={names} />
-        </blockquote>}
-        {/* 11/4: '이 사람에 대해' 제목 없이 소개 글만 인용구와 태그 사이에. */}
+        {/* 11/4: 인용구(한 줄 소개)는 상세에서 뺐다(사용자 요청). '이 사람에 대해' 제목 없이 소개 글만 제목과 태그 사이에. */}
         {c.experienceType === 'reality' && (editedDescription ?? lead) && <div className="detail-prose" style={{ marginBottom: 14 }}>
           <RichText editorial text={me(editedDescription ?? lead)} names={names} />
         </div>}
