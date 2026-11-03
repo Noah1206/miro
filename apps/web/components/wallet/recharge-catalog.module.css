@@ -9,15 +9,15 @@
 .quantity { display:flex; align-items:baseline; gap:6px; flex:1; min-width:0; }
 .quantity strong { font-size:19px; font-weight:650; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
 .quantity small { font-size:11px; color:var(--color-text-secondary); }
-.price { flex-shrink:0; display:grid; place-items:center; min-width:92px; min-height:40px; padding:0 14px; border:0; border-radius:10px; background:var(--color-lavender-300); color:#1f1830; font:inherit; font-size:15px; font-weight:650; white-space:nowrap; font-variant-numeric:tabular-nums; cursor:pointer; transition:filter 160ms, transform 160ms; }
+.price { flex-shrink:0; display:grid; place-items:center; min-width:108px; min-height:40px; padding:0 18px; border:0; border-radius:10px; background:var(--color-lavender-500); color:#fff; font:inherit; font-size:15px; font-weight:650; white-space:nowrap; font-variant-numeric:tabular-nums; cursor:pointer; transition:filter 160ms, transform 160ms; }
 .price:hover:not(:disabled) { filter:brightness(1.06); }
 .price:active:not(:disabled) { transform:scale(.97); }
 .price:disabled { opacity:.55; cursor:default; }
 .price:focus-visible { outline:2px solid #d4c7ff; outline-offset:3px; }
-.spinner { width:16px; height:16px; border:2px solid #1f183055; border-top-color:#1f1830; border-radius:50%; animation:spin 700ms linear infinite; }
+.spinner { width:16px; height:16px; border:2px solid #ffffff55; border-top-color:#fff; border-radius:50%; animation:spin 700ms linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .note { font-size:11px; line-height:1.7; color:var(--color-text-tertiary); margin:0; }
 .note a { color:var(--color-text-secondary); text-decoration:underline; text-underline-offset:3px; white-space:nowrap; }
 .footer { display:grid; gap:4px; position:sticky; bottom:calc(-1 * var(--space-5)); padding:10px 0 0; background:var(--color-surface-2); }
-@media(max-width:360px) { .option { padding:10px; gap:9px; } .art { width:54px; height:54px; } .quantity { gap:4px; } .quantity strong { font-size:17px; } .quantity small { font-size:10px; } .price { min-width:80px; padding:0 10px; font-size:14px; } }
+@media(max-width:360px) { .option { padding:10px; gap:9px; } .art { width:54px; height:54px; } .quantity { gap:4px; } .quantity strong { font-size:17px; } .quantity small { font-size:10px; } .price { min-width:92px; padding:0 12px; font-size:14px; } }
 @media(prefers-reduced-motion:reduce) { .price { transition:none; } .spinner { animation-duration:2s; } }
