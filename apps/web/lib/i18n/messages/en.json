@@ -1761,5 +1761,7 @@
  "정리하지 못했어요. 잠시 뒤 다시 시도해 주세요.": "Couldn’t combine. Please try again shortly.",
  "지금 이야기": "Story so far",
  "지금 이야기는 대화가 이어지면 AI가 새로 고쳐 써요. 고친 내용은 다음 요약에 이어져요.": "The AI rewrites the story so far as the chat goes on. Your edits carry into the next summary.",
- "지난 이야기": "Earlier chapters"
+ "지난 이야기": "Earlier chapters",
+ "간단히 보기": "Show less",
+ "자세히 보기": "Show all"
 }

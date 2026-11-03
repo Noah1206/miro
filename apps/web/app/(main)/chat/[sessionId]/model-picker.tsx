@@ -57,6 +57,7 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
   const families = [...new Set(choices.map(chatModelFamily))]
   const rows = families.map(family => choices.find(c => chatModelFamily(c) === family && c.length === length) ?? choices.find(c => chatModelFamily(c) === family)!)
   const providers = [...new Set(rows.map(c => modelPresentation(c).provider))]
+  const [more, setMore] = useState(false)
   return <div className={sheet.options}>
     {selected && (() => {
       const lengths = ['scene', 'long', 'saga'] as const
@@ -67,9 +68,10 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
         <StepSlider label={t('답변 길이')} steps={lengths.map(value => ({ value, label: label(value) }))} value={length} onChange={value => pick(value as typeof lengths[number])} />
       </div>
     })()}
+    {/* 11/3: 처음엔 회사마다 대표 모델 하나(고른 모델이 있으면 그것)만, '자세히 보기'로 전체 목록. */}
     {providers.map(provider => <section key={provider} className={sheet.group} aria-label={provider}>
-      <h3>{provider}</h3>
-      {rows.filter(c => modelPresentation(c).provider === provider).map(choice => {
+      {more && <h3>{provider}</h3>}
+      {rows.filter(c => modelPresentation(c).provider === provider).filter((c, i, list) => more || c.id === (list.find(x => x.id === selected?.id) ?? list[0])!.id).map(choice => {
         const presentation = modelPresentation(choice)
         return <button type="button" key={choice.id} className={sheet.option} aria-pressed={selected?.id === choice.id} onClick={() => { setModel(choice.id); onSelect?.() }}>
           <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong></span><span className={sheet.description}>{t(presentation.description)}</span></span>
@@ -77,6 +79,7 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
         </button>
       })}
     </section>)}
+    {rows.length > providers.length && <button type="button" className={sheet.more} aria-expanded={more} onClick={() => setMore(v => !v)}>{more ? t('간단히 보기') : t('자세히 보기')}</button>}
     {!choices.length && <p className={sheet.description}>{t('준비 중')}</p>}
     {choices.length > 0 && <p className={sheet.priceNote}>{t('실제 사용량만큼 차감돼요.')}</p>}
   </div>
