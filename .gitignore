@@ -38,3 +38,6 @@ output/**/*.zip.part*
 output/**/*.safetensors
 # 운영 DB 접속 주소(비밀번호 포함)가 찍힌 로그
 output/deploy-fix-20261027/db-error.log
+
+# 11/3: 작업 결과물·점검 기록은 저장소에 올리지 않는다(전에 올린 것은 git 기록에 남음).
+output/

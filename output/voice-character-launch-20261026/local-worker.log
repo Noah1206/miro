@@ -1,5 +1,0 @@
-
-> miro@ speech:worker /Users/johyeon-ung/Desktop/Miro
-> tsx --tsconfig apps/web/tsconfig.json tooling/voice/speech-worker.ts
-
- ELIFECYCLE  Command failed with exit code 143.
