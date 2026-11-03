@@ -5,7 +5,7 @@
  *
  *   DATABASE_URL=<운영 DIRECT_DATABASE_URL> pnpm voice:add --file 녹음.m4a --text "녹음에서 읽은 문장 그대로" \
  *     --id m-2 --label "도윤 · 남성 20대 낮은 톤" --basis own_voice --holder "목소리 주인" --evidence "본인 녹음·서면 동의" \
- *     --by ab40905045@gmail.com --db-host <DATABASE_URL 호스트> [--adult]
+ *     --by ab40905045@gmail.com --db-host <DATABASE_URL 호스트> [--adult] [--start 200]
  *
  * --text 를 빼면(11/3 사용자: "녹음 파일만 주면 클로닝") 아무 내용의 녹음이든 앞뒤 무음을 자르고 말이 있는 25초를 골라
  * Gemini 로 받아쓴 뒤 그 문장으로 등록한다(길이 자유, m4a·mp3·wav 다 됨). 대본(VOICE_SCRIPTS)은 새로 녹음할 때만 참고.
@@ -32,7 +32,7 @@ async function main() {
   const { values: a } = parseArgs({ options: {
     file: { type: 'string' }, text: { type: 'string' }, id: { type: 'string' }, label: { type: 'string' },
     basis: { type: 'string' }, holder: { type: 'string' }, evidence: { type: 'string' }, by: { type: 'string' },
-    'db-host': { type: 'string' }, adult: { type: 'boolean', default: false }, 'upload-url': { type: 'string' },
+    'db-host': { type: 'string' }, adult: { type: 'boolean', default: false }, 'upload-url': { type: 'string' }, start: { type: 'string' },
   } })
   for (const k of ['file', 'id', 'label', 'basis', 'holder', 'evidence', 'by', 'db-host'] as const) if (!a[k]?.trim()) throw new Error(`--${k} 가 필요합니다`)
   if (!['own_voice', 'written_consent', 'license'].includes(a.basis!)) throw new Error('--basis 는 own_voice|written_consent|license')
@@ -42,7 +42,8 @@ async function main() {
   const key = process.env.MIRO_TTS_API_KEY ?? (await readFile(join(homedir(), '.miro/voices/gsv/modal-tts-api-key.txt'), 'utf8')).trim()
   // 앞뒤 무음을 자르고 25초까지만, 44.1kHz 모노 wav — 서버의 5~30초·3MB 조건에 맞춘다.
   const dir = mkdtempSync(join(tmpdir(), 'voice-add-')), clip = join(dir, 'clip.wav')
-  execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', a.file!, '-af', 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.3,areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.3,areverse,loudnorm=I=-20:TP=-2',
+  // --start 초(11/3) — 긴 녹음에서 배경음 없이 또렷한 구간부터 쓴다(없으면 처음부터).
+  execFileSync('ffmpeg', ['-v', 'error', '-y', ...(a.start ? ['-ss', String(Number(a.start) || 0)] : []), '-i', a.file!, '-af', 'silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.3,areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.3,areverse,loudnorm=I=-20:TP=-2',
     '-t', '25', '-ac', '1', '-ar', '44100', clip])
   const audio = await readFile(clip)
   const text = a.text?.trim() || await transcribe(audio)
