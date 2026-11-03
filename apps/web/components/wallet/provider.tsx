@@ -228,11 +228,6 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
               <p className={`t-caption ${styles.muted}`}>{t('보낼 금액')}</p>
               <p className={`t-title-1 ${styles.amount}`} style={{ margin: 'var(--space-1) 0 0' }} data-order-amount={order.amountMinor}>{krw(order.amountMinor)}</p>
             </div>
-            <div>
-              <p className={`t-caption ${styles.muted}`}>{t('입금자명')}</p>
-              <strong className="t-title-3">{order.depositName}</strong>
-              <p className={`t-caption ${styles.muted}`}>{t('송금할 때 입금자명에 이 코드를 적어 주세요.')}</p>
-            </div>
             <TransferActions bank={wallet.account.bank} accountNumber={wallet.account.number} amount={order.amountMinor} />
           </>}
           {order.status === 'approved' && <p className="t-body">{t('입금이 확인됐어요. 잔액 반영까지 최대 15분 정도 걸릴 수 있어요.')}</p>}
