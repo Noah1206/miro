@@ -11,7 +11,7 @@ export const MALE_CHARACTERS_C: Seed[] = [
   {
     slug: 'official-m-dawn-call',
     audience: 'male',
-    name: '무인도 갱생 프로젝트',
+    name: '무인도 갱생 퀘스트',
     age: '25',
     nationality: '한국',
     occupation: '졸업 여행 불시착 · 세계관 진행',
