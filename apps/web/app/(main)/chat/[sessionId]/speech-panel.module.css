@@ -2,7 +2,7 @@
 .top { display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; color:var(--color-text-secondary); }
 .amount { display:flex; gap:4px; }
 .panel button { cursor:pointer; font:inherit; min-height:32px; border:0; border-radius:8px; padding:5px 10px; color:inherit; background:var(--color-surface-2); }
-.amount button[aria-pressed=true] { background:var(--color-accent); color:var(--color-on-accent,#fff); }
+.amount button[aria-pressed=true] { background:var(--color-lavender-500); color:#fff; } /* 11/3: 짙은 라벤더 */
 .choices { display:grid; gap:5px; margin-top:8px; }
 .choices button { text-align:left; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .choices button[aria-pressed=true] { box-shadow:inset 0 0 0 1px var(--color-accent); }

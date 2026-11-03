@@ -67,6 +67,11 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   return <>
+    {/* 음성 모드(11/3) — 메뉴 안 두 버튼 대신 ☰ 왼쪽 토글. 켜면 캐릭터 답장을 목소리로 듣는다. */}
+    {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceSwitch} aria-label={t('음성 모드')} title={t('음성 모드')} onClick={toggle}>
+      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>
+      <i aria-hidden />
+    </button>}
     <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -91,7 +96,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
           {panel === 'model' && <ChatModelOptions choices={choices}/>}
         </div>}
       </section>
-      {available && <section className={styles.section} aria-label={t('대화 모드')}><h3>{t('대화 모드')}</h3><div className={styles.modes}>{[false, true].map(voice => <button key={String(voice)} type="button" aria-pressed={on === voice} onClick={() => { if (on !== voice) toggle() }}>{voice ? t('음성 모드') : t('채팅 모드')}</button>)}</div></section>}
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
         {characterHref && row(characterHref, 'character', t('캐릭터 정보'))}
