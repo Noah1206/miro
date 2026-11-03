@@ -10,7 +10,9 @@ const LENGTHS = ['scene', 'long', 'saga'] as const
 export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
+  // 11/3: GPT 는 고르는 목록에서 뺀다 — 장애 때 뒤에서 대신 답하는 예비 역할은 그대로(routeModels).
   const candidates = registry?.models.filter(m => m.enabled && m.chatSelectable !== false && m.capabilities.includes('dialogue')
+    && m.provider !== 'openai' && !/^openai\/|^gpt-/i.test(m.providerModelId)
     && m.inputCost !== undefined && m.outputCost !== undefined
     && (!productionRuntime() || !!providerFromEnv(m.provider, m.providerModelId))) ?? []
   // A ready backup remains selectable when no primary is available.
