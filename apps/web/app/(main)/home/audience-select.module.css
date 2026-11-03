@@ -16,3 +16,10 @@
 .apply { flex: 1; min-height: 44px; padding: 0 16px; border: 0; border-radius: 12px; background: #eee; color: #202020; font-size: 14px; font-weight: 600; }
 .trigger:focus-visible, .close:focus-visible, .reset:focus-visible, .apply:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 @media (max-width: 540px) { .dialog { width: calc(100vw - 20px); max-height: 90dvh; border-radius: 20px; } .header { padding: 20px 16px; } .footer { padding-inline: 16px; } }
+
+/* 남성향/여성향(11/4) */
+.audience { flex-shrink: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0 24px 16px; padding: 4px; border-radius: 12px; background: #2c2c2c; }
+.audience button { height: 40px; border: 0; border-radius: 9px; background: transparent; color: #b3b3b3; font-size: 14px; }
+.audience button[aria-pressed="true"] { background: #eee; color: #202020; font-weight: 600; }
+.audience button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 540px) { .audience { margin-inline: 16px; } }

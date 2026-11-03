@@ -17,11 +17,14 @@ import { AudienceSelect } from './audience-select'
 import { InstallAppHint } from '@/components/pwa-install'
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
   const user = await currentUser()
+  // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
+  const raw = (await searchParams).audience
+  const audience = raw === 'male' || raw === 'female' ? raw : undefined
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [sections, unread, unveil] = await Promise.all([
-    measured('nav.home_data', () => homeSections(user?.id ?? null)),
+    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
   ])
@@ -51,7 +54,7 @@ export default async function Home() {
       <HomeBanner signedIn={!!user} />
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       <div className={styles.searchRow}>
-        <AudienceSelect groups={sections.filters} />
+        <AudienceSelect groups={sections.filters} audience={audience} />
         <TransitionLink href="/search" prefetch={true} aria-label={t('검색')} className={styles.searchBar}>
           <span>{t('이름이나 키워드로 검색')}</span>
           <span className={styles.searchIcon} aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="10.5" cy="10.5" r="7.5" /><path d="m16 16 5 5" /></svg></span>
@@ -60,7 +63,7 @@ export default async function Home() {
       {/* 10/28: 오리지널 작품 줄은 일단 가린다(사용자 요청). 다시 보이려면 <OriginalStoriesRow /> 를 되살린다. */}
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
-      {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: t('🔥 지금 가장 많이 대화하는 남자들'), subtitle: t('요즘 가장 많은 사람이 말을 건 캐릭터'), items: sections.ranking }} href="/explore" />}
+      {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: audience === 'male' ? t('🔥 지금 가장 많이 대화하는 여자들') : audience === 'female' ? t('🔥 지금 가장 많이 대화하는 남자들') : t('🔥 지금 가장 많이 대화하는 캐릭터'), subtitle: t('요즘 가장 많은 사람이 말을 건 캐릭터'), items: sections.ranking }} href="/explore" />}
       {sections.forYou.length > 0 && <Row index={1} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
       {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}

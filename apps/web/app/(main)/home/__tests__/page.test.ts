@@ -29,7 +29,7 @@ describe('home published stories', () => {
   it.each([false, true])('keeps published works visible when Unveil is %s', async enabled => {
     vi.stubGlobal('React', React)
     vi.mocked(homeUnveilEnabled).mockResolvedValue(enabled)
-    const html = renderToStaticMarkup(await Home())
+    const html = renderToStaticMarkup(await Home({ searchParams: Promise.resolve({}) }))
     expect(html).toContain('aria-label="미로 오리지널"')
     expect(html).toContain('href="/stories/published-story"')
     expect(html).toContain(`aria-checked="${enabled}"`)

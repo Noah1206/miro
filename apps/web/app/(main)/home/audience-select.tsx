@@ -8,7 +8,7 @@ import { startNavigation } from '@/lib/motion/view-transition'
 import styles from './audience-select.module.css'
 
 /** BL catalog picker with broad genres, careers and species; no audience preferences. */
-export function AudienceSelect({ groups }: { groups: DiscoveryGroup[] }) {
+export function AudienceSelect({ groups, audience }: { groups: DiscoveryGroup[]; audience?: 'male' | 'female' }) {
   const router = useRouter()
   const t = useT()
   const [open, setOpen] = useState(false)
@@ -28,7 +28,7 @@ export function AudienceSelect({ groups }: { groups: DiscoveryGroup[] }) {
   }
   return (<>
     <button ref={trigger} type="button" className={styles.trigger} aria-haspopup="dialog" aria-expanded={open} onClick={() => { setOpenCount(value => value + 1); setOpen(true) }}>
-      {t('전체')}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      {t(audience === 'male' ? '남성향' : audience === 'female' ? '여성향' : '전체')}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
     </button>
     <dialog ref={ref} className={styles.dialog} aria-labelledby="discovery-title"
       onClose={() => { setOpen(false); trigger.current?.focus() }}
@@ -41,6 +41,16 @@ export function AudienceSelect({ groups }: { groups: DiscoveryGroup[] }) {
         <div><h2 id="discovery-title" tabIndex={-1} autoFocus>{t('취향으로 찾기')}</h2><p>{t('좋아하는 분위기와 성향을 골라보세요')}</p></div>
         <button type="button" onClick={close} aria-label={t('닫기')} className={styles.close}>×</button>
       </header>
+      {/* 남성향/여성향(11/4) — 고르면 홈이 그 대상으로 바뀐다. */}
+      <div className={styles.audience} role="group" aria-label={t('대상')}>
+        {([[undefined, '전체'], ['male', '남성향'], ['female', '여성향']] as const).map(([v, label]) => (
+          <button key={label} type="button" aria-pressed={audience === v} onClick={() => {
+            setOpen(false)
+            const url = v ? `/home?audience=${v}` : '/home'
+            startNavigation('forward', () => router.push(url), url)
+          }}>{t(label)}</button>
+        ))}
+      </div>
       <div className={styles.scroll}>
         <DiscoveryFilters key={openCount} groups={groups} selected={tags} onChange={setTags} />
         {!groups.length && <p className={styles.empty}>{t('등록된 태그가 아직 없어요')}</p>}
