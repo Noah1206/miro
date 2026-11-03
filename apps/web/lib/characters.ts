@@ -4,6 +4,9 @@ import { db, characters, worlds, contactProfiles } from '@miro/db'
 
 export type OfficialCard = {
   contactEnabled?: boolean | null
+  /** 언베일 썸네일(11/4). veiled = 언베일을 안 켠 사람이라 흐리게 보여야 한다. */
+  coverUnveil?: boolean
+  veiled?: boolean
   startingContext?: string | null,
   id: string
   slug: string
@@ -105,6 +108,7 @@ async function getOne(where: ReturnType<typeof and>) {
       dislikes: characters.dislikes,
       startingTime: characters.startingTime,
       images: characters.images,
+      coverUnveil: characters.coverUnveil,
       contactEnabled: contactProfiles.enabled,
       worldLocation: worlds.location,
       worldEra: worlds.era,

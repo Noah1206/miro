@@ -4,6 +4,7 @@ import { characterTagFont } from '@/lib/character-tag-font'
 import { useState } from 'react'
 import { Button, TransitionLink } from '@/components/ui'
 import { CharacterVisual } from '@/components/character-visual'
+import { UnveilCover } from '@/components/unveil-badge'
 import type { CardPage, HomeCard, HomeSort } from '@/lib/home'
 import { HomeContentTabs } from './content-tabs'
 import styles from './home.module.css'
@@ -23,6 +24,7 @@ export function StoryCard({ c }: { c: HomeCard }) {
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={picture(c)} ratio="4 / 5" shared={false} scrim={false} style={{ borderRadius: 0 }} />
+      {c.coverUnveil && <UnveilCover veiled={c.veiled} label={t('언베일')} />}
     </div>
     <CardDetails c={c} />
   </TransitionLink>

@@ -226,6 +226,8 @@ export const characters = pgTable('characters', {
   presetPersonas: jsonb('preset_personas').$type<Array<{ name: string; gender: 'female' | 'male' | null; description: string | null }>>().notNull().default([]),
   /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸 안내문. 비우면 기본 문구. */
   personaGuide: text('persona_guide').notNull().default(''),
+  /** 언베일 썸네일(11/4) — 대표 사진 노출이 커서, 언베일을 안 켠 사람의 홈·상세에선 흐리게 + 언베일 표시. */
+  coverUnveil: boolean('cover_unveil').notNull().default(false),
   situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string; situation?: string; adult?: true }>>().notNull().default([]),
   /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
   /** 이용 대상(10/28) — true 면 언베일(성인 인증·켬)을 연 사람에게만 보인다. */

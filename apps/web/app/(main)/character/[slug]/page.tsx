@@ -19,6 +19,8 @@ import { subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
 import { StartWithLogin } from './start-button'
+import { UnveilCover } from '@/components/unveil-badge'
+import { homeUnveilEnabled } from '@/lib/home-mode'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -32,11 +34,12 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const editedDescription = officialDescription(c)
   const tagline = officialTagline(c) ?? c.tagline
 
-  const [comments, commentCount, similar, likes] = await Promise.all([
+  const [comments, commentCount, similar, likes, unveil] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
+    homeUnveilEnabled(user?.id ?? null),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
   const me = (text: string | null) => text ?? ''
@@ -96,6 +99,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="detail-top">
       <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
+        {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} />}
         <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
       </div>
 
