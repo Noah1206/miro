@@ -4,7 +4,7 @@ import { characterEditorial } from '@/components/scene/character-editorial'
 import { CharacterSettingsView } from '../character/[slug]/settings-view'
 import { parseCharacterForm } from './parse'
 import { Accordion, Button } from '@/components/ui'
-import { LikeButton, Rule, RealityStrip, SampleDialogue, Stat } from '../character/[slug]/sections'
+import { LikeButton, Rule, SampleDialogue, Stat } from '../character/[slug]/sections'
 import { PhotoHero } from '../character/[slug]/hero'
 import { subject } from '@/lib/format'
 import type { ContactCapabilities } from '@/lib/reality/channels'
@@ -97,7 +97,6 @@ export function DetailPreview({ d, can, experienceType }: { d: Snapshot | null; 
 
           </div>
 
-          {experienceType === 'reality' && <RealityStrip can={can} />}
           {experienceType === 'reality' && d.worldSetting && (
             <Rule label={t('세계관')}>
               <RichText editorial text={d.worldSetting} names={names} />

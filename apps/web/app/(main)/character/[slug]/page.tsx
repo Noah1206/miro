@@ -14,7 +14,7 @@ import { Back, Page, TransitionLink } from '@/components/ui'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
-import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview, RealityStrip } from './sections'
+import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview } from './sections'
 import { subject, withParticle } from '@/lib/format'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
@@ -131,7 +131,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="character-detail-copy detail-rest" style={{ padding: '0 var(--gutter)', position: 'relative' }}>
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
-        {c.experienceType === 'reality' && <RealityStrip can={can} />}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
             {c.experienceType === 'reality' && <RichText editorial text={me(editedDescription ?? c.personality)} names={names} />}
