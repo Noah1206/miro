@@ -206,6 +206,13 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </motion.p>
         )}
       </AnimatePresence>
+      {/* 11/3 요청(제타처럼): 사진 만들기·✳︎·/ 는 입력창 바깥 위 줄에. 모델·보내기는 입력창 안 아래 줄. */}
+      <div className={styles.tray}>
+        {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} disabled={pending || calendarPending || !ready} />}
+        <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+        <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready}
+          onPick={value => { setCommand(value); setRequestId(crypto.randomUUID()) }} />
+      </div>
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
@@ -222,9 +229,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             </button>
           </span>
         </div>}
-        {/* 11/3: 사진 버튼은 입력칸 왼쪽 위 구석(모델 알약 위), 알약과 같은 테두리의 동그라미. */}
         <div className={styles.inputRow}>
-          {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} disabled={pending || calendarPending || !ready} />}
           <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
             placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
             onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
@@ -241,9 +246,6 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
               onSubmit={value => { setDraft(value); setRequestId(crypto.randomUUID()); setTimeout(() => ref.current?.requestSubmit(), 0) }} />
           </div>
         <div className={styles.composerBar}>
-          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-          <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready}
-            onPick={value => { setCommand(value); setRequestId(crypto.randomUUID()) }} />
           <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
             {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
           </Pressable>

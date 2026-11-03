@@ -64,7 +64,9 @@ export function StepSlider({ name, label, steps, value, onChange }: {
       {name && <input type="hidden" name={name} value={steps[index]!.value} />}
       <div style={{ position: 'relative', height: 40, display: 'flex', alignItems: 'center' }}>
         <div aria-hidden style={{ position: 'absolute', left: 0, right: 0, height: 16, borderRadius: 8, background: 'var(--color-surface-3)' }} />
-        <div aria-hidden style={{ position: 'absolute', left: 0, width: `calc(${at(index)} + 9px)`, height: 16, borderRadius: 8, background: 'linear-gradient(90deg, var(--color-lavender-500), var(--color-lavender-300))', transition: 'width 200ms' }} />
+        {/* 11/3: 오른쪽(더 긴·더 많은) 단계일수록 짙게 — 그라데이션은 막대 전체에 깔고 고른 데까지만 보이게 자른다. */}
+        <div aria-hidden style={{ position: 'absolute', left: 0, right: 0, height: 16, borderRadius: 8, background: 'linear-gradient(90deg, var(--color-lavender-300), var(--color-lavender-600))',
+          clipPath: `inset(0 calc(100% - ${at(index)} - 9px) 0 0 round 8px)`, transition: 'clip-path 200ms' }} />
         {steps.map((_, k) => <span key={k} aria-hidden style={{ position: 'absolute', left: `calc(${at(k)} - 3px)`, width: 6, height: 6, borderRadius: 3, background: k <= index ? '#fff8' : 'var(--color-text-disabled)' }} />)}
         <span aria-hidden style={{ position: 'absolute', left: `calc(${at(index)} - 9px)`, width: 18, height: 18, borderRadius: 9, background: 'var(--color-white)', transition: 'left 200ms' }} />
         <input type="range" min={0} max={last} step={1} value={index} onChange={e => onChange(steps[Number(e.target.value)]!.value)} aria-label={label} aria-valuetext={steps[index]!.label}
