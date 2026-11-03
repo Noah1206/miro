@@ -19,6 +19,8 @@ export function characterImageSources(original: string, size: ImageSize) {
   }
 
   const publicPath = '/storage/v1/object/public/character-images/'
+  // 움직이는 썸네일(11/4, animated WebP) — 크기 변환을 거치면 첫 장만 남는다. 원본 그대로.
+  if (url.pathname.endsWith('.webp')) return { src: original }
   if (url.protocol !== 'https:' || !url.hostname.endsWith('.supabase.co') || !url.pathname.startsWith(publicPath) || url.pathname.length === publicPath.length) {
     return { src: original }
   }

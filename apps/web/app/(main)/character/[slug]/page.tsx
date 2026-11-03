@@ -82,6 +82,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
     ...(c.experienceType === 'reality' ? [[c.speechStyle, c.values].filter(Boolean).join(' ')] : []),
   ].filter((line) => line.trim())
 
+  // 소개 글 뒤의 '상세정보' 단락(키·몸무게·쓰리사이즈)은 세부정보로 접는다.
+  const cut = c.personality?.indexOf('\n\n상세정보') ?? -1
+  const lead = cut >= 0 ? c.personality!.slice(0, cut) : c.personality
+  const details = cut >= 0 ? c.personality!.slice(cut + 2) : ''
+
   return (
     <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: 'var(--color-bg)' }}>
       <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5, padding: '6px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)' }}>
@@ -137,9 +142,16 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
         {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
           <div className="detail-prose">
-            {c.experienceType === 'reality' && <RichText editorial text={me(editedDescription ?? c.personality)} names={names} />}
-            {!editedDescription && profile.map((line) => <RichText editorial key={line} text={line} names={names} />)}
+            {c.experienceType === 'reality' && <RichText editorial text={me(editedDescription ?? lead)} names={names} />}
           </div>
+          {/* 11/4 사용자: 상세정보(수치)·나이·MBTI·말투 줄은 '세부정보 보기'로 접고 옅은 글씨로. */}
+          {(details || (!editedDescription && profile.length > 0)) && <details className="t-caption" style={{ marginTop: 12, color: 'var(--color-text-tertiary)' }}>
+            <summary style={{ cursor: 'pointer', color: 'var(--color-text-secondary)', listStylePosition: 'inside' }}>{t('세부정보 보기')}</summary>
+            <div style={{ display: 'grid', gap: 8, marginTop: 8, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
+              {details && <p>{details}</p>}
+              {!editedDescription && profile.map((line) => <p key={line}>{line}</p>)}
+            </div>
+          </details>}
         </Rule>}
         {c.experienceType === 'reality' && c.worldSetting && (
           <Rule label={t('세계관')}>

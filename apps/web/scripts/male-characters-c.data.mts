@@ -241,7 +241,7 @@ export const MALE_CHARACTERS_C: Seed[] = [
   {
     slug: 'official-m-hunter-guild',
     audience: 'male',
-    name: '헌터 길드',
+    name: '클랜 인 히어로',
     age: '26',
     nationality: '게임이 된 서울',
     occupation: 'SSS급 히든 클래스 「금기의 계약자」 · 세계관 진행',

@@ -20,7 +20,7 @@ const apply = process.argv.includes('--apply')
 const only = process.argv.find((a) => a.startsWith('--only='))?.slice(7)
 const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('official-')).sort().map((slug) => {
   const files = readdirSync(join(ROOT, slug))
-  const gallery = files.filter((f) => /^0[1-5]\.jpg$/.test(f)).sort()
+  const gallery = files.filter((f) => /^0[1-5]\.(jpg|webp)$/.test(f)).sort()   // 01.webp = 움직이는 대표 사진(11/4)
   if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
   // 인트로 장면 사진은 없을 수 있다(10/19 작품 메인공 6명 — 대표 사진 01만).
   return { slug, gallery, intro: files.includes('intro.jpg') ? 'intro.jpg' : null }
@@ -38,7 +38,7 @@ const { db, characters } = await import('@miro/db')
 
 async function put(slug: string, file: string) {
   const path = `${OWNER}/official/${slug}/${file}`
-  const { error } = await storage.upload(path, readFileSync(join(ROOT, slug, file)), { contentType: 'image/jpeg', upsert: true })
+  const { error } = await storage.upload(path, readFileSync(join(ROOT, slug, file)), { contentType: file.endsWith('.webp') ? 'image/webp' : 'image/jpeg', upsert: true })
   if (error) throw new Error(`upload ${path}: ${error.message}`)
   // 같은 경로에 덮어쓰면 CDN이 옛 사진을 줄 수 있어 버전 쿼리를 붙인다.
   return `${storage.getPublicUrl(path).data.publicUrl}?v=${Date.now()}`
