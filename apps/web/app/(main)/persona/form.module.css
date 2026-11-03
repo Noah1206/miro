@@ -1,0 +1,15 @@
+/* 페르소나 폼(11/3 개편) — 테두리 없는 채운 칸, 이름은 칸 안 위쪽 작게. 사진 시트(.photoField·.photoModes)와 같은 결. */
+.form { display: grid; gap: 12px; }
+.field { display: grid; gap: 4px; padding: 12px 16px; border-radius: 14px; background: var(--color-surface-2); transition: box-shadow 150ms, background 150ms; cursor: text; }
+.field:hover { background: var(--color-surface-3); }
+.field:focus-within { box-shadow: 0 0 0 2px var(--color-lavender-500); background: var(--color-surface-2); }
+.top { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--color-text-tertiary); }
+.top b { font-weight: 400; color: var(--color-lavender-500); margin-left: 2px; }
+.field input, .field textarea { width: 100%; padding: 0; border: 0; outline: none; background: none; color: var(--color-text-primary); font: inherit; font-size: 16px; line-height: 1.5; resize: none; }
+.field input::placeholder, .field textarea::placeholder { color: var(--color-text-quaternary, var(--color-text-tertiary)); }
+.genders { display: grid; gap: 4px; padding: 12px 16px 14px; border-radius: 14px; background: var(--color-surface-2); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; padding: 4px; border-radius: 10px; background: var(--color-surface-1); }
+.seg button { height: 38px; border: 0; border-radius: 8px; background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 15px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--color-surface-3); color: var(--color-text-primary); font-weight: 600; }
+.seg button:focus-visible { outline: 2px solid var(--color-lavender-500); outline-offset: 1px; }
+.submit { margin-top: 8px; }
