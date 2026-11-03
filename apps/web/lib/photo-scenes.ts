@@ -2,7 +2,9 @@
  * 사진 시트의 장면·구도 목록(11/2). 로컬 스튜디오(tooling/image/studio_presets.json)와 같은 장면 — 장면을 늘릴 땐 두 곳에 같이 넣는다.
  * 언베일 장면은 언베일이 켜진 방에서만 보이고, 서버도 다시 막는다. 태그는 그림 모델에 그대로 들어가는 영어.
  */
-export type PhotoScene = { id: string; label: string; unveil: boolean; couple: boolean; tags: string; male?: true; group?: string }
+export type Audience = 'male' | 'female'
+/** audience 가 있으면 그 쪽 캐릭터(남성향/여성향) 시트에서만 보이는 장면. */
+export type PhotoScene = { id: string; label: string; unveil: boolean; couple: boolean; tags: string; audience?: Audience; group?: string }
 
 export const PHOTO_SCENES: PhotoScene[] = [
   { id: 'd_cafe', label: '카페', unveil: false, couple: false, tags: 'sitting in cafe by window, holding coffee cup, gentle smile, soft daylight, upper body' },
@@ -24,16 +26,102 @@ export const PHOTO_SCENES: PhotoScene[] = [
   { id: 'u_fellatio', label: '펠라', unveil: true, couple: true, tags: 'fellatio, kneeling, nude, looking up, blush, bed, night, pov' },
   { id: 'u_squirting', label: '시오후키', unveil: true, couple: true, tags: 'nude, sex, squirting, female ejaculation, orgasm, arched back, trembling, blush, open mouth, lying on bed, spread legs, night' },
   { id: 'u_after', label: '끝난 뒤', unveil: true, couple: true, tags: 'after sex, lying in bed together, covered with blanket, bare shoulders, looking at each other, tender smile, night' },
-  ...maleScenes(),
+  ...catalog('male', maleRows()),
+  ...catalog('female', femaleRows()),
 ]
+
+/** [id, 이름, 태그, 둘이?] 묶음별 줄 → 장면. */
+type Row = [string, string, string, boolean?]
+type Groups = Array<[string, boolean, Row[]]>
+function catalog(audience: Audience, groups: Groups): PhotoScene[] {
+  return groups.flatMap(([group, unveil, rows]) => rows.map(([id, label, tags, couple]) => ({ id, label, unveil, couple: !!couple, tags, audience, group })))
+}
+
+/**
+ * 여성향 캐릭터(남자 주인공) 상황 목록(11/3) — 그림은 남자 중심, 상대는 가리거나 일부만(styleFor('female') 쪽이 처리). 태그엔 성별 단어를 넣지 않는다.
+ */
+function femaleRows(): Groups {
+  return [
+    ['표정', false, [
+      ['f_smile', '미소', 'gentle smile, looking at viewer, upper body'],
+      ['f_angry', '화남', 'angry, frown, glaring, looking at viewer, upper body'],
+      ['f_laugh', '활짝 웃음', 'laughing, open mouth, happy, upper body'],
+      ['f_cry', '눈물', 'crying, tears, sad, upper body'],
+      ['f_smirk', '비웃음', 'smirk, smug, half-closed eyes, looking at viewer, upper body'],
+      ['f_blank', '무표정', 'expressionless, cold eyes, looking at viewer, upper body'],
+      ['f_fluster', '당황', 'flustered, surprised, blush, upper body'],
+      ['f_shy', '부끄러움', 'embarrassed, blush, looking away, hand over mouth, upper body'],
+      ['f_pout', '삐짐', 'pout, sulking, looking away, crossed arms, upper body'],
+      ['f_jealous', '질투', 'jealous, frown, looking away, clenched jaw, upper body'],
+      ['f_sleepy', '졸림', 'sleepy, half-closed eyes, messy hair, yawning, upper body'],
+    ]],
+    ['일상', false, [
+      ['f_phone', '휴대폰 보기', 'looking at smartphone, sitting, relaxed, indoors'],
+      ['f_nap', '낮잠', 'sleeping, lying on sofa, closed eyes, afternoon light'],
+      ['f_eat', '밥 먹기', 'eating, holding chopsticks, table, indoors, upper body'],
+      ['f_drink', '술 한잔', 'drinking, holding glass, flushed face, loosened necktie, bar, night'],
+      ['f_selfie', '셀카', 'selfie, holding phone, smile, upper body'],
+      ['f_gym', '운동', 'working out, gym, sweat, tank top, muscular arms'],
+      ['f_necktie', '출근 준비', 'tying necktie, dress shirt, mirror, morning light, upper body'],
+      ['f_drive', '운전', 'driving car, hand on steering wheel, looking at viewer, night, city lights'],
+    ]],
+    ['스킨십', false, [
+      ['f_hug', '포옹', 'hug, embracing, chin on head, closed eyes, smile, upper body', true],
+      ['f_backhug', '백허그', 'hug from behind, arms around waist, chin on shoulder, smile, upper body', true],
+      ['f_headpat', '머리 쓰다듬기', 'headpat, hand on head, gentle smile, looking down, upper body', true],
+      ['f_forehead', '이마 키스', 'forehead kiss, closed eyes, gentle, upper body', true],
+      ['f_kabedon', '벽치기', 'kabedon, hand on wall, leaning close, looking down at viewer, smirk, pov'],
+      ['f_carry', '안아 들기', 'princess carry, carrying, smile, looking down', true],
+      ['f_hands', '손잡기', 'holding hands, interlocked fingers, walking together, smile, cowboy shot', true],
+      ['f_lap', '무릎베개', 'lap pillow, lying on lap, looking up, relaxed', true],
+    ]],
+    ['노출', true, [
+      ['f_unbutton', '셔츠 단추 풀기', 'unbuttoning shirt, open shirt, pectorals, abs, looking at viewer, bedroom, upper body'],
+      ['f_shirt_off', '상의 벗기', 'taking off shirt, shirt lift, abs, looking at viewer, bedroom'],
+      ['f_shirtless', '상반신 탈의', 'shirtless, pectorals, abs, sweat, looking at viewer, upper body'],
+      ['f_towel', '수건 한 장', 'towel around waist, wet hair, water drops, abs, bathroom, steam, cowboy shot'],
+      ['f_bed', '침대 위', 'lying on bed, shirtless, bedsheet, bedroom eyes, looking at viewer, night'],
+      ['f_nude', '알몸', 'completely nude, penis, abs, standing, looking at viewer, bedroom, full body'],
+      ['f_mirror', '거울 셀카', 'mirror selfie, shirtless, abs, holding phone, bathroom'],
+    ]],
+    ['애무', true, [
+      ['f_neck', '목 키스', 'neck kiss, kissing neck, closed eyes, night, bedroom, upper body', true],
+      ['f_ear', '귀에 속삭이기', 'whispering in ear, ear biting, smirk, close-up, night', true],
+      ['f_undress_other', '옷 벗겨 주기', 'undressing another, unbuttoning, looking at viewer, bedroom eyes, night', true],
+      ['f_handjob', '핸드잡', 'handjob, penis, shirtless, blush, heavy breathing, bed', true],
+      ['f_masturbate', '자위', 'male masturbation, penis, shirtless, blush, heavy breathing, bed'],
+    ]],
+    ['체위', true, [
+      ['f_reverse', '역기승위', 'sex, reverse cowgirl position, lying on back, nude, abs, blush, bed', true],
+      ['f_lotus', '마주 앉아서', 'sex, sitting, face to face, lotus position, hugging, nude, kiss, bed', true],
+      ['f_spooning', '옆으로 누워서', 'sex, spooning, lying on side, from behind, nude, bed', true],
+      ['f_wall', '벽에 기대서', 'sex, standing, against wall, nude, sweat, night', true],
+      ['f_mating', '교배 프레스', 'sex, mating press, nude, sweat, looking down, bed, pov', true],
+      ['f_exhausted', '끝나고 녹초', 'after sex, lying on bed, nude, heavy breathing, sweat, messy hair'],
+      ['f_condom', '콘돔 들고', 'holding condom, condom wrapper in mouth, shirtless, smirk, looking at viewer, upper body'],
+    ]],
+    ['샤워', true, [
+      ['f_shower', '샤워', 'showering, nude, wet, water drops, steam, abs, bathroom'],
+      ['f_hairwash', '머리 감겨 주기', 'washing another\'s hair, shower, nude, bubbles, smile, bathroom', true],
+      ['f_bath', '같이 욕조', 'bathing together, bathtub, nude, steam, leaning back, smile', true],
+      ['f_shower_sex', '샤워부스에서', 'sex, shower, standing, against glass, wet, nude, steam', true],
+    ]],
+    ['플레이', true, [
+      ['f_tie', '넥타이로 묶기', 'wrists tied with necktie, open shirt, smirk, bed, night', true],
+      ['f_blindfold', '눈가리개', 'blindfold, shirtless, lying on bed, blush, night'],
+      ['f_bondage', '구속', 'bondage, tied up, rope, shirtless, lying on bed, blush'],
+      ['f_collar', '목줄', 'collar, leash, shirtless, kneeling, blush, looking up'],
+      ['f_spanking', '스팽킹', 'spanking, bent over, from behind, nude, blush', true],
+    ]],
+  ]
+}
 
 /**
  * 남성향 캐릭터 전용 상황 목록(11/3 사용자: 베이비챗 남성향처럼 감정·행동·스킨십·체위까지 유저가 다 골라서) — 묶음별로 시트에 보인다.
- * 위의 기본 장면도 남성향에선 같은 묶음 안에 들어간다(MALE_GROUP_OF). [id, 이름, 태그, 둘이?]
+ * 위의 기본 장면도 같은 묶음 안에 들어간다(BASE_GROUP_OF).
  */
-function maleScenes(): PhotoScene[] {
-  type Row = [string, string, string, boolean?]
-  const groups: Array<[string, boolean, Row[]]> = [
+function maleRows(): Groups {
+  const groups: Groups = [
     ['표정', false, [
       ['m_smile', '미소', 'gentle smile, looking at viewer, upper body'],
       ['m_angry', '화남', 'angry, frown, clenched teeth, looking at viewer, upper body'],
@@ -136,16 +224,16 @@ function maleScenes(): PhotoScene[] {
       ['m_twerk', '트월킹', 'twerking, ass, from behind, looking back, shorts, motion lines'],
     ]],
   ]
-  return groups.flatMap(([group, unveil, rows]) => rows.map(([id, label, tags, couple]) => ({ id, label, unveil, couple: !!couple, tags, male: true as const, group })))
+  return groups
 }
 
-/** 남성향 시트에서 기본 장면이 들어갈 묶음 — 없는 장면(일상 기본)은 '일상'. */
-export const MALE_GROUP_OF: Record<string, string> = {
+/** 시트에서 기본 장면이 들어갈 묶음 — 없는 장면(일상 기본)은 '일상'. */
+export const BASE_GROUP_OF: Record<string, string> = {
   u_shower: '노출', u_tease: '노출', u_lingerie: '노출', u_topless: '노출', u_kiss: '스킨십',
   u_missionary: '체위', u_cowgirl: '체위', u_doggy: '체위', u_standing: '체위', u_squirting: '체위', u_after: '체위',
   u_paizuri: '애무', u_fellatio: '애무',
 }
-export const MALE_GROUPS = ['표정', '일상', '스킨십', '노출', '애무', '체위', '샤워', '결혼·임신', '플레이'] as const
+export const SCENE_GROUPS = ['표정', '일상', '스킨십', '노출', '애무', '체위', '샤워', '결혼·임신', '플레이'] as const
 
 /** 만든 사람이 정한 장면(11/3). 설명은 한국어 그대로 저장하고, 그릴 때 영어 태그로 바꾼다. */
 export type CustomPhotoScene = { label: string; description: string; unveil?: true; couple?: true }
@@ -169,7 +257,10 @@ export const PHOTO_COMPOSITIONS = {
   distance: { label: '얼마나 가까이', options: [['자동', ''], ['얼굴 가까이', 'close-up, portrait'], ['상반신', 'upper body'], ['무릎 위까지', 'cowboy shot'], ['전신', 'full body']] },
   angle: { label: '어느 방향에서', options: [['자동', ''], ['정면 눈높이', 'from front, straight-on'], ['위에서 내려다보기', 'from above'], ['아래에서 올려다보기', 'from below'], ['옆모습', 'from side, profile'], ['뒷모습', 'from behind'], ['내 시점 (1인칭)', 'pov']] },
   gaze: { label: '어디를 보는지', options: [['자동', ''], ['화면(나)을 봄', 'looking at viewer'], ['서로 마주 봄', 'face to face, looking at each other, eye contact'], ['다른 곳을 봄', 'looking away'], ['눈 감음', 'closed eyes']] },
-  // 옷(11/3) — 시트는 남성향 캐릭터에서만 보여 준다(다른 캐릭터는 늘 '자동').
+  // 옷(11/3) — outfit 은 남성향(여자 옷), outfitMen 은 여성향(남자 옷) 시트에서만 보인다. 안 보이는 쪽은 늘 '자동'.
+  outfitMen: { label: '무슨 옷', options: [['자동', ''], ['평상복', 'casual clothes'], ['셔츠', 'white dress shirt, sleeves rolled up'], ['정장', 'black suit, necktie'], ['운동복', 'sportswear, tank top'],
+    ['실내복', 'loungewear, t-shirt, grey sweatpants'], ['제복', 'military uniform'], ['경찰복', 'police uniform'], ['의사 가운', 'doctor, lab coat'], ['앞치마', 'apron over shirt'],
+    ['수영복', 'swim trunks, shirtless'], ['한복', 'hanbok'], ['집사복', 'butler, tailcoat, white gloves']] },
   outfit: { label: '무슨 옷', options: [['자동', ''], ['평상복', 'casual clothes'], ['운동복', 'sportswear, sports bra, leggings'], ['실내복', 'pajamas, oversized shirt'], ['정장', 'office lady, white shirt, pencil skirt'],
     ['간호사복', 'nurse, nurse uniform, nurse cap'], ['메이드복', 'maid, maid headdress, apron'], ['경찰복', 'police uniform, police hat'], ['고양이', 'cat ears, cat tail, cat cosplay'],
     ['치어리더', 'cheerleader, pom poms, crop top, miniskirt'], ['바니걸', 'playboy bunny, rabbit ears, leotard, pantyhose'], ['비키니', 'bikini'], ['기모노', 'kimono']] },

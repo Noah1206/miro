@@ -5,7 +5,7 @@ import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
-import { MALE_GROUP_OF, MALE_GROUPS, PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, type CompositionKey } from '@/lib/photo-scenes'
+import { BASE_GROUP_OF, SCENE_GROUPS, PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, type Audience, type CompositionKey } from '@/lib/photo-scenes'
 import { requestPhoto, type MediaState } from './media-actions'
 import styles from './chat.module.css'
 
@@ -13,9 +13,9 @@ import styles from './chat.module.css'
  * '+ 한 장 더'는 지금 장의 장면·구도를 복사한다. 세부사항은 이 대화방에 저장해 두고 모든 장에 같이 보낸다 — 사진마다 머리색·속옷 색이 바뀌지 않게. */
 type Shot = { key: number; scene: string; picks: number[] }
 const KEYS = Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]
-const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷') }
+const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷'), outfitMen: msg('옷') }
 
-export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled, custom = [] }: { sessionId: string; unveil: boolean; bundle: boolean; male?: boolean; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }> }) {
+export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, custom = [] }: { sessionId: string; unveil: boolean; bundle: boolean; audience?: Audience; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }> }) {
   const t = useT(), router = useRouter()
   const { refreshBalance } = useWallet()
   const [open, setOpen] = useState(false)
@@ -32,20 +32,21 @@ export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled,
   }, [state, router, refreshBalance])
   // 만든 사람이 정한 이 캐릭터만의 장면이 앞에 — 이름은 만든 사람이 쓴 그대로(번역하지 않는다).
   const own = custom.filter(s => unveil || !s.unveil)
-  // 남성향은 언베일이 아니어도 언베일 장면을 흐리게 보여 준다(고를 수는 없다). 다른 캐릭터는 예전처럼 숨긴다.
-  const scenes = PHOTO_SCENES.filter(s => (unveil || male || !s.unveil) && (male || !s.male))
-  // 남성향(11/3): 상황이 많아서 묶음(표정·일상·스킨십…)을 먼저 고르고 그 묶음의 장면만 보여 준다. 옷은 남성향에서만.
-  const groupOf = (s: (typeof scenes)[number]) => s.group ?? MALE_GROUP_OF[s.id] ?? '일상'
-  // 남성향은 일반 / 언베일로 나눠 보여 준다(11/3) — 언베일이 아닌 방에선 언베일 쪽 장면을 흐리게 잠가 둔다.
+  // 남성향·여성향(11/3): 상황 목록을 묶음으로, 언베일이 아니어도 언베일 장면을 흐리게 보여 준다(고를 수는 없다). audience 를 모르면 예전처럼.
+  const catalog = !!audience
+  const scenes = PHOTO_SCENES.filter(s => (unveil || catalog || !s.unveil) && (!s.audience || s.audience === audience))
+  // 상황이 많아서 묶음(표정·일상·스킨십…)을 먼저 고르고 그 묶음의 장면만 보여 준다. 옷은 남성향=여자 옷, 여성향=남자 옷.
+  const groupOf = (s: (typeof scenes)[number]) => s.group ?? BASE_GROUP_OF[s.id] ?? '일상'
+  // 일반 / 언베일로 나눠 보여 준다(11/3) — 언베일이 아닌 방에선 언베일 쪽 장면을 흐리게 잠가 둔다.
   const [adultMode, setAdultMode] = useState(false)
-  const locked = male && adultMode && !unveil
-  const inMode = male ? scenes.filter(s => s.unveil === adultMode) : scenes
-  const groups = male ? MALE_GROUPS.filter(g => inMode.some(s => groupOf(s) === g)) : []
+  const locked = catalog && adultMode && !unveil
+  const inMode = catalog ? scenes.filter(s => s.unveil === adultMode) : scenes
+  const groups = catalog ? SCENE_GROUPS.filter(g => inMode.some(s => groupOf(s) === g)) : []
   const [pickedGroup, setGroup] = useState<string>('표정')
   const group = groups.includes(pickedGroup as (typeof groups)[number]) ? pickedGroup : groups[0] ?? ''
-  const shown = male ? inMode.filter(s => groupOf(s) === group) : scenes
-  const ownShown = male ? own.filter(s => s.unveil === adultMode) : own
-  const keys = male ? KEYS : KEYS.filter(k => k !== 'outfit')
+  const shown = catalog ? inMode.filter(s => groupOf(s) === group) : scenes
+  const ownShown = catalog ? own.filter(s => s.unveil === adultMode) : own
+  const keys = KEYS.filter(k => k === 'outfit' ? audience === 'male' : k === 'outfitMen' ? audience === 'female' : true)
   const sceneName = (id: string) => !id ? t('지금 대화') : own.find(s => s.id === id)?.label ?? t(scenes.find(s => s.id === id)?.label ?? '')
   const shot = shots[Math.min(cur, shots.length - 1)]!
   const update = (p: Partial<Shot>) => setShots(list => list.map(s => (s.key === shot.key ? { ...s, ...p } : s)))
@@ -84,10 +85,10 @@ export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled,
         </div>
         <div>
           <p style={label}><span>{t('장면')}</span>{count > 1 && <span>{t('{n}장째', { n: Math.min(cur, count - 1) + 1 })}</span>}</p>
-          {male && <div role="tablist" aria-label={t('일반 / 언베일')} className={styles.photoModes}>
+          {catalog && <div role="tablist" aria-label={t('일반 / 언베일')} className={styles.photoModes}>
             {[false, true].map(on => <button key={String(on)} type="button" role="tab" aria-selected={adultMode === on} onClick={() => setAdultMode(on)}>{t(on ? '언베일' : '일반')}</button>)}
           </div>}
-          {male && <div role="tablist" aria-label={t('장면 묶음')} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+          {catalog && <div role="tablist" aria-label={t('장면 묶음')} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
             {groups.map(g => <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)} style={tab(group === g)}>{t(g)}</button>)}
           </div>}
           {locked && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', margin: '0 0 10px' }}>{t('언베일을 켜면 고를 수 있어요.')}</p>}
@@ -102,7 +103,7 @@ export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled,
         <div>
           <p style={label}>{t('구도')}</p>
           {/* 드롭다운 — 이름은 칸 안 위쪽, 값은 굵게. '자동'에서 바꾼 칸은 라벤더 바탕. */}
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${male ? 2 : 3}, minmax(0, 1fr))`, gap: 8 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${catalog ? 2 : 3}, minmax(0, 1fr))`, gap: 8 }}>
             {keys.map(k => [k, KEYS.indexOf(k)] as const).map(([k, j]) => <label key={k} className={styles.photoField} data-set={shot.picks[j] ? '' : undefined}>
               <span>{t(SHORT[k])}</span>
               <select value={shot.picks[j]} aria-label={t(PHOTO_COMPOSITIONS[k].label)} onChange={e => update({ picks: shot.picks.map((v, x) => (x === j ? Number(e.target.value) : v)) })}>

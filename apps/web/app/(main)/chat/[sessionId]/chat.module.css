@@ -472,7 +472,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* Leave a clear gutter above the writing area, including with the keyboard open. */
 .composer, :global([data-chat-theme]) .composer { padding-top:12px; }
-/* 남성향 사진 시트(11/3): 일반 / 언베일 둘로 나누는 칸, 언베일이 아닌 방에선 언베일 장면 이름을 흐리게 잠근다. */
+/* 남성향·여성향 사진 시트(11/3): 일반 / 언베일 둘로 나누는 칸, 언베일이 아닌 방에선 언베일 장면 이름을 흐리게 잠근다. */
 .photoModes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 12px; background: var(--color-surface-2); }
 .photoModes button { height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 14px; cursor: pointer; }
 .photoModes button[aria-selected="true"] { background: var(--color-surface-3); color: var(--color-text-primary); font-weight: 600; }
