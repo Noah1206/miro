@@ -471,6 +471,12 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .app-shell:has(.nav) .nav { left: 0; right: 0; bottom: 20px; width: min(912px, calc(100% - 32px)); max-width: none; margin: 0 auto; }
   .app-shell:has(> aside) > div:last-child { --side: 280px; margin-left: max(calc((100% - 960px) / 2), var(--side)); margin-right: auto; }
   .app-shell:has(aside[data-collapsed="true"]) > div:last-child { --side: 72px; }
+  /* 11/3: 채팅방도 사이드바 옆에 넓게 — 셸 폭 제한을 풀고, 사이드바 오른쪽 전체를 쓰며 본문은 그 안 가운데 860. 하단 탭이 없으니 사이드바는 바닥까지. */
+  /* 사이드바만 있고 하단 탭이 없는 셸 = 채팅방 경로(대화 전 페르소나 화면 포함, nav.tsx). */
+  .app-shell:has(> aside):not(:has(.nav)) { max-width: none; }
+  .app-shell:has(> aside):not(:has(.nav)) > aside { left: 0; bottom: 0; }
+  .app-shell:has(> aside):not(:has(.nav)) > div:last-child { margin-left: var(--side); margin-right: 0; }
+  .app-shell:has(> aside) .chat-main { max-width: 860px; }
   .app-shell:has(> aside) .nav { left: max(calc((100% - 912px) / 2), 304px); right: auto; width: min(912px, calc(100% - 328px)); margin: 0; }
   .app-shell:has(aside[data-collapsed="true"]) .nav { left: max(calc((100% - 912px) / 2), 96px); width: min(912px, calc(100% - 120px)); }
 }

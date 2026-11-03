@@ -315,16 +315,16 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='dm']) .narrationText { font-size:13px; line-height:19px; letter-spacing:0; }
 
 /* MIRO: quiet graphite surfaces and restrained lavender accents. */
-:global([data-chat-theme='miro']) .main { background:#121212; color:#ffffff; }
-:global([data-chat-theme='miro']) .header { background:#121212; border-bottom:1px solid #ffffff08; min-height:62px; padding:9px 16px; }
+:global([data-chat-theme='miro']) .main { background:#1e1e1e; color:#ffffff; }
+:global([data-chat-theme='miro']) .header { background:#1e1e1e; border-bottom:1px solid #ffffff08; min-height:62px; padding:9px 16px; }
 :global([data-chat-theme='miro']) .title { font-size:16px; font-weight:600; letter-spacing:-.3px; }
 :global([data-chat-theme='miro']) .bubble, :global([data-chat-theme='miro']) .userBubble { padding:7px 13px; font-size:14px; line-height:1.65; letter-spacing:-.15px; border:0; box-shadow:none; }
 :global([data-chat-theme='miro']) .bubble { background:#383838; color:#ffffff; border-radius:4px 14px 14px; }
 :global([data-chat-theme='miro']) .userBubble { background:#b89aff; color:#241337; border-radius:14px 4px 14px 14px; max-width:80%; }
 :global([data-chat-theme='miro']) .avatar { width:30px; height:30px; border-radius:50%; background:#282828; color:#ffffff; overflow:hidden; }
 :global([data-chat-theme='miro']) .speaker { margin:0 0 6px; font-size:11px; font-weight:500; color:#a8a8a8; letter-spacing:.1px; }
-:global([data-chat-theme='miro']) .composer { padding:4px 14px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#12121200,#121212 14px); border:0; }
-:global([data-chat-theme='miro']) .composerForm { display:flex; flex-direction:row; align-items:flex-end; gap:6px; padding:2px 8px 2px 12px; border:1px solid #ffffff12; border-radius:22px; background:#1b1b1b; box-shadow:0 4px 20px #00000012; transition:border-color 180ms ease; }
+:global([data-chat-theme='miro']) .composer { padding:4px 14px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,#1e1e1e00,#1e1e1e 14px); border:0; }
+:global([data-chat-theme='miro']) .composerForm { display:flex; flex-direction:row; align-items:flex-end; gap:6px; padding:2px 8px 2px 12px; border:1px solid #ffffff12; border-radius:22px; background:#272727; box-shadow:0 4px 20px #00000012; transition:border-color 180ms ease; }
 :global([data-chat-theme='miro']) .composerForm:focus-within { border-color:#ac91d766; }
 :global([data-chat-theme='miro']) .input { flex:1; min-width:0; min-height:34px; padding:6px 0; font-size:15px; line-height:22px; letter-spacing:-.15px; color:#ffffff; caret-color:#c6b1ef; }
 :global([data-chat-theme='miro']) .input::placeholder { font-size:13px; color:#898989; }
