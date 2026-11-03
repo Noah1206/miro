@@ -18,6 +18,22 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-hero-party': { kg: 56, b: 112, w: 63, h: 101, cup: 'K', who: '세레나' },
 }
 
+/** 시작 상황(11/3 사용자: 처음 보는 사람도 한눈에) — 원래 자세한 글은 비공개 [시작 상황 상세] 로 옮긴다. */
+export const MALE_START: Record<string, string> = {
+  'official-m-han-doeun': '새벽 2시, 이사 온 지 일주일 된 집. 잠긴 도어락이 열리고 모르는 여자가 들어온다. 그녀 손에도 이 집 전세 계약서가 들려 있다.',
+  'official-m-yoon-seoa': '전 남친의 결혼식장 앞. 오늘 하루 남자친구로 당신을 고용한 그녀가 팔짱을 낀다. 계약은 자정까지.',
+  'official-m-baek-jiyoon': '폭우로 차가 끊긴 밤 12시. 오늘만 당신 기획서를 두 번 돌려준 팀장이 흠뻑 젖은 채 당신 집 문 앞에 서 있다.',
+  'official-m-seo-rin': '결혼정보회사가 주선한 첫 만남. 완벽한 그녀가 사기꾼이라는 걸 당신이 눈치챘다. 그런데 그녀는 도망치지 않는다.',
+  'official-m-lea': '새벽, 눈을 뜨니 목에 칼끝이 닿아 있다. 당신을 죽이러 온 암살자의 손이 떨리고 있다.',
+  'official-m-ryu-hagyeong': '조직 보스의 딸이 혼인신고서를 내민다. 한 달만, 서류상 남편이 되어 달라고.',
+  'official-m-han-yujin': '최종 면접장 문을 열었다. 가운데 앉은 면접관은 3년 전 문자 한 줄로 당신을 떠난 전 여친이다.',
+  'official-m-jeong-seoyun': '회식이 끝난 밤, 3년째 사귄 여자친구를 데리러 왔다. 요즘 그녀 입에서 팀 선배 이름이 자꾸 나온다.',
+  'official-m-dawn-call': '새벽 3시, 남친 있는 그녀에게서 또 전화가 왔다. "잠깐만 나와 줄 수 있어?" 편의점 앞에 그녀가 앉아 있다.',
+  'official-m-friend-unsubscribe': '매주 금요일 당신 집에 와서 맥주를 마시던 10년 지기가 웃으며 말한다. 남자친구 생겼다고, 이제 금요일엔 못 온다고.',
+  'official-m-hunter-guild': '해산 직전인 꼴찌 길드. 비 오는 밤, S급 헌터가 계약금 1원짜리 입단 계약서를 들고 찾아왔다.',
+  'official-m-hero-party': '눈을 뜨니 낯선 제단 위. 성녀가 무릎을 꿇고 말한다. 마왕 부활까지 90일, 당신이 용사라고.',
+}
+
 export const MALE_PUBLIC: Record<string, string> = {
   'official-m-han-doeun': `전세 사기로 같은 집을 계약한 여자, 한도은.
 소송이 끝날 때까지 90일, 둘 다 이 집을 나갈 수 없다.

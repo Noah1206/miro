@@ -25,14 +25,16 @@ import { MALE_CHARACTERS_A } from './male-characters-a.data.mts'
 import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mts'
 import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
-import { MALE_BODY, MALE_PUBLIC } from './male-characters-public.data.mts'
+import { MALE_BODY, MALE_PUBLIC, MALE_START } from './male-characters-public.data.mts'
 // 11/3 남성향 12명: 화면엔 짧은 소개 + 상세정보(키·몸무게·쓰리사이즈), 원래 긴 소개는 비공개 설정 맨 앞으로(AI 는 그대로 읽는다).
 // 수치는 사진 생성용 외형(bodyProfile.detail)에도 붙인다.
 function withMalePublic(s: Seed): Seed {
   const intro = MALE_PUBLIC[s.slug], body = MALE_BODY[s.slug]
   if (!intro) return s
   const stats = body && `상세정보${body.who ? ` (${body.who})` : ''}\n${s.visual.bodyProfile.height} · ${body.kg}kg\n쓰리사이즈 B${body.b}/W${body.w}/H${body.h}cm · ${body.cup}컵`
-  return { ...s, personality: stats ? `${intro}\n\n${stats}` : intro, secret: `[상세 설정]\n${s.personality}\n\n${s.secret}`,
+  const start = MALE_START[s.slug]
+  return { ...s, personality: stats ? `${intro}\n\n${stats}` : intro, startingContext: start ?? s.startingContext,
+    secret: `[상세 설정]\n${s.personality}\n\n${start ? `[시작 상황 상세]\n${s.startingContext}\n\n` : ''}${s.secret}`,
     visual: body ? { ...s.visual, bodyProfile: { ...s.visual.bodyProfile, detail: `${s.visual.bodyProfile.detail}, B${body.b}/W${body.w}/H${body.h}cm ${body.cup}컵` } } : s.visual }
 }
 // 11/3 남성향 12명: B 묶음은 두 번째 시작 상황의 장면 설명을 같은 파일에 둔다(C 는 인트로 줄에 직접, A 는 인트로 글만).
