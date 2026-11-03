@@ -34,7 +34,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const [loaded, rows, profile] = await Promise.all([loadSession(sessionId, user.id, '', { view: true }), messengerItems(user.id, sessionId), accountProfile(user)])
   if (!loaded || loaded.experienceType !== 'reality') notFound()
   // 두 경험에서 같은 페르소나를 사용한다.
-  if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} context={loaded.snapshot.character.worldRole.startingContext} />
+  if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} photo={loaded.characterPhoto} context={loaded.snapshot.character.worldRole.startingContext} />
   // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
   const [modelOptions] = await Promise.all([
     chatModelOptions(user.id, loaded.adult.since !== null),

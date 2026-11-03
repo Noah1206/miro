@@ -29,7 +29,7 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone }: {
           placeholder={t('예) 스물여섯, 출판사 편집자. 낯을 가리지만 친해지면 장난이 많다.')} />
       </LabeledField>
       {state?.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
-      <SubmitButton full>{submitLabel}</SubmitButton>
+      <SubmitButton full variant="primary" size="lg">{submitLabel}</SubmitButton>
     </form>
   )
 }
