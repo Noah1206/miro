@@ -66,15 +66,22 @@ for (const p of plan) {
     console.log('done', p.slug, images.length, 'photos')
     continue
   }
-  const introUrl = await put(p.slug, p.intro)
-  // 장면 사진은 첫 인트로 줄에만 — 나머지 줄의 옛 image 는 지운다.
-  let first = true
+  // 장면 사진은 장면마다 첫 인트로 줄에만 — intro.jpg 가 첫 장면, intro-2.jpg 가 둘째 장면(11/4). 나머지 줄의 옛 image 는 지운다.
+  const files = readdirSync(join(ROOT, p.slug))
+  const scenes = [...new Set(row.dialogue.filter(d => d.purpose === 'intro').map(d => d.scene ?? ''))]
+  const urls = new Map<string, string>()
+  for (const [i, scene] of scenes.entries()) {
+    const f = i === 0 ? p.intro : `intro-${i + 1}.jpg`
+    if (files.includes(f)) urls.set(scene, await put(p.slug, f))
+  }
+  const done = new Set<string>()
   const dialogue = row.dialogue.map(({ image: _old, ...d }) => {
-    if (d.purpose !== 'intro' || !first) return d
-    first = false
-    return { ...d, image: introUrl }
+    const scene = d.scene ?? ''
+    if (d.purpose !== 'intro' || done.has(scene) || !urls.has(scene)) return d
+    done.add(scene)
+    return { ...d, image: urls.get(scene)! }
   })
-  if (first) throw new Error(`no intro line: ${p.slug}`)
+  if (!done.size) throw new Error(`no intro line: ${p.slug}`)
   await db.update(characters).set({ images, sampleDialogue: dialogue }).where(eq(characters.id, row.id))
   console.log('done', p.slug, images.length, 'photos + intro')
 }

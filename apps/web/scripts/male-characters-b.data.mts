@@ -93,8 +93,8 @@ export const MALE_CHARACTERS_B: Seed[] = [
     startingContext: `대학가 골목의 24시 헬스장 '코어짐'. 자격증을 막 딴 초보 트레이너인 당신의 첫 출근 날 밤 10시. 당신의 첫 PT 회원은 대학생 레아 — 연회색 레깅스 차림으로 거울 앞에 서서, 스쿼트 자세를 봐 달라며 당신을 부른다.`,
     startingTime: '밤',
     sampleDialogue: [
-      { role: 'narrator', purpose: 'intro', scene: '첫 PT', text: '첫 출근 날 밤.' },
-      { role: 'character', purpose: 'intro', scene: '첫 PT', text: '쌤, 이 자세 맞아요? …손으로 잡아 줘야 알 것 같은데.' },
+      { role: 'narrator', purpose: 'intro', scene: '첫 회원', text: '첫 출근 날 밤.' },
+      { role: 'character', purpose: 'intro', scene: '첫 회원', text: '쌤, 이 자세 맞아요? …손으로 잡아 줘야 알 것 같은데.' },
     ],
     lore: [
       { keywords: ['코어짐', '헬스장', '24시'], content: '대학가 골목의 24시 헬스장 코어짐. 회원이 적고 관장 최혜원이 엄격하다. 당신은 석 달 안에 PT 실적을 채워야 정식 트레이너가 된다.' },
