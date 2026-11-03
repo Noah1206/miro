@@ -204,7 +204,6 @@
  "기분이 표정과 말에 묻어나요.": "Moods show in their face and words.",
  "기쁠 때": "When happy",
  "기억 {memories}건 · 사건 {events}건": "{memories} memories · {events} events",
- "기억 {n}개 · 점을 누르면 무엇을 기억하는지 보여요.": "{n} memories · Tap a dot to see what's remembered.",
  "기억 {n}개와 연결 {m}개": "{n} memories and {m} connections",
  "기억을 그리는 중…": "Drawing memories…",
  "기억을 불러오지 못했어요.": "Couldn't load memories.",
@@ -1745,5 +1744,9 @@
  "서사력과 몰입감이 가장 뛰어난 플래그십 모델": "Flagship model with the strongest storytelling and immersion",
  "장문의 대화에 적합한 고성능 모델": "High-performance model for long conversations",
  "표현력과 몰입감이 좋은 최신 Flash 모델": "Latest Flash model with rich expression and immersion",
- "자연스러운 대화에 맞춘 빠른 Flash 모델": "Fast Flash model tuned for natural conversation"
+ "자연스러운 대화에 맞춘 빠른 Flash 모델": "Fast Flash model tuned for natural conversation",
+ "기억 {n}개 · 점이나 아래 목록을 누르면 보고 고칠 수 있어요.": "{n} memories · Tap a dot or the list below to view and edit.",
+ "기억 내용": "Memory",
+ "정말 지우기": "Delete for good",
+ "저장하지 못했어요. 다시 시도해 주세요.": "Couldn’t save. Please try again."
 }

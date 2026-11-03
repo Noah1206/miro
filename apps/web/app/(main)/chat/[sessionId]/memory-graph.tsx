@@ -153,12 +153,56 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
       </p>
 
       {active
-        ? <div className="stack" style={{ gap: 4 }}>
-            <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{t(LAYER[active.layer].label)}</p>
-            <p className="t-body t-quote">{active.content}</p>
-            {active.tags.length > 0 && <p className="t-caption">{active.tags.map((t) => `#${t}`).join(' ')}</p>}
+        ? <MemoryEditor key={active.id} sessionId={sessionId} node={active} onDone={() => { setSelected(null); setAttempt(a => a + 1) }} />
+        : <p className="t-caption">{t('기억 {n}개 · 점이나 아래 목록을 누르면 보고 고칠 수 있어요.', { n: placed.length })}</p>}
+
+      {/* 기억 노트(11/3) — 그래프의 점을 글로 나열한다. 누르면 위 편집기가 열린다. */}
+      {(['long_term', 'relationship', 'world', 'short_term'] as const).map((layer) => {
+        const items = placed.filter((n) => n.layer === layer)
+        if (!items.length) return null
+        return (
+          <div key={layer} className="stack" style={{ gap: 4 }}>
+            <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{t(LAYER[layer].label)}</p>
+            {items.map((n) => (
+              <button key={n.id} type="button" className="t-caption hit" aria-pressed={n.id === selected} onClick={() => setSelected(n.id === selected ? null : n.id)}
+                style={{ textAlign: 'left', background: n.id === selected ? 'var(--color-surface-3)' : 'var(--color-surface-2)', border: 0, borderRadius: 8, padding: '8px 10px', color: 'var(--color-text-primary)', cursor: 'pointer' }}>
+                {n.content}
+              </button>
+            ))}
           </div>
-        : <p className="t-caption">{t('기억 {n}개 · 점을 누르면 무엇을 기억하는지 보여요.', { n: placed.length })}</p>}
+        )
+      })}
+    </div>
+  )
+}
+
+/** 고른 기억 하나를 고치거나 지운다. 지우기는 한 번 더 눌러야 한다 — 되돌릴 수 없다. */
+function MemoryEditor({ sessionId, node, onDone }: { sessionId: string; node: Placed; onDone: () => void }) {
+  const t = useT()
+  const [text, setText] = useState(node.content)
+  const [busy, setBusy] = useState(false)
+  const [confirm, setConfirm] = useState(false)
+  const [error, setError] = useState(false)
+  const send = async (method: 'PATCH' | 'DELETE') => {
+    setBusy(true); setError(false)
+    const r = await fetch(`/api/memory-graph/${sessionId}`, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: node.id, content: text }) }).catch(() => null)
+    setBusy(false)
+    if (r?.ok) onDone(); else setError(true)
+  }
+  const changed = text.trim() !== node.content && text.trim().length > 0
+  const button = { minHeight: 36, padding: '0 14px', borderRadius: 8, border: 0, cursor: 'pointer' } as const
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{t(LAYER[node.layer].label)}</p>
+      <textarea value={text} maxLength={300} rows={3} aria-label={t('기억 내용')} onChange={(e) => { setText(e.target.value); setConfirm(false) }}
+        className="t-body" style={{ width: '100%', resize: 'vertical', padding: 10, borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }} />
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+        <button type="button" disabled={busy} onClick={() => confirm ? send('DELETE') : setConfirm(true)} className="t-caption"
+          style={{ ...button, background: 'none', color: confirm ? 'var(--color-danger, #ff5a5a)' : 'var(--color-text-secondary)' }}>{confirm ? t('정말 지우기') : t('지우기')}</button>
+        <button type="button" disabled={busy || !changed} onClick={() => send('PATCH')} className="t-caption"
+          style={{ ...button, background: changed ? 'var(--color-accent)' : 'var(--color-surface-3)', color: changed ? 'var(--color-white)' : 'var(--color-text-tertiary)' }}>{t('저장')}</button>
+      </div>
+      {error && <p className="t-caption" role="alert">{t('저장하지 못했어요. 다시 시도해 주세요.')}</p>}
     </div>
   )
 }
