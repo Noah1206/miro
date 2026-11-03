@@ -1940,5 +1940,8 @@
  "페르소나 이름": "Persona name",
  "이 대화의 나": "Me in this chat",
  "직접 쓰기": "Write my own",
- "페르소나 선택": "Choose persona"
+ "페르소나 선택": "Choose persona",
+ "고쳐 쓰기": "Edit",
+ "추천 답변": "Suggested replies",
+ "추천 답변을 만들지 못했어요. 다시 눌러 주세요.": "Couldn't make suggestions. Tap again."
 }

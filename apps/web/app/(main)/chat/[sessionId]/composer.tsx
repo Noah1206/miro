@@ -9,6 +9,8 @@ import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
 import { PersonaPicker } from './persona-picker'
+import { SuggestButton, SuggestList } from './suggest-replies'
+import type { Suggestion } from './suggest-actions'
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
@@ -41,6 +43,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const { append, live, setLive, calendarPending, remove } = useTurns()
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
+  // 추천 답변(11/3) — 후보 3개와 실패 문구.
+  const [suggest, setSuggest] = useState<Suggestion[] | null>(null)
+  const [suggestError, setSuggestError] = useState('')
   const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
   const hadRefresh = useRef(false)
@@ -211,6 +216,11 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </motion.p>
         )}
       </AnimatePresence>
+      {suggest && <SuggestList options={suggest} onClose={() => setSuggest(null)} onPick={(text, send) => {
+        setDraft(text); setRequestId(crypto.randomUUID()); setSuggest(null)
+        if (send) setTimeout(() => ref.current?.requestSubmit(), 0); else ta.current?.focus()
+      }} />}
+      {suggestError && <p role="alert" className="t-caption" style={{ marginBottom: 8, color: 'var(--color-danger)' }}>{t(suggestError)}</p>}
       {/* 11/3 요청(제타처럼): 사진 만들기·✳︎·/ 는 입력창 바깥 위 줄에. 모델·보내기는 입력창 안 아래 줄. */}
       <div className={styles.tray}>
         {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} disabled={pending || calendarPending || !ready} />}
@@ -218,6 +228,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
           onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
           onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
+        <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} onReady={r => { if ('error' in r) { setSuggestError(r.error); setSuggest(null) } else { setSuggestError(''); setSuggest(r.options) } }} />
       </div>
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
