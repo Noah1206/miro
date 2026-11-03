@@ -98,6 +98,8 @@ export async function getOrGenerate(opts: {
   seed?: number
   /** 지금 순간의 장면 글(11/3) — 장면을 고르지 않았을 때 자세·표정·옷·장소를 여기서 읽는다. 호출자가 언베일 원문은 빼고 넘긴다. */
   moment?: string
+  /** 장면을 안 골랐을 때의 구도 태그(11/3) — 지금 순간 태그 뒤에 붙는다. */
+  composition?: string
 }): Promise<MediaResult> {
   const identity = await activeVisualIdentity(opts.characterId)
   const context = { ...opts.context, visualVersion: identity.version }
@@ -225,7 +227,7 @@ async function modalPhoto(
   const level = opts.unveil ? cappedLevel(opts.unveil.level) : null
   const style = styleFor(audience)
   const seed = opts.seed ?? 11
-  const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:s${seed}`
+  const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:${opts.composition ?? ''}:s${seed}`
   const units = opts.usage?.units ?? usageWeight('photo')
   const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
@@ -238,7 +240,8 @@ async function modalPhoto(
     // 고른 장면 태그는 LLM 을 거치지 않고 그대로(바뀌지 않게), 외형·장소·세부사항만 영어 태그로 바꾼다.
     // 외형·장소·세부사항(look)은 주인공 바로 뒤로, 고른 장면·수위(tags)는 뒤로 — 외형이 상대 인물에게 섞이지 않게.
     const [look, moment] = await Promise.all([toImageTags(source), !opts.scene && opts.moment ? toMomentTags(opts.moment) : Promise.resolve('')])
-    const tags = [tag?.positive, opts.scene?.tags ?? moment].filter(Boolean).join(', ')
+    // 장면을 안 골랐으면 지금 순간 + 그 장의 구도(11/3 — 예전엔 구도를 고르면 순간 태그가 빠졌다).
+    const tags = [tag?.positive, opts.scene?.tags ?? [moment, opts.composition].filter(Boolean).join(', ')].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
       () => generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple, extraNeg: tag?.negative, seed, refUrl }))

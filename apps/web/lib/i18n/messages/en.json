@@ -1778,5 +1778,20 @@
  "장면 설명": "Scene description",
  "장면 이름": "Scene name",
  "장면 이름 (예: 비 오는 옥상)": "Scene name (e.g. Rainy rooftop)",
- "채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.": "Scenes only this character has, to pick when making a photo in chat. Describe a scene and it gets drawn that way."
+ "채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.": "Scenes only this character has, to pick when making a photo in chat. Describe a scene and it gets drawn that way.",
+ "{n}장 만들기 · {price} 미로": "Make {n} · {price} MIRO",
+ "장수": "Number of photos",
+ "한 장 늘리기": "One more photo",
+ "한 장 줄이기": "One fewer photo",
+ "+ 사진 한 장 더 · 구도 따로": "+ One more photo · its own framing",
+ "{n}번째 사진": "Photo {n}",
+ "이 사진 빼기": "Remove this photo",
+ "+ 한 장 더": "+ One more",
+ "{n}장째": "Photo {n}",
+ "구도": "Framing",
+ "지금 대화": "Now",
+ "첫 장은 1~2분 걸릴 수 있어요": "The first photo can take 1–2 minutes",
+ "거리": "Distance",
+ "방향": "Angle",
+ "시선": "Gaze"
 }

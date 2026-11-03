@@ -66,5 +66,6 @@ export function sceneTags(scene: PhotoScene | null, picks: Partial<Record<Compos
   return [...tags, ...add].join(', ')
 }
 
-/** 가격(11/2 확정): 종류와 상관없이 장수로 — 1장 10, 4장 묶음 36(장당 9). */
-export const PHOTO_PRICE = { single: 10, bundle: 36, bundleCount: 4 } as const
+/** 가격(11/2 확정, 11/3 장수 자유): 1장 10, 2장부터는 장당 9(예전 4장 묶음 36과 같은 할인). 한 번에 최대 6장. */
+export const PHOTO_PRICE = { single: 10, each: 9, max: 6 } as const
+export const photoPrice = (count: number) => (count <= 1 ? PHOTO_PRICE.single : count * PHOTO_PRICE.each)
