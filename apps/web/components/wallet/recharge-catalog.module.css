@@ -1,5 +1,5 @@
 .catalog { display:grid; gap:20px; color:var(--color-text-primary); }
-.balance { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0 18px; border-bottom:1px solid #ffffff12; font-size:13px; color:var(--color-text-secondary); }
+.balance { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0 6px; font-size:13px; color:var(--color-text-secondary); }
 .balance strong { display:flex; align-items:center; gap:7px; color:var(--color-text-primary); font-size:20px; font-variant-numeric:tabular-nums; }
 .balance small { font-size:11px; font-weight:400; color:var(--color-text-secondary); }
 .options { display:grid; gap:8px; margin:0; padding:0; list-style:none; min-width:0; }
@@ -9,7 +9,7 @@
 .quantity { display:flex; align-items:baseline; gap:6px; flex:1; min-width:0; }
 .quantity strong { font-size:19px; font-weight:650; letter-spacing:-.4px; font-variant-numeric:tabular-nums; }
 .quantity small { font-size:11px; color:var(--color-text-secondary); }
-.price { flex-shrink:0; display:grid; place-items:center; min-width:108px; min-height:40px; padding:0 18px; border:0; border-radius:10px; background:var(--color-lavender-500); color:#fff; font:inherit; font-size:15px; font-weight:650; white-space:nowrap; font-variant-numeric:tabular-nums; cursor:pointer; transition:filter 160ms, transform 160ms; }
+.price { flex-shrink:0; display:grid; place-items:center; min-width:108px; min-height:40px; padding:0 18px; border:0; border-radius:7px; background:var(--color-lavender-500); color:#fff; font:inherit; font-size:15px; font-weight:650; white-space:nowrap; font-variant-numeric:tabular-nums; cursor:pointer; transition:filter 160ms, transform 160ms; }
 .price:hover:not(:disabled) { filter:brightness(1.06); }
 .price:active:not(:disabled) { transform:scale(.97); }
 .price:disabled { opacity:.55; cursor:default; }
