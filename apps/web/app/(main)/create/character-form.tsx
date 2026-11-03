@@ -472,7 +472,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
           {/* 이용 대상(10/28) — 언베일 전용이면 언베일을 켠 사람의 홈·탐색에만 나온다. */}
           <Section title={t('이용 대상')}>
-            <Segmented name="adultOnly" value={adultOnly} onChange={setAdultOnly} options={[{ value: '0', label: t('모두') }, { value: '1', label: t('언베일 전용') }]} />
+            <Segmented name="adultOnly" value={adultOnly} onChange={setAdultOnly} options={[{ value: '0', label: t('모두') }, { value: '1', label: t('언베일 전용'), unveil: true }]} />
           </Section>
           <Section title={t('대화 기본값')}>
             <div style={{ display: 'grid', gap: 24, padding: 16, borderRadius: 16, border: '1px solid var(--color-border)', background: 'color-mix(in srgb, var(--color-lavender-300) 4%, transparent)' }}>

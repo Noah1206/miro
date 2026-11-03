@@ -26,8 +26,11 @@ export function SelectField({ name, value, onChange, placeholder, options }: {
 
 /** 두세 칸 나눔 버튼 — 고른 칸만 라벤더 테두리·옅은 라벤더 면. */
 export function Segmented<V extends string>({ name, value, onChange, options }: {
-  name?: string; value: V; onChange: (v: V) => void; options: Array<{ value: V; label: string; hint?: string }>
+  name?: string; value: V; onChange: (v: V) => void; options: Array<{ value: V; label: string; hint?: string; unveil?: boolean }>
 }) {
+  // 언베일 칸(11/3): 고르면 홈 언베일 토글과 같은 빨강·자홍·보라 그라데이션.
+  const unveilOn = { border: '1.5px solid #ff3d7f', background: 'linear-gradient(115deg, rgb(255 31 90 / .22) 0%, rgb(224 17 157 / .22) 55%, rgb(155 28 255 / .22) 100%), var(--color-surface-2)',
+    color: '#ffe0ec', boxShadow: '0 0 16px rgb(255 31 90 / .35)' }
   return (
     <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: `repeat(${options.length}, 1fr)`, gap: 8 }}>
       {name && <input type="hidden" name={name} value={value} />}
@@ -38,7 +41,8 @@ export function Segmented<V extends string>({ name, value, onChange, options }: 
             style={{ minHeight: 56, padding: '10px 12px', borderRadius: 12, cursor: 'pointer', textAlign: 'center',
               border: `1.5px solid ${on ? 'var(--color-lavender-300)' : 'var(--color-border)'}`,
               background: on ? 'color-mix(in srgb, var(--color-lavender-300) 14%, var(--color-surface-2))' : 'var(--color-surface-2)',
-              color: on ? 'var(--color-lavender-200)' : 'var(--color-text-secondary)', fontSize: fieldFont, fontWeight: on ? 'var(--weight-semibold)' : 400 }}>
+              color: on ? 'var(--color-lavender-200)' : 'var(--color-text-secondary)', fontSize: fieldFont, fontWeight: on ? 'var(--weight-semibold)' : 400,
+              ...(on && o.unveil ? unveilOn : {}) }}>
             {o.label}
             {o.hint && <span className="t-caption" style={{ display: 'block', marginTop: 2, color: on ? 'var(--color-lavender-300)' : 'var(--color-text-tertiary)' }}>{o.hint}</span>}
           </button>

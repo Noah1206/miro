@@ -92,12 +92,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </TransitionLink>
       )}
 
-      <div style={{ position: 'relative' }}>
+      {/* 11/3: 컴퓨터에서는 위쪽을 사진 | 이름·소개·시작 버튼 두 칸으로(globals.css .detail-top). 휴대폰은 위아래 그대로. */}
+      <div className="detail-top">
+      <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
         <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
       </div>
 
-      <div className="character-detail-copy" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
+      <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
         <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{c.name}</h1>
         {tagline && <blockquote className="detail-lead-quote" style={{ borderColor: names.palette?.character }}>
           <RichText editorial text={tagline.replace(/([.!?。！？])\s+/g, '$1\n')} names={names} />
@@ -114,6 +116,19 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
           <LikeButton slug={slug} initial={likes} />
         </div>
+
+        {/* n18 — 문. 휴대폰은 고정 하단(내비 위, 2.5.8 / 2.4.11), 컴퓨터는 이 자리에 그대로 선다. */}
+        {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
+            넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
+        <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '32px var(--gutter) calc(10px + env(safe-area-inset-bottom))', background: 'linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0), rgba(var(--color-bg-rgb), 0.8) 40%, var(--color-bg) 75%)' }}>
+          {user
+            ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
+            : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
+        </div>
+      </div>
+      </div>
+
+      <div className="character-detail-copy detail-rest" style={{ padding: '0 var(--gutter)', position: 'relative' }}>
 
         {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
         {c.experienceType === 'reality' && <RealityStrip can={can} />}
@@ -147,15 +162,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <SimilarRow items={similar} />
         </section>
       )}
-
-      {/* n18 — 문. 고정 하단. 내비 위에 올라앉는다 (2.5.8 / 2.4.11). */}
-      {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
-          넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
-      <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '32px var(--gutter) calc(10px + env(safe-area-inset-bottom))', background: 'linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0), rgba(var(--color-bg-rgb), 0.8) 40%, var(--color-bg) 75%)' }}>
-        {user
-          ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
-          : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
-      </div>
     </Page>
   )
 }
