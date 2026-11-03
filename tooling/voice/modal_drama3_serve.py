@@ -238,7 +238,9 @@ class Voices:
                 user_voices.commit()
                 # 미리 듣기를 받아쓰기보다 먼저 시작한다 — 받아쓰기 시간이 기다림에서 빠진다. 문장이 다르면 파일을 지우고 거절(그 미리 듣기는 버림).
                 Speaker().preview.spawn(vid)
-                segments, _ = self.asr.transcribe(f'{d}/ref.wav', language='ko', beam_size=1, vad_filter=True)
+                # 11/3: 파일 경로를 주면 faster-whisper 가 PyAV 로 읽다가 버전 차이(metadata_errors 인자)로 죽는다 — 16kHz 배열로 넘긴다.
+                subprocess.run(['ffmpeg', '-v', 'error', '-i', f'{d}/ref.wav', '-ac', '1', '-ar', '16000', f'{d}/ref16.wav'], check=True)
+                segments, _ = self.asr.transcribe(sf.read(f'{d}/ref16.wav', dtype='float32')[0], language='ko', beam_size=1, vad_filter=True)
                 score = cer(''.join(s.text for s in segments), text)
             if score > MAX_CER:
                 shutil.rmtree(f'{USER_VOICES}/{vid}', ignore_errors=True); user_voices.commit()
