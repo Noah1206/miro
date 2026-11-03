@@ -478,6 +478,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   /* 11/3 요청: 본문은 화면 전체의 가운데. 화면이 좁아 사이드바(펼침 280·접힘 72)에 닿으면 그 오른쪽으로 밀린다(탭 화면과 같은 규칙). */
   .app-shell:has(> aside):not(:has(.nav)) > div:last-child { margin-left: 0; margin-right: 0; }
   .app-shell:has(> aside) .chat-main { max-width: min(860px, calc(100% - var(--side))); margin-left: max(calc((100% - 860px) / 2), var(--side)); margin-right: auto; }
+  /* 11/4: 캐릭터 상세도 사이드바 옆 가운데(채팅방과 같은 규칙) — 안 하면 접힌 사이드바 밑으로 본문 왼쪽이 잘린다. */
+  .app-shell:has(> aside) .character-detail-theme { max-width: min(960px, calc(100% - var(--side))); margin-left: max(calc((100% - 960px) / 2), var(--side)); margin-right: auto; }
   .app-shell:has(> aside) .nav { left: max(calc((100% - 912px) / 2), 304px); right: auto; width: min(912px, calc(100% - 328px)); margin: 0; }
   .app-shell:has(aside[data-collapsed="true"]) .nav { left: max(calc((100% - 912px) / 2), 96px); width: min(912px, calc(100% - 120px)); }
 }
