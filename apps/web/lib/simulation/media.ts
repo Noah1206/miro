@@ -1,12 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import { budgetedImage } from '@/lib/ai/media-budget'
 import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
-import { generateModalImage, modalImageReady, styleFor, toImageTags } from '@/lib/ai/modal-image'
+import { generateModalImage, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
 import { saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   db, characters, characterVisualIdentities, generatedMedia, roleplaySessions, worldStates,
+  messages,
 } from '@miro/db'
 import { buildMediaKey, buildVisualPrompt, type MediaKind, type PhotoContext } from '@miro/domain'
 import { resolveImage } from '@miro/providers'
@@ -95,6 +96,8 @@ export async function getOrGenerate(opts: {
   scene?: { tags: string; couple: boolean }
   /** 같은 장면의 몇 번째 버전인지(4장 묶음) — Modal 경로에서만. */
   seed?: number
+  /** 지금 순간의 장면 글(11/3) — 장면을 고르지 않았을 때 자세·표정·옷·장소를 여기서 읽는다. 호출자가 언베일 원문은 빼고 넘긴다. */
+  moment?: string
 }): Promise<MediaResult> {
   const identity = await activeVisualIdentity(opts.characterId)
   const context = { ...opts.context, visualVersion: identity.version }
@@ -234,8 +237,8 @@ async function modalPhoto(
     const tag = level ? levelTags(level) : null
     // 고른 장면 태그는 LLM 을 거치지 않고 그대로(바뀌지 않게), 외형·장소·세부사항만 영어 태그로 바꾼다.
     // 외형·장소·세부사항(look)은 주인공 바로 뒤로, 고른 장면·수위(tags)는 뒤로 — 외형이 상대 인물에게 섞이지 않게.
-    const look = await toImageTags(source)
-    const tags = [tag?.positive, opts.scene?.tags].filter(Boolean).join(', ')
+    const [look, moment] = await Promise.all([toImageTags(source), !opts.scene && opts.moment ? toMomentTags(opts.moment) : Promise.resolve('')])
+    const tags = [tag?.positive, opts.scene?.tags ?? moment].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
       () => generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple, extraNeg: tag?.negative, seed, refUrl }))
@@ -252,6 +255,23 @@ async function modalPhoto(
     ? await guarded({ userId: opts.usage.userId, kind: 'photo', units, idempotencyKey: `media:${opts.usage.userId}:${cacheKey}` }, generateAndSave)
     : await generateAndSave()
   return { ...saved, cached: false, providerNotice: null }
+}
+
+/**
+ * 지금 순간의 장면 글(11/3) — 최근 사용자 말과 캐릭터의 서술·행동·대사(최대 900자). 사진이 그 순간 맥락대로 나오게.
+ * 언베일 모델이 쓴 원문(is_explicit)은 빼고 넘긴다 — 태그 변환은 상용 모델이 한다(원문이 공급자에게 가지 않게).
+ */
+export async function sceneMoment(sessionId: string): Promise<string> {
+  const rows = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, explicit: messages.isExplicit }).from(messages)
+    .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator']), inArray(messages.kind, ['text'])))
+    .orderBy(desc(messages.createdAt)).limit(4)
+  const lines = rows.reverse().filter(r => !r.explicit).map(r => {
+    if (r.role === 'user') return `사용자: ${r.content}`
+    const blocks = (r.blocks as Array<{ type?: string; text?: string }> | null) ?? []
+    const text = blocks.filter(b => b.type && ['narrative', 'action', 'dialogue'].includes(b.type)).map(b => b.text).filter(Boolean).join(' ')
+    return `장면: ${text || r.content}`
+  })
+  return lines.join('\n').slice(-900)
 }
 
 /** 캐시된 asset 도 Mock 으로 만들어졌다면 그 사실을 계속 알린다. */

@@ -16,3 +16,5 @@
 .search input { flex:1; min-width:0; padding:9px 10px; border:0; border-radius:8px; background:#ffffff0b; color:inherit; font:inherit; font-size:16px; }
 .status { padding:16px 10px; color:#a8a8b0; font-size:13px; }
 @media(max-width:360px) { .row { gap:7px; padding-inline:7px; } .name { max-width:100px; font-size:12px; } .description { font-size:11px; } }
+/* 11/3: '/' 로 열었을 때 방향키로 가리킨 줄. */
+.row[data-active] { background:#ffffff12; }

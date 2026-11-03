@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm'
 import { db, characters, messages, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
 import { loadSession } from '@/lib/simulation/snapshot'
-import { contextFromWorld, getOrGenerate } from '@/lib/simulation/media'
+import { contextFromWorld, sceneMoment, getOrGenerate } from '@/lib/simulation/media'
 import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
 import { unsafeRequest } from '@/lib/ai/local-image'
@@ -68,6 +68,8 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   if (scene?.unveil && !unveil) return { error: msg('언베일 장면은 언베일을 켠 대화방에서만 만들 수 있어요.'), notice: null }
   const picks = Object.fromEntries((Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]).map(k => [k, Number(form.get(k) ?? 0) || 0]))
   const tags = sceneTags(scene, picks)
+  // '지금 대화 그대로'(장면을 안 골랐을 때) — 그 순간의 자세·표정·옷·장소를 사진에 싣는다(11/3 사용자 고정 요구).
+  const moment = scene ? undefined : await sceneMoment(sessionId).catch(() => '') || undefined
   const bundle = form.get('count') === String(PHOTO_PRICE.bundleCount) && modalImageReady()
   // 누를 때마다 새 그림(11/2 사용자: 같은 사진을 무료로 계속 주면 안 된다) — 번호를 매번 새로 뽑아 캐시에 걸리지 않게 하고, 장마다 차감한다.
   const seeds = Array.from({ length: bundle ? PHOTO_PRICE.bundleCount : 1 }, () => randomInt(1, 2_147_483_647))
@@ -84,6 +86,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
       unveil,
       details,
       scene: tags ? { tags, couple: !!scene?.couple } : undefined,
+      moment,
       seed,
     })))
     const done = results.flatMap(r => r.status === 'fulfilled' ? [r.value] : [])

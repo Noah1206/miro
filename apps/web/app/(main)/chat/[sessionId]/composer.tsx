@@ -86,10 +86,12 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
   const [requestId, setRequestId] = useState('')
   const [draft, setDraft] = useState('')
+  // 11/3: 입력칸 맨 앞의 '/명령어' — 띄어쓰기 전까지는 명령어 찾기로 쓴다(라이브러리 목록이 위로 뜬다).
+  const slashQuery = /^\/(\S{0,40})$/.exec(draft)?.[1] ?? null
   const draftNow = useRef(draft)
   draftNow.current = draft
   const [ready, setReady] = useState(false)
-  const hasText = !!draft.trim() || !!command
+  const hasText = (!!draft.trim() && slashQuery === null) || !!command
   const storageKey = `miro:chat-draft:${sessionId}`
   useEffect(() => {
     let input = '', id = crypto.randomUUID()
@@ -210,8 +212,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       <div className={styles.tray}>
         {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} disabled={pending || calendarPending || !ready} />}
         <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-        <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready}
-          onPick={value => { setCommand(value); setRequestId(crypto.randomUUID()) }} />
+        <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
+          onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
       </div>
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
@@ -233,7 +235,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
             placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
             onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && slashQuery !== null) { e.preventDefault(); return } if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
             />
         </div>
         {/* Selected model stays beside the input tools; prices appear only in the selector. */}

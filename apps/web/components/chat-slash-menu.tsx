@@ -22,9 +22,11 @@ const icons = {
 }
 
 /** The slash palette exposes existing room controls and selectable server-owned commands. */
-export function ChatSlashMenu({ commands, messengerHref, disabled, onPick }: {
+export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null }: {
   commands: Array<{ name: string; hint: string }>; messengerHref?: string
   disabled: boolean; onPick: (command: SelectedCommand) => void
+  /** 11/3: 입력칸 맨 앞에 '/' 를 치면 그 뒤 글자(없으면 '') — 라이브러리 목록을 위로 띄우고 이 글자로 거른다. 아니면 null. */
+  typed?: string | null
 }) {
   const t = useT()
   const { openRoomPanel, setPickerOpen } = useRoomControls()
@@ -35,6 +37,7 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick }: {
   const [rows, setRows] = useState<LibraryCommand[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [retry, setRetry] = useState(0)
+  const [active, setActive] = useState(0)
   const root = useRef<HTMLDivElement>(null)
   const trigger = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLDivElement>(null)
@@ -45,6 +48,28 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick }: {
     document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape)
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
   }, [open])
+  // 입력칸에서 '/' 로 시작하면 라이브러리를 그 글자로 바로 연다. '/' 를 지우면 닫는다.
+  const typing = typed !== null
+  const own = typing ? commands.filter(c => c.name.toLowerCase().startsWith((typed ?? '').toLowerCase())) : []
+  useEffect(() => {
+    if (typed === null) { setOpen(false); return }
+    setLibrary(true); setQuery(typed); setActive(0); setOpen(true)
+  }, [typed])
+  // 입력 중에는 초점이 입력칸에 있다 — 방향키로 고르고 Enter 로 적용(보내기보다 먼저 받는다).
+  useEffect(() => {
+    if (!open || !typing) return
+    const keys = (event: KeyboardEvent) => {
+      if (!(event.target instanceof HTMLTextAreaElement) || event.isComposing) return
+      const items = Array.from(panel.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault(); if (items.length) setActive(i => (i + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length)
+      } else if (event.key === 'Enter' && !event.shiftKey && items.length) {
+        event.preventDefault(); event.stopPropagation(); items[Math.min(active, items.length - 1)]?.click()
+      }
+    }
+    document.addEventListener('keydown', keys, true)
+    return () => document.removeEventListener('keydown', keys, true)
+  }, [open, typing, active, rows])
   useEffect(() => {
     if (!open || !library) return
     let active = true
@@ -74,14 +99,17 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick }: {
         event.preventDefault(); items[next]?.focus()
       }}>
       {library ? <>
-        <div className={styles.search}>
+        {own.map((command, i) => <button key={`own-${command.name}`} type="button" role="menuitem" className={styles.row} data-active={i === active || undefined} onClick={() => pick({ name: command.name })}>
+          <span className={styles.slash} aria-hidden>/</span><span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint}</span>
+        </button>)}
+        {!typing && <div className={styles.search}>
           <button type="button" aria-label={t('뒤로')} onClick={() => setLibrary(false)}>‹</button>
           <input aria-label={t('명령어 찾기')} placeholder={t('이름이나 설명으로 찾기')} maxLength={40} value={query} onChange={event => setQuery(event.target.value)} />
-        </div>
+        </div>}
         {failed ? <button type="button" role="menuitem" className={styles.row} onClick={() => setRetry(value => value + 1)}>{t('다시 불러오기')}</button>
           : rows === null ? <p className={styles.status}>{t('불러오는 중…')}</p>
           : rows.length === 0 ? <p className={styles.status}>{t('명령어가 없어요.')}</p>
-          : rows.map(command => <button key={command.id} type="button" role="menuitem" className={styles.row} onClick={() => pick({ name: command.name, sourceId: command.id })}>
+          : rows.map((command, i) => <button key={command.id} type="button" role="menuitem" className={styles.row} data-active={typing && own.length + i === active || undefined} onClick={() => pick({ name: command.name, sourceId: command.id })}>
             {icons.library}<span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint || command.prompt}</span>
           </button>)}
       </> : <>

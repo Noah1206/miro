@@ -34,6 +34,21 @@ export async function toImageTags(text: string): Promise<string> {
   }
 }
 
+const MOMENT_SYSTEM = `You turn the latest moment of a Korean roleplay chat into English Danbooru-style scene tags for an anime illustration of ONE character (the user is not drawn).
+Rules:
+- Output only comma-separated English tags, at most 10, most important first.
+- Cover what is visible right now: the character's pose/action, facial expression, outfit or its state, place, time of day/lighting, one key prop.
+- Use only what the text says or clearly implies. Do not invent new events.
+- The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.). No quality tags or style names.`
+
+/** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). */
+export async function toMomentTags(text: string): Promise<string> {
+  try {
+    const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-moment:v1', maxTokens: 400, schema: Tags, system: MOMENT_SYSTEM, prompt: text })
+    return tags
+  } catch { return '' }
+}
+
 /** PNG 바이트. 첫 장은 GPU 준비로 1~2분 걸릴 수 있다. */
 /** look = 캐릭터 외형 태그(주인공 바로 뒤에 붙는다 — 상대 인물에게 섞이지 않게), tags = 장면·수위. */
 /** refUrl = 캐릭터 대표 사진(공개 버킷) — 얼굴·머리·그림체를 그 사진에 맞춘다(11/2). */
