@@ -82,7 +82,7 @@ export type BuiltContext = {
  * 사용자가 한 단어만 보내도 장면을 펼친다. 이번 턴의 입력 형식과 장면의 긴장은 무게만 바꾼다.
  * 성격·말투·관계·세계관은 이미 프롬프트에 들어 있으므로 모델이 그 맥락에 맞춰 마무리한다.
  */
-const USER_VIEWPOINT = `Use limited second-person POV centered on the user here, not an observer's report. Narration calls the user '당신'; persona names are for direct speech. Ground the authored situation in what reaches the user: sound, distance and visible actions addressed to them. Unfold one change at a time, then leave room to respond. Never invent user actions, thoughts, feelings or bodily reactions; character secrets stay in thought.`
+const USER_VIEWPOINT = `Use limited first-person POV: narration is the user's own experience, written as if the user is living it, not an observer's report. Narration calls the user '나' (내/나를/나에게) and never uses '당신'; persona names are for direct speech. Ground the authored situation in what reaches the user: sound, distance and visible actions addressed to them. Unfold one change at a time, then leave room to respond. Never invent user actions, thoughts, feelings or bodily reactions; character secrets stay in thought.`
 
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''

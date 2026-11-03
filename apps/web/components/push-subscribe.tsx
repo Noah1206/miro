@@ -126,7 +126,8 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
       <PushSheet kind={status === 'ios_install' ? 'ios_install' : status === 'subscribed' ? 'on' : 'denied'} open={guide} onClose={() => { setGuide(false); markPushPromptDone() }} name={name} />
     </>
   )
-  if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed') return null
+  // 11/4 사용자: iPhone '홈 화면에 추가' 안내 줄은 채팅방에 띄우지 않는다.
+  if (status === 'checking' || status === 'unsupported' || status === 'unconfigured' || status === 'subscribed' || status === 'ios_install') return null
   const text: Record<Exclude<Status, 'checking' | 'unsupported' | 'unconfigured' | 'subscribed'>, string> = {
     ios_install: t('iPhone에서는 공유 → 홈 화면에 추가한 뒤 알림을 켜야 {name}의 연락을 받을 수 있어요.', { name }),
     prompt: t('앱을 닫아도 {name}의 연락을 받으려면', { name }),
