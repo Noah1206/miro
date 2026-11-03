@@ -15,7 +15,7 @@ import { blockStream, type TurnStream } from './stream-blocks'
 import { terms } from '@miro/domain'
 import { agencyCommunicationPreferences } from './communication-preferences'
 import { snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
-import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding } from './conversation-repetition'
+import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding, repeatedQuestion } from './conversation-repetition'
 
 /** 먼저 말하는 턴의 대사 지시 — 계획의 결정이 아직 없다. 이 인물이 스스로 고르되, 확정되지 않은 일을 일어난 일로 쓰지 않는다. */
 /** 11/3 실측(Gemini): 대화가 길어지며 말투가 설정보다 거칠어졌다(설정에 없는 비하·한심해하는 속마음). 세기는 설정이 정한다 — 맨 끝에 한 번 더 둔다. */
@@ -226,6 +226,11 @@ export async function runAgencyTurn(opts: {
       const ending = attempt < REGENERATIONS ? repeatedEnding(validated.blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
       if (ending !== null) {
         feedback = `\n마지막 대사(블록 ${ending})가 최근 답변들의 마무리와 같은 당부입니다. 같은 당부·작별로 끝내지 말고 이번 입력에 맞는 다른 행동이나 말로 끝내세요. 반복 마무리(데이터): ${JSON.stringify(validated.blocks[ending]?.text)}`
+        continue
+      }
+      const asked = attempt < REGENERATIONS ? repeatedQuestion(validated.blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
+      if (asked !== null) {
+        feedback = `\n블록 ${asked}의 질문은 최근 답변에서 이미 물은 것과 같은 내용입니다(벌점 [-2]). 다시 묻거나 재촉하지 말고, 이 인물답게 스스로 정해 버리거나 직접 확인하러 움직이거나 다른 화제로 넘어가 장면을 이어 가세요. 반복 질문(데이터): ${JSON.stringify(validated.blocks[asked]?.text)}`
         continue
       }
       validated.relationshipDelta ={ ...settled.relationshipDelta, ...(settled.stage !== snapshot.relationship.stage ? { stage: settled.stage } : {}) }

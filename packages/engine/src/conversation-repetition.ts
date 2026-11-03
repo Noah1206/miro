@@ -65,6 +65,59 @@ export function repeatedEnding(blocks: readonly Block[], recent: readonly Previo
   return hits >= 2 ? at : null
 }
 
+const SENTENCES = /(?<=[.!?。！？…])\s*|\n+/
+const ASK = /몇\s*시|몇\s*분|언제|어디|누구|무엇|뭐(?:야|예요|에요|지|하|를|가)?|왜|어떻게|얼마/
+const isQuestion = (s: string) => /[?？]\s*$/.test(s.trim()) || /(?:니까|나요|가요|래요|ㄹ까|을까|할까|는지)\s*[.?？]?\s*$/.test(s.trim())
+const ownBlocks = (m: Previous, characterName?: string) => (m.blocks?.length ? m.blocks : [{ type: 'dialogue', text: m.content }])
+  .filter(b => !characterName || !b.speaker || b.speaker === characterName)
+
+/**
+ * 말만 바꾼 같은 질문(11/4 벌점 실측: 단답 3턴 연속 "내일 몇 시에 출근합니까?" → "몇 시에 문 열고 나옵니까" → "몇 시 몇 분에 나옵니까").
+ * 문장 비교로는 안 잡힌다 — 같은 의문사(몇 시·언제·어디…)에 핵심 낱말 하나 이상을 최근 3턴의 질문과 공유하면 그 블록 번호. 다시 쓰게만 한다.
+ */
+export function repeatedQuestion(blocks: readonly Block[], recent: readonly Previous[], characterName?: string): number | null {
+  const asked = recent.filter(m => m.role === 'character').slice(-3).flatMap(m => ownBlocks(m, characterName))
+    .filter(b => (b.type ?? 'dialogue') === 'dialogue').flatMap(b => b.text.split(SENTENCES)).filter(isQuestion)
+  if (!asked.length) return null
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i]!
+    if ((b.type ?? 'dialogue') !== 'dialogue' || (characterName && b.speaker && b.speaker !== characterName)) continue
+    for (const q of b.text.split(SENTENCES).filter(isQuestion)) {
+      const w = ASK.exec(q)?.[0]?.replace(/\s/g, '')
+      if (!w) continue
+      const mine = new Set(terms(q))
+      if (asked.some(old => ASK.exec(old)?.[0]?.replace(/\s/g, '') === w && terms(old).some(t => t.length >= 2 && mine.has(t)))) return i
+    }
+  }
+  return null
+}
+
+/** 상투 표현 — 벌점표 [-2]. 들어간 서술·행동 문장은 지운다. */
+const STOCK = /심장이\s*(?:쿵|철렁|덜컥)|숨이\s*멎|눈빛이\s*깊어|입꼬리가?\s*(?:올라|말려|씰룩|희미하게)|느른한\s*(?:미소|호|입꼬리)|가슴이\s*(?:두근|쿵|저릿)|시간이\s*멈춘\s*(?:듯|것)/
+/** 매 턴 되풀이되는 몸짓·소품 낱말 — 최근 턴의 서술·행동에 나온 이 낱말이 또 나오면 그 문장을 지운다. */
+const MOTIF = ['입꼬리', '미소', '눈썹', '눈매', '시선', '한숨', '턱', '손목', '시계', '장갑', '어깨', '입술', '머리카락', '귀끝', '앞머리', '안경', '담배', '넥타이', '소매']
+
+/**
+ * 벌점 문장 지우기(11/4) — 서술(narrative)·행동(action)에서 상투 표현이나 최근 턴마다 되풀이된 몸짓·소품 문장을 뺀다. 대사는 건드리지 않는다.
+ * 블록에 다른 문장이 남을 때만 지우고(빈 블록·말 끊김 방지), 한 블록이 통째로 그 문장뿐이면 그 블록만 뺀다 — 대사가 하나도 없게 되는 경우엔 손대지 않는다.
+ */
+export function trimPenalizedSentences<T extends Block>(blocks: readonly T[], recent: readonly Previous[], characterName?: string): T[] {
+  const prev = recent.filter(m => m.role === 'character').slice(-3).map(m => ownBlocks(m, characterName)
+    .filter(b => b.type === 'narrative' || b.type === 'action').map(b => b.text).join(' '))
+  // 바로 앞 턴에 나왔거나 최근 3턴 중 2턴에 나온 낱말 — 연달아 나오는 것과 한 턴 걸러 되풀이되는 것을 함께 막는다(11/4 실측: 장갑이 한 턴 걸러 6/14턴).
+  const tired = new Set(MOTIF.filter(w => prev.at(-1)?.includes(w) || prev.filter(t => t.includes(w)).length >= 2))
+  const bad = (s: string) => STOCK.test(s) || [...tired].some(w => s.includes(w))
+  const out = blocks.flatMap(b => {
+    if (b.type !== 'narrative' && b.type !== 'action') return [b]
+    const parts = b.text.split(/(?<=[.!?。！？…])\s+/)
+    const kept = parts.filter(s => !bad(s))
+    if (kept.length === parts.length) return [b]
+    return kept.length ? [{ ...b, text: kept.join(' ') }] : []
+  })
+  const hasTalk = (bs: readonly T[]) => bs.some(b => (b.type ?? 'dialogue') === 'dialogue')
+  return out.length && (hasTalk(out) || !hasTalk(blocks)) ? out : [...blocks]
+}
+
 export function conversationVariationDirective(recent: readonly Previous[], characterName?: string): string {
   const turns = recent.filter(m => m.role === 'character').slice(-3)
   if (!turns.length) return ''

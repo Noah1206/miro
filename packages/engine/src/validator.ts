@@ -1,4 +1,5 @@
 import { ensembleNames } from './context'
+import { trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
@@ -72,7 +73,8 @@ function validateBlocks(
   const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name), ...ensembleNames(s.character.personality.secret)])
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 
-  return p.rp.blocks.filter((b) => {
+  // 11/4 벌점 방식: 상투 표현·턴마다 되풀이된 몸짓·소품 문장을 서술·행동에서 지운다(대사는 그대로). 스트리밍과 저장이 같은 결과를 낸다.
+  return trimPenalizedSentences(p.rp.blocks.filter((b) => {
     // 전화 중에는 서술할 화면이 없다. 모드에 맞지 않는 블록은 버린다.
     if (!allowed.has(b.type)) {
       issues.push({ field: 'rp.blocks', reason: `${b.type} not allowed in ${s.mode ?? 'chat'}` })
@@ -99,7 +101,7 @@ function validateBlocks(
       }
     }
     return true
-  })
+  }), s.recentMessages ?? [], s.character.identity.name)
 }
 
 function validateWorldDelta(
