@@ -23,6 +23,25 @@ function availableModels(adult: boolean) {
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
   return pinned ? models.sort((a, b) => Number(b.id === pinned) - Number(a.id === pinned)) : models
 }
+/**
+ * 11/3: 일반·언베일 방의 고르는 목록을 같게 — 목록과 고른 값(choice id)은 일반 레지스트리 기준이고,
+ * 언베일 방에서는 같은 모델의 언베일 쪽 짝(OpenRouter 경유 shared-*, 또는 언베일 자체 모델)으로 보낸다.
+ * key = 화면·저장에 쓰는 id(두 방이 같다), model = 실제로 부를 모델.
+ */
+function choiceModels(adult: boolean): Array<{ key: string; model: ModelDefinition }> {
+  const main = availableModels(false)
+  if (!adult) return main.map(model => ({ key: model.id, model }))
+  const own = availableModels(true)
+  const byId = new Map(own.map(m => [m.id, m]))
+  const paired = main.flatMap(m => {
+    const twin = m.id.startsWith('shared-') ? byId.get(m.id.slice('shared-'.length)) : byId.get(`shared-${m.id}`)
+    return twin ? [{ key: m.id, model: twin }] : []
+  })
+  // 일반 목록에 짝이 없는 언베일 모델(예비 제외)은 뒤에 — 일반 키가 없으면 그 모델 id 그대로.
+  const covered = new Set(paired.map(p => p.model.id))
+  const rest = own.filter(m => !covered.has(m.id) && !paired.some(p => displayName(p.model.providerModelId) === displayName(m.providerModelId))).map(model => ({ key: model.id, model }))
+  return paired.length ? [...paired, ...rest] : rest
+}
 function choiceId(id: string, length: ChatLength) { return `model:${encodeURIComponent(id)}:${length}` }
 function displayName(id: string) {
   // OpenRouter 이름(언베일 방, 11/3): anthropic/claude-sonnet-5.5 · google/gemini-3.8-flash → 직결 이름과 같게.
@@ -56,10 +75,10 @@ function chatQuote(model: ModelDefinition, output: number, pricing: ReturnType<t
 export async function chatModelOptions(_userId: string, adult = false) {
   try {
     const pricing = tokenPricing()
-    const choices: ChatModelChoice[] = availableModels(adult).flatMap(model => LENGTHS.map(length => {
+    const choices: ChatModelChoice[] = choiceModels(adult).flatMap(({ key, model }) => LENGTHS.map(length => {
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
-      return { id: choiceId(model.id, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
+      return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
         maximumTokens: quote.maximumTokens, maxOutputTokens: quote.maxOutputTokens }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
@@ -67,12 +86,13 @@ export async function chatModelOptions(_userId: string, adult = false) {
 }
 /** Legacy product ids still resolve, but all dialogue now draws from the token wallet. */
 export async function resolveChatModel(_userId: string, choice: string, adult = false) {
-  const models = availableModels(adult)
-  const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
-  const first = (pinned ? models.find(m => m.id === pinned) : undefined) ?? models[0]
+  const models = choiceModels(adult)
+  // 기본 모델은 두 방이 같다(11/3) — 일반 방의 지정 모델(MIRO_CHAT_MODEL_ID)이 언베일 방에서도 첫 값.
+  const pinned = process.env.MIRO_CHAT_MODEL_ID
+  const first = ((pinned ? models.find(m => m.key === pinned) : undefined) ?? models[0])?.model
   let model = first, length: ChatLength = choice === 'pro' ? 'long' : 'scene'
   if (choice !== 'miro' && choice !== 'pro') {
-    const match = models.flatMap(m => LENGTHS.map(l => ({ m, l, id: choiceId(m.id, l) }))).find(c => c.id === choice)
+    const match = models.flatMap(m => LENGTHS.map(l => ({ m: m.model, l, id: choiceId(m.key, l) }))).find(c => c.id === choice)
     if (!match) throw new Error('invalid chat model')
     model = match.m; length = match.l
   }

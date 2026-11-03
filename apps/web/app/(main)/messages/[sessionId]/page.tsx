@@ -47,7 +47,7 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   const initialModel = modelOptions.choices.find(choice => choice.id === lastChoice)?.id ?? modelOptions.choices[0]?.id
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={initialModel} storageKey={`miro:dm-model:${sessionId}:${loaded.adult.since !== null}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={initialModel} storageKey={`miro:dm-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><MessengerDelivery key={sessionId} sessionId={sessionId} initial={items}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout`} style={{ outline: 'none', background: 'var(--color-bg)' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />

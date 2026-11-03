@@ -1,5 +1,6 @@
 import { feature } from '@miro/config'
 import { homeUnveilEnabled } from '@/lib/home-mode'
+import { inlineMirrorEnabled } from '@/lib/simulation/inline-mirror'
 import { and, eq, isNull, isNotNull, lt, sql } from 'drizzle-orm'
 import { db, realityContacts, roleplaySessions } from '@miro/db'
 import { purgeBefore } from '@miro/domain'
@@ -39,8 +40,8 @@ export async function unreadContactCount(userId: string): Promise<number> {
   const unveil = await homeUnveilEnabled(userId)
   const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(realityContacts)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
-    .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent'), unveil ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)))
-  if (unveil) return row?.n ?? 0
+    .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent'), unveil && !inlineMirrorEnabled() ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)))
+  if (unveil && !inlineMirrorEnabled()) return row?.n ?? 0
   const [story] = await db.execute<{ n: number }>(sql`
     SELECT count(*)::int AS n FROM story_messages m JOIN story_runs r ON r.id = m.run_id
     WHERE r.user_id = ${userId}::uuid AND r.status <> 'archived'
@@ -99,7 +100,7 @@ export async function listSessions(userId: string, options: {
           ${channelMessage}
         ORDER BY m.created_at DESC,m.id DESC LIMIT 1
       ) latest ON true
-      WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL AND (r.adult_since IS NOT NULL) = ${unveil}
+      WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL AND (r.adult_since IS NOT NULL) = ${unveil && !inlineMirrorEnabled()}
         ${options.channel==='dm'?sql`AND c.experience_type='reality'`:sql``}
       UNION ALL
       SELECT latest.id, person->>'name', s.slug || '-' || (person->>'key'), person->>'image',

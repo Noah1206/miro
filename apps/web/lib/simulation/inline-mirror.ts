@@ -4,13 +4,14 @@ import { BRIDGE_SYSTEM, EXPLICIT, bridgePrompt, sanitizeBridge } from '@/lib/sim
  * 인라인 세션 미러링(10/27). 한 방 안에서 언베일 모델이 쓴 원문(is_explicit)은 화면에는 그대로 두고,
  * 상용 모델(Claude·Gemini)로 가는 대화 기록에서는 줄거리 요약으로 바꿔 보낸다 — 원문은 공급자에게 가지 않는다.
  * 요약은 b33d86de 의 다리와 같은 프롬프트·단어 검사를 쓴다. 검사를 못 넘으면 고정 문장으로 대신한다(fail closed).
- * 켜는 스위치: MIRO_INLINE_MIRROR=1 (꺼져 있으면 예전처럼 방 단위로만 분리).
+ * 스위치: 기본 켜짐(11/3), MIRO_INLINE_MIRROR=0 이면 예전처럼 방 단위로만 분리.
  */
 export type HistoryMessage = { id?: string; role: string; content: string; isExplicit?: boolean }
 
 export const MASKED_FALLBACK = '두 사람은 이어서 사적인 시간을 보냈고, 관계가 한층 가까워졌다.'
 
-export const inlineMirrorEnabled = () => process.env.MIRO_INLINE_MIRROR === '1'
+// 11/3 사용자 결정: 일반·언베일을 한 방으로 — 기본으로 켠다. 끄려면 MIRO_INLINE_MIRROR=0(예전처럼 방 단위 분리).
+export const inlineMirrorEnabled = () => process.env.MIRO_INLINE_MIRROR !== '0'
 
 /**
  * 이번 턴을 언베일 모델로 보낼까. gateAllowed(인증·동의·캐릭터 19+·페르소나·언베일 켜짐)가 먼저고,

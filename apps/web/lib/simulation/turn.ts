@@ -102,7 +102,9 @@ async function executeTurn(opts: {
     const boundary = await applyContactBoundaryRequest(sessionId, userId, input, opts.requestId, now,
       loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) ?? loaded.contactBoundary
     loaded.snapshot.contactBoundary = boundary
-    const model = await measured('chat.model', () => resolveChatModel(userId, loaded.adult.turn && loaded.adult.since === null && opts.chatModel !== 'pro' ? 'miro' : opts.chatModel ?? 'miro', loaded.adult.turn)).catch(() => null)
+    // 11/3: 언베일 턴도 고른 모델 그대로(언베일 쪽 짝으로 보낸다). 짝이 없으면 기본 모델로.
+    const model = await measured('chat.model', () => resolveChatModel(userId, opts.chatModel ?? 'miro', loaded.adult.turn)
+      .catch(() => loaded.adult.turn ? resolveChatModel(userId, 'miro', true) : Promise.reject(new Error('invalid chat model')))).catch(() => null)
     if (!model) return { ok: false, reason: 'model_unavailable' }
     const dialogueModelId = model.modelId
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.

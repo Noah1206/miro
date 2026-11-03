@@ -7,6 +7,7 @@ import { db, characters, messages, relationships, roleplaySessions, worldStates,
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { defaultSessionPolicy } from '@miro/config'
 import { inWrittenOrder } from './commit'
+import { inlineMirrorEnabled } from './inline-mirror'
 
 /** 시작 관계 기본값. 캐릭터는 처음부터 사용자에게 호감을 보이지 않는다 (명세서 4.1). */
 const DEFAULT_START = {
@@ -50,14 +51,17 @@ export async function createRoleplaySession(
     const gate = await adultModeGateFor(userId, character.characterId)
     if (!gate.allowed) throw new Error(`UNVEIL_UNAVAILABLE:${gate.next}`)
   }
-  const modeCondition = unveil ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)
+  // 11/3 사용자 결정: 언베일도 같은 방에서 이어진다(인라인 미러링 — 턴마다 언베일 모델로 보낼지 정하고, 상용 모델엔 원문 대신 줄거리).
+  // 미러링을 끈 배포(MIRO_INLINE_MIRROR=0)만 예전처럼 언베일 방을 따로 둔다.
+  const separate = unveil && !inlineMirrorEnabled()
+  const modeCondition = separate ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)
   const existing = await db.select({ id: roleplaySessions.id }).from(roleplaySessions)
     .where(and(
       eq(roleplaySessions.userId, userId), eq(roleplaySessions.characterId, character.characterId),
       eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
     )).limit(1)
   // 재진입은 저장된 상태 위에서 이어진다. 새 세션을 만들지 않는다.
-  if (existing[0] && unveil) await db.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, existing[0].id))
+  if (existing[0] && separate) await db.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, existing[0].id))
   if (existing[0]) return { sessionId: existing[0].id, characterId: character.characterId, isOfficial: character.isOfficial, created: false }
 
   const result = await db.transaction(async (tx) => {
@@ -68,7 +72,7 @@ export async function createRoleplaySession(
       eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
     )).limit(1)
     if (active) {
-      if (unveil) await tx.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, active.id))
+      if (separate) await tx.update(roleplaySessions).set({ adultMode: true, adultLevel: 'explicit' }).where(eq(roleplaySessions.id, active.id))
       return { sessionId: active.id, created: false, revisionId: undefined }
     }
 
@@ -93,7 +97,7 @@ export async function createRoleplaySession(
     const [session] = await tx.insert(roleplaySessions).values({
       userId, characterId: character.characterId, worldId: starting.worldId, policyVersion,
       openingScene: scene ? opts.scene : null,
-      ...(unveil ? { adultMode: true, adultSince: new Date(), adultLevel: 'explicit' as const } : {}),
+      ...(separate ? { adultMode: true, adultSince: new Date(), adultLevel: 'explicit' as const } : {}),
     }).returning({ id: roleplaySessions.id })
     const id = session!.id
     // 시작 시점의 세계 상태. 이후 턴마다 초기화되지 않고 누적된다.
