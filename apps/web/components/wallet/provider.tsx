@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { Button, Notice, Sheet, TransitionLink, useToast } from '@/components/ui'
-import { readWallet, purchaseCredits, requestDepositConfirmation } from '@/app/(main)/recharge/wallet-actions'
+import { readWallet, purchaseCredits, requestDepositConfirmation, cancelPendingOrder } from '@/app/(main)/recharge/wallet-actions'
 import { TransferActions } from '@/app/(main)/recharge/transfer-actions'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
 import styles from './wallet.module.css'
@@ -179,6 +179,21 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
     finally {if(token===epoch.current){locked.current=false;setChecking(false)}}
   }
 
+  /** 11/3: 대기 주문을 취소하고 금액 고르기로 돌아간다 — 고른 금액을 바꿀 길이 없었다. */
+  async function chooseAgain() {
+    const order = wallet?.order
+    if (!order || locked.current) return
+    const token = epoch.current
+    locked.current = true; setState('loading'); setError(null)
+    try {
+      const result = await cancelPendingOrder(order.id)
+      if (token !== epoch.current) return
+      if (result.ok) { purchase.current = null; depositRequest.current = null; sync(result.wallet); setStage('catalog'); setState('idle') }
+      else { setError(result.error); setState('idle') }
+    } catch { if (token === epoch.current) { setError(msg('주문을 바꾸지 못했어요. 다시 시도해 주세요.')); setState('idle') } }
+    finally { if (token === epoch.current) locked.current = false }
+  }
+
   async function retryAction() {
     if (locked.current) return
     const request = pending.current
@@ -240,6 +255,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
           <div className={styles.actions}>
             <Button variant="primary" full data-confirm-deposit onClick={() => order.status==='awaiting'?void requestDeposit():void refresh()} status={state === 'loading' || checking ? 'loading' : 'idle'}
               disabled={state==='loading'||checking}>{t(order.status==='awaiting'?'입금 확인 요청':'입금 확인하기')}</Button>
+            {order.status === 'awaiting' && <Button full variant="ghost" size="sm" data-choose-again onClick={() => void chooseAgain()} disabled={state==='loading'||checking} style={{ color: 'var(--color-text-primary)' }}>{t('다른 금액 고르기')}</Button>}
             <Button full variant="ghost" size="sm" onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </div>
         </section> : done ? <>

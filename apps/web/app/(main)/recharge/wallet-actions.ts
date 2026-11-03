@@ -1,6 +1,6 @@
 'use server'
 import { requireUser } from '@/lib/auth'
-import { createBankOrder, OrderPendingError } from '@/lib/payments/bank-transfer'
+import { cancelBankOrder, createBankOrder, OrderPendingError } from '@/lib/payments/bank-transfer'
 import { walletHistory, walletSnapshot } from '@/lib/wallet/service'
 import { observe } from '@/lib/observe'
 import { msg } from '@/lib/i18n'
@@ -32,6 +32,15 @@ export async function requestDepositConfirmation(orderId:string, requestId:strin
     const result=await requestBankDeposit(user.id,orderId,requestId)
     return {ok:true as const,sent:result.sent,wallet:await walletSnapshot(user.id,orderId)}
   } catch { return {ok:false as const,error:msg('입금 확인 요청을 보내지 못했어요. 다시 시도해 주세요.')} }
+}
+
+/** 대기 주문을 취소하고 금액을 다시 고른다(11/3). 입금 확인을 요청한 주문은 바꿀 수 없다. */
+export async function cancelPendingOrder(orderId: string) {
+  const user = await requireUser()
+  if (!UUID.test(orderId)) return { ok: false as const, error: msg('주문 정보를 확인해 주세요.') }
+  const result = await cancelBankOrder(user.id, orderId)
+  if (result === 'requested') return { ok: false as const, error: msg('입금 확인을 요청한 주문은 바꿀 수 없어요. 운영자 확인을 기다려 주세요.') }
+  return { ok: true as const, wallet: await walletSnapshot(user.id) }
 }
 
 /** Browser supplies identity only. Catalog prices and settlement remain server-owned. */

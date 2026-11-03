@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm'
-import { db, bankTransferOrders } from '@miro/db'
+import { db, bankTelegramRequests, bankTransferOrders } from '@miro/db'
 import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, rechargeProduct } from '@miro/config'
 import { observe } from '@/lib/observe'
 import { applyPaymentEvent } from './service'
@@ -90,6 +90,24 @@ export async function createBankOrder(opts: {
     if (String((e as { code?: string }).code) === '23505') throw new OrderPendingError('ORDER_ALREADY_PENDING')
     throw e
   }
+}
+
+/**
+ * 대기 주문 취소(11/3) — 금액을 다시 고르려는 사용자용. 입금 확인을 이미 요청한 주문은 돈이 오갔을 수 있어 막는다.
+ * 상태 칸에 '취소'가 없어 만료(expired)로 닫고 note 에 남긴다 — 새 주문을 바로 넣을 수 있다.
+ */
+export async function cancelBankOrder(userId: string, orderId: string): Promise<'cancelled' | 'requested' | 'not_pending'> {
+  return db.transaction(async tx => {
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${'bank-order:' + userId}))`)
+    const [order] = await tx.select({ id: bankTransferOrders.id, status: bankTransferOrders.status }).from(bankTransferOrders)
+      .where(and(eq(bankTransferOrders.id, orderId), eq(bankTransferOrders.userId, userId))).limit(1).for('update')
+    if (!order || order.status !== 'awaiting') return 'not_pending'
+    const [asked] = await tx.select({ id: bankTelegramRequests.id }).from(bankTelegramRequests).where(eq(bankTelegramRequests.orderId, orderId)).limit(1)
+    if (asked) return 'requested'
+    await tx.update(bankTransferOrders).set({ status: 'expired', note: 'user_cancelled' }).where(eq(bankTransferOrders.id, orderId))
+    observe('bank_order.user_cancelled', { userId, orderId })
+    return 'cancelled'
+  })
 }
 
 /** 이 사용자의 대기 주문. 없으면 null. */
