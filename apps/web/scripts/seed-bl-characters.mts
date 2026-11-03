@@ -25,15 +25,21 @@ import { MALE_CHARACTERS_A } from './male-characters-a.data.mts'
 import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mts'
 import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
-import { MALE_BODY, MALE_PUBLIC, MALE_START } from './male-characters-public.data.mts'
+import { MALE_BODY, MALE_INTRO, MALE_PUBLIC, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
 // 11/3 남성향 12명: 화면엔 짧은 소개 + 상세정보(키·몸무게·쓰리사이즈), 원래 긴 소개는 비공개 설정 맨 앞으로(AI 는 그대로 읽는다).
 // 수치는 사진 생성용 외형(bodyProfile.detail)에도 붙인다.
 function withMalePublic(s: Seed): Seed {
   const intro = MALE_PUBLIC[s.slug], body = MALE_BODY[s.slug]
   if (!intro) return s
   const stats = body && `상세정보${body.who ? ` (${body.who})` : ''}\n${s.visual.bodyProfile.height} · ${body.kg}kg\n쓰리사이즈 B${body.b}/W${body.w}/H${body.h}cm · ${body.cup}컵`
-  const start = MALE_START[s.slug]
-  return { ...s, personality: stats ? `${intro}\n\n${stats}` : intro, startingContext: start ?? s.startingContext,
+  const start = MALE_START[s.slug], scenes = MALE_INTRO[s.slug]
+  // 장면마다 서술 하나 + 대사 하나. 첫 줄은 원래 첫 줄의 장면 정보(시각·장소·상황)를 그대로 잇는다. 말투 예시 문답은 뺀다.
+  const sampleDialogue = scenes ? Object.entries(scenes).flatMap(([scene, [narration, line]]) => {
+    const first = s.sampleDialogue.find(d => d.purpose === 'intro' && d.scene === scene)
+    if (!first) throw new Error(`${s.name}: unknown scene ${scene}`)
+    return [{ ...first, role: 'narrator' as const, text: narration }, { role: 'character' as const, purpose: 'intro' as const, scene, text: line }]
+  }) : s.sampleDialogue
+  return { ...s, sampleDialogue, speechStyle: MALE_SPEECH[s.slug] ?? s.speechStyle, personality: stats ? `${intro}\n\n${stats}` : intro, startingContext: start ?? s.startingContext,
     secret: `[상세 설정]\n${s.personality}\n\n${start ? `[시작 상황 상세]\n${s.startingContext}\n\n` : ''}${s.secret}`,
     visual: body ? { ...s.visual, bodyProfile: { ...s.visual.bodyProfile, detail: `${s.visual.bodyProfile.detail}, B${body.b}/W${body.w}/H${body.h}cm ${body.cup}컵` } } : s.visual }
 }
