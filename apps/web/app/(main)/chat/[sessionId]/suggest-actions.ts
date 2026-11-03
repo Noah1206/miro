@@ -17,22 +17,24 @@ const SYSTEM = `너는 롤플레이 채팅에서 사용자(유저)가 다음에 
 - 후보 3개. 서로 방향이 달라야 한다(예: 장난스럽게 / 진지하게 / 대담하게). 같은 말의 바꿔 쓰기 금지.
 - 각 후보: say = 유저가 소리 내어 하는 짧은 대사(따옴표 없이, 40자 이내), act = 유저의 짧은 행동·시선 묘사(주어 없이 과거형, 40자 이내, 예: "방 문틈으로 그 모습을 멍하니 바라보았다").
 - 바로 앞 캐릭터의 말과 지금 장면에 자연스럽게 이어진다. 유저 페르소나가 있으면 그 사람답게.
-- 캐릭터의 대사·속마음은 쓰지 않는다. 설명·번호·이모지 없이. 최근 대화와 같은 언어로 쓴다.`
+- 캐릭터의 대사·속마음은 쓰지 않는다. 설명·번호·이모지 없이. 최근 대화와 같은 언어로 쓴다.
+- 답은 반드시 이 모양의 JSON 객체 하나: {"options":[{"say":"…","act":"…"},{"say":"…","act":"…"},{"say":"…","act":"…"}]} (배열만 내지 않는다)`
 
-/** 추천 답변(11/3, 제타식) — 최근 대화로 유저 다음 말 후보 3개. 차감 없음(보조 모델). 언베일이 켜진 방은 성인 모델로. */
+/** 추천 답변(11/3, 제타식) — 최근 대화(빠르게 나오도록 6줄·줄당 350자만)로 유저 다음 말 후보 3개. 차감 없음(보조 모델). 언베일이 켜진 방은 성인 모델로. */
 export async function suggestReplies(sessionId: string): Promise<{ options: Suggestion[] } | { error: string }> {
   const user = await requireUser()
-  const loaded = await loadSession(sessionId, user.id, '', { view: true })
+  // 방 확인과 최근 대화를 한 바퀴에 읽는다 — 대화는 방 주인이 확인된 뒤에만 쓴다.
+  const [loaded, rows] = await Promise.all([loadSession(sessionId, user.id, '', { view: true }),
+    db.select({ role: messages.role, content: messages.content }).from(messages)
+      .where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'text'))).orderBy(desc(messages.turnIndex), desc(messages.createdAt)).limit(6)])
   if (!loaded || loaded.restricted) return { error: msg('대화를 찾을 수 없습니다.') }
-  const rows = await db.select({ role: messages.role, content: messages.content }).from(messages)
-    .where(and(eq(messages.sessionId, sessionId), eq(messages.kind, 'text'))).orderBy(desc(messages.turnIndex), desc(messages.createdAt)).limit(12)
   const who = (r: string) => (r === 'user' ? '유저' : r === 'narrator' ? '서술' : loaded.characterName)
-  const recent = rows.reverse().map(r => `${who(r.role)}: ${r.content.slice(0, 500)}`).join('\n')
+  const recent = rows.reverse().map(r => `${who(r.role)}: ${r.content.slice(0, 350)}`).join('\n')
   const persona = loaded.snapshot.userPersona
   const adult = (await adultModeGateFor(user.id, loaded.characterId, sessionId)).allowed
   const llm = auxiliaryLLM(loaded.characterName, { userId: user.id, sessionId, requestId: randomUUID(), workload: 'interactive', origin: 'chat:suggest', adult })
   try {
-    const { options } = await llm.generateStructured({ task: 'semantic_event', promptVersion: 'suggest-replies:v1', maxTokens: 500, schema: Out, system: SYSTEM,
+    const { options } = await llm.generateStructured({ task: 'semantic_event', promptVersion: 'suggest-replies:v2', maxTokens: 300, schema: Out, system: SYSTEM,
       prompt: `캐릭터: ${loaded.characterName}\n${persona ? `유저 페르소나: ${persona.name}${persona.description ? ` — ${persona.description}` : ''}\n` : ''}\n최근 대화:\n${recent || '(아직 없음)'}` })
     return { options: options.map(o => ({ say: o.say.replace(/^["“]|["”]$/g, '').trim(), act: o.act.trim() })).filter(o => o.say || o.act) }
   } catch {

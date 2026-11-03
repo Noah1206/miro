@@ -9,8 +9,7 @@ import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
 import { PersonaPicker } from './persona-picker'
-import { SuggestButton, SuggestList } from './suggest-replies'
-import type { Suggestion } from './suggest-actions'
+import { SuggestButton, SuggestList, type SuggestState } from './suggest-replies'
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
@@ -44,7 +43,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
   // 추천 답변(11/3) — 후보 3개와 실패 문구.
-  const [suggest, setSuggest] = useState<Suggestion[] | null>(null)
+  const [suggest, setSuggest] = useState<SuggestState>(null)
   const [suggestError, setSuggestError] = useState('')
   const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
@@ -216,7 +215,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </motion.p>
         )}
       </AnimatePresence>
-      {suggest && <SuggestList options={suggest} onClose={() => setSuggest(null)} onPick={(text, send) => {
+      {suggest && <SuggestList state={suggest} onClose={() => setSuggest(null)} onPick={(text, send) => {
         setDraft(text); setRequestId(crypto.randomUUID()); setSuggest(null)
         if (send) setTimeout(() => ref.current?.requestSubmit(), 0); else ta.current?.focus()
       }} />}
@@ -228,7 +227,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
           onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
           onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-        <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} onReady={r => { if ('error' in r) { setSuggestError(r.error); setSuggest(null) } else { setSuggestError(''); setSuggest(r.options) } }} />
+        <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} loading={suggest === 'loading'} onChange={setSuggest} onError={setSuggestError} />
       </div>
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
