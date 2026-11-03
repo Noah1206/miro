@@ -4,7 +4,7 @@ import { msg } from '@/lib/i18n'
 export function selectedChatChoice(choices: ChatModelChoice[], id: string) {
   return choices.find(choice => choice.id === id) ?? choices.find(choice => choice.length === (id === 'pro' ? 'long' : 'scene')) ?? choices[0]
 }
-export function chatModelFamily(choice: ChatModelChoice) { return choice.id.replace(/:(scene|long)$/, '') }
+export function chatModelFamily(choice: ChatModelChoice) { return choice.id.replace(/:(scene|long|saga)$/, '') }
 
 /** Display metadata never replaces the server's registry ID or price quote. */
 export function modelPresentation(choice: ChatModelChoice) {
@@ -13,14 +13,15 @@ export function modelPresentation(choice: ChatModelChoice) {
     const family = /haiku|sonnet|opus|fable/i.exec(name)?.[0]
     const version = /\d+(?:[.-]\d+)*/.exec(name)?.[0].replace(/-/g, '.') ?? ''
     return { provider: 'Anthropic', icon: 'claude', label: family ? `${family.charAt(0).toUpperCase()}${family.slice(1).toLowerCase()} ${version}`.trim() : name,
-      description: /haiku/i.test(name) ? msg('빠른 응답을 위한 경량 모델') : /sonnet/i.test(name) ? msg('속도와 지능을 균형 있게 제공하는 모델') : msg('복잡한 작업과 깊이 있는 추론에 집중') }
+      description: /haiku/i.test(name) ? msg('빠른 응답을 위한 경량 모델') : /sonnet/i.test(name) ? msg('속도와 서사력을 균형 있게 갖춘 모델') : /opus/i.test(name) ? msg('서사력과 몰입감이 가장 뛰어난 플래그십 모델') : msg('복잡한 작업과 깊이 있는 추론에 집중') }
   }
   if (/deepseek/i.test(name)) return { provider: 'DeepSeek', icon: 'deepseek', label: name, description: msg('대화용 AI 모델') }
   if (/gemini/i.test(name) || choice.provider === 'gemini') {
     const version = /\d+(?:\.\d+)*/.exec(name)?.[0] ?? ''
     const family = /argon|flash-lite|flash|pro/i.exec(name)?.[0] ?? ''
     return { provider: 'Google', icon: 'gemini', label: `${family.charAt(0).toUpperCase()}${family.slice(1)} ${version}`.trim(),
-      description: /flash/i.test(name) ? msg('빠른 응답을 위한 경량 모델') : msg('복잡한 작업과 깊이 있는 추론에 집중') }
+      description: /argon/i.test(name) ? msg('장문의 대화에 적합한 고성능 모델') : /flash-lite/i.test(name) ? msg('빠른 응답을 위한 경량 모델')
+        : /3\.8/.test(name) && /flash/i.test(name) ? msg('표현력과 몰입감이 좋은 최신 Flash 모델') : /flash/i.test(name) ? msg('자연스러운 대화에 맞춘 빠른 Flash 모델') : msg('복잡한 작업과 깊이 있는 추론에 집중') }
   }
   if (/gpt|openai|o[134]-/i.test(name) || choice.provider === 'openai') {
     const family = /astra|sol|terra|luna/i.exec(name)?.[0]

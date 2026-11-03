@@ -74,7 +74,7 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
     const hasBackup = definitions.some(d => d.fallback === true && d.enabled !== false && providerFromEnv(String(d.provider), String(d.providerModelId)))
     if (!hasBackup && process.env.OPENAI_API_KEY && !definitions.some(d => d.id === BACKUP_MODEL.id)) definitions.push(BACKUP_MODEL)
     // 키가 없는 예비는 뺀다 — 예비 하나 때문에 모든 호출이 'credentials missing' 으로 멈추지 않게.
-    registry = new ModelRegistry(definitions.filter(d => d.fallback !== true || providerFromEnv(String(d.provider), String(d.providerModelId))))
+    registry = new ModelRegistry([...definitions.filter(d => d.fallback !== true || providerFromEnv(String(d.provider), String(d.providerModelId))), ...sharedChatModels('main')])
   } else {
     const names = [process.env.AI_PROVIDER, process.env.AI_FALLBACK_PROVIDER].filter((n): n is string => !!n && n !== 'mock')
     const definitions = names.map((name, i) => {
@@ -101,6 +101,29 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
   return { registry, resolveModel }
 }
 /**
+ * 두 방의 모델 목록을 같게(11/3 사용자: "언베일이랑 일반이랑 똑같이") — 상대 레지스트리의 대화 모델을 OpenRouter 로 빌려 온다.
+ * 언베일 방이 빌리는 Claude·Gemini 도 OpenRouter 로만 간다(성인 대화는 메인 키로 보내지 않는다, 10/2). 일반 방의 DeepSeek 은 원래 OpenRouter.
+ * 빌린 모델은 예비+직접 선택 — 기본 모델을 바꾸지 않고, 공급자 장애 때 마지막 순번 예비가 될 뿐이다.
+ * ponytail: 가격은 원래 레지스트리 값을 쓴다(OpenRouter Gemini 는 약 10% 비쌈). 어긋나면 상대 레지스트리에 OpenRouter 항목을 직접 적어 덮는다.
+ */
+function sharedChatModels(into: 'main' | 'adult'): object[] {
+  const raw = process.env[into === 'adult' ? 'MIRO_MODEL_REGISTRY' : 'MIRO_ADULT_MODEL_REGISTRY']
+  if (!raw || !process.env.OPENROUTER_API_KEY) return []
+  const vendor: Record<string, string> = { anthropic: 'anthropic', gemini: 'google', openai: 'openai', openrouter: '' }
+  return (JSON.parse(raw) as Array<Record<string, unknown>>).flatMap(d => {
+    const caps = (d.capabilities as string[] | undefined) ?? (into === 'main' ? [...AI_TASKS] : [])
+    if (d.enabled === false || (d.fallback === true && d.chatSelectable !== true) || !caps.includes('dialogue') || d.inputCost === undefined || d.outputCost === undefined) return []
+    const prefix = vendor[String(d.provider)]
+    if (prefix === undefined) return []
+    // claude-sonnet-5-5 → anthropic/claude-sonnet-5.5 (OpenRouter 는 버전을 점으로 쓴다)
+    const model = prefix ? `${prefix}/${String(d.providerModelId).replace(/-(\d+)-(\d+)$/, '-$1.$2')}` : String(d.providerModelId)
+    return [{ id: `shared-${String(d.id)}`, provider: 'openrouter', providerModelId: model, tier: 'standard', capabilities: ['dialogue'],
+      inputCost: d.inputCost, outputCost: d.outputCost, maxContextTokens: d.maxContextTokens ?? 128_000, maxOutputTokens: d.maxOutputTokens ?? 16_384,
+      fallback: true, chatSelectable: true }]
+  })
+}
+
+/**
  * 성인 모드 대화방 전용 모델(10/2). 미로 메인 키(Gemini·예비 GPT)와 섞지 않는다 — 성인 대화가 메인 키로 가면 공급자 정책 위반으로 미로 전체가 멈출 수 있다.
  * MIRO_ADULT_MODEL_REGISTRY 는 MIRO_MODEL_REGISTRY 와 같은 모양(JSON 배열, 가격 필수). capabilities·tier 를 비우면 모든 일·standard.
  * 예: [{"id":"adult","provider":"openrouter","providerModelId":"<모델>","inputCost":0.5,"outputCost":2,"maxContextTokens":128000,"maxOutputTokens":4096}]
@@ -108,7 +131,7 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
 export function adultRegistry(): ModelRegistry | null {
   if (!process.env.MIRO_ADULT_MODEL_REGISTRY) return null
   const definitions = (JSON.parse(process.env.MIRO_ADULT_MODEL_REGISTRY) as object[]).map(d => ({ capabilities: [...AI_TASKS], tier: 'standard', ...d }))
-  const registry = new ModelRegistry(definitions)
+  const registry = new ModelRegistry([...definitions, ...sharedChatModels('adult')])
   const enabled = registry.models.filter(m => m.enabled)
   return enabled.some(m => m.capabilities.includes('dialogue'))
     && enabled.every(m => m.provider !== 'mock' && m.inputCost !== undefined && m.outputCost !== undefined && providerFromEnv(m.provider, m.providerModelId)) ? registry : null

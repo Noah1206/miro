@@ -16,12 +16,15 @@ function availableModels(adult: boolean) {
   // A ready backup remains selectable when no primary is available.
   // Otherwise backups keep their existing role and never displace a primary model.
   const regular = candidates.filter(model => !model.fallback || model.chatSelectable === true)
-  const models = regular.length ? regular : candidates
+  // 같은 모델이 두 항목(직결·OpenRouter 공유 등)으로 있으면 앞의 것만 목록에 — 11/3 모델 목록 확장.
+  const models = (regular.length ? regular : candidates).filter((m, i, all) => all.findIndex(o => displayName(o.providerModelId) === displayName(m.providerModelId)) === i)
   const pinned = adult ? undefined : process.env.MIRO_CHAT_MODEL_ID
   return pinned ? models.sort((a, b) => Number(b.id === pinned) - Number(a.id === pinned)) : models
 }
 function choiceId(id: string, length: ChatLength) { return `model:${encodeURIComponent(id)}:${length}` }
 function displayName(id: string) {
+  // OpenRouter 이름(언베일 방, 11/3): anthropic/claude-sonnet-5.5 · google/gemini-3.8-flash → 직결 이름과 같게.
+  id = id.replace(/^(anthropic|google)\//, '').replace(/^(claude-(?:haiku|sonnet|opus))-5\.5$/, '$1-5-5')
   const claude = /^claude-(haiku|sonnet|opus)-5-5$/.exec(id)
   if (claude) return `Claude ${claude[1]![0]!.toUpperCase()}${claude[1]!.slice(1)} 5.5`
   if (id === 'claude-fable-5') return 'Claude Fable 5'
@@ -32,6 +35,9 @@ function displayName(id: string) {
   if (id === 'gpt-5.4-mini') return 'GPT-5.4 mini'
   if (id === 'gemini-3.5-flash-lite') return 'Gemini 3.5 Flash-Lite'
   if (id === 'gemini-3.6-flash') return 'Gemini 3.6 Flash'
+  const deepseek = /^deepseek\/deepseek-(.+)$/.exec(id)
+  if (deepseek) return `DeepSeek ${deepseek[1]!.replace(/-/g, ' ').replace(/\b[a-z]/g, c => c.toUpperCase())}`
+  if (id === 'gemini-3.7-flash') return 'Gemini 3.7 Flash'
   if (id === 'gemini-3.8-flash') return 'Gemini 3.8 Flash'
   return id
 }
