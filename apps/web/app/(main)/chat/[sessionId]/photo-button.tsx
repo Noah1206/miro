@@ -32,17 +32,19 @@ export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled,
   }, [state, router, refreshBalance])
   // 만든 사람이 정한 이 캐릭터만의 장면이 앞에 — 이름은 만든 사람이 쓴 그대로(번역하지 않는다).
   const own = custom.filter(s => unveil || !s.unveil)
-  const scenes = PHOTO_SCENES.filter(s => (unveil || !s.unveil) && (male || !s.male))
+  // 남성향은 언베일이 아니어도 언베일 장면을 흐리게 보여 준다(고를 수는 없다). 다른 캐릭터는 예전처럼 숨긴다.
+  const scenes = PHOTO_SCENES.filter(s => (unveil || male || !s.unveil) && (male || !s.male))
   // 남성향(11/3): 상황이 많아서 묶음(표정·일상·스킨십…)을 먼저 고르고 그 묶음의 장면만 보여 준다. 옷은 남성향에서만.
   const groupOf = (s: (typeof scenes)[number]) => s.group ?? MALE_GROUP_OF[s.id] ?? '일상'
-  // 남성향은 일반 / 언베일로 나눠 보여 준다(11/3) — 언베일 쪽 장면 이름은 살짝 흐리게(누르거나 올리면 또렷).
+  // 남성향은 일반 / 언베일로 나눠 보여 준다(11/3) — 언베일이 아닌 방에선 언베일 쪽 장면을 흐리게 잠가 둔다.
   const [adultMode, setAdultMode] = useState(false)
-  const inMode = male ? scenes.filter(s => s.unveil === (unveil && adultMode)) : scenes
+  const locked = male && adultMode && !unveil
+  const inMode = male ? scenes.filter(s => s.unveil === adultMode) : scenes
   const groups = male ? MALE_GROUPS.filter(g => inMode.some(s => groupOf(s) === g)) : []
   const [pickedGroup, setGroup] = useState<string>('표정')
   const group = groups.includes(pickedGroup as (typeof groups)[number]) ? pickedGroup : groups[0] ?? ''
   const shown = male ? inMode.filter(s => groupOf(s) === group) : scenes
-  const ownShown = male ? own.filter(s => s.unveil === (unveil && adultMode)) : own
+  const ownShown = male ? own.filter(s => s.unveil === adultMode) : own
   const keys = male ? KEYS : KEYS.filter(k => k !== 'outfit')
   const sceneName = (id: string) => !id ? t('지금 대화') : own.find(s => s.id === id)?.label ?? t(scenes.find(s => s.id === id)?.label ?? '')
   const shot = shots[Math.min(cur, shots.length - 1)]!
@@ -82,17 +84,19 @@ export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled,
         </div>
         <div>
           <p style={label}><span>{t('장면')}</span>{count > 1 && <span>{t('{n}장째', { n: Math.min(cur, count - 1) + 1 })}</span>}</p>
-          {male && unveil && <div role="tablist" aria-label={t('일반 / 언베일')} className={styles.photoModes}>
+          {male && <div role="tablist" aria-label={t('일반 / 언베일')} className={styles.photoModes}>
             {[false, true].map(on => <button key={String(on)} type="button" role="tab" aria-selected={adultMode === on} onClick={() => setAdultMode(on)}>{t(on ? '언베일' : '일반')}</button>)}
           </div>}
           {male && <div role="tablist" aria-label={t('장면 묶음')} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
             {groups.map(g => <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)} style={tab(group === g)}>{t(g)}</button>)}
           </div>}
+          {locked && <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', margin: '0 0 10px' }}>{t('언베일을 켜면 고를 수 있어요.')}</p>}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            <button type="button" aria-pressed={!shot.scene} style={pill(!shot.scene)} onClick={() => update({ scene: '' })}>{t('지금 대화 그대로')}</button>
+            {!locked && <button type="button" aria-pressed={!shot.scene} style={pill(!shot.scene)} onClick={() => update({ scene: '' })}>{t('지금 대화 그대로')}</button>}
             {ownShown.map(s => <button key={s.id} type="button" aria-pressed={shot.scene === s.id} style={pill(shot.scene === s.id)} onClick={() => update({ scene: s.id })}>{s.label}</button>)}
-            {shown.map(s => <button key={s.id} type="button" aria-pressed={shot.scene === s.id} aria-label={male && s.unveil ? t(s.label) : undefined}
-              className={male && s.unveil ? styles.photoBlur : undefined} style={pill(shot.scene === s.id)} onClick={() => update({ scene: s.id })}><span>{t(s.label)}</span></button>)}
+            {shown.map(s => locked
+              ? <button key={s.id} type="button" disabled aria-hidden className={styles.photoBlur} style={{ ...pill(false), cursor: 'default' }}><span>{t(s.label)}</span></button>
+              : <button key={s.id} type="button" aria-pressed={shot.scene === s.id} style={pill(shot.scene === s.id)} onClick={() => update({ scene: s.id })}>{t(s.label)}</button>)}
           </div>
         </div>
         <div>
