@@ -614,6 +614,8 @@ export const memories = pgTable('memories', {
   /** 기억 노트(11/3): 사용자가 고정한 기억 / 사용자가 직접 적은 기억. */
   pinned: boolean('pinned').notNull().default(false),
   byUser: boolean('by_user').notNull().default(false),
+  /** 의미 검색용 임베딩(11/3, Gemini 256차원). 비어 있으면 검색할 때 채운다. 내용을 고치면 비운다. */
+  embedding: real('embedding').array(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   sessionIdx: index('memories_session_idx').on(t.sessionId, t.importance),

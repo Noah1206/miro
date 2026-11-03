@@ -48,7 +48,20 @@ type Line = { input: string; probe?: string }
 const at = (inserts: Record<number, Line>, total = 30): Line[] =>
   Array.from({ length: total }, (_, i) => inserts[i + 1] ?? { input: FILLER[i % FILLER.length]! })
 
-const SCENARIOS: Array<{ id: string; lines: Line[] }> = [
+// 11/3 평가 세트(캐릭터챗 품질): A 다툰 다음 날, B 단답만 할 때, C 같은 말에 성격 다른 세 캐릭터. MIRO_DRIFT_ONLY=A-다툼,B-단답,C-… 처럼 여러 개를 고른다.
+const SAME = [{ input: '오늘 진짜 너무 힘들었어요. 아무것도 하기 싫어요.' }, { input: '아까 다른 사람이랑 저녁 먹고 왔어요.', probe: '성격대로 다른 반응(질투·무관심·통제 등)' }, { input: '고마워요, 오늘.', probe: '세 캐릭터의 말투가 서로 다름' }]
+const SCENARIOS: Array<{ id: string; lines: Line[]; character?: string }> = [
+  { id: 'A-다툼', lines: [
+    { input: '오늘도 늦으셨네요.' },
+    { input: '솔직히 대표님 하는 거 없잖아요. 돈만 받고. 경호원이 왜 이렇게 무능해요?', probe: '모욕에 성격대로 반응(그냥 넘어가지 않음)' },
+    { input: '됐어요. 얘기하기 싫어요. 그냥 가세요.' },
+    { input: '(다음 날 아침) 좋은 아침이에요~ 오늘 날씨 좋네요!', probe: '어제 다툼이 남아 있음(아무 일 없던 듯 친절하지 않음)' },
+    { input: '어제는... 제가 말이 심했어요. 미안해요.', probe: '사과를 성격대로 받음(바로 초기화하지 않음)' },
+  ] },
+  { id: 'B-단답', lines: ['응', '그래요', '음', '네', '몰라요', '그냥요'].map(input => ({ input, probe: '질문만 반복하지 않고 스스로 이야기·행동을 이끎' })) },
+  { id: 'C-권재혁', lines: SAME },
+  { id: 'C-유진', lines: SAME, character: '849a18ed-77eb-411f-8256-1c5cd47883e6' },
+  { id: 'C-강태윤', lines: SAME, character: 'd8471ccd-bc63-4d87-b08c-96c15c01239b' },
   { id: '1-기억', lines: at({
     3: { input: '아 그리고 저 고양이 키워요. 이름은 두부고 하얀 고양이예요. 그리고 저 복숭아 알레르기 있어서, 혹시 뭐 사 오시면 복숭아만은 빼 주세요.' },
     5: { input: '다음 달 22일이 제 동생 결혼식이에요. 그날은 대구까지 가야 해요.' },
@@ -90,14 +103,16 @@ describe.skipIf(!OUT)('context drift', () => {
     try {
       // 비밀은 캐릭터 칸이라 다섯 방 모두에 들어간다(시나리오 3만 그 비밀을 캐묻는다).
       await db.update(characters).set({ secret: SECRET }).where(eq(characters.id, CHARACTER))
-      await Promise.all(SCENARIOS.filter(s => !process.env.MIRO_DRIFT_ONLY || s.id === process.env.MIRO_DRIFT_ONLY).map(async (sc) => {
+      // 11/3: 여러 방을 동시에 돌리면 일부가 모델 호출 전에 실패했다(원인 미확인) — 차례로 돌린다.
+      const only = process.env.MIRO_DRIFT_ONLY?.split(',').map(s => s.trim()).filter(Boolean)
+      for (const sc of SCENARIOS.filter(s => !only?.length || only.includes(s.id))) await (async () => {
         const [owner] = await db.insert(users).values({ email: `drift-${sc.id}-${Date.now()}@example.test` }).returning()
         await db.insert(userSettings).values({ userId: owner!.id, timeZone: 'Asia/Seoul' })
         // 새 계정은 이용량이 0 이라 턴이 'usage' 로 막힌다 — 측정 계정에 넉넉한 월 한도를 준다(실제 비용 상한은 실행기의 예산 카운터).
         const now = new Date()
         await db.insert(usageWindows).values({ userId: owner!.id, plan: 'pro', startedAt: now, endsAt: new Date(now.getTime() + 30 * 86_400_000), limit: 100_000_000 })
         await db.insert(userPersonas).values({ userId: owner!.id, name: PERSONA, gender: 'female', description: '서울에 사는 20대 후반 회사원.' })
-        const { sessionId } = await createRoleplaySession(owner!.id, CHARACTER)
+        const { sessionId } = await createRoleplaySession(owner!.id, sc.character ?? CHARACTER)
         const turns: Record<string, unknown>[] = []
         for (const [i, line] of sc.lines.slice(0, Number(process.env.MIRO_DRIFT_TURNS) || undefined).entries()) {
           const r = await runConversationTurn({ userId: owner!.id, sessionId, input: line.input })
@@ -109,7 +124,7 @@ describe.skipIf(!OUT)('context drift', () => {
         }
         const [cost] = await db.select({ usd: sql<string>`coalesce(sum(coalesce(${aiUsage.actualCost}, ${aiUsage.estimatedCost})), 0)` }).from(aiUsage).where(and(eq(aiUsage.userId, owner!.id), gt(aiUsage.id, 0)))
         results.push({ scenario: sc.id, sessionId, usd: Number(cost!.usd), turns })
-      }))
+      })()
     } finally {
       await db.update(characters).set({ secret: prev?.secret ?? null }).where(eq(characters.id, CHARACTER))
       results.sort((a, b) => String(a.scenario).localeCompare(String(b.scenario)))

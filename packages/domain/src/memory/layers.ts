@@ -26,7 +26,7 @@ export function terms(text: string): string[] {
 }
 
 type SearchableMemory = Pick<Memory, 'sessionId' | 'importance' | 'persistence' | 'content'>
-  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'sourceOccurredAt' | 'confidence' | 'pinned'>>
+  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'sourceOccurredAt' | 'confidence' | 'pinned' | 'similarity'>>
 
 const timeOf = (m: SearchableMemory) => (m.sourceOccurredAt ?? m.createdAt)?.getTime() ?? 0
 const durable = (m: SearchableMemory) => m.persistence >= .6 && (m.confidence ?? 1) >= .6
@@ -60,7 +60,10 @@ export function retrieveMemories<T extends SearchableMemory>(
 ): T[] {
   if (limit <= 0) return []
   const q = terms(query).slice(0, 64)
-  const scored = memories.filter(m => m.sessionId === sessionId).map(m => ({ m, score: m.importance * m.persistence + relevance(m, q) }))
+  // 11/3 의미 검색: 뜻 유사도(Gemini 임베딩 코사인)가 0.70 을 넘는 만큼 더한다 — 낱말이 달라도("강아지"↔"반려견") 찾는다.
+  // 실측: 관계없는 한국어 기억도 0.64~0.69 가 나와서 기준을 0.70 에 둔다(맞는 기억 0.73~0.79 → +0.15~0.45). 유사도가 없으면 예전과 같다.
+  const semantic = (m: SearchableMemory) => m.similarity === undefined ? 0 : Math.max(0, m.similarity - 0.70) * 5
+  const scored = memories.filter(m => m.sessionId === sessionId).map(m => ({ m, score: m.importance * m.persistence + relevance(m, q) + semantic(m) }))
     .sort((a, b) => b.score - a.score || timeOf(b.m) - timeOf(a.m))
   const selected = new Set<T>()
   // 사용자가 고정한 기억은 무엇보다 먼저 싣는다(고정 수는 API 가 방마다 제한한다).

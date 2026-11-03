@@ -30,6 +30,8 @@ export type Memory = {
   pinned?: boolean
   /** 사용자가 직접 적은 기억(11/3) — 원문 메시지가 없어도 확인된 기억으로 쓴다. */
   byUser?: boolean
+  /** 이번 입력과의 뜻 유사도(11/3 의미 검색, 0..1) — 검색할 때만 붙는다. 없으면 낱말 일치만 본다. */
+  similarity?: number
 }
 
 export type MemoryCandidate = {

@@ -72,7 +72,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ sessio
   }
   const content = typeof body?.content === 'string' ? body.content.trim() : ''
   if (!content || content.length > maxLength(row.type)) return NextResponse.json({ error: 'invalid_content' }, { status: 400 })
-  await db.update(memories).set({ content, confidence: 100, tags: tagsOf({ content, tags: [] }) }).where(eq(memories.id, row.id))
+  await db.update(memories).set({ content, confidence: 100, tags: tagsOf({ content, tags: [] }), embedding: null }).where(eq(memories.id, row.id))
   return NextResponse.json({ ok: true })
 }
 
