@@ -16,12 +16,14 @@ export async function GET(req: Request) {
   // code 가 있으면 사용자가 창을 닫았거나 본인확인기관 오류다 — 결과를 받으러 가지 않는다.
   const r = !id || url.searchParams.get('code') ? 'cancelled' : (await confirmAdult(user.id, { identityVerificationId: id })).ok ? 'done' : 'failed'
   const next = url.searchParams.get('next')
-  if (next === '/home?unveil=enable') {
+  // 11/4: 캐릭터 상세의 흐린 사진에서 시작한 인증도 언베일을 켜고 그 캐릭터로 돌아간다.
+  const character = next && /^\/character\/([a-zA-Z0-9-]+)\?unveil=enable$/.exec(next)
+  if (next === '/home?unveil=enable' || character) {
     const jar = await cookies()
     const intended = jar.get('miro_home_verify')?.value === user.id
     jar.delete('miro_home_verify')
     if (r === 'done' && intended) await setHomeUnveilFor(user.id, true, true)
-    return NextResponse.redirect(new URL('/home', url))
+    return NextResponse.redirect(new URL(character ? `/character/${character[1]}` : '/home', url))
   }
   // 채팅에서 시작한 인증은 해당 대화로 복귀한다. 외부 주소는 허용하지 않는다.
   if (next && /^\/chat\/[a-zA-Z0-9-]+$/.test(next)) return NextResponse.redirect(new URL(next, url))

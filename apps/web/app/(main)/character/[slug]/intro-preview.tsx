@@ -5,6 +5,7 @@ import { useId, useState } from 'react'
 import { RichText, type RichNames } from '@/components/scene/rich-text'
 import { useT } from '@/lib/i18n/client'
 import { Rule, SampleDialogue } from './sections'
+import { UnveilCover } from '@/components/unveil-badge'
 
 export type IntroScene = {
   /** 폼으로 보내는 값(도입부 이름). */
@@ -21,8 +22,10 @@ export type IntroScene = {
  * 상세의 '첫 장면' — 시작 상황 텍스트 탭, 시각·장소 안내, 도입부 대사와 서술(10/8, 위프 스크린샷처럼).
  * 고른 칩은 아래 '대화 시작하기' 폼으로 간다(form 속성). 도입부가 하나면 칩 없이 그것만 보인다.
  */
-export function IntroPreview({ scenes, names, portrait, turns }: {
+export function IntroPreview({ scenes, names, portrait, turns, veil }: {
   scenes: IntroScene[]; names: RichNames; portrait: string | null
+  /** 11/4: 언베일 수위 장면 사진을 흐리고, 누르면 성인 본인인증 → 언베일 켜기. 언베일을 켠 사람에겐 null. */
+  veil?: { signedIn: boolean; returnTo: string } | null
   turns: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
 }) {
   const t = useT()
@@ -59,7 +62,12 @@ export function IntroPreview({ scenes, names, portrait, turns }: {
       {lines.map((line, i) => (
         <div key={`${scene.value}-${i}`} className="intro-line">
           {/* eslint-disable-next-line @next/next/no-img-element -- 시드가 올린 공개 장면 사진 한 장 */}
-          {line.image && <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />}
+          {line.image && (veil
+            ? <div style={{ position: 'relative', width: '100%', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+                <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />
+                <UnveilCover veiled label={t('언베일')} unlock={veil} />
+              </div>
+            : <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />)}
           {line.role === 'character'
             ? <div className="intro-bubble"><RichText editorial text={line.text} names={names} /></div>
             : <RichText editorial className="intro-narration" text={line.text} names={names} />}

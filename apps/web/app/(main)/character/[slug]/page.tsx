@@ -65,6 +65,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   })
 
   const enter = startRoleplay.bind(null, slug)
+  // 11/4: 언베일 수위 사진(대표·갤러리·인트로 장면)은 언베일을 안 켠 사람에게 흐리게 — 누르면 성인 본인인증 후 언베일이 켜진다.
+  const unlockAt = { signedIn: !!user, returnTo: `/character/${slug}?unveil=enable` }
+  const veilIntro = c.coverUnveil && !unveil ? unlockAt : null
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
   const heroImages = c.images
   // 장르와 관계 키워드가 겹치면 한 번만(11/4 #동창회 #첫사랑 두 번).
@@ -105,7 +108,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="detail-top">
       <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
-        {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} />}
+        {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} />}
         <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
       </div>
 
@@ -156,7 +159,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
         </details>
 
-        <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null}
+        <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null} veil={veilIntro}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
 
         <Rule label={t('댓글 {n}', { n: commentCount })}
