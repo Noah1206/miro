@@ -29,8 +29,8 @@ export function PhotoButton({ sessionId, unveil, bundle, disabled }: { sessionId
     background: on ? 'var(--color-text-primary)' : 'transparent', color: on ? 'var(--color-surface-2)' : 'inherit', font: 'inherit', fontSize: 13, cursor: 'pointer' } as const)
   const field = { width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: 12, background: 'transparent', color: 'inherit', font: 'inherit', fontSize: 15 } as const
   return <>
-    <button type="button" className={styles.toolButton} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
-      <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.5"/></svg>
+    <button type="button" className={`${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
+      <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
     </button>
     <Sheet open={open} onClose={() => setOpen(false)} title={t(unveil ? '언베일 사진 만들기' : '사진 만들기')} variant="choice" snap={{ half: 0.7, full: 0.92 }}>
       <form action={action} style={{ display: 'grid', gap: 'var(--space-4)' }}>

@@ -222,11 +222,15 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             </button>
           </span>
         </div>}
-        <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
-          placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
-          onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
-          />
+        {/* 11/3: 사진 버튼은 입력칸 왼쪽 위 구석(모델 알약 위), 알약과 같은 테두리의 동그라미. */}
+        <div className={styles.inputRow}>
+          {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} disabled={pending || calendarPending || !ready} />}
+          <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
+            placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
+            onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
+            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing && (e.metaKey || e.ctrlKey || window.matchMedia('(pointer: fine)').matches)) { e.preventDefault(); if (!pending && (e.currentTarget.value.trim() || command)) e.currentTarget.form?.requestSubmit() } }}
+            />
+        </div>
         {/* Selected model stays beside the input tools; prices appear only in the selector. */}
         <div className={styles.composerRow}>
           <div className={styles.composerTools}>
@@ -235,7 +239,6 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
             <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}
               onSubmit={value => { setDraft(value); setRequestId(crypto.randomUUID()); setTimeout(() => ref.current?.requestSubmit(), 0) }} />
-            {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} disabled={pending || calendarPending || !ready} />}
           </div>
         <div className={styles.composerBar}>
           <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />

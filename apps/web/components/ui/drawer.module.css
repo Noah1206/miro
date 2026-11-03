@@ -1,5 +1,7 @@
 .backdrop { position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.48); }
 .frame { position:fixed; inset:0; z-index:61; display:flex; justify-content:flex-end; width:100%; max-width:var(--app-w,480px); margin-inline:auto; overflow:hidden; pointer-events:none; }
+/* 11/3: 컴퓨터에서는 앱 폭 가운데가 아니라 화면 오른쪽 끝에서 열린다(채팅방이 넓어지며 서랍이 가운데 떠 보였다). */
+@media (min-width:1024px) { .frame { max-width:none; } }
 .panel { --color-text-primary:#f5f5f5; --color-text-secondary:#d0d0d0; --color-text-tertiary:#b5b5b5; --color-surface-1:#303032; --color-surface-2:#3c3c3f; --color-surface-3:#48484b; display:flex; flex-direction:column; flex:0 0 auto; width:min(88%,360px); height:100%; min-height:0; background:#272729; color:var(--color-text-primary); border:0; border-radius:18px 0 0 18px; pointer-events:auto; touch-action:pan-y; outline:none; color-scheme:dark; }
 .header { display:flex; align-items:center; gap:12px; flex:0 0 auto; min-height:calc(68px + env(safe-area-inset-top,0px)); padding:calc(12px + env(safe-area-inset-top,0px)) 20px 12px; border:0; touch-action:pan-y; }
 .title { margin:0; font-size:17px; font-weight:550; line-height:1.4; outline:none; }

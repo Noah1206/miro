@@ -46,8 +46,8 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
   const askLogin = useLoginSheet()
   const activePath = /^\/search(?:\/|$)/.test(pathname) ? '/explore' : pathname
   const activeIndex = ITEMS.findIndex(item => activePath === item.href || activePath.startsWith(item.href + '/'))
-  // 11/3: 채팅방은 컴퓨터에서 왼쪽 채팅 사이드바만 둔다(하단 탭은 입력창과 겹쳐서 계속 숨김). 휴대폰에서 사이드바는 CSS 로 안 보인다.
-  if (/^\/chat\//.test(pathname)) return <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
+  // 11/3: 채팅방·문자(DM)방은 컴퓨터에서 왼쪽 채팅 사이드바만 둔다(하단 탭은 입력창과 겹쳐서 계속 숨김). 휴대폰에서 사이드바는 CSS 로 안 보인다.
+  if (/^\/(chat|messages)\//.test(pathname)) return <DesktopChats signedIn={signedIn} providers={providers} collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
   if (/^\/create(?:\/|$)/.test(pathname) || /^\/(chat|messages|live|call)\//.test(pathname) || /^\/character\/[^/]+$/.test(pathname) || /^\/stories\/play\//.test(pathname)) return null
   return (
     // 대화 탭은 목록이 곧 사이드바 내용이라 데스크톱 사이드바를 두지 않는다(10/28).
