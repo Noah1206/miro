@@ -5,7 +5,7 @@ import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
-import { PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, type CompositionKey } from '@/lib/photo-scenes'
+import { MALE_GROUP_OF, MALE_GROUPS, PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, type CompositionKey } from '@/lib/photo-scenes'
 import { requestPhoto, type MediaState } from './media-actions'
 import styles from './chat.module.css'
 
@@ -13,9 +13,9 @@ import styles from './chat.module.css'
  * '+ 한 장 더'는 지금 장의 장면·구도를 복사한다. 세부사항은 이 대화방에 저장해 두고 모든 장에 같이 보낸다 — 사진마다 머리색·속옷 색이 바뀌지 않게. */
 type Shot = { key: number; scene: string; picks: number[] }
 const KEYS = Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]
-const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선') }
+const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷') }
 
-export function PhotoButton({ sessionId, unveil, bundle, disabled, custom = [] }: { sessionId: string; unveil: boolean; bundle: boolean; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }> }) {
+export function PhotoButton({ sessionId, unveil, bundle, male = false, disabled, custom = [] }: { sessionId: string; unveil: boolean; bundle: boolean; male?: boolean; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }> }) {
   const t = useT(), router = useRouter()
   const { refreshBalance } = useWallet()
   const [open, setOpen] = useState(false)
@@ -32,7 +32,13 @@ export function PhotoButton({ sessionId, unveil, bundle, disabled, custom = [] }
   }, [state, router, refreshBalance])
   // 만든 사람이 정한 이 캐릭터만의 장면이 앞에 — 이름은 만든 사람이 쓴 그대로(번역하지 않는다).
   const own = custom.filter(s => unveil || !s.unveil)
-  const scenes = PHOTO_SCENES.filter(s => unveil || !s.unveil)
+  const scenes = PHOTO_SCENES.filter(s => (unveil || !s.unveil) && (male || !s.male))
+  // 남성향(11/3): 상황이 많아서 묶음(표정·일상·스킨십…)을 먼저 고르고 그 묶음의 장면만 보여 준다. 옷은 남성향에서만.
+  const groupOf = (s: (typeof scenes)[number]) => s.group ?? MALE_GROUP_OF[s.id] ?? '일상'
+  const groups = male ? MALE_GROUPS.filter(g => scenes.some(s => groupOf(s) === g)) : []
+  const [group, setGroup] = useState<string>('표정')
+  const shown = male ? scenes.filter(s => groupOf(s) === group) : scenes
+  const keys = male ? KEYS : KEYS.filter(k => k !== 'outfit')
   const sceneName = (id: string) => !id ? t('지금 대화') : own.find(s => s.id === id)?.label ?? t(scenes.find(s => s.id === id)?.label ?? '')
   const shot = shots[Math.min(cur, shots.length - 1)]!
   const update = (p: Partial<Shot>) => setShots(list => list.map(s => (s.key === shot.key ? { ...s, ...p } : s)))
@@ -71,17 +77,20 @@ export function PhotoButton({ sessionId, unveil, bundle, disabled, custom = [] }
         </div>
         <div>
           <p style={label}><span>{t('장면')}</span>{count > 1 && <span>{t('{n}장째', { n: Math.min(cur, count - 1) + 1 })}</span>}</p>
+          {male && <div role="tablist" aria-label={t('장면 묶음')} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+            {groups.map(g => <button key={g} type="button" role="tab" aria-selected={group === g} onClick={() => setGroup(g)} style={tab(group === g)}>{t(g)}</button>)}
+          </div>}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             <button type="button" aria-pressed={!shot.scene} style={pill(!shot.scene)} onClick={() => update({ scene: '' })}>{t('지금 대화 그대로')}</button>
             {own.map(s => <button key={s.id} type="button" aria-pressed={shot.scene === s.id} style={pill(shot.scene === s.id)} onClick={() => update({ scene: s.id })}>{s.label}</button>)}
-            {scenes.map(s => <button key={s.id} type="button" aria-pressed={shot.scene === s.id} style={pill(shot.scene === s.id)} onClick={() => update({ scene: s.id })}>{t(s.label)}</button>)}
+            {shown.map(s => <button key={s.id} type="button" aria-pressed={shot.scene === s.id} style={pill(shot.scene === s.id)} onClick={() => update({ scene: s.id })}>{t(s.label)}</button>)}
           </div>
         </div>
         <div>
           <p style={label}>{t('구도')}</p>
           {/* 드롭다운 — 이름은 칸 안 위쪽, 값은 굵게. '자동'에서 바꾼 칸은 라벤더 바탕. */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
-            {KEYS.map((k, j) => <label key={k} className={styles.photoField} data-set={shot.picks[j] ? '' : undefined}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${male ? 2 : 3}, minmax(0, 1fr))`, gap: 8 }}>
+            {keys.map(k => [k, KEYS.indexOf(k)] as const).map(([k, j]) => <label key={k} className={styles.photoField} data-set={shot.picks[j] ? '' : undefined}>
               <span>{t(SHORT[k])}</span>
               <select value={shot.picks[j]} aria-label={t(PHOTO_COMPOSITIONS[k].label)} onChange={e => update({ picks: shot.picks.map((v, x) => (x === j ? Number(e.target.value) : v)) })}>
                 {PHOTO_COMPOSITIONS[k].options.map(([name], i) => <option key={name} value={i}>{t(name)}</option>)}

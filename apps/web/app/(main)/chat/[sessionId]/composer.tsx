@@ -32,7 +32,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
   /** 사진 버튼(11/2) — 사진 생성이 켜진 방에서만 넘긴다. */
-  photo?: { unveil: boolean; bundle: boolean; scenes?: Array<{ id: string; label: string; unveil: boolean }> }
+  photo?: { unveil: boolean; bundle: boolean; male?: boolean; scenes?: Array<{ id: string; label: string; unveil: boolean }> }
 }) {
   const t = useT()
   const { append, live, setLive, calendarPending, remove } = useTurns()
@@ -210,7 +210,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       </AnimatePresence>
       {/* 11/3 요청(제타처럼): 사진 만들기·✳︎·/ 는 입력창 바깥 위 줄에. 모델·보내기는 입력창 안 아래 줄. */}
       <div className={styles.tray}>
-        {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} custom={photo.scenes} disabled={pending || calendarPending || !ready} />}
+        {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} male={photo.male} custom={photo.scenes} disabled={pending || calendarPending || !ready} />}
         <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
         <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
           onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
