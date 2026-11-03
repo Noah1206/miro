@@ -25,13 +25,16 @@ import { MALE_CHARACTERS_A } from './male-characters-a.data.mts'
 import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mts'
 import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
-import { MALE_BODY, MALE_COVER_UNVEIL, MALE_GUIDE, MALE_INTRO, MALE_PUBLIC, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
+import { MALE_BODY, MALE_COVER_UNVEIL, MALE_GUIDE, MALE_INTRO, MALE_PUBLIC, MALE_ROSTER, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
 // 11/3 남성향 12명: 화면엔 짧은 소개 + 상세정보(키·몸무게·쓰리사이즈), 원래 긴 소개는 비공개 설정 맨 앞으로(AI 는 그대로 읽는다).
 // 수치는 사진 생성용 외형(bodyProfile.detail)에도 붙인다.
 function withMalePublic(s: Seed): Seed {
-  const intro = MALE_PUBLIC[s.slug], body = MALE_BODY[s.slug]
+  let intro = MALE_PUBLIC[s.slug]; const body = MALE_BODY[s.slug]
   if (!intro) return s
-  const stats = body && `상세정보${body.who ? ` (${body.who})` : ''}\n${s.visual.bodyProfile.height} · ${body.kg}kg\n쓰리사이즈 B${body.b}/W${body.w}/H${body.h}cm · ${body.cup}컵`
+  // 여러 명 나오는 카드는 등장인물 목록이 소개 글 아래에 보이고, 대표 한 명 수치(상세정보)는 목록과 겹쳐 뺀다.
+  const roster = MALE_ROSTER[s.slug]
+  if (roster) intro = `${intro}\n\n${roster}`
+  const stats = !roster && body && `상세정보${body.who ? ` (${body.who})` : ''}\n${s.visual.bodyProfile.height} · ${body.kg}kg\n쓰리사이즈 B${body.b}/W${body.w}/H${body.h}cm · ${body.cup}컵`
   const start = MALE_START[s.slug], scenes = MALE_INTRO[s.slug]
   // 장면마다 서술 하나 + 대사 하나. 첫 줄은 원래 첫 줄의 장면 정보(시각·장소·상황)를 그대로 잇는다. 말투 예시 문답은 뺀다.
   const sampleDialogue = scenes ? Object.entries(scenes).flatMap(([scene, [narration, line]]) => {
