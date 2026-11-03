@@ -398,6 +398,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme='miro']) .bubble,
 :global([data-chat-theme='miro']) .userBubble { font-size:16px; line-height:1.6; }
 
+/* 11/3 요청: 마지막 말풍선과 입력창 사이가 너무 붙어 보여서 대화 끝에 여백. 테마별 padding 규칙보다 뒤에 둔다. */
+.transcript, :global([data-chat-theme]) .transcript { padding-bottom: 28px; }
+
 /* 입력창(10/17 요청): 높이를 두 배로, 그 안 아래 줄에 도구와 보내기를 작게 같은 줄로. 테마별 가로 배치 규칙보다 뒤에 둔다. */
 .composerForm, :global([data-chat-theme]) .composerForm { flex-direction: column; align-items: stretch; gap: 0; padding: 6px 6px 4px 12px; }
 .input, :global([data-chat-theme]) .input { flex: none; width: 100%; min-height: 44px; padding: 6px 2px; }
