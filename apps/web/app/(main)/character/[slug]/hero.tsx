@@ -3,9 +3,15 @@ import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useRef, useState } from 'react'
 import { CharacterPhoto, CharacterVisual } from '@/components/character-visual'
 import { useT } from '@/lib/i18n/client'
+import { UnveilCover } from '@/components/unveil-badge'
+import { isUnveilPhoto } from '@/lib/unveil-photo'
 
-export function PhotoHero({ name, accent, slug, photos, shared = true }: {
+type Veil = { signedIn: boolean; returnTo: string } | null
+
+export function PhotoHero({ name, accent, slug, photos, shared = true, veil = null }: {
   name: string; accent: string | null; slug: string; photos: string[]; shared?: boolean
+  /** 11/4: 언베일을 안 켠 사람 — 언베일 사진(unveil-…)만 흐리고, 누르면 성인 본인인증 → 언베일 켜기. */
+  veil?: Veil
 }) {
   const t = useT()
   const [selected, setSelected] = useState(0)
@@ -13,6 +19,7 @@ export function PhotoHero({ name, accent, slug, photos, shared = true }: {
   return (
     <div style={{ position: 'relative' }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
+      {veil && isUnveilPhoto(photo) && <UnveilCover veiled label={t('언베일')} unlock={veil} />}
       {photos.length > 1 && (
         <div role="group" aria-label={t('{name} 사진 선택', { name })} style={{
           position: 'absolute', left: 'var(--gutter)', right: 'var(--gutter)', bottom: 'var(--space-7)', zIndex: 3,
@@ -25,7 +32,7 @@ export function PhotoHero({ name, accent, slug, photos, shared = true }: {
               background: 'var(--color-surface-2)', opacity: selected === index ? 1 : 0.68,
             }}>
               <CharacterPhoto src={src} alt="" size="avatar" sizes="52px" width={52} height={66}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: veil && isUnveilPhoto(src) ? 'blur(6px)' : undefined }} />
             </button>
           ))}
         </div>
@@ -35,7 +42,7 @@ export function PhotoHero({ name, accent, slug, photos, shared = true }: {
 }
 
 /** Scroll-linked: 스크롤 위치가 곧 progress. 위로 밀면 비주얼이 조금 커지며 가라앉는다 (transform·opacity 만). */
-export function DetailHero({ name, accent, slug, images }: { name: string; accent: string | null; slug: string; images: string[] }) {
+export function DetailHero({ name, accent, slug, images, veil = null }: { name: string; accent: string | null; slug: string; images: string[]; veil?: Veil }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.08])
@@ -45,7 +52,7 @@ export function DetailHero({ name, accent, slug, images }: { name: string; accen
   return (
     <div ref={ref} style={{ position: 'relative', overflow: 'hidden', borderRadius: 0 }}>
       <motion.div style={reduce ? undefined : { scale, opacity, y, transformOrigin: 'center top' }}>
-        <PhotoHero name={name} accent={accent} slug={slug} photos={images.filter(Boolean)} />
+        <PhotoHero name={name} accent={accent} slug={slug} photos={images.filter(Boolean)} veil={veil} />
       </motion.div>
     </div>
   )

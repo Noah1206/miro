@@ -107,7 +107,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       {/* 11/3: 컴퓨터에서는 위쪽을 사진 | 이름·소개·시작 버튼 두 칸으로(globals.css .detail-top). 휴대폰은 위아래 그대로. */}
       <div className="detail-top">
       <div className="detail-top-media" style={{ position: 'relative' }}>
-        <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} />
+        <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} veil={unveil ? null : unlockAt} />
         {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} />}
         <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
       </div>

@@ -23,9 +23,11 @@ const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('o
   const gallery = files.filter((f) => /^0[1-5]\.(jpg|webp)$/.test(f)).sort()   // 01.webp = 움직이는 대표 사진(11/4)
   if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
   // 인트로 장면 사진은 없을 수 있다(10/19 작품 메인공 6명 — 대표 사진 01만).
-  return { slug, gallery, intro: files.includes('intro.jpg') ? 'intro.jpg' : null }
+  // u1.jpg… = 언베일 수위 갤러리 사진(11/4) — unveil-u1.jpg 로 올려 언베일을 안 켠 사람에겐 흐린다(lib/unveil-photo).
+  const unveil = files.filter((f) => /^u[1-5]\.jpg$/.test(f)).sort()
+  return { slug, gallery, unveil, intro: files.includes('intro.jpg') ? 'intro.jpg' : null }
 })
-for (const p of plan) console.log(p.slug, 'gallery', p.gallery.join(','), p.intro ? '+ intro' : '(no intro)')
+for (const p of plan) console.log(p.slug, 'gallery', p.gallery.join(','), p.unveil.length ? `+ unveil ${p.unveil.join(',')}` : '', p.intro ? '+ intro' : '(no intro)')
 if (!apply) { console.log('(dry run — --apply 로 올린다)'); process.exit(0) }
 
 const url = process.env.SUPABASE_URL
@@ -36,8 +38,8 @@ const storage = createClient(url, key, { auth: { persistSession: false } }).stor
 const { eq } = await import('drizzle-orm')
 const { db, characters } = await import('@miro/db')
 
-async function put(slug: string, file: string) {
-  const path = `${OWNER}/official/${slug}/${file}`
+async function put(slug: string, file: string, as = file) {
+  const path = `${OWNER}/official/${slug}/${as}`
   const { error } = await storage.upload(path, readFileSync(join(ROOT, slug, file)), { contentType: file.endsWith('.webp') ? 'image/webp' : 'image/jpeg', upsert: true })
   if (error) throw new Error(`upload ${path}: ${error.message}`)
   // 같은 경로에 덮어쓰면 CDN이 옛 사진을 줄 수 있어 버전 쿼리를 붙인다.
@@ -61,6 +63,7 @@ for (const p of plan) {
   }
   const images: string[] = []
   for (const f of p.gallery) images.push(await put(p.slug, f))
+  for (const f of p.unveil) images.push(await put(p.slug, f, `unveil-${f}`))
   if (!p.intro) {
     await db.update(characters).set({ images }).where(eq(characters.id, row.id))
     console.log('done', p.slug, images.length, 'photos')
