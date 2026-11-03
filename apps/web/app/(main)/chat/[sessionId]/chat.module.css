@@ -472,6 +472,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 
 /* Leave a clear gutter above the writing area, including with the keyboard open. */
 .composer, :global([data-chat-theme]) .composer { padding-top:12px; }
+/* 남성향 사진 시트(11/3): 일반 / 언베일 둘로 나누는 칸, 언베일 장면 이름은 살짝 흐리게 — 올리거나 고르면 또렷. */
+.photoModes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; margin-bottom: 12px; border-radius: 12px; background: var(--color-surface-2); }
+.photoModes button { height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--color-text-secondary); font: inherit; font-size: 14px; cursor: pointer; }
+.photoModes button[aria-selected="true"] { background: var(--color-surface-3); color: var(--color-text-primary); font-weight: 600; }
+.photoBlur span { filter: blur(3.5px); transition: filter 150ms; }
+.photoBlur:hover span, .photoBlur:focus-visible span, .photoBlur[aria-pressed="true"] span { filter: none; }
 /* 사진 시트 구도 드롭다운(11/3) — 채운 칸, 이름은 칸 안 위쪽 작게·값은 굵게, 화살표는 안쪽. 바꾼 칸(data-set)은 라벤더. */
 .photoField { position: relative; display: block; border-radius: 12px; background: var(--color-surface-2); transition: background 150ms; min-width: 0; }
 .photoField:hover { background: var(--color-surface-3); }
