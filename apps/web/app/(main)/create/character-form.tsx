@@ -13,6 +13,8 @@ import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
+import { PhotoScenesEditor } from './photo-scenes-editor'
+import type { CustomPhotoScene } from '@/lib/photo-scenes'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink } from '@/components/ui'
 import { TestChat } from './test-chat'
@@ -50,6 +52,7 @@ export type FormInitial = {
   startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
   lore: Array<{ keywords: string[]; content: string }>
   situationImages: Array<{ keywords: string[]; image: string }>
+  photoScenes?: CustomPhotoScene[]
   recommendedModel: string; recommendedLength: 'scene' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
@@ -458,6 +461,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           {/* 상황별 사진(10/28, 위프·베이비챗식) — 사진마다 상황을 적어 두면 대화가 그 상황이 됐을 때 AI 가 골라 채팅에 띄운다(10/31). */}
           <Section title={t('상황별 사진 · 선택')} subtitle={t('사진마다 어떤 상황인지 적어 두면, 대화가 그 상황이 됐을 때 AI가 알아서 채팅에 띄워요.')}>
             <SituationImagesEditor defaultValue={i.situationImages ?? []} />
+          </Section>
+          {/* 사진 장면(11/3) — 채팅 사진 버튼의 기본 장면 뒤에 이 캐릭터만의 장면을 붙인다. */}
+          <Section title={t('사진 장면 · 선택')} subtitle={t('채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.')}>
+            <PhotoScenesEditor defaultValue={i.photoScenes ?? []} />
           </Section>
         </Panel>
 

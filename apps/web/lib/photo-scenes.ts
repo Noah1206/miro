@@ -26,6 +26,23 @@ export const PHOTO_SCENES: PhotoScene[] = [
   { id: 'u_after', label: '끝난 뒤', unveil: true, couple: true, tags: 'after sex, lying in bed together, covered with blanket, bare shoulders, looking at each other, tender smile, night' },
 ]
 
+/** 만든 사람이 정한 장면(11/3). 설명은 한국어 그대로 저장하고, 그릴 때 영어 태그로 바꾼다. */
+export type CustomPhotoScene = { label: string; description: string; unveil?: true; couple?: true }
+export const CUSTOM_SCENE_LIMITS = { entries: 12, label: 20, description: 200 } as const
+/** 시트·서버가 쓰는 만든 장면 id — 저장 순서 번호. */
+export const customSceneId = (index: number) => `c${index}`
+
+/** 폼 JSON → 저장할 목록. 이름·설명이 없는 줄은 버린다. */
+export function normalizeCustomScenes(input: unknown): CustomPhotoScene[] {
+  if (!Array.isArray(input)) return []
+  return input.flatMap((raw) => {
+    const o = (raw ?? {}) as Record<string, unknown>
+    const label = typeof o.label === 'string' ? o.label.replace(/\s+/g, ' ').trim().slice(0, CUSTOM_SCENE_LIMITS.label) : ''
+    const description = typeof o.description === 'string' ? o.description.replace(/\s+/g, ' ').trim().slice(0, CUSTOM_SCENE_LIMITS.description) : ''
+    return label && description ? [{ label, description, ...(o.unveil === true ? { unveil: true as const } : {}), ...(o.couple === true ? { couple: true as const } : {}) }] : []
+  }).slice(0, CUSTOM_SCENE_LIMITS.entries)
+}
+
 /** 구도 — 묶음마다 '자동'(빈 태그)이 첫 번째. 고르면 장면 태그 속 같은 묶음 태그를 빼고 고른 것을 넣는다. */
 export const PHOTO_COMPOSITIONS = {
   distance: { label: '얼마나 가까이', options: [['자동', ''], ['얼굴 가까이', 'close-up, portrait'], ['상반신', 'upper body'], ['무릎 위까지', 'cowboy shot'], ['전신', 'full body']] },

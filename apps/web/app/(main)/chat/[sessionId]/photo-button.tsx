@@ -10,7 +10,7 @@ import styles from './chat.module.css'
 
 /** 입력창의 사진 버튼(11/2) — 시트에서 장면·구도·고정 세부사항을 고르고 1장 또는 4장 묶음으로 만든다.
  * 세부사항은 이 대화방에 저장해 두고 매번 같이 보낸다 — 사진마다 머리색·속옷 색이 바뀌지 않게. */
-export function PhotoButton({ sessionId, unveil, bundle, disabled }: { sessionId: string; unveil: boolean; bundle: boolean; disabled?: boolean }) {
+export function PhotoButton({ sessionId, unveil, bundle, disabled, custom = [] }: { sessionId: string; unveil: boolean; bundle: boolean; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }> }) {
   const t = useT(), router = useRouter()
   const { refreshBalance } = useWallet()
   const [open, setOpen] = useState(false)
@@ -24,6 +24,8 @@ export function PhotoButton({ sessionId, unveil, bundle, disabled }: { sessionId
     if (state.notice || state.error) void refreshBalance(true)
     if (state.notice) { router.refresh(); setOpen(false) }
   }, [state, router, refreshBalance])
+  // 11/3: 만든 사람이 정한 이 캐릭터만의 장면이 앞에 — 이름은 만든 사람이 쓴 그대로(번역하지 않는다).
+  const own = custom.filter(s => unveil || !s.unveil)
   const scenes = PHOTO_SCENES.filter(s => unveil || !s.unveil)
   const pill = (on: boolean) => ({ padding: '8px 14px', borderRadius: 999, border: `1px solid ${on ? 'var(--color-text-primary)' : 'var(--color-border)'}`,
     background: on ? 'var(--color-text-primary)' : 'transparent', color: on ? 'var(--color-surface-2)' : 'inherit', font: 'inherit', fontSize: 13, cursor: 'pointer' } as const)
@@ -40,6 +42,7 @@ export function PhotoButton({ sessionId, unveil, bundle, disabled }: { sessionId
           <span className="t-caption" style={{ fontWeight: 600 }}>{t('장면')}</span>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             <button type="button" aria-pressed={!scene} style={pill(!scene)} onClick={() => setScene('')}>{t('지금 대화 그대로')}</button>
+            {own.map(s => <button key={s.id} type="button" aria-pressed={scene === s.id} style={pill(scene === s.id)} onClick={() => setScene(s.id)}>{s.label}</button>)}
             {scenes.map(s => <button key={s.id} type="button" aria-pressed={scene === s.id} style={pill(scene === s.id)} onClick={() => setScene(s.id)}>{t(s.label)}</button>)}
           </div>
         </div>

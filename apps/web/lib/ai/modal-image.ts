@@ -4,7 +4,7 @@
  * env: MIRO_IMAGE_URL(image_api 주소), MIRO_IMAGE_SECRET(Modal Secret 'miro-image-api' 와 같은 값).
  */
 import { z } from 'zod'
-import { resolveLLM } from '@miro/providers'
+import { resolveLLM, type LLMProvider } from '@miro/providers'
 
 export function modalImageReady() {
   return !!(process.env.MIRO_IMAGE_URL && process.env.MIRO_IMAGE_SECRET)
@@ -39,12 +39,13 @@ Rules:
 - Output only comma-separated English tags, at most 10, most important first.
 - Cover what is visible right now: the character's pose/action, facial expression, outfit or its state, place, time of day/lighting, one key prop.
 - Use only what the text says or clearly implies. Do not invent new events.
+- If the text clearly involves two people together (hug, kiss, holding hands), include that interaction.
 - The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.). No quality tags or style names.`
 
 /** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). */
-export async function toMomentTags(text: string): Promise<string> {
+export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM()): Promise<string> {
   try {
-    const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-moment:v1', maxTokens: 400, schema: Tags, system: MOMENT_SYSTEM, prompt: text })
+    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: 'modal-moment:v1', maxTokens: 400, schema: Tags, system: MOMENT_SYSTEM, prompt: text })
     return tags
   } catch { return '' }
 }

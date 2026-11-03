@@ -1767,5 +1767,16 @@
  "다른 금액 고르기": "Choose a different amount",
  "입금 확인을 요청한 주문은 바꿀 수 없어요. 운영자 확인을 기다려 주세요.": "You can’t change an order after requesting deposit confirmation. Please wait for the operator to check it.",
  "주문을 바꾸지 못했어요. 다시 시도해 주세요.": "Couldn’t change the order. Please try again.",
- "{units} 미로 토큰을 {price}에 충전": "Top up {units} MIRO tokens for {price}"
+ "{units} 미로 토큰을 {price}에 충전": "Top up {units} MIRO tokens for {price}",
+ "+ 장면 추가": "+ Add scene",
+ "둘이 함께": "Two together",
+ "사진 장면 · 선택": "Photo scenes · optional",
+ "언베일 장면": "Unveil scene",
+ "예: 비 오는 밤 옥상 난간에 기대 젖은 셔츠 차림으로 담배를 문 채 이쪽을 내려다본다": "e.g. On a rainy night, leaning on the rooftop railing in a wet shirt, cigarette in mouth, looking down this way",
+ "이 장면은 그릴 수 없어요.": "This scene can’t be drawn.",
+ "장면 빼기": "Remove scene",
+ "장면 설명": "Scene description",
+ "장면 이름": "Scene name",
+ "장면 이름 (예: 비 오는 옥상)": "Scene name (e.g. Rainy rooftop)",
+ "채팅에서 사진을 만들 때 고를 수 있는 이 캐릭터만의 장면이에요. 장면을 글로 적으면 그대로 그려요.": "Scenes only this character has, to pick when making a photo in chat. Describe a scene and it gets drawn that way."
 }

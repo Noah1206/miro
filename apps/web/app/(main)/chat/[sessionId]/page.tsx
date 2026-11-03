@@ -25,6 +25,7 @@ import { ImmersiveProvider, VoiceStatus } from './immersive'
 import { RoomMenu } from '@/components/room-menu'
 import { feature } from '@miro/config'
 import { modalImageReady } from '@/lib/ai/modal-image'
+import { customSceneId } from '@/lib/photo-scenes'
 
 /** 처음 들어온 대화 화면에서 짚어 주는 기능(10/19). 화면에 없는 버튼(테마에 따라 다름)은 건너뛴다. */
 const CHAT_COACH: CoachStep[] = [
@@ -51,7 +52,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     sessionMedia(sessionId, user.id),
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
-    session.then(l => l ? db.select({ rec: characters.recommendedChat }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0]?.rec ?? null) : null),
+    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
   ])
   if (!loaded || !mature) notFound()
   // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
@@ -71,7 +72,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
@@ -98,7 +99,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
-          photo={feature('imageGeneration') && !loaded.restricted ? { unveil: loaded.adult.on, bundle: modalImageReady() } : undefined} />
+          photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
       </section>
 
     </main></ChatTheme></ImmersiveProvider></TurnsProvider></ChatModelProvider>
