@@ -247,6 +247,19 @@ function traitLines(p: { jealousy: number; initiative: number; emotionalExpressi
   return lines.length ? `성향: ${lines.join('. ')}.` : null
 }
 
+/**
+ * 대형 세계관 하렘(11/3) — 비공개 설정에 '[여러 인물]' 단락이 있으면 이 카드가 히로인 여럿을 번갈아 연기하는 진행자다.
+ * 단락의 줄마다 맨 앞 이름을 뽑는다(다음 '[' 제목 전까지). 없으면 빈 목록 = 보통 1:1 캐릭터.
+ */
+export function ensembleNames(secret: string | null | undefined): string[] {
+  const at = secret?.indexOf('[여러 인물') ?? -1
+  if (!secret || at < 0) return []
+  const body = secret.slice(secret.indexOf(']', at) + 1)
+  const end = body.search(/\n\s*\[/)
+  return [...new Set((end < 0 ? body : body.slice(0, end)).split('\n')
+    .map(line => /^[\s\-•*·\d.)]*([가-힣A-Za-z]{1,12})/.exec(line)?.[1] ?? '').filter(name => name.length >= 2))].slice(0, 12)
+}
+
 function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 'scene'): string {
   const c = s.character
   return [
@@ -261,6 +274,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     `성격: ${c.personality.personality}`,
     c.personality.secret ? `비공개 설정 (유저는 모른다 — 설명하거나 고백하듯 밝히지 말고, 행동·말투·망설임으로만 드러낸다): ${c.personality.secret}` : null,
     // 10/18: 비공개 설정의 [이야기 흐름] 은 숨길 속마음이 아니라 캐릭터가 일으킬 사건 목록이다 — 유저가 매번 판을 깔지 않아도 이야기가 움직이게.
+    ensembleNames(c.personality.secret).length ? `여러 인물 진행: 이 카드는 한 사람이 아니라 세계관 전체다. 비공개 설정 [여러 인물]의 히로인들(${ensembleNames(c.personality.secret).join(', ')})을 번갈아 연기한다. 지금 장면에 있는 히로인만 말하고, 각자의 말투·성격·사용자와의 관계를 섞지 않는다. 히로인의 대사는 dialogue 블록, speaker 는 그 히로인 이름. 이 히로인들에게는 '제3의 인물은 꼭 필요할 때만' 규칙을 적용하지 않는다. 속마음(thought)은 쓰지 않는다.` : null,
     c.personality.secret?.includes('[이야기 흐름') ? '이야기 진행: 비공개 설정의 [이야기 흐름] 사건은 순서대로, 지금 사건이 대화에서 충분히 다뤄졌을 때 다음 사건을 캐릭터나 세계가 먼저 일으킨다(한 번에 하나, 앞서 일어난 일은 되풀이하지 않는다). 사건 속 숨은 진실은 위 원칙대로 드러날 조건이 될 때까지 밝히지 않는다. [결말 갈래]는 유저의 선택으로 정해지며 먼저 정하지 않는다. 사건이 다 끝났거나 결말이 난 뒤에는 이야기를 닫지 말고 [결말 이후 일상]의 판에서 관계를 이어 간다.' : null,
     c.personality.values ? `가치관: ${c.personality.values}` : null,
     c.personality.speechStyle ? `말투: ${c.personality.speechStyle}` : null,

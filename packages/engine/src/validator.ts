@@ -1,3 +1,4 @@
+import { ensembleNames } from './context'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
@@ -67,7 +68,8 @@ function validateBlocks(
   s: SimulationSnapshot,
   issues: ValidationIssue[],
 ): SimulationProposal['rp']['blocks'] {
-  const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name)])
+  // 대형 세계관 하렘(11/3): [여러 인물] 의 히로인도 말할 수 있다.
+  const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name), ...ensembleNames(s.character.personality.secret)])
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 
   return p.rp.blocks.filter((b) => {
