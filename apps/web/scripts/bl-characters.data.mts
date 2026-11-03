@@ -29,6 +29,8 @@ export type Seed = {
   values: string
   speechStyle: string
   userNickname: string
+  /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸 안내. */
+  personaGuide?: string
   hobbies: string[]
   dislikes: string[]
   jealousy: number

@@ -9,7 +9,8 @@ import styles from './form.module.css'
 
 const GENDERS = [{ value: '', label: msg('밝히지 않음') }, { value: 'female', label: msg('여성') }, { value: 'male', label: msg('남성') }]
 
-export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, presets = [] }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void; presets?: UserPersona[] }) {
+/** guide(11/4) — 세계관 카드에서 쓸 때: '나에 대해'가 필수가 되고 만든 사람의 작성 안내가 칸 안내로 보인다. */
+export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, presets = [], guide }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void; presets?: UserPersona[]; guide?: string }) {
   const [state, action] = useActionState(sessionId ? saveConversationPersonaAction : savePersonaAction, null)
   const [gender, setGender] = useState<string>(initial?.gender ?? '')
   const [name, setName] = useState(initial?.name ?? '')
@@ -44,9 +45,9 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
         </div>
       </div>
       <label className={styles.field}>
-        <span className={styles.top}><span>{t('나에 대해')}</span><span>{about.length}/{PERSONA_LIMITS.description}</span></span>
-        <textarea name="description" value={about} onChange={e => setAbout(e.target.value)} maxLength={PERSONA_LIMITS.description} rows={4}
-          placeholder={t('예) 스물여섯, 출판사 편집자. 낯을 가리지만 친해지면 장난이 많다.')} />
+        <span className={styles.top}><span>{t(guide === undefined ? '나에 대해' : '이 세계에서의 나')}{guide !== undefined && <b aria-hidden>*</b>}</span><span>{about.length}/{PERSONA_LIMITS.description}</span></span>
+        <textarea name="description" value={about} onChange={e => setAbout(e.target.value)} maxLength={PERSONA_LIMITS.description} rows={4} required={guide !== undefined}
+          placeholder={guide || t('예) 스물여섯, 출판사 편집자. 낯을 가리지만 친해지면 장난이 많다.')} />
       </label>
       {state?.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
       <div className={styles.submit}><SubmitButton full variant="primary" size="lg">{submitLabel}</SubmitButton></div>

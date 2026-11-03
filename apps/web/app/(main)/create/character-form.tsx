@@ -56,6 +56,7 @@ export type FormInitial = {
   situationImages: Array<{ keywords: string[]; image: string }>
   photoScenes?: CustomPhotoScene[]
   presetPersonas?: UserPersona[]
+  personaGuide?: string
   recommendedModel: string; recommendedLength: 'scene' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
@@ -445,6 +446,11 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* 인트로 대화(10/28) — 화자를 고르고 한 마디씩 쌓는 채팅식 편집기. 데스크톱에선 인트로 탭일 때 미리보기 자리(오른쪽)에 뜬다. */}
         {/* 준비된 페르소나(11/3) — 대화 시작 화면에서 사용자가 골라 쓰는 '나'. 비워 두면 사용자가 직접 적는다. */}
         <Panel id="preset-personas" show={tab === 'intro'}>
+          {/* 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드에서 사용자가 '이 세계에서의 나'를 쓸 때 보이는 안내. */}
+          <Section title={t('페르소나 작성 안내 · 선택')} subtitle={t('첫 대화 전에 사용자는 세계관을 읽고 이 세계에서의 자기 자신을 직접 적어요. 무엇을 적으면 좋을지 알려 주세요.')}>
+            <CountedTextArea name="personaGuide" ariaLabel={t('페르소나 작성 안내')} max={300} rows={3} defaultValue={i.personaGuide ?? ''}
+              placeholder={t('예) 당신은 어떤 헌터인가요? 이름, 원래 등급, 능력, 지금 처지를 적어 주세요.')} />
+          </Section>
           <Section title={t('준비된 페르소나 · 선택')} subtitle={t('대화를 시작할 때 사용자가 고를 수 있는 \'나\'예요. 고른 뒤에 고쳐 쓸 수도 있어요.')}>
             <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
           </Section>

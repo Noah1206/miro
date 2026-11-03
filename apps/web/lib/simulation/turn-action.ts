@@ -5,6 +5,7 @@ import type { TurnStream } from '@miro/engine'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { undoLastTurn } from '@/lib/simulation/reroll'
 import { clientIp } from '@/lib/alpha/session'
+import { needsPersona } from '@/lib/persona'
 import { type UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
@@ -64,6 +65,7 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
   const commandId = resend ? resend.commandId : opts.mode === 'chat' ? String(form.get('commandId') ?? '').trim() || undefined : undefined
   const input = resend ? resend.input : String(form.get('input') ?? '').trim() || (command ? `/${command}` : '')
   if (input.length === 0) return { error: null, notice: null, limit: null }
+  if (opts.mode === 'chat' && await needsPersona(userId, sessionId)) return fail(msg('먼저 이 세계에서의 나를 적어 주세요.'))
 
   const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {

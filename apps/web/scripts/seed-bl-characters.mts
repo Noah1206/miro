@@ -25,7 +25,7 @@ import { MALE_CHARACTERS_A } from './male-characters-a.data.mts'
 import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mts'
 import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
-import { MALE_BODY, MALE_INTRO, MALE_PUBLIC, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
+import { MALE_BODY, MALE_GUIDE, MALE_INTRO, MALE_PUBLIC, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
 // 11/3 남성향 12명: 화면엔 짧은 소개 + 상세정보(키·몸무게·쓰리사이즈), 원래 긴 소개는 비공개 설정 맨 앞으로(AI 는 그대로 읽는다).
 // 수치는 사진 생성용 외형(bodyProfile.detail)에도 붙인다.
 function withMalePublic(s: Seed): Seed {
@@ -41,7 +41,7 @@ function withMalePublic(s: Seed): Seed {
   }) : s.sampleDialogue
   // 상세 화면은 말투+가치관을 한 줄로 보여 준다 — 화면엔 성격 묘사(MALE_SPEECH)만, 가치관은 비공개로.
   const speech = MALE_SPEECH[s.slug]
-  return { ...s, sampleDialogue, speechStyle: speech ?? s.speechStyle, values: speech ? '' : s.values,
+  return { ...s, sampleDialogue, speechStyle: speech ?? s.speechStyle, values: speech ? '' : s.values, personaGuide: MALE_GUIDE[s.slug] ?? s.personaGuide,
     personality: stats ? `${intro}\n\n${stats}` : intro, startingContext: start ?? s.startingContext,
     secret: `[상세 설정]\n${s.personality}\n\n${speech ? `[가치관]\n${s.values}\n\n` : ''}${start ? `[시작 상황 상세]\n${s.startingContext}\n\n` : ''}${s.secret}`,
     visual: body ? { ...s.visual, bodyProfile: { ...s.visual.bodyProfile, detail: `${s.visual.bodyProfile.detail}, B${body.b}/W${body.w}/H${body.h}cm ${body.cup}컵` } } : s.visual }
@@ -185,6 +185,7 @@ for (const s of SEEDS) {
     jealousy: s.jealousy, initiative: s.initiative, emotionalExpression: s.emotionalExpression,
     relationshipKeywords: s.relationshipKeywords, startingContext: s.startingContext, startingTime: s.startingTime,
     sampleDialogue: keepSceneImages(s.sampleDialogue, exists?.dialogue ?? []), lore: s.lore, initialRelationship: s.initialRelationship,
+    personaGuide: s.personaGuide ?? '',
   }
   const { routine: _r, ...contact } = s.contact
   const revision = await db.transaction(async (tx) => {

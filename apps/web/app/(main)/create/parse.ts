@@ -153,6 +153,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     situationImages,
     photoScenes,
     presetPersonas,
+    personaGuide: s('personaGuide').slice(0, 300),
     adultOnly: s('adultOnly') === '1',
     // 권장 대화 설정(10/28) — 모델을 비우면 저장하지 않는다(서버 기본).
     // 생각(10/28) — 낮음은 지금 기본과 같아서 싣지 않는다. 모델을 비워도 생각만 고를 수 있다.
