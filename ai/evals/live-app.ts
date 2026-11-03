@@ -72,7 +72,7 @@ const status = spawnSync('pnpm', ['exec', 'vitest', 'run', '--config', 'ai/evals
   // 성인 비교는 메인을 mock 으로 막는다 — 자율성 경로(--agency)만 판 컴파일에 메인(Gemini)을 쓴다(캐릭터 설정만, 운영과 같음).
   MIRO_MODEL_REGISTRY: live && (!adult || process.argv.includes('--agency')) ? registry : '', GEMINI_API_KEY: live && (!adult || process.argv.includes('--agency')) ? env.GEMINI_API_KEY : '',
   ANTHROPIC_API_KEY: anthropicKey, MIRO_ADULT_MODEL_REGISTRY: adultRegistry, OPENROUTER_API_KEY: live && adult ? env.OPENROUTER_API_KEY : '', MIRO_ADULT_OUT: adult ? out : '',
-  TEST_DATABASE_URL: database, MIRO_CHARACTER_AGENCY_MODE: (adult && process.argv.includes('--agency')) || file === EVALS.context ? 'live' : 'off',  // 맥락 실측은 운영과 같은 자율성 경로로(11/3 1차는 꺼진 경로였다) MIRO_ADULT_AGENCY: process.argv.includes('--agency') ? '1' : '', AI_TIMEOUT_MS: option('--timeout-ms') ?? '',
+  TEST_DATABASE_URL: database, MIRO_CHARACTER_AGENCY_MODE: adult && process.argv.includes('--agency') ? 'live' : 'off', MIRO_ADULT_AGENCY: process.argv.includes('--agency') ? '1' : '', AI_TIMEOUT_MS: option('--timeout-ms') ?? '',
   ...Object.fromEntries(Object.entries(features).map(([name, on]) => [`MIRO_FEATURE_${name}`, on])),
   // 전용 DB 라 하루 전체 원가 카운터도 이 실측만 센다 — 두 카운터 모두 상한이다.
   AI_DAILY_BUDGET: live ? String(limitUSD) : '0', MIRO_BUDGET_POLICY: JSON.stringify({ user_monthly: { cost: limitUSD, requests: 100_000 } }),

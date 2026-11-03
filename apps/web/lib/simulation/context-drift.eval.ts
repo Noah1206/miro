@@ -10,6 +10,8 @@ import { runConversationTurn } from './turn'
  * 시나리오마다 30턴씩 실제 앱 경로로 돌린다. probe 턴의 답과 자동 표시(사용자 대사 대필 등)를 파일로 남기고 판정은 사람이 읽는다.
  */
 const OUT = process.env.MIRO_COMPARE_OUT
+// 운영 구성으로 돈다 — 공통 vitest.config 가 자율성 경로를 끄고 강화 검토를 켜는데 운영은 반대다(11/3: 앞선 실측 네 번이 그 구성이었다).
+if (OUT) Object.assign(process.env, { MIRO_CHARACTER_AGENCY_MODE: 'live', MIRO_AGENCY_DEFAULT_POLICY: '', MIRO_FEATURE_STRICT_CONVERSATION_REVIEW: '0' })
 const CHARACTER = 'fdf8aa88-14d2-442f-8eca-03576e3af919'   // 권재혁(경호 대표, 스토커 의뢰)
 const PERSONA = '지민'
 const SECRET = '스토커의 정체가 옛 조직 시절 후배 "민규"라는 것을 2주 전부터 알고 있다. 의뢰인에게는 절대 말하지 않고 혼자 처리하려 한다.'

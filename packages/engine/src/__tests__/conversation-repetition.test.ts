@@ -41,6 +41,11 @@ describe('reworded repeated ending', () => {
   it('flags the same instruction reworded across turns', () => {
     expect(repeatedEnding([{ type: 'narrative', text: '빗소리.' }, { type: 'dialogue', text: '우산 펴고 내려요. 열두 걸음, 내 오른쪽 한 발 뒤.' }], last)).toBe(1)
   })
+  it('flags an every-other-turn reworded ending (Gemini)', () => {
+    const gemini = [previous('엉뚱한 생각 그만하고 가방 챙겨요. 나가서 문 열 테니까 딴 데 보지 말고 바로 내립니다.'), previous('당장 내릴 준비 해요.'),
+      previous('쓸데없는 소리로 정신 팔지 말고 가방이나 제대로 챙겨요. 나가서 조수석 문 열어줄 테니까 내릴 준비만 하고 있습니다.'), previous('주말이고 친구고 다 나중 일입니다.')]
+    expect(repeatedEnding([{ type: 'dialogue', text: '딴생각하지 말고 가방 챙겨요. 문 열어줄 테니까 바로 내립니다.' }], gemini)).toBe(0)
+  })
   it('allows a new ending and a one-off echo', () => {
     expect(repeatedEnding([{ type: 'dialogue', text: '진술 끝나면 저녁은 내가 사죠. 짜지 않은 걸로.' }], last)).toBeNull()
     expect(repeatedEnding([{ type: 'dialogue', text: '우산 펴고 내려요. 열두 걸음, 내 오른쪽 한 발 뒤.' }], last.slice(0, 1))).toBeNull()

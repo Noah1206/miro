@@ -43,7 +43,8 @@ export function repeatedConversationBlock(blocks: readonly Block[], recent: read
 
 /**
  * 말만 바꾼 같은 마무리 — 11/3 맥락 실측: 8턴 중 6턴이 "내려요. 우산 펴고 오른쪽에 붙어서. 열두 걸음"으로 끝났다(문장 비교로는 안 잡힌다).
- * 마지막 대사가 최근 3턴 중 2턴의 마지막 대사와 핵심 낱말을 절반 이상 공유하면 그 블록 번호. 다시 쓰게만 하고 턴을 실패시키지는 않는다(호출부).
+ * 마지막 대사가 최근 4턴 중 2턴의 마지막 대사와 핵심 낱말을 3개 이상·33% 이상 공유하면 그 블록 번호. 다시 쓰게만 하고 턴을 실패시키지는 않는다(호출부).
+ * 기준은 11/3 실측 답 5벌로 맞췄다 — 절반 기준은 Gemini 의 한 턴 걸러 반복("가방 챙겨요. 문 열어줄 테니까 내립니다")을 놓쳤고, 이 기준은 새 내용이 붙은 끝맺음을 걸지 않았다.
  */
 export function repeatedEnding(blocks: readonly Block[], recent: readonly Previous[], characterName?: string): number | null {
   const lastLine = (bs: readonly Block[]) => {
@@ -53,13 +54,13 @@ export function repeatedEnding(blocks: readonly Block[], recent: readonly Previo
   const at = lastLine(blocks)
   if (at < 0) return null
   const mine = new Set(terms(blocks[at]!.text))
-  const hits = recent.filter(m => m.role === 'character').slice(-3).filter(m => {
+  const hits = recent.filter(m => m.role === 'character').slice(-4).filter(m => {
     const bs = m.blocks?.length ? m.blocks : [{ type: 'dialogue', text: m.content }]
     const j = lastLine(bs)
     if (j < 0) return false
     const old = new Set(terms(bs[j]!.text))
     const shared = [...mine].filter(t => old.has(t)).length
-    return shared >= 3 && shared / Math.min(mine.size, old.size) >= .5
+    return shared >= 3 && shared / Math.min(mine.size, old.size) >= .33
   }).length
   return hits >= 2 ? at : null
 }
