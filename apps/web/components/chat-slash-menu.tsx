@@ -105,7 +105,6 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
           <span className={styles.slash} aria-hidden>/</span><span className={styles.name}>/{command.name}</span><span className={styles.description}>{command.hint}</span>
         </button>)}
         {!typing && <div className={styles.search}>
-          <button type="button" aria-label={t('뒤로')} onClick={() => setLibrary(false)}>‹</button>
           <input aria-label={t('명령어 찾기')} placeholder={t('이름이나 설명으로 찾기')} maxLength={40} value={query} onChange={event => setQuery(event.target.value)} />
         </div>}
         {failed ? <button type="button" role="menuitem" className={styles.row} onClick={() => setRetry(value => value + 1)}>{t('다시 불러오기')}</button>
