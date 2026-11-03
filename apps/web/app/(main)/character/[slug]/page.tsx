@@ -21,6 +21,7 @@ import { getT } from '@/lib/i18n/server'
 import { StartWithLogin } from './start-button'
 import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
+import { coverTitle } from '@/lib/editorial/cover-title'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -67,7 +68,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const enter = startRoleplay.bind(null, slug)
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
   const heroImages = c.images
-  const tags = [...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean)
+  // 장르와 관계 키워드가 겹치면 한 번만(11/4 #동창회 #첫사랑 두 번).
+  const tags = [...new Set([...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean))]
   // 라벨을 붙인 표 대신 읽히는 문장으로. 값이 없으면 그 문장이 통째로 빠진다.
   // socialPosition 이 직업을 이미 품고 있으면 직업을 빼서 같은 말을 두 번 하지 않는다
   // (히사시: '조직의 중간 간부' + '오사카 조직의 중간 간부').
@@ -109,10 +111,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
 
       <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
-        <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{c.name}</h1>
+        <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{coverTitle(c)}</h1>
         {tagline && <blockquote className="detail-lead-quote" style={{ borderColor: names.palette?.character }}>
           <RichText editorial text={tagline.replace(/([.!?。！？])\s+/g, '$1\n')} names={names} />
         </blockquote>}
+        {/* 11/4: '이 사람에 대해' 제목 없이 소개 글만 인용구와 태그 사이에. */}
+        {c.experienceType === 'reality' && (editedDescription ?? lead) && <div className="detail-prose" style={{ marginBottom: 14 }}>
+          <RichText editorial text={me(editedDescription ?? lead)} names={names} />
+        </div>}
 
         {tags.length > 0 && (
           <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>
@@ -139,26 +145,20 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       <div className="character-detail-copy detail-rest" style={{ padding: '0 var(--gutter)', position: 'relative' }}>
 
-        {/* 사진·통화는 미로 캐릭터의 것이다. 일반 캐릭터챗 상세에는 없는 기능을 그리지 않는다. */}
-        {(c.experienceType === 'reality' || profile.length > 0) && <Rule label={t('이 사람에 대해')}>
-          <div className="detail-prose">
-            {c.experienceType === 'reality' && <RichText editorial text={me(editedDescription ?? lead)} names={names} />}
-          </div>
-          {/* 11/4 사용자: 상세정보(수치)·나이·MBTI·말투 줄은 '세부정보 보기'로 접고 옅은 글씨로. */}
-          {(details || (!editedDescription && profile.length > 0)) && <details className="t-caption" style={{ marginTop: 12, color: 'var(--color-text-tertiary)' }}>
-            <summary style={{ cursor: 'pointer', color: 'var(--color-text-secondary)', listStylePosition: 'inside' }}>{t('세부정보 보기')}</summary>
-            <div style={{ display: 'grid', gap: 8, marginTop: 8, whiteSpace: 'pre-line', lineHeight: 1.6 }}>
-              {details && <p>{details}</p>}
-              {!editedDescription && profile.map((line) => <p key={line}>{line}</p>)}
-            </div>
-          </details>}
-        </Rule>}
-        {c.experienceType === 'reality' && c.worldSetting && (
-          <Rule label={t('세계관')}>
-            <div className="detail-prose"><RichText editorial text={me(c.worldSetting)} names={names} /></div>
-          </Rule>
-        )}
-        <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
+        {/* 11/4 사용자: 수치·나이·말투 줄과 세계관·연락은 '세부정보 보기'를 눌러야 펼쳐진다. */}
+        <details style={{ marginTop: 'var(--space-5)' }}>
+          <summary className="t-caption" style={{ cursor: 'pointer', color: 'var(--color-text-secondary)', listStylePosition: 'inside' }}>{t('세부정보 보기')}</summary>
+          {(details || (!editedDescription && profile.length > 0)) && <div className="t-caption" style={{ display: 'grid', gap: 8, marginTop: 8, whiteSpace: 'pre-line', lineHeight: 1.6, color: 'var(--color-text-tertiary)' }}>
+            {details && <p>{details}</p>}
+            {!editedDescription && profile.map((line) => <p key={line}>{line}</p>)}
+          </div>}
+          {c.experienceType === 'reality' && c.worldSetting && (
+            <Rule label={t('세계관')}>
+              <div className="detail-prose"><RichText editorial text={me(c.worldSetting)} names={names} /></div>
+            </Rule>
+          )}
+          <CharacterSettings characterId={c.id} name={c.name} experienceType={c.experienceType} />
+        </details>
 
         <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />

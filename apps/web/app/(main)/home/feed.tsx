@@ -9,13 +9,14 @@ import type { CardPage, HomeCard, HomeSort } from '@/lib/home'
 import { HomeContentTabs } from './content-tabs'
 import styles from './home.module.css'
 import { useT } from '@/lib/i18n/client'
+import { coverTitle } from '@/lib/editorial/cover-title'
 
 const picture = (c: HomeCard) => c.images[0] ?? null
 
 /** 카드에 대화한 사람 수(말풍선 숫자)는 띄우지 않는다(2026-09-30 요청). */
 function CardDetails({ c }: { c: HomeCard }) {
   return <span className={styles.cardDetails}>
-    <strong>{c.name}</strong>
+    <strong>{coverTitle(c)}</strong>
     <span className={`${styles.cardTags} ${characterTagFont.className}`}>{characterTags(c).map(tag => <span key={tag}>#{tag}</span>)}</span>
   </span>
 }

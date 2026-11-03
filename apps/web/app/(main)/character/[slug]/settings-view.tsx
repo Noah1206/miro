@@ -1,6 +1,6 @@
 'use client'
 import type { contactProfiles, characterVisualIdentities } from '@miro/db'
-import { BUILD_PRESETS, GENDER_PRESETS, type ContactChannel } from '@miro/domain'
+import { type ContactChannel } from '@miro/domain'
 import { S } from '@/lib/character-options'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
@@ -10,40 +10,10 @@ import styles from './settings-view.module.css'
 const step = (value: number, options: readonly { value: number; label: string }[]) =>
   options.reduce((best, option) => Math.abs(option.value - value) < Math.abs(best.value - value) ? option : best).label
 
-function Details({ rows }: { rows: [string, string | null | undefined][] }) {
-  const t = useT()
-  const visibleRows = rows.filter(([, value]) => value?.trim())
-  const flow = (items: typeof visibleRows) => <dl style={{ margin: 0, display: 'flex', flexWrap: 'wrap', gap: '8px 18px' }}>
-    {items.map(([label, value]) => <div key={label} style={{
-      display: 'inline-flex', alignItems: 'baseline', gap: 7, minWidth: 0, padding: '7px 0',
-    }}>
-      <dt style={{ flexShrink: 0, fontSize: 12, lineHeight: 1.4, color: 'var(--color-text-tertiary)' }}>{t(label)}</dt>
-      <dd style={{
-        margin: 0,
-        fontSize: 14,
-        fontWeight: 500,
-        lineHeight: 1.5,
-        whiteSpace: 'pre-wrap',
-        overflowWrap: 'anywhere',
-        color: 'var(--color-text-primary)',
-      }}>{value}</dd>
-    </div>)}
-  </dl>
-  return <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--color-surface-1)' }}>{flow(visibleRows)}</div>
-}
-
 export function CharacterSettingsView({ visual, contact, name, can }: { name: string; can: ContactCapabilities; visual?: Pick<typeof characterVisualIdentities.$inferSelect, 'bodyProfile' | 'baseFace' | 'hair' | 'styleTags' | 'expressionTendency'>; contact?: Pick<typeof contactProfiles.$inferSelect, 'enabled' | 'presentation' | 'contactFrequency' | 'initiativeLevel' | 'preferredChannel' | 'photoProbability' | 'voiceMessageProbability' | 'callProbability' | 'videoCallProbability'> }) {
   const t = useT()
-  const appearance: [string, string | null | undefined][] = visual ? [
-    [msg('성별'), visual.bodyProfile.gender ? t(GENDER_PRESETS[visual.bodyProfile.gender]?.label ?? '') : null],
-    [msg('체형'), visual.bodyProfile.build ? t(BUILD_PRESETS[visual.bodyProfile.build]?.label ?? '') : null],
-    [msg('키'), visual.bodyProfile.height], [msg('체형 설명'), visual.bodyProfile.detail],
-    [msg('눈'), visual.baseFace.eyes], [msg('코'), visual.baseFace.nose], [msg('턱선'), visual.baseFace.jaw], [msg('피부'), visual.baseFace.skin], [msg('특징'), visual.baseFace.distinctive],
-    [msg('머리 색'), visual.hair.color], [msg('머리 길이'), visual.hair.length], [msg('헤어스타일'), visual.hair.style],
-    [msg('스타일'), visual.styleTags.join(' · ')], [msg('표정'), visual.expressionTendency],
-  ] : []
   return <>
-    {appearance.some(([, value]) => value?.trim()) && <Rule label={t('외형')}><Details rows={appearance} /></Rule>}
+    {/* 11/4: 상세의 '외형' 칸은 뺐다(사용자 요청). 외형 설정은 사진 생성·프롬프트에만 쓴다. */}
     {contact && <Rule label={t('연락')}>
       <div className={styles.contactCard}>
         <div className={styles.summary}>
