@@ -2,12 +2,11 @@ import { ChatTheme } from '@/components/chat-theme'
 import { RoomMenu } from '@/components/room-menu'
 import { notFound, redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
-import { characters, db, realityContacts } from '@miro/db'
+import { db, realityContacts } from '@miro/db'
 import { feature } from '@miro/config'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
-import { ConversationPersona } from '@/components/conversation-persona'
 import { Back, Notice } from '@/components/ui'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ChatModelProvider, CurrentChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
@@ -33,9 +32,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
   // 지갑은 렌더에서 뺐다 — 레이아웃이 처음·포커스·실시간·턴 뒤에 읽는다.
   const [loaded, rows, profile] = await Promise.all([loadSession(sessionId, user.id, '', { view: true }), messengerItems(user.id, sessionId), accountProfile(user)])
   if (!loaded || loaded.experienceType !== 'reality') notFound()
-  // 두 경험에서 같은 페르소나를 사용한다.
-  if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName}
-    presets={(await db.select({ p: characters.presetPersonas }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1))[0]?.p ?? []} context={loaded.snapshot.character.worldRole.startingContext} />
   // 주인 확인이 먼저다 — 남의 세션 주소로 들어와도 그 사람의 연락을 '읽음' 으로 바꾸지 않는다.
   const [modelOptions] = await Promise.all([
     chatModelOptions(user.id, loaded.adult.since !== null),

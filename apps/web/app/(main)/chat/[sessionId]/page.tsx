@@ -12,12 +12,12 @@ import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
+import { getPersona } from '@/lib/persona'
 import { MessageList, type Msg } from './messages'
 import { ChatModelProvider } from './model-picker'
 import { chatModelOptions, recommendedChoice } from '@/lib/ai/chat-models'
 import { TurnsProvider } from './turns'
 import { sceneMessages } from '@/lib/messenger'
-import { ConversationPersona } from '@/components/conversation-persona'
 import { getT } from '@/lib/i18n/server'
 import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
@@ -42,7 +42,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 10/27: 화면용 로더(view)로 AI 턴 전용 조회를 건너뛰고(언베일 판정은 그대로), 지갑 조회를 뺐다
   // (지갑은 레이아웃이 처음·포커스·실시간·턴 뒤에 읽는다). 몰입 모드 유형은 방 주인 조건으로 같은 바퀴에 읽는다.
   const session = loadSession(sessionId, user.id, '', { view: true })
-  const [loaded, all, modelOptions, mature, adult, media, profile, rec] = await Promise.all([
+  const [loaded, all, modelOptions, mature, adult, media, profile, rec, myPersona] = await Promise.all([
     session,
     db.select().from(messages).where(eq(messages.sessionId, sessionId)).orderBy(asc(messages.turnIndex), asc(messages.createdAt)),
     session.then(l => chatModelOptions(user.id, l?.adult.since !== null && !!l)),
@@ -53,10 +53,10 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
     session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
+    // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
+    getPersona(user.id),
   ])
   if (!loaded || !mature) notFound()
-  // 채팅을 처음 진행하면 페르소나부터 — 캐릭터가 부를 이름과 내 소개(2026-09-29 결정). 저장하면 이 대화로 돌아온다.
-  if (!loaded.personaConfigured) return <ConversationPersona entry={loaded.entry} required sessionId={sessionId} initial={loaded.snapshot.userPersona ?? null} characterName={loaded.characterName} presets={rec?.presets ?? []} context={loaded.snapshot.character.worldRole.startingContext} />
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 
@@ -99,6 +99,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
+          persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
           photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
       </section>
 

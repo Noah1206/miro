@@ -8,6 +8,7 @@ import styles from './chat.module.css'
 import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
+import { PersonaPicker } from './persona-picker'
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
@@ -27,12 +28,14 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력란과 설정 메뉴에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo }: {
+export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo, persona }: {
   sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; messengerHref?: string
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
   /** 사진 버튼(11/2) — 사진 생성이 켜진 방에서만 넘긴다. */
   photo?: { unveil: boolean; bundle: boolean; audience?: 'male' | 'female'; scenes?: Array<{ id: string; label: string; unveil: boolean }> }
+  /** 페르소나 드롭다운(11/3) — 모델 선택 옆. */
+  persona?: ComponentProps<typeof PersonaPicker>
 }) {
   const t = useT()
   const { append, live, setLive, calendarPending, remove } = useTurns()
@@ -243,6 +246,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         <div className={styles.composerRow}>
           <div className={styles.composerTools}>
             <ModelPicker {...modelOptions} place="up" disabled={pending || calendarPending || !ready}/>
+            {persona && <PersonaPicker {...persona} disabled={pending || calendarPending || !ready} />}
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 몰입 모드(10/19): 말로 쓰기 — 말이 끝나면 그대로 보낸다. */}
             <MicButton disabled={pending || calendarPending || !ready} onDraft={value => { setDraft(value); setRequestId(crypto.randomUUID()) }}
