@@ -1766,5 +1766,6 @@
  "자세히 보기": "Show all",
  "다른 금액 고르기": "Choose a different amount",
  "입금 확인을 요청한 주문은 바꿀 수 없어요. 운영자 확인을 기다려 주세요.": "You can’t change an order after requesting deposit confirmation. Please wait for the operator to check it.",
- "주문을 바꾸지 못했어요. 다시 시도해 주세요.": "Couldn’t change the order. Please try again."
+ "주문을 바꾸지 못했어요. 다시 시도해 주세요.": "Couldn’t change the order. Please try again.",
+ "{units} 미로 토큰을 {price}에 충전": "Top up {units} MIRO tokens for {price}"
 }

@@ -146,8 +146,10 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
     if (wallet?.order?.settledAt || (wallet?.order && ['expired', 'rejected'].includes(wallet.order.status))) void reflect(wallet, epoch.current)
   }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt])
 
-  async function checkout() {
-    if (locked.current || !selected) return
+  async function checkout(choice = selected) {
+    if (locked.current || !choice) return
+    const selected = choice
+    setSelected(choice)
     const token = epoch.current
     locked.current = true; setState('loading'); setError(null)
     // A timed-out POST is retried with exactly the same order ID, never a new purchase.
@@ -220,10 +222,6 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
     {/* 잔액 부족은 제목을 아이콘과 함께 본문 가운데에 그린다 — 시트 머리에는 닫기만 남는다. */}
     <Sheet open={open} onClose={cancel} title={insufficient ? undefined : t('충전')} label={insufficient ? t('토큰이 부족해요') : undefined}>
       <div className={styles.stack} data-pay-state={state}>
-        {!insufficient && (waiting || done) && wallet && <div className={styles.balanceLine}>
-          <span>{t('충전 잔액')}</span>
-          <strong data-sheet-balance={wallet.available}>{t('{n} 미로 토큰', { n: wallet.available.toLocaleString(locale) })}</strong>
-        </div>}
         {error && <Notice tone="danger" role="alert">{t(error)}</Notice>}
         {state === 'failed' && pending.current && <Button onClick={() => void retryAction()}>{t('다시 확인하기')}</Button>}
         {insufficient ? <div className={styles.stack} data-balance-required={needed?.cost}>
@@ -237,7 +235,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
             <Button variant="ghost" full onClick={cancel} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </div>
         </div> : waiting ? <section className={styles.stack} data-bank-order={order.status}>
-          <h3 className="t-title-3">{order.status === 'approved' ? t('입금 확인 · 지급 대기') : t('입금 대기 중')}</h3>
+          {order.status === 'approved' && <h3 className="t-title-3">{t('입금 확인 · 지급 대기')}</h3>}
           {order.status === 'awaiting' && wallet?.account && <>
             <div>
               <p className={`t-caption ${styles.muted}`}>{t('보낼 금액')}</p>
@@ -263,7 +261,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
           <Button full variant="primary" onClick={cancel}>{t('확인')}</Button>
         </> : <>
           {wallet && !wallet.account && <Notice>{t('지금은 충전을 받지 않고 있어요.')}</Notice>}
-          {wallet?.account && <RechargeCatalog available={wallet.available} products={wallet.products} selected={selected} onSelect={setSelected} onNext={() => void checkout()} onClose={cancel} busy={state === 'loading'} />}
+          {wallet?.account && <RechargeCatalog available={wallet.available} products={wallet.products} onPick={id => void checkout(id)} onClose={cancel} busy={state === 'loading'} picking={state === 'loading' ? selected : null} />}
           {!wallet && <Button onClick={() => void refresh()} status={checking ? 'loading' : 'idle'} full>{t('잔액 다시 불러오기')}</Button>}
         </>}
       </div>

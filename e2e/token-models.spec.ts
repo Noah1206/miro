@@ -29,7 +29,7 @@ test('model choices use token balances and reply length, and open a token-only r
   const recharge = page.getByRole('dialog', { name: '충전', exact: true })
   await expect(recharge).toContainText(WELCOME_GRANT.units.toLocaleString('ko-KR'))
   await expect(recharge).toContainText('3,000원')
-  await expect(recharge.locator('input[value="recharge:e2e_small"]')).toHaveCount(1)
+  await expect(recharge.locator('button[value="recharge:e2e_small"]')).toHaveCount(1)
   await expect(recharge.locator('input[value^="pass:"]')).toHaveCount(0)
   await page.screenshot({ path: test.info().outputPath('token-recharge.png') })
 })

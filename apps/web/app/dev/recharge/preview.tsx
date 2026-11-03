@@ -17,7 +17,7 @@ export function RechargePreview() {
   <a href="https://eseon.tistory.com/624" target="_blank" rel="noreferrer">네이버 시리즈 — 수량과 가격을 나란히 비교 ↗</a>
   <a href="https://envia.tistory.com/126" target="_blank" rel="noreferrer">카카오페이지 — 보유 잔액과 충전 금액 구분 ↗</a></div></div>
   <Sheet open={open} onClose={()=>setOpen(false)} title="충전">
-   {next ? <div style={{display:'grid',gap:18}}><h2>선택한 금액 확인</h2><p>미리보기에서만 이동했어요. 실제 주문은 생성하지 않았어요.</p><Button onClick={()=>setNext(false)}>금액 다시 선택</Button></div> : <RechargeCatalog available={0} products={products} selected={selected} onSelect={setSelected} onNext={()=>setNext(true)} onClose={()=>setOpen(false)} />}
+   {next ? <div style={{display:'grid',gap:18}}><h2>선택한 금액 확인</h2><p>미리보기에서만 이동했어요. 실제 주문은 생성하지 않았어요.</p><Button onClick={()=>setNext(false)}>금액 다시 선택</Button></div> : <RechargeCatalog available={0} products={products} onPick={id=>{setSelected(id);setNext(true)}} onClose={()=>setOpen(false)} />}
   </Sheet>
  </main>
 }
