@@ -39,8 +39,11 @@ function withMalePublic(s: Seed): Seed {
     if (!first) throw new Error(`${s.name}: unknown scene ${scene}`)
     return [{ ...first, role: 'narrator' as const, text: narration }, { role: 'character' as const, purpose: 'intro' as const, scene, text: line }]
   }) : s.sampleDialogue
-  return { ...s, sampleDialogue, speechStyle: MALE_SPEECH[s.slug] ?? s.speechStyle, personality: stats ? `${intro}\n\n${stats}` : intro, startingContext: start ?? s.startingContext,
-    secret: `[상세 설정]\n${s.personality}\n\n${start ? `[시작 상황 상세]\n${s.startingContext}\n\n` : ''}${s.secret}`,
+  // 상세 화면은 말투+가치관을 한 줄로 보여 준다 — 화면엔 성격 묘사(MALE_SPEECH)만, 가치관은 비공개로.
+  const speech = MALE_SPEECH[s.slug]
+  return { ...s, sampleDialogue, speechStyle: speech ?? s.speechStyle, values: speech ? '' : s.values,
+    personality: stats ? `${intro}\n\n${stats}` : intro, startingContext: start ?? s.startingContext,
+    secret: `[상세 설정]\n${s.personality}\n\n${speech ? `[가치관]\n${s.values}\n\n` : ''}${start ? `[시작 상황 상세]\n${s.startingContext}\n\n` : ''}${s.secret}`,
     visual: body ? { ...s.visual, bodyProfile: { ...s.visual.bodyProfile, detail: `${s.visual.bodyProfile.detail}, B${body.b}/W${body.w}/H${body.h}cm ${body.cup}컵` } } : s.visual }
 }
 // 11/3 남성향 12명: B 묶음은 두 번째 시작 상황의 장면 설명을 같은 파일에 둔다(C 는 인트로 줄에 직접, A 는 인트로 글만).
