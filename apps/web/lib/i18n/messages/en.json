@@ -1928,5 +1928,14 @@
  "수영복": "Swimwear",
  "한복": "Hanbok",
  "집사복": "Butler",
- "이 대화에서만 쓰여요. 다른 대화의 설정은 바뀌지 않아요.": "Used only in this chat. Your other chats stay the same."
+ "이 대화에서만 쓰여요. 다른 대화의 설정은 바뀌지 않아요.": "Used only in this chat. Your other chats stay the same.",
+ "+ 페르소나 추가": "+ Add persona",
+ "대화를 시작할 때 사용자가 고를 수 있는 '나'예요. 고른 뒤에 고쳐 쓸 수도 있어요.": "Who the user can be when they start a chat. They can edit it after choosing.",
+ "예: 스물여섯, 입사 3개월 차 신입. 팀장에게 매일 기획서를 돌려받는다.": "e.g. 26, three months into the job. The team lead sends every proposal back.",
+ "이름 (예: 신입 사원 지우)": "Name (e.g. Jiwoo, new hire)",
+ "준비된 페르소나": "Ready-made personas",
+ "준비된 페르소나 · 선택": "Ready-made personas · Optional",
+ "페르소나 빼기": "Remove persona",
+ "페르소나 소개": "Persona description",
+ "페르소나 이름": "Persona name"
 }

@@ -14,6 +14,8 @@ import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
 import { PhotoScenesEditor } from './photo-scenes-editor'
+import { PresetPersonasEditor } from './preset-personas-editor'
+import type { UserPersona } from '@miro/domain'
 import type { CustomPhotoScene } from '@/lib/photo-scenes'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink } from '@/components/ui'
@@ -53,6 +55,7 @@ export type FormInitial = {
   lore: Array<{ keywords: string[]; content: string }>
   situationImages: Array<{ keywords: string[]; image: string }>
   photoScenes?: CustomPhotoScene[]
+  presetPersonas?: UserPersona[]
   recommendedModel: string; recommendedLength: 'scene' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
@@ -440,6 +443,12 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <input type="hidden" name="startingTime" value={gen.startingTime ?? i.startingTime} />
         </Panel>
         {/* 인트로 대화(10/28) — 화자를 고르고 한 마디씩 쌓는 채팅식 편집기. 데스크톱에선 인트로 탭일 때 미리보기 자리(오른쪽)에 뜬다. */}
+        {/* 준비된 페르소나(11/3) — 대화 시작 화면에서 사용자가 골라 쓰는 '나'. 비워 두면 사용자가 직접 적는다. */}
+        <Panel id="preset-personas" show={tab === 'intro'}>
+          <Section title={t('준비된 페르소나 · 선택')} subtitle={t('대화를 시작할 때 사용자가 고를 수 있는 \'나\'예요. 고른 뒤에 고쳐 쓸 수도 있어요.')}>
+            <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
+          </Section>
+        </Panel>
         <Panel id="intro-dialogue" show={tab === 'intro'}>
           <Section title={t('인트로 대화')} subtitle={t('새 채팅이 열릴 때 캐릭터가 먼저 건네는 말이에요. 비워 두면 사용자가 먼저 말을 걸어요.')}>
             <div className="create-intro-editor">
