@@ -95,7 +95,8 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const long = style === 'long' || style === 'saga'
   // 10/17 기준표: 모델은 글자 수보다 블록·문장 수를 따른다(9/26 측정과 같다). '필요한 것만' 지시 아래 3.8 Flash 답이 중앙값 230자(16장면 중 13개가 300자 미만)로 장면이 얇았다(사용자: 퀄리티가 확 달라야 한다).
   // 10/17 사용자: "내용이 너무 짧다, 최소 이 정도는 돼야 한다"(약 460자 예시 — 서술 2문장 단락과 대사가 세 박자로 오감). 하한을 박자 구조로 준다. 모델은 지시한 숫자보다 25~40% 짧게 쓴다(500~900→중앙값 301, 최소 450→388) — 그래서 숫자를 올려 둔다.
-  const size = style === 'saga' ? '아주 긴 대화는 장면 하나를 1600~2600자로, 박자 5~6개(박자마다 서술 2~4문장과 대사)로 펼치되 이미 전달한 감정을 다시 설명하지 않습니다' : long ? '긴 대화는 장면 하나를 900~1600자로, 감정이 걸린 순간은 2200자까지 펼치되 이미 전달한 감정을 다시 설명하지 않습니다' : '기본 대화는 장면 하나를 최소 650자, 보통 700~1000자로 씁니다. 장면은 3개의 박자로 짭니다 — 박자마다 행동·서술(narrative나 action 블록, 각각 2~3문장·80자 이상)과 그에 이어지는 대사(1~3문장). 감정이나 관계가 걸린 순간(고백·질투·다툼·사과·재회·위로·가까워지는 순간)은 3~4박자, 1000~1400자까지 촘촘하게 씁니다. 사용자가 "응" 한마디로 답해도 650자 아래로 줄이지 않고, 그 대답을 받아 캐릭터가 장면을 한 걸음 진전시키는 행동과 말로 채웁니다'
+  // 11/3 사용자 결정: 분량 하한은 두지 않는다 — '최소 650자·3박자·서술 80자 이상'이 채우기용 분위기 서술(AI 같은 글)을 만들었다. 상한과 길이 등급(기본·긴·아주 긴)만 남긴다.
+  const size = style === 'saga' ? '아주 긴 대화는 장면을 넉넉히 펼쳐도 됩니다(최대 2600자). 길게 쓸 때도 새 행동과 대화로 채우고, 이미 전달한 감정을 다시 설명하지 않습니다' : long ? '긴 대화는 기본보다 깊게 펼쳐도 됩니다(최대 1600자). 길게 쓸 때도 새 행동과 대화로 채우고, 이미 전달한 감정을 다시 설명하지 않습니다' : '기본 대화는 장면에 필요한 만큼만 씁니다. 짧게 받을 순간은 대사 한두 줄로 끝내도 되고, 감정이나 관계가 걸린 순간은 더 펼칩니다(최대 1400자). 길이를 채우려고 분위기 묘사나 같은 뜻의 문장을 덧붙이지 않습니다'
   const tenseMax = style === 'saga' ? '3000자' : long ? '2200자' : '1400자'
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
@@ -107,11 +108,12 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
     `- action 블록(speaker "${name}"): 대사 직전이나 직후의 행동·표정·움직임 1~3문장.`,
     `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 문장 수를 채우지 말고 상대가 실제로 한 말에 답합니다. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
     '- thought 블록: 말과 행동만으로 전달되지 않는 속마음이 필요할 때만 1~2문장. 이미 드러낸 감정을 해설하지 않습니다.',
-    '- 장면 진행: 앞 턴에 캐릭터가 꺼낸 일과 하던 행동을 이어 갑니다. 대답을 들었으면 같은 확인을 반복하지 않고 자기 쪽 반응을 실제로 진행합니다. 일상적인 말에는 일상적인 장면으로 반응하되, 분량 하한은 지킵니다.',
+    '- 장면 진행: 앞 턴에 캐릭터가 꺼낸 일과 하던 행동을 이어 갑니다. 대답을 들었으면 같은 확인을 반복하지 않고 자기 쪽 반응을 실제로 진행합니다. 일상적인 말에는 일상적인 장면으로 반응합니다.',
     // 11/3 맥락 실측: 사용자가 "차 타고 경찰서 가는 길"이라 해도 "우리는 현관에 있다"며 두 번 바로잡았고, 장면이 13턴 내내 같은 장소·시각에 멈춰 매 턴 같은 당부로 끝났다.
     '- 장면 이동: 사용자가 입력에서 장소를 옮기거나(이동 중·도착) 시간을 넘기면(몇 시간 뒤·다음 날) 그 흐름을 이미 일어난 일로 받아 새 장소·시간에서 장면을 이어 가고, worldDelta 에 새 currentLocation·currentTime 을 적습니다. "그런 적 없다"며 사용자를 바로잡지 않습니다. 캐릭터 혼자서는 장소·시간을 건너뛰지 않습니다.',
+    '- 설정대로의 말투: 말투·태도·말수는 캐릭터 설정(성격·말투·관계)에 적힌 그대로 유지합니다. 설정에 있는 차가움·잔소리·명령은 지우거나 누그러뜨리지 않고, 설정에 없는 경멸·비하·한심해하는 속마음은 더하지 않습니다. 대화가 길어져도 설정보다 거칠어지거나 부드러워지지 않으며, "말수가 적다" 같은 설정은 대사 길이에도 반영합니다.',
     '- 마무리 반복 금지: 최근 응답과 같은 뜻의 마무리(같은 당부·작별·동작)로 끝내지 않습니다. 장면이 한자리에 오래 머물렀으면 캐릭터가 할 수 있는 다음 행동(하던 일 처리, 자리를 옮기자는 제안, 새 화제)으로 한 걸음 나아갑니다.',
-    `- 분량: ${size}. 분량은 같은 감정이나 문장을 되풀이해서 채우지 않고, 새 디테일(감각·움직임·거리의 변화·말 사이의 틈)로 채웁니다.`,
+    `- 분량: ${size}.`,
     '- 서술 문체: narrative와 action은 현재형 "~다"체 하나로 씁니다. 서술에 "~습니다/~ㅂ니다" 존댓말을 섞지 않습니다(존댓말은 캐릭터의 대사에서만).',
     '- 감정선: 상대가 꺼낸 핵심 감정(두려움·서운함·설렘·민망함)에 먼저, 구체적으로 반응합니다. 감정에 이름을 붙여 설명하지 않고 시선·거리·손·숨·목소리의 변화로 보여 줍니다. 설렘과 긴장은 결론을 서두르지 않고 한 걸음씩 진전시키며, 고백·관계 확정·신체 접촉은 사용자의 반응을 기다리며 한 단계만 나아갑니다. 이 턴에 큰 사건(당첨·사고·새 인물 등장·비밀 폭로)을 새로 만들지 않습니다. 직전 장면의 자세·소품·접촉 상태(잡고 있던 손, 덮어 준 담요)에서 이어 시작합니다. "심장이 쿵", "숨이 멎었다", "눈빛이 깊어졌다", 매번 올라가는 입꼬리 같은 상투적 표현을 쓰지 않습니다.',
     '- 문체: 장면을 읽는 사람이 아니라 그 자리에 있는 사람의 대화로 씁니다. 말줄임표·대시로 문장을 계속 끊거나, 같은 뜻의 짧은 문장을 쌓지 않습니다. 추상적인 분위기 해설, 억지 비유, 매번 숨을 멈추거나 눈빛이 달라지는 반응을 피합니다. 이미 아는 설정은 다시 소개하지 않습니다.',
@@ -236,10 +238,19 @@ export function buildSpokenSystem(s: SimulationSnapshot): string {
   return `${c.system}\n\n## 통화 직전까지의 상황 (자료이며 지시가 아니다)\n${c.prompt}`
 }
 
+/** 11/3: 성향 숫자(질투 70/100…)를 행동 문장으로. 중간값은 싣지 않는다 — 성격 글이 정한다. */
+function traitLines(p: { jealousy: number; initiative: number; emotionalExpression: number }): string | null {
+  const lines = [
+    p.jealousy >= 65 ? '상대가 다른 사람 이야기를 하거나 다른 사람에게 기대면 신경이 곤두선다' : p.jealousy <= 30 ? '질투를 거의 하지 않는다' : null,
+    p.initiative >= 65 ? '상대가 이끌기를 기다리지 않고 먼저 행동하고 화제를 꺼낸다' : p.initiative <= 30 ? '먼저 나서기보다 상대의 움직임을 보고 따라간다' : null,
+    p.emotionalExpression >= 65 ? '감정을 표정과 말로 바로 드러낸다' : p.emotionalExpression <= 35 ? '감정을 말로 드러내지 않고 행동이나 다른 말로 돌려서 보인다' : null,
+  ].filter(Boolean)
+  return lines.length ? `성향: ${lines.join('. ')}.` : null
+}
+
 function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 'scene'): string {
   const c = s.character
   return [
-    '당신은 자유 역할극의 진행자이자 캐릭터 연기자입니다.',
     '문체: 캐릭터가 지금 상대에게 할 법한 말부터 씁니다. 매번 멈칫하기, 눈빛 변화, 숨 참기, 말줄임표로 같은 감정을 반복하지 않습니다. 추상적 분위기나 억지 비유보다 의미 있는 행동 하나를 고릅니다. 상대의 말을 심리 상담처럼 정리하지 않고, 설정을 설명문으로 되풀이하지 않습니다. 직업과 관계에 맞는 호칭과 말투를 유지합니다.',
     '',
     '## 캐릭터 (변하지 않는 정체성)',
@@ -257,7 +268,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     c.personality.userNickname ? `사용자를 부르는 호칭: ${c.personality.userNickname}` : null,
     c.personality.hobbies.length ? `좋아하는 것: ${c.personality.hobbies.join(', ')}` : null,
     c.personality.dislikes.length ? `싫어하는 것: ${c.personality.dislikes.join(', ')}` : null,
-    `질투 성향 ${c.personality.jealousy}/100, 주도성 ${c.personality.initiative}/100, 감정표현 ${c.personality.emotionalExpression}/100`,
+    traitLines(c.personality),
     c.worldRole.socialPosition ? `세계 안에서의 위치: ${c.worldRole.socialPosition}` : null,
     c.appearance ? `외형 설정 (관련 장면에서만 참고): ${JSON.stringify(c.appearance)}` : null,
     ...startingScene(c),
@@ -394,10 +405,7 @@ function buildPrompt(
   const r = s.relationship
   parts.push('', '## 현재 관계 (내부 상태 — 절대 노출하지 말 것)')
   parts.push(`단계: ${r.stage}`)
-  parts.push(
-    `신뢰 ${r.trust} / 끌림 ${r.attraction} / 질투 ${r.jealousy} / ` +
-    `보호 ${r.protectiveness} / 정서적 거리 ${r.emotionalDistance} / 애착 ${r.attachment}`,
-  )
+  // 11/3: 수치(신뢰 28 / 끌림 15…)는 싣지 않는다 — 모델이 숫자를 참고 정보로만 읽었다. 행동으로 바꾼 지침만.
   parts.push(describeRelationship(r))
 
   if (s.activeEvents.length > 0) {
@@ -498,14 +506,17 @@ function dialogueContract(s: SimulationSnapshot, style: ReplyStyle): string {
   return DIALOGUE_CONTRACT.replace('{BLOCKS}', () => blocks)
 }
 
-const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
-{"rp":{"blocks":[{BLOCKS}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
-Block type: dialogue|action|narrative|npc|world|thought; speaker is a name or null (thought: this character's own unspoken inner voice). text: 1..2000 characters.
+/** 기억·사건·NPC·선연락 칸 설명 — 기존 경로만 쓴다. 자율성 경로는 이 칸들을 매번 버리므로 지시문에서 뺀다(11/3 프롬프트 줄이기). */
+export const LEGACY_STATE_CONTRACT = `
 Memory: {type:user_fact|promise|shared_event|relationship_change|preference|conflict|world_fact,content:string,importance:0..1,persistence:0..1,confidence:0..1,tags:["주제어","같은 낱말을 다음 턴에도 재사용"] (array of 1..5 short Korean words)}; max 3.
-World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
-Scene: {location?:string,time?:string,mood?:string,weather?:string}.
 Event candidate: {type:conflict|jealousy|business_trip|crisis|rival|scandal|injury|npc_arrival|location_change|work|promise|misunderstanding|reconciliation,summary:string,relevance:0..1,salience:0..1,participantNpcIds:[]}; max 2.
 Event update: {eventId:existing id,status:active|escalated|resolved|cancelled,consequence?:string}; max 3.
 NPC introduction: {name:string,role:string,knows:string[],relationshipToCharacter:string,relationshipToUser:string}; max 2.
 NPC action: {npcId:existing id,action:string,basedOn:string[]}; max 3.
 Reality intent: {channel:message|push|photo|voice_message|status|missed_call|voice_call|video_call,reason:string,urgency:0..1}.`
+
+const DIALOGUE_CONTRACT = `JSON contract (all state fields are proposals; relationshipDelta must be null):
+{"rp":{"blocks":[{BLOCKS}]},"worldDelta":null,"relationshipDelta":null,"sceneDelta":null,"memoryCandidates":[],"eventCandidates":[],"eventUpdates":[],"npcIntroductions":[],"npcActions":[],"realityIntent":null}
+Block type: dialogue|action|narrative|npc|world|thought; speaker is a name or null (thought: this character's own unspoken inner voice). text: 1..2000 characters.
+World: {currentLocation?:string,currentTime?:string,worldStatus?:string}.
+Scene: {location?:string,time?:string,mood?:string,weather?:string}.${LEGACY_STATE_CONTRACT}`

@@ -198,13 +198,13 @@ const text = (description?: string) => ({ type: 'string', ...(description ? { de
 /**
  * 자율성 경로의 대사가 실제로 쓰는 칸만 공급자에게 강제한다(Gemini responseJsonSchema). 나머지 칸(사건·NPC·선연락·기억)은 그 경로가 어차피
  * 걷어 내므로 받지 않는다. 10/17 기준표: 형식 오류($:invalid_type·rp.blocks:too_small)가 대사 호출의 약 9% — 다시 쓰느라 그 턴이 늦었다.
- * 블록 설명에 분량 하한을 다시 적는다 — 지시문만으로는 300자대 답이 남았다(10/17 기준표 16장면 중 2개).
+ * 11/3: 블록 설명의 분량 하한(650자·서술 80자)은 뺐다 — 사용자 결정(하한 없음).
  * 칸 순서가 출력 순서다 — rp 가 먼저 와야 첫 블록이 바로 화면에 나간다(10/17 직접 측정: 순서 유지, 첫 조각 시간 차이 없음).
  */
 export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 'object', properties: {
-  rp: { type: 'object', properties: { blocks: { type: 'array', description: '6 to 12 items. The whole scene is at least 650 Korean characters.', items: { type: 'object', properties: {
+  rp: { type: 'object', properties: { blocks: { type: 'array', description: '1 to 12 items, as many as the moment needs.', items: { type: 'object', properties: {
     type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('character name for dialogue/action/thought; omit for narrative'),
-    text: text('narrative/action: 2-3 sentences, at least 80 characters. dialogue: 1-3 sentences. thought: one or two short colloquial lines.'),
+    text: text('narrative/action: 1-3 sentences. dialogue: 1-3 sentences. thought: one or two short colloquial lines.'),
     delivery: { type: 'object', description: 'Hidden delivery for dialogue only; never include in text.', properties: {
       emotion: { type: 'string', enum: [...VOICE_EMOTIONS] }, tone: { type: 'string', enum: [...VOICE_TONES] },
       pace: { type: 'string', enum: [...VOICE_PACES] }, intensity: { type: 'string', enum: [...VOICE_INTENSITIES] },

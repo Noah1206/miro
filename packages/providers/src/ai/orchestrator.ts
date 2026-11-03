@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { appendFileSync } from 'node:fs'
 import { productionRuntime } from '@miro/config'
 import type { ZodType, ZodTypeDef } from 'zod'
 import type { LLMProvider, ProviderInfo } from '../types'
@@ -160,6 +161,8 @@ export class AIOrchestrator implements LLMProvider {
   }
   private async run<T>(req: GenerationRequest, validate: (text: string, truncated?: boolean) => T, overrideRetries?: number, onAttempt?: () => void): Promise<T> {
     if (req.signal?.aborted) throw new AIUnavailableError(0, 'cancelled')
+    // 실측 도구(11/3): MIRO_PROMPT_DUMP=<파일> 이면 모델에 실제로 보낸 지시·입력을 한 줄씩 남긴다. 운영에서는 꺼져 있다.
+    if (process.env.MIRO_PROMPT_DUMP && !productionRuntime()) appendFileSync(process.env.MIRO_PROMPT_DUMP, JSON.stringify({ task: req.task, promptVersion: req.promptVersion, system: req.system, prompt: req.prompt }) + '\n')
     let attempts = 0, last = 'unavailable', denied: string | null = null
     const selections = this.selections(req)
     for (let index = 0; index < selections.length; index++) {

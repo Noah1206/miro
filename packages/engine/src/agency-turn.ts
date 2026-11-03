@@ -2,7 +2,7 @@ import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@mir
 import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, feature, productionRuntime } from '@miro/config'
-import { buildContext, estimateTokens, type SimulationSnapshot } from './context'
+import { buildContext, estimateTokens, LEGACY_STATE_CONTRACT, type SimulationSnapshot } from './context'
 import { AGENCY_DIALOGUE_RESPONSE_SCHEMA, SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
@@ -18,6 +18,22 @@ import { snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-groun
 import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding } from './conversation-repetition'
 
 /** 먼저 말하는 턴의 대사 지시 — 계획의 결정이 아직 없다. 이 인물이 스스로 고르되, 확정되지 않은 일을 일어난 일로 쓰지 않는다. */
+/** 11/3 실측(Gemini): 대화가 길어지며 말투가 설정보다 거칠어졌다(설정에 없는 비하·한심해하는 속마음). 세기는 설정이 정한다 — 맨 끝에 한 번 더 둔다. */
+const PERSONA_TONE_RULE = '말투의 세기는 캐릭터 설정이 정합니다: 설정에 적힌 차가움·잔소리·명령·다정함은 그대로 지키고, 설정에 없는 경멸·비하나 사용자를 한심하게 여기는 속마음은 더하지 않습니다. 앞선 턴보다 점점 거칠어지거나 길게 훈계하지 말고, 설정의 말수에 맞는 길이로 말합니다.'
+/** 11/3: 기분·표현 수치(energy 70, stress 19…)를 문장으로. 보통 범위는 아무것도 싣지 않는다. */
+function affectLine(a: { valence: number; arousal: number; stress: number; energy: number }, e: { openness: number; directness: number }): string {
+  return [
+    a.valence <= -30 ? '기분이 가라앉아 있다' : a.valence >= 30 ? '기분이 좋다' : null,
+    a.stress >= 60 ? '긴장이 쌓여 날이 서 있다' : null,
+    a.energy <= 30 ? '지쳐 있다' : null,
+    a.arousal >= 70 ? '감정이 들끓고 있다' : null,
+    e.openness <= 30 ? '속을 잘 내보이지 않는다' : e.openness >= 70 ? '마음을 꽤 열어 둔 상태다' : null,
+    e.directness >= 70 ? '말을 돌리지 않고 곧장 한다' : e.directness <= 30 ? '할 말을 돌려서 한다' : null,
+  ].filter(Boolean).join(', ')
+}
+
+/** 사용자 입력에 시간이 흘렀다는 말이 있는지 — 있을 때만 장면 시각을 바꾼다. */
+const TIME_CUE = /아침|점심|저녁|밤|새벽|낮|오전|오후|정오|자정|다음\s*날|이튿날|내일|어제|며칠|몇\s*시간|한참|시간이\s*(?:흐|지)|해가|날이\s*(?:밝|저)|\d+\s*시|\d+\s*분\s*(?:뒤|후)|morning|noon|evening|night|tomorrow|later|hours?/i
 const OWN_CHOICE_DIRECTIVE = `\n## 이번 턴의 선택\n이 인물이 작성된 설정·경계·지금 감정 안에서 스스로 고릅니다: 대답, 질문, 거절, 미루기, 화제 돌리기 중 이 사람다운 반응. 내부 판단을 대사로 설명하지 않습니다.
 약속·연락·이동·구매 같은 일을 이미 한 일처럼 쓰지 않습니다(하려는 마음이나 제안으로만). 사용자의 동의나 행동을 대신 쓰지 않습니다. 속마음은 말하지 않은 반응이지 약속이나 새 사실이 아닙니다.
 worldDelta/sceneDelta 에는 사용자가 이번 입력에서 옮긴 장소·시간만 적고, 사건 완료/NPC 등장/realityIntent 는 null 이나 빈 값으로 둡니다.\n`
@@ -120,16 +136,22 @@ export async function runAgencyTurn(opts: {
       // 사건·NPC 는 결정이 아니면 바뀌지 않는다 — 렌더러가 '마무리' 를 제안하지 않게 아예 싣지 않는다(§3.3).
       semanticEvents: [], memories, recentMessages: recent, activeNpcs: [], activeEvents: [], recentlyResolvedEvents: [], userInput: opts.userInput, communicationPreferences,
     }, opts.contextScale, false, policy.generation.replyLength)
+    // 11/3 프롬프트 줄이기: 이 경로가 버리는 칸(기억·사건·NPC·선연락) 설명은 지시문에서 뺀다.
+    context.system = context.system.replace(LEGACY_STATE_CONTRACT, '')
     context.system += plan ? buildAgencyDecisionDirective(plan.decision) : OWN_CHOICE_DIRECTIVE
     context.system += '\n' + USER_GROUNDING_RULE
+    context.system += '\n' + PERSONA_TONE_RULE
     context.system += conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name)
     context.system += '\n' + contactBoundaryDirective(snapshot.contactBoundary, new Date(agency.context.clock.now))
     context.system += '\n장면의 연속성: 최근 자기 행동과 소품 상태를 이어 갑니다. 이미 끈 담배를 다시 끄거나, 놓아 둔 잔을 다시 준비하는 식으로 장면을 초기화하지 않습니다. 새 반응에 필요하지 않은 같은 몸짓·돌봄 제안은 반복하지 않습니다. 과거 속마음은 소리 내어 한 말이 아니며, 내레이터나 다른 인물의 비공개 사실은 자기 지식으로 쓰지 않습니다.'
     context.system += `\n## 승인된 세계 상태(데이터)\n${JSON.stringify({ location: snapshot.world.currentLocation, time: snapshot.world.currentTime, status: snapshot.world.worldStatus,
-      moveIntent: move, rule: move ? '이동을 시작하거나 준비하는 것은 쓸 수 있지만, 도착했거나 장소가 바뀌었다고 쓰지 않는다.' : '장소는 바뀌지 않는다. 새 장소·도착·사건 완료를 서술하지 않는다.' })}\n`
-    context.prompt += `\n## 검증된 근거와 캐릭터 상태 (데이터)\n${JSON.stringify({ evidence: v.context.evidence.filter(e => recent.some(m => m.id === e.id) || e.kind !== 'message'),
+      moveIntent: move, rule: move ? '이동을 시작하거나 준비하는 것은 쓸 수 있지만, 도착했거나 장소가 바뀌었다고 쓰지 않는다.' : '사용자가 이번 입력에서 옮긴 경우가 아니면 장소는 바뀌지 않는다. 캐릭터 혼자 새 장소·도착·사건 완료를 서술하지 않는다.' })}\n`
+    // 11/3 프롬프트 줄이기: 메시지 근거는 위 '최근 대화'와 같은 글이라 다시 싣지 않는다(사건 같은 메시지 밖 근거만). 기분 수치는 문장으로.
+    context.prompt += `\n## 검증된 근거와 캐릭터 상태 (데이터)\n${JSON.stringify({ evidence: v.context.evidence.filter(e => e.kind !== 'message'),
       beliefs: v.state.beliefs.filter(b => b.status === 'active' && b.evidenceIds.every(id => evidence.has(id))),
-      goals: v.state.goals.filter(g => g.status === 'active'), affect: v.state.affect, expression: v.state.expression })}`
+      goals: v.state.goals.filter(g => g.status === 'active') })}`
+    const feeling = affectLine(v.state.affect, v.state.expression)
+    if (feeling) context.prompt += `\n지금 몸과 마음(드러내 말하지 말고 태도로): ${feeling}`
     if (unsure.length) context.prompt += `\n## 불확실한 과거 기록 (출처 없음 — 사실로 단정하지 말 것)\n${unsure.map(u => `- ${u}`).join('\n')}`
     return context
   }
@@ -180,6 +202,8 @@ export async function runAgencyTurn(opts: {
       const userTerms = new Set(terms(opts.userInput))
       const fromUser = (place?: string) => !!place && terms(place).some(t => userTerms.has(t))
       if (proposal.worldDelta?.currentLocation && !fromUser(proposal.worldDelta.currentLocation)) { rejected.push('worldDelta.currentLocation'); proposal.worldDelta = { ...proposal.worldDelta, currentLocation: undefined } }
+      // 11/3: 시간도 사용자가 넘긴 때만 바꾼다 — 사용자 말 없이 밤→아침으로 건너뛰던 것.
+      if (proposal.worldDelta?.currentTime && !fromUser(proposal.worldDelta.currentTime) && !TIME_CUE.test(opts.userInput)) { rejected.push('worldDelta.currentTime'); proposal.worldDelta = { ...proposal.worldDelta, currentTime: undefined } }
       if (proposal.worldDelta && !proposal.worldDelta.currentTime && !proposal.worldDelta.worldStatus) proposal.worldDelta = null
       if (proposal.sceneDelta?.location && !fromUser(proposal.sceneDelta.location)) { rejected.push('sceneDelta.location'); proposal.sceneDelta = { ...proposal.sceneDelta, location: undefined } }
       if (proposal.eventCandidates.length) { rejected.push('eventCandidates'); proposal.eventCandidates = [] }

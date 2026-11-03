@@ -99,7 +99,7 @@ describe.skipIf(!OUT)('context drift', () => {
         await db.insert(userPersonas).values({ userId: owner!.id, name: PERSONA, gender: 'female', description: '서울에 사는 20대 후반 회사원.' })
         const { sessionId } = await createRoleplaySession(owner!.id, CHARACTER)
         const turns: Record<string, unknown>[] = []
-        for (const [i, line] of sc.lines.entries()) {
+        for (const [i, line] of sc.lines.slice(0, Number(process.env.MIRO_DRIFT_TURNS) || undefined).entries()) {
           const r = await runConversationTurn({ userId: owner!.id, sessionId, input: line.input })
           const blocks = r.ok ? r.blocks.map(b => ({ type: b.type, speaker: b.speaker ?? null, text: b.text })) : []
           const [w] = await db.select({ loc: worldStates.currentLocation, time: worldStates.currentTime }).from(worldStates).where(eq(worldStates.sessionId, sessionId))

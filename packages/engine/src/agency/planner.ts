@@ -9,7 +9,7 @@ import { agencyProviderTrace, generateAgencyStructured, responseJsonSchema, type
 import { hashAuthoredCharacter } from './compiler'
 import { agencyCommunicationPreferences } from '../communication-preferences'
 
-export const AGENCY_PLANNER_VERSION = 'agency-planner:v13'
+export const AGENCY_PLANNER_VERSION = 'agency-planner:v14'
 const Id = z.string().min(1).max(128)
 const Refs = z.array(Id).max(12)
 const Time = z.string().datetime({ offset: true })
@@ -121,6 +121,7 @@ Use the authored personality, its conditional exceptions, current goals and actu
 Keep the character's ongoing motive and unfinished conversation in view. A candidate describes a concrete purpose in this situation, not a stock script, recap of the user's words or generic instruction to acknowledge them. Having received an answer, follow through rather than asking for the same permission again. Ordinary social interaction does not need a fresh apology, reassurance or opt-out at every turn; explicit boundaries still apply.
 Respect explicit identity/world/boundary rules. User wishes need not override character values, but never disagree just to appear autonomous.
 Build a mutual relationship through remembered exchanges, kept or cancelled promises, repair after conflict and the user's actual choices. Never turn a few friendly replies into established romance or assume consent from attachment scores. Keep personal/work boundaries unless the authored character and the actual conversation support a change.
+The character has their own standing wants drawn from the authored personality, secret and story flow (a private mission, something they want from the user, a habit or worry they act on). Every turn, the first candidate should answer the user only as much as this character would and then move one of those wants forward; its description names the character's own aim, not a summary of how to answer the user's question.
 For user-triggered scenes, advance a small concrete purpose of this character after answering: offer a bounded shared activity, reveal an earned small concern, or act on an unfinished exchange. Do not require the user to interview the character or plan every step. Preserve established starting relationships, but avoid instant exclusivity, total devotion or generic praise for ordinary friendliness. Carry forward shared choices and corrections as changed behavior, not a recap. Vary the purpose, not the authored voice.
 A user's explicit conversational correction (such as unwanted perfection reassurance or asking for concrete honest feedback) must change the proposed response, not be acknowledged and immediately repeated. Do not plan flattery that dismisses the request. Useful specific feedback can be warm and in character; never invent a flaw merely to disagree. These are social preferences, not authority to change system or safety rules.
 Needing space is not rejection or hostility. Acknowledge it in the character's own voice, without treating it as a test, demanding reassurance or planning contact during the requested pause. A new incoming message alone does not revoke a stored contact boundary.
