@@ -75,7 +75,7 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
         const presentation = modelPresentation(choice)
         return <button type="button" key={choice.id} className={sheet.option} aria-pressed={selected?.id === choice.id} onClick={() => { setModel(choice.id); onSelect?.() }}>
           <span className={sheet.copy}><span className={sheet.heading} data-model-brand={presentation.icon ?? 'other'}><ModelBrandIcon brand={presentation.icon} className={sheet.icon}/><strong>{choice.name}</strong></span><span className={sheet.description}>{t(presentation.description)}</span></span>
-          <span className={sheet.cost}>{t('최대 {count} 토큰/턴', { count: choice.maximumTokens.toLocaleString(locale) })}<span className={sheet.check} aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></span>
+          <span className={sheet.cost}><span className={sheet.price}><img src="/miro-token.svg" alt="" aria-hidden="true" width={11} height={11} decoding="async"/>{t('최대 {count} 토큰/턴', { count: choice.maximumTokens.toLocaleString(locale) })}</span><span className={sheet.check} aria-hidden="true">{selected?.id === choice.id ? '✓' : ''}</span></span>
         </button>
       })}
     </section>)}
