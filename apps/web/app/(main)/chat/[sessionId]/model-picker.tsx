@@ -1,5 +1,6 @@
 'use client'
-import { createContext, useContext, useEffect, useState, useRef, useId, type CSSProperties, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useId, type ReactNode } from 'react'
+import { StepSlider } from '@/app/(main)/create/settings-controls'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import type { WalletSnapshot } from '@/lib/wallet/types'
 import { useWallet } from '@/components/wallet/provider'
@@ -61,11 +62,9 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
       const lengths = ['scene', 'long', 'saga'] as const
       const label = (value: typeof lengths[number]) => value === 'scene' ? t('기본 대화') : value === 'long' ? t('긴 대화') : t('아주 긴 대화')
       const pick = (value: typeof lengths[number]) => { const choice = choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value); if (choice) setModel(choice.id) }
-      const index = Math.max(0, lengths.indexOf(length))
+      // 11/3: 만들기 화면의 단계 슬라이더와 같은 모양.
       return <div className={sheet.lengths}>
-        <input type="range" min={0} max={2} step={1} value={index} aria-label={t('답변 길이')} aria-valuetext={label(lengths[index]!)}
-          style={{ '--fill': `${index * 50}%` } as CSSProperties} onChange={e => pick(lengths[Number(e.target.value)]!)}/>
-        <div className={sheet.lengthLabels} aria-hidden="true">{lengths.map(value => <button key={value} type="button" tabIndex={-1} data-on={length === value} onClick={() => pick(value)}>{label(value)}</button>)}</div>
+        <StepSlider label={t('답변 길이')} steps={lengths.map(value => ({ value, label: label(value) }))} value={length} onChange={value => pick(value as typeof lengths[number])} />
       </div>
     })()}
     {providers.map(provider => <section key={provider} className={sheet.group} aria-label={provider}>

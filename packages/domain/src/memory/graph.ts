@@ -14,7 +14,7 @@ export type MemoryEdge = { source: string; target: string; tags: string[]; weigh
 export type MemoryGraph = { nodes: MemoryNode[]; edges: MemoryEdge[]; tags: Array<{ tag: string; count: number }> }
 
 /** 내부 상태는 화면에 올리지 않는다 — 요약 캐시는 그래프의 노드가 아니다. */
-const HIDDEN = new Set(['short_term_summary'])
+const HIDDEN = new Set(['short_term_summary', 'chapter'])
 
 /**
  * 태그가 비어 있는 기억(태그 도입 이전 기록, 규칙이 만든 기억)의 대체 태그.

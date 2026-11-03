@@ -432,7 +432,7 @@ function buildPrompt(
 
   if (memories.length > 0) {
     const layers = groupByLayer(memories)
-    for (const [key, label] of [['short_term', '최근 사건 요약'], ['world', '세계와 NPC에 대한 사실']] as const) {
+    for (const [key, label] of [['story', '지난 이야기 (예전 요약, 지금보다 앞선 일)'], ['short_term', '최근 사건 요약'], ['world', '세계와 NPC에 대한 사실']] as const) {
       if (layers[key].length) { parts.push('', '## ' + label); for (const m of layers[key]) parts.push('- ' + m.content) }
     }
     if (layers.long_term.length > 0) {

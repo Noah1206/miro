@@ -16,6 +16,7 @@ import { bridgeSummarizer, maskExplicitHistory } from '@/lib/simulation/inline-m
 import { sanitizeBridge } from '@/lib/simulation/unveil-bridge'
 import { captureMoments } from '@/lib/reality/moments'
 import { groundedMemoryCandidates } from './memory-sources'
+import { CHAPTER_LIMIT, compactChapters } from './memory-compact'
 
 type Kind = 'memory_extraction' | 'memory_summary'
 const KINDS: readonly AITask[] = ['memory_extraction', 'memory_summary']
@@ -163,7 +164,8 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
       stored = fresh.length
       const accepted = fresh.flatMap(m => m.replaces ? [m.replaces] : [])
       if (accepted.length) await tx.delete(memories).where(and(eq(memories.sessionId, job.sessionId), inArray(memories.id, accepted)))
-      if (fresh.some(m => m.type === 'short_term_summary')) await tx.delete(memories).where(and(eq(memories.sessionId, job.sessionId), eq(memories.type, 'short_term_summary')))
+      // 11/3: 예전 요약은 지우지 않고 '지난 이야기'로 남긴다 — 덮어쓰면 오래된 일이 사라졌다.
+      if (fresh.some(m => m.type === 'short_term_summary')) await tx.update(memories).set({ type: 'chapter' }).where(and(eq(memories.sessionId, job.sessionId), eq(memories.type, 'short_term_summary')))
       await tx.insert(memories).values(fresh.map(m => ({
         sessionId: job.sessionId, characterId: job.characterId, sourceMessageId: m.sourceMessageId!, type: m.type, content: m.content,
         importance: Math.round(m.importance * 100), persistence: Math.round(m.persistence * 100), confidence: Math.round(m.confidence * 100),
@@ -182,6 +184,12 @@ async function processJob(job: typeof memoryJobs.$inferSelect, id: string, token
     await captureMoments(llm, { sessionId: job.sessionId, messageId: job.messageId, input: source.content, timeZone: loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone,
       now: source.createdAt, recent: recentMessages.map(m => ({ who: m.role === 'user' ? 'user' as const : 'character' as const, text: m.content.slice(0, 300) })) })
       .catch(e => observe('moment.capture_failed', { jobId: id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))
+  }
+  // 지난 이야기가 쌓이면 묶어서 줄인다. 실패해도 요약 작업은 끝난 것이다.
+  if (job.kind === 'memory_summary' && stored) {
+    const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(memories).where(and(eq(memories.sessionId, job.sessionId), eq(memories.type, 'chapter')))
+    if ((row?.n ?? 0) > CHAPTER_LIMIT) await compactChapters(job.sessionId, job.userId)
+      .catch(e => observe('memory.compact_failed', { jobId: id, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))
   }
   observe('memory.job_done', { jobId: id, kind: job.kind, stored })
   return 'done'

@@ -1,6 +1,8 @@
 export type MemoryType =
   | 'user_fact' | 'promise' | 'shared_event'
   | 'relationship_change' | 'preference' | 'conflict' | 'short_term_summary' | 'world_fact'
+  /** 지난 이야기(11/3): 새 요약이 나올 때 덮어쓰지 않고 남긴 예전 요약. 모델이 직접 만들지 않는다. */
+  | 'chapter'
 
 export type Memory = {
   id: string
@@ -24,6 +26,10 @@ export type Memory = {
   /** 기억 그래프의 엣지. 태그를 공유하는 기억끼리 이어진다. */
   tags: string[]
   createdAt: Date
+  /** 사용자가 고정한 기억(11/3) — 검색에서 늘 먼저 실리고 정리 때 버리지 않는다. */
+  pinned?: boolean
+  /** 사용자가 직접 적은 기억(11/3) — 원문 메시지가 없어도 확인된 기억으로 쓴다. */
+  byUser?: boolean
 }
 
 export type MemoryCandidate = {

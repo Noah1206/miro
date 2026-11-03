@@ -609,6 +609,9 @@ export const memories = pgTable('memories', {
   sourceMessageId: uuid('source_message_id'),
   /** 기억 그래프의 엣지. 태그를 공유하는 기억끼리 연결된다. */
   tags: text('tags').array().notNull().default([]),
+  /** 기억 노트(11/3): 사용자가 고정한 기억 / 사용자가 직접 적은 기억. */
+  pinned: boolean('pinned').notNull().default(false),
+  byUser: boolean('by_user').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   sessionIdx: index('memories_session_idx').on(t.sessionId, t.importance),

@@ -8,10 +8,11 @@ import type { Memory, MemoryType } from './types'
  *   relationship 두 사람 사이의 사건 — 갈등·화해·관계 변화
  *   world        세계 상태·사건·NPC (world_states/events/npcs 표가 곧 world memory)
  */
-export type MemoryLayer = 'long_term' | 'relationship' | 'short_term' | 'world'
+export type MemoryLayer = 'long_term' | 'relationship' | 'short_term' | 'world' | 'story'
 
 export function layerOf(type: MemoryType): MemoryLayer {
   if (type === 'short_term_summary') return 'short_term'
+  if (type === 'chapter') return 'story'
   if (type === 'world_fact') return 'world'
   return type === 'shared_event' || type === 'relationship_change' || type === 'conflict' ? 'relationship' : 'long_term'
 }
@@ -25,7 +26,7 @@ export function terms(text: string): string[] {
 }
 
 type SearchableMemory = Pick<Memory, 'sessionId' | 'importance' | 'persistence' | 'content'>
-  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'sourceOccurredAt' | 'confidence'>>
+  & Partial<Pick<Memory, 'type' | 'tags' | 'createdAt' | 'sourceMessageId' | 'sourceOccurredAt' | 'confidence' | 'pinned'>>
 
 const timeOf = (m: SearchableMemory) => (m.sourceOccurredAt ?? m.createdAt)?.getTime() ?? 0
 const durable = (m: SearchableMemory) => m.persistence >= .6 && (m.confidence ?? 1) >= .6
@@ -62,6 +63,8 @@ export function retrieveMemories<T extends SearchableMemory>(
   const scored = memories.filter(m => m.sessionId === sessionId).map(m => ({ m, score: m.importance * m.persistence + relevance(m, q) }))
     .sort((a, b) => b.score - a.score || timeOf(b.m) - timeOf(a.m))
   const selected = new Set<T>()
+  // 사용자가 고정한 기억은 무엇보다 먼저 싣는다(고정 수는 API 가 방마다 제한한다).
+  for (const { m } of scored) if (m.pinned && selected.size < limit) selected.add(m)
   const reserve = (type: MemoryType, count: number, latest = false) => {
     const candidates = scored.filter(({ m }) => m.type === type && durable(m))
     if (latest) candidates.sort((a, b) => timeOf(b.m) - timeOf(a.m) || b.score - a.score)
@@ -71,23 +74,30 @@ export function retrieveMemories<T extends SearchableMemory>(
     const preferenceQuota = Math.min(4, Math.max(1, Math.floor(limit / 3)))
     const communication = scored.filter(({ m }) => m.type && durable(m) && isCommunicationPreference({ ...m, type: m.type }))
       .sort((a, b) => timeOf(b.m) - timeOf(a.m) || b.score - a.score)
-    for (const { m } of communication.slice(0, Math.min(2, preferenceQuota))) selected.add(m)
+    const before = selected.size
+    for (const { m } of communication.filter(({ m }) => !selected.has(m)).slice(0, Math.min(2, preferenceQuota))) if (selected.size < limit) selected.add(m)
     const preferences = scored.filter(({ m }) => m.type === 'preference' && durable(m) && !selected.has(m))
       .sort((a, b) => timeOf(b.m) - timeOf(a.m) || b.score - a.score)
-    for (const { m } of preferences.slice(0, preferenceQuota - selected.size)) selected.add(m)
+    for (const { m } of preferences.slice(0, Math.max(0, preferenceQuota - (selected.size - before)))) if (selected.size < limit) selected.add(m)
     reserve('promise', limit >= 16 ? 2 : 1)
     reserve('conflict', 1)
     if (limit >= 7) reserve('shared_event', 1)
     if (limit >= 12) reserve('relationship_change', 1)
   }
-  for (const { m } of scored) if (selected.size < limit) selected.add(m)
+  // 지난 이야기는 길다(최대 900자) — 이번 입력과 가장 맞는 한두 편만 싣고 나머지 자리는 사실들에 준다.
+  let chapters = [...selected].filter(m => m.type === 'chapter').length
+  for (const { m } of scored) {
+    if (selected.size >= limit || selected.has(m)) continue
+    if (m.type === 'chapter') { if (chapters >= (limit >= 16 ? 2 : 1)) continue; chapters++ }
+    selected.add(m)
+  }
   // Preserve ranking for callers; slots decide membership, not the order of the prompt.
   return scored.filter(({ m }) => selected.has(m)).map(({ m }) => m)
 }
 
 /** 프롬프트에 계층별로 나눠 싣는다 — 어떤 기억이 어떤 종류인지 모델이 구분한다. */
 export function groupByLayer<T extends Pick<Memory, 'type'>>(memories: T[]): Record<MemoryLayer, T[]> {
-  const out: Record<MemoryLayer, T[]> = { long_term: [], relationship: [], short_term: [], world: [] }
+  const out: Record<MemoryLayer, T[]> = { long_term: [], relationship: [], short_term: [], world: [], story: [] }
   for (const m of memories) out[layerOf(m.type)].push(m)
   return out
 }

@@ -1748,5 +1748,18 @@
  "기억 {n}개 · 점이나 아래 목록을 누르면 보고 고칠 수 있어요.": "{n} memories · Tap a dot or the list below to view and edit.",
  "기억 내용": "Memory",
  "정말 지우기": "Delete for good",
- "저장하지 못했어요. 다시 시도해 주세요.": "Couldn’t save. Please try again."
+ "저장하지 못했어요. 다시 시도해 주세요.": "Couldn’t save. Please try again.",
+ "+ 기억 직접 적기": "+ Add a memory",
+ "{n}편 하나로 정리하기": "Combine {n} chapters into one",
+ "고정": "Pinned",
+ "고정 풀기": "Unpin",
+ "고정은 한 방에 5개까지예요.": "You can pin up to 5 per chat.",
+ "기억 종류": "Memory type",
+ "예: 나는 매운 음식을 못 먹는다": "e.g. I can’t eat spicy food",
+ "적을 기억": "Memory to add",
+ "정리하는 중…": "Combining…",
+ "정리하지 못했어요. 잠시 뒤 다시 시도해 주세요.": "Couldn’t combine. Please try again shortly.",
+ "지금 이야기": "Story so far",
+ "지금 이야기는 대화가 이어지면 AI가 새로 고쳐 써요. 고친 내용은 다음 요약에 이어져요.": "The AI rewrites the story so far as the chat goes on. Your edits carry into the next summary.",
+ "지난 이야기": "Earlier chapters"
 }

@@ -302,7 +302,12 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       if (input.undo && (accepted.length || summary)) undo.memories.deleted.push(...(await tx.select().from(memories).where(and(eq(memories.sessionId, input.sessionId),
         or(accepted.length ? inArray(memories.id, accepted) : undefined, summary ? eq(memories.type, 'short_term_summary') : undefined)))).map(undoMemory))
       if (accepted.length) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), inArray(memories.id, accepted)))
-      if (summary) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), eq(memories.type, 'short_term_summary')))
+      // 11/3: 예전 요약은 '지난 이야기'로 남긴다. 되돌릴 수 있는 턴(undo)은 지웠다가 되살리는 기존 방식 그대로.
+      if (summary) {
+        const old = and(eq(memories.sessionId, input.sessionId), eq(memories.type, 'short_term_summary'))
+        if (input.undo) await tx.delete(memories).where(old)
+        else await tx.update(memories).set({ type: 'chapter' }).where(old)
+      }
       undo.memories.inserted = (await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,

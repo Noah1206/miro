@@ -52,16 +52,16 @@ export function Segmented<V extends string>({ name, value, onChange, options }: 
   )
 }
 
-/** 단계 슬라이더(10/28 생각·출력량) — 막대 위 점 n개, 고른 데까지 라벤더. */
+/** 단계 슬라이더(10/28 생각·출력량, 11/3 채팅 답변 길이도) — 막대 위 점 n개, 고른 데까지 라벤더. name 이 없으면 폼 값은 남기지 않는다. */
 export function StepSlider({ name, label, steps, value, onChange }: {
-  name: string; label: string; steps: ReadonlyArray<{ value: string; label: string }>; value: string; onChange: (v: string) => void
+  name?: string; label: string; steps: ReadonlyArray<{ value: string; label: string }>; value: string; onChange: (v: string) => void
 }) {
   const last = steps.length - 1
   const index = Math.max(0, steps.findIndex(s => s.value === value))
   const at = (k: number) => `calc(8px + (100% - 16px) * ${k / last})`
   return (
     <div>
-      <input type="hidden" name={name} value={steps[index]!.value} />
+      {name && <input type="hidden" name={name} value={steps[index]!.value} />}
       <div style={{ position: 'relative', height: 40, display: 'flex', alignItems: 'center' }}>
         <div aria-hidden style={{ position: 'absolute', left: 0, right: 0, height: 16, borderRadius: 8, background: 'var(--color-surface-3)' }} />
         <div aria-hidden style={{ position: 'absolute', left: 0, width: `calc(${at(index)} + 9px)`, height: 16, borderRadius: 8, background: 'linear-gradient(90deg, var(--color-lavender-500), var(--color-lavender-300))', transition: 'width 200ms' }} />

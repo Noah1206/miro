@@ -40,7 +40,8 @@ export function pruneMemories(memories: Memory[], limit: number): {
   )
   // Retention also needs diversity: a hundred strong factual memories must not erase the
   // reason for a disagreement or every explicit preference. Small caps keep old behavior.
-  const protectedIds = new Set<string>()
+  // 고정한 기억과 지난 이야기는 버리지 않는다 — 지난 이야기 수는 자동 정리가 묶어서 줄인다.
+  const protectedIds = new Set<string>(memories.filter(m => m.pinned || m.type === 'chapter').map(m => m.id))
   if (limit >= 12) {
     for (const type of ['short_term_summary', 'preference', 'promise', 'conflict', 'shared_event', 'relationship_change'] as const) {
       const quota = type === 'short_term_summary' ? 1 : Math.min(type === 'preference' ? 8 : 4, Math.floor(limit / 12))

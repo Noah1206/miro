@@ -111,8 +111,9 @@ export async function runAgencyTurn(opts: {
     return { ...m, content: proof.quote, blocks: ownBlocks?.length ? ownBlocks : undefined }
   })
   // 출처(원문 메시지)가 남아 있는 기억만 기억으로 싣는다. 나머지는 불확실한 과거 기록으로 따로 — 관측 사실로 승격하지 않는다.
-  const sourced = snapshot.memories.filter(m => m.sourceMessageId)
-  let uncertain = snapshot.memories.filter(m => !m.sourceMessageId).map(m => m.content)
+  // 사용자가 직접 적은 기억(11/3)은 원문이 없어도 확인된 기억이다.
+  const sourced = snapshot.memories.filter(m => m.sourceMessageId || m.byUser)
+  let uncertain = snapshot.memories.filter(m => !m.sourceMessageId && !m.byUser).map(m => m.content)
   const build = (recent: typeof evidenceMessages, memories: typeof sourced, unsure: string[]) => {
     const { projected, mood, move } = settled, v = plan ?? early
     const context = buildContext({ ...snapshot, relationship: projected, characterState: { ...(snapshot.characterState ?? { stress: 20, energy: 70, currentGoals: [], currentThoughts: [], firedRules: [] }), mood },

@@ -10,14 +10,6 @@
 .options { padding:6px; }
 /* 답변 길이 슬라이더(11/3): 바 위 세 칸에 손잡이, 아래 이름은 눌러도 이동. */
 .lengths { margin:6px 14px 8px; }
-.lengths input { display:block; width:100%; height:22px; margin:0; background:transparent; appearance:none; -webkit-appearance:none; cursor:pointer; }
-.lengths input::-webkit-slider-runnable-track { height:4px; border-radius:2px; background:linear-gradient(to right,#f2f0f5 var(--fill),#ffffff1a var(--fill)); }
-.lengths input::-moz-range-track { height:4px; border-radius:2px; background:linear-gradient(to right,#f2f0f5 var(--fill),#ffffff1a var(--fill)); }
-.lengths input::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; margin-top:-6px; border:0; border-radius:50%; background:#f2f0f5; box-shadow:0 1px 4px #0006; }
-.lengths input::-moz-range-thumb { width:16px; height:16px; border:0; border-radius:50%; background:#f2f0f5; box-shadow:0 1px 4px #0006; }
-.lengthLabels { display:flex; justify-content:space-between; margin-top:2px; }
-.lengthLabels button { min-height:28px; padding:0; border:0; background:transparent; color:#99959f; font:inherit; font-size:11px; cursor:pointer; }
-.lengthLabels button[data-on='true'] { color:#f2f0f5; }
 .group h3 { margin:0; padding:10px 9px 5px; color:#89858f; font-size:10px; font-weight:400; }
 .option { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; width:100%; min-height:65px; padding:12px 9px; border:0; border-radius:10px; background:transparent; color:inherit; font:inherit; cursor:pointer; text-align:left; }
 .option:hover,.option[aria-pressed='true'] { background:#ffffff08; }
@@ -31,7 +23,7 @@
 .wallet { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:4px 15px; min-height:45px; border-top:1px solid #ffffff0b; color:#99959f; font-size:11px; }
 .wallet strong { color:#dedbe4; font-weight:500; }
 .wallet button { padding:10px 0 10px 10px; border:0; background:none; color:#d4cfdc; font:inherit; font-size:11px; cursor:pointer; }
-.trigger:focus-visible,.option:focus-visible,.lengths input:focus-visible,.wallet button:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
+.trigger:focus-visible,.option:focus-visible,.wallet button:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
 :global([data-chat-theme='dm-light']) .trigger,:global([data-chat-theme='talk']) .trigger { color:#292929; border-color:#00000030; }
 :global([data-chat-theme='dm-light']) .trigger .icon,:global([data-chat-theme='talk']) .trigger .icon { color:#292929; }
 @media(max-width:360px) { .trigger { max-width:155px; gap:5px; padding-inline:8px; } .brand { font-size:11px; } .option { gap:5px; padding-inline:7px; } .heading { gap:5px; } .heading strong { font-size:12px; } .cost { font-size:9px; } }
