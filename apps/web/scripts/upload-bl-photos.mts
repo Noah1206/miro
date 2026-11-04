@@ -24,7 +24,8 @@ const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('o
   if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
   // 인트로 장면 사진은 없을 수 있다(10/19 작품 메인공 6명 — 대표 사진 01만).
   // u1.jpg… = 언베일 수위 갤러리 사진(11/4) — unveil-u1.jpg 로 올려 언베일을 안 켠 사람에겐 흐린다(lib/unveil-photo).
-  const unveil = files.filter((f) => /^u[1-5]\.jpg$/.test(f)).sort()
+  // 11/4 하렘 카드는 히로인마다 여러 장이라 u1~u99 까지(숫자 순서).
+  const unveil = files.filter((f) => /^u\d{1,2}\.jpg$/.test(f)).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
   return { slug, gallery, unveil, intro: files.includes('intro.jpg') ? 'intro.jpg' : null }
 })
 for (const p of plan) console.log(p.slug, 'gallery', p.gallery.join(','), p.unveil.length ? `+ unveil ${p.unveil.join(',')}` : '', p.intro ? '+ intro' : '(no intro)')
