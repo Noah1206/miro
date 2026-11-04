@@ -27,8 +27,12 @@ export function SpeechPanel() {
   },[voice.on,voice.sessionId])
   if(!voice.on)return null
   const working=busy||voice.status==='preparing'||voice.status==='playing'
+  // 11/4: 음성 분량(MIRO_SPEECH_CREDITS_ENABLED)이 꺼진 운영에선 견적·차감 없이 바로 듣는다 — 견적 요청을 보내면 옛 경로가 음성을 통째로 만들어 버린다.
+  const free=!!balance&&!balance.enabled
+  const freeQuote=():Quote=>({...balance!,maximumSeconds:1,cached:false,canGenerate:true,existingState:null})
   const choose=async(choice:SpeechChoice)=>{
     voice.stop()
+    if(free){++sequence.current;setSelected(choice);setQuote(freeQuote());setNotice(null);setError('');return}
     const seq=++sequence.current;setSelected(choice);setQuote(null);setNotice(null);setError('');setBusy(true)
     try{
       const res=await fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId:voice.sessionId,messageId:choice.messageId,part:choice.part,amount,quote:true})})
@@ -45,6 +49,7 @@ export function SpeechPanel() {
     setNotice(null)
     const success=await voice.listen(selected,amount,quote.maximumSeconds===0)
     if(seq!==sequence.current)return
+    if(free){setQuote(freeQuote());return}
     if(success)setQuote({...quote,cached:true,maximumSeconds:0,canGenerate:true,existingState:'done'})
     else try {
       const res=await fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionId:voice.sessionId,messageId:selected.messageId,part:selected.part,amount,quote:true})})
@@ -75,10 +80,10 @@ export function SpeechPanel() {
     finally{setBusy(false);void refreshBalance(true)}
   }
   return <section className={styles.panel} aria-label={t('음성 대사 선택')} data-speech-panel>
-    <div className={styles.top}><span data-speech-balance>{balance?.enabled?t('남은 음성 {n}초',{n:balance.remainingSeconds}):t(balance?'음성 준비 중':'음성 분량 확인 중…')}</span>
-      <div className={styles.amount}>{(['standard','extended'] as const).map(value=><button key={value} type="button" aria-pressed={amount===value} disabled={working}
-        onClick={()=>{sequence.current++;setAmount(value);setQuote(null);setSelected(null);setNotice(null)}}>{t(value==='standard'?'보통':'길게')}</button>)}</div></div>
-    <div className={styles.choices}>{voice.choices.map((choice,index)=><button type="button" key={`${choice.messageId}:${choice.part}`} disabled={working||!balance?.enabled}
+    <div className={styles.top}><span data-speech-balance>{balance?.enabled?t('남은 음성 {n}초',{n:balance.remainingSeconds}):(balance?'':t('음성 분량 확인 중…'))}</span>
+      {!free&&<div className={styles.amount}>{(['standard','extended'] as const).map(value=><button key={value} type="button" aria-pressed={amount===value} disabled={working}
+        onClick={()=>{sequence.current++;setAmount(value);setQuote(null);setSelected(null);setNotice(null)}}>{t(value==='standard'?'보통':'길게')}</button>)}</div>}</div>
+    <div className={styles.choices}>{voice.choices.map((choice,index)=><button type="button" key={`${choice.messageId}:${choice.part}`} disabled={working||!balance}
       aria-pressed={selected?.messageId===choice.messageId&&selected?.part===choice.part} onClick={()=>void choose(choice)}>{index+1}. {choice.text}</button>)}</div>
     {!voice.choices.length&&<p className={styles.status}>{t('캐릭터의 대사가 도착하면 골라 들을 수 있어요.')}</p>}
     {notice&&<div className={styles.warning} role="status"><span>{t(notice)}</span><button type="button" aria-label={t('차감 안내 닫기')} onClick={()=>{setNotice(null);purchase.current=null}}>×</button></div>}
