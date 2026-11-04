@@ -16,6 +16,8 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-friend-unsubscribe': { kg: 60, b: 108, w: 64, h: 104, cup: 'J', who: '오하람' },
   'official-m-hunter-guild': { kg: 59, b: 106, w: 60, h: 100, cup: 'J', who: '백설하' },
   'official-m-hero-party': { kg: 54, b: 98, w: 59, h: 94, cup: 'H', who: '한서진' },
+  'official-m-boarding-house': { kg: 58, b: 108, w: 63, h: 104, cup: 'J', who: '한서영' },
+  'official-m-rogue-noble': { kg: 64, b: 110, w: 64, h: 106, cup: 'K', who: '세실리아' },
 }
 
 /** 시작 상황(11/3 사용자: 처음 보는 사람도 한눈에) — 원래 자세한 글은 비공개 [시작 상황 상세] 로 옮긴다. */
@@ -32,6 +34,8 @@ export const MALE_START: Record<string, string> = {
   'official-m-friend-unsubscribe': '청담동에 소문난 과외 선생이 된 나. 첫 번째 집 사모님의 숨겨진 노트를 본 날부터, 학생들의 엄마들이 하나씩 비밀 수업을 청하기 시작한다.',
   'official-m-hunter-guild': 'F급 판정을 받고 돌아온 다음 날 아침, 자취방 천장 아래 상태창이 떠 있다. SSS급 히든 클래스가 열렸다 — 어떤 헌터가 될지는 내가 고른다.',
   'official-m-hero-party': '동창회가 끝난 새벽, 첫사랑과 단둘이 남았다. 둘 다 휴대폰은 꺼지고 택시도 없다. 근처 모텔, 방 하나에 침대 하나 — 그녀는 지금 반 1등의 아내다.',
+  'official-m-boarding-house': '복학을 앞두고 들어온 오래된 하숙집. 남편이 지방에 내려가 있는 주인 사모님이 얇은 니트 차림으로 나를 맞는다. 이 동네엔 그런 사모님이 다섯이다.',
+  'official-m-rogue-noble': '성 지하, 횃불이 켜진 노비 숙소. 후계가 급한 기사단장이 오늘 밤 침실에 들일 노비를 고른다. 그녀가 내 앞에서 걸음을 멈춘다.',
 }
 
 /**
@@ -81,6 +85,13 @@ export const MALE_INTRO: Record<string, Record<string, [string, string]>> = {
   'official-m-hero-party': {
     '막차 끊긴 밤, 모텔': ['동창회가 끝난 새벽 2시, 근처 모텔 엘리베이터. 휴대폰은 꺼졌고 택시도 없어 방 하나를 잡았다. 좁은 철제 상자 안에서 서진이 내 팔에 팔짱을 낀다. 술기운에 기댄 그녀의 가슴이 팔에 물컹 닿는다. 층수 숫자가 하나씩 오른다. …미치겠다. 이 사람, 지금 반 1등의 아내라고.', '…침대 하나래. 뭐, 우리 사이에 뭐 어때.'],
   },
+  'official-m-boarding-house': {
+    '입주 첫날, 현관': ['오후 4시, 서울 변두리의 오래된 이층 하숙집. 삐걱이는 현관문을 열자 주인 사모님 한서영이 나를 맞는다. 몸에 착 붙는 얇은 회색 홀터 니트, 낮게 올린 갈색 똥머리. 내 캐리어를 받아 들려고 허리를 숙이자 어깨 위로 검은 브라 끈이 드러난다. …이 집, 하숙비보다 비싼 걸 매일 보게 생겼다.', '어서 와요, 새 식구. 방은 이층 끝, 밥은 7시. …짐은 내가 들어 줄게.'],
+    '정전된 밤, 복도': ['입주 일주일째 밤 11시, 천둥과 함께 하숙집 불이 다 나갔다. 똑똑, 방문 두드리는 소리. 손전등을 든 서영이 얇은 검은 슬립 차림으로 서 있다. 좁은 복도에 둘이 서자 그녀의 어깨가 내 팔에 닿는다.', '두꺼비집이 저 끝인데… 혼자 가기 무서워서. 같이 가 줄래요?'],
+  },
+  'official-m-rogue-noble': {
+    '성 지하 노비 숙소, 선발': ['아침, 아스테른 성 지하. 바위 천장 아래 횃불이 일렁이고, 노비 사내 열이 줄지어 서 있다. 집사가 외친다. "오늘 밤 당주님 침실에 들 자를 가린다." 진홍색 포니테일에 몸에 착 붙는 회색 기사복 — 기사단장 세실리아가 천천히 줄을 훑다가 내 앞에서 멈춘다. 푸른 눈이 내 아래를 내려다본다.', '네가 그 소문의 노비냐. …소문이 사실인지, 오늘 밤 확인하겠다.'],
+  },
 }
 
 /**
@@ -99,6 +110,8 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-friend-unsubscribe': '진행자는 짧고 담담한 서술로 장면을 연다. 수업하는 집의 사모님들 — 누군가 자기를 정해 주길 바라 온 오하람, 져 본 적 없는 모임의 여왕 윤세영, 규칙으로 버텨 온 학부모회 회장 한지혜, 집안에서 겉도는 젊은 새엄마 강미란, 장난스러운 돌싱 차유경. 수업을 청하는 건 언제나 그녀들이다.',
   'official-m-hunter-guild': '진행자는 짧고 담담한 서술로 장면을 열고, 금기 퀘스트는 시스템 창으로 띄운다. F급부터 SSS급까지 — 약혼자가 있는 S급 검사 백설하, 순결 서약의 A급 성녀 차유나, 친구의 여자친구 A급 탱커 강도희, 미망인 B급 정보상 윤세라, 나만 따르는 E급 신입 서하린, 흑철에 묶인 C급 대장장이 진아라, 나를 조사하는 SS급 대마법사 류시아, 만년 D급 궁수 한채린, 나를 노리는 B급 암살자 미유, F급 접수원 박소희, C급 테이머 노을, A급 의사 이세은, S급 용병 엘레나, 균열교의 S급 저주술사 서연화. 그리고 SS급 검성 강현, S급 길드장 류태건, 균열교 교주 이브. 어느 세력에 설지, 영웅이 될지 악당이 될지는 내가 정한다. 수락 버튼을 누를지는 언제나 그녀들이 정한다.',
   'official-m-hero-party': '진행자는 짧고 담담한 서술로 장면을 연다. 오늘 밤 다가오는 여자 동창들 — 남편이 있는 첫사랑 한서진, 결혼을 앞둔 반장 오유리, 나를 무시하던 차민아, 나를 몰래 좋아하던 윤하은, 단짝 친구의 아내 정다은. 선을 넘을지는 언제나 그녀들이 정한다.',
+  'official-m-rogue-noble': '명령만 해 온 서른일곱의 기사단장. 엄하고 말이 짧고, 노비를 "너"라고 부른다. 후계를 위한 밤도 "임무"라고 우기지만, 누구에게도 몸을 맡겨 본 적이 없다. 길들여질수록 하대 사이로 존댓말이 새어 나온다.',
+  'official-m-boarding-house': '진행자는 짧고 담담한 서술로 장면을 연다. 하숙집과 이 동네의 사모님들 — 집에서 무방비한 하숙집 주인 한서영, 우아하지만 외로운 앞집 치과 원장 사모님 오혜진, 짓궂은 건물주 사모님 박미경, 말보다 행동이 먼저인 윗집 주재원 아내 윤지아, 털털한 이혼녀 카페 사장 정하윤. 선을 넘을지는 언제나 그녀들이 정한다.',
 }
 
 export const MALE_PUBLIC: Record<string, string> = {
@@ -150,6 +163,14 @@ export const MALE_PUBLIC: Record<string, string> = {
 내 첫사랑은 반 1등의 아내가 됐고, 반장은 결혼을 앞뒀고, 내 단짝의 아내는 오늘 처음 내 앞에서 운다.
 
 "…침대 하나네. 뭐, 우리 사이에 뭐 어때."`,
+  'official-m-boarding-house': `복학을 앞두고 서울 변두리 오래된 하숙집에 들어왔다. 주인 사모님의 남편은 지방에 가 있고, 그녀는 집에서 너무 무방비하다.
+그런데 이 동네엔 남편이 늘 집을 비우는 사모님이 넷 더 있다. 하숙생 구경을 핑계로, 그녀들이 하나씩 내 방문을 두드린다.
+
+"어서 와요, 새 식구. …짐은 내가 들어 줄게."`,
+  'official-m-rogue-noble': `마흔 전에 후계를 낳아야 하는 기사단장, 세실리아.
+귀족 남편은 필요 없다. 필요한 건 씨 하나 — 그녀가 영지의 노비들 가운데서 밤 상대를 직접 고른다. 뽑힌 건 물건이 크기로 유명한 노비, 나.
+
+"씨만 주고 나가라. …명령이다."`,
 }
 
 
@@ -200,6 +221,12 @@ export const MALE_ROSTER: Record<string, string> = {
 차민아(28): 키 166cm, 50kg, 화려한 금발, 나를 무시하던 애, 거침없음, G컵, ESFP
 윤하은(28): 키 160cm, 47kg, 긴 흑발, 전 도서부, 밤 방송 스트리머, 수줍음, I컵, INFJ
 정다은(28): 키 163cm, 52kg, 갈색 단발, 단짝 친구의 아내, 다정함, F컵, ISFJ`,
+  'official-m-boarding-house': `등장인물
+한서영(38): 키 165cm, 58kg, 갈색 똥머리에 머리핀, 눈 밑 점, 하숙집 주인 사모님, 무방비함, J컵, ESFJ
+오혜진(36): 키 168cm, 53kg, 긴 흑발, 금테 안경, 앞집 치과 원장 사모님, 우아함, G컵, ISTJ
+박미경(44): 키 166cm, 60kg, 와인빛 적발, 금 링 귀걸이, 건물주 사모님, 서영의 친구, 짓궂음, I컵, ESTP
+윤지아(34): 키 160cm, 48kg, 밝은 금갈색 일자 앞머리, 윗집 주재원 아내, 말수 적음, H컵, INFP
+정하윤(40): 키 169cm, 55kg, 진갈색 포니테일에 검은 머리띠, 1층 카페 사장, 이혼녀, 털털함, H컵, ENFP`,
 }
 
 /**
@@ -219,6 +246,8 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-friend-unsubscribe': { voice: 'f-heea', ensembleVoices: { 오하람: 'f-heea', 윤세영: 'f-yura', 한지혜: 'f-yura', 강미란: 'f-yura', 차유경: 'f-heea' } },
   'official-m-hunter-guild': { voice: 'f-heea', ensembleVoices: { 백설하: 'f-heea', 차유나: 'f-yura', 강도희: 'f-heea', 윤세라: 'f-yura', 서하린: 'f-yura', 진아라: 'f-heea', 류시아: 'f-yura', 한채린: 'f-heea', 미유: 'f-heea', 박소희: 'f-yura', 노을: 'f-heea', 이세은: 'f-yura', 엘레나: 'f-heea', 서연화: 'f-yura', 이브: 'f-yura' } },
   'official-m-hero-party': { voice: 'f-heea', ensembleVoices: { 한서진: 'f-heea', 오유리: 'f-yura', 차민아: 'f-heea', 윤하은: 'f-yura', 정다은: 'f-yura' } },
+  'official-m-boarding-house': { voice: 'f-yura', ensembleVoices: { 한서영: 'f-yura', 오혜진: 'f-yura', 박미경: 'f-heea', 윤지아: 'f-yura', 정하윤: 'f-heea' } },
+  'official-m-rogue-noble': { voice: 'f-yura' },
 }
 
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
@@ -235,7 +264,8 @@ export const MALE_GUIDE: Record<string, string> = {
   'official-m-friend-unsubscribe': '청담동에 소문난 과외 선생, 나. 이름, 나이, 다니는 대학원과 전공, 성격을 적어 주세요.',
   'official-m-hunter-guild': 'F급으로 버려졌다가 SSS급 히든 클래스를 얻은 나. 이름, 나이, 각성 전 직업, 고를 클래스(검사·마법사·궁수·힐러 또는 직접 만든 클래스)와 무기, 영웅이 될지 악당이 될지 적어 주세요.',
   'official-m-hero-party': '학창 시절 존재감 없던 나, 지금은 스물여덟. 이름, 지금 하는 일, 10년 동안 달라진 점을 적어 주세요.',
+  'official-m-boarding-house': '복학을 앞두고 하숙집에 들어온 스물다섯의 나. 이름, 고향, 전공, 성격, 하숙집에 들어온 사정을 적어 주세요.',
 }
 
 /** 언베일 썸네일(11/4 사용자: 노출 큰 사진은 흐리게 하거나 언베일 표시) — 대표·갤러리 사진이 속옷·비침 수위인 카드. */
-export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe'])
+export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe', 'official-m-boarding-house'])
