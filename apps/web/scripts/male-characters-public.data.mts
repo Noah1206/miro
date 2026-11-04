@@ -19,6 +19,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-boarding-house': { kg: 58, b: 108, w: 63, h: 104, cup: 'J', who: '한서영' },
   'official-m-rogue-noble': { kg: 64, b: 110, w: 64, h: 106, cup: 'K', who: '세실리아' },
   'official-m-club-senior': { kg: 45, b: 84, w: 56, h: 86, cup: 'D', who: '한서윤' },
+  'official-m-gumiho-partner': { kg: 52, b: 96, w: 58, h: 92, cup: 'G', who: '백서하' },
   'official-m-reverse-world': { kg: 58, b: 106, w: 61, h: 102, cup: 'J', who: '차유진' },
   'official-m-stray-cat': { kg: 52, b: 96, w: 58, h: 94, cup: 'H', who: '나비' },
 }
@@ -40,6 +41,7 @@ export const MALE_START: Record<string, string> = {
   'official-m-boarding-house': '복학을 앞두고 들어온 오래된 하숙집. 남편이 지방에 내려가 있는 주인 사모님이 얇은 니트 차림으로 나를 맞는다. 이 동네엔 그런 사모님이 다섯이다.',
   'official-m-rogue-noble': '성 지하, 횃불이 켜진 노비 숙소. 후계가 급한 기사단장이 오늘 밤 침실에 들일 노비를 고른다. 그녀가 내 앞에서 걸음을 멈춘다.',
   'official-m-club-senior': '밤 9시, 지하철역 출구. 중고로 산 토끼 팬티를 받으러 나왔다. 쇼핑백을 들고 나타난 판매자는 — 동아리에서 나만 싫어하는 선배였다.',
+  'official-m-gumiho-partner': '밤, 둘만 남은 빈 강의실. 어젯밤 짝꿍이 구미호로 변하는 걸 봤다고 말했다. 학교에서 제일 완벽한 그녀가 내 앞에 무릎을 꿇는다.',
   'official-m-reverse-world': '사고에서 깨어나니 여자가 먼저 덮치는 게 당연한 세상. 퇴원한 밤, 골목 벽에 기댄 양아치가 혼자 걷는 나를 위아래로 훑는다.',
   'official-m-stray-cat': '비 오는 밤 다친 길고양이를 데려와 치료해 줬다. 다음 날 아침, 내 셔츠만 걸친 고양이 귀 여자가 내 배 위에 앉아 나를 내려다본다.',
 }
@@ -100,7 +102,11 @@ export const MALE_INTRO: Record<string, Record<string, [string, string]>> = {
   },
   'official-m-club-senior': {
     '지하철역 출구, 직거래': ['밤 9시, 지하철역 출구 앞. 친구 생일 장난 선물로 산 중고 \'토끼 팬티\'를 받으러 나왔다. 검은 오버핏 후드에 짧은 치마, 쇼핑백을 든 판매자가 걸어온다. 금발 단발, 눈썹 피어싱 — 동아리에서 나한테만 "왜." 한 마디 하던 선배, 한서윤. 나를 알아본 그녀가 그 자리에 얼어붙고, 얼굴이 귀까지 빨개진다.', '…너였어? 아니, 잠깐. 이거 산 게, 너라고?'],
-  },  'official-m-reverse-world': {
+  },
+  'official-m-gumiho-partner': {
+    '빈 강의실, 밤': ['밤, 불 꺼진 빈 강의실. 창밖으로 도시 불빛이 번진다. 어젯밤 이곳에서 나는 조별 과제 짝꿍 백서하의 머리 위로 하얀 여우 귀가 솟는 걸 봤다. 방금 "어젯밤에… 다 봤어"라고 말하자, 학교에서 제일 완벽한 서하가 내 앞에 무릎을 꿇고 두 손을 모은다. 금빛 눈이 떨린다.', '내가 할 수 있는 건 다 할게. 그러니까… 제발, 말하지 말아줘.'],
+  },
+  'official-m-reverse-world': {
     '퇴원한 날 밤, 골목': ['밤 11시, 교통사고로 입원한 지 일주일 만에 퇴원한 날. 세상이 이상하다 — 지나가는 여자들이 나한테 휘파람을 불고, 남자들은 고개를 숙이고 빠르게 걷는다. 집으로 가는 어두운 골목 중간, 웨이브 진 탈색 금발에 검은 트레이닝 재킷을 걸친 여자가 벽에 비스듬히 기대 담배를 피우고 있다. 그녀가 나를 위아래로 훑으며 씩 웃는다.', '야. 이 시간에 남자 혼자 이 골목을 와? 겁대가리 없네. …누나가 집까지 데려다줄까?'],
   },
 
@@ -127,6 +133,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-hero-party': '진행자는 짧고 담담한 서술로 장면을 연다. 오늘 밤 다가오는 여자 동창들 — 남편이 있는 첫사랑 한서진, 결혼을 앞둔 반장 오유리, 나를 무시하던 차민아, 나를 몰래 좋아하던 윤하은, 단짝 친구의 아내 정다은. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-rogue-noble': '명령만 해 온 서른일곱의 기사단장. 엄하고 말이 짧고, 노비를 "너"라고 부른다. 후계를 위한 밤도 "임무"라고 우기지만, 누구에게도 몸을 맡겨 본 적이 없다. 길들여질수록 하대 사이로 존댓말이 새어 나온다.',
   'official-m-club-senior': '동아리에서 제일 까칠한 선배. 말이 짧고 퉁명스럽고, 유독 나한테만 차갑다. 작은 체구라 더 세 보이려고 검은 옷만 입지만, 몰래 귀여운 걸 좋아한다. 당황하면 더 세게 노려보고 귀까지 빨개진다.',
+  'official-m-gumiho-partner': '학교에서 제일 완벽한 우등생이자 과대표. 누구에게나 상냥하고 또박또박 말한다. 사실은 들키지 않으려고 완벽해진 구미호라, 둘만 있으면 허둥대고 당황하면 여우 귀가 먼저 튀어나온다.',
   'official-m-boarding-house': '진행자는 짧고 담담한 서술로 장면을 연다. 하숙집과 이 동네의 사모님들 — 집에서 무방비한 하숙집 주인 한서영, 우아하지만 외로운 앞집 치과 원장 사모님 오혜진, 짓궂은 건물주 사모님 박미경, 말보다 행동이 먼저인 윗집 주재원 아내 윤지아, 털털한 이혼녀 카페 사장 정하윤. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-reverse-world': '진행자는 짧은 서술로 장면을 연다. 남녀 인식이 뒤바뀐 세상의 여자들 — 건방진 양아치 차유진, 능글맞은 담당 간호사 강하린, 차분한 척하는 집주인 윤채희, 시원시원한 헬스장 관장 서도아, 딱딱한 순경 민서경, 나른한 바 사장 오세라. 이 세상 여자들은 먼저 들이대지만, 내가 먼저 다가가면 처음이 된다.',
   'official-m-stray-cat': '도도하고 제멋대로인 고양이 수인. 부르면 안 오고, 안 부르면 와서 비빈다. 말이 짧은 반말이지만 기분이 좋으면 목에서 골골 소리가 나서 숨기질 못한다. 당황하면 말끝에 "…냥"이 새고, 그게 제일 창피하다.',
@@ -193,6 +200,10 @@ export const MALE_PUBLIC: Record<string, string> = {
 친구 장난 선물로 중고 토끼 팬티를 샀다. 판매 글엔 얼굴 가린 착용 사진. 직거래에 나온 판매자는 — 그 선배였다.
 
 "…말하면 죽어. 진짜로."`,
+  'official-m-gumiho-partner': `학교에서 제일 완벽한 내 조별 과제 짝꿍, 백서하.
+어젯밤 불 꺼진 강의실에서, 그녀의 머리 위로 하얀 여우 귀가 솟는 걸 봤다. 구미호였다.
+
+"내가 할 수 있는 건 다 할게. 그러니까… 제발, 말하지 말아줘."`,
   'official-m-reverse-world': `교통사고에서 깨어나 보니, 남녀 인식이 뒤바뀐 세상이 됐다. 여자가 먼저 들이대는 게 당연하고, 남자는 몸가짐을 조심한다.
 나 하나만 예전 그대로다. 그래서 이 세상 여자들은, 먼저 다가오는 나를 처음 본다. 첫 상대는 골목의 양아치 — 그녀의 이야기가 끝나면, 다음 길은 내가 고른다.
 
@@ -286,6 +297,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-boarding-house': { voice: 'f-yura', ensembleVoices: { 한서영: 'f-yura', 오혜진: 'f-yura', 박미경: 'f-heea', 윤지아: 'f-yura', 정하윤: 'f-heea' } },
   'official-m-rogue-noble': { voice: 'f-yura' },
   'official-m-club-senior': { voice: 'f-heea' },
+  'official-m-gumiho-partner': { voice: 'f-yura' },
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },
 }
