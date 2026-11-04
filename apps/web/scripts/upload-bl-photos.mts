@@ -20,7 +20,7 @@ const apply = process.argv.includes('--apply')
 const only = process.argv.find((a) => a.startsWith('--only='))?.slice(7)
 const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('official-')).sort().map((slug) => {
   const files = readdirSync(join(ROOT, slug))
-  const gallery = files.filter((f) => /^0[1-5]\.(jpg|webp)$/.test(f)).sort()   // 01.webp = 움직이는 대표 사진(11/4)
+  const gallery = files.filter((f) => /^0[1-9]\.(jpg|webp)$/.test(f)).sort()   // 01.webp = 움직이는 대표 사진(11/4)
   if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
   // 인트로 장면 사진은 없을 수 있다(10/19 작품 메인공 6명 — 대표 사진 01만).
   // u1.jpg… = 언베일 수위 갤러리 사진(11/4) — unveil-u1.jpg 로 올려 언베일을 안 켠 사람에겐 흐린다(lib/unveil-photo).
