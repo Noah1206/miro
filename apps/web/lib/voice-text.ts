@@ -2,8 +2,13 @@ import { taggedSpeech, voiceDelivery, type VoiceDelivery } from '@miro/config'
 
 /** 소리 내어 읽을 글. 서술·속마음·NPC는 읽지 않는다. speech = 신음 태그가 든 음성용 대사(언베일, 화면엔 text). */
 export const SPOKEN_MAX = 1200
-export type SpokenSegment = { text: string; delivery: VoiceDelivery; speech?: string }
-export function spokenSegments(blocks: Array<Record<string, unknown>>, content: string, characterName?: string): SpokenSegment[] {
+export type SpokenSegment = { text: string; delivery: VoiceDelivery; speech?: string
+  /** 여러 인물 카드에서 카드 이름이 아닌 히로인이 말한 줄(11/4) — 그 히로인 목소리로 읽는다. */
+  speaker?: string }
+/** 대사 화자가 목소리 목록의 어느 히로인인가 — 'speaker' 가 '벨제나 교수'처럼 이름 뒤에 호칭이 붙어도 맞춘다. */
+export const matchSpeaker = (speaker: string, names: readonly string[]) => names.find(n => speaker === n || speaker.startsWith(n)) ?? null
+/** speakers = 히로인별 목소리가 있는 이름(characters.ensemble_voices 의 키). 그 히로인 대사도 읽는다 — 서버와 화면이 같은 목록을 넘겨야 part 번호가 맞는다. */
+export function spokenSegments(blocks: Array<Record<string, unknown>>, content: string, characterName?: string, speakers: readonly string[] = []): SpokenSegment[] {
   if (!blocks.length) return content.trim() ? [{ text: content.trim().slice(0, SPOKEN_MAX), delivery: voiceDelivery(null) }] : []
   const result: SpokenSegment[] = []
   let remaining = SPOKEN_MAX, whisper = false
@@ -13,10 +18,11 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
       continue
     }
     if (block.type !== 'dialogue' || typeof block.text !== 'string') continue
-    if (characterName && block.speaker && block.speaker !== characterName) continue
+    const speaker = typeof block.speaker === 'string' && block.speaker !== characterName ? block.speaker : null
+    if (characterName && speaker && !matchSpeaker(speaker, speakers)) continue
     const text = block.text.trim().slice(0, remaining)
     const speech = text === block.text.trim() ? taggedSpeech(text, block.speech) : null
-    if (text) { result.push({ text, delivery: voiceDelivery(block.delivery, whisper), ...(speech ? { speech } : {}) }); remaining -= text.length }
+    if (text) { result.push({ text, delivery: voiceDelivery(block.delivery, whisper), ...(speech ? { speech } : {}), ...(speaker ? { speaker } : {}) }); remaining -= text.length }
     whisper = false
     if (!remaining) break
   }

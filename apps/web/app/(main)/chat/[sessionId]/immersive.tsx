@@ -24,7 +24,9 @@ export const useImmersive = () => useContext(Ctx)
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
 const SILENT = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
-export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, enabled=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string;enabled?:boolean }) {
+export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, voiceSpeakers=[], enabled=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string
+  /** 히로인별 목소리가 있는 이름(11/4) — 서버(lib/speech/access)와 같은 목록이어야 part 번호가 맞는다. */
+  voiceSpeakers?:string[];enabled?:boolean }) {
   const key = `miro:immersive:${sessionId}`
   const [preferredOn, setOn] = useState(false)
   const on=enabled&&preferredOn
@@ -35,7 +37,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   useEffect(()=>{if(!enabled){controller.current?.abort();audio.current?.pause();setStatus('idle')}},[enabled])
   const known=new Set(initialMessages.map(m=>m.id))
   const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&m.blocks.length&&/^[0-9a-f-]{36}$/i.test(m.id))
-    .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
+    .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName,voiceSpeakers).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
   const stop=()=>{controller.current?.abort();audio.current?.pause();setStatus('idle')}
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // Voice is opt-in for every character, including those originally created as text.

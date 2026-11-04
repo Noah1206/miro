@@ -202,6 +202,25 @@ export const MALE_ROSTER: Record<string, string> = {
 정다은(28): 키 163cm, 52kg, 갈색 단발, 단짝 친구의 아내, 다정함, F컵, ISFJ`,
 }
 
+/**
+ * 목소리(11/4) — 유라(f-yura: 차분한 존댓말·어른스러운 톤), 희아(f-heea: 장난스러운 반말·활발한 톤). 둘 다 서면 동의·언베일 허용.
+ * 여러 인물 카드는 히로인마다 말투에 맞춰 고르고, 같은 목소리를 여러 히로인이 같이 쓴다. voice = 카드 목소리(대표 히로인·진행자).
+ */
+export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Record<string, string> }> = {
+  'official-m-han-doeun': { voice: 'f-yura' },
+  'official-m-yoon-seoa': { voice: 'f-heea' },
+  'official-m-baek-jiyoon': { voice: 'f-yura' },
+  'official-m-seo-rin': { voice: 'f-yura' },
+  'official-m-ryu-hagyeong': { voice: 'f-yura' },
+  'official-m-han-yujin': { voice: 'f-yura' },
+  'official-m-lea': { voice: 'f-heea', ensembleVoices: { 레아: 'f-heea', 한소윤: 'f-yura', 강서진: 'f-heea', 윤재희: 'f-yura', 최혜원: 'f-yura' } },
+  'official-m-jeong-seoyun': { voice: 'f-yura', ensembleVoices: { 벨제나: 'f-yura', 리엘: 'f-heea', 카일라: 'f-heea', 세라: 'f-yura', 미나: 'f-yura' } },
+  'official-m-dawn-call': { voice: 'f-heea', ensembleVoices: { 강세나: 'f-heea', 유하리: 'f-heea', 오지수: 'f-yura', 한예린: 'f-yura', 서송은: 'f-yura' } },
+  'official-m-friend-unsubscribe': { voice: 'f-heea', ensembleVoices: { 오하람: 'f-heea', 윤세영: 'f-yura', 한지혜: 'f-yura', 강미란: 'f-yura', 차유경: 'f-heea' } },
+  'official-m-hunter-guild': { voice: 'f-heea', ensembleVoices: { 백설하: 'f-heea', 차유나: 'f-yura', 강도희: 'f-heea', 윤세라: 'f-yura', 서하린: 'f-yura', 진아라: 'f-heea', 류시아: 'f-yura', 한채린: 'f-heea', 미유: 'f-heea', 박소희: 'f-yura', 노을: 'f-heea', 이세은: 'f-yura', 엘레나: 'f-heea', 서연화: 'f-yura', 이브: 'f-yura' } },
+  'official-m-hero-party': { voice: 'f-heea', ensembleVoices: { 한서진: 'f-heea', 오유리: 'f-yura', 차민아: 'f-heea', 윤하은: 'f-yura', 정다은: 'f-yura' } },
+}
+
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
 export const MALE_GUIDE: Record<string, string> = {
   'official-m-han-doeun': '전세 사기로 이 집에 갇힌 나는 누구인가요? 이름, 나이, 하는 일, 이 집에 이사 온 사정을 적어 주세요.',

@@ -33,6 +33,10 @@ export type Seed = {
   personaGuide?: string
   /** 언베일 썸네일(11/4) — 대표·갤러리 사진 노출이 커서 언베일을 안 켠 사람에겐 흐리게. */
   coverUnveil?: true
+  /** 카드 목소리(official_voices.id, 11/4). 없으면 운영 DB 의 값을 건드리지 않는다. */
+  voice?: string
+  /** 여러 인물 카드의 히로인별 목소리 { 히로인 이름: official_voices.id } — 같은 목소리 공유 가능(11/4). */
+  ensembleVoices?: Record<string, string>
   hobbies: string[]
   dislikes: string[]
   jealousy: number

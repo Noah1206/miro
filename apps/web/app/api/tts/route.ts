@@ -7,7 +7,8 @@ import { submitSpeech, speechFailure, quoteSpeech } from '@/lib/speech/http'
 import { speechAmount, speechCreditsEnabled } from '@/lib/speech/credits-policy'
 import { spokenSegments } from '@/lib/voice-text'
 import { feature } from '@miro/config'
-import { voiceColumns, voiceUsable } from '@/lib/voice'
+import { voiceColumns } from '@/lib/voice'
+import { segmentVoice } from '@/lib/speech/access'
 
 export const runtime = 'nodejs'
 // The actual native model's cold load exceeded30s in the local comparison.
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     || (body?.reuseOnly !== undefined && typeof body.reuseOnly !== 'boolean')
     || (body?.part !== undefined && (!Number.isInteger(body.part) || Number(body.part) < 0 || Number(body.part) > 11))) return new Response(null, { status: 400 })
   const [row] = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, name: characters.name,
-    voice: officialVoices.providerVoiceId, ...voiceColumns, characterOwnerId: characters.ownerId, adultSince: roleplaySessions.adultSince })
+    voice: officialVoices.providerVoiceId, ...voiceColumns, characterOwnerId: characters.ownerId, adultSince: roleplaySessions.adultSince, ensembleVoices: characters.ensembleVoices })
     .from(messages)
     .innerJoin(roleplaySessions, and(eq(roleplaySessions.id, messages.sessionId), eq(roleplaySessions.userId, user.id)))
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
@@ -38,7 +39,7 @@ export async function POST(req: Request) {
       isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt), eq(roleplaySessions.status, 'active'), isNull(characters.deletedAt))).limit(1)
   if (!row) return new Response(null, { status: 404 })
   if (row.role !== 'character') return new Response(null, { status: 403 })
-  const segments = spokenSegments(row.blocks, row.content, row.name)
+  const segments = spokenSegments(row.blocks, row.content, row.name, Object.keys(row.ensembleVoices ?? {}))
   if (!segments.length) return new Response(null, { status: 204 })
   if(speechCreditsEnabled() && !speechQueueEnabled()) return Response.json({error:'voice_not_ready'},{status:503})
   const tts = resolveTts()
@@ -62,7 +63,7 @@ export async function POST(req: Request) {
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   try {
     const timeout = AbortSignal.timeout(170_000)
-    const out = await tts.speak({ text, voice: voiceUsable(row, row.characterOwnerId, !!row.adultSince) ? row.voice : null,
+    const out = await tts.speak({ text, voice: await segmentVoice(row, selected ?? segments[0]),
       language: settings?.language ?? 'ko', style: delivery?.tone === 'whisper' ? 'whisper' : 'normal', delivery },
       AbortSignal.any([req.signal, timeout]))
     return new Response(out.audio, { headers: { 'content-type': out.contentType, 'cache-control': 'private, no-store' } })
