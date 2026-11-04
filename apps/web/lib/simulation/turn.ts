@@ -202,11 +202,12 @@ async function executeTurn(opts: {
     if (firstPromise && !transition.realityIntent && promisedContact(renderBlocks(transition.blocks))) {
       transition.realityIntent = { channel: 'message', reason: PROMISE_REASON, urgency: 0.9, notBefore: firstPromise.at.toISOString(), promise: true }
     }
-    // 필터는 통과했지만 캐릭터를 벗어난 거절문 — 대사로 저장하지 않고 공급자 거절과 같이 처리한다(차감 취소, 턴 미저장).
+    // 필터는 통과했지만 캐릭터를 벗어난 거절문 — 대사로 저장하지 않고 차감을 취소한다(턴 미저장).
+    // 11/4 사용자 요청: '안전 차단'으로 안내하지 않고 평범한 생성 실패로 — 같은 말을 다시 보내면 새로 받는다(언베일 안내도 붙이지 않는다).
     if (looksLikeRefusal(renderBlocks(transition.blocks))) {
       await refund()
       observe('turn.refused', { sessionId, turn: turnIndex, model: dialogueModelId, by: 'text' })
-      return { ok: false, reason: 'safety', unveil: await offerUnveil() }
+      return { ok: false, reason: 'generation' }
     }
     if (result.providerMode === 'fallback' || turnMeter.missingSuccessfulUsage) {
       await refund()

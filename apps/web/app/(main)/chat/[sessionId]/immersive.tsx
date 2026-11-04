@@ -35,8 +35,9 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const {appended}=useTurns()
   const controller=useRef<AbortController|null>(null)
   useEffect(()=>{if(!enabled){controller.current?.abort();audio.current?.pause();setStatus('idle')}},[enabled])
+  // 11/4: 인트로 대사는 블록 없이 글만 있다 — 그것도 고를 수 있게(서버 spokenSegments 도 글만 있으면 그 글을 읽는다).
   const known=new Set(initialMessages.map(m=>m.id))
-  const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&m.blocks.length&&/^[0-9a-f-]{36}$/i.test(m.id))
+  const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
     .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName,voiceSpeakers).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
   const stop=()=>{controller.current?.abort();audio.current?.pause();setStatus('idle')}
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
