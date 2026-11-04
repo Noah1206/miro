@@ -94,6 +94,11 @@ body {
 }
 a { color: inherit; text-decoration: none; }
 button, input, textarea, select { font: inherit; color: inherit; }
+/* 11/4: iPhone 사파리는 글자가 16px 보다 작은 입력칸에 커서가 들어가면 화면을 확대하고 옆으로 밀린다(채팅 입력 13px).
+   아이폰에서만(-webkit-touch-callout 은 iOS 사파리만 안다) 입력칸 글자를 16px 이상으로. 다른 기기는 그대로. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']), textarea, select { font-size: max(16px, 1em) !important; }
+}
 button { cursor: pointer; }
 img { display: block; max-width: 100%; }
 h1, h2, h3, p { margin: 0; }
