@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useState, useEffect } from 'react'
+import { useActionState, useState, useEffect, useRef, useId } from 'react'
 import { PERSONA_LIMITS, type UserPersona } from '@miro/domain'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { savePersonaAction, saveConversationPersonaAction } from './actions'
@@ -21,18 +21,10 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
     <form action={action} className={styles.form}>
       <input type="hidden" name="next" value={next} />
       {sessionId && <input type="hidden" name="sessionId" value={sessionId} />}
-      {/* 만든 사람이 준비한 페르소나(11/3) — 누르면 아래 칸이 채워지고, 그다음 고쳐 쓸 수 있다. */}
-      {presets.length > 0 && <div className={styles.presets} role="group" aria-label={t('준비된 페르소나')}>
-        <span className={styles.top}>{t('준비된 페르소나')}</span>
-        {presets.map(p => {
-          const on = name === p.name && gender === (p.gender ?? '') && about === (p.description ?? '')
-          return <button key={p.name} type="button" aria-pressed={on} className={styles.preset}
-            onClick={() => { setName(p.name); setGender(p.gender ?? ''); setAbout(p.description ?? '') }}>
-            <strong>{p.name}{p.gender && <span> · {t(p.gender === 'female' ? '여성' : '남성')}</span>}</strong>
-            {p.description && <small>{p.description}</small>}
-          </button>
-        })}
-      </div>}
+      {/* 만든 사람이 준비한 페르소나(11/3) — 11/5: 드롭다운으로 고르고, 고른 것을 다시 누르면 해제(칸 비움). 고른 뒤 고쳐 쓸 수 있다. */}
+      {presets.length > 0 && <PresetDropdown presets={presets}
+        isOn={p => name === p.name && gender === (p.gender ?? '') && about === (p.description ?? '')}
+        onPick={p => { if (p) { setName(p.name); setGender(p.gender ?? ''); setAbout(p.description ?? '') } else { setName(''); setGender(''); setAbout('') } }} />}
       <label className={styles.field}>
         <span className={styles.top}><span>{t('이름')}<b aria-hidden>*</b></span><span>{name.length}/{PERSONA_LIMITS.name}</span></span>
         <input name="name" value={name} onChange={e => setName(e.target.value)} maxLength={PERSONA_LIMITS.name} required autoComplete="off" placeholder={t('예) 지우')} />
@@ -52,5 +44,39 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
       {state?.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
       <div className={styles.submit}><SubmitButton full variant="primary" size="lg">{submitLabel}</SubmitButton></div>
     </form>
+  )
+}
+
+function PresetDropdown({ presets, isOn, onPick }: { presets: UserPersona[]; isOn: (p: UserPersona) => boolean; onPick: (p: UserPersona | null) => void }) {
+  const t = useT()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const listId = useId()
+  const current = presets.find(isOn)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('pointerdown', onDown); document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey) }
+  }, [open])
+  return (
+    <div ref={ref} className={styles.presets}>
+      <span className={styles.top}>{t('준비된 페르소나')}</span>
+      <button type="button" className={styles.presetToggle} aria-expanded={open} aria-controls={listId} onClick={() => setOpen(o => !o)}>
+        <span>{current ? current.name : t('선택 안 함')}</span>
+        <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 150ms' }}><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+      {open && <div id={listId} role="group" aria-label={t('준비된 페르소나')} className={styles.presetList}>
+        {presets.map(p => {
+          const on = isOn(p)
+          return <button key={p.name} type="button" aria-pressed={on} className={styles.preset}
+            onClick={() => { onPick(on ? null : p); setOpen(false) }}>
+            <strong>{p.name}{p.gender && <span> · {t(p.gender === 'female' ? '여성' : '남성')}</span>}</strong>
+            {p.description && <small>{p.description}</small>}
+          </button>
+        })}
+      </div>}
+    </div>
   )
 }

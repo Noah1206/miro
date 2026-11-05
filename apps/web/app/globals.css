@@ -454,6 +454,11 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .rich-text.intro-narration em { color: inherit; font-style: normal; }
 .intro-bubble { max-width: 85%; padding: 8px 11px; border-radius: 12px; background: var(--color-surface-2); }
 .intro-bubble .rich-text p { line-height: 1.55; }
+.intro-typing { display: inline-flex; gap: 5px; align-items: center; padding: 12px 14px; }
+.intro-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--color-text-secondary); animation: intro-typing 1.2s infinite ease-in-out; }
+.intro-typing span:nth-child(2) { animation-delay: .15s; } .intro-typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes intro-typing { 0%, 60%, 100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .intro-typing span { animation: none; opacity: .7; } }
 .detail-sample-dialogue { font-size: 13px; line-height: 1.55; }
 .detail-chat-preview { padding: 18px 14px; border-radius: 14px; background: rgba(255,255,255,0.025); }
 .intro-photo { display: block; width: 100%; height: auto; border-radius: var(--radius-md); background: var(--color-surface-2); border: 0; }

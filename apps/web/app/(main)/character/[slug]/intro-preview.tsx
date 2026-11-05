@@ -1,7 +1,7 @@
 'use client'
 import { CharacterBriefing } from '@/components/character-briefing'
 import type { CharacterEntry } from '@/lib/character-entry'
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { RichText, type RichNames } from '@/components/scene/rich-text'
 import { useT } from '@/lib/i18n/client'
 import { Rule, SampleDialogue } from './sections'
@@ -22,8 +22,10 @@ export type IntroScene = {
  * 상세의 '첫 장면' — 시작 상황 텍스트 탭, 시각·장소 안내, 도입부 대사와 서술(10/8, 위프 스크린샷처럼).
  * 고른 칩은 아래 '대화 시작하기' 폼으로 간다(form 속성). 도입부가 하나면 칩 없이 그것만 보인다.
  */
-export function IntroPreview({ scenes, names, portrait, turns, veil }: {
+export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
   scenes: IntroScene[]; names: RichNames; portrait: string | null
+  /** 11/5: 인트로 섹션 바로 밑의 '대화 바로 시작하기' 버튼. */
+  start?: ReactNode
   /** 11/4: 언베일 수위 장면 사진을 흐리고, 누르면 성인 본인인증 → 언베일 켜기. 언베일을 켠 사람에겐 null. */
   veil?: { signedIn: boolean; returnTo: string } | null
   turns: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
@@ -74,6 +76,8 @@ export function IntroPreview({ scenes, names, portrait, turns, veil }: {
             : <RichText editorial className="intro-narration" text={line.text} names={names} />}
         </div>
       ))}
+      {/* 11/5: 인트로 끝에 상대가 입력 중인 말풍선(…) — 이어서 바로 대화로 */}
+      {(!longIntro || expanded) && <div className="intro-line"><div className="intro-bubble intro-typing" aria-hidden><span /><span /><span /></div></div>}
       </div>
       {longIntro && (
         <button type="button" className="intro-expand" aria-expanded={expanded} aria-controls={contentId} onClick={() => setExpanded(!expanded)}>
@@ -82,6 +86,7 @@ export function IntroPreview({ scenes, names, portrait, turns, veil }: {
       )}
     </div>
     </Rule>
+    {start && <div style={{ marginTop: 'var(--space-4)' }}>{start}</div>}
     {turns.length > 0 && (
       <Rule label={t('대화 예시')}>
         <div className="detail-chat-preview">

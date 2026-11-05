@@ -147,7 +147,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             {/* 11/5: 시작 버튼 왼쪽 댓글 아이콘 — 댓글 전체 화면으로 */}
             <TransitionLink href={`/character/${slug}/comments`} aria-label={t('댓글 {n}', { n: commentCount })}
               style={{ flex: 'none', width: 48, height: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
-              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg>
+              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="var(--color-white)" stroke="var(--color-white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg>
             </TransitionLink>
             <div style={{ flex: 1, minWidth: 0 }}>
               {user
@@ -179,6 +179,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </details>
 
         <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null} veil={veilIntro}
+          start={user
+            ? <button type="submit" form="start-roleplay" className="btn-start" style={{ width: '100%', minHeight: 52, borderRadius: 'var(--radius-lg)', background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontSize: 16, fontWeight: 'var(--weight-regular)', fontFamily: 'inherit', cursor: 'pointer' }}>{t('대화 바로 시작하기')}</button>
+            : <StartWithLogin slug={slug} label={t('대화 바로 시작하기')} />}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
       </div>
 
