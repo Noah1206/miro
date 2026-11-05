@@ -42,7 +42,7 @@ export function IntroPreview({ scenes, names, portrait, turns, veil }: {
   const lines = longIntro && !expanded ? sceneLines.filter(line => line === firstNarration || line === firstSpeech) : sceneLines
   return (
     <>
-    <Rule label={t('첫 장면')}>
+    <Rule label={t('시작 설정')}>
     <div className="intro-preview">
       {scenes.length > 1 && (
         <fieldset className="intro-scenes">

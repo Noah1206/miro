@@ -113,23 +113,29 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
 
       <div className="character-detail-copy detail-top-info" style={{ padding: '18px var(--gutter) 0', position: 'relative' }}>
-        <h1 className="t-hero t-name" style={{ marginBottom: 4 }}>{coverTitle(c)}</h1>
-        {/* 11/4: 인용구(한 줄 소개)는 상세에서 뺐다(사용자 요청). '이 사람에 대해' 제목 없이 소개 글만 제목과 태그 사이에. */}
-        {c.experienceType === 'reality' && (editedDescription ?? lead) && <div className="detail-prose" style={{ marginBottom: 14 }}>
+        {/* 11/5 사용자 스크린샷 순서: 제목 → 통계 → 배지 → 소개 → 해시태그 칩. */}
+        <h1 className="t-hero t-name" style={{ marginBottom: 8 }}>{coverTitle(c)}</h1>
+
+        {/* 통계 — 댓글·좋아요. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청). */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
+          <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
+          <LikeButton slug={slug} initial={likes} />
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+          <span className="t-caption" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{c.audience === 'male' ? t('남성향') : t('여성향')}</span>
+        </div>
+
+        {/* 11/4: 인용구(한 줄 소개)는 상세에서 뺐다(사용자 요청). */}
+        {c.experienceType === 'reality' && (editedDescription ?? lead) && <div className="detail-prose" style={{ marginBottom: 16 }}>
           <RichText editorial text={me(editedDescription ?? lead)} names={names} />
         </div>}
 
         {tags.length > 0 && (
-          <p className="t-caption" style={{ color: 'var(--color-text-secondary)', marginBottom: 10 }}>
-            {tags.map((t) => `#${t}`).join(' ')}
-          </p>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+            {tags.map((tag) => <span key={tag} className="t-caption" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)' }}>#{tag}</span>)}
+          </div>
         )}
-
-        {/* 통계 칩 — 댓글·좋아요. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청). */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-          <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
-          <LikeButton slug={slug} initial={likes} />
-        </div>
 
         {/* n18 — 문. 휴대폰은 고정 하단(내비 위, 2.5.8 / 2.4.11), 컴퓨터는 이 자리에 그대로 선다. */}
         {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
@@ -145,8 +151,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="character-detail-copy detail-rest" style={{ padding: '0 var(--gutter)', position: 'relative' }}>
 
         {/* 11/4 사용자: 수치·나이·말투 줄과 세계관·연락은 '세부정보 보기'를 눌러야 펼쳐진다. */}
-        <details style={{ marginTop: 'var(--space-5)' }}>
-          <summary className="t-caption" style={{ cursor: 'pointer', color: 'var(--color-text-secondary)', listStylePosition: 'inside' }}>{t('세부정보 보기')}</summary>
+        <details className="detail-more" style={{ marginTop: 'var(--space-5)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--color-border)' }}>
+          <summary style={{ cursor: 'pointer', listStyle: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 48, borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', color: 'var(--color-text-secondary)', fontSize: 15 }}>
+            {t('상세 정보 더 보기')} <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+          </summary>
           {(details || (!editedDescription && profile.length > 0)) && <div className="t-caption" style={{ display: 'grid', gap: 8, marginTop: 8, whiteSpace: 'pre-line', lineHeight: 1.6, color: 'var(--color-text-tertiary)' }}>
             {details && <p>{details}</p>}
             {!editedDescription && profile.map((line) => <p key={line}>{line}</p>)}

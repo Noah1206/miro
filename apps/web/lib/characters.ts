@@ -87,6 +87,7 @@ async function getOne(where: ReturnType<typeof and>) {
       isOfficial: characters.isOfficial,
       isPublic: characters.isPublic,
       experienceType: characters.experienceType,
+      audience: characters.audience,
       name: characters.name,
       role: characters.role,
       age: characters.age,

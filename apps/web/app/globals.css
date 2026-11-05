@@ -503,3 +503,6 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .app-shell:has(.nav) { transition: none; }
   .app-shell:has(aside[data-collapsed="true"]) .nav { animation: none; }
 }
+
+/* 11/5 상세 정보 더 보기 버튼: 기본 삼각형 숨김 */
+.detail-more > summary::-webkit-details-marker { display: none; }

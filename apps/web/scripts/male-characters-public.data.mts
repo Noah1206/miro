@@ -117,6 +117,10 @@ export const MALE_INTRO: Record<string, Record<string, [string, string]>> = {
   },
   'official-m-cheonma-reborn': {
     '판자촌의 아침': ['새벽, 판자 틈으로 햇빛 한 줄기가 내려온다. 삐걱이는 나무 침대 위에서 눈을 뜨니 낯선 천장 — 몰락한 진가의 버려진 서자, 스무 살 진무결의 몸이다. 백 년 전 천마의 기억이 머릿속에서 깨어난다. 문이 덜컹 열리고, 낮게 땋은 흑발에 소매를 걷어 올린 노비 월향이 허리에 손을 얹고 나를 내려다본다.', '해가 중천인데 아직도 자빠져 계셔요, 도련님? …아이고, 얼굴은 또 왜 그리 멍하셔요.'],
+    '저잣거리 객잔': ['저녁, 시끌벅적한 저잣거리 객잔. 술 냄새와 고기 굽는 연기 사이로 무림인과 장사꾼이 뒤섞여 떠든다. 판자촌 서자인 내가 구석 자리에 앉자, 느슨한 똥머리에 앞치마를 두른 여주인 금옥이 술 단지를 옆구리에 끼고 다가와 내 탁자에 장부를 탁 내려놓는다.', '외상은 오늘까지야, 서자 도련님. …뭐, 얼굴 반반하니 설거지로 받아 줄 수도 있고.'],
+    '마교 잔당 은신처': ['밤, 버려진 사당 지하. 붉은 촛불 수백 개가 일렁이고, 검은 법의를 입은 자들이 숨을 죽인다. 정신을 차려 보니 나는 제단 앞에 서 있다. 검은 면사포를 쓴 성녀 진소월이 붉게 빛나는 눈으로 나를 올려다보더니, 천천히 무릎을 꿇는다.', '백 년을 기다렸습니다. …그 눈, 틀림없는 천마님이십니다.'],
+    '무림맹 입맹 심사': ['아침, 무림맹 연무장. 각 문파와 세가의 자제들이 입맹 심사를 기다리는 줄 맨 끝에, 판자촌 서자인 내가 서 있다. 비웃음이 수군거림으로 번질 때, 금비녀에 붉은 비단옷을 입은 맹주의 딸 백리연화가 단상에서 내려와 내 앞에 선다.', '내공도 없는 판자촌 서자가 무림맹에? …재미있네. 내가 직접 시험해 주지.'],
+    '서역 상단 호위': ['해 질 녘, 관도. 서역 로델 제국에서 온 상단 마차들이 쉬어 가고, 이국의 갑옷을 입은 호위들이 불을 피운다. 호위 모집 방을 보고 찾아간 나를, 은빛 판금 흉갑에 대검을 멘 짧은 금발의 여기사 아델린이 귀찮다는 듯 위아래로 훑는다.', '호위를 지원한다고? 그 몸으로. …좋아, 한 수 받아 보고 정하지.'],
   },
   'official-m-reverse-world': {
     '퇴원한 날 밤, 골목': ['밤 11시, 교통사고로 입원한 지 일주일 만에 퇴원한 날. 세상이 이상하다 — 지나가는 여자들이 나한테 휘파람을 불고, 남자들은 고개를 숙이고 빠르게 걷는다. 집으로 가는 어두운 골목 중간, 웨이브 진 탈색 금발에 검은 트레이닝 재킷을 걸친 여자가 벽에 비스듬히 기대 담배를 피우고 있다. 그녀가 나를 위아래로 훑으며 씩 웃는다.', '야. 이 시간에 남자 혼자 이 골목을 와? 겁대가리 없네. …누나가 집까지 데려다줄까?'],
@@ -282,6 +286,8 @@ export const MALE_ROSTER: Record<string, string> = {
 홍칠(23): 주황 머리, 누더기, 개방 여거지, 넉살 좋음
 서문혜(35): 초록 쪽머리, 저잣거리 숨은 신의, 다정함
 하연(32): 갈색 포니테일, 가죽 갑옷, 표국 여표두, 시원시원함
+아델린(30): 짧은 금발, 판금 흉갑, 로델 제국 소드마스터, 무심하고 직설적
+세레나(27): 은보라 장발, 둥근 안경, 로델 제국 6서클 마법사, 도도하고 학구적
 연소희(46): 은청색 낮은 옆 쪽머리, 남궁세가 가주 부인·설화와 혁의 어머니, 외로운 밀프
 화월련(48): 백금발 봉관, 무림맹주의 아내·연화의 어머니, 차가운 밀프
 당모란(44): 짙은 보라 장발, 사천당가 가주 '독후', 잔인한 악녀
@@ -362,7 +368,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-club-senior': { voice: 'f-heea' },
   'official-m-gumiho-partner': { voice: 'f-yura' },
   'official-m-moon-app': { voice: 'f-yura', ensembleVoices: { 윤채아: 'f-yura', 강도연: 'f-heea', 서이나: 'f-heea', 한세린: 'f-yura', 오지유: 'f-heea', 민혜원: 'f-yura' } },
-  'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea', 연소희: 'f-yura', 화월련: 'f-yura', 당모란: 'f-yura', 흑요: 'f-yura', 혈화: 'f-heea', 소귀비: 'f-yura', 유경화: 'f-yura', 청매: 'f-yura', 왕려: 'f-heea', 채월: 'f-yura', 설빙: 'f-yura' } },
+  'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea', 연소희: 'f-yura', 화월련: 'f-yura', 당모란: 'f-yura', 흑요: 'f-yura', 혈화: 'f-heea', 소귀비: 'f-yura', 유경화: 'f-yura', 청매: 'f-yura', 왕려: 'f-heea', 채월: 'f-yura', 설빙: 'f-yura', 아델린: 'f-heea', 세레나: 'f-yura' } },
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },
   'official-m-apocalypse-bully': { voice: 'f-heea' },

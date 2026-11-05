@@ -51,7 +51,7 @@ export type ConversationOutcome =
       /** 문자: 캐릭터가 지금 바빠서 답장을 나중으로 미뤘다. until 은 ISO, label 은 뭘 하는 중인지. */
       delayed?: { until: string; label: string }
     }
-  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'model_unavailable' | 'command_unavailable' }
+  | { ok: false; reason: 'not_found' | 'restricted' | 'empty' | 'too_long' | 'generation' | 'conflict' | 'model_unavailable' | 'command_unavailable' | 'command_adult_only' }
   /** unveil: 일반 방에서 거절됐고 사용자가 언베일로 이어갈 수 있다(ready=인증·동의 완료, verify=인증·동의가 남음). 권유일 뿐 전환은 사용자가 한다. */
   | { ok: false; reason: 'safety'; unveil?: 'ready' | 'verify' | null }
   | { ok: false; reason: 'usage'; error: UsageExceededError }
@@ -98,6 +98,8 @@ async function executeTurn(opts: {
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
     const commandRule = opts.command || opts.commandId ? await resolveChatCommand(userId, loaded.commands, { name: opts.command, sourceId: opts.commandId }) : null
     if ((opts.command || opts.commandId) && !commandRule) return { ok: false, reason: 'command_unavailable' }
+    // 11/5: 설명이 [언베일] 로 시작하는 명령어(색마모드 등)는 언베일이 켜진 방에서만 실행한다.
+    if (commandRule?.hint.startsWith('[언베일]') && !loaded.adult.turn) return { ok: false, reason: 'command_adult_only' }
     const now = new Date()
     const boundary = await applyContactBoundaryRequest(sessionId, userId, input, opts.requestId, now,
       loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) ?? loaded.contactBoundary

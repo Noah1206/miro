@@ -71,6 +71,7 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
   if (!r.ok) {
     switch (r.reason) {
       case 'command_unavailable': return fail(msg('명령어를 사용할 수 없어요. 다시 선택해 주세요.'))
+      case 'command_adult_only': return fail(msg('이 명령어는 언베일을 켠 대화방에서만 쓸 수 있어요.'))
       case 'usage': return exceeded(r.error)
       case 'model_unavailable': return fail(msg('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.'))
       case 'budget': return fail(r.kind === 'turn_tokens' ? msg('이번 답변의 생성 한도에 도달했어요. 토큰은 차감되지 않았어요. 입력을 줄이거나 다른 답변 길이를 선택해 주세요.') : r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
