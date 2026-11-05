@@ -137,7 +137,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         {tags.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {tags.map((tag) => <span key={tag} className="t-caption" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)' }}>#{tag}</span>)}
+            {tags.map((tag) => <span key={tag} style={{ padding: '3px 8px', borderRadius: 8, fontSize: 12, lineHeight: 1.5, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)' }}>#{tag}</span>)}
           </div>
         )}
 

@@ -15,9 +15,10 @@ export function UnveilSwitch({ checked, disabled, label, accessibleLabel, descri
         {intense
           // 11/6 사용자: 홈 머리는 '언베일' 글자 대신 19 아이콘. 꺼져 있으면 회색, 켜지면 그라데이션.
           ? <svg aria-hidden className={styles.unveilMark} viewBox="0 0 40 40">
-              <defs><linearGradient id="unveil-mark-g" x1="0" x2="1"><stop offset="0" stopColor="#ff3d7f" /><stop offset="1" stopColor="#ff9a3d" /></linearGradient></defs>
-              <circle cx="20" cy="20" r="17.5" fill="none" strokeWidth="3" className={styles.unveil19Ring} />
-              <text x="20" y="26.5" textAnchor="middle" fontSize="17" fontWeight="800" className={styles.unveilText}>19</text>
+              {/* 11/6 사용자 시안: 빨간 원 + 흰 테두리 + 흰 19(청소년 이용불가 표시). 꺼져 있으면 회색 원. */}
+              <circle cx="20" cy="20" r="19" className={styles.unveil19Fill} />
+              <circle cx="20" cy="20" r="15.5" fill="none" stroke="#fff" strokeWidth="2.2" />
+              <text x="20" y="26" textAnchor="middle" fontSize="16" fontWeight="800" fill="#fff" style={{ fontFamily: 'Pretendard, system-ui, sans-serif' }}>19</text>
             </svg>
           : <span className={styles.adultLabel}>{label}</span>}
         <span aria-hidden className={styles.adultTrack}><span className={styles.adultKnob} /></span>
