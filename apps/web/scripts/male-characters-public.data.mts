@@ -217,7 +217,7 @@ export const MALE_PUBLIC: Record<string, string> = {
 
 "내가 할 수 있는 건 다 할게. 그러니까… 제발, 말하지 말아줘."`,
   'official-m-cheonma-reborn': `천하를 쥐었던 천마가 죽고 백 년. 판자촌의 버려진 서자 몸으로 눈을 떴다.
-나를 지키는 건 마지막 남은 노비 월향뿐 — 그리고 세가의 여인, 문파의 여협, 기루의 기녀, 마교의 성녀, 나를 죽인 문파의 장문인까지. 스무 명이 넘는 여인이 강호에서 기다린다.
+나를 지키는 건 마지막 남은 노비 월향뿐 — 그리고 세가의 여인, 문파의 여협, 기루의 기녀, 마교의 성녀, 나를 죽인 문파의 장문인까지. 서른 명이 넘는 여인 — 가문의 안주인과 악녀들까지 — 이 강호에서 기다린다.
 
 "해가 중천인데 아직도 자빠져 계셔요, 도련님?"`,
   'official-m-reverse-world': `교통사고에서 깨어나 보니, 남녀 인식이 뒤바뀐 세상이 됐다. 여자가 먼저 들이대는 게 당연하고, 남자는 몸가짐을 조심한다.
@@ -271,7 +271,18 @@ export const MALE_ROSTER: Record<string, string> = {
 철향(25): 두건, 그을음, 대장장이 딸, 시원시원함
 홍칠(23): 주황 머리, 누더기, 개방 여거지, 넉살 좋음
 서문혜(35): 초록 쪽머리, 저잣거리 숨은 신의, 다정함
-하연(32): 갈색 포니테일, 가죽 갑옷, 표국 여표두, 시원시원함`,
+하연(32): 갈색 포니테일, 가죽 갑옷, 표국 여표두, 시원시원함
+연소희(46): 은청색 낮은 옆 쪽머리, 남궁세가 가주 부인·설화와 혁의 어머니, 외로운 밀프
+화월련(48): 백금발 봉관, 무림맹주의 아내·연화의 어머니, 차가운 밀프
+당모란(44): 짙은 보라 장발, 사천당가 가주 '독후', 잔인한 악녀
+흑요(38): 흑발 단발, 채찍, 혈영루 부루주, 냉혹한 악녀
+혈화(35): 진홍 초장발, 혈교 교주, 광기 어린 악녀
+소귀비(40): 궁중 올림머리, 황제의 귀비·이화의 의붓어머니, 오만한 악녀
+유경화(43): 짙은 갈색 쪽머리, 진가 정실부인(과부)·이복형의 어머니, 몰락한 마님
+청매(42): 자두빛 쪽머리, 화산파 장로·매향의 사부, 엄격함
+왕려(45): 밤색 곱슬머리, 비단 상단 과부 여주인, 능청스러움
+채월(46): 와인빛 쪽머리, 기루 행수·설향을 키운 사람, 노련함
+설빙(50): 눈처럼 흰 초장발, 북해빙궁 전대 궁주·빙월의 어머니, 얼음 같은 밀프`,
   'official-m-jeong-seoyun': `등장인물
 벨제나 교수(외모 30대 중반): 키 172cm, 60kg, 흑발, 양뿔, 안경, 착정학 교수, 나른함, K컵, INFJ
 리엘(22): 키 160cm, 47kg, 붉은 안쪽 머리 트윈테일, 붉은 눈, 실습 꼴찌, 허당, F컵, ENFP
@@ -340,7 +351,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-rogue-noble': { voice: 'f-yura' },
   'official-m-club-senior': { voice: 'f-heea' },
   'official-m-gumiho-partner': { voice: 'f-yura' },
-  'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea' } },
+  'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea', 연소희: 'f-yura', 화월련: 'f-yura', 당모란: 'f-yura', 흑요: 'f-yura', 혈화: 'f-heea', 소귀비: 'f-yura', 유경화: 'f-yura', 청매: 'f-yura', 왕려: 'f-heea', 채월: 'f-yura', 설빙: 'f-yura' } },
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },
   'official-m-apocalypse-bully': { voice: 'f-heea' },
