@@ -49,17 +49,17 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         {/* 11/4: 사진 원본 비율(4:5)대로 — 15:16 이면 아래 제목 로고가 잘렸다. */}
         <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="4 / 5" scrim={false} />
-          {c.coverUnveil && <UnveilCover veiled={c.veiled} label="언베일" />}
+          {c.coverUnveil && <UnveilCover veiled={c.veiled} label="언베일" hideLabel />}
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>
           <p className="t-body t-name" style={{ fontWeight: 'var(--weight-medium)', fontSize: 18, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{coverTitle(c)}</p>
           {/* 소개는 늘 2줄 높이(내용이 없어도). */}
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.tagline ? `“${c.tagline}”` : ''}</p>
-          {/* 10/20: 본문 글꼴 보통 굵기, 배경 없는 작은 글자, 폭을 넘으면 다음 줄로. */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 6px' }}>
+          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.tagline ? `“${c.tagline}”` : ''}</p>
+          {/* 11/6: 상세 페이지 해시태그 칩(회색 바탕·강조색 글자)을 작게 — 폭을 넘으면 다음 줄로. */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {tags.slice(0, 3).map(tag => (
-              <span key={tag} style={{ color: 'var(--color-text-tertiary)', fontSize: 10, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
+              <span key={tag} style={{ padding: '2px 6px', borderRadius: 6, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)', fontSize: 10, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
             ))}
           </div>
         </div>
