@@ -28,7 +28,7 @@ export function Rule({ label, action, children, accent }: { label: string; actio
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
       className="character-detail-section">
       <div className="character-detail-section-heading">
-        <h2 className="t-title-3" style={{ flex: 1, fontWeight: 300 }}>{label}</h2>
+        <h2 className="t-title-3" style={{ flex: 1, fontWeight: 'var(--weight-semibold)' }}>{label}</h2>
         {action}
       </div>
       {children}
