@@ -1,7 +1,7 @@
 'use client'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
-import { useRef, useState } from 'react'
-import { CharacterPhoto, CharacterVisual } from '@/components/character-visual'
+import { useEffect, useRef, useState } from 'react'
+import { CharacterPhoto, CharacterVisual, characterImageSources } from '@/components/character-visual'
 import { useT } from '@/lib/i18n/client'
 import { UnveilCover } from '@/components/unveil-badge'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
@@ -16,6 +16,14 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
   const t = useT()
   const [selected, setSelected] = useState(0)
   const photo = photos[selected] ?? null
+  // 11/5: 넘길 때마다 큰 사진을 그제야 받아 어두운 배경이 비쳤다 — 나머지 사진도 같은 크기·srcset 으로 미리 받아 캐시에 둔다.
+  useEffect(() => {
+    for (const src of photos.slice(1)) {
+      const s = characterImageSources(src, 'detail'), img = new Image()
+      if ('srcSet' in s && s.srcSet) { img.sizes = '(max-width: 768px) 100vw, 720px'; img.srcset = s.srcSet }
+      img.src = s.src
+    }
+  }, [photos])
   return (
     <div style={{ position: 'relative' }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
