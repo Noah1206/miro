@@ -178,7 +178,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
       {similar.length > 0 && (
         <section aria-labelledby="similar" style={{ marginTop: 'var(--space-7)' }}>
-          <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12 }}>
+          <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12, fontWeight: 300 }}>
             {t('{subject} 마음에 들었다면', { subject: subject(c.name), name: c.name })}
           </h2>
           <SimilarRow items={similar} />
