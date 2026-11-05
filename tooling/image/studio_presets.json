@@ -1,0 +1,275 @@
+{
+  "_note": "이미지 스튜디오 목록(studio.py 가 매번 읽는다). 포즈·상황 추가는 situations 에 한 줄. couple=true 면 상대 인물이 붙는다. 어려 보임 차단은 studio.py·modal_lora_test.py 에 고정이라 여기서 못 끈다.",
+  "styles": {
+    "gda": {
+      "label": "남성향 · 가다공 (부드러운 반실사)",
+      "ckpt": "out-gda3/gda_v3.safetensors",
+      "variant": "gda",
+      "scale": 0.7,
+      "hr_scale": 0,
+      "hr_strength": 0.4,
+      "subject": "1girl, adult woman, mature female",
+      "partner": "1boy, adult male",
+      "body": "",
+      "neg": "purple hair, censored, bar censor, mosaic censoring, bald",
+      "couple_neg": "2girls, multiple girls, yuri, 3people, 4people, group, crowd, multiple boys"
+    },
+    "fa": {
+      "label": "남성향 · FA (깔끔한 애니 셀 채색)",
+      "ckpt": "out-gda3/gda_v3.safetensors",
+      "variant": "fa",
+      "scale": 0.8,
+      "hr_scale": 0,
+      "hr_strength": 0.4,
+      "subject": "1girl, adult woman, mature female",
+      "partner": "1boy, adult male",
+      "body": "",
+      "neg": "censored, bar censor, mosaic censoring, bald",
+      "couple_neg": "2girls, multiple girls, yuri, 3people, 4people, group, crowd, multiple boys"
+    },
+    "kdh": {
+      "label": "남성향 · KDH (그을린 피부·강한 광택)",
+      "ckpt": "out-gda3/gda_v3.safetensors",
+      "variant": "kdh",
+      "scale": 0.8,
+      "hr_scale": 0,
+      "hr_strength": 0.4,
+      "subject": "1girl, adult woman, mature female",
+      "partner": "1boy, adult male",
+      "body": "",
+      "neg": "censored, bar censor, mosaic censoring, bald",
+      "couple_neg": "2girls, multiple girls, yuri, 3people, 4people, group, crowd, multiple boys"
+    },
+    "whif": {
+      "label": "여성향 · 위프 (남자 중심)",
+      "ckpt": "out-whif/whif_v1.safetensors",
+      "variant": "whif",
+      "scale": 0.35,
+      "hr_scale": 1.0,
+      "hr_strength": 0.5,
+      "subject": "1boy, adult male, mature male, male focus",
+      "partner": "1girl, adult woman, long hair, feminine",
+      "body": "athletic build, toned body, defined abs, defined pectorals, clear collarbones, anatomically correct, ideal body proportions, smooth skin, soft shading, delicate lineart",
+      "neg": "censored, bar censor, mosaic censoring, sketch, rough lines, messy shading, deformed body, hyper muscular, bodybuilder, bulky, veins, flat body, undefined body, featureless body, blob, bad proportions, long torso, shiny skin, oily skin, glossy, harsh highlights",
+      "couple_neg": "2boys, multiple boys, yaoi, 3people, 4people, group, crowd, multiple girls"
+    }
+  },
+  "compositions": {
+    "거리": [
+      {
+        "label": "자동 (장면 기본)",
+        "tags": ""
+      },
+      {
+        "label": "얼굴 가까이",
+        "tags": "close-up, portrait"
+      },
+      {
+        "label": "상반신",
+        "tags": "upper body"
+      },
+      {
+        "label": "무릎 위까지",
+        "tags": "cowboy shot"
+      },
+      {
+        "label": "전신",
+        "tags": "full body"
+      }
+    ],
+    "각도": [
+      {
+        "label": "자동 (장면 기본)",
+        "tags": ""
+      },
+      {
+        "label": "정면 눈높이",
+        "tags": "from front, straight-on"
+      },
+      {
+        "label": "위에서 내려다보기",
+        "tags": "from above"
+      },
+      {
+        "label": "아래에서 올려다보기",
+        "tags": "from below"
+      },
+      {
+        "label": "옆모습",
+        "tags": "from side, profile"
+      },
+      {
+        "label": "뒷모습",
+        "tags": "from behind"
+      },
+      {
+        "label": "내 시점 (1인칭)",
+        "tags": "pov"
+      }
+    ],
+    "시선": [
+      {
+        "label": "자동 (장면 기본)",
+        "tags": ""
+      },
+      {
+        "label": "화면(나)을 봄",
+        "tags": "looking at viewer"
+      },
+      {
+        "label": "서로 마주 봄",
+        "tags": "face to face, looking at each other, eye contact"
+      },
+      {
+        "label": "다른 곳을 봄",
+        "tags": "looking away"
+      },
+      {
+        "label": "눈 감음",
+        "tags": "closed eyes"
+      }
+    ]
+  },
+  "situations": [
+    {
+      "id": "d_cafe",
+      "group": "일상",
+      "label": "카페",
+      "couple": false,
+      "prompt": "sitting in cafe by window, holding coffee cup, gentle smile, soft daylight, upper body"
+    },
+    {
+      "id": "d_cooking",
+      "group": "일상",
+      "label": "요리",
+      "couple": false,
+      "prompt": "cooking in small kitchen wearing apron, holding ladle, steam, cheerful, warm light, upper body"
+    },
+    {
+      "id": "d_street",
+      "group": "일상",
+      "label": "거리 산책",
+      "couple": false,
+      "prompt": "walking on city street, coat, looking at viewer, evening lights, cowboy shot"
+    },
+    {
+      "id": "d_sofa",
+      "group": "일상",
+      "label": "소파에서 쉬기",
+      "couple": false,
+      "prompt": "lying on sofa, oversized t-shirt, relaxed, holding smartphone, warm lamp light, indoors"
+    },
+    {
+      "id": "d_bed_morning",
+      "group": "일상",
+      "label": "아침 침대",
+      "couple": false,
+      "prompt": "sitting in bed in the morning, messy hair, sleepy smile, morning sunlight, upper body"
+    },
+    {
+      "id": "d_date",
+      "group": "일상",
+      "label": "데이트 (둘이)",
+      "couple": true,
+      "prompt": "date, walking side by side, holding hands, looking at each other, smile, city night, cowboy shot"
+    },
+    {
+      "id": "u_shower",
+      "group": "언베일",
+      "label": "샤워 후 수건",
+      "couple": false,
+      "prompt": "just out of shower, wrapped in towel, wet hair, steam, bathroom, blush, bare shoulders, cowboy shot"
+    },
+    {
+      "id": "u_tease",
+      "group": "언베일",
+      "label": "유혹",
+      "couple": false,
+      "prompt": "completely nude, nipples, seductive pose, lying on bed, bedroom eyes, alluring smile, looking at viewer, night, dim warm light, cowboy shot"
+    },
+    {
+      "id": "u_lingerie",
+      "group": "언베일",
+      "label": "속옷",
+      "couple": false,
+      "prompt": "lingerie, sitting on bed, blush, looking at viewer, night, soft lamp light, cowboy shot"
+    },
+    {
+      "id": "u_topless",
+      "group": "언베일",
+      "label": "상반신 노출",
+      "couple": false,
+      "prompt": "topless, nude, nipples, sitting on bed, upper body, blush, looking at viewer, soft window light, bedroom"
+    },
+    {
+      "id": "u_kiss",
+      "group": "언베일",
+      "label": "키스",
+      "couple": true,
+      "prompt": "kissing, closed eyes, hands on chest, blush, night, bedroom, upper body"
+    },
+    {
+      "id": "u_missionary",
+      "group": "언베일",
+      "label": "정상위",
+      "couple": true,
+      "prompt": "sex, vaginal penetration, penis, completely nude, nipples, missionary position, woman lying on back, man on top between legs, face to face, looking at each other, eye contact, sweat, blush, open mouth, bed, night"
+    },
+    {
+      "id": "u_cowgirl",
+      "group": "언베일",
+      "label": "기승위",
+      "couple": true,
+      "prompt": "nude, sex, cowgirl position, girl on top, looking at each other, eye contact, hands on chest, blush, bed, night"
+    },
+    {
+      "id": "u_doggy",
+      "group": "언베일",
+      "label": "후배위",
+      "couple": true,
+      "prompt": "nude, sex from behind, doggystyle, looking back over shoulder, blush, gripping sheets, bed, night"
+    },
+    {
+      "id": "u_standing",
+      "group": "언베일",
+      "label": "들박 (안아 들기)",
+      "couple": true,
+      "prompt": "nude, sex, standing sex, carrying, suspended congress, legs wrapped around waist, arms around neck, face to face, looking at each other, blush, against wall, night"
+    },
+    {
+      "id": "u_paizuri",
+      "group": "언베일",
+      "label": "파이즈리",
+      "couple": true,
+      "prompt": "paizuri, breasts squeezed together, penis between breasts, nude, kneeling on bed, looking up, blush, night, pov"
+    },
+    {
+      "id": "u_fellatio",
+      "group": "언베일",
+      "label": "펠라",
+      "couple": true,
+      "prompt": "fellatio, kneeling, nude, looking up, blush, bed, night, pov"
+    },
+    {
+      "id": "u_breast_suck",
+      "group": "언베일",
+      "label": "가슴 빨기",
+      "couple": true,
+      "prompt": "breast sucking, man sucking on woman's nipple, topless, nipples, large breasts, woman hugging man's head, head back, eyes half closed, open mouth, blush, heavy breathing, sweat, sitting on bed, night, dim warm light, upper body"
+    },
+    {
+      "id": "u_squirting",
+      "group": "언베일",
+      "label": "시오후키",
+      "couple": true,
+      "prompt": "nude, sex, squirting, female ejaculation, orgasm, arched back, trembling, blush, open mouth, lying on bed, spread legs, night"
+    },
+    {
+      "id": "u_after",
+      "group": "언베일",
+      "label": "끝난 뒤",
+      "couple": true,
+      "prompt": "after sex, lying in bed together, covered with blanket, bare shoulders, looking at each other, tender smile, night"
+    }
+  ]
+}

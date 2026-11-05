@@ -1,0 +1,12 @@
+# comic.py 폰트(Google Fonts, OFL) — 이 폴더에서: xargs -n1 curl -sfLO < FONTS.txt  (ttf 는 git 에 안 올림)
+https://raw.githubusercontent.com/google/fonts/main/ofl/blackhansans/BlackHanSans-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/dokdo/Dokdo-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/eastseadokdo/EastSeaDokdo-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/gaegu/Gaegu-Bold.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/gamjaflower/GamjaFlower-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/himelody/HiMelody-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/jua/Jua-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/nanumbrushscript/NanumBrushScript-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/nanumpenscript/NanumPenScript-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/songmyung/SongMyung-Regular.ttf
+https://raw.githubusercontent.com/google/fonts/main/ofl/yeonsung/YeonSung-Regular.ttf
