@@ -311,13 +311,14 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .app-shell:has(.create-page) { --shell-w: 960px; }
   /* 11/3 요청(베이비챗 프로필 상세처럼): 캐릭터 상세는 960 폭 한 장 — 위는 사진 | 이름·소개·시작 버튼, 아래는 설정·도입부·댓글.
      인라인 여백·고정 버튼을 덮어야 해서 !important. */
-  .app-shell:has(.character-detail-theme) { --shell-w: 960px; }
+  /* 11/5 사용자 스크린샷: 1100 폭, 사진 | 정보 반반, 시작 버튼은 정보 칸 맨 아래(사진 아랫선)에 붙는다. */
+  .app-shell:has(.character-detail-theme) { --shell-w: 1100px; }
   .character-detail-theme { padding-bottom: 64px !important; }
-  .detail-top { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 40px; align-items: start; padding: 72px 24px 8px; }
-  .detail-top-media { border-radius: 16px; overflow: hidden; }
+  .detail-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: stretch; padding: 72px 24px 8px; }
+  .detail-top-media { border-radius: 16px; overflow: hidden; align-self: start; }
   .detail-top-info, .detail-rest { padding-inline: 24px !important; }
-  .detail-top-info { padding: 0 !important; }
-  .character-detail-theme .detail-cta { position: static; width: auto; margin: 20px 0 0; padding: 0 !important; background: none !important; }
+  .detail-top-info { padding: 0 !important; display: flex; flex-direction: column; }
+  .character-detail-theme .detail-cta { position: static; width: auto; margin: auto 0 0; padding: 20px 0 0 !important; background: none !important; }
 }
 .create-page { max-width: 560px; }
 .create-intro-editor { height: min(560px, 70dvh); }
