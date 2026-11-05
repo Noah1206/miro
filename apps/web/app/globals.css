@@ -455,7 +455,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-bubble .rich-text p { line-height: 1.55; }
 .detail-sample-dialogue { font-size: 13px; line-height: 1.55; }
 .detail-chat-preview { padding: 18px 14px; border-radius: 14px; background: rgba(255,255,255,0.025); }
-.intro-photo { display: block; width: 100%; height: auto; border-radius: var(--radius-md); background: var(--color-surface-2); border: 1px solid rgba(255,255,255,0.08); }
+.intro-photo { display: block; width: 100%; height: auto; border-radius: var(--radius-md); background: var(--color-surface-2); border: 0; }
 
 /* Detail sections have a clear boundary; paragraphs within each section stay connected. */
 .character-detail-copy .character-detail-section {

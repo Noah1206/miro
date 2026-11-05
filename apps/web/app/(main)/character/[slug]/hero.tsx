@@ -36,7 +36,7 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
           {photos.map((src, index) => (
             <button key={`${src}-${index}`} type="button" onClick={() => setSelected(index)} aria-label={t('{n}번째 사진 보기', { n: index + 1 })} aria-pressed={selected === index} style={{
               width: 52, height: 66, flex: '0 0 auto', padding: 0, overflow: 'hidden', cursor: 'pointer',
-              borderRadius: 8, border: selected === index ? '1.5px solid var(--color-white)' : '1px solid rgba(255,255,255,.18)',
+              borderRadius: 8, border: 0,
               background: 'var(--color-surface-2)', opacity: selected === index ? 1 : 0.68,
             }}>
               <CharacterPhoto src={src} alt="" size="avatar" sizes="52px" width={52} height={66}
