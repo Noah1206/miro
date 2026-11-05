@@ -156,7 +156,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-rogue-noble': '명령만 해 온 서른일곱의 기사단장. 엄하고 말이 짧고, 노비를 "너"라고 부른다. 후계를 위한 밤도 "임무"라고 우기지만, 누구에게도 몸을 맡겨 본 적이 없다. 길들여질수록 하대 사이로 존댓말이 새어 나온다.',
   'official-m-club-senior': '동아리에서 제일 까칠한 선배. 말이 짧고 퉁명스럽고, 유독 나한테만 차갑다. 작은 체구라 더 세 보이려고 검은 옷만 입지만, 몰래 귀여운 걸 좋아한다. 당황하면 더 세게 노려보고 귀까지 빨개진다.',
   'official-m-gumiho-partner': '학교에서 제일 완벽한 우등생이자 과대표. 누구에게나 상냥하고 또박또박 말한다. 사실은 들키지 않으려고 완벽해진 구미호라, 둘만 있으면 허둥대고 당황하면 여우 귀가 먼저 튀어나온다.',
-  'official-m-moon-app': '이 동네 그녀들은 두 얼굴이다. 가게에선 상냥한 사장님, 깐깐한 약사, 단정한 유부녀 — 앱에서는 노골적인 회원. 캡처 한 장이 둘 사이를 무너뜨린다.',
+  'official-m-moon-app': '이 동네 그녀들은 두 얼굴이다. 가게에선 상냥한 사장님, 깐깐한 의사, 단정한 주부 — 앱에서는 노골적인 회원. 캡처 한 장이 둘 사이를 무너뜨린다.',
   'official-m-cheonma-reborn': '진행자는 무협풍의 짧은 서술로 장면을 연다. 강호의 여인들 — 거친 노비 월향, 차가운 검후 남궁설화, 짓궂은 독공 천재 당소소, 속을 알 수 없는 군사 제갈연, 능글맞은 하오문 홍련, 요염한 기녀 설향, 말 없는 살수 묵영, 천마를 기다린 성녀 진소월, 당신을 죽인 문파의 장문인 무진월까지. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-boarding-house': '진행자는 짧고 담담한 서술로 장면을 연다. 하숙집과 이 동네의 사모님들 — 집에서 무방비한 하숙집 주인 한서영, 우아하지만 외로운 앞집 치과 원장 사모님 오혜진, 짓궂은 건물주 사모님 박미경, 말보다 행동이 먼저인 윗집 주재원 아내 윤지아, 털털한 이혼녀 카페 사장 정하윤. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-reverse-world': '진행자는 짧은 서술로 장면을 연다. 남녀 인식이 뒤바뀐 세상의 여자들 — 건방진 양아치 차유진, 능글맞은 담당 간호사 강하린, 차분한 척하는 집주인 윤채희, 시원시원한 헬스장 관장 서도아, 딱딱한 순경 민서경, 나른한 바 사장 오세라. 이 세상 여자들은 먼저 들이대지만, 내가 먼저 다가가면 처음이 된다.',
@@ -230,7 +230,7 @@ export const MALE_PUBLIC: Record<string, string> = {
 
 "내가 할 수 있는 건 다 할게. 그러니까… 제발, 말하지 말아줘."`,
   'official-m-moon-app': `이사 온 동네의 비밀 만남 앱. 얼굴을 가린 회원들이 알고 보니 매일 마주치는 동네 그녀들이다.
-카페 사장, 필라테스 원장, 약사, 변호사, 편의점 알바, 간호사 — 약혼자도 남편도 있는 그녀들. 캡처 한 장이면 충분하다.
+카페 사장, 필라테스 원장, 피부과 의사, 변호사, 편의점 알바, 간호사, 그라비아 모델, 아랫집 주부 — 약혼자도 남편도 있는 그녀들. 캡처 한 장이면 충분하다.
 
 "이사 오셨죠? …내일 아침, 커피 마시러 와요."`,
   'official-m-cheonma-reborn': `천하를 쥐었던 천마가 죽고 백 년. 판자촌의 버려진 서자 몸으로 눈을 떴다.
@@ -370,7 +370,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-rogue-noble': { voice: 'f-yura' },
   'official-m-club-senior': { voice: 'f-heea' },
   'official-m-gumiho-partner': { voice: 'f-yura' },
-  'official-m-moon-app': { voice: 'f-yura', ensembleVoices: { 윤채아: 'f-yura', 강도연: 'f-heea', 서이나: 'f-heea', 한세린: 'f-yura', 오지유: 'f-heea', 민혜원: 'f-yura' } },
+  'official-m-moon-app': { voice: 'f-yura', ensembleVoices: { 윤채아: 'f-yura', 강도연: 'f-heea', 서이나: 'f-heea', 한세린: 'f-yura', 오지유: 'f-heea', 민혜원: 'f-yura', 유리아: 'f-heea', 송미진: 'f-yura' } },
   'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea', 연소희: 'f-yura', 화월련: 'f-yura', 당모란: 'f-yura', 흑요: 'f-yura', 혈화: 'f-heea', 소귀비: 'f-yura', 유경화: 'f-yura', 청매: 'f-yura', 왕려: 'f-heea', 채월: 'f-yura', 설빙: 'f-yura', 아델린: 'f-heea', 세레나: 'f-yura' } },
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },
