@@ -1,7 +1,7 @@
 'use client'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
-import { CharacterPhoto, CharacterVisual, characterImageSources } from '@/components/character-visual'
+import { CharacterVisual, characterImageSources } from '@/components/character-visual'
 import { useT } from '@/lib/i18n/client'
 import { UnveilCover } from '@/components/unveil-badge'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
@@ -28,21 +28,26 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
     <div style={{ position: 'relative' }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
       {veil && isUnveilPhoto(photo) && <UnveilCover veiled label={t('언베일')} unlock={veil} />}
+      {/* 11/5: 썸네일 줄 대신 < > 로 넘긴다(끝에서 처음으로 돌아감). */}
       {photos.length > 1 && (
-        <div role="group" aria-label={t('{name} 사진 선택', { name })} style={{
-          position: 'absolute', left: 'var(--gutter)', right: 'var(--gutter)', bottom: 'var(--space-7)', zIndex: 3,
-          display: 'flex', gap: 8, overflowX: 'auto', padding: '2px 0', scrollbarWidth: 'none',
-        }}>
-          {photos.map((src, index) => (
-            <button key={`${src}-${index}`} type="button" onClick={() => setSelected(index)} aria-label={t('{n}번째 사진 보기', { n: index + 1 })} aria-pressed={selected === index} style={{
-              width: 52, height: 66, flex: '0 0 auto', padding: 0, overflow: 'hidden', cursor: 'pointer',
-              borderRadius: 8, border: 0,
-              background: 'var(--color-surface-2)', opacity: selected === index ? 1 : 0.68,
-            }}>
-              <CharacterPhoto src={src} alt="" size="avatar" sizes="52px" width={52} height={66}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: veil && isUnveilPhoto(src) ? 'blur(6px)' : undefined }} />
+        <div role="group" aria-label={t('{name} 사진 선택', { name })}>
+          {([-1, 1] as const).map(step => (
+            <button key={step} type="button" onClick={() => setSelected(i => (i + step + photos.length) % photos.length)}
+              aria-label={t(step < 0 ? '이전 사진' : '다음 사진')} style={{
+                position: 'absolute', top: '50%', [step < 0 ? 'left' : 'right']: 'var(--gutter)', transform: 'translateY(-50%)', zIndex: 3,
+                width: 40, height: 40, borderRadius: '50%', border: 0, padding: 0, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(0,0,0,0.38)', color: 'var(--color-white)', backdropFilter: 'blur(4px)',
+              }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d={step < 0 ? 'M15 5l-7 7 7 7' : 'M9 5l7 7-7 7'} />
+              </svg>
             </button>
           ))}
+          <span aria-live="polite" style={{
+            position: 'absolute', right: 'var(--gutter)', bottom: 'var(--space-7)', zIndex: 3, padding: '3px 10px', borderRadius: 999,
+            background: 'rgba(0,0,0,0.38)', color: 'var(--color-white)', fontSize: 'var(--font-caption)',
+          }}>{selected + 1} / {photos.length}</span>
         </div>
       )}
     </div>
