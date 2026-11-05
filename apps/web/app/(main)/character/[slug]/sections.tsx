@@ -28,7 +28,6 @@ export function Rule({ label, action, children, accent }: { label: string; actio
       viewport={{ once: true, margin: '-10% 0px' }} transition={{ duration: duration.slow, ease: ease.enter }}
       className="character-detail-section">
       <div className="character-detail-section-heading">
-        <span aria-hidden style={{ width: 3, height: 15, borderRadius: 2, background: accent ?? 'var(--color-border-strong)', flexShrink: 0 }} />
         <h2 className="t-title-3" style={{ flex: 1 }}>{label}</h2>
         {action}
       </div>

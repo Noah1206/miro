@@ -45,15 +45,16 @@ export function IntroPreview({ scenes, names, portrait, turns, veil }: {
     <Rule label={t('시작 설정')}>
     <div className="intro-preview">
       {scenes.length > 1 && (
-        <fieldset className="intro-scenes">
-          <legend className="sr-only">{t('시작 상황')}</legend>
-          {scenes.map((s, i) => (
-            <label key={s.value} className="intro-chip">
-              <input type="radio" name="scene" value={s.value} form="start-roleplay" checked={i === index} onChange={() => { setIndex(i); setExpanded(true) }} />
-              <span>{s.label}</span>
-            </label>
-          ))}
-        </fieldset>
+        // 11/5 사용자: 시작 상황 탭 → 드롭다운.
+        <div style={{ position: 'relative', marginBottom: 12 }}>
+          <select name="scene" form="start-roleplay" aria-label={t('시작 상황')} value={scenes[index]?.value}
+            onChange={(e) => { setIndex(Math.max(0, scenes.findIndex(s => s.value === e.target.value))); setExpanded(true) }}
+            style={{ width: '100%', minHeight: 48, padding: '0 40px 0 14px', appearance: 'none', WebkitAppearance: 'none', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontSize: 16, fontWeight: 'var(--weight-semibold)', fontFamily: 'inherit', cursor: 'pointer' }}>
+            {scenes.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--color-text-secondary)' }}><path d="m6 9 6 6 6-6" /></svg>
+        </div>
       )}
       {scene.briefing && <CharacterBriefing entry={scene.briefing} />}
       {scene.meta && <p className="intro-meta">{scene.meta}</p>}
