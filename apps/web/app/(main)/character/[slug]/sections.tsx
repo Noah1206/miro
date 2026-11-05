@@ -136,7 +136,7 @@ export function Stat({ icon, label }: { icon: 'chat' | 'book' | 'comment'; label
       background: 'var(--color-surface-2)', fontSize: 12, color: 'var(--color-text-secondary)',
     }}>
       <svg aria-hidden width="14" height="14" viewBox="0 0 24 24"
-        fill={icon === 'book' ? 'none' : 'currentColor'}
+        fill={icon === 'book' ? 'none' : icon === 'comment' ? '#fff' : 'currentColor'}
         stroke={icon === 'book' ? 'currentColor' : 'none'} strokeWidth="1.75" strokeLinejoin="round">
         {path}
       </svg>
