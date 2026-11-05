@@ -25,6 +25,7 @@ import { MALE_CHARACTERS_A } from './male-characters-a.data.mts'
 import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mts'
 import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { MALE_CHARACTERS_D } from './male-characters-d.data.mts'
+import { MALE_CHARACTERS_E } from './male-characters-e.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
 import { MALE_BODY, MALE_COVER_UNVEIL, MALE_GUIDE, MALE_INTRO, MALE_PUBLIC, MALE_ROSTER, MALE_VOICES, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
 // 11/3 남성향 12명: 화면엔 짧은 소개 + 상세정보(키·몸무게·쓰리사이즈), 원래 긴 소개는 비공개 설정 맨 앞으로(AI 는 그대로 읽는다).
@@ -68,7 +69,7 @@ function withSceneOpenings(s: Seed): Seed {
 // 4차(10/19): 작품 6개의 서브공 19명 — 작품 세계를 이어받은 1:1 캐릭터.
 // --only=<slug> 이면 그 캐릭터 하나만 다룬다(11/1, 다른 미반영 slug 가 같이 들어가지 않게).
 const ONLY = process.argv.find(a => a.startsWith('--only='))?.slice(7)
-const ALL: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO, ...SEEDS_MALE, ...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D].map(withSceneOpenings).map(withMalePublic)
+const ALL: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO, ...SEEDS_MALE, ...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E].filter(s => !ONLY || s.slug === ONLY).map(withSceneOpenings).map(withMalePublic)   // --only 를 먼저 걸러 다른 작품의 쓰다 만 데이터에 막히지 않게(11/4)
 const SEEDS = ONLY ? ALL.filter(s => s.slug === ONLY) : ALL
 if (ONLY && !SEEDS.length) throw new Error(`no seed ${ONLY}`)
 
