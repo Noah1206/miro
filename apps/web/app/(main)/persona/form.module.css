@@ -2,7 +2,7 @@
 .form { display: grid; gap: 12px; }
 .field { display: grid; gap: 4px; padding: 12px 16px; border-radius: 14px; background: var(--color-surface-2); transition: box-shadow 150ms, background 150ms; cursor: text; }
 .field:hover { background: var(--color-surface-3); }
-.field:focus-within { box-shadow: 0 0 0 2px var(--color-lavender-500); background: var(--color-surface-2); }
+.field:focus-within { box-shadow: 0 0 0 1px var(--color-lavender-500); background: var(--color-surface-2); }
 .top { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: var(--color-text-tertiary); }
 .top b { font-weight: 400; color: var(--color-lavender-500); margin-left: 2px; }
 .field input, .field textarea { width: 100%; padding: 0; border: 0; outline: none; background: none; color: var(--color-text-primary); font: inherit; font-size: 16px; line-height: 1.5; resize: none; }
