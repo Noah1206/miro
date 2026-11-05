@@ -141,9 +141,18 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면
             넓은 화면에서 앱 폭 밖으로 튀어나간다 (인라인이 CSS 를 이긴다). */}
         <div className="detail-cta" style={{ zIndex: 25, bottom: 0, padding: '32px var(--gutter) calc(10px + env(safe-area-inset-bottom))', background: 'linear-gradient(to bottom, rgba(var(--color-bg-rgb), 0), rgba(var(--color-bg-rgb), 0.8) 40%, var(--color-bg) 75%)' }}>
-          {user
-            ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
-            : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* 11/5: 시작 버튼 왼쪽 댓글 아이콘 — 댓글 전체 화면으로 */}
+            <TransitionLink href={`/character/${slug}/comments`} aria-label={t('댓글 {n}', { n: commentCount })}
+              style={{ flex: 'none', width: 48, height: 48, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border-strong)', background: 'var(--color-bg)', color: 'var(--color-text-primary)' }}>
+              <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg>
+            </TransitionLink>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {user
+                ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
+                : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
+            </div>
+          </div>
         </div>
       </div>
       </div>
@@ -169,11 +178,6 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
         <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null} veil={veilIntro}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
-
-        <Rule label={t('댓글 {n}', { n: commentCount })}
-          action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>{t('전체보기')}</TransitionLink>}>
-          <CommentsPreview slug={slug} items={comments} />
-        </Rule>
       </div>
 
       {similar.length > 0 && (
@@ -184,6 +188,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <SimilarRow items={similar} />
         </section>
       )}
+
+      {/* 11/5 사용자: 댓글은 '마음에 들었다면' 추천 아래, 맨 밑 */}
+      <div className="character-detail-copy" style={{ padding: '0 var(--gutter)' }}>
+        <Rule label={t('댓글 {n}', { n: commentCount })}
+          action={<TransitionLink href={`/character/${slug}/comments`} className="t-caption" style={{ color: 'var(--color-accent-text)', fontWeight: 'var(--weight-semibold)' }}>{t('전체보기')}</TransitionLink>}>
+          <CommentsPreview slug={slug} items={comments} />
+        </Rule>
+      </div>
     </Page>
   )
 }
