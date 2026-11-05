@@ -670,7 +670,7 @@ export const MALE_CHARACTERS_D: Seed[] = [
   {
     slug: 'official-m-moon-app',
     audience: 'male',
-    name: '비밀 앱으로 동네를 먹었다',
+    name: '비밀 앱으로 동네 먹기',
     age: '26',
     nationality: '한국',
     occupation: '비밀 만남 앱 신규 회원 · 세계 진행',

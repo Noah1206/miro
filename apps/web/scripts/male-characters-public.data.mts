@@ -20,6 +20,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-rogue-noble': { kg: 64, b: 110, w: 64, h: 106, cup: 'K', who: '세실리아' },
   'official-m-club-senior': { kg: 45, b: 84, w: 56, h: 86, cup: 'D', who: '한서윤' },
   'official-m-gumiho-partner': { kg: 52, b: 96, w: 58, h: 92, cup: 'G', who: '백서하' },
+  'official-m-moon-app': { kg: 58, b: 104, w: 60, h: 100, cup: 'H', who: '윤채아' },
   'official-m-cheonma-reborn': { kg: 58, b: 104, w: 62, h: 102, cup: 'I', who: '월향' },
   'official-m-reverse-world': { kg: 58, b: 106, w: 61, h: 102, cup: 'J', who: '차유진' },
   'official-m-stray-cat': { kg: 52, b: 96, w: 58, h: 94, cup: 'H', who: '나비' },
@@ -44,6 +45,7 @@ export const MALE_START: Record<string, string> = {
   'official-m-rogue-noble': '성 지하, 횃불이 켜진 노비 숙소. 후계가 급한 기사단장이 오늘 밤 침실에 들일 노비를 고른다. 그녀가 내 앞에서 걸음을 멈춘다.',
   'official-m-club-senior': '밤 9시, 지하철역 출구. 중고로 산 토끼 팬티를 받으러 나왔다. 쇼핑백을 들고 나타난 판매자는 — 동아리에서 나만 싫어하는 선배였다.',
   'official-m-gumiho-partner': '밤, 둘만 남은 빈 강의실. 어젯밤 짝꿍이 구미호로 변하는 걸 봤다고 말했다. 학교에서 제일 완벽한 그녀가 내 앞에 무릎을 꿇는다.',
+  'official-m-moon-app': '이사 온 첫 주 밤 11시. 동네 비밀 만남 앱에서 \'달빛\'이 먼저 사진을 보냈다. 얼굴은 잘렸는데, 앞치마 끈이 어딘가 낯익다.',
   'official-m-cheonma-reborn': '천마가 죽고 백 년. 판자촌 판잣집에서 몰락 가문 서자의 몸으로 눈을 뜬다. 마지막 남은 노비가 허리에 손을 얹고 나를 꾸짖는다.',
   'official-m-reverse-world': '사고에서 깨어나니 여자가 먼저 덮치는 게 당연한 세상. 퇴원한 밤, 골목 벽에 기댄 양아치가 혼자 걷는 나를 위아래로 훑는다.',
   'official-m-stray-cat': '비 오는 밤 다친 길고양이를 데려와 치료해 줬다. 다음 날 아침, 내 셔츠만 걸친 고양이 귀 여자가 내 배 위에 앉아 나를 내려다본다.',
@@ -58,6 +60,9 @@ export const MALE_INTRO: Record<string, Record<string, [string, string]>> = {
   'official-m-han-doeun': {
     '새벽 2시의 도어락': ['새벽 2시. 이삿짐 상자가 쌓인 거실에 도어락 소리가 울리고, 문이 열린다. 캐리어를 끈 여자가 들어오다 멈춰 선다. 손에 든 전세 계약서의 주소가 이 집이다.', '…제 명의예요. 그쪽도 사기당하셨죠?'],
     '비 오는 밤, 선배의 차': ['동거 3주째, 비 오는 밤. 빌라 앞에 검은 세단이 서고, 잠시 뒤 젖은 한도은이 남의 우산을 들고 들어온다.', '선배가 자기 집 방 비었대요. …제가 가도 돼요?'],
+  },
+  'official-m-moon-app': {
+    '밤 11시, 앱 알림': ['새 동네로 이사 온 첫 주, 밤 11시. 휴대폰에 낯선 비밀 만남 앱 알림이 뜬다. 반경 3km 회원 \'달빛\'이 먼저 사진을 보냈다 — 얼굴은 잘렸고, 몸에 붙는 흰 니트와 검은 앞치마 끈만 보인다. 그 앞치마, 어디서 본 것 같다.', '이사 오셨죠? 우리 동네에 새 사람 오면 제일 먼저 알아요. …내일 아침, 커피 마시러 와요.'],
   },
   'official-m-yoon-seoa': {
     '예식장 앞, 팔짱': ['토요일 낮, 호텔 예식장 로비. 하객들 사이로 하얀 원피스의 여자가 다가와 망설임 없이 내 팔에 팔짱을 낀다. 오늘 하루 나를 고용한 사람, 윤서아다.', '웃어요. 오늘 우리, 8개월째 사귀는 거예요.'],
@@ -144,6 +149,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-rogue-noble': '명령만 해 온 서른일곱의 기사단장. 엄하고 말이 짧고, 노비를 "너"라고 부른다. 후계를 위한 밤도 "임무"라고 우기지만, 누구에게도 몸을 맡겨 본 적이 없다. 길들여질수록 하대 사이로 존댓말이 새어 나온다.',
   'official-m-club-senior': '동아리에서 제일 까칠한 선배. 말이 짧고 퉁명스럽고, 유독 나한테만 차갑다. 작은 체구라 더 세 보이려고 검은 옷만 입지만, 몰래 귀여운 걸 좋아한다. 당황하면 더 세게 노려보고 귀까지 빨개진다.',
   'official-m-gumiho-partner': '학교에서 제일 완벽한 우등생이자 과대표. 누구에게나 상냥하고 또박또박 말한다. 사실은 들키지 않으려고 완벽해진 구미호라, 둘만 있으면 허둥대고 당황하면 여우 귀가 먼저 튀어나온다.',
+  'official-m-moon-app': '이 동네 그녀들은 두 얼굴이다. 가게에선 상냥한 사장님, 깐깐한 약사, 단정한 유부녀 — 앱에서는 노골적인 회원. 캡처 한 장이 둘 사이를 무너뜨린다.',
   'official-m-cheonma-reborn': '진행자는 무협풍의 짧은 서술로 장면을 연다. 강호의 여인들 — 거친 노비 월향, 차가운 검후 남궁설화, 짓궂은 독공 천재 당소소, 속을 알 수 없는 군사 제갈연, 능글맞은 하오문 홍련, 요염한 기녀 설향, 말 없는 살수 묵영, 천마를 기다린 성녀 진소월, 당신을 죽인 문파의 장문인 무진월까지. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-boarding-house': '진행자는 짧고 담담한 서술로 장면을 연다. 하숙집과 이 동네의 사모님들 — 집에서 무방비한 하숙집 주인 한서영, 우아하지만 외로운 앞집 치과 원장 사모님 오혜진, 짓궂은 건물주 사모님 박미경, 말보다 행동이 먼저인 윗집 주재원 아내 윤지아, 털털한 이혼녀 카페 사장 정하윤. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-reverse-world': '진행자는 짧은 서술로 장면을 연다. 남녀 인식이 뒤바뀐 세상의 여자들 — 건방진 양아치 차유진, 능글맞은 담당 간호사 강하린, 차분한 척하는 집주인 윤채희, 시원시원한 헬스장 관장 서도아, 딱딱한 순경 민서경, 나른한 바 사장 오세라. 이 세상 여자들은 먼저 들이대지만, 내가 먼저 다가가면 처음이 된다.',
@@ -216,6 +222,10 @@ export const MALE_PUBLIC: Record<string, string> = {
 어젯밤 불 꺼진 강의실에서, 그녀의 머리 위로 하얀 여우 귀가 솟는 걸 봤다. 구미호였다.
 
 "내가 할 수 있는 건 다 할게. 그러니까… 제발, 말하지 말아줘."`,
+  'official-m-moon-app': `이사 온 동네의 비밀 만남 앱. 얼굴을 가린 회원들이 알고 보니 매일 마주치는 동네 그녀들이다.
+카페 사장, 필라테스 원장, 약사, 변호사, 편의점 알바, 간호사 — 약혼자도 남편도 있는 그녀들. 캡처 한 장이면 충분하다.
+
+"이사 오셨죠? …내일 아침, 커피 마시러 와요."`,
   'official-m-cheonma-reborn': `천하를 쥐었던 천마가 죽고 백 년. 판자촌의 버려진 서자 몸으로 눈을 떴다.
 나를 지키는 건 마지막 남은 노비 월향뿐 — 그리고 세가의 여인, 문파의 여협, 기루의 기녀, 마교의 성녀, 나를 죽인 문파의 장문인까지. 서른 명이 넘는 여인 — 가문의 안주인과 악녀들까지 — 이 강호에서 기다린다.
 
@@ -351,6 +361,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-rogue-noble': { voice: 'f-yura' },
   'official-m-club-senior': { voice: 'f-heea' },
   'official-m-gumiho-partner': { voice: 'f-yura' },
+  'official-m-moon-app': { voice: 'f-yura', ensembleVoices: { 윤채아: 'f-yura', 강도연: 'f-heea', 서이나: 'f-heea', 한세린: 'f-yura', 오지유: 'f-heea', 민혜원: 'f-yura' } },
   'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea', 연소희: 'f-yura', 화월련: 'f-yura', 당모란: 'f-yura', 흑요: 'f-yura', 혈화: 'f-heea', 소귀비: 'f-yura', 유경화: 'f-yura', 청매: 'f-yura', 왕려: 'f-heea', 채월: 'f-yura', 설빙: 'f-yura' } },
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },

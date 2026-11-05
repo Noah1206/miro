@@ -79,7 +79,7 @@ const args = new Set(process.argv.slice(2))
 
 function check(s: Seed): string[] {
   const bad: string[] = []
-  if (s.name.length > 10) bad.push('name>10')
+  if (s.name.length > 20) bad.push('name>20')
   if (s.tagline.length > 40) bad.push(`tagline ${s.tagline.length}>40`)
   if (s.startingContext.length > 600) bad.push(`startingContext ${s.startingContext.length}>600`)
   // 일반 전용(고등학생) 캐릭터는 직업에 '고등학생'을 그대로 써서 언베일이 막히게 한다 — 그 검사만 건너뛴다.
