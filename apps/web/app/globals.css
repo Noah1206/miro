@@ -317,7 +317,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   /* 11/5 사용자 스크린샷: 1100 폭, 사진 | 정보 반반, 시작 버튼은 정보 칸 맨 아래(사진 아랫선)에 붙는다. */
   .app-shell:has(.character-detail-theme) { --shell-w: 1100px; }
   .character-detail-theme { padding-bottom: 64px !important; }
-  .detail-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: stretch; padding: 72px 24px 8px; }
+  .detail-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 36px; align-items: stretch; padding: 12px 24px 8px; }
   .detail-top-media { border-radius: 16px; overflow: hidden; align-self: start; }
   .detail-top-info, .detail-rest { padding-inline: 24px !important; }
   .detail-top-info { padding: 0 !important; display: flex; flex-direction: column; }
@@ -521,7 +521,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* 11/5 사용자: 휴대폰도 데스크톱처럼 — 사진을 여백 둔 둥근 카드로(뒤로 가기 버튼은 사진 위 여백에). */
 @media (max-width: 1023px) {
-  .detail-top-media { margin: 60px var(--gutter) 0; border-radius: 16px; overflow: hidden; }
+  /* 11/6: 위 '< 프로필 상세' 줄이 이미 자리를 차지하므로 사진 위 여백은 조금만. */
+  .detail-top-media { margin: 8px var(--gutter) 0; border-radius: 16px; overflow: hidden; }
 }
 
 /* 11/6: 카드 해시태그 한 줄 — 옆으로 밀어서 넘기고 스크롤바는 숨김. */
