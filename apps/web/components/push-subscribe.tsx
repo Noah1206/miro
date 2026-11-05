@@ -186,9 +186,9 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
           {/* 힉스필드 3D 종(10/1 요청, 가입 선물 그림과 같은 점토 질감) — 차단 시트만 사선이 그어진 종. */}
           <img className={styles.icon} src={kind === 'denied' ? '/push-bell-off.png' : '/push-bell.png'} alt="" aria-hidden width={64} height={64} decoding="async" />
           {/* 첫 초점은 제목에 — 닫기 버튼에 주면 열리자마자 초점 테두리가 그려진다. 스크린 리더는 제목부터 읽는다. */}
-          <h2 className="t-title-2" tabIndex={-1} data-initial-focus style={kind === 'denied' ? { fontWeight: 300 } : undefined}>{t(copy.title)}</h2>
+          <h2 className="t-title-2" tabIndex={-1} data-initial-focus style={kind === 'denied' ? { fontSize: 18, fontWeight: 600 } : undefined}>{t(copy.title)}</h2>
           {/* 설명은 한 줄만(9/30 요청) — '설정 방법 보기' 를 누르면 그 줄이 이 브라우저의 켜는 길로 바뀐다. */}
-          <p className={how ? styles.path : undefined} role={how ? 'status' : undefined}>{how ? t(how) : t(copy.line, { name })}</p>
+          <p className={how ? styles.path : undefined} role={how ? 'status' : undefined} style={kind === 'denied' ? { fontSize: 13 } : undefined}>{how ? t(how) : t(copy.line, { name })}</p>
         </div>
         <div className={styles.actions}>
           {onAllow ? <>
@@ -196,11 +196,10 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
             <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </> : kind === 'denied' && !how
             ? <>
-              {/* 11/5 요청: 짙은 배경 + 흰 글씨, 글자는 가늘게 */}
-              <Button variant="primary" full onClick={() => setHow(settingsPath())}
-                style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 300 }}>{t('설정 방법 보기')}</Button>
+              {/* 11/6 요청: 버튼은 1차 '알림 받기' 시트와 같은 모양 */}
+              <Button variant="primary" full onClick={() => setHow(settingsPath())}>{t('설정 방법 보기')}</Button>
               {/* 알림 받기 시트와 같은 짝 — 닫는 길이 X 하나뿐이지 않게(10/1). */}
-              <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)', fontWeight: 300 }}>{t('나중에')}</Button>
+              <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
             </>
             : <Button variant="primary" full onClick={onClose}>{t('확인')}</Button>}
         </div>
