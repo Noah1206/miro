@@ -62,13 +62,16 @@ function NewCommand({ onDone }: { onDone: (cmd: CharacterCommand) => void }) {
   const [hint, setHint] = useState('')
   const [prompt, setPrompt] = useState('')
   const [isPublic, setIsPublic] = useState(true)
+  // 11/5: 언베일 전용 — 설명 앞에 [언베일] 이 붙고, 채팅에서는 언베일이 켜진 방에서만 실행된다(turn.ts).
+  const [adultOnly, setAdultOnly] = useState(false)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const ok = name.trim() && prompt.trim()
   const submit = async () => {
     if (!ok || pending) return
     setPending(true); setError('')
-    try { onDone(await saveCommand({ name, hint, prompt, isPublic })) }
+    const plain = hint.replace(/^\[언베일\]\s*/, '')
+    try { onDone(await saveCommand({ name, hint: adultOnly ? `[언베일] ${plain}`.slice(0, COMMAND_LIMITS.hint) : plain, prompt, isPublic })) }
     catch { setError(t('지금은 저장하지 못했어요. 잠시 뒤 다시 시도해 주세요.')) }
     setPending(false)
   }
@@ -85,6 +88,7 @@ function NewCommand({ onDone }: { onDone: (cmd: CharacterCommand) => void }) {
         placeholder={t('AI에게 줄 프롬프트 — 예) 오늘 하루를 일기 형식으로 돌아보는 장면을 써 줘')} style={{ ...field, resize: 'none' }} />
     </div>
     <Switch name="commandPublic" checked={isPublic} onChange={setIsPublic} label={t('라이브러리에 공개')} hint={t('켜면 다른 제작자도 이 명령어를 자기 캐릭터에 붙일 수 있어요.')} />
+    <Switch name="commandAdultOnly" checked={adultOnly} onChange={setAdultOnly} label={t('언베일 전용')} hint={t('켜면 언베일을 켠 대화방에서만 실행돼요.')} />
     {error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{error}</p>}
     <button type="button" onClick={() => void submit()} disabled={!ok || pending}
       style={{ minHeight: 44, borderRadius: 'var(--radius-button)', border: 0, cursor: ok ? 'pointer' : 'default', background: ok ? 'var(--color-accent)' : 'var(--color-surface-3)', color: ok ? 'var(--color-accent-on)' : 'var(--color-text-disabled)', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)' }}>
