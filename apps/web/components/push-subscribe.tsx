@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 import { Button, Sheet, useToast } from '@/components/ui'
 import styles from './push-subscribe.module.css'
 import { markPushPromptDone, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
@@ -178,8 +180,7 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
   const t = useT()
   /** 차단 시트에서 '설정 방법 보기' 를 누르면 설명 줄이 이 브라우저의 켜는 길로 바뀐다. */
   const [how, setHow] = useState<string | null>(null)
-  return (
-    <Sheet open={open} onClose={onClose} label={t(copy.title)} compact>
+  const body = (
       <div className={styles.stack} data-push-sheet={kind}>
         <div className={styles.center}>
           {/* 힉스필드 3D 종(10/1 요청, 가입 선물 그림과 같은 점토 질감) — 차단 시트만 사선이 그어진 종. */}
@@ -204,7 +205,40 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
             : <Button variant="primary" full onClick={onClose}>{t('확인')}</Button>}
         </div>
       </div>
-    </Sheet>
+  )
+  // 11/5 요청: 알림 꺼짐 안내는 아래 시트 대신 위에서 내려오는 팝업
+  if (kind === 'denied') return <TopPopup open={open} onClose={onClose} label={t(copy.title)}>{body}</TopPopup>
+  return <Sheet open={open} onClose={onClose} label={t(copy.title)} compact>{body}</Sheet>
+}
+
+function TopPopup({ open, onClose, label, children }: { open: boolean; onClose: () => void; label: string; children: React.ReactNode }) {
+  const t = useT()
+  const ref = useRef<HTMLDivElement>(null)
+  const reduce = useReducedMotion()
+  useFocusTrap(ref, open)
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open, onClose])
+  return (
+    <AnimatePresence>
+      {open && <>
+        <motion.div key="bg" aria-hidden onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,0.45)' }} />
+        <motion.div key="pop" ref={ref} role="dialog" aria-modal aria-label={label}
+          initial={reduce ? { opacity: 0 } : { y: '-110%' }} animate={reduce ? { opacity: 1 } : { y: 0 }} exit={reduce ? { opacity: 0 } : { y: '-110%' }}
+          transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+          style={{ position: 'fixed', top: 'calc(8px + env(safe-area-inset-top))', left: 0, right: 0, margin: '0 auto', width: 'min(calc(100% - 16px), 460px)', zIndex: 61,
+            background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', colorScheme: 'dark', border: '1px solid var(--color-border)', borderRadius: 16, boxShadow: '0 12px 40px rgba(0,0,0,0.45)', padding: '8px 20px 16px' }}>
+          <button type="button" onClick={onClose} aria-label={t('닫기')} style={{ position: 'absolute', top: 4, right: 8, width: 44, height: 44, border: 0, background: 'transparent', color: 'var(--color-text-primary)', display: 'grid', placeItems: 'center' }}>
+            <svg aria-hidden width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          </button>
+          {children}
+        </motion.div>
+      </>}
+    </AnimatePresence>
   )
 }
 function toUint8(base64: string): Uint8Array<ArrayBuffer> {
