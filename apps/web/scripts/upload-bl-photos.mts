@@ -73,17 +73,26 @@ for (const p of plan) {
   // 장면 사진은 장면마다 첫 인트로 줄에만 — intro.jpg 가 첫 장면, intro-2.jpg 가 둘째 장면(11/4). 나머지 줄의 옛 image 는 지운다.
   const files = readdirSync(join(ROOT, p.slug))
   const scenes = [...new Set(row.dialogue.filter(d => d.purpose === 'intro').map(d => d.scene ?? ''))]
+  // 11/5: 한 장면에 서술이 여러 줄이면 줄마다 사진 — intro.jpg, intro.2.jpg, intro.3.jpg …(둘째 장면은 intro-2.jpg, intro-2.2.jpg …).
   const urls = new Map<string, string>()
   for (const [i, scene] of scenes.entries()) {
-    const f = i === 0 ? p.intro : `intro-${i + 1}.jpg`
-    if (files.includes(f)) urls.set(scene, await put(p.slug, f))
+    const base = i === 0 ? 'intro' : `intro-${i + 1}`
+    for (let k = 1; k <= 9; k++) {
+      const f = k === 1 ? `${base}.jpg` : `${base}.${k}.jpg`
+      if (files.includes(f)) urls.set(`${scene}#${k}`, await put(p.slug, f))
+    }
   }
   const done = new Set<string>()
+  const seen = new Map<string, number>()
   const dialogue = row.dialogue.map(({ image: _old, ...d }) => {
     const scene = d.scene ?? ''
-    if (d.purpose !== 'intro' || done.has(scene) || !urls.has(scene)) return d
+    if (d.purpose !== 'intro' || d.role !== 'narrator') return d
+    const k = (seen.get(scene) ?? 0) + 1
+    seen.set(scene, k)
+    const url = urls.get(`${scene}#${k}`)
+    if (!url) return d
     done.add(scene)
-    return { ...d, image: urls.get(scene)! }
+    return { ...d, image: url }
   })
   if (!done.size) throw new Error(`no intro line: ${p.slug}`)
   await db.update(characters).set({ images, sampleDialogue: dialogue }).where(eq(characters.id, row.id))

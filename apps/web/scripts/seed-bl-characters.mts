@@ -39,10 +39,13 @@ function withMalePublic(s: Seed): Seed {
   const stats = !roster && body && `상세정보${body.who ? ` (${body.who})` : ''}\n${s.visual.bodyProfile.height} · ${body.kg}kg\n쓰리사이즈 B${body.b}/W${body.w}/H${body.h}cm · ${body.cup}컵`
   const start = MALE_START[s.slug], scenes = MALE_INTRO[s.slug]
   // 장면마다 서술 하나 + 대사 하나. 첫 줄은 원래 첫 줄의 장면 정보(시각·장소·상황)를 그대로 잇는다. 말투 예시 문답은 뺀다.
-  const sampleDialogue = scenes ? Object.entries(scenes).flatMap(([scene, [narration, line]]) => {
+  const sampleDialogue = scenes ? Object.entries(scenes).flatMap(([scene, parts]) => {
     const first = s.sampleDialogue.find(d => d.purpose === 'intro' && d.scene === scene)
     if (!first) throw new Error(`${s.name}: unknown scene ${scene}`)
-    return [{ ...first, role: 'narrator' as const, text: narration }, { role: 'character' as const, purpose: 'intro' as const, scene, text: line }]
+    const [narration, ...rest] = parts.slice(0, -1)
+    return [{ ...first, role: 'narrator' as const, text: narration! },
+      ...rest.map(text => ({ role: 'narrator' as const, purpose: 'intro' as const, scene, text })),
+      { role: 'character' as const, purpose: 'intro' as const, scene, text: parts[parts.length - 1]! }]
   }) : s.sampleDialogue
   // 상세 화면은 말투+가치관을 한 줄로 보여 준다 — 화면엔 성격 묘사(MALE_SPEECH)만, 가치관은 비공개로.
   const speech = MALE_SPEECH[s.slug]
