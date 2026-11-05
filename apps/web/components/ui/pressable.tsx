@@ -10,6 +10,8 @@ export type PressableProps = Omit<HTMLMotionProps<'button'>, 'ref' | 'style' | '
   onLongPress?: () => void
   /** scale 없이 밝기만 (아주 작은 요소). */
   subtle?: boolean
+  /** 눌렸을 때 크기(기본 press.scale 0.97). 더 또렷한 눌림이 필요한 버튼만 바꾼다(11/5 '대화 시작하기' 0.94). */
+  pressScale?: number
 }
 type Props = PressableProps
 
@@ -20,7 +22,7 @@ type Props = PressableProps
  * 눌림은 MotionValue 로 직접 움직인다 — `animate` prop 을 비워 두어야 Page 의 등장 순서(variants)를 물려받는다.
  */
 export const Pressable = forwardRef<HTMLButtonElement, Props>(function Pressable(
-  { onLongPress, subtle, children, style, disabled, onClick, ...rest }, ref,
+  { onLongPress, subtle, pressScale = press.scale, children, style, disabled, onClick, ...rest }, ref,
 ) {
   const reduce = useReducedMotion()
   const { pressed, handlers } = usePress({ disabled, onLongPress })
@@ -29,10 +31,10 @@ export const Pressable = forwardRef<HTMLButtonElement, Props>(function Pressable
   useEffect(() => {
     const down = pressed && !disabled
     const t = down ? { duration: press.downMs / 1000, ease: ease.exit } : spring.quick
-    const a = animate(scale, down && !reduce && !subtle ? press.scale : 1, t)
+    const a = animate(scale, down && !reduce && !subtle ? pressScale : 1, t)
     const b = animate(filter, down ? `brightness(${press.brightness})` : 'brightness(1)', t)
     return () => { a.stop(); b.stop() }   // 다음 상태는 현재 값에서 이어진다
-  }, [pressed, disabled, reduce, subtle, scale, filter])
+  }, [pressed, disabled, reduce, subtle, pressScale, scale, filter])
   return (
     <motion.button
       ref={ref}

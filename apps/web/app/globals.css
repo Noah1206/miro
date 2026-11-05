@@ -201,6 +201,16 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
   background: var(--color-accent-pressed) !important;
   border-color: var(--color-accent-pressed) !important;
 }
+/* 캐릭터 상세 '대화 시작하기'(11/5): 라벤더 600 → 올리면 700, 누르면 800 으로 짙어지고 글자는 흰색 → 라벤더 100 → 200(공통 규칙은 옅어져서 이 버튼만 따로). */
+.btn.btn-start { transition: background-color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard); }
+@media (hover: hover) and (pointer: fine) {
+  .btn.btn-start[data-variant="primary"]:not(:disabled):not([aria-busy="true"]):hover {
+    background: var(--color-lavender-700) !important; border-color: var(--color-lavender-700) !important; color: var(--color-lavender-100) !important;
+  }
+}
+.btn.btn-start[data-variant="primary"]:not(:disabled):not([aria-busy="true"]):is(:active, [data-pressed="true"]) {
+  background: var(--color-lavender-800) !important; border-color: var(--color-lavender-800) !important; color: var(--color-lavender-200) !important;
+}
 /* 온보딩 '다음' 은 잠겨 있어도 회색으로 바꾸지 않고 같은 라벤더를 옅게 — 고르면 또렷해진다(2026-09-30 요청). */
 .btn.btn-next:disabled:not([aria-busy="true"]) { background: var(--color-accent) !important; color: var(--color-accent-on) !important; border-color: var(--color-accent) !important; opacity: 0.35 !important; }
 
