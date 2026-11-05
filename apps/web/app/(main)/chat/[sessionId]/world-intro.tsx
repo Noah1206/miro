@@ -21,7 +21,7 @@ export function WorldIntro({ sessionId, worldSetting, guide, presets, mine }: { 
       </>}
       <h2 id={worldSetting ? undefined : 'world-intro-title'} className="t-micro" style={{ marginBottom: 4 }}>{t('이 세계에서의 나')}</h2>
       <p className="t-caption" style={{ marginBottom: 12, color: 'var(--color-text-tertiary)' }}>{t('대화를 시작하기 전에, 이 세계에서 당신이 누구인지 적어 주세요.')}</p>
-      <PersonaForm initial={null} next={`/chat/${sessionId}`} submitLabel={t('이 사람으로 시작')} submitStyle={{ background: 'var(--color-white)', border: '1px solid var(--color-white)', color: 'var(--color-accent-on)', fontWeight: 300 }} sessionId={sessionId} presets={picks}
+      <PersonaForm initial={null} next={`/chat/${sessionId}`} submitLabel={t('이 사람으로 시작')} submitStyle={{ background: 'var(--color-white)', border: '1px solid var(--color-white)', color: 'var(--color-accent-on)', fontWeight: 400 }} sessionId={sessionId} presets={picks}
         guide={guide || t('이 세계에서 당신은 어떤 사람인가요? 나이, 하는 일, 성격, 지금 처지를 적어 주세요.')} onDone={done} />
     </section>
   )
