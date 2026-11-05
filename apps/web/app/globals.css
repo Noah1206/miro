@@ -507,3 +507,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 
 /* 11/5 상세 정보 더 보기 버튼: 기본 삼각형 숨김 */
 .detail-more > summary::-webkit-details-marker { display: none; }
+
+/* 11/5 사용자: 휴대폰도 데스크톱처럼 — 사진을 여백 둔 둥근 카드로(뒤로 가기 버튼은 사진 위 여백에). */
+@media (max-width: 1023px) {
+  .detail-top-media { margin: 60px var(--gutter) 0; border-radius: 16px; overflow: hidden; }
+}
