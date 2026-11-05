@@ -49,7 +49,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         {/* 11/4: 사진 원본 비율(4:5)대로 — 15:16 이면 아래 제목 로고가 잘렸다. */}
         <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
           <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="4 / 5" scrim={false} />
-          {c.coverUnveil && <UnveilCover veiled={c.veiled} label="언베일" hideLabel />}
+          {c.coverUnveil && <UnveilCover veiled={c.veiled} label="언베일" />}
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>
