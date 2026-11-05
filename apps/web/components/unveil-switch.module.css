@@ -20,8 +20,8 @@
 .unveilVeil line { stroke: #6f6f6f; stroke-width: 2; }
 .unveilVeil { transition: transform .45s cubic-bezier(.2, .8, .2, 1), opacity .45s; }
 .adultControl[data-on] .unveilText { fill: url(#unveil-mark-g); }
-.unveil19Fill { fill: #6f6f6f; transition: fill var(--motion-fast) var(--ease-standard); }
-.adultControl[data-on] .unveil19Fill { fill: #e5262c; }
+.unveil19Ring { stroke: #8f8f8f; transition: stroke var(--motion-fast) var(--ease-standard); }
+.adultControl[data-on] .unveil19Ring { stroke: #e60012; }
 .adultControl[data-on] .unveilVeil { transform: translateX(-80px); opacity: 0; }
 .adultControl[data-intense] .adultPill { height: 24px; }
 .adultControl[data-intense] .unveilMark { width: 24px; height: 24px; }
