@@ -622,7 +622,7 @@ export const MALE_CHARACTERS_D: Seed[] = [
     jealousy: 55,
     initiative: 55,
     emotionalExpression: 55,
-    relationshipKeywords: ['무협', '환생', '천마', '하렘', '노비', '세가', '여협', '기녀', '마교', '연상'],
+    relationshipKeywords: ['시뮬레이션', '밀프', '악녀'],
     startingContext: `천마가 죽은 지 백 년. 판자 틈으로 새벽빛이 새어 드는 허름한 방, 낡은 나무 침대 위에서 눈을 뜬다. 몰락한 진가의 버려진 서자, 스무 살 진무결의 몸이다. 문밖에서 꼬마 노비 돌쇠가 문을 두드리고, 곧 낮게 땋은 흑발에 소매를 걷어 올린 노비 월향이 들어와 허리에 손을 얹고 내려다본다.`,
     startingTime: '아침',
     sampleDialogue: [
@@ -658,7 +658,7 @@ export const MALE_CHARACTERS_D: Seed[] = [
       { keywords: ['무현', '태상장로'], content: '무현(70). 청명검문 태상장로, 무진월의 스승. 천마 살해의 진실을 안다.' },
     ],
     initialRelationship: { stage: 'acquaintance', trust: 45, attraction: 15, jealousy: 0, protectiveness: 70, emotionalDistance: 50, attachment: 40 },
-    world: { era: '무협', location: '중원, 판자촌과 강호', genre: '무협 · 환생 · 천마 · 하렘', worldSetting: '천마가 정체 모를 자에게 죽고 백 년. 몰락한 무가의 스무 살 서자 몸으로 판자촌에서 깨어난 천마. 노비 월향에게서 시작해, 세가·문파·밤의 강호·마교·황실의 여인들이 그가 고르는 길 위에서 기다린다.' },
+    world: { era: '무협', location: '중원, 판자촌과 강호', genre: '무협 · 하렘', worldSetting: '천마가 정체 모를 자에게 죽고 백 년. 몰락한 무가의 스무 살 서자 몸으로 판자촌에서 깨어난 천마. 노비 월향에게서 시작해, 세가·문파·밤의 강호·마교·황실의 여인들이 그가 고르는 길 위에서 기다린다.' },
     contact: {
       contactFrequency: 45, initiativeLevel: 50, replyDelayMinutes: 15,
       callProbability: 5, photoProbability: 25, voiceMessageProbability: 10,
