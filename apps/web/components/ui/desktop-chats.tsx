@@ -46,7 +46,7 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
   return <aside className={styles.sidebar} data-collapsed={collapsed} aria-label={t('대화')}>
     <div className={styles.brandRow}>
       {collapsed ? <button className={styles.expand} onClick={onToggle} aria-label="사이드바 열기" aria-expanded={false}><span className={styles.expandLogo}><LogoMark size={28} label="" /></span><svg className={styles.expandIcon} width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16m4-12 3 4-3 4"/></svg></button> : <>
-        <TransitionLink href="/home" className={styles.brand}><LogoMark size={28} /><span>MIRO</span></TransitionLink>
+        <TransitionLink href="/home" className={styles.brand}><LogoMark size={22} /><span>MIRO</span></TransitionLink>
         <button className={styles.toggle} onClick={onToggle} aria-label="사이드바 닫기" aria-expanded={true}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16m7-12-3 4 3 4"/></svg></button>
       </>}
     </div>

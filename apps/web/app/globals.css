@@ -178,6 +178,9 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 /* layout */
 .page { min-height: 100dvh; padding: var(--space-5) var(--gutter) calc(var(--nav-h) + var(--space-3)); max-width: 640px; margin: 0 auto; }
 .page--immersive { max-width: none; padding: 0; }
+/* 11/6: 프로필 사진이 없을 때 기본 그림 = 회색 미로 마크. */
+.avatar-default { display: grid; place-items: center; }
+.avatar-default img { filter: grayscale(1) brightness(.6); }
 .stack { display: flex; flex-direction: column; }
 .hairline { height: 1px; background: var(--color-border); border: 0; margin: 0; }
 
@@ -491,8 +494,10 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .app-shell:has(.nav) > aside { left: 0; }
   /* 10/28: 본문(960)과 내비(912)는 화면 가운데. 화면이 좁아 사이드바(펼침 280·접힘 72)에 닿으면 그 오른쪽으로 밀린다 — 둘은 늘 같은 축. */
   .app-shell:has(.nav) .nav { left: 0; right: 0; bottom: 20px; width: min(912px, calc(100% - 32px)); max-width: none; margin: 0 auto; }
-  .app-shell:has(> aside) > div:last-child { --side: 280px; margin-left: max(calc((100% - 960px) / 2), var(--side)); margin-right: auto; }
-  .app-shell:has(aside[data-collapsed="true"]) > div:last-child { --side: 72px; }
+  .app-shell:has(> aside) { --side: 280px; }
+  .app-shell:has(aside[data-collapsed="true"]) { --side: 72px; }
+  /* 11/6 요청(베이비챗 대시보드처럼): 탭 화면 본문은 화면 가운데가 아니라 사이드바 오른쪽 영역의 가운데, 폭은 최대 1100(양옆 24 여백). */
+  .app-shell:has(> aside):has(.nav) > div:last-child { --main-w: min(1100px, calc(100% - var(--side) - 48px)); max-width: var(--main-w); margin-left: calc(var(--side) + (100% - var(--side) - var(--main-w)) / 2); margin-right: 0; }
   /* 11/3: 채팅방도 사이드바 옆에 넓게 — 셸 폭 제한을 풀고, 사이드바 오른쪽 전체를 쓰며 본문은 그 안 가운데 860. 하단 탭이 없으니 사이드바는 바닥까지. */
   /* 사이드바만 있고 하단 탭이 없는 셸 = 채팅방 경로(대화 전 페르소나 화면 포함, nav.tsx). */
   .app-shell:has(> aside):not(:has(.nav)) { max-width: none; }
@@ -502,8 +507,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .app-shell:has(> aside) .chat-main { max-width: min(860px, calc(100% - var(--side))); margin-left: max(calc((100% - 860px) / 2), var(--side)); margin-right: auto; }
   /* 11/4: 캐릭터 상세도 사이드바 옆 가운데(채팅방과 같은 규칙) — 안 하면 접힌 사이드바 밑으로 본문 왼쪽이 잘린다. */
   .app-shell:has(> aside) .character-detail-theme { max-width: min(960px, calc(100% - var(--side))); margin-left: max(calc((100% - 960px) / 2), var(--side)); margin-right: auto; }
-  .app-shell:has(> aside) .nav { left: max(calc((100% - 912px) / 2), 304px); right: auto; width: min(912px, calc(100% - 328px)); margin: 0; }
-  .app-shell:has(aside[data-collapsed="true"]) .nav { left: max(calc((100% - 912px) / 2), 96px); width: min(912px, calc(100% - 120px)); }
+  /* 하단 탭도 본문과 같은 축 — 사이드바 오른쪽 영역의 가운데. */
+  .app-shell:has(> aside) .nav { --nav-w: min(912px, calc(100% - var(--side) - 48px)); left: calc(var(--side) + (100% - var(--side) - var(--nav-w)) / 2); right: auto; width: var(--nav-w); margin: 0; }
 }
 @keyframes desktop-nav-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) {

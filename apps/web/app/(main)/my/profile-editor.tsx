@@ -19,7 +19,7 @@ export function ProfileIdentity({ initial, email }: { initial: AccountProfile; e
   const { profile } = useAccountProfile(initial)
   return <div className={styles.profile}>
     <span className={styles.avatar} aria-hidden>
-      {profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" sizes="64px" width={64} height={64} loading="eager" /> : <LogoMark size={28} />}
+      {profile.avatarUrl ? <CharacterPhoto key={profile.avatarUrl} src={profile.avatarUrl} alt="" size="avatar" sizes="64px" width={64} height={64} loading="eager" /> : <span className="avatar-default"><LogoMark size={28} label="" /></span>}
     </span>
     <div className={styles.who}>
       <p className={styles.name}>{profile.name}</p>

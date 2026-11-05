@@ -1,7 +1,7 @@
 .sidebar { display: none; }
 @media (min-width: 1024px) {
   .sidebar { display: flex; flex-direction: column; position: fixed; top: 0; bottom: var(--nav-h); width: 280px; padding: 16px 14px 16px; background: var(--color-bg); z-index: 20; overflow: hidden; transition: width 280ms cubic-bezier(.22,1,.36,1), padding 280ms cubic-bezier(.22,1,.36,1); }
-  .brand { display: flex; align-items: center; gap: 10px; padding: 0 12px; font-size: 23px; font-weight: 750; letter-spacing: .06em; }
+  .brand { display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 18px; font-weight: 750; letter-spacing: .06em; }
   .heading { display: flex; align-items: center; justify-content: space-between; padding: 36px 12px 14px; }
   .heading h2 { font-size: 15px; margin: 0; }
   .heading a { font-size: 11px; color: var(--color-text-tertiary); }
