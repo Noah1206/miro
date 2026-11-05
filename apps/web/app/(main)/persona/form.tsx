@@ -10,7 +10,7 @@ import styles from './form.module.css'
 const GENDERS = [{ value: '', label: msg('밝히지 않음') }, { value: 'female', label: msg('여성') }, { value: 'male', label: msg('남성') }]
 
 /** guide(11/4) — 세계관 카드에서 쓸 때: '나에 대해'가 필수가 되고 만든 사람의 작성 안내가 칸 안내로 보인다. */
-export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, presets = [], guide }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void; presets?: UserPersona[]; guide?: string }) {
+export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, presets = [], guide, submitStyle }: { initial: UserPersona | null; next: string; submitLabel: string; sessionId?: string; onDone?: () => void; presets?: UserPersona[]; guide?: string; submitStyle?: React.CSSProperties }) {
   const [state, action] = useActionState(sessionId ? saveConversationPersonaAction : savePersonaAction, null)
   const [gender, setGender] = useState<string>(initial?.gender ?? '')
   const [name, setName] = useState(initial?.name ?? '')
@@ -42,7 +42,7 @@ export function PersonaForm({ initial, next, submitLabel, sessionId, onDone, pre
           placeholder={guide || t('예) 스물여섯, 출판사 편집자. 낯을 가리지만 친해지면 장난이 많다.')} />
       </label>
       {state?.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
-      <div className={styles.submit}><SubmitButton full variant="primary" size="lg">{submitLabel}</SubmitButton></div>
+      <div className={styles.submit}><SubmitButton full variant="primary" size="lg" style={submitStyle}>{submitLabel}</SubmitButton></div>
     </form>
   )
 }
