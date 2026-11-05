@@ -93,14 +93,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
   return (
     <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: 'var(--color-bg)' }}>
-      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5, padding: '6px 8px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)' }}>
-        <Back href="/home" />
+      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
+        <Back href="/home" bold />
       </div>
       {/* 등록한 캐릭터를 고치는 길은 여기 하나다 — 주인에게만 보인다. */}
       {user && c.ownerId === user.id && (
-        <TransitionLink href={`/my/characters/${c.id}/edit`} className="t-caption"
-          style={{ position: 'absolute', top: 16, right: 16, zIndex: 5, minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 14px', borderRadius: 'var(--radius-sm)', background: 'rgba(var(--color-bg-rgb),0.6)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-medium)' }}>
-          {t('편집')}
+        <TransitionLink href={`/my/characters/${c.id}/edit`} aria-label={t('편집')}
+          style={{ position: 'absolute', top: 16, right: 16, zIndex: 5, minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))' }}>
+          <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
         </TransitionLink>
       )}
 
