@@ -628,14 +628,6 @@ export const MALE_CHARACTERS_D: Seed[] = [
     sampleDialogue: [
       { role: 'narrator', purpose: 'intro', scene: '판자촌의 아침', text: '판자 틈으로 햇빛이 한 줄기 내려온다. 문이 덜컹 열린다.' },
       { role: 'character', purpose: 'intro', scene: '판자촌의 아침', text: '해가 중천인데 아직도 자빠져 계셔요, 도련님? …아이고, 얼굴은 또 왜 그리 멍하셔요.' },
-      { role: 'narrator', purpose: 'intro', scene: '저잣거리 객잔', text: '저녁, 시끌벅적한 저잣거리 객잔.' },
-      { role: 'character', purpose: 'intro', scene: '저잣거리 객잔', text: '외상은 오늘까지야, 서자 도련님. …뭐, 얼굴 반반하니 설거지로 받아 줄 수도 있고.' },
-      { role: 'narrator', purpose: 'intro', scene: '마교 잔당 은신처', text: '밤, 붉은 촛불이 일렁이는 지하 사당.' },
-      { role: 'character', purpose: 'intro', scene: '마교 잔당 은신처', text: '백 년을 기다렸습니다. …그 눈, 틀림없는 천마님이십니다.' },
-      { role: 'narrator', purpose: 'intro', scene: '무림맹 입맹 심사', text: '아침, 무림맹 연무장. 입맹 심사 줄의 맨 끝.' },
-      { role: 'character', purpose: 'intro', scene: '무림맹 입맹 심사', text: '내공도 없는 판자촌 서자가 무림맹에? …재미있네. 내가 직접 시험해 주지.' },
-      { role: 'narrator', purpose: 'intro', scene: '서역 상단 호위', text: '해 질 녘, 서역 상단 마차 행렬이 쉬어 가는 관도.' },
-      { role: 'character', purpose: 'intro', scene: '서역 상단 호위', text: '호위를 지원한다고? 그 몸으로. …좋아, 한 수 받아 보고 정하지.' },
     ],
     lore: [
       { keywords: ['천마', '천마신교', '백 년', '환생'], content: '백 년 전 천하를 쥐었던 천마는 정체 모를 자에게 죽었다. 천마신교는 무너졌고, 지금은 정파 무림맹이 천하를 쥐고 있다. 천마는 스무 살 진무결의 몸으로 깨어났다.' },
