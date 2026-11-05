@@ -397,4 +397,4 @@ export const MALE_GUIDE: Record<string, string> = {
 }
 
 /** 언베일 썸네일(11/4 사용자: 노출 큰 사진은 흐리게 하거나 언베일 표시) — 대표·갤러리 사진이 속옷·비침 수위인 카드. */
-export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe', 'official-m-boarding-house', 'official-m-stray-cat'])
+export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe', 'official-m-boarding-house', 'official-m-stray-cat', 'official-m-moon-app'])
