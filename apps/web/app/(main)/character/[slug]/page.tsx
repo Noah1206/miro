@@ -122,12 +122,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <h1 className="t-hero t-name" style={{ marginBottom: 8 }}>{coverTitle(c)}</h1>
 
         {/* 통계 — 댓글·좋아요. 대화한 사람 수는 띄우지 않는다(2026-09-30 요청). */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
           <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
           <LikeButton slug={slug} initial={likes} />
-        </div>
-
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+          {/* 11/6 사용자: 남성향/여성향 표시는 좋아요와 같은 줄에. */}
           <span className="t-caption" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{c.audience === 'male' ? t('남성향') : t('여성향')}</span>
         </div>
 
