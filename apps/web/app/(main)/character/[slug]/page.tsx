@@ -93,8 +93,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
 
   return (
     <Page immersive className="character-detail-theme" style={{ paddingBottom: 'calc(88px + env(safe-area-inset-bottom))', background: 'var(--color-bg)' }}>
-      <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 5 }}>
+      {/* 11/5 사용자: 사진 왼쪽 위 구석에 '< 프로필 상세'. */}
+      <div className="detail-head" style={{ position: 'absolute', top: 12, left: 'var(--gutter)', zIndex: 5, display: 'flex', alignItems: 'center', gap: 10 }}>
         <Back href="/home" bold />
+        <span style={{ fontSize: 18, fontWeight: 'var(--weight-semibold)', color: 'var(--color-text-primary)' }}>{t('프로필 상세')}</span>
       </div>
       {/* 등록한 캐릭터를 고치는 길은 여기 하나다 — 주인에게만 보인다. */}
       {user && c.ownerId === user.id && (

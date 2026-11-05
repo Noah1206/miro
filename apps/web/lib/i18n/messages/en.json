@@ -1962,5 +1962,6 @@
  "시작 설정": "Starting setup",
  "음성 분량 확인 중…": "Checking voice length…",
  "이 명령어는 언베일을 켠 대화방에서만 쓸 수 있어요.": "This command only works in chats with Unveil turned on.",
- "켜면 언베일을 켠 대화방에서만 실행돼요.": "When on, it only runs in chats with Unveil turned on."
+ "켜면 언베일을 켠 대화방에서만 실행돼요.": "When on, it only runs in chats with Unveil turned on.",
+ "프로필 상세": "Profile"
 }

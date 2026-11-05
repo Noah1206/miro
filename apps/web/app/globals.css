@@ -319,6 +319,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
   .detail-top-info, .detail-rest { padding-inline: 24px !important; }
   .detail-top-info { padding: 0 !important; display: flex; flex-direction: column; }
   .character-detail-theme .detail-cta { position: static; width: auto; margin: auto 0 0; padding: 20px 0 0 !important; background: none !important; }
+  .detail-head { left: 24px !important; top: 20px !important; }
 }
 .create-page { max-width: 560px; }
 .create-intro-editor { height: min(560px, 70dvh); }
