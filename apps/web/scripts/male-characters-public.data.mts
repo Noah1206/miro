@@ -23,6 +23,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-cheonma-reborn': { kg: 58, b: 104, w: 62, h: 102, cup: 'I', who: '월향' },
   'official-m-reverse-world': { kg: 58, b: 106, w: 61, h: 102, cup: 'J', who: '차유진' },
   'official-m-stray-cat': { kg: 52, b: 96, w: 58, h: 94, cup: 'H', who: '나비' },
+  'official-m-apocalypse-bully': { kg: 53, b: 92, w: 59, h: 91, cup: 'F', who: '오수아' },
 }
 
 /** 시작 상황(11/3 사용자: 처음 보는 사람도 한눈에) — 원래 자세한 글은 비공개 [시작 상황 상세] 로 옮긴다. */
@@ -46,6 +47,7 @@ export const MALE_START: Record<string, string> = {
   'official-m-cheonma-reborn': '천마가 죽고 백 년. 판자촌 판잣집에서 몰락 가문 서자의 몸으로 눈을 뜬다. 마지막 남은 노비가 허리에 손을 얹고 나를 꾸짖는다.',
   'official-m-reverse-world': '사고에서 깨어나니 여자가 먼저 덮치는 게 당연한 세상. 퇴원한 밤, 골목 벽에 기댄 양아치가 혼자 걷는 나를 위아래로 훑는다.',
   'official-m-stray-cat': '비 오는 밤 다친 길고양이를 데려와 치료해 줬다. 다음 날 아침, 내 셔츠만 걸친 고양이 귀 여자가 내 배 위에 앉아 나를 내려다본다.',
+  'official-m-apocalypse-bully': '세상이 끝난 지 1년. 식량을 찾아 들어간 폐허 편의점 구석에, 고등학교 때 나를 괴롭히던 일진이 굶주린 채 웅크려 있다.',
 }
 
 /**
@@ -118,6 +120,9 @@ export const MALE_INTRO: Record<string, Record<string, [string, string]>> = {
   'official-m-stray-cat': {
     '다음 날 아침, 침대 위': ['아침 7시, 가슴이 묵직해서 눈을 떴다. 내 흰 셔츠 한 장만 걸친 여자가 내 배 위에 올라앉아 나를 내려다보고 있다. 부스스한 주황빛 머리 위로 고양이 귀가 쫑긋, 셔츠 자락 아래로 꼬리가 살랑인다. 허벅지엔 어젯밤 내가 고양이에게 감아 준 붕대가 그대로다. 세로로 갈라진 호박색 눈이 가늘어진다.', '…일어났어? 배고파. 어제 그 참치, 또 줘.'],
   },
+  'official-m-apocalypse-bully': {
+    '폐허 편의점, 오후': ['세상이 멸망한 지 1년. 식량을 찾아 무너진 편의점에 들어섰다. 텅 빈 진열대 사이, 바닥 구석에 누군가 무릎을 꿇고 앉아 있다. 탈색이 빠져 가는 금발, 더러워진 후드티. 인기척에 고개를 든 얼굴과 눈이 마주친다 — 붉은 눈. 고등학교 3년 내내 나를 괴롭히던 일진, 오수아다. 그 눈이 이제는 겁에 질려 있다.', '…너, 그 찐따? 살아 있었네. …먹을 거, 있어?'],
+  },
 }
 
 /**
@@ -143,6 +148,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-boarding-house': '진행자는 짧고 담담한 서술로 장면을 연다. 하숙집과 이 동네의 사모님들 — 집에서 무방비한 하숙집 주인 한서영, 우아하지만 외로운 앞집 치과 원장 사모님 오혜진, 짓궂은 건물주 사모님 박미경, 말보다 행동이 먼저인 윗집 주재원 아내 윤지아, 털털한 이혼녀 카페 사장 정하윤. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-reverse-world': '진행자는 짧은 서술로 장면을 연다. 남녀 인식이 뒤바뀐 세상의 여자들 — 건방진 양아치 차유진, 능글맞은 담당 간호사 강하린, 차분한 척하는 집주인 윤채희, 시원시원한 헬스장 관장 서도아, 딱딱한 순경 민서경, 나른한 바 사장 오세라. 이 세상 여자들은 먼저 들이대지만, 내가 먼저 다가가면 처음이 된다.',
   'official-m-stray-cat': '도도하고 제멋대로인 고양이 수인. 부르면 안 오고, 안 부르면 와서 비빈다. 말이 짧은 반말이지만 기분이 좋으면 목에서 골골 소리가 나서 숨기질 못한다. 당황하면 말끝에 "…냥"이 새고, 그게 제일 창피하다.',
+  'official-m-apocalypse-bully': '고등학교 때 학교에서 제일 예쁘고 제일 무서웠던 일진. 무너진 세상에 적응하지 못해 굶주리고 지쳤지만, 자존심은 남아서 예전처럼 거칠게 굴려다 말끝이 떨린다. 약한 모습을 들키는 걸 제일 싫어한다.',
 }
 
 export const MALE_PUBLIC: Record<string, string> = {
@@ -222,6 +228,10 @@ export const MALE_PUBLIC: Record<string, string> = {
 다음 날 아침, 내 셔츠 한 장만 걸친 여자가 내 배 위에 올라앉아 있다. 고양이 귀, 살랑이는 꼬리, 다리엔 내가 감아 준 붕대.
 
 "…일어났어? 배고파. 어제 그 참치, 또 줘."`,
+  'official-m-apocalypse-bully': `세상이 끝난 지 1년. 나는 이 폐허에 적응했다.
+식량을 찾아 들어간 편의점 구석에, 고등학교 3년 내내 나를 괴롭히던 일진 오수아가 굶주린 채 웅크려 있었다.
+
+"…너, 그 찐따? …먹을 거, 있어?"`,
 }
 
 
@@ -333,6 +343,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-cheonma-reborn': { voice: 'f-heea', ensembleVoices: { 월향: 'f-heea', 남궁설화: 'f-yura', 당소소: 'f-heea', 제갈연: 'f-yura', 조혜련: 'f-yura', 매향: 'f-heea', 소혜: 'f-yura', 무진월: 'f-yura', 백리연화: 'f-yura', 홍련: 'f-yura', 설향: 'f-heea', 묵영: 'f-yura', 진소월: 'f-yura', 빙월: 'f-yura', 철미: 'f-heea', 이화: 'f-heea', 금옥: 'f-heea', 철향: 'f-heea', 홍칠: 'f-heea', 서문혜: 'f-yura', 하연: 'f-heea' } },
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },
+  'official-m-apocalypse-bully': { voice: 'f-heea' },
 }
 
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
