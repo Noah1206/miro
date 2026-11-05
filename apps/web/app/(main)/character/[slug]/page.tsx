@@ -16,6 +16,7 @@ import { COPY } from '@/lib/copy'
 import { DetailHero } from './hero'
 import { LikeButton, Rule, Stat, SimilarRow, CommentsPreview } from './sections'
 import { subject, withParticle } from '@/lib/format'
+import { hotFirst } from '@/lib/character-card-copy'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
 import { StartWithLogin } from './start-button'
@@ -71,7 +72,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
   const heroImages = c.images
   // 장르와 관계 키워드가 겹치면 한 번만(11/4 #동창회 #첫사랑 두 번).
-  const tags = [...new Set([...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean))]
+  const tags = hotFirst([...new Set([...(c.worldGenre ?? '').split('·').map((g) => g.trim().replace(/\s+/g, '')), ...c.relationshipKeywords].filter(Boolean))])
   // 라벨을 붙인 표 대신 읽히는 문장으로. 값이 없으면 그 문장이 통째로 빠진다.
   // socialPosition 이 직업을 이미 품고 있으면 직업을 빼서 같은 말을 두 번 하지 않는다
   // (히사시: '조직의 중간 간부' + '오사카 조직의 중간 간부').
