@@ -47,6 +47,7 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<boolean> 
 export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { vapidPublicKey: string | null; name: string; autoPrompt?: boolean }) {
   const [status, setStatus] = useState<Status>('checking')
   const [ask, setAsk] = useState(false)
+  const [bannerClosed, setBannerClosed] = useState(false)
   const [guide, setGuide] = useState(false)
   const toast = useToast()
   const t = useT()
@@ -139,6 +140,15 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     denied: t('알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.'),
     working: t('확인 중…'),
   }
+  // 11/7 사용자: 알림 차단 안내는 입력창 위 줄이 아니라 헤더 바로 밑 알림(배너)으로. 닫을 수 있다.
+  if (status === 'denied') return bannerClosed ? null : (
+    <div role="status" data-push-denied style={{ position: 'fixed', top: 'calc(env(safe-area-inset-top, 0px) + 68px)', left: '50%', transform: 'translateX(-50%)', zIndex: 40, display: 'flex', alignItems: 'center', gap: 10, width: 'max-content', maxWidth: 'calc(100% - 32px)', padding: '9px 10px 9px 14px', borderRadius: 12, border: '1px solid #ffffff1f', background: 'var(--color-surface-2)', boxShadow: '0 8px 24px #00000040', color: 'var(--color-text-secondary)' }}>
+      <span className="t-caption">{text.denied}</span>
+      <button type="button" onClick={() => setBannerClosed(true)} aria-label={t('닫기')} style={{ display: 'grid', placeItems: 'center', width: 24, height: 24, padding: 0, border: 0, borderRadius: 6, background: 'transparent', color: 'inherit', cursor: 'pointer' }}>
+        <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+  )
   return (
     <>
       {/* 입력창 위 한 줄 — 미디어 버튼 줄과 같은 여백. 안 바뀌는 안내라 live region 이 아니다(대화방의 '입력 중' 상태와 겹치지 않게). */}
