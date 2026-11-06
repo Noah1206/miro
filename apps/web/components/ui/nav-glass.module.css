@@ -16,3 +16,6 @@
 /* 11/7 사용자: 지금 탭은 알림 팝업 '확인' 버튼 색(라벤더 600)으로 진하게 채우고, 아이콘·글자는 흰색. */
 .bar .indicator::before { background: var(--color-lavender-600); box-shadow: none; }
 .bar :global(.nav__item[aria-current="page"]) { color: var(--color-white) !important; }
+/* 11/7 사용자: 지금 탭 배경 채움은 없애고, 그 색(라벤더 600)을 아이콘·글자에. */
+.bar .indicator::before { background: transparent; box-shadow: none; }
+.bar :global(.nav__item[aria-current="page"]) { color: var(--color-lavender-600) !important; }
