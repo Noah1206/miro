@@ -259,7 +259,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
             // 11/6: 여러 인물 — 이름이 같거나 줄임("연화" ↔ "백리연화")이면 그 인물 사진.
             const photoOf = own ? portrait : castPhotos[seg.speaker] ?? Object.entries(castPhotos).find(([n]) => n.endsWith(seg.speaker) || seg.speaker.endsWith(n))?.[1]
             const face = theme !== 'miro' ? <DefaultChatAvatar /> : photoOf
-              ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="32px" width={32} height={32} />
+              ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="44px" width={44} height={44} />
               : seg.speaker.slice(0, 1)
             return <span className={styles.avatar} aria-hidden>{face}</span>
           })()}

@@ -542,3 +542,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .headerTitleRow { display:flex; align-items:center; gap:9px; min-width:0; }
 .headerAvatar { flex:none; width:30px; height:30px; border-radius:50%; overflow:hidden; background:#282828; }
 .headerAvatar img { width:100%; height:100%; object-fit:cover; }
+/* 11/6 사용자: 얼굴이 잘 보이게 말풍선 아바타를 크게(30 → 44px), 제목 옆 사진도 조금 크게. */
+:global([data-chat-theme='miro']) .avatar, .avatar { width:44px; height:44px; font-size:16px; }
+.avatar img { object-position:center 20%; }
+.characterRow { gap:10px; }
+.turnPhotoRow { padding-left:54px; }
+.headerAvatar { width:34px; height:34px; }
