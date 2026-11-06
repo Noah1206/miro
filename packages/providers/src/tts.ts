@@ -6,13 +6,16 @@
 import type { VoiceDelivery } from '@miro/config'
 /** delivery is per utterance. style remains for older speech servers. */
 export type TtsRequest = { text: string; voice: string | null; language: string; style?: 'normal' | 'whisper'; delivery?: VoiceDelivery; maxAudioSeconds?: number }
-export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promise<{ audio: ArrayBuffer; contentType: string }> }
+export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promise<{ audio: ArrayBuffer; contentType: string }>
+  /** 11/6: 서버를 미리 깨운다(꺼져 있으면 켜지는 데 24~33초) — 음성 모드를 켜는 순간 부른다. 실패해도 조용히. */
+  warm?(signal?: AbortSignal): Promise<void> }
 
 export function resolveTts(): TtsProvider | null {
   const url = process.env.MIRO_TTS_URL?.replace(/\/$/, '')
   if (!url) return null
   const key = process.env.MIRO_TTS_API_KEY
   return {
+    async warm(signal) { await fetch(`${url}/health`, { signal }).then(r => r.body?.cancel()).catch(() => {}) },
     async speak(req, signal) {
       const res = await fetch(`${url}/speak`, {
         method: 'POST', signal,

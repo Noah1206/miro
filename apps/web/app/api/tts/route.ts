@@ -5,7 +5,7 @@ import { currentUser } from '@/lib/auth'
 import { speechQueueEnabled } from '@/lib/speech/policy'
 import { submitSpeech, speechFailure, quoteSpeech } from '@/lib/speech/http'
 import { speechAmount, speechCreditsEnabled } from '@/lib/speech/credits-policy'
-import { spokenSegments } from '@/lib/voice-text'
+import { speechSentences, spokenSegments } from '@/lib/voice-text'
 import { feature } from '@miro/config'
 import { voiceColumns } from '@/lib/voice'
 import { segmentVoice } from '@/lib/speech/access'
@@ -23,12 +23,15 @@ export async function POST(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
-  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown } | null
+  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; sub?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown } | null
+  // 11/6: 음성 모드를 켜면 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간(24~33초)을 기다리지 않게. 글·대화 없이 상태 확인만.
+  if (body?.wake === true) { await resolveTts()?.warm?.(AbortSignal.timeout(60_000)); return new Response(null, { status: 204 }) }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
   if (!/^[0-9a-f-]{36}$/i.test(sessionId) || !/^[0-9a-f-]{36}$/i.test(messageId)
     || (body?.plan !== undefined && typeof body.plan !== 'boolean')
     || (body?.reuseOnly !== undefined && typeof body.reuseOnly !== 'boolean')
-    || (body?.part !== undefined && (!Number.isInteger(body.part) || Number(body.part) < 0 || Number(body.part) > 11))) return new Response(null, { status: 400 })
+    || (body?.part !== undefined && (!Number.isInteger(body.part) || Number(body.part) < 0 || Number(body.part) > 11))
+    || (body?.sub !== undefined && (body?.part === undefined || !Number.isInteger(body.sub) || Number(body.sub) < 0 || Number(body.sub) > 19))) return new Response(null, { status: 400 })
   const [row] = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, name: characters.name,
     voice: officialVoices.providerVoiceId, ...voiceColumns, characterOwnerId: characters.ownerId, adultSince: roleplaySessions.adultSince, ensembleVoices: characters.ensembleVoices })
     .from(messages)
@@ -58,7 +61,11 @@ export async function POST(req: Request) {
   const selected = body?.part === undefined ? null : segments[Number(body.part)]
   if (body?.part !== undefined && !selected) return new Response(null, { status: 400 })
   // Preserve the original whole-reply contract for older clients. New clients select each part.
-  const text = selected ? (selected.speech ?? selected.text) : segments.map(s => s.speech ?? s.text).join(' ')
+  const whole = selected ? (selected.speech ?? selected.text) : segments.map(s => s.speech ?? s.text).join(' ')
+  // 11/6: sub = 그 대사의 몇 번째 문장(문장 단위 재생). 응답 머리 x-voice-sentences 에 전체 문장 수를 알려 준다.
+  const sentences = body?.sub !== undefined ? speechSentences(whole) : null
+  if (sentences && !sentences[Number(body!.sub)]) return new Response(null, { status: 400 })
+  const text = sentences ? sentences[Number(body!.sub)]! : whole
   const delivery = selected?.delivery ?? (segments.length === 1 ? segments[0]!.delivery : undefined)
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   try {
@@ -66,7 +73,7 @@ export async function POST(req: Request) {
     const out = await tts.speak({ text, voice: await segmentVoice(row, selected ?? segments[0]),
       language: settings?.language ?? 'ko', style: delivery?.tone === 'whisper' ? 'whisper' : 'normal', delivery },
       AbortSignal.any([req.signal, timeout]))
-    return new Response(out.audio, { headers: { 'content-type': out.contentType, 'cache-control': 'private, no-store' } })
+    return new Response(out.audio, { headers: { 'content-type': out.contentType, 'cache-control': 'private, no-store', ...(sentences ? { 'x-voice-sentences': String(sentences.length) } : {}) } })
   } catch {
     // No automatic paid retry and no substitution with an unrelated browser voice.
     return Response.json({ error: 'voice_generation_failed' }, { status: 502 })

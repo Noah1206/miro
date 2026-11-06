@@ -3,11 +3,26 @@ export type VoicePlaybackStatus = 'idle' | 'preparing' | 'playing' | 'error'
 export async function playVoiceSelection(sessionId:string,messageId:string,part:number,amount:'standard'|'extended',
   audio:HTMLAudioElement,signal:AbortSignal,status:(state:VoicePlaybackStatus)=>void,reuseOnly=false) {
   check(signal);status('preparing')
-  const result=await waitForSpeech(await fetch('/api/tts',{method:'POST',signal,headers:{'content-type':'application/json'},
-    body:JSON.stringify({sessionId,messageId,part,amount,confirmed:true,reuseOnly})}),signal)
-  if(result.status!==200||!result.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
-  const blob=await result.blob();check(signal);status('playing')
-  await play(blob,audio,signal);status('idle')
+  // 11/6: 문장 단위 — 첫 문장부터 받아 바로 재생하고, 듣는 동안 다음 문장을 미리 받는다. 서버가 문장 수를 안 주면(대기열 경로) 한 번에 통째로.
+  const get=async(sub:number)=>{
+    const result=await waitForSpeech(await fetch('/api/tts',{method:'POST',signal,headers:{'content-type':'application/json'},
+      body:JSON.stringify({sessionId,messageId,part,sub,amount,confirmed:true,reuseOnly})}),signal)
+    if(result.status!==200||!result.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
+    const total=Number(result.headers.get('x-voice-sentences'))
+    return {blob:await result.blob(),total:Number.isInteger(total)&&total>0?total:1}
+  }
+  const first=await get(0);check(signal)
+  let next=first.total>1?get(1):null
+  next?.catch(()=>{})
+  status('playing');await play(first.blob,audio,signal)
+  for(let sub=1;sub<first.total&&next;sub++){
+    status('preparing')
+    const cur=await next;check(signal)
+    next=sub+1<first.total?get(sub+1):null
+    next?.catch(()=>{})
+    status('playing');await play(cur.blob,audio,signal)
+  }
+  status('idle')
 }
 
 function check(signal: AbortSignal) { if (signal.aborted) throw new DOMException('Voice cancelled', 'AbortError') }
