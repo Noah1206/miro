@@ -550,3 +550,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .headerAvatar { width:34px; height:34px; }
 /* 11/7 사용자: 사진 버튼 배경을 / 버튼과 같은 색으로. */
 .composerTools .photoTool { background:var(--color-surface-2); }
+/* 11/7 사용자: 추천 답변 배경도 / 버튼과 같은 색으로. */
+.composerBar .suggestPill { background:var(--color-surface-2); }
