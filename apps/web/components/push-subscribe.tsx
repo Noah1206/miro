@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useFocusTrap } from '@/lib/motion/use-focus-trap'
 import { Button, Sheet, useToast } from '@/components/ui'
+
+/** 11/6: 알림 시트의 확인 버튼은 캐릭터 상세 '대화 시작하기'와 같은 모양(라벤더·흰 글자·보통 굵기·눌리면 0.94배, hover/active 는 globals.css .btn-start). */
+const START = { className: 'btn-start', pressScale: 0.94, style: { background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' } } as const
 import styles from './push-subscribe.module.css'
 import { markPushPromptDone, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
@@ -192,16 +195,16 @@ function PushSheet({ kind, open, onClose, name, working = false, onAllow }: {
         </div>
         <div className={styles.actions}>
           {onAllow ? <>
-            <Button variant="primary" full onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
+            <Button variant="primary" full {...START} onClick={onAllow} status={working ? 'loading' : 'idle'} disabled={working}>{t('알림 받기')}</Button>
             <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
           </> : kind === 'denied' && !how
             ? <>
               {/* 11/6 요청: 버튼은 1차 '알림 받기' 시트와 같은 모양 */}
-              <Button variant="primary" full onClick={() => setHow(settingsPath())}>{t('설정 방법 보기')}</Button>
+              <Button variant="primary" full {...START} onClick={() => setHow(settingsPath())}>{t('설정 방법 보기')}</Button>
               {/* 알림 받기 시트와 같은 짝 — 닫는 길이 X 하나뿐이지 않게(10/1). */}
               <Button variant="ghost" size="sm" full onClick={onClose} style={{ color: 'var(--color-text-primary)' }}>{t('나중에')}</Button>
             </>
-            : <Button variant="primary" full onClick={onClose}>{t('확인')}</Button>}
+            : <Button variant="primary" full {...START} onClick={onClose}>{t('확인')}</Button>}
         </div>
       </div>
   )
