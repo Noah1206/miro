@@ -8,7 +8,7 @@ import { MOODS, RELATIONS } from '@/lib/genres'
 import { discoveryOptionCounts, discoveryTagLabel, discoveryTags, type DiscoveryCard, type DiscoveryGroup } from '@/lib/discovery-filters'
 import { DiscoveryFilters } from '@/components/discovery-filters'
 import type { CardPage } from '@/lib/home'
-import { StoryCard } from '../home/feed'
+import { CharacterCard } from '@/components/character-card'
 import { startNavigation } from '@/lib/motion/view-transition'
 import cards from '../home/home.module.css'
 import styles from './search.module.css'
@@ -144,7 +144,8 @@ export function SearchScreen({ groups = [], filterCatalog, initialPage, isResult
     </section>}
     {isResults && <section className={styles.results} aria-label={t('검색 결과')} aria-busy={busy}>
       <div className={styles.resultHeading}><span role="status" className={styles.resultCount}>{busy || !page ? t('결과 확인 중') : t('결과 {count}개', { count: page.items.length })}</span><button disabled={busy || !active} onClick={() => { if (!active) return; setDraft(''); update(new URLSearchParams()) }}>{t('초기화')}</button></div>
-      <div className={cards.grid}>{page?.items.map(c => <StoryCard key={c.id} c={c} />)}</div>
+      {/* 11/7 사용자: 탐색 카드도 홈 줄 카드와 같은 내용(제목·두 줄 소개·해시태그 칩)으로. */}
+      <div className={cards.grid}>{page?.items.map(c => <CharacterCard key={c.id} c={{ ...c, caption: c.role }} />)}</div>
       {busy && <p className={styles.status} role="status">{t('불러오는 중')}</p>}
       {failed && <div className={styles.status} role="alert"><p>{t('목록을 불러오지 못했어요.')}</p><Button variant="ghost" onClick={() => setRetry(n => n + 1)}>{t('다시 시도')}</Button></div>}
       {!busy && !failed && page?.items.length === 0 && <p className={styles.status}>{t('고른 조건에 맞는 이야기가 아직 없어요')}</p>}
