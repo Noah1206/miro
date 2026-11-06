@@ -203,7 +203,7 @@ const text = (description?: string) => ({ type: 'string', ...(description ? { de
  */
 export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 'object', properties: {
   rp: { type: 'object', properties: { blocks: { type: 'array', description: '1 to 12 items, as many as the moment needs.', items: { type: 'object', properties: {
-    type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('character name for dialogue/action/thought; omit for narrative'),
+    type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('name of the person speaking or acting for dialogue/action/thought (in a multi-heroine card, that heroine — never the card title); omit for narrative'),
     text: text('narrative/action: 1-3 sentences. dialogue: 1-3 sentences. thought: one or two short colloquial lines.'),
     delivery: { type: 'object', description: 'Hidden delivery for dialogue only; never include in text.', properties: {
       emotion: { type: 'string', enum: [...VOICE_EMOTIONS] }, tone: { type: 'string', enum: [...VOICE_TONES] },
