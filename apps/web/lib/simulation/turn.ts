@@ -143,7 +143,9 @@ async function executeTurn(opts: {
     const context = { turnMeter, dialogueModelId, allowEvaluation: false, userId, sessionId, requestId: opts.requestId, traceId: opts.traceId, ip: opts.ip, continuity: reservation?.continuity ?? false, usageUnits: reservation?.cost ?? 0, origin: policy.origin, adult: loaded.adult.turn }
     // 첫 대화(10/19): 가까운 일정 하나를 묻고 끝에 "이따 ~에 문자할게" 를 약속하게 한다 — 약속했으면 그 시각에 실제로 연락이 간다(아래).
     // 대부분 첫 답 하나만 보고 떠나서(7일 45턴/45방), 먼저 연락하는 캐릭터라는 걸 첫 답에서 보여야 한다.
-    const firstPromise = loaded.snapshot.turnCount === 0 && loaded.experienceType === 'reality' && !loaded.snapshot.world.narrativeCalendar && !contactBoundaryActive(boundary, now)
+    // 11/6 사용자: 첫 답에만 붙이니 한창인 장면에서도 튀었다 → 첫 대화 동안(처음 6턴) 장면이 한숨 돌린 때 한 번. 이미 약속했으면 그만.
+    const promised = loaded.snapshot.recentMessages.some(m => m.role === 'character' && promisedContact(m.content))
+    const firstPromise = loaded.snapshot.turnCount < 6 && !promised && loaded.experienceType === 'reality' && !loaded.snapshot.world.narrativeCalendar && !contactBoundaryActive(boundary, now)
       ? firstPromiseAt(now, loaded.snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone) : null
     // 성인 방인데 전용 모델이 빠져 있으면 여기서 던진다(메인 모델로 보내지 않음) — 잡아 둔 사용량은 돌려준다.
     let llm: ReturnType<typeof resolveRpLLM>
