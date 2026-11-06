@@ -566,3 +566,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 :global([data-chat-theme]) .userBubble strong, .userBubble strong { font-weight:700; }
 /* 11/7 사용자: ✳︎·안내 문구 줄을 살짝 아래로. */
 .inputRow, :global([data-chat-theme]) .inputRow { padding-top:6px; }
+/* 11/7 사용자: 입력칸 안내 문구와 ✳︎ 를 조금 크게(13 → 15px, ✳︎ 15 → 18px). */
+:global([data-chat-theme='miro']) .input::placeholder { font-size:15px; }
+.inputRow > button[data-coach='narration'] svg, :global([data-chat-theme]) .inputRow > button[data-coach='narration'] svg { width:18px; height:18px; }
