@@ -58,10 +58,12 @@ export function CharacterPhoto({ src, alt, size, sizes, width, height, loading =
  * 호출부가 characters.images[0]에서 대표 사진을 정한다.
  * (Supabase Storage 의 공개 URL, 만들기에서 올린 사진).
  */
-export function CharacterVisual({ name, accent, slug, photo, ratio = '4 / 5', size = 'thumbnail', loading = 'lazy', shared = true, scrim = true, className, style }: {
+export function CharacterVisual({ name, accent, slug, photo, photos, active = 0, ratio = '4 / 5', size = 'thumbnail', loading = 'lazy', shared = true, scrim = true, className, style }: {
   name: string; accent: string | null; slug: string
   /** 대표 사진 경로. 없으면 글자 자리표시. */
   photo?: string | null
+  /** 11/6: 카드 자동 넘김 — 사진을 겹쳐 두고 active 장만 서서히 보인다(src 를 바꾸면 새로 받는 동안 깜빡였다). */
+  photos?: string[]; active?: number
   ratio?: string; size?: ImageSize; loading?: 'eager' | 'lazy'; shared?: boolean; scrim?: boolean; className?: string; style?: React.CSSProperties
 }) {
   return (
@@ -70,7 +72,12 @@ export function CharacterVisual({ name, accent, slug, photo, ratio = '4 / 5', si
       background: 'var(--color-surface-1)',
       viewTransitionName: shared ? `hero-${slug}` : undefined, ...style,
     }}>
-      {photo ? (
+      {photos && photos.length > 1 ? photos.map((src, i) => (
+        <CharacterPhoto key={src} src={src} alt="" size={size} loading={loading}
+          sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}
+          width={880} height={1168}
+          style={{ position: 'absolute', inset: -1, width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', objectFit: 'cover', objectPosition: 'center 25%', opacity: i === active ? 1 : 0, transition: 'opacity 600ms ease' }} />
+      )) : photo ? (
         <CharacterPhoto key={photo} src={photo} alt="" size={size} loading={loading}
           sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}
           width={880} height={1168}
