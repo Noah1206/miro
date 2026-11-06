@@ -9,7 +9,9 @@ import { isUnveilPhoto } from '@/lib/unveil-photo'
  * 카드마다 시작을 조금씩 어긋나게 해 한꺼번에 바뀌지 않게 한다.
  */
 export function useRotatingPhoto(images: string[], veiled?: boolean): { photos: string[]; active: number; photo: string | null; onPhotoReady: (i: number) => void } {
-  const photos = veiled === false ? images : images.filter(src => !isUnveilPhoto(src))
+  // 움직이는 대표 사진(01.webp, 헌터 길드 등)이 있으면 그 한 장만 — 다른 사진으로 넘기지 않는다.
+  const moving = images[0] && /\.webp(\?|$)/.test(images[0])
+  const photos = moving ? [images[0]!] : veiled === false ? images : images.filter(src => !isUnveilPhoto(src))
   const [i, setI] = useState(0)
   const reduce = useReducedMotion()
   const n = photos.length
