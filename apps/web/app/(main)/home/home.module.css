@@ -23,7 +23,7 @@
 @media (prefers-reduced-motion: reduce) { .poster img { transition: none; } }
 
 .cardDetails { display: flex; flex-direction: column; gap: 6px; padding: 10px 2px 0; color: var(--color-text-primary); text-align: left; }
-.cardDetails strong { font-size: 18px; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.cardDetails strong { font-size: 16px; font-weight: 700; line-height: 1.25; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .cardTags { display: flex; flex-wrap: nowrap; gap: 6px; margin: 0; font-size: 11px; line-height: 1.5; color: color-mix(in srgb, var(--color-text-primary) 60%, var(--color-text-secondary)); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 /* 11/6: 해시태그 줄은 옆으로 밀어서 넘겨 본다(스크롤바는 숨김). */
 .cardTags::-webkit-scrollbar { display: none; }

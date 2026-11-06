@@ -55,7 +55,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>
-          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-medium)', fontSize: 18, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{coverTitle(c)}</p>
+          <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 16, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{coverTitle(c)}</p>
           {/* 소개는 늘 2줄 높이(내용이 없어도). */}
           <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.tagline ? `“${c.tagline}”` : ''}</p>
           {/* 11/6: 상세 페이지 해시태그 칩(회색 바탕·강조색 글자)을 작게 — 한 줄로 이어지고 옆으로 밀어서 넘겨 본다. */}
