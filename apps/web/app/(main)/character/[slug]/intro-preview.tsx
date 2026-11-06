@@ -76,8 +76,8 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
             : <RichText editorial className="intro-narration" text={line.text} names={names} />}
         </div>
       ))}
-      {/* 11/5: 인트로 끝에 상대가 입력 중인 말풍선(…) — 이어서 바로 대화로 */}
-      {(!longIntro || expanded) && <div className="intro-line"><div className="intro-bubble intro-typing" aria-hidden><span /><span /><span /></div></div>}
+      {/* 11/5: 인트로 끝에 입력 중 말풍선(…) — 11/6 사용자: 내가 적는 쪽이라 오른쪽 정렬 */}
+      {(!longIntro || expanded) && <div className="intro-line" style={{ alignItems: 'flex-end' }}><div className="intro-bubble intro-typing" aria-hidden><span /><span /><span /></div></div>}
       </div>
       {longIntro && (
         <button type="button" className="intro-expand" aria-expanded={expanded} aria-controls={contentId} onClick={() => setExpanded(!expanded)}>
