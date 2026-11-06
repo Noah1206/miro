@@ -25,9 +25,6 @@ export function PushGuide({ vapidPublicKey }: { vapidPublicKey: string | null })
     : t('앱을 닫아 두어도 캐릭터의 연락을 알림으로 받아요.')
   return (
     <div role="status" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, padding: '12px 14px', borderRadius: 14, border: '1px solid #ffffff1a', background: 'var(--color-surface-2)' }}>
-      <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none', color: 'var(--color-accent-text)' }}>
-        <path d="M18 8.5a6 6 0 0 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5" /><path d="M10.2 20.5a2 2 0 0 0 3.6 0" />
-      </svg>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p className="t-body" style={{ margin: 0, fontWeight: 600 }}>{t('알림이 꺼져 있어요')}</p>
         <p className="t-caption" style={{ margin: '2px 0 0', color: 'var(--color-text-secondary)' }}>{line}</p>
