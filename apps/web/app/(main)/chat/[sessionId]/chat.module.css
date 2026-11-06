@@ -552,3 +552,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .composerTools .photoTool { background:var(--color-surface-2); }
 /* 11/7 사용자: 추천 답변 배경도 / 버튼과 같은 색으로. */
 .composerBar .suggestPill { background:var(--color-surface-2); }
+/* 11/7 사용자: 모델 알약 왼쪽 여백(12px)만큼 아래에도 여백 — 입력창 카드 안에서 위아래·옆이 고르게. */
+.composerForm, :global([data-chat-theme]) .composerForm { padding-bottom:12px; }
