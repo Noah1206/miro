@@ -3,7 +3,7 @@
   position:relative;
   border:1px solid #ffffff30;
   border-radius:20px;
-  background:#28282c;
+  background:#3a3a40; /* 11/7 사용자: 조금 더 하얗게(전 #28282c) */
   background-clip:padding-box;
   box-shadow:0 8px 28px #00000024,inset 0 1px 0 #ffffff1c,inset 0 -1px 0 #00000018;
   transition:border-color 180ms ease,box-shadow 180ms ease;

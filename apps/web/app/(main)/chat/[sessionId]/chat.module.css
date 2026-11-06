@@ -557,3 +557,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/7 사용자: 입력창 여백도 반응형 — 왼쪽과 아래를 같은 값으로, 좁은 화면은 8px, 넓은 화면은 12px. */
 .composerForm, :global([data-chat-theme]) .composerForm { padding-left:clamp(8px, 2.4vw, 12px); padding-bottom:clamp(8px, 2.4vw, 12px); }
 .composerTools, :global([data-chat-theme]) .composerTools { gap:clamp(4px, 1.2vw, 6px); }
+/* 11/7 사용자: 입력칸 높이를 키운다(34 → 52px, 글이 길어지면 그대로 늘어난다). */
+.inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height:52px; }
