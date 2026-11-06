@@ -61,11 +61,12 @@ export async function getConversationPersona(userId: string, sessionId: string):
   return row ? row.persona ?? await getPersona(userId) : null
 }
 
-/** 첫 대화 전 관문(11/4) — 아직 한 턴도 없고 이 대화방의 '나'를 적지 않았으면 true. 세계관 카드가 뜨고 턴을 받지 않는다. */
+/** 첫 대화 전 관문(11/4) — 만든 사람이 페르소나를 필수로 정했고(11/6), 아직 한 턴도 없고 이 대화방의 '나'를 적지 않았으면 true. 세계관 카드가 뜨고 턴을 받지 않는다. */
 export async function needsPersona(userId: string, sessionId: string): Promise<boolean> {
-  const [row] = await db.select({ persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount }).from(roleplaySessions)
+  const [row] = await db.select({ persona: roleplaySessions.userPersona, turns: roleplaySessions.turnCount, required: characters.personaRequired }).from(roleplaySessions)
+    .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
     .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt)))
-  return !!row && row.turns === 0 && !row.persona
+  return !!row && row.required && row.turns === 0 && !row.persona
 }
 
 export async function saveConversationPersona(userId: string, sessionId: string, raw: { name: unknown; gender: unknown; description: unknown }): Promise<{ ok: true } | { ok: false; error: string }> {

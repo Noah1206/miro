@@ -1964,5 +1964,8 @@
  "이 명령어는 언베일을 켠 대화방에서만 쓸 수 있어요.": "This command only works in chats with Unveil turned on.",
  "켜면 언베일을 켠 대화방에서만 실행돼요.": "When on, it only runs in chats with Unveil turned on.",
  "프로필 상세": "Profile",
- "대화 바로 시작하기": "Start chatting now"
+ "대화 바로 시작하기": "Start chatting now",
+ "대화 전 페르소나": "Persona before chat",
+ "필수": "Required",
+ "필수로 두면 사용자는 첫 대화 전에 이 세계에서의 나를 정해야 시작할 수 있어요. 선택이면 바로 대화를 시작해요.": "If required, users must set who they are in this world before the first chat. If optional, the chat starts right away."
 }

@@ -226,6 +226,8 @@ export const characters = pgTable('characters', {
   presetPersonas: jsonb('preset_personas').$type<Array<{ name: string; gender: 'female' | 'male' | null; description: string | null }>>().notNull().default([]),
   /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸 안내문. 비우면 기본 문구. */
   personaGuide: text('persona_guide').notNull().default(''),
+  /** 첫 대화 전 페르소나 필수(11/6) — 만든 사람이 정한다. 꺼져 있으면 세계관 카드 없이 바로 시작. */
+  personaRequired: boolean('persona_required').notNull().default(false),
   /** 언베일 썸네일(11/4) — 대표 사진 노출이 커서, 언베일을 안 켠 사람의 홈·상세에선 흐리게 + 언베일 표시. */
   coverUnveil: boolean('cover_unveil').notNull().default(false),
   /** 여러 인물 카드의 히로인별 목소리(11/4) — { 히로인 이름: official_voices.id }. 같은 목소리 공유 가능. 없는 히로인은 voiceId. */
