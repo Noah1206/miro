@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
 import { Pressable, StatusIcon } from '@/components/ui'
 import styles from './chat.module.css'
-import { PhotoButton } from './photo-button'
 import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
 import { ModelPicker, useChatModel } from './model-picker'
@@ -250,7 +249,6 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <ModelPicker {...modelOptions} place="up" disabled={pending || calendarPending || !ready}/>
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 11/4 사용자: 사진·✳︎·/·추천은 입력창 아래 도구 줄로 내렸다. 페르소나 드롭다운·마이크는 뺐다. */}
-            {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} disabled={pending || calendarPending || !ready} />}
             <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
               onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
               onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
