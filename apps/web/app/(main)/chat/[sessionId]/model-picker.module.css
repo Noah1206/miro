@@ -54,3 +54,5 @@
 /* 11/6 사용자: 모델 알약은 브랜드색으로 채운다(어두운 테마). 밝은 테마는 아래 규칙이 글자색만 바꾼다. */
 :global([data-chat-theme='miro']) .trigger[data-model-brand],:global([data-chat-theme='dm']) .trigger[data-model-brand] { background:var(--model-brand-logo,#45454c); border-color:transparent; color:#fff; }
 :global([data-chat-theme='miro']) .trigger[data-model-brand] .icon,:global([data-chat-theme='dm']) .trigger[data-model-brand] .icon,:global([data-chat-theme='miro']) .trigger[data-model-brand] > svg,:global([data-chat-theme='dm']) .trigger[data-model-brand] > svg { color:#fff; }
+/* 11/7 사용자: 모델 알약 너비를 스크린샷처럼 여유 있게 — 옆 여백·아이콘 간격을 넓힌다(높이 29px 은 그대로). */
+.trigger { gap:8px; padding:0 14px 0 10px; max-width:min(200px,100%); }
