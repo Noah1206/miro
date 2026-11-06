@@ -24,7 +24,9 @@ type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'femal
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo, castPhotos = {} }: {
+  /** 11/6: 인물 이름 → 사진(여러 인물 카드). 말풍선 아바타가 이름 첫 글자 대신 이 사진. */
+  castPhotos?: Record<string, string>
   items: Msg[]; characterName: string; portrait?: string | null
   /** 11/6: 사진 만들기 — 캐릭터 답변마다 그 아래 버튼. 없으면(기능 꺼짐) 버튼도 없다. */
   photo?: PhotoProps
@@ -143,7 +145,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
-            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast}
+            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
@@ -162,8 +164,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   )
 }
 
-function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil, cast }: {
-  m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]
+function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil, cast, castPhotos }: {
+  m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]; castPhotos?: Record<string, string>
 }) {
   const t = useT()
   const done = useRef(onDone)
@@ -199,16 +201,16 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       <Reportable id={m.id} kind="message">
         <RealityTag sender={reality?.senderLabel} channel={reality?.channelLabel} />
         <div data-reality-message style={{ paddingLeft: 12, borderLeft: '2px solid var(--color-accent)' }}>
-          <CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} cast={cast} />
+          <CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} cast={cast} castPhotos={castPhotos} />
         </div>
       </Reportable>
     )
   }
-  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} /></Reportable>
+  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} castPhotos={castPhotos} /></Reportable>
 }
 
-function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast }: {
-  m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]
+function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast, castPhotos = {} }: {
+  m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]; castPhotos?: Record<string, string>
 }) {
   // 상황은 말풍선 밖, 행동·속마음은 같은 인물의 말풍선 안에서 대사와 구분한다.
   const t = useT()
@@ -254,8 +256,10 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
       return (
         <div key={i} className={styles.characterRow} hidden={hidden}>
           {(() => {
-            const face = theme !== 'miro' ? <DefaultChatAvatar /> : own && portrait
-              ? <CharacterPhoto src={portrait} alt="" size="avatar" sizes="32px" width={32} height={32} />
+            // 11/6: 여러 인물 — 이름이 같거나 줄임("연화" ↔ "백리연화")이면 그 인물 사진.
+            const photoOf = own ? portrait : castPhotos[seg.speaker] ?? Object.entries(castPhotos).find(([n]) => n.endsWith(seg.speaker) || seg.speaker.endsWith(n))?.[1]
+            const face = theme !== 'miro' ? <DefaultChatAvatar /> : photoOf
+              ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="32px" width={32} height={32} />
               : seg.speaker.slice(0, 1)
             return <span className={styles.avatar} aria-hidden>{face}</span>
           })()}

@@ -27,6 +27,7 @@ import { ImmersiveProvider, VoiceStatus } from './immersive'
 import { RoomMenu } from '@/components/room-menu'
 import { feature } from '@miro/config'
 import { ensembleNames } from '@miro/engine'
+import { CharacterPhoto } from '@/components/character-visual'
 import { modalImageReady } from '@/lib/ai/modal-image'
 import { customSceneId } from '@/lib/photo-scenes'
 
@@ -68,6 +69,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const history = sceneMessages(all)
 
   const s = loaded.snapshot
+  // 11/6: 여러 인물 카드 — 인물 순서대로 갤러리 사진을 아바타로(이름 첫 글자 대신).
+  const cast = ensembleNames(s.character.personality.secret)
+  const castPhotos = Object.fromEntries(cast.flatMap((name, i) => loaded.characterImages?.[i] ? [[name, loaded.characterImages[i]!]] : []))
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
@@ -83,7 +87,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
       <section className={`chat-main ${styles.main}`}>
         <header className={styles.header}>
           <Back href="/archive" />
-          <div className={styles.headerIdentity}><h1 className={styles.title}>{loaded.characterName}</h1></div>
+          <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{loaded.characterPhoto && <span className={styles.headerAvatar} aria-hidden><CharacterPhoto src={loaded.characterPhoto} alt="" size="avatar" sizes="32px" width={32} height={32} /></span>}<h1 className={styles.title}>{loaded.characterName}</h1></div></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
         </header>
@@ -98,7 +102,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
-          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={ensembleNames(s.character.personality.secret)} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
+          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={cast} castPhotos={castPhotos} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
           {needPersona && <WorldIntro sessionId={sessionId} worldSetting={s.worldSetting ?? null} guide={rec?.guide ?? ''} presets={rec?.presets ?? []} personality={s.character.personality.personality} audience={rec?.audience ?? null} />}
         </div>
 

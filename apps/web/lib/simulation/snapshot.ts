@@ -32,6 +32,8 @@ export type LoadedSession = {
   characterId: string
   characterName: string
   characterPhoto?: string | null
+  /** 11/6: 갤러리 순서 = 여러 인물 카드의 인물 순서(01 첫 히로인, 02 둘째 …) — 채팅 아바타용. */
+  characterImages?: string[]
   characterStatus: string | null
   characterStatusAt: Date | null
   /** 운영 제한. 새 턴/미디어를 거부한다. */
@@ -189,6 +191,7 @@ export async function loadSession(
     characterId: c.id,
     characterName: c.name,
     characterPhoto: c.images[0] ?? null,
+    characterImages: c.images,
     characterStatus: row.session.characterStatus,
     characterStatusAt: row.session.characterStatusAt,
     restricted: row.session.restrictedAt !== null,
