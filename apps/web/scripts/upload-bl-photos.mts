@@ -20,7 +20,8 @@ const apply = process.argv.includes('--apply')
 const only = process.argv.find((a) => a.startsWith('--only='))?.slice(7)
 const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('official-')).sort().map((slug) => {
   const files = readdirSync(join(ROOT, slug))
-  const gallery = files.filter((f) => /^(0[1-9]|[1-9]\d)\.(jpg|webp)$/.test(f)).sort()   // 11/5 01~99(천마환생 인물 카드 40장)   // 01.webp = 움직이는 대표 사진(11/4)
+  // 11/7 01u.jpg = 01 바로 뒤에 오는 언베일 사진(일반→언베일 짝) — unveil-01u.jpg 로 올린다
+  const gallery = files.filter((f) => /^(0[1-9]|[1-9]\d)u?\.(jpg|webp)$/.test(f)).sort()   // 11/5 01~99(천마환생 인물 카드 40장)   // 01.webp = 움직이는 대표 사진(11/4)
   if (gallery.length === 0) throw new Error(`missing photos: ${slug}`)
   // 인트로 장면 사진은 없을 수 있다(10/19 작품 메인공 6명 — 대표 사진 01만).
   // u1.jpg… = 언베일 수위 갤러리 사진(11/4) — unveil-u1.jpg 로 올려 언베일을 안 켠 사람에겐 흐린다(lib/unveil-photo).
@@ -63,7 +64,7 @@ for (const p of plan) {
     console.log('situations', p.slug, situationImages.length, `(adult ${situationImages.filter(s => s.adult).length})`)
   }
   const images: string[] = []
-  for (const f of p.gallery) images.push(await put(p.slug, f))
+  for (const f of p.gallery) images.push(await put(p.slug, f, /u\./.test(f) ? `unveil-${f}` : f))
   for (const f of p.unveil) images.push(await put(p.slug, f, `unveil-${f}`))
   if (!p.intro) {
     await db.update(characters).set({ images }).where(eq(characters.id, row.id))

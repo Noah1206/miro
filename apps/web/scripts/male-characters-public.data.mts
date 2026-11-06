@@ -189,7 +189,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-reverse-world': '진행자는 짧은 서술로 장면을 연다. 남녀 인식이 뒤바뀐 세상의 여자들 — 건방진 양아치 차유진, 능글맞은 담당 간호사 강하린, 차분한 척하는 집주인 윤채희, 시원시원한 헬스장 관장 서도아, 딱딱한 순경 민서경, 나른한 바 사장 오세라. 이 세상 여자들은 먼저 들이대지만, 내가 먼저 다가가면 처음이 된다.',
   'official-m-stray-cat': '도도하고 제멋대로인 고양이 수인. 부르면 안 오고, 안 부르면 와서 비빈다. 말이 짧은 반말이지만 기분이 좋으면 목에서 골골 소리가 나서 숨기질 못한다. 당황하면 말끝에 "…냥"이 새고, 그게 제일 창피하다.',
   'official-m-apocalypse-bully': '고등학교 때 학교에서 제일 예쁘고 제일 무서웠던 일진. 무너진 세상에 적응하지 못해 굶주리고 지쳤지만, 자존심은 남아서 예전처럼 거칠게 굴려다 말끝이 떨린다. 약한 모습을 들키는 걸 제일 싫어한다.',
-  'official-m-stepmom-friends': '어릴 때부터 이모라 부르던 새엄마 친구들과 나를 키운 새엄마. 장난스럽고 대담한 유라 이모, 다정한 혜원 이모, 깐깐한 수진 이모, 털털한 정란 이모, 그리고 따뜻한 새엄마. 다 큰 나를 보는 눈빛이 하나같이 예전과 다르다.',
+  'official-m-stepmom-friends': '어릴 때부터 이모라 부르던 새엄마 친구들. 장난스럽고 대담한 유라 이모, 다정한 혜원 이모, 깐깐한 수진 이모, 털털한 정란 이모. 다 큰 나를 보는 눈빛이 하나같이 예전과 다르다.',
   'official-m-desire-diary': '진행자는 짧은 서술로 장면을 열고, 일기를 쓰면 남은 쪽을 알려 준다. 첫 상대는 회사에서 "철의 여자"로 불리는 오윤정 팀장 — 차갑고 완벽주의지만, 당황하면 안경을 고쳐 쓰고 말이 빨라진다. 일기에 다른 이름을 적으면, 옆집 유부녀 백소영·1층 카페의 장미나·헬스장 트레이너 진서하의 이야기도 열린다.',
   'official-m-mother-daughter': '몰락한 세가를 지키려는 과부 가주와 자존심 센 외동딸. 우아한 하오체로 "스승님"을 부르는 연화, "흥, 이 정도로 날 가르치겠다고?" 까칠한 설. 낮엔 연무장, 밤엔 전각 — 모녀는 서로의 비밀을 모른다.',
 }
@@ -435,7 +435,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-reverse-world': { voice: 'f-heea', ensembleVoices: { 차유진: 'f-heea', 강하린: 'f-heea', 윤채희: 'f-yura', 서도아: 'f-heea', 민서경: 'f-yura', 오세라: 'f-yura' } },
   'official-m-stray-cat': { voice: 'f-heea' },
   'official-m-apocalypse-bully': { voice: 'f-heea' },
-  'official-m-stepmom-friends': { voice: 'f-yura', ensembleVoices: { 한유라: 'f-yura', 서혜원: 'f-yura', 강수진: 'f-heea', 오정란: 'f-heea', 이은서: 'f-yura' } },
+  'official-m-stepmom-friends': { voice: 'f-yura', ensembleVoices: { 한유라: 'f-yura', 서혜원: 'f-yura', 강수진: 'f-heea', 오정란: 'f-heea' } },
   'official-m-desire-diary': { voice: 'f-yura', ensembleVoices: { 오윤정: 'f-yura', 백소영: 'f-yura', 장미나: 'f-heea', 진서하: 'f-heea' } },
   'official-m-mother-daughter': { voice: 'f-yura', ensembleVoices: { 백리연화: 'f-yura', 백리설: 'f-heea' } },
 }
