@@ -10,17 +10,19 @@ export type Segment = { kind: 'narration'; paragraphs: Paragraph[] } | { kind: '
 
 const KINDS = new Set(['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'])
 
-export function segmentReply(blocks: Array<Record<string, unknown>>, content: string, name: string): Segment[] {
+export function segmentReply(blocks: Array<Record<string, unknown>>, content: string, name: string, cast: readonly string[] = []): Segment[] {
   const kept = blocks.filter((b) => KINDS.has(String(b.type)) && typeof b.text === 'string')
   const speakerOf = (b: Record<string, unknown>) => typeof b.speaker === 'string' && b.speaker.trim() ? b.speaker : null
   // 속마음은 늘 이 캐릭터의 것이다(검증기가 남의 속마음을 버린다). 그래서 속마음의 화자는 답을 쓸 때의 캐릭터 이름이다 —
   // 캐릭터 이름을 바꾼 뒤에도 옛 답의 행동·대사가 옛 이름의 말풍선으로 갈라지지 않는다.
-  const self = new Set([name, ...kept.filter((b) => b.type === 'thought').map(speakerOf).filter((v): v is string => !!v)])
+  // 여러 인물 카드(11/6)의 히로인 속마음은 그 히로인 말풍선에 붙는다(cast = 히로인 이름).
+  const heroines = new Set(cast)
+  const self = new Set([name, ...kept.filter((b) => b.type === 'thought').map(speakerOf).filter((v): v is string => !!v && !heroines.has(v))])
   const items = kept.map((b) => {
     const type = String(b.type)
     const speaker = speakerOf(b)
     if (type === 'narrative' || type === 'world') return { text: String(b.text), kind: 'narration' as const, speaker: null }
-    if (type === 'thought') return { text: String(b.text), kind: 'thought' as const, speaker: name }
+    if (type === 'thought') return { text: String(b.text), kind: 'thought' as const, speaker: speaker && heroines.has(speaker) ? speaker : name }
     return { text: String(b.text), kind: type === 'action' ? 'action' as const : 'dialogue' as const, speaker: !speaker || self.has(speaker) ? name : speaker }
   })
   // 블록이 없는 옛 기록: 빈 줄로 나눈 문단, "이름:" 은 대사, 강조 파서가 기울임으로 읽는 별표로 시작하면 행동 —

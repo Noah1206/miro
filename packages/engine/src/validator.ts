@@ -70,7 +70,8 @@ function validateBlocks(
   issues: ValidationIssue[],
 ): SimulationProposal['rp']['blocks'] {
   // 대형 세계관 하렘(11/3): [여러 인물] 의 히로인도 말할 수 있다.
-  const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name), ...ensembleNames(s.character.personality.secret)])
+  const cast = new Set(ensembleNames(s.character.personality.secret))
+  const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name), ...cast])
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 
   // 11/4 벌점 방식: 상투 표현·턴마다 되풀이된 몸짓·소품 문장을 서술·행동에서 지운다(대사는 그대로). 스트리밍과 저장이 같은 결과를 낸다.
@@ -81,7 +82,8 @@ function validateBlocks(
       return false
     }
     // An inner voice belongs to this character alone. Other people's minds are not the character's knowledge.
-    if (b.type === 'thought' && b.speaker && b.speaker !== s.character.identity.name) {
+    // 여러 인물 카드(11/6)는 이 카드가 연기하는 히로인 자신의 속마음까지만.
+    if (b.type === 'thought' && b.speaker && b.speaker !== s.character.identity.name && !cast.has(b.speaker)) {
       issues.push({ field: 'rp.blocks', reason: 'thought of someone else' })
       return false
     }

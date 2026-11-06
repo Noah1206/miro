@@ -5,7 +5,7 @@ import { and, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, characterRevisions, characterRuntimeStates, characters, messages, roleplaySessions } from '@miro/db'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import { createAgencyState, lifeEvidence, localIso, type AgencyEvidence, type AgencyState } from '@miro/domain'
-import { AgencyCompilationError, compileAuthoredCharacter, type SimulationSnapshot } from '@miro/engine'
+import { AgencyCompilationError, compileAuthoredCharacter, ensembleNames, type SimulationSnapshot } from '@miro/engine'
 import { AIUnavailableError, type LLMProvider } from '@miro/providers'
 import { observe } from '@/lib/observe'
 import { recentLife } from './life'
@@ -118,13 +118,15 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
   const stored = refs.length ? await db.select().from(messages).where(and(eq(messages.sessionId, sessionId), inArray(messages.id, refs), isNull(messages.hiddenAt), characterCanSeeMessage)) : []
   const evidence: AgencyEvidence[] = []
   const actor = snapshot.character.id
+  // 여러 인물 카드(11/6): 히로인 대사도 이 캐릭터의 말이다. 카드 이름 대사만 모으면 응답이 통째로 근거에서 빠져 최근 대화에서도 사라졌다.
+  const cast = new Set(ensembleNames(snapshot.character.personality.secret))
   // 최근 대화는 대사 맥락과 같은 수만(POLICY.context.recentMessageCount) — 24개를 다 실으면 계획 입력이 7~8천 토큰이 됐다(9/29 실측).
   // 목표·믿음이 가리키는 옛 메시지(stored)는 따로 실린다.
   for (const message of [...snapshot.recentMessages.slice(-POLICY.context.recentMessageCount), ...stored]) {
     if (!message.id || !['user', 'character'].includes(message.role)) continue
     const blocks = message.blocks ?? []
-    const text = message.kind === 'photo' ? ('createdAt' in message ? photoMessageText(message) : message.content) : blocks.length && message.kind !== 'reality_message' ? blocks.filter(b => b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name))
-      .map(b => b.text).join('\n') : message.content
+    const text = message.kind === 'photo' ? ('createdAt' in message ? photoMessageText(message) : message.content) : blocks.length && message.kind !== 'reality_message' ? blocks.filter(b => b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name || typeof b.speaker === 'string' && cast.has(b.speaker)))
+      .map(b => typeof b.speaker === 'string' && cast.has(b.speaker) ? `${b.speaker}: ${b.text}` : b.text).join('\n') : message.content
     if (!text.trim()) continue
     // 기록 시각은 사용자 현지 시각(오프셋 포함) — 대화 기록과 같은 기준이어야 '오늘·어제'를 맞게 말한다.
     const at = 'createdAt' in message ? (snapshot.clock ? localIso(message.createdAt, snapshot.clock.timeZone) : message.createdAt.toISOString()) : message.at ?? now.toISOString()

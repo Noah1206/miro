@@ -2,7 +2,7 @@ import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@mir
 import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, feature, productionRuntime } from '@miro/config'
-import { buildContext, estimateTokens, LEGACY_STATE_CONTRACT, type SimulationSnapshot } from './context'
+import { buildContext, ensembleNames, estimateTokens, LEGACY_STATE_CONTRACT, type SimulationSnapshot } from './context'
 import { AGENCY_DIALOGUE_RESPONSE_SCHEMA, SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
@@ -117,13 +117,15 @@ export async function runAgencyTurn(opts: {
 
   // ── 맥락 (§4 우선순위: 경계·설정 → 입력·승인된 결정 → 현재 장소/사건·목표 → 최근 대화 → 출처 있는 기억 → 보조) ──
   const evidence = new Set(view.context.evidence.map(e => e.id))
+  const own = new Set([snapshot.character.identity.name, ...ensembleNames(snapshot.character.personality.secret)])
   const evidenceMessages = snapshot.recentMessages.filter(m => m.id && evidence.has(m.id)).map(m => {
     const proof = view.context.evidence.find(e => e.id === m.id)!
     // Keep the character's own earlier gestures/inner voice for scene continuity, separately
     // labelled by buildContext. They are not message evidence or facts known to the user.
+    // 여러 인물 카드(11/6)는 이 카드가 연기한 히로인의 블록도 자기 것이다 — 빠지면 히로인이 방금 한 말을 잊는다.
     const ownBlocks = m.role === 'character' && m.kind !== 'reality_message' ? m.blocks?.filter(b =>
-      b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name)
-      || ['action', 'thought'].includes(b.type) && b.speaker === snapshot.character.identity.name) : undefined
+      b.type === 'dialogue' && (!b.speaker || own.has(b.speaker))
+      || ['action', 'thought'].includes(b.type) && !!b.speaker && own.has(b.speaker)) : undefined
     return { ...m, content: proof.quote, blocks: ownBlocks?.length ? ownBlocks : undefined }
   })
   // 출처(원문 메시지)가 남아 있는 기억만 기억으로 싣는다. 나머지는 불확실한 과거 기록으로 따로 — 관측 사실로 승격하지 않는다.

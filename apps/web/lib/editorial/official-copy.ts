@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto'
 import copy from './official-copy.json'
 import entryCopy from './official-entry.json'
+import aiCopy from './official-ai.json'
 import type { CharacterEntry } from '@/lib/character-entry'
 import type { DialogueEntry } from '@/lib/intro-dialogue'
 
@@ -83,6 +84,19 @@ export function officialSamples(profile: { id: string; slug: string | null }, en
 export function officialTagline(profile: { id: string; slug: string | null; tagline: string | null }): string | null {
   const item = edition(profile)
   return item && hash(profile.tagline ?? '') === item.sourceTaglineHash ? item.tagline : null
+}
+
+/**
+ * 남성향 공식 캐릭터의 AI 원본(11/6) — 화면은 짧은 소개·말투·첫 장면을 보여 주고(시드 withMalePublic), AI 는 작성한 원본을 읽는다.
+ * 화면 칸이 시드가 쓴 그대로일 때만 쓴다. 편집기로 고친 행은 고친 값이 이긴다. 원본은 seed-bl-characters.mts 가 만든다(--male-ai).
+ */
+type AiCopy = { sourceHash: string; personality: string; secret: string; values: string; speechStyle: string; startingContext: string }
+const aiEditions: Record<string, AiCopy> = aiCopy
+type AiSource = { personality: string; secret?: string | null; values?: string | null; speechStyle?: string | null; startingContext?: string | null }
+export const aiSourceHash = (p: AiSource) => hash(JSON.stringify([p.personality, p.secret ?? '', p.values ?? '', p.speechStyle ?? '', p.startingContext ?? '']))
+export function officialAi(profile: AiSource & { slug: string | null }): AiCopy | null {
+  const item = profile.slug ? aiEditions[profile.slug] : undefined
+  return item && aiSourceHash(profile) === item.sourceHash ? item : null
 }
 
 /** A scene begins where the user is now; later author changes stay authoritative. */

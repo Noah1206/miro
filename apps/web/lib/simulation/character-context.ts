@@ -1,7 +1,7 @@
 import type { characters, characterVisualIdentities, messages } from '@miro/db'
 import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
-import { officialSamples, officialStartingContext } from '@/lib/editorial/official-copy'
+import { officialAi, officialSamples, officialStartingContext } from '@/lib/editorial/official-copy'
 import { photoMessageText } from '@/lib/messenger/photo-context'
 
 /** One authored identity projection for reply and proactive paths. No inferred demographic traits. */
@@ -9,18 +9,20 @@ export function characterContext(
   c: typeof characters.$inferSelect,
   visual?: typeof characterVisualIdentities.$inferSelect | null,
 ): CharacterCore {
+  // 11/6 남성향: 화면용으로 줄인 소개·말투·첫 장면 대신 작성한 원본 설정을 읽는다(없으면 DB 그대로).
+  const ai = officialAi(c)
   return {
     id: c.id, ownerId: c.ownerId, isOfficial: c.isOfficial,
     identity: { name: c.name, age: c.age, nationality: c.nationality, occupation: c.occupation, mbti: c.mbti },
     personality: {
-      personality: c.personality, secret: c.secret, values: c.values, speechStyle: c.speechStyle,
+      personality: ai?.personality ?? c.personality, secret: ai?.secret ?? c.secret, values: ai?.values ?? c.values, speechStyle: ai?.speechStyle ?? c.speechStyle,
       userNickname: c.userNickname, hobbies: c.hobbies, dislikes: c.dislikes,
       jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
       bonding: bondingCurveOf(c, c.initialRelationship.bonding),
       relationshipProfile: parseRelationshipProfile(c.relationshipProfile),
     },
     worldRole: {
-      socialPosition: c.socialPosition, startingContext: officialStartingContext(c),
+      socialPosition: c.socialPosition, startingContext: ai?.startingContext ?? officialStartingContext(c),
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore,
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,

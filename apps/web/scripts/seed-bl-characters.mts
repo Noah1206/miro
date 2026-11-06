@@ -54,6 +54,18 @@ function withMalePublic(s: Seed): Seed {
     secret: `[상세 설정]\n${s.personality}\n\n${speech ? `[가치관]\n${s.values}\n\n` : ''}${start ? `[시작 상황 상세]\n${s.startingContext}\n\n` : ''}${s.secret}`,
     visual: body ? { ...s.visual, bodyProfile: { ...s.visual.bodyProfile, detail: `${s.visual.bodyProfile.detail}, B${body.b}/W${body.w}/H${body.h}cm ${body.cup}컵` } } : s.visual }
 }
+// 11/6 남성향 AI 원본(lib/editorial/official-ai.json) — 화면엔 위의 짧은 소개·말투·첫 장면, AI 엔 작성한 원본 설정.
+// 운영 행이 이 시드 값 그대로일 때만 쓰인다. --apply 때마다 다시 쓰고(바뀌었으면 배포해야 반영), --male-ai 는 파일만 쓴다.
+const AI_COPY = new URL('../lib/editorial/official-ai.json', import.meta.url)
+async function writeMaleAiCopy() {
+  const { aiSourceHash } = await import('../lib/editorial/official-copy')
+  const male = [...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E].filter(s => MALE_PUBLIC[s.slug])
+  writeFileSync(AI_COPY, JSON.stringify(Object.fromEntries(male.map(s => [s.slug, {
+    sourceHash: aiSourceHash(withMalePublic(s)),
+    personality: s.personality, secret: s.secret, values: s.values, speechStyle: s.speechStyle, startingContext: s.startingContext,
+  }])), null, 1) + '\n')
+}
+
 // 11/3 남성향 12명: B 묶음은 두 번째 시작 상황의 장면 설명을 같은 파일에 둔다(C 는 인트로 줄에 직접, A 는 인트로 글만).
 const SCENE_OPENINGS = { ...SCENE_OPENINGS_BASE, ...SCENE_OPENINGS_B }
 
@@ -153,6 +165,8 @@ if (args.has('--male-preview')) {
   console.log('wrote', doc.pathname); process.exit(0)
 }
 
+if (args.has('--male-ai')) { await writeMaleAiCopy(); console.log('wrote', AI_COPY.pathname); process.exit(0) }
+
 if (args.has('--preview')) {
   writeFileSync(DOC, `# 공식 BL 캐릭터 11명 — 전문 (2026-10-04)\n\n\`apps/web/scripts/bl-characters.data.mts\` 에서 만든 검토용 문서. 고칠 건 데이터 파일에서 고친다.\n\n${SEEDS.map(markdown).join('\n---\n\n')}`)
   console.log('wrote', DOC.pathname); process.exit(0)
@@ -160,6 +174,7 @@ if (args.has('--preview')) {
 
 for (const s of SEEDS) console.log(s.slug, s.name, `소개 ${s.personality.length}자`, `비공개 ${s.secret.length}자`, `인트로 ${s.sampleDialogue.filter(d => d.purpose === 'intro').reduce((n, d) => n + d.text.length, 0)}자`, `로어 ${s.lore.length}`)
 if (!args.has('--apply')) { console.log('(dry run — --apply 로 넣는다)'); process.exit(0) }
+await writeMaleAiCopy()
 
 const { eq } = await import('drizzle-orm')
 const { db, characters, worlds, contactProfiles, characterVisualIdentities } = await import('@miro/db')

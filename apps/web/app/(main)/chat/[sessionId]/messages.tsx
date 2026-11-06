@@ -20,8 +20,10 @@ import { useOpeningPlayback } from './use-opening-playback'
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [] }: {
   items: Msg[]; characterName: string; portrait?: string | null
+  /** 11/6: 여러 인물 카드의 히로인 이름 — 히로인의 속마음을 그 히로인 말풍선에 붙인다. */
+  cast?: readonly string[]
   /** 11/6: 언베일을 안 켠 사람 — 사진 메시지를 흐리고 누르면 언베일 켜기로. */
   veilPhotos?: boolean
   sessionId?: string; hasStarted?: boolean
@@ -135,7 +137,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
-            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined}
+            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
           </Line>
         ))}
@@ -152,8 +154,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   )
 }
 
-function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil }: {
-  m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void
+function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil, cast }: {
+  m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]
 }) {
   const t = useT()
   const done = useRef(onDone)
@@ -189,21 +191,21 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       <Reportable id={m.id} kind="message">
         <RealityTag sender={reality?.senderLabel} channel={reality?.channelLabel} />
         <div data-reality-message style={{ paddingLeft: 12, borderLeft: '2px solid var(--color-accent)' }}>
-          <CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} />
+          <CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} cast={cast} />
         </div>
       </Reportable>
     )
   }
-  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} /></Reportable>
+  return <Reportable id={m.id} kind="message"><CharacterBubble m={m} name={characterName} portrait={portrait} typing={typing} mood={mood} onGrow={onGrow} onDone={onDone} cast={cast} /></Reportable>
 }
 
-function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone }: {
-  m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void
+function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', onGrow, onDone, cast }: {
+  m: Msg; name: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]
 }) {
   // 상황은 말풍선 밖, 행동·속마음은 같은 인물의 말풍선 안에서 대사와 구분한다.
   const t = useT()
   const { theme } = useChatTheme()
-  const segments = segmentReply(m.blocks, m.content, name)
+  const segments = segmentReply(m.blocks, m.content, name, cast)
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)

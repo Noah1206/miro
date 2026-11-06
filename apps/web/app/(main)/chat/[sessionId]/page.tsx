@@ -26,6 +26,7 @@ import { CoachMarks, type CoachStep } from '@/components/coach-marks'
 import { ImmersiveProvider, VoiceStatus } from './immersive'
 import { RoomMenu } from '@/components/room-menu'
 import { feature } from '@miro/config'
+import { ensembleNames } from '@miro/engine'
 import { modalImageReady } from '@/lib/ai/modal-image'
 import { customSceneId } from '@/lib/photo-scenes'
 
@@ -97,7 +98,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
-          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} />
+          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={ensembleNames(s.character.personality.secret)} />
           {needPersona && <WorldIntro sessionId={sessionId} worldSetting={s.worldSetting ?? null} guide={rec?.guide ?? ''} presets={rec?.presets ?? []} personality={s.character.personality.personality} audience={rec?.audience ?? null} />}
         </div>
 
