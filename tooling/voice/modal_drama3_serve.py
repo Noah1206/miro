@@ -151,7 +151,9 @@ class Speaker:
             ref_text, codes = self.reference(voice)
             other = build_drama3_prompt('<|speaker:0|>' + 'Zq', model.tokenizer, model.config, ['<|speaker:0|>' + ref_text], [codes])
             common = next((i for i in range(min(len(other), rows)) if not torch.equal(other[i], prompt[i])), min(len(other), rows))
-            cut = common - 1
+            # 11/6: 끊는 자리를 fish-speech 의 읽기 단위(128줄) 경계로 — 경계가 다르면 계산이 미세하게 달라져 소리가 갈렸다(사용자 청취: 예전이 나음).
+            # 경계를 맞추면 계산 순서가 generate_drama3 와 같아 같은 씨앗에서 예전과 똑같은 소리가 난다(bench 의 same_as_old).
+            cut = (common - 1) // 128 * 128
             hit = False
             if cut > 0:
                 prefill(0, cut)
@@ -197,6 +199,7 @@ class Speaker:
                 row[name] = self.speak(text, voice, reuse=reuse)
                 torch.cuda.synchronize(); row[name + '_s'] = round(time.perf_counter() - t, 2)
             row['same'] = row['first'] == row['again']
+            row['same_as_old'] = row['first'] == row['old']
             out.append(row)
         return out
 
