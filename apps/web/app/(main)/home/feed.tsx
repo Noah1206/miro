@@ -10,7 +10,7 @@ import { HomeContentTabs } from './content-tabs'
 import styles from './home.module.css'
 import { useT } from '@/lib/i18n/client'
 import { coverTitle } from '@/lib/editorial/cover-title'
-import { useRotatingPhoto } from '@/components/rotating-photo'
+import { stillCover, useRotatingPhoto } from '@/components/rotating-photo'
 
 /** 카드에 대화한 사람 수(말풍선 숫자)는 띄우지 않는다(2026-09-30 요청). */
 function CardDetails({ c }: { c: HomeCard }) {
@@ -21,7 +21,7 @@ function CardDetails({ c }: { c: HomeCard }) {
 }
 export function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
-  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled)
+  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, stillCover(c.slug))
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio="4 / 5" shared={false} scrim={false} style={{ borderRadius: 0 }} />

@@ -5,6 +5,7 @@ import { CharacterVisual, characterImageSources } from '@/components/character-v
 import { useT } from '@/lib/i18n/client'
 import { UnveilCover } from '@/components/unveil-badge'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
+import { stillCover } from '@/components/rotating-photo'
 
 type Veil = { signedIn: boolean; returnTo: string } | null
 
@@ -24,10 +25,10 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
       img.src = s.src
     }
   }, [photos])
-  // 11/6: 대표 사진은 저절로 다음 장으로(11/7 사용자: 3.5초 → 1초, 누르면 그 자리에서 다시 센다). 움직임 줄이기 설정이면 넘기지 않는다.
+  // 11/6: 대표 사진은 저절로 다음 장으로(11/7 사용자: 3.5초 → 1초, 누르면 그 자리에서 다시 센다). 움직임 줄이기 설정·표지 고정 작품이면 넘기지 않는다(< > 로는 넘길 수 있다).
   const reduce = useReducedMotion()
   useEffect(() => {
-    if (reduce || photos.length < 2) return
+    if (reduce || photos.length < 2 || stillCover(slug)) return
     const id = setInterval(() => setSelected(i => (i + 1) % photos.length), 1000)
     return () => clearInterval(id)
   }, [reduce, photos.length, selected])

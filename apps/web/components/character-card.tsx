@@ -6,7 +6,7 @@ import { UnveilCover } from '@/components/unveil-badge'
 import { characterTags } from '@/lib/character-card-copy'
 import { press, spring } from '@/lib/motion/tokens'
 import { coverTitle } from '@/lib/editorial/cover-title'
-import { useRotatingPhoto } from '@/components/rotating-photo'
+import { stillCover, useRotatingPhoto } from '@/components/rotating-photo'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
 export type CardCharacter = {
@@ -42,7 +42,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
-  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled)
+  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, stillCover(c.slug))
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
