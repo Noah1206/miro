@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useReducedMotion } from 'motion/react'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
 
@@ -8,18 +8,21 @@ import { isUnveilPhoto } from '@/lib/unveil-photo'
  * 언베일 사진(unveil-…)은 언베일을 켠 사람(veiled === false)에게만 돌린다 — 카드엔 사진별 흐림이 없어서다.
  * 카드마다 시작을 조금씩 어긋나게 해 한꺼번에 바뀌지 않게 한다.
  */
-export function useRotatingPhoto(images: string[], veiled?: boolean): { photos: string[]; active: number; photo: string | null } {
+export function useRotatingPhoto(images: string[], veiled?: boolean): { photos: string[]; active: number; photo: string | null; onPhotoReady: (i: number) => void } {
   const photos = veiled === false ? images : images.filter(src => !isUnveilPhoto(src))
   const [i, setI] = useState(0)
   const reduce = useReducedMotion()
   const n = photos.length
+  // 다 받아서 그릴 수 있는 사진만 차례에 넣는다 — 덜 받은 사진으로 넘어가면 빈칸이 깜빡이거나 서서히 그려졌다.
+  const ready = useRef(new Set<number>())
+  const onPhotoReady = useCallback((k: number) => { ready.current.add(k) }, [])
   useEffect(() => {
     if (reduce || n < 2) return
     let id: ReturnType<typeof setInterval> | undefined
-    const start = setTimeout(() => { id = setInterval(() => setI(v => (v + 1) % n), 2000) }, Math.random() * 1000)
+    const start = setTimeout(() => { id = setInterval(() => setI(v => { for (let s = 1; s < n; s++) { const k = (v + s) % n; if (ready.current.has(k)) return k } return v }), 2000) }, Math.random() * 1000)
     return () => { clearTimeout(start); clearInterval(id) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduce, n])
   const active = i % Math.max(n, 1)
-  return { photos, active, photo: photos[active] ?? images[0] ?? null }
+  return { photos, active, photo: photos[active] ?? images[0] ?? null, onPhotoReady }
 }

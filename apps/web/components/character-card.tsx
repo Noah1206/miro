@@ -42,7 +42,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
-  const { photo, photos, active } = useRotatingPhoto(c.images, c.veiled)
+  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled)
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
@@ -50,7 +50,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         style={{ display: 'block', minWidth: 0 }}>
         {/* 11/4: 사진 원본 비율(4:5)대로 — 15:16 이면 아래 제목 로고가 잘렸다. */}
         <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} photos={photos} active={active} ratio="4 / 5" scrim={false} />
+          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio="4 / 5" scrim={false} />
           {c.coverUnveil && <UnveilCover veiled={c.veiled} label="언베일" hideLabel />}
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}

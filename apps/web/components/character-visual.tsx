@@ -38,16 +38,20 @@ export function characterImageSources(original: string, size: ImageSize) {
   }
 }
 
-export function CharacterPhoto({ src, alt, size, sizes, width, height, loading = 'lazy', style }: {
+export function CharacterPhoto({ src, alt, size, sizes, width, height, loading = 'lazy', style, onReady }: {
   src: string; alt: string; size: ImageSize; sizes: string; width: number; height: number
   loading?: 'eager' | 'lazy'; style?: React.CSSProperties
+  /** 11/6: 다 받고 그릴 준비가 끝났을 때(이미 캐시에 있어도 한 번) — 카드 자동 넘김이 준비된 사진으로만 넘어가게. */
+  onReady?: () => void
 }) {
   const [failed, setFailed] = useState(false)
   const sources = failed ? { src } : characterImageSources(src, size)
   return (
     <img src={sources.src} srcSet={'srcSet' in sources ? sources.srcSet : undefined}
       sizes={'srcSet' in sources ? sizes : undefined} alt={alt} width={width} height={height}
-      loading={loading} fetchPriority={loading === 'eager' ? 'high' : undefined} decoding="async" onError={() => setFailed(true)} style={style} />
+      loading={loading} fetchPriority={loading === 'eager' ? 'high' : undefined} decoding="async" onError={() => setFailed(true)} style={style}
+      ref={onReady ? el => { if (el?.complete && el.naturalWidth) el.decode().then(onReady, onReady) } : undefined}
+      onLoad={onReady ? e => { e.currentTarget.decode().then(onReady, onReady) } : undefined} />
   )
 }
 
@@ -58,12 +62,12 @@ export function CharacterPhoto({ src, alt, size, sizes, width, height, loading =
  * 호출부가 characters.images[0]에서 대표 사진을 정한다.
  * (Supabase Storage 의 공개 URL, 만들기에서 올린 사진).
  */
-export function CharacterVisual({ name, accent, slug, photo, photos, active = 0, ratio = '4 / 5', size = 'thumbnail', loading = 'lazy', shared = true, scrim = true, className, style }: {
+export function CharacterVisual({ name, accent, slug, photo, photos, active = 0, onPhotoReady, ratio = '4 / 5', size = 'thumbnail', loading = 'lazy', shared = true, scrim = true, className, style }: {
   name: string; accent: string | null; slug: string
   /** 대표 사진 경로. 없으면 글자 자리표시. */
   photo?: string | null
   /** 11/6: 카드 자동 넘김 — 사진을 겹쳐 두고 active 장만 보인다(src 를 바꾸면 새로 받는 동안 깜빡였다). */
-  photos?: string[]; active?: number
+  photos?: string[]; active?: number; onPhotoReady?: (i: number) => void
   ratio?: string; size?: ImageSize; loading?: 'eager' | 'lazy'; shared?: boolean; scrim?: boolean; className?: string; style?: React.CSSProperties
 }) {
   return (
@@ -76,7 +80,7 @@ export function CharacterVisual({ name, accent, slug, photo, photos, active = 0,
         <CharacterPhoto key={src} src={src} alt="" size={size} loading={loading}
           sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}
           width={880} height={1168}
-          style={{ position: 'absolute', inset: -1, width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', objectFit: 'cover', objectPosition: 'center 25%', opacity: i === active ? 1 : 0 }} />
+          style={{ position: 'absolute', inset: -1, width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', objectFit: 'cover', objectPosition: 'center 25%', opacity: i === active ? 1 : 0 }} onReady={() => onPhotoReady?.(i)} />
       )) : photo ? (
         <CharacterPhoto key={photo} src={photo} alt="" size={size} loading={loading}
           sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}

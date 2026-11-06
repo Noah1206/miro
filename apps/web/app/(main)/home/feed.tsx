@@ -21,10 +21,10 @@ function CardDetails({ c }: { c: HomeCard }) {
 }
 export function StoryCard({ c }: { c: HomeCard }) {
   const t = useT()
-  const { photo, photos, active } = useRotatingPhoto(c.images, c.veiled)
+  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled)
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
-      <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={photo} photos={photos} active={active} ratio="4 / 5" shared={false} scrim={false} style={{ borderRadius: 0 }} />
+      <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio="4 / 5" shared={false} scrim={false} style={{ borderRadius: 0 }} />
       {c.coverUnveil && <UnveilCover veiled={c.veiled} label={t('언베일')} hideLabel />}
     </div>
     <CardDetails c={c} />
