@@ -559,3 +559,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .composerTools, :global([data-chat-theme]) .composerTools { gap:clamp(4px, 1.2vw, 6px); }
 /* 11/7 사용자: 입력칸 높이를 키운다(34 → 52px, 글이 길어지면 그대로 늘어난다). */
 .inputRow .input, :global([data-chat-theme]) .inputRow .input { min-height:52px; }
+/* 11/7 사용자: 내 말풍선 글씨도 캐릭터 말풍선과 같은 크기·굵기(15px·550, 상황은 기울임). 색은 흰색 그대로. */
+:global([data-chat-theme]) .userBubble, .userBubble { font-weight:550; }
+:global([data-chat-theme='miro']) .userBubble { font-size:15px; line-height:1.65; }
+:global([data-chat-theme]) .userBubble em, .userBubble em { font-weight:550; color:#d3d3d3; }
+:global([data-chat-theme]) .userBubble strong, .userBubble strong { font-weight:700; }
