@@ -464,4 +464,5 @@ export const MALE_GUIDE: Record<string, string> = {
 }
 
 /** 언베일 썸네일(11/4 사용자: 노출 큰 사진은 흐리게 하거나 언베일 표시) — 대표·갤러리 사진이 속옷·비침 수위인 카드. */
-export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe', 'official-m-boarding-house', 'official-m-stray-cat', 'official-m-moon-app', 'official-m-living-doll'])
+// 11/6 사용자: 조금이라도 노출·수위 있는 대표 사진은 전부 언베일 흐림 — 로고만 있는 클랜 인 히어로(헌터 길드)만 뺀다.
+export const MALE_COVER_UNVEIL = { has: (slug: string) => slug.startsWith('official-m-') && slug !== 'official-m-hunter-guild' }
