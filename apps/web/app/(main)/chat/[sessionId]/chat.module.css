@@ -569,3 +569,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/7 사용자: 입력칸 안내 문구와 ✳︎ 를 조금 크게(13 → 15px, ✳︎ 15 → 18px). */
 :global([data-chat-theme='miro']) .input::placeholder { font-size:15px; }
 .inputRow > button[data-coach='narration'] svg, :global([data-chat-theme]) .inputRow > button[data-coach='narration'] svg { width:18px; height:18px; }
+/* 11/7 사용자: 실제로 입력하는 글자도 크게(15 → 16px, 안내 문구도 같이). 16px 이면 iPhone 이 입력할 때 화면을 확대하지 않는다. */
+:global([data-chat-theme='miro']) .input, :global([data-chat-theme='miro']) .inputRow .input { font-size:16px; line-height:24px; }
+:global([data-chat-theme='miro']) .input::placeholder { font-size:16px; }
