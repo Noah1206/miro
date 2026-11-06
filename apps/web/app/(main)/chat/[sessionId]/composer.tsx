@@ -20,7 +20,6 @@ import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
 import { useT } from '@/lib/i18n/client'
 import { UNVEIL_CARRY, UNVEIL_OFFER } from './adult-toggle'
-import { PhotoButton } from './photo-button'
 
 /** 실패한 턴의 기다림을 유지하는 시간. 이보다 길어지면 멈춘 앱처럼 보인다. */
 const KEEP_WAITING_MS = 12_000
@@ -236,6 +235,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </span>
         </div>}
         <div className={styles.inputRow}>
+          {/* 11/6 사용자: ✳︎(상황 묘사)는 입력칸 왼쪽 */}
+          <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
           <textarea className={styles.input} ref={ta} name="input" autoComplete="off" data-1p-ignore data-lpignore="true" value={draft} disabled={calendarPending || !ready} rows={1} required={!command} maxLength={2000}
             placeholder={command ? t('덧붙일 말이 있으면 적어요. 없어도 보낼 수 있어요.') : t('대사, 행동, 묘사를 자유롭게…')} aria-label={t(COPY.a11y.composer)}
             onChange={(e) => { setDraft(e.currentTarget.value); setRequestId(crypto.randomUUID()) }}
@@ -248,8 +249,6 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <ModelPicker {...modelOptions} place="up" disabled={pending || calendarPending || !ready}/>
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 11/4 사용자: 사진·✳︎·/·추천은 입력창 아래 도구 줄로 내렸다. 페르소나 드롭다운·마이크는 뺐다. */}
-            {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} disabled={pending || calendarPending || !ready} />}
-            <ChatEmojiButton textareaRef={ta} onDraftChange={value => { setDraft(value); setRequestId(crypto.randomUUID()) }} disabled={calendarPending || !ready} onSelect={emoji => { setDraft(value => value + emoji); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
               onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
               onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />

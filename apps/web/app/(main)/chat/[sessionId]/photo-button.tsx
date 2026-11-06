@@ -15,7 +15,7 @@ type Shot = { key: number; scene: string; picks: number[] }
 const KEYS = Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]
 const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷'), outfitMen: msg('옷') }
 
-export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, custom = [] }: { sessionId: string; unveil: boolean; bundle: boolean; audience?: Audience; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }> }) {
+export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, custom = [], variant = 'tool' }: { sessionId: string; unveil: boolean; bundle: boolean; audience?: Audience; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }>; variant?: 'tool' | 'turn' }) {
   const t = useT(), router = useRouter()
   const { refreshBalance } = useWallet()
   const [open, setOpen] = useState(false)
@@ -57,9 +57,10 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
     background: on ? 'color-mix(in srgb, var(--color-lavender-500) 18%, transparent)' : 'transparent', color: on ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', font: 'inherit', fontSize: 14, fontWeight: on ? 600 : 400, cursor: 'pointer' } as const)
   const label = { fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 10px', display: 'flex', justifyContent: 'space-between' } as const
   return <>
-    <button type="button" className={`${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
+    {/* 11/6 사용자: 사진 버튼은 입력창 도구 줄이 아니라 캐릭터 답변마다 그 아래(variant='turn') */}
+    <button type="button" className={variant === 'turn' ? styles.turnPhoto : `${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
       <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
-    </button>
+    {variant === 'turn' && <span>{t('사진 만들기')}</span>}</button>
     <Sheet open={open} onClose={() => setOpen(false)} title={t(unveil ? '언베일 사진 만들기' : '사진 만들기')} variant="choice" snap={{ half: 0.7, full: 0.92 }}>
       <form action={action} style={{ display: 'grid', gap: 22 }}>
         <input type="hidden" name="sessionId" value={sessionId} />

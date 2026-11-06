@@ -51,3 +51,6 @@
 :global([data-chat-theme='dm-light']) .current[data-model-brand='deepseek'],:global([data-chat-theme='talk']) .current[data-model-brand='deepseek'] { --model-brand-ink:#3556d5; }
 :global([data-chat-theme='dm-light']) .trigger[data-model-brand='gemini'],:global([data-chat-theme='talk']) .trigger[data-model-brand='gemini'],
 :global([data-chat-theme='dm-light']) .current[data-model-brand='gemini'],:global([data-chat-theme='talk']) .current[data-model-brand='gemini'] { --model-brand-ink:#315fbb; --model-brand-logo:#416ecc; }
+/* 11/6 사용자: 모델 알약은 브랜드색으로 채운다(어두운 테마). 밝은 테마는 아래 규칙이 글자색만 바꾼다. */
+:global([data-chat-theme='miro']) .trigger[data-model-brand],:global([data-chat-theme='dm']) .trigger[data-model-brand] { background:var(--model-brand-logo,#45454c); border-color:transparent; color:#fff; }
+:global([data-chat-theme='miro']) .trigger[data-model-brand] .icon,:global([data-chat-theme='dm']) .trigger[data-model-brand] .icon,:global([data-chat-theme='miro']) .trigger[data-model-brand] > svg,:global([data-chat-theme='dm']) .trigger[data-model-brand] > svg { color:#fff; }

@@ -18,11 +18,16 @@ import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
 import { useImmersive } from './immersive'
+import { PhotoButton } from './photo-button'
+
+type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'female'; scenes: Array<{ id: string; label: string; unveil: boolean }> }
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [] }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo }: {
   items: Msg[]; characterName: string; portrait?: string | null
+  /** 11/6: 사진 만들기 — 캐릭터 답변마다 그 아래 버튼. 없으면(기능 꺼짐) 버튼도 없다. */
+  photo?: PhotoProps
   /** 11/6: 여러 인물 카드의 히로인 이름 — 히로인의 속마음을 그 히로인 말풍선에 붙인다. */
   cast?: readonly string[]
   /** 11/6: 언베일을 안 켠 사람 — 사진 메시지를 흐리고 누르면 언베일 켜기로. */
@@ -140,6 +145,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
+            {photo && sessionId && m.role === 'character' && m.kind === 'text' && !m.opening && keyOf(m) !== typingId && /^[0-9a-f-]{36}$/i.test(m.id)
+              && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
           </Line>
         ))}
       </AnimatePresence>
