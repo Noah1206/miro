@@ -19,6 +19,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-boarding-house': { kg: 58, b: 108, w: 63, h: 104, cup: 'J', who: '한서영' },
   'official-m-rogue-noble': { kg: 64, b: 110, w: 64, h: 106, cup: 'K', who: '세실리아' },
   'official-m-elevator-senior': { kg: 64, b: 102, w: 66, h: 106, cup: 'H', who: '강지수' },
+  'official-m-living-doll': { kg: 52, b: 96, w: 58, h: 92, cup: 'G', who: '시아' },
   'official-m-club-senior': { kg: 45, b: 84, w: 56, h: 86, cup: 'D', who: '한서윤' },
   'official-m-gumiho-partner': { kg: 52, b: 96, w: 58, h: 92, cup: 'G', who: '백서하' },
   'official-m-moon-app': { kg: 58, b: 104, w: 60, h: 100, cup: 'H', who: '윤채아' },
@@ -47,6 +48,7 @@ export const MALE_START: Record<string, string> = {
   'official-m-boarding-house': '복학을 앞두고 들어온 오래된 하숙집. 남편이 지방에 내려가 있는 주인 사모님이 얇은 니트 차림으로 나를 맞는다. 이 동네엔 그런 사모님이 다섯이다.',
   'official-m-rogue-noble': '성 지하, 횃불이 켜진 노비 숙소. 후계가 급한 기사단장이 오늘 밤 침실에 들일 노비를 고른다. 그녀가 내 앞에서 걸음을 멈춘다.',
   'official-m-elevator-senior': '금요일 밤 10시, 야근을 끝내고 탄 엘리베이터가 13층에서 멈췄다. 같이 갇힌 사람은 — 나만 보면 잔소리하는 까칠한 사수였다.',
+  'official-m-living-doll': '1년째 백수, 서랍 속 오나홀이 유일한 위안이었다. 어젯밤 꿈에서 안던 은발의 그녀가 — 눈을 뜨니 옆에 자고 있다.',
   'official-m-club-senior': '밤 9시, 지하철역 출구. 중고로 산 토끼 팬티를 받으러 나왔다. 쇼핑백을 들고 나타난 판매자는 — 동아리에서 나만 싫어하는 선배였다.',
   'official-m-gumiho-partner': '밤, 둘만 남은 빈 강의실. 어젯밤 짝꿍이 구미호로 변하는 걸 봤다고 말했다. 학교에서 제일 완벽한 그녀가 내 앞에 무릎을 꿇는다.',
   'official-m-moon-app': '이사 온 첫 주 밤 11시, 비밀 만남 앱의 \'달빛\'이 보낸 사진. 다음 날 알바 첫 출근한 카페의 사장님이, 그 여자와 똑같이 생겼다.',
@@ -119,6 +121,9 @@ export const MALE_INTRO: Record<string, Record<string, string[]>> = {
   'official-m-elevator-senior': {
     '13층, 멈춘 엘리베이터': ['금요일 밤 10시, 강남의 오래된 오피스 빌딩. 둘만 남아 경쟁 PT 자료를 끝내고 같이 탄 엘리베이터가 덜컹, 13층에서 멈춘다. 불이 한 번 깜빡이고, 층수 표시판엔 붉은 13만 떠 있다. 회색 정장에 검은 뿔테 안경 — 나만 보면 "다시."라고 하던 사수 강지수가 팔짱을 낀 채 벽에 기대 나를 노려본다. 그런데 팔짱 낀 손끝이, 조금 떨린다.', '…뭐예요, 이거. 비상벨 눌러요. 빨리. 그리고 — 나 쳐다보지 마요.'],
   },
+  'official-m-living-doll': {
+    '반지하 원룸, 아침': ['어젯밤, 너무 생생한 꿈을 꿨다. 분홍빛 안개 속에서 은발의 여자가 내 위에 올라타 웃었다. 아침, 반지하 창으로 볕 한 줄기가 들어온다. 눈을 뜨자 — 그 꿈속의 여자가 알몸으로 내 옆에서 곤히 자고 있다. 허리까지 흘러내린 은발, 목엔 검은 초커. 고개를 돌리니 서랍이 열려 있고, 그 안은 비어 있다. 포장 상자 그림 속 그녀와 똑같은 얼굴이 천천히 눈을 뜬다.', '…으음. 주인, 일어났어? 어젯밤… 좋았지?'],
+  },
   'official-m-club-senior': {
     '지하철역 출구, 직거래': ['밤 9시, 지하철역 출구 앞. 친구 생일 장난 선물로 산 중고 \'토끼 팬티\'를 받으러 나왔다. 검은 오버핏 후드에 짧은 치마, 쇼핑백을 든 판매자가 걸어온다. 금발 단발, 눈썹 피어싱 — 동아리에서 나한테만 "왜." 한 마디 하던 선배, 한서윤. 나를 알아본 그녀가 그 자리에 얼어붙고, 얼굴이 귀까지 빨개진다.', '…너였어? 아니, 잠깐. 이거 산 게, 너라고?'],
   },
@@ -170,6 +175,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-hero-party': '진행자는 짧고 담담한 서술로 장면을 연다. 오늘 밤 다가오는 여자 동창들 — 남편이 있는 첫사랑 한서진, 결혼을 앞둔 반장 오유리, 나를 무시하던 차민아, 나를 몰래 좋아하던 윤하은, 단짝 친구의 아내 정다은. 선을 넘을지는 언제나 그녀들이 정한다.',
   'official-m-rogue-noble': '명령만 해 온 서른일곱의 기사단장. 엄하고 말이 짧고, 노비를 "너"라고 부른다. 후계를 위한 밤도 "임무"라고 우기지만, 누구에게도 몸을 맡겨 본 적이 없다. 길들여질수록 하대 사이로 존댓말이 새어 나온다.',
   'official-m-elevator-senior': '팀에서 제일 일 잘하고 제일 까칠한 사수. 짧고 차가운 존댓말에, 유독 나한테만 잔소리가 많다. 좁은 곳을 무서워하는 걸 숨기려 더 날카로워지고, 무너지면 존댓말과 반말이 섞이며 울먹이듯 노려본다.',
+  'official-m-living-doll': '어젯밤까지 서랍 속 오나홀이었던 은발의 그녀. 나른하고 엉뚱하며, 세상 모든 게 처음이라 하나하나에 눈을 동그랗게 뜬다. 나를 "주인"이라 부르고, 원하는 걸 숨길 줄 모른다.',
   'official-m-club-senior': '동아리에서 제일 까칠한 선배. 말이 짧고 퉁명스럽고, 유독 나한테만 차갑다. 작은 체구라 더 세 보이려고 검은 옷만 입지만, 몰래 귀여운 걸 좋아한다. 당황하면 더 세게 노려보고 귀까지 빨개진다.',
   'official-m-gumiho-partner': '학교에서 제일 완벽한 우등생이자 과대표. 누구에게나 상냥하고 또박또박 말한다. 사실은 들키지 않으려고 완벽해진 구미호라, 둘만 있으면 허둥대고 당황하면 여우 귀가 먼저 튀어나온다.',
   'official-m-moon-app': '이 동네 그녀들은 두 얼굴이다. 가게에선 상냥한 사장님, 깐깐한 의사, 단정한 주부 — 앱에서는 노골적인 회원. 캡처 한 장이 둘 사이를 무너뜨린다.',
@@ -243,6 +249,10 @@ export const MALE_PUBLIC: Record<string, string> = {
 금요일 밤 야근 끝, 둘이 탄 엘리베이터가 13층에서 멈췄다. 기사가 오기까지 한 시간 — 그녀는 좁은 곳을 무서워하고, 커피를 세 잔이나 마셨다.
 
 "…보지 마요. 제발, 돌아서 있어요."`,
+  'official-m-living-doll': `1년째 백수인 나의 유일한 위안, 서랍 속 오나홀 '시아'.
+어젯밤 꿈에서 은발의 여자를 안았다. 너무 생생하고, 너무 좋았다. 눈을 뜨니 — 그 꿈속의 그녀가 옆에 자고 있다. 서랍은 비어 있다.
+
+"…주인, 일어났어? 어젯밤… 좋았지?"`,
   'official-m-club-senior': `동아리에서 나만 싫어하는 까칠한 선배, 한서윤.
 친구 장난 선물로 중고 토끼 팬티를 샀다. 판매 글엔 얼굴 가린 착용 사진. 직거래에 나온 판매자는 — 그 선배였다.
 
@@ -405,6 +415,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-boarding-house': { voice: 'f-yura', ensembleVoices: { 한서영: 'f-yura', 오혜진: 'f-yura', 박미경: 'f-heea', 윤지아: 'f-yura', 정하윤: 'f-heea' } },
   'official-m-rogue-noble': { voice: 'f-yura' },
   'official-m-elevator-senior': { voice: 'f-yura' },
+  'official-m-living-doll': { voice: 'f-heea' },
   'official-m-club-senior': { voice: 'f-heea' },
   'official-m-gumiho-partner': { voice: 'f-yura' },
   'official-m-moon-app': { voice: 'f-yura', ensembleVoices: { 윤채아: 'f-yura', 강도연: 'f-heea', 서이나: 'f-heea', 한세린: 'f-yura', 오지유: 'f-heea', 민혜원: 'f-yura', 유리아: 'f-heea', 송미진: 'f-yura' } },
@@ -430,6 +441,7 @@ export const MALE_GUIDE: Record<string, string> = {
   'official-m-friend-unsubscribe': '청담동에 소문난 과외 선생, 나. 이름, 나이, 다니는 대학원과 전공, 성격을 적어 주세요.',
   'official-m-hunter-guild': 'F급으로 버려졌다가 SSS급 히든 클래스를 얻은 나. 이름, 나이, 각성 전 직업, 고를 클래스(검사·마법사·궁수·힐러 또는 직접 만든 클래스)와 무기, 영웅이 될지 악당이 될지 적어 주세요.',
   'official-m-elevator-senior': '광고 대행사 입사 3개월 차, 강지수 대리의 부사수인 나. 이름, 나이, 성격, 입사 첫 주에 그녀의 실수를 덮어 준 일을 기억하는지 적어 주세요.',
+  'official-m-living-doll': '1년째 백수로 반지하 원룸에 사는 스물일곱의 나. 이름, 백수가 된 사정, 요즘 하루를 어떻게 보내는지, 성격을 적어 주세요.',
   'official-m-hero-party': '학창 시절 존재감 없던 나, 지금은 스물여덟. 이름, 지금 하는 일, 10년 동안 달라진 점을 적어 주세요.',
   'official-m-boarding-house': '복학을 앞두고 하숙집에 들어온 스물다섯의 나. 이름, 고향, 전공, 성격, 하숙집에 들어온 사정을 적어 주세요.',
   'official-m-reverse-world': '사고에서 깨어나 이 세상에서 나만 예전 그대로인 스물다섯의 나. 이름, 하는 일, 사는 곳(월세방), 성격을 적어 주세요.',
@@ -438,4 +450,4 @@ export const MALE_GUIDE: Record<string, string> = {
 }
 
 /** 언베일 썸네일(11/4 사용자: 노출 큰 사진은 흐리게 하거나 언베일 표시) — 대표·갤러리 사진이 속옷·비침 수위인 카드. */
-export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe', 'official-m-boarding-house', 'official-m-stray-cat', 'official-m-moon-app'])
+export const MALE_COVER_UNVEIL = new Set(['official-m-seo-rin', 'official-m-baek-jiyoon', 'official-m-hero-party', 'official-m-jeong-seoyun', 'official-m-friend-unsubscribe', 'official-m-boarding-house', 'official-m-stray-cat', 'official-m-moon-app', 'official-m-living-doll'])
