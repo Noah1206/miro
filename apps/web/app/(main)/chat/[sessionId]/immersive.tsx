@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import type { CharacterMedia } from '@miro/config'
 import { useT } from '@/lib/i18n/client'
 import { spokenSegments } from '@/lib/voice-text'
-import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
+import { playVoiceSelection, voicePause, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { useTurns } from './turns'
 import type { Msg } from './messages'
 import { SpeechPanel } from './speech-panel'
@@ -61,6 +61,37 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       value=>{if(controller.current===active)setStatus(value)},reuseOnly);return true }
     catch {if(!active.signal.aborted)setStatus('error');return false}
   }
+  // 11/6: 음성 모드에선 새로 도착한 캐릭터 답을 저절로 처음부터 끝까지 읽는다(대사마다 문장 단위·대사 사이 쉼).
+  // 음성 분량 차감이 켜진 운영(유료)에선 저절로 읽지 않고 지금처럼 골라 듣는다 — 묻지 않고 차감하지 않게.
+  const free=useRef<boolean|null>(null)
+  useEffect(()=>{if(!on)return;free.current=null
+    void fetch('/api/tts/credits',{cache:'no-store'}).then(r=>r.ok?r.json():null).then((b:{enabled?:boolean}|null)=>{free.current=!!b&&!b.enabled}).catch(()=>{})},[on])
+  const spoken=useRef(new Set<string>())
+  // 켜는 순간 이미 와 있던 답은 읽지 않는다 — 켠 뒤에 새로 오는 답부터.
+  useEffect(()=>{if(on)for(const m of appended)spoken.current.add(m.id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[on])
+  const fresh=appended.filter(m=>!known.has(m.id)&&m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id)).at(-1)
+  useEffect(()=>{
+    if(!on||!enabled||!fresh||spoken.current.has(fresh.id))return
+    spoken.current.add(fresh.id)
+    const segments=spokenSegments(fresh.blocks,fresh.content,characterName,voiceSpeakers)
+    if(!segments.length)return
+    void (async()=>{
+      // 차감 여부를 아직 모르면 잠깐 기다린다(켠 직후 첫 답).
+      for(let i=0;i<20&&free.current===null;i++)await new Promise(r=>setTimeout(r,150))
+      if(!free.current)return
+      stop();unlock();const active=new AbortController();controller.current=active
+      try{
+        for(const [part,s] of segments.entries()){
+          await playVoiceSelection(sessionId,fresh.id,part,'standard',audio.current!,active.signal,v=>{if(controller.current===active)setStatus(v)})
+          const pause=Math.max(0,Math.min(1500,s.delivery.pauseAfterMs??0))
+          if(pause&&part<segments.length-1)await voicePause(pause,active.signal)
+        }
+      }catch{if(!active.signal.aborted)setStatus('error')}
+    })()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[on,enabled,fresh?.id])
   return (
     <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
