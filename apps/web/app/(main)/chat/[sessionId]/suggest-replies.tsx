@@ -8,7 +8,7 @@ export type SuggestState = Suggestion[] | 'loading' | null
 /** 추천 답변 버튼(11/3) — 입력창 위 줄. 누르는 즉시 자리(빈 카드 3장)를 띄우고, 받으면 그 자리에 채운다. */
 export function SuggestButton({ sessionId, disabled, loading, onChange, onError }: { sessionId: string; disabled?: boolean; loading: boolean; onChange: (s: SuggestState) => void; onError: (e: string) => void }) {
   const t = useT()
-  return <button type="button" className={styles.toolButton} disabled={disabled || loading} aria-busy={loading} aria-label={t('추천 답변')} title={t('추천 답변')}
+  return <button type="button" className={styles.suggestPill} disabled={disabled || loading} aria-busy={loading} aria-label={t('추천 답변')} title={t('추천 답변')}
     onClick={async () => {
       onChange('loading'); onError('')
       const r = await suggestReplies(sessionId)
@@ -17,6 +17,7 @@ export function SuggestButton({ sessionId, disabled, loading, onChange, onError 
     <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3Z" />
     </svg>
+    <span>{t('추천 답변')}</span>
   </button>
 }
 

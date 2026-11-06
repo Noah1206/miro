@@ -22,7 +22,9 @@ const icons = {
 }
 
 /** The slash palette exposes existing room controls and selectable server-owned commands. */
-export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null, onSlash }: {
+export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed = null, onSlash, hideTrigger = false }: {
+  /** 11/6 사용자: 도구 줄의 '/' 버튼은 지운다 — 입력칸에 '/' 를 치면 뜨는 목록은 그대로. */
+  hideTrigger?: boolean
   commands: Array<{ name: string; hint: string }>; messengerHref?: string
   disabled: boolean; onPick: (command: SelectedCommand) => void
   /** 11/3: 입력칸 맨 앞에 '/' 를 치면 그 뒤 글자(없으면 '') — 라이브러리 목록을 위로 띄우고 이 글자로 거른다. 아니면 null. */
@@ -87,7 +89,7 @@ export function ChatSlashMenu({ commands, messengerHref, disabled, onPick, typed
     {icon}<span className={styles.name}>{name}</span><span className={styles.description}>{description}</span>
   </button>
   return <div ref={root} className={styles.root}>
-    <button ref={trigger} type="button" disabled={disabled} className={styles.trigger} aria-label={t('대화 기능')} aria-haspopup="menu" aria-expanded={open}
+    <button ref={trigger} type="button" hidden={hideTrigger} disabled={disabled} className={styles.trigger} aria-label={t('대화 기능')} aria-haspopup="menu" aria-expanded={open}
       onClick={() => { if (onSlash) { if (!onSlash()) { setLibrary(true); setQuery(''); setOpen(value => !value) } return } setLibrary(false); setOpen(value => !value) }}>
       <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="m15 4-6 16"/></svg>
     </button>
