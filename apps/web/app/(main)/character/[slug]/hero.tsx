@@ -24,6 +24,13 @@ export function PhotoHero({ name, accent, slug, photos, shared = true, veil = nu
       img.src = s.src
     }
   }, [photos])
+  // 11/6: 대표 사진은 3.5초마다 저절로 다음 장으로(누르면 그 자리에서 다시 센다). 움직임 줄이기 설정이면 넘기지 않는다.
+  const reduce = useReducedMotion()
+  useEffect(() => {
+    if (reduce || photos.length < 2) return
+    const id = setInterval(() => setSelected(i => (i + 1) % photos.length), 3500)
+    return () => clearInterval(id)
+  }, [reduce, photos.length, selected])
   return (
     <div style={{ position: 'relative' }}>
       <CharacterVisual name={name} accent={accent} slug={slug} photo={photo} ratio="4 / 5" size="detail" loading="eager" shared={shared} style={{ borderRadius: 0, border: 0 }} />
