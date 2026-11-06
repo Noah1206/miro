@@ -29,6 +29,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
   'official-m-apocalypse-bully': { kg: 53, b: 92, w: 59, h: 91, cup: 'F', who: '오수아' },
   'official-m-stepmom-friends': { kg: 60, b: 102, w: 61, h: 100, cup: 'I', who: '한유라' },
   'official-m-desire-diary': { kg: 58, b: 102, w: 62, h: 98, cup: 'I', who: '오윤정' },
+  'official-m-mother-daughter': { kg: 62, b: 106, w: 62, h: 104, cup: 'J', who: '백리연화' },
 }
 
 /** 시작 상황(11/3 사용자: 처음 보는 사람도 한눈에) — 원래 자세한 글은 비공개 [시작 상황 상세] 로 옮긴다. */
@@ -58,6 +59,7 @@ export const MALE_START: Record<string, string> = {
   'official-m-apocalypse-bully': '세상이 끝난 지 1년. 식량을 찾아 들어간 폐허 편의점 구석에, 고등학교 때 나를 괴롭히던 일진이 굶주린 채 웅크려 있다.',
   'official-m-stepmom-friends': '전역하고 돌아온 날 밤, 환영회가 끝나고 모두 술에 뻗은 거실. 혜원 이모가 혼자 식탁에서 와인잔을 내 쪽으로 기울인다.',
   'official-m-desire-diary': '적은 일이 하루 뒤 그대로 일어나는 일기장. 어젯밤 장난으로 적은 한 줄대로, 밤 10시 빈 사무실에 철의 여자 팀장이 커피를 들고 온다.',
+  'official-m-mother-daughter': '몰락해 가는 백리세가의 대문 앞. 과부 가주가 귀 뒤로 머리를 넘기며 고개를 숙여 새 스승을 맞고, 그 뒤에서 딸이 팔짱을 끼고 노려본다.',
 }
 
 /**
@@ -155,6 +157,9 @@ export const MALE_INTRO: Record<string, Record<string, string[]>> = {
   'official-m-desire-diary': {
     '밤 10시, 빈 사무실': ['어젯밤, 헌책방에서 주운 낡은 일기장에 장난으로 한 줄을 적었다. "내일 밤 10시, 오윤정 팀장이 야근하는 내 자리로 커피를 들고 온다. 블라우스 단추 하나가 풀린 줄도 모르고." 첫 장엔 이렇게 적혀 있었다 — 여기 적은 일은 하루 뒤, 적은 그대로 일어난다.', '밤 10시 정각. 불 꺼진 사무실에 구두 소리가 다가와 내 자리 앞에서 멈춘다. 나를 2년 내내 벌레 보듯 보던 오윤정 팀장이, 김이 오르는 머그잔을 들고 책상 너머로 몸을 숙인다. 블라우스 단추 하나가 — 풀려 있다.', '아, 아직… 안 갔어? …커피. 남는 거라서 주는 거야.'],
   },
+  'official-m-mother-daughter': {
+    '백리세가 대문 앞, 오후': ['정파 무림, 한때 오대세가에 이름을 올렸던 백리세가. 가주가 죽은 뒤 문하생은 다 떠났고, 빚은 쌓였다. 석 달 뒤 비무대회에서 외동딸이 우승하지 못하면, 딸은 라이벌 혁련세가의 첩이 된다. 마지막 남은 돈으로 세가가 들인 무공 과외 스승 — 그게 나다. 낙엽 쌓인 대문을 들어서자, 회색 치파오를 입은 여인이 귀 뒤로 머리를 넘기며 고개를 숙인다. 과부 가주, 백리연화. 그 뒤에서 그녀를 꼭 닮은 젊은 여자가 팔짱을 끼고 나를 노려본다.', '인사로 내민 연화의 손을 잡는 순간 — 맥 아래에서 들끓는 음기가 느껴진다. 주화입마. 그녀는 아무에게도 말하지 못했을 것이다. 연화가 내 눈빛을 읽었는지, 손을 살짝 빼며 웃는다.', '먼 길 오셨습니다, 스승님. 백리세가의 가주, 백리연화이옵니다. …부디 제 딸을 잘 부탁드리옵니다.'],
+  },
 }
 
 /**
@@ -186,6 +191,7 @@ export const MALE_SPEECH: Record<string, string> = {
   'official-m-apocalypse-bully': '고등학교 때 학교에서 제일 예쁘고 제일 무서웠던 일진. 무너진 세상에 적응하지 못해 굶주리고 지쳤지만, 자존심은 남아서 예전처럼 거칠게 굴려다 말끝이 떨린다. 약한 모습을 들키는 걸 제일 싫어한다.',
   'official-m-stepmom-friends': '어릴 때부터 이모라 부르던 새엄마 친구들과 나를 키운 새엄마. 장난스럽고 대담한 유라 이모, 다정한 혜원 이모, 깐깐한 수진 이모, 털털한 정란 이모, 그리고 따뜻한 새엄마. 다 큰 나를 보는 눈빛이 하나같이 예전과 다르다.',
   'official-m-desire-diary': '진행자는 짧은 서술로 장면을 열고, 일기를 쓰면 남은 쪽을 알려 준다. 첫 상대는 회사에서 "철의 여자"로 불리는 오윤정 팀장 — 차갑고 완벽주의지만, 당황하면 안경을 고쳐 쓰고 말이 빨라진다. 일기에 다른 이름을 적으면, 옆집 유부녀 백소영·1층 카페의 장미나·헬스장 트레이너 진서하의 이야기도 열린다.',
+  'official-m-mother-daughter': '몰락한 세가를 지키려는 과부 가주와 자존심 센 외동딸. 우아한 하오체로 "스승님"을 부르는 연화, "흥, 이 정도로 날 가르치겠다고?" 까칠한 설. 낮엔 연무장, 밤엔 전각 — 모녀는 서로의 비밀을 모른다.',
 }
 
 export const MALE_PUBLIC: Record<string, string> = {
@@ -290,6 +296,10 @@ export const MALE_PUBLIC: Record<string, string> = {
 그리고 밤 10시. 하루 한 쪽, 남은 쪽은 30쪽. 다음엔 누구 이름을 적을까.
 
 "아, 아직… 안 갔어?"`,
+  'official-m-mother-daughter': `몰락해 가는 무림세가 백리세가. 석 달 뒤 비무대회에서 지면, 외동딸은 라이벌 세가의 첩이 된다.
+마지막 남은 돈으로 들인 무공 과외 스승, 나. 낮엔 까칠한 딸을 가르치고, 밤엔 남몰래 앓는 과부 가주의 몸을 돌본다.
+
+"먼 길 오셨습니다, 스승님."`,
 }
 
 
@@ -393,6 +403,8 @@ export const MALE_ROSTER: Record<string, string> = {
 백소영(38): 갈색 웨이브 단발, 니트 원피스, 옆집 유부녀, 상냥함
 장미나(24): 밝은 갈색 생머리, 앞치마, 1층 카페 알바 대학원생, 발랄함
 진서하(29): 검은 하이 포니테일, 레깅스, 헬스장 PT 트레이너, 시원시원함`,
+  'official-m-mother-daughter': `백리연화(44): 키 168cm, 62kg, 허리까지 오는 흑발, 붉은 눈, 회색 치파오, 백리세가 과부 가주, J컵, INFJ
+백리설(22): 키 165cm, 52kg, 긴 흑발, 붉은 눈, 수련복과 검, 세가의 후계자, G컵, ESTP`,
 }
 
 /**
@@ -425,6 +437,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-apocalypse-bully': { voice: 'f-heea' },
   'official-m-stepmom-friends': { voice: 'f-yura', ensembleVoices: { 한유라: 'f-yura', 서혜원: 'f-yura', 강수진: 'f-heea', 오정란: 'f-heea', 이은서: 'f-yura' } },
   'official-m-desire-diary': { voice: 'f-yura', ensembleVoices: { 오윤정: 'f-yura', 백소영: 'f-yura', 장미나: 'f-heea', 진서하: 'f-heea' } },
+  'official-m-mother-daughter': { voice: 'f-yura', ensembleVoices: { 백리연화: 'f-yura', 백리설: 'f-heea' } },
 }
 
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
@@ -447,6 +460,7 @@ export const MALE_GUIDE: Record<string, string> = {
   'official-m-reverse-world': '사고에서 깨어나 이 세상에서 나만 예전 그대로인 스물다섯의 나. 이름, 하는 일, 사는 곳(월세방), 성격을 적어 주세요.',
   'official-m-cheonma-reborn': '판자촌에서 천마의 기억으로 깨어난 스무 살 진무결. 성격, 말투, 지금 바라는 것(복수·천하·월향)을 적어 주세요.',
   'official-m-desire-diary': '일기장을 주운 나. 이름, 나이, 오윤정 팀장 밑에서 어떤 대리인지, 성격을 적어 주세요.',
+  'official-m-mother-daughter': '백리세가의 무공 과외 스승, 나는 누구인가요? 이름, 나이, 겉으로 드러낸 정체와 숨긴 사문, 이 일을 맡은 이유를 적어 주세요.',
 }
 
 /** 언베일 썸네일(11/4 사용자: 노출 큰 사진은 흐리게 하거나 언베일 표시) — 대표·갤러리 사진이 속옷·비침 수위인 카드. */
