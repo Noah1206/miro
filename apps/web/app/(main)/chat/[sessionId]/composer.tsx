@@ -251,12 +251,13 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
             <ChatInputMore disabled={calendarPending || !ready} onInsert={text => { setDraft(value => (value + text).slice(0, 2000)); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
             {/* 11/4 사용자: 사진·✳︎·/·추천은 입력창 아래 도구 줄로 내렸다. 페르소나 드롭다운·마이크는 뺐다. */}
             {photo && <PhotoButton sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} disabled={pending || calendarPending || !ready} />}
-            <ChatSlashMenu hideTrigger commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
+            <ChatSlashMenu commands={commands} messengerHref={messengerHref} disabled={pending || calendarPending || !ready} typed={slashQuery}
               onSlash={() => { if (draft.trim() && slashQuery === null) return false; setDraft('/'); setRequestId(crypto.randomUUID()); requestAnimationFrame(() => { const el = ta.current; if (el) { el.focus(); el.setSelectionRange(1, 1) } }); return true }}
               onPick={value => { setCommand(value); if (slashQuery !== null) setDraft(''); setRequestId(crypto.randomUUID()); ta.current?.focus() }} />
-            <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} loading={suggest === 'loading'} onChange={setSuggest} onError={setSuggestError} />
           </div>
         <div className={styles.composerBar}>
+          {/* 11/6 사용자: 추천 답변은 보내기 버튼 바로 옆 */}
+          <SuggestButton sessionId={sessionId} disabled={pending || calendarPending || !ready} loading={suggest === 'loading'} onChange={setSuggest} onError={setSuggestError} />
           <Pressable data-empty={!draft.trim()} type="submit" disabled={pending || calendarPending || !ready || !hasText} aria-label={t(COPY.cta.send)} className={styles.send}>
             {pending ? <StatusIcon status="loading" /> : <ChatSendIcon />}
           </Pressable>

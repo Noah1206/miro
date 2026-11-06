@@ -533,3 +533,8 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .suggestPill:disabled { opacity:.45; cursor:default; }
 .suggestPill:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }
 :global([data-chat-theme='dm-light']) .suggestPill, :global([data-chat-theme='talk']) .suggestPill { color:#292929; border-color:#00000030; }
+/* 11/6 사용자: 아래 줄 요소 높이를 29px 로 통일 — / 버튼을 줄이고, 입력칸 ✳︎ 아이콘도 작게. 추천 답변은 보내기 옆. */
+.composerTools > div > button[aria-haspopup='menu'] { flex:0 0 29px; width:29px; height:29px; }
+.composerTools > div > button[aria-haspopup='menu'] svg { width:15px; height:15px; }
+.inputRow > button[data-coach='narration'] svg, :global([data-chat-theme]) .inputRow > button[data-coach='narration'] svg { width:15px; height:15px; }
+.composerBar, :global([data-chat-theme]) .composerBar { gap:6px; }
