@@ -62,7 +62,7 @@ export function CharacterVisual({ name, accent, slug, photo, photos, active = 0,
   name: string; accent: string | null; slug: string
   /** 대표 사진 경로. 없으면 글자 자리표시. */
   photo?: string | null
-  /** 11/6: 카드 자동 넘김 — 사진을 겹쳐 두고 active 장만 서서히 보인다(src 를 바꾸면 새로 받는 동안 깜빡였다). */
+  /** 11/6: 카드 자동 넘김 — 사진을 겹쳐 두고 active 장만 보인다(src 를 바꾸면 새로 받는 동안 깜빡였다). */
   photos?: string[]; active?: number
   ratio?: string; size?: ImageSize; loading?: 'eager' | 'lazy'; shared?: boolean; scrim?: boolean; className?: string; style?: React.CSSProperties
 }) {
@@ -76,7 +76,7 @@ export function CharacterVisual({ name, accent, slug, photo, photos, active = 0,
         <CharacterPhoto key={src} src={src} alt="" size={size} loading={loading}
           sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}
           width={880} height={1168}
-          style={{ position: 'absolute', inset: -1, width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', objectFit: 'cover', objectPosition: 'center 25%', opacity: i === active ? 1 : 0, transition: 'opacity 600ms ease' }} />
+          style={{ position: 'absolute', inset: -1, width: 'calc(100% + 2px)', height: 'calc(100% + 2px)', objectFit: 'cover', objectPosition: 'center 25%', opacity: i === active ? 1 : 0 }} />
       )) : photo ? (
         <CharacterPhoto key={photo} src={photo} alt="" size={size} loading={loading}
           sizes={size === 'detail' ? '(max-width: 768px) 100vw, 720px' : '(max-width: 600px) 50vw, 320px'}
