@@ -250,6 +250,8 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .row-scroll--flush { padding: 0 8px; scroll-padding: 0 8px; gap: 8px; }
 /* 10/20: 폰에서 한 화면에 약 3장(3.2), 넓은 화면은 150px 상한. */
 .row-scroll--flush > * { flex: 0 0 min(150px, calc((100% - 24px) / 3.2)); }
+/* 11/6 요청: 휴대폰에서는 한 화면에 2장 반 — 셋째 카드가 반쯤 보여 옆으로 넘길 수 있다는 게 보인다. */
+@media (max-width: 767px) { .row-scroll--flush > * { flex-basis: calc((100% - 24px) / 2.5); } }
 /* 미로 오리지널 작품 줄은 원래 크기(150px) 그대로(10/20). */
 .row-scroll--stories > * { flex-basis: 150px; }
 
