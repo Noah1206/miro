@@ -10,6 +10,7 @@ import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
 import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, REPLY_TYPING_PACE } from '@/components/scene/typing'
 import { CharacterPhoto } from '@/components/character-visual'
+import { UnveilCover } from '@/components/unveil-badge'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { REROLL, useTurns } from './turns'
@@ -19,8 +20,10 @@ import { useOpeningPlayback } from './use-opening-playback'
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false }: {
   items: Msg[]; characterName: string; portrait?: string | null
+  /** 11/6: 언베일을 안 켠 사람 — 사진 메시지를 흐리고 누르면 언베일 켜기로. */
+  veilPhotos?: boolean
   sessionId?: string; hasStarted?: boolean
   /** 캐릭터의 지금 기분 — 타이핑 속도가 여기서 나온다. */
   mood?: Mood
@@ -132,7 +135,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
-            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait}
+            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
           </Line>
         ))}
@@ -149,8 +152,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   )
 }
 
-function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone }: {
-  m: Msg; characterName: string; portrait?: string | null; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void
+function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil }: {
+  m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void
 }) {
   const t = useT()
   const done = useRef(onDone)
@@ -170,7 +173,12 @@ function Message({ m, characterName, portrait, typing = false, mood = 'neutral',
       <Reportable id={m.id} kind="photo">
         {reality && <RealityTag sender={reality.senderLabel} channel={reality.channelLabel} />}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} className={styles.photo} onLoad={onGrow} />
+        {veil
+          ? <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
+              <img src={m.content} alt="" className={styles.photo} onLoad={onGrow} />
+              <UnveilCover veiled label={t('언베일')} unlock={{ signedIn: true, returnTo: "/home?unveil=enable" }} />
+            </div>
+          : <img src={m.content} alt={reality?.caption ? t('캐릭터가 보낸 사진 — {caption}', { caption: reality.caption }) : t('캐릭터가 보낸 사진')} className={styles.photo} onLoad={onGrow} />}
         {reality?.caption && <p className="t-caption t-quote">{reality.caption}</p>}
       </Reportable>
     )

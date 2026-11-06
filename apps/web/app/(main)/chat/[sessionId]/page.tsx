@@ -1,4 +1,5 @@
 import { ChatTheme } from '@/components/chat-theme'
+import { homeUnveilEnabled } from '@/lib/home-mode'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
 import { db, messages, characters } from '@miro/db'
@@ -53,13 +54,15 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     sessionMedia(sessionId, user.id),
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
-    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, ensembleVoices: characters.ensembleVoices }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
+    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
     // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
     getPersona(user.id),
     // 첫 대화 전 세계관 카드(11/4) — 이 방의 '나'를 적기 전에는 입력창 대신 카드가 뜬다.
     needsPersona(user.id, sessionId),
   ])
   if (!loaded || !mature) notFound()
+  // 11/6: 언베일 표지 캐릭터는 언베일을 안 켠 사람에게 대화 속 사진(인트로·상황 사진)도 흐린다.
+  const veilPhotos = !!rec?.coverUnveil && !(await homeUnveilEnabled(user.id))
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 
@@ -94,7 +97,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
-          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} />
+          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} />
           {needPersona && <WorldIntro sessionId={sessionId} worldSetting={s.worldSetting ?? null} guide={rec?.guide ?? ''} presets={rec?.presets ?? []} mine={myPersona} />}
         </div>
 
