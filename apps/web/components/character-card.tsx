@@ -6,6 +6,7 @@ import { UnveilCover } from '@/components/unveil-badge'
 import { characterTags } from '@/lib/character-card-copy'
 import { press, spring } from '@/lib/motion/tokens'
 import { coverTitle } from '@/lib/editorial/cover-title'
+import { useRotatingPhoto } from '@/components/rotating-photo'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
 export type CardCharacter = {
@@ -41,6 +42,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
+  const photo = useRotatingPhoto(c.images, c.veiled)
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
@@ -48,7 +50,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         style={{ display: 'block', minWidth: 0 }}>
         {/* 11/4: 사진 원본 비율(4:5)대로 — 15:16 이면 아래 제목 로고가 잘렸다. */}
         <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={c.images[0] ?? null} ratio="4 / 5" scrim={false} />
+          <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} ratio="4 / 5" scrim={false} />
           {c.coverUnveil && <UnveilCover veiled={c.veiled} label="언베일" hideLabel />}
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}

@@ -45,7 +45,8 @@ const pageColumns = {
   occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
   accentA: characters.accentA, accentB: characters.accentB, genre: selectedWorldGenre,
   tagline: characters.tagline, startingContext: characters.startingContext,
-  images: sql<string[]>`case when ${characters.images}->>0 is null then '[]'::jsonb else jsonb_build_array(${characters.images}->>0) end`,
+  // 11/6: 카드 사진이 저절로 넘어가도록 앞 4장까지(전체를 보내면 목록 응답이 커진다).
+  images: sql<string[]>`coalesce(jsonb_path_query_array(${characters.images}, '$[0 to 3]'), '[]'::jsonb)`,
   contactEnabled: contactProfiles.enabled,
   coverUnveil: characters.coverUnveil,
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
@@ -152,7 +153,8 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   const plays = await playCounts(pageRows.map(row => row.id))
   const last = rows.slice(0, PAGE_SIZE).at(-1)
   return {
-    items: pageRows.map(({ createdAtKey: _createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: row.coverUnveil && !unveil })),
+    // 11/6: veiled = 언베일을 안 켠 사람 — 표지 흐림(coverUnveil 카드만 그림)과 카드 사진 자동 넘김의 언베일 사진 제외에 같이 쓴다.
+    items: pageRows.map(({ createdAtKey: _createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: !unveil })),
     nextCursor: !all && rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify(sort === 'latest' ? [last.createdAtKey, last.id] : [last.createdAtKey, last.id, sort, last.sortScore])).toString('base64url') : null,
   }
 }
