@@ -113,7 +113,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="detail-top">
       <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} veil={unveil ? null : unlockAt} />
-        {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} />}
+        {/* 11/6: 언베일을 켠 사람에겐 사진 모서리 '언베일' 표시를 띄우지 않는다. */}
+        {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} hideLabel={unveil} />}
         <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
       </div>
 
