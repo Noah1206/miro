@@ -8,7 +8,7 @@
   · GET /voices/<id>/preview(만들어지는 중이면 202) · DELETE /voices/<id>.
 글 안의 [moaning] 같은 괄호 태그는 그대로 모델에 들어간다.
 배포: modal deploy tooling/voice/modal_drama3_serve.py   (Secret miro-drama3-tts 의 MIRO_TTS_API_KEY = Vercel 과 같은 키)
-요청이 없으면 5분 뒤 꺼진다. 처음 켜질 때 모델 로드에 몇 분 걸린다.
+요청이 없으면 20분 뒤 꺼진다. 처음 켜질 때 모델 로드에 몇 분 걸린다.
 """
 import modal
 from modal_drama3_compare import image as base_image, voices
@@ -16,6 +16,8 @@ from modal_drama3_compare import image as base_image, voices
 WEIGHTS = '/voices/_drama3/miro-emotion-20261031-v1/native-emotion-v1'   # 11/1 감정 단계로 교체(사용자 청취 "괜찮네"), 되돌리기: miro-moan-20261029-v2/native-moan-v2
 VOICES = '/voices/_drama3/serving-voices'
 DEFAULT_VOICE = 'asmr01'
+# ponytail: 목소리 샘플 상태는 목소리 16개까지 들고 있는다(하나 ~100MB) — 넘으면 가장 오래 안 쓴 것부터 버린다
+PREFIX_VOICES = 16
 SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
 # CUDA 그래프는 켠다(fish-speech 기본값) — 10/30 판은 학습·청취 스크립트에서 FISH_DRAMA3_CUDA_GRAPH=0 을 그대로 가져와
 # 한 칸마다 작은 커널 수천 개를 따로 띄우는 느린 경로(원본 주석: "eager decode is bound by kernel launches")로 돌고 있었다(10/31).
@@ -64,6 +66,8 @@ class Speaker:
             os.environ['FISH_DRAMA3_CUDA_GRAPH'] = '0'; self.model.decode_graphs = None
             print('cuda graph capture failed, eager decode:', type(e).__name__, flush=True)
         print(f'cuda graphs ready in {time.time() - started:.1f}s', flush=True)
+        from collections import OrderedDict
+        self.prefixes = OrderedDict()   # 목소리 → 목소리 샘플까지 읽은 모델 상태(11/6, 아래 generate)
 
     def reference(self, name):
         import os, torch
@@ -85,7 +89,7 @@ class Speaker:
             self.refs[name] = (text, codes)
         return self.refs[name]
 
-    def speak(self, text, voice):
+    def speak(self, text, voice, reuse=True):
         import io, numpy as np, soundfile as sf, torch
         from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt, generate_drama3
         from drama3_fullft.sampling_profiles import sampling_profile
@@ -94,11 +98,107 @@ class Speaker:
         limit = min(1536, max(384, len(text) * 24))
         with torch.inference_mode():
             prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
-            frames, _ = generate_drama3(self.model, prompt, max_new_tokens=limit, **sampling_profile(SAMPLING))
+            frames = self.generate(prompt, voice or DEFAULT_VOICE, limit) if reuse else generate_drama3(self.model, prompt, max_new_tokens=limit, **sampling_profile(SAMPLING))[0]
             if len(frames) == 0: raise ValueError('Empty generated audio')
             wave = self.codec_decode(frames)
         buf = io.BytesIO(); sf.write(buf, np.clip(wave, -1, 1), self.codec.sample_rate, format='WAV', subtype='PCM_16')
         return buf.getvalue()
+
+    def generate(self, prompt, voice, max_new_tokens):
+        """generate_drama3 와 같은 생성(같은 샘플링·같은 디코드 그래프)인데, 목소리 샘플까지 읽은 상태를 목소리마다 저장해 두고 되돌려 쓴다(11/6).
+        요청마다 같은 목소리 샘플 ~670줄을 다시 읽느라 4.7초씩 들던 준비를, 목소리당 처음 한 번만 한다.
+        모델은 위치별로 저장되는 주의층과, 앞 내용을 상태 하나로 요약하는 순환층(GatedDeltaNet)이 섞여 있다 —
+        주의층 저장값은 [:cut] 위치를, 순환층은 그 시점의 상태를 통째로 떠 둔다. cut 은 목소리 샘플과 공통 머리말이 끝나기 한 줄 전:
+        보조 디코더(tower)의 줄 p 는 다음 줄 p+1 을 정답으로 보고 채워지므로, 마지막 공통 줄은 글마다 다시 채워야 한다."""
+        import time, torch
+        from fish_speech.models.text2semantic.fish_omni.generate import Drama3DecodeGraphs, ensure_drama3_caches
+        from drama3_fullft.sampling_profiles import sampling_profile
+        model = self.model; backbone, tower = model.backbone, model.audio_decoder
+        sampling = sampling_profile(SAMPLING)
+        rows = len(prompt); capacity = rows + max_new_tokens
+        if capacity > model.config.text.max_position_embeddings: raise ValueError('prompt too long')
+        graphs = Drama3DecodeGraphs.for_model(model, capacity)
+        if graphs is None: ensure_drama3_caches(model, capacity)
+        frames = torch.zeros((capacity, prompt.shape[1]), dtype=torch.long, device=tower.device)
+        frames[:rows] = prompt.to(tower.device)
+        positions = torch.arange(capacity, device=tower.device)
+
+        def prefill(lo, hi):
+            hidden = None
+            for start in range(lo, hi, 128):
+                end = min(start + 128, hi)
+                chunk = frames[start:end]
+                hidden = backbone(inputs_embeds=tower.embed_backbone(chunk, backbone.embed(chunk[:, 0]))[None], input_pos=positions[start:end])[0].to(tower.device)
+                paired = min(end, rows - 1)
+                if paired > start: tower.prefill(hidden[: paired - start], positions[start:paired], frames[start:paired], frames[start + 1 : paired + 1])
+            return hidden
+
+        attn = [l.self_attn for l in backbone.model.layers if l.layer_type == 'full_attention']
+        linear = [l.linear_attn for l in backbone.model.layers if l.layer_type != 'full_attention']
+        towers = [l.transformer_layer.attention for l in (*tower.shared_layers, *tower.residual_layers)]
+        started = time.perf_counter()
+        saved = self.prefixes.get(voice)
+        if saved and rows > saved['cut'] + 1 and torch.equal(prompt[: saved['cut'] + 1], saved['rows']):
+            cut = saved['cut']
+            for a, (k, v) in zip(attn, saved['attn']): a.k_cache[:1, :, :cut].copy_(k); a.v_cache[:1, :, :cut].copy_(v)
+            for g, (c, r) in zip(linear, saved['linear']): g.conv_state[:1].copy_(c); g.recurrent_state[:1].copy_(r)
+            for t, (k, v) in zip(towers, saved['tower']): t.k_cache[:, :, :cut].copy_(k); t.v_cache[:, :, :cut].copy_(v)
+            self.prefixes.move_to_end(voice)
+            hit = True
+        else:
+            # 공통 머리말 = 서로 다른 두 글로 만든 프롬프트가 같은 줄까지(목소리 샘플·지시문·화자 표시)
+            from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
+            ref_text, codes = self.reference(voice)
+            other = build_drama3_prompt('<|speaker:0|>' + 'Zq', model.tokenizer, model.config, ['<|speaker:0|>' + ref_text], [codes])
+            common = next((i for i in range(min(len(other), rows)) if not torch.equal(other[i], prompt[i])), min(len(other), rows))
+            cut = common - 1
+            hit = False
+            if cut > 0:
+                prefill(0, cut)
+                self.prefixes[voice] = {'cut': cut, 'rows': prompt[: cut + 1].clone(),
+                    'attn': [(a.k_cache[:1, :, :cut].clone(), a.v_cache[:1, :, :cut].clone()) for a in attn],
+                    'linear': [(g.conv_state[:1].clone(), g.recurrent_state[:1].clone()) for g in linear],
+                    'tower': [(t.k_cache[:, :, :cut].clone(), t.v_cache[:, :, :cut].clone()) for t in towers]}
+                while len(self.prefixes) > PREFIX_VOICES: self.prefixes.popitem(last=False)
+            else: cut = 0
+        hidden = prefill(cut, rows)
+        print(f'prefill {rows} rows (reused {cut if hit else 0}) in {time.perf_counter() - started:.2f}s', flush=True)
+
+        hidden = hidden[-1:]
+        produced = 0
+        if graphs is not None: graphs.start(hidden, rows - 1, frames[:rows], sampling['temperature'], sampling['top_k'], sampling['top_p'])
+        for step in range(max_new_tokens):
+            position = rows - 1 + step
+            if graphs is not None: sampled, main = graphs.step(position)
+            else:
+                logits = backbone.compute_logits(hidden).to(tower.device)
+                sampled = tower.decode_step(logits, hidden, positions[position : position + 1], frames[position : position + 1], frames[: position + 1, 0],
+                                            temperature=sampling['temperature'], top_k=sampling['top_k'], top_p=sampling['top_p'])
+                main = sampled[0, 0].item()
+            if main == model.config.eos_token_id: break
+            frames[position + 1] = sampled[0]
+            produced += 1
+            if graphs is None and step + 1 < max_new_tokens:
+                hidden = backbone(inputs_embeds=tower.embed_backbone(sampled, backbone.embed(sampled[:, 0]))[None], input_pos=positions[position + 1 : position + 2])[0].to(tower.device)
+        return frames[rows : rows + produced].cpu()
+
+    @modal.method()
+    def bench(self, items, seed=7):
+        """재사용 확인용(11/6): 같은 글을 예전 방식·재사용 첫 번째(저장)·재사용 두 번째(되돌림)로 만들어 시간과 소리를 돌려준다.
+        저장/되돌림이 같은 씨앗에서 같은 소리면 상태를 제대로 되돌린 것이다."""
+        import time, torch
+        out = []
+        for item in items:
+            text, voice = delivery_text(item['text'], item), item.get('voice')
+            row = {'text': item['text'], 'voice': voice}
+            for name, reuse, drop in (('old', False, False), ('first', True, True), ('again', True, False)):
+                if drop: self.prefixes.pop(voice or DEFAULT_VOICE, None)
+                torch.manual_seed(seed); torch.cuda.synchronize(); t = time.perf_counter()
+                row[name] = self.speak(text, voice, reuse=reuse)
+                torch.cuda.synchronize(); row[name + '_s'] = round(time.perf_counter() - t, 2)
+            row['same'] = row['first'] == row['again']
+            out.append(row)
+        return out
 
     def codec_decode(self, frames):
         import numpy as np

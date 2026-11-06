@@ -39,21 +39,3 @@ const WHISPER_CUES = /속삭|귓가|귓속|귀에 대고|귀엣말|소곤|숨죽
 export function spokenStyle(blocks: Array<Record<string, unknown>>): 'whisper' | 'normal' {
   return blocks.some((b) => b.type !== 'dialogue' && typeof b.text === 'string' && WHISPER_CUES.test(b.text)) ? 'whisper' : 'normal'
 }
-
-/**
- * 11/6: 한 대사를 문장 단위로 — 첫 문장만 먼저 만들어 바로 재생하고, 듣는 동안 다음 문장을 만든다(첫 소리까지 대사 전체 → 첫 문장 시간).
- * 너무 짧은 조각(12자 미만)은 다음 문장에 붙여 억양이 덜 끊기게. 괄호 지시([moaning] 등) 안에서는 나누지 않는다. 최대 20문장.
- */
-export function speechSentences(text: string): string[] {
-  const parts = text.split(/(?<=[.!?…~。！？])\s+(?![^\[]*\])/).map(s => s.trim()).filter(Boolean)
-  const out: string[] = []
-  let carry = ''
-  for (const p of parts) {
-    const joined = carry ? `${carry} ${p}` : p
-    if (joined.replace(/\[[^\]]*\]/g, '').trim().length < 12) { carry = joined; continue }
-    out.push(joined); carry = ''
-  }
-  if (carry) out.length ? (out[out.length - 1] += ` ${carry}`) : out.push(carry)
-  if (out.length <= 20) return out
-  return [...out.slice(0, 19), out.slice(19).join(' ')]
-}
