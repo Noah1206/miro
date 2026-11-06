@@ -9,7 +9,7 @@ import { isUnveilPhoto } from '@/lib/unveil-photo'
  * 카드마다 시작을 조금씩 어긋나게 해 한꺼번에 바뀌지 않게 한다.
  */
 /** 11/7 사용자: 대표 사진이 넘어가지 않고 첫 장(표지)에 머무는 작품 — 카드와 상세 대표 사진 모두. */
-const STILL_COVERS = new Set(['official-m-cheonma-reborn'])
+const STILL_COVERS = new Set(['official-m-cheonma-reborn', 'official-m-mother-daughter'])
 export const stillCover = (slug?: string | null) => !!slug && STILL_COVERS.has(slug)
 
 export function useRotatingPhoto(images: string[], veiled?: boolean, still = false): { photos: string[]; active: number; photo: string | null; onPhotoReady: (i: number) => void } {
