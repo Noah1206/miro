@@ -10,9 +10,8 @@ const LENGTHS = ['scene', 'long', 'saga'] as const
 export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
-  // 11/3: GPT 는 고르는 목록에서 뺀다 — 장애 때 뒤에서 대신 답하는 예비 역할은 그대로(routeModels).
+  // 11/7 사용자: GPT 도 고르는 목록에 다시 연다(11/3 '목록에서 뺀다'를 뒤집음 — 예비 역할은 그대로).
   const candidates = registry?.models.filter(m => m.enabled && m.chatSelectable !== false && m.capabilities.includes('dialogue')
-    && m.provider !== 'openai' && !/^openai\/|^gpt-/i.test(m.providerModelId)
     && m.inputCost !== undefined && m.outputCost !== undefined
     && (!productionRuntime() || !!providerFromEnv(m.provider, m.providerModelId))) ?? []
   // A ready backup remains selectable when no primary is available.
@@ -45,9 +44,12 @@ function choiceModels(adult: boolean): Array<{ key: string; model: ModelDefiniti
 function choiceId(id: string, length: ChatLength) { return `model:${encodeURIComponent(id)}:${length}` }
 function displayName(id: string) {
   // OpenRouter 이름(언베일 방, 11/3): anthropic/claude-sonnet-5.5 · google/gemini-3.8-flash → 직결 이름과 같게.
-  id = id.replace(/^(anthropic|google)\//, '').replace(/^(claude-(?:haiku|sonnet|opus))-5\.5$/, '$1-5-5')
-  const claude = /^claude-(haiku|sonnet|opus)-5-5$/.exec(id)
-  if (claude) return `Claude ${claude[1]![0]!.toUpperCase()}${claude[1]!.slice(1)} 5.5`
+  id = id.replace(/^(anthropic|google|openai)\//, '')
+  // claude-opus-4-6 · claude-opus-4.6 · claude-opus-5 · claude-sonnet-5-5 → Claude Opus 4.6 / Opus 5 / Sonnet 5.5
+  const claude = /^claude-(haiku|sonnet|opus)-(\d+)(?:[.-](\d+))?$/.exec(id)
+  if (claude) return `Claude ${claude[1]![0]!.toUpperCase()}${claude[1]!.slice(1)} ${claude[2]}${claude[3] ? `.${claude[3]}` : ''}`
+  if (id === 'gemini-3-flash-preview') return 'Gemini 3 Flash'
+  if (id === 'gemini-3.1-pro-preview') return 'Gemini 3.1 Pro'
   if (id === 'claude-fable-5') return 'Claude Fable 5'
   if (id === 'claude-fable-5-1') return 'Claude Fable 5.1'
   if (id === 'gemini-4-argon') return 'Gemini 4 Argon'
