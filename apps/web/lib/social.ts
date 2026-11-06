@@ -146,7 +146,7 @@ export async function similarCharacters(characterId: string, genre: string | nul
   const rows = await db.select({
     id: characters.id, slug: characters.slug, name: characters.name,
     role: characters.role, tagline: characters.tagline, accentA: characters.accentA,
-    genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords, images: characters.images,
+    genre: worlds.genre, relationshipKeywords: characters.relationshipKeywords, images: characters.images, coverUnveil: characters.coverUnveil,
   })
     .from(characters)
     .innerJoin(worlds, eq(worlds.characterId, characters.id))

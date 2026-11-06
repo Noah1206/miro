@@ -191,7 +191,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           <h2 id="similar" className="t-title-3" style={{ padding: '0 var(--gutter)', marginBottom: 12, fontWeight: 'var(--weight-semibold)' }}>
             {t('{subject} 마음에 들었다면', { subject: subject(c.name), name: c.name })}
           </h2>
-          <SimilarRow items={similar} />
+          {/* 11/6: 언베일을 안 켠 사람에겐 언베일 표지 카드를 흐린다(홈과 같은 규칙). */}
+          <SimilarRow items={similar.map(s => ({ ...s, veiled: !unveil }))} />
         </section>
       )}
 

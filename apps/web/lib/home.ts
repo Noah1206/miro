@@ -227,7 +227,8 @@ function shuffle<T>(xs: T[]): T[] {
 }
 
 /** 인기 = 대화한 사람 수 순서로 6명. 장르를 고르면 그 장르 안에서 줄 세운다(2026-09-30). */
-export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[]> {
+/** veiled = 언베일을 안 켠 사람(11/6) — 언베일 표지 카드를 흐리고 언베일 사진은 넘기지 않는다. */
+export async function popularHomeCards(genres: string[] = [], veiled = true): Promise<HomeCard[]> {
   if (indexedDiscoveryEnabled()) {
     const ranked = await rankedPopularIds(genreMatch(sql.raw('c.id'), genres))
     if (ranked.length === 0) return []
@@ -244,7 +245,7 @@ export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[
       const row = byId.get(character_id)
       if (!row) return []
       const { createdAtKey: _createdAtKey, ...details } = row
-      return [card({ ...details, slug: details.slug ?? details.id }, { plays })]
+      return [card({ ...details, slug: details.slug ?? details.id }, { plays, veiled })]
     })
   }
   const counts = db.select({ characterId: roleplaySessions.characterId, plays: sql<number>`count(distinct ${roleplaySessions.userId})::int`.as('plays') })
@@ -256,7 +257,7 @@ export async function popularHomeCards(genres: string[] = []): Promise<HomeCard[
     .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres)))
     .orderBy(desc(counts.plays), desc(characters.createdAt), desc(characters.id))
     .limit(6)
-  return rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays }))
+  return rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays, veiled }))
 }
 
 
