@@ -17,6 +17,7 @@ import { REROLL, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
+import { useImmersive } from './immersive'
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
@@ -205,7 +206,17 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   // 상황은 말풍선 밖, 행동·속마음은 같은 인물의 말풍선 안에서 대사와 구분한다.
   const t = useT()
   const { theme } = useChatTheme()
+  const voice = useImmersive()
   const segments = segmentReply(m.blocks, m.content, name, cast)
+  // 11/6: 음성 모드(무료)에선 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다. 길게 누르기(신고)와 겹치지 않게 짧은 누름만.
+  const replayable = voice.on && voice.free && !typing && /^[0-9a-f-]{36}$/i.test(m.id)
+  const pressedAt = useRef(0)
+  const replayProps = (texts: string[]) => replayable ? {
+    className: `${styles.bubble} ${styles.replayable}`, role: 'button', tabIndex: 0, 'aria-label': t('이 대사 다시 듣기'),
+    onPointerDown: () => { pressedAt.current = Date.now() },
+    onClick: () => { if (Date.now() - pressedAt.current < 450) voice.replay(m, texts) },
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); voice.replay(m, texts) } },
+  } : { className: styles.bubble }
   const count = segments.reduce((n, s) => n + s.paragraphs.length, 0)
   // 문단을 하나씩 친다 — 문단이 많은 응답은 전체가 빨라진다.
   const [typed, setTyped] = useState(0)
@@ -243,7 +254,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
           })()}
           <div className={styles.characterContent}>
             <p className={styles.speaker}>{seg.speaker}</p>
-            <div className={styles.timedBubble}><div className={styles.bubble}>
+            <div className={styles.timedBubble}><div {...replayProps(seg.paragraphs.filter(p => p.kind === 'dialogue').map(p => p.text))}>
               {seg.paragraphs.map((p) => (
                 <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
                   hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>

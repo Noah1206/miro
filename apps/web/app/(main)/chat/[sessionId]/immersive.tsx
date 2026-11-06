@@ -17,8 +17,10 @@ import styles from './chat.module.css'
  */
 export type SpeechChoice={messageId:string;part:number;text:string}
 type Immersive = { media: CharacterMedia; available:boolean; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
-  choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string }
-const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'' })
+  choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string
+  /** 11/6: 무료 운영(음성 분량 차감 꺼짐) — 새 답 이어 읽기·말풍선 눌러 다시 듣기. */
+  free:boolean;replay:(m:Msg,texts:string[])=>void }
+const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{} })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
@@ -39,7 +41,40 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const known=new Set(initialMessages.map(m=>m.id))
   const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
     .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName,voiceSpeakers).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
-  const stop=()=>{controller.current?.abort();audio.current?.pause();setStatus('idle')}
+  // 11/6 이어 읽기: 읽을 답을 줄 세워 끝까지 읽는다 — 읽는 중에 새 답이 와도 끊지 않고 뒤에 붙는다.
+  const queue=useRef<Array<{id:string;parts:number[]|null;key:string}>>([])
+  const current=useRef<string|null>(null)
+  const latest=useRef<Msg[]>([]);latest.current=[...initialMessages,...appended.filter(m=>!known.has(m.id))]
+  const stop=()=>{queue.current=[];controller.current?.abort();audio.current?.pause();setStatus('idle')}
+  const drain=async()=>{
+    if(current.current!==null)return
+    const active=new AbortController();controller.current=active
+    try{
+      while(queue.current.length&&!active.signal.aborted){
+        const job=queue.current.shift()!;current.current=job.key
+        const m=latest.current.find(x=>x.id===job.id);if(!m)continue
+        const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
+        const parts=(job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])
+        for(const [k,part] of parts.entries()){
+          try{await playVoiceSelection(sessionId,m.id,part,'standard',audio.current!,active.signal,v=>{if(controller.current===active)setStatus(v)})}
+          catch(e){if(active.signal.aborted)throw e;setStatus('error');continue}   // 한 줄이 실패해도 나머지는 계속 읽는다
+          const pause=Math.max(0,Math.min(1500,segs[part]!.delivery.pauseAfterMs??0))
+          if(pause&&k<parts.length-1)await voicePause(pause,active.signal)
+        }
+      }
+    }catch{/* 음성 모드를 끄거나 방을 나감 */}
+    finally{current.current=null}
+  }
+  // 음성 분량 차감이 켜진 운영(유료)에선 저절로 읽지 않는다 — 지금처럼 골라 듣는 패널(묻지 않고 차감하지 않게).
+  const [free,setFree]=useState<boolean|null>(null)
+  useEffect(()=>{if(!on)return;setFree(null);const a=new AbortController()
+    void fetch('/api/tts/credits',{cache:'no-store',signal:a.signal}).then(r=>r.ok?r.json():null).then((b:{enabled?:boolean}|null)=>setFree(!!b&&!b.enabled)).catch(()=>{})
+    return()=>a.abort()},[on])
+  const enqueue=(id:string,parts:number[]|null)=>{
+    const key=`${id}:${parts?.join(',')??'all'}`
+    if(current.current===key||queue.current.some(j=>j.key===key))return
+    queue.current.push({id,parts,key});void drain()
+  }
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // 11/6: 음성 모드가 켜지면(토글·다시 들어옴) 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간을 기다리지 않게.
   useEffect(()=>{if(on)void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true}),keepalive:true}).catch(()=>{})},[on])
@@ -61,39 +96,30 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       value=>{if(controller.current===active)setStatus(value)},reuseOnly);return true }
     catch {if(!active.signal.aborted)setStatus('error');return false}
   }
-  // 11/6: 음성 모드에선 새로 도착한 캐릭터 답을 저절로 처음부터 끝까지 읽는다(대사마다 문장 단위·대사 사이 쉼).
-  // 음성 분량 차감이 켜진 운영(유료)에선 저절로 읽지 않고 지금처럼 골라 듣는다 — 묻지 않고 차감하지 않게.
-  const free=useRef<boolean|null>(null)
-  useEffect(()=>{if(!on)return;free.current=null
-    void fetch('/api/tts/credits',{cache:'no-store'}).then(r=>r.ok?r.json():null).then((b:{enabled?:boolean}|null)=>{free.current=!!b&&!b.enabled}).catch(()=>{})},[on])
-  const spoken=useRef(new Set<string>())
   // 켜는 순간 이미 와 있던 답은 읽지 않는다 — 켠 뒤에 새로 오는 답부터.
+  const spoken=useRef(new Set<string>())
   useEffect(()=>{if(on)for(const m of appended)spoken.current.add(m.id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[on])
-  const fresh=appended.filter(m=>!known.has(m.id)&&m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id)).at(-1)
+  const arrived=appended.filter(m=>!known.has(m.id)&&m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
   useEffect(()=>{
-    if(!on||!enabled||!fresh||spoken.current.has(fresh.id))return
-    spoken.current.add(fresh.id)
-    const segments=spokenSegments(fresh.blocks,fresh.content,characterName,voiceSpeakers)
-    if(!segments.length)return
-    void (async()=>{
-      // 차감 여부를 아직 모르면 잠깐 기다린다(켠 직후 첫 답).
-      for(let i=0;i<20&&free.current===null;i++)await new Promise(r=>setTimeout(r,150))
-      if(!free.current)return
-      stop();unlock();const active=new AbortController();controller.current=active
-      try{
-        for(const [part,s] of segments.entries()){
-          await playVoiceSelection(sessionId,fresh.id,part,'standard',audio.current!,active.signal,v=>{if(controller.current===active)setStatus(v)})
-          const pause=Math.max(0,Math.min(1500,s.delivery.pauseAfterMs??0))
-          if(pause&&part<segments.length-1)await voicePause(pause,active.signal)
-        }
-      }catch{if(!active.signal.aborted)setStatus('error')}
-    })()
+    if(!on||!enabled||free!==true)return
+    for(const m of arrived)if(!spoken.current.has(m.id)){spoken.current.add(m.id);enqueue(m.id,null)}
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[on,enabled,fresh?.id])
+  },[on,enabled,free,arrived.map(m=>m.id).join()])
+  /** 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다(줄 끝에 붙는다). texts = 그 말풍선에 든 대사 문단. */
+  const replay=(m:Msg,texts:string[])=>{
+    if(!on||!enabled||free!==true||!/^[0-9a-f-]{36}$/i.test(m.id))return
+    const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
+    const said=texts.map(x=>x.trim()).filter(Boolean)
+    // 블록 없는 옛 기록·인트로는 글 전체가 한 줄이다.
+    const parts=!m.blocks.length?(segs.length&&said.length?[0]:[]):segs.flatMap((s,i)=>said.some(x=>x===s.text||x.startsWith(s.text))?[i]:[])
+    if(!parts.length)return
+    if(current.current===null)unlock()
+    enqueue(m.id,parts)
+  }
   return (
-    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId }}>
+    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}
@@ -103,6 +129,10 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
 }
 
 export function VoiceStatus() {
+  const t=useT(),voice=useImmersive()
+  // 무료 운영: 고르는 패널 대신 한 줄 — 새 답은 저절로 읽고, 다시 들으려면 말풍선을 누른다.
+  if(voice.on&&voice.free)return <p className={styles.voiceHint} role="status">
+    {t(voice.status==='preparing'?'음성 준비 중…':voice.status==='playing'?'읽는 중':voice.status==='error'?'음성을 읽지 못했어요':'새 답은 저절로 읽어요 · 말풍선을 누르면 다시 들어요')}</p>
   return <SpeechPanel/>
 }
 
