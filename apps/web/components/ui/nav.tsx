@@ -10,7 +10,7 @@ import { useT } from '@/lib/i18n/client'
 import glass from './nav-glass.module.css'
 
 /**
- * 탭은 미로 · 탐색 · 만들기 · 대화 · 프로필 순서다.
+ * 탭은 홈 · 탐색 · 만들기 · 대화 · 프로필 순서다.
  *
  * 아이콘은 선이 아니라 꽉 찬 실루엣이다. 속(플러스·말풍선 점)은 같은 path 안의
  * 하위 도형으로 두고 fill-rule=evenodd 로 뚫는다 — 배경색으로 덮으면 내비의 반투명 블러와
@@ -21,8 +21,9 @@ const ITEMS = [
    * 미로 — 첫 화면(홈). 캐릭터 카드가 겹겹이 쌓인 모양이다.
    * 겹친 자리는 evenodd 로 뚫려 틈이 된다. 그 틈 덕에 한 덩어리가 아니라 '여러 장' 으로 읽힌다.
    */
-  { href: '/home', label: msg('미로'),
-    icon: <path d="M10.8 2.6h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4h-7.2a3.4 3.4 0 0 1-3.4-3.4V6a3.4 3.4 0 0 1 3.4-3.4ZM6 7.4h7.2a3.4 3.4 0 0 1 3.4 3.4v7.2a3.4 3.4 0 0 1-3.4 3.4H6a3.4 3.4 0 0 1-3.4-3.4v-7.2A3.4 3.4 0 0 1 6 7.4Z" /> },
+  /** 11/7 사용자: '미로' → '홈', 집 모양 아이콘. 지붕+몸통 한 덩어리에 문을 evenodd 로 뚫는다. */
+  { href: '/home', label: msg('홈'),
+    icon: <path d="M11.2 2.9a1.3 1.3 0 0 1 1.6 0l8.4 6.7c.4.3.6.8.6 1.3v9.1c0 .9-.7 1.6-1.6 1.6H4c-.9 0-1.6-.7-1.6-1.6v-9.1c0-.5.2-1 .6-1.3l8.2-6.7ZM10 15.4v4.8h4v-4.8a2 2 0 0 0-4 0Z" /> },
   { href: '/explore', label: msg('탐색'),
     icon: <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 5.4-2.8 6.4-6.4 2.8 2.8-6.4 6.4-2.8ZM12 10.8a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z" /> },
   /** 만들기 — 둥근 사각형에 evenodd 로 뚫린 플러스. 10/28: '내가 만든 캐릭터' 화면으로 간다(사용자 요청). */
@@ -66,7 +67,7 @@ export function Nav({ signedIn = true, providers = [] }: { signedIn?: boolean; p
                 {it.icon}
               </svg>
               {/* 10/28: 아이콘 아래 탭 이름(다시 보이게). */}
-              <span style={{ fontSize: 'var(--font-micro)', lineHeight: 1.2, letterSpacing: 0 }}>{t(it.label)}</span>
+              <span style={{ fontSize: 'var(--font-micro)', lineHeight: 1.2, letterSpacing: 0, marginTop: 3 }}>{t(it.label)}</span>
             </span>
         )
         const style = { color: 'var(--color-text-primary)' }
