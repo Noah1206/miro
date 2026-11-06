@@ -554,3 +554,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .composerBar .suggestPill { background:var(--color-surface-2); }
 /* 11/7 사용자: 모델 알약 왼쪽 여백(12px)만큼 아래에도 여백 — 입력창 카드 안에서 위아래·옆이 고르게. */
 .composerForm, :global([data-chat-theme]) .composerForm { padding-bottom:12px; }
+/* 11/7 사용자: 입력창 여백도 반응형 — 왼쪽과 아래를 같은 값으로, 좁은 화면은 8px, 넓은 화면은 12px. */
+.composerForm, :global([data-chat-theme]) .composerForm { padding-left:clamp(8px, 2.4vw, 12px); padding-bottom:clamp(8px, 2.4vw, 12px); }
+.composerTools, :global([data-chat-theme]) .composerTools { gap:clamp(4px, 1.2vw, 6px); }

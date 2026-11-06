@@ -56,3 +56,5 @@
 :global([data-chat-theme='miro']) .trigger[data-model-brand] .icon,:global([data-chat-theme='dm']) .trigger[data-model-brand] .icon,:global([data-chat-theme='miro']) .trigger[data-model-brand] > svg,:global([data-chat-theme='dm']) .trigger[data-model-brand] > svg { color:#fff; }
 /* 11/7 사용자: 모델 알약 너비를 스크린샷처럼 여유 있게 — 옆 여백·아이콘 간격을 넓힌다(높이 29px 은 그대로). */
 .trigger { gap:8px; padding:0 14px 0 10px; max-width:min(200px,100%); }
+/* 11/7 사용자: 화면 너비에 따라 반응형 — 좁은 휴대폰은 촘촘히, 넓으면 스크린샷처럼 여유 있게. */
+.trigger { gap:clamp(5px, 1.5vw, 8px); padding:0 clamp(9px, 2.8vw, 14px) 0 clamp(7px, 2vw, 10px); }
