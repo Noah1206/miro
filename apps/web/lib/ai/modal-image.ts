@@ -13,7 +13,7 @@ export function modalImageReady() {
 /** 11/7 작품별 그림체(tooling/image/STYLES.md) — 대표 사진을 그린 그림체와 같게. 서버 안에서만 쓰고 화면에 띄우지 않는다. */
 const WORK_STYLE: Record<string, string> = {
   'official-m-rogue-noble': 'itim-noob', 'official-m-club-senior': 'itim-noob', 'official-m-reverse-world': 'itim-noob', 'official-m-apocalypse-bully': 'itim-noob', 'official-m-others-gf': 'itim-noob',
-  'official-m-gumiho-partner': 'kdh-noob', 'official-m-moon-app': 'kdh-noob', 'official-m-hero-party': 'kdh-noob',
+  'official-m-gumiho-partner': 'kdh-noob', 'official-m-moon-app': 'kdh-noob', 'official-m-hero-party': 'kdh-noob', 'official-m-massage-club': 'kdh-noob',
   'official-m-desire-diary': 'fa-noob', 'official-m-pet-seniors': 'fa-noob',
   'official-m-brat-senior': 'acdm-noob',
   'official-m-stray-cat': 'isg-noob', 'official-m-stepmom-friends': 'isg-noob',
