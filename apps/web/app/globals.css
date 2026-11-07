@@ -439,7 +439,7 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .sample-narration .rich-text { color: var(--color-text-secondary); font-size: var(--font-body-size); font-style: italic; line-height: 1.65; }
 .sample-narration .rich-text em { font-style: normal; }
 /* 인트로: 작은 텍스트 탭 → 시각·장소 한 줄 → 서술과 말풍선. */
-.intro-preview { display: flex; flex-direction: column; gap: 14px; font-size: 16px; }
+.intro-preview { display: flex; flex-direction: column; gap: 14px; font-size: 13px; }
 .intro-expand { align-self: flex-start; min-height: 44px; padding: 8px 0; border: 0; background: transparent; color: var(--color-accent-text); font: inherit; font-size: var(--font-caption); cursor: pointer; }
 .intro-scenes { display:flex; flex-wrap:wrap; gap:8px 18px; border:0; padding:0; margin:0; }
 .intro-chip { position:relative; display:inline-flex; align-items:center; min-height:32px; padding:4px 0; border:0; border-radius:0; background:transparent; color:var(--color-text-secondary); font-size:14px; line-height:1.5; font-weight:var(--weight-medium); cursor:pointer; }
