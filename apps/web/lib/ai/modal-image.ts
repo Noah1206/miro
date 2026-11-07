@@ -14,7 +14,8 @@ export function modalImageReady() {
 const WORK_STYLE: Record<string, string> = {
   'official-m-rogue-noble': 'itim-noob', 'official-m-club-senior': 'itim-noob', 'official-m-reverse-world': 'itim-noob', 'official-m-apocalypse-bully': 'itim-noob',
   'official-m-gumiho-partner': 'kdh-noob', 'official-m-moon-app': 'kdh-noob',
-  'official-m-desire-diary': 'fa-noob',
+  'official-m-desire-diary': 'fa-noob', 'official-m-pet-seniors': 'fa-noob',
+  'official-m-brat-senior': 'acdm-noob',
   'official-m-stray-cat': 'isg-noob', 'official-m-stepmom-friends': 'isg-noob',
   'official-m-frustrated-madam': 'syh-noob',
   'official-m-mother-daughter': 'srn',
