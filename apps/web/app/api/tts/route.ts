@@ -32,7 +32,8 @@ export async function POST(req: Request) {
     || (body?.reuseOnly !== undefined && typeof body.reuseOnly !== 'boolean')
     || (body?.part !== undefined && (!Number.isInteger(body.part) || Number(body.part) < 0 || Number(body.part) > 11))) return new Response(null, { status: 400 })
   const [row] = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, name: characters.name,
-    voice: officialVoices.providerVoiceId, ...voiceColumns, characterOwnerId: characters.ownerId, adultSince: roleplaySessions.adultSince, ensembleVoices: characters.ensembleVoices })
+    voice: officialVoices.providerVoiceId, ...voiceColumns, characterOwnerId: characters.ownerId, adultSince: roleplaySessions.adultSince, ensembleVoices: characters.ensembleVoices,
+    voiceOverrides: roleplaySessions.voiceOverrides, audience: characters.audience, characterId: characters.id, userId: roleplaySessions.userId })
     .from(messages)
     .innerJoin(roleplaySessions, and(eq(roleplaySessions.id, messages.sessionId), eq(roleplaySessions.userId, user.id)))
     .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))

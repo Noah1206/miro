@@ -5,12 +5,13 @@ import { SpeechError, type SpeechPolicy, type SpeechSpec } from './policy'
 import { speechAllowance, speechCreditsEnabled, type SpeechAmount } from './credits-policy'
 import { adultModeGateFor } from '../ops/safety'
 import { feature } from '@miro/config'
-import { voiceColumns, voiceUsable } from '../voice'
+import { autoVoice, listenerVoiceUsable, voiceColumns, voiceUsable } from '../voice'
 
 export async function speechSource(userId: string, sessionId: string, messageId: string) {
   if(!feature('characterVoice'))throw new SpeechError('voice_not_ready',404)
   const [row] = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, name: characters.name,
-    voice: officialVoices.providerVoiceId, ...voiceColumns,characterId:characters.id,characterOwnerId:characters.ownerId,adultSince:roleplaySessions.adultSince,ensembleVoices:characters.ensembleVoices })
+    voice: officialVoices.providerVoiceId, ...voiceColumns,characterId:characters.id,characterOwnerId:characters.ownerId,adultSince:roleplaySessions.adultSince,ensembleVoices:characters.ensembleVoices,
+    voiceOverrides:roleplaySessions.voiceOverrides,audience:characters.audience,userId:roleplaySessions.userId })
     .from(messages)
     .innerJoin(roleplaySessions, and(eq(roleplaySessions.id,messages.sessionId),eq(roleplaySessions.userId,userId)))
     .innerJoin(characters,eq(characters.id,roleplaySessions.characterId))
@@ -23,19 +24,32 @@ export async function speechSource(userId: string, sessionId: string, messageId:
   return { row, segments: spokenSegments(row.blocks,row.content,row.name,Object.keys(row.ensembleVoices ?? {})) }
 }
 /**
- * 이 줄을 읽을 목소리(11/4) — 여러 인물 카드에서 히로인에게 따로 정한 목소리가 있으면 그것, 없으면 카드 목소리.
- * 같은 목소리를 여러 히로인이 같이 써도 된다. 쓸 수 없는 목소리(내려감·비공개·언베일 불가)면 null.
+ * 이 줄을 읽을 목소리 — 순서: ① 이 방에서 사용자가 고른 목소리(11/8, voice_overrides) ② 만든 사람이 정한 목소리
+ * (히로인별 ensemble_voices, 없으면 카드 목소리, 11/4) ③ 자동 배정(11/8, lib/voice autoVoice — 화자마다 다른 목소리).
+ * 같은 목소리를 여러 히로인이 같이 써도 된다. 쓸 수 없는 목소리(내려감·비공개·언베일 불가)는 건너뛴다.
  */
 export async function segmentVoice(row: { voice: string | null; voiceStatus: string | null; voiceOwnerId: string | null; voiceShared: boolean | null; voiceAdultAllowed: boolean | null
-  characterOwnerId: string | null; adultSince: Date | null; ensembleVoices: Record<string, string> | null }, segment: SpokenSegment | undefined): Promise<string | null> {
+  characterOwnerId: string | null; adultSince: Date | null; ensembleVoices: Record<string, string> | null
+  voiceOverrides?: Record<string, string> | null; audience?: 'female' | 'male'; characterId?: string; userId?: string }, segment: SpokenSegment | undefined): Promise<string | null> {
   const names = Object.keys(row.ensembleVoices ?? {})
   const key = segment?.speaker ? matchSpeaker(segment.speaker, names) : null
+  const adult = !!row.adultSince
+  const lookup = async (id: string) => (await db.select({ voice: officialVoices.providerVoiceId, ...voiceColumns }).from(officialVoices).where(eq(officialVoices.id, id)).limit(1))[0]
+  const picked = row.voiceOverrides?.[key ?? '']
+  if (picked && row.userId) {
+    const v = await lookup(picked)
+    if (v && listenerVoiceUsable(v, row.userId, adult)) return v.voice
+  }
   const id = key ? row.ensembleVoices![key] : null
   if (id) {
-    const [v] = await db.select({ voice: officialVoices.providerVoiceId, ...voiceColumns }).from(officialVoices).where(eq(officialVoices.id, id)).limit(1)
-    if (v) return voiceUsable(v, row.characterOwnerId, !!row.adultSince) ? v.voice : null
-  }
-  return row.voice && voiceUsable(row, row.characterOwnerId, !!row.adultSince) ? row.voice : null
+    const v = await lookup(id)
+    if (v && voiceUsable(v, row.characterOwnerId, adult)) return v.voice
+  } else if (row.voice && voiceUsable(row, row.characterOwnerId, adult)) return row.voice
+  if (!row.characterId || !row.audience) return null
+  // 자리: 주인공 0, 히로인은 이름 순서대로 1, 2, … — 방 안에서 서로 다른 목소리
+  const auto = await autoVoice(row.characterId, row.audience, key ? [...names].sort().indexOf(key) + 1 : 0)
+  const v = auto ? await lookup(auto) : undefined
+  return v && voiceUsable(v, row.characterOwnerId, adult) ? v.voice : null
 }
 export async function speechSpec(userId: string, sessionId: string, messageId: string, part: number, policy: SpeechPolicy, amount: SpeechAmount='standard'): Promise<SpeechSpec> {
   const {row,segments}=await speechSource(userId,sessionId,messageId)

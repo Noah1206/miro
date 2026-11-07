@@ -13,14 +13,15 @@ const DEFAULT_VOICE_NAME = '지환'
  * 고른 줄만 밝은 카드가 되고, 오른쪽 끝에 흰 재생 버튼, 아래로 재생바가 미끄러져 나온다. 실제 값은 숨은 voiceId 칸으로 폼에 실린다.
  * ponytail: 여성·남성은 공식 목소리 이름('성우 여', '여성 …')으로 나눈다 — 목소리에 성별 칸이 생기면 그걸로.
  */
-export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; value: string; onChange: (id: string) => void }) {
+/** autoLabel(11/8, 채팅방 목소리 고르기): '' 줄을 기본 목소리 지환 대신 '자동 · …' 으로 — 성별 거르기와 무관하게 늘 맨 위, 미리 듣기 없음. */
+export function VoiceList({ voices, value, onChange, autoLabel }: { voices: VoiceOption[]; value: string; onChange: (id: string) => void; autoLabel?: string }) {
   const t = useT()
   const [filter, setFilter] = useState<Filter>('all')
   const gender = (l: string) => /여성|성우 여/.test(l) ? 'female' : /남성|성우 남/.test(l) ? 'male' : null
   const shown = voices.filter((v) => filter === 'all' || (filter === 'mine' ? v.mine : gender(v.label) === filter))
   const pills: Array<[Filter, string]> = [['all', t('전체')], ['female', t('여성')], ['male', t('남성')], ...(voices.some((v) => v.mine) ? [['mine', t('내 음성')] as [Filter, string]] : [])]
   // 기본 목소리(음성 서버 DEFAULT_VOICE, 남성)는 사람 이름으로 보인다(10/31 사용자) — 이름이라 번역하지 않는다
-  const rows: VoiceOption[] = [...(filter === 'all' || filter === 'male' ? [{ id: '', label: DEFAULT_VOICE_NAME }] : []), ...shown]
+  const rows: VoiceOption[] = [...(autoLabel ? [{ id: '', label: autoLabel }] : filter === 'all' || filter === 'male' ? [{ id: '', label: DEFAULT_VOICE_NAME }] : []), ...shown]
   return (
     <div className="stack" style={{ gap: 16 }}>
       <input type="hidden" name="voiceId" value={value} />
@@ -37,7 +38,7 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
         {rows.map((v) => {
           const [title, sub] = v.label.split(' · ')
           // 위 줄: 성별(+나이). 톤 설명은 뺀다. 기본 목소리는 음성 서버 기본값(asmr01, 남성)
-          const g = v.id === '' ? 'male' : gender(v.label)
+          const g = v.id === '' ? (autoLabel ? null : 'male') : gender(v.label)
           const age = (sub ?? '').replace(/^(여성|남성)\s*/, '').replace(/\S*\s*톤$/, '').trim()
           const top = [g === 'female' ? t('여성') : g === 'male' ? t('남성') : null, age || null, v.mine ? t('내 음성') : null].filter(Boolean).join(' · ')
           const row = (playing: boolean) => (
@@ -53,9 +54,9 @@ export function VoiceList({ voices, value, onChange }: { voices: VoiceOption[]; 
               </span>
             </button>
           )
-          return value === v.id
+          return value === v.id && !(autoLabel && v.id === '')
             ? <Selected key={v.id || 'default'} id={v.id} row={row} />
-            : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: 14 }}>{row(false)}</div>
+            : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: 14, background: value === v.id ? 'var(--color-surface-2)' : undefined }}>{row(false)}</div>
         })}
         {rows.length === 0 && <p className="t-caption" style={{ margin: '8px 0', color: 'var(--color-text-tertiary)' }}>{t('해당하는 목소리가 없어요.')}</p>}
       </div>

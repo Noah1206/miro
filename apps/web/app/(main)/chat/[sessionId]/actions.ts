@@ -5,7 +5,8 @@ import { createRoleplaySession } from '@/lib/simulation/start'
 import { setHomeUnveilFor } from '@/lib/home-mode'
 import { revalidatePath } from 'next/cache'
 import { and, eq, isNull } from 'drizzle-orm'
-import { db, roleplaySessions } from '@miro/db'
+import { characters, db, roleplaySessions } from '@miro/db'
+import { selectableVoice } from '@/lib/voice'
 import { requireUser } from '@/lib/auth'
 import { msg } from '@/lib/i18n'
 import { changeStoryDate, type StoryDateResult } from '@/lib/simulation/story-date'
@@ -44,4 +45,26 @@ export async function setAdultMode(sessionId: string, on: boolean, agreed = fals
     if (error instanceof Error && error.message.startsWith('UNVEIL_UNAVAILABLE:')) return { error: error.message.slice('UNVEIL_UNAVAILABLE:'.length) }
     throw error
   }
+}
+
+/**
+ * 이 방에서 화자 목소리 바꾸기(11/8). key '' = 주인공, 그 밖은 카드의 히로인 이름(ensemble_voices 키). voiceId '' = 자동으로 되돌리기.
+ * 고를 수 있는 목소리(공식·내 것·공개)만 받는다 — 읽을 때도 다시 본다(lib/speech/access segmentVoice).
+ */
+export async function setRoomVoice(sessionId: string, key: string, voiceId: string): Promise<{ error: string | null }> {
+  const user = await requireUser()
+  const [s] = await db.select({ overrides: roleplaySessions.voiceOverrides, ensemble: characters.ensembleVoices }).from(roleplaySessions)
+    .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt))).limit(1)
+  if (!s) return { error: msg('대화를 찾을 수 없습니다.') }
+  if (key !== '' && !Object.keys(s.ensemble ?? {}).includes(key)) return { error: msg('목소리를 바꿀 수 없어요.') }
+  const next = { ...(s.overrides ?? {}) }
+  if (!voiceId) delete next[key]
+  else {
+    const ok = await selectableVoice(voiceId, user.id)
+    if (!ok) return { error: msg('목소리를 바꿀 수 없어요.') }
+    next[key] = ok
+  }
+  await db.update(roleplaySessions).set({ voiceOverrides: next }).where(eq(roleplaySessions.id, sessionId))
+  return { error: null }
 }

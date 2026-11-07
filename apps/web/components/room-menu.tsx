@@ -19,9 +19,10 @@ import { useLanguage, useT } from '@/lib/i18n/client'
 import { ChatModelOptions } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { MemoryGraphView } from '@/app/(main)/chat/[sessionId]/memory-graph'
 import { useImmersive } from '@/app/(main)/chat/[sessionId]/immersive'
+import { RoomVoicePanel, type RoomVoice } from '@/components/room-voice'
 import styles from './room-menu.module.css'
 
-type Panel = 'persona' | 'theme' | 'model' | 'memory'
+type Panel = 'persona' | 'theme' | 'model' | 'memory' | 'voice'
 type IconName = Panel | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
 function MenuIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
@@ -29,6 +30,7 @@ function MenuIcon({ name }: { name: IconName }) {
     theme: <><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1.4-3.4 1.5 1.5 0 0 1 1.1-2.6H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8Z"/><path d="M7 10h.01M10 6.5h.01M15 7h.01M18 10h.01" strokeWidth="3"/></>,
     model: <><rect x="4" y="7" width="16" height="13" rx="3"/><path d="M12 3v4M8 12v3M16 12v3M1 12h3M20 12h3"/></>,
     memory: <><path d="M8 4h8l4 4v12H4V4h4M15 4v5h5M8 13h8M8 17h5"/></>,
+    voice: <path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/>,
     message: <path d="M21 11a8 8 0 0 1-8 8H8l-5 3v-6a8 8 0 0 1 0-10A8 8 0 0 1 9 3h4a8 8 0 0 1 8 8Z"/>,
     archive: <><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></>,
     character: <><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="9" r="3"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></>,
@@ -41,11 +43,11 @@ function MenuIcon({ name }: { name: IconName }) {
 function Chevron() { return <svg aria-hidden="true" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="m9 5 7 7-7 7"/></svg> }
 
 /** Existing room controls share one drawer; detail panels expand in place. */
-export function RoomMenu({ sessionId, initialPersona, characterName, profile: initialProfile, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0, messenger = false }: {
+export function RoomMenu({ sessionId, initialPersona, characterName, profile: initialProfile, entry, portrait, messengerHref, characterHref, choices = [], turnCount = 0, messenger = false, roomVoice }: {
   sessionId: string; initialPersona: UserPersona | null; characterName: string
   profile: AccountProfile
   entry?: CharacterEntry | null; portrait?: string | null; messengerHref?: string; characterHref?: string
-  choices?: ChatModelChoice[]; turnCount?: number; messenger?: boolean
+  choices?: ChatModelChoice[]; turnCount?: number; messenger?: boolean; roomVoice?: RoomVoice
 }) {
   const t = useT()
   const { profile, refresh: refreshProfile } = useAccountProfile(initialProfile)
@@ -62,8 +64,9 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
     void refreshProfile(); void refreshBalance()
   }, [request, refreshProfile, refreshBalance])
   const close = () => setOpen(false)
-  const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('AI 모델'), theme: t('채팅방 테마'), memory: t('대화 기억') }
-  const tiles: Panel[] = ['persona', 'model', 'theme', 'memory']
+  const titles: Record<Panel, string> = { persona: t('페르소나'), model: t('AI 모델'), theme: t('채팅방 테마'), memory: t('대화 기억'), voice: t('목소리') }
+  // 목소리(11/8)는 음성 모드를 쓸 수 있는 방에서만
+  const tiles: Panel[] = ['persona', 'model', 'theme', 'memory', ...(available && roomVoice ? ['voice' as const] : [])]
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   return <>
@@ -94,6 +97,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
           {panel === 'theme' && <ChatThemeOptions compact portrait={portrait}/>}
           {panel === 'memory' && <MemoryGraphView sessionId={sessionId} refreshKey={turnCount}/>}
           {panel === 'model' && <ChatModelOptions choices={choices}/>}
+          {panel === 'voice' && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
         </div>}
       </section>
       <section className={`${styles.section} ${styles.actions} ${styles.management}`} aria-label={t('대화 관리')}>

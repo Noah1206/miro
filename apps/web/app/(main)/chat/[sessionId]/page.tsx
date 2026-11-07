@@ -2,7 +2,8 @@ import { ChatTheme } from '@/components/chat-theme'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { notFound, redirect } from 'next/navigation'
 import { asc, eq } from 'drizzle-orm'
-import { db, messages, characters } from '@miro/db'
+import { db, messages, characters, roleplaySessions } from '@miro/db'
+import { pickAutoVoice, voiceOptions } from '@/lib/voice'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
 import { loadSession } from '@/lib/simulation/snapshot'
@@ -57,12 +58,23 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     sessionMedia(sessionId, user.id),
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
-    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
+    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
     // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
     getPersona(user.id),
     // 첫 대화 전 세계관 카드(11/4) — 이 방의 '나'를 적기 전에는 입력창 대신 카드가 뜬다.
     needsPersona(user.id, sessionId),
   ])
+  // 11/8 방에서 화자별 목소리 고르기 — 고를 수 있는 목소리, 이 방에서 고른 것, 화자마다 지금 쓰는 기본(만든 사람이 정한 것 → 자동).
+  const roomVoice = feature('characterVoice') && rec ? await (async () => {
+    const [options, [ov]] = await Promise.all([voiceOptions(user.id), db.select({ o: roleplaySessions.voiceOverrides }).from(roleplaySessions).where(eq(roleplaySessions.id, sessionId)).limit(1)])
+    const official = options.filter(o => !o.id.startsWith('u-'))
+    const names = Object.keys(rec.ensembleVoices ?? {}).sort()
+    const labelOf = (id: string | null | undefined) => options.find(o => o.id === id)?.label.split(' · ')[0] ?? null
+    const auto = (slot: number) => labelOf(pickAutoVoice(official, loaded!.characterId, rec.audience, slot))
+    const speakers = [{ key: '', name: loaded!.characterName, defaultLabel: labelOf(rec.voiceId) ?? auto(0) },
+      ...names.map((n, i) => ({ key: n, name: n, defaultLabel: labelOf(rec.ensembleVoices![n]) ?? auto(i + 1) }))]
+    return { speakers, options, overrides: ov?.o ?? {} }
+  })() : undefined
   if (!loaded || !mature) notFound()
   // 11/6: 언베일 표지 캐릭터는 언베일을 안 켠 사람에게 대화 속 사진(인트로·상황 사진)도 흐린다.
   const veilPhotos = !!rec?.coverUnveil && !(await homeUnveilEnabled(user.id))
@@ -92,7 +104,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
           <Back href="/archive" />
           <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{loaded.characterPhoto && <span className={styles.headerAvatar} aria-hidden><CharacterPhoto src={loaded.characterPhoto} alt="" size="avatar" sizes="32px" width={32} height={32} /></span>}<h1 className={styles.title}>{loaded.characterName}</h1></div></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
-          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} />
+          <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} roomVoice={roomVoice} />
         </header>
         <VoiceStatus />
 

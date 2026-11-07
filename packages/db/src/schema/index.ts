@@ -418,6 +418,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   openingScene: text('opening_scene'),
   /** 이 방에서 확인한 사용자 설정. NULL이면 입장 시 공용 페르소나를 기본값으로 제안한다. */
   userPersona: jsonb('user_persona').$type<UserPersona>(),
+  /** 11/8 이 방에서 사용자가 고른 목소리 { 화자: official_voices.id } — '' = 카드 주인공, 그 밖은 ensemble_voices 의 히로인 이름. 없으면 자동(카드 목소리 → 자동 배정). */
+  voiceOverrides: jsonb('voice_overrides').$type<Record<string, string>>().notNull().default({}),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),

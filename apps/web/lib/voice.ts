@@ -39,6 +39,35 @@ export function voiceUsable(v: { voiceStatus: string | null; voiceOwnerId: strin
 }
 export const voiceColumns = { voiceStatus: officialVoices.status, voiceOwnerId: officialVoices.ownerId, voiceShared: officialVoices.shared, voiceAdultAllowed: officialVoices.adultAllowed }
 
+/** 공식 목소리 이름으로 성별을 가른다('… · 여성'). 만들기 화면 VoiceList 와 같은 규칙. */
+export const voiceGender = (label: string): 'female' | 'male' | null => /여성|성우 여/.test(label) ? 'female' : /남성|성우 남/.test(label) ? 'male' : null
+
+/**
+ * 자동 목소리(11/8) — 카드·히로인에 정한 목소리가 없을 때. 남성향 카드는 여성, 여성향 카드는 남성 공식 목소리 중에서
+ * 캐릭터마다 다른 자리부터 화자 순서대로 하나씩 — 같은 방의 히로인끼리 목소리가 겹치지 않는다(목소리 수보다 화자가 많을 때만 돈다).
+ * 반환은 official_voices.id. 맞는 목소리가 없으면 null(음성 서버 기본 목소리).
+ */
+export function pickAutoVoice(pool: Array<{ id: string; label: string }>, characterId: string, audience: 'female' | 'male', slot: number): string | null {
+  const want = audience === 'male' ? 'female' : 'male'
+  const list = pool.filter(v => voiceGender(v.label) === want).map(v => v.id).sort()
+  if (!list.length) return null
+  let h = 0
+  for (const c of characterId) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return list[(h + slot) % list.length]!
+}
+export async function autoVoice(characterId: string, audience: 'female' | 'male', slot: number): Promise<string | null> {
+  const pool = await db.select({ id: officialVoices.id, label: officialVoices.label }).from(officialVoices)
+    .where(and(eq(officialVoices.status, 'active'), isNull(officialVoices.ownerId)))
+  return pickAutoVoice(pool, characterId, audience, slot)
+}
+
+/** 듣는 사람이 방에서 고른 목소리를 쓸 수 있나 — 고를 수 있는 목소리(공식·내 것·공개)이고 언베일 방이면 언베일 허용. */
+export function listenerVoiceUsable(v: { voiceStatus: string | null; voiceOwnerId: string | null; voiceShared: boolean | null; voiceAdultAllowed: boolean | null }, userId: string, adult: boolean): boolean {
+  if (v.voiceStatus !== 'active') return false
+  if (v.voiceOwnerId && v.voiceOwnerId !== userId && !v.voiceShared) return false
+  return !adult || !!v.voiceAdultAllowed
+}
+
 /**
  * 녹음할 때 화면에 띄우는 문장. 서버가 골라 쿠키에 적고(브라우저가 고르지 못한다), Modal 이 받아쓰기로 그 문장을 읽었는지 대조한다.
  * 미리 만든 남의 녹음 파일로는 통과하기 어렵다(ElevenLabs·Resemble 의 문장 읽기 확인과 같은 방식). 읽은 문장이 그대로 참조 글(ref.txt)이 된다. 한국어만(10/31 결정).
