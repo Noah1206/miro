@@ -64,6 +64,10 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
       {!scene.briefing && scene.context && (!longIntro || expanded) && <RichText editorial className="intro-narration" text={scene.context} names={names} />}
       {lines.map((line, i) => (
         <div key={`${scene.value}-${i}`} className="intro-line">
+          {line.role === 'character'
+            ? <div className="intro-bubble"><RichText editorial text={line.text} names={names} /></div>
+            : <RichText editorial className="intro-narration" text={line.text} names={names} />}
+          {/* 11/8 사용자: 상황 설명 글 다음에 그 장면 사진 */}
           {/* eslint-disable-next-line @next/next/no-img-element -- 시드가 올린 공개 장면 사진 한 장 */}
           {line.image && (veil
             ? <div style={{ position: 'relative', width: '100%', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}>
@@ -71,9 +75,6 @@ export function IntroPreview({ scenes, names, portrait, turns, veil, start }: {
                 <UnveilCover veiled label={t('언베일')} unlock={veil} />
               </div>
             : <img src={line.image} alt="" loading="lazy" decoding="async" className="intro-photo" />)}
-          {line.role === 'character'
-            ? <div className="intro-bubble"><RichText editorial text={line.text} names={names} /></div>
-            : <RichText editorial className="intro-narration" text={line.text} names={names} />}
         </div>
       ))}
       {/* 11/5: 인트로 끝에 입력 중 말풍선(…) — 11/6 사용자: 내가 적는 쪽이라 오른쪽 정렬 */}

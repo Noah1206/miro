@@ -2,7 +2,7 @@
  * Unmarked legacy samples stay samples; they never become chat history implicitly.
  */
 /**
- * image: 인트로 장면 사진(공개 URL) — 있으면 그 줄 앞에 사진 메시지로 먼저 깔린다(공식 캐릭터 시드, 10/5).
+ * image: 인트로 장면 사진(공개 URL) — 있으면 그 줄 다음에 사진 메시지로 깔린다(공식 캐릭터 시드, 10/5 · 11/8 글 → 사진 순서).
  * scene: 시작 상황 이름(10/5, 위프처럼 여러 도입부 중 고른다). 같은 scene 의 인트로 줄이 한 도입부다.
  * 처음 나오는 scene 이 기본 도입부 — scene 이 없는 줄('')도 하나의 도입부로 친다(사용자가 만든 캐릭터).
  * context·time·location: 기본이 아닌 도입부의 첫 줄에 붙는 그 장면의 첫 장면 설명·시작 시각·장소(10/6).
@@ -51,9 +51,10 @@ export function parseIntroDialogue(raw: string): DialogueEntry[] {
 /** Keep authored second-person narration. Persona names are character forms of address, not a spectator viewpoint. */
 export function introMessages(sessionId: string, entries: readonly DialogueEntry[], opening?: string, opts: { scene?: string; userName?: string | null } = {}) {
   if (opening) return [{ sessionId, role: 'character' as const, kind: 'text' as const, content: opening, blocks: [], turnIndex: 0 }]
+  // 11/8 사용자: 상황 설명 글 다음에 그 장면 사진
   const turns = introDialogue(entries, opts.scene).flatMap((t) => [
-    ...(t.image ? [{ role: t.role, kind: 'photo' as const, content: t.image }] : []),
     { role: t.role, kind: 'text' as const, content: t.text },
+    ...(t.image ? [{ role: t.role, kind: 'photo' as const, content: t.image }] : []),
   ])
   return turns.map((t, index) => ({ sessionId, ...t, blocks: [], turnIndex: index - turns.length }))
 }
