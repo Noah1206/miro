@@ -298,7 +298,7 @@ export const MALE_CHARACTERS_E: Seed[] = [
         blocks: [
           { days: [], start: '00:00', end: '07:00', label: '수면', availability: 'unreachable' },
           { days: [1, 2, 3, 4, 5], start: '08:00', end: '19:00', label: '회사', availability: 'busy' },
-          { days: [], start: '19:00', end: '24:00', label: '야근 또는 집', availability: 'free' },
+          { days: [], start: '19:00', end: '00:00', label: '야근 또는 집', availability: 'free' },
         ],
       },
     },
