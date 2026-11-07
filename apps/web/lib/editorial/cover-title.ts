@@ -11,6 +11,7 @@ const COVER_TITLES: Record<string, string> = {
   'official-m-living-doll': '오나홀이 살아났다',
   'official-m-reverse-world': '정조역전 세계',
   'official-m-idol-girlfriend': '아이돌 여자친구',
+  'official-m-stray-cat': '구해준 길고양이가 수인이 되었다',
 }
 
 export const coverTitle = (c: { slug?: string | null; name: string }) => (c.slug && COVER_TITLES[c.slug]) || c.name

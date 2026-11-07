@@ -47,8 +47,9 @@ const pageColumns = {
   tagline: characters.tagline, startingContext: characters.startingContext,
   // 11/7: 카드 소개 2줄 = 상세 화면의 소개 글 앞부분(전체를 보내면 목록 응답이 커진다).
   blurb: sql<string | null>`left(${characters.personality}, 200)`,
-  // 11/6: 카드 사진이 저절로 넘어가도록 앞 4장까지(전체를 보내면 목록 응답이 커진다).
-  images: sql<string[]>`coalesce(jsonb_path_query_array(${characters.images}, '$[0 to 3]'), '[]'::jsonb)`,
+  // 11/6: 카드 사진이 저절로 넘어가도록 앞 몇 장만(전체를 보내면 목록 응답이 커진다).
+  // 11/7: 4 → 8장 — 하렘은 일반·언베일 짝이라 4장이면 언베일을 끈 사람에게 두 명만 돌았다.
+  images: sql<string[]>`coalesce(jsonb_path_query_array(${characters.images}, '$[0 to 7]'), '[]'::jsonb)`,
   contactEnabled: contactProfiles.enabled,
   coverUnveil: characters.coverUnveil,
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
