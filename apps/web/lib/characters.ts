@@ -46,6 +46,7 @@ export async function listOfficials(type: ExperienceType): Promise<OfficialCard[
       accentB: characters.accentB,
       genre: sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`,
       tagline: characters.tagline, startingContext: characters.startingContext,
+      blurb: sql<string | null>`left(${characters.personality}, 200)`,
       images: characters.images,
       contactEnabled: contactProfiles.enabled,
     })

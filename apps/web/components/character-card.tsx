@@ -17,6 +17,8 @@ export type CardCharacter = {
   slug: string | null
   name: string
   tagline: string | null
+  /** 상세 소개 글 앞부분(카드 2줄). */
+  blurb?: string | null
   accentA: string | null
   genre: string | null
   relationshipKeywords: string[]
@@ -38,6 +40,9 @@ export type CardCharacter = {
  * 이미지 아래에 이름·한 줄·해시태그를 둔다(10/19). 대화 인원은 띄우지 않는다.
  * 마크업을 한 곳에 두어야 홈과 상세가 어긋나지 않는다 (실제로 어긋났었다).
  */
+/** 11/7: 카드 소개 2줄 = 상세 화면 소개 글의 앞부분([프로필] 같은 머리말은 뺀다). 없으면 한 줄 대사. */
+const cardBlurb = (c: CardCharacter) => c.blurb?.replace(/\[[^\]\n]*\]/g, ' ').replace(/[*_#]/g, '').replace(/\s+/g, ' ').trim() || (c.tagline ? `“${c.tagline}”` : '')
+
 export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) {
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
@@ -57,7 +62,7 @@ export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>
           <p className="t-body t-name" style={{ fontWeight: 'var(--weight-bold)', fontSize: 16, lineHeight: 1.25, letterSpacing: '-.025em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{coverTitle(c)}</p>
           {/* 소개는 늘 2줄 높이(내용이 없어도). */}
-          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{c.tagline ? `“${c.tagline}”` : ''}</p>
+          <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{cardBlurb(c)}</p>
           {/* 11/6: 상세 페이지 해시태그 칩(회색 바탕·강조색 글자)을 작게 — 한 줄로 이어지고 옆으로 밀어서 넘겨 본다. */}
           <div className="tag-scroll" style={{ display: 'flex', flexWrap: 'nowrap', gap: 4 }}>
             {tags.map(tag => (

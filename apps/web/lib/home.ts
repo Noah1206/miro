@@ -45,6 +45,8 @@ const pageColumns = {
   occupation: characters.occupation, relationshipKeywords: characters.relationshipKeywords,
   accentA: characters.accentA, accentB: characters.accentB, genre: selectedWorldGenre,
   tagline: characters.tagline, startingContext: characters.startingContext,
+  // 11/7: 카드 소개 2줄 = 상세 화면의 소개 글 앞부분(전체를 보내면 목록 응답이 커진다).
+  blurb: sql<string | null>`left(${characters.personality}, 200)`,
   // 11/6: 카드 사진이 저절로 넘어가도록 앞 4장까지(전체를 보내면 목록 응답이 커진다).
   images: sql<string[]>`coalesce(jsonb_path_query_array(${characters.images}, '$[0 to 3]'), '[]'::jsonb)`,
   contactEnabled: contactProfiles.enabled,
