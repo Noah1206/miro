@@ -175,7 +175,8 @@ def image_api(body: dict):
     # 캐릭터 대표 사진(우리 Supabase 공개 버킷만 — 다른 주소는 받지 않는다). 둘이 나오면 상대 얼굴까지 닮지 않게 세기를 낮춘다.
     ref = None
     ref_url = str(body.get('ref_url', ''))
-    if ref_url.startswith('https://rmuirlqxuxzpqoqeceej.supabase.co/storage/v1/object/public/'):
+    # 11/8 NoobAI 판은 레퍼런스(IP-Adapter)를 걸면 색이 타고 줄무늬로 깨진다 → 받지 않는다
+    if not style.get('base') and ref_url.startswith('https://rmuirlqxuxzpqoqeceej.supabase.co/storage/v1/object/public/'):
         import urllib.request
         try:
             ref = urllib.request.urlopen(ref_url, timeout=20).read()
