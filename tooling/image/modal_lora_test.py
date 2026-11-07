@@ -185,8 +185,10 @@ def image_api(body: dict):
     couple = 0.75 if body.get('couple') else 1.0
     ref_scale = (0.3 if body.get('unveil') else style.get('ref_scale', 0.6)) * couple
     face_scale = (0.6 if body.get('unveil') else 0.3) * couple
-    png = Gen(ckpt=style['ckpt'], base=style.get('base', '')).gen.remote(   # 11/7 NoobAI 판 그림체는 기본 모델도 NoobAI 로prompt, style['variant'], style['scale'], seed, neg, bool(body.get('unveil')), True,
-                                            style['hr_scale'], style['hr_strength'], ref, ref_scale, face_scale)
+    # 11/7 NoobAI 판 그림체는 기본 모델도 NoobAI 로
+    png = Gen(ckpt=style['ckpt'], base=style.get('base', '')).gen.remote(
+        prompt=prompt, variant=style['variant'], scale=style['scale'], seed=seed, neg=neg, unveil=bool(body.get('unveil')), hires=True,
+        hr_scale=style['hr_scale'], hr_strength=style['hr_strength'], ref=ref, ref_scale=ref_scale, face_scale=face_scale)
     return {'png': base64.b64encode(png).decode(), 'prompt': prompt, 'neg': neg}   # 프롬프트는 확인용(앱은 png 만 쓴다)
 
 
