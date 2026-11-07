@@ -27,7 +27,7 @@ const plan = readdirSync(ROOT).filter((d) => only ? d === only : d.startsWith('o
   // u1.jpg… = 언베일 수위 갤러리 사진(11/4) — unveil-u1.jpg 로 올려 언베일을 안 켠 사람에겐 흐린다(lib/unveil-photo).
   // 11/4 하렘 카드는 히로인마다 여러 장이라 u1~u99 까지(숫자 순서).
   const unveil = files.filter((f) => /^u\d{1,2}\.jpg$/.test(f)).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
-  return { slug, gallery, unveil, intro: files.includes('intro.jpg') ? 'intro.jpg' : null }
+  return { slug, gallery, unveil, intro: files.some((f) => /^intro[.-].*jpg$/.test(f)) ? 'intro.jpg' : null }   // 11/8 첫 줄에 사진이 없어도(intro.2.jpg 부터) 장면 사진을 넣는다
 })
 for (const p of plan) console.log(p.slug, 'gallery', p.gallery.join(','), p.unveil.length ? `+ unveil ${p.unveil.join(',')}` : '', p.intro ? '+ intro' : '(no intro)')
 if (!apply) { console.log('(dry run — --apply 로 올린다)'); process.exit(0) }
