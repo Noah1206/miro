@@ -116,9 +116,9 @@ export async function getOrGenerate(opts: {
   // 11/2: 학습한 LoRA 가 있는 Modal 로 일반·언베일 사진 모두. 성인(19+) 캐릭터만 — 그림체가 성인 데이터로 학습돼서
   // 학생 캐릭터의 일반 사진은 아래 기존 경로로 둔다(언베일은 원래 19+ 만 허용).
   if (opts.kind === 'photo' && modalImageReady()) {
-    const [c] = await db.select({ audience: characters.audience, age: characters.age, images: characters.images }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
+    const [c] = await db.select({ audience: characters.audience, age: characters.age, images: characters.images, slug: characters.slug }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
     const age = Number.parseInt(String(c?.age ?? ''), 10)
-    if (c && Number.isFinite(age) && age >= 19) return modalPhoto(opts, identity, context, c.audience, c.images?.[0])
+    if (c && Number.isFinite(age) && age >= 19) return modalPhoto(opts, identity, context, c.audience, c.images?.[0], c.slug)
     if (opts.unveil) throw new Error('unveil_image_unavailable')
   }
   if (opts.unveil && opts.kind === 'photo') {
@@ -219,13 +219,13 @@ async function unveilPhoto(
 /** Modal 사진(11/2) — 외형·장면·고정 세부사항을 영어 태그로 바꿔 학습한 그림체로. 대화방마다 비공개 저장, 사진 사용량 규칙 그대로. */
 async function modalPhoto(
   opts: Parameters<typeof getOrGenerate>[0], identity: Awaited<ReturnType<typeof activeVisualIdentity>>, context: PhotoContext, audience: 'male' | 'female',
-  refUrl?: string,
+  refUrl?: string, slug?: string | null,
 ): Promise<MediaResult> {
   if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
   const request = opts.unveil?.request
   if (unsafeRequest(request) || unsafeRequest(opts.details)) throw new Error('unsafe_request')
   const level = opts.unveil ? cappedLevel(opts.unveil.level) : null
-  const style = styleFor(audience)
+  const style = styleFor(audience, slug)
   const seed = opts.seed ?? 11
   const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:${opts.composition ?? ''}:s${seed}`
   const units = opts.usage?.units ?? usageWeight('photo')

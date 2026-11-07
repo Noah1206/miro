@@ -12,7 +12,7 @@ import modal
 
 MODEL = 'cagliostrolab/animagine-xl-4.0'
 LORA_ROOT = '/vol/siran'   # --ckpt 는 이 아래 경로(예: out-gda/gda_v1.safetensors). 폴더 없이 파일명만 주면 out/ 에서 찾는다
-TRIGGER = {'base': '', 'siran': 'siran style, ', 'siran2': 'siran2 style, ', 'gda': 'gda style, ', 'fa': 'fa style, ', 'kdh': 'kdh style, ', 'whif': 'whif style, ', 'mojz': 'mojz style, ', 'itim': 'itim style, ', 'isg': 'isg style, ', 'th': 'th style, ', 'seka': 'seka style, ', 'srn': 'srn style, '}   # 학습 설명문 맨 앞 트리거(keep_tokens=1)
+TRIGGER = {'base': '', 'siran': 'siran style, ', 'siran2': 'siran2 style, ', 'gda': 'gda style, ', 'fa': 'fa style, ', 'kdh': 'kdh style, ', 'whif': 'whif style, ', 'mojz': 'mojz style, ', 'itim': 'itim style, ', 'isg': 'isg style, ', 'th': 'th style, ', 'srn': 'srn style, ', 'syh': 'syh style, ', 'acdm': 'acdm style, '}   # 학습 설명문 맨 앞 트리거(keep_tokens=1)
 
 app = modal.App('miro-lora-test')
 cache = modal.Volume.from_name('miro-image-models', create_if_missing=True)
@@ -35,13 +35,20 @@ PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 
 @app.cls(gpu=['A10G', 'L4', 'A100-40GB'], image=image, volumes={'/cache': cache, '/vol': train_vol}, timeout=900, scaledown_window=60)
 class Gen:
     ckpt: str = modal.parameter(default='siran_v1-step00002000.safetensors')
+    base: str = modal.parameter(default='')   # 11/6 기본 모델 바꾸기 — 'HF저장소::파일.safetensors'(예: Laxhar/noobai-XL-1.1::NoobAI-XL-v1.1.safetensors), 비면 Animagine
 
     @modal.enter()
     def load(self):
         import torch
         from diffusers import StableDiffusionXLPipeline, EulerAncestralDiscreteScheduler
-        self.pipe = StableDiffusionXLPipeline.from_pretrained(
-            MODEL, torch_dtype=torch.float16, use_safetensors=True, cache_dir='/cache').to('cuda')
+        if self.base:
+            from huggingface_hub import hf_hub_download
+            repo, fname = self.base.split('::')
+            self.pipe = StableDiffusionXLPipeline.from_single_file(
+                hf_hub_download(repo, fname, cache_dir='/cache'), torch_dtype=torch.float16).to('cuda')
+        else:
+            self.pipe = StableDiffusionXLPipeline.from_pretrained(
+                MODEL, torch_dtype=torch.float16, use_safetensors=True, cache_dir='/cache').to('cuda')
         self.pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(self.pipe.scheduler.config)
         import os
         folder, name = os.path.split(self.ckpt)
@@ -69,7 +76,7 @@ class Gen:
     def gen(self, prompt: str, variant: str, scale: float = 1.0, seed: int = 7, neg: str = '', unveil: bool = False, hires: bool = False,
             hr_scale: float = 0.0, hr_strength: float = 0.4, ref: bytes | None = None, ref_scale: float = 0.0, face_scale: float = 0.0,
             init: bytes | None = None, init_strength: float = 0.65, ctrl: bytes | None = None, ctrl_scale: float = 0.6,
-            ctrl_end: float = 0.6, ctrl_top: float = 0.0, redo_top: float = 0.0, redo_prompt: str = '', redo_strength: float = 0.85, redo_from: float = 0.0, redo_x0: float = 0.0, redo_x1: float = 1.0) -> bytes:
+            ctrl_end: float = 0.6, ctrl_top: float = 0.0, redo_top: float = 0.0, redo_prompt: str = '', redo_strength: float = 0.85, redo_from: float = 0.0, redo_x0: float = 0.0, redo_x1: float = 1.0, redo_mask: bytes | None = None) -> bytes:
         import io, torch
         from PIL import Image
         if variant == 'base':
@@ -105,13 +112,15 @@ class Gen:
                            guidance_scale=5.0, generator=g).images[0]
         else:
             img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=832, height=1216, num_inference_steps=28, guidance_scale=5.0, generator=g).images[0]
-        if redo_top:   # 11/4 2단계: 위쪽(얼굴·머리)만 가리고 윤곽선 없이 다시 칠한다 — 표정·머리색·소품을 인물대로
+        if redo_top or redo_mask:   # 11/4 2단계: 위쪽(얼굴·머리)만 가리고 윤곽선 없이 다시 칠한다 — 표정·머리색·소품을 인물대로
             from diffusers import StableDiffusionXLInpaintPipeline
             from PIL import ImageFilter
             if not hasattr(self, 'inp'):
                 self.inp = StableDiffusionXLInpaintPipeline(**self.pipe.components)
             mask = Image.new('L', img.size, 0)
-            if redo_top > 0:   # 11/5 redo_x0·redo_x1: 가로도 잘라 상자로(손 같은 옆 부분을 안 건드리게)
+            if redo_mask:   # 11/7 --masks: 흰 곳만 다시 칠한다(배경·옷처럼 상자로 못 자르는 곳)
+                mask = Image.open(io.BytesIO(redo_mask)).convert('L').resize(img.size)
+            elif redo_top > 0:   # 11/5 redo_x0·redo_x1: 가로도 잘라 상자로(손 같은 옆 부분을 안 건드리게)
                 mask.paste(255, (int(img.width * redo_x0), int(img.height * redo_from), int(img.width * redo_x1), int(img.height * redo_top)))   # redo_from~redo_top 구간(11/4: 하의만 고치기)
             else:   # 음수 = 아래쪽 |redo_top| 만큼 다시 칠한다(손·하체)
                 mask.paste(255, (0, int(img.height * (1 + redo_top)), img.width, img.height))
@@ -176,7 +185,7 @@ def image_api(body: dict):
     couple = 0.75 if body.get('couple') else 1.0
     ref_scale = (0.3 if body.get('unveil') else style.get('ref_scale', 0.6)) * couple
     face_scale = (0.6 if body.get('unveil') else 0.3) * couple
-    png = Gen(ckpt=style['ckpt']).gen.remote(prompt, style['variant'], style['scale'], seed, neg, bool(body.get('unveil')), True,
+    png = Gen(ckpt=style['ckpt'], base=style.get('base', '')).gen.remote(   # 11/7 NoobAI 판 그림체는 기본 모델도 NoobAI 로prompt, style['variant'], style['scale'], seed, neg, bool(body.get('unveil')), True,
                                             style['hr_scale'], style['hr_strength'], ref, ref_scale, face_scale)
     return {'png': base64.b64encode(png).decode(), 'prompt': prompt, 'neg': neg}   # 프롬프트는 확인용(앱은 png 만 쓴다)
 
@@ -187,7 +196,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
          hr_scales: str = '', hr_strength: float = 0.4, inits: str = '', faces: str = '', face_scale: float = 0.5, ref_scale: float = 0.0,
          init_strengths: str = '0.65', ctrls: str = '', ctrl_scale: float = 0.6, ctrl_end: float = 0.6,
          ctrl_tops: str = '', redo_tops: str = '', redo_prompts: str = '', redo_strength: float = 0.85, redo_from: float = 0.0,
-         line_seeds: str = '', redo_x0: float = 0.0, redo_x1: float = 1.0):
+         line_seeds: str = '', redo_x0: float = 0.0, redo_x1: float = 1.0, base: str = '', masks: str = ''):
     """--prompts 파일(한 줄에 프롬프트 하나)이 있으면 그 프롬프트만, --variant 하나로, --seeds 마다 뽑는다(캐릭터 사진용).
     비교용: --scales 0.6,0.8,1.0 (강도 여러 개), --hires off|on|both (업스케일 재생성)."""
     import os
@@ -200,7 +209,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
     grid = bool(scales) or hires != 'off' or bool(hr_scales)
     # 11/4 --inits / --faces: 쉼표로 프롬프트 줄마다 밑그림·얼굴 레퍼런스 파일(줄 수와 같게, 빈 칸은 없음)
     per = lambda s: [(open(x, 'rb').read() if x else None) for x in s.split(',')] if s else [None] * len(lines)
-    ini, fac, ctl = per(inits), per(faces), per(ctrls)
+    ini, fac, ctl, msk = per(inits), per(faces), per(ctrls), per(masks)
     sts = [float(x) for x in init_strengths.split(',')]
     tops = [float(x) for x in ctrl_tops.split(',')] if ctrl_tops else [0.0] * len(lines)
     rtops = [float(x) for x in redo_tops.split(',')] if redo_tops else [0.0] * len(lines)
@@ -209,8 +218,8 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
     jobs = [(i + 1, p, v, int(s), w, h, r, st) for i, p in enumerate(lines) for v in variants
             for s in (line_seeds.split(',')[i:i + 1] if line_seeds else seeds.split(',')) for w in ws for h in hs
             for r in (hrs if h else [0.0]) for st in (sts if ini[i] else [0.0])]
-    results = Gen(ckpt=ckpt).gen.starmap([(p, v, w, s, neg, unveil, h, r, hr_strength, fac[i - 1], ref_scale if fac[i - 1] else 0.0, face_scale if fac[i - 1] else 0.0,
-                                           ini[i - 1], st, ctl[i - 1], ctrl_scale, ctrl_end, tops[i - 1], rtops[i - 1], rps[i - 1], redo_strength, redo_from, redo_x0, redo_x1) for i, p, v, s, w, h, r, st in jobs])
+    results = Gen(ckpt=ckpt, base=base).gen.starmap([(p, v, w, s, neg, unveil, h, r, hr_strength, fac[i - 1], ref_scale if fac[i - 1] else 0.0, face_scale if fac[i - 1] else 0.0,
+                                           ini[i - 1], st, ctl[i - 1], ctrl_scale, ctrl_end, tops[i - 1], rtops[i - 1], rps[i - 1], redo_strength, redo_from, redo_x0, redo_x1, msk[i - 1]) for i, p, v, s, w, h, r, st in jobs])
     for (i, _, v, s, w, h, r, st), data in zip(jobs, results):
         tag = (f'hr{r}' if h and r else ('hr' if h else 'base')) + (f'-i{st}' if st else '')
         path = (f'{out}/{i}-{v}-s{s}-w{w}-{tag}.png' if grid else f'{out}/{i}-{v}-s{s}.png') if prompts else f'{out}/{i}-{v}.png'

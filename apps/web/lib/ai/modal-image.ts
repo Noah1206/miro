@@ -10,8 +10,20 @@ export function modalImageReady() {
   return !!(process.env.MIRO_IMAGE_URL && process.env.MIRO_IMAGE_SECRET)
 }
 
-/** 캐릭터 대상 → 그림체. 남성향 캐릭터(여자)는 가다공, 여성향 캐릭터(남자)는 위프 — 남자 중심. */
-export const styleFor = (audience: 'male' | 'female') => (audience === 'male' ? 'gda' : 'whif')
+/** 11/7 작품별 그림체(tooling/image/STYLES.md) — 대표 사진을 그린 그림체와 같게. 서버 안에서만 쓰고 화면에 띄우지 않는다. */
+const WORK_STYLE: Record<string, string> = {
+  'official-m-rogue-noble': 'itim-noob', 'official-m-club-senior': 'itim-noob', 'official-m-reverse-world': 'itim-noob', 'official-m-apocalypse-bully': 'itim-noob',
+  'official-m-gumiho-partner': 'kdh-noob', 'official-m-moon-app': 'kdh-noob',
+  'official-m-desire-diary': 'fa-noob',
+  'official-m-stray-cat': 'isg-noob', 'official-m-stepmom-friends': 'isg-noob',
+  'official-m-frustrated-madam': 'syh-noob',
+  'official-m-mother-daughter': 'srn',
+  'official-m-cheonma-reborn': 'mojz',
+}
+
+/** 캐릭터 → 그림체. 작품 표에 없으면 남성향(여자)은 가다공, 여성향(남자)은 위프 — 남자 중심. */
+export const styleFor = (audience: 'male' | 'female', slug?: string | null) =>
+  (slug && WORK_STYLE[slug]) || (audience === 'male' ? 'gda' : 'whif')
 
 const Tags = z.object({ tags: z.string().max(1200) })
 // 그림 모델은 프롬프트 앞 약 77토큰만 읽는다(11/2 확인: 길면 뒤의 장면이 잘린다) — 외형은 핵심 10개 안팎으로.
