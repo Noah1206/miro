@@ -576,3 +576,15 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/7 사용자: 실제로 입력하는 글자도 크게(15 → 16px, 안내 문구도 같이). 16px 이면 iPhone 이 입력할 때 화면을 확대하지 않는다. */
 :global([data-chat-theme='miro']) .input, :global([data-chat-theme='miro']) .inputRow .input { font-size:16px; line-height:24px; }
 :global([data-chat-theme='miro']) .input::placeholder { font-size:16px; }
+
+/* 11/9 만들어지는 사진 자리 — 사진 크기(.photo)와 같은 칸에 빛이 지나가는 애니메이션, 사진이 오면 사라지고 그 자리에 사진이 나타난다. */
+.turnPhotoRow { flex-wrap:wrap; }
+.photoMaking { flex-basis:100%; display:grid; gap:10px; margin:12px 0 4px; }
+.photoMakingTile { position:relative; overflow:hidden; width:72%; max-width:360px; aspect-ratio:3/4; margin-inline:auto; border-radius:var(--radius-md);
+  display:grid; place-content:center; justify-items:center; gap:10px; background:var(--color-surface-2); color:var(--color-text-tertiary); font-size:13px; }
+.photoMakingTile svg { width:34px; height:34px; animation:photoMakingPulse 1.6s ease-in-out infinite; }
+.photoMakingTile::after { content:''; position:absolute; inset:0; transform:translateX(-100%);
+  background:linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--color-lavender-500) 22%, transparent) 50%, transparent 80%); animation:photoMakingShine 1.8s ease-in-out infinite; }
+@keyframes photoMakingShine { to { transform:translateX(100%); } }
+@keyframes photoMakingPulse { 50% { opacity:.45; transform:scale(.92); } }
+@media (prefers-reduced-motion: reduce) { .photoMakingTile::after, .photoMakingTile svg { animation:none; } }

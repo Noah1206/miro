@@ -1,5 +1,5 @@
 'use client'
-import { useActionState, useEffect, useState } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
@@ -32,7 +32,13 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
   useEffect(() => {
     if (state.notice || state.error) void refreshBalance(true)
     if (state.notice) { router.refresh(); setOpen(false) }
+    if (state.error) setOpen(true)   // 만드는 동안 닫아 둔 창을 다시 열어 실패 이유를 보여 준다
   }, [state, router, refreshBalance])
+  // 11/9 사용자: 만들기를 누르면 창을 닫고 대화 안에 만들어지는 사진 자리(애니메이션)를 띄운다 — 사진이 오면 그 자리에 나타난다.
+  const [making, setMaking] = useState(0)
+  useEffect(() => { if (!pending) setMaking(0) }, [pending])
+  const slot = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (making) slot.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [making])
   // 만든 사람이 정한 이 캐릭터만의 장면이 앞에 — 이름은 만든 사람이 쓴 그대로(번역하지 않는다).
   const own = custom.filter(s => unveil || !s.unveil)
   // 남성향·여성향(11/3): 상황 목록을 묶음으로, 언베일이 아니어도 언베일 장면을 흐리게 보여 준다(고를 수는 없다). audience 를 모르면 예전처럼.
@@ -64,8 +70,14 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
     <button type="button" className={variant === 'turn' ? styles.turnPhoto : `${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
       <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
     {variant === 'turn' && <span>{t('사진 만들기')}</span>}</button>
+    {pending && making > 0 && <div ref={slot} className={styles.photoMaking} role="status" aria-live="polite">
+      {Array.from({ length: making }, (_, i) => <div key={i} className={styles.photoMakingTile}>
+        <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
+        <span>{t('사진 만드는 중…')}</span>
+      </div>)}
+    </div>}
     <Sheet open={open} onClose={() => setOpen(false)} title={t(unveil ? '언베일 사진 만들기' : '사진 만들기')} variant="choice" snap={{ half: 0.7, full: 0.92 }}>
-      <form action={action} style={{ display: 'grid', gap: 22 }}>
+      <form action={action} onSubmit={() => { setMaking(count); setOpen(false) }} style={{ display: 'grid', gap: 22 }}>
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="count" value={count} />
         {shots.map((s, i) => <span key={s.key} hidden>
