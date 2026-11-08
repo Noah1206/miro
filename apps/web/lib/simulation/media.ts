@@ -15,6 +15,8 @@ import { resolveImage } from '@miro/providers'
 import { guarded } from '@/lib/usage/guard'
 import { hasAppearance, inferAppearance } from './appearance'
 import { matchSceneAsset } from './scene-assets'
+import { ensembleNames } from '@miro/engine'
+import { isUnveilPhoto } from '@/lib/unveil-photo'
 
 export type MediaResult = {
   id: string
@@ -117,9 +119,12 @@ export async function getOrGenerate(opts: {
   // 11/2: 학습한 LoRA 가 있는 Modal 로 일반·언베일 사진 모두. 성인(19+) 캐릭터만 — 그림체가 성인 데이터로 학습돼서
   // 학생 캐릭터의 일반 사진은 아래 기존 경로로 둔다(언베일은 원래 19+ 만 허용).
   if (opts.kind === 'photo' && modalImageReady()) {
-    const [c] = await db.select({ audience: characters.audience, age: characters.age, images: characters.images, slug: characters.slug }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
+    const [c] = await db.select({ audience: characters.audience, age: characters.age, images: characters.images, slug: characters.slug, secret: characters.secret }).from(characters).where(eq(characters.id, opts.characterId)).limit(1)
     const age = Number.parseInt(String(c?.age ?? ''), 10)
-    if (c && Number.isFinite(age) && age >= 19) return modalPhoto(opts, identity, context, c.audience, c.images?.[0], c.slug)
+    if (c && Number.isFinite(age) && age >= 19) {
+      const heroine = await speakingHeroine(opts.sessionId, c.secret, c.images ?? [])
+      return modalPhoto(opts, identity, context, c.audience, heroine?.ref ?? c.images?.[0], c.slug, heroine)
+    }
     if (opts.unveil) throw new Error('unveil_image_unavailable')
   }
   if (opts.unveil && opts.kind === 'photo') {
@@ -217,10 +222,29 @@ async function unveilPhoto(
   return { ...saved, cached: false, providerNotice: null }
 }
 
+/**
+ * 여러 인물 카드(11/9) — 이 대화방의 마지막 캐릭터 답에서 말한 히로인과 그 [여러 인물] 줄(외형), 같은 순서의 갤러리 사진(레퍼런스).
+ * 히로인이 말한 적이 없으면 첫 장면을 이끄는 히로인(목록 첫째가 아닌 '첫 히로인' 표시) → 없으면 null(카드 대표 외형 그대로).
+ */
+async function speakingHeroine(sessionId: string, secret: string | null, images: string[]): Promise<{ name: string; look: string; ref?: string } | null> {
+  const cast = ensembleNames(secret)
+  if (!cast.length || !secret) return null
+  const body = secret.slice(secret.indexOf('[여러 인물'))
+  const lineOf = (name: string) => body.split('\n').find(l => l.replace(/^[\s\-•*·\d.)]*/, '').startsWith(name))?.trim()
+  const rows = await db.select({ blocks: messages.blocks }).from(messages)
+    .where(and(eq(messages.sessionId, sessionId), eq(messages.role, 'character'), isNull(messages.hiddenAt))).orderBy(desc(messages.createdAt)).limit(5)
+  const spoken = rows.flatMap(r => [...(r.blocks as Array<{ speaker?: unknown }>)].reverse().map(b => typeof b.speaker === 'string' ? b.speaker : '')).find(sp => cast.includes(sp))
+  const name = spoken ?? cast.find(n => /첫 히로인|첫 장면/.test(lineOf(n) ?? '')) ?? null
+  const look = name && lineOf(name)
+  if (!name || !look) return null
+  const gallery = images.filter(src => !isUnveilPhoto(src))
+  return { name, look, ref: gallery[cast.indexOf(name)] }
+}
+
 /** Modal 사진(11/2) — 외형·장면·고정 세부사항을 영어 태그로 바꿔 학습한 그림체로. 대화방마다 비공개 저장, 사진 사용량 규칙 그대로. */
 async function modalPhoto(
   opts: Parameters<typeof getOrGenerate>[0], identity: Awaited<ReturnType<typeof activeVisualIdentity>>, context: PhotoContext, audience: 'male' | 'female',
-  refUrl?: string, slug?: string | null,
+  refUrl?: string, slug?: string | null, heroine?: { name: string; look: string } | null,
 ): Promise<MediaResult> {
   if (identity.hasRealPersonReference) throw new Error('unveil_real_person_reference')
   const request = opts.unveil?.request
@@ -228,12 +252,13 @@ async function modalPhoto(
   const level = opts.unveil ? cappedLevel(opts.unveil.level) : null
   const style = styleFor(audience, slug)
   const seed = opts.seed ?? 11
-  const cacheKey = `modal:${opts.sessionId}:${style}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:${opts.composition ?? ''}:s${seed}`
+  const cacheKey = `modal:${opts.sessionId}:${style}:${heroine?.name ?? ''}:${level ?? 'normal'}:${buildMediaKey(opts.kind, context)}:${request ?? ''}:${opts.details ?? ''}:${opts.scene?.tags ?? ''}:${opts.composition ?? ''}:s${seed}`
   const units = opts.usage?.units ?? usageWeight('photo')
   const [hit] = await db.select({ id: generatedMedia.id, url: generatedMedia.url }).from(generatedMedia)
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
   if (hit) return { ...hit, cached: true, providerNotice: null }
-  const source = [buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }),
+  // 여러 인물 카드(11/9)는 지금 말하는 히로인의 [여러 인물] 줄로 — 카드 대표 외형이 아니라.
+  const source = [heroine ? heroine.look : buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }),
     opts.details && `fixed details (keep exactly): ${opts.details}`, request].filter(Boolean).join('\n')
   const [session] = await db.select({ userId: roleplaySessions.userId }).from(roleplaySessions).where(eq(roleplaySessions.id, opts.sessionId)).limit(1)
   const generateAndSave = async () => {

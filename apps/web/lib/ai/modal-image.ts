@@ -5,6 +5,7 @@
  */
 import { z } from 'zod'
 import { resolveLLM, type LLMProvider } from '@miro/providers'
+import { observe } from '@/lib/observe'
 
 export function modalImageReady() {
   return !!(process.env.MIRO_IMAGE_URL && process.env.MIRO_IMAGE_SECRET)
@@ -39,12 +40,16 @@ Rules:
 
 /** 한국어가 섞인 외형·장면·세부사항 → 영어 태그. 실패하면 원문을 그대로 쓴다(그림은 계속 만든다). */
 export async function toImageTags(text: string): Promise<string> {
-  try {
-    const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 600, schema: Tags, system: SYSTEM, prompt: text })
-    return tags
-  } catch {
-    return text
+  // 11/9 운영에서 한 번 실패해 한국어 원문이 그대로 그림 모델로 갔다(머리·눈 색이 안 맞음) — 한 번 더 시도하고, 원인을 로그에 남긴다.
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 600, schema: Tags, system: SYSTEM, prompt: text })
+      return tags
+    } catch (e) {
+      observe('image.tags_failed', { attempt, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })
+    }
   }
+  return text
 }
 
 const MOMENT_SYSTEM = `You turn the latest moment of a Korean roleplay chat into English Danbooru-style scene tags for an anime illustration of ONE character (the user is not drawn).
