@@ -17,6 +17,7 @@ import { AudienceSelect } from './audience-select'
 import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile } from './profile-link'
+import { HomeViewBeacon } from './view-beacon'
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
@@ -51,6 +52,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </header>
 
       <InstallAppHint />
+      <HomeViewBeacon />
 
       {/* 약관·처리방침 개정이 공지 중이면 초기화면에서 알린다(약관 제3조 ③). 평소엔 아무것도 그리지 않는다. */}
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />

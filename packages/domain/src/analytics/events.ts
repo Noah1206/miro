@@ -4,6 +4,8 @@ export const ANALYTICS_EVENTS = [
   'event_triggered', 'scene_changed', 'reality_contact_sent', 'reality_contact_opened',
   'call_started', 'call_completed', 'call_unanswered', 'usage_limit_reached', 'upgrade_viewed', 'subscription_started',
   'recharge_purchased',
+  // 11/8 퍼널(관리자 /funnel) — 나머지 단계는 각 표(users·roleplay_sessions·generated_media·bank_transfer_orders)에서 바로 읽는다.
+  'home_viewed', 'unveil_enabled',
   'archive_opened', 'session_archived', 'session_deleted', 'report_submitted', 'account_deleted',
   // Closed Alpha 퍼널 — 로그인 없는 체험. userId 는 null, props.alphaSession 으로 묶는다.
   'landing_view', 'experience_start', 'first_message_sent', 'third_message_sent',

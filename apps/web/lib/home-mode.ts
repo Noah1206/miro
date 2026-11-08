@@ -5,6 +5,7 @@ import { productionRuntime } from '@miro/config'
 import { mentionsMinor } from '@miro/domain'
 import { getPersona } from './persona'
 import { msg } from './i18n'
+import { track } from './analytics/track'
 
 export async function homeUnveilEnabled(userId: string | null): Promise<boolean> {
   if (!userId) return false
@@ -29,7 +30,7 @@ export async function setHomeUnveilFor(userId: string, enabled: boolean, agreed 
     if (enabled && agreed && !current.maturePolicyAgreedAt) await tx.update(users).set({ maturePolicyAgreedAt: new Date() }).where(eq(users.id, userId))
     await tx.insert(userSettings).values({ userId, unveilEnabled: enabled }).onConflictDoUpdate({ target: userSettings.userId, set: { unveilEnabled: enabled, updatedAt: new Date() } })
     return { ok: true as const, enabled }
-  })
+  }).then(r => { if (r.ok && enabled) void track(userId, 'unveil_enabled', {}); return r })
 }
 
 /**

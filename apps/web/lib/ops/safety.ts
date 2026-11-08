@@ -7,27 +7,15 @@ import { activeVisualIdentity } from '@/lib/simulation/media'
 import { msg } from '@/lib/i18n'
 import { getPersona, getConversationPersona } from '@/lib/persona'
 
-/**
- * 베타 성인 테스터(10/2 사용자 결정: "베타테스터는 내가 직접 뽑을 거라서") — MIRO_ADULT_TESTERS 의 이메일(쉼표 구분) 계정은
- * PortOne 본인인증 전이라도 성인 인증을 마친 것으로 본다. 테스터가 성인인지는 운영자가 직접 확인한다.
- */
-export function adultTester(email: string | null | undefined): boolean {
-  const list = (process.env.MIRO_ADULT_TESTERS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean)
-  return !!email && list.includes(email.toLowerCase())
-}
-
-/** 서버 기준 성인 표현 허용 판정. 클라이언트 토글 값을 믿지 않는다. */
+/** 서버 기준 성인 표현 허용 판정. 클라이언트 토글 값을 믿지 않는다. 11/8 베타 테스터 예외 삭제 — 누구나 본인인증으로 연다. */
 export async function matureGateFor(userId: string, characterId: string): Promise<MatureGate> {
-  const [u] = await db.select({ v: users.adultVerifiedAt, p: users.maturePolicyAgreedAt, email: users.email })
+  const [u] = await db.select({ v: users.adultVerifiedAt, p: users.maturePolicyAgreedAt })
     .from(users).where(eq(users.id, userId)).limit(1)
-  const tester = adultTester(u?.email)
-  // 운영은 실제 본인인증(PortOne)이 붙어야 열린다 — Mock 인증은 신원 확인이 아니다. 운영자가 고른 테스터만 예외.
-  if (productionRuntime() && !tester && resolveAdultVerification().info.mode !== 'live') return { allowed: false, reason: 'not_verified', next: msg('현재 일반 등급 콘텐츠만 제공합니다.') }
+  // 운영은 실제 본인인증(PortOne)이 붙어야 열린다 — Mock 인증은 신원 확인이 아니다.
+  if (productionRuntime() && resolveAdultVerification().info.mode !== 'live') return { allowed: false, reason: 'not_verified', next: msg('현재 일반 등급 콘텐츠만 제공합니다.') }
   const vi = await activeVisualIdentity(characterId)
-  // 테스터의 정책 동의는 방마다 첫 켜기 시트의 체크로 받는다.
-  const since = tester ? new Date() : null
   return gateMature({
-    adultVerifiedAt: u?.v ?? since, maturePolicyAgreedAt: u?.p ?? since,
+    adultVerifiedAt: u?.v ?? null, maturePolicyAgreedAt: u?.p ?? null,
     hasRealPersonReference: vi.hasRealPersonReference,
   })
 }
