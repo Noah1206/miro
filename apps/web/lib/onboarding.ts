@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { isLanguage, type Language } from '@miro/domain'
-import { WELCOME_GRANT } from '@miro/config'
+import { POLICY, WELCOME_GRANT } from '@miro/config'
+import { adultOn } from '@miro/providers'
 import { db, termsConsents, userPersonas, userSettings, users } from '@miro/db'
 import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
@@ -38,8 +39,8 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   const birth = form.get('birthDate')
   const birthDate = typeof birth === 'string' && birth ? birth : null
   if (!birthDate || !validBirthDate(birthDate, today)) return { ok: false, step: 4, error: msg('생년월일을 다시 확인해 주세요.') }
-  // 일반 가입은 만 14세 이상. 언베일 인증과는 독립적으로 한국 날짜 기준으로 검사한다.
-  if (birthDate && fullAge(birthDate, today) < 14) return { ok: false, step: 4, error: msg('만 14세 이상만 가입할 수 있어요.') }
+  // 11/8 남성향 성인 서비스 — 가입부터 청소년 보호법 기준 성인(만 19세가 되는 해의 1월 1일부터)만. 언베일 판정과 같은 기준.
+  if (!adultOn(birthDate, today, POLICY.adultVerification.minimumAge)) return { ok: false, step: 4, error: msg('만 19세 이상(청소년 보호법 기준)만 가입할 수 있어요.') }
 
   if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 5, error: msg('필수 항목에 모두 동의해 주세요.') }
 
@@ -55,11 +56,6 @@ export async function precheckNickname(userId: string, nickname: string): Promis
   const existing = await getPersona(userId)
   const saved = await savePersona(userId, { name: nickname, gender: existing?.gender ?? null, description: existing?.description ?? null })
   return saved.ok ? { ok: true } : { ok: false, error: saved.error }
-}
-
-function fullAge(v: string, today: Date): number {
-  const now = today.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
-  return Number(now.slice(0, 4)) - Number(v.slice(0, 4)) - (now.slice(5) < v.slice(5) ? 1 : 0)
 }
 
 function validBirthDate(v: string, today: Date): boolean {
