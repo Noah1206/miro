@@ -1983,5 +1983,7 @@
  "본인인증": "Identity verification",
  "본인인증이 필요해요": "Identity verification required",
  "성인 인증 안내": "Age verification notice",
- "청소년 유해 정보가 포함되어 있어요. 로그인하고 본인인증을 마치면 볼 수 있어요.": "This contains content harmful to minors. Sign in and complete identity verification to view it."
+ "청소년 유해 정보가 포함되어 있어요. 로그인하고 본인인증을 마치면 볼 수 있어요.": "This contains content harmful to minors. Sign in and complete identity verification to view it.",
+ "갤러리": "Gallery",
+ "아직 열리지 않은 사진": "Locked photo"
 }

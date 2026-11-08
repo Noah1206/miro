@@ -5,7 +5,7 @@ import { createRoleplaySession } from '@/lib/simulation/start'
 import { setHomeUnveilFor } from '@/lib/home-mode'
 import { revalidatePath } from 'next/cache'
 import { and, eq, isNull } from 'drizzle-orm'
-import { characters, db, roleplaySessions } from '@miro/db'
+import { characters, db, messages, roleplaySessions } from '@miro/db'
 import { selectableVoice } from '@/lib/voice'
 import { requireUser } from '@/lib/auth'
 import { msg } from '@/lib/i18n'
@@ -69,4 +69,23 @@ export async function setRoomVoice(sessionId: string, key: string, voiceId: stri
   }
   await db.update(roleplaySessions).set({ voiceOverrides: next }).where(eq(roleplaySessions.id, sessionId))
   return { error: null }
+}
+
+/**
+ * 갤러리(11/8) — 만든 사람이 넣은 상황별 사진(characters.situation_images) 중 이 사용자가 이 캐릭터와의 대화에서 본 것(해금)만 사진을 준다.
+ * 해금 = 어느 대화방이든 그 사진이 채팅에 떴던 기록(messages kind=photo). 사진 주소의 ?v= 는 다시 올리면 바뀌어서 떼고 비교한다.
+ * 언베일 전용 사진은 언베일 방에서만 선명하게(blurred) — 일반 방에선 흐리게 보인다.
+ */
+export async function roomGallery(sessionId: string): Promise<{ items: Array<{ image: string | null; blurred: boolean }> }> {
+  const user = await requireUser()
+  const [s] = await db.select({ characterId: roleplaySessions.characterId, adultSince: roleplaySessions.adultSince, images: characters.situationImages })
+    .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+    .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt))).limit(1)
+  if (!s?.images.length) return { items: [] }
+  const base = (u: string) => u.split('?')[0]!
+  const shown = new Set((await db.select({ content: messages.content }).from(messages)
+    .innerJoin(roleplaySessions, eq(roleplaySessions.id, messages.sessionId))
+    .where(and(eq(roleplaySessions.userId, user.id), eq(roleplaySessions.characterId, s.characterId), eq(messages.kind, 'photo'), isNull(messages.hiddenAt))))
+    .map(m => base(m.content)))
+  return { items: s.images.map(e => shown.has(base(e.image)) ? { image: e.image, blurred: !!e.adult && !s.adultSince } : { image: null, blurred: false }) }
 }

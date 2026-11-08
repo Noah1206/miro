@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { budgetedImage } from '@/lib/ai/media-budget'
 import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
 import { generateModalImage, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
+import { censorPng } from '@/lib/ai/censor'
 import { saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
@@ -200,7 +201,7 @@ async function unveilPhoto(
   const generateAndSave = async () => {
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `open-model:${model}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? usageWeight('photo') : 0 },
-      () => generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, level: opts.unveil.level, width: 832, height: 1216 }))
+      async () => censorPng(await generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, level: opts.unveil.level, width: 832, height: 1216 })))
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
     const [saved] = await db.insert(generatedMedia).values({
@@ -244,7 +245,8 @@ async function modalPhoto(
     const tags = [tag?.positive, opts.scene?.tags ?? [moment, opts.composition].filter(Boolean).join(', ')].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
-      () => generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple, extraNeg: tag?.negative, seed, refUrl }))
+      // 11/8 언베일 사진은 성기 부위를 가린 뒤에만 저장·전송(lib/ai/censor) — 가림이 실패하면 사진도 실패
+      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple, extraNeg: tag?.negative, seed, refUrl }); return tag?.mature ? censorPng(png) : png })
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
     const [saved] = await db.insert(generatedMedia).values({
