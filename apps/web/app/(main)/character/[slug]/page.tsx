@@ -6,7 +6,7 @@ import { characterEditorial } from '@/components/scene/character-editorial'
 import { sampleWithAtmosphere } from '@/lib/sample-atmosphere'
 import { IntroPreview, type IntroScene } from './intro-preview'
 import { CharacterSettings } from './settings'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
 import { characterLikeState, countComments, listComments, similarCharacters } from '@/lib/social'
@@ -28,6 +28,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
   const t = await getT()
   const user = await currentUser()
+  // 11/8 성인 서비스 — 로그인·본인인증 전에는 작품 목록·상세를 보이지 않는다(홈은 흐린 화면).
+  if (!user) redirect('/home')
   const { slug } = await params
   const stored = await getCharacterByKey(slug, user?.id ?? null)
   const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null

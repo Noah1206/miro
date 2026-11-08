@@ -1975,5 +1975,13 @@
  "앱을 닫아 두어도 캐릭터의 연락을 알림으로 받아요.": "Get messages from your characters even when the app is closed.",
  "화자": "Speaker",
  "목소리를 바꿀 수 없어요.": "Couldn't change the voice.",
- "만 19세 이상(청소년 보호법 기준)만 가입할 수 있어요.": "You must be 19 or older (Korean Youth Protection Act) to sign up."
+ "만 19세 이상(청소년 보호법 기준)만 가입할 수 있어요.": "You must be 19 or older (Korean Youth Protection Act) to sign up.",
+ "19세 이상만 볼 수 있어요": "Only for ages 19 and up",
+ "MIRO는 만 19세 이상 성인을 위한 서비스예요. 「청소년 보호법」에 따라 처음 한 번 휴대전화 본인인증으로 나이를 확인해요. 운영자는 성인인지 여부만 받고 이름·전화번호는 저장하지 않아요.": "MIRO is for adults aged 19 and over. Under Korea's Youth Protection Act, we check your age once with mobile phone identity verification. We only receive whether you are an adult and do not store your name or phone number.",
+ "다른 계정으로 로그인": "Sign in with another account",
+ "로그인하고 성인 인증하기": "Sign in and verify age",
+ "본인인증": "Identity verification",
+ "본인인증이 필요해요": "Identity verification required",
+ "성인 인증 안내": "Age verification notice",
+ "청소년 유해 정보가 포함되어 있어요. 로그인하고 본인인증을 마치면 볼 수 있어요.": "This contains content harmful to minors. Sign in and complete identity verification to view it."
 }

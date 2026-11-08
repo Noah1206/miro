@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
   const sortValue = params.get('sort') ?? 'latest'
   // 홈 칩(2026-09-30) — genre·relation 을 여러 번 보내면 그 종류 안에서는 하나라도, 두 종류는 둘 다 맞는 캐릭터.
   const genres = params.getAll('genre')
+  // 11/8 성인 서비스 — 로그인 전에는 작품 목록을 주지 않는다.
+  if (!(await currentUser())) return NextResponse.json({ items: [], nextCursor: null }, { headers: { 'Cache-Control': 'no-store' } })
   try {
     if (!['latest', 'ranking', 'reviews', 'popular'].includes(sortValue)) throw new Error('INVALID_SORT')
     const tags = discoveryTags(params.getAll('tag'))

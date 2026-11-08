@@ -3,9 +3,12 @@ import { Page } from '@/components/ui'
 import { getT } from '@/lib/i18n/server'
 import { SearchScreen } from './screen'
 import { redirect } from 'next/navigation'
+import { currentUser } from '@/lib/auth'
 import styles from './search.module.css'
 export async function generateMetadata() { const t = await getT(); return { title: t('검색') } }
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  // 11/8 성인 서비스 — 로그인 전에는 검색하지 못한다.
+  if (!await currentUser()) redirect('/home')
   const incoming = await searchParams
   const params = new URLSearchParams()
   for (const key of ['q', 'tag', 'genre', 'relation']) {

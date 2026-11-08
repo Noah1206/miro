@@ -18,6 +18,11 @@ import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile } from './profile-link'
 import { HomeViewBeacon } from './view-beacon'
+import { HomeAgeGate } from './age-gate'
+import type { HomeCard } from '@/lib/home'
+
+/** 로그인 전(11/8) — 흐린 카드에도 제목·소개 글이 HTML 에 실리지 않게 글자를 비운다. 사진만 흐리게 보인다. */
+const veil = (c: HomeCard): HomeCard => ({ ...c, name: '', role: null, occupation: null, relationshipKeywords: [], genre: null, tagline: null, caption: null, startingContext: null })
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
@@ -27,7 +32,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const audience = raw === 'male' || raw === 'female' ? raw : undefined
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [sections, unread, unveil, profile] = await Promise.all([
-    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),
+    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)).then(s => user ? s : { ...s, ranking: s.ranking.map(veil), forYou: s.forYou.map(veil), recommended: s.recommended.map(veil), others: s.others.map(veil), genres: [], filters: [] }),
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
     user ? accountProfile(user) : null,
@@ -59,6 +64,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       <HomeBanner signedIn={!!user} />
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
+      {(() => { const content = <>
       <div className={styles.searchRow}>
         <AudienceSelect groups={sections.filters} audience={audience} />
         <TransitionLink href="/search" prefetch={true} aria-label={t('검색')} className={styles.searchBar}>
@@ -73,6 +79,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.others.length > 0 && <AllCharacters items={sections.others} />}
+      </>; return user ? content : <HomeAgeGate>{content}</HomeAgeGate> })()}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>

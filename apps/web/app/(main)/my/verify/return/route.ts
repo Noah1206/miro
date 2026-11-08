@@ -25,6 +25,11 @@ export async function GET(req: Request) {
     if (r === 'done' && intended) await setHomeUnveilFor(user.id, true, true)
     return NextResponse.redirect(new URL(character ? `/character/${character[1]}` : '/home', url))
   }
+  // 가입 단계의 본인인증(11/8) — 끝났으면 홈, 아니면 그 단계로 결과와 함께.
+  if (next === '/onboarding/verify' || next === '/onboarding/verify?welcome=1') {
+    const welcome = next.endsWith('welcome=1')
+    return NextResponse.redirect(new URL(r === 'done' ? (welcome ? '/home?welcome=1' : '/home') : `/onboarding/verify?r=${r}${welcome ? '&welcome=1' : ''}`, url))
+  }
   // 채팅에서 시작한 인증은 해당 대화로 복귀한다. 외부 주소는 허용하지 않는다.
   if (next && /^\/chat\/[a-zA-Z0-9-]+$/.test(next)) return NextResponse.redirect(new URL(next, url))
   return NextResponse.redirect(new URL(`/my/verify?r=${r}`, url))

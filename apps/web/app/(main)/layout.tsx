@@ -2,7 +2,9 @@ import { OAUTH_LABEL, resolveOAuth, type OAuthProviderId } from '@miro/providers
 import { Nav } from '@/components/ui/nav'
 import { NavigationFeedback } from '@/components/navigation-feedback'
 import { LoginSheetProvider } from '@/components/ui/login-sheet'
+import { redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
+import { consentRedirect } from '@/lib/consent-gate'
 import { IncomingCall } from '@/components/incoming-call'
 import { PushSubscribe } from '@/components/push-subscribe'
 import { measured } from '@/lib/observe'
@@ -18,6 +20,8 @@ const IDS: OAuthProviderId[] = ['google', 'kakao', 'twitter']
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   // 비로그인 사용자에게는 로그인을 화면 이동 대신 시트로 묻는다. 보던 화면을 잃지 않게 한다.
   const user = await measured('nav.layout_auth', () => currentUser())
+  // 11/8: 가입 단계(동의·본인인증)를 마치지 않은 회원은 어느 화면에서든 그 단계로 — 성인 서비스라 인증 전에는 콘텐츠를 보이지 않는다.
+  if (user) { const step = await consentRedirect(user.id); if (step) redirect(step) }
   const t = await getT()
   const providers = user ? [] : IDS.filter(id => resolveOAuth(id)).map(id => ({ id, label: OAUTH_LABEL[id] }))
   return (
