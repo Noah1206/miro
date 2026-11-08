@@ -27,7 +27,8 @@ const WORK_STYLE: Record<string, string> = {
 export const styleFor = (audience: 'male' | 'female', slug?: string | null) =>
   (slug && WORK_STYLE[slug]) || (audience === 'male' ? 'gda' : 'whif')
 
-const Tags = z.object({ tags: z.string().max(1200) })
+// 언베일 모델(DeepSeek)은 tags 를 배열로 줄 때가 있다(11/9) — 쉼표로 이어 받는다.
+const Tags = z.object({ tags: z.preprocess(v => Array.isArray(v) ? v.join(', ') : v, z.string().max(1200)) })
 // 그림 모델은 프롬프트 앞 약 77토큰만 읽는다(11/2 확인: 길면 뒤의 장면이 잘린다) — 외형은 핵심 10개 안팎으로.
 const SYSTEM = `You convert a character description into English Danbooru-style tags for an anime illustration model.
 Rules:
@@ -39,14 +40,16 @@ Rules:
 - Do not add quality tags or style names.`
 
 /** 한국어가 섞인 외형·장면·세부사항 → 영어 태그. 실패하면 원문을 그대로 쓴다(그림은 계속 만든다). */
-export async function toImageTags(text: string): Promise<string> {
-  // 11/9 원인: Gemini 3.8 은 생각 토큰도 상한에 들어가 600 이면 JSON 이 잘렸다 → 2048. 운영에서 한 번 실패해 한국어 원문이 그대로 그림 모델로 갔다(머리·눈 색이 안 맞음) — 한 번 더 시도하고, 원인을 로그에 남긴다.
-  for (let attempt = 1; attempt <= 2; attempt++) {
+export async function toImageTags(text: string, fallback?: Pick<LLMProvider, 'generateStructured'>): Promise<string> {
+  // 11/9 운영 원인: 성인 외형 문장은 Gemini 가 content_blocked 로 막아 한국어 원문이 그림 모델로 갔다(머리·눈 색이 안 맞음).
+  // 언베일 방이면 두 번째 시도를 언베일 모델(fallback)로, 아니면 같은 모델로 한 번 더. 원인은 로그에.
+  const llms = [resolveLLM(), fallback ?? resolveLLM()]
+  for (const [i, llm] of llms.entries()) {
     try {
-      const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 2048, schema: Tags, system: SYSTEM, prompt: text })
+      const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 2048, schema: Tags, system: SYSTEM, prompt: text })
       return tags
     } catch (e) {
-      observe('image.tags_failed', { attempt, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })
+      observe('image.tags_failed', { attempt: i + 1, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })
     }
   }
   return text

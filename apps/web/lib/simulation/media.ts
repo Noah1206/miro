@@ -17,6 +17,7 @@ import { hasAppearance, inferAppearance } from './appearance'
 import { matchSceneAsset } from './scene-assets'
 import { ensembleNames } from '@miro/engine'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
+import { auxiliaryLLM } from './mock-llm'
 
 export type MediaResult = {
   id: string
@@ -265,7 +266,9 @@ async function modalPhoto(
     const tag = level ? levelTags(level) : null
     // 고른 장면 태그는 LLM 을 거치지 않고 그대로(바뀌지 않게), 외형·장소·세부사항만 영어 태그로 바꾼다.
     // 외형·장소·세부사항(look)은 주인공 바로 뒤로, 고른 장면·수위(tags)는 뒤로 — 외형이 상대 인물에게 섞이지 않게.
-    const [look, moment] = await Promise.all([toImageTags(source), !opts.scene && opts.moment ? toMomentTags(opts.moment) : Promise.resolve('')])
+    // 언베일 방(판정 통과)이면 성인 문장을 막는 상용 모델 대신 언베일 모델이 외형(예비)·순간을 태그로 바꾼다(11/9).
+    const adultLLM = opts.unveil && session?.userId ? auxiliaryLLM(opts.characterName, { userId: session.userId, sessionId: opts.sessionId, requestId: randomUUID(), workload: 'background', origin: 'photo:tags', adult: true }) : undefined
+    const [look, moment] = await Promise.all([toImageTags(source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM) : Promise.resolve('')])
     // 장면을 안 골랐으면 지금 순간 + 그 장의 구도(11/3 — 예전엔 구도를 고르면 순간 태그가 빠졌다).
     const tags = [tag?.positive, opts.scene?.tags ?? [moment, opts.composition].filter(Boolean).join(', ')].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
