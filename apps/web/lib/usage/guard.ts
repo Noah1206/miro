@@ -241,6 +241,16 @@ export async function guarded<T>(
   }
 }
 
+/** 함수가 강제로 끊겨 확정도 롤백도 못 한 그림 예약을 돌려준다(11/9) — 그림은 300초 안에 끝나므로 30분 지난 예약은 버려진 것. 통화처럼 오래 열린 예약은 건드리지 않는다. */
+export async function rollbackStaleMediaReservations(now = new Date()): Promise<number> {
+  const stale = await db.select({ id: usageLedger.id }).from(usageLedger)
+    .where(and(eq(usageLedger.status, 'reserved'), sql`${usageLedger.kind} in ('photo', 'background', 'faceCast', 'liveScene')`,
+      sql`${usageLedger.createdAt} < ${new Date(now.getTime() - 30 * 60_000).toISOString()}::timestamptz`)).limit(100)
+  for (const { id } of stale) await rollback(id)
+  if (stale.length) observe('usage.stale_media_rolled_back', { count: stale.length })
+  return stale.length
+}
+
 export type UsageStatus = {
   plan: Plan
   limit: number

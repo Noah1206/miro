@@ -76,7 +76,7 @@ export async function generateModalImage(req: { style: string; look?: string; ta
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, style: req.style, look: req.look ?? '', tags: req.tags, unveil: req.unveil, couple: !!req.couple,
       extra_neg: req.extraNeg ?? '', seed: req.seed, ref_url: req.refUrl ?? '' }),
-    signal: AbortSignal.timeout(5 * 60_000),
+    signal: AbortSignal.timeout(200_000),   // 함수 한도(300초) 안에서 끝내야 실패 시 차감을 돌려줄 수 있다(11/9)
   })
   if (!res.ok) throw new Error(`modal image ${res.status}: ${(await res.text()).slice(0, 200)}`)
   const { png } = (await res.json()) as { png?: string }

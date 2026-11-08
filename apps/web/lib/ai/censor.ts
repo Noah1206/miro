@@ -9,7 +9,7 @@ export async function censorPng(png: Buffer): Promise<Buffer> {
   const res = await fetch(url, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, png: png.toString('base64') }),
-    signal: AbortSignal.timeout(90_000),
+    signal: AbortSignal.timeout(60_000),
   })
   if (!res.ok) throw new Error(`censor ${res.status}`)
   const { png: out } = (await res.json()) as { png?: string }

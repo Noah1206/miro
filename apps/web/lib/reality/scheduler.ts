@@ -2,6 +2,7 @@ import { runMessengerInbox } from '@/lib/messenger/inbox'
 import { deliverRealityPush } from './push-outbox'
 import { maintainAI } from '@/lib/ai/maintenance'
 import { reconcileStaleAIReservations } from '@/lib/ai/gateway'
+import { rollbackStaleMediaReservations } from '@/lib/usage/guard'
 import { eq, sql } from 'drizzle-orm'
 import { POLICY, characterAgencyCohort, characterAgencyMode } from '@miro/config'
 import { db, roleplaySessions } from '@miro/db'
@@ -61,6 +62,7 @@ async function step<T>(failed: string[], name: string, run: () => Promise<T>, fa
 export async function runRealityMaintenance(wall = new Date()): Promise<MaintenanceRun> {
   const failedSteps: string[] = []
   await step(failedSteps, 'ai_reservations', () => reconcileStaleAIReservations(wall), undefined)
+  await step(failedSteps, 'media_reservations', () => rollbackStaleMediaReservations(wall), 0)
   // 정리 작업은 벽시계로 돈다. `now` 는 판단 시각(활동 시간·Quiet Hours)만 바꾸는 값이며,
   // 생성 시각(실제 시각)과 비교하는 만료 판정에 섞이면 방금 만든 통화가 부재중이 된다.
   const calls = await step(failedSteps, 'calls', () => expireCalls(wall), { missed: 0, timedOut: 0 })

@@ -25,7 +25,10 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
   const [cur, setCur] = useState(0)
   useEffect(() => { try { setDetails(localStorage.getItem(key) ?? '') } catch { /* 저장소가 막혀도 사진은 만든다 */ } }, [key])
   const save = (value: string) => { setDetails(value); try { value ? localStorage.setItem(key, value) : localStorage.removeItem(key) } catch { /* ignore */ } }
-  const [state, action, pending] = useActionState(requestPhoto, { error: null, notice: null } satisfies MediaState)
+  const [state, action, pending] = useActionState(async (prev: MediaState, form: FormData): Promise<MediaState> => {
+    // 응답이 끊겨도(시간 초과 등) 화면이 깨지지 않게 — 차감은 서버가 돌려준다(11/9)
+    try { return await requestPhoto(prev, form) } catch { return { error: '사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.', notice: null } }
+  }, { error: null, notice: null } satisfies MediaState)
   useEffect(() => {
     if (state.notice || state.error) void refreshBalance(true)
     if (state.notice) { router.refresh(); setOpen(false) }

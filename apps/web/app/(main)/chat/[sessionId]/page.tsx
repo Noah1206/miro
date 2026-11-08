@@ -1,3 +1,6 @@
+// 사진 만들기(서버 액션)가 이 페이지에서 돈다 — 그림 서버가 처음 켜질 때 1~3분 걸려도 요청이 끊기지 않게(11/9).
+export const maxDuration = 300
+
 import { ChatTheme } from '@/components/chat-theme'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { notFound, redirect } from 'next/navigation'
