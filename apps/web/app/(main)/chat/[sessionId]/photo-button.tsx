@@ -1,5 +1,6 @@
 'use client'
 import { useActionState, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Sheet } from '@/components/ui'
 import { useT } from '@/lib/i18n/client'
@@ -70,12 +71,12 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
     <button type="button" className={variant === 'turn' ? styles.turnPhoto : `${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
       <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
     {variant === 'turn' && <span>{t('사진 만들기')}</span>}</button>
-    {pending && making > 0 && <div ref={slot} className={styles.photoMaking} role="status" aria-live="polite">
+    {pending && making > 0 && typeof document !== 'undefined' && document.getElementById('photo-making-slot') && createPortal(<div ref={slot} className={styles.photoMaking} role="status" aria-live="polite">
       {Array.from({ length: making }, (_, i) => <div key={i} className={styles.photoMakingTile}>
         <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
         <span>{t('사진 만드는 중…')}</span>
       </div>)}
-    </div>}
+    </div>, document.getElementById('photo-making-slot')!)}
     <Sheet open={open} onClose={() => setOpen(false)} title={t(unveil ? '언베일 사진 만들기' : '사진 만들기')} variant="choice" snap={{ half: 0.7, full: 0.92 }}>
       <form action={action} onSubmit={() => { setMaking(count); setOpen(false) }} style={{ display: 'grid', gap: 22 }}>
         <input type="hidden" name="sessionId" value={sessionId} />

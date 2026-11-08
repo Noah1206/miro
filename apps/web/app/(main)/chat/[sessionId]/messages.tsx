@@ -153,6 +153,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
         ))}
       </AnimatePresence>
     </div>
+    {/* 만들어지는 사진 자리(11/9) — 사진은 대화 맨 끝에 붙으므로 사진 버튼이 여기로 그린다(photo-button.tsx). */}
+    <div id="photo-making-slot" />
     {opening.playing && <button type="button" className={styles.openingSkip} onClick={opening.finish}>{t('인트로 전체 보기')}</button>}
     {/* 11/7 사용자: 말풍선 밑 다시 받기 버튼은 지운다. */}
     <div ref={end} aria-hidden />
