@@ -79,6 +79,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .bubble { width: fit-content; max-width: 80%; padding: 12px 14px; border-radius: var(--radius-chat); background: var(--color-surface-2); font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
 .bubble p { margin: 0; white-space: pre-wrap; }
 .bubble p + p { margin-top: 12px; }
+/* 11/8 여러 인물 카드의 화자 모를 줄 — 말풍선·이름·사진 없이 한 덩어리 */
+.loose { font-size: var(--font-body-size); line-height: 1.65; letter-spacing: -.3px; color: var(--color-text-primary); overflow-wrap: anywhere; }
+.loose p { margin: 0; white-space: pre-wrap; }
+.loose p + p { margin-top: 12px; }
 .action { color: var(--color-text-secondary); font-style: italic; }
 /* 이미 기울어진 서술 안에서 *강조* 는 반대로 세워야 보인다. */
 .action em { font-style: normal; }

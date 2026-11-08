@@ -249,6 +249,18 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
         </div>
       )
       const own = seg.speaker === name
+      // 11/8 여러 인물 카드에서 화자를 모르는 줄(인트로 등)은 카드 이름(작품명)·대표 사진을 붙이지 않고 말풍선 없이 한 덩어리로.
+      if (own && cast?.length) return (
+        <div key={i} className={styles.loose} hidden={hidden}>
+          {seg.paragraphs.map((p) => (
+            <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
+              hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
+              {p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}
+              {line(p)}
+            </p>
+          ))}
+        </div>
+      )
       return (
         <div key={i} className={styles.characterRow} hidden={hidden}>
           {(() => {
