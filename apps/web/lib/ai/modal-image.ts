@@ -40,10 +40,10 @@ Rules:
 
 /** 한국어가 섞인 외형·장면·세부사항 → 영어 태그. 실패하면 원문을 그대로 쓴다(그림은 계속 만든다). */
 export async function toImageTags(text: string): Promise<string> {
-  // 11/9 운영에서 한 번 실패해 한국어 원문이 그대로 그림 모델로 갔다(머리·눈 색이 안 맞음) — 한 번 더 시도하고, 원인을 로그에 남긴다.
+  // 11/9 원인: Gemini 3.8 은 생각 토큰도 상한에 들어가 600 이면 JSON 이 잘렸다 → 2048. 운영에서 한 번 실패해 한국어 원문이 그대로 그림 모델로 갔다(머리·눈 색이 안 맞음) — 한 번 더 시도하고, 원인을 로그에 남긴다.
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 600, schema: Tags, system: SYSTEM, prompt: text })
+      const { tags } = await resolveLLM().generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 2048, schema: Tags, system: SYSTEM, prompt: text })
       return tags
     } catch (e) {
       observe('image.tags_failed', { attempt, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })
@@ -63,7 +63,7 @@ Rules:
 /** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). */
 export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM()): Promise<string> {
   try {
-    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: 'modal-moment:v1', maxTokens: 400, schema: Tags, system: MOMENT_SYSTEM, prompt: text })
+    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: 'modal-moment:v1', maxTokens: 2048, schema: Tags, system: MOMENT_SYSTEM, prompt: text })
     return tags
   } catch { return '' }
 }
