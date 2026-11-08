@@ -3,7 +3,7 @@
  * 모양·규칙은 bl-characters.data.mts 와 같다(공개 소개 / 비공개 설정 / 장면 인트로 / 로어 / 생활 리듬). 전원 성인, 노골적 묘사 없음 — 긴장은 상황(계약·권력·금단·질투)에서.
  * seed-bl-characters.mts 의 ALL 에 MALE_CHARACTERS_B 를, scene-openings.data.mts 에 SCENE_OPENINGS_B 를 합쳐야 들어간다(아직 안 합침).
  */
-import type { Seed } from './bl-characters.data.mts'
+import type { Seed } from './seed-types.mts'
 import type { SceneOpening } from './scene-openings.data.mts'
 
 const WEEKDAYS = [1, 2, 3, 4, 5]

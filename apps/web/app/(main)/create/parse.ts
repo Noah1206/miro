@@ -163,8 +163,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
       ...(THINK.includes(s('recommendedThinking')) ? { thinking: s('recommendedThinking') as 'medium' | 'high' | 'xhigh' | 'max' } : {}),
     } : null,
     commands: parseCommands(s('commands')),
-    // 홈 남성향/여성향(10/20). 기본 여성향.
-    audience: (s('audience') === 'male' ? 'male' : 'female') as 'male' | 'female',
+    // 11/8 남성향 전용 — 만들기는 모두 남성향.
+    audience: 'male' as 'male' | 'female',
     initialRelationship,
     ...(relationshipProfile ? { relationshipProfile } : {}),
   }

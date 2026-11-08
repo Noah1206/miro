@@ -4,7 +4,7 @@
  * 전원 성인. 긴장은 상황(계약·금단·권력·질투·비밀)으로 만들고 노골적 묘사는 쓰지 않는다. 유저의 행동·감정은 쓰지 않는다.
  * seed-bl-characters.mts 의 ALL 목록에 MALE_CHARACTERS_A 를 넣어야 운영에 들어간다(아직 안 넣음).
  */
-import type { Seed } from './bl-characters.data.mts'
+import type { Seed } from './seed-types.mts'
 
 const WEEKDAYS = [1, 2, 3, 4, 5]
 const WEEKEND = [0, 6]

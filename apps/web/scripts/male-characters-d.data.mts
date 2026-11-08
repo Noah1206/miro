@@ -3,7 +3,7 @@
  * 하렘 카드 규칙은 male-characters-c.data.mts 머리말과 같다(secret 맨 앞 [여러 인물] 단락 → 엔진 ensembleNames).
  * 전원 성인(20+). 이름·사정·문장은 새로 썼다. seed-bl-characters.mts 에 import 해야 들어간다.
  */
-import type { Seed } from './bl-characters.data.mts'
+import type { Seed } from './seed-types.mts'
 
 export const MALE_CHARACTERS_D: Seed[] = [
   // ───────────────────────── 사모님들 빼앗기 — 하숙집 사모님 · 남편이 늘 집을 비우는 동네 · 대형 세계관 하렘(진행자 카드) ─────────────────────────

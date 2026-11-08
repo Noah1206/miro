@@ -4,7 +4,7 @@
  * 이 카드를 히로인 여럿을 번갈아 연기하는 진행자로 다룬다. 카드 name 은 세계관 이름, 대표 히로인이 첫 장면을 이끈다.
  * 전원 성인(20+). 이름·사정·문장은 새로 썼다. 다른 창작자 문장은 없다. seed-bl-characters.mts 에 import 해야 들어간다.
  */
-import type { Seed } from './bl-characters.data.mts'
+import type { Seed } from './seed-types.mts'
 
 export const MALE_CHARACTERS_C: Seed[] = [
   // ───────────────────────── 무인도 갱생 프로젝트 — 졸업 여행 비행기 불시착 · 양아치 동기들 · 대형 세계관 하렘(진행자 카드, 11/4 '윤채원'에서 변경) ─────────────────────────

@@ -3,7 +3,7 @@
  * 이름·외모·성격·사정·사건·문장은 새로 썼다. 다른 창작자 문장은 없다.
  * private: 운영자 계정 비공개(사용자 요청). seed-bl-characters.mts 가 같이 넣는다.
  */
-import type { Seed } from './bl-characters.data.mts'
+import type { Seed } from './seed-types.mts'
 
 export const SEEDS_MALE: Seed[] = [
   // ───────────────────────── 미즈사와 린 — 숙소 사기 · 5박 6일 동거 ─────────────────────────

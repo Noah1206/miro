@@ -2,7 +2,7 @@
  * 남성향 E 묶음 — 2026-11-04. D 묶음(male-characters-d.data.mts)은 다른 작업이 쓰는 중이라 따로 둔다.
  * 1:1 카드 규칙은 D 의 한서윤과 같다. 전원 성인(20+). seed-bl-characters.mts 에 import 해야 들어간다.
  */
-import type { Seed } from './bl-characters.data.mts'
+import type { Seed } from './seed-types.mts'
 
 export const MALE_CHARACTERS_E: Seed[] = [
   // ───────────────────────── 구해준 길고양이가 수인이 되었다 — 다친 치즈냥 나비 · 자취방 동거 · 1:1 · 일반+언베일 (11/4) ─────────────────────────

@@ -3,7 +3,7 @@
  * 일반(카페) · 언베일 혼자 유혹 · 언베일 정상위. 운영 DB 는 읽기만, 결과는 output/preview/<slug>/ 에만(채팅방에 올리지 않음).
  *
  *   npx tsx --env-file=../../.env scripts/preview-photos.mts            # 19세 이상·공개(또는 운영자 소유) 캐릭터 전부
- *   npx tsx --env-file=../../.env scripts/preview-photos.mts --only=official-kang-seheon
+ *   npx tsx --env-file=../../.env scripts/preview-photos.mts --only=official-m-massage-club
  */
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs'
 import { and, eq, isNull } from 'drizzle-orm'

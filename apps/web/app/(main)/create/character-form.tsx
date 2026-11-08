@@ -84,7 +84,7 @@ export const EMPTY: FormInitial = {
   contactEnabled: true, contactFrequency: 50, initiativeLevel: 50, replyDelayMinutes: 5,
   activeHoursStart: '08:00', activeHoursEnd: '23:00', preferredChannel: 'message',
   photoProbability: 20, voiceMessageProbability: 20, callProbability: 30, videoCallProbability: 10, senderLabel: '',
-  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], situationImages: [], recommendedModel: '', recommendedLength: 'scene', recommendedThinking: 'low', commands: [], media: 'text', audience: 'female',
+  startingContext: '', worldLocation: '', startingTime: '', sampleDialogue: [], lore: [], situationImages: [], recommendedModel: '', recommendedLength: 'scene', recommendedThinking: 'low', commands: [], media: 'text', audience: 'male',
   isPublic: true,
   images: [],
 }
