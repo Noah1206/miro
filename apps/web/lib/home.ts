@@ -15,6 +15,12 @@ export type HomeCard = OfficialCard & {
   plays: number
   /** 카드 아래 한 줄. */
   caption: string | null
+  /** 11/8 홈 섹션 계산용(베이비챗식) — 만든 시각·대상·공식 여부·성인 전용·최근 7일 대화 인원. */
+  createdAt?: string
+  audience?: Audience
+  isOfficial?: boolean
+  adultOnly?: boolean
+  recentPlays?: number
 }
 
 export type HomeRow = { key: string; title: string; items: HomeCard[]; /** 제목 아래 짧은 글(10/20). */ subtitle?: string }
@@ -52,6 +58,7 @@ const pageColumns = {
   images: sql<string[]>`coalesce(jsonb_path_query_array(${characters.images}, '$[0 to 7]'), '[]'::jsonb)`,
   contactEnabled: contactProfiles.enabled,
   coverUnveil: characters.coverUnveil,
+  audience: characters.audience, isOfficial: characters.isOfficial, adultOnly: characters.adultOnly,
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
 }
 
@@ -157,7 +164,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   const last = rows.slice(0, PAGE_SIZE).at(-1)
   return {
     // 11/6: veiled = 언베일을 안 켠 사람 — 표지 흐림(coverUnveil 카드만 그림)과 카드 사진 자동 넘김의 언베일 사진 제외에 같이 쓴다.
-    items: pageRows.map(({ createdAtKey: _createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: !unveil })),
+    items: pageRows.map(({ createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: !unveil, createdAt: createdAtKey })),
     nextCursor: !all && rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify(sort === 'latest' ? [last.createdAtKey, last.id] : [last.createdAtKey, last.id, sort, last.sortScore])).toString('base64url') : null,
   }
 }
@@ -180,47 +187,50 @@ export const miroPage = (userId: string | null, cursor: string | null = null) =>
 export const miroCatalog = (userId: string | null) => cardPage('reality', userId, null, true, {}, true, true)
 
 /**
- * 홈 섹션(10/19, 위프·베이비챗형): 인기 순위 + 장르별 줄. 목록은 homeCatalog(랭킹순 — 대화 인원, 같으면 최신) 한 번만 읽고 나눈다.
- * 장르 줄은 worlds.genre 의 '·' 조각 중 카드가 3개 이상인 것, 많은 순으로 6줄. 섹션끼리 캐릭터가 겹치지 않는다(10/19).
+ * 홈 섹션(11/8, 베이비챗 홈 분석 반영). 목록은 homeCatalog 한 번만 읽고 나눈다. 한 캐릭터는 한 섹션에만(10/19 사용자 요청).
+ * 순서: 지금 뜨는 신작 → 남성향/여성향 인기 TOP 10 → 미로 오리지널 신작 → 나에게 맞춘 → 따끈따끈한 유저 신작 → 태그 → 세이프티 인기 → 전체.
+ * - 지금 뜨는 신작: 만든 지 21일 안, 최근 7일 대화 인원순(같으면 최신).
+ * - 인기 TOP 10·세이프티·맞춤: 최근 7일 대화 인원순(같으면 누적, 같으면 최신) — 대화가 쌓이기 전엔 최신순과 같다.
+ * - 오리지널·유저 신작: 최신순. 세이프티는 언베일을 켠 사람에게만, 성인 전용이 아닌 캐릭터.
  */
-export async function homeSections(userId: string | null, audience?: Audience): Promise<{ ranking: HomeCard[]; forYou: HomeCard[]; recommended: HomeCard[]; genres: HomeRow[]; others: HomeCard[]; filters: DiscoveryGroup[] }> {
-  // 10/19: 최근에 만든 캐릭터가 앞에 오게(사용자 요청) — 대화 수가 쌓이기 전까지 최신순.
-  const [{ items }, chattedRows] = await Promise.all([
+export type HomeSections = { rising: HomeCard[]; popularMale: HomeCard[]; popularFemale: HomeCard[]; originals: HomeCard[]; forYou: HomeCard[]; fresh: HomeCard[]; safety: HomeCard[]; tags: string[]; others: HomeCard[]; filters: DiscoveryGroup[] }
+export async function homeSections(userId: string | null, audience?: Audience): Promise<HomeSections> {
+  const [{ items: raw }, chattedRows, unveil] = await Promise.all([
     homeCatalog(userId, { sort: 'latest', audience }),
     userId ? db.selectDistinct({ id: roleplaySessions.characterId }).from(roleplaySessions)
       .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt))) : Promise.resolve([]),
+    homeUnveilEnabled(userId),
   ])
-  // 10/19: 한 캐릭터는 한 섹션에만(사용자 요청). 10/28 순서: 인기 → 나에게 맞춘 → 미로 추천 → 장르 한 줄 → 나머지 전체.
-  const ranking = items.slice(0, 10)
-  let pool = items.slice(10)
-  const take = (pick: (c: HomeCard) => boolean) => {
-    const got = shuffle(pool.filter(pick)).slice(0, 10)
+  const recent = await playCounts(raw.map(c => c.id), 7)
+  const items = raw.map(c => ({ ...c, recentPlays: recent.get(c.id) ?? 0 }))
+  const newest = (a: HomeCard, b: HomeCard) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')
+  // 11/8 베이비챗 확인: 누적 순이 아니라 최근 기간 지표로 줄 세운다 → 최근 7일 대화 인원, 같으면 누적, 같으면 최신.
+  const byPlays = (a: HomeCard, b: HomeCard) => (b.recentPlays ?? 0) - (a.recentPlays ?? 0) || b.plays - a.plays || newest(a, b)
+  let pool = items
+  // ranked = 순위가 의미 있는 줄은 섞지 않는다. 나머지 줄은 들어올 때마다 섞는다(10/20 사용자 요청).
+  const take = (pick: (c: HomeCard) => boolean, order: (a: HomeCard, b: HomeCard) => number, ranked = true) => {
+    const got = pool.filter(pick).sort(order).slice(0, 10)
     const ids = new Set(got.map(c => c.id))
     pool = pool.filter(c => !ids.has(c.id))
-    return got
+    return ranked ? got : shuffle(got)
   }
+  const cutoff = new Date(Date.now() - 21 * 864e5).toISOString()
+  const rising = take(c => (c.createdAt ?? '') >= cutoff, (a, b) => (b.recentPlays ?? 0) - (a.recentPlays ?? 0) || newest(a, b))   // 신작은 누적보다 최신이 먼저
+  const popularMale = audience === 'female' ? [] : take(c => c.audience === 'male', byPlays)
+  const popularFemale = audience === 'male' ? [] : take(c => c.audience === 'female', byPlays)
+  const originals = take(c => !!c.isOfficial || c.slug.startsWith('official-'), newest, false)
   // 나에게 맞춘: 대화해 본 캐릭터들과 장르가 겹치는, 아직 대화하지 않은 캐릭터. 대화가 없으면 아무 캐릭터.
   const chatted = new Set(chattedRows.map(r => r.id))
   const liked = new Set(items.filter(c => chatted.has(c.id)).flatMap(c => genreValues(c.genre)))
-  let forYou = take(c => !chatted.has(c.id) && genreValues(c.genre).some(g => liked.has(g)))
-  if (forYou.length < 3) forYou = [...forYou, ...take(c => !chatted.has(c.id))].slice(0, 10)
-  const recommended = take(c => c.slug.startsWith('official-'))
-  const rest = pool
-  const counts = new Map<string, number>()
-  for (const c of rest) for (const g of new Set(genreValues(c.genre))) counts.set(g, (counts.get(g) ?? 0) + 1)
-  const buckets = new Map<string, HomeCard[]>()
-  for (const c of rest) {
-    const gs = [...new Set(genreValues(c.genre))].filter(g => (counts.get(g) ?? 0) >= 3)
-    if (!gs.length) continue
-    const g = gs.sort((a, b) => (counts.get(a)! - counts.get(b)!) || a.localeCompare(b))[0]!
-    buckets.set(g, [...(buckets.get(g) ?? []), c])
-  }
-  const genres = [...buckets].filter(([, cs]) => cs.length >= 3).sort((a, b) => b[1].length - a[1].length).slice(0, 1)
-    .map(([g, cs]) => ({ key: g, title: g, items: shuffle(cs) }))
+  let forYou = take(c => !chatted.has(c.id) && genreValues(c.genre).some(g => liked.has(g)), byPlays, false)
+  if (forYou.length < 3) forYou = [...forYou, ...take(c => !chatted.has(c.id), byPlays, false)].slice(0, 10)
+  const fresh = take(c => !c.isOfficial && !c.slug.startsWith('official-'), newest)
+  const safety = unveil ? take(c => !c.adultOnly && !c.coverUnveil, byPlays) : []
+  const filters = availableDiscoveryGroups(items)
+  // 태그 줄: 대화가 많은 캐릭터에 붙은 태그부터(각 묶음의 인기 태그), 없으면 묶음 앞 태그.
+  const tags = [...new Set(filters.flatMap(g => g.popularTags ?? g.tags.slice(0, 2)))].slice(0, 16)
   // 10/28: 아래 '전체 캐릭터' 격자는 섹션에 나온 캐릭터까지 전부 보여 준다(사용자 요청).
-  const others = items
-  // 10/20: 줄 안의 순서는 들어올 때마다 섞는다(사용자 요청) — 어느 줄에 들어가는지는 그대로.
-  return { ranking: shuffle(ranking), forYou, recommended, genres, others, filters: availableDiscoveryGroups(items) }
+  return { rising, popularMale, popularFemale, originals, forYou, fresh, safety, tags, others: items, filters }
 }
 
 function shuffle<T>(xs: T[]): T[] {
@@ -288,11 +298,12 @@ async function publicCharacters(viewerId: string | null, limit: number, type: Ex
 }
 
 /** 캐릭터별 대화 인원. 한 번의 질의로 모아 카드에 붙인다. */
-async function playCounts(ids: string[]): Promise<Map<string, number>> {
+async function playCounts(ids: string[], days?: number): Promise<Map<string, number>> {
   if (ids.length === 0) return new Map()
   const rows = await db.select({ id: roleplaySessions.characterId, n: sql<number>`count(distinct ${roleplaySessions.userId})::int` })
     .from(roleplaySessions)
-    .where(and(inArray(roleplaySessions.characterId, ids), isNull(roleplaySessions.deletedAt)))
+    .where(and(inArray(roleplaySessions.characterId, ids), isNull(roleplaySessions.deletedAt),
+      ...(days ? [gt(roleplaySessions.lastInteractionAt, sql`now() - make_interval(days => ${days})`)] : [])))
     .groupBy(roleplaySessions.characterId)
   return new Map(rows.map((r) => [r.id, r.n]))
 }

@@ -20,6 +20,7 @@ import { HeaderProfile } from './profile-link'
 import { HomeViewBeacon } from './view-beacon'
 import { HomeAgeGate } from './age-gate'
 import type { HomeCard } from '@/lib/home'
+import { discoveryTagLabel } from '@/lib/discovery-filters'
 
 /** 로그인 전(11/8) — 흐린 카드에도 제목·소개 글이 HTML 에 실리지 않게 글자를 비운다. 사진만 흐리게 보인다. */
 const veil = (c: HomeCard): HomeCard => ({ ...c, name: '', role: null, occupation: null, relationshipKeywords: [], genre: null, tagline: null, caption: null, startingContext: null })
@@ -32,7 +33,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const audience = raw === 'male' || raw === 'female' ? raw : undefined
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [sections, unread, unveil, profile] = await Promise.all([
-    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)).then(s => user ? s : { ...s, ranking: s.ranking.map(veil), forYou: s.forYou.map(veil), recommended: s.recommended.map(veil), others: s.others.map(veil), genres: [], filters: [] }),
+    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)).then(s => user ? s : { ...s, rising: s.rising.map(veil), popularMale: s.popularMale.map(veil), popularFemale: s.popularFemale.map(veil), originals: s.originals.map(veil), forYou: s.forYou.map(veil), fresh: s.fresh.map(veil), safety: [], tags: [], others: s.others.map(veil), filters: [] }),
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
     user ? accountProfile(user) : null,
@@ -74,9 +75,21 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </div>
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('홈')}</h1>
-      {sections.ranking.length > 0 && <Row index={0} row={{ key: 'ranking', title: audience === 'male' ? t('🔥 지금 가장 많이 대화하는 여자들') : audience === 'female' ? t('🔥 지금 가장 많이 대화하는 남자들') : t('🔥 지금 가장 많이 대화하는 캐릭터'), subtitle: t('요즘 가장 많은 사람이 말을 건 캐릭터'), items: sections.ranking }} href="/explore" />}
-      {sections.forYou.length > 0 && <Row index={1} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
-      {sections.recommended.length > 0 && <Row index={2} row={{ key: 'recommended', title: t('⭐ 미로 추천 캐릭터'), items: sections.recommended }} href="/explore" />}
+      {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
+      {sections.rising.length > 0 && <Row index={0} row={{ key: 'rising', title: t('🆕 지금 뜨는 신작'), subtitle: t('최근 3주 안에 나온 이야기 중 요즘 대화가 몰리는 순서'), items: sections.rising }} href="/explore" />}
+      {sections.popularMale.length > 0 && <Row index={1} row={{ key: 'popular-male', title: t('🔥 남심 저격! 인기 남성향 TOP 10'), items: sections.popularMale }} href="/explore" />}
+      {sections.popularFemale.length > 0 && <Row index={2} row={{ key: 'popular-female', title: t('💗 여심 저격! 인기 여성향 TOP 10'), items: sections.popularFemale }} href="/explore" />}
+      {sections.originals.length > 0 && <Row index={3} row={{ key: 'originals', title: t('⭐ 미로 오리지널 신작'), items: sections.originals }} href="/explore" />}
+      {sections.forYou.length > 0 && <Row index={4} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
+      {sections.fresh.length > 0 && <Row index={5} row={{ key: 'fresh', title: t('🌱 따끈따끈한 유저 신작'), items: sections.fresh }} href="/explore" />}
+      {sections.tags.length > 0 && <section aria-labelledby="row-tags" style={{ marginBottom: 'var(--space-7)', padding: '0 var(--gutter)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+          <h2 id="row-tags" className="t-title-3">{t('🏷️ 취향은 숨겨도 태그는 못 숨겨')}</h2>
+          <TransitionLink href="/explore" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{sections.tags.map(tag => <TransitionLink key={tag} href={`/explore?tag=${encodeURIComponent(tag)}`} className="t-caption" style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--color-surface-2, rgba(255,255,255,.06))', color: 'var(--color-text-primary)' }}>#{discoveryTagLabel(tag)}</TransitionLink>)}</div>
+      </section>}
+      {sections.safety.length > 0 && <Row index={6} row={{ key: 'safety', title: t('🛡️ 놓치면 아쉬운 세이프티 인기 TOP 10'), subtitle: t('언베일 없이도 재밌는 이야기'), items: sections.safety }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.others.length > 0 && <AllCharacters items={sections.others} />}
       </>; return user ? content : <HomeAgeGate>{content}</HomeAgeGate> })()}
