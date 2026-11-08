@@ -17,6 +17,7 @@ import { feature } from '@miro/config'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
 import { getT } from '@/lib/i18n/server'
+import { observe } from '@/lib/observe'
 
 export type MediaState = { error: string | null; notice: string | null }
 
@@ -125,6 +126,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
     return { error: null, notice: first.providerNotice ?? msg(done.every(m => m.cached) ? '기존 이미지를 보여드렸어요. 추가 차감은 없어요.' : '이미지가 도착했어요.') }
   } catch (e) {
     if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
+    observe('photo.failed', { sessionId, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })   // 11/8 원인이 로그에 남게
     // 이미지 생성 실패 시 텍스트 역할극은 그대로 유지한다 (명세서 5.3 예외).
     return { error: msg('사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.'), notice: null }
   }
