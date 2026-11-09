@@ -11,7 +11,8 @@ export function UnveilCover({ veiled, label, unlock, hideLabel }: { veiled?: boo
   unlock?: { signedIn: boolean; returnTo: string } }) {
   const size = veiled ? 44 : 20
   return <>
-    {veiled && <span aria-hidden style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(22px) saturate(1.1)', WebkitBackdropFilter: 'blur(22px) saturate(1.1)', background: 'rgb(0 0 0 / .25)', zIndex: 2 }} />}
+    {/* 11/9 사용자: 흐림이 너무 보수적 → 22px·어둡게 .25 에서 14px·.12 로(윤곽·색은 보이고 세부는 안 보이게). 본인인증 전 사람에게 보이는 화면이라 더 줄이진 않는다. */}
+    {veiled && <span aria-hidden style={{ position: 'absolute', inset: 0, backdropFilter: 'blur(14px) saturate(1.1)', WebkitBackdropFilter: 'blur(14px) saturate(1.1)', background: 'rgb(0 0 0 / .12)', zIndex: 2 }} />}
     {veiled && unlock && <UnveilUnlock {...unlock} />}
     {/* 11/7 사용자: '언베일' 글자 대신 19 아이콘 — 홈 머리 스위치와 같은 청소년유해표시(빨간 테두리 원, 흰 바탕, 검은 19). */}
     {!hideLabel && <svg role="img" aria-label={label} viewBox="0 0 40 40" width={size} height={size} style={{
