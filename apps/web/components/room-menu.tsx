@@ -71,11 +71,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const archiveHref = messenger ? '/archive?channel=dm' : '/archive'
   const row = (href: string, icon: IconName, label: string) => <TransitionLink href={href} className={styles.row} onClick={close}><MenuIcon name={icon}/><span>{label}</span><Chevron/></TransitionLink>
   return <>
-    {/* 음성 모드(11/3) — 메뉴 안 두 버튼 대신 ☰ 왼쪽 토글. 켜면 캐릭터 답장을 목소리로 듣는다. */}
-    {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceSwitch} aria-label={t('음성 모드')} title={t('음성 모드')} onClick={toggle}>
-      <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></svg>
-      <i aria-hidden />
-    </button>}
     <button type="button" className={styles.trigger} aria-label={t('대화 메뉴')} aria-haspopup="dialog" aria-expanded={open} aria-controls={open ? menuId : undefined} onClick={() => { setPanel(null); setOpen(true); void refreshProfile(); void refreshBalance() }}>
       <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
@@ -90,6 +85,8 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       </section>
       <section className={styles.section} aria-label={t('내 설정')}>
         <h3>{t('내 설정')}</h3>
+        {/* 음성 모드(11/9 사용자: 헤더 대신 메뉴 안) — 켜면 캐릭터 답장을 목소리로 듣는다. 이 탭이 아이폰 소리 잠금도 푼다. */}
+        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={toggle}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
         <div className={styles.grid}>{tiles.map(id => <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
         </button>)}</div>
