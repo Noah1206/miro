@@ -171,10 +171,12 @@ export async function voiceSample(userId: string, id: string): Promise<ArrayBuff
   let path: string
   if (!id) path = '/samples/asmr01'
   else {
-    const [row] = await db.select({ file: officialVoices.providerVoiceId, ownerId: officialVoices.ownerId }).from(officialVoices)
+    const [row] = await db.select({ file: officialVoices.providerVoiceId, ownerId: officialVoices.ownerId, samples: officialVoices.samples }).from(officialVoices)
       .where(and(eq(officialVoices.id, id), selectable(userId))).limit(1)
     if (!row) return null
-    path = row.ownerId ? `/voices/${row.file}/preview` : `/samples/${row.file}`
+    // 11/9: 녹음 하나로 올린 공식 목소리(voice:add — 민지·서연·도희·혜수·은아)도 파일은 회원 목소리 자리에 있다 — /samples 는 404 라 미리 듣기가 안 됐다.
+    const uploaded = row.samples.some(s => s.path?.startsWith('modal:miro-user-voices/'))
+    path = row.ownerId || uploaded ? `/voices/${row.file}/preview` : `/samples/${row.file}`
   }
   const up = uploadBase()
   const res = await fetch(`${up.url}${path}`, { headers: up.headers, signal: AbortSignal.timeout(20_000) })
