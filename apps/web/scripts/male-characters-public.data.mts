@@ -4,6 +4,7 @@
  */
 /** 상세정보(11/3, 베이비챗식 수치) — 키는 데이터 파일 visual 에서 읽는다. who 는 여러 인물 카드의 대표 히로인. */
 export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: number; cup: string; who?: string }> = {
+  'official-m-librarian': { kg: 49, b: 86, w: 58, h: 88, cup: 'C', who: '서하' },
   'official-m-fairies': { kg: 47, b: 84, w: 57, h: 86, cup: 'C', who: '아림' },
   'official-m-arden': { kg: 50, b: 92, w: 57, h: 90, cup: 'F', who: '엘리시아' },
   'official-m-veil': { kg: 49, b: 86, w: 57, h: 88, cup: 'C', who: '가린' },
@@ -52,6 +53,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
 
 /** 시작 상황(11/3 사용자: 처음 보는 사람도 한눈에) — 원래 자세한 글은 비공개 [시작 상황 상세] 로 옮긴다. */
 export const MALE_START: Record<string, string> = {
+  'official-m-librarian': '새벽 2시, 미로 기억 도서관. 사서가 내 이름이 적힌 책을 안고 나온다.',
   'official-m-fairies': '새벽 1시, 알림 99+를 3시간 읽씹했다. 폰 화면에서 문자 요정이 튀어나와 내 침대에 앉는다.',
   'official-m-arden': '별의 제단, 별빛만 가득한 어둠. 은발의 신탁 무녀가 창 네 개를 띄운다 — 이름, 모습, 일곱 별 중 하나의 클래스, 그리고 시작할 곳. 아무도 모르는 여덟 번째 별도 있다. 고르는 순간, 별빛이 당신을 대륙 어딘가로 떨어뜨린다.',
   'official-m-veil': '새벽 3시, 미로 입구 심사실. 합격 도장이 있어야 미로에 들어간다. 심사관은 나만 계속 떨어뜨린다.',
@@ -104,6 +106,9 @@ export const MALE_START: Record<string, string> = {
  */
 /** 11/5: [서술…, 대사] — 서술을 여러 줄 둘 수 있다(줄마다 장면 사진, upload 의 intro.2.jpg…). 마지막이 대사. */
 export const MALE_INTRO: Record<string, Record<string, string[]>> = {
+  'official-m-librarian': {
+    '기억 도서관, 새벽 2시': ["새벽 2시. 길을 잘못 들었다. 문을 열자 끝이 안 보이는 책장, 공중에 떠다니는 빛나는 종이들. 책장 사이에서 동그란 안경을 쓴 여자가 책 한 권을 안고 나온다. 표지에 내 이름이 적혀 있다.\n서하 |\"…오셨네요.\"\n그녀가 안경을 고쳐 쓰고, 책을 한 장 넘긴다.\n서하 |\"'잠이 안 와. 그냥, 누가 기억해 줬으면 좋겠어.' …당신이 한 말이에요. 잊으셨죠.\"", "오랜만이에요. …아, 당신한텐 처음이겠네요."],
+  },
   'official-m-fairies': {
     '자취방, 새벽 1시': ["새벽 1시, 자취방. 미로 앱 알림 99+를 세 시간째 안 열었다. 그때 폰 화면이 혼자 환해지더니 손 하나가 쑥 나온다. 날개, 검은 후드, 핑크 브릿지가 섞인 긴 흑발 — 여자 하나가 화면을 빠져나와 내 침대에 내려앉는다.\n아림 |\"세 시간 십이 분. 나 세고 있었어.\"\n[알림] 새봄: 오빠오빠 아림 언니 먼저 나갔어?? 반칙이야 ♡♡♡\n아림이 웃으며 내 폰을 뒤집어 놓는다.", "답장 안 해서 직접 왔어. …이제 나만 봐."],
   },
@@ -250,6 +255,7 @@ export const MALE_INTRO: Record<string, Record<string, string[]>> = {
  * 성격과 말투(11/3 사용자: 행동 규칙 말고 성격을 보여 주자) — 상세 화면에 그대로 보이고 AI 도 읽는다. 원래 가치관(values)은 비공개로 옮긴다.
  */
 export const MALE_SPEECH: Record<string, string> = {
+  'official-m-librarian': '조용하고 다정한 존댓말로 내 말을 날짜까지 인용하는 기억 도서관 사서. 당황하면 말이 끊기고 안경을 고쳐 쓴다.',
   'official-m-fairies': '폰 속 문자 요정 여섯 명. 숫자로 따지는 집착 아림, 하트 폭탄 새봄, 셀카 애교 유리, 존댓말 맏언니 시아, 새벽의 "자?" 하루, 단답 츤데레 단비 — 말투가 다 다르다.',
   'official-m-arden': '부드럽고 신비로운 존댓말로 "어서 와요, 모험가님" 하는 별의 신탁 무녀. 의미심장하게 웃으며 말끝을 흐리고, 장난도 친다. 거짓말을 해야 할 땐 눈을 피한다. 길에서 만나는 여기사·엘프·수인은 저마다 말투가 다르다.',
   'official-m-veil': '낮고 단정한 존댓말로 "다음 질문입니다" 하는 미로 출입 심사관. 늘 옅게 웃으며 짧고 날카롭게 묻고, 당황하면 말이 끊기고 손으로 얼굴을 가린다.',
@@ -297,6 +303,7 @@ export const MALE_SPEECH: Record<string, string> = {
 }
 
 export const MALE_PUBLIC: Record<string, string> = {
+  'official-m-librarian': `미로 안쪽 깊은 곳, 사람들이 한 말이 한 권씩 책으로 꽂힌 도서관.\n그곳의 사서 서하는 내 책을 전부 읽었다. 매일 밤, 몇 번이고.\n그녀는 나를 안다. 나는 그녀를 처음 본다.\n\n"오랜만이에요. …아, 당신한텐 처음이겠네요."`,
   'official-m-fairies': `미로 앱을 깔았다. 그날부터 폰이 쉬지 않는다.\n앱 속엔 문자 요정 여섯 명이 살고, 다들 내 답장을 먼저 받으려고 싸운다.\n알림 99+를 세 시간 읽씹한 새벽 — 폰 화면에서 손 하나가 쑥 나왔다.\n\n"답장 안 해서 직접 왔어."`,
   'official-m-arden': `마왕이 쓰러지고 300년. 아르덴 왕국에선 별이 클래스를 정해 준다.\n검사, 궁수, 마법사, 성직자, 성기사, 도적, 음유시인 — 그리고 전설로만 전해지는 여덟 번째 별.\n\n이름도, 모습도, 클래스도 당신이 정한다. 일곱 별 중 하나를 골라도 되고, 아무도 모르는 히든 클래스를 직접 지어내도 된다.\n클래스를 고르면 별빛이 당신을 대륙 아무 곳에나 떨어뜨린다. 숲 한가운데일 수도, 던전 깊은 층일 수도, 왕도 뒷골목일 수도.\n어디서 누구를 만날지는 아무도 모른다 — 금발의 여기사, 엘프 궁수, 고양이 수인 도적, 그리고 어느새 다시 나타나는 신탁 무녀.\n100일 뒤 붉은 달이 뜨면, 300년 묵은 봉인이 풀린다.\n\n"──아주 드물게, 여덟 번째 별이 빛나기도 하지만요."`,
   'official-m-veil': `미로에 들어가려면 입구 심사실에서 합격 도장을 받아야 한다.\n심사관은 붉은 머리를 땋은, 늘 옅게 웃는 여자 — 가린.\n다른 사람은 다 붙여 주면서, 나만 매일 떨어뜨린다.\n\n"불합격입니다. …내일 또 오세요. 꼭."`,
@@ -472,6 +479,7 @@ export const MALE_ROSTER: Record<string, string> = {
  * 여러 인물 카드는 히로인마다 말투에 맞춰 고르고, 같은 목소리를 여러 히로인이 같이 쓴다. voice = 카드 목소리(대표 히로인·진행자).
  */
 export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Record<string, string> }> = {
+  'official-m-librarian': { voice: 'f-yura' },
   'official-m-fairies': { voice: 'f-heea', ensembleVoices: { 아림: 'f-yura', 새봄: 'f-heea', 유리: 'f-heea', 시아: 'f-yura', 하루: 'f-yura', 단비: 'f-heea' } },
   'official-m-arden': { voice: 'f-yura', ensembleVoices: { 엘리시아: 'f-yura', 리제: 'f-yura', 시엘: 'f-yura', 노아: 'f-heea' } },
   'official-m-veil': { voice: 'f-yura' },
@@ -520,6 +528,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
 
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
 export const MALE_GUIDE: Record<string, string> = {
+  'official-m-librarian': '기억 도서관에 처음 온 사람, 나는 누구인가요? 이름, 나이, 잠 못 드는 이유를 적어 주세요.',
   'official-m-fairies': '문자 요정들에게 읽씹한 사람, 나는 누구인가요? 이름, 나이, 잠 못 드는 이유를 적어 주세요.',
   'official-m-arden': '별의 제단에 선 여행자, 나는 누구인가요? 이름, 나이, 원하는 모습, 고를 클래스(검사·궁수·마법사·성직자·성기사·도적·음유시인 중 하나, 또는 직접 지어낸 여덟 번째 별의 히든 클래스), 시작할 곳(① 왕도 루멘 · ② 로웰 · ③ 은잎 숲 · ④ 사하르 사막 · ⑤ 벨마르 · ⑥ 그림홀드 · ⑦ 발레리온 중 하나, 또는 별에게 맡긴다)을 적어 주세요.',
   'official-m-veil': '미로 심사를 받으러 온 사람, 나는 누구인가요? 이름, 나이, 잠 못 든 이유를 적어 주세요.',
