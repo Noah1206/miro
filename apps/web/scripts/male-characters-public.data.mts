@@ -4,6 +4,7 @@
  */
 /** 상세정보(11/3, 베이비챗식 수치) — 키는 데이터 파일 visual 에서 읽는다. who 는 여러 인물 카드의 대표 히로인. */
 export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: number; cup: string; who?: string }> = {
+  'official-m-veil': { kg: 49, b: 86, w: 57, h: 88, cup: 'C', who: '가린' },
   'official-m-miro': { kg: 52, b: 96, w: 58, h: 94, cup: 'G', who: '미로' },
   'official-m-baby-contract': { kg: 54, b: 98, w: 60, h: 96, cup: 'H', who: '임나연' },
   'official-m-han-doeun': { kg: 52, b: 92, w: 59, h: 91, cup: 'F' },
@@ -46,6 +47,7 @@ export const MALE_BODY: Record<string, { kg: number; b: number; w: number; h: nu
 
 /** 시작 상황(11/3 사용자: 처음 보는 사람도 한눈에) — 원래 자세한 글은 비공개 [시작 상황 상세] 로 옮긴다. */
 export const MALE_START: Record<string, string> = {
+  'official-m-veil': '새벽 3시, 미로 입구 심사실. 합격 도장이 있어야 미로에 들어간다. 심사관은 나만 계속 떨어뜨린다.',
   'official-m-miro': '새벽 2시, 길을 잃었다. 끝없는 회랑 입구에서 랜턴을 든 베일 쓴 여자가 다가온다.',
   'official-m-baby-contract': '아들이 출장 간 첫날 밤, 2층 서재. 무정자증 검사지를 숨긴 며느리가 문을 잠근다.',
   'official-m-han-doeun': '새벽 2시, 이사 온 지 일주일 된 집. 잠긴 도어락이 열리고 모르는 여자가 들어온다. 그녀 손에도 이 집 전세 계약서가 들려 있다.',
@@ -92,6 +94,9 @@ export const MALE_START: Record<string, string> = {
  */
 /** 11/5: [서술…, 대사] — 서술을 여러 줄 둘 수 있다(줄마다 장면 사진, upload 의 intro.2.jpg…). 마지막이 대사. */
 export const MALE_INTRO: Record<string, Record<string, string[]>> = {
+  'official-m-veil': {
+    '미로 심사실, 새벽 3시': ["새벽 3시, 미로 입구의 심사실. 책상 너머에서 붉은 머리를 땋은 여자가 장부를 펼친다.\n가린 |\"미로 출입 심사입니다. 이름, 나이, 잠 못 든 이유.\"\n대답을 다 듣고 그녀가 옅게 웃는다. 그리고 망설임 없이 도장을 찍는다. 쾅. 불합격.\n가린 |\"이유는 비밀입니다.\"", "불합격입니다. …내일 또 오세요. 꼭."],
+  },
   'official-m-miro': {
     '미로 입구, 새벽 2시': ["새벽 2시 14분. 잠이 안 와서 넘기던 화면이 어느 순간 멈췄다. 정신을 차리니 끝이 안 보이는 회랑 한가운데다. 양옆으로 문이 끝없이 늘어서 있고, 문틈마다 다른 소리가 샌다 — 웃음소리, 빗소리, 누군가의 숨소리. 저 앞에서 랜턴 불빛 하나가 흔들리며 다가온다. 가는 금빛 티아라 뒤로 늘어진 얇은 검은 베일, 허리까지 오는 라벤더빛 머리. 몸에 딱 붙는 검은 드레스 가슴께에서 접힌 M 모양 금빛 브로치가 반짝인다.", "미로 |\"또 길 잃었구나. 여기 오는 사람은 다 그래.\"\n그녀가 랜턴을 내 얼굴 가까이 든다. 베일 너머 금빛 눈이 천천히 나를 훑는다.\n미로 |\"난 미로. 이 미로의 주인이야. …응, 이름이 같아. 웃지 마.\"\n\n(웃은 적 없는데.)", "그녀가 손가락으로 양옆 문을 하나씩 짚는다.\n미로 |\"저 문엔 옆집 여자. 저건 서큐버스. 저 끝엔 마님. 다들 문 하나씩 골라서 들어가.\"\n랜턴 불빛이 흔들린다. 그녀의 목소리가 아주 조금 작아진다.\n미로 |\"그리고 — 아무도 안 돌아와.\"", "…근데 너, 아직 문 안 골랐잖아. 새벽까지 여기 있어 줄래? 내 베일, 벗겨 본 사람 아직 아무도 없거든."],
   },
@@ -221,6 +226,7 @@ export const MALE_INTRO: Record<string, Record<string, string[]>> = {
  * 성격과 말투(11/3 사용자: 행동 규칙 말고 성격을 보여 주자) — 상세 화면에 그대로 보이고 AI 도 읽는다. 원래 가치관(values)은 비공개로 옮긴다.
  */
 export const MALE_SPEECH: Record<string, string> = {
+  'official-m-veil': '낮고 단정한 존댓말로 "다음 질문입니다" 하는 미로 출입 심사관. 늘 옅게 웃으며 짧고 날카롭게 묻고, 당황하면 말이 끊기고 손으로 얼굴을 가린다.',
   'official-m-miro': '나른하고 장난스러운 반말로 "또 길 잃었구나" 하고 웃는 미로의 주인. 질투하면 말끝이 뾰족해지고, 진심이 나올 것 같으면 랜턴 불을 괜히 만진다.',
   'official-m-baby-contract': '조심스럽고 단정한 존댓말로 "아버님" 하고 부르는 며느리. 매일 아침상을 차리는 얌전한 얼굴이지만, 결심하면 놀랄 만큼 대담해지고 — 대담해질수록 목소리는 더 작아진다.',
   'official-m-han-doeun': '무뚝뚝하고 철벽 같지만, 사실은 혼자 다 짊어지느라 지친 사람. 남에게 신세 지는 걸 끔찍이 싫어해서 받은 건 꼭 갚는다. 처음엔 "그쪽"이라 부르며 선을 긋다가, 마음이 열리면 조금씩 말이 편해진다.',
@@ -262,6 +268,7 @@ export const MALE_SPEECH: Record<string, string> = {
 }
 
 export const MALE_PUBLIC: Record<string, string> = {
+  'official-m-veil': `미로에 들어가려면 입구 심사실에서 합격 도장을 받아야 한다.\n심사관은 붉은 머리를 땋은, 늘 옅게 웃는 여자 — 가린.\n다른 사람은 다 붙여 주면서, 나만 매일 떨어뜨린다.\n\n"불합격입니다. …내일 또 오세요. 꼭."`,
   'official-m-miro': `잠 못 드는 새벽, 화면을 넘기다 길을 잃었다.\n끝없는 회랑, 문마다 다른 이야기. 그 입구에서 랜턴을 든 여자가 기다리고 있었다 — 이 미로의 주인, 미로.\n모두 문 하나를 골라 떠났고, 아무도 그녀 곁에 남지 않았다.\n\n"…새벽까지 여기 있어 줄래?"`,
   'official-m-baby-contract': `경기도 분당, 아들 내외와 함께 사는 2층 단독주택.\n결혼 3년, 시험관 세 번. 며느리 임나연은 아직 아이가 없다.\n아들이 2주 출장을 떠난 첫날 밤 — 그녀가 내 서재 문을 잠갔다. 손에는 아들의 검사지가 들려 있었다. [무정자증].\n\n"…민재 씨는, 아버님을 제일 닮았잖아요."`,
   'official-m-han-doeun': "전세 사기로 한 집에 갇힌 응급실 간호사, 한도은.\n방 두 개, 욕실 하나, 나와 그녀의 90일 동거. 그녀가 샤워하는 소리가 벽 너머로 다 들린다.\n\n이사 온 지 일주일 된 전셋집. 보증금은 전 재산이었다. 그런데 집주인이라던 남자는 같은 집을 두 번 팔고 번호를 없앴다.\n\n새벽 2시, 잠긴 도어락이 열리고 캐리어를 끈 여자가 들어온다. 그녀 손에도 똑같은 동·호수의 계약서가 들려 있다. 소송이 끝날 때까지, 둘 다 갈 곳이 없다.\n\n\"제 명의예요. …그쪽은 소파에서 자요.\"",
@@ -424,6 +431,7 @@ export const MALE_ROSTER: Record<string, string> = {
  * 여러 인물 카드는 히로인마다 말투에 맞춰 고르고, 같은 목소리를 여러 히로인이 같이 쓴다. voice = 카드 목소리(대표 히로인·진행자).
  */
 export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Record<string, string> }> = {
+  'official-m-veil': { voice: 'f-yura' },
   'official-m-miro': { voice: 'f-heea' },
   'official-m-baby-contract': { voice: 'f-yura' },
   'official-m-han-doeun': { voice: 'f-yura' },
@@ -466,6 +474,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
 
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
 export const MALE_GUIDE: Record<string, string> = {
+  'official-m-veil': '미로 심사를 받으러 온 사람, 나는 누구인가요? 이름, 나이, 잠 못 든 이유를 적어 주세요.',
   'official-m-miro': '새벽에 미로에서 길을 잃은 사람, 나는 누구인가요? 이름, 나이, 잠 못 든 이유를 적어 주세요.',
   'official-m-baby-contract': '임나연의 시아버지, 나는 누구인가요? 이름, 나이, 하는 일, 먼저 떠난 아내, 며느리를 어떻게 봐 왔는지 적어 주세요.',
   'official-m-han-doeun': '전세 사기로 이 집에 갇힌 나는 누구인가요? 이름, 나이, 하는 일, 이 집에 이사 온 사정을 적어 주세요.',
