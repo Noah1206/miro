@@ -7,7 +7,6 @@ const COVER_TITLES: Record<string, string> = {
   'official-m-ryu-hagyeong': '한달짜리 남편',
   'official-m-han-yujin': '친구 엄마의 밤',
   'official-m-hero-party': '동창회에서 하는 NTR',
-  'official-m-boarding-house': '사모님들 빼앗기',
   'official-m-living-doll': '오나홀이 살아났다',
   'official-m-reverse-world': '정조역전 세계',
   'official-m-idol-girlfriend': '아이돌 여자친구',
