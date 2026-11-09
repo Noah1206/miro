@@ -6,6 +6,8 @@ export const ANALYTICS_EVENTS = [
   'recharge_purchased',
   // 11/8 퍼널(관리자 /funnel) — 나머지 단계는 각 표(users·roleplay_sessions·generated_media·bank_transfer_orders)에서 바로 읽는다.
   'home_viewed', 'unveil_enabled',
+  // 11/9 웹소설 — 대화방이 결말에 닿음(AI 의 결말 표식).
+  'story_ending',
   'archive_opened', 'session_archived', 'session_deleted', 'report_submitted', 'account_deleted',
   // Closed Alpha 퍼널 — 로그인 없는 체험. userId 는 null, props.alphaSession 으로 묶는다.
   'landing_view', 'experience_start', 'first_message_sent', 'third_message_sent',

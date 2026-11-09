@@ -587,3 +587,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 @keyframes photoMakingShine { to { transform:translateX(100%); } }
 @keyframes photoMakingPulse { 50% { opacity:.45; transform:scale(.92); } }
 @media (prefers-reduced-motion: reduce) { .photoMakingTile::after, .photoMakingTile svg { animation:none; } }
+/* 11/9 결말 카드 — 결말 표식이 실린 답 바로 뒤. */
+.endingCard { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 2px; padding:12px 14px; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface-1); }
+.endingCard strong { min-width:0; font-size:13px; letter-spacing:.04em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

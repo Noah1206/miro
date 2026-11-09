@@ -4,7 +4,7 @@ import { bindChatComposerFollow } from '@/components/chat-viewport'
 import { AnimatePresence } from 'motion/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import styles from './chat.module.css'
-import { Popover, MenuItem } from '@/components/ui'
+import { Popover, MenuItem, ButtonLink } from '@/components/ui'
 import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
@@ -19,6 +19,7 @@ import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
 import { useImmersive } from './immersive'
 import { PhotoButton } from './photo-button'
+import { endingTitle } from '@/lib/novel-ending'
 
 type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'female'; scenes: Array<{ id: string; label: string; unveil: boolean }> }
 
@@ -51,6 +52,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
   const displayed = items.filter(opening.visible)
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
+  // 11/9 웹소설: 처음 결말 표식이 실린 답 뒤에 결말 카드. 표식 줄 자체는 말풍선에서 뺀다.
+  const endingId = displayed.find(m => m.role !== 'user' && endingTitle(m.blocks))?.id
   const end = useRef<HTMLDivElement>(null)
   const log = useRef<HTMLDivElement>(null)
   const following = useRef(true)
@@ -145,10 +148,14 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
-            <Message m={{...m, hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
+            <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
+            {sessionId && m.id === endingId && <aside className={styles.endingCard}>
+              <strong>ENDING · {endingTitle(m.blocks)}</strong>
+              <ButtonLink href={`/chat/${sessionId}/novel`} variant="primary" size="sm">{t('웹소설로 받기')}</ButtonLink>
+            </aside>}
           </Line>
         ))}
       </AnimatePresence>

@@ -1995,5 +1995,21 @@
  "💗 여심 저격! 인기 여성향 TOP 10": "💗 Top 10 for Her",
  "🔥 남심 저격! 인기 남성향 TOP 10": "🔥 Top 10 for Him",
  "🛡️ 놓치면 아쉬운 세이프티 인기 TOP 10": "🛡️ Top 10 Safe Picks",
- "사진 만드는 중…": "Making your photo…"
+ "사진 만드는 중…": "Making your photo…",
+ "TXT로 받기": "Download TXT",
+ "{n} 미로/화": "{n} MIRO per chapter",
+ "{n}화": "Chapter {n}",
+ "{n}화 쓰는 중…": "Writing chapter {n}…",
+ "결말을 본 기념으로 첫 웹소설은 무료예요.": "You reached an ending — your first web novel is free.",
+ "목차": "Contents",
+ "미로가 부족해요. 충전한 뒤 이어서 만들 수 있어요.": "Not enough MIRO. Recharge to keep writing.",
+ "웹소설 만들기": "Make web novel",
+ "웹소설로 만들기": "Turn into a web novel",
+ "웹소설로 받기": "Get it as a web novel",
+ "웹소설을 쓰지 못했어요. 다시 시도해 주세요.": "Couldn't write the web novel. Please try again.",
+ "이미 쓰는 중이에요. 잠시 뒤 다시 열어 주세요.": "Already writing. Please reopen in a moment.",
+ "이어서 만들기": "Continue writing",
+ "지금까지의 대화를 웹소설로 다시 써요. 한 화씩 써지니 잠시 기다려 주세요.": "Your conversation so far, rewritten as a web novel. Chapters are written one at a time, so please wait a moment.",
+ "처음부터 다시 만들기": "Start over",
+ "한 번 더 누르면 지금 쓴 화를 지우고 다시 써요": "Tap again to delete these chapters and rewrite"
 }

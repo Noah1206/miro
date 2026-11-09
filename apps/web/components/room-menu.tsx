@@ -106,6 +106,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {messengerHref && row(messengerHref, 'message', t('메시지 창으로 이동'))}
         {characterHref && row(characterHref, 'character', t('캐릭터 정보'))}
         {row(archiveHref, 'archive', t('이전 대화 보기'))}
+        {row(`/chat/${sessionId}/novel`, 'download', t('웹소설로 만들기'))}
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>
         {row('/my/permissions', 'settings', t('알림·접근 권한'))}

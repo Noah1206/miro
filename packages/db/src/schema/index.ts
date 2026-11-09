@@ -557,6 +557,24 @@ export const turnUndos = pgTable('turn_undos', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }).enableRLS()
 
+/** 웹소설 한 화(11/9). throughTurn = 이 화가 다룬 마지막 턴. */
+export type NovelChapter = { n: number; title: string; text: string; throughTurn: number }
+
+/** 11/9 웹소설: 대화방의 결말(처음 한 번만)과 화 단위로 쓴 웹소설. */
+export const sessionNovels = pgTable('session_novels', {
+  sessionId: uuid('session_id').primaryKey().references(() => roleplaySessions.id, { onDelete: 'cascade' }),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  endingTitle: text('ending_title'),
+  endingTurn: integer('ending_turn'),
+  endedAt: timestamp('ended_at', { withTimezone: true }),
+  chapters: jsonb('chapters').$type<NovelChapter[]>().notNull().default([]),
+  /** 결말 난 방의 첫 웹소설 한 번은 무료 — 그 한 벌을 다 쓰면 켠다. */
+  freeUsed: boolean('free_used').notNull().default(false),
+  status: text('status', { enum: ['idle', 'writing', 'done'] }).notNull().default('idle'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS()
+
 
 /* ─────────────── Simulation state (M2) ─────────────── */
 

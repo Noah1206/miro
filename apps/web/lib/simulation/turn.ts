@@ -27,6 +27,8 @@ import { prepareAgencyTurn } from '@/lib/agency/turn-context'
 import { applyContactBoundaryRequest } from '@/lib/reality/boundary'
 import { resolveChatCommand } from './chat-command'
 import { chooseSituationImage } from '@/lib/situation-images'
+import { endingTitle } from '@/lib/novel-ending'
+import { recordEnding } from '@/lib/novel'
 
 export type ConversationOutcome =
   | {
@@ -286,6 +288,11 @@ async function executeTurn(opts: {
     })
     if (transition.newEvent) void track(userId, 'event_triggered', { sessionId, type: transition.newEvent.candidate.type })
     if (transition.sceneDelta) void track(userId, 'scene_changed', { sessionId })
+    // 11/9 웹소설: AI 가 결말 표식을 쓴 턴 — 처음 결말만 남기고 기록한다.
+    const ending = endingTitle(transition.blocks)
+    if (ending) await recordEnding(sessionId, userId, ending, turnIndex)
+      .then(first => { if (first) void track(userId, 'story_ending', { sessionId, title: ending }) })
+      .catch(() => observe('novel.ending_record_failed', { sessionId }))
 
     // Event Engine 은 "무엇" 을, Scheduler 는 "언제" 를 맡는다. notBefore 가 없는 의도만 지금 보낸다.
     let reality: { channel: ContactChannel; text: string } | null = null
