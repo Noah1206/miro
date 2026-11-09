@@ -44,7 +44,7 @@ export async function segmentVoice(row: { voice: string | null; voiceStatus: str
   if (id) {
     const v = await lookup(id)
     if (v && voiceUsable(v, row.characterOwnerId, adult)) return v.voice
-  } else if (row.voice && voiceUsable(row, row.characterOwnerId, adult)) return row.voice
+  } else if (!key && row.voice && voiceUsable(row, row.characterOwnerId, adult)) return row.voice   // 11/9: 비워 둔 히로인('')은 카드 목소리 대신 자동 — 유저가 방에서 고른다
   if (!row.characterId || !row.audience) return null
   // 자리: 주인공 0, 히로인은 이름 순서대로 1, 2, … — 방 안에서 서로 다른 목소리
   const auto = await autoVoice(row.characterId, row.audience, key ? [...names].sort().indexOf(key) + 1 : 0)
