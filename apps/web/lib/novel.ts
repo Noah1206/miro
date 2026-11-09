@@ -78,10 +78,10 @@ export async function writeNextChapter(sessionId: string, userId: string): Promi
   let reservationId: string | null = null
   try {
     const prev = novel.chapters.at(-1)
-    const after = prev?.throughTurn ?? Number.MIN_SAFE_INTEGER
+    // 11/9 실측: 첫 화에 MIN_SAFE_INTEGER 를 넘기면 integer 범위 밖이라 쿼리가 터졌다 — 첫 화는 조건 없이.
     // 화면에 보이는 장면 기록만 — 숨긴 줄·문자·사진은 뺀다.
     const rows = sceneMessages(await db.select().from(messages)
-      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), gt(messages.turnIndex, after)))
+      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), prev ? gt(messages.turnIndex, prev.throughTurn) : undefined))
       .orderBy(asc(messages.turnIndex), asc(messages.createdAt)))
       .filter(m => (m.kind === 'text' || m.kind === 'live_scene') && m.content.trim())
     const turns = [...new Set(rows.map(m => m.turnIndex))]

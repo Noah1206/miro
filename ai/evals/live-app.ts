@@ -20,7 +20,7 @@ import { testDatabaseUrl } from '../../tooling/test-database'
  */
 const option = (name: string) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : undefined }
 const EVALS: Record<string, string> = { reality: 'apps/web/lib/reality/reality-live.eval.ts', compare: 'apps/web/lib/simulation/model-compare.eval.ts', adult: 'apps/web/lib/simulation/adult-compare.eval.ts',
-  context: 'apps/web/lib/simulation/context-drift.eval.ts' }
+  context: 'apps/web/lib/simulation/context-drift.eval.ts', novel: 'apps/web/lib/simulation/novel-ending.eval.ts' }
 /** 100만 토큰당 USD(입력, 출력). 예산 판정에 가격이 없으면 앱이 호출을 막는다. */
 const PRICES: Record<string, [number, number]> = { 'gemini-3.8-flash': [0.75, 3.75], 'gemini-3.1-pro-preview': [2, 12], 'claude-sonnet-5-5': [2, 10],
   // 성인 모드 후보(OpenRouter 목록 가격, 2026-10-02).
