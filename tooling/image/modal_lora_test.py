@@ -12,7 +12,7 @@ import modal
 
 MODEL = 'cagliostrolab/animagine-xl-4.0'
 LORA_ROOT = '/vol/siran'   # --ckpt 는 이 아래 경로(예: out-gda/gda_v1.safetensors). 폴더 없이 파일명만 주면 out/ 에서 찾는다
-TRIGGER = {'base': '', 'siran': 'siran style, ', 'siran2': 'siran2 style, ', 'gda': 'gda style, ', 'fa': 'fa style, ', 'kdh': 'kdh style, ', 'whif': 'whif style, ', 'mojz': 'mojz style, ', 'itim': 'itim style, ', 'isg': 'isg style, ', 'th': 'th style, ', 'srn': 'srn style, ', 'syh': 'syh style, ', 'acdm': 'acdm style, '}   # 학습 설명문 맨 앞 트리거(keep_tokens=1)
+TRIGGER = {'base': '', 'siran': 'siran style, ', 'siran2': 'siran2 style, ', 'gda': 'gda style, ', 'fa': 'fa style, ', 'kdh': 'kdh style, ', 'whif': 'whif style, ', 'mojz': 'mojz style, ', 'itim': 'itim style, ', 'isg': 'isg style, ', 'th': 'th style, ', 'srn': 'srn style, ', 'syh': 'syh style, ', 'acdm': 'acdm style, ', 'mojz': 'mojz style, '}   # 학습 설명문 맨 앞 트리거(keep_tokens=1)
 
 app = modal.App('miro-lora-test')
 cache = modal.Volume.from_name('miro-image-models', create_if_missing=True)
@@ -22,7 +22,12 @@ image = modal.Image.debian_slim(python_version='3.11').pip_install(
 CONTROLNET = 'xinsir/controlnet-canny-sdxl-1.0'   # 11/4 구도 고정(레퍼런스 윤곽선만, 색은 프롬프트대로)
 
 NEGATIVE_BASE = ('lowres, bad anatomy, bad hands, extra digits, worst quality, low quality, jpeg artifacts, watermark, signature, '
-                 'child, loli, young, flat chest')   # 어려 보이는 그림 차단은 언베일에서도 항상 유지
+                 'child, loli, young, flat chest, sweatdrop')   # 어려 보이는 그림 차단은 언베일에서도 항상 유지
+# 11/8 사용자 지정 기본 광택(일상·언베일 모두) — 젖은 장면 단어·구릿빛 보정은 프롬프트에서 따로
+GLOSS = (', (shiny skin:1.3), (glossy skin:1.2), glowing skin, dewy skin, glistening body, oiled skin highlights, shiny face, soft glow, '
+         'plump glossy pink lips, cinematic lighting, soft rim light, depth of field, realistic lighting')
+GLOSS_LIGHT = ', soft skin sheen, soft glow, cinematic lighting, soft rim light, depth of field'   # 11/9 표지 전용(사용자: 표지만 광택 약하게) — 프롬프트에 'soft sheen' 을 넣으면 이것('cover art' 는 가짜 글씨가 생김)
+gloss = lambda p: '' if '1girl' not in p or 'matte skin' in p else GLOSS_LIGHT if 'soft sheen' in p else GLOSS.replace(' oiled skin highlights,', '') if 'pale porcelain skin' in p else GLOSS   # 하얀 피부가 구릿빛으로 가면 프롬프트에 (pale porcelain skin:1.2). 남자 단독 그림엔 안 붙인다(11/8, 마른 아들이 근육질로 나옴)
 NEGATIVE = NEGATIVE_BASE + ', nsfw, nude, nipples'   # 기본(일반) — --unveil 이면 노출 차단 단어만 뺀다
 PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 외형, 노출 없음
     '1girl, solo, mature female, adult woman, long black hair, office lady, white blouse, looking at viewer, slight smile, upper body, city night bokeh, masterpiece, high score, great score, absurdres',
@@ -35,6 +40,7 @@ PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 
 @app.cls(gpu=['A10G', 'L4', 'A100-40GB'], image=image, volumes={'/cache': cache, '/vol': train_vol}, timeout=900, scaledown_window=60)
 class Gen:
     ckpt: str = modal.parameter(default='siran_v1-step00002000.safetensors')
+    wide: bool = modal.parameter(default=False)   # 11/9 가로 그림(1216×832) — 아르덴 장면 사진(사용자: 가로가 더 긴 디자인)
     base: str = modal.parameter(default='')   # 11/6 기본 모델 바꾸기 — 'HF저장소::파일.safetensors'(예: Laxhar/noobai-XL-1.1::NoobAI-XL-v1.1.safetensors), 비면 Animagine
 
     @modal.enter()
@@ -86,7 +92,7 @@ class Gen:
             self.pipe.set_adapters(['siran'], adapter_weights=[scale])
         g = torch.Generator('cuda').manual_seed(seed)
         # 어려 보임 차단은 부정 프롬프트 맨 앞(잘리더라도 남게).
-        p, n = TRIGGER[variant] + prompt, ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, neg] if x)
+        p, n = TRIGGER[variant] + prompt + gloss(prompt), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, neg] if x)
         ref_img = Image.open(io.BytesIO(ref)).convert('RGB') if ref else Image.new('RGB', (224, 224))
         self.pipe.set_ip_adapter_scale([ref_scale, face_scale] if ref else [0.0, 0.0])
         ref_img = [ref_img, ref_img]
@@ -111,7 +117,7 @@ class Gen:
             img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=base, strength=init_strength, num_inference_steps=40,
                            guidance_scale=5.0, generator=g).images[0]
         else:
-            img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=832, height=1216, num_inference_steps=28, guidance_scale=5.0, generator=g).images[0]
+            img = self.pipe(**self._embeds(p, n), ip_adapter_image=ref_img, width=1216 if self.wide else 832, height=832 if self.wide else 1216, num_inference_steps=28, guidance_scale=5.0, generator=g).images[0]
         if redo_top or redo_mask:   # 11/4 2단계: 위쪽(얼굴·머리)만 가리고 윤곽선 없이 다시 칠한다 — 표정·머리색·소품을 인물대로
             from diffusers import StableDiffusionXLInpaintPipeline
             from PIL import ImageFilter
@@ -125,10 +131,10 @@ class Gen:
             else:   # 음수 = 아래쪽 |redo_top| 만큼 다시 칠한다(손·하체)
                 mask.paste(255, (0, int(img.height * (1 + redo_top)), img.width, img.height))
             mask = mask.filter(ImageFilter.GaussianBlur(40))   # 경계 부드럽게
-            img = self.inp(**self._embeds(TRIGGER[variant] + (redo_prompt or prompt), n), ip_adapter_image=ref_img, image=img, mask_image=mask,
+            img = self.inp(**self._embeds(TRIGGER[variant] + (redo_prompt or prompt) + gloss(redo_prompt or prompt), n), ip_adapter_image=ref_img, image=img, mask_image=mask,
                            strength=redo_strength, width=img.width, height=img.height, num_inference_steps=35, guidance_scale=5.5, generator=g).images[0]
         if hires:   # 11/2 업스케일 재생성: 1.5배로 키워 약하게(strength 0.4) 다시 그려 작은 부위 디테일을 살린다. 같은 unet 이라 LoRA 도 그대로 걸린다
-            up = img.resize((1248, 1824), Image.LANCZOS)
+            up = img.resize((img.width * 3 // 2, img.height * 3 // 2), Image.LANCZOS)
             if hr_scale and variant != 'base':   # 11/2: 1단계는 약하게(몸 형태), 2단계는 강하게(얼굴 그림체를 몸 전체에)
                 self.pipe.set_adapters(['siran'], adapter_weights=[hr_scale])
             img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=up, strength=hr_strength, num_inference_steps=30,
@@ -199,7 +205,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
          hr_scales: str = '', hr_strength: float = 0.4, inits: str = '', faces: str = '', face_scale: float = 0.5, ref_scale: float = 0.0,
          init_strengths: str = '0.65', ctrls: str = '', ctrl_scale: float = 0.6, ctrl_end: float = 0.6,
          ctrl_tops: str = '', redo_tops: str = '', redo_prompts: str = '', redo_strength: float = 0.85, redo_from: float = 0.0,
-         line_seeds: str = '', redo_x0: float = 0.0, redo_x1: float = 1.0, base: str = '', masks: str = ''):
+         line_seeds: str = '', redo_x0: float = 0.0, redo_x1: float = 1.0, base: str = '', masks: str = '', wide: bool = False):
     """--prompts 파일(한 줄에 프롬프트 하나)이 있으면 그 프롬프트만, --variant 하나로, --seeds 마다 뽑는다(캐릭터 사진용).
     비교용: --scales 0.6,0.8,1.0 (강도 여러 개), --hires off|on|both (업스케일 재생성)."""
     import os
@@ -221,7 +227,7 @@ def main(ckpt: str = 'siran_v1-step00002000.safetensors', scale: float = 1.0, ou
     jobs = [(i + 1, p, v, int(s), w, h, r, st) for i, p in enumerate(lines) for v in variants
             for s in (line_seeds.split(',')[i:i + 1] if line_seeds else seeds.split(',')) for w in ws for h in hs
             for r in (hrs if h else [0.0]) for st in (sts if ini[i] else [0.0])]
-    results = Gen(ckpt=ckpt, base=base).gen.starmap([(p, v, w, s, neg, unveil, h, r, hr_strength, fac[i - 1], ref_scale if fac[i - 1] else 0.0, face_scale if fac[i - 1] else 0.0,
+    results = Gen(ckpt=ckpt, base=base, wide=wide).gen.starmap([(p, v, w, s, neg, unveil, h, r, hr_strength, fac[i - 1], ref_scale if fac[i - 1] else 0.0, face_scale if fac[i - 1] else 0.0,
                                            ini[i - 1], st, ctl[i - 1], ctrl_scale, ctrl_end, tops[i - 1], rtops[i - 1], rps[i - 1], redo_strength, redo_from, redo_x0, redo_x1, msk[i - 1]) for i, p, v, s, w, h, r, st in jobs])
     for (i, _, v, s, w, h, r, st), data in zip(jobs, results):
         tag = (f'hr{r}' if h and r else ('hr' if h else 'base')) + (f'-i{st}' if st else '')
