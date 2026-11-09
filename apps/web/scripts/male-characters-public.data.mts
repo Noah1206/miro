@@ -522,7 +522,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-store-girl': { voice: 'f-heea' },
   'official-m-deskmate-streamer': { voice: 'f-yura' },
   'official-m-massage-club': { voice: 'f-heea', ensembleVoices: { 서하린: 'f-heea', 오지수: 'f-yura', 백서윤: 'f-yura', 민채아: 'f-heea', 강다인: 'f-heea', 박혜원: 'f-yura' } },
-  'official-m-pet-seniors': { voice: 'f-heea' },
+  'official-m-pet-seniors': { voice: 'f-heea', ensembleVoices: { 한서진: 'f-dohee', 윤채린: 'f-minji', 정다은: 'f-seoyeon', 강하나: 'f-hyesu', 백소연: 'f-euna', 마예린: 'f-yura', 진아라: 'f-heea', 신하윤: 'f-minji', 류미나: 'f-seoyeon', 한유경: 'f-hyesu' } },   // 11/9 히로인별 기본 목소리 — 유저는 방 메뉴 '목소리'에서 바꾼다
   'official-m-others-gf': { voice: 'f-yura' },
 }
 
