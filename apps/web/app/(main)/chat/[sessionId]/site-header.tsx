@@ -4,6 +4,7 @@ import { getT } from '@/lib/i18n/server'
 import { HomeUnveilToggle } from '@/app/(main)/home/unveil-toggle'
 import { NotificationBell } from '@/app/(main)/home/bell'
 import { HeaderProfile } from '@/app/(main)/home/profile-link'
+import { HeaderWallet } from '@/components/header-wallet'
 import homeStyles from '@/app/(main)/home/home.module.css'
 import styles from './chat.module.css'
 
@@ -20,6 +21,7 @@ export async function ChatSiteHeader({ unveil, unread, profile }: { unveil: bool
         {links.map(([href, label]) => <TransitionLink key={href} href={href}>{label}</TransitionLink>)}
       </nav>
       <div className={homeStyles.headerTools} style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
+        <HeaderWallet />
         <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn />
         <NotificationBell unread={unread} signedIn className={`hit ${homeStyles.headerItem} ${homeStyles.headerAction}`} />
         <HeaderProfile initial={profile} />

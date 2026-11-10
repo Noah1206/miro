@@ -18,6 +18,7 @@ import { AudienceSelect } from './audience-select'
 import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile } from './profile-link'
+import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon } from './view-beacon'
 import { HomeAgeGate } from './age-gate'
 import type { HomeCard } from '@/lib/home'
@@ -50,6 +51,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
         <span className={`${styles.headerItem} ${styles.headerLogo}`} style={{ display: 'block' }}><LogoMark size={30} /></span>
 
         <div className={styles.headerTools} style={{ display: 'flex', alignItems: 'center', gap: 4, marginRight: -8, marginLeft: 'auto' }}>
+          {user && <HeaderWallet />}
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
           {/* 알림 종 — 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). 로그인 전에는 누르면 로그인 시트가 뜬다. */}
           <NotificationBell unread={unread} signedIn={!!user} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
