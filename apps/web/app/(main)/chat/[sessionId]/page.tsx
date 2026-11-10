@@ -9,6 +9,8 @@ import { db, messages, characters, roleplaySessions } from '@miro/db'
 import { pickAutoVoice, voiceOptions } from '@/lib/voice'
 import { currentUser } from '@/lib/auth'
 import { accountProfile } from '@/lib/account-profile'
+import { unreadContactCount } from '@/lib/ops/archive'
+import { ChatSiteHeader } from './site-header'
 import { loadSession } from '@/lib/simulation/snapshot'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
 import { sessionMedia } from '@/lib/call/service'
@@ -80,7 +82,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })() : undefined
   if (!loaded || !mature) notFound()
   // 11/6: 언베일 표지 캐릭터는 언베일을 안 켠 사람에게 대화 속 사진(인트로·상황 사진)도 흐린다.
-  const veilPhotos = !!rec?.coverUnveil && !(await homeUnveilEnabled(user.id))
+  const [unveilOn, unread] = await Promise.all([homeUnveilEnabled(user.id), unreadContactCount(user.id)])
+  const veilPhotos = !!rec?.coverUnveil && !unveilOn
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 
@@ -105,6 +108,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   return (
     <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName} voiceSpeakers={Object.keys(rec?.ensembleVoices ?? {})}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
+        <ChatSiteHeader unveil={unveilOn} unread={unread} profile={profile} />
         <header className={styles.header}>
           <Back href="/archive" />
           <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{loaded.characterPhoto && <span className={styles.headerAvatar} aria-hidden><CharacterPhoto src={loaded.characterPhoto} alt="" size="avatar" sizes="32px" width={32} height={32} /></span>}<h1 className={styles.title}>{loaded.characterName}</h1></div></div>

@@ -617,3 +617,11 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .endingSkip, .endingView { min-height:34px; padding:0 12px; border-radius:var(--radius-md); font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
 .endingSkip { border:1px solid var(--color-border); background:transparent; color:var(--color-text-secondary, inherit); }
 .endingView { border:0; background:var(--color-accent); color:var(--color-white, #fff); }
+/* 11/10 대화방 사이트 헤더(크랙 참고) — 데스크톱에서만. 모바일은 화면이 좁아 숨긴다. */
+.siteHeader { display: none; }
+@media (min-width: 1024px) {
+  .siteHeader { display: flex; align-items: center; flex: 0 0 auto; gap: 16px; min-height: 56px; padding: 0 20px; border-bottom: 1px solid var(--color-border); }
+  .siteNav { display: flex; gap: 22px; }
+  .siteNav a { color: var(--color-text-secondary); font-size: 15px; font-weight: 600; text-decoration: none; }
+  .siteNav a:hover { color: var(--color-text-primary); }
+}
