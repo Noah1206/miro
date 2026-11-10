@@ -304,11 +304,11 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="profile" show={tab === 'profile'}>
           {/* 유형(10/19): 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx.
               10/31 사용자: 음성 / 음성+영상 두 갈래를 '몰입 모드' 하나로 — 고르면 'video'(사진이 화면 전체). 예전에 'voice'로 저장된 캐릭터도 몰입 모드로 보이고, 고쳐 저장할 때까지 값은 그대로. */}
-          {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('몰입 모드는 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.')}>
+          {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('더빙은 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.')}>
             <Card>
               <input type="hidden" name="media" value={media} />
               <ChoiceChips value={media === 'text' ? 'text' : 'video'} onChange={v => setMedia(v === 'text' ? 'text' : media === 'text' ? 'video' : media)} columns={2}
-                options={[{ value: 'text', label: t('대화') }, { value: 'video', label: t('몰입 모드') }]} />
+                options={[{ value: 'text', label: t('대화') }, { value: 'video', label: t('더빙') }]} />
             </Card>
           </Section>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}

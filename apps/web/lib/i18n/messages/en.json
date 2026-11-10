@@ -2108,5 +2108,7 @@
  "인물 이름": "Character name",
  "인물 추가": "Add character",
  "프로필 탭에서 등장인물을 먼저 추가해 주세요.": "Add characters in the Profile tab first.",
- "위 목소리는 주인공·내레이션 목소리예요. 아래에서 등장인물마다 목소리를 고정하세요. 같은 목소리를 여러 인물에 써도 돼요.": "The voice above is for the lead and narration. Fix a voice for each character below — the same voice can be used for several."
+ "위 목소리는 주인공·내레이션 목소리예요. 아래에서 등장인물마다 목소리를 고정하세요. 같은 목소리를 여러 인물에 써도 돼요.": "The voice above is for the lead and narration. Fix a voice for each character below — the same voice can be used for several.",
+ "더빙": "Dubbing",
+ "더빙은 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.": "Dubbing lets you hear this character’s chat as voice and reply by speaking. The character photo fills the screen."
 }
