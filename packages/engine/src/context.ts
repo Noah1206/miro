@@ -191,7 +191,10 @@ export type ReplyStyle = 'scene' | 'long' | 'saga' | 'brief'
 export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = false, style: ReplyStyle = 'scene'): BuiltContext {
   const template = prompts.select('dialogue', s.relationship.sessionId)
   // spoken: 실시간 음성 통화. 소리로 나가므로 JSON 계약·상태 변화 제안을 싣지 않는다.
-  const system = template.system + CHARACTER_VOICE_RULES + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : VOICE_DELIVERY_PROMPT + '\n' + (s.adultMode ? ADULT_SPEECH_PROMPT + '\n' : '') + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
+  // 11/10: 장면 답은 분량 지시(replyLengthRule)를 따른다 — '짧게 끝낼 수 있다'는 말투 규칙이 답을 500자 안팎에 묶었다(짧은 답·통화는 그대로).
+  const voiceRules = style === 'brief' || spoken ? CHARACTER_VOICE_RULES : CHARACTER_VOICE_RULES.replace('짧게 할 말은 짧게 끝낼 수 있고, 서술·속마음 없이 대사만 필요한 순간도 있습니다. ', '')
+  const system = template.system + voiceRules + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : VOICE_DELIVERY_PROMPT + '\n' + (s.adultMode ? ADULT_SPEECH_PROMPT + '\n' : '') + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
+    + (style === 'brief' || spoken ? '' : `\n## 분량(반드시 지킴)\n${replyLengthRule(style)}.`)
   const systemTokens = estimateTokens(system)
 
   // ECHO 는 같은 모델에 맥락을 더 넣는다. 늘어난 양도 아래 예산 검사를 똑같이 통과해야 한다.

@@ -19,7 +19,7 @@ import { conversationVariationDirective, repeatedConversationBlock, repeatedEndi
 
 /** 먼저 말하는 턴의 대사 지시 — 계획의 결정이 아직 없다. 이 인물이 스스로 고르되, 확정되지 않은 일을 일어난 일로 쓰지 않는다. */
 /** 11/3 실측(Gemini): 대화가 길어지며 말투가 설정보다 거칠어졌다(설정에 없는 비하·한심해하는 속마음). 세기는 설정이 정한다 — 맨 끝에 한 번 더 둔다. */
-const PERSONA_TONE_RULE = '말투의 세기는 캐릭터 설정이 정합니다: 설정에 적힌 차가움·잔소리·명령·다정함은 그대로 지키고, 설정에 없는 경멸·비하나 사용자를 한심하게 여기는 속마음은 더하지 않습니다. 앞선 턴보다 점점 거칠어지거나 길게 훈계하지 말고, 설정의 말수에 맞는 길이로 말합니다.'
+const PERSONA_TONE_RULE = '말투의 세기는 캐릭터 설정이 정합니다: 설정에 적힌 차가움·잔소리·명령·다정함은 그대로 지키고, 설정에 없는 경멸·비하나 사용자를 한심하게 여기는 속마음은 더하지 않습니다. 앞선 턴보다 점점 거칠어지거나 길게 훈계하지 말고, 대사 한 줄의 길이는 설정의 말수에 맞춥니다(응답 전체 분량은 아래 분량 지시를 따릅니다).'
 /** 11/3: 기분·표현 수치(energy 70, stress 19…)를 문장으로. 보통 범위는 아무것도 싣지 않는다. */
 function affectLine(a: { valence: number; arousal: number; stress: number; energy: number }, e: { openness: number; directness: number }): string {
   return [
