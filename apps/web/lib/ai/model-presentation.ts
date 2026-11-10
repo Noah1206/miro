@@ -4,7 +4,7 @@ import { msg } from '@/lib/i18n'
 export function selectedChatChoice(choices: ChatModelChoice[], id: string) {
   return choices.find(choice => choice.id === id) ?? choices.find(choice => choice.length === (id === 'pro' ? 'long' : 'scene')) ?? choices[0]
 }
-export function chatModelFamily(choice: ChatModelChoice) { return choice.id.replace(/:(scene|long|saga)$/, '') }
+export function chatModelFamily(choice: ChatModelChoice) { return choice.id.replace(/:(short|scene|plus|long|saga)$/, '') }
 
 /** Display metadata never replaces the server's registry ID or price quote. */
 export function modelPresentation(choice: ChatModelChoice) {
