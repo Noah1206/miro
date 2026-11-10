@@ -2,11 +2,11 @@ import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition }
 import { POLICY, tokenPricing, tokenQuote, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
-export type ChatTier = typeof POLICY.chatTier.miro | typeof POLICY.chatTier.echo | typeof POLICY.chatTier.saga
-export type ChatLength = 'scene' | 'long' | 'saga'
+export type ChatTier = (typeof POLICY.chatTier)[keyof typeof POLICY.chatTier]
+export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
-const TIER_OF = { scene: 'miro', long: 'echo', saga: 'saga' } as const
-const LENGTHS = ['scene', 'long', 'saga'] as const
+const TIER_OF = { short: 'short', scene: 'miro', plus: 'plus', long: 'echo', saga: 'saga' } as const
+const LENGTHS = ['short', 'scene', 'plus', 'long', 'saga'] as const
 export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry

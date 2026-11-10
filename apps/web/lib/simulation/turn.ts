@@ -87,7 +87,7 @@ async function executeTurn(opts: {
   /** 11/10 엔딩 분기점에서 사용자가 '엔딩 보기'를 고른 엔딩 이름 — 이번 응답이 그 엔딩의 에필로그가 된다. */
   ending?: string
   /** 11/10 사용자가 출력량 팝업에서 고른 생각 강도 — 없으면 작품 권장값. */
-  thinking?: 'low' | 'medium' | 'high'
+  thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
   stream?: TurnStream
 }): Promise<ConversationOutcome> {
@@ -329,7 +329,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; thinking?: 'low' | 'medium' | 'high'; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (opts.mode === 'messenger') {
     const requestId = opts.requestId ?? randomUUID()
     try {

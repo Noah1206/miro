@@ -246,7 +246,7 @@ export const characters = pgTable('characters', {
   /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
   /** 이용 대상(10/28) — true 면 언베일(성인 인증·켬)을 연 사람에게만 보인다. */
   adultOnly: boolean('adult_only').notNull().default(false),
-  recommendedChat: jsonb('recommended_chat').$type<{ model: string; length: 'scene' | 'long' | 'saga'; thinking?: 'medium' | 'high' | 'xhigh' | 'max' }>(),
+  recommendedChat: jsonb('recommended_chat').$type<{ model: string; length: 'short' | 'scene' | 'plus' | 'long' | 'saga'; thinking?: 'medium' | 'high' | 'xhigh' | 'max' }>(),
   /** 명령어(10/19) — 채팅에서 `/이름` 으로 부르는 한 턴 지시의 복사본. 라이브러리(command_book)에서 골랐거나 제작자가 적은 것. */
   commands: jsonb('commands').$type<Array<{ name: string; hint: string; prompt: string; sourceId?: string }>>().notNull().default([]),
   relationshipKeywords: jsonb('relationship_keywords').$type<string[]>().notNull().default([]),

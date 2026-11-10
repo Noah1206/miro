@@ -136,6 +136,13 @@ export const POLICY = {
    * 배수는 원가 측정 후 확정한다.
    */
   chatTier: {
+    /** 짧게(11/10 5단계) — 약 600자. */
+    short: {
+      contextScale: DEV_DEFAULT(1),
+      maxOutputTokens: DEV_DEFAULT(3072),
+      replyLength: 'short' as const,
+      auxiliary: 'planned' as const,
+    },
     miro: {
       contextScale: DEV_DEFAULT(1),
       /**
@@ -148,6 +155,13 @@ export const POLICY = {
       replyLength: 'scene' as const,
       /** 보조 분석(기억 추출·의미 이벤트)을 규칙이 요구할 때만 돌린다. */
       auxiliary: 'planned' as const,
+    },
+    /** 조금 길게(11/10 5단계) — 기본과 길게 사이, 약 1,400자. */
+    plus: {
+      contextScale: DEV_DEFAULT(2),
+      maxOutputTokens: DEV_DEFAULT(5120),
+      replyLength: 'plus' as const,
+      auxiliary: 'always' as const,
     },
     echo: {
       /** 최근 대화·기억을 이 배수만큼 더 넣는다. maxTokens 예산 안에서만 늘어난다. */

@@ -9,18 +9,21 @@ import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import { StepSlider } from '@/app/(main)/create/settings-controls'
 
-type Length = 'scene' | 'long' | 'saga'
+type Length = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 11/10 출력량 — 베이비챗의 배수 표기와 크랙의 카드 고르기를 합쳤다. 글자 수는 엔진 지시(context.ts styleDirective)의 목표치. */
 const OPTIONS: Array<{ value: Length; label: string; rate: string; chars: string; hint: string }> = [
+  { value: 'short', label: '짧게', rate: '0.6x', chars: '약 600자', hint: '짧고 빠르게 — 대사가 2~3번 오가요' },
   { value: 'scene', label: '기본', rate: '1.0x', chars: '약 1,000자', hint: '장면 하나를 충분히 — 대사가 4~6번 오가요' },
+  { value: 'plus', label: '조금 길게', rate: '1.4x', chars: '약 1,400자', hint: '기본보다 한두 박자 더 이어가요' },
   { value: 'long', label: '길게', rate: '1.7x', chars: '약 1,800자', hint: '서술과 대사를 더 깊게 펼쳐요' },
   { value: 'saga', label: '아주 길게', rate: '2.5x', chars: '약 2,500자', hint: '한 턴을 웹소설 한 회처럼 길게' },
 ]
 
-export type Thinking = 'auto' | 'low' | 'medium' | 'high'
+export type Thinking = 'auto' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 const THINKING_KEY = 'miro:chat-thinking', THINKING_EVENT = 'miro:chat-thinking'
-const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'auto', label: '작품 기본' }, { value: 'low', label: '낮음' }, { value: 'medium', label: '보통' }, { value: 'high', label: '높음' }]
-const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return v === 'low' || v === 'medium' || v === 'high' ? v : 'auto' } catch { return 'auto' } }
+/** 11/10 사용자: 5단계 — 만들기 화면의 '생각' 막대와 같은 값·이름. 'auto'(작품 기본)는 아무것도 안 골랐을 때만 — 막대엔 가운데(보통)로 보이고, 막대를 움직여야 저장된다. */
+const THINKING: Array<{ value: Exclude<Thinking, 'auto'>; label: string }> = [{ value: 'low', label: '빠름' }, { value: 'medium', label: '가볍게' }, { value: 'high', label: '보통' }, { value: 'xhigh', label: '깊게' }, { value: 'max', label: '최대' }]
+const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : 'auto' } catch { return 'auto' } }
 const subscribe = (on: () => void) => { window.addEventListener(THINKING_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(THINKING_EVENT, on); window.removeEventListener('storage', on) } }
 /** 11/10 생각 강도(effort) — 이 기기에서 고른 값. 입력창이 턴마다 싣고, 서버는 작품 권장값보다 이 값을 먼저 쓴다. */
 export function useChatThinking(): [Thinking, (v: Thinking) => void] {
@@ -38,10 +41,10 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
   const current = (selected?.length ?? 'scene') as Length
   const [pick, setPick] = useState<Length>(current)
   const [thinking, setThinking] = useChatThinking()
-  const [think, setThink] = useState<Thinking>(thinking)
-  useEffect(() => { if (open) { setPick(current); setThink(thinking) } }, [open, current, thinking])
+  const [think, setThink] = useState<Thinking>(thinking === 'auto' ? 'high' : thinking)
+  useEffect(() => { if (open) { setPick(current); setThink(thinking === 'auto' ? 'high' : thinking) } }, [open, current, thinking])
   const variant = (value: Length) => selected ? choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value) : undefined
-  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); setThinking(think); onClose() }
+  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); if (think !== (thinking === 'auto' ? 'high' : thinking)) setThinking(think); onClose() }
 
   return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.78, full: 0.92 }}>
     <div className="stack" style={{ gap: 12, padding: '0 var(--space-4) var(--space-5)' }}>

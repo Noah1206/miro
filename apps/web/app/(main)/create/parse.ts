@@ -169,7 +169,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     // 권장 대화 설정(10/28) — 모델을 비우면 저장하지 않는다(서버 기본).
     // 생각(10/28) — 낮음은 지금 기본과 같아서 싣지 않는다. 모델을 비워도 생각만 고를 수 있다.
     recommendedChat: s('recommendedModel') || THINK.includes(s('recommendedThinking')) ? {
-      model: s('recommendedModel').slice(0, 120), length: (['long', 'saga'].includes(s('recommendedLength')) ? s('recommendedLength') : 'scene') as 'scene' | 'long' | 'saga',
+      model: s('recommendedModel').slice(0, 120), length: (['short', 'plus', 'long', 'saga'].includes(s('recommendedLength')) ? s('recommendedLength') : 'scene') as 'short' | 'scene' | 'plus' | 'long' | 'saga',
       ...(THINK.includes(s('recommendedThinking')) ? { thinking: s('recommendedThinking') as 'medium' | 'high' | 'xhigh' | 'max' } : {}),
     } : null,
     commands: parseCommands(s('commands')),

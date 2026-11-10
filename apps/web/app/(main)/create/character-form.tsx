@@ -72,7 +72,7 @@ export type FormInitial = {
   playGuide?: string
   firstReplies?: string[]
   endings?: CharacterEnding[]
-  recommendedModel: string; recommendedLength: 'scene' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
+  recommendedModel: string; recommendedLength: 'short' | 'scene' | 'plus' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
   /** 캐릭터 유형(10/19): 대화만 / 음성통화 / 음성+영상통화. */
@@ -241,7 +241,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [adultOnly, setAdultOnly] = useState<'0' | '1'>(i.adultOnly ? '1' : '0')
   const [personaRequired, setPersonaRequired] = useState<'0' | '1'>(i.personaRequired ? '1' : '0')
   const [recModel, setRecModel] = useState(i.recommendedModel ?? '')
-  const [recLength, setRecLength] = useState<'scene' | 'long' | 'saga'>(i.recommendedLength ?? 'scene')
+  const [recLength, setRecLength] = useState<'short' | 'scene' | 'plus' | 'long' | 'saga'>(i.recommendedLength ?? 'scene')
   const [recThinking, setRecThinking] = useState<string>(i.recommendedThinking ?? 'low')
   const missing = useMemo(() => [
     [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [!startingContext.trim(), msg('첫 장면')], [hashtagCount === 0, msg('해시태그')],
@@ -573,8 +573,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
               <div>
                 <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4 }}>{t('출력량')}</p>
-                <StepSlider name="recommendedLength" label={t('출력량')} value={recLength} onChange={v => setRecLength(v as 'scene' | 'long' | 'saga')}
-                  steps={[{ value: 'scene', label: t('보통 장면') }, { value: 'long', label: t('긴 장면') }, { value: 'saga', label: t('아주 긴 장면') }]} />
+                <StepSlider name="recommendedLength" label={t('출력량')} value={recLength} onChange={v => setRecLength(v as 'short' | 'scene' | 'plus' | 'long' | 'saga')}
+                  steps={[{ value: 'short', label: t('짧은 장면') }, { value: 'scene', label: t('보통 장면') }, { value: 'plus', label: t('조금 긴 장면') }, { value: 'long', label: t('긴 장면') }, { value: 'saga', label: t('아주 긴 장면') }]} />
               </div>
               <div>
                 <p className="t-body" style={{ fontWeight: 'var(--weight-medium)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>

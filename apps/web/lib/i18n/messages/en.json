@@ -2111,5 +2111,15 @@
  "위 목소리는 주인공·내레이션 목소리예요. 아래에서 등장인물마다 목소리를 고정하세요. 같은 목소리를 여러 인물에 써도 돼요.": "The voice above is for the lead and narration. Fix a voice for each character below — the same voice can be used for several.",
  "더빙": "Dubbing",
  "더빙은 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.": "Dubbing lets you hear this character’s chat as voice and reply by speaking. The character photo fills the screen.",
- "이 모델은 고를 수 없어요": "Not available for this model"
+ "이 모델은 고를 수 없어요": "Not available for this model",
+ "짧게": "Short",
+ "약 600자": "About 600 characters",
+ "짧고 빠르게 — 대사가 2~3번 오가요": "Short and quick — 2–3 lines of dialogue",
+ "조금 길게": "A bit longer",
+ "약 1,400자": "About 1,400 characters",
+ "기본보다 한두 박자 더 이어가요": "Goes a beat or two further than default",
+ "짧은 장면": "Short scene",
+ "조금 긴 장면": "Slightly long scene",
+ "짧은 대화": "Short chat",
+ "조금 긴 대화": "Slightly long chat"
 }

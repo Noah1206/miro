@@ -60,8 +60,8 @@ export function ChatModelOptions({ choices, onSelect }: { choices: ChatModelChoi
   const [more, setMore] = useState(false)
   return <div className={sheet.options}>
     {selected && (() => {
-      const lengths = ['scene', 'long', 'saga'] as const
-      const label = (value: typeof lengths[number]) => value === 'scene' ? t('기본 대화') : value === 'long' ? t('긴 대화') : t('아주 긴 대화')
+      const lengths = ['short', 'scene', 'plus', 'long', 'saga'] as const
+      const label = (value: typeof lengths[number]) => ({ short: t('짧은 대화'), scene: t('기본 대화'), plus: t('조금 긴 대화'), long: t('긴 대화'), saga: t('아주 긴 대화') })[value]
       const pick = (value: typeof lengths[number]) => { const choice = choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value); if (choice) setModel(choice.id) }
       // 11/3: 만들기 화면의 단계 슬라이더와 같은 모양.
       return <div className={sheet.lengths}>

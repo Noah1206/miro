@@ -96,6 +96,8 @@ export function replyLengthRule(style: ReplyStyle): string {
   // 고친 뒤에도 모델은 지시의 약 50%를 쓴다(1300~1600자 지시 → 732자). 목표(화면 표시: 약 1,000·1,800·2,500자)의 두 배쯤을 지시한다. 아주 긴 대화는 출력 토큰 상한에 JSON 이 잘리지 않게 덜 올린다.
   return style === 'saga' ? `아주 긴 대화는 한 응답을 4200~4800자로 씁니다 — narrative 단락 12~15개(각 2~4문장)와 대사(dialogue) 블록 14~18개. ${fill}`
     : style === 'long' ? `긴 대화는 한 응답을 3400~3800자로 씁니다 — narrative 단락 10~12개(각 2~4문장)와 대사(dialogue) 블록 11~14개. ${fill}`
+    : style === 'plus' ? `조금 긴 대화는 한 응답을 2700~3000자로 씁니다 — narrative 단락 8~10개(각 2~4문장)와 대사(dialogue) 블록 9~12개. ${fill}`
+    : style === 'short' ? `짧은 대화는 한 응답을 1200~1400자로 씁니다 — narrative 단락 4~5개(각 2~3문장) 사이로 대사(dialogue) 블록이 5~6개 오가는 장면 하나. ${fill}`
     : `기본 대화는 한 응답을 2000~2400자로 씁니다 — narrative 단락 7~9개(각 2~4문장) 사이로 대사(dialogue) 블록이 8~10개 오가는 장면 하나. 이보다 짧게 끝내지 않습니다. ${fill}`
 }
 
@@ -107,14 +109,14 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const name = s.character.identity.name
   // ECHO(long)는 같은 장면을 더 길게 — 박자를 더 두고 서술·대사를 깊게 한다. 모델은 글자 수보다 문장·블록 수를 따른다
   // (9/26 실측: 900~1500자를 주자 중앙값 668자, MIRO 581자와 15% 차이). 그래서 문장 수와 오가는 횟수를 올린다.
-  const long = style === 'long' || style === 'saga'
+  const long = style === 'long' || style === 'saga' || style === 'plus'
   // 10/17 기준표: 모델은 글자 수보다 블록·문장 수를 따른다(9/26 측정과 같다). '필요한 것만' 지시 아래 3.8 Flash 답이 중앙값 230자(16장면 중 13개가 300자 미만)로 장면이 얇았다(사용자: 퀄리티가 확 달라야 한다).
   // 10/17 사용자: "내용이 너무 짧다, 최소 이 정도는 돼야 한다"(약 460자 예시 — 서술 2문장 단락과 대사가 세 박자로 오감). 하한을 박자 구조로 준다. 모델은 지시한 숫자보다 25~40% 짧게 쓴다(500~900→중앙값 301, 최소 450→388) — 그래서 숫자를 올려 둔다.
   // 11/3 사용자 결정: 분량 하한은 두지 않는다 — '최소 650자·3박자·서술 80자 이상'이 채우기용 분위기 서술(AI 같은 글)을 만들었다. 상한과 길이 등급(기본·긴·아주 긴)만 남긴다.
   // 11/10 사용자: 기본 분량 = 베이비챗(1.25x)·크랙 한 턴의 평균(약 1,000자 — 서술 단락 사이로 대사가 4~6번 오가는 장면). 11/3 의 '하한 없음'을 뒤집는다.
   // 채우기용 분위기 서술 금지(11/3 이유)는 그대로 — 분량은 새 행동·대사·사건 진행으로 채운다. 모델은 지시보다 짧게 쓰므로 범위를 목표보다 약간 높게 둔다.
   const size = replyLengthRule(style)
-  const tenseMax = style === 'saga' ? '4800자' : long ? '4000자' : '2800자'
+  const tenseMax = style === 'saga' ? '4800자' : style === 'plus' ? '3400자' : long ? '4000자' : style === 'short' ? '1800자' : '2800자'
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
   // 그대로 따랐고 같은 몸짓·문장 틀이 되풀이됐다. 이 지시(3차)는 순서·표현을 매번 바꾸게 한다. 형식 실패의 한 원인(종류를 키로 쓴 블록)은
@@ -183,7 +185,7 @@ function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, te
 }
 
 /** scene: 캐릭터챗의 장면 하나(기본, MIRO). long: 더 긴 장면(ECHO). saga: 아주 긴 장면(10/28). brief: 자율성 엔진이 쓰는 입력 길이 맞춤 형식. */
-export type ReplyStyle = 'scene' | 'long' | 'saga' | 'brief'
+export type ReplyStyle = 'short' | 'scene' | 'plus' | 'long' | 'saga' | 'brief'
 
 /**
  * Context 조립.
@@ -227,7 +229,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
+    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
