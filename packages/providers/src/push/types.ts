@@ -9,6 +9,9 @@ export type PushPayload = {
   url: string
   /** 같은 세션의 알림은 하나로 합친다. */
   tag: string
+  /** 11/10 알림 아이콘 = 캐릭터 프로필 사진. 서비스 워커가 그 방 테마(카톡이면 둥근 사각형)에 맞춰 다듬는다. */
+  icon?: string
+  session?: string
 }
 
 export type PushResult =

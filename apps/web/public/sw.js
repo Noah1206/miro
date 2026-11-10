@@ -18,17 +18,29 @@ self.addEventListener('fetch', (event) => {
   }))
 })
 
+/* 11/10 알림 아이콘 = 캐릭터 프로필 사진. 그 방 채팅 테마가 카톡이면 카톡 프로필처럼 둥근 사각형(페이지가 miro-prefs 캐시에 테마를 적어 둔다). */
+async function iconFor(data) {
+  if (!data.icon) return '/icon-192.png?v=4'
+  let shape = 'round'
+  try {
+    const prefs = await caches.open('miro-prefs')
+    const hit = (data.session && await prefs.match(`/__prefs/theme/${data.session}`)) || await prefs.match('/__prefs/theme/default')
+    if (hit && (await hit.text()) === 'talk') shape = 'talk'
+  } catch {}
+  return `/api/push-icon?src=${encodeURIComponent(data.icon)}&shape=${shape}`
+}
+
 /* Web Push 수신 및 탭 열기. */
 self.addEventListener('push', (event) => {
   let data = { title: 'MIRO', body: '', url: '/', tag: 'miro' }
   try { data = { ...data, ...event.data.json() } } catch {}
-  event.waitUntil(self.registration.showNotification(data.title, {
+  event.waitUntil(iconFor(data).then((icon) => self.registration.showNotification(data.title, {
     body: data.body,
     tag: data.tag,
     renotify: true,
     data: { url: data.url },
-    icon: '/icon-192.png?v=4',
-  }))
+    icon,
+  })))
 })
 
 self.addEventListener('notificationclick', (event) => {

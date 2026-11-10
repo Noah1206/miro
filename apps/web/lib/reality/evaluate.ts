@@ -29,6 +29,7 @@ import { dueMomentFor, settleMoment, type DueMoment } from './moments'
 import { msg } from '@/lib/i18n'
 import { translateTo } from '@/lib/i18n/server'
 import { adoptRelationshipPolicy } from '@/lib/agency/session-policy'
+import { characterPushIcon } from '@/lib/push/character-icon'
 
 export type EvaluateOutcome =
   | { outcome: 'sent'; channel: ContactChannel; contactId: string; text?: string }
@@ -270,9 +271,9 @@ async function evaluateWith(sessionId: string, now: Date, opts: { inline?: boole
     }
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, row.session.userId)).limit(1)
     await pushToUser(row.session.userId, {
-      title: presented.senderLabel,
+      title: row.character.name,
       body: translateTo(settings?.language, channel === 'video' ? msg('영상통화 수신') : msg('전화 수신')),
-      url: `/messages/${sessionId}`, tag: `call:${sessionId}`,
+      url: `/messages/${sessionId}`, tag: `call:${sessionId}`, icon: characterPushIcon(row.character.images), session: sessionId,
     })
     void track(row.session.userId, 'reality_contact_sent', { sessionId, channel: decision.channel, reason: intent.reason })
     return { outcome: 'sent', channel: decision.channel, contactId }
@@ -440,7 +441,7 @@ export function contactedEventKeys(keys: string[]): Set<string> {
 }
 
 async function pushToUser(userId: string, payload: {
-  title: string; body: string; url: string; tag: string
+  title: string; body: string; url: string; tag: string; icon?: string; session?: string
 }): Promise<void> {
   const [owner] = await db.select({ deletedAt: users.deletedAt }).from(users).where(eq(users.id, userId)).limit(1)
   if (!owner || owner.deletedAt) return

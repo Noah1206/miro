@@ -14,6 +14,12 @@ const Context = createContext<{ theme: Theme; select: (theme: Theme) => void }>(
 export const useChatTheme = () => useContext(Context)
 const valid = (value: unknown): value is Theme => value === 'dm-light' || value === 'miro' || value === 'dm' || value === 'talk'
 
+/** 11/10 알림 아이콘 모양 — 서비스 워커는 localStorage 를 못 읽으니 방별 테마를 캐시에 적어 둔다(카톡이면 둥근 사각형 아이콘). */
+function rememberForPush(sessionId: string | undefined, theme: Theme) {
+  if (typeof caches === 'undefined') return
+  void caches.open('miro-prefs').then(c => c.put(`/__prefs/theme/${sessionId ?? 'default'}`, new Response(theme))).catch(() => {})
+}
+
 /** Visual preference only: shared by this session's scene and messenger on this device. */
 export function ChatTheme({ sessionId, children }: { sessionId?: string; children: ReactNode }) {
   const key = sessionId ? `miro:chat-theme:${sessionId}` : DEFAULT_THEME_KEY
@@ -26,7 +32,8 @@ export function ChatTheme({ sessionId, children }: { sessionId?: string; childre
         const ownAt = Number(localStorage.getItem(`${key}:at`) ?? 0), sharedAt = Number(localStorage.getItem(`${DEFAULT_THEME_KEY}:at`) ?? 0)
         // The latest explicit choice wins: a library choice updates existing rooms;
         // a later choice inside one room only changes that room.
-        setTheme(valid(saved) && ownAt >= sharedAt ? saved : valid(shared) ? shared : DEFAULT_THEME)
+        const current = valid(saved) && ownAt >= sharedAt ? saved : valid(shared) ? shared : DEFAULT_THEME
+        setTheme(current); rememberForPush(sessionId, current)
       } catch { setTheme(DEFAULT_THEME) }
     }
     read()
@@ -37,7 +44,7 @@ export function ChatTheme({ sessionId, children }: { sessionId?: string; childre
   useEffect(() => {
     if (root.current) return bindChatViewport(root.current)
   }, [])
-  const select = (next: Theme) => { setTheme(next); try { localStorage.setItem(key, next); localStorage.setItem(`${key}:at`, String(Date.now())) } catch { /* Private storage can be unavailable; selection still works. */ } }
+  const select = (next: Theme) => { setTheme(next); rememberForPush(sessionId, next); try { localStorage.setItem(key, next); localStorage.setItem(`${key}:at`, String(Date.now())) } catch { /* Private storage can be unavailable; selection still works. */ } }
   return <Context.Provider value={{ theme, select }}>{sessionId ? <div ref={root} className={styles.root} data-chat-theme={theme}>{children}</div> : children}</Context.Provider>
 }
 

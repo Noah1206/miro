@@ -6,6 +6,7 @@ import { feature, productionRuntime } from '@miro/config'
 import { resolvePush } from '@miro/providers'
 import type { UsageTransaction } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
+import { characterPushIcon } from '@/lib/push/character-icon'
 
 export async function enqueueRealityPush(tx: UsageTransaction, contactId: string, userId: string) {
   const subscriptions = await tx.select({ id: pushSubscriptions.id }).from(pushSubscriptions)
@@ -32,7 +33,7 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
   for (const job of claimed) {
     const [row] = await db.select({ job: realityPushJobs, contact: realityContacts, subscription: pushSubscriptions,
       session: roleplaySessions, user: users, profile: contactProfiles, message: messages,
-      experienceType: characters.experienceType, characterDeletedAt: characters.deletedAt }).from(realityPushJobs)
+      experienceType: characters.experienceType, characterDeletedAt: characters.deletedAt, characterName: characters.name, characterImages: characters.images }).from(realityPushJobs)
       .innerJoin(realityContacts, eq(realityContacts.id, realityPushJobs.contactId))
       .innerJoin(pushSubscriptions, eq(pushSubscriptions.id, realityPushJobs.subscriptionId))
       .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
@@ -93,9 +94,11 @@ export async function deliverRealityPush(now = new Date(), limit = 20): Promise<
             || carried.some(id => runtime?.state.goals.some(g => g.id === id && g.status === 'cancelled')))) return null
         }
         const delivered = await provider.send(row.subscription, {
-          title: typeof payload.senderLabel === 'string' ? payload.senderLabel : 'MIRO',
+          // 11/10 사용자: 제목은 캐릭터 이름만, 아이콘은 캐릭터 프로필 사진.
+          title: row.characterName,
           body: typeof payload.text === 'string' && !latest.adultSince ? payload.text.slice(0, 90) : '새로운 연락이 왔어요.',
           url: `/messages/${row.session.id}`, tag: `session:${row.session.id}`,
+          icon: characterPushIcon(row.characterImages), session: row.session.id,
         })
         // Record a confirmed send before releasing the session lock; a concurrent pause
         // must not relabel an already-started, successful delivery as cancelled.
