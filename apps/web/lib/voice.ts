@@ -69,6 +69,17 @@ export async function autoVoice(characterId: string, audience: 'female' | 'male'
   return pickAutoVoice(pool, characterId, audience, slot)
 }
 
+/** 성별을 정해 공식 목소리 하나 — seed 가 같으면 늘 같은 목소리(11/10, 목록에 없는 조연용). */
+export async function autoVoiceOfGender(gender: 'male' | 'female', seed: string): Promise<string | null> {
+  const pool = await db.select({ id: officialVoices.id, label: officialVoices.label }).from(officialVoices)
+    .where(and(eq(officialVoices.status, 'active'), isNull(officialVoices.ownerId)))
+  const list = pool.filter(v => voiceGender(v.label) === gender).map(v => v.id).sort()
+  if (!list.length) return null
+  let h = 0
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  return list[h % list.length]!
+}
+
 /** 듣는 사람이 방에서 고른 목소리를 쓸 수 있나 — 고를 수 있는 목소리(공식·내 것·공개)이고 언베일 방이면 언베일 허용. */
 export function listenerVoiceUsable(v: { voiceStatus: string | null; voiceOwnerId: string | null; voiceShared: boolean | null; voiceAdultAllowed: boolean | null }, userId: string, adult: boolean): boolean {
   if (v.voiceStatus !== 'active') return false

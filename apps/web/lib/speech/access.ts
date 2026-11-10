@@ -5,7 +5,7 @@ import { SpeechError, type SpeechPolicy, type SpeechSpec } from './policy'
 import { speechAllowance, speechCreditsEnabled, type SpeechAmount } from './credits-policy'
 import { adultModeGateFor } from '../ops/safety'
 import { feature } from '@miro/config'
-import { autoVoice, listenerVoiceUsable, voiceColumns, voiceUsable } from '../voice'
+import { autoVoice, autoVoiceOfGender, listenerVoiceUsable, voiceColumns, voiceUsable } from '../voice'
 
 export async function speechSource(userId: string, sessionId: string, messageId: string) {
   if(!feature('characterVoice'))throw new SpeechError('voice_not_ready',404)
@@ -39,6 +39,12 @@ export async function segmentVoice(row: { voice: string | null; voiceStatus: str
   if (picked && row.userId) {
     const v = await lookup(picked)
     if (v && listenerVoiceUsable(v, row.userId, adult)) return v.voice
+  }
+  // 11/10: 목록에 없는 남자 인물(남성향 작품의 조연) — 카드 목소리(여자) 대신 남자 목소리, 이름마다 고정.
+  if (!key && segment?.speaker && row.audience === 'male' && row.characterId) {
+    const male = await autoVoiceOfGender('male', `${row.characterId}:${segment.speaker}`)
+    const v = male ? await lookup(male) : undefined
+    if (v && voiceUsable(v, row.characterOwnerId, adult)) return v.voice
   }
   const id = key ? row.ensembleVoices![key] : null
   if (id) {

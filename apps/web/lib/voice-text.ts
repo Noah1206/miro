@@ -19,7 +19,8 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
     }
     if (block.type !== 'dialogue' || typeof block.text !== 'string') continue
     const speaker = typeof block.speaker === 'string' && block.speaker !== characterName ? block.speaker : null
-    if (characterName && speaker && !matchSpeaker(speaker, speakers)) continue
+    // 11/10: 목록에 없는 인물도 건너뛰지 않는다(사용자: 안 끊기게) — 목소리는 segmentVoice 가 정한다.
+    if (speaker && /^(나|당신|유저|사용자|user)$/i.test(speaker.trim())) continue   // 유저 몫의 대사는 읽지 않는다
     const text = block.text.trim().slice(0, remaining)
     const speech = text === block.text.trim() ? taggedSpeech(text, block.speech) : null
     if (text) { result.push({ text, delivery: voiceDelivery(block.delivery, whisper), ...(speech ? { speech } : {}), ...(speaker ? { speaker } : {}) }); remaining -= text.length }
