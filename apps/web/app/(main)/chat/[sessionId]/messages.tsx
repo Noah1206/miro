@@ -63,8 +63,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const lastReply = [...settled].reverse().find(m => m.role !== 'user' && m.role !== 'system')
   const readyName = lastReply && settled[settled.length - 1]?.id === lastReply.id && lastReply.id !== skipped ? endingReady(lastReply.blocks) : null
   const readyDef = readyName ? endings.find(e => e.name === readyName) : undefined
-  // 11/10 상태창 — 가장 최근 상태창만 펼쳐 두고 지난 것은 접는다.
-  const lastStatusId = [...displayed].reverse().find(m => m.role === 'character' && m.blocks.some(b => b.type === 'status'))?.id
+  // 11/10 상태창 — 사용자 요청: 지난 상태창도 접지 않고 모두 펼쳐 둔다(사용자가 직접 접을 수는 있다).
   const end = useRef<HTMLDivElement>(null)
   const log = useRef<HTMLDivElement>(null)
   const following = useRef(true)
@@ -165,7 +164,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
-            {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open={m.id === lastStatusId} />}
+            {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open />}
             {sessionId && endingIds.has(m.id) && <aside className={styles.endingCard}>
               {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
                 return <>
