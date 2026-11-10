@@ -19,16 +19,16 @@ const OPTIONS: Array<{ value: Length; label: string; rate: string; chars: string
   { value: 'saga', label: '아주 길게', rate: '2.5x', chars: '약 2,500자', hint: '한 턴을 웹소설 한 회처럼 길게' },
 ]
 
-export type Thinking = 'auto' | 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+export type Thinking = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
 const THINKING_KEY = 'miro:chat-thinking', THINKING_EVENT = 'miro:chat-thinking'
-/** 11/10 사용자: 5단계 — 만들기 화면의 '생각' 막대와 같은 값·이름. 'auto'(작품 기본)는 아무것도 안 골랐을 때만 — 막대엔 가운데(보통)로 보이고, 막대를 움직여야 저장된다. */
-const THINKING: Array<{ value: Exclude<Thinking, 'auto'>; label: string }> = [{ value: 'low', label: '빠름' }, { value: 'medium', label: '가볍게' }, { value: 'high', label: '보통' }, { value: 'xhigh', label: '깊게' }, { value: 'max', label: '최대' }]
-const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : 'auto' } catch { return 'auto' } }
+/** 11/10 사용자: 5단계 — 만들기 화면의 '생각' 막대와 같은 값·이름. 안 고르면 기본은 '보통'(high). */
+const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'low', label: '빠름' }, { value: 'medium', label: '가볍게' }, { value: 'high', label: '보통' }, { value: 'xhigh', label: '깊게' }, { value: 'max', label: '최대' }]
+const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : 'high' } catch { return 'high' } }
 const subscribe = (on: () => void) => { window.addEventListener(THINKING_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(THINKING_EVENT, on); window.removeEventListener('storage', on) } }
 /** 11/10 생각 강도(effort) — 이 기기에서 고른 값. 입력창이 턴마다 싣고, 서버는 작품 권장값보다 이 값을 먼저 쓴다. */
 export function useChatThinking(): [Thinking, (v: Thinking) => void] {
-  const value = useSyncExternalStore(subscribe, readThinking, () => 'auto' as Thinking)
-  const set = (v: Thinking) => { try { if (v === 'auto') localStorage.removeItem(THINKING_KEY); else localStorage.setItem(THINKING_KEY, v) } catch { /* 이번 화면에서만 */ } window.dispatchEvent(new Event(THINKING_EVENT)) }
+  const value = useSyncExternalStore(subscribe, readThinking, () => 'high' as Thinking)
+  const set = (v: Thinking) => { try { localStorage.setItem(THINKING_KEY, v) } catch { /* 이번 화면에서만 */ } window.dispatchEvent(new Event(THINKING_EVENT)) }
   return [value, set]
 }
 
@@ -41,10 +41,10 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
   const current = (selected?.length ?? 'scene') as Length
   const [pick, setPick] = useState<Length>(current)
   const [thinking, setThinking] = useChatThinking()
-  const [think, setThink] = useState<Thinking>(thinking === 'auto' ? 'high' : thinking)
-  useEffect(() => { if (open) { setPick(current); setThink(thinking === 'auto' ? 'high' : thinking) } }, [open, current, thinking])
+  const [think, setThink] = useState<Thinking>(thinking)
+  useEffect(() => { if (open) { setPick(current); setThink(thinking) } }, [open, current, thinking])
   const variant = (value: Length) => selected ? choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value) : undefined
-  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); if (think !== (thinking === 'auto' ? 'high' : thinking)) setThinking(think); onClose() }
+  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); setThinking(think); onClose() }
 
   return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.78, full: 0.92 }}>
     <div className="stack" style={{ gap: 12, padding: '0 var(--space-4) var(--space-5)' }}>
