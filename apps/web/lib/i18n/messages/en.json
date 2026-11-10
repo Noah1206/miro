@@ -2171,5 +2171,8 @@
  "지금은 이 캐릭터를 응원할 수 없어요.": "You can’t cheer this character right now.",
  "응원을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.": "Couldn’t send your cheer. Please try again shortly.",
  "보내는 중…": "Sending…",
- "만든 사람": "Creator"
+ "만든 사람": "Creator",
+ "작품별 이번 달 수익": "This month by character",
+ "대화 {n}": "Chats {n}",
+ "응원 {n}": "Cheers {n}"
 }

@@ -9,7 +9,7 @@ import { getT } from '@/lib/i18n/server'
 import { SectionLinks } from '@/components/ui/section-links'
 import styles from './characters.module.css'
 import { MakeTabs } from './make-tabs'
-import { creatorRewardSummary, CREATOR_REWARD_RATE } from '@/lib/usage/creator-reward'
+import { creatorRewardByCharacter, creatorRewardSummary, CREATOR_REWARD_RATE } from '@/lib/usage/creator-reward'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
 const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -34,7 +34,9 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
     .where(and(eq(characters.ownerId, user.id), isNull(characters.deletedAt)))
     .orderBy(desc(characters.createdAt))
 
-  const reward = await creatorRewardSummary(user.id)
+  const [reward, byCharacter] = await Promise.all([creatorRewardSummary(user.id), creatorRewardByCharacter(user.id)])
+  const earning = mine.flatMap(c => { const e = byCharacter.get(c.id); return e ? [{ id: c.id, name: c.name, ...e }] : [] })
+    .sort((a, b) => (b.reward + b.cheer) - (a.reward + a.cheer))
   const shown = mine.filter((c) =>
     filter === 'all' ? true : filter === 'public' ? c.isPublic && !c.isDraft : filter === 'private' ? !c.isPublic && !c.isDraft : c.isDraft)
   const cards: CardCharacter[] = shown.map((c) => ({
@@ -59,6 +61,21 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
           <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('누적 {n}', { n: reward.total.toLocaleString('ko-KR') })}</span>
         </div>
       </section>
+      {/* 11/11 작품별 이번 달 수익 — 대화 보상과 받은 응원을 나눠서. */}
+      {earning.length > 0 && (
+        <section aria-label={t('작품별 이번 달 수익')} style={{ margin: '0 0 12px', padding: '10px 16px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
+          <strong className="t-caption" style={{ display: 'block', color: 'var(--color-text-secondary)', marginBottom: 6 }}>{t('작품별 이번 달 수익')}</strong>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
+            {earning.map(e => (
+              <li key={e.id} style={{ display: 'flex', alignItems: 'baseline', gap: 12, fontSize: 14 }}>
+                <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('대화 {n}', { n: e.reward.toLocaleString('ko-KR') })} · {t('응원 {n}', { n: e.cheer.toLocaleString('ko-KR') })}</span>
+                <strong style={{ minWidth: 56, textAlign: 'right' }}>{(e.reward + e.cheer).toLocaleString('ko-KR')}</strong>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <SectionLinks fullBleed label={t('내가 만든 캐릭터')} active={filter}
         items={FILTERS.map(f => ({ key: f.key, label: t(f.label), href: f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}` }))} />
       {cards.length === 0 ? (
