@@ -93,9 +93,12 @@ class Speaker:
         import io, numpy as np, soundfile as sf, torch
         from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt, generate_drama3
         from drama3_fullft.sampling_profiles import sampling_profile
+        import zlib
         ref_text, codes = self.reference(voice)
         # ponytail: 길이 상한은 글자 수 비례 추정 — 잘리는 답이 많으면 실측으로 조정
         limit = min(1536, max(384, len(text) * 24))
+        # 11/11 사용자("한 문장마다 다른 사람 같다"): 목소리마다 같은 씨앗 — 요청마다 무작위가 새로 시작돼 같은 목소리의 결이 줄마다 흔들렸다.
+        torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
         with torch.inference_mode():
             prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
             frames = self.generate(prompt, voice or DEFAULT_VOICE, limit) if reuse else generate_drama3(self.model, prompt, max_new_tokens=limit, **sampling_profile(SAMPLING))[0]

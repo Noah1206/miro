@@ -3,12 +3,21 @@ export type VoicePlaybackStatus = 'idle' | 'preparing' | 'playing' | 'error'
 export async function playVoiceSelection(sessionId:string,messageId:string,part:number,amount:'standard'|'extended',
   audio:HTMLAudioElement,signal:AbortSignal,status:(state:VoicePlaybackStatus)=>void,reuseOnly=false) {
   check(signal);status('preparing')
+  const blob=await fetchVoiceBlob(sessionId,messageId,part,amount,signal,reuseOnly);check(signal);status('playing')
+  await play(blob,audio,signal);status('idle')
+}
+
+/** 11/11 소리만 받아 둔다 — 이어 읽기는 지금 줄을 재생하는 동안 다음 줄을 미리 받는다(재생 사이 기다림을 없앤다). */
+export async function fetchVoiceBlob(sessionId:string,messageId:string,part:number,amount:'standard'|'extended',signal:AbortSignal,reuseOnly=false):Promise<Blob> {
   // 11/6: 문장 단위로 나눠 받던 것을 되돌렸다 — 문장마다 억양·감정 흐름이 새로 시작됐다. 음성 서버가 목소리 샘플 준비를 재사용해(4.7초→0.4초) 대사 통째로도 충분히 빠르다.
   const result=await waitForSpeech(await fetch('/api/tts',{method:'POST',signal,headers:{'content-type':'application/json'},
     body:JSON.stringify({sessionId,messageId,part,amount,confirmed:true,reuseOnly})}),signal)
   if(result.status!==200||!result.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
-  const blob=await result.blob();check(signal);status('playing')
-  await play(blob,audio,signal);status('idle')
+  return result.blob()
+}
+
+export async function playVoiceBlob(blob:Blob,audio:HTMLAudioElement,signal:AbortSignal,status:(state:VoicePlaybackStatus)=>void){
+  check(signal);status('playing');await play(blob,audio,signal);status('idle')
 }
 
 function check(signal: AbortSignal) { if (signal.aborted) throw new DOMException('Voice cancelled', 'AbortError') }

@@ -11,7 +11,7 @@ describe('per-utterance voice delivery', () => {
   it('retains generated directions through validation while rendering only dialogue text', () => {
     const parsed = SimulationProposal.parse({ rp: { blocks: [{ type: 'dialogue', speaker: '토마스', text: '괜찮아. 나 여기 있어.', delivery }] } })
     expect(parsed.rp.blocks[0]!.delivery).toEqual(delivery)
-    expect(spokenSegments(parsed.rp.blocks, '', '토마스')[0]).toEqual({ text: '괜찮아. 나 여기 있어.', delivery })
+    expect(spokenSegments(parsed.rp.blocks, '', '토마스')[0]).toEqual({ text: '괜찮아. 나 여기 있어.', delivery, lines: ['괜찮아. 나 여기 있어.'] })
     expect(renderBlocks(parsed.rp.blocks)).not.toContain('pauseAfterMs')
     expect(renderBlocks(parsed.rp.blocks)).not.toContain('hurt')
   })
@@ -20,7 +20,8 @@ describe('per-utterance voice delivery', () => {
     expect(RpBlock.parse({ type: 'thought', text: '속으로만 하는 말', delivery })).not.toHaveProperty('delivery')
     expect(RpBlock.parse({ dialogue: '토마스', text: '안녕', delivery }).delivery).toEqual(delivery)
   })
-  it('does not merge emotions, read narration, or assign an NPC the character voice', () => {
+  // 11/11: 같은 사람이 이어 하는 말은 한 번에 합성한다(줄마다 따로면 목소리 결·감정이 줄마다 새로 시작됐다). 감정은 묶음 첫 줄, 쉼은 마지막 줄.
+  it('merges one speaker\'s consecutive lines, skips narration, and keeps other speakers separate', () => {
     const blocks = [
       { type: 'narrative', text: '귀에 대고 속삭인다.' },
       { type: 'dialogue', speaker: '토마스', text: '가까이 와.' },
@@ -30,9 +31,11 @@ describe('per-utterance voice delivery', () => {
       { type: 'npc', speaker: '다른 사람', text: 'NPC의 말.' },
     ]
     const plan = spokenSegments(blocks, '', '토마스')
-    expect(plan.map(s => s.text)).toEqual(['가까이 와.', '정말 반가워.'])
+    expect(plan.map(s => s.text)).toEqual(['가까이 와. 정말 반가워.', '다른 사람의 말.'])
     expect(plan[0]!.delivery.tone).toBe('whisper')
-    expect(plan[1]!.delivery).toMatchObject({ emotion: 'happy', tone: 'playful', pace: 'fast', pauseAfterMs: 200 })
+    expect(plan[0]!.delivery.pauseAfterMs).toBe(200)
+    expect(plan[0]!.lines).toEqual(['가까이 와.', '정말 반가워.'])
+    expect(plan[1]!.speaker).toBe('다른 사람')
   })
   it('supports legacy dialogue and clamps shared pause values and total spoken length', () => {
     expect(spokenSegments([], '옛 메시지')[0]!.delivery).toEqual(voiceDelivery(null))

@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom'
 import type { CharacterMedia } from '@miro/config'
 import { useT } from '@/lib/i18n/client'
 import { spokenSegments } from '@/lib/voice-text'
-import { playVoiceSelection, voicePause, type VoicePlaybackStatus } from '@/lib/voice-playback'
+import { fetchVoiceBlob, playVoiceBlob, playVoiceSelection, voicePause, type VoicePlaybackStatus } from '@/lib/voice-playback'
 import { useTurns } from './turns'
 import type { Msg } from './messages'
 import { SpeechPanel } from './speech-panel'
@@ -55,8 +55,13 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
         const m=latest.current.find(x=>x.id===job.id);if(!m)continue
         const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
         const parts=(job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])
+        const report=(v:VoicePlaybackStatus)=>{if(controller.current===active)setStatus(v)}
+        // 11/11 미리 받기: 지금 줄을 재생하는 동안 다음 줄 합성을 시작해 둔다(줄 사이 기다림이 합성 시간만큼 있었다).
+        const fetchPart=(part:number)=>{const p=fetchVoiceBlob(sessionId,m.id,part,'standard',active.signal);p.catch(()=>{});return p}
+        let next:Promise<Blob>|null=parts.length?fetchPart(parts[0]!):null
         for(const [k,part] of parts.entries()){
-          try{await playVoiceSelection(sessionId,m.id,part,'standard',audio.current!,active.signal,v=>{if(controller.current===active)setStatus(v)})}
+          const pending=next!;next=k+1<parts.length?fetchPart(parts[k+1]!):null
+          try{report('preparing');await playVoiceBlob(await pending,audio.current!,active.signal,report)}
           catch(e){if(active.signal.aborted)throw e;setStatus('error');continue}   // 한 줄이 실패해도 나머지는 계속 읽는다
           const pause=Math.max(0,Math.min(1500,segs[part]!.delivery.pauseAfterMs??0))
           if(pause&&k<parts.length-1)await voicePause(pause,active.signal)
@@ -113,7 +118,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
     const said=texts.map(x=>x.trim()).filter(Boolean)
     // 블록 없는 옛 기록·인트로는 글 전체가 한 줄이다.
-    const parts=!m.blocks.length?(segs.length&&said.length?[0]:[]):segs.flatMap((s,i)=>said.some(x=>x===s.text||x.startsWith(s.text))?[i]:[])
+    const parts=!m.blocks.length?(segs.length&&said.length?[0]:[]):segs.flatMap((s,i)=>said.some(x=>s.lines.some(l=>x===l||x.startsWith(l)))?[i]:[])
     if(!parts.length)return
     if(current.current===null)unlock()
     enqueue(m.id,parts)
