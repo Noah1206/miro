@@ -65,8 +65,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       {/* 11/10 사용자: 로그인한 사람에겐 배너 대신 크랙식 추천(들어올 때마다 랜덤 6작품, 표지가 언베일인 작품은 뺀다). 로그인 전엔 가입 선물 배너 그대로. */}
-      {user ? <HomeHero items={[...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.popularFemale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
-        .filter(c => c.images.length > 0 && !c.coverUnveil).sort(() => Math.random() - 0.5).slice(0, 6)} /> : <HomeBanner signedIn={false} />}
+      {user ? <HomeHero items={(() => {
+        // 11/10 사용자: 남성향 4 + 여성향 2, 순서는 섞는다.
+        const all = [...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.popularFemale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
+          .filter(c => c.images.length > 0 && !c.coverUnveil).sort(() => Math.random() - 0.5)
+        return [...all.filter(c => c.audience === 'male').slice(0, 4), ...all.filter(c => c.audience === 'female').slice(0, 2)].sort(() => Math.random() - 0.5)
+      })()} /> : <HomeBanner signedIn={false} />}
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       {(() => { const content = <>
       <div className={styles.searchRow}>
