@@ -621,7 +621,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .siteHeader { display: none; }
 @media (min-width: 1024px) {
   /* 11/10 사용자: 헤더는 대화 칸 폭이 아니라 화면 전체(사이드바 오른쪽 끝까지) — 위에 고정하고 대화 칸은 그만큼 아래에서 시작한다. */
-  .siteHeader { display: flex; align-items: center; gap: 16px; position: fixed; top: 0; left: var(--side, 0px); right: 0; z-index: 20; height: 56px; padding: 0 24px; box-sizing: border-box; border-bottom: 1px solid var(--color-border); background: var(--color-bg); }
+  .siteHeader { display: flex; align-items: center; gap: 16px; position: fixed; top: 0; left: var(--side, 0px); right: 0; z-index: 20; height: 56px; padding: 0 24px; box-sizing: border-box; background: var(--color-bg); }
   .main { padding-top: 56px; box-sizing: border-box; }
   .siteNav { display: flex; gap: 22px; }
   .siteNav a { color: var(--color-text-secondary); font-size: 15px; font-weight: 600; text-decoration: none; }
