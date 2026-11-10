@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button, ButtonLink } from '@/components/ui'
+import { Back, Button } from '@/components/ui'
 import { useWallet } from '@/components/wallet/provider'
 import { useT } from '@/lib/i18n/client'
 import { moveToWallet } from './actions'
@@ -90,7 +90,7 @@ export function TransferFlow({ balance }: { balance: number }) {
 
   return (
     <div className={styles.screen}>
-      <div className={styles.top}><ButtonLink href="/earnings" variant="ghost" size="sm" aria-label={t('뒤로')} direction="back">‹</ButtonLink></div>
+      <div className={styles.top}><Back href="/earnings" /></div>
       <div className={styles.amountBody}>
         <p className={styles.to}>{t('내 미로 지갑으로')}</p>
         <p className={`${styles.amount} ${amount ? '' : styles.placeholder} ${over ? styles.shake : ''}`} aria-live="polite">
