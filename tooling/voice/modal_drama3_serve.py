@@ -19,6 +19,10 @@ DEFAULT_VOICE = 'asmr01'
 # ponytail: 목소리 샘플 상태는 목소리 16개까지 들고 있는다(하나 ~100MB) — 넘으면 가장 오래 안 쓴 것부터 버린다
 PREFIX_VOICES = 16
 SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
+# 11/11 스트리밍: 첫 조각은 짧게(8프레임 ≈ 0.37초, 첫소리를 빨리), 그다음은 16프레임(≈0.74초)마다.
+# stream_check 실측(희아, 248프레임): 코덱은 뒤를 보지 않는다(보류 프레임 차이 0) — 그런데 기억이 길어 앞 48·128프레임만 문맥으로 주면 소리가 갈렸고
+# (최대 차이 0.52·0.10), 256프레임 이상·처음부터 전부는 한 번에 푼 것과 같았다(0.007, 수치 흔들림 수준). 처음부터 다시 풀어도 16조각에 0.34초라 전부 준다.
+STREAM_FIRST, STREAM_EVERY, STREAM_CTX, STREAM_HOLD = 8, 16, 1 << 20, 0
 # CUDA 그래프는 켠다(fish-speech 기본값) — 10/30 판은 학습·청취 스크립트에서 FISH_DRAMA3_CUDA_GRAPH=0 을 그대로 가져와
 # 한 칸마다 작은 커널 수천 개를 따로 띄우는 느린 경로(원본 주석: "eager decode is bound by kernel launches")로 돌고 있었다(10/31).
 image = (base_image.env({'FISH_DRAMA3_FP8_EXPERTS': '0'})
@@ -108,6 +112,11 @@ class Speaker:
         return buf.getvalue()
 
     def generate(self, prompt, voice, max_new_tokens):
+        """_decode 를 끝까지 돌린 결과(11/11 스트리밍 때문에 생성기로 나눔 — 계산은 그대로)."""
+        for frames, rows, produced, done in self._decode(prompt, voice, max_new_tokens):
+            if done: return frames[rows : rows + produced].cpu()
+
+    def _decode(self, prompt, voice, max_new_tokens, every=0):
         """generate_drama3 와 같은 생성(같은 샘플링·같은 디코드 그래프)인데, 목소리 샘플까지 읽은 상태를 목소리마다 저장해 두고 되돌려 쓴다(11/6).
         요청마다 같은 목소리 샘플 ~670줄을 다시 읽느라 4.7초씩 들던 준비를, 목소리당 처음 한 번만 한다.
         모델은 위치별로 저장되는 주의층과, 앞 내용을 상태 하나로 요약하는 순환층(GatedDeltaNet)이 섞여 있다 —
@@ -183,9 +192,72 @@ class Speaker:
             if main == model.config.eos_token_id: break
             frames[position + 1] = sampled[0]
             produced += 1
+            if every and produced % every == 0: yield frames, rows, produced, False   # 11/11 스트리밍: 중간 결과(계산 순서는 그대로)
             if graphs is None and step + 1 < max_new_tokens:
                 hidden = backbone(inputs_embeds=tower.embed_backbone(sampled, backbone.embed(sampled[:, 0]))[None], input_pos=positions[position + 1 : position + 2])[0].to(tower.device)
-        return frames[rows : rows + produced].cpu()
+        yield frames, rows, produced, True
+
+    def speak_stream(self, text, voice):
+        """11/11 스트리밍(사용자: 첫소리가 늦다) — 만드는 대로 소리 조각(PCM16 모노)을 내보낸다. 생성 계산은 speak 와 같다(같은 씨앗 → 같은 프레임).
+        코덱은 조각마다 앞 STREAM_CTX 프레임을 문맥으로 함께 풀고 새 부분만 보낸다 — 이음새가 전체를 한 번에 푼 것과 같은지는 stream_check 로 잰다."""
+        import zlib, numpy as np, torch
+        from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
+        ref_text, codes = self.reference(voice)
+        limit = min(1536, max(384, len(text) * 24))
+        torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
+        sent, first = 0, True
+        with torch.inference_mode():
+            prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
+            for frames, rows, produced, done in self._decode(prompt, voice or DEFAULT_VOICE, limit, every=STREAM_EVERY):
+                upto = produced if done else produced - STREAM_HOLD
+                if not done and upto - sent < (STREAM_FIRST if first else STREAM_EVERY): continue
+                if upto <= sent: continue
+                start = max(0, sent - STREAM_CTX)
+                wave = self.codec_decode(frames[rows + start : rows + upto])
+                per = len(wave) // (upto - start)
+                chunk = wave[(sent - start) * per :]
+                sent, first = upto, False
+                yield (np.clip(chunk, -1, 1) * 32767).astype('<i2').tobytes()
+
+    @modal.method()
+    def stream_check(self, text, voice=None, seed=7):
+        """스트리밍 이음새 확인(11/11): 같은 프레임을 한 번에 푼 소리와 조각으로 이어 붙인 소리를 비교한다. 문맥 길이·보류 프레임별 최대 차이."""
+        import numpy as np, torch
+        torch.manual_seed(seed)
+        from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
+        ref_text, codes = self.reference(voice)
+        with torch.inference_mode():
+            prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
+            frames = self.generate(prompt, voice or DEFAULT_VOICE, min(1536, max(384, len(text) * 24)))
+            full = self.codec_decode(frames)
+            per = len(full) // len(frames)
+            out = {'frames': len(frames), 'samples_per_frame': per, 'sample_rate': self.codec.sample_rate, 'full_samples': len(full)}
+            def spec(w):
+                t = torch.from_numpy(w).float()
+                return torch.stft(t, 2048, 512, window=torch.hann_window(2048), return_complex=True).abs().clamp_min(1e-5).log10()
+            ref = spec(full)
+            again = self.codec_decode(frames)   # 같은 걸 두 번 풀어도 같은가(GPU 수치 흔들림 기준선)
+            out['repeat_max_diff'] = float(np.abs(again - full).max())
+            import time
+            for ctx in (128, 256, 100000):
+                for hold in (0,):
+                    torch.cuda.synchronize(); t0 = time.perf_counter()
+                    parts, sent, n = [], 0, len(frames)
+                    marks = list(range(STREAM_FIRST + hold, n, STREAM_EVERY)) + [n]
+                    for produced in marks:
+                        upto = produced if produced == n else produced - hold
+                        if upto <= sent: continue
+                        start = max(0, sent - ctx)
+                        wave = self.codec_decode(frames[start:upto])
+                        parts.append(wave[(sent - start) * per :]); sent = upto
+                    stitched = np.concatenate(parts)
+                    torch.cuda.synchronize(); took = time.perf_counter() - t0
+                    m = min(len(stitched), len(full))
+                    d = (spec(stitched[:m]) - ref[:, : spec(stitched[:m]).shape[1]]).abs()
+                    seams = [min(d.shape[1] - 1, (b * per) // 512) for b in range(STREAM_FIRST, n, STREAM_EVERY)]
+                    out[f'ctx{ctx}_hold{hold}'] = {'max_diff': float(np.abs(stitched[:m] - full[:m]).max()), 'len_diff': int(len(stitched) - len(full)),
+                        'spec_mean': round(float(d.mean()), 4), 'spec_seam': round(float(d[:, seams].mean()), 4) if seams else None, 'decode_s': round(took, 2), 'chunks': len(parts)}
+        return out
 
     @modal.method()
     def bench(self, items, seed=7):
@@ -258,6 +330,19 @@ class Speaker:
             if not text: return Response(b'empty text', status_code=400)
             try: return Response(self.speak(delivery_text(text, body), body.get('voice')), media_type='audio/wav')
             except Exception: return Response(b'generation failed', status_code=500)   # 글 내용은 로그에 남기지 않는다
+
+        @api.post('/speak_stream')
+        async def speak_stream(request: Request):
+            """11/11 만드는 대로 PCM16 모노 조각을 흘려보낸다(x-sample-rate 헤더). 목소리가 없으면 첫 조각 전에 400."""
+            from fastapi.responses import StreamingResponse
+            if not hmac.compare_digest(request.headers.get('authorization', ''), f'Bearer {key}'): return Response(status_code=401)
+            body = await request.json()
+            text = str(body.get('text', '')).strip()[:600]
+            if not text: return Response(b'empty text', status_code=400)
+            try: self.reference(body.get('voice'))
+            except Exception: return Response(b'voice not found', status_code=400)
+            return StreamingResponse(self.speak_stream(delivery_text(text, body), body.get('voice')), media_type='audio/L16',
+                                     headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 

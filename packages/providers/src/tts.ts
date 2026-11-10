@@ -8,7 +8,9 @@ import type { VoiceDelivery } from '@miro/config'
 export type TtsRequest = { text: string; voice: string | null; language: string; style?: 'normal' | 'whisper'; delivery?: VoiceDelivery; maxAudioSeconds?: number }
 export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promise<{ audio: ArrayBuffer; contentType: string }>
   /** 11/6: 서버를 미리 깨운다(꺼져 있으면 켜지는 데 24~33초) — 음성 모드를 켜는 순간 부른다. 실패해도 조용히. */
-  warm?(signal?: AbortSignal): Promise<void> }
+  warm?(signal?: AbortSignal): Promise<void>
+  /** 11/11 만드는 대로 받기 — PCM16 모노 조각 스트림(sampleRate 와 함께). 첫 조각까지 약 1초. */
+  speakStream?(req: TtsRequest, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }> }
 
 export function resolveTts(): TtsProvider | null {
   const url = process.env.MIRO_TTS_URL?.replace(/\/$/, '')
@@ -16,6 +18,16 @@ export function resolveTts(): TtsProvider | null {
   const key = process.env.MIRO_TTS_API_KEY
   return {
     async warm(signal) { await fetch(`${url}/health`, { signal }).then(r => r.body?.cancel()).catch(() => {}) },
+    async speakStream(req, signal) {
+      const res = await fetch(`${url}/speak_stream`, {
+        method: 'POST', signal,
+        headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}) },
+        body: JSON.stringify(req),
+      })
+      const sampleRate = Number(res.headers.get('x-sample-rate'))
+      if (!res.ok || !res.body || !(sampleRate > 0)) { await res.body?.cancel(); throw new Error(`tts stream ${res.status}`) }
+      return { stream: res.body, sampleRate }
+    },
     async speak(req, signal) {
       const res = await fetch(`${url}/speak`, {
         method: 'POST', signal,

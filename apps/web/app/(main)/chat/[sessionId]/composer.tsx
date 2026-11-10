@@ -17,6 +17,7 @@ import type { TurnState } from '@/lib/simulation/turn-action'
 import { ENDING_VIEW, REROLL, useTurns } from './turns'
 import { useChosenThinking } from '@/components/reply-length-sheet'
 import { streamTurn } from './stream-turn'
+import { useImmersive } from './immersive'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
@@ -66,7 +67,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     }
     let undone = false
     try {
-      const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) })
+      // 11/11 글과 같이 읽기 — 음성 모드면 대사 묶음이 오는 대로 읽고, 그 답은 저장된 뒤 다시 읽지 않는다.
+      let spokeLive = false
+      const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) }, voice.live ? speech => { spokeLive = true; voice.speakLive(speech) } : undefined)
+      if (spokeLive && result.messages?.length) voice.markSpoken(result.messages.map(m => m.id))
       if (result.undone?.length) { undone = true; remove(result.undone) }
       setState(result)
       if (result.limit && !result.limit.attend) openRecharge()
@@ -88,6 +92,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   }
   const { model, setModel } = useChatModel()
   const router = useRouter()
+  const voice = useImmersive()
   const { refreshBalance, wallet, openRecharge } = useWallet()
   const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
   // 11/10 생각 강도 — 서버가 강도만큼 턴 한도를 늘리므로(turn.ts thinkScale) 보내는 상한도 같이 늘린다.
@@ -247,6 +252,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
+        {voice.live && <input type="hidden" name="voice" value="1" />}
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="command" value={command?.name ?? ''} />

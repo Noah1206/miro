@@ -4,7 +4,8 @@ import { flushSync } from 'react-dom'
 import type { CharacterMedia } from '@miro/config'
 import { useT } from '@/lib/i18n/client'
 import { spokenSegments } from '@/lib/voice-text'
-import { fetchVoiceBlob, playVoiceBlob, playVoiceSelection, voicePause, type VoicePlaybackStatus } from '@/lib/voice-playback'
+import { playVoiceSelection, type VoicePlaybackStatus } from '@/lib/voice-playback'
+import { VoiceStreamPlayer } from '@/lib/voice-stream'
 import { useTurns } from './turns'
 import type { Msg } from './messages'
 import { SpeechPanel } from './speech-panel'
@@ -19,8 +20,11 @@ export type SpeechChoice={messageId:string;part:number;text:string}
 type Immersive = { media: CharacterMedia; available:boolean; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
   choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string
   /** 11/6: 무료 운영(음성 분량 차감 꺼짐) — 새 답 이어 읽기·말풍선 눌러 다시 듣기. */
-  free:boolean;replay:(m:Msg,texts:string[])=>void }
-const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{} })
+  free:boolean;replay:(m:Msg,texts:string[])=>void
+  /** 11/11 글과 같이 읽기 — /api/turn 이 보낸 서명된 대사 묶음을 바로 읽는다. 쓰는 중이면 true(폼에 voice=1). */
+  live:boolean;speakLive:(speech:LiveSpeechToken)=>void;markSpoken:(ids:string[])=>void }
+export type LiveSpeechToken={text:string;speaker:string|null;delivery:Record<string,unknown>;exp:number;token:string}
+const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false,speakLive:()=>{},markSpoken:()=>{} })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
@@ -42,31 +46,45 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
     .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName,voiceSpeakers).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
   // 11/6 이어 읽기: 읽을 답을 줄 세워 끝까지 읽는다 — 읽는 중에 새 답이 와도 끊지 않고 뒤에 붙는다.
-  const queue=useRef<Array<{id:string;parts:number[]|null;key:string}>>([])
+  type Job={key:string}&({kind:'part';id:string;parts:number[]|null}|{kind:'live';speech:LiveSpeechToken})
+  const queue=useRef<Job[]>([])
   const current=useRef<string|null>(null)
+  const player=useRef<VoiceStreamPlayer|null>(null)
   const latest=useRef<Msg[]>([]);latest.current=[...initialMessages,...appended.filter(m=>!known.has(m.id))]
-  const stop=()=>{queue.current=[];controller.current?.abort();audio.current?.pause();setStatus('idle')}
+  const stop=()=>{queue.current=[];controller.current?.abort();audio.current?.pause();player.current?.stop();setStatus('idle')}
+  /**
+   * 11/11 만드는 대로 듣기: 묶음마다 /api/tts 를 stream 으로 받아 오는 조각부터 재생한다. 한 묶음을 다 받으면(재생 끝이 아니라)
+   * 바로 다음 묶음을 요청해 재생 시각 뒤에 붙인다 — 묶음 사이 기다림이 없다.
+   */
   const drain=async()=>{
     if(current.current!==null)return
     const active=new AbortController();controller.current=active
+    player.current??=new VoiceStreamPlayer()
+    const report=(v:VoicePlaybackStatus)=>{if(controller.current===active)setStatus(v)}
+    let ended:Promise<void>=Promise.resolve()
+    const post=(body:object)=>fetch('/api/tts',{method:'POST',signal:active.signal,headers:{'content-type':'application/json'},body:JSON.stringify({sessionId,stream:true,...body})})
+    const one=async(body:object,pause:number)=>{
+      if(current.current===null)return
+      report('preparing')
+      const res=await post(body)
+      if(!res.ok||!res.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
+      const fed=await player.current!.feed(res,active.signal,()=>report('playing'))
+      ended=fed.ended;player.current!.gap(Math.max(0,Math.min(1500,pause)))
+    }
     try{
       while(queue.current.length&&!active.signal.aborted){
         const job=queue.current.shift()!;current.current=job.key
-        const m=latest.current.find(x=>x.id===job.id);if(!m)continue
-        const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
-        const parts=(job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])
-        const report=(v:VoicePlaybackStatus)=>{if(controller.current===active)setStatus(v)}
-        // 11/11 미리 받기: 지금 줄을 재생하는 동안 다음 줄 합성을 시작해 둔다(줄 사이 기다림이 합성 시간만큼 있었다).
-        const fetchPart=(part:number)=>{const p=fetchVoiceBlob(sessionId,m.id,part,'standard',active.signal);p.catch(()=>{});return p}
-        let next:Promise<Blob>|null=parts.length?fetchPart(parts[0]!):null
-        for(const [k,part] of parts.entries()){
-          const pending=next!;next=k+1<parts.length?fetchPart(parts[k+1]!):null
-          try{report('preparing');await playVoiceBlob(await pending,audio.current!,active.signal,report)}
-          catch(e){if(active.signal.aborted)throw e;setStatus('error');continue}   // 한 줄이 실패해도 나머지는 계속 읽는다
-          const pause=Math.max(0,Math.min(1500,segs[part]!.delivery.pauseAfterMs??0))
-          if(pause&&k<parts.length-1)await voicePause(pause,active.signal)
-        }
+        try{
+          if(job.kind==='live'){await one({live:job.speech},Number(job.speech.delivery.pauseAfterMs)||300);continue}
+          const m=latest.current.find(x=>x.id===job.id);if(!m)continue
+          const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
+          for(const part of (job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])){
+            try{await one({messageId:m.id,part,amount:'standard',confirmed:true},segs[part]!.delivery.pauseAfterMs??0)}
+            catch(e){if(active.signal.aborted)throw e;setStatus('error')}   // 한 묶음이 실패해도 나머지는 계속 읽는다
+          }
+        }catch(e){if(active.signal.aborted)throw e;setStatus('error')}
       }
+      await ended;if(controller.current===active&&!active.signal.aborted)setStatus('idle')
     }catch{/* 음성 모드를 끄거나 방을 나감 */}
     finally{current.current=null}
   }
@@ -78,14 +96,20 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const enqueue=(id:string,parts:number[]|null)=>{
     const key=`${id}:${parts?.join(',')??'all'}`
     if(current.current===key||queue.current.some(j=>j.key===key))return
-    queue.current.push({id,parts,key});void drain()
+    queue.current.push({kind:'part',id,parts,key});void drain()
   }
+  const speakLive=(speech:LiveSpeechToken)=>{
+    if(!on||!enabled||free!==true)return
+    queue.current.push({kind:'live',speech,key:`live:${speech.token}`});void drain()
+  }
+  // 글과 같이 읽은 답은 저장된 뒤 다시 읽지 않는다.
+  const markSpoken=(ids:string[])=>{for(const id of ids)spoken.current.add(id)}
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // 11/6: 음성 모드가 켜지면(토글·다시 들어옴) 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간을 기다리지 않게.
   useEffect(()=>{if(on)void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true}),keepalive:true}).catch(()=>{})},[on])
   // Voice is opt-in for every character, including those originally created as text.
   useEffect(() => { try { setOn(localStorage.getItem(key) === '1') } catch { setOn(false) } }, [key])
-  const unlock = () => { audio.current ??= new Audio(); audio.current.src = SILENT; audio.current.play().catch(() => {}) }
+  const unlock = () => { audio.current ??= new Audio(); audio.current.src = SILENT; audio.current.play().catch(() => {}); (player.current ??= new VoiceStreamPlayer()).unlock() }
   const toggle = () => {
     if(!enabled)return
     const next = !on
@@ -124,7 +148,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay }}>
+    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true,speakLive,markSpoken }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}

@@ -1,6 +1,10 @@
 import { currentUser } from '@/lib/auth'
 import { turnFromForm, type TurnState } from '@/lib/simulation/turn-action'
 import { msg } from '@/lib/i18n'
+import { and, eq } from 'drizzle-orm'
+import { characters, db, roleplaySessions } from '@miro/db'
+import { feature } from '@miro/config'
+import { liveGrouper, signLive } from '@/lib/speech/live'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -18,17 +22,33 @@ export async function POST(req: Request): Promise<Response> {
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (event: unknown) => { try { controller.enqueue(encoder.encode(JSON.stringify(event) + '\n')) } catch { /* 받는 쪽이 떠났다 — 턴은 계속 간다 */ } }
+      // 11/11 음성 모드(무료 이어 읽기)가 켜진 채팅방: 같은 사람 대사가 모이는 대로 읽을 묶음(speech)을 서명해 보낸다 — 저장을 기다리지 않는다.
+      const sessionId = String(form.get('sessionId') ?? '')
+      const room = form.get('voice') === '1' && form.get('mode') !== 'messenger' && feature('characterVoice') && /^[0-9a-f-]{36}$/i.test(sessionId)
+        ? (await db.select({ name: characters.name, ensemble: characters.ensembleVoices }).from(roleplaySessions)
+          .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
+          .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id))).limit(1))[0] : undefined
+      let grouper = room ? liveGrouper(room.name, Object.keys(room.ensemble ?? {})) : null
+      const speak = (groups: ReturnType<NonNullable<typeof grouper>['push']>) => {
+        for (const g of groups) { const signed = signLive(user.id, sessionId, g); if (signed) send({ type: 'speech', speech: { ...g, ...signed } }) }
+      }
       let state: TurnState
       try {
         // 문자방(10/9)도 같은 경로 — 문자 모드는 대사 블록만 오므로 말풍선이 하나씩 도착한다.
         const mode = form.get('mode') === 'messenger' ? 'messenger' as const : 'chat' as const
         state = await turnFromForm(user.id, form, { mode, path: (id) => mode === 'messenger' ? `/messages/${id}` : `/chat/${id}`,
-          stream: { onBlocks: (blocks) => send({ type: 'blocks', blocks }), onReset: () => send({ type: 'reset' }) },
+          stream: {
+            onBlocks: (blocks) => { send({ type: 'blocks', blocks }); if (grouper) speak(grouper.push(blocks as unknown as Array<Record<string, unknown>>)) },
+            // 새 시도 — 읽던 묶음도 버린다(화면과 같이).
+            onReset: () => { send({ type: 'reset' }); if (room) grouper = liveGrouper(room.name, Object.keys(room.ensemble ?? {})) },
+          },
           // 리롤: 옛 턴을 되돌린 순간 알린다 — 화면이 옛 답을 지우고 새 답을 기다린다.
           onUndone: (ids) => send({ type: 'undone', ids }) })
       } catch {
         state = { error: msg('연결이 끊겼어요. 입력한 내용은 보관했어요. 다시 전송하면 처리 결과를 확인해요.'), notice: null, limit: null, retryWithSameId: true }
       }
+      // 저장까지 끝난 답만 남은 묶음을 읽는다(거절·실패면 읽지 않는다).
+      if (grouper && state.succeeded) speak(grouper.end())
       send({ type: 'done', state })
       try { controller.close() } catch { /* 이미 닫혔다 */ }
     },
