@@ -116,6 +116,8 @@ export const pushSubscriptions = pgTable('push_subscriptions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   /** 발송 실패(410 등) 시 기록. 반복 실패 구독은 정리 대상. */
   failedAt: timestamp('failed_at', { withTimezone: true }),
+  /** 11/10 같은 기기 표시(알림 서비스 + 기기 종류) — 새 구독이 오면 같은 기기의 옛 구독을 멈춰 알림이 두 번 오지 않게 한다. */
+  device: text('device'),
 }, (t) => ({ userIdx: index('push_subscriptions_user_idx').on(t.userId) }))
 
 /**
