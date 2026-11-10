@@ -14,7 +14,7 @@ import styles from './chat.module.css'
  * '+ 한 장 더'는 지금 장의 장면·구도를 복사한다. 세부사항은 이 대화방에 저장해 두고 모든 장에 같이 보낸다 — 사진마다 머리색·속옷 색이 바뀌지 않게. */
 type Shot = { key: number; scene: string; picks: number[] }
 const KEYS = Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]
-const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷') }
+const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷'), outfitMen: msg('옷') }
 
 export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, custom = [], variant = 'tool' }: { sessionId: string; unveil: boolean; bundle: boolean; audience?: Audience; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }>; variant?: 'tool' | 'turn' }) {
   const t = useT(), router = useRouter()
@@ -56,7 +56,7 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
   const group = groups.includes(pickedGroup as (typeof groups)[number]) ? pickedGroup : groups[0] ?? ''
   const shown = catalog ? inMode.filter(s => groupOf(s) === group) : scenes
   const ownShown = catalog ? own.filter(s => s.unveil === adultMode) : own
-  const keys = KEYS.filter(k => k === 'outfit' ? audience === 'male' : true)
+  const keys = KEYS.filter(k => k === 'outfit' ? audience === 'male' : k === 'outfitMen' ? audience === 'female' : true)
   const sceneName = (id: string) => !id ? t('지금 대화') : own.find(s => s.id === id)?.label ?? t(scenes.find(s => s.id === id)?.label ?? '')
   const shot = shots[Math.min(cur, shots.length - 1)]!
   const update = (p: Partial<Shot>) => setShots(list => list.map(s => (s.key === shot.key ? { ...s, ...p } : s)))

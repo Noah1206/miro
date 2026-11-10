@@ -41,7 +41,13 @@ export async function unreadContactCount(userId: string): Promise<number> {
   const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(realityContacts)
     .innerJoin(roleplaySessions, eq(roleplaySessions.id, realityContacts.sessionId))
     .where(and(eq(roleplaySessions.userId, userId), isNull(roleplaySessions.deletedAt), eq(realityContacts.status, 'sent'), unveil && !inlineMirrorEnabled() ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)))
-  return row?.n ?? 0
+  if (unveil && !inlineMirrorEnabled()) return row?.n ?? 0
+  const [story] = await db.execute<{ n: number }>(sql`
+    SELECT count(*)::int AS n FROM story_messages m JOIN story_runs r ON r.id = m.run_id
+    WHERE r.user_id = ${userId}::uuid AND r.status <> 'archived'
+      AND m.channel = 'dm' AND m.role = 'character' AND m.read_at IS NULL
+  `)
+  return (row?.n ?? 0) + (story?.n ?? 0)
 }
 
 /**
@@ -96,6 +102,22 @@ export async function listSessions(userId: string, options: {
       ) latest ON true
       WHERE r.user_id = ${userId}::uuid AND r.deleted_at IS NULL AND (r.adult_since IS NOT NULL) = ${unveil && !inlineMirrorEnabled()}
         ${options.channel==='dm'?sql`AND c.experience_type='reality'`:sql``}
+      UNION ALL
+      SELECT latest.id, person->>'name', s.slug || '-' || (person->>'key'), person->>'image',
+        NULL::text, NULL::text, CASE WHEN r.status = 'archived' THEN 'archived' ELSE 'active' END,
+        latest.created_at, '', '', NULL::text, left(latest.content, 180),
+        CASE WHEN r.status = 'archived' THEN 0 ELSE
+          (SELECT count(*)::int FROM story_messages um WHERE um.run_id = r.id AND um.channel = 'dm'
+            AND um.thread = person->>'key' AND um.role = 'character' AND um.read_at IS NULL) END,
+        '/messages/story/' || r.id || '/' || (person->>'key'), s.title, r.run_no
+      FROM story_runs r JOIN stories s ON s.id = r.story_id
+      CROSS JOIN LATERAL jsonb_array_elements(s.public->'characters') person
+      CROSS JOIN LATERAL (
+        SELECT m.id, m.created_at, m.content FROM story_messages m
+        WHERE m.run_id = r.id AND m.channel = 'dm' AND m.thread = person->>'key'
+        ORDER BY m.created_at DESC, m.id DESC LIMIT 1
+      ) latest
+      WHERE r.user_id = ${userId}::uuid AND ${!unveil&&options.channel!=='chat'}
     )
     SELECT *, to_char(last_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS cursor_time FROM inbox
     WHERE true ${options.status ? sql`AND status = ${options.status}` : sql``}

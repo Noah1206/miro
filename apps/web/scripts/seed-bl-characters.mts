@@ -11,7 +11,15 @@
  */
 import { randomUUID } from 'node:crypto'
 import { writeFileSync } from 'node:fs'
-import type { Seed } from './seed-types.mts'
+import { SEEDS as SEEDS_1, type Seed } from './bl-characters.data.mts'
+import { SEEDS_2 } from './bl-characters-2.data.mts'
+import { SEEDS_3 } from './bl-characters-3.data.mts'
+import { SEEDS_4_TIGER } from './bl-characters-4-tiger.data.mts'
+import { SEEDS_4_TAEGYEONG } from './bl-characters-4-taegyeong.data.mts'
+import { SEEDS_4_SION } from './bl-characters-4-sion.data.mts'
+import { SEEDS_4_MU } from './bl-characters-4-mu.data.mts'
+import { SEEDS_4_HANGYEOL } from './bl-characters-4-hangyeol.data.mts'
+import { SEEDS_4_IDO } from './bl-characters-4-ido.data.mts'
 import { SEEDS_MALE } from './male-characters.data.mts'
 import { MALE_CHARACTERS_A } from './male-characters-a.data.mts'
 import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mts'
@@ -19,11 +27,12 @@ import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { MALE_CHARACTERS_D } from './male-characters-d.data.mts'
 import { MALE_CHARACTERS_E } from './male-characters-e.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
+import { FEMALE_PUBLIC } from './bl-characters-public.data.mts'
 import { MALE_BODY, MALE_COVER_UNVEIL, MALE_GUIDE, MALE_INTRO, MALE_PUBLIC, MALE_ROSTER, MALE_VOICES, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
 // 11/3 남성향 12명: 화면엔 짧은 소개 + 상세정보(키·몸무게·쓰리사이즈), 원래 긴 소개는 비공개 설정 맨 앞으로(AI 는 그대로 읽는다).
 // 수치는 사진 생성용 외형(bodyProfile.detail)에도 붙인다.
 function withMalePublic(s: Seed): Seed {
-  let intro = MALE_PUBLIC[s.slug]; const body = MALE_BODY[s.slug]
+  let intro = MALE_PUBLIC[s.slug] ?? FEMALE_PUBLIC[s.slug]; const body = MALE_BODY[s.slug]
   if (!intro) return s
   // 여러 명 나오는 카드는 등장인물 목록이 소개 글 아래에 보이고, 대표 한 명 수치(상세정보)는 목록과 겹쳐 뺀다.
   const roster = MALE_ROSTER[s.slug]
@@ -76,7 +85,7 @@ function withSceneOpenings(s: Seed): Seed {
 // 4차(10/19): 작품 6개의 서브공 19명 — 작품 세계를 이어받은 1:1 캐릭터.
 // --only=<slug> 이면 그 캐릭터 하나만 다룬다(11/1, 다른 미반영 slug 가 같이 들어가지 않게).
 const ONLY = process.argv.find(a => a.startsWith('--only='))?.slice(7)
-const ALL: Seed[] = [...SEEDS_MALE, ...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E].filter(s => !ONLY || s.slug === ONLY).map(withSceneOpenings).map(withMalePublic)   // --only 를 먼저 걸러 다른 작품의 쓰다 만 데이터에 막히지 않게(11/4)
+const ALL: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO, ...SEEDS_MALE, ...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E].filter(s => !ONLY || s.slug === ONLY).map(withSceneOpenings).map(withMalePublic)   // --only 를 먼저 걸러 다른 작품의 쓰다 만 데이터에 막히지 않게(11/4)
 const SEEDS = ONLY ? ALL.filter(s => s.slug === ONLY) : ALL
 if (ONLY && !SEEDS.length) throw new Error(`no seed ${ONLY}`)
 
@@ -160,7 +169,7 @@ if (args.has('--male-preview')) {
 if (args.has('--male-ai')) { await writeMaleAiCopy(); console.log('wrote', AI_COPY.pathname); process.exit(0) }
 
 if (args.has('--preview')) {
-  writeFileSync(DOC, `# 공식 BL 캐릭터 11명 — 전문 (2026-10-04)\n\n\`apps/web/scripts/bl-characters.data.mts\` 에서 만든 검토용 문서. 고칠 건 데이터 파일에서 고친다.\n\n${ALL.map(markdown).join('\n---\n\n')}`)
+  writeFileSync(DOC, `# 공식 BL 캐릭터 11명 — 전문 (2026-10-04)\n\n\`apps/web/scripts/bl-characters.data.mts\` 에서 만든 검토용 문서. 고칠 건 데이터 파일에서 고친다.\n\n${SEEDS.map(markdown).join('\n---\n\n')}`)
   console.log('wrote', DOC.pathname); process.exit(0)
 }
 

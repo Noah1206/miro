@@ -43,7 +43,7 @@ export function AudienceSelect({ groups, audience }: { groups: DiscoveryGroup[];
       </header>
       {/* 남성향/여성향(11/4) — 고르면 홈이 그 대상으로 바뀐다. */}
       <div className={styles.audience} role="group" aria-label={t('대상')}>
-        {([[undefined, '전체'], ['male', '남성향']] as const).map(([v, label]) => (
+        {([[undefined, '전체'], ['male', '남성향'], ['female', '여성향']] as const).map(([v, label]) => (
           <button key={label} type="button" aria-pressed={audience === v} onClick={() => {
             setOpen(false)
             const url = v ? `/home?audience=${v}` : '/home'
