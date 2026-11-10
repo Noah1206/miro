@@ -217,8 +217,9 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     <div className={styles.composer} data-chat-composer>
       <AnimatePresence initial={false}>
         {showTyping && (
-          <motion.p key="thinking" role="status" className="t-caption t-quote" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 8 }}>
-            {t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}
+          <motion.p key="thinking" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tween.fast} style={{ marginBottom: 10, display: 'flex', alignItems: 'center' }}>
+            {/* 11/11 사용자: 베이비챗처럼 글 없이 점 셋만(흰→회색 색 순환, 1.2초). 화면 낭독기에는 글로 알린다. */}
+            <span className="sr-only">{t('{subject} 입력 중', { subject: subject(characterName), name: characterName })}</span>
             <span className={styles.typingDots} aria-hidden><i /><i /><i /></span>
             {slow && <span style={{ marginLeft: 8, color: 'var(--color-text-tertiary)' }}>{t('조금 오래 걸리고 있어요')}</span>}
           </motion.p>

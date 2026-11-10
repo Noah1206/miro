@@ -112,12 +112,14 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 @media (max-width: 360px) { .header { gap: 4px; padding-inline: 8px; } .title { font-size: 16px; } .styleButton { padding: 0 8px 0 12px; font-size: 12px; } .transcript { padding-inline: 12px; } }
 
 /* 입력 중 — 실제 메신저의 점 세 개. 기다림을 "아무 일도 없음" 이 아니라 "쓰고 있음" 으로 보이게 한다. */
-.typingDots { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
-.typingDots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .35; animation: typingBlink 1.3s infinite; }
-.typingDots i:nth-child(2) { animation-delay: .18s; }
-.typingDots i:nth-child(3) { animation-delay: .36s; }
-@keyframes typingBlink { 0%, 60%, 100% { opacity: .25; transform: translateY(0); } 30% { opacity: .9; transform: translateY(-2px); } }
-@media (prefers-reduced-motion: reduce) { .typingDots i { animation: none; opacity: .5; } }
+.typingDots { --dot-1: #fff; --dot-2: #acacac; --dot-3: #828282; display: inline-flex; gap: 6px; padding: 4px 2px; }
+/* 11/11 베이비챗 입력 대기 점(dotColorCycle 1.2s linear) — 셋이 0.4초씩 어긋나 색이 흘러간다. */
+.typingDots i { width: 8px; height: 8px; border-radius: 50%; background: var(--dot-1); animation: dotColorCycle 1.2s linear infinite; }
+.typingDots i:nth-child(2) { animation-delay: .4s; }
+.typingDots i:nth-child(3) { animation-delay: .8s; }
+@keyframes dotColorCycle { 0%, 100% { background: var(--dot-1); } 33% { background: var(--dot-2); } 66% { background: var(--dot-3); } }
+:global([data-chat-theme='talk']) .typingDots { --dot-1: #191919; --dot-2: #5a5a5a; --dot-3: #8a8a8a; }
+@media (prefers-reduced-motion: reduce) { .typingDots i { animation: none; background: var(--dot-2); } }
 
 /* Theme scope changes presentation only; dialogs keep the application's own colors. */
 :global([data-chat-theme='dm']) .main { background:#000; color:#f5f5f5; }
