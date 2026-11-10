@@ -93,10 +93,10 @@ const USER_VIEWPOINT = `Use limited first-person POV: narration is the user's ow
 export function replyLengthRule(style: ReplyStyle): string {
   const fill = '분량은 새 행동·대사·장면 진행으로 채우고, 분위기 묘사나 같은 뜻의 문장, 이미 전달한 감정의 재설명으로 채우지 않습니다'
   // 11/10 운영: 응답 스키마 설명('1 to 12 items', '1-3 sentences')이 분량 지시를 눌러 답이 500~690자에 머물렀다(proposal.schema.ts 고침).
-  // 모델은 지시보다 조금 짧게 쓰므로 목표(화면 표시: 약 1,000·1,800·2,500자)보다 약간 높게 지시한다. 아주 긴 대화는 출력 토큰 상한에 JSON 이 잘리지 않게.
-  return style === 'saga' ? `아주 긴 대화는 한 응답을 3000~3400자로 씁니다 — narrative 단락 9~12개(각 2~4문장)와 대사(dialogue) 블록 10~14개. ${fill}`
-    : style === 'long' ? `긴 대화는 한 응답을 2200~2600자로 씁니다 — narrative 단락 7~9개(각 2~4문장)와 대사(dialogue) 블록 8~11개. ${fill}`
-    : `기본 대화는 한 응답을 1300~1600자로 씁니다 — narrative 단락 5~7개(각 2~4문장) 사이로 대사(dialogue) 블록이 6~8개 오가는 장면 하나. 이보다 짧게 끝내지 않습니다. ${fill}`
+  // 고친 뒤에도 모델은 지시의 약 50%를 쓴다(1300~1600자 지시 → 732자). 목표(화면 표시: 약 1,000·1,800·2,500자)의 두 배쯤을 지시한다. 아주 긴 대화는 출력 토큰 상한에 JSON 이 잘리지 않게 덜 올린다.
+  return style === 'saga' ? `아주 긴 대화는 한 응답을 4200~4800자로 씁니다 — narrative 단락 12~15개(각 2~4문장)와 대사(dialogue) 블록 14~18개. ${fill}`
+    : style === 'long' ? `긴 대화는 한 응답을 3400~3800자로 씁니다 — narrative 단락 10~12개(각 2~4문장)와 대사(dialogue) 블록 11~14개. ${fill}`
+    : `기본 대화는 한 응답을 2000~2400자로 씁니다 — narrative 단락 7~9개(각 2~4문장) 사이로 대사(dialogue) 블록이 8~10개 오가는 장면 하나. 이보다 짧게 끝내지 않습니다. ${fill}`
 }
 
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
