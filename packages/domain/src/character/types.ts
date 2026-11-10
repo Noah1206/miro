@@ -68,6 +68,8 @@ export type CharacterCore = {
     stats?: CharacterStat[]
     /** 엔딩(11/10) — 조건이 충족되면 결말 표식을 남긴다. */
     endings?: CharacterEnding[]
+    /** 다인 작품(11/11)의 함께 나오는 인물 — 이 카드가 주인공과 함께 연기한다. */
+    cast?: CastProfile[]
   }
 
   visualIdentityId: string | null
@@ -162,3 +164,9 @@ export type ContactProfile = {
 export type ContactChannel =
   | 'message' | 'push' | 'photo' | 'voice_message'
   | 'status' | 'missed_call' | 'voice_call' | 'video_call'
+
+/** 다인 작품(11/11) 인물 하나 — 만들기 화면에서 주인공 아래로 추가한 캐릭터. 성향 셋은 0~100(주인공과 같은 셈). */
+export type CastProfile = {
+  name: string; intro: string; age?: string; mbti?: string; nationality?: string; occupation?: string
+  jealousy: number; initiative: number; emotionalExpression: number
+}

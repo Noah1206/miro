@@ -23,7 +23,7 @@ export function restoreDraft(entries: Array<[string, string]>, type: 'chat' | 'r
   const p = parseCharacterForm(form, type)
   const c = p.character, r = p.initialRelationship, v = p.visual, contact = p.contact
   return {
-    name, title: c.tagline ?? '', personality, voiceId: p.voiceId ?? '', ensembleVoices: p.ensembleVoices, ensemblePhotos: p.ensemblePhotos, audience: c.audience,
+    name, title: c.tagline ?? '', personality, voiceId: p.voiceId ?? '', ensembleVoices: p.ensembleVoices, ensemblePhotos: p.ensemblePhotos, ensembleCast: p.ensembleCast, audience: c.audience,
     age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
     hobbies: c.hobbies, dislikes: c.dislikes, mood: p.world.genre?.split(' · ') ?? [],
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,

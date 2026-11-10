@@ -2,7 +2,7 @@ import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@mir
 import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, feature, productionRuntime } from '@miro/config'
-import { buildContext, ensembleNames, estimateTokens, LEGACY_STATE_CONTRACT, replyLengthRule, type SimulationSnapshot } from './context'
+import { buildContext, castNames, estimateTokens, LEGACY_STATE_CONTRACT, replyLengthRule, type SimulationSnapshot } from './context'
 import { AGENCY_DIALOGUE_RESPONSE_SCHEMA, SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
@@ -117,7 +117,7 @@ export async function runAgencyTurn(opts: {
 
   // ── 맥락 (§4 우선순위: 경계·설정 → 입력·승인된 결정 → 현재 장소/사건·목표 → 최근 대화 → 출처 있는 기억 → 보조) ──
   const evidence = new Set(view.context.evidence.map(e => e.id))
-  const own = new Set([snapshot.character.identity.name, ...ensembleNames(snapshot.character.personality.secret)])
+  const own = new Set([snapshot.character.identity.name, ...castNames(snapshot.character)])
   const evidenceMessages = snapshot.recentMessages.filter(m => m.id && evidence.has(m.id)).map(m => {
     const proof = view.context.evidence.find(e => e.id === m.id)!
     // Keep the character's own earlier gestures/inner voice for scene continuity, separately

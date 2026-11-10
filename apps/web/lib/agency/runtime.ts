@@ -5,7 +5,7 @@ import { and, eq, inArray, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, characterRevisions, characterRuntimeStates, characters, messages, roleplaySessions } from '@miro/db'
 import { POLICY, characterAgencyMode, productionRuntime } from '@miro/config'
 import { createAgencyState, lifeEvidence, localIso, type AgencyEvidence, type AgencyState } from '@miro/domain'
-import { AgencyCompilationError, compileAuthoredCharacter, ensembleNames, type SimulationSnapshot } from '@miro/engine'
+import { AgencyCompilationError, compileAuthoredCharacter, castNames, type SimulationSnapshot } from '@miro/engine'
 import { AIUnavailableError, type LLMProvider } from '@miro/providers'
 import { observe } from '@/lib/observe'
 import { recentLife } from './life'
@@ -119,7 +119,7 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
   const evidence: AgencyEvidence[] = []
   const actor = snapshot.character.id
   // 여러 인물 카드(11/6): 히로인 대사도 이 캐릭터의 말이다. 카드 이름 대사만 모으면 응답이 통째로 근거에서 빠져 최근 대화에서도 사라졌다.
-  const cast = new Set(ensembleNames(snapshot.character.personality.secret))
+  const cast = new Set(castNames(snapshot.character))
   // 최근 대화는 12개만 — 24개를 다 실으면 계획 입력이 7~8천 토큰이 됐다(9/29 실측). 11/10 대사 맥락이 30개로 늘어도 계획은 그대로 둔다.
   // 목표·믿음이 가리키는 옛 메시지(stored)는 따로 실린다.
   for (const message of [...snapshot.recentMessages.slice(-12), ...stored]) {

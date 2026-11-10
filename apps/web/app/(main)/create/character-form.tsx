@@ -2,7 +2,7 @@
 import { introDialogue, introScenes, sampleDialogue } from '@/lib/intro-dialogue'
 import { ContactSettings, RelationshipSettings } from './creation-settings'
 import type { ProfileStatus } from './profile-settings'
-import type { CharacterEnding, CharacterStat, RelationshipProfile } from '@miro/domain'
+import type { CastProfile, CharacterEnding, CharacterStat, RelationshipProfile } from '@miro/domain'
 import type { ContactCapabilities } from '@/lib/reality/channels'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -25,7 +25,7 @@ import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink, useToast } from '@/components/ui'
 import { TestChat } from './test-chat'
 import { VoiceList, type VoiceOption } from './voice-list'
-import { CastNames, CastVoices, castJson, castPhotosJson, type CastMember } from './cast-editor'
+import { CastProfiles, CastVoices, MBTI_TYPES, castJson, castPhotosJson, castProfilesJson, type CastMember } from './cast-editor'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
@@ -34,10 +34,6 @@ import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
-const MBTI_TYPES = [
-  'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
-  'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP',
-] as const
 export type FormInitial = {
   name: string; title: string; worldSetting: string; age: string; mbti: string; nationality: string; occupation: string
   personality: string; hobbies: string[]; dislikes: string[]; mood: string[]; jealousy: number; initiative: number; emotionalExpression: number
@@ -47,6 +43,7 @@ export type FormInitial = {
   /** 다인 작품(11/10) 등장인물별 목소리 { 이름: 목소리 id, '' = 자동 }. 비어 있으면 1:1. */
   ensembleVoices?: Record<string, string>
   ensemblePhotos?: Record<string, string>
+  ensembleCast?: CastProfile[]
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
@@ -167,7 +164,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [build] = useState<string>(i.build)
   const [voiceId, setVoiceId] = useState<string>(i.voiceId)
   // 작품 형식(11/10 사용자): 1:1 = 캐릭터 한 명, 다인 = 여러 인물이 나오고 인물마다 목소리를 고정한다.
-  const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ name, voice, ...(i.ensemblePhotos?.[name] ? { photo: i.ensemblePhotos[name] } : {}) })))
+  // 11/11 인물마다 사진·소개·성향·고급 설정까지(ensembleCast) — 예전 작품은 이름·목소리·사진만 있다.
+  const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ ...i.ensembleCast?.find(p => p.name === name), name, voice, ...(i.ensemblePhotos?.[name] ? { photo: i.ensemblePhotos[name] } : {}) })))
   const [castMode, setCastMode] = useState<'single' | 'multi'>(cast.length ? 'multi' : 'single')
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
@@ -245,8 +243,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [recLength, setRecLength] = useState<'short' | 'scene' | 'plus' | 'long' | 'saga'>(i.recommendedLength ?? 'scene')
   const [recThinking, setRecThinking] = useState<string>(i.recommendedThinking ?? 'low')
   const missing = useMemo(() => [
-    [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [!startingContext.trim(), msg('첫 장면')], [hashtagCount === 0, msg('해시태그')],
-  ].filter(([empty]) => empty).map(([, label]) => label as string), [name, personality, startingContext, hashtagCount])
+    [!name.trim(), msg('이름')], [!personality.trim(), msg('캐릭터 소개')], [castMode === 'multi' && cast.some(c => !c.name.trim() || !c.intro?.trim()), msg('추가한 캐릭터의 이름·소개')], [!startingContext.trim(), msg('첫 장면')], [hashtagCount === 0, msg('해시태그')],
+  ].filter(([empty]) => empty).map(([, label]) => label as string), [name, personality, startingContext, hashtagCount, castMode, cast])
   const canSubmit = missing.length === 0
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -316,13 +314,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
           <input type="hidden" name="audience" value={audience} />
-          <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 인물 이름을 적어 두면 목소리 탭에서 인물마다 목소리를 고정할 수 있어요. 인물 설정은 캐릭터 소개·세계관에 적어 주세요.')}>
+          <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 아래 캐릭터 칸 밑의 \'캐릭터 추가\'로 인물을 더하고, 목소리 탭에서 인물마다 목소리를 고정할 수 있어요.')}>
             <Card>
               <input type="hidden" name="ensembleVoices" value={castMode === 'multi' ? castJson(cast) : '{}'} />
               <input type="hidden" name="ensemblePhotos" value={castMode === 'multi' ? castPhotosJson(cast) : '{}'} />
-              <Segmented value={castMode} onChange={v => { setCastMode(v); if (v === 'multi' && !cast.length) setCast([{ name: '', voice: '' }]) }}
+              <input type="hidden" name="ensembleCast" value={castMode === 'multi' ? castProfilesJson(cast) : '[]'} />
+              <Segmented value={castMode} onChange={setCastMode}
                 options={[{ value: 'single', label: t('1:1'), hint: t('캐릭터 한 명') }, { value: 'multi', label: t('다인'), hint: t('여러 인물') }]} />
-              {castMode === 'multi' && <div style={{ marginTop: 'var(--space-4)' }}><CastNames cast={cast} onChange={setCast} /></div>}
             </Card>
           </Section>
           <Section title={t('공개')}>
@@ -368,6 +366,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </div>
             </Card>
           </Section>
+          {/* 11/11 다인: 주인공 칸 아래로 같은 모양의 캐릭터 칸을 버튼으로 하나씩 더한다. */}
+          {castMode === 'multi' && <CastProfiles cast={cast} onChange={setCast}
+            heading={(index, body) => <Section title={t('캐릭터 {n}', { n: index + 2 })}><IdentityCard>{body}</IdentityCard></Section>} />}
 
         </Panel>
 

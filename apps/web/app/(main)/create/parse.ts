@@ -1,3 +1,4 @@
+import type { CastProfile } from '@miro/domain'
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
 import { normalizeSituationImages } from '@/lib/situation-images'
 import { normalizeCustomScenes } from '@/lib/photo-scenes'
@@ -231,6 +232,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     ensembleVoices: parseEnsemble(s('ensembleVoices')),
     // 11/10 인물별 프로필 사진 — 우리 저장소에 올린 사진 URL 만.
     ensemblePhotos: Object.fromEntries(Object.entries(parseEnsemble(s('ensemblePhotos'), 500)).filter(([, v]) => isOwnImageUrl(v))),
+    // 11/11 인물별 설정 — 소개 1000자·20명까지, 성향은 0~100 정수.
+    ensembleCast: parseCast(s('ensembleCast')),
     startingTime,
     character, world, contact, visual, initialRelationship,
   }
@@ -291,6 +294,22 @@ function extraScenes(form: FormData) {
 }
 
 /** 다인 작품 등장인물 칸(JSON) → { 이름: 목소리 id }. 모양이 틀리면 빈 값(1:1). */
+export function parseCast(raw: string): CastProfile[] {
+  let o: unknown
+  try { o = JSON.parse(raw || '[]') } catch { return [] }
+  if (!Array.isArray(o)) return []
+  const str = (v: unknown, n: number) => typeof v === 'string' ? v.trim().slice(0, n) : ''
+  const pct = (v: unknown) => typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : 50
+  const seen = new Set<string>()
+  return o.slice(0, 20).flatMap((p: Record<string, unknown>) => {
+    const name = str(p?.name, 20)
+    if (!name || seen.has(name)) return []
+    seen.add(name)
+    return [{ name, intro: str(p.intro, 1000), age: str(p.age, 10), mbti: str(p.mbti, 4), nationality: str(p.nationality, 40), occupation: str(p.occupation, 60),
+      jealousy: pct(p.jealousy), initiative: pct(p.initiative), emotionalExpression: pct(p.emotionalExpression) }]
+  })
+}
+
 export function parseEnsemble(raw: string, max = 40): Record<string, string> {
   let o: unknown
   try { o = JSON.parse(raw || '{}') } catch { return {} }

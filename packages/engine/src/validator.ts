@@ -1,4 +1,4 @@
-import { ensembleNames } from './context'
+import { castNames } from './context'
 import { trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
 import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
@@ -76,7 +76,8 @@ function validateBlocks(
   issues: ValidationIssue[],
 ): SimulationProposal['rp']['blocks'] {
   // 대형 세계관 하렘(11/3): [여러 인물] 의 히로인도 말할 수 있다.
-  const cast = new Set(ensembleNames(s.character.personality.secret))
+  // 11/11 다인 작품의 함께 나오는 인물도.
+  const cast = new Set(castNames(s.character))
   const known = new Set([s.character.identity.name, ...s.activeNpcs.map((n) => n.name), ...cast])
   const allowed = allowedBlockTypes(s.mode ?? 'chat')
 

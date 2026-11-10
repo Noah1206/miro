@@ -2146,5 +2146,11 @@
  "매일 {daily}토큰 · {week}일 연속이면 {bonus}토큰 더": "{daily} tokens daily · {bonus} more for a {week}-day streak",
  "토큰이 부족해요. 오늘 출석 체크를 하면 {amount}토큰을 받아요.": "You're out of tokens. Check in today to get {amount} tokens.",
  "출석하러 가기": "Go check in",
- "주요 메뉴": "Main menu"
+ "주요 메뉴": "Main menu",
+ "다인은 여러 인물이 함께 나오는 작품이에요. 아래 캐릭터 칸 밑의 '캐릭터 추가'로 인물을 더하고, 목소리 탭에서 인물마다 목소리를 고정할 수 있어요.": "A multi-cast work features several characters. Add more with 'Add character' below the character section, and set a voice for each in the Voice tab.",
+ "이 인물의 성격·가치관·말투, 주인공·사용자와의 관계를 적어 주세요.": "Describe this character's personality, values, way of speaking, and relationship to the lead and the user.",
+ "이 캐릭터 삭제": "Delete this character",
+ "추가한 캐릭터의 이름·소개": "Name and intro of added characters",
+ "캐릭터 {n}": "Character {n}",
+ "캐릭터 추가": "Add character"
 }
