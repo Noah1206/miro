@@ -2145,5 +2145,6 @@
  "출석하지 못했어요. 다시 시도해 주세요.": "Couldn't check in. Please try again.",
  "매일 {daily}토큰 · {week}일 연속이면 {bonus}토큰 더": "{daily} tokens daily · {bonus} more for a {week}-day streak",
  "토큰이 부족해요. 오늘 출석 체크를 하면 {amount}토큰을 받아요.": "You're out of tokens. Check in today to get {amount} tokens.",
- "출석하러 가기": "Go check in"
+ "출석하러 가기": "Go check in",
+ "주요 메뉴": "Main menu"
 }
