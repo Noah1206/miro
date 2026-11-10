@@ -2134,5 +2134,14 @@
  "주소가 바뀌었거나 더 이상 볼 수 없는 페이지예요.": "The address may have changed, or this page is no longer available.",
  "캐릭터가 이 이야기에서 꼭 기억했으면 하는 설정을 적어 주세요. 매 답변에 반영돼요.": "Write down details you want the character to always remember in this story. They're reflected in every reply.",
  "페이지를 찾을 수 없어요": "Page not found",
- "홈으로": "Go home"
+ "홈으로": "Go home",
+ "출석 체크": "Daily check-in",
+ "{days}일 연속": "{days}-day streak",
+ "이번 주 출석 {n}/{week}일": "This week {n}/{week} days",
+ "출석 완료": "Checked in",
+ "출석하기": "Check in",
+ "{days}일 연속 출석! {amount}토큰을 받았어요": "{days}-day streak! You got {amount} tokens",
+ "{amount}토큰을 받았어요 · 오늘 자정까지 쓸 수 있어요": "You got {amount} tokens · use them by midnight",
+ "출석하지 못했어요. 다시 시도해 주세요.": "Couldn't check in. Please try again.",
+ "매일 {daily}토큰 · {week}일 연속이면 {bonus}토큰 더": "{daily} tokens daily · {bonus} more for a {week}-day streak"
 }

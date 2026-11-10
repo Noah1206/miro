@@ -7,7 +7,7 @@ import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
-import { characterAgencyMode, feature, tokensForCost, POLICY } from '@miro/config'
+import { characterAgencyMode, feature, tokensForCost, POLICY, MIN_TURN_BALANCE } from '@miro/config'
 import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
 import { looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
@@ -131,7 +131,8 @@ async function executeTurn(opts: {
     let reservation: Reservation | null = null
     const balance = await usageStatus(userId)
     const availableTokens = balance.remaining + balance.rechargeRemaining
-    if (availableTokens === 0 && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
+    // 11/10 사용자: 잔액이 500 미만이면 대화를 시작하지 않는다(하루 무료 1,500 은 자정에 다시 채워진다).
+    if (availableTokens < MIN_TURN_BALANCE && model.quote.maximumTokens > 0) return { ok: false, reason: 'usage', error: new UsageExceededError(balance.plan, balance.resetsAt ?? new Date()) }
     // A small positive balance may still fund a short actual turn. Reserve only the smaller ceiling.
     if (opts.tokenCeiling !== undefined && (!Number.isSafeInteger(opts.tokenCeiling) || opts.tokenCeiling < 0)) return { ok: false, reason: 'model_unavailable' }
     const maximumTokens = Math.min(model.quote.maximumTokens * thinkScale, availableTokens, opts.tokenCeiling ?? Infinity)

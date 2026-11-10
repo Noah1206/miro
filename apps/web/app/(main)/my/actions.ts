@@ -6,6 +6,7 @@ import { destroySession, requireUser } from '@/lib/auth'
 import { getPersona, parsePersona, savePersona } from '@/lib/persona'
 import { uploadCharacterImage } from '@/lib/storage/images'
 import { accountProfile, type AccountProfile } from '@/lib/account-profile'
+import { checkIn } from '@/lib/attendance'
 
 export type ProfileResult = { ok: true; profile: AccountProfile } | { ok: false; error: string } | null
 
@@ -44,4 +45,10 @@ export async function saveProfile(_: ProfileResult, form: FormData): Promise<Pro
 export async function logout(): Promise<void> {
   await destroySession()
   redirect('/home')
+}
+
+/** 11/10 출석 체크 — 프로필의 버튼. 하루 한 번 1,500, 7일 연속마다 1,500 추가. */
+export async function attend() {
+  const user = await requireUser()
+  return checkIn(user.id)
 }
