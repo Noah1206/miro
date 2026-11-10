@@ -26,6 +26,9 @@ const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'low', lab
 const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : 'high' } catch { return 'high' } }
 const subscribe = (on: () => void) => { window.addEventListener(THINKING_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(THINKING_EVENT, on); window.removeEventListener('storage', on) } }
 /** 11/10 생각 강도(effort) — 이 기기에서 고른 값. 입력창이 턴마다 싣고, 서버는 작품 권장값보다 이 값을 먼저 쓴다. */
+/** 사용자가 막대를 움직여 고른 값만 — 안 골랐으면 null(서버가 작품 권장값을 쓴다). 화면 표시용 기본값(high)과 구분한다. */
+const readChosen = (): Thinking | null => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : null } catch { return null } }
+export function useChosenThinking(): Thinking | null { return useSyncExternalStore(subscribe, readChosen, () => null) }
 export function useChatThinking(): [Thinking, (v: Thinking) => void] {
   const value = useSyncExternalStore(subscribe, readThinking, () => 'high' as Thinking)
   const set = (v: Thinking) => { try { localStorage.setItem(THINKING_KEY, v) } catch { /* 이번 화면에서만 */ } window.dispatchEvent(new Event(THINKING_EVENT)) }
