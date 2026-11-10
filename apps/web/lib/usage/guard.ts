@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
 import { db, rechargeGrants, rechargeLedger, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
 import { usagePolicy, productionRuntime, type Plan } from '@miro/config'
 import { costOf, decide, isEntitled, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
@@ -47,12 +47,13 @@ export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[
  * 호출부가 이미 사용자 advisory lock 을 쥐고 있고, 이 잠금이 그 안에서 한 번 더 막는다.
  * 확보한 총량이 need 에 못 미치면 부분 목록을 그대로 돌려준다 — 판단은 호출부가 한다.
  */
-async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date, paidOnly = false): Promise<{ grantId: string; amount: number }[]> {
+async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date, paidOnly = false, onlyProviders?: string[]): Promise<{ grantId: string; amount: number }[]> {
   const rows = await tx.select().from(rechargeGrants)
     .where(and(
       eq(rechargeGrants.userId, userId),
       eq(rechargeGrants.status, 'active'),
       paidOnly ? eq(rechargeGrants.source, 'purchase') : undefined,
+      onlyProviders ? inArray(rechargeGrants.provider, onlyProviders) : undefined,
       or(isNull(rechargeGrants.expiresAt), gt(rechargeGrants.expiresAt, now)),
       sql`${rechargeGrants.amount} - ${rechargeGrants.consumed} - ${rechargeGrants.refunded} > 0`,
     ))
@@ -93,6 +94,8 @@ export async function rechargeBalance(userId: string, now = new Date()): Promise
  */
 export async function reserve(opts: {
   userId: string; kind: UsageKind; units?: number; tokenAmount?: number; idempotencyKey: string; now?: Date; paidOnly?: boolean
+  /** 이 provider 의 충전 잔액에서만 뺀다(월간 제공량은 안 씀) — 출금 신청이 창작 보상 토큰만 빼도록. */
+  onlyProviders?: string[]
 }, existingTx?: UsageTransaction): Promise<Reservation> {
   const now = opts.now ?? new Date()
   const units = opts.units ?? 1
@@ -130,11 +133,12 @@ export async function reserve(opts: {
 
 
     // 월간 제공량을 먼저 쓰고, 모자란 만큼만 충전 잔액에서 가져온다.
-    const fromMonthly = opts.paidOnly ? 0 : Math.max(0, Math.min(cost, limit - win.consumed))
+    const restricted = opts.paidOnly || !!opts.onlyProviders
+    const fromMonthly = restricted ? 0 : Math.max(0, Math.min(cost, limit - win.consumed))
     const shortfall = cost - fromMonthly
-    const picked = shortfall > 0 ? await takeFromGrants(tx, opts.userId, shortfall, now, opts.paidOnly) : []
+    const picked = shortfall > 0 ? await takeFromGrants(tx, opts.userId, shortfall, now, opts.paidOnly, opts.onlyProviders) : []
     const fromGrants = picked.reduce((n, g) => n + g.amount, 0)
-    const covered = opts.paidOnly ? fromGrants === cost : decision.allowed || fromMonthly + fromGrants === cost
+    const covered = restricted ? fromGrants === cost : decision.allowed || fromMonthly + fromGrants === cost
 
     const continuity = opts.tokenAmount === undefined && !covered && ['textRP', 'complexEvent', 'majorEvent'].includes(opts.kind) && policy.continuity.enabled && win.continuityConsumed + cost <= policy.continuity.reserve
     if (!covered && !continuity) {

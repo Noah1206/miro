@@ -957,7 +957,7 @@ export const adminActions = pgTable('admin_actions', {
   action: text('action', {
     enum: ['start_review', 'hide_content', 'restrict_session', 'resolve_no_action', 'dismiss', 'reopen',
       'bank_order_approve', 'bank_order_reject',
-      'character_set_reality', 'character_set_chat'],
+      'character_set_reality', 'character_set_chat', 'payout_paid', 'payout_reject'],
   }).notNull(),
   previousStatus: text('previous_status'),
   newStatus: text('new_status'),
@@ -1518,3 +1518,27 @@ export const speechSynthesisUsage = pgTable('speech_synthesis_usage', {
   leaseToken:uuid('lease_token'),leaseUntil:timestamp('lease_until',{withTimezone:true}),
   createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),
 },t=>({user:index('speech_usage_user_idx').on(t.userKey,t.createdAt),daily:index('speech_usage_daily_idx').on(t.createdAt),active:index('speech_usage_active_idx').on(t.state).where(sql`${t.state} in ('running','uncertain')`)})).enableRLS()
+
+/**
+ * 11/11 창작 보상 출금 신청(3단계). 신청하는 순간 그만큼의 창작 보상 토큰을 지갑에서 빼고(ledgerId — 거절하면 되돌린다),
+ * 운영자가 직접 송금한 뒤 paid 로 표시한다. 금액은 신청 때의 환율·세율로 고정한다.
+ * 주민등록번호는 원천징수(지급명세서) 때문에 받으며 rrnSealed 에 암호화해서만 둔다(@miro/db sealPii).
+ */
+export const creatorPayouts = pgTable('creator_payouts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
+  tokens: integer('tokens').notNull(),
+  grossKRW: integer('gross_krw').notNull(),
+  taxKRW: integer('tax_krw').notNull(),
+  netKRW: integer('net_krw').notNull(),
+  realName: text('real_name').notNull(),
+  rrnSealed: text('rrn_sealed').notNull(),
+  bank: text('bank').notNull(),
+  accountNumber: text('account_number').notNull(),
+  ledgerId: uuid('ledger_id').notNull().references(() => usageLedger.id),
+  status: text('status', { enum: ['requested', 'paid', 'rejected'] }).notNull().default('requested'),
+  note: text('note').notNull().default(''),
+  decidedBy: uuid('decided_by').references(() => adminUsers.id),
+  decidedAt: timestamp('decided_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ userIdx: index('creator_payouts_user_idx').on(t.userId, t.createdAt) }))
