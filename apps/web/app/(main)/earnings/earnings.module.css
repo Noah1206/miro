@@ -1,0 +1,15 @@
+.header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.header h1 { font-size: 18px; margin: 0; }
+.card { display: flex; flex-direction: column; gap: 2px; padding: 20px; border-radius: var(--radius-lg); background: var(--color-surface-1); border: 1px solid var(--color-border); }
+.caption { font-size: 13px; color: var(--color-text-secondary); }
+.balance { font-size: 28px; font-weight: 750; letter-spacing: -0.02em; }
+.balance small { font-size: 16px; font-weight: 600; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; }
+.history { margin-top: 24px; }
+.history h2 { font-size: 15px; margin: 0 0 8px; }
+.history ul { list-style: none; margin: 0; padding: 0; }
+.history li { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
+.history li span { display: flex; flex-direction: column; gap: 2px; font-size: 15px; }
+.history li small { font-size: 12px; color: var(--color-text-secondary); }
+.history li strong { font-size: 15px; }
+.history li strong[data-sign='plus'] { color: var(--color-accent); }

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, type ReactNode } from 'react'
 import { motion } from 'motion/react'
-import { Button, Card, Notice, Sheet } from '@/components/ui'
+import { Button, ButtonLink, Card, Notice, Sheet } from '@/components/ui'
 import { readWalletHistory } from '@/app/(main)/recharge/wallet-actions'
 import { tween } from '@/lib/motion/tokens'
 import { COPY } from '@/lib/copy'
@@ -48,6 +48,16 @@ export function Wallet({ initial, children, showOrder = false }: { initial: Wall
         <p className={`t-caption ${styles.muted}`}>{t('남은 제공 토큰을 먼저 쓰고, 부족한 만큼 충전 토큰에서 사용해요. 입금이 확인되면 토큰이 지급돼요.')}</p>
         <ul className={styles.terms} data-refund-terms>{[COPY.refund.recharge, COPY.refund.failure, COPY.refund.how].map(line => <li key={line}>{t(line)}</li>)}</ul>
       </div>}
+    </Card>
+    {/* 11/11 수익 지갑 — 창작 보상·받은 응원은 여기 따로 쌓이고, 지갑으로 옮기거나 출금한다. */}
+    <Card style={{ padding: 'var(--space-4)' }} data-earnings={initial.earnings ?? 0}>
+      <div className={styles.balanceLine}>
+        <div><p className={`t-caption ${styles.muted}`}>{t('수익')}</p><p className="t-title-3">{(initial.earnings ?? 0).toLocaleString(locale)} <span className="t-body">{t('토큰')}</span></p></div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <ButtonLink href="/earnings/transfer" size="sm" variant="primary">{t('지갑으로 옮기기')}</ButtonLink>
+          <ButtonLink href="/earnings" size="sm">{t('자세히')}</ButtonLink>
+        </div>
+      </div>
     </Card>
     {value.monthlyRemaining > 0 && <div className={styles.balanceLine}>
       <span data-usage-remaining={value.monthlyRemaining}>{t('남은 제공 토큰 · {n}', { n: value.monthlyRemaining.toLocaleString(locale) })}</span>

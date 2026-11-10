@@ -17,6 +17,6 @@ export async function submitPayout(prev: PayoutState, form: FormData): Promise<P
     if (e instanceof PayoutError) return fail(e.message)
     throw e
   }
-  revalidatePath('/my/characters/payout')
+  revalidatePath('/earnings', 'layout')
   return { ok: true, error: null, requestId: crypto.randomUUID() }
 }

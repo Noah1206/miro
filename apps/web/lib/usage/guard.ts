@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, notInArray, or, sql } from 'drizzle-orm'
 import { db, rechargeGrants, rechargeLedger, subscriptions, usageLedger, usageWindows, users } from '@miro/db'
 import { usagePolicy, productionRuntime, type Plan } from '@miro/config'
 import { costOf, decide, isEntitled, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
@@ -47,13 +47,20 @@ export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[
  * 호출부가 이미 사용자 advisory lock 을 쥐고 있고, 이 잠금이 그 안에서 한 번 더 막는다.
  * 확보한 총량이 need 에 못 미치면 부분 목록을 그대로 돌려준다 — 판단은 호출부가 한다.
  */
+/**
+ * 11/11 수익 지갑 — 창작 보상(유료 몫)·받은 응원은 일반 지갑과 따로 쌓인다. 대화 등에 자동으로 쓰이지 않고,
+ * 크리에이터가 '지갑으로 옮기기'(단방향) 하거나 출금할 때만 빠진다(onlyProviders).
+ */
+export const EARNINGS_PROVIDERS = ['creator_reward', 'creator_cheer']
+const notEarnings = or(isNull(rechargeGrants.provider), notInArray(rechargeGrants.provider, EARNINGS_PROVIDERS))
+
 async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date, paidOnly = false, onlyProviders?: string[]): Promise<{ grantId: string; amount: number }[]> {
   const rows = await tx.select().from(rechargeGrants)
     .where(and(
       eq(rechargeGrants.userId, userId),
       eq(rechargeGrants.status, 'active'),
       paidOnly ? eq(rechargeGrants.source, 'purchase') : undefined,
-      onlyProviders ? inArray(rechargeGrants.provider, onlyProviders) : undefined,
+      onlyProviders ? inArray(rechargeGrants.provider, onlyProviders) : notEarnings,
       or(isNull(rechargeGrants.expiresAt), gt(rechargeGrants.expiresAt, now)),
       sql`${rechargeGrants.amount} - ${rechargeGrants.consumed} - ${rechargeGrants.refunded} > 0`,
     ))
@@ -79,7 +86,16 @@ export async function rechargeBalance(userId: string, now = new Date()): Promise
       eq(rechargeGrants.userId, userId),
       eq(rechargeGrants.status, 'active'),
       or(isNull(rechargeGrants.expiresAt), gt(rechargeGrants.expiresAt, now)),
+      notEarnings,
     ))
+  return row?.total ?? 0
+}
+
+/** 수익 지갑 잔액(토큰). */
+export async function earningsBalance(userId: string, tx: UsageTransaction | typeof db = db): Promise<number> {
+  const [row] = await tx.select({ total: sql<number>`coalesce(sum(${rechargeGrants.amount} - ${rechargeGrants.consumed} - ${rechargeGrants.refunded}), 0)::int` })
+    .from(rechargeGrants)
+    .where(and(eq(rechargeGrants.userId, userId), eq(rechargeGrants.status, 'active'), inArray(rechargeGrants.provider, EARNINGS_PROVIDERS)))
   return row?.total ?? 0
 }
 

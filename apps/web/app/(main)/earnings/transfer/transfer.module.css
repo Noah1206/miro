@@ -1,0 +1,38 @@
+/* 토스 이체 화면 — 위는 큰 금액, 아래는 키패드. 전체 화면 높이를 쓰고 하단은 고정. */
+.screen { display: flex; flex-direction: column; min-height: calc(100dvh - 120px); max-width: 480px; margin: 0 auto; padding: 0 16px; }
+.top { height: 48px; display: flex; align-items: center; }
+.backBtn { width: 40px; height: 40px; border: 0; background: none; color: var(--color-text-primary); font-size: 28px; line-height: 1; cursor: pointer; }
+.amountBody { flex: 1; padding-top: 32px; }
+.to { margin: 0 0 8px; font-size: 17px; font-weight: 600; color: var(--color-text-secondary); }
+.amount { margin: 0; font-size: 34px; font-weight: 750; letter-spacing: -0.02em; color: var(--color-text-primary); word-break: keep-all; }
+.placeholder { color: var(--color-text-tertiary, var(--color-text-secondary)); opacity: 0.55; }
+.maxChip { margin-top: 12px; padding: 6px 12px; border: 0; border-radius: 8px; background: var(--color-surface-1); color: var(--color-text-secondary); font: inherit; font-size: 14px; cursor: pointer; }
+.error { margin: 12px 0 0; font-size: 14px; color: var(--color-danger, #f04452); }
+.shake { color: var(--color-danger, #f04452); animation: shake 0.3s; }
+@keyframes shake { 25% { transform: translateX(-6px) } 75% { transform: translateX(6px) } }
+.bottom { position: sticky; bottom: 0; padding-bottom: max(12px, env(safe-area-inset-bottom)); background: var(--color-bg); }
+.quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px; }
+.quick button { height: 40px; border: 0; border-radius: 10px; background: var(--color-surface-1); color: var(--color-text-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.cta { margin-bottom: 8px; animation: rise 0.18s ease-out; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px) } }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); }
+.keypad button { height: 60px; border: 0; background: none; color: var(--color-text-primary); font: inherit; font-size: 24px; font-weight: 600; border-radius: 12px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.keypad button:active { background: var(--color-surface-1); transform: scale(0.96); }
+.confirmBody { flex: 1; padding-top: 24px; }
+.walletIcon { display: inline-flex; width: 56px; height: 56px; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-surface-1); }
+.confirmTitle { margin: 20px 0 28px; font-size: 26px; font-weight: 700; line-height: 1.4; letter-spacing: -0.02em; }
+.confirmTitle b { color: var(--color-accent); }
+.details { margin: 0; display: grid; gap: 14px; }
+.details div { display: flex; justify-content: space-between; font-size: 15px; }
+.details dt { color: var(--color-text-secondary); }
+.details dd { margin: 0; font-weight: 600; }
+.warn { margin: 24px 0 0; padding: 12px 14px; border-radius: 12px; background: var(--color-surface-1); font-size: 13px; line-height: 1.5; color: var(--color-text-secondary); }
+.footer { position: sticky; bottom: 0; padding: 12px 0 max(16px, env(safe-area-inset-bottom)); background: var(--color-bg); }
+.doneBody { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.check { width: 72px; height: 72px; border-radius: 50%; background: var(--color-accent); display: flex; align-items: center; justify-content: center; animation: pop 0.35s cubic-bezier(.2,1.4,.4,1); }
+.check svg { width: 44px; height: 44px; fill: none; stroke: var(--color-accent-on, #fff); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw 0.35s 0.2s forwards; }
+@keyframes pop { from { transform: scale(0.4); opacity: 0 } }
+@keyframes draw { to { stroke-dashoffset: 0 } }
+.doneTitle { margin: 24px 0 8px; font-size: 24px; font-weight: 700; line-height: 1.4; }
+.sub { margin: 0; color: var(--color-text-secondary); font-size: 15px; }
+@media (prefers-reduced-motion: reduce) { .check, .check svg, .shake, .cta { animation: none; stroke-dashoffset: 0; } }

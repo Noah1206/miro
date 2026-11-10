@@ -1,8 +1,7 @@
 import { desc, eq, sql } from 'drizzle-orm'
 import { creatorPayouts, db, rechargeGrants, sealPii } from '@miro/db'
 import { revisionEffective } from '@/lib/legal/revisions'
-import { commit, reserve, UsageExceededError, type UsageTransaction } from './guard'
-import { CHEER_PROVIDER, CREATOR_REWARD_PROVIDER, CREATOR_REWARD_RATE } from './creator-reward'
+import { commit, earningsBalance, EARNINGS_PROVIDERS, reserve, UsageExceededError } from './guard'
 
 /**
  * 창작 보상 3단계(11/11) — 받은 토큰을 현금으로 출금 신청. 운영자가 직접 송금한다(관리자 /payouts).
@@ -18,7 +17,6 @@ export const PAYOUT_MIN_KRW = 30_000
 /** 실명·계좌·주민등록번호 수집이 처리방침에 들어가는 날(revisions.ts, 30일 전 공지) — 그 전엔 신청을 받지 않는다. */
 export const PAYOUT_OPENS = '2026-12-11'
 export const payoutOpen = (now = new Date()) => revisionEffective('privacy', PAYOUT_OPENS, now)
-const CREATOR_PROVIDERS = [CREATOR_REWARD_PROVIDER, CHEER_PROVIDER]
 
 /** 사업소득 원천징수 3.3%(소득세 3% + 지방소득세 0.3%, 10원 미만 버림). 소득세가 1,000원 미만이면 소액부징수로 0. */
 export function payoutQuote(tokens: number) {
@@ -29,21 +27,8 @@ export function payoutQuote(tokens: number) {
   return { gross, incomeTax: income, localTax: local, net: gross - income - local }
 }
 
-/**
- * 지금 출금할 수 있는 토큰 = min(출금 대상으로 번 토큰 − 이미 신청한 토큰, 지갑에 남은 창작 보상 토큰).
- * ponytail: 매번 전체 기록을 다시 센다 — 크리에이터 기록이 수만 건이 되면 월별 집계 표로 바꾼다.
- */
-export async function withdrawableTokens(userId: string, tx: UsageTransaction | typeof db = db): Promise<{ earned: number; requested: number; left: number; withdrawable: number }> {
-  const [row] = await tx.execute<{ earned: number; requested: number; left: number }>(sql`select
-      (select coalesce(sum(case when g.provider = ${CHEER_PROVIDER} then g.amount
-          else least(g.amount, floor(coalesce((select sum(rl.amount) from recharge_ledger rl join recharge_grants pg on pg.id = rl.grant_id and pg.source = 'purchase'
-            where rl.ledger_id::text = split_part(g.external_ref, '|', 1)), 0) * ${CREATOR_REWARD_RATE})::int) end), 0)::int
-        from ${rechargeGrants} g where g.user_id = ${userId} and g.status = 'active' and g.provider in (${CREATOR_REWARD_PROVIDER}, ${CHEER_PROVIDER})) as earned,
-      (select coalesce(sum(tokens), 0)::int from ${creatorPayouts} where user_id = ${userId} and status in ('requested', 'paid')) as requested,
-      (select coalesce(sum(amount - consumed - refunded), 0)::int from ${rechargeGrants} where user_id = ${userId} and status = 'active' and provider in (${CREATOR_REWARD_PROVIDER}, ${CHEER_PROVIDER})) as left`)
-  const earned = row?.earned ?? 0, requested = row?.requested ?? 0, left = row?.left ?? 0
-  return { earned, requested, left, withdrawable: Math.max(0, Math.min(earned - requested, left)) }
-}
+/** 출금할 수 있는 토큰 = 수익 지갑 잔액(유료 몫 보상·받은 응원만 쌓이고, 옮기기·출금으로만 빠진다). */
+export const withdrawableTokens = (userId: string) => earningsBalance(userId)
 
 export class PayoutError extends Error {}
 
@@ -67,13 +52,10 @@ export async function requestPayout(opts: { userId: string; tokens: number; real
   const quote = payoutQuote(opts.tokens)
   await db.transaction(async tx => {
     // 같은 사람의 신청이 겹치면 출금 가능액을 두 번 쓰지 않게 사용자 단위로 잠근다(guard 의 잠금과 같은 키).
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${opts.userId}))`)
-    // 남은 창작 보상 토큰보다 많으면 reserve 가 거절한다.
-    const reservation = await reserve({ userId: opts.userId, kind: 'payout', tokenAmount: opts.tokens, onlyProviders: CREATOR_PROVIDERS, idempotencyKey: `payout:${opts.userId}:${opts.requestId}` }, tx)
+    // 수익 잔액보다 많으면 reserve 가 거절한다.
+    const reservation = await reserve({ userId: opts.userId, kind: 'payout', tokenAmount: opts.tokens, onlyProviders: EARNINGS_PROVIDERS, idempotencyKey: `payout:${opts.userId}:${opts.requestId}` }, tx)
       .catch(e => { throw e instanceof UsageExceededError ? new PayoutError('over_withdrawable') : e })
     if (reservation.reused) return
-    const w = await withdrawableTokens(opts.userId, tx)
-    if (opts.tokens > w.earned - w.requested) throw new PayoutError('over_withdrawable')
     await commit(reservation.reservationId, undefined, tx)
     await tx.insert(creatorPayouts).values({ userId: opts.userId, tokens: opts.tokens, grossKRW: quote.gross, incomeTaxKRW: quote.incomeTax, localTaxKRW: quote.localTax, netKRW: quote.net,
       realName, rrnSealed: sealed, bank, accountNumber, ledgerId: reservation.reservationId })
@@ -84,4 +66,31 @@ export async function myPayouts(userId: string) {
   return db.select({ id: creatorPayouts.id, tokens: creatorPayouts.tokens, netKRW: creatorPayouts.netKRW, status: creatorPayouts.status, note: creatorPayouts.note, createdAt: creatorPayouts.createdAt })
     .from(creatorPayouts).where(eq(creatorPayouts.userId, userId))
     .orderBy(desc(creatorPayouts.createdAt)).limit(20)
+}
+
+export const TRANSFER_PROVIDER = 'earnings_transfer'
+
+/** 수익 → 일반 지갑(단방향). 옮긴 토큰은 대화 등에 쓰이고 다시 수익·출금으로 돌아오지 않는다. 받은 쪽 기록 = (provider, 예약 id) 로 한 번만. */
+export async function transferToWallet(opts: { userId: string; amount: number; requestId: string }): Promise<void> {
+  if (!Number.isSafeInteger(opts.amount) || opts.amount <= 0) throw new PayoutError('invalid_amount')
+  if (!/^[0-9a-f-]{36}$/i.test(opts.requestId)) throw new PayoutError('invalid_request')
+  await db.transaction(async tx => {
+    const reservation = await reserve({ userId: opts.userId, kind: 'earnings_transfer', tokenAmount: opts.amount, onlyProviders: EARNINGS_PROVIDERS, idempotencyKey: `transfer:${opts.userId}:${opts.requestId}` }, tx)
+      .catch(e => { throw e instanceof UsageExceededError ? new PayoutError('over_withdrawable') : e })
+    if (reservation.reused) return
+    await commit(reservation.reservationId, undefined, tx)
+    await tx.insert(rechargeGrants).values({ userId: opts.userId, amount: opts.amount, source: 'grant', provider: TRANSFER_PROVIDER, externalRef: reservation.reservationId }).onConflictDoNothing()
+  })
+}
+
+/** 수익 지갑 내역 — 들어온 것(창작 보상·받은 응원)과 나간 것(지갑으로 옮김·출금 신청). */
+export async function earningsHistory(userId: string): Promise<Array<{ id: string; at: Date; label: string; amount: number }>> {
+  const rows = await db.execute<{ id: string; at: string; label: string; amount: number }>(sql`
+    select id::text, created_at::text as at, case provider when 'creator_cheer' then '받은 응원' else '창작 보상' end as label, (amount - refunded) as amount
+      from ${rechargeGrants} where user_id = ${userId} and status = 'active' and provider in ('creator_reward', 'creator_cheer')
+    union all
+    select id::text, created_at::text, case kind when 'payout' then '출금 신청' else '지갑으로 옮김' end, -amount
+      from usage_ledger where user_id = ${userId} and kind in ('payout', 'earnings_transfer') and status = 'committed'
+    order by at desc limit 30`)
+  return [...rows].map(r => ({ ...r, at: new Date(r.at) }))
 }

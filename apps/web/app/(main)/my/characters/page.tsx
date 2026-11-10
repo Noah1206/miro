@@ -59,7 +59,7 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
         <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
           <strong style={{ display: 'block', fontSize: 17 }}>{t('이번 달 {n}', { n: reward.month.toLocaleString('ko-KR') })}</strong>
           <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('누적 {n}', { n: reward.total.toLocaleString('ko-KR') })}</span>
-          <TransitionLink href="/my/characters/payout" className="t-caption" style={{ display: 'block', marginTop: 2, color: 'var(--color-accent)', fontWeight: 600 }}>{t('출금 신청')}</TransitionLink>
+          <TransitionLink href="/earnings" className="t-caption" style={{ display: 'block', marginTop: 2, color: 'var(--color-accent)', fontWeight: 600 }}>{t('수익 지갑')}</TransitionLink>
         </div>
       </section>
       {/* 11/11 작품별 이번 달 수익 — 대화 보상과 받은 응원을 나눠서. */}

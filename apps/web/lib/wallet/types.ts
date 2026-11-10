@@ -13,6 +13,8 @@ export type WalletSnapshot = {
   /** Server read identity/time keep cached route props from replacing a newer balance. */
   userId: string; observedAt: number
   rechargeRemaining: number; monthlyRemaining: number; available: number
+  /** 수익 지갑(창작 보상·응원) — available 에 들어가지 않는다. 화면용이라 없을 수 있다(잔액 새로고침 응답). */
+  earnings?: number
   plan: 'free' | 'pro'; resetsAt: string | null
   account: BankAccount | null; products: RechargeProduct[]
   order: WalletOrder | null; history: WalletHistory

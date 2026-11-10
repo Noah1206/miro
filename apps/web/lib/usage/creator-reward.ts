@@ -1,14 +1,17 @@
 import { and, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
-import { characters, db, rechargeGrants, usageLedger, users } from '@miro/db'
+import { characters, db, rechargeGrants, rechargeLedger, usageLedger, users } from '@miro/db'
 import { commit, reserve, type UsageTransaction } from './guard'
 
 /**
  * 창작 보상 1단계(11/11) — 다른 사람이 내 캐릭터와 대화하며 실제로 쓴 토큰의 일부를 만든 사람 지갑에 미로 토큰으로 적립한다(현금 아님).
  * 공식 캐릭터·자기 캐릭터와의 대화는 빼고, 턴 차감이 취소되면(리롤·실패) 같이 회수한다. 지급은 (provider, 예약 id) UNIQUE 로 한 번만.
- * ponytail: 여러 계정으로 자기 작품을 돌리는 어뷰징은 막지 않는다 — 앱 안 토큰이라 피해가 작다. 현금 정산(3단계) 전에는 계정·기기 기준 상한을 둔다.
+ * 어뷰징은 가입 3일 미만·게스트 제외와 하루 상한으로 막는다. 유료 토큰으로 낸 몫의 보상만 수익(출금 가능)에 쌓인다.
  */
 export const CREATOR_REWARD_RATE = 0.1
 export const CREATOR_REWARD_PROVIDER = 'creator_reward'
+/** 무료 토큰(월간 제공·출석·가입 선물)으로 한 대화의 보상 — 출금이 안 되니 수익이 아니라 일반 지갑으로 바로 들어간다. */
+export const CREATOR_REWARD_FREE_PROVIDER = 'creator_reward_free'
+const REWARD_PROVIDERS = [CREATOR_REWARD_PROVIDER, CREATOR_REWARD_FREE_PROVIDER]
 /** 11/11 어뷰징 막기 — 한 사람이 같은 크리에이터에게 하루(한국 시간)에 만들어 줄 수 있는 대화 보상 상한, 보상에서 빼는 새 계정 기간. */
 export const REWARD_DAILY_CAP_PER_PAYER = 300
 export const REWARD_NEW_ACCOUNT_DAYS = 3
@@ -32,17 +35,24 @@ export async function accrueCreatorReward(tx: UsageTransaction, opts: { reservat
   // 한 사람 → 같은 크리에이터 하루 상한. 보낸 사람(예약의 주인)은 기록의 예약 id 로 찾는다.
   const [today] = await tx.execute<{ sum: number }>(sql`select coalesce(sum(g.amount), 0)::int as sum from ${rechargeGrants} g
     join ${usageLedger} l on l.id::text = split_part(g.external_ref, '|', 1)
-    where g.user_id = ${c.ownerId} and g.provider = ${CREATOR_REWARD_PROVIDER} and g.status = 'active' and l.user_id = ${opts.payerId} and g.created_at >= ${KST_DAY_START}`)
+    where g.user_id = ${c.ownerId} and g.provider in (${CREATOR_REWARD_PROVIDER}, ${CREATOR_REWARD_FREE_PROVIDER}) and g.status = 'active' and l.user_id = ${opts.payerId} and g.created_at >= ${KST_DAY_START}`)
   const amount = Math.min(Math.floor(l.amount * CREATOR_REWARD_RATE), REWARD_DAILY_CAP_PER_PAYER - (today?.sum ?? 0))
   if (amount <= 0) return
-  await tx.insert(rechargeGrants).values({ userId: c.ownerId, amount, source: 'grant', provider: CREATOR_REWARD_PROVIDER, externalRef: refOf(opts.reservationId, opts.characterId) })
-    .onConflictDoNothing()
+  // 이 턴에서 충전 토큰으로 낸 몫의 10% 까지만 수익(출금 가능), 나머지는 일반 지갑.
+  const [paid] = await tx.select({ n: sql<number>`coalesce(sum(${rechargeLedger.amount}), 0)::int` }).from(rechargeLedger)
+    .innerJoin(rechargeGrants, and(eq(rechargeGrants.id, rechargeLedger.grantId), eq(rechargeGrants.source, 'purchase')))
+    .where(eq(rechargeLedger.ledgerId, opts.reservationId))
+  const earned = Math.min(amount, Math.floor((paid?.n ?? 0) * CREATOR_REWARD_RATE))
+  const ref = refOf(opts.reservationId, opts.characterId)
+  for (const [provider, n] of [[CREATOR_REWARD_PROVIDER, earned], [CREATOR_REWARD_FREE_PROVIDER, amount - earned]] as const) {
+    if (n > 0) await tx.insert(rechargeGrants).values({ userId: c.ownerId, amount: n, source: 'grant', provider, externalRef: ref }).onConflictDoNothing()
+  }
 }
 
 /** 턴 차감이 취소되면 그 턴의 창작 보상도 회수한다. */
 export async function revokeCreatorReward(tx: UsageTransaction, reservationId: string): Promise<void> {
   await tx.update(rechargeGrants).set({ status: 'revoked' })
-    .where(and(eq(rechargeGrants.provider, CREATOR_REWARD_PROVIDER), or(eq(rechargeGrants.externalRef, reservationId), like(rechargeGrants.externalRef, `${reservationId}|%`))))
+    .where(and(inArray(rechargeGrants.provider, REWARD_PROVIDERS), or(eq(rechargeGrants.externalRef, reservationId), like(rechargeGrants.externalRef, `${reservationId}|%`))))
 }
 
 /** 내 캐릭터 화면의 창작 보상 요약 — 이번 달(한국 시간)·누적. */
@@ -52,7 +62,7 @@ export async function creatorRewardSummary(userId: string): Promise<{ month: num
     total: sql<number>`coalesce(sum(${rechargeGrants.amount}), 0)::int`,
     month: sql<number>`coalesce(sum(${rechargeGrants.amount}) filter (where ${rechargeGrants.createdAt} >= ${monthStart}), 0)::int`,
   }).from(rechargeGrants)
-    .where(and(eq(rechargeGrants.userId, userId), inArray(rechargeGrants.provider, [CREATOR_REWARD_PROVIDER, CHEER_PROVIDER]), eq(rechargeGrants.status, 'active'), gte(rechargeGrants.amount, 1)))
+    .where(and(eq(rechargeGrants.userId, userId), inArray(rechargeGrants.provider, [...REWARD_PROVIDERS, CHEER_PROVIDER]), eq(rechargeGrants.status, 'active'), gte(rechargeGrants.amount, 1)))
   return { month: row?.month ?? 0, total: row?.total ?? 0 }
 }
 
@@ -83,9 +93,9 @@ export async function sendCheer(opts: { userId: string; characterId: string; amo
 export async function creatorRewardByCharacter(userId: string): Promise<Map<string, { reward: number; cheer: number }>> {
   const monthStart = sql`date_trunc('month', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul'`
   const rows = await db.execute<{ character: string; reward: number; cheer: number }>(sql`select split_part(external_ref, '|', 2) as character,
-      coalesce(sum(amount) filter (where provider = ${CREATOR_REWARD_PROVIDER}), 0)::int as reward,
+      coalesce(sum(amount) filter (where provider <> ${CHEER_PROVIDER}), 0)::int as reward,
       coalesce(sum(amount) filter (where provider = ${CHEER_PROVIDER}), 0)::int as cheer
-    from ${rechargeGrants} where user_id = ${userId} and status = 'active' and provider in (${CREATOR_REWARD_PROVIDER}, ${CHEER_PROVIDER})
+    from ${rechargeGrants} where user_id = ${userId} and status = 'active' and provider in (${CREATOR_REWARD_PROVIDER}, ${CREATOR_REWARD_FREE_PROVIDER}, ${CHEER_PROVIDER})
       and created_at >= ${monthStart} and external_ref like '%|%'
     group by 1`)
   return new Map([...rows].map(r => [r.character, { reward: r.reward, cheer: r.cheer }]))

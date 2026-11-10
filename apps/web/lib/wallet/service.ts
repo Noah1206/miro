@@ -1,7 +1,7 @@
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { bankTransferOrders, db, rechargeGrants, usageLedger } from '@miro/db'
 import { bankAccount, rechargeCatalog } from '@miro/config'
-import { usageStatus } from '@/lib/usage/guard'
+import { earningsBalance, usageStatus } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
 import type { WalletEntry, WalletHistory, WalletOrder, WalletSnapshot } from './types'
 
@@ -27,17 +27,18 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
         case when ${usageLedger.continuity} then '대화 이어가기 제공량'
           else coalesce((select a.model || ' · ' from ai_usage a where 'turn:' || a.request_id::text = ${usageLedger.idempotencyKey} and a.task = 'dialogue' and a.ok = true order by a.created_at desc limit 1), '') || '충전 토큰 ' || ${usageLedger.fromGrants}::text || ' · 제공 토큰 ' || (${usageLedger.amount} - ${usageLedger.fromGrants})::text end as detail,
         case ${usageLedger.status} when 'committed' then '사용 완료' when 'reserved' then '사용 중' else '차감 취소' end as status
-      from ${usageLedger} where ${usageLedger.userId} = ${userId}
+      -- 수익 지갑에서 빠진 것(옮기기·출금)은 일반 지갑 내역이 아니다 — 옮기기는 받은 쪽(+)으로 보인다.
+      from ${usageLedger} where ${usageLedger.userId} = ${userId} and ${usageLedger.kind} not in ('payout', 'earnings_transfer')
       union all
       select 'grant:' || ${rechargeGrants.id}::text, ${rechargeGrants.createdAt},
-        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' when ${rechargeGrants.provider} = 'creator_reward' then '창작 보상' when ${rechargeGrants.provider} = 'creator_cheer' then '받은 응원' else '토큰 지급' end,
+        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' when ${rechargeGrants.provider} = 'creator_reward_free' then '창작 보상' when ${rechargeGrants.provider} = 'earnings_transfer' then '수익에서 옮김' else '토큰 지급' end,
         ${rechargeGrants.amount} - ${rechargeGrants.refunded},
         case when ${rechargeGrants.refunded} > 0 then '회수 ' || ${rechargeGrants.refunded}::text
           when ${rechargeGrants.expiresAt} is not null then to_char(${rechargeGrants.expiresAt} at time zone 'Asia/Seoul', 'YYYY.MM.DD') || '까지'
           else '월초에 초기화되지 않아요' end,
         case when ${rechargeGrants.status} = 'revoked' then '환불됨'
           when ${rechargeGrants.expiresAt} <= now() then '기한 지남' else '지급 완료' end
-      from ${rechargeGrants} where ${rechargeGrants.userId} = ${userId}
+      from ${rechargeGrants} where ${rechargeGrants.userId} = ${userId} and ${rechargeGrants.provider} is distinct from 'creator_reward' and ${rechargeGrants.provider} is distinct from 'creator_cheer'
       union all
       select 'order:' || ${bankTransferOrders.id}::text, ${bankTransferOrders.createdAt},
         case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '토큰 충전 주문' end,
@@ -64,12 +65,13 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
 
 export async function walletSnapshot(userId: string, orderId?: string): Promise<WalletSnapshot> {
   const observedAt = Date.now()
-  const [usage, history, orders] = await Promise.all([
+  const [usage, history, orders, earnings] = await Promise.all([
     usageStatus(userId), walletHistory(userId, undefined, 5),
     db.select().from(bankTransferOrders).where(and(eq(bankTransferOrders.userId, userId), orderId
       ? eq(bankTransferOrders.id, orderId)
       : or(eq(bankTransferOrders.status, 'awaiting'), and(eq(bankTransferOrders.status, 'approved'), isNull(bankTransferOrders.settledAt)))))
       .orderBy(desc(bankTransferOrders.createdAt)).limit(1),
+    earningsBalance(userId),
   ])
   let account: WalletSnapshot['account'] = null
   let products: WalletSnapshot['products'] = []
@@ -87,5 +89,5 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
   } : null
   return { userId, observedAt, rechargeRemaining: usage.rechargeRemaining, monthlyRemaining: usage.remaining,
     available: usage.remaining + usage.rechargeRemaining, resetsAt: usage.resetsAt?.toISOString() ?? null,
-    plan: usage.plan, account, products, order, history }
+    plan: usage.plan, account, products, order, history, earnings }
 }
