@@ -54,6 +54,8 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
   // 11/9 웹소설: 처음 결말 표식이 실린 답 뒤에 결말 카드. 표식 줄 자체는 말풍선에서 뺀다.
   const endingId = displayed.find(m => m.role !== 'user' && endingTitle(m.blocks))?.id
+  // 11/10 상태창 — 가장 최근 상태창만 펼쳐 두고 지난 것은 접는다.
+  const lastStatusId = [...displayed].reverse().find(m => m.role === 'character' && m.blocks.some(b => b.type === 'status'))?.id
   const end = useRef<HTMLDivElement>(null)
   const log = useRef<HTMLDivElement>(null)
   const following = useRef(true)
@@ -152,6 +154,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
+            {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open={m.id === lastStatusId} />}
             {sessionId && m.id === endingId && <aside className={styles.endingCard}>
               <strong>ENDING · {endingTitle(m.blocks)}</strong>
               <ButtonLink href={`/chat/${sessionId}/novel`} variant="primary" size="sm">{t('웹소설로 받기')}</ButtonLink>
@@ -322,4 +325,19 @@ function Reportable({ id, kind, children }: { id: string; kind: 'message' | 'pho
       </Popover>
     </div>
   )
+}
+
+/** 11/10 상태창 카드(크랙 INFO 블록) — 저장된 답의 status 블록을 접히는 카드로. 형식·스탯이 없는 작품엔 블록이 없어 아무것도 안 그린다. */
+function StatusCard({ blocks, open }: { blocks: Array<Record<string, unknown>>; open: boolean }) {
+  const t = useT()
+  const b = blocks.find(x => x.type === 'status')
+  if (!b) return null
+  const text = typeof b.text === 'string' ? b.text.trim() : ''
+  const stats = b.stats && typeof b.stats === 'object' ? Object.entries(b.stats as Record<string, number>) : []
+  if (!text && !stats.length) return null
+  return <details className={styles.statusCard} open={open}>
+    <summary>{t('상태창')}</summary>
+    {text ? <pre className={styles.statusText}>{text}</pre>
+      : <ul className={styles.statusStats}>{stats.map(([k, v]) => <li key={k}><span>{k}</span><b>{v}</b></li>)}</ul>}
+  </details>
 }

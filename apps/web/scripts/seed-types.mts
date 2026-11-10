@@ -26,6 +26,10 @@ export type Seed = {
   userNickname: string
   /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸 안내. */
   personaGuide?: string
+  /** 11/10 상태창 형식(크랙 INFO 블록) — 매 답변 끝에 채워 붙인다 */
+  statusFormat?: string
+  /** 11/10 스탯 최대 7개 */
+  stats?: Array<{ name: string; min: number; max: number; default: number; unit?: string; description: string }>
   /** 언베일 썸네일(11/4) — 대표·갤러리 사진 노출이 커서 언베일을 안 켠 사람에겐 흐리게. */
   coverUnveil?: true
   /** 카드 목소리(official_voices.id, 11/4). 없으면 운영 DB 의 값을 건드리지 않는다. */

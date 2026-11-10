@@ -48,6 +48,8 @@ export type SimulationSnapshot = {
   experienceType?: 'chat' | 'reality'
   /** 턴마다 변하는 캐릭터 상태. 없으면 기본(neutral). runTurn 이 이번 턴 값을 채워 넣는다. */
   characterState?: CharacterState
+  /** 11/10 이 방의 지금 스탯 값(character.worldRole.stats 가 있을 때). */
+  statValues?: Record<string, number>
   /** 이번 사용자 입력에서 코드가 분류한 의미 이벤트. */
   semanticEvents?: SemanticEvent[]
   /** 기억 검색의 질의. 이번 사용자 입력. */
@@ -276,6 +278,21 @@ export function ensembleNames(secret: string | null | undefined): string[] {
     .map(line => /^[\s\-•*·\d.)]*([가-힣A-Za-z]{1,12})/.exec(line)?.[1] ?? '').filter(name => name.length >= 2))].slice(0, 12)
 }
 
+/**
+ * 11/10 상태창·스탯(크랙 INFO 블록) — 작품이 형식·스탯을 정했을 때만. 상태창은 rp.blocks 가 아니라 최상위 status 칸에,
+ * 스탯 새 값은 statValues 칸에 낸다. 서버가 범위로 자르고 상태 블록으로 저장한다(말풍선·대화 기록에는 안 나온다).
+ */
+function statusRules(c: SimulationSnapshot['character']): string[] {
+  const format = c.worldRole.statusFormat?.trim(), stats = c.worldRole.stats ?? []
+  if (!format && !stats.length) return []
+  return [
+    '', '## 상태창·스탯',
+    format ? `- 매 응답마다 최상위 status 칸에 아래 형식을 이번 장면 기준으로 빠짐없이 채워 씁니다. 줄 구조·기호·순서는 형식 그대로, 값만 바꿉니다. 대괄호 안의 안내문은 실제 값으로 바꿉니다. 상태창 내용을 rp.blocks 본문에 다시 쓰지 않습니다.\n형식:\n${format}` : null,
+    stats.length ? `- 스탯: 이번 장면에서 실제로 일어난 일만큼만 바꾸고, 최상위 statValues 칸에 { 스탯 이름: 새 값 } 으로 모든 스탯의 새 값을 냅니다(안 바뀐 스탯은 지금 값 그대로). 한 턴에 크게 튀지 않게 합니다.\n${stats.map(st => `  · ${st.name} (${st.min}~${st.max}${st.unit ?? ''}, 기본 ${st.default}): ${st.description}`).join('\n')}` : null,
+    stats.length && format ? '- 상태창에 스탯을 쓸 때는 statValues 에 낸 새 값과 같은 숫자를 씁니다.' : null,
+  ].filter((l): l is string => l !== null)
+}
+
 function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 'scene'): string {
   const c = s.character
   return [
@@ -335,6 +352,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
       '- 관계 변화는 Miro Core 규칙이 결정합니다. relationshipDelta는 null로 반환합니다.',
       '- 사건은 지금 상황에서 자연스러울 때만 제안합니다. 매 턴 사건을 만들지 않습니다.',
       '- 기억은 관계에 실제로 중요한 것만 남깁니다.',
+      ...statusRules(c),
       '',
       '반드시 지정된 JSON 스키마에 맞는 객체만 반환합니다.',
     ]),
@@ -410,6 +428,8 @@ function buildPrompt(
   if (s.clock) parts.push(`현실 시각(사용자 기준, ${s.clock.timeZone}): ${s.clock.label} · ${s.clock.period}. ${calendar ? '실제 문자·알림의 시각입니다. 장면의 날짜는 위의 세계관 날짜를 따릅니다.' : '세계의 하루도 이 때를 따릅니다.'}`)
   parts.push('시간의 연속성: 메시지의 기록 날짜와 장면 속 시각은 구분합니다. 자정이 지나지 않았는데 내일을 오늘로, 오늘 일을 어제로 바꾸지 않습니다. 날짜가 불명확하면 특정 날짜·완료를 단정하지 않습니다. 연락하겠다는 말은 약속이며 실제 발송·상대의 답과 구분합니다. 늦은 약속을 이미 지켰다고 쓰거나, 미래 연습·발표가 끝났다고 지어내지 않습니다.')
   if (s.routine) parts.push(`캐릭터의 생활 리듬: ${s.routine}`)
+  const stats = s.character.worldRole.stats ?? []
+  if (stats.length && !spoken) parts.push('', '## 지금 스탯 값 (이 방)', ...stats.map(st => `- ${st.name}: ${s.statValues?.[st.name] ?? st.default}${st.unit ?? ''}`))
   if (s.recentCalls?.length) {
     parts.push('', '## 최근 통화 (캐릭터가 아는 사실)')
     for (const line of s.recentCalls) parts.push(`- ${line}`)

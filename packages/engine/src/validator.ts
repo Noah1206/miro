@@ -1,7 +1,7 @@
 import { ensembleNames } from './context'
 import { trimPenalizedSentences } from './conversation-repetition'
 import { POLICY } from '@miro/config'
-import { allowedBlockTypes, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
+import { allowedBlockTypes, clampStatValues, validateNpcKnowledge, selectEvent, filterSalient } from '@miro/domain'
 import type { RelationshipDelta, EventCandidate, MemoryCandidate, Npc, RealityIntent, SimulationEvent } from '@miro/domain'
 import type { SimulationProposal } from './proposal.schema'
 import type { SimulationSnapshot } from './context'
@@ -25,6 +25,10 @@ export type ValidatedTransition = {
   realityIntent: RealityIntent | null
   emotion: SimulationProposal['emotion']
   intent: SimulationProposal['intent']
+  /** 11/10 상태창 글(작품에 형식이 있을 때만) */
+  status?: string | null
+  /** 11/10 범위로 자른 이번 턴 뒤 스탯 값(작품에 스탯이 있을 때만) */
+  statValues?: Record<string, number> | null
   issues: ValidationIssue[]
 }
 
@@ -54,6 +58,8 @@ export function validateProposal(
     realityIntent: proposal.realityIntent,
     emotion: proposal.emotion,
     intent: proposal.intent,
+    status: snapshot.character.worldRole.statusFormat?.trim() && proposal.status?.trim() ? proposal.status.trim() : null,
+    statValues: snapshot.character.worldRole.stats?.length ? clampStatValues(snapshot.character.worldRole.stats, snapshot.statValues ?? {}, proposal.statValues) : null,
     issues,
   }
 }

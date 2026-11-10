@@ -24,6 +24,7 @@ export function characterContext(
     worldRole: {
       socialPosition: c.socialPosition, startingContext: ai?.startingContext ?? officialStartingContext(c),
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore,
+      ...(c.statusFormat ? { statusFormat: c.statusFormat } : {}), ...(c.stats.length ? { stats: c.stats } : {}),
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,
     ...(visual ? { appearance: {

@@ -6,6 +6,20 @@ import type { LoreEntry } from './lore'
 import type { BondingCurve } from '../relationship/dynamics'
 import type { RelationshipProfile } from '../relationship/profile'
 
+/** 스탯 하나(11/10, 크랙 스탯 설정) — 범위 안에서만 움직인다. description 은 AI 가 언제 얼마나 바꿀지 판단하는 설명. */
+export type CharacterStat = { name: string; min: number; max: number; default: number; unit?: string; description: string }
+
+/** AI 가 낸 새 스탯 값을 정의된 스탯·범위로 자른다. 모르는 이름·숫자 아닌 값은 버린다. */
+export function clampStatValues(stats: CharacterStat[], current: Record<string, number>, proposed: Record<string, unknown> | undefined): Record<string, number> {
+  const out: Record<string, number> = {}
+  for (const s of stats) {
+    const raw = proposed?.[s.name]
+    const v = typeof raw === 'number' && Number.isFinite(raw) ? raw : (current[s.name] ?? s.default)
+    out[s.name] = Math.min(s.max, Math.max(s.min, Math.round(v)))
+  }
+  return out
+}
+
 export type CharacterCore = {
   id: string
   ownerId: string | null // null = 공식 캐릭터
@@ -45,6 +59,10 @@ export type CharacterCore = {
     sampleDialogue?: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
     /** 로어북 — 매 턴이 아니라 유저 입력이 키워드를 건드린 턴에만 실린다. */
     lore?: LoreEntry[]
+    /** 상태창 형식(11/10) — 매 답변 끝에 이 틀을 채워 붙인다. 없으면 상태창 없음. */
+    statusFormat?: string
+    /** 스탯(11/10) — 대화방마다 값이 움직이는 수치. */
+    stats?: CharacterStat[]
   }
 
   visualIdentityId: string | null

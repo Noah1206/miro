@@ -166,6 +166,7 @@ export async function loadSession(
     experienceType: c.experienceType,
     contactBoundary: row.session.contactBoundary,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
+    statValues: row.session.statValues,
     clock: localClock(now, timeZone),
     routine: availability ? describeRoutine(availability.routine, availability) : null,
     life: lifeLines(life, timeZone),

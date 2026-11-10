@@ -260,7 +260,7 @@ async function executeTurn(opts: {
       const committed = await measured('chat.commit', () => commitTurn({
         reservationId: reservation?.reservationId ?? null, actualTokens, moments, requestId: opts.requestId, requestResult: outcome,
         sessionId, characterId: loaded.characterId, turnIndex,
-        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: transition.blocks, transition, sceneMarker, channel: 'scene', situationImage,
+        userInput: input, userMessageId, explicit: loaded.adult.turn, responseText, blocks: withStatus(transition.blocks, transition.status ?? null, transition.statValues ?? null) as typeof transition.blocks, transition, sceneMarker, channel: 'scene', situationImage,
         // 리롤(10/27) — 이 턴은 다시 받을 수 있다. 다시 보낼 때 같은 명령어를 붙인다.
         undo: { command: opts.command ?? null, commandId: opts.commandId ?? null },
         ...(agency?.mode === 'live' && result.agency ? { agency: { version: agency.version, plan: result.agency.plan } } : {}),
@@ -269,6 +269,7 @@ async function executeTurn(opts: {
         currentRelationship: loaded.snapshot.relationship,
         existingMemories: loaded.snapshot.memories,
         characterState: result.characterState,
+        ...(transition.statValues ? { statValues: transition.statValues } : {}),
         ledger: { policy: result.policy, records: result.records },
         // continuity 턴도 기억은 남긴다 — 후처리는 배경 작업이라 사용자 예산을 더 쓰지 않는다.
         ...(result.policy.memory === 'deferred' ? { memoryJobs: { userId, auxiliary: result.policy.generation.auxiliary } } : {}),
@@ -350,4 +351,13 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
     await failRequest(request.requestId)
     return { ok: false, reason: 'generation' }
   }
+}
+
+/**
+ * 11/10 상태창 — 저장할 블록 끝에 상태 블록을 붙인다. 말풍선(reply-segments)·대화 기록(character-context)은 이 종류를 걸러 내고,
+ * 대화 화면이 접히는 카드로 따로 그린다. 스트리밍 중엔 안 보이고 저장된 메시지가 오면 나타난다.
+ */
+function withStatus<T extends Record<string, unknown>>(blocks: T[], status: string | null, stats: Record<string, number> | null): Array<T | { type: 'status'; text: string; stats?: Record<string, number> }> {
+  if (!status && !stats) return blocks
+  return [...blocks, { type: 'status' as const, text: status ?? '', ...(stats ? { stats } : {}) }]
 }

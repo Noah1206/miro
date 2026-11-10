@@ -590,3 +590,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/9 결말 카드 — 결말 표식이 실린 답 바로 뒤. */
 .endingCard { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 2px; padding:12px 14px; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface-1); }
 .endingCard strong { min-width:0; font-size:13px; letter-spacing:.04em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 11/10 상태창 카드 — 크랙 INFO 블록처럼 답 아래 접히는 카드. 형식 글의 줄·기호를 그대로 보이게 pre. */
+.statusCard { margin:8px 0 2px; border:1px solid var(--color-border); border-radius:var(--radius-md); background:var(--color-surface-1); overflow:hidden; }
+.statusCard summary { cursor:pointer; padding:8px 12px; font-size:12px; letter-spacing:.06em; color:var(--color-text-secondary, inherit); list-style:none; user-select:none; }
+.statusCard summary::-webkit-details-marker { display:none; }
+.statusCard summary::before { content:'▸'; display:inline-block; margin-right:6px; transition:transform .15s; }
+.statusCard[open] summary::before { transform:rotate(90deg); }
+.statusText { margin:0; padding:0 12px 12px; font:12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap; word-break:break-word; }
+.statusStats { margin:0; padding:0 12px 12px; list-style:none; display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:6px 12px; font-size:12.5px; }
+.statusStats li { display:flex; justify-content:space-between; gap:8px; }

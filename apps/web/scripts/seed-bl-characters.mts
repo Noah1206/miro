@@ -211,6 +211,7 @@ for (const s of SEEDS) {
     relationshipKeywords: s.relationshipKeywords, startingContext: s.startingContext, startingTime: s.startingTime,
     sampleDialogue: keepSceneImages(s.sampleDialogue, exists?.dialogue ?? []), lore: s.lore, initialRelationship: s.initialRelationship,
     personaGuide: s.personaGuide ?? '', coverUnveil: s.coverUnveil ?? false,
+    statusFormat: s.statusFormat ?? '', stats: s.stats ?? [],
     ...(s.voice ? { voiceId: s.voice } : {}), ...(s.ensembleVoices ? { ensembleVoices: s.ensembleVoices } : {}),
   }
   const { routine: _r, ...contact } = s.contact

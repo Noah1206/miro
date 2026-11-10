@@ -81,7 +81,7 @@ export async function undoLastTurn(userId: string, sessionId: string, replyId: s
         version: sql`${characterRuntimeStates.version} + 1`, updatedAt: now }).where(eq(characterRuntimeStates.sessionId, sessionId))
     }
     await tx.update(roleplaySessions).set({ turnCount: b.session.turnCount, lastInteractionAt: new Date(b.session.lastInteractionAt),
-      pendingRealityIntent: b.session.pendingRealityIntent as never, characterState: b.session.characterState }).where(eq(roleplaySessions.id, sessionId))
+      pendingRealityIntent: b.session.pendingRealityIntent as never, characterState: b.session.characterState, ...(b.session.statValues ? { statValues: b.session.statValues } : {}) }).where(eq(roleplaySessions.id, sessionId))
     await tx.delete(turnUndos).where(eq(turnUndos.sessionId, sessionId))
     return { ok: true, messageIds: ids, input: undo.input, command: b.command.name, commandId: b.command.sourceId }
   })

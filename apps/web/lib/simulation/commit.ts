@@ -62,6 +62,8 @@ export type CommitInput = {
   existingMemories: Memory[]
   /** 이번 턴 이후의 캐릭터 상태. runTurn 이 만든다. */
   characterState?: CharacterState
+  /** 11/10 이번 턴 뒤 스탯 값(작품에 스탯이 있을 때만) */
+  statValues?: Record<string, number>
   /** Live Scene 장면 표시 한 줄 (장소 · 시간). 미로 세션에서 장면이 바뀐 턴에만 온다. */
   sceneMarker?: string | null
   /** scene(기본) = 만나서 나누는 장면, messenger = 문자. 메시지 kind 가 여기서 갈린다 — 화면이 kind 로 두 페이지를 나눈다. */
@@ -399,6 +401,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         pendingRealityIntent: contactBoundaryActive(session.contactBoundary, new Date()) ? null
           : t.realityIntent ?? ((session.pendingRealityIntent as RealityIntent | null)?.promise ? session.pendingRealityIntent : null),
         ...(input.characterState ? { characterState: input.characterState } : {}),
+        ...(input.statValues ? { statValues: input.statValues } : {}),
       })
       .where(eq(roleplaySessions.id, input.sessionId))
 
@@ -413,7 +416,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         relationship: { trust: r.trust, attraction: r.attraction, jealousy: r.jealousy, protectiveness: r.protectiveness,
           emotionalDistance: r.emotionalDistance, attachment: r.attachment, stage: r.stage },
         session: { turnCount: session.turnCount, lastInteractionAt: session.lastInteractionAt.toISOString(),
-          pendingRealityIntent: session.pendingRealityIntent, characterState: session.characterState },
+          pendingRealityIntent: session.pendingRealityIntent, characterState: session.characterState, statValues: session.statValues },
         command: { name: input.undo.command, sourceId: input.undo.commandId },
         ledgerId: input.reservationId ?? null,
         ...undo,

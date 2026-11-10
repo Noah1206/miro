@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   customType, bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
-import type { BaseFace, BodyProfile, HairProfile, CharacterCore, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
+import type { BaseFace, BodyProfile, HairProfile, CharacterCore, CharacterStat, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -228,6 +228,10 @@ export const characters = pgTable('characters', {
   personaGuide: text('persona_guide').notNull().default(''),
   /** 첫 대화 전 페르소나 필수(11/6) — 만든 사람이 정한다. 꺼져 있으면 세계관 카드 없이 바로 시작. */
   personaRequired: boolean('persona_required').notNull().default(false),
+  /** 상태창 형식(11/10, 크랙 INFO 블록) — 매 답변 끝에 AI 가 이 틀을 채워 붙인다. 비우면 상태창 없음. */
+  statusFormat: text('status_format').notNull().default(''),
+  /** 스탯(11/10) — 대화방마다 값이 움직이는 수치 최대 7개. AI 가 매 턴 새 값을 내고 서버가 범위로 자른다. */
+  stats: jsonb('stats').$type<CharacterStat[]>().notNull().default([]),
   /** 언베일 썸네일(11/4) — 대표 사진 노출이 커서, 언베일을 안 켠 사람의 홈·상세에선 흐리게 + 언베일 표시. */
   coverUnveil: boolean('cover_unveil').notNull().default(false),
   /** 여러 인물 카드의 히로인별 목소리(11/4) — { 히로인 이름: official_voices.id }. 같은 목소리 공유 가능. 없는 히로인은 voiceId. */
@@ -420,6 +424,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   userPersona: jsonb('user_persona').$type<UserPersona>(),
   /** 11/8 이 방에서 사용자가 고른 목소리 { 화자: official_voices.id } — '' = 카드 주인공, 그 밖은 ensemble_voices 의 히로인 이름. 없으면 자동(카드 목소리 → 자동 배정). */
   voiceOverrides: jsonb('voice_overrides').$type<Record<string, string>>().notNull().default({}),
+  /** 11/10 이 방의 지금 스탯 값 { 스탯 이름: 값 } — 없는 스탯은 characters.stats 의 기본값. */
+  statValues: jsonb('stat_values').$type<Record<string, number>>().notNull().default({}),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),
@@ -535,7 +541,7 @@ export type TurnUndoBefore = {
   versions: { world: number; relationship: number; runtime: number | null }
   world: { currentLocation: string; currentTime: string; worldStatus: string | null; activeEventIds: string[]; activeNpcIds: string[]; currentSceneId: string | null }
   relationship: Pick<typeof relationships.$inferSelect, 'trust' | 'attraction' | 'jealousy' | 'protectiveness' | 'emotionalDistance' | 'attachment' | 'stage'>
-  session: { turnCount: number; lastInteractionAt: string; pendingRealityIntent: unknown; characterState: Record<string, unknown> }
+  session: { turnCount: number; lastInteractionAt: string; pendingRealityIntent: unknown; characterState: Record<string, unknown>; statValues?: Record<string, number> }
   runtime: { state: AgencyState; nextWakeAt: string | null } | null
   /** 다시 보낼 때 같은 명령어를 붙인다. */
   command: { name: string | null; sourceId: string | null }

@@ -158,7 +158,7 @@ export function lenientArray<T extends z.ZodTypeAny>(item: T, max: number) {
  * 괄호는 extractJson 이 채우고, 여기서는 rp 안에 들어간 최상위 키를 제자리로 옮긴다. 이미 최상위에 있는 키는 건드리지 않는다.
  */
 const ROOT_KEYS = ['emotion', 'intent', 'worldDelta', 'relationshipDelta', 'sceneDelta', 'memoryCandidates', 'eventCandidates',
-  'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent'] as const
+  'eventUpdates', 'npcIntroductions', 'npcActions', 'realityIntent', 'status', 'statValues'] as const
 function hoistFromRp(v: unknown): unknown {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return v
   const root = v as Record<string, unknown>
@@ -189,6 +189,10 @@ export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   npcIntroductions: lenientArray(NpcIntroductionProposal, 2),
   npcActions: lenientArray(NpcActionProposal, 3),
   realityIntent: RealityIntentProposal.nullable().default(null).catch(null),
+  /** 11/10 상태창 — 작품의 상태창 형식을 채운 글(형식이 없는 작품은 비운다). 화면엔 접히는 카드로만 나온다. */
+  status: z.string().max(2000).optional().catch(undefined),
+  /** 11/10 스탯 새 값 { 이름: 값 } — 서버가 작품 스탯 정의·범위로 자른다. */
+  statValues: z.record(z.number()).optional().catch(undefined),
 }))
 
 export type SimulationProposal = z.infer<typeof SimulationProposal>
@@ -216,4 +220,6 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
   intent: text('at most 80 characters'),
   worldDelta: { type: 'object', properties: { currentLocation: text('only a place the user moved to in this input'), currentTime: text(), worldStatus: text() } },
   sceneDelta: { type: 'object', properties: { location: text('only a place the user moved to in this input'), time: text(), mood: text(), weather: text() } },
+  status: text('Only when the card defines a status window format: that format filled in for this scene. Otherwise omit.'),
+  statValues: { type: 'object', description: 'Only when the card defines stats: { stat name: new number } for every stat. Otherwise omit.', additionalProperties: { type: 'number' } },
 }, required: ['rp'] }
