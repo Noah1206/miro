@@ -21,16 +21,18 @@ import { MemoryGraphView } from '@/app/(main)/chat/[sessionId]/memory-graph'
 import { useImmersive } from '@/app/(main)/chat/[sessionId]/immersive'
 import { RoomVoicePanel, type RoomVoice } from '@/components/room-voice'
 import { RoomGallery } from '@/components/room-gallery'
+import { ReplyLengthSheet } from '@/components/reply-length-sheet'
 import styles from './room-menu.module.css'
 
 type Panel = 'persona' | 'theme' | 'model' | 'memory'
-type IconName = Panel | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
+type IconName = Panel | 'length' | 'message' | 'archive' | 'character' | 'settings' | 'download' | 'exit'
 function MenuIcon({ name }: { name: IconName }) {
   const paths: Record<IconName, ReactNode> = {
     persona: <><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></>,
     theme: <><path d="M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1.4-3.4 1.5 1.5 0 0 1 1.1-2.6H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8Z"/><path d="M7 10h.01M10 6.5h.01M15 7h.01M18 10h.01" strokeWidth="3"/></>,
     model: <><rect x="4" y="7" width="16" height="13" rx="3"/><path d="M12 3v4M8 12v3M16 12v3M1 12h3M20 12h3"/></>,
     memory: <><path d="M8 4h8l4 4v12H4V4h4M15 4v5h5M8 13h8M8 17h5"/></>,
+    length: <><path d="M4 6h16M4 10h12M4 14h16M4 18h9"/></>,
     message: <path d="M21 11a8 8 0 0 1-8 8H8l-5 3v-6a8 8 0 0 1 0-10A8 8 0 0 1 9 3h4a8 8 0 0 1 8 8Z"/>,
     archive: <><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></>,
     character: <><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="9" r="3"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/></>,
@@ -57,6 +59,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const menuId = useId()
   const [open, setOpen] = useState(false)
   const [panel, setPanel] = useState<Panel | null>(null)
+  const [lengthOpen, setLengthOpen] = useState(false)
   const { request } = useRoomControls()
   useEffect(() => {
     if (!request) return
@@ -89,7 +92,10 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {available && on && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
         <div className={styles.grid}>{tiles.map(id => <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
           <MenuIcon name={id}/><span>{titles[id]}</span>
-        </button>)}</div>
+        </button>)}
+          {/* 11/10 출력량 설정 — 서랍 대신 팝업(크랙·베이비챗 참고). 모델 선택과 같은 저장소를 쓴다. */}
+          {choices.length > 0 && <button type="button" className={styles.tile} aria-haspopup="dialog" onClick={() => { close(); setLengthOpen(true) }}><MenuIcon name="length"/><span>{t('출력량 설정')}</span></button>}
+        </div>
         {panel && <div id={`${menuId}-detail`} role="region" aria-labelledby={`${menuId}-${panel}`} className={styles.detail}>
           <div className={styles.detailHead}><strong>{titles[panel]}</strong><button type="button" aria-label={t('상세 설정 닫기')} onClick={() => { document.getElementById(`${menuId}-${panel}`)?.focus(); setPanel(null) }}>×</button></div>
           {panel === 'persona' && <ConversationPersona inline sessionId={sessionId} initial={initialPersona} characterName={characterName} entry={entry}/>}
@@ -109,5 +115,6 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         <InstallAppButton className={styles.row} onOpen={close}><MenuIcon name="download"/><span>{t('홈 화면에 추가')}</span><Chevron/></InstallAppButton>
       </section>
     </Drawer>
+    <ReplyLengthSheet open={lengthOpen} onClose={() => setLengthOpen(false)} choices={choices}/>
   </>
 }
