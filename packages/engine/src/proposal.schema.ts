@@ -206,9 +206,9 @@ const text = (description?: string) => ({ type: 'string', ...(description ? { de
  * 칸 순서가 출력 순서다 — rp 가 먼저 와야 첫 블록이 바로 화면에 나간다(10/17 직접 측정: 순서 유지, 첫 조각 시간 차이 없음).
  */
 export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 'object', properties: {
-  rp: { type: 'object', properties: { blocks: { type: 'array', description: '1 to 12 items, as many as the moment needs.', items: { type: 'object', properties: {
+  rp: { type: 'object', properties: { blocks: { type: 'array', description: 'Follow the length rule (분량) in the system prompt: a standard scene is about 12 to 18 items; short replies only when that rule says so. Up to 30 items.', items: { type: 'object', properties: {
     type: { type: 'string', enum: [...RP_BLOCK_TYPES] }, speaker: text('name of the person speaking or acting for dialogue/action/thought (in a multi-heroine card, that heroine — never the card title); omit for narrative'),
-    text: text('narrative/action: 1-3 sentences. dialogue: 1-3 sentences. thought: one or two short colloquial lines.'),
+    text: text('narrative: 2-4 sentences. action: 1-3 sentences. dialogue: 1-4 sentences. thought: one or two short colloquial lines.'),
     delivery: { type: 'object', description: 'Hidden delivery for dialogue only; never include in text.', properties: {
       emotion: { type: 'string', enum: [...VOICE_EMOTIONS] }, tone: { type: 'string', enum: [...VOICE_TONES] },
       pace: { type: 'string', enum: [...VOICE_PACES] }, intensity: { type: 'string', enum: [...VOICE_INTENSITIES] },
