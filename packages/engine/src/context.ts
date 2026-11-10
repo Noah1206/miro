@@ -86,6 +86,16 @@ export type BuiltContext = {
  */
 const USER_VIEWPOINT = `Use limited first-person POV: narration is the user's own experience, written as if the user is living it, not an observer's report. Narration calls the user '나' (내/나를/나에게) and never uses '당신'; persona names are for direct speech. Ground the authored situation in what reaches the user: sound, distance and visible actions addressed to them. Unfold one change at a time, then leave room to respond. Never invent user actions, thoughts, feelings or bodily reactions; character secrets stay in thought.`
 
+/**
+ * 11/10 사용자: 기본 분량 = 베이비챗(1.25x)·크랙 한 턴의 평균(약 1,000자). 11/3 의 '하한 없음'을 뒤집는다 — 채우기용 서술 금지(11/3 이유)는 그대로.
+ * 운영 실측: 글자 수만 주자 Sonnet 답이 416자 — 블록 개수를 함께 주고(모델은 블록·문장 수를 따른다, 9/26·10/17), 자율성 경로는 지시문 끝에 한 번 더 붙인다(agency-turn).
+ */
+export function replyLengthRule(style: ReplyStyle): string {
+  const long = style === 'long' || style === 'saga'
+  const fill = '분량은 새 행동·대사·장면 진행으로 채우고, 분위기 묘사나 같은 뜻의 문장, 이미 전달한 감정의 재설명으로 채우지 않습니다'
+  return style === 'saga' ? `아주 긴 대화는 한 응답을 2300~2800자로 씁니다 — narrative 단락 7~10개(각 2~4문장)와 대사(dialogue) 블록 8~12개(최대 3200자). ${fill}` : long ? `긴 대화는 한 응답을 1600~2000자로 씁니다 — narrative 단락 5~7개(각 2~4문장)와 대사(dialogue) 블록 6~9개(최대 2400자). ${fill}` : `기본 대화는 한 응답을 1000~1300자로 씁니다 — narrative 단락 3~5개(각 2~4문장) 사이로 대사(dialogue) 블록이 4~6개 오가는 장면 하나(최대 1600자). 이보다 짧게 끝내지 않습니다. ${fill}`
+}
+
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''
   const prose = /\*[^*]+\*/.test(input) || input.includes('\n') || input.length > 120
@@ -100,9 +110,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   // 11/3 사용자 결정: 분량 하한은 두지 않는다 — '최소 650자·3박자·서술 80자 이상'이 채우기용 분위기 서술(AI 같은 글)을 만들었다. 상한과 길이 등급(기본·긴·아주 긴)만 남긴다.
   // 11/10 사용자: 기본 분량 = 베이비챗(1.25x)·크랙 한 턴의 평균(약 1,000자 — 서술 단락 사이로 대사가 4~6번 오가는 장면). 11/3 의 '하한 없음'을 뒤집는다.
   // 채우기용 분위기 서술 금지(11/3 이유)는 그대로 — 분량은 새 행동·대사·사건 진행으로 채운다. 모델은 지시보다 짧게 쓰므로 범위를 목표보다 약간 높게 둔다.
-  const fill = '분량은 새 행동·대사·장면 진행으로 채우고, 분위기 묘사나 같은 뜻의 문장, 이미 전달한 감정의 재설명으로 채우지 않습니다'
-  // 11/10 운영 실측: 글자 수만 주자 Sonnet 답이 416자(목표의 40%) — 블록 개수를 함께 준다(모델은 글자 수보다 블록·문장 수를 따른다, 9/26·10/17 측정).
-  const size = style === 'saga' ? `아주 긴 대화는 한 응답을 2300~2800자로 씁니다 — narrative 단락 7~10개(각 2~4문장)와 대사(dialogue) 블록 8~12개(최대 3200자). ${fill}` : long ? `긴 대화는 한 응답을 1600~2000자로 씁니다 — narrative 단락 5~7개(각 2~4문장)와 대사(dialogue) 블록 6~9개(최대 2400자). ${fill}` : `기본 대화는 한 응답을 1000~1300자로 씁니다 — narrative 단락 3~5개(각 2~4문장) 사이로 대사(dialogue) 블록이 4~6개 오가는 장면 하나(최대 1600자). 이보다 짧게 끝내지 않습니다. ${fill}`
+  const size = replyLengthRule(style)
   const tenseMax = style === 'saga' ? '3400자' : long ? '2600자' : '1800자'
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를

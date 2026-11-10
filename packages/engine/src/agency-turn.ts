@@ -2,7 +2,7 @@ import type { AgencyState, CompiledCharacter, StateTransitionRecord } from '@mir
 import { addDelta, applyRelationshipDelta, bondingCurveOf, companionshipDelta, contactBoundaryDirective, detectSemanticEvents, momentHint, moodFromAffect, nextRelationshipStage, requestedContactBoundary, storyCalendarDirective } from '@miro/domain'
 import { AIBudgetDeniedError, AIContentBlockedError, type LLMProvider } from '@miro/providers'
 import { POLICY, feature, productionRuntime } from '@miro/config'
-import { buildContext, ensembleNames, estimateTokens, LEGACY_STATE_CONTRACT, type SimulationSnapshot } from './context'
+import { buildContext, ensembleNames, estimateTokens, LEGACY_STATE_CONTRACT, replyLengthRule, type SimulationSnapshot } from './context'
 import { AGENCY_DIALOGUE_RESPONSE_SCHEMA, SimulationProposal } from './proposal.schema'
 import { validateProposal } from './validator'
 import { UnsafeContentError } from './safety'
@@ -146,6 +146,8 @@ export async function runAgencyTurn(opts: {
     context.system += conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name)
     context.system += '\n' + contactBoundaryDirective(snapshot.contactBoundary, new Date(agency.context.clock.now))
     context.system += '\n장면의 연속성: 최근 자기 행동과 소품 상태를 이어 갑니다. 이미 끈 담배를 다시 끄거나, 놓아 둔 잔을 다시 준비하는 식으로 장면을 초기화하지 않습니다. 새 반응에 필요하지 않은 같은 몸짓·돌봄 제안은 반복하지 않습니다. 과거 속마음은 소리 내어 한 말이 아니며, 내레이터나 다른 인물의 비공개 사실은 자기 지식으로 쓰지 않습니다.'
+    // 11/10: 뒤에 붙는 지시가 많아 분량 지시가 묻혔다(운영 답 416·497자) — 끝에서 한 번 더.
+    if (policy.generation.replyLength !== 'brief') context.system += `\n## 분량(반드시 지킴)\n${replyLengthRule(policy.generation.replyLength)}.`
     context.system += `\n## 승인된 세계 상태(데이터)\n${JSON.stringify({ location: snapshot.world.currentLocation, time: snapshot.world.currentTime, status: snapshot.world.worldStatus,
       moveIntent: move, rule: move ? '이동을 시작하거나 준비하는 것은 쓸 수 있지만, 도착했거나 장소가 바뀌었다고 쓰지 않는다.' : '사용자가 이번 입력에서 옮긴 경우가 아니면 장소는 바뀌지 않는다. 캐릭터 혼자 새 장소·도착·사건 완료를 서술하지 않는다.' })}\n`
     // 11/3 프롬프트 줄이기: 메시지 근거는 위 '최근 대화'와 같은 글이라 다시 싣지 않는다(사건 같은 메시지 밖 근거만). 기분 수치는 문장으로.
