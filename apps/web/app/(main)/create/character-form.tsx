@@ -25,6 +25,7 @@ import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink } from '@/components/ui'
 import { TestChat } from './test-chat'
 import { VoiceList, type VoiceOption } from './voice-list'
+import { CastNames, CastVoices, castJson, type CastMember } from './cast-editor'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
@@ -43,6 +44,8 @@ export type FormInitial = {
   gender: string; build: string; height: string; detail: string
   /** 공식 목소리 ID. '' 이면 기본 목소리. */
   voiceId: string
+  /** 다인 작품(11/10) 등장인물별 목소리 { 이름: 목소리 id, '' = 자동 }. 비어 있으면 1:1. */
+  ensembleVoices?: Record<string, string>
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
@@ -162,6 +165,9 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [gender, setGender] = useState<string>(i.gender)
   const [build] = useState<string>(i.build)
   const [voiceId, setVoiceId] = useState<string>(i.voiceId)
+  // 작품 형식(11/10 사용자): 1:1 = 캐릭터 한 명, 다인 = 여러 인물이 나오고 인물마다 목소리를 고정한다.
+  const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ name, voice })))
+  const [castMode, setCastMode] = useState<'single' | 'multi'>(cast.length ? 'multi' : 'single')
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
   const [isPublic, setIsPublic] = useState(i.isPublic)
@@ -307,6 +313,14 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
           <input type="hidden" name="audience" value={audience} />
+          <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 인물 이름을 적어 두면 목소리 탭에서 인물마다 목소리를 고정할 수 있어요. 인물 설정은 캐릭터 소개·세계관에 적어 주세요.')}>
+            <Card>
+              <input type="hidden" name="ensembleVoices" value={castMode === 'multi' ? castJson(cast) : '{}'} />
+              <Segmented value={castMode} onChange={v => { setCastMode(v); if (v === 'multi' && !cast.length) setCast([{ name: '', voice: '' }]) }}
+                options={[{ value: 'single', label: t('1:1'), hint: t('캐릭터 한 명') }, { value: 'multi', label: t('다인'), hint: t('여러 인물') }]} />
+              {castMode === 'multi' && <div style={{ marginTop: 'var(--space-4)' }}><CastNames cast={cast} onChange={setCast} /></div>}
+            </Card>
+          </Section>
           <Section title={t('공개')}>
             <Card>
               <Switch name="isPublic" checked={isPublic} onChange={setIsPublic}
@@ -520,6 +534,10 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('목소리')}>
             {/* 기본 목소리(지환)는 늘 있으니 목록은 늘 보인다 */}
             <VoiceList voices={voices} value={voiceId} onChange={setVoiceId} />
+            {castMode === 'multi' && <div style={{ marginTop: 'var(--space-5)' }}>
+              <p className="t-caption" style={{ margin: '0 0 8px', color: 'var(--color-text-secondary)' }}>{t('위 목소리는 주인공·내레이션 목소리예요. 아래에서 등장인물마다 목소리를 고정하세요. 같은 목소리를 여러 인물에 써도 돼요.')}</p>
+              <CastVoices cast={cast} voices={voices} onChange={setCast} />
+            </div>}
             <TransitionLink href="/my/voices" className="t-caption" style={{ display: 'inline-block', marginTop: 16, color: 'var(--color-lavender-200)' }}>{t('내 음성 만들기')} →</TransitionLink>
           </Section>
         </Panel>

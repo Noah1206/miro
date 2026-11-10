@@ -226,6 +226,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     isPublicOn: form.get('isPublic') === 'on',
     // 공식 목소리 ID. 지금 고를 수 있는 것인지는 저장할 때 서버가 DB 로 다시 본다(lib/voice.ts).
     voiceId: orNull(s('voiceId').slice(0, 40)),
+    // 다인 작품(11/10) 등장인물별 목소리 — 이름 20자·20명까지. 목소리 id 는 저장할 때 서버가 다시 본다(lib/voice selectableEnsemble).
+    ensembleVoices: parseEnsemble(s('ensembleVoices')),
     startingTime,
     character, world, contact, visual, initialRelationship,
   }
@@ -283,4 +285,17 @@ function extraScenes(form: FormData) {
     const meta = { ...(context ? { context } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}) }
     return lines.map((l, k) => ({ ...l, scene, ...(k === 0 ? meta : {}) }))
   }).slice(0, 80)
+}
+
+/** 다인 작품 등장인물 칸(JSON) → { 이름: 목소리 id }. 모양이 틀리면 빈 값(1:1). */
+export function parseEnsemble(raw: string): Record<string, string> {
+  let o: unknown
+  try { o = JSON.parse(raw || '{}') } catch { return {} }
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return {}
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(o as Record<string, unknown>).slice(0, 20)) {
+    const name = k.trim().slice(0, 20)
+    if (name && !(name in out)) out[name] = typeof v === 'string' ? v.slice(0, 40) : ''
+  }
+  return out
 }

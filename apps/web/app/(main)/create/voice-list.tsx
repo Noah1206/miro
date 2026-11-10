@@ -15,7 +15,7 @@ const DEFAULT_VOICE_NAME = '지환'
  */
 /** autoLabel(11/8, 채팅방 목소리 고르기): '' 줄을 기본 목소리 지환 대신 '자동 · …' 으로 — 성별 거르기와 무관하게 늘 맨 위, 미리 듣기 없음. */
 /** compact(11/10, 채팅방 메뉴): 작은 아이콘·한 줄(이름 + 옅은 성별)·좁은 간격·고른 줄 체크 — 캐릭터 줄보다 한 단계 아래로 보이게. 만들기 화면은 그대로. */
-export function VoiceList({ voices, value, onChange, autoLabel, compact = false }: { voices: VoiceOption[]; value: string; onChange: (id: string) => void; autoLabel?: string; compact?: boolean }) {
+export function VoiceList({ voices, value, onChange, autoLabel, compact = false, hiddenName = 'voiceId' }: { voices: VoiceOption[]; value: string; onChange: (id: string) => void; autoLabel?: string; compact?: boolean; hiddenName?: string }) {
   const t = useT()
   const [filter, setFilter] = useState<Filter>('all')
   const gender = (l: string) => /여성|성우 여/.test(l) ? 'female' : /남성|성우 남/.test(l) ? 'male' : null
@@ -25,7 +25,7 @@ export function VoiceList({ voices, value, onChange, autoLabel, compact = false 
   const rows: VoiceOption[] = [...(autoLabel ? [{ id: '', label: autoLabel }] : filter === 'all' || filter === 'male' ? [{ id: '', label: DEFAULT_VOICE_NAME }] : []), ...shown]
   return (
     <div className="stack" style={{ gap: compact ? 8 : 16 }}>
-      <input type="hidden" name="voiceId" value={value} />
+      <input type="hidden" name={hiddenName} value={value} />
       {voices.length > 0 && <div role="group" aria-label={t('목소리 거르기')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {pills.map(([k, label]) => (
           <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}

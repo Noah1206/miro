@@ -2098,5 +2098,15 @@
  "생각 강도": "Thinking effort",
  "높일수록 답을 더 깊게 다듬지만, 느려지고 토큰을 더 써요.": "Higher effort refines replies more, but is slower and uses more tokens.",
  "작품 기본": "Story default",
- "낮음": "Low"
+ "낮음": "Low",
+ "작품 형식": "Format",
+ "다인은 여러 인물이 함께 나오는 작품이에요. 인물 이름을 적어 두면 목소리 탭에서 인물마다 목소리를 고정할 수 있어요. 인물 설정은 캐릭터 소개·세계관에 적어 주세요.": "Multi-cast stories feature several characters. Add their names and you can fix a voice for each in the Voice tab. Describe the characters in the intro and world setting.",
+ "1:1": "1:1",
+ "캐릭터 한 명": "One character",
+ "다인": "Multi-cast",
+ "여러 인물": "Several characters",
+ "인물 이름": "Character name",
+ "인물 추가": "Add character",
+ "프로필 탭에서 등장인물을 먼저 추가해 주세요.": "Add characters in the Profile tab first.",
+ "위 목소리는 주인공·내레이션 목소리예요. 아래에서 등장인물마다 목소리를 고정하세요. 같은 목소리를 여러 인물에 써도 돼요.": "The voice above is for the lead and narration. Fix a voice for each character below — the same voice can be used for several."
 }

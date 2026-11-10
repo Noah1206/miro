@@ -13,7 +13,7 @@ import { resolveCharacterImages } from '@/lib/storage/images'
 import { parseCharacterForm } from '@/app/(main)/create/parse'
 import { captureAgencyRevision, pinAgencyRevision, scheduleAgencyCompilation } from '@/lib/agency/revisions'
 import { inWrittenOrder } from '@/lib/simulation/commit'
-import { selectableVoice } from '@/lib/voice'
+import { selectableEnsemble, selectableVoice } from '@/lib/voice'
 import { scheduleRelationshipProfile } from '@/lib/relationship-profile'
 
 /**
@@ -40,10 +40,11 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   // 사진 — 만들기(actions.ts)와 같은 규칙.
   const images = await resolveCharacterImages(form, user.id)
   const voiceId = await selectableVoice(p.voiceId, user.id)
+  const ensembleVoices = await selectableEnsemble(p.ensembleVoices, user.id)
 
   const result = await db.transaction(async (tx) => {
     await tx.update(characters).set({
-      ...p.character, images, voiceId,
+      ...p.character, images, voiceId, ensembleVoices,
       isDraft: stillDraft,
       // The saved type owns the execution policy; editing cannot convert it.
       experienceType: owned.character.experienceType,

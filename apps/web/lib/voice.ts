@@ -27,6 +27,14 @@ export async function selectableVoice(id: string | null, userId: string): Promis
   return row?.id ?? null
 }
 
+/** 다인 작품 등장인물별 목소리(11/10) — 지금 고를 수 없는 목소리는 ''(자동)로. */
+export async function selectableEnsemble(map: Record<string, string>, userId: string): Promise<Record<string, string>> {
+  const ids = [...new Set(Object.values(map).filter(Boolean))]
+  const ok = new Set(ids.length ? (await db.select({ id: officialVoices.id }).from(officialVoices)
+    .where(and(inArray(officialVoices.id, ids), selectable(userId)))).map(r => r.id) : [])
+  return Object.fromEntries(Object.entries(map).map(([k, v]) => [k, ok.has(v) ? v : '']))
+}
+
 /**
  * 읽을 때 다시 보는 규칙 — 고른 뒤에 만든 사람이 공개를 끄거나 언베일 사용을 끄면 그때부터 그 캐릭터는 이 목소리로 읽지 않는다.
  * characterOwnerId = 목소리를 고른 캐릭터 제작자(듣는 사람이 아니다).
