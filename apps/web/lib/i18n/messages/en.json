@@ -2094,5 +2094,9 @@
  "서술과 대사를 더 깊게 펼쳐요": "Deeper narration and dialogue",
  "한 턴을 웹소설 한 회처럼 길게": "Each turn as long as a web-novel chapter",
  "최대 {count}": "Max {count}",
- "적용": "Apply"
+ "적용": "Apply",
+ "생각 강도": "Thinking effort",
+ "높일수록 답을 더 깊게 다듬지만, 느려지고 토큰을 더 써요.": "Higher effort refines replies more, but is slower and uses more tokens.",
+ "작품 기본": "Story default",
+ "낮음": "Low"
 }
