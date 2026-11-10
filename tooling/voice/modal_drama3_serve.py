@@ -180,7 +180,9 @@ class Speaker:
 
         hidden = hidden[-1:]
         produced = 0
+        t_start = time.perf_counter()
         if graphs is not None: graphs.start(hidden, rows - 1, frames[:rows], sampling['temperature'], sampling['top_k'], sampling['top_p'])
+        if every: print(f'decode graphs.start {time.perf_counter() - t_start:.2f}s', flush=True)
         for step in range(max_new_tokens):
             position = rows - 1 + step
             if graphs is not None: sampled, main = graphs.step(position)
@@ -205,15 +207,18 @@ class Speaker:
         ref_text, codes = self.reference(voice)
         limit = min(1536, max(384, len(text) * 24))
         torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
-        sent, first = 0, True
+        import time
+        sent, first, t0 = 0, True, time.perf_counter()
         with torch.inference_mode():
             prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
-            for frames, rows, produced, done in self._decode(prompt, voice or DEFAULT_VOICE, limit, every=STREAM_EVERY):
+            for frames, rows, produced, done in self._decode(prompt, voice or DEFAULT_VOICE, limit, every=STREAM_FIRST):
                 upto = produced if done else produced - STREAM_HOLD
                 if not done and upto - sent < (STREAM_FIRST if first else STREAM_EVERY): continue
                 if upto <= sent: continue
                 start = max(0, sent - STREAM_CTX)
+                t1 = time.perf_counter()
                 wave = self.codec_decode(frames[rows + start : rows + upto])
+                if first: print(f'stream first chunk: {produced} frames at {t1 - t0:.2f}s, decode {time.perf_counter() - t1:.2f}s', flush=True)
                 per = len(wave) // (upto - start)
                 chunk = wave[(sent - start) * per :]
                 sent, first = upto, False
