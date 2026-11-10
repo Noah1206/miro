@@ -1,5 +1,6 @@
 import { desc, eq, sql } from 'drizzle-orm'
 import { creatorPayouts, db, rechargeGrants, sealPii } from '@miro/db'
+import { revisionEffective } from '@/lib/legal/revisions'
 import { commit, reserve, UsageExceededError, type UsageTransaction } from './guard'
 import { CHEER_PROVIDER, CREATOR_REWARD_PROVIDER, CREATOR_REWARD_RATE } from './creator-reward'
 
@@ -14,6 +15,9 @@ import { CHEER_PROVIDER, CREATOR_REWARD_PROVIDER, CREATOR_REWARD_RATE } from './
  */
 export const PAYOUT_KRW_PER_TOKEN = 5
 export const PAYOUT_MIN_KRW = 30_000
+/** 실명·계좌·주민등록번호 수집이 처리방침에 들어가는 날(revisions.ts, 30일 전 공지) — 그 전엔 신청을 받지 않는다. */
+export const PAYOUT_OPENS = '2026-12-11'
+export const payoutOpen = (now = new Date()) => revisionEffective('privacy', PAYOUT_OPENS, now)
 const CREATOR_PROVIDERS = [CREATOR_REWARD_PROVIDER, CHEER_PROVIDER]
 
 /** 사업소득 원천징수 3.3%(소득세 3% + 지방소득세 0.3%, 10원 미만 버림). 소득세가 1,000원 미만이면 소액부징수로 0. */
@@ -21,8 +25,8 @@ export function payoutQuote(tokens: number) {
   const gross = tokens * PAYOUT_KRW_PER_TOKEN
   let income = Math.floor(gross * 0.03 / 10) * 10
   if (income < 1000) income = 0
-  const tax = income + Math.floor(income * 0.1 / 10) * 10
-  return { gross, tax, net: gross - tax }
+  const local = Math.floor(income * 0.1 / 10) * 10
+  return { gross, incomeTax: income, localTax: local, net: gross - income - local }
 }
 
 /**
@@ -51,6 +55,7 @@ export function validRrn(rrn: string): boolean {
 }
 
 export async function requestPayout(opts: { userId: string; tokens: number; realName: string; rrn: string; bank: string; accountNumber: string; requestId: string }): Promise<void> {
+  if (!payoutOpen()) throw new PayoutError('not_open')
   const realName = opts.realName.trim(), bank = opts.bank.trim(), accountNumber = opts.accountNumber.replace(/[\s-]/g, '')
   const rrn = opts.rrn.replace(/\D/g, '')
   if (!Number.isSafeInteger(opts.tokens) || opts.tokens * PAYOUT_KRW_PER_TOKEN < PAYOUT_MIN_KRW) throw new PayoutError('below_minimum')
@@ -70,7 +75,7 @@ export async function requestPayout(opts: { userId: string; tokens: number; real
     const w = await withdrawableTokens(opts.userId, tx)
     if (opts.tokens > w.earned - w.requested) throw new PayoutError('over_withdrawable')
     await commit(reservation.reservationId, undefined, tx)
-    await tx.insert(creatorPayouts).values({ userId: opts.userId, tokens: opts.tokens, grossKRW: quote.gross, taxKRW: quote.tax, netKRW: quote.net,
+    await tx.insert(creatorPayouts).values({ userId: opts.userId, tokens: opts.tokens, grossKRW: quote.gross, incomeTaxKRW: quote.incomeTax, localTaxKRW: quote.localTax, netKRW: quote.net,
       realName, rrnSealed: sealed, bank, accountNumber, ledgerId: reservation.reservationId })
   })
 }

@@ -7,7 +7,7 @@ export type PayoutStatus = 'requested' | 'paid' | 'rejected'
 export async function listPayouts(status: PayoutStatus | 'all' = 'requested') {
   const rows = await db.select({
     id: creatorPayouts.id, userId: creatorPayouts.userId, email: users.email, tokens: creatorPayouts.tokens,
-    grossKRW: creatorPayouts.grossKRW, taxKRW: creatorPayouts.taxKRW, netKRW: creatorPayouts.netKRW,
+    grossKRW: creatorPayouts.grossKRW, incomeTaxKRW: creatorPayouts.incomeTaxKRW, localTaxKRW: creatorPayouts.localTaxKRW, netKRW: creatorPayouts.netKRW,
     realName: creatorPayouts.realName, rrnSealed: creatorPayouts.rrnSealed, bank: creatorPayouts.bank, accountNumber: creatorPayouts.accountNumber,
     status: creatorPayouts.status, note: creatorPayouts.note, createdAt: creatorPayouts.createdAt, decidedAt: creatorPayouts.decidedAt,
   }).from(creatorPayouts).innerJoin(users, eq(users.id, creatorPayouts.userId))
@@ -48,4 +48,34 @@ export async function rejectPayout(adminId: string, id: string, note: string): P
     await tx.insert(adminActions).values({ adminId, action: 'payout_reject', previousStatus: 'requested', newStatus: 'rejected', note: `출금 ${id} ${note}` })
     return 'rejected'
   })
+}
+
+/** 'YYYY-MM'(한국 달) → 그 달의 시작·다음 달 시작(UTC 시각). */
+export function kstMonthRange(month: string): [Date, Date] {
+  const [y, m] = month.split('-').map(Number) as [number, number]
+  return [new Date(Date.UTC(y, m - 1, 1) - 9 * 3600_000), new Date(Date.UTC(y, m, 1) - 9 * 3600_000)]
+}
+export const lastKstMonth = (now = new Date()) => {
+  const k = new Date(now.getTime() + 9 * 3600_000)
+  return new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth() - 1, 1)).toISOString().slice(0, 7)
+}
+
+/**
+ * 그 달(송금 완료 기준)에 지급한 출금을 사람별로 묶는다 — 원천징수이행상황신고서 '사업소득 매월징수(A25)' 칸과 간이지급명세서(거주자의 사업소득)에 그대로 옮겨 적는 숫자.
+ * 업종코드 940306 = 1인 미디어 콘텐츠 창작자(인적용역).
+ */
+export async function monthlyWithholding(month: string) {
+  const [from, to] = kstMonthRange(month)
+  const rows = await db.select({ userId: creatorPayouts.userId, realName: creatorPayouts.realName, rrnSealed: creatorPayouts.rrnSealed,
+    gross: creatorPayouts.grossKRW, incomeTax: creatorPayouts.incomeTaxKRW, localTax: creatorPayouts.localTaxKRW })
+    .from(creatorPayouts).where(and(eq(creatorPayouts.status, 'paid'), sql`${creatorPayouts.decidedAt} >= ${from} and ${creatorPayouts.decidedAt} < ${to}`))
+  const people = new Map<string, { realName: string; rrn: string; gross: number; incomeTax: number; localTax: number }>()
+  for (const r of rows) {
+    const p = people.get(r.userId) ?? { realName: r.realName, rrn: (() => { try { return openPii(r.rrnSealed) } catch { return '' } })(), gross: 0, incomeTax: 0, localTax: 0 }
+    p.gross += r.gross; p.incomeTax += r.incomeTax; p.localTax += r.localTax
+    people.set(r.userId, p)
+  }
+  const list = [...people.values()]
+  const sum = (k: 'gross' | 'incomeTax' | 'localTax') => list.reduce((n, p) => n + p[k], 0)
+  return { month, people: list, total: { count: list.length, gross: sum('gross'), incomeTax: sum('incomeTax'), localTax: sum('localTax') } }
 }

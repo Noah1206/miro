@@ -1,5 +1,5 @@
 import { and, eq, gte, lt, sql } from 'drizzle-orm'
-import { db, aiBudgetCounters, aiUsage, bankTransferOrders, opsAlerts, opsBackupRuns, realityPushJobs } from '@miro/db'
+import { db, aiBudgetCounters, aiUsage, bankTransferOrders, creatorPayouts, opsAlerts, opsBackupRuns, realityPushJobs } from '@miro/db'
 import { budgetPolicy, startOfDayKST } from '@/lib/usage/ai-usage'
 import { observe } from '@/lib/observe'
 
@@ -9,7 +9,7 @@ export type OpsAlert = { key: string; title: string; detail: string }
 const REPEAT_MS = 6 * 3600_000
 /** 백업은 하루 한 번(03시 KST)인데 GitHub 스케줄이 몇 시간씩 밀리므로 하루 반을 넘겨야 멈춘 것으로 본다. */
 const BACKUP_STALE_MS = 36 * 3600_000
-const CONNECTED: OpsAlert = { key: 'connected', title: 'MIRO 운영자 알림 연결됨', detail: '이 채널로 AI 제공자 장애, 일일 예산 소진, 24시간 넘은 입금 대기, 푸시 발송 실패, 정기 백업 멈춤을 알려요.' }
+const CONNECTED: OpsAlert = { key: 'connected', title: 'MIRO 운영자 알림 연결됨', detail: '이 채널로 AI 제공자 장애, 일일 예산 소진, 24시간 넘은 입금 대기, 푸시 발송 실패, 정기 백업 멈춤, 출금 대기·세금 기한을 알려요.' }
 
 /**
  * 운영자가 알아야 할 상태만 고른다 — 사용자에게 가는 알림이 아니다.
@@ -48,6 +48,8 @@ export async function collectOpsAlerts(now = new Date()): Promise<OpsAlert[]> {
   const [push] = await db.select({ n: sql<number>`count(*)::int` }).from(realityPushJobs)
     .where(and(eq(realityPushJobs.status, 'failed'), gte(realityPushJobs.createdAt, dayAgo)))
   if (push && push.n >= 3) out.push({ key: 'push_failed', title: '푸시 발송 실패 누적', detail: `최근 24시간 실패 ${push.n}건` })
+
+  out.push(...await payoutAlerts(now))
 
   // 백업이 한 번도 없던 때(설정 전)는 조용히 둔다 — 한 번 돌기 시작한 백업이 멈추는 것을 잡는다.
   // 이 조회가 실패해도(표 누락 등) 위에서 모은 알림은 보내야 한다 — 따로 잡아 그 자체를 알림으로 올린다.
@@ -106,4 +108,33 @@ async function postDiscord(url: string, content: string): Promise<boolean> {
     })
     return r.ok
   } catch { return false }
+}
+
+/**
+ * 11/11 창작 보상 출금 — 3일 넘은 출금 대기, 그리고 지난달 지급이 있으면 세금 기한 알림.
+ * 원천세 신고·납부는 다음 달 10일(1·5·9·10일에), 간이지급명세서는 다음 달 말일(20·25일과 말일에). 키에 날짜를 넣어 그날 한 번만 간다.
+ */
+async function payoutAlerts(now: Date): Promise<OpsAlert[]> {
+  const out: OpsAlert[] = []
+  const [waiting] = await db.select({ n: sql<number>`count(*)::int` }).from(creatorPayouts)
+    .where(and(eq(creatorPayouts.status, 'requested'), lt(creatorPayouts.createdAt, new Date(now.getTime() - 3 * 86_400_000))))
+  if (waiting && waiting.n > 0) out.push({ key: 'payouts_waiting', title: '출금 신청 송금 필요', detail: `3일 넘게 기다리는 창작 보상 출금 ${waiting.n}건. 운영자 앱 /payouts 에서 송금 후 '송금 완료'를 눌러 주세요.` })
+
+  const k = new Date(now.getTime() + 9 * 3600_000)
+  const day = k.getUTCDate(), lastDay = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth() + 1, 0)).getUTCDate()
+  const withholding = [1, 5, 9, 10].includes(day), statement = [20, 25, lastDay].includes(day)
+  if (!withholding && !statement) return out
+  const from = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth() - 1, 1) - 9 * 3600_000)
+  const to = new Date(Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), 1) - 9 * 3600_000)
+  const [last] = await db.select({ people: sql<number>`count(distinct ${creatorPayouts.userId})::int`, gross: sql<number>`coalesce(sum(${creatorPayouts.grossKRW}), 0)::int`,
+    incomeTax: sql<number>`coalesce(sum(${creatorPayouts.incomeTaxKRW}), 0)::int`, localTax: sql<number>`coalesce(sum(${creatorPayouts.localTaxKRW}), 0)::int` })
+    .from(creatorPayouts).where(and(eq(creatorPayouts.status, 'paid'), gte(creatorPayouts.decidedAt, from), lt(creatorPayouts.decidedAt, to)))
+  if (!last || last.people === 0) return out
+  const month = new Date(from.getTime() + 9 * 3600_000).toISOString().slice(0, 7)
+  const today = k.toISOString().slice(0, 10), won = (n: number) => `${n.toLocaleString('ko-KR')}원`
+  if (withholding) out.push({ key: `tax_withholding:${today}`, title: `원천세 신고·납부 기한 ${k.getUTCMonth() + 1}월 10일`,
+    detail: `${month} 창작 보상 지급 — 홈택스 원천징수이행상황신고 사업소득(A25): 인원 ${last.people}명 · 총지급액 ${won(last.gross)} · 소득세 ${won(last.incomeTax)}, 이어서 위택스 지방소득세 ${won(last.localTax)}. 자세한 값은 운영자 앱 /payouts?month=${month}` })
+  if (statement) out.push({ key: `tax_statement:${today}`, title: `간이지급명세서(사업소득) 제출 기한 ${k.getUTCMonth() + 1}월 ${lastDay}일`,
+    detail: `${month} 지급분 ${last.people}명. 운영자 앱 /payouts?month=${month} 의 'CSV' 를 받아 홈택스 간이지급명세서(거주자의 사업소득)에 제출해 주세요.` })
+  return out
 }

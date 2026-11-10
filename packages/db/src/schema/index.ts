@@ -1529,7 +1529,9 @@ export const creatorPayouts = pgTable('creator_payouts', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'restrict' }),
   tokens: integer('tokens').notNull(),
   grossKRW: integer('gross_krw').notNull(),
-  taxKRW: integer('tax_krw').notNull(),
+  /** 원천징수 — 소득세(3%)와 지방소득세(0.3%)를 따로 둔다: 신고서와 납부처가 다르다(국세청·지방자치단체). */
+  incomeTaxKRW: integer('income_tax_krw').notNull(),
+  localTaxKRW: integer('local_tax_krw').notNull(),
   netKRW: integer('net_krw').notNull(),
   realName: text('real_name').notNull(),
   rrnSealed: text('rrn_sealed').notNull(),

@@ -6,7 +6,7 @@ import { submitPayout, type PayoutState } from './actions'
 
 const BANKS = ['KB국민은행', '신한은행', '우리은행', '하나은행', 'NH농협은행', 'IBK기업은행', '카카오뱅크', '토스뱅크', '케이뱅크', '새마을금고', '우체국', 'SC제일은행', '부산은행', '대구은행(iM뱅크)']
 const ERRORS: Record<string, string> = {
-  agree: '두 가지 동의가 모두 필요해요.', below_minimum: '최소 출금 금액보다 적어요.', over_withdrawable: '출금할 수 있는 토큰보다 많아요.',
+  agree: '두 가지 동의가 모두 필요해요.', not_open: '출금 신청은 12월 11일부터 받아요(개인정보 처리방침 개정 시행일).', below_minimum: '최소 출금 금액보다 적어요.', over_withdrawable: '출금할 수 있는 토큰보다 많아요.',
   invalid_rrn: '주민등록번호를 다시 확인해 주세요.', invalid_account: '계좌번호는 숫자 8~20자리로 적어 주세요.', invalid_input: '이름과 은행을 확인해 주세요.', invalid_request: '다시 시도해 주세요.',
 }
 const field = { width: '100%', height: 44, padding: '0 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 15 } as const

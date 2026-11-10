@@ -2,7 +2,7 @@ import { msg } from '@/lib/i18n'
 import { ADULT_POLICY } from './adult'
 import { AI_NOTICE } from './ai'
 import { MARKETING_CONSENT, NIGHT_MARKETING_CONSENT } from './marketing'
-import { PRIVACY_POLICY } from './privacy'
+import { privacyPolicy } from './privacy'
 import { REFUND_POLICY } from './refund'
 import { effectiveVersion } from './revisions'
 import { serviceTerms } from './service'
@@ -43,7 +43,7 @@ export function legalDocs(now = new Date()): Record<LegalKey, LegalDoc> {
   const terms = termsVersion(now), privacy = privacyVersion(now)
   return {
     service: { title: LEGAL_TITLES.service, version: terms, ...serviceTerms(now) },
-    privacy: { title: LEGAL_TITLES.privacy, version: privacy, ...PRIVACY_POLICY },
+    privacy: { title: LEGAL_TITLES.privacy, version: privacy, ...privacyPolicy(now) },
     refund: { title: LEGAL_TITLES.refund, version: terms, ...REFUND_POLICY },
     transfer: { title: LEGAL_TITLES.transfer, version: privacy, ...TRANSFER_CONSENT },
     ai: { title: LEGAL_TITLES.ai, version: terms, ...AI_NOTICE },

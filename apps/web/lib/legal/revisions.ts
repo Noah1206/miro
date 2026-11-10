@@ -26,7 +26,16 @@ export const NOTICE_DAYS: Record<Revision['kind'], number> = { minor: 7, major: 
  * 출시 뒤 첫 개정부터 여기에 적는다. 예:
  * { doc: 'service', from: '2026-10-05', to: '2026-11-01', announcedAt: '2026-10-25', kind: 'minor', changes: [{ clause: '제3조 ①', before: '…', after: '…' }] }
  */
-export const REVISIONS: Revision[] = []
+export const REVISIONS: Revision[] = [
+  // 11/11 창작 보상 출금 — 출금을 신청한 크리에이터에게서만 실명·계좌·주민등록번호를 받는다. 수집 항목이 늘어 처리방침 16항대로 30일 전 공지.
+  { doc: 'privacy', from: '2026-11-08', to: '2026-12-11', announcedAt: '2026-11-11', kind: 'major', changes: [
+    { clause: '한눈에 보기·2항(처리 항목)', before: '창작 보상 출금 관련 항목 없음', after: '창작 보상 출금을 신청한 경우: 예금주 실명, 은행·계좌번호, 주민등록번호(암호화 저장), 출금 신청·지급 내역' },
+    { clause: '1항(처리 목적)', before: '창작 보상 출금 목적 없음', after: '창작 보상 출금: 송금, 「소득세법」에 따른 원천징수와 지급명세서 제출' },
+    { clause: '3항(보유 기간)', before: '해당 없음', after: '출금 신청·지급 기록과 실명·계좌·주민등록번호: 지급한 해의 다음 해부터 5년(「국세기본법」 제85조의3), 반려된 신청은 반려 후 1년' },
+    { clause: '5항(제3자 제공)', before: '법령에 따른 경우 제외하고 제공하지 않음', after: '같음 — 원천징수 신고·지급명세서 제출 때 국세청·지방자치단체에 법령에 따라 제공함을 명시' },
+    { clause: '9항(안전성 확보 조치)', before: '주민등록번호 처리 없음', after: '주민등록번호는 AES-256 으로 암호화해 저장하고 출금 처리 화면에서만 복호화' },
+  ] },
+]
 
 /** 한국 날짜 'YYYY-MM-DD'. 약관의 날짜 기준은 모두 한국 시간이다. */
 export const kstDate = (now = new Date()) => now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })

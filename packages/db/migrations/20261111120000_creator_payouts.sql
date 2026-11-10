@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS creator_payouts (
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
   tokens integer NOT NULL,
   gross_krw integer NOT NULL,
-  tax_krw integer NOT NULL,
+  income_tax_krw integer NOT NULL,
+  local_tax_krw integer NOT NULL,
   net_krw integer NOT NULL,
   real_name text NOT NULL,
   rrn_sealed text NOT NULL,
@@ -18,4 +19,5 @@ CREATE TABLE IF NOT EXISTS creator_payouts (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS creator_payouts_user_idx ON creator_payouts (user_id, created_at);
+CREATE INDEX IF NOT EXISTS creator_payouts_decided_idx ON creator_payouts (status, decided_at);
 ALTER TABLE creator_payouts ENABLE ROW LEVEL SECURITY;
