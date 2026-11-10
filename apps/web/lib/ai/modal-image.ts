@@ -66,7 +66,8 @@ Rules:
 // 11/11 언베일 방: 성행위 장면이면 그 행위·자세를 정확히(오랄 장면이 등 돌린 단독 사진으로 나왔다). 상대(남자)는 시점(pov)으로 일부만.
 const MOMENT_ADULT = `
 - This is an adult (18+) explicit scene between consenting adults. If a sexual act is happening, the act and position are the MOST important tags: name them with standard Danbooru tags (e.g. fellatio, deepthroat, kneeling, sex, vaginal, missionary, cowgirl position, doggystyle, paizuri, handjob) and the partner's visible part (1boy, penis, pov, hetero).
-- Keep the character's current clothing state (e.g. open blouse, skirt lift, breasts out) and the place.`
+- Order: act tags first, then the framing that shows the act (fellatio/deepthroat: looking up, pov, from above; doggystyle: from behind; cowgirl: pov, from below; missionary: pov, lying on back), then expression and clothing state (e.g. open blouse, breasts out).
+- At most ONE place tag (e.g. study, living room). No props, doors, furniture or background objects — they pull the picture away from the act.`
 
 /** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). adult = 언베일 모델로 바꿀 때. */
 export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM(), adult = false): Promise<string> {
@@ -78,10 +79,11 @@ export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generat
 }
 
 /** 11/11 미리 깨우기 — 사진 창을 열 때 그 그림체 서버를 미리 띄운다(꺼진 서버 73초 → 켜진 서버 17초 실측). 기다리지 않고, 실패해도 무시. */
-export function warmModalImage(style: string): void {
+export async function warmModalImage(style: string): Promise<void> {
   if (!modalImageReady()) return
-  void fetch(process.env.MIRO_IMAGE_URL!, { method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, style, warm: true }), signal: AbortSignal.timeout(10_000) }).catch(() => {})
+  // 기다려야 요청이 실제로 나간다 — 안 기다리면 서버 함수가 먼저 끝나 깨우기가 안 갔다(11/11 실측 75초). 서버는 띄우기만 하고 바로 답한다.
+  await fetch(process.env.MIRO_IMAGE_URL!, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, style, warm: true }), signal: AbortSignal.timeout(8_000) }).catch(() => {})
 }
 
 /** PNG 바이트. 첫 장은 GPU 준비로 1~2분 걸릴 수 있다. */

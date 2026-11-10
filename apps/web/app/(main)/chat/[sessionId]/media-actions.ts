@@ -138,5 +138,5 @@ export async function warmPhoto(sessionId: string): Promise<void> {
   const loaded = await loadSession(sessionId, user.id)
   if (!loaded) return
   const [c] = await db.select({ audience: characters.audience, slug: characters.slug }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
-  if (c) warmModalImage(styleFor(c.audience, c.slug))
+  if (c) await warmModalImage(styleFor(c.audience, c.slug))
 }
