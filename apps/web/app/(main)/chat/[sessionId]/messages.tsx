@@ -13,13 +13,13 @@ import { CharacterPhoto } from '@/components/character-visual'
 import { UnveilCover } from '@/components/unveil-badge'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
-import { REROLL, useTurns } from './turns'
+import { ENDING_VIEW, REROLL, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
 import { useImmersive } from './immersive'
 import { PhotoButton } from './photo-button'
-import { endingTitle } from '@/lib/novel-ending'
+import { endingReady, endingTitle } from '@/lib/novel-ending'
 
 type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'female'; scenes: Array<{ id: string; label: string; unveil: boolean }> }
 
@@ -54,8 +54,15 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
   const displayed = items.filter(opening.visible)
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
-  // 11/9 웹소설: 처음 결말 표식이 실린 답 뒤에 결말 카드. 표식 줄 자체는 말풍선에서 뺀다.
-  const endingId = displayed.find(m => m.role !== 'user' && endingTitle(m.blocks))?.id
+  // 11/9 웹소설: 결말 표식이 실린 답 뒤에 결말 카드. 표식 줄 자체는 말풍선에서 뺀다.
+  // 11/10: 이어서 하다 다른 엔딩에 닿아도 카드가 뜨게 — 엔딩마다 처음 닿은 답에 하나씩.
+  const endingIds = new Set<string>()
+  { const got = new Set<string>(); for (const m of displayed) { const title = m.role !== 'user' ? endingTitle(m.blocks) : null; if (title && !got.has(title)) { got.add(title); endingIds.add(m.id) } } }
+  // 11/10 엔딩 분기점: 마지막 답이 '엔딩 조건 달성' 표식이고 아직 고르지 않았으면 엔딩 보기/이어서를 묻는다. 그냥 다음 말을 쓰면 이어 가는 것이다.
+  const [skipped, setSkipped] = useState<string | null>(null)
+  const lastReply = [...settled].reverse().find(m => m.role !== 'user' && m.role !== 'system')
+  const readyName = lastReply && settled[settled.length - 1]?.id === lastReply.id && lastReply.id !== skipped ? endingReady(lastReply.blocks) : null
+  const readyDef = readyName ? endings.find(e => e.name === readyName) : undefined
   // 11/10 상태창 — 가장 최근 상태창만 펼쳐 두고 지난 것은 접는다.
   const lastStatusId = [...displayed].reverse().find(m => m.role === 'character' && m.blocks.some(b => b.type === 'status'))?.id
   const end = useRef<HTMLDivElement>(null)
@@ -154,12 +161,12 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
       <AnimatePresence initial={false}>
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
-            <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
+            <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b]) && !endingReady([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
             {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open={m.id === lastStatusId} />}
-            {sessionId && m.id === endingId && <aside className={styles.endingCard}>
+            {sessionId && endingIds.has(m.id) && <aside className={styles.endingCard}>
               {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
                 return <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -169,6 +176,16 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
                   {others.length > 0 && <p>{t('다른 엔딩 {n}개', { n: others.length })}{others.some(e => e.hint) ? ` — ${others.filter(e => e.hint).map(e => e.hint).join(' · ')}` : ''}</p>}
                 </div></> })()}
               <ButtonLink href={`/chat/${sessionId}/novel`} variant="primary" size="sm">{t('웹소설로 받기')}</ButtonLink>
+            </aside>}
+            {sessionId && readyName && m.id === lastReply?.id && !live && <aside className={styles.endingCard} aria-label={t('엔딩 조건 달성')}>
+              <div className={styles.endingInfo}>
+                <strong>{readyDef && <span className={styles.endingGrade} data-grade={readyDef.grade}>{readyDef.grade}</span>}{t('엔딩 조건 달성')} · {readyName}</strong>
+                <p>{t('엔딩을 보면 이야기가 이 결말로 맺어져요. 이어서 하면 다른 엔딩을 찾을 수 있어요.')}</p>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flex: 'none' }}>
+                <button type="button" className={styles.endingSkip} onClick={() => setSkipped(m.id)}>{t('이어서 하기')}</button>
+                <button type="button" className={styles.endingView} onClick={() => window.dispatchEvent(new CustomEvent(ENDING_VIEW, { detail: { name: readyName } }))}>{t('엔딩 보기')}</button>
+              </div>
             </aside>}
           </Line>
         ))}

@@ -28,7 +28,7 @@ export type StartedSession = { sessionId: string; characterId: string; isOfficia
  */
 export async function createRoleplaySession(
   userId: string, key: string,
-  opts: { opening?: string; scene?: string; unveil?: boolean } = {},
+  opts: { opening?: string; scene?: string; unveil?: boolean; fresh?: boolean } = {},
 ): Promise<StartedSession> {
   const found = await db
     .select({
@@ -55,6 +55,11 @@ export async function createRoleplaySession(
   // 미러링을 끈 배포(MIRO_INLINE_MIRROR=0)만 예전처럼 언베일 방을 따로 둔다.
   const separate = unveil && !inlineMirrorEnabled()
   const modeCondition = separate ? isNotNull(roleplaySessions.adultSince) : isNull(roleplaySessions.adultSince)
+  // 11/10 처음부터 다시(다회차) — 지금 방은 보관(archived)으로 남기고 새 방을 연다. 보관한 방도 대화 목록에서 열린다.
+  if (opts.fresh) await db.update(roleplaySessions).set({ status: 'archived' }).where(and(
+    eq(roleplaySessions.userId, userId), eq(roleplaySessions.characterId, character.characterId),
+    eq(roleplaySessions.status, 'active'), isNull(roleplaySessions.deletedAt), modeCondition,
+  ))
   const existing = await db.select({ id: roleplaySessions.id }).from(roleplaySessions)
     .where(and(
       eq(roleplaySessions.userId, userId), eq(roleplaySessions.characterId, character.characterId),

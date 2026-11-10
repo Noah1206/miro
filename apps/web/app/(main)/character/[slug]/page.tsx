@@ -23,7 +23,7 @@ import { StartWithLogin } from './start-button'
 import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
-import { reachedEndings } from '@/lib/ending-collection'
+import { hasActiveRun, reachedEndings } from '@/lib/ending-collection'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -38,13 +38,14 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const can = features()
   const editedDescription = officialDescription(c)
 
-  const [comments, commentCount, similar, likes, unveil, reached] = await Promise.all([
+  const [comments, commentCount, similar, likes, unveil, reached, running] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
     homeUnveilEnabled(user?.id ?? null),
     c.endings.length ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
+    c.endings.length ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
   const me = (text: string | null) => text ?? ''
@@ -159,6 +160,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
               {user
                 ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
                 : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
+              {/* 11/10 다회차 — 엔딩이 있는 작품에서 이미 하던 방이 있으면, 그 방은 남기고 처음부터 새로 시작한다. */}
+              {user && running && <button type="submit" form="start-roleplay" name="fresh" value="1"
+                style={{ display: 'block', margin: '8px auto 0', border: 0, background: 'transparent', color: 'var(--color-text-secondary)', font: 'inherit', fontSize: 13, textDecoration: 'underline', cursor: 'pointer' }}>{t('처음부터 다시 하기 (지금 방은 대화 목록에 남아요)')}</button>}
             </div>
           </div>
         </div>

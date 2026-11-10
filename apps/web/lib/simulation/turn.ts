@@ -84,6 +84,8 @@ async function executeTurn(opts: {
   /** 캐릭터 명령어 이름 또는 접근 가능한 라이브러리 ID — 이번 턴의 대사에만 적용한다. */
   command?: string
   commandId?: string
+  /** 11/10 엔딩 분기점에서 사용자가 '엔딩 보기'를 고른 엔딩 이름 — 이번 응답이 그 엔딩의 에필로그가 된다. */
+  ending?: string
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
   stream?: TurnStream
 }): Promise<ConversationOutcome> {
@@ -100,6 +102,7 @@ async function executeTurn(opts: {
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
     const commandRule = opts.command || opts.commandId ? await resolveChatCommand(userId, loaded.commands, { name: opts.command, sourceId: opts.commandId }) : null
     if ((opts.command || opts.commandId) && !commandRule) return { ok: false, reason: 'command_unavailable' }
+    const endingRule = opts.ending ? loaded.snapshot.character.worldRole.endings?.find(e => e.name === opts.ending) : undefined
     // 11/5: 설명이 [언베일] 로 시작하는 명령어(색마모드 등)는 언베일이 켜진 방에서만 실행한다.
     if (commandRule?.hint.startsWith('[언베일]') && !loaded.adult.turn) return { ok: false, reason: 'command_adult_only' }
     const now = new Date()
@@ -157,7 +160,8 @@ async function executeTurn(opts: {
       const directive = contactBoundaryDirective(boundary, now)
       const firstMeeting = firstPromise ? firstMeetingDirective(firstPromise.when) : ''
       // 서버에서 확인한 한 턴 지시. 이번 대사 한 번만 따른다(기억·관계 규칙은 평소대로).
-      const commandDirective = commandRule ? `사용자가 명령어 /${commandRule.name} 을 썼습니다. 이번 응답 한 번은 다음 지시대로 씁니다(성격·말투·상황은 그대로): ${commandRule.prompt}` : ''
+      const commandDirective = commandRule ? `사용자가 명령어 /${commandRule.name} 을 썼습니다. 이번 응답 한 번은 다음 지시대로 씁니다(성격·말투·상황은 그대로): ${commandRule.prompt}`
+        : endingRule ? `사용자가 엔딩 '${endingRule.name}' 을 보기로 골랐습니다. 이번 응답은 그 엔딩의 에필로그입니다 — 지금까지의 대화를 바탕으로 이야기를 그 결말로 맺는 장면을 쓰고(조건: ${endingRule.condition}${endingRule.epilogue ? ` · 분위기: ${endingRule.epilogue}` : ''}), 마지막 블록을 narrative 로 하고 text 를 정확히 \`— ENDING · ${endingRule.name} —\` 로 씁니다. 사용자의 입력('엔딩 보기')은 대사가 아니라 이 선택입니다.` : ''
       // Keep the provider's usage/provenance getters: a spread would freeze or discard them.
       llm = directive || firstMeeting || commandDirective || thinking ? new Proxy(provider, { get(target, key) {
         if (key === 'generateStructured') return (request: Parameters<typeof provider.generateStructured>[0]) => target.generateStructured({ ...request,
@@ -323,7 +327,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (opts.mode === 'messenger') {
     const requestId = opts.requestId ?? randomUUID()
     try {
@@ -339,7 +343,7 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
   // 같은 글이라도 모델·명령어가 다르면 다른 요청이다(멱등 키).
-  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '') + (opts.commandId ? '\0book:' + opts.commandId : '')
+  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '') + (opts.commandId ? '\0book:' + opts.commandId : '') + (opts.ending ? '\0ending:' + opts.ending : '')
   try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, keyed, opts.requestId)) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached

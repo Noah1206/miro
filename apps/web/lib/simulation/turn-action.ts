@@ -67,7 +67,9 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
   if (input.length === 0) return { error: null, notice: null, limit: null }
   if (opts.mode === 'chat' && await needsPersona(userId, sessionId)) return fail(msg('먼저 이 세계에서의 나를 적어 주세요.'))
 
-  const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
+  // 11/10 엔딩 분기점의 '엔딩 보기' — 이름만 받는다. 서버가 그 작품의 엔딩인지 다시 본다.
+  const ending = !resend && opts.mode === 'chat' ? String(form.get('ending') ?? '').trim().slice(0, 40) || undefined : undefined
+  const r = await runConversationTurn({ userId, sessionId, input, command, commandId, ending, ip: await clientIp(), mode: opts.mode, chatModel: String(form.get('chatModel') ?? 'miro'), tokenCeiling: form.has('tokenCeiling') ? Number(form.get('tokenCeiling')) : undefined, requestId: String(form.get('requestId') ?? '') || undefined, stream: opts.stream })
   if (!r.ok) {
     switch (r.reason) {
       case 'command_unavailable': return fail(msg('명령어를 사용할 수 없어요. 다시 선택해 주세요.'))

@@ -2077,5 +2077,10 @@
  "시작 상황 (선택) — 사용자의 역할, 등장인물과의 관계, 이 장면이 시작되는 상황": "Starting situation (optional) — your role, relationship with the characters, how this scene begins",
  "장소 (선택)": "Location (optional)",
  "시간 (선택)": "Time (optional)",
- "시간": "Time"
+ "시간": "Time",
+ "엔딩 보기": "View ending",
+ "엔딩 조건 달성": "Ending unlocked",
+ "이어서 하기": "Keep playing",
+ "엔딩을 보면 이야기가 이 결말로 맺어져요. 이어서 하면 다른 엔딩을 찾을 수 있어요.": "Viewing it closes the story on this ending. Keep playing to find other endings.",
+ "처음부터 다시 하기 (지금 방은 대화 목록에 남아요)": "Start over (your current chat stays in your list)"
 }

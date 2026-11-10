@@ -10,7 +10,7 @@ export async function startRoleplay(key: string, form?: FormData): Promise<void>
   const user = await requireUser()
   // 고른 시작 상황(상세 화면의 도입부 칩). 이미 대화방이 있으면 무시되고 이어진다.
   const scene = form?.get('scene')
-  const s = await createRoleplaySession(user.id, key, { scene: typeof scene === 'string' ? scene : undefined })
+  const s = await createRoleplaySession(user.id, key, { scene: typeof scene === 'string' ? scene : undefined, fresh: form?.get('fresh') === '1' })
   if (s.created) {
     void track(user.id, 'character_selected', { characterId: s.characterId, official: s.isOfficial })
     void track(user.id, 'rp_started', { sessionId: s.sessionId, characterId: s.characterId })

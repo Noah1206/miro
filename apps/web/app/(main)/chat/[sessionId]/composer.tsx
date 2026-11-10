@@ -13,7 +13,7 @@ import { SuggestButton, SuggestList, type SuggestState } from './suggest-replies
 import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-menu'
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
-import { REROLL, useTurns } from './turns'
+import { ENDING_VIEW, REROLL, useTurns } from './turns'
 import { streamTurn } from './stream-turn'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
@@ -184,8 +184,17 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       form.set('input', input); form.set('requestId', crypto.randomUUID()); form.set('reroll', replyId)
       void send(form, true)
     }
+    const onEnding = (event: Event) => {
+      const { name } = (event as CustomEvent<{ name: string }>).detail
+      const { action: send, ready: canSend, calendarPending: busy } = latest.current
+      if (sending.current || !canSend || busy || !ref.current) return
+      const form = new FormData(ref.current)
+      form.set('input', msg('엔딩 보기')); form.set('ending', name); form.set('requestId', crypto.randomUUID()); form.delete('command'); form.delete('commandId')
+      void send(form, true)   // 쓰던 글은 그대로 둔다
+    }
     window.addEventListener(REROLL, onReroll)
-    return () => window.removeEventListener(REROLL, onReroll)
+    window.addEventListener(ENDING_VIEW, onEnding)
+    return () => { window.removeEventListener(REROLL, onReroll); window.removeEventListener(ENDING_VIEW, onEnding) }
   }, [])
   useEffect(() => {
     if (refreshing) { hadRefresh.current = true; return }

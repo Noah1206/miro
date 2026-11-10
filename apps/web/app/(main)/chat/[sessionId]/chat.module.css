@@ -613,3 +613,7 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 /* 11/10 엔딩 카드 그림 — 만든 사람이 올린 그림. */
 .endingImage { width:54px; height:72px; flex:none; border-radius:8px; object-fit:cover; }
 .endingInfo { flex:1; }
+/* 11/10 엔딩 분기점 버튼 */
+.endingSkip, .endingView { min-height:34px; padding:0 12px; border-radius:var(--radius-md); font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
+.endingSkip { border:1px solid var(--color-border); background:transparent; color:var(--color-text-secondary, inherit); }
+.endingView { border:0; background:var(--color-accent); color:var(--color-white, #fff); }

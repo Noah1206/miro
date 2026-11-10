@@ -5,6 +5,9 @@ import type { Msg } from './messages'
 /** 리롤(10/27): 마지막 답 아래 '다시 받기'가 입력창에 보내는 신호. detail = { replyId, input }. */
 export const REROLL = 'miro:reroll'
 
+/** 11/10 엔딩 분기점의 '엔딩 보기' — 입력창이 그 엔딩의 에필로그를 받는 턴을 보낸다. detail = { name }. */
+export const ENDING_VIEW = 'miro:ending-view'
+
 /** 지금 오고 있는 답(10/9 스트리밍) — 보낸 말과, 저장 전에 받은 블록. 저장된 답이 오면 그것으로 바뀐다. */
 export type LiveTurn = { input: string; blocks: Array<Record<string, unknown>>; playbackId?: string }
 type Turns = {
