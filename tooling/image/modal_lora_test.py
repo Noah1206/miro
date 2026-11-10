@@ -6,6 +6,7 @@ LoRA 는 학습 볼륨(miro-image-train)에서 바로 읽고, 모델은 modal_im
 
 결과: output/lora-test/<프롬프트번호>-<base|siran|siran2>.png
 """
+import re
 from pathlib import Path
 
 import modal
@@ -28,6 +29,23 @@ GLOSS = (', (shiny skin:1.3), (glossy skin:1.2), glowing skin, dewy skin, gliste
          'plump glossy pink lips, cinematic lighting, soft rim light, depth of field, realistic lighting')
 GLOSS_LIGHT = ', soft skin sheen, soft glow, cinematic lighting, soft rim light, depth of field'   # 11/9 표지 전용(사용자: 표지만 광택 약하게) — 프롬프트에 'soft sheen' 을 넣으면 이것('cover art' 는 가짜 글씨가 생김)
 gloss = lambda p: '' if '1girl' not in p or 'matte skin' in p else GLOSS_LIGHT if 'soft sheen' in p else GLOSS.replace(' oiled skin highlights,', '') if 'pale porcelain skin' in p else GLOSS   # 하얀 피부가 구릿빛으로 가면 프롬프트에 (pale porcelain skin:1.2). 남자 단독 그림엔 안 붙인다(11/8, 마른 아들이 근육질로 나옴)
+# 11/9 시선 태그(사용자: "카메라 보면 안 된다니까 — 태그로 나눠서 안 볼 땐 확실하게"): 프롬프트 맨 앞 [away] = 카메라 절대 안 봄, [viewer] = 카메라 봄.
+# [away] 면 프롬프트 속 정면 응시 단어를 지우고, 시선 돌림을 앞에 세게 붙이고, 부정에 정면 응시를 최고 가중치로 넣는다. 태그 없으면 예전 그대로.
+AWAY_POS = '(looking away:1.5), (averted gaze:1.4), (looking to the side:1.2), '
+AWAY_NEG = '(looking at viewer:1.7), (eye contact:1.6), (staring at viewer:1.5), facing viewer, looking at camera'
+_VIEWER_WORDS = re.compile(r'\(?(looking at viewer|eye contact|looking at camera|staring at viewer|glaring at viewer)(:[\d.]+)?\s*\)?,?\s*')
+# 11/9 광택 태그(사용자: "광택을 추가하는 태그"): [gloss] = soft sheen(약한 광택)을 지우고 기본 GLOSS + 아래 강화 단어. matte 부정도 붙인다.
+GLOSS_TAG = '(glossy skin:1.4), (shiny skin:1.3), (skin highlights:1.2), (glossy lips:1.2), (shiny hair:1.2), '
+def gaze(p: str):
+    """줄 앞 태그([away]/[viewer]/[gloss], 여러 개 가능)를 풀어 (프롬프트, 추가 부정) 을 돌려준다. 이름은 예전 그대로."""
+    pre, neg = '', []
+    while p.startswith('['):
+        tag, _, rest = p.partition(']'); tag, p = tag[1:], rest.lstrip()
+        if tag == 'away': pre += AWAY_POS; neg.append(AWAY_NEG); p = _VIEWER_WORDS.sub('', p)
+        elif tag == 'viewer': pre += '(looking at viewer:1.3), '; neg.append('(looking away:1.3)')
+        elif tag == 'gloss': pre += GLOSS_TAG; neg.append('matte skin, dry skin, flat skin'); p = p.replace('soft sheen, ', '').replace(', soft sheen', '')
+        else: raise ValueError(f'unknown tag [{tag}]')
+    return pre + p, ', '.join(neg)
 NEGATIVE = NEGATIVE_BASE + ', nsfw, nude, nipples'   # 기본(일반) — --unveil 이면 노출 차단 단어만 뺀다
 PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 외형, 노출 없음
     '1girl, solo, mature female, adult woman, long black hair, office lady, white blouse, looking at viewer, slight smile, upper body, city night bokeh, masterpiece, high score, great score, absurdres',
@@ -37,7 +55,8 @@ PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 
 ]
 
 
-@app.cls(gpu=['A10G', 'L4', 'A100-40GB'], image=image, volumes={'/cache': cache, '/vol': train_vol}, timeout=900, scaledown_window=60)
+# 11/11 꺼진 서버 73초 vs 켜진 서버 17초(실측) — 마지막 사진 뒤 5분 켜 둔다(이어 찍는 사진이 빠르게). ponytail: 그림체마다 켜진 채 5분 = A10G 약 $0.09, 사용자가 많아지면 메모리 스냅숏으로 켜는 시간을 줄인다
+@app.cls(gpu=['A10G', 'L4', 'A100-40GB'], image=image, volumes={'/cache': cache, '/vol': train_vol}, timeout=900, scaledown_window=300)
 class Gen:
     ckpt: str = modal.parameter(default='siran_v1-step00002000.safetensors')
     wide: bool = modal.parameter(default=False)   # 11/9 가로 그림(1216×832) — 아르덴 장면 사진(사용자: 가로가 더 긴 디자인)
@@ -70,6 +89,10 @@ class Gen:
                              returned_embeddings_type=ReturnedEmbeddingsType.PENULTIMATE_HIDDEN_STATES_NON_NORMALIZED, requires_pooled=[False, True],
                              truncate_long_prompts=False)
 
+    @modal.method()
+    def ping(self) -> bool:   # 11/11 미리 깨우기 — 부르면 load() 까지 끝난 서버가 뜬다
+        return True
+
     def _embeds(self, p: str, n: str) -> dict:
         import torch
         with torch.no_grad():
@@ -92,7 +115,8 @@ class Gen:
             self.pipe.set_adapters(['siran'], adapter_weights=[scale])
         g = torch.Generator('cuda').manual_seed(seed)
         # 어려 보임 차단은 부정 프롬프트 맨 앞(잘리더라도 남게).
-        p, n = TRIGGER[variant] + prompt + gloss(prompt), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, neg] if x)
+        prompt, gneg = gaze(prompt)   # [away]/[viewer] 시선 태그
+        p, n = TRIGGER[variant] + prompt + gloss(prompt), ', '.join(x for x in [NEGATIVE_BASE if unveil else NEGATIVE, gneg, neg] if x)
         ref_img = Image.open(io.BytesIO(ref)).convert('RGB') if ref else Image.new('RGB', (224, 224))
         self.pipe.set_ip_adapter_scale([ref_scale, face_scale] if ref else [0.0, 0.0])
         ref_img = [ref_img, ref_img]
@@ -162,6 +186,9 @@ def image_api(body: dict):
     style = json.load(open('/app/studio_presets.json', encoding='utf-8'))['styles'].get(body.get('style', ''))
     if not style:
         raise HTTPException(status_code=400, detail='unknown style')
+    if body.get('warm'):   # 11/11 사진 창을 열 때 — 기다리지 않고 그 그림체 서버만 띄운다
+        Gen(ckpt=style['ckpt'], base=style.get('base', '')).ping.spawn()
+        return {'ok': True}
     tags = str(body.get('tags', ''))[:1500]
     # 둘이 나오는 장면이면 상대 인물 + '둘이' 를 직접 지시(부정 프롬프트만으로는 셋째 인물이 끼었다, 11/2)
     who = style['partner'] + ', hetero, couple, duo, two people only' if body.get('couple') else 'solo'
