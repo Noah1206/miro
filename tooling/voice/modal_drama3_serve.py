@@ -328,7 +328,7 @@ class Speaker:
         """11/11 한 턴 통째로(사용자: 묶음이 아니라 1턴당 바로, 작품은 인물별 대사 전체를 만들어 잘라 쓰기).
         lines = 대화 순서의 대사 묶음 [{text, voice, delivery}] — 같은 사람이 이어 한 말은 이미 한 줄(앱 spokenSegments).
         목소리가 하나면 한 번에 합성하며 그대로 흘려보낸다. 여럿이면 목소리마다 그 턴의 대사를 전부 한 번에 합성하고,
-        글자 수 비율 근처의 가장 조용한 곳에서 잘라 대화 순서대로 이어 보낸다(사이 쉼 = 앞 줄의 pauseAfterMs). 감정·말투는 목소리마다 첫 줄 것."""
+        글자 수 비율 근처의 가장 조용한 곳에서 잘라 대화 순서대로 이어 보낸다(사이 쉼 = 앞 줄의 pauseAfterMs). 감정·말투는 줄마다(turn_text)."""
         import zlib, numpy as np, torch
         from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
         groups = {}
@@ -337,7 +337,7 @@ class Speaker:
         rate = self.codec.sample_rate
         if len(groups) == 1:
             voice = next(iter(groups))
-            yield from self.speak_stream(delivery_text(' '.join(l['text'] for l in lines), lines[0]), voice)
+            yield from self.speak_stream(turn_text(lines), voice)
             return
         # 11/11 첫소리를 먼저(사용자): 대화 순서대로 필요할 때 만든다 — 그 턴에 한 번만 말하는 인물은 만드는 대로 흘려보내고,
         # 여러 번 말하는 인물은 그 인물의 대사 전체를 한 번에 만든 뒤 잘라 첫 조각부터 보낸다. 뒤 인물은 앞 소리가 재생되는 동안 만든다.
@@ -347,13 +347,13 @@ class Speaker:
             ref_text, codes = self.reference(voice)
             torch.manual_seed(zlib.crc32(voice.encode()))
             with torch.inference_mode():
-                prompt = build_drama3_prompt('<|speaker:0|>' + delivery_text(text, lines[idx[0]]), self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
+                prompt = build_drama3_prompt('<|speaker:0|>' + turn_text([lines[i] for i in idx]), self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
                 wave = trim_tail(self.codec_decode(self.generate(prompt, voice, frame_limit(text))), rate)
             cuts = [0, *split_points(wave, [len(lines[i]['text']) for i in idx], rate), len(wave)]
             for k, i in enumerate(idx): pieces[i] = trim_tail(wave[cuts[k] : cuts[k + 1]], rate)
         for i, line in enumerate(lines):
             voice = line.get('voice') or DEFAULT_VOICE
-            if len(groups[voice]) == 1: yield from self.speak_stream(delivery_text(line['text'], line), voice)
+            if len(groups[voice]) == 1: yield from self.speak_stream(turn_text([line]), voice)
             else:
                 if i not in pieces: make(voice, groups[voice])
                 yield pcm(pieces.pop(i))
@@ -493,7 +493,10 @@ class Speaker:
             if not hmac.compare_digest(request.headers.get('authorization', ''), f'Bearer {key}'): return Response(status_code=401)
             body = await request.json()
             raw = body.get('lines') if isinstance(body.get('lines'), list) else []
-            lines = [{'text': str(l.get('text', '')).strip()[:1400], 'voice': l.get('voice'), 'delivery': l.get('delivery') if isinstance(l.get('delivery'), dict) else {}}
+            dict_or = lambda d: d if isinstance(d, dict) else {}
+            lines = [{'text': str(l.get('text', '')).strip()[:1400], 'voice': l.get('voice'), 'delivery': dict_or(l.get('delivery')),
+                      'parts': [{'text': str(p.get('text', '')).strip()[:1400], 'delivery': dict_or(p.get('delivery'))}
+                                for p in (l.get('parts') if isinstance(l.get('parts'), list) else [])[:24] if isinstance(p, dict) and str(p.get('text', '')).strip()]}
                      for l in raw[:12] if isinstance(l, dict) and str(l.get('text', '')).strip()]
             if not lines: return Response(b'empty text', status_code=400)
             try:
@@ -515,9 +518,26 @@ def delivery_text(text, body):
     if body.get('style') == 'whisper' and 'tone' not in d: d = {**d, 'tone': 'whisper'}
     # 신음이 있는 줄은 흥분한 상태라 말이 빨라진다(10/31 사용자) — AI 가 일부러 느리게(slow) 고른 줄만 그대로 둔다
     if '[moaning' in text and d.get('pace', 'normal') == 'normal': d = {**d, 'pace': 'fast'}
+    # 11/11 신음 줄에 속삭임을 같이 걸면 신음이 눌려 거의 안 들렸다(운영 대사가 거의 다 whisper+moaning) — 신음 줄은 속삭임을 뺀다.
+    if '[moaning' in text and d.get('tone') == 'whisper': d = {**d, 'tone': 'normal'}
     tags = [DELIVERY_TAGS[f].get(d.get(f), '') for f in DELIVERY_TAGS]
     tags = [t for t in tags if t]
     return ('[' + ', '.join(tags) + '] ' if tags else '') + text
+
+
+def turn_text(lines):
+    """11/11 여러 줄을 한 번에 합성할 때 줄마다 감정 지시를 그 줄 앞에 — 바뀔 때만 다시 쓴다(같으면 이어 읽기).
+    예전엔 첫 줄 감정 하나가 턴 전체에 걸려, 갑자기 만져서 놀라는 줄도 앞의 차분한 감정으로 읽혔다."""
+    out, prev = [], None
+    for l in lines:
+        for p in l.get('parts') or [l]:
+            tagged = delivery_text(p['text'], p)
+            tag = tagged[: len(tagged) - len(p['text'])]
+            out.append(tagged if tag != prev else p['text']); prev = tag
+    return ' '.join(out)
+
+if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌는 줄에만 지시
+    assert turn_text([{'text': 'a', 'parts': [{'text': 'a', 'delivery': {}}, {'text': 'b', 'delivery': {'emotion': 'anxious'}}, {'text': 'c', 'delivery': {'emotion': 'anxious'}}]}]) == 'a [anxious] b c'
 
 def _whisper():
     from faster_whisper import WhisperModel

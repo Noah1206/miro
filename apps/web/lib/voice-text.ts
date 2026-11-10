@@ -6,7 +6,9 @@ export type SpokenSegment = { text: string; delivery: VoiceDelivery; speech?: st
   /** 여러 인물 카드에서 카드 이름이 아닌 히로인이 말한 줄(11/4) — 그 히로인 목소리로 읽는다. */
   speaker?: string
   /** 11/11 이 묶음에 든 대사 줄(화면 말풍선 문단) — 말풍선을 눌러 다시 들을 때 맞춘다. */
-  lines: string[] }
+  lines: string[]
+  /** 11/11 줄마다 읽을 글(speech 우선)과 그 줄의 감정 — 한 번에 합성해도 감정은 줄마다 바뀐다(사용자: 갑자기 만졌는데 놀라는 느낌이 없다). */
+  parts: Array<{ text: string; delivery: VoiceDelivery }> }
 /** 대사 화자가 목소리 목록의 어느 히로인인가 — 'speaker' 가 '벨제나 교수'처럼 이름 뒤에 호칭이 붙어도 맞춘다. */
 export const matchSpeaker = (speaker: string, names: readonly string[]) => names.find(n => speaker === n || speaker.startsWith(n)) ?? null
 /** 한 번에 합성하는 최대 글자 — 합성 서버 상한(600)보다 조금 작게. */
@@ -18,7 +20,10 @@ const MERGE_MAX = 500
  * 카드 이름으로 말한 줄이 없으면 가장 많이 말한 사람이 주인공이다(작품 제목이 카드 이름이고 대사 화자는 실명인 경우) — 그 사람은 카드 목소리.
  */
 export function spokenSegments(blocks: Array<Record<string, unknown>>, content: string, characterName?: string, speakers: readonly string[] = []): SpokenSegment[] {
-  if (!blocks.length) return content.trim() ? [{ text: content.trim().slice(0, SPOKEN_MAX), delivery: voiceDelivery(null), lines: [content.trim().slice(0, SPOKEN_MAX)] }] : []
+  if (!blocks.length) {
+    const text = content.trim().slice(0, SPOKEN_MAX)
+    return text ? [{ text, delivery: voiceDelivery(null), lines: [text], parts: [{ text, delivery: voiceDelivery(null) }] }] : []
+  }
   const lines: Array<{ text: string; speech: string | null; delivery: VoiceDelivery; speaker: string | null }> = []
   let remaining = SPOKEN_MAX, whisper = false
   for (const block of blocks) {
@@ -51,10 +56,11 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
       last.text = prevText + ' ' + l.text
       if (prevSpeech !== undefined || l.speech) last.speech = (prevSpeech ?? prevText) + ' ' + (l.speech ?? l.text)
       last.lines.push(l.text)
+      last.parts.push({ text: l.speech ?? l.text, delivery: l.delivery })
       last.delivery = { ...last.delivery, pauseAfterMs: l.delivery.pauseAfterMs }
       continue
     }
-    result.push({ text: l.text, delivery: l.delivery, lines: [l.text], ...(l.speech ? { speech: l.speech } : {}), ...(l.speaker ? { speaker: l.speaker } : {}) })
+    result.push({ text: l.text, delivery: l.delivery, lines: [l.text], parts: [{ text: l.speech ?? l.text, delivery: l.delivery }], ...(l.speech ? { speech: l.speech } : {}), ...(l.speaker ? { speaker: l.speaker } : {}) })
   }
   return result
 }

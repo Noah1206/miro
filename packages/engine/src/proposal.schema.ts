@@ -214,7 +214,7 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
       pace: { type: 'string', enum: [...VOICE_PACES] }, intensity: { type: 'string', enum: [...VOICE_INTENSITIES] },
       pauseAfterMs: { type: 'integer', minimum: 0, maximum: 1500 },
     } },
-    speech: text('Adult scenes only, dialogue only: same text with vocal tags inserted; omit otherwise. Never shown.') },
+    speech: text('Adult scenes only, dialogue only: same text with vocal tags and muffled sound syllables inserted; omit otherwise. Never shown.') },
     required: ['type', 'text'] } } }, required: ['blocks'] },
   emotion: { type: 'string', enum: ['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious'] },
   intent: text('at most 80 characters'),

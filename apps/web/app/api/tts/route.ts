@@ -67,15 +67,10 @@ export async function POST(req: Request) {
   // 11/10 동기 합성(운영 기본 경로)은 회원당 분당 30회·하루 600회.
   if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
   // 11/11 한 턴 통째(사용자: 묶음이 아니라 1턴당 바로) — 대화 순서의 묶음과 각 목소리를 넘기면 서버가 목소리마다 한 번에 합성해 잘라 순서대로 흘려보낸다.
-  // 감정·말투는 같은 사람이면 그 턴의 첫 묶음 것 하나.
+  // 11/11 감정은 줄마다(parts) — 서버가 바뀌는 줄 앞에 지시를 끼운다. 목소리 결은 한 번에 합성해 그대로.
   if (body?.turn === true && tts.speakTurn) {
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-    const first = new Map<string, (typeof segments)[number]['delivery']>()
-    const lines = await Promise.all(segments.map(async s => {
-      const key = s.speaker ?? ''
-      if (!first.has(key)) first.set(key, s.delivery)
-      return { text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: first.get(key)! }
-    }))
+    const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts })))
     if (lines.some(l => !l.voice)) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
     try {
       const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko' }, AbortSignal.any([req.signal, AbortSignal.timeout(170_000)]))
