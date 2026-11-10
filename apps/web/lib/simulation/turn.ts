@@ -86,6 +86,8 @@ async function executeTurn(opts: {
   commandId?: string
   /** 11/10 엔딩 분기점에서 사용자가 '엔딩 보기'를 고른 엔딩 이름 — 이번 응답이 그 엔딩의 에필로그가 된다. */
   ending?: string
+  /** 11/10 사용자가 출력량 팝업에서 고른 생각 강도 — 없으면 작품 권장값. */
+  thinking?: 'low' | 'medium' | 'high'
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
   stream?: TurnStream
 }): Promise<ConversationOutcome> {
@@ -116,8 +118,8 @@ async function executeTurn(opts: {
     const dialogueModelId = model.modelId
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
     const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
-    const thinking = charSettings?.rec?.thinking
-    const thinkScale = thinking ? { medium: 2, high: 3, xhigh: 4, max: 5 }[thinking] : 1
+    const thinking = opts.thinking ?? charSettings?.rec?.thinking
+    const thinkScale = thinking ? ({ low: 1, medium: 2, high: 3, xhigh: 4, max: 5 } as const)[thinking] ?? 1 : 1
     // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
     const offerUnveil = () => loaded.adult.since === null ? unveilOfferFor(userId, loaded.characterId, sessionId).catch(() => null) : Promise.resolve(null)
     const importance = importanceScore(interactionImportance(input))
@@ -327,7 +329,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; thinking?: 'low' | 'medium' | 'high'; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (opts.mode === 'messenger') {
     const requestId = opts.requestId ?? randomUUID()
     try {
@@ -343,7 +345,7 @@ export async function runConversationTurn(opts: { userId: string; sessionId: str
   if (opts.input.length > MAX_INPUT) return { ok: false, reason: 'too_long' }
   let request
   // 같은 글이라도 모델·명령어가 다르면 다른 요청이다(멱등 키).
-  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '') + (opts.commandId ? '\0book:' + opts.commandId : '') + (opts.ending ? '\0ending:' + opts.ending : '')
+  const keyed = (opts.chatModel === 'pro' ? opts.input + '\0miro-pro' : opts.chatModel && opts.chatModel !== 'miro' ? opts.input + '\0model:' + opts.chatModel : opts.input) + (opts.command ? '\0cmd:' + opts.command : '') + (opts.commandId ? '\0book:' + opts.commandId : '') + (opts.ending ? '\0ending:' + opts.ending : '') + (opts.thinking ? '\0think:' + opts.thinking : '')
   try { request = await measured('chat.gateway', () => beginRequest(opts.userId, opts.sessionId, keyed, opts.requestId)) }
   catch (error) { return { ok: false, reason: error instanceof SessionUnavailableError ? error.reason : 'conflict' } }
   if (request.cached) return request.cached

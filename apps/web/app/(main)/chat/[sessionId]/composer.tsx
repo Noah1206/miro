@@ -14,6 +14,7 @@ import { ChatSlashMenu, type SelectedCommand } from '@/components/chat-slash-men
 import { COPY } from '@/lib/copy'
 import type { TurnState } from '@/lib/simulation/turn-action'
 import { ENDING_VIEW, REROLL, useTurns } from './turns'
+import { useChatThinking } from '@/components/reply-length-sheet'
 import { streamTurn } from './stream-turn'
 import { subject } from '@/lib/format'
 import { msg } from '@/lib/i18n'
@@ -88,7 +89,10 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const router = useRouter()
   const { refreshBalance, wallet, openRecharge } = useWallet()
   const choice = modelOptions.choices?.find(c => c.id === model) ?? modelOptions.choices?.find(c => c.length === (model === 'pro' ? 'long' : 'scene'))
-  const tokenCeiling = choice ? Math.min(choice.maximumTokens, wallet?.available ?? choice.maximumTokens) : undefined
+  // 11/10 생각 강도 — 서버가 강도만큼 턴 한도를 늘리므로(turn.ts thinkScale) 보내는 상한도 같이 늘린다.
+  const [thinking] = useChatThinking()
+  const thinkScale = thinking === 'medium' ? 2 : thinking === 'high' ? 3 : 1
+  const tokenCeiling = choice ? Math.min(choice.maximumTokens * thinkScale, wallet?.available ?? choice.maximumTokens * thinkScale) : undefined
   const previousModel = useRef(model)
   useEffect(() => { if (previousModel.current !== model) { setRequestId(crypto.randomUUID()); previousModel.current = model } }, [model])
   const [requestId, setRequestId] = useState('')
@@ -235,6 +239,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="command" value={command?.name ?? ''} />
+        {thinking !== 'auto' && <input type="hidden" name="thinking" value={thinking} />}
         <input type="hidden" name="commandId" value={command?.sourceId ?? ''} />
         {/* 고른 명령어(10/19) — 이번 턴만 이 지시대로. 글을 덧붙이지 않아도 보낼 수 있다. */}
         {command && <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>

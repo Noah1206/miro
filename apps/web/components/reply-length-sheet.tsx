@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Sheet } from '@/components/ui/sheet'
 import { Button } from '@/components/ui'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
@@ -16,6 +16,18 @@ const OPTIONS: Array<{ value: Length; label: string; rate: string; chars: string
   { value: 'saga', label: '아주 길게', rate: '2.5x', chars: '약 2,500자', hint: '한 턴을 웹소설 한 회처럼 길게' },
 ]
 
+export type Thinking = 'auto' | 'low' | 'medium' | 'high'
+const THINKING_KEY = 'miro:chat-thinking', THINKING_EVENT = 'miro:chat-thinking'
+const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'auto', label: '작품 기본' }, { value: 'low', label: '낮음' }, { value: 'medium', label: '보통' }, { value: 'high', label: '높음' }]
+const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return v === 'low' || v === 'medium' || v === 'high' ? v : 'auto' } catch { return 'auto' } }
+const subscribe = (on: () => void) => { window.addEventListener(THINKING_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(THINKING_EVENT, on); window.removeEventListener('storage', on) } }
+/** 11/10 생각 강도(effort) — 이 기기에서 고른 값. 입력창이 턴마다 싣고, 서버는 작품 권장값보다 이 값을 먼저 쓴다. */
+export function useChatThinking(): [Thinking, (v: Thinking) => void] {
+  const value = useSyncExternalStore(subscribe, readThinking, () => 'auto' as Thinking)
+  const set = (v: Thinking) => { try { if (v === 'auto') localStorage.removeItem(THINKING_KEY); else localStorage.setItem(THINKING_KEY, v) } catch { /* 이번 화면에서만 */ } window.dispatchEvent(new Event(THINKING_EVENT)) }
+  return [value, set]
+}
+
 /** 채팅방 메뉴의 '출력량 설정' 팝업. 고른 길이는 지금 모델의 같은 회사 길이 선택지로 바꿔 저장된다(모델 선택과 같은 저장소). */
 export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; onClose: () => void; choices: ChatModelChoice[] }) {
   const t = useT()
@@ -24,11 +36,13 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
   const selected = selectedChatChoice(choices, model)
   const current = (selected?.length ?? 'scene') as Length
   const [pick, setPick] = useState<Length>(current)
-  useEffect(() => { if (open) setPick(current) }, [open, current])
+  const [thinking, setThinking] = useChatThinking()
+  const [think, setThink] = useState<Thinking>(thinking)
+  useEffect(() => { if (open) { setPick(current); setThink(thinking) } }, [open, current, thinking])
   const variant = (value: Length) => selected ? choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value) : undefined
-  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); onClose() }
+  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); setThinking(think); onClose() }
 
-  return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.62, full: 0.9 }}>
+  return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.78, full: 0.92 }}>
     <div className="stack" style={{ gap: 12, padding: '0 var(--space-4) var(--space-5)' }}>
       <p className="t-caption" style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{t('캐릭터 답변 한 번의 길이예요. 길수록 토큰을 더 써요.')}</p>
       <div role="radiogroup" aria-label={t('출력량')} className="stack" style={{ gap: 8 }}>
@@ -48,6 +62,17 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
             </span>
           </button>
         })}
+      </div>
+      {/* 생각 강도 — 높일수록 답을 더 깊게 다듬지만 느려지고 토큰을 더 쓴다(턴당 최대 토큰이 강도만큼 늘어난다). */}
+      <div className="stack" style={{ gap: 8, marginTop: 8 }}>
+        <strong style={{ fontSize: 15, fontWeight: 700 }}>{t('생각 강도')}</strong>
+        <p className="t-caption" style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{t('높일수록 답을 더 깊게 다듬지만, 느려지고 토큰을 더 써요.')}</p>
+        <div role="radiogroup" aria-label={t('생각 강도')} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
+          {THINKING.map(o => { const on = think === o.value
+            return <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => setThink(o.value)}
+              style={{ minHeight: 40, borderRadius: 'var(--radius-md)', font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                border: `1.5px solid ${on ? 'var(--color-accent)' : 'var(--color-border)'}`, background: on ? 'color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-1))' : 'var(--color-surface-1)', color: on ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{t(o.label)}</button> })}
+        </div>
       </div>
       <Button variant="primary" full onClick={apply} disabled={!variant(pick)}>{t('적용')}</Button>
     </div>
