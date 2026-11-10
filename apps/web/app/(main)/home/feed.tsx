@@ -25,7 +25,7 @@ export function StoryCard({ c }: { c: HomeCard }) {
   return <TransitionLink className={styles.story} href={`/character/${c.slug || c.id}`} aria-label={`${c.name}, ${c.role || t('이야기 살펴보기')}`}>
     <div className={styles.poster}>
       <CharacterVisual name={c.name} accent={c.accentA} slug={c.slug || c.id} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio="4 / 5" shared={false} scrim={false} style={{ borderRadius: 0 }} />
-      {c.coverUnveil && <UnveilCover veiled={c.veiled} label={t('언베일')} hideLabel />}
+      {c.coverUnveil && photo === c.images[0] && <UnveilCover veiled={c.veiled} label={t('언베일')} hideLabel={!c.veiled} />}
     </div>
     <CardDetails c={c} />
   </TransitionLink>
