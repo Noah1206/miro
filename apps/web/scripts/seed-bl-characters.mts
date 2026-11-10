@@ -26,6 +26,7 @@ import { MALE_CHARACTERS_B, SCENE_OPENINGS_B } from './male-characters-b.data.mt
 import { MALE_CHARACTERS_C } from './male-characters-c.data.mts'
 import { MALE_CHARACTERS_D } from './male-characters-d.data.mts'
 import { MALE_CHARACTERS_E } from './male-characters-e.data.mts'
+import { MALE_CHARACTERS_F } from './male-characters-f.data.mts'
 import { SCENE_OPENINGS as SCENE_OPENINGS_BASE } from './scene-openings.data.mts'
 import { FEMALE_PUBLIC } from './bl-characters-public.data.mts'
 import { MALE_BODY, MALE_COVER_UNVEIL, MALE_GUIDE, MALE_INTRO, MALE_PUBLIC, MALE_ROSTER, MALE_VOICES, MALE_SPEECH, MALE_START } from './male-characters-public.data.mts'
@@ -60,7 +61,7 @@ function withMalePublic(s: Seed): Seed {
 const AI_COPY = new URL('../lib/editorial/official-ai.json', import.meta.url)
 async function writeMaleAiCopy() {
   const { aiSourceHash } = await import('../lib/editorial/official-copy')
-  const male = [...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E].filter(s => MALE_PUBLIC[s.slug])
+  const male = [...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E, ...MALE_CHARACTERS_F].filter(s => MALE_PUBLIC[s.slug])
   writeFileSync(AI_COPY, JSON.stringify(Object.fromEntries(male.map(s => [s.slug, {
     sourceHash: aiSourceHash(withMalePublic(s)),
     personality: s.personality, secret: s.secret, values: s.values, speechStyle: s.speechStyle, startingContext: s.startingContext,
@@ -85,7 +86,7 @@ function withSceneOpenings(s: Seed): Seed {
 // 4차(10/19): 작품 6개의 서브공 19명 — 작품 세계를 이어받은 1:1 캐릭터.
 // --only=<slug> 이면 그 캐릭터 하나만 다룬다(11/1, 다른 미반영 slug 가 같이 들어가지 않게).
 const ONLY = process.argv.find(a => a.startsWith('--only='))?.slice(7)
-const ALL: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO, ...SEEDS_MALE, ...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E].filter(s => !ONLY || s.slug === ONLY).map(withSceneOpenings).map(withMalePublic)   // --only 를 먼저 걸러 다른 작품의 쓰다 만 데이터에 막히지 않게(11/4)
+const ALL: Seed[] = [...SEEDS_1, ...SEEDS_2, ...SEEDS_3, ...SEEDS_4_TIGER, ...SEEDS_4_TAEGYEONG, ...SEEDS_4_SION, ...SEEDS_4_MU, ...SEEDS_4_HANGYEOL, ...SEEDS_4_IDO, ...SEEDS_MALE, ...MALE_CHARACTERS_A, ...MALE_CHARACTERS_B, ...MALE_CHARACTERS_C, ...MALE_CHARACTERS_D, ...MALE_CHARACTERS_E, ...MALE_CHARACTERS_F].filter(s => !ONLY || s.slug === ONLY).map(withSceneOpenings).map(withMalePublic)   // --only 를 먼저 걸러 다른 작품의 쓰다 만 데이터에 막히지 않게(11/4)
 const SEEDS = ONLY ? ALL.filter(s => s.slug === ONLY) : ALL
 if (ONLY && !SEEDS.length) throw new Error(`no seed ${ONLY}`)
 
