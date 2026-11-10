@@ -23,6 +23,8 @@ SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
 # stream_check 실측(희아, 248프레임): 코덱은 뒤를 보지 않는다(보류 프레임 차이 0) — 그런데 기억이 길어 앞 48·128프레임만 문맥으로 주면 소리가 갈렸고
 # (최대 차이 0.52·0.10), 256프레임 이상·처음부터 전부는 한 번에 푼 것과 같았다(0.007, 수치 흔들림 수준). 처음부터 다시 풀어도 16조각에 0.34초라 전부 준다.
 STREAM_FIRST, STREAM_EVERY, STREAM_CTX, STREAM_HOLD = 8, 16, 1 << 20, 0
+# 11/11 견본 배경 걷어냄(modal_clean_refs.py, Demucs) — 견본을 바꾸면 이 값을 바꿔 배포해야 상태 저장(견본·준비 상태가 든)이 새로 만들어진다.
+REFS_VERSION = '2026-11-11-vocals-squeezed'
 # 11/11 켜질 때 미리 준비할 목소리(운영 official_voices 활성 11개 + 기본) — provider_voice_id. 목소리를 새로 열면 여기에 더한다.
 def split_points(wave, lengths, rate):
     """한 번에 합성한 소리를 줄마다 자를 자리 — 글자 수 비율로 짐작한 곳 앞뒤 15% 안에서 가장 조용한 곳(160ms 평균 세기가 가장 낮은 곳)."""
@@ -39,6 +41,15 @@ def split_points(wave, lengths, rate):
         at = lo + int(np.argmin(smooth[lo:hi])) if hi > lo else min(n - 1, max(prev + 1, expect))
         cuts.append(at * win); prev = at
     return cuts
+
+def trim_tail(wave, rate, floor=0.004, keep=0.25):
+    """끝의 침묵은 0.25초만 남긴다(11/11 — 견본 침묵을 흉내 낸 긴 끝을 자른다)."""
+    import numpy as np
+    win = max(1, int(rate * 0.02)); n = len(wave) // win
+    if n < 2: return wave
+    loud = np.sqrt(np.mean(wave[: n * win].reshape(n, win) ** 2, axis=1)) >= floor
+    if not loud.any(): return wave[: int(rate * keep)]
+    return wave[: min(len(wave), (int(n - np.argmax(loud[::-1])) * win) + int(rate * keep))]
 
 def frame_limit(text):
     """생성 프레임 상한(초당 약 21.5프레임). 11/11 한 턴 통째 합성 때문에 1536(71초)→4096(190초) — CUDA 그래프 용량은 프롬프트 포함 10240줄."""
@@ -87,6 +98,7 @@ class Speaker:
         # 11/11 쓰는 목소리는 켜질 때 미리 준비(목소리 샘플까지 읽은 상태) — 상태 저장 안에 들어가 되살아난 서버는 목소리마다 첫 요청 7.5초가 없다.
         from collections import OrderedDict
         self.prefixes = OrderedDict()
+        print('refs', REFS_VERSION, flush=True)
         for voice in PREWARM_VOICES:
             try: self._prewarm_voice(voice)
             except Exception as e: print('prewarm failed', voice[:8], type(e).__name__, flush=True)
@@ -292,7 +304,7 @@ class Speaker:
         limit = frame_limit(text)
         torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
         import time
-        sent, first, t0 = 0, True, time.perf_counter()
+        sent, first, t0, quiet, rate = 0, True, time.perf_counter(), 0, self.codec.sample_rate
         with torch.inference_mode():
             prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
             for frames, rows, produced, done in self._decode(prompt, voice or DEFAULT_VOICE, limit, every=STREAM_FIRST):
@@ -306,6 +318,10 @@ class Speaker:
                 per = len(wave) // (upto - start)
                 chunk = wave[(sent - start) * per :]
                 sent, first = upto, False
+                # 11/11 안전망: 2초 넘게 소리가 없으면 말이 끝난 것 — 남은 침묵을 만들지 않고 멈춘다(견본 침묵을 흉내 내 1분 넘게 이어진 적이 있다).
+                quiet = quiet + len(chunk) if np.sqrt(np.mean(chunk ** 2)) < 0.004 else 0
+                if quiet > rate * 2:
+                    yield (np.clip(chunk[: int(rate * 0.3)], -1, 1) * 32767).astype('<i2').tobytes(); return
                 yield (np.clip(chunk, -1, 1) * 32767).astype('<i2').tobytes()
 
     def speak_turn(self, lines):
@@ -332,9 +348,9 @@ class Speaker:
             torch.manual_seed(zlib.crc32(voice.encode()))
             with torch.inference_mode():
                 prompt = build_drama3_prompt('<|speaker:0|>' + delivery_text(text, lines[idx[0]]), self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
-                wave = self.codec_decode(self.generate(prompt, voice, frame_limit(text)))
+                wave = trim_tail(self.codec_decode(self.generate(prompt, voice, frame_limit(text))), rate)
             cuts = [0, *split_points(wave, [len(lines[i]['text']) for i in idx], rate), len(wave)]
-            for k, i in enumerate(idx): pieces[i] = wave[cuts[k] : cuts[k + 1]]
+            for k, i in enumerate(idx): pieces[i] = trim_tail(wave[cuts[k] : cuts[k + 1]], rate)
         for i, line in enumerate(lines):
             voice = line.get('voice') or DEFAULT_VOICE
             if len(groups[voice]) == 1: yield from self.speak_stream(delivery_text(line['text'], line), voice)
