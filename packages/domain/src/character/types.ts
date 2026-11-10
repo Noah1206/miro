@@ -7,6 +7,9 @@ import type { BondingCurve } from '../relationship/dynamics'
 import type { RelationshipProfile } from '../relationship/profile'
 
 /** 스탯 하나(11/10, 크랙 스탯 설정) — 범위 안에서만 움직인다. description 은 AI 가 언제 얼마나 바꿀지 판단하는 설명. */
+/** 엔딩 하나(11/10, 크랙 엔딩 설정) — 최소 턴이 지난 뒤 조건이 장면에서 충족되면 AI 가 결말 표식(— ENDING · 이름 —)을 남긴다. */
+export type CharacterEnding = { name: string; grade: 'N' | 'R' | 'SR' | 'SSR'; minTurns: number; condition: string; epilogue?: string; hint?: string }
+
 export type CharacterStat = { name: string; min: number; max: number; default: number; unit?: string; description: string }
 
 /** AI 가 낸 새 스탯 값을 정의된 스탯·범위로 자른다. 모르는 이름·숫자 아닌 값은 버린다. */
@@ -63,6 +66,8 @@ export type CharacterCore = {
     statusFormat?: string
     /** 스탯(11/10) — 대화방마다 값이 움직이는 수치. */
     stats?: CharacterStat[]
+    /** 엔딩(11/10) — 조건이 충족되면 결말 표식을 남긴다. */
+    endings?: CharacterEnding[]
   }
 
   visualIdentityId: string | null

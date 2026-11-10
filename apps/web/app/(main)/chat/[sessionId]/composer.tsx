@@ -27,12 +27,14 @@ const KEEP_WAITING_MS = 12_000
 const SLOW_NOTICE_MS = 12_000
 
 /** 자유 입력. 선택지 없음. 보내는 동안엔 "답을 고르고 있다" — 기계 느낌을 줄인다 (DESIGN §24). 모델 선택은 입력란과 설정 메뉴에서 공유한다. */
-export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo }: {
+export function ChatComposer({ sessionId, characterName, modelOptions, messengerHref, commands = [], photo, firstReplies }: {
   sessionId: string; characterName: string; modelOptions: ComponentProps<typeof ModelPicker>; messengerHref?: string
   /** 제작자가 붙인 명령어(10/19). `/` 버튼으로 골라 보내면 그 턴만 지시대로 쓴다. */
   commands?: Array<{ name: string; hint: string }>
   /** 사진 버튼(11/2) — 사진 생성이 켜진 방에서만 넘긴다. */
   photo?: { unveil: boolean; bundle: boolean; audience?: 'male' | 'female'; scenes?: Array<{ id: string; label: string; unveil: boolean }> }
+  /** 추천 첫 답변(11/10, 크랙) — 첫 턴에만 넘긴다. 입력창 위에 미리 띄운다. *별표* 는 행동. */
+  firstReplies?: string[]
   /** 페르소나 드롭다운(11/3) — 모델 선택 옆. */
   persona?: ComponentProps<typeof PersonaPicker>
 }) {
@@ -41,7 +43,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   const [state, setState] = useState<TurnState>({ error: null, notice: null, limit: null })
   const [pending, setPending] = useState(false)
   // 추천 답변(11/3) — 후보 3개와 실패 문구.
-  const [suggest, setSuggest] = useState<SuggestState>(null)
+  const [suggest, setSuggest] = useState<SuggestState>(() => firstReplies?.length ? firstReplies.map(asSuggestion) : null)
   const [suggestError, setSuggestError] = useState('')
   const [command, setCommand] = useState<SelectedCommand | null>(null)
   const [refreshing, startRefresh] = useTransition()
@@ -264,4 +266,11 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       </form>
     </div>
   )
+}
+
+/** 작품이 적은 추천 첫 답변 한 줄 → 추천 카드. *별표* 안은 행동, 나머지는 대사. */
+function asSuggestion(line: string): { say: string; act: string } {
+  const act = [...line.matchAll(/\*([^*]+)\*/g)].map(m => m[1]!.trim()).join(' ')
+  const say = line.replace(/\*[^*]+\*/g, '').trim().replace(/^"|"$/g, '')
+  return { say, act }
 }

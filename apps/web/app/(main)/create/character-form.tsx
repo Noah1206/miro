@@ -1,20 +1,24 @@
 'use client'
-import { introDialogue, sampleDialogue } from '@/lib/intro-dialogue'
+import { introDialogue, introScenes, sampleDialogue } from '@/lib/intro-dialogue'
 import { ContactSettings, RelationshipSettings } from './creation-settings'
 import type { ProfileStatus } from './profile-settings'
-import type { RelationshipProfile } from '@miro/domain'
+import type { CharacterEnding, CharacterStat, RelationshipProfile } from '@miro/domain'
 import type { ContactCapabilities } from '@/lib/reality/channels'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'motion/react'
 import { GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
-import { CreateHeader, type CreateTab } from './header'
+import { CreateHeader, StepNav, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
 import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
 import { PhotoScenesEditor } from './photo-scenes-editor'
 import { PresetPersonasEditor } from './preset-personas-editor'
+import { StatusEditor } from './status-editor'
+import { ExamplesEditor } from './examples-editor'
+import { EndingsEditor } from './endings-editor'
+import { ExtraScenesEditor } from './extra-scenes-editor'
 import type { UserPersona } from '@miro/domain'
 import type { CustomPhotoScene } from '@/lib/photo-scenes'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
@@ -58,6 +62,13 @@ export type FormInitial = {
   presetPersonas?: UserPersona[]
   personaGuide?: string
   personaRequired?: boolean
+  /** 상태창·스탯(11/10, 크랙 INFO 블록) */
+  statusFormat?: string
+  stats?: CharacterStat[]
+  /** 플레이 가이드·추천 첫 답변(11/10, 크랙 시작 설정) */
+  playGuide?: string
+  firstReplies?: string[]
+  endings?: CharacterEnding[]
   recommendedModel: string; recommendedLength: 'scene' | 'long' | 'saga'; recommendedThinking: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; adultOnly?: boolean
   /** 명령어(10/19) — 채팅에서 /이름 으로 부르는 한 턴 지시의 복사본. */
   commands: CharacterCommand[]
@@ -340,8 +351,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
             </Card>
           </Section>
 
-          {/* 상황 예시(10/28): 칸은 지웠다(사용자 요청). 이미 적힌 예시는 지우지 않게 그대로 보낸다. */}
-          <input type="hidden" name="sampleDialogue" value={JSON.stringify(sampleDialogue(i.sampleDialogue))} />
         </Panel>
 
         {/* ── 세계관 ── */}
@@ -354,6 +363,13 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               </LabeledField>
             </Card>
           </Section>
+          {/* 전개 예시(11/10, 크랙 스토리 설정) — 10/28 사용자 요청으로 화면에서 뺐던 상황 예시를 고급 설정 안에 접어서 되살렸다. 이미 적힌 예시는 그대로 이어받는다. */}
+          <details className="create-advanced">
+            <summary>{t('고급 설정 · 전개 예시')}</summary>
+            <Section title={t('전개 예시 · 선택')} subtitle={t('유저가 이렇게 말하면 캐릭터는 이렇게 답한다는 예시예요. 최대 3쌍. AI가 말투와 분량의 기준으로 삼아요.')}>
+              <ExamplesEditor defaultValue={sampleDialogue(i.sampleDialogue)} characterName={name} />
+            </Section>
+          </details>
           <input type="hidden" name="lore" value={JSON.stringify(i.lore)} />
 
         </Panel>
@@ -460,12 +476,41 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('준비된 페르소나 · 선택')} subtitle={t('대화를 시작할 때 사용자가 고를 수 있는 \'나\'예요. 고른 뒤에 고쳐 쓸 수도 있어요.')}>
             <PresetPersonasEditor defaultValue={i.presetPersonas ?? []} />
           </Section>
+          {/* 플레이 가이드·추천 첫 답변(11/10, 크랙 시작 설정) — 둘 다 사용자 화면에만 보이고 AI 에는 가지 않는다. */}
+          <Section title={t('플레이 가이드 · 선택')} subtitle={t('첫 화면에 사용자에게만 보이는 안내예요. AI는 이 글을 읽지 않아요. 어떻게 놀면 좋은지 알려 주세요.')}>
+            <CountedTextArea name="playGuide" ariaLabel={t('플레이 가이드')} max={500} rows={3} defaultValue={i.playGuide ?? ''}
+              placeholder={t('예) 매일 해 질 녘에 습격이 와요. 죽으면 같은 날 아침으로 돌아가니, 무엇이 달라졌는지 살펴보세요.')} />
+          </Section>
+          <Section title={t('추천 첫 답변 · 선택')} subtitle={t('첫 대화에서 입력창 위에 미리 떠 있는 답이에요. 최대 3개, 행동은 *별표* 로 감싸요.')}>
+            <div className="stack" style={{ gap: 8 }}>
+              {[0, 1, 2].map(n => <CountedInput key={n} name="firstReplies" ariaLabel={t('추천 첫 답변 {n}', { n: n + 1 })} max={80}
+                placeholder={[t('예) *주위를 둘러본다* 여기가… 어디지?'), t('예) 오늘은 정말 일찍 퇴근할 거예요.'), t('예) 처음 뵙겠습니다.')][n]} defaultValue={i.firstReplies?.[n] ?? ''} />)}
+            </div>
+          </Section>
         </Panel>
         <Panel id="intro-dialogue" show={tab === 'intro'}>
           <Section title={t('인트로 대화')} subtitle={t('새 채팅이 열릴 때 캐릭터가 먼저 건네는 말이에요. 비워 두면 사용자가 먼저 말을 걸어요.')}>
             <div className="create-intro-editor">
               <DialogueEditor intro fill name="introDialogue" characterName={name} defaultValue={genIntro ?? introDialogue(i.sampleDialogue)} />
             </div>
+          </Section>
+          {/* 시작 설정 추가(11/10, 크랙) — 첫 장면 말고 다른 시작 상황. 사용자는 소개 페이지에서 고른다. */}
+          <details className="create-advanced" open={introScenes(i.sampleDialogue).length > 1}>
+            <summary>{t('시작 설정 추가 · 선택')}</summary>
+            <ExtraScenesEditor characterName={name} defaultValue={introScenes(i.sampleDialogue).slice(1).map(scene => ({ scene, lines: introDialogue(i.sampleDialogue, scene) }))} />
+          </details>
+        </Panel>
+
+        {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
+        <Panel id="status" show={tab === 'status'}>
+          <Section title={t('상태창 · 선택')} subtitle={t('매 답변 끝에 붙는 상태 정보의 틀이에요. 날짜·장소·스탯·아이템처럼 이야기가 어디까지 왔는지 보여 줘요. 대화 화면에선 접었다 펼 수 있는 카드로 나와요.')}>
+            <StatusEditor defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} />
+          </Section>
+        </Panel>
+        {/* ── 엔딩(11/10, 크랙 엔딩 설정) — 비워 두면 엔딩 없이 이어진다. ── */}
+        <Panel id="endings" show={tab === 'endings'}>
+          <Section title={t('엔딩 · 선택')} subtitle={t('최소 턴이 지나고 조건이 이야기 속에서 이뤄지면 엔딩 카드가 떠요. 등급을 달고 힌트를 남기면 사용자가 다른 엔딩도 모으고 싶어져요.')}>
+            <EndingsEditor defaultValue={i.endings ?? []} />
           </Section>
         </Panel>
 
@@ -525,6 +570,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         </Panel>
 
         {/* ── 소개 페이지 ── */}
+        {tab !== 'preview' && <StepNav tab={tab} onTab={openTab} />}
         <Panel id="preview" show={tab === 'preview' || (desktop && tab !== 'intro')}>
           <div style={{ marginTop: 20 }}><ChoiceChips value={previewMode} onChange={setPreviewMode} options={[{ value: 'detail', label: t('소개 페이지') }, { value: 'chat', label: t('테스트 채팅') }]} /></div>
           {/* 테스트 채팅(10/19) — 미리보기를 연 시점의 인트로를 깔고, 보낼 때마다 폼을 다시 읽어 지금 설정으로 답한다. */}

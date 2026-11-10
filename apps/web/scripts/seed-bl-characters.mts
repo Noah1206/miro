@@ -212,6 +212,7 @@ for (const s of SEEDS) {
     sampleDialogue: keepSceneImages(s.sampleDialogue, exists?.dialogue ?? []), lore: s.lore, initialRelationship: s.initialRelationship,
     personaGuide: s.personaGuide ?? '', coverUnveil: s.coverUnveil ?? false,
     statusFormat: s.statusFormat ?? '', stats: s.stats ?? [],
+    playGuide: s.playGuide ?? '', firstReplies: s.firstReplies ?? [], endings: s.endings ?? [],
     ...(s.voice ? { voiceId: s.voice } : {}), ...(s.ensembleVoices ? { ensembleVoices: s.ensembleVoices } : {}),
   }
   const { routine: _r, ...contact } = s.contact

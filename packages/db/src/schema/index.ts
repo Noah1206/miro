@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import {
   customType, bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
-import type { BaseFace, BodyProfile, HairProfile, CharacterCore, CharacterStat, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
+import type { BaseFace, BodyProfile, HairProfile, CharacterCore, CharacterStat, CharacterEnding, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -232,6 +232,12 @@ export const characters = pgTable('characters', {
   statusFormat: text('status_format').notNull().default(''),
   /** 스탯(11/10) — 대화방마다 값이 움직이는 수치 최대 7개. AI 가 매 턴 새 값을 내고 서버가 범위로 자른다. */
   stats: jsonb('stats').$type<CharacterStat[]>().notNull().default([]),
+  /** 플레이 가이드(11/10, 크랙) — 첫 화면에 사용자에게만 보이는 안내. AI 에는 보내지 않는다. */
+  playGuide: text('play_guide').notNull().default(''),
+  /** 추천 첫 답변(11/10, 크랙) — 첫 턴에 입력창 위에 미리 띄우는 사용자 쪽 대사 최대 3개. *별표* 는 행동. */
+  firstReplies: jsonb('first_replies').$type<string[]>().notNull().default([]),
+  /** 엔딩(11/10, 크랙 엔딩 설정) — 이름·등급·최소 턴·조건·에필로그·힌트. 조건이 충족되면 AI 가 결말 표식을 남긴다. */
+  endings: jsonb('endings').$type<CharacterEnding[]>().notNull().default([]),
   /** 언베일 썸네일(11/4) — 대표 사진 노출이 커서, 언베일을 안 켠 사람의 홈·상세에선 흐리게 + 언베일 표시. */
   coverUnveil: boolean('cover_unveil').notNull().default(false),
   /** 여러 인물 카드의 히로인별 목소리(11/4) — { 히로인 이름: official_voices.id }. 같은 목소리 공유 가능. 없는 히로인은 voiceId. */

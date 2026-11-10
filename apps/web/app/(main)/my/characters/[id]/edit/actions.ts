@@ -30,7 +30,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
   const p = parseCharacterForm(form, owned.character.experienceType)
   // 편집기는 기본 도입부만 다룬다 — 다른 시작 상황(scene 이 붙은 인트로, 10/5)은 그대로 남긴다.
   const [firstScene] = introScenes(owned.character.sampleDialogue)
-  p.character.sampleDialogue = [...p.character.sampleDialogue,
+  // 11/10: 만들기 화면이 다른 시작 설정도 다루면(extraScenesPresent) 폼이 보낸 장면이 전부다 — 지운 장면은 지운 것이다.
+  if (form.get('extraScenesPresent') !== '1') p.character.sampleDialogue = [...p.character.sampleDialogue,
     ...owned.character.sampleDialogue.filter((t) => t.purpose === 'intro' && (t.scene ?? '') !== (firstScene ?? ''))]
   const wasDraft = owned.character.isDraft
   const stillDraft = wasDraft && !p.publish

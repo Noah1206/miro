@@ -6,7 +6,7 @@ import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
 /** 일상·연락 탭은 관계 탭에 합쳤고, 외형도 관계 탭으로 옮기고 그 자리에 명령어 탭을 뒀다(10/19). */
-export type CreateTab = 'profile' | 'personality' | 'commands' | 'relationship' | 'intro' | 'situations' | 'voice' | 'settings' | 'preview'
+export type CreateTab = 'profile' | 'personality' | 'commands' | 'relationship' | 'intro' | 'status' | 'endings' | 'situations' | 'voice' | 'settings' | 'preview'
 
 export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: msg('프로필') },
@@ -14,6 +14,8 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'commands', label: msg('명령어') },
   { key: 'relationship', label: msg('관계') },
   { key: 'intro', label: msg('인트로') },
+  { key: 'status', label: msg('상태창') },
+  { key: 'endings', label: msg('엔딩') },
   { key: 'situations', label: msg('상황별 사진') },
   { key: 'voice', label: msg('음성') },
   { key: 'settings', label: msg('분류·설정') },
@@ -106,4 +108,24 @@ function chip(primary: boolean, on: boolean): React.CSSProperties {
     background: primary && on ? 'var(--color-accent)' : 'var(--color-surface-2)',
     color: primary && on ? 'var(--color-accent-on)' : on ? 'var(--color-text-primary)' : 'var(--color-text-disabled)',
   }
+}
+
+/**
+ * 11/10 단계 이동(크랙 만들기식) — 폼 맨 아래에 붙는 이전/다음. 다음 버튼엔 다음 탭 이름을 써서 어디로 가는지 보이게.
+ * 마지막 입력 탭에선 다음이 없다(게시는 머리의 버튼). 탭을 바꾸면 폼 맨 위로 올린다.
+ */
+export function StepNav({ tab, onTab }: { tab: CreateTab; onTab: (t: CreateTab) => void }) {
+  const t = useT()
+  const keys = TABS.filter(x => x.key !== 'preview')
+  const at = keys.findIndex(x => x.key === tab)
+  if (at < 0) return null
+  const go = (k: CreateTab) => { onTab(k); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const prev = keys[at - 1], next = keys[at + 1]
+  return (
+    <nav aria-label={t('단계 이동')} className="create-stepnav">
+      {prev ? <button type="button" className="create-step-prev" onClick={() => go(prev.key)}>{t('이전')}</button> : <span />}
+      <span className="create-step-count" aria-hidden>{at + 1} / {keys.length}</span>
+      {next ? <button type="button" className="create-step-next" onClick={() => go(next.key)}>{t('다음')} · {t(next.label)}</button> : <span />}
+    </nav>
+  )
 }

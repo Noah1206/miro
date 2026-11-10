@@ -25,7 +25,9 @@ type PhotoProps = { unveil: boolean; bundle: boolean; audience?: 'male' | 'femal
 
 export type Msg = { at?: string; hideTime?: boolean; opening?: boolean; id: string; role: string; kind: string; content: string; blocks: Array<Record<string, unknown>> }
 
-export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo, castPhotos = {} }: {
+export function MessageList({ items: server, characterName, portrait, mood = 'neutral', sessionId, hasStarted = false, veilPhotos = false, cast = [], photo, castPhotos = {}, endings = [] }: {
+  /** 11/10 작품이 정한 엔딩(크랙 엔딩 설정) — 엔딩 카드에 등급을, 아직 못 본 엔딩은 힌트로. */
+  endings?: Array<{ name: string; grade: string; hint?: string }>
   /** 11/6: 인물 이름 → 사진(여러 인물 카드). 말풍선 아바타가 이름 첫 글자 대신 이 사진. */
   castPhotos?: Record<string, string>
   items: Msg[]; characterName: string; portrait?: string | null
@@ -156,7 +158,11 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
             {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open={m.id === lastStatusId} />}
             {sessionId && m.id === endingId && <aside className={styles.endingCard}>
-              <strong>ENDING · {endingTitle(m.blocks)}</strong>
+              {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
+                return <div className={styles.endingInfo}>
+                  <strong>{def && <span className={styles.endingGrade} data-grade={def.grade}>{def.grade}</span>}ENDING · {title}</strong>
+                  {others.length > 0 && <p>{t('다른 엔딩 {n}개', { n: others.length })}{others.some(e => e.hint) ? ` — ${others.filter(e => e.hint).map(e => e.hint).join(' · ')}` : ''}</p>}
+                </div> })()}
               <ButtonLink href={`/chat/${sessionId}/novel`} variant="primary" size="sm">{t('웹소설로 받기')}</ButtonLink>
             </aside>}
           </Line>

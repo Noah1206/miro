@@ -1,7 +1,7 @@
 import { parseIntroDialogue } from '@/lib/intro-dialogue'
 import { normalizeSituationImages } from '@/lib/situation-images'
 import { normalizeCustomScenes } from '@/lib/photo-scenes'
-import { normalizePresetPersonas } from '@miro/domain'
+import { normalizePresetPersonas, type CharacterEnding, type CharacterStat } from '@miro/domain'
 import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
 import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
 import type { CharacterCommand } from '@miro/db'
@@ -111,6 +111,11 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   try { photoScenes = normalizeCustomScenes(JSON.parse(s('photoScenes') || '[]')) } catch { /* 빈 배열 */ }
   let presetPersonas: ReturnType<typeof normalizePresetPersonas> = []
   try { presetPersonas = normalizePresetPersonas(JSON.parse(s('presetPersonas') || '[]')) } catch { /* 빈 배열 */ }
+  // 상태창·스탯(11/10) — 스탯은 최대 7개, 이름 있는 것만, 최소 ≤ 기본 ≤ 최대로 맞춘다.
+  let endings: CharacterEnding[] = []
+  try { endings = normalizeEndings(JSON.parse(s('endings') || '[]')) } catch { /* 빈 배열 */ }
+  let stats: CharacterStat[] = []
+  try { stats = normalizeStats(JSON.parse(s('stats') || '[]')) } catch { /* 빈 배열 */ }
 
   const startingTime = orNull(s('startingTime'))
   const initialRelationship = {
@@ -134,6 +139,11 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   const character = {
     name,
+    statusFormat: s('statusFormat').slice(0, 1000),
+    stats,
+    endings,
+    playGuide: s('playGuide').slice(0, 500),
+    firstReplies: form.getAll('firstReplies').map(v => String(v).trim().slice(0, 80)).filter(Boolean).slice(0, 3),
     tagline: orNull(s('title')),
     age,
     nationality: orNull(s('nationality')),
@@ -148,7 +158,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     relationshipKeywords,
     startingContext: orNull(s('startingContext')),
     ...(startingTime ? { startingTime } : {}),
-    sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]')],
+    sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]'), ...extraScenes(form)],
     lore,
     situationImages,
     photoScenes,
@@ -219,4 +229,54 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     startingTime,
     character, world, contact, visual, initialRelationship,
   }
+}
+
+/** 만들기 화면의 스탯 칸(JSON) → 저장할 스탯. 모양이 틀린 줄은 버리고, 범위를 바로잡는다. */
+export function normalizeStats(raw: unknown): CharacterStat[] {
+  if (!Array.isArray(raw)) return []
+  const out: CharacterStat[] = []
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue
+    const o = r as Record<string, unknown>
+    const name = typeof o.name === 'string' ? o.name.trim().slice(0, 10) : ''
+    if (!name || out.some(x => x.name === name)) continue
+    const n = (v: unknown, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(-99999, Math.min(99999, Math.round(v))) : d)
+    let min = n(o.min, 0), max = n(o.max, 100)
+    if (min > max) [min, max] = [max, min]
+    const def = Math.min(max, Math.max(min, n(o.default, min)))
+    const unit = typeof o.unit === 'string' && o.unit.trim() ? o.unit.trim().slice(0, 3) : undefined
+    out.push({ name, min, max, default: def, ...(unit ? { unit } : {}), description: typeof o.description === 'string' ? o.description.trim().slice(0, 500) : '' })
+    if (out.length === 7) break
+  }
+  return out
+}
+
+/** 만들기 화면의 엔딩 칸(JSON) → 저장할 엔딩. 이름·조건이 있는 것만, 최대 10개, 최소 턴은 10 이상(크랙과 같다). */
+export function normalizeEndings(raw: unknown): CharacterEnding[] {
+  if (!Array.isArray(raw)) return []
+  const out: CharacterEnding[] = []
+  for (const r of raw) {
+    if (!r || typeof r !== 'object') continue
+    const o = r as Record<string, unknown>
+    const str = (v: unknown, n: number) => (typeof v === 'string' ? v.trim().slice(0, n) : '')
+    const name = str(o.name, 20), condition = str(o.condition, 500)
+    if (!name || !condition || out.some(x => x.name === name)) continue
+    const grade = (['N', 'R', 'SR', 'SSR'] as const).find(g => g === o.grade) ?? 'N'
+    const minTurns = Math.max(10, Math.min(9999, Math.round(typeof o.minTurns === 'number' && Number.isFinite(o.minTurns) ? o.minTurns : 10)))
+    const epilogue = str(o.epilogue, 1000), hint = str(o.hint, 20)
+    out.push({ name, grade, minTurns, condition, ...(epilogue ? { epilogue } : {}), ...(hint ? { hint } : {}) })
+    if (out.length === 10) break
+  }
+  return out
+}
+
+/** 시작 설정 추가(11/10) — 이름과 인트로가 둘 다 있는 장면만. 장면 이름이 그 줄들의 scene 이 된다(소개 페이지의 시작 장면 고르기가 읽는다). */
+function extraScenes(form: FormData) {
+  const names = form.getAll('extraScene').map(v => String(v).trim().slice(0, 12))
+  const dialogs = form.getAll('extraSceneDialogue').map(v => String(v))
+  return names.flatMap((scene, n) => {
+    if (!scene || !dialogs[n]) return []
+    const lines = parseIntroDialogue(dialogs[n]!)
+    return lines.length ? lines.map(l => ({ ...l, scene })) : []
+  }).slice(0, 80)
 }

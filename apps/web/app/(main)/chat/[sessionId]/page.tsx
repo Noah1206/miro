@@ -61,7 +61,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     sessionMedia(sessionId, user.id),
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
-    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
+    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, playGuide: characters.playGuide, firstReplies: characters.firstReplies, endings: characters.endings, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
     // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
     getPersona(user.id),
     // 첫 대화 전 세계관 카드(11/4) — 이 방의 '나'를 적기 전에는 입력창 대신 카드가 뜬다.
@@ -120,7 +120,11 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
               <p className="t-body t-quote">{String((s.activeEvents[0].continuationState as { summary?: string }).summary ?? s.activeEvents[0].type)}</p>
             </aside>
           )}
-          <MessageList sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={cast} castPhotos={castPhotos} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
+          {/* 플레이 가이드(11/10, 크랙) — 첫 턴 전에만, 사용자에게만 보이는 안내. AI 에는 가지 않는다. */}
+          {s.turnCount === 0 && rec?.playGuide && <aside className={styles.playGuide} aria-label={t('플레이 가이드')}>
+            <strong>{t('플레이 가이드')}</strong><p>{rec.playGuide}</p>
+          </aside>}
+          <MessageList endings={rec?.endings ?? []} sessionId={sessionId} hasStarted={s.turnCount > 0} items={items} characterName={loaded.characterName} portrait={loaded.characterPhoto} mood={s.characterState?.mood ?? 'neutral'} veilPhotos={veilPhotos} cast={cast} castPhotos={castPhotos} photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />
           {needPersona && <WorldIntro sessionId={sessionId} worldSetting={s.worldSetting ?? null} guide={rec?.guide ?? ''} presets={rec?.presets ?? []} personality={s.character.personality.personality} audience={rec?.audience ?? null} />}
         </div>
 
@@ -128,7 +132,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
-        {!needPersona && <ChatComposer sessionId={sessionId} characterName={loaded.characterName} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
+        {!needPersona && <ChatComposer sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}
           persona={{ sessionId, current: loaded.snapshot.userPersona ?? null, mine: myPersona, presets: rec?.presets ?? [] }}
           photo={feature('imageGeneration') && !loaded.restricted ? { unveil: !!adult?.allowed, bundle: modalImageReady(), audience: rec?.audience, scenes: (rec?.scenes ?? []).map((scene, i) => ({ id: customSceneId(i), label: scene.label, unveil: !!scene.unveil })) } : undefined} />}
       </section>

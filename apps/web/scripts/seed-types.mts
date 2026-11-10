@@ -28,6 +28,12 @@ export type Seed = {
   personaGuide?: string
   /** 11/10 상태창 형식(크랙 INFO 블록) — 매 답변 끝에 채워 붙인다 */
   statusFormat?: string
+  /** 11/10 플레이 가이드(사용자에게만) */
+  playGuide?: string
+  /** 11/10 추천 첫 답변 최대 3개 */
+  firstReplies?: string[]
+  /** 11/10 엔딩 */
+  endings?: Array<{ name: string; grade: 'N' | 'R' | 'SR' | 'SSR'; minTurns: number; condition: string; epilogue?: string; hint?: string }>
   /** 11/10 스탯 최대 7개 */
   stats?: Array<{ name: string; min: number; max: number; default: number; unit?: string; description: string }>
   /** 언베일 썸네일(11/4) — 대표·갤러리 사진 노출이 커서 언베일을 안 켠 사람에겐 흐리게. */
