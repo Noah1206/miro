@@ -53,9 +53,11 @@ function displayName(id: string) {
   if (id === 'claude-fable-5') return 'Claude Fable 5'
   if (id === 'claude-fable-5-1') return 'Claude Fable 5.1'
   if (id === 'gemini-4-argon') return 'Gemini 4 Argon'
-  const gpt = /^gpt-(6(?:\.1)?)-(luna|terra|sol|astra)$/.exec(id)
+  // 11/10 GPT 추가: 5.6 시리즈(Luna/Terra/Sol)·5.5·5.4(mini/nano)도 같은 이름 규칙으로.
+  const gpt = /^gpt-(\d+(?:\.\d+)?)-(luna|terra|sol|astra)$/.exec(id)
   if (gpt) return `GPT ${gpt[1]} ${gpt[2]![0]!.toUpperCase()}${gpt[2]!.slice(1)}`
-  if (id === 'gpt-5.4-mini') return 'GPT-5.4 mini'
+  const plain = /^gpt-(\d+(?:\.\d+)?)(?:-(mini|nano))?$/.exec(id)
+  if (plain) return `GPT-${plain[1]}${plain[2] ? ` ${plain[2]}` : ''}`
   if (id === 'gemini-3.5-flash-lite') return 'Gemini 3.5 Flash-Lite'
   if (id === 'gemini-3.6-flash') return 'Gemini 3.6 Flash'
   const deepseek = /^deepseek\/deepseek-(.+)$/.exec(id)
