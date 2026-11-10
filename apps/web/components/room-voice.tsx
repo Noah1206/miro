@@ -1,5 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { useT } from '@/lib/i18n/client'
 import { VoiceList, type VoiceOption } from '@/app/(main)/create/voice-list'
 import { setRoomVoice } from '@/app/(main)/chat/[sessionId]/actions'
@@ -11,7 +12,7 @@ export type RoomVoice = { speakers: Array<{ key: string; name: string; defaultLa
  * 고르면 이 방에서만 바뀐다. 다음에 읽는 대사부터 새 목소리(음성 캐시 키에 목소리가 들어 있어 이전 소리를 다시 쓰지 않는다).
  */
 export function RoomVoicePanel({ sessionId, voice }: { sessionId: string; voice: RoomVoice }) {
-  const t = useT()
+  const t = useT(), router = useRouter()
   const [open, setOpen] = useState<string | null>(null)
   const [picked, setPicked] = useState<Record<string, string>>(voice.overrides)
   const [error, setError] = useState<string | null>(null)
@@ -24,6 +25,7 @@ export function RoomVoicePanel({ sessionId, voice }: { sessionId: string; voice:
     start(async () => {
       const r = await setRoomVoice(sessionId, key, id)
       if (r.error) { setPicked(before); setError(r.error) }
+      else router.refresh()   // 메뉴를 닫았다 다시 열면 서버 값으로 다시 그리므로, 저장한 값이 바로 반영되게
     })
   }
   // 11/10 사용자: 음성 모드 토글 아래 캐릭터 목록 — 줄마다 지금 목소리, 누르면 그 캐릭터의 목소리 목록이 펼쳐진다.
