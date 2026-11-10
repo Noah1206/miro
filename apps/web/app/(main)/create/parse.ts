@@ -263,8 +263,8 @@ export function normalizeEndings(raw: unknown): CharacterEnding[] {
     if (!name || !condition || out.some(x => x.name === name)) continue
     const grade = (['N', 'R', 'SR', 'SSR'] as const).find(g => g === o.grade) ?? 'N'
     const minTurns = Math.max(10, Math.min(9999, Math.round(typeof o.minTurns === 'number' && Number.isFinite(o.minTurns) ? o.minTurns : 10)))
-    const epilogue = str(o.epilogue, 1000), hint = str(o.hint, 20)
-    out.push({ name, grade, minTurns, condition, ...(epilogue ? { epilogue } : {}), ...(hint ? { hint } : {}) })
+    const epilogue = str(o.epilogue, 1000), hint = str(o.hint, 20), image = str(o.image, 500)
+    out.push({ name, grade, minTurns, condition, ...(epilogue ? { epilogue } : {}), ...(hint ? { hint } : {}), ...(/^https:\/\//.test(image) ? { image } : {}) })
     if (out.length === 10) break
   }
   return out
@@ -274,9 +274,13 @@ export function normalizeEndings(raw: unknown): CharacterEnding[] {
 function extraScenes(form: FormData) {
   const names = form.getAll('extraScene').map(v => String(v).trim().slice(0, 12))
   const dialogs = form.getAll('extraSceneDialogue').map(v => String(v))
+  const field = (key: string, n: number, max: number) => String(form.getAll(key)[n] ?? '').trim().slice(0, max)
   return names.flatMap((scene, n) => {
     if (!scene || !dialogs[n]) return []
     const lines = parseIntroDialogue(dialogs[n]!)
-    return lines.length ? lines.map(l => ({ ...l, scene })) : []
+    // 장면 정보는 그 장면 첫 줄에 붙인다 — sceneOpening 이 거기서 읽는다.
+    const context = field('extraSceneContext', n, 600), location = field('extraSceneLocation', n, 60), time = field('extraSceneTime', n, 20)
+    const meta = { ...(context ? { context } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}) }
+    return lines.map((l, k) => ({ ...l, scene, ...(k === 0 ? meta : {}) }))
   }).slice(0, 80)
 }

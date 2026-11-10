@@ -1,12 +1,14 @@
 'use client'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { CharacterEnding } from '@miro/domain'
 import { useT } from '@/lib/i18n/client'
+import { shrinkImage } from '@/lib/shrink-image'
 import { box, fieldFont } from './form-parts'
+import { uploadSituationImage } from './actions'
 
 export const ENDING_LIMIT = 10
 const GRADES: CharacterEnding['grade'][] = ['N', 'R', 'SR', 'SSR']
-type Row = { id: number; name: string; grade: CharacterEnding['grade']; minTurns: string; condition: string; epilogue: string; hint: string }
+type Row = { id: number; name: string; grade: CharacterEnding['grade']; minTurns: string; condition: string; epilogue: string; hint: string; image: string; uploading?: boolean; error?: string }
 
 /**
  * 엔딩(11/10, 크랙 엔딩 설정) — 최대 10개. 최소 턴이 지나고 조건이 장면에서 충족되면 AI 가 결말 표식을 남기고,
@@ -14,12 +16,24 @@ type Row = { id: number; name: string; grade: CharacterEnding['grade']; minTurns
  */
 export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[] }) {
   const t = useT()
-  const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, name: e.name, grade: e.grade, minTurns: String(e.minTurns), condition: e.condition, epilogue: e.epilogue ?? '', hint: e.hint ?? '' })))
+  const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, name: e.name, grade: e.grade, minTurns: String(e.minTurns), condition: e.condition, epilogue: e.epilogue ?? '', hint: e.hint ?? '', image: e.image ?? '' })))
   const [nextId, setNextId] = useState(defaultValue.length)
+  const uid = useId()
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
+  // 엔딩 카드 그림 — 상황 사진과 같은 업로드(고르자마자 올리고 URL 만 싣는다).
+  const pick = async (id: number, file: File | undefined) => {
+    if (!file) return
+    patch(id, { uploading: true, error: undefined })
+    const fd = new FormData()
+    fd.set('file', await shrinkImage(file))
+    try {
+      const r = await uploadSituationImage(fd)
+      patch(id, 'url' in r ? { image: r.url, uploading: false } : { error: r.error, uploading: false })
+    } catch { patch(id, { error: t('사진을 올리지 못했어요.'), uploading: false }) }
+  }
   const value = rows.filter(r => r.name.trim() && r.condition.trim()).map(r => ({
     name: r.name.trim(), grade: r.grade, minTurns: Math.max(10, Number(r.minTurns) || 10), condition: r.condition.trim(),
-    ...(r.epilogue.trim() ? { epilogue: r.epilogue.trim() } : {}), ...(r.hint.trim() ? { hint: r.hint.trim() } : {}),
+    ...(r.epilogue.trim() ? { epilogue: r.epilogue.trim() } : {}), ...(r.hint.trim() ? { hint: r.hint.trim() } : {}), ...(r.image ? { image: r.image } : {}),
   }))
   const input = { ...box(false), minHeight: 40, padding: '0 10px', borderRadius: 8, fontSize: fieldFont, outline: 'none', minWidth: 0 } as const
   const area = { ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: fieldFont, resize: 'vertical', outline: 'none', fontFamily: 'inherit' } as const
@@ -48,9 +62,20 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
           <textarea value={r.epilogue} maxLength={1000} rows={2} aria-label={t('에필로그')} placeholder={t('에필로그 분위기 (선택) — AI가 결말 장면을 이 느낌으로 맺어요.')}
             onChange={e => patch(r.id, { epilogue: e.target.value })} style={area} />
           <input value={r.hint} maxLength={20} placeholder={t('엔딩 힌트 (선택, 사용자에게 보여요)')} aria-label={t('엔딩 힌트')} onChange={e => patch(r.id, { hint: e.target.value })} style={input} />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <label htmlFor={`${uid}-${r.id}`} style={{ position: 'relative', display: 'grid', placeItems: 'center', width: 72, height: 96, flex: 'none', borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+              background: 'var(--color-surface-2)', border: r.image ? 0 : '1.5px dashed var(--color-border-strong)', color: 'var(--color-text-tertiary)', fontSize: 12 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {r.image ? <img src={r.image} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} /> : (r.uploading ? t('올리는 중…') : '+')}
+            </label>
+            <input id={`${uid}-${r.id}`} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; void pick(r.id, f) }} />
+            <span style={{ flex: 1, fontSize: 13, color: r.error ? 'var(--color-danger, #d33)' : 'var(--color-text-secondary)' }}>{r.error ?? t('엔딩 카드 그림 (선택) — 엔딩에 닿으면 카드와 도감에 보여요.')}</span>
+            {r.image && <button type="button" onClick={() => patch(r.id, { image: '' })} style={{ border: 0, background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>{t('빼기')}</button>}
+          </div>
         </div>
       ))}
-      {rows.length < ENDING_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', grade: 'N', minTurns: '10', condition: '', epilogue: '', hint: '' }]); setNextId(n => n + 1) }}
+      {rows.length < ENDING_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', grade: 'N', minTurns: '10', condition: '', epilogue: '', hint: '', image: '' }]); setNextId(n => n + 1) }}
         style={{ minHeight: 44, borderRadius: 12, border: '1.5px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: fieldFont }}>{t('+ 엔딩 추가')} ({rows.length}/{ENDING_LIMIT})</button>}
     </div>
   )

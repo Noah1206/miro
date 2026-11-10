@@ -2069,5 +2069,13 @@
  "시작 설정 이름": "Starting setup name",
  "시작 설정 이름 (예: 비 오는 밤)": "Starting setup name (e.g. Rainy night)",
  "시작 설정 빼기": "Remove starting setup",
- "시작 설정 추가 · 선택": "More starting setups · Optional"
+ "시작 설정 추가 · 선택": "More starting setups · Optional",
+ "엔딩 도감": "Ending Collection",
+ "아직 닿지 않은 엔딩": "Not reached yet",
+ "엔딩 카드 그림 (선택) — 엔딩에 닿으면 카드와 도감에 보여요.": "Ending card image (optional) — shown on the card and in the collection once reached.",
+ "빼기": "Remove",
+ "시작 상황 (선택) — 사용자의 역할, 등장인물과의 관계, 이 장면이 시작되는 상황": "Starting situation (optional) — your role, relationship with the characters, how this scene begins",
+ "장소 (선택)": "Location (optional)",
+ "시간 (선택)": "Time (optional)",
+ "시간": "Time"
 }

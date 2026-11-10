@@ -23,6 +23,7 @@ import { StartWithLogin } from './start-button'
 import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
+import { reachedEndings } from '@/lib/ending-collection'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -37,12 +38,13 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const can = features()
   const editedDescription = officialDescription(c)
 
-  const [comments, commentCount, similar, likes, unveil] = await Promise.all([
+  const [comments, commentCount, similar, likes, unveil, reached] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType),
     characterLikeState(c.id, user?.id ?? null),
     homeUnveilEnabled(user?.id ?? null),
+    c.endings.length ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
   const me = (text: string | null) => text ?? ''
@@ -188,6 +190,29 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             : <StartWithLogin slug={slug} label={t('대화 바로 시작하기')} />}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />
       </div>
+
+      {/* 엔딩 도감(11/10, 크랙) — 닿은 엔딩은 이름·그림, 아직인 엔딩은 등급과 힌트만. */}
+      {c.endings.length > 0 && (
+        <section aria-labelledby="endings" style={{ marginTop: 'var(--space-7)', padding: '0 var(--gutter)' }}>
+          <h2 id="endings" className="t-title-3" style={{ marginBottom: 12, fontWeight: 'var(--weight-semibold)' }}>
+            {t('엔딩 도감')} <span style={{ fontSize: 14, color: 'var(--color-text-secondary)', fontWeight: 400 }}>{c.endings.filter(e => reached.has(e.name)).length}/{c.endings.length}</span>
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
+            {c.endings.map(e => { const got = reached.has(e.name)
+              return <div key={e.name} style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)', background: 'var(--color-surface-1)', overflow: 'hidden' }}>
+                <div style={{ aspectRatio: '3 / 4', background: 'var(--color-surface-2)', display: 'grid', placeItems: 'center', color: 'var(--color-text-tertiary)', fontSize: 28 }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {got && e.image ? <img src={e.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (got ? '✓' : '?')}
+                </div>
+                <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--color-text-secondary)' }}>{e.grade}</span>
+                  <strong style={{ fontSize: 14, fontWeight: 600 }}>{got ? e.name : t('아직 닿지 않은 엔딩')}</strong>
+                  {!got && e.hint && <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{e.hint}</span>}
+                </div>
+              </div> })}
+          </div>
+        </section>
+      )}
 
       {similar.length > 0 && (
         <section aria-labelledby="similar" style={{ marginTop: 'var(--space-7)' }}>

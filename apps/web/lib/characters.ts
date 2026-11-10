@@ -111,6 +111,7 @@ async function getOne(where: ReturnType<typeof and>) {
       startingTime: characters.startingTime,
       images: characters.images,
       coverUnveil: characters.coverUnveil,
+      endings: characters.endings,
       contactEnabled: contactProfiles.enabled,
       worldLocation: worlds.location,
       worldEra: worlds.era,

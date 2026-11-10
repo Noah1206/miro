@@ -4,7 +4,8 @@ import { useT } from '@/lib/i18n/client'
 import { box, fieldFont, DialogueEditor } from './form-parts'
 
 type Turn = Parameters<typeof DialogueEditor>[0]['defaultValue'] extends (infer U)[] | undefined ? U : never
-type Row = { id: number; scene: string; lines: Turn[] }
+type Meta = { context?: string; time?: string; location?: string }
+type Row = { id: number; scene: string; lines: Turn[] } & Meta
 export const EXTRA_SCENE_LIMIT = 4
 
 /**
@@ -12,7 +13,7 @@ export const EXTRA_SCENE_LIMIT = 4
  * 사용자는 캐릭터 소개 페이지에서 시작할 장면을 고른다(이미 있는 기능, 10/5). 전에는 편집기가 첫 장면만 다뤄서 시드로만 넣을 수 있었다.
  * 칸 순서대로 extraScene(이름)·extraSceneDialogue(인트로 JSON)를 같은 개수로 싣는다.
  */
-export function ExtraScenesEditor({ defaultValue, characterName }: { defaultValue: Array<{ scene: string; lines: Turn[] }>; characterName: string }) {
+export function ExtraScenesEditor({ defaultValue, characterName }: { defaultValue: Array<{ scene: string; lines: Turn[] } & Meta>; characterName: string }) {
   const t = useT()
   const [rows, setRows] = useState<Row[]>(() => defaultValue.map((d, id) => ({ id, ...d })))
   const [nextId, setNextId] = useState(defaultValue.length)
@@ -26,6 +27,16 @@ export function ExtraScenesEditor({ defaultValue, characterName }: { defaultValu
               style={{ ...box(false), flex: 1, minWidth: 0, minHeight: 44, padding: '0 12px', borderRadius: 8, fontSize: fieldFont, outline: 'none' }} />
             <button type="button" aria-label={t('시작 설정 빼기')} onClick={() => setRows(rs => rs.filter(x => x.id !== r.id))}
               style={{ width: 36, height: 36, flex: 'none', borderRadius: 18, border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>×</button>
+          </div>
+          {/* 장면 정보(시작 상황·장소·시간) — 이 장면으로 시작하면 세계가 여기서 출발한다. 전엔 편집기를 거치면 사라졌다(11/10 고침). */}
+          <textarea name="extraSceneContext" defaultValue={r.context ?? ''} maxLength={600} rows={2} aria-label={t('시작 상황')}
+            placeholder={t('시작 상황 (선택) — 사용자의 역할, 등장인물과의 관계, 이 장면이 시작되는 상황')}
+            style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: fieldFont, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 8 }}>
+            <input name="extraSceneLocation" defaultValue={r.location ?? ''} maxLength={60} placeholder={t('장소 (선택)')} aria-label={t('장소')}
+              style={{ ...box(false), minWidth: 0, minHeight: 40, padding: '0 10px', borderRadius: 8, fontSize: fieldFont, outline: 'none' }} />
+            <input name="extraSceneTime" defaultValue={r.time ?? ''} maxLength={20} placeholder={t('시간 (선택)')} aria-label={t('시간')}
+              style={{ ...box(false), minWidth: 0, minHeight: 40, padding: '0 10px', borderRadius: 8, fontSize: fieldFont, outline: 'none' }} />
           </div>
           <div style={{ height: 360 }}>
             <DialogueEditor intro fill name="extraSceneDialogue" characterName={characterName} defaultValue={r.lines} />

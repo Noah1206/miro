@@ -610,3 +610,6 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .endingGrade[data-grade="R"] { background:#2f6fd8; color:#fff; }
 .endingGrade[data-grade="SR"] { background:#8a3fd1; color:#fff; }
 .endingGrade[data-grade="SSR"] { background:linear-gradient(90deg,#f5b400,#ff6a3d); color:#1a1200; }
+/* 11/10 엔딩 카드 그림 — 만든 사람이 올린 그림. */
+.endingImage { width:54px; height:72px; flex:none; border-radius:8px; object-fit:cover; }
+.endingInfo { flex:1; }

@@ -497,7 +497,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           {/* 시작 설정 추가(11/10, 크랙) — 첫 장면 말고 다른 시작 상황. 사용자는 소개 페이지에서 고른다. */}
           <details className="create-advanced" open={introScenes(i.sampleDialogue).length > 1}>
             <summary>{t('시작 설정 추가 · 선택')}</summary>
-            <ExtraScenesEditor characterName={name} defaultValue={introScenes(i.sampleDialogue).slice(1).map(scene => ({ scene, lines: introDialogue(i.sampleDialogue, scene) }))} />
+            <ExtraScenesEditor characterName={name} defaultValue={introScenes(i.sampleDialogue).slice(1).map(scene => ({ scene, lines: introDialogue(i.sampleDialogue, scene), ...sceneMeta(i.sampleDialogue, scene) }))} />
           </details>
         </Panel>
 
@@ -743,4 +743,11 @@ function ReactionTraits({ initial }: { initial: FormInitial }) {
       </div>
     </div>
   )
+}
+
+/** 시작 설정의 장면 정보 — 그 장면 줄 가운데 시작 상황·시각·장소가 적힌 첫 줄에서(시드가 넣은 값). */
+function sceneMeta(entries: FormInitial['sampleDialogue'], scene: string) {
+  const hit = (entries as Array<FormInitial['sampleDialogue'][number] & { scene?: string; context?: string; time?: string; location?: string }>)
+    .find(t => t.purpose === 'intro' && t.scene === scene && (t.context || t.time || t.location))
+  return hit ? { context: hit.context, time: hit.time, location: hit.location } : {}
 }
