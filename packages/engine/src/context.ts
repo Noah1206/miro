@@ -91,9 +91,12 @@ const USER_VIEWPOINT = `Use limited first-person POV: narration is the user's ow
  * 운영 실측: 글자 수만 주자 Sonnet 답이 416자 — 블록 개수를 함께 주고(모델은 블록·문장 수를 따른다, 9/26·10/17), 자율성 경로는 지시문 끝에 한 번 더 붙인다(agency-turn).
  */
 export function replyLengthRule(style: ReplyStyle): string {
-  const long = style === 'long' || style === 'saga'
   const fill = '분량은 새 행동·대사·장면 진행으로 채우고, 분위기 묘사나 같은 뜻의 문장, 이미 전달한 감정의 재설명으로 채우지 않습니다'
-  return style === 'saga' ? `아주 긴 대화는 한 응답을 2300~2800자로 씁니다 — narrative 단락 7~10개(각 2~4문장)와 대사(dialogue) 블록 8~12개(최대 3200자). ${fill}` : long ? `긴 대화는 한 응답을 1600~2000자로 씁니다 — narrative 단락 5~7개(각 2~4문장)와 대사(dialogue) 블록 6~9개(최대 2400자). ${fill}` : `기본 대화는 한 응답을 1000~1300자로 씁니다 — narrative 단락 3~5개(각 2~4문장) 사이로 대사(dialogue) 블록이 4~6개 오가는 장면 하나(최대 1600자). 이보다 짧게 끝내지 않습니다. ${fill}`
+  // 11/10 운영 보정: 모델(Sonnet 5.5)은 지시한 분량의 약 45%를 쓴다(1000~1300자 지시 → 493·565자). 목표(화면 표시: 약 1,000·1,800·2,500자)의 두 배쯤을 지시한다.
+  // 아주 긴 대화는 출력 토큰 상한(운영 모델 4096 이하)에 JSON 이 잘리지 않게 덜 올린다.
+  return style === 'saga' ? `아주 긴 대화는 한 응답을 3800~4400자로 씁니다 — narrative 단락 10~14개(각 2~4문장)와 대사(dialogue) 블록 12~16개. ${fill}`
+    : style === 'long' ? `긴 대화는 한 응답을 3000~3600자로 씁니다 — narrative 단락 8~11개(각 2~4문장)와 대사(dialogue) 블록 9~13개. ${fill}`
+    : `기본 대화는 한 응답을 2000~2400자로 씁니다 — narrative 단락 6~8개(각 2~4문장) 사이로 대사(dialogue) 블록이 7~10개 오가는 장면 하나. 이보다 짧게 끝내지 않습니다. ${fill}`
 }
 
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
@@ -111,7 +114,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   // 11/10 사용자: 기본 분량 = 베이비챗(1.25x)·크랙 한 턴의 평균(약 1,000자 — 서술 단락 사이로 대사가 4~6번 오가는 장면). 11/3 의 '하한 없음'을 뒤집는다.
   // 채우기용 분위기 서술 금지(11/3 이유)는 그대로 — 분량은 새 행동·대사·사건 진행으로 채운다. 모델은 지시보다 짧게 쓰므로 범위를 목표보다 약간 높게 둔다.
   const size = replyLengthRule(style)
-  const tenseMax = style === 'saga' ? '3400자' : long ? '2600자' : '1800자'
+  const tenseMax = style === 'saga' ? '4800자' : long ? '4000자' : '2800자'
   // 9/24 실측: "짧게 쓰는 입력엔 한 줄씩" 규칙 아래 답이 76~123자, 3블록에 머물렀다. 길이를 입력에 맞추지 않고 장면에 맞춘다.
   // 9/26 실측(16턴씩, gemini-3.8-flash): 순서 예시 하나를 주는 1차 지시는 16/16 성공(중앙값 414자·7블록)이었지만 15턴이 예시 순서를
   // 그대로 따랐고 같은 몸짓·문장 틀이 되풀이됐다. 이 지시(3차)는 순서·표현을 매번 바꾸게 한다. 형식 실패의 한 원인(종류를 키로 쓴 블록)은
