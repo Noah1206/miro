@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm'
 import { characters, db, roleplaySessions } from '@miro/db'
 import { feature } from '@miro/config'
 import { liveGrouper, signLive } from '@/lib/speech/live'
+import { resolveTts } from '@miro/providers'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
@@ -29,6 +30,8 @@ export async function POST(req: Request): Promise<Response> {
           .innerJoin(characters, eq(characters.id, roleplaySessions.characterId))
           .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id))).limit(1))[0] : undefined
       let grouper = room ? liveGrouper(room.name, Object.keys(room.ensemble ?? {})) : null
+      // 답을 쓰는 동안 합성 서버를 깨운다(꺼져 있으면 켜지는 30초를 답 생성 시간 뒤에 숨긴다). 기다리지 않는다.
+      if (room) void resolveTts()?.warm?.(AbortSignal.timeout(60_000)).catch(() => {})
       const speak = (groups: ReturnType<NonNullable<typeof grouper>['push']>) => {
         for (const g of groups) { const signed = signLive(user.id, sessionId, g); if (signed) send({ type: 'speech', speech: { ...g, ...signed } }) }
       }

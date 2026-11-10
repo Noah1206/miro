@@ -9,16 +9,18 @@ import { matchSpeaker } from '../voice-text'
  * 다만 기다리지 않으려고 LIVE_GROUP 자 넘게 모이면 먼저 보낸다 — 이때도 한 사람의 말은 감정·말투를 첫 줄 것 하나로 맞추고, 서버 씨앗도 목소리마다 같아 이어 들린다.
  */
 export const LIVE_GROUP = 150
+/** 첫 묶음은 짧게(11/11) — 대사가 150자 쌓일 때까지 기다리지 않고 첫소리를 빨리. */
+export const LIVE_FIRST = 60
 const MAX_TEXT = 500
 const WHISPER_CUES = /속삭|귓가|귓속|귀에 대고|귀엣말|소곤|숨죽|목소리를 낮|낮게 읊|작게 말|작은 목소리/
 export type LiveSpeech = { text: string; speaker: string | null; delivery: VoiceDelivery }
 type Pending = { speaker: string | null; texts: string[]; delivery: VoiceDelivery }
 
 export function liveGrouper(characterName: string, speakers: readonly string[]) {
-  let seen = 0, lead: string | null | undefined, pending: Pending | null = null
+  let seen = 0, sent = 0, lead: string | null | undefined, pending: Pending | null = null
   const deliveries = new Map<string, VoiceDelivery>()
   const flush = (out: LiveSpeech[]) => {
-    if (pending?.texts.length) out.push({ text: pending.texts.join(' ').slice(0, MAX_TEXT), speaker: pending.speaker, delivery: pending.delivery })
+    if (pending?.texts.length) { out.push({ text: pending.texts.join(' ').slice(0, MAX_TEXT), speaker: pending.speaker, delivery: pending.delivery }); sent++ }
     pending = null
   }
   return {
@@ -43,7 +45,7 @@ export function liveGrouper(characterName: string, speakers: readonly string[]) 
         if (pending && pending.speaker !== speaker) flush(out)
         pending ??= { speaker, texts: [], delivery: deliveries.get(key)! }
         pending.texts.push(l.text)
-        if (pending.texts.join(' ').length >= LIVE_GROUP) flush(out)
+        if (pending.texts.join(' ').length >= (sent ? LIVE_GROUP : LIVE_FIRST)) flush(out)
       }
       seen = lines.length
       return out

@@ -23,6 +23,15 @@ SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
 # stream_check 실측(희아, 248프레임): 코덱은 뒤를 보지 않는다(보류 프레임 차이 0) — 그런데 기억이 길어 앞 48·128프레임만 문맥으로 주면 소리가 갈렸고
 # (최대 차이 0.52·0.10), 256프레임 이상·처음부터 전부는 한 번에 푼 것과 같았다(0.007, 수치 흔들림 수준). 처음부터 다시 풀어도 16조각에 0.34초라 전부 준다.
 STREAM_FIRST, STREAM_EVERY, STREAM_CTX, STREAM_HOLD = 8, 16, 1 << 20, 0
+# 11/11 켜질 때 미리 준비할 목소리(운영 official_voices 활성 11개 + 기본) — provider_voice_id. 목소리를 새로 열면 여기에 더한다.
+PREWARM_VOICES = (
+    'a5201527d34471b03817182b6531bb3e01fc92df1a3f999edf2d940971b3e76e', '92cb93673ea569c86cfca09d4e72ee7d6e004f5199228417a11267c9360ed2cf',
+    '69bacb4f815a856c47d4780040533a9ccc1a6855b0a44bd321675a9691bc44b8', 'f89e2d42bafe669e8deda6ed17dc03e4ff724dbec33cbe6334db6c0e22e4d436',
+    '7957fb58a77207716705328b631e56af6cb50611c7a0aacf582ff00e567c1e11', '46e987920acccb82bf0cebb1ebef04880c441bcede46213fbd0864f026a9b83d',
+    'd172023c27412afbaf89e1d03f76f4700ede7136fb620e0e6f3b91446203aecb', '1db62c842e73924c3ce89862666c070a8e2709d0e6de507d411c6d6b92c76ed6',
+    '750e1f586d990f4c29648357194ec1c2b0ca40c76d26d7ede6400e0ff77b9f2b', 'd5b4a31e1f4ad18fed004d222ae0696417615293f96c0bc85689a8ef772da31f',
+    '19b7e3a0247ca570bedcad023e46b0c16af3ece29aa481d60c661a9a6cfd4862',
+)
 # CUDA 그래프는 켠다(fish-speech 기본값) — 10/30 판은 학습·청취 스크립트에서 FISH_DRAMA3_CUDA_GRAPH=0 을 그대로 가져와
 # 한 칸마다 작은 커널 수천 개를 따로 띄우는 느린 경로(원본 주석: "eager decode is bound by kernel launches")로 돌고 있었다(10/31).
 image = (base_image.env({'FISH_DRAMA3_FP8_EXPERTS': '0'})
@@ -55,6 +64,12 @@ class Speaker:
         self.model.eval()
         self.codec = load_codec_model(weights / 'codec.pth', str(self.model.device), torch.bfloat16).eval()
         self.refs = {}
+        # 11/11 쓰는 목소리는 켜질 때 미리 준비(목소리 샘플까지 읽은 상태) — 상태 저장 안에 들어가 되살아난 서버는 목소리마다 첫 요청 7.5초가 없다.
+        from collections import OrderedDict
+        self.prefixes = OrderedDict()
+        for voice in PREWARM_VOICES:
+            try: self._prewarm_voice(voice)
+            except Exception as e: print('prewarm failed', voice[:8], type(e).__name__, flush=True)
 
     @modal.enter()
     def capture_graphs(self):
@@ -71,7 +86,7 @@ class Speaker:
             print('cuda graph capture failed, eager decode:', type(e).__name__, flush=True)
         print(f'cuda graphs ready in {time.time() - started:.1f}s', flush=True)
         from collections import OrderedDict
-        self.prefixes = OrderedDict()   # 목소리 → 목소리 샘플까지 읽은 모델 상태(11/6, 아래 generate)
+        if not hasattr(self, 'prefixes'): self.prefixes = OrderedDict()   # 목소리 → 목소리 샘플까지 읽은 모델 상태(11/6, 아래 generate). 11/11 load 에서 미리 채움
 
     def reference(self, name):
         import os, torch
@@ -93,7 +108,7 @@ class Speaker:
             self.refs[name] = (text, codes)
         return self.refs[name]
 
-    def speak(self, text, voice, reuse=True):
+    def speak(self, text, voice, reuse=True, seed=True):
         import io, numpy as np, soundfile as sf, torch
         from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt, generate_drama3
         from drama3_fullft.sampling_profiles import sampling_profile
@@ -102,7 +117,7 @@ class Speaker:
         # ponytail: 길이 상한은 글자 수 비례 추정 — 잘리는 답이 많으면 실측으로 조정
         limit = min(1536, max(384, len(text) * 24))
         # 11/11 사용자("한 문장마다 다른 사람 같다"): 목소리마다 같은 씨앗 — 요청마다 무작위가 새로 시작돼 같은 목소리의 결이 줄마다 흔들렸다.
-        torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
+        if seed: torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
         with torch.inference_mode():
             prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
             frames = self.generate(prompt, voice or DEFAULT_VOICE, limit) if reuse else generate_drama3(self.model, prompt, max_new_tokens=limit, **sampling_profile(SAMPLING))[0]
@@ -110,6 +125,55 @@ class Speaker:
             wave = self.codec_decode(frames)
         buf = io.BytesIO(); sf.write(buf, np.clip(wave, -1, 1), self.codec.sample_rate, format='WAV', subtype='PCM_16')
         return buf.getvalue()
+
+    def _prewarm_voice(self, voice):
+        """_decode 의 '처음 보는 목소리' 갈래와 같은 계산으로 목소리 샘플까지 읽은 상태를 만들어 둔다(디코드는 하지 않는다).
+        끊는 자리 앞까지는 글과 상관없이 같은 줄이라 계산 결과도 같다 — 요청 때 만든 것과 같은 상태."""
+        import torch
+        from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt, ensure_drama3_caches
+        model = self.model; backbone, tower = model.backbone, model.audio_decoder
+        ref_text, codes = self.reference(voice)
+        with torch.inference_mode():
+            prompt = build_drama3_prompt('<|speaker:0|>' + '안녕.', model.tokenizer, model.config, ['<|speaker:0|>' + ref_text], [codes])
+            other = build_drama3_prompt('<|speaker:0|>' + 'Zq', model.tokenizer, model.config, ['<|speaker:0|>' + ref_text], [codes])
+            rows = len(prompt)
+            common = next((i for i in range(min(len(other), rows)) if not torch.equal(other[i], prompt[i])), min(len(other), rows))
+            cut = (common - 1) // 128 * 128
+            if cut <= 0: return
+            ensure_drama3_caches(model, rows + 8)
+            frames = prompt.to(tower.device); positions = torch.arange(rows, device=tower.device)
+            for start in range(0, cut, 128):
+                end = min(start + 128, cut)
+                chunk = frames[start:end]
+                hidden = backbone(inputs_embeds=tower.embed_backbone(chunk, backbone.embed(chunk[:, 0]))[None], input_pos=positions[start:end])[0].to(tower.device)
+                paired = min(end, rows - 1)
+                if paired > start: tower.prefill(hidden[: paired - start], positions[start:paired], frames[start:paired], frames[start + 1 : paired + 1])
+            attn = [l.self_attn for l in backbone.model.layers if l.layer_type == 'full_attention']
+            linear = [l.linear_attn for l in backbone.model.layers if l.layer_type != 'full_attention']
+            towers = [l.transformer_layer.attention for l in (*tower.shared_layers, *tower.residual_layers)]
+            self.prefixes[voice] = {'cut': cut, 'rows': prompt[: cut + 1].clone(),
+                'attn': [(a.k_cache[:1, :, :cut].clone(), a.v_cache[:1, :, :cut].clone()) for a in attn],
+                'linear': [(g.conv_state[:1].clone(), g.recurrent_state[:1].clone()) for g in linear],
+                'tower': [(t.k_cache[:, :, :cut].clone(), t.v_cache[:, :, :cut].clone()) for t in towers]}
+        print(f'prewarmed {voice[:8]} cut {cut}', flush=True)
+
+    @modal.method()
+    def compare(self, voice, lines, seed=11):
+        """11/11 청취 비교: 예전(대사 줄마다 따로·줄마다 감정·요청마다 다른 무작위) vs 지금(한 묶음·첫 줄 감정·목소리 고정 씨앗). WAV 두 개."""
+        import io, numpy as np, soundfile as sf, torch
+        rate = self.codec.sample_rate
+        def wav(parts):
+            buf = io.BytesIO(); sf.write(buf, np.concatenate(parts), rate, format='WAV', subtype='PCM_16'); return buf.getvalue()
+        def pcm(audio):
+            data, _ = sf.read(io.BytesIO(audio), dtype='float32'); return data
+        old = []
+        for i, l in enumerate(lines):
+            torch.manual_seed(seed + i * 7919)   # 예전엔 요청마다 무작위가 새로 시작됐다
+            old.append(pcm(self.speak(delivery_text(l['text'], l), voice, seed=False)))
+            old.append(np.zeros(int(rate * min(1.5, (l.get('delivery') or {}).get('pauseAfterMs', 300) / 1000)), dtype='float32'))
+        joined = {'text': ' '.join(l['text'] for l in lines), 'delivery': lines[0].get('delivery')}
+        new = pcm(self.speak(delivery_text(joined['text'], joined), voice))
+        return {'old': wav(old), 'new': wav([new])}
 
     def generate(self, prompt, voice, max_new_tokens):
         """_decode 를 끝까지 돌린 결과(11/11 스트리밍 때문에 생성기로 나눔 — 계산은 그대로)."""
