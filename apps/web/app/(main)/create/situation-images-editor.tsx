@@ -61,10 +61,10 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
                 </button>
               </div>
             </div>
-            <textarea value={r.situation} onChange={e => patch(r.id, { situation: e.target.value })} aria-label={t('상황 설명')} maxLength={SITUATION_LIMITS.situationLength} rows={2}
+            <textarea value={r.situation} onChange={e => patch(r.id, { situation: e.target.value })} aria-label={t('상황 설명')} maxLength={SITUATION_LIMITS.situationLength} rows={2} className="small-placeholder"
               placeholder={t('어떤 상황에 띄울까요? 예) 비 맞고 돌아와 젖은 셔츠 차림일 때')}
               style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
-            <input value={r.keywords} onChange={e => patch(r.id, { keywords: e.target.value })} aria-label={t('상황 키워드')} maxLength={110}
+            <input value={r.keywords} onChange={e => patch(r.id, { keywords: e.target.value })} aria-label={t('상황 키워드')} maxLength={110} className="small-placeholder"
               placeholder={t('키워드 (선택, 쉼표로) 예) 비, 우산')}
               style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%' }} />
             {r.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(r.error)}</p>}
