@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
 import { BASE_GROUP_OF, SCENE_GROUPS, PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, type Audience, type CompositionKey } from '@/lib/photo-scenes'
-import { requestPhoto, type MediaState } from './media-actions'
+import { requestPhoto, warmPhoto, type MediaState } from './media-actions'
 import styles from './chat.module.css'
 
 /** 입력창의 사진 버튼(11/2, 11/3 개편) — 위 장 탭(1장 2장 +)으로 장을 고르고, 그 장의 장면·구도(드롭다운 3개)를 바꾼다.
@@ -68,7 +68,7 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
   const label = { fontSize: 13, color: 'var(--color-text-tertiary)', margin: '0 0 10px', display: 'flex', justifyContent: 'space-between' } as const
   return <>
     {/* 11/6 사용자: 사진 버튼은 입력창 도구 줄이 아니라 캐릭터 답변마다 그 아래(variant='turn') */}
-    <button type="button" className={variant === 'turn' ? styles.turnPhoto : `${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => setOpen(true)}>
+    <button type="button" className={variant === 'turn' ? styles.turnPhoto : `${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => { setOpen(true); void warmPhoto(sessionId).catch(() => {}) }}>
       <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
     {variant === 'turn' && <span>{t('사진 만들기')}</span>}</button>
     {pending && making > 0 && typeof document !== 'undefined' && document.getElementById('photo-making-slot') && createPortal(<div ref={slot} className={styles.photoMaking} role="status" aria-live="polite">

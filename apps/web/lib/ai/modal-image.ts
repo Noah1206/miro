@@ -63,12 +63,25 @@ Rules:
 - If the text clearly involves two people together (hug, kiss, holding hands), include that interaction.
 - The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.). No quality tags or style names.`
 
-/** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). */
-export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM()): Promise<string> {
+// 11/11 언베일 방: 성행위 장면이면 그 행위·자세를 정확히(오랄 장면이 등 돌린 단독 사진으로 나왔다). 상대(남자)는 시점(pov)으로 일부만.
+const MOMENT_ADULT = `
+- This is an adult (18+) explicit scene between consenting adults. If a sexual act is happening, the act and position are the MOST important tags: name them with standard Danbooru tags (e.g. fellatio, deepthroat, kneeling, sex, vaginal, missionary, cowgirl position, doggystyle, paizuri, handjob) and the partner's visible part (1boy, penis, pov, hetero).
+- Keep the character's current clothing state (e.g. open blouse, skirt lift, breasts out) and the place.`
+
+/** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). adult = 언베일 모델로 바꿀 때. */
+export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM(), adult = false): Promise<string> {
   try {
-    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: 'modal-moment:v1', maxTokens: 2048, schema: Tags, system: MOMENT_SYSTEM, prompt: text })
+    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: adult ? 'modal-moment:v2-adult' : 'modal-moment:v1', maxTokens: 2048, schema: Tags,
+      system: adult ? MOMENT_SYSTEM.replace('at most 10', 'at most 14') + MOMENT_ADULT : MOMENT_SYSTEM, prompt: text })
     return tags
   } catch { return '' }
+}
+
+/** 11/11 미리 깨우기 — 사진 창을 열 때 그 그림체 서버를 미리 띄운다(꺼진 서버 73초 → 켜진 서버 17초 실측). 기다리지 않고, 실패해도 무시. */
+export function warmModalImage(style: string): void {
+  if (!modalImageReady()) return
+  void fetch(process.env.MIRO_IMAGE_URL!, { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, style, warm: true }), signal: AbortSignal.timeout(10_000) }).catch(() => {})
 }
 
 /** PNG 바이트. 첫 장은 GPU 준비로 1~2분 걸릴 수 있다. */

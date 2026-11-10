@@ -9,7 +9,7 @@ import { contextFromWorld, sceneMoment, getOrGenerate } from '@/lib/simulation/m
 import { UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { adultModeGateFor, matureGateFor } from '@/lib/ops/safety'
 import { unsafeRequest } from '@/lib/ai/local-image'
-import { modalImageReady, toMomentTags } from '@/lib/ai/modal-image'
+import { modalImageReady, styleFor, toMomentTags, warmModalImage } from '@/lib/ai/modal-image'
 import { randomInt, randomUUID } from 'node:crypto'
 import { auxiliaryLLM } from '@/lib/simulation/mock-llm'
 import { PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, sceneTags, type CompositionKey, type PhotoScene } from '@/lib/photo-scenes'
@@ -84,7 +84,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   if (plans.some(p => p.sceneId && !p.scene)) return { error: msg('이 장면은 그릴 수 없어요.'), notice: null }
   if (plans.some(p => p.scene?.unveil) && !unveil) return { error: msg('언베일 장면은 언베일을 켠 대화방에서만 만들 수 있어요.'), notice: null }
   // '지금 대화 그대로'(장면을 안 고른 장) — 그 순간의 자세·표정·옷·장소를 사진에 싣는다(11/3 사용자 고정 요구).
-  const moment = plans.some(p => !p.scene) ? await sceneMoment(sessionId).catch(() => '') || undefined : undefined
+  const moment = plans.some(p => !p.scene) ? await sceneMoment(sessionId, { explicit: !!unveil }).catch(() => '') || undefined : undefined
   // 누를 때마다 새 그림(11/2 사용자: 같은 사진을 무료로 계속 주면 안 된다) — 번호를 매번 새로 뽑아 캐시에 걸리지 않게 하고, 장마다 차감한다.
   const units = photoPrice(count) / count
   const shots = plans.map(({ scene, picks }) => ({ seed: randomInt(1, 2_147_483_647), couple: !!scene?.couple,
@@ -130,4 +130,13 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
     // 이미지 생성 실패 시 텍스트 역할극은 그대로 유지한다 (명세서 5.3 예외).
     return { error: msg('사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.'), notice: null }
   }
+}
+
+/** 사진 창을 열 때 — 이 방 캐릭터의 그림체 서버를 미리 깨운다(만들기를 누를 때쯤 켜져 있게). */
+export async function warmPhoto(sessionId: string): Promise<void> {
+  const user = await requireUser()
+  const loaded = await loadSession(sessionId, user.id)
+  if (!loaded) return
+  const [c] = await db.select({ audience: characters.audience, slug: characters.slug }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
+  if (c) warmModalImage(styleFor(c.audience, c.slug))
 }

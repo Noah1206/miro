@@ -268,13 +268,13 @@ async function modalPhoto(
     // 외형·장소·세부사항(look)은 주인공 바로 뒤로, 고른 장면·수위(tags)는 뒤로 — 외형이 상대 인물에게 섞이지 않게.
     // 언베일 방(판정 통과)이면 성인 문장을 막는 상용 모델 대신 언베일 모델이 외형(예비)·순간을 태그로 바꾼다(11/9).
     const adultLLM = opts.unveil && session?.userId ? auxiliaryLLM(opts.characterName, { userId: session.userId, sessionId: opts.sessionId, requestId: randomUUID(), workload: 'background', origin: 'photo:tags', adult: true }) : undefined
-    const [look, moment] = await Promise.all([toImageTags(source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM) : Promise.resolve('')])
+    const [look, moment] = await Promise.all([toImageTags(source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM, !!adultLLM) : Promise.resolve('')])
     // 장면을 안 골랐으면 지금 순간 + 그 장의 구도(11/3 — 예전엔 구도를 고르면 순간 태그가 빠졌다).
     const tags = [tag?.positive, opts.scene?.tags ?? [moment, opts.composition].filter(Boolean).join(', ')].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
       // 11/8 언베일 사진은 성기 부위를 가린 뒤에만 저장·전송(lib/ai/censor) — 가림이 실패하면 사진도 실패
-      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple, extraNeg: tag?.negative, seed, refUrl }); return tag?.mature ? censorPng(png) : png })
+      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? (!!tag?.mature && /\b(1boy|hetero|penis|fellatio|sex)\b/.test(moment)), extraNeg: tag?.negative, seed, refUrl }); return tag?.mature ? censorPng(png) : png })
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
     const [saved] = await db.insert(generatedMedia).values({
@@ -293,12 +293,13 @@ async function modalPhoto(
 /**
  * 지금 순간의 장면 글(11/3) — 최근 사용자 말과 캐릭터의 서술·행동·대사(최대 900자). 사진이 그 순간 맥락대로 나오게.
  * 언베일 모델이 쓴 원문(is_explicit)은 빼고 넘긴다 — 태그 변환은 상용 모델이 한다(원문이 공급자에게 가지 않게).
+ * 단 언베일 사진(explicit)이면 태그 변환도 언베일 모델이 하므로 그대로 넣는다(11/11: 다 빠져서 오랄 장면이 외형 태그만으로 그려졌다).
  */
-export async function sceneMoment(sessionId: string): Promise<string> {
+export async function sceneMoment(sessionId: string, opts: { explicit?: boolean } = {}): Promise<string> {
   const rows = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, explicit: messages.isExplicit }).from(messages)
     .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator']), inArray(messages.kind, ['text'])))
     .orderBy(desc(messages.createdAt)).limit(4)
-  const lines = rows.reverse().filter(r => !r.explicit).map(r => {
+  const lines = rows.reverse().filter(r => opts.explicit || !r.explicit).map(r => {
     if (r.role === 'user') return `사용자: ${r.content}`
     const blocks = (r.blocks as Array<{ type?: string; text?: string }> | null) ?? []
     const text = blocks.filter(b => b.type && ['narrative', 'action', 'dialogue'].includes(b.type)).map(b => b.text).filter(Boolean).join(' ')
