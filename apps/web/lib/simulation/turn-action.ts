@@ -1,4 +1,5 @@
 import { revalidatePath } from 'next/cache'
+import { attendanceStatus } from '@/lib/attendance'
 import { and, eq } from 'drizzle-orm'
 import { db, conversationRequests } from '@miro/db'
 import type { TurnStream } from '@miro/engine'
@@ -19,7 +20,8 @@ export type TurnState = {
   error: string | null
   notice: string | null
   /** 한도 도달 시 UI 가 Pro 안내 / 초기화 대기를 구분해 보여준다. */
-  limit: { plan: 'free' | 'pro'; resetsAt: string } | null
+  /** attend: 오늘 출석 체크를 안 했다(11/10) — 충전 시트 대신 출석 안내를 띄운다. */
+  limit: { plan: 'free' | 'pro'; resetsAt: string; attend?: boolean } | null
   /**
    * 생성이 실패했지만 오류 문구를 띄우지 않는다 — 캐릭터가 아직 쓰는 중인 것처럼 점을 계속 돌린다.
    * 유저가 손쓸 수 있는 실패(한도·안전·세션 없음)는 해당하지 않는다. 그건 말해 줘야 풀린다.
@@ -36,7 +38,7 @@ export type TurnState = {
 }
 
 const fail = (error: string): TurnState => ({ error, notice: null, limit: null })
-const exceeded = (e: UsageExceededError): TurnState => ({ error: exceededMessage(e), notice: null, limit: { plan: e.plan, resetsAt: e.resetsAt.toISOString() } })
+const exceeded = (e: UsageExceededError, attend = false): TurnState => ({ error: exceededMessage(e), notice: null, limit: { plan: e.plan, resetsAt: e.resetsAt.toISOString(), ...(attend ? { attend } : {}) } })
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 type TurnOpts = { mode: 'chat' | 'messenger'; path: (sessionId: string) => string; stream?: TurnStream }
@@ -76,7 +78,8 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
     switch (r.reason) {
       case 'command_unavailable': return fail(msg('명령어를 사용할 수 없어요. 다시 선택해 주세요.'))
       case 'command_adult_only': return fail(msg('이 명령어는 언베일을 켠 대화방에서만 쓸 수 있어요.'))
-      case 'usage': return exceeded(r.error)
+      // 11/10 잔액이 모자랄 때 오늘 출석 체크를 안 했으면 출석 안내를, 했으면 기존 충전 안내를.
+      case 'usage': return exceeded(r.error, await attendanceStatus(userId).then(a => !a.checkedToday, () => false))
       case 'model_unavailable': return fail(msg('선택한 모델을 사용할 수 없어요. 요금제와 모델 준비 상태를 확인해 주세요.'))
       case 'budget': return fail(r.kind === 'turn_tokens' ? msg('이번 답변의 생성 한도에 도달했어요. 토큰은 차감되지 않았어요. 입력을 줄이거나 다른 답변 길이를 선택해 주세요.') : r.kind === 'user_monthly' ? COPY.error.budgetMonthly : COPY.error.budget)
       case 'too_long': return fail(COPY.error.tooLong(2000))

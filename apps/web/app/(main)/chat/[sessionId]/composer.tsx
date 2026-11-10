@@ -3,7 +3,8 @@ import { ChatEmojiButton, ChatSendIcon, ChatInputMore } from '@/components/chat-
 import { useEffect, useRef, useState, useTransition, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion } from 'motion/react'
-import { Pressable, StatusIcon } from '@/components/ui'
+import { Pressable, StatusIcon, TransitionLink } from '@/components/ui'
+import { ATTENDANCE_GRANT } from '@miro/config'
 import styles from './chat.module.css'
 import glass from '@/components/chat-composer-glass.module.css'
 import { tween } from '@/lib/motion/tokens'
@@ -68,7 +69,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) })
       if (result.undone?.length) { undone = true; remove(result.undone) }
       setState(result)
-      if (result.limit) openRecharge()
+      if (result.limit && !result.limit.attend) openRecharge()
       if (reroll) { if (!result.succeeded && undone) restore(false) }
       else if (result.succeeded) { setCommand(null); if (!draftNow.current.trim()) setRequestId(crypto.randomUUID()) }
       else if (!result.keepWaiting) restore(!!result.retryWithSameId)
@@ -223,6 +224,14 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
           </motion.p>
         )}
         {state.notice && !showTyping && <motion.p key="notice" role="status" className="t-caption" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ marginBottom: 8, color: 'var(--color-text-tertiary)' }}>⚠ {t(state.notice)}</motion.p>}
+        {/* 11/10 잔액 부족 + 오늘 출석 안 함 → 출석 안내(출석했으면 안 나오고 충전 시트가 열린다). */}
+        {state.limit?.attend && (
+          <motion.div key="attend" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, padding: '10px 12px', borderRadius: 12, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }}>
+            <span style={{ flex: 1, minWidth: 0 }}>{t('토큰이 부족해요. 오늘 출석 체크를 하면 {amount}토큰을 받아요.', { amount: ATTENDANCE_GRANT.daily.toLocaleString() })}</span>
+            <TransitionLink href="/my" style={{ flex: 'none', padding: '6px 12px', borderRadius: 8, background: 'var(--color-accent)', color: 'var(--color-white, #fff)', fontWeight: 650 }}>{t('출석하러 가기')}</TransitionLink>
+          </motion.div>
+        )}
         {state.error && !state.limit && (
           <motion.p key="err" role="alert" className="t-caption" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tween.enter} style={{ marginBottom: 8, color: 'var(--color-danger)' }}>
             {t(state.error)}
