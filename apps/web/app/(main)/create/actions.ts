@@ -52,7 +52,7 @@ export async function saveCharacter(form: FormData): Promise<string> {
 
   const result = await db.transaction(async (tx) => {
     const [character] = await tx.insert(characters).values({
-      id: creationId, ownerId: user.id, isOfficial: false, ...p.character, images, voiceId, ensembleVoices,
+      id: creationId, ownerId: user.id, isOfficial: false, ...p.character, images, voiceId, ensembleVoices, ensemblePhotos: p.ensemblePhotos,
       isDraft: !p.publish,
       experienceType: p.experienceType,
       // 초안은 절대 공개되지 않는다. 등록할 때만 폼에서 선택한 공개 상태를 적용한다.

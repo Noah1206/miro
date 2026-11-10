@@ -25,7 +25,7 @@ import { Segmented, SelectField, StepSlider } from './settings-controls'
 import { TransitionLink, useToast } from '@/components/ui'
 import { TestChat } from './test-chat'
 import { VoiceList, type VoiceOption } from './voice-list'
-import { CastNames, CastVoices, castJson, type CastMember } from './cast-editor'
+import { CastNames, CastVoices, castJson, castPhotosJson, type CastMember } from './cast-editor'
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
@@ -46,6 +46,7 @@ export type FormInitial = {
   voiceId: string
   /** 다인 작품(11/10) 등장인물별 목소리 { 이름: 목소리 id, '' = 자동 }. 비어 있으면 1:1. */
   ensembleVoices?: Record<string, string>
+  ensemblePhotos?: Record<string, string>
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
@@ -166,7 +167,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
   const [build] = useState<string>(i.build)
   const [voiceId, setVoiceId] = useState<string>(i.voiceId)
   // 작품 형식(11/10 사용자): 1:1 = 캐릭터 한 명, 다인 = 여러 인물이 나오고 인물마다 목소리를 고정한다.
-  const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ name, voice })))
+  const [cast, setCast] = useState<CastMember[]>(() => Object.entries(i.ensembleVoices ?? {}).map(([name, voice]) => ({ name, voice, ...(i.ensemblePhotos?.[name] ? { photo: i.ensemblePhotos[name] } : {}) })))
   const [castMode, setCastMode] = useState<'single' | 'multi'>(cast.length ? 'multi' : 'single')
   const [advanced, setAdvanced] = useState(false)
   const [profileAdvanced, setProfileAdvanced] = useState(false)
@@ -318,6 +319,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 인물 이름을 적어 두면 목소리 탭에서 인물마다 목소리를 고정할 수 있어요. 인물 설정은 캐릭터 소개·세계관에 적어 주세요.')}>
             <Card>
               <input type="hidden" name="ensembleVoices" value={castMode === 'multi' ? castJson(cast) : '{}'} />
+              <input type="hidden" name="ensemblePhotos" value={castMode === 'multi' ? castPhotosJson(cast) : '{}'} />
               <Segmented value={castMode} onChange={v => { setCastMode(v); if (v === 'multi' && !cast.length) setCast([{ name: '', voice: '' }]) }}
                 options={[{ value: 'single', label: t('1:1'), hint: t('캐릭터 한 명') }, { value: 'multi', label: t('다인'), hint: t('여러 인물') }]} />
               {castMode === 'multi' && <div style={{ marginTop: 'var(--space-4)' }}><CastNames cast={cast} onChange={setCast} /></div>}

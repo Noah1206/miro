@@ -242,6 +242,8 @@ export const characters = pgTable('characters', {
   coverUnveil: boolean('cover_unveil').notNull().default(false),
   /** 여러 인물 카드의 히로인별 목소리(11/4) — { 히로인 이름: official_voices.id }. 같은 목소리 공유 가능. 없는 히로인은 voiceId. */
   ensembleVoices: jsonb('ensemble_voices').$type<Record<string, string>>().notNull().default({}),
+  /** 11/10 다인 작품 인물별 프로필 사진 { 이름: 사진 URL } — 대화방 말풍선 아바타. 없으면 작품 사진 순서로 대신한다. */
+  ensemblePhotos: jsonb('ensemble_photos').$type<Record<string, string>>().notNull().default({}),
   situationImages: jsonb('situation_images').$type<Array<{ keywords: string[]; image: string; situation?: string; adult?: true }>>().notNull().default([]),
   /** 권장 대화 설정(10/28, 분류·설정 탭) — 새 채팅을 열 때 처음 골라져 있는 모델·출력량. 사용자는 채팅방에서 바꿀 수 있다. */
   /** 이용 대상(10/28) — true 면 언베일(성인 인증·켬)을 연 사람에게만 보인다. */

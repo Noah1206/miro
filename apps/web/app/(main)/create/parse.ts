@@ -228,6 +228,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     voiceId: orNull(s('voiceId').slice(0, 40)),
     // 다인 작품(11/10) 등장인물별 목소리 — 이름 20자·20명까지. 목소리 id 는 저장할 때 서버가 다시 본다(lib/voice selectableEnsemble).
     ensembleVoices: parseEnsemble(s('ensembleVoices')),
+    // 11/10 인물별 프로필 사진 — 올린 사진 URL(https)만.
+    ensemblePhotos: Object.fromEntries(Object.entries(parseEnsemble(s('ensemblePhotos'), 500)).filter(([, v]) => /^https:\/\//.test(v))),
     startingTime,
     character, world, contact, visual, initialRelationship,
   }
@@ -288,14 +290,14 @@ function extraScenes(form: FormData) {
 }
 
 /** 다인 작품 등장인물 칸(JSON) → { 이름: 목소리 id }. 모양이 틀리면 빈 값(1:1). */
-export function parseEnsemble(raw: string): Record<string, string> {
+export function parseEnsemble(raw: string, max = 40): Record<string, string> {
   let o: unknown
   try { o = JSON.parse(raw || '{}') } catch { return {} }
   if (!o || typeof o !== 'object' || Array.isArray(o)) return {}
   const out: Record<string, string> = {}
   for (const [k, v] of Object.entries(o as Record<string, unknown>).slice(0, 20)) {
     const name = k.trim().slice(0, 20)
-    if (name && !(name in out)) out[name] = typeof v === 'string' ? v.slice(0, 40) : ''
+    if (name && !(name in out)) out[name] = typeof v === 'string' ? v.slice(0, max) : ''
   }
   return out
 }

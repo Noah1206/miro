@@ -28,7 +28,7 @@ export default async function EditCharacter({ params }: { params: Promise<{ id: 
     personality: c.personality, hobbies: c.hobbies, dislikes: c.dislikes,
     mood: genreValues(world?.genre ?? null),
     jealousy: c.jealousy, initiative: c.initiative, emotionalExpression: c.emotionalExpression,
-    gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average', voiceId: c.voiceId ?? '', ensembleVoices: c.ensembleVoices ?? {},
+    gender: visual?.bodyProfile?.gender ?? 'male', build: visual?.bodyProfile?.build ?? 'average', voiceId: c.voiceId ?? '', ensembleVoices: c.ensembleVoices ?? {}, ensemblePhotos: c.ensemblePhotos ?? {},
     height: visual?.bodyProfile?.height ?? '', detail: visual?.bodyProfile?.detail ?? '',
     eyes: visual?.baseFace?.eyes ?? '', nose: visual?.baseFace?.nose ?? '', jaw: visual?.baseFace?.jaw ?? '',
     skin: visual?.baseFace?.skin ?? '', distinctive: visual?.baseFace?.distinctive ?? '',

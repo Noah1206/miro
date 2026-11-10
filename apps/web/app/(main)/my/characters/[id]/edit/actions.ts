@@ -45,7 +45,7 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
 
   const result = await db.transaction(async (tx) => {
     await tx.update(characters).set({
-      ...p.character, images, voiceId, ensembleVoices,
+      ...p.character, images, voiceId, ensembleVoices, ensemblePhotos: p.ensemblePhotos,
       isDraft: stillDraft,
       // The saved type owns the execution policy; editing cannot convert it.
       experienceType: owned.character.experienceType,

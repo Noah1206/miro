@@ -61,7 +61,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
     sessionMedia(sessionId, user.id),
     accountProfile(user),
     // 권장 대화 설정(10/28) — 제작자가 고른 모델·출력량이 새 채팅의 처음 선택값.
-    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, playGuide: characters.playGuide, firstReplies: characters.firstReplies, endings: characters.endings, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
+    session.then(l => l ? db.select({ rec: characters.recommendedChat, scenes: characters.photoScenes, audience: characters.audience, presets: characters.presetPersonas, guide: characters.personaGuide, playGuide: characters.playGuide, firstReplies: characters.firstReplies, endings: characters.endings, ensemblePhotos: characters.ensemblePhotos, ensembleVoices: characters.ensembleVoices, coverUnveil: characters.coverUnveil, voiceId: characters.voiceId }).from(characters).where(eq(characters.id, l.characterId)).limit(1).then(r => r[0] ?? null) : null),
     // 페르소나 드롭다운(11/3) — 내 기본 페르소나도 고를 수 있게.
     getPersona(user.id),
     // 첫 대화 전 세계관 카드(11/4) — 이 방의 '나'를 적기 전에는 입력창 대신 카드가 뜬다.
@@ -89,7 +89,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 11/7: 언베일 사진은 건너뛴다 — 갤러리가 일반→언베일 짝이어도 인물 순서가 어긋나지 않게.
   const cast = ensembleNames(s.character.personality.secret)
   const castImages = (loaded.characterImages ?? []).filter(src => !isUnveilPhoto(src))
-  const castPhotos = Object.fromEntries(cast.flatMap((name, i) => castImages[i] ? [[name, castImages[i]!]] : []))
+  // 11/10: 만든 사람이 인물마다 올린 사진(ensemble_photos)이 먼저 — 없을 때만 작품 사진 순서로 대신한다.
+  const named = rec?.ensemblePhotos ?? {}
+  const castPhotos = { ...Object.fromEntries(cast.flatMap((name, i) => castImages[i] ? [[name, castImages[i]!]] : [])), ...named }
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
     content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
