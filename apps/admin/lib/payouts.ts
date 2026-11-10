@@ -1,4 +1,4 @@
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { db, adminActions, creatorPayouts, openPii, rechargeGrants, rechargeLedger, usageLedger, users } from '@miro/db'
 
 export type PayoutStatus = 'requested' | 'paid' | 'rejected'
@@ -68,7 +68,7 @@ export async function monthlyWithholding(month: string) {
   const [from, to] = kstMonthRange(month)
   const rows = await db.select({ userId: creatorPayouts.userId, realName: creatorPayouts.realName, rrnSealed: creatorPayouts.rrnSealed,
     gross: creatorPayouts.grossKRW, incomeTax: creatorPayouts.incomeTaxKRW, localTax: creatorPayouts.localTaxKRW })
-    .from(creatorPayouts).where(and(eq(creatorPayouts.status, 'paid'), sql`${creatorPayouts.decidedAt} >= ${from} and ${creatorPayouts.decidedAt} < ${to}`))
+    .from(creatorPayouts).where(and(eq(creatorPayouts.status, 'paid'), gte(creatorPayouts.decidedAt, from), lt(creatorPayouts.decidedAt, to)))
   const people = new Map<string, { realName: string; rrn: string; gross: number; incomeTax: number; localTax: number }>()
   for (const r of rows) {
     const p = people.get(r.userId) ?? { realName: r.realName, rrn: (() => { try { return openPii(r.rrnSealed) } catch { return '' } })(), gross: 0, incomeTax: 0, localTax: 0 }
