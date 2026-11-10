@@ -56,7 +56,8 @@ PROMPTS = [   # modal_image_gen.py 의 시험 프롬프트와 같다 — 성인 
 
 
 # 11/11 꺼진 서버 73초 vs 켜진 서버 17초(실측) — 마지막 사진 뒤 5분 켜 둔다(이어 찍는 사진이 빠르게). ponytail: 그림체마다 켜진 채 5분 = A10G 약 $0.09, 사용자가 많아지면 메모리 스냅숏으로 켜는 시간을 줄인다
-@app.cls(gpu=['A10G', 'L4', 'A100-40GB'], image=image, volumes={'/cache': cache, '/vol': train_vol}, timeout=900, scaledown_window=300)
+@app.cls(gpu=['A10G', 'L4', 'L40S', 'A100-40GB', 'A100-80GB'],   # 11/11 GPU 배정에 90초 기다린 적이 있어 고를 수 있는 종류를 늘림(앞쪽이 우선)
+ image=image, volumes={'/cache': cache, '/vol': train_vol}, timeout=900, scaledown_window=300)
 class Gen:
     ckpt: str = modal.parameter(default='siran_v1-step00002000.safetensors')
     wide: bool = modal.parameter(default=False)   # 11/9 가로 그림(1216×832) — 아르덴 장면 사진(사용자: 가로가 더 긴 디자인)

@@ -6,11 +6,11 @@
 export async function censorPng(png: Buffer): Promise<Buffer> {
   const url = process.env.MIRO_CENSOR_URL
   if (!url || !process.env.MIRO_IMAGE_SECRET) throw new Error('censor_unavailable')
-  const res = await fetch(url, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, png: png.toString('base64') }),
-    signal: AbortSignal.timeout(60_000),
-  })
+  const body = JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, png: png.toString('base64') })
+  const call = () => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(45_000) })
+  // 11/11 한 번 다시 — 5MB 를 미국 서버로 올리다 408(요청 시간 초과)이 나 다 그린 사진이 버려졌다. 시간 초과·서버 오류만 다시 보낸다.
+  let res = await call().catch(() => null)
+  if (!res || res.status === 408 || res.status >= 500) res = await call()
   if (!res.ok) throw new Error(`censor ${res.status}`)
   const { png: out } = (await res.json()) as { png?: string }
   if (!out) throw new Error('censor_empty')
