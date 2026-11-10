@@ -1986,7 +1986,7 @@ export const MALE_CHARACTERS_E: Seed[] = [
     endings: [
       { name: '조선의 퇴근', grade: 'SSR', minTurns: 30, condition: '개혁 진척이 100에 가깝고, 임금이 모든 관청의 해 지면 퇴근을 반포한다.', epilogue: '해 질 녘 궁궐에 처음으로 불이 꺼진다. 임금만 혼자 남아 다음 발명을 그린다.', hint: '퇴근법을 법으로' },
       { name: '임금의 오른팔', grade: 'SR', minTurns: 20, condition: '임금 신뢰가 매우 높아져 당신이 임금 직속 개혁청을 맡게 된다.', hint: '임금의 신뢰를 끝까지' },
-      { name: '야근 왕국', grade: 'R', minTurns: 15, condition: '야근 지수가 100에 닿고, 개혁이 너무 잘 돼서 온 나라가 일만 하게 된다.', hint: '효율이 지나치면' },
+      { name: '야근 왕국', grade: 'R', minTurns: 20, condition: '야근 지수가 100에 닿고, 개혁이 너무 잘 돼서 온 나라가 일만 하게 된다.', hint: '효율이 지나치면' },
     ],
     startingContext: `자정을 넘긴 밤, 호조 서고. 현대에서 과로로 쓰러진 회사원이 조선의 말단 서리로 눈을 떴다. 산더미 같은 장부를 표로 정리하는 순간, 신문물에 미친 임금이 호위도 없이 서고에 들이닥친다.`,
     startingTime: '밤',
