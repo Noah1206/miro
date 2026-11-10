@@ -31,7 +31,7 @@ export function Row({ row, index, href }: { row: HomeRow; index: number; href?: 
           <motion.div key={`${row.key}-${c.id}`}
             initial={reduce ? false : { opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }}
             transition={{ duration: duration.normal, ease: ease.enter, delay: 0.08 * index + stagger.tight * i }}>
-            <CharacterCard c={c} />
+            <CharacterCard c={c} still={row.key === 'originals'} />
           </motion.div>
         ))}
       </div>

@@ -43,11 +43,11 @@ export type CardCharacter = {
 /** 11/7: 카드 소개 2줄 = 상세 화면 소개 글의 앞부분([프로필] 같은 머리말은 뺀다). 없으면 한 줄 대사. */
 const cardBlurb = (c: CardCharacter) => c.blurb?.replace(/\[[^\]\n]*\]/g, ' ').replace(/[*_#]/g, '').replace(/\s+/g, ' ').trim() || (c.tagline ? `“${c.tagline}”` : '')
 
-export function CharacterCard({ c }: { c: CardCharacter; tagsBelow?: boolean }) {
+export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: boolean; /** 11/10: 표지에 고정(홈 '미로 오리지널' 줄) */ still?: boolean }) {
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
-  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, stillCover(c.slug))
+  const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, still || stillCover(c.slug))
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
       <TransitionLink href={c.href ?? `/character/${slug}`}
