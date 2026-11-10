@@ -21,6 +21,7 @@ self.addEventListener('fetch', (event) => {
 /* 11/10 알림 아이콘 = 캐릭터 프로필 사진. 그 방 채팅 테마가 카톡이면 카톡 프로필처럼 둥근 사각형(페이지가 miro-prefs 캐시에 테마를 적어 둔다). */
 async function iconFor(data) {
   if (!data.icon) return '/icon-192.png?v=4'
+  if (data.icon.startsWith('/')) return data.icon   // 앱에 든 인물 사진(오리지널 스토리)은 그대로
   let shape = 'round'
   try {
     const prefs = await caches.open('miro-prefs')

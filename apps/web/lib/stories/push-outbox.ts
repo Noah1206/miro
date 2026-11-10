@@ -68,6 +68,8 @@ export async function deliverStoryPush(now = new Date(), limit = 20) {
           title: def.characters.find(c => c.key === contact.speaker)?.name ?? 'MIRO',
           body: translateTo(settings.language, '새 연락이 도착했어요.'),
           url: storyThreadUrl(run.id, contact.speaker), tag: `story:${run.id}:${contact.speaker}`,
+          // 11/10 알림 아이콘 = 그 인물 사진(앱에 든 파일).
+          icon: def.characters.find(c => c.key === contact.speaker)?.image,
         })
         if (result.ok) { await finish('sent', null, job.attempts + 1); observe('story.push_sent', { jobId: id }) }
         else {
