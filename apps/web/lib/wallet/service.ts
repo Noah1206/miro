@@ -22,7 +22,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       select 'usage:' || ${usageLedger.id}::text as id, ${usageLedger.createdAt} as at,
         case ${usageLedger.kind} when 'textRP' then '모델 대화' when 'voiceCallPerMinute' then '음성통화'
           when 'videoCallPerMinute' then '영상통화' when 'photo' then '사진 생성'
-          when 'liveScene' then '라이브 장면' else '추가 인터랙션' end as label,
+          when 'liveScene' then '라이브 장면' when 'cheer' then '응원 보냄' else '추가 인터랙션' end as label,
         case when ${usageLedger.status} = 'rolled_back' or ${usageLedger.continuity} then 0 else -${usageLedger.amount} end as amount,
         case when ${usageLedger.continuity} then '대화 이어가기 제공량'
           else coalesce((select a.model || ' · ' from ai_usage a where 'turn:' || a.request_id::text = ${usageLedger.idempotencyKey} and a.task = 'dialogue' and a.ok = true order by a.created_at desc limit 1), '') || '충전 토큰 ' || ${usageLedger.fromGrants}::text || ' · 제공 토큰 ' || (${usageLedger.amount} - ${usageLedger.fromGrants})::text end as detail,
@@ -30,7 +30,7 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       from ${usageLedger} where ${usageLedger.userId} = ${userId}
       union all
       select 'grant:' || ${rechargeGrants.id}::text, ${rechargeGrants.createdAt},
-        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' when ${rechargeGrants.provider} = 'creator_reward' then '창작 보상' else '토큰 지급' end,
+        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' when ${rechargeGrants.provider} = 'creator_reward' then '창작 보상' when ${rechargeGrants.provider} = 'creator_cheer' then '받은 응원' else '토큰 지급' end,
         ${rechargeGrants.amount} - ${rechargeGrants.refunded},
         case when ${rechargeGrants.refunded} > 0 then '회수 ' || ${rechargeGrants.refunded}::text
           when ${rechargeGrants.expiresAt} is not null then to_char(${rechargeGrants.expiresAt} at time zone 'Asia/Seoul', 'YYYY.MM.DD') || '까지'

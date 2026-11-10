@@ -1,6 +1,6 @@
-import { and, eq, gte, sql } from 'drizzle-orm'
+import { and, eq, gte, inArray, sql } from 'drizzle-orm'
 import { characters, db, rechargeGrants, usageLedger } from '@miro/db'
-import type { UsageTransaction } from './guard'
+import { commit, reserve, type UsageTransaction } from './guard'
 
 /**
  * 창작 보상 1단계(11/11) — 다른 사람이 내 캐릭터와 대화하며 실제로 쓴 토큰의 일부를 만든 사람 지갑에 미로 토큰으로 적립한다(현금 아님).
@@ -9,6 +9,10 @@ import type { UsageTransaction } from './guard'
  */
 export const CREATOR_REWARD_RATE = 0.1
 export const CREATOR_REWARD_PROVIDER = 'creator_reward'
+/** 2단계 응원하기(11/11) — 충전한 토큰으로 만든 사람을 응원하면, 만든 사람이 그 70%를 받는다(베이비챗 첫 등급과 같은 비율). */
+export const CHEER_PROVIDER = 'creator_cheer'
+export const CHEER_SHARE = 0.7
+export const CHEER_AMOUNTS = [100, 300, 500, 1000] as const
 
 /** 턴 차감이 확정된 뒤 같은 트랜잭션에서 부른다. */
 export async function accrueCreatorReward(tx: UsageTransaction, opts: { reservationId: string; payerId: string; characterId: string }): Promise<void> {
@@ -35,6 +39,29 @@ export async function creatorRewardSummary(userId: string): Promise<{ month: num
     total: sql<number>`coalesce(sum(${rechargeGrants.amount}), 0)::int`,
     month: sql<number>`coalesce(sum(${rechargeGrants.amount}) filter (where ${rechargeGrants.createdAt} >= ${monthStart}), 0)::int`,
   }).from(rechargeGrants)
-    .where(and(eq(rechargeGrants.userId, userId), eq(rechargeGrants.provider, CREATOR_REWARD_PROVIDER), eq(rechargeGrants.status, 'active'), gte(rechargeGrants.amount, 1)))
+    .where(and(eq(rechargeGrants.userId, userId), inArray(rechargeGrants.provider, [CREATOR_REWARD_PROVIDER, CHEER_PROVIDER]), eq(rechargeGrants.status, 'active'), gte(rechargeGrants.amount, 1)))
   return { month: row?.month ?? 0, total: row?.total ?? 0 }
+}
+
+export class CheerError extends Error {}
+
+/**
+ * 응원 보내기 — 보낸 사람 지갑에서 충전한 토큰만 차감하고(가입 선물·창작 보상 토큰은 안 된다 — 무료 토큰을 다른 계정으로 옮기는 통로를 막는다),
+ * 만든 사람에게 70% 를 미로 토큰으로 준다. requestId 가 같으면 한 번만 처리된다.
+ */
+export async function sendCheer(opts: { userId: string; characterId: string; amount: number; requestId: string }): Promise<void> {
+  if (!CHEER_AMOUNTS.includes(opts.amount as typeof CHEER_AMOUNTS[number])) throw new CheerError('invalid_amount')
+  if (!/^[0-9a-f-]{36}$/i.test(opts.requestId)) throw new CheerError('invalid_request')
+  const [c] = await db.select({ ownerId: characters.ownerId, isOfficial: characters.isOfficial, isPublic: characters.isPublic, deletedAt: characters.deletedAt })
+    .from(characters).where(eq(characters.id, opts.characterId)).limit(1)
+  if (!c || c.deletedAt || !c.isPublic || c.isOfficial || !c.ownerId) throw new CheerError('not_cheerable')
+  if (c.ownerId === opts.userId) throw new CheerError('own_character')
+  const ownerId = c.ownerId
+  await db.transaction(async tx => {
+    const reservation = await reserve({ userId: opts.userId, kind: 'cheer', tokenAmount: opts.amount, paidOnly: true, idempotencyKey: `cheer:${opts.userId}:${opts.requestId}` }, tx)
+    if (reservation.reused) return
+    await commit(reservation.reservationId, undefined, tx)
+    await tx.insert(rechargeGrants).values({ userId: ownerId, amount: Math.floor(opts.amount * CHEER_SHARE), source: 'grant', provider: CHEER_PROVIDER, externalRef: reservation.reservationId })
+      .onConflictDoNothing()
+  })
 }

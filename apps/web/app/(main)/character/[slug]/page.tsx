@@ -24,6 +24,9 @@ import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import { hasActiveRun, reachedEndings } from '@/lib/ending-collection'
+import { CheerButton } from './cheer'
+import { db, users } from '@miro/db'
+import { eq } from 'drizzle-orm'
 
 export default async function CharacterDetail({ params }: { params: Promise<{ slug: string }> }) {
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
@@ -41,6 +44,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const can = features()
   const editedDescription = officialDescription(c)
 
+  const cheerable = !c.isOfficial && c.isPublic && !!c.ownerId && c.ownerId !== user.id
+  const creator = cheerable ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId!)).limit(1))[0]?.name ?? '' : ''
   const [comments, commentCount, similar, likes, reached, running] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
@@ -138,6 +143,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', marginBottom: 16 }}>
           <Stat icon="comment" label={t('댓글 {n}', { n: commentCount })} />
           <LikeButton slug={slug} initial={likes} />
+          {/* 11/11 응원하기 — 다른 사람이 만든 공개 캐릭터만(공식·내 캐릭터는 아님). */}
+          {cheerable && <CheerButton characterId={c.id} creatorName={creator || t('만든 사람')} />}
           {/* 11/6 사용자: 남성향/여성향 표시는 좋아요와 같은 줄에. */}
           <span className="t-caption" style={{ padding: '6px 10px', borderRadius: 10, background: 'var(--color-surface-2)', color: 'var(--color-text-primary)', fontWeight: 'var(--weight-semibold)' }}>{c.audience === 'male' ? t('남성향') : t('여성향')}</span>
         </div>

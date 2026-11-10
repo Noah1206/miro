@@ -2159,5 +2159,17 @@
  "창작 보상": "Creator rewards",
  "다른 사람이 내 캐릭터와 대화하면 쓴 토큰의 {rate}%가 내 지갑에 쌓여요.": "When others chat with your characters, {rate}% of the tokens they spend goes to your wallet.",
  "이번 달 {n}": "This month {n}",
- "누적 {n}": "Total {n}"
+ "누적 {n}": "Total {n}",
+ "응원하기": "Cheer",
+ "{name}님 응원하기": "Cheer {name}",
+ "보낸 토큰의 70%가 만든 사람에게 전해져요. 충전한 토큰으로만 응원할 수 있어요.": "70% of the tokens you send go to the creator. Only purchased tokens can be used.",
+ "응원할 토큰": "Tokens to send",
+ "{n} 토큰 응원하기": "Cheer {n} tokens",
+ "{name}님에게 {n} 토큰을 응원했어요.": "You cheered {name} with {n} tokens.",
+ "충전한 토큰이 부족해요. 응원은 충전한 토큰으로만 할 수 있어요.": "Not enough purchased tokens. Cheers use purchased tokens only.",
+ "내 캐릭터는 응원할 수 없어요.": "You can’t cheer your own character.",
+ "지금은 이 캐릭터를 응원할 수 없어요.": "You can’t cheer this character right now.",
+ "응원을 보내지 못했어요. 잠시 뒤 다시 시도해 주세요.": "Couldn’t send your cheer. Please try again shortly.",
+ "보내는 중…": "Sending…",
+ "만든 사람": "Creator"
 }
