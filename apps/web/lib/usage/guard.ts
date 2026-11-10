@@ -4,6 +4,7 @@ import { usagePolicy, productionRuntime, type Plan } from '@miro/config'
 import { costOf, decide, isEntitled, isWindowActive, openWindow, type UsageKind } from '@miro/domain'
 import { track } from '@/lib/analytics/track'
 import { observe } from '@/lib/observe'
+import { revokeCreatorReward } from './creator-reward'
 
 export class UsageExceededError extends Error {
   constructor(readonly plan: Plan, readonly resetsAt: Date) {
@@ -209,6 +210,8 @@ export async function rollbackInTransaction(tx: UsageTransaction, reservationId:
     const [l] = await tx.select().from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1).for('update')
     if (!l || (l.status !== 'reserved' && !(opts.committed && l.status === 'committed'))) return
     await tx.update(usageLedger).set({ status: 'rolled_back' }).where(eq(usageLedger.id, reservationId))
+    // 11/11 창작 보상 — 차감이 취소된 턴의 보상은 회수한다(리롤·실패).
+    if (l.status === 'committed') await revokeCreatorReward(tx, reservationId)
     // 각 출처로 정확히 되돌린다 — 충전에서 쓴 만큼은 그 잔액으로, 나머지는 월간 창으로.
     for (const part of await tx.select().from(rechargeLedger).where(eq(rechargeLedger.ledgerId, reservationId))) {
       await tx.update(rechargeGrants).set({ consumed: sql`greatest(0, ${rechargeGrants.consumed} - ${part.amount})` }).where(eq(rechargeGrants.id, part.grantId))

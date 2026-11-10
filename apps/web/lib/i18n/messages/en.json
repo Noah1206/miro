@@ -2155,5 +2155,9 @@
  "캐릭터 추가": "Add character",
  "히로인": "Heroine",
  "남자 캐릭터": "Male character",
- "주인공(나)": "Protagonist (you)"
+ "주인공(나)": "Protagonist (you)",
+ "창작 보상": "Creator rewards",
+ "다른 사람이 내 캐릭터와 대화하면 쓴 토큰의 {rate}%가 내 지갑에 쌓여요.": "When others chat with your characters, {rate}% of the tokens they spend goes to your wallet.",
+ "이번 달 {n}": "This month {n}",
+ "누적 {n}": "Total {n}"
 }

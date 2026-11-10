@@ -9,6 +9,7 @@ import { getT } from '@/lib/i18n/server'
 import { SectionLinks } from '@/components/ui/section-links'
 import styles from './characters.module.css'
 import { MakeTabs } from './make-tabs'
+import { creatorRewardSummary, CREATOR_REWARD_RATE } from '@/lib/usage/creator-reward'
 
 type Filter = 'all' | 'public' | 'private' | 'draft'
 const FILTERS: Array<{ key: Filter; label: string }> = [
@@ -33,6 +34,7 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
     .where(and(eq(characters.ownerId, user.id), isNull(characters.deletedAt)))
     .orderBy(desc(characters.createdAt))
 
+  const reward = await creatorRewardSummary(user.id)
   const shown = mine.filter((c) =>
     filter === 'all' ? true : filter === 'public' ? c.isPublic && !c.isDraft : filter === 'private' ? !c.isPublic && !c.isDraft : c.isDraft)
   const cards: CardCharacter[] = shown.map((c) => ({
@@ -45,6 +47,18 @@ export default async function MyCharacters({ searchParams }: { searchParams: Pro
     <Page wide className={styles.page}>
       <div className={styles.frame}>
       <header className={styles.header}><Back href="/my" /><h1 className="sr-only">{t('내 캐릭터')}</h1><MakeTabs active="characters" /></header>
+      {/* 11/11 창작 보상 1단계 — 다른 사람이 내 캐릭터와 대화하며 쓴 토큰의 일부가 미로 토큰으로 쌓인다. */}
+      <section aria-label={t('창작 보상')} style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '4px 0 12px', padding: '14px 16px', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-1)', border: '1px solid var(--color-border)' }}>
+        <img src="/miro-token.svg" alt="" aria-hidden width={28} height={28} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <strong style={{ display: 'block', fontSize: 15 }}>{t('창작 보상')}</strong>
+          <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('다른 사람이 내 캐릭터와 대화하면 쓴 토큰의 {rate}%가 내 지갑에 쌓여요.', { rate: Math.round(CREATOR_REWARD_RATE * 100) })}</span>
+        </div>
+        <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+          <strong style={{ display: 'block', fontSize: 17 }}>{t('이번 달 {n}', { n: reward.month.toLocaleString('ko-KR') })}</strong>
+          <span className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('누적 {n}', { n: reward.total.toLocaleString('ko-KR') })}</span>
+        </div>
+      </section>
       <SectionLinks fullBleed label={t('내가 만든 캐릭터')} active={filter}
         items={FILTERS.map(f => ({ key: f.key, label: t(f.label), href: f.key === 'all' ? '/my/characters' : `/my/characters?filter=${f.key}` }))} />
       {cards.length === 0 ? (

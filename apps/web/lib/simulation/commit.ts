@@ -12,6 +12,7 @@ import type { Memory, CharacterState, RelationshipState, StateTransitionRecord, 
 import type { ValidatedTransition, AgencyPlan, TurnPolicy } from '@miro/engine'
 import { applyMessageReceipt } from '@/lib/agency/receipts'
 import { settleTokensInTransaction } from '@/lib/usage/guard'
+import { accrueCreatorReward } from '@/lib/usage/creator-reward'
 import { enqueueMemoryJobs } from '@/lib/ai/memory-jobs'
 import { groundedMemoryCandidates } from '@/lib/ai/memory-sources'
 
@@ -107,6 +108,8 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         const [r] = await tx.update(usageLedger).set({ status: 'committed' }).where(and(eq(usageLedger.id, input.reservationId), eq(usageLedger.userId, session.userId), eq(usageLedger.status, 'reserved'))).returning({ id: usageLedger.id })
         if (!r) throw new StaleStateError()
       }
+      // 11/11 창작 보상 — 다른 사람이 만든 캐릭터와의 턴이면 쓴 토큰의 10% 를 만든 사람에게 적립한다.
+      await accrueCreatorReward(tx, { reservationId: input.reservationId, payerId: session.userId, characterId: input.characterId })
     }
     const t = input.transition
     // 되돌리기 기록 — 이 턴이 덮어쓰기 전 값. 아래 단계들이 자기가 바꾸는 것의 이전 값을 채운다.
