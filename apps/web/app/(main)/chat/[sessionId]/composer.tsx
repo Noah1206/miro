@@ -67,10 +67,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     }
     let undone = false
     try {
-      // 11/11 글과 같이 읽기 — 음성 모드면 대사 묶음이 오는 대로 읽고, 그 답은 저장된 뒤 다시 읽지 않는다.
-      let spokeLive = false
-      const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) }, voice.live ? speech => { spokeLive = true; voice.speakLive(speech) } : undefined)
-      if (spokeLive && result.messages?.length) voice.markSpoken(result.messages.map(m => m.id))
+      const result = await streamTurn(form, setLive, ids => { undone = true; remove(ids) })
       if (result.undone?.length) { undone = true; remove(result.undone) }
       setState(result)
       if (result.limit && !result.limit.attend) openRecharge()

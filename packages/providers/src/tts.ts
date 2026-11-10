@@ -10,24 +10,29 @@ export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promis
   /** 11/6: 서버를 미리 깨운다(꺼져 있으면 켜지는 데 24~33초) — 음성 모드를 켜는 순간 부른다. 실패해도 조용히. */
   warm?(signal?: AbortSignal): Promise<void>
   /** 11/11 만드는 대로 받기 — PCM16 모노 조각 스트림(sampleRate 와 함께). 첫 조각까지 약 1초. */
-  speakStream?(req: TtsRequest, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }> }
+  speakStream?(req: TtsRequest, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }>
+  /** 11/11 한 턴 통째 — 대화 순서의 대사 묶음. 목소리마다 한 번에 합성해 잘라 순서대로(서버 /speak_turn). */
+  speakTurn?(req: { lines: Array<{ text: string; voice: string | null; delivery?: VoiceDelivery }>; language: string }, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }> }
 
 export function resolveTts(): TtsProvider | null {
   const url = process.env.MIRO_TTS_URL?.replace(/\/$/, '')
   if (!url) return null
   const key = process.env.MIRO_TTS_API_KEY
+  /** 만드는 대로 받는 PCM16 조각(x-sample-rate) — /speak_stream(대사 하나)·/speak_turn(한 턴 통째) 공통. */
+  const stream = async (path: string, body: unknown, signal?: AbortSignal) => {
+    const res = await fetch(`${url}${path}`, {
+      method: 'POST', signal,
+      headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}) },
+      body: JSON.stringify(body),
+    })
+    const sampleRate = Number(res.headers.get('x-sample-rate'))
+    if (!res.ok || !res.body || !(sampleRate > 0)) { await res.body?.cancel(); throw new Error(`tts stream ${res.status}`) }
+    return { stream: res.body, sampleRate }
+  }
   return {
     async warm(signal) { await fetch(`${url}/health`, { signal }).then(r => r.body?.cancel()).catch(() => {}) },
-    async speakStream(req, signal) {
-      const res = await fetch(`${url}/speak_stream`, {
-        method: 'POST', signal,
-        headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}) },
-        body: JSON.stringify(req),
-      })
-      const sampleRate = Number(res.headers.get('x-sample-rate'))
-      if (!res.ok || !res.body || !(sampleRate > 0)) { await res.body?.cancel(); throw new Error(`tts stream ${res.status}`) }
-      return { stream: res.body, sampleRate }
-    },
+    speakTurn: (req, signal) => stream('/speak_turn', req, signal),
+    speakStream: (req, signal) => stream('/speak_stream', req, signal),
     async speak(req, signal) {
       const res = await fetch(`${url}/speak`, {
         method: 'POST', signal,

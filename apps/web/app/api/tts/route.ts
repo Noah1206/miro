@@ -10,7 +10,6 @@ import { feature } from '@miro/config'
 import { voiceColumns } from '@/lib/voice'
 import { segmentVoice } from '@/lib/speech/access'
 import { takeUserQuota, takeVoiceWake } from '@/lib/usage/user-quota'
-import { verifyLive } from '@/lib/speech/live'
 import type { TtsProvider, TtsRequest } from '@miro/providers'
 
 export const runtime = 'nodejs'
@@ -26,7 +25,7 @@ export async function POST(req: Request) {
   if(!feature('characterVoice'))return Response.json({error:'voice_not_ready'},{status:404})
   const user = await currentUser()
   if (!user) return new Response(null, { status: 401 })
-  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; live?: unknown; stream?: unknown } | null
+  const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown; stream?: unknown; turn?: unknown } | null
   // 11/6: 음성 모드를 켜면 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간(24~33초)을 기다리지 않게. 글·대화 없이 상태 확인만.
   // 11/10 깨우기는 회원당 5분에 한 번(GPU 를 계속 켜 두지 못하게).
   if (body?.wake === true) {
@@ -34,23 +33,6 @@ export async function POST(req: Request) {
     await resolveTts()?.warm?.(AbortSignal.timeout(60_000)); return new Response(null, { status: 204 })
   }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
-  // 11/11 글과 같이 읽기: 저장 전의 대사 묶음 — /api/turn 이 서명한 것만(이 사용자·이 방·10분). 목소리 고르기는 저장 뒤 읽기와 같다(segmentVoice).
-  if (body?.live !== undefined) {
-    const live = /^[0-9a-f-]{36}$/i.test(sessionId) ? verifyLive(user.id, sessionId, body.live) : null
-    if (!live) return new Response(null, { status: 400 })
-    const [room] = await db.select({ voice: officialVoices.providerVoiceId, ...voiceColumns, characterOwnerId: characters.ownerId, adultSince: roleplaySessions.adultSince,
-      ensembleVoices: characters.ensembleVoices, voiceOverrides: roleplaySessions.voiceOverrides, audience: characters.audience, characterId: characters.id, userId: roleplaySessions.userId })
-      .from(roleplaySessions).innerJoin(characters, eq(characters.id, roleplaySessions.characterId)).leftJoin(officialVoices, eq(officialVoices.id, characters.voiceId))
-      .where(and(eq(roleplaySessions.id, sessionId), eq(roleplaySessions.userId, user.id), isNull(roleplaySessions.deletedAt), isNull(roleplaySessions.restrictedAt),
-        eq(roleplaySessions.status, 'active'), isNull(characters.deletedAt))).limit(1)
-    if (!room) return new Response(null, { status: 404 })
-    const tts = resolveTts()
-    if (!tts) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
-    if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
-    const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-    const voice = await segmentVoice(room, { text: live.text, delivery: live.delivery, lines: [live.text], ...(live.speaker ? { speaker: live.speaker } : {}) })
-    return synthesize(tts, { text: live.text, voice, language: settings?.language ?? 'ko', style: live.delivery.tone === 'whisper' ? 'whisper' : 'normal', delivery: live.delivery }, req, true)
-  }
   if (!/^[0-9a-f-]{36}$/i.test(sessionId) || !/^[0-9a-f-]{36}$/i.test(messageId)
     || (body?.plan !== undefined && typeof body.plan !== 'boolean')
     || (body?.reuseOnly !== undefined && typeof body.reuseOnly !== 'boolean')
@@ -84,6 +66,22 @@ export async function POST(req: Request) {
   }
   // 11/10 동기 합성(운영 기본 경로)은 회원당 분당 30회·하루 600회.
   if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
+  // 11/11 한 턴 통째(사용자: 묶음이 아니라 1턴당 바로) — 대화 순서의 묶음과 각 목소리를 넘기면 서버가 목소리마다 한 번에 합성해 잘라 순서대로 흘려보낸다.
+  // 감정·말투는 같은 사람이면 그 턴의 첫 묶음 것 하나.
+  if (body?.turn === true && tts.speakTurn) {
+    const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
+    const first = new Map<string, (typeof segments)[number]['delivery']>()
+    const lines = await Promise.all(segments.map(async s => {
+      const key = s.speaker ?? ''
+      if (!first.has(key)) first.set(key, s.delivery)
+      return { text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: first.get(key)! }
+    }))
+    if (lines.some(l => !l.voice)) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
+    try {
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko' }, AbortSignal.any([req.signal, AbortSignal.timeout(170_000)]))
+      return new Response(out.stream, { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
+    } catch { return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
+  }
   const selected = body?.part === undefined ? null : segments[Number(body.part)]
   if (body?.part !== undefined && !selected) return new Response(null, { status: 400 })
   // Preserve the original whole-reply contract for older clients. New clients select each part.

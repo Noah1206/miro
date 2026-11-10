@@ -24,6 +24,26 @@ SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
 # (최대 차이 0.52·0.10), 256프레임 이상·처음부터 전부는 한 번에 푼 것과 같았다(0.007, 수치 흔들림 수준). 처음부터 다시 풀어도 16조각에 0.34초라 전부 준다.
 STREAM_FIRST, STREAM_EVERY, STREAM_CTX, STREAM_HOLD = 8, 16, 1 << 20, 0
 # 11/11 켜질 때 미리 준비할 목소리(운영 official_voices 활성 11개 + 기본) — provider_voice_id. 목소리를 새로 열면 여기에 더한다.
+def split_points(wave, lengths, rate):
+    """한 번에 합성한 소리를 줄마다 자를 자리 — 글자 수 비율로 짐작한 곳 앞뒤 15% 안에서 가장 조용한 곳(160ms 평균 세기가 가장 낮은 곳)."""
+    import numpy as np
+    win = max(1, int(rate * 0.02)); n = len(wave) // win
+    if n < 4 or len(lengths) < 2: return [len(wave) * sum(lengths[: k + 1]) // max(1, sum(lengths)) for k in range(len(lengths) - 1)]
+    energy = np.sqrt(np.mean(wave[: n * win].reshape(n, win) ** 2, axis=1))
+    smooth = np.convolve(energy, np.ones(8) / 8, mode='same')
+    total, acc, prev, cuts = sum(lengths), 0, 0, []
+    for length in lengths[:-1]:
+        acc += length
+        expect = int(n * acc / total); span = max(2, int(n * 0.15))
+        lo, hi = max(prev + 1, expect - span), min(n - 1, expect + span)
+        at = lo + int(np.argmin(smooth[lo:hi])) if hi > lo else min(n - 1, max(prev + 1, expect))
+        cuts.append(at * win); prev = at
+    return cuts
+
+def frame_limit(text):
+    """생성 프레임 상한(초당 약 21.5프레임). 11/11 한 턴 통째 합성 때문에 1536(71초)→4096(190초) — CUDA 그래프 용량은 프롬프트 포함 10240줄."""
+    return min(4096, max(384, len(text) * 24))
+
 PREWARM_VOICES = (
     'a5201527d34471b03817182b6531bb3e01fc92df1a3f999edf2d940971b3e76e', '92cb93673ea569c86cfca09d4e72ee7d6e004f5199228417a11267c9360ed2cf',
     '69bacb4f815a856c47d4780040533a9ccc1a6855b0a44bd321675a9691bc44b8', 'f89e2d42bafe669e8deda6ed17dc03e4ff724dbec33cbe6334db6c0e22e4d436',
@@ -115,7 +135,7 @@ class Speaker:
         import zlib
         ref_text, codes = self.reference(voice)
         # ponytail: 길이 상한은 글자 수 비례 추정 — 잘리는 답이 많으면 실측으로 조정
-        limit = min(1536, max(384, len(text) * 24))
+        limit = frame_limit(text)
         # 11/11 사용자("한 문장마다 다른 사람 같다"): 목소리마다 같은 씨앗 — 요청마다 무작위가 새로 시작돼 같은 목소리의 결이 줄마다 흔들렸다.
         if seed: torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
         with torch.inference_mode():
@@ -269,7 +289,7 @@ class Speaker:
         import zlib, numpy as np, torch
         from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
         ref_text, codes = self.reference(voice)
-        limit = min(1536, max(384, len(text) * 24))
+        limit = frame_limit(text)
         torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
         import time
         sent, first, t0 = 0, True, time.perf_counter()
@@ -288,6 +308,37 @@ class Speaker:
                 sent, first = upto, False
                 yield (np.clip(chunk, -1, 1) * 32767).astype('<i2').tobytes()
 
+    def speak_turn(self, lines):
+        """11/11 한 턴 통째로(사용자: 묶음이 아니라 1턴당 바로, 작품은 인물별 대사 전체를 만들어 잘라 쓰기).
+        lines = 대화 순서의 대사 묶음 [{text, voice, delivery}] — 같은 사람이 이어 한 말은 이미 한 줄(앱 spokenSegments).
+        목소리가 하나면 한 번에 합성하며 그대로 흘려보낸다. 여럿이면 목소리마다 그 턴의 대사를 전부 한 번에 합성하고,
+        글자 수 비율 근처의 가장 조용한 곳에서 잘라 대화 순서대로 이어 보낸다(사이 쉼 = 앞 줄의 pauseAfterMs). 감정·말투는 목소리마다 첫 줄 것."""
+        import zlib, numpy as np, torch
+        from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
+        groups = {}
+        for i, l in enumerate(lines): groups.setdefault(l.get('voice') or DEFAULT_VOICE, []).append(i)
+        pcm = lambda w: (np.clip(w, -1, 1) * 32767).astype('<i2').tobytes()
+        rate = self.codec.sample_rate
+        if len(groups) == 1:
+            voice = next(iter(groups))
+            yield from self.speak_stream(delivery_text(' '.join(l['text'] for l in lines), lines[0]), voice)
+            return
+        pieces = {}
+        for voice, idx in groups.items():
+            text = ' '.join(lines[i]['text'] for i in idx)
+            ref_text, codes = self.reference(voice)
+            torch.manual_seed(zlib.crc32(voice.encode()))
+            with torch.inference_mode():
+                prompt = build_drama3_prompt('<|speaker:0|>' + delivery_text(text, lines[idx[0]]), self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
+                wave = self.codec_decode(self.generate(prompt, voice, frame_limit(text)))
+            cuts = [0, *split_points(wave, [len(lines[i]['text']) for i in idx], rate), len(wave)]
+            for k, i in enumerate(idx): pieces[i] = wave[cuts[k] : cuts[k + 1]]
+        for i in range(len(lines)):
+            yield pcm(pieces[i])
+            if i < len(lines) - 1:
+                pause = min(1.5, max(0.0, float((lines[i].get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
+                yield pcm(np.zeros(int(rate * pause), dtype='float32'))
+
     @modal.method()
     def stream_check(self, text, voice=None, seed=7):
         """스트리밍 이음새 확인(11/11): 같은 프레임을 한 번에 푼 소리와 조각으로 이어 붙인 소리를 비교한다. 문맥 길이·보류 프레임별 최대 차이."""
@@ -297,7 +348,7 @@ class Speaker:
         ref_text, codes = self.reference(voice)
         with torch.inference_mode():
             prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
-            frames = self.generate(prompt, voice or DEFAULT_VOICE, min(1536, max(384, len(text) * 24)))
+            frames = self.generate(prompt, voice or DEFAULT_VOICE, frame_limit(text))
             full = self.codec_decode(frames)
             per = len(full) // len(frames)
             out = {'frames': len(frames), 'samples_per_frame': per, 'sample_rate': self.codec.sample_rate, 'full_samples': len(full)}
@@ -412,6 +463,21 @@ class Speaker:
             except Exception: return Response(b'voice not found', status_code=400)
             return StreamingResponse(self.speak_stream(delivery_text(text, body), body.get('voice')), media_type='audio/L16',
                                      headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
+
+        @api.post('/speak_turn')
+        async def speak_turn(request: Request):
+            """11/11 한 턴 통째: {lines:[{text, voice, delivery}]} → PCM16 조각(x-sample-rate). 목소리가 없으면 첫 조각 전에 400."""
+            from fastapi.responses import StreamingResponse
+            if not hmac.compare_digest(request.headers.get('authorization', ''), f'Bearer {key}'): return Response(status_code=401)
+            body = await request.json()
+            raw = body.get('lines') if isinstance(body.get('lines'), list) else []
+            lines = [{'text': str(l.get('text', '')).strip()[:1400], 'voice': l.get('voice'), 'delivery': l.get('delivery') if isinstance(l.get('delivery'), dict) else {}}
+                     for l in raw[:12] if isinstance(l, dict) and str(l.get('text', '')).strip()]
+            if not lines: return Response(b'empty text', status_code=400)
+            try:
+                for l in lines: self.reference(l['voice'])
+            except Exception: return Response(b'voice not found', status_code=400)
+            return StreamingResponse(self.speak_turn(lines), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 

@@ -21,10 +21,9 @@ type Immersive = { media: CharacterMedia; available:boolean; on: boolean; toggle
   choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string
   /** 11/6: 무료 운영(음성 분량 차감 꺼짐) — 새 답 이어 읽기·말풍선 눌러 다시 듣기. */
   free:boolean;replay:(m:Msg,texts:string[])=>void
-  /** 11/11 글과 같이 읽기 — /api/turn 이 보낸 서명된 대사 묶음을 바로 읽는다. 쓰는 중이면 true(폼에 voice=1). */
-  live:boolean;speakLive:(speech:LiveSpeechToken)=>void;markSpoken:(ids:string[])=>void }
-export type LiveSpeechToken={text:string;speaker:string|null;delivery:Record<string,unknown>;exp:number;token:string}
-const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false,speakLive:()=>{},markSpoken:()=>{} })
+  /** 11/11 음성 모드로 이어 읽는 중 — 폼에 voice=1(답을 쓰는 동안 합성 서버를 깨운다). */
+  live:boolean }
+const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
@@ -46,15 +45,15 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const choices=[...initialMessages,...appended.filter(m=>!known.has(m.id))].filter(m=>m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
     .reverse().flatMap(m=>spokenSegments(m.blocks,m.content,characterName,voiceSpeakers).map((s,part)=>({messageId:m.id,part,text:s.text}))).slice(0,3)
   // 11/6 이어 읽기: 읽을 답을 줄 세워 끝까지 읽는다 — 읽는 중에 새 답이 와도 끊지 않고 뒤에 붙는다.
-  type Job={key:string}&({kind:'part';id:string;parts:number[]|null}|{kind:'live';speech:LiveSpeechToken})
+  type Job={key:string;id:string;parts:number[]|null}
   const queue=useRef<Job[]>([])
   const current=useRef<string|null>(null)
   const player=useRef<VoiceStreamPlayer|null>(null)
   const latest=useRef<Msg[]>([]);latest.current=[...initialMessages,...appended.filter(m=>!known.has(m.id))]
   const stop=()=>{queue.current=[];controller.current?.abort();audio.current?.pause();player.current?.stop();setStatus('idle')}
   /**
-   * 11/11 만드는 대로 듣기: 묶음마다 /api/tts 를 stream 으로 받아 오는 조각부터 재생한다. 한 묶음을 다 받으면(재생 끝이 아니라)
-   * 바로 다음 묶음을 요청해 재생 시각 뒤에 붙인다 — 묶음 사이 기다림이 없다.
+   * 11/11 만드는 대로 듣기: /api/tts 를 stream 으로 받아 오는 조각부터 재생한다. 새 답은 한 턴 통째(turn) — 서버가 목소리마다 한 번에 합성해
+   * 대화 순서대로 흘려보낸다(사용자: 묶음이 아니라 1턴당). 말풍선 다시 듣기는 그 묶음만, 다 받으면 다음 묶음을 재생 시각 뒤에 붙인다.
    */
   const drain=async()=>{
     if(current.current!==null)return
@@ -75,8 +74,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       while(queue.current.length&&!active.signal.aborted){
         const job=queue.current.shift()!;current.current=job.key
         try{
-          if(job.kind==='live'){await one({live:job.speech},Number(job.speech.delivery.pauseAfterMs)||300);continue}
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
+          if(job.parts===null){await one({messageId:m.id,turn:true},0);continue}
           const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
           for(const part of (job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])){
             try{await one({messageId:m.id,part,amount:'standard',confirmed:true},segs[part]!.delivery.pauseAfterMs??0)}
@@ -96,14 +95,9 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const enqueue=(id:string,parts:number[]|null)=>{
     const key=`${id}:${parts?.join(',')??'all'}`
     if(current.current===key||queue.current.some(j=>j.key===key))return
-    queue.current.push({kind:'part',id,parts,key});void drain()
+    queue.current.push({id,parts,key});void drain()
   }
-  const speakLive=(speech:LiveSpeechToken)=>{
-    if(!on||!enabled||free!==true)return
-    queue.current.push({kind:'live',speech,key:`live:${speech.token}`});void drain()
-  }
-  // 글과 같이 읽은 답은 저장된 뒤 다시 읽지 않는다.
-  const markSpoken=(ids:string[])=>{for(const id of ids)spoken.current.add(id)}
+
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
   // 11/6: 음성 모드가 켜지면(토글·다시 들어옴) 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간을 기다리지 않게.
   useEffect(()=>{if(on)void fetch('/api/tts',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wake:true}),keepalive:true}).catch(()=>{})},[on])
@@ -148,7 +142,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true,speakLive,markSpoken }}>
+    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}
