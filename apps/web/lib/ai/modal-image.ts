@@ -60,6 +60,7 @@ Rules:
 - Output only comma-separated English tags, at most 10, most important first.
 - Cover what is visible right now: the character's pose/action, facial expression, outfit or its state, place, time of day/lighting, one key prop.
 - Use only what the text says or clearly implies. Do not invent new events.
+- The text has the current situation (place · time), the story so far, and the recent chat; the LAST lines are the moment to draw. Use the earlier parts only for continuity (where they are, what is already taken off or changed), never draw an earlier event.
 - If the text clearly involves two people together (hug, kiss, holding hands), include that interaction.
 - The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.). No quality tags or style names.`
 

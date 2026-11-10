@@ -8,7 +8,7 @@ import { usageWeight } from '@miro/config'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
   db, characters, characterVisualIdentities, generatedMedia, roleplaySessions, worldStates,
-  messages,
+  messages, memories,
 } from '@miro/db'
 import { buildMediaKey, buildVisualPrompt, type MediaKind, type PhotoContext } from '@miro/domain'
 import { resolveImage } from '@miro/providers'
@@ -291,21 +291,31 @@ async function modalPhoto(
 }
 
 /**
- * 지금 순간의 장면 글(11/3) — 최근 사용자 말과 캐릭터의 서술·행동·대사(최대 900자). 사진이 그 순간 맥락대로 나오게.
+ * 사진 장면 글(11/3, 11/11 확장) — 지금 상황(장소·시간) + 지금까지의 흐름(중요한 기억) + 최근 대화 8개(최신이 맨 끝).
+ * 11/11 사용자: "이때까지의 대화맥락과 현재 상황을 판단해서" — 예전엔 최근 4개(900자)만 봐서 장소·옷 상태가 끊겼다.
  * 언베일 모델이 쓴 원문(is_explicit)은 빼고 넘긴다 — 태그 변환은 상용 모델이 한다(원문이 공급자에게 가지 않게).
  * 단 언베일 사진(explicit)이면 태그 변환도 언베일 모델이 하므로 그대로 넣는다(11/11: 다 빠져서 오랄 장면이 외형 태그만으로 그려졌다).
+ * 기억도 같은 규칙 — 언베일 대화가 섞인 방의 일반 사진에는 기억을 싣지 않는다(기억에 성인 내용이 있을 수 있다).
  */
 export async function sceneMoment(sessionId: string, opts: { explicit?: boolean } = {}): Promise<string> {
-  const rows = await db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, explicit: messages.isExplicit }).from(messages)
-    .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator']), inArray(messages.kind, ['text'])))
-    .orderBy(desc(messages.createdAt)).limit(4)
+  const [rows, world, mem] = await Promise.all([
+    db.select({ role: messages.role, content: messages.content, blocks: messages.blocks, explicit: messages.isExplicit }).from(messages)
+      .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator']), inArray(messages.kind, ['text'])))
+      .orderBy(desc(messages.createdAt)).limit(8),
+    db.select({ location: worldStates.currentLocation, time: worldStates.currentTime }).from(worldStates).where(eq(worldStates.sessionId, sessionId)).limit(1),
+    db.select({ content: memories.content }).from(memories).where(eq(memories.sessionId, sessionId)).orderBy(desc(memories.importance), desc(memories.createdAt)).limit(4),
+  ])
   const lines = rows.reverse().filter(r => opts.explicit || !r.explicit).map(r => {
     if (r.role === 'user') return `사용자: ${r.content}`
     const blocks = (r.blocks as Array<{ type?: string; text?: string }> | null) ?? []
     const text = blocks.filter(b => b.type && ['narrative', 'action', 'dialogue'].includes(b.type)).map(b => b.text).filter(Boolean).join(' ')
     return `장면: ${text || r.content}`
   })
-  return lines.join('\n').slice(-900)
+  const w = world[0]
+  const place = [w?.location, w?.time].filter(Boolean).join(' · ')
+  const history = opts.explicit || !rows.some(r => r.explicit) ? mem.map(m => `- ${m.content.slice(0, 200)}`).join('\n') : ''
+  return [place && `## 지금 상황\n${place}`, history && `## 지금까지(흐름)\n${history}`, lines.length && `## 최근 대화(맨 아래가 지금 이 순간)\n${lines.join('\n').slice(-2400)}`]
+    .filter(Boolean).join('\n\n')
 }
 
 /** 캐시된 asset 도 Mock 으로 만들어졌다면 그 사실을 계속 알린다. */
