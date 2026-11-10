@@ -43,7 +43,9 @@ export function snapshot(form: HTMLFormElement): Snapshot {
     : [...keptImages, ...newFiles.map((f) => URL.createObjectURL(f))]
   const photoUrls = photos.filter((u): u is string => Boolean(u))
   return {
-    settings: parseCharacterForm((() => { const data = new FormData(); fd.forEach((value, key) => data.append(key, value)); data.set('intent', 'draft'); if (!s('name')) data.set('name', '이름'); return data })()),
+    settings: parseCharacterForm((() => { const data = new FormData(); fd.forEach((value, key) => data.append(key, value)); data.set('intent', 'draft'); data.set('name', s('name').slice(0, 10) || '이름')
+      // 미리보기는 보여 주기만 — 저장 길이 검사(CHARACTER_FIELD_TOO_LONG)로 화면이 깨지지 않게 잘라서 넘긴다(11/10, 긴 작품 이름 편집 화면 오류).
+      for (const [k, n] of [['title', 40], ['personality', 1000], ['startingContext', 600]] as const) data.set(k, s(k).slice(0, n)); return data })()),
     name: s('name'), tagline: s('title'), age: s('age'), nationality: s('nationality'), occupation: s('occupation'), mbti: s('mbti'),
     personality: s('personality'), worldSetting: s('worldSetting'), startingContext: s('startingContext'), startingTime: s('startingTime'),
     keywords: [...csv('mood'), ...csv('relationshipKeywords')],
