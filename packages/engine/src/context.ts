@@ -118,7 +118,8 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   // proposal.schema.ts 의 normalizeBlock 이 흡수한다. 측정 원본은 ai/evals/agency/reports/scene-beats-*-2026-09-26.json(9/29 삭제 — git 기록에만 남음).
   const base = [
     `- 응답 구성: 한 응답은 장면 하나입니다. 사용자 발화에 먼저 반응하고, 필요한 만큼 서술과 대사를 이어 갑니다. 같은 말을 되풀이해 분량을 채우지 않습니다. 블록 순서는 상황에 맞게 고릅니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.`,
-    `- narrative 블록(speaker null): ${USER_VIEWPOINT}`,
+    // 11/10: 'Unfold one change at a time' 가 답을 한 박자로 끊었다(운영 364~552자) — 장면 답은 여러 박자로 진행한다. 짧은 답(brief)은 원문 그대로.
+    `- narrative 블록(speaker null): ${USER_VIEWPOINT.replace('Unfold one change at a time, then leave room to respond.', 'Let the scene move through several beats (action, reply, reaction, a new development), then end where the user can respond.')}`,
     `- action 블록(speaker "${name}"): 대사 직전이나 직후의 행동·표정·움직임 1~3문장.`,
     `- dialogue 블록(speaker "${name}"): 그 순간 캐릭터가 하는 말. 성격과 말투 그대로, 문장 수를 채우지 말고 상대가 실제로 한 말에 답합니다. 블록마다 답·제안·감정·질문 중 하나를 실어 대화를 진전시키고, 사용자의 말을 되묻기만 하는 한마디로 넘기지 않습니다.`,
     '- thought 블록: 말과 행동만으로 전달되지 않는 속마음이 필요할 때만 1~2문장. 이미 드러낸 감정을 해설하지 않습니다.',
