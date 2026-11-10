@@ -12,30 +12,40 @@ export type RoomVoice = { speakers: Array<{ key: string; name: string; defaultLa
  */
 export function RoomVoicePanel({ sessionId, voice }: { sessionId: string; voice: RoomVoice }) {
   const t = useT()
-  const [speaker, setSpeaker] = useState(voice.speakers[0]?.key ?? '')
+  const [open, setOpen] = useState<string | null>(null)
   const [picked, setPicked] = useState<Record<string, string>>(voice.overrides)
   const [error, setError] = useState<string | null>(null)
   const [, start] = useTransition()
-  const current = voice.speakers.find(s => s.key === speaker) ?? voice.speakers[0]
-  if (!current) return null
-  const choose = (id: string) => {
+  if (!voice.speakers.length) return null
+  const choose = (key: string, id: string) => {
     const before = picked
-    setPicked(p => { const n = { ...p }; if (id) n[current.key] = id; else delete n[current.key]; return n })
+    setPicked(p => { const n = { ...p }; if (id) n[key] = id; else delete n[key]; return n })
     setError(null)
     start(async () => {
-      const r = await setRoomVoice(sessionId, current.key, id)
+      const r = await setRoomVoice(sessionId, key, id)
       if (r.error) { setPicked(before); setError(r.error) }
     })
   }
+  // 11/10 사용자: 음성 모드 토글 아래 캐릭터 목록 — 줄마다 지금 목소리, 누르면 그 캐릭터의 목소리 목록이 펼쳐진다.
   return (
-    <div className="stack" style={{ gap: 12 }}>
-      {voice.speakers.length > 1 && <div role="tablist" aria-label={t('화자')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {voice.speakers.map(s => <button key={s.key || 'main'} type="button" role="tab" aria-selected={s.key === current.key} onClick={() => setSpeaker(s.key)}
-          style={{ minHeight: 34, padding: '0 14px', borderRadius: 999, border: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600,
-            background: s.key === current.key ? 'var(--color-text-primary)' : 'var(--color-surface-2)', color: s.key === current.key ? 'var(--color-bg)' : 'var(--color-text-secondary)' }}>{s.name}</button>)}
-      </div>}
-      <VoiceList key={current.key} voices={voice.options} value={picked[current.key] ?? ''} onChange={choose}
-        autoLabel={current.defaultLabel ? `${t('자동')} · ${current.defaultLabel}` : t('자동')} />
+    <div style={{ display: 'grid', gap: 6, marginBottom: 10 }}>
+      {voice.speakers.map(s => {
+        const id = picked[s.key] ?? ''
+        const label = id ? voice.options.find(o => o.id === id)?.label ?? t('자동') : s.defaultLabel ? `${t('자동')} · ${s.defaultLabel}` : t('자동')
+        const expanded = open === s.key
+        return <div key={s.key || 'main'} style={{ borderRadius: 12, background: 'var(--color-surface-2)' }}>
+          <button type="button" aria-expanded={expanded} onClick={() => setOpen(expanded ? null : s.key)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 46, padding: '0 14px', border: 0, background: 'transparent', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
+            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+            <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '55%' }}>{label}</span>
+            <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none', transform: expanded ? 'rotate(90deg)' : undefined, transition: 'transform .15s' }}><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+          {expanded && <div style={{ padding: '0 10px 10px' }}>
+            <VoiceList voices={voice.options} value={id} onChange={v => choose(s.key, v)}
+              autoLabel={s.defaultLabel ? `${t('자동')} · ${s.defaultLabel}` : t('자동')} />
+          </div>}
+        </div>
+      })}
       {error && <p className="t-caption" role="alert" style={{ margin: 0, color: 'var(--color-danger)' }}>{error}</p>}
     </div>
   )
