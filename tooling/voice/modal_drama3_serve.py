@@ -536,13 +536,16 @@ def cer(said, want):
 
 assert cer('안녕, 하세요!', '안녕하세요') == 0 and abs(cer('안녕하', '안녕하세요') - 0.4) < 1e-9
 
-@app.cls(image=modal.Image.debian_slim(python_version='3.12').apt_install('ffmpeg').pip_install('fastapi[standard]', 'numpy', 'soundfile', 'faster-whisper')
+@app.cls(image=modal.Image.debian_slim(python_version='3.12').apt_install('ffmpeg').pip_install('fastapi[standard]', 'numpy<2', 'soundfile', 'faster-whisper')
+         # 11/11 회원 녹음 배경 제거(voice_clean, Demucs) — CPU 판 torch 와 모델 무게를 이미지에 미리 받아 둔다
+         .pip_install('torch==2.8.0', 'torchaudio==2.8.0', index_url='https://download.pytorch.org/whl/cpu').pip_install('demucs==4.0.1')
+         .run_commands("python -c \"from demucs.pretrained import get_model; get_model('htdemucs')\"")
          # 모델을 이미지에 미리 받아 둔다(run_function 은 이 파일을 통째로 불러 Drama 3 모듈이 없어 실패)
          .run_commands("python -c \"from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8')\"")
          # 이 파일이 맨 위에서 modal_drama3_compare 를 불러서, 컨테이너에도 같이 넣어야 켜진다(10/31: 빠져 있어 켜질 때마다 죽었다)
-         .add_local_python_source('drama3_fullft', 'modal_drama3_compare'),
-         cpu=4, memory=4096, volumes={USER_VOICES: user_voices, '/voices': voices}, secrets=[modal.Secret.from_name('miro-drama3-tts')],
-         timeout=120, max_containers=2, scaledown_window=120, enable_memory_snapshot=True)
+         .add_local_python_source('drama3_fullft', 'modal_drama3_compare', 'voice_clean'),
+         cpu=8, memory=8192, volumes={USER_VOICES: user_voices, '/voices': voices}, secrets=[modal.Secret.from_name('miro-drama3-tts')],
+         timeout=180, max_containers=2, scaledown_window=120, enable_memory_snapshot=True)
 class Voices:
     @modal.enter(snap=True)
     def load(self): self.asr = _whisper()
@@ -580,8 +583,13 @@ class Voices:
                 if clipped > 0.01: return {'error': 'clipped'}
                 data = open(f'{d}/ref.wav', 'rb').read()
                 vid = hashlib.sha256(data).hexdigest()
+                # 11/11 배경 제거 — 합성 모델은 견본의 배경음악·잡음·긴 침묵까지 흉내 낸다. 원본은 ref.orig.wav 로 남긴다(받아쓰기도 원본으로).
+                from voice_clean import clean_reference
+                cleaned, background_db, clean_rate = clean_reference(wave.astype('float32'), rate)
+                if len(cleaned) < clean_rate * 3 or float(np.sqrt(np.mean(cleaned ** 2))) < 0.01: return {'error': 'quiet'}   # 목소리가 거의 없는 녹음(음악만 등)
                 os.makedirs(f'{USER_VOICES}/{vid}', exist_ok=True)
-                open(f'{USER_VOICES}/{vid}/ref.wav', 'wb').write(data)
+                open(f'{USER_VOICES}/{vid}/ref.orig.wav', 'wb').write(data)
+                sf.write(f'{USER_VOICES}/{vid}/ref.wav', cleaned, clean_rate, subtype='PCM_16')
                 open(f'{USER_VOICES}/{vid}/ref.txt', 'w', encoding='utf-8').write(text)
                 user_voices.commit()
                 # 미리 듣기를 받아쓰기보다 먼저 시작한다 — 받아쓰기 시간이 기다림에서 빠진다. 문장이 다르면 파일을 지우고 거절(그 미리 듣기는 버림).
@@ -593,7 +601,7 @@ class Voices:
             if score > MAX_CER:
                 shutil.rmtree(f'{USER_VOICES}/{vid}', ignore_errors=True); user_voices.commit()
                 return {'error': 'mismatch', 'cer': round(score, 2)}
-            return {'id': vid, 'seconds': round(seconds, 1), 'cer': round(score, 2)}
+            return {'id': vid, 'seconds': round(seconds, 1), 'cer': round(score, 2), 'background_db': round(background_db, 1)}
 
         @api.get('/voices/{vid}/preview')
         def preview(vid: str, request: Request):
