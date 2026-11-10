@@ -27,6 +27,11 @@ export const NOTICE_DAYS: Record<Revision['kind'], number> = { minor: 7, major: 
  * { doc: 'service', from: '2026-10-05', to: '2026-11-01', announcedAt: '2026-10-25', kind: 'minor', changes: [{ clause: '제3조 ①', before: '…', after: '…' }] }
  */
 export const REVISIONS: Revision[] = [
+  // 11/11 창작 보상·응원·출금 조항 추가 — 회원에게 새 혜택을 주는 변경이라 7일 전 공지. 출금 자체는 처리방침 시행일(12/11)부터.
+  { doc: 'service', from: '2026-11-08', to: '2026-11-18', announcedAt: '2026-11-11', kind: 'minor', changes: [
+    { clause: '제10조의2 (신설)', before: '없음', after: '창작 보상(다른 회원이 쓴 미로의 10%), 응원(70%), 부정 이용 방지(하루 상한 300미로·가입 3일 미만 제외), 충전 미로에서 생긴 몫의 현금 출금(1미로 5원, 3만 원 이상, 3.3% 원천징수, 2026-12-11부터)' },
+    { clause: '제10조 ⑦', before: '제11조의 환불 말고는 현금으로 바꿀 수 없음', after: '제11조의 환불과 제10조의2의 창작 보상 출금 말고는 현금으로 바꿀 수 없음' },
+  ] },
   // 11/11 창작 보상 출금 — 출금을 신청한 크리에이터에게서만 실명·계좌·주민등록번호를 받는다. 수집 항목이 늘어 처리방침 16항대로 30일 전 공지.
   { doc: 'privacy', from: '2026-11-08', to: '2026-12-11', announcedAt: '2026-11-11', kind: 'major', changes: [
     { clause: '한눈에 보기·2항(처리 항목)', before: '창작 보상 출금 관련 항목 없음', after: '창작 보상 출금을 신청한 경우: 예금주 실명, 은행·계좌번호, 주민등록번호(암호화 저장), 출금 신청·지급 내역' },
