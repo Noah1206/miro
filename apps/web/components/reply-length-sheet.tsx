@@ -7,6 +7,7 @@ import { chatModelFamily, selectedChatChoice } from '@/lib/ai/model-presentation
 import { useChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
 import { INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
+import { StepSlider } from '@/app/(main)/create/settings-controls'
 
 type Length = 'scene' | 'long' | 'saga'
 /** 11/10 출력량 — 베이비챗의 배수 표기와 크랙의 카드 고르기를 합쳤다. 글자 수는 엔진 지시(context.ts styleDirective)의 목표치. */
@@ -45,34 +46,23 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
   return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.78, full: 0.92 }}>
     <div className="stack" style={{ gap: 12, padding: '0 var(--space-4) var(--space-5)' }}>
       <p className="t-caption" style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{t('캐릭터 답변 한 번의 길이예요. 길수록 토큰을 더 써요.')}</p>
-      <div role="radiogroup" aria-label={t('출력량')} className="stack" style={{ gap: 8 }}>
-        {OPTIONS.map(o => {
-          const choice = variant(o.value), on = pick === o.value
-          return <button key={o.value} type="button" role="radio" aria-checked={on} disabled={!choice} onClick={() => setPick(o.value)}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', padding: '14px 16px', borderRadius: 'var(--radius-lg)', textAlign: 'left', font: 'inherit', cursor: choice ? 'pointer' : 'not-allowed', opacity: choice ? 1 : 0.45,
-              border: `1.5px solid ${on ? 'var(--color-accent)' : 'var(--color-border)'}`, background: on ? 'color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-1))' : 'var(--color-surface-1)', color: 'var(--color-text-primary)' }}>
-            <span style={{ flex: 'none', minWidth: 46, padding: '4px 0', borderRadius: 8, textAlign: 'center', fontSize: 13, fontWeight: 800, background: on ? 'var(--color-accent)' : 'var(--color-surface-3)', color: on ? 'var(--color-white, #fff)' : 'var(--color-text-secondary)' }}>{o.rate}</span>
-            <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
-              <span style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}><strong style={{ fontSize: 15, fontWeight: 700 }}>{t(o.label)}</strong><span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t(o.chars)}</span></span>
-              <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t(o.hint)}</span>
-            </span>
-            <span style={{ flex: 'none', display: 'grid', justifyItems: 'end', gap: 4 }}>
-              {choice && <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--color-text-tertiary)' }}><img src="/miro-token.svg" alt="" aria-hidden width={11} height={11} />{t('최대 {count}', { count: choice.maximumTokens.toLocaleString(locale) })}</span>}
-              <span aria-hidden style={{ width: 20, height: 20, borderRadius: 10, border: `2px solid ${on ? 'var(--color-accent)' : 'var(--color-border-strong)'}`, display: 'grid', placeItems: 'center' }}>{on && <span style={{ width: 10, height: 10, borderRadius: 5, background: 'var(--color-accent)' }} />}</span>
-            </span>
-          </button>
-        })}
-      </div>
+      {/* 11/10 사용자: 출력량·생각 강도 모두 만들기 화면의 단계 막대로 — 막대로 고르고, 고른 단계의 설명·최대 토큰은 아래 한 줄로. */}
+      <StepSlider label={t('출력량')} value={pick} onChange={v => setPick(v as Length)} steps={OPTIONS.map(o => ({ value: o.value, label: t(o.label) }))} />
+      {(() => { const o = OPTIONS.find(x => x.value === pick)!, choice = variant(pick)
+        return <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }}>
+          <span style={{ flex: 'none', minWidth: 46, padding: '4px 0', borderRadius: 8, textAlign: 'center', fontSize: 13, fontWeight: 800, background: 'var(--color-accent)', color: 'var(--color-white, #fff)' }}>{o.rate}</span>
+          <span style={{ flex: 1, minWidth: 0, display: 'grid', gap: 2 }}>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>{t(o.chars)}</span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t(o.hint)}</span>
+          </span>
+          {choice ? <span style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--color-text-tertiary)' }}><img src="/miro-token.svg" alt="" aria-hidden width={11} height={11} />{t('최대 {count}', { count: choice.maximumTokens.toLocaleString(locale) })}</span>
+            : <span style={{ flex: 'none', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{t('이 모델은 고를 수 없어요')}</span>}
+        </div> })()}
       {/* 생각 강도 — 높일수록 답을 더 깊게 다듬지만 느려지고 토큰을 더 쓴다(턴당 최대 토큰이 강도만큼 늘어난다). */}
-      <div className="stack" style={{ gap: 8, marginTop: 8 }}>
+      <div className="stack" style={{ gap: 8, marginTop: 12 }}>
         <strong style={{ fontSize: 15, fontWeight: 700 }}>{t('생각 강도')}</strong>
         <p className="t-caption" style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{t('높일수록 답을 더 깊게 다듬지만, 느려지고 토큰을 더 써요.')}</p>
-        <div role="radiogroup" aria-label={t('생각 강도')} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
-          {THINKING.map(o => { const on = think === o.value
-            return <button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => setThink(o.value)}
-              style={{ minHeight: 40, borderRadius: 'var(--radius-md)', font: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                border: `1.5px solid ${on ? 'var(--color-accent)' : 'var(--color-border)'}`, background: on ? 'color-mix(in srgb, var(--color-accent) 12%, var(--color-surface-1))' : 'var(--color-surface-1)', color: on ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{t(o.label)}</button> })}
-        </div>
+        <StepSlider label={t('생각 강도')} value={think} onChange={v => setThink(v as Thinking)} steps={THINKING.map(o => ({ value: o.value, label: t(o.label) }))} />
       </div>
       <Button variant="primary" full onClick={apply} disabled={!variant(pick)}>{t('적용')}</Button>
     </div>
