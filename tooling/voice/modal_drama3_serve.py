@@ -323,8 +323,10 @@ class Speaker:
             voice = next(iter(groups))
             yield from self.speak_stream(delivery_text(' '.join(l['text'] for l in lines), lines[0]), voice)
             return
+        # 11/11 첫소리를 먼저(사용자): 대화 순서대로 필요할 때 만든다 — 그 턴에 한 번만 말하는 인물은 만드는 대로 흘려보내고,
+        # 여러 번 말하는 인물은 그 인물의 대사 전체를 한 번에 만든 뒤 잘라 첫 조각부터 보낸다. 뒤 인물은 앞 소리가 재생되는 동안 만든다.
         pieces = {}
-        for voice, idx in groups.items():
+        def make(voice, idx):
             text = ' '.join(lines[i]['text'] for i in idx)
             ref_text, codes = self.reference(voice)
             torch.manual_seed(zlib.crc32(voice.encode()))
@@ -333,10 +335,14 @@ class Speaker:
                 wave = self.codec_decode(self.generate(prompt, voice, frame_limit(text)))
             cuts = [0, *split_points(wave, [len(lines[i]['text']) for i in idx], rate), len(wave)]
             for k, i in enumerate(idx): pieces[i] = wave[cuts[k] : cuts[k + 1]]
-        for i in range(len(lines)):
-            yield pcm(pieces[i])
+        for i, line in enumerate(lines):
+            voice = line.get('voice') or DEFAULT_VOICE
+            if len(groups[voice]) == 1: yield from self.speak_stream(delivery_text(line['text'], line), voice)
+            else:
+                if i not in pieces: make(voice, groups[voice])
+                yield pcm(pieces.pop(i))
             if i < len(lines) - 1:
-                pause = min(1.5, max(0.0, float((lines[i].get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
+                pause = min(1.5, max(0.0, float((line.get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
                 yield pcm(np.zeros(int(rate * pause), dtype='float32'))
 
     @modal.method()
