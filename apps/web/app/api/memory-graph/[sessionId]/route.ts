@@ -11,7 +11,7 @@ export const runtime = 'nodejs'
 export type MemoryNoteItem = { id: string; type: MemoryType; layer: MemoryLayer; content: string; pinned: boolean; byUser: boolean }
 export type MemoryNotes = MemoryGraph & { items: MemoryNoteItem[]; note: string }
 /** 11/10 유저노트 최대 글자 수 — 매 턴 프롬프트에 실린다. */
-export const USER_NOTE_MAX = 1000
+const USER_NOTE_MAX = 1000
 
 /** 한 방에서 고정할 수 있는 기억 수 — 고정은 매 턴 먼저 실리므로 너무 많으면 다른 기억 자리가 없다. */
 const PIN_LIMIT = 5
