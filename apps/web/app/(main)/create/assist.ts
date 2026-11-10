@@ -10,6 +10,7 @@ import { introDialogue } from '@/lib/intro-dialogue'
 import { resolveRpLLM } from '@/lib/simulation/mock-llm'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { parseCharacterForm, TEST_CHAT_LIMIT } from './parse'
+import { takeUserQuota } from '@/lib/usage/user-quota'
 
 /** 자동 채우기 결과 — 만들기 폼의 칸 이름 그대로. 화면은 비어 있는 칸에만 넣는다. */
 export type QuickFill = {
@@ -39,6 +40,8 @@ export async function quickFill(description: string, known: Partial<Record<(type
     return value ? [`${KNOWN_LABEL[key]}: ${value}`] : []
   })
   if (!text && facts.length === 0) throw new Error('DESCRIPTION_REQUIRED')
+  // 11/10 회원당 하루 30번 — 사용량을 차감하지 않으니 서버에서 센다.
+  if (!(await takeUserQuota(user.id, 'quick_fill', [{ ms: 86_400_000, max: 30 }]))) throw new Error('QUICK_FILL_LIMIT')
   installAIUsageSink()
   const llm = createAI({ mock: req => buildMockDraft(req.prompt), context: {
     userId: user.id, requestId: randomUUID(), workload: 'interactive', usageUnits: 0, origin: 'character:quick-fill',
@@ -69,6 +72,8 @@ export async function testTurn(entries: Array<[string, string]>, history: TestTu
   const text = input.trim().slice(0, 500)
   if (!text) return { error: msg('메시지를 입력해 주세요.') }
   if (history.filter(m => m.role === 'user').length >= TEST_CHAT_LIMIT) return { error: msg('테스트 대화는 10번까지예요. 게시하면 계속 이야기할 수 있어요.') }
+  // 11/10 위 턴 수는 화면이 보낸 기록이라 우회된다 — 회원당 하루 100턴을 서버에서 센다.
+  if (!(await takeUserQuota(user.id, 'test_chat', [{ ms: 86_400_000, max: 100 }]))) return { error: msg('오늘 테스트 대화를 모두 썼어요. 내일 다시 해 볼 수 있어요.') }
 
   const form = new FormData()
   for (const [key, value] of entries) if (typeof key === 'string' && typeof value === 'string') form.append(key, value)

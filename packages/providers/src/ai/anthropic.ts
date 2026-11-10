@@ -27,6 +27,13 @@ export function claudeSchema(schema: unknown): unknown {
   if (out.type === 'object') out.additionalProperties = false
   return out
 }
+/** 11/10 캐릭터·규칙 앞부분을 캐시한다(같은 방의 다음 턴은 캐시 읽기 단가). 이번 턴 지시는 캐시 뒤 블록으로. */
+function systemBlocks(system: string, prefix?: number): string | Anthropic.Beta.BetaTextBlockParam[] {
+  if (!prefix || prefix <= 0 || prefix > system.length) return system
+  const head: Anthropic.Beta.BetaTextBlockParam = { type: 'text', text: system.slice(0, prefix), cache_control: { type: 'ephemeral' } }
+  return prefix === system.length ? [head] : [head, { type: 'text', text: system.slice(prefix) }]
+}
+
 export class AnthropicProvider implements AIProvider {
   readonly info
   private readonly client: Anthropic
@@ -48,7 +55,7 @@ export class AnthropicProvider implements AIProvider {
       const params: Anthropic.Beta.MessageCreateParamsNonStreaming = {
         model: this.model,
         max_tokens: req.maxTokens ?? 1024,
-        system: req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''),
+        system: systemBlocks(req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''), req.cacheSystemPrefix),
         messages: [{ role: 'user', content: req.prompt }],
         output_config: { effort: req.thinking ?? 'low' },
         ...(schema ? { tools: [{ name: 'submit', description: 'Submit the complete result.', input_schema: schema }], tool_choice: { type: 'auto' as const } } : {}),

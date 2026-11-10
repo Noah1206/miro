@@ -2,6 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MemoryGraph, MemoryLayer, MemoryNode } from '@miro/domain'
 import type { MemoryNoteItem, MemoryNotes } from '@/app/api/memory-graph/[sessionId]/route'
+/** 서버 한도(route USER_NOTE_MAX)와 같다 — 라우트 파일은 DB 를 불러오므로 값은 가져오지 않는다. */
+const USER_NOTE_MAX = 1000
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -179,6 +181,7 @@ export function MemoryGraphView({ sessionId, refreshKey }: { sessionId: string; 
         ? <MemoryEditor key={active.id} sessionId={sessionId} item={active} onDone={() => { setSelected(null); reload() }} />
         : <p className="t-caption">{items.length ? t('기억 {n}개 · 점이나 아래 목록을 누르면 보고 고칠 수 있어요.', { n: items.length }) : t('아직 기억이 쌓이지 않았어요. 대화를 나누면 여기에 남아요.')}</p>}
 
+      <UserNote key={graph.note} sessionId={sessionId} initial={graph.note} onDone={reload} />
       <MemoryAdd sessionId={sessionId} onDone={reload} />
 
       {/* 기억 노트 — 누르면 위 편집기가 열린다. 지금 이야기·지난 이야기는 그래프엔 없고 여기에만 있다. */}
@@ -218,7 +221,7 @@ function MemoryEditor({ sessionId, item, onDone }: { sessionId: string; item: Me
   const [busy, setBusy] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const max = item.type === 'short_term_summary' || item.type === 'chapter' ? 900 : 300
+  const max = item.type === 'short_term_summary' || item.type === 'chapter' ? 1500 : 300
   const send = async (method: 'PATCH' | 'DELETE', body: object) => {
     setBusy(true); setError(null)
     const e = await call(sessionId, method, { id: item.id, ...body })
@@ -241,6 +244,37 @@ function MemoryEditor({ sessionId, item, onDone }: { sessionId: string; item: Me
           style={{ ...buttonBase, background: changed ? 'var(--color-accent)' : 'var(--color-surface-3)', color: changed ? 'var(--color-white)' : 'var(--color-text-tertiary)' }}>{t('저장')}</button>
       </div>
       {error && <p className="t-caption" role="alert">{error}</p>}
+    </div>
+  )
+}
+
+/** 11/10 유저노트(크랙 대비) — 이 방에서 캐릭터가 반드시 기억할 설정. 매 턴 최근 대화 뒤에 실려 긴 대화에서도 흐려지지 않는다. */
+function UserNote({ sessionId, initial, onDone }: { sessionId: string; initial: string; onDone: () => void }) {
+  const t = useT()
+  const [text, setText] = useState(initial)
+  const [busy, setBusy] = useState(false)
+  const [state, setState] = useState<'idle' | 'saved' | 'error'>('idle')
+  const changed = text.trim() !== initial
+  const save = async () => {
+    setBusy(true); setState('idle')
+    const e = await call(sessionId, 'POST', { action: 'note', content: text })
+    setBusy(false)
+    if (e) setState('error'); else { setState('saved'); onDone() }
+  }
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <p className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{t('유저노트')}</p>
+        <span className="t-micro" style={{ color: 'var(--color-text-tertiary)' }}>{text.length}/{USER_NOTE_MAX}</span>
+      </div>
+      <textarea value={text} maxLength={USER_NOTE_MAX} rows={4} aria-label={t('유저노트')} placeholder={t('캐릭터가 이 이야기에서 꼭 기억했으면 하는 설정을 적어 주세요. 매 답변에 반영돼요.')}
+        onChange={(e) => { setText(e.target.value); setState('idle') }} className="t-body" style={fieldStyle} />
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', alignItems: 'center' }}>
+        {state === 'saved' && !changed && <span className="t-caption" role="status" style={{ color: 'var(--color-text-tertiary)' }}>{t('저장했어요')}</span>}
+        {state === 'error' && <span className="t-caption" role="alert">{t('저장하지 못했어요. 다시 시도해 주세요.')}</span>}
+        <button type="button" disabled={busy || !changed} onClick={save} className="t-caption"
+          style={{ ...buttonBase, background: changed ? 'var(--color-accent)' : 'var(--color-surface-3)', color: changed ? 'var(--color-white)' : 'var(--color-text-tertiary)' }}>{t('저장')}</button>
+      </div>
     </div>
   )
 }

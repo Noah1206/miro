@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { msg } from '@/lib/i18n'
+import { isOwnImageUrl } from './own-url'
 
 /**
  * 캐릭터 사진 업로드 — Supabase Storage 의 `character-images` 버킷(공개 읽기).
@@ -59,7 +60,7 @@ export async function uploadCharacterImages(files: File[], ownerId: string): Pro
  */
 export async function resolveCharacterImages(form: FormData, ownerId: string): Promise<string[]> {
   const newFiles = form.getAll('images').filter((f): f is File => f instanceof File && f.size > 0)
-  const keptImages = form.getAll('keptImages').filter((v): v is string => typeof v === 'string')
+  const keptImages = form.getAll('keptImages').filter((v): v is string => typeof v === 'string' && isOwnImageUrl(v))
   const order = form.getAll('imageOrder').filter((v): v is string => typeof v === 'string')
   const { urls: uploadedUrls, errors } = newFiles.length > 0
     ? await uploadCharacterImages(newFiles, ownerId)

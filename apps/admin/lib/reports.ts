@@ -57,7 +57,10 @@ export async function act(adminId: string, reportId: string, expectedVersion: nu
       .returning({ id: reports.id })
     if (updated.length === 0) return 'stale'
 
-    if (action === 'hide_content' && r.targetType !== 'live_scene') {
+    // 11/10 작품 신고의 숨김 = 작품 비공개(공식 작품은 isOfficial 이라 그대로 보인다 — 따로 내린다).
+    if (action === 'hide_content' && r.targetType === 'character') {
+      await tx.update(characters).set({ isPublic: false }).where(eq(characters.id, r.targetId))
+    } else if (action === 'hide_content' && r.targetType !== 'live_scene') {
       await tx.update(messages).set({ hiddenAt: new Date() }).where(eq(messages.id, r.targetId))
     }
     if (action === 'restrict_session' && r.sessionId) {

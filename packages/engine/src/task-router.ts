@@ -23,7 +23,7 @@ function memoryHistory(s: SimulationSnapshot) {
   const self = s.character.identity.name
   return participantHistory(s).map(m => ({ id: m.id, at: m.at, role: m.role, ...(m.npcName ? { npcName: m.npcName } : {}),
     content: m.role === 'user' ? m.content : excerpt(m.blocks?.length
-      ? m.blocks.map(b => b.speaker && b.speaker !== self ? `${b.speaker}: ${b.text}` : b.text).join('\n') : m.content, 400) }))
+      ? m.blocks.map(b => b.speaker && b.speaker !== self ? `${b.speaker}: ${b.text}` : b.text).join('\n') : m.content, 800) }))
 }
 /**
  * 실측(2026-09-26·27, gemini-3.5-flash-lite): 사건이 있든 없든 대부분 [{"type","confidence"}] 배열만 돌려주고(25회 중 23회),
@@ -78,9 +78,9 @@ function normalizeMemoryItem(v: unknown, fallbackType?: (typeof MEMORY_TYPES)[nu
   const content = typeof o.content === 'string' ? o.content : asKey ? o[asKey] : undefined
   if (!type || typeof content !== 'string') return v
   const num = (k: string, d: number) => (typeof o[k] === 'number' ? o[k] : d)
-  return { ...o, type, content: clip(content, fallbackType === 'short_term_summary' && type === 'short_term_summary' ? 900 : 300), importance: num('importance', .8), persistence: num('persistence', .8), confidence: num('confidence', 1) }
+  return { ...o, type, content: clip(content, fallbackType === 'short_term_summary' && type === 'short_term_summary' ? 1500 : 300), importance: num('importance', .8), persistence: num('persistence', .8), confidence: num('confidence', 1) }
 }
-/** 길이 한도를 넘긴 항목도 문장 경계에서 자른다. 요약만 900자이고 개별 사실은 여전히 300자다. */
+/** 길이 한도를 넘긴 항목도 문장 경계에서 자른다. 요약만 1500자(11/10)이고 개별 사실은 여전히 300자다. */
 function clip(text: string, max = 300): string {
   if (text.length <= max) return text
   const head = text.slice(0, max)
@@ -90,7 +90,7 @@ function clip(text: string, max = 300): string {
 /** 태스크가 기대하는 타입을 알면 빠진 type 을 채울 수 있다 — 요약 요청의 답은 요약이다. */
 export function memoryResult(fallbackType?: (typeof MEMORY_TYPES)[number], requireQuote = false) {
   const base = fallbackType === 'short_term_summary'
-    ? MemoryCandidateProposal.extend({ type: z.literal('short_term_summary'), content: z.string().min(2).max(900) })
+    ? MemoryCandidateProposal.extend({ type: z.literal('short_term_summary'), content: z.string().min(2).max(1500) })
     : MemoryCandidateProposal
   // The dialogue proposal cannot nominate a source. Only the extraction task accepts this metadata.
   const sourced = base.extend({ sourceMessageId: z.string().uuid().optional(), sourceQuote: z.string().min(2).max(600).optional() })
@@ -114,7 +114,8 @@ export function planTasks(input: string, turn: number, mode: 'planned' | 'always
     // 평범한 취향·공유 사건도 키워드 없이 쌓인다. 최근 창에서 빠지기 전에 주기적으로 확인한다.
     || (turn > 0 && turn % 4 === 0)
     || importanceScore(interactionImportance(input)) >= .3)) tasks.push('memory_extraction')
-  if (feature('memorySummaries') && turn > 0 && turn % 12 === 0) tasks.push('memory_summary')
+  // 11/10 긴 맥락: 10턴마다 — 대사 창(15턴)보다 짧아서 창에서 빠지는 대화는 늘 요약에 들어가 있다(12턴마다였을 땐 창 6턴과 사이가 비었다).
+  if (feature('memorySummaries') && turn > 0 && turn % 10 === 0) tasks.push('memory_summary')
   return [...tasks, 'dialogue']
 }
 export async function analyzeSemantic(llm: LLMProvider, input: string, s: SimulationSnapshot) {
@@ -131,7 +132,7 @@ export async function analyzeMemory(llm: LLMProvider, task: 'memory_summary' | '
   const schema = task === 'memory_summary' ? memoryResult('short_term_summary').refine(r => r.memories.length === 1 && r.memories[0]?.type === 'short_term_summary', 'one merged summary required') : memoryResult(undefined, true)
   const system = p.system + `
 반드시 최상위 JSON 객체 {"memories":[...]}를 반환하세요. 최상위 배열은 금지합니다.
-${task === 'memory_summary' ? `memories는 정확히 1개입니다. 이전 요약과 새 대화를 최대 900자의 short_term_summary로 갱신하세요. 이전 기억을 개별 항목으로 복사하지 마세요.
+${task === 'memory_summary' ? `memories는 정확히 1개입니다. 이전 요약과 새 대화를 최대 1500자의 short_term_summary로 갱신하세요. 이전 기억을 개별 항목으로 복사하지 마세요.
 단순한 최근 줄거리가 아니라 관계의 이어짐을 보존하세요: ①현재 상황 ②기억할 공유 경험과 그 이유 ③갈등의 원인→상대가 원한 대응→실제로 확인된 화해/미해결 상태 ④유효한 약속·호칭·대화 선호. 항목이 없으면 만들지 마세요. 새 사건 때문에 아직 유효한 오래된 정정·갈등 원인·약속을 지우지 마세요. 최신 정정으로 무효가 된 사실은 반복하지 마세요.` : `previousMemories 는 이미 저장된 기억입니다 — 참고만 하고 그대로 다시 내지 마세요. 이번 입력과 최근 참여자 대화에서 아직 저장되지 않은 확인된 사실만 최대 3개 반환하고, 새 사실이 없으면 {"memories":[]} 를 반환하세요. 모든 항목에 importance·persistence·confidence 숫자가 있어야 합니다.
 사용자의 호칭·말투·칭찬/위로 방식·연락 경계 요청은 preference와 태그 "대화 선호"로 남기며, 원한 방식과 피하고 싶은 방식을 함께 보존하세요. 갈등은 원인과 요청·해결 여부를 conflict에, 함께 한 경험은 구체적인 사건과 두 사람에게 중요한 이유를 shared_event에 남기세요. 약속/계획은 완료된 사건이 아닙니다. 캐릭터가 한 제안을 사용자가 동의한 사실로 바꾸지 마세요. 외운 단어 대신 다음 행동에 도움이 되는 정보와 실제 근거를 남기세요.
 모든 추출 항목에 sourceQuote를 넣으세요. sourceQuote는 사실의 근거인 사용자 발화의 정확한 2~600자 부분 인용입니다. 현재 input이 근거이면 sourceMessageId를 생략하세요. 최근 대화의 과거 사용자 발화가 근거이면 해당 recent 항목의 id를 sourceMessageId로 반드시 넣으세요. 캐릭터/NPC/요약의 문장을 사용자 원문으로 인용하거나 과거 사실을 현재 input에 귀속시키지 마세요. 출처가 없거나 발췌에 사실이 없는 항목은 반환하지 마세요.
@@ -144,7 +145,7 @@ ${task === 'memory_summary' ? `memories는 정확히 1개입니다. 이전 요�
     ...(task === 'memory_extraction' ? { sourceQuote: 'exact substring of the source user statement', sourceMessageId: 'omit for current input; otherwise exact id of the quoted recent user message' } : {}) }] }
   const prompt = boundedMemoryPrompt(s, input, system, contract)
   const result = await llm.generateStructured({ schema, task, system, prompt,
-    promptVersion: `${p.id}:${p.version}+causal-memory-v3`, maxTokens: task === 'memory_summary' ? 1536 : 768 })
+    promptVersion: `${p.id}:${p.version}+causal-memory-v3`, maxTokens: task === 'memory_summary' ? 3072 : 768 })
   const userSources = new Map(participantHistory(s).filter(m => m.role === 'user' && m.id).map(m => [m.id!, m.content]))
   const characterSources = new Map(participantHistory(s).filter(m => m.role === 'character' && m.id).map(m => [m.id!, m.content]))
   return { memories: result.memories.filter(m => {

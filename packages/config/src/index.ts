@@ -125,9 +125,14 @@ export const POLICY = {
   context: {
     /** ContextBuilder 가 조립할 수 있는 최대 토큰(근사). 초과 시 우선순위 낮은 항목부터 제외. */
     /** 9/26: 캐릭터챗 답이 장면 하나(500~1300자)로 길어져 8000 이면 긴 말투 예시와 함께 최근 대화가 반으로 잘렸다. dialogue 모델 맥락은 131072. */
-    maxTokens: DEV_DEFAULT(12000),
-    recentMessageCount: DEV_DEFAULT(12),
-    relevantMemoryCount: DEV_DEFAULT(8),
+    /**
+     * 11/10 긴 맥락 기준(크랙 대비, docs/LONG_CONTEXT_STANDARD.md): 단위는 글자(UTF-16) — 공급자 입력 상한 검사(generationInputCeiling)와 같은 셈이다.
+     * 예전 12000(글자/2.2)은 실제로는 바이트 셈의 입력 상한(64000 바이트 ≈ 2만 1천 자)에 먼저 걸렸다. 64000(요금 견적의 입력 상한)에서 사용자 입력(2000)·응답 스키마·반복 방지 지시·재작성 여유분을 뺀 값.
+     */
+    maxTokens: DEV_DEFAULT(46000),
+    /** 최근 대화 원문 30개(15턴) — 요약은 10턴마다라 창에서 빠지는 대화는 늘 요약에 들어가 있다. */
+    recentMessageCount: DEV_DEFAULT(30),
+    relevantMemoryCount: DEV_DEFAULT(16),
   },
 
   /**

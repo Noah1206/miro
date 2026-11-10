@@ -2124,5 +2124,15 @@
  "조금 긴 대화": "Slightly long chat",
  "저장되었습니다.": "Saved.",
  "성공적으로 생성되었습니다.": "Created successfully.",
- "인물 사진": "Character photo"
+ "인물 사진": "Character photo",
+ "[작품]": "[Story]",
+ "오늘 테스트 대화를 모두 썼어요. 내일 다시 해 볼 수 있어요.": "You've used all of today's test chats. You can try again tomorrow.",
+ "유저노트": "User note",
+ "잠시 문제가 생겼어요": "Something went wrong",
+ "잠시 후 다시 시도해 주세요.": "Please try again in a moment.",
+ "저장했어요": "Saved",
+ "주소가 바뀌었거나 더 이상 볼 수 없는 페이지예요.": "The address may have changed, or this page is no longer available.",
+ "캐릭터가 이 이야기에서 꼭 기억했으면 하는 설정을 적어 주세요. 매 답변에 반영돼요.": "Write down details you want the character to always remember in this story. They're reflected in every reply.",
+ "페이지를 찾을 수 없어요": "Page not found",
+ "홈으로": "Go home"
 }

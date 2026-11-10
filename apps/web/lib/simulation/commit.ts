@@ -304,13 +304,18 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
       if (input.undo && (accepted.length || summary)) undo.memories.deleted.push(...(await tx.select().from(memories).where(and(eq(memories.sessionId, input.sessionId),
         or(accepted.length ? inArray(memories.id, accepted) : undefined, summary ? eq(memories.type, 'short_term_summary') : undefined)))).map(undoMemory))
       if (accepted.length) await tx.delete(memories).where(and(eq(memories.sessionId, input.sessionId), inArray(memories.id, accepted)))
-      // 11/3: 예전 요약은 '지난 이야기'로 남긴다. 되돌릴 수 있는 턴(undo)은 지웠다가 되살리는 기존 방식 그대로.
+      // 11/3: 예전 요약은 '지난 이야기'로 남긴다. 11/10: 되돌릴 수 있는 턴(채팅방은 늘 그렇다)도 — 예전엔 지우기만 해서 채팅방의 과거가 요약 한 편에만 남았다.
+      // 되돌릴 수 있게 원본은 지우고(undo.deleted 에 이미 담김) 같은 글의 '지난 이야기' 사본을 새로 넣는다 — 다시 받기가 사본을 지우고 원본을 되살린다.
+      let chapters: string[] = []
       if (summary) {
         const old = and(eq(memories.sessionId, input.sessionId), eq(memories.type, 'short_term_summary'))
-        if (input.undo) await tx.delete(memories).where(old)
-        else await tx.update(memories).set({ type: 'chapter' }).where(old)
+        if (input.undo) {
+          const rows = await tx.delete(memories).where(old).returning()
+          if (rows.length) chapters = (await tx.insert(memories).values(rows.map(({ id: _id, ...m }) => ({ ...m, type: 'chapter' as const })))
+            .returning({ id: memories.id })).map(m => m.id)
+        } else await tx.update(memories).set({ type: 'chapter' }).where(old)
       }
-      undo.memories.inserted = (await tx.insert(memories).values(fresh.map((m) => ({
+      undo.memories.inserted = chapters.concat((await tx.insert(memories).values(fresh.map((m) => ({
         sessionId: input.sessionId,
         characterId: input.characterId,
         sourceMessageId: m.sourceMessageId!,
@@ -320,7 +325,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         persistence: Math.round(m.persistence * 100),
         confidence: Math.round(m.confidence * 100),
         tags: tagsOf({ content: m.content, tags: m.tags ?? [] }),
-      }))).returning({ id: memories.id })).map(m => m.id)
+      }))).returning({ id: memories.id })).map(m => m.id))
 
       // 한도를 넘으면 중요도가 낮은 것부터 정리한다.
       const all = await tx.select().from(memories)

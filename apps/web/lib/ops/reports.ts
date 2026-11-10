@@ -1,7 +1,7 @@
-import { and, eq } from 'drizzle-orm'
-import { db, messages, reports, roleplaySessions, scenes } from '@miro/db'
+import { and, eq, isNull, or } from 'drizzle-orm'
+import { db, characters, messages, reports, roleplaySessions, scenes } from '@miro/db'
 
-export type ReportTarget = { type: 'message' | 'photo' | 'live_scene'; id: string }
+export type ReportTarget = { type: 'message' | 'photo' | 'live_scene' | 'character'; id: string }
 export type ReportReason = 'safety' | 'rights' | 'harassment' | 'inappropriate' | 'other'
 
 const UUID = /^[0-9a-f-]{36}$/i
@@ -12,6 +12,13 @@ const UUID = /^[0-9a-f-]{36}$/i
  */
 export async function resolveTarget(userId: string, target: ReportTarget) {
   if (!UUID.test(target.id)) return null
+  // 11/10 작품 신고 — 공개·공식 작품만(남의 비공개 작품은 찾을 수 없다).
+  if (target.type === 'character') {
+    const [c] = await db.select({ id: characters.id, name: characters.name, tagline: characters.tagline }).from(characters)
+      .where(and(eq(characters.id, target.id), or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), isNull(characters.deletedAt))).limit(1)
+    if (!c) return null
+    return { sessionId: null, characterId: c.id, snapshot: { content: [c.name, c.tagline].filter(Boolean).join(' — ') } }
+  }
   if (target.type === 'live_scene') {
     const [row] = await db.select({ scene: scenes, session: roleplaySessions })
       .from(scenes).innerJoin(roleplaySessions, eq(roleplaySessions.id, scenes.sessionId))

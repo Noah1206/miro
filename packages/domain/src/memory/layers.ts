@@ -87,7 +87,7 @@ export function retrieveMemories<T extends SearchableMemory>(
     if (limit >= 7) reserve('shared_event', 1)
     if (limit >= 12) reserve('relationship_change', 1)
   }
-  // 지난 이야기는 길다(최대 900자) — 이번 입력과 가장 맞는 한두 편만 싣고 나머지 자리는 사실들에 준다.
+  // 지난 이야기는 길다(최대 1500자, 11/10) — 이번 입력과 가장 맞는 한두 편만 싣고 나머지 자리는 사실들에 준다.
   let chapters = [...selected].filter(m => m.type === 'chapter').length
   for (const { m } of scored) {
     if (selected.size >= limit || selected.has(m)) continue

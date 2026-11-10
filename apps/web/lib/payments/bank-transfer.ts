@@ -4,6 +4,8 @@ import { db, bankTelegramRequests, bankTransferOrders } from '@miro/db'
 import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, rechargeProduct } from '@miro/config'
 import { observe } from '@/lib/observe'
 import { applyPaymentEvent } from './service'
+import { afterResponse } from '@/lib/defer'
+import { postOperatorNote } from '@/lib/ops/alerts'
 
 /** 계좌이체 Provider 이름. payment_events 에 이 이름으로 남아 다른 결제와 섞이지 않는다. */
 export const BANK_PROVIDER = 'bank_transfer'
@@ -83,7 +85,11 @@ export async function createBankOrder(opts: {
       }).returning()
       return { row: created!, created: true }
     })
-    if (result.created) observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
+    if (result.created) {
+      observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
+      // 11/10 새 입금 대기 주문은 바로 운영자 채널로(15분 크론을 기다리지 않게). 실패해도 주문은 그대로.
+      void afterResponse(() => postOperatorNote(`**새 계좌이체 주문** ${amountMinor.toLocaleString('ko-KR')}${currency === 'KRW' ? '원' : ` ${currency}`} · 입금자 ${depositorName} · 코드 ${code}`)).catch(() => {})
+    }
     return result.row
   } catch (e) {
     // 부분 UNIQUE 인덱스: 사용자당 대기 주문은 하나. 이미 있으면 그걸 쓰라고 알린다.

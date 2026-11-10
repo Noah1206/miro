@@ -1,8 +1,8 @@
 import { DEFAULT_CHARACTER_STATE } from '@miro/domain'
 import { receiveMessenger, MessengerError } from '@/lib/messenger/inbox'
 import { resolveChatModel } from '@/lib/ai/chat-models'
-import { eq, and } from 'drizzle-orm'
-import { db, conversationRequests, characters, messages } from '@miro/db'
+import { eq, and, sql } from 'drizzle-orm'
+import { db, conversationRequests, characters, messages, memories } from '@miro/db'
 import { captureEvaluation } from '@/lib/ai/evaluation'
 import { randomUUID } from 'node:crypto'
 import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance } from '@miro/providers'
@@ -13,6 +13,7 @@ import { looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeConte
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
+import { CHAPTER_LIMIT, compactChapters } from '@/lib/ai/memory-compact'
 import { runMemoryJobs } from '@/lib/ai/memory-jobs'
 import { resolveRpLLM, auxiliaryLLM } from './mock-llm'
 import { UsageExceededError, reserve, rollback, usageStatus, type Reservation } from '@/lib/usage/guard'
@@ -178,7 +179,8 @@ async function executeTurn(opts: {
       agency = prepared.runtime
       policyInput.agencyMode = characterAgencyMode(sessionId, prepared.policyVersion ?? loaded.policyVersion)
       // 개정판이 준비됐는지는 여기서야 안다 — 정책의 engine 은 준비 상태까지 본 결과다(준비 전이면 legacy 로 보류).
-      policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false })
+      // 11/10: 여유분 턴은 보조 모델을 안 넘기므로 기억은 배경 작업으로 — 전엔 inline 이라 그 턴의 기억이 아예 안 남았다.
+      policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false, memory: reservation?.continuity ? 'deferred' : 'inline' })
       context.origin = policy.origin
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
         () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream: opts.stream,
@@ -295,6 +297,11 @@ async function executeTurn(opts: {
     })
     if (transition.newEvent) void track(userId, 'event_triggered', { sessionId, type: transition.newEvent.candidate.type })
     if (transition.sceneDelta) void track(userId, 'scene_changed', { sessionId })
+    // 11/10 긴 맥락: 채팅방 요약 턴도 지난 이야기가 쌓이면 묶는다(전엔 배경 작업 경로만 묶었다). 응답 뒤에, 실패해도 턴은 끝난 것이다.
+    if (transition.memories.some(m => m.type === 'short_term_summary')) void afterResponse(async () => {
+      const [row] = await db.select({ n: sql<number>`count(*)::int` }).from(memories).where(and(eq(memories.sessionId, sessionId), eq(memories.type, 'chapter')))
+      if ((row?.n ?? 0) > CHAPTER_LIMIT) await compactChapters(sessionId, userId).catch(e => observe('memory.compact_failed', { sessionId, error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }))
+    })
     // 11/9 웹소설: AI 가 결말 표식을 쓴 턴 — 처음 결말만 남기고 기록한다.
     const ending = endingTitle(transition.blocks)
     if (ending) await recordEnding(sessionId, userId, ending, turnIndex)

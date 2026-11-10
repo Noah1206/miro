@@ -434,6 +434,8 @@ export const roleplaySessions = pgTable('roleplay_sessions', {
   voiceOverrides: jsonb('voice_overrides').$type<Record<string, string>>().notNull().default({}),
   /** 11/10 이 방의 지금 스탯 값 { 스탯 이름: 값 } — 없는 스탯은 characters.stats 의 기본값. */
   statValues: jsonb('stat_values').$type<Record<string, number>>().notNull().default({}),
+  /** 11/10 유저노트 — 캐릭터가 반드시 기억하길 바라는 사용자의 글(최대 1000자). 매 턴 프롬프트 끝(최근 대화 뒤)에 실린다. */
+  userNote: text('user_note').notNull().default(''),
 
   status: text('status', { enum: ['active', 'archived'] }).notNull().default('active'),
   lastInteractionAt: timestamp('last_interaction_at', { withTimezone: true }).notNull().defaultNow(),
@@ -894,7 +896,7 @@ export const callSessions = pgTable('call_sessions', {
 export const reports = pgTable('reports', {
   id: uuid('id').primaryKey().defaultRandom(),
   reporterId: uuid('reporter_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  targetType: text('target_type', { enum: ['message', 'photo', 'live_scene'] }).notNull(),
+  targetType: text('target_type', { enum: ['message', 'photo', 'live_scene', 'character'] }).notNull(),   // 11/10 character = 작품 자체 신고(text 라 DB 변경 없음)
   targetId: uuid('target_id').notNull(),
   reason: text('reason', { enum: ['safety', 'rights', 'harassment', 'inappropriate', 'other'] }).notNull(),
   detail: text('detail').notNull().default(''),

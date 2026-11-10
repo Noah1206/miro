@@ -9,6 +9,7 @@ import { spokenSegments } from '@/lib/voice-text'
 import { feature } from '@miro/config'
 import { voiceColumns } from '@/lib/voice'
 import { segmentVoice } from '@/lib/speech/access'
+import { takeUserQuota, takeVoiceWake } from '@/lib/usage/user-quota'
 
 export const runtime = 'nodejs'
 // The actual native model's cold load exceeded30s in the local comparison.
@@ -25,7 +26,11 @@ export async function POST(req: Request) {
   if (!user) return new Response(null, { status: 401 })
   const body = await req.json().catch(() => null) as { sessionId?: unknown; messageId?: unknown; plan?: unknown; part?: unknown; quote?:unknown; amount?:unknown; confirmed?:unknown; reuseOnly?:unknown; wake?: unknown } | null
   // 11/6: 음성 모드를 켜면 서버를 미리 깨운다 — 대사를 누를 때 켜지는 시간(24~33초)을 기다리지 않게. 글·대화 없이 상태 확인만.
-  if (body?.wake === true) { await resolveTts()?.warm?.(AbortSignal.timeout(60_000)); return new Response(null, { status: 204 }) }
+  // 11/10 깨우기는 회원당 5분에 한 번(GPU 를 계속 켜 두지 못하게).
+  if (body?.wake === true) {
+    if (!(await takeVoiceWake(user.id))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
+    await resolveTts()?.warm?.(AbortSignal.timeout(60_000)); return new Response(null, { status: 204 })
+  }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
   if (!/^[0-9a-f-]{36}$/i.test(sessionId) || !/^[0-9a-f-]{36}$/i.test(messageId)
     || (body?.plan !== undefined && typeof body.plan !== 'boolean')
@@ -58,6 +63,8 @@ export async function POST(req: Request) {
     }
     catch(error) { return speechFailure(error) }
   }
+  // 11/10 동기 합성(운영 기본 경로)은 회원당 분당 30회·하루 600회.
+  if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
   const selected = body?.part === undefined ? null : segments[Number(body.part)]
   if (body?.part !== undefined && !selected) return new Response(null, { status: 400 })
   // Preserve the original whole-reply contract for older clients. New clients select each part.

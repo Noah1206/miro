@@ -6,6 +6,7 @@ import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
 import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
 import type { CharacterCommand } from '@miro/db'
 import { searchNeedle } from '@/lib/search-params'
+import { isOwnImageUrl } from '@/lib/storage/own-url'
 export { MOODS } from '@/lib/genres'
 import { RELATIONS } from '@/lib/genres'
 /** 생각 5단계(10/28) 중 기본(low)보다 깊은 것만 저장한다. */
@@ -117,7 +118,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   let stats: CharacterStat[] = []
   try { stats = normalizeStats(JSON.parse(s('stats') || '[]')) } catch { /* 빈 배열 */ }
 
-  const startingTime = orNull(s('startingTime'))
+  const startingTime = orNull(s('startingTime').slice(0, 60))
   const initialRelationship = {
     stage: oneOf('stage', STAGES, 'stranger'),
     trust: clamp('trust', 30),
@@ -146,8 +147,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     firstReplies: form.getAll('firstReplies').map(v => String(v).trim().slice(0, 80)).filter(Boolean).slice(0, 3),
     tagline: orNull(s('title')),
     age,
-    nationality: orNull(s('nationality')),
-    occupation: orNull(s('occupation')),
+    nationality: orNull(s('nationality').slice(0, 60)),
+    occupation: orNull(s('occupation').slice(0, 60)),
     mbti: orNull(s('mbti').toUpperCase().slice(0, 4)),
     personality,
     hobbies: tags('hobbies', 6, 30),
@@ -186,7 +187,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     if (moodByNeedle.size === 11) break
   }
   const mood = [...moodByNeedle.values()]
-  const world = { era: null, location: orNull(s('worldLocation').slice(0, 60)), genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting')) }
+  const world = { era: null, location: orNull(s('worldLocation').slice(0, 60)), genre: mood.length > 0 ? mood.join(' · ') : null, worldSetting: orNull(s('worldSetting').slice(0, 4000)) }
 
   // 연락 성향. 스위치가 꺼지면 enabled=false — 엔진이 어떤 이유로도 먼저 연락하지 않는다.
   const delayN = Number(s('replyDelayMinutes'))
@@ -208,13 +209,13 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   }
 
   // 외형. 사진이 이 값으로 같은 사람을 그린다.
-  const face = (k: 'eyes' | 'nose' | 'jaw' | 'skin' | 'distinctive') => orNull(s(k))
+  const face = (k: 'eyes' | 'nose' | 'jaw' | 'skin' | 'distinctive') => orNull(s(k).slice(0, 200))
   const visual = {
     baseFace: { eyes: face('eyes'), nose: face('nose'), jaw: face('jaw'), skin: face('skin'), distinctive: face('distinctive') },
-    hair: { color: orNull(s('hairColor')), length: orNull(s('hairLength')), style: orNull(s('hairStyle')) },
-    bodyProfile: { build, gender, height: orNull(s('height')), detail: orNull(s('detail')) },
+    hair: { color: orNull(s('hairColor').slice(0, 200)), length: orNull(s('hairLength').slice(0, 200)), style: orNull(s('hairStyle').slice(0, 200)) },
+    bodyProfile: { build, gender, height: orNull(s('height').slice(0, 200)), detail: orNull(s('detail').slice(0, 200)) },
     styleTags: tags('styleTags', 5, 40),
-    expressionTendency: orNull(s('expression')),
+    expressionTendency: orNull(s('expression').slice(0, 200)),
   }
 
   return {
@@ -228,8 +229,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     voiceId: orNull(s('voiceId').slice(0, 40)),
     // 다인 작품(11/10) 등장인물별 목소리 — 이름 20자·20명까지. 목소리 id 는 저장할 때 서버가 다시 본다(lib/voice selectableEnsemble).
     ensembleVoices: parseEnsemble(s('ensembleVoices')),
-    // 11/10 인물별 프로필 사진 — 올린 사진 URL(https)만.
-    ensemblePhotos: Object.fromEntries(Object.entries(parseEnsemble(s('ensemblePhotos'), 500)).filter(([, v]) => /^https:\/\//.test(v))),
+    // 11/10 인물별 프로필 사진 — 우리 저장소에 올린 사진 URL 만.
+    ensemblePhotos: Object.fromEntries(Object.entries(parseEnsemble(s('ensemblePhotos'), 500)).filter(([, v]) => isOwnImageUrl(v))),
     startingTime,
     character, world, contact, visual, initialRelationship,
   }
@@ -268,7 +269,7 @@ export function normalizeEndings(raw: unknown): CharacterEnding[] {
     const grade = (['N', 'R', 'SR', 'SSR'] as const).find(g => g === o.grade) ?? 'N'
     const minTurns = Math.max(10, Math.min(9999, Math.round(typeof o.minTurns === 'number' && Number.isFinite(o.minTurns) ? o.minTurns : 10)))
     const epilogue = str(o.epilogue, 1000), hint = str(o.hint, 20), image = str(o.image, 500)
-    out.push({ name, grade, minTurns, condition, ...(epilogue ? { epilogue } : {}), ...(hint ? { hint } : {}), ...(/^https:\/\//.test(image) ? { image } : {}) })
+    out.push({ name, grade, minTurns, condition, ...(epilogue ? { epilogue } : {}), ...(hint ? { hint } : {}), ...(image && isOwnImageUrl(image) ? { image } : {}) })
     if (out.length === 10) break
   }
   return out

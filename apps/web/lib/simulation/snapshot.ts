@@ -97,14 +97,15 @@ export async function loadSession(
       .where(and(eq(events.sessionId, sessionId), eq(events.status, 'resolved'), gt(events.cooldownUntilTurn, row.session.turnCount)))
       .orderBy(events.type, desc(events.cooldownUntilTurn), desc(events.id)), []),
     ai(() => db.select().from(npcs).where(and(eq(npcs.sessionId, sessionId), eq(npcs.isActive, true))), []),
-    ai(() => memoryRetriever.retrieve({ sessionId, userId, query: input, limit: 24 }), []),
+    ai(() => memoryRetriever.retrieve({ sessionId, userId, query: input, limit: 40 }), []),
     row.world.currentSceneId && !opts.view
       ? db.select().from(scenes).where(eq(scenes.id, row.world.currentSceneId)).limit(1)
       : Promise.resolve([]),
     db.select().from(messages)
       .where(and(eq(messages.sessionId, sessionId), isNull(messages.hiddenAt), inArray(messages.role, ['user', 'character', 'narrator', 'npc']), characterCanSeeMessage))
       .orderBy(desc(messages.createdAt), desc(messages.turnIndex), desc(messages.id))
-      .limit(24),
+      // 11/10 긴 맥락: 대사 창 30개(ECHO 는 최대 60개)와 요약 입력(10턴마다 지난 30턴)을 함께 채운다.
+      .limit(60),
     ai(() => db.select({ channel: realityContacts.channel, sentAt: realityContacts.sentAt })
       .from(realityContacts)
       .where(and(eq(realityContacts.sessionId, sessionId), eq(realityContacts.status, 'sent')))
@@ -167,6 +168,7 @@ export async function loadSession(
     contactBoundary: row.session.contactBoundary,
     characterState: { ...DEFAULT_CHARACTER_STATE, ...(row.session.characterState as Partial<CharacterState>) },
     statValues: row.session.statValues,
+    userNote: row.session.userNote,
     clock: localClock(now, timeZone),
     routine: availability ? describeRoutine(availability.routine, availability) : null,
     life: lifeLines(life, timeZone),

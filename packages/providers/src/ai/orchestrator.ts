@@ -122,7 +122,7 @@ export class AIOrchestrator implements LLMProvider {
     schema: ZodType<Out, ZodTypeDef, In>; system: string; prompt: string; maxRetries?: number
     task?: string; maxTokens?: number; temperature?: number; promptVersion?: string
     responseSchema?: GenerationRequest['responseSchema']; thinking?: GenerationRequest['thinking']; safety?: GenerationRequest['safety']
-    onText?: GenerationRequest['onText']; onAttempt?: () => void
+    onText?: GenerationRequest['onText']; onAttempt?: () => void; cacheSystemPrefix?: number
   }): Promise<Out> { return this.execute({ ...opts, task: taskOf(opts.task) }) }
   async generateText(opts: { system: string; prompt: string; task?: string; maxTokens?: number; temperature?: number; promptVersion?: string }): Promise<string> {
     return this.run({ ...opts, task: taskOf(opts.task) }, text => {
@@ -143,7 +143,7 @@ export class AIOrchestrator implements LLMProvider {
     }
     if (this.opts.explicitModel) return [{ model: this.opts.explicitModel, provider: this.opts.chain[0]! }]
     if (this.opts.registry && this.opts.resolveModel) {
-      const registry = this.opts.registry, tokens = Math.ceil(Buffer.byteLength(req.system + req.prompt, 'utf8'))
+      const registry = this.opts.registry, tokens = generationInputCeiling(req)
       const fits = (m: ModelDefinition) => m.maxContextTokens >= tokens + m.maxOutputTokens
       let models: ModelDefinition[]
       if (req.task === 'dialogue' && this.opts.context?.dialogueModelId) {

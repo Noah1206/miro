@@ -120,9 +120,9 @@ export async function loadAgencyEvidence(sessionId: string, snapshot: Simulation
   const actor = snapshot.character.id
   // 여러 인물 카드(11/6): 히로인 대사도 이 캐릭터의 말이다. 카드 이름 대사만 모으면 응답이 통째로 근거에서 빠져 최근 대화에서도 사라졌다.
   const cast = new Set(ensembleNames(snapshot.character.personality.secret))
-  // 최근 대화는 대사 맥락과 같은 수만(POLICY.context.recentMessageCount) — 24개를 다 실으면 계획 입력이 7~8천 토큰이 됐다(9/29 실측).
+  // 최근 대화는 12개만 — 24개를 다 실으면 계획 입력이 7~8천 토큰이 됐다(9/29 실측). 11/10 대사 맥락이 30개로 늘어도 계획은 그대로 둔다.
   // 목표·믿음이 가리키는 옛 메시지(stored)는 따로 실린다.
-  for (const message of [...snapshot.recentMessages.slice(-POLICY.context.recentMessageCount), ...stored]) {
+  for (const message of [...snapshot.recentMessages.slice(-12), ...stored]) {
     if (!message.id || !['user', 'character'].includes(message.role)) continue
     const blocks = message.blocks ?? []
     const text = message.kind === 'photo' ? ('createdAt' in message ? photoMessageText(message) : message.content) : blocks.length && message.kind !== 'reality_message' ? blocks.filter(b => b.type === 'dialogue' && (!b.speaker || b.speaker === snapshot.character.identity.name || typeof b.speaker === 'string' && cast.has(b.speaker)))

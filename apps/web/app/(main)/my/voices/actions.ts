@@ -4,12 +4,14 @@ import { feature } from '@miro/config'
 import { requireUser } from '@/lib/auth'
 import { privacyVersion, termsVersion } from '@/lib/legal'
 import { uploadCharacterImage } from '@/lib/storage/images'
+import { takeVoiceWake } from '@/lib/usage/user-quota'
 import { activateUserVoice, issueVoicePrompt, readVoicePrompt, createUserVoice, retireUserVoices, updateUserVoice, warmVoiceServer, type VoiceUploadError } from '@/lib/voice'
 
 /** 녹음 시작 때 GPU 깨우기(기다리지 않음). */
 export async function warmVoice() {
-  await requireUser()
-  if (feature('characterVoice')) await warmVoiceServer()
+  const user = await requireUser()
+  // 11/10 깨우기는 회원당 5분에 한 번(/api/tts 와 같은 한도).
+  if (feature('characterVoice') && await takeVoiceWake(user.id, 'upload')) await warmVoiceServer()
 }
 
 /** 녹음 올리기 — 동의 두 개(본인 목소리·복제와 서비스 사용)는 필수, 공개·언베일 사용은 선택. */

@@ -3,8 +3,9 @@ import type { GenerationRequest, AIUsageRecord } from './types'
 
 /** A byte upper bound also covers structured-output/tool schemas sent by adapters. */
 export function generationInputCeiling(request: GenerationRequest): number {
-  return Buffer.byteLength(request.system + request.prompt, 'utf8')
-    + (request.responseSchema ? Buffer.byteLength(JSON.stringify(request.responseSchema), 'utf8') : 0) + 512
+  // 11/10: 바이트 대신 글자 수 — 한국어 1글자는 3바이트지만 토큰은 약 1개 이하라, 바이트 셈이 긴 맥락을 실제의 3분의 1에서 막았다. 실제 사용량은 정산에서 다시 잰다.
+  return (request.system + request.prompt).length
+    + (request.responseSchema ? JSON.stringify(request.responseSchema).length : 0) + 512
 }
 
 /** One shared envelope covers dialogue, analyses, retries and fallbacks before settlement. */

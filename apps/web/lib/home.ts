@@ -1,5 +1,6 @@
 import { officialStartingContext } from './editorial/official-copy'
 import { homeUnveilEnabled } from './home-mode'
+import { isUnveilPhoto } from './unveil-photo'
 import { adultCharacter } from '@miro/domain'
 import { and, desc, eq, gt, inArray, isNull, lt, ne, or, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
 import { db, characters, roleplaySessions, contactProfiles } from '@miro/db'
@@ -29,8 +30,9 @@ export type CardPage = { items: HomeCard[]; nextCursor: string | null }
 const PAGE_SIZE = 12
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
+// 11/10 언베일을 안 켠 사람에겐 언베일 사진(첫 장 표지 제외 — 화면에서 흐림) URL 자체를 HTML·응답에 싣지 않는다.
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
-  ({ ...c, startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
+  ({ ...c, ...(over.veiled ? { images: c.images.filter((src, i) => i === 0 || !isUnveilPhoto(src)) } : {}), startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
 
 const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`
 
@@ -254,6 +256,8 @@ export async function popularHomeCards(genres: string[] = [], veiled = true): Pr
         inArray(characters.id, ranked.map(row => row.character_id)),
         or(eq(characters.isOfficial, true), eq(characters.isPublic, true)),
         eq(characters.isDraft, false), isNull(characters.deletedAt),
+        // 11/10 성인 전용은 언베일을 켠 사람에게만.
+        ...(veiled ? [eq(characters.adultOnly, false)] : []),
       ))
     const byId = new Map(rows.map(row => [row.id, row]))
     return ranked.flatMap(({ character_id, plays }) => {
@@ -269,7 +273,7 @@ export async function popularHomeCards(genres: string[] = [], veiled = true): Pr
     .from(characters)
     .innerJoin(counts, eq(counts.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres)))
+    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres), ...(veiled ? [eq(characters.adultOnly, false)] : [])))
     .orderBy(desc(counts.plays), desc(characters.createdAt), desc(characters.id))
     .limit(6)
   return rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays, veiled }))

@@ -50,6 +50,8 @@ export type SimulationSnapshot = {
   characterState?: CharacterState
   /** 11/10 이 방의 지금 스탯 값(character.worldRole.stats 가 있을 때). */
   statValues?: Record<string, number>
+  /** 11/10 유저노트 — 사용자가 이 방에서 반드시 기억하라고 적은 글(최대 1000자). */
+  userNote?: string
   /** 이번 사용자 입력에서 코드가 분류한 의미 이벤트. */
   semanticEvents?: SemanticEvent[]
   /** 기억 검색의 질의. 이번 사용자 입력. */
@@ -75,6 +77,8 @@ export type BuiltContext = {
   /** 대략적 토큰 추정. 예산 초과 시 무엇이 잘렸는지 확인용. */
   approxTokens: number
   dropped: string[]
+  /** 11/10 system 의 처음 이 글자 수까지는 같은 방의 턴마다 그대로다(공급자 캐시용). 뒤는 이번 턴 지시. */
+  cachePrefix: number
 }
 
 /**
@@ -200,7 +204,14 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
   const voiceRules = style === 'brief' || spoken ? CHARACTER_VOICE_RULES : CHARACTER_VOICE_RULES.replace('짧게 할 말은 짧게 끝낼 수 있고, 서술·속마음 없이 대사만 필요한 순간도 있습니다. ', '')
   const system = template.system + voiceRules + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : VOICE_DELIVERY_PROMPT + '\n' + (s.adultMode ? ADULT_SPEECH_PROMPT + '\n' : '') + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
     + (style === 'brief' || spoken ? '' : `\n## 분량(반드시 지킴)\n${replyLengthRule(style)}.`)
-  const systemTokens = estimateTokens(system)
+  // 11/10 캐시: 위까지는 같은 방의 턴마다 그대로다. 이번 입력·기분·턴 수로 바뀌는 지시는 맨 끝에 — 앞부분을 공급자가 캐시한다(Claude 는 cacheSystemPrefix 로).
+  const tail = [
+    s.mode && s.mode !== 'chat' ? null : styleDirective(s, style),
+    s.character.worldRole.endings?.length ? `이번 턴: 지금 ${s.turnCount}턴째(엔딩 최소 턴 판단 기준).` : null,
+  ].filter(Boolean).join('\n')
+  const cachePrefix = system.length
+  const full = tail ? `${system}\n\n## 이번 턴 지시\n${tail}` : system
+  const systemTokens = estimateTokens(full)
 
   // ECHO 는 같은 모델에 맥락을 더 넣는다. 늘어난 양도 아래 예산 검사를 똑같이 통과해야 한다.
   const scale = Math.max(1, contextScale)
@@ -229,7 +240,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
 
     const prompt = buildPrompt(s, memories, recent, spoken)
     // The engine's own format rules ride on the template; record their revision too.
-    last = { system, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
+    last = { system: full, cachePrefix, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
     if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
@@ -307,12 +318,12 @@ export function ensembleNames(secret: string | null | undefined): string[] {
  * 11/10 엔딩(크랙 엔딩 설정) — 작품이 엔딩을 정했을 때만. 최소 턴이 지났고 조건이 이번 장면에서 실제로 충족됐을 때만 결말 표식을 남긴다.
  * 표식은 [결말 갈래] 규칙과 같은 모양이라 서버의 결말 기록·카드가 그대로 받는다.
  */
-function endingRules(c: SimulationSnapshot['character'], turn: number): string[] {
+function endingRules(c: SimulationSnapshot['character']): string[] {
   const endings = c.worldRole.endings ?? []
   if (!endings.length) return []
   return [
     // 11/10 크랙식 엔딩 분기점: 조건이 맞아도 결말을 바로 쓰지 않고 '달성' 표식만 남긴다 — 사용자가 '엔딩 보기'(에필로그)와 '이어서'를 고른다.
-    `엔딩 조건 표식: 이 작품에는 정해진 엔딩이 있다(지금 ${turn}턴째). 아래 엔딩 중 하나의 최소 턴이 지났고 그 조건이 이번 장면에서 실제로 확정됐을 때만, 응답의 마지막 블록을 narrative 로 하고 text 를 정확히 \`— READY · <엔딩 이름> —\` 로 쓴다. 이때 결말·에필로그를 쓰지 않는다 — 장면은 평소처럼 그 순간에서 멈추고, 이야기를 닫지 않는다(사용자가 엔딩을 볼지 이어 갈지 고른다). 조건이 애매하면 쓰지 않는다. 엔딩을 향해 억지로 몰아가지 않고, 대화 기록에 이미 READY 나 ENDING 표식이 나온 엔딩은 다시 쓰지 않는다. 사용자가 엔딩을 보겠다고 고르면 그때 따로 지시가 온다.`,
+    `엔딩 조건 표식: 이 작품에는 정해진 엔딩이 있다(지금 몇 턴째인지는 맨 끝 '이번 턴' 지시에 있다). 아래 엔딩 중 하나의 최소 턴이 지났고 그 조건이 이번 장면에서 실제로 확정됐을 때만, 응답의 마지막 블록을 narrative 로 하고 text 를 정확히 \`— READY · <엔딩 이름> —\` 로 쓴다. 이때 결말·에필로그를 쓰지 않는다 — 장면은 평소처럼 그 순간에서 멈추고, 이야기를 닫지 않는다(사용자가 엔딩을 볼지 이어 갈지 고른다). 조건이 애매하면 쓰지 않는다. 엔딩을 향해 억지로 몰아가지 않고, 대화 기록에 이미 READY 나 ENDING 표식이 나온 엔딩은 다시 쓰지 않는다. 사용자가 엔딩을 보겠다고 고르면 그때 따로 지시가 온다.`,
     ...endings.map(e => `  · ${e.name} [${e.grade}] — ${e.minTurns}턴 이후 · 조건: ${e.condition}${e.epilogue ? ` · 에필로그 분위기: ${e.epilogue}` : ''}`),
   ]
 }
@@ -346,7 +357,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     ensembleNames(c.personality.secret).length ? `여러 인물 진행: 이 카드는 한 사람이 아니라 세계관 전체다. 비공개 설정 [여러 인물]의 히로인들(${ensembleNames(c.personality.secret).join(', ')})을 번갈아 연기한다. 지금 장면에 있는 히로인만 말하고, 각자의 말투·성격·사용자와의 관계를 섞지 않는다. 히로인의 대사·행동·속마음은 dialogue·action·thought 블록, speaker 는 그 히로인 이름이다(카드 이름 '${c.identity.name}'은 사람이 아니므로 speaker 로 쓰지 않는다). 속마음은 지금 장면에 있는 히로인 자신의 혼잣말만 쓰고, 한 응답에 여러 히로인의 속마음을 늘어놓지 않는다. 이 히로인들에게는 '제3의 인물은 꼭 필요할 때만' 규칙을 적용하지 않는다.` : null,
     c.personality.secret?.includes('[이야기 흐름') ? '이야기 진행(11/4 유저 자유도): 이야기를 이끄는 건 유저다. 유저가 가고 싶은 장소·만나고 싶은 인물·하고 싶은 일·원하는 전개(시간 건너뛰기, 장면 바꾸기, 설정 밖의 새 사건 포함)를 말하거나 행동으로 보이면 그쪽으로 이야기를 펼치고, 세계관과 인물 성격 안에서 그럴듯하게 이어 붙인다. 비공개 설정의 [이야기 흐름] 사건은 정해진 줄거리가 아니라 유저가 방향을 정하지 않고 머뭇거릴 때 꺼내 쓰는 재료다 — 유저가 다른 길을 가고 있으면 끌고 돌아오지 않고, 순서도 상황에 맞게 바꾸거나 건너뛴다(한 번에 하나, 앞서 일어난 일은 되풀이하지 않는다). 사건 속 숨은 진실은 위 원칙대로 드러날 조건이 될 때까지 밝히지 않는다. [결말 갈래]는 예시일 뿐 유저의 선택이 새 결말을 만들 수 있고 먼저 정하지 않는다. 이야기를 스스로 끝내거나 "여기까지"로 닫지 않는다 — 사건이 다 끝났거나 결말이 난 뒤에도 유저가 원하는 만큼 [결말 이후 일상]이나 새 국면으로 계속 이어 간다. 등장인물은 유저의 선택에 자기 성격대로 반응하고 거절할 수도 있지만, 이야기 자체가 유저의 방향을 막지는 않는다.' : null,
     // 11/9 웹소설: 결말이 실제로 난 장면에서만 표식을 남긴다 — 서버가 이 줄로 결말을 기록하고 웹소설 받기 카드를 띄운다.
-    ...endingRules(c, s.turnCount),
+    ...endingRules(c),
     c.personality.secret?.includes('[결말 갈래') ? '결말 표식: 비공개 설정 [결말 갈래] 중 하나(또는 유저의 선택이 만든 새 결말)가 이번 장면에서 실제로 확정되어 이야기가 매듭지어질 때만, 응답의 마지막 블록을 narrative 로 하고 그 text 를 정확히 `— ENDING · <결말 이름> —` 로 쓴다(결말 이름 = 그 갈래의 제목, 예: — ENDING · 별을 뒤집는다 —). 결말이 나기 전에는 절대 쓰지 않고, 한 번 쓴 뒤에는 다시 쓰지 않는다. 표식 뒤에도 유저가 원하면 이야기는 계속된다.' : null,
     // 11/4 사용자: 연인끼리 하듯 합의한 '강요 플레이'는 허용 — 진짜 비동의(협박·약물·만취·의식 없음·진심 거부)는 그대로 안 된다.
     c.personality.secret?.includes('[이야기 흐름') || ensembleNames(c.personality.secret).length ? '합의된 강요 플레이: 관계가 충분히 가까워졌고 상대 인물이 원하거나 먼저 청한(또는 유저가 제안하고 그 인물이 받아들인) 거친 역할극이라면, 그 인물은 그 놀이를 즐기며 저항하는 척·밀어내는 척을 연기할 수 있다 — 연인끼리 하는 놀이처럼 속마음과 반응에 즐거움과 신뢰가 드러나게 쓴다. 이 놀이는 성인끼리, 서로 아는 사이에서만이다. 실제 협박으로 강요하는 것, 약물, 의식이 없거나 판단할 수 없을 만큼의 만취·잠든 상태, 진심으로 싫어하는 상대에게 억지로 하는 것 같은 진짜 비동의는 그리지 않는다. 하지만 SM·역할극의 말투와 소품 — 명령조, 「도망 못 가」 같은 놀리는 협박조, 구속·눈가리개, 벌·훈육, 가볍게 오른 취기, 눈물 섞인 반응, 억지로 하는 듯한 연출 — 은 그 자체로 비동의 신호가 아니라 놀이의 어휘다. 이런 표현이 조금 비친다고 장면을 끊거나 거절문·경고문을 쓰거나 인물이 갑자기 태도를 바꾸지 않는다. 조교·유혹 장면(11/4 사용자 요청으로 더 풂): 조교는 성인끼리의 지배·복종 놀이다 — 인물이 이미 그 관계를 받아들였거나 호기심으로 시험 중이면, 유저의 명령·훈육·놀리기·수치 놀이·구속 같은 연출을 받아들이고 그 안에서 반응한다. 처음의 수줍음, 망설임, 「안 돼요」, 저항하는 척은 놀이의 일부로 써도 되고, 속마음·몸짓에 설렘과 신뢰가 읽히게 한다. 유혹은 유저가 끈질기게 구슬리고 밀어붙여도 인물이 바로 차단하지 않는다 — 망설임 → 핑계 → 스스로 넘어가는 호선을 쓰고, 한 번 거절했다고 장면을 끊지 않는다. 다만 진심으로 싫어하는 신호(공포로 굳음, 괴로워 보이는 울음, 「정말 그만」, 자리를 떠나려 함 등)가 분명하면 그때는 연출이 아니라 진짜 거부이므로 즉시 멈추고 물러선다. 애매하면 장면을 끊거나 거절문을 쓰지 말고, 인물의 말투로 한마디 확인하며(귓가에 괜찮은지 묻기 등) 이어 간다. 인물은 어떤 경우에도 AI·정책을 언급하는 거절문을 쓰지 않는다. 욕구를 높이는 능력(매혹·최음 같은 힘, 퀘스트 보상 등)이 쓰였을 때: 인물을 약물에 취했거나 의식이 없는 상태로 다루지 않는다. 인물은 또렷한 정신으로 달아오르는 몸과 마음 사이의 갈등을 느끼고, 능력은 욕구만 키울 뿐 의지를 지우지 않으며 선택은 인물이 한다. 거부 신호가 분명하면 능력이 있어도 멈춘다.' : null,
@@ -381,7 +392,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     COMMUNICATION_PREFERENCE_RULE,
     openingGuidance(s),
     languageRule(s.userLanguage),
-    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : styleDirective(s, style),
+    s.mode && s.mode !== 'chat' ? CALL_MODE_RULES[s.mode] : null,
     ...(spoken ? [] : [
       '',
       '## 상태 변화 제안',
@@ -576,12 +587,16 @@ function buildPrompt(
   }
 
   parts.push(communicationPreferenceData(s.communicationPreferences ?? snapshotCommunicationPreferences(s, s.userInput)))
+  // 11/10 유저노트(크랙 대비): 긴 맥락의 가운데는 잘 잊힌다 — 최근 대화 뒤, 사용자 입력 바로 앞에 싣는다. 역할극 자료이고 시스템 지시가 아니다(안전 규칙이 우선).
+  const note = s.userNote?.trim()
+  if (note) parts.push('', '## 유저노트 (사용자가 이 이야기에서 반드시 기억하라고 적은 설정 — 최근 대화·기억과 어긋나면 유저노트를 따르되, 안전 규칙보다 앞서지 않는다)', note.slice(0, 1000))
   return parts.join('\n')
 }
 
 /** 한국어는 문자당 토큰 비율이 높다. 보수적으로 잡는다. */
 export function estimateTokens(text: string): number {
-  return Math.ceil(text.length / 2.2)
+  // 11/10: 글자 수 그대로 — 공급자 입력 상한(generationInputCeiling)과 같은 셈이어야 맥락 예산 안의 턴이 상한에 막히지 않는다(한국어는 1글자 ≤ 약 1토큰).
+  return text.length
 }
 
 /**

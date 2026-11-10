@@ -42,6 +42,11 @@ export type GenerationRequest = {
    * 이 글은 아직 검증 전이다. 보여 줄지·무엇을 보여 줄지는 부른 쪽이 정한다.
    */
   onText?: (text: string) => void
+  /**
+   * 11/10 지시문 앞부분 캐시 — system 의 처음 이 글자 수까지는 같은 방의 턴마다 그대로다(캐릭터·규칙). 캐시를 따로 켜야 하는 공급자(Claude)만 쓴다.
+   * 나머지(이번 턴 지시)는 그 뒤에 붙는다. 없거나 범위 밖이면 캐시하지 않는다.
+   */
+  cacheSystemPrefix?: number
 }
 
 export type GenerationResult = {

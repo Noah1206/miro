@@ -142,7 +142,7 @@ export async function runTurn(opts: {
     for (let attempt = 0; attempt <= 2; attempt++) {
       const proposal = await opts.llm.generateStructured({
         schema: SimulationProposal, task: 'dialogue', promptVersion: context.promptVersion, maxTokens: opts.maxOutputTokens, ...draftStream,
-        system: context.system + '\n' + USER_GROUNDING_RULE + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name),
+        system: context.system + '\n' + USER_GROUNDING_RULE + conversationVariationDirective(snapshot.recentMessages, snapshot.character.identity.name), cacheSystemPrefix: context.cachePrefix,
         prompt: `${context.prompt}\n\n## 사용자 입력\n${opts.userInput}\n\n위 입력에 이어지는 응답을 JSON 으로 반환하세요.${repair}`,
       })
       const blocks = validateProposal(proposal, snapshot).blocks

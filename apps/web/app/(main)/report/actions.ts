@@ -7,7 +7,7 @@ import { track } from '@/lib/analytics/track'
 import { msg } from '@/lib/i18n'
 
 const Form = z.object({
-  type: z.enum(['message', 'photo', 'live_scene']), id: z.string().uuid(),
+  type: z.enum(['message', 'photo', 'live_scene', 'character']), id: z.string().uuid(),
   reason: z.enum(['safety', 'rights', 'harassment', 'inappropriate', 'other']), detail: z.string().max(1000),
 })
 export type ReportState = { error: string | null }

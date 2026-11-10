@@ -35,15 +35,17 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const stored = await getCharacterByKey(slug, user?.id ?? null)
   const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null
   if (!c) notFound()
+  const unveil = await homeUnveilEnabled(user.id)
+  // 11/10 성인 전용 작품은 언베일을 켠 사람(또는 만든 사람)에게만 — 주소로 바로 들어와도 홈으로.
+  if (c.adultOnly && !unveil && c.ownerId !== user.id) redirect('/home')
   const can = features()
   const editedDescription = officialDescription(c)
 
-  const [comments, commentCount, similar, likes, unveil, reached, running] = await Promise.all([
+  const [comments, commentCount, similar, likes, reached, running] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
-    similarCharacters(c.id, c.worldGenre, c.experienceType),
+    similarCharacters(c.id, c.worldGenre, c.experienceType, unveil),
     characterLikeState(c.id, user?.id ?? null),
-    homeUnveilEnabled(user?.id ?? null),
     c.endings.length ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
     c.endings.length ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
   ])
@@ -111,6 +113,11 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             style={{ minWidth: 44, minHeight: 44, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)' }}>
             <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
           </TransitionLink>
+        )}
+        {/* 11/10 작품 신고 — 남의 작품에만. 기존 신고 화면(/report)을 쓴다. */}
+        {c.ownerId !== user.id && (
+          <TransitionLink href={`/report?type=character&id=${c.id}`} className="t-caption"
+            style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-secondary)' }}>{t('신고')}</TransitionLink>
         )}
       </div>
 
