@@ -42,8 +42,8 @@ export function RoomVoicePanel({ sessionId, voice }: { sessionId: string; voice:
             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '55%' }}>{label}</span>
             <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flex: 'none', transform: expanded ? 'rotate(90deg)' : undefined, transition: 'transform .15s' }}><path d="M9 6l6 6-6 6"/></svg>
           </button>
-          {expanded && <div style={{ padding: '0 10px 10px' }}>
-            <VoiceList voices={voice.options} value={id} onChange={v => choose(s.key, v)}
+          {expanded && <div style={{ margin: '0 8px 8px', padding: 8, borderRadius: 10, background: 'var(--color-bg)' }}>
+            <VoiceList compact voices={voice.options} value={id} onChange={v => choose(s.key, v)}
               autoLabel={s.defaultLabel ? `${t('자동')} · ${s.defaultLabel}` : t('자동')} />
           </div>}
         </div>

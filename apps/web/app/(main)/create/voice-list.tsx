@@ -14,7 +14,8 @@ const DEFAULT_VOICE_NAME = '지환'
  * ponytail: 여성·남성은 공식 목소리 이름('성우 여', '여성 …')으로 나눈다 — 목소리에 성별 칸이 생기면 그걸로.
  */
 /** autoLabel(11/8, 채팅방 목소리 고르기): '' 줄을 기본 목소리 지환 대신 '자동 · …' 으로 — 성별 거르기와 무관하게 늘 맨 위, 미리 듣기 없음. */
-export function VoiceList({ voices, value, onChange, autoLabel }: { voices: VoiceOption[]; value: string; onChange: (id: string) => void; autoLabel?: string }) {
+/** compact(11/10, 채팅방 메뉴): 작은 아이콘·한 줄(이름 + 옅은 성별)·좁은 간격·고른 줄 체크 — 캐릭터 줄보다 한 단계 아래로 보이게. 만들기 화면은 그대로. */
+export function VoiceList({ voices, value, onChange, autoLabel, compact = false }: { voices: VoiceOption[]; value: string; onChange: (id: string) => void; autoLabel?: string; compact?: boolean }) {
   const t = useT()
   const [filter, setFilter] = useState<Filter>('all')
   const gender = (l: string) => /여성|성우 여/.test(l) ? 'female' : /남성|성우 남/.test(l) ? 'male' : null
@@ -23,18 +24,18 @@ export function VoiceList({ voices, value, onChange, autoLabel }: { voices: Voic
   // 기본 목소리(음성 서버 DEFAULT_VOICE, 남성)는 사람 이름으로 보인다(10/31 사용자) — 이름이라 번역하지 않는다
   const rows: VoiceOption[] = [...(autoLabel ? [{ id: '', label: autoLabel }] : filter === 'all' || filter === 'male' ? [{ id: '', label: DEFAULT_VOICE_NAME }] : []), ...shown]
   return (
-    <div className="stack" style={{ gap: 16 }}>
+    <div className="stack" style={{ gap: compact ? 8 : 16 }}>
       <input type="hidden" name="voiceId" value={value} />
       {voices.length > 0 && <div role="group" aria-label={t('목소리 거르기')} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {pills.map(([k, label]) => (
           <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)}
-            style={{ minHeight: 36, padding: '0 16px', borderRadius: 999, border: 0, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+            style={{ minHeight: compact ? 28 : 36, padding: compact ? '0 12px' : '0 16px', borderRadius: 999, border: 0, cursor: 'pointer', fontSize: compact ? 12 : 14, fontWeight: 600,
               background: filter === k ? 'var(--color-text-primary)' : 'var(--color-surface-2)', color: filter === k ? 'var(--color-bg)' : 'var(--color-text-secondary)' }}>
             {label}
           </button>
         ))}
       </div>}
-      <div role="radiogroup" aria-label={t('목소리')} className="stack" style={{ gap: 4 }}>
+      <div role="radiogroup" aria-label={t('목소리')} className="stack" style={{ gap: compact ? 0 : 4 }}>
         {rows.map((v) => {
           const [title, sub] = v.label.split(' · ')
           // 위 줄: 성별(+나이). 톤 설명은 뺀다. 기본 목소리는 음성 서버 기본값(asmr01, 남성)
@@ -43,20 +44,24 @@ export function VoiceList({ voices, value, onChange, autoLabel }: { voices: Voic
           const top = [g === 'female' ? t('여성') : g === 'male' ? t('남성') : null, age || null, v.mine ? t('내 음성') : null].filter(Boolean).join(' · ')
           const row = (playing: boolean) => (
             <button type="button" role="radio" aria-checked={value === v.id} onClick={() => onChange(v.id)}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: '12px 16px', border: 0, cursor: 'pointer', textAlign: 'left',
+              style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0, padding: compact ? '7px 10px' : '12px 16px', border: 0, cursor: 'pointer', textAlign: 'left',
                 background: 'transparent', color: 'var(--color-text-primary)', font: 'inherit' }}>
-              <span aria-hidden style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: 15, fontWeight: 700,
+              <span aria-hidden style={{ width: compact ? 28 : 40, height: compact ? 28 : 40, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', fontSize: compact ? 12 : 15, fontWeight: 700,
                 background: v.image ? `center / cover url(${v.image})` : v.mine || v.id === '' ? DEFAULT_VOICE_BG : avatar(v.id), color: 'var(--color-white)' }}>
-                {v.image ? null : v.mine || v.id === '' ? <VoiceLogo size={20} /> : (title ?? '').replace(/^(성우|템플릿)\s*/, '').trim().slice(0, 1) || '♪'}</span>
-              <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
+                {v.image ? null : v.mine || v.id === '' ? <VoiceLogo size={compact ? 14 : 20} /> : (title ?? '').replace(/^(성우|템플릿)\s*/, '').trim().slice(0, 1) || '♪'}</span>
+              {compact ? <span style={{ display: 'flex', alignItems: 'baseline', gap: 6, flex: 1, minWidth: 0 }}>
+                <span className={playing ? css.flow : undefined} style={{ fontSize: 14, fontWeight: value === v.id ? 700 : 500, color: value === v.id ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
+                {top && <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', whiteSpace: 'nowrap' }}>{top}</span>}
+              </span> : <span className="stack" style={{ gap: 0, lineHeight: 1.3, flex: 1, minWidth: 0 }}>
                 {top && <span style={{ fontSize: 12, color: '#7a7a7a' }}>{top}</span>}
                 <span className={playing ? css.flow : undefined} style={{ fontSize: 16, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</span>
-              </span>
+              </span>}
+              {compact && value === v.id && <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-lavender-500)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flex: 'none' }}><path d="M5 12l5 5L20 7"/></svg>}
             </button>
           )
           return value === v.id && !(autoLabel && v.id === '')
-            ? <Selected key={v.id || 'default'} id={v.id} row={row} />
-            : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: 14, background: value === v.id ? 'var(--color-surface-2)' : undefined }}>{row(false)}</div>
+            ? <Selected key={v.id || 'default'} id={v.id} row={row} compact={compact} />
+            : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: compact ? 10 : 14, background: value === v.id ? 'var(--color-surface-2)' : undefined }}>{row(false)}</div>
         })}
         {rows.length === 0 && <p className="t-caption" style={{ margin: '8px 0', color: 'var(--color-text-tertiary)' }}>{t('해당하는 목소리가 없어요.')}</p>}
       </div>
@@ -68,7 +73,7 @@ export function VoiceList({ voices, value, onChange, autoLabel }: { voices: Voic
  * 고른 목소리 — 밝은 카드, 이름 줄 오른쪽 끝 흰 재생 버튼. 재생하는 동안 이름이 라벤더색으로 음악처럼 흐른다(10/31, 재생바 대신).
  * 처음 누를 때 견본을 받는다(공식 목소리는 처음 한 번 GPU 가 만든다).
  */
-function Selected({ id, row }: { id: string; row: (playing: boolean) => ReactNode }) {
+function Selected({ id, row, compact = false }: { id: string; row: (playing: boolean) => ReactNode; compact?: boolean }) {
   const t = useT()
   const audio = useRef<HTMLAudioElement>(null)
   const [src, setSrc] = useState<string | null>(null)
@@ -99,16 +104,16 @@ function Selected({ id, row }: { id: string; row: (playing: boolean) => ReactNod
   }
 
   return (
-    <div style={{ borderRadius: 14, overflow: 'hidden', background: 'var(--color-surface-2)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', paddingRight: 18 }}>
+    <div style={{ borderRadius: compact ? 10 : 14, overflow: 'hidden', background: 'var(--color-surface-2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', paddingRight: compact ? 8 : 18 }}>
         {row(playing)}
         <button type="button" onClick={toggle} aria-label={playing ? t('멈추기') : t('미리 듣기')}
-          style={{ width: 32, height: 32, borderRadius: '50%', border: 0, flexShrink: 0, padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
+          style={{ width: compact ? 24 : 32, height: compact ? 24 : 32, borderRadius: '50%', border: 0, flexShrink: 0, padding: 0, cursor: 'pointer', display: 'grid', placeItems: 'center',
             background: '#fff', color: '#111' }}>
           {playing
-            ? <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><rect x="6.5" y="6" width="4" height="12" rx="2" /><rect x="13.5" y="6" width="4" height="12" rx="2" /></svg>
+            ? <svg viewBox="0 0 24 24" width={compact ? 14 : 20} height={compact ? 14 : 20} fill="currentColor" aria-hidden><rect x="6.5" y="6" width="4" height="12" rx="2" /><rect x="13.5" y="6" width="4" height="12" rx="2" /></svg>
             // 둥글둥글한 ▶ — 같은 색 굵은 둥근 테두리로 모서리를 깎는다(살짝 오른쪽이 눈으로 보기에 가운데)
-            : <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden><path d="M9.5 7.5v9l7-4.5z" stroke="currentColor" strokeWidth="3.6" strokeLinejoin="round" /></svg>}
+            : <svg viewBox="0 0 24 24" width={compact ? 14 : 20} height={compact ? 14 : 20} fill="currentColor" aria-hidden><path d="M9.5 7.5v9l7-4.5z" stroke="currentColor" strokeWidth="3.6" strokeLinejoin="round" /></svg>}
         </button>
       </div>
       {failed && <p className="t-caption" role="alert" style={{ margin: '0 16px 12px', color: 'var(--color-danger)' }}>{t('미리 듣기 실패. 다시 눌러 주세요.')}</p>}
