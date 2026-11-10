@@ -15,16 +15,18 @@ import { voiceGender } from '@/lib/voice'
  * 성별이 작품 대상과 같은 쪽(남성향의 히로인, 여성향의 남자)은 '' = 자동(유저가 방에서 고른다), 반대쪽은 그 성별의 공식 목소리를 정해 둔다
  * — 자동 배정은 작품 대상의 반대 성별에서만 고르기 때문(lib/voice pickAutoVoice).
  */
-const Cast = z.object({ people: z.array(z.object({ name: z.string().min(1).max(20), gender: z.enum(['male', 'female']), villain: z.boolean(), main: z.boolean().default(false) })).max(40) })
+const Cast = z.object({ people: z.array(z.object({ name: z.string().min(1).max(20), gender: z.enum(['male', 'female']), villain: z.boolean(), main: z.boolean().default(false), role: z.enum(['villain', 'friend', 'mentor', 'other']).default('other') })).max(40) })
 const SYSTEM = [
   '캐릭터 설정 글을 읽고, 대화 장면에서 직접 대사를 할 수 있는 이름 있는 인물을 모두 뽑습니다.',
   '카드 이름(작품 제목일 수 있음), 사용자(나·당신), 이름 없는 무리(사람들·학생들)는 빼고, 이름은 설정에 적힌 그대로 씁니다(존칭·직함 없이).',
   '각 인물의 성별(male|female)과 악역·일진·건달·적대 세력처럼 거칠고 위협적인 쪽인지(villain)를 적습니다. 확실하지 않으면 villain=false.',
+  '남자 인물은 role 도 적습니다: villain(악역·일진·건달·적대), friend(친구·동기·후배·소꿉친구·룸메이트), mentor(사부·선배·상사·보호자처럼 다정하거나 점잖은 어른), other(그 밖 — 주인공·라이벌·일반). 여자 인물은 other.',
   '카드가 가리키는 주인공(1:1 카드의 그 인물, 카드 이름이 사람 이름이면 그 사람)은 main=true 로 표시합니다 — 그 인물은 카드 목소리로 읽는다.',
-  '반드시 JSON {"people":[{"name":"","gender":"male","villain":false,"main":false}]} 만 반환합니다.',
+  '반드시 JSON {"people":[{"name":"","gender":"male","villain":false,"main":false,"role":"other"}]} 만 반환합니다.',
 ].join('\n')
 
-export async function refreshVoiceCast(characterId: string, userId: string | null): Promise<'updated' | 'unchanged' | 'skipped'> {
+/** reassignMale(11/10 백필용): 이미 공식 남자 목소리(m-…)로 정해 둔 칸도 역할 규칙으로 다시 고른다. 작성자가 고른 회원 목소리·여자 칸은 그대로. */
+export async function refreshVoiceCast(characterId: string, userId: string | null, opts: { reassignMale?: boolean } = {}): Promise<'updated' | 'unchanged' | 'skipped'> {
   const [row] = await db.select({ name: characters.name, personality: characters.personality, secret: characters.secret, startingContext: characters.startingContext, audience: characters.audience })
     .from(characters).where(and(eq(characters.id, characterId), isNull(characters.deletedAt))).limit(1)
   if (!row) return 'skipped'
@@ -35,10 +37,12 @@ export async function refreshVoiceCast(characterId: string, userId: string | nul
     prompt: JSON.stringify({ cardName: row.name, settings: [row.personality, row.startingContext, row.secret].filter(Boolean).join('\n\n').slice(0, 14000) }) })
   const pool = await db.select({ id: officialVoices.id, label: officialVoices.label }).from(officialVoices).where(and(eq(officialVoices.status, 'active'), isNull(officialVoices.ownerId)))
   const of = (g: 'male' | 'female') => pool.filter(v => voiceGender(v.label) === g).map(v => v.id).sort()
-  const pick = (g: 'male' | 'female', name: string, villain: boolean) => {
+  // 11/10 사용자: 남자 목소리는 역할로 나눈다 — 악역 동원, 친구 준혁, 다정한 어른 진혁, 그 밖 주혁. 목소리가 내려가 있으면 이름으로 고른다.
+  const ROLE_VOICE: Record<string, string> = { villain: 'm-dongwon', friend: 'm-junhyeok', mentor: 'm-jinhyeok', other: 'm-juhyeok' }
+  const pick = (g: 'male' | 'female', name: string, villain: boolean, role = 'other') => {
     const list = of(g); if (!list.length) return ''
-    // ponytail: 거친 남자 목소리는 지금 동원 하나 — 목소리에 '거친' 표시가 생기면 그걸로 고른다.
-    if (g === 'male' && villain && list.includes('m-dongwon')) return 'm-dongwon'
+    const want = g === 'male' ? ROLE_VOICE[villain ? 'villain' : role] : undefined
+    if (want && list.includes(want)) return want
     let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0
     return list[h % list.length]!
   }
@@ -50,8 +54,15 @@ export async function refreshVoiceCast(characterId: string, userId: string | nul
     let added = 0
     for (const p of answer.people) {
       const name = p.name.trim()
-      if (!name || p.main || name === current.name || matchSpeaker(name, Object.keys(next))) continue
-      next[name] = p.gender === same ? '' : pick(p.gender, name, p.villain)
+      if (!name || p.main || name === current.name) continue
+      const existing = matchSpeaker(name, Object.keys(next))
+      if (existing) {
+        if (!(opts.reassignMale && p.gender === 'male' && p.gender !== same && String(next[existing]).startsWith('m-'))) continue
+        const v = pick('male', existing, p.villain, p.role)
+        if (v && v !== next[existing]) { next[existing] = v; added++ }
+        continue
+      }
+      next[name] = p.gender === same ? '' : pick(p.gender, name, p.villain, p.role)
       added++
     }
     if (!added) return 'unchanged' as const
