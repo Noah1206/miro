@@ -22,7 +22,7 @@ import { ExtraScenesEditor } from './extra-scenes-editor'
 import type { UserPersona } from '@miro/domain'
 import type { CustomPhotoScene } from '@/lib/photo-scenes'
 import { Segmented, SelectField, StepSlider } from './settings-controls'
-import { TransitionLink } from '@/components/ui'
+import { TransitionLink, useToast } from '@/components/ui'
 import { TestChat } from './test-chat'
 import { VoiceList, type VoiceOption } from './voice-list'
 import { CastNames, CastVoices, castJson, type CastMember } from './cast-editor'
@@ -142,7 +142,7 @@ export function CharacterForm(props: CharacterFormProps) {
 }
 
 function CharacterFormBody({ mode, experienceType, creationId, userId, draft = false, initial, action, closeHref, capabilities, storageKey, voices = [], models = [] }: CharacterFormProps & { storageKey: string | null }) {
-  const router = useRouter()
+  const router = useRouter(), toast = useToast()
   const t = useT()
   const i: FormInitial = { ...EMPTY, ...initial }
   const [tab, setTab] = useState<CreateTab>('profile')
@@ -274,6 +274,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           }
         } catch { /* Storage may be unavailable. The saved record is authoritative. */ }
       }
+      // 11/10 사용자: 끝나면 토스트 — 임시 저장·편집은 '저장되었습니다.', 새로 만들면 '성공적으로 생성되었습니다.' (토스트는 앱 전체에 걸려 있어 이동해도 보인다)
+      toast(mode === 'create' && form.get('intent') !== 'draft' ? msg('성공적으로 생성되었습니다.') : msg('저장되었습니다.'))
       if (mountedRef.current) router.push(destination)
     } catch {
       if (mountedRef.current) setSaveError(msg('저장하지 못했어요. 작성한 내용은 이 화면에 남아 있습니다. 다시 시도해 주세요.'))
