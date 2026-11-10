@@ -629,9 +629,9 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-clock': { voice: 'f-yura' },
   'official-m-novelist': { voice: 'f-yura' },
   'official-m-bell': { voice: 'f-heea' },
-  'official-m-cheongun-return': { voice: 'f-heea', ensembleVoices: { 운하린: '', 금채린: '', 진설아: '', 야월: '' } },
-  'official-m-academy-extra': { voice: 'f-yura', ensembleVoices: { 루시엔: '', 세라핀: '', 카렌: '', 이졸데: '' } },
-  'official-m-dungeon-barbarian': { voice: 'f-heea', ensembleVoices: { 하르가: '', 리샤: '', 미레유: '', 아델: '', 노엘: '' } },
+  'official-m-cheongun-return': { voice: 'f-heea', ensembleVoices: { 운하린: '', 금채린: '', 진설아: '', 야월: '', 백현오: 'm-juhyeok', 철두: 'm-juhyeok', 진무혁: 'm-dongwon' } },
+  'official-m-academy-extra': { voice: 'f-yura', ensembleVoices: { 루시엔: '', 세라핀: '', 카렌: '', 이졸데: '', 아이젠: 'm-juhyeok', 레오나르트: 'm-dongwon' } },
+  'official-m-dungeon-barbarian': { voice: 'f-heea', ensembleVoices: { 하르가: '', 리샤: '', 미레유: '', 아델: '', 노엘: '', 크라그: 'm-juhyeok', 베일런: 'm-dongwon' } },
   'official-m-cartographer': { voice: 'f-heea' },
   'official-m-clock': { voice: 'f-yura' },
   'official-m-novelist': { voice: 'f-yura' },
@@ -642,7 +642,7 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-painter': { voice: 'f-heea' },
   'official-m-librarian': { voice: 'f-yura' },
   'official-m-fairies': { voice: 'f-heea', ensembleVoices: { 아림: 'f-yura', 새봄: 'f-heea', 유리: 'f-heea', 시아: 'f-yura', 하루: 'f-yura', 단비: 'f-heea' } },
-  'official-m-arden': { voice: 'f-yura', ensembleVoices: { 엘리시아: 'f-yura', 리제: 'f-yura', 시엘: 'f-yura', 노아: 'f-heea' } },
+  'official-m-arden': { voice: 'f-yura', ensembleVoices: { 엘리시아: 'f-yura', 리제: 'f-yura', 시엘: 'f-yura', 노아: 'f-heea', 카일: 'm-dongwon', 바론: 'm-juhyeok' } },
   'official-m-veil': { voice: 'f-yura' },
   'official-m-miro': { voice: 'f-heea' },
   'official-m-baby-contract': { voice: 'f-yura' },
@@ -676,15 +676,15 @@ export const MALE_VOICES: Record<string, { voice: string; ensembleVoices?: Recor
   'official-m-brat-senior': { voice: 'f-heea' },
   'official-m-crush-roommate': { voice: 'f-heea' },
   'official-m-ski-resort': { voice: 'f-heea', ensembleVoices: { 민소은: 'f-heea', 윤지혜: 'f-yura' } },
-  'official-m-wall-friend': { voice: 'f-heea' },
+  'official-m-wall-friend': { voice: 'f-heea', ensembleVoices: { 서준호: 'm-dongwon' } },
   'official-m-only-me': { voice: 'f-yura' },
   'official-m-council': { voice: 'f-yura' },
   'official-m-inner-senior': { voice: 'f-yura' },
   'official-m-store-girl': { voice: 'f-heea' },
   'official-m-bully-bj': { voice: 'f-heea' },
   'official-m-massage-club': { voice: 'f-heea', ensembleVoices: { 서하린: 'f-heea', 오지수: 'f-yura', 백서윤: 'f-yura', 민채아: 'f-heea', 강다인: 'f-heea', 박혜원: 'f-yura' } },
-  'official-m-pet-seniors': { voice: 'f-heea', ensembleVoices: { 한서진: '', 윤채린: '', 정다은: '', 강하나: '', 백소연: '', 마예린: '', 진아라: '', 신하윤: '', 류미나: '', 한유경: '' } },   // 11/9 히로인 목소리는 유저가 방 메뉴 '목소리'에서 고른다(비우면 자동) — 이름은 탭용
-  'official-m-others-gf': { voice: 'f-yura' },
+  'official-m-pet-seniors': { voice: 'f-heea', ensembleVoices: { 한서진: '', 윤채린: '', 정다은: '', 강하나: '', 백소연: '', 마예린: '', 진아라: '', 신하윤: '', 류미나: '', 한유경: '', 이태호: 'm-juhyeok', 최도겸: 'm-dongwon', 박준호: 'm-juhyeok', 강민석: 'm-juhyeok', 정성훈: 'm-juhyeok', 윤재혁: 'm-juhyeok' } },   // 11/9 히로인 목소리는 유저가 방 메뉴 '목소리'에서 고른다(비우면 자동) — 이름은 탭용
+  'official-m-others-gf': { voice: 'f-yura', ensembleVoices: { 서도윤: 'm-juhyeok', 박지호: 'm-juhyeok' } },
 }
 
 /** 페르소나 작성 안내(11/4) — 첫 대화 전 세계관 카드의 '이 세계에서의 나' 칸에 보인다. 사용자는 이걸 보고 반드시 적고 시작한다. */
