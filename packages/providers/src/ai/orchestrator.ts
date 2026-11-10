@@ -278,7 +278,9 @@ export class AIOrchestrator implements LLMProvider {
           rejectHoldExpiry?.(new Error('lease_hold_expired'))
         }, this.maxLeaseHoldMs)
         let result: GenerationResult | undefined, output: T | undefined, ok = false
-        const timeoutMs = model.timeoutMs ?? this.timeoutMs
+        // 11/10: 생각하는 동안은 글이 안 나온다 — 생각 강도만큼 조용한 시간 한도를 늘린다(운영: '높음'이 20초에 끊겨 턴 실패).
+        const thinkFactor = request.thinking === 'max' ? 5 : request.thinking === 'xhigh' ? 4 : request.thinking === 'high' ? 3 : request.thinking === 'medium' ? 2 : 1
+        const timeoutMs = (model.timeoutMs ?? this.timeoutMs) * thinkFactor
         try {
           // 시도마다 처음부터 — 받는 대로 보던 쪽은 앞 시도의 글을 버린다(재시도·다시 묻기·예비 모델).
           onAttempt?.()
