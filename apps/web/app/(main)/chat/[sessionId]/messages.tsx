@@ -71,7 +71,9 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const typing = useRef<string | null>(null)
   if (last && last.role !== 'user' && !seen.current.has(keyOf(last))) typing.current = keyOf(last)
   else if (!last || typing.current !== keyOf(last)) typing.current = null
-  const typingId = typing.current
+  // 다 친 답은 타이핑에서 뺀다 — 전엔 다음 턴·새로고침 전까지 '치는 중'으로 남아 상태창·사진 버튼이 숨었다(11/10).
+  const [typedKey, setTypedKey] = useState<string | null>(null)
+  const typingId = typing.current !== typedKey ? typing.current : null
   // 리롤(10/27): 다 친 마지막 장면 답 하나만 다시 받을 수 있다. 그 답이 아직 마지막인지는 서버가 다시 본다.
   const lastSettled = settled[settled.length - 1]
   const rerollInput = !live && hasStarted && !opening.playing && lastSettled?.role === 'character' && lastSettled.kind === 'text' && !lastSettled.opening
@@ -153,7 +155,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
         {displayed.map((m, index) => (
           <Line key={keyOf(m)} className={styles.messageLine} data-message-role={m.role} layout={false} {...(quiet.has(m.id) || m.role === 'character' && m.id === `${liveKey}:reply` ? { initial: false } : {})}>
             <Message m={{...m, blocks: m.role === 'user' ? m.blocks : m.blocks.filter(b => !endingTitle([b])), hideTime: !!m.at && displayed[index + 1]?.role === m.role && displayed[index + 1]?.at?.slice(0,16) === m.at.slice(0,16)}} characterName={characterName} portrait={portrait} veil={veilPhotos ? sessionId : undefined} cast={cast} castPhotos={castPhotos}
-              typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => opening.advance(m.id)} />
+              typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
             {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open={m.id === lastStatusId} />}
