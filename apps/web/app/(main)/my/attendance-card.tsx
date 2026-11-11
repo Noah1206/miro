@@ -38,12 +38,13 @@ export function AttendanceCard({ initial }: { initial: Attendance }) {
         <h2>{t('출석 체크')}</h2>
         <span style={{ color: 'var(--profile-muted)', fontSize: 12 }}>{t('{days}일 연속', { days: state.streak })}</span>
       </div>
-      <div className={styles.creditMain} style={{ marginBottom: 10 }}>
+      {/* 11/12 사용자: 출석하기 버튼은 일주일 점 줄 밑에 가로 전체로 */}
+      <div className={styles.creditMain} style={{ marginBottom: 10, flexDirection: 'column', alignItems: 'stretch' }}>
         <ol aria-label={t('이번 주 출석 {n}/{week}일', { n: filled, week })} style={{ display: 'flex', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
           {Array.from({ length: week }, (_, i) => <li key={i} aria-hidden style={{ width: 22, height: 22, borderRadius: '50%', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 650,
             background: i < filled ? 'var(--color-accent)' : 'var(--profile-control)', color: i < filled ? 'var(--color-white, #fff)' : 'var(--profile-muted)' }}>{i + 1}</li>)}
         </ol>
-        <Button type="button" variant="primary" size="sm" className={styles.chargeButton} style={{ borderRadius: 8, fontSize: 15 }}
+        <Button type="button" variant="primary" size="sm" className={styles.chargeButton} style={{ borderRadius: 8, fontSize: 15, width: '100%', background: '#fff', color: '#111015', borderColor: '#fff' }}
           onClick={check} disabled={state.checkedToday} status={pending ? 'loading' : 'idle'}>{state.checkedToday ? t('출석 완료') : t('출석하기')}</Button>
       </div>
       <p style={{ margin: 0, color: 'var(--profile-muted)', fontSize: 12, lineHeight: 1.5 }} role="status">
