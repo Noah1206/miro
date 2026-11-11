@@ -18,8 +18,8 @@ VOICES = '/voices/_drama3/serving-voices'
 DEFAULT_VOICE = 'asmr01'
 # ponytail: 목소리 샘플 상태는 목소리 16개까지 들고 있는다(하나 ~100MB) — 넘으면 가장 오래 안 쓴 것부터 버린다
 PREFIX_VOICES = 16
-# 11/11 사용자: 같은 목소리인데 줄마다 살짝 다르다 — 가장 느슨한 설정(temperature 1.0·top_p .9)에서 같은 정의의 안정 설정(.7·.7, top_k 는 크게 둬 침묵 멈춤 없음)으로.
-SAMPLING = 'miro-untruncated-only-v1'   # 되돌리기: 'fish-space-untruncated-v1'
+# 11/11 오후 .7·.7(안정 설정)로 바꿨다가 음질이 크게 떨어졌다(사용자) — 시험 생성과 같은 설정으로 되돌림. 줄마다 다르던 톤은 감정 지시를 빼서(EMOTION_TAGS) 잡는다.
+SAMPLING = 'fish-space-untruncated-v1'
 EMOTION_TAGS = False   # 11/11 사용자: 일정한 톤으로 — 줄마다 감정·말투·빠르기 지시([anxious, whisper …])를 붙이지 않는다. 대사 속 소리 태그([moaning] 등)는 그대로.
 # 11/11 스트리밍: 첫 조각은 짧게(8프레임 ≈ 0.37초, 첫소리를 빨리), 그다음은 16프레임(≈0.74초)마다.
 # stream_check 실측(희아, 248프레임): 코덱은 뒤를 보지 않는다(보류 프레임 차이 0) — 그런데 기억이 길어 앞 48·128프레임만 문맥으로 주면 소리가 갈렸고
