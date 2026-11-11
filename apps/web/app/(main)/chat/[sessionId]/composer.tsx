@@ -249,7 +249,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
       <form ref={ref} autoComplete="off" onSubmit={event => { event.preventDefault(); if (!sending.current && ready && !calendarPending && (draft.trim() || command)) void action(new FormData(event.currentTarget)) }} className={`${styles.composerForm} ${glass.surface}`}>
         <input type="hidden" name="requestId" value={requestId} />
         <input type="hidden" name="chatModel" value={model} />
-        {voice.live && <input type="hidden" name="voice" value="1" />}
+        {/* 11/11 음성 모드가 켜져 있으면 늘 — 'live'(무료 합성 조건까지)일 때만 보내 서버가 음성 꺼짐으로 보고 신음 태그(speech)를 빼고 썼다. */}
+        {voice.on && <input type="hidden" name="voice" value="1" />}
         {tokenCeiling !== undefined && <input type="hidden" name="tokenCeiling" value={tokenCeiling} />}
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="command" value={command?.name ?? ''} />
