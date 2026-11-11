@@ -259,7 +259,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
     const recent = s.recentMessages.slice(-plan.messages)
     if (s.recentMessages.length > recent.length) dropped.push(`messages(${s.recentMessages.length - recent.length})`)
 
-    const prompt = buildPrompt(s, memories, recent, spoken)
+    const prompt = buildPrompt(s, memories, recent, spoken, !spoken && style !== 'brief' && (!s.mode || s.mode === 'chat'))
     // The engine's own format rules ride on the template; record their revision too.
     last = { system: full, cachePrefix, prompt, promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(prompt), dropped }
@@ -511,6 +511,7 @@ function buildPrompt(
   memories: Memory[],
   recent: RecentMessage[],
   spoken = false,
+  novel = false,
 ): string {
   const parts: string[] = []
 
@@ -632,6 +633,8 @@ function buildPrompt(
       } else parts.push(`${label}: ${m.content}`)
       if (Object.values(source).some(v => v !== undefined)) parts.push(`출처: ${JSON.stringify(source)}`)
     }
+    // 11/11 운영: 예전 1인칭('내 손목')으로 쌓인 방은 새 문체 지시보다 앞 턴을 따라 했다 — 문체는 지시문을 따르게 한다.
+    if (novel) parts.push('(위 최근 대화의 서술이 1인칭(\'나\'·\'내\')이나 현재형이었더라도 따라 하지 않습니다. 이번 응답의 서술은 지시문대로 3인칭 과거형 소설체로 씁니다. 내용·흐름만 잇습니다.)')
   }
 
   parts.push(communicationPreferenceData(s.communicationPreferences ?? snapshotCommunicationPreferences(s, s.userInput)))
