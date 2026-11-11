@@ -32,10 +32,10 @@
    * 밝은 채움 위 글자는 --color-accent-on (8.64:1). 글자·아이콘도 역할 토큰을 따른다.
    * 기본은 평평한 한 색. 언베일 토글과 수위 선택은 사용자 승인(2026-10-10)에 따라 자수정 그라데이션·은은한 glow 예외.
    */
-  --color-accent: var(--color-lavender-300);
+  --color-accent: var(--color-lavender-500);
   --color-accent-bright: var(--color-lavender-200);
-  --color-accent-pressed: var(--color-lavender-400);
-  --color-accent-on: #191919;
+  --color-accent-pressed: var(--color-lavender-700);
+  --color-accent-on: #FFFFFF;
   --color-accent-text: var(--color-lavender-300);
   --color-accent-soft: var(--color-lavender-950);
   --color-accent-selected: var(--color-lavender-900);
@@ -198,8 +198,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 
 .btn:disabled:not([aria-busy="true"]) { background: var(--color-surface-3) !important; color: var(--color-text-disabled) !important; border-color: transparent !important; }
 @media (hover: hover) and (pointer: fine) {
   :is(.btn, .button-link):is([data-variant="primary"], [data-variant="relationship"]):not(:disabled):not([aria-busy="true"]):hover {
-    background: var(--color-accent-bright) !important;
-    border-color: var(--color-accent-bright) !important;
+    background: var(--color-lavender-600) !important;
+    border-color: var(--color-lavender-600) !important;
   }
 }
 :is(.btn, .button-link):is([data-variant="primary"], [data-variant="relationship"]):not(:disabled):not([aria-busy="true"]):is(:active, [data-pressed="true"]) {
