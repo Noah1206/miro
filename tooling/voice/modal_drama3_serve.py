@@ -25,6 +25,9 @@ PREFIX_VOICES = 16
 SESSION_TURNS = 6       # 방·목소리마다 들고 있는 합격 턴 수(가장 닮은 턴은 밀려나지 않게 따로 지킨다)
 SESSIONS = 400          # 기억하는 방·목소리 쌍(코드만이라 작다)
 SESSION_PREFIXES = 24   # 이어 붙인 상태까지 읽어 둔 모델 상태(쌍당 수백 MB) — 넘으면 가장 오래 안 쓴 것부터
+# 11/12 사용자: "말의 빠르기를 올리는 게 나을 것 같다" — 만든 소리를 음높이 그대로 조금 빠르게 내보낸다(ffmpeg atempo). 모델·기억·고장 판별은 원래 빠르기 그대로라 목소리는 안 바뀐다.
+# 1.0 이면 끔. /speak(미리 듣기·견본)는 원래 빠르기.
+TEMPO = 1.1
 RETRIES = 3             # 무음으로 시작하면 씨앗을 바꿔 다시(11/11 같은 대사가 71초 무음으로 나온 고장)
 # 11/11 오후 .7·.7(안정 설정)로 바꿨다가 음질이 크게 떨어졌다(사용자) — 시험 생성과 같은 설정으로 되돌림. 줄마다 다르던 톤은 감정 지시를 빼서(EMOTION_TAGS) 잡는다.
 SAMPLING = 'fish-space-untruncated-v1'
@@ -475,6 +478,52 @@ class Speaker:
                 except Exception as e: print('remember failed', type(e).__name__, flush=True)
             return
 
+    def tempo(self, chunks):
+        """PCM16 조각 흐름을 음높이 그대로 TEMPO 배 빠르게 — ffmpeg 에 흘려 넣고 나오는 대로 내보낸다. ffmpeg 을 못 띄우면 원래 빠르기 그대로."""
+        import queue, subprocess, threading
+        if TEMPO == 1.0: yield from chunks; return
+        try:
+            # 11/12 실측: -fflags nobuffer 는 소리를 잃었고(8.6초→3.6초), 기본값은 입력 4.8초가 쌓여야 첫 소리가 나왔다 — 입력 살펴보기를 끄면 첫 조각(0.37초)부터 바로 나오고 길이도 맞다.
+            p = subprocess.Popen(['ffmpeg', '-v', 'error', '-probesize', '32', '-analyzeduration', '0', '-f', 's16le', '-ar', str(self.codec.sample_rate), '-ac', '1', '-i', 'pipe:0',
+                                  '-af', f'atempo={TEMPO}', '-f', 's16le', '-flush_packets', '1', 'pipe:1'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+        except Exception as e:
+            print('tempo unavailable', type(e).__name__, flush=True); yield from chunks; return
+        out = queue.Queue()
+        def pump():
+            while True:
+                data = p.stdout.read(8192)
+                if not data: break
+                out.put(data)
+            out.put(None)
+        threading.Thread(target=pump, daemon=True).start()
+        try:
+            for chunk in chunks:
+                p.stdin.write(chunk); p.stdin.flush()
+                while not out.empty():
+                    data = out.get()
+                    if data: yield data
+            p.stdin.close()
+            while True:
+                data = out.get(timeout=15)
+                if data is None: break
+                yield data
+        finally:
+            if p.poll() is None: p.kill()
+
+    @modal.method()
+    def tempo_check(self, text, voice):
+        """빠르기 확인(11/12): 같은 대사를 원래 빠르기와 TEMPO 로 — 길이 비율과 첫 조각 시간."""
+        import io, time, numpy as np, soundfile as sf
+        def take(chunks):
+            t0, first, parts = time.perf_counter(), None, []
+            for c in chunks:
+                if first is None: first = time.perf_counter() - t0
+                parts.append(c)
+            data = b''.join(parts); a = np.frombuffer(data[: len(data) // 2 * 2], '<i2')
+            buf = io.BytesIO(); sf.write(buf, a, self.codec.sample_rate, format='WAV', subtype='PCM_16')
+            return {'wav': buf.getvalue(), 'seconds': round(len(a) / self.codec.sample_rate, 2), 'first_s': round(first or 0, 2)}
+        return {'plain': take(self.speak_stream(text, voice)), 'tempo': take(self.tempo(self.speak_stream(text, voice)))}
+
     def speak_turn(self, lines, session=None, turn=None):
         """11/11 한 턴 통째로(사용자: 묶음이 아니라 1턴당 바로, 작품은 인물별 대사 전체를 만들어 잘라 쓰기).
         lines = 대화 순서의 대사 묶음 [{text, voice, delivery}] — 같은 사람이 이어 한 말은 이미 한 줄(앱 spokenSegments).
@@ -674,7 +723,7 @@ class Speaker:
             if not text: return Response(b'empty text', status_code=400)
             try: self.reference(body.get('voice'))
             except Exception: return Response(b'voice not found', status_code=400)
-            return StreamingResponse(self.speak_stream(delivery_text(text, body), body.get('voice')), media_type='audio/L16',
+            return StreamingResponse(self.tempo(self.speak_stream(delivery_text(text, body), body.get('voice'))), media_type='audio/L16',
                                      headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
 
         @api.post('/speak_turn')
@@ -695,7 +744,7 @@ class Speaker:
             except Exception: return Response(b'voice not found', status_code=400)
             # 11/11 밤 방 단위 기억: 앱이 방(session)과 메시지(turn) 식별자를 주면 같은 방의 지난 턴을 이어 받는다. 없으면 예전처럼 턴마다 새로.
             ident = lambda v: v if isinstance(v, str) and 0 < len(v) <= 64 and all(c.isalnum() or c in '-_' for c in v) else None
-            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn'))), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
+            return StreamingResponse(self.tempo(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn')))), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 
