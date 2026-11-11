@@ -14,11 +14,15 @@ import styles from './chat.module.css'
  * '+ 한 장 더'는 지금 장의 장면·구도를 복사한다. 세부사항은 이 대화방에 저장해 두고 모든 장에 같이 보낸다 — 사진마다 머리색·속옷 색이 바뀌지 않게. */
 type Shot = { key: number; scene: string; picks: number[] }
 const KEYS = Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]
+/** 11/11 사용자: 사진이 너무 늦다(꺼진 서버 55~137초 vs 켜진 서버 31초, 사진 창을 열 때 깨우면 누를 때까지 못 켜졌다). 방에 들어와 버튼이 처음 보일 때 한 번 미리 깨운다 —
+ * 대화 내내 켜 두면 안 쓰는 사람도 GPU 비용이 나가서 방당 한 번(5분 유지). ponytail: 방 입장마다 A10G 5분 ≈ $0.09 상한, 사용자가 많아지면 사진을 자주 쓰는 방만 깨우거나 메모리 스냅숏으로 켜는 시간을 줄인다 */
+const warmedRooms = new Set<string>()
 const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷'), outfitMen: msg('옷') }
 
 export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, custom = [], variant = 'tool' }: { sessionId: string; unveil: boolean; bundle: boolean; audience?: Audience; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }>; variant?: 'tool' | 'turn' }) {
   const t = useT(), router = useRouter()
   const { refreshBalance } = useWallet()
+  useEffect(() => { if (disabled || warmedRooms.has(sessionId)) return; warmedRooms.add(sessionId); void warmPhoto(sessionId).catch(() => {}) }, [sessionId, disabled])
   const [open, setOpen] = useState(false)
   const key = `miro:photo-details:${sessionId}`
   const [details, setDetails] = useState('')

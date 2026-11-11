@@ -132,7 +132,7 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   }
 }
 
-/** 사진 창을 열 때 — 이 방 캐릭터의 그림체 서버를 미리 깨운다(만들기를 누를 때쯤 켜져 있게). */
+/** 방에 들어와 사진 버튼이 보일 때, 그리고 사진 창을 열 때 — 이 방 캐릭터의 그림체 서버를 미리 깨운다(만들기를 누를 때쯤 켜져 있게). */
 export async function warmPhoto(sessionId: string): Promise<void> {
   const user = await requireUser()
   const loaded = await loadSession(sessionId, user.id)
