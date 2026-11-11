@@ -13,9 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getT()
   // 탭 제목은 어느 화면에서나 이 한 줄로 고정한다(2026-09-30 요청) — 문장 | 서비스 이름. template 에 %s 가 없어 각 화면이 정한 제목은 쓰이지 않는다.
   const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('AI 캐릭터챗 MIRO')}`
-  const shareImage = {
-    url: '/miro-share-v1.png', width: 1200, height: 630, alt: 'MIRO 로고',
-  }
+  // 11/12 링크 미리보기 그림 — 미로 시그니처 캐릭터 8명(미로·가린·문자 요정·서하·채이·다온·하진·수아), 짙은 라벤더 단색 배경·흰 굵은 MIRO(사용자 선택 A안, 힉스필드 생성 + 글씨는 직접 얹음, output/share-image). 파일 이름을 바꿔야 메신저 캐시가 새로 받는다.
+  const shareImage = { url: '/miro-share-v2.png', width: 1200, height: 630, alt: 'MIRO' }
   return {
     metadataBase: new URL('https://miroapp.app'),
     title: { default: title, template: title }, manifest: '/manifest.json',
