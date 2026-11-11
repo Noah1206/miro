@@ -16,6 +16,7 @@ import { expireBankOrders, settleApprovedOrders } from '@/lib/payments/bank-tran
 import { deliverBankTelegramRequests } from '@/lib/payments/telegram'
 import { observe } from '@/lib/observe'
 import { notifyOperators } from '@/lib/ops/alerts'
+import { sendCreatorDigests } from '@/lib/usage/creator-digest'
 import { runMemoryJobs, type MemoryJobRun } from '@/lib/ai/memory-jobs'
 import { advanceCharacterLife } from '@/lib/agency/life'
 import { precompileAgencyRevisions } from '@/lib/agency/revisions'
@@ -83,6 +84,8 @@ export async function runRealityMaintenance(wall = new Date()): Promise<Maintena
   await step(failedSteps, 'agency_revisions', () => precompileAgencyRevisions(), 0)
   // 응답 직후 시도가 유실된 기억 작업을 거둔다(임대 만료 포함).
   const memoryJobsRun = await runMemoryJobs(wall, { limit: 20 }).catch((e) => { observe('memory.jobs_sweep_failed', { error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }); return { claimed: 0, results: {} } })
+  // 11/11 크리에이터 주간 알림(월요일 10시 이후 한 번).
+  await step(failedSteps, 'creator_digest', () => sendCreatorDigests(wall), 0)
   // 운영자 알림은 맨 끝에 — 위 작업이 남긴 기록까지 보고 판단한다. 알림 실패가 유지보수를 막지 않는다.
   const ops = await notifyOperators(wall).catch((e) => { observe('ops.alerts_failed', { error: e instanceof Error ? e.message.slice(0, 120) : 'unknown' }); return { alerts: 0, sent: 0 } })
   return { calls, purged, expiredSubscriptions, passNotices, bankOrders, ops, memoryJobs: memoryJobsRun, failedSteps }
