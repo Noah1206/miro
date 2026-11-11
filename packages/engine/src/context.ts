@@ -381,25 +381,8 @@ function endingRules(c: SimulationSnapshot['character']): string[] {
   ]
 }
 
-/** 11/11 사용자: 베이비챗처럼 상태창 기본 탑재 — 상태창을 따로 정하지 않은 공식 작품(운영자 계정이 올린 official-* 는 is_official=false 라 slug 로도 본다)은 매 턴 이 INFO 를 채운다(인물·위치·옷차림·속마음·관계·호감). */
-export const DEFAULT_STATUS_FORMAT = `INFO
-👤 [사용자 이름] | 📅 [날짜·시간] | 📍 [장소]
-────────────────────
-(이 장면에 나온 인물마다 아래 블록을 반복)
-🌸 [인물 이름]
-📍 [위치] · 👘 [지금 옷차림과 그 상태]
-💭 속마음: "[지금 속마음 한 줄]"
-💍 관계: [관계] | 💗 호감 [0~100]`
-/** 11/11 언베일 방에서만 기본 INFO 의 인물별 블록 끝에 붙는 줄. 만든 사람이 정한 상태창에는 붙이지 않는다. */
-const ADULT_STATUS_LINES = `
-🩸 배란주기: [n]/30일 · [안정기|가임기] | 💊 피임: [함|안 함]
-🤰 임신: [가능|불가능|임신 중(n주)] | 💦 [사정 받은 횟수] · 🍆 [관계 횟수]
-❤️ 호감: [0~100] | 🖤 혐오: [0~100]`
-
-function statusRules(c: SimulationSnapshot['character'], adult = false): string[] {
-  const raw = c.worldRole.statusFormat?.trim(), stats = c.worldRole.stats ?? []
-  // 언베일은 호감을 ❤️/🖤 줄로 옮기므로 기본 💗 호감 칸은 뺀다(같은 값 두 번 방지).
-  const format = adult && raw === DEFAULT_STATUS_FORMAT ? raw.replace(' | 💗 호감 [0~100]', '') + ADULT_STATUS_LINES : raw
+function statusRules(c: SimulationSnapshot['character']): string[] {
+  const format = c.worldRole.statusFormat?.trim(), stats = c.worldRole.stats ?? []
   if (!format && !stats.length) return []
   return [
     '', '## 상태창·스탯',
@@ -439,7 +422,8 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     c.personality.dislikes.length ? `싫어하는 것: ${c.personality.dislikes.join(', ')}` : null,
     traitLines(c.personality),
     c.worldRole.socialPosition ? `세계 안에서의 위치: ${c.worldRole.socialPosition}` : null,
-    c.appearance ? `외형 설정 (관련 장면에서만 참고): ${JSON.stringify(c.appearance)}` : null,
+    // 11/12 외형 칸을 없앴다(사용자: 외형은 소개 글에 적는다) — 따로 받은 외형 값은 보내지 않는다(숨은 칸의 기본값 '남성·보통 체형'이 틀린 정보로 들어갔다).
+    '외형: 이 캐릭터의 외모·체형·옷차림은 위 소개와 설정에 적힌 묘사를 그대로 따릅니다. 적히지 않은 부분은 설정과 어울리게 한 번 정하고, 정한 뒤에는 대화 내내 바꾸지 않습니다.',
     ...castSection(c),
     ...startingScene(c),
     ...sampleLines(c),
@@ -471,7 +455,7 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
       '- 관계 변화는 Miro Core 규칙이 결정합니다. relationshipDelta는 null로 반환합니다.',
       '- 사건은 지금 상황에서 자연스러울 때만 제안합니다. 매 턴 사건을 만들지 않습니다.',
       '- 기억은 관계에 실제로 중요한 것만 남깁니다.',
-      ...statusRules(c, s.adultMode),
+      ...statusRules(c),
       '',
       '반드시 지정된 JSON 스키마에 맞는 객체만 반환합니다.',
     ]),

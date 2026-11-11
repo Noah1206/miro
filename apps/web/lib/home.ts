@@ -22,6 +22,8 @@ export type HomeCard = OfficialCard & {
   isOfficial?: boolean
   adultOnly?: boolean
   recentPlays?: number
+  /** 11/12 이 작품에서 오간 대화 턴의 합 — 카드 표지에 띄운다. */
+  chats?: number
 }
 
 export type HomeRow = { key: string; title: string; items: HomeCard[]; /** 제목 아래 짧은 글(10/20). */ subtitle?: string }
@@ -167,7 +169,7 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
   const last = rows.slice(0, PAGE_SIZE).at(-1)
   return {
     // 11/6: veiled = 언베일을 안 켠 사람 — 표지 흐림(coverUnveil 카드만 그림)과 카드 사진 자동 넘김의 언베일 사진 제외에 같이 쓴다.
-    items: pageRows.map(({ createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: !unveil, createdAt: createdAtKey })),
+    items: await withChats(pageRows.map(({ createdAtKey, sortScore: _sortScore, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: !unveil, createdAt: createdAtKey }))),
     nextCursor: !all && rows.length > PAGE_SIZE && last ? Buffer.from(JSON.stringify(sort === 'latest' ? [last.createdAtKey, last.id] : [last.createdAtKey, last.id, sort, last.sortScore])).toString('base64url') : null,
   }
 }
@@ -261,12 +263,12 @@ export async function popularHomeCards(genres: string[] = [], veiled = true): Pr
         ...(veiled ? [eq(characters.adultOnly, false)] : []),
       ))
     const byId = new Map(rows.map(row => [row.id, row]))
-    return ranked.flatMap(({ character_id, plays }) => {
+    return withChats(ranked.flatMap(({ character_id, plays }) => {
       const row = byId.get(character_id)
       if (!row) return []
       const { createdAtKey: _createdAtKey, ...details } = row
       return [card({ ...details, slug: details.slug ?? details.id }, { plays, veiled })]
-    })
+    }))
   }
   const counts = db.select({ characterId: roleplaySessions.characterId, plays: sql<number>`count(distinct ${roleplaySessions.userId})::int`.as('plays') })
     .from(roleplaySessions).where(isNull(roleplaySessions.deletedAt)).groupBy(roleplaySessions.characterId).as('play_counts')
@@ -277,7 +279,7 @@ export async function popularHomeCards(genres: string[] = [], veiled = true): Pr
     .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres), ...(veiled ? [eq(characters.adultOnly, false)] : [])))
     .orderBy(desc(counts.plays), desc(characters.createdAt), desc(characters.id))
     .limit(6)
-  return rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays, veiled }))
+  return withChats(rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays, veiled })))
 }
 
 
@@ -302,6 +304,17 @@ async function publicCharacters(viewerId: string | null, limit: number, type: Ex
     .orderBy(desc(characters.createdAt))
     .limit(limit)
   return rows as (OfficialCard & { isOfficial: boolean })[]
+}
+
+/** 11/12 카드 표지의 '대화 수' — 그 작품에서 오간 턴의 합(지운 대화방 제외). 한 번의 질의로 붙인다. */
+async function withChats(cards: HomeCard[]): Promise<HomeCard[]> {
+  if (cards.length === 0) return cards
+  const rows = await db.select({ id: roleplaySessions.characterId, n: sql<number>`coalesce(sum(${roleplaySessions.turnCount}), 0)::int` })
+    .from(roleplaySessions)
+    .where(and(inArray(roleplaySessions.characterId, cards.map(c => c.id)), isNull(roleplaySessions.deletedAt)))
+    .groupBy(roleplaySessions.characterId)
+  const chats = new Map(rows.map(r => [r.id, r.n]))
+  return cards.map(c => ({ ...c, chats: chats.get(c.id) ?? 0 }))
 }
 
 /** 캐릭터별 대화 인원. 한 번의 질의로 모아 카드에 붙인다. */
@@ -340,5 +353,5 @@ export async function discoverGrid(userId: string | null, type: ExperienceType):
   const plays = await playCounts([...officials, ...shared].map(c => c.id))
   const all = officials.map(c => card(c, { plays: plays.get(c.id) ?? 0 }))
   const sharedCards = shared.map(c => card({ ...c, slug: c.slug ?? c.id }, { plays: plays.get(c.id) ?? 0 }))
-  return [...all, ...sharedCards, ...(mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id }))]
+  return withChats([...all, ...sharedCards, ...(mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id }))])
 }

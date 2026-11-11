@@ -218,7 +218,7 @@ export const characters = pgTable('characters', {
    * 상세의 '상황 예시' — 이 캐릭터와의 대화가 어떤 느낌인지 보여주는 짧은 주고받음.
    * purpose가 없는 기존 항목은 소개용. purpose='intro' 항목은 새 세션에만 첫 메시지로 복사한다.
    */
-  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string; context?: string; time?: string; location?: string }>>().notNull().default([]),
+  sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string; context?: string; time?: string; location?: string; status?: string }>>().notNull().default([]),
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
   lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
   /** 상황별 사진(10/28) — 대화 중 키워드가 나오면 그 사진을 채팅에 한 번 띄운다. */

@@ -4,7 +4,7 @@ import { useT } from '@/lib/i18n/client'
 import { box, fieldFont, DialogueEditor } from './form-parts'
 
 type Turn = Parameters<typeof DialogueEditor>[0]['defaultValue'] extends (infer U)[] | undefined ? U : never
-type Meta = { context?: string; time?: string; location?: string }
+type Meta = { context?: string; time?: string; location?: string; status?: string }
 type Row = { id: number; scene: string; lines: Turn[] } & Meta
 export const EXTRA_SCENE_LIMIT = 4
 
@@ -41,6 +41,10 @@ export function ExtraScenesEditor({ defaultValue, characterName }: { defaultValu
           <div style={{ height: 360 }}>
             <DialogueEditor intro fill name="extraSceneDialogue" characterName={characterName} defaultValue={r.lines} />
           </div>
+          {/* 11/12 이 장면의 인트로 상태창 — 값까지 채워 적은 글이 인트로 마지막 글 아래 카드로 깔린다. */}
+          <textarea name="extraSceneStatus" defaultValue={r.status ?? ''} maxLength={2000} rows={4} aria-label={t('인트로 상태창')}
+            placeholder={t('인트로 상태창 (선택) — 이 장면에 보일 상태창을 값까지 채워 적어 주세요')}
+            style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: 13, lineHeight: 1.6, resize: 'vertical', outline: 'none', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} />
         </div>
       ))}
       {rows.length < EXTRA_SCENE_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, scene: '', lines: [] }]); setNextId(n => n + 1) }}

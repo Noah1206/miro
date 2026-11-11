@@ -63,12 +63,8 @@ export async function updateCharacter(characterId: string, form: FormData): Prom
     if (owned.contact) await tx.update(contactProfiles).set(p.contact).where(eq(contactProfiles.characterId, characterId))
     else await tx.insert(contactProfiles).values({ characterId, ...p.contact })
 
-    const v = owned.visual
-    if (v) {
-      const changed = JSON.stringify({ baseFace: v.baseFace, hair: v.hair, bodyProfile: v.bodyProfile, styleTags: v.styleTags, expressionTendency: v.expressionTendency })
-        !== JSON.stringify(p.visual)
-      await tx.update(characterVisualIdentities).set({ ...p.visual, version: changed ? v.version + 1 : v.version }).where(eq(characterVisualIdentities.id, v.id))
-    } else {
+    // 11/12 외형 칸이 없어졌다 — 이미 정해진 외형(사진이 같은 사람을 그리는 근거)은 편집 저장으로 건드리지 않는다.
+    if (!owned.visual) {
       await tx.insert(characterVisualIdentities).values({ characterId, ...p.visual, referenceSource: 'text' })
     }
 

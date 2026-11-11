@@ -164,7 +164,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
               typing={m.id === opening.activeId || keyOf(m) === typingId} mood={mood} onGrow={follow} onDone={() => { opening.advance(m.id); if (keyOf(m) === typing.current) setTypedKey(keyOf(m)) }} />
             {photo && sessionId && m.role === 'character' && m.kind === 'text' && (!m.opening || !opening.playing) && m.id !== opening.activeId && keyOf(m) !== typingId
               && <div className={styles.turnPhotoRow}><PhotoButton variant="turn" sessionId={sessionId} unveil={photo.unveil} bundle={photo.bundle} audience={photo.audience} custom={photo.scenes} /></div>}
-            {m.role === 'character' && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open />}
+            {(m.role === 'character' || m.role === 'narrator') && (m.id !== opening.activeId && keyOf(m) !== typingId) && <StatusCard blocks={m.blocks} open />}
             {sessionId && endingIds.has(m.id) && <aside className={styles.endingCard}>
               {(() => { const title = endingTitle(m.blocks); const def = endings.find(e => e.name === title); const others = endings.filter(e => e.name !== title)
                 return <>

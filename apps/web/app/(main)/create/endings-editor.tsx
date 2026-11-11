@@ -18,6 +18,8 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
   const t = useT()
   const [rows, setRows] = useState<Row[]>(() => defaultValue.map((e, id) => ({ id, name: e.name, grade: e.grade, minTurns: String(e.minTurns), condition: e.condition, epilogue: e.epilogue ?? '', hint: e.hint ?? '', image: e.image ?? '' })))
   const [nextId, setNextId] = useState(defaultValue.length)
+  // 11/12 엔딩은 만드는 사람이 고른다 — '없음'이면 칸을 접고 빈 값으로 저장한다(적어 둔 내용은 화면에 남아 다시 켜면 돌아온다).
+  const [on, setOn] = useState(defaultValue.length > 0)
   const uid = useId()
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
   // 엔딩 카드 그림 — 상황 사진과 같은 업로드(고르자마자 올리고 URL 만 싣는다).
@@ -41,8 +43,12 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
     background: on ? 'color-mix(in srgb, var(--color-accent) 14%, transparent)' : 'transparent', color: on ? 'var(--color-text-primary)' : 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 13, fontWeight: 600 } as const)
   return (
     <div className="stack" style={{ gap: 12 }}>
-      <input type="hidden" name="endings" value={JSON.stringify(value)} />
-      {rows.map(r => (
+      <input type="hidden" name="endings" value={JSON.stringify(on ? value : [])} />
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button type="button" aria-pressed={!on} onClick={() => setOn(false)} style={chip(!on)}>{t('엔딩 없음')}</button>
+        <button type="button" aria-pressed={on} onClick={() => setOn(true)} style={chip(on)}>{t('엔딩 있음')}</button>
+      </div>
+      {on && rows.map(r => (
         <div key={r.id} className="stack" style={{ gap: 8, padding: 12, borderRadius: 12, border: '1px solid var(--color-border)' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <input value={r.name} maxLength={20} placeholder={t('엔딩 이름 (예: 내일이 온다)')} aria-label={t('엔딩 이름')} onChange={e => patch(r.id, { name: e.target.value })} style={{ ...input, flex: 1 }} />
@@ -75,7 +81,7 @@ export function EndingsEditor({ defaultValue }: { defaultValue: CharacterEnding[
           </div>
         </div>
       ))}
-      {rows.length < ENDING_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', grade: 'N', minTurns: '10', condition: '', epilogue: '', hint: '', image: '' }]); setNextId(n => n + 1) }}
+      {on && rows.length < ENDING_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', grade: 'N', minTurns: '10', condition: '', epilogue: '', hint: '', image: '' }]); setNextId(n => n + 1) }}
         style={{ minHeight: 44, borderRadius: 12, border: '1.5px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: fieldFont }}>{t('+ 엔딩 추가')} ({rows.length}/{ENDING_LIMIT})</button>}
     </div>
   )

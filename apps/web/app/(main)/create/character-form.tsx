@@ -11,7 +11,7 @@ import { GENDER_PRESETS, GENDER_TYPES } from '@miro/domain'
 import { CreateHeader, StepNav, type CreateTab } from './header'
 import { CreateTour } from './tour'
 import { DetailPreview, snapshot, type Snapshot } from './preview'
-import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
+import { ChoiceChips, CountedInput, CountedTextArea, DialogueEditor, ImagePicker, LabeledField, LoreEditor, PresetTags, Switch, TagInput, box, fieldFont, fieldPad, type Step } from './form-parts'
 import { SituationImagesEditor } from './situation-images-editor'
 import { PhotoScenesEditor } from './photo-scenes-editor'
 import { PresetPersonasEditor } from './preset-personas-editor'
@@ -29,7 +29,9 @@ import { CastProfiles, CastVoices, MBTI_TYPES, castJson, castPhotosJson, castPro
 import { CommandEditor } from './command-editor'
 import type { CharacterCommand } from '@miro/db'
 import type { CharacterMedia } from '@miro/config'
-import { CATEGORIES, HASHTAG_GROUPS } from '@/lib/genres'
+import { CATEGORIES } from '@/lib/genres'
+// 11/12 해시태그 고르기 = 탐색 페이지 필터와 같은 목록(고른 태그가 탐색에서 그대로 걸린다).
+import { DISCOVERY_GROUPS } from '@/lib/discovery-filters'
 import { activeDraftKey, draftStorageKey, restoreDraft, serializableDraft } from './draft-storage'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
@@ -342,8 +344,8 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                     {/* 소개(한 줄)와 성격 설명을 한 칸으로(10/19). 서버 칸 이름은 그대로 — 첫 줄이 title, 나머지가 personality. */}
                     <input type="hidden" name="title" value={title} />
                     <input type="hidden" name="personality" value={personality} />
-                    <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 성격·가치관·말투를 적어 주세요.')}>
-                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={1040} rows={6} />
+                    <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 외모·성격·말투·가치관·비밀·배경 이야기를 자유롭게 적어 주세요. AI는 여기 적힌 대로 연기해요.')}>
+                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={5040} rows={10} />
                     </LabeledField>
                     {experienceType === 'reality' && <ReactionTraits initial={i} />}
                   </div>
@@ -389,7 +391,6 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
               <ExamplesEditor defaultValue={sampleDialogue(i.sampleDialogue)} characterName={name} />
             </Section>
           </details>
-          <input type="hidden" name="lore" value={JSON.stringify(i.lore)} />
 
         </Panel>
 
@@ -402,48 +403,16 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           </Section>
         </Panel>
 
+        {/* ── 로어북(11/12 연결) — 전엔 숨은 칸이 저장값만 되돌려 보내 새 캐릭터는 늘 비어 있었다. 탭이 닫혀 있어도 DOM 에 남아 제출된다. ── */}
+        <Panel id="lore" show={tab === 'lore'}>
+          <Section title={t('로어북 · 선택')} subtitle={t('세계관이나 인물·장소 설정을 적어 두면, 대화에 그 키워드가 나온 턴에만 AI에게 전달돼요. 키워드를 비우면 항상 전달돼요.')}>
+            <LoreEditor name="lore" defaultValue={i.lore} />
+          </Section>
+        </Panel>
+
         {/* ── 외형 — 관계 탭 안에 함께 보인다(10/19). DOM 은 앞이지만 order 로 관계 내용 아래에 놓는다. ── */}
         <Panel id="relationship-visual" show={tab === 'relationship'} order={1}>
-          {/* 10/28: 외형 칸 전체를 화면에서 숨겼다(사용자 요청) — 칸은 DOM 에 남아 저장값·자동 채우기 값이 그대로 제출된다. */}
-          <div hidden>
-          <Section title={t('외형')}>
-            <Card>
-              {/* 10/28: 몸(성별·키·체형 설명) 칸을 화면에서 뺐다(사용자 요청) — 저장값·자동 채우기 값은 그대로 보낸다. */}
-              <input type="hidden" name="build" value={build} />
-              <input type="hidden" name="gender" value={gender} />
-              <input type="hidden" name="height" value={gen.height ?? String(i.height ?? '')} />
-              <input type="hidden" name="detail" value={gen.detail ?? String(i.detail ?? '')} />
-
-              {/* 얼굴·머리는 고급 — 몸만 정해도 사진은 나온다. 접혀 있어도 칸은 DOM 에 남아 제출된다. */}
-              <AdvancedToggle open={advanced} onToggle={() => setAdvanced((v) => !v)} controls="appearance-advanced" />
-              <div id="appearance-advanced" hidden={!advanced}>
-                <div className="stack" style={{ gap: 18, marginTop: 'var(--space-5)' }}>
-                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)' }}>{t('얼굴')}</p>
-                  <LabeledField label={t('눈')}><CountedInput name="eyes" placeholder={t('예) 깊고 차가운 회청색 눈')} max={80} {...g('eyes')} /></LabeledField>
-                  <Two>
-                    <LabeledField label={t('코')}><CountedInput name="nose" placeholder={t('예) 곧고 높은 콧대')} max={80} {...g('nose')} /></LabeledField>
-                    <LabeledField label={t('턱')}><CountedInput name="jaw" placeholder={t('예) 선이 분명한 턱')} max={80} {...g('jaw')} /></LabeledField>
-                  </Two>
-                  <LabeledField label={t('피부')}><CountedInput name="skin" placeholder={t('예) 창백하고 건조한 피부')} max={80} {...g('skin')} /></LabeledField>
-                  <LabeledField label={t('알아보게 하는 특징')} hint={t('흉터, 점, 문신처럼 그 사람을 알아보게 하는 한 가지.')}>
-                    <CountedInput name="distinctive" placeholder={t('예) 왼쪽 눈썹 끝을 가로지르는 오래된 흉터')} max={100} {...g('distinctive')} />
-                  </LabeledField>
-
-                  <p className="t-body" style={{ fontWeight: 'var(--weight-semibold)', marginTop: 'var(--space-2)' }}>{t('머리 · 인상')}</p>
-                  <Two>
-                    <LabeledField label={t('머리 색')}><CountedInput name="hairColor" placeholder={t('예) 어두운 갈색')} max={40} {...g('hairColor')} /></LabeledField>
-                    <LabeledField label={t('머리 길이')}><CountedInput name="hairLength" placeholder={t('예) 짧고 단정한')} max={40} {...g('hairLength')} /></LabeledField>
-                  </Two>
-                  <LabeledField label={t('머리 스타일')}><CountedInput name="hairStyle" placeholder={t('예) 이마를 드러내게 넘긴')} max={60} {...g('hairStyle')} /></LabeledField>
-                  <LabeledField label={t('평소 표정')}><CountedInput name="expression" placeholder={t('예) 표정 변화가 거의 없다')} max={120} {...g('expression')} /></LabeledField>
-                  <LabeledField label={t('스타일 태그')} hint={t('옷차림·분위기. 사진 생성이 읽습니다.')}>
-                    <TagInput name="styleTags" placeholder={t('예) 소매를 걷어 올린 셔츠')} max={5} maxLength={40} {...gt('styleTags')} />
-                  </LabeledField>
-                </div>
-              </div>
-            </Card>
-          </Section>
-          </div>
+          {/* 11/12 외형 칸 전부 삭제(사용자: 외형은 소개 글에 적는다) — AI 와 사진 생성 모두 소개 글의 묘사를 따른다. */}
           {!can.characterVoice&&<input type="hidden" name="media" value={media}/>}
         </Panel>
 
@@ -523,7 +492,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* ── 상태창·스탯(11/10, 크랙 INFO 블록) — 비워 두면 상태창 없이 지금처럼 대화한다. ── */}
         <Panel id="status" show={tab === 'status'}>
           <Section title={t('상태창 · 선택')} subtitle={t('매 답변 끝에 붙는 상태 정보의 틀이에요. 날짜·장소·스탯·아이템처럼 이야기가 어디까지 왔는지 보여 줘요. 대화 화면에선 접었다 펼 수 있는 카드로 나와요.')}>
-            <StatusEditor defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} />
+            <StatusEditor defaultFormat={i.statusFormat ?? ''} defaultStats={i.stats ?? []} defaultIntroStatus={(introDialogue(i.sampleDialogue) as Array<{ status?: string }>).find(e => e.status)?.status ?? ''} />
           </Section>
         </Panel>
         {/* ── 엔딩(11/10, 크랙 엔딩 설정) — 비워 두면 엔딩 없이 이어진다. ── */}
@@ -564,7 +533,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
           <Section title={t('해시태그')}>
             {/* 10/28: 접는 버튼 없이 바로 펼쳐 둔다(사용자 요청). */}
             <PresetTags name="hashtags" label={msg('해시태그')} max={10} defaultValue={initialHashtags} onChange={setHashtags}
-              groups={HASHTAG_GROUPS} />
+              groups={DISCOVERY_GROUPS.map(g => ({ label: g.title, options: g.tags }))} />
           </Section>
           {/* 이용 대상(10/28) — 언베일 전용이면 언베일을 켠 사람의 홈·탐색에만 나온다. */}
           <Section title={t('이용 대상')}>
@@ -617,8 +586,8 @@ function splitIntro(text: string): { title: string; personality: string } {
   const nl = whole.indexOf('\n')
   const first = (nl === -1 ? whole : whole.slice(0, nl)).trim()
   const rest = nl === -1 ? '' : whole.slice(nl + 1).trim()
-  if (first.length <= 40 && rest) return { title: first, personality: rest.slice(0, 1000) }
-  return { title: first.slice(0, 40), personality: whole.slice(0, 1000) }
+  if (first.length <= 40 && rest) return { title: first, personality: rest.slice(0, 5000) }
+  return { title: first.slice(0, 40), personality: whole.slice(0, 5000) }
 }
 
 /** 탭 패널. 감춰도 DOM 에 남긴다 — 값이 살아 있어야 한 번에 제출된다. order 로 같은 탭의 두 패널 순서를 정한다. */
@@ -770,7 +739,7 @@ function ReactionTraits({ initial }: { initial: FormInitial }) {
 
 /** 시작 설정의 장면 정보 — 그 장면 줄 가운데 시작 상황·시각·장소가 적힌 첫 줄에서(시드가 넣은 값). */
 function sceneMeta(entries: FormInitial['sampleDialogue'], scene: string) {
-  const hit = (entries as Array<FormInitial['sampleDialogue'][number] & { scene?: string; context?: string; time?: string; location?: string }>)
-    .find(t => t.purpose === 'intro' && t.scene === scene && (t.context || t.time || t.location))
-  return hit ? { context: hit.context, time: hit.time, location: hit.location } : {}
+  const hit = (entries as Array<FormInitial['sampleDialogue'][number] & { scene?: string; context?: string; time?: string; location?: string; status?: string }>)
+    .find(t => t.purpose === 'intro' && t.scene === scene && (t.context || t.time || t.location || t.status))
+  return hit ? { context: hit.context, time: hit.time, location: hit.location, status: hit.status } : {}
 }

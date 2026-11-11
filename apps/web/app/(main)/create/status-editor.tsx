@@ -28,7 +28,7 @@ const EXAMPLES: Array<[string, string]> = [
  * 상태창·스탯(11/10) — 매 답변 끝에 붙는 상태창의 틀과, 대화방마다 움직이는 수치(최대 7개).
  * AI 는 형식을 채우고 스탯 새 값을 내며, 서버가 범위로 자른다. 비워 두면 상태창이 없다.
  */
-export function StatusEditor({ defaultFormat, defaultStats }: { defaultFormat: string; defaultStats: CharacterStat[] }) {
+export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus = '' }: { defaultFormat: string; defaultStats: CharacterStat[]; defaultIntroStatus?: string }) {
   const t = useT()
   const [format, setFormat] = useState(defaultFormat)
   const [rows, setRows] = useState<Row[]>(() => defaultStats.map((s, id) => ({ id, name: s.name, min: String(s.min), max: String(s.max), def: String(s.default), unit: s.unit ?? '', description: s.description })))
@@ -51,6 +51,11 @@ export function StatusEditor({ defaultFormat, defaultStats }: { defaultFormat: s
           onChange={e => setFormat(e.target.value)}
           style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: 13, lineHeight: 1.6, resize: 'vertical', outline: 'none', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} />
         <span style={{ alignSelf: 'flex-end', fontSize: 12, color: 'var(--color-text-tertiary, var(--color-text-secondary))' }}>{format.length} / {STATUS_FORMAT_LIMIT}</span>
+      </div>
+      <div className="stack" style={{ gap: 8 }}>
+        <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t('인트로 상태창 — 첫 장면에 보일 상태창을 값까지 채워 적어 주세요. 비우면 인트로엔 상태창이 없어요.')}</span>
+        <textarea name="introStatus" defaultValue={defaultIntroStatus} maxLength={STATUS_FORMAT_LIMIT} rows={6} aria-label={t('인트로 상태창')}
+          style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: 13, lineHeight: 1.6, resize: 'vertical', outline: 'none', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }} />
       </div>
       {rows.map(r => (
         <div key={r.id} className="stack" style={{ gap: 8, padding: 12, borderRadius: 12, border: '1px solid var(--color-border)' }}>

@@ -4,7 +4,7 @@ import { normalizeSituationImages } from '@/lib/situation-images'
 import { normalizeCustomScenes } from '@/lib/photo-scenes'
 import { normalizePresetPersonas, type CharacterEnding, type CharacterStat } from '@miro/domain'
 import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
-import { BONDING_CURVES, BUILD_TYPES, GENDER_TYPES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
+import { BONDING_CURVES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
 import type { CharacterCommand } from '@miro/db'
 import { searchNeedle } from '@/lib/search-params'
 import { isOwnImageUrl } from '@/lib/storage/own-url'
@@ -71,7 +71,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   const name = s('name')
   if (!name) throw new Error('NAME_REQUIRED')
-  if (name.length > 10 || s('title').length > 40 || s('personality').length > 1000 || s('startingContext').length > 600) throw new Error('CHARACTER_FIELD_TOO_LONG')
+  if (name.length > 10 || s('title').length > 40 || s('personality').length > 5000 || s('startingContext').length > 600) throw new Error('CHARACTER_FIELD_TOO_LONG')
   if (publish && !s('title')) throw new Error('TITLE_REQUIRED')
   if (publish && !s('startingContext')) throw new Error('STARTING_CONTEXT_REQUIRED')
   const personality = s('personality') || (publish ? '' : `${name}에 대한 설명은 아직 적히지 않았다.`)
@@ -80,8 +80,6 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   // 나이는 숫자로 제한하지 않는다 — "추정불가", "1000살" 처럼 캐릭터마다 다를 수 있다.
   const age = orNull(s('age').slice(0, 20))
 
-  const build = oneOf('build', BUILD_TYPES, 'average')
-  const gender = oneOf('gender', GENDER_TYPES, 'male')
 
   // 상황 예시 — DialogueEditor 가 JSON 으로 싣는다. 모양이 이상하면 버린다.
   let sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string }> = []
@@ -160,7 +158,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     relationshipKeywords,
     startingContext: orNull(s('startingContext')),
     ...(startingTime ? { startingTime } : {}),
-    sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]'), ...extraScenes(form)],
+    // 11/12 인트로 상태창은 기본 도입부 첫 줄에 싣는다(새 칸 없이 같은 JSON).
+    sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]').map((e, n) => (n === 0 && s('introStatus').trim() ? { ...e, status: s('introStatus').trim().slice(0, 2000) } : e)), ...extraScenes(form)],
     lore,
     situationImages,
     photoScenes,
@@ -214,7 +213,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
   const visual = {
     baseFace: { eyes: face('eyes'), nose: face('nose'), jaw: face('jaw'), skin: face('skin'), distinctive: face('distinctive') },
     hair: { color: orNull(s('hairColor').slice(0, 200)), length: orNull(s('hairLength').slice(0, 200)), style: orNull(s('hairStyle').slice(0, 200)) },
-    bodyProfile: { build, gender, height: orNull(s('height').slice(0, 200)), detail: orNull(s('detail').slice(0, 200)) },
+    // 11/12 성별·체형 칸 삭제 — 비워 두면 사진을 처음 그릴 때 소개 글을 읽어 외형을 한 번 정한다(inferAppearance).
+    bodyProfile: {},
     styleTags: tags('styleTags', 5, 40),
     expressionTendency: orNull(s('expression').slice(0, 200)),
   }
@@ -287,8 +287,8 @@ function extraScenes(form: FormData) {
     if (!scene || !dialogs[n]) return []
     const lines = parseIntroDialogue(dialogs[n]!)
     // 장면 정보는 그 장면 첫 줄에 붙인다 — sceneOpening 이 거기서 읽는다.
-    const context = field('extraSceneContext', n, 600), location = field('extraSceneLocation', n, 60), time = field('extraSceneTime', n, 20)
-    const meta = { ...(context ? { context } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}) }
+    const context = field('extraSceneContext', n, 600), location = field('extraSceneLocation', n, 60), time = field('extraSceneTime', n, 20), status = field('extraSceneStatus', n, 2000)
+    const meta = { ...(context ? { context } : {}), ...(location ? { location } : {}), ...(time ? { time } : {}), ...(status ? { status } : {}) }
     return lines.map((l, k) => ({ ...l, scene, ...(k === 0 ? meta : {}) }))
   }).slice(0, 80)
 }

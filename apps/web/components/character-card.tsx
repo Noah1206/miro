@@ -1,6 +1,7 @@
 'use client'
 import { motion, useReducedMotion } from 'motion/react'
 import { TransitionLink } from '@/components/ui'
+import { useLanguage } from '@/lib/i18n/client'
 import { CharacterVisual } from '@/components/character-visual'
 import { UnveilCover } from '@/components/unveil-badge'
 import { characterTags } from '@/lib/character-card-copy'
@@ -33,6 +34,8 @@ export type CardCharacter = {
   /** 언베일 썸네일(11/4). */
   coverUnveil?: boolean
   veiled?: boolean
+  /** 11/12 이 작품에서 오간 대화 수 — 표지 왼쪽 아래에 미로 마크와 함께. 없거나 0이면 안 그린다. */
+  chats?: number
 }
 
 /**
@@ -47,6 +50,7 @@ export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: bool
   const reduce = useReducedMotion()
   const slug = c.slug ?? c.id
   const tags = characterTags(c)
+  const language = useLanguage()
   const { photo, photos, active, onPhotoReady } = useRotatingPhoto(c.images, c.veiled, still || stillCover(c.slug))
   return (
     <motion.div whileTap={reduce ? undefined : { scale: press.scale }} transition={spring.quick}>
@@ -58,6 +62,9 @@ export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: bool
           <CharacterVisual name={c.name} accent={c.accentA} slug={slug} photo={photo} photos={photos} active={active} onPhotoReady={onPhotoReady} ratio="4 / 5" scrim={false} />
           {/* 11/10 사용자: 흐림은 수위 있는 표지가 보일 때만 — 넘어간 다른 사진엔 안 씌운다 */}
           {c.coverUnveil && photo === c.images[0] && <UnveilCover veiled={c.veiled} label="언베일" hideLabel={!c.veiled} />}
+          {!!c.chats && <span style={{ position: 'absolute', left: 6, bottom: 6, display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 7px', borderRadius: 999, background: 'rgba(0,0,0,.55)', color: '#fff', fontSize: 11, fontWeight: 600, lineHeight: 1 }}>
+            <span aria-hidden="true" style={{ width: 12, height: 12, flex: 'none', background: 'var(--color-lavender-400)', WebkitMask: 'url(/logo-mark.svg) center / contain no-repeat', mask: 'url(/logo-mark.svg) center / contain no-repeat' }} />{/* 숫자가 마크보다 떠 보여 살짝 내린다 */}<span style={{ position: 'relative', top: '.08em' }}>{new Intl.NumberFormat(language, { notation: 'compact', maximumFractionDigits: 1 }).format(c.chats)}</span>
+          </span>}
         </div>
         {/* 10/19: 사진 아래 — 굵은 이름, 회색 한 줄 소개 2줄, 둥근 칩 태그(레퍼런스 카드). */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '10px 0 0', color: 'var(--color-text-primary)' }}>

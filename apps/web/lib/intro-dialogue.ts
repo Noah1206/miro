@@ -7,10 +7,11 @@
  * 처음 나오는 scene 이 기본 도입부 — scene 이 없는 줄('')도 하나의 도입부로 친다(사용자가 만든 캐릭터).
  * context·time·location: 기본이 아닌 도입부의 첫 줄에 붙는 그 장면의 첫 장면 설명·시작 시각·장소(10/6).
  * 기본 도입부는 캐릭터의 startingContext·startingTime·세계 장소를 그대로 쓴다.
+ * status: 인트로 상태창(11/12) — 만든 사람이 채워 쓴 첫 장면의 상태창. 기본 도입부 첫 줄에 붙고, 인트로 마지막 글에 상태창 카드로 깔린다.
  */
 export type DialogueEntry = {
   role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string
-  context?: string; time?: string; location?: string
+  context?: string; time?: string; location?: string; status?: string
 }
 const isIntro = (t: DialogueEntry) => t.purpose === 'intro' && (t.role === 'character' || t.role === 'narrator')
 /** 도입부 이름들 — 인트로 줄에 나온 순서대로. 첫 번째가 기본. */
@@ -56,5 +57,7 @@ export function introMessages(sessionId: string, entries: readonly DialogueEntry
     { role: t.role, kind: 'text' as const, content: t.text },
     ...(t.image ? [{ role: t.role, kind: 'photo' as const, content: t.image }] : []),
   ])
-  return turns.map((t, index) => ({ sessionId, ...t, blocks: [], turnIndex: index - turns.length }))
+  const status = introDialogue(entries, opts.scene).find((t) => t.status)?.status
+  const last = turns.map((t) => t.kind).lastIndexOf('text')
+  return turns.map((t, index) => ({ sessionId, ...t, blocks: status && index === last ? [{ type: 'status', text: status }] : [], turnIndex: index - turns.length }))
 }

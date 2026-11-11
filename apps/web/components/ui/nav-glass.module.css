@@ -19,3 +19,5 @@
 /* 11/7 사용자: 지금 탭 배경 채움은 없애고, 그 색(라벤더 600)을 아이콘·글자에. */
 .bar .indicator::before { background: transparent; box-shadow: none; }
 .bar :global(.nav__item[aria-current="page"]) { color: var(--color-lavender-600) !important; }
+/* 11/12 사용자: 지금 탭 아이콘·글자는 옅은 라벤더. */
+.bar :global(.nav__item[aria-current="page"]) { color: var(--color-lavender-300) !important; }

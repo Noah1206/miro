@@ -33,7 +33,7 @@ export function restoreDraft(entries: Array<[string, string]>, type: 'chat' | 'r
     stage: r.stage, trust: r.trust, attraction: r.attraction, relJealousy: r.jealousy,
     protectiveness: r.protectiveness, emotionalDistance: r.emotionalDistance, attachment: r.attachment,
     bonding: r.bonding ?? '',
-    gender: v.bodyProfile.gender, build: v.bodyProfile.build, height: v.bodyProfile.height ?? '', detail: v.bodyProfile.detail ?? '',
+    gender: 'male', build: 'average', height: '', detail: '',   // 11/12 성별·체형 칸 삭제 — 폼 초기값 모양만 맞춘다
     eyes: v.baseFace.eyes ?? '', nose: v.baseFace.nose ?? '', jaw: v.baseFace.jaw ?? '', skin: v.baseFace.skin ?? '', distinctive: v.baseFace.distinctive ?? '',
     hairColor: v.hair.color ?? '', hairLength: v.hair.length ?? '', hairStyle: v.hair.style ?? '', expression: v.expressionTendency ?? '', styleTags: v.styleTags,
     contactEnabled: contact.enabled, contactFrequency: contact.contactFrequency, initiativeLevel: contact.initiativeLevel,

@@ -1,6 +1,6 @@
 import type { characters, characterVisualIdentities, messages } from '@miro/db'
 import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
-import { DEFAULT_STATUS_FORMAT, type RecentMessage } from '@miro/engine'
+import type { RecentMessage } from '@miro/engine'
 import { officialAi, officialSamples, officialStartingContext } from '@/lib/editorial/official-copy'
 import { photoMessageText } from '@/lib/messenger/photo-context'
 
@@ -24,7 +24,7 @@ export function characterContext(
     worldRole: {
       socialPosition: c.socialPosition, startingContext: ai?.startingContext ?? officialStartingContext(c),
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore,
-      ...(c.statusFormat ? { statusFormat: c.statusFormat } : (c.isOfficial || c.slug?.startsWith('official-')) ? { statusFormat: DEFAULT_STATUS_FORMAT } : {}), ...(c.stats.length ? { stats: c.stats } : {}), ...(c.endings.length ? { endings: c.endings } : {}), ...(c.ensembleCast?.length ? { cast: c.ensembleCast } : {}),
+      ...(c.statusFormat ? { statusFormat: c.statusFormat } : {}), ...(c.stats.length ? { stats: c.stats } : {}), ...(c.endings.length ? { endings: c.endings } : {}), ...(c.ensembleCast?.length ? { cast: c.ensembleCast } : {}),
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,
     ...(visual ? { appearance: {
