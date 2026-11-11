@@ -18,7 +18,9 @@ VOICES = '/voices/_drama3/serving-voices'
 DEFAULT_VOICE = 'asmr01'
 # ponytail: 목소리 샘플 상태는 목소리 16개까지 들고 있는다(하나 ~100MB) — 넘으면 가장 오래 안 쓴 것부터 버린다
 PREFIX_VOICES = 16
-SAMPLING = 'fish-space-untruncated-v1'   # 시험 생성과 같은 설정
+# 11/11 사용자: 같은 목소리인데 줄마다 살짝 다르다 — 가장 느슨한 설정(temperature 1.0·top_p .9)에서 같은 정의의 안정 설정(.7·.7, top_k 는 크게 둬 침묵 멈춤 없음)으로.
+SAMPLING = 'miro-untruncated-only-v1'   # 되돌리기: 'fish-space-untruncated-v1'
+EMOTION_TAGS = False   # 11/11 사용자: 일정한 톤으로 — 줄마다 감정·말투·빠르기 지시([anxious, whisper …])를 붙이지 않는다. 대사 속 소리 태그([moaning] 등)는 그대로.
 # 11/11 스트리밍: 첫 조각은 짧게(8프레임 ≈ 0.37초, 첫소리를 빨리), 그다음은 16프레임(≈0.74초)마다.
 # stream_check 실측(희아, 248프레임): 코덱은 뒤를 보지 않는다(보류 프레임 차이 0) — 그런데 기억이 길어 앞 48·128프레임만 문맥으로 주면 소리가 갈렸고
 # (최대 차이 0.52·0.10), 256프레임 이상·처음부터 전부는 한 번에 푼 것과 같았다(0.007, 수치 흔들림 수준). 처음부터 다시 풀어도 16조각에 0.34초라 전부 준다.
@@ -514,6 +516,7 @@ def delivery_text(text, body):
     예전 Fish 게이트웨이(drama3_fullft/miro_contract.py)와 같은 표. 10/30 서버가 이걸 빠뜨려 delivery 가 버려지고 있었다(10/31 수정).
     대사 사이 쉼(pauseAfterMs)은 앱 재생기가 직접 둔다."""
     from drama3_fullft.miro_contract import DELIVERY_TAGS
+    if not EMOTION_TAGS: return text
     d = body.get('delivery') if isinstance(body.get('delivery'), dict) else {}
     if body.get('style') == 'whisper' and 'tone' not in d: d = {**d, 'tone': 'whisper'}
     # 신음이 있는 줄은 흥분한 상태라 말이 빨라진다(10/31 사용자) — AI 가 일부러 느리게(slow) 고른 줄만 그대로 둔다
@@ -537,7 +540,7 @@ def turn_text(lines):
     return ' '.join(out)
 
 if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌는 줄에만 지시
-    assert turn_text([{'text': 'a', 'parts': [{'text': 'a', 'delivery': {}}, {'text': 'b', 'delivery': {'emotion': 'anxious'}}, {'text': 'c', 'delivery': {'emotion': 'anxious'}}]}]) == 'a [anxious] b c'
+    assert turn_text([{'text': 'a', 'parts': [{'text': 'a', 'delivery': {}}, {'text': 'b', 'delivery': {'emotion': 'anxious'}}, {'text': 'c', 'delivery': {'emotion': 'anxious'}}]}]) == ('a [anxious] b c' if EMOTION_TAGS else 'a b c')
 
 def _whisper():
     from faster_whisper import WhisperModel

@@ -42,13 +42,17 @@ export function bindChatViewport(element: HTMLElement) {
     if (closed && Math.abs(window.scrollY - roomTop) > 1) window.scrollTo({ top: roomTop, behavior: 'instant' })
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
+  // 11/11 사용자: 입력창 아래가 빈다 — iOS(특히 홈 화면 앱)는 키보드가 닫힌 뒤 화면 크기 이벤트를 안 줄 때가 있어 방이 키보드 열린 높이에 멈췄다.
+  // 포커스가 빠지면 닫히는 애니메이션이 끝날 때쯤 몇 번 더 잰다.
+  const timers: number[] = []
+  const settle = () => { schedule(); timers.push(window.setTimeout(schedule, 350), window.setTimeout(schedule, 800), window.setTimeout(schedule, 1500)) }
   update()
   viewport.addEventListener('resize', schedule)
   viewport.addEventListener('scroll', schedule)
   window.addEventListener('resize', schedule)
   window.addEventListener('pageshow', schedule)
   document.addEventListener('focusin', schedule)
-  document.addEventListener('focusout', schedule)
+  document.addEventListener('focusout', settle)
   document.addEventListener('visibilitychange', schedule)
   return () => {
     cancelAnimationFrame(frame)
@@ -57,7 +61,8 @@ export function bindChatViewport(element: HTMLElement) {
     window.removeEventListener('resize', schedule)
     window.removeEventListener('pageshow', schedule)
     document.removeEventListener('focusin', schedule)
-    document.removeEventListener('focusout', schedule)
+    document.removeEventListener('focusout', settle)
+    timers.forEach(clearTimeout)
     document.removeEventListener('visibilitychange', schedule)
   }
 }

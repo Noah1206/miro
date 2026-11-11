@@ -119,6 +119,9 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .typingDots i:nth-child(3) { animation-delay: .8s; }
 @keyframes dotColorCycle { 0%, 100% { background: var(--dot-1); } 33% { background: var(--dot-2); } 66% { background: var(--dot-3); } }
 :global([data-chat-theme='talk']) .typingDots { --dot-1: #191919; --dot-2: #5a5a5a; --dot-3: #8a8a8a; }
+/* 11/11 사용자 스크린샷: 점 셋을 둥근 네모 말풍선(바탕보다 조금 밝은 회색) 안에. */
+.typingBubble { display: inline-flex; align-items: center; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.06); }
+:global([data-chat-theme='talk']) .typingBubble, :global([data-chat-theme='dm-light']) .typingBubble { background: rgba(0,0,0,.06); }
 @media (prefers-reduced-motion: reduce) { .typingDots i { animation: none; background: var(--dot-2); } }
 
 /* Theme scope changes presentation only; dialogs keep the application's own colors. */
