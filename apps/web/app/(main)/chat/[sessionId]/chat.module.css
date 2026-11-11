@@ -645,3 +645,12 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
 .action, .thought,
 :global([data-chat-theme]) .bubble .action,
 :global([data-chat-theme]) .bubble .thought { font-style:normal; }
+
+/* 11/12 사용자: 서술·설명 글은 자간과 아래 공백을 줄인다(대사 말풍선은 그대로). */
+:global([data-chat-theme]) .narrationText,
+:global([data-chat-theme]) .opening,
+.narrationText, .opening { letter-spacing:-.45px; line-height:1.65; }
+.narrationText p + p { margin-top:8px; }
+:global([data-chat-theme]) .bubble .action,
+:global([data-chat-theme]) .bubble .thought,
+.action, .thought { letter-spacing:-.45px; }

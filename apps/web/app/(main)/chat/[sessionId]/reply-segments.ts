@@ -8,6 +8,8 @@ import { parseEmphasis } from '@/components/scene/emphasis'
 export type Paragraph = { text: string; kind: 'narration' | 'action' | 'thought' | 'dialogue'; index: number }
 export type Segment = { kind: 'narration'; paragraphs: Paragraph[] } | { kind: 'bubble'; speaker: string; paragraphs: Paragraph[] }
 
+/** `차유진 |"대사"` — 이름(20자 이하) + | + 따옴표 대사. */
+const SPEECH_LINE = /^([^|\n"“]{1,20}?)\s*\|\s*["“](.*?)["”]?$/
 const KINDS = new Set(['dialogue', 'action', 'narrative', 'npc', 'world', 'thought'])
 
 export function segmentReply(blocks: Array<Record<string, unknown>>, content: string, name: string, cast: readonly string[] = []): Segment[] {
@@ -33,8 +35,28 @@ export function segmentReply(blocks: Array<Record<string, unknown>>, content: st
     return { text: dialogue ? text.slice(prefix.length).trimStart() : text, kind: !dialogue && parseEmphasis(text)[0]?.style === 'italic' ? 'action' as const : 'dialogue' as const, speaker: name }
   })
 
+  // 11/12 인트로 데이터는 서술 안에 `이름 |"대사"` 줄을 섞어 쓴다(베이비챗식). 그 줄은 대사 말풍선으로,
+  // `나 |"…"`(주인공=사용자)는 이름표만 떼고 따옴표 대사로 서술에 남긴다.
+  const expanded = source.flatMap((item) => {
+    if (item.kind !== 'narration' || !item.text.includes('|')) return [item]
+    const out: typeof source = []
+    const prose = (text: string) => {
+      const last = out[out.length - 1]
+      if (last?.kind === 'narration') last.text += '\n' + text
+      else out.push({ text, kind: 'narration', speaker: null })
+    }
+    for (const line of item.text.split('\n')) {
+      const m = SPEECH_LINE.exec(line.trim())
+      if (!m) { if (line.trim()) prose(line); continue }
+      const [, who, said] = m as unknown as [string, string, string]
+      if (who === '나') prose(`"${said}"`)
+      else out.push({ text: said, kind: 'dialogue', speaker: self.has(who) ? name : who })
+    }
+    return out
+  })
+
   const segments: Segment[] = []
-  source.forEach((item, index) => {
+  expanded.forEach((item, index) => {
     const paragraph: Paragraph = { text: item.text, kind: item.kind, index }
     const last = segments[segments.length - 1]
     if (item.kind === 'narration') {

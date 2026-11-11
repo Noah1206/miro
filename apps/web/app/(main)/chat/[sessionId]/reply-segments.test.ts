@@ -37,4 +37,8 @@ describe('segmentReply', () => {
     const kinds = segmentReply([], '*^^* 안녕\n\n* 창밖을 본다*\n\n*…* 늦었네요.', '토마스').flatMap(s => s.paragraphs).map((p) => p.kind)
     expect(kinds).toEqual(['dialogue', 'dialogue', 'action'])
   })
+  it('서술 속 `이름 |"대사"` 줄은 말풍선, `나 |"…"` 는 따옴표 서술', () => {
+    const segs = segmentReply([b('narrative', '골목이다.\n차유진 |"야, 왔어?"\n나 |"네."\n재가 떨어졌다.')], '', '나만 안 바뀐 세상')
+    expect(segs.map(s => s.kind === 'bubble' ? `${s.speaker}:${s.paragraphs[0]!.text}` : s.paragraphs.map(p => p.text).join('/'))).toEqual(['골목이다.', '차유진:야, 왔어?', '"네."\n재가 떨어졌다.'])
+  })
 })
