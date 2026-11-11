@@ -30,6 +30,7 @@ import { getT } from '@/lib/i18n/server'
 import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
 import { ImmersiveProvider, VoiceStatus } from './immersive'
+import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
 import { RoomMenu } from '@/components/room-menu'
 import { feature, voicePaused } from '@miro/config'
 import { ensembleNames } from '@miro/engine'
@@ -84,7 +85,9 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   if (!loaded || !mature) notFound()
   // 11/6: 언베일 표지 캐릭터는 언베일을 안 켠 사람에게 대화 속 사진(인트로·상황 사진)도 흐린다.
   const [unveilOn, unread] = await Promise.all([homeUnveilEnabled(user.id), unreadContactCount(user.id)])
-  const veilPhotos = !!rec?.coverUnveil && !unveilOn
+  // 11/12: 표지가 언베일이 아니어도 인트로에 노골적인 글이 있는 작품이면 같이 가린다(lib/explicit-text). 글은 아래 items 에서 가림 문구로 바꾼다.
+  const introExplicit = all.some(m => m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content))
+  const veilPhotos = (!!rec?.coverUnveil || introExplicit) && !unveilOn
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
 
@@ -98,12 +101,12 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const castPhotos = { ...Object.fromEntries(cast.flatMap((name, i) => castImages[i] ? [[name, castImages[i]!]] : [])), ...named }
   const items: Msg[] = history.map((m) => ({
     id: m.id, role: m.role, kind: m.hiddenAt ? 'hidden' : m.kind,
-    content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : m.content,
-    blocks: m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
+    content: m.hiddenAt ? t('운영 정책에 따라 숨김 처리된 메시지입니다.') : !unveilOn && m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content) ? t(VEILED_LINE) : m.content,
+    blocks: !unveilOn && m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content) ? [] : m.blocks as Array<Record<string, unknown>>, at: m.createdAt.toISOString(),
     opening: m.turnIndex <= 0 && !m.hiddenAt && (m.kind === 'text' || m.kind === 'photo') && (m.role === 'character' || m.role === 'narrator'),
   }))
   if (history.length === 0 && s.character.worldRole.startingContext) items.push({
-    id: `opening:${sessionId}`, role: 'narrator', kind: 'text', content: s.character.worldRole.startingContext, blocks: [], opening: true,
+    id: `opening:${sessionId}`, role: 'narrator', kind: 'text', content: !unveilOn && explicitText(s.character.worldRole.startingContext) ? t(VEILED_LINE) : s.character.worldRole.startingContext, blocks: [], opening: true,
   })
 
   return (

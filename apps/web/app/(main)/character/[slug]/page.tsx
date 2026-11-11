@@ -1,6 +1,7 @@
 import { officialDescription, officialEntry, officialIntro, officialSamples } from '@/lib/editorial/official-copy'
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
+import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
 import { RichText } from '@/components/scene/rich-text'
 import { characterEditorial } from '@/components/scene/character-editorial'
 import { sampleWithAtmosphere } from '@/lib/sample-atmosphere'
@@ -68,10 +69,10 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       briefing: officialEntry(stored!, stored!.sampleDialogue, scene),
       label: scene || t('처음부터'),
       meta: [opening?.time ?? c.startingTime, opening?.location ?? c.worldLocation].filter(Boolean).join(' | '),
-      context: editedDescription ? '' : me(opening?.context ?? c.startingContext),
+      context: editedDescription ? '' : !unveil && explicitText(opening?.context ?? c.startingContext) ? t(VEILED_LINE) : me(opening?.context ?? c.startingContext),
       lines: introDialogue(c.sampleDialogue, scene).map((d) => ({
         role: d.role === 'character' ? 'character' as const : 'narrator' as const,
-        text: d.role === 'narrator' ? me(d.text) : d.text,
+        text: !unveil && explicitText(d.text) ? t(VEILED_LINE) : d.role === 'narrator' ? me(d.text) : d.text,
         ...(d.image ? { image: d.image } : {}),
       })),
     }
@@ -80,7 +81,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const enter = startRoleplay.bind(null, slug)
   // 11/4: 언베일 수위 사진(대표·갤러리·인트로 장면)은 언베일을 안 켠 사람에게 흐리게 — 누르면 성인 본인인증 후 언베일이 켜진다.
   const unlockAt = { signedIn: !!user, returnTo: `/character/${slug}?unveil=enable` }
-  const veilIntro = c.coverUnveil && !unveil ? unlockAt : null
+  // 11/12: 표지가 언베일이 아니어도 인트로에 노골적인 글이 있는 작품이면 인트로 사진을 같이 가린다. 글은 위 lines 에서 가림 문구로 바꾼다.
+  const veilIntro = (c.coverUnveil || c.sampleDialogue.some(d => d.purpose === 'intro' && explicitText(d.text))) && !unveil ? unlockAt : null
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
   const heroImages = c.images
   // 장르와 관계 키워드가 겹치면 한 번만(11/4 #동창회 #첫사랑 두 번).
