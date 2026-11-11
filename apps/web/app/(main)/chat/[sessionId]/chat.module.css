@@ -632,3 +632,5 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
   .siteNav a { color: var(--color-text-secondary); font-size: 15px; font-weight: 600; text-decoration: none; }
   .siteNav a:hover { color: var(--color-text-primary); }
 }
+/* 11/11 사용자: 휴대폰에서 입력창이 켜진 채 대화를 위로 올리면 헤더를 숨긴다(chat-viewport.ts 가 data-header-hidden 을 건다). */
+:global([data-header-hidden='true']) .header { display:none; }
