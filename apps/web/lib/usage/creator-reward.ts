@@ -7,7 +7,9 @@ import { commit, reserve, type UsageTransaction } from './guard'
  * 공식 캐릭터·자기 캐릭터와의 대화는 빼고, 턴 차감이 취소되면(리롤·실패) 같이 회수한다. 지급은 (provider, 예약 id) UNIQUE 로 한 번만.
  * 어뷰징은 가입 3일 미만·게스트 제외와 하루 상한으로 막는다. 유료 토큰으로 낸 몫의 보상만 수익(출금 가능)에 쌓인다.
  */
-export const CREATOR_REWARD_RATE = 0.1
+// 11/12 사용자: "업계 최고로, 지금은 원가를 따질 때가 아니다 — 30% 고정"(베이비챗 일반 10~13%·독점 28~37%, 제타는 정산 제도 확인 안 됨). 등급·독점 조건 없이 누구나.
+// 내리는 건 회원에게 불리한 변경(30일 전 공지)이라 쉽게 못 내린다.
+export const CREATOR_REWARD_RATE = 0.3
 export const CREATOR_REWARD_PROVIDER = 'creator_reward'
 /** 무료 토큰(월간 제공·출석·가입 선물)으로 한 대화의 보상 — 출금이 안 되니 수익이 아니라 일반 지갑으로 바로 들어간다. */
 export const CREATOR_REWARD_FREE_PROVIDER = 'creator_reward_free'
@@ -23,7 +25,7 @@ export const VOICE_REWARD_FREE_PROVIDER = 'voice_reward_free'
 export const VOICE_REWARD_DAILY_CAP_PER_PAYER = 100
 const VOICE_PROVIDERS = [VOICE_REWARD_PROVIDER, VOICE_REWARD_FREE_PROVIDER]
 /** 11/11 어뷰징 막기 — 한 사람이 같은 크리에이터에게 하루(한국 시간)에 만들어 줄 수 있는 대화 보상 상한, 보상에서 빼는 새 계정 기간. */
-export const REWARD_DAILY_CAP_PER_PAYER = 300
+export const REWARD_DAILY_CAP_PER_PAYER = 900   // 11/12 비율을 3배(10→30%)로 올리며 같이 3배 — 한 사람이 하루 3,000 토큰을 쓸 때까지라는 기준은 그대로
 export const REWARD_NEW_ACCOUNT_DAYS = 3
 /** 보상 기록의 externalRef = '예약 id|캐릭터 id' — 예약 id 로 한 번만 지급하고, 캐릭터 id 로 작품별 수익을 묶는다. */
 const refOf = (reservationId: string, characterId: string) => `${reservationId}|${characterId}`
@@ -48,7 +50,7 @@ export async function accrueCreatorReward(tx: UsageTransaction, opts: { reservat
     where g.user_id = ${c.ownerId} and g.provider in (${CREATOR_REWARD_PROVIDER}, ${CREATOR_REWARD_FREE_PROVIDER}) and g.status = 'active' and l.user_id = ${opts.payerId} and g.created_at >= ${KST_DAY_START}`)
   const amount = Math.min(Math.floor(l.amount * CREATOR_REWARD_RATE), REWARD_DAILY_CAP_PER_PAYER - (today?.sum ?? 0))
   if (amount <= 0) return
-  // 이 턴에서 충전 토큰으로 낸 몫의 10% 까지만 수익(출금 가능), 나머지는 일반 지갑.
+  // 이 턴에서 충전 토큰으로 낸 몫의 30%(CREATOR_REWARD_RATE) 까지만 수익(출금 가능), 나머지는 일반 지갑.
   const [paid] = await tx.select({ n: sql<number>`coalesce(sum(${rechargeLedger.amount}), 0)::int` }).from(rechargeLedger)
     .innerJoin(rechargeGrants, and(eq(rechargeGrants.id, rechargeLedger.grantId), eq(rechargeGrants.source, 'purchase')))
     .where(eq(rechargeLedger.ledgerId, opts.reservationId))

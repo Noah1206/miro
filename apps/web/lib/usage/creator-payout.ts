@@ -10,7 +10,7 @@ import { commit, earningsBalance, EARNINGS_PROVIDERS, reserve, UsageExceededErro
  *  - 대화 1000토큰(유료) → 매출 ≥6,670원, AI ≤3,333원, 크리에이터 100토큰 × 5원 = 500원 → 운영 ≥2,837원
  *  - 응원 1000토큰 → 매출 ≥6,670원, AI 0, 크리에이터 700토큰 × 5원 = 3,500원 → 운영 ≥3,170원
  * 그래서 1토큰 = 5원. 무료 토큰(출석·가입 선물·월간 제공)으로 한 대화의 보상은 앱 안에서만 쓰고 출금은 안 된다 —
- * 유료로 낸 몫의 10% 만 출금 대상(응원은 원래 유료 토큰만).
+ * 유료로 낸 몫의 30%(11/12 인상, 그 전 10%) 만 출금 대상(응원은 원래 유료 토큰만).
  */
 export const PAYOUT_KRW_PER_TOKEN = 5
 export const PAYOUT_MIN_KRW = 30_000

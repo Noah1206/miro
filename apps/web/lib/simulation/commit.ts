@@ -108,7 +108,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
         const [r] = await tx.update(usageLedger).set({ status: 'committed' }).where(and(eq(usageLedger.id, input.reservationId), eq(usageLedger.userId, session.userId), eq(usageLedger.status, 'reserved'))).returning({ id: usageLedger.id })
         if (!r) throw new StaleStateError()
       }
-      // 11/11 창작 보상 — 다른 사람이 만든 캐릭터와의 턴이면 쓴 토큰의 10% 를 만든 사람에게 적립한다.
+      // 11/11 창작 보상 — 다른 사람이 만든 캐릭터와의 턴이면 쓴 토큰의 30%(11/12, CREATOR_REWARD_RATE) 를 만든 사람에게 적립한다.
       await accrueCreatorReward(tx, { reservationId: input.reservationId, payerId: session.userId, characterId: input.characterId })
     }
     const t = input.transition
