@@ -86,8 +86,8 @@ export async function transferToWallet(opts: { userId: string; amount: number; r
 /** 수익 지갑 내역 — 들어온 것(창작 보상·받은 응원)과 나간 것(지갑으로 옮김·출금 신청). */
 export async function earningsHistory(userId: string): Promise<Array<{ id: string; at: Date; label: string; amount: number }>> {
   const rows = await db.execute<{ id: string; at: string; label: string; amount: number }>(sql`
-    select id::text, created_at::text as at, case provider when 'creator_cheer' then '받은 응원' else '창작 보상' end as label, (amount - refunded) as amount
-      from ${rechargeGrants} where user_id = ${userId} and status = 'active' and provider in ('creator_reward', 'creator_cheer')
+    select id::text, created_at::text as at, case provider when 'creator_cheer' then '받은 응원' when 'voice_reward' then '목소리 보상' else '창작 보상' end as label, (amount - refunded) as amount
+      from ${rechargeGrants} where user_id = ${userId} and status = 'active' and provider in ('creator_reward', 'creator_cheer', 'voice_reward')
     union all
     select id::text, created_at::text, case kind when 'payout' then '출금 신청' else '지갑으로 옮김' end, -amount
       from usage_ledger where user_id = ${userId} and kind in ('payout', 'earnings_transfer') and status = 'committed'

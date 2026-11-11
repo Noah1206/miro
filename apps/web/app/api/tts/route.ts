@@ -11,6 +11,7 @@ import { voiceColumns } from '@/lib/voice'
 import { segmentVoice } from '@/lib/speech/access'
 import { takeUserQuota, takeVoiceWake } from '@/lib/usage/user-quota'
 import type { TtsProvider, TtsRequest } from '@miro/providers'
+import { accrueVoiceReward } from '@/lib/usage/creator-reward'
 
 export const runtime = 'nodejs'
 // The actual native model's cold load exceeded30s in the local comparison.
@@ -76,6 +77,8 @@ export async function POST(req: Request) {
     if (lines.some(l => !l.voice)) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
     try {
       const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId }, AbortSignal.any([req.signal, AbortSignal.timeout(170_000)]))
+      // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
+      await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: lines.map(l => l.voice ?? '') }).catch(() => {})
       return new Response(out.stream, { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
     } catch { return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }

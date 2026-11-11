@@ -51,7 +51,7 @@ export type UsageTransaction = Parameters<Parameters<typeof db.transaction>[0]>[
  * 11/11 수익 지갑 — 창작 보상(유료 몫)·받은 응원은 일반 지갑과 따로 쌓인다. 대화 등에 자동으로 쓰이지 않고,
  * 크리에이터가 '지갑으로 옮기기'(단방향) 하거나 출금할 때만 빠진다(onlyProviders).
  */
-export const EARNINGS_PROVIDERS = ['creator_reward', 'creator_cheer']
+export const EARNINGS_PROVIDERS = ['creator_reward', 'creator_cheer', 'voice_reward']   // voice_reward(11/12) = 목소리 보상 중 충전 토큰에서 생긴 몫
 const notEarnings = or(isNull(rechargeGrants.provider), notInArray(rechargeGrants.provider, EARNINGS_PROVIDERS))
 
 async function takeFromGrants(tx: UsageTransaction, userId: string, need: number, now: Date, paidOnly = false, onlyProviders?: string[]): Promise<{ grantId: string; amount: number }[]> {

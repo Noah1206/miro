@@ -31,14 +31,14 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
       from ${usageLedger} where ${usageLedger.userId} = ${userId} and ${usageLedger.kind} not in ('payout', 'earnings_transfer')
       union all
       select 'grant:' || ${rechargeGrants.id}::text, ${rechargeGrants.createdAt},
-        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' when ${rechargeGrants.provider} = 'creator_reward_free' then '창작 보상' when ${rechargeGrants.provider} = 'earnings_transfer' then '수익에서 옮김' else '토큰 지급' end,
+        case when ${rechargeGrants.source} = 'purchase' then '토큰 충전' when ${rechargeGrants.provider} = 'welcome' then '가입 선물' when ${rechargeGrants.provider} = 'creator_reward_free' then '창작 보상' when ${rechargeGrants.provider} = 'voice_reward_free' then '목소리 보상' when ${rechargeGrants.provider} = 'earnings_transfer' then '수익에서 옮김' else '토큰 지급' end,
         ${rechargeGrants.amount} - ${rechargeGrants.refunded},
         case when ${rechargeGrants.refunded} > 0 then '회수 ' || ${rechargeGrants.refunded}::text
           when ${rechargeGrants.expiresAt} is not null then to_char(${rechargeGrants.expiresAt} at time zone 'Asia/Seoul', 'YYYY.MM.DD') || '까지'
           else '월초에 초기화되지 않아요' end,
         case when ${rechargeGrants.status} = 'revoked' then '환불됨'
           when ${rechargeGrants.expiresAt} <= now() then '기한 지남' else '지급 완료' end
-      from ${rechargeGrants} where ${rechargeGrants.userId} = ${userId} and ${rechargeGrants.provider} is distinct from 'creator_reward' and ${rechargeGrants.provider} is distinct from 'creator_cheer'
+      from ${rechargeGrants} where ${rechargeGrants.userId} = ${userId} and ${rechargeGrants.provider} is distinct from 'creator_reward' and ${rechargeGrants.provider} is distinct from 'creator_cheer' and ${rechargeGrants.provider} is distinct from 'voice_reward'
       union all
       select 'order:' || ${bankTransferOrders.id}::text, ${bankTransferOrders.createdAt},
         case ${bankTransferOrders.kind} when 'pass' then 'Pro 1개월 이용권' else '토큰 충전 주문' end,

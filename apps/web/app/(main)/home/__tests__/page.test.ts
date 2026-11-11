@@ -16,7 +16,6 @@ vi.mock('@/components/ui', () => ({
   TransitionLink: ({ children, href }: { children: React.ReactNode; href: string }) => React.createElement('a', { href }, children),
 }))
 vi.mock('@/components/site-footer', () => ({ SiteFooter: () => null }))
-vi.mock('@/components/legal-revision-notice', () => ({ LegalRevisionToast: () => null }))
 vi.mock('../audience-select', () => ({ AudienceSelect: () => React.createElement('button', null, '전체') }))
 vi.mock('../row', () => ({ Row: () => null }))
 vi.mock('../banner', () => ({ HomeBanner: () => null }))

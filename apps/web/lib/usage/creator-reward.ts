@@ -1,5 +1,5 @@
 import { and, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
-import { characters, db, rechargeGrants, rechargeLedger, usageLedger, users } from '@miro/db'
+import { characters, db, officialVoices, rechargeGrants, rechargeLedger, turnUndos, usageLedger, users } from '@miro/db'
 import { commit, reserve, type UsageTransaction } from './guard'
 
 /**
@@ -12,6 +12,16 @@ export const CREATOR_REWARD_PROVIDER = 'creator_reward'
 /** 무료 토큰(월간 제공·출석·가입 선물)으로 한 대화의 보상 — 출금이 안 되니 수익이 아니라 일반 지갑으로 바로 들어간다. */
 export const CREATOR_REWARD_FREE_PROVIDER = 'creator_reward_free'
 const REWARD_PROVIDERS = [CREATOR_REWARD_PROVIDER, CREATOR_REWARD_FREE_PROVIDER]
+/**
+ * 목소리 보상(11/12) — 목소리만 올리는 크리에이터를 위해: 다른 회원이 내가 녹음해 공개한 목소리로 답을 들으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게.
+ * 작품 보상(10%)과 같은 지갑·같은 규칙(유료 몫만 수익, 가입 3일 미만·게스트 제외, 하루 상한, 차감 취소 시 회수)이고 비율만 작다(사용자 결정 3%).
+ * 한 턴에 여러 회원의 목소리가 쓰이면 3% 를 목소리 수로 나눈다. 운영자 목소리·자기 목소리로 들은 턴은 없다.
+ */
+export const VOICE_REWARD_RATE = 0.03
+export const VOICE_REWARD_PROVIDER = 'voice_reward'
+export const VOICE_REWARD_FREE_PROVIDER = 'voice_reward_free'
+export const VOICE_REWARD_DAILY_CAP_PER_PAYER = 100
+const VOICE_PROVIDERS = [VOICE_REWARD_PROVIDER, VOICE_REWARD_FREE_PROVIDER]
 /** 11/11 어뷰징 막기 — 한 사람이 같은 크리에이터에게 하루(한국 시간)에 만들어 줄 수 있는 대화 보상 상한, 보상에서 빼는 새 계정 기간. */
 export const REWARD_DAILY_CAP_PER_PAYER = 300
 export const REWARD_NEW_ACCOUNT_DAYS = 3
@@ -52,7 +62,57 @@ export async function accrueCreatorReward(tx: UsageTransaction, opts: { reservat
 /** 턴 차감이 취소되면 그 턴의 창작 보상도 회수한다. */
 export async function revokeCreatorReward(tx: UsageTransaction, reservationId: string): Promise<void> {
   await tx.update(rechargeGrants).set({ status: 'revoked' })
-    .where(and(inArray(rechargeGrants.provider, REWARD_PROVIDERS), or(eq(rechargeGrants.externalRef, reservationId), like(rechargeGrants.externalRef, `${reservationId}|%`))))
+    .where(and(inArray(rechargeGrants.provider, [...REWARD_PROVIDERS, ...VOICE_PROVIDERS]), or(eq(rechargeGrants.externalRef, reservationId), like(rechargeGrants.externalRef, `${reservationId}|%`))))
+}
+
+/**
+ * 목소리 보상 적립 — 답을 목소리로 들려준 뒤 부른다(/api/tts 한 턴 통째 경로). voices = 그 턴에 쓰인 엔진 쪽 목소리 id 들.
+ * 그 턴의 차감 기록은 되돌리기 기록(turn_undos — 방마다 마지막 턴 하나)에서 찾는다: 방금 받은 답을 들을 때만 적립되고, 지난 답을 다시 들을 때는 없다.
+ * 같은 턴·같은 목소리는 (provider, externalRef) UNIQUE 로 한 번만.
+ */
+export async function accrueVoiceReward(opts: { sessionId: string; messageId: string; payerId: string; voices: string[] }): Promise<void> {
+  const ids = [...new Set(opts.voices.filter(Boolean))]
+  if (!ids.length) return
+  const owned = (await db.select({ id: officialVoices.id, ownerId: officialVoices.ownerId }).from(officialVoices)
+    .where(and(inArray(officialVoices.providerVoiceId, ids), eq(officialVoices.status, 'active'))))
+    .filter((v): v is { id: string; ownerId: string } => !!v.ownerId && v.ownerId !== opts.payerId)
+  if (!owned.length) return
+  await db.transaction(async tx => {
+    const [undo] = await tx.select({ before: turnUndos.before }).from(turnUndos)
+      .where(and(eq(turnUndos.sessionId, opts.sessionId), sql`${opts.messageId}::uuid = any(${turnUndos.messageIds})`)).limit(1)
+    const reservationId = undo?.before.ledgerId
+    if (!reservationId) return
+    const [l] = await tx.select({ amount: usageLedger.amount, status: usageLedger.status, userId: usageLedger.userId }).from(usageLedger).where(eq(usageLedger.id, reservationId)).limit(1)
+    if (!l || l.status !== 'committed' || l.userId !== opts.payerId) return
+    const [payer] = await tx.select({ isGuest: users.isGuest, createdAt: users.createdAt }).from(users).where(eq(users.id, opts.payerId)).limit(1)
+    if (!payer || payer.isGuest || Date.now() - payer.createdAt.getTime() < REWARD_NEW_ACCOUNT_DAYS * 86_400_000) return
+    const [paid] = await tx.select({ n: sql<number>`coalesce(sum(${rechargeLedger.amount}), 0)::int` }).from(rechargeLedger)
+      .innerJoin(rechargeGrants, and(eq(rechargeGrants.id, rechargeLedger.grantId), eq(rechargeGrants.source, 'purchase')))
+      .where(eq(rechargeLedger.ledgerId, reservationId))
+    const share = (n: number) => Math.floor(n * VOICE_REWARD_RATE / owned.length)
+    for (const voice of owned) {
+      const [today] = await tx.execute<{ sum: number }>(sql`select coalesce(sum(g.amount), 0)::int as sum from ${rechargeGrants} g
+        join ${usageLedger} l on l.id::text = split_part(g.external_ref, '|', 1)
+        where g.user_id = ${voice.ownerId} and g.provider in (${VOICE_REWARD_PROVIDER}, ${VOICE_REWARD_FREE_PROVIDER}) and g.status = 'active' and l.user_id = ${opts.payerId} and g.created_at >= ${KST_DAY_START}`)
+      const amount = Math.min(share(l.amount), VOICE_REWARD_DAILY_CAP_PER_PAYER - (today?.sum ?? 0))
+      if (amount <= 0) continue
+      const earned = Math.min(amount, share(paid?.n ?? 0))
+      const ref = `${reservationId}|voice:${voice.id}`
+      for (const [provider, n] of [[VOICE_REWARD_PROVIDER, earned], [VOICE_REWARD_FREE_PROVIDER, amount - earned]] as const) {
+        if (n > 0) await tx.insert(rechargeGrants).values({ userId: voice.ownerId, amount: n, source: 'grant', provider, externalRef: ref }).onConflictDoNothing()
+      }
+    }
+  })
+}
+
+/** 내 음성 화면의 목소리 보상 요약 — 이번 달(한국 시간)·누적. */
+export async function voiceRewardSummary(userId: string): Promise<{ month: number; total: number }> {
+  const monthStart = sql`date_trunc('month', now() at time zone 'Asia/Seoul') at time zone 'Asia/Seoul'`
+  const [row] = await db.select({
+    total: sql<number>`coalesce(sum(${rechargeGrants.amount}), 0)::int`,
+    month: sql<number>`coalesce(sum(${rechargeGrants.amount}) filter (where ${rechargeGrants.createdAt} >= ${monthStart}), 0)::int`,
+  }).from(rechargeGrants).where(and(eq(rechargeGrants.userId, userId), inArray(rechargeGrants.provider, VOICE_PROVIDERS), eq(rechargeGrants.status, 'active')))
+  return { month: row?.month ?? 0, total: row?.total ?? 0 }
 }
 
 /** 내 캐릭터 화면의 창작 보상 요약 — 이번 달(한국 시간)·누적. */

@@ -10,7 +10,6 @@ import { getLanguage, getT } from '@/lib/i18n/server'
 import { OPERATOR } from '@/lib/legal/operator'
 import { SubmitButton } from '@/components/ui/submit-button'
 import { SiteFooter } from '@/components/site-footer'
-import { LegalRevisionNotice } from '@/components/legal-revision-notice'
 import { logout } from './actions'
 import { MenuItemContent, MenuRow, MenuSection } from './menu'
 import { CreditCard } from './credit-card'
@@ -94,7 +93,6 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <TransitionLink href="/terms/privacy">{t('개인정보 처리방침')}</TransitionLink>
           <TransitionLink href="/terms/refund">{t('취소·환불 규정')}</TransitionLink>
         </div>
-        <LegalRevisionNotice style={{ marginTop: 12, borderRadius: 8 }} />
         <details className={styles.businessDetails}>
           <summary>{t('MIRO 사업자 정보')}<ProfileIcon name="chevron" size={14} /></summary>
           <SiteFooter style={{ marginTop: 8, padding: '16px 0 0', borderTop: '1px solid var(--profile-divider)' }} />
