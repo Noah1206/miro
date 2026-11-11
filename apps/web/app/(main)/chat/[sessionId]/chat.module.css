@@ -629,5 +629,3 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
   .siteNav a { color: var(--color-text-secondary); font-size: 15px; font-weight: 600; text-decoration: none; }
   .siteNav a:hover { color: var(--color-text-primary); }
 }
-/* 11/11 사용자(데스크톱): 상황 서술이 넓은 대화 칸 한 줄을 다 채우지 않고 줄바꿈되게 — 폭을 520px 로 줄여 가운데에(모바일 폭과 비슷한 줄 길이). */
-@media (min-width: 1024px) { .narrationText, :global([data-chat-theme]) .narrationText { max-width: 520px; margin-inline: auto; } }

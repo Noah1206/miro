@@ -199,6 +199,9 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   )
 }
 
+/** 11/11 사용자: 상황 서술은 한 줄을 다 채우지 않고 문장마다 줄바꿈(데스크톱·폰 모두) — 문장 끝(. ! ? … 와 닫는 따옴표) 뒤 공백을 줄바꿈으로. */
+const sentenceLines = (text: string) => text.replace(/([.!?…][)"'”’」]?)[ \t]+(?=\S)/g, '$1\n')
+
 function Message({ m, characterName, portrait, typing = false, mood = 'neutral', onGrow, onDone, veil, cast, castPhotos }: {
   m: Msg; characterName: string; portrait?: string | null; veil?: string; typing?: boolean; mood?: Mood; onGrow?: () => void; onDone?: () => void; cast?: readonly string[]; castPhotos?: Record<string, string>
 }) {
@@ -283,7 +286,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
           <svg className={styles.sceneIcon} viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
           <div className={styles.narrationText}>
-            {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}{line(p)}</p>)}
+            {seg.paragraphs.map((p) => <p key={p.index} hidden={typing && p.index > typed}>{p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}{line({ ...p, text: sentenceLines(p.text) })}</p>)}
           </div>
         </div>
       )
