@@ -18,6 +18,14 @@ VOICES = '/voices/_drama3/serving-voices'
 DEFAULT_VOICE = 'asmr01'
 # ponytail: 목소리 샘플 상태는 목소리 16개까지 들고 있는다(하나 ~100MB) — 넘으면 가장 오래 안 쓴 것부터 버린다
 PREFIX_VOICES = 16
+# 11/11 밤 방 단위 목소리 기억(사용자 청취 "맨 오른쪽이 진짜 너무 좋은데", output/voice-delivery G 구역 · 실험 modal_drama3_session_memory.py):
+# 턴마다 견본만 보고 새로 시작하면 높이·크기·감정이 턴마다 따로 논다 → 같은 방·같은 목소리의 지난 턴(글+소리)을 견본 뒤에 이어 붙인다.
+# 붙이는 것 = 지난 합격 턴 중 견본과 가장 닮은 1개 + 바로 앞 합격 턴. 고장 난 턴(무음·대사 건너뜀)은 기억에 넣지 않는다 — 넣으면 뒤 턴이 따라 무너졌다(1차 실험).
+# ponytail: 기억은 컨테이너 메모리에만 — 서버가 꺼지면(20분) 그 방은 견본만으로 다시 시작한다. 끊김이 거슬리면 볼륨에 코드(턴당 수십 KB)를 저장.
+SESSION_TURNS = 6       # 방·목소리마다 들고 있는 합격 턴 수(가장 닮은 턴은 밀려나지 않게 따로 지킨다)
+SESSIONS = 400          # 기억하는 방·목소리 쌍(코드만이라 작다)
+SESSION_PREFIXES = 24   # 이어 붙인 상태까지 읽어 둔 모델 상태(쌍당 수백 MB) — 넘으면 가장 오래 안 쓴 것부터
+RETRIES = 3             # 무음으로 시작하면 씨앗을 바꿔 다시(11/11 같은 대사가 71초 무음으로 나온 고장)
 # 11/11 오후 .7·.7(안정 설정)로 바꿨다가 음질이 크게 떨어졌다(사용자) — 시험 생성과 같은 설정으로 되돌림. 줄마다 다르던 톤은 감정 지시를 빼서(EMOTION_TAGS) 잡는다.
 SAMPLING = 'fish-space-untruncated-v1'
 EMOTION_TAGS = False   # 11/11 밤 사용자 청취(모녀덮밥 방 7턴, output/voice-delivery E): 지시를 붙인 쪽은 "목소리가 완전 달라져서" 뺌 — 지시 없이 대사 글만으로. 낮의 "감정 지시는 무조건"을 사용자가 뒤집음. 대사 속 소리 태그([moaning] 등)는 그대로.
@@ -53,6 +61,39 @@ def trim_tail(wave, rate, floor=0.004, keep=0.25):
     if not loud.any(): return wave[: int(rate * keep)]
     return wave[: min(len(wave), (int(n - np.argmax(loud[::-1])) * win) + int(rate * keep))]
 
+def speech_stats(text, wave, rate):
+    """(한글 글자 수, 말 구간의 세기, 글자/초) — 괄호 태그는 글자 수에서 뺀다. 소리가 아예 없으면 세기 0."""
+    import re, numpy as np
+    n = len(re.findall('[가-힣]', re.sub(r'\[[^\]]*\]', '', text)))
+    win = max(1, int(rate * 0.02)); k = len(wave) // win
+    if k < 2: return n, 0.0, 0.0
+    energy = np.sqrt(np.mean(wave[: k * win].reshape(k, win) ** 2, axis=1)); loud = energy >= 0.01
+    if not loud.any(): return n, 0.0, 0.0
+    a, b = int(np.argmax(loud)), int(k - np.argmax(loud[::-1]))
+    return n, float(np.sqrt(np.mean(wave[a * win : b * win] ** 2))), n / max((b - a) * 0.02, 0.1)
+
+def broken(text, wave, rate):
+    """다시 만들어야 하는 고장인가 — 거의 무음(11/11 71초 침묵), 또는 긴 대사인데 글자/초가 비정상(대사를 건너뜀·늘어짐). 짧은 줄은 세기만 본다."""
+    n, rms, cps = speech_stats(text, wave, rate)
+    return rms < 0.03 or (n >= 15 and not 2.3 <= cps <= 7.5)
+
+def rest_after(text, seconds, pace=4.2):
+    """seconds 만큼 읽었다면 남은 대사 — 읽은 글자 수(초당 pace 글자)를 지난 첫 문장 끝부터. 남은 게 거의 없으면 ''.
+    ponytail: 읽은 자리를 시간으로 짐작한다(한 문장쯤 겹치거나 빠질 수 있다) — 정확히 하려면 만든 소리를 받아써서 맞춘다."""
+    import re
+    read, seen = int(seconds * pace), 0
+    for m in re.finditer('[가-힣]', text):
+        seen += 1
+        if seen >= read:
+            end = re.search(r'[.!?…]+["\')\]]*\s+', text[m.end():])
+            rest = text[m.end() + end.end():].strip() if end else ''
+            return rest if len(re.findall('[가-힣]', rest)) >= 5 else ''
+    return ''
+
+def healthy(text, wave, rate):
+    """기억에 넣어도 되는 소리인가 — 고장이 아니고, 판단할 만큼 긴 대사."""
+    return speech_stats(text, wave, rate)[0] >= 15 and not broken(text, wave, rate)
+
 def frame_limit(text):
     """생성 프레임 상한(초당 약 21.5프레임). 11/11 한 턴 통째 합성 때문에 1536(71초)→4096(190초) — CUDA 그래프 용량은 프롬프트 포함 10240줄."""
     return min(4096, max(384, len(text) * 24))
@@ -70,7 +111,8 @@ PREWARM_VOICES = (
 image = (base_image.env({'FISH_DRAMA3_FP8_EXPERTS': '0'})
          .pip_install('fastapi[standard]')
          .add_local_python_source('drama3_fullft', 'modal_drama3_compare'))
-app = modal.App('miro-drama3-tts')
+import os as _os
+app = modal.App(_os.environ.get('MIRO_TTS_APP', 'miro-drama3-tts'))   # 시험 배포: MIRO_TTS_APP=miro-drama3-tts-staging modal deploy …
 user_voices = modal.Volume.from_name('miro-user-voices', create_if_missing=True)
 USER_VOICES = '/user-voices'
 PREVIEW_TEXT = '안녕, 오늘 하루는 어땠어? 나는 네 이야기가 제일 궁금했어.'
@@ -100,6 +142,13 @@ class Speaker:
         # 11/11 쓰는 목소리는 켜질 때 미리 준비(목소리 샘플까지 읽은 상태) — 상태 저장 안에 들어가 되살아난 서버는 목소리마다 첫 요청 7.5초가 없다.
         from collections import OrderedDict
         self.prefixes = OrderedDict()
+        self.session_prefixes, self.memory, self.ref_embs = OrderedDict(), OrderedDict(), {}
+        # 기억에서 "견본과 가장 닮은 지난 턴"을 고르는 화자 판별 모델(작다). 못 올리면 가장 처음 합격 턴을 쓴다.
+        try:
+            from transformers import AutoFeatureExtractor, WavLMForXVector
+            self.sv_fe = AutoFeatureExtractor.from_pretrained('microsoft/wavlm-base-plus-sv', cache_dir='/voices/_drama3/hf-cache')
+            self.sv = WavLMForXVector.from_pretrained('microsoft/wavlm-base-plus-sv', cache_dir='/voices/_drama3/hf-cache').to(self.model.device).eval()
+        except Exception as e: self.sv = None; print('speaker model unavailable', type(e).__name__, flush=True)
         print('refs', REFS_VERSION, flush=True)
         for voice in PREWARM_VOICES:
             try: self._prewarm_voice(voice)
@@ -121,6 +170,8 @@ class Speaker:
         print(f'cuda graphs ready in {time.time() - started:.1f}s', flush=True)
         from collections import OrderedDict
         if not hasattr(self, 'prefixes'): self.prefixes = OrderedDict()   # 목소리 → 목소리 샘플까지 읽은 모델 상태(11/6, 아래 generate). 11/11 load 에서 미리 채움
+        for name, value in (('session_prefixes', OrderedDict()), ('memory', OrderedDict()), ('ref_embs', {}), ('sv', None)):
+            if not hasattr(self, name): setattr(self, name, value)
 
     def reference(self, name):
         import os, torch
@@ -141,6 +192,63 @@ class Speaker:
             with torch.inference_mode(): codes = encode_audio(f'{folder}/ref.wav', self.codec, str(self.model.device)).cpu().long()
             self.refs[name] = (text, codes)
         return self.refs[name]
+
+    def embed(self, wave, rate):
+        """화자 임베딩(정규화) — 화자 판별 모델이 없으면 None."""
+        import torch, torchaudio
+        if self.sv is None: return None
+        a = torchaudio.functional.resample(torch.as_tensor(wave, dtype=torch.float32), rate, 16000).numpy()
+        with torch.inference_mode():
+            e = self.sv(**{k: x.to(self.sv.device) for k, x in self.sv_fe(a, sampling_rate=16000, return_tensors='pt').items()}).embeddings[0]
+        return torch.nn.functional.normalize(e.float(), dim=-1).cpu()
+
+    def history(self, session, voice, turn=None):
+        """이 방·이 목소리의 다음 턴에 이어 붙일 지난 턴 [(글, 코드)] — 견본과 가장 닮은 1개 + 바로 앞 턴. 다시 듣는 턴 자신은 뺀다."""
+        if not session: return []
+        good = [g for g in self.memory.get((session, voice), []) if g['turn'] != turn or turn is None]
+        if not good: return []
+        # 유사도는 소수 둘째 자리까지만 견준다(같으면 먼저 온 턴) — 0.988 과 0.989 의 차이로 기준 턴이 바뀌면 읽어 둔 상태를 통째로 다시 만들어야 한다(11/11 운영 확인 11초).
+        best = max(good[:-1], key=lambda g: round(g['sim'], 2)) if len(good) > 1 else None
+        return [(g['text'], g['codes']) for g in ((best, good[-1]) if best else (good[-1],))]
+
+    def remember(self, session, voice, turn, text, codes, wave):
+        """합격한 턴만 기억에 넣는다. codes = [칸, 프레임](소리 코드), wave = 그 소리."""
+        import torch
+        if not session or not healthy(text, wave, self.codec.sample_rate): return False
+        if voice not in self.ref_embs:
+            from fish_speech.models.text2semantic.inference import decode_to_audio
+            with torch.inference_mode(): ref_wave = decode_to_audio(self.reference(voice)[1].to(self.model.device), self.codec).float().cpu().numpy().squeeze()
+            self.ref_embs[voice] = self.embed(ref_wave, self.codec.sample_rate)
+        e, ref = self.embed(wave, self.codec.sample_rate), self.ref_embs[voice]
+        good = [g for g in self.memory.get((session, voice), []) if g['turn'] != turn or turn is None]
+        good.append({'turn': turn, 'text': text, 'codes': codes.cpu().long(), 'sim': float(e @ ref) if e is not None and ref is not None else -len(good)})   # 판별 모델이 없으면 먼저 온 턴이 높다
+        if len(good) > SESSION_TURNS:
+            best = max(good[:-1], key=lambda g: round(g['sim'], 2))
+            good = [g for g in good[:-SESSION_TURNS + 1] if g is best] + good[-SESSION_TURNS + 1 :]
+        self.memory[(session, voice)] = good; self.memory.move_to_end((session, voice))
+        while len(self.memory) > SESSIONS: self.memory.popitem(last=False)
+        return True
+
+    def prompts(self, text, voice, history):
+        """(이 글의 프롬프트, 공통 머리말을 재는 짝 프롬프트) — 지난 턴을 이어 붙이면 둘 다 같은 기억을 단다."""
+        from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
+        ref_text, codes = self.reference(voice)
+        make = lambda t: build_drama3_prompt('<|speaker:0|>' + t, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes],
+                                             history=[('<|speaker:0|>' + h, c) for h, c in history])
+        return make(text), make('Zq')
+
+    @modal.method()
+    def prepare(self, session, voice): return self._prepare(session, voice)
+
+    def _prepare(self, session, voice):
+        """턴이 끝난 뒤 뒤에서(유저가 입력하는 동안) 다음 턴이 쓸 상태를 미리 읽어 둔다 — 이어 붙인 기억(약 1,500~2,000줄)을 요청 때 읽으면 첫소리가 몇 초 늦는다."""
+        import torch
+        history = self.history(session, voice)
+        if not history: return False
+        with torch.inference_mode():
+            prompt, other = self.prompts('안녕.', voice, history)
+            for _ in self._decode(prompt, voice, 1, key=(session, voice), other=other): pass
+        return True
 
     def speak(self, text, voice, reuse=True, seed=True):
         import io, numpy as np, soundfile as sf, torch
@@ -214,7 +322,7 @@ class Speaker:
         for frames, rows, produced, done in self._decode(prompt, voice, max_new_tokens):
             if done: return frames[rows : rows + produced].cpu()
 
-    def _decode(self, prompt, voice, max_new_tokens, every=0):
+    def _decode(self, prompt, voice, max_new_tokens, every=0, key=None, other=None):
         """generate_drama3 와 같은 생성(같은 샘플링·같은 디코드 그래프)인데, 목소리 샘플까지 읽은 상태를 목소리마다 저장해 두고 되돌려 쓴다(11/6).
         요청마다 같은 목소리 샘플 ~670줄을 다시 읽느라 4.7초씩 들던 준비를, 목소리당 처음 한 번만 한다.
         모델은 위치별로 저장되는 주의층과, 앞 내용을 상태 하나로 요약하는 순환층(GatedDeltaNet)이 섞여 있다 —
@@ -247,31 +355,46 @@ class Speaker:
         linear = [l.linear_attn for l in backbone.model.layers if l.layer_type != 'full_attention']
         towers = [l.transformer_layer.attention for l in (*tower.shared_layers, *tower.residual_layers)]
         started = time.perf_counter()
-        saved = self.prefixes.get(voice)
-        if saved and rows > saved['cut'] + 1 and torch.equal(prompt[: saved['cut'] + 1], saved['rows']):
+        # key 가 있으면 방·목소리 단위 저장소(이어 붙인 기억까지 읽은 상태), 없으면 목소리 단위(견본까지).
+        store, name, limit = (self.session_prefixes, key, SESSION_PREFIXES) if key else (self.prefixes, voice, PREFIX_VOICES)
+        def restore(saved):
             cut = saved['cut']
             for a, (k, v) in zip(attn, saved['attn']): a.k_cache[:1, :, :cut].copy_(k); a.v_cache[:1, :, :cut].copy_(v)
             for g, (c, r) in zip(linear, saved['linear']): g.conv_state[:1].copy_(c); g.recurrent_state[:1].copy_(r)
             for t, (k, v) in zip(towers, saved['tower']): t.k_cache[:, :, :cut].copy_(k); t.v_cache[:, :, :cut].copy_(v)
-            self.prefixes.move_to_end(voice)
+            return cut
+        fits = lambda saved: bool(saved) and rows > saved['cut'] + 1 and torch.equal(prompt[: saved['cut'] + 1], saved['rows'])
+        saved = store.get(name)
+        # 방 단위는 기억이 턴마다 늘어난다 — 저장된 상태가 앞부분만 맞으면(지난 턴 하나가 더 붙음) 그 뒤만 이어 읽어 다시 저장한다.
+        # 11/11 운영 확인: 이걸 안 해서 앞부분만 재사용하고 새로 붙은 턴(약 1,000줄)을 요청마다 다시 읽어 첫소리가 6초였다.
+        longer = None
+        if key and other is not None:
+            common = next((i for i in range(min(len(other), rows)) if not torch.equal(other[i], prompt[i])), min(len(other), rows))
+            longer = (common - 1) // 128 * 128
+        if fits(saved) and (longer is None or saved['cut'] >= longer):
+            cut = restore(saved)
+            store.move_to_end(name)
             hit = True
         else:
-            # 공통 머리말 = 서로 다른 두 글로 만든 프롬프트가 같은 줄까지(목소리 샘플·지시문·화자 표시)
-            from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
-            ref_text, codes = self.reference(voice)
-            other = build_drama3_prompt('<|speaker:0|>' + 'Zq', model.tokenizer, model.config, ['<|speaker:0|>' + ref_text], [codes])
+            # 공통 머리말 = 서로 다른 두 글로 만든 프롬프트가 같은 줄까지(목소리 샘플·지시문·화자 표시, 이어 붙인 기억)
+            if other is None:
+                from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
+                ref_text, codes = self.reference(voice)
+                other = build_drama3_prompt('<|speaker:0|>' + 'Zq', model.tokenizer, model.config, ['<|speaker:0|>' + ref_text], [codes])
             common = next((i for i in range(min(len(other), rows)) if not torch.equal(other[i], prompt[i])), min(len(other), rows))
             # 11/6: 끊는 자리를 fish-speech 의 읽기 단위(128줄) 경계로 — 경계가 다르면 계산이 미세하게 달라져 소리가 갈렸다(사용자 청취: 예전이 나음).
             # 경계를 맞추면 계산 순서가 generate_drama3 와 같아 같은 씨앗에서 예전과 똑같은 소리가 난다(bench 의 same_as_old).
             cut = (common - 1) // 128 * 128
             hit = False
             if cut > 0:
-                prefill(0, cut)
-                self.prefixes[voice] = {'cut': cut, 'rows': prompt[: cut + 1].clone(),
+                # 방 단위 상태를 새로 만들 때도 견본까지는 목소리 단위 상태에서 되돌려 쓴다(견본 512줄을 다시 읽지 않는다). 둘 다 128줄 경계라 계산은 같다.
+                base = saved if fits(saved) and saved['cut'] < cut else self.prefixes.get(voice) if key else None
+                prefill(restore(base) if fits(base) and base['cut'] < cut else 0, cut)
+                store[name] = {'cut': cut, 'rows': prompt[: cut + 1].clone(),
                     'attn': [(a.k_cache[:1, :, :cut].clone(), a.v_cache[:1, :, :cut].clone()) for a in attn],
                     'linear': [(g.conv_state[:1].clone(), g.recurrent_state[:1].clone()) for g in linear],
                     'tower': [(t.k_cache[:, :, :cut].clone(), t.v_cache[:, :, :cut].clone()) for t in towers]}
-                while len(self.prefixes) > PREFIX_VOICES: self.prefixes.popitem(last=False)
+                while len(store) > limit: store.popitem(last=False)
             else: cut = 0
         hidden = prefill(cut, rows)
         print(f'prefill {rows} rows (reused {cut if hit else 0}) in {time.perf_counter() - started:.2f}s', flush=True)
@@ -297,36 +420,62 @@ class Speaker:
                 hidden = backbone(inputs_embeds=tower.embed_backbone(sampled, backbone.embed(sampled[:, 0]))[None], input_pos=positions[position + 1 : position + 2])[0].to(tower.device)
         yield frames, rows, produced, True
 
-    def speak_stream(self, text, voice):
+    def speak_stream(self, text, voice, session=None, turn=None, _depth=0):
         """11/11 스트리밍(사용자: 첫소리가 늦다) — 만드는 대로 소리 조각(PCM16 모노)을 내보낸다. 생성 계산은 speak 와 같다(같은 씨앗 → 같은 프레임).
-        코덱은 조각마다 앞 STREAM_CTX 프레임을 문맥으로 함께 풀고 새 부분만 보낸다 — 이음새가 전체를 한 번에 푼 것과 같은지는 stream_check 로 잰다."""
-        import zlib, numpy as np, torch
-        from fish_speech.models.text2semantic.fish_omni.generate import build_drama3_prompt
-        ref_text, codes = self.reference(voice)
-        limit = frame_limit(text)
-        torch.manual_seed(zlib.crc32((voice or DEFAULT_VOICE).encode()))
-        import time
-        sent, first, t0, quiet, rate = 0, True, time.perf_counter(), 0, self.codec.sample_rate
-        with torch.inference_mode():
-            prompt = build_drama3_prompt('<|speaker:0|>' + text, self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
-            for frames, rows, produced, done in self._decode(prompt, voice or DEFAULT_VOICE, limit, every=STREAM_FIRST):
-                upto = produced if done else produced - STREAM_HOLD
-                if not done and upto - sent < (STREAM_FIRST if first else STREAM_EVERY): continue
-                if upto <= sent: continue
-                start = max(0, sent - STREAM_CTX)
-                t1 = time.perf_counter()
-                wave = self.codec_decode(frames[rows + start : rows + upto])
-                if first: print(f'stream first chunk: {produced} frames at {t1 - t0:.2f}s, decode {time.perf_counter() - t1:.2f}s', flush=True)
-                per = len(wave) // (upto - start)
-                chunk = wave[(sent - start) * per :]
-                sent, first = upto, False
-                # 11/11 안전망: 2초 넘게 소리가 없으면 말이 끝난 것 — 남은 침묵을 만들지 않고 멈춘다(견본 침묵을 흉내 내 1분 넘게 이어진 적이 있다).
-                quiet = quiet + len(chunk) if np.sqrt(np.mean(chunk ** 2)) < 0.004 else 0
-                if quiet > rate * 2:
-                    yield (np.clip(chunk[: int(rate * 0.3)], -1, 1) * 32767).astype('<i2').tobytes(); return
-                yield (np.clip(chunk, -1, 1) * 32767).astype('<i2').tobytes()
+        코덱은 조각마다 앞 STREAM_CTX 프레임을 문맥으로 함께 풀고 새 부분만 보낸다 — 이음새가 전체를 한 번에 푼 것과 같은지는 stream_check 로 잰다.
+        session 이 있으면 그 방의 지난 턴을 이어 붙이고(history), 끝난 뒤 합격한 소리를 기억에 넣는다. 소리 없이 시작하면(2초) 씨앗을 바꿔 다시 — 그때까지 보낸 것이 없어 듣는 쪽은 모른다."""
+        import time, zlib, numpy as np, torch
+        voice = voice or DEFAULT_VOICE
+        limit, rate = frame_limit(text), self.codec.sample_rate
+        history = self.history(session, voice, turn)
+        pcm = lambda w: (np.clip(w, -1, 1) * 32767).astype('<i2').tobytes()
+        for attempt in range(RETRIES):
+            torch.manual_seed(zlib.crc32(voice.encode()) + attempt)   # attempt 0 = 목소리마다 같은 씨앗(11/11)
+            sent, first, t0, quiet, held, loud, again, wave, codes = 0, True, time.perf_counter(), 0, [], False, False, None, None
+            with torch.inference_mode():
+                prompt, other = self.prompts(text, voice, history)
+                for frames, rows, produced, done in self._decode(prompt, voice, limit, every=STREAM_FIRST, key=(session, voice) if history else None, other=other):
+                    upto = produced if done else produced - STREAM_HOLD
+                    if not done and upto - sent < (STREAM_FIRST if first else STREAM_EVERY): continue
+                    if upto <= sent: continue
+                    start = max(0, sent - STREAM_CTX)
+                    t1 = time.perf_counter()
+                    wave = self.codec_decode(frames[rows + start : rows + upto])
+                    if start == 0: codes = frames[rows : rows + upto, 1:].T.clone()   # STREAM_CTX 가 커서 늘 처음부터 — wave 가 지금까지의 소리 전체다
+                    if first: print(f'stream first chunk: {produced} frames at {t1 - t0:.2f}s, decode {time.perf_counter() - t1:.2f}s, history {len(history)}, attempt {attempt}', flush=True)
+                    per = len(wave) // (upto - start)
+                    chunk = wave[(sent - start) * per :]
+                    sent, first = upto, False
+                    # 11/11 안전망: 2초 넘게 소리가 없으면 말이 끝난 것 — 남은 침묵을 만들지 않고 멈춘다(견본 침묵을 흉내 내 1분 넘게 이어진 적이 있다).
+                    quiet = quiet + len(chunk) if np.sqrt(np.mean(chunk ** 2)) < 0.004 else 0
+                    if not loud:
+                        if quiet:
+                            if quiet > rate * 2: again = attempt < RETRIES - 1; break   # 소리 없이 시작 — 다시(마지막 시도면 그냥 끝)
+                            held.append(chunk); continue
+                        loud = True
+                        for h in held: yield pcm(h)
+                    if quiet > rate * 2:
+                        yield pcm(chunk[: int(rate * 0.3)]); break
+                    yield pcm(chunk)
+            if again: print(f'silent start, retry {attempt + 1}', flush=True); continue
+            if not loud and held: yield pcm(held[0][: int(rate * 0.3)])   # 끝까지 소리가 없었다 — 빈 응답 대신 짧은 침묵
+            # 11/11 운영 확인: 지난 턴을 이어 붙인 턴이 대사 160자 중 앞부분만 읽고 끝났다(5.9초). 이미 내보낸 소리는 되돌릴 수 없으니 남은 대사를 이어서 만든다(한 번만).
+            if loud and wave is not None and _depth == 0:
+                n, _, cps = speech_stats(text, wave, rate)
+                rest = rest_after(text, len(wave) / rate) if n >= 15 and cps > 7.5 else ''
+                if rest:
+                    print(f'ended early at {len(wave) / rate:.1f}s ({cps:.1f} chars/s), continuing', flush=True)
+                    yield pcm(np.zeros(int(rate * 0.25), dtype='float32'))
+                    yield from self.speak_stream(rest, voice, session, turn, _depth=1)
+                    return
+            if quiet and loud and codes is not None:   # 끝의 침묵은 기억에 넣지 않는다(다음 턴이 침묵을 흉내 낸다)
+                drop = int(quiet // per); codes, wave = codes[:, : codes.shape[1] - drop], wave[: len(wave) - drop * per]
+            if session and loud and wave is not None and codes is not None and _depth == 0:   # 이어 만든 뒷부분은 기억에 넣지 않는다(턴 전체가 아니다)
+                try: print('remembered' if self.remember(session, voice, turn, text, codes, wave) else 'not remembered', flush=True)
+                except Exception as e: print('remember failed', type(e).__name__, flush=True)
+            return
 
-    def speak_turn(self, lines):
+    def speak_turn(self, lines, session=None, turn=None):
         """11/11 한 턴 통째로(사용자: 묶음이 아니라 1턴당 바로, 작품은 인물별 대사 전체를 만들어 잘라 쓰기).
         lines = 대화 순서의 대사 묶음 [{text, voice, delivery}] — 같은 사람이 이어 한 말은 이미 한 줄(앱 spokenSegments).
         목소리가 하나면 한 번에 합성하며 그대로 흘려보낸다. 여럿이면 목소리마다 그 턴의 대사를 전부 한 번에 합성하고,
@@ -339,29 +488,69 @@ class Speaker:
         rate = self.codec.sample_rate
         if len(groups) == 1:
             voice = next(iter(groups))
-            yield from self.speak_stream(turn_text(lines), voice)
+            yield from self.speak_stream(turn_text(lines), voice, session, turn)
+            self.prepare_later(session, [voice])
             return
         # 11/11 첫소리를 먼저(사용자): 대화 순서대로 필요할 때 만든다 — 그 턴에 한 번만 말하는 인물은 만드는 대로 흘려보내고,
         # 여러 번 말하는 인물은 그 인물의 대사 전체를 한 번에 만든 뒤 잘라 첫 조각부터 보낸다. 뒤 인물은 앞 소리가 재생되는 동안 만든다.
         pieces = {}
         def make(voice, idx):
-            text = ' '.join(lines[i]['text'] for i in idx)
-            ref_text, codes = self.reference(voice)
-            torch.manual_seed(zlib.crc32(voice.encode()))
-            with torch.inference_mode():
-                prompt = build_drama3_prompt('<|speaker:0|>' + turn_text([lines[i] for i in idx]), self.model.tokenizer, self.model.config, ['<|speaker:0|>' + ref_text], [codes])
-                wave = trim_tail(self.codec_decode(self.generate(prompt, voice, frame_limit(text))), rate)
+            text, tagged = ' '.join(lines[i]['text'] for i in idx), turn_text([lines[i] for i in idx])
+            history = self.history(session, voice, turn)
+            # 통째로 만든 뒤 자르는 길이라 다 듣고 판단할 수 있다 — 고장(무음·대사 건너뜀)이면 씨앗을 바꿔 다시.
+            for attempt in range(RETRIES):
+                torch.manual_seed(zlib.crc32(voice.encode()) + attempt)
+                with torch.inference_mode():
+                    prompt, other = self.prompts(tagged, voice, history)
+                    for frames, rows, produced, done in self._decode(prompt, voice, frame_limit(text), key=(session, voice) if history else None, other=other):
+                        if done: frames = frames[rows : rows + produced].cpu()
+                    if len(frames) == 0: continue
+                    whole = self.codec_decode(frames)
+                if not broken(tagged, whole, rate): break
+                print(f'broken turn piece, retry {attempt + 1}', flush=True)
+            if len(frames) == 0: raise ValueError('Empty generated audio')
+            try: self.remember(session, voice, turn, tagged, frames[:, 1:].T, whole)
+            except Exception as e: print('remember failed', type(e).__name__, flush=True)
+            wave = trim_tail(whole, rate)
             cuts = [0, *split_points(wave, [len(lines[i]['text']) for i in idx], rate), len(wave)]
             for k, i in enumerate(idx): pieces[i] = trim_tail(wave[cuts[k] : cuts[k + 1]], rate)
         for i, line in enumerate(lines):
             voice = line.get('voice') or DEFAULT_VOICE
-            if len(groups[voice]) == 1: yield from self.speak_stream(turn_text([line]), voice)
+            if len(groups[voice]) == 1: yield from self.speak_stream(turn_text([line]), voice, session, turn)
             else:
                 if i not in pieces: make(voice, groups[voice])
                 yield pcm(pieces.pop(i))
             if i < len(lines) - 1:
                 pause = min(1.5, max(0.0, float((line.get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
                 yield pcm(np.zeros(int(rate * pause), dtype='float32'))
+        self.prepare_later(session, list(groups))
+
+    def prepare_later(self, session, voices_used):
+        """다음 턴용 상태를 뒤에서 준비시킨다(같은 컨테이너에 다음 일로 줄 선다). 실패해도 다음 턴이 요청 때 읽을 뿐이다."""
+        if not session: return
+        for voice in voices_used:
+            try:
+                if self.history(session, voice): Speaker().prepare.spawn(session, voice)
+            except Exception as e: print('prepare spawn failed', type(e).__name__, flush=True)
+
+    @modal.method()
+    def session_check(self, texts, voice, session):
+        """방 단위 기억 확인(11/11 밤): 같은 방의 턴들을 운영 경로(speak_stream) 그대로 순서대로 만들고, 턴 사이에 다음 턴 준비까지. 턴마다 WAV·첫소리 시간·준비 시간."""
+        import io, time, numpy as np, soundfile as sf
+        out = []
+        for n, text in enumerate(texts, 1):
+            t0, first, parts = time.perf_counter(), None, []
+            for chunk in self.speak_stream(text, voice, session, f't{n}'):
+                if first is None: first = time.perf_counter() - t0
+                parts.append(np.frombuffer(chunk, '<i2'))
+            total = time.perf_counter() - t0
+            t1 = time.perf_counter(); prepared = self._prepare(session, voice); prep = time.perf_counter() - t1
+            buf = io.BytesIO(); sf.write(buf, np.concatenate(parts) if parts else np.zeros(1, '<i2'), self.codec.sample_rate, format='WAV', subtype='PCM_16')
+            mem = self.memory.get((session, voice), [])
+            out.append({'wav': buf.getvalue(), 'first_s': round(first or 0, 2), 'total_s': round(total, 2), 'prepare_s': round(prep, 2), 'prepared': bool(prepared),
+                        'remembered': [g['turn'] for g in mem], 'sims': [round(g['sim'], 3) for g in mem]})
+        self.prepare_later(session, [voice])   # 뒤에서 준비시키는 호출 자체가 되는지(실패하면 로그에 prepare spawn failed)
+        return out
 
     @modal.method()
     def stream_check(self, text, voice=None, seed=7):
@@ -504,7 +693,9 @@ class Speaker:
             try:
                 for l in lines: self.reference(l['voice'])
             except Exception: return Response(b'voice not found', status_code=400)
-            return StreamingResponse(self.speak_turn(lines), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
+            # 11/11 밤 방 단위 기억: 앱이 방(session)과 메시지(turn) 식별자를 주면 같은 방의 지난 턴을 이어 받는다. 없으면 예전처럼 턴마다 새로.
+            ident = lambda v: v if isinstance(v, str) and 0 < len(v) <= 64 and all(c.isalnum() or c in '-_' for c in v) else None
+            return StreamingResponse(self.speak_turn(lines, ident(body.get('session')), ident(body.get('turn'))), media_type='audio/L16', headers={'x-sample-rate': str(self.codec.sample_rate), 'cache-control': 'no-store'})
         return api
 
 
@@ -539,7 +730,13 @@ def turn_text(lines):
             out.append(tagged if tag != prev else p['text']); prev = tag
     return ' '.join(out)
 
-if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌는 줄에만 지시
+if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌는 줄에만 지시 · 고장 판별
+    import numpy as _np
+    _t = '오늘은 날씨가 참 좋아서 산책을 다녀왔어요. 기분이 좋네요.'; _r = 44100
+    _tone = lambda secs: (0.2 * _np.sin(2 * _np.pi * 220 * _np.arange(int(_r * secs)) / _r)).astype('float32')
+    assert healthy(_t, _tone(6), _r) and not healthy(_t, _tone(6) * 0.001, _r) and not healthy(_t, _tone(1.5), _r) and not healthy(_t, _tone(40), _r)
+    assert rest_after('가나다라마바사. 아자차카타파하! 거너더러머버서어.', 1.0) == '아자차카타파하! 거너더러머버서어.' and rest_after('가나다라마바사.', 1.0) == ''
+    assert not broken('응, 알았어.', _tone(1.2), _r) and broken('응, 알았어.', _tone(1.2) * 0.001, _r) and not healthy('응, 알았어.', _tone(1.2), _r)
     assert turn_text([{'text': 'a', 'parts': [{'text': 'a', 'delivery': {}}, {'text': 'b', 'delivery': {'emotion': 'anxious'}}, {'text': 'c', 'delivery': {'emotion': 'anxious'}}]}]) == ('a [anxious] b c' if EMOTION_TAGS else 'a b c')
 
 def _whisper():

@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts })))
     if (lines.some(l => !l.voice)) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
     try {
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko' }, AbortSignal.any([req.signal, AbortSignal.timeout(170_000)]))
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId }, AbortSignal.any([req.signal, AbortSignal.timeout(170_000)]))
       return new Response(out.stream, { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
     } catch { return Response.json({ error: 'voice_generation_failed' }, { status: 502 }) }
   }
