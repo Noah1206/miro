@@ -144,7 +144,7 @@ export const POLICY = {
     /** 짧게(11/10 5단계) — 약 600자. */
     short: {
       contextScale: DEV_DEFAULT(1),
-      maxOutputTokens: DEV_DEFAULT(3072),
+      maxOutputTokens: DEV_DEFAULT(4096),   // 11/11 베이비챗 분량에 맞춰 3072 → 4096
       replyLength: 'short' as const,
       auxiliary: 'planned' as const,
     },
@@ -155,7 +155,7 @@ export const POLICY = {
        * 잘리면 JSON 이 깨져 턴 전체가 실패한다. 운영 dialogue 모델(gemini-flash)의 상한도 2048 이다.
        */
       // 11/10 사용자: 기본 분량을 베이비챗(1.25x)·크랙 평균(약 1,000자)으로 — 본문만 3배라 JSON 까지 2048 을 넘는다(실측 330자 답이 ~1000 토큰).
-      maxOutputTokens: DEV_DEFAULT(4096),
+      maxOutputTokens: DEV_DEFAULT(6144),   // 11/11 베이비챗 한 턴(약 1,500~2,500자)에 맞춰 4096 → 6144
       /** 캐릭터챗 한 응답의 길이 — scene: 장면 하나(약 1,000자, 11/10). */
       replyLength: 'scene' as const,
       /** 보조 분석(기억 추출·의미 이벤트)을 규칙이 요구할 때만 돌린다. */
@@ -164,7 +164,7 @@ export const POLICY = {
     /** 조금 길게(11/10 5단계) — 기본과 길게 사이, 약 1,400자. */
     plus: {
       contextScale: DEV_DEFAULT(2),
-      maxOutputTokens: DEV_DEFAULT(5120),
+      maxOutputTokens: DEV_DEFAULT(7168),   // 11/11 5120 → 7168
       replyLength: 'plus' as const,
       auxiliary: 'always' as const,
     },

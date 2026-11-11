@@ -141,7 +141,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   const character = {
     name,
-    statusFormat: s('statusFormat').slice(0, 1000),
+    statusFormat: s('statusFormat').slice(0, 2000),
     stats,
     endings,
     playGuide: s('playGuide').slice(0, 500),

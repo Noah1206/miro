@@ -2231,5 +2231,6 @@
  "옮기기": "Move",
  "얼마나 옮길까요?": "How much to move?",
  "수익 잔액 {n}토큰": "Earnings {n} tokens",
- "전액": "All"
+ "전액": "All",
+ "인물별 INFO": "Per-character INFO"
 }

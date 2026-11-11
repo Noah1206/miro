@@ -2,6 +2,16 @@ import type { characters, characterVisualIdentities, messages } from '@miro/db'
 import { bondingCurveOf, localIso, parseRelationshipProfile, type CharacterCore } from '@miro/domain'
 import type { RecentMessage } from '@miro/engine'
 import { officialAi, officialSamples, officialStartingContext } from '@/lib/editorial/official-copy'
+
+/** 11/11 사용자: 베이비챗처럼 상태창 기본 탑재 — 상태창을 따로 정하지 않은 공식 작품은 매 턴 이 INFO 를 채운다(인물·위치·옷차림·속마음·관계·호감). */
+export const DEFAULT_STATUS_FORMAT = `INFO
+👤 [사용자 이름] | 📅 [날짜·시간] | 📍 [장소]
+────────────────────
+(이 장면에 나온 인물마다 아래 블록을 반복)
+🌸 [인물 이름]
+📍 [위치] · 👘 [지금 옷차림과 그 상태]
+💭 속마음: "[지금 속마음 한 줄]"
+💍 관계: [관계] | 💗 호감 [0~100]`
 import { photoMessageText } from '@/lib/messenger/photo-context'
 
 /** One authored identity projection for reply and proactive paths. No inferred demographic traits. */
@@ -24,7 +34,7 @@ export function characterContext(
     worldRole: {
       socialPosition: c.socialPosition, startingContext: ai?.startingContext ?? officialStartingContext(c),
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore,
-      ...(c.statusFormat ? { statusFormat: c.statusFormat } : {}), ...(c.stats.length ? { stats: c.stats } : {}), ...(c.endings.length ? { endings: c.endings } : {}), ...(c.ensembleCast?.length ? { cast: c.ensembleCast } : {}),
+      ...(c.statusFormat ? { statusFormat: c.statusFormat } : c.isOfficial ? { statusFormat: DEFAULT_STATUS_FORMAT } : {}), ...(c.stats.length ? { stats: c.stats } : {}), ...(c.endings.length ? { endings: c.endings } : {}), ...(c.ensembleCast?.length ? { cast: c.ensembleCast } : {}),
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,
     ...(visual ? { appearance: {

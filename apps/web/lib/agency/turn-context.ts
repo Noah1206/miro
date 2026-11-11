@@ -12,7 +12,8 @@ export async function prepareAgencyTurn(sessionId: string, userId: string, sourc
   if (source.experienceType !== 'reality') return { runtime: null, snapshot: source, agency: undefined }
   // 11/11 언베일 턴은 자율성 계획을 건너뛴다(대화 경로로) — 계획 모델이 거절을 고르거나, 거절 선택지를 빼면 '기다림'으로 떨어져
   // 대사가 그 결정대로 막았다(모녀덮밥 방). 계획 없는 경로(문라이트 방)는 유저가 이끄는 대로 이어졌다. 사용자: 베이비챗처럼 원하는 대로 진행.
-  if (source.adultMode) return { runtime: null, snapshot: source, agency: undefined }
+  // 11/11 사용자: 모든 대화를 베이비챗처럼 — 대화방(chat)은 계획 없이 유저가 이끄는 대로. 자율성 계획은 통화·라이브처럼 다른 화면에만 남긴다.
+  if (source.adultMode || !source.mode || source.mode === 'chat') return { runtime: null, snapshot: source, agency: undefined }
   const effectivePolicy = await adoptRelationshipPolicy(sessionId, userId) ?? policyVersion
   const runtime = await loadAgencyRuntime(sessionId, userId, source, llm, now, effectivePolicy)
   // Until the pinned revision compiles, keep the verified conversation path and hold back only the

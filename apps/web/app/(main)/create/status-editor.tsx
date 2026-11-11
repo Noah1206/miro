@@ -5,12 +5,20 @@ import { useT } from '@/lib/i18n/client'
 import { box, fieldFont } from './form-parts'
 
 export const STAT_LIMIT = 7
-export const STATUS_FORMAT_LIMIT = 1000
+export const STATUS_FORMAT_LIMIT = 2000   // 11/11 베이비챗 INFO(여러 인물) 가 1000자를 넘는다
 
 type Row = { id: number; name: string; min: string; max: string; def: string; unit: string; description: string }
 
 /** 상태창 예시 틀(11/10, 크랙 INFO 블록) — 빈 칸에서 시작하기 어려운 사람을 위해 장르별로 하나씩. */
 const EXAMPLES: Array<[string, string]> = [
+  // 11/11 베이비챗 INFO 블록(사용자 대화에서 확인한 구성) — 인물마다 위치·옷차림·속마음·관계·호감.
+  ['인물별 INFO', `INFO
+👤 [사용자 이름] | 📅 [날짜·시간] | 📍 [장소]
+────────────────────
+🌸 [인물 이름]
+📍 [위치] · 👘 [지금 옷차림과 그 상태]
+💭 속마음: "[지금 속마음 한 줄]"
+💍 관계: [관계] | 💗 호감 [0~100]\n────────────────────\n🌸 [두 번째 인물 이름]\n📍 [위치] · 👘 [옷차림과 상태]\n💭 속마음: "[속마음 한 줄]"\n💍 관계: [관계] | 💗 호감 [0~100]`],
   ['RPG', 'D+[며칠째] | [날짜] | [시각] | [날씨] | [장소]\n━━━━━━━━━━\n[사용자 이름] · [직업/클래스] · Lv.[레벨]\nHP [값]/100 | MP [값]/100\n아이템: [가진 것]\n퀘스트: [진행 중인 것]'],
   ['로맨스', '[날짜] [시각] · [장소]\n━━━━━━━━━━\n[상대 이름] 호감도 [값]/100 · [관계 단계]\n지금 기분: [한 줄]'],
   ['시뮬레이션', '[n]일째 | [시각] | [장소]\n━━━━━━━━━━\n[핵심 수치들]\n오늘 할 일: [목록]\n최근 사건: [한 줄]'],

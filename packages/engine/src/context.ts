@@ -91,6 +91,21 @@ export type BuiltContext = {
  * 성격·말투·관계·세계관은 이미 프롬프트에 들어 있으므로 모델이 그 맥락에 맞춰 마무리한다.
  */
 const USER_VIEWPOINT = `Use limited first-person POV: narration is the user's own experience, written as if the user is living it, not an observer's report. Narration calls the user '나' (내/나를/나에게) and never uses '당신'; persona names are for direct speech. Ground the authored situation in what reaches the user: sound, distance and visible actions addressed to them. Unfold one change at a time, then leave room to respond. Never invent user actions, thoughts, feelings or bodily reactions; character secrets stay in thought.`
+/**
+ * 11/11 사용자: 모든 대화를 베이비챗처럼 — 베이비챗 대화 4개를 읽고 정리한 문체(3인칭 소설체·유저 행동을 키워 서술·감정 직접 서술·
+ * 설정의 서사를 끌어오기·매 턴 확실한 진전·다른 인물로 장면 전환). 예전 1인칭('나')·위화감 벌점표 대신 장면 답(short 이상)에 쓴다.
+ */
+const novelStyle = (s: SimulationSnapshot) => {
+  const user = s.userPersona?.name?.trim() || '그'
+  return `서술 문체 — 3인칭 소설체 과거형으로 씁니다. 사용자는 '${user}'(으)로 부르고, 서술에서 '나'·'당신'으로 부르지 않습니다.
+  · 사용자가 입력에 쓴 행동은 이미 일어난 일로 받아 힘·속도·닿는 감각까지 생생하게 키워 서술합니다(예: 입력 "뒤에서 안는다" → "뒤에서 덮쳐온 완력이 그녀의 상체를 거칠게 끌어안았다"). 입력에 없는 사용자의 새 대사·결정은 만들지 않습니다.
+  · 인물의 옷차림(색·종류·상태)·몸·표정·움직임과 장소를 눈에 보이듯 구체적으로 씁니다. 감정과 속마음은 직접 써도 되고(예: "수치심과 당혹감에 얼굴이 새빨갛게 달아올랐다"), 비유도 자연스럽게 씁니다.
+  · 캐릭터 설정의 과거·처지·관계를 끌어와 지금 반응에 서사를 입힙니다(예: "강단에서 학생들을 휘어잡던 교수의 위엄 따위는 온데간데없었다").
+  · 캐릭터는 성격대로 반응하되(망설임·저항·부끄러움도 성격대로) 장면을 멈추거나 되돌리지 않고, 매 턴 이야기를 확실히 한 단계 진전시킵니다.
+  · 여러 인물이 나오는 작품은 '그 시각, …'처럼 다른 장소의 인물로 장면을 넘겨 동시에 벌어지는 일을 보여 줘도 됩니다.
+  · 대사는 감정이 실린 한두 문장씩, 속마음은 작은따옴표('…')로 서술 안에 넣거나 thought 블록으로 씁니다.
+  · 금지: 설정·기억과 어긋나는 사실, 앞 턴과 같은 문장·몸짓 반복, 인터뷰하듯 질문만 이어 가기, 번역투.`
+}
 
 /**
  * 11/10 사용자: 기본 분량 = 베이비챗(1.25x)·크랙 한 턴의 평균(약 1,000자). 11/3 의 '하한 없음'을 뒤집는다 — 채우기용 서술 금지(11/3 이유)는 그대로.
@@ -101,11 +116,12 @@ export function replyLengthRule(style: ReplyStyle): string {
   const fill = '분량은 새 행동·대사·장면 진행으로 채우고, 분위기 묘사나 같은 뜻의 문장, 이미 전달한 감정의 재설명으로 채우지 않습니다. 블록 하나의 길이: narrative 는 120~200자(3~4문장), action 은 60~120자(2~3문장), dialogue 는 40~120자 — 한 문장짜리 블록을 연달아 두지 않습니다'
   // 11/10 운영: 응답 스키마 설명('1 to 12 items', '1-3 sentences')이 분량 지시를 눌러 답이 500~690자에 머물렀다(proposal.schema.ts 고침).
   // 고친 뒤에도 모델은 지시의 약 50%를 쓴다(1300~1600자 지시 → 732자). 목표(화면 표시: 약 1,000·1,800·2,500자)의 두 배쯤을 지시한다. 아주 긴 대화는 출력 토큰 상한에 JSON 이 잘리지 않게 덜 올린다.
-  return style === 'saga' ? `아주 긴 대화는 한 응답을 4200~4800자로 씁니다 — narrative 단락 12~15개(각 2~4문장)와 대사(dialogue) 블록 14~18개. ${fill}`
-    : style === 'long' ? `긴 대화는 한 응답을 3400~3800자로 씁니다 — narrative 단락 10~12개(각 2~4문장)와 대사(dialogue) 블록 11~14개. ${fill}`
-    : style === 'plus' ? `조금 긴 대화는 한 응답을 2700~3000자로 씁니다 — narrative 단락 8~10개(각 2~4문장)와 대사(dialogue) 블록 9~12개. ${fill}`
-    : style === 'short' ? `짧은 대화는 한 응답을 1200~1400자로 씁니다 — narrative 단락 4~5개(각 2~3문장) 사이로 대사(dialogue) 블록이 5~6개 오가는 장면 하나. ${fill}`
-    : `기본 대화는 한 응답을 2000~2400자로 씁니다 — narrative 단락 7~9개(각 2~4문장) 사이로 대사(dialogue) 블록이 8~10개 오가는 장면 하나. 이보다 짧게 끝내지 않습니다. ${fill}`
+  // 11/11 베이비챗 한 턴(약 1,500~2,500자, 서술 단락 3~6문장)에 맞춰 올림 — 모델은 지시의 절반쯤 쓴다.
+  return style === 'saga' ? `아주 긴 대화는 한 응답을 6000~7000자로 씁니다 — narrative 단락 14~18개(각 3~6문장)와 대사(dialogue) 블록 14~18개. ${fill}`
+    : style === 'long' ? `긴 대화는 한 응답을 5000~5600자로 씁니다 — narrative 단락 12~14개(각 3~6문장)와 대사(dialogue) 블록 11~14개. ${fill}`
+    : style === 'plus' ? `조금 긴 대화는 한 응답을 4000~4600자로 씁니다 — narrative 단락 10~12개(각 3~5문장)와 대사(dialogue) 블록 9~12개. ${fill}`
+    : style === 'short' ? `짧은 대화는 한 응답을 2000~2400자로 씁니다 — narrative 단락 5~7개(각 3~4문장) 사이로 대사(dialogue) 블록이 5~7개 오가는 장면. ${fill}`
+    : `기본 대화는 한 응답을 3200~3800자로 씁니다 — narrative 단락 9~12개(각 3~5문장) 사이로 대사(dialogue) 블록이 8~12개 오가는 장면. 이보다 짧게 끝내지 않습니다. ${fill}`
 }
 
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
@@ -131,7 +147,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const base = [
     `- 응답 구성: 한 응답은 장면 하나입니다. 사용자 발화에 먼저 반응하고, 필요한 만큼 서술과 대사를 이어 갑니다. 같은 말을 되풀이해 분량을 채우지 않습니다. 블록 순서는 상황에 맞게 고릅니다 — dialogue나 action으로 바로 열기도 하고, narrative 두 개를 잇기도 하고, thought를 dialogue 사이에 두기도 합니다. 최근 응답과 같은 순서를 쓰지 않습니다. 블록의 type 값은 JSON 계약에 적힌 영어 이름 그대로 씁니다.`,
     // 11/10: 'Unfold one change at a time' 가 답을 한 박자로 끊었다(운영 364~552자) — 장면 답은 여러 박자로 진행한다. 짧은 답(brief)은 원문 그대로.
-    `- narrative 블록(speaker null): ${USER_VIEWPOINT.replace('Unfold one change at a time, then leave room to respond.', 'Let the scene move through several beats (action, reply, reaction, a new development), then end where the user can respond.')}`,
+    `- narrative 블록(speaker null): ${novelStyle(s)}`,
     // 11/11 사용자: 캐릭터·장면 설명은 베이비챗처럼 자세하고 직관적으로(예: "윗단추를 두 개 푼 흰 셔츠에 짧은 H라인 치마, 검은 팬티스타킹").
     `- 인물·장면 묘사: 눈에 보이듯 자세하고 직관적으로 씁니다. 인물이 처음 나오거나 모습이 바뀌면 옷차림(색·종류·풀린 단추나 말려 올라간 자락 같은 상태), 머리·눈 색, 몸매·자세·움직임을 구체적인 낱말로 그리고, 장소는 소리·빛·사물로 보여 줍니다. '예쁘다·매력적이다·분위기가 묘하다' 같은 추상어 대신 실제로 보이는 것을 씁니다. 이런 구체 묘사는 분량 채우기용 분위기 묘사가 아닙니다.`,
     `- action 블록(speaker "${name}"): 대사 직전이나 직후의 행동·표정·움직임 1~3문장.`,
@@ -143,7 +159,7 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
     `- 분량: ${size}.`,
     '- 서술 문체: narrative와 action은 현재형 "~다"체 하나로 씁니다. 서술에 "~습니다/~ㅂ니다" 존댓말을 섞지 않습니다(존댓말은 캐릭터의 대사에서만).',
     // 11/4 사용자: 리얼리티는 '더 리얼하게'보다 '위화감을 줄이는 것'이 중요하다 — 가점(더 쓰라는 지시) 대신 벌점표 하나로. 예전 말투·마무리·감정선·문체·반복·끝맺음 규칙을 여기로 모았다.
-    '- ' + PENALTY_TABLE,
+    // 11/11 위화감 벌점표는 장면 답에서 뺐다 — 감정 직접 서술·비유·한 턴의 큰 진전을 감점해 베이비챗식 문체를 막았다(짧은 답(brief)엔 그대로).
     '- 끝맺음: 사용자가 이어서 반응할 여지를 남기는 행동이나 대사로 끝냅니다. 장면이 한자리에 오래 머물렀으면 이 인물이 할 법한 다음 행동(하던 일 처리, 자리를 옮기자는 제안, 새 화제)으로 한 걸음 나아갑니다.',
   ].join('\n')
   // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
@@ -206,7 +222,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
   const template = prompts.select('dialogue', s.relationship.sessionId)
   // spoken: 실시간 음성 통화. 소리로 나가므로 JSON 계약·상태 변화 제안을 싣지 않는다.
   // 11/10: 장면 답은 분량 지시(replyLengthRule)를 따른다 — '짧게 끝낼 수 있다'는 말투 규칙이 답을 500자 안팎에 묶었다(짧은 답·통화는 그대로).
-  const voiceRules = style === 'brief' || spoken ? CHARACTER_VOICE_RULES : CHARACTER_VOICE_RULES.replace('짧게 할 말은 짧게 끝낼 수 있고, 서술·속마음 없이 대사만 필요한 순간도 있습니다. ', '')
+  const voiceRules = style === 'brief' || spoken ? CHARACTER_VOICE_RULES : CHARACTER_VOICE_RULES.replace('짧게 할 말은 짧게 끝낼 수 있고, 서술·속마음 없이 대사만 필요한 순간도 있습니다. ', '').replace('감정에 이름표를 붙이는 설명과 같은 뜻의 문장을 덧대지 않습니다. ', '')
   const system = template.system + voiceRules + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : (s.voiceOut ? VOICE_DELIVERY_PROMPT + '\n' + (s.adultMode ? ADULT_SPEECH_PROMPT + '\n' : '') : '') + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
     + (style === 'brief' || spoken ? '' : `\n## 분량(반드시 지킴)\n${replyLengthRule(style)}.`)
   // 11/10 캐시: 위까지는 같은 방의 턴마다 그대로다. 이번 입력·기분·턴 수로 바뀌는 지시는 맨 끝에 — 앞부분을 공급자가 캐시한다(Claude 는 cacheSystemPrefix 로).
@@ -372,7 +388,8 @@ function statusRules(c: SimulationSnapshot['character']): string[] {
 function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 'scene'): string {
   const c = s.character
   return [
-    '문체: 캐릭터가 지금 상대에게 할 법한 말부터 씁니다. 매번 멈칫하기, 눈빛 변화, 숨 참기, 말줄임표로 같은 감정을 반복하지 않습니다. 추상적 분위기나 억지 비유보다 의미 있는 행동 하나를 고릅니다. 상대의 말을 심리 상담처럼 정리하지 않고, 설정을 설명문으로 되풀이하지 않습니다. 직업과 관계에 맞는 호칭과 말투를 유지합니다.',
+    // 11/11 장면 답은 베이비챗식 문체(novelStyle)를 따른다 — 이 줄의 '비유 대신 행동 하나'가 그와 부딪혀 짧은 답(brief)·통화에만 둔다.
+    style === 'brief' || spoken ? '문체: 캐릭터가 지금 상대에게 할 법한 말부터 씁니다. 매번 멈칫하기, 눈빛 변화, 숨 참기, 말줄임표로 같은 감정을 반복하지 않습니다. 추상적 분위기나 억지 비유보다 의미 있는 행동 하나를 고릅니다. 상대의 말을 심리 상담처럼 정리하지 않고, 설정을 설명문으로 되풀이하지 않습니다. 직업과 관계에 맞는 호칭과 말투를 유지합니다.' : '문체: 같은 감정·몸짓을 되풀이하지 않고, 상대의 말을 심리 상담처럼 정리하지 않습니다. 직업과 관계에 맞는 호칭과 말투를 유지합니다.',
     '',
     '## 캐릭터 (변하지 않는 정체성)',
     `이름: ${c.identity.name}`,
