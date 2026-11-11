@@ -146,6 +146,8 @@ export async function loadSession(
   // 기본이 아닌 시작 상황으로 연 방은 그 장면의 첫 장면 설명을 쓴다(10/6).
   const opening = sceneOpening(officialIntro(c, c.sampleDialogue), row.session.openingScene)?.context
   if (opening) character.worldRole.startingContext = opening
+  // 11/12 설정집 항목 중 다른 시작 설정 전용은 뺀다(시작 설정을 안 고른 방은 전용 항목 없이).
+  if (character.worldRole.lore) character.worldRole.lore = character.worldRole.lore.filter(e => !e.scene || e.scene === row.session.openingScene)
   const snapshot: SimulationSnapshot = {
     character,
     world: row.world as never,

@@ -1,6 +1,6 @@
 import { prompts, CHARACTER_VOICE_RULES } from '@miro/providers'
 import { ADULT_SPEECH_PROMPT, POLICY, VOICE_DELIVERY_PROMPT } from '@miro/config'
-import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, storyCalendarDirective } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, loreLimit, storyCalendarDirective } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
 } from '@miro/domain'
@@ -553,11 +553,13 @@ function buildPrompt(
   if (s.worldGenre) parts.push(`장르: ${s.worldGenre}`)
   if (s.scene) parts.push(`장면: ${s.scene.mood} / ${s.scene.weather}`)
 
-  // 로어북 — 이번 입력이 건드린 항목만. 캐릭터가 원래 알던 것이므로 기억과 구분해서 싣는다.
-  const lore = selectLore(s.character.worldRole.lore ?? [], s.userInput ?? '')
+  // 설정집(로어북) — 키워드가 나온 항목만. 캐릭터가 원래 알던 것이므로 기억과 구분해서 싣는다.
+  // 11/12 이번 입력뿐 아니라 최근 대화 6개(캐릭터 답 포함)에서도 찾는다 — 캐릭터가 꺼낸 이름에도 걸리고, 한 번 불린 항목이 몇 턴 이어진다.
+  const loreQuery = [...s.recentMessages.slice(-6).map(m => m.content), s.userInput ?? ''].join('\n')
+  const lore = selectLore(s.character.worldRole.lore ?? [], loreQuery, loreLimit(s.character.worldRole.loreLimit))
   if (lore.length > 0) {
     parts.push('', '## 캐릭터가 알고 있는 것 (원래 알던 배경 — 새로 알게 된 척하지 말 것)')
-    for (const entry of lore) parts.push(`- ${entry.content}`)
+    for (const entry of lore) parts.push(`- ${entry.name ? `[${entry.name}] ` : ''}${entry.content}`)
   }
 
   const r = s.relationship

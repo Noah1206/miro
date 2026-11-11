@@ -59,7 +59,8 @@ export type FormInitial = {
   activeHoursStart: string; activeHoursEnd: string; preferredChannel: string
   photoProbability: number; voiceMessageProbability: number; callProbability: number; videoCallProbability: number; senderLabel: string
   startingContext: string; worldLocation: string; startingTime: string; sampleDialogue: Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro' }>
-  lore: Array<{ keywords: string[]; content: string }>
+  lore: Array<{ keywords: string[]; content: string; name?: string; scene?: string }>
+  loreLimit?: number
   situationImages: Array<{ keywords: string[]; image: string }>
   photoScenes?: CustomPhotoScene[]
   presetPersonas?: UserPersona[]
@@ -407,7 +408,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         {/* ── 로어북(11/12 연결) — 전엔 숨은 칸이 저장값만 되돌려 보내 새 캐릭터는 늘 비어 있었다. 탭이 닫혀 있어도 DOM 에 남아 제출된다. ── */}
         <Panel id="lore" show={tab === 'lore'}>
           <Section title={t('설정집 · 선택')} subtitle={t('세계관이나 인물·장소 설정을 적어 두면, 대화에 그 키워드가 나온 턴에만 AI에게 전달돼요. 키워드를 비우면 항상 전달돼요.')}>
-            <LoreEditor name="lore" defaultValue={i.lore} />
+            <LoreEditor name="lore" defaultValue={i.lore} defaultLimit={i.loreLimit ?? 6} scenes={introScenes(i.sampleDialogue).slice(1)} />
           </Section>
         </Panel>
 

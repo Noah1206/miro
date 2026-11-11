@@ -62,6 +62,8 @@ export type CharacterCore = {
     sampleDialogue?: Array<{ role: 'character' | 'user' | 'narrator'; text: string }>
     /** 로어북 — 매 턴이 아니라 유저 입력이 키워드를 건드린 턴에만 실린다. */
     lore?: LoreEntry[]
+    /** 11/12 한 턴에 싣는 설정집 항목 수(만든 사람이 고름). */
+    loreLimit?: number
     /** 상태창 형식(11/10) — 매 답변 끝에 이 틀을 채워 붙인다. 없으면 상태창 없음. */
     statusFormat?: string
     /** 스탯(11/10) — 대화방마다 값이 움직이는 수치. */

@@ -4,7 +4,7 @@ import { normalizeSituationImages } from '@/lib/situation-images'
 import { normalizeCustomScenes } from '@/lib/photo-scenes'
 import { normalizePresetPersonas, type CharacterEnding, type CharacterStat } from '@miro/domain'
 import { CHARACTER_MEDIA, type CharacterMedia } from '@miro/config'
-import { BONDING_CURVES, normalizeLore, parseRelationshipProfile } from '@miro/domain'
+import { BONDING_CURVES, loreLimit, normalizeLore, parseRelationshipProfile } from '@miro/domain'
 import type { CharacterCommand } from '@miro/db'
 import { searchNeedle } from '@/lib/search-params'
 import { isOwnImageUrl } from '@/lib/storage/own-url'
@@ -160,7 +160,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     ...(startingTime ? { startingTime } : {}),
     // 11/12 인트로 상태창은 기본 도입부 첫 줄에 싣는다(새 칸 없이 같은 JSON).
     sampleDialogue: [...sampleDialogue, ...parseIntroDialogue(s('introDialogue') || '[]').map((e, n) => (n === 0 && s('introStatus').trim() ? { ...e, status: s('introStatus').trim().slice(0, 2000) } : e)), ...extraScenes(form)],
-    lore,
+    lore, loreLimit: loreLimit(Number(s('loreLimit') || NaN)),
     situationImages,
     photoScenes,
     presetPersonas,

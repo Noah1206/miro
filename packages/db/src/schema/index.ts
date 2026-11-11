@@ -220,7 +220,9 @@ export const characters = pgTable('characters', {
    */
   sampleDialogue: jsonb('sample_dialogue').$type<Array<{ role: 'character' | 'user' | 'narrator'; text: string; purpose?: 'intro'; image?: string; scene?: string; context?: string; time?: string; location?: string; status?: string }>>().notNull().default([]),
   /** 로어북 — 유저 입력에 키워드가 뜨면 그 항목만 프롬프트에 실린다. */
-  lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string }>>().notNull().default([]),
+  lore: jsonb('lore').$type<Array<{ keywords: string[]; content: string; name?: string; scene?: string }>>().notNull().default([]),
+  /** 11/12 한 턴에 싣는 설정집 항목 수(1~20). */
+  loreLimit: integer('lore_limit').notNull().default(6),
   /** 상황별 사진(10/28) — 대화 중 키워드가 나오면 그 사진을 채팅에 한 번 띄운다. */
   /** 만든 사람이 정한 사진 장면(11/3) — 채팅 사진 시트의 기본 장면 뒤에 붙는다. 설명은 한국어, 그릴 때 태그로 바뀐다. */
   photoScenes: jsonb('photo_scenes').$type<Array<{ label: string; description: string; unveil?: true; couple?: true }>>().notNull().default([]),

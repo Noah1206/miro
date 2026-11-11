@@ -8,6 +8,7 @@ import { Line } from '../character/[slug]/sections'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 import { shrinkImage } from '@/lib/shrink-image'
+import { myLoreSources } from './actions'
 
 /**
  * 만들기 폼의 조각들 (레퍼런스 UI).
@@ -760,67 +761,81 @@ export function Stepped({ name, label, options, defaultValue, value: controlled,
  * 성격은 매 턴 들어가고(정체성) 로어는 불렸을 때만 들어간다(지식). 그래서 항목을 많이 적어도
  * 매 턴 값이 오르지 않는다 — 키워드를 비워 두면 "항상 실림" 이 되므로 그것만 주의한다.
  */
-export function LoreEditor({ name, defaultValue = [] }: { name: string; defaultValue?: LoreItem[] }) {
-  const [items, setItems] = useState<LoreItem[]>(defaultValue)
-  const [keywords, setKeywords] = useState('')
-  const [content, setContent] = useState('')
-  const full = items.length >= MAX_LORE
+export function LoreEditor({ name, defaultValue = [], defaultLimit = 6, scenes = [] }: { name: string; defaultValue?: LoreItem[]; defaultLimit?: number; /** 저장된 추가 시작 설정 이름 — 항목을 그 장면 전용으로 묶을 때 고른다. */ scenes?: string[] }) {
   const t = useT()
-
-  const add = () => {
-    const text = content.trim()
-    if (!text || full) return
-    const keys = [...new Set(keywords.split(',').map((k) => k.trim()).filter(Boolean))].slice(0, MAX_LORE_KEYWORDS)
-    setItems([...items, { keywords: keys, content: text.slice(0, MAX_LORE_CONTENT) }])
-    setKeywords(''); setContent('')
+  // 11/12 항목을 그 자리에서 고친다(전엔 지우고 다시 적어야 했다). 순서가 우선순위라 위로 올리는 버튼을 둔다.
+  const [rows, setRows] = useState<Array<{ id: number; name: string; keywords: string; content: string; scene: string }>>(() =>
+    defaultValue.map((d, id) => ({ id, name: d.name ?? '', keywords: d.keywords.join(', '), content: d.content, scene: d.scene ?? '' })))
+  const [nextId, setNextId] = useState(defaultValue.length)
+  const [limit, setLimit] = useState(defaultLimit)
+  // 11/12 불러오기 — 내 다른 작품의 설정집을 이 작품 끝에 덧붙인다(같은 내용은 건너뛴다).
+  const [sources, setSources] = useState<Awaited<ReturnType<typeof myLoreSources>> | null>(null)
+  const openSources = async () => { if (sources) return setSources(null); try { setSources(await myLoreSources()) } catch { setSources([]) } }
+  const importFrom = (lore: LoreItem[]) => {
+    setRows(rs => {
+      const have = new Set(rs.map(r => r.content.trim()))
+      const add = lore.filter(e => !have.has(e.content.trim())).slice(0, MAX_LORE - rs.length)
+      return [...rs, ...add.map((e, n) => ({ id: nextId + n, name: e.name ?? '', keywords: e.keywords.join(', '), content: e.content, scene: '' }))]
+    })
+    setNextId(n => n + lore.length); setSources(null)
   }
-  const remove = (i: number) => setItems(items.filter((_, j) => j !== i))
-
+  const patch = (id: number, p: Partial<(typeof rows)[number]>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
+  const up = (i: number) => setRows(rs => (i === 0 ? rs : [...rs.slice(0, i - 1), rs[i]!, rs[i - 1]!, ...rs.slice(i + 1)]))
+  const value: LoreItem[] = rows.filter(r => r.content.trim()).map(r => ({
+    keywords: [...new Set(r.keywords.split(',').map(k => k.trim()).filter(Boolean))].slice(0, MAX_LORE_KEYWORDS), content: r.content.trim().slice(0, MAX_LORE_CONTENT),
+    ...(r.name.trim() ? { name: r.name.trim() } : {}), ...(r.scene ? { scene: r.scene } : {}),
+  }))
+  const line = { width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit' } as const
   return (
     <div className="stack" style={{ gap: 12 }}>
-      <input type="hidden" name={name} value={JSON.stringify(items)} />
-
-      {items.length > 0 && (
-        <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
-          {items.map((item, i) => (
-            <li key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', ...box(false) }}>
-              <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
-                <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: item.keywords.length ? 'var(--color-accent-text)' : 'var(--color-text-tertiary)' }}>
-                  {item.keywords.length ? item.keywords.map((k) => `#${k}`).join(' ') : t('항상 실림 (키워드 없음)')}
-                </span>
-                <span style={{ fontSize: 14, lineHeight: 1.5, wordBreak: 'break-word' }}>{item.content}</span>
-              </div>
-              <button type="button" onClick={() => remove(i)} aria-label={t('이 항목 지우기')} className="hit" style={roundBtn}>
-                <svg aria-hidden width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {!full && (
-        <div className="stack" style={{ gap: 8, padding: '10px 12px', ...box(false) }}>
-          <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder={t('키워드 (쉼표로 구분) — 예) 민준, 사촌형')}
-            maxLength={120} autoComplete="off"
-            style={{ width: '100%', background: 'none', border: 0, outline: 'none', color: 'var(--color-text-primary)', fontSize: 14, fontFamily: 'inherit' }} />
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={2} maxLength={MAX_LORE_CONTENT}
+      <input type="hidden" name={name} value={JSON.stringify(value)} />
+      <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+        {t('한 턴에 전달할 항목 수')}
+        <input name="loreLimit" type="number" min={1} max={20} value={limit} onChange={e => setLimit(Math.max(1, Math.min(20, Number(e.target.value) || 1)))} aria-label={t('한 턴에 전달할 항목 수')}
+          style={{ ...box(false), width: 64, minHeight: 36, padding: '0 10px', borderRadius: 8, fontSize: 14, outline: 'none' }} />
+        <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{t('위에 있는 항목이 먼저 들어가요')}</span>
+      </label>
+      <div className="stack" style={{ gap: 8 }}>
+        <button type="button" onClick={openSources} aria-expanded={!!sources}
+          style={{ alignSelf: 'flex-start', minHeight: 36, padding: '0 14px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>{t('다른 작품에서 불러오기')}</button>
+        {sources && (sources.length === 0
+          ? <p className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('설정집이 있는 내 작품이 아직 없어요.')}</p>
+          : sources.map(src => <button key={src.id} type="button" onClick={() => importFrom(src.lore)}
+              style={{ display: 'flex', justifyContent: 'space-between', gap: 8, minHeight: 40, padding: '0 12px', alignItems: 'center', ...box(false), cursor: 'pointer', font: 'inherit', fontSize: 14, color: 'var(--color-text-primary)', textAlign: 'left' }}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{src.name}</span><span style={{ flex: 'none', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{src.lore.length}</span>
+            </button>))}
+      </div>
+      {rows.map((r, i) => (
+        <div key={r.id} className="stack" style={{ gap: 8, padding: '10px 12px', ...box(false) }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input value={r.name} maxLength={20} placeholder={t('항목 이름 (선택) — 예) 민준')} aria-label={t('항목 이름')} onChange={e => patch(r.id, { name: e.target.value })} style={{ ...line, fontWeight: 600 }} />
+            {i > 0 && <button type="button" onClick={() => up(i)} aria-label={t('위로 올리기')} className="hit" style={roundBtn}>↑</button>}
+            <button type="button" onClick={() => setRows(rs => rs.filter(x => x.id !== r.id))} aria-label={t('이 항목 지우기')} className="hit" style={roundBtn}>×</button>
+          </div>
+          <input value={r.keywords} maxLength={220} autoComplete="off" placeholder={t('키워드 (쉼표로 구분) — 예) 민준, 사촌형')} aria-label={t('키워드')} onChange={e => patch(r.id, { keywords: e.target.value })}
+            style={{ ...line, color: 'var(--color-accent-text)' }} />
+          <textarea value={r.content} rows={3} maxLength={MAX_LORE_CONTENT} aria-label={t('설정 내용')} onChange={e => patch(r.id, { content: e.target.value })}
             placeholder={t('이 키워드가 나오면 캐릭터가 떠올릴 것 — 예) 민준은 세 살 위 사촌 형. 어릴 때 같이 살았고 지금은 연락이 뜸하다.')}
-            style={{ width: '100%', background: 'none', border: 0, outline: 'none', resize: 'none', color: 'var(--color-text-primary)', fontSize: 14, lineHeight: 1.5, fontFamily: 'inherit' }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>{items.length}/{MAX_LORE}</span>
-            <button type="button" onClick={add} disabled={!content.trim()} className="hit"
-              style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 'var(--radius-sm)', border: 0, cursor: content.trim() ? 'pointer' : 'default',
-                background: content.trim() ? 'var(--color-accent)' : 'var(--color-surface-3)', color: content.trim() ? 'var(--color-accent-on)' : 'var(--color-text-tertiary)', fontSize: 13 }}>
-              {t('추가')}
-            </button>
+            style={{ ...line, resize: 'vertical', lineHeight: 1.5 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span className="t-micro" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--color-text-tertiary)' }}>
+              {r.keywords.trim() ? `${r.content.length}/${MAX_LORE_CONTENT}` : `${t('항상 실림 (키워드 없음)')} · ${r.content.length}/${MAX_LORE_CONTENT}`}
+            </span>
+            {scenes.length > 0 && <select value={r.scene} onChange={e => patch(r.id, { scene: e.target.value })} aria-label={t('적용할 시작 설정')}
+              style={{ ...box(false), marginLeft: 'auto', minHeight: 32, padding: '0 8px', borderRadius: 8, fontSize: 13, outline: 'none' }}>
+              <option value="">{t('모든 시작 설정')}</option>
+              {[...new Set([...scenes, ...(r.scene ? [r.scene] : [])])].map(sc => <option key={sc} value={sc}>{sc}</option>)}
+            </select>}
           </div>
         </div>
-      )}
+      ))}
+      {rows.length < MAX_LORE && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', keywords: '', content: '', scene: '' }]); setNextId(n => n + 1) }}
+        style={{ minHeight: 44, borderRadius: 12, border: '1.5px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 14 }}>{t('+ 설정 추가')} ({rows.length}/{MAX_LORE})</button>}
     </div>
   )
 }
 
-export type LoreItem = { keywords: string[]; content: string }
-const MAX_LORE = 24
+export type LoreItem = { keywords: string[]; content: string; name?: string; scene?: string }
+const MAX_LORE = 40
 const MAX_LORE_KEYWORDS = 8
 const MAX_LORE_CONTENT = 600

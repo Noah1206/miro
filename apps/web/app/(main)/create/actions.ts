@@ -3,7 +3,7 @@ import { defaultSessionPolicy } from '@miro/config'
 import { introMessages } from '@/lib/intro-dialogue'
 
 import { revalidatePath } from 'next/cache'
-import { and, eq, asc } from 'drizzle-orm'
+import { and, eq, asc, desc, isNull, sql } from 'drizzle-orm'
 import {
   db, messages, characters, worlds, contactProfiles, roleplaySessions, worldStates, relationships, characterVisualIdentities } from '@miro/db'
 import { requireUser } from '@/lib/auth'
@@ -114,4 +114,14 @@ export async function uploadSituationImage(form: FormData): Promise<{ url: strin
   if (!(file instanceof File) || file.size === 0) return { error: msg('사진을 고르지 못했어요.') }
   const r = await uploadCharacterImage(file, user.id)
   return r.ok ? { url: r.url } : { error: r.error }
+}
+
+/** 11/12 설정집 불러오기 — 내가 만든 다른 작품의 설정집 항목(베이비챗 '불러오기'). 본인 작품만. */
+export async function myLoreSources(): Promise<Array<{ id: string; name: string; lore: Array<{ keywords: string[]; content: string; name?: string }> }>> {
+  const user = await requireUser()
+  const rows = await db.select({ id: characters.id, name: characters.name, lore: characters.lore }).from(characters)
+    .where(and(eq(characters.ownerId, user.id), isNull(characters.deletedAt), sql`jsonb_array_length(${characters.lore}) > 0`))
+    .orderBy(desc(characters.createdAt)).limit(50)
+  // 시작 설정 전용 표시(scene)는 다른 작품에선 뜻이 없어 뺀다.
+  return rows.map(r => ({ id: r.id, name: r.name, lore: r.lore.map(({ scene: _scene, ...e }) => e) }))
 }

@@ -9,9 +9,15 @@ export type LoreEntry = {
   /** 이 항목을 불러내는 낱말. 비어 있으면 항상 후보(always 항목). */
   keywords: string[]
   content: string
+  /** 11/12 항목 이름(만든 사람이 알아보는 제목, AI 에도 머리말로 간다). */
+  name?: string
+  /** 11/12 이 시작 설정으로 연 방에서만 쓴다. 없으면 모든 시작 설정. */
+  scene?: string
 }
 
-export const LORE_LIMITS = { entries: 24, keywords: 8, keywordLength: 24, content: 600, selected: 4 } as const
+// 11/12 크랙(400자·키워드 5개)·베이비챗(한 턴 5~15개)보다 넉넉하게: 40항목·600자·키워드 8개, 한 턴 기본 6개(만든 사람이 1~20 으로 고른다).
+export const LORE_LIMITS = { entries: 40, keywords: 8, keywordLength: 24, content: 600, selected: 6, selectedMax: 20, name: 20, scene: 12 } as const
+export const loreLimit = (n: unknown) => Math.max(1, Math.min(LORE_LIMITS.selectedMax, Math.round(typeof n === 'number' && Number.isFinite(n) ? n : LORE_LIMITS.selected)))
 
 /**
  * 이번 턴에 실을 항목.
@@ -19,7 +25,7 @@ export const LORE_LIMITS = { entries: 24, keywords: 8, keywordLength: 24, conten
  * keywords 가 빈 항목은 언제나 실린다(세계관 상수). 나머지는 겹치는 키워드 수로 정렬한다.
  * 같은 수면 먼저 적은 항목이 앞선다 — 만든 사람의 순서가 중요도다.
  */
-export function selectLore(entries: LoreEntry[], query: string, limit = LORE_LIMITS.selected): LoreEntry[] {
+export function selectLore(entries: LoreEntry[], query: string, limit: number = LORE_LIMITS.selected): LoreEntry[] {
   const haystack = normalizeQuery(query)
   const always = entries.filter((e) => e.keywords.length === 0)
   const scored = entries
@@ -51,14 +57,16 @@ export function normalizeLore(input: unknown): LoreEntry[] {
   return input
     .map((raw) => {
       if (!raw || typeof raw !== 'object') return null
-      const o = raw as { keywords?: unknown; content?: unknown }
+      const o = raw as { keywords?: unknown; content?: unknown; name?: unknown; scene?: unknown }
       const content = typeof o.content === 'string' ? o.content.trim().slice(0, LORE_LIMITS.content) : ''
       if (!content) return null
       const keywords = Array.isArray(o.keywords)
         ? [...new Set(o.keywords.filter((k): k is string => typeof k === 'string')
             .map((k) => k.trim().slice(0, LORE_LIMITS.keywordLength)).filter(Boolean))].slice(0, LORE_LIMITS.keywords)
         : []
-      return { keywords, content }
+      const name = typeof o.name === 'string' ? o.name.trim().slice(0, LORE_LIMITS.name) : ''
+      const scene = typeof o.scene === 'string' ? o.scene.trim().slice(0, LORE_LIMITS.scene) : ''
+      return { keywords, content, ...(name ? { name } : {}), ...(scene ? { scene } : {}) }
     })
     .filter((e): e is LoreEntry => e !== null)
     .slice(0, LORE_LIMITS.entries)
