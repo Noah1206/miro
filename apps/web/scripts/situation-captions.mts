@@ -1,5 +1,5 @@
 /**
- * 11/11 상황 사진 채우기 — 작품 갤러리 사진(표지 제외)을 비전 모델이 보고 '그 사진이 맞는 상황' 한 줄을 써서 characters.situation_images 로.
+ * 11/11 상황 사진 채우기 — 작품의 언베일 사진(사용자 결정: 언베일만)을 비전 모델이 보고 '그 사진이 맞는 상황' 한 줄을 써서 characters.situation_images 로.
  * 언베일 사진(파일 이름 unveil-…)은 adult 표시 — 언베일이 켜진 턴에만 후보가 된다. 이미 상황 사진이 있는 작품은 건너뛴다.
  *
  *   npx tsx --env-file=../../.env scripts/situation-captions.mts --test <url>...        # 두세 장 시험(쓰기 없음)
@@ -43,7 +43,8 @@ if (argv[0] === '--test') {
 const { db, characters, eq, sql } = await import('@miro/db')
 const rows = await db.select({ id: characters.id, slug: characters.slug, name: characters.name, images: characters.images, secret: characters.secret })
   .from(characters).where(sql`${characters.isPublic} and ${characters.deletedAt} is null and ${characters.audience} = 'male' and jsonb_array_length(${characters.situationImages}) = 0 and ${characters.slug} like 'official-m-%'`)
-const works: Work[] = rows.map(r => ({ id: r.id, slug: r.slug ?? '', name: r.name, images: (r.images ?? []).slice(1, 1 + PER_WORK),
+// 11/11 사용자: 상황 사진은 이미 만든 언베일 사진만 쓴다(일반 사진은 넣지 않음).
+const works: Work[] = rows.map(r => ({ id: r.id, slug: r.slug ?? '', name: r.name, images: (r.images ?? []).filter(src => /\/unveil-[^/?]+(\?|$)/.test(src)).slice(0, PER_WORK),
   heroines: /\[여러 인물[^\]]*\]([\s\S]*)/.exec(r.secret ?? '')?.[1]?.split('\n').map(l => l.replace(/^[\s\-•*·\d.)]*/, '').split(/[\s(:—-]/)[0]).filter(n => n && n.length <= 6).slice(0, 8).join(', ') ?? '' }))
   .filter(w => w.images.length)
 const total = works.reduce((n, w) => n + w.images.length, 0)
