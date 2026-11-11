@@ -6,6 +6,8 @@ import { observe } from '@/lib/observe'
 import { applyPaymentEvent } from './service'
 import { afterResponse } from '@/lib/defer'
 import { postOperatorNote } from '@/lib/ops/alerts'
+import { telegramPaymentConfig } from './telegram-config'
+import { telegramCall } from './telegram-api'
 
 /** 계좌이체 Provider 이름. payment_events 에 이 이름으로 남아 다른 결제와 섞이지 않는다. */
 export const BANK_PROVIDER = 'bank_transfer'
@@ -89,6 +91,11 @@ export async function createBankOrder(opts: {
       observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
       // 11/10 새 입금 대기 주문은 바로 운영자 채널로(15분 크론을 기다리지 않게). 실패해도 주문은 그대로.
       void afterResponse(() => postOperatorNote(`**새 계좌이체 주문** ${amountMinor.toLocaleString('ko-KR')}${currency === 'KRW' ? '원' : ` ${currency}`} · 입금자 ${depositorName} · 코드 ${code}`)).catch(() => {})
+      // 11/12 신청 순간 텔레그램에도(승인 버튼은 사용자가 '입금 확인 요청'을 누르면 따로 온다). 설정이 없거나 실패해도 주문은 그대로.
+      void afterResponse(async () => {
+        const chatId = telegramPaymentConfig()?.chatId
+        if (chatId) await telegramCall('sendMessage', { chat_id: chatId, text: `[MIRO 계좌이체 신청]\n${amountMinor.toLocaleString('ko-KR')}원${units ? ` · ${units.toLocaleString('ko-KR')} 토큰` : ' · 이용권'}\n입금자명: ${depositorName}\n대조 코드: ${code}\n\n아직 입금 전일 수 있어요. 사용자가 입금 확인을 요청하면 승인 버튼이 옵니다.` })
+      }).catch(() => {})
     }
     return result.row
   } catch (e) {
