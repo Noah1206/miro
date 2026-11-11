@@ -33,7 +33,7 @@ describe('inline mirror', () => {
   })
   it('routes to the adult model only through the gate', () => {
     expect(decideAdultTurn({ gateAllowed: false, input: '섹스', lastExplicit: true })).toBe(false)
-    expect(decideAdultTurn({ gateAllowed: true, input: '안녕', lastExplicit: false })).toBe(false)
+    expect(decideAdultTurn({ gateAllowed: true, input: '안녕', lastExplicit: false })).toBe(true)   // 11/11 홈 언베일이 켜져 있으면 모든 턴이 언베일
     expect(decideAdultTurn({ gateAllowed: true, input: '안녕', lastExplicit: true })).toBe(true)
     expect(decideAdultTurn({ gateAllowed: true, input: '알몸으로', lastExplicit: false })).toBe(true)
   })

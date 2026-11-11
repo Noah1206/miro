@@ -1,4 +1,4 @@
-import { BRIDGE_SYSTEM, EXPLICIT, bridgePrompt, sanitizeBridge } from '@/lib/simulation/unveil-bridge'
+import { BRIDGE_SYSTEM, bridgePrompt, sanitizeBridge } from '@/lib/simulation/unveil-bridge'
 
 /**
  * 인라인 세션 미러링(10/27). 한 방 안에서 언베일 모델이 쓴 원문(is_explicit)은 화면에는 그대로 두고,
@@ -14,12 +14,12 @@ export const MASKED_FALLBACK = '두 사람은 이어서 사적인 시간을 보�
 export const inlineMirrorEnabled = () => process.env.MIRO_INLINE_MIRROR !== '0'
 
 /**
- * 이번 턴을 언베일 모델로 보낼까. gateAllowed(인증·동의·캐릭터 19+·페르소나·언베일 켜짐)가 먼저고,
- * 입력에 성인 맥락이 보이거나 직전 답이 언베일 모델 것이었을 때만 true. 입력 감지만으로는 절대 넘어가지 않는다.
- * ponytail: 한 번 넘어가면 직전 답이 계속 원문이라 방에 머문다 — 일반으로 돌아오기는 언베일 스위치를 끄는 것뿐. 장면 전환 감지는 필요할 때.
+ * 이번 턴을 언베일 모델로 보낼까 — gateAllowed(인증·동의·캐릭터 19+·페르소나·홈 언베일 켜짐)면 늘 true.
+ * 11/11 사용자: "홈에서 언베일을 켜면 모든 방·계정 자체가 언베일이어야" — 예전엔 입력 낱말 목록(EXPLICIT)이 맞을 때만 넘어가서
+ * '핥·따먹' 같은 말은 일반 모델로 가 캐릭터가 거절만 했다. input·lastExplicit 는 호출부 호환으로 받기만 한다.
  */
 export function decideAdultTurn(o: { gateAllowed: boolean; input: string; lastExplicit: boolean }): boolean {
-  return o.gateAllowed && (o.lastExplicit || EXPLICIT.test(o.input))
+  return o.gateAllowed
 }
 
 /** 연속된 원문 한 덩어리를 요약한다. 성인 전용 모델로만 부를 것(auxiliaryLLM adult: true). */
