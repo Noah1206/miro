@@ -9,12 +9,12 @@ import { Line, SceneMeta } from '@/components/scene/text'
 import { Emphasis } from '@/components/scene/emphasis'
 import { TypedText } from '@/components/scene/typed-text'
 import { BOX_END_PAUSE_MS, OPENING_PARAGRAPH_MS, REPLY_TYPING_PACE } from '@/components/scene/typing'
-import { CharacterPhoto } from '@/components/character-visual'
 import { UnveilCover } from '@/components/unveil-badge'
 import type { Mood } from '@miro/domain'
 import { usePress } from '@/lib/motion/use-press'
 import { ENDING_VIEW, REROLL, useTurns } from './turns'
 import { segmentReply, type Paragraph } from './reply-segments'
+import { CharacterPhoto } from '@/components/character-visual'
 import { useT } from '@/lib/i18n/client'
 import { useOpeningPlayback } from './use-opening-playback'
 import { useImmersive } from './immersive'
@@ -278,10 +278,15 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
           endPauseMs={boxEnds.has(p.index) ? BOX_END_PAUSE_MS : 260} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />)
     : <Emphasis text={p.text} />
 
+  // 11/12 사용자(제타 스크린샷): 상황 서술은 말풍선 밖(아이콘 없이 가운데 정렬·회색 기울임), 말풍선 안은 행동(회색 기울임)과 대사(흰 글씨 "…").
+  const shown = segments
+  const lastBubble = shown.map(s => s.kind).lastIndexOf('bubble')
+  const paragraphClass = (p: Paragraph) => p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : styles.dialogueLine
+  const quoted = (p: Paragraph) => theme === 'miro' && p.kind === 'dialogue' && !/^["“'‘]/.test(p.text) ? { ...p, text: `"${p.text}"` } : p
+
   return <div className={styles.reply}>
-    {segments.map((seg, i) => {
+    {shown.map((seg, i) => {
       const hidden = typing && seg.paragraphs[0]!.index > typed
-      // 11/12 사용자: 서술은 아이콘 없이, 문장마다 줄을 바꾸지 않고 한 덩어리로.
       if (seg.kind === 'narration') return (
         <div key={i} className={styles.narration} hidden={hidden} data-narration>
           <div className={styles.narrationText}>
@@ -290,8 +295,9 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
         </div>
       )
       const own = seg.speaker === name
-      // 11/8 여러 인물 카드에서 화자를 모르는 줄(인트로 등)은 카드 이름(작품명)·대표 사진을 붙이지 않고 말풍선 없이 한 덩어리로.
-      if (own && cast?.length) return (
+      // 11/8 여러 인물 카드에서 화자를 모르는 줄(인트로 등)은 카드 이름(작품명)·대표 사진을 붙이지 않는다 — 미로 테마는 같은 줄에 이름·사진 없이 말풍선만.
+      const anonymous = own && !!cast?.length
+      if (anonymous && theme !== 'miro') return (
         <div key={i} className={styles.loose} hidden={hidden}>
           {seg.paragraphs.map((p) => (
             <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
@@ -307,22 +313,22 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
           {(() => {
             // 11/6: 여러 인물 — 이름이 같거나 줄임("연화" ↔ "백리연화")이면 그 인물 사진.
             const photoOf = own ? portrait : castPhotos[seg.speaker] ?? Object.entries(castPhotos).find(([n]) => n.endsWith(seg.speaker) || seg.speaker.endsWith(n))?.[1]
-            const face = theme !== 'miro' ? <DefaultChatAvatar /> : photoOf
-              ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="44px" width={44} height={44} />
+            const face = theme !== 'miro' ? <DefaultChatAvatar /> : anonymous ? null : photoOf
+              ? <CharacterPhoto src={photoOf} alt="" size="avatar" sizes="28px" width={28} height={28} />
               : seg.speaker.slice(0, 1)
-            return <span className={styles.avatar} aria-hidden>{face}</span>
+            return <span className={`${styles.avatar}${anonymous ? ` ${styles.avatarBlank}` : ''}`} aria-hidden>{face}</span>
           })()}
           <div className={styles.characterContent}>
-            <p className={styles.speaker}>{seg.speaker}</p>
+            {!anonymous && <p className={styles.speaker}>{seg.speaker}</p>}
             <div className={styles.timedBubble}><div {...replayProps(seg.paragraphs.filter(p => p.kind === 'dialogue').map(p => p.text))}>
               {seg.paragraphs.map((p) => (
-                <p key={p.index} className={p.kind === 'thought' ? styles.thought : p.kind === 'action' ? styles.action : undefined}
+                <p key={p.index} className={paragraphClass(p)}
                   hidden={typing && p.index > typed} data-thought={p.kind === 'thought' || undefined}>
                   {p.kind === 'thought' && <span className="sr-only">{t('속마음: ')}</span>}
-                  {line(p)}
+                  {line(quoted(p))}
                 </p>
               ))}
-            </div>{i === segments.map(s => s.kind).lastIndexOf('bubble') && <BubbleTime m={m}/>}</div>
+            </div>{i === lastBubble && <BubbleTime m={m}/>}</div>
           </div>
         </div>
       )

@@ -32,6 +32,8 @@ async function streamCompletion(response: Response, req: GenerationRequest, prov
       while ((newline = buffer.indexOf('\n')) >= 0 && !ended) {
         const line = buffer.slice(0, newline).replace(/\r$/, ''); buffer = buffer.slice(newline + 1)
         if (!line) dispatch()
+        // OpenRouter 는 생각하는 동안 ': OPENROUTER PROCESSING' 을 보낸다 — 살아 있다는 표시라 조용한 시간 한도를 다시 잰다(전체 한도는 그대로).
+        else if (line.startsWith(':')) { if (provider === 'openrouter') req.onText!(text) }
         else if (line.startsWith('data:')) data.push(line.slice(5).replace(/^ /, ''))
       }
       if (done) { if (buffer.startsWith('data:')) data.push(buffer.slice(5).trim()); dispatch(); break }
@@ -70,7 +72,8 @@ export class OpenAICompatibleProvider implements AIProvider {
     const requiresReasoning = /^(openai\/)?gpt-(6-astra|6\.1-sol)(?:-|$)/.test(this.model)
     // GPT-5 는 생각 토큰이 max_completion_tokens 를 같이 먹는다 — medium 생각이면 4096 을 생각만으로 다 써 답이 비었다
     // (10/4 성격표 예비 호출 전부 max_tokens). 생각을 켠 요청은 답 몫의 3배를 준다. ponytail: 모델 상한은 레지스트리가 알지만 여기선 모른다 — 16k 안이면 된다.
-    const streaming = this.name === 'openai' && !!req.onText
+    // 11/12: OpenRouter(언베일 방)도 받는 대로 — 한 번에 받으면 출력량 '아주 길게'가 글 없는 60초 한도에 끊겨 예비까지 실패했다.
+    const streaming = (this.name === 'openai' || this.name === 'openrouter') && !!req.onText
     const completionCap = (req.maxTokens ?? 1024) * (req.thinking && !req.hardTokenCap ? 3 : 1)
     const res = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
