@@ -68,6 +68,11 @@ export function bindChatViewport(element: HTMLElement) {
   document.addEventListener('focusout', settle)
   document.addEventListener('visibilitychange', schedule)
   return () => {
+    // 11/12 키보드가 열린 채 방을 나가면(뒤로 가기) 다음 화면이 밀린 채로 남는다 — 키보드가 닫히는 동안 문서를 맨 위로 되돌려 둔다.
+    if (keyboard || viewport.offsetTop > 1) {
+      const reset = () => { if (window.visualViewport && window.visualViewport.offsetTop > 1 || window.scrollY < 0) window.scrollTo({ top: 0, behavior: 'instant' }) }
+      window.scrollTo({ top: 0, behavior: 'instant' }); window.setTimeout(reset, 350); window.setTimeout(reset, 800)
+    }
     cancelAnimationFrame(frame)
     element.removeEventListener('scroll', onScroll, { capture: true })
     viewport.removeEventListener('resize', schedule)
