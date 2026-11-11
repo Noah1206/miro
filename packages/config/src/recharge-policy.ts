@@ -13,7 +13,7 @@ export const PLANNED_RECHARGE_TIERS = [
 ] as const
 
 /** 가입 보상 — 2026-10-16: 첫 가입 설정을 마치면 1,000토큰, 7일 뒤 소멸. 계정당 한 번. */
-export const WELCOME_GRANT = { units: 1000, validDays: 7 } as const
+export const WELCOME_GRANT = { units: 1500, validDays: 7 } as const
 /** 11/10 사용자: 출석 체크(프로필 버튼)로 하루 1,500토큰(그날 KST 자정에 소멸), 7일 연속 출석마다 1,500 추가(7일 유효). */
 export const ATTENDANCE_GRANT = { daily: 1500, weeklyBonus: 1500, streakDays: 7, bonusValidDays: 7 } as const
 /** 대화를 시작하려면 잔액이 이만큼 있어야 한다. */
