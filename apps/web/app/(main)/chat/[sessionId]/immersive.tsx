@@ -17,21 +17,23 @@ import styles from './chat.module.css'
  * 통화가 아니다 — 턴은 그대로 채팅 턴이고, 소리는 저장된 답을 읽는다.
  */
 export type SpeechChoice={messageId:string;part:number;text:string}
-type Immersive = { media: CharacterMedia; available:boolean; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
+type Immersive = { media: CharacterMedia; available:boolean; soon:boolean; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
   choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string
   /** 11/6: 무료 운영(음성 분량 차감 꺼짐) — 새 답 이어 읽기·말풍선 눌러 다시 듣기. */
   free:boolean;replay:(m:Msg,texts:string[])=>void
   /** 11/11 음성 모드로 이어 읽는 중 — 폼에 voice=1(답을 쓰는 동안 합성 서버를 깨운다). */
   live:boolean }
-const Ctx = createContext<Immersive>({ media: 'text', available:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false })
+const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
 const SILENT = 'data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
-export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, voiceSpeakers=[], enabled=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string
+export function ImmersiveProvider({ sessionId, media, portrait, children, initialMessages=[], characterName, voiceSpeakers=[], enabled=false, soon=false }: { sessionId: string; media: CharacterMedia; portrait?: string | null; children: ReactNode; initialMessages?:Msg[];characterName?:string
   /** 히로인별 목소리가 있는 이름(11/4) — 서버(lib/speech/access)와 같은 목록이어야 part 번호가 맞는다. */
-  voiceSpeakers?:string[];enabled?:boolean }) {
+  voiceSpeakers?:string[];enabled?:boolean
+  /** 11/12 음성 서버가 멈춰 있는 동안(MIRO_VOICE_PAUSED=1) — 켤 수 없고 방 메뉴에 '곧 열림' 으로만 보인다. */
+  soon?:boolean }) {
   const key = `miro:immersive:${sessionId}`
   const [preferredOn, setOn] = useState(false)
   const on=enabled&&preferredOn
@@ -142,7 +144,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true }}>
+    <Ctx.Provider value={{ media, available:enabled, soon, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}
