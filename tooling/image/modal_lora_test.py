@@ -106,7 +106,7 @@ class Gen:
     def gen(self, prompt: str, variant: str, scale: float = 1.0, seed: int = 7, neg: str = '', unveil: bool = False, hires: bool = False,
             hr_scale: float = 0.0, hr_strength: float = 0.4, ref: bytes | None = None, ref_scale: float = 0.0, face_scale: float = 0.0,
             init: bytes | None = None, init_strength: float = 0.65, ctrl: bytes | None = None, ctrl_scale: float = 0.6,
-            ctrl_end: float = 0.6, ctrl_top: float = 0.0, redo_top: float = 0.0, redo_prompt: str = '', redo_strength: float = 0.85, redo_from: float = 0.0, redo_x0: float = 0.0, redo_x1: float = 1.0, redo_mask: bytes | None = None) -> bytes:
+            ctrl_end: float = 0.6, ctrl_top: float = 0.0, redo_top: float = 0.0, redo_prompt: str = '', redo_strength: float = 0.85, redo_from: float = 0.0, redo_x0: float = 0.0, redo_x1: float = 1.0, redo_mask: bytes | None = None, fmt: str = 'PNG') -> bytes:
         import io, torch
         from PIL import Image
         if variant == 'base':
@@ -165,7 +165,8 @@ class Gen:
             img = self.i2i(**self._embeds(p, n), ip_adapter_image=ref_img, image=up, strength=hr_strength, num_inference_steps=30,
                            guidance_scale=5.0, generator=g).images[0]
         buf = io.BytesIO()
-        img.save(buf, 'PNG')
+        # 11/11 앱 서버는 WEBP(약 1/10) — 웹 함수 이미지엔 Pillow 가 없어 여기(GPU 쪽)에서 바꾼다. 로컬 실행(.png 저장)은 PNG 그대로.
+        img.save(buf, 'WEBP', quality=90, method=4) if fmt == 'WEBP' else img.save(buf, 'PNG')
         return buf.getvalue()
 
 
@@ -223,13 +224,9 @@ def image_api(body: dict):
     # 11/7 NoobAI 판 그림체는 기본 모델도 NoobAI 로
     png = Gen(ckpt=style['ckpt'], base=style.get('base', '')).gen.remote(
         prompt=prompt, variant=style['variant'], scale=style['scale'], seed=seed, neg=neg, unveil=bool(body.get('unveil')), hires=True,
-        hr_scale=style['hr_scale'], hr_strength=style['hr_strength'], ref=ref, ref_scale=ref_scale, face_scale=face_scale)
-    # 11/11 PNG(약 5MB) 대신 WebP(약 1/10) — 앱·가림 서버·저장소·폰으로 몇 번씩 오가는 크기라 받기까지 오래 걸렸고 가림 서버 업로드가 시간 초과(408)났다. 키 이름 png 는 예전 그대로.
-    import io
-    from PIL import Image
-    buf = io.BytesIO()
-    Image.open(io.BytesIO(png)).convert('RGB').save(buf, 'WEBP', quality=90, method=4)
-    return {'png': base64.b64encode(buf.getvalue()).decode(), 'prompt': prompt, 'neg': neg}   # 프롬프트는 확인용(앱은 png 만 쓴다)
+        hr_scale=style['hr_scale'], hr_strength=style['hr_strength'], ref=ref, ref_scale=ref_scale, face_scale=face_scale, fmt='WEBP')
+    # 11/11 png 키에 WebP(약 1/10)가 온다 — 앱·가림 서버·저장소·폰으로 오가는 크기를 줄였다(키 이름은 예전 그대로).
+    return {'png': base64.b64encode(png).decode(), 'prompt': prompt, 'neg': neg}   # 프롬프트는 확인용(앱은 png 만 쓴다)
 
 
 @app.local_entrypoint()
