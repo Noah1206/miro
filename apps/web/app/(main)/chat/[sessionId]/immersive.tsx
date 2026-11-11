@@ -154,8 +154,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
 export function VoiceStatus() {
   const t=useT(),voice=useImmersive()
   // 무료 운영: 고르는 패널 대신 한 줄 — 새 답은 저절로 읽고, 다시 들으려면 말풍선을 누른다.
-  if(voice.on&&voice.free)return <p className={styles.voiceHint} role="status">
-    {t(voice.status==='preparing'?'음성 준비 중…':voice.status==='playing'?'읽는 중':voice.status==='error'?'음성을 읽지 못했어요':'새 답은 저절로 읽어요 · 말풍선을 누르면 다시 들어요')}</p>
+  // 11/12 사용자: 헤더 밑 안내 줄은 없앰 — 켤 때 토스트(room-menu)로만 알린다.
+  if(voice.on&&voice.free)return null
   return <SpeechPanel/>
 }
 

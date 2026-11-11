@@ -7,7 +7,7 @@ import type { AccountProfile } from '@/lib/account-profile'
 import { useAccountProfile } from '@/components/account-profile-provider'
 import type { ChatModelChoice } from '@/lib/ai/chat-models'
 import { ChatThemeOptions } from '@/components/chat-theme'
-import { LogoMark } from '@/components/ui'
+import { LogoMark, useToast } from '@/components/ui'
 import { CharacterPhoto } from '@/components/character-visual'
 import { ConversationPersona } from '@/components/conversation-persona'
 import { InstallAppButton } from '@/components/pwa-install'
@@ -55,6 +55,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
   const { profile, refresh: refreshProfile } = useAccountProfile(initialProfile)
   const locale = INTL_LOCALE[useLanguage()]
   const { available, on, toggle } = useImmersive()
+  const toast = useToast()
   const { wallet, openRecharge, refreshBalance, live } = useWallet()
   const menuId = useId()
   const [open, setOpen] = useState(false)
@@ -87,7 +88,7 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
       <section className={styles.section} aria-label={t('내 설정')}>
         <h3>{t('내 설정')}</h3>
         {/* 음성 모드(11/9 사용자: 헤더 대신 메뉴 안) — 켜면 캐릭터 답장을 목소리로 듣는다. 이 탭이 아이폰 소리 잠금도 푼다. */}
-        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={toggle}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
+        {available && <button type="button" role="switch" aria-checked={on} className={styles.voiceRow} onClick={() => { if (!on) toast(t('음성 모드가 켜졌어요')); toggle() }}><span>{t('음성 모드')}</span><i aria-hidden /></button>}
         {/* 11/10: 목소리 고르기는 타일 대신 음성 모드를 켰을 때 토글 바로 아래 — 캐릭터별 목록 */}
         {available && on && roomVoice && <RoomVoicePanel sessionId={sessionId} voice={roomVoice}/>}
         <div className={styles.grid}>{tiles.map(id => <button key={id} id={`${menuId}-${id}`} type="button" className={styles.tile} aria-expanded={panel === id} aria-controls={panel === id ? `${menuId}-detail` : undefined} onClick={() => setPanel(panel === id ? null : id)}>
