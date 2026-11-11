@@ -155,7 +155,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
     // A timed-out POST is retried with exactly the same order ID, never a new purchase.
     if (!purchase.current || purchase.current.productId !== selected) purchase.current = { productId: selected, requestId: crypto.randomUUID() }
     try {
-      const result = await purchaseCredits(selected, purchase.current.requestId)
+      const result = await purchaseCredits(selected, purchase.current.requestId, !!wallet?.minor)  // 미성년은 시트의 동의 칸을 거쳐야 여기 온다
       if (token !== epoch.current) return
       if (result.ok) { setState('idle'); await reflect(result.wallet, token) }
       else { setError(result.error); setState('failed') }
@@ -261,7 +261,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
           <Button full variant="primary" onClick={cancel}>{t('확인')}</Button>
         </> : <>
           {wallet && !wallet.account && <Notice>{t('지금은 충전을 받지 않고 있어요.')}</Notice>}
-          {wallet?.account && <RechargeCatalog available={wallet.available} products={wallet.products} onPick={id => void checkout(id)} onClose={cancel} busy={state === 'loading'} picking={state === 'loading' ? selected : null} />}
+          {wallet?.account && <RechargeCatalog available={wallet.available} products={wallet.products} onPick={id => void checkout(id)} onClose={cancel} busy={state === 'loading'} picking={state === 'loading' ? selected : null} minor={!!wallet.minor} />}
           {!wallet && <Button onClick={() => void refresh()} status={checking ? 'loading' : 'idle'} full>{t('잔액 다시 불러오기')}</Button>}
         </>}
       </div>

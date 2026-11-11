@@ -1,6 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { isLanguage, type Language } from '@miro/domain'
-import { WELCOME_GRANT } from '@miro/config'
+import { POLICY, WELCOME_GRANT } from '@miro/config'
+import { adultOn } from '@miro/providers'
+import { teenOpen } from '@/lib/teen-open'
 import { db, termsConsents, userPersonas, userSettings, users } from '@miro/db'
 import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
@@ -39,7 +41,9 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   const birthDate = typeof birth === 'string' && birth ? birth : null
   if (!birthDate || !validBirthDate(birthDate, today)) return { ok: false, step: 4, error: msg('생년월일을 다시 확인해 주세요.') }
   // 11/12 사용자: 19세 미만도 가입·대화 — 성인 내용은 언베일(본인인증으로 성인 확인)에서만. 만 14세 미만은 법정대리인 동의가 필요해 받지 않는다(개인정보 보호법 제22조의2).
-  if (fullAge(birthDate, today) < MIN_SIGNUP_AGE) return { ok: false, step: 4, error: msg('만 14세 이상만 가입할 수 있어요.') }
+  // 약관 개정 시행일(teenOpen) 전에는 시행 중인 약관대로 만 19세(청소년 보호법 기준) 이상만.
+  if (teenOpen(today)) { if (fullAge(birthDate, today) < MIN_SIGNUP_AGE) return { ok: false, step: 4, error: msg('만 14세 이상만 가입할 수 있어요.') } }
+  else if (!adultOn(birthDate, today, POLICY.adultVerification.minimumAge)) return { ok: false, step: 4, error: msg('만 19세 이상(청소년 보호법 기준)만 가입할 수 있어요.') }
 
   if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 5, error: msg('필수 항목에 모두 동의해 주세요.') }
 

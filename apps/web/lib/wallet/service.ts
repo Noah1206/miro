@@ -3,6 +3,7 @@ import { bankTransferOrders, db, rechargeGrants, usageLedger } from '@miro/db'
 import { bankAccount, firstPurchasePrice, rechargeCatalog } from '@miro/config'
 import { earningsBalance, usageStatus } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
+import { isMinor } from '@/lib/payments/minor'
 import type { WalletEntry, WalletHistory, WalletOrder, WalletSnapshot } from './types'
 
 /** Every branch filters the owner. The cursor keeps Postgres microseconds, including ties. */
@@ -65,13 +66,14 @@ export async function walletHistory(userId: string, cursor?: string, limit = 20)
 
 export async function walletSnapshot(userId: string, orderId?: string): Promise<WalletSnapshot> {
   const observedAt = Date.now()
-  const [usage, history, orders, earnings] = await Promise.all([
+  const [usage, history, orders, earnings, minor] = await Promise.all([
     usageStatus(userId), walletHistory(userId, undefined, 5),
     db.select().from(bankTransferOrders).where(and(eq(bankTransferOrders.userId, userId), orderId
       ? eq(bankTransferOrders.id, orderId)
       : or(eq(bankTransferOrders.status, 'awaiting'), and(eq(bankTransferOrders.status, 'approved'), isNull(bankTransferOrders.settledAt)))))
       .orderBy(desc(bankTransferOrders.createdAt)).limit(1),
     earningsBalance(userId),
+    isMinor(userId),
   ])
   let account: WalletSnapshot['account'] = null
   let products: WalletSnapshot['products'] = []
@@ -95,5 +97,5 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
   } : null
   return { userId, observedAt, rechargeRemaining: usage.rechargeRemaining, monthlyRemaining: usage.remaining,
     available: usage.remaining + usage.rechargeRemaining, resetsAt: usage.resetsAt?.toISOString() ?? null,
-    plan: usage.plan, account, products, order, history, earnings }
+    plan: usage.plan, account, products, order, history, earnings, minor }
 }

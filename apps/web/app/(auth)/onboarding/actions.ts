@@ -5,6 +5,7 @@ import { requireUser } from '@/lib/auth'
 import { takeNext } from '@/lib/oauth-state'
 import { completeOnboarding, parseOnboarding, precheckNickname, type OnboardingError } from '@/lib/onboarding'
 import { WELCOME_PARAM } from '@/lib/onboarding-options'
+import { teenOpen } from '@/lib/teen-open'
 
 export type OnboardingState = OnboardingError | null
 
@@ -23,6 +24,6 @@ export async function finishOnboarding(_prev: OnboardingState, form: FormData): 
   const done = await completeOnboarding(user.id, parsed.input, receipt?.at)
   if (!done.ok) return { step: done.step, error: done.error }
   const next = (await takeNext()) ?? '/home'
-  // 11/12: 본인인증 단계 없이 바로 — 가입 선물 표시는 홈으로.
-  redirect(done.welcomed ? `/home?${WELCOME_PARAM}=1` : next)
+  // 11/12: 청소년 개방 약관 시행일부터는 본인인증 단계 없이 바로 홈 — 그 전에는 본인인증 단계로(가입 선물 표시는 그 단계를 지나 홈까지).
+  redirect(done.welcomed ? (teenOpen() ? `/home?${WELCOME_PARAM}=1` : `/onboarding/verify?${WELCOME_PARAM}=1`) : next)
 }

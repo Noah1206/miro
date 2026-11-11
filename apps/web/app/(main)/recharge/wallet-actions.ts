@@ -4,6 +4,7 @@ import { cancelBankOrder, createBankOrder, OrderPendingError } from '@/lib/payme
 import { walletHistory, walletSnapshot } from '@/lib/wallet/service'
 import { observe } from '@/lib/observe'
 import { msg } from '@/lib/i18n'
+import { isMinor } from '@/lib/payments/minor'
 import { requestBankDeposit } from '@/lib/payments/telegram'
 import { walletRealtimeChannel } from '@/lib/wallet/realtime'
 
@@ -44,9 +45,11 @@ export async function cancelPendingOrder(orderId: string) {
 }
 
 /** Browser supplies identity only. Catalog prices and settlement remain server-owned. */
-export async function purchaseCredits(selection: string, requestId: string) {
+export async function purchaseCredits(selection: string, requestId: string, guardianConsent = false) {
   const user = await requireUser()
   if (!UUID.test(requestId) || typeof selection !== 'string' || !selection.startsWith('recharge:')) return { ok: false as const, error: msg('주문 정보를 확인해 주세요.') }
+  // 11/12 미성년(만 19세 미만)은 법정대리인 동의를 확인한 뒤에만 주문한다(민법 제5조).
+  if (!guardianConsent && await isMinor(user.id)) return { ok: false as const, error: msg('법정대리인(부모님) 동의를 확인해 주세요.') }
   try {
     const order = await createBankOrder({ userId: user.id, kind: 'recharge',
       productId: selection.slice('recharge:'.length), requestId })

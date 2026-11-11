@@ -1,6 +1,7 @@
 'use server'
 import { redirect } from 'next/navigation'
 import { requireUser } from '@/lib/auth'
+import { isMinor } from '@/lib/payments/minor'
 import { BankTransferUnavailableError, OrderPendingError, createBankOrder } from '@/lib/payments/bank-transfer'
 
 /**
@@ -14,6 +15,8 @@ export async function orderByTransfer(formData: FormData) {
   const depositorName = String(formData.get('depositorName') ?? '')
   // redirect 는 예외를 던져 흐름을 옮긴다 — try 안에서 부르면 catch 가 삼킨다. 밖에서 부른다.
   let code = 'created'
+  // 11/12 미성년은 법정대리인 동의 확인 후에만(지갑 시트와 같은 규칙).
+  if (formData.get('guardianConsent') !== 'on' && await isMinor(user.id)) redirect('/recharge?order=guardian')
   try {
     await createBankOrder({ userId: user.id, kind, productId, depositorName })
   } catch (e) {

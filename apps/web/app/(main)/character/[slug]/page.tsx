@@ -7,7 +7,7 @@ import { characterEditorial } from '@/components/scene/character-editorial'
 import { sampleWithAtmosphere } from '@/lib/sample-atmosphere'
 import { IntroPreview, type IntroScene } from './intro-preview'
 import { CharacterSettings } from './settings'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { getCharacterByKey } from '@/lib/characters'
 import { characterLikeState, countComments, listComments, similarCharacters } from '@/lib/social'
@@ -33,27 +33,26 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   // 로그인 전에도 캐릭터를 살펴볼 수 있다 — 문 앞에서 묻는다 (E-48).
   const t = await getT()
   const user = await currentUser()
-  // 11/8 성인 서비스 — 로그인·본인인증 전에는 작품 목록·상세를 보이지 않는다(홈은 흐린 화면).
-  if (!user) redirect('/home')
+  // 11/12 사용자: 로그인 전에도 상세를 본다 — '대화하기'를 누르면 로그인 시트(StartWithLogin).
   const { slug } = await params
   const stored = await getCharacterByKey(slug, user?.id ?? null)
   const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null
   if (!c) notFound()
-  const unveil = await homeUnveilEnabled(user.id)
+  const unveil = await homeUnveilEnabled(user?.id ?? null)
   // 11/12 사용자: 성인 전용 작품도 상세는 보인다(표지·인트로는 흐림). 언베일을 안 켰으면 '대화하기'가 본인인증·언베일 켜기로 바뀐다.
-  const locked = c.adultOnly && !unveil && c.ownerId !== user.id
+  const locked = !!user && c.adultOnly && !unveil && c.ownerId !== user.id
   const can = features()
   const editedDescription = officialDescription(c)
 
-  const cheerable = !c.isOfficial && c.isPublic && !!c.ownerId && c.ownerId !== user.id
+  const cheerable = !c.isOfficial && c.isPublic && !!c.ownerId && c.ownerId !== user?.id
   const creator = cheerable ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId!)).limit(1))[0]?.name ?? '' : ''
   const [comments, commentCount, similar, likes, reached, running] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType, unveil),
     characterLikeState(c.id, user?.id ?? null),
-    c.endings.length ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
-    c.endings.length ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
+    c.endings.length && user ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
+    c.endings.length && user ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
   const me = (text: string | null) => text ?? ''
@@ -122,7 +121,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
           </TransitionLink>
         )}
         {/* 11/10 작품 신고 — 남의 작품에만. 기존 신고 화면(/report)을 쓴다. */}
-        {c.ownerId !== user.id && (
+        {c.ownerId !== user?.id && (
           <TransitionLink href={`/report?type=character&id=${c.id}`} className="t-caption"
             style={{ minHeight: 44, display: 'inline-flex', alignItems: 'center', color: 'var(--color-text-secondary)' }}>{t('신고')}</TransitionLink>
         )}
