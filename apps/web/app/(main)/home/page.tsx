@@ -10,7 +10,7 @@ import { HomeBanner } from './banner'
 import { HomeHero } from './hero'
 import { NotificationBell } from './bell'
 import { SiteFooter } from '@/components/site-footer'
-import { LegalRevisionNotice } from '@/components/legal-revision-notice'
+import { LegalRevisionToast } from '@/components/legal-revision-notice'
 import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
 import { getT } from '@/lib/i18n/server'
@@ -63,8 +63,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       <InstallAppHint />
       <HomeViewBeacon />
 
-      {/* 약관·처리방침 개정이 공지 중이면 초기화면에서 알린다(약관 제3조 ③). 평소엔 아무것도 그리지 않는다. */}
-      <LegalRevisionNotice style={{ marginBottom: 'var(--space-3)' }} />
+      {/* 약관·처리방침 개정이 공지 중이면 초기화면에서 토스트로 알린다(약관 제3조 ③, 11/11 사용자 요청). 평소엔 아무것도 하지 않는다. '나' 화면엔 닫기 없는 띠가 그대로 있다. */}
+      <LegalRevisionToast />
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       {/* 11/10 사용자: 로그인한 사람에겐 배너 대신 크랙식 추천(들어올 때마다 랜덤 6작품, 표지가 언베일인 작품은 뺀다). 로그인 전엔 가입 선물 배너 그대로. */}
       {user ? <HomeHero items={(() => {
