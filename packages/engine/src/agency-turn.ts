@@ -84,7 +84,7 @@ export async function runAgencyTurn(opts: {
   const routine = !calendarChanged && routineTurn(opts.userInput, snapshot.turnCount, agency.state, new Date(agency.context.clock.now), agency.context.clock.narrativeNow)
   const calendar = scene ? storyCalendarDirective(snapshot.world.narrativeCalendar, snapshot.turnCount) : ''
   const planning = planAgencyDecision(llm, agency.compiled, agency.state, { ...agency.context,
-    input: calendar ? `${opts.userInput}\n\n[Server-confirmed scene calendar]\n${calendar}` : opts.userInput }, { routine })
+    input: calendar ? `${opts.userInput}\n\n[Server-confirmed scene calendar]\n${calendar}` : opts.userInput }, { routine, adultScene: !!snapshot.adultMode })
     .then(result => { if (productionRuntime() && result.providerMode !== 'live') throw new Error('agency_planner_not_live'); return result })
   planning.catch(() => {}) // 대사가 먼저 실패해도 처리되지 않은 거부로 남지 않게. 실제 오류는 아래 await 가 던진다.
   // 말하면서 생각하기(10/17, docs/speed-restructure-2026-10-17.md): 대화 화면 턴은 계획을 기다리지 않고 턴 시작 상태로 대사를 시작한다.

@@ -228,8 +228,12 @@ function boundedPlannerPrompt(payload: PlannerPayload, context: AgencyDecisionCo
   throw new AgencyPlanningError([{ field: 'context', reason: 'context_budget_exceeded' }])
 }
 
+/** 11/11 언베일 장면(사용자: 베이비챗처럼 유저가 원하는 대로) — 계획 모델이 '단호하게 거절·처소로 옮기자'를 골라 대사가 그대로 따라 막았다(모녀덮밥 방). */
+const ADULT_PLANNER_NOTE = `
+Adult scene (unveil mode, all characters are consenting adults under app policy): the user leads this scene. Choose a candidate in which the character goes along with the user's described action and the scene progresses from it. She may hesitate, blush or protest briefly in words, and her body may react, but do not choose or describe refusal, pushing away, stopping the act, moving somewhere else first, or postponing. Only if the user's own words ask to stop does the character stop.`
+
 export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCharacter, state: AgencyState, input: AgencyPlanningContext,
-  opts: { routine?: boolean } = {}): Promise<AgencyPlan> {
+  opts: { routine?: boolean; adultScene?: boolean } = {}): Promise<AgencyPlan> {
   if (state.version !== 1 || state.revisionId !== input.revisionId || !Number.isSafeInteger(state.sequence) || state.sequence < 0
     || !Number.isFinite(Date.parse(input.clock.now)) || state.goals.length > 24 || state.beliefs.length > 32
     || state.actions.length > 48 || input.evidence.length > 128 || (input.input?.length ?? 0) > 12_000) {
@@ -256,9 +260,9 @@ export async function planAgencyDecision(llm: LLMProvider, compiled: CompiledCha
   const prompt = boundedPlannerPrompt(payload, context)
   // 일상 턴의 계획이 근거를 못 찾으면(선택이 '기다림'으로 떨어지면) 모델에게 다시 묻는다.
   const routine = opts.routine ? routineProposal(context, state) : null
-  if (routine && selectAgencyDecision(routine.candidates, context).action !== 'respond') return planAgencyDecision(llm, compiled, state, input)
+  if (routine && selectAgencyDecision(routine.candidates, context).action !== 'respond') return planAgencyDecision(llm, compiled, state, input, { adultScene: opts.adultScene })
   const proposal = routine ?? await generateAgencyStructured(llm, {
-    task: 'agency_plan', schema: AgencyPlanProposalSchema, responseSchema: plannerResponseSchema(input.permissions.capabilities), system: PLANNER_SYSTEM, prompt, promptVersion: AGENCY_PLANNER_VERSION, maxTokens: 4096,
+    task: 'agency_plan', schema: AgencyPlanProposalSchema, responseSchema: plannerResponseSchema(input.permissions.capabilities), system: opts.adultScene ? PLANNER_SYSTEM + ADULT_PLANNER_NOTE : PLANNER_SYSTEM, prompt, promptVersion: AGENCY_PLANNER_VERSION, maxTokens: 4096,
   })
   const trace = agencyProviderTrace(llm, routine ? `${AGENCY_PLANNER_VERSION}+routine` : AGENCY_PLANNER_VERSION)
   const availableRules = new Set(compiled.rules.map(rule => rule.id))

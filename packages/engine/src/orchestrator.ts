@@ -96,7 +96,7 @@ export async function runTurn(opts: {
   if (opts.snapshot.experienceType !== 'chat' && opts.agency?.mode === 'shadow' && opts.llm.info.mode === 'mock') {
     // One-step comparison only. Never persist or realize a shadow choice in the live session.
     try {
-      const plan = await planAgencyDecision(opts.llm, opts.agency.compiled, opts.agency.state, { ...opts.agency.context, input: opts.userInput })
+      const plan = await planAgencyDecision(opts.llm, opts.agency.compiled, opts.agency.state, { ...opts.agency.context, input: opts.userInput }, { adultScene: !!opts.snapshot.adultMode })
       agencyShadow = { action: plan.decision.action, issueCount: plan.issues.length }
     } catch { agencyShadow = { error: true } }
   } else if (opts.agency?.mode === 'shadow') agencyShadow = { error: true }
