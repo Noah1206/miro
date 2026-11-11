@@ -72,21 +72,25 @@ export class CheerError extends Error {}
  * 응원 보내기 — 보낸 사람 지갑에서 충전한 토큰만 차감하고(가입 선물·창작 보상 토큰은 안 된다 — 무료 토큰을 다른 계정으로 옮기는 통로를 막는다),
  * 만든 사람에게 70% 를 미로 토큰으로 준다. requestId 가 같으면 한 번만 처리된다.
  */
-export async function sendCheer(opts: { userId: string; characterId: string; amount: number; requestId: string }): Promise<void> {
+/** 처리했으면 알림용 정보(만든 사람·캐릭터·받은 양), 같은 requestId 로 이미 처리된 거면 null. */
+export async function sendCheer(opts: { userId: string; characterId: string; amount: number; requestId: string }): Promise<{ ownerId: string; characterName: string; images: string[]; earned: number } | null> {
   if (!CHEER_AMOUNTS.includes(opts.amount as typeof CHEER_AMOUNTS[number])) throw new CheerError('invalid_amount')
   if (!/^[0-9a-f-]{36}$/i.test(opts.requestId)) throw new CheerError('invalid_request')
-  const [c] = await db.select({ ownerId: characters.ownerId, isOfficial: characters.isOfficial, isPublic: characters.isPublic, deletedAt: characters.deletedAt })
+  const [c] = await db.select({ ownerId: characters.ownerId, isOfficial: characters.isOfficial, isPublic: characters.isPublic, deletedAt: characters.deletedAt, name: characters.name, images: characters.images })
     .from(characters).where(eq(characters.id, opts.characterId)).limit(1)
   if (!c || c.deletedAt || !c.isPublic || c.isOfficial || !c.ownerId) throw new CheerError('not_cheerable')
   if (c.ownerId === opts.userId) throw new CheerError('own_character')
   const ownerId = c.ownerId
-  await db.transaction(async tx => {
+  const earned = Math.floor(opts.amount * CHEER_SHARE)
+  const done = await db.transaction(async tx => {
     const reservation = await reserve({ userId: opts.userId, kind: 'cheer', tokenAmount: opts.amount, paidOnly: true, idempotencyKey: `cheer:${opts.userId}:${opts.requestId}` }, tx)
-    if (reservation.reused) return
+    if (reservation.reused) return false
     await commit(reservation.reservationId, undefined, tx)
-    await tx.insert(rechargeGrants).values({ userId: ownerId, amount: Math.floor(opts.amount * CHEER_SHARE), source: 'grant', provider: CHEER_PROVIDER, externalRef: refOf(reservation.reservationId, opts.characterId) })
+    await tx.insert(rechargeGrants).values({ userId: ownerId, amount: earned, source: 'grant', provider: CHEER_PROVIDER, externalRef: refOf(reservation.reservationId, opts.characterId) })
       .onConflictDoNothing()
+    return true
   })
+  return done ? { ownerId, characterName: c.name, images: c.images ?? [], earned } : null
 }
 
 /** 작품별 이번 달(한국 시간) 수익 — 대화 보상과 받은 응원을 따로. 캐릭터 id → 값. */

@@ -25,7 +25,17 @@ export async function cheerCreator(characterId: string, amount: number, requestI
   const { sendCheer, CheerError } = await import('@/lib/usage/creator-reward')
   const { UsageExceededError } = await import('@/lib/usage/guard')
   try {
-    await sendCheer({ userId: user.id, characterId, amount, requestId })
+    const done = await sendCheer({ userId: user.id, characterId, amount, requestId })
+    // 11/11 크리에이터 알림 — 응원이 오면 만든 사람 기기로 바로(응답 뒤에 보내 응원 버튼이 기다리지 않게, 실패해도 응원은 그대로).
+    if (done) {
+      const { afterResponse } = await import('@/lib/defer')
+      void afterResponse(async () => {
+        const [{ pushToUser }, { characterPushIcon }] = await Promise.all([import('@/lib/push/to-user'), import('@/lib/push/character-icon')])
+        const from = user.displayName?.trim() || '누군가'
+        await pushToUser(done.ownerId, { title: '응원이 도착했어요', body: `${from}님이 '${done.characterName}'에 응원을 보냈어요 · 수익 +${done.earned.toLocaleString('ko-KR')}`,
+          url: '/earnings', tag: `cheer:${requestId}`, icon: characterPushIcon(done.images) }).catch(() => {})
+      })
+    }
     return { ok: true }
   } catch (e) {
     if (e instanceof UsageExceededError) return { ok: false, reason: 'insufficient' }
