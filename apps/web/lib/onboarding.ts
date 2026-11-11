@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { isLanguage, type Language } from '@miro/domain'
-import { POLICY, WELCOME_GRANT } from '@miro/config'
-import { adultOn } from '@miro/providers'
+import { WELCOME_GRANT } from '@miro/config'
 import { db, termsConsents, userPersonas, userSettings, users } from '@miro/db'
 import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
@@ -39,8 +38,8 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   const birth = form.get('birthDate')
   const birthDate = typeof birth === 'string' && birth ? birth : null
   if (!birthDate || !validBirthDate(birthDate, today)) return { ok: false, step: 4, error: msg('생년월일을 다시 확인해 주세요.') }
-  // 11/8 남성향 성인 서비스 — 가입부터 청소년 보호법 기준 성인(만 19세가 되는 해의 1월 1일부터)만. 언베일 판정과 같은 기준.
-  if (!adultOn(birthDate, today, POLICY.adultVerification.minimumAge)) return { ok: false, step: 4, error: msg('만 19세 이상(청소년 보호법 기준)만 가입할 수 있어요.') }
+  // 11/12 사용자: 19세 미만도 가입·대화 — 성인 내용은 언베일(본인인증으로 성인 확인)에서만. 만 14세 미만은 법정대리인 동의가 필요해 받지 않는다(개인정보 보호법 제22조의2).
+  if (fullAge(birthDate, today) < MIN_SIGNUP_AGE) return { ok: false, step: 4, error: msg('만 14세 이상만 가입할 수 있어요.') }
 
   if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 5, error: msg('필수 항목에 모두 동의해 주세요.') }
 
@@ -56,6 +55,14 @@ export async function precheckNickname(userId: string, nickname: string): Promis
   const existing = await getPersona(userId)
   const saved = await savePersona(userId, { name: nickname, gender: existing?.gender ?? null, description: existing?.description ?? null })
   return saved.ok ? { ok: true } : { ok: false, error: saved.error }
+}
+
+const MIN_SIGNUP_AGE = 14
+/** 만 나이 — 생일이 지나야 한 살. */
+function fullAge(birth: string, today: Date): number {
+  const [y, m, d] = birth.split('-').map(Number) as [number, number, number]
+  const age = today.getUTCFullYear() - y
+  return today.getUTCMonth() + 1 < m || (today.getUTCMonth() + 1 === m && today.getUTCDate() < d) ? age - 1 : age
 }
 
 function validBirthDate(v: string, today: Date): boolean {

@@ -20,7 +20,7 @@ import { subject, withParticle } from '@/lib/format'
 import { hotFirst } from '@/lib/character-card-copy'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
-import { StartWithLogin } from './start-button'
+import { StartWithLogin, StartWithUnveil } from './start-button'
 import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
@@ -40,8 +40,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const c = stored ? { ...stored, sampleDialogue: [...officialIntro(stored, stored.sampleDialogue).filter(d => d.purpose === 'intro'), ...officialSamples(stored, stored.sampleDialogue)] } : null
   if (!c) notFound()
   const unveil = await homeUnveilEnabled(user.id)
-  // 11/10 성인 전용 작품은 언베일을 켠 사람(또는 만든 사람)에게만 — 주소로 바로 들어와도 홈으로.
-  if (c.adultOnly && !unveil && c.ownerId !== user.id) redirect('/home')
+  // 11/12 사용자: 성인 전용 작품도 상세는 보인다(표지·인트로는 흐림). 언베일을 안 켰으면 '대화하기'가 본인인증·언베일 켜기로 바뀐다.
+  const locked = c.adultOnly && !unveil && c.ownerId !== user.id
   const can = features()
   const editedDescription = officialDescription(c)
 
@@ -82,7 +82,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   // 11/4: 언베일 수위 사진(대표·갤러리·인트로 장면)은 언베일을 안 켠 사람에게 흐리게 — 누르면 성인 본인인증 후 언베일이 켜진다.
   const unlockAt = { signedIn: !!user, returnTo: `/character/${slug}?unveil=enable` }
   // 11/12: 표지가 언베일이 아니어도 인트로에 노골적인 글이 있는 작품이면 인트로 사진을 같이 가린다. 글은 위 lines 에서 가림 문구로 바꾼다.
-  const veilIntro = (c.coverUnveil || c.sampleDialogue.some(d => d.purpose === 'intro' && explicitText(d.text))) && !unveil ? unlockAt : null
+  const veilIntro = (c.coverUnveil || c.adultOnly || c.sampleDialogue.some(d => d.purpose === 'intro' && explicitText(d.text))) && !unveil ? unlockAt : null
   // 공식 캐릭터의 추가 사진과 사용자가 올린 사진은 히어로 위 썸네일에서 바로 고른다.
   const heroImages = c.images
   // 장르와 관계 키워드가 겹치면 한 번만(11/4 #동창회 #첫사랑 두 번).
@@ -133,7 +133,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} veil={unveil ? null : unlockAt} />
         {/* 11/6: 언베일을 켠 사람에겐 사진 모서리 '언베일' 표시를 띄우지 않는다. */}
-        {c.coverUnveil && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} hideLabel={unveil} />}
+        {(c.coverUnveil || c.adultOnly) && <UnveilCover veiled={!unveil} label={t('언베일')} unlock={unlockAt} hideLabel={unveil} />}
         <div style={{ position: 'absolute', bottom: 16, right: 'var(--gutter)', zIndex: 4 }}><LikeButton slug={slug} initial={likes} overlay /></div>
       </div>
 
@@ -173,7 +173,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
               <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="var(--color-white)" stroke="var(--color-white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z" /></svg>
             </TransitionLink>
             <div style={{ flex: 1, minWidth: 0 }}>
-              {user
+              {locked
+                ? <StartWithUnveil returnTo={unlockAt.returnTo} label={t(COPY.cta.startRoleplay)} />
+                : user
                 ? <form id="start-roleplay" action={enter}><SubmitButton variant="primary" full className="btn-start" pressScale={0.94} style={{ background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' }}>{t(COPY.cta.startRoleplay)}</SubmitButton></form>
                 : <StartWithLogin slug={slug} label={t('로그인하고 시작하기')} />}
               {/* 11/10 다회차 — 엔딩이 있는 작품에서 이미 하던 방이 있으면, 그 방은 남기고 처음부터 새로 시작한다. */}
@@ -205,7 +207,9 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
         </details>
 
         <IntroPreview scenes={introScenesData} names={names} portrait={c.images[0] ?? null} veil={veilIntro}
-          start={user
+          start={locked
+            ? <StartWithUnveil returnTo={unlockAt.returnTo} label={t('대화 바로 시작하기')} />
+            : user
             ? <button type="submit" form="start-roleplay" className="btn-start" style={{ width: '100%', minHeight: 52, borderRadius: 'var(--radius-lg)', background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontSize: 16, fontWeight: 'var(--weight-regular)', fontFamily: 'inherit', cursor: 'pointer' }}>{t('대화 바로 시작하기')}</button>
             : <StartWithLogin slug={slug} label={t('대화 바로 시작하기')} />}
           turns={sampleWithAtmosphere(c.slug, sampleDialogue(c.sampleDialogue))} />

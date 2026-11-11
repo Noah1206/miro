@@ -8,6 +8,11 @@ import { track } from '@/lib/analytics/track'
 /** 역할극 시작 (n18). 세션 생성 규칙은 lib/simulation/start 에 있다 — 알파와 같은 경로. */
 export async function startRoleplay(key: string, form?: FormData): Promise<void> {
   const user = await requireUser()
+  // 11/12 성인 전용 작품은 언베일(본인인증 성인)을 켠 사람만 시작한다 — 화면 버튼은 인증 흐름으로 바뀌지만 서버도 막는다.
+  const { getCharacterByKey } = await import('@/lib/characters')
+  const { homeUnveilEnabled } = await import('@/lib/home-mode')
+  const c = await getCharacterByKey(key, user.id)
+  if (c?.adultOnly && c.ownerId !== user.id && !(await homeUnveilEnabled(user.id))) redirect(`/character/${key}`)
   // 고른 시작 상황(상세 화면의 도입부 칩). 이미 대화방이 있으면 무시되고 이어진다.
   const scene = form?.get('scene')
   const s = await createRoleplaySession(user.id, key, { scene: typeof scene === 'string' ? scene : undefined, fresh: form?.get('fresh') === '1' })

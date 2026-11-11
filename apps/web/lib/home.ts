@@ -33,8 +33,9 @@ const PAGE_SIZE = 12
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 // 11/10 언베일을 안 켠 사람에겐 언베일 사진(첫 장 표지 제외 — 화면에서 흐림) URL 자체를 HTML·응답에 싣지 않는다.
+// 11/12 사용자: 성인 전용 작품도 목록에 보인다 — 언베일을 안 켠 사람에겐 표지를 언베일 표지처럼 흐린다(coverUnveil 로 같이 취급).
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
-  ({ ...c, ...(over.veiled ? { images: c.images.filter((src, i) => i === 0 || !isUnveilPhoto(src)) } : {}), startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
+  ({ ...c, ...(over.veiled ? { images: c.images.filter((src, i) => i === 0 || !isUnveilPhoto(src)) } : {}), coverUnveil: !!c.coverUnveil || ('adultOnly' in c && !!c.adultOnly), startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
 
 const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`
 
@@ -150,7 +151,6 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       discoveryMatch(filter.tags),
       ...(filter.audience ? [eq(characters.audience, filter.audience)] : []),
       // 이용 대상(10/28): 성인(언베일)만 캐릭터는 언베일을 켠 사람에게만.
-      ...(unveil ? [] : [eq(characters.adultOnly, false)]),
       ...(searchNeedle(filter.query ?? '') ? [containsAny(sql`concat_ws(' ', ${characters.name}, ${characters.role}, ${characters.tagline}, ${characters.relationshipKeywords}::text, ${selectedWorldGenre})`, [searchNeedle(filter.query ?? '')])] : []),
       ...(contactOnly ? [eq(contactProfiles.enabled, true)] : []),
       ...(cursor ? [sort === 'latest' ? afterDate : or(lt(score, cursor.score), and(eq(score, cursor.score), afterDate))] : []),
@@ -259,8 +259,6 @@ export async function popularHomeCards(genres: string[] = [], veiled = true): Pr
         inArray(characters.id, ranked.map(row => row.character_id)),
         or(eq(characters.isOfficial, true), eq(characters.isPublic, true)),
         eq(characters.isDraft, false), isNull(characters.deletedAt),
-        // 11/10 성인 전용은 언베일을 켠 사람에게만.
-        ...(veiled ? [eq(characters.adultOnly, false)] : []),
       ))
     const byId = new Map(rows.map(row => [row.id, row]))
     return withChats(ranked.flatMap(({ character_id, plays }) => {
@@ -276,7 +274,7 @@ export async function popularHomeCards(genres: string[] = [], veiled = true): Pr
     .from(characters)
     .innerJoin(counts, eq(counts.characterId, characters.id))
     .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
-    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres), ...(veiled ? [eq(characters.adultOnly, false)] : [])))
+    .where(and(or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt), gt(counts.plays, 0), genreMatch(characters.id, genres)))
     .orderBy(desc(counts.plays), desc(characters.createdAt), desc(characters.id))
     .limit(6)
   return withChats(rows.map(({ createdAtKey: _createdAtKey, plays, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays, veiled })))

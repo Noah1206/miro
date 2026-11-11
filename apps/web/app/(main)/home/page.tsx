@@ -19,7 +19,6 @@ import { accountProfile } from '@/lib/account-profile'
 import { HeaderProfile } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon } from './view-beacon'
-import { HomeAgeGate } from './age-gate'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { voicePaused } from '@miro/config'
 import type { HomeCard } from '@/lib/home'
@@ -103,7 +102,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {sections.safety.length > 0 && <Row index={6} row={{ key: 'safety', title: t('🛡️ 놓치면 아쉬운 세이프티 인기 TOP 10'), subtitle: t('언베일 없이도 재밌는 이야기'), items: sections.safety }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.others.length > 0 && <AllCharacters items={sections.others} />}
-      </>; return user ? content : <HomeAgeGate>{content}</HomeAgeGate> })()}
+      </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>

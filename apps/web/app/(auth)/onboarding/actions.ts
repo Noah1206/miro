@@ -23,6 +23,6 @@ export async function finishOnboarding(_prev: OnboardingState, form: FormData): 
   const done = await completeOnboarding(user.id, parsed.input, receipt?.at)
   if (!done.ok) return { step: done.step, error: done.error }
   const next = (await takeNext()) ?? '/home'
-  // 11/8: 다음은 본인인증 단계 — 가입 선물 표시는 그 단계를 지나 홈까지 넘긴다.
-  redirect(done.welcomed ? `/onboarding/verify?${WELCOME_PARAM}=1` : next)
+  // 11/12: 본인인증 단계 없이 바로 — 가입 선물 표시는 홈으로.
+  redirect(done.welcomed ? `/home?${WELCOME_PARAM}=1` : next)
 }
