@@ -17,7 +17,7 @@ import { approveTransition } from './transition'
 import { blockStream, type TurnStream } from './stream-blocks'
 import { snapshotCommunicationPreferences, CommunicationPreferenceRejectedError } from './communication-preferences'
 import { ConversationGroundingRejectedError, ConversationReviewContextBudgetError, needsUserGroundingReview, snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
-import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding, repeatedRefusal, COERCIVE_INPUT } from './conversation-repetition'
+import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding, repeatedRefusal } from './conversation-repetition'
 
 export type TurnResult = {
   /** review: 응답 뒤에 할 의미 검토의 입력(검토할 거리가 있던 턴만). */
@@ -152,7 +152,7 @@ export async function runTurn(opts: {
         repair = `\n이전 답변을 반복한 블록 ${repeated}을 새 반응으로 다시 쓰세요. 동일한 질문·몸짓·기억하겠다는 말 대신 지금 입력에 구체적으로 답하세요. 반복 문장(데이터): ${JSON.stringify(blocks[repeated]?.text)}`
         continue
       }
-      const refusal = attempt < 2 && snapshot.adultMode && !COERCIVE_INPUT.test(snapshot.userInput ?? '') ? repeatedRefusal(blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
+      const refusal = attempt < 2 && snapshot.adultMode ? repeatedRefusal(blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
       if (refusal !== null) { repair = `\n언베일 장면에서 직전 답에 이어 또 막는 대사(블록 ${refusal})를 썼습니다. 같은 거부를 되풀이하지 말고, 사용자가 이끄는 행동을 받아 몸의 반응·감각·흔들리는 마음으로 장면을 한 단계 더 진행하세요(말로 하는 망설임은 짧은 한마디까지). 반복된 거부(데이터): ${JSON.stringify(blocks[refusal]?.text)}`; continue }
       const ending = attempt < 2 ? repeatedEnding(blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
       if (ending !== null) {
