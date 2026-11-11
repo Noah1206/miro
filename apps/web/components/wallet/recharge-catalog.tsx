@@ -27,9 +27,7 @@ export function RechargeCatalog({ available, products, onPick, onClose, busy = f
           <TokenArt tier={products.length === 1 ? 0 : Math.round(i * 4 / last)} />
           <span className={styles.quantity}><strong>{number(p.units)}</strong><small>{t('미로 토큰')}</small>
             {/* 11/12 첫 구매 할인이 걸린 상품에 할인율 태그 */}
-            {p.firstPriceMinor && <><em className={styles.tag}>{t('{n}% 할인', { n: Math.round((1 - p.firstPriceMinor / p.priceMinor) * 100) })}</em></>}</span>
-          {/* 11/12 원래 가격은 금액 버튼 바로 옆에 옅은 회색으로 */}
-          {p.firstPriceMinor && <s className={styles.was}>{t('{n}원', { n: number(p.priceMinor) })}</s>}
+            {p.firstPriceMinor && <><i className={styles.break} aria-hidden /><em className={styles.tag}>{t('{n}% 할인', { n: Math.round((1 - p.firstPriceMinor / p.priceMinor) * 100) })}</em><s className={styles.was}>{t('{n}원', { n: number(p.priceMinor) })}</s></>}</span>
           <button type="button" className={styles.price} value={id} disabled={busy} aria-busy={picking === id} onClick={() => onPick(id)}
             aria-label={t('{units} 미로 토큰을 {price}에 충전', { units: number(p.units), price: t('{n}원', { n: number(p.firstPriceMinor ?? p.priceMinor) }) })}>
             {picking === id ? <span className={styles.spinner} aria-hidden /> : t('{n}원', { n: number(p.firstPriceMinor ?? p.priceMinor) })}
