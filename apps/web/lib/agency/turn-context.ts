@@ -10,6 +10,9 @@ import { adoptRelationshipPolicy } from './session-policy'
 export async function prepareAgencyTurn(sessionId: string, userId: string, source: SimulationSnapshot,
   llm: LLMProvider, input: { id: string; text: string }, now = new Date(), policyVersion?: string) {
   if (source.experienceType !== 'reality') return { runtime: null, snapshot: source, agency: undefined }
+  // 11/11 언베일 턴은 자율성 계획을 건너뛴다(대화 경로로) — 계획 모델이 거절을 고르거나, 거절 선택지를 빼면 '기다림'으로 떨어져
+  // 대사가 그 결정대로 막았다(모녀덮밥 방). 계획 없는 경로(문라이트 방)는 유저가 이끄는 대로 이어졌다. 사용자: 베이비챗처럼 원하는 대로 진행.
+  if (source.adultMode) return { runtime: null, snapshot: source, agency: undefined }
   const effectivePolicy = await adoptRelationshipPolicy(sessionId, userId) ?? policyVersion
   const runtime = await loadAgencyRuntime(sessionId, userId, source, llm, now, effectivePolicy)
   // Until the pinned revision compiles, keep the verified conversation path and hold back only the
@@ -28,8 +31,7 @@ export async function prepareAgencyTurn(sessionId: string, userId: string, sourc
       evidence: (await loadAgencyEvidence(sessionId, snapshot, runtime, input, now)).slice(-126),
       clock: agencyClock(now, snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone, 'user', !snapshot.mode || snapshot.mode === 'chat' ? snapshot.world.narrativeCalendar?.date : null),
       // 이동 의도는 만나서 나누는 장면에서만 — 문자·통화 중에 자리를 옮긴다고 서술할 화면이 없다.
-      // 11/11 언베일 턴은 거절·선 긋기·미루기를 고르지 않는다 — 유저가 이끄는 장면을 캐릭터가 막아 세웠다(사용자: 베이비챗처럼 원하는 대로 진행).
-      permissions: { contact: false, capabilities: ['respond', 'ask', ...(snapshot.adultMode ? [] : ['decline', 'defer', 'set_boundary']), 'disclose', 'cancel_commitment', 'wait', ...(!snapshot.mode || snapshot.mode === 'chat' ? ['move'] : [])] },
+      permissions: { contact: false, capabilities: ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'cancel_commitment', 'wait', ...(!snapshot.mode || snapshot.mode === 'chat' ? ['move'] : [])] },
       location: snapshot.world.currentLocation,
     },
   } : undefined
