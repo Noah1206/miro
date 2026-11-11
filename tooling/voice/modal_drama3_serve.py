@@ -117,6 +117,10 @@ image = (base_image.env({'FISH_DRAMA3_FP8_EXPERTS': '0'})
 import os as _os
 app = modal.App(_os.environ.get('MIRO_TTS_APP', 'miro-drama3-tts'))   # 시험 배포: MIRO_TTS_APP=miro-drama3-tts-staging modal deploy …
 user_voices = modal.Volume.from_name('miro-user-voices', create_if_missing=True)
+# 11/12 방 기억을 서버 밖에도(사용자: "서버 메모리에만 있다는 점이 걸린다") — 서버는 20분 쉬면 꺼지고 그때 메모리의 기억이 사라졌다.
+# 합격한 턴을 기억에 넣을 때 여기에도 쓴다(방 하나 = 항목 하나, {목소리: [턴…]}, 턴당 수십 KB). 서버가 새로 켜진 뒤 그 방이 처음 불리면 여기서 되읽는다.
+# 보관: Modal Dict 는 7일 동안 읽기·쓰기가 없으면 항목이 스스로 사라진다 — 따로 지우는 일 없이 "마지막으로 쓴 뒤 7일".
+memory_store = modal.Dict.from_name('miro-voice-memory', create_if_missing=True)
 USER_VOICES = '/user-voices'
 PREVIEW_TEXT = '안녕, 오늘 하루는 어땠어? 나는 네 이야기가 제일 궁금했어.'
 # 받아쓰기와 화면 문장이 이만큼 넘게 다르면 거절(글자 오류율). ponytail: 시작값 — 실측으로 조정
@@ -145,7 +149,7 @@ class Speaker:
         # 11/11 쓰는 목소리는 켜질 때 미리 준비(목소리 샘플까지 읽은 상태) — 상태 저장 안에 들어가 되살아난 서버는 목소리마다 첫 요청 7.5초가 없다.
         from collections import OrderedDict
         self.prefixes = OrderedDict()
-        self.session_prefixes, self.memory, self.ref_embs = OrderedDict(), OrderedDict(), {}
+        self.session_prefixes, self.memory, self.ref_embs, self.recalled = OrderedDict(), OrderedDict(), {}, OrderedDict()
         # 기억에서 "견본과 가장 닮은 지난 턴"을 고르는 화자 판별 모델(작다). 못 올리면 가장 처음 합격 턴을 쓴다.
         try:
             from transformers import AutoFeatureExtractor, WavLMForXVector
@@ -173,7 +177,7 @@ class Speaker:
         print(f'cuda graphs ready in {time.time() - started:.1f}s', flush=True)
         from collections import OrderedDict
         if not hasattr(self, 'prefixes'): self.prefixes = OrderedDict()   # 목소리 → 목소리 샘플까지 읽은 모델 상태(11/6, 아래 generate). 11/11 load 에서 미리 채움
-        for name, value in (('session_prefixes', OrderedDict()), ('memory', OrderedDict()), ('ref_embs', {}), ('sv', None)):
+        for name, value in (('session_prefixes', OrderedDict()), ('memory', OrderedDict()), ('ref_embs', {}), ('sv', None), ('recalled', OrderedDict())):
             if not hasattr(self, name): setattr(self, name, value)
 
     def reference(self, name):
@@ -205,9 +209,24 @@ class Speaker:
             e = self.sv(**{k: x.to(self.sv.device) for k, x in self.sv_fe(a, sampling_rate=16000, return_tensors='pt').items()}).embeddings[0]
         return torch.nn.functional.normalize(e.float(), dim=-1).cpu()
 
+    def recall(self, session):
+        """서버가 새로 켜진 뒤 이 방을 처음 볼 때 한 번, 밖에 써 둔 기억을 되읽는다. 이 방에서 기억이 있는 목소리들."""
+        import numpy as np, torch
+        if session and session not in self.recalled:
+            self.recalled[session] = True
+            while len(self.recalled) > SESSIONS * 4: self.recalled.popitem(last=False)
+            try:
+                for voice, turns in (memory_store.get(session) or {}).items():
+                    if (session, voice) not in self.memory:
+                        self.memory[(session, voice)] = [{'turn': t['turn'], 'text': t['text'], 'sim': t['sim'],
+                                                          'codes': torch.from_numpy(np.frombuffer(t['codes'], '<i2').reshape(t['shape']).astype('int64'))} for t in turns]
+            except Exception as e: print('recall failed', type(e).__name__, flush=True)
+        return [v for (s, v) in self.memory if s == session]
+
     def history(self, session, voice, turn=None):
         """이 방·이 목소리의 다음 턴에 이어 붙일 지난 턴 [(글, 코드)] — 견본과 가장 닮은 1개 + 바로 앞 턴. 다시 듣는 턴 자신은 뺀다."""
         if not session: return []
+        self.recall(session)
         good = [g for g in self.memory.get((session, voice), []) if g['turn'] != turn or turn is None]
         if not good: return []
         # 유사도는 소수 둘째 자리까지만 견준다(같으면 먼저 온 턴) — 0.988 과 0.989 의 차이로 기준 턴이 바뀌면 읽어 둔 상태를 통째로 다시 만들어야 한다(11/11 운영 확인 11초).
@@ -230,6 +249,11 @@ class Speaker:
             good = [g for g in good[:-SESSION_TURNS + 1] if g is best] + good[-SESSION_TURNS + 1 :]
         self.memory[(session, voice)] = good; self.memory.move_to_end((session, voice))
         while len(self.memory) > SESSIONS: self.memory.popitem(last=False)
+        try:   # 서버 밖에도 쓴다(이 방의 다른 목소리 기억은 그대로 두고 이 목소리만 바꿔 넣는다)
+            stored = memory_store.get(session) or {}
+            stored[voice] = [{'turn': g['turn'], 'text': g['text'], 'sim': g['sim'], 'codes': g['codes'].numpy().astype('<i2').tobytes(), 'shape': tuple(g['codes'].shape)} for g in good]
+            memory_store[session] = stored
+        except Exception as e: print('memory store failed', type(e).__name__, flush=True)
         return True
 
     def prompts(self, text, voice, history):
@@ -511,6 +535,24 @@ class Speaker:
             if p.poll() is None: p.kill()
 
     @modal.method()
+    def recall_check(self, texts, voice, session):
+        """밖에 써 둔 기억 확인(11/12): 두 턴을 만들어 기억시킨 뒤, 서버가 꺼졌다 켜진 것처럼 메모리의 기억·읽어 둔 상태를 지우고 되읽어 다음 턴을 만든다."""
+        import time
+        for n, text in enumerate(texts[:2], 1):
+            for _ in self.speak_stream(text, voice, session, f't{n}'): pass
+        before = [g['turn'] for g in self.memory.get((session, voice), [])]
+        for k in [k for k in self.memory if k[0] == session]: del self.memory[k]
+        self.session_prefixes.pop((session, voice), None); self.recalled.pop(session, None)
+        t0 = time.perf_counter(); known = self.recall(session); recall_s = time.perf_counter() - t0
+        t1 = time.perf_counter(); prepared = self._prepare(session, voice); prepare_s = time.perf_counter() - t1
+        t2, first = time.perf_counter(), None
+        for _ in self.speak_stream(texts[2], voice, session, 't3'):
+            if first is None: first = time.perf_counter() - t2
+        return {'before': before, 'recalled_voices': len(known), 'after_recall': [g['turn'] for g in self.memory.get((session, voice), [])][:len(before)],
+                'recall_s': round(recall_s, 2), 'prepare_s': round(prepare_s, 2), 'prepared': bool(prepared), 'first_s': round(first or 0, 2),
+                'history_used': len(self.history(session, voice, 't3'))}
+
+    @modal.method()
     def tempo_check(self, text, voice):
         """빠르기 확인(11/12): 같은 대사를 원래 빠르기와 TEMPO 로 — 길이 비율과 첫 조각 시간."""
         import io, time, numpy as np, soundfile as sf
@@ -703,6 +745,18 @@ class Speaker:
 
         @api.get('/health')
         def health(): return {'ok': True, 'engine': 'drama3-moan-v2'}
+
+        @api.post('/warm')
+        async def warm(request: Request):
+            """11/12 방에 들어올 때(음성 모드가 켜질 때) 앱이 부른다 — 서버를 깨우면서 그 방의 기억을 되읽고, 다음 턴이 쓸 상태를 뒤에서 미리 읽어 둔다.
+            서버가 꺼졌다 켜진 뒤에도 첫 턴부터 이어 말하고 첫소리가 늦지 않게."""
+            if not hmac.compare_digest(request.headers.get('authorization', ''), f'Bearer {key}'): return Response(status_code=401)
+            body = await request.json()
+            session = body.get('session')
+            if not (isinstance(session, str) and 0 < len(session) <= 64 and all(c.isalnum() or c in '-_' for c in session)): return {'ok': True, 'voices': 0}
+            known = self.recall(session)
+            self.prepare_later(session, known)
+            return {'ok': True, 'voices': len(known)}
 
         @api.post('/speak')
         async def speak(request: Request):

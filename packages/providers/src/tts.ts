@@ -8,7 +8,8 @@ import type { VoiceDelivery } from '@miro/config'
 export type TtsRequest = { text: string; voice: string | null; language: string; style?: 'normal' | 'whisper'; delivery?: VoiceDelivery; maxAudioSeconds?: number }
 export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promise<{ audio: ArrayBuffer; contentType: string }>
   /** 11/6: 서버를 미리 깨운다(꺼져 있으면 켜지는 데 24~33초) — 음성 모드를 켜는 순간 부른다. 실패해도 조용히. */
-  warm?(signal?: AbortSignal): Promise<void>
+  /** session(11/12): 그 방의 목소리 기억을 되읽고 다음 턴용 상태를 미리 준비시킨다 — 서버가 꺼졌다 켜진 뒤에도 첫 턴부터 이어 말하게. */
+  warm?(signal?: AbortSignal, session?: string): Promise<void>
   /** 11/11 만드는 대로 받기 — PCM16 모노 조각 스트림(sampleRate 와 함께). 첫 조각까지 약 1초. */
   speakStream?(req: TtsRequest, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }>
   /** 11/11 한 턴 통째 — 대화 순서의 대사 묶음. 목소리마다 한 번에 합성해 잘라 순서대로(서버 /speak_turn). */
@@ -32,7 +33,12 @@ export function resolveTts(): TtsProvider | null {
     return { stream: res.body, sampleRate }
   }
   return {
-    async warm(signal) { await fetch(`${url}/health`, { signal }).then(r => r.body?.cancel()).catch(() => {}) },
+    async warm(signal, session) {
+      const call = session
+        ? fetch(`${url}/warm`, { method: 'POST', signal, headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}) }, body: JSON.stringify({ session }) })
+        : fetch(`${url}/health`, { signal })
+      await call.then(r => r.body?.cancel()).catch(() => {})
+    },
     speakTurn: (req, signal) => stream('/speak_turn', req, signal),
     speakStream: (req, signal) => stream('/speak_stream', req, signal),
     async speak(req, signal) {

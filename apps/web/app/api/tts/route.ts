@@ -30,7 +30,9 @@ export async function POST(req: Request) {
   // 11/10 깨우기는 회원당 5분에 한 번(GPU 를 계속 켜 두지 못하게).
   if (body?.wake === true) {
     if (!(await takeVoiceWake(user.id))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
-    await resolveTts()?.warm?.(AbortSignal.timeout(60_000)); return new Response(null, { status: 204 })
+    // 11/12 방을 함께 주면 그 방의 목소리 기억도 미리 불러온다(본인 방인지는 따로 보지 않는다 — 기억을 읽어 둘 뿐 아무것도 돌려주지 않는다).
+    const room = typeof body.sessionId === 'string' && /^[0-9a-f-]{36}$/i.test(body.sessionId) ? body.sessionId : undefined
+    await resolveTts()?.warm?.(AbortSignal.timeout(60_000), room); return new Response(null, { status: 204 })
   }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
   if (!/^[0-9a-f-]{36}$/i.test(sessionId) || !/^[0-9a-f-]{36}$/i.test(messageId)
