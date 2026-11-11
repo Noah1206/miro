@@ -272,7 +272,7 @@ export async function verifyAgencyRealization(llm: LLMProvider, input: AgencyRea
   let initialTrace = agencyProviderTrace(llm, AGENCY_REALIZATION_VERSION)
   const issues: AgencyIssue[] = []
   if (input.decision.sessionId !== input.context.sessionId || input.decision.revisionId !== input.context.revisionId
-    || input.state.revisionId !== input.context.revisionId || input.blocks.length === 0 || input.blocks.length > 12
+    || input.state.revisionId !== input.context.revisionId || input.blocks.length === 0 || input.blocks.length > 30   /* 11/11 응답 블록 상한 30 과 같게 */
     || input.blocks.some(block => !block.text.trim() || block.text.length > 2000)) {
     return { ...initialTrace, ok: false, issues: [{ field: 'realization', reason: 'invalid_realization_context' }], claims: [], reviewed: false }
   }

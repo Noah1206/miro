@@ -173,7 +173,8 @@ function hoistFromRp(v: unknown): unknown {
 export const SimulationProposal = z.preprocess(hoistFromRp, z.object({
   /** 대사만이 이 응답의 필수 부분이다. 블록 하나가 어긋나면 그 블록만 버리되, 남는 것이 없으면 실패다. */
   rp: z.object({
-    blocks: lenientArray(RpBlock, 12).pipe(z.array(RpBlock).min(1)),
+    // 11/11 12 → 30: 응답 형식은 '최대 30개'인데 서버가 앞 12개만 남겨 긴 장면의 뒷부분(마지막 대사)이 잘렸다 — 실측에서 블록 수가 늘 정확히 12였다.
+    blocks: lenientArray(RpBlock, 30).pipe(z.array(RpBlock).min(1)),
   }),
   /** 이 응답에서 캐릭터가 느끼는 감정 (표시·로그용, 상태를 바꾸지 않는다). 모르는 값은 없는 것으로. */
   emotion: z.enum(['neutral', 'happy', 'curious', 'hurt', 'jealous', 'angry', 'anxious']).optional().catch(undefined),

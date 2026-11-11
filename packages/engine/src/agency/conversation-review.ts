@@ -15,11 +15,11 @@ const Claim = z.object({
 export const ConversationReviewSchema = z.object({
   complete: z.boolean(),
   blocks: z.array(z.object({
-    blockIndex: z.number().int().min(0).max(11),
+    blockIndex: z.number().int().min(0).max(29),   // 11/11 응답 블록 상한 30 과 같게
     noUserClaims: z.boolean(),
     boundaryViolation: z.boolean(),
     claims: z.array(Claim).max(24),
-  }).strict()).max(12),
+  }).strict()).max(30),
 }).strict()
 export type ConversationReviewAssessment = z.infer<typeof ConversationReviewSchema>
 export type ConversationReviewResult = {
