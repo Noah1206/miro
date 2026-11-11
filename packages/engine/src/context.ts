@@ -18,6 +18,8 @@ export type RecentMessage = {
 }
 
 export type SimulationSnapshot = {
+  /** 11/11 이 턴을 음성으로 읽는가(음성 모드가 켜진 방). 켜졌을 때만 대사마다 숨은 음성 지시(delivery·speech)를 받는다 — 꺼진 방은 그 출력이 분량을 깎았다. */
+  voiceOut?: boolean
   contactBoundary?: import('@miro/domain').ContactBoundary | null
   character: CharacterCore
   world: WorldState
@@ -202,7 +204,7 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
   // spoken: 실시간 음성 통화. 소리로 나가므로 JSON 계약·상태 변화 제안을 싣지 않는다.
   // 11/10: 장면 답은 분량 지시(replyLengthRule)를 따른다 — '짧게 끝낼 수 있다'는 말투 규칙이 답을 500자 안팎에 묶었다(짧은 답·통화는 그대로).
   const voiceRules = style === 'brief' || spoken ? CHARACTER_VOICE_RULES : CHARACTER_VOICE_RULES.replace('짧게 할 말은 짧게 끝낼 수 있고, 서술·속마음 없이 대사만 필요한 순간도 있습니다. ', '')
-  const system = template.system + voiceRules + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : VOICE_DELIVERY_PROMPT + '\n' + (s.adultMode ? ADULT_SPEECH_PROMPT + '\n' : '') + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
+  const system = template.system + voiceRules + '\n' + buildSystem(s, spoken, style) + '\n' + (spoken ? '' : (s.voiceOut ? VOICE_DELIVERY_PROMPT + '\n' + (s.adultMode ? ADULT_SPEECH_PROMPT + '\n' : '') : '') + dialogueContract(s, style)) + safetyRules(s.adultMode, s.adultLevel)
     + (style === 'brief' || spoken ? '' : `\n## 분량(반드시 지킴)\n${replyLengthRule(style)}.`)
   // 11/10 캐시: 위까지는 같은 방의 턴마다 그대로다. 이번 입력·기분·턴 수로 바뀌는 지시는 맨 끝에 — 앞부분을 공급자가 캐시한다(Claude 는 cacheSystemPrefix 로).
   const tail = [

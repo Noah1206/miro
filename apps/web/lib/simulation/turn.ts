@@ -89,6 +89,8 @@ async function executeTurn(opts: {
   ending?: string
   /** 11/10 사용자가 출력량 팝업에서 고른 생각 강도 — 없으면 작품 권장값. */
   thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+  /** 11/11 음성 모드가 켜진 방에서 보낸 턴 — 대사마다 숨은 음성 지시를 받는다. */
+  voice?: boolean
   /** 대사를 블록 단위로 받는 대로 보낼 곳(10/9 스트리밍). 저장 전 답이다 — 최종본은 돌려주는 결과다. */
   stream?: TurnStream
 }): Promise<ConversationOutcome> {
@@ -101,6 +103,7 @@ async function executeTurn(opts: {
   for (let attempt = 0; attempt < 2; attempt++) {
     // 성인 방은 전용 모델의 가격과 한도를 사용한다.
     const loaded = await measured('chat.snapshot', () => loadSession(sessionId, userId, input))
+    if (loaded) loaded.snapshot.voiceOut = !!opts.voice
     if (!loaded) return { ok: false, reason: 'not_found' }
     if (loaded.restricted) return { ok: false, reason: 'restricted' }
     const commandRule = opts.command || opts.commandId ? await resolveChatCommand(userId, loaded.commands, { name: opts.command, sourceId: opts.commandId }) : null
@@ -337,7 +340,7 @@ async function executeTurn(opts: {
 }
 
 /** Main chat and alpha share ownership, trace and replay protection. */
-export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
+export async function runConversationTurn(opts: { userId: string; sessionId: string; input: string; command?: string; commandId?: string; ending?: string; thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'; voice?: boolean; ip?: string | null; requestId?: string; chatModel?: string; tokenCeiling?: number; mode?: 'chat' | 'messenger'; stream?: TurnStream }): Promise<ConversationOutcome> {
   if (opts.mode === 'messenger') {
     const requestId = opts.requestId ?? randomUUID()
     try {

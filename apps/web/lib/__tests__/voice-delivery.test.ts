@@ -45,7 +45,8 @@ describe('per-utterance voice delivery', () => {
     expect(parts.reduce((n, s) => n + s.text.length, 0)).toBe(SPOKEN_MAX)
   })
   it('asks for delivery in the same dialogue generation and declares it for constrained agency outputs', () => {
-    expect(buildContext(snapshot()).system).toContain('hidden delivery object')
+    expect(buildContext({ ...snapshot(), voiceOut: true }).system).toContain('hidden delivery object')
+    expect(buildContext(snapshot()).system).not.toContain('hidden delivery object')   // 11/11 음성 모드가 꺼진 방엔 음성 지시를 싣지 않는다
     expect(buildContext(snapshot(), 1, true).system).not.toContain('hidden delivery object')
     const schema = AGENCY_DIALOGUE_RESPONSE_SCHEMA as any
     expect(schema.properties.rp.properties.blocks.items.properties.delivery.properties.pauseAfterMs.maximum).toBe(1500)

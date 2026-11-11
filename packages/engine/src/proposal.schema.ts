@@ -223,3 +223,11 @@ export const AGENCY_DIALOGUE_RESPONSE_SCHEMA: Record<string, unknown> = { type: 
   status: text('Only when the card defines a status window format: that format filled in for this scene. Otherwise omit.'),
   statValues: { type: 'object', description: 'Only when the card defines stats: { stat name: new number } for every stat. Otherwise omit.', additionalProperties: { type: 'number' } },
 }, required: ['rp'] }
+
+/** 11/11 음성 모드가 꺼진 방 — 대사 블록에 숨은 음성 칸(delivery·speech)이 없는 같은 스키마. 그 출력이 답 분량(토큰)을 깎았다. */
+export const AGENCY_DIALOGUE_TEXT_SCHEMA: Record<string, unknown> = (() => {
+  const copy = structuredClone(AGENCY_DIALOGUE_RESPONSE_SCHEMA) as { properties: { rp: { properties: { blocks: { items: { properties: Record<string, unknown> } } } } } }
+  const block = copy.properties.rp.properties.blocks.items.properties
+  delete block.delivery; delete block.speech
+  return copy
+})()
