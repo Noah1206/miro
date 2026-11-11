@@ -85,8 +85,7 @@ export async function warmModalImage(style: string): Promise<void> {
   // 기다려야 요청이 실제로 나간다 — 안 기다리면 서버 함수가 먼저 끝나 깨우기가 안 갔다(11/11 실측 75초). 서버는 띄우기만 하고 바로 답한다.
   const ping = (url: string | undefined, body: Record<string, unknown>) => url ? fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ key: process.env.MIRO_IMAGE_SECRET, warm: true, ...body }), signal: AbortSignal.timeout(8_000) }).catch(() => {}) : Promise.resolve()
-  // 가림 서버(언베일 사진)도 같이 — 따로 꺼져 있으면 그림 뒤에 몇 초~수십 초가 더 붙는다.
-  await Promise.all([ping(process.env.MIRO_IMAGE_URL, { style }), ping(process.env.MIRO_CENSOR_URL, {})])
+  await ping(process.env.MIRO_IMAGE_URL, { style })   // 11/11 가림 단계를 뺐으므로 가림 서버는 깨우지 않는다
 }
 
 /** PNG 바이트. 첫 장은 GPU 준비로 1~2분 걸릴 수 있다. */

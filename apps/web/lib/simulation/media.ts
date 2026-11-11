@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { budgetedImage } from '@/lib/ai/media-budget'
 import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
 import { generateModalImage, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
-import { censorPng } from '@/lib/ai/censor'
+// 11/11 사용자 결정: 사진을 만들 때 가림(성기 블러, lib/ai/censor — 정보통신망법 44조의7 대응으로 넣었던 단계)을 하지 않는다. 다시 켜려면 아래 두 곳에서 censorPng 로 감싼다.
 import { imageDataUrl, saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
@@ -207,7 +207,7 @@ async function unveilPhoto(
   const generateAndSave = async () => {
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `open-model:${model}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? usageWeight('photo') : 0 },
-      async () => censorPng(await generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, level: opts.unveil.level, width: 832, height: 1216 })))
+      async () => generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, level: opts.unveil.level, width: 832, height: 1216 }))
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
     const [saved] = await db.insert(generatedMedia).values({
@@ -273,8 +273,8 @@ async function modalPhoto(
     const tags = [tag?.positive, opts.scene?.tags ?? [moment, opts.composition].filter(Boolean).join(', ')].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
-      // 11/8 언베일 사진은 성기 부위를 가린 뒤에만 저장·전송(lib/ai/censor) — 가림이 실패하면 사진도 실패
-      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? (!!tag?.mature && /\b(1boy|hetero|penis|fellatio|sex)\b/.test(moment)), extraNeg: tag?.negative, seed, refUrl }); return tag?.mature ? censorPng(png) : png })
+      // 11/8 언베일 사진은 가린 뒤에만 저장했으나 11/11 사용자 결정으로 가림 단계 없음(파일 맨 위 설명)
+      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? (!!tag?.mature && /\b(1boy|hetero|penis|fellatio|sex)\b/.test(moment)), extraNeg: tag?.negative, seed, refUrl }); return png })
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
     const [saved] = await db.insert(generatedMedia).values({
