@@ -28,7 +28,8 @@ export async function prepareAgencyTurn(sessionId: string, userId: string, sourc
       evidence: (await loadAgencyEvidence(sessionId, snapshot, runtime, input, now)).slice(-126),
       clock: agencyClock(now, snapshot.clock?.timeZone ?? POLICY.reality.defaultTimeZone, 'user', !snapshot.mode || snapshot.mode === 'chat' ? snapshot.world.narrativeCalendar?.date : null),
       // 이동 의도는 만나서 나누는 장면에서만 — 문자·통화 중에 자리를 옮긴다고 서술할 화면이 없다.
-      permissions: { contact: false, capabilities: ['respond', 'ask', 'decline', 'defer', 'disclose', 'set_boundary', 'cancel_commitment', 'wait', ...(!snapshot.mode || snapshot.mode === 'chat' ? ['move'] : [])] },
+      // 11/11 언베일 턴은 거절·선 긋기·미루기를 고르지 않는다 — 유저가 이끄는 장면을 캐릭터가 막아 세웠다(사용자: 베이비챗처럼 원하는 대로 진행).
+      permissions: { contact: false, capabilities: ['respond', 'ask', ...(snapshot.adultMode ? [] : ['decline', 'defer', 'set_boundary']), 'disclose', 'cancel_commitment', 'wait', ...(!snapshot.mode || snapshot.mode === 'chat' ? ['move'] : [])] },
       location: snapshot.world.currentLocation,
     },
   } : undefined
