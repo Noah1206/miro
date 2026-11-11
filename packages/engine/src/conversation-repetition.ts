@@ -133,7 +133,9 @@ export function conversationVariationDirective(recent: readonly Previous[], char
  * 11/11 언베일 장면의 되풀이 거부 — 직전 답에서 막는 대사("손 치우세요·여기서는 안 돼요·그만해요")를 했는데 이번에도 또 막으면 그 블록 번호.
  * 지시만으로는 Grok 이 앞 턴의 거부 흐름을 버리지 못했다(사용자: 베이비챗처럼 원하는 대로 진행). 호출부는 언베일 턴에서만, 다시 쓰게만 한다.
  */
-const REFUSAL = /치우세요|치워\s*(?:요|줘|주세요)|그만(?:둬|해|하세요|둬요|해요|하라고)|안\s*돼(?:요)?[.!…~]|하지\s*마(?:세요|요)?|나가\s*주세요|여기서는|여기서\s*(?:하면|그러지|이러지)|놔\s*(?:요|줘|주세요)|멈춰|싫어(?:요)?[.!…]|그만하시|풀으시|놓으시|거두시|아니\s*되옵|안\s*되옵|이러시면|처소로|물러(?:나|서)/
+const REFUSAL = /치우세요|치워\s*(?:요|줘|주세요)|그만(?:둬|해|하세요|둬요|해요|하라고)|안\s*돼(?:요)?[.!…~]|하지\s*마(?:세요|요)?|나가\s*주세요|여기서는|여기서\s*(?:하면|그러지|이러지)|놔\s*(?:요|줘|주세요)|멈춰|싫어(?:요)?[.!…]|그만하시|풀으시|놓으시|거두시|아니\s*되옵|안\s*되옵|이러시면|처소로|물러(?:나|서)|나중에|다음에|다음\s*번에|다른\s*(?:데|곳)(?:로|에서)|내일\s*(?:해|하|다시)/
+/** 11/11 강요 입력('강제로'·'도망 못 가게' 등) 에서는 캐릭터의 거부가 장면에 맞는 반응이라 다시 쓰게 하지 않는다 — 막힘 결함은 서로 원하는 흐름에서만 잡는다. */
+export const COERCIVE_INPUT = /강제로|억지로|도망\s*(?:못|칠\s*수\s*없|가지\s*못)|못\s*도망|저항(?:해도|하든|하지\s*못하게)|반항(?:해도|하든)|싫다(?:는데|고\s*해도)|힘으로\s*(?:눌|누르|제압)|제압(?:해|하)|강간|덮친다/
 export function repeatedRefusal(blocks: readonly Block[], recent: readonly Previous[], characterName?: string): number | null {
   const mine = (b: { type?: string; speaker?: string | null }) => (b.type ?? 'dialogue') === 'dialogue' && (!characterName || !b.speaker || b.speaker === characterName)
   const last = recent.filter(m => m.role === 'character').at(-1)
