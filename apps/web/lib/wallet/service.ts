@@ -1,6 +1,6 @@
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { bankTransferOrders, db, rechargeGrants, usageLedger } from '@miro/db'
-import { bankAccount, rechargeCatalog } from '@miro/config'
+import { bankAccount, firstPurchasePrice, rechargeCatalog } from '@miro/config'
 import { earningsBalance, usageStatus } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
 import type { WalletEntry, WalletHistory, WalletOrder, WalletSnapshot } from './types'
@@ -80,6 +80,12 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
     // The configured domestic bank accepts KRW only. Never relabel another currency as won.
     if (account) products = rechargeCatalog().products.filter(p => p.currency === 'KRW')
   } catch { observe('wallet.catalog_unavailable', {}) }
+  // 11/12 상품마다 첫 구매 할인(정가의 6/7) — 아직 산 적 없는 상품에만 할인가를 붙인다(주문 금액은 createBankOrder 가 같은 기준으로 정한다).
+  if (products.length) {
+    const bought = new Set((await db.selectDistinct({ productId: bankTransferOrders.productId }).from(bankTransferOrders)
+      .where(and(eq(bankTransferOrders.userId, userId), eq(bankTransferOrders.status, 'approved')))).map(r => r.productId))
+    products = products.map(p => (bought.has(p.id) ? p : { ...p, firstPriceMinor: firstPurchasePrice(p.priceMinor) }))
+  }
   const o = orders[0]
   const order: WalletOrder | null = o ? {
     id: o.id, kind: o.kind, status: o.status === 'awaiting' && o.expiresAt <= new Date() ? 'expired' : o.status,

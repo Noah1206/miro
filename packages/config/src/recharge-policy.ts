@@ -38,7 +38,12 @@ export type RechargeProduct = {
   currency: string
   /** 지급 후 유효기간(일). 생략하면 만료 없음 — 정책 확정 전 기본값이다. */
   validDays?: number
+  /** 11/12 이 사용자가 이 상품을 처음 살 때의 할인가(서버가 지갑 화면용으로 붙인다). 없으면 정가. */
+  firstPriceMinor?: number
 }
+
+/** 11/12 사용자 결정: 상품마다 첫 구매 한 번은 정가의 6/7(2,800→2,400원, 약 14.3% 할인), 100원 단위(6,500→5,600 · 13,000→11,100 · 28,000→24,000 · 46,500→39,900). */
+export const firstPurchasePrice = (priceMinor: number) => Math.round(priceMinor * 6 / 7 / 100) * 100
 
 export type RechargeCatalog = { products: RechargeProduct[] }
 

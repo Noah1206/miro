@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, lt, or, sql } from 'drizzle-orm'
 import { db, bankTelegramRequests, bankTransferOrders } from '@miro/db'
-import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, rechargeProduct } from '@miro/config'
+import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, firstPurchasePrice, rechargeProduct } from '@miro/config'
 import { observe } from '@/lib/observe'
 import { applyPaymentEvent } from './service'
 import { afterResponse } from '@/lib/defer'
@@ -80,6 +80,12 @@ export async function createBankOrder(opts: {
         eq(bankTransferOrders.userId, opts.userId), or(eq(bankTransferOrders.status, 'awaiting'),
           and(eq(bankTransferOrders.status, 'approved'), isNull(bankTransferOrders.settledAt))))).limit(1)
       if (pending) throw new OrderPendingError('ORDER_ALREADY_PENDING')
+      // 11/12 상품마다 첫 구매 한 번은 할인(정가의 6/7) — 승인된 같은 상품 주문이 없을 때만. 금액은 여기서(서버) 정한다.
+      if (opts.kind === 'recharge' && productId) {
+        const [bought] = await tx.select({ id: bankTransferOrders.id }).from(bankTransferOrders).where(and(
+          eq(bankTransferOrders.userId, opts.userId), eq(bankTransferOrders.productId, productId), eq(bankTransferOrders.status, 'approved'))).limit(1)
+        if (!bought) amountMinor = firstPurchasePrice(amountMinor)
+      }
       const [created] = await tx.insert(bankTransferOrders).values({
         ...(opts.requestId ? { id: opts.requestId } : {}),
         userId: opts.userId, kind: opts.kind, productId, amountMinor, currency, units,

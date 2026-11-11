@@ -27,8 +27,13 @@ export function RechargeCatalog({ available, products, onPick, onClose, busy = f
           <TokenArt tier={products.length === 1 ? 0 : Math.round(i * 4 / last)} />
           <span className={styles.quantity}><strong>{number(p.units)}</strong><small>{t('미로 토큰')}</small></span>
           <button type="button" className={styles.price} value={id} disabled={busy} aria-busy={picking === id} onClick={() => onPick(id)}
-            aria-label={t('{units} 미로 토큰을 {price}에 충전', { units: number(p.units), price: t('{n}원', { n: number(p.priceMinor) }) })}>
-            {picking === id ? <span className={styles.spinner} aria-hidden /> : t('{n}원', { n: number(p.priceMinor) })}
+            aria-label={t('{units} 미로 토큰을 {price}에 충전', { units: number(p.units), price: t('{n}원', { n: number(p.firstPriceMinor ?? p.priceMinor) }) })}>
+            {picking === id ? <span className={styles.spinner} aria-hidden /> : p.firstPriceMinor
+              ? <span style={{ display: 'grid', justifyItems: 'center', lineHeight: 1.15 }}>
+                  <small style={{ fontSize: 10, fontWeight: 500, opacity: .85 }}>{t('첫 구매')} <s>{t('{n}원', { n: number(p.priceMinor) })}</s></small>
+                  {t('{n}원', { n: number(p.firstPriceMinor) })}
+                </span>
+              : t('{n}원', { n: number(p.priceMinor) })}
           </button>
         </li>
       })}
