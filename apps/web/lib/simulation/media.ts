@@ -3,7 +3,7 @@ import { budgetedImage } from '@/lib/ai/media-budget'
 import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
 import { generateModalImage, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
 import { censorPng } from '@/lib/ai/censor'
-import { saveMessengerImage } from '@/lib/storage/messenger-images'
+import { imageDataUrl, saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
 import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
 import {
@@ -209,7 +209,7 @@ async function unveilPhoto(
       sessionId: opts.sessionId, usageUnits: opts.usage ? usageWeight('photo') : 0 },
       async () => censorPng(await generateLocalImage({ model, prompt, characterAge: opts.unveil.characterAge, mature: true, level: opts.unveil.level, width: 832, height: 1216 })))
     const id = randomUUID()
-    const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
+    const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
     const [saved] = await db.insert(generatedMedia).values({
       id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt,
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,
@@ -276,7 +276,7 @@ async function modalPhoto(
       // 11/8 언베일 사진은 성기 부위를 가린 뒤에만 저장·전송(lib/ai/censor) — 가림이 실패하면 사진도 실패
       async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? (!!tag?.mature && /\b(1boy|hetero|penis|fellatio|sex)\b/.test(moment)), extraNeg: tag?.negative, seed, refUrl }); return tag?.mature ? censorPng(png) : png })
     const id = randomUUID()
-    const storage = await saveMessengerImage(opts.sessionId, id, `data:image/png;base64,${png.toString('base64')}`)
+    const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
     const [saved] = await db.insert(generatedMedia).values({
       id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt: [look, tags].filter(Boolean).join(' | '),
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,

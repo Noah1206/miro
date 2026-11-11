@@ -52,10 +52,12 @@ def censor(body: dict):
     from imgutils.detect import detect_censors
     if not hmac.compare_digest(str(body.get('key', '')), os.environ['MIRO_IMAGE_SECRET']):
         raise HTTPException(status_code=401)
+    if body.get('warm'):   # 11/11 사진 창을 열 때 미리 깨우기 — 서버만 띄우고 바로 답한다
+        return {'ok': True}
     img = Image.open(io.BytesIO(base64.b64decode(body['png']))).convert('RGB')
     boxes = [b for b, l, s in detect_censors(img) if l in LABELS and s >= THRESHOLD]
     if boxes:
         img = blur(img, boxes)
     buf = io.BytesIO()
-    img.save(buf, 'PNG')
+    img.save(buf, 'WEBP', quality=90, method=4)   # 11/11 PNG 대신 WebP(약 1/10) — 앱으로 돌려보내고 저장·전송하는 크기. 키 이름 png 는 예전 그대로
     return {'png': base64.b64encode(buf.getvalue()).decode(), 'hits': len(boxes)}

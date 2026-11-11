@@ -224,7 +224,12 @@ def image_api(body: dict):
     png = Gen(ckpt=style['ckpt'], base=style.get('base', '')).gen.remote(
         prompt=prompt, variant=style['variant'], scale=style['scale'], seed=seed, neg=neg, unveil=bool(body.get('unveil')), hires=True,
         hr_scale=style['hr_scale'], hr_strength=style['hr_strength'], ref=ref, ref_scale=ref_scale, face_scale=face_scale)
-    return {'png': base64.b64encode(png).decode(), 'prompt': prompt, 'neg': neg}   # 프롬프트는 확인용(앱은 png 만 쓴다)
+    # 11/11 PNG(약 5MB) 대신 WebP(약 1/10) — 앱·가림 서버·저장소·폰으로 몇 번씩 오가는 크기라 받기까지 오래 걸렸고 가림 서버 업로드가 시간 초과(408)났다. 키 이름 png 는 예전 그대로.
+    import io
+    from PIL import Image
+    buf = io.BytesIO()
+    Image.open(io.BytesIO(png)).convert('RGB').save(buf, 'WEBP', quality=90, method=4)
+    return {'png': base64.b64encode(buf.getvalue()).decode(), 'prompt': prompt, 'neg': neg}   # 프롬프트는 확인용(앱은 png 만 쓴다)
 
 
 @app.local_entrypoint()

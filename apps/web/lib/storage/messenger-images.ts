@@ -7,6 +7,13 @@ export function messengerStorage() {
   return createClient(url, key, { auth: { persistSession: false } })
 }
 
+/** 11/11 그림·가림 서버가 PNG 대신 WebP 를 준다(예전 PNG 도 받는다) — 바이트 머리로 형식을 골라 data URL 로. */
+export function imageDataUrl(bytes: Buffer): string {
+  const mime = bytes.subarray(0, 4).toString('latin1') === 'RIFF' && bytes.subarray(8, 12).toString('latin1') === 'WEBP' ? 'image/webp'
+    : bytes[0] === 0xff && bytes[1] === 0xd8 ? 'image/jpeg' : 'image/png'
+  return `data:${mime};base64,${bytes.toString('base64')}`
+}
+
 /** Personalized photos are private; only the owner-checked route can issue short-lived access. */
 export async function saveMessengerImage(sessionId: string, assetId: string, dataUrl: string) {
   const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl)
