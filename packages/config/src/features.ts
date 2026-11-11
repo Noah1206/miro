@@ -48,6 +48,9 @@ const PRESET: Record<Mode, Record<FeatureName, boolean>> = {
   },
 }
 
+/** 음성 서버가 멈춰 있어 음성을 '곧 열림' 으로 보여 주는 동안(운영 env MIRO_VOICE_PAUSED=1). 다시 열 때는 이 값을 지우고 재배포. */
+export const voicePaused = (): boolean => process.env.MIRO_VOICE_PAUSED === '1'
+
 export function currentMode(): Mode {
   return process.env.MIRO_MODE === 'alpha' ? 'alpha' : 'production'
 }
@@ -58,6 +61,8 @@ export function feature(name: FeatureName): boolean {
   // 캐릭터가 걸려던 전화는 문자로 간다(deliverableChannel). 다시 열 때는 이 목록에서 'voiceCall' 을 뺀다.
   if (productionRuntime() && ['voiceCall', 'voiceCallAudio', 'videoCall', 'liveScene'].includes(name)) return false
   if (productionRuntime() && name==='imageGeneration' && process.env.MIRO_SCENE_IMAGES_ENABLED!=='1') return false
+  // 11/12 음성 서버(Modal)가 멈춘 동안 — 음성에 관한 화면·요청을 한 곳에서 끈다. 화면은 '곧 열림' 으로 알린다(voicePaused).
+  if (name === 'characterVoice' && voicePaused()) return false
   const override = process.env[`MIRO_FEATURE_${name.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}`]?.trim()
   if (override === '1') return true
   if (override === '0') return false

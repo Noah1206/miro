@@ -20,6 +20,8 @@ import { HeaderProfile } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon } from './view-beacon'
 import { HomeAgeGate } from './age-gate'
+import { VoiceSoonSheet } from './voice-soon-sheet'
+import { voicePaused } from '@miro/config'
 import type { HomeCard } from '@/lib/home'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 
@@ -62,7 +64,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       <InstallAppHint />
       <HomeViewBeacon />
 
-      {/* 약관·처리방침 개정이 공지 중이면 초기화면에서 토스트로 알린다(약관 제3조 ③, 11/11 사용자 요청). 평소엔 아무것도 하지 않는다. '나' 화면엔 닫기 없는 띠가 그대로 있다. */}
+      {/* 11/12 음성 서버가 멈춘 동안: 음성 모드 예고 시트(이 기기에 한 번, 로그인한 사람만). */}
+      {user && voicePaused() && <VoiceSoonSheet />}
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       {/* 11/10 사용자: 로그인한 사람에겐 배너 대신 크랙식 추천(들어올 때마다 랜덤 6작품, 표지가 언베일인 작품은 뺀다). 로그인 전엔 가입 선물 배너 그대로. */}
       {user ? <HomeHero items={(() => {

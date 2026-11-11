@@ -35,6 +35,8 @@ export function VoiceList({ voices, value, onChange, autoLabel, compact = false,
           </button>
         ))}
       </div>}
+      {/* 11/12 음성이 멈춘 동안(목록이 비어 온다): 고를 것 대신 안내만 — 이미 고른 목소리는 숨은 칸으로 그대로 저장된다. */}
+      {voices.length === 0 && !autoLabel ? <p className="t-caption" style={{ margin: 0, color: 'var(--color-text-secondary)' }}>{t('음성은 곧 열려요. 이미 고른 목소리는 그대로 유지돼요.')}</p> :
       <div role="radiogroup" aria-label={t('목소리')} className="stack" style={{ gap: compact ? 0 : 4 }}>
         {rows.map((v) => {
           const [title, sub] = v.label.split(' · ')
@@ -64,7 +66,7 @@ export function VoiceList({ voices, value, onChange, autoLabel, compact = false,
             : <div key={v.id || 'default'} style={{ display: 'flex', borderRadius: compact ? 10 : 14, background: value === v.id ? 'var(--color-surface-2)' : undefined }}>{row(false)}</div>
         })}
         {rows.length === 0 && <p className="t-caption" style={{ margin: '8px 0', color: 'var(--color-text-tertiary)' }}>{t('해당하는 목소리가 없어요.')}</p>}
-      </div>
+      </div>}
     </div>
   )
 }

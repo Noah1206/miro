@@ -31,7 +31,7 @@ import { msg } from '@/lib/i18n'
 import { CoachMarks, type CoachStep } from '@/components/coach-marks'
 import { ImmersiveProvider, VoiceStatus } from './immersive'
 import { RoomMenu } from '@/components/room-menu'
-import { feature } from '@miro/config'
+import { feature, voicePaused } from '@miro/config'
 import { ensembleNames } from '@miro/engine'
 import { CharacterPhoto } from '@/components/character-visual'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
@@ -107,7 +107,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   })
 
   return (
-    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice') && process.env.MIRO_VOICE_PAUSED !== '1'} soon={feature('characterVoice') && process.env.MIRO_VOICE_PAUSED === '1'} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName} voiceSpeakers={Object.keys(rec?.ensembleVoices ?? {})}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
+    <ChatModelProvider key={`${sessionId}:${loaded.adult.since !== null}`} initialModel={recommendedChoice(modelOptions.choices, rec?.rec) ?? modelOptions.choices[0]?.id} storageKey={`miro:chat-model:character:${loaded.characterId}`} modelChoices={modelOptions.choices.map(choice => choice.id)}><TurnsProvider><ImmersiveProvider sessionId={sessionId} media={media} enabled={feature('characterVoice')} soon={voicePaused()} portrait={loaded.characterPhoto} initialMessages={items} characterName={loaded.characterName} voiceSpeakers={Object.keys(rec?.ensembleVoices ?? {})}><ChatTheme key={sessionId} sessionId={sessionId}><main id="main" tabIndex={-1} className={`chat-layout ${styles.page}`} style={{ outline: 'none' }}>
       <section className={`chat-main ${styles.main}`}>
         <ChatSiteHeader unveil={unveilOn} unread={unread} profile={profile} />
         <header className={styles.header}>
