@@ -15,7 +15,7 @@ import { blockStream, type TurnStream } from './stream-blocks'
 import { terms } from '@miro/domain'
 import { agencyCommunicationPreferences } from './communication-preferences'
 import { snapshotUserGrounding, USER_GROUNDING_RULE } from './conversation-grounding'
-import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding, repeatedQuestion } from './conversation-repetition'
+import { conversationVariationDirective, repeatedConversationBlock, repeatedEnding, repeatedQuestion, repeatedRefusal } from './conversation-repetition'
 
 /** 먼저 말하는 턴의 대사 지시 — 계획의 결정이 아직 없다. 이 인물이 스스로 고르되, 확정되지 않은 일을 일어난 일로 쓰지 않는다. */
 /** 11/3 실측(Gemini): 대화가 길어지며 말투가 설정보다 거칠어졌다(설정에 없는 비하·한심해하는 속마음). 세기는 설정이 정한다 — 맨 끝에 한 번 더 둔다. */
@@ -227,6 +227,8 @@ export async function runAgencyTurn(opts: {
         feedback = `\n이전 대사와 반복되는 블록 ${repeated}을 다시 쓰세요. 같은 뜻의 빈말이나 같은 소품 동작으로 바꾸지 말고, 지금 사용자가 한 말에 답하며 장면을 한 걸음 이어가세요. 반복 문장(데이터): ${JSON.stringify(validated.blocks[repeated]?.text)}`
         continue
       }
+      const refusal = attempt < REGENERATIONS && snapshot.adultMode ? repeatedRefusal(validated.blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
+      if (refusal !== null) { feedback = `\n언베일 장면에서 직전 답에 이어 또 막는 대사(블록 ${refusal})를 썼습니다. 같은 거부를 되풀이하지 말고, 사용자가 이끄는 행동을 받아 몸의 반응·감각·흔들리는 마음으로 장면을 한 단계 더 진행하세요(말로 하는 망설임은 짧은 한마디까지). 반복된 거부(데이터): ${JSON.stringify(validated.blocks[refusal]?.text)}`; continue }
       const ending = attempt < REGENERATIONS ? repeatedEnding(validated.blocks, snapshot.recentMessages, snapshot.character.identity.name) : null
       if (ending !== null) {
         feedback = `\n마지막 대사(블록 ${ending})가 최근 답변들의 마무리와 같은 당부입니다. 같은 당부·작별로 끝내지 말고 이번 입력에 맞는 다른 행동이나 말로 끝내세요. 반복 마무리(데이터): ${JSON.stringify(validated.blocks[ending]?.text)}`

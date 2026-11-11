@@ -66,6 +66,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     const t0 = Date.now()
     // GPT-5/6 계열은 max_tokens·temperature 를 받지 않는다(400). 생각은 reasoning_effort 로 — 기본 none, 필수 추론 모델은 low.
     const modernGPT = /^(openai\/)?gpt-[56](?:[.-]|$)/.test(this.model)
+    const anthropicViaRouter = this.name === 'openrouter' && /^~?anthropic\//.test(this.model)
     const requiresReasoning = /^(openai\/)?gpt-(6-astra|6\.1-sol)(?:-|$)/.test(this.model)
     // GPT-5 는 생각 토큰이 max_completion_tokens 를 같이 먹는다 — medium 생각이면 4096 을 생각만으로 다 써 답이 비었다
     // (10/4 성격표 예비 호출 전부 max_tokens). 생각을 켠 요청은 답 몫의 3배를 준다. ponytail: 모델 상한은 레지스트리가 알지만 여기선 모른다 — 16k 안이면 된다.
@@ -77,13 +78,15 @@ export class OpenAICompatibleProvider implements AIProvider {
       signal: req.signal,
       body: JSON.stringify({
         model: this.model,
+        // 11/11 OpenRouter 의 Anthropic 모델(언베일 방의 Sonnet 짝)은 생각을 끌 수 없고(none 거절) 생각 중엔 temperature 를 못 바꾼다 —
+        // require_parameters 와 함께 '맞는 서버 없음(404)'이 나 매번 예비(Grok)로 넘어갔다. 그 모델은 temperature 를 빼고 생각은 최소 low.
         // JSON 모드는 지시문에 JSON 이라는 말이 있어야 받는다(없으면 400).
         messages: [{ role: 'system', content: req.system + (req.json ? '\nReturn only a JSON object.' : '') }, { role: 'user', content: req.prompt }],
         ...(modernGPT ? { max_completion_tokens: completionCap, reasoning_effort: (req.thinking === 'max' ? 'xhigh' : req.thinking) ?? (requiresReasoning ? 'low' : 'none') }
-          : { max_tokens: req.maxTokens ?? 1024, temperature: req.temperature ?? 0.9 }),
+          : { max_tokens: req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }),
         // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).
         // ponytail: 생각을 끌 수 없는 모델(필수 생각)은 none 을 무시한다 — 그런 모델은 비교에서 거른다.
-        ...(this.name === 'openrouter' ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? 'none', exclude: true } } : {}),
+        ...(this.name === 'openrouter' ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? (anthropicViaRouter ? 'low' : 'none'), exclude: true } } : {}),
         // 스키마는 디코딩 안내로만 준다(strict 아님) — strict 는 선택 필드가 있는 우리 스키마를 400 으로 거절한다. 검증은 오케스트레이터가 zod 로 한다.
         // ponytail: 예비가 스키마를 자주 어기면 선택 필드를 nullable 로 바꾼 strict 스키마로 올린다.
         ...(req.json ? { response_format: req.responseSchema
