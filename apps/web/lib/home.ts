@@ -140,7 +140,8 @@ async function cardPage(type: ExperienceType | null, userId: string | null, curs
       ...(includeOwned ? [or(
         eq(characters.isOfficial, true),
         eq(characters.isPublic, true),
-        ...(userId ? [eq(characters.ownerId, userId)] : []),
+        // 11/12: 내 비공개 캐릭터는 사진이 있을 때만 — 사진 없는 준비 중 캐릭터가 홈에 빈 카드로 섞였다.
+        ...(userId ? [and(eq(characters.ownerId, userId), sql`jsonb_array_length(coalesce(${characters.images}, '[]'::jsonb)) > 0`)] : []),
       )] : [or(eq(characters.isOfficial, true), eq(characters.isPublic, true))]),
       genreMatch(characters.id, filter.genres),
       relationMatch(filter.relations),
