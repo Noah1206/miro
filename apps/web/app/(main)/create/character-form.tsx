@@ -307,16 +307,17 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="profile" show={tab === 'profile'}>
           {/* 유형(10/19): 몰입 모드 = 채팅을 목소리로 듣고 말로 이어 가는 모드(통화 아님). 재생은 chat/[sessionId]/immersive.tsx.
               10/31 사용자: 음성 / 음성+영상 두 갈래를 '몰입 모드' 하나로 — 고르면 'video'(사진이 화면 전체). 예전에 'voice'로 저장된 캐릭터도 몰입 모드로 보이고, 고쳐 저장할 때까지 값은 그대로. */}
-          {can.characterVoice&&experienceType === 'reality' && <Section title={t('유형')} subtitle={t('더빙은 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.')}>
+          {/* 11/12 사용자: 음성 관련 칸은 숨긴다 — 저장값(media)은 그대로 제출된다. */}
+          {can.characterVoice&&experienceType === 'reality' && <div hidden><Section title={t('유형')} subtitle={t('더빙은 이 캐릭터와의 채팅을 목소리로 듣고 말로 이어 가는 모드예요. 캐릭터 사진이 화면 전체에 깔려요.')}>
             <Card>
               <input type="hidden" name="media" value={media} />
               <ChoiceChips value={media === 'text' ? 'text' : 'video'} onChange={v => setMedia(v === 'text' ? 'text' : media === 'text' ? 'video' : media)} columns={2}
                 options={[{ value: 'text', label: t('대화') }, { value: 'video', label: t('더빙') }]} />
             </Card>
-          </Section>}
+          </Section></div>}
           {/* 대상(10/28): 고르는 칸은 지웠다(사용자 요청). 저장된 값은 그대로 보낸다. */}
           <input type="hidden" name="audience" value={audience} />
-          <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 아래 캐릭터 칸 밑의 \'캐릭터 추가\'로 인물을 더하고, 목소리 탭에서 인물마다 목소리를 고정할 수 있어요.')}>
+          <Section title={t('작품 형식')} subtitle={t('다인은 여러 인물이 함께 나오는 작품이에요. 아래 캐릭터 칸 밑의 \'캐릭터 추가\'로 인물을 더할 수 있어요.')}>
             <Card>
               <input type="hidden" name="ensembleVoices" value={castMode === 'multi' ? castJson(cast) : '{}'} />
               <input type="hidden" name="ensemblePhotos" value={castMode === 'multi' ? castPhotosJson(cast) : '{}'} />
@@ -405,7 +406,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
 
         {/* ── 로어북(11/12 연결) — 전엔 숨은 칸이 저장값만 되돌려 보내 새 캐릭터는 늘 비어 있었다. 탭이 닫혀 있어도 DOM 에 남아 제출된다. ── */}
         <Panel id="lore" show={tab === 'lore'}>
-          <Section title={t('로어북 · 선택')} subtitle={t('세계관이나 인물·장소 설정을 적어 두면, 대화에 그 키워드가 나온 턴에만 AI에게 전달돼요. 키워드를 비우면 항상 전달돼요.')}>
+          <Section title={t('설정집 · 선택')} subtitle={t('세계관이나 인물·장소 설정을 적어 두면, 대화에 그 키워드가 나온 턴에만 AI에게 전달돼요. 키워드를 비우면 항상 전달돼요.')}>
             <LoreEditor name="lore" defaultValue={i.lore} />
           </Section>
         </Panel>

@@ -12,7 +12,7 @@ export const TABS: Array<{ key: CreateTab; label: string }> = [
   { key: 'profile', label: msg('프로필') },
   { key: 'personality', label: msg('세계관') },
   { key: 'commands', label: msg('명령어') },
-  { key: 'lore', label: msg('로어북') },
+  { key: 'lore', label: msg('설정집') },
   { key: 'relationship', label: msg('관계') },
   { key: 'intro', label: msg('인트로') },
   { key: 'status', label: msg('상태창') },
