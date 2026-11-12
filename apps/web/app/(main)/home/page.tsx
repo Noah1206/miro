@@ -15,7 +15,7 @@ import { getT } from '@/lib/i18n/server'
 import { AudienceSelect } from './audience-select'
 import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
-import { HeaderProfile } from './profile-link'
+import { HeaderProfile, HeaderProfileGuest } from './profile-link'
 import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
@@ -51,7 +51,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
           <HomeUnveilToggle key={String(unveil)} enabled={unveil} signedIn={!!user} />
           {/* 알림 종 — 빨간 숫자는 실제 안 읽은 연락 수(2026-09-30 요청). 로그인 전에는 누르면 로그인 시트가 뜬다. */}
           <NotificationBell unread={unread} signedIn={!!user} className={`hit ${styles.headerItem} ${styles.headerAction}`} />
-          {profile && <HeaderProfile initial={profile} />}
+          {profile ? <HeaderProfile initial={profile} /> : !user && <HeaderProfileGuest />}
           {/* 헤더에 로그인 버튼·내 정보 표시는 두지 않는다 — 로그인은 로그인이 필요한 곳(만들기·대화·나·알림)에 들어갈 때 시트로 묻는다(2026-09-30 요청). */}
         </div>
       </header>
