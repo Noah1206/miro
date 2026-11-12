@@ -22,6 +22,8 @@ import { hotFirst } from '@/lib/character-card-copy'
 import { startRoleplay } from './actions'
 import { getT } from '@/lib/i18n/server'
 import { StartWithLogin, StartWithUnveil } from './start-button'
+import { CreatorRow } from '@/components/creator-row'
+import { creatorKeyOf, creatorOf } from '@/lib/creators'
 import { UnveilCover } from '@/components/unveil-badge'
 import { homeUnveilEnabled } from '@/lib/home-mode'
 import { coverTitle } from '@/lib/editorial/cover-title'
@@ -48,13 +50,15 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const cheerable = !c.isOfficial && c.isPublic && !!c.ownerId && c.ownerId !== user?.id
   // 11/12 크리에이터 이름 — 해시태그 아래와 응원 버튼에 같이 쓴다(운영 작품은 그림체별 필명, lib/creator-name).
   const creator = creatorName(c, c.ownerId ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId)).limit(1))[0]?.name : null)
-  const [comments, commentCount, similar, likes, reached, running] = await Promise.all([
+  const creatorKey = creatorKeyOf(c)
+  const [comments, commentCount, similar, likes, reached, running, creatorInfo] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
     similarCharacters(c.id, c.worldGenre, c.experienceType, unveil),
     characterLikeState(c.id, user?.id ?? null),
     c.endings.length && user ? reachedEndings(c.id, user.id) : Promise.resolve(new Set<string>()),
     c.endings.length && user ? hasActiveRun(c.id, user.id) : Promise.resolve(false),
+    creatorKey ? creatorOf(creatorKey, user?.id ?? null) : Promise.resolve(null),
   ])
   // 장면 안의 독자에게 직접 말하는 2인칭을 유지한다.
   const me = (text: string | null) => text ?? ''
@@ -130,6 +134,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
       </div>
 
       {/* 11/3: 컴퓨터에서는 위쪽을 사진 | 이름·소개·시작 버튼 두 칸으로(globals.css .detail-top). 휴대폰은 위아래 그대로. */}
+      {/* 11/12 사용자: 사진 밖 맨 위에 만든 사람(누르면 그 사람의 작품 모음)과 팔로우 */}
+      {creatorInfo && <div style={{ padding: '0 var(--gutter) 8px' }}><CreatorRow creator={creatorInfo} signedIn={!!user} /></div>}
       <div className="detail-top">
       <div className="detail-top-media" style={{ position: 'relative' }}>
         <DetailHero name={c.name} accent={c.accentA} slug={c.slug ?? c.id} images={heroImages} veil={unveil ? null : unlockAt} />
@@ -162,7 +168,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             {tags.map((tag) => <span key={tag} style={{ padding: '3px 8px', borderRadius: 8, fontSize: 12, lineHeight: 1.5, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)' }}>#{tag}</span>)}
           </div>
         )}
-        {creator && <p className="t-caption" style={{ margin: '-8px 0 16px', color: 'var(--color-text-tertiary, #8f8f99)' }}>@{creator}</p>}
+        {/* 11/12: 만든 사람은 사진 위 크리에이터 줄(CreatorRow)로 옮겼다 — 여기 @이름은 겹쳐서 뺐다. */}
 
         {/* n18 — 문. 휴대폰은 고정 하단(내비 위, 2.5.8 / 2.4.11), 컴퓨터는 이 자리에 그대로 선다. */}
         {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면

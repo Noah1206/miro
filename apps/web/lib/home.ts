@@ -1,5 +1,6 @@
 import { officialStartingContext } from './editorial/official-copy'
 import { homeUnveilEnabled } from './home-mode'
+import { OFFICIAL_OWNER_ID } from './creators'
 import { isUnveilPhoto } from './unveil-photo'
 import { adultCharacter } from '@miro/domain'
 import { and, desc, eq, gt, inArray, isNull, lt, ne, or, sql, type SQL, type SQLWrapper } from 'drizzle-orm'
@@ -357,4 +358,20 @@ export async function discoverGrid(userId: string | null, type: ExperienceType):
   const all = officials.map(c => card(c, { plays: plays.get(c.id) ?? 0 }))
   const sharedCards = shared.map(c => card({ ...c, slug: c.slug ?? c.id }, { plays: plays.get(c.id) ?? 0 }))
   return withChats([...all, ...sharedCards, ...(mine as OfficialCard[]).map((c) => card({ ...c, slug: c.slug ?? c.id }))])
+}
+
+/** 11/12 크리에이터 페이지 — 그 크리에이터의 공개 작품, 최신순. 키가 필명('pen:이름')이면 운영 작품 중 그 필명으로 보이는 것만. 홈 카드와 같은 모양·같은 흐림 규칙. */
+export async function creatorCards(key: string, viewerId: string | null): Promise<HomeCard[]> {
+  const pen = key.startsWith('pen:') ? key.slice(4) : null
+  const [rows, unveil] = await Promise.all([
+    db.select(pageColumns).from(characters)
+      .leftJoin(contactProfiles, eq(contactProfiles.characterId, characters.id))
+      .where(and(pen ? and(eq(characters.ownerId, OFFICIAL_OWNER_ID), sql`${characters.slug} like 'official-%'`) : eq(characters.ownerId, key),
+        or(eq(characters.isOfficial, true), eq(characters.isPublic, true)), eq(characters.isDraft, false), isNull(characters.deletedAt)))
+      .orderBy(desc(characters.createdAt)).limit(200),
+    homeUnveilEnabled(viewerId),
+  ])
+  const mine = pen ? rows.filter(r => creatorName({ slug: r.slug, audience: r.audience }) === pen) : rows
+  const plays = await playCounts(mine.map(r => r.id))
+  return withChats(mine.map(({ createdAtKey, ...row }) => card({ ...row, slug: row.slug ?? row.id }, { plays: plays.get(row.id) ?? 0, veiled: !unveil, createdAt: createdAtKey })))
 }

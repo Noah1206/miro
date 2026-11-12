@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
-  customType, bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, real, text, timestamp, uniqueIndex, uuid,
+  customType, bigint, bigserial, boolean, date, index, integer, jsonb, numeric, pgTable, primaryKey, real, text, timestamp, uniqueIndex, uuid,
 } from 'drizzle-orm/pg-core'
 import type { BaseFace, BodyProfile, HairProfile, CharacterCore, CharacterStat, CharacterEnding, CastProfile, AuthoredDocument, CompiledCharacter, AgencyState, AgencyDecision, ContactBoundary, NarrativeCalendar, UserPersona } from '@miro/domain'
 
@@ -1182,6 +1182,13 @@ export const characterLikes = pgTable('character_likes', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ uniq: uniqueIndex('character_likes_uniq').on(t.characterId, t.userId) }))
+
+/** 11/12 크리에이터 팔로우 — creator_key 는 회원 id(uuid) 또는 운영 작품 필명('pen:달무리', lib/creator-name). 자기 자신은 서버가 막는다. */
+export const creatorFollows = pgTable('creator_follows', {
+  followerId: uuid('follower_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  creatorKey: text('creator_key').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({ pk: primaryKey({ columns: [t.followerId, t.creatorKey] }), byCreator: index('creator_follows_creator_idx').on(t.creatorKey) }))
 
 /** Server-only durable Web Push work, created in the message transaction. */
 export const realityPushJobs = pgTable('reality_push_jobs', {
