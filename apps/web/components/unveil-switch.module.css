@@ -44,7 +44,8 @@
 
 /* 11/12 사용자: 휴대폰에서는 언베일 토글을 짧게(40×20 → 34×18), 19 표시 20px. */
 @media (max-width: 1023px) {
-  .adultControl[data-intense] .adultPill { height: 20px; gap: 8px; }
+  .adultControl[data-intense] .adultPill { height: 20px; gap: 12px; padding: 0; }
+  .adultToggle { padding: 0; }
   .adultControl[data-intense] .unveilMark { width: 20px; height: 20px; }
   .adultControl[data-intense] .adultTrack { width: 34px; height: 18px; }
   .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 14px; height: 14px; }
