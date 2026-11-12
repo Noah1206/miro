@@ -79,7 +79,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
             <p className="t-caption" style={{ color: 'var(--color-text-secondary)', textAlign: 'center' }}>
               {t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}
             </p>
-            <WelcomeTicket />
+            <WelcomeTicket plain />
             {note && <p className="t-caption" style={{ margin: 0, color: 'var(--color-accent-bright)', fontWeight: 'var(--weight-semibold)', textAlign: 'center' }}>{t(note)}</p>}
           </div>
           {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(p => <SocialButton key={p.id} {...p} next={next} surface="sheet" />)}
@@ -90,7 +90,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
 }
 
 /** 11/12 첫 로그인 선물 — 미로의 '문 너머' 컨셉(힉스필드 점토 문 + M 코인), 아래는 7일 출석 도장. 수량은 WELCOME_GRANT·ATTENDANCE_GRANT 한 곳에서. */
-/** plain: 11/12 사용자 — 데스크톱 사이드바에서는 카드 배경·테두리 없이 그림·글·도장만. */
+/** plain: 11/12 사용자 — 카드 배경·테두리 없이 그림·글·도장만(로그인 팝업·데스크톱 사이드바 모두). */
 export function WelcomeTicket({ plain = false }: { plain?: boolean }) {
   const t = useT()
   const fmt = (v: number) => v.toLocaleString('en-US')
