@@ -102,9 +102,8 @@ button, input, textarea, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 img { display: block; max-width: 100%; }
 h1, h2, h3, p { margin: 0; }
-:focus-visible { outline: 2px solid var(--color-white); outline-offset: 3px; border-radius: var(--radius-xs); }
+/* 11/12 사용자: 버튼·링크에 초점이 갈 때 생기는 흰 테두리(초점 링)를 모두 없앤다 — 팝업이 열리며 닫기 버튼에 초점이 갈 때 거슬렸다. */
 /* 어두운 면 위의 흰 링이 배경과 겹칠 때를 위해 바깥에 검은 테두리 한 겹 (2.4.13 방향) */
-button:focus-visible, a:focus-visible, [tabindex]:focus-visible { box-shadow: 0 0 0 5px var(--color-bg); }
 
 /* 터치 확장 — 시각 크기는 그대로 두고 터치 영역만 44px 를 보장한다 (패턴 문서 §6, 아이콘·칩 버튼용) */
 .hit { position: relative; }
@@ -449,7 +448,6 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .intro-chip input { position:absolute; opacity:0; pointer-events:none; }
 .intro-chip:has(input:checked) { color:var(--color-accent-text); font-weight:var(--weight-semibold); }
 .intro-chip:has(input:checked)::before { content:''; position:absolute; bottom:2px; left:0; right:0; height:1px; background:var(--color-accent-text); }
-.intro-chip:has(input:focus-visible) { outline:2px solid var(--color-accent); outline-offset:4px; }
 .intro-meta { align-self:flex-start; margin:0; padding:0; border:0; border-radius:0; background:transparent; font-size:13px; line-height:1.6; color:var(--color-text-tertiary); word-break:keep-all; }
 .intro-line { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
 .rich-text.intro-narration { color: var(--color-text-secondary); font-style: italic; }
@@ -549,3 +547,6 @@ html[data-nav="back"]::view-transition-new(root) { animation-name: vt-in-back; }
 .create-step-prev { border: 1px solid var(--color-border); background: transparent; color: var(--color-text-secondary); }
 .create-step-next { border: 0; background: var(--color-accent); color: var(--color-accent-on, #fff); font-weight: 600; }
 @media (min-width: 1024px) { .create-stepnav { padding-right: 40px; } }
+
+/* 11/12 사용자: 초점 링을 어디에서도 그리지 않는다(개별 컴포넌트의 :focus-visible outline 포함). */
+*:focus-visible, *:focus { outline: none !important; }
