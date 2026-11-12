@@ -47,7 +47,7 @@
   .headerLogo img, .headerLogo svg { width: 24px !important; height: 24px !important; }
   .headerAction { width: 24px !important; overflow: visible; }
   .headerAction svg { width: 28px; height: 28px; flex: none; translate: 0 -3px; }  /* 종 그림(상자의 78%) ≈ 22px. 아래(넓은 테두리)가 무거워 처져 보여 3px 위로 */
-  .headerAction .bellDot { top: -4.5px; right: -1px; width: 7px; height: 7px; }  /* 점은 종 그림 안쪽 위에 겹쳐 높이에 들어가지 않게 */
+  .headerAction .bellDot { top: -2.5px; right: 1px; width: 7px; height: 7px; }  /* 점은 종 그림 안쪽 위에 겹쳐 높이에 들어가지 않게 */
   .headerAvatar { width: 26px !important; height: 26px !important; margin-left: 0 !important; }  /* 원은 같은 높이의 알약보다 작아 보여 +2px 시각 보정 */
 }
 
