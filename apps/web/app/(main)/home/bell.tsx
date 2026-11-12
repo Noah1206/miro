@@ -23,16 +23,17 @@ const BOX = { position: 'relative', display: 'grid', placeItems: 'center', width
 export function NotificationBell({ unread, signedIn, className }: { unread: number; signedIn: boolean; className?: string }) {
   const t = useT()
   const askLogin = useLoginSheet()
+  // 11/12 사용자: 크랙처럼 얇은 회색 종 + 숫자 대신 작은 빨간 점(안 읽은 알림이 있을 때).
   const inner = <>
-    <svg aria-hidden width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 8.5a6 6 0 0 0-12 0c0 6.5-2.5 8.5-2.5 8.5h17S18 15 18 8.5" /><path d="M10.2 20.5a2 2 0 0 0 3.6 0" />
+    <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.6" strokeLinejoin="round">
+      <path d="M12 3.2c-3.6 0-6.4 2.8-6.4 6.3v4.2L4 17.3h16l-1.6-3.6V9.5c0-3.5-2.8-6.3-6.4-6.3Z" /><path d="M9.6 19.4a2.5 2.5 0 0 0 4.8 0" strokeLinecap="round" />
     </svg>
-    {unread > 0 && <span className={styles.bellBadge} aria-hidden>{unread > 999 ? '999+' : unread}</span>}
+    {unread > 0 && <span className={styles.bellDot} aria-hidden />}
   </>
   if (!signedIn) return (
     <button type="button" aria-label={t('알림, 가입 선물이 기다리고 있어요')} className={className} style={BOX}
       onClick={() => askLogin(undefined, t('가입하면 {n} 미로 토큰을 선물로 드려요', { n: WELCOME_GRANT.units }))}>
-      {inner}{VISITOR_BADGE && <span className={styles.bellBadge} aria-hidden>{VISITOR_BADGE}</span>}
+      {inner}{VISITOR_BADGE && <span className={styles.bellDot} aria-hidden />}
     </button>
   )
   return (

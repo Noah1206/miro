@@ -64,9 +64,6 @@
 
 /* 알림 종의 안 읽은 수 — 캐릭터가 보낸 문자·전화 중 아직 안 본 것(대화 목록 방별 빨간 숫자의 합). 0 이면 그리지 않는다(2026-09-30 요청).
    종 가운데에서 오른쪽 위로 자라는 알약. 흰 글자와 대비 5.8:1 인 --color-danger-strong(E-38). */
-.bellBadge { position: absolute; top: 1px; left: calc(50% + 1px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
-  display: grid; place-items: center; background: var(--color-danger-strong); color: var(--color-white);
-  font-size: var(--font-micro); font-weight: 700; line-height: 1; letter-spacing: 0; white-space: nowrap; pointer-events: none; }
 
 /* 장르·관계 칩 섹션(2026-09-30 요청) — 제목 아래 한 줄로 두고 가로로 넘긴다. 칩 모양은 예전 검색 페이지의 장르 버튼 그대로.
    줄은 화면 끝까지 넘어가게 여백(gutter)만큼 밖으로 펴고 안쪽에 같은 여백을 둔다. 위아래 6px 은 초점 테두리가 잘리지 않을 자리 — 아래는 margin 으로 되돌린다. */
@@ -122,3 +119,6 @@
 .searchBar > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ababab; opacity: 1; font-size: 14px; letter-spacing: -.02em; }
 .searchIcon { flex-shrink: 0; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--color-text-secondary); }
 .searchBar:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
+
+/* 11/12 사용자(크랙식 알림): 숫자 대신 종 오른쪽 위 8px 빨간 점. */
+.bellDot { position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #ff6352; pointer-events: none; }
