@@ -15,6 +15,8 @@ const USER_NOTE_MAX = 1000
 
 /** 한 방에서 고정할 수 있는 기억 수 — 고정은 매 턴 먼저 실리므로 너무 많으면 다른 기억 자리가 없다. */
 const PIN_LIMIT = 5
+/** 정리 중인 방 — 동시 정리 요청을 막는다. */
+const compacting = new Set<string>()
 /** 요약·지난 이야기는 1500자까지(11/10), 나머지 기억은 300자까지(모델이 쓰는 한도와 같다). */
 const maxLength = (type: string) => type === 'short_term_summary' || type === 'chapter' ? 1500 : 300
 /** 직접 적을 때 고르는 칸 → 저장할 종류. */
@@ -67,12 +69,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ sessio
   const row = await ownedMemory(sessionId, body?.id)
   if (!row) return NextResponse.json({ error: 'not_found' }, { status: 404 })
   if (typeof body?.pinned === 'boolean') {
-    if (body.pinned) {
-      const [count] = await db.select({ n: sql<number>`count(*)::int` }).from(memories).where(and(eq(memories.sessionId, sessionId), eq(memories.pinned, true)))
-      if ((count?.n ?? 0) >= PIN_LIMIT) return NextResponse.json({ error: 'pin_limit' }, { status: 409 })
-    }
-    await db.update(memories).set({ pinned: body.pinned }).where(eq(memories.id, row.id))
-    return NextResponse.json({ ok: true })
+    const pinned = body.pinned
+    // 방 줄을 잠근 채 세고 고정한다 — 동시에 여러 번 눌러도 상한을 넘지 않는다.
+    const ok = await db.transaction(async tx => {
+      if (pinned) {
+        await tx.execute(sql`select 1 from roleplay_sessions where id = ${sessionId} for update`)
+        const [count] = await tx.select({ n: sql<number>`count(*)::int` }).from(memories).where(and(eq(memories.sessionId, sessionId), eq(memories.pinned, true)))
+        if ((count?.n ?? 0) >= PIN_LIMIT) return false
+      }
+      await tx.update(memories).set({ pinned }).where(eq(memories.id, row.id))
+      return true
+    })
+    return ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: 'pin_limit' }, { status: 409 })
   }
   const content = typeof body?.content === 'string' ? body.content.trim() : ''
   if (!content || content.length > maxLength(row.type)) return NextResponse.json({ error: 'invalid_content' }, { status: 400 })
@@ -97,7 +105,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ session
     return NextResponse.json({ ok: true })
   }
   if (body?.action === 'compact') {
-    const result = await compactChapters(sessionId, user.id).catch(() => null)
+    // 같은 방 정리는 한 번에 하나만 — 연타해도 AI 호출은 1번. 끝나면 편이 1개라 다음 호출은 AI 없이 'nothing'.
+    // ponytail: 서버 한 대(맥) 기준 메모리 잠금, 여러 대로 늘리면 DB advisory lock 으로
+    if (compacting.has(sessionId)) return NextResponse.json({ error: 'busy' }, { status: 429 })
+    compacting.add(sessionId)
+    const result = await compactChapters(sessionId, user.id).catch(() => null).finally(() => compacting.delete(sessionId))
     return result ? NextResponse.json({ ok: true, result }) : NextResponse.json({ error: 'compact_failed' }, { status: 502 })
   }
   const type = ADD_TYPES[body?.layer as MemoryLayer]

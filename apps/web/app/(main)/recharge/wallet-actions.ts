@@ -29,6 +29,7 @@ export async function readWalletHistory(cursor?: string) {
 
 export async function requestDepositConfirmation(orderId:string, requestId:string) {
   const user=await requireUser()
+  if (!UUID.test(orderId) || !UUID.test(requestId)) return {ok:false as const,error:msg('주문 정보를 확인해 주세요.')}
   try {
     const result=await requestBankDeposit(user.id,orderId,requestId)
     return {ok:true as const,sent:result.sent,wallet:await walletSnapshot(user.id,orderId)}
@@ -49,7 +50,11 @@ export async function purchaseCredits(selection: string, requestId: string, guar
   const user = await requireUser()
   if (!UUID.test(requestId) || typeof selection !== 'string' || !selection.startsWith('recharge:')) return { ok: false as const, error: msg('주문 정보를 확인해 주세요.') }
   // 11/12 미성년(만 19세 미만)은 법정대리인 동의를 확인한 뒤에만 주문한다(민법 제5조).
-  if (!guardianConsent && await isMinor(user.id)) return { ok: false as const, error: msg('법정대리인(부모님) 동의를 확인해 주세요.') }
+  // 미성년 여부는 서버가 생년월일로 정한다. 동의는 본인 체크(자기 확인)라 미성년이 체크한 주문은 기록을 남겨 취소 요청 때 대조한다.
+  if (await isMinor(user.id)) {
+    if (guardianConsent !== true) return { ok: false as const, error: msg('법정대리인(부모님) 동의를 확인해 주세요.') }
+    observe('wallet.guardian_consent', { userId: user.id, requestId, selection, at: new Date().toISOString() })
+  }
   try {
     const order = await createBankOrder({ userId: user.id, kind: 'recharge',
       productId: selection.slice('recharge:'.length), requestId })
