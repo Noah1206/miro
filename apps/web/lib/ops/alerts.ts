@@ -67,13 +67,13 @@ export async function collectOpsAlerts(now = new Date()): Promise<OpsAlert[]> {
 }
 
 /**
- * 유지보수 크론(15분)마다 부른다. Discord 웹훅(MIRO_OPS_DISCORD_WEBHOOK)이 없으면 세기만 하고 보내지 않는다.
- * 웹훅을 처음 본 뒤 한 번 '연결됨' 인사를 보내 채널이 살아 있는지 확인시켜 준다.
+ * 유지보수 크론(15분)마다 부른다. 운영자 채널(opsChannel)이 없으면 세기만 하고 보내지 않는다.
+ * 채널을 처음 본 뒤 한 번 '연결됨' 인사를 보내 채널이 살아 있는지 확인시켜 준다.
  */
 export async function notifyOperators(now = new Date()): Promise<{ alerts: number; sent: number }> {
-  const webhook = process.env.MIRO_OPS_DISCORD_WEBHOOK
+  const post = opsChannel()
   const alerts = await collectOpsAlerts(now)
-  if (!webhook) {
+  if (!post) {
     if (alerts.length) observe('ops.alerts_unsent', { keys: alerts.map((a) => a.key).join(',') })
     return { alerts: alerts.length, sent: 0 }
   }
@@ -82,7 +82,7 @@ export async function notifyOperators(now = new Date()): Promise<{ alerts: numbe
   for (const a of [CONNECTED, ...alerts]) {
     const [prev] = await db.select({ at: opsAlerts.lastSentAt }).from(opsAlerts).where(eq(opsAlerts.key, a.key))
     if (prev && (a.key === CONNECTED.key || prev.at > cutoff)) continue
-    if (!(await postDiscord(webhook, `**${a.title}**\n${a.detail}`))) { observe('ops.alert_failed', { key: a.key }); continue }
+    if (!(await post(`**${a.title}**\n${a.detail}`))) { observe('ops.alert_failed', { key: a.key }); continue }
     await db.insert(opsAlerts).values({ key: a.key, lastSentAt: now, detail: a.detail })
       .onConflictDoUpdate({ target: opsAlerts.key, set: { lastSentAt: now, detail: a.detail } })
     sent++
@@ -91,12 +91,38 @@ export async function notifyOperators(now = new Date()): Promise<{ alerts: numbe
 }
 
 /**
- * 알림이 아닌 운영 기록 한 줄(반복 억제 없음). 웹훅이 없으면 보내지 않고 false.
+ * 알림이 아닌 운영 기록 한 줄(반복 억제 없음). 채널이 없으면 보내지 않고 false.
  * DB 밖에 남아야 하는 사실(예: 계정 삭제 — 백업에서 복구하면 되살아난다)을 운영자 채널에 적어 둔다.
  */
 export async function postOperatorNote(content: string): Promise<boolean> {
-  const webhook = process.env.MIRO_OPS_DISCORD_WEBHOOK
-  return webhook ? postDiscord(webhook, content) : false
+  const post = opsChannel()
+  return post ? post(content) : false
+}
+
+/**
+ * 운영자 채널 — 11/12 사용자: 입금 알림 텔레그램 봇(MIRO_TELEGRAM_BOT_TOKEN·CHAT_ID)이 먼저, 없을 때만 Discord 웹훅.
+ * 따로 받고 싶으면 MIRO_OPS_TELEGRAM_CHAT_ID 로 대화방만 바꾼다.
+ */
+function opsChannel(): ((content: string) => Promise<boolean>) | null {
+  const token = process.env.MIRO_TELEGRAM_BOT_TOKEN?.trim()
+  const chat = (process.env.MIRO_OPS_TELEGRAM_CHAT_ID || process.env.MIRO_TELEGRAM_CHAT_ID)?.trim()
+  if (token && chat) return (content) => postTelegram(token, chat, content)
+  const webhook = process.env.MIRO_OPS_DISCORD_WEBHOOK?.trim()
+  return webhook ? (content) => postDiscord(webhook, content) : null
+}
+
+/** **굵게** 만 HTML 굵게로 — 나머지 글자는 그대로 보이게 이스케이프한다. */
+const telegramHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+
+async function postTelegram(token: string, chat: string, content: string): Promise<boolean> {
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chat_id: chat, text: `🚨 MIRO 운영\n${telegramHtml(content).slice(0, 3800)}`, parse_mode: 'HTML', disable_web_page_preview: true }),
+      signal: AbortSignal.timeout(5000),
+    })
+    return r.ok
+  } catch { return false }
 }
 
 async function postDiscord(url: string, content: string): Promise<boolean> {
