@@ -33,6 +33,12 @@
 
 .newContact { color: #F15B62; font-weight: 600; }
 
+/* 11/12 사용자(베이비챗 스크린샷): 휴대폰 헤더 줄은 48px, 아이콘은 줄이지 않고 원래 크기. 위 여백은 상태 표시줄(safe-area)만. 인라인 패딩을 덮어야 해서 !important. */
+@media (max-width: 1023px) {
+  .header { min-height: 48px !important; padding-top: env(safe-area-inset-top) !important; padding-bottom: 0 !important; }
+  .headerItem { scale: 1; }
+}
+
 /* 컴퓨터(2026-09-30 요청): 카드 모양은 그대로, 한 줄 칸 수만 늘린다 — .grid-2 의 넓은 화면 규칙(globals.css)과 같다. */
 @media (min-width: 1024px) {
   .headerLogo { display: none !important; }
