@@ -38,16 +38,17 @@
 /* 11/12 사용자(베이비챗 스크린샷): 휴대폰 헤더 줄은 48px, 아이콘은 줄이지 않고 원래 크기. 위 여백은 상태 표시줄(safe-area)만. 인라인 패딩을 덮어야 해서 !important. */
 @media (max-width: 1023px) {
   .header { min-height: 48px !important; padding-top: env(safe-area-inset-top) !important; padding-bottom: 0 !important; }
-  /* 11/12 사용자(베이비챗 휴대폰 헤더를 재서 맞춤): 요소는 모두 20~23px 한 크기, 사이 20px, 오른쪽 여백 18px. */
+  /* 11/12 사용자(베이비챗 휴대폰 헤더를 재서 맞춤): 로고·토큰 알약·19 토글·종 그림·프로필 모두 높이 24px, 사이 20px, 오른쪽 여백 18px. */
   .header { align-items: center !important; padding-right: 18px !important; }
   .headerItem, .headerTools > * { scale: 1; }
   .headerTools { gap: 20px !important; margin-right: 0 !important; align-items: center !important; }
   .headerTools > * { height: 24px !important; min-height: 0 !important; }
   .headerLogo { display: flex !important; align-items: center; height: 24px; }
-  .headerAction { width: 22px !important; }
-  .headerAction svg { width: 28px; height: 28px; }  /* 종 그림 ≈ 21px(상자의 74%) */
-  .headerAction .bellDot { top: 1px; right: -1px; width: 7px; height: 7px; }
-  .headerAvatar { width: 23px !important; height: 23px !important; margin-left: 0 !important; }
+  .headerLogo img, .headerLogo svg { width: 24px !important; height: 24px !important; }
+  .headerAction { width: 24px !important; overflow: visible; }
+  .headerAction svg { width: 31px; height: 31px; flex: none; }  /* 종 그림(상자의 78%) = 24px — 모든 요소 24px */
+  .headerAction .bellDot { top: -1px; right: -1px; width: 7px; height: 7px; }
+  .headerAvatar { width: 24px !important; height: 24px !important; margin-left: 0 !important; }
 }
 
 /* 컴퓨터(2026-09-30 요청): 카드 모양은 그대로, 한 줄 칸 수만 늘린다 — .grid-2 의 넓은 화면 규칙(globals.css)과 같다. */

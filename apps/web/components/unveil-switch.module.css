@@ -42,14 +42,14 @@
 :global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
 @media(max-width:420px) { .adultPill { gap:4px; padding:0; } }
 
-/* 11/12 사용자(베이비챗 휴대폰 헤더를 재서 맞춤): 19 표시가 토글 동그라미 자체 — 토글 43×23, 동그라미 21(흰 바탕·빨간 테두리·검은 19). 따로 있던 19 표시는 숨김. */
+/* 11/12 사용자(베이비챗 휴대폰 헤더를 재서 맞춤): 19 표시가 토글 동그라미 자체 — 토글 44×24, 동그라미 22(흰 바탕·빨간 테두리·검은 19). 따로 있던 19 표시는 숨김. */
 @media (max-width: 1023px) {
-  .adultControl[data-intense] .adultPill { height: 23px; gap: 0; padding: 0; }
+  .adultControl[data-intense] .adultPill { height: 24px; gap: 0; padding: 0; }
   .adultToggle { padding: 0; }
   .adultControl[data-intense] .unveilMark { display: none; }
-  .adultControl[data-intense] .adultTrack { width: 43px; height: 23px; }
-  .adultControl[data-intense] .adultKnob { top: 1px; left: 1px; width: 21px; height: 21px; box-sizing: border-box; display: grid; place-items: center;
+  .adultControl[data-intense] .adultTrack { width: 44px; height: 24px; }
+  .adultControl[data-intense] .adultKnob { top: 1px; left: 1px; width: 22px; height: 22px; box-sizing: border-box; display: grid; place-items: center;
     background: #fff; border: 2.5px solid #e60012; }
-  .adultControl[data-intense] .adultKnob::after { content: '19'; color: #000; font-size: 9.5px; font-weight: 900; letter-spacing: -.4px; line-height: 1; }
-  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); background: #fff; }  /* 43 - 21 - 1×2 */
+  .adultControl[data-intense] .adultKnob::after { content: '19'; color: #000; font-size: 10px; font-weight: 900; letter-spacing: -.4px; line-height: 1; }
+  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); background: #fff; }  /* 44 - 22 - 1×2 */
 }
