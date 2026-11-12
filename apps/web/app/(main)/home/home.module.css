@@ -42,12 +42,12 @@
   .header { align-items: center !important; }
   .headerItem, .headerTools > * { scale: 1; }
   .headerTools { gap: 12px !important; margin-right: 0 !important; align-items: center !important; }  /* 11/12: 요소 사이 간격 12px 로 통일(보이지 않는 여백을 없애 실제 간격 = gap) */
-  .headerTools > * { height: 36px !important; min-height: 0 !important; }
+  .headerTools > * { height: 32px !important; min-height: 0 !important; }  /* 11/12: 남은 토큰 알약 높이(32)가 기준 */
   .headerLogo { display: flex !important; align-items: center; height: 36px; }
-  .headerAction svg { width: 22px; height: 22px; }
-  .headerAction { width: 22px !important; }
-  .headerAction .bellDot { top: 7px; right: 0; width: 7px; height: 7px; }
-  .headerAvatar { width: 30px !important; height: 30px !important; margin-left: 0 !important; }
+  .headerAction svg { width: 34px; height: 34px; }  /* 종 그림 ≈ 26px(상자의 74%) */
+  .headerAction { width: 30px !important; }
+  .headerAction .bellDot { top: 2px; right: 0; width: 8px; height: 8px; }
+  .headerAvatar { width: 28px !important; height: 28px !important; margin-left: 0 !important; }  /* 다른 요소(32)보다 조금 작게 */
 }
 
 /* 컴퓨터(2026-09-30 요청): 카드 모양은 그대로, 한 줄 칸 수만 늘린다 — .grid-2 의 넓은 화면 규칙(globals.css)과 같다. */
