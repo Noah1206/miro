@@ -42,11 +42,11 @@
 :global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
 @media(max-width:420px) { .adultPill { gap:4px; padding:0; } }
 
-/* 11/12 사용자: 휴대폰에서는 언베일 토글을 짧고 낮게(40×20 → 32×16), 19 표시도 같이 줄인다. */
+/* 11/12 사용자: 휴대폰에서는 언베일 토글을 짧게(40×20 → 34×18), 19 표시 20px. */
 @media (max-width: 1023px) {
   .adultControl[data-intense] .adultPill { height: 20px; gap: 8px; }
-  .adultControl[data-intense] .unveilMark { width: 18px; height: 18px; }
-  .adultControl[data-intense] .adultTrack { width: 32px; height: 16px; }
-  .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 12px; height: 12px; }
-  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(16px); }
+  .adultControl[data-intense] .unveilMark { width: 20px; height: 20px; }
+  .adultControl[data-intense] .adultTrack { width: 34px; height: 18px; }
+  .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 14px; height: 14px; }
+  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(16px); }  /* 34 - 14 - 2×2 */
 }
