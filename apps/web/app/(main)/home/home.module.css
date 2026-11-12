@@ -47,7 +47,7 @@
   .headerAction svg { width: 34px; height: 34px; }  /* 종 그림 ≈ 26px(상자의 74%) */
   .headerAction { width: 30px !important; }
   .headerAction .bellDot { top: 2px; right: 0; width: 8px; height: 8px; }
-  .headerAvatar { width: 28px !important; height: 28px !important; margin-left: 0 !important; }  /* 다른 요소(32)보다 조금 작게 */
+  .headerAvatar { width: 32px !important; height: 32px !important; margin-left: 0 !important; }  /* 11/12 사용자: 조금 크게 */
 }
 
 /* 컴퓨터(2026-09-30 요청): 카드 모양은 그대로, 한 줄 칸 수만 늘린다 — .grid-2 의 넓은 화면 규칙(globals.css)과 같다. */

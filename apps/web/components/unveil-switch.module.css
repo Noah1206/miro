@@ -42,12 +42,12 @@
 :global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
 @media(max-width:420px) { .adultPill { gap:4px; padding:0; } }
 
-/* 11/12 사용자: 휴대폰 헤더는 남은 토큰 알약(32px) 높이에 맞춘다 — 19 표시 30px, 토글 52×30. */
+/* 11/12 사용자: 휴대폰 헤더 — 19 표시 26px, 토글 44×24. */
 @media (max-width: 1023px) {
-  .adultControl[data-intense] .adultPill { height: 30px; gap: 12px; padding: 0; }
+  .adultControl[data-intense] .adultPill { height: 26px; gap: 12px; padding: 0; }
   .adultToggle { padding: 0; }
-  .adultControl[data-intense] .unveilMark { width: 30px; height: 30px; }
-  .adultControl[data-intense] .adultTrack { width: 52px; height: 30px; }
-  .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 26px; height: 26px; }
-  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(22px); }  /* 52 - 26 - 2×2 */
+  .adultControl[data-intense] .unveilMark { width: 26px; height: 26px; }
+  .adultControl[data-intense] .adultTrack { width: 44px; height: 24px; }
+  .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 20px; height: 20px; }
+  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); }  /* 44 - 20 - 2×2 */
 }
