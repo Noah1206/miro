@@ -90,11 +90,13 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
 }
 
 /** 11/12 첫 로그인 선물 — 미로의 '문 너머' 컨셉(힉스필드 점토 문 + M 코인), 아래는 7일 출석 도장. 수량은 WELCOME_GRANT·ATTENDANCE_GRANT 한 곳에서. */
-export function WelcomeTicket() {
+/** plain: 11/12 사용자 — 데스크톱 사이드바에서는 카드 배경·테두리 없이 그림·글·도장만. */
+export function WelcomeTicket({ plain = false }: { plain?: boolean }) {
   const t = useT()
   const fmt = (v: number) => v.toLocaleString('en-US')
   return (
-    <div style={{ width: '100%', maxWidth: 340, marginTop: 10, padding: '14px 16px', borderRadius: 18, border: '1px solid var(--color-lavender-700)', background: 'radial-gradient(120% 90% at 30% 30%, rgba(132,96,232,.35), rgba(30,22,47,.9) 70%)' }}>
+    <div style={{ width: '100%', maxWidth: 340, marginTop: 10, padding: '14px 16px', borderRadius: 18,
+      ...(plain ? {} : { border: '1px solid var(--color-lavender-700)', background: 'radial-gradient(120% 90% at 30% 30%, rgba(132,96,232,.35), rgba(30,22,47,.9) 70%)' }) }}>
       {/* 11/12 사용자: C안(말 거는 문구), 그림+글 묶음은 카드 가운데 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         <img src="/welcome-gift/door.webp" alt="" width={92} height={111} style={{ flex: 'none' }} />
