@@ -23,14 +23,14 @@ export async function creatorOf(key: string, viewerId: string | null): Promise<C
     following: viewerId ? sql<boolean>`coalesce(bool_or(${creatorFollows.followerId} = ${viewerId}), false)` : sql<boolean>`false`,
   }).from(creatorFollows).where(eq(creatorFollows.creatorKey, key))
   const base = { key, followers: counts?.followers ?? 0, following: !!counts?.following }
-  if (key.startsWith('pen:')) return { ...base, name: key.slice(4), avatarUrl: null, pen: true, self: viewerId === OFFICIAL_OWNER_ID }
+  if (key.startsWith('pen:')) return { ...base, name: key.slice(4), avatarUrl: null, pen: true, self: false }  // 필명은 운영자에게도 별도 크리에이터로 보인다
   const [u] = await db.select({ name: users.displayName, avatarUrl: users.avatarUrl }).from(users).where(eq(users.id, key)).limit(1)
   if (!u) return null
   return { ...base, name: u.name?.trim() || '이름 없는 크리에이터', avatarUrl: u.avatarUrl, pen: false, self: viewerId === key }
 }
 
 export async function setFollow(viewerId: string, key: string, follow: boolean): Promise<void> {
-  if (!validCreatorKey(key) || viewerId === key || (key.startsWith('pen:') && viewerId === OFFICIAL_OWNER_ID)) return
+  if (!validCreatorKey(key) || viewerId === key) return
   if (follow) await db.insert(creatorFollows).values({ followerId: viewerId, creatorKey: key }).onConflictDoNothing()
   else await db.delete(creatorFollows).where(and(eq(creatorFollows.followerId, viewerId), eq(creatorFollows.creatorKey, key)))
 }
