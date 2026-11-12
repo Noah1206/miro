@@ -5,7 +5,6 @@ import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, firstPurchasePrice, re
 import { observe } from '@/lib/observe'
 import { applyPaymentEvent } from './service'
 import { afterResponse } from '@/lib/defer'
-import { postOperatorNote } from '@/lib/ops/alerts'
 import { telegramPaymentConfig } from './telegram-config'
 import { telegramCall } from './telegram-api'
 
@@ -95,8 +94,7 @@ export async function createBankOrder(opts: {
     })
     if (result.created) {
       observe('bank_order.created', { userId: opts.userId, kind: opts.kind, productId, amountMinor })
-      // 11/10 새 입금 대기 주문은 바로 운영자 채널로(15분 크론을 기다리지 않게). 실패해도 주문은 그대로.
-      void afterResponse(() => postOperatorNote(`**새 계좌이체 주문** ${amountMinor.toLocaleString('ko-KR')}${currency === 'KRW' ? '원' : ` ${currency}`} · 입금자 ${depositorName} · 코드 ${code}`)).catch(() => {})
+      // 11/12: 운영자 채널이 같은 텔레그램 봇이 되어, 예전 Discord '새 계좌이체 주문' 기록은 아래 신청 알림과 겹쳐 뺐다.
       // 11/12 신청 순간 텔레그램에도(승인 버튼은 사용자가 '입금 확인 요청'을 누르면 따로 온다). 설정이 없거나 실패해도 주문은 그대로.
       void afterResponse(async () => {
         const chatId = telegramPaymentConfig()?.chatId
