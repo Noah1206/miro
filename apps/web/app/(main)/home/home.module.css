@@ -41,7 +41,7 @@
   /* 11/12 사용자: 확대(1.18배)를 없애고 요소를 줄인다 — 모든 요소를 36px 줄 높이 가운데에 맞춰 한 줄로 정렬, 간격 10px. */
   .header { align-items: center !important; }
   .headerItem, .headerTools > * { scale: 1; }
-  .headerTools { gap: 10px !important; margin-right: 0 !important; align-items: center !important; }
+  .headerTools { gap: 10px !important; margin-right: -8px !important; align-items: center !important; }  /* 11/12: 로고 빼고 오른쪽으로 살짝 */
   .headerTools > * { height: 36px !important; min-height: 0 !important; }
   .headerLogo { display: flex !important; align-items: center; height: 36px; }
   .headerAction svg { width: 22px; height: 22px; }
