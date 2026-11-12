@@ -39,7 +39,7 @@
 @media (max-width: 1023px) {
   .header { min-height: 48px !important; padding-top: env(safe-area-inset-top) !important; padding-bottom: 0 !important; }
   /* 11/12 사용자(베이비챗 휴대폰 헤더를 재서 맞춤): 로고·토큰 알약·19 토글·종 그림·프로필 모두 높이 24px, 사이 20px, 오른쪽 여백 18px. */
-  .header { align-items: center !important; padding-right: 18px !important; }
+  .header { align-items: center !important; padding-right: 10px !important; }  /* 11/12 사용자: 오른쪽 끝에 더 붙게 */
   .headerItem, .headerTools > * { scale: 1; }
   .headerTools { gap: 20px !important; margin-right: 0 !important; align-items: center !important; }
   .headerTools > * { height: 24px !important; min-height: 0 !important; }
