@@ -9,7 +9,7 @@ import { AIBudgetDeniedError, TurnMeter, importanceScore, interactionImportance 
 import { beginRequest, failRequest, SessionUnavailableError } from '@/lib/ai/gateway'
 import { characterAgencyMode, feature, tokensForCost, POLICY, MIN_TURN_BALANCE } from '@miro/config'
 import { contactBoundaryActive, contactBoundaryDirective, firstMeetingDirective, firstPromiseAt, momentHint, PROMISE_REASON, promisedContact, type CharacterState, type ContactChannel, type RealityIntent } from '@miro/domain'
-import { looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
+import { looksLikeBackstageLeak, looksLikeRefusal, renderBlocks, resolveTurnPolicy, runTurn, UnsafeContentError, type TurnResult, type TurnStream } from '@miro/engine'
 import { loadSession } from './snapshot'
 import { commitTurn, StaleStateError, type CommittedMessage } from './commit'
 import { afterResponse } from '@/lib/defer'
@@ -226,6 +226,12 @@ async function executeTurn(opts: {
     if (looksLikeRefusal(renderBlocks(transition.blocks))) {
       await refund()
       observe('turn.refused', { sessionId, turn: turnIndex, model: dialogueModelId, by: 'text' })
+      return { ok: false, reason: 'generation' }
+    }
+    // 11/12 개발 정보(모델·그림 학습 등)가 대사로 새면 저장하지 않는다 — 같은 말을 다시 보내면 새로 받는다.
+    if (looksLikeBackstageLeak(renderBlocks(transition.blocks))) {
+      await refund()
+      observe('turn.backstage_leak', { sessionId, turn: turnIndex, model: dialogueModelId })
       return { ok: false, reason: 'generation' }
     }
     if (result.providerMode === 'fallback' || turnMeter.missingSuccessfulUsage) {

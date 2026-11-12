@@ -12,3 +12,11 @@ export class UnsafeContentError extends Error {
  */
 const REFUSAL = /(?:AI|인공지능|언어\s*모델|어시스턴트)(?:로서|으로서|이기\s*때문에|라서)|(?:콘텐츠\s*)?(?:정책|가이드라인|이용\s*약관)(?:상|에\s*따라|을\s*위반|에\s*어긋)|(?:그런|해당|이|그)\s*(?:요청|내용|장면)(?:은|에는|에)\s*(?:도와|응해|응할|응답할|제공할|작성할)\s*(?:드릴\s*)?수\s*없|\bI\s+(?:can(?:'|’)?t|cannot|won(?:'|’)t)\s+(?:help|assist|continue|provide|create|write|engage)|\bI(?:'|’)m\s+(?:not\s+able|unable)\s+to\b|\bas\s+an\s+AI\b/i
 export function looksLikeRefusal(text: string): boolean { return REFUSAL.test(text) }
+
+/**
+ * 11/12 사용자: 캐릭터챗에서 개발 정보(모델·그림 학습·도구·지시문)는 절대 말하지 않는다. 지시문(BACKSTAGE_RULE)이 1차,
+ * 이건 모델이 그래도 새어 나간 경우의 2차 거름망 — 걸리면 거절문과 같이 턴을 저장하지 않고 차감을 취소한다.
+ * ponytail: 이름 목록 정규식. 작품 세계에 쓰일 만한 흔한 낱말(로라·모달 등)은 오탐이라 뺐다.
+ */
+const BACKSTAGE = /\b(?:claude|anthropic|chat\s*gpt|gpt-?\d|openai|gemini|deepseek|grok|openrouter|stable\s*diffusion|sdxl|lora\b|noob\s*ai|higgsfield|runpod|seedream|midjourney|comfy\s*ui|llm)\b|클로드|앤트로픽|챗\s*지피티|지피티|오픈\s*ai|제미나이|딥시크|힉스필드|스테이블\s*디퓨전|미드저니|언어\s*모델|시스템\s*프롬프트|프롬프트\s*원문/i
+export function looksLikeBackstageLeak(text: string): boolean { return BACKSTAGE.test(text) }

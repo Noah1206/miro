@@ -4,6 +4,7 @@ import { and, asc, desc, eq, isNull, lt, sql } from 'drizzle-orm'
 import { db, storyChanges, storyMessages, storyRuns, storyTurns } from '@miro/db'
 import { applyActions, type StoryAction, type StoryDefinition, type StoryState } from '@miro/domain'
 import { createAI } from '@miro/providers'
+import { looksLikeBackstageLeak } from '@miro/engine'
 import { installAIUsageSink } from '@/lib/usage/ai-usage'
 import { definitionOf, runFor, type Protagonist } from './repo'
 import { DM_VERSION, INTERPRET_VERSION, NARRATE_VERSION, dmPrompt, interpretPrompt, narratePrompt, type LogLine } from './prompts'
@@ -113,6 +114,8 @@ export async function runStoryTurn(input: { userId: string; runId: string; clien
       reply = { role: 'character', speaker: thread, content: dm.text, blocks: null }
     }
 
+    // 11/12 개발 정보가 새면 저장하지 않고 실패로(다시 보내면 새로 받는다).
+    if (looksLikeBackstageLeak(reply.content)) throw new Error('BACKSTAGE_LEAK')
     return await commitTurn({ def, runId: run.id, turnId, userMessageId, input: { ...input, text, thread }, state: result.state, applied: result.applied,
       rejected: result.rejected, clarify: interpreted.clarify, reply, now: now() })
   } catch (e) {
