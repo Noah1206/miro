@@ -33,7 +33,6 @@ import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
 import { RoomMenu } from '@/components/room-menu'
 import { feature, voicePaused } from '@miro/config'
 import { ensembleNames } from '@miro/engine'
-import { CharacterPhoto } from '@/components/character-visual'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
 import { modalImageReady } from '@/lib/ai/modal-image'
 import { customSceneId } from '@/lib/photo-scenes'
@@ -114,7 +113,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         <ChatSiteHeader unveil={unveilOn} unread={unread} profile={profile} />
         <header className={styles.header}>
           <Back href="/archive" />
-          <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{loaded.characterPhoto && <span className={styles.headerAvatar} aria-hidden><CharacterPhoto src={loaded.characterPhoto} alt="" size="avatar" sizes="32px" width={32} height={32} /></span>}<h1 className={styles.title}>{loaded.characterName}</h1></div></div>
+          <div className={styles.headerIdentity}><div className={styles.headerTitleRow}>{/* 11/12 사용자: 헤더에 작품·캐릭터 사진 없이 이름만 */}<h1 className={styles.title}>{loaded.characterName}</h1></div></div>
           {loaded.adult.since !== null && <TransitionLink href="/home" className="t-micro">{t('언베일')}</TransitionLink>}
           <RoomMenu sessionId={sessionId} initialPersona={s.userPersona ?? null} characterName={loaded.characterName} profile={profile} entry={loaded.entry} portrait={loaded.characterPhoto} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} characterHref={`/character/${loaded.characterId}`} choices={modelOptions.choices} turnCount={s.turnCount} roomVoice={roomVoice} />
         </header>

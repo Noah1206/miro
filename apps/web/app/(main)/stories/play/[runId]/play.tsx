@@ -5,7 +5,7 @@ import type { StoryEntry } from '@miro/domain'
 import { StoryBriefing } from '@/components/stories/story-briefing'
 import { StoryPassage } from '@/components/stories/story-passage'
 import { Back, Button, Sheet, Switch, TransitionLink } from '@/components/ui'
-import { ChatThemePicker, ChatHeaderAvatar } from '@/components/chat-theme'
+import { ChatThemePicker } from '@/components/chat-theme'
 import { MessengerThread } from '../../../messages/[sessionId]/thread'
 import messengerStyles from '../../../messages/[sessionId]/messages.module.css'
 import { ChatSendIcon } from '@/components/chat-input-tools'
@@ -152,7 +152,7 @@ export function StoryPlay(p: Props) {
     <main id="main" tabIndex={-1} className="chat-layout" style={{ outline: 'none', background: 'var(--color-bg)' }}>
       <section className={`chat-main ${messengerStyles.main}`}>
         <header className={messengerStyles.header}>
-          <Back href="/archive" /><ChatHeaderAvatar />
+          <Back href="/archive" />{/* 11/12 사용자: 채팅방 헤더에 사진 없이 */}
           <h1 className={messengerStyles.title}>{names.get(tab)}</h1>
           <TransitionLink href={`/stories/play/${p.runId}`} className={messengerStyles.headerLink}>{t('이야기 이어가기')}</TransitionLink>
           <Button type="button" variant="ghost" size="sm" onClick={() => setProgressOpen(true)}>{t('진행')}</Button>
