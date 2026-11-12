@@ -57,7 +57,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </header>
 
       <InstallAppHint />
-      <HomeViewBeacon />
+      <HomeViewBeacon signedIn={!!user} />
 
       {/* 11/12 음성 서버가 멈춘 동안: 음성 모드 예고 시트(이 기기에 한 번, 로그인한 사람만). */}
       {user && voicePaused() && <VoiceSoonSheet />}

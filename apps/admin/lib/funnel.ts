@@ -34,5 +34,22 @@ export async function funnel(days: number) {
     from roleplay_sessions s ${male}
     where s.created_at > ${since} and s.user_id not in ${ops}
     group by c.id, c.name order by started desc, turn5 desc limit 40`)
-  return { steps: steps as Record<string, number | null>, works: [...works] as Array<{ name: string; started: number; turn5: number; unveil: number; photo: number }> }
+  // 유입 경로별(11/12) — 홍보 링크의 utm_source 로 들어온 익명 ID, 그 익명 ID 가 로그인한 뒤 남긴 방문으로 계정을 잇는다.
+  const sources = await db.execute(sql`with src as (
+      select distinct props->>'src' as src, props->>'anonId' as anon from analytics_events
+      where event = 'home_viewed' and created_at > ${since} and props->>'src' is not null and (user_id is null or user_id not in ${ops})),
+    linked as (
+      select distinct s.src, e.user_id from src s join analytics_events e
+        on e.event = 'home_viewed' and e.props->>'anonId' = s.anon and e.user_id is not null and e.user_id not in ${ops})
+    select s.src, count(distinct s.anon)::int as visit,
+      (select count(distinct l.user_id) from linked l join public.users u on u.id = l.user_id
+        where l.src = s.src and u.created_at > ${since} and u.deleted_at is null and u.birth_date is not null)::int as signup,
+      (select count(distinct l.user_id) from linked l join roleplay_sessions r on r.user_id = l.user_id
+        where l.src = s.src and r.created_at > ${since} and r.turn_count >= 5)::int as turn5
+    from src s group by s.src order by visit desc limit 20`)
+  return {
+    steps: steps as Record<string, number | null>,
+    works: [...works] as Array<{ name: string; started: number; turn5: number; unveil: number; photo: number }>,
+    sources: [...sources] as Array<{ src: string; visit: number; signup: number; turn5: number }>,
+  }
 }

@@ -13,7 +13,7 @@ const tone = (r: number) => (r >= 50 ? '#2f8a4e' : r >= 20 ? '#b7791f' : '#c2412
 export default async function FunnelPage({ searchParams }: { searchParams: Promise<{ d?: string }> }) {
   if (!await currentAdmin()) redirect('/login')
   const days = (await searchParams).d === '30' ? 30 : 7
-  const { steps, works } = await funnel(days)
+  const { steps, works, sources } = await funnel(days)
   const counts = STEPS.map(([k]) => steps[k] ?? 0)
   const max = Math.max(1, ...counts)
   // 가장 많이 빠지는 곳 — 앞 단계가 0 이 아닌 구간 중 전환율이 가장 낮은 곳.
@@ -32,6 +32,14 @@ export default async function FunnelPage({ searchParams }: { searchParams: Promi
           <td><div style={{ height: 14, width: `${Math.max((n / max) * 100, 1)}%`, background: 'var(--accent, #e2621b)', borderRadius: 4 }} /></td>
           <td>{n.toLocaleString()}</td>
           <td style={{ color: rate === null ? undefined : tone(rate) }}>{i === 0 ? '기준' : rate === null ? '—' : `${rate}%`}</td></tr>
+      })}</tbody></table>
+    <h2>유입 경로</h2>
+    <p>홍보 링크 끝에 <code>?utm_source=arca</code> 처럼 붙이면 여기에 채널별로 잡혀요.</p>
+    <table><thead><tr><th>경로</th><th>방문</th><th>가입 완료</th><th>5턴 도달</th><th>방문→가입</th></tr></thead>
+      <tbody>{sources.map(s => {
+        const r = s.visit ? Math.round((s.signup / s.visit) * 100) : null
+        return <tr key={s.src}><td>{s.src}</td><td>{s.visit}</td><td>{s.signup}</td><td>{s.turn5}</td>
+          <td style={{ color: r === null ? undefined : tone(r) }}>{r === null ? '—' : `${r}%`}</td></tr>
       })}</tbody></table>
     <h2>계좌이체</h2>
     <p>신청 후 미입금률 {steps.unpaid_pct ?? '—'}{steps.unpaid_pct != null && '%'} · 입금 확인까지 중간값 {steps.wait_min ?? '—'}{steps.wait_min != null && '분'}</p>
