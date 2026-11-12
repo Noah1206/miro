@@ -47,7 +47,7 @@
   .adultControl[data-intense] .adultPill { height: 27px; gap: 12px; padding: 0; }
   .adultToggle { padding: 0; }
   .adultControl[data-intense] .unveilMark { width: 27px; height: 27px; }
-  .adultControl[data-intense] .adultTrack { width: 46px; height: 25px; }
+  .adultControl[data-intense] .adultTrack { width: 40px; height: 25px; }
   .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 21px; height: 21px; }
-  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(21px); }  /* 46 - 21 - 2×2 */
+  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(15px); }  /* 40 - 21 - 2×2 */
 }
