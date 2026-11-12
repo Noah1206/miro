@@ -36,7 +36,6 @@ export function bindChatViewport(element: HTMLElement) {
     keyboard = state.keyboard
     element.dataset.keyboard = String(keyboard)
     element.dataset.inputFocused = String(focused)
-    if (!keyboard && headerHidden) { headerHidden = false; delete element.dataset.headerHidden }
     element.style.setProperty('--chat-visible-height', `${state.height}px`)
     element.style.setProperty('--chat-visible-width', `${state.width}px`)
     element.style.setProperty('--chat-visible-top', `${state.top}px`)
@@ -44,15 +43,23 @@ export function bindChatViewport(element: HTMLElement) {
     if (closed && Math.abs(window.scrollY - roomTop) > 1) window.scrollTo({ top: roomTop, behavior: 'instant' })
   }
   const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
-  // 11/11 사용자: 휴대폰에서 입력창이 켜진 채 대화를 위로 올리면(지난 대화 보기) 헤더를 숨겨 대화 칸을 넓힌다. 키보드가 닫히면 다시 나온다.
-  // scroll 은 버블링하지 않아 capture 로 받는다. 위로 6px 넘게 움직였을 때만(키보드가 열리며 아래로 붙는 자동 스크롤은 무시).
+  // 11/12 사용자: 대화를 위로 올리면(지난 대화 보기) 헤더가 접히고, 아래로 내리면 다시 내려온다 — 키보드와 상관없이, 애니메이션은 chat.module.css.
+  // scroll 은 버블링하지 않아 capture 로 받는다. 6px 넘게 움직였을 때만, 입력칸(textarea) 안의 스크롤은 무시.
   const lastTop = new WeakMap<EventTarget, number>()
+  const setHidden = (hidden: boolean) => {
+    if (hidden === headerHidden) return
+    headerHidden = hidden
+    if (hidden) element.dataset.headerHidden = 'true'
+    else delete element.dataset.headerHidden
+  }
   const onScroll = (event: Event) => {
     const el = event.target
-    if (!(el instanceof HTMLElement) || !keyboard) return
+    if (!(el instanceof HTMLElement) || el instanceof HTMLTextAreaElement || el.scrollHeight <= el.clientHeight) return
     const prev = lastTop.get(el) ?? el.scrollTop
     lastTop.set(el, el.scrollTop)
-    if (!headerHidden && prev - el.scrollTop > 6) { headerHidden = true; element.dataset.headerHidden = 'true' }
+    const delta = el.scrollTop - prev
+    if (delta < -6) setHidden(true)
+    else if (delta > 6) setHidden(false)
   }
   element.addEventListener('scroll', onScroll, { capture: true, passive: true })
   // 11/11 사용자: 입력창 아래가 빈다 — iOS(특히 홈 화면 앱)는 키보드가 닫힌 뒤 화면 크기 이벤트를 안 줄 때가 있어 방이 키보드 열린 높이에 멈췄다.

@@ -632,8 +632,10 @@ button.avatar:focus-visible, .iconButton:focus-visible, .photoButton:focus-visib
   .siteNav a { color: var(--color-text-secondary); font-size: 15px; font-weight: 600; text-decoration: none; }
   .siteNav a:hover { color: var(--color-text-primary); }
 }
-/* 11/11 사용자: 휴대폰에서 입력창이 켜진 채 대화를 위로 올리면 헤더를 숨긴다(chat-viewport.ts 가 data-header-hidden 을 건다). */
-:global([data-header-hidden='true']) .header { display:none; }
+/* 11/12 사용자: 대화를 위로 올리면 헤더가 위로 접히며 사라지고, 아래로 내리면 내려온다(chat-viewport.ts 가 data-header-hidden 을 건다). */
+.header { max-height:120px; transition:max-height .28s cubic-bezier(.2,.8,.2,1), min-height .28s cubic-bezier(.2,.8,.2,1), padding .28s cubic-bezier(.2,.8,.2,1), opacity .2s ease, transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s; }
+:global([data-header-hidden='true']) .header { max-height:0; min-height:0; padding-top:0; padding-bottom:0; opacity:0; transform:translateY(-12px); border-bottom-color:transparent; overflow:hidden; pointer-events:none; }
+@media (prefers-reduced-motion: reduce) { .header { transition:none; } }
 
 /* 11/12 사용자(베이비챗 스크린샷): 서술·속마음은 기울이지 않고 왼쪽 정렬, 단어 중간에서 줄을 바꾸지 않는다
    (가운데 정렬+기울임이 줄마다 들쭉날쭉하고 '소매/에'처럼 한두 글자만 다음 줄로 넘어갔다). 색·크기는 그대로. */
