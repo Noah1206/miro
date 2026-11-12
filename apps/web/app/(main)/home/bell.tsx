@@ -23,9 +23,9 @@ const BOX = { position: 'relative', display: 'grid', placeItems: 'center', width
 export function NotificationBell({ unread, signedIn, className }: { unread: number; signedIn: boolean; className?: string }) {
   const t = useT()
   const askLogin = useLoginSheet()
-  // 11/12 사용자: 크랙처럼 얇은 회색 종 + 숫자 대신 작은 빨간 점(안 읽은 알림이 있을 때).
+  // 11/12 사용자: 크랙처럼 얇은 회색 종 + 숫자 대신 작은 빨간 점(안 읽은 알림이 있을 때). 종 그림 높이 ≈ 토글 높이(20px) — 그림이 상자의 74% 라 27px.
   const inner = <>
-    <svg aria-hidden width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.6" strokeLinejoin="round">
+    <svg aria-hidden width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="1.5" strokeLinejoin="round">
       <path d="M12 3.2c-3.6 0-6.4 2.8-6.4 6.3v4.2L4 17.3h16l-1.6-3.6V9.5c0-3.5-2.8-6.3-6.4-6.3Z" /><path d="M9.6 19.4a2.5 2.5 0 0 0 4.8 0" strokeLinecap="round" />
     </svg>
     {unread > 0 && <span className={styles.bellDot} aria-hidden />}

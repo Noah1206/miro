@@ -121,4 +121,4 @@
 .searchBar:focus-visible { outline: 2px solid var(--color-accent-text); outline-offset: 2px; }
 
 /* 11/12 사용자(크랙식 알림): 숫자 대신 종 오른쪽 위 8px 빨간 점. */
-.bellDot { position: absolute; top: 7px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: #ff6352; pointer-events: none; }
+.bellDot { position: absolute; top: 5px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #ff6352; pointer-events: none; }
