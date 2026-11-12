@@ -42,12 +42,12 @@
 :global([data-chat-theme='dm-light']) .adultControl[data-on] .adultLabel { color:#7630b7; }
 @media(max-width:420px) { .adultPill { gap:4px; padding:0; } }
 
-/* 11/12 사용자: 휴대폰 헤더 — 19 표시 26px, 토글 44×24. */
+/* 11/12 사용자: 휴대폰 헤더 — 시각 보정(진한 19·밝은 토글은 커 보여서 작게, 흐린 종·프로필·토큰 알약은 기준 32). 19 27px, 토글 46×25. */
 @media (max-width: 1023px) {
-  .adultControl[data-intense] .adultPill { height: 26px; gap: 12px; padding: 0; }
+  .adultControl[data-intense] .adultPill { height: 27px; gap: 12px; padding: 0; }
   .adultToggle { padding: 0; }
-  .adultControl[data-intense] .unveilMark { width: 26px; height: 26px; }
-  .adultControl[data-intense] .adultTrack { width: 44px; height: 24px; }
-  .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 20px; height: 20px; }
-  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(20px); }  /* 44 - 20 - 2×2 */
+  .adultControl[data-intense] .unveilMark { width: 27px; height: 27px; }
+  .adultControl[data-intense] .adultTrack { width: 46px; height: 25px; }
+  .adultControl[data-intense] .adultKnob { top: 2px; left: 2px; width: 21px; height: 21px; }
+  .adultControl[data-intense][data-on] .adultKnob { transform: translateX(21px); }  /* 46 - 21 - 2×2 */
 }
