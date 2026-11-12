@@ -8,6 +8,7 @@ import { useT } from '@/lib/i18n/client'
 import { CharacterPhoto } from '@/components/character-visual'
 import { TransitionLink } from './transition-link'
 import { SocialButton, type LoginProvider } from './social-button'
+import { WelcomeTicket } from './login-sheet'
 import { LogoMark } from './logo'
 import styles from './desktop-chats.module.css'
 
@@ -64,6 +65,8 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
       {page?.nextCursor && <button className={styles.more} disabled={loadingMore} onClick={more}>{t(loadingMore ? '불러오는 중…' : '더 보기')}</button>}
     </div> : <section className={styles.login} aria-label={t('MIRO 로그인')}>
       <p>{t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}</p>
+      {/* 11/12 사용자: 로그인 버튼 위에 로그인 팝업과 같은 첫 로그인 선물 카드 — 사이드바 폭에 맞게 줄인다. */}
+      <div style={{ zoom: 0.82, marginBottom: 12 }}><WelcomeTicket /></div>
       <div className={styles.socials}>
         {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(provider => <SocialButton key={provider.id} {...provider} next={pathname} surface="sheet" />)}
       </div>

@@ -90,7 +90,7 @@ export function LoginSheetProvider({ providers, children }: { providers: LoginPr
 }
 
 /** 11/12 첫 로그인 선물 — 미로의 '문 너머' 컨셉(힉스필드 점토 문 + M 코인), 아래는 7일 출석 도장. 수량은 WELCOME_GRANT·ATTENDANCE_GRANT 한 곳에서. */
-function WelcomeTicket() {
+export function WelcomeTicket() {
   const t = useT()
   const fmt = (v: number) => v.toLocaleString('en-US')
   return (

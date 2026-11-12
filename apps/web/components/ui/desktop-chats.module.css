@@ -22,7 +22,7 @@
   .login { margin-block: auto; padding: 24px 12px 16px; border-radius: 12px; }
   .socials { display: flex; flex-direction: column; gap: 10px; }
   .socials a, .socials a:hover { padding-inline: 8px; font-size: 13px; background: transparent; }
-  .login p { margin: 14px 0 24px; text-align: center; font-size: 12px; line-height: 1.7; color: var(--color-text-secondary); }
+  .login > p { margin: 14px 0 24px; text-align: center; font-size: 12px; line-height: 1.7; color: var(--color-text-secondary); }
 }
 
 @media (min-width: 1024px) {
