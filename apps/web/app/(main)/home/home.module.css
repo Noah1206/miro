@@ -38,7 +38,11 @@
 /* 11/12 사용자(베이비챗 스크린샷): 휴대폰 헤더 줄은 48px, 아이콘은 줄이지 않고 원래 크기. 위 여백은 상태 표시줄(safe-area)만. 인라인 패딩을 덮어야 해서 !important. */
 @media (max-width: 1023px) {
   .header { min-height: 48px !important; padding-top: env(safe-area-inset-top) !important; padding-bottom: 0 !important; }
-  .headerItem { scale: 1; }
+  /* 11/12 사용자: 헤더 높이는 그대로, 안의 요소(로고·언베일 스위치·알림·프로필)를 키워 헤더를 꽉 채운다. scale 은 자리를 차지하지 않아 간격도 같이 넓힌다. */
+  .headerItem { scale: 1.18; }
+  .headerTools { gap: 12px !important; margin-right: 0 !important; }
+  .headerTools > * { scale: 1.18; }  /* 언베일 스위치처럼 headerItem 이 없는 것도 같이 */
+  .headerAvatar { width: 34px; height: 34px; }
 }
 
 /* 컴퓨터(2026-09-30 요청): 카드 모양은 그대로, 한 줄 칸 수만 늘린다 — .grid-2 의 넓은 화면 규칙(globals.css)과 같다. */

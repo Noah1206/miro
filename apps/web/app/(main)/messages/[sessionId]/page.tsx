@@ -10,7 +10,6 @@ import { loadSession } from '@/lib/simulation/snapshot'
 import { Back, Notice } from '@/components/ui'
 import { chatModelOptions } from '@/lib/ai/chat-models'
 import { ChatModelProvider, CurrentChatModel } from '@/app/(main)/chat/[sessionId]/model-picker'
-import { PushSubscribe } from '@/components/push-subscribe'
 import { MessengerDelivery } from './delivery'
 import { messengerItems } from '@/lib/messenger/inbox'
 import styles from './messages.module.css'
@@ -59,7 +58,6 @@ export default async function MessagesPage({ params, searchParams }: { params: P
         )}
         <MessengerThread characterName={loaded.characterName} portrait={loaded.characterPhoto} />
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 문자 페이지에서 알림 권한을 묻는다. */}
-        <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />
         <MessengerComposer modelOptions={modelOptions}/>
       </section>
     </main></ChatTheme></MessengerDelivery></ChatModelProvider>

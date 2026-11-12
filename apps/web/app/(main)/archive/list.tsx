@@ -11,7 +11,6 @@ import { preview } from '@/lib/archive-format'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import emptyStyles from './empty.module.css'
 import styles from './list.module.css'
-import { SectionLinks } from '@/components/ui/section-links'
 
 /**
  * 항목이 사라지면 아래가 올라온다 (Layout Animation). 관계 수치는 어디에도 없다.
@@ -76,7 +75,12 @@ export function ArchiveList({ initialPage, channel='chat' }: {
     <>
       <header className="sticky-head" style={{ marginBottom: 12, paddingBlock: 'var(--space-2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
-          <h1 className="t-title-1" style={{ flex: 1 }}>{t('대화')}</h1>
+          {/* 11/12 사용자(A안): 제목 자리에 큰 글자 탭 — 고른 쪽만 흰색(베이비챗 '홈 랭킹'). 화면 이름은 화면 낭독기에만. */}
+          <h1 className="sr-only">{t('대화')}</h1>
+          <nav aria-label={t('대화 종류')} className={styles.channels}>
+            {([['chat', t('캐릭터챗'), '/archive'], ['dm', 'DM', '/archive?channel=dm']] as const).map(([key, label, href]) =>
+              <TransitionLink key={key} href={href} aria-current={channel === key ? 'page' : undefined} className={styles.channel}>{label}</TransitionLink>)}
+          </nav>
         {/* 대화 관리 — 누르면 방마다 삭제가 보인다. 지울 방이 없으면 두지 않는다. */}
         {items.length > 0 && <button type="button" onClick={() => setManaging((value) => !value)} aria-label={t('대화 관리')} aria-pressed={managing} style={{
           width: 40, height: 40, display: 'grid', placeItems: 'center', padding: 0, border: 0, borderRadius: 'var(--radius-sm)',
@@ -88,8 +92,6 @@ export function ArchiveList({ initialPage, channel='chat' }: {
           </svg>
         </button>}
         </div>
-        <SectionLinks fullBleed label={t('대화 종류')} active={channel} className={styles.channels}
-          items={[{ key: 'chat', label: t('캐릭터챗'), href: '/archive' }, { key: 'dm', label: 'dm', href: '/archive?channel=dm' }]} />
       </header>
       <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0, gap: 8 }}>
         <AnimatePresence initial={false}>

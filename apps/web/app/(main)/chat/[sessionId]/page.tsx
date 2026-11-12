@@ -17,7 +17,6 @@ import { sessionMedia } from '@/lib/call/service'
 import { Back, TransitionLink } from '@/components/ui'
 import styles from './chat.module.css'
 import { COPY } from '@/lib/copy'
-import { PushSubscribe } from '@/components/push-subscribe'
 import { ChatComposer } from './composer'
 import { getPersona, needsPersona } from '@/lib/persona'
 import { WorldIntro } from './world-intro'
@@ -139,7 +138,6 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
         </div>
 
         {/* 앱 밖 연락은 끌 수 없다 — 이 기기가 구독될 때까지 미로 캐릭터 대화방에서 알림 권한을 묻는다. */}
-        {loaded.experienceType === 'reality' && <PushSubscribe vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={loaded.characterName} />}
         {/* The room menu keeps the DM link; the model picker lives in the composer. */}
         <CoachMarks storageKey="miro:tour:chat" steps={CHAT_COACH} />
         {!needPersona && <ChatComposer sessionId={sessionId} characterName={loaded.characterName} firstReplies={s.turnCount === 0 ? rec?.firstReplies : undefined} modelOptions={modelOptions} messengerHref={loaded.experienceType === 'reality' ? `/messages/${sessionId}` : undefined} commands={loaded.commands}

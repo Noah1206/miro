@@ -6,7 +6,6 @@ import { ArchiveList } from './list'
 import { measured } from '@/lib/observe'
 import { getT } from '@/lib/i18n/server'
 import styles from './list.module.css'
-import { PushGuide } from './push-guide'
 
 export default async function ArchivePage({ searchParams }: { searchParams: Promise<{ deleted?: string; channel?:string }> }) {
   const user = await currentUser()
@@ -19,8 +18,6 @@ export default async function ArchivePage({ searchParams }: { searchParams: Prom
   return (
     <Page wide className={styles.page}>
       {deleted && <p role="status" className="t-caption" style={{ marginBottom: 12 }}>{t('역할극을 삭제했습니다.')}</p>}
-      {/* 11/7 사용자: 알림을 안 켰으면 목록 위에서 켜는 길을 바로 알려 준다. */}
-      <PushGuide vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} />
       <ArchiveList key={channel} initialPage={page} channel={channel} />
     </Page>
   )
