@@ -2,6 +2,7 @@ import { officialDescription, officialEntry, officialIntro, officialSamples } fr
 import { features } from '@miro/config'
 import { introDialogue, introScenes, sampleDialogue, sceneOpening } from '@/lib/intro-dialogue'
 import { explicitText, VEILED_LINE } from '@/lib/explicit-text'
+import { creatorName } from '@/lib/creator-name'
 import { RichText } from '@/components/scene/rich-text'
 import { characterEditorial } from '@/components/scene/character-editorial'
 import { sampleWithAtmosphere } from '@/lib/sample-atmosphere'
@@ -45,7 +46,8 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
   const editedDescription = officialDescription(c)
 
   const cheerable = !c.isOfficial && c.isPublic && !!c.ownerId && c.ownerId !== user?.id
-  const creator = cheerable ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId!)).limit(1))[0]?.name ?? '' : ''
+  // 11/12 크리에이터 이름 — 해시태그 아래와 응원 버튼에 같이 쓴다(운영 작품은 그림체별 필명, lib/creator-name).
+  const creator = creatorName(c, c.ownerId ? (await db.select({ name: users.displayName }).from(users).where(eq(users.id, c.ownerId)).limit(1))[0]?.name : null)
   const [comments, commentCount, similar, likes, reached, running] = await Promise.all([
     listComments(c.id, user?.id ?? null, 8, 'popular'),
     countComments(c.id),
@@ -160,6 +162,7 @@ export default async function CharacterDetail({ params }: { params: Promise<{ sl
             {tags.map((tag) => <span key={tag} style={{ padding: '3px 8px', borderRadius: 8, fontSize: 12, lineHeight: 1.5, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)' }}>#{tag}</span>)}
           </div>
         )}
+        {creator && <p className="t-caption" style={{ margin: '-8px 0 16px', color: 'var(--color-text-tertiary, #8f8f99)' }}>@{creator}</p>}
 
         {/* n18 — 문. 휴대폰은 고정 하단(내비 위, 2.5.8 / 2.4.11), 컴퓨터는 이 자리에 그대로 선다. */}
         {/* 위치(left/right/width)는 .detail-cta 가 정한다 — 인라인으로 left:0 을 주면

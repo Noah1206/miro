@@ -11,6 +11,8 @@ import { stillCover, useRotatingPhoto } from '@/components/rotating-photo'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
 export type CardCharacter = {
+  /** 11/12 크리에이터 이름(lib/creator-name) — 해시태그 아래. */
+  creator?: string
   startingContext?: string | null
   occupation?: string | null
   contactEnabled?: boolean | null
@@ -77,6 +79,7 @@ export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: bool
               <span key={tag} style={{ padding: '2px 6px', borderRadius: 6, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)', fontSize: 10, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
             ))}
           </div>
+          {c.creator && <p style={{ margin: 0, fontSize: 11, lineHeight: 1.4, color: 'var(--color-text-tertiary, #8f8f99)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{c.creator}</p>}
         </div>
       </TransitionLink>
     </motion.div>

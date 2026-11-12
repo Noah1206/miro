@@ -17,6 +17,7 @@ function CardDetails({ c }: { c: HomeCard }) {
   return <span className={styles.cardDetails}>
     <strong>{coverTitle(c)}</strong>
     <span className={`${styles.cardTags} ${characterTagFont.className}`}>{characterTags(c).map(tag => <span key={tag}>#{tag}</span>)}</span>
+    {c.creator && <span className={styles.cardCreator}>@{c.creator}</span>}
   </span>
 }
 export function StoryCard({ c }: { c: HomeCard }) {

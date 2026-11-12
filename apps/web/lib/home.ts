@@ -8,6 +8,7 @@ import { listOfficials, type ExperienceType, type OfficialCard } from './charact
 import { indexedDiscoveryEnabled, rankedPopularIds } from './search-index'
 import { searchGenres, searchNeedle } from './search-params'
 import { msg } from '@/lib/i18n'
+import { creatorName } from './creator-name'
 import { genreValues } from './genres'
 import { availableDiscoveryGroups, discoveryTagGroups, discoveryTagNeedle, type DiscoveryGroup } from './discovery-filters'
 
@@ -22,6 +23,8 @@ export type HomeCard = OfficialCard & {
   isOfficial?: boolean
   adultOnly?: boolean
   recentPlays?: number
+  /** 11/12 크리에이터 이름 — 회원 닉네임, 운영 작품은 그림체별 필명(lib/creator-name). 카드 해시태그 아래. */
+  creator?: string
   /** 11/12 이 작품에서 오간 대화 턴의 합 — 카드 표지에 띄운다. */
   chats?: number
 }
@@ -35,7 +38,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 // 11/10 언베일을 안 켠 사람에겐 언베일 사진(첫 장 표지 제외 — 화면에서 흐림) URL 자체를 HTML·응답에 싣지 않는다.
 // 11/12 사용자: 성인 전용 작품도 목록에 보인다 — 언베일을 안 켠 사람에겐 표지를 언베일 표지처럼 흐린다(coverUnveil 로 같이 취급).
 const card = (c: OfficialCard, over: Partial<HomeCard> = {}): HomeCard =>
-  ({ ...c, ...(over.veiled ? { images: c.images.filter((src, i) => i === 0 || !isUnveilPhoto(src)) } : {}), coverUnveil: !!c.coverUnveil || ('adultOnly' in c && !!c.adultOnly), startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
+  ({ ...c, creator: creatorName(c, (c as { ownerName?: string | null }).ownerName), ...(over.veiled ? { images: c.images.filter((src, i) => i === 0 || !isUnveilPhoto(src)) } : {}), coverUnveil: !!c.coverUnveil || ('adultOnly' in c && !!c.adultOnly), startingContext: officialStartingContext(c), caption: c.role, plays: 0, ...over })
 
 const selectedWorldGenre = sql<string | null>`(select w.genre from worlds w where w.character_id = ${characters.id} order by w.id limit 1)`
 
@@ -64,6 +67,8 @@ const pageColumns = {
   contactEnabled: contactProfiles.enabled,
   coverUnveil: characters.coverUnveil,
   audience: characters.audience, isOfficial: characters.isOfficial, adultOnly: characters.adultOnly,
+  // 11/12 카드 해시태그 아래의 크리에이터 이름용(lib/creator-name).
+  ownerName: sql<string | null>`(select u.display_name from users u where u.id = ${characters.ownerId})`,
   createdAtKey: sql<string>`to_char(${characters.createdAt} at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')`,
 }
 

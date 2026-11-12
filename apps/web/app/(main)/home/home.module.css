@@ -28,6 +28,8 @@
 /* 11/6: 해시태그 줄은 옆으로 밀어서 넘겨 본다(스크롤바는 숨김). */
 .cardTags::-webkit-scrollbar { display: none; }
 .cardTags span { white-space: nowrap; flex: none; }
+/* 11/12 해시태그 아래 크리에이터 이름 */
+.cardCreator { font-size: 11px; line-height: 1.4; color: var(--color-text-tertiary, #8f8f99); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 
 
