@@ -11,7 +11,7 @@ export function HeaderWallet() {
   const { wallet, refreshBalance, openRecharge } = useWallet()
   useEffect(() => { if (!wallet) void refreshBalance() }, [wallet, refreshBalance])
   return (
-    <button type="button" onClick={openRecharge} aria-label={`${t('남은 토큰')} ${wallet ? wallet.available.toLocaleString(locale) : ''} · ${t('충전하기')}`}
+    <button type="button" data-header-wallet onClick={openRecharge} aria-label={`${t('남은 토큰')} ${wallet ? wallet.available.toLocaleString(locale) : ''} · ${t('충전하기')}`}
       style={{ display: 'flex', alignItems: 'center', gap: 6, height: 32, padding: '0 10px 0 8px', marginRight: 4, borderRadius: 16, border: '1px solid var(--color-border)', background: 'var(--color-surface-1)', color: 'var(--color-text-primary)', font: 'inherit', fontSize: 13, fontWeight: 650, cursor: 'pointer', whiteSpace: 'nowrap' }}>
       <img src="/miro-token.svg" alt="" aria-hidden width={16} height={16} decoding="async" />
       <span data-header-balance={wallet?.available}>{wallet ? wallet.available.toLocaleString(locale) : '—'}</span>
