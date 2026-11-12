@@ -66,7 +66,7 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
     </div> : <section className={styles.login} aria-label={t('MIRO 로그인')}>
       {/* 11/12 사용자: 사이드바는 로고·안내 문장 없이 선물 카드와 로그인 버튼만. */}
       {/* 11/12 사용자: 로그인 버튼 위에 로그인 팝업과 같은 첫 로그인 선물 카드 — 사이드바 폭에 맞게 줄인다. */}
-      <div style={{ zoom: 0.82, marginBottom: 12 }}><WelcomeTicket plain /></div>
+      <div style={{ zoom: 0.82, marginBottom: 28 }}><WelcomeTicket plain /></div>
       <div className={styles.socials}>
         {[...providers].sort((a, b) => Number(b.id === 'kakao') - Number(a.id === 'kakao')).map(provider => <SocialButton key={provider.id} {...provider} next={pathname} surface="sheet" />)}
       </div>
