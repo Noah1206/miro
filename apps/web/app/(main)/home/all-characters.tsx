@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import type { HomeCard } from '@/lib/home'
 import { useT } from '@/lib/i18n/client'
-import { StoryCard } from './feed'
+import { CharacterCard } from '@/components/character-card'
 import styles from './home.module.css'
 
 /** 홈 '전체 캐릭터' 격자 — 대화량순(대화한 사람 수)/최신순(10/28). items 는 최신순으로 온다. */
@@ -21,7 +21,8 @@ export function AllCharacters({ items }: { items: HomeCard[] }) {
               background: sort === key ? 'var(--color-bg)' : 'transparent', color: sort === key ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>{label}</button>
         ))}
       </div>
-      <div className={styles.grid}>{shown.map(c => <StoryCard key={c.id} c={c} />)}</div>
+      {/* 11/12 사용자: 홈 줄·탐색과 같은 카드 */}
+      <div className={styles.grid}>{shown.map(c => <CharacterCard key={c.id} c={c} />)}</div>
     </section>
   )
 }

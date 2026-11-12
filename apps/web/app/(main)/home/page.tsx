@@ -20,11 +20,8 @@ import { HeaderWallet } from '@/components/header-wallet'
 import { HomeViewBeacon } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { voicePaused } from '@miro/config'
-import type { HomeCard } from '@/lib/home'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 
-/** 로그인 전(11/8) — 흐린 카드에도 제목·소개 글이 HTML 에 실리지 않게 글자를 비운다. 사진만 흐리게 보인다. */
-const veil = (c: HomeCard): HomeCard => ({ ...c, name: '', role: null, occupation: null, relationshipKeywords: [], genre: null, tagline: null, caption: null, startingContext: null })
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
@@ -34,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const audience = raw === 'male' || raw === 'female' ? raw : undefined
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [sections, unread, unveil, profile] = await Promise.all([
-    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)).then(s => user ? s : { ...s, rising: s.rising.map(veil), popularMale: s.popularMale.map(veil), popularFemale: s.popularFemale.map(veil), originals: s.originals.map(veil), forYou: s.forYou.map(veil), fresh: s.fresh.map(veil), safety: [], tags: [], others: s.others.map(veil), filters: [] }),
+    measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),  // 11/12: 로그인 전에도 이름·소개 그대로(19세 막 시절의 글자 비우기 삭제)
     user ? unreadContactCount(user.id) : 0,
     homeUnveilEnabled(user?.id ?? null),
     user ? accountProfile(user) : null,
