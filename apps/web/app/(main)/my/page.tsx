@@ -79,7 +79,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href="/my/permissions" label={t('알림·접근 권한')} icon="bell" />
         </MenuSection>
         <MenuSection title={t('고객지원')}>
-          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} sub={OPERATOR.email} icon="help" />
+          <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} icon="help" />{/* 11/12 사용자: 이메일 주소는 표시하지 않음(누르면 메일 앱) */}
           <MenuRow href="/my/ai-data" label={t('AI 개선 참여')} icon="data" />
         </MenuSection>
       </div>
