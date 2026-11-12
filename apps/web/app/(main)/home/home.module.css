@@ -47,7 +47,7 @@
   .headerLogo img, .headerLogo svg { width: 24px !important; height: 24px !important; }
   .headerAction { width: 24px !important; overflow: visible; }
   .headerAction svg { width: 31px; height: 31px; flex: none; }  /* 종 그림(상자의 78%) = 24px — 모든 요소 24px */
-  .headerAction .bellDot { top: -1px; right: -1px; width: 7px; height: 7px; }
+  .headerAction .bellDot { top: 2px; right: 2px; width: 7px; height: 7px; }  /* 점은 종 그림 안쪽 위에 겹쳐 높이에 들어가지 않게 */
   .headerAvatar { width: 24px !important; height: 24px !important; margin-left: 0 !important; }
 }
 
