@@ -64,6 +64,11 @@ export function DesktopChats({ signedIn, providers, collapsed, onToggle }: { sig
       {error && <div role="alert" className={styles.empty}>{t('목록을 불러오지 못했어요.')}<button onClick={() => setRetry(n => n + 1)}>{t('다시 시도')}</button></div>}
       {page?.nextCursor && <button className={styles.more} disabled={loadingMore} onClick={more}>{t(loadingMore ? '불러오는 중…' : '더 보기')}</button>}
     </div> : <section className={styles.login} aria-label={t('MIRO 로그인')}>
+      {/* 11/12 사용자: 로그인 팝업처럼 맨 위에 로고 + MIRO */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+        <LogoMark size={28} />
+        <span style={{ fontSize: 21, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--color-text-primary)' }}>MIRO</span>
+      </div>
       <p>{t('내 일상 속에 살아있는 캐릭터와 관계를 쌓아보세요')}</p>
       {/* 11/12 사용자: 로그인 버튼 위에 로그인 팝업과 같은 첫 로그인 선물 카드 — 사이드바 폭에 맞게 줄인다. */}
       <div style={{ zoom: 0.82, marginBottom: 12 }}><WelcomeTicket /></div>
