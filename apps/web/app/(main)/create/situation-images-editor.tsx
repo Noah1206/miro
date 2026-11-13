@@ -22,7 +22,7 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
   // 앞 칸에 사진을 다 올려야 다음 칸을 연다(10/28) — 빈 칸만 쌓이지 않게.
   const canAdd = rows.every(r => r.image && !r.uploading)
-  const value = rows.filter(r => r.image).map(r => ({ image: r.image, situation: r.situation.trim(), keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean), ...(r.adult ? { adult: true as const } : {}) }))   // 언베일 전용 표시는 편집해도 유지
+  const value = rows.filter(r => r.image).map(r => ({ image: r.image, situation: r.situation.trim(), keywords: r.keywords.split(',').map(k => k.trim()).filter(Boolean), ...(r.adult ? { adult: true as const } : {}) }))
 
   const pick = async (id: number, file: File | undefined) => {
     if (!file) return
@@ -67,6 +67,11 @@ export function SituationImagesEditor({ defaultValue }: { defaultValue: Situatio
             <input value={r.keywords} onChange={e => patch(r.id, { keywords: e.target.value })} aria-label={t('상황 키워드')} maxLength={110} className="small-placeholder"
               placeholder={t('키워드 (선택, 쉼표로) 예) 비, 우산')}
               style={{ ...box(false), padding: '10px 12px', fontSize: fieldFont, color: 'var(--color-text-primary)', outline: 'none', width: '100%' }} />
+            {/* 11/14 언베일 전용 — 켜면 언베일이 켜진 턴에만 후보가 되고, 일반 방 갤러리에선 흐리게 보인다. */}
+            <label className="t-caption" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: 'var(--color-text-secondary)' }}>
+              <input type="checkbox" checked={!!r.adult} onChange={e => patch(r.id, { adult: e.target.checked ? true : undefined })} />
+              {t('언베일 전용')}
+            </label>
             {r.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(r.error)}</p>}
           </div>
         ))}
