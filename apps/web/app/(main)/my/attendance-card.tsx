@@ -9,7 +9,7 @@ import { useLanguage, useT } from '@/lib/i18n/client'
 import { attend } from './actions'
 import styles from './my.module.css'
 
-/** 11/10 출석 체크 — 누르면 오늘 1,500토큰(자정에 소멸), 7일 연속마다 1,500 추가. 점 7개가 이번 주 연속 출석. */
+/** 11/10 출석 체크 — 누르면 오늘 500토큰(자정에 소멸), 7일 연속마다 500 추가(11/14 1,500→500). 점 7개가 이번 주 연속 출석. */
 export function AttendanceCard({ initial }: { initial: Attendance }) {
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]

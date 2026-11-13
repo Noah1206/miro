@@ -47,7 +47,7 @@ export async function logout(): Promise<void> {
   redirect('/home')
 }
 
-/** 11/10 출석 체크 — 프로필의 버튼. 하루 한 번 1,500, 7일 연속마다 1,500 추가. */
+/** 11/10 출석 체크 — 프로필의 버튼. 하루 한 번 500, 7일 연속마다 500 추가(11/14 1,500→500). */
 export async function attend() {
   const user = await requireUser()
   return checkIn(user.id)
