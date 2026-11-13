@@ -15,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: `${BASE}/home`, priority: 1 },
     ...genres.map(g => ({ url: `${BASE}/genre/${encodeURIComponent(g)}`, priority: 0.9 })),
+    { url: `${BASE}/creators`, priority: 0.7 },   // 11/13 제작자 안내
     ...cards.map(c => ({ url: `${BASE}/character/${c.slug}`, lastModified: c.createdAt, priority: 0.8 })),
     ...['/login', '/terms', ...Object.keys(legalDocs()).map(k => `/terms/${k}`)].map(path => ({ url: `${BASE}${path}` })),
   ]
