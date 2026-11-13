@@ -5,7 +5,7 @@ import { HomeViewBeacon } from '@/app/(main)/home/view-beacon'
 import { Quiz } from './quiz'
 
 const TITLE = '내가 남성향 웹소설에 빙의했다면? 나는 어떤 남주일까'
-const DESC = '8가지 상황으로 알아보는 내 남주 유형 테스트 · 30초 · 로그인 없음'
+const DESC = '12가지 상황으로 알아보는 내 남주 유형 테스트 · 1분 · 로그인 없음'
 export const metadata: Metadata = { description: DESC, openGraph: { title: TITLE, description: DESC, url: '/test' }, twitter: { card: 'summary_large_image', title: TITLE, description: DESC } }
 
 /** 성향 테스트(11/13, 홍보용) — 로그인 없이 누구나. 방문은 홈 방문과 같은 기록으로 남는다(utm_source 로 채널 구분). */
