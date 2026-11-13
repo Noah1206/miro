@@ -36,7 +36,8 @@ export function Quiz() {
         </div>
       </div>
       <h2 className="t-display" style={{ margin: 0, minHeight: '2.4em', wordBreak: 'keep-all' }}>{cur.q}</h2>
-      <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
+      {/* 태블릿 폭에서는 선택지가 두 줄로 */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'var(--space-2)' }}>
         {cur.a.map(([type, text]) => (
           <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} onClick={() => pick(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45 }}>{text}</Button>
         ))}

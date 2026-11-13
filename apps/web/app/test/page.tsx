@@ -13,7 +13,7 @@ export default async function TestPage() {
   const user = await currentUser()
   return (
     <main style={{ minHeight: '100dvh', display: 'grid', alignContent: 'center', padding: 'var(--space-6) var(--gutter)' }}>
-      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'grid', gap: 'var(--space-6)' }}>
+      <div style={{ width: '100%', maxWidth: 768, margin: '0 auto', display: 'grid', gap: 'var(--space-6)' }}>
         <a href="/home" aria-label="MIRO 홈" style={{ justifySelf: 'center' }}><LogoMark size={36} /></a>
         <Quiz />
       </div>

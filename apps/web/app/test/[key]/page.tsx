@@ -8,12 +8,13 @@ import { RESULTS, type TypeKey } from '@/lib/quiz'
 type Params = { params: Promise<{ key: string }> }
 const SITE = 'https://miroapp.app'
 
-/** 결과 카드의 표지 = 환상의 케미 작품의 표지. */
+/** 결과 카드의 표지 = 환상의 케미 작품의 표지. 추천 작품도 표지를 함께 읽는다. */
 async function load(key: string) {
   const r = RESULTS[key as TypeKey]
   if (!r) return null
-  const cover = (await getOfficialBySlug(r.chemi.slug))?.images.find(Boolean) ?? null
-  return { ...r, cover }
+  const coverOf = async (slug: string) => (await getOfficialBySlug(slug))?.images.find(Boolean) ?? null
+  const [cover, ...recCovers] = await Promise.all([r.chemi.slug, ...r.recs.map(w => w.slug)].map(coverOf))
+  return { ...r, cover: cover ?? null, recs: r.recs.map((w, i) => ({ ...w, cover: recCovers[i] ?? null })) }
 }
 
 /** 공유했을 때 링크 미리보기에 유형 이름과 표지가 뜬다 — 결과 카드를 따로 만들지 않는 이유. */
@@ -35,7 +36,9 @@ export default async function TestResult({ params }: Params) {
   const share = `https://twitter.com/intent/tweet?${new URLSearchParams({ text: `내 남주 유형은 [${r.title}]입니다!\n${r.quote}\n\n내 유형은 뭘까? [내가 남성향 웹소설에 빙의했다면?] 테스트 하러 가기\n#미로_남주테스트 #미로`, url: `${SITE}/test?utm_source=test` })}`
   return (
     <main style={{ minHeight: '100dvh', display: 'grid', alignContent: 'center', padding: 'var(--space-6) var(--gutter)' }}>
-      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', display: 'grid', gap: 'var(--space-4)' }}>
+      {/* 11/13 태블릿 폭(768)까지 넓힌다 — 넓으면 카드와 설명이 좌우로, 좁으면 위아래로. */}
+      <div style={{ width: '100%', maxWidth: 768, margin: '0 auto', display: 'grid', gap: 'var(--space-5)' }}>
+       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'var(--space-5)', alignItems: 'start' }}>
         {/* 결과 카드 — 홍보 카드와 같은 정사각: 표지 위에 유형 이름과 대사. */}
         <div style={{ position: 'relative', aspectRatio: '1', borderRadius: 'var(--radius-xl)', overflow: 'hidden', background: 'var(--color-surface-2)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -48,7 +51,8 @@ export default async function TestResult({ params }: Params) {
             <p style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)', wordBreak: 'keep-all' }}>{r.quote}</p>
           </div>
         </div>
-        <ul style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
+        <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+        <ul style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
           {r.tags.map(t => <li key={t} style={chip}>#{t.replace(/ /g, '_')}</li>)}
         </ul>
         <p style={{ margin: 0, wordBreak: 'keep-all' }}>{r.desc}</p>
@@ -69,9 +73,20 @@ export default async function TestResult({ params }: Params) {
           ))}
         </div>
         <ButtonLink href={`/character/${r.chemi.slug}`} variant="primary" size="lg" full style={{ whiteSpace: 'normal', textAlign: 'center', wordBreak: 'keep-all' }}>나와 환상의 케미, {r.chemi.type} 만나러 가기</ButtonLink>
-        <p className="t-caption" style={{ margin: 'var(--space-2) 0 0' }}>{r.title}에게 추천하는 작품</p>
-        <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
-          {r.recs.map(w => <ButtonLink key={w.slug} href={`/character/${w.slug}`} size="lg" full style={{ whiteSpace: 'normal', textAlign: 'center', wordBreak: 'keep-all' }}>{w.name}</ButtonLink>)}
+        </div>
+       </div>
+        {/* 추천 작품 — 세로가 조금 더 긴(4:5) 표지 카드 그리드. */}
+        <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
+          <p className="t-caption" style={{ margin: 0 }}>{r.title}에게 추천하는 작품</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--space-3)' }}>
+            {r.recs.map(w => (
+              <a key={w.slug} href={`/character/${w.slug}`} style={{ position: 'relative', display: 'block', aspectRatio: '4 / 5', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {w.cover && <img src={w.cover} alt="" loading="lazy" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />}
+                <span style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '28px 10px 10px', background: 'linear-gradient(180deg, rgba(8,6,14,0), rgba(8,6,14,.92))', fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-semibold)', lineHeight: 1.35, wordBreak: 'keep-all' }}>{w.name}</span>
+              </a>
+            ))}
+          </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
           <ButtonLink href={share} target="_blank" rel="noopener noreferrer" variant="ghost" full>결과 공유하기</ButtonLink>
