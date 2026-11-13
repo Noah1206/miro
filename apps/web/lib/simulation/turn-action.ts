@@ -6,7 +6,6 @@ import type { TurnStream } from '@miro/engine'
 import { runConversationTurn } from '@/lib/simulation/turn'
 import { undoLastTurn } from '@/lib/simulation/reroll'
 import { clientIp } from '@/lib/alpha/session'
-import { needsPersona } from '@/lib/persona'
 import { type UsageExceededError, exceededMessage } from '@/lib/usage/guard'
 import { COPY } from '@/lib/copy'
 import { msg } from '@/lib/i18n'
@@ -67,7 +66,7 @@ async function turnState(userId: string, form: FormData, opts: TurnOpts, resend?
   const commandId = resend ? resend.commandId : opts.mode === 'chat' ? String(form.get('commandId') ?? '').trim() || undefined : undefined
   const input = resend ? resend.input : String(form.get('input') ?? '').trim() || (command ? `/${command}` : '')
   if (input.length === 0) return { error: null, notice: null, limit: null }
-  if (opts.mode === 'chat' && await needsPersona(userId, sessionId)) return fail(msg('먼저 이 세계에서의 나를 적어 주세요.'))
+  // 11/13 사용자: '이 세계에서의 나'는 선택 — 안 적어도 첫 메시지를 보낼 수 있다(대화방을 연 사람이 첫 메시지를 못 보내고 떠났다).
 
   // 11/10 엔딩 분기점의 '엔딩 보기' — 이름만 받는다. 서버가 그 작품의 엔딩인지 다시 본다.
   const ending = !resend && opts.mode === 'chat' ? String(form.get('ending') ?? '').trim().slice(0, 40) || undefined : undefined

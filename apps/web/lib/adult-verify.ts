@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { and, eq, ne } from 'drizzle-orm'
-import { db, users } from '@miro/db'
+import { db, users, userSettings } from '@miro/db'
 import { canRetryVerification, verifyRetryAt } from '@miro/domain'
 import { resolveAdultVerification } from '@miro/providers'
 import { msg } from '@/lib/i18n'
@@ -38,6 +38,8 @@ export async function confirmAdult(userId: string, req: { birthDate?: string; id
   }
   try {
     await db.update(users).set({ adultVerifiedAt: now, maturePolicyAgreedAt: now, adultVerifyFailedAt: null, ...(di ? { adultVerifyDi: di } : {}) }).where(eq(users.id, userId))
+    // 11/13 사용자: 인증을 마치면 언베일도 켠다 — 예전엔 인증 뒤 '대화하기' 첫 탭이 언베일만 켜서 한 번 더 눌러야 대화가 열렸다.
+    await db.insert(userSettings).values({ userId, unveilEnabled: true }).onConflictDoUpdate({ target: userSettings.userId, set: { unveilEnabled: true, updatedAt: now } })
   } catch (e) {
     // 같은 DI 로 두 계정이 동시에 인증한 경우 — 고유 색인이 막는다.
     const err = e as { code?: string; cause?: { code?: string } }

@@ -45,7 +45,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
   const user = await currentUser()
   // 남성향/여성향(11/4) — '전체' 버튼 창에서 고른다. 없으면 전체.
   const raw = (await searchParams).audience
-  const audience = raw === 'male' || raw === 'female' ? raw : undefined
+  // 11/13 사용자: 여성향(남자 캐릭터)은 홈에서 뺀다 — 공식 여성향 25개도 비공개(목록 output/ads/hidden-female-2026-11-13.txt).
+  const audience = raw === 'male' ? raw : undefined
   // 목록과 안 읽은 연락 수를 함께 읽는다 — 알림 종 숫자가 목록을 기다리게 하지 않는다.
   const [sections, unread, unveil, profile] = await Promise.all([
     measured('nav.home_data', () => homeSections(user?.id ?? null, audience)),  // 11/12: 로그인 전에도 이름·소개 그대로(19세 막 시절의 글자 비우기 삭제)
@@ -54,6 +55,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     user ? accountProfile(user) : null,
   ])
   const [t, language] = await Promise.all([getT(), getLanguage()])
+  // 11/13 사용자: 인증 직후(하루)와 로그인 전에는 안내 시트(음성 예고·제작자 모집)를 띄우지 않는다 — 인증한 10명 중 9명이 홈에서 대화를 시작하지 않았다.
+  const settled = !!user && (!user.adultVerifiedAt || Date.now() - new Date(user.adultVerifiedAt).getTime() > 86_400_000)
 
   return (
     <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))', '--font-title-3': '16px' } as React.CSSProperties}>
@@ -77,15 +80,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       <HomeViewBeacon signedIn={!!user} />
 
       {/* 11/12 음성 서버가 멈춘 동안: 음성 모드 예고 시트(이 기기에 한 번, 로그인한 사람만). */}
-      {user && voicePaused() && <VoiceSoonSheet />}
+      {settled && voicePaused() && <VoiceSoonSheet />}
       {/* 컴퓨터에서만 보이는 배너 — 헤더 - 배너 - 캐릭터(2026-09-30 요청). */}
       {/* 11/10 사용자: 로그인한 사람에겐 배너 대신 크랙식 추천(들어올 때마다 랜덤 6작품, 표지가 언베일인 작품은 뺀다). 로그인 전엔 가입 선물 배너 그대로. */}
       {/* 11/12 사용자: 로그인 전에도 크랙식 추천(데스크톱 소개 카드의 흐린 배경 포함) — 가입 선물 안내는 로그인 팝업의 선물 카드가 맡는다. */}
       {<HomeHero items={(() => {
-        // 11/10 사용자: 남성향 4 + 여성향 2, 순서는 섞는다.
-        const all = [...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.popularFemale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
+        // 11/13 사용자: 여성향을 빼서 남성향 6, 순서는 섞는다.
+        const all = [...new Map([...sections.originals, ...sections.rising, ...sections.popularMale, ...sections.forYou, ...sections.others].map(c => [c.id, c])).values()]
           .filter(c => c.images.length > 0 && !c.coverUnveil).sort(() => Math.random() - 0.5)
-        return [...all.filter(c => c.audience === 'male').slice(0, 4), ...all.filter(c => c.audience === 'female').slice(0, 2)].sort(() => Math.random() - 0.5)
+        return all.filter(c => c.audience === 'male').slice(0, 6)
       })()} />}
       {/* 검색 — 배너 아래 전체 폭 입력창 모양(10/19). 누르면 검색 화면으로 가서 바로 입력. 모양은 검색 화면의 입력창과 같다. */}
       {(() => { const content = <>
@@ -104,7 +107,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
       {sections.rising.length > 0 && <Row index={0} row={{ key: 'rising', title: t('🆕 지금 뜨는 신작'), subtitle: t('최근 3주 안에 나온 이야기 중 요즘 대화가 몰리는 순서'), items: sections.rising }} href="/explore" />}
       {sections.popularMale.length > 0 && <Row index={1} row={{ key: 'popular-male', title: t('🔥 남심 저격! 인기 남성향 TOP 10'), items: sections.popularMale }} href="/explore" />}
-      {sections.popularFemale.length > 0 && <Row index={2} row={{ key: 'popular-female', title: t('💗 여심 저격! 인기 여성향 TOP 10'), items: sections.popularFemale }} href="/explore" />}
       {sections.originals.length > 0 && <Row index={3} row={{ key: 'originals', title: t('⭐ 미로 오리지널 신작'), items: sections.originals }} href="/explore" />}
       {sections.forYou.length > 0 && <Row index={4} row={{ key: 'for-you', title: user?.displayName ? t('💘 {name}님에게 맞춘 캐릭터', { name: user.displayName }) : t('💘 당신에게 맞춘 캐릭터'), items: sections.forYou }} href="/explore" />}
       {sections.fresh.length > 0 && <Row index={5} row={{ key: 'fresh', title: t('🌱 따끈따끈한 유저 신작'), items: sections.fresh }} href="/explore" />}
@@ -121,7 +123,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {sections.others.length > 0 && <AllCharacters items={sections.others} />}
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 11/13 처음 온 사람에게 제작자 모집을 한 번 알린다(브라우저당 한 번, 다른 시트가 닫힌 뒤). */}
-      <CreatorInvite ratePercent={Math.round(CREATOR_REWARD_RATE * 100)} />
+      {settled && <CreatorInvite ratePercent={Math.round(CREATOR_REWARD_RATE * 100)} />}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>
