@@ -31,7 +31,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
         {user && <IncomingCall userId={user.id} />}
         {/* 온보딩을 마치고 가입 보상을 받은 직후 한 번 — 알림 시트가 먼저 끝난 뒤에 가운데 팝업으로 뜬다. */}
         {user && <WelcomePopup units={WELCOME_GRANT.units} validDays={WELCOME_GRANT.validDays} />}
-        {/* 로그인해서 들어오면 어디서든 먼저 알림을 켜자고 묻는다 — 세션에 한 번(2026-09-29). */}
+        {/* 로그인에 성공한 직후 한 번 알림을 켜자고 묻는다 — 그냥 들어왔을 때는 띄우지 않는다(11/13). */}
         {user && <PushSubscribe autoPrompt vapidPublicKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null} name={t('캐릭터')} />}
         <Nav signedIn={!!user} providers={providers} />
         <div style={{ minWidth: 0 }}><NavigationFeedback>{children}</NavigationFeedback></div>

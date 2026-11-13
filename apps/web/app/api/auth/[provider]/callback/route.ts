@@ -8,6 +8,7 @@ import { resolveOAuth } from '@miro/providers'
 import { signInWithProfile } from '@/lib/auth'
 import { isProvider, takeNext, takeOAuthState } from '@/lib/oauth-state'
 import { track } from '@/lib/analytics/track'
+import { JUST_SIGNED_IN_COOKIE } from '@/lib/onboarding-options'
 import { observe } from '@/lib/observe'
 
 /** n7 — 제공자에서 돌아옴. state 검증 → 코드 교환 → 세션 → 약관 또는 홈. */
@@ -34,6 +35,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   // 계정에 고른 언어가 있으면 이 기기의 화면도 그 언어로 맞춘다(새 기기·쿠키를 지운 브라우저).
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, r.userId)).limit(1)
   if (settings) (await cookies()).set(LANGUAGE_COOKIE, settings.language, { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 60 * 60 * 24 * 365 })
+  // 11/13 알림 시트는 로그인에 성공한 직후에만 뜬다 — 그 표시(5분, 시트가 읽고 지움).
+  const jar = await cookies()
+  jar.set(JUST_SIGNED_IN_COOKIE, '1', { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 300 })
   // 온보딩(프로필·약관)이나 국외 이전 동의가 남아 있으면 그 화면이 먼저다 — 돌아갈 곳은 쿠키에 그대로 두고 동의 후에 쓴다.
   const pending = await consentRedirect(r.userId)
   if (pending) return to(pending)

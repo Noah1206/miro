@@ -7,7 +7,7 @@ import { Button, Sheet, useToast } from '@/components/ui'
 /** 11/6: 알림 시트의 확인 버튼은 캐릭터 상세 '대화 시작하기'와 같은 모양(라벤더·흰 글자·보통 굵기·눌리면 0.94배, hover/active 는 globals.css .btn-start). */
 const START = { className: 'btn-start', pressScale: 0.94, style: { background: 'var(--color-lavender-600)', border: '1px solid var(--color-lavender-600)', color: 'var(--color-white)', fontWeight: 'var(--weight-regular)', borderRadius: 'var(--radius-lg)' } } as const
 import styles from './push-subscribe.module.css'
-import { markPushPromptDone, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
+import { JUST_SIGNED_IN_COOKIE, markPushPromptDone, pushPromptDone, WELCOME_PARAM } from '@/lib/onboarding-options'
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 
@@ -41,7 +41,7 @@ export async function subscribeToPush(vapidPublicKey: string): Promise<boolean> 
 }
 
 /**
- * autoPrompt: 로그인한 사용자가 들어오면 화면 어디서든 바로 팝업으로 묻는다(2026-09-29 결정). 이때는 줄을 그리지 않고
+ * autoPrompt: 로그인에 성공한 직후 한 번 팝업으로 묻는다(2026-09-29 결정, 11/13 '들어오자마자'에서 '로그인 성공 직후'로). 이때는 줄을 그리지 않고
  * 팝업만 띄우며, iPhone 미설치·차단 상태도 한 번은 알려 준다.
  */
 export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { vapidPublicKey: string | null; name: string; autoPrompt?: boolean }) {
@@ -52,7 +52,15 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
   const toast = useToast()
   const t = useT()
   // 11/7 사용자: 알림 차단 안내는 토스트로 — 방에 들어올 때 한 번 떴다가 사라진다.
-  useEffect(() => { if (status === 'denied' && !deniedToast.current) { deniedToast.current = true; toast(t('알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.')) } }, [status, toast, t])
+  // 11/13 사용자: 먼저 띄우는 알림(시트·차단 안내)은 로그인에 성공한 직후에만 — 그냥 들어온 화면에서는 아무것도 띄우지 않는다.
+  // 로그인 콜백이 심은 쿠키를 한 번 읽고 지운다. 권한 화면(/my/permissions, autoPrompt 아님)의 안내는 그대로.
+  const [justSignedIn, setJustSignedIn] = useState(false)
+  useEffect(() => {
+    if (!document.cookie.split('; ').some(c => c === `${JUST_SIGNED_IN_COOKIE}=1`)) return
+    document.cookie = `${JUST_SIGNED_IN_COOKIE}=; path=/; max-age=0`
+    setJustSignedIn(true)
+  }, [])
+  useEffect(() => { if (status === 'denied' && !deniedToast.current && (!autoPrompt || justSignedIn)) { deniedToast.current = true; toast(t('알림이 차단되어 있습니다. 브라우저 설정에서 허용해 주세요.')) } }, [status, toast, t, autoPrompt, justSignedIn])
   // 먼저 묻기. 가입 직후라면 가입 선물 팝업이 이것이 끝나기를 기다린다(markPushPromptDone) — 보여 주고 닫았거나, 물을 게 없었을 때.
   // 가입 직후(?welcome=1)에는 알림이 이미 켜져 있어도('켜져 있어요' 시트) 알림 시트를 먼저 보인다. 다만 온보딩의 '캐릭터 알림 받기' 에서
   // 이미 물었으면(markPushAsked) 다시 띄우지 않는다 — 가입이 한 번에 끝나게(2026-09-30 요청). 주소는 화면이 붙은 뒤에 읽는다 —
@@ -71,12 +79,12 @@ export function PushSubscribe({ vapidPublicKey, name, autoPrompt = false }: { va
     // 이미 한 번 보였거나(허용 뒤 상태가 바뀐 경우) 팝업이 먼저 떠 버렸으면 시트를 다시 띄우지 않는다 — 겹치지 않게.
     if (shown.current || pushPromptDone()) { markPushPromptDone(); return }
     const asks = status === 'prompt' || status === 'ios_install' || status === 'denied' || (welcome && status === 'subscribed')
-    if (!asks || askedThisSession()) { markPushPromptDone(); return }
+    if (!asks || askedThisSession() || !(justSignedIn || welcome)) { markPushPromptDone(); return }   // 로그인 직후(또는 가입 직후)가 아니면 먼저 묻지 않는다
     // 화면이 먼저 그려진 뒤 올라오게 잠깐 기다린다 — 들어오자마자 덮으면 무엇 위에 뜬 건지 알 수 없다.
     if (Date.now() - mountedAt.current > ENTRY_WINDOW_MS) { markPushPromptDone(); return }
     const timer = setTimeout(() => { shown.current = true; markPushAsked(); if (status === 'prompt') setAsk(true); else setGuide(true) }, 700)
     return () => clearTimeout(timer)
-  }, [autoPrompt, status, welcome])
+  }, [autoPrompt, status, welcome, justSignedIn])
 
   useEffect(() => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
