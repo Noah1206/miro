@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next'
 
-const AI_BOTS = ['GPTBot', 'ChatGPT-User', 'OAI-SearchBot', 'ClaudeBot', 'Claude-Web', 'Claude-User', 'Claude-SearchBot', 'anthropic-ai', 'Google-Extended', 'GoogleOther',
-  'CCBot', 'PerplexityBot', 'Perplexity-User', 'Bytespider', 'Amazonbot', 'Applebot-Extended', 'meta-externalagent', 'FacebookBot', 'cohere-ai', 'Diffbot', 'YouBot', 'Timpibot', 'ImagesiftBot', 'omgili']
+// 11/13 AEO: AI 검색·답변용 봇(OAI-SearchBot·ChatGPT-User·Claude-SearchBot·Claude-User·PerplexityBot·Perplexity-User)은 막지 않는다 —
+// 학습용이 아니라 ChatGPT·Claude·Perplexity 답변에 미로를 띄우는 봇이다. 아래는 학습·수집용만. Cloudflare AI Crawl Control 에서도 검색 봇은 허용해야 효과가 있다.
+const AI_BOTS = ['GPTBot', 'ClaudeBot', 'Claude-Web', 'anthropic-ai', 'Google-Extended', 'GoogleOther',
+  'CCBot', 'Bytespider', 'Amazonbot', 'Applebot-Extended', 'meta-externalagent', 'FacebookBot', 'cohere-ai', 'Diffbot', 'YouBot', 'Timpibot', 'ImagesiftBot', 'omgili']
 
 /** 11/10 검색 노출 — 홈·로그인·약관만, 대화·내 정보·만들기·API·관리는 막는다. */
 export default function robots(): MetadataRoute.Robots {

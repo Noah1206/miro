@@ -15,16 +15,21 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('AI 캐릭터챗 MIRO')}`
   // 11/12 링크 미리보기 그림 — 미로 시그니처 캐릭터 8명(미로·가린·문자 요정·서하·채이·다온·하진·수아), 짙은 라벤더 단색 배경·흰 굵은 MIRO(사용자 선택 A안, 힉스필드 생성 + 글씨는 직접 얹음, output/share-image). 파일 이름을 바꿔야 메신저 캐시가 새로 받는다.
   const shareImage = { url: '/miro-share-v3.png', width: 1200, height: 630, alt: 'MIRO' }
+  // 11/13 검색(SEO·AEO): 검색 결과·AI 답변에 쓰이는 한 줄 설명.
+  const description = 'MIRO(미로)는 AI 캐릭터챗이에요. 성격과 세계관을 가진 캐릭터와 1:1로 대화하고, 문자를 주고받고, 나만의 캐릭터를 직접 만들 수 있어요. 남성향·여성향·로맨스·판타지·BL 캐릭터가 기다려요.'
   return {
     metadataBase: new URL('https://miroapp.app'),
     title: { default: title, template: title }, manifest: '/manifest.json',
+    description,
+    keywords: ['AI 캐릭터챗', 'AI 채팅', '캐릭터 채팅', '캐릭터챗', 'AI 롤플레이', '미로', 'MIRO', '남성향', '여성향', 'BL', '웹소설'],
     applicationName: 'MIRO',
     appleWebApp: { capable: true, title: 'MIRO', statusBarStyle: 'black-translucent' },
+    robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },
     openGraph: {
-      type: 'website', siteName: 'MIRO', title, images: [shareImage],
+      type: 'website', siteName: 'MIRO', title, description, url: '/home', locale: 'ko_KR', images: [shareImage],
     },
     twitter: {
-      card: 'summary_large_image', title, images: [shareImage],
+      card: 'summary_large_image', title, description, images: [shareImage],
     },
     // 탭은 현재 로고 + 차콜 타일. v5로 기존 브라우저 캐시를 갱신한다.
     icons: {

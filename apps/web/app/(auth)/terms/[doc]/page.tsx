@@ -11,7 +11,7 @@ import { getLanguage, getT } from '@/lib/i18n/server'
 export async function generateMetadata({ params }: { params: Promise<{ doc: string }> }): Promise<Metadata> {
   const { doc } = await params
   const t = await getT()
-  return { title: t(isLegalKey(doc) ? legalDocs()[doc].title : msg('약관')) }
+  return { title: t(isLegalKey(doc) ? legalDocs()[doc].title : msg('약관')), alternates: { canonical: `/terms/${doc}` } }
 }
 
 /**

@@ -22,6 +22,20 @@ import { VoiceSoonSheet } from './voice-soon-sheet'
 import { voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 
+const SITE = 'https://miroapp.app'
+const HOME_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    { '@type': 'WebSite', '@id': `${SITE}/#website`, url: `${SITE}/home`, name: 'MIRO', alternateName: ['미로', 'AI 캐릭터챗 MIRO'], inLanguage: 'ko-KR', publisher: { '@id': `${SITE}/#org` } },
+    { '@type': 'Organization', '@id': `${SITE}/#org`, name: 'MIRO', legalName: '스터플', url: SITE, logo: `${SITE}/icon-512.png` },
+    {
+      '@type': 'WebApplication', name: 'MIRO', url: `${SITE}/home`, applicationCategory: 'EntertainmentApplication', operatingSystem: 'Web, iOS, Android',
+      inLanguage: ['ko', 'en', 'ja', 'zh'], image: `${SITE}/miro-share-v3.png`,
+      description: '성격과 세계관을 가진 AI 캐릭터와 1:1로 대화하고 문자를 주고받는 AI 캐릭터챗. 나만의 캐릭터도 직접 만들 수 있다.',
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
+    },
+  ],
+}
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
@@ -81,7 +95,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </div>
       {/* 10/28: 오리지널 작품 줄은 일단 가린다(사용자 요청). 다시 보이려면 <OriginalStoriesRow /> 를 되살린다. */}
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
-      <h1 className="sr-only">{t('홈')}</h1>
+      <h1 className="sr-only">{t('AI 캐릭터챗 MIRO')}</h1>
+      {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(HOME_JSON_LD) }} />
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
       {sections.rising.length > 0 && <Row index={0} row={{ key: 'rising', title: t('🆕 지금 뜨는 신작'), subtitle: t('최근 3주 안에 나온 이야기 중 요즘 대화가 몰리는 순서'), items: sections.rising }} href="/explore" />}
       {sections.popularMale.length > 0 && <Row index={1} row={{ key: 'popular-male', title: t('🔥 남심 저격! 인기 남성향 TOP 10'), items: sections.popularMale }} href="/explore" />}
