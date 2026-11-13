@@ -43,7 +43,7 @@ export function Quiz() {
       {/* 선택지는 세로 한 줄, 앞에 번호(11/13 요청). */}
       <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
         {cur.a.map(([type, text], i) => (
-          <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} aria-pressed={chosen === type} onClick={() => setChosen(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45, ...(chosen === type && { background: 'var(--color-surface-3)', boxShadow: 'inset 0 0 0 1px rgba(255, 255, 255, 0.28)' }) }}>
+          <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} aria-pressed={chosen === type} onClick={() => setChosen(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45, ...(chosen === type && { background: 'var(--color-surface-3)' }) }}>
             <span style={{ display: 'flex', gap: 10 }}><span aria-hidden style={{ flex: 'none', color: 'var(--color-accent-text)', fontWeight: 'var(--weight-bold)' }}>{i + 1}</span><span>{text}</span></span>
           </Button>
         ))}
