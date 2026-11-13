@@ -84,7 +84,7 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   // 11/6: 언베일 표지 캐릭터는 언베일을 안 켠 사람에게 대화 속 사진(인트로·상황 사진)도 흐린다.
   const [unveilOn, unread] = await Promise.all([homeUnveilEnabled(user.id), unreadContactCount(user.id)])
   // 11/12: 표지가 언베일이 아니어도 인트로에 노골적인 글이 있는 작품이면 같이 가린다(lib/explicit-text). 글은 아래 items 에서 가림 문구로 바꾼다.
-  const introExplicit = all.some(m => m.turnIndex <= 0 && m.kind === 'text' && explicitText(m.content))
+  const introExplicit = all.some(m => m.turnIndex <= 0 && ((m.kind === 'text' && explicitText(m.content)) || (m.kind === 'photo' && isUnveilPhoto(m.content))))
   const veilPhotos = (!!rec?.coverUnveil || introExplicit) && !unveilOn
   // 문자·통화 기록은 /messages 의 것이다. 여기는 만나서 나눈 장면만 — 문자로 보낸 사진도 저쪽으로.
   const history = sceneMessages(all)
