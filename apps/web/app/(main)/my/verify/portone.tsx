@@ -5,20 +5,7 @@ import { useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
 import { confirmIdentity } from './actions'
 
-type PortOneSDK = { requestIdentityVerification(req: Record<string, unknown>): Promise<{ code?: string; message?: string } | undefined> }
-let loading: Promise<PortOneSDK> | null = null
-/** PortOne V2 브라우저 SDK — 이 화면에서만 필요해 누를 때 한 번 불러온다. */
-function portOne(): Promise<PortOneSDK> {
-  const w = window as unknown as { PortOne?: PortOneSDK }
-  if (w.PortOne) return Promise.resolve(w.PortOne)
-  return loading ??= new Promise((ok, fail) => {
-    const s = document.createElement('script')
-    s.src = 'https://cdn.portone.io/v2/browser-sdk.js'
-    s.onload = () => (w.PortOne ? ok(w.PortOne) : fail(new Error('portone_sdk')))
-    s.onerror = () => { loading = null; fail(new Error('portone_sdk')) }
-    document.head.append(s)
-  })
-}
+import { portOne } from '@/lib/portone-sdk'
 
 /**
  * PortOne 본인인증(10/2). PC 는 창이 닫히면 서버에 확인을 맡기고, 모바일은 창이 /my/verify/return 으로 돌려보낸다.

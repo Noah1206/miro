@@ -19,6 +19,8 @@ export type WalletSnapshot = {
   /** 11/12 민법상 미성년 — 충전 전에 법정대리인 동의를 확인한다. */
   minor?: boolean
   account: BankAccount | null; products: RechargeProduct[]
+  /** 11/13 카드 결제(포트원 상점 id·KG이니시스 채널 키) — 설정이 없으면 null(계좌이체만). */
+  card?: { storeId: string; channelKey: string; name: string; email: string } | null
   order: WalletOrder | null; history: WalletHistory
 }
 export type BalanceActionResult =

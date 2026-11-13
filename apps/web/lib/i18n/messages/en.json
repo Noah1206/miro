@@ -2290,5 +2290,21 @@
  "언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.": "Sent to the AI only in chats with Unveil on, and never shown on screen. In adult scenes it takes priority over the general guidelines.",
  "언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 좋아하는 것·싫어하는 것·처음 허용하는 선·잘 넘어가는 계기·끝난 뒤 반응을 적어 주세요.": "Sent to the AI only in chats with Unveil on, and never shown on screen. Write likes, dislikes, first limits, what tips them over, and how they react afterwards.",
  "예) 어깨가 닿으면 움찔하고 시선을 피한다": "e.g. Flinches and looks away when shoulders touch",
- "예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척": "e.g. Likes: long kisses, being led / Dislikes: harsh words, rushing / First limit: only kissing before dating / Tips over: alcohol, late nights alone together / Afterwards: hides under the blanket in embarrassment and pretends nothing happened the next day"
+ "예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척": "e.g. Likes: long kisses, being led / Dislikes: harsh words, rushing / First limit: only kissing before dating / Tips over: alcohol, late nights alone together / Afterwards: hides under the blanket in embarrassment and pretends nothing happened the next day",
+ "결제 상태를 확인하지 못했어요. 잠시 후 잔액을 확인해 주세요.": "We couldn't confirm the payment status. Please check your balance in a moment.",
+ "결제 수단": "Payment method",
+ "결제가 완료되지 않았어요. 카드에서 빠져나간 금액이 있으면 자동으로 취소돼요.": "The payment wasn't completed. Any amount charged to your card will be cancelled automatically.",
+ "결제를 마치지 않았어요.": "The payment wasn't finished.",
+ "결제를 확인하고 있어요. 잠시 후 잔액에 반영돼요.": "Confirming your payment. It will show in your balance shortly.",
+ "결제창에 필요한 구매자 정보예요. 결제대행사(KG이니시스)로만 전달돼요.": "Buyer details required by the payment window. They are sent only to the payment processor (KG Inicis).",
+ "결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.": "Couldn't open the payment window. Please try again shortly.",
+ "계좌이체": "Bank transfer",
+ "구매자 이름": "Buyer name",
+ "구매자 이메일": "Buyer email",
+ "구매자 휴대폰 번호": "Buyer mobile number",
+ "주문을 만들지 못했어요. 다시 시도해 주세요.": "Couldn't create the order. Please try again.",
+ "지금은 카드 결제를 받지 않고 있어요.": "Card payments aren't available right now.",
+ "카드 결제": "Card",
+ "휴대폰 번호 (- 없이)": "Mobile number (digits only)",
+ "카드 결제가 완료됐어요. 잔액에 반영했습니다.": "Card payment complete. Added to your balance."
 }

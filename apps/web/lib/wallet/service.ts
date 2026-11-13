@@ -1,9 +1,11 @@
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
-import { bankTransferOrders, db, rechargeGrants, usageLedger } from '@miro/db'
+import { bankTransferOrders, db, rechargeGrants, usageLedger, users } from '@miro/db'
 import { bankAccount, firstPurchasePrice, rechargeCatalog } from '@miro/config'
 import { earningsBalance, usageStatus } from '@/lib/usage/guard'
 import { observe } from '@/lib/observe'
 import { isMinor } from '@/lib/payments/minor'
+import { purchasedProductIds } from '@/lib/payments/first-purchase'
+import { cardPaymentConfig } from '@/lib/payments/portone-card'
 import type { WalletEntry, WalletHistory, WalletOrder, WalletSnapshot } from './types'
 
 /** Every branch filters the owner. The cursor keeps Postgres microseconds, including ties. */
@@ -77,15 +79,19 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
   ])
   let account: WalletSnapshot['account'] = null
   let products: WalletSnapshot['products'] = []
+  // 11/13 카드 결제(포트원·KG이니시스) — 설정이 다 있을 때만. 브라우저엔 상점 id·채널 키만 간다.
+  const cfg = cardPaymentConfig()
+  // 결제창(KG이니시스)은 구매자 이름·연락처·이메일이 필수 — 이름·이메일은 계정 값을 미리 채워 두고, 휴대폰은 결제할 때 입력받는다(우리 서버엔 저장 안 함).
+  const [buyer] = cfg ? await db.select({ name: users.displayName, email: users.email }).from(users).where(eq(users.id, userId)).limit(1) : []
+  const card = cfg ? { ...cfg, name: buyer?.name ?? '', email: buyer?.email ?? '' } : null
   try {
     account = bankAccount()
     // The configured domestic bank accepts KRW only. Never relabel another currency as won.
-    if (account) products = rechargeCatalog().products.filter(p => p.currency === 'KRW')
+    if (account || card) products = rechargeCatalog().products.filter(p => p.currency === 'KRW')
   } catch { observe('wallet.catalog_unavailable', {}) }
-  // 11/12 상품마다 첫 구매 할인(정가의 6/7) — 아직 산 적 없는 상품에만 할인가를 붙인다(주문 금액은 createBankOrder 가 같은 기준으로 정한다).
+  // 11/12 상품마다 첫 구매 할인(정가의 6/7) — 아직 산 적 없는 상품에만 할인가를 붙인다(주문 금액은 두 주문 경로가 같은 기준으로 정한다).
   if (products.length) {
-    const bought = new Set((await db.selectDistinct({ productId: bankTransferOrders.productId }).from(bankTransferOrders)
-      .where(and(eq(bankTransferOrders.userId, userId), eq(bankTransferOrders.status, 'approved')))).map(r => r.productId))
+    const bought = await purchasedProductIds(userId)
     products = products.map(p => (bought.has(p.id) ? p : { ...p, firstPriceMinor: firstPurchasePrice(p.priceMinor) }))
   }
   const o = orders[0]
@@ -97,5 +103,5 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
   } : null
   return { userId, observedAt, rechargeRemaining: usage.rechargeRemaining, monthlyRemaining: usage.remaining,
     available: usage.remaining + usage.rechargeRemaining, resetsAt: usage.resetsAt?.toISOString() ?? null,
-    plan: usage.plan, account, products, order, history, earnings, minor }
+    plan: usage.plan, account, card, products, order, history, earnings, minor }
 }

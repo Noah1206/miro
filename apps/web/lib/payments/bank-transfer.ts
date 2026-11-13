@@ -4,6 +4,7 @@ import { db, bankTelegramRequests, bankTransferOrders } from '@miro/db'
 import { BANK_TRANSFER_WINDOW_HOURS, POLICY, bankAccount, firstPurchasePrice, rechargeProduct } from '@miro/config'
 import { observe } from '@/lib/observe'
 import { applyPaymentEvent } from './service'
+import { purchasedProductIds } from './first-purchase'
 import { afterResponse } from '@/lib/defer'
 import { telegramPaymentConfig } from './telegram-config'
 import { telegramCall } from './telegram-api'
@@ -81,9 +82,8 @@ export async function createBankOrder(opts: {
       if (pending) throw new OrderPendingError('ORDER_ALREADY_PENDING')
       // 11/12 상품마다 첫 구매 한 번은 할인(정가의 6/7) — 승인된 같은 상품 주문이 없을 때만. 금액은 여기서(서버) 정한다.
       if (opts.kind === 'recharge' && productId) {
-        const [bought] = await tx.select({ id: bankTransferOrders.id }).from(bankTransferOrders).where(and(
-          eq(bankTransferOrders.userId, opts.userId), eq(bankTransferOrders.productId, productId), eq(bankTransferOrders.status, 'approved'))).limit(1)
-        if (!bought) amountMinor = firstPurchasePrice(amountMinor)
+        // 11/13 카드 결제로 산 상품도 첫 구매로 친다(purchasedProductIds).
+        if (!(await purchasedProductIds(opts.userId, tx)).has(productId)) amountMinor = firstPurchasePrice(amountMinor)
       }
       const [created] = await tx.insert(bankTransferOrders).values({
         ...(opts.requestId ? { id: opts.requestId } : {}),

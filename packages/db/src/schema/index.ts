@@ -1009,6 +1009,30 @@ export const bankTransferOrders = pgTable('bank_transfer_orders', {
   userIdx: index('bank_transfer_orders_user_idx').on(t.userId, t.createdAt),
 }))
 
+/**
+ * 카드 결제 주문(11/13, 포트원 V2 · KG이니시스). id = 포트원 paymentId. 금액·지급량은 주문 시점에 서버 카탈로그로 확정해 두고,
+ * 결제 결과는 포트원 API 로 다시 조회해 이 금액과 같을 때만 지급한다(브라우저·웹훅이 보낸 금액은 믿지 않는다).
+ * 지급 자체는 payment_events UNIQUE(provider, externalEventId) 가 한 번만 일어나게 한다.
+ */
+export const cardPaymentOrders = pgTable('card_payment_orders', {
+  id: text('id').primaryKey(),
+  /** 같은 버튼 재시도(타임아웃 등)는 같은 주문으로 — 브라우저가 만든 요청 id. */
+  requestId: uuid('request_id').notNull().unique(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull(),
+  amountMinor: integer('amount_minor').notNull(),
+  currency: text('currency').notNull(),
+  units: integer('units').notNull(),
+  status: text('status', { enum: ['pending', 'paid', 'failed', 'cancelled'] }).notNull().default('pending'),
+  pgTxId: text('pg_tx_id'),
+  failureReason: text('failure_reason'),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  userIdx: index('card_payment_orders_user_idx').on(t.userId, t.createdAt),
+}))
+
 /** Each intentional deposit request is durable before any Telegram network request. */
 export const bankTelegramRequests = pgTable('bank_telegram_requests', {
   id: uuid('id').primaryKey(),

@@ -6,7 +6,9 @@ import { readWallet, purchaseCredits, requestDepositConfirmation, cancelPendingO
 import { TransferActions } from '@/app/(main)/recharge/transfer-actions'
 import type { BalanceActionResult, PayState, WalletSnapshot } from '@/lib/wallet/types'
 import styles from './wallet.module.css'
-import { RechargeCatalog } from './recharge-catalog'
+import { RechargeCatalog, type Buyer, type PayChoice } from './recharge-catalog'
+import { confirmCardPayment, startCardPayment } from '@/app/(main)/recharge/card-actions'
+import { portOne } from '@/lib/portone-sdk'
 import { msg, INTL_LOCALE } from '@/lib/i18n'
 import { useLanguage, useT } from '@/lib/i18n/client'
 import { useWalletBalance } from './use-wallet-balance'
@@ -40,6 +42,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   const [needed, setNeeded] = useState<{ cost: number; label: string } | null>(null)
   const [selected, setSelected] = useState('')
   const [checking, setChecking] = useState(false)
+  const [cardDone, setCardDone] = useState(false)
   const pending = useRef<Pending | null>(null)
   const epoch = useRef(0)
   const locked = useRef(false)
@@ -52,7 +55,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   const cancel = useCallback(() => {
     if (executing.current) return
     epoch.current++; pending.current = null; locked.current = false
-    setOpen(false); setState('cancelled'); setError(null); setNeeded(null)
+    setOpen(false); setState('cancelled'); setError(null); setNeeded(null); setCardDone(false)
   }, [])
   useEffect(() => {
     epoch.current++; pending.current = null; locked.current = false
@@ -108,7 +111,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   async function openRecharge() {
     if (locked.current || open) return
     const token = ++epoch.current
-    pending.current = null; setNeeded(null); setStage('catalog'); setOpen(true); setError(null); setState('loading'); locked.current = true
+    pending.current = null; setNeeded(null); setStage('catalog'); setOpen(true); setError(null); setCardDone(false); setState('loading'); locked.current = true
     try { const fresh = await readWallet(); if (token === epoch.current) { sync(fresh); setState('idle') } }
     catch { if (token === epoch.current) { setError(msg('잔액을 불러오지 못했어요. 다시 확인해 주세요.')); setState('failed') } }
     finally { if (token === epoch.current) locked.current = false }
@@ -145,6 +148,44 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   useEffect(() => {
     if (wallet?.order?.settledAt || (wallet?.order && ['expired', 'rejected'].includes(wallet.order.status))) void reflect(wallet, epoch.current)
   }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt])
+
+  /**
+   * 11/13 카드 결제(포트원·KG이니시스) — 서버가 금액을 정한 주문 → 포트원 결제창 → 서버가 포트원에 다시 조회해 지급.
+   * PC 는 창이 닫히면 여기서 확인하고, 모바일은 결제창이 /recharge/card/return 으로 돌려보낸다(웹훅도 같은 확인을 한다).
+   */
+  async function cardCheckout(choice: string, buyer: Buyer) {
+    if (locked.current || !choice) return
+    setSelected(choice)
+    const token = epoch.current
+    locked.current = true; setState('loading'); setError(null)
+    const key = `card:${choice}`
+    if (!purchase.current || purchase.current.productId !== key) purchase.current = { productId: key, requestId: crypto.randomUUID() }
+    try {
+      const started = await startCardPayment(choice, purchase.current.requestId, !!wallet?.minor)
+      if (token !== epoch.current) return
+      if (!started.ok) { setError(started.error); setState('failed'); return }
+      const { storeId, channelKey, paymentId, orderName, totalAmount } = started.payment
+      let res
+      try {
+        res = await (await portOne()).requestPayment({ storeId, channelKey, paymentId, orderName, totalAmount, currency: 'CURRENCY_KRW', payMethod: 'CARD',
+          customer: { customerId: started.customerId, fullName: buyer.name, phoneNumber: buyer.phone, email: buyer.email },
+          redirectUrl: `${location.origin}/recharge/card/return` })
+      } catch { if (token === epoch.current) { setError(msg('결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.')); setState('failed') }; return }
+      if (token !== epoch.current) return
+      // 창을 닫았거나 카드사·PG 오류 — 다음 시도는 새 주문으로(같은 결제 건을 다시 쓰지 않는다).
+      if (!res || res.code) { purchase.current = null; setError(res?.message || msg('결제를 마치지 않았어요.')); setState('idle'); return }
+      const confirmed = await confirmCardPayment(paymentId)
+      if (token !== epoch.current) return
+      sync(confirmed.wallet)
+      if (confirmed.status === 'paid') {
+        purchase.current = null; setCardDone(true); setState('success'); toast(t('충전이 반영됐어요'))
+        const request = pending.current
+        if (request && confirmed.wallet.available >= request.cost) await execute(request, token)
+      } else if (confirmed.status === 'pending') { setError(msg('결제를 확인하고 있어요. 잠시 후 잔액에 반영돼요.')); setState('idle') }
+      else { purchase.current = null; setError(msg('결제가 완료되지 않았어요. 카드에서 빠져나간 금액이 있으면 자동으로 취소돼요.')); setState('failed') }
+    } catch { if (token === epoch.current) { setError(msg('결제 상태를 확인하지 못했어요. 잠시 후 잔액을 확인해 주세요.')); setState('failed') } }
+    finally { if (token === epoch.current) locked.current = false }
+  }
 
   async function checkout(choice = selected) {
     if (locked.current || !choice) return
@@ -214,7 +255,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
 
   const order = wallet?.order
   const waiting = order && !order.settledAt && ['awaiting', 'approved'].includes(order.status)
-  const done = !!order?.settledAt && !pending.current
+  const done = (!!order?.settledAt || cardDone) && !pending.current
   const insufficient = stage === 'insufficient' && !waiting && state !== 'failed'
   const krw = (n: number) => t('{n}원', { n: n.toLocaleString(locale) })
   return <Context.Provider value={{ wallet, state, live, busy: state === 'loading', sync, seed, refreshBalance, openRecharge: () => { void openRecharge() }, requireBalance }}>
@@ -260,8 +301,9 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
           <Notice>{t('지급이 완료됐어요. 잔액에 반영했습니다.')}</Notice>
           <Button full variant="primary" onClick={cancel}>{t('확인')}</Button>
         </> : <>
-          {wallet && !wallet.account && <Notice>{t('지금은 충전을 받지 않고 있어요.')}</Notice>}
-          {wallet?.account && <RechargeCatalog available={wallet.available} products={wallet.products} onPick={id => void checkout(id)} onClose={cancel} busy={state === 'loading'} picking={state === 'loading' ? selected : null} minor={!!wallet.minor} />}
+          {wallet && !wallet.account && !wallet.card && <Notice>{t('지금은 충전을 받지 않고 있어요.')}</Notice>}
+          {(wallet?.account || wallet?.card) && <RechargeCatalog available={wallet.available} products={wallet.products} card={wallet.card ?? null} bank={!!wallet.account}
+            onPick={(id: string, pay: PayChoice) => void (pay.method === 'card' ? cardCheckout(id, pay.buyer) : checkout(id))} onClose={cancel} busy={state === 'loading'} picking={state === 'loading' ? selected : null} minor={!!wallet.minor} />}
           {!wallet && <Button onClick={() => void refresh()} status={checking ? 'loading' : 'idle'} full>{t('잔액 다시 불러오기')}</Button>}
         </>}
       </div>
