@@ -21,7 +21,7 @@ import { HomeViewBeacon } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
-import { AfterMount } from './after-mount'
+import { AfterMount } from '@/components/after-mount'
 
 const SITE = 'https://miroapp.app'
 // 11/13 자주 묻는 질문 — 화면(한국어 화면만)과 구조화 데이터가 같은 글을 쓴다. Google FAQ 리치 결과는 2026-05 종료됐고, 이 글은 검색 답변·AI 답변용이다.

@@ -5,6 +5,7 @@ import { characterStorySummary, characterTags } from '@/lib/character-card-copy'
 import { useT } from '@/lib/i18n/client'
 import type { HomeCard } from '@/lib/home'
 import styles from './hero.module.css'
+import { AfterMount } from '@/components/after-mount'
 
 /**
  * 11/10 사용자: 배너 자리에 크랙식 추천 — 랜덤으로 고른 작품을 큰 그림 + 소개 카드 + 다음 작품 띠로.
@@ -42,7 +43,7 @@ export function HomeHero({ items }: { items: HomeCard[] }) {
           <span className={styles.badge}>{t('스토리 추천')}</span>
           <strong className={styles.title}>{c.name}</strong>
           {blurb && <p className={styles.blurb}>{blurb}</p>}
-          <p className={styles.tags}>{characterTags(c).slice(0, 3).map(tag => <span key={tag}>#{tag}</span>)}</p>
+          <p className={styles.tags}><AfterMount>{characterTags(c).slice(0, 3).map(tag => <span key={tag}>#{tag}</span>)}</AfterMount></p>
           <div className={styles.foot}>
             <TransitionLink href={href} className={styles.more}>{t('자세히 보기')}</TransitionLink>
             <span className={styles.count}>{i + 1} / {n}</span>

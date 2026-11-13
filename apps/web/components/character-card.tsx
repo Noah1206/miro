@@ -8,6 +8,7 @@ import { characterTags } from '@/lib/character-card-copy'
 import { press, spring } from '@/lib/motion/tokens'
 import { coverTitle } from '@/lib/editorial/cover-title'
 import { stillCover, useRotatingPhoto } from '@/components/rotating-photo'
+import { AfterMount } from '@/components/after-mount'
 
 /** 카드가 그리는 것. 홈의 행과 상세의 '비슷한 작품' 이 같은 모양이어야 한다. */
 export type CardCharacter = {
@@ -74,10 +75,11 @@ export function CharacterCard({ c, still }: { c: CardCharacter; tagsBelow?: bool
           {/* 소개는 늘 2줄 높이(내용이 없어도). */}
           <p style={{ margin: 0, fontSize: 12, lineHeight: 1.4, height: '2.8em', color: 'var(--color-text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{cardBlurb(c)}</p>
           {/* 11/6: 상세 페이지 해시태그 칩(회색 바탕·강조색 글자)을 작게 — 한 줄로 이어지고 옆으로 밀어서 넘겨 본다. */}
-          <div className="tag-scroll" style={{ display: 'flex', flexWrap: 'nowrap', gap: 4 }}>
-            {tags.map(tag => (
+          <div className="tag-scroll" style={{ display: 'flex', flexWrap: 'nowrap', gap: 4, minHeight: tags.length ? 18 : undefined }}>
+            {/* 11/13 베이비챗식: 해시태그(유부녀·NTR 등)는 브라우저에서만 — 서버 HTML(검색엔진)에 성인 태그 글자를 남기지 않는다. */}
+            <AfterMount>{tags.map(tag => (
               <span key={tag} style={{ padding: '2px 6px', borderRadius: 6, background: 'var(--color-surface-2)', color: 'var(--color-accent-text)', fontSize: 10, fontWeight: 400, lineHeight: 1.4, whiteSpace: 'nowrap' }}>#{tag}</span>
-            ))}
+            ))}</AfterMount>
           </div>
           {c.creator && <p style={{ margin: 0, fontSize: 11, lineHeight: 1.4, color: 'var(--color-text-tertiary, #8f8f99)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>@{c.creator}</p>}
         </div>
