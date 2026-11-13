@@ -69,7 +69,8 @@ export function castProfilesJson(cast: CastMember[]): string {
     if (!name || seen.has(name)) return []
     seen.add(name)
     return [{ name, intro: (c.intro ?? '').trim(), age: c.age ?? '', mbti: c.mbti ?? '', nationality: c.nationality ?? '', occupation: c.occupation ?? '',
-      jealousy: c.jealousy ?? 50, initiative: c.initiative ?? 50, emotionalExpression: c.emotionalExpression ?? 50 }]
+      jealousy: c.jealousy ?? 50, initiative: c.initiative ?? 50, emotionalExpression: c.emotionalExpression ?? 50,
+      ...((c.intimacy ?? '').trim() ? { intimacy: (c.intimacy ?? '').trim() } : {}) }]
   }))
 }
 
@@ -164,6 +165,9 @@ export function CastProfiles({ cast, onChange, heading }: { cast: CastMember[]; 
             <LabeledField label={t('국적')}><Field label={t('국적')} value={c.nationality ?? ''} max={40} onChange={v => set(i, { nationality: v })} /></LabeledField>
             <LabeledField label={t('직업')}><Field label={t('직업')} value={c.occupation ?? ''} max={60} onChange={v => set(i, { occupation: v })} /></LabeledField>
           </div>
+          <LabeledField label={t('성적 설정 · 선택')} hint={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 좋아하는 것·싫어하는 것·처음 허용하는 선·잘 넘어가는 계기·끝난 뒤 반응을 적어 주세요.')}>
+            <Area label={t('성적 설정')} value={c.intimacy ?? ''} max={800} onChange={v => set(i, { intimacy: v })} />
+          </LabeledField>
         </div>}
         <button type="button" onClick={() => onChange(cast.filter((_, j) => j !== i))}
           style={{ alignSelf: 'flex-end', padding: '6px 0', border: 0, background: 'none', color: 'var(--color-text-tertiary)', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>{t('이 캐릭터 삭제')}</button>

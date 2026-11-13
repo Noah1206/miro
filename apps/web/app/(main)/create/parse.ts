@@ -15,6 +15,8 @@ const THINK = ['medium', 'high', 'xhigh', 'max']
 
 /** 등록 전 테스트 채팅의 턴 수 — 한 초안에서 사용자가 보낼 수 있는 메시지 수(assist.ts·test-chat.tsx). */
 export const TEST_CHAT_LIMIT = 10
+/** 11/13 성적 설정 글자 수. */
+export const INTIMACY_LIMIT = 1500
 /** 명령어 한도(10/19) — 캐릭터당 개수, 이름·설명·지시 글자 수. 라이브러리(commands.ts)도 같은 값을 쓴다. */
 export const COMMAND_LIMITS = { count: 20, name: 12, hint: 40, prompt: 400 } as const
 /** 명령어 목록 JSON 을 한도 안으로 읽는다. 모양이 이상하면 빈 목록. */
@@ -167,6 +169,8 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
     personaGuide: s('personaGuide').slice(0, 300),
     personaRequired: s('personaRequired') === '1',
     adultOnly: s('adultOnly') === '1',
+    // 11/13 성적 설정 — 언베일 방의 AI 지시문에만(화면 비공개).
+    intimacy: s('intimacy').trim().slice(0, INTIMACY_LIMIT),
     // 권장 대화 설정(10/28) — 모델을 비우면 저장하지 않는다(서버 기본).
     // 생각(10/28) — 낮음은 지금 기본과 같아서 싣지 않는다. 모델을 비워도 생각만 고를 수 있다.
     recommendedChat: s('recommendedModel') || THINK.includes(s('recommendedThinking')) ? {
@@ -253,7 +257,14 @@ export function normalizeStats(raw: unknown): CharacterStat[] {
     if (min > max) [min, max] = [max, min]
     const def = Math.min(max, Math.max(min, n(o.default, min)))
     const unit = typeof o.unit === 'string' && o.unit.trim() ? o.unit.trim().slice(0, 3) : undefined
-    out.push({ name, min, max, default: def, ...(unit ? { unit } : {}), description: typeof o.description === 'string' ? o.description.trim().slice(0, 500) : '' })
+    // 11/13 숨은 수치·구간별 행동 — 구간은 범위 안 from 으로, 최대 6개, 같은 from 은 하나만.
+    const stages = (Array.isArray(o.stages) ? o.stages : []).flatMap((g: unknown) => {
+      const x = (g ?? {}) as Record<string, unknown>
+      const behavior = typeof x.behavior === 'string' ? x.behavior.replace(/\s+/g, ' ').trim().slice(0, 200) : ''
+      return behavior ? [{ from: Math.min(max, Math.max(min, n(x.from, min))), behavior }] : []
+    }).filter((g, i, a) => a.findIndex(y => y.from === g.from) === i).sort((x, y) => x.from - y.from).slice(0, 6)
+    out.push({ name, min, max, default: def, ...(unit ? { unit } : {}), description: typeof o.description === 'string' ? o.description.trim().slice(0, 500) : '',
+      ...(o.hidden === true ? { hidden: true as const } : {}), ...(stages.length ? { stages } : {}) })
     if (out.length === 7) break
   }
   return out
@@ -306,7 +317,8 @@ export function parseCast(raw: string): CastProfile[] {
     if (!name || seen.has(name)) return []
     seen.add(name)
     return [{ name, intro: str(p.intro, 1000), age: str(p.age, 10), mbti: str(p.mbti, 4), nationality: str(p.nationality, 40), occupation: str(p.occupation, 60),
-      jealousy: pct(p.jealousy), initiative: pct(p.initiative), emotionalExpression: pct(p.emotionalExpression) }]
+      jealousy: pct(p.jealousy), initiative: pct(p.initiative), emotionalExpression: pct(p.emotionalExpression),
+      ...(str(p.intimacy, 800) ? { intimacy: str(p.intimacy, 800) } : {}) }]
   })
 }
 

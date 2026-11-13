@@ -7,7 +7,9 @@ import { box, fieldFont } from './form-parts'
 export const STAT_LIMIT = 7
 export const STATUS_FORMAT_LIMIT = 2000   // 11/11 베이비챗 INFO(여러 인물) 가 1000자를 넘는다
 
-type Row = { id: number; name: string; min: string; max: string; def: string; unit: string; description: string }
+type Stage = { from: string; behavior: string }
+type Row = { id: number; name: string; min: string; max: string; def: string; unit: string; description: string; hidden: boolean; stages: Stage[] }
+const STAGE_LIMIT = 6
 
 /** 상태창 예시 틀(11/10, 크랙 INFO 블록) — 빈 칸에서 시작하기 어려운 사람을 위해 장르별로 하나씩. */
 const EXAMPLES: Array<[string, string]> = [
@@ -31,11 +33,13 @@ const EXAMPLES: Array<[string, string]> = [
 export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus = '' }: { defaultFormat: string; defaultStats: CharacterStat[]; defaultIntroStatus?: string }) {
   const t = useT()
   const [format, setFormat] = useState(defaultFormat)
-  const [rows, setRows] = useState<Row[]>(() => defaultStats.map((s, id) => ({ id, name: s.name, min: String(s.min), max: String(s.max), def: String(s.default), unit: s.unit ?? '', description: s.description })))
+  const [rows, setRows] = useState<Row[]>(() => defaultStats.map((s, id) => ({ id, name: s.name, min: String(s.min), max: String(s.max), def: String(s.default), unit: s.unit ?? '', description: s.description,
+    hidden: !!s.hidden, stages: (s.stages ?? []).map(g => ({ from: String(g.from), behavior: g.behavior })) })))
   const [nextId, setNextId] = useState(defaultStats.length)
   const patch = (id: number, p: Partial<Row>) => setRows(rs => rs.map(r => (r.id === id ? { ...r, ...p } : r)))
   const num = (v: string, d: number) => (v.trim() === '' || Number.isNaN(Number(v)) ? d : Number(v))
-  const value = rows.filter(r => r.name.trim()).map(r => ({ name: r.name.trim(), min: num(r.min, 0), max: num(r.max, 100), default: num(r.def, 0), unit: r.unit.trim() || undefined, description: r.description.trim() }))
+  const value = rows.filter(r => r.name.trim()).map(r => ({ name: r.name.trim(), min: num(r.min, 0), max: num(r.max, 100), default: num(r.def, 0), unit: r.unit.trim() || undefined, description: r.description.trim(),
+    ...(r.hidden ? { hidden: true } : {}), stages: r.stages.filter(g => g.behavior.trim()).map(g => ({ from: num(g.from, 0), behavior: g.behavior.trim() })) }))
   const input = { ...box(false), minHeight: 40, padding: '0 10px', borderRadius: 8, fontSize: fieldFont, outline: 'none', minWidth: 0 } as const
   return (
     <div className="stack" style={{ gap: 16 }}>
@@ -73,9 +77,23 @@ export function StatusEditor({ defaultFormat, defaultStats, defaultIntroStatus =
           <textarea value={r.description} maxLength={500} rows={2} aria-label={t('스탯 설명')}
             placeholder={t('AI가 언제 올리고 내릴지 적어 주세요. 예) 칭찬하거나 도와주면 오르고, 약속을 어기면 내려요.')}
             onChange={e => patch(r.id, { description: e.target.value })} style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: fieldFont, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
+          {/* 11/13 숨은 수치·구간별 행동(아카 설계탭: 이성 자각 0~4단계처럼 수치는 숨기고 구간마다 보일 행동만) */}
+          <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={r.hidden} onChange={e => patch(r.id, { hidden: e.target.checked })} style={{ marginTop: 2 }} />
+            <span>{t('숨은 수치 — 사용자 화면과 상태창에 안 보이고, AI도 숫자를 말하지 않고 행동으로만 드러내요.')}</span>
+          </label>
+          <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>{t('구간별 행동 · 선택 — 값이 이 숫자 이상일 때 캐릭터가 보일 행동이에요.')}</span>
+          {r.stages.map((g, k) => <div key={k} style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+            <input value={g.from} inputMode="numeric" placeholder={t('부터')} aria-label={t('구간 시작 값')} onChange={e => patch(r.id, { stages: r.stages.map((x, j) => j === k ? { ...x, from: e.target.value } : x) })} style={{ ...input, width: 64, flex: 'none' }} />
+            <input value={g.behavior} maxLength={200} placeholder={t('예) 어깨가 닿으면 움찔하고 시선을 피한다')} aria-label={t('구간 행동')} onChange={e => patch(r.id, { stages: r.stages.map((x, j) => j === k ? { ...x, behavior: e.target.value } : x) })} style={{ ...input, flex: 1 }} />
+            <button type="button" aria-label={t('구간 빼기')} onClick={() => patch(r.id, { stages: r.stages.filter((_, j) => j !== k) })}
+              style={{ width: 36, height: 36, flex: 'none', borderRadius: 18, border: 0, background: 'var(--color-surface-3)', color: 'var(--color-text-secondary)', cursor: 'pointer' }}>×</button>
+          </div>)}
+          {r.stages.length < STAGE_LIMIT && <button type="button" onClick={() => patch(r.id, { stages: [...r.stages, { from: '', behavior: '' }] })}
+            style={{ alignSelf: 'flex-start', minHeight: 32, padding: '0 12px', borderRadius: 999, border: '1px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: 13 }}>{t('+ 구간 추가')}</button>}
         </div>
       ))}
-      {rows.length < STAT_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', min: '0', max: '100', def: '0', unit: '', description: '' }]); setNextId(n => n + 1) }}
+      {rows.length < STAT_LIMIT && <button type="button" onClick={() => { setRows(rs => [...rs, { id: nextId, name: '', min: '0', max: '100', def: '0', unit: '', description: '', hidden: false, stages: [] }]); setNextId(n => n + 1) }}
         style={{ minHeight: 44, borderRadius: 12, border: '1.5px dashed var(--color-border-strong)', background: 'transparent', color: 'var(--color-text-secondary)', cursor: 'pointer', font: 'inherit', fontSize: fieldFont }}>{t('+ 스탯 추가')} ({rows.length}/{STAT_LIMIT})</button>}
     </div>
   )

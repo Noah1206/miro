@@ -236,6 +236,8 @@ export const characters = pgTable('characters', {
   statusFormat: text('status_format').notNull().default(''),
   /** 스탯(11/10) — 대화방마다 값이 움직이는 수치 최대 7개. AI 가 매 턴 새 값을 내고 서버가 범위로 자른다. */
   stats: jsonb('stats').$type<CharacterStat[]>().notNull().default([]),
+  /** 11/13 성적 설정 — 좋아함·싫어함·처음 허용선·잘 넘어가는 계기·끝난 뒤 반응. 언베일 방의 AI 지시문에만 싣고 화면엔 안 보인다. */
+  intimacy: text('intimacy').notNull().default(''),
   /** 플레이 가이드(11/10, 크랙) — 첫 화면에 사용자에게만 보이는 안내. AI 에는 보내지 않는다. */
   playGuide: text('play_guide').notNull().default(''),
   /** 추천 첫 답변(11/10, 크랙) — 첫 턴에 입력창 위에 미리 띄우는 사용자 쪽 대사 최대 3개. *별표* 는 행동. */

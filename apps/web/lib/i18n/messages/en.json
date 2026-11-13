@@ -2277,5 +2277,18 @@
  "얼마나 옮길까요?": "How much to move?",
  "수익 잔액 {n}토큰": "Earnings {n} tokens",
  "전액": "All",
- "인물별 INFO": "Per-character INFO"
+ "인물별 INFO": "Per-character INFO",
+ "+ 구간 추가": "+ Add range",
+ "구간 빼기": "Remove range",
+ "구간 시작 값": "Range start value",
+ "구간 행동": "Behavior in this range",
+ "구간별 행동 · 선택 — 값이 이 숫자 이상일 때 캐릭터가 보일 행동이에요.": "Behavior by range · optional — what the character does once the value reaches this number.",
+ "부터": "From",
+ "성적 설정": "Intimacy settings",
+ "성적 설정 · 선택": "Intimacy settings · optional",
+ "숨은 수치 — 사용자 화면과 상태창에 안 보이고, AI도 숫자를 말하지 않고 행동으로만 드러내요.": "Hidden value — not shown on screen or in the status window; the AI never says the number and shows it only through behavior.",
+ "언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.": "Sent to the AI only in chats with Unveil on, and never shown on screen. In adult scenes it takes priority over the general guidelines.",
+ "언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 좋아하는 것·싫어하는 것·처음 허용하는 선·잘 넘어가는 계기·끝난 뒤 반응을 적어 주세요.": "Sent to the AI only in chats with Unveil on, and never shown on screen. Write likes, dislikes, first limits, what tips them over, and how they react afterwards.",
+ "예) 어깨가 닿으면 움찔하고 시선을 피한다": "e.g. Flinches and looks away when shoulders touch",
+ "예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척": "e.g. Likes: long kisses, being led / Dislikes: harsh words, rushing / First limit: only kissing before dating / Tips over: alcohol, late nights alone together / Afterwards: hides under the blanket in embarrassment and pretends nothing happened the next day"
 }

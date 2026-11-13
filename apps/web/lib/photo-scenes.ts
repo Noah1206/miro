@@ -282,6 +282,13 @@ export function sceneTags(scene: PhotoScene | null, picks: Partial<Record<Compos
   return [...tags, ...add].join(', ')
 }
 
+/** 11/13 순간 태그에도 구도 태그가 들어간다 — 사용자가 시트에서 구도를 골랐으면 순간 쪽 구도·시선 태그는 빼고 고른 것만 남긴다(얼굴 가까이 + 전신 같은 충돌 방지). */
+const COMPOSITION_TAGS = new Set(Object.values(PHOTO_COMPOSITIONS).flatMap(c => c.options.flatMap(([, t]) => t.split(',').map(x => x.trim()).filter(Boolean))))
+export function momentWithComposition(moment: string, composition?: string): string {
+  const own = composition ? moment.split(',').map(t => t.trim()).filter(t => t && !COMPOSITION_TAGS.has(t)) : moment.split(',').map(t => t.trim()).filter(Boolean)
+  return [...own, composition].filter(Boolean).join(', ')
+}
+
 /** 가격(11/2 확정, 11/3 장수 자유): 1장 10, 2장부터는 장당 9(예전 4장 묶음 36과 같은 할인). 한 번에 최대 6장. */
 export const PHOTO_PRICE = { single: 10, each: 9, max: 6 } as const
 export const photoPrice = (count: number) => (count <= 1 ? PHOTO_PRICE.single : count * PHOTO_PRICE.each)

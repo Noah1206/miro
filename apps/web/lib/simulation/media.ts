@@ -17,6 +17,7 @@ import { hasAppearance, inferAppearance } from './appearance'
 import { matchSceneAsset } from './scene-assets'
 import { ensembleNames } from '@miro/engine'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
+import { momentWithComposition } from '@/lib/photo-scenes'
 import { auxiliaryLLM } from './mock-llm'
 
 export type MediaResult = {
@@ -270,7 +271,7 @@ async function modalPhoto(
     const adultLLM = opts.unveil && session?.userId ? auxiliaryLLM(opts.characterName, { userId: session.userId, sessionId: opts.sessionId, requestId: randomUUID(), workload: 'background', origin: 'photo:tags', adult: true }) : undefined
     const [look, moment] = await Promise.all([toImageTags(source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM, !!adultLLM) : Promise.resolve('')])
     // 장면을 안 골랐으면 지금 순간 + 그 장의 구도(11/3 — 예전엔 구도를 고르면 순간 태그가 빠졌다).
-    const tags = [tag?.positive, opts.scene?.tags ?? [moment, opts.composition].filter(Boolean).join(', ')].filter(Boolean).join(', ')
+    const tags = [tag?.positive, opts.scene?.tags ?? momentWithComposition(moment, opts.composition)].filter(Boolean).join(', ')
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
       // 11/8 언베일 사진은 가린 뒤에만 저장했으나 11/11 사용자 결정으로 가림 단계 없음(파일 맨 위 설명)

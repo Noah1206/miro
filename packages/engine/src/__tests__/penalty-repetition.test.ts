@@ -21,4 +21,11 @@ describe('penalty repetition', () => {
     ], recent, '권재혁')
     expect(out.map(b => b.text)).toEqual(['복도 끝 창문을 확인한다.', '들어가요.'])
   })
+  it('drops AI-tell narration (11/13) but keeps plain lines and dialogue', () => {
+    const out = trimPenalizedSentences([
+      { type: 'narrative', speaker: null, text: '그는 컵을 내려놓았다. 가슴 한편이 아려왔다. 그제야 깨달았다. 어쩌면 그것이 사랑이었는지도 모른다. 문이 닫혔다.' },
+      { type: 'dialogue', speaker: '권재혁', text: '그제야 깨달았어요.' },
+    ], [], '권재혁')
+    expect(out.map(b => b.text)).toEqual(['그는 컵을 내려놓았다. 문이 닫혔다.', '그제야 깨달았어요.'])
+  })
 })

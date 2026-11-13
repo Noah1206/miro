@@ -1,6 +1,6 @@
 import { prompts, CHARACTER_VOICE_RULES } from '@miro/providers'
 import { ADULT_SPEECH_PROMPT, POLICY, VOICE_DELIVERY_PROMPT } from '@miro/config'
-import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, loreLimit, storyCalendarDirective } from '@miro/domain'
+import { CALL_MODE_RULES, describeRelationship, groupByLayer, languageRule, moodGuide, personaLines, retrieveMemories, selectLore, loreLimit, storyCalendarDirective, currentStage } from '@miro/domain'
 import type {
   CharacterCore, CharacterState, Memory, RelationshipState, SemanticEvent, SimulationEvent, Npc, WorldState, Scene, SimulationMode, LocalClock, UserPersona, Language,
 } from '@miro/domain'
@@ -104,7 +104,8 @@ const novelStyle = (s: SimulationSnapshot) => {
   · 캐릭터는 성격대로 반응하되(망설임·저항·부끄러움도 성격대로) 장면을 멈추거나 되돌리지 않고, 매 턴 이야기를 확실히 한 단계 진전시킵니다.
   · 여러 인물이 나오는 작품은 '그 시각, …'처럼 다른 장소의 인물로 장면을 넘겨 동시에 벌어지는 일을 보여 줘도 됩니다.
   · 대사는 감정이 실린 한두 문장씩, 속마음은 작은따옴표('…')로 서술 안에 넣거나 thought 블록으로 씁니다.
-  · 금지: 설정·기억과 어긋나는 사실, 앞 턴과 같은 문장·몸짓 반복, 인터뷰하듯 질문만 이어 가기, 번역투.`
+  · 금지: 설정·기억과 어긋나는 사실, 앞 턴과 같은 문장·몸짓 반복, 인터뷰하듯 질문만 이어 가기, 번역투.
+  · ${AI_TELLS_SCENE.replace(/\n {2}/g, '\n    ')}`
 }
 
 /**
@@ -123,6 +124,23 @@ export function replyLengthRule(style: ReplyStyle): string {
     : style === 'short' ? `짧은 대화는 한 응답을 2000~2400자로 씁니다 — narrative 단락 5~7개(각 3~4문장) 사이로 대사(dialogue) 블록이 5~7개 오가는 장면. ${fill}`
     : `기본 대화는 한 응답을 3200~3800자로 씁니다 — narrative 단락 9~12개(각 3~5문장) 사이로 대사(dialogue) 블록이 8~12개 오가는 장면. 이보다 짧게 끝내지 않습니다. ${fill}`
 }
+
+/** 11/13 아카 설계탭(CFLS): "…", "ㅇㅇ", "흠" 같은 최소 입력이 이어질 때 — 몇 번째인지(현재 입력 포함). */
+const MINIMAL = /^(?:[.…?!~\s]*|ㅇ+|응+|어+|음+|흠+|ㅋ+|ㅎ+|네|넵|그래|글쎄|몰라|웅)$/
+export function minimalInputRun(s: Pick<SimulationSnapshot, 'userInput' | 'recentMessages'>): number {
+  const users = s.recentMessages.filter(m => m.role === 'user').map(m => m.content)
+  const seq = s.userInput !== undefined ? [...users, s.userInput] : users
+  let n = 0
+  for (let i = seq.length - 1; i >= 0 && MINIMAL.test((seq[i] ?? '').replace(/[.…?!~\s]+$/, '').trim()); i--) n++
+  return n
+}
+const SILENCE_STEP = [
+  '',
+  '\n- 사용자가 아주 짧게 반응했습니다 — 담담하게 받아 주고(고개 끄덕임, 잠깐의 침묵 등) 하던 일을 이어 갑니다.',
+  '\n- 사용자가 두 번 연속 아주 짧게만 반응했습니다 — 캐릭터가 성격대로 살짝 떠보거나 걱정합니다("무슨 일 있어?", 힐끔 보기). 같은 질문을 되풀이하지 않습니다.',
+  '\n- 사용자가 세 번 이상 연속 아주 짧게만 반응했습니다 — 이제 캐릭터가 먼저 움직여 장면을 바꿉니다. 지금 기분대로: 조급하면 따지듯("지금 뭐 해?"), 불안하면 확인하듯, 화났으면 차갑게 등 돌리기, 장난스러우면 쿡 찌르거나 놀리기. 슬픔·상처 장면이면 조용히 곁을 지키는 것도 됩니다. 질문으로 끝내지 말고 행동으로 다음 상황을 만듭니다.',
+]
+const silenceStep = (s: SimulationSnapshot) => SILENCE_STEP[Math.min(minimalInputRun(s), 3)]!
 
 function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   const input = s.userInput ?? [...s.recentMessages].reverse().find((m) => m.role === 'user')?.content ?? ''
@@ -164,12 +182,28 @@ function styleDirective(s: SimulationSnapshot, style: ReplyStyle): string {
   ].join('\n')
   // 미로 캐릭터: 메시지·통화는 Reality 쪽이 맡는다. 첫 장면이 연락이어도 채팅은 만나서 이어 간다(실측: 메신저 화면 서술로 샘).
   const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다(사용자가 함께 이동하는 장면을 쓰면 따릅니다). 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
-  const thought = inPerson + THOUGHT_RULE
+  const thought = inPerson + THOUGHT_RULE + silenceStep(s)
   // 11/4 벌점 방식: '충분히·무게를 주고·감각을 함께' 같은 더 쓰라는 지시를 뺐다. 감정이 걸린 장면은 길이 상한만 늘린다.
   if (tense) return base + `\n- 지금은 감정이나 사건이 걸린 장면입니다 — 필요하면 전체 ${tenseMax}까지 써도 됩니다.` + thought
   if (prose) return base + '\n- 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 그 묘사를 이미 일어난 일로 받아 이어 갑니다.' + thought
   return base + thought
 }
+
+/**
+ * AI 글 티(11/13 사용자 목록) — 하나씩은 틀린 표현이 아니지만 한 글에 여럿 모이면 AI 글로 읽힌다. 채팅 벌점표와 웹소설(lib/novel)이 같이 쓴다.
+ * 코드로 지우는 쪽은 conversation-repetition.ts STOCK.
+ */
+const TELL_IDIOMS = '감정을 보여 주지 않고 설명하는 관용구: "시간이 멈춘 듯했다", "가슴 한편이 아려왔다", "말로 표현할 수 없는 감정이 밀려왔다", "심장이 쿵 내려앉았다" → 그 순간 인물이 실제로 한 말·손·시선·멈칫한 행동으로'
+const TELLS = [
+  '깨달음·여운으로 닫는 끝맺음: "비로소 ~할 수 있었다", "그제야 깨달았다", "어쩌면 그것이 ~였는지도 모른다", "그날 이후, 그녀는 조금 달라졌다" → 교훈·요약 없이 행동이나 대사에서 끊습니다',
+  '있어 보이려는 대구: "~가 아니라 ~였다", "끝이 아닌 새로운 시작", "단순한 ~를 넘어선 ~"',
+  '평균값 배경: 창밖 빗방울, 식어버린 커피, 젖은 아스팔트 냄새, 흩날리는 벚꽃, 노을 지는 하늘 → 장면에 실제로 있는 것만, 이 장소에만 있을 구체적인 물건·소리로',
+  '같은 박자: 비슷한 길이의 문장이 일정하게 이어짐 → 아주 짧은 문장, 끊긴 말, 한 호흡에 긴 문장을 섞습니다',
+]
+const tellList = (items: string[]) => `AI 글 티 — 하나만 있어도 고치고, 한 글에 둘 이상 모이면 반드시 다시 씁니다.\n${items.map(t => `  · ${t}`).join('\n')}`
+export const AI_TELLS = tellList([TELL_IDIOMS, ...TELLS])
+/** 장면 답(베이비챗식 소설체)은 감정 직접 서술을 허용한다(11/11 결정) — 감정 관용구 줄은 빼고 넣는다. 관용구 문장 삭제는 코드(STOCK)가 따로 한다. */
+const AI_TELLS_SCENE = tellList(TELLS)
 
 /**
  * 위화감 벌점표(11/4 사용자: 리얼함을 더하는 것보다 위화감을 줄이는 게 중요 — 가점보다 벌점 방식).
@@ -188,7 +222,8 @@ export const PENALTY_TABLE = `위화감 벌점표 — 더 화려하게 쓰려 �
   [-1] 분량을 채우려는 분위기 묘사, 같은 뜻 문장 덧붙이기, 이미 전달한 감정 다시 설명
   [-1] 일상적인 호의마다 감사·사과·존중 선언("말해 줘서 고마워요", "불편하면 말해 주세요")
   [-1] 한 턴에 사건 해결·고백·관계 진전을 몰아치거나, 큰 사건(사고·새 인물·비밀 폭로)을 새로 만듦
-  [-1] 속사정과 비밀을 첫 질문에 다 설명함`
+  [-1] 속사정과 비밀을 첫 질문에 다 설명함
+  ${AI_TELLS.replace(/\n {2}/g, '\n    ')}`
 
 /**
  * 속마음은 혼잣말이다(10/17 사용자: "어투가 어색해, AI 같아"). 실측 예 — "처음이라니. 당신에게는 정작 나를 처음 알게 되었던
@@ -202,7 +237,7 @@ const THOUGHT_RULE = '\n- thought 블록은 이 캐릭터가 속으로 삼킨 �
 function briefDirective(s: SimulationSnapshot, input: string, prose: boolean, tense: boolean): string {
   const base = USER_VIEWPOINT + '\n- ' + PENALTY_TABLE + '\n- 응답 구성: 사용자의 말 중 이 인물에게 중요한 부분에 자기 말투로 반응하고, 앞서 하던 일과 대화를 이어 갑니다. action·narrative·thought는 말만으로 전달되지 않는 새 정보가 있을 때만 씁니다. 상황·속마음·대사의 고정 순서나 개수를 채우지 않습니다. 대사만으로 충분한 순간도 있습니다. 작성된 말끝·호칭·문장 길이를 유지하고, 사용자 문장을 되풀이한 뒤 감사·사과·질문을 붙이는 틀을 피합니다.'
   const inPerson = s.experienceType === 'reality' ? '\n- 기본은 직접 만나 같은 공간에 있는 장면입니다. 단, 고른 도입부가 방송·원격 연락이면 그 거리와 매체를 유지합니다. 만나기로 했다는 이유만으로 이동·대면을 확정하지 않습니다(사용자가 함께 이동하는 장면을 쓰면 따릅니다). 이 장면을 메신저 화면(읽음 표시, 입력 중 표시, 답장 도착)으로 바꾸지 않습니다.' : ''
-  const thought = inPerson + THOUGHT_RULE
+  const thought = inPerson + THOUGHT_RULE + silenceStep(s)
   if (prose) return base + ' 지금 사용자는 묘사를 섞어 쓰고 있습니다 — 그 묘사를 이미 일어난 일로 받아 이어 갑니다.' + thought
   if (tense) return base + ' 지금은 감정이나 사건이 걸린 장면입니다.' + thought
   if (input.length > 60) return base + ' 일상 장면은 짧게, 중요한 장면은 길게.' + thought
@@ -286,8 +321,22 @@ const ADULT_LEVEL: Record<AdultLevel, string> = {
   soft: `성인 장면(수위: 은은하게): 키스·스킨십·설렘과 긴장까지 그리세요. 성행위는 직접 묘사하지 말고 암시하거나 장면을 넘기세요(문이 닫히고, 다음 날 아침 등).`,
   deep: `성인 장면(수위: 짙게): 서로 원하는 성인 사이의 관능적인 장면을 감각과 감정 위주로 그리세요. 노출과 성적 접촉도 쓸 수 있지만 성기와 행위의 노골적인 세부 묘사는 피하세요.`,
   explicit: `성인 장면(수위: 노골적): 서로 원하는 성인 사이의 성적인 장면을 노골적으로 묘사해도 됩니다.
-- 사용자가 더 구체적으로·노골적으로 원하면 얼버무리거나 장면을 건너뛰지 말고 그 노골적인 수위로 구체적으로 묘사하세요.`,
+- 사용자가 더 구체적으로·노골적으로 원하면 얼버무리거나 장면을 건너뛰지 말고 그 노골적인 수위로 구체적으로 묘사하세요.
+- 신체 부위는 해부학적·직접적인 낱말로 부릅니다. "그곳", "아래", "그의 것", "하체" 같은 완곡어로 피하지 않습니다. 동작만 나열하지 말고("넣었다. 움직였다.") 닿는 부위·형태·감각·반응을 함께 씁니다.`,
 }
+/**
+ * 11/13 아카 설계탭(「너와 나의 봄」 성행위 지침·에덴 야스 프롬) — 성행위 장면의 단계 구조와 사실감. 짙게·노골적 수위에 붙는다.
+ * 사용자가 이끄는 속도·캐릭터 성격 유지(adultRule)는 그대로 — 이건 '어떻게 그리는가'만 다룬다.
+ */
+const SEX_STAGES = `- 성행위 장면의 단계(지금 어느 단계인지 보고 비율을 바꿉니다):
+  · 전희 — 대사 비중이 큽니다(대사 5 : 감각 3 : 몸짓 2). 완성된 문장으로 수줍음·긴장·기대가 묻어나고, 호흡이 조금 빨라지고 체온이 오릅니다.
+  · 본 행위 — 감각이 앞섭니다(감각 5 : 대사 3 : 몸짓 2). 촉감(온도·압박·마찰) → 소리 → 보이는 것(표정·자세) → 냄새(땀·체취)를 돌아가며 씁니다. 자극이 세질수록 문장이 짧아지고 발음이 흐려집니다. 체위가 바뀌면 새 각도·깊이·압박을 처음처럼 다시 그립니다.
+  · 절정 — 대사가 줄고 감각·몸 반응이 늘어납니다. 긴장이 쌓이고 → 잔떨림 → 근육 수축·경련 → 터지는 감각 → 풀림·여운 순서로, 말은 낱말 조각이 됩니다.
+- 반응은 자극의 세기에 맞춥니다: 가벼운 접촉엔 숨 멈춤·잔떨림, 깊고 센 자극엔 목소리 갈라짐·경련. 자극을 받은 직후 아주 짧은 망설임(숨을 삼킴, 표정이 멈칫함)을 넣어 기계처럼 즉각 반응하지 않게 합니다.
+- 가끔 행위 중에도 그 사람다운 일상 한마디가 새어 나올 수 있습니다(현실감). 절정 직후 무방비한 순간엔 평소 숨기던 속마음이나 본성이 한 조각 드러납니다.`
+/** 11/13 같은 출처 — 성격이 무너지는 상투어와 장면 뒤 복귀. 수위와 무관하게 성인 방 전체. */
+const ADULT_CHARACTER_LOCK = `- 쓰지 않는 상투어(캐릭터 설정이나 사용자가 직접 그 말을 쓴 경우만 예외): "주인님", "내 것/네 것이 됐어", "각인", "길들이기", "마킹", "암캐 같은 표정", "공허한 눈", 경외·숭배, 갑작스러운 순종과 인격 포기.
+- 장면이 끝나면 일상으로 돌아옵니다: 다음 장면부터 말투·호칭·성격은 설정 그대로이고(성격의 대부분이 유지됩니다), 매 턴 성적으로 매달리거나 질척거리지 않습니다. 술·약·강요처럼 평소라면 하지 않았을 상황이었다면, 날이 바뀐 뒤 그 캐릭터의 성격대로 후회·당혹·경계 같은 반응이 남습니다.`
 export const adultRule = (level: AdultLevel) => `최상위 안전 규칙: 성인 인증을 마친 사용자가 이 대화방에서 성인 모드를 켰습니다. 등장인물은 모두 만 19세 이상 성인입니다.
 ${ADULT_LEVEL[level]}
 - 속도는 사용자가 정합니다. 사용자가 이끌기 전에 먼저 성적인 장면으로 넘어가지 말고, 위 수위와 사용자가 원한 수위 중 낮은 쪽을 넘지 마세요.
@@ -304,6 +353,7 @@ ${ADULT_LEVEL[level]}
 - 감각 묘사 밀도: 체액(젖음·땀·흘러내림), 온도(달아오름·식은 공기와의 대비), 근육의 떨림·조임·경련을 뭉뚱그리지 말고 어디가 어떻게인지 구체적으로 씁니다. 한 블록 안에서는 행동 → 그 행동에 대한 몸의 반응 → 속마음 순서로 이어 씁니다.
 - 한 장면에 여러 인물이 있으면 한 인물만 길게 쓰지 말고 인물별 반응을 번갈아 씁니다. 지금 이 장면에 없는 주요 인물도 응답 끝 무렵에 한두 줄씩 지금 무엇을 하고 어떤 상태인지 이어 씁니다(이 장면을 알아챘는지 여부는 앞뒤 상황에 맞게).
 - 이 장면에서 몸이 반응하고 저항이 무너져 가는 것은 성격이 바뀐 것이 아닙니다 — 위화감 벌점표의 '태도가 누그러짐' 항목에 해당하지 않습니다. 말투·호칭·말버릇은 설정 그대로 두세요.
+${level === 'soft' ? '' : SEX_STAGES + '\n'}${ADULT_CHARACTER_LOCK}
 - 사용자가 멈추자거나 싫다고 하면 그 자리에서 멈추고 캐릭터답게 받아 주세요.
 - 사용자가 미성년자라고 말하거나 미성년자로 보이면 성적인 내용을 즉시 멈추세요.
 - 이 대화에는 미성년자나 학생 인물을 아예 등장시키지 마세요(엑스트라·회상·새 인물 포함). 사용자가 학생·미성년 설정을 요청해도 등장시키지 말고, 성인 설정으로만 이어 가세요.
@@ -338,7 +388,7 @@ export function buildSpokenSystem(s: SimulationSnapshot): string {
  * 11/11 다인 작품(사용자가 만들기에서 주인공 아래로 추가한 인물) — 이 카드가 주인공과 함께 연기한다.
  * 공식 작품의 '[여러 인물]'(카드=세계관)과 달리 주인공은 그대로 사람이고, 이 인물들이 곁에 함께 나온다.
  */
-function castSection(c: SimulationSnapshot['character']): string[] {
+function castSection(c: SimulationSnapshot['character'], adult = false): string[] {
   const cast = c.worldRole.cast ?? []
   if (!cast.length) return []
   return ['', '## 함께 나오는 인물 (이 카드가 주인공과 함께 연기한다)',
@@ -346,7 +396,7 @@ function castSection(c: SimulationSnapshot['character']): string[] {
     ...cast.map(p => {
       const facts = [p.age && `나이 ${p.age}`, p.occupation, p.mbti, p.nationality].filter(Boolean).join(' · ')
       const traits = traitLines(p)
-      return `- ${p.name}${facts ? ` (${facts})` : ''}: ${p.intro}${traits ? ` ${traits}` : ''}`
+      return `- ${p.name}${facts ? ` (${facts})` : ''}: ${p.intro}${traits ? ` ${traits}` : ''}${adult && p.intimacy?.trim() ? ` 성적 설정: ${p.intimacy.trim()}` : ''}`
     })]
 }
 
@@ -402,8 +452,11 @@ function statusRules(c: SimulationSnapshot['character']): string[] {
   return [
     '', '## 상태창·스탯',
     format ? `- 매 응답마다 최상위 status 칸에 아래 형식을 이번 장면 기준으로 빠짐없이 채워 씁니다. 줄 구조·기호·순서는 형식 그대로, 값만 바꿉니다. 대괄호 안의 안내문은 실제 값으로 바꿉니다. 상태창 내용을 rp.blocks 본문에 다시 쓰지 않습니다.\n형식:\n${format}` : null,
-    stats.length ? `- 스탯: 이번 장면에서 실제로 일어난 일만큼만 바꾸고, 최상위 statValues 칸에 { 스탯 이름: 새 값 } 으로 모든 스탯의 새 값을 냅니다(안 바뀐 스탯은 지금 값 그대로). 한 턴에 크게 튀지 않게 합니다.\n${stats.map(st => `  · ${st.name} (${st.min}~${st.max}${st.unit ?? ''}, 기본 ${st.default}): ${st.description}`).join('\n')}` : null,
-    stats.length && format ? '- 상태창에 스탯을 쓸 때는 statValues 에 낸 새 값과 같은 숫자를 씁니다.' : null,
+    stats.length ? `- 스탯: 이번 장면에서 실제로 일어난 일만큼만 바꾸고, 최상위 statValues 칸에 { 스탯 이름: 새 값 } 으로 모든 스탯의 새 값을 냅니다(안 바뀐 스탯은 지금 값 그대로). 한 턴에 크게 튀지 않게 합니다.\n${stats.map(st => `  · ${st.name}${st.hidden ? ' [숨은 수치]' : ''} (${st.min}~${st.max}${st.unit ?? ''}, 기본 ${st.default}): ${st.description}${st.stages?.length ? ` 구간별 행동: ${[...st.stages].sort((x, y) => x.from - y.from).map(g => `${g.from}부터 — ${g.behavior}`).join(' / ')}` : ''}`).join('\n')}` : null,
+    stats.some(st => st.stages?.length) ? '- 구간별 행동이 있는 스탯은 지금 값이 들어간 구간의 행동을 이번 장면의 말투·몸짓·선택에 자연스럽게 드러냅니다. 구간이 바뀌면 한 번에 뒤집지 말고 몇 턴에 걸쳐 스며들게 합니다.' : null,
+    // 11/13 아카 설계탭(「너와 나의 봄」): 수치가 많아도 서사에 절대 노출하지 않는다 — 구간 이름·수치 대신 행동으로만.
+    stats.some(st => st.hidden) ? `- [숨은 수치](${stats.filter(st => st.hidden).map(st => st.name).join(', ')})는 사용자에게 보이지 않습니다. 서사·대사·속마음·상태창 어디에도 그 이름·숫자·단계·임계값을 쓰지 않고("호감도가 올랐다", "경계 단계" 같은 말 금지), 오직 행동으로만 드러냅니다.` : null,
+    stats.length && format ? '- 상태창에 스탯을 쓸 때는 statValues 에 낸 새 값과 같은 숫자를 씁니다(숨은 수치는 상태창에 쓰지 않습니다).' : null,
   ].filter((l): l is string => l !== null)
 }
 
@@ -435,11 +488,13 @@ function buildSystem(s: SimulationSnapshot, spoken = false, style: ReplyStyle = 
     c.personality.userNickname ? `사용자를 부르는 호칭: ${c.personality.userNickname}` : null,
     c.personality.hobbies.length ? `좋아하는 것: ${c.personality.hobbies.join(', ')}` : null,
     c.personality.dislikes.length ? `싫어하는 것: ${c.personality.dislikes.join(', ')}` : null,
+    // 11/13 성적 설정 — 언베일 방에서만. 성인 장면의 색채는 이 설정이 공통 지침보다 우선한다(아카 설계탭: BP 성적 성향 우선).
+    s.adultMode && c.worldRole.intimacy?.trim() ? `성적 설정 (성인 장면에서 공통 지침보다 우선. 처음 허용선·조건이 적혀 있으면 관계·상황이 그 조건에 닿기 전엔 넘지 않고 성격대로 밀어내되, 사용자가 이끄는 장면을 멈추지는 않는다): ${c.worldRole.intimacy.trim()}` : null,
     traitLines(c.personality),
     c.worldRole.socialPosition ? `세계 안에서의 위치: ${c.worldRole.socialPosition}` : null,
     // 11/12 외형 칸을 없앴다(사용자: 외형은 소개 글에 적는다) — 따로 받은 외형 값은 보내지 않는다(숨은 칸의 기본값 '남성·보통 체형'이 틀린 정보로 들어갔다).
     '외형: 이 캐릭터의 외모·체형·옷차림은 위 소개와 설정에 적힌 묘사를 그대로 따릅니다. 적히지 않은 부분은 설정과 어울리게 한 번 정하고, 정한 뒤에는 대화 내내 바꾸지 않습니다.',
-    ...castSection(c),
+    ...castSection(c, !!s.adultMode),
     ...startingScene(c),
     ...sampleLines(c),
     ...personaSection(s),
@@ -548,7 +603,7 @@ function buildPrompt(
   parts.push('시간의 연속성: 메시지의 기록 날짜와 장면 속 시각은 구분합니다. 자정이 지나지 않았는데 내일을 오늘로, 오늘 일을 어제로 바꾸지 않습니다. 날짜가 불명확하면 특정 날짜·완료를 단정하지 않습니다. 연락하겠다는 말은 약속이며 실제 발송·상대의 답과 구분합니다. 늦은 약속을 이미 지켰다고 쓰거나, 미래 연습·발표가 끝났다고 지어내지 않습니다.')
   if (s.routine) parts.push(`캐릭터의 생활 리듬: ${s.routine}`)
   const stats = s.character.worldRole.stats ?? []
-  if (stats.length && !spoken) parts.push('', '## 지금 스탯 값 (이 방)', ...stats.map(st => `- ${st.name}: ${s.statValues?.[st.name] ?? st.default}${st.unit ?? ''}`))
+  if (stats.length && !spoken) parts.push('', '## 지금 스탯 값 (이 방)', ...stats.map(st => { const v = s.statValues?.[st.name] ?? st.default, g = currentStage(st, v); return `- ${st.name}${st.hidden ? ' [숨은 수치]' : ''}: ${v}${st.unit ?? ''}${g ? ` → 지금 보일 행동: ${g.behavior}` : ''}` }))
   if (s.recentCalls?.length) {
     parts.push('', '## 최근 통화 (캐릭터가 아는 사실)')
     for (const line of s.recentCalls) parts.push(`- ${line}`)

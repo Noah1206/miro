@@ -25,6 +25,7 @@ export function characterContext(
       socialPosition: c.socialPosition, startingContext: ai?.startingContext ?? officialStartingContext(c),
       sampleDialogue: officialSamples(c, c.sampleDialogue), lore: c.lore, loreLimit: c.loreLimit,
       ...(c.statusFormat ? { statusFormat: c.statusFormat } : {}), ...(c.stats.length ? { stats: c.stats } : {}), ...(c.endings.length ? { endings: c.endings } : {}), ...(c.ensembleCast?.length ? { cast: c.ensembleCast } : {}),
+      ...(c.intimacy?.trim() ? { intimacy: c.intimacy } : {}),
     },
     visualIdentityId: visual?.id ?? null, contactProfileId: null,
     ...(visual ? { appearance: {

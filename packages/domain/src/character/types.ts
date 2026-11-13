@@ -10,7 +10,22 @@ import type { RelationshipProfile } from '../relationship/profile'
 /** 엔딩 하나(11/10, 크랙 엔딩 설정) — 최소 턴이 지난 뒤 조건이 장면에서 충족되면 AI 가 결말 표식(— ENDING · 이름 —)을 남긴다. */
 export type CharacterEnding = { name: string; grade: 'N' | 'R' | 'SR' | 'SSR'; minTurns: number; condition: string; epilogue?: string; hint?: string; image?: string }
 
-export type CharacterStat = { name: string; min: number; max: number; default: number; unit?: string; description: string }
+/**
+ * 11/13 아카 설계탭(「너와 나의 봄」 이성 자각·집착 수치): hidden 이면 사용자 화면·상태창·서사 어디에도 이름·숫자가 나오지 않는 숨은 수치.
+ * stages = 구간별로 보일 행동(from 이상부터 다음 구간 전까지). AI 는 숫자 대신 지금 구간의 행동만 보인다.
+ */
+export type StatStage = { from: number; behavior: string }
+export type CharacterStat = { name: string; min: number; max: number; default: number; unit?: string; description: string; hidden?: true; stages?: StatStage[] }
+
+/** 지금 값이 들어가는 구간(가장 큰 from ≤ 값). 구간이 없으면 null. */
+export function currentStage(stat: CharacterStat, value: number): StatStage | null {
+  return [...(stat.stages ?? [])].sort((a, b) => a.from - b.from).filter(st => st.from <= value).at(-1) ?? null
+}
+/** 사용자에게 보여도 되는 스탯 값만(숨은 스탯 제외). */
+export function visibleStatValues(stats: CharacterStat[], values: Record<string, number>): Record<string, number> {
+  const hidden = new Set(stats.filter(s => s.hidden).map(s => s.name))
+  return Object.fromEntries(Object.entries(values).filter(([k]) => !hidden.has(k)))
+}
 
 /** AI 가 낸 새 스탯 값을 정의된 스탯·범위로 자른다. 모르는 이름·숫자 아닌 값은 버린다. */
 export function clampStatValues(stats: CharacterStat[], current: Record<string, number>, proposed: Record<string, unknown> | undefined): Record<string, number> {
@@ -72,6 +87,8 @@ export type CharacterCore = {
     endings?: CharacterEnding[]
     /** 다인 작품(11/11)의 함께 나오는 인물 — 이 카드가 주인공과 함께 연기한다. */
     cast?: CastProfile[]
+    /** 11/13 성적 설정 — 언베일 방에서만 지시문에 실린다. */
+    intimacy?: string
   }
 
   visualIdentityId: string | null
@@ -171,4 +188,6 @@ export type ContactChannel =
 export type CastProfile = {
   name: string; intro: string; age?: string; mbti?: string; nationality?: string; occupation?: string
   jealousy: number; initiative: number; emotionalExpression: number
+  /** 11/13 그 인물의 성적 설정(언베일 방에서만 AI 에 전달). */
+  intimacy?: string
 }

@@ -62,18 +62,23 @@ Rules:
 - Use only what the text says or clearly implies. Do not invent new events.
 - The text has the current situation (place · time), the story so far, and the recent chat; the LAST lines are the moment to draw. Use the earlier parts only for continuity (where they are, what is already taken off or changed), never draw an earlier event.
 - If the text clearly involves two people together (hug, kiss, holding hands), include that interaction.
+- Order: action/pose first, then expression, then outfit, then place/lighting (the image model reads the front of the prompt first).
+- Add exactly ONE framing tag that shows the moment best: talking face to face → upper body; standing/walking → cowboy shot; whole outfit or body posture matters → full body; lying down → from above; character is above or taller than the viewer → from below; a tiny detail (eyes, hands, a held object) → close-up.
+- Gaze: "looking at viewer" only when the character is talking to or looking at the user in the text; otherwise looking away or at what she/he is doing.
 - The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.). No quality tags or style names.`
 
 // 11/11 언베일 방: 성행위 장면이면 그 행위·자세를 정확히(오랄 장면이 등 돌린 단독 사진으로 나왔다). 상대(남자)는 시점(pov)으로 일부만.
 const MOMENT_ADULT = `
 - This is an adult (18+) explicit scene between consenting adults. If a sexual act is happening, the act and position are the MOST important tags: name them with standard Danbooru tags (e.g. fellatio, deepthroat, kneeling, sex, vaginal, missionary, cowgirl position, doggystyle, paizuri, handjob) and the partner's visible part (1boy, penis, pov, hetero).
 - Order: act tags first, then the framing that shows the act (fellatio/deepthroat: looking up, pov, from above; doggystyle: from behind; cowgirl: pov, from below; missionary: pov, lying on back), then expression and clothing state (e.g. open blouse, breasts out).
-- At most ONE place tag (e.g. study, living room). No props, doors, furniture or background objects — they pull the picture away from the act.`
+- At most ONE place tag (e.g. study, living room). No props, doors, furniture or background objects — they pull the picture away from the act.
+- Intensity (11/13): read which stage the narration is in and add 2-3 body/expression tags for it right after the framing — the same position looks different at each stage.
+  foreplay: blush, half-closed eyes, light sweat, shy | main act: sweat, heavy breathing, open mouth, motion lines | climax: orgasm, arched back, trembling, tears, clenched teeth or tongue out (only what the text describes) | afterglow: exhausted, heavy breathing, messy hair, cum drip only if the text says so.`
 
 /** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). adult = 언베일 모델로 바꿀 때. */
 export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM(), adult = false): Promise<string> {
   try {
-    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: adult ? 'modal-moment:v2-adult' : 'modal-moment:v1', maxTokens: 2048, schema: Tags,
+    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: adult ? 'modal-moment:v3-adult' : 'modal-moment:v2', maxTokens: 2048, schema: Tags,
       system: adult ? MOMENT_SYSTEM.replace('at most 10', 'at most 14') + MOMENT_ADULT : MOMENT_SYSTEM, prompt: text })
     return tags
   } catch { return '' }

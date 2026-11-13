@@ -16,6 +16,7 @@ import { SituationImagesEditor } from './situation-images-editor'
 import { PhotoScenesEditor } from './photo-scenes-editor'
 import { PresetPersonasEditor } from './preset-personas-editor'
 import { StatusEditor } from './status-editor'
+import { INTIMACY_LIMIT } from './parse'
 import { ExamplesEditor } from './examples-editor'
 import { EndingsEditor } from './endings-editor'
 import { ExtraScenesEditor } from './extra-scenes-editor'
@@ -46,6 +47,8 @@ export type FormInitial = {
   ensembleVoices?: Record<string, string>
   ensemblePhotos?: Record<string, string>
   ensembleCast?: CastProfile[]
+  /** 11/13 성적 설정(언베일 방에서만 AI 에 전달). */
+  intimacy?: string
   eyes: string; nose: string; jaw: string; skin: string; distinctive: string
   hairColor: string; hairLength: string; hairStyle: string; expression: string; styleTags: string[]
   stage: string; trust: number; attraction: number; emotionalDistance: number; attachment: number; protectiveness: number; relJealousy: number
@@ -409,6 +412,11 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
         <Panel id="lore" show={tab === 'lore'}>
           <Section title={t('설정집 · 선택')} subtitle={t('세계관이나 인물·장소 설정을 적어 두면, 대화에 그 키워드가 나온 턴에만 AI에게 전달돼요. 키워드를 비우면 항상 전달돼요.')}>
             <LoreEditor name="lore" defaultValue={i.lore} defaultLimit={i.loreLimit ?? 6} scenes={introScenes(i.sampleDialogue).slice(1)} />
+          </Section>
+          {/* 11/13 성적 설정(아카 설계탭 BP 성적 설정) — 언베일이 켜진 대화에서만 AI 에 실린다. 상세 화면엔 안 보인다. */}
+          <Section title={t('성적 설정 · 선택')} subtitle={t('언베일이 켜진 대화에서만 AI에게 전달되고 화면에는 보이지 않아요. 성인 장면에서는 공통 지침보다 이 설정이 먼저예요.')}>
+            <CountedTextArea name="intimacy" max={INTIMACY_LIMIT} rows={7} defaultValue={i.intimacy ?? ''} ariaLabel={t('성적 설정')}
+              placeholder={t('예) 좋아함: 키스를 오래, 리드당하는 것 / 싫어함: 거친 말, 서두르는 것 / 처음 허용선: 사귀기 전엔 키스까지 / 잘 넘어가는 계기: 술, 둘만 있는 새벽 / 끝난 뒤: 부끄러워 이불 속으로 숨고 다음 날 모른 척')} />
           </Section>
         </Panel>
 
