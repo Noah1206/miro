@@ -1,15 +1,17 @@
 import { expect, test } from 'vitest'
-import { QUESTIONS, RESULTS, TRAITS, resultKey } from '../quiz'
+import { QUESTION_SETS, RESULTS, TYPES, resultKey } from '../quiz'
 
-test('모든 1위·2위 조합에 결과가 있다', () => {
-  for (const a of TRAITS) for (const b of TRAITS) if (a !== b) expect(RESULTS[a + b]).toBeTruthy()
-  expect(Object.keys(RESULTS)).toHaveLength(20)
-  expect(QUESTIONS.every(q => q.a.length === TRAITS.length)).toBe(true)
-  expect(Object.values(RESULTS).every(r => r.recs.length > 0 && r.tags.length > 0)).toBe(true)
+test('질문 한 벌마다 여덟 유형이 선택지에 네 번씩 나온다', () => {
+  for (const set of QUESTION_SETS) {
+    expect(set).toHaveLength(8)
+    const seen = set.flatMap(q => q.a.map(([t]) => t))
+    for (const t of TYPES) expect(seen.filter(x => x === t)).toHaveLength(4)
+    expect(set.every(q => new Set(q.a.map(([t]) => t)).size === 4)).toBe(true)
+  }
+  expect(Object.keys(RESULTS).sort()).toEqual([...TYPES].sort())
 })
 
-test('많이 고른 순서대로, 동점이면 나중에 고른 쪽이 앞선다', () => {
-  expect(resultKey(['r', 'r', 'r', 'd', 'd', 'g', 's', 'r'])).toBe('rd')
-  expect(resultKey(['r', 'd', 'r', 'd'])).toBe('dr')          // 2:2 → 마지막에 고른 자극이 1위
-  expect(resultKey(['h', 'h', 'h', 'h'])).toMatch(/^h[rdgs]$/)  // 한 성향만 골라도 결과가 나온다
+test('가장 많이 고른 유형, 동점이면 나중에 고른 유형', () => {
+  expect(resultKey(['j', 'j', 'n', 'z', 'j', 'c', 'd', 'g'])).toBe('j')
+  expect(resultKey(['j', 'n', 'j', 'n'])).toBe('n')
 })
