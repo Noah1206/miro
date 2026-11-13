@@ -175,9 +175,10 @@ export const POLICY = {
        * 더 길게 답한다. 실제 상한은 모델의 maxOutputTokens 로 한 번 더 잘리므로,
        * 이 값을 올리려면 MIRO_MODEL_REGISTRY 의 해당 모델도 같이 올려야 한다.
        */
-      maxOutputTokens: DEV_DEFAULT(6144),
+      // 11/14 사용자: '길게'가 '조금 길게'(7168)보다 상한이 낮아 더 싸던 순서를 바로잡음 — 조금 길게(7168) < 길게(7680) < 아주 길게(8192).
+      maxOutputTokens: DEV_DEFAULT(7680),
       /**
-       * long: 더 긴 장면(900~1500자, 2026-09-26). 상한만 올리면 모델은 지시대로 500~900자에 멈춘다 — 길이는 지시가 정한다.
+       * long:더 긴 장면(900~1500자, 2026-09-26). 상한만 올리면 모델은 지시대로 500~900자에 멈춘다 — 길이는 지시가 정한다.
        * 긴 장면은 JSON 까지 2048 토큰을 넘을 수 있어 MIRO_MODEL_REGISTRY 의 dialogue 모델 상한도 4096 이어야 한다.
        */
       replyLength: 'long' as const,
