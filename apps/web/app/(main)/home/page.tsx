@@ -25,7 +25,12 @@ import { AfterMount } from '@/components/after-mount'
 
 const SITE = 'https://miroapp.app'
 // 11/13 자주 묻는 질문 — 화면(한국어 화면만)과 구조화 데이터가 같은 글을 쓴다. Google FAQ 리치 결과는 2026-05 종료됐고, 이 글은 검색 답변·AI 답변용이다.
-const FAQ: [string, string][] = [
+// 11/13 '음성 캐릭터챗' 검색어 — 음성 서버가 멈춘 동안(voicePaused)은 '곧 열려요'로, 되는 것처럼 쓰지 않는다.
+const VOICE_FAQ: Record<'on' | 'paused', [string, string]> = {
+  on: ['음성 캐릭터챗도 되나요?', '네. 음성 모드를 켜면 캐릭터가 자기 목소리로 대사를 읽어 주는 음성 캐릭터챗으로 대화할 수 있어요. 히로인 목소리는 직접 고를 수 있어요.'],
+  paused: ['음성 캐릭터챗도 되나요?', '캐릭터가 자기 목소리로 대사를 읽어 주는 음성 캐릭터챗(음성 모드)을 준비하고 있어요. 지금은 서버 점검 중이라 잠시 쉬고 있고, 곧 다시 열려요.'],
+}
+const FAQ_BASE: [string, string][] = [
   ['미로 AI 캐릭터챗은 어떤 서비스인가요?', '미로(MIRO)는 AI 캐릭터챗이에요. 성격과 가치관, 세계관을 가진 AI 캐릭터와 1:1로 대화하고, 앱 밖에서도 문자를 주고받을 수 있어요. 캐릭터는 자기 생활 리듬대로 지내다가 먼저 연락하기도 해요.'],
   ['무료로 이용할 수 있나요?', '네. 가입하면 1,500토큰을 선물로 드리고, 출석 체크로 매일 토큰을 더 받을 수 있어요. 토큰이 부족할 때만 충전하면 돼요.'],
   ['어떤 캐릭터와 대화할 수 있나요?', '남성향·여성향 로맨스, 판타지, 학원물, 무협, BL 등 다양한 장르의 캐릭터와 오리지널 스토리가 있어요. 홈과 탐색에서 장르·태그로 찾을 수 있어요.'],
@@ -33,7 +38,8 @@ const FAQ: [string, string][] = [
   ['몇 살부터 이용할 수 있나요?', '만 14세 이상이면 가입할 수 있어요. 성인 전용 콘텐츠(언베일)는 본인인증으로 만 19세 이상임을 확인한 분에게만 열려요.'],
   ['앱을 설치해야 하나요?', '아니요. miroapp.app 웹에서 바로 쓸 수 있고, 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있어요. 한국어, 영어, 일본어, 중국어를 지원해요.'],
 ]
-const HOME_JSON_LD = {
+const faqList = (): [string, string][] => { const [first, ...rest] = FAQ_BASE; return [first!, VOICE_FAQ[voicePaused() ? 'paused' : 'on'], ...rest] }
+const homeJsonLd = (FAQ: [string, string][]) => ({
   '@context': 'https://schema.org',
   '@graph': [
     { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
@@ -46,7 +52,7 @@ const HOME_JSON_LD = {
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
     },
   ],
-}
+})
 
 /** 홈은 캐릭터 목록이 아니라 세계로 들어가는 입구다 — 주제를 가진 행으로 훑는다 (명세서 2.1). */
 export default async function Home({ searchParams }: { searchParams: Promise<{ audience?: string }> }) {
@@ -62,6 +68,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     user ? accountProfile(user) : null,
   ])
   const [t, language] = await Promise.all([getT(), getLanguage()])
+  const FAQ = faqList()
 
   return (
     <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))', '--font-title-3': '16px' } as React.CSSProperties}>
@@ -108,7 +115,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
       <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(HOME_JSON_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeJsonLd(FAQ)) }} />
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}
       {sections.rising.length > 0 && <Row index={0} row={{ key: 'rising', title: t('🆕 지금 뜨는 신작'), subtitle: t('최근 3주 안에 나온 이야기 중 요즘 대화가 몰리는 순서'), items: sections.rising }} href="/explore" />}
       {sections.popularMale.length > 0 && <Row index={1} row={{ key: 'popular-male', title: t('🔥 남심 저격! 인기 남성향 TOP 10'), items: sections.popularMale }} href="/explore" />}
@@ -130,7 +137,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
       {/* 11/13 자주 묻는 질문 — 원문이 한국어라 한국어 화면에서만(약관 본문과 같은 방식). 펼침은 브라우저 기본 details. */}
       {language === 'ko' && <section aria-labelledby="row-faq" lang="ko" style={{ margin: 'var(--space-7) 0', padding: '0 var(--gutter)' }}>
-        <h2 id="row-faq" className="t-title-3" style={{ marginBottom: 14 }}>자주 묻는 질문</h2>
+        <h2 id="row-faq" className="t-title-3" style={{ marginBottom: 14 }}>미로 AI 캐릭터챗 자주 묻는 질문</h2>
         {FAQ.map(([q, a]) => (
           <details key={q} style={{ borderTop: '1px solid var(--color-border, rgba(255,255,255,.08))', padding: '12px 0' }}>
             <summary style={{ cursor: 'pointer', fontWeight: 'var(--weight-semibold)' }}>{q}</summary>

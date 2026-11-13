@@ -2,6 +2,7 @@ import { currentUser } from '@/lib/auth'
 import { visitorConsent } from '@/lib/visitor-consent'
 import { VisitorConsent } from '@/components/visitor-consent'
 import type { Metadata, Viewport } from 'next'
+import { voicePaused } from '@miro/config'
 import Script from 'next/script'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
@@ -17,7 +18,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const shareImage = { url: '/miro-share-v3.png', width: 1200, height: 630, alt: 'MIRO' }
   // 11/13 검색(SEO·AEO): 검색 결과·AI 답변에 쓰이는 한 줄 설명.
   // 11/13 사용자: 검색 이름은 '미로 AI 캐릭터챗'(이름+서비스) — 제목·og:site_name·h1·구조화 데이터를 같은 이름으로(Google 사이트 이름 규칙).
-  const description = '미로 AI 캐릭터챗(MIRO)에서 성격과 세계관을 가진 캐릭터와 1:1로 대화하고, 문자를 주고받고, 나만의 캐릭터를 직접 만들어 보세요. 남성향·여성향·로맨스·판타지·BL 캐릭터가 기다려요.'
+  // '음성 캐릭터챗'은 음성 서버가 멈춘 동안 '곧 열려요'로(되는 것처럼 쓰지 않는다).
+  const description = `미로 AI 캐릭터챗(MIRO)에서 성격과 세계관을 가진 캐릭터와 1:1로 대화하고, 문자를 주고받고, 나만의 캐릭터를 직접 만들어 보세요. ${voicePaused() ? '캐릭터 목소리로 듣는 음성 캐릭터챗도 곧 열려요.' : '캐릭터 목소리로 듣는 음성 캐릭터챗도 즐길 수 있어요.'}`
   return {
     metadataBase: new URL('https://miroapp.app'),
     title: { default: title, template: title }, manifest: '/manifest.json',
