@@ -7,6 +7,10 @@ export const ONBOARDING_STEPS = 5
 export const REQUIRED_TERMS = ['terms', 'privacy', 'transfer', 'ai', 'push'] as const
 /** 가입 보상을 준 직후 한 번 환영 시트를 띄우는 주소 표시. */
 export const WELCOME_PARAM = 'welcome'
+/** 11/13 가입을 마친 뒤 돌아갈 곳(로그인 전에 보던 화면)에 환영 표시를 붙인다 — 예전엔 늘 홈으로 보내 보던 작품을 잃었다. */
+export const withWelcome = (path: string) => `${path}${path.includes('?') ? '&' : '?'}${WELCOME_PARAM}=1`
+/** 주소로 받은 '돌아갈 곳' — 이 사이트 안의 경로만(가입 단계 화면은 제외), 아니면 홈. */
+export const afterSignup = (next: string | null | undefined) => next && next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/onboarding') && !next.startsWith('/login') ? next : '/home'
 /**
  * 11/13 사용자: 알림을 켜자는 시트는 로그인에 성공한 직후에만 — 그냥 들어왔을 때(이미 로그인된 채 다시 방문 포함)는 절대 띄우지 않는다.
  * 로그인 콜백이 이 쿠키를 잠깐 심고, 알림 시트가 읽은 뒤 바로 지운다(화면에서 읽어야 해서 httpOnly 아님, 값은 표시일 뿐).

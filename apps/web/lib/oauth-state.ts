@@ -23,7 +23,7 @@ export async function takeOAuthState(): Promise<OAuthState | null> {
  */
 export async function rememberNext(path: string): Promise<void> {
   if (!path.startsWith('/') || path.startsWith('//')) return
-  ;(await cookies()).set(NEXT, path, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 600 })
+  ;(await cookies()).set(NEXT, path, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: 3600 })   // 11/13 10분→1시간: 가입 단계(동의·알림·본인인증)가 10분을 넘기면 돌아갈 곳을 잃었다
 }
 export async function takeNext(): Promise<string | null> {
   const jar = await cookies(); const v = jar.get(NEXT)?.value ?? null

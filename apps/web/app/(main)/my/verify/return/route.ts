@@ -3,6 +3,7 @@ import { setHomeUnveilFor } from '@/lib/home-mode'
 import { NextResponse } from 'next/server'
 import { currentUser } from '@/lib/auth'
 import { confirmAdult } from '@/lib/adult-verify'
+import { afterSignup, withWelcome } from '@/lib/onboarding-options'
 
 /**
  * 모바일 본인인증은 PortOne 창에서 이 주소로 돌아온다(함수 결과를 받지 못한다, 10/2).
@@ -25,10 +26,13 @@ export async function GET(req: Request) {
     if (r === 'done' && intended) await setHomeUnveilFor(user.id, true, true)
     return NextResponse.redirect(new URL(character ? `/character/${character[1]}` : '/home', url))
   }
-  // 가입 단계의 본인인증(11/8) — 끝났으면 홈, 아니면 그 단계로 결과와 함께.
-  if (next === '/onboarding/verify' || next === '/onboarding/verify?welcome=1') {
-    const welcome = next.endsWith('welcome=1')
-    return NextResponse.redirect(new URL(r === 'done' ? (welcome ? '/home?welcome=1' : '/home') : `/onboarding/verify?r=${r}${welcome ? '&welcome=1' : ''}`, url))
+  // 가입 단계의 본인인증(11/8) — 끝났으면 보던 곳(없으면 홈), 아니면 그 단계로 결과와 함께.
+  // 11/13 인증이 끝나면 로그인 전에 보던 곳(주소의 next, 없으면 홈)으로 — 홈으로만 보내면 보러 온 작품을 잃는다.
+  if (next && (next === '/onboarding/verify' || next.startsWith('/onboarding/verify?'))) {
+    const q = new URLSearchParams(next.split('?')[1] ?? '')
+    const welcome = q.has('welcome'), dest = afterSignup(q.get('next'))
+    const back = `/onboarding/verify?r=${r}${welcome ? '&welcome=1' : ''}&next=${encodeURIComponent(dest)}`
+    return NextResponse.redirect(new URL(r === 'done' ? (welcome ? withWelcome(dest) : dest) : back, url))
   }
   // 채팅에서 시작한 인증은 해당 대화로 복귀한다. 외부 주소는 허용하지 않는다.
   if (next && /^\/chat\/[a-zA-Z0-9-]+$/.test(next)) return NextResponse.redirect(new URL(next, url))

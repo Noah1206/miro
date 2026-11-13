@@ -7,17 +7,21 @@ import { getT } from '@/lib/i18n/server'
 import { adultVerificationState } from '@/app/(main)/my/verify/actions'
 import { logout } from '@/app/(main)/my/actions'
 import { SignupVerify } from './signup-verify'
+import { afterSignup, withWelcome } from '@/lib/onboarding-options'
 import s from '../transfer/transfer.module.css'
 
 export async function generateMetadata(): Promise<Metadata> { const t = await getT(); return { title: t('본인인증') } }
 
 /** 가입 마지막 단계(11/8) — 성인 서비스라 휴대전화 본인인증으로 청소년이 아닌지 확인한다. 마치기 전에는 (main) 화면에 들어가지 못한다. */
-export default async function SignupVerifyPage({ searchParams }: { searchParams: Promise<{ r?: string; welcome?: string }> }) {
+export default async function SignupVerifyPage({ searchParams }: { searchParams: Promise<{ r?: string; welcome?: string; next?: string }> }) {
   const user = await currentUser()
   if (!user) redirect('/login')
+  const { r, welcome, next } = await searchParams
+  // 11/13 인증을 마치면 로그인 전에 보던 곳으로(없으면 홈) — 휴대폰은 인증 창에서 이 화면으로 돌아오므로 여기서도 같은 곳으로 보낸다.
+  const dest = afterSignup(next)
   const pending = await consentRedirect(user.id)
-  if (pending !== '/onboarding/verify') redirect(pending ?? '/home')
-  const [t, state, { r, welcome }] = await Promise.all([getT(), adultVerificationState(), searchParams])
+  if (pending !== '/onboarding/verify') redirect(pending ?? (welcome ? withWelcome(dest) : dest))
+  const [t, state] = await Promise.all([getT(), adultVerificationState()])
   return (
     <Page className={s.page}>
       <h1 className={s.title}>{t('본인인증이 필요해요')}</h1>
@@ -25,7 +29,7 @@ export default async function SignupVerifyPage({ searchParams }: { searchParams:
       <div style={{ marginTop: 28 }}>
         {r === 'cancelled' && <p role="status" className="t-caption" style={{ marginBottom: 16 }}>{t('본인인증을 마치지 않았어요.')}</p>}
         {r === 'failed' && <p role="alert" className="t-caption" style={{ marginBottom: 16 }}>{t('본인인증 결과를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.')}</p>}
-        <SignupVerify state={state} welcome={!!welcome} />
+        <SignupVerify state={state} welcome={!!welcome} dest={dest} />
       </div>
       <form action={logout} style={{ marginTop: 24, textAlign: 'center' }}>
         <button type="submit" className={s.back}>{t('다른 계정으로 로그인')}</button>
