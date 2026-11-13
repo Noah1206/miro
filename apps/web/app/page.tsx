@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { permanentRedirect, redirect } from 'next/navigation'
 import { currentUser } from '@/lib/auth'
 import { consentRedirect } from '@/lib/consent-gate'
 
@@ -15,5 +15,7 @@ export default async function Root({ searchParams }: { searchParams: Promise<{ u
     if (to) redirect(to)
   }
   const src = (await searchParams).utm_source
-  redirect(typeof src === 'string' && src ? `/home?utm_source=${encodeURIComponent(src)}` : '/home')
+  // 11/13 검색: 영구 이동(308) — 임시(307)면 Google 이 '/' 를 대표 주소로 남겨 /home canonical 을 무시했다(Search Console 확인).
+  // 동의 확인은 (main) 레이아웃도 하므로, 브라우저가 이 이동을 기억해도 동의 화면을 건너뛰지 않는다.
+  permanentRedirect(typeof src === 'string' && src ? `/home?utm_source=${encodeURIComponent(src)}` : '/home')
 }
