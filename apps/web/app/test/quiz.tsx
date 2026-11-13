@@ -36,10 +36,12 @@ export function Quiz() {
         </div>
       </div>
       <h2 className="t-display" style={{ margin: 0, minHeight: '2.4em', wordBreak: 'keep-all' }}>{cur.q}</h2>
-      {/* 태블릿 폭에서는 선택지가 두 줄로 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 'var(--space-2)' }}>
-        {cur.a.map(([type, text]) => (
-          <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} onClick={() => pick(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45 }}>{text}</Button>
+      {/* 선택지는 세로 한 줄, 앞에 번호(11/13 요청). */}
+      <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
+        {cur.a.map(([type, text], i) => (
+          <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} onClick={() => pick(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45 }}>
+            <span style={{ display: 'flex', gap: 10 }}><span aria-hidden style={{ flex: 'none', color: 'var(--color-accent-text)', fontWeight: 'var(--weight-bold)' }}>{i + 1}</span><span>{text}</span></span>
+          </Button>
         ))}
       </div>
     </div>
