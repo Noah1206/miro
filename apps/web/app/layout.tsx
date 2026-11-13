@@ -9,6 +9,7 @@ import './globals.css'
 import { Providers } from '@/components/ui/providers'
 import { LanguageProvider } from '@/lib/i18n/client'
 import { getLanguage, getT, messagesFor } from '@/lib/i18n/server'
+import { PresenceBeacon } from '@/components/presence-beacon'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT()
@@ -71,6 +72,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <a href="#main" className="skip-link">{t('본문으로 건너뛰기')}</a><Providers>{children}<VisitorConsent needed={needsConsent} /></Providers>
         </LanguageProvider>
         <Analytics />
+        {/* 11/13 운영자 현황용 '지금 접속 중' 신호(화면엔 아무것도 그리지 않음). */}
+        <PresenceBeacon />
       </body>
     </html>
   )
