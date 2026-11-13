@@ -4,8 +4,8 @@ import { LogoMark } from '@/components/ui/logo'
 import { HomeViewBeacon } from '@/app/(main)/home/view-beacon'
 import { Quiz } from './quiz'
 
-const TITLE = '미로에 떨어졌다. 나는 어떤 주인공일까?'
-const DESC = '남성향 웹소설 속 내 유형 테스트 · 8문항 · 30초 · 로그인 없음'
+const TITLE = '당신의 성향은? 미로가 찍어 드립니다'
+const DESC = '캐릭터챗에서 내가 끌리는 전개 테스트 · 8문항 · 30초 · 로그인 없음'
 export const metadata: Metadata = { description: DESC, openGraph: { title: TITLE, description: DESC, url: '/test' }, twitter: { card: 'summary_large_image', title: TITLE, description: DESC } }
 
 /** 성향 테스트(11/13, 홍보용) — 로그인 없이 누구나. 방문은 홈 방문과 같은 기록으로 남는다(utm_source 로 채널 구분). */

@@ -14,9 +14,9 @@ export function Quiz() {
 
   if (!deck) return (
     <div style={{ display: 'grid', gap: 'var(--space-5)', textAlign: 'center' }}>
-      <h1 className="t-display" style={{ margin: 0 }}>미로에 떨어졌다.<br />나는 어떤 주인공일까?</h1>
-      <p className="t-caption" style={{ margin: 0 }}>남성향 웹소설 속 내 유형 · {QUIZ_LENGTH}문항 · 30초 · 로그인 없음</p>
-      <Button variant="primary" size="lg" full onClick={() => setDeck(shuffle(QUESTIONS).slice(0, QUIZ_LENGTH).map(({ q, a }) => ({ q, options: shuffle(a.map((text, i) => ({ text, trait: TRAITS[i]! }))) })))}>입장하기</Button>
+      <h1 className="t-display" style={{ margin: 0 }}>당신의 성향은?<br />미로가 찍어 드립니다</h1>
+      <p className="t-caption" style={{ margin: 0 }}>캐릭터챗에서 내가 끌리는 전개 · {QUIZ_LENGTH}문항 · 30초 · 로그인 없음</p>
+      <Button variant="primary" size="lg" full onClick={() => setDeck(shuffle(QUESTIONS).slice(0, QUIZ_LENGTH).map(({ q, a }) => ({ q, options: shuffle(a.map((text, i) => ({ text, trait: TRAITS[i]! }))) })))}>시작하기</Button>
     </div>
   )
 
