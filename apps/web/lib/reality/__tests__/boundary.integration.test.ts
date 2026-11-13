@@ -59,7 +59,7 @@ describeDb('relationship experience — durable boundaries and preserved history
   it('accepts a contact stop through the app even when the token wallet cannot fund an AI reply', async () => {
     const s = await fixture()
     const pricing = tokenPricing()
-    vi.spyOn(chatModels, 'resolveChatModel').mockResolvedValue({ modelId: 'priced-test', metered: true,
+    vi.spyOn(chatModels, 'resolveChatModel').mockResolvedValue({ modelId: 'priced-test', metered: true, floorTokens: 0,
       tier: POLICY.chatTier.miro, tierName: 'miro', pricing,
       quote: tokenQuote({ inputCost: 2, outputCost: 10, maxContextTokens: 200000, maxOutputTokens: 2048 }, 2048, pricing) })
     const create = vi.spyOn(providers, 'createAI')

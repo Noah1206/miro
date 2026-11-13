@@ -2,6 +2,8 @@ import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition }
 import { POLICY, tokenPricing, tokenQuote, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
+/** 한 턴 최소 차감 = 그 모델·길이의 일반 방 최대 견적 × 이 비율(11/14, Sonnet 기본 길이 184 → 23 ≈ 실제 평균). */
+export const MIN_TURN_SHARE = 0.125
 export type ChatTier = (typeof POLICY.chatTier)[keyof typeof POLICY.chatTier]
 export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
@@ -93,19 +95,22 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   const models = choiceModels(adult)
   // 기본 모델은 두 방이 같다(11/3) — 일반 방의 지정 모델(MIRO_CHAT_MODEL_ID)이 언베일 방에서도 첫 값.
   const pinned = process.env.MIRO_CHAT_MODEL_ID
-  const first = ((pinned ? models.find(m => m.key === pinned) : undefined) ?? models[0])?.model
-  let model = first, length: ChatLength = choice === 'pro' ? 'long' : 'scene'
+  const firstEntry = (pinned ? models.find(m => m.key === pinned) : undefined) ?? models[0]
+  let model = firstEntry?.model, key = firstEntry?.key, length: ChatLength = choice === 'pro' ? 'long' : 'scene'
   if (choice !== 'miro' && choice !== 'pro') {
-    const match = models.flatMap(m => LENGTHS.map(l => ({ m: m.model, l, id: choiceId(m.key, l) }))).find(c => c.id === choice)
+    const match = models.flatMap(m => LENGTHS.map(l => ({ m: m.model, k: m.key, l, id: choiceId(m.key, l) }))).find(c => c.id === choice)
     if (!match) throw new Error('invalid chat model')
-    model = match.m; length = match.l
+    model = match.m; key = match.k; length = match.l
   }
   if (!model) throw new Error('chat model unavailable')
   const tierName = TIER_OF[length]
   const tier = POLICY.chatTier[tierName]
   const pricing = tokenPricing()
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
-  return { modelId: model.id, metered: true, tier, tierName, pricing, quote }
+  // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
+  const main = adult ? availableModels(false).find(m => m.id === key) : model
+  const floorTokens = Math.ceil((main ? chatQuote(main, tier.maxOutputTokens, pricing, false) : quote).maximumTokens * MIN_TURN_SHARE)
+  return { modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }
 }
 
 /** 만들기의 권장 모델 후보(10/28) — 채팅에서 고를 수 있는 모델 하나씩. */
