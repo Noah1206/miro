@@ -22,6 +22,12 @@ type WalletContext = {
   requireBalance: (cost: number, action: Pending['action'], label?: string) => Promise<void>
 }
 const Context = createContext<WalletContext | null>(null)
+
+/** 11/14 Google Ads 구매 전환(gtag 는 layout 의 초기화 스크립트가 만든다). 같은 주문을 다시 보내도 transaction_id 로 한 번만 집계된다. */
+function adsPurchase(id: string, krw: number) {
+  (window as { gtag?: (...args: unknown[]) => void }).gtag?.('event', 'conversion', { send_to: 'AW-18512422714/vlkxCJap_rcdELrOtPtE', value: krw, currency: 'KRW', transaction_id: id })
+}
+
 export function useWallet() {
   const context = useContext(Context)
   if (!context) throw new Error('WalletProvider missing')
@@ -124,6 +130,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
     if (order?.settledAt && settledSeen.current !== order.id) {
       settledSeen.current = order.id; purchase.current = null
       setState('success'); toast(t('충전이 반영됐어요'))
+      adsPurchase(order.id, order.amountMinor)
       const request = pending.current
       if (request && fresh.available >= request.cost) await execute(request, token)
       else if (request) { setStage('insufficient'); setState('idle') }

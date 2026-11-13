@@ -60,6 +60,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           gtag('config', 'AW-18512422714');
+          // 11/14 Google Ads 가입 전환 — 로그인 콜백이 새 사용자에게만 남긴 miro_ads 쿠키를 한 번 보내고 지운다.
+          if (/(?:^|; )miro_ads=signup/.test(document.cookie)) {
+            document.cookie = 'miro_ads=; path=/; max-age=0';
+            gtag('event', 'conversion', { send_to: 'AW-18512422714/esZMCJOp_rcdELrOtPtE' });
+          }
         `}</Script>
         {/* 스크립트 본체는 화면이 반응하기 시작한 뒤에(10/27) — beforeInteractive 면 첫 화면이 이 외부 스크립트를 기다렸다. 위 초기화가 그 사이 기록을 줄 세운다. */}
         <Script src="https://www.googletagmanager.com/gtag/js?id=AW-18512422714" strategy="afterInteractive" />

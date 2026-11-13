@@ -38,6 +38,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ provider: strin
   // 11/13 알림 시트는 로그인에 성공한 직후에만 뜬다 — 그 표시(5분, 시트가 읽고 지움).
   const jar = await cookies()
   jar.set(JUST_SIGNED_IN_COOKIE, '1', { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 300 })
+  // 11/14 Google Ads 가입 전환 — 다음 화면의 layout 스크립트가 읽고 지운다.
+  if (r.isNew) jar.set('miro_ads', 'signup', { path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 300 })
   // 온보딩(프로필·약관)이나 국외 이전 동의가 남아 있으면 그 화면이 먼저다 — 돌아갈 곳은 쿠키에 그대로 두고 동의 후에 쓴다.
   const pending = await consentRedirect(r.userId)
   if (pending) return to(pending)
