@@ -40,9 +40,9 @@ export function Quiz() {
         </div>
       </div>
       <h2 className="t-display" style={{ margin: 0, wordBreak: 'keep-all' }}>{cur.q}</h2>
-      {/* 그 질문의 상황 그림(16:9). key 로 질문이 바뀔 때 그림을 새로 그린다. */}
+      {/* 그 질문의 상황 그림(원본 16:9 를 2:1 로 잘라 낮게 — 선택지와 '다음'이 한 화면에 들어오게, 얼굴이 있는 위쪽을 남긴다). key 로 질문이 바뀔 때 그림을 새로 그린다. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img key={cur.id} src={`/quiz/q${cur.id}.jpg`} alt="" style={{ width: '100%', aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }} />
+      <img key={cur.id} src={`/quiz/q${cur.id}.jpg`} alt="" style={{ width: '100%', aspectRatio: '2 / 1', objectFit: 'cover', objectPosition: 'center 30%', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }} />
       {/* 선택지는 세로 한 줄, 앞에 번호(11/13 요청). */}
       <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
         {cur.a.map(([type, text], i) => (
