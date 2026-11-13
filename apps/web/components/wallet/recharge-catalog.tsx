@@ -52,7 +52,8 @@ export function RechargeCatalog({ available, products, onPick, onClose, busy = f
     </div>
     {minor && <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '0 0 12px', padding: 12, borderRadius: 12, background: 'var(--color-surface-2)', fontSize: 13, lineHeight: 1.5, cursor: 'pointer' }}>
       <input type="checkbox" checked={guardian} onChange={e => setGuardian(e.target.checked)} style={{ marginTop: 3, accentColor: 'var(--color-lavender-500)' }} />
-      <span><strong>{t('법정대리인(부모님)의 동의를 받았어요')}</strong><br />
+      {/* 11/14 사용자: 생년월일을 받지 않아 나이를 모르는 사람(성인 인증 전)에게 띄운다 — 성인도 체크할 수 있는 문장으로. */}
+      <span><strong>{t('만 19세 이상이거나, 법정대리인(부모님)의 동의를 받았어요')}</strong><br />
         <span style={{ color: 'var(--color-text-secondary)' }}>{t('만 19세 미만은 법정대리인 동의가 필요해요. 동의 없이 결제한 경우 본인이나 법정대리인이 결제를 취소할 수 있어요.')}</span></span>
     </label>}
     {card && <div style={{ display: 'grid', gap: 10, margin: '0 0 12px' }}>
