@@ -1,8 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { isLanguage, type Language } from '@miro/domain'
-import { POLICY, WELCOME_GRANT } from '@miro/config'
-import { adultOn } from '@miro/providers'
-import { teenOpen } from '@/lib/teen-open'
+import { WELCOME_GRANT } from '@miro/config'
 import { db, termsConsents, userPersonas, userSettings, users } from '@miro/db'
 import { privacyVersion, termsVersion } from '@/lib/legal'
 import { observe } from '@/lib/observe'
@@ -37,42 +35,21 @@ export function parseOnboarding(form: FormData, today = new Date()): ({ ok: true
   const g = form.get('gender')
   if (g !== 'female' && g !== 'male' && g !== 'none') return { ok: false, step: 3, error: msg('성별을 골라 주세요.') }
 
-  const birth = form.get('birthDate')
-  const birthDate = typeof birth === 'string' && birth ? birth : null
-  if (!birthDate || !validBirthDate(birthDate, today)) return { ok: false, step: 4, error: msg('생년월일을 다시 확인해 주세요.') }
-  // 11/12 사용자: 19세 미만도 가입·대화 — 성인 내용은 언베일(본인인증으로 성인 확인)에서만. 만 14세 미만은 법정대리인 동의가 필요해 받지 않는다(개인정보 보호법 제22조의2).
-  // 약관 개정 시행일(teenOpen) 전에는 시행 중인 약관대로 만 19세(청소년 보호법 기준) 이상만.
-  if (teenOpen(today)) { if (fullAge(birthDate, today) < MIN_SIGNUP_AGE) return { ok: false, step: 4, error: msg('만 14세 이상만 가입할 수 있어요.') } }
-  else if (!adultOn(birthDate, today, POLICY.adultVerification.minimumAge)) return { ok: false, step: 4, error: msg('만 19세 이상(청소년 보호법 기준)만 가입할 수 있어요.') }
-
-  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 5, error: msg('필수 항목에 모두 동의해 주세요.') }
+  // 11/13 사용자: 생년월일 단계 삭제 — 나이는 약관 단계의 '[필수] 만 n세 이상'(REQUIRED_TERMS 'age')으로 받는다. 성인 내용은 여전히 언베일(본인인증)에서만.
+  void today
+  if (!REQUIRED_TERMS.every((k) => form.get(k) === 'on')) return { ok: false, step: 4, error: msg('필수 항목에 모두 동의해 주세요.') }
 
   return { ok: true, input: {
-    language, nickname: name.persona.name, gender: g === 'none' ? null : g, birthDate,
+    language, nickname: name.persona.name, gender: g === 'none' ? null : g, birthDate: null,
     marketing: form.get('marketing') === 'on', nightMarketing: form.get('nightMarketing') === 'on',
   } }
 }
 
-/** 'YYYY-MM-DD', 실제로 있는 날짜, 1900년 이후, 오늘 이전. */
 /** 닉네임 미리 저장(닉네임 단계에서 '다음' 을 누르면 뒤에서 돈다). 페르소나로 저장해 두어 마지막 단계가 다시 쓰지 않게 한다. */
 export async function precheckNickname(userId: string, nickname: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const existing = await getPersona(userId)
   const saved = await savePersona(userId, { name: nickname, gender: existing?.gender ?? null, description: existing?.description ?? null })
   return saved.ok ? { ok: true } : { ok: false, error: saved.error }
-}
-
-const MIN_SIGNUP_AGE = 14
-/** 만 나이 — 생일이 지나야 한 살. */
-function fullAge(birth: string, today: Date): number {
-  const [y, m, d] = birth.split('-').map(Number) as [number, number, number]
-  const age = today.getUTCFullYear() - y
-  return today.getUTCMonth() + 1 < m || (today.getUTCMonth() + 1 === m && today.getUTCDate() < d) ? age - 1 : age
-}
-
-function validBirthDate(v: string, today: Date): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return false
-  const d = new Date(`${v}T00:00:00Z`)
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === v && v >= '1900-01-01' && d <= today
 }
 
 /**

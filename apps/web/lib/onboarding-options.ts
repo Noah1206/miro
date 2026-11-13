@@ -1,11 +1,12 @@
 /** 온보딩 화면(클라이언트)과 저장(서버)이 함께 쓰는 값. DB 를 읽지 않는 파일로 둔다. */
-export const ONBOARDING_STEPS = 5
+// 11/13 사용자: 생년월일 단계를 뺐다(언어 → 닉네임 → 성별 → 약관) — 나이는 약관 단계의 '[필수] 만 n세 이상' 확인으로 받는다.
+export const ONBOARDING_STEPS = 4
 /** 필수 동의 — 없으면 가입이 끝나지 않는다. */
 /** 캐릭터 알림(push)도 필수(2026-10-01 결정, 예외 없음) — 서버는 체크만 보고, 브라우저 허용·구독은 온보딩 화면이 끝까지 확인한다. */
 /** 가입은 생년월일로 청소년 보호법 기준 성인(만 19세)인지 확인한다(11/8). 본인인증은 언베일에서 별도로 한다. */
 /** 개인정보 국외 이전(transfer)도 필수 — 약관·처리방침과 따로 받는 동의(개인정보 보호법 제28조의8, 10/5). 동의 기록은 terms_consents.transfer_version. */
 // 11/13 사용자: 캐릭터 알림(push)은 필수에서 선택으로 — 가입 중 이탈이 컸다(아카 유입 10명 중 5명이 가입 단계에서 멈춤). 10/1 '예외 없이 필수' 결정을 뒤집는다.
-export const REQUIRED_TERMS = ['terms', 'privacy', 'transfer', 'ai'] as const
+export const REQUIRED_TERMS = ['age', 'terms', 'privacy', 'transfer', 'ai'] as const
 /** 가입 보상을 준 직후 한 번 환영 시트를 띄우는 주소 표시. */
 export const WELCOME_PARAM = 'welcome'
 /** 11/13 가입을 마친 뒤 돌아갈 곳(로그인 전에 보던 화면)에 환영 표시를 붙인다 — 예전엔 늘 홈으로 보내 보던 작품을 잃었다. */

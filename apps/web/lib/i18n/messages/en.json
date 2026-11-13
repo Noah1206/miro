@@ -1,4 +1,6 @@
 {
+  "[필수] 만 19세 이상이에요": "[Required] I am 19 or older",
+  "[필수] 만 14세 이상이에요": "[Required] I am 14 or older",
  "미성년자로 보이는 요청은 그릴 수 없어요.": "We can't draw requests that look like they involve minors.",
  "실존 인물이나 실제 사진을 바탕으로 한 요청은 그릴 수 없어요.": "We can't draw requests based on real people or real photos.",
  "(만료)": "(Expired)",

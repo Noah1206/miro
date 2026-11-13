@@ -14,7 +14,7 @@ export async function funnel(days: number) {
   const male = sql`join characters c on c.id = s.character_id and c.audience = 'male'`
   const [steps] = await db.execute(sql`select
     (select count(distinct props->>'anonId') from analytics_events where event = 'home_viewed' and created_at > ${since} and (user_id is null or user_id not in ${ops}))::int as visit,
-    (select count(*) from public.users where created_at > ${since} and deleted_at is null and birth_date is not null and id not in ${ops})::int as signup,
+    (select count(*) from public.users where created_at > ${since} and deleted_at is null and exists (select 1 from terms_consents tc where tc.user_id = public.users.id) and id not in ${ops})::int as signup,
     (select count(distinct s.user_id) from roleplay_sessions s ${male} where s.created_at > ${since} and s.user_id not in ${ops})::int as started,
     (select count(distinct s.user_id) from roleplay_sessions s ${male} where s.created_at > ${since} and s.turn_count >= 5 and s.user_id not in ${ops})::int as turn5,
     (select count(*) from public.users where adult_verified_at > ${since} and deleted_at is null and id not in ${ops})::int as verified,
@@ -43,7 +43,7 @@ export async function funnel(days: number) {
         on e.event = 'home_viewed' and e.props->>'anonId' = s.anon and e.user_id is not null and e.user_id not in ${ops})
     select s.src, count(distinct s.anon)::int as visit,
       (select count(distinct l.user_id) from linked l join public.users u on u.id = l.user_id
-        where l.src = s.src and u.created_at > ${since} and u.deleted_at is null and u.birth_date is not null)::int as signup,
+        where l.src = s.src and u.created_at > ${since} and u.deleted_at is null and exists (select 1 from terms_consents tc where tc.user_id = u.id))::int as signup,
       (select count(distinct l.user_id) from linked l join roleplay_sessions r on r.user_id = l.user_id
         where l.src = s.src and r.created_at > ${since} and r.turn_count >= 5)::int as turn5
     from src s group by s.src order by visit desc limit 20`)

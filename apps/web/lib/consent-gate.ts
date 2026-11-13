@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm'
 import { db, termsConsents, users } from '@miro/db'
-import { teenOpen } from '@/lib/teen-open'
 
 export type ConsentStep = '/onboarding' | '/onboarding/transfer' | '/onboarding/verify'
 
@@ -14,6 +13,6 @@ export async function consentRedirect(userId: string): Promise<ConsentStep | nul
   if (!row?.consented) return '/onboarding'
   if (!row.transferVersion) return '/onboarding/transfer'
   // 11/12 사용자: 청소년 개방 약관 시행일(teenOpen)부터 본인인증은 가입 필수 단계가 아니다 — 언베일을 켤 때만(home-mode·adult 게이트가 따로 막는다).
-  if (!teenOpen() && !row.verified) return '/onboarding/verify'
+  // 11/13 사용자: 가입 단계 본인인증 삭제 — 본인인증은 언베일(19 버튼)을 켤 때만.
   return null
 }

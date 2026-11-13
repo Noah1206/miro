@@ -4,8 +4,7 @@ import { redirect } from 'next/navigation'
 import { requireUser } from '@/lib/auth'
 import { takeNext } from '@/lib/oauth-state'
 import { completeOnboarding, parseOnboarding, precheckNickname, type OnboardingError } from '@/lib/onboarding'
-import { WELCOME_PARAM, afterSignup, withWelcome } from '@/lib/onboarding-options'
-import { teenOpen } from '@/lib/teen-open'
+import { afterSignup, withWelcome } from '@/lib/onboarding-options'
 
 export type OnboardingState = OnboardingError | null
 
@@ -27,5 +26,6 @@ export async function finishOnboarding(_prev: OnboardingState, form: FormData): 
   // 11/12: 청소년 개방 약관 시행일부터는 본인인증 단계 없이 바로 홈 — 그 전에는 본인인증 단계로(가입 선물 표시는 그 단계를 지나 홈까지).
   // 11/13 가입을 마치면 로그인 전에 보던 곳(작품 상세 등)으로 돌아간다 — 홈으로만 보내면 보러 온 작품을 잃는다. 본인인증 단계에는 주소로 넘긴다.
   const dest = afterSignup(next)
-  redirect(done.welcomed ? (teenOpen() ? withWelcome(dest) : `/onboarding/verify?${WELCOME_PARAM}=1&next=${encodeURIComponent(dest)}`) : next)
+  // 11/13 사용자: 가입 단계 본인인증 삭제 — 바로 보던 곳으로.
+  redirect(done.welcomed ? withWelcome(dest) : dest)
 }
