@@ -19,6 +19,7 @@ import { ProfileIdentity } from './profile-editor'
 import { InstallAppButton } from '@/components/pwa-install'
 import { ProfileIcon } from './profile-icon'
 import { VerificationSheet } from './verify/verification-sheet'
+import { faqList } from '@/lib/faq'
 import styles from './my.module.css'
 
 /** Account overview: identity, real wallet balance, activity, settings and support. */
@@ -82,6 +83,15 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
           <MenuRow href={`mailto:${OPERATOR.email}`} label={t('문의하기')} icon="help" />{/* 11/12 사용자: 이메일 주소는 표시하지 않음(누르면 메일 앱) */}
           <MenuRow href="/my/ai-data" label={t('AI 개선 참여')} icon="data" />
         </MenuSection>
+        {/* 11/13 사용자: 홈에 있던 자주 묻는 질문을 프로필 섹션으로. 원문 한국어라 한국어 화면에서만. */}
+        {language === 'ko' && <MenuSection title="자주 묻는 질문">
+          {faqList().map(([q, a]) => (
+            <details key={q} className={styles.faq}>
+              <summary className={styles.row}><span className={styles.rowCopy}><span className={styles.rowLabel}>{q}</span></span><span className={styles.chevron}><ProfileIcon name="chevron" size={16} /></span></summary>
+              <p>{a}</p>
+            </details>
+          ))}
+        </MenuSection>}
       </div>
       <div className={styles.accountActions}>
         <form action={logout}><SubmitButton variant="ghost" size="sm" style={{ color: 'var(--profile-muted)', fontSize: 13, fontWeight: 450, padding: '8px 0' }}>{t('로그아웃')}</SubmitButton></form>

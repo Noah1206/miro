@@ -47,6 +47,12 @@
 .rowSub { color: var(--profile-muted); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .rowEnd { flex-shrink: 0; max-width: 45%; color: var(--profile-muted); font-size: 13px; line-height: 1.5; text-align: right; overflow-wrap: anywhere; }
 .chevron { display: flex; flex-shrink: 0; color: #909090; }
+.faq + .faq { border-top: 1px solid var(--profile-divider); }
+.faq > summary { list-style: none; }
+.faq > summary::-webkit-details-marker { display: none; }
+.faq > summary .chevron svg { transition: transform 160ms; }
+.faq[open] > summary .chevron svg { transform: rotate(90deg); }
+.faq > p { margin: -4px 0 14px; color: var(--profile-muted); font-size: 14px; line-height: 1.6; }
 .accountActions { display: flex; align-items: center; gap: 14px; margin: 16px 4px 8px; color: var(--profile-muted); font-size: 13px; }
 .accountActions > a { display: inline-flex; align-items: center; min-height: 44px; }
 .accountActions > span { color: #777; }
