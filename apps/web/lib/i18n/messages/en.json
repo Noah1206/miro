@@ -2308,5 +2308,8 @@
  "카드 결제가 완료됐어요. 잔액에 반영했습니다.": "Card payment complete. Added to your balance.",
  "결제창에 필요한 구매자 정보예요. 결제대행사(NHN KCP)로만 전달돼요.": "Buyer details required by the payment window. They are sent only to the payment processor (NHN KCP).",
  "[선택] 캐릭터 알림 받기": "[Optional] Get character notifications",
- "알림이 꺼져 있어요. 나중에 설정에서 켤 수 있어요.": "Notifications are off. You can turn them on later in settings."
+ "알림이 꺼져 있어요. 나중에 설정에서 켤 수 있어요.": "Notifications are off. You can turn them on later in settings.",
+ "초기 제작자를 찾고 있어요": "We’re looking for early creators",
+ "독점·등급 조건 없이 첫 작품부터 대화 보상 {rate}%, 수익은 계좌로 받아요.": "No exclusivity or tiers: earn {rate}% of chat spend from your first character, paid out to your bank account.",
+ "제작자 안내 보기": "See creator guide"
 }
