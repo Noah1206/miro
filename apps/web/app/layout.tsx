@@ -21,7 +21,6 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL('https://miroapp.app'),
     title: { default: title, template: title }, manifest: '/manifest.json',
     description,
-    keywords: ['AI 캐릭터챗', 'AI 채팅', '캐릭터 채팅', '캐릭터챗', 'AI 롤플레이', '미로', 'MIRO', '남성향', '여성향', 'BL', '웹소설'],
     applicationName: 'MIRO',
     appleWebApp: { capable: true, title: 'MIRO', statusBarStyle: 'black-translucent' },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },

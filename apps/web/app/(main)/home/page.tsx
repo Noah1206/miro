@@ -11,7 +11,7 @@ import { NotificationBell } from './bell'
 import { SiteFooter } from '@/components/site-footer'
 import { unreadContactCount } from '@/lib/ops/archive'
 import styles from './home.module.css'
-import { getT } from '@/lib/i18n/server'
+import { getLanguage, getT } from '@/lib/i18n/server'
 import { AudienceSelect } from './audience-select'
 import { InstallAppHint } from '@/components/pwa-install'
 import { accountProfile } from '@/lib/account-profile'
@@ -23,9 +23,19 @@ import { voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
 
 const SITE = 'https://miroapp.app'
+// 11/13 자주 묻는 질문 — 화면(한국어 화면만)과 구조화 데이터가 같은 글을 쓴다. Google FAQ 리치 결과는 2026-05 종료됐고, 이 글은 검색 답변·AI 답변용이다.
+const FAQ: [string, string][] = [
+  ['MIRO(미로)는 어떤 서비스인가요?', 'MIRO는 AI 캐릭터챗이에요. 성격과 가치관, 세계관을 가진 AI 캐릭터와 1:1로 대화하고, 앱 밖에서도 문자를 주고받을 수 있어요. 캐릭터는 자기 생활 리듬대로 지내다가 먼저 연락하기도 해요.'],
+  ['무료로 이용할 수 있나요?', '네. 가입하면 1,500토큰을 선물로 드리고, 출석 체크로 매일 토큰을 더 받을 수 있어요. 토큰이 부족할 때만 충전하면 돼요.'],
+  ['어떤 캐릭터와 대화할 수 있나요?', '남성향·여성향 로맨스, 판타지, 학원물, 무협, BL 등 다양한 장르의 캐릭터와 오리지널 스토리가 있어요. 홈과 탐색에서 장르·태그로 찾을 수 있어요.'],
+  ['캐릭터를 직접 만들 수 있나요?', '네. 만들기 탭에서 캐릭터의 성격, 말투, 세계관, 첫 장면을 정해 누구나 만들고 공개할 수 있어요. 다른 사람이 내 캐릭터와 대화하면 창작 보상을 받아요.'],
+  ['몇 살부터 이용할 수 있나요?', '만 14세 이상이면 가입할 수 있어요. 성인 전용 콘텐츠(언베일)는 본인인증으로 만 19세 이상임을 확인한 분에게만 열려요.'],
+  ['앱을 설치해야 하나요?', '아니요. miroapp.app 웹에서 바로 쓸 수 있고, 휴대폰 홈 화면에 추가하면 앱처럼 쓸 수 있어요. 한국어, 영어, 일본어, 중국어를 지원해요.'],
+]
 const HOME_JSON_LD = {
   '@context': 'https://schema.org',
   '@graph': [
+    { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
     { '@type': 'WebSite', '@id': `${SITE}/#website`, url: `${SITE}/home`, name: 'MIRO', alternateName: ['미로', 'AI 캐릭터챗 MIRO'], inLanguage: 'ko-KR', publisher: { '@id': `${SITE}/#org` } },
     { '@type': 'Organization', '@id': `${SITE}/#org`, name: 'MIRO', legalName: '스터플', url: SITE, logo: `${SITE}/icon-512.png` },
     {
@@ -50,7 +60,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     homeUnveilEnabled(user?.id ?? null),
     user ? accountProfile(user) : null,
   ])
-  const t = await getT()
+  const [t, language] = await Promise.all([getT(), getLanguage()])
 
   return (
     <Page immersive wide style={{ paddingBottom: 'calc(var(--nav-h) + var(--space-3))', '--font-title-3': '16px' } as React.CSSProperties}>
@@ -116,6 +126,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}
       {sections.others.length > 0 && <AllCharacters items={sections.others} />}
       </>; return content })()}  {/* 11/12 사용자: 로그인 전 홈 전체를 가리던 19세 막 삭제 — 성인 표지·인트로는 언베일이 꺼진 동안 이미 가려진다. */}
+      {/* 11/13 자주 묻는 질문 — 원문이 한국어라 한국어 화면에서만(약관 본문과 같은 방식). 펼침은 브라우저 기본 details. */}
+      {language === 'ko' && <section aria-labelledby="row-faq" lang="ko" style={{ margin: 'var(--space-7) 0', padding: '0 var(--gutter)' }}>
+        <h2 id="row-faq" className="t-title-3" style={{ marginBottom: 14 }}>자주 묻는 질문</h2>
+        {FAQ.map(([q, a]) => (
+          <details key={q} style={{ borderTop: '1px solid var(--color-border, rgba(255,255,255,.08))', padding: '12px 0' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 'var(--weight-semibold)' }}>{q}</summary>
+            <p className="t-caption" style={{ margin: '8px 0 0', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>{a}</p>
+          </details>
+        ))}
+      </section>}
       {/* 초기화면의 사업자 정보·약관·호스팅 제공자·고객문의(전자상거래법 제10조, 10/5). */}
       <SiteFooter />
     </Page>
