@@ -21,6 +21,7 @@ import { HomeViewBeacon } from './view-beacon'
 import { VoiceSoonSheet } from './voice-soon-sheet'
 import { voicePaused } from '@miro/config'
 import { discoveryTagLabel } from '@/lib/discovery-filters'
+import { AfterMount } from './after-mount'
 
 const SITE = 'https://miroapp.app'
 // 11/13 자주 묻는 질문 — 화면(한국어 화면만)과 구조화 데이터가 같은 글을 쓴다. Google FAQ 리치 결과는 2026-05 종료됐고, 이 글은 검색 답변·AI 답변용이다.
@@ -120,7 +121,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
           <h2 id="row-tags" className="t-title-3">{t('🏷️ 취향은 숨겨도 태그는 못 숨겨')}</h2>
           <TransitionLink href="/explore" className="t-caption" style={{ color: 'var(--color-text-secondary)' }}>{t('전체 보기')}</TransitionLink>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{sections.tags.map(tag => <TransitionLink key={tag} href={`/explore?tag=${encodeURIComponent(tag)}`} className="t-caption" style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--color-surface-2, rgba(255,255,255,.06))', color: 'var(--color-text-primary)' }}>#{discoveryTagLabel(tag)}</TransitionLink>)}</div>
+        {/* 11/13 베이비챗식: 태그 글자(유부녀·NTR 등)는 브라우저에서만 그려 검색엔진이 사이트를 성인물로 분류하지 않게. */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, minHeight: 30 }}><AfterMount>{sections.tags.map(tag => <TransitionLink key={tag} href={`/explore?tag=${encodeURIComponent(tag)}`} className="t-caption" style={{ padding: '6px 12px', borderRadius: 999, background: 'var(--color-surface-2, rgba(255,255,255,.06))', color: 'var(--color-text-primary)' }}>#{discoveryTagLabel(tag)}</TransitionLink>)}</AfterMount></div>
       </section>}
       {sections.safety.length > 0 && <Row index={6} row={{ key: 'safety', title: t('🛡️ 놓치면 아쉬운 세이프티 인기 TOP 10'), subtitle: t('언베일 없이도 재밌는 이야기'), items: sections.safety }} href="/explore" />}
       {/* 10/28: 전체 캐릭터 격자 — 위 섹션에 나온 캐릭터도 포함. */}

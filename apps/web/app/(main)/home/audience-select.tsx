@@ -52,7 +52,8 @@ export function AudienceSelect({ groups, audience }: { groups: DiscoveryGroup[];
         ))}
       </div>
       <div className={styles.scroll}>
-        <DiscoveryFilters key={openCount} groups={groups} selected={tags} onChange={setTags} />
+        {/* 11/13 베이비챗식: 태그 목록은 창을 연 뒤에만 그린다 — 닫힌 창의 태그 글자가 홈 HTML(검색엔진)에 들어가지 않게. */}
+        {open && <DiscoveryFilters key={openCount} groups={groups} selected={tags} onChange={setTags} />}
         {!groups.length && <p className={styles.empty}>{t('등록된 태그가 아직 없어요')}</p>}
       </div>
       <footer className={styles.footer}>
