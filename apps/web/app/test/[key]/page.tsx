@@ -52,6 +52,13 @@ export default async function TestResult({ params }: Params) {
           {r.tags.map(t => <li key={t} style={chip}>#{t.replace(/ /g, '_')}</li>)}
         </ul>
         <p style={{ margin: 0, wordBreak: 'keep-all' }}>{r.desc}</p>
+        {/* 이 유형이 끌리는 인기 태그 */}
+        <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
+          <span className="t-caption">{r.title}이 끌리는 태그</span>
+          <ul style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
+            {r.likes.map(t => <li key={t} style={{ ...chip, color: 'var(--color-text-primary)' }}>#{t}</li>)}
+          </ul>
+        </div>
         {/* 환상의 케미·파국의 조합 — 히로인 유형. */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)', textAlign: 'center' }}>
           {[['환상의 케미', r.chemi.type], ['파국의 조합', r.bad]].map(([label, type]) => (

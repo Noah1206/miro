@@ -9,6 +9,7 @@ test('질문 한 벌마다 여덟 유형이 선택지에 네 번씩 나온다', 
     expect(set.every(q => new Set(q.a.map(([t]) => t)).size === 4)).toBe(true)
   }
   expect(Object.keys(RESULTS).sort()).toEqual([...TYPES].sort())
+  expect(Object.values(RESULTS).every(r => r.tags.length && r.likes.length && r.recs.length)).toBeTruthy()
 })
 
 test('가장 많이 고른 유형, 동점이면 나중에 고른 유형', () => {
