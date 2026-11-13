@@ -6,11 +6,12 @@ import { QUESTION_SETS, resultKey, type Question, type TypeKey } from '@/lib/qui
 
 const shuffle = <T,>(xs: T[]) => xs.map(x => [Math.random(), x] as const).sort((a, b) => a[0] - b[0]).map(([, x]) => x)
 
-/** 시작 화면 → 질문 8개(두 벌 중 한 벌, 순서와 선택지를 섞음) → 결과 주소로 이동. 무작위는 '시작하기'를 누른 뒤에만 뽑는다(서버 그림과 어긋나지 않게). */
+/** 시작 화면 → 질문 8개(두 벌 중 한 벌, 순서와 선택지를 섞음, 고른 뒤 '다음') → 결과 주소로 이동. 무작위는 '시작하기'를 누른 뒤에만 뽑는다(서버 그림과 어긋나지 않게). */
 export function Quiz() {
   const router = useRouter()
   const [deck, setDeck] = useState<Question[] | null>(null)
   const [picks, setPicks] = useState<TypeKey[]>([])
+  const [chosen, setChosen] = useState<TypeKey | null>(null)   // 고르기만 한 상태 — '다음'을 눌러야 넘어간다(11/13 요청)
 
   if (!deck) return (
     <div style={{ display: 'grid', gap: 'var(--space-5)', textAlign: 'center' }}>
@@ -22,9 +23,12 @@ export function Quiz() {
 
   const step = picks.length
   const cur = deck[Math.min(step, deck.length - 1)]!
-  const pick = (type: TypeKey) => {
-    const next = [...picks, type]
+  const last = step >= deck.length - 1
+  const goNext = () => {
+    if (!chosen) return
+    const next = [...picks, chosen]
     setPicks(next)
+    setChosen(null)
     if (next.length === deck.length) router.push(`/test/${resultKey(next)}`)
   }
   return (
@@ -39,11 +43,12 @@ export function Quiz() {
       {/* 선택지는 세로 한 줄, 앞에 번호(11/13 요청). */}
       <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
         {cur.a.map(([type, text], i) => (
-          <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} onClick={() => pick(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45 }}>
+          <Button key={`${step}-${type}`} size="lg" full disabled={step >= deck.length} aria-pressed={chosen === type} onClick={() => setChosen(type)} style={{ justifyContent: 'flex-start', textAlign: 'left', whiteSpace: 'normal', wordBreak: 'keep-all', lineHeight: 1.45, ...(chosen === type && { background: 'var(--color-accent-selected)', boxShadow: 'inset 0 0 0 1px var(--color-accent)' }) }}>
             <span style={{ display: 'flex', gap: 10 }}><span aria-hidden style={{ flex: 'none', color: 'var(--color-accent-text)', fontWeight: 'var(--weight-bold)' }}>{i + 1}</span><span>{text}</span></span>
           </Button>
         ))}
       </div>
+      <Button variant="primary" size="lg" full disabled={!chosen || step >= deck.length} onClick={goNext}>{last ? '결과 보기' : '다음'}</Button>
     </div>
   )
 }

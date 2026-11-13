@@ -8,13 +8,13 @@ import { RESULTS, type TypeKey } from '@/lib/quiz'
 type Params = { params: Promise<{ key: string }> }
 const SITE = 'https://miroapp.app'
 
-/** 결과 카드의 표지 = 환상의 케미 작품의 표지. 추천 작품도 표지를 함께 읽는다. */
+/** 결과 카드의 그림 = 유형별 '환상의 케미' 히로인(11/13 힉스필드: 케미 작품의 사진을 참조로 넣어 같은 그림체로, 테스트 질문의 상황에 맞춰 새로 그림 — public/quiz/<유형>.jpg). 추천 작품은 표지를 읽는다. */
 async function load(key: string) {
   const r = RESULTS[key as TypeKey]
   if (!r) return null
   const coverOf = async (slug: string) => (await getOfficialBySlug(slug))?.images.find(Boolean) ?? null
-  const [cover, ...recCovers] = await Promise.all([r.chemi.slug, ...r.recs.map(w => w.slug)].map(coverOf))
-  return { ...r, cover: cover ?? null, recs: r.recs.map((w, i) => ({ ...w, cover: recCovers[i] ?? null })) }
+  const recCovers = await Promise.all(r.recs.map(w => coverOf(w.slug)))
+  return { ...r, cover: `/quiz/${key}.jpg`, recs: r.recs.map((w, i) => ({ ...w, cover: recCovers[i] ?? null })) }
 }
 
 /** 공유했을 때 링크 미리보기에 유형 이름과 표지가 뜬다 — 결과 카드를 따로 만들지 않는 이유. */
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const r = await load(key)
   if (!r) return {}
   const title = `내 남주 유형은 [${r.title}]`
-  const images = r.cover ? [r.cover] : undefined
+  const images = [r.cover]
   return { description: r.desc, openGraph: { title, description: r.desc, url: `/test/${key}`, images }, twitter: { card: 'summary_large_image', title, description: r.desc, images } }
 }
 
