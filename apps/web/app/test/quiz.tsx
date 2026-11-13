@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { QUESTIONS, resultKey, type Question, type TypeKey } from '@/lib/quiz'
+import { QUESTIONS, encodeScores, resultKey, type Question, type TypeKey } from '@/lib/quiz'
 
 const shuffle = <T,>(xs: T[]) => xs.map(x => [Math.random(), x] as const).sort((a, b) => a[0] - b[0]).map(([, x]) => x)
 
@@ -29,7 +29,7 @@ export function Quiz() {
     const next = [...picks, chosen]
     setPicks(next)
     setChosen(null)
-    if (next.length === deck.length) router.push(`/test/${resultKey(next)}`)
+    if (next.length === deck.length) router.push(`/test/${resultKey(next)}?s=${encodeScores(next)}`)   // s = 내가 유형별로 고른 횟수(결과의 점수 보드)
   }
   return (
     <div style={{ display: 'grid', gap: 'var(--space-5)' }}>

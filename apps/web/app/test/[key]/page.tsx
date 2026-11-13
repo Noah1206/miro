@@ -3,9 +3,9 @@ import { notFound } from 'next/navigation'
 import { getOfficialBySlug } from '@/lib/characters'
 import { ButtonLink } from '@/components/ui/button'
 import { LogoMark } from '@/components/ui/logo'
-import { RESULTS, type TypeKey } from '@/lib/quiz'
+import { RESULTS, decodeScores, type TypeKey } from '@/lib/quiz'
 
-type Params = { params: Promise<{ key: string }> }
+type Params = { params: Promise<{ key: string }>; searchParams: Promise<{ s?: string }> }
 const SITE = 'https://miroapp.app'
 
 /** 결과 카드의 그림 = 유형별 '환상의 케미' 히로인(11/13 힉스필드: 케미 작품의 사진을 참조로 넣어 같은 그림체로, 테스트 질문의 상황에 맞춰 새로 그림 — public/quiz/<유형>.jpg). 추천 작품은 표지를 읽는다. */
@@ -29,8 +29,11 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 const chip: React.CSSProperties = { padding: '4px 10px', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface-2)', color: 'var(--color-accent-text)', fontSize: 'var(--font-caption)' }
 
-export default async function TestResult({ params }: Params) {
+export default async function TestResult({ params, searchParams }: Params) {
   const { key } = await params
+  // 내가 실제로 고른 횟수(테스트를 마치고 온 주소에만 있다). 1위가 이 결과와 다르면 남의 글자열이라 보지 않는다.
+  const scored = decodeScores((await searchParams).s)
+  const scores = scored && scored[0]![1] === scored.find(c => c[0] === key)?.[1] ? scored.filter(c => c[1] > 0) : null
   const r = await load(key)
   if (!r) notFound()
   const share = `https://twitter.com/intent/tweet?${new URLSearchParams({ text: `내 남주 유형은 [${r.title}]입니다!\n${r.quote}\n\n내 유형은 뭘까? [내가 남성향 웹소설에 빙의했다면?] 테스트 하러 가기\n#미로_남주테스트 #미로`, url: `${SITE}/test?utm_source=test` })}`
@@ -63,14 +66,47 @@ export default async function TestResult({ params }: Params) {
             {r.likes.map(t => <li key={t} style={{ ...chip, color: 'var(--color-text-primary)' }}>#{t}</li>)}
           </ul>
         </div>
-        {/* 환상의 케미·파국의 조합 — 히로인 유형. */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)', textAlign: 'center' }}>
-          {[['환상의 케미', r.chemi.type], ['파국의 조합', r.bad]].map(([label, type]) => (
-            <div key={label} style={{ padding: 'var(--space-3)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }}>
-              <div className="t-caption">{label}</div>
-              <div style={{ marginTop: 4, fontSize: 'var(--font-title-3)', fontWeight: 'var(--weight-bold)' }}>{type}</div>
+        {/* 유형 점수 보드 — 내가 12문항에서 유형별로 실제로 고른 횟수. */}
+        {scores && (
+          <div style={{ display: 'grid', gap: 10, padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontWeight: 'var(--weight-bold)' }}>내 유형 점수 보드</span>
+              <span className="t-caption">12문항 중 고른 횟수</span>
             </div>
-          ))}
+            {scores.map(([t, n]) => (
+              <div key={t} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 5em) 1fr 4.5em', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 'var(--font-caption)', fontWeight: t === key ? 'var(--weight-bold)' : undefined }}>{RESULTS[t].title}</span>
+                <span role="img" aria-label={`${RESULTS[t].title} ${n}회`} style={{ height: 10, borderRadius: 999, background: 'var(--color-surface-3)', overflow: 'hidden' }}>
+                  <span style={{ display: 'block', width: `${(n / scores[0]![1]) * 100}%`, height: '100%', borderRadius: 999, background: t === key ? 'var(--color-accent)' : 'var(--color-text-tertiary)' }} />
+                </span>
+                <span style={{ fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-bold)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: t === key ? 'var(--color-accent-text)' : undefined }}>{n}회 · {Math.round((n / 12) * 100)}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* 히로인 유형별 궁합 지수 — 막대 차트. 첫 줄이 환상의 케미, 마지막 줄이 파국의 조합. 재미로 보는 수치다. */}
+        <div style={{ display: 'grid', gap: 10, padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ fontWeight: 'var(--weight-bold)' }}>히로인 유형별 궁합 지수</span>
+            <span className="t-caption">재미로 보는 수치</span>
+          </div>
+          {r.compat.map(([type, score], i) => {
+            const best = i === 0, worst = i === r.compat.length - 1
+            const color = best ? 'var(--color-accent)' : worst ? 'var(--color-danger)' : 'var(--color-text-tertiary)'
+            return (
+              <div key={type} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 7.5em) 1fr 3em', alignItems: 'center', gap: 10 }}>
+                <span style={{ fontSize: 'var(--font-caption)', fontWeight: best || worst ? 'var(--weight-bold)' : undefined, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{type}</span>
+                <span role="img" aria-label={`${type} ${score}%`} style={{ height: 10, borderRadius: 999, background: 'var(--color-surface-3)', overflow: 'hidden' }}>
+                  <span style={{ display: 'block', width: `${score}%`, height: '100%', borderRadius: 999, background: color }} />
+                </span>
+                <span style={{ fontSize: 'var(--font-caption)', fontWeight: 'var(--weight-bold)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: best ? 'var(--color-accent-text)' : worst ? 'var(--color-danger)' : undefined }}>{score}%</span>
+              </div>
+            )
+          })}
+          <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }} className="t-caption">
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 999, background: 'var(--color-accent)', marginRight: 6 }} />환상의 케미 · {r.chemi.type}</span>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 999, background: 'var(--color-danger)', marginRight: 6 }} />파국의 조합 · {r.bad}</span>
+          </div>
         </div>
         <ButtonLink href={`/character/${r.chemi.slug}`} variant="primary" size="lg" full style={{ whiteSpace: 'normal', textAlign: 'center', wordBreak: 'keep-all' }}>나와 환상의 케미, {r.chemi.type} 만나러 가기</ButtonLink>
         </div>
