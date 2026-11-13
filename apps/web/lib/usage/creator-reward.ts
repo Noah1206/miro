@@ -1,6 +1,7 @@
 import { and, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import { characters, db, officialVoices, rechargeGrants, rechargeLedger, turnUndos, usageLedger, users } from '@miro/db'
 import { commit, reserve, type UsageTransaction } from './guard'
+import { revisionEffective } from '@/lib/legal/revisions'
 
 /**
  * 창작 보상 1단계(11/11) — 다른 사람이 내 캐릭터와 대화하며 실제로 쓴 토큰의 일부를 만든 사람 지갑에 미로 토큰으로 적립한다(현금 아님).
@@ -55,8 +56,10 @@ export async function accrueCreatorReward(tx: UsageTransaction, opts: { reservat
     .innerJoin(rechargeGrants, and(eq(rechargeGrants.id, rechargeLedger.grantId), eq(rechargeGrants.source, 'purchase')))
     .where(eq(rechargeLedger.ledgerId, opts.reservationId))
   const earned = Math.min(amount, Math.floor((paid?.n ?? 0) * CREATOR_REWARD_RATE))
+  // 11/14 사용자: 무료 토큰으로 한 대화는 보상 없음(베이비챗과 같은 방식) — 약관 개정(2026-12-14 시행, 30일 전 공지)부터. 그 전엔 일반 지갑으로.
+  const free = revisionEffective('service', '2026-12-14') ? 0 : amount - earned
   const ref = refOf(opts.reservationId, opts.characterId)
-  for (const [provider, n] of [[CREATOR_REWARD_PROVIDER, earned], [CREATOR_REWARD_FREE_PROVIDER, amount - earned]] as const) {
+  for (const [provider, n] of [[CREATOR_REWARD_PROVIDER, earned], [CREATOR_REWARD_FREE_PROVIDER, free]] as const) {
     if (n > 0) await tx.insert(rechargeGrants).values({ userId: c.ownerId, amount: n, source: 'grant', provider, externalRef: ref }).onConflictDoNothing()
   }
 }
