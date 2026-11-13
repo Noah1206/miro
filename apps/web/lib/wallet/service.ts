@@ -79,9 +79,9 @@ export async function walletSnapshot(userId: string, orderId?: string): Promise<
   ])
   let account: WalletSnapshot['account'] = null
   let products: WalletSnapshot['products'] = []
-  // 11/13 카드 결제(포트원·KG이니시스) — 설정이 다 있을 때만. 브라우저엔 상점 id·채널 키만 간다.
+  // 11/13 카드 결제(포트원·NHN KCP) — 설정이 다 있을 때만. 브라우저엔 상점 id·채널 키만 간다.
   const cfg = cardPaymentConfig()
-  // 결제창(KG이니시스)은 구매자 이름·연락처·이메일이 필수 — 이름·이메일은 계정 값을 미리 채워 두고, 휴대폰은 결제할 때 입력받는다(우리 서버엔 저장 안 함).
+  // 결제창은 구매자 이름·연락처·이메일이 필수 — 이름·이메일은 계정 값을 미리 채워 두고, 휴대폰은 결제할 때 입력받는다(우리 서버엔 저장 안 함).
   const [buyer] = cfg ? await db.select({ name: users.displayName, email: users.email }).from(users).where(eq(users.id, userId)).limit(1) : []
   const card = cfg ? { ...cfg, name: buyer?.name ?? '', email: buyer?.email ?? '' } : null
   try {

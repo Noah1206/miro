@@ -20,7 +20,7 @@ export function RechargeCatalog({ available, products, onPick, onClose, busy = f
   available: number; products: RechargeProduct[]; onPick: (id: string, pay: PayChoice) => void; onClose: () => void; busy?: boolean; picking?: string | null
   /** 11/12 만 19세 미만 — 법정대리인 동의 칸에 체크해야 금액 버튼이 눌린다(서버도 같은 확인). */
   minor?: boolean
-  /** 11/13 카드 결제(포트원·KG이니시스) — 있으면 결제 수단을 고른다. 이름·이메일은 계정 값으로 미리 채운다. */
+  /** 11/13 카드 결제(포트원·NHN KCP) — 있으면 결제 수단을 고른다. 이름·이메일은 계정 값으로 미리 채운다. */
   card?: { name: string; email: string } | null
   /** 계좌이체를 받는지(운영 계좌가 설정됐는지). */
   bank?: boolean
@@ -61,7 +61,7 @@ export function RechargeCatalog({ available, products, onPick, onClose, busy = f
         <button type="button" role="radio" aria-checked={method === 'bank'} onClick={() => setMethod('bank')} style={chip(method === 'bank')}>{t('계좌이체')}</button>
       </div>}
       {method === 'card' && <div style={{ display: 'grid', gap: 6 }}>
-        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{t('결제창에 필요한 구매자 정보예요. 결제대행사(KG이니시스)로만 전달돼요.')}</span>
+        <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{t('결제창에 필요한 구매자 정보예요. 결제대행사(NHN KCP)로만 전달돼요.')}</span>
         <input value={buyer.name} onChange={e => setBuyer(b => ({ ...b, name: e.target.value }))} maxLength={30} autoComplete="name" placeholder={t('이름')} aria-label={t('구매자 이름')} style={field} />
         <input value={buyer.phone} onChange={e => setBuyer(b => ({ ...b, phone: e.target.value }))} maxLength={13} inputMode="tel" autoComplete="tel" placeholder={t('휴대폰 번호 (- 없이)')} aria-label={t('구매자 휴대폰 번호')} aria-invalid={!!buyer.phone && !phoneOk(buyer.phone)} style={field} />
         <input value={buyer.email} onChange={e => setBuyer(b => ({ ...b, email: e.target.value }))} maxLength={100} type="email" autoComplete="email" placeholder={t('이메일')} aria-label={t('구매자 이메일')} aria-invalid={!!buyer.email && !emailOk(buyer.email)} style={field} />

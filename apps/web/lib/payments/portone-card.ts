@@ -7,8 +7,8 @@ import { applyPaymentEvent } from './service'
 import { purchasedProductIds } from './first-purchase'
 
 /**
- * 카드 결제(11/13) — 포트원 V2 결제창 + KG이니시스 채널. 결제대행사는 포트원 콘솔의 채널로 고르고 채널 키만 넣는다.
- * env: PORTONE_STORE_ID·PORTONE_API_SECRET(본인인증과 같은 값), PORTONE_PAYMENT_CHANNEL_KEY(KG이니시스 채널), PORTONE_WEBHOOK_SECRET.
+ * 카드 결제(11/13) — 포트원 V2 결제창 + NHN KCP 채널(본인인증과 같은 "Miro" 채널, 용도 결제·인증). 결제대행사는 포트원 콘솔의 채널로 고르고 채널 키만 넣는다.
+ * env: PORTONE_STORE_ID·PORTONE_API_SECRET(본인인증과 같은 값), PORTONE_PAYMENT_CHANNEL_KEY(결제 채널), PORTONE_WEBHOOK_SECRET.
  * 지급은 포트원 API 로 결제를 다시 조회해 '결제 완료 + 주문 금액과 같음'일 때만, applyPaymentEvent 한 길로(이중 지급은 UNIQUE 가 막는다).
  */
 export const CARD_PROVIDER = 'portone'

@@ -2296,7 +2296,6 @@
  "결제가 완료되지 않았어요. 카드에서 빠져나간 금액이 있으면 자동으로 취소돼요.": "The payment wasn't completed. Any amount charged to your card will be cancelled automatically.",
  "결제를 마치지 않았어요.": "The payment wasn't finished.",
  "결제를 확인하고 있어요. 잠시 후 잔액에 반영돼요.": "Confirming your payment. It will show in your balance shortly.",
- "결제창에 필요한 구매자 정보예요. 결제대행사(KG이니시스)로만 전달돼요.": "Buyer details required by the payment window. They are sent only to the payment processor (KG Inicis).",
  "결제창을 열지 못했어요. 잠시 후 다시 시도해 주세요.": "Couldn't open the payment window. Please try again shortly.",
  "계좌이체": "Bank transfer",
  "구매자 이름": "Buyer name",
@@ -2306,5 +2305,6 @@
  "지금은 카드 결제를 받지 않고 있어요.": "Card payments aren't available right now.",
  "카드 결제": "Card",
  "휴대폰 번호 (- 없이)": "Mobile number (digits only)",
- "카드 결제가 완료됐어요. 잔액에 반영했습니다.": "Card payment complete. Added to your balance."
+ "카드 결제가 완료됐어요. 잔액에 반영했습니다.": "Card payment complete. Added to your balance.",
+ "결제창에 필요한 구매자 정보예요. 결제대행사(NHN KCP)로만 전달돼요.": "Buyer details required by the payment window. They are sent only to the payment processor (NHN KCP)."
 }

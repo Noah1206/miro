@@ -150,7 +150,7 @@ export function WalletProvider({ children, userId = null }: { children: ReactNod
   }, [wallet?.order?.id, wallet?.order?.status, wallet?.order?.settledAt])
 
   /**
-   * 11/13 카드 결제(포트원·KG이니시스) — 서버가 금액을 정한 주문 → 포트원 결제창 → 서버가 포트원에 다시 조회해 지급.
+   * 11/13 카드 결제(포트원·NHN KCP) — 서버가 금액을 정한 주문 → 포트원 결제창 → 서버가 포트원에 다시 조회해 지급.
    * PC 는 창이 닫히면 여기서 확인하고, 모바일은 결제창이 /recharge/card/return 으로 돌려보낸다(웹훅도 같은 확인을 한다).
    */
   async function cardCheckout(choice: string, buyer: Buyer) {
