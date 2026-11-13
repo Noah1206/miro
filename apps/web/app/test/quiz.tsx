@@ -15,8 +15,8 @@ export function Quiz() {
 
   if (!deck) return (
     <div style={{ display: 'grid', gap: 'var(--space-5)', textAlign: 'center' }}>
-      <h1 className="t-display" style={{ margin: 0, wordBreak: 'keep-all' }}>내가 남성향 웹소설에 빙의했다면?<br />나는 어떤 남주일까</h1>
-      <p className="t-caption" style={{ margin: 0 }}>12가지 상황으로 알아보는 내 남주 유형 · 1분 · 로그인 없음</p>
+      <h1 className="t-display" style={{ margin: 0, wordBreak: 'keep-all' }}>현생에선 아무도 모르는 내 취향<br />내 최애 히로인은 어떤 유형일까?</h1>
+      <p className="t-caption" style={{ margin: 0 }}>12가지 상황으로 알아보는 내 최애 히로인 유형 · 1분 · 로그인 없음</p>
       <Button variant="primary" size="lg" full onClick={() => setDeck(shuffle(QUESTIONS).map(q => ({ ...q, a: shuffle(q.a) })))}>테스트 시작하기</Button>
     </div>
   )

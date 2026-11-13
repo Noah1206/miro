@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { key } = await params
   const r = await load(key)
   if (!r) return {}
-  const title = `내 남주 유형은 [${r.title}]`
+  const title = `내 최애 히로인은 [${r.title}]`
   const images = [r.cover]
   return { description: r.desc, openGraph: { title, description: r.desc, url: `/test/${key}`, images }, twitter: { card: 'summary_large_image', title, description: r.desc, images } }
 }
@@ -36,7 +36,7 @@ export default async function TestResult({ params, searchParams }: Params) {
   const scores = scored && scored[0]![1] === scored.find(c => c[0] === key)?.[1] ? scored.filter(c => c[1] > 0) : null
   const r = await load(key)
   if (!r) notFound()
-  const share = `https://twitter.com/intent/tweet?${new URLSearchParams({ text: `내 남주 유형은 [${r.title}]입니다!\n${r.quote}\n\n내 유형은 뭘까? [내가 남성향 웹소설에 빙의했다면?] 테스트 하러 가기\n#미로_남주테스트 #미로`, url: `${SITE}/test?utm_source=test` })}`
+  const share = `https://twitter.com/intent/tweet?${new URLSearchParams({ text: `내 최애 히로인은 [${r.title}]!\n${r.quote}\n\n현생에선 아무도 모르는 내 취향, 너는? 테스트 하러 가기\n#미로_취향테스트 #미로`, url: `${SITE}/test?utm_source=test` })}`
   return (
     <main style={{ minHeight: '100dvh', display: 'grid', alignContent: 'center', padding: 'var(--space-6) var(--gutter)' }}>
       {/* 11/13 태블릿 폭(768)까지 넓힌다 — 넓으면 카드와 설명이 좌우로, 좁으면 위아래로. */}
@@ -49,7 +49,7 @@ export default async function TestResult({ params, searchParams }: Params) {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,6,14,0) 35%, rgba(8,6,14,.94) 88%)' }} />
           <span style={{ position: 'absolute', top: 14, left: 14, display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px 6px 8px', borderRadius: 999, background: 'rgba(12,10,20,.6)', fontWeight: 'var(--weight-bold)', fontSize: 'var(--font-caption)' }}><LogoMark size={20} />MIRO</span>
           <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 'var(--space-5) var(--space-4)', textAlign: 'center' }}>
-            <p className="t-caption" style={{ margin: '0 0 6px' }}>당신의 남주 유형</p>
+            <p className="t-caption" style={{ margin: '0 0 6px' }}>현생에선 아무도 모르는 내 최애 히로인</p>
             <h1 className="t-hero" style={{ margin: 0 }}>{r.title}</h1>
             <p style={{ margin: '10px 0 0', color: 'var(--color-text-secondary)', wordBreak: 'keep-all' }}>{r.quote}</p>
           </div>
@@ -59,18 +59,18 @@ export default async function TestResult({ params, searchParams }: Params) {
           {r.tags.map(t => <li key={t} style={chip}>#{t.replace(/ /g, '_')}</li>)}
         </ul>
         <p style={{ margin: 0, wordBreak: 'keep-all' }}>{r.desc}</p>
-        {/* 이 유형이 끌리는 인기 태그 */}
+        {/* 이 취향이 끌리는 인기 태그 */}
         <div style={{ display: 'grid', gap: 'var(--space-2)' }}>
-          <span className="t-caption">{r.title}이 끌리는 태그</span>
+          <span className="t-caption">이 취향이 끌리는 태그</span>
           <ul style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: 0, padding: 0, listStyle: 'none' }}>
             {r.likes.map(t => <li key={t} style={{ ...chip, color: 'var(--color-text-primary)' }}>#{t}</li>)}
           </ul>
         </div>
-        {/* 유형 점수 보드 — 내가 12문항에서 유형별로 실제로 고른 횟수. */}
+        {/* 취향 점수 보드 — 내가 12문항에서 유형별로 실제로 고른 횟수. */}
         {scores && (
           <div style={{ display: 'grid', gap: 10, padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span style={{ fontWeight: 'var(--weight-bold)' }}>내 유형 점수 보드</span>
+              <span style={{ fontWeight: 'var(--weight-bold)' }}>내 취향 점수 보드</span>
               <span className="t-caption">12문항 중 고른 횟수</span>
             </div>
             {scores.map(([t, n]) => (
@@ -84,10 +84,10 @@ export default async function TestResult({ params, searchParams }: Params) {
             ))}
           </div>
         )}
-        {/* 히로인 유형별 궁합 지수 — 막대 차트. 첫 줄이 환상의 케미, 마지막 줄이 파국의 조합. 재미로 보는 수치다. */}
+        {/* 히로인 유형별 취향 지수 — 막대 차트. 첫 줄이 최애, 마지막 줄이 지뢰. 재미로 보는 수치다. */}
         <div style={{ display: 'grid', gap: 10, padding: 'var(--space-4)', borderRadius: 'var(--radius-lg)', background: 'var(--color-surface-2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ fontWeight: 'var(--weight-bold)' }}>히로인 유형별 궁합 지수</span>
+            <span style={{ fontWeight: 'var(--weight-bold)' }}>히로인 유형별 취향 지수</span>
             <span className="t-caption">재미로 보는 수치</span>
           </div>
           {r.compat.map(([type, score], i) => {
@@ -104,16 +104,16 @@ export default async function TestResult({ params, searchParams }: Params) {
             )
           })}
           <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap' }} className="t-caption">
-            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 999, background: 'var(--color-accent)', marginRight: 6 }} />환상의 케미 · {r.chemi.type}</span>
-            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 999, background: 'var(--color-danger)', marginRight: 6 }} />파국의 조합 · {r.bad}</span>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 999, background: 'var(--color-accent)', marginRight: 6 }} />최애 · {r.chemi.type}</span>
+            <span><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 999, background: 'var(--color-danger)', marginRight: 6 }} />지뢰 · {r.bad}</span>
           </div>
         </div>
-        <ButtonLink href={`/character/${r.chemi.slug}`} variant="primary" size="lg" full style={{ whiteSpace: 'normal', textAlign: 'center', wordBreak: 'keep-all' }}>나와 환상의 케미, {r.chemi.type} 만나러 가기</ButtonLink>
+        <ButtonLink href={`/character/${r.chemi.slug}`} variant="primary" size="lg" full style={{ whiteSpace: 'normal', textAlign: 'center', wordBreak: 'keep-all' }}>내 최애 {r.chemi.type}, 만나러 가기</ButtonLink>
         </div>
        </div>
         {/* 추천 작품 — 세로가 조금 더 긴(4:5) 표지 카드 그리드. */}
         <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
-          <p className="t-caption" style={{ margin: 0 }}>{r.title}에게 추천하는 작품</p>
+          <p className="t-caption" style={{ margin: 0 }}>{r.title} 취향에게 추천하는 작품</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--space-3)' }}>
             {r.recs.map(w => (
               <a key={w.slug} href={`/character/${w.slug}`} style={{ position: 'relative', display: 'block', aspectRatio: '4 / 5', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--color-surface-2)', color: 'var(--color-text-primary)' }}>
