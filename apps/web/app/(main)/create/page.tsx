@@ -3,7 +3,7 @@ import { recommendableModels } from '@/lib/ai/chat-models'
 import { feature, features } from '@miro/config'
 import { voiceOptions } from '@/lib/voice'
 import { notFound, redirect } from 'next/navigation'
-import { requireUser } from '@/lib/auth'
+import { currentUser } from '@/lib/auth'
 import { db, characters } from '@miro/db'
 import { and, eq, isNull } from 'drizzle-orm'
 import { CharacterForm } from './character-form'
@@ -17,7 +17,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-
 export default async function CreatePage({ searchParams }: {
   searchParams: Promise<{ type?: string; draft?: string }>
 }) {
-  const [user, params] = await Promise.all([requireUser(), searchParams])
+  // 11/13 로그인 전에는 오류(UNAUTHORIZED) 대신 로그인 시트로 — 레이아웃도 같은 곳으로 보내지만 화면이 함께 그려지며 여기서 먼저 오류가 났다(운영 알림).
+  const [me, params] = await Promise.all([currentUser(), searchParams])
+  if (!me) redirect('/login?next=%2Fcreate')
+  const user = me
   if (params.type === undefined) {
     if (params.draft !== undefined) notFound()
     if (CREATE_CHARACTER_OPTIONS.length === 1) redirect(`/create?type=${CREATE_CHARACTER_OPTIONS[0]!.type}`)

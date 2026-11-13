@@ -2306,5 +2306,7 @@
  "카드 결제": "Card",
  "휴대폰 번호 (- 없이)": "Mobile number (digits only)",
  "카드 결제가 완료됐어요. 잔액에 반영했습니다.": "Card payment complete. Added to your balance.",
- "결제창에 필요한 구매자 정보예요. 결제대행사(NHN KCP)로만 전달돼요.": "Buyer details required by the payment window. They are sent only to the payment processor (NHN KCP)."
+ "결제창에 필요한 구매자 정보예요. 결제대행사(NHN KCP)로만 전달돼요.": "Buyer details required by the payment window. They are sent only to the payment processor (NHN KCP).",
+ "[선택] 캐릭터 알림 받기": "[Optional] Get character notifications",
+ "알림이 꺼져 있어요. 나중에 설정에서 켤 수 있어요.": "Notifications are off. You can turn them on later in settings."
 }

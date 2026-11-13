@@ -31,8 +31,8 @@ const TERMS = [
   // 국외 이전은 처리방침과 따로 받는 동의다(개인정보 보호법 제28조의8, 10/5) — 묶어서 받지 않는다.
   { key: 'transfer', title: msg('[필수] 개인정보 국외 이전 동의'), sub: msg('AI 응답 생성 등을 위해 개인정보가 국외 업체에서 처리돼요'), href: '/terms/transfer' },
   { key: 'ai', title: msg('[필수] AI 생성 콘텐츠 안내'), href: '/terms/ai' },
-  // 브라우저 알림 권한 — 필수(2026-10-01 결정, 예외 없음). 시작하기를 누를 때 묻고, 허용·구독까지 끝나야 가입이 끝난다.
-  { key: 'push', title: msg('[필수] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자를 알림으로 받아요') },
+  // 브라우저 알림 권한 — 선택(11/13 사용자: 필수였을 때 가입 중 이탈이 컸다). 켜면 그 자리에서 권한을 묻고, 안 켜도 가입은 끝난다.
+  { key: 'push', title: msg('[선택] 캐릭터 알림 받기'), sub: msg('캐릭터가 먼저 보내는 문자를 알림으로 받아요') },
   { key: 'marketing', title: msg('[선택] 이벤트·혜택 알림 받기'), sub: msg('광고성 정보 수신 동의'), href: '/terms/marketing' },
   { key: 'nightMarketing', title: msg('[선택] 야간 혜택 알림 받기'), sub: msg('오후 9시 ~ 다음날 오전 8시에도 받아요'), href: '/terms/night-marketing' },
 ] as const
@@ -104,7 +104,7 @@ export function OnboardingForm({ visitorConsent }: { visitorConsent: VisitorCons
     if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return true
     if (noWebPush()) return true
     const blocked = (permission: NotificationPermission) => {
-      setPushGranted(false); fail(msg('알림을 허용해야 시작할 수 있어요.'), howTo && permission === 'denied' ? settingsPath() : null); return false
+      setPushGranted(false); fail(msg('알림이 꺼져 있어요. 나중에 설정에서 켤 수 있어요.'), howTo && permission === 'denied' ? settingsPath() : null); return false
     }
     if (Notification.permission === 'denied') return blocked('denied')
     markPushAsked()
@@ -116,8 +116,6 @@ export function OnboardingForm({ visitorConsent }: { visitorConsent: VisitorCons
     setPushGranted(true)
     return true
   }
-  // '알림 허용하기' — 아직 정하지 않았으면 권한 창을 다시 띄우고, 설정에서 켠 뒤라면 바로 통과. 허용되면 알림 줄을 켠다.
-  const allowPush = () => { void askPermission(true).then((ok) => { if (ok) { setChecked((c) => ({ ...c, push: true })); setError(null); setPushPath(null) } }) }
   // '캐릭터 알림 받기'를 켜는 순간(그 줄·전체 동의) 그 자리에서 권한을 묻는다(2026-10-01 요청). 허용하지 않으면 다시 끈다.
   const turnOnPush = () => { void askPermission().then((ok) => { if (!ok) setChecked((c) => ({ ...c, push: false })) }) }
   const toggleTerm = (key: string) => {
@@ -126,12 +124,13 @@ export function OnboardingForm({ visitorConsent }: { visitorConsent: VisitorCons
     if (key === 'push' && on) turnOnPush()
   }
   /**
-   * 시작하기 — 캐릭터 알림은 필수다(2026-10-01 결정, 예외 없음). 시작하기는 알림이 허용된 뒤에만 열리고, 여기서 구독까지 끝나야 제출한다.
+   * 시작하기 — 캐릭터 알림은 선택이다(11/13, 그 전엔 필수). '캐릭터 알림 받기'를 켠 사람만 여기서 구독까지 하고, 못 켜도 가입은 끝난다.
    * 권한은 한 번 더 확인한다(그사이 설정에서 끈 경우).
    */
   const askPushThenSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    if (pushHandled.current || !vapid || noWebPush()) return
+    // 11/13 알림은 선택 — '캐릭터 알림 받기'를 켠 사람만 여기서 구독까지 한다. 안 켰으면 바로 가입을 끝낸다.
+    if (pushHandled.current || !vapid || noWebPush() || !checked.push) return
     e.preventDefault()
     const form = e.currentTarget, submitter = (e.nativeEvent as SubmitEvent).submitter
     void askPermission()
@@ -139,12 +138,11 @@ export function OnboardingForm({ visitorConsent }: { visitorConsent: VisitorCons
         if (!granted) return false
         setAsking(true)
         const subscribed = await Promise.race([subscribeToPush(vapid).catch(() => false), new Promise<boolean>((done) => setTimeout(() => done(false), 8000))])
-        if (!subscribed) fail(msg('알림을 켜지 못했어요. 잠시 뒤 다시 눌러 주세요.'))
         return subscribed
       })
-      .catch(() => { fail(msg('알림을 켜지 못했어요. 잠시 뒤 다시 눌러 주세요.')); return false })
-      // 잠금을 먼저 풀어야(동기로 그림) 잠긴 버튼으로 제출하지 않는다.
-      .then((ok) => { flushSync(() => setAsking(false)); if (ok) { pushHandled.current = true; form.requestSubmit(submitter) } })
+      .catch(() => false)
+      // 잠금을 먼저 풀어야(동기로 그림) 잠긴 버튼으로 제출하지 않는다. 알림을 못 켰어도(거절·실패) 가입은 그대로 끝낸다 — 알림은 선택이다.
+      .then(() => { flushSync(() => setAsking(false)); pushHandled.current = true; form.requestSubmit(submitter) })
   }
   // 고르면 화면만 그 언어로 바뀌고, 넘어가는 건 '다음' 으로(2026-09-30 요청).
   const switchLanguage = useSwitchLanguage()
@@ -242,23 +240,8 @@ export function OnboardingForm({ visitorConsent }: { visitorConsent: VisitorCons
               <Button type="button" variant="primary" full className="btn-next" disabled={!birthDate} onClick={() => go(5)}>{t('다음')}</Button>
             </>}
             {step === 5 && (
-              // 버튼 하나(2026-10-01 요청): '알림 허용하기'로 시작해, 알림이 허용되면 토스처럼 주황으로 차오르며 글자가 위로 넘어가 '시작하기'가 된다.
-              // 허용 전에는 눌러도 제출하지 않고 권한을 묻는다(알림 줄·전체 동의로 허용해도 똑같이 바뀐다).
-              <motion.div initial={false} animate={{ scale: pushGranted && !reduce ? [1, 1.03, 1] : 1 }} transition={{ duration: 0.4, ease: ease.standard }}>
-                <SubmitButton variant={pushGranted ? 'primary' : 'secondary'} full disabled={asking || (pushGranted && !requiredOk)}
-                  onClick={(e) => { if (!pushGranted) { e.preventDefault(); allowPush() } }}
-                  style={{ transition: 'background-color 360ms var(--ease-standard), color 360ms var(--ease-standard), border-color 360ms var(--ease-standard)' }}>
-                  {/* 글자가 넘어가는 창 — 두 글자를 같은 칸에 겹쳐(가운데 맞춤) 위아래로만 자른다. 옆으로는 자르지 않아 긴 글자도 온전히 빠진다. */}
-                  <span style={{ display: 'inline-grid', justifyItems: 'center', clipPath: 'inset(0 -64px)' }}>
-                    <AnimatePresence initial={false}>
-                      <motion.span key={pushGranted ? 'start' : 'allow'} initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '-100%', opacity: 0 }}
-                        transition={reduce ? { duration: 0 } : spring.default} style={{ gridArea: '1 / 1', whiteSpace: 'nowrap' }}>
-                        {pushGranted ? t('시작하기') : t('알림 허용하기')}
-                      </motion.span>
-                    </AnimatePresence>
-                  </span>
-                </SubmitButton>
-              </motion.div>
+              // 11/13 알림이 선택이 되면서 버튼은 늘 '시작하기' — 필수 동의만 되면 열린다(예전엔 '알림 허용하기'로 시작해 허용해야 열렸다).
+              <SubmitButton variant="primary" full disabled={asking || !requiredOk}>{t('시작하기')}</SubmitButton>
             )}
           </div>
         </motion.div>

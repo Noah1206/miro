@@ -34,7 +34,7 @@ describe('온보딩 입력', () => {
     expect(step({ ...FULL, birthDate: '2012-09-30' })).toBe(0)
     expect(step({ ...FULL, birthDate: '2012-10-01' })).toBe(4)
     expect(step({ ...FULL, ai: '' })).toBe(5)
-    expect(step({ ...FULL, push: '' })).toBe(5) // 캐릭터 알림도 필수(2026-10-01)
+    expect(step({ ...FULL, push: '' })).toBe(0) // 캐릭터 알림은 선택(11/13, 그 전엔 필수)
     expect(step({ ...FULL, transfer: '' })).toBe(5) // 국외 이전은 처리방침과 따로 받는 필수 동의(10/5)
     expect(step({ ...FULL, birthDate: '2015-05-05' })).toBe(4) // 생년월일이 만 14세 미만이면 거절
   })
