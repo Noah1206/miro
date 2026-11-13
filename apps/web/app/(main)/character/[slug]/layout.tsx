@@ -11,11 +11,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const c = await getCharacterByKey(slug, null)
   if (!c) { const t = await getT(); return { title: t('캐릭터') } }
-  const title = `${coverTitle(c)} | MIRO`
+  const title = `${coverTitle(c)} | 미로 AI 캐릭터챗`
   return {
     title: { absolute: title },
     alternates: { canonical: `/character/${slug}` },
-    openGraph: { title, url: `/character/${slug}` },
+    openGraph: { title, url: `/character/${slug}`, siteName: '미로 AI 캐릭터챗', locale: 'ko_KR', ...(c.images[0] ? { images: [c.images[0]] } : {}) },
     ...(c.adultOnly ? { other: { rating: 'adult' } } : {}),
   }
 }

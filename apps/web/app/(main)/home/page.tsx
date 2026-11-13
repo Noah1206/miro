@@ -26,7 +26,7 @@ import { AfterMount } from '@/components/after-mount'
 const SITE = 'https://miroapp.app'
 // 11/13 자주 묻는 질문 — 화면(한국어 화면만)과 구조화 데이터가 같은 글을 쓴다. Google FAQ 리치 결과는 2026-05 종료됐고, 이 글은 검색 답변·AI 답변용이다.
 const FAQ: [string, string][] = [
-  ['MIRO(미로)는 어떤 서비스인가요?', 'MIRO는 AI 캐릭터챗이에요. 성격과 가치관, 세계관을 가진 AI 캐릭터와 1:1로 대화하고, 앱 밖에서도 문자를 주고받을 수 있어요. 캐릭터는 자기 생활 리듬대로 지내다가 먼저 연락하기도 해요.'],
+  ['미로 AI 캐릭터챗은 어떤 서비스인가요?', '미로(MIRO)는 AI 캐릭터챗이에요. 성격과 가치관, 세계관을 가진 AI 캐릭터와 1:1로 대화하고, 앱 밖에서도 문자를 주고받을 수 있어요. 캐릭터는 자기 생활 리듬대로 지내다가 먼저 연락하기도 해요.'],
   ['무료로 이용할 수 있나요?', '네. 가입하면 1,500토큰을 선물로 드리고, 출석 체크로 매일 토큰을 더 받을 수 있어요. 토큰이 부족할 때만 충전하면 돼요.'],
   ['어떤 캐릭터와 대화할 수 있나요?', '남성향·여성향 로맨스, 판타지, 학원물, 무협, BL 등 다양한 장르의 캐릭터와 오리지널 스토리가 있어요. 홈과 탐색에서 장르·태그로 찾을 수 있어요.'],
   ['캐릭터를 직접 만들 수 있나요?', '네. 만들기 탭에서 캐릭터의 성격, 말투, 세계관, 첫 장면을 정해 누구나 만들고 공개할 수 있어요. 다른 사람이 내 캐릭터와 대화하면 창작 보상을 받아요.'],
@@ -37,10 +37,10 @@ const HOME_JSON_LD = {
   '@context': 'https://schema.org',
   '@graph': [
     { '@type': 'FAQPage', mainEntity: FAQ.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) },
-    { '@type': 'WebSite', '@id': `${SITE}/#website`, url: `${SITE}/home`, name: 'MIRO', alternateName: ['미로', 'AI 캐릭터챗 MIRO'], inLanguage: 'ko-KR', publisher: { '@id': `${SITE}/#org` } },
+    { '@type': 'WebSite', '@id': `${SITE}/#website`, url: `${SITE}/home`, name: '미로 AI 캐릭터챗', alternateName: ['미로', 'MIRO', 'miroapp.app'], inLanguage: 'ko-KR', publisher: { '@id': `${SITE}/#org` } },
     { '@type': 'Organization', '@id': `${SITE}/#org`, name: 'MIRO', legalName: '스터플', url: SITE, logo: `${SITE}/icon-512.png` },
     {
-      '@type': 'WebApplication', name: 'MIRO', url: `${SITE}/home`, applicationCategory: 'EntertainmentApplication', operatingSystem: 'Web, iOS, Android',
+      '@type': 'WebApplication', name: '미로 AI 캐릭터챗', alternateName: 'MIRO', url: `${SITE}/home`, applicationCategory: 'EntertainmentApplication', operatingSystem: 'Web, iOS, Android',
       inLanguage: ['ko', 'en', 'ja', 'zh'], image: `${SITE}/miro-share-v3.png`,
       description: '성격과 세계관을 가진 AI 캐릭터와 1:1로 대화하고 문자를 주고받는 AI 캐릭터챗. 나만의 캐릭터도 직접 만들 수 있다.',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW' },
@@ -106,7 +106,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
       </div>
       {/* 10/28: 오리지널 작품 줄은 일단 가린다(사용자 요청). 다시 보이려면 <OriginalStoriesRow /> 를 되살린다. */}
       {/* 섹션형 홈(10/19, 위프·베이비챗) — 인기 순위 + 장르별 줄. 전체 목록(필터·정렬)은 탐색 탭(/explore). */}
-      <h1 className="sr-only">{t('AI 캐릭터챗 MIRO')}</h1>
+      <h1 className="sr-only">{t('미로 AI 캐릭터챗')}</h1>
       {/* 11/13 SEO·AEO: 검색엔진·AI 답변용 구조화 데이터(사이트·운영 주체·앱). */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(HOME_JSON_LD) }} />
       {/* 11/8 베이비챗 홈 분석 반영 — 신작 상승 → 남/여 인기 TOP 10 → 오리지널 신작 → 맞춤 → 유저 신작 → 태그 → 세이프티. 계산은 lib/home.ts homeSections. */}

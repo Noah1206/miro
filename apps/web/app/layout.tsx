@@ -12,11 +12,12 @@ import { getLanguage, getT, messagesFor } from '@/lib/i18n/server'
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT()
   // 탭 제목은 어느 화면에서나 이 한 줄로 고정한다(2026-09-30 요청) — 문장 | 서비스 이름. template 에 %s 가 없어 각 화면이 정한 제목은 쓰이지 않는다.
-  const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('AI 캐릭터챗 MIRO')}`
+  const title = `${t('최애 캐릭터를 현실에서 만나봐')} | ${t('미로 AI 캐릭터챗')}`
   // 11/12 링크 미리보기 그림 — 미로 시그니처 캐릭터 8명(미로·가린·문자 요정·서하·채이·다온·하진·수아), 짙은 라벤더 단색 배경·흰 굵은 MIRO(사용자 선택 A안, 힉스필드 생성 + 글씨는 직접 얹음, output/share-image). 파일 이름을 바꿔야 메신저 캐시가 새로 받는다.
   const shareImage = { url: '/miro-share-v3.png', width: 1200, height: 630, alt: 'MIRO' }
   // 11/13 검색(SEO·AEO): 검색 결과·AI 답변에 쓰이는 한 줄 설명.
-  const description = 'MIRO(미로)는 AI 캐릭터챗이에요. 성격과 세계관을 가진 캐릭터와 1:1로 대화하고, 문자를 주고받고, 나만의 캐릭터를 직접 만들 수 있어요. 남성향·여성향·로맨스·판타지·BL 캐릭터가 기다려요.'
+  // 11/13 사용자: 검색 이름은 '미로 AI 캐릭터챗'(이름+서비스) — 제목·og:site_name·h1·구조화 데이터를 같은 이름으로(Google 사이트 이름 규칙).
+  const description = '미로 AI 캐릭터챗(MIRO)에서 성격과 세계관을 가진 캐릭터와 1:1로 대화하고, 문자를 주고받고, 나만의 캐릭터를 직접 만들어 보세요. 남성향·여성향·로맨스·판타지·BL 캐릭터가 기다려요.'
   return {
     metadataBase: new URL('https://miroapp.app'),
     title: { default: title, template: title }, manifest: '/manifest.json',
@@ -25,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
     appleWebApp: { capable: true, title: 'MIRO', statusBarStyle: 'black-translucent' },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 } },
     openGraph: {
-      type: 'website', siteName: 'MIRO', title, description, url: '/home', locale: 'ko_KR', images: [shareImage],
+      type: 'website', siteName: '미로 AI 캐릭터챗', title, description, url: '/home', locale: 'ko_KR', images: [shareImage],
     },
     twitter: {
       card: 'summary_large_image', title, description, images: [shareImage],
