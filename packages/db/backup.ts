@@ -119,8 +119,13 @@ async function backupStorage(objects: StorageObject[], root: string) {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   // 새 형식 비밀 키(sb_secret_…)는 apikey 머리글로만, 옛 JWT 서비스 키는 Authorization 도 같이 보낸다.
   const auth: Record<string, string> = key ? { apikey: key, ...(key.startsWith('eyJ') ? { authorization: `Bearer ${key}` } : {}) } : {}
-  const files: Manifest['storage'] = []
-  for (const o of objects) {
+  const files: Manifest['storage'] = new Array(objects.length)
+  // 8개씩 동시에 받는다 — 한 줄로 받으면 1,086개(370MB, 11/15)에 30분을 넘겨 작업 시간 제한에 걸렸다.
+  let next = 0
+  await Promise.all(Array.from({ length: 8 }, async () => { for (let i = next++; i < objects.length; i = next++) await one(objects[i], i) }))
+  return files
+
+  async function one(o: StorageObject, i: number) {
     // 비공개 버킷은 서비스 키가 있어야 받는다 — 조용히 건너뛰지 않고 멈춘다.
     if (!o.public && !key) throw new Error(`Storage bucket ${o.bucket} is private; SUPABASE_SERVICE_ROLE_KEY required`)
     const path = resolve(root, 'storage', o.bucket, o.name)
@@ -136,9 +141,8 @@ async function backupStorage(objects: StorageObject[], root: string) {
     if (etag && !etag.includes('-') && etag !== md5) throw new Error(`Storage md5 mismatch ${o.bucket}/${o.name}`)
     mkdirSync(dirname(path), { recursive: true })
     writeFileSync(path, bytes)
-    files.push({ bucket: o.bucket, name: o.name, size: o.size, md5 })
+    files[i] = { bucket: o.bucket, name: o.name, size: o.size, md5 }
   }
-  return files
 }
 
 const started = Date.now()
