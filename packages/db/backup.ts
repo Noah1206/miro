@@ -33,7 +33,7 @@ import * as schema from './src/schema/index'
  * Storage 는 모든 버킷의 모든 파일을 받는다. 공개 버킷은 공개 주소로, 비공개 버킷은 SUPABASE_SERVICE_ROLE_KEY 로 받고
  * 키가 없으면 백업 전체가 멈춘다(조용히 빠뜨리지 않는다).
  *
- * 복원: 앱 데이터는 pg_restore --no-owner --no-privileges -n public -n miro_perf db.dump.
+ * 복원: 앱 데이터는 pg_restore --no-owner --no-privileges -n public -n miro_perf -n miro_private db.dump.
  * Auth 는 그 다음, 새 Supabase 프로젝트에서 auth 표를 비운 뒤(새 프로젝트는 비어 있다)
  *   PGOPTIONS='-c session_replication_role=replica' pg_restore --data-only --no-owner -d <DIRECT_DATABASE_URL> auth.dump
  * (표 사이 외래 키 순서를 무시하려고 replica). Storage 파일은 storage/<버킷>/<경로> 를 같은 버킷·경로로 다시 올린다.
@@ -52,7 +52,7 @@ if (outDir && process.argv[2] !== 'record' && existsSync(join(outDir, 'manifest.
 }
 const BIN = process.env.PG17_BIN ?? '/opt/homebrew/opt/postgresql@17/bin'
 const PORT = process.env.RESTORE_PORT ?? '55432'
-const SCHEMAS = ['public', 'miro_perf']
+const SCHEMAS = ['public', 'miro_perf', 'miro_private'] // miro_private: 지갑 알림 함수·토픽(10/27) — 빠지면 public 트리거가 복원에서 실패
 const src = new URL(source)
 if (src.port === '6543') src.port = '5432' // Supavisor 트랜잭션 풀러로는 pg_dump 스냅샷을 못 쓴다 — 세션 모드
 const local = ['localhost', '127.0.0.1', '::1'].includes(src.hostname)
