@@ -35,9 +35,20 @@ Rules:
 - Output only comma-separated tags in English (no sentences), at most 12 tags, most important first.
 - Priority: hair color, hair length, hair style, eye color, skin, one distinctive mark (tattoo, scar, piercing, glasses), outfit.
 - Keep every fixed detail exactly (hair, eyes, outfit, underwear color, accessories, marks). Do not change colors.
+- Put the everyday outfit tags (clothes only, not hair/eyes/marks/accessories) LAST, after a single " | " separator: "appearance tags | outfit tags". If no outfit is described, output no separator.
 - Do not add place, time, mood, pose, framing or camera tags (the scene is given separately).
 - The character is an adult. Never add age-down words (child, loli, shota, teen, school uniform, etc.).
 - Do not add quality tags or style names.`
+
+/** 외형 태그 규칙 판 — 저장해 둔 외형 태그(lib/simulation/media.ts lookTags)의 열쇠에 들어간다. 규칙을 바꾸면 올린다. */
+export const LOOK_VERSION = 'modal-tags:v2'
+
+/** 11/15 외형 태그 "외형 | 평소 옷" 에서, 장면·순간이 옷을 따로 말하면 평소 옷을 뺀다 — 앞에 놓인 평소 옷이 잠옷·수건·알몸 같은 지금 옷 상태를 이겼다. */
+const WEARS = /\b(nude|naked|topless|bottomless|towel|lingerie|underwear|bra|panties|bikini|swimsuit|swim trunks|pajamas|apron|dress|uniform|shirt|blouse|sweater|hoodie|jacket|coat|skirt|kimono|hanbok|suit|sportswear|leggings|robe|bathrobe|jeans|maid|nurse|bunny|bunnysuit|leotard|cosplay|clothes|loungewear|tank top|tailcoat|sundress)\b/
+export function lookFor(look: string, sceneTags: string): string {
+  const [appearance, outfit] = look.split(' | ')
+  return [appearance, outfit && !WEARS.test(sceneTags) ? outfit : ''].filter(Boolean).join(', ')
+}
 
 /** 한국어가 섞인 외형·장면·세부사항 → 영어 태그. 실패하면 원문을 그대로 쓴다(그림은 계속 만든다). */
 export async function toImageTags(text: string, fallback?: Pick<LLMProvider, 'generateStructured'>): Promise<string> {
@@ -46,7 +57,7 @@ export async function toImageTags(text: string, fallback?: Pick<LLMProvider, 'ge
   const llms = [resolveLLM(), fallback ?? resolveLLM()]
   for (const [i, llm] of llms.entries()) {
     try {
-      const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: 'modal-tags:v1', maxTokens: 2048, schema: Tags, system: SYSTEM, prompt: text })
+      const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: LOOK_VERSION, maxTokens: 2048, schema: Tags, system: SYSTEM, prompt: text })
       return tags
     } catch (e) {
       observe('image.tags_failed', { attempt: i + 1, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })
@@ -76,13 +87,21 @@ const MOMENT_ADULT = `
   foreplay: blush, half-closed eyes, light sweat, shy | main act: sweat, heavy breathing, open mouth, motion lines | climax: orgasm, arched back, trembling, tears, clenched teeth or tongue out (only what the text describes) | afterglow: exhausted, heavy breathing, messy hair, cum drip only if the text says so.`
 
 /** 11/3 사용자 고정 요구: 채팅 중 사진은 그 순간 맥락대로 — 최근 장면 글 → 자세·표정·옷·장소 태그. 실패하면 빈 값(외형·장소만으로 그린다). adult = 언베일 모델로 바꿀 때. */
-export async function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM(), adult = false): Promise<string> {
-  try {
-    const { tags } = await llm.generateStructured({ task: 'image_prompt', promptVersion: adult ? 'modal-moment:v3-adult' : 'modal-moment:v2', maxTokens: 2048, schema: Tags,
-      system: adult ? MOMENT_SYSTEM.replace('at most 10', 'at most 14') + MOMENT_ADULT : MOMENT_SYSTEM, prompt: text })
-    return tags
-  } catch { return '' }
+export function toMomentTags(text: string, llm: Pick<LLMProvider, 'generateStructured'> = resolveLLM(), adult = false): Promise<string> {
+  // 11/15 같은 순간을 여러 장 찍으면 같은 글을 장마다 바꿨다(6장 = 6번) — 진행 중이거나 방금(1분) 바꾼 결과를 같이 쓴다.
+  const key = `${adult}:${text}`
+  let tags = momentTags.get(key)
+  if (!tags) {
+    tags = llm.generateStructured({ task: 'image_prompt', promptVersion: adult ? 'modal-moment:v3-adult' : 'modal-moment:v2', maxTokens: 2048, schema: Tags,
+      system: adult ? MOMENT_SYSTEM.replace('at most 10', 'at most 14') + MOMENT_ADULT : MOMENT_SYSTEM, prompt: text }).then(r => r.tags)
+      // 실패하면 외형만으로 그린다 — 장면 없는 사진의 원인이 로그에 남게(11/15, 예전엔 조용히 빈 값)
+      .catch(e => { observe('image.moment_failed', { adult, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' }); return '' })
+    momentTags.set(key, tags)
+    setTimeout(() => momentTags.delete(key), 60_000).unref()
+  }
+  return tags
 }
+const momentTags = new Map<string, Promise<string>>()
 
 /** 11/11 미리 깨우기 — 사진 창을 열 때 그 그림체 서버를 미리 띄운다(꺼진 서버 73초 → 켜진 서버 17초 실측). 기다리지 않고, 실패해도 무시. */
 export async function warmModalImage(style: string): Promise<void> {

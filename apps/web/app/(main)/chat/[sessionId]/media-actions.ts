@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
 import { eq } from 'drizzle-orm'
 import { db, characters, messages, roleplaySessions } from '@miro/db'
 import { requireUser } from '@/lib/auth'
@@ -19,7 +19,23 @@ import { msg } from '@/lib/i18n'
 import { getT } from '@/lib/i18n/server'
 import { observe } from '@/lib/observe'
 
-export type MediaState = { error: string | null; notice: string | null }
+/** job = 뒤에서 만들고 있는 사진 묶음 번호 — 화면이 photoJob 으로 끝났는지 묻는다. */
+export type MediaState = { error: string | null; notice: string | null; job?: string }
+
+// 11/15 사진은 요청을 받자마자 답하고 뒤에서 만든다 — 맥 호스팅은 Cloudflare 가 100초에 응답을 끊는데 꺼진 그림 서버는 55~137초가 걸려,
+// 화면엔 실패로 뜨고 서버는 끝까지 만들어 차감했다.
+// ponytail: 한 프로세스 메모리(맥 한 대, next start 하나). 서버가 여러 대가 되면 표로 옮긴다 — 재시작으로 잃어도 사진·차감은 DB 에 그대로라 화면은 새로고침만 한다.
+type PhotoJob = { userId: string; at: number; status: 'pending' | 'done' | 'failed'; error: string | null; done: number }
+const jobs: Map<string, PhotoJob> = ((globalThis as { __miroPhotoJobs?: Map<string, PhotoJob> }).__miroPhotoJobs ??= new Map())
+
+/** 사진 묶음이 끝났는지. 모르는 번호(서버 재시작·남의 것)는 null — 끝난 묶음은 한 번 알려 주고 지운다. */
+export async function photoJob(id: string): Promise<{ status: PhotoJob['status']; error: string | null; done: number } | null> {
+  const user = await requireUser()
+  const job = jobs.get(id)
+  if (!job || job.userId !== user.id) return null
+  if (job.status !== 'pending') jobs.delete(id)
+  return { status: job.status, error: job.error, done: job.done }
+}
 
 /**
  * AI 사진.
@@ -87,52 +103,53 @@ export async function requestPhoto(_prev: MediaState, form: FormData): Promise<M
   const moment = plans.some(p => !p.scene) ? await sceneMoment(sessionId, { explicit: !!unveil }).catch(() => '') || undefined : undefined
   // 누를 때마다 새 그림(11/2 사용자: 같은 사진을 무료로 계속 주면 안 된다) — 번호를 매번 새로 뽑아 캐시에 걸리지 않게 하고, 장마다 차감한다.
   const units = photoPrice(count) / count
-  const shots = plans.map(({ scene, picks }) => ({ seed: randomInt(1, 2_147_483_647), couple: !!scene?.couple,
+  const shots = plans.map(({ scene, picks }) => ({ seed: randomInt(1, 2_147_483_647), couple: !!scene?.couple, unveil: !!scene?.unveil,
     tags: scene ? sceneTags(scene, picks) : '', composition: scene ? '' : sceneTags(null, picks) }))
 
+  const now = Date.now()
+  for (const [id, j] of jobs) if (now - j.at > 15 * 60_000) jobs.delete(id)
+  const jobId = randomUUID()
+  const job: PhotoJob = { userId: user.id, at: now, status: 'pending', error: null, done: 0 }
+  jobs.set(jobId, job)
+  after(async () => {
   try {
-    const results = await Promise.allSettled(shots.map(({ seed, tags, composition, couple }) => getOrGenerate({
-      sessionId,
-      characterId: loaded.characterId,
-      characterName: loaded.characterName,
-      kind: 'photo',
-      context,
-      usage: { userId: user.id, units },
-      unveil,
-      details,
-      scene: tags ? { tags, couple } : undefined,
-      moment,
-      composition,
-      seed,
-    })))
-    const done = results.flatMap(r => r.status === 'fulfilled' ? [r.value] : [])
-    if (!done.length) throw (results[0] as PromiseRejectedResult).reason
-
-    await db.insert(messages).values(done.map(media => ({
-      sessionId,
-      role: 'character' as const,
-      kind: 'photo' as const,
-      content: media.url,
-      turnIndex: loaded.snapshot.turnCount,
-      mediaId: media.id,
-    })))
-
+    // 11/15 한 장씩 차례로 — 한꺼번에 보내면 그림 서버가 장수만큼 새로 떠서(각각 약 73초·유휴 5분 과금) 오히려 늦고 비쌌다.
+    // 한 장이 되면 바로 대화에 넣는다(화면이 다음 조회 때 보여 준다). 한 장이 실패하면 남은 장은 만들지 않는다(차감도 없음).
+    for (const { seed, tags, composition, couple, unveil: explicit } of shots) {
+      const media = await getOrGenerate({
+        sessionId,
+        characterId: loaded.characterId,
+        characterName: loaded.characterName,
+        kind: 'photo',
+        context,
+        usage: { userId: user.id, units },
+        unveil,
+        details,
+        scene: tags ? { tags, couple, unveil: explicit } : undefined,
+        moment,
+        composition,
+        seed,
+      })
+      await db.insert(messages).values({ sessionId, role: 'character', kind: 'photo', content: media.url, turnIndex: loaded.snapshot.turnCount, mediaId: media.id })
+      job.done++
+    }
     await db.update(roleplaySessions).set({ lastInteractionAt: new Date() })
       .where(eq(roleplaySessions.id, sessionId))
-
-    revalidatePath(`/chat/${sessionId}`)
-    const first = done[0]!
-    if (done.length < shots.length) return { error: null, notice: msg('일부 사진만 도착했어요. 못 만든 사진은 차감하지 않았어요.') }
-    return { error: null, notice: first.providerNotice ?? msg(done.every(m => m.cached) ? '기존 이미지를 보여드렸어요. 추가 차감은 없어요.' : '이미지가 도착했어요.') }
+    job.status = 'done'
   } catch (e) {
-    if (e instanceof UsageExceededError) return { error: exceededMessage(e), notice: null }
+    // 일부만 온 묶음은 끝난 것으로 — 못 만든 장은 차감하지 않았고, 화면은 온 사진만 보여 준다.
+    if (job.done) { job.status = 'done'; observe('photo.partial', { sessionId, done: job.done, of: shots.length, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' }); return }
+    job.status = 'failed'
+    if (e instanceof UsageExceededError) { job.error = exceededMessage(e); return }
     observe('photo.failed', { sessionId, error: e instanceof Error ? e.message.slice(0, 160) : 'unknown' })   // 11/8 원인이 로그에 남게
     // 이미지 생성 실패 시 텍스트 역할극은 그대로 유지한다 (명세서 5.3 예외).
-    return { error: msg('사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.'), notice: null }
+    job.error = msg('사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.')
   }
+  })
+  return { error: null, notice: null, job: jobId }
 }
 
-/** 방에 들어와 사진 버튼이 보일 때, 그리고 사진 창을 열 때 — 이 방 캐릭터의 그림체 서버를 미리 깨운다(만들기를 누를 때쯤 켜져 있게). */
+/** 사진 창을 열 때(11/15: 방에 들어올 때는 깨우지 않는다 — 사진을 안 찍는 입장마다 GPU 5분 ≈ $0.09 가 나갔다) — 이 방 캐릭터의 그림체 서버를 미리 깨운다(만들기를 누를 때쯤 켜져 있게). */
 export async function warmPhoto(sessionId: string): Promise<void> {
   const user = await requireUser()
   const loaded = await loadSession(sessionId, user.id)

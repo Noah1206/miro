@@ -7,22 +7,20 @@ import { useT } from '@/lib/i18n/client'
 import { msg } from '@/lib/i18n'
 import { useWallet } from '@/components/wallet/provider'
 import { BASE_GROUP_OF, SCENE_GROUPS, PHOTO_COMPOSITIONS, PHOTO_PRICE, PHOTO_SCENES, photoPrice, type Audience, type CompositionKey } from '@/lib/photo-scenes'
-import { requestPhoto, warmPhoto, type MediaState } from './media-actions'
+import { photoJob, requestPhoto, warmPhoto, type MediaState } from './media-actions'
 import styles from './chat.module.css'
 
 /** 입력창의 사진 버튼(11/2, 11/3 개편) — 위 장 탭(1장 2장 +)으로 장을 고르고, 그 장의 장면·구도(드롭다운 3개)를 바꾼다.
  * '+ 한 장 더'는 지금 장의 장면·구도를 복사한다. 세부사항은 이 대화방에 저장해 두고 모든 장에 같이 보낸다 — 사진마다 머리색·속옷 색이 바뀌지 않게. */
 type Shot = { key: number; scene: string; picks: number[] }
 const KEYS = Object.keys(PHOTO_COMPOSITIONS) as CompositionKey[]
-/** 11/11 사용자: 사진이 너무 늦다(꺼진 서버 55~137초 vs 켜진 서버 31초, 사진 창을 열 때 깨우면 누를 때까지 못 켜졌다). 방에 들어와 버튼이 처음 보일 때 한 번 미리 깨운다 —
- * 대화 내내 켜 두면 안 쓰는 사람도 GPU 비용이 나가서 방당 한 번(5분 유지). ponytail: 방 입장마다 A10G 5분 ≈ $0.09 상한, 사용자가 많아지면 사진을 자주 쓰는 방만 깨우거나 메모리 스냅숏으로 켜는 시간을 줄인다 */
-const warmedRooms = new Set<string>()
+/** 그림 서버는 사진 창을 열 때만 미리 깨운다(11/15) — 11/11 엔 방에 들어올 때 깨웠는데(꺼진 서버 55~137초 vs 켜진 서버 31초) 사진을 안 찍는 입장마다 A10G 5분 ≈ $0.09 가 나갔다.
+ * 지금은 뒤에서 만들고 한 장씩 도착하므로 첫 장이 늦어도 실패로 보이지 않는다. */
 const SHORT: Record<CompositionKey, string> = { distance: msg('거리'), angle: msg('방향'), gaze: msg('시선'), outfit: msg('옷'), outfitMen: msg('옷') }
 
 export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, custom = [], variant = 'tool' }: { sessionId: string; unveil: boolean; bundle: boolean; audience?: Audience; disabled?: boolean; custom?: Array<{ id: string; label: string; unveil: boolean }>; variant?: 'tool' | 'turn' }) {
   const t = useT(), router = useRouter()
   const { refreshBalance } = useWallet()
-  useEffect(() => { if (disabled || warmedRooms.has(sessionId)) return; warmedRooms.add(sessionId); void warmPhoto(sessionId).catch(() => {}) }, [sessionId, disabled])
   const [open, setOpen] = useState(false)
   const key = `miro:photo-details:${sessionId}`
   const [details, setDetails] = useState('')
@@ -34,14 +32,37 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
     // 응답이 끊겨도(시간 초과 등) 화면이 깨지지 않게 — 차감은 서버가 돌려준다(11/9)
     try { return await requestPhoto(prev, form) } catch { return { error: '사진을 만들지 못했습니다. 대화는 계속할 수 있습니다.', notice: null } }
   }, { error: null, notice: null } satisfies MediaState)
+  // 11/9 사용자: 만들기를 누르면 창을 닫고 대화 안에 만들어지는 사진 자리(애니메이션)를 띄운다 — 사진이 오면 그 자리에 나타난다.
+  const [making, setMaking] = useState(0)
+  // 11/15 서버는 접수만 하고 바로 답한다(job) — 끝날 때까지 4초마다 묻는다(Cloudflare 100초 응답 제한을 넘는 사진이 실패로 보이던 것).
+  const [job, setJob] = useState<string | null>(null)
+  const [jobError, setJobError] = useState<string | null>(null)
   useEffect(() => {
+    if (state.job) { setJob(state.job); return }
+    setMaking(0)
     if (state.notice || state.error) void refreshBalance(true)
     if (state.notice) { router.refresh(); setOpen(false) }
     if (state.error) setOpen(true)   // 만드는 동안 닫아 둔 창을 다시 열어 실패 이유를 보여 준다
   }, [state, router, refreshBalance])
-  // 11/9 사용자: 만들기를 누르면 창을 닫고 대화 안에 만들어지는 사진 자리(애니메이션)를 띄운다 — 사진이 오면 그 자리에 나타난다.
-  const [making, setMaking] = useState(0)
-  useEffect(() => { if (!pending) setMaking(0) }, [pending])
+  useEffect(() => {
+    if (!job) return
+    const started = Date.now()
+    let timer: ReturnType<typeof setTimeout>, stopped = false, seen = 0
+    const tick = async () => {
+      // undefined = 조회가 끊김(다음에 다시), null = 서버가 모르는 번호(재시작) — 그땐 새로고침만 한다(사진·차감은 서버에 그대로).
+      const r = await photoJob(job).catch(() => undefined)
+      if (stopped) return
+      // 여러 장은 한 장씩 도착한다 — 도착한 만큼 대화에 띄우고 만드는 중 자리를 줄인다.
+      if (r?.status === 'pending' && r.done > seen) { setMaking(m => Math.max(1, m - (r.done - seen))); seen = r.done; void refreshBalance(true); router.refresh() }
+      if ((r === undefined || r?.status === 'pending') && Date.now() - started < 600_000) { timer = setTimeout(tick, 4000); return }
+      void refreshBalance(true); router.refresh(); setJob(null); setMaking(0)
+      if (r?.status === 'failed') { setJobError(r.error); setOpen(true) }
+    }
+    timer = setTimeout(tick, 4000)
+    return () => { stopped = true; clearTimeout(timer) }
+  }, [job, router, refreshBalance])
+  const busy = pending || !!job
+  const error = jobError ?? state.error
   const slot = useRef<HTMLDivElement>(null)
   useEffect(() => { if (making) slot.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [making])
   // 만든 사람이 정한 이 캐릭터만의 장면이 앞에 — 이름은 만든 사람이 쓴 그대로(번역하지 않는다).
@@ -75,14 +96,14 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
     <button type="button" className={variant === 'turn' ? styles.turnPhoto : `${styles.toolButton} ${styles.photoTool}`} disabled={disabled} aria-label={t('사진 만들기')} onClick={() => { setOpen(true); void warmPhoto(sessionId).catch(() => {}) }}>
       <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
     {variant === 'turn' && <span>{t('사진 만들기')}</span>}</button>
-    {pending && making > 0 && typeof document !== 'undefined' && document.getElementById('photo-making-slot') && createPortal(<div ref={slot} className={styles.photoMaking} role="status" aria-live="polite">
+    {busy && making > 0 && typeof document !== 'undefined' && document.getElementById('photo-making-slot') && createPortal(<div ref={slot} className={styles.photoMaking} role="status" aria-live="polite">
       {Array.from({ length: making }, (_, i) => <div key={i} className={styles.photoMakingTile}>
         <svg aria-hidden viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="m20.5 15.5-4.2-4.2a1.5 1.5 0 0 0-2.1 0L6 19.5"/></svg>
         <span>{t('사진 만드는 중…')}</span>
       </div>)}
     </div>, document.getElementById('photo-making-slot')!)}
     <Sheet open={open} onClose={() => setOpen(false)} title={t(unveil ? '언베일 사진 만들기' : '사진 만들기')} variant="choice" snap={{ half: 0.7, full: 0.92 }}>
-      <form action={action} onSubmit={() => { setMaking(count); setOpen(false) }} style={{ display: 'grid', gap: 22 }}>
+      <form action={action} onSubmit={() => { setMaking(count); setJobError(null); setOpen(false) }} style={{ display: 'grid', gap: 22 }}>
         <input type="hidden" name="sessionId" value={sessionId} />
         <input type="hidden" name="count" value={count} />
         {shots.map((s, i) => <span key={s.key} hidden>
@@ -140,11 +161,11 @@ export function PhotoButton({ sessionId, unveil, bundle, audience, disabled, cus
             style={{ width: '100%', padding: '12px', border: 0, borderRadius: 12, background: 'var(--color-surface-2)', color: 'inherit', font: 'inherit', fontSize: 15, resize: 'none' }} />
           <span className="t-caption" style={{ color: 'var(--color-text-tertiary)' }}>{t('적어 둔 세부사항은 이 대화방 사진마다 똑같이 들어가요.')}</span>
         </label>
-        {state.error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(state.error)}</p>}
+        {error && <p role="alert" className="t-caption" style={{ color: 'var(--color-danger)' }}>{t(error)}</p>}
         <div style={{ display: 'grid', gap: 10 }}>
-          <button type="submit" disabled={pending} aria-busy={pending} style={{ minHeight: 54, width: '100%', border: 0, borderRadius: 12, background: 'var(--color-lavender-500)', color: '#fff',
-            font: 'inherit', fontSize: 16, fontWeight: 650, cursor: pending ? 'default' : 'pointer', opacity: pending ? 0.6 : 1 }}>
-            {pending ? t('만드는 중…') : t('{n}장 만들기 · {price} 미로', { n: count, price: photoPrice(count) })}
+          <button type="submit" disabled={busy} aria-busy={busy} style={{ minHeight: 54, width: '100%', border: 0, borderRadius: 12, background: 'var(--color-lavender-500)', color: '#fff',
+            font: 'inherit', fontSize: 16, fontWeight: 650, cursor: busy ? 'default' : 'pointer', opacity: busy ? 0.6 : 1 }}>
+            {busy ? t('만드는 중…') : t('{n}장 만들기 · {price} 미로', { n: count, price: photoPrice(count) })}
           </button>
           <p className="t-caption" style={{ color: 'var(--color-text-tertiary)', textAlign: 'center', margin: 0 }}>{t('첫 장은 1~2분 걸릴 수 있어요')}</p>
         </div>

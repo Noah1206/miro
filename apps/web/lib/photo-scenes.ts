@@ -289,6 +289,13 @@ export function momentWithComposition(moment: string, composition?: string): str
   return [...own, composition].filter(Boolean).join(', ')
 }
 
+/** 11/15 지금 순간 태그가 노출·성행위 장면인가 — 언베일 방에서도 이럴 때만 수위 태그·노출을 붙인다(운동복의 sports bra 는 아님). */
+export const explicitMoment = (moment: string) =>
+  /\b(nsfw|nude|naked|nipples?|topless|bottomless|pussy|penis|sex|vaginal|anal|fellatio|deepthroat|paizuri|handjob|footjob|cunnilingus|fingering|masturbation|cum|orgasm|ahegao|missionary|doggystyle|cowgirl position|undress\w*|lingerie|underwear|panties|(?<!sports )bra|breasts out|open (?:blouse|shirt)|no bra|no panties|naked towel|see-through|groping)\b/.test(moment)
+/** 11/15 지금 순간 태그가 둘이 하는 동작인가 — 일상 방의 포옹·키스도 상대를 그린다(예전엔 언베일일 때만이라 'hug' + 'solo' 가 같이 갔다). 베개·자기 무릎을 안는 건 혼자. */
+export const twoPeopleMoment = (moment: string) =>
+  /\b(1boy|hetero|penis|fellatio|sex|hug(?:ging)?(?! (?:pillow|own|doll|plushie|stuffed|knees|legs))|embrac\w*|kiss(?:ing)?(?! mark)|holding hands|hand holding|headpat|lap pillow|princess carry|arm hug|couple)\b/.test(moment)
+
 /** 가격(11/2 확정, 11/3 장수 자유): 1장 10, 2장부터는 장당 9(예전 4장 묶음 36과 같은 할인). 한 번에 최대 6장. */
 export const PHOTO_PRICE = { single: 10, each: 9, max: 6 } as const
 export const photoPrice = (count: number) => (count <= 1 ? PHOTO_PRICE.single : count * PHOTO_PRICE.each)

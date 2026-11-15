@@ -198,7 +198,10 @@ def image_api(body: dict):
     # 캐릭터 외형(look)은 주인공 바로 뒤·상대 인물 앞에 — 끝에 두면 약해지고 둘이 나오면 상대에게 섞였다(11/2: 남자가 금발로).
     # 주인공·외형·상대·장면 순(앞이 더 세게 걸린다), 몸 묘사는 맨 뒤. Compel 로 77토큰을 넘어도 잘리지 않는다.
     look = str(body.get('look', ''))[:400]
-    prompt = ', '.join(x for x in [style['subject'], look, who, tags, style['body'] if body.get('unveil') else ''] if x)
+    # 11/15 알몸 몸 묘사('nude, nipples…', NoobAI 판)는 장면이 실제로 벗은 장면일 때만 — 속옷·수건·키스 같은 옷 입은 언베일 장면에도 붙어 벗겨졌다.
+    import re
+    bare = 'nude' not in style['body'] or re.search(r'\b(nude|naked|topless|bottomless|nipples|pussy|penis|sex|naked apron)\b', tags)
+    prompt = ', '.join(x for x in [style['subject'], look, who, tags, style['body'] if body.get('unveil') and bare else ''] if x)
     # 어려 보임 차단은 항상 맨 앞. 둘이 나오면 상대 성별이 바뀌지 않게(위프는 BL 데이터라 남자 둘로 끌린다), 일상이면 상의 탈의도 막는다.
     # 혼자 장면에 복제 인물이 끼지 않게, 혼자 언베일은 옷을 다 입히지 않게(옷 입은 레퍼런스 사진이 옷을 끌어온다, 11/2).
     solo_neg = '' if body.get('couple') else 'multiple girls, multiple boys, 2girls, 2boys, clone, duplicate, another person'

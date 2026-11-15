@@ -1,11 +1,11 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { budgetedImage } from '@/lib/ai/media-budget'
 import { cappedLevel, generateLocalImage, levelTags, openImageReady, unsafeRequest, type BaseModel, type UnveilLevel } from '@/lib/ai/local-image'
-import { generateModalImage, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
+import { generateModalImage, LOOK_VERSION, lookFor, modalImageReady, styleFor, toImageTags, toMomentTags } from '@/lib/ai/modal-image'
 // 11/11 사용자 결정: 사진을 만들 때 가림(성기 블러, lib/ai/censor — 정보통신망법 44조의7 대응으로 넣었던 단계)을 하지 않는다. 다시 켜려면 아래 두 곳에서 censorPng 로 감싼다.
 import { imageDataUrl, saveMessengerImage } from '@/lib/storage/messenger-images'
 import { usageWeight } from '@miro/config'
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import {
   db, characters, characterVisualIdentities, generatedMedia, roleplaySessions, worldStates,
   messages, memories,
@@ -17,7 +17,7 @@ import { hasAppearance, inferAppearance } from './appearance'
 import { matchSceneAsset } from './scene-assets'
 import { ensembleNames } from '@miro/engine'
 import { isUnveilPhoto } from '@/lib/unveil-photo'
-import { momentWithComposition } from '@/lib/photo-scenes'
+import { explicitMoment, momentWithComposition, twoPeopleMoment } from '@/lib/photo-scenes'
 import { auxiliaryLLM } from './mock-llm'
 
 export type MediaResult = {
@@ -98,7 +98,7 @@ export async function getOrGenerate(opts: {
   /** 사용자가 고정해 둔 세부사항(11/2, 머리·옷·속옷 색 등) — 프롬프트와 캐시 키에 같이 들어간다. 호출자가 안전 검사를 마친 값. */
   details?: string
   /** 사진 시트에서 고른 장면·구도(11/2, 영어 태그) — Modal 경로에서만 쓴다. couple 이면 상대 인물도 그린다. */
-  scene?: { tags: string; couple: boolean }
+  scene?: { tags: string; couple: boolean; unveil?: boolean }
   /** 같은 장면의 몇 번째 버전인지(4장 묶음) — Modal 경로에서만. */
   seed?: number
   /** 지금 순간의 장면 글(11/3) — 장면을 고르지 않았을 때 자세·표정·옷·장소를 여기서 읽는다. 호출자가 언베일 원문은 빼고 넘긴다. */
@@ -260,35 +260,64 @@ async function modalPhoto(
     .where(and(eq(generatedMedia.sessionId, opts.sessionId), eq(generatedMedia.kind, 'photo'), eq(generatedMedia.cacheKey, cacheKey))).limit(1)
   if (hit) return { ...hit, cached: true, providerNotice: null }
   // 여러 인물 카드(11/9)는 지금 말하는 히로인의 [여러 인물] 줄로 — 카드 대표 외형이 아니라.
-  const source = [heroine ? heroine.look : buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }),
+  // 장소·시간·분위기는 외형 글에서 뺀다(11/15) — 어차피 외형 태그엔 안 쓰는데(장면은 따로 간다), 들어 있으면 장소가 바뀔 때마다 외형 태그를 새로 뽑게 된다.
+  const source = [heroine ? heroine.look : buildVisualPrompt({ identity: identity as never, characterName: opts.characterName, context, kind: opts.kind }).replace(`, at ${context.location}, ${context.time}, ${context.mood} mood`, ''),
     opts.details && `fixed details (keep exactly): ${opts.details}`, request].filter(Boolean).join('\n')
   const [session] = await db.select({ userId: roleplaySessions.userId }).from(roleplaySessions).where(eq(roleplaySessions.id, opts.sessionId)).limit(1)
   const generateAndSave = async () => {
-    const tag = level ? levelTags(level) : null
     // 고른 장면 태그는 LLM 을 거치지 않고 그대로(바뀌지 않게), 외형·장소·세부사항만 영어 태그로 바꾼다.
     // 외형·장소·세부사항(look)은 주인공 바로 뒤로, 고른 장면·수위(tags)는 뒤로 — 외형이 상대 인물에게 섞이지 않게.
     // 언베일 방(판정 통과)이면 성인 문장을 막는 상용 모델 대신 언베일 모델이 외형(예비)·순간을 태그로 바꾼다(11/9).
     const adultLLM = opts.unveil && session?.userId ? auxiliaryLLM(opts.characterName, { userId: session.userId, sessionId: opts.sessionId, requestId: randomUUID(), workload: 'background', origin: 'photo:tags', adult: true }) : undefined
-    const [look, moment] = await Promise.all([toImageTags(source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM, !!adultLLM) : Promise.resolve('')])
+    const [saved, moment] = await Promise.all([lookTags(opts.characterId, source, adultLLM), !opts.scene && opts.moment ? toMomentTags(opts.moment, adultLLM, !!adultLLM) : Promise.resolve('')])
+    // 11/15 언베일 방이어도 수위 태그·노출은 그 사진이 노출·성행위 장면일 때만(언베일 장면을 골랐거나 지금 순간이 그럴 때) —
+    // 예전엔 방 수위만 보고 붙여서 밥 먹는 순간·카페 장면도 벗은 사진이 됐다. 아니면 일반 사진과 똑같이 그린다.
+    const tag = level && (opts.scene ? opts.scene.unveil : explicitMoment(moment)) ? levelTags(level) : null
     // 장면을 안 골랐으면 지금 순간 + 그 장의 구도(11/3 — 예전엔 구도를 고르면 순간 태그가 빠졌다).
-    const tags = [tag?.positive, opts.scene?.tags ?? momentWithComposition(moment, opts.composition)].filter(Boolean).join(', ')
+    const sceneTags = opts.scene?.tags ?? momentWithComposition(moment, opts.composition)
+    const tags = [tag?.positive, sceneTags].filter(Boolean).join(', ')
+    // 장면·순간이 옷을 말하면 평소 옷은 뺀다(11/15) — 저장은 "외형 | 평소 옷" 그대로.
+    const look = lookFor(saved.look, sceneTags)
     const png = await budgetedImage({ kind: 'photo', info: { mode: 'live', name: `modal:${style}`, notice: null }, userId: session?.userId ?? null,
       sessionId: opts.sessionId, usageUnits: opts.usage ? units : 0 },
       // 11/8 언베일 사진은 가린 뒤에만 저장했으나 11/11 사용자 결정으로 가림 단계 없음(파일 맨 위 설명)
-      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? (!!tag?.mature && /\b(1boy|hetero|penis|fellatio|sex)\b/.test(moment)), extraNeg: tag?.negative, seed, refUrl }); return png })
+      async () => { const png = await generateModalImage({ style, look, tags, unveil: !!tag?.mature, couple: opts.scene?.couple ?? twoPeopleMoment(moment), extraNeg: tag?.negative, seed, refUrl }); return png })
     const id = randomUUID()
     const storage = await saveMessengerImage(opts.sessionId, id, imageDataUrl(png))
-    const [saved] = await db.insert(generatedMedia).values({
+    const [row] = await db.insert(generatedMedia).values({
       id, sessionId: opts.sessionId, characterId: opts.characterId, kind: 'photo', url: `/api/messenger-images/${id}`, cacheKey, prompt: [look, tags].filter(Boolean).join(' | '),
       visualIdentityId: identity.id, visualIdentityVersion: identity.version,
-      providerMetadata: { provider: `modal:${style}`, unveilLevel: level, storage },
+      providerMetadata: { provider: `modal:${style}`, unveilLevel: level, storage, ...(saved.key ? { lookKey: saved.key, look: saved.look } : {}) },
     }).returning({ id: generatedMedia.id, url: generatedMedia.url })
-    return saved!
+    return row!
   }
-  const saved = opts.usage
+  const media = opts.usage
     ? await guarded({ userId: opts.usage.userId, kind: 'photo', units, idempotencyKey: `media:${opts.usage.userId}:${cacheKey}` }, generateAndSave)
     : await generateAndSave()
-  return { ...saved, cached: false, providerNotice: null }
+  return { ...media, cached: false, providerNotice: null }
+}
+
+/**
+ * 외형 태그(11/15) — 같은 외형 글은 한 번만 바꾸고 그 캐릭터의 지난 사진에 적어 둔 것(providerMetadata.look)을 다시 쓴다.
+ * 예전엔 사진마다 AI 가 새로 뽑아 머리·눈 색 단어가 흔들렸고(얼굴 기준 사진이 없는 NoobAI 그림체는 이 태그가 전부다), 6장이면 6번 불렀다.
+ * key 가 없으면 변환 실패(원문 그대로) — 그건 적어 두지 않는다.
+ */
+const looks = new Map<string, Promise<string>>()
+async function lookTags(characterId: string, source: string, adultLLM?: Parameters<typeof toImageTags>[1]): Promise<{ key: string | null; look: string }> {
+  const key = createHash('sha256').update(`${LOOK_VERSION}\n${source}`).digest('hex').slice(0, 32)
+  let look = looks.get(key)
+  if (!look) {
+    look = (async () => {
+      const [row] = await db.select({ meta: generatedMedia.providerMetadata }).from(generatedMedia)
+        .where(and(eq(generatedMedia.characterId, characterId), eq(generatedMedia.kind, 'photo'), sql`${generatedMedia.providerMetadata}->>'lookKey' = ${key}`)).limit(1)
+      return typeof row?.meta?.look === 'string' && row.meta.look ? row.meta.look : toImageTags(source, adultLLM)
+    })()
+    if (looks.size > 500) looks.clear()
+    looks.set(key, look)
+    look.then(v => { if (v === source) looks.delete(key) }, () => looks.delete(key))
+  }
+  const value = await look
+  return { key: value === source ? null : key, look: value }
 }
 
 /**
