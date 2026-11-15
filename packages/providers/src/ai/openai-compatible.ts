@@ -89,7 +89,8 @@ export class OpenAICompatibleProvider implements AIProvider {
           : { max_tokens: req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }),
         // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).
         // ponytail: 생각을 끌 수 없는 모델(필수 생각)은 none 을 무시한다 — 그런 모델은 비교에서 거른다.
-        ...(this.name === 'openrouter' ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? (anthropicViaRouter ? 'low' : 'none'), exclude: true } } : {}),
+        // GPT 는 위의 reasoning_effort 하나만 보낸다 — 둘을 같이 보내 값이 다르면 400(conflicting values).
+        ...(this.name === 'openrouter' && !modernGPT ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? (anthropicViaRouter || requiresReasoning || /^google\/gemini-3/.test(this.model) ? 'low' : 'none'), exclude: true } } : {}), // 11/15: Gemini 3·gpt-6.1-sol 도 none 이면 400("Reasoning is mandatory")
         // 스키마는 디코딩 안내로만 준다(strict 아님) — strict 는 선택 필드가 있는 우리 스키마를 400 으로 거절한다. 검증은 오케스트레이터가 zod 로 한다.
         // ponytail: 예비가 스키마를 자주 어기면 선택 필드를 nullable 로 바꾼 strict 스키마로 올린다.
         ...(req.json ? { response_format: req.responseSchema
