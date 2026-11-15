@@ -57,6 +57,8 @@ export function routeModels(registry: ModelRegistry, task: AITask, tokens: numbe
   const rank = { small: 0, standard: 1, premium: 2 }
   const eligible = registry.models.filter(m => m.enabled && serves(m, task) && m.maxContextTokens >= tokens + m.maxOutputTokens && (!continuity || m.tier === 'small'))
   const regular = eligible.filter(m => m.id !== rollout.canaryModel && m.id !== rollout.shadowModel && m.provider !== 'miro-slm').sort((a,b) =>
+    // 그 일을 레지스트리에 직접 적은 모델이 먼저(11/15) — 고르는 목록용 대사 전용 모델이 늘면서 강한 일이 전부 그쪽(gpt-6.1-terra)으로 가 20초 시간 초과만 냈다.
+    Number(!a.capabilities.includes(task)) - Number(!b.capabilities.includes(task)) ||
     Number(!!a.fallback) - Number(!!b.fallback) || Math.abs(rank[a.tier]-rank[tier]) - Math.abs(rank[b.tier]-rank[tier]) || rank[a.tier]-rank[b.tier])
   const canary = eligible.find(m => m.id === rollout.canaryModel)
   if (!continuity && !rollout.rollback && rollout.approved && canary && cohort(key) < Math.min(100, Math.max(0, rollout.canaryPercent ?? 0))) regular.unshift(canary)

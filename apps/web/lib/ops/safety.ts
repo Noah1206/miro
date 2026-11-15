@@ -1,9 +1,8 @@
 import { productionRuntime } from '@miro/config'
-import { eq } from 'drizzle-orm'
-import { db, characters, users } from '@miro/db'
+import { and, desc, eq } from 'drizzle-orm'
+import { db, characters, characterVisualIdentities, users } from '@miro/db'
 import { adultCharacter, gateMature, mentionsMinor, type MatureGate } from '@miro/domain'
 import { adultModelReady, resolveAdultVerification } from '@miro/providers'
-import { activeVisualIdentity } from '@/lib/simulation/media'
 import { msg } from '@/lib/i18n'
 import { getPersona, getConversationPersona } from '@/lib/persona'
 
@@ -13,10 +12,13 @@ export async function matureGateFor(userId: string, characterId: string): Promis
     .from(users).where(eq(users.id, userId)).limit(1)
   // 운영은 실제 본인인증(PortOne)이 붙어야 열린다 — Mock 인증은 신원 확인이 아니다.
   if (productionRuntime() && resolveAdultVerification().info.mode !== 'live') return { allowed: false, reason: 'not_verified', next: msg('현재 일반 등급 콘텐츠만 제공합니다.') }
-  const vi = await activeVisualIdentity(characterId)
+  // 표만 읽는다(11/15) — activeVisualIdentity 는 외형이 비면 AI 추론까지 돌려서, 방을 열고 턴을 보낼 때마다 수십 초가 걸렸다. 외형은 사진을 그릴 때만 채운다.
+  const [vi] = await db.select({ real: characterVisualIdentities.hasRealPersonReference }).from(characterVisualIdentities)
+    .where(and(eq(characterVisualIdentities.characterId, characterId), eq(characterVisualIdentities.isActive, true)))
+    .orderBy(desc(characterVisualIdentities.version)).limit(1)
   return gateMature({
     adultVerifiedAt: u?.v ?? null, maturePolicyAgreedAt: u?.p ?? null,
-    hasRealPersonReference: vi.hasRealPersonReference,
+    hasRealPersonReference: vi?.real ?? false,
   })
 }
 

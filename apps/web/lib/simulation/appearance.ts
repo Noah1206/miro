@@ -37,7 +37,8 @@ const SYSTEM = `당신은 캐릭터의 외형을 정하는 설계자입니다.
 - body.gender 는 male 또는 female 이며, 인물 정보에 드러난 성별을 따릅니다.
 - 성격·소개 글에 외모(성별·키·체형·머리·눈·피부·옷차림·특징)가 적혀 있으면 그 묘사를 그대로 옮기고, 적히지 않은 부분만 어울리게 채웁니다.
 - 실존 인물이나 특정 배우를 재현하지 않습니다.
-- 한국어로 쓰고, 반드시 JSON 객체만 반환합니다.`
+- 한국어로 쓰고, 반드시 아래 모양의 JSON 객체만 반환합니다. 모든 값은 짧은 문자열(40자 이내, height 는 "168cm" 처럼)이고 비워 두지 않습니다.
+{"baseFace":{"eyes":"","nose":"","jaw":"","skin":"","distinctive":""},"hair":{"color":"","length":"","style":""},"body":{"build":"slim|average|muscular|heavy","gender":"male|female","height":"","detail":""},"styleTags":["1~5개"],"expression":""}`
 
 /**
  * 외형이 없는 기존 캐릭터를 성격·직업·세계관을 근거로 한 번 채운다.
