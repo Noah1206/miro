@@ -71,6 +71,7 @@ export default async function MyPage({ searchParams }: { searchParams: Promise<{
       <div className={styles.sections}>
         <MenuSection title={t('내 활동')}>
           <MenuRow href="/my/characters" label={t('내가 만든 캐릭터')} icon="characters" />
+          <MenuRow href="/my/likes" label={t('좋아요한 캐릭터')} icon="heart" />
           <MenuRow href="/persona?next=/my" label={t('페르소나')} icon="persona" />
         </MenuSection>
         <MenuSection title={t('앱 설정')} id="profile-settings">

@@ -2189,7 +2189,7 @@
  "출석 완료": "Checked in",
  "출석하기": "Check in",
  "{days}일 연속 출석! {amount}토큰을 받았어요": "{days}-day streak! You got {amount} tokens",
- "{amount}토큰을 받았어요 · 오늘 자정까지 쓸 수 있어요": "You got {amount} tokens · use them by midnight",
+ "{amount}토큰을 받았어요 · 7일 동안 쓸 수 있어요": "You got {amount} tokens · valid for 7 days",
  "출석하지 못했어요. 다시 시도해 주세요.": "Couldn't check in. Please try again.",
  "매일 {daily}토큰 · {week}일 연속이면 {bonus}토큰 더": "{daily} tokens daily · {bonus} more for a {week}-day streak",
  "토큰이 부족해요. 오늘 출석 체크를 하면 {amount}토큰을 받아요.": "You're out of tokens. Check in today to get {amount} tokens.",
@@ -2316,5 +2316,8 @@
  "독점·등급 조건 없이 첫 작품부터 대화 보상 {rate}%, 수익은 계좌로 받아요.": "No exclusivity or tiers: earn {rate}% of chat spend from your first character, paid out to your bank account.",
  "제작자 안내 보기": "See creator guide",
  "음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요": "Voice mode is on. Every 100 characters of spoken lines costs 10 more tokens",
- "음성 모드로 받은 답은 다시 받을 수 없어요.": "Replies received in voice mode can't be regenerated."
+ "음성 모드로 받은 답은 다시 받을 수 없어요.": "Replies received in voice mode can't be regenerated.",
+  "좋아요한 캐릭터": "Liked characters",
+  "아직 좋아요한 캐릭터가 없어요": "No liked characters yet",
+  "둘러보기": "Browse"
 }

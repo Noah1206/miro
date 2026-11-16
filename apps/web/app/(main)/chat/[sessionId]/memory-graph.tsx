@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { MemoryGraph, MemoryLayer, MemoryNode } from '@miro/domain'
 import type { MemoryNoteItem, MemoryNotes } from '@/app/api/memory-graph/[sessionId]/route'
 /** 서버 한도(route USER_NOTE_MAX)와 같다 — 라우트 파일은 DB 를 불러오므로 값은 가져오지 않는다. */
-const USER_NOTE_MAX = 1000
+const USER_NOTE_MAX = 2000
 import { msg } from '@/lib/i18n'
 import { useT } from '@/lib/i18n/client'
 

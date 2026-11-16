@@ -3,7 +3,7 @@ import { db, rechargeGrants } from '@miro/db'
 import { ATTENDANCE_GRANT } from '@miro/config'
 
 /**
- * 11/10 출석 체크 — 프로필의 버튼을 눌러야 그날 1,500토큰(그날 KST 자정에 소멸). 7일 연속 출석마다 1,500 추가(7일 유효).
+ * 11/10 출석 체크 — 프로필의 버튼을 눌러야 그날 토큰(11/16 자정 소멸 → 7일 유효: 당일 소멸은 커뮤니티에서 가장 크게 욕먹는 조건이었다). 7일 연속 출석마다 1,500 추가(7일 유효).
  * 지급은 충전 잔액(recharge_grants)에 넣는다 — (provider, '사용자:KST 날짜') 고유 색인이 하루 두 번 지급을 막는다(연타·동시 요청 포함).
  */
 const KST = 9 * 3_600_000, DAY = 86_400_000
@@ -28,10 +28,8 @@ export async function attendanceStatus(userId: string, now = new Date()): Promis
 
 export async function checkIn(userId: string, now = new Date()): Promise<CheckIn> {
   const today = kstDay(now.getTime())
-  const kst = new Date(now.getTime() + KST)
-  const midnight = new Date(Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate() + 1) - KST)
   const [daily] = await db.insert(rechargeGrants).values({ userId, amount: ATTENDANCE_GRANT.daily, source: 'grant', provider: 'daily',
-    externalRef: ref(userId, today), expiresAt: midnight }).onConflictDoNothing().returning({ id: rechargeGrants.id })
+    externalRef: ref(userId, today), expiresAt: new Date(now.getTime() + ATTENDANCE_GRANT.dailyValidDays * DAY) }).onConflictDoNothing().returning({ id: rechargeGrants.id })
   const status = await attendanceStatus(userId, now)
   if (!daily) return { ...status, granted: 0, bonus: false }
   // 7일째·14일째… 연속 출석한 날 한 번 더(같은 날 두 번은 고유 색인이 막는다).

@@ -9,7 +9,7 @@ import { useLanguage, useT } from '@/lib/i18n/client'
 import { attend } from './actions'
 import styles from './my.module.css'
 
-/** 11/10 출석 체크 — 누르면 오늘 500토큰(자정에 소멸), 7일 연속마다 500 추가(11/14 1,500→500). 점 7개가 이번 주 연속 출석. */
+/** 11/10 출석 체크 — 누르면 오늘 500토큰(7일 유효, 11/16), 7일 연속마다 500 추가(11/14 1,500→500). 점 7개가 이번 주 연속 출석. */
 export function AttendanceCard({ initial }: { initial: Attendance }) {
   const t = useT()
   const locale = INTL_LOCALE[useLanguage()]
@@ -27,7 +27,7 @@ export function AttendanceCard({ initial }: { initial: Attendance }) {
       setState({ checkedToday: r.checkedToday, streak: r.streak })
       if (r.granted > 0) {
         setNotice(r.bonus ? t('{days}일 연속 출석! {amount}토큰을 받았어요', { days: r.streak, amount: r.granted.toLocaleString(locale) })
-          : t('{amount}토큰을 받았어요 · 오늘 자정까지 쓸 수 있어요', { amount: r.granted.toLocaleString(locale) }))
+          : t('{amount}토큰을 받았어요 · 7일 동안 쓸 수 있어요', { amount: r.granted.toLocaleString(locale) }))
         void refreshBalance(true)
       }
     } catch { setNotice(t('출석하지 못했어요. 다시 시도해 주세요.')) }

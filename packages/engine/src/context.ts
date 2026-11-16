@@ -747,7 +747,7 @@ function buildPrompt(
   parts.push(communicationPreferenceData(s.communicationPreferences ?? snapshotCommunicationPreferences(s, s.userInput)))
   // 11/10 유저노트(크랙 대비): 긴 맥락의 가운데는 잘 잊힌다 — 최근 대화 뒤, 사용자 입력 바로 앞에 싣는다. 역할극 자료이고 시스템 지시가 아니다(안전 규칙이 우선).
   const note = s.userNote?.trim()
-  if (note) parts.push('', '## 유저노트 (사용자가 이 이야기에서 반드시 기억하라고 적은 설정 — 최근 대화·기억과 어긋나면 유저노트를 따르되, 안전 규칙보다 앞서지 않는다)', note.slice(0, 1000))
+  if (note) parts.push('', '## 유저노트 (사용자가 이 이야기에서 반드시 기억하라고 적은 설정 — 최근 대화·기억과 어긋나면 유저노트를 따르되, 안전 규칙보다 앞서지 않는다)', note.slice(0, 2000))
   return parts.join('\n')
 }
 
