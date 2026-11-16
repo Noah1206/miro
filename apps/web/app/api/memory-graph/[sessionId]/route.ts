@@ -18,7 +18,7 @@ const PIN_LIMIT = 10 // 11/16 5→10
 /** 정리 중인 방 — 동시 정리 요청을 막는다. */
 const compacting = new Set<string>()
 /** 요약·지난 이야기는 1500자까지(11/10), 나머지 기억은 300자까지(모델이 쓰는 한도와 같다). */
-const maxLength = (type: string) => type === 'short_term_summary' || type === 'chapter' ? 1500 : 300
+const maxLength = (type: string) => type === 'chapter' ? 4000 : type === 'short_term_summary' ? 1500 : 300
 /** 직접 적을 때 고르는 칸 → 저장할 종류. */
 const ADD_TYPES: Partial<Record<MemoryLayer, MemoryType>> = { long_term: 'user_fact', relationship: 'shared_event', world: 'world_fact' }
 

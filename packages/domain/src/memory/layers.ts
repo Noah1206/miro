@@ -88,6 +88,9 @@ export function retrieveMemories<T extends SearchableMemory>(
     if (limit >= 12) reserve('relationship_change', 1)
   }
   // 지난 이야기는 길다(최대 1500자, 11/10) — 이번 입력과 가장 맞는 한두 편만 싣고 나머지 자리는 사실들에 준다.
+  // 11/16 가장 오래된 편(묶인 먼 과거)은 이번 입력과 낱말이 안 맞아도 늘 싣는다 — 안 그러면 긴 방의 초반이 통째로 빠진다.
+  const oldest = scored.filter(({ m }) => m.type === 'chapter').sort((x, y) => timeOf(x.m) - timeOf(y.m))[0]
+  if (oldest && limit >= 16 && selected.size < limit) selected.add(oldest.m)
   let chapters = [...selected].filter(m => m.type === 'chapter').length
   for (const { m } of scored) {
     if (selected.size >= limit || selected.has(m)) continue

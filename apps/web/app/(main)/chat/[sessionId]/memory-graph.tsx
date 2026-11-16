@@ -221,7 +221,7 @@ function MemoryEditor({ sessionId, item, onDone }: { sessionId: string; item: Me
   const [busy, setBusy] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const max = item.type === 'short_term_summary' || item.type === 'chapter' ? 1500 : 300
+  const max = item.type === 'chapter' ? 4000 : item.type === 'short_term_summary' ? 1500 : 300
   const send = async (method: 'PATCH' | 'DELETE', body: object) => {
     setBusy(true); setError(null)
     const e = await call(sessionId, method, { id: item.id, ...body })
