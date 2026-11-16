@@ -56,8 +56,8 @@ describe('typing rhythm', () => {
 
   it('keeps the normal pace for a small backlog and speeds up only when text piles up', () => {
     expect(replyTypingBoost(0)).toBe(1)
-    expect(replyTypingBoost(200)).toBe(1)
-    expect(replyTypingBoost(1000)).toBe(5)
+    expect(replyTypingBoost(100)).toBe(1)
+    expect(replyTypingBoost(500)).toBe(5)
     expect(replyTypingBoost(100000)).toBe(12)
   })
 })
