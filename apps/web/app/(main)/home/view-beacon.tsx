@@ -18,7 +18,7 @@ export function HomeViewBeacon({ signedIn }: { signedIn: boolean }) {
 /**
  * 11/17 사용자: 홈에 들어오면 무조건 음성 서버를 깨운다 — 꺼져 있으면 첫 소리까지 약 50초, 켜져 있으면 3~6초(실측).
  * 음성 모드로 바꿨을 때 바로 소리가 나게, 방에 들어가기 전에 켜 둔다. 로그인한 사람만(서버가 회원당 5분에 한 번으로 막는다), 화면엔 아무것도 그리지 않는다.
- * 비용: 깨운 뒤 아무도 안 쓰면 20분 켜졌다 꺼진다(GPU 약 $2) — 사용자가 알고 정한 값.
+ * 비용: 깨운 뒤 아무도 안 쓰면 10분 켜졌다 꺼진다(GPU 약 $1, 11/17 20분 → 10분) — 사용자가 알고 정한 값.
  */
 export function HomeVoiceWake() {
   useEffect(() => { void fetch('/api/tts', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wake: true }), keepalive: true }).catch(() => {}) }, [])
