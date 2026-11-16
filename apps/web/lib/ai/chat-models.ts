@@ -15,7 +15,9 @@ export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
 const TIER_OF = { short: 'short', scene: 'miro', plus: 'plus', long: 'echo', saga: 'saga' } as const
 const LENGTHS = ['short', 'scene', 'plus', 'long', 'saga'] as const
-export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; typicalTokens: number; maxOutputTokens: number }
+export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; typicalTokens: number; maxOutputTokens: number; thinking?: boolean }
+/** 11/16 생각 강도가 실제로 먹는 모델만 — Claude·GPT 5/6·Gemini 3/4(3.5 Flash 는 생각을 끈 모델). DeepSeek·Grok·Gemma 는 화면에서 막대를 숨기고 서버도 무시한다. */
+export const modelThinks = (providerModelId: string) => /(^|\/)(claude-|gpt-[56]|gemini-(3-|3\.[1678]|4-))/.test(providerModelId)
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
   // 11/7 사용자: GPT 도 고르는 목록에 다시 연다(11/3 '목록에서 뺀다'를 뒤집음 — 예비 역할은 그대로).
@@ -104,7 +106,7 @@ export async function chatModelOptions(_userId: string, adult = false) {
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
       return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
-        maximumTokens: quote.maximumTokens, typicalTokens: Math.max(1, Math.ceil(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE)), maxOutputTokens: quote.maxOutputTokens }
+        maximumTokens: quote.maximumTokens, typicalTokens: Math.max(1, Math.ceil(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE)), maxOutputTokens: quote.maxOutputTokens, thinking: modelThinks(model.providerModelId) }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
   } catch { return { freeReady: false, proReady: false, choices: [] as ChatModelChoice[] } }
@@ -129,7 +131,8 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
   const main = adult ? availableModels(false).find(m => m.id === key) : model
   const floorTokens = Math.ceil(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE)
-  return { modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }
+  // thinking 은 선택 칸으로 — 이 반환형을 흉내 내는 시험 자료를 깨지 않는다.
+  return Object.assign({ modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }, { thinking: modelThinks(model.providerModelId) } as { thinking?: boolean })
 }
 
 /** 만들기의 권장 모델 후보(10/28) — 채팅에서 고를 수 있는 모델 하나씩. */

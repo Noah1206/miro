@@ -126,7 +126,9 @@ async function executeTurn(opts: {
     const dialogueModelId = model.modelId
     // 캐릭터의 권장 생각·상황별 사진(10/28). 생각을 높이면 그 깊이만큼 이 턴의 출력 한도·예약을 늘린다 — 생각이 답 자리를 먹거나 예약을 넘어 턴이 실패하지 않게.
     const [charSettings] = await db.select({ rec: characters.recommendedChat, situationImages: characters.situationImages }).from(characters).where(eq(characters.id, loaded.characterId)).limit(1)
-    const thinking = opts.thinking ?? charSettings?.rec?.thinking
+    // 11/16 생각 강도는 3단계(빠름·보통·깊게) — 예전 '깊게·최대'(xhigh·max)는 Sonnet 에서 답 없이 잘렸다. 생각이 먹지 않는 모델(DeepSeek 등)은 무시한다.
+    const wanted = opts.thinking ?? charSettings?.rec?.thinking
+    const thinking = model.thinking && wanted ? (wanted === 'xhigh' || wanted === 'max' ? 'high' as const : wanted) : undefined
     const thinkScale = thinking ? ({ low: 1, medium: 2, high: 3, xhigh: 4, max: 5 } as const)[thinking] ?? 1 : 1
     // 일반 방에서만 권한다 — 언베일 방의 거절은 갈 곳이 없다.
     const offerUnveil = () => loaded.adult.since === null ? unveilOfferFor(userId, loaded.characterId, sessionId).catch(() => null) : Promise.resolve(null)

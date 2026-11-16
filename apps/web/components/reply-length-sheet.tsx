@@ -19,18 +19,19 @@ const OPTIONS: Array<{ value: Length; label: string; rate: string; chars: string
   { value: 'saga', label: '아주 길게', rate: '2.5x', chars: '약 2,500자', hint: '한 턴을 웹소설 한 회처럼 길게' },
 ]
 
-export type Thinking = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
-const THINKING_KEY = 'miro:chat-thinking', THINKING_EVENT = 'miro:chat-thinking'
+export type Thinking = 'low' | 'medium' | 'high'
+// 11/16 저장 키를 바꿨다 — 예전엔 안 골라도 화면 기본값 '보통(high)'이 '적용'과 함께 저장돼 그 뒤 모든 턴이 높은 생각으로 갔다(Sonnet 첫 글자 50초·토큰 4배).
+const THINKING_KEY = 'miro:chat-thinking-v2', THINKING_EVENT = 'miro:chat-thinking'
 /** 11/10 사용자: 5단계 — 만들기 화면의 '생각' 막대와 같은 값·이름. 안 고르면 기본은 '보통'(high). */
-const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'low', label: '빠름' }, { value: 'medium', label: '가볍게' }, { value: 'high', label: '보통' }, { value: 'xhigh', label: '깊게' }, { value: 'max', label: '최대' }]
-const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : 'high' } catch { return 'high' } }
+const THINKING: Array<{ value: Thinking; label: string }> = [{ value: 'low', label: '빠름' }, { value: 'medium', label: '보통' }, { value: 'high', label: '깊게' }]
+const readThinking = (): Thinking => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : 'low' } catch { return 'low' } }
 const subscribe = (on: () => void) => { window.addEventListener(THINKING_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(THINKING_EVENT, on); window.removeEventListener('storage', on) } }
 /** 11/10 생각 강도(effort) — 이 기기에서 고른 값. 입력창이 턴마다 싣고, 서버는 작품 권장값보다 이 값을 먼저 쓴다. */
 /** 사용자가 막대를 움직여 고른 값만 — 안 골랐으면 null(서버가 작품 권장값을 쓴다). 화면 표시용 기본값(high)과 구분한다. */
 const readChosen = (): Thinking | null => { try { const v = localStorage.getItem(THINKING_KEY); return THINKING.some(o => o.value === v) ? v as Thinking : null } catch { return null } }
 export function useChosenThinking(): Thinking | null { return useSyncExternalStore(subscribe, readChosen, () => null) }
 export function useChatThinking(): [Thinking, (v: Thinking) => void] {
-  const value = useSyncExternalStore(subscribe, readThinking, () => 'high' as Thinking)
+  const value = useSyncExternalStore(subscribe, readThinking, () => 'low' as Thinking)
   const set = (v: Thinking) => { try { localStorage.setItem(THINKING_KEY, v) } catch { /* 이번 화면에서만 */ } window.dispatchEvent(new Event(THINKING_EVENT)) }
   return [value, set]
 }
@@ -47,7 +48,8 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
   const [think, setThink] = useState<Thinking>(thinking)
   useEffect(() => { if (open) { setPick(current); setThink(thinking) } }, [open, current, thinking])
   const variant = (value: Length) => selected ? choices.find(c => chatModelFamily(c) === chatModelFamily(selected) && c.length === value) : undefined
-  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); setThinking(think); onClose() }
+  // 막대를 실제로 움직였을 때만 저장한다 — 안 고른 사람은 작품 권장값(없으면 빠름)을 그대로 쓴다.
+  const apply = () => { const choice = variant(pick); if (choice) setModel(choice.id); if (think !== thinking) setThinking(think); onClose() }
 
   return <Sheet open={open} onClose={onClose} title={t('출력량 설정')} variant="choice" snap={{ half: 0.78, full: 0.92 }}>
     <div className="stack" style={{ gap: 12, padding: '0 var(--space-4) var(--space-5)' }}>
@@ -65,11 +67,11 @@ export function ReplyLengthSheet({ open, onClose, choices }: { open: boolean; on
             : <span style={{ flex: 'none', fontSize: 12, color: 'var(--color-text-tertiary)' }}>{t('이 모델은 고를 수 없어요')}</span>}
         </div> })()}
       {/* 생각 강도 — 높일수록 답을 더 깊게 다듬지만 느려지고 토큰을 더 쓴다(턴당 최대 토큰이 강도만큼 늘어난다). */}
-      <div className="stack" style={{ gap: 8, marginTop: 12 }}>
+      {selected?.thinking !== false && <div className="stack" style={{ gap: 8, marginTop: 12 }}>
         <strong style={{ fontSize: 15, fontWeight: 700 }}>{t('생각 강도')}</strong>
         <p className="t-caption" style={{ color: 'var(--color-text-secondary)', margin: 0 }}>{t('높일수록 답을 더 깊게 다듬지만, 느려지고 토큰을 더 써요.')}</p>
         <StepSlider label={t('생각 강도')} value={think} onChange={v => setThink(v as Thinking)} steps={THINKING.map(o => ({ value: o.value, label: t(o.label) }))} />
-      </div>
+      </div>}
       <Button variant="primary" full onClick={apply} disabled={!variant(pick)}>{t('적용')}</Button>
     </div>
   </Sheet>
