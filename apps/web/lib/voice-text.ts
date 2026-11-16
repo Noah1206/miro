@@ -1,13 +1,16 @@
 import { taggedSpeech, voiceDelivery, type VoiceDelivery } from '@miro/config'
 
-/** 소리 내어 읽을 글. 서술·속마음·NPC는 읽지 않는다. speech = 신음 태그가 든 음성용 대사(언베일, 화면엔 text). */
-export const SPOKEN_MAX = 1200
+/** 소리 내어 읽을 글. 서술은 읽지 않는다. speech = 신음 태그가 든 음성용 대사(언베일, 화면엔 text).
+ *  11/17 사용자: 긴 답도 끝까지(1200 → 2000자), 속마음(thought)도 읽는다 — 속마음 묶음은 inner 로 표시해 합성 서버가 조금 다른 소리로 낸다. */
+export const SPOKEN_MAX = 2000
 /** 11/16 사용자(답 길이 비례): 음성 모드 턴은 읽는 대사 100자마다 10토큰을 더 받는다 — 음성 서버(H100 2대) 원가 추정 1,000자 $0.15~0.2. */
 export const VOICE_TOKENS_PER_100 = 10
 export const VOICE_TOKENS_MAX = Math.ceil(SPOKEN_MAX / 100) * VOICE_TOKENS_PER_100
 export const voiceTokens = (blocks: Array<Record<string, unknown>>, content = '') =>
   Math.ceil(spokenSegments(blocks, content).reduce((n, s) => n + s.text.length, 0) / 100) * VOICE_TOKENS_PER_100
 export type SpokenSegment = { text: string; delivery: VoiceDelivery; speech?: string
+  /** 11/17 속마음 묶음 — 카드 목소리로, 서버가 울림을 얹는다. 말과 한 묶음으로 합치지 않는다. */
+  inner?: boolean
   /** 여러 인물 카드에서 카드 이름이 아닌 히로인이 말한 줄(11/4) — 그 히로인 목소리로 읽는다. */
   speaker?: string
   /** 11/11 이 묶음에 든 대사 줄(화면 말풍선 문단) — 말풍선을 눌러 다시 들을 때 맞춘다. */
@@ -29,11 +32,17 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
     const text = content.trim().slice(0, SPOKEN_MAX)
     return text ? [{ text, delivery: voiceDelivery(null), lines: [text], parts: [{ text, delivery: voiceDelivery(null) }] }] : []
   }
-  const lines: Array<{ text: string; speech: string | null; delivery: VoiceDelivery; speaker: string | null }> = []
+  const lines: Array<{ text: string; speech: string | null; delivery: VoiceDelivery; speaker: string | null; inner?: boolean }> = []
   let remaining = SPOKEN_MAX, whisper = false
   for (const block of blocks) {
     if (block.type === 'action' || block.type === 'narrative') {
       whisper = typeof block.text === 'string' && WHISPER_CUES.test(block.text)
+      continue
+    }
+    if (block.type === 'thought' && typeof block.text === 'string') {
+      const text = block.text.trim().slice(0, remaining)
+      if (text) { lines.push({ text, speech: null, delivery: voiceDelivery(null), speaker: null, inner: true }); remaining -= text.length }
+      if (!remaining) break
       continue
     }
     if (block.type !== 'dialogue' || typeof block.text !== 'string') continue
@@ -47,7 +56,7 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
     if (!remaining) break
   }
   // 주인공 정하기 — 카드 이름(또는 화자 없음) 줄이 없으면, 목록에 없는 화자 가운데 가장 많이 말한 사람을 주인공으로 본다.
-  if (!lines.some(l => l.speaker === null)) {
+  if (!lines.some(l => l.speaker === null && !l.inner)) {   // 속마음 줄(늘 화자 없음)은 세지 않는다
     const counts = new Map<string, number>()
     for (const l of lines) if (l.speaker && !matchSpeaker(l.speaker, speakers)) counts.set(l.speaker, (counts.get(l.speaker) ?? 0) + 1)
     const lead = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0]
@@ -56,7 +65,7 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
   const result: SpokenSegment[] = []
   for (const l of lines) {
     const last = result.at(-1)
-    if (last && (last.speaker ?? null) === l.speaker && last.text.length + 1 + l.text.length <= MERGE_MAX) {
+    if (last && (last.speaker ?? null) === l.speaker && !last.inner === !l.inner && last.text.length + 1 + l.text.length <= MERGE_MAX) {
       const prevText = last.text, prevSpeech = last.speech
       last.text = prevText + ' ' + l.text
       if (prevSpeech !== undefined || l.speech) last.speech = (prevSpeech ?? prevText) + ' ' + (l.speech ?? l.text)
@@ -65,7 +74,7 @@ export function spokenSegments(blocks: Array<Record<string, unknown>>, content: 
       last.delivery = { ...last.delivery, pauseAfterMs: l.delivery.pauseAfterMs }
       continue
     }
-    result.push({ text: l.text, delivery: l.delivery, lines: [l.text], parts: [{ text: l.speech ?? l.text, delivery: l.delivery }], ...(l.speech ? { speech: l.speech } : {}), ...(l.speaker ? { speaker: l.speaker } : {}) })
+    result.push({ text: l.text, delivery: l.delivery, lines: [l.text], parts: [{ text: l.speech ?? l.text, delivery: l.delivery }], ...(l.speech ? { speech: l.speech } : {}), ...(l.speaker ? { speaker: l.speaker } : {}), ...(l.inner ? { inner: true } : {}) })
   }
   return result
 }

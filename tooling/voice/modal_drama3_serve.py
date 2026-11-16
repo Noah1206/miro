@@ -28,6 +28,11 @@ SESSION_PREFIXES = 24   # 이어 붙인 상태까지 읽어 둔 모델 상태(�
 # 11/12 사용자: "말의 빠르기를 올리는 게 나을 것 같다" — 만든 소리를 음높이 그대로 조금 빠르게 내보낸다(ffmpeg atempo). 모델·기억·고장 판별은 원래 빠르기 그대로라 목소리는 안 바뀐다.
 # 1.0 이면 끔. /speak(미리 듣기·견본)는 원래 빠르기.
 TEMPO = 1.1
+# 11/17 사용자: 긴 답(읽을 글 2,000자)도 끝까지, 속마음도 읽되 조금 다르게.
+# 한 번에 만드는 길이는 프레임 상한(4096 ≈ 190초 ≈ 800자)에 걸린다 — 읽을 글이 BATCH_CHARS 를 넘으면 줄 경계에서 나눠 차례로 만든다(짧은 턴은 예전처럼 한 번에).
+BATCH_CHARS = 500
+# 속마음: 조금 작게 + 짧은 울림 한 번(머릿속에서 들리는 느낌). 0 이면 끔. 값은 청취로 정한다.
+INNER_GAIN, INNER_ECHO, INNER_ECHO_S = 0.85, 0.32, 0.11
 QUIET_END = 4           # 말하던 도중 이만큼(초) 조용하면 끝난 것으로 본다
 RETRIES = 3             # 무음으로 시작하면 씨앗을 바꿔 다시(11/11 같은 대사가 71초 무음으로 나온 고장)
 # 11/11 오후 .7·.7(안정 설정)로 바꿨다가 음질이 크게 떨어졌다(사용자) — 시험 생성과 같은 설정으로 되돌림. 줄마다 다르던 톤은 감정 지시를 빼서(EMOTION_TAGS) 잡는다.
@@ -93,6 +98,38 @@ def rest_after(text, seconds, pace=4.2):
             rest = text[m.end() + end.end():].strip() if end else ''
             return rest if len(re.findall('[가-힣]', rest)) >= 5 else ''
     return ''
+
+def turn_batches(lines):
+    """한 목소리 턴을 차례로 만들 묶음 [(속마음인가, [줄…])] — 속마음과 말은 따로, 같은 종류는 BATCH_CHARS 까지 이어 붙인다. 한 줄이 그보다 길면 문장 끝에서 나눈다."""
+    import re
+    pieces = []
+    for l in lines:
+        text = l['text']
+        if len(text) <= BATCH_CHARS: pieces.append(l); continue
+        cur = ''
+        for sent in re.findall(r'[^.!?…]+[.!?…]*["\')\]]*\s*', text) or [text]:
+            if cur and len(cur) + len(sent) > BATCH_CHARS: pieces.append({**l, 'text': cur.strip(), 'parts': []}); cur = ''
+            cur += sent
+        if cur.strip(): pieces.append({**l, 'text': cur.strip(), 'parts': []})
+    out = []
+    for l in pieces:
+        inner = bool(l.get('inner'))
+        if out and out[-1][0] == inner and sum(len(x['text']) + 1 for x in out[-1][1]) + len(l['text']) <= BATCH_CHARS: out[-1][1].append(l)
+        else: out.append((inner, [l]))
+    return out
+
+def inner_voice(chunks, rate):
+    """속마음 소리 — PCM16 조각 흐름을 조금 작게, 짧은 울림 하나를 얹어 내보낸다(y[n] = g·x[n] + a·g·x[n-d])."""
+    import numpy as np
+    if not INNER_ECHO and INNER_GAIN == 1: yield from chunks; return
+    delay = max(1, int(rate * INNER_ECHO_S)); tail = np.zeros(delay, dtype='float32')
+    out = lambda y: (np.clip(y, -1, 1) * 32767).astype('<i2').tobytes()
+    for c in chunks:
+        x = np.frombuffer(c[: len(c) // 2 * 2], '<i2').astype('float32') / 32768 * INNER_GAIN
+        if not len(x): continue
+        buf = np.concatenate([tail, x])
+        yield out(x + INNER_ECHO * buf[: len(x)]); tail = buf[len(x):]
+    yield out(INNER_ECHO * tail)
 
 def healthy(text, wave, rate):
     """기억에 넣어도 되는 소리인가 — 고장이 아니고, 판단할 만큼 긴 대사."""
@@ -448,7 +485,7 @@ class Speaker:
                 hidden = backbone(inputs_embeds=tower.embed_backbone(sampled, backbone.embed(sampled[:, 0]))[None], input_pos=positions[position + 1 : position + 2])[0].to(tower.device)
         yield frames, rows, produced, True
 
-    def speak_stream(self, text, voice, session=None, turn=None, _depth=0):
+    def speak_stream(self, text, voice, session=None, turn=None, _depth=0, keep=True):
         """11/11 스트리밍(사용자: 첫소리가 늦다) — 만드는 대로 소리 조각(PCM16 모노)을 내보낸다. 생성 계산은 speak 와 같다(같은 씨앗 → 같은 프레임).
         코덱은 조각마다 앞 STREAM_CTX 프레임을 문맥으로 함께 풀고 새 부분만 보낸다 — 이음새가 전체를 한 번에 푼 것과 같은지는 stream_check 로 잰다.
         session 이 있으면 그 방의 지난 턴을 이어 붙이고(history), 끝난 뒤 합격한 소리를 기억에 넣는다. 소리 없이 시작하면(2초) 씨앗을 바꿔 다시 — 그때까지 보낸 것이 없어 듣는 쪽은 모른다."""
@@ -500,7 +537,7 @@ class Speaker:
                     return
             if quiet and loud and codes is not None:   # 끝의 침묵은 기억에 넣지 않는다(다음 턴이 침묵을 흉내 낸다)
                 drop = int(quiet // per); codes, wave = codes[:, : codes.shape[1] - drop], wave[: len(wave) - drop * per]
-            if session and loud and wave is not None and codes is not None and _depth == 0:   # 이어 만든 뒷부분은 기억에 넣지 않는다(턴 전체가 아니다)
+            if session and keep and loud and wave is not None and codes is not None and _depth == 0:   # 이어 만든 뒷부분은 기억에 넣지 않는다(턴 전체가 아니다)
                 try: print('remembered' if self.remember(session, voice, turn, text, codes, wave) else 'not remembered', flush=True)
                 except Exception as e: print('remember failed', type(e).__name__, flush=True)
             return
@@ -582,7 +619,11 @@ class Speaker:
         rate = self.codec.sample_rate
         if len(groups) == 1:
             voice = next(iter(groups))
-            yield from self.speak_stream(turn_text(lines), voice, session, turn)
+            # 11/17 긴 턴·속마음: 묶음마다 차례로 만든다. 기억에는 첫 묶음만 넣는다(같은 턴의 뒤 묶음은 지난 턴 기억을 그대로 이어 받는다 — 읽어 둔 상태를 다시 쓴다).
+            for k, (inner, batch) in enumerate(turn_batches(lines)):
+                if k: yield pcm(np.zeros(int(rate * 0.3), dtype='float32'))
+                made = self.speak_stream(turn_text(batch), voice, session, turn, keep=k == 0 and not inner)
+                yield from (inner_voice(made, rate) if inner else made)
             self.prepare_later(session, [voice])
             return
         # 11/11 첫소리를 먼저(사용자): 대화 순서대로 필요할 때 만든다 — 그 턴에 한 번만 말하는 인물은 만드는 대로 흘려보내고,
@@ -610,10 +651,11 @@ class Speaker:
             for k, i in enumerate(idx): pieces[i] = trim_tail(wave[cuts[k] : cuts[k + 1]], rate)
         for i, line in enumerate(lines):
             voice = line.get('voice') or DEFAULT_VOICE
-            if len(groups[voice]) == 1: yield from self.speak_stream(turn_text([line]), voice, session, turn)
+            said = (lambda made: inner_voice(made, rate)) if line.get('inner') else (lambda made: made)   # 11/17 속마음 줄은 울림을 얹는다
+            if len(groups[voice]) == 1: yield from said(self.speak_stream(turn_text([line]), voice, session, turn))
             else:
                 if i not in pieces: make(voice, groups[voice])
-                yield pcm(pieces.pop(i))
+                yield from said([pcm(pieces.pop(i))])
             if i < len(lines) - 1:
                 pause = min(1.5, max(0.0, float((line.get('delivery') or {}).get('pauseAfterMs', 300)) / 1000))
                 yield pcm(np.zeros(int(rate * pause), dtype='float32'))
@@ -791,10 +833,10 @@ class Speaker:
             body = await request.json()
             raw = body.get('lines') if isinstance(body.get('lines'), list) else []
             dict_or = lambda d: d if isinstance(d, dict) else {}
-            lines = [{'text': str(l.get('text', '')).strip()[:1400], 'voice': l.get('voice'), 'delivery': dict_or(l.get('delivery')),
+            lines = [{'text': str(l.get('text', '')).strip()[:1400], 'voice': l.get('voice'), 'delivery': dict_or(l.get('delivery')), 'inner': l.get('inner') is True,
                       'parts': [{'text': str(p.get('text', '')).strip()[:1400], 'delivery': dict_or(p.get('delivery'))}
                                 for p in (l.get('parts') if isinstance(l.get('parts'), list) else [])[:24] if isinstance(p, dict) and str(p.get('text', '')).strip()]}
-                     for l in raw[:12] if isinstance(l, dict) and str(l.get('text', '')).strip()]
+                     for l in raw[:48] if isinstance(l, dict) and str(l.get('text', '')).strip()]   # 11/17 12 → 48: 속마음이 말 사이에 끼면 묶음 수가 늘어난다
             if not lines: return Response(b'empty text', status_code=400)
             try:
                 for l in lines: self.reference(l['voice'])
@@ -838,6 +880,9 @@ def turn_text(lines):
 
 if __name__ == '__main__':   # python modal_drama3_serve.py — 감정이 바뀌는 줄에만 지시 · 고장 판별
     import numpy as _np
+    _b = turn_batches([{'text': '가' * 300}, {'text': '나' * 300}, {'text': '속', 'inner': True}, {'text': ('다' * 99 + '. ') * 9}])
+    assert [(i, len(x)) for i, x in _b][:3] == [(False, 1), (False, 1), (True, 1)] and all(sum(len(l['text']) for l in x) <= BATCH_CHARS for _, x in _b) and ''.join(l['text'] for _, x in _b[3:] for l in x).count('다') == 891
+    _e = b''.join(inner_voice([(_np.ones(4410, '<i2') * 1000).tobytes()] * 3, 44100)); assert len(_e) == (4410 * 3 + int(44100 * INNER_ECHO_S)) * 2
     _t = '오늘은 날씨가 참 좋아서 산책을 다녀왔어요. 기분이 좋네요.'; _r = 44100
     _tone = lambda secs: (0.2 * _np.sin(2 * _np.pi * 220 * _np.arange(int(_r * secs)) / _r)).astype('float32')
     assert healthy(_t, _tone(6), _r) and not healthy(_t, _tone(6) * 0.001, _r) and not healthy(_t, _tone(1.5), _r) and not healthy(_t, _tone(40), _r)

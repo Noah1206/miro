@@ -17,7 +17,8 @@ import { accrueVoiceReward } from '@/lib/usage/creator-reward'
 export const runtime = 'nodejs'
 // The actual native model's cold load exceeded30s in the local comparison.
 // Queue mode responds immediately; the180s bound is only for the legacy synchronous bridge.
-export const maxDuration = 180
+// 11/17 180 → 600: 한 턴 통째 합성은 소리 길이의 약 2/3 시간이 걸린다(실측 221초 소리에 148초) — 읽을 글 2,000자(약 5분 소리)에 서버가 켜지는 시간까지 들어가야 한다.
+export const maxDuration = 600
 
 /** Only owner-authorized, committed character dialogue can trigger synthesis.
  * plan=true returns the utterance order without generating audio.
@@ -77,10 +78,10 @@ export async function POST(req: Request) {
   // 11/11 감정은 줄마다(parts) — 서버가 바뀌는 줄 앞에 지시를 끼운다. 목소리 결은 한 번에 합성해 그대로.
   if (body?.turn === true && tts.speakTurn) {
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
-    const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts })))
+    const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
     if (lines.some(l => !l.voice)) return Response.json({ error: 'voice_unavailable' }, { status: 503 })
     try {
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId }, AbortSignal.any([req.signal, AbortSignal.timeout(170_000)]))
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: messageId }, AbortSignal.any([req.signal, AbortSignal.timeout(540_000)]))   // 11/17 170초 → 540초: 요청부터 170초에 끊어, 서버가 늦게 켜지거나 답이 길면 소리가 흘러나오던 도중에 뚝 끊겼다
       // 11/12 목소리 보상 — 다른 회원이 올린 목소리로 들었으면 그 턴에 쓴 토큰의 3% 를 목소리 주인에게(실패해도 듣는 데는 영향 없음).
       await accrueVoiceReward({ sessionId, messageId, payerId: user.id, voices: lines.map(l => l.voice ?? '') }).catch(() => {})
       return new Response(out.stream, { headers: { 'content-type': 'audio/L16', 'x-sample-rate': String(out.sampleRate), 'cache-control': 'private, no-store', 'x-accel-buffering': 'no' } })
@@ -114,7 +115,7 @@ async function primeRoomVoice(userId: string, sessionId: string): Promise<void> 
     for (const m of recent.reverse()) {
       const { row, segments } = await speechSource(userId, sessionId, m.id)
       if (!segments.length) continue
-      const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts })))
+      const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
       if (lines.some(l => !l.voice)) return
       const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: m.id }, AbortSignal.timeout(120_000))
       const reader = out.stream.getReader()
