@@ -122,6 +122,8 @@ function sharedChatModels(into: 'main' | 'adult'): object[] {
     const model = prefix ? `${prefix}/${String(d.providerModelId).replace(/-(\d+)-(\d+)$/, '-$1.$2')}` : String(d.providerModelId)
     return [{ id: `shared-${String(d.id)}`, provider: 'openrouter', providerModelId: model, tier: 'standard', capabilities: ['dialogue'],
       inputCost: d.inputCost, outputCost: d.outputCost, maxContextTokens: d.maxContextTokens ?? 128_000, maxOutputTokens: d.maxOutputTokens ?? 16_384,
+      // 11/16 캐시 단가·구간 단가도 같이 옮긴다 — 빠져 있어서 OpenRouter 로 보낸 같은 모델이 캐시로 읽고도 할인 없는 값으로 계산·차감됐다(언베일 Sonnet 턴이 일반 방의 두 배).
+      ...(d.cachedInputCost === undefined ? {} : { cachedInputCost: d.cachedInputCost }), ...(d.priceTiers ? { priceTiers: d.priceTiers } : {}), ...(d.priceChanges ? { priceChanges: d.priceChanges } : {}),
       fallback: true, chatSelectable: true }]
   })
 }
@@ -131,9 +133,20 @@ function sharedChatModels(into: 'main' | 'adult'): object[] {
  * MIRO_ADULT_MODEL_REGISTRY 는 MIRO_MODEL_REGISTRY 와 같은 모양(JSON 배열, 가격 필수). capabilities·tier 를 비우면 모든 일·standard.
  * 예: [{"id":"adult","provider":"openrouter","providerModelId":"<모델>","inputCost":0.5,"outputCost":2,"maxContextTokens":128000,"maxOutputTokens":4096}]
  */
+/**
+ * OpenRouter 가 캐시로 읽은 입력에 매기는 값(일반 입력 대비) — 단가표에 캐시 단가가 없을 때만 쓴다(11/16, OpenRouter 문서의 계열별 배수).
+ * 모르는 계열·OpenAI(0.25 또는 0.5 로 모델마다 다름)는 할인 없이 둔다 — 원가를 낮게 잡는 쪽으로 틀리지 않게.
+ */
+const OPENROUTER_CACHE_READ: Array<[RegExp, number]> = [[/^~?anthropic\//, 0.1], [/^deepseek\//, 0.1], [/^google\//, 0.25], [/^x-ai\//, 0.25]]
+function withCacheRate<T extends object>(d: T): T {
+  const m = d as { provider?: string; providerModelId?: string; inputCost?: number; cachedInputCost?: number }
+  const rate = m.provider === 'openrouter' && m.cachedInputCost === undefined && typeof m.inputCost === 'number'
+    ? OPENROUTER_CACHE_READ.find(([family]) => family.test(m.providerModelId ?? ''))?.[1] : undefined
+  return rate === undefined ? d : { ...d, cachedInputCost: m.inputCost! * rate }
+}
 export function adultRegistry(): ModelRegistry | null {
   if (!process.env.MIRO_ADULT_MODEL_REGISTRY) return null
-  const definitions = (JSON.parse(process.env.MIRO_ADULT_MODEL_REGISTRY) as object[]).map(d => ({ capabilities: [...AI_TASKS], tier: 'standard', ...d }))
+  const definitions = (JSON.parse(process.env.MIRO_ADULT_MODEL_REGISTRY) as object[]).map(d => withCacheRate({ capabilities: [...AI_TASKS], tier: 'standard', ...d }))
   const registry = new ModelRegistry([...definitions, ...sharedChatModels('adult')])
   const enabled = registry.models.filter(m => m.enabled)
   return enabled.some(m => m.capabilities.includes('dialogue'))

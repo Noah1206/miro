@@ -52,6 +52,11 @@ export type GenerationRequest = {
    * Claude 는 마지막 덩이에 캐시 표시를 달고, 나머지 공급자는 flatPrompt 로 한 글로 보낸다(앞부분이 같으면 자동 캐시).
    */
   promptPrefix?: string[]
+  /**
+   * 11/16 같은 대화를 같은 공급자로 보내기 위한 열쇠(방 id 의 해시 — 방 id 자체는 밖으로 보내지 않는다).
+   * OpenRouter 는 이 값이 같으면 첫 요청부터 같은 호스트로 보내 캐시가 이어진다. 다른 공급자는 무시한다.
+   */
+  sessionKey?: string
 }
 /** promptPrefix 를 prompt 앞에 붙인 한 덩이 글. */
 export function flatPrompt(req: Pick<GenerationRequest, 'prompt' | 'promptPrefix'>): string {

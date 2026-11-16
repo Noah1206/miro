@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { appendFileSync } from 'node:fs'
 import { productionRuntime } from '@miro/config'
 import type { ZodType, ZodTypeDef } from 'zod'
@@ -196,7 +196,8 @@ export class AIOrchestrator implements LLMProvider {
         const request = { ...req, hardTokenCap: !!this.opts.context?.turnMeter,
           disableProviderFallback: !!this.opts.context?.turnMeter || !!this.opts.context?.dialogueModelId || this.opts.taskModels?.[taskOf(req.task)] !== undefined || req.disableProviderFallback,
           maxTokens: Math.min(req.maxTokens ?? model.maxOutputTokens, model.maxOutputTokens, this.opts.context?.turnMeter?.maxOutputTokens ?? Infinity),
-          prompt: repairSchema ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt }
+          prompt: repairSchema ? req.prompt + '\nReturn only valid JSON matching the requested schema.' + failed : req.prompt,
+          ...(this.opts.context?.sessionId ? { sessionKey: createHash('sha256').update(this.opts.context.sessionId).digest('hex').slice(0, 32) } : {}) }
         const context = { ...this.opts.context, traceId: this.traceId, requestId: this.requestId }
         const release = acquireProvider(providerKey, context.workload === 'background')
         if (!release) { last = 'provider_overloaded'; break }

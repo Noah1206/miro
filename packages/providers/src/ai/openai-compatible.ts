@@ -105,6 +105,7 @@ export class OpenAICompatibleProvider implements AIProvider {
           ? { type: 'json_schema', json_schema: { name: 'output', schema: req.responseSchema, strict: false } }
           : { type: 'json_object' } } : {}),
         ...this.extra,
+        ...(this.name === 'openrouter' && req.sessionKey ? { session_id: req.sessionKey } : {}),
         ...(streaming ? { stream: true, stream_options: { include_usage: true } } : {}),
       }),
     })
