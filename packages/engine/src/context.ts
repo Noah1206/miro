@@ -305,11 +305,6 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
     { memories: 2, messages: 4 },
   ]
   let last: BuiltContext | null = null
-  // 11/16 상한 근처의 긴 방: 지금은 들어가도 닻이 옮겨지기 전(최대 4턴 뒤)에 넘칠 크기면 미리 한 칸 작은 창을 고른다 —
-  // 안 그러면 닻 주기 한가운데서 창이 바뀌어 캐시가 한 번 더 깨진다(운영 실측: 상한에 닿은 방에서 두 턴에 한 번꼴로 20%대만 캐시로 읽혔다).
-  // 한 주기 안에서는 예상 크기가 거의 같아 같은 창이 유지된다. 예상까지 들어가는 창이 없으면 지금 들어가는 첫 창을 쓴다.
-  const turnsLeft = cacheLayout ? (CACHE_ANCHOR_TURNS - (s.turnCount % CACHE_ANCHOR_TURNS)) % CACHE_ANCHOR_TURNS : 0
-  let fits: BuiltContext | null = null
   for (const plan of plans) {
     const dropped: string[] = []
     const latestSummary = s.memories.filter(m => m.sessionId === s.relationship.sessionId && m.type === 'short_term_summary')
@@ -327,12 +322,8 @@ export function buildContext(s: SimulationSnapshot, contextScale = 1, spoken = f
     // The engine's own format rules ride on the template; record their revision too.
     last = { system: full, cachePrefix, prompt, ...(cacheLayout ? { history } : {}), promptVersion: `dialogue:${template.version}+${style === 'brief' ? 'scene-thought' : style === 'long' ? 'scene-long' : style === 'saga' ? 'scene-saga' : style === 'plus' ? 'scene-plus' : style === 'short' ? 'scene-short' : 'scene-beats'}${s.experienceType === 'reality' && (!s.mode || s.mode === 'chat') ? '+in-person' : ''}${s.mode === 'messenger' ? '+messenger' : ''}+voice-conversation-v3`,
       approxTokens: systemTokens + estimateTokens(history.join('') + prompt), dropped }
-    if (last.approxTokens > POLICY.context.maxTokens) continue
-    const perTurn = recent.length ? estimateTokens(history.join('')) / Math.max(1, recent.length / 2) : 0
-    if (last.approxTokens + turnsLeft * perTurn <= POLICY.context.maxTokens) return last
-    fits ??= last
+    if (last.approxTokens <= POLICY.context.maxTokens) return last
   }
-  if (fits) return fits
   throw new Error('context_budget_exceeded')
 }
 
