@@ -117,7 +117,7 @@ export async function beginRequest(userId: string, sessionId: string, input: str
     }
     if (row.rate >= limit) throw new Error('request rate limit')
     if (row.busy) throw new Error('conversation busy')
-    await tx.insert(conversationRequests).values({ id: requestId, userId, sessionId, inputHash, leaseUntil: new Date(now.getTime() + 15 * 60_000) })
+    await tx.insert(conversationRequests).values({ id: requestId, userId, sessionId, inputHash, leaseUntil: new Date(now.getTime() + 6 * 60_000) }) // 11/16 15→6분: 턴은 5분(maxDuration)을 못 넘는다 — 멈춘 턴이 방을 15분 묶었다
     return { requestId, cached: null }
   })
 }
