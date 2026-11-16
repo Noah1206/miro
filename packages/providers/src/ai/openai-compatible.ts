@@ -71,6 +71,9 @@ export class OpenAICompatibleProvider implements AIProvider {
     const modernGPT = /^(openai\/)?gpt-[56](?:[.-]|$)/.test(this.model)
     const anthropicViaRouter = this.name === 'openrouter' && /^~?anthropic\//.test(this.model)
     const requiresReasoning = /^(openai\/)?gpt-(6-astra|6\.1-sol)(?:-|$)/.test(this.model)
+    // 11/16 OpenRouter 의 Claude 중 생각을 끌 수 있는 모델(실측: none 을 받는다)은 끈다 — low 로 두면 첫 글자가 늦다(Haiku 5.5 4.0초 → 0.8초, Opus 5 2.7 → 1.6초, Opus 4.6 2.3 → 1.7초).
+    // Sonnet 5.5·Opus 5.5·Fable 은 none 을 400 으로 거절한다(필수 생각) — 목록에 없는 모델은 예전처럼 low.
+    const optionalReasoning = /^~?anthropic\/claude-(haiku-5\.5|opus-5|opus-4\.\d+)$/.test(this.model)
     // GPT-5 는 생각 토큰이 max_completion_tokens 를 같이 먹는다 — medium 생각이면 4096 을 생각만으로 다 써 답이 비었다
     // (10/4 성격표 예비 호출 전부 max_tokens). 생각을 켠 요청은 답 몫의 3배를 준다. ponytail: 모델 상한은 레지스트리가 알지만 여기선 모른다 — 16k 안이면 된다.
     // 11/12: OpenRouter(언베일 방)도 받는 대로 — 한 번에 받으면 출력량 '아주 길게'가 글 없는 60초 한도에 끊겨 예비까지 실패했다.
@@ -98,7 +101,7 @@ export class OpenAICompatibleProvider implements AIProvider {
         // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).
         // ponytail: 생각을 끌 수 없는 모델(필수 생각)은 none 을 무시한다 — 그런 모델은 비교에서 거른다.
         // GPT 는 위의 reasoning_effort 하나만 보낸다 — 둘을 같이 보내 값이 다르면 400(conflicting values).
-        ...(this.name === 'openrouter' && !modernGPT ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? (anthropicViaRouter || requiresReasoning || /^google\/gemini-[34]/.test(this.model) ? 'low' : 'none'), exclude: true } } : {}), // 11/15: Gemini 3·gpt-6.1-sol 도 none 이면 400("Reasoning is mandatory")
+        ...(this.name === 'openrouter' && !modernGPT ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? ((anthropicViaRouter && !optionalReasoning) || requiresReasoning || /^google\/gemini-[34]/.test(this.model) ? 'low' : 'none'), exclude: true } } : {}), // 11/15: Gemini 3·gpt-6.1-sol 도 none 이면 400("Reasoning is mandatory")
         // 스키마는 디코딩 안내로만 준다(strict 아님) — strict 는 선택 필드가 있는 우리 스키마를 400 으로 거절한다. 검증은 오케스트레이터가 zod 로 한다.
         // ponytail: 예비가 스키마를 자주 어기면 선택 필드를 nullable 로 바꾼 strict 스키마로 올린다.
         ...(req.json ? { response_format: req.responseSchema
