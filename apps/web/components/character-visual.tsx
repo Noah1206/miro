@@ -10,28 +10,29 @@ const IMAGE_WIDTHS: Record<ImageSize, readonly [number, number]> = {
   detail: [720, 1080],
 }
 
-export function characterImageSources(original: string, size: ImageSize) {
-  let url: URL
+const MEDIA = '/media/character-images/'
+const OLD_PUBLIC = '/storage/v1/object/public/character-images/'
+/**
+ * 우리 사진의 서버 경로(/media/character-images/…). 11/16 사진을 Supabase Storage 에서 운영 서버 디스크로 옮겼다 —
+ * 예전 Supabase 주소로 저장된 것도 같은 파일이라 여기서 새 경로로 읽는다. 우리 사진이 아니면 null.
+ */
+export function ownImagePath(original: string): string | null {
+  if (original.startsWith(MEDIA)) return original
   try {
-    url = new URL(original)
-  } catch {
-    return { src: original }
-  }
+    const url = new URL(original)
+    return url.protocol === 'https:' && url.hostname.endsWith('.supabase.co') && url.pathname.startsWith(OLD_PUBLIC) && url.pathname.length > OLD_PUBLIC.length
+      ? MEDIA + url.pathname.slice(OLD_PUBLIC.length) + url.search : null
+  } catch { return null }
+}
 
-  const publicPath = '/storage/v1/object/public/character-images/'
+/** 화면 크기에 맞게 줄인 사진 주소들 — Next 이미지 변환(/_next/image)이 줄이고 WebP 로 바꿔 서버 디스크에 캐시한다. */
+export function characterImageSources(original: string, size: ImageSize) {
+  const path = ownImagePath(original)
+  if (!path) return { src: original }
+  const file = path.split('?')[0]!
   // 움직이는 썸네일(11/4, animated WebP) — 크기 변환을 거치면 첫 장만 남는다. 원본 그대로.
-  if (url.pathname.endsWith('.webp')) return { src: original }
-  if (url.protocol !== 'https:' || !url.hostname.endsWith('.supabase.co') || !url.pathname.startsWith(publicPath) || url.pathname.length === publicPath.length) {
-    return { src: original }
-  }
-
-  url.pathname = `/storage/v1/render/image/public/character-images/${url.pathname.slice(publicPath.length)}`
-  url.searchParams.set('quality', '80')
-  url.searchParams.set('resize', 'contain')
-  const candidates = IMAGE_WIDTHS[size].map((width) => {
-    url.searchParams.set('width', String(width))
-    return { width, url: url.toString() }
-  })
+  if (file.endsWith('.webp')) return { src: path }
+  const candidates = IMAGE_WIDTHS[size].map((width) => ({ width, url: `/_next/image?url=${encodeURIComponent(file)}&w=${width}&q=80` }))
   return {
     src: candidates[0]!.url,
     srcSet: candidates.map(({ width, url: candidate }) => `${candidate} ${width}w`).join(', '),
@@ -45,7 +46,7 @@ export function CharacterPhoto({ src, alt, size, sizes, width, height, loading =
   onReady?: () => void
 }) {
   const [failed, setFailed] = useState(false)
-  const sources = failed ? { src } : characterImageSources(src, size)
+  const sources = failed ? { src: ownImagePath(src) ?? src } : characterImageSources(src, size)
   return (
     <img src={sources.src} srcSet={'srcSet' in sources ? sources.srcSet : undefined}
       sizes={'srcSet' in sources ? sizes : undefined} alt={alt} width={width} height={height}
