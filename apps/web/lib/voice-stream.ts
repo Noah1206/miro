@@ -19,6 +19,32 @@ export class VoiceStreamPlayer {
   stop() {
     for (const s of this.sources) { try { s.stop() } catch { /* 이미 끝남 */ } }
     this.sources.clear(); this.next = 0
+    for (const end of this.beds) end()
+  }
+
+  private clips = new Map<string, Promise<AudioBuffer | null>>()
+  private beds = new Set<() => void>()
+  /** 11/17 대사 밑에 까는 효과음(젖은 소리 등) — 루프로 작게 틀고, 돌려준 함수로 서서히 끈다. 파일을 못 받으면 조용히 건너뛴다. */
+  bed(urls: string[], volume = 0.35): () => void {
+    this.unlock()
+    const ctx = this.ctx!, gain = ctx.createGain(), srcs: AudioBufferSourceNode[] = []
+    gain.gain.setValueAtTime(0, ctx.currentTime); gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.6); gain.connect(ctx.destination)
+    let live = true
+    for (const url of urls) {
+      if (!this.clips.has(url)) this.clips.set(url, fetch(url).then(r => r.arrayBuffer()).then(b => ctx.decodeAudioData(b)).catch(() => null))
+      void this.clips.get(url)!.then(buffer => {
+        if (!buffer || !live) return
+        const src = ctx.createBufferSource(); src.buffer = buffer; src.loop = true; src.connect(gain); src.start(); srcs.push(src)
+      })
+    }
+    const end = () => {
+      if (!live) return
+      live = false; this.beds.delete(end)
+      gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime); gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5)
+      setTimeout(() => { for (const s of srcs) { try { s.stop() } catch { /* 이미 끝남 */ } } gain.disconnect() }, 600)
+    }
+    this.beds.add(end)
+    return end
   }
 
   /**
