@@ -17,13 +17,15 @@ import styles from './chat.module.css'
  * 통화가 아니다 — 턴은 그대로 채팅 턴이고, 소리는 저장된 답을 읽는다.
  */
 export type SpeechChoice={messageId:string;part:number;text:string}
-type Immersive = { media: CharacterMedia; available:boolean; soon:boolean; on: boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
+type Immersive = { media: CharacterMedia; available:boolean; soon:boolean; on: boolean;
+  /** 11/16 글·음성 맞추기: 음성이 아직 시작되지 않은 새 답 — 화면이 그 글을 잡아 뒀다가 소리와 같이 보여 준다. */
+  held:(id:string)=>boolean; holding:boolean; toggle: () => void; status: VoicePlaybackStatus; retry: () => void;
   choices:SpeechChoice[];listen:(choice:SpeechChoice,amount:'standard'|'extended',reuseOnly?:boolean)=>Promise<boolean>;stop:()=>void;sessionId:string
   /** 11/6: 무료 운영(음성 분량 차감 꺼짐) — 새 답 이어 읽기·말풍선 눌러 다시 듣기. */
   free:boolean;replay:(m:Msg,texts:string[])=>void
   /** 11/11 음성 모드로 이어 읽는 중 — 폼에 voice=1(답을 쓰는 동안 합성 서버를 깨운다). */
   live:boolean }
-const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false })
+const Ctx = createContext<Immersive>({ media: 'text', available:false, soon:false, on: false, held:()=>false, holding:false, toggle: () => {}, status: 'idle', retry: () => {},choices:[],listen:async()=>false,stop:()=>{},sessionId:'',free:false,replay:()=>{},live:false })
 export const useImmersive = () => useContext(Ctx)
 
 // 토글을 누른 손가락으로 재생을 한 번 열어 둔다 — iOS 는 제스처 밖에서 처음 만든 소리를 막는다.
@@ -52,7 +54,12 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   const current=useRef<string|null>(null)
   const player=useRef<VoiceStreamPlayer|null>(null)
   const latest=useRef<Msg[]>([]);latest.current=[...initialMessages,...appended.filter(m=>!known.has(m.id))]
-  const stop=()=>{queue.current=[];controller.current?.abort();audio.current?.pause();player.current?.stop();setStatus('idle')}
+  // 11/16 글·음성 맞추기 — released: 소리가 시작됐거나(또는 실패·중단·30초 초과) 글을 보여도 되는 답, skipped: 음성 모드를 켜기 전에 와 있던 답.
+  const [released,setReleased]=useState<ReadonlySet<string>>(new Set())
+  const [skipped,setSkipped]=useState<ReadonlySet<string>>(new Set())
+  const release=(id:string)=>setReleased(prev=>prev.has(id)?prev:new Set([...prev,id]))
+  const releaseAll=()=>setReleased(prev=>new Set([...prev,...latest.current.map(m=>m.id)]))
+  const stop=()=>{queue.current=[];controller.current?.abort();audio.current?.pause();player.current?.stop();setStatus('idle');releaseAll()}
   /**
    * 11/11 만드는 대로 듣기: /api/tts 를 stream 으로 받아 오는 조각부터 재생한다. 새 답은 한 턴 통째(turn) — 서버가 목소리마다 한 번에 합성해
    * 대화 순서대로 흘려보낸다(사용자: 묶음이 아니라 1턴당). 말풍선 다시 듣기는 그 묶음만, 다 받으면 다음 묶음을 재생 시각 뒤에 붙인다.
@@ -64,12 +71,12 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     const report=(v:VoicePlaybackStatus)=>{if(controller.current===active)setStatus(v)}
     let ended:Promise<void>=Promise.resolve()
     const post=(body:object)=>fetch('/api/tts',{method:'POST',signal:active.signal,headers:{'content-type':'application/json'},body:JSON.stringify({sessionId,stream:true,...body})})
-    const one=async(body:object,pause:number)=>{
+    const one=async(body:object,pause:number,started?:()=>void)=>{
       if(current.current===null)return
       report('preparing')
       const res=await post(body)
       if(!res.ok||!res.headers.get('content-type')?.startsWith('audio/'))throw new Error('voice_generation_failed')
-      const fed=await player.current!.feed(res,active.signal,()=>report('playing'))
+      const fed=await player.current!.feed(res,active.signal,()=>{report('playing');started?.()})
       ended=fed.ended;player.current!.gap(Math.max(0,Math.min(1500,pause)))
     }
     try{
@@ -77,7 +84,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
         const job=queue.current.shift()!;current.current=job.key
         try{
           const m=latest.current.find(x=>x.id===job.id);if(!m)continue
-          if(job.parts===null){await one({messageId:m.id,turn:true},0);continue}
+          if(job.parts===null){try{await one({messageId:m.id,turn:true},0,()=>release(m.id))}finally{release(m.id)};continue}
           const segs=spokenSegments(m.blocks,m.content,characterName,voiceSpeakers)
           for(const part of (job.parts??segs.map((_,i)=>i)).filter(p=>segs[p])){
             try{await one({messageId:m.id,part,amount:'standard',confirmed:true},segs[part]!.delivery.pauseAfterMs??0)}
@@ -98,6 +105,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     const key=`${id}:${parts?.join(',')??'all'}`
     if(current.current===key||queue.current.some(j=>j.key===key))return
     queue.current.push({id,parts,key});void drain()
+    if(parts===null)setTimeout(()=>release(id),30_000)   // 소리가 끝내 안 와도 글은 보여 준다
   }
 
   useEffect(()=>()=>{controller.current?.abort();audio.current?.pause()},[sessionId])
@@ -123,7 +131,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
   }
   // 켜는 순간 이미 와 있던 답은 읽지 않는다 — 켠 뒤에 새로 오는 답부터.
   const spoken=useRef(new Set<string>())
-  useEffect(()=>{if(on)for(const m of appended)spoken.current.add(m.id)
+  useEffect(()=>{if(on){for(const m of appended)spoken.current.add(m.id);setSkipped(new Set(appended.map(m=>m.id)))}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[on])
   const arrived=appended.filter(m=>!known.has(m.id)&&m.role==='character'&&m.kind==='text'&&(m.blocks.length||m.content.trim())&&/^[0-9a-f-]{36}$/i.test(m.id))
@@ -132,6 +140,9 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     for(const m of arrived)if(!spoken.current.has(m.id)){spoken.current.add(m.id);enqueue(m.id,null)}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[on,enabled,free,arrived.map(m=>m.id).join()])
+  const liveVoice=on&&enabled&&free===true
+  const arrivedIds=new Set(arrived.map(m=>m.id))
+  const held=(id:string)=>liveVoice&&arrivedIds.has(id)&&!skipped.has(id)&&!released.has(id)
   /** 말풍선을 누르면 그 말풍선의 대사를 다시 읽는다(줄 끝에 붙는다). texts = 그 말풍선에 든 대사 문단. */
   const replay=(m:Msg,texts:string[])=>{
     if(!on||!enabled||free!==true||!/^[0-9a-f-]{36}$/i.test(m.id))return
@@ -144,7 +155,7 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
     enqueue(m.id,parts)
   }
   return (
-    <Ctx.Provider value={{ media, available:enabled, soon, on, toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true }}>
+    <Ctx.Provider value={{ media, available:enabled, soon, on, held, holding:arrived.some(m=>held(m.id)), toggle, status, retry:()=>{},choices,listen,stop,sessionId,free:free===true,replay,live:on&&enabled&&free===true }}>
       <div data-immersive={on ? media : undefined} style={{ display: 'contents' }}>
         {on && media === 'video' && portrait && <div aria-hidden className={styles.backdrop} style={{ backgroundImage: `url(${JSON.stringify(portrait)})` }} />}
         {children}

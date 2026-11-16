@@ -170,7 +170,8 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
   // 유저가 다시 쓰기 시작하면 기다림은 끝난 것이다.
   useEffect(() => { if (draft) setWaiting(false) }, [draft])
   // 첫 블록이 오면 점 대신 답이 보인다.
-  const showTyping = (pending && !live?.blocks.length) || waiting
+  // 11/16 음성 모드에선 소리가 시작될 때까지 글을 잡아 두므로 그동안 점을 계속 보인다.
+  const showTyping = (pending && (!live?.blocks.length || voice.live)) || waiting || voice.holding
   const [slow, setSlow] = useState(false)
   useEffect(() => {
     setSlow(false)

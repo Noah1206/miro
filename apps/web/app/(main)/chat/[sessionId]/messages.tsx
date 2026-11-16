@@ -44,15 +44,17 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   // 서버 목록 뒤에 방금 보낸 턴을 붙인다. refresh 로 서버 목록에 같은 id 가 실리면 그쪽만 남는다.
   const t = useT()
   const { appended, quiet, playbackKeys, live, removed } = useTurns()
+  const voice = useImmersive()
   const known = new Set(server.map((m) => m.id))
   // 오고 있는 답(스트리밍)은 맨 뒤에 — 보낸 말과 지금까지 받은 블록. 저장된 답이 오면 사라지고 그 자리를 저장본이 채운다.
   const liveKey = live?.playbackId ?? 'live'
   const liveItems: Msg[] = live ? [{ id: `${liveKey}:user`, role: 'user', kind: 'text', content: live.input, blocks: [] },
-    ...(live.blocks.length ? [{ id: `${liveKey}:reply`, role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
+    // 11/16 음성 모드: 오고 있는 답의 글은 보여 주지 않는다 — 소리가 시작될 때 같이 나온다(그동안은 입력창 위 점).
+    ...(live.blocks.length && !voice.live ? [{ id: `${liveKey}:reply`, role: 'character', kind: 'text', content: '', blocks: live.blocks }] : [])] : []
   const settled = [...server, ...appended.filter((m) => !known.has(m.id))].filter((m) => !removed.has(m.id))
   const items = [...settled, ...liveItems]
   const opening = useOpeningPlayback(sessionId, items, hasStarted)
-  const displayed = items.filter(opening.visible)
+  const displayed = items.filter(m => opening.visible(m) && !voice.held(m.id))
   const keyOf = (m: Msg) => playbackKeys.get(m.id) ?? m.id
   // 11/9 웹소설: 결말 표식이 실린 답 뒤에 결말 카드. 표식 줄 자체는 말풍선에서 뺀다.
   // 11/10: 이어서 하다 다른 엔딩에 닿아도 카드가 뜨게 — 엔딩마다 처음 닿은 답에 하나씩.
@@ -71,7 +73,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   // 이미 화면에 있던 메시지는 다시 치지 않는다. 처음 열 때 전부 다시 치면 대화가 재생된다.
   const seen = useRef<Set<string> | null>(null)
   if (seen.current === null) seen.current = new Set(items.map(keyOf))
-  for (const id of quiet) seen.current.add(playbackKeys.get(id) ?? id)
+  for (const id of quiet) if (!voice.held(id)) seen.current.add(playbackKeys.get(id) ?? id)
   const last = items[items.length - 1]
   // 치는 중인 메시지는 한 번 정해지면 다음 메시지가 올 때까지 바뀌지 않는다 — 백그라운드 refresh 로 목록이 갈려도 타이핑이 끊기지 않는다.
   const typing = useRef<string | null>(null)
@@ -83,7 +85,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   // 리롤(10/27): 다 친 마지막 장면 답 하나만 다시 받을 수 있다. 그 답이 아직 마지막인지는 서버가 다시 본다.
   const lastSettled = settled[settled.length - 1]
   // 11/16 음성 모드에선 다시 받기 버튼을 숨긴다(서버도 음성 턴은 거절).
-  const voiceOn = useImmersive().on
+  const voiceOn = voice.on
   const rerollInput = !voiceOn && !live && hasStarted && !opening.playing && lastSettled?.role === 'character' && lastSettled.kind === 'text' && !lastSettled.opening
     && keyOf(lastSettled) !== typingId ? [...settled].reverse().find((m) => m.role === 'user')?.content : undefined
 
@@ -97,7 +99,7 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
     wasStreaming.current = !!live
     follow()
   }, [items.length, displayed.length, !!live, live?.blocks.length, follow])
-  useEffect(() => { for (const m of items) seen.current!.add(keyOf(m)) }, [items, playbackKeys])
+  useEffect(() => { for (const m of items) if (!voice.held(m.id)) seen.current!.add(keyOf(m)) }, [items, playbackKeys])
   useEffect(() => {
     const transcript = end.current?.parentElement
     if (!transcript) return
@@ -278,7 +280,7 @@ function CharacterBubble({ m, name, portrait, typing = false, mood = 'neutral', 
   const line = (p: Paragraph) => typing && p.index === typed
     ? (m.opening
       ? <TypedText text={p.text} mood="neutral" pace={1} maxParagraphMs={OPENING_PARAGRAPH_MS} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />
-      : <TypedText text={p.text} mood={mood} pace={REPLY_TYPING_PACE} boost={replyTypingBoost(backlog(p.index))} maxParagraphMs={Infinity} sentencePausesOnly
+      : <TypedText text={p.text} mood={mood} pace={REPLY_TYPING_PACE} boost={voice.live ? 1 : replyTypingBoost(backlog(p.index))} maxParagraphMs={Infinity} sentencePausesOnly
           endPauseMs={boxEnds.has(p.index) ? BOX_END_PAUSE_MS : 260} onGrow={onGrow} onDone={() => { setTyped(p.index + 1); onGrow?.() }} />)
     : <Emphasis text={p.text} />
 

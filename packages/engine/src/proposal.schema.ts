@@ -29,6 +29,9 @@ function normalizeBlock(v: unknown): unknown {
   return { type: keys[0], speaker: typeof speaker === 'string' ? speaker : null, text: o.text, delivery: o.delivery, speech: o.speech }
 }
 
+/** 대사 글에 섞여 나온 영어 괄호 태그([moaning softly]·[breathing heavily] 등). */
+const INLINE_TAG = /\[[a-z][a-z ]{2,30}\]/i
+
 export const RpBlock = z.preprocess(normalizeBlock, z.object({
   type: z.enum(RP_BLOCK_TYPES),
   /** dialogue/npc 는 화자가 필요하다. narrative/action/world 는 null. 모델은 null 대신 생략을 잘 한다 — 검증기가 처리한다. */
@@ -40,6 +43,11 @@ export const RpBlock = z.preprocess(normalizeBlock, z.object({
 }).transform(block => {
   // A malformed optional direction must never discard an otherwise valid reply.
   if (block.type !== 'dialogue') { delete block.delivery; delete block.speech }
+  // 11/16 음성 태그([moaning] 등)를 숨은 speech 칸이 아니라 대사 글에 그대로 쓰는 모델(Grok)이 있다 — 화면엔 태그 없는 글, 음성엔 태그 든 글.
+  if (INLINE_TAG.test(block.text)) {
+    const shown = block.text.replace(new RegExp(INLINE_TAG.source, 'gi'), ' ').replace(/\s+/g, ' ').replace(/\s+([.,!?~"”])/g, '$1').trim()
+    if (shown) { if (block.type === 'dialogue') block.speech ??= block.text; block.text = shown }
+  }
   return block
 }))
 
