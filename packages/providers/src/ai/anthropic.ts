@@ -54,7 +54,8 @@ export class AnthropicProvider implements AIProvider {
     try {
       const params: Anthropic.Beta.MessageCreateParamsNonStreaming = {
         model: this.model,
-        max_tokens: req.maxTokens ?? 1024,
+        // 11/16 생각(보통 이상)은 답과 같은 상한을 먹는다 — 실측(Sonnet 5.5): '높게'가 8,192 중 8,181 을 쓰고 그 위 단계는 생각만 하다 잘려 답이 없었다. 생각을 켠 요청은 답 몫의 3배를 준다(OpenAI 쪽과 같은 셈).
+        max_tokens: (req.maxTokens ?? 1024) * (req.thinking && req.thinking !== 'low' && !req.hardTokenCap ? 3 : 1),
         system: systemBlocks(req.system + (schema ? '\nCall the submit tool exactly once with the complete result. Do not answer in text.' : req.json ? '\nReturn only a JSON object.' : ''), req.cacheSystemPrefix),
         // 11/16 최근 대화 덩이의 끝에 캐시 표시 — 다음 턴은 이 자리까지를 캐시에서 읽고(정가의 10%) 새로 붙은 메시지만 새로 쓴다.
         messages: [{ role: 'user', content: req.promptPrefix?.length

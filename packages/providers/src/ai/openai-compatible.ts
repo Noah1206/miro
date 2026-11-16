@@ -97,7 +97,7 @@ export class OpenAICompatibleProvider implements AIProvider {
             ? [...req.promptPrefix.map((text, i, all) => ({ type: 'text', text, ...(i === all.length - 1 ? { cache_control: { type: 'ephemeral' } } : {}) })), { type: 'text', text: req.prompt }]
             : flatPrompt(req) }],
         ...(modernGPT ? { max_completion_tokens: completionCap, reasoning_effort: (req.thinking === 'max' ? 'xhigh' : req.thinking) ?? (requiresReasoning ? 'low' : 'none') }
-          : { max_tokens: req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }),
+          : { max_tokens: anthropicViaRouter ? completionCap : req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }), // 11/16 OpenRouter 의 Claude 도 생각이 답 몫을 먹는다 — 직결과 같이 3배
         // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).
         // ponytail: 생각을 끌 수 없는 모델(필수 생각)은 none 을 무시한다 — 그런 모델은 비교에서 거른다.
         // GPT 는 위의 reasoning_effort 하나만 보낸다 — 둘을 같이 보내 값이 다르면 400(conflicting values).
