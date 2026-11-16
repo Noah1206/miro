@@ -20,10 +20,12 @@ export async function getPersona(userId: string): Promise<UserPersona | null> {
 export function parsePersona(raw: { name: unknown; gender: unknown; description: unknown }): { ok: true; persona: UserPersona } | { ok: false; error: string } {
   // 제어 문자(NUL 등)는 DB text 가 받지 않고 프롬프트에도 쓸모가 없다 — 공백으로 바꾼 뒤 공백을 하나로 모은다.
   const text = (v: unknown) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim() : '')
-  const name = text(raw.name), description = text(raw.description)
+  // 소개는 줄바꿈을 살린다(11/16 2000자 — 긴 설정은 줄을 나눠 쓴다). 그 밖의 제어 문자만 지운다.
+  const lines = (v: unknown) => (typeof v === 'string' ? v.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, ' ').replace(/[^\S\n]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim() : '')
+  const name = text(raw.name), description = lines(raw.description)
   if (!name) return { ok: false, error: msg('이름을 적어 주세요.') }
   if ([...name].length > PERSONA_LIMITS.name) return { ok: false, error: msg('이름은 12자까지 쓸 수 있어요.') }
-  if ([...description].length > PERSONA_LIMITS.description) return { ok: false, error: msg('소개는 300자까지 쓸 수 있어요.') }
+  if ([...description].length > PERSONA_LIMITS.description) return { ok: false, error: msg('소개는 2000자까지 쓸 수 있어요.') }
   const gender = raw.gender === 'female' || raw.gender === 'male' ? raw.gender : null
   return { ok: true, persona: { name, gender, description: description || null } }
 }

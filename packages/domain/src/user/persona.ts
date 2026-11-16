@@ -4,7 +4,8 @@
  */
 export type UserPersona = { name: string; gender: 'female' | 'male' | null; description: string | null }
 
-export const PERSONA_LIMITS = { name: 12, description: 300 } as const
+/** 11/16 소개 300→2000자(커뮤니티 통용 2,000~3,000자 — 자기 캐릭터를 들고 다니는 사람은 300자에 못 담는다). 만든 사람이 준비해 두는 페르소나는 300자 그대로(presetDescription). */
+export const PERSONA_LIMITS = { name: 12, description: 2000, presetDescription: 300 } as const
 
 /** 만든 사람이 준비해 두는 페르소나(11/3) — 대화 시작 화면에서 사용자가 골라 쓴다(고른 뒤 고칠 수 있다). 모양은 사용자 페르소나와 같다. */
 export const PRESET_PERSONA_LIMIT = 6
@@ -13,7 +14,7 @@ export function normalizePresetPersonas(input: unknown): UserPersona[] {
   return input.flatMap((raw): UserPersona[] => {
     const o = (raw ?? {}) as Record<string, unknown>
     const name = typeof o.name === 'string' ? o.name.trim().slice(0, PERSONA_LIMITS.name) : ''
-    const description = typeof o.description === 'string' ? o.description.trim().slice(0, PERSONA_LIMITS.description) : ''
+    const description = typeof o.description === 'string' ? o.description.trim().slice(0, PERSONA_LIMITS.presetDescription) : ''
     return name ? [{ name, gender: o.gender === 'female' || o.gender === 'male' ? o.gender : null, description: description || null }] : []
   }).slice(0, PRESET_PERSONA_LIMIT)
 }

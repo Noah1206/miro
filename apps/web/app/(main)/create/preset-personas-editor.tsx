@@ -33,7 +33,7 @@ export function PresetPersonasEditor({ defaultValue }: { defaultValue: UserPerso
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {GENDERS.map(([g, label]) => <button key={label} type="button" aria-pressed={r.gender === g} onClick={() => patch(r.id, { gender: g })} style={chip(r.gender === g)}>{t(label)}</button>)}
           </div>
-          <textarea value={r.description} maxLength={PERSONA_LIMITS.description} rows={2} aria-label={t('페르소나 소개')}
+          <textarea value={r.description} maxLength={PERSONA_LIMITS.presetDescription} rows={2} aria-label={t('페르소나 소개')}
             placeholder={t('예: 스물여섯, 입사 3개월 차 신입. 팀장에게 매일 기획서를 돌려받는다.')}
             onChange={e => patch(r.id, { description: e.target.value })} style={{ ...box(false), width: '100%', padding: 12, borderRadius: 8, fontSize: fieldFont, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
         </div>

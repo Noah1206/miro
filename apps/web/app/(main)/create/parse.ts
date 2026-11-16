@@ -73,7 +73,7 @@ export function parseCharacterForm(form: FormData, expectedType?: 'chat' | 'real
 
   const name = s('name')
   if (!name) throw new Error('NAME_REQUIRED')
-  if (name.length > 10 || s('title').length > 40 || s('personality').length > 5000 || s('startingContext').length > 600) throw new Error('CHARACTER_FIELD_TOO_LONG')
+  if (name.length > 10 || s('title').length > 40 || s('personality').length > 10000 || s('startingContext').length > 600) throw new Error('CHARACTER_FIELD_TOO_LONG')
   if (publish && !s('title')) throw new Error('TITLE_REQUIRED')
   if (publish && !s('startingContext')) throw new Error('STARTING_CONTEXT_REQUIRED')
   const personality = s('personality') || (publish ? '' : `${name}에 대한 설명은 아직 적히지 않았다.`)

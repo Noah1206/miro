@@ -115,7 +115,8 @@ export function planTasks(input: string, turn: number, mode: 'planned' | 'always
     || (turn > 0 && turn % 4 === 0)
     || importanceScore(interactionImportance(input)) >= .3)) tasks.push('memory_extraction')
   // 11/10 긴 맥락: 10턴마다 — 대사 창(15턴)보다 짧아서 창에서 빠지는 대화는 늘 요약에 들어가 있다(12턴마다였을 땐 창 6턴과 사이가 비었다).
-  if (feature('memorySummaries') && turn > 0 && turn % 10 === 0) tasks.push('memory_summary')
+  // 11/16 10→5턴(커뮤니티 통용값) — 10턴 묶음은 숫자·호칭·누가 아는지 같은 작은 사실이 요약에서 빠졌다.
+  if (feature('memorySummaries') && turn > 0 && turn % 5 === 0) tasks.push('memory_summary')
   return [...tasks, 'dialogue']
 }
 export async function analyzeSemantic(llm: LLMProvider, input: string, s: SimulationSnapshot) {
@@ -133,7 +134,7 @@ export async function analyzeMemory(llm: LLMProvider, task: 'memory_summary' | '
   const system = p.system + `
 반드시 최상위 JSON 객체 {"memories":[...]}를 반환하세요. 최상위 배열은 금지합니다.
 ${task === 'memory_summary' ? `memories는 정확히 1개입니다. 이전 요약과 새 대화를 최대 1500자의 short_term_summary로 갱신하세요. 이전 기억을 개별 항목으로 복사하지 마세요.
-단순한 최근 줄거리가 아니라 관계의 이어짐을 보존하세요: ①현재 상황 ②기억할 공유 경험과 그 이유 ③갈등의 원인→상대가 원한 대응→실제로 확인된 화해/미해결 상태 ④유효한 약속·호칭·대화 선호. 항목이 없으면 만들지 마세요. 새 사건 때문에 아직 유효한 오래된 정정·갈등 원인·약속을 지우지 마세요. 최신 정정으로 무효가 된 사실은 반복하지 마세요.` : `previousMemories 는 이미 저장된 기억입니다 — 참고만 하고 그대로 다시 내지 마세요. 이번 입력과 최근 참여자 대화에서 아직 저장되지 않은 확인된 사실만 최대 3개 반환하고, 새 사실이 없으면 {"memories":[]} 를 반환하세요. 모든 항목에 importance·persistence·confidence 숫자가 있어야 합니다.
+단순한 최근 줄거리가 아니라 관계의 이어짐을 보존하세요: ①현재 상황 ②기억할 공유 경험과 그 이유 ③갈등의 원인→상대가 원한 대응→실제로 확인된 화해/미해결 상태 ④유효한 약속·호칭·대화 선호 ⑤등장한 인물마다 한 줄 — 사용자와 아는 사이인지, 서로 부르는 호칭, 지금 관계, 마지막으로 있던 곳과 하던 일 ⑥누가 무엇을 알고 누가 모르는지(비밀·거짓말·들킨 것 — 모르는 인물이 아는 듯 굴지 않게) ⑦구체적인 숫자(돈·수량·기한)와 이야기 속 날짜·시각은 바꾸지 말고 그대로 ⑧아직 끝나지 않은 일은 [미해결]로 표시. 항목이 없으면 만들지 마세요. 새 사건 때문에 아직 유효한 오래된 정정·갈등 원인·약속을 지우지 마세요. 최신 정정으로 무효가 된 사실은 반복하지 마세요.` : `previousMemories 는 이미 저장된 기억입니다 — 참고만 하고 그대로 다시 내지 마세요. 이번 입력과 최근 참여자 대화에서 아직 저장되지 않은 확인된 사실만 최대 3개 반환하고, 새 사실이 없으면 {"memories":[]} 를 반환하세요. 모든 항목에 importance·persistence·confidence 숫자가 있어야 합니다.
 사용자의 호칭·말투·칭찬/위로 방식·연락 경계 요청은 preference와 태그 "대화 선호"로 남기며, 원한 방식과 피하고 싶은 방식을 함께 보존하세요. 갈등은 원인과 요청·해결 여부를 conflict에, 함께 한 경험은 구체적인 사건과 두 사람에게 중요한 이유를 shared_event에 남기세요. 약속/계획은 완료된 사건이 아닙니다. 캐릭터가 한 제안을 사용자가 동의한 사실로 바꾸지 마세요. 외운 단어 대신 다음 행동에 도움이 되는 정보와 실제 근거를 남기세요.
 모든 추출 항목에 sourceQuote를 넣으세요. sourceQuote는 사실의 근거인 사용자 발화의 정확한 2~600자 부분 인용입니다. 현재 input이 근거이면 sourceMessageId를 생략하세요. 최근 대화의 과거 사용자 발화가 근거이면 해당 recent 항목의 id를 sourceMessageId로 반드시 넣으세요. 캐릭터/NPC/요약의 문장을 사용자 원문으로 인용하거나 과거 사실을 현재 input에 귀속시키지 마세요. 출처가 없거나 발췌에 사실이 없는 항목은 반환하지 마세요.
 예외 하나: 작가 설정이 두 사람이 함께 겪었다고 정한 과거를 캐릭터가 자기 기억으로 구체적으로 말했고(예: 그날 비가 왔고 당신은 우산이 없었다) 사용자가 부정하지 않았다면, 그 디테일을 shared_event로 남기고 sourceMessageId에 그 캐릭터 메시지 id, sourceQuote에 캐릭터 원문을 넣으세요 — 이후 대화가 그 디테일과 어긋나지 않게 하려는 기록입니다. 사용자가 다르게 말했다면 사용자 말을 따르고 캐릭터 디테일은 남기지 마세요. 사용자의 다른 사실·선호·약속은 이 예외로 남기지 마세요.

@@ -226,7 +226,7 @@ function MemoryEditor({ sessionId, item, onDone }: { sessionId: string; item: Me
     setBusy(true); setError(null)
     const e = await call(sessionId, method, { id: item.id, ...body })
     setBusy(false)
-    if (!e) onDone(); else setError(e === 'pin_limit' ? t('고정은 한 방에 5개까지예요.') : t('저장하지 못했어요. 다시 시도해 주세요.'))
+    if (!e) onDone(); else setError(e === 'pin_limit' ? t('고정은 한 방에 10개까지예요.') : t('저장하지 못했어요. 다시 시도해 주세요.'))
   }
   const changed = text.trim() !== item.content && text.trim().length > 0
   return (

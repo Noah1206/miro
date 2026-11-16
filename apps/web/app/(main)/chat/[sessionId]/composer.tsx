@@ -214,7 +214,7 @@ export function ChatComposer({ sessionId, characterName, modelOptions, messenger
     const active = document.activeElement
     if (active === document.body || active?.id === 'main') ta.current?.focus({ preventScroll: true })
   }, [refreshing, state.succeeded])
-  useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, 140)}px` } }, [draft])
+  useEffect(() => { if (ta.current) { ta.current.style.height = 'auto'; ta.current.style.height = `${Math.min(ta.current.scrollHeight, Math.min(window.innerHeight * 0.4, 320))}px` } }, [draft])
 
   return (
     <div className={styles.composer} data-chat-composer>

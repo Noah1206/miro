@@ -350,7 +350,7 @@ function CharacterFormBody({ mode, experienceType, creationId, userId, draft = f
                     <input type="hidden" name="title" value={title} />
                     <input type="hidden" name="personality" value={personality} />
                     <LabeledField label={t('캐릭터 소개')} required hint={t('첫 줄은 카드에 걸리는 한 줄 소개가 돼요(40자). 그 아래에 외모·성격·말투·가치관·비밀·배경 이야기를 자유롭게 적어 주세요. AI는 여기 적힌 대로 연기해요.')}>
-                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={5040} rows={10} />
+                      <ControlledArea name="characterIntro" label={t('캐릭터 소개')} value={intro} onChange={setIntro} max={10040} rows={10} />
                     </LabeledField>
                     {experienceType === 'reality' && <ReactionTraits initial={i} />}
                   </div>
@@ -596,8 +596,8 @@ function splitIntro(text: string): { title: string; personality: string } {
   const nl = whole.indexOf('\n')
   const first = (nl === -1 ? whole : whole.slice(0, nl)).trim()
   const rest = nl === -1 ? '' : whole.slice(nl + 1).trim()
-  if (first.length <= 40 && rest) return { title: first, personality: rest.slice(0, 5000) }
-  return { title: first.slice(0, 40), personality: whole.slice(0, 5000) }
+  if (first.length <= 40 && rest) return { title: first, personality: rest.slice(0, 10000) }
+  return { title: first.slice(0, 40), personality: whole.slice(0, 10000) }
 }
 
 /** 탭 패널. 감춰도 DOM 에 남긴다 — 값이 살아 있어야 한 번에 제출된다. order 로 같은 탭의 두 패널 순서를 정한다. */

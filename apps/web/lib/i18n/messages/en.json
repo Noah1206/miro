@@ -554,7 +554,7 @@
  "소개 페이지": "Profile page",
  "소개 페이지 미리보기": "Profile page preview",
  "소개 한 줄이 여기에 걸립니다.": "Your one-line intro appears here.",
- "소개는 300자까지 쓸 수 있어요.": "Intros can be up to 300 characters.",
+ "소개는 2000자까지 쓸 수 있어요.": "Intros can be up to 2,000 characters.",
  "소꿉친구": "Childhood friend",
  "소리 켜기": "Turn on sound",
  "소리가 꺼져 있어요": "Sound is off",
@@ -1775,7 +1775,7 @@
  "{n}편 하나로 정리하기": "Combine {n} chapters into one",
  "고정": "Pinned",
  "고정 풀기": "Unpin",
- "고정은 한 방에 5개까지예요.": "You can pin up to 5 per chat.",
+ "고정은 한 방에 10개까지예요.": "You can pin up to 10 per chat.",
  "기억 종류": "Memory type",
  "예: 나는 매운 음식을 못 먹는다": "e.g. I can’t eat spicy food",
  "적을 기억": "Memory to add",
@@ -2319,5 +2319,11 @@
  "음성 모드로 받은 답은 다시 받을 수 없어요.": "Replies received in voice mode can't be regenerated.",
   "좋아요한 캐릭터": "Liked characters",
   "아직 좋아요한 캐릭터가 없어요": "No liked characters yet",
-  "둘러보기": "Browse"
+  "둘러보기": "Browse",
+  "대화 내려받기 (TXT)": "Download chat (TXT)",
+  "작품별 대화 통계": "Chat stats by character",
+  "{n}명": "{n} people",
+  "평균 {n}턴": "avg {n} turns",
+  "10턴 넘긴 방 {n}%": "{n}% passed 10 turns",
+  "미로는 독점을 요구하지 않아요. 비공개 캐릭터의 설정은 운영이 고치거나 지우지 않아요. 공개 작품에 조치가 필요하면 이유를 알려 드려요.": "Miro never asks for exclusivity. We don't edit or delete the settings of private characters. If a public work needs action, we tell you why."
 }

@@ -14,7 +14,7 @@ export type MemoryNotes = MemoryGraph & { items: MemoryNoteItem[]; note: string 
 const USER_NOTE_MAX = 2000
 
 /** 한 방에서 고정할 수 있는 기억 수 — 고정은 매 턴 먼저 실리므로 너무 많으면 다른 기억 자리가 없다. */
-const PIN_LIMIT = 5
+const PIN_LIMIT = 10 // 11/16 5→10
 /** 정리 중인 방 — 동시 정리 요청을 막는다. */
 const compacting = new Set<string>()
 /** 요약·지난 이야기는 1500자까지(11/10), 나머지 기억은 300자까지(모델이 쓰는 한도와 같다). */

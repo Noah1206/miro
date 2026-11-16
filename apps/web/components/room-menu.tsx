@@ -117,6 +117,8 @@ export function RoomMenu({ sessionId, initialPersona, characterName, profile: in
         {characterHref && row(characterHref, 'character', t('캐릭터 정보'))}
         {row(archiveHref, 'archive', t('이전 대화 보기'))}
         {row(`/chat/${sessionId}/novel`, 'download', t('웹소설로 만들기'))}
+        {/* 11/16 대화 원문 TXT — 파일 내려받기라 화면 전환 링크가 아니라 일반 링크. */}
+        <a href={`/api/chat-export/${sessionId}`} download className={styles.row} onClick={close}><MenuIcon name="download"/><span>{t('대화 내려받기 (TXT)')}</span><Chevron/></a>
       </section>
       <section className={`${styles.section} ${styles.actions}`} aria-label={t('환경')}>
         {row('/my/permissions', 'settings', t('알림·접근 권한'))}
