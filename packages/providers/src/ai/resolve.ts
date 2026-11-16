@@ -36,7 +36,10 @@ export function providerFromEnv(name: string | undefined, model?: string): AIPro
     // 저장·학습하지 않는 공급자에게만, 그리고 요청한 JSON 형식을 지키는 공급자에게만 보낸다(처리방침의 '학습에 쓰지 않음'·대사 계약).
     // 빠른 공급자부터(throughput) — 기본(가격순)은 느린 호스트에 걸려 대사가 40~60초 걸렸다(10/3 실측).
     case 'openrouter': return e.OPENROUTER_API_KEY && model
-      ? new OpenAICompatibleProvider('openrouter', e.OPENROUTER_API_KEY, model, 'https://openrouter.ai/api/v1', { provider: { data_collection: 'deny', require_parameters: true, sort: 'throughput' } }) : null
+      // 11/16 Gemini 는 OpenRouter 안의 두 길(Google Vertex·Google AI Studio) 가운데 AI Studio 를 먼저 — 같은 요청(언베일 방, 실측 각 12~25회)에
+      // Vertex 는 열에 한 번쯤 '참여할 수 없다'는 답을 돌려줬고(실제 방에선 네 번 연속) AI Studio 는 한 번도 없었다. AI Studio 가 막히면(429) Vertex 로 넘어간다.
+      ? new OpenAICompatibleProvider('openrouter', e.OPENROUTER_API_KEY, model, 'https://openrouter.ai/api/v1', { provider: { data_collection: 'deny', require_parameters: true,
+        ...(model.startsWith('google/') ? { order: ['google-ai-studio', 'google-vertex'] } : { sort: 'throughput' }) } }) : null
     case 'miro-slm': return e.MIRO_SLM_URL && (model || e.MIRO_SLM_MODEL) ? new MiroSLMProvider(e.MIRO_SLM_URL, e.MIRO_SLM_API_KEY ?? '', (model || e.MIRO_SLM_MODEL)!) : null
     default: return null
   }
