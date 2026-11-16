@@ -25,14 +25,14 @@ export function ownImagePath(original: string): string | null {
   } catch { return null }
 }
 
-/** 화면 크기에 맞게 줄인 사진 주소들 — Next 이미지 변환(/_next/image)이 줄이고 WebP 로 바꿔 서버 디스크에 캐시한다. */
+/** 화면 크기에 맞게 줄인 사진 주소들(?w=폭) — 사진 경로(app/media)가 줄인 WebP 를 주고, 주소가 사진 확장자라 Cloudflare 가 캐시한다. */
 export function characterImageSources(original: string, size: ImageSize) {
   const path = ownImagePath(original)
   if (!path) return { src: original }
   const file = path.split('?')[0]!
   // 움직이는 썸네일(11/4, animated WebP) — 크기 변환을 거치면 첫 장만 남는다. 원본 그대로.
   if (file.endsWith('.webp')) return { src: path }
-  const candidates = IMAGE_WIDTHS[size].map((width) => ({ width, url: `/_next/image?url=${encodeURIComponent(file)}&w=${width}&q=80` }))
+  const candidates = IMAGE_WIDTHS[size].map((width) => ({ width, url: `${file}?w=${width}` }))
   return {
     src: candidates[0]!.url,
     srcSet: candidates.map(({ width, url: candidate }) => `${candidate} ${width}w`).join(', '),
