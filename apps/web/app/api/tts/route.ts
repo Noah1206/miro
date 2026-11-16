@@ -20,6 +20,17 @@ export const runtime = 'nodejs'
 // 11/17 180 → 600: 한 턴 통째 합성은 소리 길이의 약 2/3 시간이 걸린다(실측 221초 소리에 148초) — 읽을 글 2,000자(약 5분 소리)에 서버가 켜지는 시간까지 들어가야 한다.
 export const maxDuration = 600
 
+/**
+ * 11/17 사용자: 음성 서버를 마지막 요청 뒤 25분 켜 둔다. 합성 서버(Modal)의 대기 상한이 20분이라, 마지막 요청 5분 뒤에 한 번 더 깨워 합쳐서 25분.
+ * ponytail: 이 웹 서버 프로세스의 타이머 하나 — 그 사이 웹 서버가 다시 뜨면 그 방은 20분에 꺼진다.
+ */
+let voiceHold: ReturnType<typeof setTimeout> | undefined
+function holdVoiceServer() {
+  clearTimeout(voiceHold)
+  voiceHold = setTimeout(() => { void resolveTts()?.warm?.(AbortSignal.timeout(60_000))?.catch(() => {}) }, 5 * 60_000)
+  voiceHold.unref?.()
+}
+
 /** Only owner-authorized, committed character dialogue can trigger synthesis.
  * plan=true returns the utterance order without generating audio.
  * part selects a server-owned utterance, never client-supplied text or directions.
@@ -36,6 +47,7 @@ export async function POST(req: Request) {
     // 11/12 방을 함께 주면 그 방의 목소리 기억도 미리 불러온다(본인 방인지는 따로 보지 않는다 — 기억을 읽어 둘 뿐 아무것도 돌려주지 않는다).
     const room = typeof body.sessionId === 'string' && /^[0-9a-f-]{36}$/i.test(body.sessionId) ? body.sessionId : undefined
     const known = await resolveTts()?.warm?.(AbortSignal.timeout(60_000), room)
+    holdVoiceServer()
     // 11/16 사용자: 처음부터 이어 말하는 목소리 — 이 방의 목소리 기억이 비어 있으면 지난 답 두 개를 뒤에서 미리 읽혀 기억을 만든다(소리는 버린다).
     if (room && known === 0) after(() => primeRoomVoice(user.id, room))
     return new Response(null, { status: 204 })
@@ -76,6 +88,7 @@ export async function POST(req: Request) {
   if (!(await takeUserQuota(user.id, 'voice_speak', [{ ms: 60_000, max: 30 }, { ms: 86_400_000, max: 600 }]))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
   // 11/11 한 턴 통째(사용자: 묶음이 아니라 1턴당 바로) — 대화 순서의 묶음과 각 목소리를 넘기면 서버가 목소리마다 한 번에 합성해 잘라 순서대로 흘려보낸다.
   // 11/11 감정은 줄마다(parts) — 서버가 바뀌는 줄 앞에 지시를 끼운다. 목소리 결은 한 번에 합성해 그대로.
+  holdVoiceServer()
   if (body?.turn === true && tts.speakTurn) {
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
     const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
