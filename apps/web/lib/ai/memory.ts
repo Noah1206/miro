@@ -28,6 +28,10 @@ export const memoryRetriever: MemoryRetriever = {
 async function attachSimilarity(candidates: Array<Memory & { embedding?: number[] | null }>, query: string) {
   const text = query.trim()
   if (!text || !embeddable(text) || !candidates.length) return
+  // 11/16 기억이 적은 방은 건너뛴다 — 요약을 뺀 기억이 대사에 싣는 수(16) 안이고 지난 이야기가 2편 이하면 전부 실리므로 순위가 결과를 바꾸지 않는다.
+  // 임베딩 호출은 턴마다 약 0.5초(실측 0.43~0.72초)이고 대사 모델을 부르기 전에 끝나야 해서 그만큼 첫 글자가 늦었다.
+  const rest = candidates.filter(m => m.type !== 'short_term_summary')
+  if (rest.length < POLICY.context.relevantMemoryCount && rest.filter(m => m.type === 'chapter').length <= 2) return
   const missing = candidates.filter(m => !m.embedding?.length && embeddable(m.content)).slice(0, 40)
   const [queryVec, docVecs] = await Promise.all([embedTexts([text], 'RETRIEVAL_QUERY'), missing.length ? embedTexts(missing.map(m => m.content), 'RETRIEVAL_DOCUMENT') : Promise.resolve([])])
   if (docVecs) {

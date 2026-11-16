@@ -4,7 +4,7 @@ import type { SimulationSnapshot } from './context'
 
 export type StreamBlock = SimulationProposal['rp']['blocks'][number]
 /** 대사 스트리밍(10/9)을 받는 쪽 — 지금까지 다 닫힌 블록 전체, 그리고 새 시도가 시작돼 앞에서 보여 준 것을 지워야 할 때. */
-export type TurnStream = { onBlocks(blocks: StreamBlock[]): void; onReset(): void }
+export type TurnStream = { onBlocks(blocks: StreamBlock[]): void; onReset(): void; onFirstText?(): void }
 
 /**
  * 아직 다 오지 않은 대사 JSON 에서 rp.blocks 의 다 닫힌 항목만 꺼낸다. 문자열 안의 괄호는 세지 않는다.
@@ -38,10 +38,11 @@ export function completedBlocks(text: string): unknown[] {
  * 늘었을 때만 넘긴다. 아직 검증 전 답이다 — 최종본은 저장 뒤에 따로 간다. dropWorld: 자율성 경로는 npc·world 블록을 걷어 낸다.
  */
 export function blockStream(snapshot: SimulationSnapshot, stream: TurnStream, opts: { dropWorld?: boolean } = {}) {
-  let shown = 0
+  let shown = 0, started = false
   return {
     onAttempt() { if (shown) stream.onReset(); shown = 0 },
     onText(text: string) {
+      if (!started && text) { started = true; stream.onFirstText?.() }
       const parsed = completedBlocks(text).flatMap(raw => { const r = RpBlock.safeParse(raw); return r.success ? [r.data] : [] })
         .filter(b => !opts.dropWorld || (b.type !== 'npc' && b.type !== 'world'))
       const blocks = allowedBlocks(parsed, snapshot)

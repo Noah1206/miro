@@ -102,6 +102,9 @@ async function executeTurn(opts: {
   const userMessageId = randomUUID()
 
   for (let attempt = 0; attempt < 2; attempt++) {
+    // 11/16 한 턴의 구간별 시간(turn.timing) — 준비 · 첫 글자 · 첫 블록 · 생성 끝 · 저장 끝. 어디가 느린지 기록으로 가른다.
+    const t0 = performance.now(), at = () => Math.round(performance.now() - t0)
+    const marks: { model?: number; firstText?: number; firstBlock?: number; generated?: number } = {}
     // 성인 방은 전용 모델의 가격과 한도를 사용한다.
     const loaded = await measured('chat.snapshot', () => loadSession(sessionId, userId, input))
     if (loaded) loaded.snapshot.voiceOut = !!opts.voice
@@ -191,8 +194,10 @@ async function executeTurn(opts: {
       // 11/10: 여유분 턴은 보조 모델을 안 넘기므로 기억은 배경 작업으로 — 전엔 inline 이라 그 턴의 기억이 아예 안 남았다.
       policy = resolveTurnPolicy({ ...policyInput, agencyReady: prepared.agency?.mode === 'live', continuity: reservation?.continuity ?? false, memory: reservation?.continuity ? 'deferred' : 'inline' })
       context.origin = policy.origin
+      marks.model = at()
+      const stream = opts.stream && { ...opts.stream, onFirstText: () => { marks.firstText ??= at() }, onBlocks: (blocks: Parameters<TurnStream['onBlocks']>[0]) => { marks.firstBlock ??= at(); opts.stream!.onBlocks(blocks) } }
       result = await timed('provider.llm.turn', { sessionId, mode: llm.info.mode, engine: policy.engine },
-        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream: opts.stream,
+        () => runTurn({ llm, snapshot: prepared.snapshot, userInput: input, agency: prepared.agency, policy, stream,
           auxiliaryLLM: reservation?.continuity ? undefined : auxiliaryLLM(loaded.characterName, context) }))
       // The fallback intent format has no clock tag; it cannot attest real contact from a dated scene.
       if (loaded.snapshot.world.narrativeCalendar && !prepared.agency) result.transition.realityIntent = null
@@ -215,6 +220,7 @@ async function executeTurn(opts: {
       return { ok: false, reason: 'generation' }
     }
 
+    marks.generated = at()
     const { transition } = result
     if (result.agencyShadow) observe('agency.shadow', { sessionId, ...result.agencyShadow })
     // 일반 캐릭터챗은 먼저 연락하지 않는다. 엔진이 의도를 냈더라도 여기서 버린다 —
@@ -300,6 +306,7 @@ async function executeTurn(opts: {
         ...(result.policy.memory === 'deferred' ? { memoryJobs: { userId, auxiliary: result.policy.generation.auxiliary } } : {}),
       }))
       outcome.messages = committed.messages
+      observe('turn.timing', { sessionId, turn: turnIndex, model: dialogueModelId, prepMs: marks.model, firstTextMs: marks.firstText, firstBlockMs: marks.firstBlock, generatedMs: marks.generated, totalMs: at(), chars: responseText.length })
     } catch (e) {
       await refund()
       // 다른 요청이 먼저 커밋했다. 최신 상태로 한 번 더 시도한다.
