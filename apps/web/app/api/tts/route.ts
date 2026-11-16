@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 
 /**
  * 11/16 방 목소리 기억 미리 만들기 — 음성 서버는 같은 방의 지난 턴 소리를 이어받아 억양·감정을 잇는다(사용자 청취: 기억이 있는 쪽이 좋다).
- * 기억이 없는 방은 첫 턴이 견본만 보고 밋밋하게 읽혀서, 음성 모드를 켤 때 지난 답 두 개를 오래된 것부터 합성해 서버가 기억하게 한다.
+ * 기억이 없는 방은 첫 턴이 견본만 보고 밋밋하게 읽혀서, 음성 모드를 켤 때 가장 최근 답의 앞부분을 합성해 서버가 기억하게 한다(11/17: 두 개 → 하나의 앞 200자).
  * 본인 방·읽을 수 있는 답인지는 speechSource 가 확인한다. 실패하면 조용히 그만둔다 — 다음 턴이 기억 없이 읽힐 뿐이다.
  * ponytail: 합성 서버가 한 번에 하나씩 만들어서, 켜자마자 보낸 첫 턴의 소리는 이 작업(최대 30~40초) 뒤로 밀릴 수 있다 — 거슬리면 한 개만 읽히거나 서버에 견본 기억을 둔다.
  */
@@ -110,14 +110,18 @@ async function primeRoomVoice(userId: string, sessionId: string): Promise<void> 
     const recent = await db.select({ id: messages.id }).from(messages)
       .innerJoin(roleplaySessions, and(eq(roleplaySessions.id, messages.sessionId), eq(roleplaySessions.userId, userId)))
       .where(and(eq(messages.sessionId, sessionId), eq(messages.role, 'character'), eq(messages.kind, 'text'), isNull(messages.hiddenAt)))
-      .orderBy(desc(messages.createdAt)).limit(2)
+      .orderBy(desc(messages.createdAt)).limit(1)   // 11/17 사용자: 음성 모드로 바꾼 직후의 첫 소리가 가장 중요하다 — 두 개(각각 길면 몇 분)를 읽히는 동안 첫 턴의 소리가 그 뒤에 줄 섰다. 가장 최근 답 하나의 앞 200자만.
     const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1)
     for (const m of recent.reverse()) {
       const { row, segments } = await speechSource(userId, sessionId, m.id)
       if (!segments.length) continue
-      const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts, ...(s.inner ? { inner: true } : {}) })))
-      if (lines.some(l => !l.voice)) return
-      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: m.id }, AbortSignal.timeout(120_000))
+      // 기억은 첫 목소리의 말 한 토막이면 된다(속마음은 서버가 기억에 넣지 않는다) — 약 10초 안에 끝난다.
+      const sample = segments.find(s => !s.inner)
+      if (!sample) continue
+      const voice = await segmentVoice(row, sample)
+      if (!voice) return
+      const text = (sample.speech ?? sample.text).slice(0, 200)
+      const out = await tts.speakTurn({ lines: [{ text, voice, delivery: sample.delivery }], language: settings?.language ?? 'ko', session: sessionId, turn: m.id }, AbortSignal.timeout(60_000))
       const reader = out.stream.getReader()
       while (!(await reader.read()).done) { /* 끝까지 받아야 서버가 그 턴을 기억한다 */ }
     }
