@@ -61,6 +61,9 @@ function displayName(id: string) {
   if (id === 'claude-fable-5') return 'Claude Fable 5'
   if (id === 'claude-fable-5-1') return 'Claude Fable 5.1'
   if (/^claude-fable-5[.-]2$/.test(id)) return 'Claude Fable 5.2'
+  // google/gemma-4-31b-it → Gemma 4 31B
+  const gemma = /^gemma-(\d+)-(\d+)b(?:-.*)?$/.exec(id)
+  if (gemma) return `Gemma ${gemma[1]} ${gemma[2]}B`
   const gemini4 = /^gemini-4-(argon|carbon|hydrogen)$/.exec(id)
   if (gemini4) return `Gemini 4 ${gemini4[1]![0]!.toUpperCase()}${gemini4[1]!.slice(1)}`
   // 11/10 GPT 추가: 5.6 시리즈(Luna/Terra/Sol)·5.5·5.4(mini/nano)도 같은 이름 규칙으로.
