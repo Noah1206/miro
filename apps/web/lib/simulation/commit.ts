@@ -77,7 +77,7 @@ export type CommitInput = {
   /** 기억 후처리(§3.5): 정책이 deferred 면 추출·요약 작업을 메시지와 같은 트랜잭션에 남긴다. */
   memoryJobs?: { userId: string; auxiliary: 'planned' | 'always' }
   /** 리롤(10/27): 다시 받을 수 있는 장면 턴이면 되돌리기 기록을 남긴다(다시 보낼 때 붙일 명령어와 함께). 없으면 옛 기록을 지운다. */
-  undo?: { command: string | null; commandId: string | null }
+  undo?: { command: string | null; commandId: string | null; voice?: boolean }
 }
 
 /**
@@ -427,6 +427,7 @@ export async function commitTurn(input: CommitInput): Promise<{ messages: Commit
           pendingRealityIntent: session.pendingRealityIntent, characterState: session.characterState, statValues: session.statValues },
         command: { name: input.undo.command, sourceId: input.undo.commandId },
         ledgerId: input.reservationId ?? null,
+        ...(input.undo.voice ? { voice: true } : {}),
         ...undo,
       }
       const record = { turnIndex: input.turnIndex, messageIds: inserted.map(m => m.id), input: input.userInput, before, createdAt: new Date() }

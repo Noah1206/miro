@@ -82,7 +82,9 @@ export function MessageList({ items: server, characterName, portrait, mood = 'ne
   const typingId = typing.current !== typedKey ? typing.current : null
   // 리롤(10/27): 다 친 마지막 장면 답 하나만 다시 받을 수 있다. 그 답이 아직 마지막인지는 서버가 다시 본다.
   const lastSettled = settled[settled.length - 1]
-  const rerollInput = !live && hasStarted && !opening.playing && lastSettled?.role === 'character' && lastSettled.kind === 'text' && !lastSettled.opening
+  // 11/16 음성 모드에선 다시 받기 버튼을 숨긴다(서버도 음성 턴은 거절).
+  const voiceOn = useImmersive().on
+  const rerollInput = !voiceOn && !live && hasStarted && !opening.playing && lastSettled?.role === 'character' && lastSettled.kind === 'text' && !lastSettled.opening
     && keyOf(lastSettled) !== typingId ? [...settled].reverse().find((m) => m.role === 'user')?.content : undefined
 
   // 타이핑 중에는 글자가 늘어날 때마다 바닥을 따라간다.

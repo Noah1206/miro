@@ -53,7 +53,7 @@ export async function turnFromForm(userId: string, form: FormData, opts: TurnOpt
   if (!UUID.test(reroll)) return fail(msg('이 답은 지금 다시 받을 수 없어요.'))
   // 리롤은 무료 — 되돌리면서 옛 턴의 차감을 돌려주므로 잔액이 0이어도 다시 받을 수 있다.
   const undone = await undoLastTurn(userId, String(form.get('sessionId') ?? ''), reroll)
-  if (!undone.ok) return fail(msg('이 답은 지금 다시 받을 수 없어요.'))
+  if (!undone.ok) return fail(undone.reason === 'voice' ? msg('음성 모드로 받은 답은 다시 받을 수 없어요.') : msg('이 답은 지금 다시 받을 수 없어요.'))
   opts.onUndone?.(undone.messageIds)
   const state = await turnState(userId, form, opts, { input: undone.input, command: undone.command ?? undefined, commandId: undone.commandId ?? undefined })
   return { ...state, undone: undone.messageIds }

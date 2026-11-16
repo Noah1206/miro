@@ -2315,5 +2315,6 @@
  "초기 제작자를 찾고 있어요": "We’re looking for early creators",
  "독점·등급 조건 없이 첫 작품부터 대화 보상 {rate}%, 수익은 계좌로 받아요.": "No exclusivity or tiers: earn {rate}% of chat spend from your first character, paid out to your bank account.",
  "제작자 안내 보기": "See creator guide",
- "음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요": "Voice mode is on. Every 100 characters of spoken lines costs 10 more tokens"
+ "음성 모드가 켜졌어요. 읽는 대사 100자마다 10토큰이 더 들어요": "Voice mode is on. Every 100 characters of spoken lines costs 10 more tokens",
+ "음성 모드로 받은 답은 다시 받을 수 없어요.": "Replies received in voice mode can't be regenerated."
 }

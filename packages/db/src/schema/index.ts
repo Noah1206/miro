@@ -565,6 +565,8 @@ export type TurnUndoBefore = {
   command: { name: string | null; sourceId: string | null }
   /** 이 턴의 사용량 원장. 리롤은 무료라 되돌릴 때 이 차감을 돌려준다(이 칸이 생기기 전 기록은 없음). */
   ledgerId?: string | null
+  /** 11/16 사용자: 음성 모드로 받은 턴은 다시 받기(차감 환불) 불가 — 합성 비용이 이미 나갔다. */
+  voice?: boolean
   events: { created: string[]; updated: Array<Pick<typeof events.$inferSelect, 'id' | 'status' | 'continuationState' | 'consequences' | 'cooldownUntilTurn' | 'resolvedAtTurn'>> }
   npcs: string[]
   /** 이 턴이 취소한 사용자 일정 — 되돌리면 다시 active. 이 턴이 만든 일정은 출처 메시지로 찾는다. */

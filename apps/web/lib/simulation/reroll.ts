@@ -7,7 +7,7 @@ import { rollbackInTransaction } from '@/lib/usage/guard'
 
 export type UndoResult =
   | { ok: true; messageIds: string[]; input: string; command: string | null; commandId: string | null }
-  | { ok: false; reason: 'not_found' | 'stale' | 'reported' | 'busy' }
+  | { ok: false; reason: 'not_found' | 'stale' | 'reported' | 'busy' | 'voice' }
 
 /**
  * 리롤(10/27) — 마지막 장면 턴을 그 턴 전으로 되돌린다. 같은 말을 다시 보내는 건 부른 쪽(턴 파이프라인)이 한다.
@@ -27,6 +27,7 @@ export async function undoLastTurn(userId: string, sessionId: string, replyId: s
     const [undo] = await tx.select().from(turnUndos).where(eq(turnUndos.sessionId, sessionId)).for('update')
     if (!undo || undo.turnIndex !== session.turnCount || !undo.messageIds.includes(replyId)) return { ok: false, reason: 'stale' }
     const b = undo.before
+    if (b.voice) return { ok: false, reason: 'voice' }
     const ids = undo.messageIds
 
     const [world] = await tx.select({ version: worldStates.version }).from(worldStates).where(eq(worldStates.sessionId, sessionId)).for('update')
