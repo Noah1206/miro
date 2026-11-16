@@ -13,7 +13,7 @@ import { TYPING_MS_PER_CHAR, charsPerTick, msPerChar, pauseAfter } from './typin
  *
  * 애니메이션을 줄이는 설정(prefers-reduced-motion)이면 통째로 보여준다.
  */
-export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs, sentencePausesOnly = false, endPauseMs = 0 }: {
+export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = true, pace = 1, maxParagraphMs, sentencePausesOnly = false, endPauseMs = 0, boost = 1 }: {
   text: string
   mood?: Mood
   onDone?: () => void
@@ -28,6 +28,8 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
   sentencePausesOnly?: boolean
   /** 다 친 뒤 onDone 까지 쉬는 시간 — 다음 박스로 넘어가기 전의 틈. */
   endPauseMs?: number
+  /** 1 보다 크면 그 배수만큼 빨리 친다. 치는 도중에 바뀌어도 다시 시작하지 않고 다음 글자부터 따른다 — 밀린 글 따라잡기(11/16). */
+  boost?: number
 }) {
   const reduce = useReducedMotion()
   const instant = !animate || reduce
@@ -39,6 +41,8 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
   done.current = onDone
   const grow = useRef(onGrow)
   grow.current = onGrow
+  const fast = useRef(boost)
+  fast.current = Math.max(1, boost)
   useEffect(() => { grow.current?.() }, [shown])
 
   useEffect(() => {
@@ -51,14 +55,14 @@ export function TypedText({ text, mood = 'neutral', onDone, onGrow, animate = tr
     // 긴 문단이라 글자 속도를 줄였으면 멈칫도 같은 비율로 줄인다 — 멈칫이 상한 밖에서 시간을 늘리지 않게.
     const squeeze = Math.min(1, speed / (TYPING_MS_PER_CHAR[mood] * pace))
     // 글자당 시간이 타이머 최소 간격보다 짧으면 한 틱에 여러 글자 — 긴 문단도 상한 안에 끝난다.
-    const chunk = charsPerTick(speed)
     const step = () => {
+      const now = speed / fast.current, chunk = charsPerTick(now)
       i = Math.min(text.length, i + chunk)
       setShown(i)
-      if (i >= text.length) { if (endPauseMs) timer = setTimeout(() => done.current?.(), endPauseMs); else done.current?.(); return }
-      timer = setTimeout(step, speed * chunk + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood, sentencePausesOnly) * pace * squeeze)
+      if (i >= text.length) { if (endPauseMs) timer = setTimeout(() => done.current?.(), endPauseMs / fast.current); else done.current?.(); return }
+      timer = setTimeout(step, now * chunk + pauseAfter(text[i - 1] ?? '', text[i] ?? '', mood, sentencePausesOnly) * pace * squeeze / fast.current)
     }
-    timer = setTimeout(step, speed * chunk)
+    timer = setTimeout(step, speed / fast.current * charsPerTick(speed / fast.current))
     return () => clearTimeout(timer)
   }, [text, instant, rhythm])
 

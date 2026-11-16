@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MIN_TICK_MS, REPLY_TYPING_PACE, charsPerTick, msPerChar, pauseAfter, replyTypingPace } from '../typing'
+import { TYPING_MS_PER_CHAR, MAX_PARAGRAPH_MS, MIN_TICK_MS, REPLY_TYPING_PACE, charsPerTick, msPerChar, pauseAfter, replyTypingBoost } from '../typing'
 
 describe('typing rhythm', () => {
   it('types slower when the character is hurt than when angry', () => {
@@ -55,9 +55,9 @@ describe('typing rhythm', () => {
   })
 
   it('keeps the normal pace for a small backlog and speeds up only when text piles up', () => {
-    expect(replyTypingPace(0)).toBe(REPLY_TYPING_PACE)
-    expect(replyTypingPace(200)).toBe(REPLY_TYPING_PACE)
-    expect(replyTypingPace(1000)).toBeCloseTo(REPLY_TYPING_PACE / 5)
-    expect(replyTypingPace(100000)).toBeCloseTo(REPLY_TYPING_PACE / 12)
+    expect(replyTypingBoost(0)).toBe(1)
+    expect(replyTypingBoost(200)).toBe(1)
+    expect(replyTypingBoost(1000)).toBe(5)
+    expect(replyTypingBoost(100000)).toBe(12)
   })
 })
