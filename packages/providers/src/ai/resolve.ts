@@ -77,7 +77,8 @@ export function registryFromEnv(mock: (req: GenerationRequest) => unknown): { re
     const hasBackup = definitions.some(d => d.fallback === true && d.enabled !== false && providerFromEnv(String(d.provider), String(d.providerModelId)))
     if (!hasBackup && process.env.OPENAI_API_KEY && !definitions.some(d => d.id === BACKUP_MODEL.id)) definitions.push(BACKUP_MODEL)
     // 키가 없는 예비는 뺀다 — 예비 하나 때문에 모든 호출이 'credentials missing' 으로 멈추지 않게.
-    registry = new ModelRegistry([...definitions.filter(d => d.fallback !== true || providerFromEnv(String(d.provider), String(d.providerModelId))), ...sharedChatModels('main')])
+    // 11/16 캐시 단가가 빠진 Claude 항목(Opus 5·4.6)은 정가의 0.1배로 채운다 — 캐시로 읽고도 제값으로 계산·차감됐다.
+    registry = new ModelRegistry([...definitions.filter(d => d.fallback !== true || providerFromEnv(String(d.provider), String(d.providerModelId))).map(withCacheRate), ...sharedChatModels('main')])
   } else {
     const names = [process.env.AI_PROVIDER, process.env.AI_FALLBACK_PROVIDER].filter((n): n is string => !!n && n !== 'mock')
     const definitions = names.map((name, i) => {
@@ -120,11 +121,11 @@ function sharedChatModels(into: 'main' | 'adult'): object[] {
     if (prefix === undefined) return []
     // claude-sonnet-5-5 → anthropic/claude-sonnet-5.5 (OpenRouter 는 버전을 점으로 쓴다)
     const model = prefix ? `${prefix}/${String(d.providerModelId).replace(/-(\d+)-(\d+)$/, '-$1.$2')}` : String(d.providerModelId)
-    return [{ id: `shared-${String(d.id)}`, provider: 'openrouter', providerModelId: model, tier: 'standard', capabilities: ['dialogue'],
+    return [withCacheRate({ id: `shared-${String(d.id)}`, provider: 'openrouter', providerModelId: model, tier: 'standard', capabilities: ['dialogue'],
       inputCost: d.inputCost, outputCost: d.outputCost, maxContextTokens: d.maxContextTokens ?? 128_000, maxOutputTokens: d.maxOutputTokens ?? 16_384,
       // 11/16 캐시 단가·구간 단가도 같이 옮긴다 — 빠져 있어서 OpenRouter 로 보낸 같은 모델이 캐시로 읽고도 할인 없는 값으로 계산·차감됐다(언베일 Sonnet 턴이 일반 방의 두 배).
       ...(d.cachedInputCost === undefined ? {} : { cachedInputCost: d.cachedInputCost }), ...(d.priceTiers ? { priceTiers: d.priceTiers } : {}), ...(d.priceChanges ? { priceChanges: d.priceChanges } : {}),
-      fallback: true, chatSelectable: true }]
+      fallback: true, chatSelectable: true })]
   })
 }
 
@@ -140,8 +141,9 @@ function sharedChatModels(into: 'main' | 'adult'): object[] {
 const OPENROUTER_CACHE_READ: Array<[RegExp, number]> = [[/^~?anthropic\//, 0.1], [/^deepseek\//, 0.1], [/^google\//, 0.25], [/^x-ai\//, 0.25]]
 function withCacheRate<T extends object>(d: T): T {
   const m = d as { provider?: string; providerModelId?: string; inputCost?: number; cachedInputCost?: number }
-  const rate = m.provider === 'openrouter' && m.cachedInputCost === undefined && typeof m.inputCost === 'number'
-    ? OPENROUTER_CACHE_READ.find(([family]) => family.test(m.providerModelId ?? ''))?.[1] : undefined
+  const rate = m.cachedInputCost !== undefined || typeof m.inputCost !== 'number' ? undefined
+    : m.provider === 'anthropic' ? 0.1
+    : m.provider === 'openrouter' ? OPENROUTER_CACHE_READ.find(([family]) => family.test(m.providerModelId ?? ''))?.[1] : undefined
   return rate === undefined ? d : { ...d, cachedInputCost: m.inputCost! * rate }
 }
 export function adultRegistry(): ModelRegistry | null {
