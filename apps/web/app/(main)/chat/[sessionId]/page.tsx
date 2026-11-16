@@ -48,6 +48,8 @@ export default async function ChatPage({ params }: { params: Promise<{ sessionId
   const user = await currentUser()
   if (!user) redirect('/login')
   const { sessionId } = await params
+  // 11/16 잘린 주소(/chat/991da667 같은)로 들어오면 DB 가 uuid 형식 오류를 내 500 이 됐다 — 없는 방으로 처리한다.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionId)) notFound()
   // 세션·기록·요금제·성인 판정은 서로를 기다릴 이유가 없다 — 한 번의 왕복 시간에 다 읽는다.
   // 10/27: 화면용 로더(view)로 AI 턴 전용 조회를 건너뛰고(언베일 판정은 그대로), 지갑 조회를 뺐다
   // (지갑은 레이아웃이 처음·포커스·실시간·턴 뒤에 읽는다). 몰입 모드 유형은 방 주인 조건으로 같은 바퀴에 읽는다.
