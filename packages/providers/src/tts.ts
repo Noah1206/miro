@@ -9,7 +9,8 @@ export type TtsRequest = { text: string; voice: string | null; language: string;
 export type TtsProvider = { speak(req: TtsRequest, signal?: AbortSignal): Promise<{ audio: ArrayBuffer; contentType: string }>
   /** 11/6: 서버를 미리 깨운다(꺼져 있으면 켜지는 데 24~33초) — 음성 모드를 켜는 순간 부른다. 실패해도 조용히. */
   /** session(11/12): 그 방의 목소리 기억을 되읽고 다음 턴용 상태를 미리 준비시킨다 — 서버가 꺼졌다 켜진 뒤에도 첫 턴부터 이어 말하게. */
-  warm?(signal?: AbortSignal, session?: string): Promise<void>
+  /** 11/16 방을 주면 서버가 그 방에서 기억하는 목소리 수를 돌려준다(모르면 undefined) — 0 이면 앱이 지난 답을 미리 읽혀 기억을 만든다. */
+  warm?(signal?: AbortSignal, session?: string): Promise<number | undefined>
   /** 11/11 만드는 대로 받기 — PCM16 모노 조각 스트림(sampleRate 와 함께). 첫 조각까지 약 1초. */
   speakStream?(req: TtsRequest, signal?: AbortSignal): Promise<{ stream: ReadableStream<Uint8Array>; sampleRate: number }>
   /** 11/11 한 턴 통째 — 대화 순서의 대사 묶음. 목소리마다 한 번에 합성해 잘라 순서대로(서버 /speak_turn). */
@@ -37,7 +38,8 @@ export function resolveTts(): TtsProvider | null {
       const call = session
         ? fetch(`${url}/warm`, { method: 'POST', signal, headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}) }, body: JSON.stringify({ session }) })
         : fetch(`${url}/health`, { signal })
-      await call.then(r => r.body?.cancel()).catch(() => {})
+      return call.then(async r => { if (!session || !r.ok) { await r.body?.cancel(); return undefined }
+        const voices = ((await r.json().catch(() => null)) as { voices?: unknown } | null)?.voices; return typeof voices === 'number' ? voices : undefined }).catch(() => undefined)
     },
     speakTurn: (req, signal) => stream('/speak_turn', req, signal),
     speakStream: (req, signal) => stream('/speak_stream', req, signal),

@@ -1,4 +1,5 @@
-import { and, eq, isNull } from 'drizzle-orm'
+import { and, desc, eq, isNull } from 'drizzle-orm'
+import { after } from 'next/server'
 import { characters, db, messages, officialVoices, roleplaySessions, userSettings } from '@miro/db'
 import { resolveTts } from '@miro/providers'
 import { currentUser } from '@/lib/auth'
@@ -8,7 +9,7 @@ import { speechAmount, speechCreditsEnabled } from '@/lib/speech/credits-policy'
 import { spokenSegments } from '@/lib/voice-text'
 import { feature } from '@miro/config'
 import { voiceColumns } from '@/lib/voice'
-import { segmentVoice } from '@/lib/speech/access'
+import { segmentVoice, speechSource } from '@/lib/speech/access'
 import { takeUserQuota, takeVoiceWake } from '@/lib/usage/user-quota'
 import type { TtsProvider, TtsRequest } from '@miro/providers'
 import { accrueVoiceReward } from '@/lib/usage/creator-reward'
@@ -33,7 +34,10 @@ export async function POST(req: Request) {
     if (!(await takeVoiceWake(user.id))) return Response.json({ error: 'voice_rate_limited' }, { status: 429 })
     // 11/12 방을 함께 주면 그 방의 목소리 기억도 미리 불러온다(본인 방인지는 따로 보지 않는다 — 기억을 읽어 둘 뿐 아무것도 돌려주지 않는다).
     const room = typeof body.sessionId === 'string' && /^[0-9a-f-]{36}$/i.test(body.sessionId) ? body.sessionId : undefined
-    await resolveTts()?.warm?.(AbortSignal.timeout(60_000), room); return new Response(null, { status: 204 })
+    const known = await resolveTts()?.warm?.(AbortSignal.timeout(60_000), room)
+    // 11/16 사용자: 처음부터 이어 말하는 목소리 — 이 방의 목소리 기억이 비어 있으면 지난 답 두 개를 뒤에서 미리 읽혀 기억을 만든다(소리는 버린다).
+    if (room && known === 0) after(() => primeRoomVoice(user.id, room))
+    return new Response(null, { status: 204 })
   }
   const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : '', messageId = typeof body?.messageId === 'string' ? body.messageId : ''
   if (!/^[0-9a-f-]{36}$/i.test(sessionId) || !/^[0-9a-f-]{36}$/i.test(messageId)
@@ -90,6 +94,33 @@ export async function POST(req: Request) {
   const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, user.id)).limit(1)
   return synthesize(tts, { text, voice: await segmentVoice(row, selected ?? segments[0]),
     language: settings?.language ?? 'ko', style: delivery?.tone === 'whisper' ? 'whisper' : 'normal', delivery }, req, body?.stream === true)
+}
+
+/**
+ * 11/16 방 목소리 기억 미리 만들기 — 음성 서버는 같은 방의 지난 턴 소리를 이어받아 억양·감정을 잇는다(사용자 청취: 기억이 있는 쪽이 좋다).
+ * 기억이 없는 방은 첫 턴이 견본만 보고 밋밋하게 읽혀서, 음성 모드를 켤 때 지난 답 두 개를 오래된 것부터 합성해 서버가 기억하게 한다.
+ * 본인 방·읽을 수 있는 답인지는 speechSource 가 확인한다. 실패하면 조용히 그만둔다 — 다음 턴이 기억 없이 읽힐 뿐이다.
+ * ponytail: 합성 서버가 한 번에 하나씩 만들어서, 켜자마자 보낸 첫 턴의 소리는 이 작업(최대 30~40초) 뒤로 밀릴 수 있다 — 거슬리면 한 개만 읽히거나 서버에 견본 기억을 둔다.
+ */
+async function primeRoomVoice(userId: string, sessionId: string): Promise<void> {
+  const tts = resolveTts()
+  if (!tts?.speakTurn) return
+  try {
+    const recent = await db.select({ id: messages.id }).from(messages)
+      .innerJoin(roleplaySessions, and(eq(roleplaySessions.id, messages.sessionId), eq(roleplaySessions.userId, userId)))
+      .where(and(eq(messages.sessionId, sessionId), eq(messages.role, 'character'), eq(messages.kind, 'text'), isNull(messages.hiddenAt)))
+      .orderBy(desc(messages.createdAt)).limit(2)
+    const [settings] = await db.select({ language: userSettings.language }).from(userSettings).where(eq(userSettings.userId, userId)).limit(1)
+    for (const m of recent.reverse()) {
+      const { row, segments } = await speechSource(userId, sessionId, m.id)
+      if (!segments.length) continue
+      const lines = await Promise.all(segments.map(async s => ({ text: s.speech ?? s.text, voice: await segmentVoice(row, s), delivery: s.delivery, parts: s.parts })))
+      if (lines.some(l => !l.voice)) return
+      const out = await tts.speakTurn({ lines, language: settings?.language ?? 'ko', session: sessionId, turn: m.id }, AbortSignal.timeout(120_000))
+      const reader = out.stream.getReader()
+      while (!(await reader.read()).done) { /* 끝까지 받아야 서버가 그 턴을 기억한다 */ }
+    }
+  } catch { /* 기억 없이 간다 */ }
 }
 
 /**
