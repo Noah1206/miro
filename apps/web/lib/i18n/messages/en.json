@@ -2328,5 +2328,7 @@
   "미로는 독점을 요구하지 않아요. 비공개 캐릭터의 설정은 운영이 고치거나 지우지 않아요. 공개 작품에 조치가 필요하면 이유를 알려 드려요.": "Miro never asks for exclusivity. We don't edit or delete the settings of private characters. If a public work needs action, we tell you why.",
   "이 장면 기억하기": "Remember this scene",
   "기억에 넣었어요.": "Saved to memory.",
-  "기억에 넣지 못했어요.": "Couldn't save to memory."
+  "기억에 넣지 못했어요.": "Couldn't save to memory.",
+  "보통 {typical} · 최대 {count} 토큰/턴": "Usually {typical} · up to {count} tokens/turn",
+  "보통 {typical} · 최대 {count}": "Usually {typical} · up to {count}"
 }

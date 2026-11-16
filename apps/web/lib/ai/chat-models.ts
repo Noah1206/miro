@@ -2,14 +2,20 @@ import { adultRegistry, registryFromEnv, providerFromEnv, type ModelDefinition }
 import { POLICY, tokenPricing, tokenQuote, tokensForCost, productionRuntime } from '@miro/config'
 
 export type ChatModel = string
-/** 한 턴 최소 차감 = 그 모델·길이의 일반 방 최대 견적 × 이 비율(11/14, Sonnet 기본 길이 184 → 23 ≈ 실제 평균). */
-export const MIN_TURN_SHARE = 0.125
+/**
+ * 한 턴 최소 차감 = 그 모델·길이의 자기 견적(검증 모델 몫을 뺀 것) × 이 비율.
+ * 11/16: 예전엔 검증 모델(Sonnet 급)이 낀 견적의 0.125 였다 — 싼 모델도 최소 11토큰이라 원가의 5~10배가 빠졌다(운영 10일: Luna 원가 8원에 73원, Haiku 9.2배, DeepSeek 4.9배).
+ * 자기 견적 기준으로 바꿔 싼 모델은 실제 원가를 따르게 하고(커뮤니티 조사: '내 캐릭터를 싸게'), Sonnet 은 142 × 0.16 = 23 그대로.
+ */
+export const MIN_TURN_SHARE = 0.16
+/** 보통 한 턴에 빠지는 양(안내용) = 자기 견적 × 이 비율 — 운영 10일 Sonnet 평균 27/142. */
+const TYPICAL_TURN_SHARE = 0.19
 export type ChatTier = (typeof POLICY.chatTier)[keyof typeof POLICY.chatTier]
 export type ChatLength = 'short' | 'scene' | 'plus' | 'long' | 'saga'
 /** 답 길이 → 등급(10/28 saga: 아주 긴 대화). */
 const TIER_OF = { short: 'short', scene: 'miro', plus: 'plus', long: 'echo', saga: 'saga' } as const
 const LENGTHS = ['short', 'scene', 'plus', 'long', 'saga'] as const
-export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; maxOutputTokens: number }
+export type ChatModelChoice = { id: string; name: string; provider?: string; providerLabel?: string; length: ChatLength; maximumTokens: number; typicalTokens: number; maxOutputTokens: number }
 function availableModels(adult: boolean) {
   const registry = adult ? adultRegistry() : registryFromEnv(() => '').registry
   // 11/7 사용자: GPT 도 고르는 목록에 다시 연다(11/3 '목록에서 뺀다'를 뒤집음 — 예비 역할은 그대로).
@@ -86,7 +92,7 @@ export async function chatModelOptions(_userId: string, adult = false) {
       const tier = POLICY.chatTier[TIER_OF[length]]
       const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
       return { id: choiceId(key, length), name: displayName(model.providerModelId), provider: model.provider, length: tier.replyLength,
-        maximumTokens: quote.maximumTokens, maxOutputTokens: quote.maxOutputTokens }
+        maximumTokens: quote.maximumTokens, typicalTokens: Math.max(1, Math.ceil(tokenQuote(model, tier.maxOutputTokens, pricing).maximumTokens * TYPICAL_TURN_SHARE)), maxOutputTokens: quote.maxOutputTokens }
     }))
     return { freeReady: choices.length > 0, proReady: choices.length > 0, choices }
   } catch { return { freeReady: false, proReady: false, choices: [] as ChatModelChoice[] } }
@@ -110,7 +116,7 @@ export async function resolveChatModel(_userId: string, choice: string, adult = 
   const quote = chatQuote(model, tier.maxOutputTokens, pricing, adult)
   // 11/14 사용자: 한 턴 최소 차감은 모델별로 — 일반 방 견적(검증 포함)의 MIN_TURN_SHARE. 언베일 방도 같은 모델이면 같은 최소를 받는다.
   const main = adult ? availableModels(false).find(m => m.id === key) : model
-  const floorTokens = Math.ceil((main ? chatQuote(main, tier.maxOutputTokens, pricing, false) : quote).maximumTokens * MIN_TURN_SHARE)
+  const floorTokens = Math.ceil(tokenQuote(main ?? model, tier.maxOutputTokens, pricing).maximumTokens * MIN_TURN_SHARE)
   return { modelId: model.id, metered: true, tier, tierName, pricing, quote, floorTokens }
 }
 
