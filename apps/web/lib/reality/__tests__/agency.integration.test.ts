@@ -1,5 +1,5 @@
 import * as auth from '@/lib/auth'
-import * as photoStorage from '@/lib/storage/messenger-images'
+import * as mediaStore from '@/lib/storage/media'
 import { GET as getMessengerImage } from '@/app/api/messenger-images/[id]/route'
 import * as photoDelivery from '@/lib/messenger/photos'
 import { REALITY_CONTENT_VERSION } from '@miro/providers'
@@ -887,15 +887,14 @@ describeDb('Reality agency — shared decision and atomic delivery', () => {
       url: `/api/messenger-images/${id}`, cacheKey: 'fixture', providerMetadata: { storage: { bucket: 'messenger-images', path: `${f.id}/${id}.jpg` } } })
     const user = { id: f.userId, email: null, displayName: null, plan: 'free' as const, adultVerifiedAt: null }
     const current = vi.spyOn(auth, 'currentUser').mockResolvedValue({ ...user, id: randomUUID() })
-    const signer = vi.fn().mockResolvedValue({ error: null, data: { signedUrl: 'https://fixture.supabase.co/signed-image' } })
-    vi.spyOn(photoStorage, 'messengerStorage').mockReturnValue({ storage: { from: () => ({ createSignedUrl: signer }) } } as unknown as ReturnType<typeof photoStorage.messengerStorage>)
+    const signer = vi.spyOn(mediaStore, 'readMedia').mockResolvedValue(Buffer.from([0xff, 0xd8, 0xff]))
     const request = new Request(`http://localhost/api/messenger-images/${id}`), params = { params: Promise.resolve({ id }) }
     expect((await getMessengerImage(request, params)).status).toBe(404)
     expect(signer).not.toHaveBeenCalled()
     current.mockResolvedValue(user)
     const response = await getMessengerImage(request, params)
-    expect(response.status).toBe(302); expect(response.headers.get('cache-control')).toBe('private, no-store')
-    expect(signer).toHaveBeenCalledWith(`${f.id}/${id}.jpg`, 60)
+    expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toBe('private, no-store')
+    expect(signer).toHaveBeenCalledWith('messenger-images', `${f.id}/${id}.jpg`)
     await db.update(roleplaySessions).set({ restrictedAt: NOW }).where(eq(roleplaySessions.id, f.id))
     expect((await getMessengerImage(request, params)).status).toBe(404)
     current.mockResolvedValue(null)

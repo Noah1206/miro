@@ -1,7 +1,8 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { db, generatedMedia, roleplaySessions, users, characters } from '@miro/db'
 import { currentUser } from '@/lib/auth'
-import { MESSENGER_IMAGE_BUCKET, messengerStorage } from '@/lib/storage/messenger-images'
+import { MESSENGER_IMAGE_BUCKET } from '@/lib/storage/messenger-images'
+import { mediaType, readMedia } from '@/lib/storage/media'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await currentUser(), { id } = await params
@@ -16,9 +17,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const storage = row?.asset.providerMetadata.storage as { bucket?: string; path?: string } | undefined
   if (!row || row.asset.kind !== 'photo' || storage?.bucket !== MESSENGER_IMAGE_BUCKET
     || !storage.path?.startsWith(`${row.asset.sessionId}/${id}.`)) return Response.json({ error: 'not_found' }, { status: 404, headers })
-  try {
-    const signed = await messengerStorage().storage.from(storage.bucket).createSignedUrl(storage.path, 60)
-    if (signed.error || !signed.data?.signedUrl) throw new Error('unavailable')
-    return new Response(null, { status: 302, headers: { ...headers, location: signed.data.signedUrl } })
-  } catch { return Response.json({ error: 'unavailable' }, { status: 503, headers }) }
+  const bytes = await readMedia(storage.bucket, storage.path), type = mediaType(storage.path)
+  if (!bytes || !type) return Response.json({ error: 'unavailable' }, { status: 503, headers })
+  return new Response(new Uint8Array(bytes), { headers: { ...headers, 'content-type': type } })
 }

@@ -5,7 +5,5 @@
  */
 export function isOwnImageUrl(url: string): boolean {
   if (/^\/(?!\/)/.test(url)) return true
-  const base = process.env.SUPABASE_URL?.replace(/\/+$/, '')
-  if (!base) return /^https:\/\//.test(url)
-  return url.startsWith(`${base}/storage/v1/object/public/character-images/`) && !url.includes('..')
+  return false   // 11/16 사진은 전부 우리 서버(/media/…) 상대 주소다 — 바깥 주소는 받지 않는다
 }
