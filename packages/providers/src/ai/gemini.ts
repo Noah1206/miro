@@ -8,7 +8,8 @@ import type { ProviderInfo } from '../types'
 export function thinkingConfig(model: string, thinking?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'): { thinkingConfig?: Record<string, unknown> } {
   // Gemini 는 high 가 끝이다 — xhigh·max 는 high 로(10/28 생각 5단계).
   const level = thinking === 'xhigh' || thinking === 'max' ? 'high' : thinking
-  if (model === 'gemini-4-argon') return { thinkingConfig: { thinkingLevel: level ?? 'low' } }
+  // 11/16 Gemini 4(Argon·Carbon·Hydrogen)는 low 가 최소다 — minimal 은 400.
+  if (model.startsWith('gemini-4-')) return { thinkingConfig: { thinkingLevel: level ?? 'low' } }
   if (model.startsWith('gemini-2.5')) return { thinkingConfig: { thinkingBudget: 0 } }
   if (model === 'gemini-3.5-flash-lite') return { thinkingConfig: { thinkingLevel: 'minimal' } }
   if (model === 'gemini-3.5-flash') return { thinkingConfig: { thinkingBudget: 0 } }

@@ -84,13 +84,16 @@ export class OpenAICompatibleProvider implements AIProvider {
         // 11/11 OpenRouter 의 Anthropic 모델(언베일 방의 Sonnet 짝)은 생각을 끌 수 없고(none 거절) 생각 중엔 temperature 를 못 바꾼다 —
         // require_parameters 와 함께 '맞는 서버 없음(404)'이 나 매번 예비(Grok)로 넘어갔다. 그 모델은 temperature 를 빼고 생각은 최소 low.
         // JSON 모드는 지시문에 JSON 이라는 말이 있어야 받는다(없으면 400).
-        messages: [{ role: 'system', content: req.system + (req.json ? '\nReturn only a JSON object.' : '') }, { role: 'user', content: req.prompt }],
+        // 11/16 OpenRouter 의 Claude 도 지시문 앞부분을 캐시한다(직결 Anthropic 과 같은 자리) — 안 하면 턴마다 2만 토큰을 새로 읽어 첫 글자가 늦고 입력 값을 전부 낸다.
+        messages: [{ role: 'system', content: anthropicViaRouter && req.cacheSystemPrefix && req.cacheSystemPrefix > 0 && req.cacheSystemPrefix <= req.system.length
+          ? [{ type: 'text', text: req.system.slice(0, req.cacheSystemPrefix), cache_control: { type: 'ephemeral' } }, { type: 'text', text: req.system.slice(req.cacheSystemPrefix) + (req.json ? '\nReturn only a JSON object.' : '') }]
+          : req.system + (req.json ? '\nReturn only a JSON object.' : '') }, { role: 'user', content: req.prompt }],
         ...(modernGPT ? { max_completion_tokens: completionCap, reasoning_effort: (req.thinking === 'max' ? 'xhigh' : req.thinking) ?? (requiresReasoning ? 'low' : 'none') }
           : { max_tokens: req.maxTokens ?? 1024, ...(anthropicViaRouter ? {} : { temperature: req.temperature ?? 0.9 }) }),
         // OpenRouter 도 생각은 reasoning 으로 — 없으면 none. 생각 토큰도 max_tokens 를 먹는다(10/2 성인 모드 실측: Kimi·Seed 가 생각하다 2048 을 다 써 대사가 잘렸다).
         // ponytail: 생각을 끌 수 없는 모델(필수 생각)은 none 을 무시한다 — 그런 모델은 비교에서 거른다.
         // GPT 는 위의 reasoning_effort 하나만 보낸다 — 둘을 같이 보내 값이 다르면 400(conflicting values).
-        ...(this.name === 'openrouter' && !modernGPT ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? (anthropicViaRouter || requiresReasoning || /^google\/gemini-3/.test(this.model) ? 'low' : 'none'), exclude: true } } : {}), // 11/15: Gemini 3·gpt-6.1-sol 도 none 이면 400("Reasoning is mandatory")
+        ...(this.name === 'openrouter' && !modernGPT ? { reasoning: { effort: (req.thinking === 'xhigh' || req.thinking === 'max' ? 'high' : req.thinking) ?? (anthropicViaRouter || requiresReasoning || /^google\/gemini-[34]/.test(this.model) ? 'low' : 'none'), exclude: true } } : {}), // 11/15: Gemini 3·gpt-6.1-sol 도 none 이면 400("Reasoning is mandatory")
         // 스키마는 디코딩 안내로만 준다(strict 아님) — strict 는 선택 필드가 있는 우리 스키마를 400 으로 거절한다. 검증은 오케스트레이터가 zod 로 한다.
         // ponytail: 예비가 스키마를 자주 어기면 선택 필드를 nullable 로 바꾼 strict 스키마로 올린다.
         ...(req.json ? { response_format: req.responseSchema
