@@ -94,7 +94,8 @@ export function ImmersiveProvider({ sessionId, media, portrait, children, initia
       }
       await ended;if(controller.current===active&&!active.signal.aborted)setStatus('idle')
     }catch{/* 음성 모드를 끄거나 방을 나감 */}
-    finally{current.current=null}
+    // 11/17 마지막 소리가 끝나길 기다리는 동안 들어온 답은 줄에만 서고 읽히지 않았다(위 반복문은 이미 끝났고, enqueue 의 drain 은 읽는 중이라 바로 돌아간다) — 끝나면 남은 줄을 이어 읽는다.
+    finally{current.current=null;if(queue.current.length&&!active.signal.aborted)void drain()}
   }
   // 음성 분량 차감이 켜진 운영(유료)에선 저절로 읽지 않는다 — 지금처럼 골라 듣는 패널(묻지 않고 차감하지 않게).
   const [free,setFree]=useState<boolean|null>(null)

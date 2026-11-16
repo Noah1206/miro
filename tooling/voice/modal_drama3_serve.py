@@ -28,6 +28,7 @@ SESSION_PREFIXES = 24   # 이어 붙인 상태까지 읽어 둔 모델 상태(�
 # 11/12 사용자: "말의 빠르기를 올리는 게 나을 것 같다" — 만든 소리를 음높이 그대로 조금 빠르게 내보낸다(ffmpeg atempo). 모델·기억·고장 판별은 원래 빠르기 그대로라 목소리는 안 바뀐다.
 # 1.0 이면 끔. /speak(미리 듣기·견본)는 원래 빠르기.
 TEMPO = 1.1
+QUIET_END = 4           # 말하던 도중 이만큼(초) 조용하면 끝난 것으로 본다
 RETRIES = 3             # 무음으로 시작하면 씨앗을 바꿔 다시(11/11 같은 대사가 71초 무음으로 나온 고장)
 # 11/11 오후 .7·.7(안정 설정)로 바꿨다가 음질이 크게 떨어졌다(사용자) — 시험 생성과 같은 설정으로 되돌림. 줄마다 다르던 톤은 감정 지시를 빼서(EMOTION_TAGS) 잡는다.
 SAMPLING = 'fish-space-untruncated-v1'
@@ -481,7 +482,9 @@ class Speaker:
                             held.append(chunk); continue
                         loud = True
                         for h in held: yield pcm(h)
-                    if quiet > rate * 2:
+                    # 11/17 말하던 도중의 쉼은 4초까지 기다린다 — 2초에 끊으니 물음 뒤에 길게 쉬는 대사에서 마지막 줄을 읽기 전에 끝났다
+                    # (실측 민지: 대사 126자 중 97자만, 끝이 침묵 1.5초). 소리 없이 시작하는 고장(위)은 그대로 2초.
+                    if quiet > rate * QUIET_END:
                         yield pcm(chunk[: int(rate * 0.3)]); break
                     yield pcm(chunk)
             if again: print(f'silent start, retry {attempt + 1}', flush=True); continue
